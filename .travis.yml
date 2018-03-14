@@ -1,0 +1,15 @@
+sudo: false
+language: python
+before_script:
+- pip install -e .
+# test script
+script:  python setup.py test
+notifications:
+  on_success: change
+  on_failure: always
+matrix:
+  include:
+    - python: 3.6
+    - python: 3.6-dev
+    - python: 3.7-dev
+    - python: 3.8-dev

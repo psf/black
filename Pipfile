@@ -1,0 +1,17 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+attrs = "*"
+click = "*"
+
+[dev-packages]
+coverage = "*"
+flake8 = "*"
+flake8-bugbear = "*"
+flake8-mypy = "*"
+mypy = "*"
+pypandoc = "*"
+twine = "*"

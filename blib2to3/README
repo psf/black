@@ -1,0 +1,7 @@
+A subset of lib2to3 taken from Python 3.7.0b2.
+Commit hash: 9c17e3a1987004b8bcfbe423953aad84493a7984
+
+Reasons for forking:
+- consistent handling of f-strings for users of Python < 3.6.2
+- better ability to debug
+- ability to Cythonize

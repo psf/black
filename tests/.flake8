@@ -1,0 +1,8 @@
+# Like the base Black .flake8 but also ignores F811 which is used deliberately
+# in test files.
+
+[flake8]
+ignore = E266, E501, F811
+max-line-length = 80
+max-complexity = 12
+select = B,C,E,F,W,T4,B9
