@@ -48,6 +48,7 @@ setup(
     license='MIT',
     py_modules=['black'],
     packages=['blib2to3', 'blib2to3.pgen2'],
+    package_data={'blib2to3': ['*.txt']},
     python_requires=">=3.6",
     zip_safe=False,
     install_requires=['click', 'attrs'],
