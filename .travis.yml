@@ -12,4 +12,3 @@ matrix:
     - python: 3.6
     - python: 3.6-dev
     - python: 3.7-dev
-    - python: 3.8-dev
