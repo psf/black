@@ -203,6 +203,11 @@ developer of Twisted and CPython:
 
 > At least the name is good.
 
+**Kenneth Reitz**, creator of [`requests`](http://python-requests.org/)
+and [`pipenv`](https://docs.pipenv.org/):
+
+> This vastly improves the formatting of our code. Thanks a ton!
+
 
 ## Tests
 
