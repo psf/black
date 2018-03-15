@@ -251,6 +251,11 @@ You can still try but prepare to be disappointed.
 
 ## Change Log
 
+### 18.3a1
+
+* fixed invalid spacing of dots in relative imports (#6, #13)
+
+
 ### 18.3a0
 
 * first published version, Happy 🍰 Day 2018!
