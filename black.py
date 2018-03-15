@@ -3,13 +3,15 @@ import asyncio
 from asyncio.base_events import BaseEventLoop
 from concurrent.futures import Executor, ProcessPoolExecutor
 from functools import partial
+import io
 import keyword
 import os
 from pathlib import Path
 import tokenize
 from typing import (
-    Dict, Generic, Iterable, Iterator, List, Optional, Set, Tuple, TypeVar, Union
+    Dict, Generic, Iterable, Iterator, List, Optional, Set, Tuple, Type, TypeVar, Union
 )
+import sys
 
 from attr import attrib, dataclass, Factory
 import click
@@ -64,28 +66,38 @@ class CannotSplit(Exception):
 @click.argument(
     'src',
     nargs=-1,
-    type=click.Path(exists=True, file_okay=True, dir_okay=True, readable=True),
+    type=click.Path(
+        exists=True, file_okay=True, dir_okay=True, readable=True, allow_dash=True
+    ),
 )
 @click.pass_context
 def main(ctx: click.Context, line_length: int, fast: bool, src: List[str]) -> None:
     """The uncompromising code formatter."""
     sources: List[Path] = []
-    for s in src:
-        p = Path(s)
-        if p.is_dir():
-            sources.extend(gen_python_files_in_dir(p))
-        elif p.is_file():
-            # if a file was explicitly given, we don't care about its extension
-            sources.append(p)
-        else:
-            err(f'invalid path: {s}')
+    if len(src) == 1 and src[0] == '-':
+        sources.append(Path('-'))
+    else:
+        for s in src:
+            p = Path(s)
+            if p.is_dir():
+                sources.extend(gen_python_files_in_dir(p))
+            elif p.is_file():
+                # if a file was explicitly given, we don't care about its extension
+                sources.append(p)
+            elif s == '-':
+                err('Cannot format both stdin and other paths')
+            else:
+                err(f'invalid path: {s}')
     if len(sources) == 0:
         ctx.exit(0)
     elif len(sources) == 1:
         p = sources[0]
         report = Report()
         try:
-            changed = format_file_in_place(p, line_length=line_length, fast=fast)
+            if str(p) == '-':
+                changed = format_stdin_to_stdout(line_length=line_length, fast=fast)
+            else:
+                changed = format_file_in_place(p, line_length=line_length, fast=fast)
             report.done(p, changed)
         except Exception as exc:
             report.failed(p, str(exc))
@@ -138,7 +150,10 @@ async def schedule_formatting(
 def format_file_in_place(src: Path, line_length: int, fast: bool) -> bool:
     """Format the file and rewrite if changed. Return True if changed."""
     try:
-        contents, encoding = format_file(src, line_length=line_length, fast=fast)
+        with tokenize.open(src) as src_buffer:
+            contents, encoding = format_file(
+                src_buffer, line_length=line_length, fast=fast
+            )
     except NothingChanged:
         return False
 
@@ -147,18 +162,28 @@ def format_file_in_place(src: Path, line_length: int, fast: bool) -> bool:
     return True
 
 
+def format_stdin_to_stdout(line_length: int, fast: bool) -> bool:
+    """Format file on stdin and pipe output to stdout. Return True if changed."""
+    try:
+        contents, _ = format_file(sys.stdin, line_length=line_length, fast=fast)
+    except NothingChanged:
+        return False
+
+    sys.stdout.write(contents)
+    return True
+
+
 def format_file(
-    src: Path, line_length: int, fast: bool
+    src_buffer: Type[io.TextIOBase], line_length: int, fast: bool
 ) -> Tuple[FileContent, Encoding]:
     """Reformats a file and returns its contents and encoding."""
-    with tokenize.open(src) as src_buffer:
-        src_contents = src_buffer.read()
+    src_contents = src_buffer.read()
     if src_contents.strip() == '':
-        raise NothingChanged(src)
+        raise NothingChanged(src_buffer.name)
 
     dst_contents = format_str(src_contents, line_length=line_length)
     if src_contents == dst_contents:
-        raise NothingChanged(src)
+        raise NothingChanged(src_buffer.name)
 
     if not fast:
         assert_equivalent(src_contents, dst_contents)

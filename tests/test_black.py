@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from functools import partial
 from pathlib import Path
+import tokenize
 from typing import List, Tuple
 import unittest
 from unittest.mock import patch
@@ -10,10 +11,14 @@ from click import unstyle
 import black
 
 ll = 88
-ff = partial(black.format_file, line_length=ll, fast=True)
 fs = partial(black.format_str, line_length=ll)
 THIS_FILE = Path(__file__)
 THIS_DIR = THIS_FILE.parent
+
+
+def ff(file_):
+    with tokenize.open(file_) as buf:
+        black.format_file(buf, line_length=ll, fast=True)
 
 
 def dump_to_stderr(*output: str) -> str:
