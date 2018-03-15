@@ -106,6 +106,8 @@ a = (1,)
 b = 1,
 c = 1
 d = (1,) + a + (2,)
+what_is_up_with_those_new_coord_names = (coord_names + set(vars_to_create)) + set(vars_to_remove)
+what_is_up_with_those_new_coord_names = (coord_names | set(vars_to_create)) - set(vars_to_remove)
 
 
 def gen():
@@ -228,6 +230,12 @@ a = (1,)
 b = 1,
 c = 1
 d = (1,) + a + (2,)
+what_is_up_with_those_new_coord_names = (coord_names + set(vars_to_create)) + set(
+    vars_to_remove
+)
+what_is_up_with_those_new_coord_names = (coord_names | set(vars_to_create)) - set(
+    vars_to_remove
+)
 
 
 def gen():
