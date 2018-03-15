@@ -52,6 +52,7 @@ setup(
     python_requires=">=3.6",
     zip_safe=False,
     install_requires=['click', 'attrs'],
+    python_requires='>=3.6.0',
     test_suite='tests.test_black',
     classifiers=[
         'Development Status :: 3 - Alpha',
