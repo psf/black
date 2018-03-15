@@ -20,7 +20,7 @@ from blib2to3 import pygram, pytree
 from blib2to3.pgen2 import driver, token
 from blib2to3.pgen2.parse import ParseError
 
-__version__ = "18.3a0"
+__version__ = "18.3a1"
 DEFAULT_LINE_LENGTH = 88
 # types
 syms = pygram.python_symbols
@@ -765,6 +765,7 @@ def whitespace(leaf: Leaf) -> str:
     DOUBLESPACE = '  '
     t = leaf.type
     p = leaf.parent
+    v = leaf.value
     if t == token.COLON:
         return NO
 
@@ -867,7 +868,7 @@ def whitespace(leaf: Leaf) -> str:
             return NO
 
         prevp = preceding_leaf(p)
-        if not prevp or prevp.type == token.AT:
+        if not prevp or prevp.type == token.AT or prevp.type == token.DOT:
             return NO
 
     elif p.type == syms.classdef:
@@ -987,10 +988,19 @@ def whitespace(leaf: Leaf) -> str:
         elif t == token.NAME or t == token.NUMBER:
             return NO
 
-    elif p.type == syms.import_from and t == token.NAME:
-        prev = leaf.prev_sibling
-        if prev and prev.type == token.DOT:
-            return NO
+    elif p.type == syms.import_from:
+        if t == token.DOT:
+            prev = leaf.prev_sibling
+            if prev and prev.type == token.DOT:
+                return NO
+
+        elif t == token.NAME:
+            if v == 'import':
+                return SPACE
+
+            prev = leaf.prev_sibling
+            if prev and prev.type == token.DOT:
+                return NO
 
     elif p.type == syms.sliceop:
         return NO
