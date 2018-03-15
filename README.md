@@ -257,7 +257,7 @@ You can still try but prepare to be disappointed.
 
 * alpha quality
 
-* date-versioned (see: http://calver.org/)
+* date-versioned (see: https://calver.org/)
 
 
 ## Authors
