@@ -255,6 +255,8 @@ You can still try but prepare to be disappointed.
 
 * fixed invalid spacing of dots in relative imports (#6, #13)
 
+* fixed spurious space in parenthesized set expressions (#7)
+
 
 ### 18.3a0
 

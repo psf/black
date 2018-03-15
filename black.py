@@ -895,6 +895,7 @@ def whitespace(leaf: Leaf) -> str:
         syms.or_test,
         syms.and_test,
         syms.arith_expr,
+        syms.expr,
         syms.shift_expr,
         syms.yield_expr,
         syms.term,
