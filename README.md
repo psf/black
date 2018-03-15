@@ -69,7 +69,7 @@ makes `pycodestyle` happy.
 As for vertical whitespace, *Black* tries to render one full expression
 or simple statement per line.  If this fits the allotted line length,
 great.
-```!py3
+```py3
 # in:
 l = [1,
      2,
@@ -82,7 +82,7 @@ l = [1, 2, 3]
 
 If not, *Black* will look at the contents of the first outer matching
 brackets and put that in a separate indented line.
-```!py3
+```py3
 # in:
 l = [[n for n in list_bosses()], [n for n in list_employees()]]
 
@@ -99,7 +99,7 @@ comma-separated (like an argument list, or a dict literal, and so on)
 then *Black* will first try to keep them on the same line with the
 matching brackets.  If that doesn't work, it will put all of them in
 separate lines.
-```!py3
+```py3
 # in:
 def very_important_function(template: str, *variables, *, file: os.PathLike, debug: bool = False):
     """Applies `variables` to the `template` and writes to `file`."""
@@ -165,7 +165,7 @@ If you're using Flake8, you can bump `max-line-length` to 88 and forget
 about it.  Alternatively, use [Bugbear](https://github.com/PyCQA/flake8-bugbear)'s
 B950 warning instead of E501 and keep the max line length at 80 which
 you are probably already using.  You'd do it like this:
-```!ini
+```ini
 [flake8]
 max-line-length = 80
 ...
