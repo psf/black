@@ -226,7 +226,7 @@ statements.
 
 By making the code exclusively Python 3.6+, I'm able to focus on the
 quality of the formatting and re-use all the nice features of the new
-releases (check out [pathlib](docs.python.org/3/library/pathlib.html) or
+releases (check out [pathlib](https://docs.python.org/3/library/pathlib.html) or
 f-strings) instead of wasting cycles on Unicode compatibility, and so on.
 
 
