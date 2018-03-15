@@ -358,7 +358,7 @@ class BracketTracker:
         """Returns True if there is an yet unmatched open bracket on the line."""
         return bool(self.bracket_match)
 
-    def max_priority(self, exclude: Iterable[LeafID] = ()) -> int:
+    def max_priority(self, exclude: Iterable[LeafID] =()) -> int:
         """Returns the highest priority of a delimiter found on the line.
 
         Values are consistent with what `is_delimiter()` returns.
@@ -781,13 +781,48 @@ def whitespace(leaf: Leaf) -> str:
     if t == STANDALONE_COMMENT:
         return NO
 
+    if t in CLOSING_BRACKETS:
+        return NO
+
     assert p is not None, f"INTERNAL ERROR: hand-made leaf without parent: {leaf!r}"
+    prev = leaf.prev_sibling
+    if not prev:
+        prevp = preceding_leaf(p)
+        if not prevp or prevp.type in OPENING_BRACKETS:
+            return NO
+
+        if prevp.type == token.EQUAL:
+            if prevp.parent and prevp.parent.type in {
+                syms.typedargslist,
+                syms.varargslist,
+                syms.parameters,
+                syms.arglist,
+                syms.argument,
+            }:
+                return NO
+
+        elif prevp.type == token.DOUBLESTAR:
+            if prevp.parent and prevp.parent.type in {
+                syms.typedargslist,
+                syms.varargslist,
+                syms.parameters,
+                syms.arglist,
+                syms.dictsetmaker,
+            }:
+                return NO
+
+        elif prevp.type == token.COLON:
+            if prevp.parent and prevp.parent.type == syms.subscript:
+                return NO
+
+    elif prev.type in OPENING_BRACKETS:
+        return NO
+
     if p.type in {syms.parameters, syms.arglist}:
         # untyped function signatures or calls
         if t == token.RPAR:
             return NO
 
-        prev = leaf.prev_sibling
         if not prev or prev.type != token.COMMA:
             return NO
 
@@ -796,13 +831,11 @@ def whitespace(leaf: Leaf) -> str:
         if t == token.RPAR:
             return NO
 
-        prev = leaf.prev_sibling
         if prev and prev.type != token.COMMA:
             return NO
 
     elif p.type == syms.typedargslist:
         # typed function signatures
-        prev = leaf.prev_sibling
         if not prev:
             return NO
 
@@ -820,7 +853,6 @@ def whitespace(leaf: Leaf) -> str:
 
     elif p.type == syms.tname:
         # type names
-        prev = leaf.prev_sibling
         if not prev:
             prevp = preceding_leaf(p)
             if not prevp or prevp.type != token.COMMA:
@@ -831,7 +863,6 @@ def whitespace(leaf: Leaf) -> str:
         if t == token.LPAR or t == token.RPAR:
             return NO
 
-        prev = leaf.prev_sibling
         if not prev:
             if t == token.DOT:
                 prevp = preceding_leaf(p)
@@ -849,7 +880,6 @@ def whitespace(leaf: Leaf) -> str:
         if t == token.EQUAL:
             return NO
 
-        prev = leaf.prev_sibling
         if not prev:
             prevp = preceding_leaf(p)
             if not prevp or prevp.type == token.LPAR:
@@ -863,7 +893,6 @@ def whitespace(leaf: Leaf) -> str:
         return NO
 
     elif p.type == syms.dotted_name:
-        prev = leaf.prev_sibling
         if prev:
             return NO
 
@@ -875,77 +904,16 @@ def whitespace(leaf: Leaf) -> str:
         if t == token.LPAR:
             return NO
 
-        prev = leaf.prev_sibling
         if prev and prev.type == token.LPAR:
             return NO
 
     elif p.type == syms.subscript:
         # indexing
-        if t == token.COLON:
-            return NO
-
-        prev = leaf.prev_sibling
         if not prev or prev.type == token.COLON:
             return NO
 
-    elif p.type in {
-        syms.test,
-        syms.not_test,
-        syms.xor_expr,
-        syms.or_test,
-        syms.and_test,
-        syms.arith_expr,
-        syms.expr,
-        syms.shift_expr,
-        syms.yield_expr,
-        syms.term,
-        syms.power,
-        syms.comparison,
-    }:
-        # various arithmetic and logic expressions
-        prev = leaf.prev_sibling
-        if not prev:
-            prevp = preceding_leaf(p)
-            if not prevp or prevp.type in OPENING_BRACKETS:
-                return NO
-
-            if prevp.type == token.EQUAL:
-                if prevp.parent and prevp.parent.type in {
-                    syms.varargslist, syms.parameters, syms.arglist, syms.argument
-                }:
-                    return NO
-
-        return SPACE
-
     elif p.type == syms.atom:
-        if t in CLOSING_BRACKETS:
-            return NO
-
-        prev = leaf.prev_sibling
-        if not prev:
-            prevp = preceding_leaf(p)
-            if not prevp:
-                return NO
-
-            if prevp.type in OPENING_BRACKETS:
-                return NO
-
-            if prevp.type == token.EQUAL:
-                if prevp.parent and prevp.parent.type in {
-                    syms.varargslist, syms.parameters, syms.arglist, syms.argument
-                }:
-                    return NO
-
-            if prevp.type == token.DOUBLESTAR:
-                if prevp.parent and prevp.parent.type in {
-                    syms.varargslist, syms.parameters, syms.arglist, syms.dictsetmaker
-                }:
-                    return NO
-
-        elif prev.type in OPENING_BRACKETS:
-            return NO
-
-        elif t == token.DOT:
+        if prev and t == token.DOT:
             # dots, but not the first one.
             return NO
 
@@ -955,13 +923,11 @@ def whitespace(leaf: Leaf) -> str:
         p.type == syms.subscriptlist
     ):
         # list interior, including unpacking
-        prev = leaf.prev_sibling
         if not prev:
             return NO
 
     elif p.type == syms.dictsetmaker:
         # dict and set interior, including unpacking
-        prev = leaf.prev_sibling
         if not prev:
             return NO
 
@@ -970,7 +936,6 @@ def whitespace(leaf: Leaf) -> str:
 
     elif p.type == syms.factor or p.type == syms.star_expr:
         # unary ops
-        prev = leaf.prev_sibling
         if not prev:
             prevp = preceding_leaf(p)
             if not prevp or prevp.type in OPENING_BRACKETS:
@@ -991,7 +956,6 @@ def whitespace(leaf: Leaf) -> str:
 
     elif p.type == syms.import_from:
         if t == token.DOT:
-            prev = leaf.prev_sibling
             if prev and prev.type == token.DOT:
                 return NO
 
@@ -999,7 +963,6 @@ def whitespace(leaf: Leaf) -> str:
             if v == 'import':
                 return SPACE
 
-            prev = leaf.prev_sibling
             if prev and prev.type == token.DOT:
                 return NO
 
