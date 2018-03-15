@@ -257,6 +257,12 @@ You can still try but prepare to be disappointed.
 
 * fixed spurious space in parenthesized set expressions (#7)
 
+* fixed spurious space after opening parentheses and in default
+  arguments (#14, #17)
+
+* fixed spurious space after unary operators when the operand was
+  a complex expression (#15)
+
 
 ### 18.3a0
 

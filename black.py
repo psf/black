@@ -815,6 +815,9 @@ def whitespace(leaf: Leaf) -> str:
             if prevp.parent and prevp.parent.type == syms.subscript:
                 return NO
 
+        elif prevp.parent and prevp.parent.type == syms.factor:
+            return NO
+
     elif prev.type in OPENING_BRACKETS:
         return NO
 

@@ -31,6 +31,7 @@ not great
 -1
 ~int and not v1 ^ 123 + v2 | True
 (~int) and (not ((v1 ^ (123 + v2)) | True))
+flags & ~ select.EPOLLIN and waiters.write_task is not None
 lambda arg: None
 lambda a=True: a
 lambda a, b, c=True: a
@@ -155,6 +156,7 @@ not great
 -1
 ~int and not v1 ^ 123 + v2 | True
 (~int) and (not ((v1 ^ (123 + v2)) | True))
+flags & ~select.EPOLLIN and waiters.write_task is not None
 lambda arg: None
 lambda a=True: a
 lambda a, b, c=True: a
