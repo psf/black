@@ -56,6 +56,15 @@ class CannotSplit(Exception):
     show_default=True,
 )
 @click.option(
+    '--check',
+    is_flag=True,
+    help=(
+        "Don't write back the files, just return the status.  Return code 0 "
+        "means nothing changed.  Return code 1 means some files were "
+        "reformatted.  Return code 123 means there was an internal error."
+    ),
+)
+@click.option(
     '--fast/--safe',
     is_flag=True,
     help='If --fast given, skip temporary sanity checks. [default: --safe]',
@@ -67,7 +76,9 @@ class CannotSplit(Exception):
     type=click.Path(exists=True, file_okay=True, dir_okay=True, readable=True),
 )
 @click.pass_context
-def main(ctx: click.Context, line_length: int, fast: bool, src: List[str]) -> None:
+def main(
+    ctx: click.Context, line_length: int, check: bool, fast: bool, src: List[str]
+) -> None:
     """The uncompromising code formatter."""
     sources: List[Path] = []
     for s in src:
@@ -85,7 +96,9 @@ def main(ctx: click.Context, line_length: int, fast: bool, src: List[str]) -> No
         p = sources[0]
         report = Report()
         try:
-            changed = format_file_in_place(p, line_length=line_length, fast=fast)
+            changed = format_file_in_place(
+                p, line_length=line_length, fast=fast, write_back=not check
+            )
             report.done(p, changed)
         except Exception as exc:
             report.failed(p, str(exc))
@@ -96,7 +109,9 @@ def main(ctx: click.Context, line_length: int, fast: bool, src: List[str]) -> No
         return_code = 1
         try:
             return_code = loop.run_until_complete(
-                schedule_formatting(sources, line_length, fast, loop, executor)
+                schedule_formatting(
+                    sources, line_length, not check, fast, loop, executor
+                )
             )
         finally:
             loop.close()
@@ -106,13 +121,14 @@ def main(ctx: click.Context, line_length: int, fast: bool, src: List[str]) -> No
 async def schedule_formatting(
     sources: List[Path],
     line_length: int,
+    write_back: bool,
     fast: bool,
     loop: BaseEventLoop,
     executor: Executor,
 ) -> int:
     tasks = {
         src: loop.run_in_executor(
-            executor, format_file_in_place, src, line_length, fast
+            executor, format_file_in_place, src, line_length, fast, write_back
         )
         for src in sources
     }
@@ -135,15 +151,18 @@ async def schedule_formatting(
     return report.return_code
 
 
-def format_file_in_place(src: Path, line_length: int, fast: bool) -> bool:
+def format_file_in_place(
+    src: Path, line_length: int, fast: bool, write_back: bool = False
+) -> bool:
     """Format the file and rewrite if changed. Return True if changed."""
     try:
         contents, encoding = format_file(src, line_length=line_length, fast=fast)
     except NothingChanged:
         return False
 
-    with open(src, "w", encoding=encoding) as f:
-        f.write(contents)
+    if write_back:
+        with open(src, "w", encoding=encoding) as f:
+            f.write(contents)
     return True
 
 
@@ -1321,7 +1340,15 @@ class Report:
     @property
     def return_code(self) -> int:
         """Which return code should the app use considering the current state."""
-        return 1 if self.failure_count else 0
+        # According to http://tldp.org/LDP/abs/html/exitcodes.html starting with
+        # 126 we have special returncodes reserved by the shell.
+        if self.failure_count:
+            return 123
+
+        elif self.change_count:
+            return 1
+
+        return 0
 
     def __str__(self) -> str:
         """A color report of the current state.

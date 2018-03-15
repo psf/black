@@ -43,6 +43,11 @@ black [OPTIONS] [SRC]...
 
 Options:
   -l, --line-length INTEGER   Where to wrap around.  [default: 88]
+  --check                     Don't write back the files, just return the
+                              status.  Return code 0 means nothing changed.
+                              Return code 1 means some files were reformatted.
+                              Return code 123 means there was an internal
+                              error.
   --fast / --safe             If --fast given, skip temporary sanity checks.
                               [default: --safe]
   --version                   Show the version and exit.
@@ -252,6 +257,8 @@ You can still try but prepare to be disappointed.
 ## Change Log
 
 ### 18.3a1
+
+* added `--check`
 
 * fixed invalid spacing of dots in relative imports (#6, #13)
 
