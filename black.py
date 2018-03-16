@@ -807,7 +807,7 @@ BRACKETS = OPENING_BRACKETS | CLOSING_BRACKETS
 ALWAYS_NO_SPACE = CLOSING_BRACKETS | {token.COMMA, token.COLON, STANDALONE_COMMENT}
 
 
-def whitespace(leaf: Leaf) -> str:
+def whitespace(leaf: Leaf) -> str:  # noqa C901
     """Return whitespace prefix if needed for the given `leaf`."""
     NO = ''
     SPACE = ' '
