@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from functools import partial
 from pathlib import Path
-from typing import List, Tuple
+from typing import Any, List, Tuple
 import unittest
 from unittest.mock import patch
 
@@ -46,6 +46,7 @@ class BlackTestCase(unittest.TestCase):
 
     def assertFormatEqual(self, expected: str, actual: str) -> None:
         if actual != expected:
+            bdv: black.DebugVisitor[Any]
             black.out('Expected tree:', fg='green')
             try:
                 exp_node = black.lib2to3_parse(expected)
@@ -161,10 +162,10 @@ class BlackTestCase(unittest.TestCase):
         out_lines = []
         err_lines = []
 
-        def out(msg: str, **kwargs):
+        def out(msg: str, **kwargs: Any) -> None:
             out_lines.append(msg)
 
-        def err(msg: str, **kwargs):
+        def err(msg: str, **kwargs: Any) -> None:
             err_lines.append(msg)
 
         with patch("black.out", out), patch("black.err", err):
@@ -223,7 +224,7 @@ class BlackTestCase(unittest.TestCase):
             )
             self.assertEqual(report.return_code, 123)
 
-    def test_is_python36(self):
+    def test_is_python36(self) -> None:
         node = black.lib2to3_parse("def f(*, arg): ...\n")
         self.assertFalse(black.is_python36(node))
         node = black.lib2to3_parse("def f(*, arg,): ...\n")
