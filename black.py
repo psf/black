@@ -960,7 +960,14 @@ def whitespace(leaf: Leaf) -> str:
 
     elif p.type == syms.subscript:
         # indexing
-        if not prev or prev.type == token.COLON:
+        if not prev:
+            assert p.parent is not None, "subscripts are always parented"
+            if p.parent.type == syms.subscriptlist:
+                return SPACE
+
+            return NO
+
+        elif prev.type == token.COLON:
             return NO
 
     elif p.type == syms.atom:
