@@ -347,8 +347,8 @@ class BracketTracker:
         if leaf.type in CLOSING_BRACKETS:
             self.depth -= 1
             opening_bracket = self.bracket_match.pop((self.depth, leaf.type))
-            leaf.opening_bracket = opening_bracket  # type: ignore
-        leaf.bracket_depth = self.depth  # type: ignore
+            leaf.opening_bracket = opening_bracket
+        leaf.bracket_depth = self.depth
         if self.depth == 0:
             delim = is_delimiter(leaf)
             if delim:
@@ -491,9 +491,9 @@ class Line:
         # For parens let's check if it's safe to remove the comma.  If the
         # trailing one is the only one, we might mistakenly change a tuple
         # into a different type by removing the comma.
-        depth = closing.bracket_depth + 1  # type: ignore
+        depth = closing.bracket_depth + 1
         commas = 0
-        opening = closing.opening_bracket  # type: ignore
+        opening = closing.opening_bracket
         for _opening_index, leaf in enumerate(self.leaves):
             if leaf is opening:
                 break
@@ -505,7 +505,7 @@ class Line:
             if leaf is closing:
                 break
 
-            bracket_depth = leaf.bracket_depth  # type: ignore
+            bracket_depth = leaf.bracket_depth
             if bracket_depth == depth and leaf.type == token.COMMA:
                 commas += 1
         if commas > 1:
@@ -1180,7 +1180,7 @@ def left_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
         if (
             current_leaves is body_leaves and
             leaf.type in CLOSING_BRACKETS and
-            leaf.opening_bracket is matching_bracket  # type: ignore
+            leaf.opening_bracket is matching_bracket
         ):
             current_leaves = tail_leaves
         current_leaves.append(leaf)
@@ -1234,7 +1234,7 @@ def right_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
         current_leaves.append(leaf)
         if current_leaves is tail_leaves:
             if leaf.type in CLOSING_BRACKETS:
-                opening_bracket = leaf.opening_bracket  # type: ignore
+                opening_bracket = leaf.opening_bracket
                 current_leaves = body_leaves
     tail_leaves.reverse()
     body_leaves.reverse()
@@ -1296,7 +1296,7 @@ def delimiter_split(line: Line, py36: bool = False) -> Iterator[Line]:
             current_line.append(comment_after, preformatted=True)
         lowest_depth = min(lowest_depth, leaf.bracket_depth)
         if (
-            leaf.bracket_depth == lowest_depth and  # type: ignore
+            leaf.bracket_depth == lowest_depth and
             leaf.type == token.STAR or
             leaf.type == token.DOUBLESTAR
         ):
@@ -1355,8 +1355,8 @@ def is_python36(node: Node) -> bool:
     """
     for n in node.pre_order():
         if n.type == token.STRING:
-            assert isinstance(n, Leaf)
-            if n.value[:2] in {'f"', 'F"', "f'", "F'", 'rf', 'fr', 'RF', 'FR'}:
+            value_head = n.value[:2]  # type: ignore
+            if value_head in {'f"', 'F"', "f'", "F'", 'rf', 'fr', 'RF', 'FR'}:
                 return True
 
         elif (
