@@ -6,7 +6,7 @@ before_script:
 - pip install -e .
 script:
 - python setup.py test
-- if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then mypy black.py; fi
+- if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then mypy black.py tests/test_black.py; fi
 notifications:
   on_success: change
   on_failure: always
