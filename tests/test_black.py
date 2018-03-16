@@ -160,30 +160,30 @@ class BlackTestCase(unittest.TestCase):
             err_lines.append(msg)
 
         with patch("black.out", out), patch("black.err", err):
-            report.done(Path('f1'), changed=True)
+            report.done(Path('f1'), changed=False)
             self.assertEqual(len(out_lines), 1)
             self.assertEqual(len(err_lines), 0)
-            self.assertEqual(out_lines[-1], 'reformatted f1')
-            self.assertEqual(unstyle(str(report)), '1 file reformatted.')
+            self.assertEqual(out_lines[-1], 'f1 already well formatted, good job.')
+            self.assertEqual(unstyle(str(report)), '1 file left unchanged.')
             self.assertEqual(report.return_code, 0)
-            report.failed(Path('e1'), 'boom')
-            self.assertEqual(len(out_lines), 1)
-            self.assertEqual(len(err_lines), 1)
-            self.assertEqual(err_lines[-1], 'error: cannot format e1: boom')
+            report.done(Path('f2'), changed=True)
+            self.assertEqual(len(out_lines), 2)
+            self.assertEqual(len(err_lines), 0)
+            self.assertEqual(out_lines[-1], 'reformatted f2')
             self.assertEqual(
-                unstyle(str(report)), '1 file reformatted, 1 file failed to reformat.'
+                unstyle(str(report)), '1 file reformatted, 1 file left unchanged.'
             )
             self.assertEqual(report.return_code, 1)
-            report.done(Path('f2'), changed=False)
+            report.failed(Path('e1'), 'boom')
             self.assertEqual(len(out_lines), 2)
             self.assertEqual(len(err_lines), 1)
-            self.assertEqual(out_lines[-1], 'f2 already well formatted, good job.')
+            self.assertEqual(err_lines[-1], 'error: cannot format e1: boom')
             self.assertEqual(
                 unstyle(str(report)),
                 '1 file reformatted, 1 file left unchanged, '
                 '1 file failed to reformat.',
             )
-            self.assertEqual(report.return_code, 1)
+            self.assertEqual(report.return_code, 123)
             report.done(Path('f3'), changed=True)
             self.assertEqual(len(out_lines), 3)
             self.assertEqual(len(err_lines), 1)
@@ -193,7 +193,7 @@ class BlackTestCase(unittest.TestCase):
                 '2 files reformatted, 1 file left unchanged, '
                 '1 file failed to reformat.',
             )
-            self.assertEqual(report.return_code, 1)
+            self.assertEqual(report.return_code, 123)
             report.failed(Path('e2'), 'boom')
             self.assertEqual(len(out_lines), 3)
             self.assertEqual(len(err_lines), 2)
@@ -203,7 +203,7 @@ class BlackTestCase(unittest.TestCase):
                 '2 files reformatted, 1 file left unchanged, '
                 '2 files failed to reformat.',
             )
-            self.assertEqual(report.return_code, 1)
+            self.assertEqual(report.return_code, 123)
             report.done(Path('f4'), changed=False)
             self.assertEqual(len(out_lines), 4)
             self.assertEqual(len(err_lines), 2)
@@ -213,7 +213,7 @@ class BlackTestCase(unittest.TestCase):
                 '2 files reformatted, 2 files left unchanged, '
                 '2 files failed to reformat.',
             )
-            self.assertEqual(report.return_code, 1)
+            self.assertEqual(report.return_code, 123)
 
 
 if __name__ == '__main__':
