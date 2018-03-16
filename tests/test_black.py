@@ -109,6 +109,14 @@ class BlackTestCase(unittest.TestCase):
         black.assert_stable(source, actual, line_length=ll)
 
     @patch("black.dump_to_file", dump_to_stderr)
+    def test_fstring(self) -> None:
+        source, expected = read_data('fstring')
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, line_length=ll)
+
+    @patch("black.dump_to_file", dump_to_stderr)
     def test_comments(self) -> None:
         source, expected = read_data('comments')
         actual = fs(source)
@@ -214,6 +222,24 @@ class BlackTestCase(unittest.TestCase):
                 '2 files failed to reformat.',
             )
             self.assertEqual(report.return_code, 123)
+
+    def test_is_python36(self):
+        node = black.lib2to3_parse("def f(*, arg): ...\n")
+        self.assertFalse(black.is_python36(node))
+        node = black.lib2to3_parse("def f(*, arg,): ...\n")
+        self.assertTrue(black.is_python36(node))
+        node = black.lib2to3_parse("def f(*, arg): f'string'\n")
+        self.assertTrue(black.is_python36(node))
+        source, expected = read_data('function')
+        node = black.lib2to3_parse(source)
+        self.assertTrue(black.is_python36(node))
+        node = black.lib2to3_parse(expected)
+        self.assertTrue(black.is_python36(node))
+        source, expected = read_data('expression')
+        node = black.lib2to3_parse(source)
+        self.assertFalse(black.is_python36(node))
+        node = black.lib2to3_parse(expected)
+        self.assertFalse(black.is_python36(node))
 
 
 if __name__ == '__main__':

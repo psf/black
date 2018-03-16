@@ -6,7 +6,7 @@ from third_party import X, Y, Z
 
 from library import some_connection, \
                     some_decorator
-
+f'trigger 3.6 mode'
 def func_no_args():
   a; b; c
   if True: raise RuntimeError
@@ -70,6 +70,8 @@ import sys
 from third_party import X, Y, Z
 
 from library import some_connection, some_decorator
+
+f'trigger 3.6 mode'
 
 
 def func_no_args():

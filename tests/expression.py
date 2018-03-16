@@ -71,6 +71,7 @@ call(arg)
 call(kwarg='hey')
 call(arg, kwarg='hey')
 call(arg, another, kwarg='hey', **kwargs)
+call(this_is_a_very_long_variable_which_will_force_a_delimiter_split, arg, another, kwarg='hey', **kwargs)  # note: no trailing comma pre-3.6
 lukasz.langa.pl
 call.me(maybe)
 1 .real
@@ -88,11 +89,6 @@ slice[:-1]
 slice[1:]
 slice[::-1]
 (str or None) if (sys.version_info[0] > (3,)) else (str or bytes or None)
-f'f-string without formatted values is just a string'
-f'{{NOT a formatted value}}'
-f'some f-string with {a} {few():.2f} {formatted.values!r}'
-f"{f'{nested} inner'} outer"
-f'space between opening braces: { {a for a in (1, 2, 3)}}'
 {'2.7': dead, '3.7': long_live or die_hard}
 {'2.7', '3.6', '3.7', '3.8', '3.9', '4.0' if gilectomy else '3.10'}
 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10 or A, 11 or B, 12 or C]
@@ -200,6 +196,13 @@ call(arg)
 call(kwarg='hey')
 call(arg, kwarg='hey')
 call(arg, another, kwarg='hey', **kwargs)
+call(
+    this_is_a_very_long_variable_which_will_force_a_delimiter_split,
+    arg,
+    another,
+    kwarg='hey',
+    **kwargs
+)  # note: no trailing comma pre-3.6
 lukasz.langa.pl
 call.me(maybe)
 1 .real
@@ -217,11 +220,6 @@ slice[:-1]
 slice[1:]
 slice[::-1]
 (str or None) if (sys.version_info[0] > (3,)) else (str or bytes or None)
-f'f-string without formatted values is just a string'
-f'{{NOT a formatted value}}'
-f'some f-string with {a} {few():.2f} {formatted.values!r}'
-f"{f'{nested} inner'} outer"
-f'space between opening braces: { {a for a in (1, 2, 3)}}'
 {'2.7': dead, '3.7': long_live or die_hard}
 {'2.7', '3.6', '3.7', '3.8', '3.9', '4.0' if gilectomy else '3.10'}
 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10 or A, 11 or B, 12 or C]

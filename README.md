@@ -260,6 +260,11 @@ You can still try but prepare to be disappointed.
 
 * added `--check`
 
+* only put trailing commas in function signatures and calls if it's
+  safe to do so. If the file is Python 3.6+ it's always safe, otherwise
+  only safe if there are no `*args` or `**kwargs` used in the signature
+  or call. (#8)
+
 * fixed invalid spacing of dots in relative imports (#6, #13)
 
 * fixed invalid splitting after comma on unpacked variables in for-loops
