@@ -72,6 +72,7 @@ call(kwarg='hey')
 call(arg, kwarg='hey')
 call(arg, another, kwarg='hey', **kwargs)
 call(this_is_a_very_long_variable_which_will_force_a_delimiter_split, arg, another, kwarg='hey', **kwargs)  # note: no trailing comma pre-3.6
+call(*gidgets[:2])
 lukasz.langa.pl
 call.me(maybe)
 1 .real
@@ -204,6 +205,7 @@ call(
     kwarg='hey',
     **kwargs
 )  # note: no trailing comma pre-3.6
+call(*gidgets[:2])
 lukasz.langa.pl
 call.me(maybe)
 1 .real

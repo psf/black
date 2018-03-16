@@ -804,6 +804,7 @@ BRACKET = {token.LPAR: token.RPAR, token.LSQB: token.RSQB, token.LBRACE: token.R
 OPENING_BRACKETS = set(BRACKET.keys())
 CLOSING_BRACKETS = set(BRACKET.values())
 BRACKETS = OPENING_BRACKETS | CLOSING_BRACKETS
+ALWAYS_NO_SPACE = CLOSING_BRACKETS | {token.COMMA, token.COLON, STANDALONE_COMMENT}
 
 
 def whitespace(leaf: Leaf) -> str:
@@ -814,23 +815,11 @@ def whitespace(leaf: Leaf) -> str:
     t = leaf.type
     p = leaf.parent
     v = leaf.value
-    if t == token.COLON:
-        return NO
-
-    if t == token.COMMA:
-        return NO
-
-    if t == token.RPAR:
+    if t in ALWAYS_NO_SPACE:
         return NO
 
     if t == token.COMMENT:
         return DOUBLESPACE
-
-    if t == STANDALONE_COMMENT:
-        return NO
-
-    if t in CLOSING_BRACKETS:
-        return NO
 
     assert p is not None, f"INTERNAL ERROR: hand-made leaf without parent: {leaf!r}"
     prev = leaf.prev_sibling
@@ -863,7 +852,7 @@ def whitespace(leaf: Leaf) -> str:
             if prevp.parent and prevp.parent.type == syms.subscript:
                 return NO
 
-        elif prevp.parent and prevp.parent.type == syms.factor:
+        elif prevp.parent and prevp.parent.type in {syms.factor, syms.star_expr}:
             return NO
 
     elif prev.type in OPENING_BRACKETS:
@@ -992,7 +981,7 @@ def whitespace(leaf: Leaf) -> str:
         if prev.type == token.DOUBLESTAR:
             return NO
 
-    elif p.type == syms.factor or p.type == syms.star_expr:
+    elif p.type in {syms.factor, syms.star_expr}:
         # unary ops
         if not prev:
             prevp = preceding_leaf(p)
