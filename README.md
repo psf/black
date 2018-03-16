@@ -256,6 +256,13 @@ You can still try but prepare to be disappointed.
 
 ## Change Log
 
+### 18.3a2 (unreleased)
+
+* fixed missing space in numpy-style array indexing (#33)
+
+* fixed spurious space after star-based unary expressions (#31)
+
+
 ### 18.3a1
 
 * added `--check`
