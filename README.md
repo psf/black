@@ -262,6 +262,9 @@ You can still try but prepare to be disappointed.
 
 * fixed invalid spacing of dots in relative imports (#6, #13)
 
+* fixed invalid splitting after comma on unpacked variables in for-loops
+  (#23)
+
 * fixed spurious space in parenthesized set expressions (#7)
 
 * fixed spurious space after opening parentheses and in default
