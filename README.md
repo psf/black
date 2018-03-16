@@ -253,6 +253,8 @@ answer is "because I don't like a particular formatting" then you're not
 ready to embrace *Black* yet. Such changes are unlikely to get accepted.
 You can still try but prepare to be disappointed.
 
+More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
+
 
 ## Change Log
 
