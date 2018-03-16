@@ -88,6 +88,7 @@ slice[:]
 slice[:-1]
 slice[1:]
 slice[::-1]
+numpy[:, 0:1]
 (str or None) if (sys.version_info[0] > (3,)) else (str or bytes or None)
 {'2.7': dead, '3.7': long_live or die_hard}
 {'2.7', '3.6', '3.7', '3.8', '3.9', '4.0' if gilectomy else '3.10'}
@@ -219,6 +220,7 @@ slice[:]
 slice[:-1]
 slice[1:]
 slice[::-1]
+numpy[:, 0:1]
 (str or None) if (sys.version_info[0] > (3,)) else (str or bytes or None)
 {'2.7': dead, '3.7': long_live or die_hard}
 {'2.7', '3.6', '3.7', '3.8', '3.9', '4.0' if gilectomy else '3.10'}
