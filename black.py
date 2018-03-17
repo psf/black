@@ -12,7 +12,7 @@ from typing import (
     Dict, Generic, Iterable, Iterator, List, Optional, Set, Tuple, TypeVar, Union
 )
 
-from attr import attrib, dataclass, Factory
+from attr import dataclass, Factory
 import click
 
 # lib2to3 fork
@@ -265,7 +265,7 @@ class Visitor(Generic[T]):
 
 @dataclass
 class DebugVisitor(Visitor[T]):
-    tree_depth: int = attrib(default=0)
+    tree_depth: int = 0
 
     def visit_default(self, node: LN) -> Iterator[T]:
         indent = ' ' * (2 * self.tree_depth)
@@ -335,10 +335,10 @@ MATH_PRIORITY = 1
 
 @dataclass
 class BracketTracker:
-    depth: int = attrib(default=0)
-    bracket_match: Dict[Tuple[Depth, NodeType], Leaf] = attrib(default=Factory(dict))
-    delimiters: Dict[LeafID, Priority] = attrib(default=Factory(dict))
-    previous: Optional[Leaf] = attrib(default=None)
+    depth: int = 0
+    bracket_match: Dict[Tuple[Depth, NodeType], Leaf] = Factory(dict)
+    delimiters: Dict[LeafID, Priority] = Factory(dict)
+    previous: Optional[Leaf] = None
 
     def mark(self, leaf: Leaf) -> None:
         if leaf.type == token.COMMENT:
@@ -389,13 +389,13 @@ class BracketTracker:
 
 @dataclass
 class Line:
-    depth: int = attrib(default=0)
-    leaves: List[Leaf] = attrib(default=Factory(list))
-    comments: Dict[LeafID, Leaf] = attrib(default=Factory(dict))
-    bracket_tracker: BracketTracker = attrib(default=Factory(BracketTracker))
-    inside_brackets: bool = attrib(default=False)
-    has_for: bool = attrib(default=False)
-    _for_loop_variable: bool = attrib(default=False, init=False)
+    depth: int = 0
+    leaves: List[Leaf] = Factory(list)
+    comments: Dict[LeafID, Leaf] = Factory(dict)
+    bracket_tracker: BracketTracker = Factory(BracketTracker)
+    inside_brackets: bool = False
+    has_for: bool = False
+    _for_loop_variable: bool = False
 
     def append(self, leaf: Leaf, preformatted: bool = False) -> None:
         has_value = leaf.value.strip()
@@ -611,9 +611,9 @@ class EmptyLineTracker:
 
     Note: this tracker works on lines that haven't been split yet.
     """
-    previous_line: Optional[Line] = attrib(default=None)
-    previous_after: int = attrib(default=0)
-    previous_defs: List[int] = attrib(default=Factory(list))
+    previous_line: Optional[Line] = None
+    previous_after: int = 0
+    previous_defs: List[int] = Factory(list)
 
     def maybe_empty_lines(self, current_line: Line) -> Tuple[int, int]:
         """Returns the number of extra empty lines before and after the `current_line`.
@@ -679,8 +679,8 @@ class LineGenerator(Visitor[Line]):
     Note: destroys the tree it's visiting by mutating prefixes of its leaves
     in ways that will no longer stringify to valid Python code on the tree.
     """
-    current_line: Line = attrib(default=Factory(Line))
-    standalone_comments: List[Leaf] = attrib(default=Factory(list))
+    current_line: Line = Factory(Line)
+    standalone_comments: List[Leaf] = Factory(list)
 
     def line(self, indent: int = 0) -> Iterator[Line]:
         """Generate a line.
@@ -1383,9 +1383,9 @@ def gen_python_files_in_dir(path: Path) -> Iterator[Path]:
 @dataclass
 class Report:
     """Provides a reformatting counter."""
-    change_count: int = attrib(default=0)
-    same_count: int = attrib(default=0)
-    failure_count: int = attrib(default=0)
+    change_count: int = 0
+    same_count: int = 0
+    failure_count: int = 0
 
     def done(self, src: Path, changed: bool) -> None:
         """Increment the counter for successful reformatting. Write out a message."""
