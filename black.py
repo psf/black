@@ -831,7 +831,7 @@ BRACKET = {token.LPAR: token.RPAR, token.LSQB: token.RSQB, token.LBRACE: token.R
 OPENING_BRACKETS = set(BRACKET.keys())
 CLOSING_BRACKETS = set(BRACKET.values())
 BRACKETS = OPENING_BRACKETS | CLOSING_BRACKETS
-ALWAYS_NO_SPACE = CLOSING_BRACKETS | {token.COMMA, token.COLON, STANDALONE_COMMENT}
+ALWAYS_NO_SPACE = CLOSING_BRACKETS | {token.COMMA, STANDALONE_COMMENT}
 
 
 def whitespace(leaf: Leaf) -> str:  # noqa C901
@@ -849,11 +849,17 @@ def whitespace(leaf: Leaf) -> str:  # noqa C901
         return DOUBLESPACE
 
     assert p is not None, f"INTERNAL ERROR: hand-made leaf without parent: {leaf!r}"
+    if t == token.COLON and p.type != syms.subscript:
+        return NO
+
     prev = leaf.prev_sibling
     if not prev:
         prevp = preceding_leaf(p)
         if not prevp or prevp.type in OPENING_BRACKETS:
             return NO
+
+        if t == token.COLON:
+            return SPACE if prevp.type == token.COMMA else NO
 
         if prevp.type == token.EQUAL:
             if prevp.parent and prevp.parent.type in {
@@ -983,7 +989,7 @@ def whitespace(leaf: Leaf) -> str:  # noqa C901
 
             return NO
 
-        elif prev.type == token.COLON:
+        else:
             return NO
 
     elif p.type == syms.atom:
