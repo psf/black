@@ -508,6 +508,10 @@ class Line:
             bracket_depth = leaf.bracket_depth
             if bracket_depth == depth and leaf.type == token.COMMA:
                 commas += 1
+                if leaf.parent and leaf.parent.type == syms.arglist:
+                    commas += 1
+                    break
+
         if commas > 1:
             self.leaves.pop()
             return True
@@ -1480,7 +1484,7 @@ def assert_equivalent(src: str, dst: str) -> None:
         raise AssertionError(
             f"INTERNAL ERROR: Black produced invalid code: {exc}. "
             f"Please report a bug on https://github.com/ambv/black/issues.  "
-            f"This invalid output might be helpful: {log}",
+            f"This invalid output might be helpful: {log}"
         ) from None
 
     src_ast_str = '\n'.join(_v(src_ast))
@@ -1491,7 +1495,7 @@ def assert_equivalent(src: str, dst: str) -> None:
             f"INTERNAL ERROR: Black produced code that is not equivalent to "
             f"the source.  "
             f"Please report a bug on https://github.com/ambv/black/issues.  "
-            f"This diff might be helpful: {log}",
+            f"This diff might be helpful: {log}"
         ) from None
 
 
@@ -1510,7 +1514,7 @@ def assert_stable(src: str, dst: str, line_length: int) -> None:
             f"INTERNAL ERROR: Black produced different code on the second pass "
             f"of the formatter.  "
             f"Please report a bug on https://github.com/ambv/black/issues.  "
-            f"This diff might be helpful: {log}",
+            f"This diff might be helpful: {log}"
         ) from None
 
 
