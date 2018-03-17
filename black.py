@@ -210,8 +210,13 @@ def format_str(src_contents: str, line_length: int) -> FileContent:
                 dst_contents += str(line)
         else:
             comments.append(current_line)
-    for comment in comments:
-        dst_contents += str(comment)
+    if comments:
+        if elt.previous_defs:
+            # Separate postscriptum comments from the last module-level def.
+            dst_contents += str(empty_line)
+            dst_contents += str(empty_line)
+        for comment in comments:
+            dst_contents += str(comment)
     return dst_contents
 
 
@@ -615,7 +620,9 @@ class EmptyLineTracker:
     """Provides a stateful method that returns the number of potential extra
     empty lines needed before and after the currently processed line.
 
-    Note: this tracker works on lines that haven't been split yet.
+    Note: this tracker works on lines that haven't been split yet.  It assumes
+    the prefix of the first leaf consists of optional newlines.  Those newlines
+    are consumed by `maybe_empty_lines()` and included in the computation.
     """
     previous_line: Optional[Line] = None
     previous_after: int = 0
@@ -633,16 +640,23 @@ class EmptyLineTracker:
             return 0, 0
 
         before, after = self._maybe_empty_lines(current_line)
+        before -= self.previous_after
         self.previous_after = after
         self.previous_line = current_line
         return before, after
 
     def _maybe_empty_lines(self, current_line: Line) -> Tuple[int, int]:
-        before = 0
+        if current_line.leaves:
+            # Consume the first leaf's extra newlines.
+            first_leaf = current_line.leaves[0]
+            before = int('\n' in first_leaf.prefix)
+            first_leaf.prefix = ''
+        else:
+            before = 0
         depth = current_line.depth
         while self.previous_defs and self.previous_defs[-1] >= depth:
             self.previous_defs.pop()
-            before = (1 if depth else 2) - self.previous_after
+            before = 1 if depth else 2
         is_decorator = current_line.is_decorator
         if is_decorator or current_line.is_def or current_line.is_class:
             if not is_decorator:
@@ -658,7 +672,6 @@ class EmptyLineTracker:
             newlines = 2
             if current_line.depth:
                 newlines -= 1
-            newlines -= self.previous_after
             return newlines, 0
 
         if current_line.is_flow_control:
@@ -1335,9 +1348,6 @@ def normalize_prefix(leaf: Leaf) -> None:
     if is_import(leaf):
         spl = leaf.prefix.split('#', 1)
         nl_count = spl[0].count('\n')
-        if len(spl) > 1:
-            # Skip one newline since it was for a standalone comment.
-            nl_count -= 1
         leaf.prefix = '\n' * nl_count
         return
 
