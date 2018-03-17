@@ -118,6 +118,12 @@ def gen():
 async def f():
     await some.complicated[0].call(with_args=(True or (1 is not 1)))
 
+if (
+    threading.current_thread() != threading.main_thread() and
+    threading.current_thread() != threading.main_thread() or
+    signal.getsignal(signal.SIGINT) != signal.default_int_handler
+):
+    return True
 
 # output
 
@@ -261,3 +267,11 @@ def gen():
 
 async def f():
     await some.complicated[0].call(with_args=(True or (1 is not 1)))
+
+
+if (
+    threading.current_thread() != threading.main_thread()
+    and threading.current_thread() != threading.main_thread()
+    or signal.getsignal(signal.SIGINT) != signal.default_int_handler
+):
+    return True

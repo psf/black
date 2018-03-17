@@ -357,19 +357,25 @@ class BracketTracker:
                 if leaf.type == token.STRING and self.previous.type == token.STRING:
                     self.delimiters[id(self.previous)] = STRING_PRIORITY
                 elif (
-                    leaf.type == token.NAME and
-                    leaf.value == 'for' and
-                    leaf.parent and
-                    leaf.parent.type in {syms.comp_for, syms.old_comp_for}
+                    leaf.type == token.NAME
+                    and leaf.value == 'for'
+                    and leaf.parent
+                    and leaf.parent.type in {syms.comp_for, syms.old_comp_for}
                 ):
                     self.delimiters[id(self.previous)] = COMPREHENSION_PRIORITY
                 elif (
-                    leaf.type == token.NAME and
-                    leaf.value == 'if' and
-                    leaf.parent and
-                    leaf.parent.type in {syms.comp_if, syms.old_comp_if}
+                    leaf.type == token.NAME
+                    and leaf.value == 'if'
+                    and leaf.parent
+                    and leaf.parent.type in {syms.comp_if, syms.old_comp_if}
                 ):
                     self.delimiters[id(self.previous)] = COMPREHENSION_PRIORITY
+                elif (
+                    leaf.type == token.NAME
+                    and leaf.value in LOGIC_OPERATORS
+                    and leaf.parent
+                ):
+                    self.delimiters[id(self.previous)] = LOGIC_PRIORITY
         if leaf.type in OPENING_BRACKETS:
             self.bracket_match[self.depth, BRACKET[leaf.type]] = leaf
             self.depth += 1
@@ -432,9 +438,9 @@ class Line:
     @property
     def is_class(self) -> bool:
         return (
-            bool(self) and
-            self.leaves[0].type == token.NAME and
-            self.leaves[0].value == 'class'
+            bool(self)
+            and self.leaves[0].type == token.NAME
+            and self.leaves[0].value == 'class'
         )
 
     @property
@@ -450,37 +456,37 @@ class Line:
         except IndexError:
             second_leaf = None
         return (
-            (first_leaf.type == token.NAME and first_leaf.value == 'def') or
-            (
-                first_leaf.type == token.NAME and
-                first_leaf.value == 'async' and
-                second_leaf is not None and
-                second_leaf.type == token.NAME and
-                second_leaf.value == 'def'
+            (first_leaf.type == token.NAME and first_leaf.value == 'def')
+            or (
+                first_leaf.type == token.NAME
+                and first_leaf.value == 'async'
+                and second_leaf is not None
+                and second_leaf.type == token.NAME
+                and second_leaf.value == 'def'
             )
         )
 
     @property
     def is_flow_control(self) -> bool:
         return (
-            bool(self) and
-            self.leaves[0].type == token.NAME and
-            self.leaves[0].value in FLOW_CONTROL
+            bool(self)
+            and self.leaves[0].type == token.NAME
+            and self.leaves[0].value in FLOW_CONTROL
         )
 
     @property
     def is_yield(self) -> bool:
         return (
-            bool(self) and
-            self.leaves[0].type == token.NAME and
-            self.leaves[0].value == 'yield'
+            bool(self)
+            and self.leaves[0].type == token.NAME
+            and self.leaves[0].value == 'yield'
         )
 
     def maybe_remove_trailing_comma(self, closing: Leaf) -> bool:
         if not (
-            self.leaves and
-            self.leaves[-1].type == token.COMMA and
-            closing.type in CLOSING_BRACKETS
+            self.leaves
+            and self.leaves[-1].type == token.COMMA
+            and closing.type in CLOSING_BRACKETS
         ):
             return False
 
@@ -551,8 +557,8 @@ class Line:
         appended will appear "too long" when splitting.
         """
         if not (
-            comment.type == STANDALONE_COMMENT and
-            self.bracket_tracker.any_open_brackets()
+            comment.type == STANDALONE_COMMENT
+            and self.bracket_tracker.any_open_brackets()
         ):
             return False
 
@@ -655,17 +661,17 @@ class EmptyLineTracker:
             return before, 1
 
         if (
-            self.previous_line and
-            self.previous_line.is_import and
-            not current_line.is_import and
-            depth == self.previous_line.depth
+            self.previous_line
+            and self.previous_line.is_import
+            and not current_line.is_import
+            and depth == self.previous_line.depth
         ):
             return (before or 1), 0
 
         if (
-            self.previous_line and
-            self.previous_line.is_yield and
-            (not current_line.is_yield or depth != self.previous_line.depth)
+            self.previous_line
+            and self.previous_line.is_yield
+            and (not current_line.is_yield or depth != self.previous_line.depth)
         ):
             return (before or 1), 0
 
@@ -969,9 +975,9 @@ def whitespace(leaf: Leaf) -> str:  # noqa C901
             return NO
 
     elif (
-        p.type == syms.listmaker or
-        p.type == syms.testlist_gexp or
-        p.type == syms.subscriptlist
+        p.type == syms.listmaker
+        or p.type == syms.testlist_gexp
+        or p.type == syms.subscriptlist
     ):
         # list interior, including unpacking
         if not prev:
@@ -1049,16 +1055,13 @@ def is_delimiter(leaf: Leaf) -> int:
     if leaf.type == token.COMMA:
         return COMMA_PRIORITY
 
-    if leaf.type == token.NAME and leaf.value in LOGIC_OPERATORS:
-        return LOGIC_PRIORITY
-
     if leaf.type in COMPARATORS:
         return COMPARATOR_PRIORITY
 
     if (
-        leaf.type in MATH_OPERATORS and
-        leaf.parent and
-        leaf.parent.type not in {syms.factor, syms.star_expr}
+        leaf.type in MATH_OPERATORS
+        and leaf.parent
+        and leaf.parent.type not in {syms.factor, syms.star_expr}
     ):
         return MATH_PRIORITY
 
@@ -1178,9 +1181,9 @@ def left_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
     matching_bracket = None
     for leaf in line.leaves:
         if (
-            current_leaves is body_leaves and
-            leaf.type in CLOSING_BRACKETS and
-            leaf.opening_bracket is matching_bracket
+            current_leaves is body_leaves
+            and leaf.type in CLOSING_BRACKETS
+            and leaf.opening_bracket is matching_bracket
         ):
             current_leaves = tail_leaves if body_leaves else head_leaves
         current_leaves.append(leaf)
@@ -1287,9 +1290,9 @@ def delimiter_split(line: Line, py36: bool = False) -> Iterator[Line]:
             current_line.append(comment_after, preformatted=True)
         lowest_depth = min(lowest_depth, leaf.bracket_depth)
         if (
-            leaf.bracket_depth == lowest_depth and
-            leaf.type == token.STAR or
-            leaf.type == token.DOUBLESTAR
+            leaf.bracket_depth == lowest_depth
+            and leaf.type == token.STAR
+            or leaf.type == token.DOUBLESTAR
         ):
             trailing_comma_safe = trailing_comma_safe and py36
         leaf_priority = delimiters.get(id(leaf))
@@ -1300,9 +1303,9 @@ def delimiter_split(line: Line, py36: bool = False) -> Iterator[Line]:
             current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
     if current_line:
         if (
-            delimiter_priority == COMMA_PRIORITY and
-            current_line.leaves[-1].type != token.COMMA and
-            trailing_comma_safe
+            delimiter_priority == COMMA_PRIORITY
+            and current_line.leaves[-1].type != token.COMMA
+            and trailing_comma_safe
         ):
             current_line.append(Leaf(token.COMMA, ','))
         normalize_prefix(current_line.leaves[0])
@@ -1315,10 +1318,10 @@ def is_import(leaf: Leaf) -> bool:
     t = leaf.type
     v = leaf.value
     return bool(
-        t == token.NAME and
-        (
-            (v == 'import' and p and p.type == syms.import_name) or
-            (v == 'from' and p and p.type == syms.import_from)
+        t == token.NAME
+        and (
+            (v == 'import' and p and p.type == syms.import_name)
+            or (v == 'from' and p and p.type == syms.import_from)
         )
     )
 
@@ -1351,9 +1354,9 @@ def is_python36(node: Node) -> bool:
                 return True
 
         elif (
-            n.type == syms.typedargslist and
-            n.children and
-            n.children[-1].type == token.COMMA
+            n.type == syms.typedargslist
+            and n.children
+            and n.children[-1].type == token.COMMA
         ):
             for ch in n.children:
                 if ch.type == token.STAR or ch.type == token.DOUBLESTAR:

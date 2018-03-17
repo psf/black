@@ -35,12 +35,12 @@ def inline_comments_in_brackets_ruin_everything():
             body,
             parameters.children[-1],  # )2
         ]
-    if (self._proc is not None and
+    if (self._proc is not None
             # has the child process finished?
-            self._returncode is None and
+            and self._returncode is None
             # the child process has finished, but the
             # transport hasn't been notified yet?
-            self._proc.poll() is None):
+            and self._proc.poll() is None):
         pass
     short = [
      # one
@@ -137,12 +137,12 @@ def inline_comments_in_brackets_ruin_everything():
             parameters.children[-1],  # )2
         ]
     if (
-        self._proc is not None and
+        self._proc is not None
         # has the child process finished?
-        self._returncode is None and
+        and self._returncode is None
         # the child process has finished, but the
         # transport hasn't been notified yet?
-        self._proc.poll() is None
+        and self._proc.poll() is None
     ):
         pass
     short = [
