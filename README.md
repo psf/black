@@ -106,7 +106,7 @@ matching brackets.  If that doesn't work, it will put all of them in
 separate lines.
 ```py3
 # in:
-def very_important_function(template: str, *variables, *, file: os.PathLike, debug: bool = False):
+def very_important_function(template: str, *variables, file: os.PathLike, debug: bool = False):
     """Applies `variables` to the `template` and writes to `file`."""
     with open(file, 'w') as f:
         ...
@@ -115,7 +115,6 @@ def very_important_function(template: str, *variables, *, file: os.PathLike, deb
 def very_important_function(
     template: str,
     *variables,
-    *,
     file: os.PathLike,
     debug: bool = False,
 ):
