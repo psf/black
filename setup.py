@@ -12,20 +12,8 @@ CURRENT_DIR = Path(__file__).parent
 
 def get_long_description():
     readme_md = CURRENT_DIR / 'README.md'
-    try:
-        import pypandoc
-        return pypandoc.convert_file(str(readme_md), 'rst')
-
-    except (IOError, ImportError):
-        print()
-        print(
-            '\x1b[31m\x1b[1mwarning:\x1b[0m\x1b[31m pandoc not found, '
-            'long description will be ugly (PyPI does not support .md).'
-            '\x1b[0m'
-        )
-        print()
-        with open(readme_md, encoding='utf8') as ld_file:
-            return ld_file.read()
+    with open(readme_md, encoding='utf8') as ld_file:
+        return ld_file.read()
 
 
 def get_version():
@@ -41,6 +29,7 @@ setup(
     version=get_version(),
     description="The uncompromising code formatter.",
     long_description=get_long_description(),
+    long_description_content_type="text/markdown",
     keywords='automation formatter yapf autopep8 pyfmt gofmt rustfmt',
     author='Łukasz Langa',
     author_email='lukasz@langa.pl',
