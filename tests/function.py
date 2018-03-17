@@ -32,7 +32,13 @@ def spaces(a=1, b=(), c=[], d={}, e=True, f=-1, g=1 if False else 2, h="", i=r''
  assert task._cancel_stack[:len(old_stack)] == old_stack
 def spaces2(result= _core.Value(None)):
  ...
-
+def example(session):
+    result = session.query(models.Customer.id).filter(
+        models.Customer.account_id == account_id,
+        models.Customer.email == email_address,
+    ).order_by(
+        models.Customer.id.asc(),
+    ).all()
 def long_lines():
     if True:
         typedargslist.extend(
@@ -117,6 +123,14 @@ def spaces(a=1, b=(), c=[], d={}, e=True, f=-1, g=1 if False else 2, h="", i=r''
 
 def spaces2(result=_core.Value(None)):
     ...
+
+
+def example(session):
+    result = session.query(models.Customer.id).filter(
+        models.Customer.account_id == account_id, models.Customer.email == email_address
+    ).order_by(
+        models.Customer.id.asc(),
+    ).all()
 
 
 def long_lines():

@@ -1178,7 +1178,7 @@ def left_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
             leaf.type in CLOSING_BRACKETS and
             leaf.opening_bracket is matching_bracket
         ):
-            current_leaves = tail_leaves
+            current_leaves = tail_leaves if body_leaves else head_leaves
         current_leaves.append(leaf)
         if current_leaves is head_leaves:
             if leaf.type in OPENING_BRACKETS:
@@ -1196,18 +1196,7 @@ def left_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
             comment_after = line.comments.get(id(leaf))
             if comment_after:
                 result.append(comment_after, preformatted=True)
-    # Check if the split succeeded.
-    tail_len = len(str(tail))
-    if not body:
-        if tail_len == 0:
-            raise CannotSplit("Splitting brackets produced the same line")
-
-        elif tail_len < 3:
-            raise CannotSplit(
-                f"Splitting brackets on an empty body to save "
-                f"{tail_len} characters is not worth it"
-            )
-
+    split_succeeded_or_raise(head, body, tail)
     for result in (head, body, tail):
         if result:
             yield result
@@ -1226,7 +1215,7 @@ def right_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
     for leaf in reversed(line.leaves):
         if current_leaves is body_leaves:
             if leaf is opening_bracket:
-                current_leaves = head_leaves
+                current_leaves = head_leaves if body_leaves else tail_leaves
         current_leaves.append(leaf)
         if current_leaves is tail_leaves:
             if leaf.type in CLOSING_BRACKETS:
@@ -1247,8 +1236,14 @@ def right_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
             comment_after = line.comments.get(id(leaf))
             if comment_after:
                 result.append(comment_after, preformatted=True)
-    # Check if the split succeeded.
-    tail_len = len(str(tail).strip('\n'))
+    split_succeeded_or_raise(head, body, tail)
+    for result in (head, body, tail):
+        if result:
+            yield result
+
+
+def split_succeeded_or_raise(head: Line, body: Line, tail: Line) -> None:
+    tail_len = len(str(tail).strip())
     if not body:
         if tail_len == 0:
             raise CannotSplit("Splitting brackets produced the same line")
@@ -1258,10 +1253,6 @@ def right_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
                 f"Splitting brackets on an empty body to save "
                 f"{tail_len} characters is not worth it"
             )
-
-    for result in (head, body, tail):
-        if result:
-            yield result
 
 
 def delimiter_split(line: Line, py36: bool = False) -> Iterator[Line]:
