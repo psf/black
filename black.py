@@ -628,6 +628,10 @@ class EmptyLineTracker:
         (two on module-level), as well as providing an extra empty line after flow
         control keywords to make them more prominent.
         """
+        if current_line.is_comment:
+            # Don't count standalone comments towards previous empty lines.
+            return 0, 0
+
         before, after = self._maybe_empty_lines(current_line)
         self.previous_after = after
         self.previous_line = current_line

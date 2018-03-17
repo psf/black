@@ -269,6 +269,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * remove a trailing comma if there is a single argument to a call
 
+* if top level functions were separated by a comment, don't put four
+  empty lines after the upper function
+
 * fixed missing space in numpy-style array indexing (#33)
 
 * fixed spurious space after star-based unary expressions (#31)
