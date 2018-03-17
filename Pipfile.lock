@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "e2dc877c2f32df83197fc3dc0f49e0a66d0d099aab106b99d64fdbe5b14cc91b"
+            "sha256": "10b4fb1719e1dfd72247a267db4ebbc3539fcc47d0f1a3602ecf699762cc3459"
         },
         "host-environment-markers": {
             "implementation_name": "cpython",
@@ -149,10 +149,10 @@
         },
         "pkginfo": {
             "hashes": [
-                "sha256:31a49103180ae1518b65d3f4ce09c784e2bc54e338197668b4fb7dc539521024",
-                "sha256:bb1a6aeabfc898f5df124e7e00303a5b3ec9a489535f346bfbddb081af93f89e"
+                "sha256:a39076cb3eb34c333a0dd390b568e9e1e881c7bf2cc0aee12120636816f55aee",
+                "sha256:5878d542a4b3f237e359926384f1dde4e099c9f5525d236b1840cf704fa8d474"
             ],
-            "version": "==1.4.1"
+            "version": "==1.4.2"
         },
         "pycodestyle": {
             "hashes": [
@@ -167,12 +167,6 @@
                 "sha256:8d616a382f243dbf19b54743f280b80198be0bca3a5396f1d2e1fca6223e8805"
             ],
             "version": "==1.6.0"
-        },
-        "pypandoc": {
-            "hashes": [
-                "sha256:e914e6d5f84a76764887e4d909b09d63308725f0cbb5293872c2c92f07c11a5b"
-            ],
-            "version": "==1.4"
         },
         "requests": {
             "hashes": [
@@ -190,17 +184,17 @@
         },
         "tqdm": {
             "hashes": [
-                "sha256:f66468c14ccd011a627734c9b3fd72f20ce16f8faecc47384eb2507af5924fb9",
-                "sha256:5ec0d4442358e55cdb4a0471d04c6c831518fd8837f259db5537d90feab380df"
+                "sha256:05e991ecb0f874046ddcb374396a626afd046fb4d31f73633ea752b844458a7a",
+                "sha256:2aea9f81fdf127048667e0ba22f5fc10ebc879fb838dc52dcf055242037ec1f7"
             ],
-            "version": "==4.19.6"
+            "version": "==4.19.8"
         },
         "twine": {
             "hashes": [
-                "sha256:d3ce5c480c22ccfb761cd358526e862b32546d2fe4bc93d46b5cf04ea3cc46ca",
-                "sha256:caa45b7987fc96321258cd7668e3be2ff34064f5c66d2d975b641adca659c1ab"
+                "sha256:87ca69576a47019052b1bf2a27c00520379304c721e5f9eb46f126068a874a61",
+                "sha256:24d1489e586f9c927f9c02b5d4d239da48f97206cc8fc6c9dacb2aab42e1a1b1"
             ],
-            "version": "==1.9.1"
+            "version": "==1.11.0rc1"
         },
         "typed-ast": {
             "hashes": [
@@ -231,13 +225,6 @@
                 "sha256:cc44da8e1145637334317feebd728bd869a35285b93cbb4cca2577da7e62db4f"
             ],
             "version": "==1.22"
-        },
-        "wheel": {
-            "hashes": [
-                "sha256:e721e53864f084f956f40f96124a74da0631ac13fbbd1ba99e8e2b5e9cafdf64",
-                "sha256:9515fe0a94e823fd90b08d22de45d7bde57c90edce705b22f5e1ecf7e1b653c8"
-            ],
-            "version": "==0.30.0"
         }
     }
 }

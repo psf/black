@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 attrs = "*"
 click = "*"
+setuptools = ">=38.6.0"
 
 [dev-packages]
 coverage = "*"
@@ -13,5 +14,4 @@ flake8 = "*"
 flake8-bugbear = "*"
 flake8-mypy = "*"
 mypy = "*"
-pypandoc = "*"
-twine = "*"
+twine = ">=1.11.0rc1"
