@@ -1115,7 +1115,7 @@ def generate_comments(leaf: Leaf) -> Iterator[Leaf]:
     if content and (content[0] not in {' ', '!', '#'}):
         content = ' ' + content
     is_standalone_comment = (
-        '\n' in before_comment or '\n' in content or leaf.type == token.DEDENT
+        '\n' in before_comment or '\n' in content or leaf.type == token.ENDMARKER
     )
     if not is_standalone_comment:
         # simple trailing comment
