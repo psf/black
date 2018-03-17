@@ -124,6 +124,9 @@ if (
     signal.getsignal(signal.SIGINT) != signal.default_int_handler
 ):
     return True
+last_call()
+# standalone comment at ENDMARKER
+
 
 # output
 
@@ -275,3 +278,6 @@ if (
     or signal.getsignal(signal.SIGINT) != signal.default_int_handler
 ):
     return True
+
+last_call()
+# standalone comment at ENDMARKER
