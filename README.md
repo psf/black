@@ -258,7 +258,7 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Change Log
 
-### 18.3a2 (unreleased)
+### 18.3a2
 
 * changed positioning of binary operators to occur at beginning of lines
   instead of at the end, following [a recent change to PEP8](https://github.com/python/peps/commit/c59c4376ad233a62ca4b3a6060c81368bd21e85b)
