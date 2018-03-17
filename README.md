@@ -260,6 +260,11 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ### 18.3a2 (unreleased)
 
+* ignore empty bracket pairs while splitting. This avoids very weirdly
+  looking formattings (#34, #35)
+
+* remove a trailing comma if there is a single argument to a call
+
 * fixed missing space in numpy-style array indexing (#33)
 
 * fixed spurious space after star-based unary expressions (#31)
