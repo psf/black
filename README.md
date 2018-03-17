@@ -260,6 +260,10 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ### 18.3a2 (unreleased)
 
+* changed positioning of binary operators to occur at beginning of lines
+  instead of at the end, following [a recent change to PEP8](https://github.com/python/peps/commit/c59c4376ad233a62ca4b3a6060c81368bd21e85b)
+  (#21)
+
 * ignore empty bracket pairs while splitting. This avoids very weirdly
   looking formattings (#34, #35)
 
