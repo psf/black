@@ -4,7 +4,7 @@ from io import StringIO
 from pathlib import Path
 import sys
 import tokenize
-from typing import List, Tuple, TextIO
+from typing import Any, List, Tuple, TextIO
 import unittest
 from unittest.mock import patch
 
@@ -18,7 +18,7 @@ THIS_FILE = Path(__file__)
 THIS_DIR = THIS_FILE.parent
 
 
-def ff(file):
+def ff(file: TextIO) -> None:
     with tokenize.open(file) as buf:
         black.format_file(buf, line_length=ll, fast=True)
 
@@ -53,6 +53,7 @@ class BlackTestCase(unittest.TestCase):
 
     def assertFormatEqual(self, expected: str, actual: str) -> None:
         if actual != expected:
+            bdv: black.DebugVisitor[Any]
             black.out('Expected tree:', fg='green')
             try:
                 exp_node = black.lib2to3_parse(expected)
@@ -133,6 +134,14 @@ class BlackTestCase(unittest.TestCase):
         black.assert_stable(source, actual, line_length=ll)
 
     @patch("black.dump_to_file", dump_to_stderr)
+    def test_fstring(self) -> None:
+        source, expected = read_data('fstring')
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, line_length=ll)
+
+    @patch("black.dump_to_file", dump_to_stderr)
     def test_comments(self) -> None:
         source, expected = read_data('comments')
         actual = fs(source)
@@ -177,37 +186,37 @@ class BlackTestCase(unittest.TestCase):
         out_lines = []
         err_lines = []
 
-        def out(msg: str, **kwargs):
+        def out(msg: str, **kwargs: Any) -> None:
             out_lines.append(msg)
 
-        def err(msg: str, **kwargs):
+        def err(msg: str, **kwargs: Any) -> None:
             err_lines.append(msg)
 
         with patch("black.out", out), patch("black.err", err):
-            report.done(Path('f1'), changed=True)
+            report.done(Path('f1'), changed=False)
             self.assertEqual(len(out_lines), 1)
             self.assertEqual(len(err_lines), 0)
-            self.assertEqual(out_lines[-1], 'reformatted f1')
-            self.assertEqual(unstyle(str(report)), '1 file reformatted.')
+            self.assertEqual(out_lines[-1], 'f1 already well formatted, good job.')
+            self.assertEqual(unstyle(str(report)), '1 file left unchanged.')
             self.assertEqual(report.return_code, 0)
-            report.failed(Path('e1'), 'boom')
-            self.assertEqual(len(out_lines), 1)
-            self.assertEqual(len(err_lines), 1)
-            self.assertEqual(err_lines[-1], 'error: cannot format e1: boom')
+            report.done(Path('f2'), changed=True)
+            self.assertEqual(len(out_lines), 2)
+            self.assertEqual(len(err_lines), 0)
+            self.assertEqual(out_lines[-1], 'reformatted f2')
             self.assertEqual(
-                unstyle(str(report)), '1 file reformatted, 1 file failed to reformat.'
+                unstyle(str(report)), '1 file reformatted, 1 file left unchanged.'
             )
             self.assertEqual(report.return_code, 1)
-            report.done(Path('f2'), changed=False)
+            report.failed(Path('e1'), 'boom')
             self.assertEqual(len(out_lines), 2)
             self.assertEqual(len(err_lines), 1)
-            self.assertEqual(out_lines[-1], 'f2 already well formatted, good job.')
+            self.assertEqual(err_lines[-1], 'error: cannot format e1: boom')
             self.assertEqual(
                 unstyle(str(report)),
                 '1 file reformatted, 1 file left unchanged, '
                 '1 file failed to reformat.',
             )
-            self.assertEqual(report.return_code, 1)
+            self.assertEqual(report.return_code, 123)
             report.done(Path('f3'), changed=True)
             self.assertEqual(len(out_lines), 3)
             self.assertEqual(len(err_lines), 1)
@@ -217,7 +226,7 @@ class BlackTestCase(unittest.TestCase):
                 '2 files reformatted, 1 file left unchanged, '
                 '1 file failed to reformat.',
             )
-            self.assertEqual(report.return_code, 1)
+            self.assertEqual(report.return_code, 123)
             report.failed(Path('e2'), 'boom')
             self.assertEqual(len(out_lines), 3)
             self.assertEqual(len(err_lines), 2)
@@ -227,7 +236,7 @@ class BlackTestCase(unittest.TestCase):
                 '2 files reformatted, 1 file left unchanged, '
                 '2 files failed to reformat.',
             )
-            self.assertEqual(report.return_code, 1)
+            self.assertEqual(report.return_code, 123)
             report.done(Path('f4'), changed=False)
             self.assertEqual(len(out_lines), 4)
             self.assertEqual(len(err_lines), 2)
@@ -237,7 +246,25 @@ class BlackTestCase(unittest.TestCase):
                 '2 files reformatted, 2 files left unchanged, '
                 '2 files failed to reformat.',
             )
-            self.assertEqual(report.return_code, 1)
+            self.assertEqual(report.return_code, 123)
+
+    def test_is_python36(self) -> None:
+        node = black.lib2to3_parse("def f(*, arg): ...\n")
+        self.assertFalse(black.is_python36(node))
+        node = black.lib2to3_parse("def f(*, arg,): ...\n")
+        self.assertTrue(black.is_python36(node))
+        node = black.lib2to3_parse("def f(*, arg): f'string'\n")
+        self.assertTrue(black.is_python36(node))
+        source, expected = read_data('function')
+        node = black.lib2to3_parse(source)
+        self.assertTrue(black.is_python36(node))
+        node = black.lib2to3_parse(expected)
+        self.assertTrue(black.is_python36(node))
+        source, expected = read_data('expression')
+        node = black.lib2to3_parse(source)
+        self.assertFalse(black.is_python36(node))
+        node = black.lib2to3_parse(expected)
+        self.assertFalse(black.is_python36(node))
 
 
 if __name__ == '__main__':

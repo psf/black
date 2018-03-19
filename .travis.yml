@@ -1,9 +1,13 @@
 sudo: false
 language: python
+cache: pip
 before_script:
+- pip install flake8 flake8-bugbear mypy
 - pip install -e .
-# test script
-script:  python setup.py test
+script:
+- python setup.py test
+- if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then mypy black.py tests/test_black.py; fi
+- if [[ $TRAVIS_PYTHON_VERSION == '3.6-dev' ]]; then flake8 black.py tests/test_black.py; fi
 notifications:
   on_success: change
   on_failure: always

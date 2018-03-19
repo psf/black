@@ -31,6 +31,7 @@ not great
 -1
 ~int and not v1 ^ 123 + v2 | True
 (~int) and (not ((v1 ^ (123 + v2)) | True))
+flags & ~ select.EPOLLIN and waiters.write_task is not None
 lambda arg: None
 lambda a=True: a
 lambda a, b, c=True: a
@@ -62,6 +63,7 @@ str or None if (1 if True else 2) else str or bytes or None
 [((i ** 2) + j) for i in (1, 2, 3) for j in (1, 2, 3)]
 {i: 0 for i in (1, 2, 3)}
 {i: j for i, j in ((1, 'a'), (2, 'b'), (3, 'c'))}
+{k: v for k, v in this_is_a_very_long_variable_which_will_cause_a_trailing_comma_which_breaks_the_comprehension}
 Python3 > Python2 > COBOL
 Life is Life
 call()
@@ -69,6 +71,8 @@ call(arg)
 call(kwarg='hey')
 call(arg, kwarg='hey')
 call(arg, another, kwarg='hey', **kwargs)
+call(this_is_a_very_long_variable_which_will_force_a_delimiter_split, arg, another, kwarg='hey', **kwargs)  # note: no trailing comma pre-3.6
+call(*gidgets[:2])
 lukasz.langa.pl
 call.me(maybe)
 1 .real
@@ -85,12 +89,9 @@ slice[:]
 slice[:-1]
 slice[1:]
 slice[::-1]
+numpy[:, 0:1]
+numpy[:, :-1]
 (str or None) if (sys.version_info[0] > (3,)) else (str or bytes or None)
-f'f-string without formatted values is just a string'
-f'{{NOT a formatted value}}'
-f'some f-string with {a} {few():.2f} {formatted.values!r}'
-f"{f'{nested} inner'} outer"
-f'space between opening braces: { {a for a in (1, 2, 3)}}'
 {'2.7': dead, '3.7': long_live or die_hard}
 {'2.7', '3.6', '3.7', '3.8', '3.9', '4.0' if gilectomy else '3.10'}
 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10 or A, 11 or B, 12 or C]
@@ -106,15 +107,26 @@ a = (1,)
 b = 1,
 c = 1
 d = (1,) + a + (2,)
-
+e = (1,).count(1)
+what_is_up_with_those_new_coord_names = (coord_names + set(vars_to_create)) + set(vars_to_remove)
+what_is_up_with_those_new_coord_names = (coord_names | set(vars_to_create)) - set(vars_to_remove)
+result = session.query(models.Customer.id).filter(models.Customer.account_id == account_id, models.Customer.email == email_address).order_by(models.Customer.id.asc(),).all()
 
 def gen():
     yield from outside_of_generator
     a = (yield)
 
-
 async def f():
     await some.complicated[0].call(with_args=(True or (1 is not 1)))
+
+if (
+    threading.current_thread() != threading.main_thread() and
+    threading.current_thread() != threading.main_thread() or
+    signal.getsignal(signal.SIGINT) != signal.default_int_handler
+):
+    return True
+last_call()
+# standalone comment at ENDMARKER
 
 
 # output
@@ -153,6 +165,7 @@ not great
 -1
 ~int and not v1 ^ 123 + v2 | True
 (~int) and (not ((v1 ^ (123 + v2)) | True))
+flags & ~select.EPOLLIN and waiters.write_task is not None
 lambda arg: None
 lambda a=True: a
 lambda a, b, c=True: a
@@ -184,6 +197,10 @@ str or None if (1 if True else 2) else str or bytes or None
 [((i ** 2) + j) for i in (1, 2, 3) for j in (1, 2, 3)]
 {i: 0 for i in (1, 2, 3)}
 {i: j for i, j in ((1, 'a'), (2, 'b'), (3, 'c'))}
+{
+    k: v
+    for k, v in this_is_a_very_long_variable_which_will_cause_a_trailing_comma_which_breaks_the_comprehension
+}
 Python3 > Python2 > COBOL
 Life is Life
 call()
@@ -191,6 +208,14 @@ call(arg)
 call(kwarg='hey')
 call(arg, kwarg='hey')
 call(arg, another, kwarg='hey', **kwargs)
+call(
+    this_is_a_very_long_variable_which_will_force_a_delimiter_split,
+    arg,
+    another,
+    kwarg='hey',
+    **kwargs
+)  # note: no trailing comma pre-3.6
+call(*gidgets[:2])
 lukasz.langa.pl
 call.me(maybe)
 1 .real
@@ -207,12 +232,9 @@ slice[:]
 slice[:-1]
 slice[1:]
 slice[::-1]
+numpy[:, 0:1]
+numpy[:, :-1]
 (str or None) if (sys.version_info[0] > (3,)) else (str or bytes or None)
-f'f-string without formatted values is just a string'
-f'{{NOT a formatted value}}'
-f'some f-string with {a} {few():.2f} {formatted.values!r}'
-f"{f'{nested} inner'} outer"
-f'space between opening braces: { {a for a in (1, 2, 3)}}'
 {'2.7': dead, '3.7': long_live or die_hard}
 {'2.7', '3.6', '3.7', '3.8', '3.9', '4.0' if gilectomy else '3.10'}
 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10 or A, 11 or B, 12 or C]
@@ -228,6 +250,18 @@ a = (1,)
 b = 1,
 c = 1
 d = (1,) + a + (2,)
+e = (1,).count(1)
+what_is_up_with_those_new_coord_names = (coord_names + set(vars_to_create)) + set(
+    vars_to_remove
+)
+what_is_up_with_those_new_coord_names = (coord_names | set(vars_to_create)) - set(
+    vars_to_remove
+)
+result = session.query(models.Customer.id).filter(
+    models.Customer.account_id == account_id, models.Customer.email == email_address
+).order_by(
+    models.Customer.id.asc()
+).all()
 
 
 def gen():
@@ -238,3 +272,14 @@ def gen():
 
 async def f():
     await some.complicated[0].call(with_args=(True or (1 is not 1)))
+
+
+if (
+    threading.current_thread() != threading.main_thread()
+    and threading.current_thread() != threading.main_thread()
+    or signal.getsignal(signal.SIGINT) != signal.default_int_handler
+):
+    return True
+
+last_call()
+# standalone comment at ENDMARKER

@@ -69,11 +69,16 @@ class Driver(object):
             if debug:
                 self.logger.debug("%s %r (prefix=%r)",
                                   token.tok_name[type], value, prefix)
+            if type == token.DEDENT:
+                _prefix = prefix
+                prefix = ""
             if p.addtoken(type, value, (prefix, start)):
                 if debug:
                     self.logger.debug("Stop.")
                 break
             prefix = ""
+            if type == token.DEDENT:
+                prefix = _prefix
             lineno, column = end
             if value.endswith("\n"):
                 lineno += 1

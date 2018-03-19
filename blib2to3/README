@@ -3,5 +3,7 @@ Commit hash: 9c17e3a1987004b8bcfbe423953aad84493a7984
 
 Reasons for forking:
 - consistent handling of f-strings for users of Python < 3.6.2
-- better ability to debug
+- backport of BPO-33064 that fixes parsing files with trailing commas after
+  *args and **kwargs
+- better ability to debug (better reprs for starters)
 - ability to Cythonize

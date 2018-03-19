@@ -43,6 +43,11 @@ black [OPTIONS] [SRC]...
 
 Options:
   -l, --line-length INTEGER   Where to wrap around.  [default: 88]
+  --check                     Don't write back the files, just return the
+                              status.  Return code 0 means nothing changed.
+                              Return code 1 means some files were reformatted.
+                              Return code 123 means there was an internal
+                              error.
   --fast / --safe             If --fast given, skip temporary sanity checks.
                               [default: --safe]
   --version                   Show the version and exit.
@@ -69,7 +74,7 @@ makes `pycodestyle` happy.
 As for vertical whitespace, *Black* tries to render one full expression
 or simple statement per line.  If this fits the allotted line length,
 great.
-```!py3
+```py3
 # in:
 l = [1,
      2,
@@ -82,7 +87,7 @@ l = [1, 2, 3]
 
 If not, *Black* will look at the contents of the first outer matching
 brackets and put that in a separate indented line.
-```!py3
+```py3
 # in:
 l = [[n for n in list_bosses()], [n for n in list_employees()]]
 
@@ -99,9 +104,9 @@ comma-separated (like an argument list, or a dict literal, and so on)
 then *Black* will first try to keep them on the same line with the
 matching brackets.  If that doesn't work, it will put all of them in
 separate lines.
-```!py3
+```py3
 # in:
-def very_important_function(template: str, *variables, *, file: os.PathLike, debug: bool = False):
+def very_important_function(template: str, *variables, file: os.PathLike, debug: bool = False):
     """Applies `variables` to the `template` and writes to `file`."""
     with open(file, 'w') as f:
         ...
@@ -110,7 +115,6 @@ def very_important_function(template: str, *variables, *, file: os.PathLike, deb
 def very_important_function(
     template: str,
     *variables,
-    *,
     file: os.PathLike,
     debug: bool = False,
 ):
@@ -165,7 +169,7 @@ If you're using Flake8, you can bump `max-line-length` to 88 and forget
 about it.  Alternatively, use [Bugbear](https://github.com/PyCQA/flake8-bugbear)'s
 B950 warning instead of E501 and keep the max line length at 80 which
 you are probably already using.  You'd do it like this:
-```!ini
+```ini
 [flake8]
 max-line-length = 80
 ...
@@ -226,7 +230,7 @@ statements.
 
 By making the code exclusively Python 3.6+, I'm able to focus on the
 quality of the formatting and re-use all the nice features of the new
-releases (check out [pathlib](docs.python.org/3/library/pathlib.html) or
+releases (check out [pathlib](https://docs.python.org/3/library/pathlib.html) or
 f-strings) instead of wasting cycles on Unicode compatibility, and so on.
 
 
@@ -248,8 +252,57 @@ answer is "because I don't like a particular formatting" then you're not
 ready to embrace *Black* yet. Such changes are unlikely to get accepted.
 You can still try but prepare to be disappointed.
 
+More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
+
 
 ## Change Log
+
+### 18.3a2
+
+* changed positioning of binary operators to occur at beginning of lines
+  instead of at the end, following [a recent change to PEP8](https://github.com/python/peps/commit/c59c4376ad233a62ca4b3a6060c81368bd21e85b)
+  (#21)
+
+* ignore empty bracket pairs while splitting. This avoids very weirdly
+  looking formattings (#34, #35)
+
+* remove a trailing comma if there is a single argument to a call
+
+* if top level functions were separated by a comment, don't put four
+  empty lines after the upper function
+
+* fixed unstable formatting of newlines with imports
+
+* fixed unintentional folding of post scriptum standalone comments
+  into last statement if it was a simple statement (#18, #28)
+
+* fixed missing space in numpy-style array indexing (#33)
+
+* fixed spurious space after star-based unary expressions (#31)
+
+
+### 18.3a1
+
+* added `--check`
+
+* only put trailing commas in function signatures and calls if it's
+  safe to do so. If the file is Python 3.6+ it's always safe, otherwise
+  only safe if there are no `*args` or `**kwargs` used in the signature
+  or call. (#8)
+
+* fixed invalid spacing of dots in relative imports (#6, #13)
+
+* fixed invalid splitting after comma on unpacked variables in for-loops
+  (#23)
+
+* fixed spurious space in parenthesized set expressions (#7)
+
+* fixed spurious space after opening parentheses and in default
+  arguments (#14, #17)
+
+* fixed spurious space after unary operators when the operand was
+  a complex expression (#15)
+
 
 ### 18.3a0
 
@@ -257,7 +310,7 @@ You can still try but prepare to be disappointed.
 
 * alpha quality
 
-* date-versioned (see: http://calver.org/)
+* date-versioned (see: https://calver.org/)
 
 
 ## Authors

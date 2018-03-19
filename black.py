@@ -7,6 +7,7 @@ import keyword
 import os
 from pathlib import Path
 import tokenize
+import sys
 from typing import (
     Dict,
     Generic,
@@ -22,7 +23,7 @@ from typing import (
 )
 import sys
 
-from attr import attrib, dataclass, Factory
+from attr import dataclass, Factory
 import click
 
 # lib2to3 fork
@@ -31,7 +32,7 @@ from blib2to3 import pygram, pytree
 from blib2to3.pgen2 import driver, token
 from blib2to3.pgen2.parse import ParseError
 
-__version__ = "18.3a0"
+__version__ = "18.3a2"
 DEFAULT_LINE_LENGTH = 88
 # types
 syms = pygram.python_symbols
@@ -67,6 +68,15 @@ class CannotSplit(Exception):
     show_default=True,
 )
 @click.option(
+    '--check',
+    is_flag=True,
+    help=(
+        "Don't write back the files, just return the status.  Return code 0 "
+        "means nothing changed.  Return code 1 means some files were "
+        "reformatted.  Return code 123 means there was an internal error."
+    ),
+)
+@click.option(
     '--fast/--safe',
     is_flag=True,
     help='If --fast given, skip temporary sanity checks. [default: --safe]',
@@ -80,7 +90,9 @@ class CannotSplit(Exception):
     ),
 )
 @click.pass_context
-def main(ctx: click.Context, line_length: int, fast: bool, src: List[str]) -> None:
+def main(
+    ctx: click.Context, line_length: int, check: bool, fast: bool, src: List[str]
+) -> None:
     """The uncompromising code formatter."""
     sources: List[Path] = []
     for s in src:
@@ -103,7 +115,9 @@ def main(ctx: click.Context, line_length: int, fast: bool, src: List[str]) -> No
             if not p.is_file() and str(p) == '-':
                 changed = format_stdin_to_stdout(line_length=line_length, fast=fast)
             else:
-                changed = format_file_in_place(p, line_length=line_length, fast=fast)
+                changed = format_file_in_place(
+                    p, line_length=line_length, fast=fast, write_back=not check
+                )
             report.done(p, changed)
         except Exception as exc:
             report.failed(p, str(exc))
@@ -114,7 +128,9 @@ def main(ctx: click.Context, line_length: int, fast: bool, src: List[str]) -> No
         return_code = 1
         try:
             return_code = loop.run_until_complete(
-                schedule_formatting(sources, line_length, fast, loop, executor)
+                schedule_formatting(
+                    sources, line_length, not check, fast, loop, executor
+                )
             )
         finally:
             loop.close()
@@ -124,13 +140,14 @@ def main(ctx: click.Context, line_length: int, fast: bool, src: List[str]) -> No
 async def schedule_formatting(
     sources: List[Path],
     line_length: int,
+    write_back: bool,
     fast: bool,
     loop: BaseEventLoop,
     executor: Executor,
 ) -> int:
     tasks = {
         src: loop.run_in_executor(
-            executor, format_file_in_place, src, line_length, fast
+            executor, format_file_in_place, src, line_length, fast, write_back
         )
         for src in sources
     }
@@ -153,7 +170,9 @@ async def schedule_formatting(
     return report.return_code
 
 
-def format_file_in_place(src: Path, line_length: int, fast: bool) -> bool:
+def format_file_in_place(
+    src: Path, line_length: int, fast: bool, write_back: bool = False
+) -> bool:
     """Format the file and rewrite if changed. Return True if changed."""
     try:
         with tokenize.open(src) as src_buffer:
@@ -163,8 +182,9 @@ def format_file_in_place(src: Path, line_length: int, fast: bool) -> bool:
     except NothingChanged:
         return False
 
-    with open(src, "w", encoding=encoding) as f:
-        f.write(contents)
+    if write_back:
+        with open(src, "w", encoding=encoding) as f:
+            f.write(contents)
     return True
 
 
@@ -205,6 +225,7 @@ def format_str(src_contents: str, line_length: int) -> FileContent:
     comments: List[Line] = []
     lines = LineGenerator()
     elt = EmptyLineTracker()
+    py36 = is_python36(src_node)
     empty_line = Line()
     after = 0
     for current_line in lines.visit(src_node):
@@ -217,12 +238,17 @@ def format_str(src_contents: str, line_length: int) -> FileContent:
             for comment in comments:
                 dst_contents += str(comment)
             comments = []
-            for line in split_line(current_line, line_length=line_length):
+            for line in split_line(current_line, line_length=line_length, py36=py36):
                 dst_contents += str(line)
         else:
             comments.append(current_line)
-    for comment in comments:
-        dst_contents += str(comment)
+    if comments:
+        if elt.previous_defs:
+            # Separate postscriptum comments from the last module-level def.
+            dst_contents += str(empty_line)
+            dst_contents += str(empty_line)
+        for comment in comments:
+            dst_contents += str(comment)
     return dst_contents
 
 
@@ -276,7 +302,7 @@ class Visitor(Generic[T]):
 
 @dataclass
 class DebugVisitor(Visitor[T]):
-    tree_depth: int = attrib(default=0)
+    tree_depth: int = 0
 
     def visit_default(self, node: LN) -> Iterator[T]:
         indent = ' ' * (2 * self.tree_depth)
@@ -346,10 +372,10 @@ MATH_PRIORITY = 1
 
 @dataclass
 class BracketTracker:
-    depth: int = attrib(default=0)
-    bracket_match: Dict[Tuple[Depth, NodeType], Leaf] = attrib(default=Factory(dict))
-    delimiters: Dict[LeafID, Priority] = attrib(default=Factory(dict))
-    previous: Optional[Leaf] = attrib(default=None)
+    depth: int = 0
+    bracket_match: Dict[Tuple[Depth, NodeType], Leaf] = Factory(dict)
+    delimiters: Dict[LeafID, Priority] = Factory(dict)
+    previous: Optional[Leaf] = None
 
     def mark(self, leaf: Leaf) -> None:
         if leaf.type == token.COMMENT:
@@ -358,8 +384,8 @@ class BracketTracker:
         if leaf.type in CLOSING_BRACKETS:
             self.depth -= 1
             opening_bracket = self.bracket_match.pop((self.depth, leaf.type))
-            leaf.opening_bracket = opening_bracket  # type: ignore
-        leaf.bracket_depth = self.depth  # type: ignore
+            leaf.opening_bracket = opening_bracket
+        leaf.bracket_depth = self.depth
         if self.depth == 0:
             delim = is_delimiter(leaf)
             if delim:
@@ -368,19 +394,25 @@ class BracketTracker:
                 if leaf.type == token.STRING and self.previous.type == token.STRING:
                     self.delimiters[id(self.previous)] = STRING_PRIORITY
                 elif (
-                    leaf.type == token.NAME and
-                    leaf.value == 'for' and
-                    leaf.parent and
-                    leaf.parent.type in {syms.comp_for, syms.old_comp_for}
+                    leaf.type == token.NAME
+                    and leaf.value == 'for'
+                    and leaf.parent
+                    and leaf.parent.type in {syms.comp_for, syms.old_comp_for}
                 ):
                     self.delimiters[id(self.previous)] = COMPREHENSION_PRIORITY
                 elif (
-                    leaf.type == token.NAME and
-                    leaf.value == 'if' and
-                    leaf.parent and
-                    leaf.parent.type in {syms.comp_if, syms.old_comp_if}
+                    leaf.type == token.NAME
+                    and leaf.value == 'if'
+                    and leaf.parent
+                    and leaf.parent.type in {syms.comp_if, syms.old_comp_if}
                 ):
                     self.delimiters[id(self.previous)] = COMPREHENSION_PRIORITY
+                elif (
+                    leaf.type == token.NAME
+                    and leaf.value in LOGIC_OPERATORS
+                    and leaf.parent
+                ):
+                    self.delimiters[id(self.previous)] = LOGIC_PRIORITY
         if leaf.type in OPENING_BRACKETS:
             self.bracket_match[self.depth, BRACKET[leaf.type]] = leaf
             self.depth += 1
@@ -390,7 +422,7 @@ class BracketTracker:
         """Returns True if there is an yet unmatched open bracket on the line."""
         return bool(self.bracket_match)
 
-    def max_priority(self, exclude: Iterable[LeafID] = ()) -> int:
+    def max_priority(self, exclude: Iterable[LeafID] =()) -> int:
         """Returns the highest priority of a delimiter found on the line.
 
         Values are consistent with what `is_delimiter()` returns.
@@ -400,11 +432,13 @@ class BracketTracker:
 
 @dataclass
 class Line:
-    depth: int = attrib(default=0)
-    leaves: List[Leaf] = attrib(default=Factory(list))
-    comments: Dict[LeafID, Leaf] = attrib(default=Factory(dict))
-    bracket_tracker: BracketTracker = attrib(default=Factory(BracketTracker))
-    inside_brackets: bool = attrib(default=False)
+    depth: int = 0
+    leaves: List[Leaf] = Factory(list)
+    comments: Dict[LeafID, Leaf] = Factory(dict)
+    bracket_tracker: BracketTracker = Factory(BracketTracker)
+    inside_brackets: bool = False
+    has_for: bool = False
+    _for_loop_variable: bool = False
 
     def append(self, leaf: Leaf, preformatted: bool = False) -> None:
         has_value = leaf.value.strip()
@@ -416,8 +450,10 @@ class Line:
             # imports, for which we only preserve newlines.
             leaf.prefix += whitespace(leaf)
         if self.inside_brackets or not preformatted:
+            self.maybe_decrement_after_for_loop_variable(leaf)
             self.bracket_tracker.mark(leaf)
             self.maybe_remove_trailing_comma(leaf)
+            self.maybe_increment_for_loop_variable(leaf)
             if self.maybe_adapt_standalone_comment(leaf):
                 return
 
@@ -439,9 +475,9 @@ class Line:
     @property
     def is_class(self) -> bool:
         return (
-            bool(self) and
-            self.leaves[0].type == token.NAME and
-            self.leaves[0].value == 'class'
+            bool(self)
+            and self.leaves[0].type == token.NAME
+            and self.leaves[0].value == 'class'
         )
 
     @property
@@ -457,37 +493,37 @@ class Line:
         except IndexError:
             second_leaf = None
         return (
-            (first_leaf.type == token.NAME and first_leaf.value == 'def') or
-            (
-                first_leaf.type == token.NAME and
-                first_leaf.value == 'async' and
-                second_leaf is not None and
-                second_leaf.type == token.NAME and
-                second_leaf.value == 'def'
+            (first_leaf.type == token.NAME and first_leaf.value == 'def')
+            or (
+                first_leaf.type == token.NAME
+                and first_leaf.value == 'async'
+                and second_leaf is not None
+                and second_leaf.type == token.NAME
+                and second_leaf.value == 'def'
             )
         )
 
     @property
     def is_flow_control(self) -> bool:
         return (
-            bool(self) and
-            self.leaves[0].type == token.NAME and
-            self.leaves[0].value in FLOW_CONTROL
+            bool(self)
+            and self.leaves[0].type == token.NAME
+            and self.leaves[0].value in FLOW_CONTROL
         )
 
     @property
     def is_yield(self) -> bool:
         return (
-            bool(self) and
-            self.leaves[0].type == token.NAME and
-            self.leaves[0].value == 'yield'
+            bool(self)
+            and self.leaves[0].type == token.NAME
+            and self.leaves[0].value == 'yield'
         )
 
     def maybe_remove_trailing_comma(self, closing: Leaf) -> bool:
         if not (
-            self.leaves and
-            self.leaves[-1].type == token.COMMA and
-            closing.type in CLOSING_BRACKETS
+            self.leaves
+            and self.leaves[-1].type == token.COMMA
+            and closing.type in CLOSING_BRACKETS
         ):
             return False
 
@@ -498,9 +534,9 @@ class Line:
         # For parens let's check if it's safe to remove the comma.  If the
         # trailing one is the only one, we might mistakenly change a tuple
         # into a different type by removing the comma.
-        depth = closing.bracket_depth + 1  # type: ignore
+        depth = closing.bracket_depth + 1
         commas = 0
-        opening = closing.opening_bracket  # type: ignore
+        opening = closing.opening_bracket
         for _opening_index, leaf in enumerate(self.leaves):
             if leaf is opening:
                 break
@@ -512,11 +548,38 @@ class Line:
             if leaf is closing:
                 break
 
-            bracket_depth = leaf.bracket_depth  # type: ignore
+            bracket_depth = leaf.bracket_depth
             if bracket_depth == depth and leaf.type == token.COMMA:
                 commas += 1
+                if leaf.parent and leaf.parent.type == syms.arglist:
+                    commas += 1
+                    break
+
         if commas > 1:
             self.leaves.pop()
+            return True
+
+        return False
+
+    def maybe_increment_for_loop_variable(self, leaf: Leaf) -> bool:
+        """In a for loop, or comprehension, the variables are often unpacks.
+
+        To avoid splitting on the comma in this situation, we will increase
+        the depth of tokens between `for` and `in`.
+        """
+        if leaf.type == token.NAME and leaf.value == 'for':
+            self.has_for = True
+            self.bracket_tracker.depth += 1
+            self._for_loop_variable = True
+            return True
+
+        return False
+
+    def maybe_decrement_after_for_loop_variable(self, leaf: Leaf) -> bool:
+        # See `maybe_increment_for_loop_variable` above for explanation.
+        if self._for_loop_variable and leaf.type == token.NAME and leaf.value == 'in':
+            self.bracket_tracker.depth -= 1
+            self._for_loop_variable = False
             return True
 
         return False
@@ -531,8 +594,8 @@ class Line:
         appended will appear "too long" when splitting.
         """
         if not (
-            comment.type == STANDALONE_COMMENT and
-            self.bracket_tracker.any_open_brackets()
+            comment.type == STANDALONE_COMMENT
+            and self.bracket_tracker.any_open_brackets()
         ):
             return False
 
@@ -589,11 +652,13 @@ class EmptyLineTracker:
     """Provides a stateful method that returns the number of potential extra
     empty lines needed before and after the currently processed line.
 
-    Note: this tracker works on lines that haven't been split yet.
+    Note: this tracker works on lines that haven't been split yet.  It assumes
+    the prefix of the first leaf consists of optional newlines.  Those newlines
+    are consumed by `maybe_empty_lines()` and included in the computation.
     """
-    previous_line: Optional[Line] = attrib(default=None)
-    previous_after: int = attrib(default=0)
-    previous_defs: List[int] = attrib(default=Factory(list))
+    previous_line: Optional[Line] = None
+    previous_after: int = 0
+    previous_defs: List[int] = Factory(list)
 
     def maybe_empty_lines(self, current_line: Line) -> Tuple[int, int]:
         """Returns the number of extra empty lines before and after the `current_line`.
@@ -602,17 +667,28 @@ class EmptyLineTracker:
         (two on module-level), as well as providing an extra empty line after flow
         control keywords to make them more prominent.
         """
+        if current_line.is_comment:
+            # Don't count standalone comments towards previous empty lines.
+            return 0, 0
+
         before, after = self._maybe_empty_lines(current_line)
+        before -= self.previous_after
         self.previous_after = after
         self.previous_line = current_line
         return before, after
 
     def _maybe_empty_lines(self, current_line: Line) -> Tuple[int, int]:
-        before = 0
+        if current_line.leaves:
+            # Consume the first leaf's extra newlines.
+            first_leaf = current_line.leaves[0]
+            before = int('\n' in first_leaf.prefix)
+            first_leaf.prefix = ''
+        else:
+            before = 0
         depth = current_line.depth
         while self.previous_defs and self.previous_defs[-1] >= depth:
             self.previous_defs.pop()
-            before = (1 if depth else 2) - self.previous_after
+            before = 1 if depth else 2
         is_decorator = current_line.is_decorator
         if is_decorator or current_line.is_def or current_line.is_class:
             if not is_decorator:
@@ -628,24 +704,23 @@ class EmptyLineTracker:
             newlines = 2
             if current_line.depth:
                 newlines -= 1
-            newlines -= self.previous_after
             return newlines, 0
 
         if current_line.is_flow_control:
             return before, 1
 
         if (
-            self.previous_line and
-            self.previous_line.is_import and
-            not current_line.is_import and
-            depth == self.previous_line.depth
+            self.previous_line
+            and self.previous_line.is_import
+            and not current_line.is_import
+            and depth == self.previous_line.depth
         ):
             return (before or 1), 0
 
         if (
-            self.previous_line and
-            self.previous_line.is_yield and
-            (not current_line.is_yield or depth != self.previous_line.depth)
+            self.previous_line
+            and self.previous_line.is_yield
+            and (not current_line.is_yield or depth != self.previous_line.depth)
         ):
             return (before or 1), 0
 
@@ -659,8 +734,8 @@ class LineGenerator(Visitor[Line]):
     Note: destroys the tree it's visiting by mutating prefixes of its leaves
     in ways that will no longer stringify to valid Python code on the tree.
     """
-    current_line: Line = attrib(default=Factory(Line))
-    standalone_comments: List[Leaf] = attrib(default=Factory(list))
+    current_line: Line = Factory(Line)
+    standalone_comments: List[Leaf] = Factory(list)
 
     def line(self, indent: int = 0) -> Iterator[Line]:
         """Generate a line.
@@ -788,37 +863,71 @@ BRACKET = {token.LPAR: token.RPAR, token.LSQB: token.RSQB, token.LBRACE: token.R
 OPENING_BRACKETS = set(BRACKET.keys())
 CLOSING_BRACKETS = set(BRACKET.values())
 BRACKETS = OPENING_BRACKETS | CLOSING_BRACKETS
+ALWAYS_NO_SPACE = CLOSING_BRACKETS | {token.COMMA, STANDALONE_COMMENT}
 
 
-def whitespace(leaf: Leaf) -> str:
+def whitespace(leaf: Leaf) -> str:  # noqa C901
     """Return whitespace prefix if needed for the given `leaf`."""
     NO = ''
     SPACE = ' '
     DOUBLESPACE = '  '
     t = leaf.type
     p = leaf.parent
-    if t == token.COLON:
-        return NO
-
-    if t == token.COMMA:
-        return NO
-
-    if t == token.RPAR:
+    v = leaf.value
+    if t in ALWAYS_NO_SPACE:
         return NO
 
     if t == token.COMMENT:
         return DOUBLESPACE
 
-    if t == STANDALONE_COMMENT:
+    assert p is not None, f"INTERNAL ERROR: hand-made leaf without parent: {leaf!r}"
+    if t == token.COLON and p.type != syms.subscript:
         return NO
 
-    assert p is not None, f"INTERNAL ERROR: hand-made leaf without parent: {leaf!r}"
+    prev = leaf.prev_sibling
+    if not prev:
+        prevp = preceding_leaf(p)
+        if not prevp or prevp.type in OPENING_BRACKETS:
+            return NO
+
+        if t == token.COLON:
+            return SPACE if prevp.type == token.COMMA else NO
+
+        if prevp.type == token.EQUAL:
+            if prevp.parent and prevp.parent.type in {
+                syms.typedargslist,
+                syms.varargslist,
+                syms.parameters,
+                syms.arglist,
+                syms.argument,
+            }:
+                return NO
+
+        elif prevp.type == token.DOUBLESTAR:
+            if prevp.parent and prevp.parent.type in {
+                syms.typedargslist,
+                syms.varargslist,
+                syms.parameters,
+                syms.arglist,
+                syms.dictsetmaker,
+            }:
+                return NO
+
+        elif prevp.type == token.COLON:
+            if prevp.parent and prevp.parent.type == syms.subscript:
+                return NO
+
+        elif prevp.parent and prevp.parent.type in {syms.factor, syms.star_expr}:
+            return NO
+
+    elif prev.type in OPENING_BRACKETS:
+        return NO
+
     if p.type in {syms.parameters, syms.arglist}:
         # untyped function signatures or calls
         if t == token.RPAR:
             return NO
 
-        prev = leaf.prev_sibling
         if not prev or prev.type != token.COMMA:
             return NO
 
@@ -827,13 +936,11 @@ def whitespace(leaf: Leaf) -> str:
         if t == token.RPAR:
             return NO
 
-        prev = leaf.prev_sibling
         if prev and prev.type != token.COMMA:
             return NO
 
     elif p.type == syms.typedargslist:
         # typed function signatures
-        prev = leaf.prev_sibling
         if not prev:
             return NO
 
@@ -851,7 +958,6 @@ def whitespace(leaf: Leaf) -> str:
 
     elif p.type == syms.tname:
         # type names
-        prev = leaf.prev_sibling
         if not prev:
             prevp = preceding_leaf(p)
             if not prevp or prevp.type != token.COMMA:
@@ -862,7 +968,6 @@ def whitespace(leaf: Leaf) -> str:
         if t == token.LPAR or t == token.RPAR:
             return NO
 
-        prev = leaf.prev_sibling
         if not prev:
             if t == token.DOT:
                 prevp = preceding_leaf(p)
@@ -880,7 +985,6 @@ def whitespace(leaf: Leaf) -> str:
         if t == token.EQUAL:
             return NO
 
-        prev = leaf.prev_sibling
         if not prev:
             prevp = preceding_leaf(p)
             if not prevp or prevp.type == token.LPAR:
@@ -894,113 +998,56 @@ def whitespace(leaf: Leaf) -> str:
         return NO
 
     elif p.type == syms.dotted_name:
-        prev = leaf.prev_sibling
         if prev:
             return NO
 
         prevp = preceding_leaf(p)
-        if not prevp or prevp.type == token.AT:
+        if not prevp or prevp.type == token.AT or prevp.type == token.DOT:
             return NO
 
     elif p.type == syms.classdef:
         if t == token.LPAR:
             return NO
 
-        prev = leaf.prev_sibling
         if prev and prev.type == token.LPAR:
             return NO
 
     elif p.type == syms.subscript:
         # indexing
-        if t == token.COLON:
-            return NO
-
-        prev = leaf.prev_sibling
-        if not prev or prev.type == token.COLON:
-            return NO
-
-    elif p.type in {
-        syms.test,
-        syms.not_test,
-        syms.xor_expr,
-        syms.or_test,
-        syms.and_test,
-        syms.arith_expr,
-        syms.shift_expr,
-        syms.yield_expr,
-        syms.term,
-        syms.power,
-        syms.comparison,
-    }:
-        # various arithmetic and logic expressions
-        prev = leaf.prev_sibling
         if not prev:
-            prevp = preceding_leaf(p)
-            if not prevp or prevp.type in OPENING_BRACKETS:
-                return NO
+            assert p.parent is not None, "subscripts are always parented"
+            if p.parent.type == syms.subscriptlist:
+                return SPACE
 
-            if prevp.type == token.EQUAL:
-                if prevp.parent and prevp.parent.type in {
-                    syms.varargslist, syms.parameters, syms.arglist, syms.argument
-                }:
-                    return NO
+            return NO
 
-        return SPACE
+        else:
+            return NO
 
     elif p.type == syms.atom:
-        if t in CLOSING_BRACKETS:
-            return NO
-
-        prev = leaf.prev_sibling
-        if not prev:
-            prevp = preceding_leaf(p)
-            if not prevp:
-                return NO
-
-            if prevp.type in OPENING_BRACKETS:
-                return NO
-
-            if prevp.type == token.EQUAL:
-                if prevp.parent and prevp.parent.type in {
-                    syms.varargslist, syms.parameters, syms.arglist, syms.argument
-                }:
-                    return NO
-
-            if prevp.type == token.DOUBLESTAR:
-                if prevp.parent and prevp.parent.type in {
-                    syms.varargslist, syms.parameters, syms.arglist, syms.dictsetmaker
-                }:
-                    return NO
-
-        elif prev.type in OPENING_BRACKETS:
-            return NO
-
-        elif t == token.DOT:
+        if prev and t == token.DOT:
             # dots, but not the first one.
             return NO
 
     elif (
-        p.type == syms.listmaker or
-        p.type == syms.testlist_gexp or
-        p.type == syms.subscriptlist
+        p.type == syms.listmaker
+        or p.type == syms.testlist_gexp
+        or p.type == syms.subscriptlist
     ):
         # list interior, including unpacking
-        prev = leaf.prev_sibling
         if not prev:
             return NO
 
     elif p.type == syms.dictsetmaker:
         # dict and set interior, including unpacking
-        prev = leaf.prev_sibling
         if not prev:
             return NO
 
         if prev.type == token.DOUBLESTAR:
             return NO
 
-    elif p.type == syms.factor or p.type == syms.star_expr:
+    elif p.type in {syms.factor, syms.star_expr}:
         # unary ops
-        prev = leaf.prev_sibling
         if not prev:
             prevp = preceding_leaf(p)
             if not prevp or prevp.type in OPENING_BRACKETS:
@@ -1019,10 +1066,17 @@ def whitespace(leaf: Leaf) -> str:
         elif t == token.NAME or t == token.NUMBER:
             return NO
 
-    elif p.type == syms.import_from and t == token.NAME:
-        prev = leaf.prev_sibling
-        if prev and prev.type == token.DOT:
-            return NO
+    elif p.type == syms.import_from:
+        if t == token.DOT:
+            if prev and prev.type == token.DOT:
+                return NO
+
+        elif t == token.NAME:
+            if v == 'import':
+                return SPACE
+
+            if prev and prev.type == token.DOT:
+                return NO
 
     elif p.type == syms.sliceop:
         return NO
@@ -1056,16 +1110,13 @@ def is_delimiter(leaf: Leaf) -> int:
     if leaf.type == token.COMMA:
         return COMMA_PRIORITY
 
-    if leaf.type == token.NAME and leaf.value in LOGIC_OPERATORS:
-        return LOGIC_PRIORITY
-
     if leaf.type in COMPARATORS:
         return COMPARATOR_PRIORITY
 
     if (
-        leaf.type in MATH_OPERATORS and
-        leaf.parent and
-        leaf.parent.type not in {syms.factor, syms.star_expr}
+        leaf.type in MATH_OPERATORS
+        and leaf.parent
+        and leaf.parent.type not in {syms.factor, syms.star_expr}
     ):
         return MATH_PRIORITY
 
@@ -1102,7 +1153,7 @@ def generate_comments(leaf: Leaf) -> Iterator[Leaf]:
     if content and (content[0] not in {' ', '!', '#'}):
         content = ' ' + content
     is_standalone_comment = (
-        '\n' in before_comment or '\n' in content or leaf.type == token.DEDENT
+        '\n' in before_comment or '\n' in content or leaf.type == token.ENDMARKER
     )
     if not is_standalone_comment:
         # simple trailing comment
@@ -1117,13 +1168,18 @@ def generate_comments(leaf: Leaf) -> Iterator[Leaf]:
         yield Leaf(STANDALONE_COMMENT, line)
 
 
-def split_line(line: Line, line_length: int, inner: bool = False) -> Iterator[Line]:
+def split_line(
+    line: Line, line_length: int, inner: bool = False, py36: bool = False
+) -> Iterator[Line]:
     """Splits a `line` into potentially many lines.
 
     They should fit in the allotted `line_length` but might not be able to.
     `inner` signifies that there were a pair of brackets somewhere around the
     current `line`, possibly transitively. This means we can fallback to splitting
     by delimiters if the LHS/RHS don't yield any results.
+
+    If `py36` is True, splitting may generate syntax that is only compatible
+    with Python 3.6 and later.
     """
     line_str = str(line).strip('\n')
     if len(line_str) <= line_length and '\n' not in line_str:
@@ -1146,11 +1202,13 @@ def split_line(line: Line, line_length: int, inner: bool = False) -> Iterator[Li
         # split altogether.
         result: List[Line] = []
         try:
-            for l in split_func(line):
+            for l in split_func(line, py36=py36):
                 if str(l).strip('\n') == line_str:
                     raise CannotSplit("Split function returned an unchanged result")
 
-                result.extend(split_line(l, line_length=line_length, inner=True))
+                result.extend(
+                    split_line(l, line_length=line_length, inner=True, py36=py36)
+                )
         except CannotSplit as cs:
             continue
 
@@ -1162,7 +1220,7 @@ def split_line(line: Line, line_length: int, inner: bool = False) -> Iterator[Li
         yield line
 
 
-def left_hand_split(line: Line) -> Iterator[Line]:
+def left_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
     """Split line into many lines, starting with the first matching bracket pair.
 
     Note: this usually looks weird, only use this for function definitions.
@@ -1178,11 +1236,11 @@ def left_hand_split(line: Line) -> Iterator[Line]:
     matching_bracket = None
     for leaf in line.leaves:
         if (
-            current_leaves is body_leaves and
-            leaf.type in CLOSING_BRACKETS and
-            leaf.opening_bracket is matching_bracket  # type: ignore
+            current_leaves is body_leaves
+            and leaf.type in CLOSING_BRACKETS
+            and leaf.opening_bracket is matching_bracket
         ):
-            current_leaves = tail_leaves
+            current_leaves = tail_leaves if body_leaves else head_leaves
         current_leaves.append(leaf)
         if current_leaves is head_leaves:
             if leaf.type in OPENING_BRACKETS:
@@ -1200,24 +1258,13 @@ def left_hand_split(line: Line) -> Iterator[Line]:
             comment_after = line.comments.get(id(leaf))
             if comment_after:
                 result.append(comment_after, preformatted=True)
-    # Check if the split succeeded.
-    tail_len = len(str(tail))
-    if not body:
-        if tail_len == 0:
-            raise CannotSplit("Splitting brackets produced the same line")
-
-        elif tail_len < 3:
-            raise CannotSplit(
-                f"Splitting brackets on an empty body to save "
-                f"{tail_len} characters is not worth it"
-            )
-
+    split_succeeded_or_raise(head, body, tail)
     for result in (head, body, tail):
         if result:
             yield result
 
 
-def right_hand_split(line: Line) -> Iterator[Line]:
+def right_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
     """Split line into many lines, starting with the last matching bracket pair."""
     head = Line(depth=line.depth)
     body = Line(depth=line.depth + 1, inside_brackets=True)
@@ -1230,11 +1277,11 @@ def right_hand_split(line: Line) -> Iterator[Line]:
     for leaf in reversed(line.leaves):
         if current_leaves is body_leaves:
             if leaf is opening_bracket:
-                current_leaves = head_leaves
+                current_leaves = head_leaves if body_leaves else tail_leaves
         current_leaves.append(leaf)
         if current_leaves is tail_leaves:
             if leaf.type in CLOSING_BRACKETS:
-                opening_bracket = leaf.opening_bracket  # type: ignore
+                opening_bracket = leaf.opening_bracket
                 current_leaves = body_leaves
     tail_leaves.reverse()
     body_leaves.reverse()
@@ -1251,8 +1298,14 @@ def right_hand_split(line: Line) -> Iterator[Line]:
             comment_after = line.comments.get(id(leaf))
             if comment_after:
                 result.append(comment_after, preformatted=True)
-    # Check if the split succeeded.
-    tail_len = len(str(tail).strip('\n'))
+    split_succeeded_or_raise(head, body, tail)
+    for result in (head, body, tail):
+        if result:
+            yield result
+
+
+def split_succeeded_or_raise(head: Line, body: Line, tail: Line) -> None:
+    tail_len = len(str(tail).strip())
     if not body:
         if tail_len == 0:
             raise CannotSplit("Splitting brackets produced the same line")
@@ -1263,15 +1316,13 @@ def right_hand_split(line: Line) -> Iterator[Line]:
                 f"{tail_len} characters is not worth it"
             )
 
-    for result in (head, body, tail):
-        if result:
-            yield result
 
-
-def delimiter_split(line: Line) -> Iterator[Line]:
+def delimiter_split(line: Line, py36: bool = False) -> Iterator[Line]:
     """Split according to delimiters of the highest priority.
 
     This kind of split doesn't increase indentation.
+    If `py36` is True, the split will add trailing commas also in function
+    signatures that contain * and **.
     """
     try:
         last_leaf = line.leaves[-1]
@@ -1285,11 +1336,20 @@ def delimiter_split(line: Line) -> Iterator[Line]:
         raise CannotSplit("No delimiters found")
 
     current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
+    lowest_depth = sys.maxsize
+    trailing_comma_safe = True
     for leaf in line.leaves:
         current_line.append(leaf, preformatted=True)
         comment_after = line.comments.get(id(leaf))
         if comment_after:
             current_line.append(comment_after, preformatted=True)
+        lowest_depth = min(lowest_depth, leaf.bracket_depth)
+        if (
+            leaf.bracket_depth == lowest_depth
+            and leaf.type == token.STAR
+            or leaf.type == token.DOUBLESTAR
+        ):
+            trailing_comma_safe = trailing_comma_safe and py36
         leaf_priority = delimiters.get(id(leaf))
         if leaf_priority == delimiter_priority:
             normalize_prefix(current_line.leaves[0])
@@ -1298,8 +1358,9 @@ def delimiter_split(line: Line) -> Iterator[Line]:
             current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
     if current_line:
         if (
-            delimiter_priority == COMMA_PRIORITY and
-            current_line.leaves[-1].type != token.COMMA
+            delimiter_priority == COMMA_PRIORITY
+            and current_line.leaves[-1].type != token.COMMA
+            and trailing_comma_safe
         ):
             current_line.append(Leaf(token.COMMA, ','))
         normalize_prefix(current_line.leaves[0])
@@ -1312,10 +1373,10 @@ def is_import(leaf: Leaf) -> bool:
     t = leaf.type
     v = leaf.value
     return bool(
-        t == token.NAME and
-        (
-            (v == 'import' and p and p.type == syms.import_name) or
-            (v == 'from' and p and p.type == syms.import_from)
+        t == token.NAME
+        and (
+            (v == 'import' and p and p.type == syms.import_name)
+            or (v == 'from' and p and p.type == syms.import_from)
         )
     )
 
@@ -1325,13 +1386,35 @@ def normalize_prefix(leaf: Leaf) -> None:
     if is_import(leaf):
         spl = leaf.prefix.split('#', 1)
         nl_count = spl[0].count('\n')
-        if len(spl) > 1:
-            # Skip one newline since it was for a standalone comment.
-            nl_count -= 1
         leaf.prefix = '\n' * nl_count
         return
 
     leaf.prefix = ''
+
+
+def is_python36(node: Node) -> bool:
+    """Returns True if the current file is using Python 3.6+ features.
+
+    Currently looking for:
+    - f-strings; and
+    - trailing commas after * or ** in function signatures.
+    """
+    for n in node.pre_order():
+        if n.type == token.STRING:
+            value_head = n.value[:2]  # type: ignore
+            if value_head in {'f"', 'F"', "f'", "F'", 'rf', 'fr', 'RF', 'FR'}:
+                return True
+
+        elif (
+            n.type == syms.typedargslist
+            and n.children
+            and n.children[-1].type == token.COMMA
+        ):
+            for ch in n.children:
+                if ch.type == token.STAR or ch.type == token.DOUBLESTAR:
+                    return True
+
+    return False
 
 
 PYTHON_EXTENSIONS = {'.py'}
@@ -1355,9 +1438,9 @@ def gen_python_files_in_dir(path: Path) -> Iterator[Path]:
 @dataclass
 class Report:
     """Provides a reformatting counter."""
-    change_count: int = attrib(default=0)
-    same_count: int = attrib(default=0)
-    failure_count: int = attrib(default=0)
+    change_count: int = 0
+    same_count: int = 0
+    failure_count: int = 0
 
     def done(self, src: Path, changed: bool) -> None:
         """Increment the counter for successful reformatting. Write out a message."""
@@ -1376,7 +1459,15 @@ class Report:
     @property
     def return_code(self) -> int:
         """Which return code should the app use considering the current state."""
-        return 1 if self.failure_count else 0
+        # According to http://tldp.org/LDP/abs/html/exitcodes.html starting with
+        # 126 we have special returncodes reserved by the shell.
+        if self.failure_count:
+            return 123
+
+        elif self.change_count:
+            return 1
+
+        return 0
 
     def __str__(self) -> str:
         """A color report of the current state.
@@ -1448,7 +1539,7 @@ def assert_equivalent(src: str, dst: str) -> None:
         raise AssertionError(
             f"INTERNAL ERROR: Black produced invalid code: {exc}. "
             f"Please report a bug on https://github.com/ambv/black/issues.  "
-            f"This invalid output might be helpful: {log}",
+            f"This invalid output might be helpful: {log}"
         ) from None
 
     src_ast_str = '\n'.join(_v(src_ast))
@@ -1459,7 +1550,7 @@ def assert_equivalent(src: str, dst: str) -> None:
             f"INTERNAL ERROR: Black produced code that is not equivalent to "
             f"the source.  "
             f"Please report a bug on https://github.com/ambv/black/issues.  "
-            f"This diff might be helpful: {log}",
+            f"This diff might be helpful: {log}"
         ) from None
 
 
@@ -1478,7 +1569,7 @@ def assert_stable(src: str, dst: str, line_length: int) -> None:
             f"INTERNAL ERROR: Black produced different code on the second pass "
             f"of the formatter.  "
             f"Please report a bug on https://github.com/ambv/black/issues.  "
-            f"This diff might be helpful: {log}",
+            f"This diff might be helpful: {log}"
         ) from None
 
 
