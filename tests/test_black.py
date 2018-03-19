@@ -90,10 +90,8 @@ class BlackTestCase(unittest.TestCase):
             sys.stdin, sys.stdout = StringIO(source), StringIO()
             sys.stdin.name = '<stdin>'
             black.format_stdin_to_stdout(line_length=ll, fast=True)
-            black.err(f'%%%%% {sys.stdout.tell()}')
             sys.stdout.seek(0)
-            black.err(f'%%%%% {len(sys.stdout)}')
-            actual = sys.stdout.readlines()
+            actual = sys.stdout.read()
         finally:
             sys.stdin, sys.stdout = hold_stdin, hold_stdout
         self.assertFormatEqual(expected, actual)
