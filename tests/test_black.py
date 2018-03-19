@@ -16,8 +16,8 @@ THIS_FILE = Path(__file__)
 THIS_DIR = THIS_FILE.parent
 
 
-def ff(file_):
-    with tokenize.open(file_) as buf:
+def ff(file):
+    with tokenize.open(file) as buf:
         black.format_file(buf, line_length=ll, fast=True)
 
 
