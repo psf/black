@@ -4,7 +4,7 @@ from io import StringIO
 from pathlib import Path
 import sys
 import tokenize
-from typing import Any, List, Tuple, TextIO
+from typing import Any, List, Tuple
 import unittest
 from unittest.mock import patch
 
@@ -18,7 +18,7 @@ THIS_FILE = Path(__file__)
 THIS_DIR = THIS_FILE.parent
 
 
-def ff(file: TextIO) -> None:
+def ff(file: Path) -> None:
     with tokenize.open(file) as buf:
         black.format_file(buf, line_length=ll, fast=True)
 
