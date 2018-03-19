@@ -174,11 +174,12 @@ def format_file_in_place(
     src: Path, line_length: int, fast: bool, write_back: bool = False
 ) -> bool:
     """Format the file and rewrite if changed. Return True if changed."""
+    with tokenize.open(src) as src_buffer:
+        src_contents = src_buffer.read()
     try:
-        with tokenize.open(src) as src_buffer:
-            contents, encoding = format_file(
-                src_buffer, line_length=line_length, fast=fast
-            )
+        contents, encoding = format_file_contents(
+            src_contents, line_length=line_length, fast=fast
+        )
     except NothingChanged:
         return False
 
@@ -190,21 +191,22 @@ def format_file_in_place(
 
 def format_stdin_to_stdout(line_length: int, fast: bool) -> bool:
     """Format file on stdin and pipe output to stdout. Return True if changed."""
+    contents = sys.stdin.read()
     try:
-        contents, _ = format_file(sys.stdin, line_length=line_length, fast=fast)
+        contents, _ = format_file_contents(contents, line_length=line_length, fast=fast)
+        return True
+
     except NothingChanged:
         return False
 
     finally:
         sys.stdout.write(contents)
-    return True
 
 
-def format_file(
-    src: TextIO, line_length: int, fast: bool
+def format_file_contents(
+    src_contents: str, line_length: int, fast: bool
 ) -> Tuple[FileContent, Encoding]:
     """Reformats a file and returns its contents and encoding."""
-    src_contents = src.read()
     if src_contents.strip() == '':
         raise NothingChanged(src.name)
 
