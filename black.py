@@ -9,19 +9,8 @@ from pathlib import Path
 import tokenize
 import sys
 from typing import (
-    Dict,
-    Generic,
-    Iterable,
-    Iterator,
-    List,
-    Optional,
-    Set,
-    TextIO,
-    Tuple,
-    TypeVar,
-    Union,
+    Dict, Generic, Iterable, Iterator, List, Optional, Set, Tuple, TypeVar, Union
 )
-import sys
 
 from attr import dataclass, Factory
 import click
