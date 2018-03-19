@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 from functools import partial
+from io import StringIO
 from pathlib import Path
+import sys
 from typing import Any, List, Tuple
 import unittest
 from unittest.mock import patch
@@ -10,7 +12,7 @@ from click import unstyle
 import black
 
 ll = 88
-ff = partial(black.format_file, line_length=ll, fast=True)
+ff = partial(black.format_file_in_place, line_length=ll, fast=True)
 fs = partial(black.format_str, line_length=ll)
 THIS_FILE = Path(__file__)
 THIS_DIR = THIS_FILE.parent
@@ -70,8 +72,7 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, line_length=ll)
-        with self.assertRaises(black.NothingChanged):
-            ff(THIS_FILE)
+        self.assertFalse(ff(THIS_FILE))
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_black(self) -> None:
@@ -80,8 +81,22 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, line_length=ll)
-        with self.assertRaises(black.NothingChanged):
-            ff(THIS_FILE)
+        self.assertFalse(ff(THIS_DIR / '..' / 'black.py'))
+
+    def test_piping(self) -> None:
+        source, expected = read_data('../black')
+        hold_stdin, hold_stdout = sys.stdin, sys.stdout
+        try:
+            sys.stdin, sys.stdout = StringIO(source), StringIO()
+            sys.stdin.name = '<stdin>'
+            black.format_stdin_to_stdout(line_length=ll, fast=True)
+            sys.stdout.seek(0)
+            actual = sys.stdout.read()
+        finally:
+            sys.stdin, sys.stdout = hold_stdin, hold_stdout
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, line_length=ll)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_setup(self) -> None:
@@ -90,8 +105,7 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, line_length=ll)
-        with self.assertRaises(black.NothingChanged):
-            ff(THIS_FILE)
+        self.assertFalse(ff(THIS_DIR / '..' / 'setup.py'))
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_function(self) -> None:
