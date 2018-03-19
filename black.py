@@ -83,27 +83,24 @@ class CannotSplit(Exception):
 def main(ctx: click.Context, line_length: int, fast: bool, src: List[str]) -> None:
     """The uncompromising code formatter."""
     sources: List[Path] = []
-    if len(src) == 1 and src[0] == '-':
-        sources.append(Path('-'))
-    else:
-        for s in src:
-            p = Path(s)
-            if p.is_dir():
-                sources.extend(gen_python_files_in_dir(p))
-            elif p.is_file():
-                # if a file was explicitly given, we don't care about its extension
-                sources.append(p)
-            elif s == '-':
-                err('Cannot format both stdin and other paths')
-            else:
-                err(f'invalid path: {s}')
+    for s in src:
+        p = Path(s)
+        if p.is_dir():
+            sources.extend(gen_python_files_in_dir(p))
+        elif p.is_file():
+            # if a file was explicitly given, we don't care about its extension
+            sources.append(p)
+        elif s == '-':
+            sources.append(Path('-'))
+        else:
+            err(f'invalid path: {s}')
     if len(sources) == 0:
         ctx.exit(0)
     elif len(sources) == 1:
         p = sources[0]
         report = Report()
         try:
-            if str(p) == '-':
+            if not p.is_file() and str(p) == '-':
                 changed = format_stdin_to_stdout(line_length=line_length, fast=fast)
             else:
                 changed = format_file_in_place(p, line_length=line_length, fast=fast)
