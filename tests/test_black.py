@@ -3,7 +3,6 @@ from functools import partial
 from io import StringIO
 from pathlib import Path
 import sys
-import tokenize
 from typing import Any, List, Tuple
 import unittest
 from unittest.mock import patch
@@ -13,14 +12,10 @@ from click import unstyle
 import black
 
 ll = 88
+ff = partial(black.format_file_in_place, line_length=ll, fast=True)
 fs = partial(black.format_str, line_length=ll)
 THIS_FILE = Path(__file__)
 THIS_DIR = THIS_FILE.parent
-
-
-def ff(file: Path) -> None:
-    with tokenize.open(file) as buf:
-        black.format_file(buf, line_length=ll, fast=True)
 
 
 def dump_to_stderr(*output: str) -> str:
@@ -77,8 +72,7 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, line_length=ll)
-        with self.assertRaises(black.NothingChanged):
-            ff(THIS_FILE)
+        self.assertFalse(ff(THIS_FILE))
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_black(self) -> None:
@@ -87,8 +81,7 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, line_length=ll)
-        with self.assertRaises(black.NothingChanged):
-            ff(THIS_FILE)
+        self.assertFalse(ff(THIS_DIR / '..' / 'black.py'))
 
     def test_piping(self) -> None:
         source, expected = read_data('../black')
@@ -114,8 +107,7 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, line_length=ll)
-        with self.assertRaises(black.NothingChanged):
-            ff(THIS_FILE)
+        self.assertFalse(ff(THIS_DIR / '..' / 'setup.py'))
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_function(self) -> None:
