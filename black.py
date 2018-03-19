@@ -175,7 +175,8 @@ def format_stdin_to_stdout(line_length: int, fast: bool) -> bool:
     except NothingChanged:
         return False
 
-    sys.stdout.write(contents)
+    finally:
+        sys.stdout.write(contents)
     return True
 
 
