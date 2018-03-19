@@ -3,13 +3,22 @@ import asyncio
 from asyncio.base_events import BaseEventLoop
 from concurrent.futures import Executor, ProcessPoolExecutor
 from functools import partial
-import io
 import keyword
 import os
 from pathlib import Path
 import tokenize
 from typing import (
-    Dict, Generic, Iterable, Iterator, List, Optional, Set, Tuple, Type, TypeVar, Union
+    Dict,
+    Generic,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    TextIO,
+    Tuple,
+    TypeVar,
+    Union,
 )
 import sys
 
@@ -174,21 +183,21 @@ def format_stdin_to_stdout(line_length: int, fast: bool) -> bool:
 
 
 def format_file(
-    src_buffer: Type[io.TextIOBase], line_length: int, fast: bool
+    src: TextIO, line_length: int, fast: bool
 ) -> Tuple[FileContent, Encoding]:
     """Reformats a file and returns its contents and encoding."""
-    src_contents = src_buffer.read()
+    src_contents = src.read()
     if src_contents.strip() == '':
-        raise NothingChanged(src_buffer.name)
+        raise NothingChanged(src.name)
 
     dst_contents = format_str(src_contents, line_length=line_length)
     if src_contents == dst_contents:
-        raise NothingChanged(src_buffer.name)
+        raise NothingChanged(src.name)
 
     if not fast:
         assert_equivalent(src_contents, dst_contents)
         assert_stable(src_contents, dst_contents, line_length=line_length)
-    return dst_contents, src_buffer.encoding
+    return dst_contents, src.encoding
 
 
 def format_str(src_contents: str, line_length: int) -> FileContent:
