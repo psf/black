@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 from functools import partial
+from io import StringIO
 from pathlib import Path
+import sys
 import tokenize
-from typing import List, Tuple
+from typing import List, Tuple, TextIO
 import unittest
 from unittest.mock import patch
 
@@ -86,6 +88,23 @@ class BlackTestCase(unittest.TestCase):
         black.assert_stable(source, actual, line_length=ll)
         with self.assertRaises(black.NothingChanged):
             ff(THIS_FILE)
+
+    def test_piping(self) -> None:
+        source, expected = read_data('../black')
+        hold_stdin, hold_stdout = sys.stdin, sys.stdout
+        try:
+            sys.stdin, sys.stdout = StringIO(source), StringIO()
+            sys.stdin.name = '<stdin>'
+            black.format_stdin_to_stdout(line_length=ll, fast=True)
+            black.err(f'%%%%% {sys.stdout.tell()}')
+            sys.stdout.seek(0)
+            black.err(f'%%%%% {len(sys.stdout)}')
+            actual = sys.stdout.readlines()
+        finally:
+            sys.stdin, sys.stdout = hold_stdin, hold_stdout
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, line_length=ll)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_setup(self) -> None:
