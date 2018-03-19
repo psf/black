@@ -177,14 +177,14 @@ def format_file_in_place(
     with tokenize.open(src) as src_buffer:
         src_contents = src_buffer.read()
     try:
-        contents, encoding = format_file_contents(
+        contents = format_file_contents(
             src_contents, line_length=line_length, fast=fast
         )
     except NothingChanged:
         return False
 
     if write_back:
-        with open(src, "w", encoding=encoding) as f:
+        with open(src, "w", encoding=src_buffer.encoding) as f:
             f.write(contents)
     return True
 
@@ -193,7 +193,7 @@ def format_stdin_to_stdout(line_length: int, fast: bool) -> bool:
     """Format file on stdin and pipe output to stdout. Return True if changed."""
     contents = sys.stdin.read()
     try:
-        contents, _ = format_file_contents(contents, line_length=line_length, fast=fast)
+        contents = format_file_contents(contents, line_length=line_length, fast=fast)
         return True
 
     except NothingChanged:
@@ -205,19 +205,19 @@ def format_stdin_to_stdout(line_length: int, fast: bool) -> bool:
 
 def format_file_contents(
     src_contents: str, line_length: int, fast: bool
-) -> Tuple[FileContent, Encoding]:
+) -> FileContent:
     """Reformats a file and returns its contents and encoding."""
     if src_contents.strip() == '':
-        raise NothingChanged(src.name)
+        raise NothingChanged
 
     dst_contents = format_str(src_contents, line_length=line_length)
     if src_contents == dst_contents:
-        raise NothingChanged(src.name)
+        raise NothingChanged
 
     if not fast:
         assert_equivalent(src_contents, dst_contents)
         assert_stable(src_contents, dst_contents, line_length=line_length)
-    return dst_contents, src.encoding
+    return dst_contents
 
 
 def format_str(src_contents: str, line_length: int) -> FileContent:
