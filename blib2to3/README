@@ -5,5 +5,7 @@ Reasons for forking:
 - consistent handling of f-strings for users of Python < 3.6.2
 - backport of BPO-33064 that fixes parsing files with trailing commas after
   *args and **kwargs
+- backport of GH-6143 that restores the ability to reformat legacy usage of
+  `async`
 - better ability to debug (better reprs for starters)
 - ability to Cythonize

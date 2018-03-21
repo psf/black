@@ -261,6 +261,10 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * added ability to pipe formatting from stdin to stdin (#25)
 
+* restored ability to format code with legacy usage of `async` as
+  a name (#20, #42)
+
+
 ### 18.3a2
 
 * changed positioning of binary operators to occur at beginning of lines

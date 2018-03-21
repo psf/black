@@ -486,8 +486,7 @@ class Line:
         return (
             (first_leaf.type == token.NAME and first_leaf.value == 'def')
             or (
-                first_leaf.type == token.NAME
-                and first_leaf.value == 'async'
+                first_leaf.type == token.ASYNC
                 and second_leaf is not None
                 and second_leaf.type == token.NAME
                 and second_leaf.value == 'def'
@@ -816,7 +815,7 @@ class LineGenerator(Visitor[Line]):
         for child in children:
             yield from self.visit(child)
 
-            if child.type == token.NAME and child.value == 'async':  # type: ignore
+            if child.type == token.ASYNC:
                 break
 
         internal_stmt = next(children)
