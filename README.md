@@ -257,6 +257,10 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Change Log
 
+### 18.3a3
+
+* added ability to pipe formatting from stdin to stdin (#25)
+
 ### 18.3a2
 
 * changed positioning of binary operators to occur at beginning of lines
