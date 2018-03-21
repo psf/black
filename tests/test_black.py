@@ -89,7 +89,7 @@ class BlackTestCase(unittest.TestCase):
         try:
             sys.stdin, sys.stdout = StringIO(source), StringIO()
             sys.stdin.name = '<stdin>'
-            black.format_stdin_to_stdout(line_length=ll, fast=True)
+            black.format_stdin_to_stdout(line_length=ll, fast=True, write_back=True)
             sys.stdout.seek(0)
             actual = sys.stdout.read()
         finally:

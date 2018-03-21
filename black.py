@@ -102,7 +102,9 @@ def main(
         report = Report()
         try:
             if not p.is_file() and str(p) == '-':
-                changed = format_stdin_to_stdout(line_length=line_length, fast=fast)
+                changed = format_stdin_to_stdout(
+                    line_length=line_length, fast=fast, write_back=not check
+                )
             else:
                 changed = format_file_in_place(
                     p, line_length=line_length, fast=fast, write_back=not check
@@ -178,7 +180,9 @@ def format_file_in_place(
     return True
 
 
-def format_stdin_to_stdout(line_length: int, fast: bool) -> bool:
+def format_stdin_to_stdout(
+    line_length: int, fast: bool, write_back: bool = False
+) -> bool:
     """Format file on stdin and pipe output to stdout. Return True if changed."""
     contents = sys.stdin.read()
     try:
@@ -189,7 +193,8 @@ def format_stdin_to_stdout(line_length: int, fast: bool) -> bool:
         return False
 
     finally:
-        sys.stdout.write(contents)
+        if write_back:
+            sys.stdout.write(contents)
 
 
 def format_file_contents(
