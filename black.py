@@ -22,7 +22,7 @@ from blib2to3 import pygram, pytree
 from blib2to3.pgen2 import driver, token
 from blib2to3.pgen2.parse import ParseError
 
-__version__ = "18.3a2"
+__version__ = "18.3a3"
 DEFAULT_LINE_LENGTH = 88
 # types
 syms = pygram.python_symbols
