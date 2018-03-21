@@ -201,7 +201,9 @@ body.
 
 ### Editor integration
 
-There is currently no integration with any text editors. Vim and
+* Visual Studio Code: [joslarson.black-vscode](https://marketplace.visualstudio.com/items?itemName=joslarson.black-vscode)
+
+There is currently no integration with any other text editors. Vim and
 Atom/Nuclide integration is planned by the author, others will require
 external contributions.
 
