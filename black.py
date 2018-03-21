@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 import asyncio
 from asyncio.base_events import BaseEventLoop
 from concurrent.futures import Executor, ProcessPoolExecutor
@@ -218,7 +219,6 @@ def format_str(src_contents: str, line_length: int) -> FileContent:
     """Reformats a string and returns new contents."""
     src_node = lib2to3_parse(src_contents)
     dst_contents = ""
-    comments: List[Line] = []
     lines = LineGenerator()
     elt = EmptyLineTracker()
     py36 = is_python36(src_node)
@@ -230,21 +230,8 @@ def format_str(src_contents: str, line_length: int) -> FileContent:
         before, after = elt.maybe_empty_lines(current_line)
         for _ in range(before):
             dst_contents += str(empty_line)
-        if not current_line.is_comment:
-            for comment in comments:
-                dst_contents += str(comment)
-            comments = []
-            for line in split_line(current_line, line_length=line_length, py36=py36):
-                dst_contents += str(line)
-        else:
-            comments.append(current_line)
-    if comments:
-        if elt.previous_defs:
-            # Separate postscriptum comments from the last module-level def.
-            dst_contents += str(empty_line)
-            dst_contents += str(empty_line)
-        for comment in comments:
-            dst_contents += str(comment)
+        for line in split_line(current_line, line_length=line_length, py36=py36):
+            dst_contents += str(line)
     return dst_contents
 
 
@@ -662,10 +649,6 @@ class EmptyLineTracker:
         (two on module-level), as well as providing an extra empty line after flow
         control keywords to make them more prominent.
         """
-        if current_line.is_comment:
-            # Don't count standalone comments towards previous empty lines.
-            return 0, 0
-
         before, after = self._maybe_empty_lines(current_line)
         before -= self.previous_after
         self.previous_after = after
@@ -673,10 +656,14 @@ class EmptyLineTracker:
         return before, after
 
     def _maybe_empty_lines(self, current_line: Line) -> Tuple[int, int]:
+        max_allowed = 1
+        if current_line.is_comment and current_line.depth == 0:
+            max_allowed = 2
         if current_line.leaves:
             # Consume the first leaf's extra newlines.
             first_leaf = current_line.leaves[0]
-            before = int('\n' in first_leaf.prefix)
+            before = first_leaf.prefix.count('\n')
+            before = min(before, max(before, max_allowed))
             first_leaf.prefix = ''
         else:
             before = 0
@@ -730,7 +717,6 @@ class LineGenerator(Visitor[Line]):
     in ways that will no longer stringify to valid Python code on the tree.
     """
     current_line: Line = Factory(Line)
-    standalone_comments: List[Leaf] = Factory(list)
 
     def line(self, indent: int = 0) -> Iterator[Line]:
         """Generate a line.
@@ -761,33 +747,22 @@ class LineGenerator(Visitor[Line]):
                     yield from self.line()
 
                 else:
-                    # regular standalone comment, to be processed later (see
-                    # docstring in `generate_comments()`
-                    self.standalone_comments.append(comment)
-            normalize_prefix(node, inside_brackets=any_open_brackets)
-            if node.type not in WHITESPACE:
-                for comment in self.standalone_comments:
+                    # regular standalone comment
                     yield from self.line()
 
                     self.current_line.append(comment)
                     yield from self.line()
 
-                self.standalone_comments = []
+            normalize_prefix(node, inside_brackets=any_open_brackets)
+            if node.type not in WHITESPACE:
                 self.current_line.append(node)
         yield from super().visit_default(node)
 
-    def visit_suite(self, node: Node) -> Iterator[Line]:
-        """Body of a statement after a colon."""
-        children = iter(node.children)
-        # Process newline before indenting.  It might contain an inline
-        # comment that should go right after the colon.
-        newline = next(children)
-        yield from self.visit(newline)
+    def visit_INDENT(self, node: Node) -> Iterator[Line]:
         yield from self.line(+1)
+        yield from self.visit_default(node)
 
-        for child in children:
-            yield from self.visit(child)
-
+    def visit_DEDENT(self, node: Node) -> Iterator[Line]:
         yield from self.line(-1)
 
     def visit_stmt(self, node: Node, keywords: Set[str]) -> Iterator[Line]:
@@ -1138,30 +1113,40 @@ def generate_comments(leaf: Leaf) -> Iterator[Leaf]:
     Inline comments are emitted as regular token.COMMENT leaves.  Standalone
     are emitted with a fake STANDALONE_COMMENT token identifier.
     """
-    if not leaf.prefix:
+    p = leaf.prefix
+    if not p:
         return
 
-    if '#' not in leaf.prefix:
+    if '#' not in p:
         return
 
-    before_comment, content = leaf.prefix.split('#', 1)
-    content = content.rstrip()
-    if content and (content[0] not in {' ', '!', '#'}):
-        content = ' ' + content
-    is_standalone_comment = (
-        '\n' in before_comment or '\n' in content or leaf.type == token.ENDMARKER
-    )
-    if not is_standalone_comment:
-        # simple trailing comment
-        yield Leaf(token.COMMENT, value='#' + content)
-        return
-
-    for line in ('#' + content).split('\n'):
+    nlines = 0
+    for index, line in enumerate(p.split('\n')):
         line = line.lstrip()
+        if not line:
+            nlines += 1
         if not line.startswith('#'):
             continue
 
-        yield Leaf(STANDALONE_COMMENT, line)
+        if index == 0 and leaf.type != token.ENDMARKER:
+            comment_type = token.COMMENT  # simple trailing comment
+        else:
+            comment_type = STANDALONE_COMMENT
+        yield Leaf(comment_type, make_comment(line), prefix='\n' * nlines)
+
+        nlines = 0
+
+
+def make_comment(content: str) -> str:
+    content = content.rstrip()
+    if not content:
+        return '#'
+
+    if content[0] == '#':
+        content = content[1:]
+    if content and content[0] not in {' ', '!', '#'}:
+        content = ' ' + content
+    return '#' + content
 
 
 def split_line(
@@ -1384,9 +1369,11 @@ def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
     you'll lose your voting rights.
     """
     if not inside_brackets:
-        spl = leaf.prefix.split('#', 1)
+        spl = leaf.prefix.split('#')
         if '\\' not in spl[0]:
-            nl_count = spl[0].count('\n')
+            nl_count = spl[-1].count('\n')
+            if len(spl) > 1:
+                nl_count -= 1
             leaf.prefix = '\n' * nl_count
             return
 

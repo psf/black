@@ -21,6 +21,8 @@ except ImportError:
 
 
 # Some comment before a function.
+
+
 def function(default=None):
     """Docstring comes first.
 
@@ -43,7 +45,10 @@ def function(default=None):
 GLOBAL_STATE = {'a': a(1), 'b': a(2), 'c': a(3)}
 
 
-# Another comment
+# Another comment!
+# This time two lines.
+
+
 @fast(really=True)
 async def wat():
     async with X.open_async() as x:  # Some more comments

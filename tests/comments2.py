@@ -1,4 +1,5 @@
 # Please keep __all__ alphabetized within each category.
+
 __all__ = [
     # Super-special typing primitives.
     'Any',
@@ -22,6 +23,7 @@ __all__ = [
     'Generator',
 ]
 
+# Comment before function.
 def inline_comments_in_brackets_ruin_everything():
     if typedargslist:
         parameters.children = [
@@ -42,11 +44,14 @@ def inline_comments_in_brackets_ruin_everything():
             # transport hasn't been notified yet?
             and self._proc.poll() is None):
         pass
+    # no newline before or after
     short = [
      # one
      1,
      # two
      2]
+
+    # no newline after
     call(arg1, arg2, """
 short
 """, arg3=True)
@@ -85,6 +90,14 @@ short
         # right
         if element is not None
     ]
+    while True:
+        if False:
+            continue
+
+            # and round and round we go
+        # and round and round we go
+
+    # let's return
     return Node(
         syms.simple_stmt,
         [
@@ -92,6 +105,12 @@ short
             Leaf(token.NEWLINE, '\n'),  # FIXME: \r\n?
         ],
     )
+
+
+#######################
+### SECTION COMMENT ###
+#######################
+
 
 instruction()
 
@@ -103,6 +122,7 @@ instruction()
 
 
 # Please keep __all__ alphabetized within each category.
+
 __all__ = [
     # Super-special typing primitives.
     'Any',
@@ -123,6 +143,8 @@ __all__ = [
     'NamedTuple',  # Not really a type.
     'Generator',
 ]
+
+# Comment before function.
 
 
 def inline_comments_in_brackets_ruin_everything():
@@ -145,12 +167,15 @@ def inline_comments_in_brackets_ruin_everything():
         and self._proc.poll() is None
     ):
         pass
+    # no newline before or after
     short = [
         # one
         1,
         # two
         2,
     ]
+
+    # no newline after
     call(
         arg1,
         arg2,
@@ -161,6 +186,7 @@ short
     )
 
     ############################################################################
+
     call2(
         # short
         arg1,
@@ -192,12 +218,26 @@ short
         # right
         if element is not None
     ]
+    while True:
+        if False:
+            continue
+
+    # and round and round we go
+    # and round and round we go
+
+    # let's return
     return Node(
         syms.simple_stmt,
         [Node(statement, result), Leaf(token.NEWLINE, '\n')],  # FIXME: \r\n?
     )
 
 
+#######################
+### SECTION COMMENT ###
+#######################
+
+
 instruction()
+
 # END COMMENTS
 # MORE END COMMENTS

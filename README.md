@@ -183,6 +183,22 @@ explains it.  The tl;dr is "it's like highway speed limits, we won't
 bother you if you overdo it by a few km/h".
 
 
+### Empty lines
+
+*Black* will allow single empty lines left by the original editors,
+except when they're added within parenthesized expressions.  Since such
+expressions are always reformatted to fit minimal space, this whitespace
+is lost.
+
+It will also insert proper spacing before and after function definitions.
+It's one line before and after inner functions and two lines before and
+after module-level functions.  *Black* will put those empty lines also
+between the function definition and any standalone comments that
+immediately precede the given function.  If you want to comment on the
+entire function, use a docstring or put a leading comment in the function
+body.
+
+
 ### Editor integration
 
 There is currently no integration with any text editors. Vim and
