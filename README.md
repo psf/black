@@ -267,6 +267,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * restored ability to format code with legacy usage of `async` as
   a name (#20, #42)
 
+* even better handling of numpy-style array indexing (#33, again)
+
 
 ### 18.3a2
 

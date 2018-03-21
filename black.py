@@ -872,7 +872,7 @@ def whitespace(leaf: Leaf) -> str:  # noqa C901
         return DOUBLESPACE
 
     assert p is not None, f"INTERNAL ERROR: hand-made leaf without parent: {leaf!r}"
-    if t == token.COLON and p.type != syms.subscript:
+    if t == token.COLON and p.type not in {syms.subscript, syms.subscriptlist}:
         return NO
 
     prev = leaf.prev_sibling
@@ -905,7 +905,7 @@ def whitespace(leaf: Leaf) -> str:  # noqa C901
                 return NO
 
         elif prevp.type == token.COLON:
-            if prevp.parent and prevp.parent.type == syms.subscript:
+            if prevp.parent and prevp.parent.type in {syms.subscript, syms.sliceop}:
                 return NO
 
         elif prevp.parent and prevp.parent.type in {syms.factor, syms.star_expr}:
