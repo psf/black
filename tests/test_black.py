@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from functools import partial
 from io import StringIO
+import os
 from pathlib import Path
 import sys
 from typing import Any, List, Tuple
@@ -47,7 +48,7 @@ class BlackTestCase(unittest.TestCase):
     maxDiff = None
 
     def assertFormatEqual(self, expected: str, actual: str) -> None:
-        if actual != expected:
+        if actual != expected and not os.environ.get('SKIP_AST_PRINT'):
             bdv: black.DebugVisitor[Any]
             black.out('Expected tree:', fg='green')
             try:
