@@ -745,8 +745,9 @@ class LineGenerator(Visitor[Line]):
 
     def visit_default(self, node: LN) -> Iterator[Line]:
         if isinstance(node, Leaf):
+            any_open_brackets = self.current_line.bracket_tracker.any_open_brackets()
             for comment in generate_comments(node):
-                if self.current_line.bracket_tracker.any_open_brackets():
+                if any_open_brackets:
                     # any comment within brackets is subject to splitting
                     self.current_line.append(comment)
                 elif comment.type == token.COMMENT:
@@ -758,7 +759,7 @@ class LineGenerator(Visitor[Line]):
                     # regular standalone comment, to be processed later (see
                     # docstring in `generate_comments()`
                     self.standalone_comments.append(comment)
-            normalize_prefix(node)
+            normalize_prefix(node, inside_brackets=any_open_brackets)
             if node.type not in WHITESPACE:
                 for comment in self.standalone_comments:
                     yield from self.line()
@@ -1238,7 +1239,7 @@ def left_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
                 current_leaves = body_leaves
     # Since body is a new indent level, remove spurious leading whitespace.
     if body_leaves:
-        normalize_prefix(body_leaves[0])
+        normalize_prefix(body_leaves[0], inside_brackets=True)
     # Build the new lines.
     for result, leaves in (
         (head, head_leaves), (body, body_leaves), (tail, tail_leaves)
@@ -1278,7 +1279,7 @@ def right_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
     head_leaves.reverse()
     # Since body is a new indent level, remove spurious leading whitespace.
     if body_leaves:
-        normalize_prefix(body_leaves[0])
+        normalize_prefix(body_leaves[0], inside_brackets=True)
     # Build the new lines.
     for result, leaves in (
         (head, head_leaves), (body, body_leaves), (tail, tail_leaves)
@@ -1342,7 +1343,7 @@ def delimiter_split(line: Line, py36: bool = False) -> Iterator[Line]:
             trailing_comma_safe = trailing_comma_safe and py36
         leaf_priority = delimiters.get(id(leaf))
         if leaf_priority == delimiter_priority:
-            normalize_prefix(current_line.leaves[0])
+            normalize_prefix(current_line.leaves[0], inside_brackets=True)
             yield current_line
 
             current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
@@ -1353,7 +1354,7 @@ def delimiter_split(line: Line, py36: bool = False) -> Iterator[Line]:
             and trailing_comma_safe
         ):
             current_line.append(Leaf(token.COMMA, ','))
-        normalize_prefix(current_line.leaves[0])
+        normalize_prefix(current_line.leaves[0], inside_brackets=True)
         yield current_line
 
 
@@ -1371,13 +1372,18 @@ def is_import(leaf: Leaf) -> bool:
     )
 
 
-def normalize_prefix(leaf: Leaf) -> None:
-    """Leave existing extra newlines for imports.  Remove everything else."""
-    if is_import(leaf):
+def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
+    """Leave existing extra newlines if not `inside_brackets`.
+
+    Remove everything else.  Note: don't use backslashes for formatting or
+    you'll lose your voting rights.
+    """
+    if not inside_brackets:
         spl = leaf.prefix.split('#', 1)
-        nl_count = spl[0].count('\n')
-        leaf.prefix = '\n' * nl_count
-        return
+        if '\\' not in spl[0]:
+            nl_count = spl[0].count('\n')
+            leaf.prefix = '\n' * nl_count
+            return
 
     leaf.prefix = ''
 

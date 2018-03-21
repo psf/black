@@ -259,6 +259,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ### 18.3a3
 
+* don't remove single empty lines outside of bracketed expressions
+  (#19)
+
 * added ability to pipe formatting from stdin to stdin (#25)
 
 * restored ability to format code with legacy usage of `async` as
