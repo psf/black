@@ -31,7 +31,7 @@ __credits__ = \
 
 import string, re
 from codecs import BOM_UTF8, lookup
-from lib2to3.pgen2.token import *
+from blib2to3.pgen2.token import *
 
 from . import token
 __all__ = [x for x in dir(token) if x[0] != '_'] + ["tokenize",
