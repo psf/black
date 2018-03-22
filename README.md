@@ -298,6 +298,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * don't omit whitespace if the previous factor leaf wasn't a math
   operator (#55)
 
+* omit extra space in kwarg unpacking if it's the first argument (#46)
+
+
 ### 18.3a3
 
 * don't remove single empty lines outside of bracketed expressions

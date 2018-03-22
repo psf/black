@@ -867,21 +867,22 @@ def whitespace(leaf: Leaf) -> str:  # noqa C901
 
         if prevp.type == token.EQUAL:
             if prevp.parent and prevp.parent.type in {
-                syms.typedargslist,
-                syms.varargslist,
-                syms.parameters,
                 syms.arglist,
                 syms.argument,
+                syms.parameters,
+                syms.typedargslist,
+                syms.varargslist,
             }:
                 return NO
 
         elif prevp.type == token.DOUBLESTAR:
             if prevp.parent and prevp.parent.type in {
+                syms.arglist,
+                syms.argument,
+                syms.dictsetmaker,
+                syms.parameters,
                 syms.typedargslist,
                 syms.varargslist,
-                syms.parameters,
-                syms.arglist,
-                syms.dictsetmaker,
             }:
                 return NO
 
