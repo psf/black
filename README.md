@@ -76,12 +76,14 @@ or simple statement per line.  If this fits the allotted line length,
 great.
 ```py3
 # in:
+
 l = [1,
      2,
      3,
 ]
 
 # out:
+
 l = [1, 2, 3]
 ```
 
@@ -89,9 +91,11 @@ If not, *Black* will look at the contents of the first outer matching
 brackets and put that in a separate indented line.
 ```py3
 # in:
+
 l = [[n for n in list_bosses()], [n for n in list_employees()]]
 
 # out:
+
 l = [
     [n for n in list_bosses()], [n for n in list_employees()]
 ]
@@ -106,12 +110,14 @@ matching brackets.  If that doesn't work, it will put all of them in
 separate lines.
 ```py3
 # in:
+
 def very_important_function(template: str, *variables, file: os.PathLike, debug: bool = False):
     """Applies `variables` to the `template` and writes to `file`."""
     with open(file, 'w') as f:
         ...
 
 # out:
+
 def very_important_function(
     template: str,
     *variables,
