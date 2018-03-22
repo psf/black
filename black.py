@@ -71,6 +71,14 @@ class CannotSplit(Exception):
     is_flag=True,
     help='If --fast given, skip temporary sanity checks. [default: --safe]',
 )
+@click.option(
+    '--no-error',
+    is_flag=True,
+    help=(
+        "Don't return 1 if there were any files changed but no error. "
+        "This is useful when running black in a file watcher in your IDE"
+    ),
+)
 @click.version_option(version=__version__)
 @click.argument(
     'src',
@@ -81,7 +89,12 @@ class CannotSplit(Exception):
 )
 @click.pass_context
 def main(
-    ctx: click.Context, line_length: int, check: bool, fast: bool, src: List[str]
+    ctx: click.Context,
+    line_length: int,
+    check: bool,
+    fast: bool,
+    src: List[str],
+    no_error: bool,
 ) -> None:
     """The uncompromising code formatter."""
     sources: List[Path] = []
@@ -100,7 +113,7 @@ def main(
         ctx.exit(0)
     elif len(sources) == 1:
         p = sources[0]
-        report = Report()
+        report = Report(no_error=no_error)
         try:
             if not p.is_file() and str(p) == '-':
                 changed = format_stdin_to_stdout(
@@ -121,7 +134,7 @@ def main(
         try:
             return_code = loop.run_until_complete(
                 schedule_formatting(
-                    sources, line_length, not check, fast, loop, executor
+                    sources, line_length, not check, fast, loop, executor, no_error
                 )
             )
         finally:
@@ -136,16 +149,17 @@ async def schedule_formatting(
     fast: bool,
     loop: BaseEventLoop,
     executor: Executor,
+    no_error: bool,
 ) -> int:
     tasks = {
         src: loop.run_in_executor(
-            executor, format_file_in_place, src, line_length, fast, write_back
+            executor, format_file_in_place, src, line_length, fast, write_back, no_error
         )
         for src in sources
     }
     await asyncio.wait(tasks.values())
     cancelled = []
-    report = Report()
+    report = Report(no_error=no_error)
     for src, task in tasks.items():
         if not task.done():
             report.failed(src, 'timed out, cancelling')
@@ -1435,6 +1449,7 @@ class Report:
     change_count: int = 0
     same_count: int = 0
     failure_count: int = 0
+    no_error: bool = False
 
     def done(self, src: Path, changed: bool) -> None:
         """Increment the counter for successful reformatting. Write out a message."""
@@ -1458,7 +1473,7 @@ class Report:
         if self.failure_count:
             return 123
 
-        elif self.change_count:
+        elif not self.no_error and self.change_count:
             return 1
 
         return 0
