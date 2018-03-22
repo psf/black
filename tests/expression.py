@@ -53,6 +53,7 @@ str or None if (1 if True else 2) else str or bytes or None
 (1, 2, 3)
 []
 [1, 2, 3, 4, 5, 6, 7, 8, 9, (10 or A), (11 or B), (12 or C)]
+[1, 2, 3,]
 {i for i in (1, 2, 3)}
 {(i ** 2) for i in (1, 2, 3)}
 {(i ** 2) for i, _ in ((1, 'a'), (2, 'b'), (3, 'c'))}
@@ -84,7 +85,10 @@ call.me(maybe)
 list[str]
 dict[str, int]
 tuple[str, ...]
-tuple[str, int, float, dict[str, int]]
+tuple[str, int, float, dict[str, int],]
+very_long_variable_name_filters: t.List[
+    t.Tuple[str, t.Union[str, t.List[t.Optional[str]]]],
+]
 slice[0]
 slice[0:1]
 slice[0:1:2]
@@ -207,6 +211,7 @@ str or None if (1 if True else 2) else str or bytes or None
 (1, 2, 3)
 []
 [1, 2, 3, 4, 5, 6, 7, 8, 9, (10 or A), (11 or B), (12 or C)]
+[1, 2, 3]
 {i for i in (1, 2, 3)}
 {(i ** 2) for i in (1, 2, 3)}
 {(i ** 2) for i, _ in ((1, 'a'), (2, 'b'), (3, 'c'))}
@@ -248,6 +253,9 @@ list[str]
 dict[str, int]
 tuple[str, ...]
 tuple[str, int, float, dict[str, int]]
+very_long_variable_name_filters: t.List[
+    t.Tuple[str, t.Union[str, t.List[t.Optional[str]]]],
+]
 slice[0]
 slice[0:1]
 slice[0:1:2]

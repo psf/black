@@ -510,9 +510,15 @@ class Line:
         ):
             return False
 
-        if closing.type == token.RSQB or closing.type == token.RBRACE:
+        if closing.type == token.RBRACE:
             self.leaves.pop()
             return True
+
+        if closing.type == token.RSQB:
+            comma = self.leaves[-1]
+            if comma.parent and comma.parent.type == syms.listmaker:
+                self.leaves.pop()
+                return True
 
         # For parens let's check if it's safe to remove the comma.  If the
         # trailing one is the only one, we might mistakenly change a tuple
