@@ -191,10 +191,10 @@
         },
         "twine": {
             "hashes": [
-                "sha256:87ca69576a47019052b1bf2a27c00520379304c721e5f9eb46f126068a874a61",
-                "sha256:24d1489e586f9c927f9c02b5d4d239da48f97206cc8fc6c9dacb2aab42e1a1b1"
+                "sha256:08eb132bbaec40c6d25b358f546ec1dc96ebd2638a86eea68769d9e67fe2b129",
+                "sha256:2fd9a4d9ff0bcacf41fdc40c8cb0cfaef1f1859457c9653fd1b92237cc4e9f25"
             ],
-            "version": "==1.11.0rc1"
+            "version": "==1.11.0"
         },
         "typed-ast": {
             "hashes": [
