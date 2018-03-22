@@ -63,6 +63,8 @@ str or None if (1 if True else 2) else str or bytes or None
 [((i ** 2) + j) for i in (1, 2, 3) for j in (1, 2, 3)]
 {i: 0 for i in (1, 2, 3)}
 {i: j for i, j in ((1, 'a'), (2, 'b'), (3, 'c'))}
+{a: b * 2 for a, b in dictionary.items()}
+{a: b * -2 for a, b in dictionary.items()}
 {k: v for k, v in this_is_a_very_long_variable_which_will_cause_a_trailing_comma_which_breaks_the_comprehension}
 Python3 > Python2 > COBOL
 Life is Life
@@ -214,6 +216,8 @@ str or None if (1 if True else 2) else str or bytes or None
 [((i ** 2) + j) for i in (1, 2, 3) for j in (1, 2, 3)]
 {i: 0 for i in (1, 2, 3)}
 {i: j for i, j in ((1, 'a'), (2, 'b'), (3, 'c'))}
+{a: b * 2 for a, b in dictionary.items()}
+{a: b * -2 for a, b in dictionary.items()}
 {
     k: v
     for k, v in this_is_a_very_long_variable_which_will_cause_a_trailing_comma_which_breaks_the_comprehension

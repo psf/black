@@ -293,6 +293,11 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Change Log
 
+### 18.3a4 (unreleased)
+
+* don't omit whitespace if the previous factor leaf wasn't a math
+  operator (#55)
+
 ### 18.3a3
 
 * don't remove single empty lines outside of bracketed expressions

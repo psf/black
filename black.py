@@ -340,6 +340,7 @@ MATH_OPERATORS = {
     token.AMPER,
     token.PERCENT,
     token.CIRCUMFLEX,
+    token.TILDE,
     token.LEFTSHIFT,
     token.RIGHTSHIFT,
     token.DOUBLESTAR,
@@ -888,7 +889,11 @@ def whitespace(leaf: Leaf) -> str:  # noqa C901
             if prevp.parent and prevp.parent.type in {syms.subscript, syms.sliceop}:
                 return NO
 
-        elif prevp.parent and prevp.parent.type in {syms.factor, syms.star_expr}:
+        elif (
+            prevp.parent
+            and prevp.parent.type in {syms.factor, syms.star_expr}
+            and prevp.type in MATH_OPERATORS
+        ):
             return NO
 
     elif prev.type in OPENING_BRACKETS:
