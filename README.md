@@ -1,6 +1,6 @@
 # black
 
-[![Build Status](https://travis-ci.org/ambv/black.svg?branch=master)](https://travis-ci.org/ambv/black)
+[![Build Status](https://travis-ci.org/ambv/black.svg?branch=master)](https://travis-ci.org/ambv/black) ![License: MIT](https://img.shields.io/github/license/ambv/black.svg) ![PyPI](https://img.shields.io/pypi/v/black.svg) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 > Any color you like.
 
@@ -247,6 +247,18 @@ developer of Twisted and CPython:
 and [`pipenv`](https://docs.pipenv.org/):
 
 > This vastly improves the formatting of our code. Thanks a ton!
+
+
+## Show your style
+
+Use the badge in your project's README.md:
+
+```markdown
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
+```
+
+Looks like this: [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
+
 
 
 ## Tests
