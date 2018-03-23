@@ -44,7 +44,7 @@ class NothingChanged(UserWarning):
 class CannotSplit(Exception):
     """A readable split that fits the allotted line length is impossible.
 
-    Raised by `left_hand_split()` and `right_hand_split()`.
+    Raised by `left_hand_split()`, `right_hand_split()`, and `delimiter_split()`.
     """
 
 
