@@ -49,6 +49,26 @@ GLOBAL_STATE = {'a': a(1), 'b': a(2), 'c': a(3)}
 # This time two lines.
 
 
+class Foo:
+    """Docstring for class Foo.  Example from Sphinx docs."""
+
+    #: Doc comment for class attribute Foo.bar.
+    #: It can have multiple lines.
+    bar = 1
+
+    flox = 1.5  #: Doc comment for Foo.flox. One line only.
+
+    baz = 2
+    """Docstring for class attribute Foo.baz."""
+
+    def __init__(self):
+        #: Doc comment for instance attribute qux.
+        self.qux = 3
+
+        self.spam = 4
+        """Docstring for instance attribute spam."""
+
+
 @fast(really=True)
 async def wat():
     async with X.open_async() as x:  # Some more comments

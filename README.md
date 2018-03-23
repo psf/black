@@ -324,6 +324,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * omit extra space in kwarg unpacking if it's the first argument (#46)
 
+* omit extra space in [Sphinx auto-attribute comments](http://www.sphinx-doc.org/en/stable/ext/autodoc.html#directive-autoattribute)
+  (#68)
+
 
 ### 18.3a3
 

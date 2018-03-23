@@ -1183,7 +1183,7 @@ def make_comment(content: str) -> str:
 
     if content[0] == '#':
         content = content[1:]
-    if content and content[0] not in {' ', '!', '#'}:
+    if content and content[0] not in ' !:#':
         content = ' ' + content
     return '#' + content
 
