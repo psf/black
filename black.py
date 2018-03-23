@@ -419,7 +419,7 @@ class BracketTracker:
         """Returns True if there is an yet unmatched open bracket on the line."""
         return bool(self.bracket_match)
 
-    def max_priority(self, exclude: Iterable[LeafID] =()) -> int:
+    def max_priority(self, exclude: Iterable[LeafID] = ()) -> int:
         """Returns the highest priority of a delimiter found on the line.
 
         Values are consistent with what `is_delimiter()` returns.
@@ -885,14 +885,17 @@ def whitespace(leaf: Leaf) -> str:  # noqa C901
             return SPACE if prevp.type == token.COMMA else NO
 
         if prevp.type == token.EQUAL:
-            if prevp.parent and prevp.parent.type in {
-                syms.arglist,
-                syms.argument,
-                syms.parameters,
-                syms.typedargslist,
-                syms.varargslist,
-            }:
-                return NO
+            if prevp.parent:
+                if prevp.parent.type in {
+                    syms.arglist, syms.argument, syms.parameters, syms.varargslist
+                }:
+                    return NO
+
+                elif prevp.parent.type == syms.typedargslist:
+                    # A bit hacky: if the equal sign has whitespace, it means we
+                    # previously found it's a typed argument.  So, we're using
+                    # that, too.
+                    return prevp.prefix
 
         elif prevp.type == token.DOUBLESTAR:
             if prevp.parent and prevp.parent.type in {
@@ -938,7 +941,7 @@ def whitespace(leaf: Leaf) -> str:  # noqa C901
         if not prev or prev.type != token.COMMA:
             return NO
 
-    if p.type == syms.varargslist:
+    elif p.type == syms.varargslist:
         # lambdas
         if t == token.RPAR:
             return NO

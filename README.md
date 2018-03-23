@@ -311,6 +311,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * automatic detection of deprecated Python 2 forms of print statements
   and exec statements in the formatted file (#49)
 
+* use proper spaces for complex expressions in default values of typed
+  function arguments (#60)
+
 * only return exit code 1 when --check is used (#50)
 
 * don't remove single trailing commas from square bracket indexing
