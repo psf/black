@@ -14,8 +14,9 @@ def func_no_args():
   for i in range(10):
     print(i)
     continue
+  exec("new-style exec", {}, {})
   return None
-async def coroutine(arg):
+async def coroutine(arg, exec=False):
  "Single-line docstring. Multiline is harder to reformat."
  async with some_connection() as conn:
      await conn.do_what_i_mean('SELECT bobby, tables FROM xkcd', timeout=2)
@@ -93,10 +94,11 @@ def func_no_args():
         print(i)
         continue
 
+    exec("new-style exec", {}, {})
     return None
 
 
-async def coroutine(arg):
+async def coroutine(arg, exec=False):
     "Single-line docstring. Multiline is harder to reformat."
     async with some_connection() as conn:
         await conn.do_what_i_mean('SELECT bobby, tables FROM xkcd', timeout=2)

@@ -275,8 +275,7 @@ python setup.py test
 
 But you can reformat Python 2 code with it, too.  *Black* is able to parse
 all of the new syntax supported on Python 3.6 but also *effectively all*
-the Python 2 syntax at the same time, as long as you're not using print
-statements.
+the Python 2 syntax at the same time.
 
 By making the code exclusively Python 3.6+, I'm able to focus on the
 quality of the formatting and re-use all the nice features of the new
@@ -308,6 +307,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 ## Change Log
 
 ### 18.3a4 (unreleased)
+
+* automatic detection of deprecated Python 2 forms of print statements
+  and exec statements in the formatted file (#49)
 
 * only return exit code 1 when --check is used (#50)
 
