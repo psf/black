@@ -62,7 +62,7 @@ class CannotSplit(Exception):
     is_flag=True,
     help=(
         "Don't write back the files, just return the status.  Return code 0 "
-        "means nothing changed.  Return code 1 means some files were "
+        "means nothing would change.  Return code 1 means some files would be "
         "reformatted.  Return code 123 means there was an internal error."
     ),
 )
@@ -100,7 +100,7 @@ def main(
         ctx.exit(0)
     elif len(sources) == 1:
         p = sources[0]
-        report = Report()
+        report = Report(check=check)
         try:
             if not p.is_file() and str(p) == '-':
                 changed = format_stdin_to_stdout(
@@ -1438,6 +1438,7 @@ def gen_python_files_in_dir(path: Path) -> Iterator[Path]:
 @dataclass
 class Report:
     """Provides a reformatting counter."""
+    check: bool = False
     change_count: int = 0
     same_count: int = 0
     failure_count: int = 0
@@ -1445,7 +1446,8 @@ class Report:
     def done(self, src: Path, changed: bool) -> None:
         """Increment the counter for successful reformatting. Write out a message."""
         if changed:
-            out(f'reformatted {src}')
+            reformatted = 'would reformat' if self.check else 'reformatted'
+            out(f'{reformatted} {src}')
             self.change_count += 1
         else:
             out(f'{src} already well formatted, good job.', bold=False)
@@ -1464,7 +1466,7 @@ class Report:
         if self.failure_count:
             return 123
 
-        elif self.change_count:
+        elif self.change_count and self.check:
             return 1
 
         return 0
@@ -1474,21 +1476,27 @@ class Report:
 
         Use `click.unstyle` to remove colors.
         """
+        if self.check:
+            reformatted = "would be reformatted"
+            unchanged = "would be left unchanged"
+            failed = "would fail to reformat"
+        else:
+            reformatted = "reformatted"
+            unchanged = "left unchanged"
+            failed = "failed to reformat"
         report = []
         if self.change_count:
             s = 's' if self.change_count > 1 else ''
             report.append(
-                click.style(f'{self.change_count} file{s} reformatted', bold=True)
+                click.style(f'{self.change_count} file{s} {reformatted}', bold=True)
             )
         if self.same_count:
             s = 's' if self.same_count > 1 else ''
-            report.append(f'{self.same_count} file{s} left unchanged')
+            report.append(f'{self.same_count} file{s} {unchanged}')
         if self.failure_count:
             s = 's' if self.failure_count > 1 else ''
             report.append(
-                click.style(
-                    f'{self.failure_count} file{s} failed to reformat', fg='red'
-                )
+                click.style(f'{self.failure_count} file{s} {failed}', fg='red')
             )
         return ', '.join(report) + '.'
 

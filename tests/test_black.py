@@ -205,7 +205,10 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(
                 unstyle(str(report)), '1 file reformatted, 1 file left unchanged.'
             )
+            self.assertEqual(report.return_code, 0)
+            report.check = True
             self.assertEqual(report.return_code, 1)
+            report.check = False
             report.failed(Path('e1'), 'boom')
             self.assertEqual(len(out_lines), 2)
             self.assertEqual(len(err_lines), 1)
@@ -246,6 +249,12 @@ class BlackTestCase(unittest.TestCase):
                 '2 files failed to reformat.',
             )
             self.assertEqual(report.return_code, 123)
+            report.check = True
+            self.assertEqual(
+                unstyle(str(report)),
+                '2 files would be reformatted, 2 files would be left unchanged, '
+                '2 files would fail to reformat.',
+            )
 
     def test_is_python36(self) -> None:
         node = black.lib2to3_parse("def f(*, arg): ...\n")

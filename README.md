@@ -44,10 +44,10 @@ black [OPTIONS] [SRC]...
 Options:
   -l, --line-length INTEGER   Where to wrap around.  [default: 88]
   --check                     Don't write back the files, just return the
-                              status.  Return code 0 means nothing changed.
-                              Return code 1 means some files were reformatted.
-                              Return code 123 means there was an internal
-                              error.
+                              status.  Return code 0 means nothing would
+                              change.  Return code 1 means some files would be
+                              reformatted.  Return code 123 means there was an
+                              internal error.
   --fast / --safe             If --fast given, skip temporary sanity checks.
                               [default: --safe]
   --version                   Show the version and exit.
@@ -58,7 +58,9 @@ Options:
 * it does nothing if no sources are passed to it;
 * it will read from standard input and write to standard output if `-`
   is used as the filename;
-* it only outputs messages to users on standard error.
+* it only outputs messages to users on standard error;
+* exits with code 0 unless an internal error occured (or `--check` was
+  used).
 
 
 ## The philosophy behind *Black*
@@ -306,6 +308,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 ## Change Log
 
 ### 18.3a4 (unreleased)
+
+* only return exit code 1 when --check is used (#50)
 
 * don't remove single trailing commas from square bracket indexing
   (#59)
