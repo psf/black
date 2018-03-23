@@ -922,7 +922,7 @@ def whitespace(leaf: Leaf) -> str:  # noqa C901
             and prevp.parent.type == syms.shift_expr
             and prevp.prev_sibling
             and prevp.prev_sibling.type == token.NAME
-            and prevp.prev_sibling.value == 'print'
+            and prevp.prev_sibling.value == 'print'  # type: ignore
         ):
             # Python 2 print chevron
             return NO
