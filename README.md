@@ -307,6 +307,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ### 18.3a4 (unreleased)
 
+* don't remove single trailing commas from square bracket indexing
+  (#59)
+
 * don't omit whitespace if the previous factor leaf wasn't a math
   operator (#55)
 
