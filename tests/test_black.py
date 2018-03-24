@@ -25,7 +25,7 @@ def dump_to_stderr(*output: str) -> str:
 
 def read_data(name: str) -> Tuple[str, str]:
     """read_data('test_name') -> 'input', 'output'"""
-    if not name.endswith('.py'):
+    if not name.endswith(('.py', '.out')):
         name += '.py'
     _input: List[str] = []
     _output: List[str] = []
@@ -281,6 +281,30 @@ class BlackTestCase(unittest.TestCase):
         self.assertFalse(black.is_python36(node))
         node = black.lib2to3_parse(expected)
         self.assertFalse(black.is_python36(node))
+
+    def test_debug_visitor(self) -> None:
+        source, _ = read_data('debug_visitor.py')
+        expected, _ = read_data('debug_visitor.out')
+        out_lines = []
+        err_lines = []
+
+        def out(msg: str, **kwargs: Any) -> None:
+            out_lines.append(msg)
+
+        def err(msg: str, **kwargs: Any) -> None:
+            err_lines.append(msg)
+
+        with patch("black.out", out), patch("black.err", err):
+            black.DebugVisitor.show(source)
+        actual = '\n'.join(out_lines) + '\n'
+        log_name = ''
+        if expected != actual:
+            log_name = black.dump_to_file(*out_lines)
+        self.assertEqual(
+            expected,
+            actual,
+            f"AST print out is different. Actual version dumped to {log_name}",
+        )
 
 
 if __name__ == '__main__':

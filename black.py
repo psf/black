@@ -320,6 +320,15 @@ class DebugVisitor(Visitor[T]):
                 out(f' {node.prefix!r}', fg='green', bold=False, nl=False)
             out(f' {node.value!r}', fg='blue', bold=False)
 
+    @classmethod
+    def show(cls, code: str) -> None:
+        """Pretty-prints a given string of `code`.
+
+        Convenience method for debugging.
+        """
+        v: DebugVisitor[None] = DebugVisitor()
+        list(v.visit(lib2to3_parse(code)))
+
 
 KEYWORDS = set(keyword.kwlist)
 WHITESPACE = {token.DEDENT, token.INDENT, token.NEWLINE}
