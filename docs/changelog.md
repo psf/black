@@ -2,6 +2,8 @@
 
 ### 18.3a4 (unreleased)
 
+* `# fmt: off` and `# fmt: on` are implemented (#5)
+
 * automatic detection of deprecated Python 2 forms of print statements
   and exec statements in the formatted file (#49)
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# fmt: on
 # Some license here.
 #
 # Has many lines. Many, many lines.

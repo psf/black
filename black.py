@@ -10,7 +10,7 @@ from pathlib import Path
 import tokenize
 import sys
 from typing import (
-    Dict, Generic, Iterable, Iterator, List, Optional, Set, Tuple, TypeVar, Union
+    Dict, Generic, Iterable, Iterator, List, Optional, Set, Tuple, Type, TypeVar, Union
 )
 
 from attr import dataclass, Factory
@@ -46,6 +46,34 @@ class CannotSplit(Exception):
 
     Raised by `left_hand_split()`, `right_hand_split()`, and `delimiter_split()`.
     """
+
+
+class FormatError(Exception):
+    """Base fmt: on/off error.
+
+    It holds the number of bytes of the prefix consumed before the format
+    control comment appeared.
+    """
+
+    def __init__(self, consumed: int) -> None:
+        super().__init__(consumed)
+        self.consumed = consumed
+
+    def trim_prefix(self, leaf: Leaf) -> None:
+        leaf.prefix = leaf.prefix[self.consumed:]
+
+    def leaf_from_consumed(self, leaf: Leaf) -> Leaf:
+        """Returns a new Leaf from the consumed part of the prefix."""
+        unformatted_prefix = leaf.prefix[:self.consumed]
+        return Leaf(token.NEWLINE, unformatted_prefix)
+
+
+class FormatOn(FormatError):
+    """Found a comment like `# fmt: on` in the file."""
+
+
+class FormatOff(FormatError):
+    """Found a comment like `# fmt: off` in the file."""
 
 
 @click.command()
@@ -658,6 +686,43 @@ class Line:
         return bool(self.leaves or self.comments)
 
 
+class UnformattedLines(Line):
+
+    def append(self, leaf: Leaf, preformatted: bool = False) -> None:
+        try:
+            list(generate_comments(leaf))
+        except FormatOn as f_on:
+            self.leaves.append(f_on.leaf_from_consumed(leaf))
+            raise
+
+        self.leaves.append(leaf)
+        if leaf.type == token.INDENT:
+            self.depth += 1
+        elif leaf.type == token.DEDENT:
+            self.depth -= 1
+
+    def append_comment(self, comment: Leaf) -> bool:
+        raise NotImplementedError("Unformatted lines don't store comments separately.")
+
+    def maybe_remove_trailing_comma(self, closing: Leaf) -> bool:
+        return False
+
+    def maybe_increment_for_loop_variable(self, leaf: Leaf) -> bool:
+        return False
+
+    def maybe_adapt_standalone_comment(self, comment: Leaf) -> bool:
+        return False
+
+    def __str__(self) -> str:
+        if not self:
+            return '\n'
+
+        res = ''
+        for leaf in self.leaves:
+            res += str(leaf)
+        return res
+
+
 @dataclass
 class EmptyLineTracker:
     """Provides a stateful method that returns the number of potential extra
@@ -678,6 +743,9 @@ class EmptyLineTracker:
         (two on module-level), as well as providing an extra empty line after flow
         control keywords to make them more prominent.
         """
+        if isinstance(current_line, UnformattedLines):
+            return 0, 0
+
         before, after = self._maybe_empty_lines(current_line)
         before -= self.previous_after
         self.previous_after = after
@@ -747,7 +815,7 @@ class LineGenerator(Visitor[Line]):
     """
     current_line: Line = Factory(Line)
 
-    def line(self, indent: int = 0) -> Iterator[Line]:
+    def line(self, indent: int = 0, type: Type[Line] = Line) -> Iterator[Line]:
         """Generate a line.
 
         If the line is empty, only emit if it makes sense.
@@ -756,35 +824,60 @@ class LineGenerator(Visitor[Line]):
         If any lines were generated, set up a new current_line.
         """
         if not self.current_line:
-            self.current_line.depth += indent
+            if self.current_line.__class__ == type:
+                self.current_line.depth += indent
+            else:
+                self.current_line = type(depth=self.current_line.depth + indent)
             return  # Line is empty, don't emit. Creating a new one unnecessary.
 
         complete_line = self.current_line
-        self.current_line = Line(depth=complete_line.depth + indent)
+        self.current_line = type(depth=complete_line.depth + indent)
         yield complete_line
+
+    def visit(self, node: LN) -> Iterator[Line]:
+        """High-level entry point to the visitor."""
+        if isinstance(self.current_line, UnformattedLines):
+            # File contained `# fmt: off`
+            yield from self.visit_unformatted(node)
+
+        else:
+            yield from super().visit(node)
 
     def visit_default(self, node: LN) -> Iterator[Line]:
         if isinstance(node, Leaf):
             any_open_brackets = self.current_line.bracket_tracker.any_open_brackets()
-            for comment in generate_comments(node):
-                if any_open_brackets:
-                    # any comment within brackets is subject to splitting
-                    self.current_line.append(comment)
-                elif comment.type == token.COMMENT:
-                    # regular trailing comment
-                    self.current_line.append(comment)
-                    yield from self.line()
+            try:
+                for comment in generate_comments(node):
+                    if any_open_brackets:
+                        # any comment within brackets is subject to splitting
+                        self.current_line.append(comment)
+                    elif comment.type == token.COMMENT:
+                        # regular trailing comment
+                        self.current_line.append(comment)
+                        yield from self.line()
 
-                else:
-                    # regular standalone comment
-                    yield from self.line()
+                    else:
+                        # regular standalone comment
+                        yield from self.line()
 
-                    self.current_line.append(comment)
-                    yield from self.line()
+                        self.current_line.append(comment)
+                        yield from self.line()
 
-            normalize_prefix(node, inside_brackets=any_open_brackets)
-            if node.type not in WHITESPACE:
-                self.current_line.append(node)
+            except FormatOff as f_off:
+                f_off.trim_prefix(node)
+                yield from self.line(type=UnformattedLines)
+                yield from self.visit(node)
+
+            except FormatOn as f_on:
+                # This only happens here if somebody says "fmt: on" multiple
+                # times in a row.
+                f_on.trim_prefix(node)
+                yield from self.visit_default(node)
+
+            else:
+                normalize_prefix(node, inside_brackets=any_open_brackets)
+                if node.type not in WHITESPACE:
+                    self.current_line.append(node)
         yield from super().visit_default(node)
 
     def visit_INDENT(self, node: Node) -> Iterator[Line]:
@@ -792,6 +885,7 @@ class LineGenerator(Visitor[Line]):
         yield from self.visit_default(node)
 
     def visit_DEDENT(self, node: Node) -> Iterator[Line]:
+        # DEDENT has no value. Additionally, in blib2to3 it never holds comments.
         yield from self.line(-1)
 
     def visit_stmt(self, node: Node, keywords: Set[str]) -> Iterator[Line]:
@@ -843,6 +937,19 @@ class LineGenerator(Visitor[Line]):
     def visit_ENDMARKER(self, leaf: Leaf) -> Iterator[Line]:
         yield from self.visit_default(leaf)
         yield from self.line()
+
+    def visit_unformatted(self, node: LN) -> Iterator[Line]:
+        if isinstance(node, Node):
+            for child in node.children:
+                yield from self.visit(child)
+
+        else:
+            try:
+                self.current_line.append(node)
+            except FormatOn as f_on:
+                f_on.trim_prefix(node)
+                yield from self.line()
+                yield from self.visit(node)
 
     def __attrs_post_init__(self) -> None:
         """You are in a twisty little maze of passages."""
@@ -1168,8 +1275,10 @@ def generate_comments(leaf: Leaf) -> Iterator[Leaf]:
     if '#' not in p:
         return
 
+    consumed = 0
     nlines = 0
     for index, line in enumerate(p.split('\n')):
+        consumed += len(line) + 1  # adding the length of the split '\n'
         line = line.lstrip()
         if not line:
             nlines += 1
@@ -1180,7 +1289,14 @@ def generate_comments(leaf: Leaf) -> Iterator[Leaf]:
             comment_type = token.COMMENT  # simple trailing comment
         else:
             comment_type = STANDALONE_COMMENT
-        yield Leaf(comment_type, make_comment(line), prefix='\n' * nlines)
+        comment = make_comment(line)
+        yield Leaf(comment_type, comment, prefix='\n' * nlines)
+
+        if comment in {'# fmt: on', '# yapf: enable'}:
+            raise FormatOn(consumed)
+
+        if comment in {'# fmt: off', '# yapf: disable'}:
+            raise FormatOff(consumed)
 
         nlines = 0
 
@@ -1210,6 +1326,10 @@ def split_line(
     If `py36` is True, splitting may generate syntax that is only compatible
     with Python 3.6 and later.
     """
+    if isinstance(line, UnformattedLines):
+        yield line
+        return
+
     line_str = str(line).strip('\n')
     if len(line_str) <= line_length and '\n' not in line_str:
         yield line
