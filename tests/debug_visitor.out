@@ -546,7 +546,7 @@ file_input
                     simple_stmt
                       power
                         NAME
- "                # We don't have to handle prefixes for `Node` objects since\n                # that delegates to the first child anyway.\n"
+ "# We don't have to handle prefixes for `Node` objects since\n                # that delegates to the first child anyway.\n                "
  'out'
                         trailer
                           LPAR

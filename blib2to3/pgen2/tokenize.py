@@ -430,6 +430,10 @@ def generate_tokens(readline):
                 yield stashed
                 stashed = None
 
+            if column > indents[-1]:           # count indents
+                indents.append(column)
+                yield (INDENT, line[:pos], (lnum, 0), (lnum, pos), line)
+
             if line[pos] in '#\r\n':           # skip comments or blank lines
                 if line[pos] == '#':
                     comment_token = line[pos:].rstrip('\r\n')
@@ -443,10 +447,7 @@ def generate_tokens(readline):
                            (lnum, pos), (lnum, len(line)), line)
                 continue
 
-            if column > indents[-1]:           # count indents or dedents
-                indents.append(column)
-                yield (INDENT, line[:pos], (lnum, 0), (lnum, pos), line)
-            while column < indents[-1]:
+            while column < indents[-1]:         # count dedents
                 if column not in indents:
                     raise IndentationError(
                         "unindent does not match any outer indentation level",
