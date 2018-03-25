@@ -12,13 +12,23 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os
-import sys
+import ast
+from pathlib import Path
+import re
 
 from recommonmark.parser import CommonMarkParser
 
 
-sys.path.insert(0, os.path.abspath('.' ))
+CURRENT_DIR = Path(__file__).parent
+
+
+def get_version():
+    black_py = CURRENT_DIR / '..' / 'black.py'
+    _version_re = re.compile(r'__version__\s+=\s+(?P<version>.*)')
+    with open(str(black_py), 'r', encoding='utf8') as f:
+        version = _version_re.search(f.read()).group('version')
+    return str(ast.literal_eval(version))
+
 
 # -- Project information -----------------------------------------------------
 
@@ -27,12 +37,12 @@ copyright = '2018, Łukasz Langa and contributors to Black'
 author = 'Łukasz Langa and contributors to Black'
 
 # Autopopulate version
-import black
-# The short X.Y version.
-# TODO: fix for 2 digit month
-version = f'{black.__version__[:4]}'
 # The full version, including alpha/beta/rc tags.
-release = black.__version__
+release = get_version()
+# The short X.Y version.
+version = release
+for sp in 'abcfr':
+    version = version.split(sp)[0]
 
 # -- General configuration ---------------------------------------------------
 
