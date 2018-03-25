@@ -10,7 +10,7 @@ In terms of inspiration, *Black* is about as configurable as *gofmt* and
 *rustfmt* are.  This is deliberate.
 
 Bug reports and fixes are always welcome!  Please follow the issue
-template for best results.
+template on GitHub for best results.
 
 Before you suggest a new feature or configuration knob, ask yourself why
 you want it.  If it enables better integration with some workflow, fixes

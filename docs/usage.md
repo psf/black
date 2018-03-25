@@ -2,28 +2,34 @@
 
 ## Installation
 
-*Black* can be installed by running `pip install black`.
+*Black* can be installed by running `pip install black`.  It requires
+Python 3.6.0+ to run but you can reformat Python 2 code with it, too.
+*Black* is able to parse all of the new syntax supported on Python 3.6
+*but also *effectively all* the Python 2 syntax at the same time.
+
 
 ## Usage
 
 To get started right away with sensible defaults:
 
 ```
-black {source_file}
+black {source_file_or_directory}
 ```
+
 
 ### Command line options
 
-Some basics about the command line help, `black --help`:
+Black doesn't provide many options.  You can list them by running
+`black --help`:
 
-```
+```text
 Usage: black [OPTIONS] [SRC]...
 
   The uncompromising code formatter.
 
 Options:
-  -l, --line-length INTEGER  How many character per line to allow.  [default:
-                             88]
+  -l, --line-length INTEGER  How many character per line to allow.
+                             [default: 88]
   --check                    Don't write back the files, just return the
                              status.  Return code 0 means nothing would
                              change.  Return code 1 means some files would be
@@ -44,7 +50,8 @@ Options:
 * exits with code 0 unless an internal error occured (or `--check` was
   used).
 
-## Important note about the pre-release of Black
+
+## NOTE: This tool is alpha quality at the moment
 
 *Black* can already successfully format itself and the standard library.
 It also sports a decent test suite.  However, it is still very new.

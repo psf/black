@@ -15,7 +15,7 @@
 import os
 import sys
 
-import recommonmark
+from recommonmark.parser import CommonMarkParser
 
 
 sys.path.insert(0, os.path.abspath('.' ))
@@ -52,7 +52,7 @@ extensions = [
 templates_path = ['_templates']
 
 source_parsers = {
-    '.md': 'recommonmark.parser.CommonMarkParser',
+    '.md': CommonMarkParser,
 }
 
 # The suffix(es) of source filenames.
@@ -97,12 +97,14 @@ html_sidebars = {
 
 html_theme_options = {
     'show_related': True,
-    'description': 'The uncompromising Python code formatter',
+    'description': '“Any color you like.”',
+    'github_button': True,
     'github_user': 'ambv',
     'github_repo': 'black',
-    'github_button': True,
+    'github_type': 'star',
     'show_powered_by': True,
     'fixed_sidebar': True,
+    'logo': 'logo2.png',
 }
 
 
@@ -162,7 +164,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'black', 'Documentation for black',
+    (master_doc, 'black', 'Documentation for Black',
      [author], 1)
 ]
 

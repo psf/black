@@ -34,9 +34,16 @@ original.  This slows it down.  If you're feeling confident, use
 ``--fast``.
 
 
+## Installation
+
+*Black* can be installed by running `pip install black`.  It requires
+Python 3.6.0+ to run but you can reformat Python 2 code with it, too.
+*Black* is able to parse all of the new syntax supported on Python 3.6
+but also *effectively all* the Python 2 syntax at the same time.
+
+
 ## Usage
 
-*Black* can be installed by running `pip install black`.
 
 ```
 black [OPTIONS] [SRC]...
@@ -262,27 +269,6 @@ Use the badge in your project's README.md:
 Looks like this: [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 
-
-## Tests
-
-Just run:
-
-```
-python setup.py test
-```
-
-## This tool requires Python 3.6.0+ to run
-
-But you can reformat Python 2 code with it, too.  *Black* is able to parse
-all of the new syntax supported on Python 3.6 but also *effectively all*
-the Python 2 syntax at the same time.
-
-By making the code exclusively Python 3.6+, I'm able to focus on the
-quality of the formatting and re-use all the nice features of the new
-releases (check out [pathlib](https://docs.python.org/3/library/pathlib.html) or
-f-strings) instead of wasting cycles on Unicode compatibility, and so on.
-
-
 ## License
 
 MIT
@@ -402,3 +388,6 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 ## Authors
 
 Glued together by [Łukasz Langa](mailto:lukasz@langa.pl).
+
+[Model T logo](https://thenounproject.com/term/model-t/16785/) by Alex
+Valdivia from the Noun Project.

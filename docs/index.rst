@@ -1,16 +1,13 @@
 .. black documentation master file, created by
    sphinx-quickstart on Fri Mar 23 10:53:30 2018.
 
-Black
-=====
+The uncompromising code formatter
+=================================
 
-**Black** is the uncompromising Python code formatter. 
-
-By using *Black*, you
-agree to cease control over minutiae of hand-formatting. In return,
-*Black* gives you speed, determinism, and freedom from `pycodestyle`
-nagging about formatting. You will save time and mental energy for
-more important matters.
+By using *Black*, you agree to cease control over minutiae of
+hand-formatting. In return, *Black* gives you speed, determinism, and
+freedom from `pycodestyle` nagging about formatting. You will save time
+and mental energy for more important matters.
 
 *Black* makes code review faster by producing the smallest diffs
 possible. Blackened code looks the same regardless of the project
@@ -19,7 +16,7 @@ can focus on the content instead.
 
 .. note::
 
-   Black is an early pre-release.
+   `Black is an early pre-release <usage.html#note-this-tool-is-alpha-quality-at-the-moment>`_.
 
 
 Testimonials
@@ -51,9 +48,9 @@ Contents
 
    usage
    technical_philosophy
-   contributors_guide
+   contributing
    changelog
-   
+
 
 Indices and tables
 ==================
