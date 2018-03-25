@@ -388,6 +388,3 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 ## Authors
 
 Glued together by [Łukasz Langa](mailto:lukasz@langa.pl).
-
-[Model T logo](https://thenounproject.com/term/model-t/16785/) by Alex
-Valdivia from the Noun Project.
