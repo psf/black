@@ -1,6 +1,6 @@
 # black
 
-[![Build Status](https://travis-ci.org/ambv/black.svg?branch=master)](https://travis-ci.org/ambv/black) ![License: MIT](https://img.shields.io/github/license/ambv/black.svg) ![PyPI](https://img.shields.io/pypi/v/black.svg) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
+[![Build Status](https://travis-ci.org/ambv/black.svg?branch=master)](https://travis-ci.org/ambv/black) [![Documentation Status](http://readthedocs.org/projects/black/badge/?version=latest)](http://black.readthedocs.io/en/latest/?badge=latest) ![License: MIT](https://img.shields.io/github/license/ambv/black.svg) ![PyPI](https://img.shields.io/pypi/v/black.svg) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 > Any color you like.
 
