@@ -4,7 +4,7 @@ import re
 from setuptools import setup
 import sys
 
-assert sys.version_info >= (3, 6, 0), "black requires Python 3.6+"
+assert sys.version_info >= (3, 6, 0), 'black requires Python 3.6+'
 from pathlib import Path  # noqa E402
 
 CURRENT_DIR = Path(__file__).parent
@@ -27,9 +27,9 @@ def get_version():
 setup(
     name='black',
     version=get_version(),
-    description="The uncompromising code formatter.",
+    description='The uncompromising code formatter.',
     long_description=get_long_description(),
-    long_description_content_type="text/markdown",
+    long_description_content_type='text/markdown',
     keywords='automation formatter yapf autopep8 pyfmt gofmt rustfmt',
     author='Łukasz Langa',
     author_email='lukasz@langa.pl',
@@ -38,7 +38,7 @@ setup(
     py_modules=['black'],
     packages=['blib2to3', 'blib2to3.pgen2'],
     package_data={'blib2to3': ['*.txt']},
-    python_requires=">=3.6",
+    python_requires='>=3.6',
     zip_safe=False,
     install_requires=['click', 'attrs>=17.4.0'],
     test_suite='tests.test_black',

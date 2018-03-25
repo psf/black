@@ -15,10 +15,10 @@ def func_no_args():
   for i in range(10):
     print(i)
     continue
-  exec("new-style exec", {}, {})
+  exec('new-style exec', {}, {})
   return None
 async def coroutine(arg, exec=False):
- "Single-line docstring. Multiline is harder to reformat."
+ 'Single-line docstring. Multiline is harder to reformat.'
  async with some_connection() as conn:
      await conn.do_what_i_mean('SELECT bobby, tables FROM xkcd', timeout=2)
  await asyncio.sleep(1)
@@ -27,7 +27,7 @@ async def coroutine(arg, exec=False):
 with_args=True,
 many_args=[1,2,3]
 )
-def function_signature_stress_test(number:int,no_annotation=None,text:str="default",* ,debug:bool=False,**kwargs) -> str:
+def function_signature_stress_test(number:int,no_annotation=None,text:str='default',* ,debug:bool=False,**kwargs) -> str:
  return text[number:-1]
 # fmt: on
 def spaces(a=1, b=(), c=[], d={}, e=True, f=-1, g=1 if False else 2, h="", i=r''):
@@ -92,10 +92,10 @@ def func_no_args():
   for i in range(10):
     print(i)
     continue
-  exec("new-style exec", {}, {})
+  exec('new-style exec', {}, {})
   return None
 async def coroutine(arg, exec=False):
- "Single-line docstring. Multiline is harder to reformat."
+ 'Single-line docstring. Multiline is harder to reformat.'
  async with some_connection() as conn:
      await conn.do_what_i_mean('SELECT bobby, tables FROM xkcd', timeout=2)
  await asyncio.sleep(1)
@@ -104,12 +104,12 @@ async def coroutine(arg, exec=False):
 with_args=True,
 many_args=[1,2,3]
 )
-def function_signature_stress_test(number:int,no_annotation=None,text:str="default",* ,debug:bool=False,**kwargs) -> str:
+def function_signature_stress_test(number:int,no_annotation=None,text:str='default',* ,debug:bool=False,**kwargs) -> str:
  return text[number:-1]
 # fmt: on
 
 
-def spaces(a=1, b=(), c=[], d={}, e=True, f=-1, g=1 if False else 2, h="", i=r''):
+def spaces(a=1, b=(), c=[], d={}, e=True, f=-1, g=1 if False else 2, h='', i=r''):
     offset = attr.ib(default=attr.Factory(lambda: _r.uniform(10000, 200000)))
     assert task._cancel_stack[:len(old_stack)] == old_stack
 
@@ -122,7 +122,7 @@ def spaces_types(
     e: bool = True,
     f: int = -1,
     g: int = 1 if False else 2,
-    h: str = "",
+    h: str = '',
     i: str = r'',
 ):
     ...

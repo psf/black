@@ -21,9 +21,9 @@ function((globals(), locals()))
 
 import sys
 
-print >>sys.stderr, "Warning:",
-print >>sys.stderr, "this is a blast from the past."
-print >>sys.stderr, "Look, a repr:", ` sys `
+print >>sys.stderr, 'Warning:',
+print >>sys.stderr, 'this is a blast from the past.'
+print >>sys.stderr, 'Look, a repr:', ` sys `
 
 
 def function((_globals, _locals)):

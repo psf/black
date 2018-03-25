@@ -22,6 +22,6 @@ normal_name = but_the_function_name_is_now_ridiculously_long_and_it_is_still_sup
 # long arguments
 normal_name = normal_function_name(
     "but with super long string arguments that on their own exceed the line limit so there's no way it can ever fit",
-    "eggs with spam and eggs and spam with eggs with spam and eggs and spam with eggs with spam and eggs and spam with eggs",
+    'eggs with spam and eggs and spam with eggs with spam and eggs and spam with eggs with spam and eggs and spam with eggs',
     this_is_a_ridiculously_long_name_and_nobody_in_their_right_mind_would_use_one_like_it=0,
 )
