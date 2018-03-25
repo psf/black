@@ -4,8 +4,6 @@
 
 *Black* can be installed by running `pip install black`.  It requires
 Python 3.6.0+ to run but you can reformat Python 2 code with it, too.
-*Black* is able to parse all of the new syntax supported on Python 3.6
-*but also *effectively all* the Python 2 syntax at the same time.
 
 
 ## Usage

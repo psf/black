@@ -1,7 +1,8 @@
 # Contributing to Black
 
 Welcome! Happy to see you willing to make the project better. Have you
-read the entire [README](README.md) yet?
+read the entire [user documentation](http://black.readthedocs.io/en/latest/)
+yet?
 
 
 ## Bird's eye view
