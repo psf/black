@@ -1,8 +1,16 @@
-# *Black*
+![Black Logo](https://raw.githubusercontent.com/ambv/black/master/docs/_static/logo2-readme.png)
+<h2 align="center">The Uncompromising Code Formatter</h2>
 
-[![Build Status](https://travis-ci.org/ambv/black.svg?branch=master)](https://travis-ci.org/ambv/black) [![Documentation Status](http://readthedocs.org/projects/black/badge/?version=latest)](http://black.readthedocs.io/en/latest/?badge=latest) [![Coverage Status](https://coveralls.io/repos/github/ambv/black/badge.svg?branch=master)](https://coveralls.io/github/ambv/black?branch=master) ![License: MIT](https://img.shields.io/github/license/ambv/black.svg) ![PyPI](https://img.shields.io/pypi/v/black.svg) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
+<p align="center">
+<a href="https://travis-ci.org/ambv/black"><img alt="Build Status" src="https://travis-ci.org/ambv/black.svg?branch=master"></a>
+<a href="http://black.readthedocs.io/en/latest/?badge=latest"><img alt="Documentation Status" src="http://readthedocs.org/projects/black/badge/?version=latest"></a>
+<a href="https://coveralls.io/github/ambv/black?branch=master"><img alt="Coverage Status" src="https://coveralls.io/repos/github/ambv/black/badge.svg?branch=master"></a>
+<img alt="License: MIT" src="https://img.shields.io/github/license/ambv/black.svg">
+<img alt="PyPI" src="https://img.shields.io/pypi/v/black.svg">
+<a href="https://github.com/ambv/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
+</p>
 
-> Any color you like.
+> “Any color you like.”
 
 
 *Black* is the uncompromising Python code formatter.  By using it, you
