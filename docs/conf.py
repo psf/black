@@ -15,6 +15,7 @@
 import ast
 from pathlib import Path
 import re
+import string
 
 from recommonmark.parser import CommonMarkParser
 
@@ -30,6 +31,15 @@ def get_version():
     return str(ast.literal_eval(version))
 
 
+def make_pypi_svg(version):
+    template = CURRENT_DIR / '_static' / 'pypi_template.svg'
+    target = CURRENT_DIR / '_static' / 'pypi.svg'
+    with open(str(template), 'r', encoding='utf8') as f:
+        svg = string.Template(f.read()).substitute(version=version)
+    with open(str(target), 'w', encoding='utf8') as f:
+        f.write(svg)
+
+
 # -- Project information -----------------------------------------------------
 
 project = 'Black'
@@ -43,6 +53,8 @@ release = get_version()
 version = release
 for sp in 'abcfr':
     version = version.split(sp)[0]
+make_pypi_svg(release)
+
 
 # -- General configuration ---------------------------------------------------
 

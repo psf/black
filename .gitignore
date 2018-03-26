@@ -1,3 +1,4 @@
 .coverage
 _build
 .DS_Store
+docs/_static/pypi.svg
