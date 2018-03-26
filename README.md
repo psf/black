@@ -292,7 +292,7 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Change Log
 
-### 18.3a4 (unreleased)
+### 18.3a4
 
 * `# fmt: off` and `# fmt: on` are implemented (#5)
 
