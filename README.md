@@ -1,4 +1,4 @@
-# black
+# *Black*
 
 [![Build Status](https://travis-ci.org/ambv/black.svg?branch=master)](https://travis-ci.org/ambv/black) [![Documentation Status](http://readthedocs.org/projects/black/badge/?version=latest)](http://black.readthedocs.io/en/latest/?badge=latest) [![Coverage Status](https://coveralls.io/repos/github/ambv/black/badge.svg?branch=master)](https://coveralls.io/github/ambv/black?branch=master) ![License: MIT](https://img.shields.io/github/license/ambv/black.svg) ![PyPI](https://img.shields.io/pypi/v/black.svg) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
@@ -61,7 +61,7 @@ Options:
   --help                      Show this message and exit.
 ```
 
-`Black` is a well-behaved Unix-style command-line tool:
+*Black* is a well-behaved Unix-style command-line tool:
 * it does nothing if no sources are passed to it;
 * it will read from standard input and write to standard output if `-`
   is used as the filename;
