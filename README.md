@@ -231,6 +231,7 @@ body.
 ### Editor integration
 
 * Visual Studio Code: [joslarson.black-vscode](https://marketplace.visualstudio.com/items?itemName=joslarson.black-vscode)
+* Emacs: [proofit404/blacken](https://github.com/proofit404/blacken)
 
 Any tool that can pipe code through *Black* using its stdio mode (just
 [use `-` as the file name](http://www.tldp.org/LDP/abs/html/special-chars.html#DASHREF2)).
@@ -238,9 +239,8 @@ The formatted code will be returned on stdout (unless `--check` was
 passed).  *Black* will still emit messages on stderr but that shouldn't
 affect your use case.
 
-There is currently no integration with any other text editors. Vim and
-Atom/Nuclide integration is planned by the author, others will require
-external contributions.
+Vim and Atom/Nuclide integration is planned by the author, others will
+require external contributions.
 
 Patches welcome! ✨ 🍰 ✨
 
