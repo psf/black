@@ -1,0 +1,4 @@
+[report]
+omit =
+  blib2to3/*
+  */site-packages/*
