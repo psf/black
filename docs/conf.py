@@ -106,7 +106,7 @@ html_sidebars = {
 }
 
 html_theme_options = {
-    'show_related': True,
+    'show_related': False,
     'description': '“Any color you like.”',
     'github_button': True,
     'github_user': 'ambv',
