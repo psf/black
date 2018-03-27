@@ -435,3 +435,14 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 ## Authors
 
 Glued together by [Łukasz Langa](mailto:lukasz@langa.pl).
+
+Maintained with [Carol Willing](mailto:carolcode@willingconsulting.com)
+and [Carl Meyer](mailto:carl@oddbird.net).
+
+Multiple contributions by:
+* [Artem Malyshev](mailto:proofit404@gmail.com)
+* [Daniel M. Capella](mailto:polycitizen@gmail.com)
+* [Eli Treuherz](mailto:eli.treuherz@cgi.com)
+* Hugo van Kemenade
+* [Mika⠙](mailto:mail@autophagy.io)
+* [Osaetin Daniel](mailto:osaetindaniel@gmail.com)
