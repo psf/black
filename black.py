@@ -754,13 +754,13 @@ class EmptyLineTracker:
 
     def _maybe_empty_lines(self, current_line: Line) -> Tuple[int, int]:
         max_allowed = 1
-        if current_line.is_comment and current_line.depth == 0:
+        if current_line.depth == 0:
             max_allowed = 2
         if current_line.leaves:
             # Consume the first leaf's extra newlines.
             first_leaf = current_line.leaves[0]
             before = first_leaf.prefix.count('\n')
-            before = min(before, max(before, max_allowed))
+            before = min(before, max_allowed)
             first_leaf.prefix = ''
         else:
             before = 0

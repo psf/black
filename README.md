@@ -218,10 +218,10 @@ always emit an extra empty line after ``return``, ``raise``, ``break``,
 ``continue``, and ``yield``.  This is to make changes in control flow
 more prominent to readers of your code.
 
-*Black* will allow single empty lines left by the original editors,
-except when they're added within parenthesized expressions.  Since such
-expressions are always reformatted to fit minimal space, this whitespace
-is lost.
+*Black* will allow single empty lines inside functions, and single and
+double empty lines on module level left by the original editors, except
+when they're within parenthesized expressions.  Since such expressions
+are always reformatted to fit minimal space, this whitespace is lost.
 
 It will also insert proper spacing before and after function definitions.
 It's one line before and after inner functions and two lines before and
@@ -337,6 +337,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * fixed 18.3a4 regression: don't crash and burn on empty lines with
   trailing whitespace (#80)
+
+* only allow up to two empty lines on module level and only single empty
+  lines within functions (#74)
 
 
 ### 18.3a4

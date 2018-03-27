@@ -12,14 +12,18 @@ def f():
     if t == token.COMMENT:  # another trailing comment
         return DOUBLESPACE
 
+
     assert p is not None, f"INTERNAL ERROR: hand-made leaf without parent: {leaf!r}"
+
 
     prev = leaf.prev_sibling
     if not prev:
         prevp = preceding_leaf(p)
         if not prevp or prevp.type in OPENING_BRACKETS:
 
+
             return NO
+
 
         if prevp.type == token.EQUAL:
             if prevp.parent and prevp.parent.type in {
