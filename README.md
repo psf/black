@@ -270,7 +270,7 @@ Use [proofit404/blacken](https://github.com/proofit404/blacken).
 
 ### PyCharm
 
-(Adapted from [*Pylinting with PyCharm*]https://kirankoduru.github.io/python/pylint-with-pycharm.html))
+(Adapted from [*Pylinting with PyCharm*](https://kirankoduru.github.io/python/pylint-with-pycharm.html))
 
 1. Install `black`.
 
