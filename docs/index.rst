@@ -16,7 +16,7 @@ can focus on the content instead.
 
 .. note::
 
-   `Black is an early pre-release <usage.html#note-this-tool-is-alpha-quality-at-the-moment>`_.
+   `Black is an early pre-release <installation_and_usage.html#note-this-is-an-early-pre-release>`_.
 
 
 Testimonials
@@ -46,10 +46,12 @@ Contents
 .. toctree::
    :maxdepth: 2
 
-   usage
-   technical_philosophy
+   installation_and_usage
+   the_black_code_style
+   editor_integration
    contributing
-   changelog
+   change_log
+   authors
 
 
 Indices and tables

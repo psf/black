@@ -27,33 +27,28 @@ content instead.
 possible.
 
 
-## NOTE: This is an early pre-release
+## Installation and Usage
 
-*Black* can already successfully format itself and the standard library.
-It also sports a decent test suite.  However, it is still very new.
-Things will probably be wonky for a while. This is made explicit by the
-"Alpha" trove classifier, as well as by the "a" in the version number.
-What this means for you is that **until the formatter becomes stable,
-you should expect some formatting to change in the future**.
-
-Also, as a temporary safety measure, *Black* will check that the
-reformatted code still produces a valid AST that is equivalent to the
-original.  This slows it down.  If you're feeling confident, use
-``--fast``.
-
-
-## Installation
+### Installation
 
 *Black* can be installed by running `pip install black`.  It requires
 Python 3.6.0+ to run but you can reformat Python 2 code with it, too.
-*Black* is able to parse all of the new syntax supported on Python 3.6
-but also *effectively all* the Python 2 syntax at the same time.
 
 
-## Usage
+### Usage
 
+To get started right away with sensible defaults:
 
 ```
+black {source_file_or_directory}
+```
+
+### Command line options
+
+Black doesn't provide many options.  You can list them by running
+`black --help`:
+
+```text
 black [OPTIONS] [SRC]...
 
 Options:
@@ -78,7 +73,22 @@ Options:
   used).
 
 
-## The philosophy behind *Black*
+### NOTE: This is an early pre-release
+
+*Black* can already successfully format itself and the standard library.
+It also sports a decent test suite.  However, it is still very new.
+Things will probably be wonky for a while. This is made explicit by the
+"Alpha" trove classifier, as well as by the "a" in the version number.
+What this means for you is that **until the formatter becomes stable,
+you should expect some formatting to change in the future**.
+
+Also, as a temporary safety measure, *Black* will check that the
+reformatted code still produces a valid AST that is equivalent to the
+original.  This slows it down.  If you're feeling confident, use
+``--fast``.
+
+
+## The *Black* code style
 
 *Black* reformats entire files in place.  It is not configurable.  It
 doesn't take previous formatting into account.  It doesn't reformat
@@ -87,12 +97,13 @@ recognizes [YAPF](https://github.com/google/yapf)'s block comments to
 the same effect, as a courtesy for straddling code.
 
 
-### How *Black* formats files
+### How *Black* wraps lines
 
 *Black* ignores previous formatting and applies uniform horizontal
 and vertical whitespace to your code.  The rules for horizontal
 whitespace are pretty obvious and can be summarized as: do whatever
-makes `pycodestyle` happy.
+makes `pycodestyle` happy.  The coding style used by *Black* can be
+viewed as a strict subset of PEP 8.
 
 As for vertical whitespace, *Black* tries to render one full expression
 or simple statement per line.  If this fits the allotted line length,
@@ -160,20 +171,6 @@ between two distinct sections of the code that otherwise share the same
 indentation level (like the arguments list and the docstring in the
 example above).
 
-Unnecessary trailing commas are removed if an expression fits in one
-line.  This makes it 1% more likely that your line won't exceed the
-allotted line length limit.
-
-*Black* avoids spurious vertical whitespace.  This is in the spirit of
-PEP 8 which says that in-function vertical whitespace should only be
-used sparingly.  One exception is control flow statements: *Black* will
-always emit an extra empty line after ``return``, ``raise``, ``break``,
-``continue``, and ``yield``.  This is to make changes in control flow
-more prominent to readers of your code.
-
-That's it.  The rest of the whitespace formatting rules follow PEP 8 and
-are designed to keep `pycodestyle` quiet.
-
 
 ### Line length
 
@@ -214,6 +211,13 @@ bother you if you overdo it by a few km/h".
 
 ### Empty lines
 
+*Black* avoids spurious vertical whitespace.  This is in the spirit of
+PEP 8 which says that in-function vertical whitespace should only be
+used sparingly.  One exception is control flow statements: *Black* will
+always emit an extra empty line after ``return``, ``raise``, ``break``,
+``continue``, and ``yield``.  This is to make changes in control flow
+more prominent to readers of your code.
+
 *Black* will allow single empty lines left by the original editors,
 except when they're added within parenthesized expressions.  Since such
 expressions are always reformatted to fit minimal space, this whitespace
@@ -228,7 +232,36 @@ entire function, use a docstring or put a leading comment in the function
 body.
 
 
-### Editor integration
+### Trailing commas
+
+*Black* will add trailing commas to expressions that are split
+by comma where each element is on its own line.  This includes function
+signatures.
+
+Unnecessary trailing commas are removed if an expression fits in one
+line.  This makes it 1% more likely that your line won't exceed the
+allotted line length limit.  Moreover, in this scenario, if you added
+another argument to your call, you'd probably fit it in the same line
+anyway.  That doesn't make diffs any larger.
+
+One exception to removing trailing commas is tuple expressions with
+just one element.  In this case *Black* won't touch the single trailing
+comma as this would unexpectedly change the underlying data type.  Note
+that this is also the case when commas are used while indexing.  This is
+a tuple in disguise: ```numpy_array[3, ]```.
+
+One exception to adding trailing commas is function signatures
+containing `*`, `*args`, or `**kwargs`.  In this case a trailing comma
+is only safe to use on Python 3.6.  *Black* will detect if your file is
+already 3.6+ only and use trailing commas in this situation.  If you
+wonder how it knows, it looks for f-strings and existing use of trailing
+commas in function signatures that have stars in them.  In other words,
+if you'd like a trailing comma in this situation and *Black* didn't
+recognize it was safe to do so, put it there manually and *Black* will
+keep it.
+
+
+## Editor integration
 
 * Visual Studio Code: [joslarson.black-vscode](https://marketplace.visualstudio.com/items?itemName=joslarson.black-vscode)
 * Emacs: [proofit404/blacken](https://github.com/proofit404/blacken)
@@ -282,7 +315,7 @@ Looks like this: [![Code style: black](https://img.shields.io/badge/code%20style
 MIT
 
 
-## Contributing
+## Contributing to Black
 
 In terms of inspiration, *Black* is about as configurable as *gofmt* and
 *rustfmt* are.  This is deliberate.
