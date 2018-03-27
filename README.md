@@ -267,6 +267,33 @@ keep it.
 
 Use [proofit404/blacken](https://github.com/proofit404/blacken).
 
+### PyCharm
+
+(Adapted from [*Pylinting with PyCharm*]https://kirankoduru.github.io/python/pylint-with-pycharm.html))
+
+1. Install `black`.
+
+        $ pip install pylint
+
+2. Locate your `black` installation folder.
+
+        $ which pylint         # MacOS/Linux
+        /usr/local/bin/pylint  # this is just a possible output check yours
+
+       <!-->
+
+        $ where pylint         # Windows
+        %LocalAppData%\Programs\Python\Python36-32\Scripts\pylint.exe  # possible location
+        
+3. Open External tools in PyCharm with `File -> Settings -> Tools -> External Tools`.
+
+4. Click the + icon to add a new external tool with the following values:
+    - Name: black
+    - Description: Black is the uncompromising Python code formatter.
+    - Program: <install_location_from_step_2>
+    - Arguments: $FilePath$
+
+5. Format the currently opened file by selecting `Tools -> External Tools -> black`.
 
 ### Vim
 
@@ -324,8 +351,6 @@ Any tool that can pipe code through *Black* using its stdio mode (just
 The formatted code will be returned on stdout (unless `--check` was
 passed).  *Black* will still emit messages on stderr but that shouldn't
 affect your use case.
-
-This can be used for example with PyCharm's [File Watchers](https://www.jetbrains.com/help/pycharm/file-watchers.html).
 
 
 ## Testimonials
