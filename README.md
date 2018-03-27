@@ -267,23 +267,24 @@ keep it.
 
 Use [proofit404/blacken](https://github.com/proofit404/blacken).
 
+
 ### PyCharm
 
 (Adapted from [*Pylinting with PyCharm*]https://kirankoduru.github.io/python/pylint-with-pycharm.html))
 
 1. Install `black`.
 
-        $ pip install pylint
+        $ pip install black
 
 2. Locate your `black` installation folder.
 
-        $ which pylint         # MacOS/Linux
-        /usr/local/bin/pylint  # this is just a possible output check yours
+        $ which black         # MacOS/Linux
+        /usr/local/bin/black  # this is just a possible output check yours
 
        <!-->
 
-        $ where pylint         # Windows
-        %LocalAppData%\Programs\Python\Python36-32\Scripts\pylint.exe  # possible location
+        $ where black         # Windows
+        %LocalAppData%\Programs\Python\Python36-32\Scripts\black.exe  # possible location
         
 3. Open External tools in PyCharm with `File -> Settings -> Tools -> External Tools`.
 
@@ -294,6 +295,7 @@ Use [proofit404/blacken](https://github.com/proofit404/blacken).
     - Arguments: $FilePath$
 
 5. Format the currently opened file by selecting `Tools -> External Tools -> black`.
+
 
 ### Vim
 
