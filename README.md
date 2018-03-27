@@ -263,8 +263,61 @@ keep it.
 
 ## Editor integration
 
-* Visual Studio Code: [joslarson.black-vscode](https://marketplace.visualstudio.com/items?itemName=joslarson.black-vscode)
-* Emacs: [proofit404/blacken](https://github.com/proofit404/blacken)
+### Emacs
+
+Use [proofit404/blacken](https://github.com/proofit404/blacken).
+
+
+### Vim
+
+Commands and shortcuts:
+
+* `,=` or `:Black` to format the entire file (ranges not supported);
+* `:BlackUpgrade` to upgrade *Black* inside the virtualenv;
+* `:BlackVersion` to get the current version of *Black* inside the
+  virtualenv.
+
+Configuration:
+* `g:black_fast` (defaults to `0`)
+* `g:black_linelength` (defaults to `88`)
+* `g:black_virtualenv` (defaults to `~/.vim/black`)
+
+To install, copy the plugin from [vim/plugin/black.vim](https://github.com/ambv/black/tree/master/vim/plugin/black.vim).
+Let me know if this requires any changes to work with Vim 8's builtin
+`packadd`, or Pathogen, or Vundle, and so on.
+
+This plugin **requires Vim 7.0+ built with Python 3.6+ support**.  It
+needs Python 3.6 to be able to run *Black* inside the Vim process which
+is much faster than calling an external command.
+
+On first run, the plugin creates its own virtualenv using the right
+Python version and automatically installs *Black*. You can upgrade it later
+by calling `:BlackUpgrade` and restarting Vim.
+
+If you need to do anything special to make your virtualenv work and
+install *Black* (for example you want to run a version from master), just
+create a virtualenv manually and point `g:black_virtualenv` to it.
+The plugin will use it.
+
+**How to get Vim with Python 3.6?**
+On Ubuntu 17.10 Vim comes with Python 3.6 by default.
+On macOS with HomeBrew run: `brew install vim --with-python3`.
+When building Vim from source, use:
+`./configure --enable-python3interp=yes`. There's many guides online how
+to do this.
+
+
+### Visual Studio Code
+
+Use [joslarson.black-vscode](https://marketplace.visualstudio.com/items?itemName=joslarson.black-vscode).
+
+
+### Other editors
+
+Atom/Nuclide integration is planned by the author, others will
+require external contributions.
+
+Patches welcome! ✨ 🍰 ✨
 
 Any tool that can pipe code through *Black* using its stdio mode (just
 [use `-` as the file name](http://www.tldp.org/LDP/abs/html/special-chars.html#DASHREF2)).
@@ -272,10 +325,7 @@ The formatted code will be returned on stdout (unless `--check` was
 passed).  *Black* will still emit messages on stderr but that shouldn't
 affect your use case.
 
-Vim and Atom/Nuclide integration is planned by the author, others will
-require external contributions.
-
-Patches welcome! ✨ 🍰 ✨
+This can be used for example with PyCharm's [File Watchers](https://www.jetbrains.com/help/pycharm/file-watchers.html).
 
 
 ## Testimonials
