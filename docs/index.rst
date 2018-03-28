@@ -51,8 +51,8 @@ Contents
    editor_integration
    contributing
    change_log
+   reference/reference_summary
    authors
-
 
 Indices and tables
 ==================
