@@ -1,1 +1,1 @@
-/Users/ambv/Dropbox (Personal)/Python/black/docs/_build/generated/show_your_style.md
+_build/generated/show_your_style.md

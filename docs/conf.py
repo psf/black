@@ -59,6 +59,7 @@ def generate_sections_from_readme():
     target_dir.mkdir(parents=True)
 
     output = None
+    target_dir = target_dir.relative_to(CURRENT_DIR)
     with open(str(readme), 'r', encoding='utf8') as f:
         for line in f:
             if line.startswith('## '):

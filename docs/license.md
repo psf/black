@@ -1,1 +1,1 @@
-/Users/ambv/Dropbox (Personal)/Python/black/docs/_build/generated/license.md
+_build/generated/license.md

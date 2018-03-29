@@ -56,7 +56,7 @@ Split functions
 
 .. autofunction:: black.split_line
 
-.. autofunction:: black.split_succeeded_or_raise
+.. autofunction:: black.bracket_split_succeeded_or_raise
 
 Utilities
 ---------

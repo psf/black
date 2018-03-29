@@ -49,7 +49,7 @@ class CannotSplit(Exception):
 
 
 class FormatError(Exception):
-    """Base fmt: on/off error.
+    """Base exception for `# fmt: on` and `# fmt: off` handling.
 
     It holds the number of bytes of the prefix consumed before the format
     control comment appeared.
@@ -309,9 +309,18 @@ T = TypeVar('T')
 
 
 class Visitor(Generic[T]):
-    """Basic lib2to3 visitor that yields things on visiting."""
+    """Basic lib2to3 visitor that yields things of type `T` on `visit()`."""
 
     def visit(self, node: LN) -> Iterator[T]:
+        """Main method to start the visit process. Yields objects of type `T`.
+
+        It tries to find a `visit_*()` method for the given `node.type`, like
+        `visit_simple_stmt` for Node objects or `visit_INDENT` for Leaf objects.
+        If no dedicated `visit_*()` method is found, chooses `visit_default()`
+        instead.
+
+        Then yields objects of type `T` from the selected visitor.
+        """
         if node.type < 256:
             name = token.tok_name[node.type]
         else:
@@ -319,6 +328,7 @@ class Visitor(Generic[T]):
         yield from getattr(self, f'visit_{name}', self.visit_default)(node)
 
     def visit_default(self, node: LN) -> Iterator[T]:
+        """Default `visit_*()` implementation. Recurses to children of `node`."""
         if isinstance(node, Node):
             for child in node.children:
                 yield from self.visit(child)
@@ -406,12 +416,32 @@ MATH_PRIORITY = 1
 
 @dataclass
 class BracketTracker:
+    """Keeps track of brackets on a line."""
+
+    #: Current bracket depth.
     depth: int = 0
+    #: All currently unclosed brackets.
     bracket_match: Dict[Tuple[Depth, NodeType], Leaf] = Factory(dict)
+    #: All current delimiters with their assigned priority.
     delimiters: Dict[LeafID, Priority] = Factory(dict)
+    #: Last processed leaf, if any.
     previous: Optional[Leaf] = None
 
     def mark(self, leaf: Leaf) -> None:
+        """Marks `leaf` with bracket-related metadata. Keeps track of delimiters.
+
+        All leaves receive an int `bracket_depth` field that stores how deep
+        within brackets a given leaf is. 0 means there are no enclosing brackets
+        that started on this line.
+
+        If a leaf is itself a closing bracket, it receives an `opening_bracket`
+        field that it forms a pair with. This is a one-directional link to
+        avoid reference cycles.
+
+        If a leaf is a delimiter (a token on which Black can split the line if
+        needed) and it's on depth 0, its `id()` is stored in the tracker's
+        `delimiters` field.
+        """
         if leaf.type == token.COMMENT:
             return
 
@@ -456,7 +486,7 @@ class BracketTracker:
         """Returns True if there is an yet unmatched open bracket on the line."""
         return bool(self.bracket_match)
 
-    def max_priority(self, exclude: Iterable[LeafID] = ()) -> int:
+    def max_delimiter_priority(self, exclude: Iterable[LeafID] = ()) -> int:
         """Returns the highest priority of a delimiter found on the line.
 
         Values are consistent with what `is_delimiter()` returns.
@@ -466,8 +496,13 @@ class BracketTracker:
 
 @dataclass
 class Line:
+    """Holds leaves and comments. Can be printed with `str(line)`."""
+
+    #: indentation level
     depth: int = 0
+    #: list of leaves
     leaves: List[Leaf] = Factory(list)
+    #: inline comments that belong on this line
     comments: Dict[LeafID, Leaf] = Factory(dict)
     bracket_tracker: BracketTracker = Factory(BracketTracker)
     inside_brackets: bool = False
@@ -475,6 +510,15 @@ class Line:
     _for_loop_variable: bool = False
 
     def append(self, leaf: Leaf, preformatted: bool = False) -> None:
+        """Add a new `leaf` to the end of the line.
+
+        Unless `preformatted` is True, the `leaf` will receive a new consistent
+        whitespace prefix and metadata applied by :class:`BracketTracker`.
+        Trailing commas are maybe removed, unpacked for loop variables are
+        demoted from being delimiters.
+
+        Inline comments are put aside.
+        """
         has_value = leaf.value.strip()
         if not has_value:
             return
@@ -496,18 +540,22 @@ class Line:
 
     @property
     def is_comment(self) -> bool:
+        """Is this line a standalone comment?"""
         return bool(self) and self.leaves[0].type == STANDALONE_COMMENT
 
     @property
     def is_decorator(self) -> bool:
+        """Is this line a decorator?"""
         return bool(self) and self.leaves[0].type == token.AT
 
     @property
     def is_import(self) -> bool:
+        """Is this an import line?"""
         return bool(self) and is_import(self.leaves[0])
 
     @property
     def is_class(self) -> bool:
+        """Is this a class definition?"""
         return (
             bool(self)
             and self.leaves[0].type == token.NAME
@@ -516,7 +564,7 @@ class Line:
 
     @property
     def is_def(self) -> bool:
-        """Also returns True for async defs."""
+        """Is this a function definition? (Also returns True for async defs.)"""
         try:
             first_leaf = self.leaves[0]
         except IndexError:
@@ -538,6 +586,10 @@ class Line:
 
     @property
     def is_flow_control(self) -> bool:
+        """Is this a flow control statement?
+
+        Those are `return`, `raise`, `break`, and `continue`.
+        """
         return (
             bool(self)
             and self.leaves[0].type == token.NAME
@@ -546,6 +598,7 @@ class Line:
 
     @property
     def is_yield(self) -> bool:
+        """Is this a yield statement?"""
         return (
             bool(self)
             and self.leaves[0].type == token.NAME
@@ -553,6 +606,7 @@ class Line:
         )
 
     def maybe_remove_trailing_comma(self, closing: Leaf) -> bool:
+        """Remove trailing comma if there is one and it's safe."""
         if not (
             self.leaves
             and self.leaves[-1].type == token.COMMA
@@ -615,7 +669,7 @@ class Line:
         return False
 
     def maybe_decrement_after_for_loop_variable(self, leaf: Leaf) -> bool:
-        # See `maybe_increment_for_loop_variable` above for explanation.
+        """See `maybe_increment_for_loop_variable` above for explanation."""
         if self._for_loop_variable and leaf.type == token.NAME and leaf.value == 'in':
             self.bracket_tracker.depth -= 1
             self._for_loop_variable = False
@@ -643,6 +697,7 @@ class Line:
         return self.append_comment(comment)
 
     def append_comment(self, comment: Leaf) -> bool:
+        """Add an inline comment to the line."""
         if comment.type != token.COMMENT:
             return False
 
@@ -661,6 +716,7 @@ class Line:
             return True
 
     def last_non_delimiter(self) -> Leaf:
+        """Returns the last non-delimiter on the line. Raises LookupError otherwise."""
         for i in range(len(self.leaves)):
             last = self.leaves[-i - 1]
             if not is_delimiter(last):
@@ -669,6 +725,7 @@ class Line:
         raise LookupError("No non-delimiters found")
 
     def __str__(self) -> str:
+        """Render the line."""
         if not self:
             return '\n'
 
@@ -683,12 +740,21 @@ class Line:
         return res + '\n'
 
     def __bool__(self) -> bool:
+        """Returns True if the line has leaves or comments."""
         return bool(self.leaves or self.comments)
 
 
 class UnformattedLines(Line):
+    """Just like :class:`Line` but stores lines which aren't reformatted."""
 
-    def append(self, leaf: Leaf, preformatted: bool = False) -> None:
+    def append(self, leaf: Leaf, preformatted: bool = True) -> None:
+        """Just add a new `leaf` to the end of the lines.
+
+        The `preformatted` argument is ignored.
+
+        Keeps track of indentation `depth`, which is useful when the user
+        says `# fmt: on`. Otherwise, doesn't do anything with the `leaf`.
+        """
         try:
             list(generate_comments(leaf))
         except FormatOn as f_on:
@@ -702,18 +768,26 @@ class UnformattedLines(Line):
             self.depth -= 1
 
     def append_comment(self, comment: Leaf) -> bool:
+        """Not implemented in this class."""
         raise NotImplementedError("Unformatted lines don't store comments separately.")
 
     def maybe_remove_trailing_comma(self, closing: Leaf) -> bool:
+        """Does nothing and returns False."""
         return False
 
     def maybe_increment_for_loop_variable(self, leaf: Leaf) -> bool:
+        """Does nothing and returns False."""
         return False
 
     def maybe_adapt_standalone_comment(self, comment: Leaf) -> bool:
+        """Does nothing and returns False."""
         return False
 
     def __str__(self) -> str:
+        """Renders unformatted lines from leaves which were added with `append()`.
+
+        `depth` is not used for indentation in this case.
+        """
         if not self:
             return '\n'
 
@@ -835,7 +909,7 @@ class LineGenerator(Visitor[Line]):
         yield complete_line
 
     def visit(self, node: LN) -> Iterator[Line]:
-        """High-level entry point to the visitor."""
+        """Main method to start the visit process. Yields :class:`Line` objects."""
         if isinstance(self.current_line, UnformattedLines):
             # File contained `# fmt: off`
             yield from self.visit_unformatted(node)
@@ -844,6 +918,7 @@ class LineGenerator(Visitor[Line]):
             yield from super().visit(node)
 
     def visit_default(self, node: LN) -> Iterator[Line]:
+        """Default `visit_*()` implementation. Recurses to children of `node`."""
         if isinstance(node, Leaf):
             any_open_brackets = self.current_line.bracket_tracker.any_open_brackets()
             try:
@@ -881,18 +956,24 @@ class LineGenerator(Visitor[Line]):
         yield from super().visit_default(node)
 
     def visit_INDENT(self, node: Node) -> Iterator[Line]:
+        """Increases indentation level, maybe yields a line."""
+        # In blib2to3 INDENT never holds comments.
         yield from self.line(+1)
         yield from self.visit_default(node)
 
     def visit_DEDENT(self, node: Node) -> Iterator[Line]:
+        """Decreases indentation level, maybe yields a line."""
         # DEDENT has no value. Additionally, in blib2to3 it never holds comments.
         yield from self.line(-1)
 
     def visit_stmt(self, node: Node, keywords: Set[str]) -> Iterator[Line]:
-        """Visit a statement.
+        """Visits a statement.
 
-        The relevant Python language keywords for this statement are NAME leaves
-        within it.
+        This implementation is shared for `if`, `while`, `for`, `try`, `except`,
+        `def`, `with`, and `class`.
+
+        The relevant Python language `keywords` for a given statement will be NAME
+        leaves within it. This methods puts those on a separate line.
         """
         for child in node.children:
             if child.type == token.NAME and child.value in keywords:  # type: ignore
@@ -901,7 +982,7 @@ class LineGenerator(Visitor[Line]):
             yield from self.visit(child)
 
     def visit_simple_stmt(self, node: Node) -> Iterator[Line]:
-        """A statement without nested statements."""
+        """Visits a statement without nested statements."""
         is_suite_like = node.parent and node.parent.type in STATEMENT
         if is_suite_like:
             yield from self.line(+1)
@@ -913,6 +994,7 @@ class LineGenerator(Visitor[Line]):
             yield from self.visit_default(node)
 
     def visit_async_stmt(self, node: Node) -> Iterator[Line]:
+        """Visits `async def`, `async for`, `async with`."""
         yield from self.line()
 
         children = iter(node.children)
@@ -927,18 +1009,28 @@ class LineGenerator(Visitor[Line]):
             yield from self.visit(child)
 
     def visit_decorators(self, node: Node) -> Iterator[Line]:
+        """Visits decorators."""
         for child in node.children:
             yield from self.line()
             yield from self.visit(child)
 
     def visit_SEMI(self, leaf: Leaf) -> Iterator[Line]:
+        """Semicolons are always removed.
+
+        Statements between them are put on separate lines.
+        """
         yield from self.line()
 
     def visit_ENDMARKER(self, leaf: Leaf) -> Iterator[Line]:
+        """End of file.
+
+        Process outstanding comments and end with a newline.
+        """
         yield from self.visit_default(leaf)
         yield from self.line()
 
     def visit_unformatted(self, node: LN) -> Iterator[Line]:
+        """Used when file contained a `# fmt: off`."""
         if isinstance(node, Node):
             for child in node.children:
                 yield from self.visit(child)
@@ -1302,6 +1394,13 @@ def generate_comments(leaf: Leaf) -> Iterator[Leaf]:
 
 
 def make_comment(content: str) -> str:
+    """Returns a consistently formatted comment from the given `content` string.
+
+    All comments (except for "##", "#!", "#:") should have a single space between
+    the hash sign and the content.
+
+    If `content` didn't start with a hash sign, one is provided.
+    """
     content = content.rstrip()
     if not content:
         return '#'
@@ -1370,7 +1469,7 @@ def split_line(
 
 
 def left_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
-    """Split line into many lines, starting with the first matching bracket pair.
+    """Splits line into many lines, starting with the first matching bracket pair.
 
     Note: this usually looks weird, only use this for function definitions.
     Prefer RHS otherwise.
@@ -1407,14 +1506,14 @@ def left_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
             comment_after = line.comments.get(id(leaf))
             if comment_after:
                 result.append(comment_after, preformatted=True)
-    split_succeeded_or_raise(head, body, tail)
+    bracket_split_succeeded_or_raise(head, body, tail)
     for result in (head, body, tail):
         if result:
             yield result
 
 
 def right_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
-    """Split line into many lines, starting with the last matching bracket pair."""
+    """Splits line into many lines, starting with the last matching bracket pair."""
     head = Line(depth=line.depth)
     body = Line(depth=line.depth + 1, inside_brackets=True)
     tail = Line(depth=line.depth)
@@ -1447,13 +1546,26 @@ def right_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
             comment_after = line.comments.get(id(leaf))
             if comment_after:
                 result.append(comment_after, preformatted=True)
-    split_succeeded_or_raise(head, body, tail)
+    bracket_split_succeeded_or_raise(head, body, tail)
     for result in (head, body, tail):
         if result:
             yield result
 
 
-def split_succeeded_or_raise(head: Line, body: Line, tail: Line) -> None:
+def bracket_split_succeeded_or_raise(head: Line, body: Line, tail: Line) -> None:
+    """Raise :exc:`CannotSplit` if the last left- or right-hand split failed.
+
+    Do nothing otherwise.
+
+    A left- or right-hand split is based on a pair of brackets. Content before
+    (and including) the opening bracket is left on one line, content inside the
+    brackets is put on a separate line, and finally content starting with and
+    following the closing bracket is put on a separate line.
+
+    Those are called `head`, `body`, and `tail`, respectively. If the split
+    produced the same line (all content in `head`) or ended up with an empty `body`
+    and the `tail` is just the closing bracket, then it's considered failed.
+    """
     tail_len = len(str(tail).strip())
     if not body:
         if tail_len == 0:
@@ -1467,11 +1579,11 @@ def split_succeeded_or_raise(head: Line, body: Line, tail: Line) -> None:
 
 
 def delimiter_split(line: Line, py36: bool = False) -> Iterator[Line]:
-    """Split according to delimiters of the highest priority.
+    """Splits according to delimiters of the highest priority.
 
     This kind of split doesn't increase indentation.
     If `py36` is True, the split will add trailing commas also in function
-    signatures that contain * and **.
+    signatures that contain `*` and `**`.
     """
     try:
         last_leaf = line.leaves[-1]
@@ -1480,7 +1592,9 @@ def delimiter_split(line: Line, py36: bool = False) -> Iterator[Line]:
 
     delimiters = line.bracket_tracker.delimiters
     try:
-        delimiter_priority = line.bracket_tracker.max_priority(exclude={id(last_leaf)})
+        delimiter_priority = line.bracket_tracker.max_delimiter_priority(
+            exclude={id(last_leaf)}
+        )
     except ValueError:
         raise CannotSplit("No delimiters found")
 
@@ -1531,9 +1645,9 @@ def is_import(leaf: Leaf) -> bool:
 
 
 def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
-    """Leave existing extra newlines if not `inside_brackets`.
+    """Leaves existing extra newlines if not `inside_brackets`.
 
-    Remove everything else.  Note: don't use backslashes for formatting or
+    Removes everything else.  Note: don't use backslashes for formatting or
     you'll lose your voting rights.
     """
     if not inside_brackets:
@@ -1580,6 +1694,9 @@ BLACKLISTED_DIRECTORIES = {
 
 
 def gen_python_files_in_dir(path: Path) -> Iterator[Path]:
+    """Generates all files under `path` which aren't under BLACKLISTED_DIRECTORIES
+    and have one of the PYTHON_EXTENSIONS.
+    """
     for child in path.iterdir():
         if child.is_dir():
             if child.name in BLACKLISTED_DIRECTORIES:
@@ -1593,7 +1710,7 @@ def gen_python_files_in_dir(path: Path) -> Iterator[Path]:
 
 @dataclass
 class Report:
-    """Provides a reformatting counter."""
+    """Provides a reformatting counter. Can be rendered with `str(report)`."""
     check: bool = False
     change_count: int = 0
     same_count: int = 0

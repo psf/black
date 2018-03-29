@@ -5,26 +5,26 @@
 
 .. currentmodule:: black
 
+:class:`BracketTracker`
+-------------------------
+
+.. autoclass:: black.BracketTracker
+   :members:
+
 :class:`EmptyLineTracker`
 -------------------------
 
 .. autoclass:: black.EmptyLineTracker
    :members:
 
-:class:`FormatOn`
------------------
+:class:`Line`
+-------------
 
-.. autoclass:: black.FormatOn
-   :members:
-
-:class:`FormatOff`
-------------------
-
-.. autoclass:: black.FormatOff
+.. autoclass:: black.Line
     :members:
 
-:class:`LineGenerator`
-----------------------
+:class:`LineGenerator` (:class:`Visitor` [:class:`Line`])
+-------------------------------------------------------
 
 .. autoclass:: black.LineGenerator
     :members:
@@ -35,10 +35,14 @@
 .. autoclass:: black.Report
     :members:
 
-:class:`Visitor`
-----------------------
+:class:`UnformattedLines` (:class:`Line`)
+----------------------------------------
+
+.. autoclass:: black.UnformattedLines
+    :members:
+
+:class:`Visitor` (Generic[T])
+----------------------------
 
 .. autoclass:: black.Visitor
     :members:
-
-

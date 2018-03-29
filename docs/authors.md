@@ -1,1 +1,1 @@
-/Users/ambv/Dropbox (Personal)/Python/black/docs/_build/generated/authors.md
+_build/generated/authors.md

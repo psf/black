@@ -1,1 +1,1 @@
-/Users/ambv/Dropbox (Personal)/Python/black/docs/_build/generated/editor_integration.md
+_build/generated/editor_integration.md
