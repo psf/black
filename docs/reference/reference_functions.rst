@@ -61,6 +61,10 @@ Split functions
 Utilities
 ---------
 
+.. py:function:: black.DebugVisitor.show(code: str) -> None
+
+    Pretty-print the lib2to3 AST of a given string of `code`.
+
 .. autofunction:: black.diff
 
 .. autofunction:: black.generate_comments
