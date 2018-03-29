@@ -44,6 +44,7 @@
 .. autoclass:: black.UnformattedLines
     :show-inheritance:
     :members:
+    :special-members: __str__
 
 :class:`Visitor`
 ----------------
