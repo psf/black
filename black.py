@@ -38,7 +38,7 @@ err = partial(click.secho, fg='red', err=True)
 
 
 class NothingChanged(UserWarning):
-    """Raised by `format_file` when the reformatted code is the same as source."""
+    """Raised by `format_file()` when the reformatted code is the same as source."""
 
 
 class CannotSplit(Exception):
@@ -165,6 +165,13 @@ async def schedule_formatting(
     loop: BaseEventLoop,
     executor: Executor,
 ) -> int:
+    """Run formatting of `sources` in parallel using the provided `executor`.
+
+    (Use ProcessPoolExecutors for actual parallelism.)
+
+    `line_length`, `write_back`, and `fast` options are passed to
+    :func:`format_file_in_place`.
+    """
     tasks = {
         src: loop.run_in_executor(
             executor, format_file_in_place, src, line_length, fast, write_back
@@ -193,7 +200,11 @@ async def schedule_formatting(
 def format_file_in_place(
     src: Path, line_length: int, fast: bool, write_back: bool = False
 ) -> bool:
-    """Format the file and rewrite if changed. Return True if changed."""
+    """Format file under `src` path. Return True if changed.
+
+    If `write_back` is True, write reformatted code back to stdout.
+    `line_length` and `fast` options are passed to :func:`format_file_contents`.
+    """
     with tokenize.open(src) as src_buffer:
         src_contents = src_buffer.read()
     try:
@@ -212,7 +223,11 @@ def format_file_in_place(
 def format_stdin_to_stdout(
     line_length: int, fast: bool, write_back: bool = False
 ) -> bool:
-    """Format file on stdin and pipe output to stdout. Return True if changed."""
+    """Format file on stdin. Return True if changed.
+
+    If `write_back` is True, write reformatted code back to stdout.
+    `line_length` and `fast` arguments are passed to :func:`format_file_contents`.
+    """
     contents = sys.stdin.read()
     try:
         contents = format_file_contents(contents, line_length=line_length, fast=fast)
@@ -229,7 +244,12 @@ def format_stdin_to_stdout(
 def format_file_contents(
     src_contents: str, line_length: int, fast: bool
 ) -> FileContent:
-    """Reformats a file and returns its contents and encoding."""
+    """Reformats a file and returns its contents and encoding.
+
+    If `fast` is False, additionally confirm that the reformatted code is
+    valid by calling :func:`assert_equivalent` and :func:`assert_stable` on it.
+    `line_length` is passed to :func:`format_str`.
+    """
     if src_contents.strip() == '':
         raise NothingChanged
 
@@ -244,7 +264,10 @@ def format_file_contents(
 
 
 def format_str(src_contents: str, line_length: int) -> FileContent:
-    """Reformats a string and returns new contents."""
+    """Reformats a string and returns new contents.
+
+    `line_length` determines how many characters per line are allowed.
+    """
     src_node = lib2to3_parse(src_contents)
     dst_contents = ""
     lines = LineGenerator()
@@ -312,7 +335,7 @@ class Visitor(Generic[T]):
     """Basic lib2to3 visitor that yields things of type `T` on `visit()`."""
 
     def visit(self, node: LN) -> Iterator[T]:
-        """Main method to start the visit process. Yields objects of type `T`.
+        """Main method to visit `node` and its children.
 
         It tries to find a `visit_*()` method for the given `node.type`, like
         `visit_simple_stmt` for Node objects or `visit_INDENT` for Leaf objects.
@@ -418,13 +441,9 @@ MATH_PRIORITY = 1
 class BracketTracker:
     """Keeps track of brackets on a line."""
 
-    #: Current bracket depth.
     depth: int = 0
-    #: All currently unclosed brackets.
     bracket_match: Dict[Tuple[Depth, NodeType], Leaf] = Factory(dict)
-    #: All current delimiters with their assigned priority.
     delimiters: Dict[LeafID, Priority] = Factory(dict)
-    #: Last processed leaf, if any.
     previous: Optional[Leaf] = None
 
     def mark(self, leaf: Leaf) -> None:
@@ -498,11 +517,8 @@ class BracketTracker:
 class Line:
     """Holds leaves and comments. Can be printed with `str(line)`."""
 
-    #: indentation level
     depth: int = 0
-    #: list of leaves
     leaves: List[Leaf] = Factory(list)
-    #: inline comments that belong on this line
     comments: Dict[LeafID, Leaf] = Factory(dict)
     bracket_tracker: BracketTracker = Factory(BracketTracker)
     inside_brackets: bool = False

@@ -9,24 +9,26 @@
 -------------------------
 
 .. autoclass:: black.BracketTracker
-   :members:
+    :members:
 
 :class:`EmptyLineTracker`
 -------------------------
 
 .. autoclass:: black.EmptyLineTracker
-   :members:
+    :members:
 
 :class:`Line`
 -------------
 
 .. autoclass:: black.Line
     :members:
+    :special-members: __str__, __bool__
 
-:class:`LineGenerator` (:class:`Visitor` [:class:`Line`])
--------------------------------------------------------
+:class:`LineGenerator`
+----------------------
 
 .. autoclass:: black.LineGenerator
+    :show-inheritance:
     :members:
 
 :class:`Report`
@@ -34,15 +36,18 @@
 
 .. autoclass:: black.Report
     :members:
+    :special-members: __str__
 
-:class:`UnformattedLines` (:class:`Line`)
-----------------------------------------
+:class:`UnformattedLines`
+-------------------------
 
 .. autoclass:: black.UnformattedLines
+    :show-inheritance:
     :members:
 
-:class:`Visitor` (Generic[T])
-----------------------------
+:class:`Visitor`
+----------------
 
 .. autoclass:: black.Visitor
+    :show-inheritance:
     :members:
