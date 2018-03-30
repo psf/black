@@ -21,16 +21,16 @@ from .a.b.c.subprocess import *
 from . import tasks
 
 __all__ = (
-    base_events.__all__ +
-    coroutines.__all__ +
-    events.__all__ +
-    futures.__all__ +
-    locks.__all__ +
-    protocols.__all__ +
-    runners.__all__ +
-    queues.__all__ +
-    streams.__all__ +
-    tasks.__all__
+    base_events.__all__
+    + coroutines.__all__
+    + events.__all__
+    + futures.__all__
+    + locks.__all__
+    + protocols.__all__
+    + runners.__all__
+    + queues.__all__
+    + streams.__all__
+    + tasks.__all__
 )
 
 
@@ -60,14 +60,14 @@ from .a.b.c.subprocess import *
 from . import tasks
 
 __all__ = (
-    base_events.__all__ +
-    coroutines.__all__ +
-    events.__all__ +
-    futures.__all__ +
-    locks.__all__ +
-    protocols.__all__ +
-    runners.__all__ +
-    queues.__all__ +
-    streams.__all__ +
-    tasks.__all__
+    base_events.__all__
+    + coroutines.__all__
+    + events.__all__
+    + futures.__all__
+    + locks.__all__
+    + protocols.__all__
+    + runners.__all__
+    + queues.__all__
+    + streams.__all__
+    + tasks.__all__
 )

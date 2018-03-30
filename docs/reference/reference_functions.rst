@@ -12,6 +12,10 @@ Assertions and checks
 
 .. autofunction:: black.assert_stable
 
+.. autofunction:: black.is_split_after_delimiter
+
+.. autofunction:: black.is_split_before_delimiter
+
 .. autofunction:: black.is_delimiter
 
 .. autofunction:: black.is_import
