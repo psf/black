@@ -3,14 +3,25 @@
 import asyncio
 from asyncio.base_events import BaseEventLoop
 from concurrent.futures import Executor, ProcessPoolExecutor
-from functools import partial
+from functools import partial, wraps
 import keyword
 import os
 from pathlib import Path
 import tokenize
 import sys
 from typing import (
-    Dict, Generic, Iterable, Iterator, List, Optional, Set, Tuple, Type, TypeVar, Union
+    Callable,
+    Dict,
+    Generic,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
 )
 
 from attr import dataclass, Factory
@@ -32,7 +43,9 @@ Depth = int
 NodeType = int
 LeafID = int
 Priority = int
+Index = int
 LN = Union[Leaf, Node]
+SplitFunc = Callable[['Line', bool], Iterator['Line']]
 out = partial(click.secho, bold=True, err=True)
 err = partial(click.secho, fg='red', err=True)
 
@@ -520,7 +533,7 @@ class Line:
 
     depth: int = 0
     leaves: List[Leaf] = Factory(list)
-    comments: Dict[LeafID, Leaf] = Factory(dict)
+    comments: List[Tuple[Index, Leaf]] = Factory(list)
     bracket_tracker: BracketTracker = Factory(BracketTracker)
     inside_brackets: bool = False
     has_for: bool = False
@@ -549,16 +562,31 @@ class Line:
             self.bracket_tracker.mark(leaf)
             self.maybe_remove_trailing_comma(leaf)
             self.maybe_increment_for_loop_variable(leaf)
-            if self.maybe_adapt_standalone_comment(leaf):
-                return
 
         if not self.append_comment(leaf):
             self.leaves.append(leaf)
 
+    def append_safe(self, leaf: Leaf, preformatted: bool = False) -> None:
+        """Like :func:`append()` but disallow invalid standalone comment structure.
+
+        Raises ValueError when any `leaf` is appended after a standalone comment
+        or when a standalone comment is not the first leaf on the line.
+        """
+        if self.bracket_tracker.depth == 0:
+            if self.is_comment:
+                raise ValueError("cannot append to standalone comments")
+
+            if self.leaves and leaf.type == STANDALONE_COMMENT:
+                raise ValueError(
+                    "cannot append standalone comments to a populated line"
+                )
+
+        self.append(leaf, preformatted=preformatted)
+
     @property
     def is_comment(self) -> bool:
         """Is this line a standalone comment?"""
-        return bool(self) and self.leaves[0].type == STANDALONE_COMMENT
+        return len(self.leaves) == 1 and self.leaves[0].type == STANDALONE_COMMENT
 
     @property
     def is_decorator(self) -> bool:
@@ -622,6 +650,15 @@ class Line:
             and self.leaves[0].value == 'yield'
         )
 
+    @property
+    def contains_standalone_comments(self) -> bool:
+        """If so, needs to be split before emitting."""
+        for leaf in self.leaves:
+            if leaf.type == STANDALONE_COMMENT:
+                return True
+
+        return False
+
     def maybe_remove_trailing_comma(self, closing: Leaf) -> bool:
         """Remove trailing comma if there is one and it's safe."""
         if not (
@@ -632,13 +669,13 @@ class Line:
             return False
 
         if closing.type == token.RBRACE:
-            self.leaves.pop()
+            self.remove_trailing_comma()
             return True
 
         if closing.type == token.RSQB:
             comma = self.leaves[-1]
             if comma.parent and comma.parent.type == syms.listmaker:
-                self.leaves.pop()
+                self.remove_trailing_comma()
                 return True
 
         # For parens let's check if it's safe to remove the comma.  If the
@@ -666,7 +703,7 @@ class Line:
                     break
 
         if commas > 1:
-            self.leaves.pop()
+            self.remove_trailing_comma()
             return True
 
         return False
@@ -694,52 +731,49 @@ class Line:
 
         return False
 
-    def maybe_adapt_standalone_comment(self, comment: Leaf) -> bool:
-        """Hack a standalone comment to act as a trailing comment for line splitting.
-
-        If this line has brackets and a standalone `comment`, we need to adapt
-        it to be able to still reformat the line.
-
-        This is not perfect, the line to which the standalone comment gets
-        appended will appear "too long" when splitting.
-        """
-        if not (
+    def append_comment(self, comment: Leaf) -> bool:
+        """Add an inline or standalone comment to the line."""
+        if (
             comment.type == STANDALONE_COMMENT
             and self.bracket_tracker.any_open_brackets()
         ):
+            comment.prefix = ''
             return False
 
-        comment.type = token.COMMENT
-        comment.prefix = '\n' + '    ' * (self.depth + 1)
-        return self.append_comment(comment)
-
-    def append_comment(self, comment: Leaf) -> bool:
-        """Add an inline comment to the line."""
         if comment.type != token.COMMENT:
             return False
 
-        try:
-            after = id(self.last_non_delimiter())
-        except LookupError:
+        after = len(self.leaves) - 1
+        if after == -1:
             comment.type = STANDALONE_COMMENT
             comment.prefix = ''
             return False
 
         else:
-            if after in self.comments:
-                self.comments[after].value += str(comment)
-            else:
-                self.comments[after] = comment
+            self.comments.append((after, comment))
             return True
 
-    def last_non_delimiter(self) -> Leaf:
-        """Return the last non-delimiter on the line. Raise LookupError otherwise."""
-        for i in range(len(self.leaves)):
-            last = self.leaves[-i - 1]
-            if not is_delimiter(last):
-                return last
+    def comments_after(self, leaf: Leaf) -> Iterator[Leaf]:
+        """Generate comments that should appear directly after `leaf`."""
+        for _leaf_index, _leaf in enumerate(self.leaves):
+            if leaf is _leaf:
+                break
 
-        raise LookupError("No non-delimiters found")
+        else:
+            return
+
+        for index, comment_after in self.comments:
+            if _leaf_index == index:
+                yield comment_after
+
+    def remove_trailing_comma(self) -> None:
+        """Remove the trailing comma and moves the comments attached to it."""
+        comma_index = len(self.leaves) - 1
+        for i in range(len(self.comments)):
+            comment_index, comment = self.comments[i]
+            if comment_index == comma_index:
+                self.comments[i] = (comma_index - 1, comment)
+        self.leaves.pop()
 
     def __str__(self) -> str:
         """Render the line."""
@@ -752,7 +786,7 @@ class Line:
         res = f'{first.prefix}{indent}{first.value}'
         for leaf in leaves:
             res += str(leaf)
-        for comment in self.comments.values():
+        for _, comment in self.comments:
             res += str(comment)
         return res + '\n'
 
@@ -806,10 +840,6 @@ class UnformattedLines(Line):
         return False
 
     def maybe_increment_for_loop_variable(self, leaf: Leaf) -> bool:
-        """Does nothing and returns False."""
-        return False
-
-    def maybe_adapt_standalone_comment(self, comment: Leaf) -> bool:
         """Does nothing and returns False."""
         return False
 
@@ -1439,23 +1469,24 @@ def split_line(
     If `py36` is True, splitting may generate syntax that is only compatible
     with Python 3.6 and later.
     """
-    if isinstance(line, UnformattedLines):
+    if isinstance(line, UnformattedLines) or line.is_comment:
         yield line
         return
 
     line_str = str(line).strip('\n')
-    if len(line_str) <= line_length and '\n' not in line_str:
+    if (
+        len(line_str) <= line_length
+        and '\n' not in line_str  # multiline strings
+        and not line.contains_standalone_comments
+    ):
         yield line
         return
 
+    split_funcs: List[SplitFunc]
     if line.is_def:
         split_funcs = [left_hand_split]
     elif line.inside_brackets:
-        split_funcs = [delimiter_split]
-        if '\n' not in line_str:
-            # Only attempt RHS if we don't have multiline strings or comments
-            # on this line.
-            split_funcs.append(right_hand_split)
+        split_funcs = [delimiter_split, standalone_comment_split, right_hand_split]
     else:
         split_funcs = [right_hand_split]
     for split_func in split_funcs:
@@ -1464,7 +1495,7 @@ def split_line(
         # split altogether.
         result: List[Line] = []
         try:
-            for l in split_func(line, py36=py36):
+            for l in split_func(line, py36):
                 if str(l).strip('\n') == line_str:
                     raise CannotSplit("Split function returned an unchanged result")
 
@@ -1517,8 +1548,7 @@ def left_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
     ):
         for leaf in leaves:
             result.append(leaf, preformatted=True)
-            comment_after = line.comments.get(id(leaf))
-            if comment_after:
+            for comment_after in line.comments_after(leaf):
                 result.append(comment_after, preformatted=True)
     bracket_split_succeeded_or_raise(head, body, tail)
     for result in (head, body, tail):
@@ -1557,8 +1587,7 @@ def right_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
     ):
         for leaf in leaves:
             result.append(leaf, preformatted=True)
-            comment_after = line.comments.get(id(leaf))
-            if comment_after:
+            for comment_after in line.comments_after(leaf):
                 result.append(comment_after, preformatted=True)
     bracket_split_succeeded_or_raise(head, body, tail)
     for result in (head, body, tail):
@@ -1592,10 +1621,25 @@ def bracket_split_succeeded_or_raise(head: Line, body: Line, tail: Line) -> None
             )
 
 
+def dont_increase_indentation(split_func: SplitFunc) -> SplitFunc:
+    """Normalize prefix of the first leaf in every line returned by `split_func`.
+
+    This is a decorator over relevant split functions.
+    """
+
+    @wraps(split_func)
+    def split_wrapper(line: Line, py36: bool = False) -> Iterator[Line]:
+        for l in split_func(line, py36):
+            normalize_prefix(l.leaves[0], inside_brackets=True)
+            yield l
+
+    return split_wrapper
+
+
+@dont_increase_indentation
 def delimiter_split(line: Line, py36: bool = False) -> Iterator[Line]:
     """Split according to delimiters of the highest priority.
 
-    This kind of split doesn't increase indentation.
     If `py36` is True, the split will add trailing commas also in function
     signatures that contain `*` and `**`.
     """
@@ -1615,11 +1659,24 @@ def delimiter_split(line: Line, py36: bool = False) -> Iterator[Line]:
     current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
     lowest_depth = sys.maxsize
     trailing_comma_safe = True
+
+    def append_to_line(leaf: Leaf) -> Iterator[Line]:
+        """Append `leaf` to current line or to new line if appending impossible."""
+        nonlocal current_line
+        try:
+            current_line.append_safe(leaf, preformatted=True)
+        except ValueError as ve:
+            yield current_line
+
+            current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
+            current_line.append(leaf)
+
     for leaf in line.leaves:
-        current_line.append(leaf, preformatted=True)
-        comment_after = line.comments.get(id(leaf))
-        if comment_after:
-            current_line.append(comment_after, preformatted=True)
+        yield from append_to_line(leaf)
+
+        for comment_after in line.comments_after(leaf):
+            yield from append_to_line(comment_after)
+
         lowest_depth = min(lowest_depth, leaf.bracket_depth)
         if (
             leaf.bracket_depth == lowest_depth
@@ -1629,7 +1686,6 @@ def delimiter_split(line: Line, py36: bool = False) -> Iterator[Line]:
             trailing_comma_safe = trailing_comma_safe and py36
         leaf_priority = delimiters.get(id(leaf))
         if leaf_priority == delimiter_priority:
-            normalize_prefix(current_line.leaves[0], inside_brackets=True)
             yield current_line
 
             current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
@@ -1640,7 +1696,40 @@ def delimiter_split(line: Line, py36: bool = False) -> Iterator[Line]:
             and trailing_comma_safe
         ):
             current_line.append(Leaf(token.COMMA, ','))
-        normalize_prefix(current_line.leaves[0], inside_brackets=True)
+        yield current_line
+
+
+@dont_increase_indentation
+def standalone_comment_split(line: Line, py36: bool = False) -> Iterator[Line]:
+    """Split standalone comments from the rest of the line."""
+    for leaf in line.leaves:
+        if leaf.type == STANDALONE_COMMENT:
+            if leaf.bracket_depth == 0:
+                break
+
+    else:
+        raise CannotSplit("Line does not have any standalone comments")
+
+    current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
+
+    def append_to_line(leaf: Leaf) -> Iterator[Line]:
+        """Append `leaf` to current line or to new line if appending impossible."""
+        nonlocal current_line
+        try:
+            current_line.append_safe(leaf, preformatted=True)
+        except ValueError as ve:
+            yield current_line
+
+            current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
+            current_line.append(leaf)
+
+    for leaf in line.leaves:
+        yield from append_to_line(leaf)
+
+        for comment_after in line.comments_after(leaf):
+            yield from append_to_line(comment_after)
+
+    if current_line:
         yield current_line
 
 
