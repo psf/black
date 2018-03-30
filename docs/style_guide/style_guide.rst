@@ -1,6 +1,6 @@
-=======================
-*Black* style and PEP 8
-=======================
+=========================
+Style reference and PEP 8
+=========================
 
 *Black* reformats entire files in place.  It is not configurable.  It
 doesn't take previous formatting into account.
@@ -12,8 +12,8 @@ This section orders topics in the same sequence as Python's PEP 8
 Code layout
 ===========
 
-- :doc:`line_wrap`
-- :doc:`line_length`
+- :doc:`horizontal_linespace`
+- :doc:`vertical_linespace`
 - :doc:`empty_lines`
 
 String Quotes
