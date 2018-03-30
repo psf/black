@@ -1,0 +1,9 @@
+name: black_docs
+channels:
+  - conda-forge
+dependencies:
+- python>=3.6
+- Sphinx==1.7.2
+- pip:
+  - recommonmark==0.4.0
+  - git+https://git@github.com/ambv/black.git
