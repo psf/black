@@ -385,6 +385,10 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ### 18.3a5 (unreleased)
 
+* fixed handling of standalone comments within nested bracketed
+  expressions; Black will no longer produce super long lines or put all
+  standalone comments at the end of the expression (#22)
+
 * fixed 18.3a4 regression: don't crash and burn on empty lines with
   trailing whitespace (#80)
 
