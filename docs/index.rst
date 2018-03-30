@@ -51,6 +51,7 @@ Contents
    editor_integration
    contributing
    change_log
+   style_guide/style_guide.md
    reference/reference_summary
    authors
 
