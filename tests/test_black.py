@@ -159,6 +159,14 @@ class BlackTestCase(unittest.TestCase):
         black.assert_stable(source, actual, line_length=ll)
 
     @patch("black.dump_to_file", dump_to_stderr)
+    def test_comments4(self) -> None:
+        source, expected = read_data('comments4')
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, line_length=ll)
+
+    @patch("black.dump_to_file", dump_to_stderr)
     def test_cantfit(self) -> None:
         source, expected = read_data('cantfit')
         actual = fs(source)
