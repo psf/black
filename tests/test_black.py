@@ -390,6 +390,51 @@ class BlackTestCase(unittest.TestCase):
             f"AST print out is different. Actual version dumped to {log_name}",
         )
 
+    def test_format_file_contents(self) -> None:
+        empty = ""
+        with self.assertRaises(black.NothingChanged):
+            black.format_file_contents(empty, line_length=ll, fast=False)
+        just_nl = "\n"
+        with self.assertRaises(black.NothingChanged):
+            black.format_file_contents(just_nl, line_length=ll, fast=False)
+        same = "l = [1, 2, 3]\n"
+        with self.assertRaises(black.NothingChanged):
+            black.format_file_contents(same, line_length=ll, fast=False)
+        different = "l = [1,2,3]"
+        expected = same
+        actual = black.format_file_contents(different, line_length=ll, fast=False)
+        self.assertEqual(expected, actual)
+        invalid = "return if you can"
+        with self.assertRaises(ValueError) as e:
+            black.format_file_contents(invalid, line_length=ll, fast=False)
+        self.assertEqual(str(e.exception), "Cannot parse: 1:7: return if you can")
+
+    def test_endmarker(self) -> None:
+        n = black.lib2to3_parse("\n")
+        self.assertEqual(n.type, black.syms.file_input)
+        self.assertEqual(len(n.children), 1)
+        self.assertEqual(n.children[0].type, black.token.ENDMARKER)
+
+    @unittest.skipIf(os.environ.get("SKIP_AST_PRINT"), "user set SKIP_AST_PRINT")
+    def test_assertFormatEqual(self) -> None:
+        out_lines = []
+        err_lines = []
+
+        def out(msg: str, **kwargs: Any) -> None:
+            out_lines.append(msg)
+
+        def err(msg: str, **kwargs: Any) -> None:
+            err_lines.append(msg)
+
+        with patch("black.out", out), patch("black.err", err):
+            with self.assertRaises(AssertionError):
+                self.assertFormatEqual("l = [1, 2, 3]", "l = [1, 2, 3,]")
+
+        out_str = "".join(out_lines)
+        self.assertTrue("Expected tree:" in out_str)
+        self.assertTrue("Actual tree:" in out_str)
+        self.assertEqual("".join(err_lines), "")
+
 
 if __name__ == "__main__":
     unittest.main()
