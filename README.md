@@ -53,11 +53,13 @@ black [OPTIONS] [SRC]...
 
 Options:
   -l, --line-length INTEGER   Where to wrap around.  [default: 88]
-  --check                     Don't write back the files, just return the
+  --check                     Don't write the files back, just return the
                               status.  Return code 0 means nothing would
                               change.  Return code 1 means some files would be
                               reformatted.  Return code 123 means there was an
                               internal error.
+  --diff                      Don't write the files back, just output a diff
+                              for each file on stdout.
   --fast / --safe             If --fast given, skip temporary sanity checks.
                               [default: --safe]
   --version                   Show the version and exit.
@@ -394,8 +396,10 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ### 18.3a5 (unreleased)
 
+* added `--diff` (#87)
+
 * add line breaks before all delimiters, except in cases like commas, to better
-  comply with PEP8 (#73)
+  comply with PEP 8 (#73)
 
 * fixed handling of standalone comments within nested bracketed
   expressions; Black will no longer produce super long lines or put all

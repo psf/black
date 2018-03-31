@@ -3,15 +3,18 @@
 import asyncio
 from asyncio.base_events import BaseEventLoop
 from concurrent.futures import Executor, ProcessPoolExecutor
+from enum import Enum
 from functools import partial, wraps
 import keyword
 import logging
+from multiprocessing import Manager
 import os
 from pathlib import Path
 import tokenize
 import signal
 import sys
 from typing import (
+    Any,
     Callable,
     Dict,
     Generic,
@@ -92,6 +95,12 @@ class FormatOff(FormatError):
     """Found a comment like `# fmt: off` in the file."""
 
 
+class WriteBack(Enum):
+    NO = 0
+    YES = 1
+    DIFF = 2
+
+
 @click.command()
 @click.option(
     "-l",
@@ -105,10 +114,15 @@ class FormatOff(FormatError):
     "--check",
     is_flag=True,
     help=(
-        "Don't write back the files, just return the status.  Return code 0 "
+        "Don't write the files back, just return the status.  Return code 0 "
         "means nothing would change.  Return code 1 means some files would be "
         "reformatted.  Return code 123 means there was an internal error."
     ),
+)
+@click.option(
+    "--diff",
+    is_flag=True,
+    help="Don't write the files back, just output a diff for each file on stdout.",
 )
 @click.option(
     "--fast/--safe",
@@ -125,7 +139,12 @@ class FormatOff(FormatError):
 )
 @click.pass_context
 def main(
-    ctx: click.Context, line_length: int, check: bool, fast: bool, src: List[str]
+    ctx: click.Context,
+    line_length: int,
+    check: bool,
+    diff: bool,
+    fast: bool,
+    src: List[str],
 ) -> None:
     """The uncompromising code formatter."""
     sources: List[Path] = []
@@ -140,6 +159,17 @@ def main(
             sources.append(Path("-"))
         else:
             err(f"invalid path: {s}")
+    if check and diff:
+        exc = click.ClickException("Options --check and --diff are mutually exclusive")
+        exc.exit_code = 2
+        raise exc
+
+    if check:
+        write_back = WriteBack.NO
+    elif diff:
+        write_back = WriteBack.DIFF
+    else:
+        write_back = WriteBack.YES
     if len(sources) == 0:
         ctx.exit(0)
     elif len(sources) == 1:
@@ -148,11 +178,11 @@ def main(
         try:
             if not p.is_file() and str(p) == "-":
                 changed = format_stdin_to_stdout(
-                    line_length=line_length, fast=fast, write_back=not check
+                    line_length=line_length, fast=fast, write_back=write_back
                 )
             else:
                 changed = format_file_in_place(
-                    p, line_length=line_length, fast=fast, write_back=not check
+                    p, line_length=line_length, fast=fast, write_back=write_back
                 )
             report.done(p, changed)
         except Exception as exc:
@@ -165,7 +195,7 @@ def main(
         try:
             return_code = loop.run_until_complete(
                 schedule_formatting(
-                    sources, line_length, not check, fast, loop, executor
+                    sources, line_length, write_back, fast, loop, executor
                 )
             )
         finally:
@@ -176,7 +206,7 @@ def main(
 async def schedule_formatting(
     sources: List[Path],
     line_length: int,
-    write_back: bool,
+    write_back: WriteBack,
     fast: bool,
     loop: BaseEventLoop,
     executor: Executor,
@@ -188,9 +218,15 @@ async def schedule_formatting(
     `line_length`, `write_back`, and `fast` options are passed to
     :func:`format_file_in_place`.
     """
+    lock = None
+    if write_back == WriteBack.DIFF:
+        # For diff output, we need locks to ensure we don't interleave output
+        # from different processes.
+        manager = Manager()
+        lock = manager.Lock()
     tasks = {
         src: loop.run_in_executor(
-            executor, format_file_in_place, src, line_length, fast, write_back
+            executor, format_file_in_place, src, line_length, fast, write_back, lock
         )
         for src in sources
     }
@@ -220,7 +256,11 @@ async def schedule_formatting(
 
 
 def format_file_in_place(
-    src: Path, line_length: int, fast: bool, write_back: bool = False
+    src: Path,
+    line_length: int,
+    fast: bool,
+    write_back: WriteBack = WriteBack.NO,
+    lock: Any = None,  # multiprocessing.Manager().Lock() is some crazy proxy
 ) -> bool:
     """Format file under `src` path. Return True if changed.
 
@@ -230,37 +270,53 @@ def format_file_in_place(
     with tokenize.open(src) as src_buffer:
         src_contents = src_buffer.read()
     try:
-        contents = format_file_contents(
+        dst_contents = format_file_contents(
             src_contents, line_length=line_length, fast=fast
         )
     except NothingChanged:
         return False
 
-    if write_back:
+    if write_back == write_back.YES:
         with open(src, "w", encoding=src_buffer.encoding) as f:
-            f.write(contents)
+            f.write(dst_contents)
+    elif write_back == write_back.DIFF:
+        src_name = f"{src.name}  (original)"
+        dst_name = f"{src.name}  (formatted)"
+        diff_contents = diff(src_contents, dst_contents, src_name, dst_name)
+        if lock:
+            lock.acquire()
+        try:
+            sys.stdout.write(diff_contents)
+        finally:
+            if lock:
+                lock.release()
     return True
 
 
 def format_stdin_to_stdout(
-    line_length: int, fast: bool, write_back: bool = False
+    line_length: int, fast: bool, write_back: WriteBack = WriteBack.NO
 ) -> bool:
     """Format file on stdin. Return True if changed.
 
     If `write_back` is True, write reformatted code back to stdout.
     `line_length` and `fast` arguments are passed to :func:`format_file_contents`.
     """
-    contents = sys.stdin.read()
+    src = sys.stdin.read()
     try:
-        contents = format_file_contents(contents, line_length=line_length, fast=fast)
+        dst = format_file_contents(src, line_length=line_length, fast=fast)
         return True
 
     except NothingChanged:
+        dst = src
         return False
 
     finally:
-        if write_back:
-            sys.stdout.write(contents)
+        if write_back == WriteBack.YES:
+            sys.stdout.write(dst)
+        elif write_back == WriteBack.DIFF:
+            src_name = "<stdin>  (original)"
+            dst_name = "<stdin>  (formatted)"
+            sys.stdout.write(diff(src, dst, src_name, dst_name))
 
 
 def format_file_contents(
@@ -2064,7 +2120,8 @@ def dump_to_file(*output: str) -> str:
     ) as f:
         for lines in output:
             f.write(lines)
-            f.write("\n")
+            if lines and lines[-1] != "\n":
+                f.write("\n")
     return f.name
 
 

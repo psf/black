@@ -26,7 +26,7 @@ def dump_to_stderr(*output: str) -> str:
 
 def read_data(name: str) -> Tuple[str, str]:
     """read_data('test_name') -> 'input', 'output'"""
-    if not name.endswith((".py", ".out")):
+    if not name.endswith((".py", ".out", ".diff")):
         name += ".py"
     _input: List[str] = []
     _output: List[str] = []
@@ -92,7 +92,9 @@ class BlackTestCase(unittest.TestCase):
         try:
             sys.stdin, sys.stdout = StringIO(source), StringIO()
             sys.stdin.name = "<stdin>"
-            black.format_stdin_to_stdout(line_length=ll, fast=True, write_back=True)
+            black.format_stdin_to_stdout(
+                line_length=ll, fast=True, write_back=black.WriteBack.YES
+            )
             sys.stdout.seek(0)
             actual = sys.stdout.read()
         finally:
@@ -100,6 +102,23 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, line_length=ll)
+
+    def test_piping_diff(self) -> None:
+        source, _ = read_data("expression.py")
+        expected, _ = read_data("expression.diff")
+        hold_stdin, hold_stdout = sys.stdin, sys.stdout
+        try:
+            sys.stdin, sys.stdout = StringIO(source), StringIO()
+            sys.stdin.name = "<stdin>"
+            black.format_stdin_to_stdout(
+                line_length=ll, fast=True, write_back=black.WriteBack.DIFF
+            )
+            sys.stdout.seek(0)
+            actual = sys.stdout.read()
+        finally:
+            sys.stdin, sys.stdout = hold_stdin, hold_stdout
+        actual = actual.rstrip() + "\n"  # the diff output has a trailing space
+        self.assertEqual(expected, actual)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_setup(self) -> None:
@@ -125,6 +144,37 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, line_length=ll)
+
+    def test_expression_ff(self) -> None:
+        source, expected = read_data("expression")
+        tmp_file = Path(black.dump_to_file(source))
+        try:
+            self.assertTrue(ff(tmp_file, write_back=black.WriteBack.YES))
+            with open(tmp_file) as f:
+                actual = f.read()
+        finally:
+            os.unlink(tmp_file)
+        self.assertFormatEqual(expected, actual)
+        with patch("black.dump_to_file", dump_to_stderr):
+            black.assert_equivalent(source, actual)
+            black.assert_stable(source, actual, line_length=ll)
+
+    def test_expression_diff(self) -> None:
+        source, _ = read_data("expression.py")
+        expected, _ = read_data("expression.diff")
+        tmp_file = Path(black.dump_to_file(source))
+        hold_stdout = sys.stdout
+        try:
+            sys.stdout = StringIO()
+            self.assertTrue(ff(tmp_file, write_back=black.WriteBack.DIFF))
+            sys.stdout.seek(0)
+            actual = sys.stdout.read()
+            actual = actual.replace(tmp_file.name, "<stdin>")
+        finally:
+            sys.stdout = hold_stdout
+            os.unlink(tmp_file)
+        actual = actual.rstrip() + "\n"  # the diff output has a trailing space
+        self.assertEqual(expected, actual)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_fstring(self) -> None:
