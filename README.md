@@ -159,7 +159,7 @@ def very_important_function(
     debug: bool = False,
 ):
     """Applies `variables` to the `template` and writes to `file`."""
-    with open(file, 'w') as f:
+    with open(file, "w") as f:
         ...
 ```
 
@@ -259,6 +259,15 @@ commas in function signatures that have stars in them.  In other words,
 if you'd like a trailing comma in this situation and *Black* didn't
 recognize it was safe to do so, put it there manually and *Black* will
 keep it.
+
+### Strings
+
+*Black* prefers double quotes (`"` and `"""`), but only if this does not
+result in more escaping. It will remove escape sequences as necessary as
+part of moving to the other type of quote. This applies to all kinds of
+prefixed strings, including *raw-strings* (`r""`), *byte literals* (`b""`),
+and *formatted strings* (`f""`). The approach above strikes a good balance
+between consistency and legibility.
 
 
 ## Editor integration

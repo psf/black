@@ -1815,6 +1815,13 @@ def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
 
 
 def normalize_string_quotes(leaf: Leaf) -> None:
+    """Prefer double quotes but only if it doesn't cause more escaping.
+
+    Adds or removes backslashes as appropriate. Doesn't parse and fix
+    strings nested in f-strings (yet).
+
+    Note: Mutates its argument.
+    """
     value = leaf.value.lstrip("furbFURB")
     if value[:3] == '"""':
         return
