@@ -392,6 +392,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * fixed 18.3a4 regression: don't crash and burn on empty lines with
   trailing whitespace (#80)
 
+* when CTRL+C is pressed while formatting many files, Black no longer
+  freaks out with a flurry of asyncio-related exceptions
+
 * only allow up to two empty lines on module level and only single empty
   lines within functions (#74)
 
