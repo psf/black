@@ -43,7 +43,7 @@ def function(default=None):
 
 
 # Explains why we use global state.
-GLOBAL_STATE = {'a': a(1), 'b': a(2), 'c': a(3)}
+GLOBAL_STATE = {"a": a(1), "b": a(2), "c": a(3)}
 
 
 # Another comment!
@@ -76,7 +76,7 @@ async def wat():
         result = await x.method1()
     # Comment after ending a block.
     if result:
-        print('A OK', file=sys.stdout)
+        print("A OK", file=sys.stdout)
         # Comment between things.
         print()
 

@@ -1,7 +1,7 @@
 def func():
     lcomp3 = [
         # This one is actually too long to fit in a single line.
-        element.split('\n', 1)[0]
+        element.split("\n", 1)[0]
         # yup
         for element in collection.select_elements()
         # right

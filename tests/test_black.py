@@ -21,7 +21,7 @@ EMPTY_LINE = "# EMPTY LINE WITH WHITESPACE" + " (this comment will be removed)"
 
 
 def dump_to_stderr(*output: str) -> str:
-    return '\n' + '\n'.join(output) + '\n'
+    return "\n" + "\n".join(output) + "\n"
 
 
 def read_data(name: str) -> Tuple[str, str]:
@@ -43,7 +43,7 @@ def read_data(name: str) -> Tuple[str, str]:
     if _input and not _output:
         # If there's no output marker, treat the entire file as already pre-formatted.
         _output = _input[:]
-    return "".join(_input).strip() + '\n', "".join(_output).strip() + '\n'
+    return "".join(_input).strip() + "\n", "".join(_output).strip() + "\n"
 
 
 class BlackTestCase(unittest.TestCase):
@@ -330,7 +330,7 @@ class BlackTestCase(unittest.TestCase):
 
         with patch("black.out", out), patch("black.err", err):
             black.DebugVisitor.show(source)
-        actual = '\n'.join(out_lines) + '\n'
+        actual = "\n".join(out_lines) + "\n"
         log_name = ""
         if expected != actual:
             log_name = black.dump_to_file(*out_lines)

@@ -319,8 +319,8 @@ GRAMMARS = [
 def lib2to3_parse(src_txt: str) -> Node:
     """Given a string with source, return the lib2to3 Node."""
     grammar = pygram.python_grammar_no_print_statement
-    if src_txt[-1] != '\n':
-        nl = '\r\n' if '\r\n' in src_txt[:1024] else '\n'
+    if src_txt[-1] != "\n":
+        nl = "\r\n" if "\r\n" in src_txt[:1024] else "\n"
         src_txt += nl
     for grammar in GRAMMARS:
         drv = driver.Driver(grammar, pytree.convert)
@@ -786,7 +786,7 @@ class Line:
     def __str__(self) -> str:
         """Render the line."""
         if not self:
-            return '\n'
+            return "\n"
 
         indent = "    " * self.depth
         leaves = iter(self.leaves)
@@ -796,7 +796,7 @@ class Line:
             res += str(leaf)
         for _, comment in self.comments:
             res += str(comment)
-        return res + '\n'
+        return res + "\n"
 
     def __bool__(self) -> bool:
         """Return True if the line has leaves or comments."""
@@ -832,7 +832,7 @@ class UnformattedLines(Line):
         `depth` is not used for indentation in this case.
         """
         if not self:
-            return '\n'
+            return "\n"
 
         res = ""
         for leaf in self.leaves:
@@ -888,7 +888,7 @@ class EmptyLineTracker:
         if current_line.leaves:
             # Consume the first leaf's extra newlines.
             first_leaf = current_line.leaves[0]
-            before = first_leaf.prefix.count('\n')
+            before = first_leaf.prefix.count("\n")
             before = min(before, max_allowed)
             first_leaf.prefix = ""
         else:
@@ -1423,7 +1423,7 @@ def generate_comments(leaf: Leaf) -> Iterator[Leaf]:
 
     consumed = 0
     nlines = 0
-    for index, line in enumerate(p.split('\n')):
+    for index, line in enumerate(p.split("\n")):
         consumed += len(line) + 1  # adding the length of the split '\n'
         line = line.lstrip()
         if not line:
@@ -1436,7 +1436,7 @@ def generate_comments(leaf: Leaf) -> Iterator[Leaf]:
         else:
             comment_type = STANDALONE_COMMENT
         comment = make_comment(line)
-        yield Leaf(comment_type, comment, prefix='\n' * nlines)
+        yield Leaf(comment_type, comment, prefix="\n" * nlines)
 
         if comment in {"# fmt: on", "# yapf: enable"}:
             raise FormatOn(consumed)
@@ -1483,10 +1483,10 @@ def split_line(
         yield line
         return
 
-    line_str = str(line).strip('\n')
+    line_str = str(line).strip("\n")
     if (
         len(line_str) <= line_length
-        and '\n' not in line_str  # multiline strings
+        and "\n" not in line_str  # multiline strings
         and not line.contains_standalone_comments
     ):
         yield line
@@ -1506,7 +1506,7 @@ def split_line(
         result: List[Line] = []
         try:
             for l in split_func(line, py36):
-                if str(l).strip('\n') == line_str:
+                if str(l).strip("\n") == line_str:
                     raise CannotSplit("Split function returned an unchanged result")
 
                 result.extend(
@@ -1765,11 +1765,11 @@ def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
     """
     if not inside_brackets:
         spl = leaf.prefix.split("#")
-        if '\\' not in spl[0]:
-            nl_count = spl[-1].count('\n')
+        if "\\" not in spl[0]:
+            nl_count = spl[-1].count("\n")
             if len(spl) > 1:
                 nl_count -= 1
-            leaf.prefix = '\n' * nl_count
+            leaf.prefix = "\n" * nl_count
             return
 
     leaf.prefix = ""
@@ -1779,6 +1779,7 @@ def normalize_string_quotes(leaf: Leaf) -> None:
     value = leaf.value.lstrip("furbFURB")
     if value[:3] == '"""':
         return
+
     elif value[:3] == "'''":
         orig_quote = "'''"
         new_quote = '"""'
@@ -1793,19 +1794,22 @@ def normalize_string_quotes(leaf: Leaf) -> None:
         return  # There's an internal error
 
     body = leaf.value[first_quote_pos + len(orig_quote):-len(orig_quote)]
-    new_body = body.replace(f'\\{orig_quote}', orig_quote).replace(new_quote, f'\\{new_quote}')
+    new_body = body.replace(f"\\{orig_quote}", orig_quote).replace(
+        new_quote, f"\\{new_quote}"
+    )
     if new_quote == '"""' and new_body[-1] == '"':
         # edge case:
         new_body = new_body[:-1] + '\\"'
-    orig_escape_count = body.count('\\')
-    new_escape_count = new_body.count('\\')
+    orig_escape_count = body.count("\\")
+    new_escape_count = new_body.count("\\")
     if new_escape_count > orig_escape_count:
         return  # Do not introduce more escaping
+
     if new_escape_count == orig_escape_count and orig_quote == '"':
         return  # Prefer double quotes
-    prefix = leaf.value[:first_quote_pos]
-    leaf.value = f'{prefix}{new_quote}{new_body}{new_quote}'
 
+    prefix = leaf.value[:first_quote_pos]
+    leaf.value = f"{prefix}{new_quote}{new_body}{new_quote}"
 
 
 def is_python36(node: Node) -> bool:
@@ -1977,8 +1981,8 @@ def assert_equivalent(src: str, dst: str) -> None:
             f"This invalid output might be helpful: {log}"
         ) from None
 
-    src_ast_str = '\n'.join(_v(src_ast))
-    dst_ast_str = '\n'.join(_v(dst_ast))
+    src_ast_str = "\n".join(_v(src_ast))
+    dst_ast_str = "\n".join(_v(dst_ast))
     if src_ast_str != dst_ast_str:
         log = dump_to_file(diff(src_ast_str, dst_ast_str, "src", "dst"))
         raise AssertionError(
@@ -2014,7 +2018,7 @@ def dump_to_file(*output: str) -> str:
     ) as f:
         for lines in output:
             f.write(lines)
-            f.write('\n')
+            f.write("\n")
     return f.name
 
 
@@ -2022,8 +2026,8 @@ def diff(a: str, b: str, a_name: str, b_name: str) -> str:
     """Return a unified diff string between strings `a` and `b`."""
     import difflib
 
-    a_lines = [line + '\n' for line in a.split('\n')]
-    b_lines = [line + '\n' for line in b.split('\n')]
+    a_lines = [line + "\n" for line in a.split("\n")]
+    b_lines = [line + "\n" for line in b.split("\n")]
     return "".join(
         difflib.unified_diff(a_lines, b_lines, fromfile=a_name, tofile=b_name, n=5)
     )
