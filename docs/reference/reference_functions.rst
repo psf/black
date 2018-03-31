@@ -77,6 +77,8 @@ Utilities
 
 .. autofunction:: black.normalize_prefix
 
+.. autofunction:: black.normalize_string_quotes
+
 .. autofunction:: black.preceding_leaf
 
 .. autofunction:: black.whitespace
