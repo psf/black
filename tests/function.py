@@ -80,7 +80,7 @@ from third_party import X, Y, Z
 
 from library import some_connection, some_decorator
 
-f'trigger 3.6 mode'
+f"trigger 3.6 mode"
 
 
 def func_no_args():
@@ -103,7 +103,7 @@ def func_no_args():
 async def coroutine(arg, exec=False):
     "Single-line docstring. Multiline is harder to reformat."
     async with some_connection() as conn:
-        await conn.do_what_i_mean('SELECT bobby, tables FROM xkcd', timeout=2)
+        await conn.do_what_i_mean("SELECT bobby, tables FROM xkcd", timeout=2)
     await asyncio.sleep(1)
 
 
@@ -120,7 +120,7 @@ def function_signature_stress_test(
     return text[number:-1]
 
 
-def spaces(a=1, b=(), c=[], d={}, e=True, f=-1, g=1 if False else 2, h="", i=r''):
+def spaces(a=1, b=(), c=[], d={}, e=True, f=-1, g=1 if False else 2, h="", i=r""):
     offset = attr.ib(default=attr.Factory(lambda: _r.uniform(10000, 200000)))
     assert task._cancel_stack[:len(old_stack)] == old_stack
 
@@ -134,7 +134,7 @@ def spaces_types(
     f: int = -1,
     g: int = 1 if False else 2,
     h: str = "",
-    i: str = r'',
+    i: str = r"",
 ):
     ...
 

@@ -64,7 +64,7 @@ def g():
         return DOUBLESPACE
 
     # Another comment because more comments
-    assert p is not None, f"INTERNAL ERROR: hand-made leaf without parent: {leaf!r}"
+    assert p is not None, f'INTERNAL ERROR: hand-made leaf without parent: {leaf!r}'
 
     prev = leaf.prev_sibling
     if not prev:
@@ -90,9 +90,9 @@ def g():
 
 
 def f():
-    NO = ''
-    SPACE = ' '
-    DOUBLESPACE = '  '
+    NO = ""
+    SPACE = " "
+    DOUBLESPACE = "  "
 
     t = leaf.type
     p = leaf.parent  # trailing comment
@@ -139,9 +139,9 @@ def f():
 
 
 def g():
-    NO = ''
-    SPACE = ' '
-    DOUBLESPACE = '  '
+    NO = ""
+    SPACE = " "
+    DOUBLESPACE = "  "
 
     t = leaf.type
     p = leaf.parent

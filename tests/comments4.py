@@ -61,7 +61,7 @@ class C:
 
 def foo(list_a, list_b):
     results = (
-        User.query.filter(User.foo == 'bar').filter(  # Because foo.
+        User.query.filter(User.foo == "bar").filter(  # Because foo.
             db.or_(User.field_a.astext.in_(list_a), User.field_b.astext.in_(list_b))
         ).filter(
             User.xyz.is_(None)
