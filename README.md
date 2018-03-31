@@ -385,6 +385,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ### 18.3a5 (unreleased)
 
+* add line breaks before all delimiters, except in cases like commas, to better
+  comply with PEP8 (#73)
+
 * fixed handling of standalone comments within nested bracketed
   expressions; Black will no longer produce super long lines or put all
   standalone comments at the end of the expression (#22)
@@ -504,5 +507,5 @@ Multiple contributions by:
 * [Daniel M. Capella](mailto:polycitizen@gmail.com)
 * [Eli Treuherz](mailto:eli.treuherz@cgi.com)
 * Hugo van Kemenade
-* [Mika⠙](mailto:mail@autophagy.io)
+* [Mika Naylor](mailto:mail@autophagy.io)
 * [Osaetin Daniel](mailto:osaetindaniel@gmail.com)

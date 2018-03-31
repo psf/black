@@ -451,6 +451,7 @@ MATH_OPERATORS = {
     token.DOUBLESTAR,
     token.DOUBLESLASH,
 }
+VARARGS = {token.STAR, token.DOUBLESTAR}
 COMPREHENSION_PRIORITY = 20
 COMMA_PRIORITY = 10
 LOGIC_PRIORITY = 5
@@ -492,32 +493,12 @@ class BracketTracker:
             leaf.opening_bracket = opening_bracket
         leaf.bracket_depth = self.depth
         if self.depth == 0:
-            delim = is_delimiter(leaf)
-            if delim:
-                self.delimiters[id(leaf)] = delim
-            elif self.previous is not None:
-                if leaf.type == token.STRING and self.previous.type == token.STRING:
-                    self.delimiters[id(self.previous)] = STRING_PRIORITY
-                elif (
-                    leaf.type == token.NAME
-                    and leaf.value == "for"
-                    and leaf.parent
-                    and leaf.parent.type in {syms.comp_for, syms.old_comp_for}
-                ):
-                    self.delimiters[id(self.previous)] = COMPREHENSION_PRIORITY
-                elif (
-                    leaf.type == token.NAME
-                    and leaf.value == "if"
-                    and leaf.parent
-                    and leaf.parent.type in {syms.comp_if, syms.old_comp_if}
-                ):
-                    self.delimiters[id(self.previous)] = COMPREHENSION_PRIORITY
-                elif (
-                    leaf.type == token.NAME
-                    and leaf.value in LOGIC_OPERATORS
-                    and leaf.parent
-                ):
-                    self.delimiters[id(self.previous)] = LOGIC_PRIORITY
+            after_delim = is_split_after_delimiter(leaf, self.previous)
+            before_delim = is_split_before_delimiter(leaf, self.previous)
+            if after_delim > before_delim:
+                self.delimiters[id(leaf)] = after_delim
+            elif before_delim > after_delim and self.previous is not None:
+                self.delimiters[id(self.previous)] = before_delim
         if leaf.type in OPENING_BRACKETS:
             self.bracket_match[self.depth, BRACKET[leaf.type]] = leaf
             self.depth += 1
@@ -1374,17 +1355,35 @@ def preceding_leaf(node: Optional[LN]) -> Optional[Leaf]:
     return None
 
 
-def is_delimiter(leaf: Leaf) -> int:
-    """Return the priority of the `leaf` delimiter. Return 0 if not delimiter.
+def is_split_after_delimiter(leaf: Leaf, previous: Leaf = None) -> int:
+    """Return the priority of the `leaf` delimiter, given a line break after it.
+
+    The delimiter priorities returned here are from those delimiters that would
+    cause a line break after themselves.
 
     Higher numbers are higher priority.
     """
     if leaf.type == token.COMMA:
         return COMMA_PRIORITY
 
-    if leaf.type in COMPARATORS:
-        return COMPARATOR_PRIORITY
+    if (
+        leaf.type in VARARGS
+        and leaf.parent
+        and leaf.parent.type in {syms.argument, syms.typedargslist}
+    ):
+        return MATH_PRIORITY
 
+    return 0
+
+
+def is_split_before_delimiter(leaf: Leaf, previous: Leaf = None) -> int:
+    """Return the priority of the `leaf` delimiter, given a line before after it.
+
+    The delimiter priorities returned here are from those delimiters that would
+    cause a line break before themselves.
+
+    Higher numbers are higher priority.
+    """
     if (
         leaf.type in MATH_OPERATORS
         and leaf.parent
@@ -1392,7 +1391,47 @@ def is_delimiter(leaf: Leaf) -> int:
     ):
         return MATH_PRIORITY
 
+    if leaf.type in COMPARATORS:
+        return COMPARATOR_PRIORITY
+
+    if (
+        leaf.type == token.STRING
+        and previous is not None
+        and previous.type == token.STRING
+    ):
+        return STRING_PRIORITY
+
+    if (
+        leaf.type == token.NAME
+        and leaf.value == "for"
+        and leaf.parent
+        and leaf.parent.type in {syms.comp_for, syms.old_comp_for}
+    ):
+        return COMPREHENSION_PRIORITY
+
+    if (
+        leaf.type == token.NAME
+        and leaf.value == "if"
+        and leaf.parent
+        and leaf.parent.type in {syms.comp_if, syms.old_comp_if}
+    ):
+        return COMPREHENSION_PRIORITY
+
+    if leaf.type == token.NAME and leaf.value in LOGIC_OPERATORS and leaf.parent:
+        return LOGIC_PRIORITY
+
     return 0
+
+
+def is_delimiter(leaf: Leaf, previous: Leaf = None) -> int:
+    """Return the priority of the `leaf` delimiter. Return 0 if not delimiter.
+
+    Higher numbers are higher priority.
+    """
+    return max(
+        is_split_before_delimiter(leaf, previous),
+        is_split_after_delimiter(leaf, previous),
+    )
 
 
 def generate_comments(leaf: Leaf) -> Iterator[Leaf]:
