@@ -409,7 +409,7 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Change Log
 
-### 18.3a5 (unreleased)
+### 18.4a0
 
 * added `--diff` (#87)
 
