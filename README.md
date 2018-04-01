@@ -426,6 +426,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * fixed 18.3a4 regression: don't crash and burn on empty lines with
   trailing whitespace (#80)
 
+* fixed 18.3a4 regression: `# yapf: disable` usage as trailing comment
+  would cause Black to not emit the rest of the file (#95)
+
 * when CTRL+C is pressed while formatting many files, Black no longer
   freaks out with a flurry of asyncio-related exceptions
 

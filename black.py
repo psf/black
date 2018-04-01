@@ -1134,6 +1134,10 @@ class LineGenerator(Visitor[Line]):
                 yield from self.line()
                 yield from self.visit(node)
 
+            if node.type == token.ENDMARKER:
+                # somebody decided not to put a final `# fmt: on`
+                yield from self.line()
+
     def __attrs_post_init__(self) -> None:
         """You are in a twisty little maze of passages."""
         v = self.visit_stmt
@@ -1537,7 +1541,12 @@ def generate_comments(leaf: Leaf) -> Iterator[Leaf]:
             raise FormatOn(consumed)
 
         if comment in {"# fmt: off", "# yapf: disable"}:
-            raise FormatOff(consumed)
+            if comment_type == STANDALONE_COMMENT:
+                raise FormatOff(consumed)
+
+            prev = preceding_leaf(leaf)
+            if not prev or prev.type in WHITESPACE:  # standalone comment in disguise
+                raise FormatOff(consumed)
 
         nlines = 0
 

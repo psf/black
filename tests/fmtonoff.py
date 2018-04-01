@@ -71,6 +71,18 @@ def long_lines():
         $
         """, re.MULTILINE | re.VERBOSE
     )
+def single_literal_yapf_disable():
+    """Black does not support this."""
+    BAZ = {
+        (1, 2, 3, 4),
+        (5, 6, 7, 8),
+        (9, 10, 11, 12),
+    }  # yapf: disable
+# fmt: off
+# No formatting to the end of the file
+l=[1,2,3]
+d={'a':1,
+   'b':2}
 
 # output
 
@@ -175,3 +187,15 @@ def long_lines():
         """,
         re.MULTILINE | re.VERBOSE,
     )
+
+
+def single_literal_yapf_disable():
+    """Black does not support this."""
+    BAZ = {(1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)}  # yapf: disable
+
+
+# fmt: off
+# No formatting to the end of the file
+l=[1,2,3]
+d={'a':1,
+   'b':2}
