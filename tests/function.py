@@ -47,6 +47,12 @@ def long_lines():
         typedargslist.extend(
             gen_annotated_params(ast_args.kwonlyargs, ast_args.kw_defaults, parameters, implicit_default=True)
         )
+        typedargslist.extend(
+            gen_annotated_params(
+                ast_args.kwonlyargs, ast_args.kw_defaults, parameters, implicit_default=True,
+                # trailing standalone comment
+            )
+        )
     _type_comment_re = re.compile(
         r"""
         ^
@@ -159,6 +165,15 @@ def long_lines():
                 ast_args.kw_defaults,
                 parameters,
                 implicit_default=True,
+            )
+        )
+        typedargslist.extend(
+            gen_annotated_params(
+                ast_args.kwonlyargs,
+                ast_args.kw_defaults,
+                parameters,
+                implicit_default=True,
+                # trailing standalone comment
             )
         )
     _type_comment_re = re.compile(

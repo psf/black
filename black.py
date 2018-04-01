@@ -1796,9 +1796,10 @@ def delimiter_split(line: Line, py36: bool = False) -> Iterator[Line]:
             current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
     if current_line:
         if (
-            delimiter_priority == COMMA_PRIORITY
+            trailing_comma_safe
+            and delimiter_priority == COMMA_PRIORITY
             and current_line.leaves[-1].type != token.COMMA
-            and trailing_comma_safe
+            and current_line.leaves[-1].type != STANDALONE_COMMENT
         ):
             current_line.append(Leaf(token.COMMA, ","))
         yield current_line
