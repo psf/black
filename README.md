@@ -264,12 +264,27 @@ keep it.
 
 ### Strings
 
-*Black* prefers double quotes (`"` and `"""`), but only if this does not
-result in more escaping. It will remove escape sequences as necessary as
-part of moving to the other type of quote. This applies to all kinds of
-prefixed strings, including *raw-strings* (`r""`), *byte literals* (`b""`),
-and *formatted strings* (`f""`). The approach above strikes a good balance
-between consistency and legibility.
+*Black* prefers double quotes (`"` and `"""`) over single quotes (`'`
+and `'''`).  It will replace the latter with the former as long as it
+does not result in more backslash escapes than before.
+
+The main reason to standardize on a single form of quotes is aesthetics.
+Having one kind of quotes everywhere reduces reader distraction.
+It will also enable a future version of *Black* to merge consecutive
+string literals that ended up on the same line (see
+[#26](https://github.com/ambv/black/issues/26) for details).
+
+Why settle on double quotes?  They anticipate apostrophes in English
+text.  They match the docstring standard described in PEP 257.  An
+empty string in double quotes (`""`) is impossible to confuse with
+a one double-quote regardless of fonts and syntax highlighting used.
+On top of this, double quotes for strings are consistent with C which
+Python interacts a lot with.
+
+On certain keyboard layouts like US English, typing single quotes is
+a bit easier than double quotes.  The latter requires use of the Shift
+key.  My recommendation here is to keep using whatever is faster to type
+and let *Black* handle the transformation.
 
 
 ## Editor integration
@@ -398,8 +413,11 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * added `--diff` (#87)
 
-* add line breaks before all delimiters, except in cases like commas, to better
-  comply with PEP 8 (#73)
+* add line breaks before all delimiters, except in cases like commas, to
+  better comply with PEP 8 (#73)
+
+* standardize string literals to use double quotes (almost) everywhere
+  (#75)
 
 * fixed handling of standalone comments within nested bracketed
   expressions; Black will no longer produce super long lines or put all
