@@ -543,3 +543,4 @@ Multiple contributions by:
 * Hugo van Kemenade
 * [Mika Naylor](mailto:mail@autophagy.io)
 * [Osaetin Daniel](mailto:osaetindaniel@gmail.com)
+* [Zsolt Dollenstein](mailto:zsol.zsol@gmail.com)
