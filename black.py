@@ -3,7 +3,7 @@
 import asyncio
 from asyncio.base_events import BaseEventLoop
 from concurrent.futures import Executor, ProcessPoolExecutor
-from enum import Enum
+from enum import IntEnum
 from functools import partial, wraps
 import keyword
 import logging
@@ -95,7 +95,7 @@ class FormatOff(FormatError):
     """Found a comment like `# fmt: off` in the file."""
 
 
-class WriteBack(Enum):
+class WriteBack(IntEnum):
     NO = 0
     YES = 1
     DIFF = 2
