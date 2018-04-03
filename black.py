@@ -129,6 +129,15 @@ class WriteBack(Enum):
     is_flag=True,
     help="If --fast given, skip temporary sanity checks. [default: --safe]",
 )
+@click.option(
+    "-q",
+    "--quiet",
+    is_flag=True,
+    help=(
+        "Don't emit non-error messages to stderr. Errors are still emitted, "
+        "silence those with 2>/dev/null."
+    ),
+)
 @click.version_option(version=__version__)
 @click.argument(
     "src",
@@ -144,6 +153,7 @@ def main(
     check: bool,
     diff: bool,
     fast: bool,
+    quiet: bool,
     src: List[str],
 ) -> None:
     """The uncompromising code formatter."""
@@ -174,7 +184,7 @@ def main(
         ctx.exit(0)
     elif len(sources) == 1:
         p = sources[0]
-        report = Report(check=check)
+        report = Report(check=check, quiet=quiet)
         try:
             if not p.is_file() and str(p) == "-":
                 changed = format_stdin_to_stdout(
@@ -195,7 +205,7 @@ def main(
         try:
             return_code = loop.run_until_complete(
                 schedule_formatting(
-                    sources, line_length, write_back, fast, loop, executor
+                    sources, line_length, write_back, fast, quiet, loop, executor
                 )
             )
         finally:
@@ -208,6 +218,7 @@ async def schedule_formatting(
     line_length: int,
     write_back: WriteBack,
     fast: bool,
+    quiet: bool,
     loop: BaseEventLoop,
     executor: Executor,
 ) -> int:
@@ -235,7 +246,7 @@ async def schedule_formatting(
     loop.add_signal_handler(signal.SIGTERM, cancel, _task_values)
     await asyncio.wait(tasks.values())
     cancelled = []
-    report = Report(check=not write_back)
+    report = Report(check=not write_back, quiet=quiet)
     for src, task in tasks.items():
         if not task.done():
             report.failed(src, "timed out, cancelling")
@@ -249,9 +260,10 @@ async def schedule_formatting(
             report.done(src, task.result())
     if cancelled:
         await asyncio.gather(*cancelled, loop=loop, return_exceptions=True)
-    else:
+    elif not quiet:
         out("All done! ✨ 🍰 ✨")
-    click.echo(str(report))
+    if not quiet:
+        click.echo(str(report))
     return report.return_code
 
 
@@ -1974,6 +1986,7 @@ def gen_python_files_in_dir(path: Path) -> Iterator[Path]:
 class Report:
     """Provides a reformatting counter. Can be rendered with `str(report)`."""
     check: bool = False
+    quiet: bool = False
     change_count: int = 0
     same_count: int = 0
     failure_count: int = 0
@@ -1982,10 +1995,12 @@ class Report:
         """Increment the counter for successful reformatting. Write out a message."""
         if changed:
             reformatted = "would reformat" if self.check else "reformatted"
-            out(f"{reformatted} {src}")
+            if not self.quiet:
+                out(f"{reformatted} {src}")
             self.change_count += 1
         else:
-            out(f"{src} already well formatted, good job.", bold=False)
+            if not self.quiet:
+                out(f"{src} already well formatted, good job.", bold=False)
             self.same_count += 1
 
     def failed(self, src: Path, message: str) -> None:

@@ -62,6 +62,9 @@ Options:
                               for each file on stdout.
   --fast / --safe             If --fast given, skip temporary sanity checks.
                               [default: --safe]
+  -q, --quiet                 Don't emit non-error messages to stderr. Errors
+                              are still emitted, silence those with
+                              2>/dev/null.
   --version                   Show the version and exit.
   --help                      Show this message and exit.
 ```
@@ -408,6 +411,10 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 
 ## Change Log
+
+### 18.4a1
+
+* added `--quiet` (#78)
 
 ### 18.4a0
 
