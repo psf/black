@@ -30,6 +30,7 @@ myself and CentOS at work.
 Install all development dependencies using:
 ```
 $ pipenv install --dev
+$ pre-commit install
 ```
 If you haven't used `pipenv` before but are comfortable with virtualenvs,
 just run `pip install pipenv` in the virtualenv you're already using and
@@ -40,10 +41,6 @@ Before submitting pull requests, run tests with:
 ```
 $ python setup.py test
 ```
-
-Also run mypy and flake8 on `black.py` and `test_black.py`.  Travis will
-run all that for you but if you left any errors here, it will be quicker
-and less embarrassing to fix them locally ;-)
 
 
 ## Hygiene

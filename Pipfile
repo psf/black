@@ -9,6 +9,7 @@ click = "*"
 setuptools = ">=38.6.0"
 
 [dev-packages]
+pre-commit = "*"
 coverage = "*"
 flake8 = "*"
 flake8-bugbear = "*"
