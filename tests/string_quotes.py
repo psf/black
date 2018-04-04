@@ -15,6 +15,9 @@ f'''This is a triple-quoted {f}-string'''
 f'MOAR {" ".join([])}'
 f"MOAR {' '.join([])}"
 r"raw string ftw"
+r'Date d\'expiration:(.*)'
+r'Tricky "quote'
+r'Not-so-tricky \"quote'
 
 # output
 
@@ -35,3 +38,6 @@ f"""This is a triple-quoted {f}-string"""
 f'MOAR {" ".join([])}'
 f"MOAR {' '.join([])}"
 r"raw string ftw"
+r"Date d\'expiration:(.*)"
+r'Tricky "quote'
+r"Not-so-tricky \"quote"
