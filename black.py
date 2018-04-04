@@ -246,7 +246,7 @@ async def schedule_formatting(
     loop.add_signal_handler(signal.SIGTERM, cancel, _task_values)
     await asyncio.wait(tasks.values())
     cancelled = []
-    report = Report(check=not write_back, quiet=quiet)
+    report = Report(check=write_back is WriteBack.NO, quiet=quiet)
     for src, task in tasks.items():
         if not task.done():
             report.failed(src, "timed out, cancelling")
