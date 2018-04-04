@@ -561,12 +561,13 @@ class BracketTracker:
             leaf.opening_bracket = opening_bracket
         leaf.bracket_depth = self.depth
         if self.depth == 0:
-            after_delim = is_split_after_delimiter(leaf, self.previous)
-            before_delim = is_split_before_delimiter(leaf, self.previous)
-            if after_delim > before_delim:
-                self.delimiters[id(leaf)] = after_delim
-            elif before_delim > after_delim and self.previous is not None:
-                self.delimiters[id(self.previous)] = before_delim
+            delim = is_split_before_delimiter(leaf, self.previous)
+            if delim and self.previous is not None:
+                self.delimiters[id(self.previous)] = delim
+            else:
+                delim = is_split_after_delimiter(leaf, self.previous)
+                if delim:
+                    self.delimiters[id(leaf)] = delim
         if leaf.type in OPENING_BRACKETS:
             self.bracket_match[self.depth, BRACKET[leaf.type]] = leaf
             self.depth += 1
@@ -1438,13 +1439,6 @@ def is_split_after_delimiter(leaf: Leaf, previous: Leaf = None) -> int:
     if leaf.type == token.COMMA:
         return COMMA_PRIORITY
 
-    if (
-        leaf.type in VARARGS
-        and leaf.parent
-        and leaf.parent.type in {syms.argument, syms.typedargslist}
-    ):
-        return MATH_PRIORITY
-
     return 0
 
 
@@ -1456,6 +1450,15 @@ def is_split_before_delimiter(leaf: Leaf, previous: Leaf = None) -> int:
 
     Higher numbers are higher priority.
     """
+    if (
+        leaf.type in VARARGS
+        and leaf.parent
+        and leaf.parent.type in {syms.argument, syms.typedargslist}
+    ):
+        # * and ** might also be MATH_OPERATORS but in this case they are not.
+        # Don't treat them as a delimiter.
+        return 0
+
     if (
         leaf.type in MATH_OPERATORS
         and leaf.parent
