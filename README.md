@@ -357,6 +357,28 @@ affect your use case.
 This can be used for example with PyCharm's [File Watchers](https://www.jetbrains.com/help/pycharm/file-watchers.html).
 
 
+## Version control integration
+
+Use [pre-commit](https://pre-commit.com/). Once you [have it
+installed](https://pre-commit.com/#install), add this to the
+`.pre-commit-config.yaml` in your repository:
+```yaml
+repos:
+-   repo: https://github.com/ambv/black
+    rev: stable
+    hooks:
+    - id: black
+      args: [--line-length=88, --safe]
+      python-version: python3.6
+```
+Then run `pre-commit install` and you're ready to go.
+
+`args` in the above config is optional but shows you how you can change
+the line length if you really need to.  If you're already using Python
+3.7, switch the `python-version` accordingly. Finally, `stable` is a tag
+that is pinned to the latest release on PyPI.  If you'd rather run on
+master, this is also an option.
+
 ## Testimonials
 
 **Dusty Phillips**, [writer](https://smile.amazon.com/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=dusty+phillips):

@@ -1,0 +1,19 @@
+# Note: don't use this config for your own repositories. Instead, see
+# "Version control integration" in README.md.
+-   repo: local
+    hooks:
+    - id: black
+      name: black
+      language: system
+      entry: python3 -m black
+      files: ^(black|setup|tests/test_black)\.py$
+    - id: flake8
+      name: flake8
+      language: system
+      entry: flake8
+      files: ^(black|setup|tests/test_black)\.py$
+    - id: mypy
+      name: mypy
+      language: system
+      entry: mypy
+      files: ^(black|setup|tests/test_black)\.py$

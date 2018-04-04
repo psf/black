@@ -1,0 +1,6 @@
+-   id: black
+    name: black
+    entry: black
+    language: python
+    language_version: python3.6
+    types: [python]
