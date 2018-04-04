@@ -1917,10 +1917,20 @@ def normalize_string_quotes(leaf: Leaf) -> None:
     if first_quote_pos == -1:
         return  # There's an internal error
 
+    prefix = leaf.value[:first_quote_pos]
     body = leaf.value[first_quote_pos + len(orig_quote):-len(orig_quote)]
-    new_body = body.replace(f"\\{orig_quote}", orig_quote).replace(
-        new_quote, f"\\{new_quote}"
-    )
+    if "r" in prefix.casefold():
+        if body.count(new_quote) != body.count(f"\\{new_quote}"):
+            # There's at least one unescaped new_quote in this raw string
+            # so converting is impossible
+            return
+
+        # Do not introduce or remove backslashes in raw strings
+        new_body = body
+    else:
+        new_body = body.replace(f"\\{orig_quote}", orig_quote).replace(
+            new_quote, f"\\{new_quote}"
+        )
     if new_quote == '"""' and new_body[-1] == '"':
         # edge case:
         new_body = new_body[:-1] + '\\"'
@@ -1932,7 +1942,6 @@ def normalize_string_quotes(leaf: Leaf) -> None:
     if new_escape_count == orig_escape_count and orig_quote == '"':
         return  # Prefer double quotes
 
-    prefix = leaf.value[:first_quote_pos]
     leaf.value = f"{prefix}{new_quote}{new_body}{new_quote}"
 
 
