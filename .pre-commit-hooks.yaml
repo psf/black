@@ -1,6 +1,6 @@
 -   id: black
     name: black
-    description: 'black: The uncompromising Python code formatter'
+    description: 'Black: The uncompromising Python code formatter'
     entry: black
     language: python
     language_version: python3.6
