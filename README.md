@@ -572,6 +572,7 @@ Maintained with [Carol Willing](mailto:carolcode@willingconsulting.com)
 and [Carl Meyer](mailto:carl@oddbird.net).
 
 Multiple contributions by:
+* [Anthony Sottile](mailto:asottile@umich.edu)
 * [Artem Malyshev](mailto:proofit404@gmail.com)
 * [Daniel M. Capella](mailto:polycitizen@gmail.com)
 * [Eli Treuherz](mailto:eli.treuherz@cgi.com)
