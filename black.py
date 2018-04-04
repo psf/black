@@ -205,7 +205,7 @@ def main(
         try:
             return_code = loop.run_until_complete(
                 schedule_formatting(
-                    sources, line_length, write_back, check, fast, quiet, loop, executor
+                    sources, line_length, write_back, fast, quiet, loop, executor
                 )
             )
         finally:
@@ -217,7 +217,6 @@ async def schedule_formatting(
     sources: List[Path],
     line_length: int,
     write_back: WriteBack,
-    check: bool,
     fast: bool,
     quiet: bool,
     loop: BaseEventLoop,
@@ -247,7 +246,7 @@ async def schedule_formatting(
     loop.add_signal_handler(signal.SIGTERM, cancel, _task_values)
     await asyncio.wait(tasks.values())
     cancelled = []
-    report = Report(check=check, quiet=quiet)
+    report = Report(check=write_back is WriteBack.NO, quiet=quiet)
     for src, task in tasks.items():
         if not task.done():
             report.failed(src, "timed out, cancelling")
