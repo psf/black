@@ -416,6 +416,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * added `--quiet` (#78)
 
+* fixed reporting on `--check` with multiple files (#101, #102)
+
 ### 18.4a0
 
 * added `--diff` (#87)
@@ -548,6 +550,7 @@ Multiple contributions by:
 * [Daniel M. Capella](mailto:polycitizen@gmail.com)
 * [Eli Treuherz](mailto:eli.treuherz@cgi.com)
 * Hugo van Kemenade
+* [Ivan Katanić](mailto:ivan.katanic@gmail.com)
 * [Mika Naylor](mailto:mail@autophagy.io)
 * [Osaetin Daniel](mailto:osaetindaniel@gmail.com)
 * [Zsolt Dollenstein](mailto:zsol.zsol@gmail.com)
