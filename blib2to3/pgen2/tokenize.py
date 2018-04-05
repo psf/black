@@ -29,7 +29,7 @@ __author__ = 'Ka-Ping Yee <ping@lfw.org>'
 __credits__ = \
     'GvR, ESR, Tim Peters, Thomas Wouters, Fred Drake, Skip Montanaro'
 
-import string, re
+import string, re, unicodedata
 from codecs import BOM_UTF8, lookup
 from blib2to3.pgen2.token import *
 
@@ -52,7 +52,7 @@ def maybe(*choices): return group(*choices) + '?'
 Whitespace = r'[ \f\t]*'
 Comment = r'#[^\r\n]*'
 Ignore = Whitespace + any(r'\\\r?\n' + Whitespace) + maybe(Comment)
-Name = r'[a-zA-Z_]\w*'
+Name = r'[^\d\W]\w*'
 
 Binnumber = r'0[bB]_?[01]+(?:_[01]+)*'
 Hexnumber = r'0[xX]_?[\da-fA-F]+(?:_[\da-fA-F]+)*[lL]?'
@@ -103,8 +103,10 @@ ContStr = group(_litprefix + r"'[^\n'\\]*(?:\\.[^\n'\\]*)*" +
 PseudoExtras = group(r'\\\r?\n', Comment, Triple)
 PseudoToken = Whitespace + group(PseudoExtras, Number, Funny, ContStr, Name)
 
-tokenprog, pseudoprog, single3prog, double3prog = list(map(
-    re.compile, (Token, PseudoToken, Single3, Double3)))
+tokenprog = re.compile(Token, re.UNICODE)
+pseudoprog = re.compile(PseudoToken, re.UNICODE)
+single3prog = re.compile(Single3)
+double3prog = re.compile(Double3)
 endprogs = {"'": re.compile(Single), '"': re.compile(Double),
             "'''": single3prog, '"""': double3prog,
             "r'''": single3prog, 'r"""': double3prog,
@@ -358,6 +360,8 @@ def untokenize(iterable):
     ut = Untokenizer()
     return ut.untokenize(iterable)
 
+InitialCategories = {'Lu', 'Ll', 'Lt', 'Lm', 'Lo', 'Nl', 'Mn', 'Mc', 'Nd', 'Pc'}
+
 def generate_tokens(readline):
     """
     The generate_tokens() generator requires one argument, readline, which
@@ -473,6 +477,8 @@ def generate_tokens(readline):
 
         while pos < max:
             pseudomatch = pseudoprog.match(line, pos)
+            if not pseudomatch:
+                print('no pseudomatch')
             if pseudomatch:                                # scan for tokens
                 start, end = pseudomatch.span(1)
                 spos, epos, pos = (lnum, start), (lnum, end), end
@@ -528,7 +534,8 @@ def generate_tokens(readline):
                             yield stashed
                             stashed = None
                         yield (STRING, token, spos, epos, line)
-                elif initial in namechars:                 # ordinary name
+                elif (initial in namechars or              # ordinary name
+                      unicodedata.category(initial) in InitialCategories):
                     if token in ('async', 'await'):
                         if async_def:
                             yield (ASYNC if token == 'async' else AWAIT,
