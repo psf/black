@@ -1,3 +1,7 @@
+'\''
+'"'
+"'"
+"\""
 "Hello"
 "Don't do that"
 'Here is a "'
@@ -18,9 +22,20 @@ r"raw string ftw"
 r'Date d\'expiration:(.*)'
 r'Tricky "quote'
 r'Not-so-tricky \"quote'
+'\n\
+The \"quick\"\n\
+brown fox\n\
+jumps over\n\
+the \'lazy\' dog.\n\
+'
+re.compile(r'[\\"]')
 
 # output
 
+"'"
+'"'
+"'"
+'"'
 "Hello"
 "Don't do that"
 'Here is a "'
@@ -41,3 +56,10 @@ r"raw string ftw"
 r"Date d\'expiration:(.*)"
 r'Tricky "quote'
 r"Not-so-tricky \"quote"
+"\n\
+The \"quick\"\n\
+brown fox\n\
+jumps over\n\
+the 'lazy' dog.\n\
+"
+re.compile(r'[\\"]')
