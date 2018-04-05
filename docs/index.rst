@@ -49,6 +49,7 @@ Contents
    installation_and_usage
    the_black_code_style
    editor_integration
+   version_control_integration 
    contributing
    change_log
    reference/reference_summary
