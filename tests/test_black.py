@@ -174,7 +174,14 @@ class BlackTestCase(unittest.TestCase):
             sys.stdout = hold_stdout
             os.unlink(tmp_file)
         actual = actual.rstrip() + "\n"  # the diff output has a trailing space
-        self.assertEqual(expected, actual)
+        if expected != actual:
+            dump = black.dump_to_file(actual)
+            msg = (
+                f"Expected diff isn't equal to the actual. If you made changes "
+                f"to expression.py and this is an anticipated difference, "
+                f"overwrite tests/expression.diff with {dump}."
+            )
+            self.assertEqual(expected, actual, msg)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_fstring(self) -> None:

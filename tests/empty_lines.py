@@ -113,23 +113,29 @@ def f():
             return NO
 
         if prevp.type == token.EQUAL:
-            if prevp.parent and prevp.parent.type in {
-                syms.typedargslist,
-                syms.varargslist,
-                syms.parameters,
-                syms.arglist,
-                syms.argument,
-            }:
+            if (
+                prevp.parent
+                and prevp.parent.type in {
+                    syms.typedargslist,
+                    syms.varargslist,
+                    syms.parameters,
+                    syms.arglist,
+                    syms.argument,
+                }
+            ):
                 return NO
 
         elif prevp.type == token.DOUBLESTAR:
-            if prevp.parent and prevp.parent.type in {
-                syms.typedargslist,
-                syms.varargslist,
-                syms.parameters,
-                syms.arglist,
-                syms.dictsetmaker,
-            }:
+            if (
+                prevp.parent
+                and prevp.parent.type in {
+                    syms.typedargslist,
+                    syms.varargslist,
+                    syms.parameters,
+                    syms.arglist,
+                    syms.dictsetmaker,
+                }
+            ):
                 return NO
 
 
@@ -167,11 +173,14 @@ def g():
             return NO
 
         if prevp.type == token.EQUAL:
-            if prevp.parent and prevp.parent.type in {
-                syms.typedargslist,
-                syms.varargslist,
-                syms.parameters,
-                syms.arglist,
-                syms.argument,
-            }:
+            if (
+                prevp.parent
+                and prevp.parent.type in {
+                    syms.typedargslist,
+                    syms.varargslist,
+                    syms.parameters,
+                    syms.arglist,
+                    syms.argument,
+                }
+            ):
                 return NO

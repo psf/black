@@ -18,7 +18,11 @@ Assertions and checks
 
 .. autofunction:: black.is_delimiter
 
+.. autofunction:: black.is_empty_tuple
+
 .. autofunction:: black.is_import
+
+.. autofunction:: black.is_one_tuple
 
 .. autofunction:: black.is_python36
 
@@ -58,6 +62,8 @@ Split functions
 
 .. autofunction:: black.right_hand_split
 
+.. autofunction:: black.standalone_comment_split
+
 .. autofunction:: black.split_line
 
 .. autofunction:: black.bracket_split_succeeded_or_raise
@@ -71,6 +77,8 @@ Utilities
 
 .. autofunction:: black.diff
 
+.. autofunction:: black.ensure_visible
+
 .. autofunction:: black.generate_comments
 
 .. autofunction:: black.make_comment
@@ -78,6 +86,8 @@ Utilities
 .. autofunction:: black.normalize_prefix
 
 .. autofunction:: black.normalize_string_quotes
+
+.. autofunction:: black.normalize_invisible_parens
 
 .. autofunction:: black.preceding_leaf
 

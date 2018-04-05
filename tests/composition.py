@@ -19,3 +19,16 @@ class C:
                 "2 files reformatted, 2 files left unchanged, "
                 "2 files failed to reformat.",
             )
+            for i in (a,):
+                if (
+                    # Rule 1
+                    i % 2 == 0
+                    # Rule 2
+                    and i % 3 == 0
+                ):
+                    while (
+                        # Just a comment
+                        call()
+                        # Another
+                    ):
+                        print(i)

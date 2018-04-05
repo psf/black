@@ -18,7 +18,10 @@ from ..queues import *
 from ..streams import *
 
 from .a.b.c.subprocess import *
-from . import tasks
+from . import (tasks)
+from . import (A, B, C)
+from . import SomeVeryLongNameAndAllOfItsAdditionalLetters1, \
+              SomeVeryLongNameAndAllOfItsAdditionalLetters2
 
 __all__ = (
     base_events.__all__
@@ -58,6 +61,11 @@ from ..streams import *
 
 from .a.b.c.subprocess import *
 from . import tasks
+from . import A, B, C
+from . import (
+    SomeVeryLongNameAndAllOfItsAdditionalLetters1,
+    SomeVeryLongNameAndAllOfItsAdditionalLetters2,
+)
 
 __all__ = (
     base_events.__all__

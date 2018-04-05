@@ -17,6 +17,7 @@ import sys
 from typing import (
     Any,
     Callable,
+    Collection,
     Dict,
     Generic,
     Iterable,
@@ -315,12 +316,12 @@ def format_stdin_to_stdout(
     `line_length` and `fast` arguments are passed to :func:`format_file_contents`.
     """
     src = sys.stdin.read()
+    dst = src
     try:
         dst = format_file_contents(src, line_length=line_length, fast=fast)
         return True
 
     except NothingChanged:
-        dst = src
         return False
 
     finally:
@@ -582,6 +583,7 @@ class BracketTracker:
         """Return the highest priority of a delimiter found on the line.
 
         Values are consistent with what `is_delimiter()` returns.
+        Raises ValueError on no delimiters.
         """
         return max(v for k, v in self.delimiters.items() if k not in exclude)
 
@@ -608,7 +610,7 @@ class Line:
 
         Inline comments are put aside.
         """
-        has_value = leaf.value.strip()
+        has_value = leaf.type in BRACKETS or bool(leaf.value.strip())
         if not has_value:
             return
 
@@ -709,12 +711,12 @@ class Line:
             and self.leaves[0].value == "yield"
         )
 
-    @property
-    def contains_standalone_comments(self) -> bool:
+    def contains_standalone_comments(self, depth_limit: int = sys.maxsize) -> bool:
         """If so, needs to be split before emitting."""
         for leaf in self.leaves:
             if leaf.type == STANDALONE_COMMENT:
-                return True
+                if leaf.bracket_depth <= depth_limit:
+                    return True
 
         return False
 
@@ -1077,15 +1079,22 @@ class LineGenerator(Visitor[Line]):
         # DEDENT has no value. Additionally, in blib2to3 it never holds comments.
         yield from self.line(-1)
 
-    def visit_stmt(self, node: Node, keywords: Set[str]) -> Iterator[Line]:
+    def visit_stmt(
+        self, node: Node, keywords: Set[str], parens: Set[str]
+    ) -> Iterator[Line]:
         """Visit a statement.
 
         This implementation is shared for `if`, `while`, `for`, `try`, `except`,
-        `def`, `with`, and `class`.
+        `def`, `with`, `class`, and `assert`.
 
-        The relevant Python language `keywords` for a given statement will be NAME
-        leaves within it. This methods puts those on a separate line.
+        The relevant Python language `keywords` for a given statement will be
+        NAME leaves within it. This methods puts those on a separate line.
+
+        `parens` holds pairs of nodes where invisible parentheses should be put.
+        Keys hold nodes after which opening parentheses should be put, values
+        hold nodes before which closing parentheses should be put.
         """
+        normalize_invisible_parens(node, parens_after=parens)
         for child in node.children:
             if child.type == token.NAME and child.value in keywords:  # type: ignore
                 yield from self.line()
@@ -1125,6 +1134,32 @@ class LineGenerator(Visitor[Line]):
             yield from self.line()
             yield from self.visit(child)
 
+    def visit_import_from(self, node: Node) -> Iterator[Line]:
+        """Visit import_from and maybe put invisible parentheses.
+
+        This is separate from `visit_stmt` because import statements don't
+        support arbitrary atoms and thus handling of parentheses is custom.
+        """
+        check_lpar = False
+        for index, child in enumerate(node.children):
+            if check_lpar:
+                if child.type == token.LPAR:
+                    # make parentheses invisible
+                    child.value = ""  # type: ignore
+                    node.children[-1].value = ""  # type: ignore
+                else:
+                    # insert invisible parentheses
+                    node.insert_child(index, Leaf(token.LPAR, ""))
+                    node.append_child(Leaf(token.RPAR, ""))
+                break
+
+            check_lpar = (
+                child.type == token.NAME and child.value == "import"  # type: ignore
+            )
+
+        for child in node.children:
+            yield from self.visit(child)
+
     def visit_SEMI(self, leaf: Leaf) -> Iterator[Line]:
         """Remove a semicolon and put the other statement on a separate line."""
         yield from self.line()
@@ -1155,18 +1190,23 @@ class LineGenerator(Visitor[Line]):
     def __attrs_post_init__(self) -> None:
         """You are in a twisty little maze of passages."""
         v = self.visit_stmt
-        self.visit_if_stmt = partial(v, keywords={"if", "else", "elif"})
-        self.visit_while_stmt = partial(v, keywords={"while", "else"})
-        self.visit_for_stmt = partial(v, keywords={"for", "else"})
-        self.visit_try_stmt = partial(v, keywords={"try", "except", "else", "finally"})
-        self.visit_except_clause = partial(v, keywords={"except"})
-        self.visit_funcdef = partial(v, keywords={"def"})
-        self.visit_with_stmt = partial(v, keywords={"with"})
-        self.visit_classdef = partial(v, keywords={"class"})
+        Ø: Set[str] = set()
+        self.visit_assert_stmt = partial(v, keywords={"assert"}, parens={"assert", ","})
+        self.visit_if_stmt = partial(v, keywords={"if", "else", "elif"}, parens={"if"})
+        self.visit_while_stmt = partial(v, keywords={"while", "else"}, parens={"while"})
+        self.visit_for_stmt = partial(v, keywords={"for", "else"}, parens={"for", "in"})
+        self.visit_try_stmt = partial(
+            v, keywords={"try", "except", "else", "finally"}, parens=Ø
+        )
+        self.visit_except_clause = partial(v, keywords={"except"}, parens=Ø)
+        self.visit_with_stmt = partial(v, keywords={"with"}, parens=Ø)
+        self.visit_funcdef = partial(v, keywords={"def"}, parens=Ø)
+        self.visit_classdef = partial(v, keywords={"class"}, parens=Ø)
         self.visit_async_funcdef = self.visit_async_stmt
         self.visit_decorated = self.visit_decorators
 
 
+IMPLICIT_TUPLE = {syms.testlist, syms.testlist_star_expr, syms.exprlist}
 BRACKET = {token.LPAR: token.RPAR, token.LSQB: token.RSQB, token.LBRACE: token.RBRACE}
 OPENING_BRACKETS = set(BRACKET.keys())
 CLOSING_BRACKETS = set(BRACKET.values())
@@ -1215,14 +1255,17 @@ def whitespace(leaf: Leaf) -> str:  # noqa C901
                     return prevp.prefix
 
         elif prevp.type == token.DOUBLESTAR:
-            if prevp.parent and prevp.parent.type in {
-                syms.arglist,
-                syms.argument,
-                syms.dictsetmaker,
-                syms.parameters,
-                syms.typedargslist,
-                syms.varargslist,
-            }:
+            if (
+                prevp.parent
+                and prevp.parent.type in {
+                    syms.arglist,
+                    syms.argument,
+                    syms.dictsetmaker,
+                    syms.parameters,
+                    syms.typedargslist,
+                    syms.varargslist,
+                }
+            ):
                 return NO
 
         elif prevp.type == token.COLON:
@@ -1382,9 +1425,10 @@ def whitespace(leaf: Leaf) -> str:  # noqa C901
 
             prevp_parent = prevp.parent
             assert prevp_parent is not None
-            if prevp.type == token.COLON and prevp_parent.type in {
-                syms.subscript, syms.sliceop
-            }:
+            if (
+                prevp.type == token.COLON
+                and prevp_parent.type in {syms.subscript, syms.sliceop}
+            ):
                 return NO
 
             elif prevp.type == token.EQUAL and prevp_parent.type == syms.argument:
@@ -1607,7 +1651,7 @@ def split_line(
     if (
         len(line_str) <= line_length
         and "\n" not in line_str  # multiline strings
-        and not line.contains_standalone_comments
+        and not line.contains_standalone_comments()
     ):
         yield line
         return
@@ -1673,9 +1717,7 @@ def left_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
     if body_leaves:
         normalize_prefix(body_leaves[0], inside_brackets=True)
     # Build the new lines.
-    for result, leaves in (
-        (head, head_leaves), (body, body_leaves), (tail, tail_leaves)
-    ):
+    for result, leaves in (head, head_leaves), (body, body_leaves), (tail, tail_leaves):
         for leaf in leaves:
             result.append(leaf, preformatted=True)
             for comment_after in line.comments_after(leaf):
@@ -1686,7 +1728,9 @@ def left_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
             yield result
 
 
-def right_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
+def right_hand_split(
+    line: Line, py36: bool = False, omit: Collection[LeafID] = ()
+) -> Iterator[Line]:
     """Split line into many lines, starting with the last matching bracket pair."""
     head = Line(depth=line.depth)
     body = Line(depth=line.depth + 1, inside_brackets=True)
@@ -1696,14 +1740,16 @@ def right_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
     head_leaves: List[Leaf] = []
     current_leaves = tail_leaves
     opening_bracket = None
+    closing_bracket = None
     for leaf in reversed(line.leaves):
         if current_leaves is body_leaves:
             if leaf is opening_bracket:
                 current_leaves = head_leaves if body_leaves else tail_leaves
         current_leaves.append(leaf)
         if current_leaves is tail_leaves:
-            if leaf.type in CLOSING_BRACKETS:
+            if leaf.type in CLOSING_BRACKETS and id(leaf) not in omit:
                 opening_bracket = leaf.opening_bracket
+                closing_bracket = leaf
                 current_leaves = body_leaves
     tail_leaves.reverse()
     body_leaves.reverse()
@@ -1711,15 +1757,36 @@ def right_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
     # Since body is a new indent level, remove spurious leading whitespace.
     if body_leaves:
         normalize_prefix(body_leaves[0], inside_brackets=True)
+    elif not head_leaves:
+        # No `head` and no `body` means the split failed. `tail` has all content.
+        raise CannotSplit("No brackets found")
+
     # Build the new lines.
-    for result, leaves in (
-        (head, head_leaves), (body, body_leaves), (tail, tail_leaves)
-    ):
+    for result, leaves in (head, head_leaves), (body, body_leaves), (tail, tail_leaves):
         for leaf in leaves:
             result.append(leaf, preformatted=True)
             for comment_after in line.comments_after(leaf):
                 result.append(comment_after, preformatted=True)
     bracket_split_succeeded_or_raise(head, body, tail)
+    assert opening_bracket and closing_bracket
+    if (
+        opening_bracket.type == token.LPAR
+        and not opening_bracket.value
+        and closing_bracket.type == token.RPAR
+        and not closing_bracket.value
+    ):
+        # These parens were optional. If there aren't any delimiters or standalone
+        # comments in the body, they were unnecessary and another split without
+        # them should be attempted.
+        if not (
+            body.bracket_tracker.delimiters or line.contains_standalone_comments(0)
+        ):
+            omit = {id(closing_bracket), *omit}
+            yield from right_hand_split(line, py36=py36, omit=omit)
+            return
+
+    ensure_visible(opening_bracket)
+    ensure_visible(closing_bracket)
     for result in (head, body, tail):
         if result:
             yield result
@@ -1833,12 +1900,7 @@ def delimiter_split(line: Line, py36: bool = False) -> Iterator[Line]:
 @dont_increase_indentation
 def standalone_comment_split(line: Line, py36: bool = False) -> Iterator[Line]:
     """Split standalone comments from the rest of the line."""
-    for leaf in line.leaves:
-        if leaf.type == STANDALONE_COMMENT:
-            if leaf.bracket_depth == 0:
-                break
-
-    else:
+    if not line.contains_standalone_comments(0):
         raise CannotSplit("Line does not have any standalone comments")
 
     current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
@@ -1948,6 +2010,109 @@ def normalize_string_quotes(leaf: Leaf) -> None:
         return  # Prefer double quotes
 
     leaf.value = f"{prefix}{new_quote}{new_body}{new_quote}"
+
+
+def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
+    """Make existing optional parentheses invisible or create new ones.
+
+    Standardizes on visible parentheses for single-element tuples, and keeps
+    existing visible parentheses for other tuples and generator expressions.
+    """
+    check_lpar = False
+    for child in list(node.children):
+        if check_lpar:
+            if child.type == syms.atom:
+                if not (
+                    is_empty_tuple(child)
+                    or is_one_tuple(child)
+                    or max_delimiter_priority_in_atom(child) >= COMMA_PRIORITY
+                ):
+                    first = child.children[0]
+                    last = child.children[-1]
+                    if first.type == token.LPAR and last.type == token.RPAR:
+                        # make parentheses invisible
+                        first.value = ""  # type: ignore
+                        last.value = ""  # type: ignore
+            elif is_one_tuple(child):
+                # wrap child in visible parentheses
+                lpar = Leaf(token.LPAR, "(")
+                rpar = Leaf(token.RPAR, ")")
+                index = child.remove() or 0
+                node.insert_child(index, Node(syms.atom, [lpar, child, rpar]))
+            else:
+                # wrap child in invisible parentheses
+                lpar = Leaf(token.LPAR, "")
+                rpar = Leaf(token.RPAR, "")
+                index = child.remove() or 0
+                node.insert_child(index, Node(syms.atom, [lpar, child, rpar]))
+
+        check_lpar = isinstance(child, Leaf) and child.value in parens_after
+
+
+def is_empty_tuple(node: LN) -> bool:
+    """Return True if `node` holds an empty tuple."""
+    return (
+        node.type == syms.atom
+        and len(node.children) == 2
+        and node.children[0].type == token.LPAR
+        and node.children[1].type == token.RPAR
+    )
+
+
+def is_one_tuple(node: LN) -> bool:
+    """Return True if `node` holds a tuple with one element, with or without parens."""
+    if node.type == syms.atom:
+        if len(node.children) != 3:
+            return False
+
+        lpar, gexp, rpar = node.children
+        if not (
+            lpar.type == token.LPAR
+            and gexp.type == syms.testlist_gexp
+            and rpar.type == token.RPAR
+        ):
+            return False
+
+        return len(gexp.children) == 2 and gexp.children[1].type == token.COMMA
+
+    return (
+        node.type in IMPLICIT_TUPLE
+        and len(node.children) == 2
+        and node.children[1].type == token.COMMA
+    )
+
+
+def max_delimiter_priority_in_atom(node: LN) -> int:
+    if node.type != syms.atom:
+        return 0
+
+    first = node.children[0]
+    last = node.children[-1]
+    if first.type == token.LPAR and last.type == token.RPAR:
+        bt = BracketTracker()
+        for c in node.children[1:-1]:
+            if isinstance(c, Leaf):
+                bt.mark(c)
+            else:
+                for leaf in c.leaves():
+                    bt.mark(leaf)
+    try:
+        return bt.max_delimiter_priority()
+
+    except ValueError:
+        return 0
+
+
+def ensure_visible(leaf: Leaf) -> None:
+    """Make sure parentheses are visible.
+
+    They could be invisible as part of some statements (see
+    :func:`normalize_invible_parens` and :func:`visit_import_from`).
+    """
+    if leaf.type == token.LPAR:
+        leaf.value = "("
+    elif leaf.type == token.RPAR:
+        leaf.value = ")"
 
 
 def is_python36(node: Node) -> bool:

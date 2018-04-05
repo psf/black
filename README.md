@@ -300,6 +300,22 @@ This behaviour may raise ``W503 line break before binary operator`` warnings in
 style guide enforcement tools like Flake8. Since ``W503`` is not PEP 8 compliant,
 you should tell Flake8 to ignore these warnings.
 
+### Parentheses
+
+Some parentheses are optional in the Python grammar.  Any expression can
+be wrapped in a pair of parentheses to form an atom.  There are a few
+interesting cases:
+
+- `if (...):`
+- `while (...):`
+- `for (...) in (...):`
+- `assert (...), (...)`
+- `from X import (...)`
+
+In those cases, parentheses are removed when the entire statement fits
+in one line, or if the inner expression doesn't have any delimiters to
+further split on.  Otherwise, the parentheses are always added.
+
 
 ## Editor integration
 
@@ -478,6 +494,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 ### 18.4a1
 
 * added `--quiet` (#78)
+
+* added automatic parentheses management (#4)
 
 * added [pre-commit](https://pre-commit.com) integration (#103, #104)
 
