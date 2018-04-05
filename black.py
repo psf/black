@@ -10,6 +10,7 @@ import logging
 from multiprocessing import Manager
 import os
 from pathlib import Path
+import re
 import tokenize
 import signal
 import sys
@@ -1922,8 +1923,10 @@ def normalize_string_quotes(leaf: Leaf) -> None:
 
     prefix = leaf.value[:first_quote_pos]
     body = leaf.value[first_quote_pos + len(orig_quote):-len(orig_quote)]
+    unescaped_new_quote = re.compile(r"(([^\\]|^)(\\\\)*)" + new_quote)
+    escaped_orig_quote = re.compile(r"\\(\\\\)*" + orig_quote)
     if "r" in prefix.casefold():
-        if body.count(new_quote) != body.count(f"\\{new_quote}"):
+        if unescaped_new_quote.search(body):
             # There's at least one unescaped new_quote in this raw string
             # so converting is impossible
             return
@@ -1931,9 +1934,8 @@ def normalize_string_quotes(leaf: Leaf) -> None:
         # Do not introduce or remove backslashes in raw strings
         new_body = body
     else:
-        new_body = body.replace(f"\\{orig_quote}", orig_quote).replace(
-            new_quote, f"\\{new_quote}"
-        )
+        new_body = escaped_orig_quote.sub(f"\\1{orig_quote}", body)
+        new_body = unescaped_new_quote.sub(f"\\1\\\\{new_quote}", new_body)
     if new_quote == '"""' and new_body[-1] == '"':
         # edge case:
         new_body = new_body[:-1] + '\\"'
