@@ -568,8 +568,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 Glued together by [Łukasz Langa](mailto:lukasz@langa.pl).
 
-Maintained with [Carol Willing](mailto:carolcode@willingconsulting.com)
-and [Carl Meyer](mailto:carl@oddbird.net).
+Maintained with [Carol Willing](mailto:carolcode@willingconsulting.com),
+[Carl Meyer](mailto:carl@oddbird.net), and
+[Mika Naylor](mailto:mail@autophagy.io).
 
 Multiple contributions by:
 * [Anthony Sottile](mailto:asottile@umich.edu)
@@ -578,6 +579,5 @@ Multiple contributions by:
 * [Eli Treuherz](mailto:eli.treuherz@cgi.com)
 * Hugo van Kemenade
 * [Ivan Katanić](mailto:ivan.katanic@gmail.com)
-* [Mika Naylor](mailto:mail@autophagy.io)
 * [Osaetin Daniel](mailto:osaetindaniel@gmail.com)
 * [Zsolt Dollenstein](mailto:zsol.zsol@gmail.com)
