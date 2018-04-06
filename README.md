@@ -289,6 +289,17 @@ a bit easier than double quotes.  The latter requires use of the Shift
 key.  My recommendation here is to keep using whatever is faster to type
 and let *Black* handle the transformation.
 
+### Line Breaks & Binary Operators
+
+*Black* will break a line before a binary operator when splitting a block
+of code over multiple lines. This is so that *Black* is compliant with the
+recent changes in the [PEP 8](https://www.python.org/dev/peps/pep-0008/#should-a-line-break-before-or-after-a-binary-operator)
+style guide, which emphasizes that this approach improves readability.
+
+This behaviour may raise ``W503 line break before binary operator`` warnings in
+style guide enforcement tools like Flake8. Since ``W503`` is not PEP 8 compliant,
+you should tell Flake8 to ignore these warnings.
+
 
 ## Editor integration
 
