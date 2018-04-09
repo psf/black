@@ -76,7 +76,7 @@ Double = r'[^"\\]*(?:\\.[^"\\]*)*"'
 Single3 = r"[^'\\]*(?:(?:\\.|'(?!''))[^'\\]*)*'''"
 # Tail end of """ string.
 Double3 = r'[^"\\]*(?:(?:\\.|"(?!""))[^"\\]*)*"""'
-_litprefix = r"(?:[uUrRbBfF]|[rR][fFbB]|[fFbB][rR])?"
+_litprefix = r"(?:[uUrRbBfF]|[rR][fFbB]|[fFbBuU][rR])?"
 Triple = group(_litprefix + "'''", _litprefix + '"""')
 # Single-line ' or " string.
 String = group(_litprefix + r"'[^\n'\\]*(?:\\.[^\n'\\]*)*'",
@@ -112,7 +112,7 @@ double3prog = re.compile(Double3)
 
 _strprefixes = set(combinations('r', 'R', 'f', 'F') +
                    combinations('r', 'R', 'b', 'B') +
-                   ['u', 'U'])
+                   ['u', 'U', 'ur', 'uR', 'Ur', 'UR'])
 
 endprogs = {"'": re.compile(Single), '"': re.compile(Double),
             "'''": single3prog, '"""': double3prog,
