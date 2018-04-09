@@ -8,7 +8,7 @@ print >> sys.stderr , "Look, a repr:", `sys`
 
 
 def function((_globals, _locals)):
-    exec "print 'hi from exec!'" in _globals, _locals
+    exec ur"print 'hi from exec!'" in _globals, _locals
 
 
 function((globals(), locals()))
@@ -27,7 +27,7 @@ print >>sys.stderr, "Look, a repr:", ` sys `
 
 
 def function((_globals, _locals)):
-    exec "print 'hi from exec!'" in _globals, _locals
+    exec ur"print 'hi from exec!'" in _globals, _locals
 
 
 function((globals(), locals()))

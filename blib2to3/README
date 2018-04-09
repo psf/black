@@ -7,6 +7,7 @@ Reasons for forking:
   *args and **kwargs
 - backport of GH-6143 that restores the ability to reformat legacy usage of
   `async`
+- support all types of string literals
 - better ability to debug (better reprs)
 - INDENT and DEDENT don't hold whitespace and comment prefixes
 - ability to Cythonize

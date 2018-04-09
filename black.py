@@ -1923,8 +1923,8 @@ def normalize_string_quotes(leaf: Leaf) -> None:
 
     prefix = leaf.value[:first_quote_pos]
     body = leaf.value[first_quote_pos + len(orig_quote):-len(orig_quote)]
-    unescaped_new_quote = re.compile(r"(([^\\]|^)(\\\\)*)" + new_quote)
-    escaped_orig_quote = re.compile(r"\\(\\\\)*" + orig_quote)
+    unescaped_new_quote = re.compile(rf"(([^\\]|^)(\\\\)*){new_quote}")
+    escaped_orig_quote = re.compile(rf"\\(\\\\)*{orig_quote}")
     if "r" in prefix.casefold():
         if unescaped_new_quote.search(body):
             # There's at least one unescaped new_quote in this raw string
@@ -1934,8 +1934,8 @@ def normalize_string_quotes(leaf: Leaf) -> None:
         # Do not introduce or remove backslashes in raw strings
         new_body = body
     else:
-        new_body = escaped_orig_quote.sub(f"\\1{orig_quote}", body)
-        new_body = unescaped_new_quote.sub(f"\\1\\\\{new_quote}", new_body)
+        new_body = escaped_orig_quote.sub(rf"\1{orig_quote}", body)
+        new_body = unescaped_new_quote.sub(rf"\1\\{new_quote}", new_body)
     if new_quote == '"""' and new_body[-1] == '"':
         # edge case:
         new_body = new_body[:-1] + '\\"'
