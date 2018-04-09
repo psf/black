@@ -316,14 +316,16 @@ Use [proofit404/blacken](https://github.com/proofit404/blacken).
 
 2. Locate your `black` installation folder.
 
-        $ which black         # MacOS/Linux
+  On MacOS / Linux / BSD:
+
+        $ which black
         /usr/local/bin/black  # possible location
 
-       <!-->
+  On Windows:
 
-        $ where black         # Windows
+        $ where black
         %LocalAppData%\Programs\Python\Python36-32\Scripts\black.exe  # possible location
-        
+
 3. Open External tools in PyCharm with `File -> Settings -> Tools -> External Tools`.
 
 4. Click the + icon to add a new external tool with the following values:
