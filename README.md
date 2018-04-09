@@ -287,7 +287,7 @@ Use [proofit404/blacken](https://github.com/proofit404/blacken).
 3. Open External tools in PyCharm with `File -> Settings -> Tools -> External Tools`.
 
 4. Click the + icon to add a new external tool with the following values:
-    - Name: black
+    - Name: Black
     - Description: Black is the uncompromising Python code formatter.
     - Program: <install_location_from_step_2>
     - Arguments: $FilePath$
