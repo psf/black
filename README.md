@@ -277,7 +277,7 @@ Use [proofit404/blacken](https://github.com/proofit404/blacken).
 2. Locate your `black` installation folder.
 
         $ which black         # MacOS/Linux
-        /usr/local/bin/black  # this is just a possible output check yours
+        /usr/local/bin/black  # possible location
 
        <!-->
 
