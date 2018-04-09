@@ -48,8 +48,10 @@ except NameError:
 def group(*choices): return '(' + '|'.join(choices) + ')'
 def any(*choices): return group(*choices) + '*'
 def maybe(*choices): return group(*choices) + '?'
-def combinations(*l):
-    return [(x + y).strip() for x in l for y in l + (" ",) if x.casefold() != y.casefold()]
+def _combinations(*l):
+    return set(
+        x + y for x in l for y in l + ("",) if x.casefold() != y.casefold()
+    )
 
 Whitespace = r'[ \f\t]*'
 Comment = r'#[^\r\n]*'
@@ -110,9 +112,11 @@ pseudoprog = re.compile(PseudoToken, re.UNICODE)
 single3prog = re.compile(Single3)
 double3prog = re.compile(Double3)
 
-_strprefixes = set(combinations('r', 'R', 'f', 'F') +
-                   combinations('r', 'R', 'b', 'B') +
-                   ['u', 'U', 'ur', 'uR', 'Ur', 'UR'])
+_strprefixes = (
+    _combinations('r', 'R', 'f', 'F') |
+    _combinations('r', 'R', 'b', 'B') |
+    {'u', 'U', 'ur', 'uR', 'Ur', 'UR'}
+)
 
 endprogs = {"'": re.compile(Single), '"': re.compile(Double),
             "'''": single3prog, '"""': double3prog,
