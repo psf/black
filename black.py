@@ -2088,14 +2088,16 @@ def max_delimiter_priority_in_atom(node: LN) -> int:
 
     first = node.children[0]
     last = node.children[-1]
-    if first.type == token.LPAR and last.type == token.RPAR:
-        bt = BracketTracker()
-        for c in node.children[1:-1]:
-            if isinstance(c, Leaf):
-                bt.mark(c)
-            else:
-                for leaf in c.leaves():
-                    bt.mark(leaf)
+    if not (first.type == token.LPAR and last.type == token.RPAR):
+        return 0
+
+    bt = BracketTracker()
+    for c in node.children[1:-1]:
+        if isinstance(c, Leaf):
+            bt.mark(c)
+        else:
+            for leaf in c.leaves():
+                bt.mark(leaf)
     try:
         return bt.max_delimiter_priority()
 
