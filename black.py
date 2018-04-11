@@ -1998,6 +1998,9 @@ def normalize_string_quotes(leaf: Leaf) -> None:
     else:
         new_body = escaped_orig_quote.sub(rf"\1{orig_quote}", body)
         new_body = unescaped_new_quote.sub(rf"\1\\{new_quote}", new_body)
+        # Add escapes again for consecutive occurences of new_quote (sub
+        # doesn't match overlapping substrings).
+        new_body = unescaped_new_quote.sub(rf"\1\\{new_quote}", new_body)
     if new_quote == '"""' and new_body[-1] == '"':
         # edge case:
         new_body = new_body[:-1] + '\\"'
