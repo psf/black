@@ -23,6 +23,14 @@ __all__ = [
     'Generator',
 ]
 
+if 'PYTHON' in os.environ:
+    add_compiler(compiler_from_env())
+else:
+    # for compiler in compilers.values():
+         # add_compiler(compiler)
+    add_compiler(compilers[(7.0, 32)])
+    # add_compiler(compilers[(7.1, 64)])
+
 # Comment before function.
 def inline_comments_in_brackets_ruin_everything():
     if typedargslist:
@@ -97,7 +105,7 @@ short
             # and round and round we go
         # and round and round we go
 
-    # let's return
+   # let's return
     return Node(
         syms.simple_stmt,
         [
@@ -143,6 +151,14 @@ __all__ = [
     "NamedTuple",  # Not really a type.
     "Generator",
 ]
+
+if "PYTHON" in os.environ:
+    add_compiler(compiler_from_env())
+else:
+    # for compiler in compilers.values():
+    # add_compiler(compiler)
+    add_compiler(compilers[(7.0, 32)])
+# add_compiler(compilers[(7.1, 64)])
 
 # Comment before function.
 

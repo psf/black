@@ -77,6 +77,12 @@ class Driver(object):
                     self.logger.debug("Stop.")
                 break
             prefix = ""
+            if type == token.INDENT:
+                if _prefix.startswith(value):
+                    # Don't double-indent.  Since we're delaying the prefix that
+                    # would normally belong to INDENT, we need to put the value
+                    # at the end versus at the beginning.
+                    _prefix = _prefix[len(value):] + value
             if type in {token.INDENT, token.DEDENT}:
                 prefix = _prefix
             lineno, column = end

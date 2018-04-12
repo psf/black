@@ -412,10 +412,6 @@ def generate_tokens(readline):
                 yield (NL, line[pos:], (lnum, pos), (lnum, len(line)), line)
                 continue
 
-            if column > indents[-1]:           # count indents
-                indents.append(column)
-                yield (INDENT, line[:pos], (lnum, 0), (lnum, pos), line)
-
             if line[pos] == '#':               # skip comments
                 comment_token = line[pos:].rstrip('\r\n')
                 nl_pos = pos + len(comment_token)
@@ -424,6 +420,10 @@ def generate_tokens(readline):
                 yield (NL, line[nl_pos:],
                         (lnum, nl_pos), (lnum, len(line)), line)
                 continue
+
+            if column > indents[-1]:           # count indents
+                indents.append(column)
+                yield (INDENT, line[:pos], (lnum, 0), (lnum, pos), line)
 
             while column < indents[-1]:        # count dedents
                 if column not in indents:
