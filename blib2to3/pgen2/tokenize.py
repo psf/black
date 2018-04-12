@@ -451,8 +451,6 @@ def generate_tokens(readline):
 
         while pos < max:
             pseudomatch = pseudoprog.match(line, pos)
-            if not pseudomatch:
-                print('no pseudomatch')
             if pseudomatch:                                # scan for tokens
                 start, end = pseudomatch.span(1)
                 spos, epos, pos = (lnum, start), (lnum, end), end
