@@ -497,6 +497,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * fixed placement of dictionary unpacking inside dictionary literals (#111)
 
+* Vim plugin now works on Windows, too
+
 ### 18.4a1
 
 * added `--quiet` (#78)
