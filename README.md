@@ -499,6 +499,7 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * Vim plugin now works on Windows, too
 
+
 ### 18.4a1
 
 * added `--quiet` (#78)
@@ -510,6 +511,7 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * fixed reporting on `--check` with multiple files (#101, #102)
 
 * fixed removing backslash escapes from raw strings (#100, #105)
+
 
 ### 18.4a0
 
