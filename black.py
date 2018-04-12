@@ -2325,7 +2325,7 @@ def dump_to_file(*output: str) -> str:
     import tempfile
 
     with tempfile.NamedTemporaryFile(
-        mode="w", prefix="blk_", suffix=".log", delete=False
+        mode="w", prefix="blk_", suffix=".log", delete=False, encoding="utf8"
     ) as f:
         for lines in output:
             f.write(lines)
