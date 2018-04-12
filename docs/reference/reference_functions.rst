@@ -91,4 +91,6 @@ Utilities
 
 .. autofunction:: black.preceding_leaf
 
+.. autofunction:: black.sub_twice
+
 .. autofunction:: black.whitespace

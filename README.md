@@ -499,6 +499,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * Vim plugin now works on Windows, too
 
+* fixed unstable formatting when encountering unnecessarily escaped quotes in a string (#120)
+
 
 ### 18.4a1
 
