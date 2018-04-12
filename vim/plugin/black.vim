@@ -35,6 +35,21 @@ python3 << endpython3
 import sys
 import vim
 
+def _find_python_binary(exec_prefix):
+  if sys.platform[:3] == "win":
+    return exec_prefix / 'python.exe'
+  return exec_prefix / 'bin' / 'python3'
+
+def _find_pip(venv_path):
+  if sys.platform[:3] == "win":
+    return venv_path / 'Scripts' / 'pip.exe'
+  return venv_path / 'bin' / 'pip'
+
+def _find_virtualenv_site_packages(venv_path):
+  if sys.platform[:3] == "win":
+    return venv_path / 'Lib' / 'site-packages'
+  return venv_path / 'Lib' / f'python{pyver[0]}.{pyver[1]}' / 'site-packages'
+
 def _initialize_black_env(upgrade=False):
   pyver = sys.version_info[:2]
   if pyver < (3, 6):
@@ -45,15 +60,13 @@ def _initialize_black_env(upgrade=False):
   import subprocess
   import venv
   virtualenv_path = Path(vim.eval("g:black_virtualenv")).expanduser()
-  virtualenv_site_packages = str(
-    virtualenv_path / 'lib' / f'python{pyver[0]}.{pyver[1]}' / 'site-packages'
-  )
+  virtualenv_site_packages = str(_find_virtualenv_site_packages(virtualenv_path))
   first_install = False
   if not virtualenv_path.is_dir():
     print('Please wait, one time setup for Black.')
     _executable = sys.executable
     try:
-      sys.executable = str(Path(sys.exec_prefix) / 'bin' / 'python3')
+      sys.executable = str(_find_python_binary(Path(sys.exec_prefix)))
       print(f'Creating a virtualenv in {virtualenv_path}...')
       print('(this path can be customized in .vimrc by setting g:black_virtualenv)')
       venv.create(virtualenv_path, with_pip=True)
@@ -65,7 +78,7 @@ def _initialize_black_env(upgrade=False):
   if upgrade:
     print('Upgrading Black with pip...')
   if first_install or upgrade:
-    subprocess.run([str(virtualenv_path / 'bin' / 'pip'), 'install', '-U', 'black'])
+    subprocess.run([str(_find_pip(virtualenv_path)), 'install', '-U', 'black'])
     print('DONE! You are all set, thanks for waiting ✨ 🍰 ✨')
   if first_install:
     print('Pro-tip: to upgrade Black in the future, use the :BlackUpgrade command and restart Vim.\n')
