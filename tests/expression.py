@@ -127,6 +127,7 @@ SomeName
 ((i ** 2) for i, _ in ((1, 'a'), (2, 'b'), (3, 'c')))
 (((i ** 2) + j) for i in (1, 2, 3) for j in (1, 2, 3))
 (*starred)
+{"id": "1","type": "type","started_at": now(),"ended_at": now() + timedelta(days=10),"priority": 1,"import_session_id": 1,**kwargs}  # no trailing comma, this file is not 3.6+
 a = (1,)
 b = 1,
 c = 1
@@ -331,6 +332,15 @@ SomeName
 ((i ** 2) for i, _ in ((1, "a"), (2, "b"), (3, "c")))
 (((i ** 2) + j) for i in (1, 2, 3) for j in (1, 2, 3))
 (*starred)
+{
+    "id": "1",
+    "type": "type",
+    "started_at": now(),
+    "ended_at": now() + timedelta(days=10),
+    "priority": 1,
+    "import_session_id": 1,
+    **kwargs
+}  # no trailing comma, this file is not 3.6+
 a = (1,)
 b = 1,
 c = 1

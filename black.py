@@ -1498,7 +1498,7 @@ def is_split_before_delimiter(leaf: Leaf, previous: Leaf = None) -> int:
     if (
         leaf.type in VARARGS
         and leaf.parent
-        and leaf.parent.type in {syms.argument, syms.typedargslist}
+        and leaf.parent.type in {syms.argument, syms.typedargslist, syms.dictsetmaker}
     ):
         # * and ** might also be MATH_OPERATORS but in this case they are not.
         # Don't treat them as a delimiter.

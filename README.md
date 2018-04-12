@@ -495,6 +495,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * fixed parsing of unaligned standalone comments (#99, #112)
 
+* fixed placement of dictionary unpacking inside dictionary literals (#111)
+
 ### 18.4a1
 
 * added `--quiet` (#78)
