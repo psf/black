@@ -491,7 +491,7 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Change Log
 
-### 18.4a2 (unreleased)
+### 18.4a2
 
 * fixed parsing of unaligned standalone comments (#99, #112)
 
