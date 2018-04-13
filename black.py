@@ -24,6 +24,7 @@ from typing import (
     Iterator,
     List,
     Optional,
+    Pattern,
     Set,
     Tuple,
     Type,
@@ -1984,9 +1985,10 @@ def normalize_string_quotes(leaf: Leaf) -> None:
         return  # There's an internal error
 
     prefix = leaf.value[:first_quote_pos]
-    body = leaf.value[first_quote_pos + len(orig_quote):-len(orig_quote)]
     unescaped_new_quote = re.compile(rf"(([^\\]|^)(\\\\)*){new_quote}")
-    escaped_orig_quote = re.compile(rf"\\(\\\\)*{orig_quote}")
+    escaped_new_quote = re.compile(rf"([^\\]|^)\\(\\\\)*{new_quote}")
+    escaped_orig_quote = re.compile(rf"([^\\]|^)\\(\\\\)*{orig_quote}")
+    body = leaf.value[first_quote_pos + len(orig_quote):-len(orig_quote)]
     if "r" in prefix.casefold():
         if unescaped_new_quote.search(body):
             # There's at least one unescaped new_quote in this raw string
@@ -1996,11 +1998,14 @@ def normalize_string_quotes(leaf: Leaf) -> None:
         # Do not introduce or remove backslashes in raw strings
         new_body = body
     else:
-        new_body = escaped_orig_quote.sub(rf"\1{orig_quote}", body)
-        new_body = unescaped_new_quote.sub(rf"\1\\{new_quote}", new_body)
-        # Add escapes again for consecutive occurences of new_quote (sub
-        # doesn't match overlapping substrings).
-        new_body = unescaped_new_quote.sub(rf"\1\\{new_quote}", new_body)
+        # remove unnecessary quotes
+        new_body = sub_twice(escaped_new_quote, rf"\1\2{new_quote}", body)
+        if body != new_body:
+            # Consider the string without unnecessary quotes as the original
+            body = new_body
+            leaf.value = f"{prefix}{orig_quote}{body}{orig_quote}"
+        new_body = sub_twice(escaped_orig_quote, rf"\1\2{orig_quote}", new_body)
+        new_body = sub_twice(unescaped_new_quote, rf"\1\\{new_quote}", new_body)
     if new_quote == '"""' and new_body[-1] == '"':
         # edge case:
         new_body = new_body[:-1] + '\\"'
@@ -2372,6 +2377,15 @@ def shutdown(loop: BaseEventLoop) -> None:
         cf_logger = logging.getLogger("concurrent.futures")
         cf_logger.setLevel(logging.CRITICAL)
         loop.close()
+
+
+def sub_twice(regex: Pattern[str], replacement: str, original: str) -> str:
+    """Replace `regex` with `replacement` twice on `original`.
+
+    This is used by string normalization to perform replaces on
+    overlapping matches.
+    """
+    return regex.sub(replacement, regex.sub(replacement, original))
 
 
 if __name__ == "__main__":

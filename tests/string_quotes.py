@@ -38,6 +38,10 @@ re.compile(r'[\\"]')
 "x = '''; y = \"\"\"\""
 "x = ''''; y = \"\"\"\"\""
 "x = '' ''; y = \"\"\"\"\""
+'unnecessary \"\"escaping'
+"unnecessary \'\'escaping"
+'\\""'
+"\\''"
 
 # output
 
@@ -81,3 +85,7 @@ re.compile(r'[\\"]')
 'x = \'\'\'; y = """"'
 'x = \'\'\'\'; y = """""'
 'x = \'\' \'\'; y = """""'
+'unnecessary ""escaping'
+"unnecessary ''escaping"
+'\\""'
+"\\''"
