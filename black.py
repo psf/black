@@ -2380,10 +2380,11 @@ def shutdown(loop: BaseEventLoop) -> None:
 
 
 def sub_twice(regex: Pattern[str], replacement: str, original: str) -> str:
-    """Replaces `regex` with `replacement` twice on `original`.
+    """Replace `regex` with `replacement` twice on `original`.
 
     This is used by string normalization to perform replaces on
-    overlapping matches."""
+    overlapping matches.
+    """
     return regex.sub(replacement, regex.sub(replacement, original))
 
 
