@@ -54,6 +54,11 @@ str or None if (1 if True else 2) else str or bytes or None
 []
 [1, 2, 3, 4, 5, 6, 7, 8, 9, (10 or A), (11 or B), (12 or C)]
 [1, 2, 3,]
+[*a]
+[*range(10)]
+[*a, 4, 5,]
+[4, *a, 5,]
+[this_is_a_very_long_variable_which_will_force_a_delimiter_split, element, another, *more]
 {i for i in (1, 2, 3)}
 {(i ** 2) for i in (1, 2, 3)}
 {(i ** 2) for i, _ in ((1, 'a'), (2, 'b'), (3, 'c'))}
@@ -76,7 +81,9 @@ call(arg, kwarg='hey')
 call(arg, another, kwarg='hey', **kwargs)
 call(this_is_a_very_long_variable_which_will_force_a_delimiter_split, arg, another, kwarg='hey', **kwargs)  # note: no trailing comma pre-3.6
 call(*gidgets[:2])
+call(a, *gidgets[:2])
 call(**self.screen_kwargs)
+call(b, **self.screen_kwargs)
 lukasz.langa.pl
 call.me(maybe)
 1 .real
@@ -127,7 +134,7 @@ SomeName
 ((i ** 2) for i, _ in ((1, 'a'), (2, 'b'), (3, 'c')))
 (((i ** 2) + j) for i in (1, 2, 3) for j in (1, 2, 3))
 (*starred)
-{"id": "1","type": "type","started_at": now(),"ended_at": now() + timedelta(days=10),"priority": 1,"import_session_id": 1,**kwargs}  # no trailing comma, this file is not 3.6+
+{"id": "1","type": "type","started_at": now(),"ended_at": now() + timedelta(days=10),"priority": 1,"import_session_id": 1,**kwargs}
 a = (1,)
 b = 1,
 c = 1
@@ -138,6 +145,12 @@ what_is_up_with_those_new_coord_names = (coord_names | set(vars_to_create)) - se
 result = session.query(models.Customer.id).filter(models.Customer.account_id == account_id, models.Customer.email == email_address).order_by(models.Customer.id.asc(),).all()
 Ø = set()
 authors.łukasz.say_thanks()
+mapping = {
+    A: 0.25 * (10.0 / 12),
+    B: 0.1 * (10.0 / 12),
+    C: 0.1 * (10.0 / 12),
+    D: 0.1 * (10.0 / 12),
+}
 
 def gen():
     yield from outside_of_generator
@@ -250,6 +263,16 @@ str or None if (1 if True else 2) else str or bytes or None
 []
 [1, 2, 3, 4, 5, 6, 7, 8, 9, (10 or A), (11 or B), (12 or C)]
 [1, 2, 3]
+[*a]
+[*range(10)]
+[*a, 4, 5]
+[4, *a, 5]
+[
+    this_is_a_very_long_variable_which_will_force_a_delimiter_split,
+    element,
+    another,
+    *more,
+]
 {i for i in (1, 2, 3)}
 {(i ** 2) for i in (1, 2, 3)}
 {(i ** 2) for i, _ in ((1, "a"), (2, "b"), (3, "c"))}
@@ -281,7 +304,9 @@ call(
     **kwargs
 )  # note: no trailing comma pre-3.6
 call(*gidgets[:2])
+call(a, *gidgets[:2])
 call(**self.screen_kwargs)
+call(b, **self.screen_kwargs)
 lukasz.langa.pl
 call.me(maybe)
 1 .real
@@ -339,8 +364,8 @@ SomeName
     "ended_at": now() + timedelta(days=10),
     "priority": 1,
     "import_session_id": 1,
-    **kwargs
-}  # no trailing comma, this file is not 3.6+
+    **kwargs,
+}
 a = (1,)
 b = 1,
 c = 1
@@ -359,6 +384,12 @@ result = session.query(models.Customer.id).filter(
 ).all()
 Ø = set()
 authors.łukasz.say_thanks()
+mapping = {
+    A: 0.25 * (10.0 / 12),
+    B: 0.1 * (10.0 / 12),
+    C: 0.1 * (10.0 / 12),
+    D: 0.1 * (10.0 / 12),
+}
 
 
 def gen():

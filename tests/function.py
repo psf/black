@@ -74,6 +74,13 @@ def long_lines():
         $
         """, re.MULTILINE | re.VERBOSE
     )
+def trailing_comma():
+    mapping = {
+    A: 0.25 * (10.0 / 12),
+    B: 0.1 * (10.0 / 12),
+    C: 0.1 * (10.0 / 12),
+    D: 0.1 * (10.0 / 12),
+}
 
 # output
 
@@ -198,3 +205,12 @@ def long_lines():
         """,
         re.MULTILINE | re.VERBOSE,
     )
+
+
+def trailing_comma():
+    mapping = {
+        A: 0.25 * (10.0 / 12),
+        B: 0.1 * (10.0 / 12),
+        C: 0.1 * (10.0 / 12),
+        D: 0.1 * (10.0 / 12),
+    }

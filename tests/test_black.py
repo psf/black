@@ -179,7 +179,7 @@ class BlackTestCase(unittest.TestCase):
             msg = (
                 f"Expected diff isn't equal to the actual. If you made changes "
                 f"to expression.py and this is an anticipated difference, "
-                f"overwrite tests/expression.diff with {dump}."
+                f"overwrite tests/expression.diff with {dump}"
             )
             self.assertEqual(expected, actual, msg)
 

@@ -522,7 +522,20 @@ MATH_OPERATORS = {
     token.DOUBLESTAR,
     token.DOUBLESLASH,
 }
-VARARGS = {token.STAR, token.DOUBLESTAR}
+STARS = {token.STAR, token.DOUBLESTAR}
+VARARGS_PARENTS = {
+    syms.arglist,
+    syms.argument,  # double star in arglist
+    syms.trailer,  # single argument to call
+    syms.typedargslist,
+    syms.varargslist,  # lambdas
+}
+UNPACKING_PARENTS = {
+    syms.atom,  # single element of a list or set literal
+    syms.dictsetmaker,
+    syms.listmaker,
+    syms.testlist_gexp,
+}
 COMPREHENSION_PRIORITY = 20
 COMMA_PRIORITY = 10
 LOGIC_PRIORITY = 5
@@ -1255,18 +1268,8 @@ def whitespace(leaf: Leaf) -> str:  # noqa C901
                     # that, too.
                     return prevp.prefix
 
-        elif prevp.type == token.DOUBLESTAR:
-            if (
-                prevp.parent
-                and prevp.parent.type in {
-                    syms.arglist,
-                    syms.argument,
-                    syms.dictsetmaker,
-                    syms.parameters,
-                    syms.typedargslist,
-                    syms.varargslist,
-                }
-            ):
+        elif prevp.type in STARS:
+            if is_vararg(prevp, within=VARARGS_PARENTS | UNPACKING_PARENTS):
                 return NO
 
         elif prevp.type == token.COLON:
@@ -1275,7 +1278,7 @@ def whitespace(leaf: Leaf) -> str:  # noqa C901
 
         elif (
             prevp.parent
-            and prevp.parent.type in {syms.factor, syms.star_expr}
+            and prevp.parent.type == syms.factor
             and prevp.type in MATH_OPERATORS
         ):
             return NO
@@ -1496,11 +1499,7 @@ def is_split_before_delimiter(leaf: Leaf, previous: Leaf = None) -> int:
 
     Higher numbers are higher priority.
     """
-    if (
-        leaf.type in VARARGS
-        and leaf.parent
-        and leaf.parent.type in {syms.argument, syms.typedargslist, syms.dictsetmaker}
-    ):
+    if is_vararg(leaf, within=VARARGS_PARENTS | UNPACKING_PARENTS):
         # * and ** might also be MATH_OPERATORS but in this case they are not.
         # Don't treat them as a delimiter.
         return 0
@@ -1878,8 +1877,7 @@ def delimiter_split(line: Line, py36: bool = False) -> Iterator[Line]:
         lowest_depth = min(lowest_depth, leaf.bracket_depth)
         if (
             leaf.bracket_depth == lowest_depth
-            and leaf.type == token.STAR
-            or leaf.type == token.DOUBLESTAR
+            and is_vararg(leaf, within=VARARGS_PARENTS)
         ):
             trailing_comma_safe = trailing_comma_safe and py36
         leaf_priority = delimiters.get(id(leaf))
@@ -2088,6 +2086,29 @@ def is_one_tuple(node: LN) -> bool:
         and len(node.children) == 2
         and node.children[1].type == token.COMMA
     )
+
+
+def is_vararg(leaf: Leaf, within: Set[NodeType]) -> bool:
+    """Return True if `leaf` is a star or double star in a vararg or kwarg.
+
+    If `within` includes VARARGS_PARENTS, this applies to function signatures.
+    If `within` includes COLLECTION_LIBERALS_PARENTS, it applies to right
+    hand-side extended iterable unpacking (PEP 3132) and additional unpacking
+    generalizations (PEP 448).
+    """
+    if leaf.type not in STARS or not leaf.parent:
+        return False
+
+    p = leaf.parent
+    if p.type == syms.star_expr:
+        # Star expressions are also used as assignment targets in extended
+        # iterable unpacking (PEP 3132).  See what its parent is instead.
+        if not p.parent:
+            return False
+
+        p = p.parent
+
+    return p.type in within
 
 
 def max_delimiter_priority_in_atom(node: LN) -> int:

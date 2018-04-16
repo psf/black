@@ -26,6 +26,8 @@ Assertions and checks
 
 .. autofunction:: black.is_python36
 
+.. autofunction:: black.is_vararg
+
 Formatting
 ----------
 

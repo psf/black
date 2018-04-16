@@ -491,6 +491,11 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Change Log
 
+### 18.4a3
+
+* generalized star expression handling, including double stars; this
+  fixes multiplication making expressions "unsafe" for trailing commas (#132)
+
 ### 18.4a2
 
 * fixed parsing of unaligned standalone comments (#99, #112)
