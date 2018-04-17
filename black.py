@@ -1364,7 +1364,7 @@ def whitespace(leaf: Leaf) -> str:  # noqa C901
             if not prevp or prevp.type == token.LPAR:
                 return NO
 
-        elif prev.type == token.EQUAL or prev.type == token.DOUBLESTAR:
+        elif prev.type in {token.EQUAL, token.STAR, token.DOUBLESTAR}:
             return NO
 
     elif p.type == syms.decorator:
