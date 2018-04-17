@@ -194,53 +194,73 @@ def main(
 
     if len(sources) == 0:
         ctx.exit(0)
+        return
+
     elif len(sources) == 1:
-        p = sources[0]
-        report = Report(check=check, quiet=quiet)
-        try:
-            cached = False
-            if not p.is_file() and str(p) == "-":
-                changed = format_stdin_to_stdout(
-                    line_length=line_length, fast=fast, write_back=write_back
-                )
-            else:
-                changed = False
-                cache: Union[Cache, None]
-                if write_back != WriteBack.DIFF:
-                    cache = read_cache()
-                    if p in cache and cache[p] == get_cache_info(p):
-                        cached = True
-                else:
-                    cache = None
-                if not cached:
-                    changed = format_file_in_place(
-                        p, line_length=line_length, fast=fast, write_back=write_back
-                    )
-                if changed and cache is not None:
-                    write_cache(cache, [p])
-            report.done(p, changed, cached)
-        except Exception as exc:
-            report.failed(p, str(exc))
-        ctx.exit(report.return_code)
+        return_code = run_single_file_mode(
+            line_length, check, fast, quiet, write_back, sources[0]
+        )
     else:
-        loop = asyncio.get_event_loop()
-        executor = ProcessPoolExecutor(max_workers=os.cpu_count())
-        return_code = 1
-        try:
-            return_code = loop.run_until_complete(
-                schedule_formatting(
-                    sources, line_length, write_back, fast, quiet, loop, executor
-                )
+        return_code = run_multi_file_mode(line_length, fast, quiet, write_back, sources)
+    ctx.exit(return_code)
+
+
+def run_single_file_mode(
+    line_length: int,
+    check: bool,
+    fast: bool,
+    quiet: bool,
+    write_back: WriteBack,
+    src: Path,
+) -> int:
+    report = Report(check=check, quiet=quiet)
+    try:
+        cached = False
+        if not src.is_file() and str(src) == "-":
+            changed = format_stdin_to_stdout(
+                line_length=line_length, fast=fast, write_back=write_back
             )
-        except:
-            import traceback
+        else:
+            changed = False
+            cache: Union[Cache, None]
+            if write_back != WriteBack.DIFF:
+                cache = read_cache()
+                src = src.resolve()
+                if src in cache and cache[src] == get_cache_info(src):
+                    cached = True
+            else:
+                cache = None
+            if not cached:
+                changed = format_file_in_place(
+                    src, line_length=line_length, fast=fast, write_back=write_back
+                )
+            if changed and cache is not None:
+                write_cache(cache, [src])
+        report.done(src, changed, cached)
+    except Exception as exc:
+        report.failed(src, str(exc))
+    return report.return_code
 
-            traceback.print_exc()
-            raise
 
-        finally:
-            shutdown(loop)
-            ctx.exit(return_code)
+def run_multi_file_mode(
+    line_length: int,
+    fast: bool,
+    quiet: bool,
+    write_back: WriteBack,
+    sources: List[Path],
+) -> int:
+    loop = asyncio.get_event_loop()
+    executor = ProcessPoolExecutor(max_workers=os.cpu_count())
+    return_code = 1
+    try:
+        return_code = loop.run_until_complete(
+            schedule_formatting(
+                sources, line_length, write_back, fast, quiet, loop, executor
+            )
+        )
+    finally:
+        shutdown(loop)
+        return return_code
 
 
 async def schedule_formatting(
@@ -2459,7 +2479,9 @@ def sub_twice(regex: Pattern[str], replacement: str, original: str) -> str:
 
 
 def read_cache() -> Cache:
-    """Read the cache if it exists and is well formed. If it is not well formed, the call to write_cache later should resolve the issue."""
+    """Read the cache if it exists and is well formed. If it is not well formed, the
+    call to write_cache later should resolve the issue.
+    """
     if not CACHE_FILE.exists():
         return {}
 
@@ -2481,7 +2503,9 @@ def get_cache_info(path: Path) -> CacheInfo:
 def filter_cached(
     cache: Cache, sources: Iterable[Path]
 ) -> Tuple[List[Path], List[Path]]:
-    """Splits a list of paths to format into a tuple of a list of paths that may still need formatting and a list of already formatted paths"""
+    """Splits a list of paths to format into a tuple of a list of paths that may still
+    need formatting and a list of already formatted paths
+    """
     todo, done = [], []
     for src in sources:
         src = src.resolve()

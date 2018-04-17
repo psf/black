@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 import sys
 from tempfile import TemporaryDirectory
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Iterator
 import unittest
 from unittest.mock import patch
 
@@ -51,7 +51,7 @@ def read_data(name: str) -> Tuple[str, str]:
 
 
 @contextmanager
-def cache_dir(exists=True) -> Path:
+def cache_dir(exists: bool = True) -> Iterator[Path]:
     with TemporaryDirectory() as workspace:
         cache_dir = Path(workspace)
         if not exists:
@@ -62,13 +62,13 @@ def cache_dir(exists=True) -> Path:
 
 
 @contextmanager
-def event_loop(close: bool):
+def event_loop(close: bool) -> Iterator[None]:
     policy = asyncio.get_event_loop_policy()
     old_loop = policy.get_event_loop()
     loop = policy.new_event_loop()
     asyncio.set_event_loop(loop)
     try:
-        yield loop
+        yield
 
     finally:
         policy.set_event_loop(old_loop)
@@ -481,9 +481,9 @@ class BlackTestCase(unittest.TestCase):
         self.assertTrue("Actual tree:" in out_str)
         self.assertEqual("".join(err_lines), "")
 
-    def test_cache_broken_file(self):
+    def test_cache_broken_file(self) -> None:
         with cache_dir() as workspace:
-            with open(black.CACHE_FILE, "w") as fobj:
+            with black.CACHE_FILE.open("w") as fobj:
                 fobj.write("this is not a pickle")
             self.assertEqual(black.read_cache(), {})
             src = (workspace / "test.py").resolve()
@@ -494,7 +494,7 @@ class BlackTestCase(unittest.TestCase):
             cache = black.read_cache()
             self.assertIn(src, cache)
 
-    def test_cache_single_file_already_cached(self):
+    def test_cache_single_file_already_cached(self) -> None:
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
             with src.open("w") as fobj:
@@ -506,7 +506,7 @@ class BlackTestCase(unittest.TestCase):
                 self.assertEqual(fobj.read(), "print('hello')")
 
     @event_loop(close=False)
-    def test_cache_multiple_files(self):
+    def test_cache_multiple_files(self) -> None:
         with cache_dir() as workspace:
             one = (workspace / "one.py").resolve()
             with one.open("w") as fobj:
@@ -525,7 +525,7 @@ class BlackTestCase(unittest.TestCase):
             self.assertIn(one, cache)
             self.assertIn(two, cache)
 
-    def test_no_cache_when_writeback_diff(self):
+    def test_no_cache_when_writeback_diff(self) -> None:
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
             with src.open("w") as fobj:
@@ -534,17 +534,17 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(result.exit_code, 0)
             self.assertFalse(black.CACHE_FILE.exists())
 
-    def test_no_cache_when_stdin(self):
+    def test_no_cache_when_stdin(self) -> None:
         with cache_dir():
             result = CliRunner().invoke(black.main, ["-"], input="print('hello')")
             self.assertEqual(result.exit_code, 0)
             self.assertFalse(black.CACHE_FILE.exists())
 
-    def test_read_cache_no_cachefile(self):
+    def test_read_cache_no_cachefile(self) -> None:
         with cache_dir():
             self.assertEqual(black.read_cache(), {})
 
-    def test_write_cache_read_cache(self):
+    def test_write_cache_read_cache(self) -> None:
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
             src.touch()
@@ -553,7 +553,7 @@ class BlackTestCase(unittest.TestCase):
             self.assertIn(src, cache)
             self.assertEqual(cache[src], black.get_cache_info(src))
 
-    def test_filter_cached(self):
+    def test_filter_cached(self) -> None:
         with TemporaryDirectory() as workspace:
             path = Path(workspace)
             uncached = (path / "uncached").resolve()
@@ -569,14 +569,14 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(todo, [uncached, cached_but_changed])
             self.assertEqual(done, [cached])
 
-    def test_write_cache_creates_directory_if_needed(self):
+    def test_write_cache_creates_directory_if_needed(self) -> None:
         with cache_dir(exists=False) as workspace:
             self.assertFalse(workspace.exists())
             black.write_cache({}, [])
             self.assertTrue(workspace.exists())
 
     @event_loop(close=False)
-    def test_failed_formatting_does_not_get_cached(self):
+    def test_failed_formatting_does_not_get_cached(self) -> None:
         with cache_dir() as workspace:
             failing = (workspace / "failing.py").resolve()
             with failing.open("w") as fobj:
