@@ -1364,7 +1364,7 @@ def whitespace(leaf: Leaf) -> str:  # noqa C901
             if not prevp or prevp.type == token.LPAR:
                 return NO
 
-        elif prev.type == token.EQUAL or prev.type == token.DOUBLESTAR:
+        elif prev.type in {token.EQUAL} | STARS:
             return NO
 
     elif p.type == syms.decorator:
@@ -2165,7 +2165,7 @@ def is_python36(node: Node) -> bool:
             and n.children[-1].type == token.COMMA
         ):
             for ch in n.children:
-                if ch.type == token.STAR or ch.type == token.DOUBLESTAR:
+                if ch.type in STARS:
                     return True
 
     return False

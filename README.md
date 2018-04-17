@@ -496,6 +496,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * generalized star expression handling, including double stars; this
   fixes multiplication making expressions "unsafe" for trailing commas (#132)
 
+* fix parsing of complex expressions after star and double stars in 
+  function parameters (#2)
+
 ### 18.4a2
 
 * fixed parsing of unaligned standalone comments (#99, #112)

@@ -158,6 +158,9 @@ def gen():
 
 async def f():
     await some.complicated[0].call(with_args=(True or (1 is not 1)))
+print(* [] or [1])
+print(**{1: 3} if False else {x: x for x in range(3)})
+print(* lambda x: x)
 for x, in (1,), (2,), (3,): ...
 for y in (): ...
 for z in (i for i in (1, 2, 3)): ...
@@ -402,6 +405,9 @@ async def f():
     await some.complicated[0].call(with_args=(True or (1 is not 1)))
 
 
+print(*[] or [1])
+print(**{1: 3} if False else {x: x for x in range(3)})
+print(*lambda x: x)
 for (x,) in (1,), (2,), (3,):
     ...
 for y in ():
