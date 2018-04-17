@@ -436,6 +436,19 @@ the line length if you really need to.  If you're already using Python
 that is pinned to the latest release on PyPI.  If you'd rather run on
 master, this is also an option.
 
+
+## Caching
+
+Black caches already formatted files, unless the `--diff` flag is used or
+code is passed via standard input. The location of the cache files depend
+on the system on which black is run. The standard locations on common
+operating systems are:
+
+* Windows: `C:\\Users\<username>\AppData\Local\black\black\Cache\<version>\cache.pkl`
+* macOS: `/Users/<username>/Library/Caches/black/<version>/cache.pkl`
+* Linux: `/home/<username>/.cache/black/<version>/cache.pkl`
+
+
 ## Testimonials
 
 **Dusty Phillips**, [writer](https://smile.amazon.com/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=dusty+phillips):

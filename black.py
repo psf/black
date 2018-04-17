@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import asyncio
+import pickle
 from asyncio.base_events import BaseEventLoop
 from concurrent.futures import Executor, ProcessPoolExecutor
 from enum import Enum
@@ -32,6 +33,7 @@ from typing import (
     Union,
 )
 
+from appdirs import user_cache_dir
 from attr import dataclass, Factory
 import click
 
@@ -43,6 +45,8 @@ from blib2to3.pgen2.parse import ParseError
 
 __version__ = "18.4a2"
 DEFAULT_LINE_LENGTH = 88
+CACHE_DIR = Path(user_cache_dir("black", version=__version__))
+CACHE_FILE = CACHE_DIR / "cache.pkl"
 # types
 syms = pygram.python_symbols
 FileContent = str
@@ -54,6 +58,10 @@ Priority = int
 Index = int
 LN = Union[Leaf, Node]
 SplitFunc = Callable[["Line", bool], Iterator["Line"]]
+Timestamp = float
+FileSize = int
+CacheInfo = Tuple[Timestamp, FileSize]
+Cache = Dict[Path, CacheInfo]
 out = partial(click.secho, bold=True, err=True)
 err = partial(click.secho, fg="red", err=True)
 
@@ -183,21 +191,34 @@ def main(
         write_back = WriteBack.DIFF
     else:
         write_back = WriteBack.YES
+
     if len(sources) == 0:
         ctx.exit(0)
     elif len(sources) == 1:
         p = sources[0]
         report = Report(check=check, quiet=quiet)
         try:
+            cached = False
             if not p.is_file() and str(p) == "-":
                 changed = format_stdin_to_stdout(
                     line_length=line_length, fast=fast, write_back=write_back
                 )
             else:
-                changed = format_file_in_place(
-                    p, line_length=line_length, fast=fast, write_back=write_back
-                )
-            report.done(p, changed)
+                changed = False
+                cache: Union[Cache, None]
+                if write_back != WriteBack.DIFF:
+                    cache = read_cache()
+                    if p in cache and cache[p] == get_cache_info(p):
+                        cached = True
+                else:
+                    cache = None
+                if not cached:
+                    changed = format_file_in_place(
+                        p, line_length=line_length, fast=fast, write_back=write_back
+                    )
+                if changed and cache is not None:
+                    write_cache(cache, [p])
+            report.done(p, changed, cached)
         except Exception as exc:
             report.failed(p, str(exc))
         ctx.exit(report.return_code)
@@ -211,6 +232,12 @@ def main(
                     sources, line_length, write_back, fast, quiet, loop, executor
                 )
             )
+        except:
+            import traceback
+
+            traceback.print_exc()
+            raise
+
         finally:
             shutdown(loop)
             ctx.exit(return_code)
@@ -232,41 +259,61 @@ async def schedule_formatting(
     `line_length`, `write_back`, and `fast` options are passed to
     :func:`format_file_in_place`.
     """
-    lock = None
-    if write_back == WriteBack.DIFF:
-        # For diff output, we need locks to ensure we don't interleave output
-        # from different processes.
-        manager = Manager()
-        lock = manager.Lock()
-    tasks = {
-        src: loop.run_in_executor(
-            executor, format_file_in_place, src, line_length, fast, write_back, lock
-        )
-        for src in sources
-    }
-    _task_values = list(tasks.values())
-    loop.add_signal_handler(signal.SIGINT, cancel, _task_values)
-    loop.add_signal_handler(signal.SIGTERM, cancel, _task_values)
-    await asyncio.wait(tasks.values())
-    cancelled = []
     report = Report(check=write_back is WriteBack.NO, quiet=quiet)
-    for src, task in tasks.items():
-        if not task.done():
-            report.failed(src, "timed out, cancelling")
-            task.cancel()
-            cancelled.append(task)
-        elif task.cancelled():
-            cancelled.append(task)
-        elif task.exception():
-            report.failed(src, str(task.exception()))
-        else:
-            report.done(src, task.result())
+
+    cache: Union[Cache, None]
+
+    if write_back != WriteBack.DIFF:
+        cache = read_cache()
+        sources, cached = filter_cached(cache, sources)
+        for src in cached:
+            report.done(src, False, True)
+    else:
+        cache = None
+
+    cancelled = []
+    formatted = []
+
+    if sources:
+        lock = None
+        if write_back == WriteBack.DIFF:
+            # For diff output, we need locks to ensure we don't interleave output
+            # from different processes.
+            manager = Manager()
+            lock = manager.Lock()
+        tasks = {
+            src: loop.run_in_executor(
+                executor, format_file_in_place, src, line_length, fast, write_back, lock
+            )
+            for src in sources
+        }
+        _task_values = list(tasks.values())
+        loop.add_signal_handler(signal.SIGINT, cancel, _task_values)
+        loop.add_signal_handler(signal.SIGTERM, cancel, _task_values)
+        await asyncio.wait(tasks.values())
+        for src, task in tasks.items():
+            if not task.done():
+                report.failed(src, "timed out, cancelling")
+                task.cancel()
+                cancelled.append(task)
+            elif task.cancelled():
+                cancelled.append(task)
+            elif task.exception():
+                report.failed(src, str(task.exception()))
+            else:
+                formatted.append(src)
+                report.done(src, task.result(), False)
+
     if cancelled:
         await asyncio.gather(*cancelled, loop=loop, return_exceptions=True)
     elif not quiet:
         out("All done! ✨ 🍰 ✨")
     if not quiet:
         click.echo(str(report))
+
+    if cache is not None and formatted:
+        write_cache(cache, formatted)
+
     return report.return_code
 
 
@@ -282,6 +329,7 @@ def format_file_in_place(
     If `write_back` is True, write reformatted code back to stdout.
     `line_length` and `fast` options are passed to :func:`format_file_contents`.
     """
+
     with tokenize.open(src) as src_buffer:
         src_contents = src_buffer.read()
     try:
@@ -2201,7 +2249,7 @@ class Report:
     same_count: int = 0
     failure_count: int = 0
 
-    def done(self, src: Path, changed: bool) -> None:
+    def done(self, src: Path, changed: bool, cached: bool = False) -> None:
         """Increment the counter for successful reformatting. Write out a message."""
         if changed:
             reformatted = "would reformat" if self.check else "reformatted"
@@ -2210,7 +2258,8 @@ class Report:
             self.change_count += 1
         else:
             if not self.quiet:
-                out(f"{src} already well formatted, good job.", bold=False)
+                why = " (cached)" if cached else ""
+                out(f"{src} already well formatted{why}, good job.", bold=False)
             self.same_count += 1
 
     def failed(self, src: Path, message: str) -> None:
@@ -2407,6 +2456,52 @@ def sub_twice(regex: Pattern[str], replacement: str, original: str) -> str:
     overlapping matches.
     """
     return regex.sub(replacement, regex.sub(replacement, original))
+
+
+def read_cache() -> Cache:
+    """Read the cache if it exists and is well formed. If it is not well formed, the call to write_cache later should resolve the issue."""
+    if not CACHE_FILE.exists():
+        return {}
+
+    with CACHE_FILE.open("rb") as fobj:
+        try:
+            cache: Cache = pickle.load(fobj)
+        except pickle.UnpicklingError:
+            return {}
+
+    return cache
+
+
+def get_cache_info(path: Path) -> CacheInfo:
+    """Return the information used to check if a file is already formatted or not."""
+    stat = path.stat()
+    return stat.st_mtime, stat.st_size
+
+
+def filter_cached(
+    cache: Cache, sources: Iterable[Path]
+) -> Tuple[List[Path], List[Path]]:
+    """Splits a list of paths to format into a tuple of a list of paths that may still need formatting and a list of already formatted paths"""
+    todo, done = [], []
+    for src in sources:
+        src = src.resolve()
+        if src not in cache:
+            todo.append(src)
+        else:
+            if cache[src] != get_cache_info(src):
+                todo.append(src)
+            else:
+                done.append(src)
+    return todo, done
+
+
+def write_cache(cache: Cache, sources: List[Path]) -> None:
+    """Update the cache file."""
+    if not CACHE_DIR.exists():
+        CACHE_DIR.mkdir(parents=True)
+    new_cache = {**cache, **{src.resolve(): get_cache_info(src) for src in sources}}
+    with CACHE_FILE.open("wb") as fobj:
+        pickle.dump(new_cache, fobj, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == "__main__":
