@@ -397,6 +397,9 @@ to do this.
 
 Use [joslarson.black-vscode](https://marketplace.visualstudio.com/items?itemName=joslarson.black-vscode).
 
+### SublimeText 3
+
+Use [sublack plugin](https://github.com/jgirardet/sublack).
 
 ### Other editors
 
