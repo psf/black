@@ -1135,7 +1135,11 @@ class LineGenerator(Visitor[Line]):
         for child in children:
             yield from self.visit(child)
 
-            if child.value == "async":
+            if (
+                isinstance(child, Leaf)
+                and child.type == token.NAME
+                and child.value == "async"
+            ):
                 break
 
         internal_stmt = next(children)
