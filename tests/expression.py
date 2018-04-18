@@ -204,6 +204,10 @@ if (
 ):
     return True
 last_call()
+
+async def lol():
+    [True async for _ in []]
+    return (i async for i in arange(42))
 # standalone comment at ENDMARKER
 
 
@@ -464,4 +468,11 @@ if (
     return True
 
 last_call()
+
+
+async def lol():
+    [True async for _ in []]
+    return (i async for i in arange(42))
+
+
 # standalone comment at ENDMARKER

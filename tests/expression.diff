@@ -117,7 +117,7 @@
  ]
  slice[0]
  slice[0:1]
-@@ -121,88 +135,122 @@
+@@ -121,92 +135,129 @@
  numpy[-(c + 1):, d]
  numpy[:, l[-2]]
  numpy[:, ::-1]
@@ -289,4 +289,11 @@
 +    return True
 +
  last_call()
++
+ 
+ async def lol():
+     [True async for _ in []]
+     return (i async for i in arange(42))
++
++
  # standalone comment at ENDMARKER
