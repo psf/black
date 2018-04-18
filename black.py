@@ -697,7 +697,8 @@ class Line:
         return (
             (first_leaf.type == token.NAME and first_leaf.value == "def")
             or (
-                first_leaf.value == "async"
+                first_leaf.type == token.NAME
+                and first_leaf.value == "async"
                 and second_leaf is not None
                 and second_leaf.type == token.NAME
                 and second_leaf.value == "def"
