@@ -105,7 +105,7 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, line_length=ll)
-        self.assertFalse(ff(THIS_FILE))
+        self.assertIs(ff(THIS_FILE), black.Changed.NO)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_black(self) -> None:
@@ -114,7 +114,7 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, line_length=ll)
-        self.assertFalse(ff(THIS_DIR / ".." / "black.py"))
+        self.assertIs(ff(THIS_DIR / ".." / "black.py"), black.Changed.NO)
 
     def test_piping(self) -> None:
         source, expected = read_data("../black")
@@ -157,7 +157,7 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, line_length=ll)
-        self.assertFalse(ff(THIS_DIR / ".." / "setup.py"))
+        self.assertIs(ff(THIS_DIR / ".." / "setup.py"), black.Changed.NO)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_function(self) -> None:
@@ -321,24 +321,24 @@ class BlackTestCase(unittest.TestCase):
             err_lines.append(msg)
 
         with patch("black.out", out), patch("black.err", err):
-            report.done(Path("f1"), changed=False)
+            report.done(Path("f1"), black.Changed.NO)
             self.assertEqual(len(out_lines), 1)
             self.assertEqual(len(err_lines), 0)
             self.assertEqual(out_lines[-1], "f1 already well formatted, good job.")
             self.assertEqual(unstyle(str(report)), "1 file left unchanged.")
             self.assertEqual(report.return_code, 0)
-            report.done(Path("f2"), changed=True)
+            report.done(Path("f2"), black.Changed.YES)
             self.assertEqual(len(out_lines), 2)
             self.assertEqual(len(err_lines), 0)
             self.assertEqual(out_lines[-1], "reformatted f2")
             self.assertEqual(
                 unstyle(str(report)), "1 file reformatted, 1 file left unchanged."
             )
-            report.done(Path("f3"), changed=False, cached=True)
+            report.done(Path("f3"), black.Changed.CACHED)
             self.assertEqual(len(out_lines), 3)
             self.assertEqual(len(err_lines), 0)
             self.assertEqual(
-                out_lines[-1], "f3 already well formatted (cached), good job."
+                out_lines[-1], "f3 wasn't modified on disk since last run."
             )
             self.assertEqual(
                 unstyle(str(report)), "1 file reformatted, 2 files left unchanged."
@@ -357,7 +357,7 @@ class BlackTestCase(unittest.TestCase):
                 "1 file failed to reformat.",
             )
             self.assertEqual(report.return_code, 123)
-            report.done(Path("f3"), changed=True)
+            report.done(Path("f3"), black.Changed.YES)
             self.assertEqual(len(out_lines), 4)
             self.assertEqual(len(err_lines), 1)
             self.assertEqual(out_lines[-1], "reformatted f3")
@@ -377,7 +377,7 @@ class BlackTestCase(unittest.TestCase):
                 "2 files failed to reformat.",
             )
             self.assertEqual(report.return_code, 123)
-            report.done(Path("f4"), changed=False)
+            report.done(Path("f4"), black.Changed.NO)
             self.assertEqual(len(out_lines), 5)
             self.assertEqual(len(err_lines), 2)
             self.assertEqual(out_lines[-1], "f4 already well formatted, good job.")
@@ -589,6 +589,11 @@ class BlackTestCase(unittest.TestCase):
             cache = black.read_cache()
             self.assertNotIn(failing, cache)
             self.assertIn(clean, cache)
+
+    def test_write_cache_write_fail(self):
+        with cache_dir(), patch.object(Path, "open") as mock:
+            mock.side_effect = OSError
+            black.write_cache({}, [])
 
 
 if __name__ == "__main__":

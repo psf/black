@@ -437,12 +437,13 @@ that is pinned to the latest release on PyPI.  If you'd rather run on
 master, this is also an option.
 
 
-## Caching
+## Ignoring non-modified files
 
-Black caches already formatted files, unless the `--diff` flag is used or
-code is passed via standard input. The location of the cache files depend
-on the system on which black is run. The standard locations on common
-operating systems are:
+*Black* remembers files it already formatted, unless the `--diff` flag is used or
+code is passed via standard input. This information is stored per-user. The exact
+location of the file depends on the black version and the system on which black
+is run. The file is non-portable. The standard location on common operating systems 
+is:
 
 * Windows: `C:\\Users\<username>\AppData\Local\black\black\Cache\<version>\cache.pkl`
 * macOS: `/Users/<username>/Library/Caches/black/<version>/cache.pkl`
