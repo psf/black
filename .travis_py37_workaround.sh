@@ -10,3 +10,7 @@ source ~/virtualenv/python3.7-deadsnakes/bin/activate
 
 echo "We ensure our own pip."
 curl -sSL https://bootstrap.pypa.io/get-pip.py | python3.7
+
+echo
+echo "Python version:"
+python3.7 -c "import sys; print(sys.version)"
