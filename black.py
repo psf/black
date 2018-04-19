@@ -649,7 +649,7 @@ class BracketTracker:
     def max_delimiter_priority(self, exclude: Iterable[LeafID] = ()) -> int:
         """Return the highest priority of a delimiter found on the line.
 
-        Values are consistent with what `is_delimiter()` returns.
+        Values are consistent with what `is_split_*_delimiter()` return.
         Raises ValueError on no delimiters.
         """
         return max(v for k, v in self.delimiters.items() if k not in exclude)
@@ -1352,17 +1352,11 @@ def whitespace(leaf: Leaf) -> str:  # noqa C901
 
     if p.type in {syms.parameters, syms.arglist}:
         # untyped function signatures or calls
-        if t == token.RPAR:
-            return NO
-
         if not prev or prev.type != token.COMMA:
             return NO
 
     elif p.type == syms.varargslist:
         # lambdas
-        if t == token.RPAR:
-            return NO
-
         if prev and prev.type != token.COMMA:
             return NO
 
@@ -1456,21 +1450,9 @@ def whitespace(leaf: Leaf) -> str:  # noqa C901
             # dots, but not the first one.
             return NO
 
-    elif (
-        p.type == syms.listmaker
-        or p.type == syms.testlist_gexp
-        or p.type == syms.subscriptlist
-    ):
-        # list interior, including unpacking
-        if not prev:
-            return NO
-
     elif p.type == syms.dictsetmaker:
-        # dict and set interior, including unpacking
-        if not prev:
-            return NO
-
-        if prev.type == token.DOUBLESTAR:
+        # dict unpacking
+        if prev and prev.type == token.DOUBLESTAR:
             return NO
 
     elif p.type in {syms.factor, syms.star_expr}:
@@ -1594,17 +1576,6 @@ def is_split_before_delimiter(leaf: Leaf, previous: Leaf = None) -> int:
         return LOGIC_PRIORITY
 
     return 0
-
-
-def is_delimiter(leaf: Leaf, previous: Leaf = None) -> int:
-    """Return the priority of the `leaf` delimiter. Return 0 if not delimiter.
-
-    Higher numbers are higher priority.
-    """
-    return max(
-        is_split_before_delimiter(leaf, previous),
-        is_split_after_delimiter(leaf, previous),
-    )
 
 
 def generate_comments(leaf: Leaf) -> Iterator[Leaf]:

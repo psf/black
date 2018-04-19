@@ -16,8 +16,6 @@ Assertions and checks
 
 .. autofunction:: black.is_split_before_delimiter
 
-.. autofunction:: black.is_delimiter
-
 .. autofunction:: black.is_empty_tuple
 
 .. autofunction:: black.is_import
