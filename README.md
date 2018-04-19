@@ -445,7 +445,7 @@ master, this is also an option.
 *Black* remembers files it already formatted, unless the `--diff` flag is used or
 code is passed via standard input. This information is stored per-user. The exact
 location of the file depends on the black version and the system on which black
-is run. The file is non-portable. The standard location on common operating systems 
+is run. The file is non-portable. The standard location on common operating systems
 is:
 
 * Windows: `C:\\Users\<username>\AppData\Local\black\black\Cache\<version>\cache.pkl`
@@ -508,12 +508,15 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Change Log
 
-### 18.4a3
+### 18.4a3 (unreleased)
+
+* added a "cache"; files already reformatted that haven't changed on disk
+  won't be reformatted again (#109)
 
 * generalized star expression handling, including double stars; this
   fixes multiplication making expressions "unsafe" for trailing commas (#132)
 
-* fix parsing of complex expressions after star and double stars in 
+* fix parsing of complex expressions after star and double stars in
   function parameters (#2)
 
 ### 18.4a2
@@ -677,4 +680,5 @@ Multiple contributions by:
 * [Eli Treuherz](mailto:eli.treuherz@cgi.com)
 * Hugo van Kemenade
 * [Ivan Katanić](mailto:ivan.katanic@gmail.com)
+* [Jonas Obrist](mailto:ojiidotch@gmail.com)
 * [Osaetin Daniel](mailto:osaetindaniel@gmail.com)
