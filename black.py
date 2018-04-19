@@ -200,23 +200,31 @@ def main(
         return
 
     elif len(sources) == 1:
-        return_code = run_single_file_mode(
-            line_length, check, fast, quiet, write_back, sources[0]
-        )
+        return_code = reformat_one(sources[0], line_length, fast, quiet, write_back)
     else:
-        return_code = run_multi_file_mode(line_length, fast, quiet, write_back, sources)
+        loop = asyncio.get_event_loop()
+        executor = ProcessPoolExecutor(max_workers=os.cpu_count())
+        return_code = 1
+        try:
+            return_code = loop.run_until_complete(
+                schedule_formatting(
+                    sources, line_length, write_back, fast, quiet, loop, executor
+                )
+            )
+        finally:
+            shutdown(loop)
     ctx.exit(return_code)
 
 
-def run_single_file_mode(
-    line_length: int,
-    check: bool,
-    fast: bool,
-    quiet: bool,
-    write_back: WriteBack,
-    src: Path,
+def reformat_one(
+    src: Path, line_length: int, fast: bool, quiet: bool, write_back: WriteBack
 ) -> int:
-    report = Report(check=check, quiet=quiet)
+    """Reformat a single file under `src` without spawning child processes.
+
+    If `quiet` is True, non-error messages are not output. `line_length`,
+    `write_back`, and `fast` options are passed to :func:`format_file_in_place`.
+    """
+    report = Report(check=write_back is WriteBack.NO, quiet=quiet)
     try:
         changed = Changed.NO
         if not src.is_file() and str(src) == "-":
@@ -244,27 +252,6 @@ def run_single_file_mode(
     except Exception as exc:
         report.failed(src, str(exc))
     return report.return_code
-
-
-def run_multi_file_mode(
-    line_length: int,
-    fast: bool,
-    quiet: bool,
-    write_back: WriteBack,
-    sources: List[Path],
-) -> int:
-    loop = asyncio.get_event_loop()
-    executor = ProcessPoolExecutor(max_workers=os.cpu_count())
-    return_code = 1
-    try:
-        return_code = loop.run_until_complete(
-            schedule_formatting(
-                sources, line_length, write_back, fast, quiet, loop, executor
-            )
-        )
-    finally:
-        shutdown(loop)
-        return return_code
 
 
 async def schedule_formatting(
