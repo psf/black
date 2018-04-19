@@ -105,7 +105,7 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, line_length=ll)
-        self.assertIs(ff(THIS_FILE), black.Changed.NO)
+        self.assertFalse(ff(THIS_FILE))
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_black(self) -> None:
@@ -114,7 +114,7 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, line_length=ll)
-        self.assertIs(ff(THIS_DIR / ".." / "black.py"), black.Changed.NO)
+        self.assertFalse(ff(THIS_DIR / ".." / "black.py"))
 
     def test_piping(self) -> None:
         source, expected = read_data("../black")
@@ -157,7 +157,7 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, line_length=ll)
-        self.assertIs(ff(THIS_DIR / ".." / "setup.py"), black.Changed.NO)
+        self.assertFalse(ff(THIS_DIR / ".." / "setup.py"))
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_function(self) -> None:
@@ -590,7 +590,7 @@ class BlackTestCase(unittest.TestCase):
             self.assertNotIn(failing, cache)
             self.assertIn(clean, cache)
 
-    def test_write_cache_write_fail(self):
+    def test_write_cache_write_fail(self) -> None:
         with cache_dir(), patch.object(Path, "open") as mock:
             mock.side_effect = OSError
             black.write_cache({}, [])

@@ -218,22 +218,26 @@ def run_single_file_mode(
 ) -> int:
     report = Report(check=check, quiet=quiet)
     try:
+        changed = Changed.NO
         if not src.is_file() and str(src) == "-":
-            changed = format_stdin_to_stdout(
+            if format_stdin_to_stdout(
                 line_length=line_length, fast=fast, write_back=write_back
-            )
+            ):
+                changed = Changed.YES
         else:
-            changed = Changed.NO
             cache: Cache = {}
             if write_back != WriteBack.DIFF:
                 cache = read_cache()
                 src = src.resolve()
                 if src in cache and cache[src] == get_cache_info(src):
                     changed = Changed.CACHED
-            if changed is not Changed.CACHED:
-                changed = format_file_in_place(
+            if (
+                changed is not Changed.CACHED
+                and format_file_in_place(
                     src, line_length=line_length, fast=fast, write_back=write_back
                 )
+            ):
+                changed = Changed.YES
             if write_back != WriteBack.DIFF and changed is not Changed.NO:
                 write_cache(cache, [src])
         report.done(src, changed)
@@ -316,7 +320,7 @@ async def schedule_formatting(
                 report.failed(src, str(task.exception()))
             else:
                 formatted.append(src)
-                report.done(src, task.result())
+                report.done(src, Changed.YES if task.result() else Changed.NO)
 
     if cancelled:
         await asyncio.gather(*cancelled, loop=loop, return_exceptions=True)
@@ -337,7 +341,7 @@ def format_file_in_place(
     fast: bool,
     write_back: WriteBack = WriteBack.NO,
     lock: Any = None,  # multiprocessing.Manager().Lock() is some crazy proxy
-) -> Changed:
+) -> bool:
     """Format file under `src` path. Return True if changed.
 
     If `write_back` is True, write reformatted code back to stdout.
@@ -351,7 +355,7 @@ def format_file_in_place(
             src_contents, line_length=line_length, fast=fast
         )
     except NothingChanged:
-        return Changed.NO
+        return False
 
     if write_back == write_back.YES:
         with open(src, "w", encoding=src_buffer.encoding) as f:
@@ -367,12 +371,12 @@ def format_file_in_place(
         finally:
             if lock:
                 lock.release()
-    return Changed.YES
+    return True
 
 
 def format_stdin_to_stdout(
     line_length: int, fast: bool, write_back: WriteBack = WriteBack.NO
-) -> Changed:
+) -> bool:
     """Format file on stdin. Return True if changed.
 
     If `write_back` is True, write reformatted code back to stdout.
@@ -382,10 +386,10 @@ def format_stdin_to_stdout(
     dst = src
     try:
         dst = format_file_contents(src, line_length=line_length, fast=fast)
-        return Changed.YES
+        return True
 
     except NothingChanged:
-        return Changed.NO
+        return False
 
     finally:
         if write_back == WriteBack.YES:
