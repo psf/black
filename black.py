@@ -2165,6 +2165,11 @@ def is_vararg(leaf: Leaf, within: Set[NodeType]) -> bool:
 
 
 def max_delimiter_priority_in_atom(node: LN) -> int:
+    """Return maximum delimiter priority inside `node`.
+
+    This is specific to atoms with contents contained in a pair of parentheses.
+    If `node` isn't an atom or there are no enclosing parentheses, returns 0.
+    """
     if node.type != syms.atom:
         return 0
 
