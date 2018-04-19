@@ -39,6 +39,8 @@ Formatting
 
 .. autofunction:: black.format_str
 
+.. autofunction:: black.reformat_one
+
 .. autofunction:: black.schedule_formatting
 
 File operations
@@ -70,6 +72,17 @@ Split functions
 
 .. autofunction:: black.bracket_split_succeeded_or_raise
 
+Caching
+-------
+
+.. autofunction:: black.filter_cached
+
+.. autofunction:: black.get_cache_info
+
+.. autofunction:: black.read_cache
+
+.. autofunction:: black.write_cache
+
 Utilities
 ---------
 
@@ -84,6 +97,8 @@ Utilities
 .. autofunction:: black.generate_comments
 
 .. autofunction:: black.make_comment
+
+.. autofunction:: black.max_delimiter_priority_in_atom
 
 .. autofunction:: black.normalize_prefix
 
