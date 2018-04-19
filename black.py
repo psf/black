@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import asyncio
+import pickle
 from asyncio.base_events import BaseEventLoop
 from concurrent.futures import Executor, ProcessPoolExecutor
 from enum import Enum
@@ -32,6 +33,7 @@ from typing import (
     Union,
 )
 
+from appdirs import user_cache_dir
 from attr import dataclass, Factory
 import click
 
@@ -54,6 +56,10 @@ Priority = int
 Index = int
 LN = Union[Leaf, Node]
 SplitFunc = Callable[["Line", bool], Iterator["Line"]]
+Timestamp = float
+FileSize = int
+CacheInfo = Tuple[Timestamp, FileSize]
+Cache = Dict[Path, CacheInfo]
 out = partial(click.secho, bold=True, err=True)
 err = partial(click.secho, fg="red", err=True)
 
@@ -102,6 +108,12 @@ class WriteBack(Enum):
     NO = 0
     YES = 1
     DIFF = 2
+
+
+class Changed(Enum):
+    NO = 0
+    CACHED = 1
+    YES = 2
 
 
 @click.command()
@@ -185,35 +197,70 @@ def main(
         write_back = WriteBack.YES
     if len(sources) == 0:
         ctx.exit(0)
+        return
+
     elif len(sources) == 1:
-        p = sources[0]
-        report = Report(check=check, quiet=quiet)
-        try:
-            if not p.is_file() and str(p) == "-":
-                changed = format_stdin_to_stdout(
-                    line_length=line_length, fast=fast, write_back=write_back
-                )
-            else:
-                changed = format_file_in_place(
-                    p, line_length=line_length, fast=fast, write_back=write_back
-                )
-            report.done(p, changed)
-        except Exception as exc:
-            report.failed(p, str(exc))
-        ctx.exit(report.return_code)
+        return_code = run_single_file_mode(
+            line_length, check, fast, quiet, write_back, sources[0]
+        )
     else:
-        loop = asyncio.get_event_loop()
-        executor = ProcessPoolExecutor(max_workers=os.cpu_count())
-        return_code = 1
-        try:
-            return_code = loop.run_until_complete(
-                schedule_formatting(
-                    sources, line_length, write_back, fast, quiet, loop, executor
-                )
+        return_code = run_multi_file_mode(line_length, fast, quiet, write_back, sources)
+    ctx.exit(return_code)
+
+
+def run_single_file_mode(
+    line_length: int,
+    check: bool,
+    fast: bool,
+    quiet: bool,
+    write_back: WriteBack,
+    src: Path,
+) -> int:
+    report = Report(check=check, quiet=quiet)
+    try:
+        if not src.is_file() and str(src) == "-":
+            changed = format_stdin_to_stdout(
+                line_length=line_length, fast=fast, write_back=write_back
             )
-        finally:
-            shutdown(loop)
-            ctx.exit(return_code)
+        else:
+            changed = Changed.NO
+            cache: Cache = {}
+            if write_back != WriteBack.DIFF:
+                cache = read_cache()
+                src = src.resolve()
+                if src in cache and cache[src] == get_cache_info(src):
+                    changed = Changed.CACHED
+            if changed is not Changed.CACHED:
+                changed = format_file_in_place(
+                    src, line_length=line_length, fast=fast, write_back=write_back
+                )
+            if write_back != WriteBack.DIFF and changed is not Changed.NO:
+                write_cache(cache, [src])
+        report.done(src, changed)
+    except Exception as exc:
+        report.failed(src, str(exc))
+    return report.return_code
+
+
+def run_multi_file_mode(
+    line_length: int,
+    fast: bool,
+    quiet: bool,
+    write_back: WriteBack,
+    sources: List[Path],
+) -> int:
+    loop = asyncio.get_event_loop()
+    executor = ProcessPoolExecutor(max_workers=os.cpu_count())
+    return_code = 1
+    try:
+        return_code = loop.run_until_complete(
+            schedule_formatting(
+                sources, line_length, write_back, fast, quiet, loop, executor
+            )
+        )
+    finally:
+        shutdown(loop)
+        return return_code
 
 
 async def schedule_formatting(
@@ -232,41 +279,55 @@ async def schedule_formatting(
     `line_length`, `write_back`, and `fast` options are passed to
     :func:`format_file_in_place`.
     """
-    lock = None
-    if write_back == WriteBack.DIFF:
-        # For diff output, we need locks to ensure we don't interleave output
-        # from different processes.
-        manager = Manager()
-        lock = manager.Lock()
-    tasks = {
-        src: loop.run_in_executor(
-            executor, format_file_in_place, src, line_length, fast, write_back, lock
-        )
-        for src in sources
-    }
-    _task_values = list(tasks.values())
-    loop.add_signal_handler(signal.SIGINT, cancel, _task_values)
-    loop.add_signal_handler(signal.SIGTERM, cancel, _task_values)
-    await asyncio.wait(tasks.values())
-    cancelled = []
     report = Report(check=write_back is WriteBack.NO, quiet=quiet)
-    for src, task in tasks.items():
-        if not task.done():
-            report.failed(src, "timed out, cancelling")
-            task.cancel()
-            cancelled.append(task)
-        elif task.cancelled():
-            cancelled.append(task)
-        elif task.exception():
-            report.failed(src, str(task.exception()))
-        else:
-            report.done(src, task.result())
+    cache: Cache = {}
+    if write_back != WriteBack.DIFF:
+        cache = read_cache()
+        sources, cached = filter_cached(cache, sources)
+        for src in cached:
+            report.done(src, Changed.CACHED)
+    cancelled = []
+    formatted = []
+    if sources:
+        lock = None
+        if write_back == WriteBack.DIFF:
+            # For diff output, we need locks to ensure we don't interleave output
+            # from different processes.
+            manager = Manager()
+            lock = manager.Lock()
+        tasks = {
+            src: loop.run_in_executor(
+                executor, format_file_in_place, src, line_length, fast, write_back, lock
+            )
+            for src in sources
+        }
+        _task_values = list(tasks.values())
+        loop.add_signal_handler(signal.SIGINT, cancel, _task_values)
+        loop.add_signal_handler(signal.SIGTERM, cancel, _task_values)
+        await asyncio.wait(_task_values)
+        for src, task in tasks.items():
+            if not task.done():
+                report.failed(src, "timed out, cancelling")
+                task.cancel()
+                cancelled.append(task)
+            elif task.cancelled():
+                cancelled.append(task)
+            elif task.exception():
+                report.failed(src, str(task.exception()))
+            else:
+                formatted.append(src)
+                report.done(src, task.result())
+
     if cancelled:
         await asyncio.gather(*cancelled, loop=loop, return_exceptions=True)
     elif not quiet:
         out("All done! ✨ 🍰 ✨")
     if not quiet:
         click.echo(str(report))
+
+    if write_back != WriteBack.DIFF and formatted:
+        write_cache(cache, formatted)
+
     return report.return_code
 
 
@@ -276,12 +337,13 @@ def format_file_in_place(
     fast: bool,
     write_back: WriteBack = WriteBack.NO,
     lock: Any = None,  # multiprocessing.Manager().Lock() is some crazy proxy
-) -> bool:
+) -> Changed:
     """Format file under `src` path. Return True if changed.
 
     If `write_back` is True, write reformatted code back to stdout.
     `line_length` and `fast` options are passed to :func:`format_file_contents`.
     """
+
     with tokenize.open(src) as src_buffer:
         src_contents = src_buffer.read()
     try:
@@ -289,7 +351,7 @@ def format_file_in_place(
             src_contents, line_length=line_length, fast=fast
         )
     except NothingChanged:
-        return False
+        return Changed.NO
 
     if write_back == write_back.YES:
         with open(src, "w", encoding=src_buffer.encoding) as f:
@@ -305,12 +367,12 @@ def format_file_in_place(
         finally:
             if lock:
                 lock.release()
-    return True
+    return Changed.YES
 
 
 def format_stdin_to_stdout(
     line_length: int, fast: bool, write_back: WriteBack = WriteBack.NO
-) -> bool:
+) -> Changed:
     """Format file on stdin. Return True if changed.
 
     If `write_back` is True, write reformatted code back to stdout.
@@ -320,10 +382,10 @@ def format_stdin_to_stdout(
     dst = src
     try:
         dst = format_file_contents(src, line_length=line_length, fast=fast)
-        return True
+        return Changed.YES
 
     except NothingChanged:
-        return False
+        return Changed.NO
 
     finally:
         if write_back == WriteBack.YES:
@@ -2201,16 +2263,20 @@ class Report:
     same_count: int = 0
     failure_count: int = 0
 
-    def done(self, src: Path, changed: bool) -> None:
+    def done(self, src: Path, changed: Changed) -> None:
         """Increment the counter for successful reformatting. Write out a message."""
-        if changed:
+        if changed is Changed.YES:
             reformatted = "would reformat" if self.check else "reformatted"
             if not self.quiet:
                 out(f"{reformatted} {src}")
             self.change_count += 1
         else:
             if not self.quiet:
-                out(f"{src} already well formatted, good job.", bold=False)
+                if changed is Changed.NO:
+                    msg = f"{src} already well formatted, good job."
+                else:
+                    msg = f"{src} wasn't modified on disk since last run."
+                out(msg, bold=False)
             self.same_count += 1
 
     def failed(self, src: Path, message: str) -> None:
@@ -2407,6 +2473,63 @@ def sub_twice(regex: Pattern[str], replacement: str, original: str) -> str:
     overlapping matches.
     """
     return regex.sub(replacement, regex.sub(replacement, original))
+
+
+CACHE_DIR = Path(user_cache_dir("black", version=__version__))
+CACHE_FILE = CACHE_DIR / "cache.pickle"
+
+
+def read_cache() -> Cache:
+    """Read the cache if it exists and is well formed.
+
+    If it is not well formed, the call to write_cache later should resolve the issue.
+    """
+    if not CACHE_FILE.exists():
+        return {}
+
+    with CACHE_FILE.open("rb") as fobj:
+        try:
+            cache: Cache = pickle.load(fobj)
+        except pickle.UnpicklingError:
+            return {}
+
+    return cache
+
+
+def get_cache_info(path: Path) -> CacheInfo:
+    """Return the information used to check if a file is already formatted or not."""
+    stat = path.stat()
+    return stat.st_mtime, stat.st_size
+
+
+def filter_cached(
+    cache: Cache, sources: Iterable[Path]
+) -> Tuple[List[Path], List[Path]]:
+    """Split a list of paths into two.
+
+    The first list contains paths of files that modified on disk or are not in the
+    cache. The other list contains paths to non-modified files.
+    """
+    todo, done = [], []
+    for src in sources:
+        src = src.resolve()
+        if cache.get(src) != get_cache_info(src):
+            todo.append(src)
+        else:
+            done.append(src)
+    return todo, done
+
+
+def write_cache(cache: Cache, sources: List[Path]) -> None:
+    """Update the cache file."""
+    try:
+        if not CACHE_DIR.exists():
+            CACHE_DIR.mkdir(parents=True)
+        new_cache = {**cache, **{src.resolve(): get_cache_info(src) for src in sources}}
+        with CACHE_FILE.open("wb") as fobj:
+            pickle.dump(new_cache, fobj, protocol=pickle.HIGHEST_PROTOCOL)
+    except OSError:
+        pass
 
 
 if __name__ == "__main__":

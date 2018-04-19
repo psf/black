@@ -40,7 +40,7 @@ setup(
     package_data={"blib2to3": ["*.txt"]},
     python_requires=">=3.6",
     zip_safe=False,
-    install_requires=["click", "attrs>=17.4.0"],
+    install_requires=["click", "attrs>=17.4.0", "appdirs"],
     test_suite="tests.test_black",
     classifiers=[
         "Development Status :: 3 - Alpha",

@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
+import asyncio
+from contextlib import contextmanager
 from functools import partial
 from io import StringIO
 import os
 from pathlib import Path
 import sys
-from typing import Any, List, Tuple
+from tempfile import TemporaryDirectory
+from typing import Any, List, Tuple, Iterator
 import unittest
 from unittest.mock import patch
 
 from click import unstyle
+from click.testing import CliRunner
 
 import black
 
@@ -46,6 +50,32 @@ def read_data(name: str) -> Tuple[str, str]:
     return "".join(_input).strip() + "\n", "".join(_output).strip() + "\n"
 
 
+@contextmanager
+def cache_dir(exists: bool = True) -> Iterator[Path]:
+    with TemporaryDirectory() as workspace:
+        cache_dir = Path(workspace)
+        if not exists:
+            cache_dir = cache_dir / "new"
+        cache_file = cache_dir / "cache.pkl"
+        with patch("black.CACHE_DIR", cache_dir), patch("black.CACHE_FILE", cache_file):
+            yield cache_dir
+
+
+@contextmanager
+def event_loop(close: bool) -> Iterator[None]:
+    policy = asyncio.get_event_loop_policy()
+    old_loop = policy.get_event_loop()
+    loop = policy.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        yield
+
+    finally:
+        policy.set_event_loop(old_loop)
+        if close:
+            loop.close()
+
+
 class BlackTestCase(unittest.TestCase):
     maxDiff = None
 
@@ -75,7 +105,7 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, line_length=ll)
-        self.assertFalse(ff(THIS_FILE))
+        self.assertIs(ff(THIS_FILE), black.Changed.NO)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_black(self) -> None:
@@ -84,7 +114,7 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, line_length=ll)
-        self.assertFalse(ff(THIS_DIR / ".." / "black.py"))
+        self.assertIs(ff(THIS_DIR / ".." / "black.py"), black.Changed.NO)
 
     def test_piping(self) -> None:
         source, expected = read_data("../black")
@@ -127,7 +157,7 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, line_length=ll)
-        self.assertFalse(ff(THIS_DIR / ".." / "setup.py"))
+        self.assertIs(ff(THIS_DIR / ".." / "setup.py"), black.Changed.NO)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_function(self) -> None:
@@ -291,67 +321,76 @@ class BlackTestCase(unittest.TestCase):
             err_lines.append(msg)
 
         with patch("black.out", out), patch("black.err", err):
-            report.done(Path("f1"), changed=False)
+            report.done(Path("f1"), black.Changed.NO)
             self.assertEqual(len(out_lines), 1)
             self.assertEqual(len(err_lines), 0)
             self.assertEqual(out_lines[-1], "f1 already well formatted, good job.")
             self.assertEqual(unstyle(str(report)), "1 file left unchanged.")
             self.assertEqual(report.return_code, 0)
-            report.done(Path("f2"), changed=True)
+            report.done(Path("f2"), black.Changed.YES)
             self.assertEqual(len(out_lines), 2)
             self.assertEqual(len(err_lines), 0)
             self.assertEqual(out_lines[-1], "reformatted f2")
             self.assertEqual(
                 unstyle(str(report)), "1 file reformatted, 1 file left unchanged."
             )
+            report.done(Path("f3"), black.Changed.CACHED)
+            self.assertEqual(len(out_lines), 3)
+            self.assertEqual(len(err_lines), 0)
+            self.assertEqual(
+                out_lines[-1], "f3 wasn't modified on disk since last run."
+            )
+            self.assertEqual(
+                unstyle(str(report)), "1 file reformatted, 2 files left unchanged."
+            )
             self.assertEqual(report.return_code, 0)
             report.check = True
             self.assertEqual(report.return_code, 1)
             report.check = False
             report.failed(Path("e1"), "boom")
-            self.assertEqual(len(out_lines), 2)
+            self.assertEqual(len(out_lines), 3)
             self.assertEqual(len(err_lines), 1)
             self.assertEqual(err_lines[-1], "error: cannot format e1: boom")
             self.assertEqual(
                 unstyle(str(report)),
-                "1 file reformatted, 1 file left unchanged, "
+                "1 file reformatted, 2 files left unchanged, "
                 "1 file failed to reformat.",
             )
             self.assertEqual(report.return_code, 123)
-            report.done(Path("f3"), changed=True)
-            self.assertEqual(len(out_lines), 3)
+            report.done(Path("f3"), black.Changed.YES)
+            self.assertEqual(len(out_lines), 4)
             self.assertEqual(len(err_lines), 1)
             self.assertEqual(out_lines[-1], "reformatted f3")
             self.assertEqual(
                 unstyle(str(report)),
-                "2 files reformatted, 1 file left unchanged, "
+                "2 files reformatted, 2 files left unchanged, "
                 "1 file failed to reformat.",
             )
             self.assertEqual(report.return_code, 123)
             report.failed(Path("e2"), "boom")
-            self.assertEqual(len(out_lines), 3)
-            self.assertEqual(len(err_lines), 2)
-            self.assertEqual(err_lines[-1], "error: cannot format e2: boom")
-            self.assertEqual(
-                unstyle(str(report)),
-                "2 files reformatted, 1 file left unchanged, "
-                "2 files failed to reformat.",
-            )
-            self.assertEqual(report.return_code, 123)
-            report.done(Path("f4"), changed=False)
             self.assertEqual(len(out_lines), 4)
             self.assertEqual(len(err_lines), 2)
-            self.assertEqual(out_lines[-1], "f4 already well formatted, good job.")
+            self.assertEqual(err_lines[-1], "error: cannot format e2: boom")
             self.assertEqual(
                 unstyle(str(report)),
                 "2 files reformatted, 2 files left unchanged, "
                 "2 files failed to reformat.",
             )
             self.assertEqual(report.return_code, 123)
+            report.done(Path("f4"), black.Changed.NO)
+            self.assertEqual(len(out_lines), 5)
+            self.assertEqual(len(err_lines), 2)
+            self.assertEqual(out_lines[-1], "f4 already well formatted, good job.")
+            self.assertEqual(
+                unstyle(str(report)),
+                "2 files reformatted, 3 files left unchanged, "
+                "2 files failed to reformat.",
+            )
+            self.assertEqual(report.return_code, 123)
             report.check = True
             self.assertEqual(
                 unstyle(str(report)),
-                "2 files would be reformatted, 2 files would be left unchanged, "
+                "2 files would be reformatted, 3 files would be left unchanged, "
                 "2 files would fail to reformat.",
             )
 
@@ -441,6 +480,120 @@ class BlackTestCase(unittest.TestCase):
         self.assertTrue("Expected tree:" in out_str)
         self.assertTrue("Actual tree:" in out_str)
         self.assertEqual("".join(err_lines), "")
+
+    def test_cache_broken_file(self) -> None:
+        with cache_dir() as workspace:
+            with black.CACHE_FILE.open("w") as fobj:
+                fobj.write("this is not a pickle")
+            self.assertEqual(black.read_cache(), {})
+            src = (workspace / "test.py").resolve()
+            with src.open("w") as fobj:
+                fobj.write("print('hello')")
+            result = CliRunner().invoke(black.main, [str(src)])
+            self.assertEqual(result.exit_code, 0)
+            cache = black.read_cache()
+            self.assertIn(src, cache)
+
+    def test_cache_single_file_already_cached(self) -> None:
+        with cache_dir() as workspace:
+            src = (workspace / "test.py").resolve()
+            with src.open("w") as fobj:
+                fobj.write("print('hello')")
+            black.write_cache({}, [src])
+            result = CliRunner().invoke(black.main, [str(src)])
+            self.assertEqual(result.exit_code, 0)
+            with src.open("r") as fobj:
+                self.assertEqual(fobj.read(), "print('hello')")
+
+    @event_loop(close=False)
+    def test_cache_multiple_files(self) -> None:
+        with cache_dir() as workspace:
+            one = (workspace / "one.py").resolve()
+            with one.open("w") as fobj:
+                fobj.write("print('hello')")
+            two = (workspace / "two.py").resolve()
+            with two.open("w") as fobj:
+                fobj.write("print('hello')")
+            black.write_cache({}, [one])
+            result = CliRunner().invoke(black.main, [str(workspace)])
+            self.assertEqual(result.exit_code, 0)
+            with one.open("r") as fobj:
+                self.assertEqual(fobj.read(), "print('hello')")
+            with two.open("r") as fobj:
+                self.assertEqual(fobj.read(), 'print("hello")\n')
+            cache = black.read_cache()
+            self.assertIn(one, cache)
+            self.assertIn(two, cache)
+
+    def test_no_cache_when_writeback_diff(self) -> None:
+        with cache_dir() as workspace:
+            src = (workspace / "test.py").resolve()
+            with src.open("w") as fobj:
+                fobj.write("print('hello')")
+            result = CliRunner().invoke(black.main, [str(src), "--diff"])
+            self.assertEqual(result.exit_code, 0)
+            self.assertFalse(black.CACHE_FILE.exists())
+
+    def test_no_cache_when_stdin(self) -> None:
+        with cache_dir():
+            result = CliRunner().invoke(black.main, ["-"], input="print('hello')")
+            self.assertEqual(result.exit_code, 0)
+            self.assertFalse(black.CACHE_FILE.exists())
+
+    def test_read_cache_no_cachefile(self) -> None:
+        with cache_dir():
+            self.assertEqual(black.read_cache(), {})
+
+    def test_write_cache_read_cache(self) -> None:
+        with cache_dir() as workspace:
+            src = (workspace / "test.py").resolve()
+            src.touch()
+            black.write_cache({}, [src])
+            cache = black.read_cache()
+            self.assertIn(src, cache)
+            self.assertEqual(cache[src], black.get_cache_info(src))
+
+    def test_filter_cached(self) -> None:
+        with TemporaryDirectory() as workspace:
+            path = Path(workspace)
+            uncached = (path / "uncached").resolve()
+            cached = (path / "cached").resolve()
+            cached_but_changed = (path / "changed").resolve()
+            uncached.touch()
+            cached.touch()
+            cached_but_changed.touch()
+            cache = {cached: black.get_cache_info(cached), cached_but_changed: (0.0, 0)}
+            todo, done = black.filter_cached(
+                cache, [uncached, cached, cached_but_changed]
+            )
+            self.assertEqual(todo, [uncached, cached_but_changed])
+            self.assertEqual(done, [cached])
+
+    def test_write_cache_creates_directory_if_needed(self) -> None:
+        with cache_dir(exists=False) as workspace:
+            self.assertFalse(workspace.exists())
+            black.write_cache({}, [])
+            self.assertTrue(workspace.exists())
+
+    @event_loop(close=False)
+    def test_failed_formatting_does_not_get_cached(self) -> None:
+        with cache_dir() as workspace:
+            failing = (workspace / "failing.py").resolve()
+            with failing.open("w") as fobj:
+                fobj.write("not actually python")
+            clean = (workspace / "clean.py").resolve()
+            with clean.open("w") as fobj:
+                fobj.write('print("hello")\n')
+            result = CliRunner().invoke(black.main, [str(workspace)])
+            self.assertEqual(result.exit_code, 123)
+            cache = black.read_cache()
+            self.assertNotIn(failing, cache)
+            self.assertIn(clean, cache)
+
+    def test_write_cache_write_fail(self):
+        with cache_dir(), patch.object(Path, "open") as mock:
+            mock.side_effect = OSError
+            black.write_cache({}, [])
 
 
 if __name__ == "__main__":
