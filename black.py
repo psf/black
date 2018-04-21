@@ -609,6 +609,8 @@ class BracketTracker:
     bracket_match: Dict[Tuple[Depth, NodeType], Leaf] = Factory(dict)
     delimiters: Dict[LeafID, Priority] = Factory(dict)
     previous: Optional[Leaf] = None
+    _for_loop_variable: bool = False
+    _lambda_arguments: bool = False
 
     def mark(self, leaf: Leaf) -> None:
         """Mark `leaf` with bracket-related metadata. Keep track of delimiters.
@@ -628,6 +630,8 @@ class BracketTracker:
         if leaf.type == token.COMMENT:
             return
 
+        self.maybe_decrement_after_for_loop_variable(leaf)
+        self.maybe_decrement_after_lambda_arguments(leaf)
         if leaf.type in CLOSING_BRACKETS:
             self.depth -= 1
             opening_bracket = self.bracket_match.pop((self.depth, leaf.type))
@@ -645,6 +649,8 @@ class BracketTracker:
             self.bracket_match[self.depth, BRACKET[leaf.type]] = leaf
             self.depth += 1
         self.previous = leaf
+        self.maybe_increment_lambda_arguments(leaf)
+        self.maybe_increment_for_loop_variable(leaf)
 
     def any_open_brackets(self) -> bool:
         """Return True if there is an yet unmatched open bracket on the line."""
@@ -658,6 +664,50 @@ class BracketTracker:
         """
         return max(v for k, v in self.delimiters.items() if k not in exclude)
 
+    def maybe_increment_for_loop_variable(self, leaf: Leaf) -> bool:
+        """In a for loop, or comprehension, the variables are often unpacks.
+
+        To avoid splitting on the comma in this situation, increase the depth of
+        tokens between `for` and `in`.
+        """
+        if leaf.type == token.NAME and leaf.value == "for":
+            self.depth += 1
+            self._for_loop_variable = True
+            return True
+
+        return False
+
+    def maybe_decrement_after_for_loop_variable(self, leaf: Leaf) -> bool:
+        """See `maybe_increment_for_loop_variable` above for explanation."""
+        if self._for_loop_variable and leaf.type == token.NAME and leaf.value == "in":
+            self.depth -= 1
+            self._for_loop_variable = False
+            return True
+
+        return False
+
+    def maybe_increment_lambda_arguments(self, leaf: Leaf) -> bool:
+        """In a lambda expression, there might be more than one argument.
+
+        To avoid splitting on the comma in this situation, increase the depth of
+        tokens between `lambda` and `:`.
+        """
+        if leaf.type == token.NAME and leaf.value == "lambda":
+            self.depth += 1
+            self._lambda_arguments = True
+            return True
+
+        return False
+
+    def maybe_decrement_after_lambda_arguments(self, leaf: Leaf) -> bool:
+        """See `maybe_increment_lambda_arguments` above for explanation."""
+        if self._lambda_arguments and leaf.type == token.COLON:
+            self.depth -= 1
+            self._lambda_arguments = False
+            return True
+
+        return False
+
 
 @dataclass
 class Line:
@@ -668,8 +718,6 @@ class Line:
     comments: List[Tuple[Index, Leaf]] = Factory(list)
     bracket_tracker: BracketTracker = Factory(BracketTracker)
     inside_brackets: bool = False
-    has_for: bool = False
-    _for_loop_variable: bool = False
 
     def append(self, leaf: Leaf, preformatted: bool = False) -> None:
         """Add a new `leaf` to the end of the line.
@@ -690,10 +738,8 @@ class Line:
             # imports, for which we only preserve newlines.
             leaf.prefix += whitespace(leaf)
         if self.inside_brackets or not preformatted:
-            self.maybe_decrement_after_for_loop_variable(leaf)
             self.bracket_tracker.mark(leaf)
             self.maybe_remove_trailing_comma(leaf)
-            self.maybe_increment_for_loop_variable(leaf)
 
         if not self.append_comment(leaf):
             self.leaves.append(leaf)
@@ -836,29 +882,6 @@ class Line:
 
         if commas > 1:
             self.remove_trailing_comma()
-            return True
-
-        return False
-
-    def maybe_increment_for_loop_variable(self, leaf: Leaf) -> bool:
-        """In a for loop, or comprehension, the variables are often unpacks.
-
-        To avoid splitting on the comma in this situation, increase the depth of
-        tokens between `for` and `in`.
-        """
-        if leaf.type == token.NAME and leaf.value == "for":
-            self.has_for = True
-            self.bracket_tracker.depth += 1
-            self._for_loop_variable = True
-            return True
-
-        return False
-
-    def maybe_decrement_after_for_loop_variable(self, leaf: Leaf) -> bool:
-        """See `maybe_increment_for_loop_variable` above for explanation."""
-        if self._for_loop_variable and leaf.type == token.NAME and leaf.value == "in":
-            self.bracket_tracker.depth -= 1
-            self._for_loop_variable = False
             return True
 
         return False
