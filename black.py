@@ -184,12 +184,8 @@ def main(
             sources.append(Path("-"))
         else:
             err(f"invalid path: {s}")
-    if check and diff:
-        exc = click.ClickException("Options --check and --diff are mutually exclusive")
-        exc.exit_code = 2
-        raise exc
 
-    if check:
+    if check and not diff:
         write_back = WriteBack.NO
     elif diff:
         write_back = WriteBack.DIFF

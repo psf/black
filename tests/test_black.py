@@ -595,6 +595,15 @@ class BlackTestCase(unittest.TestCase):
             mock.side_effect = OSError
             black.write_cache({}, [])
 
+    def test_check_diff_use_together(self) -> None:
+        with cache_dir() as workspace:
+            src = (workspace / "test.py").resolve()
+            with src.open("w") as fobj:
+                fobj.write("print('hello_bad_indented')")
+            result = CliRunner().invoke(black.main, [str(src), "--diff", "--check"])
+            self.assertEqual(result.exit_code, 0)
+            self.assertFalse(black.CACHE_FILE.exists())
+
 
 if __name__ == "__main__":
     unittest.main()
