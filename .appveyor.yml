@@ -1,0 +1,10 @@
+install:
+- C:\Python36\python.exe -m pip install mypy
+- C:\Python36\python.exe -m pip install -e .
+
+# Not a C# project
+build: off
+
+test_script:
+- C:\Python36\python.exe tests/test_black.py
+- C:\Python36\python.exe -m mypy black.py tests/test_black.py
