@@ -293,8 +293,12 @@ async def schedule_formatting(
             for src in sources
         }
         _task_values = list(tasks.values())
-        loop.add_signal_handler(signal.SIGINT, cancel, _task_values)
-        loop.add_signal_handler(signal.SIGTERM, cancel, _task_values)
+        try:
+            loop.add_signal_handler(signal.SIGINT, cancel, _task_values)
+            loop.add_signal_handler(signal.SIGTERM, cancel, _task_values)
+        except NotImplementedError:
+            # There are no good alternatives for these on Windows
+            pass
         await asyncio.wait(_task_values)
         for src, task in tasks.items():
             if not task.done():
