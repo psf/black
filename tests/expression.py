@@ -37,6 +37,7 @@ lambda a=True: a
 lambda a, b, c=True: a
 lambda a, b, c=True, *, d=(1 << v2), e='str': a
 lambda a, b, c=True, *vararg, d=(v1 << 2), e='str', **kwargs: a + b
+foo = (lambda port_id, ignore_missing: {"port1": port1_resource, "port2": port2_resource}[port_id])
 1 if True else 2
 str or None if True else str or bytes or None
 (str or None) if True else (str or bytes or None)
@@ -249,6 +250,11 @@ lambda a=True: a
 lambda a, b, c=True: a
 lambda a, b, c=True, *, d=(1 << v2), e="str": a
 lambda a, b, c=True, *vararg, d=(v1 << 2), e="str", **kwargs: a + b
+foo = (
+    lambda port_id, ignore_missing: {"port1": port1_resource, "port2": port2_resource}[
+        port_id
+    ]
+)
 1 if True else 2
 str or None if True else str or bytes or None
 (str or None) if True else (str or bytes or None)
