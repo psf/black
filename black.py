@@ -428,7 +428,6 @@ def format_str(src_contents: str, line_length: int) -> FileContent:
 GRAMMARS = [
     pygram.python_grammar_no_print_statement_no_exec_statement,
     pygram.python_grammar_no_print_statement,
-    pygram.python_grammar_no_exec_statement,
     pygram.python_grammar,
 ]
 

@@ -29,16 +29,16 @@ class Symbols(object):
             setattr(self, name, symbol)
 
 
+# Python 2
 python_grammar = driver.load_packaged_grammar("blib2to3", _GRAMMAR_FILE)
 
 python_symbols = Symbols(python_grammar)
 
+# Python 2 + from __future__ import print_function
 python_grammar_no_print_statement = python_grammar.copy()
 del python_grammar_no_print_statement.keywords["print"]
 
-python_grammar_no_exec_statement = python_grammar.copy()
-del python_grammar_no_exec_statement.keywords["exec"]
-
+# Python 3
 python_grammar_no_print_statement_no_exec_statement = python_grammar.copy()
 del python_grammar_no_print_statement_no_exec_statement.keywords["print"]
 del python_grammar_no_print_statement_no_exec_statement.keywords["exec"]
