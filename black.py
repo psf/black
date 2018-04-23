@@ -191,43 +191,38 @@ def main(
         write_back = WriteBack.DIFF
     else:
         write_back = WriteBack.YES
+    report = Report(check=check, quiet=quiet)
     if len(sources) == 0:
         ctx.exit(0)
         return
 
     elif len(sources) == 1:
-        return_code = reformat_one(
-            sources[0], line_length, fast, quiet, write_back, check
-        )
+        reformat_one(sources[0], line_length, fast, write_back, report)
     else:
         loop = asyncio.get_event_loop()
         executor = ProcessPoolExecutor(max_workers=os.cpu_count())
-        return_code = 1
         try:
-            return_code = loop.run_until_complete(
+            loop.run_until_complete(
                 schedule_formatting(
-                    sources, line_length, write_back, fast, quiet, loop, executor, check
+                    sources, line_length, fast, write_back, report, loop, executor
                 )
             )
         finally:
             shutdown(loop)
-    ctx.exit(return_code)
+        if not quiet:
+            out("All done! ✨ 🍰 ✨")
+            click.echo(str(report))
+    ctx.exit(report.return_code)
 
 
 def reformat_one(
-    src: Path,
-    line_length: int,
-    fast: bool,
-    quiet: bool,
-    write_back: WriteBack,
-    check: bool,
-) -> int:
+    src: Path, line_length: int, fast: bool, write_back: WriteBack, report: "Report"
+) -> None:
     """Reformat a single file under `src` without spawning child processes.
 
     If `quiet` is True, non-error messages are not output. `line_length`,
     `write_back`, and `fast` options are passed to :func:`format_file_in_place`.
     """
-    report = Report(check=check, quiet=quiet)
     try:
         changed = Changed.NO
         if not src.is_file() and str(src) == "-":
@@ -254,19 +249,17 @@ def reformat_one(
         report.done(src, changed)
     except Exception as exc:
         report.failed(src, str(exc))
-    return report.return_code
 
 
 async def schedule_formatting(
     sources: List[Path],
     line_length: int,
-    write_back: WriteBack,
     fast: bool,
-    quiet: bool,
+    write_back: WriteBack,
+    report: "Report",
     loop: BaseEventLoop,
     executor: Executor,
-    check: bool,
-) -> int:
+) -> None:
     """Run formatting of `sources` in parallel using the provided `executor`.
 
     (Use ProcessPoolExecutors for actual parallelism.)
@@ -274,7 +267,6 @@ async def schedule_formatting(
     `line_length`, `write_back`, and `fast` options are passed to
     :func:`format_file_in_place`.
     """
-    report = Report(check=check, quiet=quiet)
     cache: Cache = {}
     if write_back != WriteBack.DIFF:
         cache = read_cache()
@@ -319,15 +311,8 @@ async def schedule_formatting(
 
     if cancelled:
         await asyncio.gather(*cancelled, loop=loop, return_exceptions=True)
-    elif not quiet:
-        out("All done! ✨ 🍰 ✨")
-    if not quiet:
-        click.echo(str(report))
-
     if write_back != WriteBack.DIFF and formatted:
         write_cache(cache, formatted)
-
-    return report.return_code
 
 
 def format_file_in_place(
