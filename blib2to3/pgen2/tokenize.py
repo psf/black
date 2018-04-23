@@ -29,7 +29,7 @@ __author__ = 'Ka-Ping Yee <ping@lfw.org>'
 __credits__ = \
     'GvR, ESR, Tim Peters, Thomas Wouters, Fred Drake, Skip Montanaro'
 
-import string, re, unicodedata
+import re
 from codecs import BOM_UTF8, lookup
 from blib2to3.pgen2.token import *
 
@@ -56,7 +56,7 @@ def _combinations(*l):
 Whitespace = r'[ \f\t]*'
 Comment = r'#[^\r\n]*'
 Ignore = Whitespace + any(r'\\\r?\n' + Whitespace) + maybe(Comment)
-Name = r'[^\d\W]\w*'
+Name = r'\w+'  # this is invalid but it's fine because Name comes after Number in all groups
 
 Binnumber = r'0[bB]_?[01]+(?:_[01]+)*'
 Hexnumber = r'0[xX]_?[\da-fA-F]+(?:_[\da-fA-F]+)*[lL]?'
@@ -334,8 +334,6 @@ def untokenize(iterable):
     ut = Untokenizer()
     return ut.untokenize(iterable)
 
-InitialCategories = {'Lu', 'Ll', 'Lt', 'Lm', 'Lo', 'Nl', 'Mn', 'Mc', 'Nd', 'Pc'}
-
 def generate_tokens(readline):
     """
     The generate_tokens() generator requires one argument, readline, which
@@ -353,7 +351,7 @@ def generate_tokens(readline):
     logical line; continuation lines are included.
     """
     lnum = parenlev = continued = 0
-    namechars, numchars = string.ascii_letters + '_', '0123456789'
+    numchars = '0123456789'
     contstr, needcont = '', 0
     contline = None
     indents = [0]
@@ -506,8 +504,7 @@ def generate_tokens(readline):
                             yield stashed
                             stashed = None
                         yield (STRING, token, spos, epos, line)
-                elif (initial in namechars or              # ordinary name
-                      unicodedata.category(initial) in InitialCategories):
+                elif initial.isidentifier():               # ordinary name
                     if token in ('async', 'await'):
                         if async_def:
                             yield (ASYNC if token == 'async' else AWAIT,
