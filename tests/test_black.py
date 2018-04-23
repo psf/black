@@ -595,6 +595,24 @@ class BlackTestCase(unittest.TestCase):
             mock.side_effect = OSError
             black.write_cache({}, [])
 
+    def test_check_diff_use_together(self) -> None:
+        with cache_dir():
+            # Files which will be reformatted.
+            src1 = (THIS_DIR / "string_quotes.py").resolve()
+            result = CliRunner().invoke(black.main, [str(src1), "--diff", "--check"])
+            self.assertEqual(result.exit_code, 1)
+
+            # Files which will not be reformatted.
+            src2 = (THIS_DIR / "composition.py").resolve()
+            result = CliRunner().invoke(black.main, [str(src2), "--diff", "--check"])
+            self.assertEqual(result.exit_code, 0)
+
+            # Multi file command.
+            result = CliRunner().invoke(
+                black.main, [str(src1), str(src2), "--diff", "--check"]
+            )
+            self.assertEqual(result.exit_code, 1)
+
 
 if __name__ == "__main__":
     unittest.main()

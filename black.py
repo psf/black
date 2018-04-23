@@ -184,12 +184,8 @@ def main(
             sources.append(Path("-"))
         else:
             err(f"invalid path: {s}")
-    if check and diff:
-        exc = click.ClickException("Options --check and --diff are mutually exclusive")
-        exc.exit_code = 2
-        raise exc
 
-    if check:
+    if check and not diff:
         write_back = WriteBack.NO
     elif diff:
         write_back = WriteBack.DIFF
@@ -200,7 +196,9 @@ def main(
         return
 
     elif len(sources) == 1:
-        return_code = reformat_one(sources[0], line_length, fast, quiet, write_back)
+        return_code = reformat_one(
+            sources[0], line_length, fast, quiet, write_back, check
+        )
     else:
         loop = asyncio.get_event_loop()
         executor = ProcessPoolExecutor(max_workers=os.cpu_count())
@@ -208,7 +206,7 @@ def main(
         try:
             return_code = loop.run_until_complete(
                 schedule_formatting(
-                    sources, line_length, write_back, fast, quiet, loop, executor
+                    sources, line_length, write_back, fast, quiet, loop, executor, check
                 )
             )
         finally:
@@ -217,14 +215,19 @@ def main(
 
 
 def reformat_one(
-    src: Path, line_length: int, fast: bool, quiet: bool, write_back: WriteBack
+    src: Path,
+    line_length: int,
+    fast: bool,
+    quiet: bool,
+    write_back: WriteBack,
+    check: bool,
 ) -> int:
     """Reformat a single file under `src` without spawning child processes.
 
     If `quiet` is True, non-error messages are not output. `line_length`,
     `write_back`, and `fast` options are passed to :func:`format_file_in_place`.
     """
-    report = Report(check=write_back is WriteBack.NO, quiet=quiet)
+    report = Report(check=check, quiet=quiet)
     try:
         changed = Changed.NO
         if not src.is_file() and str(src) == "-":
@@ -262,6 +265,7 @@ async def schedule_formatting(
     quiet: bool,
     loop: BaseEventLoop,
     executor: Executor,
+    check: bool,
 ) -> int:
     """Run formatting of `sources` in parallel using the provided `executor`.
 
@@ -270,7 +274,7 @@ async def schedule_formatting(
     `line_length`, `write_back`, and `fast` options are passed to
     :func:`format_file_in_place`.
     """
-    report = Report(check=write_back is WriteBack.NO, quiet=quiet)
+    report = Report(check=check, quiet=quiet)
     cache: Cache = {}
     if write_back != WriteBack.DIFF:
         cache = read_cache()
