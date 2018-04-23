@@ -513,6 +513,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * added a "cache"; files already reformatted that haven't changed on disk
   won't be reformatted again (#109)
 
+* `--check` and `--diff` are no longer mutually exclusive (#149)
+
 * generalized star expression handling, including double stars; this
   fixes multiplication making expressions "unsafe" for trailing commas (#132)
 
@@ -684,3 +686,4 @@ Multiple contributions by:
 * [Ivan Katanić](mailto:ivan.katanic@gmail.com)
 * [Jonas Obrist](mailto:ojiidotch@gmail.com)
 * [Osaetin Daniel](mailto:osaetindaniel@gmail.com)
+* [Vishwas B Sharma](mailto:sharma.vishwas88@gmail.com)
