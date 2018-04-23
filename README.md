@@ -523,7 +523,7 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * fixed `--diff` not showing entire path (#130)
 
 * fixed parsing of complex expressions after star and double stars in
-  function parameters (#2)
+  function calls (#2)
 
 * fixed invalid splitting on comma in lambda arguments (#133)
 
