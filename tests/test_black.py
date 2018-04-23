@@ -200,7 +200,7 @@ class BlackTestCase(unittest.TestCase):
             self.assertTrue(ff(tmp_file, write_back=black.WriteBack.DIFF))
             sys.stdout.seek(0)
             actual = sys.stdout.read()
-            actual = actual.replace(tmp_file.name, "<stdin>")
+            actual = actual.replace(str(tmp_file), "<stdin>")
         finally:
             sys.stdout = hold_stdout
             os.unlink(tmp_file)

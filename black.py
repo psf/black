@@ -341,8 +341,8 @@ def format_file_in_place(
         with open(src, "w", encoding=src_buffer.encoding) as f:
             f.write(dst_contents)
     elif write_back == write_back.DIFF:
-        src_name = f"{src.name}  (original)"
-        dst_name = f"{src.name}  (formatted)"
+        src_name = f"{src}  (original)"
+        dst_name = f"{src}  (formatted)"
         diff_contents = diff(src_contents, dst_contents, src_name, dst_name)
         if lock:
             lock.acquire()
