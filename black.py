@@ -1158,7 +1158,16 @@ class LineGenerator(Visitor[Line]):
 
     def visit_DEDENT(self, node: Node) -> Iterator[Line]:
         """Decrease indentation level, maybe yield a line."""
-        # DEDENT has no value. Additionally, in blib2to3 it never holds comments.
+        # The current line might still wait for trailing comments.  At DEDENT time
+        # there won't be any (they would be prefixes on the preceding NEWLINE).
+        # Emit the line then.
+        yield from self.line()
+
+        # While DEDENT has no value, its prefix may contain standalone comments
+        # that belong to the current indentation level.  Get 'em.
+        yield from self.visit_default(node)
+
+        # Finally, emit the dedent.
         yield from self.line(-1)
 
     def visit_stmt(

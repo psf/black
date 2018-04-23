@@ -158,7 +158,7 @@ else:
     # for compiler in compilers.values():
     # add_compiler(compiler)
     add_compiler(compilers[(7.0, 32)])
-# add_compiler(compilers[(7.1, 64)])
+    # add_compiler(compilers[(7.1, 64)])
 
 # Comment before function.
 
@@ -238,8 +238,8 @@ short
         if False:
             continue
 
-    # and round and round we go
-    # and round and round we go
+            # and round and round we go
+        # and round and round we go
 
     # let's return
     return Node(

@@ -43,6 +43,7 @@ class Driver(object):
         p.setup()
         lineno = 1
         column = 0
+        indent_columns = []
         type = value = start = end = line_text = None
         prefix = ""
         for quintuple in tokens:
@@ -72,12 +73,16 @@ class Driver(object):
             if type in {token.INDENT, token.DEDENT}:
                 _prefix = prefix
                 prefix = ""
+            if type == token.DEDENT:
+                _indent_col = indent_columns.pop()
+                prefix, _prefix = self._partially_consume_prefix(_prefix, _indent_col)
             if p.addtoken(type, value, (prefix, start)):
                 if debug:
                     self.logger.debug("Stop.")
                 break
             prefix = ""
             if type == token.INDENT:
+                indent_columns.append(len(value))
                 if _prefix.startswith(value):
                     # Don't double-indent.  Since we're delaying the prefix that
                     # would normally belong to INDENT, we need to put the value
@@ -113,6 +118,35 @@ class Driver(object):
         """Parse a string and return the syntax tree."""
         tokens = tokenize.generate_tokens(io.StringIO(text).readline)
         return self.parse_tokens(tokens, debug)
+
+    def _partially_consume_prefix(self, prefix, column):
+        lines = []
+        current_line = ""
+        current_column = 0
+        wait_for_nl = False
+        for char in prefix:
+            current_line += char
+            if wait_for_nl:
+                if char == '\n':
+                    if current_line.strip() and current_column < column:
+                        res = ''.join(lines)
+                        return res, prefix[len(res):]
+
+                    lines.append(current_line)
+                    current_line = ""
+                    current_column = 0
+                    wait_for_nl = False
+            elif char == ' ':
+                current_column += 1
+            elif char == '\t':
+                current_column += 4
+            elif char == '\n':
+                # enexpected empty line
+                current_column = 0
+            else:
+                # indent is finished
+                wait_for_nl = True
+        return ''.join(lines), current_line
 
 
 def _generate_pickle_name(gt):

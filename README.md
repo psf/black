@@ -518,6 +518,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * generalized star expression handling, including double stars; this
   fixes multiplication making expressions "unsafe" for trailing commas (#132)
 
+* fixed comment indentation when a standalone comment closes a block (#16, #32)
+
 * fixed `--diff` not showing entire path (#130)
 
 * fixed parsing of complex expressions after star and double stars in
