@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from functools import partial
 from io import StringIO
@@ -507,7 +508,9 @@ class BlackTestCase(unittest.TestCase):
 
     @event_loop(close=False)
     def test_cache_multiple_files(self) -> None:
-        with cache_dir() as workspace:
+        with cache_dir() as workspace, patch(
+            "black.ProcessPoolExecutor", new=ThreadPoolExecutor
+        ):
             one = (workspace / "one.py").resolve()
             with one.open("w") as fobj:
                 fobj.write("print('hello')")
@@ -577,7 +580,9 @@ class BlackTestCase(unittest.TestCase):
 
     @event_loop(close=False)
     def test_failed_formatting_does_not_get_cached(self) -> None:
-        with cache_dir() as workspace:
+        with cache_dir() as workspace, patch(
+            "black.ProcessPoolExecutor", new=ThreadPoolExecutor
+        ):
             failing = (workspace / "failing.py").resolve()
             with failing.open("w") as fobj:
                 fobj.write("not actually python")
