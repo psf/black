@@ -1,3 +1,7 @@
+"""Docstring."""
+
+
+# leading comment
 def f():
     NO = ''
     SPACE = ' '
@@ -44,9 +48,11 @@ def f():
                 syms.dictsetmaker,
             }:
                 return NO
+
 ###############################################################################
 # SECTION BECAUSE SECTIONS
 ###############################################################################
+
 def g():
     NO = ''
     SPACE = ' '
@@ -89,6 +95,10 @@ def g():
 # output
 
 
+"""Docstring."""
+
+
+# leading comment
 def f():
     NO = ""
     SPACE = " "

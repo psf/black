@@ -27,5 +27,45 @@ try:
 except OSError:
     print("problems")
 
+import sys
+
+
+# leading function comment
+def wat():
+    ...
+    # trailing function comment
+
+
+# SECTION COMMENT
+
+
+# leading 1
+@deco1
+# leading 2
+@deco2(with_args=True)
+# leading 3
+@deco3
+def decorated1():
+    ...
+
+
+# leading 1
+@deco1
+# leading 2
+@deco2(with_args=True)
+# leading function comment
+def decorated1():
+    ...
+
+
+# Note: crappy but inevitable.  The current design of EmptyLineTracker doesn't
+# allow this to work correctly.  The user will have to split those lines by
+# hand.
+some_instruction
+# This comment should be split from `some_instruction` by two lines but isn't.
+def g():
+    ...
+
+
 if __name__ == "__main__":
     main()

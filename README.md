@@ -230,11 +230,9 @@ are always reformatted to fit minimal space, this whitespace is lost.
 
 It will also insert proper spacing before and after function definitions.
 It's one line before and after inner functions and two lines before and
-after module-level functions.  *Black* will put those empty lines also
-between the function definition and any standalone comments that
-immediately precede the given function.  If you want to comment on the
-entire function, use a docstring or put a leading comment in the function
-body.
+after module-level functions.  *Black* will not put empty lines between
+function/class definitions and standalone comments that immediately precede
+the given function/class.
 
 
 ### Trailing commas
@@ -531,6 +529,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
   fixes multiplication making expressions "unsafe" for trailing commas (#132)
 
 * fixed comment indentation when a standalone comment closes a block (#16, #32)
+
+* fixed standalone comments receiving extra empty lines if immediately preceding
+  a class, def, or decorator (#56, #154)
 
 * fixed `--diff` not showing entire path (#130)
 

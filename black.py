@@ -1040,12 +1040,14 @@ class EmptyLineTracker:
                 # Don't insert empty lines before the first line in the file.
                 return 0, 0
 
-            if self.previous_line and self.previous_line.is_decorator:
-                # Don't insert empty lines between decorators.
+            if self.previous_line.is_decorator:
                 return 0, 0
 
-            if is_decorator and self.previous_line and self.previous_line.is_comment:
-                # Don't insert empty lines between decorator comments.
+            if (
+                self.previous_line.is_comment
+                and self.previous_line.depth == current_line.depth
+                and before == 0
+            ):
                 return 0, 0
 
             newlines = 2
