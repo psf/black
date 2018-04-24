@@ -176,6 +176,13 @@ between two distinct sections of the code that otherwise share the same
 indentation level (like the arguments list and the docstring in the
 example above).
 
+If a line of "from" imports cannot fit in the allotted length, it's always split
+into one per line.  Imports tend to change often and this minimizes diffs, as well
+as enables readers of code to easily find which commit introduced a particular
+import.  This exception also makes *Black* compatible with
+[isort](https://pypi.org/p/isort/).  Use `multi_line_output=3` and
+`include_trailing_comma=True` in your isort config.
+
 
 ### Line length
 
@@ -527,6 +534,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * Black no longer enforces putting empty lines behind control flow statements
   (#90)
+
+* Black now splits imports like "Mode 3 + trailing comma" of isort (#127)
 
 * fixed comment indentation when a standalone comment closes a block (#16, #32)
 

@@ -17,6 +17,10 @@ from ..runners import *  # comment here
 from ..queues import *
 from ..streams import *
 
+from some_library import (
+    Just, Enough, Libraries, To, Fit, In, This, Nice, Split, Which, We, No, Longer, Use
+)
+
 from .a.b.c.subprocess import *
 from . import (tasks)
 from . import (A, B, C)
@@ -58,6 +62,23 @@ from .protocols import *
 from ..runners import *  # comment here
 from ..queues import *
 from ..streams import *
+
+from some_library import (
+    Just,
+    Enough,
+    Libraries,
+    To,
+    Fit,
+    In,
+    This,
+    Nice,
+    Split,
+    Which,
+    We,
+    No,
+    Longer,
+    Use,
+)
 
 from .a.b.c.subprocess import *
 from . import tasks

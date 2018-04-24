@@ -1712,6 +1712,8 @@ def split_line(
     split_funcs: List[SplitFunc]
     if line.is_def:
         split_funcs = [left_hand_split]
+    elif line.is_import:
+        split_funcs = [explode_split]
     elif line.inside_brackets:
         split_funcs = [delimiter_split, standalone_comment_split, right_hand_split]
     else:
@@ -1976,6 +1978,24 @@ def standalone_comment_split(line: Line, py36: bool = False) -> Iterator[Line]:
 
     if current_line:
         yield current_line
+
+
+def explode_split(
+    line: Line, py36: bool = False, omit: Collection[LeafID] = ()
+) -> Iterator[Line]:
+    """Split by RHS and immediately split contents by a delimiter."""
+    new_lines = list(right_hand_split(line, py36, omit))
+    if len(new_lines) != 3:
+        yield from new_lines
+        return
+
+    yield new_lines[0]
+    try:
+        yield from delimiter_split(new_lines[1], py36)
+    except CannotSplit:
+        yield new_lines[1]
+
+    yield new_lines[2]
 
 
 def is_import(leaf: Leaf) -> bool:
