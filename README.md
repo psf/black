@@ -370,7 +370,14 @@ Configuration:
 
 To install, copy the plugin from [vim/plugin/black.vim](https://github.com/ambv/black/tree/master/vim/plugin/black.vim).
 Let me know if this requires any changes to work with Vim 8's builtin
-`packadd`, or Pathogen, or Vundle, and so on.
+`packadd`, or Pathogen, and so on.
+
+To install with Vundle you need to use the `rtp` (run time path)
+option because the plugin is in a subdirectory of the project:
+
+```
+Plugin 'ambv/black', {'rtp': 'vim'}
+```
 
 This plugin **requires Vim 7.0+ built with Python 3.6+ support**.  It
 needs Python 3.6 to be able to run *Black* inside the Vim process which
