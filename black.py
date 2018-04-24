@@ -1044,6 +1044,10 @@ class EmptyLineTracker:
                 # Don't insert empty lines between decorators.
                 return 0, 0
 
+            if is_decorator and self.previous_line and self.previous_line.is_comment:
+                # Don't insert empty lines between decorator comments.
+                return 0, 0
+
             newlines = 2
             if current_line.depth:
                 newlines -= 1
