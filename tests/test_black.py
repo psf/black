@@ -628,7 +628,7 @@ class BlackTestCase(unittest.TestCase):
             )
             self.assertEqual(result.exit_code, 1)
 
-    def test_read_cache_line_lengths(self):
+    def test_read_cache_line_lengths(self) -> None:
         with cache_dir() as workspace:
             path = (workspace / "file.py").resolve()
             path.touch()
