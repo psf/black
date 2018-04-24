@@ -458,9 +458,9 @@ location of the file depends on the black version and the system on which black
 is run. The file is non-portable. The standard location on common operating systems
 is:
 
-* Windows: `C:\\Users\<username>\AppData\Local\black\black\Cache\<version>\cache.pickle`
-* macOS: `/Users/<username>/Library/Caches/black/<version>/cache.pickle`
-* Linux: `/home/<username>/.cache/black/<version>/cache.pickle`
+* Windows: `C:\\Users\<username>\AppData\Local\black\black\Cache\<version>\cache.<line-length>.pickle`
+* macOS: `/Users/<username>/Library/Caches/black/<version>/cache.<line-length>.pickle`
+* Linux: `/home/<username>/.cache/black/<version>/cache.<line-length>.pickle`
 
 
 ## Testimonials
