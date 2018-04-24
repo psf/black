@@ -218,10 +218,7 @@ bother you if you overdo it by a few km/h".
 
 *Black* avoids spurious vertical whitespace.  This is in the spirit of
 PEP 8 which says that in-function vertical whitespace should only be
-used sparingly.  One exception is control flow statements: *Black* will
-always emit an extra empty line after ``return``, ``raise``, ``break``,
-``continue``, and ``yield``.  This is to make changes in control flow
-more prominent to readers of your code.
+used sparingly.
 
 *Black* will allow single empty lines inside functions, and single and
 double empty lines on module level left by the original editors, except
@@ -527,6 +524,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * generalized star expression handling, including double stars; this
   fixes multiplication making expressions "unsafe" for trailing commas (#132)
+
+* Black no longer enforces putting empty lines behind control flow statements
+  (#90)
 
 * fixed comment indentation when a standalone comment closes a block (#16, #32)
 

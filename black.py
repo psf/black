@@ -1056,21 +1056,11 @@ class EmptyLineTracker:
                 newlines -= 1
             return newlines, 0
 
-        if current_line.is_flow_control:
-            return before, 1
-
         if (
             self.previous_line
             and self.previous_line.is_import
             and not current_line.is_import
             and depth == self.previous_line.depth
-        ):
-            return (before or 1), 0
-
-        if (
-            self.previous_line
-            and self.previous_line.is_yield
-            and (not current_line.is_yield or depth != self.previous_line.depth)
         ):
             return (before or 1), 0
 
