@@ -60,6 +60,8 @@ Split functions
 
 .. autofunction:: black.delimiter_split
 
+.. autofunction:: black.explode_split
+
 .. autofunction:: black.left_hand_split
 
 .. autofunction:: black.right_hand_split
