@@ -11,7 +11,7 @@
  True
  False
  1
-@@ -29,60 +29,78 @@
+@@ -29,61 +29,83 @@
  ~great
  +value
  -1
@@ -37,8 +37,14 @@
  (str or None) if True else (str or bytes or None)
  str or None if (1 if True else 2) else str or bytes or None
  (str or None) if (1 if True else 2) else (str or bytes or None)
+-((super_long_variable_name or None) if (1 if super_long_test_name else 2) else (str or bytes or None))
 -{'2.7': dead, '3.7': (long_live or die_hard)}
 -{'2.7': dead, '3.7': (long_live or die_hard), **{'3.6': verygood}}
++(
++    (super_long_variable_name or None)
++    if (1 if super_long_test_name else 2)
++    else (str or bytes or None)
++)
 +{"2.7": dead, "3.7": (long_live or die_hard)}
 +{"2.7": dead, "3.7": (long_live or die_hard), **{"3.6": verygood}}
  {**a, **b, **c}
@@ -110,7 +116,7 @@
  call(**self.screen_kwargs)
  call(b, **self.screen_kwargs)
  lukasz.langa.pl
-@@ -91,11 +109,11 @@
+@@ -92,11 +114,11 @@
  1.0 .real
  ....__class__
  list[str]
@@ -123,7 +129,7 @@
  ]
  slice[0]
  slice[0:1]
-@@ -122,88 +140,122 @@
+@@ -123,88 +145,122 @@
  numpy[-(c + 1):, d]
  numpy[:, l[-2]]
  numpy[:, ::-1]

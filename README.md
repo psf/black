@@ -540,6 +540,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * fixed invalid splitting on comma in lambda arguments (#133)
 
+* fixed missing splits of ternary expressions (#141)
+
 ### 18.4a2
 
 * fixed parsing of unaligned standalone comments (#99, #112)

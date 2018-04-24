@@ -583,6 +583,7 @@ UNPACKING_PARENTS = {
 }
 COMPREHENSION_PRIORITY = 20
 COMMA_PRIORITY = 10
+TERNARY_PRIORITY = 7
 LOGIC_PRIORITY = 5
 STRING_PRIORITY = 4
 COMPARATOR_PRIORITY = 3
@@ -1601,6 +1602,14 @@ def is_split_before_delimiter(leaf: Leaf, previous: Leaf = None) -> int:
         and leaf.parent.type in {syms.comp_if, syms.old_comp_if}
     ):
         return COMPREHENSION_PRIORITY
+
+    if (
+        leaf.type == token.NAME
+        and leaf.value in {"if", "else"}
+        and leaf.parent
+        and leaf.parent.type == syms.test
+    ):
+        return TERNARY_PRIORITY
 
     if leaf.type == token.NAME and leaf.value in LOGIC_OPERATORS and leaf.parent:
         return LOGIC_PRIORITY

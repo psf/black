@@ -43,6 +43,7 @@ str or None if True else str or bytes or None
 (str or None) if True else (str or bytes or None)
 str or None if (1 if True else 2) else str or bytes or None
 (str or None) if (1 if True else 2) else (str or bytes or None)
+((super_long_variable_name or None) if (1 if super_long_test_name else 2) else (str or bytes or None))
 {'2.7': dead, '3.7': (long_live or die_hard)}
 {'2.7': dead, '3.7': (long_live or die_hard), **{'3.6': verygood}}
 {**a, **b, **c}
@@ -260,6 +261,11 @@ str or None if True else str or bytes or None
 (str or None) if True else (str or bytes or None)
 str or None if (1 if True else 2) else str or bytes or None
 (str or None) if (1 if True else 2) else (str or bytes or None)
+(
+    (super_long_variable_name or None)
+    if (1 if super_long_test_name else 2)
+    else (str or bytes or None)
+)
 {"2.7": dead, "3.7": (long_live or die_hard)}
 {"2.7": dead, "3.7": (long_live or die_hard), **{"3.6": verygood}}
 {**a, **b, **c}
