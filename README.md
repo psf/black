@@ -368,9 +368,21 @@ Configuration:
 * `g:black_linelength` (defaults to `88`)
 * `g:black_virtualenv` (defaults to `~/.vim/black`)
 
-To install, copy the plugin from [vim/plugin/black.vim](https://github.com/ambv/black/tree/master/vim/plugin/black.vim).
+To install with [vim-plug](https://github.com/junegunn/vim-plug):
+
+```
+Plug 'ambv/black',
+```
+
+or with [Vundle](https://github.com/VundleVim/Vundle.vim):
+
+```
+Plugin 'ambv/black'
+```
+
+or you can copy the plugin from [plugin/black.vim](https://github.com/ambv/black/tree/master/plugin/black.vim).
 Let me know if this requires any changes to work with Vim 8's builtin
-`packadd`, or Pathogen, or Vundle, and so on.
+`packadd`, or Pathogen, and so on.
 
 This plugin **requires Vim 7.0+ built with Python 3.6+ support**.  It
 needs Python 3.6 to be able to run *Black* inside the Vim process which
