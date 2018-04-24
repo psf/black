@@ -522,7 +522,7 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Change Log
 
-### 18.4a3 (unreleased)
+### 18.4a3
 
 * added a "cache"; files already reformatted that haven't changed on disk
   won't be reformatted again (#109)
@@ -550,6 +550,7 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * fixed invalid splitting on comma in lambda arguments (#133)
 
 * fixed missing splits of ternary expressions (#141)
+
 
 ### 18.4a2
 
