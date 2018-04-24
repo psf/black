@@ -233,7 +233,7 @@ def reformat_one(
         else:
             cache: Cache = {}
             if write_back != WriteBack.DIFF:
-                cache = read_cache()
+                cache = read_cache(line_length)
                 src = src.resolve()
                 if src in cache and cache[src] == get_cache_info(src):
                     changed = Changed.CACHED
@@ -245,7 +245,7 @@ def reformat_one(
             ):
                 changed = Changed.YES
             if write_back != WriteBack.DIFF and changed is not Changed.NO:
-                write_cache(cache, [src])
+                write_cache(cache, [src], line_length)
         report.done(src, changed)
     except Exception as exc:
         report.failed(src, str(exc))
@@ -269,7 +269,7 @@ async def schedule_formatting(
     """
     cache: Cache = {}
     if write_back != WriteBack.DIFF:
-        cache = read_cache()
+        cache = read_cache(line_length)
         sources, cached = filter_cached(cache, sources)
         for src in cached:
             report.done(src, Changed.CACHED)
@@ -312,7 +312,7 @@ async def schedule_formatting(
     if cancelled:
         await asyncio.gather(*cancelled, loop=loop, return_exceptions=True)
     if write_back != WriteBack.DIFF and formatted:
-        write_cache(cache, formatted)
+        write_cache(cache, formatted, line_length)
 
 
 def format_file_in_place(
@@ -2467,18 +2467,22 @@ def sub_twice(regex: Pattern[str], replacement: str, original: str) -> str:
 
 
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
-CACHE_FILE = CACHE_DIR / "cache.pickle"
 
 
-def read_cache() -> Cache:
+def get_cache_file(line_length: int) -> Path:
+    return CACHE_DIR / f"cache.{line_length}.pickle"
+
+
+def read_cache(line_length: int) -> Cache:
     """Read the cache if it exists and is well formed.
 
     If it is not well formed, the call to write_cache later should resolve the issue.
     """
-    if not CACHE_FILE.exists():
+    cache_file = get_cache_file(line_length)
+    if not cache_file.exists():
         return {}
 
-    with CACHE_FILE.open("rb") as fobj:
+    with cache_file.open("rb") as fobj:
         try:
             cache: Cache = pickle.load(fobj)
         except pickle.UnpicklingError:
@@ -2511,13 +2515,14 @@ def filter_cached(
     return todo, done
 
 
-def write_cache(cache: Cache, sources: List[Path]) -> None:
+def write_cache(cache: Cache, sources: List[Path], line_length: int) -> None:
     """Update the cache file."""
+    cache_file = get_cache_file(line_length)
     try:
         if not CACHE_DIR.exists():
             CACHE_DIR.mkdir(parents=True)
         new_cache = {**cache, **{src.resolve(): get_cache_info(src) for src in sources}}
-        with CACHE_FILE.open("wb") as fobj:
+        with cache_file.open("wb") as fobj:
             pickle.dump(new_cache, fobj, protocol=pickle.HIGHEST_PROTOCOL)
     except OSError:
         pass

@@ -57,8 +57,7 @@ def cache_dir(exists: bool = True) -> Iterator[Path]:
         cache_dir = Path(workspace)
         if not exists:
             cache_dir = cache_dir / "new"
-        cache_file = cache_dir / "cache.pkl"
-        with patch("black.CACHE_DIR", cache_dir), patch("black.CACHE_FILE", cache_file):
+        with patch("black.CACHE_DIR", cache_dir):
             yield cache_dir
 
 
@@ -492,15 +491,16 @@ class BlackTestCase(unittest.TestCase):
 
     def test_cache_broken_file(self) -> None:
         with cache_dir() as workspace:
-            with black.CACHE_FILE.open("w") as fobj:
+            cache_file = black.get_cache_file(black.DEFAULT_LINE_LENGTH)
+            with cache_file.open("w") as fobj:
                 fobj.write("this is not a pickle")
-            self.assertEqual(black.read_cache(), {})
+            self.assertEqual(black.read_cache(black.DEFAULT_LINE_LENGTH), {})
             src = (workspace / "test.py").resolve()
             with src.open("w") as fobj:
                 fobj.write("print('hello')")
             result = CliRunner().invoke(black.main, [str(src)])
             self.assertEqual(result.exit_code, 0)
-            cache = black.read_cache()
+            cache = black.read_cache(black.DEFAULT_LINE_LENGTH)
             self.assertIn(src, cache)
 
     def test_cache_single_file_already_cached(self) -> None:
@@ -508,7 +508,7 @@ class BlackTestCase(unittest.TestCase):
             src = (workspace / "test.py").resolve()
             with src.open("w") as fobj:
                 fobj.write("print('hello')")
-            black.write_cache({}, [src])
+            black.write_cache({}, [src], black.DEFAULT_LINE_LENGTH)
             result = CliRunner().invoke(black.main, [str(src)])
             self.assertEqual(result.exit_code, 0)
             with src.open("r") as fobj:
@@ -525,14 +525,14 @@ class BlackTestCase(unittest.TestCase):
             two = (workspace / "two.py").resolve()
             with two.open("w") as fobj:
                 fobj.write("print('hello')")
-            black.write_cache({}, [one])
+            black.write_cache({}, [one], black.DEFAULT_LINE_LENGTH)
             result = CliRunner().invoke(black.main, [str(workspace)])
             self.assertEqual(result.exit_code, 0)
             with one.open("r") as fobj:
                 self.assertEqual(fobj.read(), "print('hello')")
             with two.open("r") as fobj:
                 self.assertEqual(fobj.read(), 'print("hello")\n')
-            cache = black.read_cache()
+            cache = black.read_cache(black.DEFAULT_LINE_LENGTH)
             self.assertIn(one, cache)
             self.assertIn(two, cache)
 
@@ -543,24 +543,26 @@ class BlackTestCase(unittest.TestCase):
                 fobj.write("print('hello')")
             result = CliRunner().invoke(black.main, [str(src), "--diff"])
             self.assertEqual(result.exit_code, 0)
-            self.assertFalse(black.CACHE_FILE.exists())
+            cache_file = black.get_cache_file(black.DEFAULT_LINE_LENGTH)
+            self.assertFalse(cache_file.exists())
 
     def test_no_cache_when_stdin(self) -> None:
         with cache_dir():
             result = CliRunner().invoke(black.main, ["-"], input="print('hello')")
             self.assertEqual(result.exit_code, 0)
-            self.assertFalse(black.CACHE_FILE.exists())
+            cache_file = black.get_cache_file(black.DEFAULT_LINE_LENGTH)
+            self.assertFalse(cache_file.exists())
 
     def test_read_cache_no_cachefile(self) -> None:
         with cache_dir():
-            self.assertEqual(black.read_cache(), {})
+            self.assertEqual(black.read_cache(black.DEFAULT_LINE_LENGTH), {})
 
     def test_write_cache_read_cache(self) -> None:
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
             src.touch()
-            black.write_cache({}, [src])
-            cache = black.read_cache()
+            black.write_cache({}, [src], black.DEFAULT_LINE_LENGTH)
+            cache = black.read_cache(black.DEFAULT_LINE_LENGTH)
             self.assertIn(src, cache)
             self.assertEqual(cache[src], black.get_cache_info(src))
 
@@ -583,7 +585,7 @@ class BlackTestCase(unittest.TestCase):
     def test_write_cache_creates_directory_if_needed(self) -> None:
         with cache_dir(exists=False) as workspace:
             self.assertFalse(workspace.exists())
-            black.write_cache({}, [])
+            black.write_cache({}, [], black.DEFAULT_LINE_LENGTH)
             self.assertTrue(workspace.exists())
 
     @event_loop(close=False)
@@ -599,14 +601,14 @@ class BlackTestCase(unittest.TestCase):
                 fobj.write('print("hello")\n')
             result = CliRunner().invoke(black.main, [str(workspace)])
             self.assertEqual(result.exit_code, 123)
-            cache = black.read_cache()
+            cache = black.read_cache(black.DEFAULT_LINE_LENGTH)
             self.assertNotIn(failing, cache)
             self.assertIn(clean, cache)
 
     def test_write_cache_write_fail(self) -> None:
         with cache_dir(), patch.object(Path, "open") as mock:
             mock.side_effect = OSError
-            black.write_cache({}, [])
+            black.write_cache({}, [], black.DEFAULT_LINE_LENGTH)
 
     def test_check_diff_use_together(self) -> None:
         with cache_dir():
@@ -625,6 +627,16 @@ class BlackTestCase(unittest.TestCase):
                 black.main, [str(src1), str(src2), "--diff", "--check"]
             )
             self.assertEqual(result.exit_code, 1)
+
+    def test_read_cache_line_lengths(self):
+        with cache_dir() as workspace:
+            path = (workspace / "file.py").resolve()
+            path.touch()
+            black.write_cache({}, [path], 1)
+            one = black.read_cache(1)
+            self.assertIn(path, one)
+            two = black.read_cache(2)
+            self.assertNotIn(path, two)
 
 
 if __name__ == "__main__":
