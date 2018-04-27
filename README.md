@@ -522,6 +522,11 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Change Log
 
+### 18.4a4
+
+* don't populate the cache on `--check` (#175)
+
+
 ### 18.4a3
 
 * added a "cache"; files already reformatted that haven't changed on disk

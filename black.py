@@ -43,7 +43,7 @@ from blib2to3 import pygram, pytree
 from blib2to3.pgen2 import driver, token
 from blib2to3.pgen2.parse import ParseError
 
-__version__ = "18.4a3"
+__version__ = "18.4a4"
 DEFAULT_LINE_LENGTH = 88
 
 # types
@@ -245,7 +245,7 @@ def reformat_one(
                 )
             ):
                 changed = Changed.YES
-            if write_back != WriteBack.DIFF and changed is not Changed.NO:
+            if write_back == WriteBack.YES and changed is not Changed.NO:
                 write_cache(cache, [src], line_length)
         report.done(src, changed)
     except Exception as exc:
@@ -312,7 +312,7 @@ async def schedule_formatting(
 
     if cancelled:
         await asyncio.gather(*cancelled, loop=loop, return_exceptions=True)
-    if write_back != WriteBack.DIFF and formatted:
+    if write_back == WriteBack.YES and formatted:
         write_cache(cache, formatted, line_length)
 
 
