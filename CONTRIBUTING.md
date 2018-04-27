@@ -7,8 +7,8 @@ yet?
 
 ## Bird's eye view
 
-In terms of inspiration, *Black* is about as configurable as *gofmt* and
-*rustfmt* are.  This is deliberate.
+In terms of inspiration, *Black* is about as configurable as *gofmt*.
+This is deliberate.
 
 Bug reports and fixes are always welcome!  Please follow the issue
 template on GitHub for best results.

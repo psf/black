@@ -506,8 +506,8 @@ MIT
 
 ## Contributing to Black
 
-In terms of inspiration, *Black* is about as configurable as *gofmt* and
-*rustfmt* are.  This is deliberate.
+In terms of inspiration, *Black* is about as configurable as *gofmt*.
+This is deliberate.
 
 Bug reports and fixes are always welcome!  However, before you suggest a
 new feature or configuration knob, ask yourself why you want it.  If it
