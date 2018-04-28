@@ -1,4 +1,5 @@
 .coverage
 _build
 .DS_Store
+.vscode
 docs/_static/pypi.svg
