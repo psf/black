@@ -744,6 +744,9 @@ class Line:
         if not has_value:
             return
 
+        if token.COLON == leaf.type and self.is_class_parenth_empty:
+            del self.leaves[-2:]
+
         if self.leaves and not preformatted:
             # Note: at this point leaf.prefix should be empty except for
             # imports, for which we only preserve newlines.
@@ -839,6 +842,19 @@ class Line:
             bool(self)
             and self.leaves[0].type == token.NAME
             and self.leaves[0].value == "yield"
+        )
+
+    @property
+    def is_class_parenth_empty(self) -> bool:
+        """Is this class parentheses blank?"""
+        return (
+            bool(self)
+            and len(self.leaves) == 4
+            and self.is_class
+            and self.leaves[2].type == token.LPAR
+            and self.leaves[2].value == "("
+            and self.leaves[3].type == token.RPAR
+            and self.leaves[3].value == ")"
         )
 
     def contains_standalone_comments(self, depth_limit: int = sys.maxsize) -> bool:
@@ -1126,6 +1142,7 @@ class LineGenerator(Visitor[Line]):
 
         If any lines were generated, set up a new current_line.
         """
+
         if not self.current_line:
             if self.current_line.__class__ == type:
                 self.current_line.depth += indent
