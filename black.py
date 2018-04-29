@@ -736,6 +736,7 @@ class Line:
         if self.leaves and not preformatted:
             # Note: at this point leaf.prefix should be empty except for
             # imports, for which we only preserve newlines.
+            lsqb_leaf: Optional[Leaf]
             if leaf.type == token.LSQB:
                 lsqb_leaf = leaf
             else:
@@ -745,7 +746,11 @@ class Line:
             complex_subscript = False
             if lsqb_leaf is not None:
                 subscript_start = lsqb_leaf.next_sibling
-                if subscript_start.type == syms.subscriptlist:
+                assert subscript_start is not None, "LSQB always has a right sibling"
+                if (
+                    isinstance(subscript_start, Node)
+                    and subscript_start.type == syms.subscriptlist
+                ):
                     subscript_start = child_towards(subscript_start, leaf)
                 complex_subscript = subscript_start is not None and any(
                     map(lambda n: n.type in EXPRS, subscript_start.pre_order())
@@ -1329,7 +1334,7 @@ ALWAYS_NO_SPACE = CLOSING_BRACKETS | {token.COMMA, STANDALONE_COMMENT}
 
 def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa C901
     """Return whitespace prefix if needed for the given `leaf`.
-    
+
     `complex_subscript` signals whether the given leaf is part of a subscription
     which has non-trivial arguments, like arithmetic expressions or function calls.
     """
@@ -1567,11 +1572,12 @@ def preceding_leaf(node: Optional[LN]) -> Optional[Leaf]:
     return None
 
 
-def child_towards(ancestor: Node, descendant: LN) -> LN:
+def child_towards(ancestor: Node, descendant: LN) -> Optional[LN]:
     """Return the child of `ancestor` that contains `descendant`."""
-    while descendant and descendant.parent != ancestor:
-        descendant = descendant.parent
-    return descendant
+    node: Optional[LN] = descendant
+    while node and node.parent != ancestor:
+        node = node.parent
+    return node
 
 
 def is_split_after_delimiter(leaf: Leaf, previous: Leaf = None) -> int:
@@ -2034,6 +2040,7 @@ def explode_split(
 
     try:
         yield from delimiter_split(new_lines[1], py36)
+
     except CannotSplit:
         yield new_lines[1]
 

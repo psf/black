@@ -10,6 +10,7 @@ slice[:c, c - 1]
 slice[c, c + 1, d::]
 slice[ham[c::d] :: 1]
 slice[ham[cheese ** 2 : -1] : 1 : 1, ham[1:2]]
+slice[:-1:]
 
 # These are from PEP-8:
 ham[1:9], ham[1:9:3], ham[:9:3], ham[1::3], ham[1:9:]
