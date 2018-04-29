@@ -302,12 +302,12 @@ This behaviour may raise ``W503 line break before binary operator`` warnings in
 style guide enforcement tools like Flake8. Since ``W503`` is not PEP 8 compliant,
 you should tell Flake8 to ignore these warnings.
 
-### Whiespace In Subscripts and ``:``
+### Slices
 
 PEP 8 [recommends](https://www.python.org/dev/peps/pep-0008/#whitespace-in-expressions-and-statements)
 to treat ``:`` in slices as a binary operator with the lowest priority, and to
 leave an equal amount of space on either side, except if a parameter is omitted
-(e.g. ``ham[1 + 1:]``). It also states that for extended slices, both ``:``
+(e.g. ``ham[1 + 1 :]``). It also states that for extended slices, both ``:``
 operators have to have the same amount of spacing, except if a parameter is
 omitted (``ham[1 + 1 ::]``). *Black* enforces these rules consistently.
 

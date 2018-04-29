@@ -582,7 +582,14 @@ UNPACKING_PARENTS = {
     syms.listmaker,
     syms.testlist_gexp,
 }
-EXPRS = {
+TEST_DESCENDANTS = {
+    syms.test,
+    syms.lambdef,
+    syms.or_test,
+    syms.and_test,
+    syms.not_test,
+    syms.comparison,
+    syms.star_expr,
     syms.expr,
     syms.xor_expr,
     syms.and_expr,
@@ -708,6 +715,13 @@ class BracketTracker:
 
         return False
 
+    def get_open_lsqb(self, leaf: Leaf) -> Optional[Leaf]:
+        """Returns the most recent opening square bracket at `leaf` (if any)."""
+        if leaf.type == token.LSQB:
+            return leaf
+
+        return self.bracket_match.get((self.depth - 1, token.RSQB))
+
 
 @dataclass
 class Line:
@@ -736,26 +750,9 @@ class Line:
         if self.leaves and not preformatted:
             # Note: at this point leaf.prefix should be empty except for
             # imports, for which we only preserve newlines.
-            lsqb_leaf: Optional[Leaf]
-            if leaf.type == token.LSQB:
-                lsqb_leaf = leaf
-            else:
-                lsqb_leaf = self.bracket_tracker.bracket_match.get(
-                    (self.bracket_tracker.depth - 1, token.RSQB)
-                )
-            complex_subscript = False
-            if lsqb_leaf is not None:
-                subscript_start = lsqb_leaf.next_sibling
-                assert subscript_start is not None, "LSQB always has a right sibling"
-                if (
-                    isinstance(subscript_start, Node)
-                    and subscript_start.type == syms.subscriptlist
-                ):
-                    subscript_start = child_towards(subscript_start, leaf)
-                complex_subscript = subscript_start is not None and any(
-                    map(lambda n: n.type in EXPRS, subscript_start.pre_order())
-                )
-            leaf.prefix += whitespace(leaf, complex_subscript=complex_subscript)
+            leaf.prefix += whitespace(
+                leaf, complex_subscript=self.is_complex_subscript(leaf)
+            )
         if self.inside_brackets or not preformatted:
             self.bracket_tracker.mark(leaf)
             self.maybe_remove_trailing_comma(leaf)
@@ -948,6 +945,22 @@ class Line:
             if comment_index == comma_index:
                 self.comments[i] = (comma_index - 1, comment)
         self.leaves.pop()
+
+    def is_complex_subscript(self, leaf: Leaf) -> bool:
+        """Returns True iff `leaf` is part of a slice with non-trivial exprs."""
+        open_lsqb = self.bracket_tracker.get_open_lsqb(leaf)
+        if open_lsqb is None:
+            return False
+
+        subscript_start = open_lsqb.next_sibling
+        if (
+            isinstance(subscript_start, Node)
+            and subscript_start.type == syms.subscriptlist
+        ):
+            subscript_start = child_towards(subscript_start, leaf)
+        return subscript_start is not None and any(
+            n.type in TEST_DESCENDANTS for n in subscript_start.pre_order()
+        )
 
     def __str__(self) -> str:
         """Render the line."""
@@ -1367,7 +1380,11 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa C901
             if prevp.type == token.COLON:
                 return NO
 
-            return SPACE if prevp.type == token.COMMA or complex_subscript else NO
+            elif prevp.type != token.COMMA and not complex_subscript:
+                return NO
+
+            else:
+                return SPACE
 
         if prevp.type == token.EQUAL:
             if prevp.parent:
@@ -1503,7 +1520,8 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa C901
 
             return NO
 
-        return SPACE if complex_subscript else NO
+        elif not complex_subscript:
+            return NO
 
     elif p.type == syms.atom:
         if prev and t == token.DOT:
