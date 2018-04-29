@@ -10,17 +10,18 @@ from pathlib import Path  # noqa E402
 CURRENT_DIR = Path(__file__).parent
 
 
-def get_long_description():
+def get_long_description() -> str:
     readme_md = CURRENT_DIR / "README.md"
     with open(readme_md, encoding="utf8") as ld_file:
         return ld_file.read()
 
 
-def get_version():
+def get_version() -> str:
     black_py = CURRENT_DIR / "black.py"
     _version_re = re.compile(r"__version__\s+=\s+(?P<version>.*)")
     with open(black_py, "r", encoding="utf8") as f:
-        version = _version_re.search(f.read()).group("version")
+        match = _version_re.search(f.read())
+        version = match.group("version") if match is not None else '"unknown"'
     return str(ast.literal_eval(version))
 
 
