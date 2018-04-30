@@ -715,11 +715,8 @@ class BracketTracker:
 
         return False
 
-    def get_open_lsqb(self, leaf: Leaf) -> Optional[Leaf]:
-        """Returns the most recent opening square bracket at `leaf` (if any)."""
-        if leaf.type == token.LSQB:
-            return leaf
-
+    def get_open_lsqb(self) -> Optional[Leaf]:
+        """Return the most recent opening square bracket (if any)."""
         return self.bracket_match.get((self.depth - 1, token.RSQB))
 
 
@@ -947,8 +944,10 @@ class Line:
         self.leaves.pop()
 
     def is_complex_subscript(self, leaf: Leaf) -> bool:
-        """Returns True iff `leaf` is part of a slice with non-trivial exprs."""
-        open_lsqb = self.bracket_tracker.get_open_lsqb(leaf)
+        """Return True iff `leaf` is part of a slice with non-trivial exprs."""
+        open_lsqb = (
+            leaf if leaf.type == token.LSQB else self.bracket_tracker.get_open_lsqb()
+        )
         if open_lsqb is None:
             return False
 
@@ -1383,8 +1382,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa C901
             elif prevp.type != token.COMMA and not complex_subscript:
                 return NO
 
-            else:
-                return SPACE
+            return SPACE
 
         if prevp.type == token.EQUAL:
             if prevp.parent:
