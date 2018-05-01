@@ -89,11 +89,11 @@ class FormatError(Exception):
         self.consumed = consumed
 
     def trim_prefix(self, leaf: Leaf) -> None:
-        leaf.prefix = leaf.prefix[self.consumed:]
+        leaf.prefix = leaf.prefix[self.consumed :]
 
     def leaf_from_consumed(self, leaf: Leaf) -> Leaf:
         """Returns a new Leaf from the consumed part of the prefix."""
-        unformatted_prefix = leaf.prefix[:self.consumed]
+        unformatted_prefix = leaf.prefix[: self.consumed]
         return Leaf(token.NEWLINE, unformatted_prefix)
 
 
@@ -582,6 +582,23 @@ UNPACKING_PARENTS = {
     syms.listmaker,
     syms.testlist_gexp,
 }
+TEST_DESCENDANTS = {
+    syms.test,
+    syms.lambdef,
+    syms.or_test,
+    syms.and_test,
+    syms.not_test,
+    syms.comparison,
+    syms.star_expr,
+    syms.expr,
+    syms.xor_expr,
+    syms.and_expr,
+    syms.shift_expr,
+    syms.arith_expr,
+    syms.trailer,
+    syms.term,
+    syms.power,
+}
 COMPREHENSION_PRIORITY = 20
 COMMA_PRIORITY = 10
 TERNARY_PRIORITY = 7
@@ -698,6 +715,10 @@ class BracketTracker:
 
         return False
 
+    def get_open_lsqb(self) -> Optional[Leaf]:
+        """Return the most recent opening square bracket (if any)."""
+        return self.bracket_match.get((self.depth - 1, token.RSQB))
+
 
 @dataclass
 class Line:
@@ -726,7 +747,9 @@ class Line:
         if self.leaves and not preformatted:
             # Note: at this point leaf.prefix should be empty except for
             # imports, for which we only preserve newlines.
-            leaf.prefix += whitespace(leaf)
+            leaf.prefix += whitespace(
+                leaf, complex_subscript=self.is_complex_subscript(leaf)
+            )
         if self.inside_brackets or not preformatted:
             self.bracket_tracker.mark(leaf)
             self.maybe_remove_trailing_comma(leaf)
@@ -859,7 +882,7 @@ class Line:
         else:
             return False
 
-        for leaf in self.leaves[_opening_index + 1:]:
+        for leaf in self.leaves[_opening_index + 1 :]:
             if leaf is closing:
                 break
 
@@ -919,6 +942,24 @@ class Line:
             if comment_index == comma_index:
                 self.comments[i] = (comma_index - 1, comment)
         self.leaves.pop()
+
+    def is_complex_subscript(self, leaf: Leaf) -> bool:
+        """Return True iff `leaf` is part of a slice with non-trivial exprs."""
+        open_lsqb = (
+            leaf if leaf.type == token.LSQB else self.bracket_tracker.get_open_lsqb()
+        )
+        if open_lsqb is None:
+            return False
+
+        subscript_start = open_lsqb.next_sibling
+        if (
+            isinstance(subscript_start, Node)
+            and subscript_start.type == syms.subscriptlist
+        ):
+            subscript_start = child_towards(subscript_start, leaf)
+        return subscript_start is not None and any(
+            n.type in TEST_DESCENDANTS for n in subscript_start.pre_order()
+        )
 
     def __str__(self) -> str:
         """Render the line."""
@@ -1303,8 +1344,12 @@ BRACKETS = OPENING_BRACKETS | CLOSING_BRACKETS
 ALWAYS_NO_SPACE = CLOSING_BRACKETS | {token.COMMA, STANDALONE_COMMENT}
 
 
-def whitespace(leaf: Leaf) -> str:  # noqa C901
-    """Return whitespace prefix if needed for the given `leaf`."""
+def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa C901
+    """Return whitespace prefix if needed for the given `leaf`.
+
+    `complex_subscript` signals whether the given leaf is part of a subscription
+    which has non-trivial arguments, like arithmetic expressions or function calls.
+    """
     NO = ""
     SPACE = " "
     DOUBLESPACE = "  "
@@ -1318,7 +1363,10 @@ def whitespace(leaf: Leaf) -> str:  # noqa C901
         return DOUBLESPACE
 
     assert p is not None, f"INTERNAL ERROR: hand-made leaf without parent: {leaf!r}"
-    if t == token.COLON and p.type not in {syms.subscript, syms.subscriptlist}:
+    if (
+        t == token.COLON
+        and p.type not in {syms.subscript, syms.subscriptlist, syms.sliceop}
+    ):
         return NO
 
     prev = leaf.prev_sibling
@@ -1328,7 +1376,13 @@ def whitespace(leaf: Leaf) -> str:  # noqa C901
             return NO
 
         if t == token.COLON:
-            return SPACE if prevp.type == token.COMMA else NO
+            if prevp.type == token.COLON:
+                return NO
+
+            elif prevp.type != token.COMMA and not complex_subscript:
+                return NO
+
+            return SPACE
 
         if prevp.type == token.EQUAL:
             if prevp.parent:
@@ -1349,7 +1403,7 @@ def whitespace(leaf: Leaf) -> str:  # noqa C901
 
         elif prevp.type == token.COLON:
             if prevp.parent and prevp.parent.type in {syms.subscript, syms.sliceop}:
-                return NO
+                return SPACE if complex_subscript else NO
 
         elif (
             prevp.parent
@@ -1455,7 +1509,7 @@ def whitespace(leaf: Leaf) -> str:  # noqa C901
         if prev and prev.type == token.LPAR:
             return NO
 
-    elif p.type == syms.subscript:
+    elif p.type in {syms.subscript, syms.sliceop}:
         # indexing
         if not prev:
             assert p.parent is not None, "subscripts are always parented"
@@ -1464,7 +1518,7 @@ def whitespace(leaf: Leaf) -> str:  # noqa C901
 
             return NO
 
-        else:
+        elif not complex_subscript:
             return NO
 
     elif p.type == syms.atom:
@@ -1532,6 +1586,14 @@ def preceding_leaf(node: Optional[LN]) -> Optional[Leaf]:
 
         node = node.parent
     return None
+
+
+def child_towards(ancestor: Node, descendant: LN) -> Optional[LN]:
+    """Return the child of `ancestor` that contains `descendant`."""
+    node: Optional[LN] = descendant
+    while node and node.parent != ancestor:
+        node = node.parent
+    return node
 
 
 def is_split_after_delimiter(leaf: Leaf, previous: Leaf = None) -> int:
@@ -1994,6 +2056,7 @@ def explode_split(
 
     try:
         yield from delimiter_split(new_lines[1], py36)
+
     except CannotSplit:
         yield new_lines[1]
 
@@ -2061,7 +2124,7 @@ def normalize_string_quotes(leaf: Leaf) -> None:
     unescaped_new_quote = re.compile(rf"(([^\\]|^)(\\\\)*){new_quote}")
     escaped_new_quote = re.compile(rf"([^\\]|^)\\(\\\\)*{new_quote}")
     escaped_orig_quote = re.compile(rf"([^\\]|^)\\(\\\\)*{orig_quote}")
-    body = leaf.value[first_quote_pos + len(orig_quote):-len(orig_quote)]
+    body = leaf.value[first_quote_pos + len(orig_quote) : -len(orig_quote)]
     if "r" in prefix.casefold():
         if unescaped_new_quote.search(body):
             # There's at least one unescaped new_quote in this raw string
