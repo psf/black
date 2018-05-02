@@ -14,7 +14,7 @@
 
 
 *Black* is the uncompromising Python code formatter.  By using it, you
-agree to cease control over minutiae of hand-formatting.  In return,
+agree to cede control over minutiae of hand-formatting.  In return,
 *Black* gives you speed, determinism, and freedom from `pycodestyle`
 nagging about formatting.  You will save time and mental energy for
 more important matters.
