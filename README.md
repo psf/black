@@ -180,8 +180,9 @@ If a line of "from" imports cannot fit in the allotted length, it's always split
 into one per line.  Imports tend to change often and this minimizes diffs, as well
 as enables readers of code to easily find which commit introduced a particular
 import.  This exception also makes *Black* compatible with
-[isort](https://pypi.org/p/isort/).  Use `multi_line_output=3` and
-`include_trailing_comma=True` in your isort config.
+[isort](https://pypi.org/p/isort/).  Use `multi_line_output=3`,
+`include_trailing_comma=True`, `force_grid_wrap=0`, and `line_length=88` in your
+isort config.
 
 
 ### Line length
