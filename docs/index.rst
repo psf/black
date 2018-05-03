@@ -4,7 +4,7 @@
 The uncompromising code formatter
 =================================
 
-By using *Black*, you agree to cease control over minutiae of
+By using *Black*, you agree to cede control over minutiae of
 hand-formatting. In return, *Black* gives you speed, determinism, and
 freedom from `pycodestyle` nagging about formatting. You will save time
 and mental energy for more important matters.
