@@ -1,5 +1,3 @@
-#! /usr/bin/env python3
-
 """Token constants (from "token.h")."""
 
 #  Taken from Python (r53757) and modified to include some tokens

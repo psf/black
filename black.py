@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import asyncio
 import pickle
 from asyncio.base_events import BaseEventLoop
