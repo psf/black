@@ -3,3 +3,6 @@ _build
 .DS_Store
 .vscode
 docs/_static/pypi.svg
+.tox
+__pycache__
+black.egg-info
