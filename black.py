@@ -885,9 +885,14 @@ class Line:
                 self.remove_trailing_comma()
                 return True
 
-        # For parens let's check if it's safe to remove the comma.  If the
-        # trailing one is the only one, we might mistakenly change a tuple
-        # into a different type by removing the comma.
+        # For parens let's check if it's safe to remove the comma.
+        # Imports are always safe.
+        if self.is_import:
+            self.remove_trailing_comma()
+            return True
+
+        # Otheriwsse, if the trailing one is the only one, we might mistakenly
+        # change a tuple into a different type by removing the comma.
         depth = closing.bracket_depth + 1
         commas = 0
         opening = closing.opening_bracket
