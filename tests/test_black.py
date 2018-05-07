@@ -636,6 +636,12 @@ class BlackTestCase(unittest.TestCase):
             )
             self.assertEqual(result.exit_code, 1)
 
+    def test_no_files(self) -> None:
+        with cache_dir():
+            # Without an argument, black exits with error code 0.
+            result = CliRunner().invoke(black.main, [])
+            self.assertEqual(result.exit_code, 0)
+
     def test_read_cache_line_lengths(self) -> None:
         with cache_dir() as workspace:
             path = (workspace / "file.py").resolve()

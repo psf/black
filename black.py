@@ -192,6 +192,7 @@ def main(
         write_back = WriteBack.YES
     report = Report(check=check, quiet=quiet)
     if len(sources) == 0:
+        out("No paths given. Nothing to do 😴")
         ctx.exit(0)
         return
 
