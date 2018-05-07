@@ -536,6 +536,13 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Change Log
 
+### 18.5a0 (unreleased)
+
+* Slices are now formatted according to PEP 8 (#178)
+
+* Empty parentheses in a class definition are removed (#145, #180)
+
+
 ### 18.4a4
 
 * don't populate the cache on `--check` (#175)
@@ -728,10 +735,12 @@ Maintained with [Carol Willing](mailto:carolcode@willingconsulting.com),
 Multiple contributions by:
 * [Anthony Sottile](mailto:asottile@umich.edu)
 * [Artem Malyshev](mailto:proofit404@gmail.com)
+* [Christian Heimes](mailto:christian@python.org)
 * [Daniel M. Capella](mailto:polycitizen@gmail.com)
 * [Eli Treuherz](mailto:eli.treuherz@cgi.com)
 * Hugo van Kemenade
 * [Ivan Katanić](mailto:ivan.katanic@gmail.com)
 * [Jonas Obrist](mailto:ojiidotch@gmail.com)
 * [Osaetin Daniel](mailto:osaetindaniel@gmail.com)
+* [Sunil Kapil](mailto:snlkapil@gmail.com)
 * [Vishwas B Sharma](mailto:sharma.vishwas88@gmail.com)
