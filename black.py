@@ -2187,17 +2187,7 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
     for child in list(node.children):
         if check_lpar:
             if child.type == syms.atom:
-                if not (
-                    is_empty_tuple(child)
-                    or is_one_tuple(child)
-                    or max_delimiter_priority_in_atom(child) >= COMMA_PRIORITY
-                ):
-                    first = child.children[0]
-                    last = child.children[-1]
-                    if first.type == token.LPAR and last.type == token.RPAR:
-                        # make parentheses invisible
-                        first.value = ""  # type: ignore
-                        last.value = ""  # type: ignore
+                maybe_make_parens_invisible_in_atom(child)
             elif is_one_tuple(child):
                 # wrap child in visible parentheses
                 lpar = Leaf(token.LPAR, "(")
@@ -2212,6 +2202,29 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
                 node.insert_child(index, Node(syms.atom, [lpar, child, rpar]))
 
         check_lpar = isinstance(child, Leaf) and child.value in parens_after
+
+
+def maybe_make_parens_invisible_in_atom(node: LN) -> bool:
+    """If it's safe, make the parens in the atom `node` invisible, recusively."""
+    if (
+        node.type != syms.atom
+        or is_empty_tuple(node)
+        or is_one_tuple(node)
+        or max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
+    ):
+        return False
+
+    first = node.children[0]
+    last = node.children[-1]
+    if first.type == token.LPAR and last.type == token.RPAR:
+        # make parentheses invisible
+        first.value = ""  # type: ignore
+        last.value = ""  # type: ignore
+        if len(node.children) > 1:
+            maybe_make_parens_invisible_in_atom(node.children[1])
+        return True
+
+    return False
 
 
 def is_empty_tuple(node: LN) -> bool:

@@ -538,9 +538,14 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ### 18.5a0 (unreleased)
 
-* Slices are now formatted according to PEP 8 (#178)
+* slices are now formatted according to PEP 8 (#178)
 
-* Empty parentheses in a class definition are removed (#145, #180)
+* empty parentheses in a class definition are now removed (#145, #180)
+
+* fixed an invalid trailing comma sometimes left in imports (#185)
+
+* fixed non-deterministic formatting when multiple pairs of removable parentheses
+  were used (#183)
 
 
 ### 18.4a4

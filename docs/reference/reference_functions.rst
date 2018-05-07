@@ -98,6 +98,8 @@ Utilities
 
 .. autofunction:: black.make_comment
 
+.. autofunction:: black.maybe_make_parens_invisible_in_atom
+
 .. autofunction:: black.max_delimiter_priority_in_atom
 
 .. autofunction:: black.normalize_prefix

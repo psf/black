@@ -163,6 +163,9 @@ async def f():
 print(* [] or [1])
 print(**{1: 3} if False else {x: x for x in range(3)})
 print(* lambda x: x)
+assert(not Test),("Short message")
+assert this is ComplexTest and not requirements.fit_in_a_single_line(force=False), "Short message"
+assert(((parens is TooMany)))
 for x, in (1,), (2,), (3,): ...
 for y in (): ...
 for z in (i for i in (1, 2, 3)): ...
@@ -419,6 +422,11 @@ async def f():
 print(*[] or [1])
 print(**{1: 3} if False else {x: x for x in range(3)})
 print(*lambda x: x)
+assert not Test, "Short message"
+assert (
+    this is ComplexTest and not requirements.fit_in_a_single_line(force=False)
+), "Short message"
+assert parens is TooMany
 for (x,) in (1,), (2,), (3,):
     ...
 for y in ():
