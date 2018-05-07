@@ -743,9 +743,8 @@ class Line:
         if not has_value:
             return
 
-        if token.COLON == leaf.type and self.is_class_parenth_empty:
+        if token.COLON == leaf.type and self.is_class_paren_empty:
             del self.leaves[-2:]
-
         if self.leaves and not preformatted:
             # Note: at this point leaf.prefix should be empty except for
             # imports, for which we only preserve newlines.
@@ -755,7 +754,6 @@ class Line:
         if self.inside_brackets or not preformatted:
             self.bracket_tracker.mark(leaf)
             self.maybe_remove_trailing_comma(leaf)
-
         if not self.append_comment(leaf):
             self.leaves.append(leaf)
 
@@ -844,8 +842,11 @@ class Line:
         )
 
     @property
-    def is_class_parenth_empty(self) -> bool:
-        """Is this class parentheses blank?"""
+    def is_class_paren_empty(self) -> bool:
+        """Is this a class with no base classes but using parentheses?
+
+        Those are unnecessary and should be removed.
+        """
         return (
             bool(self)
             and len(self.leaves) == 4
@@ -1141,7 +1142,6 @@ class LineGenerator(Visitor[Line]):
 
         If any lines were generated, set up a new current_line.
         """
-
         if not self.current_line:
             if self.current_line.__class__ == type:
                 self.current_line.depth += indent
