@@ -553,19 +553,20 @@ COMPARATORS = {
     token.GREATEREQUAL,
 }
 MATH_OPERATORS = {
+    token.VBAR,
+    token.CIRCUMFLEX,
+    token.AMPER,
+    token.LEFTSHIFT,
+    token.RIGHTSHIFT,
     token.PLUS,
     token.MINUS,
     token.STAR,
     token.SLASH,
-    token.VBAR,
-    token.AMPER,
-    token.PERCENT,
-    token.CIRCUMFLEX,
-    token.TILDE,
-    token.LEFTSHIFT,
-    token.RIGHTSHIFT,
-    token.DOUBLESTAR,
     token.DOUBLESLASH,
+    token.PERCENT,
+    token.AT,
+    token.TILDE,
+    token.DOUBLESTAR,
 }
 STARS = {token.STAR, token.DOUBLESTAR}
 VARARGS_PARENTS = {
@@ -599,12 +600,27 @@ TEST_DESCENDANTS = {
     syms.power,
 }
 COMPREHENSION_PRIORITY = 20
-COMMA_PRIORITY = 10
-TERNARY_PRIORITY = 7
-LOGIC_PRIORITY = 5
-STRING_PRIORITY = 4
-COMPARATOR_PRIORITY = 3
-MATH_PRIORITY = 1
+COMMA_PRIORITY = 18
+TERNARY_PRIORITY = 16
+LOGIC_PRIORITY = 14
+STRING_PRIORITY = 12
+COMPARATOR_PRIORITY = 10
+MATH_PRIORITIES = {
+    token.VBAR: 8,
+    token.CIRCUMFLEX: 7,
+    token.AMPER: 6,
+    token.LEFTSHIFT: 5,
+    token.RIGHTSHIFT: 5,
+    token.PLUS: 4,
+    token.MINUS: 4,
+    token.STAR: 3,
+    token.SLASH: 3,
+    token.DOUBLESLASH: 3,
+    token.PERCENT: 3,
+    token.AT: 3,
+    token.TILDE: 2,
+    token.DOUBLESTAR: 1,
+}
 
 
 @dataclass
@@ -1649,7 +1665,7 @@ def is_split_before_delimiter(leaf: Leaf, previous: Leaf = None) -> int:
         and leaf.parent
         and leaf.parent.type not in {syms.factor, syms.star_expr}
     ):
-        return MATH_PRIORITY
+        return MATH_PRIORITIES[leaf.type]
 
     if leaf.type in COMPARATORS:
         return COMPARATOR_PRIORITY

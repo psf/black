@@ -540,6 +540,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * slices are now formatted according to PEP 8 (#178)
 
+* math operators now use their respective priorities for delimiting multiline
+  expressions (#148)
+
 * empty parentheses in a class definition are now removed (#145, #180)
 
 * fixed an invalid trailing comma sometimes left in imports (#185)

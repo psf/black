@@ -208,6 +208,18 @@ if (
     aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 ):
     return True
+if (
+    ~ aaaa.a + aaaa.b - aaaa.c * aaaa.d / aaaa.e | aaaa.f & aaaa.g % aaaa.h ^ aaaa.i << aaaa.k >> aaaa.l ** aaaa.m // aaaa.n
+):
+    return True
+if (
+    ~ aaaaaaaa.a + aaaaaaaa.b - aaaaaaaa.c @ aaaaaaaa.d / aaaaaaaa.e | aaaaaaaa.f & aaaaaaaa.g % aaaaaaaa.h ^ aaaaaaaa.i << aaaaaaaa.k >> aaaaaaaa.l ** aaaaaaaa.m // aaaaaaaa.n
+):
+    return True
+if (
+    ~ aaaaaaaaaaaaaaaa.a + aaaaaaaaaaaaaaaa.b - aaaaaaaaaaaaaaaa.c * aaaaaaaaaaaaaaaa.d @ aaaaaaaaaaaaaaaa.e | aaaaaaaaaaaaaaaa.f & aaaaaaaaaaaaaaaa.g % aaaaaaaaaaaaaaaa.h ^ aaaaaaaaaaaaaaaa.i << aaaaaaaaaaaaaaaa.k >> aaaaaaaaaaaaaaaa.l ** aaaaaaaaaaaaaaaa.m // aaaaaaaaaaaaaaaa.n
+):
+    return True
 last_call()
 # standalone comment at ENDMARKER
 
@@ -473,6 +485,27 @@ if (
 if (
     aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     / aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+):
+    return True
+if (
+    ~aaaa.a + aaaa.b - aaaa.c * aaaa.d / aaaa.e
+    | aaaa.f & aaaa.g % aaaa.h ^ aaaa.i << aaaa.k >> aaaa.l ** aaaa.m // aaaa.n
+):
+    return True
+if (
+    ~aaaaaaaa.a + aaaaaaaa.b - aaaaaaaa.c @ aaaaaaaa.d / aaaaaaaa.e
+    | aaaaaaaa.f & aaaaaaaa.g % aaaaaaaa.h
+    ^ aaaaaaaa.i << aaaaaaaa.k >> aaaaaaaa.l ** aaaaaaaa.m // aaaaaaaa.n
+):
+    return True
+if (
+    ~aaaaaaaaaaaaaaaa.a
+    + aaaaaaaaaaaaaaaa.b
+    - aaaaaaaaaaaaaaaa.c * aaaaaaaaaaaaaaaa.d @ aaaaaaaaaaaaaaaa.e
+    | aaaaaaaaaaaaaaaa.f & aaaaaaaaaaaaaaaa.g % aaaaaaaaaaaaaaaa.h
+    ^ aaaaaaaaaaaaaaaa.i
+    << aaaaaaaaaaaaaaaa.k
+    >> aaaaaaaaaaaaaaaa.l ** aaaaaaaaaaaaaaaa.m // aaaaaaaaaaaaaaaa.n
 ):
     return True
 last_call()
