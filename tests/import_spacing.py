@@ -23,6 +23,7 @@ from ..streams import *
 from some_library import (
     Just, Enough, Libraries, To, Fit, In, This, Nice, Split, Which, We, No, Longer, Use
 )
+from name_of_a_company.extremely_long_project_name.component.ttypes import CuteLittleServiceHandlerFactoryyy
 
 from .a.b.c.subprocess import *
 from . import (tasks)
@@ -82,6 +83,9 @@ from some_library import (
     No,
     Longer,
     Use,
+)
+from name_of_a_company.extremely_long_project_name.component.ttypes import (
+    CuteLittleServiceHandlerFactoryyy
 )
 
 from .a.b.c.subprocess import *

@@ -547,6 +547,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * fixed non-deterministic formatting when multiple pairs of removable parentheses
   were used (#183)
 
+* fixed not splitting long from-imports with only a single name
+
 
 ### 18.4a4
 

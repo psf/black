@@ -41,7 +41,7 @@ from blib2to3 import pygram, pytree
 from blib2to3.pgen2 import driver, token
 from blib2to3.pgen2.parse import ParseError
 
-__version__ = "18.4a5"
+__version__ = "18.4a6"
 DEFAULT_LINE_LENGTH = 88
 
 # types
@@ -1830,7 +1830,8 @@ def left_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
     """Split line into many lines, starting with the first matching bracket pair.
 
     Note: this usually looks weird, only use this for function definitions.
-    Prefer RHS otherwise.
+    Prefer RHS otherwise.  This is why this function is not symmetrical with
+    :func:`right_hand_split` which also handles optional parentheses.
     """
     head = Line(depth=line.depth)
     body = Line(depth=line.depth + 1, inside_brackets=True)
@@ -1870,7 +1871,10 @@ def left_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
 def right_hand_split(
     line: Line, py36: bool = False, omit: Collection[LeafID] = ()
 ) -> Iterator[Line]:
-    """Split line into many lines, starting with the last matching bracket pair."""
+    """Split line into many lines, starting with the last matching bracket pair.
+
+    If the split was by optional parentheses, attempt splitting without them, too.
+    """
     head = Line(depth=line.depth)
     body = Line(depth=line.depth + 1, inside_brackets=True)
     tail = Line(depth=line.depth)
@@ -1909,20 +1913,25 @@ def right_hand_split(
     bracket_split_succeeded_or_raise(head, body, tail)
     assert opening_bracket and closing_bracket
     if (
+        # the opening bracket is an optional paren
         opening_bracket.type == token.LPAR
         and not opening_bracket.value
+        # the closing bracket is an optional paren
         and closing_bracket.type == token.RPAR
         and not closing_bracket.value
+        # there are no delimiters or standalone comments in the body
+        and not body.bracket_tracker.delimiters
+        and not line.contains_standalone_comments(0)
+        # and it's not an import (optional parens are the only thing we can split
+        # on in this case; attempting a split without them is a waste of time)
+        and not line.is_import
     ):
-        # These parens were optional. If there aren't any delimiters or standalone
-        # comments in the body, they were unnecessary and another split without
-        # them should be attempted.
-        if not (
-            body.bracket_tracker.delimiters or line.contains_standalone_comments(0)
-        ):
-            omit = {id(closing_bracket), *omit}
+        omit = {id(closing_bracket), *omit}
+        try:
             yield from right_hand_split(line, py36=py36, omit=omit)
             return
+        except CannotSplit:
+            pass
 
     ensure_visible(opening_bracket)
     ensure_visible(closing_bracket)
