@@ -2337,7 +2337,7 @@ def is_python36(node: Node) -> bool:
 
     Currently looking for:
     - f-strings; and
-    - trailing commas after * or ** in function signatures.
+    - trailing commas after * or ** in function signatures and calls.
     """
     for n in node.pre_order():
         if n.type == token.STRING:
@@ -2346,13 +2346,18 @@ def is_python36(node: Node) -> bool:
                 return True
 
         elif (
-            n.type == syms.typedargslist
+            n.type in {syms.typedargslist, syms.arglist}
             and n.children
             and n.children[-1].type == token.COMMA
         ):
             for ch in n.children:
                 if ch.type in STARS:
                     return True
+
+                if ch.type == syms.argument:
+                    for argch in ch.children:
+                        if argch.type in STARS:
+                            return True
 
     return False
 

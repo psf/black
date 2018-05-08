@@ -549,6 +549,11 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * fixed not splitting long from-imports with only a single name
 
+* fixed Python 3.6+ file discovery by also looking at function calls with
+  unpacking. This fixed non-deterministic formatting if trailing commas
+  where used both in function signatures with stars and function calls
+  with stars but the former would be reformatted to a single line.
+
 
 ### 18.4a4
 
