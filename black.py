@@ -1257,9 +1257,8 @@ class LineGenerator(Visitor[Line]):
         The relevant Python language `keywords` for a given statement will be
         NAME leaves within it. This methods puts those on a separate line.
 
-        `parens` holds pairs of nodes where invisible parentheses should be put.
-        Keys hold nodes after which opening parentheses should be put, values
-        hold nodes before which closing parentheses should be put.
+        `parens` holds a set of string leaf values immeditely after which
+        invisible parens should be put.
         """
         normalize_invisible_parens(node, parens_after=parens)
         for child in node.children:
@@ -2204,6 +2203,9 @@ def normalize_string_quotes(leaf: Leaf) -> None:
 
 def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
     """Make existing optional parentheses invisible or create new ones.
+
+    `parens_after` is a set of string leaf values immeditely after which parens
+    should be put.
 
     Standardizes on visible parentheses for single-element tuples, and keeps
     existing visible parentheses for other tuples and generator expressions.
