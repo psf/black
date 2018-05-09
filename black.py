@@ -599,6 +599,22 @@ TEST_DESCENDANTS = {
     syms.term,
     syms.power,
 }
+ASSIGNMENTS = {
+    "=",
+    "+=",
+    "-=",
+    "*=",
+    "@=",
+    "/=",
+    "%=",
+    "&=",
+    "|=",
+    "^=",
+    "<<=",
+    ">>=",
+    "**=",
+    "//=",
+}
 COMPREHENSION_PRIORITY = 20
 COMMA_PRIORITY = 18
 TERNARY_PRIORITY = 16
@@ -994,8 +1010,9 @@ class Line:
             and subscript_start.type == syms.subscriptlist
         ):
             subscript_start = child_towards(subscript_start, leaf)
-        return subscript_start is not None and any(
-            n.type in TEST_DESCENDANTS for n in subscript_start.pre_order()
+        return (
+            subscript_start is not None
+            and any(n.type in TEST_DESCENDANTS for n in subscript_start.pre_order())
         )
 
     def __str__(self) -> str:
@@ -1252,7 +1269,7 @@ class LineGenerator(Visitor[Line]):
         """Visit a statement.
 
         This implementation is shared for `if`, `while`, `for`, `try`, `except`,
-        `def`, `with`, `class`, and `assert`.
+        `def`, `with`, `class`, `assert` and assignments.
 
         The relevant Python language `keywords` for a given statement will be
         NAME leaves within it. This methods puts those on a separate line.
@@ -1368,6 +1385,8 @@ class LineGenerator(Visitor[Line]):
         self.visit_with_stmt = partial(v, keywords={"with"}, parens=Ø)
         self.visit_funcdef = partial(v, keywords={"def"}, parens=Ø)
         self.visit_classdef = partial(v, keywords={"class"}, parens=Ø)
+        self.visit_expr_stmt = partial(v, keywords=Ø, parens=ASSIGNMENTS)
+        self.visit_return_stmt = partial(v, keywords={"return"}, parens={"return"})
         self.visit_async_funcdef = self.visit_async_stmt
         self.visit_decorated = self.visit_decorators
 

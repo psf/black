@@ -327,6 +327,11 @@ interesting cases:
 - `for (...) in (...):`
 - `assert (...), (...)`
 - `from X import (...)`
+- assignments like:
+  - `target = (...)`
+  - `target: type = (...)`
+  - `some, *un, packing = (...)`
+  - `augmented += (...)`
 
 In those cases, parentheses are removed when the entire statement fits
 in one line, or if the inner expression doesn't have any delimiters to
@@ -539,6 +544,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 ### 18.5a0 (unreleased)
 
 * slices are now formatted according to PEP 8 (#178)
+
+* parentheses are now also managed automatically on the right-hand side
+  of assignments and return statements (#140)
 
 * math operators now use their respective priorities for delimiting multiline
   expressions (#148)
