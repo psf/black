@@ -434,6 +434,10 @@ Use [joslarson.black-vscode](https://marketplace.visualstudio.com/items?itemName
 
 Use [sublack plugin](https://github.com/jgirardet/sublack).
 
+### IPython Notebook Magic
+
+Use [blackcellmagic](https://github.com/csurfer/blackcellmagic).
+
 ### Other editors
 
 Atom/Nuclide integration is planned by the author, others will
