@@ -436,6 +436,26 @@ class BlackTestCase(unittest.TestCase):
         node = black.lib2to3_parse(expected)
         self.assertFalse(black.is_python36(node))
 
+    def test_get_future_imports(self) -> None:
+        node = black.lib2to3_parse("\n")
+        self.assertEqual(set(), black.get_future_imports(node))
+        node = black.lib2to3_parse("from __future__ import black\n")
+        self.assertEqual({"black"}, black.get_future_imports(node))
+        node = black.lib2to3_parse("from __future__ import multiple, imports\n")
+        self.assertEqual({"multiple", "imports"}, black.get_future_imports(node))
+        node = black.lib2to3_parse("from __future__ import (parenthesized, imports)\n")
+        self.assertEqual({"parenthesized", "imports"}, black.get_future_imports(node))
+        node = black.lib2to3_parse(
+            "from __future__ import multiple\nfrom __future__ import imports\n"
+        )
+        self.assertEqual({"multiple", "imports"}, black.get_future_imports(node))
+        node = black.lib2to3_parse("# comment\nfrom __future__ import black\n")
+        self.assertEqual({"black"}, black.get_future_imports(node))
+        node = black.lib2to3_parse('"""docstring"""\nfrom __future__ import black\n')
+        self.assertEqual({"black"}, black.get_future_imports(node))
+        node = black.lib2to3_parse("some(other, code)\nfrom __future__ import black\n")
+        self.assertEqual(set(), black.get_future_imports(node))
+
     def test_debug_visitor(self) -> None:
         source, _ = read_data("debug_visitor.py")
         expected, _ = read_data("debug_visitor.out")

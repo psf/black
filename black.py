@@ -2357,6 +2357,44 @@ def is_python36(node: Node) -> bool:
     return False
 
 
+def get_future_imports(node: Node) -> Set[str]:
+    """Returns a set of __future__ imports in the file."""
+    imports = set()
+    for child in node.children:
+        if child.type != syms.simple_stmt:
+            break
+        first_child = child.children[0]
+        if isinstance(first_child, Leaf):
+            # Continue looking if we see a docstring; otherwise stop.
+            if (
+                len(child.children) == 2
+                and first_child.type == token.STRING
+                and isinstance(child.children[1], Leaf)
+                and child.children[1].type == token.NEWLINE
+            ):
+                continue
+            else:
+                break
+        elif isinstance(first_child, Node) and first_child.type == syms.import_from:
+            module_name = first_child.children[1]
+            assert isinstance(module_name, Leaf)
+            if module_name.value == "__future__":
+                for import_from_child in first_child.children[3:]:
+                    if isinstance(import_from_child, Leaf):
+                        if import_from_child.type == token.NAME:
+                            imports.add(import_from_child.value)
+                    elif isinstance(import_from_child, Node):
+                        assert import_from_child.type == syms.import_as_names
+                        for leaf in import_from_child.children:
+                            if isinstance(leaf, Leaf) and leaf.type == token.NAME:
+                                imports.add(leaf.value)
+            else:
+                break
+        else:
+            break
+    return imports
+
+
 PYTHON_EXTENSIONS = {".py"}
 BLACKLISTED_DIRECTORIES = {
     "build", "buck-out", "dist", "_build", ".git", ".hg", ".mypy_cache", ".tox", ".venv"
