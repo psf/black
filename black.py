@@ -409,7 +409,8 @@ def format_str(src_contents: str, line_length: int) -> FileContent:
     """
     src_node = lib2to3_parse(src_contents)
     dst_contents = ""
-    lines = LineGenerator()
+    future_imports = get_future_imports(src_node)
+    lines = LineGenerator(remove_u="unicode_literals" in future_imports)
     elt = EmptyLineTracker()
     py36 = is_python36(src_node)
     empty_line = Line()
@@ -1138,6 +1139,7 @@ class LineGenerator(Visitor[Line]):
     in ways that will no longer stringify to valid Python code on the tree.
     """
     current_line: Line = Factory(Line)
+    remove_u: bool = False
 
     def line(self, indent: int = 0, type: Type[Line] = Line) -> Iterator[Line]:
         """Generate a line.
@@ -1205,6 +1207,8 @@ class LineGenerator(Visitor[Line]):
             else:
                 normalize_prefix(node, inside_brackets=any_open_brackets)
                 if node.type == token.STRING:
+                    if self.remove_u:
+                        normalize_string_prefix(node)
                     normalize_string_quotes(node)
                 if node.type not in WHITESPACE:
                     self.current_line.append(node)
@@ -2123,6 +2127,17 @@ def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
             return
 
     leaf.prefix = ""
+
+
+def normalize_string_prefix(leaf: Leaf) -> None:
+    """Removes any u/U prefix from a string.
+
+    Note: Mutates its argument.
+    """
+    match = re.match(r"^([furbFURB]*)(.*)$", leaf.value)
+    assert match is not None, f"failed to match string {leaf.value!r}"
+    new_prefix = match.group(1).replace("u", "").replace("U", "")
+    leaf.value = f"{new_prefix}{match.group(2)}"
 
 
 def normalize_string_quotes(leaf: Leaf) -> None:
