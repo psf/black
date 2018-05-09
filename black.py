@@ -409,9 +409,10 @@ def format_str(src_contents: str, line_length: int) -> FileContent:
     """
     src_node = lib2to3_parse(src_contents)
     dst_contents = ""
-    lines = LineGenerator()
-    elt = EmptyLineTracker()
+    future_imports = get_future_imports(src_node)
     py36 = is_python36(src_node)
+    lines = LineGenerator(remove_u_prefix=py36 or "unicode_literals" in future_imports)
+    elt = EmptyLineTracker()
     empty_line = Line()
     after = 0
     for current_line in lines.visit(src_node):
@@ -1171,6 +1172,7 @@ class LineGenerator(Visitor[Line]):
     in ways that will no longer stringify to valid Python code on the tree.
     """
     current_line: Line = Factory(Line)
+    remove_u_prefix: bool = False
 
     def line(self, indent: int = 0, type: Type[Line] = Line) -> Iterator[Line]:
         """Generate a line.
@@ -1238,6 +1240,7 @@ class LineGenerator(Visitor[Line]):
             else:
                 normalize_prefix(node, inside_brackets=any_open_brackets)
                 if node.type == token.STRING:
+                    normalize_string_prefix(node, remove_u_prefix=self.remove_u_prefix)
                     normalize_string_quotes(node)
                 if node.type not in WHITESPACE:
                     self.current_line.append(node)
@@ -2161,6 +2164,22 @@ def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
     leaf.prefix = ""
 
 
+def normalize_string_prefix(leaf: Leaf, remove_u_prefix: bool = False) -> None:
+    """Make all string prefixes lowercase.
+
+    If remove_u_prefix is given, also removes any u prefix from the string.
+
+    Note: Mutates its argument.
+    """
+    match = re.match(r"^([furbFURB]*)(.*)$", leaf.value, re.DOTALL)
+    assert match is not None, f"failed to match string {leaf.value!r}"
+    orig_prefix = match.group(1)
+    new_prefix = orig_prefix.lower()
+    if remove_u_prefix:
+        new_prefix = new_prefix.replace("u", "")
+    leaf.value = f"{new_prefix}{match.group(2)}"
+
+
 def normalize_string_quotes(leaf: Leaf) -> None:
     """Prefer double quotes but only if it doesn't cause more escaping.
 
@@ -2421,6 +2440,41 @@ def is_python36(node: Node) -> bool:
                             return True
 
     return False
+
+
+def get_future_imports(node: Node) -> Set[str]:
+    """Return a set of __future__ imports in the file."""
+    imports = set()
+    for child in node.children:
+        if child.type != syms.simple_stmt:
+            break
+        first_child = child.children[0]
+        if isinstance(first_child, Leaf):
+            # Continue looking if we see a docstring; otherwise stop.
+            if (
+                len(child.children) == 2
+                and first_child.type == token.STRING
+                and child.children[1].type == token.NEWLINE
+            ):
+                continue
+            else:
+                break
+        elif first_child.type == syms.import_from:
+            module_name = first_child.children[1]
+            if not isinstance(module_name, Leaf) or module_name.value != "__future__":
+                break
+            for import_from_child in first_child.children[3:]:
+                if isinstance(import_from_child, Leaf):
+                    if import_from_child.type == token.NAME:
+                        imports.add(import_from_child.value)
+                else:
+                    assert import_from_child.type == syms.import_as_names
+                    for leaf in import_from_child.children:
+                        if isinstance(leaf, Leaf) and leaf.type == token.NAME:
+                            imports.add(leaf.value)
+        else:
+            break
+    return imports
 
 
 PYTHON_EXTENSIONS = {".py"}
