@@ -3,10 +3,10 @@
 
 <p align="center">
 <a href="https://travis-ci.org/ambv/black"><img alt="Build Status" src="https://travis-ci.org/ambv/black.svg?branch=master"></a>
-<a href="http://black.readthedocs.io/en/latest/?badge=latest"><img alt="Documentation Status" src="http://readthedocs.org/projects/black/badge/?version=latest"></a>
+<a href="http://black.readthedocs.io/en/stable/?badge=stable"><img alt="Documentation Status" src="http://readthedocs.org/projects/black/badge/?version=stable"></a>
 <a href="https://coveralls.io/github/ambv/black?branch=master"><img alt="Coverage Status" src="https://coveralls.io/repos/github/ambv/black/badge.svg?branch=master"></a>
-<a href="https://github.com/ambv/black/blob/master/LICENSE"><img alt="License: MIT" src="http://black.readthedocs.io/en/latest/_static/license.svg"></a>
-<a href="https://pypi.python.org/pypi/black"><img alt="PyPI" src="http://black.readthedocs.io/en/latest/_static/pypi.svg"></a>
+<a href="https://github.com/ambv/black/blob/master/LICENSE"><img alt="License: MIT" src="http://black.readthedocs.io/en/stable/_static/license.svg"></a>
+<a href="https://pypi.python.org/pypi/black"><img alt="PyPI" src="http://black.readthedocs.io/en/stable/_static/pypi.svg"></a>
 <a href="https://github.com/ambv/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 </p>
 
