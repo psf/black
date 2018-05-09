@@ -274,6 +274,11 @@ keep it.
 and `'''`).  It will replace the latter with the former as long as it
 does not result in more backslash escapes than before.
 
+*Black* also standardizes string prefixes, making them always lowercase.
+On top of that, if your code is already Python 3.6+ only or it's using
+the `unicode_literals` future import, *Black* will remove `u` from the
+string prefix as it is meaningless in those scenarios.
+
 The main reason to standardize on a single form of quotes is aesthetics.
 Having one kind of quotes everywhere reduces reader distraction.
 It will also enable a future version of *Black* to merge consecutive
@@ -556,6 +561,10 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
   expressions (#148)
 
 * empty parentheses in a class definition are now removed (#145, #180)
+
+* string prefixes are now standardized to lowercase and `u` is removed
+  on Python 3.6+ only code and Python 2.7+ code with the `unicode_literals`
+  future import (#188, #198, #199)
 
 * fixed an invalid trailing comma sometimes left in imports (#185)
 
