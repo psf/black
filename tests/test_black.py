@@ -470,6 +470,8 @@ class BlackTestCase(unittest.TestCase):
         self.assertEqual({"black"}, black.get_future_imports(node))
         node = black.lib2to3_parse("some(other, code)\nfrom __future__ import black\n")
         self.assertEqual(set(), black.get_future_imports(node))
+        node = black.lib2to3_parse("from some.module import black\n")
+        self.assertEqual(set(), black.get_future_imports(node))
 
     def test_debug_visitor(self) -> None:
         source, _ = read_data("debug_visitor.py")

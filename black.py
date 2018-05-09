@@ -2388,27 +2388,24 @@ def get_future_imports(node: Node) -> Set[str]:
             if (
                 len(child.children) == 2
                 and first_child.type == token.STRING
-                and isinstance(child.children[1], Leaf)
                 and child.children[1].type == token.NEWLINE
             ):
                 continue
             else:
                 break
-        elif isinstance(first_child, Node) and first_child.type == syms.import_from:
+        elif first_child.type == syms.import_from:
             module_name = first_child.children[1]
-            assert isinstance(module_name, Leaf)
-            if module_name.value == "__future__":
-                for import_from_child in first_child.children[3:]:
-                    if isinstance(import_from_child, Leaf):
-                        if import_from_child.type == token.NAME:
-                            imports.add(import_from_child.value)
-                    elif isinstance(import_from_child, Node):
-                        assert import_from_child.type == syms.import_as_names
-                        for leaf in import_from_child.children:
-                            if isinstance(leaf, Leaf) and leaf.type == token.NAME:
-                                imports.add(leaf.value)
-            else:
+            if not isinstance(module_name, Leaf) or module_name.value != "__future__":
                 break
+            for import_from_child in first_child.children[3:]:
+                if isinstance(import_from_child, Leaf):
+                    if import_from_child.type == token.NAME:
+                        imports.add(import_from_child.value)
+                else:
+                    assert import_from_child.type == syms.import_as_names
+                    for leaf in import_from_child.children:
+                        if isinstance(leaf, Leaf) and leaf.type == token.NAME:
+                            imports.add(leaf.value)
         else:
             break
     return imports

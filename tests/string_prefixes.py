@@ -2,7 +2,6 @@
 
 name = R"Łukasz"
 F"hello {name}"
-U"hello"
 B"hello"
 
 # output
@@ -12,5 +11,4 @@ B"hello"
 
 name = r"Łukasz"
 f"hello {name}"
-u"hello"
 b"hello"
