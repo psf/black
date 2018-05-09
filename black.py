@@ -1207,8 +1207,7 @@ class LineGenerator(Visitor[Line]):
             else:
                 normalize_prefix(node, inside_brackets=any_open_brackets)
                 if node.type == token.STRING:
-                    if self.remove_u:
-                        normalize_string_prefix(node)
+                    normalize_string_prefix(node, remove_u=self.remove_u)
                     normalize_string_quotes(node)
                 if node.type not in WHITESPACE:
                     self.current_line.append(node)
@@ -2129,14 +2128,19 @@ def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
     leaf.prefix = ""
 
 
-def normalize_string_prefix(leaf: Leaf) -> None:
-    """Removes any u/U prefix from a string.
+def normalize_string_prefix(leaf: Leaf, remove_u: bool = False) -> None:
+    """Lowercases all string prefixes.
+
+    If remove_u is given, also removes any u prefix from the string.
 
     Note: Mutates its argument.
     """
-    match = re.match(r"^([furbFURB]*)(.*)$", leaf.value)
+    match = re.match(r"^([furbFURB]*)(.*)$", leaf.value, re.DOTALL)
     assert match is not None, f"failed to match string {leaf.value!r}"
-    new_prefix = match.group(1).replace("u", "").replace("U", "")
+    orig_prefix = match.group(1)
+    new_prefix = orig_prefix.lower()
+    if remove_u:
+        new_prefix = new_prefix.replace("u", "")
     leaf.value = f"{new_prefix}{match.group(2)}"
 
 
