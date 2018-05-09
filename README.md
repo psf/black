@@ -106,9 +106,9 @@ the same effect, as a courtesy for straddling code.
 
 *Black* ignores previous formatting and applies uniform horizontal
 and vertical whitespace to your code.  The rules for horizontal
-whitespace are pretty obvious and can be summarized as: do whatever
-makes `pycodestyle` happy.  The coding style used by *Black* can be
-viewed as a strict subset of PEP 8.
+whitespace can be summarized as: do whatever makes `pycodestyle` happy.
+The coding style used by *Black* can be viewed as a strict subset of
+PEP 8.
 
 As for vertical whitespace, *Black* tries to render one full expression
 or simple statement per line.  If this fits the allotted line length,
@@ -414,7 +414,7 @@ Python version and automatically installs *Black*. You can upgrade it later
 by calling `:BlackUpgrade` and restarting Vim.
 
 If you need to do anything special to make your virtualenv work and
-install *Black* (for example you want to run a version from master), just
+install *Black* (for example you want to run a version from master),
 create a virtualenv manually and point `g:black_virtualenv` to it.
 The plugin will use it.
 
