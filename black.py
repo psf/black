@@ -647,8 +647,8 @@ class BracketTracker:
     bracket_match: Dict[Tuple[Depth, NodeType], Leaf] = Factory(dict)
     delimiters: Dict[LeafID, Priority] = Factory(dict)
     previous: Optional[Leaf] = None
-    _for_loop_variable: bool = False
-    _lambda_arguments: bool = False
+    _for_loop_variable: int = 0
+    _lambda_arguments: int = 0
 
     def mark(self, leaf: Leaf) -> None:
         """Mark `leaf` with bracket-related metadata. Keep track of delimiters.
@@ -710,7 +710,7 @@ class BracketTracker:
         """
         if leaf.type == token.NAME and leaf.value == "for":
             self.depth += 1
-            self._for_loop_variable = True
+            self._for_loop_variable += 1
             return True
 
         return False
@@ -719,7 +719,7 @@ class BracketTracker:
         """See `maybe_increment_for_loop_variable` above for explanation."""
         if self._for_loop_variable and leaf.type == token.NAME and leaf.value == "in":
             self.depth -= 1
-            self._for_loop_variable = False
+            self._for_loop_variable -= 1
             return True
 
         return False
@@ -732,7 +732,7 @@ class BracketTracker:
         """
         if leaf.type == token.NAME and leaf.value == "lambda":
             self.depth += 1
-            self._lambda_arguments = True
+            self._lambda_arguments += 1
             return True
 
         return False
@@ -741,7 +741,7 @@ class BracketTracker:
         """See `maybe_increment_lambda_arguments` above for explanation."""
         if self._lambda_arguments and leaf.type == token.COLON:
             self.depth -= 1
-            self._lambda_arguments = False
+            self._lambda_arguments -= 1
             return True
 
         return False

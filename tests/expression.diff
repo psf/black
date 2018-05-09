@@ -11,7 +11,7 @@
  True
  False
  1
-@@ -29,61 +29,83 @@
+@@ -29,62 +29,84 @@
  ~great
  +value
  -1
@@ -24,9 +24,10 @@
  lambda a, b, c=True: a
 -lambda a, b, c=True, *, d=(1 << v2), e='str': a
 -lambda a, b, c=True, *vararg, d=(v1 << 2), e='str', **kwargs: a + b
--foo = (lambda port_id, ignore_missing: {"port1": port1_resource, "port2": port2_resource}[port_id])
 +lambda a, b, c=True, *, d=(1 << v2), e="str": a
 +lambda a, b, c=True, *vararg, d=(v1 << 2), e="str", **kwargs: a + b
+ manylambdas = lambda x=lambda y=lambda z=1: z: y(): x()
+-foo = (lambda port_id, ignore_missing: {"port1": port1_resource, "port2": port2_resource}[port_id])
 +foo = lambda port_id, ignore_missing: {
 +    "port1": port1_resource, "port2": port2_resource
 +}[
@@ -116,7 +117,7 @@
  call(**self.screen_kwargs)
  call(b, **self.screen_kwargs)
  lukasz.langa.pl
-@@ -92,11 +114,11 @@
+@@ -93,11 +115,11 @@
  1.0 .real
  ....__class__
  list[str]
@@ -129,7 +130,7 @@
  ]
  slice[0]
  slice[0:1]
-@@ -123,103 +145,140 @@
+@@ -124,103 +146,140 @@
  numpy[-(c + 1) :, d]
  numpy[:, l[-2]]
  numpy[:, ::-1]
