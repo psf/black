@@ -2312,8 +2312,8 @@ def is_vararg(leaf: Leaf, within: Set[NodeType]) -> bool:
     """Return True if `leaf` is a star or double star in a vararg or kwarg.
 
     If `within` includes VARARGS_PARENTS, this applies to function signatures.
-    If `within` includes COLLECTION_LIBERALS_PARENTS, it applies to right
-    hand-side extended iterable unpacking (PEP 3132) and additional unpacking
+    If `within` includes UNPACKING_PARENTS, it applies to right hand-side
+    extended iterable unpacking (PEP 3132) and additional unpacking
     generalizations (PEP 448).
     """
     if leaf.type not in STARS or not leaf.parent:
