@@ -1375,7 +1375,9 @@ class LineGenerator(Visitor[Line]):
         v = self.visit_stmt
         Ø: Set[str] = set()
         self.visit_assert_stmt = partial(v, keywords={"assert"}, parens={"assert", ","})
-        self.visit_if_stmt = partial(v, keywords={"if", "else", "elif"}, parens={"if"})
+        self.visit_if_stmt = partial(
+            v, keywords={"if", "else", "elif"}, parens={"if", "elif"}
+        )
         self.visit_while_stmt = partial(v, keywords={"while", "else"}, parens={"while"})
         self.visit_for_stmt = partial(v, keywords={"for", "else"}, parens={"for", "in"})
         self.visit_try_stmt = partial(
