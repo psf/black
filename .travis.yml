@@ -6,7 +6,6 @@ before_install:
 - if [[ $TRAVIS_PYTHON_VERSION == '3.7-dev' ]]; then sudo add-apt-repository ppa:deadsnakes/ppa -y; fi
 - if [[ $TRAVIS_PYTHON_VERSION == '3.7-dev' ]]; then sudo sudo apt-get update; fi
 install:
-- if [[ $TRAVIS_PYTHON_VERSION == '3.7-dev' ]]; then source .travis_py37_workaround.sh; fi
 - pip install coverage coveralls flake8 flake8-bugbear mypy
 - pip install -e .
 script:
