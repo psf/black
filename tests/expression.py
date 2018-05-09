@@ -426,7 +426,7 @@ mapping = {
 
 def gen():
     yield from outside_of_generator
-    a = yield
+    a = (yield)
 
 
 async def f():

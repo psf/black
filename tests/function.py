@@ -85,11 +85,14 @@ def f(
   a,
   **kwargs,
 ) -> A:
-    return A(
-        very_long_argument_name1=very_long_value_for_the_argument,
-        very_long_argument_name2=very_long_value_for_the_argument,
-        **kwargs,
+    return (
+        yield from A(
+            very_long_argument_name1=very_long_value_for_the_argument,
+            very_long_argument_name2=very_long_value_for_the_argument,
+            **kwargs,
+        )
     )
+def __await__(): return (yield)
 
 # output
 
@@ -224,8 +227,14 @@ def trailing_comma():
 
 
 def f(a, **kwargs) -> A:
-    return A(
-        very_long_argument_name1=very_long_value_for_the_argument,
-        very_long_argument_name2=very_long_value_for_the_argument,
-        **kwargs,
+    return (
+        yield from A(
+            very_long_argument_name1=very_long_value_for_the_argument,
+            very_long_argument_name2=very_long_value_for_the_argument,
+            **kwargs,
+        )
     )
+
+
+def __await__():
+    return (yield)

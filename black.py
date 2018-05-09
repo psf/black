@@ -2258,6 +2258,7 @@ def maybe_make_parens_invisible_in_atom(node: LN) -> bool:
         node.type != syms.atom
         or is_empty_tuple(node)
         or is_one_tuple(node)
+        or is_yield(node)
         or max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
     ):
         return False
@@ -2306,6 +2307,27 @@ def is_one_tuple(node: LN) -> bool:
         and len(node.children) == 2
         and node.children[1].type == token.COMMA
     )
+
+
+def is_yield(node: LN) -> bool:
+    """Return True if `node` holds a `yield` or `yield from` expression."""
+    if node.type == syms.yield_expr:
+        return True
+
+    if node.type == token.NAME and node.value == "yield":  # type: ignore
+        return True
+
+    if node.type != syms.atom:
+        return False
+
+    if len(node.children) != 3:
+        return False
+
+    lpar, expr, rpar = node.children
+    if lpar.type == token.LPAR and rpar.type == token.RPAR:
+        return is_yield(expr)
+
+    return False
 
 
 def is_vararg(leaf: Leaf, within: Set[NodeType]) -> bool:
