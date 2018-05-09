@@ -410,9 +410,9 @@ def format_str(src_contents: str, line_length: int) -> FileContent:
     src_node = lib2to3_parse(src_contents)
     dst_contents = ""
     future_imports = get_future_imports(src_node)
-    lines = LineGenerator(remove_u="unicode_literals" in future_imports)
-    elt = EmptyLineTracker()
     py36 = is_python36(src_node)
+    lines = LineGenerator(remove_u_prefix=py36 or "unicode_literals" in future_imports)
+    elt = EmptyLineTracker()
     empty_line = Line()
     after = 0
     for current_line in lines.visit(src_node):
@@ -1139,7 +1139,7 @@ class LineGenerator(Visitor[Line]):
     in ways that will no longer stringify to valid Python code on the tree.
     """
     current_line: Line = Factory(Line)
-    remove_u: bool = False
+    remove_u_prefix: bool = False
 
     def line(self, indent: int = 0, type: Type[Line] = Line) -> Iterator[Line]:
         """Generate a line.
@@ -1207,7 +1207,7 @@ class LineGenerator(Visitor[Line]):
             else:
                 normalize_prefix(node, inside_brackets=any_open_brackets)
                 if node.type == token.STRING:
-                    normalize_string_prefix(node, remove_u=self.remove_u)
+                    normalize_string_prefix(node, remove_u_prefix=self.remove_u_prefix)
                     normalize_string_quotes(node)
                 if node.type not in WHITESPACE:
                     self.current_line.append(node)
@@ -2128,10 +2128,10 @@ def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
     leaf.prefix = ""
 
 
-def normalize_string_prefix(leaf: Leaf, remove_u: bool = False) -> None:
-    """Lowercases all string prefixes.
+def normalize_string_prefix(leaf: Leaf, remove_u_prefix: bool = False) -> None:
+    """Make all string prefixes lowercase.
 
-    If remove_u is given, also removes any u prefix from the string.
+    If remove_u_prefix is given, also removes any u prefix from the string.
 
     Note: Mutates its argument.
     """
@@ -2139,7 +2139,7 @@ def normalize_string_prefix(leaf: Leaf, remove_u: bool = False) -> None:
     assert match is not None, f"failed to match string {leaf.value!r}"
     orig_prefix = match.group(1)
     new_prefix = orig_prefix.lower()
-    if remove_u:
+    if remove_u_prefix:
         new_prefix = new_prefix.replace("u", "")
     leaf.value = f"{new_prefix}{match.group(2)}"
 
@@ -2377,7 +2377,7 @@ def is_python36(node: Node) -> bool:
 
 
 def get_future_imports(node: Node) -> Set[str]:
-    """Returns a set of __future__ imports in the file."""
+    """Return a set of __future__ imports in the file."""
     imports = set()
     for child in node.children:
         if child.type != syms.simple_stmt:
