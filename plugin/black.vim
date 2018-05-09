@@ -78,7 +78,7 @@ def _initialize_black_env(upgrade=False):
   if upgrade:
     print('Upgrading Black with pip...')
   if first_install or upgrade:
-    subprocess.run([str(_get_pip(virtualenv_path)), 'install', '-U', 'black'])
+    subprocess.run([str(_get_pip(virtualenv_path)), 'install', '-U', 'black'], stdout=subprocess.PIPE)
     print('DONE! You are all set, thanks for waiting ✨ 🍰 ✨')
   if first_install:
     print('Pro-tip: to upgrade Black in the future, use the :BlackUpgrade command and restart Vim.\n')
