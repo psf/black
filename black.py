@@ -2494,7 +2494,7 @@ def gen_python_files_in_dir(path: Path) -> Iterator[Path]:
 
             yield from gen_python_files_in_dir(child)
 
-        elif child.suffix in PYTHON_EXTENSIONS:
+        elif child.is_file() and child.suffix in PYTHON_EXTENSIONS:
             yield child
 
 

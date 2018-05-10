@@ -695,6 +695,13 @@ class BlackTestCase(unittest.TestCase):
             result = CliRunner().invoke(black.main, [])
             self.assertEqual(result.exit_code, 0)
 
+    def test_broken_symlink(self) -> None:
+        with cache_dir() as workspace:
+            symlink = workspace / "broken_link.py"
+            symlink.symlink_to("nonexistent.py")
+            result = CliRunner().invoke(black.main, [str(workspace.resolve())])
+            self.assertEqual(result.exit_code, 0)
+
     def test_read_cache_line_lengths(self) -> None:
         with cache_dir() as workspace:
             path = (workspace / "file.py").resolve()
