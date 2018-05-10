@@ -10,6 +10,7 @@
 This provides a high-level interface to parse a file into a syntax tree.
 
 """
+from appdirs import user_cache_dir
 
 __author__ = "Guido van Rossum <guido@python.org>"
 
@@ -149,11 +150,17 @@ class Driver(object):
         return ''.join(lines), current_line
 
 
+CACHE_DIR = user_cache_dir("black")
+
+
 def _generate_pickle_name(gt):
-    head, tail = os.path.splitext(gt)
-    if tail == ".txt":
-        tail = ""
-    return head + tail + ".".join(map(str, sys.version_info)) + ".pickle"
+    name, ext = os.path.splitext(os.path.basename(gt))
+    if ext == ".txt":
+        ext = ""
+    return os.path.join(
+        CACHE_DIR,
+        name + ext + ".".join(map(str, sys.version_info)) + ".pickle"
+    )
 
 
 def load_grammar(gt="Grammar.txt", gp=None,
