@@ -776,6 +776,7 @@ Multiple contributions by:
 * [Eli Treuherz](mailto:eli.treuherz@cgi.com)
 * Hugo van Kemenade
 * [Ivan Katanić](mailto:ivan.katanic@gmail.com)
+* [Jelle Zijlstra](mailto:jelle.zijlstra@gmail.com)
 * [Jonas Obrist](mailto:ojiidotch@gmail.com)
 * [Osaetin Daniel](mailto:osaetindaniel@gmail.com)
 * [Sunil Kapil](mailto:snlkapil@gmail.com)
