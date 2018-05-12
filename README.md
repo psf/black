@@ -74,7 +74,7 @@ Options:
 * it will read from standard input and write to standard output if `-`
   is used as the filename;
 * it only outputs messages to users on standard error;
-* exits with code 0 unless an internal error occured (or `--check` was
+* exits with code 0 unless an internal error occurred (or `--check` was
   used).
 
 
