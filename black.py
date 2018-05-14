@@ -399,7 +399,7 @@ def format_file_contents(
 
     if not fast:
         assert_equivalent(src_contents, dst_contents)
-        assert_stable(src_contents, dst_contents, line_length=line_length)
+        assert_stable(src_contents, dst_contents, line_length=line_length, is_pyi=is_pyi)
     return dst_contents
 
 
@@ -1154,8 +1154,14 @@ class EmptyLineTracker:
             ):
                 return 0, 0
 
-            newlines = 1 if self.is_pyi else 2
-            if current_line.depth:
+            if self.is_pyi:
+                if current_line.is_class or self.previous_line.is_class:
+                    newlines = 1
+                else:
+                    newlines = 0
+            else:
+                newlines = 2
+            if current_line.depth and newlines:
                 newlines -= 1
             return newlines, 0
 
@@ -2646,9 +2652,9 @@ def assert_equivalent(src: str, dst: str) -> None:
         ) from None
 
 
-def assert_stable(src: str, dst: str, line_length: int) -> None:
+def assert_stable(src: str, dst: str, line_length: int, is_pyi: bool = False) -> None:
     """Raise AssertionError if `dst` reformats differently the second time."""
-    newdst = format_str(dst, line_length=line_length)
+    newdst = format_str(dst, line_length=line_length, is_pyi=is_pyi)
     if dst != newdst:
         log = dump_to_file(
             diff(src, dst, "source", "first pass"),
