@@ -636,12 +636,9 @@ class BlackTestCase(unittest.TestCase):
             uncached.touch()
             cached.touch()
             cached_but_changed.touch()
-            symlink = path / "broken_link"
-            symlink.symlink_to("nonexistent")
-            broken_link = symlink.resolve()
             cache = {cached: black.get_cache_info(cached), cached_but_changed: (0.0, 0)}
             todo, done = black.filter_cached(
-                cache, [uncached, cached, cached_but_changed, broken_link]
+                cache, [uncached, cached, cached_but_changed]
             )
             self.assertEqual(todo, [uncached, cached_but_changed])
             self.assertEqual(done, [cached])

@@ -2761,8 +2761,6 @@ def filter_cached(
     todo, done = [], []
     for src in sources:
         src = src.resolve()
-        if not src.exists():
-            continue
         if cache.get(src) != get_cache_info(src):
             todo.append(src)
         else:
