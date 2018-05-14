@@ -566,6 +566,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
   on Python 3.6+ only code and Python 2.7+ code with the `unicode_literals`
   future import (#188, #198, #199)
 
+* fixed trailers (content with brackets) being unnecessarily exploded
+  into their own lines after a dedented closing bracket
+
 * fixed an invalid trailing comma sometimes left in imports (#185)
 
 * fixed non-deterministic formatting when multiple pairs of removable parentheses

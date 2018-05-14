@@ -169,9 +169,7 @@ def spaces2(result=_core.Value(None)):
 def example(session):
     result = session.query(models.Customer.id).filter(
         models.Customer.account_id == account_id, models.Customer.email == email_address
-    ).order_by(
-        models.Customer.id.asc()
-    ).all()
+    ).order_by(models.Customer.id.asc()).all()
 
 
 def long_lines():

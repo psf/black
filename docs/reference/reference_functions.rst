@@ -20,6 +20,8 @@ Assertions and checks
 
 .. autofunction:: black.is_import
 
+.. autofunction:: black.is_line_short_enough
+
 .. autofunction:: black.is_one_tuple
 
 .. autofunction:: black.is_python36
@@ -93,6 +95,8 @@ Utilities
 .. autofunction:: black.diff
 
 .. autofunction:: black.ensure_visible
+
+.. autofunction:: black.enumerate_reversed
 
 .. autofunction:: black.generate_comments
 

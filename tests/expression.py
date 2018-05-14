@@ -270,9 +270,7 @@ lambda a, b, c=True, *vararg, d=(v1 << 2), e="str", **kwargs: a + b
 manylambdas = lambda x=lambda y=lambda z=1: z: y(): x()
 foo = lambda port_id, ignore_missing: {
     "port1": port1_resource, "port2": port2_resource
-}[
-    port_id
-]
+}[port_id]
 1 if True else 2
 str or None if True else str or bytes or None
 (str or None) if True else (str or bytes or None)
@@ -411,9 +409,7 @@ what_is_up_with_those_new_coord_names = (
 )
 result = session.query(models.Customer.id).filter(
     models.Customer.account_id == account_id, models.Customer.email == email_address
-).order_by(
-    models.Customer.id.asc()
-).all()
+).order_by(models.Customer.id.asc()).all()
 Ø = set()
 authors.łukasz.say_thanks()
 mapping = {
