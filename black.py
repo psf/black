@@ -975,17 +975,21 @@ class Line:
             self.comments.append((after, comment))
             return True
 
-    def comments_after(self, leaf: Leaf) -> Iterator[Leaf]:
-        """Generate comments that should appear directly after `leaf`."""
-        for _leaf_index, _leaf in enumerate(self.leaves):
-            if leaf is _leaf:
-                break
+    def comments_after(self, leaf: Leaf, _index: int = -1) -> Iterator[Leaf]:
+        """Generate comments that should appear directly after `leaf`.
 
-        else:
-            return
+        Provide a non-negative leaf `_index` to speed up the function.
+        """
+        if _index == -1:
+            for _index, _leaf in enumerate(self.leaves):
+                if leaf is _leaf:
+                    break
+
+            else:
+                return
 
         for index, comment_after in self.comments:
-            if _leaf_index == index:
+            if _index == index:
                 yield comment_after
 
     def remove_trailing_comma(self) -> None:
@@ -2055,10 +2059,10 @@ def delimiter_split(line: Line, py36: bool = False) -> Iterator[Line]:
             current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
             current_line.append(leaf)
 
-    for leaf in line.leaves:
+    for index, leaf in enumerate(line.leaves):
         yield from append_to_line(leaf)
 
-        for comment_after in line.comments_after(leaf):
+        for comment_after in line.comments_after(leaf, index):
             yield from append_to_line(comment_after)
 
         lowest_depth = min(lowest_depth, leaf.bracket_depth)
@@ -2102,10 +2106,10 @@ def standalone_comment_split(line: Line, py36: bool = False) -> Iterator[Line]:
             current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
             current_line.append(leaf)
 
-    for leaf in line.leaves:
+    for index, leaf in enumerate(line.leaves):
         yield from append_to_line(leaf)
 
-        for comment_after in line.comments_after(leaf):
+        for comment_after in line.comments_after(leaf, index):
             yield from append_to_line(comment_after)
 
     if current_line:
