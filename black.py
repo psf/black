@@ -327,12 +327,13 @@ def format_file_in_place(
     If `write_back` is True, write reformatted code back to stdout.
     `line_length` and `fast` options are passed to :func:`format_file_contents`.
     """
+    is_pyi = src.suffix == ".pyi"
 
     with tokenize.open(src) as src_buffer:
         src_contents = src_buffer.read()
     try:
         dst_contents = format_file_contents(
-            src_contents, line_length=line_length, fast=fast
+            src_contents, line_length=line_length, fast=fast, is_pyi=is_pyi
         )
     except NothingChanged:
         return False
@@ -381,7 +382,7 @@ def format_stdin_to_stdout(
 
 
 def format_file_contents(
-    src_contents: str, line_length: int, fast: bool
+    src_contents: str, *, line_length: int, fast: bool, is_pyi: bool = False
 ) -> FileContent:
     """Reformat contents a file and return new contents.
 
@@ -392,7 +393,7 @@ def format_file_contents(
     if src_contents.strip() == "":
         raise NothingChanged
 
-    dst_contents = format_str(src_contents, line_length=line_length)
+    dst_contents = format_str(src_contents, line_length=line_length, is_pyi=is_pyi)
     if src_contents == dst_contents:
         raise NothingChanged
 
@@ -402,7 +403,7 @@ def format_file_contents(
     return dst_contents
 
 
-def format_str(src_contents: str, line_length: int) -> FileContent:
+def format_str(src_contents: str, line_length: int, *, is_pyi: bool = False) -> FileContent:
     """Reformat a string and return new contents.
 
     `line_length` determines how many characters per line are allowed.
@@ -410,9 +411,10 @@ def format_str(src_contents: str, line_length: int) -> FileContent:
     src_node = lib2to3_parse(src_contents)
     dst_contents = ""
     future_imports = get_future_imports(src_node)
+    lines = LineGenerator()
+    elt = EmptyLineTracker(is_pyi=is_pyi)
     py36 = is_python36(src_node)
     lines = LineGenerator(remove_u_prefix=py36 or "unicode_literals" in future_imports)
-    elt = EmptyLineTracker()
     empty_line = Line()
     after = 0
     for current_line in lines.visit(src_node):
@@ -1094,6 +1096,7 @@ class EmptyLineTracker:
     the prefix of the first leaf consists of optional newlines.  Those newlines
     are consumed by `maybe_empty_lines()` and included in the computation.
     """
+    is_pyi: bool = False
     previous_line: Optional[Line] = None
     previous_after: int = 0
     previous_defs: List[int] = Factory(list)
@@ -1117,7 +1120,7 @@ class EmptyLineTracker:
     def _maybe_empty_lines(self, current_line: Line) -> Tuple[int, int]:
         max_allowed = 1
         if current_line.depth == 0:
-            max_allowed = 2
+            max_allowed = 1 if self.is_pyi else 2
         if current_line.leaves:
             # Consume the first leaf's extra newlines.
             first_leaf = current_line.leaves[0]
@@ -1129,7 +1132,10 @@ class EmptyLineTracker:
         depth = current_line.depth
         while self.previous_defs and self.previous_defs[-1] >= depth:
             self.previous_defs.pop()
-            before = 1 if depth else 2
+            if self.is_pyi:
+                before = 0 if depth else 1
+            else:
+                before = 1 if depth else 2
         is_decorator = current_line.is_decorator
         if is_decorator or current_line.is_def or current_line.is_class:
             if not is_decorator:
@@ -1148,7 +1154,7 @@ class EmptyLineTracker:
             ):
                 return 0, 0
 
-            newlines = 2
+            newlines = 1 if self.is_pyi else 2
             if current_line.depth:
                 newlines -= 1
             return newlines, 0
@@ -2477,7 +2483,7 @@ def get_future_imports(node: Node) -> Set[str]:
     return imports
 
 
-PYTHON_EXTENSIONS = {".py"}
+PYTHON_EXTENSIONS = {".py", ".pyi"}
 BLACKLISTED_DIRECTORIES = {
     "build", "buck-out", "dist", "_build", ".git", ".hg", ".mypy_cache", ".tox", ".venv"
 }
