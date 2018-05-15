@@ -31,7 +31,7 @@ def dump_to_stderr(*output: str) -> str:
 
 def read_data(name: str) -> Tuple[str, str]:
     """read_data('test_name') -> 'input', 'output'"""
-    if not name.endswith((".py", ".out", ".diff")):
+    if not name.endswith((".py", ".pyi", ".out", ".diff")):
         name += ".py"
     _input: List[str] = []
     _output: List[str] = []
@@ -339,6 +339,13 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_stable(source, actual, line_length=ll)
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_stub(self) -> None:
+        source, expected = read_data("stub.pyi")
+        actual = fs(source, is_pyi=True)
+        self.assertFormatEqual(expected, actual)
+        black.assert_stable(source, actual, line_length=ll, is_pyi=True)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_fmtonoff(self) -> None:
