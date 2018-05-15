@@ -581,6 +581,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
   where used both in function signatures with stars and function calls
   with stars but the former would be reformatted to a single line.
 
+* fixed crash when dead symlinks where encountered
+
 
 ### 18.4a4
 
@@ -781,6 +783,7 @@ Multiple contributions by:
 * [Ivan Katanić](mailto:ivan.katanic@gmail.com)
 * [Jelle Zijlstra](mailto:jelle.zijlstra@gmail.com)
 * [Jonas Obrist](mailto:ojiidotch@gmail.com)
+* [Miguel Gaiowski](mailto:miggaiowski@gmail.com)
 * [Osaetin Daniel](mailto:osaetindaniel@gmail.com)
 * [Sunil Kapil](mailto:snlkapil@gmail.com)
 * [Vishwas B Sharma](mailto:sharma.vishwas88@gmail.com)
