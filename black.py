@@ -839,6 +839,14 @@ class Line:
         )
 
     @property
+    def is_trivial_class(self) -> bool:
+        """Is this line a class definition with a body consisting only of "..."?"""
+        return (
+            self.is_class
+            and self.leaves[-3:] == [Leaf(token.DOT, ".") for _ in range(3)]
+        )
+
+    @property
     def is_def(self) -> bool:
         """Is this a function definition? (Also returns True for async defs.)"""
         try:
@@ -1160,12 +1168,16 @@ class EmptyLineTracker:
                 return 0, 0
 
             if self.is_pyi:
-                if (
-                    current_line.is_class
-                    or self.previous_line.is_class
-                    or self.previous_line.depth > current_line.depth
-                ):
+                if self.previous_line.depth > current_line.depth:
                     newlines = 1
+                elif current_line.is_class or self.previous_line.is_class:
+                    if (
+                        current_line.is_trivial_class
+                        and self.previous_line.is_trivial_class
+                    ):
+                        newlines = 0
+                    else:
+                        newlines = 1
                 else:
                     newlines = 0
             else:
