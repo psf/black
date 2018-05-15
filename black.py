@@ -1160,7 +1160,11 @@ class EmptyLineTracker:
                 return 0, 0
 
             if self.is_pyi:
-                if current_line.is_class or self.previous_line.is_class:
+                if (
+                    current_line.is_class
+                    or self.previous_line.is_class
+                    or self.previous_line.depth > current_line.depth
+                ):
                     newlines = 1
                 else:
                     newlines = 0
