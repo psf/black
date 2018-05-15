@@ -12,10 +12,6 @@ Assertions and checks
 
 .. autofunction:: black.assert_stable
 
-.. autofunction:: black.is_split_after_delimiter
-
-.. autofunction:: black.is_split_before_delimiter
-
 .. autofunction:: black.is_empty_tuple
 
 .. autofunction:: black.is_import
@@ -25,6 +21,14 @@ Assertions and checks
 .. autofunction:: black.is_one_tuple
 
 .. autofunction:: black.is_python36
+
+.. autofunction:: black.is_split_after_delimiter
+
+.. autofunction:: black.is_split_before_delimiter
+
+.. autofunction:: black.is_stub_body
+
+.. autofunction:: black.is_stub_suite
 
 .. autofunction:: black.is_vararg
 

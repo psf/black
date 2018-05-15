@@ -841,7 +841,7 @@ class Line:
         )
 
     @property
-    def is_trivial_class(self) -> bool:
+    def is_stub_class(self) -> bool:
         """Is this line a class definition with a body consisting only of "..."?"""
         return (
             self.is_class
@@ -1177,10 +1177,7 @@ class EmptyLineTracker:
                 if self.previous_line.depth > current_line.depth:
                     newlines = 1
                 elif current_line.is_class or self.previous_line.is_class:
-                    if (
-                        current_line.is_trivial_class
-                        and self.previous_line.is_trivial_class
-                    ):
+                    if current_line.is_stub_class and self.previous_line.is_stub_class:
                         newlines = 0
                     else:
                         newlines = 1
@@ -1329,51 +1326,16 @@ class LineGenerator(Visitor[Line]):
 
     def visit_suite(self, node: Node) -> Iterator[Line]:
         """Visit a suite."""
-        if self.is_pyi and self.is_trivial_suite(node):
+        if self.is_pyi and is_stub_suite(node):
             yield from self.visit(node.children[2])
         else:
             yield from self.visit_default(node)
-
-    def is_trivial_suite(self, node: Node) -> bool:
-        if len(node.children) != 4:
-            return False
-        if (
-            not isinstance(node.children[0], Leaf)
-            or node.children[0].type != token.NEWLINE
-        ):
-            return False
-        if (
-            not isinstance(node.children[1], Leaf)
-            or node.children[1].type != token.INDENT
-        ):
-            return False
-        if (
-            not isinstance(node.children[3], Leaf)
-            or node.children[3].type != token.DEDENT
-        ):
-            return False
-        stmt = node.children[2]
-        if not isinstance(stmt, Node):
-            return False
-        return self.is_trivial_body(stmt)
-
-    def is_trivial_body(self, stmt: Node) -> bool:
-        if not isinstance(stmt, Node) or stmt.type != syms.simple_stmt:
-            return False
-        if len(stmt.children) != 2:
-            return False
-        child = stmt.children[0]
-        return (
-            child.type == syms.atom
-            and len(child.children) == 3
-            and all(leaf == Leaf(token.DOT, ".") for leaf in child.children)
-        )
 
     def visit_simple_stmt(self, node: Node) -> Iterator[Line]:
         """Visit a statement without nested statements."""
         is_suite_like = node.parent and node.parent.type in STATEMENT
         if is_suite_like:
-            if self.is_pyi and self.is_trivial_body(node):
+            if self.is_pyi and is_stub_body(node):
                 yield from self.visit_default(node)
             else:
                 yield from self.line(+1)
@@ -1381,11 +1343,7 @@ class LineGenerator(Visitor[Line]):
                 yield from self.line(-1)
 
         else:
-            if (
-                not self.is_pyi
-                or not node.parent
-                or not self.is_trivial_suite(node.parent)
-            ):
+            if not self.is_pyi or not node.parent or not is_stub_suite(node.parent):
                 yield from self.line()
             yield from self.visit_default(node)
 
@@ -2472,6 +2430,35 @@ def is_vararg(leaf: Leaf, within: Set[NodeType]) -> bool:
         p = p.parent
 
     return p.type in within
+
+
+def is_stub_suite(node: Node) -> bool:
+    """Return True if `node` is a suite with a stub body."""
+    if (
+        len(node.children) != 4
+        or node.children[0].type != token.NEWLINE
+        or node.children[1].type != token.INDENT
+        or node.children[3].type != token.DEDENT
+    ):
+        return False
+
+    return is_stub_body(node.children[2])
+
+
+def is_stub_body(node: LN) -> bool:
+    """Return True if `node` is a simple statement containing an ellipsis."""
+    if not isinstance(node, Node) or node.type != syms.simple_stmt:
+        return False
+
+    if len(node.children) != 2:
+        return False
+
+    child = node.children[0]
+    return (
+        child.type == syms.atom
+        and len(child.children) == 3
+        and all(leaf == Leaf(token.DOT, ".") for leaf in child.children)
+    )
 
 
 def max_delimiter_priority_in_atom(node: LN) -> int:
