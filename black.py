@@ -1331,6 +1331,8 @@ class LineGenerator(Visitor[Line]):
         ):
             return False
         stmt = node.children[2]
+        if not isinstance(stmt, Node):
+            return False
         return self.is_trivial_body(stmt)
 
     def is_trivial_body(self, stmt: Node) -> bool:
@@ -1351,14 +1353,18 @@ class LineGenerator(Visitor[Line]):
         if is_suite_like:
             if self.is_pyi and self.is_trivial_body(node):
                 yield from self.visit_default(node)
-                yield from self.line()
             else:
                 yield from self.line(+1)
                 yield from self.visit_default(node)
                 yield from self.line(-1)
 
         else:
-            yield from self.line()
+            if (
+                not self.is_pyi
+                or not node.parent
+                or not self.is_trivial_suite(node.parent)
+            ):
+                yield from self.line()
             yield from self.visit_default(node)
 
     def visit_async_stmt(self, node: Node) -> Iterator[Line]:
