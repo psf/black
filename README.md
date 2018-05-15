@@ -342,6 +342,43 @@ In those cases, parentheses are removed when the entire statement fits
 in one line, or if the inner expression doesn't have any delimiters to
 further split on.  Otherwise, the parentheses are always added.
 
+### Typing stub files
+
+PEP 484 describes the syntax for type hints in Python.  One of the
+use cases for typing is providing type annotations for modules which
+cannot contain them directly (they might be written in C, or they might
+be third-party, or their implementation may be overly dynamic, and so on).
+
+To solve this, [stub files with the `.pyi` file
+extension](https://www.python.org/dev/peps/pep-0484/#stub-files) can be
+used to describe typing information for an external module.  Those stub
+files omit the implementation of classes and functions they
+describe, instead they only contain the structure of the file (listing
+globals, functions, and classes with their members).  The recommended
+code style for those files is more terse than PEP 8:
+
+* prefer `...` on the same line as the class/function signature;
+* avoid vertical whitespace between consecutive module-level functions,
+  names, or methods and fields within a single class;
+* use a single blank line between top-level class definitions, or none
+  if the classes are very small.
+
+*Black* enforces the above rules.  There are additional guidelines for
+formatting `.pyi` file that are not enforced yet but might be in
+a future version of the formatter:
+
+* all function bodies should be empty (contain `...` instead of the body);
+* do not use docstrings;
+* prefer `...` over `pass`;
+* for arguments with a default, use `...` instead of the actual default;
+* avoid using string literals in type annotations, stub files support
+  forward references natively (like Python 3.7 code with `from __future__
+  import annotations`);
+* use variable annotations instead of type comments, even for stubs that
+  target older versions of Python;
+* for arguments that default to `None`, use `Optional[]` explicitly;
+* use `float` instead of `Union[int, float]`.
+
 
 ## Editor integration
 
@@ -565,6 +602,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * string prefixes are now standardized to lowercase and `u` is removed
   on Python 3.6+ only code and Python 2.7+ code with the `unicode_literals`
   future import (#188, #198, #199)
+
+* typing stub files (`.pyi`) are now formatted in a style that is consistent
+  with PEP 484 (#207, #210)
 
 * fixed trailers (content with brackets) being unnecessarily exploded
   into their own lines after a dedented closing bracket
