@@ -2013,6 +2013,8 @@ def right_hand_split(
     If the split was by optional parentheses, attempt splitting without them, too.
     `omit` is a collection of closing bracket IDs that shouldn't be considered for
     this split.
+
+    Note: running this function modifies `bracket_depth` on the leaves of `line`.
     """
     head = Line(depth=line.depth)
     body = Line(depth=line.depth + 1, inside_brackets=True)
