@@ -399,11 +399,15 @@ def format_file_contents(
 
     if not fast:
         assert_equivalent(src_contents, dst_contents)
-        assert_stable(src_contents, dst_contents, line_length=line_length, is_pyi=is_pyi)
+        assert_stable(
+            src_contents, dst_contents, line_length=line_length, is_pyi=is_pyi
+        )
     return dst_contents
 
 
-def format_str(src_contents: str, line_length: int, *, is_pyi: bool = False) -> FileContent:
+def format_str(
+    src_contents: str, line_length: int, *, is_pyi: bool = False
+) -> FileContent:
     """Reformat a string and return new contents.
 
     `line_length` determines how many characters per line are allowed.
@@ -411,10 +415,11 @@ def format_str(src_contents: str, line_length: int, *, is_pyi: bool = False) -> 
     src_node = lib2to3_parse(src_contents)
     dst_contents = ""
     future_imports = get_future_imports(src_node)
-    lines = LineGenerator()
     elt = EmptyLineTracker(is_pyi=is_pyi)
     py36 = is_python36(src_node)
-    lines = LineGenerator(remove_u_prefix=py36 or "unicode_literals" in future_imports)
+    lines = LineGenerator(
+        remove_u_prefix=py36 or "unicode_literals" in future_imports, is_pyi=is_pyi
+    )
     empty_line = Line()
     after = 0
     for current_line in lines.visit(src_node):
@@ -1183,6 +1188,7 @@ class LineGenerator(Visitor[Line]):
     Note: destroys the tree it's visiting by mutating prefixes of its leaves
     in ways that will no longer stringify to valid Python code on the tree.
     """
+    is_pyi: bool = False
     current_line: Line = Factory(Line)
     remove_u_prefix: bool = False
 
@@ -1299,13 +1305,57 @@ class LineGenerator(Visitor[Line]):
 
             yield from self.visit(child)
 
+    def visit_suite(self, node: Node) -> Iterator[Line]:
+        """Visit a suite."""
+        if self.is_pyi and self.is_trivial_suite(node):
+            yield from self.visit(node.children[2])
+        else:
+            yield from self.visit_default(node)
+
+    def is_trivial_suite(self, node: Node) -> bool:
+        if len(node.children) != 4:
+            return False
+        if (
+            not isinstance(node.children[0], Leaf)
+            or node.children[0].type != token.NEWLINE
+        ):
+            return False
+        if (
+            not isinstance(node.children[1], Leaf)
+            or node.children[1].type != token.INDENT
+        ):
+            return False
+        if (
+            not isinstance(node.children[3], Leaf)
+            or node.children[3].type != token.DEDENT
+        ):
+            return False
+        stmt = node.children[2]
+        return self.is_trivial_body(stmt)
+
+    def is_trivial_body(self, stmt: Node) -> bool:
+        if not isinstance(stmt, Node) or stmt.type != syms.simple_stmt:
+            return False
+        if len(stmt.children) != 2:
+            return False
+        child = stmt.children[0]
+        return (
+            child.type == syms.atom
+            and len(child.children) == 3
+            and all(leaf == Leaf(token.DOT, ".") for leaf in child.children)
+        )
+
     def visit_simple_stmt(self, node: Node) -> Iterator[Line]:
         """Visit a statement without nested statements."""
         is_suite_like = node.parent and node.parent.type in STATEMENT
         if is_suite_like:
-            yield from self.line(+1)
-            yield from self.visit_default(node)
-            yield from self.line(-1)
+            if self.is_pyi and self.is_trivial_body(node):
+                yield from self.visit_default(node)
+                yield from self.line()
+            else:
+                yield from self.line(+1)
+                yield from self.visit_default(node)
+                yield from self.line(-1)
 
         else:
             yield from self.line()
