@@ -342,6 +342,26 @@ In those cases, parentheses are removed when the entire statement fits
 in one line, or if the inner expression doesn't have any delimiters to
 further split on.  Otherwise, the parentheses are always added.
 
+### Call chains
+
+Some popular APIs, like ORMs, use call chaining.  This API style is known
+as a [fluent interface](https://en.wikipedia.org/wiki/Fluent_interface).
+*Black* formats those treating dots that follow a call or an indexing
+operation like a very low priority delimiter.  It's easier to show the
+behavior than to explain it.  Look at the example::
+```py3
+def example(session):
+    result = (
+        session.query(models.Customer.id)
+        .filter(
+            models.Customer.account_id == account_id,
+            models.Customer.email == email_address,
+        )
+        .order_by(models.Customer.id.asc())
+        .all()
+    )
+```
+
 ### Typing stub files
 
 PEP 484 describes the syntax for type hints in Python.  One of the
@@ -588,6 +608,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 ## Change Log
 
 ### 18.5a0 (unreleased)
+
+* call chains are now formatted according to the [fluent interfaces](https://en.wikipedia.org/wiki/Fluent_interface) style (#67)
 
 * slices are now formatted according to PEP 8 (#178)
 

@@ -61,28 +61,37 @@ class C:
 
 def foo(list_a, list_b):
     results = (
-        User.query.filter(User.foo == "bar").filter(  # Because foo.
+        User.query.filter(User.foo == "bar")
+        .filter(  # Because foo.
             db.or_(User.field_a.astext.in_(list_a), User.field_b.astext.in_(list_b))
-        ).filter(User.xyz.is_(None))
+        )
+        .filter(User.xyz.is_(None))
         # Another comment about the filtering on is_quux goes here.
-        .filter(db.not_(User.is_pending.astext.cast(db.Boolean).is_(True))).order_by(
-            User.created_at.desc()
-        ).with_for_update(key_share=True).all()
+        .filter(db.not_(User.is_pending.astext.cast(db.Boolean).is_(True)))
+        .order_by(User.created_at.desc())
+        .with_for_update(key_share=True)
+        .all()
     )
     return results
 
 
 def foo2(list_a, list_b):
     # Standalone comment reasonably placed.
-    return User.query.filter(User.foo == "bar").filter(
-        db.or_(User.field_a.astext.in_(list_a), User.field_b.astext.in_(list_b))
-    ).filter(User.xyz.is_(None))
+    return (
+        User.query.filter(User.foo == "bar")
+        .filter(
+            db.or_(User.field_a.astext.in_(list_a), User.field_b.astext.in_(list_b))
+        )
+        .filter(User.xyz.is_(None))
+    )
 
 
 def foo3(list_a, list_b):
     return (
         # Standlone comment but weirdly placed.
-        User.query.filter(User.foo == "bar").filter(
+        User.query.filter(User.foo == "bar")
+        .filter(
             db.or_(User.field_a.astext.in_(list_a), User.field_b.astext.in_(list_b))
-        ).filter(User.xyz.is_(None))
+        )
+        .filter(User.xyz.is_(None))
     )

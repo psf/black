@@ -626,21 +626,22 @@ LOGIC_PRIORITY = 14
 STRING_PRIORITY = 12
 COMPARATOR_PRIORITY = 10
 MATH_PRIORITIES = {
-    token.VBAR: 8,
-    token.CIRCUMFLEX: 7,
-    token.AMPER: 6,
-    token.LEFTSHIFT: 5,
-    token.RIGHTSHIFT: 5,
-    token.PLUS: 4,
-    token.MINUS: 4,
-    token.STAR: 3,
-    token.SLASH: 3,
-    token.DOUBLESLASH: 3,
-    token.PERCENT: 3,
-    token.AT: 3,
-    token.TILDE: 2,
-    token.DOUBLESTAR: 1,
+    token.VBAR: 9,
+    token.CIRCUMFLEX: 8,
+    token.AMPER: 7,
+    token.LEFTSHIFT: 6,
+    token.RIGHTSHIFT: 6,
+    token.PLUS: 5,
+    token.MINUS: 5,
+    token.STAR: 4,
+    token.SLASH: 4,
+    token.DOUBLESLASH: 4,
+    token.PERCENT: 4,
+    token.AT: 4,
+    token.TILDE: 3,
+    token.DOUBLESTAR: 2,
 }
+DOT_PRIORITY = 1
 
 
 @dataclass
@@ -1730,6 +1731,14 @@ def is_split_before_delimiter(leaf: Leaf, previous: Leaf = None) -> int:
         return 0
 
     if (
+        leaf.type == token.DOT
+        and leaf.parent
+        and leaf.parent.type not in {syms.import_from, syms.dotted_name}
+        and (previous is None or previous.type != token.NAME)
+    ):
+        return DOT_PRIORITY
+
+    if (
         leaf.type in MATH_OPERATORS
         and leaf.parent
         and leaf.parent.type not in {syms.factor, syms.star_expr}
@@ -2127,6 +2136,10 @@ def delimiter_split(line: Line, py36: bool = False) -> Iterator[Line]:
         delimiter_priority = bt.max_delimiter_priority(exclude={id(last_leaf)})
     except ValueError:
         raise CannotSplit("No delimiters found")
+
+    if delimiter_priority == DOT_PRIORITY:
+        if bt.delimiter_count_with_priority(delimiter_priority) == 1:
+            raise CannotSplit("Splitting a single attribute from its owner looks wrong")
 
     current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
     lowest_depth = sys.maxsize
