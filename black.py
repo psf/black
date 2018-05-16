@@ -706,6 +706,17 @@ class BracketTracker:
         """
         return max(v for k, v in self.delimiters.items() if k not in exclude)
 
+    def delimiter_count_with_priority(self, priority: int = 0) -> int:
+        """Return the number of delimiters with the given `priority`.
+
+        If no `priority` is passed, defaults to max priority on the line.
+        """
+        if not self.delimiters:
+            return 0
+
+        priority = priority or self.max_delimiter_priority()
+        return sum(1 for p in self.delimiters.values() if p == priority)
+
     def maybe_increment_for_loop_variable(self, leaf: Leaf) -> bool:
         """In a for loop, or comprehension, the variables are often unpacks.
 
@@ -837,10 +848,9 @@ class Line:
     @property
     def is_stub_class(self) -> bool:
         """Is this line a class definition with a body consisting only of "..."?"""
-        return (
-            self.is_class
-            and self.leaves[-3:] == [Leaf(token.DOT, ".") for _ in range(3)]
-        )
+        return self.is_class and self.leaves[-3:] == [
+            Leaf(token.DOT, ".") for _ in range(3)
+        ]
 
     @property
     def is_def(self) -> bool:
@@ -1461,10 +1471,9 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa C901
         return DOUBLESPACE
 
     assert p is not None, f"INTERNAL ERROR: hand-made leaf without parent: {leaf!r}"
-    if (
-        t == token.COLON
-        and p.type not in {syms.subscript, syms.subscriptlist, syms.sliceop}
-    ):
+    if t == token.COLON and p.type not in {
+        syms.subscript, syms.subscriptlist, syms.sliceop
+    }:
         return NO
 
     prev = leaf.prev_sibling
@@ -1638,10 +1647,9 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa C901
 
             prevp_parent = prevp.parent
             assert prevp_parent is not None
-            if (
-                prevp.type == token.COLON
-                and prevp_parent.type in {syms.subscript, syms.sliceop}
-            ):
+            if prevp.type == token.COLON and prevp_parent.type in {
+                syms.subscript, syms.sliceop
+            }:
                 return NO
 
             elif prevp.type == token.EQUAL and prevp_parent.type == syms.argument:
@@ -2016,7 +2024,7 @@ def right_hand_split(
         and not line.is_import
     ):
         omit = {id(closing_bracket), *omit}
-        delimiter_count = len(body.bracket_tracker.delimiters)
+        delimiter_count = body.bracket_tracker.delimiter_count_with_priority()
         if (
             delimiter_count == 0
             or delimiter_count == 1
@@ -2091,11 +2099,9 @@ def delimiter_split(line: Line, py36: bool = False) -> Iterator[Line]:
     except IndexError:
         raise CannotSplit("Line empty")
 
-    delimiters = line.bracket_tracker.delimiters
+    bt = line.bracket_tracker
     try:
-        delimiter_priority = line.bracket_tracker.max_delimiter_priority(
-            exclude={id(last_leaf)}
-        )
+        delimiter_priority = bt.max_delimiter_priority(exclude={id(last_leaf)})
     except ValueError:
         raise CannotSplit("No delimiters found")
 
@@ -2121,12 +2127,11 @@ def delimiter_split(line: Line, py36: bool = False) -> Iterator[Line]:
             yield from append_to_line(comment_after)
 
         lowest_depth = min(lowest_depth, leaf.bracket_depth)
-        if (
-            leaf.bracket_depth == lowest_depth
-            and is_vararg(leaf, within=VARARGS_PARENTS)
+        if leaf.bracket_depth == lowest_depth and is_vararg(
+            leaf, within=VARARGS_PARENTS
         ):
             trailing_comma_safe = trailing_comma_safe and py36
-        leaf_priority = delimiters.get(id(leaf))
+        leaf_priority = bt.delimiters.get(id(leaf))
         if leaf_priority == delimiter_priority:
             yield current_line
 
