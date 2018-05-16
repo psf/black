@@ -610,7 +610,7 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
   with PEP 484 (#207, #210)
 
 * fixed trailers (content with brackets) being unnecessarily exploded
-  into their own lines after a dedented closing bracket
+  into their own lines after a dedented closing bracket (#119)
 
 * fixed an invalid trailing comma sometimes left in imports (#185)
 
