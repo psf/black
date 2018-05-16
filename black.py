@@ -1746,31 +1746,54 @@ def is_split_before_delimiter(leaf: Leaf, previous: Leaf = None) -> int:
     ):
         return STRING_PRIORITY
 
+    if leaf.type != token.NAME:
+        return 0
+
     if (
-        leaf.type == token.NAME
-        and leaf.value == "for"
+        leaf.value == "for"
         and leaf.parent
         and leaf.parent.type in {syms.comp_for, syms.old_comp_for}
     ):
         return COMPREHENSION_PRIORITY
 
     if (
-        leaf.type == token.NAME
-        and leaf.value == "if"
+        leaf.value == "if"
         and leaf.parent
         and leaf.parent.type in {syms.comp_if, syms.old_comp_if}
     ):
         return COMPREHENSION_PRIORITY
 
-    if (
-        leaf.type == token.NAME
-        and leaf.value in {"if", "else"}
-        and leaf.parent
-        and leaf.parent.type == syms.test
-    ):
+    if leaf.value in {"if", "else"} and leaf.parent and leaf.parent.type == syms.test:
         return TERNARY_PRIORITY
 
-    if leaf.type == token.NAME and leaf.value in LOGIC_OPERATORS and leaf.parent:
+    if leaf.value == "is":
+        return COMPARATOR_PRIORITY
+
+    if (
+        leaf.value == "in"
+        and leaf.parent
+        and leaf.parent.type in {syms.comp_op, syms.comparison}
+        and not (
+            previous is not None
+            and previous.type == token.NAME
+            and previous.value == "not"
+        )
+    ):
+        return COMPARATOR_PRIORITY
+
+    if (
+        leaf.value == "not"
+        and leaf.parent
+        and leaf.parent.type == syms.comp_op
+        and not (
+            previous is not None
+            and previous.type == token.NAME
+            and previous.value == "is"
+        )
+    ):
+        return COMPARATOR_PRIORITY
+
+    if leaf.value in LOGIC_OPERATORS and leaf.parent:
         return LOGIC_PRIORITY
 
     return 0

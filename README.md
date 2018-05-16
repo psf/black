@@ -628,6 +628,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * fixed crash on dealing with optional parentheses (#193)
 
+* fixed "is", "is not", "in", and "not in" not considered operators for
+  splitting purposes
+
 * fixed crash when dead symlinks where encountered
 
 

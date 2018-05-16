@@ -173,6 +173,10 @@ for z in (i for i in (1, 2, 3)): ...
 for i in (call()): ...
 for j in (1 + (2 + 3)): ...
 while(this and that): ...
+a = aaaa.bbbb.cccc.dddd.eeee.ffff.gggg.hhhh.iiii.jjjj.kkkk.llll.mmmm.nnnn.oooo.pppp in qqqq.rrrr.ssss.tttt.uuuu.vvvv.xxxx.yyyy.zzzz
+a = aaaa.bbbb.cccc.dddd.eeee.ffff.gggg.hhhh.iiii.jjjj.kkkk.llll.mmmm.nnnn.oooo.pppp not in qqqq.rrrr.ssss.tttt.uuuu.vvvv.xxxx.yyyy.zzzz
+a = aaaa.bbbb.cccc.dddd.eeee.ffff.gggg.hhhh.iiii.jjjj.kkkk.llll.mmmm.nnnn.oooo.pppp is qqqq.rrrr.ssss.tttt.uuuu.vvvv.xxxx.yyyy.zzzz
+a = aaaa.bbbb.cccc.dddd.eeee.ffff.gggg.hhhh.iiii.jjjj.kkkk.llll.mmmm.nnnn.oooo.pppp is not qqqq.rrrr.ssss.tttt.uuuu.vvvv.xxxx.yyyy.zzzz
 if (
     threading.current_thread() != threading.main_thread() and
     threading.current_thread() != threading.main_thread() or
@@ -449,6 +453,22 @@ for j in 1 + (2 + 3):
     ...
 while this and that:
     ...
+a = (
+    aaaa.bbbb.cccc.dddd.eeee.ffff.gggg.hhhh.iiii.jjjj.kkkk.llll.mmmm.nnnn.oooo.pppp
+    in qqqq.rrrr.ssss.tttt.uuuu.vvvv.xxxx.yyyy.zzzz
+)
+a = (
+    aaaa.bbbb.cccc.dddd.eeee.ffff.gggg.hhhh.iiii.jjjj.kkkk.llll.mmmm.nnnn.oooo.pppp
+    not in qqqq.rrrr.ssss.tttt.uuuu.vvvv.xxxx.yyyy.zzzz
+)
+a = (
+    aaaa.bbbb.cccc.dddd.eeee.ffff.gggg.hhhh.iiii.jjjj.kkkk.llll.mmmm.nnnn.oooo.pppp
+    is qqqq.rrrr.ssss.tttt.uuuu.vvvv.xxxx.yyyy.zzzz
+)
+a = (
+    aaaa.bbbb.cccc.dddd.eeee.ffff.gggg.hhhh.iiii.jjjj.kkkk.llll.mmmm.nnnn.oooo.pppp
+    is not qqqq.rrrr.ssss.tttt.uuuu.vvvv.xxxx.yyyy.zzzz
+)
 if (
     threading.current_thread() != threading.main_thread()
     and threading.current_thread() != threading.main_thread()
