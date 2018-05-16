@@ -340,7 +340,19 @@ interesting cases:
 
 In those cases, parentheses are removed when the entire statement fits
 in one line, or if the inner expression doesn't have any delimiters to
-further split on.  Otherwise, the parentheses are always added.
+further split on.  If there is only a single delimiter and the expression
+starts or ends with a bracket, the parenthesis can also be successfully
+omitted since the existing bracket pair will organize the expression
+neatly anyway.  Otherwise, the parentheses are added.
+
+Please note that *Black* does not add or remove any additional nested
+parentheses that you might want to have for clarity or further
+code organization.  For example those parentheses are not going to be
+removed:
+```py3
+return not (this or that)
+decision = (maybe.this() and values > 0) or (maybe.that() and values < 0)
+```
 
 ### Call chains
 
