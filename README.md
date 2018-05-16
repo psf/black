@@ -597,6 +597,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * math operators now use their respective priorities for delimiting multiline
   expressions (#148)
 
+* optional parentheses are now omitted on expressions that start or end
+  with a bracket and only contain a single operator (#177)
+
 * empty parentheses in a class definition are now removed (#145, #180)
 
 * string prefixes are now standardized to lowercase and `u` is removed
@@ -620,6 +623,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
   unpacking. This fixed non-deterministic formatting if trailing commas
   where used both in function signatures with stars and function calls
   with stars but the former would be reformatted to a single line.
+
+* fixed crash on dealing with optional parentheses (#193)
 
 * fixed crash when dead symlinks where encountered
 

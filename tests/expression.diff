@@ -167,11 +167,11 @@
 -what_is_up_with_those_new_coord_names = (coord_names + set(vars_to_create)) + set(vars_to_remove)
 -what_is_up_with_those_new_coord_names = (coord_names | set(vars_to_create)) - set(vars_to_remove)
 -result = session.query(models.Customer.id).filter(models.Customer.account_id == account_id, models.Customer.email == email_address).order_by(models.Customer.id.asc(),).all()
-+what_is_up_with_those_new_coord_names = (
-+    (coord_names + set(vars_to_create)) + set(vars_to_remove)
++what_is_up_with_those_new_coord_names = (coord_names + set(vars_to_create)) + set(
++    vars_to_remove
 +)
-+what_is_up_with_those_new_coord_names = (
-+    (coord_names | set(vars_to_create)) - set(vars_to_remove)
++what_is_up_with_those_new_coord_names = (coord_names | set(vars_to_create)) - set(
++    vars_to_remove
 +)
 +result = session.query(models.Customer.id).filter(
 +    models.Customer.account_id == account_id, models.Customer.email == email_address
@@ -256,8 +256,8 @@
 -    ~ aaaaaaaaaaaaaaaa.a + aaaaaaaaaaaaaaaa.b - aaaaaaaaaaaaaaaa.c * aaaaaaaaaaaaaaaa.d @ aaaaaaaaaaaaaaaa.e | aaaaaaaaaaaaaaaa.f & aaaaaaaaaaaaaaaa.g % aaaaaaaaaaaaaaaa.h ^ aaaaaaaaaaaaaaaa.i << aaaaaaaaaaaaaaaa.k >> aaaaaaaaaaaaaaaa.l ** aaaaaaaaaaaaaaaa.m // aaaaaaaaaaaaaaaa.n
 +print(*lambda x: x)
 +assert not Test, "Short message"
-+assert (
-+    this is ComplexTest and not requirements.fit_in_a_single_line(force=False)
++assert this is ComplexTest and not requirements.fit_in_a_single_line(
++    force=False
 +), "Short message"
 +assert parens is TooMany
 +for (x,) in (1,), (2,), (3,):

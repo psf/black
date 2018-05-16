@@ -239,11 +239,8 @@ def reformat_one(
                 src = src.resolve()
                 if src in cache and cache[src] == get_cache_info(src):
                     changed = Changed.CACHED
-            if (
-                changed is not Changed.CACHED
-                and format_file_in_place(
-                    src, line_length=line_length, fast=fast, write_back=write_back
-                )
+            if changed is not Changed.CACHED and format_file_in_place(
+                src, line_length=line_length, fast=fast, write_back=write_back
             ):
                 changed = Changed.YES
             if write_back == WriteBack.YES and changed is not Changed.NO:
@@ -860,14 +857,11 @@ class Line:
             second_leaf: Optional[Leaf] = self.leaves[1]
         except IndexError:
             second_leaf = None
-        return (
-            (first_leaf.type == token.NAME and first_leaf.value == "def")
-            or (
-                first_leaf.type == token.ASYNC
-                and second_leaf is not None
-                and second_leaf.type == token.NAME
-                and second_leaf.value == "def"
-            )
+        return (first_leaf.type == token.NAME and first_leaf.value == "def") or (
+            first_leaf.type == token.ASYNC
+            and second_leaf is not None
+            and second_leaf.type == token.NAME
+            and second_leaf.value == "def"
         )
 
     @property
@@ -1032,9 +1026,8 @@ class Line:
             and subscript_start.type == syms.subscriptlist
         ):
             subscript_start = child_towards(subscript_start, leaf)
-        return (
-            subscript_start is not None
-            and any(n.type in TEST_DESCENDANTS for n in subscript_start.pre_order())
+        return subscript_start is not None and any(
+            n.type in TEST_DESCENDANTS for n in subscript_start.pre_order()
         )
 
     def __str__(self) -> str:
@@ -1999,8 +1992,9 @@ def right_hand_split(
     # Since body is a new indent level, remove spurious leading whitespace.
     if body_leaves:
         normalize_prefix(body_leaves[0], inside_brackets=True)
-    elif not head_leaves:
-        # No `head` and no `body` means the split failed. `tail` has all content.
+    if not head_leaves:
+        # No `head` means the split failed. Either `tail` has all content or
+        # the matching `opening_bracket` wasn't available on `line` anymore.
         raise CannotSplit("No brackets found")
 
     # Build the new lines.
@@ -2018,19 +2012,27 @@ def right_hand_split(
         # the closing bracket is an optional paren
         and closing_bracket.type == token.RPAR
         and not closing_bracket.value
-        # there are no delimiters or standalone comments in the body
-        and not body.bracket_tracker.delimiters
+        # there are no standalone comments in the body
         and not line.contains_standalone_comments(0)
         # and it's not an import (optional parens are the only thing we can split
         # on in this case; attempting a split without them is a waste of time)
         and not line.is_import
     ):
         omit = {id(closing_bracket), *omit}
-        try:
-            yield from right_hand_split(line, py36=py36, omit=omit)
-            return
-        except CannotSplit:
-            pass
+        delimiter_count = len(body.bracket_tracker.delimiters)
+        if (
+            delimiter_count == 0
+            or delimiter_count == 1
+            and (
+                body.leaves[0].type in OPENING_BRACKETS
+                or body.leaves[-1].type in CLOSING_BRACKETS
+            )
+        ):
+            try:
+                yield from right_hand_split(line, py36=py36, omit=omit)
+                return
+            except CannotSplit:
+                pass
 
     ensure_visible(opening_bracket)
     ensure_visible(closing_bracket)
