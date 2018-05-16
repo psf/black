@@ -609,6 +609,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * typing stub files (`.pyi`) are now formatted in a style that is consistent
   with PEP 484 (#207, #210)
 
+* progress when reformatting many files is now reported incrementally
+
 * fixed trailers (content with brackets) being unnecessarily exploded
   into their own lines after a dedented closing bracket (#119)
 

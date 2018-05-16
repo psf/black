@@ -282,32 +282,29 @@ async def schedule_formatting(
             manager = Manager()
             lock = manager.Lock()
         tasks = {
-            src: loop.run_in_executor(
+            loop.run_in_executor(
                 executor, format_file_in_place, src, line_length, fast, write_back, lock
-            )
-            for src in sources
+            ): src
+            for src in sorted(sources)
         }
-        _task_values = list(tasks.values())
+        pending: Iterable[asyncio.Task] = tasks.keys()
         try:
-            loop.add_signal_handler(signal.SIGINT, cancel, _task_values)
-            loop.add_signal_handler(signal.SIGTERM, cancel, _task_values)
+            loop.add_signal_handler(signal.SIGINT, cancel, pending)
+            loop.add_signal_handler(signal.SIGTERM, cancel, pending)
         except NotImplementedError:
             # There are no good alternatives for these on Windows
             pass
-        await asyncio.wait(_task_values)
-        for src, task in tasks.items():
-            if not task.done():
-                report.failed(src, "timed out, cancelling")
-                task.cancel()
-                cancelled.append(task)
-            elif task.cancelled():
-                cancelled.append(task)
-            elif task.exception():
-                report.failed(src, str(task.exception()))
-            else:
-                formatted.append(src)
-                report.done(src, Changed.YES if task.result() else Changed.NO)
-
+        while pending:
+            done, _ = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
+            for task in done:
+                src = tasks.pop(task)
+                if task.cancelled():
+                    cancelled.append(task)
+                elif task.exception():
+                    report.failed(src, str(task.exception()))
+                else:
+                    formatted.append(src)
+                    report.done(src, Changed.YES if task.result() else Changed.NO)
     if cancelled:
         await asyncio.gather(*cancelled, loop=loop, return_exceptions=True)
     if write_back == WriteBack.YES and formatted:
@@ -2833,7 +2830,7 @@ def diff(a: str, b: str, a_name: str, b_name: str) -> str:
     )
 
 
-def cancel(tasks: List[asyncio.Task]) -> None:
+def cancel(tasks: Iterable[asyncio.Task]) -> None:
     """asyncio signal handler that cancels all `tasks` and reports to stderr."""
     err("Aborted!")
     for task in tasks:
