@@ -1741,7 +1741,7 @@ def is_split_before_delimiter(leaf: Leaf, previous: Leaf = None) -> int:
         leaf.type == token.DOT
         and leaf.parent
         and leaf.parent.type not in {syms.import_from, syms.dotted_name}
-        and (previous is None or previous.type != token.NAME)
+        and (previous is None or previous.type in CLOSING_BRACKETS)
     ):
         return DOT_PRIORITY
 

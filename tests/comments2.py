@@ -23,6 +23,25 @@ __all__ = [
     'Generator',
 ]
 
+not_shareables = [
+    # singletons
+    True,
+    False,
+    NotImplemented, ...,
+    # builtin types and objects
+    type,
+    object,
+    object(),
+    Exception(),
+    42,
+    100.0,
+    "spam",
+    # user-defined types and objects
+    Cheese,
+    Cheese("Wensleydale"),
+    SubBytes(b"spam"),
+]
+
 if 'PYTHON' in os.environ:
     add_compiler(compiler_from_env())
 else:
@@ -150,6 +169,26 @@ __all__ = [
     "FrozenSet",
     "NamedTuple",  # Not really a type.
     "Generator",
+]
+
+not_shareables = [
+    # singletons
+    True,
+    False,
+    NotImplemented,
+    ...,
+    # builtin types and objects
+    type,
+    object,
+    object(),
+    Exception(),
+    42,
+    100.0,
+    "spam",
+    # user-defined types and objects
+    Cheese,
+    Cheese("Wensleydale"),
+    SubBytes(b"spam"),
 ]
 
 if "PYTHON" in os.environ:
