@@ -131,13 +131,13 @@ brackets and put that in a separate indented line.
 ```py3
 # in:
 
-l = [[n for n in list_bosses()], [n for n in list_employees()]]
+TracebackException.from_exception(exc, limit, lookup_lines, capture_locals)
 
 # out:
 
-l = [
-    [n for n in list_bosses()], [n for n in list_employees()]
-]
+TracebackException.from_exception(
+    exc, limit, lookup_lines, capture_locals
+)
 ```
 
 If that still doesn't fit the bill, it will decompose the internal
@@ -176,13 +176,13 @@ between two distinct sections of the code that otherwise share the same
 indentation level (like the arguments list and the docstring in the
 example above).
 
-If a line of "from" imports cannot fit in the allotted length, it's always split
-into one per line.  Imports tend to change often and this minimizes diffs, as well
-as enables readers of code to easily find which commit introduced a particular
-import.  This exception also makes *Black* compatible with
-[isort](https://pypi.org/p/isort/).  Use `multi_line_output=3`,
-`include_trailing_comma=True`, `force_grid_wrap=0`, and `line_length=88` in your
-isort config.
+If a data structure literal (tuple, list, set, dict) or a line of "from"
+imports cannot fit in the allotted length, it's always split into one
+per line.  This minimizes diffs as well as enables readers of code to
+find which commit introduced a particular entry.  This also makes
+*Black* compatible with [isort](https://pypi.org/p/isort/).  Use
+`multi_line_output=3`, `include_trailing_comma=True`,
+`force_grid_wrap=0`, and `line_length=88` in your isort config.
 
 
 ### Line length
@@ -630,7 +630,13 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ### 18.5a0 (unreleased)
 
-* call chains are now formatted according to the [fluent interfaces](https://en.wikipedia.org/wiki/Fluent_interface) style (#67)
+* call chains are now formatted according to the
+  [fluent interfaces](https://en.wikipedia.org/wiki/Fluent_interface)
+  style (#67)
+
+* data structure literals (tuples, lists, dictionaries, and sets) are
+  now also always exploded like imports when they don't fit in a single
+  line (#152)
 
 * slices are now formatted according to PEP 8 (#178)
 

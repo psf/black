@@ -35,9 +35,9 @@ else:
 def inline_comments_in_brackets_ruin_everything():
     if typedargslist:
         parameters.children = [
-            parameters.children[0],  # (1
+            children[0],  # (1
             body,
-            parameters.children[-1],  # )1
+            children[-1],  # )1
         ]
     else:
         parameters.children = [
@@ -163,9 +163,7 @@ else:
 # Comment before function.
 def inline_comments_in_brackets_ruin_everything():
     if typedargslist:
-        parameters.children = [
-            parameters.children[0], body, parameters.children[-1]  # (1  # )1
-        ]
+        parameters.children = [children[0], body, children[-1]]  # (1  # )1
     else:
         parameters.children = [
             parameters.children[0],  # (2 what if this was actually long

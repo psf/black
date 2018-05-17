@@ -776,6 +776,7 @@ class Line:
     comments: List[Tuple[Index, Leaf]] = Factory(list)
     bracket_tracker: BracketTracker = Factory(BracketTracker)
     inside_brackets: bool = False
+    should_explode: bool = False
 
     def append(self, leaf: Leaf, preformatted: bool = False) -> None:
         """Add a new `leaf` to the end of the line.
@@ -1473,7 +1474,9 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa C901
 
     assert p is not None, f"INTERNAL ERROR: hand-made leaf without parent: {leaf!r}"
     if t == token.COLON and p.type not in {
-        syms.subscript, syms.subscriptlist, syms.sliceop
+        syms.subscript,
+        syms.subscriptlist,
+        syms.sliceop,
     }:
         return NO
 
@@ -1495,7 +1498,10 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa C901
         if prevp.type == token.EQUAL:
             if prevp.parent:
                 if prevp.parent.type in {
-                    syms.arglist, syms.argument, syms.parameters, syms.varargslist
+                    syms.arglist,
+                    syms.argument,
+                    syms.parameters,
+                    syms.varargslist,
                 }:
                     return NO
 
@@ -1649,7 +1655,8 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa C901
             prevp_parent = prevp.parent
             assert prevp_parent is not None
             if prevp.type == token.COLON and prevp_parent.type in {
-                syms.subscript, syms.sliceop
+                syms.subscript,
+                syms.sliceop,
             }:
                 return NO
 
@@ -1902,15 +1909,15 @@ def split_line(
         return
 
     line_str = str(line).strip("\n")
-    if is_line_short_enough(line, line_length=line_length, line_str=line_str):
+    if not line.should_explode and is_line_short_enough(
+        line, line_length=line_length, line_str=line_str
+    ):
         yield line
         return
 
     split_funcs: List[SplitFunc]
     if line.is_def:
         split_funcs = [left_hand_split]
-    elif line.is_import:
-        split_funcs = [explode_split]
     else:
 
         def rhs(line: Line, py36: bool = False) -> Iterator[Line]:
@@ -2073,6 +2080,7 @@ def right_hand_split(
 
     ensure_visible(opening_bracket)
     ensure_visible(closing_bracket)
+    body.should_explode = should_explode(body, opening_bracket)
     for result in (head, body, tail):
         if result:
             yield result
@@ -2210,26 +2218,6 @@ def standalone_comment_split(line: Line, py36: bool = False) -> Iterator[Line]:
 
     if current_line:
         yield current_line
-
-
-def explode_split(
-    line: Line, py36: bool = False, omit: Collection[LeafID] = ()
-) -> Iterator[Line]:
-    """Split by rightmost bracket and immediately split contents by a delimiter."""
-    new_lines = list(right_hand_split(line, py36, omit))
-    if len(new_lines) != 3:
-        yield from new_lines
-        return
-
-    yield new_lines[0]
-
-    try:
-        yield from delimiter_split(new_lines[1], py36)
-
-    except CannotSplit:
-        yield new_lines[1]
-
-    yield new_lines[2]
 
 
 def is_import(leaf: Leaf) -> bool:
@@ -2547,6 +2535,17 @@ def ensure_visible(leaf: Leaf) -> None:
         leaf.value = ")"
 
 
+def should_explode(line: Line, opening_bracket: Leaf) -> bool:
+    """Should `line` immediately be split with `delimiter_split()` after RHS?"""
+    return bool(
+        opening_bracket.parent
+        and opening_bracket.parent.type in {syms.atom, syms.import_from}
+        and opening_bracket.value in "[{("
+        and line.bracket_tracker.delimiters
+        and line.bracket_tracker.max_delimiter_priority() == COMMA_PRIORITY
+    )
+
+
 def is_python36(node: Node) -> bool:
     """Return True if the current file is using Python 3.6+ features.
 
@@ -2675,7 +2674,15 @@ def get_future_imports(node: Node) -> Set[str]:
 
 PYTHON_EXTENSIONS = {".py", ".pyi"}
 BLACKLISTED_DIRECTORIES = {
-    "build", "buck-out", "dist", "_build", ".git", ".hg", ".mypy_cache", ".tox", ".venv"
+    "build",
+    "buck-out",
+    "dist",
+    "_build",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".tox",
+    ".venv",
 }
 
 

@@ -38,7 +38,9 @@ this_is_a_ridiculously_long_name_and_nobody_in_their_right_mind_would_use_one_li
     1
 )  # with a comment
 this_is_a_ridiculously_long_name_and_nobody_in_their_right_mind_would_use_one_like_it = [
-    1, 2, 3
+    1,
+    2,
+    3,
 ]
 this_is_a_ridiculously_long_name_and_nobody_in_their_right_mind_would_use_one_like_it = (
     function()
