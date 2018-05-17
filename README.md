@@ -360,7 +360,7 @@ Some popular APIs, like ORMs, use call chaining.  This API style is known
 as a [fluent interface](https://en.wikipedia.org/wiki/Fluent_interface).
 *Black* formats those treating dots that follow a call or an indexing
 operation like a very low priority delimiter.  It's easier to show the
-behavior than to explain it.  Look at the example::
+behavior than to explain it.  Look at the example:
 ```py3
 def example(session):
     result = (
