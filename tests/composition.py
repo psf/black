@@ -32,6 +32,11 @@ class C:
                         # Another
                     ):
                         print(i)
+            if _cfg_target_split > [int(x) for x in cur_target.split(".")]:
+                my_msg = "$MACOSX_DEPLOYMENT_TARGET mismatch: " 'now "%s" but "%s" during configure' % (
+                    cur_target,
+                    _cfg_target,
+                )
 
     def omitting_trailers(self) -> None:
         get_collection(
