@@ -11,9 +11,14 @@ CURRENT_DIR = Path(__file__).parent
 
 
 def get_long_description() -> str:
+    description = ""
     readme_md = CURRENT_DIR / "README.md"
     with open(readme_md, encoding="utf8") as ld_file:
-        return ld_file.read()
+        description += ld_file.read()
+
+    changelog_md = CURRENT_DIR / "docs" / "change_log.md"
+    with open(changelog_md, encoding="utf8") as ld_file:
+        description += ld_file.read()
 
 
 def get_version() -> str:
