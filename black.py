@@ -1315,7 +1315,7 @@ class LineGenerator(Visitor[Line]):
         The relevant Python language `keywords` for a given statement will be
         NAME leaves within it. This methods puts those on a separate line.
 
-        `parens` holds a set of string leaf values immeditely after which
+        `parens` holds a set of string leaf values immediately after which
         invisible parens should be put.
         """
         normalize_invisible_parens(node, parens_after=parens)
@@ -2361,7 +2361,7 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
                 rpar = Leaf(token.RPAR, ")")
                 index = child.remove() or 0
                 node.insert_child(index, Node(syms.atom, [lpar, child, rpar]))
-            else:
+            elif not (isinstance(child, Leaf) and is_multiline_string(child)):
                 # wrap child in invisible parentheses
                 lpar = Leaf(token.LPAR, "")
                 rpar = Leaf(token.RPAR, "")
@@ -2470,6 +2470,12 @@ def is_vararg(leaf: Leaf, within: Set[NodeType]) -> bool:
         p = p.parent
 
     return p.type in within
+
+
+def is_multiline_string(leaf: Leaf) -> bool:
+    """Return True if `leaf` is a multiline string that actually spans many lines."""
+    value = leaf.value.lstrip("furbFURB")
+    return value[:3] in {'"""', "'''"} and "\n" in value
 
 
 def is_stub_suite(node: Node) -> bool:

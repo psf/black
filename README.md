@@ -653,6 +653,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * fixed non-deterministic formatting when multiple pairs of removable parentheses
   were used (#183)
 
+* fixed multiline strings being unnecessarily wrapped in optional
+  parentheses in long assignments (#215)
+
 * fixed not splitting long from-imports with only a single name
 
 * fixed Python 3.6+ file discovery by also looking at function calls with

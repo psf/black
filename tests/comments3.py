@@ -1,4 +1,7 @@
 def func():
+    x = """
+    a really long string
+    """
     lcomp3 = [
         # This one is actually too long to fit in a single line.
         element.split("\n", 1)[0]
