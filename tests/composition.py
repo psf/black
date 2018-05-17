@@ -32,6 +32,11 @@ class C:
                         # Another
                     ):
                         print(i)
+        return (
+            "Utterly failed doctest test for %s\n"
+            '  File "%s", line %s, in %s\n\n%s'
+            % (test.name, test.filename, lineno, lname, err)
+        )
 
     def omitting_trailers(self) -> None:
         get_collection(
@@ -143,14 +148,17 @@ class C:
         )
 
         # This is weird but true.
-        assert expectedexpectedexpectedexpectedexpectedexpectedexpectedexpectedexpect == {
-            key1: value1,
-            key2: value2,
-            key3: value3,
-            key4: value4,
-            key5: value5,
-            key6: value6,
-            key7: value7,
-            key8: value8,
-            key9: value9,
-        }
+        assert (
+            expectedexpectedexpectedexpectedexpectedexpectedexpectedexpectedexpect
+            == {
+                key1: value1,
+                key2: value2,
+                key3: value3,
+                key4: value4,
+                key5: value5,
+                key6: value6,
+                key7: value7,
+                key8: value8,
+                key9: value9,
+            }
+        )

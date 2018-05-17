@@ -30,6 +30,7 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    cast,
 )
 
 from appdirs import user_cache_dir
@@ -1922,12 +1923,14 @@ def split_line(
 
         def rhs(line: Line, py36: bool = False) -> Iterator[Line]:
             for omit in generate_trailers_to_omit(line, line_length):
-                lines = list(right_hand_split(line, py36, omit=omit))
+                lines = list(right_hand_split(line, line_length, py36, omit=omit))
                 if is_line_short_enough(lines[0], line_length=line_length):
                     yield from lines
                     return
 
             # All splits failed, best effort split with no omits.
+            # This mostly happens to multiline strings that are by definition
+            # reported as not fitting a single line.
             yield from right_hand_split(line, py36)
 
         if line.inside_brackets:
@@ -2001,7 +2004,7 @@ def left_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
 
 
 def right_hand_split(
-    line: Line, py36: bool = False, omit: Collection[LeafID] = ()
+    line: Line, line_length: int, py36: bool = False, omit: Collection[LeafID] = ()
 ) -> Iterator[Line]:
     """Split line into many lines, starting with the last matching bracket pair.
 
@@ -2063,27 +2066,9 @@ def right_hand_split(
         and not line.is_import
     ):
         omit = {id(closing_bracket), *omit}
-        delimiter_count = body.bracket_tracker.delimiter_count_with_priority()
-        first = body.leaves[0]
-        last = body.leaves[-1]
-        if (
-            delimiter_count == 0
-            or delimiter_count == 1
-            and (
-                first.type in OPENING_BRACKETS
-                or last.type == token.RPAR
-                or last.type == token.RBRACE
-                or (
-                    # don't use indexing for omitting optional parentheses;
-                    # it looks weird
-                    last.type == token.RSQB
-                    and last.parent
-                    and last.parent.type != syms.trailer
-                )
-            )
-        ):
+        if can_omit_invisible_parens(body, line_length):
             try:
-                yield from right_hand_split(line, py36=py36, omit=omit)
+                yield from right_hand_split(line, line_length, py36=py36, omit=omit)
                 return
             except CannotSplit:
                 pass
@@ -2604,21 +2589,10 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
     closing_bracket = None
     optional_brackets: Set[LeafID] = set()
     inner_brackets: Set[LeafID] = set()
-    for index, leaf in enumerate_reversed(line.leaves):
-        length += len(leaf.prefix) + len(leaf.value)
+    for index, leaf, leaf_length in enumerate_with_length(line, reversed=True):
+        length += leaf_length
         if length > line_length:
             break
-
-        comment: Optional[Leaf]
-        for comment in line.comments_after(leaf, index):
-            if "\n" in comment.prefix:
-                break  # Oops, standalone comment!
-
-            length += len(comment.value)
-        else:
-            comment = None
-        if comment is not None:
-            break  # There was a standalone comment, we can't continue.
 
         optional_brackets.discard(id(leaf))
         if opening_bracket:
@@ -2940,6 +2914,32 @@ def enumerate_reversed(sequence: Sequence[T]) -> Iterator[Tuple[Index, T]]:
         index -= 1
 
 
+def enumerate_with_length(
+    line: Line, reversed: bool = False
+) -> Iterator[Tuple[Index, Leaf, int]]:
+    """Return an enumeration of leaves with their length.
+
+    Stops prematurely on multiline strings and standalone comments.
+    """
+    op = cast(
+        Callable[[Sequence[Leaf]], Iterator[Tuple[Index, Leaf]]],
+        enumerate_reversed if reversed else enumerate,
+    )
+    for index, leaf in op(line.leaves):
+        length = len(leaf.prefix) + len(leaf.value)
+        if "\n" in leaf.value:
+            return  # Multiline strings, we can't continue.
+
+        comment: Optional[Leaf]
+        for comment in line.comments_after(leaf, index):
+            if "\n" in comment.prefix:
+                return  # Oops, standalone comment!
+
+            length += len(comment.value)
+
+        yield index, leaf, length
+
+
 def is_line_short_enough(line: Line, *, line_length: int, line_str: str = "") -> bool:
     """Return True if `line` is no longer than `line_length`.
 
@@ -2952,6 +2952,95 @@ def is_line_short_enough(line: Line, *, line_length: int, line_str: str = "") ->
         and "\n" not in line_str  # multiline strings
         and not line.contains_standalone_comments()
     )
+
+
+def can_omit_invisible_parens(line: Line, line_length: int) -> bool:
+    """Does `line` have a shape safe to reformat without optional parens around it?
+
+    Returns True for only a subset of potentially nice looking formattings but
+    the point is to not return false positives that end up producing lines that
+    are too long.
+    """
+    bt = line.bracket_tracker
+    if not bt.delimiters:
+        # Without delimiters the optional parentheses are useless.
+        return True
+
+    max_priority = bt.max_delimiter_priority()
+    if bt.delimiter_count_with_priority(max_priority) > 1:
+        # With more than one delimiter of a kind the optional parentheses read better.
+        return False
+
+    if max_priority == DOT_PRIORITY:
+        # A single stranded method call doesn't require optional parentheses.
+        return True
+
+    assert len(line.leaves) >= 2, "Stranded delimiter"
+
+    first = line.leaves[0]
+    second = line.leaves[1]
+    penultimate = line.leaves[-2]
+    last = line.leaves[-1]
+
+    # With a single delimiter, omit if the expression starts or ends with
+    # a bracket.
+    if first.type in OPENING_BRACKETS and second.type not in CLOSING_BRACKETS:
+        remainder = False
+        length = 4 * line.depth
+        for _index, leaf, leaf_length in enumerate_with_length(line):
+            if leaf.type in CLOSING_BRACKETS and leaf.opening_bracket is first:
+                remainder = True
+            if remainder:
+                length += leaf_length
+                if length > line_length:
+                    break
+
+                if leaf.type in OPENING_BRACKETS:
+                    # There are brackets we can further split on.
+                    remainder = False
+
+        else:
+            # checked the entire string and line length wasn't exceeded
+            if len(line.leaves) == _index + 1:
+                return True
+
+        # Note: we are not returning False here because a line might have *both*
+        # a leading opening bracket and a trailing closing bracket.  If the
+        # opening bracket doesn't match our rule, maybe the closing will.
+
+    if (
+        last.type == token.RPAR
+        or last.type == token.RBRACE
+        or (
+            # don't use indexing for omitting optional parentheses;
+            # it looks weird
+            last.type == token.RSQB
+            and last.parent
+            and last.parent.type != syms.trailer
+        )
+    ):
+        if penultimate.type in OPENING_BRACKETS:
+            # Empty brackets don't help.
+            return False
+
+        if is_multiline_string(first):
+            # Additional wrapping of a multiline string in this situation is
+            # unnecessary.
+            return True
+
+        length = 4 * line.depth
+        seen_other_brackets = False
+        for _index, leaf, leaf_length in enumerate_with_length(line):
+            length += leaf_length
+            if leaf is last.opening_bracket:
+                if seen_other_brackets or length <= line_length:
+                    return True
+
+            elif leaf.type in OPENING_BRACKETS:
+                # There are brackets we can further split on.
+                seen_other_brackets = True
+
+    return False
 
 
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
