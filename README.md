@@ -268,6 +268,7 @@ if you'd like a trailing comma in this situation and *Black* didn't
 recognize it was safe to do so, put it there manually and *Black* will
 keep it.
 
+
 ### Strings
 
 *Black* prefers double quotes (`"` and `"""`) over single quotes (`'`
@@ -297,6 +298,7 @@ a bit easier than double quotes.  The latter requires use of the Shift
 key.  My recommendation here is to keep using whatever is faster to type
 and let *Black* handle the transformation.
 
+
 ### Line Breaks & Binary Operators
 
 *Black* will break a line before a binary operator when splitting a block
@@ -307,6 +309,7 @@ style guide, which emphasizes that this approach improves readability.
 This behaviour may raise ``W503 line break before binary operator`` warnings in
 style guide enforcement tools like Flake8. Since ``W503`` is not PEP 8 compliant,
 you should tell Flake8 to ignore these warnings.
+
 
 ### Slices
 
@@ -320,6 +323,7 @@ omitted (``ham[1 + 1 ::]``). *Black* enforces these rules consistently.
 This behaviour may raise ``E203 whitespace before ':'`` warnings in style guide
 enforcement tools like Flake8. Since ``E203`` is not PEP 8 compliant, you should
 tell Flake8 to ignore these warnings.
+
 
 ### Parentheses
 
@@ -354,6 +358,7 @@ return not (this or that)
 decision = (maybe.this() and values > 0) or (maybe.that() and values < 0)
 ```
 
+
 ### Call chains
 
 Some popular APIs, like ORMs, use call chaining.  This API style is known
@@ -373,6 +378,7 @@ def example(session):
         .all()
     )
 ```
+
 
 ### Typing stub files
 
@@ -504,13 +510,16 @@ to do this.
 
 Use [joslarson.black-vscode](https://marketplace.visualstudio.com/items?itemName=joslarson.black-vscode).
 
+
 ### SublimeText 3
 
 Use [sublack plugin](https://github.com/jgirardet/sublack).
 
+
 ### IPython Notebook Magic
 
 Use [blackcellmagic](https://github.com/csurfer/blackcellmagic).
+
 
 ### Other editors
 
