@@ -32,11 +32,6 @@ class C:
                         # Another
                     ):
                         print(i)
-            if _cfg_target_split > [int(x) for x in cur_target.split(".")]:
-                my_msg = "$MACOSX_DEPLOYMENT_TARGET mismatch: " 'now "%s" but "%s" during configure' % (
-                    cur_target,
-                    _cfg_target,
-                )
 
     def omitting_trailers(self) -> None:
         get_collection(
@@ -48,6 +43,9 @@ class C:
         d[0][1][2][3][4][5][6][7][8][9][10][11][12][13][14][15][16][17][18][19][20][21][
             22
         ]
+        assignment = (
+            some.rather.elaborate.rule() and another.rule.ending_with.index[123]
+        )
 
     def easy_asserts(self) -> None:
         assert {

@@ -2064,12 +2064,22 @@ def right_hand_split(
     ):
         omit = {id(closing_bracket), *omit}
         delimiter_count = body.bracket_tracker.delimiter_count_with_priority()
+        first = body.leaves[0]
+        last = body.leaves[-1]
         if (
             delimiter_count == 0
             or delimiter_count == 1
             and (
-                body.leaves[0].type in OPENING_BRACKETS
-                or body.leaves[-1].type in CLOSING_BRACKETS
+                first.type in OPENING_BRACKETS
+                or last.type == token.RPAR
+                or last.type == token.RBRACE
+                or (
+                    # don't use indexing for omitting optional parentheses;
+                    # it looks weird
+                    last.type == token.RSQB
+                    and last.parent
+                    and last.parent.type != syms.trailer
+                )
             )
         ):
             try:
