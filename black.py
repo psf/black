@@ -2532,13 +2532,21 @@ def ensure_visible(leaf: Leaf) -> None:
 
 def should_explode(line: Line, opening_bracket: Leaf) -> bool:
     """Should `line` immediately be split with `delimiter_split()` after RHS?"""
-    return bool(
+    if not (
         opening_bracket.parent
         and opening_bracket.parent.type in {syms.atom, syms.import_from}
         and opening_bracket.value in "[{("
-        and line.bracket_tracker.delimiters
-        and line.bracket_tracker.max_delimiter_priority() == COMMA_PRIORITY
-    )
+    ):
+        return False
+
+    try:
+        last_leaf = line.leaves[-1]
+        exclude = {id(last_leaf)} if last_leaf.type == token.COMMA else set()
+        max_priority = line.bracket_tracker.max_delimiter_priority(exclude=exclude)
+    except (IndexError, ValueError):
+        return False
+
+    return max_priority == COMMA_PRIORITY
 
 
 def is_python36(node: Node) -> bool:
