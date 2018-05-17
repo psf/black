@@ -23,6 +23,9 @@ import logging
 import pkgutil
 import sys
 
+from appdirs import user_cache_dir
+from pathlib import Path
+
 # Pgen imports
 from . import grammar, parse, token, tokenize, pgen
 
@@ -150,10 +153,15 @@ class Driver(object):
 
 
 def _generate_pickle_name(gt):
+    cache_dir = Path(user_cache_dir("black")) / "blib2to3"
+    if not cache_dir.exists():
+        cache_dir.mkdir(parents=True)
     head, tail = os.path.splitext(gt)
+    head = os.path.basename(head)
     if tail == ".txt":
         tail = ""
-    return head + tail + ".".join(map(str, sys.version_info)) + ".pickle"
+    filename = head + tail + ".".join(map(str, sys.version_info)) + ".pickle"
+    return cache_dir / filename
 
 
 def load_grammar(gt="Grammar.txt", gp=None,
