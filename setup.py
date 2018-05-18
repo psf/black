@@ -44,7 +44,7 @@ setup(
     install_requires=["click", "attrs>=17.4.0", "appdirs"],
     test_suite="tests.test_black",
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Environment :: Console",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",

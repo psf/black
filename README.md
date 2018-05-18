@@ -78,14 +78,16 @@ Options:
   used).
 
 
-### NOTE: This is an early pre-release
+### NOTE: This is a beta product
 
-*Black* can already successfully format itself and the standard library.
+*Black* is already successfully used by several projects, small and big.
 It also sports a decent test suite.  However, it is still very new.
 Things will probably be wonky for a while. This is made explicit by the
-"Alpha" trove classifier, as well as by the "a" in the version number.
+"Beta" trove classifier, as well as by the "b" in the version number.
 What this means for you is that **until the formatter becomes stable,
-you should expect some formatting to change in the future**.
+you should expect some formatting to change in the future**.  That being
+said, no drastic stylistic changes are planned, mostly responses to bug
+reports.
 
 Also, as a temporary safety measure, *Black* will check that the
 reformatted code still produces a valid AST that is equivalent to the
@@ -628,7 +630,7 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Change Log
 
-### 18.5a0 (unreleased)
+### 18.5b0
 
 * call chains are now formatted according to the
   [fluent interfaces](https://en.wikipedia.org/wiki/Fluent_interface)
