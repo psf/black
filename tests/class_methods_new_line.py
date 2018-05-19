@@ -36,6 +36,7 @@ class ClassWithInitAndVars:
 
 class ClassWithInitAndVarsAndDocstring:
     """Test class"""
+
     cls_var = 100
 
     def __init__(self):
