@@ -46,9 +46,10 @@ from blib2to3.pgen2.parse import ParseError
 
 __version__ = "18.5b0"
 DEFAULT_LINE_LENGTH = 88
+CACHE_DIR = Path(user_cache_dir("black", version=__version__))
+
 
 # types
-syms = pygram.python_symbols
 FileContent = str
 Encoding = str
 Depth = int
@@ -64,6 +65,9 @@ CacheInfo = Tuple[Timestamp, FileSize]
 Cache = Dict[Path, CacheInfo]
 out = partial(click.secho, bold=True, err=True)
 err = partial(click.secho, fg="red", err=True)
+
+pygram.initialize(CACHE_DIR)
+syms = pygram.python_symbols
 
 
 class NothingChanged(UserWarning):
@@ -3049,9 +3053,6 @@ def can_omit_invisible_parens(line: Line, line_length: int) -> bool:
                 seen_other_brackets = True
 
     return False
-
-
-CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 
 
 def get_cache_file(line_length: int) -> Path:

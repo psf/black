@@ -149,11 +149,15 @@ class Driver(object):
         return ''.join(lines), current_line
 
 
-def _generate_pickle_name(gt):
+def _generate_pickle_name(gt, cache_dir=None):
     head, tail = os.path.splitext(gt)
     if tail == ".txt":
         tail = ""
-    return head + tail + ".".join(map(str, sys.version_info)) + ".pickle"
+    name = head + tail + ".".join(map(str, sys.version_info)) + ".pickle"
+    if cache_dir:
+        return os.path.join(cache_dir, os.path.basename(name))
+    else:
+        return name
 
 
 def load_grammar(gt="Grammar.txt", gp=None,
@@ -186,7 +190,7 @@ def _newer(a, b):
     return os.path.getmtime(a) >= os.path.getmtime(b)
 
 
-def load_packaged_grammar(package, grammar_source):
+def load_packaged_grammar(package, grammar_source, cache_dir=None):
     """Normally, loads a pickled grammar by doing
         pkgutil.get_data(package, pickled_grammar)
     where *pickled_grammar* is computed from *grammar_source* by adding the
@@ -198,8 +202,9 @@ def load_packaged_grammar(package, grammar_source):
 
     """
     if os.path.isfile(grammar_source):
-        return load_grammar(grammar_source)
-    pickled_name = _generate_pickle_name(os.path.basename(grammar_source))
+        gp = _generate_pickle_name(grammar_source, cache_dir) if cache_dir else None
+        return load_grammar(grammar_source, gp=gp)
+    pickled_name = _generate_pickle_name(os.path.basename(grammar_source), cache_dir)
     data = pkgutil.get_data(package, pickled_name)
     g = grammar.Grammar()
     g.loads(data)
