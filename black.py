@@ -38,17 +38,170 @@ from attr import dataclass, Factory
 import click
 
 # lib2to3 fork
+import blib2to3
 from blib2to3.pytree import Node, Leaf, type_repr
-from blib2to3 import pygram, pytree
-from blib2to3.pgen2 import driver, token
+from blib2to3 import pytree
+from blib2to3.pgen2 import driver, pgen, token
+from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.parse import ParseError
 
 
 __version__ = "18.5b0"
 DEFAULT_LINE_LENGTH = 88
 
+CACHE_DIR = Path(user_cache_dir("black", version=__version__))
+
+
+# blib2to3.pygram replacement to store pickled grammar in black's cache directory.
+
+
+def load_grammar(grammarfile: Path) -> Grammar:
+    """Load (cache) grammar
+    """
+    picklename = grammarfile.stem + ".".join(map(str, sys.version_info)) + ".pickle"
+    cachefile = CACHE_DIR / picklename
+    if cachefile.exists() and cachefile.stat().st_mtime >= grammarfile.stat().st_mtime:
+        grammar = Grammar()
+        grammar.load(cachefile)
+        return grammar
+    else:
+        grammar = pgen.generate_grammar(grammarfile)
+        if not CACHE_DIR.exists():
+            CACHE_DIR.mkdir(parents=True)
+        grammar.dump(cachefile)
+        return grammar
+
+
+def filter_grammar(grammar: Grammar, remove_keywords: Iterable[str]) -> Grammar:
+    new_grammar = grammar.copy()
+    for k in remove_keywords:
+        del new_grammar.keywords[k]
+    return new_grammar
+
+
+class PythonSymbols:
+    and_expr: int
+    and_test: int
+    annassign: int
+    arglist: int
+    argument: int
+    arith_expr: int
+    assert_stmt: int
+    async_funcdef: int
+    async_stmt: int
+    atom: int
+    augassign: int
+    break_stmt: int
+    classdef: int
+    comp_for: int
+    comp_if: int
+    comp_iter: int
+    comp_op: int
+    comparison: int
+    compound_stmt: int
+    continue_stmt: int
+    decorated: int
+    decorator: int
+    decorators: int
+    del_stmt: int
+    dictsetmaker: int
+    dotted_as_name: int
+    dotted_as_names: int
+    dotted_name: int
+    encoding_decl: int
+    eval_input: int
+    except_clause: int
+    exec_stmt: int
+    expr: int
+    expr_stmt: int
+    exprlist: int
+    factor: int
+    file_input: int
+    flow_stmt: int
+    for_stmt: int
+    funcdef: int
+    global_stmt: int
+    if_stmt: int
+    import_as_name: int
+    import_as_names: int
+    import_from: int
+    import_name: int
+    import_stmt: int
+    lambdef: int
+    listmaker: int
+    not_test: int
+    old_comp_for: int
+    old_comp_if: int
+    old_comp_iter: int
+    old_lambdef: int
+    old_test: int
+    or_test: int
+    parameters: int
+    pass_stmt: int
+    power: int
+    print_stmt: int
+    raise_stmt: int
+    return_stmt: int
+    shift_expr: int
+    simple_stmt: int
+    single_input: int
+    sliceop: int
+    small_stmt: int
+    star_expr: int
+    stmt: int
+    subscript: int
+    subscriptlist: int
+    suite: int
+    term: int
+    test: int
+    testlist: int
+    testlist1: int
+    testlist_gexp: int
+    testlist_safe: int
+    testlist_star_expr: int
+    tfpdef: int
+    tfplist: int
+    tname: int
+    trailer: int
+    try_stmt: int
+    typedargslist: int
+    varargslist: int
+    vfpdef: int
+    vfplist: int
+    vname: int
+    while_stmt: int
+    with_item: int
+    with_stmt: int
+    with_var: int
+    xor_expr: int
+    yield_arg: int
+    yield_expr: int
+    yield_stmt: int
+
+    def __init__(self, grammar: Grammar) -> None:
+        """Initializer.
+
+        Creates an attribute for each grammar symbol (nonterminal),
+        whose value is the symbol's type (an int >= 256).
+        """
+        for name, symbol in grammar.symbol2number.items():
+            setattr(self, name, symbol)
+
+
+python_grammar = load_grammar(Path(blib2to3.__file__).parent / "Grammar.txt")
+
+GRAMMARS = [
+    # Python 3
+    filter_grammar(python_grammar, ["print", "exec"]),
+    # Python 2 + from __future__ import print_function
+    filter_grammar(python_grammar, ["print"]),
+    # Python 2
+    python_grammar,
+]
+
+
 # types
-syms = pygram.python_symbols
+syms = PythonSymbols(python_grammar)
 FileContent = str
 Encoding = str
 Depth = int
@@ -430,16 +583,8 @@ def format_str(
     return dst_contents
 
 
-GRAMMARS = [
-    pygram.python_grammar_no_print_statement_no_exec_statement,
-    pygram.python_grammar_no_print_statement,
-    pygram.python_grammar,
-]
-
-
 def lib2to3_parse(src_txt: str) -> Node:
     """Given a string with source, return the lib2to3 Node."""
-    grammar = pygram.python_grammar_no_print_statement
     if src_txt[-1] != "\n":
         nl = "\r\n" if "\r\n" in src_txt[:1024] else "\n"
         src_txt += nl
@@ -3049,9 +3194,6 @@ def can_omit_invisible_parens(line: Line, line_length: int) -> bool:
                 seen_other_brackets = True
 
     return False
-
-
-CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 
 
 def get_cache_file(line_length: int) -> Path:
