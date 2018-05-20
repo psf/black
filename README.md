@@ -27,7 +27,7 @@ content instead.
 possible.
 
 
-## Installation and Usage
+## Installation and usage
 
 ### Installation
 
@@ -301,7 +301,7 @@ key.  My recommendation here is to keep using whatever is faster to type
 and let *Black* handle the transformation.
 
 
-### Line Breaks & Binary Operators
+### Line breaks & binary operators
 
 *Black* will break a line before a binary operator when splitting a block
 of code over multiple lines. This is so that *Black* is compliant with the
@@ -431,19 +431,25 @@ Use [proofit404/blacken](https://github.com/proofit404/blacken).
 
 1. Install `black`.
 
-        $ pip install black
+```console
+$ pip install black
+```
 
 2. Locate your `black` installation folder.
 
-  On MacOS / Linux / BSD:
+  On macOS / Linux / BSD:
 
-        $ which black
-        /usr/local/bin/black  # possible location
+```console
+$ which black
+/usr/local/bin/black  # possible location
+```
 
   On Windows:
 
-        $ where black
-        %LocalAppData%\Programs\Python\Python36-32\Scripts\black.exe  # possible location
+```console
+$ where black
+%LocalAppData%\Programs\Python\Python36-32\Scripts\black.exe  # possible location
+```
 
 3. Open External tools in PyCharm with `File -> Settings -> Tools -> External Tools`.
 
@@ -502,7 +508,7 @@ The plugin will use it.
 
 **How to get Vim with Python 3.6?**
 On Ubuntu 17.10 Vim comes with Python 3.6 by default.
-On macOS with HomeBrew run: `brew install vim --with-python3`.
+On macOS with Homebrew run: `brew install vim --with-python3`.
 When building Vim from source, use:
 `./configure --enable-python3interp=yes`. There's many guides online how
 to do this.
