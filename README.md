@@ -654,7 +654,11 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 ### 18.5b1 (unreleased)
 
 * Python grammar pickle caches are stored with the formatting caches, making
-  *Black* work in environments where site-packages is not user-writable (#192).
+  *Black* work in environments where site-packages is not user-writable (#192)
+
+* fixed invalid code produced when standalone comments were present in a trailer
+  that was omitted from line splitting on a large expression (#237)
+
 
 ### 18.5b0
 

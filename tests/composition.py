@@ -32,6 +32,14 @@ class C:
                         # Another
                     ):
                         print(i)
+        xxxxxxxxxxxxxxxx = Yyyy2YyyyyYyyyyy(
+            push_manager=context.request.resource_manager,
+            max_items_to_push=num_items,
+            batch_size=Yyyy2YyyyYyyyyYyyy.FULL_SIZE,
+        ).push(
+            # Only send the first n items.
+            items=items[:num_items]
+        )
         return (
             "Utterly failed doctest test for %s\n"
             '  File "%s", line %s, in %s\n\n%s'

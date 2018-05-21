@@ -2606,6 +2606,9 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
         if length > line_length:
             break
 
+        if leaf.type == STANDALONE_COMMENT:
+            break
+
         optional_brackets.discard(id(leaf))
         if opening_bracket:
             if leaf is opening_bracket:
