@@ -659,6 +659,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * fixed invalid code produced when standalone comments were present in a trailer
   that was omitted from line splitting on a large expression (#237)
 
+* fixed optional parentheses being removed within `# fmt: off` sections (#224)
+
 
 ### 18.5b0
 

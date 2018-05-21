@@ -50,6 +50,11 @@ def long_lines():
         typedargslist.extend(
             gen_annotated_params(ast_args.kwonlyargs, ast_args.kw_defaults, parameters, implicit_default=True)
         )
+        # fmt: off
+        a = (
+            unnecessary_bracket()
+        )
+        # fmt: on
     _type_comment_re = re.compile(
         r"""
         ^
@@ -69,8 +74,10 @@ def long_lines():
             \n?
         )
         $
-        """, re.MULTILINE | re.VERBOSE
+        """, # fmt: off
+        re.MULTILINE | re.VERBOSE
     )
+    # fmt: on
 def single_literal_yapf_disable():
     """Black does not support this."""
     BAZ = {
@@ -163,6 +170,11 @@ def long_lines():
                 implicit_default=True,
             )
         )
+        # fmt: off
+        a = (
+            unnecessary_bracket()
+        )
+        # fmt: on
     _type_comment_re = re.compile(
         r"""
         ^
@@ -182,9 +194,10 @@ def long_lines():
             \n?
         )
         $
-        """,
+        """,  # fmt: off
         re.MULTILINE | re.VERBOSE,
     )
+    # fmt: on
 
 
 def single_literal_yapf_disable():

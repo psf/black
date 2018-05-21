@@ -1820,7 +1820,7 @@ def is_split_before_delimiter(leaf: Leaf, previous: Leaf = None) -> int:
     return 0
 
 
-def generate_comments(leaf: Leaf) -> Iterator[Leaf]:
+def generate_comments(leaf: LN) -> Iterator[Leaf]:
     """Clean the prefix of the `leaf` and generate comments from it, if any.
 
     Comments in lib2to3 are shoved into the whitespace prefix.  This happens
@@ -2337,6 +2337,11 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
     Standardizes on visible parentheses for single-element tuples, and keeps
     existing visible parentheses for other tuples and generator expressions.
     """
+    try:
+        list(generate_comments(node))
+    except FormatOff:
+        return  # This `node` has a prefix with `# fmt: off`, don't mess with parens.
+
     check_lpar = False
     for child in list(node.children):
         if check_lpar:
