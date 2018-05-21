@@ -912,8 +912,13 @@ class Line:
     @property
     def is_docstring(self) -> bool:
         """Is the line a triple quoted docstring?"""
-        return self.leaves[0].type == token.STRING and self.leaves[0].value.startswith(
-            '"""'
+        return (
+            bool(self)
+            and self.leaves[0].type == token.STRING
+            and (
+                self.leaves[0].value.startswith('"""')
+                or self.leaves[0].value.startswith("'''")
+            )
         )
 
     def contains_standalone_comments(self, depth_limit: int = sys.maxsize) -> bool:
