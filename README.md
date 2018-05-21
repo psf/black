@@ -28,7 +28,7 @@ possible.
 
 ---
 
-*Contents:* **[Installation and Usage](#installation-and-usage)** |
+*Contents:* **[Installation and usage](#installation-and-usage)** |
 **[The *Black* code style](#the-black-code-style)** |
 **[Editor integration](#editor-integration)** |
 **[Version control integration](#version-control-integration)** |
