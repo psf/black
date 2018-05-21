@@ -6,6 +6,10 @@ from third_party import X, Y, Z
 
 from library import some_connection, \
                     some_decorator
+# fmt: off
+from third_party import (X,
+                         Y, Z)
+# fmt: on
 f'trigger 3.6 mode'
 # fmt: off
 def func_no_args():
@@ -102,6 +106,10 @@ from third_party import X, Y, Z
 
 from library import some_connection, some_decorator
 
+# fmt: off
+from third_party import (X,
+                         Y, Z)
+# fmt: on
 f"trigger 3.6 mode"
 # fmt: off
 def func_no_args():

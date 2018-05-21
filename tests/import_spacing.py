@@ -24,6 +24,7 @@ from some_library import (
     Just, Enough, Libraries, To, Fit, In, This, Nice, Split, Which, We, No, Longer, Use
 )
 from name_of_a_company.extremely_long_project_name.component.ttypes import CuteLittleServiceHandlerFactoryyy
+from name_of_a_company.extremely_long_project_name.extremely_long_component_name.ttypes import *
 
 from .a.b.c.subprocess import *
 from . import (tasks)
@@ -87,6 +88,7 @@ from some_library import (
 from name_of_a_company.extremely_long_project_name.component.ttypes import (
     CuteLittleServiceHandlerFactoryyy
 )
+from name_of_a_company.extremely_long_project_name.extremely_long_component_name.ttypes import *
 
 from .a.b.c.subprocess import *
 from . import tasks

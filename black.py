@@ -1375,32 +1375,6 @@ class LineGenerator(Visitor[Line]):
             yield from self.line()
             yield from self.visit(child)
 
-    def visit_import_from(self, node: Node) -> Iterator[Line]:
-        """Visit import_from and maybe put invisible parentheses.
-
-        This is separate from `visit_stmt` because import statements don't
-        support arbitrary atoms and thus handling of parentheses is custom.
-        """
-        check_lpar = False
-        for index, child in enumerate(node.children):
-            if check_lpar:
-                if child.type == token.LPAR:
-                    # make parentheses invisible
-                    child.value = ""  # type: ignore
-                    node.children[-1].value = ""  # type: ignore
-                else:
-                    # insert invisible parentheses
-                    node.insert_child(index, Leaf(token.LPAR, ""))
-                    node.append_child(Leaf(token.RPAR, ""))
-                break
-
-            check_lpar = (
-                child.type == token.NAME and child.value == "import"  # type: ignore
-            )
-
-        for child in node.children:
-            yield from self.visit(child)
-
     def visit_SEMI(self, leaf: Leaf) -> Iterator[Line]:
         """Remove a semicolon and put the other statement on a separate line."""
         yield from self.line()
@@ -1447,6 +1421,7 @@ class LineGenerator(Visitor[Line]):
         self.visit_classdef = partial(v, keywords={"class"}, parens=Ø)
         self.visit_expr_stmt = partial(v, keywords=Ø, parens=ASSIGNMENTS)
         self.visit_return_stmt = partial(v, keywords={"return"}, parens={"return"})
+        self.visit_import_from = partial(v, keywords=Ø, parens={"import"})
         self.visit_async_funcdef = self.visit_async_stmt
         self.visit_decorated = self.visit_decorators
 
@@ -2343,7 +2318,7 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
         return  # This `node` has a prefix with `# fmt: off`, don't mess with parens.
 
     check_lpar = False
-    for child in list(node.children):
+    for index, child in enumerate(list(node.children)):
         if check_lpar:
             if child.type == syms.atom:
                 maybe_make_parens_invisible_in_atom(child)
@@ -2351,8 +2326,21 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
                 # wrap child in visible parentheses
                 lpar = Leaf(token.LPAR, "(")
                 rpar = Leaf(token.RPAR, ")")
-                index = child.remove() or 0
+                child.remove()
                 node.insert_child(index, Node(syms.atom, [lpar, child, rpar]))
+            elif node.type == syms.import_from:
+                # "import from" nodes store parentheses directly as part of
+                # the statement
+                if child.type == token.LPAR:
+                    # make parentheses invisible
+                    child.value = ""  # type: ignore
+                    node.children[-1].value = ""  # type: ignore
+                elif child.type != token.STAR:
+                    # insert invisible parentheses
+                    node.insert_child(index, Leaf(token.LPAR, ""))
+                    node.append_child(Leaf(token.RPAR, ""))
+                break
+
             elif not (isinstance(child, Leaf) and is_multiline_string(child)):
                 # wrap child in invisible parentheses
                 lpar = Leaf(token.LPAR, "")

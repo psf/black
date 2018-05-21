@@ -661,6 +661,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * fixed optional parentheses being removed within `# fmt: off` sections (#224)
 
+* fixed invalid code produced when stars in very long imports were incorrectly 
+  wrapped in optional parentheses (#234)
 
 ### 18.5b0
 
