@@ -26,6 +26,21 @@ content instead.
 *Black* makes code review faster by producing the smallest diffs
 possible.
 
+---
+
+*Contents:* **[Installation and Usage](#installation-and-usage)** |
+**[The *Black* code style](#the-black-code-style)** |
+**[Editor integration](#editor-integration)** |
+**[Version control integration](#version-control-integration)** |
+**[Ignoring unmodified files](#ignoring-unmodified-files)** |
+**[Testimonials](#testimonials)** |
+**[Show your style](#show-your-style)** |
+**[License](#license)** |
+**[Contributing](#contributing-to-black)** |
+**[Change Log](#change-log)** |
+**[Authors](#authors)**
+
+---
 
 ## Installation and usage
 
@@ -568,9 +583,9 @@ that is pinned to the latest release on PyPI.  If you'd rather run on
 master, this is also an option.
 
 
-## Ignoring non-modified files
+## Ignoring unmodified files
 
-*Black* remembers files it already formatted, unless the `--diff` flag is used or
+*Black* remembers files it has already formatted, unless the `--diff` flag is used or
 code is passed via standard input. This information is stored per-user. The exact
 location of the file depends on the black version and the system on which black
 is run. The file is non-portable. The standard location on common operating systems
@@ -897,3 +912,18 @@ Multiple contributions by:
 * [Osaetin Daniel](mailto:osaetindaniel@gmail.com)
 * [Sunil Kapil](mailto:snlkapil@gmail.com)
 * [Vishwas B Sharma](mailto:sharma.vishwas88@gmail.com)
+
+---
+
+*Contents:*
+**[Installation and Usage](#installation-and-usage)** |
+**[The *Black* code style](#the-black-code-style)** |
+**[Editor integration](#editor-integration)** |
+**[Version control integration](#version-control-integration)** |
+**[Ignoring unmodified files](#ignoring-unmodified-files)** |
+**[Testimonials](#testimonials)** |
+**[Show your style](#show-your-style)** |
+**[License](#license)** |
+**[Contributing](#contributing-to-black)** |
+**[Change Log](#change-log)** |
+**[Authors](#authors)**
