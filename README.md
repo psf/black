@@ -651,6 +651,11 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Change Log
 
+### 18.5b1 (unreleased)
+
+* Python grammar pickle caches are stored with the formatting caches, making
+  *Black* work in environments where site-packages is not user-writable (#192).
+
 ### 18.5b0
 
 * call chains are now formatted according to the
