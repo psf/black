@@ -2599,7 +2599,8 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
         if length > line_length:
             break
 
-        if leaf.type == STANDALONE_COMMENT:
+        has_inline_comment = leaf_length > len(leaf.value) + len(leaf.prefix)
+        if leaf.type == STANDALONE_COMMENT or has_inline_comment:
             break
 
         optional_brackets.discard(id(leaf))
@@ -2940,9 +2941,6 @@ def enumerate_with_length(
 
         comment: Optional[Leaf]
         for comment in line.comments_after(leaf, index):
-            if "\n" in comment.prefix:
-                return  # Oops, standalone comment!
-
             length += len(comment.value)
 
         yield index, leaf, length
