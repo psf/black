@@ -219,22 +219,30 @@ def main(
         return
 
     elif len(sources) == 1:
-        reformat_one(sources[0], line_length, fast, pyi, py36, write_back, report)
+        reformat_one(
+            src=sources[0],
+            line_length=line_length,
+            fast=fast,
+            pyi=pyi,
+            py36=py36,
+            write_back=write_back,
+            report=report,
+        )
     else:
         loop = asyncio.get_event_loop()
         executor = ProcessPoolExecutor(max_workers=os.cpu_count())
         try:
             loop.run_until_complete(
                 schedule_formatting(
-                    sources,
-                    line_length,
-                    fast,
-                    pyi,
-                    py36,
-                    write_back,
-                    report,
-                    loop,
-                    executor,
+                    sources=sources,
+                    line_length=line_length,
+                    fast=fast,
+                    pyi=pyi,
+                    py36=py36,
+                    write_back=write_back,
+                    report=report,
+                    loop=loop,
+                    executor=executor,
                 )
             )
         finally:
