@@ -22,7 +22,6 @@ class ClassSimplest:
 
 
 class ClassWithInit:
-
     def __init__(self):
         pass
 

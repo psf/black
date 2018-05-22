@@ -1181,6 +1181,12 @@ class EmptyLineTracker:
                 return 0, 0
 
             if (
+                self.previous_line.is_class
+                and self.previous_line.depth != current_line.depth
+            ):
+                return 0, 0
+
+            if (
                 self.previous_line.is_comment
                 and self.previous_line.depth == current_line.depth
                 and before == 0

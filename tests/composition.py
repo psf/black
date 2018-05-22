@@ -1,5 +1,4 @@
 class C:
-
     def test(self) -> None:
         with patch("black.out", print):
             self.assertEqual(

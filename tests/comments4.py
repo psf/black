@@ -1,5 +1,4 @@
 class C:
-
     @pytest.mark.parametrize(
         ("post_data", "message"),
         [
