@@ -910,7 +910,7 @@ class Line:
         )
 
     @property
-    def is_docstring(self) -> bool:
+    def is_triple_quoted_string(self) -> bool:
         """Is the line a triple quoted docstring?"""
         return (
             bool(self)
@@ -1214,7 +1214,7 @@ class EmptyLineTracker:
         if (
             self.previous_line
             and self.previous_line.is_class
-            and current_line.is_docstring
+            and current_line.is_triple_quoted_string
         ):
             return before, 1
 
