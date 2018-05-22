@@ -678,6 +678,7 @@ class BlackTestCase(unittest.TestCase):
             mock.side_effect = OSError
             black.write_cache({}, [], black.DEFAULT_LINE_LENGTH)
 
+    @event_loop(close=False)
     def test_check_diff_use_together(self) -> None:
         with cache_dir():
             # Files which will be reformatted.
@@ -694,7 +695,7 @@ class BlackTestCase(unittest.TestCase):
             result = CliRunner().invoke(
                 black.main, [str(src1), str(src2), "--diff", "--check"]
             )
-            self.assertEqual(result.exit_code, 1)
+            self.assertEqual(result.exit_code, 1, result.output)
 
     def test_no_files(self) -> None:
         with cache_dir():
@@ -719,9 +720,42 @@ class BlackTestCase(unittest.TestCase):
             two = black.read_cache(2)
             self.assertNotIn(path, two)
 
-    def test_pipe_force_pyi_mode(self) -> None:
+    def test_single_file_force_pyi(self) -> None:
+        contents = "def f(): ...\n\ndef g(): ...\n"
+        expected = contents.replace("\n\n", "\n")
+        with cache_dir() as workspace:
+            path = (workspace / "file.py").resolve()
+            with open(path, "w") as fh:
+                fh.write(contents)
+            result = CliRunner().invoke(black.main, [str(path), "--pyi"])
+            self.assertEqual(result.exit_code, 0)
+            with open(path, "r") as fh:
+                actual = fh.read()
+        self.assertEqual(actual, expected)
+
+    @event_loop(close=False)
+    def test_multi_file_force_pyi(self) -> None:
+        contents = "def f(): ...\n\ndef g(): ...\n"
+        expected = contents.replace("\n\n", "\n")
+        with cache_dir() as workspace:
+            paths = [
+                (workspace / "file1.py").resolve(),
+                (workspace / "file2.py").resolve(),
+            ]
+            for path in paths:
+                with open(path, "w") as fh:
+                    fh.write(contents)
+            result = CliRunner().invoke(black.main, [str(p) for p in paths] + ["--pyi"])
+            self.assertEqual(result.exit_code, 0, result.exception)
+            for path in paths:
+                with open(path, "r") as fh:
+                    actual = fh.read()
+                self.assertEqual(actual, expected)
+
+    def test_pipe_force_pyi(self) -> None:
         source, expected = read_data("stub.pyi")
         result = CliRunner().invoke(black.main, ["-", "-q", "--pyi"], input=source)
+        self.assertEqual(result.exit_code, 0, result.exception)
         actual = result.output
         self.assertFormatEqual(expected, actual)
 

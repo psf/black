@@ -162,7 +162,7 @@ class Changed(Enum):
 @click.option(
     "--pyi",
     is_flag=True,
-    help="Force pyi (stub file) formatting when piping source to black.",
+    help="Force pyi (stub file) formatting, regardless of file extension.",
 )
 @click.version_option(version=__version__)
 @click.argument(
@@ -217,7 +217,7 @@ def main(
         try:
             loop.run_until_complete(
                 schedule_formatting(
-                    sources, line_length, fast, write_back, report, loop, executor
+                    sources, line_length, fast, pyi, write_back, report, loop, executor
                 )
             )
         finally:
@@ -257,7 +257,11 @@ def reformat_one(
                 if src in cache and cache[src] == get_cache_info(src):
                     changed = Changed.CACHED
             if changed is not Changed.CACHED and format_file_in_place(
-                src, line_length=line_length, fast=fast, write_back=write_back
+                src,
+                line_length=line_length,
+                fast=fast,
+                force_pyi=pyi,
+                write_back=write_back,
             ):
                 changed = Changed.YES
             if write_back == WriteBack.YES and changed is not Changed.NO:
@@ -271,6 +275,7 @@ async def schedule_formatting(
     sources: List[Path],
     line_length: int,
     fast: bool,
+    pyi: bool,
     write_back: WriteBack,
     report: "Report",
     loop: BaseEventLoop,
@@ -280,7 +285,7 @@ async def schedule_formatting(
 
     (Use ProcessPoolExecutors for actual parallelism.)
 
-    `line_length`, `write_back`, and `fast` options are passed to
+    `line_length`, `write_back`, `fast`, and `pyi` options are passed to
     :func:`format_file_in_place`.
     """
     cache: Cache = {}
@@ -300,7 +305,14 @@ async def schedule_formatting(
             lock = manager.Lock()
         tasks = {
             loop.run_in_executor(
-                executor, format_file_in_place, src, line_length, fast, write_back, lock
+                executor,
+                format_file_in_place,
+                src,
+                line_length,
+                fast,
+                pyi,
+                write_back,
+                lock,
             ): src
             for src in sorted(sources)
         }
@@ -332,6 +344,7 @@ def format_file_in_place(
     src: Path,
     line_length: int,
     fast: bool,
+    force_pyi: bool = False,
     write_back: WriteBack = WriteBack.NO,
     lock: Any = None,  # multiprocessing.Manager().Lock() is some crazy proxy
 ) -> bool:
@@ -340,7 +353,7 @@ def format_file_in_place(
     If `write_back` is True, write reformatted code back to stdout.
     `line_length` and `fast` options are passed to :func:`format_file_contents`.
     """
-    is_pyi = src.suffix == ".pyi"
+    is_pyi = force_pyi or src.suffix == ".pyi"
 
     with tokenize.open(src) as src_buffer:
         src_contents = src_buffer.read()
