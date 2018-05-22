@@ -252,7 +252,7 @@ def reformat_one(
         else:
             cache: Cache = {}
             if write_back != WriteBack.DIFF:
-                cache = read_cache(line_length)
+                cache = read_cache(line_length, pyi)
                 src = src.resolve()
                 if src in cache and cache[src] == get_cache_info(src):
                     changed = Changed.CACHED
@@ -265,7 +265,7 @@ def reformat_one(
             ):
                 changed = Changed.YES
             if write_back == WriteBack.YES and changed is not Changed.NO:
-                write_cache(cache, [src], line_length)
+                write_cache(cache, [src], line_length, pyi)
         report.done(src, changed)
     except Exception as exc:
         report.failed(src, str(exc))
@@ -290,7 +290,7 @@ async def schedule_formatting(
     """
     cache: Cache = {}
     if write_back != WriteBack.DIFF:
-        cache = read_cache(line_length)
+        cache = read_cache(line_length, pyi)
         sources, cached = filter_cached(cache, sources)
         for src in cached:
             report.done(src, Changed.CACHED)
@@ -337,7 +337,7 @@ async def schedule_formatting(
     if cancelled:
         await asyncio.gather(*cancelled, loop=loop, return_exceptions=True)
     if write_back == WriteBack.YES and formatted:
-        write_cache(cache, formatted, line_length)
+        write_cache(cache, formatted, line_length, pyi)
 
 
 def format_file_in_place(
@@ -3080,16 +3080,16 @@ def can_omit_invisible_parens(line: Line, line_length: int) -> bool:
     return False
 
 
-def get_cache_file(line_length: int) -> Path:
-    return CACHE_DIR / f"cache.{line_length}.pickle"
+def get_cache_file(line_length: int, pyi: bool = False) -> Path:
+    return CACHE_DIR / f"cache.{line_length}{'.pyi' if pyi else ''}.pickle"
 
 
-def read_cache(line_length: int) -> Cache:
+def read_cache(line_length: int, pyi: bool = False) -> Cache:
     """Read the cache if it exists and is well formed.
 
     If it is not well formed, the call to write_cache later should resolve the issue.
     """
-    cache_file = get_cache_file(line_length)
+    cache_file = get_cache_file(line_length, pyi)
     if not cache_file.exists():
         return {}
 
@@ -3126,9 +3126,11 @@ def filter_cached(
     return todo, done
 
 
-def write_cache(cache: Cache, sources: List[Path], line_length: int) -> None:
+def write_cache(
+    cache: Cache, sources: List[Path], line_length: int, pyi: bool = False
+) -> None:
     """Update the cache file."""
-    cache_file = get_cache_file(line_length)
+    cache_file = get_cache_file(line_length, pyi)
     try:
         if not CACHE_DIR.exists():
             CACHE_DIR.mkdir(parents=True)

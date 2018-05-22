@@ -731,6 +731,11 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(result.exit_code, 0)
             with open(path, "r") as fh:
                 actual = fh.read()
+            # verify cache with --pyi is separate
+            pyi_cache = black.read_cache(black.DEFAULT_LINE_LENGTH, pyi=True)
+            self.assertIn(path, pyi_cache)
+            normal_cache = black.read_cache(black.DEFAULT_LINE_LENGTH)
+            self.assertNotIn(path, normal_cache)
         self.assertEqual(actual, expected)
 
     @event_loop(close=False)
@@ -751,6 +756,12 @@ class BlackTestCase(unittest.TestCase):
                 with open(path, "r") as fh:
                     actual = fh.read()
                 self.assertEqual(actual, expected)
+            # verify cache with --pyi is separate
+            pyi_cache = black.read_cache(black.DEFAULT_LINE_LENGTH, pyi=True)
+            normal_cache = black.read_cache(black.DEFAULT_LINE_LENGTH)
+            for path in paths:
+                self.assertIn(path, pyi_cache)
+                self.assertNotIn(path, normal_cache)
 
     def test_pipe_force_pyi(self) -> None:
         source, expected = read_data("stub.pyi")
