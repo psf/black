@@ -159,6 +159,11 @@ class Changed(Enum):
         "silence those with 2>/dev/null."
     ),
 )
+@click.option(
+    "--pyi",
+    is_flag=True,
+    help="Force pyi (stub file) formatting when piping source to black.",
+)
 @click.version_option(version=__version__)
 @click.argument(
     "src",
@@ -174,6 +179,7 @@ def main(
     check: bool,
     diff: bool,
     fast: bool,
+    pyi: bool,
     quiet: bool,
     src: List[str],
 ) -> None:
@@ -204,7 +210,7 @@ def main(
         return
 
     elif len(sources) == 1:
-        reformat_one(sources[0], line_length, fast, write_back, report)
+        reformat_one(sources[0], line_length, fast, pyi, write_back, report)
     else:
         loop = asyncio.get_event_loop()
         executor = ProcessPoolExecutor(max_workers=os.cpu_count())
@@ -223,18 +229,24 @@ def main(
 
 
 def reformat_one(
-    src: Path, line_length: int, fast: bool, write_back: WriteBack, report: "Report"
+    src: Path,
+    line_length: int,
+    fast: bool,
+    pyi: bool,
+    write_back: WriteBack,
+    report: "Report",
 ) -> None:
     """Reformat a single file under `src` without spawning child processes.
 
     If `quiet` is True, non-error messages are not output. `line_length`,
-    `write_back`, and `fast` options are passed to :func:`format_file_in_place`.
+    `write_back`, `fast` and `pyi` options are passed to
+    :func:`format_file_in_place` or :func:`format_stdin_to_stdout`.
     """
     try:
         changed = Changed.NO
         if not src.is_file() and str(src) == "-":
             if format_stdin_to_stdout(
-                line_length=line_length, fast=fast, write_back=write_back
+                line_length=line_length, fast=fast, is_pyi=pyi, write_back=write_back
             ):
                 changed = Changed.YES
         else:
@@ -357,17 +369,23 @@ def format_file_in_place(
 
 
 def format_stdin_to_stdout(
-    line_length: int, fast: bool, write_back: WriteBack = WriteBack.NO
+    line_length: int,
+    fast: bool,
+    is_pyi: bool = False,
+    write_back: WriteBack = WriteBack.NO,
 ) -> bool:
     """Format file on stdin. Return True if changed.
 
     If `write_back` is True, write reformatted code back to stdout.
-    `line_length` and `fast` arguments are passed to :func:`format_file_contents`.
+    `line_length`, `fast` and `is_pyi` arguments are passed to
+    :func:`format_file_contents`.
     """
     src = sys.stdin.read()
     dst = src
     try:
-        dst = format_file_contents(src, line_length=line_length, fast=fast)
+        dst = format_file_contents(
+            src, line_length=line_length, fast=fast, is_pyi=is_pyi
+        )
         return True
 
     except NothingChanged:

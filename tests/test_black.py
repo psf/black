@@ -719,6 +719,12 @@ class BlackTestCase(unittest.TestCase):
             two = black.read_cache(2)
             self.assertNotIn(path, two)
 
+    def test_pipe_force_pyi_mode(self) -> None:
+        source, expected = read_data("stub.pyi")
+        result = CliRunner().invoke(black.main, ["-", "-q", "--pyi"], input=source)
+        actual = result.output
+        self.assertFormatEqual(expected, actual)
+
 
 if __name__ == "__main__":
     unittest.main()
