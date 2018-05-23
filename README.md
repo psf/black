@@ -80,6 +80,13 @@ Options:
   -q, --quiet                 Don't emit non-error messages to stderr. Errors
                               are still emitted, silence those with
                               2>/dev/null.
+   --pyi                      Consider all input files typing stubs regardless
+                              of file extension (useful when piping source on
+                              standard input).
+  --py36                      Allow using Python 3.6-only syntax on all input
+                              files.  This will put trailing commas in function
+                              signatures and calls also after *args and
+                              **kwargs.  [default: per-file auto-detection]
   --version                   Show the version and exit.
   --help                      Show this message and exit.
 ```
@@ -653,10 +660,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ### 18.5b1 (unreleased)
 
-* Added `--pyi` option to force pyi-style formatting (regardless of file
-  extension, or when piping source to *Black*), and `--py36` option to force
-  allowing Py36 syntax (e.g. trailing commas after `*args` or `**kwargs`), even
-  if the file doesn't currently use any 3.6-only syntax (#249)
+* added `--pyi` (#249)
+
+* added `--py36` (#249)
 
 * Python grammar pickle caches are stored with the formatting caches, making
   *Black* work in environments where site-packages is not user-writable (#192)
@@ -672,6 +678,7 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * fixed unstable formatting when inline comments were moved around in
   a trailer that was omitted from line splitting on a large expression
   (#238)
+
 
 ### 18.5b0
 

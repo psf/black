@@ -162,14 +162,18 @@ class Changed(Enum):
 @click.option(
     "--pyi",
     is_flag=True,
-    help="Force pyi (stub file) formatting, regardless of file extension.",
+    help=(
+        "Consider all input files typing stubs regardless of file extension "
+        "(useful when piping source on standard input)."
+    ),
 )
 @click.option(
     "--py36",
     is_flag=True,
     help=(
-        "Force Python 3.6 mode, even if file doesn't currently use "
-        "Python 3.6-only syntax."
+        "Allow using Python 3.6-only syntax on all input files.  This will put "
+        "trailing commas in function signatures and calls also after *args and "
+        "**kwargs.  [default: per-file auto-detection]"
     ),
 )
 @click.version_option(version=__version__)
