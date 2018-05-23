@@ -678,6 +678,7 @@ class BlackTestCase(unittest.TestCase):
             mock.side_effect = OSError
             black.write_cache({}, [], black.DEFAULT_LINE_LENGTH)
 
+    @event_loop(close=False)
     def test_check_diff_use_together(self) -> None:
         with cache_dir():
             # Files which will be reformatted.
@@ -694,7 +695,7 @@ class BlackTestCase(unittest.TestCase):
             result = CliRunner().invoke(
                 black.main, [str(src1), str(src2), "--diff", "--check"]
             )
-            self.assertEqual(result.exit_code, 1)
+            self.assertEqual(result.exit_code, 1, result.output)
 
     def test_no_files(self) -> None:
         with cache_dir():
@@ -718,6 +719,104 @@ class BlackTestCase(unittest.TestCase):
             self.assertIn(path, one)
             two = black.read_cache(2)
             self.assertNotIn(path, two)
+
+    def test_single_file_force_pyi(self) -> None:
+        contents, expected = read_data("force_pyi")
+        with cache_dir() as workspace:
+            path = (workspace / "file.py").resolve()
+            with open(path, "w") as fh:
+                fh.write(contents)
+            result = CliRunner().invoke(black.main, [str(path), "--pyi"])
+            self.assertEqual(result.exit_code, 0)
+            with open(path, "r") as fh:
+                actual = fh.read()
+            # verify cache with --pyi is separate
+            pyi_cache = black.read_cache(black.DEFAULT_LINE_LENGTH, pyi=True)
+            self.assertIn(path, pyi_cache)
+            normal_cache = black.read_cache(black.DEFAULT_LINE_LENGTH)
+            self.assertNotIn(path, normal_cache)
+        self.assertEqual(actual, expected)
+
+    @event_loop(close=False)
+    def test_multi_file_force_pyi(self) -> None:
+        contents, expected = read_data("force_pyi")
+        with cache_dir() as workspace:
+            paths = [
+                (workspace / "file1.py").resolve(),
+                (workspace / "file2.py").resolve(),
+            ]
+            for path in paths:
+                with open(path, "w") as fh:
+                    fh.write(contents)
+            result = CliRunner().invoke(black.main, [str(p) for p in paths] + ["--pyi"])
+            self.assertEqual(result.exit_code, 0)
+            for path in paths:
+                with open(path, "r") as fh:
+                    actual = fh.read()
+                self.assertEqual(actual, expected)
+            # verify cache with --pyi is separate
+            pyi_cache = black.read_cache(black.DEFAULT_LINE_LENGTH, pyi=True)
+            normal_cache = black.read_cache(black.DEFAULT_LINE_LENGTH)
+            for path in paths:
+                self.assertIn(path, pyi_cache)
+                self.assertNotIn(path, normal_cache)
+
+    def test_pipe_force_pyi(self) -> None:
+        source, expected = read_data("force_pyi")
+        result = CliRunner().invoke(black.main, ["-", "-q", "--pyi"], input=source)
+        self.assertEqual(result.exit_code, 0)
+        actual = result.output
+        self.assertFormatEqual(actual, expected)
+
+    def test_single_file_force_py36(self) -> None:
+        source, expected = read_data("force_py36")
+        with cache_dir() as workspace:
+            path = (workspace / "file.py").resolve()
+            with open(path, "w") as fh:
+                fh.write(source)
+            result = CliRunner().invoke(black.main, [str(path), "--py36"])
+            self.assertEqual(result.exit_code, 0)
+            with open(path, "r") as fh:
+                actual = fh.read()
+            # verify cache with --py36 is separate
+            py36_cache = black.read_cache(black.DEFAULT_LINE_LENGTH, py36=True)
+            self.assertIn(path, py36_cache)
+            normal_cache = black.read_cache(black.DEFAULT_LINE_LENGTH)
+            self.assertNotIn(path, normal_cache)
+        self.assertEqual(actual, expected)
+
+    @event_loop(close=False)
+    def test_multi_file_force_py36(self) -> None:
+        source, expected = read_data("force_py36")
+        with cache_dir() as workspace:
+            paths = [
+                (workspace / "file1.py").resolve(),
+                (workspace / "file2.py").resolve(),
+            ]
+            for path in paths:
+                with open(path, "w") as fh:
+                    fh.write(source)
+            result = CliRunner().invoke(
+                black.main, [str(p) for p in paths] + ["--py36"]
+            )
+            self.assertEqual(result.exit_code, 0)
+            for path in paths:
+                with open(path, "r") as fh:
+                    actual = fh.read()
+                self.assertEqual(actual, expected)
+            # verify cache with --py36 is separate
+            pyi_cache = black.read_cache(black.DEFAULT_LINE_LENGTH, py36=True)
+            normal_cache = black.read_cache(black.DEFAULT_LINE_LENGTH)
+            for path in paths:
+                self.assertIn(path, pyi_cache)
+                self.assertNotIn(path, normal_cache)
+
+    def test_pipe_force_py36(self) -> None:
+        source, expected = read_data("force_py36")
+        result = CliRunner().invoke(black.main, ["-", "-q", "--py36"], input=source)
+        self.assertEqual(result.exit_code, 0)
+        actual = result.output
+        self.assertFormatEqual(actual, expected)
 
 
 if __name__ == "__main__":

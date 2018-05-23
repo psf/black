@@ -159,6 +159,19 @@ class Changed(Enum):
         "silence those with 2>/dev/null."
     ),
 )
+@click.option(
+    "--pyi",
+    is_flag=True,
+    help="Force pyi (stub file) formatting, regardless of file extension.",
+)
+@click.option(
+    "--py36",
+    is_flag=True,
+    help=(
+        "Force Python 3.6 mode, even if file doesn't currently use "
+        "Python 3.6-only syntax."
+    ),
+)
 @click.version_option(version=__version__)
 @click.argument(
     "src",
@@ -174,6 +187,8 @@ def main(
     check: bool,
     diff: bool,
     fast: bool,
+    pyi: bool,
+    py36: bool,
     quiet: bool,
     src: List[str],
 ) -> None:
@@ -204,14 +219,30 @@ def main(
         return
 
     elif len(sources) == 1:
-        reformat_one(sources[0], line_length, fast, write_back, report)
+        reformat_one(
+            src=sources[0],
+            line_length=line_length,
+            fast=fast,
+            pyi=pyi,
+            py36=py36,
+            write_back=write_back,
+            report=report,
+        )
     else:
         loop = asyncio.get_event_loop()
         executor = ProcessPoolExecutor(max_workers=os.cpu_count())
         try:
             loop.run_until_complete(
                 schedule_formatting(
-                    sources, line_length, fast, write_back, report, loop, executor
+                    sources=sources,
+                    line_length=line_length,
+                    fast=fast,
+                    pyi=pyi,
+                    py36=py36,
+                    write_back=write_back,
+                    report=report,
+                    loop=loop,
+                    executor=executor,
                 )
             )
         finally:
@@ -223,33 +254,49 @@ def main(
 
 
 def reformat_one(
-    src: Path, line_length: int, fast: bool, write_back: WriteBack, report: "Report"
+    src: Path,
+    line_length: int,
+    fast: bool,
+    pyi: bool,
+    py36: bool,
+    write_back: WriteBack,
+    report: "Report",
 ) -> None:
     """Reformat a single file under `src` without spawning child processes.
 
     If `quiet` is True, non-error messages are not output. `line_length`,
-    `write_back`, and `fast` options are passed to :func:`format_file_in_place`.
+    `write_back`, `fast` and `pyi` options are passed to
+    :func:`format_file_in_place` or :func:`format_stdin_to_stdout`.
     """
     try:
         changed = Changed.NO
         if not src.is_file() and str(src) == "-":
             if format_stdin_to_stdout(
-                line_length=line_length, fast=fast, write_back=write_back
+                line_length=line_length,
+                fast=fast,
+                is_pyi=pyi,
+                force_py36=py36,
+                write_back=write_back,
             ):
                 changed = Changed.YES
         else:
             cache: Cache = {}
             if write_back != WriteBack.DIFF:
-                cache = read_cache(line_length)
+                cache = read_cache(line_length, pyi, py36)
                 src = src.resolve()
                 if src in cache and cache[src] == get_cache_info(src):
                     changed = Changed.CACHED
             if changed is not Changed.CACHED and format_file_in_place(
-                src, line_length=line_length, fast=fast, write_back=write_back
+                src,
+                line_length=line_length,
+                fast=fast,
+                force_pyi=pyi,
+                force_py36=py36,
+                write_back=write_back,
             ):
                 changed = Changed.YES
             if write_back == WriteBack.YES and changed is not Changed.NO:
-                write_cache(cache, [src], line_length)
+                write_cache(cache, [src], line_length, pyi, py36)
         report.done(src, changed)
     except Exception as exc:
         report.failed(src, str(exc))
@@ -259,6 +306,8 @@ async def schedule_formatting(
     sources: List[Path],
     line_length: int,
     fast: bool,
+    pyi: bool,
+    py36: bool,
     write_back: WriteBack,
     report: "Report",
     loop: BaseEventLoop,
@@ -268,12 +317,12 @@ async def schedule_formatting(
 
     (Use ProcessPoolExecutors for actual parallelism.)
 
-    `line_length`, `write_back`, and `fast` options are passed to
+    `line_length`, `write_back`, `fast`, and `pyi` options are passed to
     :func:`format_file_in_place`.
     """
     cache: Cache = {}
     if write_back != WriteBack.DIFF:
-        cache = read_cache(line_length)
+        cache = read_cache(line_length, pyi, py36)
         sources, cached = filter_cached(cache, sources)
         for src in cached:
             report.done(src, Changed.CACHED)
@@ -288,7 +337,15 @@ async def schedule_formatting(
             lock = manager.Lock()
         tasks = {
             loop.run_in_executor(
-                executor, format_file_in_place, src, line_length, fast, write_back, lock
+                executor,
+                format_file_in_place,
+                src,
+                line_length,
+                fast,
+                pyi,
+                py36,
+                write_back,
+                lock,
             ): src
             for src in sorted(sources)
         }
@@ -313,13 +370,15 @@ async def schedule_formatting(
     if cancelled:
         await asyncio.gather(*cancelled, loop=loop, return_exceptions=True)
     if write_back == WriteBack.YES and formatted:
-        write_cache(cache, formatted, line_length)
+        write_cache(cache, formatted, line_length, pyi, py36)
 
 
 def format_file_in_place(
     src: Path,
     line_length: int,
     fast: bool,
+    force_pyi: bool = False,
+    force_py36: bool = False,
     write_back: WriteBack = WriteBack.NO,
     lock: Any = None,  # multiprocessing.Manager().Lock() is some crazy proxy
 ) -> bool:
@@ -328,13 +387,17 @@ def format_file_in_place(
     If `write_back` is True, write reformatted code back to stdout.
     `line_length` and `fast` options are passed to :func:`format_file_contents`.
     """
-    is_pyi = src.suffix == ".pyi"
+    is_pyi = force_pyi or src.suffix == ".pyi"
 
     with tokenize.open(src) as src_buffer:
         src_contents = src_buffer.read()
     try:
         dst_contents = format_file_contents(
-            src_contents, line_length=line_length, fast=fast, is_pyi=is_pyi
+            src_contents,
+            line_length=line_length,
+            fast=fast,
+            is_pyi=is_pyi,
+            force_py36=force_py36,
         )
     except NothingChanged:
         return False
@@ -357,17 +420,28 @@ def format_file_in_place(
 
 
 def format_stdin_to_stdout(
-    line_length: int, fast: bool, write_back: WriteBack = WriteBack.NO
+    line_length: int,
+    fast: bool,
+    is_pyi: bool = False,
+    force_py36: bool = False,
+    write_back: WriteBack = WriteBack.NO,
 ) -> bool:
     """Format file on stdin. Return True if changed.
 
     If `write_back` is True, write reformatted code back to stdout.
-    `line_length` and `fast` arguments are passed to :func:`format_file_contents`.
+    `line_length`, `fast`, `is_pyi`, and `force_py36` arguments are passed to
+    :func:`format_file_contents`.
     """
     src = sys.stdin.read()
     dst = src
     try:
-        dst = format_file_contents(src, line_length=line_length, fast=fast)
+        dst = format_file_contents(
+            src,
+            line_length=line_length,
+            fast=fast,
+            is_pyi=is_pyi,
+            force_py36=force_py36,
+        )
         return True
 
     except NothingChanged:
@@ -383,7 +457,12 @@ def format_stdin_to_stdout(
 
 
 def format_file_contents(
-    src_contents: str, *, line_length: int, fast: bool, is_pyi: bool = False
+    src_contents: str,
+    *,
+    line_length: int,
+    fast: bool,
+    is_pyi: bool = False,
+    force_py36: bool = False,
 ) -> FileContent:
     """Reformat contents a file and return new contents.
 
@@ -394,20 +473,30 @@ def format_file_contents(
     if src_contents.strip() == "":
         raise NothingChanged
 
-    dst_contents = format_str(src_contents, line_length=line_length, is_pyi=is_pyi)
+    dst_contents = format_str(
+        src_contents, line_length=line_length, is_pyi=is_pyi, force_py36=force_py36
+    )
     if src_contents == dst_contents:
         raise NothingChanged
 
     if not fast:
         assert_equivalent(src_contents, dst_contents)
         assert_stable(
-            src_contents, dst_contents, line_length=line_length, is_pyi=is_pyi
+            src_contents,
+            dst_contents,
+            line_length=line_length,
+            is_pyi=is_pyi,
+            force_py36=force_py36,
         )
     return dst_contents
 
 
 def format_str(
-    src_contents: str, line_length: int, *, is_pyi: bool = False
+    src_contents: str,
+    line_length: int,
+    *,
+    is_pyi: bool = False,
+    force_py36: bool = False,
 ) -> FileContent:
     """Reformat a string and return new contents.
 
@@ -417,7 +506,7 @@ def format_str(
     dst_contents = ""
     future_imports = get_future_imports(src_node)
     elt = EmptyLineTracker(is_pyi=is_pyi)
-    py36 = is_python36(src_node)
+    py36 = force_py36 or is_python36(src_node)
     lines = LineGenerator(
         remove_u_prefix=py36 or "unicode_literals" in future_imports, is_pyi=is_pyi
     )
@@ -2836,9 +2925,13 @@ def assert_equivalent(src: str, dst: str) -> None:
         ) from None
 
 
-def assert_stable(src: str, dst: str, line_length: int, is_pyi: bool = False) -> None:
+def assert_stable(
+    src: str, dst: str, line_length: int, is_pyi: bool = False, force_py36: bool = False
+) -> None:
     """Raise AssertionError if `dst` reformats differently the second time."""
-    newdst = format_str(dst, line_length=line_length, is_pyi=is_pyi)
+    newdst = format_str(
+        dst, line_length=line_length, is_pyi=is_pyi, force_py36=force_py36
+    )
     if dst != newdst:
         log = dump_to_file(
             diff(src, dst, "source", "first pass"),
@@ -3049,16 +3142,19 @@ def can_omit_invisible_parens(line: Line, line_length: int) -> bool:
     return False
 
 
-def get_cache_file(line_length: int) -> Path:
-    return CACHE_DIR / f"cache.{line_length}.pickle"
+def get_cache_file(line_length: int, pyi: bool = False, py36: bool = False) -> Path:
+    return (
+        CACHE_DIR
+        / f"cache.{line_length}{'.pyi' if pyi else ''}{'.py36' if py36 else ''}.pickle"
+    )
 
 
-def read_cache(line_length: int) -> Cache:
+def read_cache(line_length: int, pyi: bool = False, py36: bool = False) -> Cache:
     """Read the cache if it exists and is well formed.
 
     If it is not well formed, the call to write_cache later should resolve the issue.
     """
-    cache_file = get_cache_file(line_length)
+    cache_file = get_cache_file(line_length, pyi, py36)
     if not cache_file.exists():
         return {}
 
@@ -3095,9 +3191,15 @@ def filter_cached(
     return todo, done
 
 
-def write_cache(cache: Cache, sources: List[Path], line_length: int) -> None:
+def write_cache(
+    cache: Cache,
+    sources: List[Path],
+    line_length: int,
+    pyi: bool = False,
+    py36: bool = False,
+) -> None:
     """Update the cache file."""
-    cache_file = get_cache_file(line_length)
+    cache_file = get_cache_file(line_length, pyi, py36)
     try:
         if not CACHE_DIR.exists():
             CACHE_DIR.mkdir(parents=True)
