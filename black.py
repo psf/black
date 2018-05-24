@@ -972,27 +972,6 @@ class Line:
         )
 
     @property
-    def is_flow_control(self) -> bool:
-        """Is this line a flow control statement?
-
-        Those are `return`, `raise`, `break`, and `continue`.
-        """
-        return (
-            bool(self)
-            and self.leaves[0].type == token.NAME
-            and self.leaves[0].value in FLOW_CONTROL
-        )
-
-    @property
-    def is_yield(self) -> bool:
-        """Is this line a yield statement?"""
-        return (
-            bool(self)
-            and self.leaves[0].type == token.NAME
-            and self.leaves[0].value == "yield"
-        )
-
-    @property
     def is_class_paren_empty(self) -> bool:
         """Is this a class with no base classes but using parentheses?
 
@@ -1224,8 +1203,7 @@ class EmptyLineTracker:
         """Return the number of extra empty lines before and after the `current_line`.
 
         This is for separating `def`, `async def` and `class` with extra empty
-        lines (two on module-level), as well as providing an extra empty line
-        after flow control keywords to make them more prominent.
+        lines (two on module-level).
         """
         if isinstance(current_line, UnformattedLines):
             return 0, 0
