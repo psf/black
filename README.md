@@ -528,7 +528,7 @@ install *Black* (for example you want to run a version from master),
 create a virtualenv manually and point `g:black_virtualenv` to it.
 The plugin will use it.
 
-To run black on save, add the following line to `.vimrc` or `init.vim`:
+To run *Black* on save, add the following line to `.vimrc` or `init.vim`:
 
 ```
 autocmd BufWritePost *.py execute ':Black'
