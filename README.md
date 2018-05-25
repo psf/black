@@ -528,6 +528,12 @@ install *Black* (for example you want to run a version from master),
 create a virtualenv manually and point `g:black_virtualenv` to it.
 The plugin will use it.
 
+To run black on save, add the following line to `.vimrc` or `init.vim`:
+
+```
+autocmd BufWritePost *.py execute ':Black'
+```
+
 **How to get Vim with Python 3.6?**
 On Ubuntu 17.10 Vim comes with Python 3.6 by default.
 On macOS with Homebrew run: `brew install vim --with-python3`.
