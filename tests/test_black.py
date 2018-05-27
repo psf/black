@@ -11,6 +11,7 @@ from tempfile import TemporaryDirectory
 from typing import Any, List, Tuple, Iterator
 import unittest
 from unittest.mock import patch
+import re
 
 from click import unstyle
 from click.testing import CliRunner
@@ -850,6 +851,18 @@ class BlackTestCase(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
         actual = result.output
         self.assertFormatEqual(actual, expected)
+
+    def test_include_exclude(self) -> None:
+        path = THIS_DIR / "include_exclude_tests"
+        include = re.compile(r"\.pyi?$")
+        exclude = re.compile(r"exclude/|\.definitely_exclude/")
+        sources: List[Path] = []
+        expected = [
+            Path(THIS_DIR / "include_exclude_tests/b/c/a.py"),
+            Path(THIS_DIR / "include_exclude_tests/b/c/a.pyi"),
+        ]
+        sources.extend(black.gen_python_files_in_dir(path, include, exclude))
+        self.assertEqual(sorted(expected), sorted(sources))
 
 
 if __name__ == "__main__":

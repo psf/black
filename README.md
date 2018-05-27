@@ -89,6 +89,14 @@ Options:
                               **kwargs.  [default: per-file auto-detection]
   -S, --skip-string-normalization
                               Don't normalize string quotes or prefixes.
+  --include TEXT              A regular expression that matches files and
+                              directories that should be included on
+                              recursive searches.  [default: \.pyi?$]
+  --exclude TEXT              A regular expression that matches files and
+                              directories that should be excluded on
+                              recursive searches.  [default: build\/|buck-o
+                              ut\/|dist\/|_build\/|.git\/|.hg\/|.mypy_cach
+                              e\/|.tox\/|.venv\/]
   --version                   Show the version and exit.
   --help                      Show this message and exit.
 ```
@@ -697,6 +705,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 ## Change Log
 
 ### 18.6b0
+
+* added `--include` and `--exclude` (#270)
 
 * added `--skip-string-normalization` (#118)
 

@@ -46,6 +46,10 @@ from blib2to3.pgen2.parse import ParseError
 
 __version__ = "18.5b1"
 DEFAULT_LINE_LENGTH = 88
+DEFAULT_EXCLUDES = (
+    r"build/|buck-out/|dist/|_build/|\.git/|\.hg/|\.mypy_cache/|\.tox/|\.venv/"
+)
+DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 
 
@@ -189,6 +193,26 @@ class FileMode(Flag):
     is_flag=True,
     help="Don't normalize string quotes or prefixes.",
 )
+@click.option(
+    "--include",
+    type=str,
+    default=DEFAULT_INCLUDES,
+    help=(
+        "A regular expression that matches files and directories that should be "
+        "included on recursive searches."
+    ),
+    show_default=True,
+)
+@click.option(
+    "--exclude",
+    type=str,
+    default=DEFAULT_EXCLUDES,
+    help=(
+        "A regular expression that matches files and directories that should be "
+        "excluded on recursive searches."
+    ),
+    show_default=True,
+)
 @click.version_option(version=__version__)
 @click.argument(
     "src",
@@ -208,6 +232,8 @@ def main(
     py36: bool,
     skip_string_normalization: bool,
     quiet: bool,
+    include: str,
+    exclude: str,
     src: List[str],
 ) -> None:
     """The uncompromising code formatter."""
@@ -215,7 +241,19 @@ def main(
     for s in src:
         p = Path(s)
         if p.is_dir():
-            sources.extend(gen_python_files_in_dir(p))
+            try:
+                include_regex = re.compile(include)
+            except Exception as exc:
+                raise SyntaxError(
+                    "Invalid regular expression for include given: {}".format(include)
+                )
+            try:
+                exclude_regex = re.compile(exclude)
+            except Exception as esc:
+                raise SyntaxError(
+                    "Invalid regular expression for exclude given: {}".format(exclude)
+                )
+            sources.extend(gen_python_files_in_dir(p, include_regex, exclude_regex))
         elif p.is_file():
             # if a file was explicitly given, we don't care about its extension
             sources.append(p)
@@ -2750,32 +2788,24 @@ def get_future_imports(node: Node) -> Set[str]:
     return imports
 
 
-PYTHON_EXTENSIONS = {".py", ".pyi"}
-BLACKLISTED_DIRECTORIES = {
-    "build",
-    "buck-out",
-    "dist",
-    "_build",
-    ".git",
-    ".hg",
-    ".mypy_cache",
-    ".tox",
-    ".venv",
-}
-
-
-def gen_python_files_in_dir(path: Path) -> Iterator[Path]:
-    """Generate all files under `path` which aren't under BLACKLISTED_DIRECTORIES
-    and have one of the PYTHON_EXTENSIONS.
+def gen_python_files_in_dir(
+    path: Path, include: Pattern[str], exclude: Pattern[str]
+) -> Iterator[Path]:
+    """Generate all files under `path` whose paths are not excluded by the
+    `exclude` regex, but are included by the `include` regex.
     """
     for child in path.iterdir():
         if child.is_dir():
-            if child.name in BLACKLISTED_DIRECTORIES:
+            if exclude.search(str(child) + "/"):
                 continue
 
-            yield from gen_python_files_in_dir(child)
+            yield from gen_python_files_in_dir(child, include, exclude)
 
-        elif child.is_file() and child.suffix in PYTHON_EXTENSIONS:
+        elif (
+            child.is_file()
+            and include.search(str(child))
+            and not exclude.search(str(child))
+        ):
             yield child
 
 
