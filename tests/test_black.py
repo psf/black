@@ -342,10 +342,11 @@ class BlackTestCase(unittest.TestCase):
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_stub(self) -> None:
+        mode = black.FileMode.PYI
         source, expected = read_data("stub.pyi")
-        actual = fs(source, is_pyi=True)
+        actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
-        black.assert_stable(source, actual, line_length=ll, is_pyi=True)
+        black.assert_stable(source, actual, line_length=ll, mode=mode)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_fmtonoff(self) -> None:
@@ -566,25 +567,27 @@ class BlackTestCase(unittest.TestCase):
         self.assertEqual("".join(err_lines), "")
 
     def test_cache_broken_file(self) -> None:
+        mode = black.FileMode.AUTO_DETECT
         with cache_dir() as workspace:
-            cache_file = black.get_cache_file(black.DEFAULT_LINE_LENGTH)
+            cache_file = black.get_cache_file(black.DEFAULT_LINE_LENGTH, mode)
             with cache_file.open("w") as fobj:
                 fobj.write("this is not a pickle")
-            self.assertEqual(black.read_cache(black.DEFAULT_LINE_LENGTH), {})
+            self.assertEqual(black.read_cache(black.DEFAULT_LINE_LENGTH, mode), {})
             src = (workspace / "test.py").resolve()
             with src.open("w") as fobj:
                 fobj.write("print('hello')")
             result = CliRunner().invoke(black.main, [str(src)])
             self.assertEqual(result.exit_code, 0)
-            cache = black.read_cache(black.DEFAULT_LINE_LENGTH)
+            cache = black.read_cache(black.DEFAULT_LINE_LENGTH, mode)
             self.assertIn(src, cache)
 
     def test_cache_single_file_already_cached(self) -> None:
+        mode = black.FileMode.AUTO_DETECT
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
             with src.open("w") as fobj:
                 fobj.write("print('hello')")
-            black.write_cache({}, [src], black.DEFAULT_LINE_LENGTH)
+            black.write_cache({}, [src], black.DEFAULT_LINE_LENGTH, mode)
             result = CliRunner().invoke(black.main, [str(src)])
             self.assertEqual(result.exit_code, 0)
             with src.open("r") as fobj:
@@ -592,6 +595,7 @@ class BlackTestCase(unittest.TestCase):
 
     @event_loop(close=False)
     def test_cache_multiple_files(self) -> None:
+        mode = black.FileMode.AUTO_DETECT
         with cache_dir() as workspace, patch(
             "black.ProcessPoolExecutor", new=ThreadPoolExecutor
         ):
@@ -601,44 +605,48 @@ class BlackTestCase(unittest.TestCase):
             two = (workspace / "two.py").resolve()
             with two.open("w") as fobj:
                 fobj.write("print('hello')")
-            black.write_cache({}, [one], black.DEFAULT_LINE_LENGTH)
+            black.write_cache({}, [one], black.DEFAULT_LINE_LENGTH, mode)
             result = CliRunner().invoke(black.main, [str(workspace)])
             self.assertEqual(result.exit_code, 0)
             with one.open("r") as fobj:
                 self.assertEqual(fobj.read(), "print('hello')")
             with two.open("r") as fobj:
                 self.assertEqual(fobj.read(), 'print("hello")\n')
-            cache = black.read_cache(black.DEFAULT_LINE_LENGTH)
+            cache = black.read_cache(black.DEFAULT_LINE_LENGTH, mode)
             self.assertIn(one, cache)
             self.assertIn(two, cache)
 
     def test_no_cache_when_writeback_diff(self) -> None:
+        mode = black.FileMode.AUTO_DETECT
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
             with src.open("w") as fobj:
                 fobj.write("print('hello')")
             result = CliRunner().invoke(black.main, [str(src), "--diff"])
             self.assertEqual(result.exit_code, 0)
-            cache_file = black.get_cache_file(black.DEFAULT_LINE_LENGTH)
+            cache_file = black.get_cache_file(black.DEFAULT_LINE_LENGTH, mode)
             self.assertFalse(cache_file.exists())
 
     def test_no_cache_when_stdin(self) -> None:
+        mode = black.FileMode.AUTO_DETECT
         with cache_dir():
             result = CliRunner().invoke(black.main, ["-"], input="print('hello')")
             self.assertEqual(result.exit_code, 0)
-            cache_file = black.get_cache_file(black.DEFAULT_LINE_LENGTH)
+            cache_file = black.get_cache_file(black.DEFAULT_LINE_LENGTH, mode)
             self.assertFalse(cache_file.exists())
 
     def test_read_cache_no_cachefile(self) -> None:
+        mode = black.FileMode.AUTO_DETECT
         with cache_dir():
-            self.assertEqual(black.read_cache(black.DEFAULT_LINE_LENGTH), {})
+            self.assertEqual(black.read_cache(black.DEFAULT_LINE_LENGTH, mode), {})
 
     def test_write_cache_read_cache(self) -> None:
+        mode = black.FileMode.AUTO_DETECT
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
             src.touch()
-            black.write_cache({}, [src], black.DEFAULT_LINE_LENGTH)
-            cache = black.read_cache(black.DEFAULT_LINE_LENGTH)
+            black.write_cache({}, [src], black.DEFAULT_LINE_LENGTH, mode)
+            cache = black.read_cache(black.DEFAULT_LINE_LENGTH, mode)
             self.assertIn(src, cache)
             self.assertEqual(cache[src], black.get_cache_info(src))
 
@@ -659,13 +667,15 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(done, [cached])
 
     def test_write_cache_creates_directory_if_needed(self) -> None:
+        mode = black.FileMode.AUTO_DETECT
         with cache_dir(exists=False) as workspace:
             self.assertFalse(workspace.exists())
-            black.write_cache({}, [], black.DEFAULT_LINE_LENGTH)
+            black.write_cache({}, [], black.DEFAULT_LINE_LENGTH, mode)
             self.assertTrue(workspace.exists())
 
     @event_loop(close=False)
     def test_failed_formatting_does_not_get_cached(self) -> None:
+        mode = black.FileMode.AUTO_DETECT
         with cache_dir() as workspace, patch(
             "black.ProcessPoolExecutor", new=ThreadPoolExecutor
         ):
@@ -677,14 +687,15 @@ class BlackTestCase(unittest.TestCase):
                 fobj.write('print("hello")\n')
             result = CliRunner().invoke(black.main, [str(workspace)])
             self.assertEqual(result.exit_code, 123)
-            cache = black.read_cache(black.DEFAULT_LINE_LENGTH)
+            cache = black.read_cache(black.DEFAULT_LINE_LENGTH, mode)
             self.assertNotIn(failing, cache)
             self.assertIn(clean, cache)
 
     def test_write_cache_write_fail(self) -> None:
+        mode = black.FileMode.AUTO_DETECT
         with cache_dir(), patch.object(Path, "open") as mock:
             mock.side_effect = OSError
-            black.write_cache({}, [], black.DEFAULT_LINE_LENGTH)
+            black.write_cache({}, [], black.DEFAULT_LINE_LENGTH, mode)
 
     @event_loop(close=False)
     def test_check_diff_use_together(self) -> None:
@@ -719,16 +730,19 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(result.exit_code, 0)
 
     def test_read_cache_line_lengths(self) -> None:
+        mode = black.FileMode.AUTO_DETECT
         with cache_dir() as workspace:
             path = (workspace / "file.py").resolve()
             path.touch()
-            black.write_cache({}, [path], 1)
-            one = black.read_cache(1)
+            black.write_cache({}, [path], 1, mode)
+            one = black.read_cache(1, mode)
             self.assertIn(path, one)
-            two = black.read_cache(2)
+            two = black.read_cache(2, mode)
             self.assertNotIn(path, two)
 
     def test_single_file_force_pyi(self) -> None:
+        reg_mode = black.FileMode.AUTO_DETECT
+        pyi_mode = black.FileMode.PYI
         contents, expected = read_data("force_pyi")
         with cache_dir() as workspace:
             path = (workspace / "file.py").resolve()
@@ -739,14 +753,16 @@ class BlackTestCase(unittest.TestCase):
             with open(path, "r") as fh:
                 actual = fh.read()
             # verify cache with --pyi is separate
-            pyi_cache = black.read_cache(black.DEFAULT_LINE_LENGTH, pyi=True)
+            pyi_cache = black.read_cache(black.DEFAULT_LINE_LENGTH, pyi_mode)
             self.assertIn(path, pyi_cache)
-            normal_cache = black.read_cache(black.DEFAULT_LINE_LENGTH)
+            normal_cache = black.read_cache(black.DEFAULT_LINE_LENGTH, reg_mode)
             self.assertNotIn(path, normal_cache)
         self.assertEqual(actual, expected)
 
     @event_loop(close=False)
     def test_multi_file_force_pyi(self) -> None:
+        reg_mode = black.FileMode.AUTO_DETECT
+        pyi_mode = black.FileMode.PYI
         contents, expected = read_data("force_pyi")
         with cache_dir() as workspace:
             paths = [
@@ -763,8 +779,8 @@ class BlackTestCase(unittest.TestCase):
                     actual = fh.read()
                 self.assertEqual(actual, expected)
             # verify cache with --pyi is separate
-            pyi_cache = black.read_cache(black.DEFAULT_LINE_LENGTH, pyi=True)
-            normal_cache = black.read_cache(black.DEFAULT_LINE_LENGTH)
+            pyi_cache = black.read_cache(black.DEFAULT_LINE_LENGTH, pyi_mode)
+            normal_cache = black.read_cache(black.DEFAULT_LINE_LENGTH, reg_mode)
             for path in paths:
                 self.assertIn(path, pyi_cache)
                 self.assertNotIn(path, normal_cache)
@@ -777,6 +793,8 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(actual, expected)
 
     def test_single_file_force_py36(self) -> None:
+        reg_mode = black.FileMode.AUTO_DETECT
+        py36_mode = black.FileMode.PYTHON36
         source, expected = read_data("force_py36")
         with cache_dir() as workspace:
             path = (workspace / "file.py").resolve()
@@ -787,14 +805,16 @@ class BlackTestCase(unittest.TestCase):
             with open(path, "r") as fh:
                 actual = fh.read()
             # verify cache with --py36 is separate
-            py36_cache = black.read_cache(black.DEFAULT_LINE_LENGTH, py36=True)
+            py36_cache = black.read_cache(black.DEFAULT_LINE_LENGTH, py36_mode)
             self.assertIn(path, py36_cache)
-            normal_cache = black.read_cache(black.DEFAULT_LINE_LENGTH)
+            normal_cache = black.read_cache(black.DEFAULT_LINE_LENGTH, reg_mode)
             self.assertNotIn(path, normal_cache)
         self.assertEqual(actual, expected)
 
     @event_loop(close=False)
     def test_multi_file_force_py36(self) -> None:
+        reg_mode = black.FileMode.AUTO_DETECT
+        py36_mode = black.FileMode.PYTHON36
         source, expected = read_data("force_py36")
         with cache_dir() as workspace:
             paths = [
@@ -813,8 +833,8 @@ class BlackTestCase(unittest.TestCase):
                     actual = fh.read()
                 self.assertEqual(actual, expected)
             # verify cache with --py36 is separate
-            pyi_cache = black.read_cache(black.DEFAULT_LINE_LENGTH, py36=True)
-            normal_cache = black.read_cache(black.DEFAULT_LINE_LENGTH)
+            pyi_cache = black.read_cache(black.DEFAULT_LINE_LENGTH, py36_mode)
+            normal_cache = black.read_cache(black.DEFAULT_LINE_LENGTH, reg_mode)
             for path in paths:
                 self.assertIn(path, pyi_cache)
                 self.assertNotIn(path, normal_cache)
