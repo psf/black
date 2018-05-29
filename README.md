@@ -715,6 +715,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * fixed extra empty line between a class declaration and the first
   method if no class docstring or fields are present (#219)
 
+* fixed extra empty line between a function signature and an inner
+  function or inner class (#196)
+
 
 ### 18.5b0
 
