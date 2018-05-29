@@ -10,7 +10,8 @@
 <a href="https://github.com/ambv/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 </p>
 
-> “Any color you like.”
+> “Any customer can have a bike shed painted any color that he wants so long as it is black.”
+— _Henry Ford, 1909_
 
 
 *Black* is the uncompromising Python code formatter.  By using it, you
