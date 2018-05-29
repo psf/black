@@ -506,7 +506,7 @@ $ where black
     - Arguments: $FilePath$
 
 5. Format the currently opened file by selecting `Tools -> External Tools -> black`.
-    - Alternatively, you can set a keyboard shortcut by navigating to `Preferences -> Keymap`.
+    - Alternatively, you can set a keyboard shortcut by navigating to `Preferences -> Keymap -> External Tools -> External Tools - Black`.
 
 
 ### Vim
