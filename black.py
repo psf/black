@@ -987,6 +987,18 @@ class Line:
             and self.leaves[3].value == ")"
         )
 
+    @property
+    def is_triple_quoted_string(self) -> bool:
+        """Is the line a triple quoted docstring?"""
+        return (
+            bool(self)
+            and self.leaves[0].type == token.STRING
+            and (
+                self.leaves[0].value.startswith('"""')
+                or self.leaves[0].value.startswith("'''")
+            )
+        )
+
     def contains_standalone_comments(self, depth_limit: int = sys.maxsize) -> bool:
         """If so, needs to be split before emitting."""
         for leaf in self.leaves:
@@ -1194,6 +1206,7 @@ class EmptyLineTracker:
     the prefix of the first leaf consists of optional newlines.  Those newlines
     are consumed by `maybe_empty_lines()` and included in the computation.
     """
+
     is_pyi: bool = False
     previous_line: Optional[Line] = None
     previous_after: int = 0
@@ -1245,6 +1258,12 @@ class EmptyLineTracker:
                 return 0, 0
 
             if (
+                self.previous_line.is_class
+                and self.previous_line.depth != current_line.depth
+            ):
+                return 0, 0
+
+            if (
                 self.previous_line.is_comment
                 and self.previous_line.depth == current_line.depth
                 and before == 0
@@ -1275,6 +1294,13 @@ class EmptyLineTracker:
         ):
             return (before or 1), 0
 
+        if (
+            self.previous_line
+            and self.previous_line.is_class
+            and current_line.is_triple_quoted_string
+        ):
+            return before, 1
+
         return before, 0
 
 
@@ -1285,6 +1311,7 @@ class LineGenerator(Visitor[Line]):
     Note: destroys the tree it's visiting by mutating prefixes of its leaves
     in ways that will no longer stringify to valid Python code on the tree.
     """
+
     is_pyi: bool = False
     current_line: Line = Factory(Line)
     remove_u_prefix: bool = False
@@ -2768,6 +2795,7 @@ def gen_python_files_in_dir(path: Path) -> Iterator[Path]:
 @dataclass
 class Report:
     """Provides a reformatting counter. Can be rendered with `str(report)`."""
+
     check: bool = False
     quiet: bool = False
     change_count: int = 0

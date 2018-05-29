@@ -39,7 +39,6 @@ class ClassWithSpaceParentheses:
 
 
 class ClassWithEmptyFunc(object):
-
     def func_with_blank_parentheses():
         return 5
 
@@ -55,7 +54,6 @@ def class_under_the_func_with_blank_parentheses():
 
 
 class NormalClass:
-
     def func_for_testing(self, first, second):
         sum = first + second
         return sum
