@@ -688,7 +688,7 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Change Log
 
-### 18.5b1 (unreleased)
+### 18.5b1
 
 * added `--pyi` (#249)
 

@@ -44,7 +44,7 @@ from blib2to3.pgen2 import driver, token
 from blib2to3.pgen2.parse import ParseError
 
 
-__version__ = "18.5b0"
+__version__ = "18.5b1"
 DEFAULT_LINE_LENGTH = 88
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 
