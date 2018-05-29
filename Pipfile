@@ -6,7 +6,6 @@ name = "pypi"
 [packages]
 attrs = ">=17.4.0"
 click = "*"
-setuptools = ">=38.6.0"
 appdirs = "*"
 
 [dev-packages]
@@ -16,6 +15,9 @@ flake8 = "*"
 flake8-bugbear = "*"
 flake8-mypy = "*"
 mypy = "*"
+readme_renderer = "*"
 recommonmark = "*"
 Sphinx = "*"
-twine = ">=1.11.0rc1"
+setuptools = ">=39.2.0"
+twine = ">=1.11.0"
+wheel = ">=0.31.1"
