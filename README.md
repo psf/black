@@ -204,10 +204,20 @@ If a data structure literal (tuple, list, set, dict) or a line of "from"
 imports cannot fit in the allotted length, it's always split into one
 element per line.  This minimizes diffs as well as enables readers of
 code to find which commit introduced a particular entry.  This also
-makes *Black* compatible with [isort](https://pypi.org/p/isort/).  Use
-`multi_line_output=3`, `include_trailing_comma=True`,
-`force_grid_wrap=0`, and `line_length=88` in your isort config.
+makes *Black* compatible with [isort](https://pypi.org/p/isort/).
 
+If you do wish to use *Black* alongside `isort`, you can pass the following
+command-line arguments to ensure compatible behaviour:
+```
+$ isort --multi-line=3 --trailing-comma --force-grid-wrap=0 --line-width=88 [ file.py ]
+```
+Or use the equivalent directives in your isort config:
+```
+multi_line_output=3
+include_trailing_comma=True
+force_grid_wrap=0
+line_length=88
+```
 
 ### Line length
 
