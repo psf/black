@@ -50,7 +50,7 @@ Contents
    the_black_code_style
    editor_integration
    version_control_integration
-   ignoring_non_modified_files
+   ignoring_unmodified_files
    contributing
    change_log
    reference/reference_summary
