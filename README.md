@@ -80,7 +80,7 @@ Options:
   -q, --quiet                 Don't emit non-error messages to stderr. Errors
                               are still emitted, silence those with
                               2>/dev/null.
-   --pyi                      Consider all input files typing stubs regardless
+  --pyi                       Consider all input files typing stubs regardless
                               of file extension (useful when piping source on
                               standard input).
   --py36                      Allow using Python 3.6-only syntax on all input
