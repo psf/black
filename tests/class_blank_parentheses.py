@@ -48,7 +48,6 @@ def public_func_with_blank_parentheses():
 
 
 def class_under_the_func_with_blank_parentheses():
-
     class InsideFunc:
         pass
 

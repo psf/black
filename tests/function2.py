@@ -12,6 +12,15 @@ def f(
         very_long_argument_name2=very_long_value_for_the_argument,
         **kwargs,
     )
+def g():
+    "Docstring."
+    def inner():
+        pass
+    print("Inner defs should breathe a little.")
+def h():
+    def inner():
+        pass
+    print("Inner defs should breathe a little.")
 
 # output
 
@@ -26,3 +35,19 @@ def f(a, **kwargs) -> A:
         very_long_argument_name2=very_long_value_for_the_argument,
         **kwargs,
     )
+
+
+def g():
+    "Docstring."
+
+    def inner():
+        pass
+
+    print("Inner defs should breathe a little.")
+
+
+def h():
+    def inner():
+        pass
+
+    print("Inner defs should breathe a little.")

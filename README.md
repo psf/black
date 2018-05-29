@@ -275,9 +275,17 @@ are always reformatted to fit minimal space, this whitespace is lost.
 
 It will also insert proper spacing before and after function definitions.
 It's one line before and after inner functions and two lines before and
-after module-level functions.  *Black* will not put empty lines between
-function/class definitions and standalone comments that immediately precede
-the given function/class.
+after module-level functions and classes.  *Black* will not put empty
+lines between function/class definitions and standalone comments that
+immediately precede the given function/class.
+
+*Black* will enforce single empty lines between a class-level docstring
+and the first following field or method.  This conforms to
+[PEP 257](https://www.python.org/dev/peps/pep-0257/#multi-line-docstrings).
+
+*Black* won't insert empty lines after function docstrings unless that
+empty line is required due to an inner function starting immediately
+after.
 
 
 ### Trailing commas
@@ -689,6 +697,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * Python grammar pickle caches are stored with the formatting caches, making
   *Black* work in environments where site-packages is not user-writable (#192)
 
+* *Black* now enforces a PEP 257 empty line after a class-level docstring
+  (and/or fields) and the first method
+
 * fixed invalid code produced when standalone comments were present in a trailer
   that was omitted from line splitting on a large expression (#237)
 
@@ -700,6 +711,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * fixed unstable formatting when inline comments were moved around in
   a trailer that was omitted from line splitting on a large expression
   (#238)
+
+* fixed extra empty line between a class declaration and the first
+  method if no class docstring or fields are present (#219)
 
 
 ### 18.5b0
@@ -959,6 +973,7 @@ Multiple contributions by:
 * [Ivan Katanić](mailto:ivan.katanic@gmail.com)
 * [Jelle Zijlstra](mailto:jelle.zijlstra@gmail.com)
 * [Jonas Obrist](mailto:ojiidotch@gmail.com)
+* [Luka Sterbic](mailto:luka.sterbic@gmail.com)
 * [Miguel Gaiowski](mailto:miggaiowski@gmail.com)
 * [Osaetin Daniel](mailto:osaetindaniel@gmail.com)
 * [Sunil Kapil](mailto:snlkapil@gmail.com)

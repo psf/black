@@ -989,14 +989,11 @@ class Line:
 
     @property
     def is_triple_quoted_string(self) -> bool:
-        """Is the line a triple quoted docstring?"""
+        """Is the line a triple quoted string?"""
         return (
             bool(self)
             and self.leaves[0].type == token.STRING
-            and (
-                self.leaves[0].value.startswith('"""')
-                or self.leaves[0].value.startswith("'''")
-            )
+            and self.leaves[0].value.startswith(('"""', "'''"))
         )
 
     def contains_standalone_comments(self, depth_limit: int = sys.maxsize) -> bool:
@@ -1257,9 +1254,8 @@ class EmptyLineTracker:
             if self.previous_line.is_decorator:
                 return 0, 0
 
-            if (
-                self.previous_line.is_class
-                and self.previous_line.depth != current_line.depth
+            if self.previous_line.depth < current_line.depth and (
+                self.previous_line.is_class or self.previous_line.is_def
             ):
                 return 0, 0
 
