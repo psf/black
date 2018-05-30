@@ -87,6 +87,8 @@ Options:
                               files.  This will put trailing commas in function
                               signatures and calls also after *args and
                               **kwargs.  [default: per-file auto-detection]
+  -S, --skip-string-normalization
+                              Don't normalize string quotes or prefixes.
   --version                   Show the version and exit.
   --help                      Show this message and exit.
 ```
@@ -345,6 +347,12 @@ On certain keyboard layouts like US English, typing single quotes is
 a bit easier than double quotes.  The latter requires use of the Shift
 key.  My recommendation here is to keep using whatever is faster to type
 and let *Black* handle the transformation.
+
+If you are adopting *Black* in a large project with pre-existing string
+conventions (like the popular ["single quotes for data, double quotes for
+human-readable strings"](https://stackoverflow.com/a/56190)), you can
+pass `--skip-string-normalization` on the command line.  This is meant as
+an adoption helper, avoid using this for new projects.
 
 
 ### Line breaks & binary operators
@@ -687,6 +695,11 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 
 ## Change Log
+
+### 18.6b0
+
+* added `--skip-string-normalization` (#118)
+
 
 ### 18.5b1
 

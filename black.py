@@ -126,6 +126,7 @@ class FileMode(Flag):
     AUTO_DETECT = 0
     PYTHON36 = 1
     PYI = 2
+    NO_STRING_NORMALIZATION = 4
 
 
 @click.command()
@@ -182,6 +183,12 @@ class FileMode(Flag):
         "**kwargs.  [default: per-file auto-detection]"
     ),
 )
+@click.option(
+    "-S",
+    "--skip-string-normalization",
+    is_flag=True,
+    help="Don't normalize string quotes or prefixes.",
+)
 @click.version_option(version=__version__)
 @click.argument(
     "src",
@@ -199,6 +206,7 @@ def main(
     fast: bool,
     pyi: bool,
     py36: bool,
+    skip_string_normalization: bool,
     quiet: bool,
     src: List[str],
 ) -> None:
@@ -227,6 +235,8 @@ def main(
         mode |= FileMode.PYTHON36
     if pyi:
         mode |= FileMode.PYI
+    if skip_string_normalization:
+        mode |= FileMode.NO_STRING_NORMALIZATION
     report = Report(check=check, quiet=quiet)
     if len(sources) == 0:
         out("No paths given. Nothing to do 😴")
@@ -487,8 +497,11 @@ def format_str(
     future_imports = get_future_imports(src_node)
     is_pyi = bool(mode & FileMode.PYI)
     py36 = bool(mode & FileMode.PYTHON36) or is_python36(src_node)
+    normalize_strings = not bool(mode & FileMode.NO_STRING_NORMALIZATION)
     lines = LineGenerator(
-        remove_u_prefix=py36 or "unicode_literals" in future_imports, is_pyi=is_pyi
+        remove_u_prefix=py36 or "unicode_literals" in future_imports,
+        is_pyi=is_pyi,
+        normalize_strings=normalize_strings,
     )
     elt = EmptyLineTracker(is_pyi=is_pyi)
     empty_line = Line()
@@ -1286,6 +1299,7 @@ class LineGenerator(Visitor[Line]):
     """
 
     is_pyi: bool = False
+    normalize_strings: bool = True
     current_line: Line = Factory(Line)
     remove_u_prefix: bool = False
 
@@ -1354,7 +1368,7 @@ class LineGenerator(Visitor[Line]):
 
             else:
                 normalize_prefix(node, inside_brackets=any_open_brackets)
-                if node.type == token.STRING:
+                if self.normalize_strings and node.type == token.STRING:
                     normalize_string_prefix(node, remove_u_prefix=self.remove_u_prefix)
                     normalize_string_quotes(node)
                 if node.type not in WHITESPACE:

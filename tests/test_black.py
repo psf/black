@@ -236,6 +236,11 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, line_length=ll)
+        mode = black.FileMode.NO_STRING_NORMALIZATION
+        not_normalized = fs(source, mode=mode)
+        self.assertFormatEqual(source, not_normalized)
+        black.assert_equivalent(source, not_normalized)
+        black.assert_stable(source, not_normalized, line_length=ll, mode=mode)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_slices(self) -> None:
