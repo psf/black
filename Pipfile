@@ -5,7 +5,7 @@ name = "pypi"
 
 [packages]
 attrs = ">=17.4.0"
-click = "*"
+click = ">=6.5"
 appdirs = "*"
 
 [dev-packages]

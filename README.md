@@ -700,6 +700,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * added `--skip-string-normalization` (#118)
 
+* fixed stdin handling not working correctly if an old version of Click was
+  used (#276)
+
 
 ### 18.5b1
 
@@ -992,6 +995,7 @@ Multiple contributions by:
 * [Luka Sterbic](mailto:luka.sterbic@gmail.com)
 * [Miguel Gaiowski](mailto:miggaiowski@gmail.com)
 * [Osaetin Daniel](mailto:osaetindaniel@gmail.com)
+* [Stavros Korokithakis](mailto:hi@stavros.io)
 * [Sunil Kapil](mailto:snlkapil@gmail.com)
 * [Vishwas B Sharma](mailto:sharma.vishwas88@gmail.com)
 
