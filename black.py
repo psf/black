@@ -2792,17 +2792,22 @@ def gen_python_files_in_dir(
     """Generate all files under `path` whose paths are not excluded by the
     `exclude` regex, but are included by the `include` regex.
     """
+
     for child in path.iterdir():
+        searchable_path = str(child.as_posix())
+        if Path(child.parts[0]).is_dir():
+            searchable_path = "/" + searchable_path
         if child.is_dir():
-            if exclude.search(str(child) + "/"):
+            searchable_path = searchable_path + "/"
+            if exclude.search(searchable_path):
                 continue
 
             yield from gen_python_files_in_dir(child, include, exclude)
 
         elif (
             child.is_file()
-            and include.search(str(child))
-            and not exclude.search(str(child))
+            and include.search(searchable_path)
+            and not exclude.search(searchable_path)
         ):
             yield child
 

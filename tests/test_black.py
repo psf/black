@@ -855,11 +855,11 @@ class BlackTestCase(unittest.TestCase):
     def test_include_exclude(self) -> None:
         path = THIS_DIR / "include_exclude_tests"
         include = re.compile(r"\.pyi?$")
-        exclude = re.compile(r"exclude/|\.definitely_exclude/")
+        exclude = re.compile(r"/exclude/|/\.definitely_exclude/")
         sources: List[Path] = []
         expected = [
-            Path(THIS_DIR / "include_exclude_tests/b/c/a.py"),
-            Path(THIS_DIR / "include_exclude_tests/b/c/a.pyi"),
+            Path(THIS_DIR / "include_exclude_tests/b/dont_exclude/a.py"),
+            Path(THIS_DIR / "include_exclude_tests/b/dont_exclude/a.pyi"),
         ]
         sources.extend(black.gen_python_files_in_dir(path, include, exclude))
         self.assertEqual(sorted(expected), sorted(sources))
