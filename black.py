@@ -238,21 +238,19 @@ def main(
 ) -> None:
     """The uncompromising code formatter."""
     sources: List[Path] = []
+    try:
+        include_regex = re.compile(include)
+    except re.error:
+        err(f"Invalid regular expression for include given: {include!r}")
+        ctx.exit(2)
+    try:
+        exclude_regex = re.compile(exclude)
+    except re.error:
+        err(f"Invalid regular expression for exclude given: {exclude!r}")
+        ctx.exit(2)
     for s in src:
         p = Path(s)
         if p.is_dir():
-            try:
-                include_regex = re.compile(include)
-            except Exception as exc:
-                raise SyntaxError(
-                    "Invalid regular expression for include given: {}".format(include)
-                )
-            try:
-                exclude_regex = re.compile(exclude)
-            except Exception as esc:
-                raise SyntaxError(
-                    "Invalid regular expression for exclude given: {}".format(exclude)
-                )
             sources.extend(gen_python_files_in_dir(p, include_regex, exclude_regex))
         elif p.is_file():
             # if a file was explicitly given, we don't care about its extension
