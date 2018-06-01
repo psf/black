@@ -731,7 +731,10 @@ class BlackTestCase(unittest.TestCase):
     def test_broken_symlink(self) -> None:
         with cache_dir() as workspace:
             symlink = workspace / "broken_link.py"
-            symlink.symlink_to("nonexistent.py")
+            try:
+                symlink.symlink_to("nonexistent.py")
+            except OSError as e:
+                self.skipTest(f"Can't create symlinks: {e}")
             result = CliRunner().invoke(black.main, [str(workspace.resolve())])
             self.assertEqual(result.exit_code, 0)
 
