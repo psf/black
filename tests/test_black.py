@@ -917,10 +917,10 @@ class BlackTestCase(unittest.TestCase):
                 contents = nl.join(["def f(  ):", "    pass"])
                 test_file.write_bytes(contents.encode())
                 ff(test_file, write_back=black.WriteBack.YES)
-                updated_contents = test_file.read_bytes()
-                self.assertIn(nl.encode(), updated_contents)
+                updated_contents: bytes = test_file.read_bytes()
+                self.assertIn(nl.encode(), updated_contents)  # type: ignore
                 if nl == "\n":
-                    self.assertNotIn(b"\r\n", updated_contents)
+                    self.assertNotIn(b"\r\n", updated_contents)  # type: ignore
 
 
 if __name__ == "__main__":

@@ -454,8 +454,8 @@ def format_file_in_place(
         return False
 
     if write_back == write_back.YES:
-        with open(src, encoding=src_buffer.encoding, newline="") as src_buffer:
-            newline = "\r\n" if "\r\n" in src_buffer.readline() else "\n"
+        with open(src, "rb") as buf:
+            newline = "\r\n" if b"\r\n" == buf.readline()[-2:] else "\n"
         with open(src, "w", encoding=src_buffer.encoding, newline=newline) as f:
             f.write(dst_contents)
     elif write_back == write_back.DIFF:
