@@ -143,6 +143,29 @@ class FileMode(Flag):
     show_default=True,
 )
 @click.option(
+    "--py36",
+    is_flag=True,
+    help=(
+        "Allow using Python 3.6-only syntax on all input files.  This will put "
+        "trailing commas in function signatures and calls also after *args and "
+        "**kwargs.  [default: per-file auto-detection]"
+    ),
+)
+@click.option(
+    "--pyi",
+    is_flag=True,
+    help=(
+        "Format all input files like typing stubs regardless of file extension "
+        "(useful when piping source on standard input)."
+    ),
+)
+@click.option(
+    "-S",
+    "--skip-string-normalization",
+    is_flag=True,
+    help="Don't normalize string quotes or prefixes.",
+)
+@click.option(
     "--check",
     is_flag=True,
     help=(
@@ -160,38 +183,6 @@ class FileMode(Flag):
     "--fast/--safe",
     is_flag=True,
     help="If --fast given, skip temporary sanity checks. [default: --safe]",
-)
-@click.option(
-    "-q",
-    "--quiet",
-    is_flag=True,
-    help=(
-        "Don't emit non-error messages to stderr. Errors are still emitted, "
-        "silence those with 2>/dev/null."
-    ),
-)
-@click.option(
-    "--pyi",
-    is_flag=True,
-    help=(
-        "Consider all input files typing stubs regardless of file extension "
-        "(useful when piping source on standard input)."
-    ),
-)
-@click.option(
-    "--py36",
-    is_flag=True,
-    help=(
-        "Allow using Python 3.6-only syntax on all input files.  This will put "
-        "trailing commas in function signatures and calls also after *args and "
-        "**kwargs.  [default: per-file auto-detection]"
-    ),
-)
-@click.option(
-    "-S",
-    "--skip-string-normalization",
-    is_flag=True,
-    help="Don't normalize string quotes or prefixes.",
 )
 @click.option(
     "--include",
@@ -214,6 +205,15 @@ class FileMode(Flag):
         "directories."
     ),
     show_default=True,
+)
+@click.option(
+    "-q",
+    "--quiet",
+    is_flag=True,
+    help=(
+        "Don't emit non-error messages to stderr. Errors are still emitted, "
+        "silence those with 2>/dev/null."
+    ),
 )
 @click.version_option(version=__version__)
 @click.argument(

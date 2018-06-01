@@ -68,6 +68,15 @@ black [OPTIONS] [SRC]...
 
 Options:
   -l, --line-length INTEGER   Where to wrap around.  [default: 88]
+  --py36                      Allow using Python 3.6-only syntax on all input
+                              files.  This will put trailing commas in function
+                              signatures and calls also after *args and
+                              **kwargs.  [default: per-file auto-detection]
+  --pyi                       Format all input files like typing stubs
+                              regardless of file extension (useful when piping
+                              source on standard input).
+  -S, --skip-string-normalization
+                              Don't normalize string quotes or prefixes.
   --check                     Don't write the files back, just return the
                               status.  Return code 0 means nothing would
                               change.  Return code 1 means some files would be
@@ -77,18 +86,6 @@ Options:
                               for each file on stdout.
   --fast / --safe             If --fast given, skip temporary sanity checks.
                               [default: --safe]
-  -q, --quiet                 Don't emit non-error messages to stderr. Errors
-                              are still emitted, silence those with
-                              2>/dev/null.
-  --pyi                       Consider all input files typing stubs regardless
-                              of file extension (useful when piping source on
-                              standard input).
-  --py36                      Allow using Python 3.6-only syntax on all input
-                              files.  This will put trailing commas in function
-                              signatures and calls also after *args and
-                              **kwargs.  [default: per-file auto-detection]
-  -S, --skip-string-normalization
-                              Don't normalize string quotes or prefixes.
   --include TEXT              A regular expression that matches files and
                               directories that should be included on
                               recursive searches. On Windows, use forward
@@ -99,7 +96,9 @@ Options:
                               slashes for directories.  [default:
                               build/|buck-out/|dist/|_build/|\.git/|\.hg/|
                               \.mypy_cache/|\.tox/|\.venv/]
-
+  -q, --quiet                 Don't emit non-error messages to stderr. Errors
+                              are still emitted, silence those with
+                              2>/dev/null.
   --version                   Show the version and exit.
   --help                      Show this message and exit.
 ```
