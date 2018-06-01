@@ -2799,17 +2799,22 @@ def gen_python_files_in_dir(
             searchable_path = "/" + searchable_path
         if child.is_dir():
             searchable_path = searchable_path + "/"
-            if exclude.search(searchable_path):
+            exclude_match = exclude.search(searchable_path)
+            if exclude_match and len(exclude_match.group()) > 0:
                 continue
 
             yield from gen_python_files_in_dir(child, include, exclude)
 
-        elif (
-            child.is_file()
-            and include.search(searchable_path)
-            and not exclude.search(searchable_path)
-        ):
-            yield child
+        else:
+            include_match = include.search(searchable_path)
+            exclude_match = exclude.search(searchable_path)
+            if (
+                child.is_file()
+                and include_match
+                and len(include_match.group()) > 0
+                and (not exclude_match or len(exclude_match.group()) == 0)
+            ):
+                yield child
 
 
 @dataclass

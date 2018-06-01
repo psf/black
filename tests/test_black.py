@@ -864,6 +864,41 @@ class BlackTestCase(unittest.TestCase):
         sources.extend(black.gen_python_files_in_dir(path, include, exclude))
         self.assertEqual(sorted(expected), sorted(sources))
 
+    def test_empty_include(self) -> None:
+        path = THIS_DIR / "include_exclude_tests"
+        empty = re.compile(r"")
+        sources: List[Path] = []
+        sources.extend(
+            black.gen_python_files_in_dir(
+                path, empty, re.compile(black.DEFAULT_EXCLUDES)
+            )
+        )
+        self.assertEqual([], (sources))
+
+    def test_empty_exclude(self) -> None:
+        path = THIS_DIR / "include_exclude_tests"
+        empty = re.compile(r"")
+        sources: List[Path] = []
+        expected = [
+            Path(THIS_DIR / "include_exclude_tests/b/dont_exclude/a.py"),
+            Path(THIS_DIR / "include_exclude_tests/b/dont_exclude/a.pyi"),
+            Path(THIS_DIR / "include_exclude_tests/b/exclude/a.py"),
+            Path(THIS_DIR / "include_exclude_tests/b/exclude/a.pyi"),
+            Path(THIS_DIR / "include_exclude_tests/b/.definitely_exclude/a.py"),
+            Path(THIS_DIR / "include_exclude_tests/b/.definitely_exclude/a.pyi"),
+        ]
+        sources.extend(
+            black.gen_python_files_in_dir(
+                path, re.compile(black.DEFAULT_INCLUDES), empty
+            )
+        )
+        self.assertEqual(sorted(expected), sorted(sources))
+
+    def test_invalid_include_exclude(self) -> None:
+        for option in ["--include", "--exclude"]:
+            result = CliRunner().invoke(black.main, ["-", option, "**()(!!*)"])
+            self.assertEqual(result.exit_code, 2)
+
 
 if __name__ == "__main__":
     unittest.main()
