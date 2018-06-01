@@ -910,6 +910,18 @@ class BlackTestCase(unittest.TestCase):
             result = CliRunner().invoke(black.main, ["-", option, "**()(!!*)"])
             self.assertEqual(result.exit_code, 2)
 
+    def test_preserves_line_endings(self) -> None:
+        with TemporaryDirectory() as workspace:
+            test_file = Path(workspace) / "test.py"
+            for nl in ["\n", "\r\n"]:
+                contents = nl.join(["def f(  ):", "    pass"])
+                test_file.write_bytes(contents.encode())
+                ff(test_file, write_back=black.WriteBack.YES)
+                updated_contents = test_file.read_bytes()
+                self.assertIn(nl.encode(), updated_contents)
+                if nl == "\n":
+                    self.assertNotIn(b"\r\n", updated_contents)
+
 
 if __name__ == "__main__":
     unittest.main()
