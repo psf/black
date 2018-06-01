@@ -190,8 +190,10 @@ class FileMode(Flag):
     default=DEFAULT_INCLUDES,
     help=(
         "A regular expression that matches files and directories that should be "
-        "included on recursive searches. On Windows, use forward slashes for "
-        "directories."
+        "included on recursive searches.  An empty value means all files are "
+        "included regardless of the name.  Use forward slashes for directories on "
+        "all platforms (Windows, too).  Exclusions are calculated first, inclusions "
+        "later."
     ),
     show_default=True,
 )
@@ -201,8 +203,9 @@ class FileMode(Flag):
     default=DEFAULT_EXCLUDES,
     help=(
         "A regular expression that matches files and directories that should be "
-        "excluded on recursive searches. On Windows, use forward slashes for "
-        "directories."
+        "excluded on recursive searches.  An empty value means no paths are excluded. "
+        "Use forward slashes for directories on all platforms (Windows, too).  "
+        "Exclusions are calculated first, inclusions later."
     ),
     show_default=True,
 )
@@ -2794,28 +2797,20 @@ def gen_python_files_in_dir(
     """Generate all files under `path` whose paths are not excluded by the
     `exclude` regex, but are included by the `include` regex.
     """
-
     for child in path.iterdir():
-        searchable_path = str(child.as_posix())
-        if Path(child.parts[0]).is_dir():
-            searchable_path = "/" + searchable_path
+        normalized_path = child.resolve().as_posix()
         if child.is_dir():
-            searchable_path = searchable_path + "/"
-            exclude_match = exclude.search(searchable_path)
-            if exclude_match and len(exclude_match.group()) > 0:
-                continue
+            normalized_path += "/"
+        exclude_match = exclude.search(normalized_path)
+        if exclude_match and exclude_match.group(0):
+            continue
 
+        if child.is_dir():
             yield from gen_python_files_in_dir(child, include, exclude)
 
-        else:
-            include_match = include.search(searchable_path)
-            exclude_match = exclude.search(searchable_path)
-            if (
-                child.is_file()
-                and include_match
-                and len(include_match.group()) > 0
-                and (not exclude_match or len(exclude_match.group()) == 0)
-            ):
+        elif child.is_file():
+            include_match = include.search(normalized_path)
+            if include_match:
                 yield child
 
 

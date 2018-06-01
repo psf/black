@@ -868,24 +868,35 @@ class BlackTestCase(unittest.TestCase):
         path = THIS_DIR / "include_exclude_tests"
         empty = re.compile(r"")
         sources: List[Path] = []
+        expected = [
+            Path(path / "b/exclude/a.pie"),
+            Path(path / "b/exclude/a.py"),
+            Path(path / "b/exclude/a.pyi"),
+            Path(path / "b/dont_exclude/a.pie"),
+            Path(path / "b/dont_exclude/a.py"),
+            Path(path / "b/dont_exclude/a.pyi"),
+            Path(path / "b/.definitely_exclude/a.pie"),
+            Path(path / "b/.definitely_exclude/a.py"),
+            Path(path / "b/.definitely_exclude/a.pyi"),
+        ]
         sources.extend(
             black.gen_python_files_in_dir(
                 path, empty, re.compile(black.DEFAULT_EXCLUDES)
             )
         )
-        self.assertEqual([], (sources))
+        self.assertEqual(sorted(expected), sorted(sources))
 
     def test_empty_exclude(self) -> None:
         path = THIS_DIR / "include_exclude_tests"
         empty = re.compile(r"")
         sources: List[Path] = []
         expected = [
-            Path(THIS_DIR / "include_exclude_tests/b/dont_exclude/a.py"),
-            Path(THIS_DIR / "include_exclude_tests/b/dont_exclude/a.pyi"),
-            Path(THIS_DIR / "include_exclude_tests/b/exclude/a.py"),
-            Path(THIS_DIR / "include_exclude_tests/b/exclude/a.pyi"),
-            Path(THIS_DIR / "include_exclude_tests/b/.definitely_exclude/a.py"),
-            Path(THIS_DIR / "include_exclude_tests/b/.definitely_exclude/a.pyi"),
+            Path(path / "b/dont_exclude/a.py"),
+            Path(path / "b/dont_exclude/a.pyi"),
+            Path(path / "b/exclude/a.py"),
+            Path(path / "b/exclude/a.pyi"),
+            Path(path / "b/.definitely_exclude/a.py"),
+            Path(path / "b/.definitely_exclude/a.pyi"),
         ]
         sources.extend(
             black.gen_python_files_in_dir(
