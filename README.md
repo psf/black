@@ -91,12 +91,15 @@ Options:
                               Don't normalize string quotes or prefixes.
   --include TEXT              A regular expression that matches files and
                               directories that should be included on
-                              recursive searches.  [default: \.pyi?$]
+                              recursive searches. On Windows, use forward
+                              slashes for directories.  [default: \.pyi?$]
   --exclude TEXT              A regular expression that matches files and
                               directories that should be excluded on
-                              recursive searches.  [default: build\/|buck-o
-                              ut\/|dist\/|_build\/|.git\/|.hg\/|.mypy_cach
-                              e\/|.tox\/|.venv\/]
+                              recursive searches. On Windows, use forward
+                              slashes for directories.  [default:
+                              build/|buck-out/|dist/|_build/|\.git/|\.hg/|
+                              \.mypy_cache/|\.tox/|\.venv/]
+
   --version                   Show the version and exit.
   --help                      Show this message and exit.
 ```

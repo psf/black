@@ -199,7 +199,8 @@ class FileMode(Flag):
     default=DEFAULT_INCLUDES,
     help=(
         "A regular expression that matches files and directories that should be "
-        "included on recursive searches."
+        "included on recursive searches. On Windows, use forward slashes for "
+        "directories."
     ),
     show_default=True,
 )
@@ -209,7 +210,8 @@ class FileMode(Flag):
     default=DEFAULT_EXCLUDES,
     help=(
         "A regular expression that matches files and directories that should be "
-        "excluded on recursive searches."
+        "excluded on recursive searches. On Windows, use forward slashes for "
+        "directories."
     ),
     show_default=True,
 )
