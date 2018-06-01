@@ -342,8 +342,8 @@ def reformat_one(
             cache: Cache = {}
             if write_back != WriteBack.DIFF:
                 cache = read_cache(line_length, mode)
-                src = src.resolve()
-                if src in cache and cache[src] == get_cache_info(src):
+                res_src = src.resolve()
+                if res_src in cache and cache[res_src] == get_cache_info(res_src):
                     changed = Changed.CACHED
             if changed is not Changed.CACHED and format_file_in_place(
                 src,
