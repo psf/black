@@ -627,13 +627,13 @@ repos:
     hooks:
     - id: black
       args: [--line-length=88, --safe]
-      python_version: python3.6
+      language_version: python3.6
 ```
 Then run `pre-commit install` and you're ready to go.
 
 `args` in the above config is optional but shows you how you can change
 the line length if you really need to.  If you're already using Python
-3.7, switch the `python_version` accordingly. Finally, `stable` is a tag
+3.7, switch the `language_version` accordingly. Finally, `stable` is a tag
 that is pinned to the latest release on PyPI.  If you'd rather run on
 master, this is also an option.
 
