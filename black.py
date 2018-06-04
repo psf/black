@@ -278,7 +278,7 @@ def main(
         py36=py36, pyi=pyi, skip_string_normalization=skip_string_normalization
     )
     report = Report(check=check, quiet=quiet, verbose=verbose)
-    sources: List[Path] = []
+    sources: Set[Path] = set()
     try:
         include_regex = re.compile(include)
     except re.error:
@@ -293,12 +293,12 @@ def main(
     for s in src:
         p = Path(s)
         if p.is_dir():
-            sources.extend(
+            sources.update(
                 gen_python_files_in_dir(p, root, include_regex, exclude_regex, report)
             )
         elif p.is_file() or s == "-":
             # if a file was explicitly given, we don't care about its extension
-            sources.append(p)
+            sources.add(p)
         else:
             err(f"invalid path: {s}")
     if len(sources) == 0:
@@ -309,7 +309,7 @@ def main(
 
     elif len(sources) == 1:
         reformat_one(
-            src=sources[0],
+            src=sources.pop(),
             line_length=line_length,
             fast=fast,
             write_back=write_back,
@@ -384,7 +384,7 @@ def reformat_one(
 
 
 async def schedule_formatting(
-    sources: List[Path],
+    sources: Set[Path],
     line_length: int,
     fast: bool,
     write_back: WriteBack,
@@ -404,7 +404,7 @@ async def schedule_formatting(
     if write_back != WriteBack.DIFF:
         cache = read_cache(line_length, mode)
         sources, cached = filter_cached(cache, sources)
-        for src in cached:
+        for src in sorted(cached):
             report.done(src, Changed.CACHED)
     cancelled = []
     formatted = []
@@ -3304,26 +3304,24 @@ def get_cache_info(path: Path) -> CacheInfo:
     return stat.st_mtime, stat.st_size
 
 
-def filter_cached(
-    cache: Cache, sources: Iterable[Path]
-) -> Tuple[List[Path], List[Path]]:
-    """Split a list of paths into two.
+def filter_cached(cache: Cache, sources: Iterable[Path]) -> Tuple[Set[Path], Set[Path]]:
+    """Split an iterable of paths in `sources` into two sets.
 
-    The first list contains paths of files that modified on disk or are not in the
-    cache. The other list contains paths to non-modified files.
+    The first contains paths of files that modified on disk or are not in the
+    cache. The other contains paths to non-modified files.
     """
-    todo, done = [], []
+    todo, done = set(), set()
     for src in sources:
         src = src.resolve()
         if cache.get(src) != get_cache_info(src):
-            todo.append(src)
+            todo.add(src)
         else:
-            done.append(src)
+            done.add(src)
     return todo, done
 
 
 def write_cache(
-    cache: Cache, sources: List[Path], line_length: int, mode: FileMode
+    cache: Cache, sources: Iterable[Path], line_length: int, mode: FileMode
 ) -> None:
     """Update the cache file."""
     cache_file = get_cache_file(line_length, mode)

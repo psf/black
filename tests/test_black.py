@@ -856,10 +856,10 @@ class BlackTestCase(unittest.TestCase):
             cached_but_changed.touch()
             cache = {cached: black.get_cache_info(cached), cached_but_changed: (0.0, 0)}
             todo, done = black.filter_cached(
-                cache, [uncached, cached, cached_but_changed]
+                cache, {uncached, cached, cached_but_changed}
             )
-            self.assertEqual(todo, [uncached, cached_but_changed])
-            self.assertEqual(done, [cached])
+            self.assertEqual(todo, {uncached, cached_but_changed})
+            self.assertEqual(done, {cached})
 
     def test_write_cache_creates_directory_if_needed(self) -> None:
         mode = black.FileMode.AUTO_DETECT
