@@ -6,7 +6,7 @@
       name: black
       language: system
       entry: python3 -m black
-      files: ^(black|setup|tests/test_black)\.py$
+      files: ^(black|setup|tests/test_black|docs/conf)\.py$
     - id: flake8
       name: flake8
       language: system
