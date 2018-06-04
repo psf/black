@@ -260,11 +260,9 @@ def main(
             sources.extend(
                 gen_python_files_in_dir(p, root, include_regex, exclude_regex)
             )
-        elif p.is_file():
+        elif p.is_file() or s == "-":
             # if a file was explicitly given, we don't care about its extension
             sources.append(p)
-        elif s == "-":
-            sources.append(Path("-"))
         else:
             err(f"invalid path: {s}")
 
