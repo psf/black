@@ -12,11 +12,15 @@ Assertions and checks
 
 .. autofunction:: black.assert_stable
 
+.. autofunction:: black.can_omit_invisible_parens
+
 .. autofunction:: black.is_empty_tuple
 
 .. autofunction:: black.is_import
 
 .. autofunction:: black.is_line_short_enough
+
+.. autofunction:: black.is_multiline_string
 
 .. autofunction:: black.is_one_tuple
 
@@ -31,6 +35,9 @@ Assertions and checks
 .. autofunction:: black.is_stub_suite
 
 .. autofunction:: black.is_vararg
+
+.. autofunction:: black.is_yield
+
 
 Formatting
 ----------
@@ -57,11 +64,11 @@ File operations
 Parsing
 -------
 
+.. autofunction:: black.decode_bytes
+
 .. autofunction:: black.lib2to3_parse
 
 .. autofunction:: black.lib2to3_unparse
-
-.. autofunction:: black.prepare_input
 
 Split functions
 ---------------
@@ -101,6 +108,8 @@ Utilities
 .. autofunction:: black.ensure_visible
 
 .. autofunction:: black.enumerate_reversed
+
+.. autofunction:: black.enumerate_with_length
 
 .. autofunction:: black.generate_comments
 

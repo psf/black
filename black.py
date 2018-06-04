@@ -1,5 +1,4 @@
 import asyncio
-import pickle
 from asyncio.base_events import BaseEventLoop
 from concurrent.futures import Executor, ProcessPoolExecutor
 from enum import Enum, Flag
@@ -10,10 +9,11 @@ import logging
 from multiprocessing import Manager
 import os
 from pathlib import Path
+import pickle
 import re
-import tokenize
 import signal
 import sys
+import tokenize
 from typing import (
     Any,
     Callable,
@@ -57,6 +57,7 @@ CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 # types
 FileContent = str
 Encoding = str
+NewLine = str
 Depth = int
 NodeType = int
 LeafID = int
@@ -469,7 +470,7 @@ def format_file_in_place(
         mode |= FileMode.PYI
 
     with open(src, "rb") as buf:
-        newline, encoding, src_contents = prepare_input(buf.read())
+        src_contents, encoding, newline = decode_bytes(buf.read())
     try:
         dst_contents = format_file_contents(
             src_contents, line_length=line_length, fast=fast, mode=mode
@@ -513,7 +514,7 @@ def format_stdin_to_stdout(
     `line_length`, `fast`, `is_pyi`, and `force_py36` arguments are passed to
     :func:`format_file_contents`.
     """
-    newline, encoding, src = prepare_input(sys.stdin.buffer.read())
+    src, encoding, newline = decode_bytes(sys.stdin.buffer.read())
     dst = src
     try:
         dst = format_file_contents(src, line_length=line_length, fast=fast, mode=mode)
@@ -523,26 +524,16 @@ def format_stdin_to_stdout(
         return False
 
     finally:
+        f = io.TextIOWrapper(
+            sys.stdout.buffer, encoding=encoding, newline=newline, write_through=True
+        )
         if write_back == WriteBack.YES:
-            f = io.TextIOWrapper(
-                sys.stdout.buffer,
-                encoding=encoding,
-                newline=newline,
-                write_through=True,
-            )
             f.write(dst)
-            f.detach()
         elif write_back == WriteBack.DIFF:
             src_name = "<stdin>  (original)"
             dst_name = "<stdin>  (formatted)"
-            f = io.TextIOWrapper(
-                sys.stdout.buffer,
-                encoding=encoding,
-                newline=newline,
-                write_through=True,
-            )
             f.write(diff(src, dst, src_name, dst_name))
-            f.detach()
+        f.detach()
 
 
 def format_file_contents(
@@ -603,17 +594,18 @@ def format_str(
     return dst_contents
 
 
-def prepare_input(src: bytes) -> Tuple[str, str, str]:
-    """Analyze `src` and return a tuple of (newline, encoding, decoded_contents)
+def decode_bytes(src: bytes) -> Tuple[FileContent, Encoding, NewLine]:
+    """Return a tuple of (decoded_contents, encoding, newline).
 
-    Where `newline` is either CRLF or LF, and `decoded_contents` is decoded with
-    universal newlines (i.e. only LF).
+    `newline` is either CRLF or LF but `decoded_contents` is decoded with
+    universal newlines (i.e. only contains LF).
     """
     srcbuf = io.BytesIO(src)
     encoding, lines = tokenize.detect_encoding(srcbuf.readline)
     newline = "\r\n" if b"\r\n" == lines[0][-2:] else "\n"
     srcbuf.seek(0)
-    return newline, encoding, io.TextIOWrapper(srcbuf, encoding).read()
+    with io.TextIOWrapper(srcbuf, encoding) as tiow:
+        return tiow.read(), encoding, newline
 
 
 GRAMMARS = [
