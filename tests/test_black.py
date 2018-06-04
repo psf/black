@@ -864,7 +864,8 @@ class BlackTestCase(unittest.TestCase):
             Path(THIS_DIR / "include_exclude_tests/b/dont_exclude/a.py"),
             Path(THIS_DIR / "include_exclude_tests/b/dont_exclude/a.pyi"),
         ]
-        sources.extend(black.gen_python_files_in_dir(path, include, exclude))
+        this_abs = THIS_DIR.resolve()
+        sources.extend(black.gen_python_files_in_dir(path, this_abs, include, exclude))
         self.assertEqual(sorted(expected), sorted(sources))
 
     def test_empty_include(self) -> None:
@@ -882,9 +883,10 @@ class BlackTestCase(unittest.TestCase):
             Path(path / "b/.definitely_exclude/a.py"),
             Path(path / "b/.definitely_exclude/a.pyi"),
         ]
+        this_abs = THIS_DIR.resolve()
         sources.extend(
             black.gen_python_files_in_dir(
-                path, empty, re.compile(black.DEFAULT_EXCLUDES)
+                path, this_abs, empty, re.compile(black.DEFAULT_EXCLUDES)
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))
@@ -901,9 +903,10 @@ class BlackTestCase(unittest.TestCase):
             Path(path / "b/.definitely_exclude/a.py"),
             Path(path / "b/.definitely_exclude/a.pyi"),
         ]
+        this_abs = THIS_DIR.resolve()
         sources.extend(
             black.gen_python_files_in_dir(
-                path, re.compile(black.DEFAULT_INCLUDES), empty
+                path, this_abs, re.compile(black.DEFAULT_INCLUDES), empty
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))

@@ -253,10 +253,13 @@ def main(
     except re.error:
         err(f"Invalid regular expression for exclude given: {exclude!r}")
         ctx.exit(2)
+    root = find_project_root(src)
     for s in src:
         p = Path(s)
         if p.is_dir():
-            sources.extend(gen_python_files_in_dir(p, include_regex, exclude_regex))
+            sources.extend(
+                gen_python_files_in_dir(p, root, include_regex, exclude_regex)
+            )
         elif p.is_file():
             # if a file was explicitly given, we don't care about its extension
             sources.append(p)
@@ -2792,13 +2795,14 @@ def get_future_imports(node: Node) -> Set[str]:
 
 
 def gen_python_files_in_dir(
-    path: Path, include: Pattern[str], exclude: Pattern[str]
+    path: Path, root: Path, include: Pattern[str], exclude: Pattern[str]
 ) -> Iterator[Path]:
     """Generate all files under `path` whose paths are not excluded by the
     `exclude` regex, but are included by the `include` regex.
     """
+    assert root.is_absolute(), f"INTERNAL ERROR: `root` must be absolute but is {root}"
     for child in path.iterdir():
-        normalized_path = child.resolve().as_posix()
+        normalized_path = child.resolve().relative_to(root).as_posix()
         if child.is_dir():
             normalized_path += "/"
         exclude_match = exclude.search(normalized_path)
@@ -2806,12 +2810,41 @@ def gen_python_files_in_dir(
             continue
 
         if child.is_dir():
-            yield from gen_python_files_in_dir(child, include, exclude)
+            yield from gen_python_files_in_dir(child, root, include, exclude)
 
         elif child.is_file():
             include_match = include.search(normalized_path)
             if include_match:
                 yield child
+
+
+def find_project_root(srcs: List[str]) -> Path:
+    """Return a directory containing .git, .hg, or pyproject.toml.
+
+    That directory can be one of the directories passed in `srcs` or their
+    common parent.
+
+    If no directory in the tree contains a marker that would specify it's the
+    project root, the root of the file system is returned.
+    """
+    if not srcs:
+        return Path("/").resolve()
+
+    common_base = min(Path(src).resolve() for src in srcs)
+    if common_base.is_dir():
+        # Append a fake file so `parents` below returns `common_base_dir`, too.
+        common_base /= "fake-file"
+    for directory in common_base.parents:
+        if (directory / ".git").is_dir():
+            return directory
+
+        if (directory / ".hg").is_dir():
+            return directory
+
+        if (directory / "pyproject.toml").is_file():
+            return directory
+
+    return directory
 
 
 @dataclass
