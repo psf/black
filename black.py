@@ -119,6 +119,13 @@ class WriteBack(Enum):
     YES = 1
     DIFF = 2
 
+    @classmethod
+    def from_configuration(cls, *, check: bool, diff: bool) -> "WriteBack":
+        if check and not diff:
+            return cls.NO
+
+        return cls.DIFF if diff else cls.YES
+
 
 class Changed(Enum):
     NO = 0
@@ -131,6 +138,19 @@ class FileMode(Flag):
     PYTHON36 = 1
     PYI = 2
     NO_STRING_NORMALIZATION = 4
+
+    @classmethod
+    def from_configuration(
+        cls, *, py36: bool, pyi: bool, skip_string_normalization: bool
+    ) -> "FileMode":
+        mode = cls.AUTO_DETECT
+        if py36:
+            mode |= cls.PYTHON36
+        if pyi:
+            mode |= cls.PYI
+        if skip_string_normalization:
+            mode |= cls.NO_STRING_NORMALIZATION
+        return mode
 
 
 @click.command()
@@ -242,6 +262,11 @@ def main(
     src: List[str],
 ) -> None:
     """The uncompromising code formatter."""
+    write_back = WriteBack.from_configuration(check=check, diff=diff)
+    mode = FileMode.from_configuration(
+        py36=py36, pyi=pyi, skip_string_normalization=skip_string_normalization
+    )
+    report = Report(check=check, quiet=quiet)
     sources: List[Path] = []
     try:
         include_regex = re.compile(include)
@@ -265,21 +290,6 @@ def main(
             sources.append(p)
         else:
             err(f"invalid path: {s}")
-
-    if check and not diff:
-        write_back = WriteBack.NO
-    elif diff:
-        write_back = WriteBack.DIFF
-    else:
-        write_back = WriteBack.YES
-    mode = FileMode.AUTO_DETECT
-    if py36:
-        mode |= FileMode.PYTHON36
-    if pyi:
-        mode |= FileMode.PYI
-    if skip_string_normalization:
-        mode |= FileMode.NO_STRING_NORMALIZATION
-    report = Report(check=check, quiet=quiet)
     if len(sources) == 0:
         out("No paths given. Nothing to do 😴")
         ctx.exit(0)
