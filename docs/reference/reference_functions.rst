@@ -61,6 +61,8 @@ Parsing
 
 .. autofunction:: black.lib2to3_unparse
 
+.. autofunction:: black.prepare_input
+
 Split functions
 ---------------
 

@@ -447,7 +447,7 @@ def format_file_in_place(
         mode |= FileMode.PYI
 
     with open(src, "rb") as buf:
-        newline, encoding, src_contents = consume_input(buf.read())
+        newline, encoding, src_contents = prepare_input(buf.read())
     try:
         dst_contents = format_file_contents(
             src_contents, line_length=line_length, fast=fast, mode=mode
@@ -479,14 +479,6 @@ def format_file_in_place(
     return True
 
 
-def consume_input(src: bytes) -> Tuple[str, str, str]:
-    srcbuf = io.BytesIO(src)
-    encoding, lines = tokenize.detect_encoding(srcbuf.readline)
-    newline = "\r\n" if b"\r\n" == lines[0][-2:] else "\n"
-    srcbuf.seek(0)
-    return newline, encoding, io.TextIOWrapper(srcbuf, encoding).read()
-
-
 def format_stdin_to_stdout(
     line_length: int,
     fast: bool,
@@ -499,7 +491,7 @@ def format_stdin_to_stdout(
     `line_length`, `fast`, `is_pyi`, and `force_py36` arguments are passed to
     :func:`format_file_contents`.
     """
-    newline, encoding, src = consume_input(sys.stdin.buffer.read())
+    newline, encoding, src = prepare_input(sys.stdin.buffer.read())
     dst = src
     try:
         dst = format_file_contents(src, line_length=line_length, fast=fast, mode=mode)
@@ -587,6 +579,19 @@ def format_str(
         for line in split_line(current_line, line_length=line_length, py36=py36):
             dst_contents += str(line)
     return dst_contents
+
+
+def prepare_input(src: bytes) -> Tuple[str, str, str]:
+    """Analyze `src` and return a tuple of (newline, encoding, decoded_contents)
+
+    Where `newline` is either CRLF or LF, and `decoded_contents` is decoded with
+    universal newlines (i.e. only LF).
+    """
+    srcbuf = io.BytesIO(src)
+    encoding, lines = tokenize.detect_encoding(srcbuf.readline)
+    newline = "\r\n" if b"\r\n" == lines[0][-2:] else "\n"
+    srcbuf.seek(0)
+    return newline, encoding, io.TextIOWrapper(srcbuf, encoding).read()
 
 
 GRAMMARS = [
