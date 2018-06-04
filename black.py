@@ -238,6 +238,15 @@ class FileMode(Flag):
         "silence those with 2>/dev/null."
     ),
 )
+@click.option(
+    "-v",
+    "--verbose",
+    is_flag=True,
+    help=(
+        "Also emit messages to stderr about files that were not changed or were "
+        "ignored due to --exclude=."
+    ),
+)
 @click.version_option(version=__version__)
 @click.argument(
     "src",
@@ -257,6 +266,7 @@ def main(
     py36: bool,
     skip_string_normalization: bool,
     quiet: bool,
+    verbose: bool,
     include: str,
     exclude: str,
     src: List[str],
@@ -266,7 +276,7 @@ def main(
     mode = FileMode.from_configuration(
         py36=py36, pyi=pyi, skip_string_normalization=skip_string_normalization
     )
-    report = Report(check=check, quiet=quiet)
+    report = Report(check=check, quiet=quiet, verbose=verbose)
     sources: List[Path] = []
     try:
         include_regex = re.compile(include)
@@ -283,7 +293,7 @@ def main(
         p = Path(s)
         if p.is_dir():
             sources.extend(
-                gen_python_files_in_dir(p, root, include_regex, exclude_regex)
+                gen_python_files_in_dir(p, root, include_regex, exclude_regex, report)
             )
         elif p.is_file() or s == "-":
             # if a file was explicitly given, we don't care about its extension
@@ -2803,10 +2813,16 @@ def get_future_imports(node: Node) -> Set[str]:
 
 
 def gen_python_files_in_dir(
-    path: Path, root: Path, include: Pattern[str], exclude: Pattern[str]
+    path: Path,
+    root: Path,
+    include: Pattern[str],
+    exclude: Pattern[str],
+    report: "Report",
 ) -> Iterator[Path]:
     """Generate all files under `path` whose paths are not excluded by the
     `exclude` regex, but are included by the `include` regex.
+
+    `report` is where output about exclusions goes.
     """
     assert root.is_absolute(), f"INTERNAL ERROR: `root` must be absolute but is {root}"
     for child in path.iterdir():
@@ -2815,10 +2831,11 @@ def gen_python_files_in_dir(
             normalized_path += "/"
         exclude_match = exclude.search(normalized_path)
         if exclude_match and exclude_match.group(0):
+            report.path_ignored(child, f"matches --exclude={exclude.pattern}")
             continue
 
         if child.is_dir():
-            yield from gen_python_files_in_dir(child, root, include, exclude)
+            yield from gen_python_files_in_dir(child, root, include, exclude, report)
 
         elif child.is_file():
             include_match = include.search(normalized_path)
@@ -2861,6 +2878,7 @@ class Report:
 
     check: bool = False
     quiet: bool = False
+    verbose: bool = False
     change_count: int = 0
     same_count: int = 0
     failure_count: int = 0
@@ -2869,11 +2887,11 @@ class Report:
         """Increment the counter for successful reformatting. Write out a message."""
         if changed is Changed.YES:
             reformatted = "would reformat" if self.check else "reformatted"
-            if not self.quiet:
+            if self.verbose or not self.quiet:
                 out(f"{reformatted} {src}")
             self.change_count += 1
         else:
-            if not self.quiet:
+            if self.verbose:
                 if changed is Changed.NO:
                     msg = f"{src} already well formatted, good job."
                 else:
@@ -2885,6 +2903,10 @@ class Report:
         """Increment the counter for failed reformatting. Write out a message."""
         err(f"error: cannot format {src}: {message}")
         self.failure_count += 1
+
+    def path_ignored(self, path: Path, message: str) -> None:
+        if self.verbose:
+            out(f"{path} ignored: {message}", bold=False)
 
     @property
     def return_code(self) -> int:

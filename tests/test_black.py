@@ -378,8 +378,8 @@ class BlackTestCase(unittest.TestCase):
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, line_length=ll)
 
-    def test_report(self) -> None:
-        report = black.Report()
+    def test_report_verbose(self) -> None:
+        report = black.Report(verbose=True)
         out_lines = []
         err_lines = []
 
@@ -446,10 +446,197 @@ class BlackTestCase(unittest.TestCase):
                 "2 files failed to reformat.",
             )
             self.assertEqual(report.return_code, 123)
-            report.done(Path("f4"), black.Changed.NO)
+            report.path_ignored(Path("wat"), "no match")
             self.assertEqual(len(out_lines), 5)
             self.assertEqual(len(err_lines), 2)
+            self.assertEqual(out_lines[-1], "wat ignored: no match")
+            self.assertEqual(
+                unstyle(str(report)),
+                "2 files reformatted, 2 files left unchanged, "
+                "2 files failed to reformat.",
+            )
+            self.assertEqual(report.return_code, 123)
+            report.done(Path("f4"), black.Changed.NO)
+            self.assertEqual(len(out_lines), 6)
+            self.assertEqual(len(err_lines), 2)
             self.assertEqual(out_lines[-1], "f4 already well formatted, good job.")
+            self.assertEqual(
+                unstyle(str(report)),
+                "2 files reformatted, 3 files left unchanged, "
+                "2 files failed to reformat.",
+            )
+            self.assertEqual(report.return_code, 123)
+            report.check = True
+            self.assertEqual(
+                unstyle(str(report)),
+                "2 files would be reformatted, 3 files would be left unchanged, "
+                "2 files would fail to reformat.",
+            )
+
+    def test_report_quiet(self) -> None:
+        report = black.Report(quiet=True)
+        out_lines = []
+        err_lines = []
+
+        def out(msg: str, **kwargs: Any) -> None:
+            out_lines.append(msg)
+
+        def err(msg: str, **kwargs: Any) -> None:
+            err_lines.append(msg)
+
+        with patch("black.out", out), patch("black.err", err):
+            report.done(Path("f1"), black.Changed.NO)
+            self.assertEqual(len(out_lines), 0)
+            self.assertEqual(len(err_lines), 0)
+            self.assertEqual(unstyle(str(report)), "1 file left unchanged.")
+            self.assertEqual(report.return_code, 0)
+            report.done(Path("f2"), black.Changed.YES)
+            self.assertEqual(len(out_lines), 0)
+            self.assertEqual(len(err_lines), 0)
+            self.assertEqual(
+                unstyle(str(report)), "1 file reformatted, 1 file left unchanged."
+            )
+            report.done(Path("f3"), black.Changed.CACHED)
+            self.assertEqual(len(out_lines), 0)
+            self.assertEqual(len(err_lines), 0)
+            self.assertEqual(
+                unstyle(str(report)), "1 file reformatted, 2 files left unchanged."
+            )
+            self.assertEqual(report.return_code, 0)
+            report.check = True
+            self.assertEqual(report.return_code, 1)
+            report.check = False
+            report.failed(Path("e1"), "boom")
+            self.assertEqual(len(out_lines), 0)
+            self.assertEqual(len(err_lines), 1)
+            self.assertEqual(err_lines[-1], "error: cannot format e1: boom")
+            self.assertEqual(
+                unstyle(str(report)),
+                "1 file reformatted, 2 files left unchanged, "
+                "1 file failed to reformat.",
+            )
+            self.assertEqual(report.return_code, 123)
+            report.done(Path("f3"), black.Changed.YES)
+            self.assertEqual(len(out_lines), 0)
+            self.assertEqual(len(err_lines), 1)
+            self.assertEqual(
+                unstyle(str(report)),
+                "2 files reformatted, 2 files left unchanged, "
+                "1 file failed to reformat.",
+            )
+            self.assertEqual(report.return_code, 123)
+            report.failed(Path("e2"), "boom")
+            self.assertEqual(len(out_lines), 0)
+            self.assertEqual(len(err_lines), 2)
+            self.assertEqual(err_lines[-1], "error: cannot format e2: boom")
+            self.assertEqual(
+                unstyle(str(report)),
+                "2 files reformatted, 2 files left unchanged, "
+                "2 files failed to reformat.",
+            )
+            self.assertEqual(report.return_code, 123)
+            report.path_ignored(Path("wat"), "no match")
+            self.assertEqual(len(out_lines), 0)
+            self.assertEqual(len(err_lines), 2)
+            self.assertEqual(
+                unstyle(str(report)),
+                "2 files reformatted, 2 files left unchanged, "
+                "2 files failed to reformat.",
+            )
+            self.assertEqual(report.return_code, 123)
+            report.done(Path("f4"), black.Changed.NO)
+            self.assertEqual(len(out_lines), 0)
+            self.assertEqual(len(err_lines), 2)
+            self.assertEqual(
+                unstyle(str(report)),
+                "2 files reformatted, 3 files left unchanged, "
+                "2 files failed to reformat.",
+            )
+            self.assertEqual(report.return_code, 123)
+            report.check = True
+            self.assertEqual(
+                unstyle(str(report)),
+                "2 files would be reformatted, 3 files would be left unchanged, "
+                "2 files would fail to reformat.",
+            )
+
+    def test_report_normal(self) -> None:
+        report = black.Report()
+        out_lines = []
+        err_lines = []
+
+        def out(msg: str, **kwargs: Any) -> None:
+            out_lines.append(msg)
+
+        def err(msg: str, **kwargs: Any) -> None:
+            err_lines.append(msg)
+
+        with patch("black.out", out), patch("black.err", err):
+            report.done(Path("f1"), black.Changed.NO)
+            self.assertEqual(len(out_lines), 0)
+            self.assertEqual(len(err_lines), 0)
+            self.assertEqual(unstyle(str(report)), "1 file left unchanged.")
+            self.assertEqual(report.return_code, 0)
+            report.done(Path("f2"), black.Changed.YES)
+            self.assertEqual(len(out_lines), 1)
+            self.assertEqual(len(err_lines), 0)
+            self.assertEqual(out_lines[-1], "reformatted f2")
+            self.assertEqual(
+                unstyle(str(report)), "1 file reformatted, 1 file left unchanged."
+            )
+            report.done(Path("f3"), black.Changed.CACHED)
+            self.assertEqual(len(out_lines), 1)
+            self.assertEqual(len(err_lines), 0)
+            self.assertEqual(out_lines[-1], "reformatted f2")
+            self.assertEqual(
+                unstyle(str(report)), "1 file reformatted, 2 files left unchanged."
+            )
+            self.assertEqual(report.return_code, 0)
+            report.check = True
+            self.assertEqual(report.return_code, 1)
+            report.check = False
+            report.failed(Path("e1"), "boom")
+            self.assertEqual(len(out_lines), 1)
+            self.assertEqual(len(err_lines), 1)
+            self.assertEqual(err_lines[-1], "error: cannot format e1: boom")
+            self.assertEqual(
+                unstyle(str(report)),
+                "1 file reformatted, 2 files left unchanged, "
+                "1 file failed to reformat.",
+            )
+            self.assertEqual(report.return_code, 123)
+            report.done(Path("f3"), black.Changed.YES)
+            self.assertEqual(len(out_lines), 2)
+            self.assertEqual(len(err_lines), 1)
+            self.assertEqual(out_lines[-1], "reformatted f3")
+            self.assertEqual(
+                unstyle(str(report)),
+                "2 files reformatted, 2 files left unchanged, "
+                "1 file failed to reformat.",
+            )
+            self.assertEqual(report.return_code, 123)
+            report.failed(Path("e2"), "boom")
+            self.assertEqual(len(out_lines), 2)
+            self.assertEqual(len(err_lines), 2)
+            self.assertEqual(err_lines[-1], "error: cannot format e2: boom")
+            self.assertEqual(
+                unstyle(str(report)),
+                "2 files reformatted, 2 files left unchanged, "
+                "2 files failed to reformat.",
+            )
+            self.assertEqual(report.return_code, 123)
+            report.path_ignored(Path("wat"), "no match")
+            self.assertEqual(len(out_lines), 2)
+            self.assertEqual(len(err_lines), 2)
+            self.assertEqual(
+                unstyle(str(report)),
+                "2 files reformatted, 2 files left unchanged, "
+                "2 files failed to reformat.",
+            )
+            self.assertEqual(report.return_code, 123)
+            report.done(Path("f4"), black.Changed.NO)
+            self.assertEqual(len(out_lines), 2)
+            self.assertEqual(len(err_lines), 2)
             self.assertEqual(
                 unstyle(str(report)),
                 "2 files reformatted, 3 files left unchanged, "
@@ -859,17 +1046,21 @@ class BlackTestCase(unittest.TestCase):
         path = THIS_DIR / "include_exclude_tests"
         include = re.compile(r"\.pyi?$")
         exclude = re.compile(r"/exclude/|/\.definitely_exclude/")
+        report = black.Report()
         sources: List[Path] = []
         expected = [
             Path(THIS_DIR / "include_exclude_tests/b/dont_exclude/a.py"),
             Path(THIS_DIR / "include_exclude_tests/b/dont_exclude/a.pyi"),
         ]
         this_abs = THIS_DIR.resolve()
-        sources.extend(black.gen_python_files_in_dir(path, this_abs, include, exclude))
+        sources.extend(
+            black.gen_python_files_in_dir(path, this_abs, include, exclude, report)
+        )
         self.assertEqual(sorted(expected), sorted(sources))
 
     def test_empty_include(self) -> None:
         path = THIS_DIR / "include_exclude_tests"
+        report = black.Report()
         empty = re.compile(r"")
         sources: List[Path] = []
         expected = [
@@ -886,13 +1077,14 @@ class BlackTestCase(unittest.TestCase):
         this_abs = THIS_DIR.resolve()
         sources.extend(
             black.gen_python_files_in_dir(
-                path, this_abs, empty, re.compile(black.DEFAULT_EXCLUDES)
+                path, this_abs, empty, re.compile(black.DEFAULT_EXCLUDES), report
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))
 
     def test_empty_exclude(self) -> None:
         path = THIS_DIR / "include_exclude_tests"
+        report = black.Report()
         empty = re.compile(r"")
         sources: List[Path] = []
         expected = [
@@ -906,7 +1098,7 @@ class BlackTestCase(unittest.TestCase):
         this_abs = THIS_DIR.resolve()
         sources.extend(
             black.gen_python_files_in_dir(
-                path, this_abs, re.compile(black.DEFAULT_INCLUDES), empty
+                path, this_abs, re.compile(black.DEFAULT_INCLUDES), empty, report
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))

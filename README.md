@@ -99,6 +99,9 @@ Options:
   -q, --quiet                 Don't emit non-error messages to stderr. Errors
                               are still emitted, silence those with
                               2>/dev/null.
+  -v, --verbose               Also emit messages to stderr about files
+                              that were not changed or were ignored due to
+                              --exclude=.
   --version                   Show the version and exit.
   --help                      Show this message and exit.
 ```
@@ -711,6 +714,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * added `--include` and `--exclude` (#270)
 
 * added `--skip-string-normalization` (#118)
+
+* added `--verbose` (#283)
 
 * fixed stdin handling not working correctly if an old version of Click was
   used (#276)
