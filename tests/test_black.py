@@ -3,7 +3,7 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from functools import partial
-from io import StringIO
+from io import BytesIO, TextIOWrapper
 import os
 from pathlib import Path
 import sys
@@ -121,8 +121,9 @@ class BlackTestCase(unittest.TestCase):
         source, expected = read_data("../black")
         hold_stdin, hold_stdout = sys.stdin, sys.stdout
         try:
-            sys.stdin, sys.stdout = StringIO(source), StringIO()
-            sys.stdin.name = "<stdin>"
+            sys.stdin = TextIOWrapper(BytesIO(source.encode()))
+            sys.stdout = TextIOWrapper(BytesIO())
+            sys.stdin.buffer.name = "<stdin>"  # type: ignore
             black.format_stdin_to_stdout(
                 line_length=ll, fast=True, write_back=black.WriteBack.YES
             )
@@ -139,8 +140,9 @@ class BlackTestCase(unittest.TestCase):
         expected, _ = read_data("expression.diff")
         hold_stdin, hold_stdout = sys.stdin, sys.stdout
         try:
-            sys.stdin, sys.stdout = StringIO(source), StringIO()
-            sys.stdin.name = "<stdin>"
+            sys.stdin = TextIOWrapper(BytesIO(source.encode()))
+            sys.stdout = TextIOWrapper(BytesIO())
+            sys.stdin.buffer.name = "<stdin>"  # type: ignore
             black.format_stdin_to_stdout(
                 line_length=ll, fast=True, write_back=black.WriteBack.DIFF
             )
@@ -204,7 +206,7 @@ class BlackTestCase(unittest.TestCase):
         tmp_file = Path(black.dump_to_file(source))
         hold_stdout = sys.stdout
         try:
-            sys.stdout = StringIO()
+            sys.stdout = TextIOWrapper(BytesIO())
             self.assertTrue(ff(tmp_file, write_back=black.WriteBack.DIFF))
             sys.stdout.seek(0)
             actual = sys.stdout.read()
