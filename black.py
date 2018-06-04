@@ -302,7 +302,8 @@ def main(
         else:
             err(f"invalid path: {s}")
     if len(sources) == 0:
-        out("No paths given. Nothing to do 😴")
+        if verbose or not quiet:
+            out("No paths given. Nothing to do 😴")
         ctx.exit(0)
         return
 
@@ -333,7 +334,7 @@ def main(
             )
         finally:
             shutdown(loop)
-        if not quiet:
+        if verbose or not quiet:
             out("All done! ✨ 🍰 ✨")
             click.echo(str(report))
     ctx.exit(report.return_code)
