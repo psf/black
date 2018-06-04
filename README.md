@@ -720,6 +720,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * fixed stdin handling not working correctly if an old version of Click was
   used (#276)
 
+* *Black* now preserves line endings when formatting a file in place (#258)
+
 
 ### 18.5b1
 
