@@ -2826,7 +2826,7 @@ def gen_python_files_in_dir(
     """
     assert root.is_absolute(), f"INTERNAL ERROR: `root` must be absolute but is {root}"
     for child in path.iterdir():
-        normalized_path = child.resolve().relative_to(root).as_posix()
+        normalized_path = "/" + child.resolve().relative_to(root).as_posix()
         if child.is_dir():
             normalized_path += "/"
         exclude_match = exclude.search(normalized_path)
