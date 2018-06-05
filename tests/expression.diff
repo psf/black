@@ -1,5 +1,5 @@
---- <stdin>  (original)
-+++ <stdin>  (formatted)
+--- [Deterministic header]
++++ [Deterministic header]
 @@ -1,8 +1,8 @@
  ...
 -'some_string'

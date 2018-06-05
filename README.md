@@ -717,6 +717,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * added `--verbose` (#283)
 
+* the header output in `--diff` now actually conforms to the unified diff spec
+
 * fixed stdin handling not working correctly if an old version of Click was
   used (#276)
 

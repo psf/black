@@ -6,17 +6,18 @@ from functools import partial
 from io import BytesIO, TextIOWrapper
 import os
 from pathlib import Path
+import re
 import sys
 from tempfile import TemporaryDirectory
 from typing import Any, List, Tuple, Iterator
 import unittest
 from unittest.mock import patch
-import re
 
 from click import unstyle
 from click.testing import CliRunner
 
 import black
+
 
 ll = 88
 ff = partial(black.format_file_in_place, line_length=ll, fast=True)
@@ -136,18 +137,22 @@ class BlackTestCase(unittest.TestCase):
         black.assert_stable(source, actual, line_length=ll)
 
     def test_piping_diff(self) -> None:
+        diff_header = re.compile(
+            rf"(STDIN|STDOUT)\t\d\d\d\d-\d\d-\d\d "
+            rf"\d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
+        )
         source, _ = read_data("expression.py")
         expected, _ = read_data("expression.diff")
         hold_stdin, hold_stdout = sys.stdin, sys.stdout
         try:
             sys.stdin = TextIOWrapper(BytesIO(source.encode("utf8")), encoding="utf8")
             sys.stdout = TextIOWrapper(BytesIO(), encoding="utf8")
-            sys.stdin.buffer.name = "<stdin>"  # type: ignore
             black.format_stdin_to_stdout(
                 line_length=ll, fast=True, write_back=black.WriteBack.DIFF
             )
             sys.stdout.seek(0)
             actual = sys.stdout.read()
+            actual = diff_header.sub("[Deterministic header]", actual)
         finally:
             sys.stdin, sys.stdout = hold_stdin, hold_stdout
         actual = actual.rstrip() + "\n"  # the diff output has a trailing space
@@ -204,13 +209,17 @@ class BlackTestCase(unittest.TestCase):
         source, _ = read_data("expression.py")
         expected, _ = read_data("expression.diff")
         tmp_file = Path(black.dump_to_file(source))
+        diff_header = re.compile(
+            rf"{re.escape(str(tmp_file))}\t\d\d\d\d-\d\d-\d\d "
+            rf"\d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
+        )
         hold_stdout = sys.stdout
         try:
             sys.stdout = TextIOWrapper(BytesIO(), encoding="utf8")
             self.assertTrue(ff(tmp_file, write_back=black.WriteBack.DIFF))
             sys.stdout.seek(0)
             actual = sys.stdout.read()
-            actual = actual.replace(str(tmp_file), "<stdin>")
+            actual = diff_header.sub("[Deterministic header]", actual)
         finally:
             sys.stdout = hold_stdout
             os.unlink(tmp_file)
