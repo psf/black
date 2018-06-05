@@ -124,10 +124,10 @@
         },
         "cfgv": {
             "hashes": [
-                "sha256:2fbaf8d082456d8fff5a68163ff59c1025a52e906914fbc738be7d8ea5b7aa4b",
-                "sha256:733aa2f66b5106af32d271336a571610b9808e868de0ad5690d9d5155e5960c5"
+                "sha256:73f48a752bd7aab103c4b882d6596c6360b7aa63b34073dd2c35c7b4b8f93010",
+                "sha256:d1791caa9ff5c0c7bce80e7ecc1921752a2eb7c2463a08ed9b6c96b85a2f75aa"
             ],
-            "version": "==1.0.0"
+            "version": "==1.1.0"
         },
         "chardet": {
             "hashes": [

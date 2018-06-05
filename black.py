@@ -46,7 +46,7 @@ from blib2to3.pgen2 import driver, token
 from blib2to3.pgen2.parse import ParseError
 
 
-__version__ = "18.6b0"
+__version__ = "18.6b1"
 DEFAULT_LINE_LENGTH = 88
 DEFAULT_EXCLUDES = (
     r"/(\.git|\.hg|\.mypy_cache|\.tox|\.venv|_build|buck-out|build|dist)/"
@@ -337,7 +337,8 @@ def main(
         finally:
             shutdown(loop)
     if verbose or not quiet:
-        out("All done!" + ("💥 💔 💥" if report.return_code else " ✨ 🍰 ✨"))
+        bang = "💥 💔 💥" if report.return_code else "✨ 🍰 ✨"
+        out(f"All done! {bang}")
         click.secho(str(report), err=True)
     ctx.exit(report.return_code)
 

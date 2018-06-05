@@ -709,6 +709,13 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Change Log
 
+### 18.6b1
+
+* hotfix: don't output human-facing information on stdout (#299)
+
+* hotfix: don't output cake emoji on non-zero return code (#300)
+
+
 ### 18.6b0
 
 * added `--include` and `--exclude` (#270)
