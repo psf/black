@@ -2213,11 +2213,14 @@ def right_hand_split(
             result.append(leaf, preformatted=True)
             for comment_after in line.comments_after(leaf):
                 result.append(comment_after, preformatted=True)
-    bracket_split_succeeded_or_raise(head, body, tail)
     assert opening_bracket and closing_bracket
+    body.should_explode = should_explode(body, opening_bracket)
+    bracket_split_succeeded_or_raise(head, body, tail)
     if (
+        # the body shouldn't be exploded
+        not body.should_explode
         # the opening bracket is an optional paren
-        opening_bracket.type == token.LPAR
+        and opening_bracket.type == token.LPAR
         and not opening_bracket.value
         # the closing bracket is an optional paren
         and closing_bracket.type == token.RPAR
@@ -2234,11 +2237,15 @@ def right_hand_split(
                 yield from right_hand_split(line, line_length, py36=py36, omit=omit)
                 return
             except CannotSplit:
-                pass
+                if len(body.leaves) == 1 and not is_line_short_enough(
+                    body, line_length=line_length
+                ):
+                    raise CannotSplit(
+                        "Splitting failed, body is still too long and can't be split."
+                    )
 
     ensure_visible(opening_bracket)
     ensure_visible(closing_bracket)
-    body.should_explode = should_explode(body, opening_bracket)
     for result in (head, body, tail):
         if result:
             yield result

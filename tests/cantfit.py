@@ -25,6 +25,9 @@ normal_name = normal_function_name(
     "eggs with spam and eggs and spam with eggs with spam and eggs and spam with eggs with spam and eggs and spam with eggs",
     this_is_a_ridiculously_long_name_and_nobody_in_their_right_mind_would_use_one_like_it=0,
 )
+string_variable_name = (
+    "a string that is waaaaaaaayyyyyyyy too long, even in parens, there's nothing you can do"  # noqa
+)
 
 
 # output
@@ -67,3 +70,4 @@ normal_name = normal_function_name(
     "eggs with spam and eggs and spam with eggs with spam and eggs and spam with eggs with spam and eggs and spam with eggs",
     this_is_a_ridiculously_long_name_and_nobody_in_their_right_mind_would_use_one_like_it=0,
 )
+string_variable_name = "a string that is waaaaaaaayyyyyyyy too long, even in parens, there's nothing you can do"  # noqa
