@@ -101,6 +101,25 @@ class BlackTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
 
     @patch("black.dump_to_file", dump_to_stderr)
+    def test_empty(self) -> None:
+        source = expected = ""
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, line_length=ll)
+
+    def test_empty_ff(self) -> None:
+        expected = ""
+        tmp_file = Path(black.dump_to_file())
+        try:
+            self.assertFalse(ff(tmp_file, write_back=black.WriteBack.YES))
+            with open(tmp_file, encoding="utf8") as f:
+                actual = f.read()
+        finally:
+            os.unlink(tmp_file)
+        self.assertFormatEqual(expected, actual)
+
+    @patch("black.dump_to_file", dump_to_stderr)
     def test_self(self) -> None:
         source, expected = read_data("test_black")
         actual = fs(source)

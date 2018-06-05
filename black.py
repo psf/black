@@ -607,6 +607,9 @@ def decode_bytes(src: bytes) -> Tuple[FileContent, Encoding, NewLine]:
     """
     srcbuf = io.BytesIO(src)
     encoding, lines = tokenize.detect_encoding(srcbuf.readline)
+    if not lines:
+        return "", encoding, "\n"
+
     newline = "\r\n" if b"\r\n" == lines[0][-2:] else "\n"
     srcbuf.seek(0)
     with io.TextIOWrapper(srcbuf, encoding) as tiow:
@@ -623,7 +626,7 @@ GRAMMARS = [
 def lib2to3_parse(src_txt: str) -> Node:
     """Given a string with source, return the lib2to3 Node."""
     grammar = pygram.python_grammar_no_print_statement
-    if src_txt[-1] != "\n":
+    if src_txt[-1:] != "\n":
         src_txt += "\n"
     for grammar in GRAMMARS:
         drv = driver.Driver(grammar, pytree.convert)
