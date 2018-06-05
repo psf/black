@@ -337,7 +337,7 @@ def main(
         finally:
             shutdown(loop)
     if verbose or not quiet:
-        out("All done! ✨ 🍰 ✨")
+        out("All done!" + ("💥 💔 💥" if report.return_code else " ✨ 🍰 ✨"))
         click.secho(str(report), err=True)
     ctx.exit(report.return_code)
 
