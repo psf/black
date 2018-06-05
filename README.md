@@ -1027,7 +1027,7 @@ Multiple contributions by:
 * [Luka Sterbic](mailto:luka.sterbic@gmail.com)
 * [Miguel Gaiowski](mailto:miggaiowski@gmail.com)
 * [Osaetin Daniel](mailto:osaetindaniel@gmail.com)
-* [Peter Bengtsson](mailto:peterbe@mozilla.com)
+* [Peter Bengtsson](mailto:mail@peterbe.com)
 * [Stavros Korokithakis](mailto:hi@stavros.io)
 * [Sunil Kapil](mailto:snlkapil@gmail.com)
 * [Vishwas B Sharma](mailto:sharma.vishwas88@gmail.com)
