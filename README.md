@@ -721,6 +721,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * fixed long trivial assignments being wrapped in unnecessary parentheses (#273)
 
+* fixed unnecessary parentheses when a line contained multiline strings (#232)
+
 * fixed stdin handling not working correctly if an old version of Click was
   used (#276)
 

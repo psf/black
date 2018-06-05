@@ -28,6 +28,13 @@ normal_name = normal_function_name(
 string_variable_name = (
     "a string that is waaaaaaaayyyyyyyy too long, even in parens, there's nothing you can do"  # noqa
 )
+for key in """
+    hostname
+    port
+    username
+""".split():
+    if key in self.connect_kwargs:
+        raise ValueError(err.format(key))
 
 
 # output
@@ -71,3 +78,10 @@ normal_name = normal_function_name(
     this_is_a_ridiculously_long_name_and_nobody_in_their_right_mind_would_use_one_like_it=0,
 )
 string_variable_name = "a string that is waaaaaaaayyyyyyyy too long, even in parens, there's nothing you can do"  # noqa
+for key in """
+    hostname
+    port
+    username
+""".split():
+    if key in self.connect_kwargs:
+        raise ValueError(err.format(key))

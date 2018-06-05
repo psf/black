@@ -1094,6 +1094,13 @@ class Line:
 
         return False
 
+    def contains_multiline_strings(self) -> bool:
+        for leaf in self.leaves:
+            if is_multiline_string(leaf):
+                return True
+
+        return False
+
     def maybe_remove_trailing_comma(self, closing: Leaf) -> bool:
         """Remove trailing comma if there is one and it's safe."""
         if not (
@@ -2225,24 +2232,35 @@ def right_hand_split(
         # the closing bracket is an optional paren
         and closing_bracket.type == token.RPAR
         and not closing_bracket.value
-        # there are no standalone comments in the body
-        and not line.contains_standalone_comments(0)
-        # and it's not an import (optional parens are the only thing we can split
-        # on in this case; attempting a split without them is a waste of time)
+        # it's not an import (optional parens are the only thing we can split on
+        # in this case; attempting a split without them is a waste of time)
         and not line.is_import
+        # there are no standalone comments in the body
+        and not body.contains_standalone_comments(0)
+        # and we can actually remove the parens
+        and can_omit_invisible_parens(body, line_length)
     ):
         omit = {id(closing_bracket), *omit}
-        if can_omit_invisible_parens(body, line_length):
-            try:
-                yield from right_hand_split(line, line_length, py36=py36, omit=omit)
-                return
-            except CannotSplit:
-                if len(body.leaves) == 1 and not is_line_short_enough(
-                    body, line_length=line_length
-                ):
-                    raise CannotSplit(
-                        "Splitting failed, body is still too long and can't be split."
-                    )
+        try:
+            yield from right_hand_split(line, line_length, py36=py36, omit=omit)
+            return
+
+        except CannotSplit:
+            if not (
+                can_be_split(body)
+                or is_line_short_enough(body, line_length=line_length)
+            ):
+                raise CannotSplit(
+                    "Splitting failed, body is still too long and can't be split."
+                )
+
+            elif head.contains_multiline_strings() or tail.contains_multiline_strings():
+                raise CannotSplit(
+                    "The current optional pair of parentheses is bound to fail to "
+                    "satisfy the splitting algorithm becase the head or the tail "
+                    "contains multiline strings which by definition never fit one "
+                    "line."
+                )
 
     ensure_visible(opening_bracket)
     ensure_visible(closing_bracket)
@@ -3188,6 +3206,42 @@ def is_line_short_enough(line: Line, *, line_length: int, line_str: str = "") ->
         and "\n" not in line_str  # multiline strings
         and not line.contains_standalone_comments()
     )
+
+
+def can_be_split(line: Line) -> bool:
+    """Return False if the line cannot be split *for sure*.
+
+    This is not an exhaustive search but a cheap heuristic that we can use to
+    avoid some unfortunate formattings (mostly around wrapping unsplittable code
+    in unnecessary parentheses).
+    """
+    leaves = line.leaves
+    if len(leaves) < 2:
+        return False
+
+    if leaves[0].type == token.STRING and leaves[1].type == token.DOT:
+        call_count = 0
+        dot_count = 0
+        next = leaves[-1]
+        for leaf in leaves[-2::-1]:
+            if leaf.type in OPENING_BRACKETS:
+                if next.type not in CLOSING_BRACKETS:
+                    return False
+
+                call_count += 1
+            elif leaf.type == token.DOT:
+                dot_count += 1
+            elif leaf.type == token.NAME:
+                if not (next.type == token.DOT or next.type in OPENING_BRACKETS):
+                    return False
+
+            elif leaf.type not in CLOSING_BRACKETS:
+                return False
+
+            if dot_count > 1 and call_count > 1:
+                return False
+
+    return True
 
 
 def can_omit_invisible_parens(line: Line, line_length: int) -> bool:
