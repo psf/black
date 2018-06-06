@@ -589,7 +589,9 @@ to do this.
 
 ### Visual Studio Code
 
-Use [joslarson.black-vscode](https://marketplace.visualstudio.com/items?itemName=joslarson.black-vscode).
+Use the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
+([instructions](https://code.visualstudio.com/docs/python/editing#_formatting))
+or [joslarson.black-vscode](https://marketplace.visualstudio.com/items?itemName=joslarson.black-vscode).
 
 
 ### SublimeText 3
