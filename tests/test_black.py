@@ -79,7 +79,7 @@ def event_loop(close: bool) -> Iterator[None]:
 
 
 class BlackRunner(CliRunner):
-    """Modifies CliRunner so that stderr is not merged with stdout.
+    """Modify CliRunner so that stderr is not merged with stdout.
 
     This is a hack that can be removed once we depend on Click 7.x"""
 
