@@ -31,13 +31,14 @@ def dump_to_stderr(*output: str) -> str:
     return "\n" + "\n".join(output) + "\n"
 
 
-def read_data(name: str) -> Tuple[str, str]:
+def read_data(name: str, data: bool = True) -> Tuple[str, str]:
     """read_data('test_name') -> 'input', 'output'"""
     if not name.endswith((".py", ".pyi", ".out", ".diff")):
         name += ".py"
     _input: List[str] = []
     _output: List[str] = []
-    with open(THIS_DIR / name, "r", encoding="utf8") as test:
+    base_dir = THIS_DIR / "data" if data else THIS_DIR
+    with open(base_dir / name, "r", encoding="utf8") as test:
         lines = test.readlines()
     result = _input
     for line in lines:
@@ -141,7 +142,7 @@ class BlackTestCase(unittest.TestCase):
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_self(self) -> None:
-        source, expected = read_data("test_black")
+        source, expected = read_data("test_black", data=False)
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
@@ -150,7 +151,7 @@ class BlackTestCase(unittest.TestCase):
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_black(self) -> None:
-        source, expected = read_data("../black")
+        source, expected = read_data("../black", data=False)
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
@@ -158,7 +159,7 @@ class BlackTestCase(unittest.TestCase):
         self.assertFalse(ff(THIS_DIR / ".." / "black.py"))
 
     def test_piping(self) -> None:
-        source, expected = read_data("../black")
+        source, expected = read_data("../black", data=False)
         stderrbuf = BytesIO()
         result = BlackRunner(stderrbuf).invoke(
             black.main, ["-", "--fast", f"--line-length={ll}"], input=source
@@ -186,7 +187,7 @@ class BlackTestCase(unittest.TestCase):
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_setup(self) -> None:
-        source, expected = read_data("../setup")
+        source, expected = read_data("../setup", data=False)
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
@@ -931,14 +932,14 @@ class BlackTestCase(unittest.TestCase):
     def test_check_diff_use_together(self) -> None:
         with cache_dir():
             # Files which will be reformatted.
-            src1 = (THIS_DIR / "string_quotes.py").resolve()
+            src1 = (THIS_DIR / "data" / "string_quotes.py").resolve()
             result = CliRunner().invoke(black.main, [str(src1), "--diff", "--check"])
-            self.assertEqual(result.exit_code, 1)
+            self.assertEqual(result.exit_code, 1, result.output)
 
             # Files which will not be reformatted.
-            src2 = (THIS_DIR / "composition.py").resolve()
+            src2 = (THIS_DIR / "data" / "composition.py").resolve()
             result = CliRunner().invoke(black.main, [str(src2), "--diff", "--check"])
-            self.assertEqual(result.exit_code, 0)
+            self.assertEqual(result.exit_code, 0, result.output)
 
             # Multi file command.
             result = CliRunner().invoke(
@@ -1080,14 +1081,14 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(actual, expected)
 
     def test_include_exclude(self) -> None:
-        path = THIS_DIR / "include_exclude_tests"
+        path = THIS_DIR / "data" / "include_exclude_tests"
         include = re.compile(r"\.pyi?$")
         exclude = re.compile(r"/exclude/|/\.definitely_exclude/")
         report = black.Report()
         sources: List[Path] = []
         expected = [
-            Path(THIS_DIR / "include_exclude_tests/b/dont_exclude/a.py"),
-            Path(THIS_DIR / "include_exclude_tests/b/dont_exclude/a.pyi"),
+            Path(path / "b/dont_exclude/a.py"),
+            Path(path / "b/dont_exclude/a.pyi"),
         ]
         this_abs = THIS_DIR.resolve()
         sources.extend(
@@ -1096,7 +1097,7 @@ class BlackTestCase(unittest.TestCase):
         self.assertEqual(sorted(expected), sorted(sources))
 
     def test_empty_include(self) -> None:
-        path = THIS_DIR / "include_exclude_tests"
+        path = THIS_DIR / "data" / "include_exclude_tests"
         report = black.Report()
         empty = re.compile(r"")
         sources: List[Path] = []
@@ -1120,7 +1121,7 @@ class BlackTestCase(unittest.TestCase):
         self.assertEqual(sorted(expected), sorted(sources))
 
     def test_empty_exclude(self) -> None:
-        path = THIS_DIR / "include_exclude_tests"
+        path = THIS_DIR / "data" / "include_exclude_tests"
         report = black.Report()
         empty = re.compile(r"")
         sources: List[Path] = []
