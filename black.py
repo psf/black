@@ -1835,7 +1835,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa C901
             elif prevp.type == token.EQUAL and prevp_parent.type == syms.argument:
                 return NO
 
-        elif t == token.NAME or t == token.NUMBER:
+        elif t in {token.NAME, token.NUMBER, token.STRING}:
             return NO
 
     elif p.type == syms.import_from:
