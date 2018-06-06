@@ -712,6 +712,11 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Change Log
 
+### 18.6b2
+
+* fixed improper unmodified file caching when `-S` was used
+
+
 ### 18.6b1
 
 * hotfix: don't output human-facing information on stdout (#299)

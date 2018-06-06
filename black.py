@@ -3335,12 +3335,7 @@ def can_omit_invisible_parens(line: Line, line_length: int) -> bool:
 
 
 def get_cache_file(line_length: int, mode: FileMode) -> Path:
-    pyi = bool(mode & FileMode.PYI)
-    py36 = bool(mode & FileMode.PYTHON36)
-    return (
-        CACHE_DIR
-        / f"cache.{line_length}{'.pyi' if pyi else ''}{'.py36' if py36 else ''}.pickle"
-    )
+    return CACHE_DIR / f"cache.{line_length}.{mode.value}.pickle"
 
 
 def read_cache(line_length: int, mode: FileMode) -> Cache:
