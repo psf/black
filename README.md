@@ -3,10 +3,10 @@
 
 <p align="center">
 <a href="https://travis-ci.org/ambv/black"><img alt="Build Status" src="https://travis-ci.org/ambv/black.svg?branch=master"></a>
-<a href="http://black.readthedocs.io/en/stable/?badge=stable"><img alt="Documentation Status" src="http://readthedocs.org/projects/black/badge/?version=stable"></a>
+<a href="https://black.readthedocs.io/en/stable/?badge=stable"><img alt="Documentation Status" src="https://readthedocs.org/projects/black/badge/?version=stable"></a>
 <a href="https://coveralls.io/github/ambv/black?branch=master"><img alt="Coverage Status" src="https://coveralls.io/repos/github/ambv/black/badge.svg?branch=master"></a>
-<a href="https://github.com/ambv/black/blob/master/LICENSE"><img alt="License: MIT" src="http://black.readthedocs.io/en/stable/_static/license.svg"></a>
-<a href="https://pypi.python.org/pypi/black"><img alt="PyPI" src="http://black.readthedocs.io/en/stable/_static/pypi.svg"></a>
+<a href="https://github.com/ambv/black/blob/master/LICENSE"><img alt="License: MIT" src="https://black.readthedocs.io/en/stable/_static/license.svg"></a>
+<a href="https://pypi.python.org/pypi/black"><img alt="PyPI" src="https://black.readthedocs.io/en/stable/_static/pypi.svg"></a>
 <a href="https://github.com/ambv/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 </p>
 
@@ -610,7 +610,7 @@ require external contributions.
 Patches welcome! ✨ 🍰 ✨
 
 Any tool that can pipe code through *Black* using its stdio mode (just
-[use `-` as the file name](http://www.tldp.org/LDP/abs/html/special-chars.html#DASHREF2)).
+[use `-` as the file name](https://www.tldp.org/LDP/abs/html/special-chars.html#DASHREF2)).
 The formatted code will be returned on stdout (unless `--check` was
 passed).  *Black* will still emit messages on stderr but that shouldn't
 affect your use case.

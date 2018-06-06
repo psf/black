@@ -1,7 +1,7 @@
 # Contributing to Black
 
 Welcome! Happy to see you willing to make the project better. Have you
-read the entire [user documentation](http://black.readthedocs.io/en/latest/)
+read the entire [user documentation](https://black.readthedocs.io/en/latest/)
 yet?
 
 
