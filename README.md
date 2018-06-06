@@ -30,6 +30,7 @@ possible.
 
 *Contents:* **[Installation and usage](#installation-and-usage)** |
 **[The *Black* code style](#the-black-code-style)** |
+**[pyproject.toml](#pyproject.toml)** |
 **[Editor integration](#editor-integration)** |
 **[Version control integration](#version-control-integration)** |
 **[Ignoring unmodified files](#ignoring-unmodified-files)** |
@@ -103,6 +104,7 @@ Options:
                               that were not changed or were ignored due to
                               --exclude=.
   --version                   Show the version and exit.
+  --config PATH               Read configuration from PATH.
   --help                      Show this message and exit.
 ```
 
@@ -487,6 +489,98 @@ a future version of the formatter:
 * use `float` instead of `Union[int, float]`.
 
 
+## pyproject.toml
+
+*Black* is able to read project-specific default values for its
+command line options from a `pyproject.toml` file.  This is
+especially useful for specifying custom `--include` and `--exclude`
+patterns for your project.
+
+**Pro-tip**: If you're asking yourself "Do I need to configure anything?"
+the answer is "No".  *Black* is all about sensible defaults.
+
+
+### What on Earth is a `pyproject.toml` file?
+
+[PEP 518](https://www.python.org/dev/peps/pep-0518/) defines
+`pyproject.toml` as a configuration file to store build system
+requirements for Python projects.  With the help of tools
+like [Poetry](https://poetry.eustace.io/) or
+[Flit](https://flit.readthedocs.io/en/latest/) it can fully replace the
+need for `setup.py` and `setup.cfg` files.
+
+
+### Where *Black* looks for the file
+
+By default *Black* looks for `pyproject.toml` starting from the common
+base directory of all files and directories passed on the command line.
+If it's not there, it looks in parent directories.  It stops looking
+when it finds the file, or a `.git` directory, or a `.hg` directory,
+or the root of the file system, whichever comes first.
+
+If you're formatting standard input, *Black* will look for configuration
+starting from the current working directory.
+
+You can also explicitly specify the path to a particular file that you
+want with `--config`.  In this situation *Black* will not look for any
+other file.
+
+If you're running with `--verbose`, you will see a blue message if
+a file was found and used.
+
+
+### Configuration format
+
+As the file extension suggests, `pyproject.toml` is a [TOML](https://github.com/toml-lang/toml) file.  It contains separate
+sections for different tools.  *Black* is using the `[tool.black]`
+section.  The option keys are the same as long names of options on
+the command line.
+
+Note that you have to use single-quoted strings in TOML for regular
+expressions. It's the equivalent of r-strings in Python.  Multiline
+strings are treated as verbose regular expressions by Black.  Use `[ ]`
+to denote a significant space character.
+
+<details>
+<summary>Example `pyproject.toml`</summary>
+
+```toml
+[tool.black]
+line-length = 88
+py36 = true
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+
+  # The following are specific to Black, you probably don't want those.
+  | blib2to3
+  | tests/data
+)/
+'''
+```
+
+</details>
+
+### Lookup hierarchy
+
+Command-line options have defaults that you can see in `--help`.
+A `pyproject.toml` can override those defaults.  Finally, options
+provided by the user on the command line override both.
+
+*Black* will only ever use one `pyproject.toml` file during an entire
+run. It doesn't look for multiple files, and doesn't compose
+configuration from different levels of the file hierarchy.
+
+
 ## Editor integration
 
 ### Emacs
@@ -632,16 +726,18 @@ repos:
     rev: stable
     hooks:
     - id: black
-      args: [--line-length=88, --safe]
       language_version: python3.6
 ```
 Then run `pre-commit install` and you're ready to go.
 
-`args` in the above config is optional but shows you how you can change
-the line length if you really need to.  If you're already using Python
-3.7, switch the `language_version` accordingly. Finally, `stable` is a tag
-that is pinned to the latest release on PyPI.  If you'd rather run on
-master, this is also an option.
+Avoid using `args` in the hook.  Instead, store necessary configuration
+in `pyproject.toml` so that editors and command-line usage of Black all
+behave consistently for your project.  See *Black*'s own `pyproject.toml`
+for an example.
+
+If you're already using Python 3.7, switch the `language_version`
+accordingly. Finally, `stable` is a tag that is pinned to the latest
+release on PyPI.  If you'd rather run on master, this is also an option.
 
 
 ## Ignoring unmodified files
@@ -713,6 +809,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 ## Change Log
 
 ### 18.6b2
+
+* added `--config` (#65)
 
 * fixed improper unmodified file caching when `-S` was used
 
@@ -1039,18 +1137,3 @@ Multiple contributions by:
 * [Stavros Korokithakis](mailto:hi@stavros.io)
 * [Sunil Kapil](mailto:snlkapil@gmail.com)
 * [Vishwas B Sharma](mailto:sharma.vishwas88@gmail.com)
-
----
-
-*Contents:*
-**[Installation and Usage](#installation-and-usage)** |
-**[The *Black* code style](#the-black-code-style)** |
-**[Editor integration](#editor-integration)** |
-**[Version control integration](#version-control-integration)** |
-**[Ignoring unmodified files](#ignoring-unmodified-files)** |
-**[Testimonials](#testimonials)** |
-**[Show your style](#show-your-style)** |
-**[License](#license)** |
-**[Contributing](#contributing-to-black)** |
-**[Change Log](#change-log)** |
-**[Authors](#authors)**

@@ -176,10 +176,10 @@ class BlackTestCase(unittest.TestCase):
         )
         source, _ = read_data("expression.py")
         expected, _ = read_data("expression.diff")
+        config = THIS_DIR / "data" / "empty_pyproject.toml"
         stderrbuf = BytesIO()
-        result = BlackRunner(stderrbuf).invoke(
-            black.main, ["-", "--fast", f"--line-length={ll}", "--diff"], input=source
-        )
+        args = ["-", "--fast", f"--line-length={ll}", "--diff", f"--config={config}"]
+        result = BlackRunner(stderrbuf).invoke(black.main, args, input=source)
         self.assertEqual(result.exit_code, 0)
         actual = diff_header.sub("[Deterministic header]", result.output)
         actual = actual.rstrip() + "\n"  # the diff output has a trailing space

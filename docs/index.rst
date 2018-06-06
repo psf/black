@@ -48,10 +48,12 @@ Contents
 
    installation_and_usage
    the_black_code_style
+   pyproject_toml
    editor_integration
    version_control_integration
    ignoring_unmodified_files
    contributing
+   show_your_style
    change_log
    reference/reference_summary
    authors

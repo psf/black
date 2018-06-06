@@ -3,7 +3,7 @@ from asyncio.base_events import BaseEventLoop
 from concurrent.futures import Executor, ProcessPoolExecutor
 from datetime import datetime
 from enum import Enum, Flag
-from functools import partial, wraps
+from functools import lru_cache, partial, wraps
 import io
 import keyword
 import logging
@@ -38,6 +38,7 @@ from typing import (
 from appdirs import user_cache_dir
 from attr import dataclass, Factory
 import click
+import toml
 
 # lib2to3 fork
 from blib2to3.pytree import Node, Leaf, type_repr
@@ -156,6 +157,40 @@ class FileMode(Flag):
         return mode
 
 
+def read_pyproject_toml(
+    ctx: click.Context, param: click.Parameter, value: Union[str, int, bool, None]
+) -> Optional[str]:
+    """Inject Black configuration from "pyproject.toml" into defaults in `ctx`.
+
+    Returns the path to a successfully found and read configuration file, None
+    otherwise.
+    """
+    assert not isinstance(value, (int, bool)), "Invalid parameter type passed"
+    if not value:
+        root = find_project_root(ctx.params.get("src", ()))
+        path = root / "pyproject.toml"
+        if path.is_file():
+            value = str(path)
+        else:
+            return None
+
+    try:
+        pyproject_toml = toml.load(value)
+        config = pyproject_toml.get("tool", {}).get("black", {})
+    except (toml.TomlDecodeError, OSError) as e:
+        raise click.BadOptionUsage(f"Error reading configuration file: {e}", ctx)
+
+    if not config:
+        return None
+
+    if ctx.default_map is None:
+        ctx.default_map = {}
+    ctx.default_map.update(  # type: ignore  # bad types in .pyi
+        {k.replace("--", "").replace("-", "_"): v for k, v in config.items()}
+    )
+    return value
+
+
 @click.command()
 @click.option(
     "-l",
@@ -257,6 +292,16 @@ class FileMode(Flag):
     type=click.Path(
         exists=True, file_okay=True, dir_okay=True, readable=True, allow_dash=True
     ),
+    is_eager=True,
+)
+@click.option(
+    "--config",
+    type=click.Path(
+        exists=False, file_okay=True, dir_okay=False, readable=True, allow_dash=False
+    ),
+    is_eager=True,
+    callback=read_pyproject_toml,
+    help="Read configuration from PATH.",
 )
 @click.pass_context
 def main(
@@ -272,26 +317,29 @@ def main(
     verbose: bool,
     include: str,
     exclude: str,
-    src: List[str],
+    src: Tuple[str],
+    config: Optional[str],
 ) -> None:
     """The uncompromising code formatter."""
     write_back = WriteBack.from_configuration(check=check, diff=diff)
     mode = FileMode.from_configuration(
         py36=py36, pyi=pyi, skip_string_normalization=skip_string_normalization
     )
-    report = Report(check=check, quiet=quiet, verbose=verbose)
-    sources: Set[Path] = set()
+    if config and verbose:
+        out(f"Using configuration from {config}.", bold=False, fg="blue")
     try:
-        include_regex = re.compile(include)
+        include_regex = re_compile_maybe_verbose(include)
     except re.error:
         err(f"Invalid regular expression for include given: {include!r}")
         ctx.exit(2)
     try:
-        exclude_regex = re.compile(exclude)
+        exclude_regex = re_compile_maybe_verbose(exclude)
     except re.error:
         err(f"Invalid regular expression for exclude given: {exclude!r}")
         ctx.exit(2)
+    report = Report(check=check, quiet=quiet, verbose=verbose)
     root = find_project_root(src)
+    sources: Set[Path] = set()
     for s in src:
         p = Path(s)
         if p.is_dir():
@@ -307,9 +355,8 @@ def main(
         if verbose or not quiet:
             out("No paths given. Nothing to do 😴")
         ctx.exit(0)
-        return
 
-    elif len(sources) == 1:
+    if len(sources) == 1:
         reformat_one(
             src=sources.pop(),
             line_length=line_length,
@@ -2894,7 +2941,7 @@ def gen_python_files_in_dir(
             normalized_path += "/"
         exclude_match = exclude.search(normalized_path)
         if exclude_match and exclude_match.group(0):
-            report.path_ignored(child, f"matches --exclude={exclude.pattern}")
+            report.path_ignored(child, f"matches the --exclude regular expression")
             continue
 
         if child.is_dir():
@@ -2906,7 +2953,8 @@ def gen_python_files_in_dir(
                 yield child
 
 
-def find_project_root(srcs: List[str]) -> Path:
+@lru_cache()
+def find_project_root(srcs: Iterable[str]) -> Path:
     """Return a directory containing .git, .hg, or pyproject.toml.
 
     That directory can be one of the directories passed in `srcs` or their
@@ -3162,6 +3210,16 @@ def sub_twice(regex: Pattern[str], replacement: str, original: str) -> str:
     overlapping matches.
     """
     return regex.sub(replacement, regex.sub(replacement, original))
+
+
+def re_compile_maybe_verbose(regex: str) -> Pattern[str]:
+    """Compile a regular expression string in `regex`.
+
+    If it contains newlines, use verbose mode.
+    """
+    if "\n" in regex:
+        regex = "(?x)" + regex
+    return re.compile(regex)
 
 
 def enumerate_reversed(sequence: Sequence[T]) -> Iterator[Tuple[Index, T]]:
