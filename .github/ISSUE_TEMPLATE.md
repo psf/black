@@ -3,7 +3,7 @@ provide some basics for me:
 
 Operating system:
 Python version:
-Black version:
+*Black* version:
 Does also happen on master:
 
 To answer the last question, follow these steps:

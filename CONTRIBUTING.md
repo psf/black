@@ -1,7 +1,7 @@
-# Contributing to Black
+# Contributing to *Black*
 
 Welcome! Happy to see you willing to make the project better. Have you
-read the entire [user documentation](http://black.readthedocs.io/en/latest/)
+read the entire [user documentation](https://black.readthedocs.io/en/latest/)
 yet?
 
 
@@ -10,8 +10,9 @@ yet?
 In terms of inspiration, *Black* is about as configurable as *gofmt*.
 This is deliberate.
 
-Bug reports and fixes are always welcome!  Please follow the issue
-template on GitHub for best results.
+Bug reports and fixes are always welcome!  Please follow the [issue
+template on GitHub](https://github.com/ambv/black/issues/new) for best 
+results.
 
 Before you suggest a new feature or configuration knob, ask yourself why
 you want it.  If it enables better integration with some workflow, fixes
@@ -24,7 +25,7 @@ to get accepted. You can still try but prepare to be disappointed.
 ## Technicalities
 
 Development on the latest version of Python is preferred.  As of this
-writing it's 3.6.4.  You can use any operating system.  I am using macOS
+writing it's 3.6.5.  You can use any operating system.  I am using macOS
 myself and CentOS at work.
 
 Install all development dependencies using:
@@ -34,7 +35,7 @@ $ pre-commit install
 ```
 If you haven't used `pipenv` before but are comfortable with virtualenvs,
 just run `pip install pipenv` in the virtualenv you're already using and
-invoke the command above from the cloned Black repo. It will do the
+invoke the command above from the cloned *Black* repo. It will do the
 correct thing.
 
 Before submitting pull requests, run tests with:

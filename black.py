@@ -2258,7 +2258,7 @@ def right_hand_split(
             elif head.contains_multiline_strings() or tail.contains_multiline_strings():
                 raise CannotSplit(
                     "The current optional pair of parentheses is bound to fail to "
-                    "satisfy the splitting algorithm becase the head or the tail "
+                    "satisfy the splitting algorithm because the head or the tail "
                     "contains multiline strings which by definition never fit one "
                     "line."
                 )
@@ -2562,7 +2562,7 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
 
 
 def maybe_make_parens_invisible_in_atom(node: LN) -> bool:
-    """If it's safe, make the parens in the atom `node` invisible, recusively."""
+    """If it's safe, make the parens in the atom `node` invisible, recursively."""
     if (
         node.type != syms.atom
         or is_empty_tuple(node)
