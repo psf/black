@@ -16,7 +16,7 @@ can focus on the content instead.
 
 .. note::
 
-   `Black is an early pre-release <installation_and_usage.html#note-this-is-an-early-pre-release>`_.
+   `Black is beta <installation_and_usage.html#note-this-is-a-beta-product>`_.
 
 
 Testimonials
