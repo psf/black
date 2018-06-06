@@ -9,7 +9,7 @@ from pathlib import Path
 import re
 import sys
 from tempfile import TemporaryDirectory
-from typing import Any, List, Tuple, Iterator
+from typing import Any, BinaryIO, Generator, List, Tuple, Iterator
 import unittest
 from unittest.mock import patch
 
@@ -78,6 +78,26 @@ def event_loop(close: bool) -> Iterator[None]:
             loop.close()
 
 
+class BlackRunner(CliRunner):
+    """Modify CliRunner so that stderr is not merged with stdout.
+
+    This is a hack that can be removed once we depend on Click 7.x"""
+
+    def __init__(self, stderrbuf: BinaryIO) -> None:
+        self.stderrbuf = stderrbuf
+        super().__init__()
+
+    @contextmanager
+    def isolation(self, *args: Any, **kwargs: Any) -> Generator[BinaryIO, None, None]:
+        with super().isolation(*args, **kwargs) as output:
+            try:
+                hold_stderr = sys.stderr
+                sys.stderr = TextIOWrapper(self.stderrbuf, encoding=self.charset)
+                yield output
+            finally:
+                sys.stderr = hold_stderr
+
+
 class BlackTestCase(unittest.TestCase):
     maxDiff = None
 
@@ -139,21 +159,14 @@ class BlackTestCase(unittest.TestCase):
 
     def test_piping(self) -> None:
         source, expected = read_data("../black")
-        hold_stdin, hold_stdout = sys.stdin, sys.stdout
-        try:
-            sys.stdin = TextIOWrapper(BytesIO(source.encode("utf8")), encoding="utf8")
-            sys.stdout = TextIOWrapper(BytesIO(), encoding="utf8")
-            sys.stdin.buffer.name = "<stdin>"  # type: ignore
-            black.format_stdin_to_stdout(
-                line_length=ll, fast=True, write_back=black.WriteBack.YES
-            )
-            sys.stdout.seek(0)
-            actual = sys.stdout.read()
-        finally:
-            sys.stdin, sys.stdout = hold_stdin, hold_stdout
-        self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        stderrbuf = BytesIO()
+        result = BlackRunner(stderrbuf).invoke(
+            black.main, ["-", "--fast", f"--line-length={ll}"], input=source
+        )
+        self.assertEqual(result.exit_code, 0)
+        self.assertFormatEqual(expected, result.output)
+        black.assert_equivalent(source, result.output)
+        black.assert_stable(source, result.output, line_length=ll)
 
     def test_piping_diff(self) -> None:
         diff_header = re.compile(
@@ -162,18 +175,12 @@ class BlackTestCase(unittest.TestCase):
         )
         source, _ = read_data("expression.py")
         expected, _ = read_data("expression.diff")
-        hold_stdin, hold_stdout = sys.stdin, sys.stdout
-        try:
-            sys.stdin = TextIOWrapper(BytesIO(source.encode("utf8")), encoding="utf8")
-            sys.stdout = TextIOWrapper(BytesIO(), encoding="utf8")
-            black.format_stdin_to_stdout(
-                line_length=ll, fast=True, write_back=black.WriteBack.DIFF
-            )
-            sys.stdout.seek(0)
-            actual = sys.stdout.read()
-            actual = diff_header.sub("[Deterministic header]", actual)
-        finally:
-            sys.stdin, sys.stdout = hold_stdin, hold_stdout
+        stderrbuf = BytesIO()
+        result = BlackRunner(stderrbuf).invoke(
+            black.main, ["-", "--fast", f"--line-length={ll}", "--diff"], input=source
+        )
+        self.assertEqual(result.exit_code, 0)
+        actual = diff_header.sub("[Deterministic header]", result.output)
         actual = actual.rstrip() + "\n"  # the diff output has a trailing space
         self.assertEqual(expected, actual)
 
@@ -232,16 +239,16 @@ class BlackTestCase(unittest.TestCase):
             rf"{re.escape(str(tmp_file))}\t\d\d\d\d-\d\d-\d\d "
             rf"\d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
         )
-        hold_stdout = sys.stdout
+        stderrbuf = BytesIO()
         try:
-            sys.stdout = TextIOWrapper(BytesIO(), encoding="utf8")
-            self.assertTrue(ff(tmp_file, write_back=black.WriteBack.DIFF))
-            sys.stdout.seek(0)
-            actual = sys.stdout.read()
-            actual = diff_header.sub("[Deterministic header]", actual)
+            result = BlackRunner(stderrbuf).invoke(
+                black.main, ["--diff", str(tmp_file)]
+            )
+            self.assertEqual(result.exit_code, 0)
         finally:
-            sys.stdout = hold_stdout
             os.unlink(tmp_file)
+        actual = result.output
+        actual = diff_header.sub("[Deterministic header]", actual)
         actual = actual.rstrip() + "\n"  # the diff output has a trailing space
         if expected != actual:
             dump = black.dump_to_file(actual)
@@ -1149,6 +1156,10 @@ class BlackTestCase(unittest.TestCase):
                 self.assertIn(nl.encode(), updated_contents)  # type: ignore
                 if nl == "\n":
                     self.assertNotIn(b"\r\n", updated_contents)  # type: ignore
+
+    def test_assert_equivalent_different_asts(self) -> None:
+        with self.assertRaises(AssertionError):
+            black.assert_equivalent("{}", "None")
 
 
 if __name__ == "__main__":
