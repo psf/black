@@ -1,4 +1,4 @@
-# Contributing to Black
+# Contributing to *Black*
 
 Welcome! Happy to see you willing to make the project better. Have you
 read the entire [user documentation](https://black.readthedocs.io/en/latest/)
@@ -35,7 +35,7 @@ $ pre-commit install
 ```
 If you haven't used `pipenv` before but are comfortable with virtualenvs,
 just run `pip install pipenv` in the virtualenv you're already using and
-invoke the command above from the cloned Black repo. It will do the
+invoke the command above from the cloned *Black* repo. It will do the
 correct thing.
 
 Before submitting pull requests, run tests with:

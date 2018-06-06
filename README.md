@@ -60,7 +60,7 @@ black {source_file_or_directory}
 
 ### Command line options
 
-Black doesn't provide many options.  You can list them by running
+*Black* doesn't provide many options.  You can list them by running
 `black --help`:
 
 ```text
@@ -645,7 +645,7 @@ master, this is also an option.
 
 *Black* remembers files it has already formatted, unless the `--diff` flag is used or
 code is passed via standard input. This information is stored per-user. The exact
-location of the file depends on the black version and the system on which black
+location of the file depends on the *Black* version and the system on which *Black*
 is run. The file is non-portable. The standard location on common operating systems
 is:
 
@@ -658,7 +658,7 @@ is:
 
 **Dusty Phillips**, [writer](https://smile.amazon.com/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=dusty+phillips):
 
-> Black is opinionated so you don't have to be.
+> *Black* is opinionated so you don't have to be.
 
 **Hynek Schlawack**, [creator of `attrs`](http://www.attrs.org/), core
 developer of Twisted and CPython:
@@ -691,7 +691,7 @@ Looks like this: [![Code style: black](https://img.shields.io/badge/code%20style
 MIT
 
 
-## Contributing to Black
+## Contributing to *Black*
 
 In terms of inspiration, *Black* is about as configurable as *gofmt*.
 This is deliberate.
@@ -840,10 +840,10 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * generalized star expression handling, including double stars; this
   fixes multiplication making expressions "unsafe" for trailing commas (#132)
 
-* Black no longer enforces putting empty lines behind control flow statements
+* *Black* no longer enforces putting empty lines behind control flow statements
   (#90)
 
-* Black now splits imports like "Mode 3 + trailing comma" of isort (#127)
+* *Black* now splits imports like "Mode 3 + trailing comma" of isort (#127)
 
 * fixed comment indentation when a standalone comment closes a block (#16, #32)
 
@@ -896,16 +896,16 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
   (#75)
 
 * fixed handling of standalone comments within nested bracketed
-  expressions; Black will no longer produce super long lines or put all
+  expressions; *Black* will no longer produce super long lines or put all
   standalone comments at the end of the expression (#22)
 
 * fixed 18.3a4 regression: don't crash and burn on empty lines with
   trailing whitespace (#80)
 
 * fixed 18.3a4 regression: `# yapf: disable` usage as trailing comment
-  would cause Black to not emit the rest of the file (#95)
+  would cause *Black* to not emit the rest of the file (#95)
 
-* when CTRL+C is pressed while formatting many files, Black no longer
+* when CTRL+C is pressed while formatting many files, *Black* no longer
   freaks out with a flurry of asyncio-related exceptions
 
 * only allow up to two empty lines on module level and only single empty
