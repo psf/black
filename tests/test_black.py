@@ -1157,6 +1157,10 @@ class BlackTestCase(unittest.TestCase):
                 if nl == "\n":
                     self.assertNotIn(b"\r\n", updated_contents)  # type: ignore
 
+    def test_assert_equivalent_different_asts(self) -> None:
+        with self.assertRaises(AssertionError):
+            black.assert_equivalent("{}", "None")
+
 
 if __name__ == "__main__":
     unittest.main()
