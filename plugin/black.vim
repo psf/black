@@ -97,8 +97,9 @@ def Black():
   start = time.time()
   fast = bool(int(vim.eval("g:black_fast")))
   line_length = int(vim.eval("g:black_linelength"))
+  mode = black.FileMode.AUTO_DETECT
   if bool(int(vim.eval("g:black_skip_string_normalization"))):
-    mode = black.FileMode.AUTO_DETECT & black.FileMode.NO_STRING_NORMALIZATION
+    mode |= black.FileMode.NO_STRING_NORMALIZATION
   buffer_str = '\n'.join(vim.current.buffer) + '\n'
   try:
     new_buffer_str = black.format_file_contents(buffer_str, line_length=line_length, fast=fast, mode=mode)
