@@ -29,14 +29,13 @@ possible.
 ---
 
 *Contents:* **[Installation and usage](#installation-and-usage)** |
-**[The *Black* code style](#the-black-code-style)** |
+**[Code style](#the-black-code-style)** |
 **[pyproject.toml](#pyproject.toml)** |
 **[Editor integration](#editor-integration)** |
 **[Version control integration](#version-control-integration)** |
 **[Ignoring unmodified files](#ignoring-unmodified-files)** |
 **[Testimonials](#testimonials)** |
 **[Show your style](#show-your-style)** |
-**[License](#license)** |
 **[Contributing](#contributing-to-black)** |
 **[Change Log](#change-log)** |
 **[Authors](#authors)**
