@@ -3012,9 +3012,6 @@ class Report:
 
     def failed(self, src: Path, message: str) -> None:
         """Increment the counter for failed reformatting. Write out a message."""
-        import traceback
-
-        traceback.print_exc()
         err(f"error: cannot format {src}: {message}")
         self.failure_count += 1
 
