@@ -41,7 +41,7 @@ setup(
     package_data={"blib2to3": ["*.txt"]},
     python_requires=">=3.6",
     zip_safe=False,
-    install_requires=["click>=6.5", "attrs>=17.4.0", "appdirs"],
+    install_requires=["click>=6.5", "attrs>=17.4.0", "appdirs", "toml>=0.9.4"],
     test_suite="tests.test_black",
     classifiers=[
         "Development Status :: 4 - Beta",

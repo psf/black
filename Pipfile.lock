@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "4bf5b65d243847bc4d7a840a9a1f36e975696dc84fdbd962454712ab8978190b"
+            "sha256": "ac93441465d67f28d5888486c43ced0b49c4a42c315a8d453064a6441fbf3de0"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -37,6 +37,13 @@
             ],
             "index": "pypi",
             "version": "==6.7"
+        },
+        "toml": {
+            "hashes": [
+                "sha256:8e86bd6ce8cc11b9620cb637466453d94f5d57ad86f17e98a98d1f73e3baab2d"
+            ],
+            "index": "pypi",
+            "version": "==0.9.4"
         }
     },
     "develop": {
@@ -453,15 +460,16 @@
         },
         "sphinxcontrib-websupport": {
             "hashes": [
-                "sha256:7a85961326aa3a400cd4ad3c816d70ed6f7c740acd7ce5d78cd0a67825072eb9",
-                "sha256:f4932e95869599b89bf4f80fc3989132d83c9faa5bf633e7b5e0c25dffb75da2"
+                "sha256:68ca7ff70785cbe1e7bccc71a48b5b6d965d79ca50629606c7861a21b206d9dd",
+                "sha256:9de47f375baf1ea07cdb3436ff39d7a9c76042c10a769c52353ec46e4e8fc3b9"
             ],
-            "version": "==1.0.1"
+            "version": "==1.1.0"
         },
         "toml": {
             "hashes": [
                 "sha256:8e86bd6ce8cc11b9620cb637466453d94f5d57ad86f17e98a98d1f73e3baab2d"
             ],
+            "index": "pypi",
             "version": "==0.9.4"
         },
         "tqdm": {

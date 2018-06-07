@@ -7,6 +7,7 @@ name = "pypi"
 attrs = ">=17.4.0"
 click = ">=6.5"
 appdirs = "*"
+toml = ">=0.9.4"
 
 [dev-packages]
 pre-commit = "*"
