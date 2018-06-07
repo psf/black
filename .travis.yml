@@ -12,7 +12,7 @@ script:
 - coverage run tests/test_black.py
 - if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then mypy black.py tests/test_black.py; fi
 - if [[ $TRAVIS_PYTHON_VERSION == '3.6-dev' ]]; then flake8 black.py tests/test_black.py; fi
-- if [[ $TRAVIS_PYTHON_VERSION == '3.7-dev' ]]; then black --check --verbose black.py setup.py tests/test_black.py docs/conf.py; fi
+- if [[ $TRAVIS_PYTHON_VERSION == '3.7-dev' ]]; then black --check --verbose .; fi
 after_success:
 - coveralls
 notifications:
