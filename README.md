@@ -813,6 +813,7 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * fixed improper unmodified file caching when `-S` was used
 
+* fixed formatting of empty triple quoted strings (#313)
 
 ### 18.6b1
 

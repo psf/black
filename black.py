@@ -2546,7 +2546,7 @@ def normalize_string_quotes(leaf: Leaf) -> None:
             leaf.value = f"{prefix}{orig_quote}{body}{orig_quote}"
         new_body = sub_twice(escaped_orig_quote, rf"\1\2{orig_quote}", new_body)
         new_body = sub_twice(unescaped_new_quote, rf"\1\\{new_quote}", new_body)
-    if new_quote == '"""' and new_body[-1] == '"':
+    if new_quote == '"""' and new_body[-1:] == '"':
         # edge case:
         new_body = new_body[:-1] + '\\"'
     orig_escape_count = body.count("\\")
@@ -3012,6 +3012,9 @@ class Report:
 
     def failed(self, src: Path, message: str) -> None:
         """Increment the counter for failed reformatting. Write out a message."""
+        import traceback
+
+        traceback.print_exc()
         err(f"error: cannot format {src}: {message}")
         self.failure_count += 1
 
