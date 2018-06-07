@@ -30,7 +30,7 @@ possible.
 
 *Contents:* **[Installation and usage](#installation-and-usage)** |
 **[Code style](#the-black-code-style)** |
-**[pyproject.toml](#pyproject.toml)** |
+**[pyproject.toml](#pyprojecttoml)** |
 **[Editor integration](#editor-integration)** |
 **[Version control integration](#version-control-integration)** |
 **[Ignoring unmodified files](#ignoring-unmodified-files)** |
