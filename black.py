@@ -191,7 +191,7 @@ def read_pyproject_toml(
     return value
 
 
-@click.command()
+@click.command(context_settings=dict(help_option_names=["-h", "--help"]))
 @click.option(
     "-l",
     "--line-length",
