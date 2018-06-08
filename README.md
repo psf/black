@@ -815,6 +815,10 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * fixed formatting of empty triple quoted strings (#313)
 
+* fixed unnecessary slowdown in comment placement calculation on lines without
+  comments
+
+
 ### 18.6b1
 
 * hotfix: don't output human-facing information on stdout (#299)

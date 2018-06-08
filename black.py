@@ -1230,6 +1230,9 @@ class Line:
 
         Provide a non-negative leaf `_index` to speed up the function.
         """
+        if not self.comments:
+            return
+
         if _index == -1:
             for _index, _leaf in enumerate(self.leaves):
                 if leaf is _leaf:
