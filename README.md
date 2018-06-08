@@ -811,7 +811,11 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * added `--config` (#65)
 
+* added `-h` equivalent to `--help` (#316)
+
 * fixed improper unmodified file caching when `-S` was used
+
+* fixed extra space in string unpacking (#305)
 
 * fixed formatting of empty triple quoted strings (#313)
 
