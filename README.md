@@ -812,6 +812,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * fixed improper formatting of f-strings with quotes inside interpolated
   expressions (#322)
 
+* fixed unnecessary slowdown when long list literals where found in a file
+
+
 ### 18.6b2
 
 * added `--config` (#65)

@@ -1256,18 +1256,18 @@ class Line:
 
     def is_complex_subscript(self, leaf: Leaf) -> bool:
         """Return True iff `leaf` is part of a slice with non-trivial exprs."""
-        open_lsqb = (
-            leaf if leaf.type == token.LSQB else self.bracket_tracker.get_open_lsqb()
-        )
+        open_lsqb = self.bracket_tracker.get_open_lsqb()
         if open_lsqb is None:
             return False
 
         subscript_start = open_lsqb.next_sibling
-        if (
-            isinstance(subscript_start, Node)
-            and subscript_start.type == syms.subscriptlist
-        ):
-            subscript_start = child_towards(subscript_start, leaf)
+
+        if isinstance(subscript_start, Node):
+            if subscript_start.type == syms.listmaker:
+                return False
+
+            if subscript_start.type == syms.subscriptlist:
+                subscript_start = child_towards(subscript_start, leaf)
         return subscript_start is not None and any(
             n.type in TEST_DESCENDANTS for n in subscript_start.pre_order()
         )
