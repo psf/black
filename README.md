@@ -807,6 +807,11 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Change Log
 
+### 18.6b3
+
+* fixed improper formatting of f-strings with quotes inside interpolated
+  expressions (#322)
+
 ### 18.6b2
 
 * added `--config` (#65)
