@@ -2549,6 +2549,12 @@ def normalize_string_quotes(leaf: Leaf) -> None:
             leaf.value = f"{prefix}{orig_quote}{body}{orig_quote}"
         new_body = sub_twice(escaped_orig_quote, rf"\1\2{orig_quote}", new_body)
         new_body = sub_twice(unescaped_new_quote, rf"\1\\{new_quote}", new_body)
+    if "f" in prefix.casefold():
+        matches = re.findall(r"[^{]\{(.*?)\}[^}]", new_body)
+        for m in matches:
+            if "\\" in str(m):
+                # Do not introduce backslashes in interpolated expressions
+                return
     if new_quote == '"""' and new_body[-1:] == '"':
         # edge case:
         new_body = new_body[:-1] + '\\"'
