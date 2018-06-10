@@ -132,6 +132,8 @@ class Base(object):
         return node.lineno
 
     def changed(self):
+        if self.was_changed:
+            return
         if self.parent:
             self.parent.changed()
         self.was_changed = True
