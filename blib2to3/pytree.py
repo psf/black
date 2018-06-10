@@ -115,8 +115,9 @@ class Base(object):
             else:
                 l_children.append(ch)
         assert found, (self.children, self, new)
-        self.parent.changed()
         self.parent.children = l_children
+        self.parent.changed()
+        self.parent.invalidate_sibling_maps()
         for x in new:
             x.parent = self.parent
         self.parent = None
@@ -143,8 +144,9 @@ class Base(object):
         if self.parent:
             for i, node in enumerate(self.parent.children):
                 if node is self:
-                    self.parent.changed()
                     del self.parent.children[i]
+                    self.parent.changed()
+                    self.parent.invalidate_sibling_maps()
                     self.parent = None
                     return i
 
@@ -157,13 +159,9 @@ class Base(object):
         if self.parent is None:
             return None
 
-        # Can't use index(); we need to test by identity
-        for i, child in enumerate(self.parent.children):
-            if child is self:
-                try:
-                    return self.parent.children[i+1]
-                except IndexError:
-                    return None
+        if self.parent.next_sibling_map is None:
+            self.parent.update_sibling_maps()
+        return self.parent.next_sibling_map[id(self)]
 
     @property
     def prev_sibling(self):
@@ -174,12 +172,9 @@ class Base(object):
         if self.parent is None:
             return None
 
-        # Can't use index(); we need to test by identity
-        for i, child in enumerate(self.parent.children):
-            if child is self:
-                if i == 0:
-                    return None
-                return self.parent.children[i-1]
+        if self.parent.prev_sibling_map is None:
+            self.parent.update_sibling_maps()
+        return self.parent.prev_sibling_map[id(self)]
 
     def leaves(self):
         for child in self.children:
@@ -226,6 +221,7 @@ class Node(Base):
         for ch in self.children:
             assert ch.parent is None, repr(ch)
             ch.parent = self
+        self.invalidate_sibling_maps()
         if prefix is not None:
             self.prefix = prefix
         if fixers_applied:
@@ -294,6 +290,7 @@ class Node(Base):
         self.children[i].parent = None
         self.children[i] = child
         self.changed()
+        self.invalidate_sibling_maps()
 
     def insert_child(self, i, child):
         """
@@ -303,6 +300,7 @@ class Node(Base):
         child.parent = self
         self.children.insert(i, child)
         self.changed()
+        self.invalidate_sibling_maps()
 
     def append_child(self, child):
         """
@@ -312,7 +310,21 @@ class Node(Base):
         child.parent = self
         self.children.append(child)
         self.changed()
+        self.invalidate_sibling_maps()
 
+    def invalidate_sibling_maps(self):
+        self.prev_sibling_map = None
+        self.next_sibling_map = None
+
+    def update_sibling_maps(self):
+        self.prev_sibling_map = _prev = {}
+        self.next_sibling_map = _next = {}
+        previous = None
+        for current in self.children:
+            _prev[id(current)] = previous
+            _next[id(previous)] = current
+            previous = current
+        _next[id(current)] = None
 
 class Leaf(Base):
 
