@@ -2529,8 +2529,8 @@ def normalize_string_quotes(leaf: Leaf) -> None:
 
     prefix = leaf.value[:first_quote_pos]
     unescaped_new_quote = re.compile(rf"(([^\\]|^)(\\\\)*){new_quote}")
-    escaped_new_quote = re.compile(rf"([^\\]|^)\\(\\\\)*{new_quote}")
-    escaped_orig_quote = re.compile(rf"([^\\]|^)\\(\\\\)*{orig_quote}")
+    escaped_new_quote = re.compile(rf"([^\\]|^)\\((?:\\\\)*){new_quote}")
+    escaped_orig_quote = re.compile(rf"([^\\]|^)\\((?:\\\\)*){orig_quote}")
     body = leaf.value[first_quote_pos + len(orig_quote) : -len(orig_quote)]
     if "r" in prefix.casefold():
         if unescaped_new_quote.search(body):
@@ -2541,10 +2541,10 @@ def normalize_string_quotes(leaf: Leaf) -> None:
         # Do not introduce or remove backslashes in raw strings
         new_body = body
     else:
-        # remove unnecessary quotes
+        # remove unnecessary escapes
         new_body = sub_twice(escaped_new_quote, rf"\1\2{new_quote}", body)
         if body != new_body:
-            # Consider the string without unnecessary quotes as the original
+            # Consider the string without unnecessary escapes as the original
             body = new_body
             leaf.value = f"{prefix}{orig_quote}{body}{orig_quote}"
         new_body = sub_twice(escaped_orig_quote, rf"\1\2{orig_quote}", new_body)

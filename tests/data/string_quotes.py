@@ -43,6 +43,7 @@ re.compile(r'[\\"]')
 "unnecessary \'\'escaping"
 '\\""'
 "\\''"
+'Lots of \\\\\\\\\'quotes\''
 
 # output
 
@@ -91,3 +92,4 @@ re.compile(r'[\\"]')
 "unnecessary ''escaping"
 '\\""'
 "\\''"
+"Lots of \\\\\\\\'quotes'"

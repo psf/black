@@ -816,6 +816,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * fixed unnecessary slowdown on AST nodes with very many siblings
 
+* fixed cannibalizing backslashes during string normalization
+
 
 ### 18.6b2
 
