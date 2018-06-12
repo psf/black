@@ -1162,7 +1162,7 @@ class BlackTestCase(unittest.TestCase):
         with self.assertRaises(AssertionError):
             black.assert_equivalent("{}", "None")
 
-    def test_symlink_within_structure(self) -> None:
+    def test_symlink_out_of_root_directory(self) -> None:
         # prepare argumens
         path = MagicMock()
         root = THIS_DIR
@@ -1186,6 +1186,24 @@ class BlackTestCase(unittest.TestCase):
         path.iterdir.assert_called_once()
         child.resolve.assert_called_once()
         child.is_symlink.assert_called_once()
+
+        # set the behavior of mock arguments
+        # child should behave like a strange file which resolved path is clearly
+        # outside of the root directory
+        child.is_symlink.return_value = False
+
+        # call the method
+        # it should raise a ValueError
+        with self.assertRaises(ValueError):
+            list(black.gen_python_files_in_dir(path, root, include, exclude, report))
+
+        # check the call of the methods of the mock objects
+        path.iterdir.assert_called()
+        self.assertEqual(path.iterdir.call_count, 2)
+        child.resolve.assert_called()
+        self.assertEqual(child.resolve.call_count, 2)
+        child.is_symlink.assert_called()
+        self.assertEqual(child.is_symlink.call_count, 2)
 
 
 if __name__ == "__main__":
