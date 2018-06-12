@@ -11,7 +11,7 @@ import sys
 from tempfile import TemporaryDirectory
 from typing import Any, BinaryIO, Generator, List, Tuple, Iterator
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from click import unstyle
 from click.testing import CliRunner
@@ -1161,6 +1161,31 @@ class BlackTestCase(unittest.TestCase):
     def test_assert_equivalent_different_asts(self) -> None:
         with self.assertRaises(AssertionError):
             black.assert_equivalent("{}", "None")
+
+    def test_symlink_within_structure(self) -> None:
+        # prepare argumens
+        path = MagicMock()
+        root = THIS_DIR
+        child = MagicMock()
+        include = re.compile(black.DEFAULT_INCLUDES)
+        exclude = re.compile(black.DEFAULT_EXCLUDES)
+        report = black.Report()
+
+        # set the behavior of mock arguments
+        # child should behave like a symlink which resolved path is clearly
+        # outside of the root directory
+        path.iterdir.return_value = [child]
+        child.resolve.return_value = Path("/a/b/c")
+        child.is_symlink.return_value = True
+
+        # call the method
+        # it should not raise any error
+        list(black.gen_python_files_in_dir(path, root, include, exclude, report))
+
+        # check the call of the methods of the mock objects
+        path.iterdir.assert_called_once()
+        child.resolve.assert_called_once()
+        child.is_symlink.assert_called_once()
 
 
 if __name__ == "__main__":
