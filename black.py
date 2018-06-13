@@ -2941,11 +2941,24 @@ def gen_python_files_in_dir(
     """Generate all files under `path` whose paths are not excluded by the
     `exclude` regex, but are included by the `include` regex.
 
+    Symbolic links pointing outside of the root directory are ignored.
+
     `report` is where output about exclusions goes.
     """
     assert root.is_absolute(), f"INTERNAL ERROR: `root` must be absolute but is {root}"
     for child in path.iterdir():
-        normalized_path = "/" + child.resolve().relative_to(root).as_posix()
+        try:
+            normalized_path = "/" + child.resolve().relative_to(root).as_posix()
+        except ValueError:
+            if child.is_symlink():
+                report.path_ignored(
+                    child,
+                    "is a symbolic link that points outside of the root directory",
+                )
+                continue
+
+            raise
+
         if child.is_dir():
             normalized_path += "/"
         exclude_match = exclude.search(normalized_path)
