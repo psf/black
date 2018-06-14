@@ -36,9 +36,7 @@ name = "black"
 version = "18.6b2"
 description = "The uncompromising code formatter."
 readme = "README.md"
-# FIXME: use proper Unicode below when new `pip` comes out with a fix for
-# https://github.com/pypa/pip/pull/5482.
-authors = ["Lukasz Langa <lukasz@langa.pl>"]
+authors = ["Łukasz Langa <lukasz@langa.pl>"]
 homepage = "https://github.com/ambv/black/"
 documentation = "https://black.readthedocs.io/en/stable/"
 license = "MIT"
