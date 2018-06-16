@@ -697,6 +697,14 @@ Use [sublack plugin](https://github.com/jgirardet/sublack).
 Use [blackcellmagic](https://github.com/csurfer/blackcellmagic).
 
 
+### Python Language Server
+
+If your editor supports the [Language Server Protocol](https://langserver.org/)
+(Atom, Sublime Text, Visual Studio Code and many more), you can use
+the [Python Language Server](https://github.com/palantir/python-language-server) with the
+[pyls-black](https://github.com/rupert/pyls-black) plugin.
+
+
 ### Other editors
 
 Atom/Nuclide integration is planned by the author, others will
