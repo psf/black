@@ -1418,9 +1418,14 @@ class EmptyLineTracker:
                     newlines = 1
                 elif current_line.is_class or self.previous_line.is_class:
                     if current_line.is_stub_class and self.previous_line.is_stub_class:
+                        # No blank line between classes with an emty body
                         newlines = 0
                     else:
                         newlines = 1
+                elif current_line.is_def and not self.previous_line.is_def:
+                    # Blank line between a block of functions and a block of
+                    # non-functions
+                    newlines = 1
                 else:
                     newlines = 0
             else:
