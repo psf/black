@@ -2045,6 +2045,10 @@ def is_split_before_delimiter(leaf: Leaf, previous: Leaf = None) -> int:
     return 0
 
 
+FMT_OFF = {"# fmt: off", "# fmt:off", "# yapf: disable"}
+FMT_ON = {"# fmt: on", "# fmt:on", "# yapf: enable"}
+
+
 def generate_comments(leaf: LN) -> Iterator[Leaf]:
     """Clean the prefix of the `leaf` and generate comments from it, if any.
 
@@ -2064,16 +2068,37 @@ def generate_comments(leaf: LN) -> Iterator[Leaf]:
     Inline comments are emitted as regular token.COMMENT leaves.  Standalone
     are emitted with a fake STANDALONE_COMMENT token identifier.
     """
-    p = leaf.prefix
-    if not p:
-        return
+    for pc in list_comments(leaf.prefix, is_endmarker=leaf.type == token.ENDMARKER):
+        yield Leaf(pc.type, pc.value, prefix="\n" * pc.newlines)
+        if pc.value in FMT_ON:
+            raise FormatOn(pc.consumed)
 
-    if "#" not in p:
-        return
+        if pc.value in FMT_OFF:
+            if pc.type == STANDALONE_COMMENT:
+                raise FormatOff(pc.consumed)
+
+            prev = preceding_leaf(leaf)
+            if not prev or prev.type in WHITESPACE:  # standalone comment in disguise
+                raise FormatOff(pc.consumed)
+
+
+@dataclass
+class ProtoComment:
+    type: int  # token.COMMENT or STANDALONE_COMMENT
+    value: str  # content of the comment
+    newlines: int  # how many newlines before the comment
+    consumed: int  # how many characters of the original leaf's prefix did we consume
+
+
+@lru_cache(maxsize=4096)
+def list_comments(prefix: str, is_endmarker: bool) -> List[ProtoComment]:
+    result: List[ProtoComment] = []
+    if not prefix or "#" not in prefix:
+        return result
 
     consumed = 0
     nlines = 0
-    for index, line in enumerate(p.split("\n")):
+    for index, line in enumerate(prefix.split("\n")):
         consumed += len(line) + 1  # adding the length of the split '\n'
         line = line.lstrip()
         if not line:
@@ -2081,25 +2106,18 @@ def generate_comments(leaf: LN) -> Iterator[Leaf]:
         if not line.startswith("#"):
             continue
 
-        if index == 0 and leaf.type != token.ENDMARKER:
+        if index == 0 and not is_endmarker:
             comment_type = token.COMMENT  # simple trailing comment
         else:
             comment_type = STANDALONE_COMMENT
         comment = make_comment(line)
-        yield Leaf(comment_type, comment, prefix="\n" * nlines)
-
-        if comment in {"# fmt: on", "# yapf: enable"}:
-            raise FormatOn(consumed)
-
-        if comment in {"# fmt: off", "# yapf: disable"}:
-            if comment_type == STANDALONE_COMMENT:
-                raise FormatOff(consumed)
-
-            prev = preceding_leaf(leaf)
-            if not prev or prev.type in WHITESPACE:  # standalone comment in disguise
-                raise FormatOff(consumed)
-
+        result.append(
+            ProtoComment(
+                type=comment_type, value=comment, newlines=nlines, consumed=consumed
+            )
+        )
         nlines = 0
+    return result
 
 
 def make_comment(content: str) -> str:
@@ -2586,10 +2604,10 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
     Standardizes on visible parentheses for single-element tuples, and keeps
     existing visible parentheses for other tuples and generator expressions.
     """
-    try:
-        list(generate_comments(node))
-    except FormatOff:
-        return  # This `node` has a prefix with `# fmt: off`, don't mess with parens.
+    for pc in list_comments(node.prefix, is_endmarker=False):
+        if pc.value in FMT_OFF:
+            # This `node` has a prefix with `# fmt: off`, don't mess with parens.
+            return
 
     check_lpar = False
     for index, child in enumerate(list(node.children)):
