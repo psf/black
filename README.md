@@ -822,6 +822,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ### 18.6b3
 
+* typing stub files (`.pyi`) now have blank lines added after constants (#340)
+
 * fixed improper formatting of f-strings with quotes inside interpolated
   expressions (#322)
 
@@ -830,6 +832,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * fixed unnecessary slowdown on AST nodes with very many siblings
 
 * fixed cannibalizing backslashes during string normalization
+
+* fixed a crash due to symbolic links pointing outside of the project directory (#338)
 
 
 ### 18.6b2
@@ -1165,6 +1169,7 @@ Multiple contributions by:
 * [Jonas Obrist](mailto:ojiidotch@gmail.com)
 * [Luka Sterbic](mailto:luka.sterbic@gmail.com)
 * [Miguel Gaiowski](mailto:miggaiowski@gmail.com)
+* [Neraste](neraste.herr10@gmail.com)
 * [Osaetin Daniel](mailto:osaetindaniel@gmail.com)
 * [Peter Bengtsson](mailto:mail@peterbe.com)
 * [Stavros Korokithakis](mailto:hi@stavros.io)
