@@ -164,9 +164,11 @@ html_theme_options = {
     "github_user": "ambv",
     "github_repo": "black",
     "github_type": "star",
+    "github_banner": True,
     "show_powered_by": True,
     "fixed_sidebar": True,
     "logo": "logo2.png",
+    "travis_button": True,
 }
 
 
