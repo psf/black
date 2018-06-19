@@ -824,6 +824,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * typing stub files (`.pyi`) now have blank lines added after constants (#340)
 
+* `# fmt: off` and `# fmt: on` now work also within bracket pairs (#329)
+
 * fixed improper formatting of f-strings with quotes inside interpolated
   expressions (#322)
 

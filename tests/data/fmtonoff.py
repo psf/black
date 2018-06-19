@@ -40,6 +40,10 @@ def spaces(a=1, b=(), c=[], d={}, e=True, f=-1, g=1 if False else 2, h="", i=r''
 def spaces_types(a: int = 1, b: tuple = (), c: list = [], d: dict = {}, e: bool = True, f: int = -1, g: int = 1 if False else 2, h: str = "", i: str = r''): ...
 def spaces2(result= _core.Value(None)):
  ...
+something = {
+    # fmt: off
+    key: 'value',
+}
 def example(session):
     # fmt: off
     result = session\
@@ -78,10 +82,11 @@ def long_lines():
             \n?
         )
         $
-        """, # fmt: off
-        re.MULTILINE | re.VERBOSE
+        """,
+        # fmt: off
+        re.MULTILINE|re.VERBOSE
+        # fmt: on
     )
-    # fmt: on
 def single_literal_yapf_disable():
     """Black does not support this."""
     BAZ = {
@@ -89,6 +94,28 @@ def single_literal_yapf_disable():
         (5, 6, 7, 8),
         (9, 10, 11, 12),
     }  # yapf: disable
+cfg.rule(
+    "Default", "address",
+    xxxx_xxxx=["xxx-xxxxxx-xxxxxxxxxx"],
+    xxxxxx="xx_xxxxx", xxxxxxx="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    xxxxxxxxx_xxxx=True, xxxxxxxx_xxxxxxxxxx=False,
+    xxxxxx_xxxxxx=2, xxxxxx_xxxxx_xxxxxxxx=70, xxxxxx_xxxxxx_xxxxx=True,
+    # fmt: off
+    xxxxxxx_xxxxxxxxxxxx={
+        "xxxxxxxx": {
+            "xxxxxx": False,
+            "xxxxxxx": False,
+            "xxxx_xxxxxx": "xxxxx",
+        },
+        "xxxxxxxx-xxxxx": {
+            "xxxxxx": False,
+            "xxxxxxx": True,
+            "xxxx_xxxxxx": "xxxxxx",
+        },
+    },
+    # fmt: on
+    xxxxxxxxxx_xxxxxxxxxxx_xxxxxxx_xxxxxxxxx=5
+)
 # fmt: off
 # No formatting to the end of the file
 l=[1,2,3]
@@ -157,6 +184,12 @@ def spaces2(result=_core.Value(None)):
     ...
 
 
+something = {
+    # fmt: off
+    key: 'value',
+}
+
+
 def example(session):
     # fmt: off
     result = session\
@@ -202,10 +235,11 @@ def long_lines():
             \n?
         )
         $
-        """,  # fmt: off
-        re.MULTILINE | re.VERBOSE,
+        """,
+        # fmt: off
+        re.MULTILINE|re.VERBOSE
+        # fmt: on
     )
-    # fmt: on
 
 
 def single_literal_yapf_disable():
@@ -213,6 +247,33 @@ def single_literal_yapf_disable():
     BAZ = {(1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)}  # yapf: disable
 
 
+cfg.rule(
+    "Default",
+    "address",
+    xxxx_xxxx=["xxx-xxxxxx-xxxxxxxxxx"],
+    xxxxxx="xx_xxxxx",
+    xxxxxxx="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    xxxxxxxxx_xxxx=True,
+    xxxxxxxx_xxxxxxxxxx=False,
+    xxxxxx_xxxxxx=2,
+    xxxxxx_xxxxx_xxxxxxxx=70,
+    xxxxxx_xxxxxx_xxxxx=True,
+    # fmt: off
+    xxxxxxx_xxxxxxxxxxxx={
+        "xxxxxxxx": {
+            "xxxxxx": False,
+            "xxxxxxx": False,
+            "xxxx_xxxxxx": "xxxxx",
+        },
+        "xxxxxxxx-xxxxx": {
+            "xxxxxx": False,
+            "xxxxxxx": True,
+            "xxxx_xxxxxx": "xxxxxx",
+        },
+    },
+    # fmt: on
+    xxxxxxxxxx_xxxxxxxxxxx_xxxxxxx_xxxxxxxxx=5,
+)
 # fmt: off
 # No formatting to the end of the file
 l=[1,2,3]

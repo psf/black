@@ -628,6 +628,7 @@ def format_str(
     is_pyi = bool(mode & FileMode.PYI)
     py36 = bool(mode & FileMode.PYTHON36) or is_python36(src_node)
     normalize_strings = not bool(mode & FileMode.NO_STRING_NORMALIZATION)
+    normalize_fmt_off(src_node)
     lines = LineGenerator(
         remove_u_prefix=py36 or "unicode_literals" in future_imports,
         is_pyi=is_pyi,
@@ -781,6 +782,7 @@ STATEMENT = {
     syms.classdef,
 }
 STANDALONE_COMMENT = 153
+token.tok_name[STANDALONE_COMMENT] = "STANDALONE_COMMENT"
 LOGIC_OPERATORS = {"and", "or"}
 COMPARATORS = {
     token.LESS,
@@ -820,6 +822,18 @@ UNPACKING_PARENTS = {
     syms.listmaker,
     syms.testlist_gexp,
     syms.testlist_star_expr,
+}
+SURROUNDED_BY_BRACKETS = {
+    syms.typedargslist,
+    syms.arglist,
+    syms.subscriptlist,
+    syms.vfplist,
+    syms.import_as_names,
+    syms.yield_expr,
+    syms.testlist_gexp,
+    syms.testlist_star_expr,
+    syms.listmaker,
+    syms.dictsetmaker,
 }
 TEST_DESCENDANTS = {
     syms.test,
@@ -1940,6 +1954,28 @@ def child_towards(ancestor: Node, descendant: LN) -> Optional[LN]:
     return node
 
 
+def container_of(leaf: Leaf) -> LN:
+    """Return `leaf` or one of its ancestors that is the topmost container of it.
+
+    By "container" we mean a node where `leaf` is the very first child.
+    """
+    same_prefix = leaf.prefix
+    container: LN = leaf
+    while container:
+        parent = container.parent
+        if parent is None:
+            break
+
+        if parent.children[0].prefix != same_prefix:
+            break
+
+        if parent.type in SURROUNDED_BY_BRACKETS:
+            break
+
+        container = parent
+    return container
+
+
 def is_split_after_delimiter(leaf: Leaf, previous: Leaf = None) -> int:
     """Return the priority of the `leaf` delimiter, given a line break after it.
 
@@ -2091,7 +2127,7 @@ class ProtoComment:
 
 
 @lru_cache(maxsize=4096)
-def list_comments(prefix: str, is_endmarker: bool) -> List[ProtoComment]:
+def list_comments(prefix: str, *, is_endmarker: bool) -> List[ProtoComment]:
     result: List[ProtoComment] = []
     if not prefix or "#" not in prefix:
         return result
@@ -2641,6 +2677,71 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
                 node.insert_child(index, Node(syms.atom, [lpar, child, rpar]))
 
         check_lpar = isinstance(child, Leaf) and child.value in parens_after
+
+
+def normalize_fmt_off(node: Node) -> None:
+    """Allow `# fmt: off`/`# fmt: on` within bracket pairs.
+
+    Ignores `# fmt: off` and `# fmt: on` outside of brackets.
+
+    Raises :exc:`SyntaxError` if no matching `# fmt: on` is found for a `# fmt: off`
+    given inside brackets.
+    """
+    try_again = True
+    while try_again:
+        try_again = hide_fmt_off(node)
+
+
+def hide_fmt_off(node: Node) -> bool:
+    bt = BracketTracker()
+    for leaf in node.leaves():
+        bt.mark(leaf)
+        if bt.depth == 0:
+            continue
+
+        previous_consumed = 0
+        for comment in list_comments(leaf.prefix, is_endmarker=False):
+            if comment.value in FMT_OFF:
+                ignored_nodes = list(generate_ignored_nodes(leaf))
+                first = ignored_nodes[0]  # Can be a container node with the `leaf`.
+                parent = first.parent
+                prefix = first.prefix
+                first.prefix = prefix[comment.consumed :]
+                hidden_value = (
+                    comment.value + "\n" + "".join(str(n) for n in ignored_nodes)
+                )
+                first_idx = None
+                for ignored in ignored_nodes:
+                    index = ignored.remove()
+                    if first_idx is None:
+                        first_idx = index
+                assert parent is not None, "INTERNAL ERROR: fmt: on/off handling (1)"
+                assert first_idx is not None, "INTERNAL ERROR: fmt: on/off handling (2)"
+                parent.insert_child(
+                    first_idx,
+                    Leaf(
+                        STANDALONE_COMMENT,
+                        hidden_value,
+                        prefix=prefix[:previous_consumed] + "\n" * comment.newlines,
+                    ),
+                )
+                return True
+
+            previous_consumed += comment.consumed
+
+    return False
+
+
+def generate_ignored_nodes(leaf: Leaf) -> Iterator[LN]:
+    container: Optional[LN] = container_of(leaf)
+    while container is not None:
+        for comment in list_comments(container.prefix, is_endmarker=False):
+            if comment.value in FMT_ON:
+                return
+
+        yield container
+
+        container = container.next_sibling
 
 
 def maybe_make_parens_invisible_in_atom(node: LN) -> bool:
