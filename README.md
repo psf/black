@@ -830,6 +830,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
   * they now correctly work across function/class boundaries (#335)
 
+  * they now work when an indentation block starts with empty lines or misaligned
+    comments (#334)
+
 * fixed improper formatting of f-strings with quotes inside interpolated
   expressions (#322)
 

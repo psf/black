@@ -70,24 +70,19 @@ class Driver(object):
             if debug:
                 self.logger.debug("%s %r (prefix=%r)",
                                   token.tok_name[type], value, prefix)
-            if type in {token.INDENT, token.DEDENT}:
-                _prefix = prefix
+            if type == token.INDENT:
+                indent_columns.append(len(value))
+                _prefix = prefix + value
                 prefix = ""
-            if type == token.DEDENT:
+                value = ""
+            elif type == token.DEDENT:
                 _indent_col = indent_columns.pop()
-                prefix, _prefix = self._partially_consume_prefix(_prefix, _indent_col)
+                prefix, _prefix = self._partially_consume_prefix(prefix, _indent_col)
             if p.addtoken(type, value, (prefix, start)):
                 if debug:
                     self.logger.debug("Stop.")
                 break
             prefix = ""
-            if type == token.INDENT:
-                indent_columns.append(len(value))
-                if _prefix.startswith(value):
-                    # Don't double-indent.  Since we're delaying the prefix that
-                    # would normally belong to INDENT, we need to put the value
-                    # at the end versus at the beginning.
-                    _prefix = _prefix[len(value):] + value
             if type in {token.INDENT, token.DEDENT}:
                 prefix = _prefix
             lineno, column = end

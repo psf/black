@@ -19,7 +19,16 @@ def test_fader(test):
     pass
 
 def check_fader(test):
+
     pass
+
+def verify_fader(test):
+  # misaligned comment
+    pass
+
+def verify_fader(test):
+    """Hey, ho."""
+    assert test.passed()
 
 def test_calculate_fades():
     calcs = [

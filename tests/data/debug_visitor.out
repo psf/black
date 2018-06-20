@@ -36,10 +36,11 @@ file_input
         NEWLINE
  '\n'
         INDENT
- '    '
+ ''
         simple_stmt
           expr_stmt
             NAME
+ '    '
  'tree_depth'
             annassign
               COLON
@@ -109,10 +110,11 @@ file_input
             NEWLINE
  '\n'
             INDENT
- '        '
+ ''
             simple_stmt
               expr_stmt
                 NAME
+ '        '
  'indent'
                 EQUAL
  ' '
@@ -184,10 +186,11 @@ file_input
                 NEWLINE
  '\n'
                 INDENT
- '            '
+ ''
                 simple_stmt
                   expr_stmt
                     NAME
+ '            '
  '_type'
                     EQUAL
  ' '
@@ -297,10 +300,11 @@ file_input
                     NEWLINE
  '\n'
                     INDENT
- '                '
+ ''
                     simple_stmt
                       yield_expr
                         NAME
+ '                '
  'yield'
                         yield_arg
                           NAME
@@ -410,10 +414,11 @@ file_input
                 NEWLINE
  '\n'
                 INDENT
- '            '
+ ''
                 simple_stmt
                   expr_stmt
                     NAME
+ '            '
  '_type'
                     EQUAL
  ' '
@@ -542,11 +547,11 @@ file_input
                     NEWLINE
  '\n'
                     INDENT
- '                '
+ ''
                     simple_stmt
                       power
                         NAME
- "# We don't have to handle prefixes for `Node` objects since\n                # that delegates to the first child anyway.\n                "
+ "                # We don't have to handle prefixes for `Node` objects since\n                # that delegates to the first child anyway.\n                "
  'out'
                         trailer
                           LPAR
@@ -699,9 +704,10 @@ file_input
               NEWLINE
  '\n'
               INDENT
- '        '
+ ''
               simple_stmt
                 STRING
+ '        '
  '"""Pretty-prints a given string of `code`.\n\n        Convenience method for debugging.\n        """'
                 NEWLINE
  '\n'
