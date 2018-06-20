@@ -2950,7 +2950,7 @@ def gen_python_files_in_dir(
     """Generate all files under `path` whose paths are not excluded by the
     `exclude` regex, but are included by the `include` regex.
 
-    Symbolic links pointing outside of the root directory are ignored.
+    Symbolic links pointing outside of the `root` directory are ignored.
 
     `report` is where output about exclusions goes.
     """
@@ -2961,8 +2961,7 @@ def gen_python_files_in_dir(
         except ValueError:
             if child.is_symlink():
                 report.path_ignored(
-                    child,
-                    "is a symbolic link that points outside of the root directory",
+                    child, f"is a symbolic link that points outside {root}"
                 )
                 continue
 

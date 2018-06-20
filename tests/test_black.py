@@ -943,12 +943,10 @@ class BlackTestCase(unittest.TestCase):
             src1 = (THIS_DIR / "data" / "string_quotes.py").resolve()
             result = CliRunner().invoke(black.main, [str(src1), "--diff", "--check"])
             self.assertEqual(result.exit_code, 1, result.output)
-
             # Files which will not be reformatted.
             src2 = (THIS_DIR / "data" / "composition.py").resolve()
             result = CliRunner().invoke(black.main, [str(src2), "--diff", "--check"])
             self.assertEqual(result.exit_code, 0, result.output)
-
             # Multi file command.
             result = CliRunner().invoke(
                 black.main, [str(src1), str(src2), "--diff", "--check"]
@@ -1171,41 +1169,29 @@ class BlackTestCase(unittest.TestCase):
             black.assert_equivalent("{}", "None")
 
     def test_symlink_out_of_root_directory(self) -> None:
-        # prepare argumens
         path = MagicMock()
         root = THIS_DIR
         child = MagicMock()
         include = re.compile(black.DEFAULT_INCLUDES)
         exclude = re.compile(black.DEFAULT_EXCLUDES)
         report = black.Report()
-
-        # set the behavior of mock arguments
-        # child should behave like a symlink which resolved path is clearly
-        # outside of the root directory
+        # `child` should behave like a symlink which resolved path is clearly
+        # outside of the `root` directory.
         path.iterdir.return_value = [child]
         child.resolve.return_value = Path("/a/b/c")
         child.is_symlink.return_value = True
-
-        # call the method
-        # it should not raise any error
-        list(black.gen_python_files_in_dir(path, root, include, exclude, report))
-
-        # check the call of the methods of the mock objects
+        try:
+            list(black.gen_python_files_in_dir(path, root, include, exclude, report))
+        except ValueError as ve:
+            self.fail("`get_python_files_in_dir()` failed: {ve}")
         path.iterdir.assert_called_once()
         child.resolve.assert_called_once()
         child.is_symlink.assert_called_once()
-
-        # set the behavior of mock arguments
-        # child should behave like a strange file which resolved path is clearly
-        # outside of the root directory
+        # `child` should behave like a strange file which resolved path is clearly
+        # outside of the `root` directory.
         child.is_symlink.return_value = False
-
-        # call the method
-        # it should raise a ValueError
         with self.assertRaises(ValueError):
             list(black.gen_python_files_in_dir(path, root, include, exclude, report))
-
-        # check the call of the methods of the mock objects
         path.iterdir.assert_called()
         self.assertEqual(path.iterdir.call_count, 2)
         child.resolve.assert_called()

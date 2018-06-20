@@ -136,7 +136,7 @@ class Driver(object):
             elif char == '\t':
                 current_column += 4
             elif char == '\n':
-                # enexpected empty line
+                # unexpected empty line
                 current_column = 0
             else:
                 # indent is finished
