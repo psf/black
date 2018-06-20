@@ -2577,6 +2577,9 @@ def convert_one_fmt_off_pair(node: Node) -> bool:
                         continue
 
                 ignored_nodes = list(generate_ignored_nodes(leaf))
+                if not ignored_nodes:
+                    continue
+
                 first = ignored_nodes[0]  # Can be a container node with the `leaf`.
                 parent = first.parent
                 prefix = first.prefix

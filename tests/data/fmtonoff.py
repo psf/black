@@ -53,6 +53,27 @@ def example(session):
         .order_by(models.Customer.id.asc())\
         .all()
     # fmt: on
+def off_and_on_without_data():
+    """All comments here are technically on the same prefix.
+
+    The comments between will be formatted. This is a known limitation.
+    """
+    # fmt: off
+
+
+        #hey, that won't work
+
+
+    # fmt: on
+    pass
+def on_and_off_broken():
+    """Another known limitation."""
+    # fmt: on
+    # fmt: off
+    this=should.not_be.formatted()
+    but=it  is  formatted
+    because . the . handling . inside . generate_ignored_nodes()
+    doesnt . consider . ordering . within . one . prefix
 def long_lines():
     if True:
         typedargslist.extend(
@@ -199,6 +220,29 @@ def example(session):
         .order_by(models.Customer.id.asc())\
         .all()
     # fmt: on
+
+
+def off_and_on_without_data():
+    """All comments here are technically on the same prefix.
+
+    The comments between will be formatted. This is a known limitation.
+    """
+    # fmt: off
+
+    # hey, that won't work
+
+    # fmt: on
+    pass
+
+
+def on_and_off_broken():
+    """Another known limitation."""
+    # fmt: on
+    # fmt: off
+    this = should.not_be.formatted()
+    but = it is formatted
+    because.the.handling.inside.generate_ignored_nodes()
+    doesnt.consider.ordering.within.one.prefix
 
 
 def long_lines():
