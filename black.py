@@ -3482,5 +3482,28 @@ def write_cache(
         pass
 
 
+def patch_click() -> None:
+    """Make Click not crash.
+
+    On certain misconfigured environments, Python 3 selects the ASCII encoding as the
+    default which restricts paths that it can access during the lifetime of the
+    application.  Click refuses to work in this scenario by raising a RuntimeError.
+
+    In case of Black the likelihood that non-ASCII characters are going to be used in
+    file paths is minimal since it's Python source code.  Moreover, this crash was
+    spurious on Python 3.7 thanks to PEP 538 and PEP 540.
+    """
+    try:
+        from click import core
+        from click import _unicodefun  # type: ignore
+    except ModuleNotFoundError:
+        return
+
+    for module in (core, _unicodefun):
+        if hasattr(module, "_verify_python3_env"):
+            module._verify_python3_env = lambda: None
+
+
 if __name__ == "__main__":
+    patch_click()
     main()

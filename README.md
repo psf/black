@@ -833,6 +833,10 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
   * they now work when an indentation block starts with empty lines or misaligned
     comments (#334)
 
+* made Click not fail on invalid environments; note that Click is right but the
+  likelihood we'll need to access non-ASCII file paths when dealing with Python source
+  code is low (#277)
+
 * fixed improper formatting of f-strings with quotes inside interpolated
   expressions (#322)
 

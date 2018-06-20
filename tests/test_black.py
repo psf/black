@@ -1213,6 +1213,28 @@ class BlackTestCase(unittest.TestCase):
         child.is_symlink.assert_called()
         self.assertEqual(child.is_symlink.call_count, 2)
 
+    def test_shhh_click(self) -> None:
+        try:
+            from click import _unicodefun  # type: ignore
+        except ModuleNotFoundError:
+            self.skipTest("Incompatible Click version")
+        if not hasattr(_unicodefun, "_verify_python3_env"):
+            self.skipTest("Incompatible Click version")
+        # First, let's see if Click is crashing with a preferred ASCII charset.
+        with patch("locale.getpreferredencoding") as gpe:
+            gpe.return_value = "ASCII"
+            with self.assertRaises(RuntimeError):
+                _unicodefun._verify_python3_env()
+        # Now, let's silence Click...
+        black.patch_click()
+        # ...and confirm it's silent.
+        with patch("locale.getpreferredencoding") as gpe:
+            gpe.return_value = "ASCII"
+            try:
+                _unicodefun._verify_python3_env()
+            except RuntimeError as re:
+                self.fail(f"`patch_click()` failed, exception still raised: {re}")
+
 
 if __name__ == "__main__":
     unittest.main(module="test_black")
