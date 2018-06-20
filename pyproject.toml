@@ -33,7 +33,7 @@ exclude = '''
 
 [tool.poetry]
 name = "black"
-version = "18.6b2"
+version = "18.6b3"
 description = "The uncompromising code formatter."
 readme = "README.md"
 # FIXME: use proper Unicode below when new `pip` comes out with a fix for
