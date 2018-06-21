@@ -820,6 +820,11 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Change Log
 
+### 18.6b4
+
+* hotfix: don't freeze when multiple comments directly precede `# fmt: off` (#371)
+
+
 ### 18.6b3
 
 * typing stub files (`.pyi`) now have blank lines added after constants (#340)

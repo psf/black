@@ -2608,7 +2608,7 @@ def convert_one_fmt_off_pair(node: Node) -> bool:
                 )
                 return True
 
-            previous_consumed += comment.consumed
+            previous_consumed = comment.consumed
 
     return False
 
