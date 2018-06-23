@@ -670,7 +670,7 @@ The plugin will use it.
 To run *Black* on save, add the following line to `.vimrc` or `init.vim`:
 
 ```
-autocmd BufWritePost *.py execute ':Black'
+autocmd BufWritePre *.py execute ':Black'
 ```
 
 **How to get Vim with Python 3.6?**
