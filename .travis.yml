@@ -2,17 +2,14 @@ sudo: required
 dist: xenial
 language: python
 cache: pip
-before_install:
-- if [[ $TRAVIS_PYTHON_VERSION == '3.7-dev' ]]; then sudo add-apt-repository ppa:deadsnakes/ppa -y; fi
-- if [[ $TRAVIS_PYTHON_VERSION == '3.7-dev' ]]; then sudo sudo apt-get update; fi
 install:
 - pip install coverage coveralls flake8 flake8-bugbear mypy
 - pip install -e .
 script:
 - coverage run tests/test_black.py
 - if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then mypy black.py tests/test_black.py; fi
-- if [[ $TRAVIS_PYTHON_VERSION == '3.6-dev' ]]; then flake8 black.py tests/test_black.py; fi
-- if [[ $TRAVIS_PYTHON_VERSION == '3.7-dev' ]]; then black --check --verbose .; fi
+- if [[ $TRAVIS_PYTHON_VERSION == '3.7' ]]; then black --check --verbose .; fi
+- if [[ $TRAVIS_PYTHON_VERSION == '3.8-dev' ]]; then flake8 black.py tests/test_black.py; fi
 after_success:
 - coveralls
 notifications:
@@ -21,5 +18,5 @@ notifications:
 matrix:
   include:
     - python: 3.6
-    - python: 3.6-dev
-    - python: 3.7-dev
+    - python: 3.7
+    - python: 3.8-dev
