@@ -820,6 +820,10 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Change Log
 
+### 18.8b0
+
+* fix parsing of `__future__` imports with renames (#389)
+
 ### 18.6b4
 
 * hotfix: don't freeze when multiple comments directly precede `# fmt: off` (#371)
