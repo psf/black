@@ -735,6 +735,14 @@ class BlackTestCase(unittest.TestCase):
         self.assertEqual(set(), black.get_future_imports(node))
         node = black.lib2to3_parse("from some.module import black\n")
         self.assertEqual(set(), black.get_future_imports(node))
+        node = black.lib2to3_parse(
+            "from __future__ import unicode_literals as _unicode_literals"
+        )
+        self.assertEqual({"unicode_literals"}, black.get_future_imports(node))
+        node = black.lib2to3_parse(
+            "from __future__ import unicode_literals as _lol, print"
+        )
+        self.assertEqual({"unicode_literals", "print"}, black.get_future_imports(node))
 
     def test_debug_visitor(self) -> None:
         source, _ = read_data("debug_visitor.py")
