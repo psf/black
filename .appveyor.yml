@@ -1,5 +1,5 @@
 install:
-- C:\Python36\python.exe -m pip install mypy
+- C:\Python36\python.exe -m pip install mypy==0.600
 - C:\Python36\python.exe -m pip install -e .
 
 # Not a C# project
