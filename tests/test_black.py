@@ -162,7 +162,9 @@ class BlackTestCase(unittest.TestCase):
         source, expected = read_data("../black", data=False)
         stderrbuf = BytesIO()
         result = BlackRunner(stderrbuf).invoke(
-            black.main, ["-", "--fast", f"--line-length={ll}"], input=source
+            black.main,
+            ["-", "--fast", f"--line-length={ll}"],
+            input=BytesIO(source.encode("utf8")),
         )
         self.assertEqual(result.exit_code, 0)
         self.assertFormatEqual(expected, result.output)
@@ -179,7 +181,9 @@ class BlackTestCase(unittest.TestCase):
         config = THIS_DIR / "data" / "empty_pyproject.toml"
         stderrbuf = BytesIO()
         args = ["-", "--fast", f"--line-length={ll}", "--diff", f"--config={config}"]
-        result = BlackRunner(stderrbuf).invoke(black.main, args, input=source)
+        result = BlackRunner(stderrbuf).invoke(
+            black.main, args, input=BytesIO(source.encode("utf8"))
+        )
         self.assertEqual(result.exit_code, 0)
         actual = diff_header.sub("[Deterministic header]", result.output)
         actual = actual.rstrip() + "\n"  # the diff output has a trailing space
@@ -877,7 +881,9 @@ class BlackTestCase(unittest.TestCase):
     def test_no_cache_when_stdin(self) -> None:
         mode = black.FileMode.AUTO_DETECT
         with cache_dir():
-            result = CliRunner().invoke(black.main, ["-"], input="print('hello')")
+            result = CliRunner().invoke(
+                black.main, ["-"], input=BytesIO(b"print('hello')")
+            )
             self.assertEqual(result.exit_code, 0)
             cache_file = black.get_cache_file(black.DEFAULT_LINE_LENGTH, mode)
             self.assertFalse(cache_file.exists())
@@ -1035,7 +1041,9 @@ class BlackTestCase(unittest.TestCase):
 
     def test_pipe_force_pyi(self) -> None:
         source, expected = read_data("force_pyi")
-        result = CliRunner().invoke(black.main, ["-", "-q", "--pyi"], input=source)
+        result = CliRunner().invoke(
+            black.main, ["-", "-q", "--pyi"], input=BytesIO(source.encode("utf8"))
+        )
         self.assertEqual(result.exit_code, 0)
         actual = result.output
         self.assertFormatEqual(actual, expected)
@@ -1089,7 +1097,9 @@ class BlackTestCase(unittest.TestCase):
 
     def test_pipe_force_py36(self) -> None:
         source, expected = read_data("force_py36")
-        result = CliRunner().invoke(black.main, ["-", "-q", "--py36"], input=source)
+        result = CliRunner().invoke(
+            black.main, ["-", "-q", "--py36"], input=BytesIO(source.encode("utf8"))
+        )
         self.assertEqual(result.exit_code, 0)
         actual = result.output
         self.assertFormatEqual(actual, expected)
@@ -1168,9 +1178,9 @@ class BlackTestCase(unittest.TestCase):
                 test_file.write_bytes(contents.encode())
                 ff(test_file, write_back=black.WriteBack.YES)
                 updated_contents: bytes = test_file.read_bytes()
-                self.assertIn(nl.encode(), updated_contents)  # type: ignore
+                self.assertIn(nl.encode(), updated_contents)
                 if nl == "\n":
-                    self.assertNotIn(b"\r\n", updated_contents)  # type: ignore
+                    self.assertNotIn(b"\r\n", updated_contents)
 
     def test_assert_equivalent_different_asts(self) -> None:
         with self.assertRaises(AssertionError):
