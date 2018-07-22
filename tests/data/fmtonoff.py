@@ -48,6 +48,39 @@ something = {
     # fmt: off
     key: 'value',
 }
+
+def subscriptlist():
+    atom[
+        # fmt: off
+        'some big and',
+        'complex subscript',
+        # fmt: on
+        goes + here, andhere,
+       ]
+
+def import_as_names():
+    # fmt: off
+    from hello import a,        b
+    'unformatted'
+    # fmt: on
+
+def testlist_star_expr():
+    # fmt: off
+    a , b = *hello
+    'unformatted'
+    # fmt: on
+
+def yield_expr():
+    # fmt: off
+    yield hello
+    'unformatted'
+    # fmt: on
+    'formatted'
+    # fmt: off
+    ( yield hello )
+    'unformatted'
+    # fmt: on
+
 def example(session):
     # fmt: off
     result = session\
@@ -142,6 +175,7 @@ cfg.rule(
     xxxxxxxxxx_xxxxxxxxxxx_xxxxxxx_xxxxxxxxx=5
 )
 # fmt: off
+yield  'hello'
 # No formatting to the end of the file
 l=[1,2,3]
 d={'a':1,
@@ -217,6 +251,43 @@ something = {
     # fmt: off
     key: 'value',
 }
+
+
+def subscriptlist():
+    atom[
+        # fmt: off
+        'some big and',
+        'complex subscript',
+        # fmt: on
+        goes + here,
+        andhere,
+    ]
+
+
+def import_as_names():
+    # fmt: off
+    from hello import a,        b
+    'unformatted'
+    # fmt: on
+
+
+def testlist_star_expr():
+    # fmt: off
+    a , b = *hello
+    'unformatted'
+    # fmt: on
+
+
+def yield_expr():
+    # fmt: off
+    yield hello
+    'unformatted'
+    # fmt: on
+    "formatted"
+    # fmt: off
+    ( yield hello )
+    'unformatted'
+    # fmt: on
 
 
 def example(session):
@@ -327,6 +398,7 @@ cfg.rule(
     xxxxxxxxxx_xxxxxxxxxxx_xxxxxxx_xxxxxxxxx=5,
 )
 # fmt: off
+yield  'hello'
 # No formatting to the end of the file
 l=[1,2,3]
 d={'a':1,

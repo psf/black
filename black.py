@@ -797,18 +797,6 @@ UNPACKING_PARENTS = {
     syms.testlist_gexp,
     syms.testlist_star_expr,
 }
-SURROUNDED_BY_BRACKETS = {
-    syms.typedargslist,
-    syms.arglist,
-    syms.subscriptlist,
-    syms.vfplist,
-    syms.import_as_names,
-    syms.yield_expr,
-    syms.testlist_gexp,
-    syms.testlist_star_expr,
-    syms.listmaker,
-    syms.dictsetmaker,
-}
 TEST_DESCENDANTS = {
     syms.test,
     syms.lambdef,
@@ -1853,7 +1841,7 @@ def container_of(leaf: Leaf) -> LN:
         if parent.type == syms.file_input:
             break
 
-        if parent.type in SURROUNDED_BY_BRACKETS:
+        if parent.prev_sibling is not None and parent.prev_sibling.type in BRACKETS:
             break
 
         container = parent

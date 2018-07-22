@@ -823,6 +823,7 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 ### 18.8b0
 
 * fix parsing of `__future__` imports with renames (#389)
+* fix scope of `# fmt: off` when directly preceding `yield` and other nodes (#385)
 
 ### 18.6b4
 
