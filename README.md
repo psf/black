@@ -650,7 +650,7 @@ or with [Vundle](https://github.com/VundleVim/Vundle.vim):
 Plugin 'ambv/black'
 ```
 
-or you can copy the plugin from [plugin/black.vim](https://github.com/ambv/black/tree/master/plugin/black.vim).
+or you can copy the plugin from [ftplugin/python/black.vim](https://github.com/ambv/black/tree/master/ftplugin/python/black.vim).
 Let me know if this requires any changes to work with Vim 8's builtin
 `packadd`, or Pathogen, and so on.
 
