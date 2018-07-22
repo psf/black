@@ -627,7 +627,7 @@ $ where black
 
 Commands and shortcuts:
 
-* `,=` or `:Black` to format the entire file (ranges not supported);
+* `:Black` to format the entire file (ranges not supported);
 * `:BlackUpgrade` to upgrade *Black* inside the virtualenv;
 * `:BlackVersion` to get the current version of *Black* inside the
   virtualenv.
