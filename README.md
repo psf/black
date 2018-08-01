@@ -58,6 +58,12 @@ To get started right away with sensible defaults:
 black {source_file_or_directory}
 ```
 
+Or get formatted code on stdout without modifying the file (useful for scripting and configuring editors):
+
+```
+cat {source_file} | black -
+```
+
 ### Command line options
 
 *Black* doesn't provide many options.  You can list them by running
