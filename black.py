@@ -398,7 +398,7 @@ def reformat_one(
                 mode=mode,
             ):
                 changed = Changed.YES
-            if write_back == WriteBack.YES and changed is not Changed.NO:
+            if write_back == WriteBack.YES and changed is not Changed.CACHED:
                 write_cache(cache, [src], line_length, mode)
         report.done(src, changed)
     except Exception as exc:
