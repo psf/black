@@ -705,10 +705,14 @@ the [Python Language Server](https://github.com/palantir/python-language-server)
 [pyls-black](https://github.com/rupert/pyls-black) plugin.
 
 
+### Atom/Nuclide
+
+Use [atom-black](https://github.com/hauntsaninja/atom-black).
+
+
 ### Other editors
 
-Atom/Nuclide integration is planned by the author, others will
-require external contributions.
+Other editors will require external contributions.
 
 Patches welcome! ✨ 🍰 ✨
 
