@@ -94,11 +94,12 @@ class WriteBack(Enum):
     NO = 0
     YES = 1
     DIFF = 2
+    CHECK = 3
 
     @classmethod
     def from_configuration(cls, *, check: bool, diff: bool) -> "WriteBack":
         if check and not diff:
-            return cls.NO
+            return cls.CHECK
 
         return cls.DIFF if diff else cls.YES
 
@@ -398,7 +399,14 @@ def reformat_one(
                 mode=mode,
             ):
                 changed = Changed.YES
-            if write_back == WriteBack.YES and changed is not Changed.NO:
+            if write_back is WriteBack.YES:
+                should_write = changed is not Changed.CACHED
+            elif write_back is WriteBack.CHECK:
+                should_write = changed is Changed.NO
+            else:
+                should_write = False
+
+            if should_write:
                 write_cache(cache, [src], line_length, mode)
         report.done(src, changed)
     except Exception as exc:
@@ -466,11 +474,17 @@ async def schedule_formatting(
                 elif task.exception():
                     report.failed(src, str(task.exception()))
                 else:
-                    formatted.append(src)
-                    report.done(src, Changed.YES if task.result() else Changed.NO)
+                    changed = Changed.YES if task.result() else Changed.NO
+                    # In normal mode, write all files to the cache.
+                    if write_back is WriteBack.YES:
+                        formatted.append(src)
+                    # In check mode, write only unchanged files to the cache.
+                    elif write_back is WriteBack.CHECK and changed is Changed.NO:
+                        formatted.append(src)
+                    report.done(src, changed)
     if cancelled:
         await asyncio.gather(*cancelled, loop=loop, return_exceptions=True)
-    if write_back == WriteBack.YES and formatted:
+    if write_back in (WriteBack.YES, WriteBack.CHECK) and formatted:
         write_cache(cache, formatted, line_length, mode)
 
 
@@ -484,7 +498,8 @@ def format_file_in_place(
 ) -> bool:
     """Format file under `src` path. Return True if changed.
 
-    If `write_back` is True, write reformatted code back to stdout.
+    If `write_back` is DIFF, write a diff to stdout. If it is YES, write reformatted
+    code to the file.
     `line_length` and `fast` options are passed to :func:`format_file_contents`.
     """
     if src.suffix == ".pyi":
@@ -533,7 +548,8 @@ def format_stdin_to_stdout(
 ) -> bool:
     """Format file on stdin. Return True if changed.
 
-    If `write_back` is True, write reformatted code back to stdout.
+    If `write_back` is YES, write reformatted code back to stdout. If it is DIFF,
+    write a diff to stdout.
     `line_length`, `fast`, `is_pyi`, and `force_py36` arguments are passed to
     :func:`format_file_contents`.
     """
