@@ -605,6 +605,7 @@ def format_str(
         remove_u_prefix=py36 or "unicode_literals" in future_imports,
         is_pyi=is_pyi,
         normalize_strings=normalize_strings,
+        allow_underscores=py36,
     )
     elt = EmptyLineTracker(is_pyi=is_pyi)
     empty_line = Line()
@@ -1391,6 +1392,7 @@ class LineGenerator(Visitor[Line]):
     normalize_strings: bool = True
     current_line: Line = Factory(Line)
     remove_u_prefix: bool = False
+    allow_underscores: bool = False
 
     def line(self, indent: int = 0) -> Iterator[Line]:
         """Generate a line.
@@ -1432,6 +1434,8 @@ class LineGenerator(Visitor[Line]):
             if self.normalize_strings and node.type == token.STRING:
                 normalize_string_prefix(node, remove_u_prefix=self.remove_u_prefix)
                 normalize_string_quotes(node)
+            if node.type == token.NUMBER:
+                normalize_numeric_literal(node, self.allow_underscores)
             if node.type not in WHITESPACE:
                 self.current_line.append(node)
         yield from super().visit_default(node)
@@ -2491,6 +2495,61 @@ def normalize_string_quotes(leaf: Leaf) -> None:
         return  # Prefer double quotes
 
     leaf.value = f"{prefix}{new_quote}{new_body}{new_quote}"
+
+
+def normalize_numeric_literal(leaf: Leaf, allow_underscores: bool) -> None:
+    """Normalizes numeric (float, int, and complex) literals."""
+    # We want all letters (e in exponents, j in complex literals, a-f
+    # in hex literals) to be lowercase.
+    text = leaf.value.lower()
+    if text.startswith(("0o", "0x", "0b")):
+        # Leave octal, hex, and binary literals alone for now.
+        pass
+    elif "e" in text:
+        before, after = text.split("e")
+        if after.startswith("-"):
+            after = after[1:]
+            sign = "-"
+        elif after.startswith("+"):
+            after = after[1:]
+            sign = ""
+        else:
+            sign = ""
+        before = format_float_or_int_string(before, allow_underscores)
+        after = format_int_string(after, allow_underscores)
+        text = f"{before}e{sign}{after}"
+    # Complex numbers and Python 2 longs
+    elif "j" in text or "l" in text:
+        number = text[:-1]
+        suffix = text[-1]
+        text = f"{format_float_or_int_string(number, allow_underscores)}{suffix}"
+    else:
+        text = format_float_or_int_string(text, allow_underscores)
+    leaf.value = text
+
+
+def format_float_or_int_string(text: str, allow_underscores: bool) -> str:
+    """Formats a float string like "1.0"."""
+    if "." not in text:
+        return format_int_string(text, allow_underscores)
+    before, after = text.split(".")
+    before = format_int_string(before, allow_underscores) if before else "0"
+    after = format_int_string(after, allow_underscores) if after else "0"
+    return f"{before}.{after}"
+
+
+def format_int_string(text: str, allow_underscores: bool) -> str:
+    """Normalizes underscores in a string to e.g. 1_000_000.
+
+    Input must be a string consisting only of digits and underscores.
+    """
+    if not allow_underscores:
+        return text
+    text = text.replace("_", "")
+    if len(text) <= 6:
+        # No underscores for numbers <= 6 digits long.
+        return text
+    return format(int(text), "3_")
 
 
 def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
