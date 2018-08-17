@@ -374,6 +374,21 @@ class BlackTestCase(unittest.TestCase):
         black.assert_stable(source, actual, line_length=ll)
 
     @patch("black.dump_to_file", dump_to_stderr)
+    def test_numeric_literals(self) -> None:
+        source, expected = read_data("numeric_literals")
+        actual = fs(source, mode=black.FileMode.PYTHON36)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, line_length=ll)
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_numeric_literals_py2(self) -> None:
+        source, expected = read_data("numeric_literals_py2")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_stable(source, actual, line_length=ll)
+
+    @patch("black.dump_to_file", dump_to_stderr)
     def test_python2(self) -> None:
         source, expected = read_data("python2")
         actual = fs(source)
