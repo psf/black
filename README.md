@@ -771,9 +771,12 @@ location of the file depends on the *Black* version and the system on which *Bla
 is run. The file is non-portable. The standard location on common operating systems
 is:
 
-* Windows: `C:\\Users\<username>\AppData\Local\black\black\Cache\<version>\cache.<line-length>.pickle`
-* macOS: `/Users/<username>/Library/Caches/black/<version>/cache.<line-length>.pickle`
-* Linux: `/home/<username>/.cache/black/<version>/cache.<line-length>.pickle`
+* Windows: `C:\\Users\<username>\AppData\Local\black\black\Cache\<version>\cache.<line-length>.<file-mode>.pickle`
+* macOS: `/Users/<username>/Library/Caches/black/<version>/cache.<line-length>.<file-mode>.pickle`
+* Linux: `/home/<username>/.cache/black/<version>/cache.<line-length>.<file-mode>.pickle`
+
+`file-mode` is an int flag that determines whether the file was formatted as 3.6+ only,
+as .pyi, and whether string normalization was omitted.
 
 
 ## Testimonials
@@ -839,8 +842,19 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ### 18.8b0
 
-* fix parsing of `__future__` imports with renames (#389)
-* fix scope of `# fmt: off` when directly preceding `yield` and other nodes (#385)
+* numeric literals are now normalized to include `_` separators on Python 3.6+ code
+  (#452)
+
+* cache is now populated when `--check` is successful for a file which speeds up
+  consecutive checks of properly formatted unmodified files (#448)
+
+* fixed parsing of `__future__` imports with renames (#389)
+
+* fixed scope of `# fmt: off` when directly preceding `yield` and other nodes (#385)
+
+* note: the Vim plugin stopped registering ``,=`` as a default chord as it turned out
+  to be a bad idea (#415)
+
 
 ### 18.6b4
 
@@ -1209,6 +1223,7 @@ Multiple contributions by:
 * [Jonas Obrist](mailto:ojiidotch@gmail.com)
 * [Luka Sterbic](mailto:luka.sterbic@gmail.com)
 * [Miguel Gaiowski](mailto:miggaiowski@gmail.com)
+* [Miroslav Shubernetskiy](mailto:miroslav@miki725.com)
 * [Neraste](neraste.herr10@gmail.com)
 * [Osaetin Daniel](mailto:osaetindaniel@gmail.com)
 * [Peter Bengtsson](mailto:mail@peterbe.com)
