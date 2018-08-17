@@ -2545,6 +2545,7 @@ def format_float_or_int_string(text: str, allow_underscores: bool) -> str:
     """Formats a float string like "1.0"."""
     if "." not in text:
         return format_int_string(text, allow_underscores)
+
     before, after = text.split(".")
     before = format_int_string(before, allow_underscores) if before else "0"
     after = format_int_string(after, allow_underscores) if after else "0"
@@ -2558,10 +2559,12 @@ def format_int_string(text: str, allow_underscores: bool) -> str:
     """
     if not allow_underscores:
         return text
+
     text = text.replace("_", "")
     if len(text) <= 6:
         # No underscores for numbers <= 6 digits long.
         return text
+
     return format(int(text), "3_")
 
 
