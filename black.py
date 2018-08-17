@@ -169,7 +169,7 @@ def read_pyproject_toml(
     "--line-length",
     type=int,
     default=DEFAULT_LINE_LENGTH,
-    help="How many character per line to allow.",
+    help="How many characters per line to allow.",
     show_default=True,
 )
 @click.option(
@@ -1150,7 +1150,7 @@ class Line:
             self.remove_trailing_comma()
             return True
 
-        # Otheriwsse, if the trailing one is the only one, we might mistakenly
+        # Otherwise, if the trailing one is the only one, we might mistakenly
         # change a tuple into a different type by removing the comma.
         depth = closing.bracket_depth + 1
         commas = 0
@@ -1363,7 +1363,7 @@ class EmptyLineTracker:
                 newlines = 1
             elif current_line.is_class or self.previous_line.is_class:
                 if current_line.is_stub_class and self.previous_line.is_stub_class:
-                    # No blank line between classes with an emty body
+                    # No blank line between classes with an empty body
                     newlines = 0
                 else:
                     newlines = 1
@@ -3059,7 +3059,7 @@ class Report:
         - otherwise return 0.
         """
         # According to http://tldp.org/LDP/abs/html/exitcodes.html starting with
-        # 126 we have special returncodes reserved by the shell.
+        # 126 we have special return codes reserved by the shell.
         if self.failure_count:
             return 123
 
