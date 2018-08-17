@@ -26,6 +26,8 @@ content instead.
 *Black* makes code review faster by producing the smallest diffs
 possible.
 
+Try it out now using the [Black Playground](https://black.now.sh).
+
 ---
 
 *Contents:* **[Installation and usage](#installation-and-usage)** |
@@ -796,7 +798,7 @@ Using the badge in README.rst:
 ```
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/ambv/black
-```    
+```
 
 Looks like this: [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
