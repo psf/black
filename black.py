@@ -2511,28 +2511,27 @@ def normalize_string_quotes(leaf: Leaf) -> None:
 
 
 def normalize_numeric_literal(leaf: Leaf, allow_underscores: bool) -> None:
-    """Normalizes numeric (float, int, and complex) literals."""
-    # We want all letters (e in exponents, j in complex literals, a-f
-    # in hex literals) to be lowercase.
+    """Normalizes numeric (float, int, and complex) literals.
+
+    All letters used in the representation are normalized to lowercase, long number
+    literals are split using underscores.
+    """
     text = leaf.value.lower()
     if text.startswith(("0o", "0x", "0b")):
-        # Leave octal, hex, and binary literals alone for now.
+        # Leave octal, hex, and binary literals alone.
         pass
     elif "e" in text:
         before, after = text.split("e")
+        sign = ""
         if after.startswith("-"):
             after = after[1:]
             sign = "-"
         elif after.startswith("+"):
             after = after[1:]
-            sign = ""
-        else:
-            sign = ""
         before = format_float_or_int_string(before, allow_underscores)
         after = format_int_string(after, allow_underscores)
         text = f"{before}e{sign}{after}"
-    # Complex numbers and Python 2 longs
-    elif "j" in text or "l" in text:
+    elif text.endswith(("j", "l")):
         number = text[:-1]
         suffix = text[-1]
         text = f"{format_float_or_int_string(number, allow_underscores)}{suffix}"
@@ -2555,7 +2554,7 @@ def format_float_or_int_string(text: str, allow_underscores: bool) -> str:
 def format_int_string(text: str, allow_underscores: bool) -> str:
     """Normalizes underscores in a string to e.g. 1_000_000.
 
-    Input must be a string consisting only of digits and underscores.
+    Input must be a string of at least six digits and optional underscores.
     """
     if not allow_underscores:
         return text
