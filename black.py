@@ -399,14 +399,9 @@ def reformat_one(
                 mode=mode,
             ):
                 changed = Changed.YES
-            if write_back is WriteBack.YES:
-                should_write = changed is not Changed.CACHED
-            elif write_back is WriteBack.CHECK:
-                should_write = changed is Changed.NO
-            else:
-                should_write = False
-
-            if should_write:
+            if (write_back is WriteBack.YES and changed is not Changed.CACHED) or (
+                write_back is WriteBack.CHECK and changed is Changed.NO
+            ):
                 write_cache(cache, [src], line_length, mode)
         report.done(src, changed)
     except Exception as exc:
@@ -437,7 +432,7 @@ async def schedule_formatting(
         for src in sorted(cached):
             report.done(src, Changed.CACHED)
     cancelled = []
-    formatted = []
+    sources_to_cache = []
     if sources:
         lock = None
         if write_back == WriteBack.DIFF:
@@ -475,17 +470,17 @@ async def schedule_formatting(
                     report.failed(src, str(task.exception()))
                 else:
                     changed = Changed.YES if task.result() else Changed.NO
-                    # In normal mode, write all files to the cache.
-                    if write_back is WriteBack.YES:
-                        formatted.append(src)
-                    # In check mode, write only unchanged files to the cache.
-                    elif write_back is WriteBack.CHECK and changed is Changed.NO:
-                        formatted.append(src)
+                    # If the file was written back or was successfully checked as
+                    # well-formatted, store this information in the cache.
+                    if write_back is WriteBack.YES or (
+                        write_back is WriteBack.CHECK and changed is Changed.NO
+                    ):
+                        sources_to_cache.append(src)
                     report.done(src, changed)
     if cancelled:
         await asyncio.gather(*cancelled, loop=loop, return_exceptions=True)
-    if write_back in (WriteBack.YES, WriteBack.CHECK) and formatted:
-        write_cache(cache, formatted, line_length, mode)
+    if sources_to_cache:
+        write_cache(cache, sources_to_cache, line_length, mode)
 
 
 def format_file_in_place(
