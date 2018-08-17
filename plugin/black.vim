@@ -126,6 +126,3 @@ endpython3
 command! Black :py3 Black()
 command! BlackUpgrade :py3 BlackUpgrade()
 command! BlackVersion :py3 BlackVersion()
-
-nmap ,= :Black<CR>
-vmap ,= :Black<CR>
