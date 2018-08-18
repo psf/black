@@ -2,21 +2,33 @@
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
-from functools import partial
+from functools import partial, wraps
 from io import BytesIO, TextIOWrapper
 import os
 from pathlib import Path
 import re
 import sys
 from tempfile import TemporaryDirectory
-from typing import Any, BinaryIO, Generator, List, Tuple, Iterator
+from typing import (
+    Any,
+    BinaryIO,
+    Callable,
+    Coroutine,
+    Generator,
+    List,
+    Tuple,
+    Iterator,
+    TypeVar,
+)
 import unittest
 from unittest.mock import patch, MagicMock
 
+from aiohttp.test_utils import TestClient, TestServer
 from click import unstyle
 from click.testing import CliRunner
 
 import black
+import blackd
 
 
 ll = 88
@@ -25,6 +37,8 @@ fs = partial(black.format_str, line_length=ll)
 THIS_FILE = Path(__file__)
 THIS_DIR = THIS_FILE.parent
 EMPTY_LINE = "# EMPTY LINE WITH WHITESPACE" + " (this comment will be removed)"
+T = TypeVar("T")
+R = TypeVar("R")
 
 
 def dump_to_stderr(*output: str) -> str:
@@ -77,6 +91,15 @@ def event_loop(close: bool) -> Iterator[None]:
         policy.set_event_loop(old_loop)
         if close:
             loop.close()
+
+
+def async_test(f: Callable[..., Coroutine[Any, None, R]]) -> Callable[..., None]:
+    @event_loop(close=True)
+    @wraps(f)
+    def wrapper(*args: Any, **kwargs: Any) -> None:
+        asyncio.get_event_loop().run_until_complete(f(*args, **kwargs))
+
+    return wrapper
 
 
 class BlackRunner(CliRunner):
@@ -1267,6 +1290,159 @@ class BlackTestCase(unittest.TestCase):
                 _unicodefun._verify_python3_env()
             except RuntimeError as re:
                 self.fail(f"`patch_click()` failed, exception still raised: {re}")
+
+    @async_test
+    async def test_blackd_request_needs_formatting(self) -> None:
+        app = blackd.make_app()
+        async with TestClient(TestServer(app)) as client:
+            response = await client.post("/", data=b"print('hello world')")
+            self.assertEqual(response.status, 200)
+            self.assertEqual(response.charset, "utf8")
+            self.assertEqual(await response.read(), b'print("hello world")\n')
+
+    @async_test
+    async def test_blackd_request_no_change(self) -> None:
+        app = blackd.make_app()
+        async with TestClient(TestServer(app)) as client:
+            response = await client.post("/", data=b'print("hello world")\n')
+            self.assertEqual(response.status, 204)
+            self.assertEqual(await response.read(), b"")
+
+    @async_test
+    async def test_blackd_request_syntax_error(self) -> None:
+        app = blackd.make_app()
+        async with TestClient(TestServer(app)) as client:
+            response = await client.post("/", data=b"what even ( is")
+            self.assertEqual(response.status, 500)
+            content = await response.text()
+            self.assertTrue(
+                content.startswith("Cannot parse"),
+                msg=f"Expected error to start with 'Cannot parse', got {repr(content)}",
+            )
+
+    @async_test
+    async def test_blackd_unsupported_version(self) -> None:
+        app = blackd.make_app()
+        async with TestClient(TestServer(app)) as client:
+            response = await client.post(
+                "/", data=b"what", headers={blackd.VERSION_HEADER: "2"}
+            )
+            self.assertEqual(response.status, 501)
+
+    @async_test
+    async def test_blackd_supported_version(self) -> None:
+        app = blackd.make_app()
+        async with TestClient(TestServer(app)) as client:
+            response = await client.post(
+                "/", data=b"what", headers={blackd.VERSION_HEADER: "1"}
+            )
+            self.assertEqual(response.status, 200)
+
+    @async_test
+    async def test_blackd_invalid_python_variant(self) -> None:
+        app = blackd.make_app()
+        async with TestClient(TestServer(app)) as client:
+            response = await client.post(
+                "/", data=b"what", headers={blackd.PYTHON_VARIANT_HEADER: "lol"}
+            )
+            self.assertEqual(response.status, 400)
+
+    @async_test
+    async def test_blackd_pyi(self) -> None:
+        app = blackd.make_app()
+        async with TestClient(TestServer(app)) as client:
+            source, expected = read_data("stub.pyi")
+            response = await client.post(
+                "/", data=source, headers={blackd.PYTHON_VARIANT_HEADER: "pyi"}
+            )
+            self.assertEqual(response.status, 200)
+            self.assertEqual(await response.text(), expected)
+
+    @async_test
+    async def test_blackd_py36(self) -> None:
+        app = blackd.make_app()
+        async with TestClient(TestServer(app)) as client:
+            response = await client.post(
+                "/",
+                data=(
+                    "def f(\n"
+                    "    and_has_a_bunch_of,\n"
+                    "    very_long_arguments_too,\n"
+                    "    and_lots_of_them_as_well_lol,\n"
+                    "    **and_very_long_keyword_arguments\n"
+                    "):\n"
+                    "    pass\n"
+                ),
+                headers={blackd.PYTHON_VARIANT_HEADER: "3.6"},
+            )
+            self.assertEqual(response.status, 200)
+            response = await client.post(
+                "/",
+                data=(
+                    "def f(\n"
+                    "    and_has_a_bunch_of,\n"
+                    "    very_long_arguments_too,\n"
+                    "    and_lots_of_them_as_well_lol,\n"
+                    "    **and_very_long_keyword_arguments\n"
+                    "):\n"
+                    "    pass\n"
+                ),
+                headers={blackd.PYTHON_VARIANT_HEADER: "3.5"},
+            )
+            self.assertEqual(response.status, 204)
+            response = await client.post(
+                "/",
+                data=(
+                    "def f(\n"
+                    "    and_has_a_bunch_of,\n"
+                    "    very_long_arguments_too,\n"
+                    "    and_lots_of_them_as_well_lol,\n"
+                    "    **and_very_long_keyword_arguments\n"
+                    "):\n"
+                    "    pass\n"
+                ),
+                headers={blackd.PYTHON_VARIANT_HEADER: "2"},
+            )
+            self.assertEqual(response.status, 204)
+
+    @async_test
+    async def test_blackd_fast(self) -> None:
+        app = blackd.make_app()
+        async with TestClient(TestServer(app)) as client:
+            response = await client.post("/", data=b"ur'hello'")
+            self.assertEqual(response.status, 500)
+            self.assertIn("failed to parse source file", await response.text())
+            response = await client.post(
+                "/", data=b"ur'hello'", headers={blackd.FAST_OR_SAFE_HEADER: "fast"}
+            )
+            self.assertEqual(response.status, 200)
+
+    @async_test
+    async def test_blackd_line_length(self) -> None:
+        app = blackd.make_app()
+        async with TestClient(TestServer(app)) as client:
+            response = await client.post(
+                "/", data=b'print("hello")\n', headers={blackd.LINE_LENGTH_HEADER: "7"}
+            )
+            self.assertEqual(response.status, 200)
+
+    @async_test
+    async def test_blackd_invalid_line_length(self) -> None:
+        app = blackd.make_app()
+        async with TestClient(TestServer(app)) as client:
+            response = await client.post(
+                "/",
+                data=b'print("hello")\n',
+                headers={blackd.LINE_LENGTH_HEADER: "NaN"},
+            )
+            self.assertEqual(response.status, 400)
+
+    def test_blackd_main(self) -> None:
+        with patch("blackd.web.run_app"):
+            result = CliRunner().invoke(blackd.main, [])
+            if result.exception is not None:
+                raise result.exception
+            self.assertEqual(result.exit_code, 0)
 
 
 if __name__ == "__main__":

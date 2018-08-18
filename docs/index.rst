@@ -52,6 +52,7 @@ Contents
    the_black_code_style
    pyproject_toml
    editor_integration
+   blackd
    version_control_integration
    ignoring_unmodified_files
    contributing

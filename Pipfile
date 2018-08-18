@@ -4,6 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+aiohttp = ">=3.3.2"
 attrs = ">=17.4.0"
 click = ">=6.5"
 appdirs = "*"

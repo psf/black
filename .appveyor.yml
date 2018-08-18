@@ -7,4 +7,4 @@ build: off
 
 test_script:
 - C:\Python36\python.exe tests/test_black.py
-- C:\Python36\python.exe -m mypy black.py tests/test_black.py
+- C:\Python36\python.exe -m mypy black.py blackd.py tests/test_black.py
