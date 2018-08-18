@@ -1209,6 +1209,7 @@ Glued together by [Łukasz Langa](mailto:lukasz@langa.pl).
 
 Maintained with [Carol Willing](mailto:carolcode@willingconsulting.com),
 [Carl Meyer](mailto:carl@oddbird.net),
+[Jelle Zijlstra](mailto:jelle.zijlstra@gmail.com),
 [Mika Naylor](mailto:mail@autophagy.io), and
 [Zsolt Dollenstein](mailto:zsol.zsol@gmail.com).
 
@@ -1220,7 +1221,6 @@ Multiple contributions by:
 * [Eli Treuherz](mailto:eli.treuherz@cgi.com)
 * Hugo van Kemenade
 * [Ivan Katanić](mailto:ivan.katanic@gmail.com)
-* [Jelle Zijlstra](mailto:jelle.zijlstra@gmail.com)
 * [Jonas Obrist](mailto:ojiidotch@gmail.com)
 * [Luka Sterbic](mailto:luka.sterbic@gmail.com)
 * [Miguel Gaiowski](mailto:miggaiowski@gmail.com)
