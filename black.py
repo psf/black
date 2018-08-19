@@ -2900,6 +2900,10 @@ def is_python36(node: Node) -> bool:
             if value_head in {'f"', 'F"', "f'", "F'", "rf", "fr", "RF", "FR"}:
                 return True
 
+        elif n.type == token.NUMBER:
+            if "_" in n.value:  # type: ignore
+                return True
+
         elif (
             n.type in {syms.typedargslist, syms.arglist}
             and n.children
