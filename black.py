@@ -2891,13 +2891,18 @@ def is_python36(node: Node) -> bool:
     """Return True if the current file is using Python 3.6+ features.
 
     Currently looking for:
-    - f-strings; and
+    - f-strings;
+    - underscores in numeric literals; and
     - trailing commas after * or ** in function signatures and calls.
     """
     for n in node.pre_order():
         if n.type == token.STRING:
             value_head = n.value[:2]  # type: ignore
             if value_head in {'f"', 'F"', "f'", "F'", "rf", "fr", "RF", "FR"}:
+                return True
+
+        elif n.type == token.NUMBER:
+            if "_" in n.value:  # type: ignore
                 return True
 
         elif (

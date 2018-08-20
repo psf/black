@@ -371,6 +371,12 @@ human-readable strings"](https://stackoverflow.com/a/56190)), you can
 pass `--skip-string-normalization` on the command line.  This is meant as
 an adoption helper, avoid using this for new projects.
 
+### Numeric literals
+
+*Black* standardizes all numeric literals to use lowercase letters: `0xab`
+instead of `0XAB` and `1e10` instead of `1E10`. In Python 3.6+, *Black*
+adds underscores to long numeric literals to aid readability: `100000000`
+becomes `100_000_000`.
 
 ### Line breaks & binary operators
 
@@ -842,6 +848,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 ## Change Log
 
 ### 18.8b0
+
+* code with `_` in numeric literals is recognized as Python 3.6+ (#461)
 
 * numeric literals are now normalized to include `_` separators on Python 3.6+ code
   (#452)
