@@ -269,7 +269,7 @@ B950 warning instead of E501 and keep the max line length at 80 which
 you are probably already using.  You'd do it like this:
 ```ini
 [flake8]
-max-line-length = 80
+max_line_length = 80
 ...
 select = C,E,F,W,B,B950
 ignore = E501
