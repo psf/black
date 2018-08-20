@@ -843,7 +843,7 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ### 18.8b0
 
-* adjacent string literals are now correctly split into multiple lines
+* adjacent string literals are now correctly split into multiple lines (#463)
 
 * numeric literals are now normalized to include `_` separators on Python 3.6+ code
   (#452)
