@@ -412,6 +412,16 @@ class BlackTestCase(unittest.TestCase):
         black.assert_stable(source, actual, line_length=ll, mode=mode)
 
     @patch("black.dump_to_file", dump_to_stderr)
+    def test_python37(self) -> None:
+        source, expected = read_data("python37")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        major, minor = sys.version_info[:2]
+        if major > 3 or (major == 3 and minor >= 7):
+            black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, line_length=ll)
+
+    @patch("black.dump_to_file", dump_to_stderr)
     def test_fmtonoff(self) -> None:
         source, expected = read_data("fmtonoff")
         actual = fs(source)
