@@ -2564,7 +2564,9 @@ def format_int_string(text: str, allow_underscores: bool) -> str:
         # No underscores for numbers <= 6 digits long.
         return text
 
-    return format(int(text), "3_")
+    # Avoid removing leading zeros, which are important if we're formatting
+    # part of a number like "0.001".
+    return format(int("1" + text), "3_")[1:].lstrip("_")
 
 
 def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
