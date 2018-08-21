@@ -925,6 +925,10 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * adjacent string literals are now correctly split into multiple lines (#463)
 
+* added `blackd`, see [its documentation](#blackd) for more info (#349)
+
+* code with `_` in numeric literals is recognized as Python 3.6+ (#461)
+
 * numeric literals are now formatted by *Black* (#452, #461, #464, #469):
 
   * numeric literals are normalized to include `_` separators on Python 3.6+ code
