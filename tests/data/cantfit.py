@@ -35,6 +35,7 @@ for key in """
 """.split():
     if key in self.connect_kwargs:
         raise ValueError(err.format(key))
+concatenated_strings = "some strings that are" "concatenated implicitly, so if you put them on separate" "lines it will fit"
 
 
 # output
@@ -85,3 +86,8 @@ for key in """
 """.split():
     if key in self.connect_kwargs:
         raise ValueError(err.format(key))
+concatenated_strings = (
+    "some strings that are"
+    "concatenated implicitly, so if you put them on separate"
+    "lines it will fit"
+)
