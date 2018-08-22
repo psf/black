@@ -1,4 +1,6 @@
 import asyncio
+from concurrent.futures import Executor, ProcessPoolExecutor
+from functools import partial
 import logging
 
 from aiohttp import web
@@ -31,11 +33,12 @@ def main(bind_host: str, bind_port: int) -> None:
 
 def make_app() -> web.Application:
     app = web.Application()
-    app.add_routes([web.post("/", handle)])
+    executor = ProcessPoolExecutor()
+    app.add_routes([web.post("/", partial(handle, executor=executor))])
     return app
 
 
-async def handle(request: web.Request) -> web.Response:
+async def handle(request: web.Request, executor: Executor) -> web.Response:
     try:
         if request.headers.get(VERSION_HEADER, "1") != "1":
             return web.Response(
@@ -75,11 +78,19 @@ async def handle(request: web.Request) -> web.Response:
         req_bytes = await request.content.read()
         charset = request.charset if request.charset is not None else "utf8"
         req_str = req_bytes.decode(charset)
-        formatted = black.format_file_contents(
-            req_str, line_length=line_length, fast=fast, mode=mode
-        ).encode(charset)
+        loop = asyncio.get_event_loop()
+        formatted_str = await loop.run_in_executor(
+            executor,
+            partial(
+                black.format_file_contents,
+                req_str,
+                line_length=line_length,
+                fast=fast,
+                mode=mode,
+            ),
+        )
         return web.Response(
-            content_type=request.content_type, charset=charset, body=formatted
+            content_type=request.content_type, charset=charset, text=formatted_str
         )
     except black.NothingChanged:
         return web.Response(status=204)
