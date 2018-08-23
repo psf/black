@@ -373,10 +373,11 @@ an adoption helper, avoid using this for new projects.
 
 ### Numeric literals
 
-*Black* standardizes all numeric literals to use lowercase letters: `0xab`
-instead of `0XAB` and `1e10` instead of `1E10`. In Python 3.6+, *Black*
-adds underscores to long numeric literals to aid readability: `100000000`
-becomes `100_000_000`.
+*Black* standardizes most numeric literals to use lowercase letters: `0xab`
+instead of `0XAB` and `1e10` instead of `1E10`. Python 2 long literals are
+styled as `2L` instead of `2l` to avoid confusion between `l` and `1`. In
+Python 3.6+, *Black* adds underscores to long numeric literals to aid
+readability: `100000000` becomes `100_000_000`.
 
 ### Line breaks & binary operators
 
@@ -851,10 +852,13 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * adjacent string literals are now correctly split into multiple lines (#463)
 
-* code with `_` in numeric literals is recognized as Python 3.6+ (#461)
+* numeric literals are now formatted by *Black* (#452, #461, #464, #469):
 
-* numeric literals are now normalized to include `_` separators on Python 3.6+ code
-  (#452)
+  * numeric literals are normalized to include `_` separators on Python 3.6+ code
+
+  * code with `_` in numeric literals is recognized as Python 3.6+
+
+  * most letters in numeric literals are lowercased (e.g., in `1e10` or `0xab`)
 
 * cache is now populated when `--check` is successful for a file which speeds up
   consecutive checks of properly formatted unmodified files (#448)
