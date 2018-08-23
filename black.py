@@ -877,8 +877,8 @@ class BracketTracker:
     bracket_match: Dict[Tuple[Depth, NodeType], Leaf] = Factory(dict)
     delimiters: Dict[LeafID, Priority] = Factory(dict)
     previous: Optional[Leaf] = None
-    _for_loop_variable: int = 0
-    _lambda_arguments: int = 0
+    _for_loop_depths: List[int] = Factory(list)
+    _lambda_argument_depths: List[int] = Factory(list)
 
     def mark(self, leaf: Leaf) -> None:
         """Mark `leaf` with bracket-related metadata. Keep track of delimiters.
@@ -951,16 +951,21 @@ class BracketTracker:
         """
         if leaf.type == token.NAME and leaf.value == "for":
             self.depth += 1
-            self._for_loop_variable += 1
+            self._for_loop_depths.append(self.depth)
             return True
 
         return False
 
     def maybe_decrement_after_for_loop_variable(self, leaf: Leaf) -> bool:
         """See `maybe_increment_for_loop_variable` above for explanation."""
-        if self._for_loop_variable and leaf.type == token.NAME and leaf.value == "in":
+        if (
+            self._for_loop_depths
+            and self._for_loop_depths[-1] == self.depth
+            and leaf.type == token.NAME
+            and leaf.value == "in"
+        ):
             self.depth -= 1
-            self._for_loop_variable -= 1
+            self._for_loop_depths.pop()
             return True
 
         return False
@@ -973,16 +978,20 @@ class BracketTracker:
         """
         if leaf.type == token.NAME and leaf.value == "lambda":
             self.depth += 1
-            self._lambda_arguments += 1
+            self._lambda_argument_depths.append(self.depth)
             return True
 
         return False
 
     def maybe_decrement_after_lambda_arguments(self, leaf: Leaf) -> bool:
         """See `maybe_increment_lambda_arguments` above for explanation."""
-        if self._lambda_arguments and leaf.type == token.COLON:
+        if (
+            self._lambda_argument_depths
+            and self._lambda_argument_depths[-1] == self.depth
+            and leaf.type == token.COLON
+        ):
             self.depth -= 1
-            self._lambda_arguments -= 1
+            self._lambda_argument_depths.pop()
             return True
 
         return False
@@ -2601,7 +2610,11 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
     for index, child in enumerate(list(node.children)):
         if check_lpar:
             if child.type == syms.atom:
-                maybe_make_parens_invisible_in_atom(child)
+                if maybe_make_parens_invisible_in_atom(child):
+                    lpar = Leaf(token.LPAR, "")
+                    rpar = Leaf(token.RPAR, "")
+                    index = child.remove() or 0
+                    node.insert_child(index, Node(syms.atom, [lpar, child, rpar]))
             elif is_one_tuple(child):
                 # wrap child in visible parentheses
                 lpar = Leaf(token.LPAR, "(")
@@ -2709,7 +2722,11 @@ def generate_ignored_nodes(leaf: Leaf) -> Iterator[LN]:
 
 
 def maybe_make_parens_invisible_in_atom(node: LN) -> bool:
-    """If it's safe, make the parens in the atom `node` invisible, recursively."""
+    """If it's safe, make the parens in the atom `node` invisible, recursively.
+
+    Returns whether the node should itself be wrapped in invisible parentheses.
+
+    """
     if (
         node.type != syms.atom
         or is_empty_tuple(node)
@@ -2727,9 +2744,9 @@ def maybe_make_parens_invisible_in_atom(node: LN) -> bool:
         last.value = ""  # type: ignore
         if len(node.children) > 1:
             maybe_make_parens_invisible_in_atom(node.children[1])
-        return True
+        return False
 
-    return False
+    return True
 
 
 def is_empty_tuple(node: LN) -> bool:
