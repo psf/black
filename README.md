@@ -866,6 +866,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * note: the Vim plugin stopped registering ``,=`` as a default chord as it turned out
   to be a bad idea (#415)
 
+* fixed formatting of lambda expressions with default arguments (#468)
+
 
 ### 18.6b4
 
