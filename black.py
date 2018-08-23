@@ -877,8 +877,8 @@ class BracketTracker:
     bracket_match: Dict[Tuple[Depth, NodeType], Leaf] = Factory(dict)
     delimiters: Dict[LeafID, Priority] = Factory(dict)
     previous: Optional[Leaf] = None
-    _for_loop_variable: int = 0
-    _lambda_arguments: int = 0
+    _for_loop_depths: List[int] = Factory(list)
+    _lambda_argument_depths: List[int] = Factory(list)
 
     def mark(self, leaf: Leaf) -> None:
         """Mark `leaf` with bracket-related metadata. Keep track of delimiters.
@@ -951,16 +951,21 @@ class BracketTracker:
         """
         if leaf.type == token.NAME and leaf.value == "for":
             self.depth += 1
-            self._for_loop_variable += 1
+            self._for_loop_depths.append(self.depth)
             return True
 
         return False
 
     def maybe_decrement_after_for_loop_variable(self, leaf: Leaf) -> bool:
         """See `maybe_increment_for_loop_variable` above for explanation."""
-        if self._for_loop_variable and leaf.type == token.NAME and leaf.value == "in":
+        if (
+            self._for_loop_depths
+            and self._for_loop_depths[-1] == self.depth
+            and leaf.type == token.NAME
+            and leaf.value == "in"
+        ):
             self.depth -= 1
-            self._for_loop_variable -= 1
+            self._for_loop_depths.pop()
             return True
 
         return False
@@ -973,16 +978,20 @@ class BracketTracker:
         """
         if leaf.type == token.NAME and leaf.value == "lambda":
             self.depth += 1
-            self._lambda_arguments += 1
+            self._lambda_argument_depths.append(self.depth)
             return True
 
         return False
 
     def maybe_decrement_after_lambda_arguments(self, leaf: Leaf) -> bool:
         """See `maybe_increment_lambda_arguments` above for explanation."""
-        if self._lambda_arguments and leaf.type == token.COLON:
+        if (
+            self._lambda_argument_depths
+            and self._lambda_argument_depths[-1] == self.depth
+            and leaf.type == token.COLON
+        ):
             self.depth -= 1
-            self._lambda_arguments -= 1
+            self._lambda_argument_depths.pop()
             return True
 
         return False
