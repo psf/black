@@ -94,6 +94,8 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
         )
     except black.NothingChanged:
         return web.Response(status=204)
+    except black.InvalidInput as e:
+        return web.Response(status=400, text=str(e))
     except Exception as e:
         logging.exception("Exception during handling a request")
         return web.Response(status=500, text=str(e))

@@ -839,7 +839,7 @@ class BlackTestCase(unittest.TestCase):
         actual = black.format_file_contents(different, line_length=ll, fast=False)
         self.assertEqual(expected, actual)
         invalid = "return if you can"
-        with self.assertRaises(ValueError) as e:
+        with self.assertRaises(black.InvalidInput) as e:
             black.format_file_contents(invalid, line_length=ll, fast=False)
         self.assertEqual(str(e.exception), "Cannot parse: 1:7: return if you can")
 
@@ -1313,7 +1313,7 @@ class BlackTestCase(unittest.TestCase):
         app = blackd.make_app()
         async with TestClient(TestServer(app)) as client:
             response = await client.post("/", data=b"what even ( is")
-            self.assertEqual(response.status, 500)
+            self.assertEqual(response.status, 400)
             content = await response.text()
             self.assertTrue(
                 content.startswith("Cannot parse"),

@@ -90,6 +90,10 @@ class CannotSplit(Exception):
     """
 
 
+class InvalidInput(Exception):
+    """Raised by :func:`lib2to3_parse` when its input fails all parse attempts."""
+
+
 class WriteBack(Enum):
     NO = 0
     YES = 1
@@ -676,7 +680,7 @@ def lib2to3_parse(src_txt: str) -> Node:
                 faulty_line = lines[lineno - 1]
             except IndexError:
                 faulty_line = "<line number missing in source>"
-            exc = ValueError(f"Cannot parse: {lineno}:{column}: {faulty_line}")
+            exc = InvalidInput(f"Cannot parse: {lineno}:{column}: {faulty_line}")
     else:
         raise exc from None
 

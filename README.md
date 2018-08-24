@@ -808,6 +808,8 @@ Apart from the above, `blackd` can produce the following response codes:
  - `HTTP 200`: If formatting was needed on the input. The response body
 	contains the blackened Python code, and the `Content-Type` header is set
 	accordingly.
+ - `HTTP 400`: If the input contains a syntax error. Details of the error are
+	returned in the response body.
  - `HTTP 500`: If there was any kind of error while trying to format the input.
 	The response body contains a textual representation of the error.
 
