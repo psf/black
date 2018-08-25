@@ -1294,7 +1294,7 @@ class BlackTestCase(unittest.TestCase):
     @async_test
     async def test_blackd_request_needs_formatting(self) -> None:
         app = blackd.make_app()
-        async with TestClient(TestServer(app)) as client:
+        async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post("/", data=b"print('hello world')")
             self.assertEqual(response.status, 200)
             self.assertEqual(response.charset, "utf8")
@@ -1303,7 +1303,7 @@ class BlackTestCase(unittest.TestCase):
     @async_test
     async def test_blackd_request_no_change(self) -> None:
         app = blackd.make_app()
-        async with TestClient(TestServer(app)) as client:
+        async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post("/", data=b'print("hello world")\n')
             self.assertEqual(response.status, 204)
             self.assertEqual(await response.read(), b"")
@@ -1311,7 +1311,7 @@ class BlackTestCase(unittest.TestCase):
     @async_test
     async def test_blackd_request_syntax_error(self) -> None:
         app = blackd.make_app()
-        async with TestClient(TestServer(app)) as client:
+        async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post("/", data=b"what even ( is")
             self.assertEqual(response.status, 400)
             content = await response.text()
@@ -1323,7 +1323,7 @@ class BlackTestCase(unittest.TestCase):
     @async_test
     async def test_blackd_unsupported_version(self) -> None:
         app = blackd.make_app()
-        async with TestClient(TestServer(app)) as client:
+        async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post(
                 "/", data=b"what", headers={blackd.VERSION_HEADER: "2"}
             )
@@ -1332,7 +1332,7 @@ class BlackTestCase(unittest.TestCase):
     @async_test
     async def test_blackd_supported_version(self) -> None:
         app = blackd.make_app()
-        async with TestClient(TestServer(app)) as client:
+        async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post(
                 "/", data=b"what", headers={blackd.VERSION_HEADER: "1"}
             )
@@ -1341,7 +1341,7 @@ class BlackTestCase(unittest.TestCase):
     @async_test
     async def test_blackd_invalid_python_variant(self) -> None:
         app = blackd.make_app()
-        async with TestClient(TestServer(app)) as client:
+        async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post(
                 "/", data=b"what", headers={blackd.PYTHON_VARIANT_HEADER: "lol"}
             )
@@ -1350,7 +1350,7 @@ class BlackTestCase(unittest.TestCase):
     @async_test
     async def test_blackd_pyi(self) -> None:
         app = blackd.make_app()
-        async with TestClient(TestServer(app)) as client:
+        async with TestClient(TestServer(app)) as client:  # type: ignore
             source, expected = read_data("stub.pyi")
             response = await client.post(
                 "/", data=source, headers={blackd.PYTHON_VARIANT_HEADER: "pyi"}
@@ -1361,7 +1361,7 @@ class BlackTestCase(unittest.TestCase):
     @async_test
     async def test_blackd_py36(self) -> None:
         app = blackd.make_app()
-        async with TestClient(TestServer(app)) as client:
+        async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post(
                 "/",
                 data=(
@@ -1408,7 +1408,7 @@ class BlackTestCase(unittest.TestCase):
     @async_test
     async def test_blackd_fast(self) -> None:
         app = blackd.make_app()
-        async with TestClient(TestServer(app)) as client:
+        async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post("/", data=b"ur'hello'")
             self.assertEqual(response.status, 500)
             self.assertIn("failed to parse source file", await response.text())
@@ -1420,7 +1420,7 @@ class BlackTestCase(unittest.TestCase):
     @async_test
     async def test_blackd_line_length(self) -> None:
         app = blackd.make_app()
-        async with TestClient(TestServer(app)) as client:
+        async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post(
                 "/", data=b'print("hello")\n', headers={blackd.LINE_LENGTH_HEADER: "7"}
             )
@@ -1429,7 +1429,7 @@ class BlackTestCase(unittest.TestCase):
     @async_test
     async def test_blackd_invalid_line_length(self) -> None:
         app = blackd.make_app()
-        async with TestClient(TestServer(app)) as client:
+        async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post(
                 "/",
                 data=b'print("hello")\n',
