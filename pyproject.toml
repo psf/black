@@ -51,7 +51,11 @@ classifiers=[
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Software Development :: Quality Assurance",
 ]
-# include = ["blib2to3/**/*.py", "blib2to3/*.txt", "blib2to3/LICENSE"]
+
+packages = [
+    {include = "black.py"},
+    {include = "blib2to3"}
+]
 
 [tool.poetry.scripts]
 black = "black:main"
