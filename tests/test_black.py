@@ -84,8 +84,11 @@ class BlackRunner(CliRunner):
 
     This is a hack that can be removed once we depend on Click 7.x"""
 
-    def __init__(self, stderrbuf: BinaryIO) -> None:
-        self.stderrbuf = stderrbuf
+    def __init__(self) -> None:
+        self.stderrbuf = BytesIO()
+        self.stdoutbuf = BytesIO()
+        self.stdout_bytes = b""
+        self.stderr_bytes = b""
         super().__init__()
 
     @contextmanager
@@ -96,6 +99,8 @@ class BlackRunner(CliRunner):
                 sys.stderr = TextIOWrapper(self.stderrbuf, encoding=self.charset)
                 yield output
             finally:
+                self.stdout_bytes = sys.stdout.buffer.getvalue()
+                self.stderr_bytes = sys.stderr.buffer.getvalue()
                 sys.stderr = hold_stderr
 
 
@@ -160,8 +165,7 @@ class BlackTestCase(unittest.TestCase):
 
     def test_piping(self) -> None:
         source, expected = read_data("../black", data=False)
-        stderrbuf = BytesIO()
-        result = BlackRunner(stderrbuf).invoke(
+        result = BlackRunner().invoke(
             black.main,
             ["-", "--fast", f"--line-length={ll}"],
             input=BytesIO(source.encode("utf8")),
@@ -179,9 +183,8 @@ class BlackTestCase(unittest.TestCase):
         source, _ = read_data("expression.py")
         expected, _ = read_data("expression.diff")
         config = THIS_DIR / "data" / "empty_pyproject.toml"
-        stderrbuf = BytesIO()
         args = ["-", "--fast", f"--line-length={ll}", "--diff", f"--config={config}"]
-        result = BlackRunner(stderrbuf).invoke(
+        result = BlackRunner().invoke(
             black.main, args, input=BytesIO(source.encode("utf8"))
         )
         self.assertEqual(result.exit_code, 0)
@@ -244,11 +247,8 @@ class BlackTestCase(unittest.TestCase):
             rf"{re.escape(str(tmp_file))}\t\d\d\d\d-\d\d-\d\d "
             rf"\d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
         )
-        stderrbuf = BytesIO()
         try:
-            result = BlackRunner(stderrbuf).invoke(
-                black.main, ["--diff", str(tmp_file)]
-            )
+            result = BlackRunner().invoke(black.main, ["--diff", str(tmp_file)])
             self.assertEqual(result.exit_code, 0)
         finally:
             os.unlink(tmp_file)
@@ -1218,6 +1218,18 @@ class BlackTestCase(unittest.TestCase):
                 self.assertIn(nl.encode(), updated_contents)
                 if nl == "\n":
                     self.assertNotIn(b"\r\n", updated_contents)
+
+    def test_preserves_line_endings_via_stdin(self) -> None:
+        for nl in ["\n", "\r\n"]:
+            contents = nl.join(["def f(  ):", "    pass"])
+            runner = BlackRunner()
+            result = runner.invoke(
+                black.main, ["-", "--fast"], input=BytesIO(contents.encode("utf8"))
+            )
+            output = runner.stdout_bytes
+            self.assertIn(nl.encode("utf8"), output)
+            if nl == "\n":
+                self.assertNotIn(b"\r\n", output)
 
     def test_assert_equivalent_different_asts(self) -> None:
         with self.assertRaises(AssertionError):
