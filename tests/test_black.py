@@ -99,8 +99,8 @@ class BlackRunner(CliRunner):
                 sys.stderr = TextIOWrapper(self.stderrbuf, encoding=self.charset)
                 yield output
             finally:
-                self.stdout_bytes = sys.stdout.buffer.getvalue()
-                self.stderr_bytes = sys.stderr.buffer.getvalue()
+                self.stdout_bytes = sys.stdout.buffer.getvalue()  # type: ignore
+                self.stderr_bytes = sys.stderr.buffer.getvalue()  # type: ignore
                 sys.stderr = hold_stderr
 
 
@@ -1226,6 +1226,7 @@ class BlackTestCase(unittest.TestCase):
             result = runner.invoke(
                 black.main, ["-", "--fast"], input=BytesIO(contents.encode("utf8"))
             )
+            self.assertEqual(result.exit_code, 0)
             output = runner.stdout_bytes
             self.assertIn(nl.encode("utf8"), output)
             if nl == "\n":
