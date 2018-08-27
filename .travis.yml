@@ -4,7 +4,7 @@ language: python
 cache: pip
 install:
 - pip install coverage coveralls flake8 flake8-bugbear mypy
-- pip install -e .
+- pip install -e '.[d]'
 script:
 - coverage run tests/test_black.py
 - if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then mypy black.py blackd.py tests/test_black.py; fi

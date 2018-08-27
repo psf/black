@@ -1,6 +1,6 @@
 install:
 - C:\Python36\python.exe -m pip install mypy
-- C:\Python36\python.exe -m pip install -e .
+- C:\Python36\python.exe -m pip install -e '.[d]'
 
 # Not a C# project
 build: off
