@@ -1318,11 +1318,9 @@ class BlackTestCase(unittest.TestCase):
             except RuntimeError as re:
                 self.fail(f"`patch_click()` failed, exception still raised: {re}")
 
+    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
     async def test_blackd_request_needs_formatting(self) -> None:
-        if not has_blackd_deps:
-            self.skipTest("blackd's dependencies are not installed")
-            return
         app = blackd.make_app()
         async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post("/", data=b"print('hello world')")
@@ -1330,22 +1328,18 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(response.charset, "utf8")
             self.assertEqual(await response.read(), b'print("hello world")\n')
 
+    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
     async def test_blackd_request_no_change(self) -> None:
-        if not has_blackd_deps:
-            self.skipTest("blackd's dependencies are not installed")
-            return
         app = blackd.make_app()
         async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post("/", data=b'print("hello world")\n')
             self.assertEqual(response.status, 204)
             self.assertEqual(await response.read(), b"")
 
+    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
     async def test_blackd_request_syntax_error(self) -> None:
-        if not has_blackd_deps:
-            self.skipTest("blackd's dependencies are not installed")
-            return
         app = blackd.make_app()
         async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post("/", data=b"what even ( is")
@@ -1356,11 +1350,9 @@ class BlackTestCase(unittest.TestCase):
                 msg=f"Expected error to start with 'Cannot parse', got {repr(content)}",
             )
 
+    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
     async def test_blackd_unsupported_version(self) -> None:
-        if not has_blackd_deps:
-            self.skipTest("blackd's dependencies are not installed")
-            return
         app = blackd.make_app()
         async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post(
@@ -1368,11 +1360,9 @@ class BlackTestCase(unittest.TestCase):
             )
             self.assertEqual(response.status, 501)
 
+    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
     async def test_blackd_supported_version(self) -> None:
-        if not has_blackd_deps:
-            self.skipTest("blackd's dependencies are not installed")
-            return
         app = blackd.make_app()
         async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post(
@@ -1380,11 +1370,9 @@ class BlackTestCase(unittest.TestCase):
             )
             self.assertEqual(response.status, 200)
 
+    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
     async def test_blackd_invalid_python_variant(self) -> None:
-        if not has_blackd_deps:
-            self.skipTest("blackd's dependencies are not installed")
-            return
         app = blackd.make_app()
         async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post(
@@ -1392,11 +1380,9 @@ class BlackTestCase(unittest.TestCase):
             )
             self.assertEqual(response.status, 400)
 
+    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
     async def test_blackd_pyi(self) -> None:
-        if not has_blackd_deps:
-            self.skipTest("blackd's dependencies are not installed")
-            return
         app = blackd.make_app()
         async with TestClient(TestServer(app)) as client:  # type: ignore
             source, expected = read_data("stub.pyi")
@@ -1406,11 +1392,9 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(response.status, 200)
             self.assertEqual(await response.text(), expected)
 
+    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
     async def test_blackd_py36(self) -> None:
-        if not has_blackd_deps:
-            self.skipTest("blackd's dependencies are not installed")
-            return
         app = blackd.make_app()
         async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post(
@@ -1456,11 +1440,9 @@ class BlackTestCase(unittest.TestCase):
             )
             self.assertEqual(response.status, 204)
 
+    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
     async def test_blackd_fast(self) -> None:
-        if not has_blackd_deps:
-            self.skipTest("blackd's dependencies are not installed")
-            return
         app = blackd.make_app()
         async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post("/", data=b"ur'hello'")
@@ -1471,11 +1453,9 @@ class BlackTestCase(unittest.TestCase):
             )
             self.assertEqual(response.status, 200)
 
+    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
     async def test_blackd_line_length(self) -> None:
-        if not has_blackd_deps:
-            self.skipTest("blackd's dependencies are not installed")
-            return
         app = blackd.make_app()
         async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post(
@@ -1483,11 +1463,9 @@ class BlackTestCase(unittest.TestCase):
             )
             self.assertEqual(response.status, 200)
 
+    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
     async def test_blackd_invalid_line_length(self) -> None:
-        if not has_blackd_deps:
-            self.skipTest("blackd's dependencies are not installed")
-            return
         app = blackd.make_app()
         async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post(
@@ -1497,10 +1475,8 @@ class BlackTestCase(unittest.TestCase):
             )
             self.assertEqual(response.status, 400)
 
+    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     def test_blackd_main(self) -> None:
-        if not has_blackd_deps:
-            self.skipTest("blackd's dependencies are not installed")
-            return
         with patch("blackd.web.run_app"):
             result = CliRunner().invoke(blackd.main, [])
             if result.exception is not None:
