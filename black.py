@@ -79,19 +79,15 @@ syms = pygram.python_symbols
 
 
 class NothingChanged(UserWarning):
-    """Raised by :func:`format_file` when reformatted code is the same as source."""
+    """Raised when reformatted code is the same as source."""
 
 
 class CannotSplit(Exception):
-    """A readable split that fits the allotted line length is impossible.
-
-    Raised by :func:`left_hand_split`, :func:`right_hand_split`, and
-    :func:`delimiter_split`.
-    """
+    """A readable split that fits the allotted line length is impossible."""
 
 
-class InvalidInput(Exception):
-    """Raised by :func:`lib2to3_parse` when its input fails all parse attempts."""
+class InvalidInput(ValueError):
+    """Raised when input source code fails all parse attempts."""
 
 
 class WriteBack(Enum):
