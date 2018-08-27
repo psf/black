@@ -881,8 +881,8 @@ class BracketTracker:
     bracket_match: Dict[Tuple[Depth, NodeType], Leaf] = Factory(dict)
     delimiters: Dict[LeafID, Priority] = Factory(dict)
     previous: Optional[Leaf] = None
-    _for_loop_variable: int = 0
-    _lambda_arguments: int = 0
+    _for_loop_depths: List[int] = Factory(list)
+    _lambda_argument_depths: List[int] = Factory(list)
 
     def mark(self, leaf: Leaf) -> None:
         """Mark `leaf` with bracket-related metadata. Keep track of delimiters.
@@ -955,16 +955,21 @@ class BracketTracker:
         """
         if leaf.type == token.NAME and leaf.value == "for":
             self.depth += 1
-            self._for_loop_variable += 1
+            self._for_loop_depths.append(self.depth)
             return True
 
         return False
 
     def maybe_decrement_after_for_loop_variable(self, leaf: Leaf) -> bool:
         """See `maybe_increment_for_loop_variable` above for explanation."""
-        if self._for_loop_variable and leaf.type == token.NAME and leaf.value == "in":
+        if (
+            self._for_loop_depths
+            and self._for_loop_depths[-1] == self.depth
+            and leaf.type == token.NAME
+            and leaf.value == "in"
+        ):
             self.depth -= 1
-            self._for_loop_variable -= 1
+            self._for_loop_depths.pop()
             return True
 
         return False
@@ -977,16 +982,20 @@ class BracketTracker:
         """
         if leaf.type == token.NAME and leaf.value == "lambda":
             self.depth += 1
-            self._lambda_arguments += 1
+            self._lambda_argument_depths.append(self.depth)
             return True
 
         return False
 
     def maybe_decrement_after_lambda_arguments(self, leaf: Leaf) -> bool:
         """See `maybe_increment_lambda_arguments` above for explanation."""
-        if self._lambda_arguments and leaf.type == token.COLON:
+        if (
+            self._lambda_argument_depths
+            and self._lambda_argument_depths[-1] == self.depth
+            and leaf.type == token.COLON
+        ):
             self.depth -= 1
-            self._lambda_arguments -= 1
+            self._lambda_argument_depths.pop()
             return True
 
         return False
@@ -2517,8 +2526,8 @@ def normalize_string_quotes(leaf: Leaf) -> None:
 def normalize_numeric_literal(leaf: Leaf, allow_underscores: bool) -> None:
     """Normalizes numeric (float, int, and complex) literals.
 
-    All letters used in the representation are normalized to lowercase, long number
-    literals are split using underscores.
+    All letters used in the representation are normalized to lowercase (except
+    in Python 2 long literals), and long number literals are split using underscores.
     """
     text = leaf.value.lower()
     if text.startswith(("0o", "0x", "0b")):
@@ -2538,6 +2547,9 @@ def normalize_numeric_literal(leaf: Leaf, allow_underscores: bool) -> None:
     elif text.endswith(("j", "l")):
         number = text[:-1]
         suffix = text[-1]
+        # Capitalize in "2L" because "l" looks too similar to "1".
+        if suffix == "l":
+            suffix = "L"
         text = f"{format_float_or_int_string(number, allow_underscores)}{suffix}"
     else:
         text = format_float_or_int_string(text, allow_underscores)
@@ -2551,14 +2563,22 @@ def format_float_or_int_string(text: str, allow_underscores: bool) -> str:
 
     before, after = text.split(".")
     before = format_int_string(before, allow_underscores) if before else "0"
-    after = format_int_string(after, allow_underscores) if after else "0"
+    if after:
+        after = format_int_string(after, allow_underscores, count_from_end=False)
+    else:
+        after = "0"
     return f"{before}.{after}"
 
 
-def format_int_string(text: str, allow_underscores: bool) -> str:
+def format_int_string(
+    text: str, allow_underscores: bool, count_from_end: bool = True
+) -> str:
     """Normalizes underscores in a string to e.g. 1_000_000.
 
-    Input must be a string of at least six digits and optional underscores.
+    Input must be a string of digits and optional underscores.
+    If count_from_end is False, we add underscores after groups of three digits
+    counting from the beginning instead of the end of the strings. This is used
+    for the fractional part of float literals.
     """
     if not allow_underscores:
         return text
@@ -2568,9 +2588,12 @@ def format_int_string(text: str, allow_underscores: bool) -> str:
         # No underscores for numbers <= 6 digits long.
         return text
 
-    # Avoid removing leading zeros, which are important if we're formatting
-    # part of a number like "0.001".
-    return format(int("1" + text), "3_")[1:].lstrip("_")
+    if count_from_end:
+        # Avoid removing leading zeros, which are important if we're formatting
+        # part of a number like "0.001".
+        return format(int("1" + text), "3_")[1:].lstrip("_")
+    else:
+        return "_".join(text[i : i + 3] for i in range(0, len(text), 3))
 
 
 def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
