@@ -23,12 +23,18 @@ from typing import (
 import unittest
 from unittest.mock import patch, MagicMock
 
-from aiohttp.test_utils import TestClient, TestServer
 from click import unstyle
 from click.testing import CliRunner
 
 import black
-import blackd
+
+try:
+    import blackd
+    from aiohttp.test_utils import TestClient, TestServer
+except ImportError:
+    has_blackd_deps = False
+else:
+    has_blackd_deps = True
 
 
 ll = 88
@@ -1314,6 +1320,9 @@ class BlackTestCase(unittest.TestCase):
 
     @async_test
     async def test_blackd_request_needs_formatting(self) -> None:
+        if not has_blackd_deps:
+            self.skipTest("blackd's dependencies are not installed")
+            return
         app = blackd.make_app()
         async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post("/", data=b"print('hello world')")
@@ -1323,6 +1332,9 @@ class BlackTestCase(unittest.TestCase):
 
     @async_test
     async def test_blackd_request_no_change(self) -> None:
+        if not has_blackd_deps:
+            self.skipTest("blackd's dependencies are not installed")
+            return
         app = blackd.make_app()
         async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post("/", data=b'print("hello world")\n')
@@ -1331,6 +1343,9 @@ class BlackTestCase(unittest.TestCase):
 
     @async_test
     async def test_blackd_request_syntax_error(self) -> None:
+        if not has_blackd_deps:
+            self.skipTest("blackd's dependencies are not installed")
+            return
         app = blackd.make_app()
         async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post("/", data=b"what even ( is")
@@ -1343,6 +1358,9 @@ class BlackTestCase(unittest.TestCase):
 
     @async_test
     async def test_blackd_unsupported_version(self) -> None:
+        if not has_blackd_deps:
+            self.skipTest("blackd's dependencies are not installed")
+            return
         app = blackd.make_app()
         async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post(
@@ -1352,6 +1370,9 @@ class BlackTestCase(unittest.TestCase):
 
     @async_test
     async def test_blackd_supported_version(self) -> None:
+        if not has_blackd_deps:
+            self.skipTest("blackd's dependencies are not installed")
+            return
         app = blackd.make_app()
         async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post(
@@ -1361,6 +1382,9 @@ class BlackTestCase(unittest.TestCase):
 
     @async_test
     async def test_blackd_invalid_python_variant(self) -> None:
+        if not has_blackd_deps:
+            self.skipTest("blackd's dependencies are not installed")
+            return
         app = blackd.make_app()
         async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post(
@@ -1370,6 +1394,9 @@ class BlackTestCase(unittest.TestCase):
 
     @async_test
     async def test_blackd_pyi(self) -> None:
+        if not has_blackd_deps:
+            self.skipTest("blackd's dependencies are not installed")
+            return
         app = blackd.make_app()
         async with TestClient(TestServer(app)) as client:  # type: ignore
             source, expected = read_data("stub.pyi")
@@ -1381,6 +1408,9 @@ class BlackTestCase(unittest.TestCase):
 
     @async_test
     async def test_blackd_py36(self) -> None:
+        if not has_blackd_deps:
+            self.skipTest("blackd's dependencies are not installed")
+            return
         app = blackd.make_app()
         async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post(
@@ -1428,6 +1458,9 @@ class BlackTestCase(unittest.TestCase):
 
     @async_test
     async def test_blackd_fast(self) -> None:
+        if not has_blackd_deps:
+            self.skipTest("blackd's dependencies are not installed")
+            return
         app = blackd.make_app()
         async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post("/", data=b"ur'hello'")
@@ -1440,6 +1473,9 @@ class BlackTestCase(unittest.TestCase):
 
     @async_test
     async def test_blackd_line_length(self) -> None:
+        if not has_blackd_deps:
+            self.skipTest("blackd's dependencies are not installed")
+            return
         app = blackd.make_app()
         async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post(
@@ -1449,6 +1485,9 @@ class BlackTestCase(unittest.TestCase):
 
     @async_test
     async def test_blackd_invalid_line_length(self) -> None:
+        if not has_blackd_deps:
+            self.skipTest("blackd's dependencies are not installed")
+            return
         app = blackd.make_app()
         async with TestClient(TestServer(app)) as client:  # type: ignore
             response = await client.post(
@@ -1459,6 +1498,9 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(response.status, 400)
 
     def test_blackd_main(self) -> None:
+        if not has_blackd_deps:
+            self.skipTest("blackd's dependencies are not installed")
+            return
         with patch("blackd.web.run_app"):
             result = CliRunner().invoke(blackd.main, [])
             if result.exception is not None:
