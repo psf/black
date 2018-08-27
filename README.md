@@ -755,6 +755,9 @@ a file.
 
 ### Usage
 
+`blackd` is not packaged alongside *Black* by default because it has additional
+dependencies. You will need to do `pip install black[d]` to install it.
+
 You can start the server on the default port, binding only to the local interface
 by running `blackd`. You will see a single line mentioning the server's version,
 and the host and port it's listening on. `blackd` will then print an access log
@@ -941,6 +944,7 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
   to be a bad idea (#415)
 
 * fixed formatting of lambda expressions with default arguments (#468)
+
 
 ### 18.6b4
 
