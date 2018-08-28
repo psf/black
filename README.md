@@ -7,7 +7,7 @@
 <a href="https://coveralls.io/github/ambv/black?branch=master"><img alt="Coverage Status" src="https://coveralls.io/repos/github/ambv/black/badge.svg?branch=master"></a>
 <a href="https://github.com/ambv/black/blob/master/LICENSE"><img alt="License: MIT" src="https://black.readthedocs.io/en/stable/_static/license.svg"></a>
 <a href="https://pypi.org/project/black/"><img alt="PyPI" src="https://black.readthedocs.io/en/stable/_static/pypi.svg"></a>
-<a href="http://pepy.tech/project/black"><img alt="Downloads" src="http://pepy.tech/badge/black"></a>
+<a href="https://pepy.tech/project/black"><img alt="Downloads" src="https://pepy.tech/badge/black"></a>
 <a href="https://github.com/ambv/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 </p>
 
@@ -793,7 +793,7 @@ as .pyi, and whether string normalization was omitted.
 
 > *Black* is opinionated so you don't have to be.
 
-**Hynek Schlawack**, [creator of `attrs`](http://www.attrs.org/), core
+**Hynek Schlawack**, [creator of `attrs`](https://www.attrs.org/), core
 developer of Twisted and CPython:
 
 > An auto-formatter that doesn't suck is all I want for Xmas!
