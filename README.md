@@ -1234,7 +1234,7 @@ Multiple contributions by:
 * [Artem Malyshev](mailto:proofit404@gmail.com)
 * [Christian Heimes](mailto:christian@python.org)
 * [Daniel M. Capella](mailto:polycitizen@gmail.com)
-* [Eli Treuherz](mailto:eli.treuherz@cgi.com)
+* [Eli Treuherz](mailto:eli@treuherz.com)
 * Hugo van Kemenade
 * [Ivan Katanić](mailto:ivan.katanic@gmail.com)
 * [Jonas Obrist](mailto:ojiidotch@gmail.com)
