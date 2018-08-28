@@ -28,7 +28,7 @@ Testimonials
 
    *Black is opinionated so you don't have to be.*
 
-**Hynek Schlawack**, creator of `attrs <http://www.attrs.org/>`_, core
+**Hynek Schlawack**, creator of `attrs <https://www.attrs.org/>`_, core
 developer of Twisted and CPython:
 
    *An auto-formatter that doesn't suck is all I want for Xmas!*
