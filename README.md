@@ -945,6 +945,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * fixed formatting of lambda expressions with default arguments (#468)
 
+* *Black* no longer breaks ``async for`` statements up to separate lines (#372)
+
 
 ### 18.6b4
 
