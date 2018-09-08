@@ -2174,7 +2174,7 @@ def left_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
             yield result
 
 
-def right_hand_split(
+def right_hand_split(  # noqa C901
     line: Line, line_length: int, py36: bool = False, omit: Collection[LeafID] = ()
 ) -> Iterator[Line]:
     """Split line into many lines, starting with the last matching bracket pair.
@@ -2214,6 +2214,9 @@ def right_hand_split(
         # No `head` means the split failed. Either `tail` has all content or
         # the matching `opening_bracket` wasn't available on `line` anymore.
         raise CannotSplit("No brackets found")
+
+    if line.is_import and len(body_leaves) == 1:
+        body_leaves.append(Leaf(token.COMMA, ","))
 
     # Build the new lines.
     for result, leaves in (head, head_leaves), (body, body_leaves), (tail, tail_leaves):
