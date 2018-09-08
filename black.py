@@ -1889,7 +1889,7 @@ def is_split_after_delimiter(leaf: Leaf, previous: Leaf = None) -> int:
 
 
 def is_split_before_delimiter(leaf: Leaf, previous: Leaf = None) -> int:
-    """Return the priority of the `leaf` delimiter, given a line before after it.
+    """Return the priority of the `leaf` delimiter, given a line break before it.
 
     The delimiter priorities returned here are from those delimiters that would
     cause a line break before themselves.
@@ -1926,15 +1926,20 @@ def is_split_before_delimiter(leaf: Leaf, previous: Leaf = None) -> int:
     ):
         return STRING_PRIORITY
 
-    if leaf.type != token.NAME:
+    if leaf.type not in {token.NAME, token.ASYNC}:
         return 0
 
     if (
         leaf.value == "for"
         and leaf.parent
         and leaf.parent.type in {syms.comp_for, syms.old_comp_for}
+        or leaf.type == token.ASYNC
     ):
-        return COMPREHENSION_PRIORITY
+        if (
+            not isinstance(leaf.prev_sibling, Leaf)
+            or leaf.prev_sibling.value != "async"
+        ):
+            return COMPREHENSION_PRIORITY
 
     if (
         leaf.value == "if"
