@@ -729,7 +729,7 @@ the [Python Language Server](https://github.com/palantir/python-language-server)
 
 ### Atom/Nuclide
 
-Use [atom-black](https://github.com/hauntsaninja/atom-black).
+Use [python-black](https://atom.io/packages/python-black).
 
 
 ### Other editors
