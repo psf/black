@@ -174,6 +174,14 @@ def read_pyproject_toml(
     show_default=True,
 )
 @click.option(
+    "--use-tabs",
+    is_flag=True,
+    help=(
+        "Use tabs instead of spaces for indentation. "
+        "Tabs are always equal to 4 spaces."
+    ),
+)
+@click.option(
     "--py36",
     is_flag=True,
     help=(
@@ -280,6 +288,7 @@ def read_pyproject_toml(
 def main(
     ctx: click.Context,
     line_length: int,
+    use_tabs: bool,
     check: bool,
     diff: bool,
     fast: bool,
@@ -333,6 +342,7 @@ def main(
         reformat_one(
             src=sources.pop(),
             line_length=line_length,
+            tabs=use_tabs,
             fast=fast,
             write_back=write_back,
             mode=mode,
@@ -346,6 +356,7 @@ def main(
                 schedule_formatting(
                     sources=sources,
                     line_length=line_length,
+                    tabs=use_tabs,
                     fast=fast,
                     write_back=write_back,
                     mode=mode,
@@ -366,6 +377,7 @@ def main(
 def reformat_one(
     src: Path,
     line_length: int,
+    tabs: bool,
     fast: bool,
     write_back: WriteBack,
     mode: FileMode,
@@ -381,19 +393,24 @@ def reformat_one(
         changed = Changed.NO
         if not src.is_file() and str(src) == "-":
             if format_stdin_to_stdout(
-                line_length=line_length, fast=fast, write_back=write_back, mode=mode
+                line_length=line_length,
+                tabs=tabs,
+                fast=fast,
+                write_back=write_back,
+                mode=mode,
             ):
                 changed = Changed.YES
         else:
             cache: Cache = {}
             if write_back != WriteBack.DIFF:
-                cache = read_cache(line_length, mode)
+                cache = read_cache(line_length, tabs, mode)
                 res_src = src.resolve()
                 if res_src in cache and cache[res_src] == get_cache_info(res_src):
                     changed = Changed.CACHED
             if changed is not Changed.CACHED and format_file_in_place(
                 src,
                 line_length=line_length,
+                tabs=tabs,
                 fast=fast,
                 write_back=write_back,
                 mode=mode,
@@ -402,7 +419,7 @@ def reformat_one(
             if (write_back is WriteBack.YES and changed is not Changed.CACHED) or (
                 write_back is WriteBack.CHECK and changed is Changed.NO
             ):
-                write_cache(cache, [src], line_length, mode)
+                write_cache(cache, [src], line_length, tabs, mode)
         report.done(src, changed)
     except Exception as exc:
         report.failed(src, str(exc))
@@ -411,6 +428,7 @@ def reformat_one(
 async def schedule_formatting(
     sources: Set[Path],
     line_length: int,
+    tabs: bool,
     fast: bool,
     write_back: WriteBack,
     mode: FileMode,
@@ -427,7 +445,7 @@ async def schedule_formatting(
     """
     cache: Cache = {}
     if write_back != WriteBack.DIFF:
-        cache = read_cache(line_length, mode)
+        cache = read_cache(line_length, tabs, mode)
         sources, cached = filter_cached(cache, sources)
         for src in sorted(cached):
             report.done(src, Changed.CACHED)
@@ -448,6 +466,7 @@ async def schedule_formatting(
             format_file_in_place,
             src,
             line_length,
+            tabs,
             fast,
             write_back,
             mode,
@@ -482,12 +501,13 @@ async def schedule_formatting(
     if cancelled:
         await asyncio.gather(*cancelled, loop=loop, return_exceptions=True)
     if sources_to_cache:
-        write_cache(cache, sources_to_cache, line_length, mode)
+        write_cache(cache, sources_to_cache, line_length, tabs, mode)
 
 
 def format_file_in_place(
     src: Path,
     line_length: int,
+    tabs: bool,
     fast: bool,
     write_back: WriteBack = WriteBack.NO,
     mode: FileMode = FileMode.AUTO_DETECT,
@@ -507,7 +527,7 @@ def format_file_in_place(
         src_contents, encoding, newline = decode_bytes(buf.read())
     try:
         dst_contents = format_file_contents(
-            src_contents, line_length=line_length, fast=fast, mode=mode
+            src_contents, line_length=line_length, tabs=tabs, fast=fast, mode=mode
         )
     except NothingChanged:
         return False
@@ -539,6 +559,7 @@ def format_file_in_place(
 
 def format_stdin_to_stdout(
     line_length: int,
+    tabs: bool,
     fast: bool,
     write_back: WriteBack = WriteBack.NO,
     mode: FileMode = FileMode.AUTO_DETECT,
@@ -554,7 +575,9 @@ def format_stdin_to_stdout(
     src, encoding, newline = decode_bytes(sys.stdin.buffer.read())
     dst = src
     try:
-        dst = format_file_contents(src, line_length=line_length, fast=fast, mode=mode)
+        dst = format_file_contents(
+            src, line_length=line_length, tabs=tabs, fast=fast, mode=mode
+        )
         return True
 
     except NothingChanged:
@@ -578,6 +601,7 @@ def format_file_contents(
     src_contents: str,
     *,
     line_length: int,
+    tabs: bool,
     fast: bool,
     mode: FileMode = FileMode.AUTO_DETECT,
 ) -> FileContent:
@@ -590,18 +614,26 @@ def format_file_contents(
     if src_contents.strip() == "":
         raise NothingChanged
 
-    dst_contents = format_str(src_contents, line_length=line_length, mode=mode)
+    dst_contents = format_str(
+        src_contents, line_length=line_length, tabs=tabs, mode=mode
+    )
     if src_contents == dst_contents:
         raise NothingChanged
 
     if not fast:
         assert_equivalent(src_contents, dst_contents)
-        assert_stable(src_contents, dst_contents, line_length=line_length, mode=mode)
+        assert_stable(
+            src_contents, dst_contents, line_length=line_length, tabs=tabs, mode=mode
+        )
     return dst_contents
 
 
 def format_str(
-    src_contents: str, line_length: int, *, mode: FileMode = FileMode.AUTO_DETECT
+    src_contents: str,
+    line_length: int,
+    tabs: bool,
+    *,
+    mode: FileMode = FileMode.AUTO_DETECT,
 ) -> FileContent:
     """Reformat a string and return new contents.
 
@@ -619,9 +651,10 @@ def format_str(
         is_pyi=is_pyi,
         normalize_strings=normalize_strings,
         allow_underscores=py36,
+        tabs=tabs,
     )
     elt = EmptyLineTracker(is_pyi=is_pyi)
-    empty_line = Line()
+    empty_line = Line(tabs=tabs)
     after = 0
     for current_line in lines.visit(src_node):
         for _ in range(after):
@@ -1011,6 +1044,7 @@ class Line:
     bracket_tracker: BracketTracker = Factory(BracketTracker)
     inside_brackets: bool = False
     should_explode: bool = False
+    tabs: bool = False
 
     def append(self, leaf: Leaf, preformatted: bool = False) -> None:
         """Add a new `leaf` to the end of the line.
@@ -1271,12 +1305,13 @@ class Line:
             n.type in TEST_DESCENDANTS for n in subscript_start.pre_order()
         )
 
-    def __str__(self) -> str:
+    def render(self, force_spaces: bool = False) -> str:
         """Render the line."""
         if not self:
             return "\n"
 
-        indent = "    " * self.depth
+        indent_style = "    " if force_spaces or not self.tabs else "\t"
+        indent = indent_style * self.depth
         leaves = iter(self.leaves)
         first = next(leaves)
         res = f"{first.prefix}{indent}{first.value}"
@@ -1285,6 +1320,9 @@ class Line:
         for _, comment in self.comments:
             res += str(comment)
         return res + "\n"
+
+    def __str__(self) -> str:
+        return self.render()
 
     def __bool__(self) -> bool:
         """Return True if the line has leaves or comments."""
@@ -1415,6 +1453,7 @@ class LineGenerator(Visitor[Line]):
     current_line: Line = Factory(Line)
     remove_u_prefix: bool = False
     allow_underscores: bool = False
+    tabs: bool = False
 
     def line(self, indent: int = 0) -> Iterator[Line]:
         """Generate a line.
@@ -1429,7 +1468,7 @@ class LineGenerator(Visitor[Line]):
             return  # Line is empty, don't emit. Creating a new one unnecessary.
 
         complete_line = self.current_line
-        self.current_line = Line(depth=complete_line.depth + indent)
+        self.current_line = Line(depth=complete_line.depth + indent, tabs=self.tabs)
         yield complete_line
 
     def visit_default(self, node: LN) -> Iterator[Line]:
@@ -2144,9 +2183,9 @@ def left_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
     Prefer RHS otherwise.  This is why this function is not symmetrical with
     :func:`right_hand_split` which also handles optional parentheses.
     """
-    head = Line(depth=line.depth)
-    body = Line(depth=line.depth + 1, inside_brackets=True)
-    tail = Line(depth=line.depth)
+    head = Line(depth=line.depth, tabs=line.tabs)
+    body = Line(depth=line.depth + 1, tabs=line.tabs, inside_brackets=True)
+    tail = Line(depth=line.depth, tabs=line.tabs)
     tail_leaves: List[Leaf] = []
     body_leaves: List[Leaf] = []
     head_leaves: List[Leaf] = []
@@ -2190,9 +2229,9 @@ def right_hand_split(
 
     Note: running this function modifies `bracket_depth` on the leaves of `line`.
     """
-    head = Line(depth=line.depth)
-    body = Line(depth=line.depth + 1, inside_brackets=True)
-    tail = Line(depth=line.depth)
+    head = Line(depth=line.depth, tabs=line.tabs)
+    body = Line(depth=line.depth + 1, tabs=line.tabs, inside_brackets=True)
+    tail = Line(depth=line.depth, tabs=line.tabs)
     tail_leaves: List[Leaf] = []
     body_leaves: List[Leaf] = []
     head_leaves: List[Leaf] = []
@@ -2338,7 +2377,9 @@ def delimiter_split(line: Line, py36: bool = False) -> Iterator[Line]:
         if bt.delimiter_count_with_priority(delimiter_priority) == 1:
             raise CannotSplit("Splitting a single attribute from its owner looks wrong")
 
-    current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
+    current_line = Line(
+        depth=line.depth, tabs=line.tabs, inside_brackets=line.inside_brackets
+    )
     lowest_depth = sys.maxsize
     trailing_comma_safe = True
 
@@ -2350,7 +2391,9 @@ def delimiter_split(line: Line, py36: bool = False) -> Iterator[Line]:
         except ValueError as ve:
             yield current_line
 
-            current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
+            current_line = Line(
+                depth=line.depth, tabs=line.tabs, inside_brackets=line.inside_brackets
+            )
             current_line.append(leaf)
 
     for index, leaf in enumerate(line.leaves):
@@ -2368,7 +2411,9 @@ def delimiter_split(line: Line, py36: bool = False) -> Iterator[Line]:
         if leaf_priority == delimiter_priority:
             yield current_line
 
-            current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
+            current_line = Line(
+                depth=line.depth, tabs=line.tabs, inside_brackets=line.inside_brackets
+            )
     if current_line:
         if (
             trailing_comma_safe
@@ -2386,7 +2431,9 @@ def standalone_comment_split(line: Line, py36: bool = False) -> Iterator[Line]:
     if not line.contains_standalone_comments(0):
         raise CannotSplit("Line does not have any standalone comments")
 
-    current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
+    current_line = Line(
+        depth=line.depth, tabs=line.tabs, inside_brackets=line.inside_brackets
+    )
 
     def append_to_line(leaf: Leaf) -> Iterator[Line]:
         """Append `leaf` to current line or to new line if appending impossible."""
@@ -2396,7 +2443,9 @@ def standalone_comment_split(line: Line, py36: bool = False) -> Iterator[Line]:
         except ValueError as ve:
             yield current_line
 
-            current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
+            current_line = Line(
+                depth=line.depth, tabs=line.tabs, inside_brackets=line.inside_brackets
+            )
             current_line.append(leaf)
 
     for index, leaf in enumerate(line.leaves):
@@ -3279,10 +3328,14 @@ def assert_equivalent(src: str, dst: str) -> None:
 
 
 def assert_stable(
-    src: str, dst: str, line_length: int, mode: FileMode = FileMode.AUTO_DETECT
+    src: str,
+    dst: str,
+    line_length: int,
+    tabs: bool = False,
+    mode: FileMode = FileMode.AUTO_DETECT,
 ) -> None:
     """Raise AssertionError if `dst` reformats differently the second time."""
-    newdst = format_str(dst, line_length=line_length, mode=mode)
+    newdst = format_str(dst, line_length=line_length, tabs=tabs, mode=mode)
     if dst != newdst:
         log = dump_to_file(
             diff(src, dst, "source", "first pass"),
@@ -3406,7 +3459,8 @@ def is_line_short_enough(line: Line, *, line_length: int, line_str: str = "") ->
     Uses the provided `line_str` rendering, if any, otherwise computes a new one.
     """
     if not line_str:
-        line_str = str(line).strip("\n")
+        # Force spaces to ensure len(line) is correct
+        line_str = line.render(force_spaces=True).strip("\n")
     return (
         len(line_str) <= line_length
         and "\n" not in line_str  # multiline strings
@@ -3539,16 +3593,17 @@ def can_omit_invisible_parens(line: Line, line_length: int) -> bool:
     return False
 
 
-def get_cache_file(line_length: int, mode: FileMode) -> Path:
-    return CACHE_DIR / f"cache.{line_length}.{mode.value}.pickle"
+def get_cache_file(line_length: int, tabs: bool, mode: FileMode) -> Path:
+    t = "t" if tabs else "s"
+    return CACHE_DIR / f"cache.{line_length}.{t}.{mode.value}.pickle"
 
 
-def read_cache(line_length: int, mode: FileMode) -> Cache:
+def read_cache(line_length: int, tabs: bool, mode: FileMode) -> Cache:
     """Read the cache if it exists and is well formed.
 
     If it is not well formed, the call to write_cache later should resolve the issue.
     """
-    cache_file = get_cache_file(line_length, mode)
+    cache_file = get_cache_file(line_length, tabs, mode)
     if not cache_file.exists():
         return {}
 
@@ -3584,10 +3639,10 @@ def filter_cached(cache: Cache, sources: Iterable[Path]) -> Tuple[Set[Path], Set
 
 
 def write_cache(
-    cache: Cache, sources: Iterable[Path], line_length: int, mode: FileMode
+    cache: Cache, sources: Iterable[Path], line_length: int, tabs: bool, mode: FileMode
 ) -> None:
     """Update the cache file."""
-    cache_file = get_cache_file(line_length, mode)
+    cache_file = get_cache_file(line_length, tabs, mode)
     try:
         if not CACHE_DIR.exists():
             CACHE_DIR.mkdir(parents=True)
