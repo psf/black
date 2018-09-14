@@ -85,8 +85,8 @@ jupyter = [
 ]
 
 [project.scripts]
-tan = "tan:patched_main"
-tand = "tand:patched_main [d]"
+tan = "black:patched_main"
+tand = "blackd:patched_main [d]"
 
 [project.urls]
 Changelog = "https://github.com/jleclanche/tan/blob/main/CHANGES.md"
