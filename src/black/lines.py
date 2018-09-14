@@ -430,11 +430,15 @@ class Line:
         )
 
     def __str__(self) -> str:
+        return self.render()
+
+    def render(self, force_spaces: bool = False) -> str:
         """Render the line."""
         if not self:
             return "\n"
 
-        indent = "    " * self.depth
+        indent_style = "    " if force_spaces or not self.mode.use_tabs else "\t"
+        indent = indent_style * self.depth
         leaves = iter(self.leaves)
         first = next(leaves)
         res = f"{first.prefix}{indent}{first.value}"
@@ -716,7 +720,9 @@ def is_line_short_enough(line: Line, *, line_length: int, line_str: str = "") ->
     Uses the provided `line_str` rendering, if any, otherwise computes a new one.
     """
     if not line_str:
-        line_str = line_to_string(line)
+        line_str = line_to_string(line, force_spaces=True)
+    else:
+        line_str = line_str.expandtabs(tabsize=4)
     return (
         len(line_str) <= line_length
         and "\n" not in line_str  # multiline strings
@@ -869,9 +875,9 @@ def _can_omit_closing_paren(line: Line, *, last: Leaf, line_length: int) -> bool
     return False
 
 
-def line_to_string(line: Line) -> str:
+def line_to_string(line: Line, force_spaces: bool = False) -> str:
     """Returns the string representation of @line.
 
     WARNING: This is known to be computationally expensive.
     """
-    return str(line).strip("\n")
+    return line.render(force_spaces=force_spaces).strip("\n")

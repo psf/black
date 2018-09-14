@@ -175,3 +175,16 @@ def test_power_op_newline() -> None:
     # requires line_length=0
     source, expected = read_data("miscellaneous", "power_op_newline")
     assert_format(source, expected, mode=black.Mode(line_length=0))
+
+
+@pytest.mark.parametrize("filename", ["long_first_line", "docstring_tabs"])
+def test_tabs(filename: str) -> None:
+    source, expected = read_data("tabs", filename)
+    mode = black.Mode(use_tabs=True)
+    assert_format(source, expected, mode)
+
+
+def test_line_length_tabs() -> None:
+    source, expected = read_data("tabs", "line_length_tabs")
+    mode = black.Mode(use_tabs=True, line_length=20)
+    assert_format(source, expected, mode)

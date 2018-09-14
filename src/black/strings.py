@@ -60,11 +60,14 @@ def lines_with_leading_tabs_expanded(s: str) -> List[str]:
     return lines
 
 
-def fix_docstring(docstring: str, prefix: str) -> str:
+def fix_docstring(docstring: str, prefix: str, expand_leading_tabs: bool) -> str:
     # https://www.python.org/dev/peps/pep-0257/#handling-docstring-indentation
     if not docstring:
         return ""
-    lines = lines_with_leading_tabs_expanded(docstring)
+    if expand_leading_tabs:
+        lines = lines_with_leading_tabs_expanded(docstring)
+    else:
+        lines = docstring.splitlines()
     # Determine minimum indentation (first line doesn't count):
     indent = sys.maxsize
     for line in lines[1:]:
