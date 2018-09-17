@@ -23,12 +23,10 @@ from typing import (
 import unittest
 from unittest.mock import patch, MagicMock
 
-from aiohttp.test_utils import TestClient, TestServer
 from click import unstyle
 from click.testing import CliRunner
 
 import black
-import blackd
 
 try:
     import blackd
