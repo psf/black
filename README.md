@@ -919,15 +919,7 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Change Log
 
-### 18.8b0
-
-* added `blackd`, see [its documentation](#blackd) for more info (#349)
-
-* adjacent string literals are now correctly split into multiple lines (#463)
-
-* added `blackd`, see [its documentation](#blackd) for more info (#349)
-
-* code with `_` in numeric literals is recognized as Python 3.6+ (#461)
+### 18.9b0
 
 * numeric literals are now formatted by *Black* (#452, #461, #464, #469):
 
@@ -937,21 +929,29 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
   * most letters in numeric literals are lowercased (e.g., in `1e10` or `0xab`)
 
+* added `blackd`, see [its documentation](#blackd) for more info (#349)
+
+* adjacent string literals are now correctly split into multiple lines (#463)
+
 * cache is now populated when `--check` is successful for a file which speeds up
   consecutive checks of properly formatted unmodified files (#448)
+
+* code with `_` in numeric literals is recognized as Python 3.6+ (#461)
+
+* fixed unstable formatting when unpacking big tuples (#267)
 
 * fixed parsing of `__future__` imports with renames (#389)
 
 * fixed scope of `# fmt: off` when directly preceding `yield` and other nodes (#385)
 
+* fixed formatting of lambda expressions with default arguments (#468)
+
+* fixed ``async for`` statements: *Black* no longer breaks them into separate
+  lines (#372)
+
 * note: the Vim plugin stopped registering ``,=`` as a default chord as it turned out
   to be a bad idea (#415)
 
-* fixed formatting of lambda expressions with default arguments (#468)
-
-* *Black* no longer breaks ``async for`` statements up to separate lines (#372)
-
-* fixed unstable formatting when unpacking big tuples (#267)
 
 
 ### 18.6b4
