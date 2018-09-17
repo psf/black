@@ -62,6 +62,7 @@ attrs = "^17.4"
 click = "^6.5"
 toml = "^0.9.4"
 appdirs = "^1.4"
+aiohttp = "^3.4"
 
 [tool.poetry.dev-dependencies]
 Sphinx = "^1.7"

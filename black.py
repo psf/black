@@ -79,15 +79,15 @@ syms = pygram.python_symbols
 
 
 class NothingChanged(UserWarning):
-    """Raised by :func:`format_file` when reformatted code is the same as source."""
+    """Raised when reformatted code is the same as source."""
 
 
 class CannotSplit(Exception):
-    """A readable split that fits the allotted line length is impossible.
+    """A readable split that fits the allotted line length is impossible."""
 
-    Raised by :func:`left_hand_split`, :func:`right_hand_split`, and
-    :func:`delimiter_split`.
-    """
+
+class InvalidInput(ValueError):
+    """Raised when input source code fails all parse attempts."""
 
 
 class WriteBack(Enum):
@@ -676,7 +676,7 @@ def lib2to3_parse(src_txt: str) -> Node:
                 faulty_line = lines[lineno - 1]
             except IndexError:
                 faulty_line = "<line number missing in source>"
-            exc = ValueError(f"Cannot parse: {lineno}:{column}: {faulty_line}")
+            exc = InvalidInput(f"Cannot parse: {lineno}:{column}: {faulty_line}")
     else:
         raise exc from None
 
