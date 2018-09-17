@@ -947,6 +947,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * *Black* no longer breaks ``async for`` statements up to separate lines (#372)
 
+* fixed unstable formatting when unpacking big tuples (#267)
+
 
 ### 18.6b4
 

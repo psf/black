@@ -2976,7 +2976,6 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
     length = 4 * line.depth
     opening_bracket = None
     closing_bracket = None
-    optional_brackets: Set[LeafID] = set()
     inner_brackets: Set[LeafID] = set()
     for index, leaf, leaf_length in enumerate_with_length(line, reversed=True):
         length += leaf_length
@@ -2987,17 +2986,12 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
         if leaf.type == STANDALONE_COMMENT or has_inline_comment:
             break
 
-        optional_brackets.discard(id(leaf))
         if opening_bracket:
             if leaf is opening_bracket:
                 opening_bracket = None
             elif leaf.type in CLOSING_BRACKETS:
                 inner_brackets.add(id(leaf))
         elif leaf.type in CLOSING_BRACKETS:
-            if not leaf.value:
-                optional_brackets.add(id(opening_bracket))
-                continue
-
             if index > 0 and line.leaves[index - 1].type in OPENING_BRACKETS:
                 # Empty brackets would fail a split so treat them as "inner"
                 # brackets (e.g. only add them to the `omit` set if another
@@ -3005,13 +2999,15 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
                 inner_brackets.add(id(leaf))
                 continue
 
-            opening_bracket = leaf.opening_bracket
             if closing_bracket:
                 omit.add(id(closing_bracket))
                 omit.update(inner_brackets)
                 inner_brackets.clear()
                 yield omit
-            closing_bracket = leaf
+
+            if leaf.value:
+                opening_bracket = leaf.opening_bracket
+                closing_bracket = leaf
 
 
 def get_future_imports(node: Node) -> Set[str]:

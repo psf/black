@@ -147,7 +147,7 @@
  slice[0:1:2]
  slice[:]
  slice[:-1]
-@@ -133,109 +156,161 @@
+@@ -133,111 +156,169 @@
  numpy[-(c + 1) :, d]
  numpy[:, l[-2]]
  numpy[:, ::-1]
@@ -234,6 +234,33 @@
 -for i in (call()): ...
 -for j in (1 + (2 + 3)): ...
 -while(this and that): ...
+-for addr_family, addr_type, addr_proto, addr_canonname, addr_sockaddr in socket.getaddrinfo('google.com', 'http'):
++print(*lambda x: x)
++assert not Test, "Short message"
++assert this is ComplexTest and not requirements.fit_in_a_single_line(
++    force=False
++), "Short message"
++assert parens is TooMany
++for (x,) in (1,), (2,), (3,):
++    ...
++for y in ():
++    ...
++for z in (i for i in (1, 2, 3)):
++    ...
++for i in call():
++    ...
++for j in 1 + (2 + 3):
++    ...
++while this and that:
++    ...
++for (
++    addr_family,
++    addr_type,
++    addr_proto,
++    addr_canonname,
++    addr_sockaddr,
++) in socket.getaddrinfo("google.com", "http"):
+     pass
 -a = aaaa.bbbb.cccc.dddd.eeee.ffff.gggg.hhhh.iiii.jjjj.kkkk.llll.mmmm.nnnn.oooo.pppp in qqqq.rrrr.ssss.tttt.uuuu.vvvv.xxxx.yyyy.zzzz
 -a = aaaa.bbbb.cccc.dddd.eeee.ffff.gggg.hhhh.iiii.jjjj.kkkk.llll.mmmm.nnnn.oooo.pppp not in qqqq.rrrr.ssss.tttt.uuuu.vvvv.xxxx.yyyy.zzzz
 -a = aaaa.bbbb.cccc.dddd.eeee.ffff.gggg.hhhh.iiii.jjjj.kkkk.llll.mmmm.nnnn.oooo.pppp is qqqq.rrrr.ssss.tttt.uuuu.vvvv.xxxx.yyyy.zzzz
@@ -284,24 +311,6 @@
 -    return True
 -if (
 -    ~ aaaaaaaaaaaaaaaa.a + aaaaaaaaaaaaaaaa.b - aaaaaaaaaaaaaaaa.c * aaaaaaaaaaaaaaaa.d @ aaaaaaaaaaaaaaaa.e | aaaaaaaaaaaaaaaa.f & aaaaaaaaaaaaaaaa.g % aaaaaaaaaaaaaaaa.h ^ aaaaaaaaaaaaaaaa.i << aaaaaaaaaaaaaaaa.k >> aaaaaaaaaaaaaaaa.l ** aaaaaaaaaaaaaaaa.m // aaaaaaaaaaaaaaaa.n
-+print(*lambda x: x)
-+assert not Test, "Short message"
-+assert this is ComplexTest and not requirements.fit_in_a_single_line(
-+    force=False
-+), "Short message"
-+assert parens is TooMany
-+for (x,) in (1,), (2,), (3,):
-+    ...
-+for y in ():
-+    ...
-+for z in (i for i in (1, 2, 3)):
-+    ...
-+for i in call():
-+    ...
-+for j in 1 + (2 + 3):
-+    ...
-+while this and that:
-+    ...
 +a = (
 +    aaaa.bbbb.cccc.dddd.eeee.ffff.gggg.hhhh.iiii.jjjj.kkkk.llll.mmmm.nnnn.oooo.pppp
 +    in qqqq.rrrr.ssss.tttt.uuuu.vvvv.xxxx.yyyy.zzzz
