@@ -8,4 +8,3 @@ __pycache__
 black.egg-info
 build/
 dist/
-pyproject.lock
