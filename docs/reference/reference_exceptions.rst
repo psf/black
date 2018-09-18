@@ -7,10 +7,6 @@
 
 .. autoexception:: black.CannotSplit
 
-.. autoexception:: black.FormatError
-
-.. autoexception:: black.FormatOn
-
-.. autoexception:: black.FormatOff
-
 .. autoexception:: black.NothingChanged
+
+.. autoexception:: black.InvalidInput

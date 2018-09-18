@@ -2013,6 +2013,16 @@ def generate_comments(leaf: LN) -> Iterator[Leaf]:
 
 @dataclass
 class ProtoComment:
+    """Describes a piece of syntax that is a comment.
+
+    It's not a :class:`blib2to3.pytree.Leaf` so that:
+
+    * it can be cached (`Leaf` objects should not be reused more than once as
+      they store their lineno, column, prefix, and parent information);
+    * `newlines` and `consumed` fields are kept separate from the `value`. This
+      simplifies handling of special marker comments like ``# fmt: off/on``.
+    """
+
     type: int  # token.COMMENT or STANDALONE_COMMENT
     value: str  # content of the comment
     newlines: int  # how many newlines before the comment
@@ -2021,6 +2031,7 @@ class ProtoComment:
 
 @lru_cache(maxsize=4096)
 def list_comments(prefix: str, *, is_endmarker: bool) -> List[ProtoComment]:
+    """Return a list of :class:`ProtoComment` objects parsed from the given `prefix`."""
     result: List[ProtoComment] = []
     if not prefix or "#" not in prefix:
         return result
