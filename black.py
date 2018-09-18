@@ -90,6 +90,10 @@ class InvalidInput(ValueError):
     """Raised when input source code fails all parse attempts."""
 
 
+class CannotVerifyEquivalence(AssertionError):
+    """Raised when it is impossible to check for AST-equivalence."""
+
+
 class WriteBack(Enum):
     NO = 0
     YES = 1
@@ -3257,7 +3261,7 @@ def assert_equivalent(src: str, dst: str) -> None:
         src_ast = ast.parse(src)
     except Exception as exc:
         major, minor = sys.version_info[:2]
-        raise AssertionError(
+        raise CannotVerifyEquivalence(
             f"cannot use --safe with this file; failed to parse source file "
             f"with Python {major}.{minor}'s builtin AST. Re-run with --fast "
             f"or stop using deprecated Python 2 syntax. AST error message: {exc}"
