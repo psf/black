@@ -44,7 +44,6 @@ ff = partial(black.format_file_in_place, line_length=ll, fast=True)
 fs = partial(black.format_str, line_length=ll)
 THIS_FILE = Path(__file__)
 THIS_DIR = THIS_FILE.parent
-EMPTY_LINE = "# EMPTY LINE WITH WHITESPACE" + " (this comment will be removed)"
 T = TypeVar("T")
 R = TypeVar("R")
 
@@ -64,7 +63,6 @@ def read_data(name: str, data: bool = True) -> Tuple[str, str]:
         lines = test.readlines()
     result = _input
     for line in lines:
-        line = line.replace(EMPTY_LINE, "")
         if line.rstrip() == "# output":
             result = _output
             continue

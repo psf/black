@@ -33,8 +33,9 @@ def spaces(a=1, b=(), c=[], d={}, e=True, f=-1, g=1 if False else 2, h="", i=r''
  assert task._cancel_stack[:len(old_stack)] == old_stack
 def spaces_types(a: int = 1, b: tuple = (), c: list = [], d: dict = {}, e: bool = True, f: int = -1, g: int = 1 if False else 2, h: str = "", i: str = r''): ...
 def spaces2(result= _core.Value(None)):
+ # There's an empty line with only whitespace after the next
  assert fut is self._read_fut, (fut, self._read_fut)
-    # EMPTY LINE WITH WHITESPACE (this comment will be removed)
+    
 def example(session):
     result = session.query(models.Customer.id).filter(
         models.Customer.account_id == account_id,
@@ -163,6 +164,7 @@ def spaces_types(
 
 
 def spaces2(result=_core.Value(None)):
+    # There's an empty line with only whitespace after the next
     assert fut is self._read_fut, (fut, self._read_fut)
 
 
