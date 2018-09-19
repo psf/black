@@ -23,7 +23,7 @@ formatting requests.
 `blackd` provides even less options than _Black_. You can see them by running
 `blackd --help`:
 
-```{program-output} blackd --help
+```{program-output} tand --help
 
 ```
 
