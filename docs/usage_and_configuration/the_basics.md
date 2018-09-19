@@ -34,7 +34,7 @@ so style options are deliberately limited and rarely added.
 
 <summary>CLI reference</summary>
 
-```{program-output} black --help
+```{program-output} tan --help
 
 ```
 
