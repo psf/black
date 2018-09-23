@@ -164,15 +164,14 @@ def read_pyproject_toml(
     return value
 
 
-GRAMMARS = [
-    ["py3", pygram.python_grammar_no_print_statement_no_exec_statement],
-    ["py2", pygram.python_grammar_no_print_statement],
-    ["py2_print_stmt", pygram.python_grammar],
+GRAMMARS: List[Tuple[str, Any]] = [
+    ("py3", pygram.python_grammar_no_print_statement_no_exec_statement),
+    ("py2", pygram.python_grammar_no_print_statement),
+    ("py2_print_stmt", pygram.python_grammar),
 ]
-
-grammar_choices = ["all"]  # the default: we try any, in the order given
+grammar_choices: List[str] = ["all"]  # the default: we try any, in the order given
 grammar_choices.extend([g[0] for g in GRAMMARS])  # click option
-grammar_chosen = []
+grammar_chosen: List[str] = []
 
 
 @click.command(context_settings=dict(help_option_names=["-h", "--help"]))
