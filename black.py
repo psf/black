@@ -164,6 +164,17 @@ def read_pyproject_toml(
     return value
 
 
+GRAMMARS = [
+    ["py3", pygram.python_grammar_no_print_statement_no_exec_statement],
+    ["py2", pygram.python_grammar_no_print_statement],
+    ["py2_print_stmt", pygram.python_grammar],
+]
+
+grammar_choices = ["all"]  # the default: we try any, in the order given
+grammar_choices.extend([g[0] for g in GRAMMARS])  # click option
+grammar_chosen = []
+
+
 @click.command(context_settings=dict(help_option_names=["-h", "--help"]))
 @click.option(
     "-l",
@@ -172,6 +183,23 @@ def read_pyproject_toml(
     default=DEFAULT_LINE_LENGTH,
     help="How many characters per line to allow.",
     show_default=True,
+)
+@click.option(
+    "-g",
+    "--grammar",
+    type=click.Choice(grammar_choices),
+    default="all",
+    help=(
+        "Restrict Black to using only *one* grammar when parsing source code."
+        "By default Black tries to apply various valid Python grammars "
+        "(currently: %s) and "
+        "will reformat code based on the first one not producing syntax errors. "
+        "Downside: Black might return error messages "
+        "not fitting your intended grammar when *any* of these detect errors. "
+        "Using the switch you can bind Black to using only one grammar. "
+        "Note: This switch must be passed via the command line."
+        % ", ".join([g[0] for g in GRAMMARS])
+    ),
 )
 @click.option(
     "--py36",
@@ -280,6 +308,7 @@ def read_pyproject_toml(
 def main(
     ctx: click.Context,
     line_length: int,
+    grammar: str,
     check: bool,
     diff: bool,
     fast: bool,
@@ -313,6 +342,8 @@ def main(
     report = Report(check=check, quiet=quiet, verbose=verbose)
     root = find_project_root(src)
     sources: Set[Path] = set()
+    if grammar != "all":
+        grammar_chosen.append(grammar)
     for s in src:
         p = Path(s)
         if p.is_dir():
@@ -651,19 +682,13 @@ def decode_bytes(src: bytes) -> Tuple[FileContent, Encoding, NewLine]:
         return tiow.read(), encoding, newline
 
 
-GRAMMARS = [
-    pygram.python_grammar_no_print_statement_no_exec_statement,
-    pygram.python_grammar_no_print_statement,
-    pygram.python_grammar,
-]
-
-
 def lib2to3_parse(src_txt: str) -> Node:
     """Given a string with source, return the lib2to3 Node."""
-    grammar = pygram.python_grammar_no_print_statement
     if src_txt[-1:] != "\n":
         src_txt += "\n"
-    for grammar in GRAMMARS:
+    for name, grammar in GRAMMARS:
+        if grammar_chosen and grammar_chosen[0] != name:
+            continue
         drv = driver.Driver(grammar, pytree.convert)
         try:
             result = drv.parse_string(src_txt, True)
