@@ -2542,9 +2542,13 @@ def normalize_numeric_literal(leaf: Leaf, allow_underscores: bool) -> None:
     in Python 2 long literals), and long number literals are split using underscores.
     """
     text = leaf.value.lower()
-    if text.startswith(("0o", "0x", "0b")):
-        # Leave octal, hex, and binary literals alone.
+    if text.startswith(("0o", "0b")):
+        # Leave octal and binary literals alone.
         pass
+    elif text.startswith("0x"):
+        # Change hex literals to upper case.
+        before, after = text[:2], text[2:]
+        text = f"{before}{after.upper()}"
     elif "e" in text:
         before, after = text.split("e")
         sign = ""
