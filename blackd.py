@@ -21,7 +21,7 @@ FAST_OR_SAFE_HEADER = "X-Fast-Or-Safe"
 @click.option(
     "--bind-host", type=str, help="Address to bind the server to.", default="localhost"
 )
-@click.option("--bind-port", type=int, help="Port to listen on", default=45484)
+@click.option("--bind-port", type=int, help="Port to listen on", default=45_484)
 @click.version_option(version=black.__version__)
 def main(bind_host: str, bind_port: int) -> None:
     logging.basicConfig(level=logging.INFO)
