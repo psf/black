@@ -5,6 +5,7 @@ from datetime import datetime
 from enum import Enum, Flag
 from functools import lru_cache, partial, wraps
 import io
+import itertools
 import keyword
 import logging
 from multiprocessing import Manager
@@ -2601,8 +2602,11 @@ def format_int_string(
 
     text = text.replace("_", "")
     if len(text) <= 6:
-        # No underscores for numbers <= 6 digits long.
-        return text
+        longest_repeat = max(len(list(group)) for _, group in itertools.groupby(text))
+        if longest_repeat <= 3:
+            # No underscores for numbers <= 6 digits long if they don't have
+            # more than 3 consecutive repeating digits.
+            return text
 
     if count_from_end:
         # Avoid removing leading zeros, which are important if we're formatting
