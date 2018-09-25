@@ -378,9 +378,8 @@ an adoption helper, avoid using this for new projects.
 syntactic parts and uppercase letters for the digits themselves: `0xAB`
 instead of `0XAB` and `1e10` instead of `1E10`. Python 2 long literals are
 styled as `2L` instead of `2l` to avoid confusion between `l` and `1`. In
-Python 3.6+, *Black* adds underscores to long numeric literals as well as
-numbers with consecutive repeating digits to aid readability: `123456789`
-becomes `123_456_789` and `34444` becomes `34_444`.
+Python 3.6+, *Black* adds underscores to long numeric literals to aid
+readability: `100000000` becomes `100_000_000`.
 
 ### Line breaks & binary operators
 
