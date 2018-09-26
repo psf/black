@@ -544,6 +544,8 @@ other file.
 If you're running with `--verbose`, you will see a blue message if
 a file was found and used.
 
+Please note `blackd` will not use `pyproject.toml` configuration. 
+
 
 ### Configuration format
 
