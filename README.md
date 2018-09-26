@@ -964,6 +964,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
   to be a bad idea (#415)
 
 
+* trailing comma is now added to single imports that don't fit on a line (#250)
+
 
 ### 18.6b4
 
