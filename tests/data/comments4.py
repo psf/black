@@ -1,3 +1,11 @@
+from com.my_lovely_company.my_lovely_team.my_lovely_project.my_lovely_component import (
+    MyLovelyCompanyTeamProjectComponent,  # NOT DRY
+)
+from com.my_lovely_company.my_lovely_team.my_lovely_project.my_lovely_component import (
+    MyLovelyCompanyTeamProjectComponent as component,  # DRY
+)
+
+
 class C:
     @pytest.mark.parametrize(
         ("post_data", "message"),

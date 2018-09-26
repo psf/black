@@ -1,3 +1,6 @@
+# The percent-percent comments are Spyder IDE cells.
+
+#%%
 def func():
     x = """
     a really long string
@@ -39,3 +42,6 @@ def func():
         # shared between sub-exceptions are not omitted
         _seen=set(_seen),
     )
+
+
+#%%

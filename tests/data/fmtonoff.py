@@ -48,6 +48,39 @@ something = {
     # fmt: off
     key: 'value',
 }
+
+def subscriptlist():
+    atom[
+        # fmt: off
+        'some big and',
+        'complex subscript',
+        # fmt: on
+        goes + here, andhere,
+       ]
+
+def import_as_names():
+    # fmt: off
+    from hello import a,        b
+    'unformatted'
+    # fmt: on
+
+def testlist_star_expr():
+    # fmt: off
+    a , b = *hello
+    'unformatted'
+    # fmt: on
+
+def yield_expr():
+    # fmt: off
+    yield hello
+    'unformatted'
+    # fmt: on
+    'formatted'
+    # fmt: off
+    ( yield hello )
+    'unformatted'
+    # fmt: on
+
 def example(session):
     # fmt: off
     result = session\
@@ -142,6 +175,7 @@ cfg.rule(
     xxxxxxxxxx_xxxxxxxxxxx_xxxxxxx_xxxxxxxxx=5
 )
 # fmt: off
+yield  'hello'
 # No formatting to the end of the file
 l=[1,2,3]
 d={'a':1,
@@ -191,7 +225,7 @@ def function_signature_stress_test(number:int,no_annotation=None,text:str='defau
  return text[number:-1]
 # fmt: on
 def spaces(a=1, b=(), c=[], d={}, e=True, f=-1, g=1 if False else 2, h="", i=r""):
-    offset = attr.ib(default=attr.Factory(lambda: _r.uniform(10000, 200000)))
+    offset = attr.ib(default=attr.Factory(lambda: _r.uniform(10000, 200_000)))
     assert task._cancel_stack[: len(old_stack)] == old_stack
 
 
@@ -217,6 +251,43 @@ something = {
     # fmt: off
     key: 'value',
 }
+
+
+def subscriptlist():
+    atom[
+        # fmt: off
+        'some big and',
+        'complex subscript',
+        # fmt: on
+        goes + here,
+        andhere,
+    ]
+
+
+def import_as_names():
+    # fmt: off
+    from hello import a,        b
+    'unformatted'
+    # fmt: on
+
+
+def testlist_star_expr():
+    # fmt: off
+    a , b = *hello
+    'unformatted'
+    # fmt: on
+
+
+def yield_expr():
+    # fmt: off
+    yield hello
+    'unformatted'
+    # fmt: on
+    "formatted"
+    # fmt: off
+    ( yield hello )
+    'unformatted'
+    # fmt: on
 
 
 def example(session):
@@ -327,6 +398,7 @@ cfg.rule(
     xxxxxxxxxx_xxxxxxxxxxx_xxxxxxx_xxxxxxxxx=5,
 )
 # fmt: off
+yield  'hello'
 # No formatting to the end of the file
 l=[1,2,3]
 d={'a':1,

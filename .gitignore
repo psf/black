@@ -6,3 +6,5 @@ docs/_static/pypi.svg
 .tox
 __pycache__
 black.egg-info
+build/
+dist/

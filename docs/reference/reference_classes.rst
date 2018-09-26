@@ -6,7 +6,7 @@
 .. currentmodule:: black
 
 :class:`BracketTracker`
--------------------------
+-----------------------
 
 .. autoclass:: black.BracketTracker
     :members:
@@ -31,6 +31,12 @@
     :show-inheritance:
     :members:
 
+:class:`ProtoComment`
+---------------------
+
+.. autoclass:: black.ProtoComment
+    :members:
+
 :class:`Report`
 ---------------
 
@@ -38,17 +44,33 @@
     :members:
     :special-members: __str__
 
-:class:`UnformattedLines`
--------------------------
-
-.. autoclass:: black.UnformattedLines
-    :show-inheritance:
-    :members:
-    :special-members: __str__
-
 :class:`Visitor`
 ----------------
 
 .. autoclass:: black.Visitor
+    :show-inheritance:
+    :members:
+
+Enums
+=====
+
+:class:`Changed`
+----------------
+
+.. autoclass:: black.Changed
+    :show-inheritance:
+    :members:
+
+:class:`FileMode`
+-----------------
+
+.. autoclass:: black.FileMode
+    :show-inheritance:
+    :members:
+
+:class:`WriteBack`
+------------------
+
+.. autoclass:: black.WriteBack
     :show-inheritance:
     :members:

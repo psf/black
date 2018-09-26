@@ -70,6 +70,9 @@ class Foo:
         """Docstring for instance attribute spam."""
 
 
+#' <h1>This is pweave!</h1>
+
+
 @fast(really=True)
 async def wat():
     async with X.open_async() as x:  # Some more comments

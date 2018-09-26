@@ -6,7 +6,8 @@
 <a href="https://black.readthedocs.io/en/stable/?badge=stable"><img alt="Documentation Status" src="https://readthedocs.org/projects/black/badge/?version=stable"></a>
 <a href="https://coveralls.io/github/ambv/black?branch=master"><img alt="Coverage Status" src="https://coveralls.io/repos/github/ambv/black/badge.svg?branch=master"></a>
 <a href="https://github.com/ambv/black/blob/master/LICENSE"><img alt="License: MIT" src="https://black.readthedocs.io/en/stable/_static/license.svg"></a>
-<a href="https://pypi.python.org/pypi/black"><img alt="PyPI" src="https://black.readthedocs.io/en/stable/_static/pypi.svg"></a>
+<a href="https://pypi.org/project/black/"><img alt="PyPI" src="https://black.readthedocs.io/en/stable/_static/pypi.svg"></a>
+<a href="https://pepy.tech/project/black"><img alt="Downloads" src="https://pepy.tech/badge/black"></a>
 <a href="https://github.com/ambv/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 </p>
 
@@ -26,12 +27,15 @@ content instead.
 *Black* makes code review faster by producing the smallest diffs
 possible.
 
+Try it out now using the [Black Playground](https://black.now.sh).
+
 ---
 
 *Contents:* **[Installation and usage](#installation-and-usage)** |
 **[Code style](#the-black-code-style)** |
 **[pyproject.toml](#pyprojecttoml)** |
 **[Editor integration](#editor-integration)** |
+**[blackd](#blackd)** |
 **[Version control integration](#version-control-integration)** |
 **[Ignoring unmodified files](#ignoring-unmodified-files)** |
 **[Testimonials](#testimonials)** |
@@ -95,7 +99,7 @@ Options:
                               recursive searches. On Windows, use forward
                               slashes for directories.  [default:
                               build/|buck-out/|dist/|_build/|\.git/|\.hg/|
-                              \.mypy_cache/|\.tox/|\.venv/]
+                              \.mypy_cache/|\.nox/|\.tox/|\.venv/]
   -q, --quiet                 Don't emit non-error messages to stderr. Errors
                               are still emitted, silence those with
                               2>/dev/null.
@@ -368,6 +372,19 @@ human-readable strings"](https://stackoverflow.com/a/56190)), you can
 pass `--skip-string-normalization` on the command line.  This is meant as
 an adoption helper, avoid using this for new projects.
 
+### Numeric literals
+
+*Black* standardizes most numeric literals to use lowercase letters for the
+syntactic parts and uppercase letters for the digits themselves: `0xAB`
+instead of `0XAB` and `1e10` instead of `1E10`. Python 2 long literals are
+styled as `2L` instead of `2l` to avoid confusion between `l` and `1`. In
+Python 3.6+, *Black* adds underscores to long numeric literals to aid
+readability: `100000000` becomes `100_000_000`.
+
+For regions where numerals are grouped differently (like [India](https://en.wikipedia.org/wiki/Indian_numbering_system)
+and [China](https://en.wikipedia.org/wiki/Chinese_numerals#Whole_numbers)),
+the `-N` or `--skip-numeric-underscore-normalization` command line option
+makes *Black* preserve underscores in numeric literals.
 
 ### Line breaks & binary operators
 
@@ -527,6 +544,8 @@ other file.
 If you're running with `--verbose`, you will see a blue message if
 a file was found and used.
 
+Please note `blackd` will not use `pyproject.toml` configuration. 
+
 
 ### Configuration format
 
@@ -617,17 +636,28 @@ $ where black
     - Name: Black
     - Description: Black is the uncompromising Python code formatter.
     - Program: <install_location_from_step_2>
-    - Arguments: $FilePath$
+    - Arguments: `$FilePath$`
 
 5. Format the currently opened file by selecting `Tools -> External Tools -> black`.
     - Alternatively, you can set a keyboard shortcut by navigating to `Preferences -> Keymap -> External Tools -> External Tools - Black`.
 
+6. Optionally, run Black on every file save:
+
+    1. Make sure you have the [File Watcher](https://plugins.jetbrains.com/plugin/7177-file-watchers) plugin installed.
+    2. Go to `Preferences -> Tools -> File Watchers` and click `+` to add a new watcher:
+        - Name: Black
+        - File type: Python
+        - Scope: Project Files
+        - Program: <install_location_from_step_2>
+        - Arguments: `$FilePath$`
+        - Output paths to refresh: `$FilePathRelativeToProjectRoot$`
+        - Working directory: `$ProjectFileDir$`
 
 ### Vim
 
 Commands and shortcuts:
 
-* `,=` or `:Black` to format the entire file (ranges not supported);
+* `:Black` to format the entire file (ranges not supported);
 * `:BlackUpgrade` to upgrade *Black* inside the virtualenv;
 * `:BlackVersion` to get the current version of *Black* inside the
   virtualenv.
@@ -705,10 +735,14 @@ the [Python Language Server](https://github.com/palantir/python-language-server)
 [pyls-black](https://github.com/rupert/pyls-black) plugin.
 
 
+### Atom/Nuclide
+
+Use [python-black](https://atom.io/packages/python-black).
+
+
 ### Other editors
 
-Atom/Nuclide integration is planned by the author, others will
-require external contributions.
+Other editors will require external contributions.
 
 Patches welcome! ✨ 🍰 ✨
 
@@ -720,6 +754,78 @@ affect your use case.
 
 This can be used for example with PyCharm's [File Watchers](https://www.jetbrains.com/help/pycharm/file-watchers.html).
 
+## blackd
+
+`blackd` is a small HTTP server that exposes *Black*'s functionality over
+a simple protocol. The main benefit of using it is to avoid paying the
+cost of starting up a new *Black* process every time you want to blacken
+a file.
+
+### Usage
+
+`blackd` is not packaged alongside *Black* by default because it has additional
+dependencies. You will need to do `pip install black[d]` to install it.
+
+You can start the server on the default port, binding only to the local interface
+by running `blackd`. You will see a single line mentioning the server's version,
+and the host and port it's listening on. `blackd` will then print an access log
+similar to most web servers on standard output, merged with any exception traces
+caused by invalid formatting requests.
+
+`blackd` provides even less options than *Black*. You can see them by running
+`blackd --help`:
+
+```text
+Usage: blackd [OPTIONS]
+
+Options:
+  --bind-host TEXT                Address to bind the server to.
+  --bind-port INTEGER             Port to listen on
+  --version                       Show the version and exit.
+  -h, --help                      Show this message and exit.
+```
+
+### Protocol
+
+`blackd` only accepts `POST` requests at the `/` path. The body of the request
+should contain the python source code to be formatted, encoded 
+according to the `charset` field in the `Content-Type` request header. If no
+`charset` is specified, `blackd` assumes `UTF-8`.
+
+There are a few HTTP headers that control how the source is formatted. These
+correspond to command line flags for *Black*. There is one exception to this:
+`X-Protocol-Version` which if present, should have the value `1`, otherwise the
+request is rejected with `HTTP 501` (Not Implemented). 
+
+The headers controlling how code is formatted are:
+
+ - `X-Line-Length`: corresponds to the `--line-length` command line flag.
+ - `X-Skip-String-Normalization`: corresponds to the `--skip-string-normalization`
+    command line flag. If present and its value is not the empty string, no string
+    normalization will be performed.
+ - `X-Skip-Numeric-Underscore-Normalization`: corresponds to the
+    `--skip-numeric-underscore-normalization` command line flag.
+ - `X-Fast-Or-Safe`: if set to `fast`, `blackd` will act as *Black* does when
+    passed the `--fast` command line flag.
+ - `X-Python-Variant`: if set to `pyi`, `blackd` will act as *Black* does when
+    passed the `--pyi` command line flag. Otherwise, its value must correspond to
+    a Python version. If this value represents at least Python 3.6, `blackd` will
+    act as *Black* does when passed the `--py36` command line flag.
+
+If any of these headers are set to invalid values, `blackd` returns a `HTTP 400`
+error response, mentioning the name of the problematic header in the message body.
+
+Apart from the above, `blackd` can produce the following response codes:
+
+ - `HTTP 204`: If the input is already well-formatted. The response body is
+	empty.
+ - `HTTP 200`: If formatting was needed on the input. The response body
+	contains the blackened Python code, and the `Content-Type` header is set
+	accordingly.
+ - `HTTP 400`: If the input contains a syntax error. Details of the error are
+	returned in the response body.
+ - `HTTP 500`: If there was any kind of error while trying to format the input.
+	The response body contains a textual representation of the error.
 
 ## Version control integration
 
@@ -754,9 +860,12 @@ location of the file depends on the *Black* version and the system on which *Bla
 is run. The file is non-portable. The standard location on common operating systems
 is:
 
-* Windows: `C:\\Users\<username>\AppData\Local\black\black\Cache\<version>\cache.<line-length>.pickle`
-* macOS: `/Users/<username>/Library/Caches/black/<version>/cache.<line-length>.pickle`
-* Linux: `/home/<username>/.cache/black/<version>/cache.<line-length>.pickle`
+* Windows: `C:\\Users\<username>\AppData\Local\black\black\Cache\<version>\cache.<line-length>.<file-mode>.pickle`
+* macOS: `/Users/<username>/Library/Caches/black/<version>/cache.<line-length>.<file-mode>.pickle`
+* Linux: `/home/<username>/.cache/black/<version>/cache.<line-length>.<file-mode>.pickle`
+
+`file-mode` is an int flag that determines whether the file was formatted as 3.6+ only,
+as .pyi, and whether string normalization was omitted.
 
 
 ## Testimonials
@@ -765,7 +874,7 @@ is:
 
 > *Black* is opinionated so you don't have to be.
 
-**Hynek Schlawack**, [creator of `attrs`](http://www.attrs.org/), core
+**Hynek Schlawack**, [creator of `attrs`](https://www.attrs.org/), core
 developer of Twisted and CPython:
 
 > An auto-formatter that doesn't suck is all I want for Xmas!
@@ -792,7 +901,7 @@ Using the badge in README.rst:
 ```
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/ambv/black
-```    
+```
 
 Looks like this: [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
@@ -820,9 +929,47 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Change Log
 
-### 18.8b0
+### 18.9b0
 
-* fix parsing of `__future__` imports with renames (#389)
+* numeric literals are now formatted by *Black* (#452, #461, #464, #469):
+
+  * numeric literals are normalized to include `_` separators on Python 3.6+ code
+
+  * added `--skip-numeric-underscore-normalization` to disable the above behavior and
+    leave numeric underscores as they were in the input
+
+  * code with `_` in numeric literals is recognized as Python 3.6+
+
+  * most letters in numeric literals are lowercased (e.g., in `1e10`, `0x01`)
+
+  * hexadecimal digits are always uppercased (e.g. `0xBADC0DE`)
+
+* added `blackd`, see [its documentation](#blackd) for more info (#349)
+
+* adjacent string literals are now correctly split into multiple lines (#463)
+
+* trailing comma is now added to single imports that don't fit on a line (#250)
+
+* cache is now populated when `--check` is successful for a file which speeds up
+  consecutive checks of properly formatted unmodified files (#448)
+
+* fixed mangling [pweave](http://mpastell.com/pweave/) and
+  [Spyder IDE](https://pythonhosted.org/spyder/) special comments (#532)
+
+* fixed unstable formatting when unpacking big tuples (#267)
+
+* fixed parsing of `__future__` imports with renames (#389)
+
+* fixed scope of `# fmt: off` when directly preceding `yield` and other nodes (#385)
+
+* fixed formatting of lambda expressions with default arguments (#468)
+
+* fixed ``async for`` statements: *Black* no longer breaks them into separate
+  lines (#372)
+
+* note: the Vim plugin stopped registering ``,=`` as a default chord as it turned out
+  to be a bad idea (#415)
+
 
 ### 18.6b4
 
@@ -1176,6 +1323,7 @@ Glued together by [Łukasz Langa](mailto:lukasz@langa.pl).
 
 Maintained with [Carol Willing](mailto:carolcode@willingconsulting.com),
 [Carl Meyer](mailto:carl@oddbird.net),
+[Jelle Zijlstra](mailto:jelle.zijlstra@gmail.com),
 [Mika Naylor](mailto:mail@autophagy.io), and
 [Zsolt Dollenstein](mailto:zsol.zsol@gmail.com).
 
@@ -1184,13 +1332,13 @@ Multiple contributions by:
 * [Artem Malyshev](mailto:proofit404@gmail.com)
 * [Christian Heimes](mailto:christian@python.org)
 * [Daniel M. Capella](mailto:polycitizen@gmail.com)
-* [Eli Treuherz](mailto:eli.treuherz@cgi.com)
+* [Eli Treuherz](mailto:eli@treuherz.com)
 * Hugo van Kemenade
 * [Ivan Katanić](mailto:ivan.katanic@gmail.com)
-* [Jelle Zijlstra](mailto:jelle.zijlstra@gmail.com)
 * [Jonas Obrist](mailto:ojiidotch@gmail.com)
 * [Luka Sterbic](mailto:luka.sterbic@gmail.com)
 * [Miguel Gaiowski](mailto:miggaiowski@gmail.com)
+* [Miroslav Shubernetskiy](mailto:miroslav@miki725.com)
 * [Neraste](neraste.herr10@gmail.com)
 * [Osaetin Daniel](mailto:osaetindaniel@gmail.com)
 * [Peter Bengtsson](mailto:mail@peterbe.com)

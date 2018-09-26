@@ -12,6 +12,8 @@ Assertions and checks
 
 .. autofunction:: black.assert_stable
 
+.. autofunction:: black.can_be_split
+
 .. autofunction:: black.can_omit_invisible_parens
 
 .. autofunction:: black.is_empty_tuple
@@ -59,7 +61,11 @@ File operations
 
 .. autofunction:: black.dump_to_file
 
+.. autofunction:: black.find_project_root
+
 .. autofunction:: black.gen_python_files_in_dir
+
+.. autofunction:: black.read_pyproject_toml
 
 Parsing
 -------
@@ -73,6 +79,10 @@ Parsing
 Split functions
 ---------------
 
+.. autofunction:: black.bracket_split_build_line
+
+.. autofunction:: black.bracket_split_succeeded_or_raise
+
 .. autofunction:: black.delimiter_split
 
 .. autofunction:: black.left_hand_split
@@ -83,12 +93,12 @@ Split functions
 
 .. autofunction:: black.split_line
 
-.. autofunction:: black.bracket_split_succeeded_or_raise
-
 Caching
 -------
 
 .. autofunction:: black.filter_cached
+
+.. autofunction:: black.get_cache_file
 
 .. autofunction:: black.get_cache_info
 
@@ -103,7 +113,21 @@ Utilities
 
     Pretty-print the lib2to3 AST of a given string of `code`.
 
+.. autofunction:: black.cancel
+
+.. autofunction:: black.child_towards
+
+.. autofunction:: black.container_of
+
+.. autofunction:: black.convert_one_fmt_off_pair
+
 .. autofunction:: black.diff
+
+.. autofunction:: black.dont_increase_indentation
+
+.. autofunction:: black.format_float_or_int_string
+
+.. autofunction:: black.format_int_string
 
 .. autofunction:: black.ensure_visible
 
@@ -113,19 +137,41 @@ Utilities
 
 .. autofunction:: black.generate_comments
 
+.. autofunction:: black.generate_ignored_nodes
+
+.. autofunction:: black.generate_trailers_to_omit
+
+.. autofunction:: black.get_future_imports
+
+.. autofunction:: black.list_comments
+
 .. autofunction:: black.make_comment
 
 .. autofunction:: black.maybe_make_parens_invisible_in_atom
 
 .. autofunction:: black.max_delimiter_priority_in_atom
 
+.. autofunction:: black.normalize_fmt_off
+
+.. autofunction:: black.normalize_numeric_literal
+
 .. autofunction:: black.normalize_prefix
+
+.. autofunction:: black.normalize_string_prefix
 
 .. autofunction:: black.normalize_string_quotes
 
 .. autofunction:: black.normalize_invisible_parens
 
+.. autofunction:: black.patch_click
+
 .. autofunction:: black.preceding_leaf
+
+.. autofunction:: black.re_compile_maybe_verbose
+
+.. autofunction:: black.should_explode
+
+.. autofunction:: black.shutdown
 
 .. autofunction:: black.sub_twice
 

@@ -86,7 +86,7 @@ from some_library import (
     Use,
 )
 from name_of_a_company.extremely_long_project_name.component.ttypes import (
-    CuteLittleServiceHandlerFactoryyy
+    CuteLittleServiceHandlerFactoryyy,
 )
 from name_of_a_company.extremely_long_project_name.extremely_long_component_name.ttypes import *
 

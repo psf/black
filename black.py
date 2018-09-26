@@ -50,7 +50,7 @@ from blib2to3.pgen2.parse import ParseError
 __version__ = "18.6b4"
 DEFAULT_LINE_LENGTH = 88
 DEFAULT_EXCLUDES = (
-    r"/(\.git|\.hg|\.mypy_cache|\.tox|\.venv|_build|buck-out|build|dist)/"
+    r"/(\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|_build|buck-out|build|dist)/"
 )
 DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
@@ -79,26 +79,27 @@ syms = pygram.python_symbols
 
 
 class NothingChanged(UserWarning):
-    """Raised by :func:`format_file` when reformatted code is the same as source."""
+    """Raised when reformatted code is the same as source."""
 
 
 class CannotSplit(Exception):
-    """A readable split that fits the allotted line length is impossible.
+    """A readable split that fits the allotted line length is impossible."""
 
-    Raised by :func:`left_hand_split`, :func:`right_hand_split`, and
-    :func:`delimiter_split`.
-    """
+
+class InvalidInput(ValueError):
+    """Raised when input source code fails all parse attempts."""
 
 
 class WriteBack(Enum):
     NO = 0
     YES = 1
     DIFF = 2
+    CHECK = 3
 
     @classmethod
     def from_configuration(cls, *, check: bool, diff: bool) -> "WriteBack":
         if check and not diff:
-            return cls.NO
+            return cls.CHECK
 
         return cls.DIFF if diff else cls.YES
 
@@ -114,10 +115,16 @@ class FileMode(Flag):
     PYTHON36 = 1
     PYI = 2
     NO_STRING_NORMALIZATION = 4
+    NO_NUMERIC_UNDERSCORE_NORMALIZATION = 8
 
     @classmethod
     def from_configuration(
-        cls, *, py36: bool, pyi: bool, skip_string_normalization: bool
+        cls,
+        *,
+        py36: bool,
+        pyi: bool,
+        skip_string_normalization: bool,
+        skip_numeric_underscore_normalization: bool,
     ) -> "FileMode":
         mode = cls.AUTO_DETECT
         if py36:
@@ -126,6 +133,8 @@ class FileMode(Flag):
             mode |= cls.PYI
         if skip_string_normalization:
             mode |= cls.NO_STRING_NORMALIZATION
+        if skip_numeric_underscore_normalization:
+            mode |= cls.NO_NUMERIC_UNDERSCORE_NORMALIZATION
         return mode
 
 
@@ -169,7 +178,7 @@ def read_pyproject_toml(
     "--line-length",
     type=int,
     default=DEFAULT_LINE_LENGTH,
-    help="How many character per line to allow.",
+    help="How many characters per line to allow.",
     show_default=True,
 )
 @click.option(
@@ -194,6 +203,12 @@ def read_pyproject_toml(
     "--skip-string-normalization",
     is_flag=True,
     help="Don't normalize string quotes or prefixes.",
+)
+@click.option(
+    "-N",
+    "--skip-numeric-underscore-normalization",
+    is_flag=True,
+    help="Don't normalize underscores in numeric literals.",
 )
 @click.option(
     "--check",
@@ -285,6 +300,7 @@ def main(
     pyi: bool,
     py36: bool,
     skip_string_normalization: bool,
+    skip_numeric_underscore_normalization: bool,
     quiet: bool,
     verbose: bool,
     include: str,
@@ -295,7 +311,10 @@ def main(
     """The uncompromising code formatter."""
     write_back = WriteBack.from_configuration(check=check, diff=diff)
     mode = FileMode.from_configuration(
-        py36=py36, pyi=pyi, skip_string_normalization=skip_string_normalization
+        py36=py36,
+        pyi=pyi,
+        skip_string_normalization=skip_string_normalization,
+        skip_numeric_underscore_normalization=skip_numeric_underscore_normalization,
     )
     if config and verbose:
         out(f"Using configuration from {config}.", bold=False, fg="blue")
@@ -398,7 +417,9 @@ def reformat_one(
                 mode=mode,
             ):
                 changed = Changed.YES
-            if write_back == WriteBack.YES and changed is not Changed.NO:
+            if (write_back is WriteBack.YES and changed is not Changed.CACHED) or (
+                write_back is WriteBack.CHECK and changed is Changed.NO
+            ):
                 write_cache(cache, [src], line_length, mode)
         report.done(src, changed)
     except Exception as exc:
@@ -428,50 +449,58 @@ async def schedule_formatting(
         sources, cached = filter_cached(cache, sources)
         for src in sorted(cached):
             report.done(src, Changed.CACHED)
+    if not sources:
+        return
+
     cancelled = []
-    formatted = []
-    if sources:
-        lock = None
-        if write_back == WriteBack.DIFF:
-            # For diff output, we need locks to ensure we don't interleave output
-            # from different processes.
-            manager = Manager()
-            lock = manager.Lock()
-        tasks = {
-            loop.run_in_executor(
-                executor,
-                format_file_in_place,
-                src,
-                line_length,
-                fast,
-                write_back,
-                mode,
-                lock,
-            ): src
-            for src in sorted(sources)
-        }
-        pending: Iterable[asyncio.Task] = tasks.keys()
-        try:
-            loop.add_signal_handler(signal.SIGINT, cancel, pending)
-            loop.add_signal_handler(signal.SIGTERM, cancel, pending)
-        except NotImplementedError:
-            # There are no good alternatives for these on Windows
-            pass
-        while pending:
-            done, _ = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
-            for task in done:
-                src = tasks.pop(task)
-                if task.cancelled():
-                    cancelled.append(task)
-                elif task.exception():
-                    report.failed(src, str(task.exception()))
-                else:
-                    formatted.append(src)
-                    report.done(src, Changed.YES if task.result() else Changed.NO)
+    sources_to_cache = []
+    lock = None
+    if write_back == WriteBack.DIFF:
+        # For diff output, we need locks to ensure we don't interleave output
+        # from different processes.
+        manager = Manager()
+        lock = manager.Lock()
+    tasks = {
+        loop.run_in_executor(
+            executor,
+            format_file_in_place,
+            src,
+            line_length,
+            fast,
+            write_back,
+            mode,
+            lock,
+        ): src
+        for src in sorted(sources)
+    }
+    pending: Iterable[asyncio.Task] = tasks.keys()
+    try:
+        loop.add_signal_handler(signal.SIGINT, cancel, pending)
+        loop.add_signal_handler(signal.SIGTERM, cancel, pending)
+    except NotImplementedError:
+        # There are no good alternatives for these on Windows.
+        pass
+    while pending:
+        done, _ = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
+        for task in done:
+            src = tasks.pop(task)
+            if task.cancelled():
+                cancelled.append(task)
+            elif task.exception():
+                report.failed(src, str(task.exception()))
+            else:
+                changed = Changed.YES if task.result() else Changed.NO
+                # If the file was written back or was successfully checked as
+                # well-formatted, store this information in the cache.
+                if write_back is WriteBack.YES or (
+                    write_back is WriteBack.CHECK and changed is Changed.NO
+                ):
+                    sources_to_cache.append(src)
+                report.done(src, changed)
     if cancelled:
         await asyncio.gather(*cancelled, loop=loop, return_exceptions=True)
-    if write_back == WriteBack.YES and formatted:
-        write_cache(cache, formatted, line_length, mode)
+    if sources_to_cache:
+        write_cache(cache, sources_to_cache, line_length, mode)
 
 
 def format_file_in_place(
@@ -484,7 +513,8 @@ def format_file_in_place(
 ) -> bool:
     """Format file under `src` path. Return True if changed.
 
-    If `write_back` is True, write reformatted code back to stdout.
+    If `write_back` is DIFF, write a diff to stdout. If it is YES, write reformatted
+    code to the file.
     `line_length` and `fast` options are passed to :func:`format_file_contents`.
     """
     if src.suffix == ".pyi":
@@ -533,7 +563,8 @@ def format_stdin_to_stdout(
 ) -> bool:
     """Format file on stdin. Return True if changed.
 
-    If `write_back` is True, write reformatted code back to stdout.
+    If `write_back` is YES, write reformatted code back to stdout. If it is DIFF,
+    write a diff to stdout.
     `line_length`, `fast`, `is_pyi`, and `force_py36` arguments are passed to
     :func:`format_file_contents`.
     """
@@ -605,6 +636,8 @@ def format_str(
         remove_u_prefix=py36 or "unicode_literals" in future_imports,
         is_pyi=is_pyi,
         normalize_strings=normalize_strings,
+        allow_underscores=py36
+        and not bool(mode & FileMode.NO_NUMERIC_UNDERSCORE_NORMALIZATION),
     )
     elt = EmptyLineTracker(is_pyi=is_pyi)
     empty_line = Line()
@@ -662,7 +695,7 @@ def lib2to3_parse(src_txt: str) -> Node:
                 faulty_line = lines[lineno - 1]
             except IndexError:
                 faulty_line = "<line number missing in source>"
-            exc = ValueError(f"Cannot parse: {lineno}:{column}: {faulty_line}")
+            exc = InvalidInput(f"Cannot parse: {lineno}:{column}: {faulty_line}")
     else:
         raise exc from None
 
@@ -797,18 +830,6 @@ UNPACKING_PARENTS = {
     syms.testlist_gexp,
     syms.testlist_star_expr,
 }
-SURROUNDED_BY_BRACKETS = {
-    syms.typedargslist,
-    syms.arglist,
-    syms.subscriptlist,
-    syms.vfplist,
-    syms.import_as_names,
-    syms.yield_expr,
-    syms.testlist_gexp,
-    syms.testlist_star_expr,
-    syms.listmaker,
-    syms.dictsetmaker,
-}
 TEST_DESCENDANTS = {
     syms.test,
     syms.lambdef,
@@ -875,8 +896,8 @@ class BracketTracker:
     bracket_match: Dict[Tuple[Depth, NodeType], Leaf] = Factory(dict)
     delimiters: Dict[LeafID, Priority] = Factory(dict)
     previous: Optional[Leaf] = None
-    _for_loop_variable: int = 0
-    _lambda_arguments: int = 0
+    _for_loop_depths: List[int] = Factory(list)
+    _lambda_argument_depths: List[int] = Factory(list)
 
     def mark(self, leaf: Leaf) -> None:
         """Mark `leaf` with bracket-related metadata. Keep track of delimiters.
@@ -949,16 +970,21 @@ class BracketTracker:
         """
         if leaf.type == token.NAME and leaf.value == "for":
             self.depth += 1
-            self._for_loop_variable += 1
+            self._for_loop_depths.append(self.depth)
             return True
 
         return False
 
     def maybe_decrement_after_for_loop_variable(self, leaf: Leaf) -> bool:
         """See `maybe_increment_for_loop_variable` above for explanation."""
-        if self._for_loop_variable and leaf.type == token.NAME and leaf.value == "in":
+        if (
+            self._for_loop_depths
+            and self._for_loop_depths[-1] == self.depth
+            and leaf.type == token.NAME
+            and leaf.value == "in"
+        ):
             self.depth -= 1
-            self._for_loop_variable -= 1
+            self._for_loop_depths.pop()
             return True
 
         return False
@@ -971,16 +997,20 @@ class BracketTracker:
         """
         if leaf.type == token.NAME and leaf.value == "lambda":
             self.depth += 1
-            self._lambda_arguments += 1
+            self._lambda_argument_depths.append(self.depth)
             return True
 
         return False
 
     def maybe_decrement_after_lambda_arguments(self, leaf: Leaf) -> bool:
         """See `maybe_increment_lambda_arguments` above for explanation."""
-        if self._lambda_arguments and leaf.type == token.COLON:
+        if (
+            self._lambda_argument_depths
+            and self._lambda_argument_depths[-1] == self.depth
+            and leaf.type == token.COLON
+        ):
             self.depth -= 1
-            self._lambda_arguments -= 1
+            self._lambda_argument_depths.pop()
             return True
 
         return False
@@ -1162,7 +1192,7 @@ class Line:
             self.remove_trailing_comma()
             return True
 
-        # Otheriwsse, if the trailing one is the only one, we might mistakenly
+        # Otherwise, if the trailing one is the only one, we might mistakenly
         # change a tuple into a different type by removing the comma.
         depth = closing.bracket_depth + 1
         commas = 0
@@ -1375,7 +1405,7 @@ class EmptyLineTracker:
                 newlines = 1
             elif current_line.is_class or self.previous_line.is_class:
                 if current_line.is_stub_class and self.previous_line.is_stub_class:
-                    # No blank line between classes with an emty body
+                    # No blank line between classes with an empty body
                     newlines = 0
                 else:
                     newlines = 1
@@ -1403,6 +1433,7 @@ class LineGenerator(Visitor[Line]):
     normalize_strings: bool = True
     current_line: Line = Factory(Line)
     remove_u_prefix: bool = False
+    allow_underscores: bool = False
 
     def line(self, indent: int = 0) -> Iterator[Line]:
         """Generate a line.
@@ -1444,6 +1475,8 @@ class LineGenerator(Visitor[Line]):
             if self.normalize_strings and node.type == token.STRING:
                 normalize_string_prefix(node, remove_u_prefix=self.remove_u_prefix)
                 normalize_string_quotes(node)
+            if node.type == token.NUMBER:
+                normalize_numeric_literal(node, self.allow_underscores)
             if node.type not in WHITESPACE:
                 self.current_line.append(node)
         yield from super().visit_default(node)
@@ -1853,7 +1886,7 @@ def container_of(leaf: Leaf) -> LN:
         if parent.type == syms.file_input:
             break
 
-        if parent.type in SURROUNDED_BY_BRACKETS:
+        if parent.prev_sibling is not None and parent.prev_sibling.type in BRACKETS:
             break
 
         container = parent
@@ -1875,7 +1908,7 @@ def is_split_after_delimiter(leaf: Leaf, previous: Leaf = None) -> int:
 
 
 def is_split_before_delimiter(leaf: Leaf, previous: Leaf = None) -> int:
-    """Return the priority of the `leaf` delimiter, given a line before after it.
+    """Return the priority of the `leaf` delimiter, given a line break before it.
 
     The delimiter priorities returned here are from those delimiters that would
     cause a line break before themselves.
@@ -1912,15 +1945,20 @@ def is_split_before_delimiter(leaf: Leaf, previous: Leaf = None) -> int:
     ):
         return STRING_PRIORITY
 
-    if leaf.type != token.NAME:
+    if leaf.type not in {token.NAME, token.ASYNC}:
         return 0
 
     if (
         leaf.value == "for"
         and leaf.parent
         and leaf.parent.type in {syms.comp_for, syms.old_comp_for}
+        or leaf.type == token.ASYNC
     ):
-        return COMPREHENSION_PRIORITY
+        if (
+            not isinstance(leaf.prev_sibling, Leaf)
+            or leaf.prev_sibling.value != "async"
+        ):
+            return COMPREHENSION_PRIORITY
 
     if (
         leaf.value == "if"
@@ -1994,6 +2032,16 @@ def generate_comments(leaf: LN) -> Iterator[Leaf]:
 
 @dataclass
 class ProtoComment:
+    """Describes a piece of syntax that is a comment.
+
+    It's not a :class:`blib2to3.pytree.Leaf` so that:
+
+    * it can be cached (`Leaf` objects should not be reused more than once as
+      they store their lineno, column, prefix, and parent information);
+    * `newlines` and `consumed` fields are kept separate from the `value`. This
+      simplifies handling of special marker comments like ``# fmt: off/on``.
+    """
+
     type: int  # token.COMMENT or STANDALONE_COMMENT
     value: str  # content of the comment
     newlines: int  # how many newlines before the comment
@@ -2002,6 +2050,7 @@ class ProtoComment:
 
 @lru_cache(maxsize=4096)
 def list_comments(prefix: str, *, is_endmarker: bool) -> List[ProtoComment]:
+    """Return a list of :class:`ProtoComment` objects parsed from the given `prefix`."""
     result: List[ProtoComment] = []
     if not prefix or "#" not in prefix:
         return result
@@ -2033,8 +2082,8 @@ def list_comments(prefix: str, *, is_endmarker: bool) -> List[ProtoComment]:
 def make_comment(content: str) -> str:
     """Return a consistently formatted comment from the given `content` string.
 
-    All comments (except for "##", "#!", "#:") should have a single space between
-    the hash sign and the content.
+    All comments (except for "##", "#!", "#:", '#'", "#%%") should have a single
+    space between the hash sign and the content.
 
     If `content` didn't start with a hash sign, one is provided.
     """
@@ -2044,7 +2093,7 @@ def make_comment(content: str) -> str:
 
     if content[0] == "#":
         content = content[1:]
-    if content and content[0] not in " !:#":
+    if content and content[0] not in " !:#'%":
         content = " " + content
     return "#" + content
 
@@ -2125,9 +2174,6 @@ def left_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
     Prefer RHS otherwise.  This is why this function is not symmetrical with
     :func:`right_hand_split` which also handles optional parentheses.
     """
-    head = Line(depth=line.depth)
-    body = Line(depth=line.depth + 1, inside_brackets=True)
-    tail = Line(depth=line.depth)
     tail_leaves: List[Leaf] = []
     body_leaves: List[Leaf] = []
     head_leaves: List[Leaf] = []
@@ -2145,15 +2191,12 @@ def left_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
             if leaf.type in OPENING_BRACKETS:
                 matching_bracket = leaf
                 current_leaves = body_leaves
-    # Since body is a new indent level, remove spurious leading whitespace.
-    if body_leaves:
-        normalize_prefix(body_leaves[0], inside_brackets=True)
-    # Build the new lines.
-    for result, leaves in (head, head_leaves), (body, body_leaves), (tail, tail_leaves):
-        for leaf in leaves:
-            result.append(leaf, preformatted=True)
-            for comment_after in line.comments_after(leaf):
-                result.append(comment_after, preformatted=True)
+    if not matching_bracket:
+        raise CannotSplit("No brackets found")
+
+    head = bracket_split_build_line(head_leaves, line, matching_bracket)
+    body = bracket_split_build_line(body_leaves, line, matching_bracket, is_body=True)
+    tail = bracket_split_build_line(tail_leaves, line, matching_bracket)
     bracket_split_succeeded_or_raise(head, body, tail)
     for result in (head, body, tail):
         if result:
@@ -2171,9 +2214,6 @@ def right_hand_split(
 
     Note: running this function modifies `bracket_depth` on the leaves of `line`.
     """
-    head = Line(depth=line.depth)
-    body = Line(depth=line.depth + 1, inside_brackets=True)
-    tail = Line(depth=line.depth)
     tail_leaves: List[Leaf] = []
     body_leaves: List[Leaf] = []
     head_leaves: List[Leaf] = []
@@ -2190,25 +2230,18 @@ def right_hand_split(
                 opening_bracket = leaf.opening_bracket
                 closing_bracket = leaf
                 current_leaves = body_leaves
-    tail_leaves.reverse()
-    body_leaves.reverse()
-    head_leaves.reverse()
-    # Since body is a new indent level, remove spurious leading whitespace.
-    if body_leaves:
-        normalize_prefix(body_leaves[0], inside_brackets=True)
-    if not head_leaves:
-        # No `head` means the split failed. Either `tail` has all content or
+    if not (opening_bracket and closing_bracket and head_leaves):
+        # If there is no opening or closing_bracket that means the split failed and
+        # all content is in the tail.  Otherwise, if `head_leaves` are empty, it means
         # the matching `opening_bracket` wasn't available on `line` anymore.
         raise CannotSplit("No brackets found")
 
-    # Build the new lines.
-    for result, leaves in (head, head_leaves), (body, body_leaves), (tail, tail_leaves):
-        for leaf in leaves:
-            result.append(leaf, preformatted=True)
-            for comment_after in line.comments_after(leaf):
-                result.append(comment_after, preformatted=True)
-    assert opening_bracket and closing_bracket
-    body.should_explode = should_explode(body, opening_bracket)
+    tail_leaves.reverse()
+    body_leaves.reverse()
+    head_leaves.reverse()
+    head = bracket_split_build_line(head_leaves, line, opening_bracket)
+    body = bracket_split_build_line(body_leaves, line, opening_bracket, is_body=True)
+    tail = bracket_split_build_line(tail_leaves, line, opening_bracket)
     bracket_split_succeeded_or_raise(head, body, tail)
     if (
         # the body shouldn't be exploded
@@ -2280,6 +2313,35 @@ def bracket_split_succeeded_or_raise(head: Line, body: Line, tail: Line) -> None
                 f"Splitting brackets on an empty body to save "
                 f"{tail_len} characters is not worth it"
             )
+
+
+def bracket_split_build_line(
+    leaves: List[Leaf], original: Line, opening_bracket: Leaf, *, is_body: bool = False
+) -> Line:
+    """Return a new line with given `leaves` and respective comments from `original`.
+
+    If `is_body` is True, the result line is one-indented inside brackets and as such
+    has its first leaf's prefix normalized and a trailing comma added when expected.
+    """
+    result = Line(depth=original.depth)
+    if is_body:
+        result.inside_brackets = True
+        result.depth += 1
+        if leaves:
+            # Since body is a new indent level, remove spurious leading whitespace.
+            normalize_prefix(leaves[0], inside_brackets=True)
+            # Ensure a trailing comma when expected.
+            if original.is_import:
+                if leaves[-1].type != token.COMMA:
+                    leaves.append(Leaf(token.COMMA, ","))
+    # Populate the line
+    for leaf in leaves:
+        result.append(leaf, preformatted=True)
+        for comment_after in original.comments_after(leaf):
+            result.append(comment_after, preformatted=True)
+    if is_body:
+        result.should_explode = should_explode(result, opening_bracket)
+    return result
 
 
 def dont_increase_indentation(split_func: SplitFunc) -> SplitFunc:
@@ -2505,6 +2567,83 @@ def normalize_string_quotes(leaf: Leaf) -> None:
     leaf.value = f"{prefix}{new_quote}{new_body}{new_quote}"
 
 
+def normalize_numeric_literal(leaf: Leaf, allow_underscores: bool) -> None:
+    """Normalizes numeric (float, int, and complex) literals.
+
+    All letters used in the representation are normalized to lowercase (except
+    in Python 2 long literals), and long number literals are split using underscores.
+    """
+    text = leaf.value.lower()
+    if text.startswith(("0o", "0b")):
+        # Leave octal and binary literals alone.
+        pass
+    elif text.startswith("0x"):
+        # Change hex literals to upper case.
+        before, after = text[:2], text[2:]
+        text = f"{before}{after.upper()}"
+    elif "e" in text:
+        before, after = text.split("e")
+        sign = ""
+        if after.startswith("-"):
+            after = after[1:]
+            sign = "-"
+        elif after.startswith("+"):
+            after = after[1:]
+        before = format_float_or_int_string(before, allow_underscores)
+        after = format_int_string(after, allow_underscores)
+        text = f"{before}e{sign}{after}"
+    elif text.endswith(("j", "l")):
+        number = text[:-1]
+        suffix = text[-1]
+        # Capitalize in "2L" because "l" looks too similar to "1".
+        if suffix == "l":
+            suffix = "L"
+        text = f"{format_float_or_int_string(number, allow_underscores)}{suffix}"
+    else:
+        text = format_float_or_int_string(text, allow_underscores)
+    leaf.value = text
+
+
+def format_float_or_int_string(text: str, allow_underscores: bool) -> str:
+    """Formats a float string like "1.0"."""
+    if "." not in text:
+        return format_int_string(text, allow_underscores)
+
+    before, after = text.split(".")
+    before = format_int_string(before, allow_underscores) if before else "0"
+    if after:
+        after = format_int_string(after, allow_underscores, count_from_end=False)
+    else:
+        after = "0"
+    return f"{before}.{after}"
+
+
+def format_int_string(
+    text: str, allow_underscores: bool, count_from_end: bool = True
+) -> str:
+    """Normalizes underscores in a string to e.g. 1_000_000.
+
+    Input must be a string of digits and optional underscores.
+    If count_from_end is False, we add underscores after groups of three digits
+    counting from the beginning instead of the end of the strings. This is used
+    for the fractional part of float literals.
+    """
+    if not allow_underscores:
+        return text
+
+    text = text.replace("_", "")
+    if len(text) <= 5:
+        # No underscores for numbers <= 5 digits long.
+        return text
+
+    if count_from_end:
+        # Avoid removing leading zeros, which are important if we're formatting
+        # part of a number like "0.001".
+        return format(int("1" + text), "3_")[1:].lstrip("_")
+    else:
+        return "_".join(text[i : i + 3] for i in range(0, len(text), 3))
+
+
 def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
     """Make existing optional parentheses invisible or create new ones.
 
@@ -2523,7 +2662,11 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
     for index, child in enumerate(list(node.children)):
         if check_lpar:
             if child.type == syms.atom:
-                maybe_make_parens_invisible_in_atom(child)
+                if maybe_make_parens_invisible_in_atom(child):
+                    lpar = Leaf(token.LPAR, "")
+                    rpar = Leaf(token.RPAR, "")
+                    index = child.remove() or 0
+                    node.insert_child(index, Node(syms.atom, [lpar, child, rpar]))
             elif is_one_tuple(child):
                 # wrap child in visible parentheses
                 lpar = Leaf(token.LPAR, "(")
@@ -2631,7 +2774,11 @@ def generate_ignored_nodes(leaf: Leaf) -> Iterator[LN]:
 
 
 def maybe_make_parens_invisible_in_atom(node: LN) -> bool:
-    """If it's safe, make the parens in the atom `node` invisible, recursively."""
+    """If it's safe, make the parens in the atom `node` invisible, recursively.
+
+    Returns whether the node should itself be wrapped in invisible parentheses.
+
+    """
     if (
         node.type != syms.atom
         or is_empty_tuple(node)
@@ -2649,9 +2796,9 @@ def maybe_make_parens_invisible_in_atom(node: LN) -> bool:
         last.value = ""  # type: ignore
         if len(node.children) > 1:
             maybe_make_parens_invisible_in_atom(node.children[1])
-        return True
+        return False
 
-    return False
+    return True
 
 
 def is_empty_tuple(node: LN) -> bool:
@@ -2829,13 +2976,18 @@ def is_python36(node: Node) -> bool:
     """Return True if the current file is using Python 3.6+ features.
 
     Currently looking for:
-    - f-strings; and
+    - f-strings;
+    - underscores in numeric literals; and
     - trailing commas after * or ** in function signatures and calls.
     """
     for n in node.pre_order():
         if n.type == token.STRING:
             value_head = n.value[:2]  # type: ignore
             if value_head in {'f"', 'F"', "f'", "F'", "rf", "fr", "RF", "FR"}:
+                return True
+
+        elif n.type == token.NUMBER:
+            if "_" in n.value:  # type: ignore
                 return True
 
         elif (
@@ -2871,7 +3023,6 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
     length = 4 * line.depth
     opening_bracket = None
     closing_bracket = None
-    optional_brackets: Set[LeafID] = set()
     inner_brackets: Set[LeafID] = set()
     for index, leaf, leaf_length in enumerate_with_length(line, reversed=True):
         length += leaf_length
@@ -2882,17 +3033,12 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
         if leaf.type == STANDALONE_COMMENT or has_inline_comment:
             break
 
-        optional_brackets.discard(id(leaf))
         if opening_bracket:
             if leaf is opening_bracket:
                 opening_bracket = None
             elif leaf.type in CLOSING_BRACKETS:
                 inner_brackets.add(id(leaf))
         elif leaf.type in CLOSING_BRACKETS:
-            if not leaf.value:
-                optional_brackets.add(id(opening_bracket))
-                continue
-
             if index > 0 and line.leaves[index - 1].type in OPENING_BRACKETS:
                 # Empty brackets would fail a split so treat them as "inner"
                 # brackets (e.g. only add them to the `omit` set if another
@@ -2900,13 +3046,15 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
                 inner_brackets.add(id(leaf))
                 continue
 
-            opening_bracket = leaf.opening_bracket
             if closing_bracket:
                 omit.add(id(closing_bracket))
                 omit.update(inner_brackets)
                 inner_brackets.clear()
                 yield omit
-            closing_bracket = leaf
+
+            if leaf.value:
+                opening_bracket = leaf.opening_bracket
+                closing_bracket = leaf
 
 
 def get_future_imports(node: Node) -> Set[str]:
@@ -3071,7 +3219,7 @@ class Report:
         - otherwise return 0.
         """
         # According to http://tldp.org/LDP/abs/html/exitcodes.html starting with
-        # 126 we have special returncodes reserved by the shell.
+        # 126 we have special return codes reserved by the shell.
         if self.failure_count:
             return 123
 
