@@ -79,6 +79,8 @@ Parsing
 Split functions
 ---------------
 
+.. autofunction:: black.bracket_split_build_line
+
 .. autofunction:: black.bracket_split_succeeded_or_raise
 
 .. autofunction:: black.delimiter_split

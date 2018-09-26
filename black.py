@@ -2329,8 +2329,9 @@ def bracket_split_build_line(
             # Since body is a new indent level, remove spurious leading whitespace.
             normalize_prefix(leaves[0], inside_brackets=True)
             # Ensure a trailing comma when expected.
-            if original.is_import and len(leaves) == 1:
-                leaves.append(Leaf(token.COMMA, ","))
+            if original.is_import:
+                if leaves[-1].type != token.COMMA:
+                    leaves.append(Leaf(token.COMMA, ","))
     # Populate the line
     for leaf in leaves:
         result.append(leaf, preformatted=True)
