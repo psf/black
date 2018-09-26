@@ -2191,9 +2191,12 @@ def left_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
             if leaf.type in OPENING_BRACKETS:
                 matching_bracket = leaf
                 current_leaves = body_leaves
-    head = bracket_split_build_line(head_leaves, line)
-    body = bracket_split_build_line(body_leaves, line, is_body=True)
-    tail = bracket_split_build_line(tail_leaves, line)
+    if not matching_bracket:
+        raise CannotSplit("No brackets found")
+
+    head = bracket_split_build_line(head_leaves, line, matching_bracket)
+    body = bracket_split_build_line(body_leaves, line, matching_bracket, is_body=True)
+    tail = bracket_split_build_line(tail_leaves, line, matching_bracket)
     bracket_split_succeeded_or_raise(head, body, tail)
     for result in (head, body, tail):
         if result:
@@ -2236,10 +2239,9 @@ def right_hand_split(
     tail_leaves.reverse()
     body_leaves.reverse()
     head_leaves.reverse()
-    head = bracket_split_build_line(head_leaves, line)
-    body = bracket_split_build_line(body_leaves, line, is_body=True)
-    tail = bracket_split_build_line(tail_leaves, line)
-    body.should_explode = should_explode(body, opening_bracket)
+    head = bracket_split_build_line(head_leaves, line, opening_bracket)
+    body = bracket_split_build_line(body_leaves, line, opening_bracket, is_body=True)
+    tail = bracket_split_build_line(tail_leaves, line, opening_bracket)
     bracket_split_succeeded_or_raise(head, body, tail)
     if (
         # the body shouldn't be exploded
@@ -2314,7 +2316,7 @@ def bracket_split_succeeded_or_raise(head: Line, body: Line, tail: Line) -> None
 
 
 def bracket_split_build_line(
-    leaves: List[Leaf], original: Line, *, is_body: bool = False
+    leaves: List[Leaf], original: Line, opening_bracket: Leaf, *, is_body: bool = False
 ) -> Line:
     """Return a new line with given `leaves` and respective comments from `original`.
 
@@ -2337,6 +2339,8 @@ def bracket_split_build_line(
         result.append(leaf, preformatted=True)
         for comment_after in original.comments_after(leaf):
             result.append(comment_after, preformatted=True)
+    if is_body:
+        result.should_explode = should_explode(result, opening_bracket)
     return result
 
 
