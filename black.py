@@ -115,10 +115,16 @@ class FileMode(Flag):
     PYTHON36 = 1
     PYI = 2
     NO_STRING_NORMALIZATION = 4
+    NO_NUMERIC_UNDERSCORE_NORMALIZATION = 8
 
     @classmethod
     def from_configuration(
-        cls, *, py36: bool, pyi: bool, skip_string_normalization: bool
+        cls,
+        *,
+        py36: bool,
+        pyi: bool,
+        skip_string_normalization: bool,
+        skip_numeric_underscore_normalization: bool,
     ) -> "FileMode":
         mode = cls.AUTO_DETECT
         if py36:
@@ -127,6 +133,8 @@ class FileMode(Flag):
             mode |= cls.PYI
         if skip_string_normalization:
             mode |= cls.NO_STRING_NORMALIZATION
+        if skip_numeric_underscore_normalization:
+            mode |= cls.NO_NUMERIC_UNDERSCORE_NORMALIZATION
         return mode
 
 
@@ -195,6 +203,12 @@ def read_pyproject_toml(
     "--skip-string-normalization",
     is_flag=True,
     help="Don't normalize string quotes or prefixes.",
+)
+@click.option(
+    "-N",
+    "--skip-numeric-underscore-normalization",
+    is_flag=True,
+    help="Don't normalize underscores in numeric literals.",
 )
 @click.option(
     "--check",
@@ -286,6 +300,7 @@ def main(
     pyi: bool,
     py36: bool,
     skip_string_normalization: bool,
+    skip_numeric_underscore_normalization: bool,
     quiet: bool,
     verbose: bool,
     include: str,
@@ -296,7 +311,10 @@ def main(
     """The uncompromising code formatter."""
     write_back = WriteBack.from_configuration(check=check, diff=diff)
     mode = FileMode.from_configuration(
-        py36=py36, pyi=pyi, skip_string_normalization=skip_string_normalization
+        py36=py36,
+        pyi=pyi,
+        skip_string_normalization=skip_string_normalization,
+        skip_numeric_underscore_normalization=skip_numeric_underscore_normalization,
     )
     if config and verbose:
         out(f"Using configuration from {config}.", bold=False, fg="blue")
@@ -618,7 +636,8 @@ def format_str(
         remove_u_prefix=py36 or "unicode_literals" in future_imports,
         is_pyi=is_pyi,
         normalize_strings=normalize_strings,
-        allow_underscores=py36,
+        allow_underscores=py36
+        and not bool(mode & FileMode.NO_NUMERIC_UNDERSCORE_NORMALIZATION),
     )
     elt = EmptyLineTracker(is_pyi=is_pyi)
     empty_line = Line()
@@ -2600,8 +2619,8 @@ def format_int_string(
         return text
 
     text = text.replace("_", "")
-    if len(text) <= 6:
-        # No underscores for numbers <= 6 digits long.
+    if len(text) <= 5:
+        # No underscores for numbers <= 5 digits long.
         return text
 
     if count_from_end:

@@ -381,6 +381,11 @@ styled as `2L` instead of `2l` to avoid confusion between `l` and `1`. In
 Python 3.6+, *Black* adds underscores to long numeric literals to aid
 readability: `100000000` becomes `100_000_000`.
 
+For regions where numerals are grouped differently (like [India](https://en.wikipedia.org/wiki/Indian_numbering_system)
+and [China](https://en.wikipedia.org/wiki/Chinese_numerals#Whole_numbers)),
+the `-N` or `--skip-numeric-underscore-normalization` command line option
+makes *Black* preserve underscores in numeric literals.
+
 ### Line breaks & binary operators
 
 *Black* will break a line before a binary operator when splitting a block
@@ -796,6 +801,8 @@ The headers controlling how code is formatted are:
  - `X-Skip-String-Normalization`: corresponds to the `--skip-string-normalization`
     command line flag. If present and its value is not the empty string, no string
     normalization will be performed.
+ - `X-Skip-Numeric-Underscore-Normalization`: corresponds to the
+    `--skip-numeric-underscore-normalization` command line flag.
  - `X-Fast-Or-Safe`: if set to `fast`, `blackd` will act as *Black* does when
     passed the `--fast` command line flag.
  - `X-Python-Variant`: if set to `pyi`, `blackd` will act as *Black* does when
@@ -925,6 +932,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * numeric literals are now formatted by *Black* (#452, #461, #464, #469):
 
   * numeric literals are normalized to include `_` separators on Python 3.6+ code
+
+  * added `--skip-numeric-underscore-normalization` to disable the above behavior and
+    leave numeric underscores as they were in the input
 
   * code with `_` in numeric literals is recognized as Python 3.6+
 

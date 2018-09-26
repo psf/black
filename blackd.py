@@ -14,6 +14,7 @@ VERSION_HEADER = "X-Protocol-Version"
 LINE_LENGTH_HEADER = "X-Line-Length"
 PYTHON_VARIANT_HEADER = "X-Python-Variant"
 SKIP_STRING_NORMALIZATION_HEADER = "X-Skip-String-Normalization"
+SKIP_NUMERIC_UNDERSCORE_NORMALIZATION_HEADER = "X-Skip-Numeric-Underscore-Normalization"
 FAST_OR_SAFE_HEADER = "X-Fast-Or-Safe"
 
 
@@ -69,11 +70,17 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
         skip_string_normalization = bool(
             request.headers.get(SKIP_STRING_NORMALIZATION_HEADER, False)
         )
+        skip_numeric_underscore_normalization = bool(
+            request.headers.get(SKIP_NUMERIC_UNDERSCORE_NORMALIZATION_HEADER, False)
+        )
         fast = False
         if request.headers.get(FAST_OR_SAFE_HEADER, "safe") == "fast":
             fast = True
         mode = black.FileMode.from_configuration(
-            py36=py36, pyi=pyi, skip_string_normalization=skip_string_normalization
+            py36=py36,
+            pyi=pyi,
+            skip_string_normalization=skip_string_normalization,
+            skip_numeric_underscore_normalization=skip_numeric_underscore_normalization,
         )
         req_bytes = await request.content.read()
         charset = request.charset if request.charset is not None else "utf8"
