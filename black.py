@@ -2174,9 +2174,6 @@ def left_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
     Prefer RHS otherwise.  This is why this function is not symmetrical with
     :func:`right_hand_split` which also handles optional parentheses.
     """
-    head = Line(depth=line.depth)
-    body = Line(depth=line.depth + 1, inside_brackets=True)
-    tail = Line(depth=line.depth)
     tail_leaves: List[Leaf] = []
     body_leaves: List[Leaf] = []
     head_leaves: List[Leaf] = []
@@ -2194,22 +2191,16 @@ def left_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
             if leaf.type in OPENING_BRACKETS:
                 matching_bracket = leaf
                 current_leaves = body_leaves
-    # Since body is a new indent level, remove spurious leading whitespace.
-    if body_leaves:
-        normalize_prefix(body_leaves[0], inside_brackets=True)
-    # Build the new lines.
-    for result, leaves in (head, head_leaves), (body, body_leaves), (tail, tail_leaves):
-        for leaf in leaves:
-            result.append(leaf, preformatted=True)
-            for comment_after in line.comments_after(leaf):
-                result.append(comment_after, preformatted=True)
+    head = bracket_split_build_line(head_leaves, line)
+    body = bracket_split_build_line(body_leaves, line, is_body=True)
+    tail = bracket_split_build_line(tail_leaves, line)
     bracket_split_succeeded_or_raise(head, body, tail)
     for result in (head, body, tail):
         if result:
             yield result
 
 
-def right_hand_split(  # noqa C901
+def right_hand_split(
     line: Line, line_length: int, py36: bool = False, omit: Collection[LeafID] = ()
 ) -> Iterator[Line]:
     """Split line into many lines, starting with the last matching bracket pair.
@@ -2220,9 +2211,6 @@ def right_hand_split(  # noqa C901
 
     Note: running this function modifies `bracket_depth` on the leaves of `line`.
     """
-    head = Line(depth=line.depth)
-    body = Line(depth=line.depth + 1, inside_brackets=True)
-    tail = Line(depth=line.depth)
     tail_leaves: List[Leaf] = []
     body_leaves: List[Leaf] = []
     head_leaves: List[Leaf] = []
@@ -2239,27 +2227,18 @@ def right_hand_split(  # noqa C901
                 opening_bracket = leaf.opening_bracket
                 closing_bracket = leaf
                 current_leaves = body_leaves
-    tail_leaves.reverse()
-    body_leaves.reverse()
-    head_leaves.reverse()
-    # Since body is a new indent level, remove spurious leading whitespace.
-    if body_leaves:
-        normalize_prefix(body_leaves[0], inside_brackets=True)
-    if not head_leaves:
-        # No `head` means the split failed. Either `tail` has all content or
+    if not (opening_bracket and closing_bracket and head_leaves):
+        # If there is no opening or closing_bracket that means the split failed and
+        # all content is in the tail.  Otherwise, if `head_leaves` are empty, it means
         # the matching `opening_bracket` wasn't available on `line` anymore.
         raise CannotSplit("No brackets found")
 
-    if line.is_import and len(body_leaves) == 1:
-        body_leaves.append(Leaf(token.COMMA, ","))
-
-    # Build the new lines.
-    for result, leaves in (head, head_leaves), (body, body_leaves), (tail, tail_leaves):
-        for leaf in leaves:
-            result.append(leaf, preformatted=True)
-            for comment_after in line.comments_after(leaf):
-                result.append(comment_after, preformatted=True)
-    assert opening_bracket and closing_bracket
+    tail_leaves.reverse()
+    body_leaves.reverse()
+    head_leaves.reverse()
+    head = bracket_split_build_line(head_leaves, line)
+    body = bracket_split_build_line(body_leaves, line, is_body=True)
+    tail = bracket_split_build_line(tail_leaves, line)
     body.should_explode = should_explode(body, opening_bracket)
     bracket_split_succeeded_or_raise(head, body, tail)
     if (
@@ -2332,6 +2311,32 @@ def bracket_split_succeeded_or_raise(head: Line, body: Line, tail: Line) -> None
                 f"Splitting brackets on an empty body to save "
                 f"{tail_len} characters is not worth it"
             )
+
+
+def bracket_split_build_line(
+    leaves: List[Leaf], original: Line, *, is_body: bool = False
+) -> Line:
+    """Return a new line with given `leaves` and respective comments from `original`.
+
+    If `is_body` is True, the result line is one-indented inside brackets and as such
+    has its first leaf's prefix normalized and a trailing comma added when expected.
+    """
+    result = Line(depth=original.depth)
+    if is_body:
+        result.inside_brackets = True
+        result.depth += 1
+        if leaves:
+            # Since body is a new indent level, remove spurious leading whitespace.
+            normalize_prefix(leaves[0], inside_brackets=True)
+            # Ensure a trailing comma when expected.
+            if original.is_import and len(leaves) == 1:
+                leaves.append(Leaf(token.COMMA, ","))
+    # Populate the line
+    for leaf in leaves:
+        result.append(leaf, preformatted=True)
+        for comment_after in original.comments_after(leaf):
+            result.append(comment_after, preformatted=True)
+    return result
 
 
 def dont_increase_indentation(split_func: SplitFunc) -> SplitFunc:
