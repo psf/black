@@ -34,7 +34,7 @@ exclude = '''
 
 [tool.poetry]
 name = "black"
-version = "18.6b4"
+version = "18.9b0"
 description = "The uncompromising code formatter."
 readme = "README.md"
 authors = [
