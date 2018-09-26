@@ -2600,8 +2600,8 @@ def format_int_string(
         return text
 
     text = text.replace("_", "")
-    if len(text) <= 4:
-        # No underscores for numbers <= 4 digits long.
+    if len(text) <= 5:
+        # No underscores for numbers <= 5 digits long.
         return text
 
     if count_from_end:
