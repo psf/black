@@ -2082,8 +2082,8 @@ def list_comments(prefix: str, *, is_endmarker: bool) -> List[ProtoComment]:
 def make_comment(content: str) -> str:
     """Return a consistently formatted comment from the given `content` string.
 
-    All comments (except for "##", "#!", "#:") should have a single space between
-    the hash sign and the content.
+    All comments (except for "##", "#!", "#:", '#'", "#%%") should have a single
+    space between the hash sign and the content.
 
     If `content` didn't start with a hash sign, one is provided.
     """
@@ -2093,7 +2093,7 @@ def make_comment(content: str) -> str:
 
     if content[0] == "#":
         content = content[1:]
-    if content and content[0] not in " !:#":
+    if content and content[0] not in " !:#'%":
         content = " " + content
     return "#" + content
 

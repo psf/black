@@ -953,6 +953,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * cache is now populated when `--check` is successful for a file which speeds up
   consecutive checks of properly formatted unmodified files (#448)
 
+* fixed mangling [pweave](http://mpastell.com/pweave/) and
+  [Spyder IDE](https://pythonhosted.org/spyder/) special comments (#532)
+
 * fixed unstable formatting when unpacking big tuples (#267)
 
 * fixed parsing of `__future__` imports with renames (#389)
