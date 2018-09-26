@@ -940,16 +940,18 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
   * code with `_` in numeric literals is recognized as Python 3.6+
 
-  * most letters in numeric literals are lowercased (e.g., in `1e10` or `0xab`)
+  * most letters in numeric literals are lowercased (e.g., in `1e10`, `0x01`)
+
+  * hexadecimal digits are always uppercased (e.g. `0xBADC0DE`)
 
 * added `blackd`, see [its documentation](#blackd) for more info (#349)
 
 * adjacent string literals are now correctly split into multiple lines (#463)
 
+* trailing comma is now added to single imports that don't fit on a line (#250)
+
 * cache is now populated when `--check` is successful for a file which speeds up
   consecutive checks of properly formatted unmodified files (#448)
-
-* code with `_` in numeric literals is recognized as Python 3.6+ (#461)
 
 * fixed unstable formatting when unpacking big tuples (#267)
 
@@ -964,9 +966,6 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * note: the Vim plugin stopped registering ``,=`` as a default chord as it turned out
   to be a bad idea (#415)
-
-
-* trailing comma is now added to single imports that don't fit on a line (#250)
 
 
 ### 18.6b4
