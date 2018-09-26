@@ -625,7 +625,7 @@ def format_str(
 
     `line_length` determines how many characters per line are allowed.
     """
-    src_node = lib2to3_parse(src_contents)
+    src_node = lib2to3_parse(src_contents.lstrip())
     dst_contents = ""
     future_imports = get_future_imports(src_node)
     is_pyi = bool(mode & FileMode.PYI)

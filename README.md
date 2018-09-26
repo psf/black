@@ -953,6 +953,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * cache is now populated when `--check` is successful for a file which speeds up
   consecutive checks of properly formatted unmodified files (#448)
 
+* whitespace at the beginning of the file is now removed (#399)
+
 * fixed mangling [pweave](http://mpastell.com/pweave/) and
   [Spyder IDE](https://pythonhosted.org/spyder/) special comments (#532)
 
