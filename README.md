@@ -82,7 +82,7 @@ Options:
   -S, --skip-string-normalization
                               Don't normalize string quotes or prefixes.
   -N, --skip-numeric-underscore-normalization
-                              Don't normalize numeric literals with _ separators.			      
+                              Don't normalize underscores in numeric literals.			      
   --check                     Don't write the files back, just return the
                               status.  Return code 0 means nothing would
                               change.  Return code 1 means some files would be
