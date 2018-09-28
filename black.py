@@ -1,6 +1,6 @@
 import asyncio
 from asyncio.base_events import BaseEventLoop
-from concurrent.futures import Executor, ProcessPoolExecutor
+from concurrent.futures import Executor, ProcessPoolExecutor, ThreadPoolExecutor
 from datetime import datetime
 from enum import Enum, Flag
 from functools import lru_cache, partial, wraps
@@ -358,7 +358,13 @@ def main(
         )
     else:
         loop = asyncio.get_event_loop()
-        executor = ProcessPoolExecutor(max_workers=os.cpu_count())
+
+        cpu_count = os.cpu_count()
+        try:
+            executor = ProcessPoolExecutor(max_workers=cpu_count)
+        except ImportError:
+            executor = ThreadPoolExecutor(max_workers=cpu_count)
+
         try:
             loop.run_until_complete(
                 schedule_formatting(
