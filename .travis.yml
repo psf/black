@@ -31,5 +31,5 @@ deploy:
   skip_cleanup: true
   on:
     condition: $TRAVIS_PYTHON_VERSION == '3.6'
-    repo: cxong/black
+    repo: ambv/black
     tags: true
