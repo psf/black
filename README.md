@@ -143,7 +143,8 @@ original.  This slows it down.  If you're feeling confident, use
 
 *Black* reformats entire files in place.  It is not configurable.  It
 doesn't take previous formatting into account.  It doesn't reformat
-blocks that start with `# fmt: off` and end with `# fmt: on`.  It also
+blocks that start with `# fmt: off` and end with `# fmt: on`. `# fmt: on/off`
+have to be on the same level of indentation. It also
 recognizes [YAPF](https://github.com/google/yapf)'s block comments to
 the same effect, as a courtesy for straddling code.
 
