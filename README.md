@@ -223,6 +223,54 @@ between two distinct sections of the code that otherwise share the same
 indentation level (like the arguments list and the docstring in the
 example above).
 
+*Black* prefers parentheses over backslashes, and will remove backslashes
+ if found.
+ ```py3
+ # in:
+ 
+ if some_short_rule1 \
+    and some_short_rule2:
+       ...
+      
+ # out:
+ 
+ if some_short_rule1 and some_short_rule2:
+    ...
+    
+ 
+ # in:
+ 
+ if some_long_rule1 \
+    and some_long_rule2:
+      ...
+ 
+ # out:
+ 
+ if (
+     some_long_rule1
+     and some_long_rule2
+ ):
+     ...
+ 
+ ```
+ 
+ This is because python has significant indentation for blocks
+ ending with a colon. However, that is not the case with backslashes.
+ ```py3
+ if True:
+    print("significant indent")
+ 
+ if some_long_rule_rule1 \
+    and some_long_rule2:
+    print("Unclear indentation")   
+ 
+ ``` 
+ The problem with backslashes is that there is no closing token for *Black*
+ to let the user know that a block has ended. Other formatters and PEP 8 work
+ around this problem by creating extra indentation, but *Black*
+ considers this bad as it can cause a cascading effect on formatting if the line
+ is too long and won't fit.
+ 
 If a data structure literal (tuple, list, set, dict) or a line of "from"
 imports cannot fit in the allotted length, it's always split into one
 element per line.  This minimizes diffs as well as enables readers of
