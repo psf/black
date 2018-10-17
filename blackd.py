@@ -108,6 +108,10 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
         return web.Response(status=500, text=str(e))
 
 
-if __name__ == "__main__":
+def patched_main() -> None:
     black.patch_click()
     main()
+
+
+if __name__ == "__main__":
+    patched_main()
