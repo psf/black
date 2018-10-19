@@ -254,7 +254,7 @@ example above).
  
  ```
  
- This is because python has significant indentation for blocks
+ This is because Python has significant indentation for blocks
  ending with a colon. However, that is not the case with backslashes.
  ```py3
  if True:
