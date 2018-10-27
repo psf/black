@@ -26,10 +26,11 @@ before_deploy:
 deploy:
   provider: releases
   api_key:
-    secure: HWp0i3tzLox5V+tT5GJ+X6rJATd4dmR6aQe0wpc7FWwrKFKF1fVqQtc8gvzS2e/Wv4Xse/Q0vqze5U6q+aYIysoVkLeZiRJ3YzBHV40/J058MG7PMjyJ1hfxsctVEUIsvKSlF9br21k5C6efem2FrfmuavbRN4sdged5HlFpPYrH65G41Wt/3msdF7NNhDaeup3vne+hVrSdYkLj3qSN5a0htLhWSeT12f5hruBqFN32dVVJrtsI9OeOvy4ASrMm2V3S9+QsR0xQFkCCwFxNF95BVzjRKIT7jcVfKsQ15uJLUonZCLMRqZ0pYfVc11J0yxVIUZ8SK0AU3tW4Fh/+LCHgifHDF9Ua5q6l+YSVZq0aVWZq21m2z/KdlTM6EdBOsAjzvYpY55SLWDCsX0Bkn6QX//E+MnPf0H2oTJ7zm5pOgCCJWXIZnX2+FsnM1W23yc3Uvwld9I33+D3dC5ZOssDpYPTzrVZWOcDYyIQCT3FvgM18xii1uajb8WJQS8Le+oJQAv5UQAB57G+Nr4iKlzpqTcPkRZSKLlTBFfh/lVU+UAMQDQgrUk+4PSOIsYxuQDK3kxdwFYJMI/BztqPidRfCHq/qR2pya/+79dp9VDCe5g2acZ40jIISqVgrezKrjFNKvYmrca8jU9iCOO4QvPiIp9qxcGJCYvctNguAD5A=
-  file: dist/black
+    secure: chYvcmnRqRKtfBcAZRj62rEv0ziWuHMl6MnfQbd1MOVQ4njntI8+CCPk118dW6MWSfwTqyMFy+t9gAgQYhjkLEHMS2aK9Z2wCWki1MkBrkMw5tYoLFvPu0KQ9rIVihxsr93a/am6Oh/Hp+1uuc4zWPUf1ubX+QlCzsxjCzVso1kTJjjdN04UxvkcFR+sY2d9Qyy9WcdifChnLwdmIJKIoVOE7Imm820nzImJHkJh8iSnjBjL98gvPPeC/nWTltsbErvf2mCv4NIjzjQZvHa87c7rSJGbliNrAxCSyyvBX+JNeS8U2fGLE83do0HieyjdPbTuc27e2nsrrihgPh+hXbiJerljclfp5hsJ5qGz5sS9MU1fR7sSLiQQ2v0TYB5RRwd34TgGiLwFAZZmgZOfMUCtefCKvP8qvELMSNd99+msfPEHiuhADF0bKPTbCUa6BgUHNr6woOLmHerjPHd6NI/a8Skz/uQB4xr3spLSmfUmX0fEqyYUDphkGPNH8IsvC1/F2isecW9kOzEWmB5oCmpMTGm4TIf3C01Nx+9PVwB2Z+30hhbfIEBxD4loRFmh/hU5TIQEpneF8yoIfe9EnMaoZbq86xhADZXvLIZvpXUdm1NQZDG6na2S1fwyOUKQsW6BWLcfoZZwZlrXrViD1jBsHBV++s+lxShTeTCszlo=
+  file:
+    - dist/black
   skip_cleanup: true
   on:
     condition: $TRAVIS_PYTHON_VERSION == '3.6'
-    repo: cxong/black
+    repo: ambv/black
     tags: true
