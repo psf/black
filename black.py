@@ -679,7 +679,6 @@ GRAMMARS = [
 
 def lib2to3_parse(src_txt: str) -> Node:
     """Given a string with source, return the lib2to3 Node."""
-    grammar = pygram.python_grammar_no_print_statement
     if src_txt[-1:] != "\n":
         src_txt += "\n"
     for grammar in GRAMMARS:
@@ -2156,7 +2155,7 @@ def split_line(
                 result.extend(
                     split_line(l, line_length=line_length, inner=True, py36=py36)
                 )
-        except CannotSplit as cs:
+        except CannotSplit:
             continue
 
         else:
@@ -2390,7 +2389,7 @@ def delimiter_split(line: Line, py36: bool = False) -> Iterator[Line]:
         nonlocal current_line
         try:
             current_line.append_safe(leaf, preformatted=True)
-        except ValueError as ve:
+        except ValueError:
             yield current_line
 
             current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
