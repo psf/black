@@ -7,7 +7,7 @@ repos:
     - id: black
       name: black
       language: system
-      entry: python3 -m black
+      entry: black
       types: [python]
     - id: flake8
       name: flake8
