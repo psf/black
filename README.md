@@ -675,7 +675,7 @@ Configuration:
 To install with [vim-plug](https://github.com/junegunn/vim-plug):
 
 ```
-Plug 'ambv/black',
+Plug 'ambv/black'
 ```
 
 or with [Vundle](https://github.com/VundleVim/Vundle.vim):
