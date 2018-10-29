@@ -138,6 +138,23 @@ class FileMode(Flag):
         return mode
 
 
+def abspath_pyproject_toml(path_search_start: str) -> Optional[str]:
+    """Find the absolute filepath to a pyproject.toml if it exists"""
+    path_project_root = find_project_root(path_search_start)
+    path_pyproject_toml = path_project_root / "pyproject.toml"
+    return str(path_pyproject_toml) if path_pyproject_toml.is_file() else None
+
+
+def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
+    """Parse a pyproject toml file, pulling out relevant parts for Black
+
+    If parsing fails, will raise a toml.TomlDecodeError
+    """
+    pyproject_toml = toml.load(path_config)
+    config = pyproject_toml.get("tool", {}).get("black", {})
+    return {k.replace("--", "").replace("-", "_"): v for k, v in config.items()}
+
+
 def read_pyproject_toml(
     ctx: click.Context, param: click.Parameter, value: Union[str, int, bool, None]
 ) -> Optional[str]:
@@ -148,16 +165,12 @@ def read_pyproject_toml(
     """
     assert not isinstance(value, (int, bool)), "Invalid parameter type passed"
     if not value:
-        root = find_project_root(ctx.params.get("src", ()))
-        path = root / "pyproject.toml"
-        if path.is_file():
-            value = str(path)
-        else:
+        value = abspath_pyproject_toml(ctx.params.get("src", ()))
+        if value is None:
             return None
 
     try:
-        pyproject_toml = toml.load(value)
-        config = pyproject_toml.get("tool", {}).get("black", {})
+        config = parse_pyproject_toml(value)
     except (toml.TomlDecodeError, OSError) as e:
         raise click.BadOptionUsage(f"Error reading configuration file: {e}", ctx)
 
@@ -166,9 +179,7 @@ def read_pyproject_toml(
 
     if ctx.default_map is None:
         ctx.default_map = {}
-    ctx.default_map.update(  # type: ignore  # bad types in .pyi
-        {k.replace("--", "").replace("-", "_"): v for k, v in config.items()}
-    )
+    ctx.default_map.update(config)  # type: ignore  # bad types in .pyi
     return value
 
 
