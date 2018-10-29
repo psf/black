@@ -3662,6 +3662,10 @@ def patch_click() -> None:
             module._verify_python3_env = lambda: None
 
 
-if __name__ == "__main__":
+def patched_main() -> None:
     patch_click()
     main()
+
+
+if __name__ == "__main__":
+    patched_main()

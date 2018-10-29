@@ -57,5 +57,10 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Software Development :: Quality Assurance",
     ],
-    entry_points={"console_scripts": ["black=black:main", "blackd=blackd:main [d]"]},
+    entry_points={
+        "console_scripts": [
+            "black=black:patched_main",
+            "blackd=blackd:patched_main [d]",
+        ]
+    },
 )
