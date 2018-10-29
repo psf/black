@@ -97,10 +97,40 @@ if _initialize_black_env():
 
 def Black():
   start = time.time()
-  fast = bool(int(vim.eval("g:black_fast")))
-  line_length = int(vim.eval("g:black_linelength"))
+
+  path_pyproject_toml = black.abspath_pyproject_toml(vim.eval("pwd"))
+  try:
+      config_pyproject_toml = black.parse_pyproject_toml(path_pyproject_toml)
+  except Exception:
+      config_pyproject_toml = {}
+
+  toml_line_length = config_pyproject_toml.get("line_length")
+  toml_fast = config_pyproject_toml.get("fast")
+  toml_skip_string_normalization = config_pyproject_toml.get(
+    "skip_string_normalization"
+  )
+
+  line_length = (
+    toml_line_length
+    if isinstance(toml_line_length, int) else
+    int(vim.eval("g:black_linelength"))
+  )
+
+  fast = (
+    toml_fast
+    if isinstance(toml_fast, bool) else
+    bool(int(vim.eval("g:black_fast")))
+  )
+
+  skip_string_normalization = (
+    toml_skip_string_normalization
+    if isinstance(toml_skip_string_normalization, bool) else
+    bool(int(vim.eval("g:black_skip_string_normalization")))
+  )
+
   mode = black.FileMode.AUTO_DETECT
-  if bool(int(vim.eval("g:black_skip_string_normalization"))):
+
+  if skip_string_normalization:
     mode |= black.FileMode.NO_STRING_NORMALIZATION
   buffer_str = '\n'.join(vim.current.buffer) + '\n'
   try:
