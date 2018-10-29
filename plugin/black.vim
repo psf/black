@@ -94,15 +94,16 @@ def _initialize_black_env(upgrade=False):
 if _initialize_black_env():
   import black
   import time
+  import toml
 
 def Black():
   start = time.time()
 
-  path_pyproject_toml = black.abspath_pyproject_toml(vim.eval("pwd"))
+  path_pyproject_toml = black.abspath_pyproject_toml(vim.eval("fnamemodify(getcwd(), ':t')"))
   try:
-      config_pyproject_toml = black.parse_pyproject_toml(path_pyproject_toml)
-  except Exception:
-      config_pyproject_toml = {}
+    config_pyproject_toml = black.parse_pyproject_toml(path_pyproject_toml)
+  except Exception as exc:
+    config_pyproject_toml = {}
 
   toml_line_length = config_pyproject_toml.get("line_length")
   toml_fast = config_pyproject_toml.get("fast")
