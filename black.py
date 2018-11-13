@@ -2435,7 +2435,7 @@ def standalone_comment_split(line: Line, py36: bool = False) -> Iterator[Line]:
         nonlocal current_line
         try:
             current_line.append_safe(leaf, preformatted=True)
-        except ValueError as ve:
+        except ValueError:
             yield current_line
 
             current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
