@@ -359,8 +359,8 @@ string literals that ended up on the same line (see
 [#26](https://github.com/ambv/black/issues/26) for details).
 
 Why settle on double quotes?  They anticipate apostrophes in English
-text.  They match the docstring standard described in PEP 257.  An
-empty string in double quotes (`""`) is impossible to confuse with
+text.  They match the docstring standard described in [PEP 257](https://www.python.org/dev/peps/pep-0257/#what-is-a-docstring).
+An empty string in double quotes (`""`) is impossible to confuse with
 a one double-quote regardless of fonts and syntax highlighting used.
 On top of this, double quotes for strings are consistent with C which
 Python interacts a lot with.
