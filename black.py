@@ -135,6 +135,7 @@ class Feature(Enum):
 
 
 VERSION_TO_FEATURES = {
+    TargetVersion.CPY27: set(),
     TargetVersion.PYPY35: {Feature.UNICODE_LITERALS, Feature.F_STRINGS},
     TargetVersion.CPY33: {Feature.UNICODE_LITERALS},
     TargetVersion.CPY34: {Feature.UNICODE_LITERALS},
@@ -162,7 +163,7 @@ VERSION_TO_FEATURES = {
 
 @dataclass
 class FileMode:
-    target_versions: Set[TargetVersion]
+    target_versions: Set[TargetVersion] = Factory(set)
     line_length: int = DEFAULT_LINE_LENGTH
     numeric_underscore_normalization: bool = True
     string_normalization: bool = True
@@ -518,7 +519,7 @@ async def schedule_formatting(
         lock = manager.Lock()
     tasks = {
         loop.run_in_executor(
-            executor, format_file_in_place, src, fast, write_back, mode, lock
+            executor, format_file_in_place, src, fast, mode, write_back, lock
         ): src
         for src in sorted(sources)
     }
@@ -555,9 +556,8 @@ async def schedule_formatting(
 def format_file_in_place(
     src: Path,
     fast: bool,
-    *,
-    write_back: WriteBack = WriteBack.NO,
     mode: FileMode,
+    write_back: WriteBack = WriteBack.NO,
     lock: Any = None,  # multiprocessing.Manager().Lock() is some crazy proxy
 ) -> bool:
     """Format file under `src` path. Return True if changed.
