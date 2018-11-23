@@ -156,8 +156,8 @@ class BlackTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
 
     def invokeBlack(self, args: List[str], exit_code: int = 0) -> None:
-        result = BlackRunner().invoke(black.main, args, mix_stderr=False)
-        self.assertEqual(result.exit_code, exit_code, msg=result.stderr)
+        result = BlackRunner().invoke(black.main, args)
+        self.assertEqual(result.exit_code, exit_code, msg=runner.stderr_bytes.decode())
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_empty(self) -> None:
@@ -193,7 +193,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, blac.FileMode())
+        black.assert_stable(source, actual, black.FileMode())
         self.assertFalse(ff(THIS_DIR / ".." / "black.py"))
 
     def test_piping(self) -> None:
@@ -791,7 +791,7 @@ class BlackTestCase(unittest.TestCase):
         node = black.lib2to3_parse("def f(*, arg,): ...\n")
         self.assertEqual(black.get_features_used(node), {Feature.TRAILING_COMMA})
         node = black.lib2to3_parse("def f(*, arg): f'string'\n")
-        self.assertEqual(black.get_features_used(node), {Feature.F_STRING})
+        self.assertEqual(black.get_features_used(node), {Feature.F_STRINGS})
         node = black.lib2to3_parse("123_456\n")
         self.assertEqual(black.get_features_used(node), {Feature.NUMERIC_UNDERSCORES})
         node = black.lib2to3_parse("123456\n")
@@ -799,12 +799,12 @@ class BlackTestCase(unittest.TestCase):
         source, expected = read_data("function")
         node = black.lib2to3_parse(source)
         self.assertEqual(
-            black.get_features_used(node), {Feature.TRAILING_COMMA, Feature.F_STRING}
+            black.get_features_used(node), {Feature.TRAILING_COMMA, Feature.F_STRINGS}
         )
         node = black.lib2to3_parse(expected)
         self.assertEqual(
             black.get_features_used(node),
-            {Feature.TRAILING_COMMA, Feature.F_STRING, Feature.NUMERIC_UNDERSCORES},
+            {Feature.TRAILING_COMMA, Feature.F_STRINGS, Feature.NUMERIC_UNDERSCORES},
         )
         source, expected = read_data("expression")
         node = black.lib2to3_parse(source)
