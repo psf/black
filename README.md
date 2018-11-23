@@ -813,8 +813,9 @@ The headers controlling how code is formatted are:
     passed the `--fast` command line flag.
  - `X-Python-Variant`: if set to `pyi`, `blackd` will act as *Black* does when
     passed the `--pyi` command line flag. Otherwise, its value must correspond to
-    a Python version. If this value represents at least Python 3.6, `blackd` will
-    act as *Black* does when passed the `--py36` command line flag.
+    a Python version or a set of comma-separated Python versions, optionally
+    prefixed with `cpy` or `pypy`. For example, to request code that is compatible
+    with PyPy 3.5 and CPython 3.5, set the header to `pypy3.5,cpy3.5`.
 
 If any of these headers are set to invalid values, `blackd` returns a `HTTP 400`
 error response, mentioning the name of the problematic header in the message body.
@@ -932,6 +933,11 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 
 ## Change Log
+
+### 18.11b0
+
+* new option `--target-version` to control which Python versions
+  *Black*-formatted code should target
 
 ### 18.9b0
 

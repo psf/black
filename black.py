@@ -237,9 +237,9 @@ def read_pyproject_toml(
     show_default=True,
 )
 @click.option(
-    "--target-versions",
-    type=click.Choice(tuple(TargetVersion)),
-    callback=lambda c, p, v: [TargetVersion[val] for val in v],
+    "--target-version",
+    type=click.Choice([v.name.lower() for v in TargetVersion]),
+    callback=lambda c, p, v: [TargetVersion[val.upper()] for val in v],
     multiple=True,
 )
 @click.option(
@@ -355,7 +355,7 @@ def read_pyproject_toml(
 def main(
     ctx: click.Context,
     line_length: int,
-    target_versions: List[TargetVersion],
+    target_version: List[TargetVersion],
     check: bool,
     diff: bool,
     fast: bool,
@@ -372,12 +372,12 @@ def main(
 ) -> None:
     """The uncompromising code formatter."""
     write_back = WriteBack.from_configuration(check=check, diff=diff)
-    if target_versions:
+    if target_version:
         if py36:
-            err(f"Cannot use both --target-versions and --py36")
+            err(f"Cannot use both --target-version and --py36")
             ctx.exit(2)
         else:
-            versions = set(target_versions)
+            versions = set(target_version)
     elif py36:
         versions = PY36_VERSIONS
     else:

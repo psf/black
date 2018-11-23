@@ -58,25 +58,33 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
             value = request.headers[PYTHON_VARIANT_HEADER]
             if value == "pyi":
                 pyi = True
-            elif "," in value:
-                try:
-                    versions = [
-                        black.TARGET_VERSION[v.upper()] for v in value.split(",")
-                    ]
-                except KeyError:
-                    return web.Response(
-                        status=400, text=f"Invalid value for {PYTHON_VARIANT_HEADER}"
-                    )
             else:
-                try:
-                    major, *rest = value.split(".")
-                    if int(major) == 3 and len(rest) > 0:
-                        if int(rest[0]) >= 6:
-                            versions = black.PY36_VERSIONS
-                except ValueError:
-                    return web.Response(
-                        status=400, text=f"Invalid value for {PYTHON_VARIANT_HEADER}"
-                    )
+                for version in value.split(","):
+                    tag = "cpy"
+                    if version.startswith('cpy'):
+                        version = version[len('cpy'):]
+                    elif version.startswith('pypy'):
+                        tag = "pypy"
+                        version = version[len('pypy'):]
+                    major_str, *rest = value.split(".")
+                    try:
+                        major = int(major)
+                        if len(rest) > 0:
+                            minor = int(rest[0])
+                        if int(major) == 3 and len(rest) > 0:
+                            if int(rest[0]) >= 6:
+                                versions = black.PY36_VERSIONS
+                        version_str = f"{tag.upper()}{major}{minor}"
+                        # If PyPY is the same as CPython in some version, use the corresponding
+                        # CPython version.
+                        if tag == "pypy" and not hasattr(TargetVersion, version_str):
+                            version_str = f"CPY{major}{minor}"
+                        versions.add(TargetVersion[version_str])
+                    except ValueError:
+                        return web.Response(
+                            status=400, text=f"Invalid value for {PYTHON_VARIANT_HEADER}"
+                        )
+
         skip_string_normalization = bool(
             request.headers.get(SKIP_STRING_NORMALIZATION_HEADER, False)
         )
