@@ -726,7 +726,7 @@ Use the [Python extension](https://marketplace.visualstudio.com/items?itemName=m
 Use [sublack plugin](https://github.com/jgirardet/sublack).
 
 
-### IPython Notebook Magic
+### Jupyter Notebook Magic
 
 Use [blackcellmagic](https://github.com/csurfer/blackcellmagic).
 
