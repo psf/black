@@ -1393,6 +1393,16 @@ class BlackTestCase(unittest.TestCase):
             )
             self.assertEqual(response.status, 400)
 
+            response = await client.post(
+                "/", data=b"what", headers={blackd.PYTHON_VARIANT_HEADER: "2.8"}
+            )
+            self.assertEqual(response.status, 400)
+
+            response = await client.post(
+                "/", data=b"what", headers={blackd.PYTHON_VARIANT_HEADER: "ruby3.5"}
+            )
+            self.assertEqual(response.status, 400)
+
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
     async def test_blackd_pyi(self) -> None:
@@ -1407,51 +1417,37 @@ class BlackTestCase(unittest.TestCase):
 
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
-    async def test_blackd_py36(self) -> None:
+    async def test_blackd_python_variant(self) -> None:
         app = blackd.make_app()
+        code = (
+            "def f(\n"
+            "    and_has_a_bunch_of,\n"
+            "    very_long_arguments_too,\n"
+            "    and_lots_of_them_as_well_lol,\n"
+            "    **and_very_long_keyword_arguments\n"
+            "):\n"
+            "    pass\n"
+        )
         async with TestClient(TestServer(app)) as client:
-            response = await client.post(
-                "/",
-                data=(
-                    "def f(\n"
-                    "    and_has_a_bunch_of,\n"
-                    "    very_long_arguments_too,\n"
-                    "    and_lots_of_them_as_well_lol,\n"
-                    "    **and_very_long_keyword_arguments\n"
-                    "):\n"
-                    "    pass\n"
-                ),
-                headers={blackd.PYTHON_VARIANT_HEADER: "3.6"},
-            )
-            self.assertEqual(response.status, 200)
-            response = await client.post(
-                "/",
-                data=(
-                    "def f(\n"
-                    "    and_has_a_bunch_of,\n"
-                    "    very_long_arguments_too,\n"
-                    "    and_lots_of_them_as_well_lol,\n"
-                    "    **and_very_long_keyword_arguments\n"
-                    "):\n"
-                    "    pass\n"
-                ),
-                headers={blackd.PYTHON_VARIANT_HEADER: "3.5"},
-            )
-            self.assertEqual(response.status, 204)
-            response = await client.post(
-                "/",
-                data=(
-                    "def f(\n"
-                    "    and_has_a_bunch_of,\n"
-                    "    very_long_arguments_too,\n"
-                    "    and_lots_of_them_as_well_lol,\n"
-                    "    **and_very_long_keyword_arguments\n"
-                    "):\n"
-                    "    pass\n"
-                ),
-                headers={blackd.PYTHON_VARIANT_HEADER: "2"},
-            )
-            self.assertEqual(response.status, 204)
+
+            async def check(header_value: str, expected_status: int) -> None:
+                response = await client.post(
+                    "/", data=code, headers={blackd.PYTHON_VARIANT_HEADER: header_value}
+                )
+                self.assertEqual(response.status, expected_status)
+
+            await check("3.6", 200)
+            await check("cpy3.6", 200)
+            await check("3.5,3.7", 200)
+            await check("3.5,cpy3.7", 200)
+
+            await check("2", 204)
+            await check("2.7", 204)
+            await check("cpy2.7", 204)
+            await check("pypy2.7", 204)
+            await check("3.4", 204)
+            await check("cpy3.4", 204)
+            await check("pypy3.4", 204)
 
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test

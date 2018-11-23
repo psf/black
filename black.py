@@ -175,7 +175,7 @@ class FileMode:
     def get_cache_key(self) -> str:
         if self.target_versions:
             version_str = ",".join(
-                str(version.value) for version in self.target_versions
+                str(version.value) for version in sorted(self.target_versions)
             )
         else:
             version_str = "-"
@@ -672,7 +672,10 @@ def format_str(src_contents: str, *, mode: FileMode) -> FileContent:
     src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)
     dst_contents = ""
     future_imports = get_future_imports(src_node)
-    versions = mode.target_versions or detect_target_versions(src_node)
+    if mode.target_versions:
+        versions = mode.target_versions
+    else:
+        versions = detect_target_versions(src_node)
     normalize_fmt_off(src_node)
     lines = LineGenerator(
         remove_u_prefix="unicode_literals" in future_imports
@@ -727,15 +730,14 @@ GRAMMARS = [
 def get_grammars(target_versions: Set[TargetVersion]) -> List[Grammar]:
     if not target_versions:
         return GRAMMARS
-    elif all(version.is_python2() for version in target_versions):
+    elif all(not version.is_python2() for version in target_versions):
+        return [pygram.python_grammar]
+    else:
+        # Python 2-compatible code, so don't try Python 3 grammar.
         return [
             pygram.python_grammar_no_print_statement_no_exec_statement,
             pygram.python_grammar_no_print_statement,
         ]
-    elif all(not version.is_python2() for version in target_versions):
-        return [pygram.python_grammar]
-    else:
-        return GRAMMARS
 
 
 def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -> Node:

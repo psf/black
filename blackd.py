@@ -61,28 +61,31 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
             else:
                 for version in value.split(","):
                     tag = "cpy"
-                    if version.startswith('cpy'):
-                        version = version[len('cpy'):]
-                    elif version.startswith('pypy'):
+                    if version.startswith("cpy"):
+                        version = version[len("cpy") :]
+                    elif version.startswith("pypy"):
                         tag = "pypy"
-                        version = version[len('pypy'):]
-                    major_str, *rest = value.split(".")
+                        version = version[len("pypy") :]
+                    major_str, *rest = version.split(".")
                     try:
-                        major = int(major)
+                        major = int(major_str)
                         if len(rest) > 0:
                             minor = int(rest[0])
-                        if int(major) == 3 and len(rest) > 0:
-                            if int(rest[0]) >= 6:
-                                versions = black.PY36_VERSIONS
+                        else:
+                            # Default to lowest supported minor version.
+                            minor = 7 if major == 2 else 3
                         version_str = f"{tag.upper()}{major}{minor}"
                         # If PyPY is the same as CPython in some version, use the corresponding
                         # CPython version.
-                        if tag == "pypy" and not hasattr(TargetVersion, version_str):
+                        if tag == "pypy" and not hasattr(
+                            black.TargetVersion, version_str
+                        ):
                             version_str = f"CPY{major}{minor}"
-                        versions.add(TargetVersion[version_str])
-                    except ValueError:
+                        versions.add(black.TargetVersion[version_str])
+                    except (KeyError, ValueError):
                         return web.Response(
-                            status=400, text=f"Invalid value for {PYTHON_VARIANT_HEADER}"
+                            status=400,
+                            text=f"Invalid value for {PYTHON_VARIANT_HEADER}",
                         )
 
         skip_string_normalization = bool(
