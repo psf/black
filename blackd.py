@@ -2,6 +2,7 @@ import asyncio
 from concurrent.futures import Executor, ProcessPoolExecutor
 from functools import partial
 import logging
+from typing import Set
 
 from aiohttp import web
 import black
@@ -51,18 +52,27 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
             )
         except ValueError:
             return web.Response(status=400, text="Invalid line length header value")
-        py36 = False
         pyi = False
+        versions: Set[black.TargetVersion] = set()
         if PYTHON_VARIANT_HEADER in request.headers:
             value = request.headers[PYTHON_VARIANT_HEADER]
             if value == "pyi":
                 pyi = True
+            elif "," in value:
+                try:
+                    versions = [
+                        black.TARGET_VERSION[v.upper()] for v in value.split(",")
+                    ]
+                except KeyError:
+                    return web.Response(
+                        status=400, text=f"Invalid value for {PYTHON_VARIANT_HEADER}"
+                    )
             else:
                 try:
                     major, *rest = value.split(".")
                     if int(major) == 3 and len(rest) > 0:
                         if int(rest[0]) >= 6:
-                            py36 = True
+                            versions = black.PY36_VERSIONS
                 except ValueError:
                     return web.Response(
                         status=400, text=f"Invalid value for {PYTHON_VARIANT_HEADER}"
@@ -76,25 +86,19 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
         fast = False
         if request.headers.get(FAST_OR_SAFE_HEADER, "safe") == "fast":
             fast = True
-        mode = black.FileMode.from_configuration(
-            py36=py36,
-            pyi=pyi,
-            skip_string_normalization=skip_string_normalization,
-            skip_numeric_underscore_normalization=skip_numeric_underscore_normalization,
+        mode = black.FileMode(
+            target_versions=versions,
+            is_pyi=pyi,
+            line_length=line_length,
+            string_normalization=not skip_string_normalization,
+            numeric_underscore_normalization=not skip_numeric_underscore_normalization,
         )
         req_bytes = await request.content.read()
         charset = request.charset if request.charset is not None else "utf8"
         req_str = req_bytes.decode(charset)
         loop = asyncio.get_event_loop()
         formatted_str = await loop.run_in_executor(
-            executor,
-            partial(
-                black.format_file_contents,
-                req_str,
-                line_length=line_length,
-                fast=fast,
-                mode=mode,
-            ),
+            executor, partial(black.format_file_contents, req_str, fast=fast, mode=mode)
         )
         return web.Response(
             content_type=request.content_type, charset=charset, text=formatted_str

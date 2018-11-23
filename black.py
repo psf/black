@@ -126,6 +126,9 @@ class TargetVersion(Enum):
         return self is not TargetVersion.CPY27
 
 
+PY36_VERSIONS = {TargetVersion.CPY36, TargetVersion.CPY37, TargetVersion.CPY38}
+
+
 class Feature(Enum):
     # All string literals are unicode
     UNICODE_LITERALS = 1
@@ -376,7 +379,7 @@ def main(
         else:
             versions = set(target_versions)
     elif py36:
-        versions = {TargetVersion.CPY36, TargetVersion.CPY37, TargetVersion.CPY38}
+        versions = PY36_VERSIONS
     else:
         # We'll autodetect later.
         versions = set()

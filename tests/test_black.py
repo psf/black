@@ -156,7 +156,8 @@ class BlackTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
 
     def invokeBlack(self, args: List[str], exit_code: int = 0) -> None:
-        result = BlackRunner().invoke(black.main, args)
+        runner = BlackRunner()
+        result = runner.invoke(black.main, args)
         self.assertEqual(result.exit_code, exit_code, msg=runner.stderr_bytes.decode())
 
     @patch("black.dump_to_file", dump_to_stderr)
@@ -415,7 +416,7 @@ class BlackTestCase(unittest.TestCase):
     @patch("black.dump_to_file", dump_to_stderr)
     def test_numeric_literals(self) -> None:
         source, expected = read_data("numeric_literals")
-        mode = black.FileMode(target_versions={black.TargetVersion.CPY36})
+        mode = black.FileMode(target_versions=black.PY36_VERSIONS)
         actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
@@ -425,8 +426,7 @@ class BlackTestCase(unittest.TestCase):
     def test_numeric_literals_ignoring_underscores(self) -> None:
         source, expected = read_data("numeric_literals_skip_underscores")
         mode = black.FileMode(
-            numeric_underscore_normalization=False,
-            target_versions={black.TargetVersion.CPY36},
+            numeric_underscore_normalization=False, target_versions=black.PY36_VERSIONS
         )
         actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
@@ -1134,13 +1134,7 @@ class BlackTestCase(unittest.TestCase):
 
     def test_single_file_force_py36(self) -> None:
         reg_mode = black.FileMode()
-        py36_mode = black.FileMode(
-            target_versions={
-                black.TargetVersion.CPY36,
-                black.TargetVersion.CPY37,
-                black.TargetVersion.CPY38,
-            }
-        )
+        py36_mode = black.FileMode(target_versions=black.PY36_VERSIONS)
         source, expected = read_data("force_py36")
         with cache_dir() as workspace:
             path = (workspace / "file.py").resolve()
@@ -1159,13 +1153,7 @@ class BlackTestCase(unittest.TestCase):
     @event_loop(close=False)
     def test_multi_file_force_py36(self) -> None:
         reg_mode = black.FileMode()
-        py36_mode = black.FileMode(
-            target_versions={
-                black.TargetVersion.CPY36,
-                black.TargetVersion.CPY37,
-                black.TargetVersion.CPY38,
-            }
-        )
+        py36_mode = black.FileMode(target_versions=black.PY36_VERSIONS)
         source, expected = read_data("force_py36")
         with cache_dir() as workspace:
             paths = [
