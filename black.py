@@ -241,6 +241,10 @@ def read_pyproject_toml(
     type=click.Choice([v.name.lower() for v in TargetVersion]),
     callback=lambda c, p, v: [TargetVersion[val.upper()] for val in v],
     multiple=True,
+    help=(
+        "Python versions that should be supported by Black's output. [default: "
+        "per-file auto-detection]"
+    ),
 )
 @click.option(
     "--py36",
