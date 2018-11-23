@@ -175,7 +175,8 @@ class FileMode:
     def get_cache_key(self) -> str:
         if self.target_versions:
             version_str = ",".join(
-                str(version.value) for version in sorted(self.target_versions)
+                str(version.value)
+                for version in sorted(self.target_versions, key=lambda v: v.value)
             )
         else:
             version_str = "-"
@@ -237,6 +238,7 @@ def read_pyproject_toml(
     show_default=True,
 )
 @click.option(
+    "-t",
     "--target-version",
     type=click.Choice([v.name.lower() for v in TargetVersion]),
     callback=lambda c, p, v: [TargetVersion[val.upper()] for val in v],
