@@ -37,7 +37,7 @@ from typing import (
 )
 
 from appdirs import user_cache_dir
-from attr import dataclass, Factory
+from attr import dataclass, evolve, Factory
 import click
 import toml
 
@@ -137,7 +137,7 @@ class Feature(Enum):
     TRAILING_COMMA = 4
 
 
-VERSION_TO_FEATURES = {
+VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
     TargetVersion.CPY27: set(),
     TargetVersion.PYPY35: {Feature.UNICODE_LITERALS, Feature.F_STRINGS},
     TargetVersion.CPY33: {Feature.UNICODE_LITERALS},
@@ -241,7 +241,7 @@ def read_pyproject_toml(
     "-t",
     "--target-version",
     type=click.Choice([v.name.lower() for v in TargetVersion]),
-    callback=lambda c, p, v: [TargetVersion[val.upper()] for val in v],
+    callback=lambda c, p, v: [TargetVersion[val.upper()] for val in v],  # type: ignore
     multiple=True,
     help=(
         "Python versions that should be supported by Black's output. [default: "
@@ -576,7 +576,7 @@ def format_file_in_place(
     `line_length` and `fast` options are passed to :func:`format_file_contents`.
     """
     if src.suffix == ".pyi":
-        mode |= FileMode.PYI
+        mode = evolve(mode, is_pyi=True)
 
     then = datetime.utcfromtimestamp(src.stat().st_mtime)
     with open(src, "rb") as buf:
@@ -3058,7 +3058,7 @@ def should_explode(line: Line, opening_bracket: Leaf) -> bool:
     return max_priority == COMMA_PRIORITY
 
 
-def get_features_used(node: Node) -> bool:
+def get_features_used(node: Node) -> Set[Feature]:
     """Return a set of (relatively) new Python features used in this file.
 
     Currently looking for:

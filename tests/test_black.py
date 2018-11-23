@@ -1045,14 +1045,12 @@ class BlackTestCase(unittest.TestCase):
         with cache_dir():
             # Files which will be reformatted.
             src1 = (THIS_DIR / "data" / "string_quotes.py").resolve()
-            result = self.invokeBlack([str(src1), "--diff", "--check"], exit_code=1)
+            self.invokeBlack([str(src1), "--diff", "--check"], exit_code=1)
             # Files which will not be reformatted.
             src2 = (THIS_DIR / "data" / "composition.py").resolve()
-            result = self.invokeBlack([str(src2), "--diff", "--check"])
+            self.invokeBlack([str(src2), "--diff", "--check"])
             # Multi file command.
-            result = self.invokeBlack(
-                [str(src1), str(src2), "--diff", "--check"], exit_code=1
-            )
+            self.invokeBlack([str(src1), str(src2), "--diff", "--check"], exit_code=1)
 
     def test_no_files(self) -> None:
         with cache_dir():

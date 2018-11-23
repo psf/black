@@ -75,8 +75,8 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
                             # Default to lowest supported minor version.
                             minor = 7 if major == 2 else 3
                         version_str = f"{tag.upper()}{major}{minor}"
-                        # If PyPY is the same as CPython in some version, use the corresponding
-                        # CPython version.
+                        # If PyPY is the same as CPython in some version, use
+                        # the corresponding CPython version.
                         if tag == "pypy" and not hasattr(
                             black.TargetVersion, version_str
                         ):
