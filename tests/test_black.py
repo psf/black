@@ -1290,7 +1290,7 @@ class BlackTestCase(unittest.TestCase):
         child.is_symlink.return_value = True
         try:
             list(black.gen_python_files_in_dir(path, root, include, exclude, report))
-        except ValueError as ve:
+        except ValueError:
             self.fail("`get_python_files_in_dir()` failed: {ve}")
         path.iterdir.assert_called_once()
         child.resolve.assert_called_once()
@@ -1454,15 +1454,18 @@ class BlackTestCase(unittest.TestCase):
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
     async def test_blackd_fast(self) -> None:
-        app = blackd.make_app()
-        async with TestClient(TestServer(app)) as client:
-            response = await client.post("/", data=b"ur'hello'")
-            self.assertEqual(response.status, 500)
-            self.assertIn("failed to parse source file", await response.text())
-            response = await client.post(
-                "/", data=b"ur'hello'", headers={blackd.FAST_OR_SAFE_HEADER: "fast"}
-            )
-            self.assertEqual(response.status, 200)
+        from contextlib import redirect_stderr
+
+        with open(os.devnull, "w") as dn, redirect_stderr(dn):
+            app = blackd.make_app()
+            async with TestClient(TestServer(app)) as client:
+                response = await client.post("/", data=b"ur'hello'")
+                self.assertEqual(response.status, 500)
+                self.assertIn("failed to parse source file", await response.text())
+                response = await client.post(
+                    "/", data=b"ur'hello'", headers={blackd.FAST_OR_SAFE_HEADER: "fast"}
+                )
+                self.assertEqual(response.status, 200)
 
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
