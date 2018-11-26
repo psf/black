@@ -5,6 +5,7 @@ from datetime import datetime
 from enum import Enum, Flag
 from functools import lru_cache, partial, wraps
 import io
+import itertools
 import keyword
 import logging
 from multiprocessing import Manager
@@ -1025,7 +1026,9 @@ class Line:
 
     depth: int = 0
     leaves: List[Leaf] = Factory(list)
-    comments: List[Tuple[Index, Leaf]] = Factory(list)
+    # The LeafID keys of comments must remain ordered by the corresponding leaf's index
+    # in leaves
+    comments: Dict[LeafID, List[Leaf]] = Factory(dict)
     bracket_tracker: BracketTracker = Factory(BracketTracker)
     inside_brackets: bool = False
     should_explode: bool = False
@@ -1232,43 +1235,35 @@ class Line:
         if comment.type != token.COMMENT:
             return False
 
-        after = len(self.leaves) - 1
-        if after == -1:
+        if not self.leaves:
             comment.type = STANDALONE_COMMENT
             comment.prefix = ""
             return False
 
         else:
-            self.comments.append((after, comment))
+            leaf_id = id(self.leaves[-1])
+            if leaf_id not in self.comments:
+                self.comments[leaf_id] = [comment]
+            else:
+                self.comments[leaf_id].append(comment)
             return True
 
-    def comments_after(self, leaf: Leaf, _index: int = -1) -> Iterator[Leaf]:
-        """Generate comments that should appear directly after `leaf`.
-
-        Provide a non-negative leaf `_index` to speed up the function.
-        """
-        if not self.comments:
-            return
-
-        if _index == -1:
-            for _index, _leaf in enumerate(self.leaves):
-                if leaf is _leaf:
-                    break
-
-            else:
-                return
-
-        for index, comment_after in self.comments:
-            if _index == index:
-                yield comment_after
+    def comments_after(self, leaf: Leaf) -> List[Leaf]:
+        """Generate comments that should appear directly after `leaf`."""
+        return self.comments.get(id(leaf), [])
 
     def remove_trailing_comma(self) -> None:
         """Remove the trailing comma and moves the comments attached to it."""
-        comma_index = len(self.leaves) - 1
-        for i in range(len(self.comments)):
-            comment_index, comment = self.comments[i]
-            if comment_index == comma_index:
-                self.comments[i] = (comma_index - 1, comment)
+        # Remember, the LeafID keys of self.comments are ordered by the
+        # corresponding leaf's index in self.leaves
+        # If id(self.leaves[-2]) is in self.comments, the order doesn't change.
+        # Otherwise, we insert it into self.comments, and it becomes the last entry.
+        # However, since we delete id(self.leaves[-1]) from self.comments, the invariant
+        # is maintained
+        self.comments.setdefault(id(self.leaves[-2]), []).extend(
+            self.comments.get(id(self.leaves[-1]), [])
+        )
+        self.comments.pop(id(self.leaves[-1]), None)
         self.leaves.pop()
 
     def is_complex_subscript(self, leaf: Leaf) -> bool:
@@ -1300,7 +1295,7 @@ class Line:
         res = f"{first.prefix}{indent}{first.value}"
         for leaf in leaves:
             res += str(leaf)
-        for _, comment in self.comments:
+        for comment in itertools.chain.from_iterable(self.comments.values()):
             res += str(comment)
         return res + "\n"
 
@@ -1892,7 +1887,7 @@ def container_of(leaf: Leaf) -> LN:
     return container
 
 
-def is_split_after_delimiter(leaf: Leaf, previous: Leaf = None) -> int:
+def is_split_after_delimiter(leaf: Leaf, previous: Optional[Leaf] = None) -> int:
     """Return the priority of the `leaf` delimiter, given a line break after it.
 
     The delimiter priorities returned here are from those delimiters that would
@@ -1906,7 +1901,7 @@ def is_split_after_delimiter(leaf: Leaf, previous: Leaf = None) -> int:
     return 0
 
 
-def is_split_before_delimiter(leaf: Leaf, previous: Leaf = None) -> int:
+def is_split_before_delimiter(leaf: Leaf, previous: Optional[Leaf] = None) -> int:
     """Return the priority of the `leaf` delimiter, given a line break before it.
 
     The delimiter priorities returned here are from those delimiters that would
@@ -2395,10 +2390,10 @@ def delimiter_split(line: Line, py36: bool = False) -> Iterator[Line]:
             current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
             current_line.append(leaf)
 
-    for index, leaf in enumerate(line.leaves):
+    for leaf in line.leaves:
         yield from append_to_line(leaf)
 
-        for comment_after in line.comments_after(leaf, index):
+        for comment_after in line.comments_after(leaf):
             yield from append_to_line(comment_after)
 
         lowest_depth = min(lowest_depth, leaf.bracket_depth)
@@ -2435,16 +2430,16 @@ def standalone_comment_split(line: Line, py36: bool = False) -> Iterator[Line]:
         nonlocal current_line
         try:
             current_line.append_safe(leaf, preformatted=True)
-        except ValueError as ve:
+        except ValueError:
             yield current_line
 
             current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
             current_line.append(leaf)
 
-    for index, leaf in enumerate(line.leaves):
+    for leaf in line.leaves:
         yield from append_to_line(leaf)
 
-        for comment_after in line.comments_after(leaf, index):
+        for comment_after in line.comments_after(leaf):
             yield from append_to_line(comment_after)
 
     if current_line:
@@ -3436,7 +3431,7 @@ def enumerate_with_length(
             return  # Multiline strings, we can't continue.
 
         comment: Optional[Leaf]
-        for comment in line.comments_after(leaf, index):
+        for comment in line.comments_after(leaf):
             length += len(comment.value)
 
         yield index, leaf, length

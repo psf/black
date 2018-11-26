@@ -1290,8 +1290,8 @@ class BlackTestCase(unittest.TestCase):
         child.is_symlink.return_value = True
         try:
             list(black.gen_python_files_in_dir(path, root, include, exclude, report))
-        except ValueError:
-            self.fail("`get_python_files_in_dir()` failed: {ve}")
+        except ValueError as ve:
+            self.fail(f"`get_python_files_in_dir()` failed: {ve}")
         path.iterdir.assert_called_once()
         child.resolve.assert_called_once()
         child.is_symlink.assert_called_once()

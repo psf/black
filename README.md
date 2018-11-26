@@ -82,7 +82,7 @@ Options:
   -S, --skip-string-normalization
                               Don't normalize string quotes or prefixes.
   -N, --skip-numeric-underscore-normalization
-                              Don't normalize underscores in numeric literals.			      
+                              Don't normalize underscores in numeric literals.
   --check                     Don't write the files back, just return the
                               status.  Return code 0 means nothing would
                               change.  Return code 1 means some files would be
@@ -238,13 +238,13 @@ the following configuration.
 multi_line_output=3
 include_trailing_comma=True
 force_grid_wrap=0
-combine_as_imports=True
+use_parentheses=True
 line_length=88
 ```
 
 The equivalent command line is:
 ```
-$ isort --multi-line=3 --trailing-comma --force-grid-wrap=0 --combine-as --line-width=88 [ file.py ]
+$ isort --multi-line=3 --trailing-comma --force-grid-wrap=0 --use-parentheses --line-width=88 [ file.py ]
 ```
 </details>
 
@@ -359,8 +359,8 @@ string literals that ended up on the same line (see
 [#26](https://github.com/ambv/black/issues/26) for details).
 
 Why settle on double quotes?  They anticipate apostrophes in English
-text.  They match the docstring standard described in PEP 257.  An
-empty string in double quotes (`""`) is impossible to confuse with
+text.  They match the docstring standard described in [PEP 257](https://www.python.org/dev/peps/pep-0257/#what-is-a-docstring).
+An empty string in double quotes (`""`) is impossible to confuse with
 a one double-quote regardless of fonts and syntax highlighting used.
 On top of this, double quotes for strings are consistent with C which
 Python interacts a lot with.
@@ -548,7 +548,7 @@ other file.
 If you're running with `--verbose`, you will see a blue message if
 a file was found and used.
 
-Please note `blackd` will not use `pyproject.toml` configuration. 
+Please note `blackd` will not use `pyproject.toml` configuration.
 
 
 ### Configuration format
@@ -726,7 +726,7 @@ Use the [Python extension](https://marketplace.visualstudio.com/items?itemName=m
 Use [sublack plugin](https://github.com/jgirardet/sublack).
 
 
-### IPython Notebook Magic
+### Jupyter Notebook Magic
 
 Use [blackcellmagic](https://github.com/csurfer/blackcellmagic).
 
@@ -792,14 +792,14 @@ Options:
 ### Protocol
 
 `blackd` only accepts `POST` requests at the `/` path. The body of the request
-should contain the python source code to be formatted, encoded 
+should contain the python source code to be formatted, encoded
 according to the `charset` field in the `Content-Type` request header. If no
 `charset` is specified, `blackd` assumes `UTF-8`.
 
 There are a few HTTP headers that control how the source is formatted. These
 correspond to command line flags for *Black*. There is one exception to this:
 `X-Protocol-Version` which if present, should have the value `1`, otherwise the
-request is rejected with `HTTP 501` (Not Implemented). 
+request is rejected with `HTTP 501` (Not Implemented).
 
 The headers controlling how code is formatted are:
 
