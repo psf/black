@@ -48,7 +48,7 @@ def make_app() -> web.Application:
 
     cors = aiohttp_cors.setup(app)
     resource = cors.add(app.router.add_resource("/"))
-    route = cors.add(
+    cors.add(
         resource.add_route("POST", partial(handle, executor=executor)),
         {
             "*": aiohttp_cors.ResourceOptions(
