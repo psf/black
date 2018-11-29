@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import contextmanager
+from contextlib import contextmanager, redirect_stderr
 from functools import partial, wraps
 from io import BytesIO, TextIOWrapper
 import os
@@ -1454,15 +1454,16 @@ class BlackTestCase(unittest.TestCase):
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
     async def test_blackd_fast(self) -> None:
-        app = blackd.make_app()
-        async with TestClient(TestServer(app)) as client:
-            response = await client.post("/", data=b"ur'hello'")
-            self.assertEqual(response.status, 500)
-            self.assertIn("failed to parse source file", await response.text())
-            response = await client.post(
-                "/", data=b"ur'hello'", headers={blackd.FAST_OR_SAFE_HEADER: "fast"}
-            )
-            self.assertEqual(response.status, 200)
+        with open(os.devnull, "w") as dn, redirect_stderr(dn):
+            app = blackd.make_app()
+            async with TestClient(TestServer(app)) as client:
+                response = await client.post("/", data=b"ur'hello'")
+                self.assertEqual(response.status, 500)
+                self.assertIn("failed to parse source file", await response.text())
+                response = await client.post(
+                    "/", data=b"ur'hello'", headers={blackd.FAST_OR_SAFE_HEADER: "fast"}
+                )
+                self.assertEqual(response.status, 200)
 
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
