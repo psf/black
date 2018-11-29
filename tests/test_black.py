@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import contextmanager
+from contextlib import contextmanager, redirect_stderr
 from functools import partial, wraps
 from io import BytesIO, TextIOWrapper
 import os
@@ -1454,8 +1454,6 @@ class BlackTestCase(unittest.TestCase):
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
     async def test_blackd_fast(self) -> None:
-        from contextlib import redirect_stderr
-
         with open(os.devnull, "w") as dn, redirect_stderr(dn):
             app = blackd.make_app()
             async with TestClient(TestServer(app)) as client:
