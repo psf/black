@@ -100,8 +100,8 @@ Options:
                               directories that should be excluded on
                               recursive searches. On Windows, use forward
                               slashes for directories.  [default:
-                              build/|buck-out/|dist/|_build/|\.git/|\.hg/|
-                              \.mypy_cache/|\.nox/|\.tox/|\.venv/]
+                              build/|buck-out/|dist/|_build/|\.eggs/|\.git/|
+                              \.hg/|\.mypy_cache/|\.nox/|\.tox/|\.venv/]
   -q, --quiet                 Don't emit non-error messages to stderr. Errors
                               are still emitted, silence those with
                               2>/dev/null.
@@ -573,7 +573,8 @@ py36 = true
 include = '\.pyi?$'
 exclude = '''
 /(
-    \.git
+    \.eggs
+  | \.git
   | \.hg
   | \.mypy_cache
   | \.tox
