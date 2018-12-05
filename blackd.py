@@ -18,15 +18,6 @@ SKIP_STRING_NORMALIZATION_HEADER = "X-Skip-String-Normalization"
 SKIP_NUMERIC_UNDERSCORE_NORMALIZATION_HEADER = "X-Skip-Numeric-Underscore-Normalization"
 FAST_OR_SAFE_HEADER = "X-Fast-Or-Safe"
 
-BLACK_HEADERS = [
-    VERSION_HEADER,
-    LINE_LENGTH_HEADER,
-    PYTHON_VARIANT_HEADER,
-    SKIP_STRING_NORMALIZATION_HEADER,
-    SKIP_NUMERIC_UNDERSCORE_NORMALIZATION_HEADER,
-    FAST_OR_SAFE_HEADER,
-]
-
 
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
 @click.option(
@@ -50,11 +41,7 @@ def make_app() -> web.Application:
     resource = cors.add(app.router.add_resource("/"))
     cors.add(
         resource.add_route("POST", partial(handle, executor=executor)),
-        {
-            "*": aiohttp_cors.ResourceOptions(
-                allow_headers=(*BLACK_HEADERS, "Content-Type")
-            )
-        },
+        {"*": aiohttp_cors.ResourceOptions(allow_headers="*")},
     )
 
     return app
