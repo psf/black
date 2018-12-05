@@ -52,7 +52,7 @@ def make_app() -> web.Application:
         resource.add_route("POST", partial(handle, executor=executor)),
         {
             "*": aiohttp_cors.ResourceOptions(
-                allow_headers=(*BLACK_HEADERS, "Content-Type")
+                allow_headers=(*BLACK_HEADERS, "Content-Type"), expose_headers="*"
             )
         },
     )
