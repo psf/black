@@ -8,7 +8,7 @@ import io
 import itertools
 import keyword
 import logging
-from multiprocessing import Manager
+from multiprocessing import Manager, freeze_support
 import os
 from pathlib import Path
 import pickle
@@ -3658,6 +3658,7 @@ def patch_click() -> None:
 
 
 def patched_main() -> None:
+    freeze_support()
     patch_click()
     main()
 
