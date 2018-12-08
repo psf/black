@@ -587,7 +587,8 @@ py36 = true
 include = '\.pyi?$'
 exclude = '''
 /(
-    \.git
+    \.eggs
+  | \.git
   | \.hg
   | \.mypy_cache
   | \.tox
