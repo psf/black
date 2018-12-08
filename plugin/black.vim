@@ -32,6 +32,9 @@ endif
 if !exists("g:black_linelength")
   let g:black_linelength = 88
 endif
+if !exists("g:black_single_quotes")
+  let g:black_single_quotes = 0
+endif
 if !exists("g:black_skip_string_normalization")
   let g:black_skip_string_normalization = 0
 endif
@@ -100,6 +103,8 @@ def Black():
   fast = bool(int(vim.eval("g:black_fast")))
   line_length = int(vim.eval("g:black_linelength"))
   mode = black.FileMode.AUTO_DETECT
+  if bool(int(vim.eval("g:black_single_quotes"))):
+    mode |= black.FileMode.SINGLE_QUOTES
   if bool(int(vim.eval("g:black_skip_string_normalization"))):
     mode |= black.FileMode.NO_STRING_NORMALIZATION
   buffer_str = '\n'.join(vim.current.buffer) + '\n'

@@ -117,6 +117,7 @@ class FileMode(Flag):
     PYI = 2
     NO_STRING_NORMALIZATION = 4
     NO_NUMERIC_UNDERSCORE_NORMALIZATION = 8
+    SINGLE_QUOTES = 16
 
     @classmethod
     def from_configuration(
@@ -124,6 +125,7 @@ class FileMode(Flag):
         *,
         py36: bool,
         pyi: bool,
+        single_quotes: bool,
         skip_string_normalization: bool,
         skip_numeric_underscore_normalization: bool,
     ) -> "FileMode":
@@ -132,6 +134,8 @@ class FileMode(Flag):
             mode |= cls.PYTHON36
         if pyi:
             mode |= cls.PYI
+        if single_quotes:
+            mode |= cls.SINGLE_QUOTES
         if skip_string_normalization:
             mode |= cls.NO_STRING_NORMALIZATION
         if skip_numeric_underscore_normalization:
@@ -198,6 +202,12 @@ def read_pyproject_toml(
         "Format all input files like typing stubs regardless of file extension "
         "(useful when piping source on standard input)."
     ),
+)
+@click.option(
+    "-s",
+    "--single-quotes",
+    is_flag=True,
+    help="Use single quotes during string normalization.",
 )
 @click.option(
     "-S",
@@ -300,6 +310,7 @@ def main(
     fast: bool,
     pyi: bool,
     py36: bool,
+    single_quotes: bool,
     skip_string_normalization: bool,
     skip_numeric_underscore_normalization: bool,
     quiet: bool,
@@ -314,6 +325,7 @@ def main(
     mode = FileMode.from_configuration(
         py36=py36,
         pyi=pyi,
+        single_quotes=single_quotes,
         skip_string_normalization=skip_string_normalization,
         skip_numeric_underscore_normalization=skip_numeric_underscore_normalization,
     )
@@ -631,11 +643,13 @@ def format_str(
     future_imports = get_future_imports(src_node)
     is_pyi = bool(mode & FileMode.PYI)
     py36 = bool(mode & FileMode.PYTHON36) or is_python36(src_node)
+    single_quotes = bool(mode & FileMode.SINGLE_QUOTES)
     normalize_strings = not bool(mode & FileMode.NO_STRING_NORMALIZATION)
     normalize_fmt_off(src_node)
     lines = LineGenerator(
         remove_u_prefix=py36 or "unicode_literals" in future_imports,
         is_pyi=is_pyi,
+        single_quotes=single_quotes,
         normalize_strings=normalize_strings,
         allow_underscores=py36
         and not bool(mode & FileMode.NO_NUMERIC_UNDERSCORE_NORMALIZATION),
@@ -1425,6 +1439,7 @@ class LineGenerator(Visitor[Line]):
 
     is_pyi: bool = False
     normalize_strings: bool = True
+    single_quotes: bool = False
     current_line: Line = Factory(Line)
     remove_u_prefix: bool = False
     allow_underscores: bool = False
@@ -1468,7 +1483,7 @@ class LineGenerator(Visitor[Line]):
             normalize_prefix(node, inside_brackets=any_open_brackets)
             if self.normalize_strings and node.type == token.STRING:
                 normalize_string_prefix(node, remove_u_prefix=self.remove_u_prefix)
-                normalize_string_quotes(node)
+                normalize_string_quotes(node, self.single_quotes)
             if node.type == token.NUMBER:
                 normalize_numeric_literal(node, self.allow_underscores)
             if node.type not in WHITESPACE:
@@ -2494,27 +2509,28 @@ def normalize_string_prefix(leaf: Leaf, remove_u_prefix: bool = False) -> None:
     leaf.value = f"{new_prefix}{match.group(2)}"
 
 
-def normalize_string_quotes(leaf: Leaf) -> None:
-    """Prefer double quotes but only if it doesn't cause more escaping.
+def normalize_string_quotes(leaf: Leaf, single_quotes: bool) -> None:
+    """Normalize quotes but only if it doesn't cause more escaping.
 
     Adds or removes backslashes as appropriate. Doesn't parse and fix
     strings nested in f-strings (yet).
 
     Note: Mutates its argument.
     """
+    preferred_quote = "'" if single_quotes else '"'
+    other_quote = '"' if single_quotes else "'"
     value = leaf.value.lstrip("furbFURB")
     if value[:3] == '"""':
         return
-
     elif value[:3] == "'''":
         orig_quote = "'''"
         new_quote = '"""'
-    elif value[0] == '"':
-        orig_quote = '"'
-        new_quote = "'"
+    elif value[0] == preferred_quote:
+        orig_quote = preferred_quote
+        new_quote = other_quote
     else:
-        orig_quote = "'"
-        new_quote = '"'
+        orig_quote = other_quote
+        new_quote = preferred_quote
     first_quote_pos = leaf.value.find(orig_quote)
     if first_quote_pos == -1:
         return  # There's an internal error
@@ -2555,8 +2571,8 @@ def normalize_string_quotes(leaf: Leaf) -> None:
     if new_escape_count > orig_escape_count:
         return  # Do not introduce more escaping
 
-    if new_escape_count == orig_escape_count and orig_quote == '"':
-        return  # Prefer double quotes
+    if new_escape_count == orig_escape_count and orig_quote == preferred_quote:
+        return  # Quote is already as desired -> nothing to do
 
     leaf.value = f"{prefix}{new_quote}{new_body}{new_quote}"
 

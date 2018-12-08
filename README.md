@@ -79,6 +79,8 @@ Options:
   --pyi                       Format all input files like typing stubs
                               regardless of file extension (useful when piping
                               source on standard input).
+  -s, --single-quotes         Use single quotes during string
+                              normalization.
   -S, --skip-string-normalization
                               Don't normalize string quotes or prefixes.
   -N, --skip-numeric-underscore-normalization
@@ -670,6 +672,7 @@ Commands and shortcuts:
 Configuration:
 * `g:black_fast` (defaults to `0`)
 * `g:black_linelength` (defaults to `88`)
+* `g:black_single_quotes` (defaults to `0`)
 * `g:black_skip_string_normalization` (defaults to `0`)
 * `g:black_virtualenv` (defaults to `~/.vim/black`)
 
@@ -805,6 +808,7 @@ request is rejected with `HTTP 501` (Not Implemented).
 The headers controlling how code is formatted are:
 
  - `X-Line-Length`: corresponds to the `--line-length` command line flag.
+ - `X-Single-Quotes`: corresponds to the `--single-quotes` command line flag.
  - `X-Skip-String-Normalization`: corresponds to the `--skip-string-normalization`
     command line flag. If present and its value is not the empty string, no string
     normalization will be performed.

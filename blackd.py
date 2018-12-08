@@ -13,6 +13,7 @@ _stop_signal = asyncio.Event()
 VERSION_HEADER = "X-Protocol-Version"
 LINE_LENGTH_HEADER = "X-Line-Length"
 PYTHON_VARIANT_HEADER = "X-Python-Variant"
+SINGLE_QUOTES_HEADER = "X-Single-Quotes"
 SKIP_STRING_NORMALIZATION_HEADER = "X-Skip-String-Normalization"
 SKIP_NUMERIC_UNDERSCORE_NORMALIZATION_HEADER = "X-Skip-Numeric-Underscore-Normalization"
 FAST_OR_SAFE_HEADER = "X-Fast-Or-Safe"
@@ -67,6 +68,7 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
                     return web.Response(
                         status=400, text=f"Invalid value for {PYTHON_VARIANT_HEADER}"
                     )
+        single_quotes = bool(request.headers.get(SINGLE_QUOTES_HEADER, False))
         skip_string_normalization = bool(
             request.headers.get(SKIP_STRING_NORMALIZATION_HEADER, False)
         )
@@ -79,6 +81,7 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
         mode = black.FileMode.from_configuration(
             py36=py36,
             pyi=pyi,
+            single_quotes=single_quotes,
             skip_string_normalization=skip_string_normalization,
             skip_numeric_underscore_normalization=skip_numeric_underscore_normalization,
         )
