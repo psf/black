@@ -1386,20 +1386,24 @@ class BlackTestCase(unittest.TestCase):
     async def test_blackd_invalid_python_variant(self) -> None:
         app = blackd.make_app()
         async with TestClient(TestServer(app)) as client:
-            response = await client.post(
-                "/", data=b"what", headers={blackd.PYTHON_VARIANT_HEADER: "lol"}
-            )
-            self.assertEqual(response.status, 400)
 
-            response = await client.post(
-                "/", data=b"what", headers={blackd.PYTHON_VARIANT_HEADER: "2.8"}
-            )
-            self.assertEqual(response.status, 400)
+            async def check(header_value: str, expected_status: int = 400) -> None:
+                response = await client.post(
+                    "/",
+                    data=b"what",
+                    headers={blackd.PYTHON_VARIANT_HEADER: header_value},
+                )
+                self.assertEqual(response.status, expected_status)
 
-            response = await client.post(
-                "/", data=b"what", headers={blackd.PYTHON_VARIANT_HEADER: "ruby3.5"}
-            )
-            self.assertEqual(response.status, 400)
+            await check("lol")
+            await check("ruby3.5")
+            await check("pyi3.6")
+            await check("cpy1.5")
+            await check("2.8")
+            await check("cpy2.8")
+            await check("3.0")
+            await check("pypy3.0")
+            await check("jython3.4")
 
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
