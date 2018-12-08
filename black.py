@@ -123,7 +123,7 @@ class TargetVersion(Enum):
     CPY38 = 8
 
     def is_python2(self) -> bool:
-        return self is not TargetVersion.CPY27
+        return self is TargetVersion.CPY27
 
 
 PY36_VERSIONS = {TargetVersion.CPY36, TargetVersion.CPY37, TargetVersion.CPY38}

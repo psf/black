@@ -155,8 +155,12 @@ class BlackTestCase(unittest.TestCase):
                 black.err(str(ve))
         self.assertEqual(expected, actual)
 
-    def invokeBlack(self, args: List[str], exit_code: int = 0) -> None:
+    def invokeBlack(
+        self, args: List[str], exit_code: int = 0, ignore_config: bool = True
+    ) -> None:
         runner = BlackRunner()
+        if ignore_config:
+            args = ["--config", str(THIS_DIR / "empty.toml"), *args]
         result = runner.invoke(black.main, args)
         self.assertEqual(result.exit_code, exit_code, msg=runner.stderr_bytes.decode())
 
