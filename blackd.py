@@ -2,6 +2,7 @@ import asyncio
 from concurrent.futures import Executor, ProcessPoolExecutor
 from functools import partial
 import logging
+from multiprocessing import freeze_support
 
 from aiohttp import web
 import black
@@ -109,6 +110,7 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
 
 
 def patched_main() -> None:
+    freeze_support()
     black.patch_click()
     main()
 
