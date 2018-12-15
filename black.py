@@ -2111,7 +2111,8 @@ def split_line(
 
     line_str = str(line).strip("\n")
 
-    # we don't want to split special comments like type annotations (https://github.com/python/typing/issues/186)
+    # we don't want to split special comments like type annotations
+    # https://github.com/python/typing/issues/186
     has_special_comment: bool = False
     for leaf in line.leaves:
         for comment in line.comments_after(leaf):
@@ -2471,7 +2472,8 @@ def is_import(leaf: Leaf) -> bool:
 
 
 def is_special_comment(leaf: Leaf) -> bool:
-    """Return True if the given leaf is a special comment. Only returns true for type comments for now."""
+    """Return True if the given leaf is a special comment.
+    Only returns true for type comments for now."""
     t = leaf.type
     v = leaf.value
     return bool(
