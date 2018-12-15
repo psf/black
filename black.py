@@ -3,6 +3,7 @@ from asyncio.base_events import BaseEventLoop
 from concurrent.futures import Executor, ProcessPoolExecutor
 from datetime import datetime
 from enum import Enum, Flag
+import fnmatch
 from functools import lru_cache, partial, wraps
 import io
 import itertools
@@ -137,6 +138,30 @@ class FileMode(Flag):
         if skip_numeric_underscore_normalization:
             mode |= cls.NO_NUMERIC_UNDERSCORE_NORMALIZATION
         return mode
+
+
+def read_gitignore(ctx: click.Context, value: str) -> Optional[str]:
+    """Injects .gitignore in excluded files"""
+    # nothing to do if not gitignore
+    gitignore = Path(__file__).parent / ".gitignore"
+    if not gitignore.is_file():
+        return None
+
+    # parse gitignore
+    excluded_in_gitignore = []
+    for line in gitignore.read_text().splitlines():
+        line = line.strip().strip("/")
+        if line and not line.startswith("#"):
+            excluded_in_gitignore.append(  # noqa  W605 incorrect
+                fnmatch.translate(line).lstrip("(?s:").rstrip(")\Z")
+            )
+
+    # merge gitignore with defaults
+    ctx.default_map["exclude"] = (  # type: ignore  # bad types in .pyi
+        r"/(" + r"|".join(excluded_in_gitignore) + "|" + value.strip()[2:]
+    )
+
+    return value
 
 
 def read_pyproject_toml(
