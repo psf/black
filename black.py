@@ -140,7 +140,9 @@ class FileMode(Flag):
         return mode
 
 
-def read_gitignore(ctx: click.Context, value: str) -> Optional[str]:
+def read_gitignore(
+    ctx: click.Context, param: click.Parameter, value: str
+) -> Optional[str]:
     """Injects .gitignore in excluded files"""
     # nothing to do if not gitignore
     gitignore = Path(__file__).parent / ".gitignore"
@@ -157,6 +159,8 @@ def read_gitignore(ctx: click.Context, value: str) -> Optional[str]:
             )
 
     # merge gitignore with defaults
+    if ctx.default_map is None:
+        ctx.default_map = {}
     ctx.default_map["exclude"] = (  # type: ignore  # bad types in .pyi
         r"/(" + r"|".join(excluded_in_gitignore) + "|" + value.strip()[2:]
     )
@@ -279,6 +283,7 @@ def read_pyproject_toml(
         "Exclusions are calculated first, inclusions later."
     ),
     show_default=True,
+    callback=read_gitignore,
 )
 @click.option(
     "-q",
