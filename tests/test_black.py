@@ -1181,6 +1181,20 @@ class BlackTestCase(unittest.TestCase):
         actual = result.output
         self.assertFormatEqual(actual, expected)
 
+    def test_merge_exclude(self) -> None:
+
+        with TemporaryDirectory() as tmpdir:
+            gitignore = Path(tmpdir, ".gitignore")
+            gitignore.write_text("exclude/\nbla.file\n.dotdir/")
+            import click
+            ctx = click.Context(click.Command('cmd'))
+            ctx.params['src'] = (tmpdir,)
+            # ctx = type("Context", (), {"params": {"src": (tmpdir,)}})()
+            with patch("black.find_project_root", return_value=gitignore.parent):
+                value = black.merge_exclude(ctx, {}, "/(\.eggs)/")
+
+            self.assertEqual(value, "/(exclude|bla\.file|\.dotdir|\.eggs)/")
+
     def test_include_exclude(self) -> None:
         path = THIS_DIR / "data" / "include_exclude_tests"
         include = re.compile(r"\.pyi?$")

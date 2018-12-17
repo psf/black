@@ -140,32 +140,25 @@ class FileMode(Flag):
         return mode
 
 
-def read_gitignore(
+def merge_exclude(
     ctx: click.Context, param: click.Parameter, value: str
-) -> Optional[str]:
+) -> str:
     """Injects .gitignore in excluded files"""
-    # nothing to do if not gitignore
-    gitignore = Path(__file__).parent / ".gitignore"
+    root = find_project_root(ctx.params.get("src", ()))
+    # nothing to do if no .gitignore
+    gitignore = root / ".gitignore"
     if not gitignore.is_file():
-        return None
-
+        return value
     # parse gitignore
     excluded_in_gitignore = []
     for line in gitignore.read_text().splitlines():
         line = line.strip().strip("/")
         if line and not line.startswith("#"):
             excluded_in_gitignore.append(  # noqa  W605 incorrect
-                fnmatch.translate(line).lstrip("(?s:").rstrip(")\Z")
+                fnmatch.translate(line).lstrip("(?s:").rstrip(r")\Z")
             )
-
-    # merge gitignore with defaults
-    if ctx.default_map is None:
-        ctx.default_map = {}
-    ctx.default_map["exclude"] = (  # type: ignore  # bad types in .pyi
-        r"/(" + r"|".join(excluded_in_gitignore) + "|" + value.strip()[2:]
-    )
-
-    return value
+    # merge gitignore and others exclude
+    return r"/(" + r"|".join(excluded_in_gitignore) + "|" + value.strip()[2:]
 
 
 def read_pyproject_toml(
@@ -283,7 +276,7 @@ def read_pyproject_toml(
         "Exclusions are calculated first, inclusions later."
     ),
     show_default=True,
-    callback=read_gitignore,
+    callback=merge_exclude,
 )
 @click.option(
     "-q",
@@ -3179,7 +3172,6 @@ def find_project_root(srcs: Iterable[str]) -> Path:
     """
     if not srcs:
         return Path("/").resolve()
-
     common_base = min(Path(src).resolve() for src in srcs)
     if common_base.is_dir():
         # Append a fake file so `parents` below returns `common_base_dir`, too.
