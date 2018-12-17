@@ -140,9 +140,7 @@ class FileMode(Flag):
         return mode
 
 
-def merge_exclude(
-    ctx: click.Context, param: click.Parameter, value: str
-) -> str:
+def merge_exclude(ctx: click.Context, param: click.Parameter, value: str) -> str:
     """Injects .gitignore in excluded files"""
     root = find_project_root(ctx.params.get("src", ()))
     # nothing to do if no .gitignore
