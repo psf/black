@@ -1187,11 +1187,12 @@ class BlackTestCase(unittest.TestCase):
             gitignore = Path(tmpdir, ".gitignore")
             gitignore.write_text("exclude/\nbla.file\n.dotdir/")
             import click
-            ctx = click.Context(click.Command('cmd'))
-            ctx.params['src'] = (tmpdir,)
+
+            ctx = click.Context(click.Command("cmd"))
+            ctx.params["src"] = (tmpdir,)
             # ctx = type("Context", (), {"params": {"src": (tmpdir,)}})()
             with patch("black.find_project_root", return_value=gitignore.parent):
-                value = black.merge_exclude(ctx, {}, "/(\.eggs)/")
+                value = black.merge_exclude(ctx, {}, "/(\.eggs)/")  # type: ignore
 
             self.assertEqual(value, "/(exclude|bla\.file|\.dotdir|\.eggs)/")
 
