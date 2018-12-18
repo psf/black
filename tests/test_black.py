@@ -1192,9 +1192,9 @@ class BlackTestCase(unittest.TestCase):
             ctx.params["src"] = (tmpdir,)
             # ctx = type("Context", (), {"params": {"src": (tmpdir,)}})()
             with patch("black.find_project_root", return_value=gitignore.parent):
-                value = black.merge_exclude(ctx, {}, "/(\.eggs)/")  # type: ignore
+                value = black.merge_exclude(ctx, {}, r"/(\.eggs)/")  # type: ignore
 
-            self.assertEqual(value, "/(exclude|bla\.file|\.dotdir|\.eggs)/")
+            self.assertEqual(value, r"/(exclude|bla\.file|\.dotdir|\.eggs)/")
 
     def test_include_exclude(self) -> None:
         path = THIS_DIR / "data" / "include_exclude_tests"
