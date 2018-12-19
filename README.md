@@ -35,6 +35,7 @@ Try it out now using the [Black Playground](https://black.now.sh).
 **[Code style](#the-black-code-style)** |
 **[pyproject.toml](#pyprojecttoml)** |
 **[Editor integration](#editor-integration)** |
+**[Docker image](#docker-image)** |
 **[blackd](#blackd)** |
 **[Version control integration](#version-control-integration)** |
 **[Ignoring unmodified files](#ignoring-unmodified-files)** |
@@ -280,7 +281,7 @@ ignore = E501
 ```
 
 You'll find *Black*'s own .flake8 config file is configured like this.
-If you're curious about the reasoning behind B950, 
+If you're curious about the reasoning behind B950,
 [Bugbear's documentation](https://github.com/PyCQA/flake8-bugbear#opinionated-warnings)
 explains it.  The tl;dr is "it's like highway speed limits, we won't
 bother you if you overdo it by a few km/h".
@@ -758,6 +759,32 @@ passed).  *Black* will still emit messages on stderr but that shouldn't
 affect your use case.
 
 This can be used for example with PyCharm's [File Watchers](https://www.jetbrains.com/help/pycharm/file-watchers.html).
+
+## Docker image
+
+### Building
+
+Running `build.sh` in the `docker/` folder will build the docker image tagged as `ambv/black:latest`
+
+### Tagging
+
+Running `tag.sh` in the `docker/` folder will tag the `ambv/black:latest` based on the `__version__` in `black.py`
+
+### Running
+
+`docker run ambv/black` defaults to the `--help` flag.
+
+To run a check on a python file:
+
+```bash
+docker run --read-only  -v $(pwd):$(pwd) -w $(pwd) ambv/black --check foo.py
+```
+
+Note that the mounted directory has to be where the file exists, e.g.,
+
+```bash
+docker run --read-only  -v /home/ubunu/somefolder/:/black/ -w /black/ ambv/black --check foo.py
+```
 
 ## blackd
 
