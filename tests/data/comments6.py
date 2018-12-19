@@ -1,5 +1,12 @@
 from typing import Any, Tuple
 
+
+def f(
+    a,  # type: int
+):
+    pass
+
+
 # test type comments
 def f(a, b, c, d, e, f, g, h, i):
     # type: (int, int, int, int, int, int, int, int, int) -> None
@@ -23,8 +30,8 @@ def f(
 
 def f(
     arg,  # type: int
-    another_arg_with_default_value=False,  # type: bool
     *args,  # type: *Any
+    default=False,  # type: bool
     **kwargs,  # type: **Any
 ):
     # type: (...) -> None
