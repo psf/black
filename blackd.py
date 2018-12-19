@@ -2,9 +2,11 @@ import asyncio
 from concurrent.futures import Executor, ProcessPoolExecutor
 from functools import partial
 import logging
+from multiprocessing import freeze_support
 from typing import Set, Tuple
 
 from aiohttp import web
+import aiohttp_cors
 import black
 import click
 
@@ -17,6 +19,15 @@ PYTHON_VARIANT_HEADER = "X-Python-Variant"
 SKIP_STRING_NORMALIZATION_HEADER = "X-Skip-String-Normalization"
 SKIP_NUMERIC_UNDERSCORE_NORMALIZATION_HEADER = "X-Skip-Numeric-Underscore-Normalization"
 FAST_OR_SAFE_HEADER = "X-Fast-Or-Safe"
+
+BLACK_HEADERS = [
+    VERSION_HEADER,
+    LINE_LENGTH_HEADER,
+    PYTHON_VARIANT_HEADER,
+    SKIP_STRING_NORMALIZATION_HEADER,
+    SKIP_NUMERIC_UNDERSCORE_NORMALIZATION_HEADER,
+    FAST_OR_SAFE_HEADER,
+]
 
 
 class InvalidVariantHeader(Exception):
@@ -40,7 +51,18 @@ def main(bind_host: str, bind_port: int) -> None:
 def make_app() -> web.Application:
     app = web.Application()
     executor = ProcessPoolExecutor()
-    app.add_routes([web.post("/", partial(handle, executor=executor))])
+
+    cors = aiohttp_cors.setup(app)
+    resource = cors.add(app.router.add_resource("/"))
+    cors.add(
+        resource.add_route("POST", partial(handle, executor=executor)),
+        {
+            "*": aiohttp_cors.ResourceOptions(
+                allow_headers=(*BLACK_HEADERS, "Content-Type"), expose_headers="*"
+            )
+        },
+    )
+
     return app
 
 
@@ -145,6 +167,7 @@ def parse_python_variant_header(value: str) -> Tuple[bool, Set[black.TargetVersi
 
 
 def patched_main() -> None:
+    freeze_support()
     black.patch_click()
     main()
 
