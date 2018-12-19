@@ -768,9 +768,9 @@ Running `build.sh` in the `docker/` folder will build the docker image tagged as
 
 ### Tagging
 
-Running `tag.sh` in the `docker/` folder will tag the `ambv/black:latest` based on the `__version__` in `black.py`
+Running `tag.sh` in the `docker/` folder will tag the `ambv/black:latest` image based on the `__version__` in `black.py`
 
-### Running
+### Usage
 
 `docker run ambv/black` defaults to the `--help` flag.
 
