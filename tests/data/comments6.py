@@ -1,3 +1,5 @@
+from typing import Any, Tuple
+
 # test type comments
 def f(a, b, c, d, e, f, g, h, i):
     # type: (int, int, int, int, int, int, int, int, int) -> None
@@ -20,37 +22,40 @@ def f(
 
 
 def f(
+    arg,  # type: int
+    another_arg_with_default_value=False,  # type: bool
+    *args,  # type: *Any
+    **kwargs,  # type: **Any
+):
+    # type: (...) -> None
+    pass
+
+
+def f(
     a,  # type: int
     b,  # type: int
     c,  # type: int
     d,  # type: int
 ):
     # type: (...) -> None
-    e = (
-        a
-        + b
-        + c
-        + d
-        + a
-        + b
-        + c
-        + d
-        + a
-        + b
-        + c
-        + d
-        + a
-        + b
-        + c
-        + d
-        + a
-        + b
-        + c
-        + d
-        + a
-        + b
-        + c
-        + d
+
+    element = 0  # type: int
+    another_element = 1  # type: float
+    another_element_with_long_name = 2  # type: int
+    another_really_really_long_element_with_a_unnecessarily_long_name_to_describe_what_it_does_enterprise_style = (
+        3
     )  # type: int
 
-    g = ""  # type: str
+    tup = (
+        another_element,  # type: int
+        another_really_really_long_element_with_a_unnecessarily_long_name_to_describe_what_it_does_enterprise_style,  # type: int
+    )  # type: Tuple[int, int]
+
+    a = (
+        element
+        + another_element
+        + another_element_with_long_name
+        + element
+        + another_element
+        + another_element_with_long_name
+    )  # type: int

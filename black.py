@@ -2113,7 +2113,7 @@ def split_line(
 
     # we don't want to split special comments like type annotations
     # https://github.com/python/typing/issues/186
-    has_special_comment: bool = False
+    has_special_comment = False
     for leaf in line.leaves:
         for comment in line.comments_after(leaf):
             if leaf.type == token.COMMA and is_special_comment(comment):
