@@ -635,7 +635,7 @@ $ where black
 %LocalAppData%\Programs\Python\Python36-32\Scripts\black.exe  # possible location
 ```
 
-3. Open External tools in PyCharm with `File -> Settings -> Tools -> External Tools`.
+3. Open External tools in PyCharm with `PyCharm -> Preferences -> Tools -> External Tools`.
 
 4. Click the + icon to add a new external tool with the following values:
     - Name: Black
@@ -644,12 +644,12 @@ $ where black
     - Arguments: `$FilePath$`
 
 5. Format the currently opened file by selecting `Tools -> External Tools -> black`.
-    - Alternatively, you can set a keyboard shortcut by navigating to `Preferences -> Keymap -> External Tools -> External Tools - Black`.
+    - Alternatively, you can set a keyboard shortcut by navigating to `PyCharm -> Preferences -> Keymap -> External Tools -> External Tools - Black`.
 
 6. Optionally, run Black on every file save:
 
     1. Make sure you have the [File Watcher](https://plugins.jetbrains.com/plugin/7177-file-watchers) plugin installed.
-    2. Go to `Preferences -> Tools -> File Watchers` and click `+` to add a new watcher:
+    2. Go to `PyCharm -> Preferences -> Tools -> File Watchers` and click `+` to add a new watcher:
         - Name: Black
         - File type: Python
         - Scope: Project Files
