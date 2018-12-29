@@ -38,13 +38,6 @@ __all__ = [x for x in dir(token) if x[0] != '_'] + ["tokenize",
            "generate_tokens", "untokenize"]
 del token
 
-try:
-    bytes
-except NameError:
-    # Support bytes type in Python <= 2.5, so 2to3 turns itself into
-    # valid Python 3 code.
-    bytes = str
-
 def group(*choices): return '(' + '|'.join(choices) + ')'
 def any(*choices): return group(*choices) + '*'
 def maybe(*choices): return group(*choices) + '?'
