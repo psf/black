@@ -160,7 +160,9 @@ def read_pyproject_toml(
         pyproject_toml = toml.load(value)
         config = pyproject_toml.get("tool", {}).get("black", {})
     except (toml.TomlDecodeError, OSError) as e:
-        raise click.BadOptionUsage(f"Error reading configuration file: {e}", ctx)
+        raise click.FileError(
+            filename=value, hint=f"Error reading configuration file: {e}"
+        )
 
     if not config:
         return None
