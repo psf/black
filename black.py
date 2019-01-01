@@ -632,7 +632,11 @@ def format_str(
     dst_contents = ""
     future_imports = get_future_imports(src_node)
     is_pyi = bool(mode & FileMode.PYI)
-    py36 = bool(mode & FileMode.PYTHON36) or is_python36(src_node)
+    py36 = (                                                                                                                
+        bool(mode & FileMode.PYTHON36)
+        or "# -*- coding: future_fstrings -*-" not in src_contents
+        and is_python36(src_node)
+    )
     normalize_strings = not bool(mode & FileMode.NO_STRING_NORMALIZATION)
     normalize_fmt_off(src_node)
     lines = LineGenerator(
