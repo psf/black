@@ -635,7 +635,15 @@ $ where black
 %LocalAppData%\Programs\Python\Python36-32\Scripts\black.exe  # possible location
 ```
 
-3. Open External tools in PyCharm with `File -> Settings -> Tools -> External Tools`.
+3. Open External tools in PyCharm  
+
+  On macOS / Linux / BSD:
+  
+```PyCharm -> Preferences -> Tools -> External Tools```
+
+  On Windows:
+  
+```File -> Settings -> Tools -> External Tools```
 
 4. Click the + icon to add a new external tool with the following values:
     - Name: Black
