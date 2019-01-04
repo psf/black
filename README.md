@@ -637,11 +637,11 @@ $ where black
 
 3. Open External tools in PyCharm  
 
-  On macOS / Linux / BSD:
+  On macOS:
   
 ```PyCharm -> Preferences -> Tools -> External Tools```
 
-  On Windows:
+  On Windows / Linux / BSD:
   
 ```File -> Settings -> Tools -> External Tools```
 
