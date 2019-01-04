@@ -641,7 +641,7 @@ $ where black
     - Name: Black
     - Description: Black is the uncompromising Python code formatter.
     - Program: <install_location_from_step_2>
-    - Arguments: `$FilePath$`
+    - Arguments: `"$FilePath$"`
 
 5. Format the currently opened file by selecting `Tools -> External Tools -> black`.
     - Alternatively, you can set a keyboard shortcut by navigating to `Preferences -> Keymap -> External Tools -> External Tools - Black`.
