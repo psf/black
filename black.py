@@ -2112,8 +2112,19 @@ def split_line(
         return
 
     line_str = str(line).strip("\n")
-    if not line.should_explode and is_line_short_enough(
-        line, line_length=line_length, line_str=line_str
+
+    # we don't want to split special comments like type annotations
+    # https://github.com/python/typing/issues/186
+    has_special_comment = False
+    for leaf in line.leaves:
+        for comment in line.comments_after(leaf):
+            if leaf.type == token.COMMA and is_special_comment(comment):
+                has_special_comment = True
+
+    if (
+        not has_special_comment
+        and not line.should_explode
+        and is_line_short_enough(line, line_length=line_length, line_str=line_str)
     ):
         yield line
         return
@@ -2459,6 +2470,16 @@ def is_import(leaf: Leaf) -> bool:
             (v == "import" and p and p.type == syms.import_name)
             or (v == "from" and p and p.type == syms.import_from)
         )
+    )
+
+
+def is_special_comment(leaf: Leaf) -> bool:
+    """Return True if the given leaf is a special comment.
+    Only returns true for type comments for now."""
+    t = leaf.type
+    v = leaf.value
+    return bool(
+        (t == token.COMMENT or t == STANDALONE_COMMENT) and (v.startswith("# type:"))
     )
 
 
@@ -2951,6 +2972,7 @@ def ensure_visible(leaf: Leaf) -> None:
 
 def should_explode(line: Line, opening_bracket: Leaf) -> bool:
     """Should `line` immediately be split with `delimiter_split()` after RHS?"""
+
     if not (
         opening_bracket.parent
         and opening_bracket.parent.type in {syms.atom, syms.import_from}
