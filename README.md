@@ -1366,7 +1366,7 @@ Multiple contributions by:
 * [Luka Sterbic](mailto:luka.sterbic@gmail.com)
 * [Miguel Gaiowski](mailto:miggaiowski@gmail.com)
 * [Miroslav Shubernetskiy](mailto:miroslav@miki725.com)
-* [Neraste](neraste.herr10@gmail.com)
+* [Neraste](mailto:neraste.herr10@gmail.com)
 * [Osaetin Daniel](mailto:osaetindaniel@gmail.com)
 * [Peter Bengtsson](mailto:mail@peterbe.com)
 * [Stavros Korokithakis](mailto:hi@stavros.io)
