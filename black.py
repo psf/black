@@ -241,7 +241,7 @@ def read_pyproject_toml(
     "-t",
     "--target-version",
     type=click.Choice([v.name.lower() for v in TargetVersion]),
-    callback=lambda c, p, v: [TargetVersion[val.upper()] for val in v],  # type: ignore
+    callback=lambda c, p, v: [TargetVersion[val.upper()] for val in v],
     multiple=True,
     help=(
         "Python versions that should be supported by Black's output. [default: "
@@ -733,13 +733,13 @@ def get_grammars(target_versions: Set[TargetVersion]) -> List[Grammar]:
     if not target_versions:
         return GRAMMARS
     elif all(not version.is_python2() for version in target_versions):
-        return [pygram.python_grammar]
-    else:
         # Python 2-compatible code, so don't try Python 3 grammar.
         return [
             pygram.python_grammar_no_print_statement_no_exec_statement,
             pygram.python_grammar_no_print_statement,
         ]
+    else:
+        return [pygram.python_grammar]
 
 
 def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -> Node:
