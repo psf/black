@@ -42,8 +42,11 @@ import sys
 import vim
 
 def _get_python_binary(exec_prefix):
-  default = vim.eval("g:pymode_python").strip()
-  if os.path.exists(default):
+  try:
+      default = vim.eval("g:pymode_python").strip()
+  except:
+      default = ""
+  if default and os.path.exists(default):
     return default
   if sys.platform[:3] == "win":
     return exec_prefix / 'python.exe'
