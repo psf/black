@@ -6,7 +6,6 @@ from enum import Enum, Flag
 from functools import lru_cache, partial, wraps
 import io
 import itertools
-import keyword
 import logging
 from multiprocessing import Manager, freeze_support
 import os
@@ -777,9 +776,7 @@ class DebugVisitor(Visitor[T]):
         list(v.visit(code))
 
 
-KEYWORDS = set(keyword.kwlist)
 WHITESPACE = {token.DEDENT, token.INDENT, token.NEWLINE}
-FLOW_CONTROL = {"return", "raise", "break", "continue"}
 STATEMENT = {
     syms.if_stmt,
     syms.while_stmt,
