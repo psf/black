@@ -14,6 +14,7 @@ import pickle
 import re
 import signal
 import sys
+import tempfile
 import tokenize
 from typing import (
     Any,
@@ -3647,11 +3648,11 @@ def write_cache(
     """Update the cache file."""
     cache_file = get_cache_file(line_length, mode)
     try:
-        if not CACHE_DIR.exists():
-            CACHE_DIR.mkdir(parents=True)
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
         new_cache = {**cache, **{src.resolve(): get_cache_info(src) for src in sources}}
-        with cache_file.open("wb") as fobj:
-            pickle.dump(new_cache, fobj, protocol=pickle.HIGHEST_PROTOCOL)
+        with tempfile.NamedTemporaryFile(dir=str(cache_file.parent), delete=False) as f:
+            pickle.dump(new_cache, f, protocol=pickle.HIGHEST_PROTOCOL)
+        os.replace(f.name, cache_file)
     except OSError:
         pass
 
