@@ -611,7 +611,7 @@ configuration from different levels of the file hierarchy.
 Use [proofit404/blacken](https://github.com/proofit404/blacken).
 
 
-### PyCharm
+### PyCharm/IntelliJ
 
 1. Install `black`.
 
@@ -635,7 +635,7 @@ $ where black
 %LocalAppData%\Programs\Python\Python36-32\Scripts\black.exe  # possible location
 ```
 
-3. Open External tools in PyCharm with `File -> Settings -> Tools -> External Tools`.
+3. Open External tools in PyCharm/IntelliJ with `File -> Settings -> Tools -> External Tools`.
 
 4. Click the + icon to add a new external tool with the following values:
     - Name: Black
@@ -757,7 +757,7 @@ The formatted code will be returned on stdout (unless `--check` was
 passed).  *Black* will still emit messages on stderr but that shouldn't
 affect your use case.
 
-This can be used for example with PyCharm's [File Watchers](https://www.jetbrains.com/help/pycharm/file-watchers.html).
+This can be used for example with PyCharm's or IntelliJ's [File Watchers](https://www.jetbrains.com/help/pycharm/file-watchers.html).
 
 ## blackd
 
