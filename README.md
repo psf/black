@@ -657,6 +657,7 @@ $ where black
         - Arguments: `$FilePath$`
         - Output paths to refresh: `$FilePathRelativeToProjectRoot$`
         - Working directory: `$ProjectFileDir$`
+	- Uncheck "Auto-save edited files to trigger the watcher"
 
 ### Vim
 
