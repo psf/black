@@ -487,6 +487,7 @@ async def schedule_formatting(
         done, _ = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
         for task in done:
             src = tasks.pop(task)
+            pending = tasks.keys()
             if task.cancelled():
                 cancelled.append(task)
             elif task.exception():
