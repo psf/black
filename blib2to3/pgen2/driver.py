@@ -131,10 +131,8 @@ class Driver(object):
                     current_line = ""
                     current_column = 0
                     wait_for_nl = False
-            elif char == ' ':
+            elif char in ' \t':
                 current_column += 1
-            elif char == '\t':
-                current_column += 4
             elif char == '\n':
                 # unexpected empty line
                 current_column = 0
