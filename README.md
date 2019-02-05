@@ -572,12 +572,11 @@ line-length = 88
 py36 = true
 include = '\.pyi?$'
 exclude = '''
-# exclude a few common directories as well as foo.py
-# in the root of the project
+
 (
   /(
-      \.eggs
-    | \.git
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
     | \.hg
     | \.mypy_cache
     | \.tox
@@ -587,7 +586,8 @@ exclude = '''
     | build
     | dist
   )/
-  | foo.py
+  | foo.py           # also separately exclude a file named foo.py in
+                     # the root of the project
 )
 '''
 
