@@ -304,7 +304,7 @@ class BlackTestCase(unittest.TestCase):
             msg = (
                 f"Expected diff isn't equal to the actual. If you made changes "
                 f"to expression.py and this is an anticipated difference, "
-                f"overwrite tests/expression.diff with {dump}"
+                f"overwrite tests/data/expression.diff with {dump}"
             )
             self.assertEqual(expected, actual, msg)
 
@@ -524,6 +524,19 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, black.FileMode())
+
+    def test_comment_indentation(self) -> None:
+        contents_tab = "if 1:\n\tif 2:\n\t\tpass\n\t# comment\n\tpass\n"
+        contents_spc = "if 1:\n    if 2:\n        pass\n    # comment\n    pass\n"
+
+        self.assertFormatEqual(fs(contents_spc), contents_spc)
+        self.assertFormatEqual(fs(contents_tab), contents_spc)
+
+        contents_tab = "if 1:\n\tif 2:\n\t\tpass\n\t\t# comment\n\tpass\n"
+        contents_spc = "if 1:\n    if 2:\n        pass\n        # comment\n    pass\n"
+
+        self.assertFormatEqual(fs(contents_tab), contents_spc)
+        self.assertFormatEqual(fs(contents_spc), contents_spc)
 
     def test_report_verbose(self) -> None:
         report = black.Report(verbose=True)
