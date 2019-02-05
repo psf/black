@@ -464,15 +464,17 @@ async def schedule_formatting(
         manager = Manager()
         lock = manager.Lock()
     tasks = {
-        loop.run_in_executor(
-            executor,
-            format_file_in_place,
-            src,
-            line_length,
-            fast,
-            write_back,
-            mode,
-            lock,
+        asyncio.create_task(
+            loop.run_in_executor(
+                executor,
+                format_file_in_place,
+                src,
+                line_length,
+                fast,
+                write_back,
+                mode,
+                lock,
+            )
         ): src
         for src in sorted(sources)
     }
@@ -487,7 +489,6 @@ async def schedule_formatting(
         done, _ = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
         for task in done:
             src = tasks.pop(task)
-            pending = tasks.keys()
             if task.cancelled():
                 cancelled.append(task)
             elif task.exception():
