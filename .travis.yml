@@ -3,7 +3,7 @@ dist: xenial
 language: python
 cache: pip
 env:
-- TEST_CMD="coverage run tests/test_black.py"
+- TEST_CMD="coverage run tests/test_black.py -v"
 install:
 - pip install coverage coveralls flake8 flake8-bugbear mypy
 - pip install -e '.[d]'
