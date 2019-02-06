@@ -81,8 +81,6 @@ Options:
                               source on standard input).
   -S, --skip-string-normalization
                               Don't normalize string quotes or prefixes.
-  -N, --skip-numeric-underscore-normalization
-                              Don't normalize underscores in numeric literals.
   --check                     Don't write the files back, just return the
                               status.  Return code 0 means nothing would
                               change.  Return code 1 means some files would be
@@ -381,14 +379,8 @@ an adoption helper, avoid using this for new projects.
 *Black* standardizes most numeric literals to use lowercase letters for the
 syntactic parts and uppercase letters for the digits themselves: `0xAB`
 instead of `0XAB` and `1e10` instead of `1E10`. Python 2 long literals are
-styled as `2L` instead of `2l` to avoid confusion between `l` and `1`. In
-Python 3.6+, *Black* adds underscores to long numeric literals to aid
-readability: `100000000` becomes `100_000_000`.
-
-For regions where numerals are grouped differently (like [India](https://en.wikipedia.org/wiki/Indian_numbering_system)
-and [China](https://en.wikipedia.org/wiki/Chinese_numerals#Whole_numbers)),
-the `-N` or `--skip-numeric-underscore-normalization` command line option
-makes *Black* preserve underscores in numeric literals.
+styled as `2L` instead of `2l` to avoid confusion between `l` and `1`.
+In Python 3.6 and later, *Black* preserves underscores in numeric literals.
 
 ### Line breaks & binary operators
 
@@ -808,8 +800,6 @@ The headers controlling how code is formatted are:
  - `X-Skip-String-Normalization`: corresponds to the `--skip-string-normalization`
     command line flag. If present and its value is not the empty string, no string
     normalization will be performed.
- - `X-Skip-Numeric-Underscore-Normalization`: corresponds to the
-    `--skip-numeric-underscore-normalization` command line flag.
  - `X-Fast-Or-Safe`: if set to `fast`, `blackd` will act as *Black* does when
     passed the `--fast` command line flag.
  - `X-Python-Variant`: if set to `pyi`, `blackd` will act as *Black* does when
@@ -933,6 +923,10 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 
 ## Change Log
+
+### 19.2b0
+
+* *Black* no longer normalizes numeric literals to include `_` separators.
 
 ### 18.9b0
 

@@ -421,9 +421,7 @@ class BlackTestCase(unittest.TestCase):
     @patch("black.dump_to_file", dump_to_stderr)
     def test_numeric_literals_ignoring_underscores(self) -> None:
         source, expected = read_data("numeric_literals_skip_underscores")
-        mode = (
-            black.FileMode.PYTHON36 | black.FileMode.NO_NUMERIC_UNDERSCORE_NORMALIZATION
-        )
+        mode = black.FileMode.PYTHON36
         actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
