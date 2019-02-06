@@ -1505,16 +1505,12 @@ class BlackTestCase(unittest.TestCase):
     async def test_blackd_invalid_line_length(self) -> None:
         app = blackd.make_app()
         async with TestClient(TestServer(app)) as client:
-            try:
-                response = await client.post(
-                    "/",
-                    data=b'print("hello")\n',
-                    headers={blackd.LINE_LENGTH_HEADER: "NaN"},
-                )
-            except Exception:
-                pass
-            else:
-                self.assertEqual(response.status, 400)
+            response = await client.post(
+                "/",
+                data=b'print("hello")\n',
+                headers={blackd.LINE_LENGTH_HEADER: "NaN"},
+            )
+            self.assertEqual(response.status, 400)
 
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     def test_blackd_main(self) -> None:
