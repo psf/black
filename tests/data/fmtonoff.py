@@ -4,13 +4,13 @@ import sys
 
 from third_party import X, Y, Z
 
-from library import some_connection, some_decorator
-
+from library import some_connection, \
+                    some_decorator
 # fmt: off
 from third_party import (X,
                          Y, Z)
 # fmt: on
-f"trigger 3.6 mode"
+f'trigger 3.6 mode'
 # Comment 1
 
 # Comment 2
@@ -38,34 +38,16 @@ many_args=[1,2,3]
 def function_signature_stress_test(number:int,no_annotation=None,text:str='default',* ,debug:bool=False,**kwargs) -> str:
  return text[number:-1]
 # fmt: on
-def spaces(a=1, b=(), c=[], d={}, e=True, f=-1, g=1 if False else 2, h="", i=r""):
-    offset = attr.ib(default=attr.Factory(lambda: _r.uniform(10000, 200000)))
-    assert task._cancel_stack[: len(old_stack)] == old_stack
-
-
-def spaces_types(
-    a: int = 1,
-    b: tuple = (),
-    c: list = [],
-    d: dict = {},
-    e: bool = True,
-    f: int = -1,
-    g: int = 1 if False else 2,
-    h: str = "",
-    i: str = r"",
-):
-    ...
-
-
-def spaces2(result=_core.Value(None)):
-    ...
-
-
+def spaces(a=1, b=(), c=[], d={}, e=True, f=-1, g=1 if False else 2, h="", i=r''):
+ offset = attr.ib(default=attr.Factory( lambda: _r.uniform(10000, 200000)))
+ assert task._cancel_stack[:len(old_stack)] == old_stack
+def spaces_types(a: int = 1, b: tuple = (), c: list = [], d: dict = {}, e: bool = True, f: int = -1, g: int = 1 if False else 2, h: str = "", i: str = r''): ...
+def spaces2(result= _core.Value(None)):
+ ...
 something = {
     # fmt: off
     key: 'value',
 }
-
 
 def subscriptlist():
     atom[
@@ -73,10 +55,8 @@ def subscriptlist():
         'some big and',
         'complex subscript',
         # fmt: on
-        goes + here,
-        andhere,
-    ]
-
+        goes + here, andhere,
+       ]
 
 def import_as_names():
     # fmt: off
@@ -84,25 +64,22 @@ def import_as_names():
     'unformatted'
     # fmt: on
 
-
 def testlist_star_expr():
     # fmt: off
     a , b = *hello
     'unformatted'
     # fmt: on
 
-
 def yield_expr():
     # fmt: off
     yield hello
     'unformatted'
     # fmt: on
-    "formatted"
+    'formatted'
     # fmt: off
     ( yield hello )
     'unformatted'
     # fmt: on
-
 
 def example(session):
     # fmt: off
@@ -113,8 +90,6 @@ def example(session):
         .order_by(models.Customer.id.asc())\
         .all()
     # fmt: on
-
-
 def off_and_on_without_data():
     """All comments here are technically on the same prefix.
 
@@ -122,31 +97,24 @@ def off_and_on_without_data():
     """
     # fmt: off
 
-    # hey, that won't work
+
+        #hey, that won't work
+
 
     # fmt: on
     pass
-
-
 def on_and_off_broken():
     """Another known limitation."""
     # fmt: on
     # fmt: off
-    this = should.not_be.formatted()
-    but = it is formatted
-    because.the.handling.inside.generate_ignored_nodes()
-    doesnt.consider.ordering.within.one.prefix
-
-
+    this=should.not_be.formatted()
+    but=it  is  formatted
+    because . the . handling . inside . generate_ignored_nodes()
+    doesnt . consider . ordering . within . one . prefix
 def long_lines():
     if True:
         typedargslist.extend(
-            gen_annotated_params(
-                ast_args.kwonlyargs,
-                ast_args.kw_defaults,
-                parameters,
-                implicit_default=True,
-            )
+            gen_annotated_params(ast_args.kwonlyargs, ast_args.kw_defaults, parameters, implicit_default=True)
         )
         # fmt: off
         a = (
@@ -177,24 +145,19 @@ def long_lines():
         re.MULTILINE|re.VERBOSE
         # fmt: on
     )
-
-
 def single_literal_yapf_disable():
     """Black does not support this."""
-    BAZ = {(1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)}  # yapf: disable
-
-
+    BAZ = {
+        (1, 2, 3, 4),
+        (5, 6, 7, 8),
+        (9, 10, 11, 12),
+    }  # yapf: disable
 cfg.rule(
-    "Default",
-    "address",
+    "Default", "address",
     xxxx_xxxx=["xxx-xxxxxx-xxxxxxxxxx"],
-    xxxxxx="xx_xxxxx",
-    xxxxxxx="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-    xxxxxxxxx_xxxx=True,
-    xxxxxxxx_xxxxxxxxxx=False,
-    xxxxxx_xxxxxx=2,
-    xxxxxx_xxxxx_xxxxxxxx=70,
-    xxxxxx_xxxxxx_xxxxx=True,
+    xxxxxx="xx_xxxxx", xxxxxxx="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    xxxxxxxxx_xxxx=True, xxxxxxxx_xxxxxxxxxx=False,
+    xxxxxx_xxxxxx=2, xxxxxx_xxxxx_xxxxxxxx=70, xxxxxx_xxxxxx_xxxxx=True,
     # fmt: off
     xxxxxxx_xxxxxxxxxxxx={
         "xxxxxxxx": {
@@ -209,7 +172,7 @@ cfg.rule(
         },
     },
     # fmt: on
-    xxxxxxxxxx_xxxxxxxxxxx_xxxxxxx_xxxxxxxxx=5,
+    xxxxxxxxxx_xxxxxxxxxxx_xxxxxxx_xxxxxxxxx=5
 )
 # fmt: off
 yield  'hello'
@@ -217,6 +180,7 @@ yield  'hello'
 l=[1,2,3]
 d={'a':1,
    'b':2}
+
 # output
 
 
@@ -439,4 +403,3 @@ yield  'hello'
 l=[1,2,3]
 d={'a':1,
    'b':2}
-
