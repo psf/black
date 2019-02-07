@@ -31,6 +31,8 @@ matrix:
       python: 3.6
     - name: "3.7"
       python: 3.7
+  # aiohttp currently has a bug affecting 3.8
+  allow_failures:
     - name: "3.8-dev"
       python: 3.8-dev
 before_deploy:
