@@ -941,10 +941,12 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ### 19.2b0
 
-* *Black* no longer normalizes numeric literals to include `_` separators.
+* long `del` statements are now split into multiple lines
+
+* *Black* no longer normalizes numeric literals to include `_` separators (#696)
 
 * new option `--target-version` to control which Python versions
-  *Black*-formatted code should target
+  *Black*-formatted code should target (#618)
 
 ### 18.9b0
 
