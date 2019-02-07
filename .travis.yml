@@ -1,4 +1,3 @@
-sudo: required
 dist: xenial
 language: python
 cache: pip
