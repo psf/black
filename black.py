@@ -1646,6 +1646,7 @@ class LineGenerator(Visitor[Line]):
         self.visit_expr_stmt = partial(v, keywords=Ø, parens=ASSIGNMENTS)
         self.visit_return_stmt = partial(v, keywords={"return"}, parens={"return"})
         self.visit_import_from = partial(v, keywords=Ø, parens={"import"})
+        self.visit_del_stmt = partial(v, keywords=Ø, parens={"del"})
         self.visit_async_funcdef = self.visit_async_stmt
         self.visit_decorated = self.visit_decorators
 
@@ -3350,7 +3351,16 @@ def assert_equivalent(src: str, dst: str) -> None:
 
             if isinstance(value, list):
                 for item in value:
-                    if isinstance(item, ast.AST):
+                    # Ignore nested tuples within del statements, because we may insert parentheses and
+                    # they change the AST.
+                    if (
+                        field == "targets"
+                        and isinstance(node, ast.Delete)
+                        and isinstance(item, ast.Tuple)
+                    ):
+                        for item in item.elts:
+                            yield from _v(item, depth + 2)
+                    elif isinstance(item, ast.AST):
                         yield from _v(item, depth + 2)
 
             elif isinstance(value, ast.AST):
