@@ -826,7 +826,7 @@ class BlackTestCase(unittest.TestCase):
         )
         node = black.lib2to3_parse(expected)
         self.assertEqual(
-            black.get_features_used(node), {Feature.TRAILING_COMMA, Feature.F_STRINGS},
+            black.get_features_used(node), {Feature.TRAILING_COMMA, Feature.F_STRINGS}
         )
         source, expected = read_data("expression")
         node = black.lib2to3_parse(source)
