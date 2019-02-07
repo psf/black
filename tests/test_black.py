@@ -27,6 +27,7 @@ from click import unstyle
 from click.testing import CliRunner
 
 import black
+from black import Feature
 
 try:
     import blackd
@@ -37,9 +38,8 @@ else:
     has_blackd_deps = True
 
 
-ll = 88
-ff = partial(black.format_file_in_place, line_length=ll, fast=True)
-fs = partial(black.format_str, line_length=ll)
+ff = partial(black.format_file_in_place, mode=black.FileMode(), fast=True)
+fs = partial(black.format_str, mode=black.FileMode())
 THIS_FILE = Path(__file__)
 THIS_DIR = THIS_FILE.parent
 EMPTY_LINE = "# EMPTY LINE WITH WHITESPACE" + " (this comment will be removed)"
@@ -155,13 +155,22 @@ class BlackTestCase(unittest.TestCase):
                 black.err(str(ve))
         self.assertEqual(expected, actual)
 
+    def invokeBlack(
+        self, args: List[str], exit_code: int = 0, ignore_config: bool = True
+    ) -> None:
+        runner = BlackRunner()
+        if ignore_config:
+            args = ["--config", str(THIS_DIR / "empty.toml"), *args]
+        result = runner.invoke(black.main, args)
+        self.assertEqual(result.exit_code, exit_code, msg=runner.stderr_bytes.decode())
+
     @patch("black.dump_to_file", dump_to_stderr)
     def test_empty(self) -> None:
         source = expected = ""
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
 
     def test_empty_ff(self) -> None:
         expected = ""
@@ -180,7 +189,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
         self.assertFalse(ff(THIS_FILE))
 
     @patch("black.dump_to_file", dump_to_stderr)
@@ -189,20 +198,20 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
         self.assertFalse(ff(THIS_DIR / ".." / "black.py"))
 
     def test_piping(self) -> None:
         source, expected = read_data("../black", data=False)
         result = BlackRunner().invoke(
             black.main,
-            ["-", "--fast", f"--line-length={ll}"],
+            ["-", "--fast", f"--line-length={black.DEFAULT_LINE_LENGTH}"],
             input=BytesIO(source.encode("utf8")),
         )
         self.assertEqual(result.exit_code, 0)
         self.assertFormatEqual(expected, result.output)
         black.assert_equivalent(source, result.output)
-        black.assert_stable(source, result.output, line_length=ll)
+        black.assert_stable(source, result.output, black.FileMode())
 
     def test_piping_diff(self) -> None:
         diff_header = re.compile(
@@ -212,7 +221,13 @@ class BlackTestCase(unittest.TestCase):
         source, _ = read_data("expression.py")
         expected, _ = read_data("expression.diff")
         config = THIS_DIR / "data" / "empty_pyproject.toml"
-        args = ["-", "--fast", f"--line-length={ll}", "--diff", f"--config={config}"]
+        args = [
+            "-",
+            "--fast",
+            f"--line-length={black.DEFAULT_LINE_LENGTH}",
+            "--diff",
+            f"--config={config}",
+        ]
         result = BlackRunner().invoke(
             black.main, args, input=BytesIO(source.encode("utf8"))
         )
@@ -227,7 +242,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
         self.assertFalse(ff(THIS_DIR / ".." / "setup.py"))
 
     @patch("black.dump_to_file", dump_to_stderr)
@@ -236,7 +251,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_function2(self) -> None:
@@ -244,7 +259,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_expression(self) -> None:
@@ -252,7 +267,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
 
     def test_expression_ff(self) -> None:
         source, expected = read_data("expression")
@@ -266,7 +281,7 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         with patch("black.dump_to_file", dump_to_stderr):
             black.assert_equivalent(source, actual)
-            black.assert_stable(source, actual, line_length=ll)
+            black.assert_stable(source, actual, black.FileMode())
 
     def test_expression_diff(self) -> None:
         source, _ = read_data("expression.py")
@@ -289,7 +304,7 @@ class BlackTestCase(unittest.TestCase):
             msg = (
                 f"Expected diff isn't equal to the actual. If you made changes "
                 f"to expression.py and this is an anticipated difference, "
-                f"overwrite tests/expression.diff with {dump}"
+                f"overwrite tests/data/expression.diff with {dump}"
             )
             self.assertEqual(expected, actual, msg)
 
@@ -299,7 +314,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_string_quotes(self) -> None:
@@ -307,12 +322,12 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
-        mode = black.FileMode.NO_STRING_NORMALIZATION
+        black.assert_stable(source, actual, black.FileMode())
+        mode = black.FileMode(string_normalization=False)
         not_normalized = fs(source, mode=mode)
         self.assertFormatEqual(source, not_normalized)
         black.assert_equivalent(source, not_normalized)
-        black.assert_stable(source, not_normalized, line_length=ll, mode=mode)
+        black.assert_stable(source, not_normalized, mode=mode)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_slices(self) -> None:
@@ -320,7 +335,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_comments(self) -> None:
@@ -328,7 +343,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_comments2(self) -> None:
@@ -336,7 +351,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_comments3(self) -> None:
@@ -344,7 +359,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_comments4(self) -> None:
@@ -352,7 +367,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_comments5(self) -> None:
@@ -360,7 +375,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_comments6(self) -> None:
@@ -368,7 +383,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_cantfit(self) -> None:
@@ -376,7 +391,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_import_spacing(self) -> None:
@@ -384,7 +399,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_composition(self) -> None:
@@ -392,7 +407,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_empty_lines(self) -> None:
@@ -400,7 +415,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_string_prefixes(self) -> None:
@@ -408,33 +423,32 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_numeric_literals(self) -> None:
         source, expected = read_data("numeric_literals")
-        actual = fs(source, mode=black.FileMode.PYTHON36)
+        mode = black.FileMode(target_versions=black.PY36_VERSIONS)
+        actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, mode)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_numeric_literals_ignoring_underscores(self) -> None:
         source, expected = read_data("numeric_literals_skip_underscores")
-        mode = (
-            black.FileMode.PYTHON36 | black.FileMode.NO_NUMERIC_UNDERSCORE_NORMALIZATION
-        )
+        mode = black.FileMode(target_versions=black.PY36_VERSIONS)
         actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll, mode=mode)
+        black.assert_stable(source, actual, mode)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_numeric_literals_py2(self) -> None:
         source, expected = read_data("numeric_literals_py2")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_python2(self) -> None:
@@ -442,22 +456,22 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         # black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_python2_unicode_literals(self) -> None:
         source, expected = read_data("python2_unicode_literals")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_stub(self) -> None:
-        mode = black.FileMode.PYI
+        mode = black.FileMode(is_pyi=True)
         source, expected = read_data("stub.pyi")
         actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
-        black.assert_stable(source, actual, line_length=ll, mode=mode)
+        black.assert_stable(source, actual, mode)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_python37(self) -> None:
@@ -467,7 +481,7 @@ class BlackTestCase(unittest.TestCase):
         major, minor = sys.version_info[:2]
         if major > 3 or (major == 3 and minor >= 7):
             black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_fmtonoff(self) -> None:
@@ -475,7 +489,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_fmtonoff2(self) -> None:
@@ -483,7 +497,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_remove_empty_parentheses_after_class(self) -> None:
@@ -491,7 +505,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_new_line_between_class_and_code(self) -> None:
@@ -499,7 +513,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_bracket_match(self) -> None:
@@ -507,7 +521,20 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, line_length=ll)
+        black.assert_stable(source, actual, black.FileMode())
+
+    def test_comment_indentation(self) -> None:
+        contents_tab = "if 1:\n\tif 2:\n\t\tpass\n\t# comment\n\tpass\n"
+        contents_spc = "if 1:\n    if 2:\n        pass\n    # comment\n    pass\n"
+
+        self.assertFormatEqual(fs(contents_spc), contents_spc)
+        self.assertFormatEqual(fs(contents_tab), contents_spc)
+
+        contents_tab = "if 1:\n\tif 2:\n\t\tpass\n\t\t# comment\n\tpass\n"
+        contents_spc = "if 1:\n    if 2:\n        pass\n        # comment\n    pass\n"
+
+        self.assertFormatEqual(fs(contents_tab), contents_spc)
+        self.assertFormatEqual(fs(contents_spc), contents_spc)
 
     def test_report_verbose(self) -> None:
         report = black.Report(verbose=True)
@@ -781,27 +808,31 @@ class BlackTestCase(unittest.TestCase):
                 "2 files would fail to reformat.",
             )
 
-    def test_is_python36(self) -> None:
+    def test_get_features_used(self) -> None:
         node = black.lib2to3_parse("def f(*, arg): ...\n")
-        self.assertFalse(black.is_python36(node))
+        self.assertEqual(black.get_features_used(node), set())
         node = black.lib2to3_parse("def f(*, arg,): ...\n")
-        self.assertTrue(black.is_python36(node))
+        self.assertEqual(black.get_features_used(node), {Feature.TRAILING_COMMA})
         node = black.lib2to3_parse("def f(*, arg): f'string'\n")
-        self.assertTrue(black.is_python36(node))
+        self.assertEqual(black.get_features_used(node), {Feature.F_STRINGS})
         node = black.lib2to3_parse("123_456\n")
-        self.assertTrue(black.is_python36(node))
+        self.assertEqual(black.get_features_used(node), {Feature.NUMERIC_UNDERSCORES})
         node = black.lib2to3_parse("123456\n")
-        self.assertFalse(black.is_python36(node))
+        self.assertEqual(black.get_features_used(node), set())
         source, expected = read_data("function")
         node = black.lib2to3_parse(source)
-        self.assertTrue(black.is_python36(node))
+        self.assertEqual(
+            black.get_features_used(node), {Feature.TRAILING_COMMA, Feature.F_STRINGS}
+        )
         node = black.lib2to3_parse(expected)
-        self.assertTrue(black.is_python36(node))
+        self.assertEqual(
+            black.get_features_used(node), {Feature.TRAILING_COMMA, Feature.F_STRINGS}
+        )
         source, expected = read_data("expression")
         node = black.lib2to3_parse(source)
-        self.assertFalse(black.is_python36(node))
+        self.assertEqual(black.get_features_used(node), set())
         node = black.lib2to3_parse(expected)
-        self.assertFalse(black.is_python36(node))
+        self.assertEqual(black.get_features_used(node), set())
 
     def test_get_future_imports(self) -> None:
         node = black.lib2to3_parse("\n")
@@ -859,21 +890,22 @@ class BlackTestCase(unittest.TestCase):
 
     def test_format_file_contents(self) -> None:
         empty = ""
+        mode = black.FileMode()
         with self.assertRaises(black.NothingChanged):
-            black.format_file_contents(empty, line_length=ll, fast=False)
+            black.format_file_contents(empty, mode=mode, fast=False)
         just_nl = "\n"
         with self.assertRaises(black.NothingChanged):
-            black.format_file_contents(just_nl, line_length=ll, fast=False)
+            black.format_file_contents(just_nl, mode=mode, fast=False)
         same = "l = [1, 2, 3]\n"
         with self.assertRaises(black.NothingChanged):
-            black.format_file_contents(same, line_length=ll, fast=False)
+            black.format_file_contents(same, mode=mode, fast=False)
         different = "l = [1,2,3]"
         expected = same
-        actual = black.format_file_contents(different, line_length=ll, fast=False)
+        actual = black.format_file_contents(different, mode=mode, fast=False)
         self.assertEqual(expected, actual)
         invalid = "return if you can"
         with self.assertRaises(black.InvalidInput) as e:
-            black.format_file_contents(invalid, line_length=ll, fast=False)
+            black.format_file_contents(invalid, mode=mode, fast=False)
         self.assertEqual(str(e.exception), "Cannot parse: 1:7: return if you can")
 
     def test_endmarker(self) -> None:
@@ -903,35 +935,33 @@ class BlackTestCase(unittest.TestCase):
         self.assertEqual("".join(err_lines), "")
 
     def test_cache_broken_file(self) -> None:
-        mode = black.FileMode.AUTO_DETECT
+        mode = black.FileMode()
         with cache_dir() as workspace:
-            cache_file = black.get_cache_file(black.DEFAULT_LINE_LENGTH, mode)
+            cache_file = black.get_cache_file(mode)
             with cache_file.open("w") as fobj:
                 fobj.write("this is not a pickle")
-            self.assertEqual(black.read_cache(black.DEFAULT_LINE_LENGTH, mode), {})
+            self.assertEqual(black.read_cache(mode), {})
             src = (workspace / "test.py").resolve()
             with src.open("w") as fobj:
                 fobj.write("print('hello')")
-            result = CliRunner().invoke(black.main, [str(src)])
-            self.assertEqual(result.exit_code, 0)
-            cache = black.read_cache(black.DEFAULT_LINE_LENGTH, mode)
+            self.invokeBlack([str(src)])
+            cache = black.read_cache(mode)
             self.assertIn(src, cache)
 
     def test_cache_single_file_already_cached(self) -> None:
-        mode = black.FileMode.AUTO_DETECT
+        mode = black.FileMode()
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
             with src.open("w") as fobj:
                 fobj.write("print('hello')")
-            black.write_cache({}, [src], black.DEFAULT_LINE_LENGTH, mode)
-            result = CliRunner().invoke(black.main, [str(src)])
-            self.assertEqual(result.exit_code, 0)
+            black.write_cache({}, [src], mode)
+            self.invokeBlack([str(src)])
             with src.open("r") as fobj:
                 self.assertEqual(fobj.read(), "print('hello')")
 
     @event_loop(close=False)
     def test_cache_multiple_files(self) -> None:
-        mode = black.FileMode.AUTO_DETECT
+        mode = black.FileMode()
         with cache_dir() as workspace, patch(
             "black.ProcessPoolExecutor", new=ThreadPoolExecutor
         ):
@@ -941,50 +971,48 @@ class BlackTestCase(unittest.TestCase):
             two = (workspace / "two.py").resolve()
             with two.open("w") as fobj:
                 fobj.write("print('hello')")
-            black.write_cache({}, [one], black.DEFAULT_LINE_LENGTH, mode)
-            result = CliRunner().invoke(black.main, [str(workspace)])
-            self.assertEqual(result.exit_code, 0)
+            black.write_cache({}, [one], mode)
+            self.invokeBlack([str(workspace)])
             with one.open("r") as fobj:
                 self.assertEqual(fobj.read(), "print('hello')")
             with two.open("r") as fobj:
                 self.assertEqual(fobj.read(), 'print("hello")\n')
-            cache = black.read_cache(black.DEFAULT_LINE_LENGTH, mode)
+            cache = black.read_cache(mode)
             self.assertIn(one, cache)
             self.assertIn(two, cache)
 
     def test_no_cache_when_writeback_diff(self) -> None:
-        mode = black.FileMode.AUTO_DETECT
+        mode = black.FileMode()
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
             with src.open("w") as fobj:
                 fobj.write("print('hello')")
-            result = CliRunner().invoke(black.main, [str(src), "--diff"])
-            self.assertEqual(result.exit_code, 0)
-            cache_file = black.get_cache_file(black.DEFAULT_LINE_LENGTH, mode)
+            self.invokeBlack([str(src), "--diff"])
+            cache_file = black.get_cache_file(mode)
             self.assertFalse(cache_file.exists())
 
     def test_no_cache_when_stdin(self) -> None:
-        mode = black.FileMode.AUTO_DETECT
+        mode = black.FileMode()
         with cache_dir():
             result = CliRunner().invoke(
                 black.main, ["-"], input=BytesIO(b"print('hello')")
             )
             self.assertEqual(result.exit_code, 0)
-            cache_file = black.get_cache_file(black.DEFAULT_LINE_LENGTH, mode)
+            cache_file = black.get_cache_file(mode)
             self.assertFalse(cache_file.exists())
 
     def test_read_cache_no_cachefile(self) -> None:
-        mode = black.FileMode.AUTO_DETECT
+        mode = black.FileMode()
         with cache_dir():
-            self.assertEqual(black.read_cache(black.DEFAULT_LINE_LENGTH, mode), {})
+            self.assertEqual(black.read_cache(mode), {})
 
     def test_write_cache_read_cache(self) -> None:
-        mode = black.FileMode.AUTO_DETECT
+        mode = black.FileMode()
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
             src.touch()
-            black.write_cache({}, [src], black.DEFAULT_LINE_LENGTH, mode)
-            cache = black.read_cache(black.DEFAULT_LINE_LENGTH, mode)
+            black.write_cache({}, [src], mode)
+            cache = black.read_cache(mode)
             self.assertIn(src, cache)
             self.assertEqual(cache[src], black.get_cache_info(src))
 
@@ -1005,15 +1033,15 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(done, {cached})
 
     def test_write_cache_creates_directory_if_needed(self) -> None:
-        mode = black.FileMode.AUTO_DETECT
+        mode = black.FileMode()
         with cache_dir(exists=False) as workspace:
             self.assertFalse(workspace.exists())
-            black.write_cache({}, [], black.DEFAULT_LINE_LENGTH, mode)
+            black.write_cache({}, [], mode)
             self.assertTrue(workspace.exists())
 
     @event_loop(close=False)
     def test_failed_formatting_does_not_get_cached(self) -> None:
-        mode = black.FileMode.AUTO_DETECT
+        mode = black.FileMode()
         with cache_dir() as workspace, patch(
             "black.ProcessPoolExecutor", new=ThreadPoolExecutor
         ):
@@ -1023,40 +1051,33 @@ class BlackTestCase(unittest.TestCase):
             clean = (workspace / "clean.py").resolve()
             with clean.open("w") as fobj:
                 fobj.write('print("hello")\n')
-            result = CliRunner().invoke(black.main, [str(workspace)])
-            self.assertEqual(result.exit_code, 123)
-            cache = black.read_cache(black.DEFAULT_LINE_LENGTH, mode)
+            self.invokeBlack([str(workspace)], exit_code=123)
+            cache = black.read_cache(mode)
             self.assertNotIn(failing, cache)
             self.assertIn(clean, cache)
 
     def test_write_cache_write_fail(self) -> None:
-        mode = black.FileMode.AUTO_DETECT
+        mode = black.FileMode()
         with cache_dir(), patch.object(Path, "open") as mock:
             mock.side_effect = OSError
-            black.write_cache({}, [], black.DEFAULT_LINE_LENGTH, mode)
+            black.write_cache({}, [], mode)
 
     @event_loop(close=False)
     def test_check_diff_use_together(self) -> None:
         with cache_dir():
             # Files which will be reformatted.
             src1 = (THIS_DIR / "data" / "string_quotes.py").resolve()
-            result = CliRunner().invoke(black.main, [str(src1), "--diff", "--check"])
-            self.assertEqual(result.exit_code, 1, result.output)
+            self.invokeBlack([str(src1), "--diff", "--check"], exit_code=1)
             # Files which will not be reformatted.
             src2 = (THIS_DIR / "data" / "composition.py").resolve()
-            result = CliRunner().invoke(black.main, [str(src2), "--diff", "--check"])
-            self.assertEqual(result.exit_code, 0, result.output)
+            self.invokeBlack([str(src2), "--diff", "--check"])
             # Multi file command.
-            result = CliRunner().invoke(
-                black.main, [str(src1), str(src2), "--diff", "--check"]
-            )
-            self.assertEqual(result.exit_code, 1, result.output)
+            self.invokeBlack([str(src1), str(src2), "--diff", "--check"], exit_code=1)
 
     def test_no_files(self) -> None:
         with cache_dir():
             # Without an argument, black exits with error code 0.
-            result = CliRunner().invoke(black.main, [])
-            self.assertEqual(result.exit_code, 0)
+            self.invokeBlack([])
 
     def test_broken_symlink(self) -> None:
         with cache_dir() as workspace:
@@ -1065,43 +1086,42 @@ class BlackTestCase(unittest.TestCase):
                 symlink.symlink_to("nonexistent.py")
             except OSError as e:
                 self.skipTest(f"Can't create symlinks: {e}")
-            result = CliRunner().invoke(black.main, [str(workspace.resolve())])
-            self.assertEqual(result.exit_code, 0)
+            self.invokeBlack([str(workspace.resolve())])
 
     def test_read_cache_line_lengths(self) -> None:
-        mode = black.FileMode.AUTO_DETECT
+        mode = black.FileMode()
+        short_mode = black.FileMode(line_length=1)
         with cache_dir() as workspace:
             path = (workspace / "file.py").resolve()
             path.touch()
-            black.write_cache({}, [path], 1, mode)
-            one = black.read_cache(1, mode)
+            black.write_cache({}, [path], mode)
+            one = black.read_cache(mode)
             self.assertIn(path, one)
-            two = black.read_cache(2, mode)
+            two = black.read_cache(short_mode)
             self.assertNotIn(path, two)
 
     def test_single_file_force_pyi(self) -> None:
-        reg_mode = black.FileMode.AUTO_DETECT
-        pyi_mode = black.FileMode.PYI
+        reg_mode = black.FileMode()
+        pyi_mode = black.FileMode(is_pyi=True)
         contents, expected = read_data("force_pyi")
         with cache_dir() as workspace:
             path = (workspace / "file.py").resolve()
             with open(path, "w") as fh:
                 fh.write(contents)
-            result = CliRunner().invoke(black.main, [str(path), "--pyi"])
-            self.assertEqual(result.exit_code, 0)
+            self.invokeBlack([str(path), "--pyi"])
             with open(path, "r") as fh:
                 actual = fh.read()
             # verify cache with --pyi is separate
-            pyi_cache = black.read_cache(black.DEFAULT_LINE_LENGTH, pyi_mode)
+            pyi_cache = black.read_cache(pyi_mode)
             self.assertIn(path, pyi_cache)
-            normal_cache = black.read_cache(black.DEFAULT_LINE_LENGTH, reg_mode)
+            normal_cache = black.read_cache(reg_mode)
             self.assertNotIn(path, normal_cache)
         self.assertEqual(actual, expected)
 
     @event_loop(close=False)
     def test_multi_file_force_pyi(self) -> None:
-        reg_mode = black.FileMode.AUTO_DETECT
-        pyi_mode = black.FileMode.PYI
+        reg_mode = black.FileMode()
+        pyi_mode = black.FileMode(is_pyi=True)
         contents, expected = read_data("force_pyi")
         with cache_dir() as workspace:
             paths = [
@@ -1111,15 +1131,14 @@ class BlackTestCase(unittest.TestCase):
             for path in paths:
                 with open(path, "w") as fh:
                     fh.write(contents)
-            result = CliRunner().invoke(black.main, [str(p) for p in paths] + ["--pyi"])
-            self.assertEqual(result.exit_code, 0)
+            self.invokeBlack([str(p) for p in paths] + ["--pyi"])
             for path in paths:
                 with open(path, "r") as fh:
                     actual = fh.read()
                 self.assertEqual(actual, expected)
             # verify cache with --pyi is separate
-            pyi_cache = black.read_cache(black.DEFAULT_LINE_LENGTH, pyi_mode)
-            normal_cache = black.read_cache(black.DEFAULT_LINE_LENGTH, reg_mode)
+            pyi_cache = black.read_cache(pyi_mode)
+            normal_cache = black.read_cache(reg_mode)
             for path in paths:
                 self.assertIn(path, pyi_cache)
                 self.assertNotIn(path, normal_cache)
@@ -1134,28 +1153,27 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(actual, expected)
 
     def test_single_file_force_py36(self) -> None:
-        reg_mode = black.FileMode.AUTO_DETECT
-        py36_mode = black.FileMode.PYTHON36
+        reg_mode = black.FileMode()
+        py36_mode = black.FileMode(target_versions=black.PY36_VERSIONS)
         source, expected = read_data("force_py36")
         with cache_dir() as workspace:
             path = (workspace / "file.py").resolve()
             with open(path, "w") as fh:
                 fh.write(source)
-            result = CliRunner().invoke(black.main, [str(path), "--py36"])
-            self.assertEqual(result.exit_code, 0)
+            self.invokeBlack([str(path), "--py36"])
             with open(path, "r") as fh:
                 actual = fh.read()
             # verify cache with --py36 is separate
-            py36_cache = black.read_cache(black.DEFAULT_LINE_LENGTH, py36_mode)
+            py36_cache = black.read_cache(py36_mode)
             self.assertIn(path, py36_cache)
-            normal_cache = black.read_cache(black.DEFAULT_LINE_LENGTH, reg_mode)
+            normal_cache = black.read_cache(reg_mode)
             self.assertNotIn(path, normal_cache)
         self.assertEqual(actual, expected)
 
     @event_loop(close=False)
     def test_multi_file_force_py36(self) -> None:
-        reg_mode = black.FileMode.AUTO_DETECT
-        py36_mode = black.FileMode.PYTHON36
+        reg_mode = black.FileMode()
+        py36_mode = black.FileMode(target_versions=black.PY36_VERSIONS)
         source, expected = read_data("force_py36")
         with cache_dir() as workspace:
             paths = [
@@ -1165,17 +1183,14 @@ class BlackTestCase(unittest.TestCase):
             for path in paths:
                 with open(path, "w") as fh:
                     fh.write(source)
-            result = CliRunner().invoke(
-                black.main, [str(p) for p in paths] + ["--py36"]
-            )
-            self.assertEqual(result.exit_code, 0)
+            self.invokeBlack([str(p) for p in paths] + ["--py36"])
             for path in paths:
                 with open(path, "r") as fh:
                     actual = fh.read()
                 self.assertEqual(actual, expected)
             # verify cache with --py36 is separate
-            pyi_cache = black.read_cache(black.DEFAULT_LINE_LENGTH, py36_mode)
-            normal_cache = black.read_cache(black.DEFAULT_LINE_LENGTH, reg_mode)
+            pyi_cache = black.read_cache(py36_mode)
+            normal_cache = black.read_cache(reg_mode)
             for path in paths:
                 self.assertIn(path, pyi_cache)
                 self.assertNotIn(path, normal_cache)
@@ -1252,8 +1267,7 @@ class BlackTestCase(unittest.TestCase):
 
     def test_invalid_include_exclude(self) -> None:
         for option in ["--include", "--exclude"]:
-            result = CliRunner().invoke(black.main, ["-", option, "**()(!!*)"])
-            self.assertEqual(result.exit_code, 2)
+            self.invokeBlack(["-", option, "**()(!!*)"], exit_code=2)
 
     def test_preserves_line_endings(self) -> None:
         with TemporaryDirectory() as workspace:
@@ -1394,10 +1408,24 @@ class BlackTestCase(unittest.TestCase):
     async def test_blackd_invalid_python_variant(self) -> None:
         app = blackd.make_app()
         async with TestClient(TestServer(app)) as client:
-            response = await client.post(
-                "/", data=b"what", headers={blackd.PYTHON_VARIANT_HEADER: "lol"}
-            )
-            self.assertEqual(response.status, 400)
+
+            async def check(header_value: str, expected_status: int = 400) -> None:
+                response = await client.post(
+                    "/",
+                    data=b"what",
+                    headers={blackd.PYTHON_VARIANT_HEADER: header_value},
+                )
+                self.assertEqual(response.status, expected_status)
+
+            await check("lol")
+            await check("ruby3.5")
+            await check("pyi3.6")
+            await check("cpy1.5")
+            await check("2.8")
+            await check("cpy2.8")
+            await check("3.0")
+            await check("pypy3.0")
+            await check("jython3.4")
 
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
@@ -1413,51 +1441,37 @@ class BlackTestCase(unittest.TestCase):
 
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
-    async def test_blackd_py36(self) -> None:
+    async def test_blackd_python_variant(self) -> None:
         app = blackd.make_app()
+        code = (
+            "def f(\n"
+            "    and_has_a_bunch_of,\n"
+            "    very_long_arguments_too,\n"
+            "    and_lots_of_them_as_well_lol,\n"
+            "    **and_very_long_keyword_arguments\n"
+            "):\n"
+            "    pass\n"
+        )
         async with TestClient(TestServer(app)) as client:
-            response = await client.post(
-                "/",
-                data=(
-                    "def f(\n"
-                    "    and_has_a_bunch_of,\n"
-                    "    very_long_arguments_too,\n"
-                    "    and_lots_of_them_as_well_lol,\n"
-                    "    **and_very_long_keyword_arguments\n"
-                    "):\n"
-                    "    pass\n"
-                ),
-                headers={blackd.PYTHON_VARIANT_HEADER: "3.6"},
-            )
-            self.assertEqual(response.status, 200)
-            response = await client.post(
-                "/",
-                data=(
-                    "def f(\n"
-                    "    and_has_a_bunch_of,\n"
-                    "    very_long_arguments_too,\n"
-                    "    and_lots_of_them_as_well_lol,\n"
-                    "    **and_very_long_keyword_arguments\n"
-                    "):\n"
-                    "    pass\n"
-                ),
-                headers={blackd.PYTHON_VARIANT_HEADER: "3.5"},
-            )
-            self.assertEqual(response.status, 204)
-            response = await client.post(
-                "/",
-                data=(
-                    "def f(\n"
-                    "    and_has_a_bunch_of,\n"
-                    "    very_long_arguments_too,\n"
-                    "    and_lots_of_them_as_well_lol,\n"
-                    "    **and_very_long_keyword_arguments\n"
-                    "):\n"
-                    "    pass\n"
-                ),
-                headers={blackd.PYTHON_VARIANT_HEADER: "2"},
-            )
-            self.assertEqual(response.status, 204)
+
+            async def check(header_value: str, expected_status: int) -> None:
+                response = await client.post(
+                    "/", data=code, headers={blackd.PYTHON_VARIANT_HEADER: header_value}
+                )
+                self.assertEqual(response.status, expected_status)
+
+            await check("3.6", 200)
+            await check("cpy3.6", 200)
+            await check("3.5,3.7", 200)
+            await check("3.5,cpy3.7", 200)
+
+            await check("2", 204)
+            await check("2.7", 204)
+            await check("cpy2.7", 204)
+            await check("pypy2.7", 204)
+            await check("3.4", 204)
+            await check("cpy3.4", 204)
+            await check("pypy3.4", 204)
 
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test

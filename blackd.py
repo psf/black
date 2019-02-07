@@ -3,6 +3,7 @@ from concurrent.futures import Executor, ProcessPoolExecutor
 from functools import partial
 import logging
 from multiprocessing import freeze_support
+from typing import Set, Tuple
 
 from aiohttp import web
 import aiohttp_cors
@@ -16,7 +17,6 @@ VERSION_HEADER = "X-Protocol-Version"
 LINE_LENGTH_HEADER = "X-Line-Length"
 PYTHON_VARIANT_HEADER = "X-Python-Variant"
 SKIP_STRING_NORMALIZATION_HEADER = "X-Skip-String-Normalization"
-SKIP_NUMERIC_UNDERSCORE_NORMALIZATION_HEADER = "X-Skip-Numeric-Underscore-Normalization"
 FAST_OR_SAFE_HEADER = "X-Fast-Or-Safe"
 
 BLACK_HEADERS = [
@@ -24,9 +24,12 @@ BLACK_HEADERS = [
     LINE_LENGTH_HEADER,
     PYTHON_VARIANT_HEADER,
     SKIP_STRING_NORMALIZATION_HEADER,
-    SKIP_NUMERIC_UNDERSCORE_NORMALIZATION_HEADER,
     FAST_OR_SAFE_HEADER,
 ]
+
+
+class InvalidVariantHeader(Exception):
+    pass
 
 
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
@@ -73,50 +76,38 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
             )
         except ValueError:
             return web.Response(status=400, text="Invalid line length header value")
-        py36 = False
-        pyi = False
+
         if PYTHON_VARIANT_HEADER in request.headers:
             value = request.headers[PYTHON_VARIANT_HEADER]
-            if value == "pyi":
-                pyi = True
-            else:
-                try:
-                    major, *rest = value.split(".")
-                    if int(major) == 3 and len(rest) > 0:
-                        if int(rest[0]) >= 6:
-                            py36 = True
-                except ValueError:
-                    return web.Response(
-                        status=400, text=f"Invalid value for {PYTHON_VARIANT_HEADER}"
-                    )
+            try:
+                pyi, versions = parse_python_variant_header(value)
+            except InvalidVariantHeader as e:
+                return web.Response(
+                    status=400,
+                    text=f"Invalid value for {PYTHON_VARIANT_HEADER}: {e.args[0]}",
+                )
+        else:
+            pyi = False
+            versions = set()
+
         skip_string_normalization = bool(
             request.headers.get(SKIP_STRING_NORMALIZATION_HEADER, False)
-        )
-        skip_numeric_underscore_normalization = bool(
-            request.headers.get(SKIP_NUMERIC_UNDERSCORE_NORMALIZATION_HEADER, False)
         )
         fast = False
         if request.headers.get(FAST_OR_SAFE_HEADER, "safe") == "fast":
             fast = True
-        mode = black.FileMode.from_configuration(
-            py36=py36,
-            pyi=pyi,
-            skip_string_normalization=skip_string_normalization,
-            skip_numeric_underscore_normalization=skip_numeric_underscore_normalization,
+        mode = black.FileMode(
+            target_versions=versions,
+            is_pyi=pyi,
+            line_length=line_length,
+            string_normalization=not skip_string_normalization,
         )
         req_bytes = await request.content.read()
         charset = request.charset if request.charset is not None else "utf8"
         req_str = req_bytes.decode(charset)
         loop = asyncio.get_event_loop()
         formatted_str = await loop.run_in_executor(
-            executor,
-            partial(
-                black.format_file_contents,
-                req_str,
-                line_length=line_length,
-                fast=fast,
-                mode=mode,
-            ),
+            executor, partial(black.format_file_contents, req_str, fast=fast, mode=mode)
         )
         return web.Response(
             content_type=request.content_type, charset=charset, text=formatted_str
@@ -128,6 +119,45 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
     except Exception as e:
         logging.exception("Exception during handling a request")
         return web.Response(status=500, text=str(e))
+
+
+def parse_python_variant_header(value: str) -> Tuple[bool, Set[black.TargetVersion]]:
+    if value == "pyi":
+        return True, set()
+    else:
+        versions = set()
+        for version in value.split(","):
+            tag = "cpy"
+            if version.startswith("cpy"):
+                version = version[len("cpy") :]
+            elif version.startswith("pypy"):
+                tag = "pypy"
+                version = version[len("pypy") :]
+            major_str, *rest = version.split(".")
+            try:
+                major = int(major_str)
+                if major not in (2, 3):
+                    raise InvalidVariantHeader("major version must be 2 or 3")
+                if len(rest) > 0:
+                    minor = int(rest[0])
+                    if major == 2 and minor != 7:
+                        raise InvalidVariantHeader(
+                            "minor version must be 7 for Python 2"
+                        )
+                else:
+                    # Default to lowest supported minor version.
+                    minor = 7 if major == 2 else 3
+                version_str = f"{tag.upper()}{major}{minor}"
+                # If PyPY is the same as CPython in some version, use
+                # the corresponding CPython version.
+                if tag == "pypy" and not hasattr(black.TargetVersion, version_str):
+                    version_str = f"CPY{major}{minor}"
+                if major == 3 and not hasattr(black.TargetVersion, version_str):
+                    raise InvalidVariantHeader(f"3.{minor} is not supported")
+                versions.add(black.TargetVersion[version_str])
+            except (KeyError, ValueError):
+                raise InvalidVariantHeader("expected e.g. '3.7', 'pypy3.5'")
+        return False, versions
 
 
 def patched_main() -> None:

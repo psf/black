@@ -2,7 +2,7 @@ import asyncio
 from asyncio.base_events import BaseEventLoop
 from concurrent.futures import Executor, ProcessPoolExecutor
 from datetime import datetime
-from enum import Enum, Flag
+from enum import Enum
 from functools import lru_cache, partial, wraps
 import io
 import itertools
@@ -37,7 +37,7 @@ from typing import (
 )
 
 from appdirs import user_cache_dir
-from attr import dataclass, Factory
+from attr import dataclass, evolve, Factory
 import click
 import toml
 
@@ -45,6 +45,7 @@ import toml
 from blib2to3.pytree import Node, Leaf, type_repr
 from blib2to3 import pygram, pytree
 from blib2to3.pgen2 import driver, token
+from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.parse import ParseError
 
 
@@ -111,32 +112,84 @@ class Changed(Enum):
     YES = 2
 
 
-class FileMode(Flag):
-    AUTO_DETECT = 0
-    PYTHON36 = 1
-    PYI = 2
-    NO_STRING_NORMALIZATION = 4
-    NO_NUMERIC_UNDERSCORE_NORMALIZATION = 8
+class TargetVersion(Enum):
+    PYPY35 = 1
+    CPY27 = 2
+    CPY33 = 3
+    CPY34 = 4
+    CPY35 = 5
+    CPY36 = 6
+    CPY37 = 7
+    CPY38 = 8
 
-    @classmethod
-    def from_configuration(
-        cls,
-        *,
-        py36: bool,
-        pyi: bool,
-        skip_string_normalization: bool,
-        skip_numeric_underscore_normalization: bool,
-    ) -> "FileMode":
-        mode = cls.AUTO_DETECT
-        if py36:
-            mode |= cls.PYTHON36
-        if pyi:
-            mode |= cls.PYI
-        if skip_string_normalization:
-            mode |= cls.NO_STRING_NORMALIZATION
-        if skip_numeric_underscore_normalization:
-            mode |= cls.NO_NUMERIC_UNDERSCORE_NORMALIZATION
-        return mode
+    def is_python2(self) -> bool:
+        return self is TargetVersion.CPY27
+
+
+PY36_VERSIONS = {TargetVersion.CPY36, TargetVersion.CPY37, TargetVersion.CPY38}
+
+
+class Feature(Enum):
+    # All string literals are unicode
+    UNICODE_LITERALS = 1
+    F_STRINGS = 2
+    NUMERIC_UNDERSCORES = 3
+    TRAILING_COMMA = 4
+
+
+VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
+    TargetVersion.CPY27: set(),
+    TargetVersion.PYPY35: {Feature.UNICODE_LITERALS, Feature.F_STRINGS},
+    TargetVersion.CPY33: {Feature.UNICODE_LITERALS},
+    TargetVersion.CPY34: {Feature.UNICODE_LITERALS},
+    TargetVersion.CPY35: {Feature.UNICODE_LITERALS, Feature.TRAILING_COMMA},
+    TargetVersion.CPY36: {
+        Feature.UNICODE_LITERALS,
+        Feature.F_STRINGS,
+        Feature.NUMERIC_UNDERSCORES,
+        Feature.TRAILING_COMMA,
+    },
+    TargetVersion.CPY37: {
+        Feature.UNICODE_LITERALS,
+        Feature.F_STRINGS,
+        Feature.NUMERIC_UNDERSCORES,
+        Feature.TRAILING_COMMA,
+    },
+    TargetVersion.CPY38: {
+        Feature.UNICODE_LITERALS,
+        Feature.F_STRINGS,
+        Feature.NUMERIC_UNDERSCORES,
+        Feature.TRAILING_COMMA,
+    },
+}
+
+
+@dataclass
+class FileMode:
+    target_versions: Set[TargetVersion] = Factory(set)
+    line_length: int = DEFAULT_LINE_LENGTH
+    string_normalization: bool = True
+    is_pyi: bool = False
+
+    def get_cache_key(self) -> str:
+        if self.target_versions:
+            version_str = ",".join(
+                str(version.value)
+                for version in sorted(self.target_versions, key=lambda v: v.value)
+            )
+        else:
+            version_str = "-"
+        parts = [
+            version_str,
+            str(self.line_length),
+            str(int(self.string_normalization)),
+            str(int(self.is_pyi)),
+        ]
+        return ".".join(parts)
+
+
+def supports_feature(target_versions: Set[TargetVersion], feature: Feature) -> bool:
+    return all(feature in VERSION_TO_FEATURES[version] for version in target_versions)
 
 
 def read_pyproject_toml(
@@ -185,6 +238,17 @@ def read_pyproject_toml(
     show_default=True,
 )
 @click.option(
+    "-t",
+    "--target-version",
+    type=click.Choice([v.name.lower() for v in TargetVersion]),
+    callback=lambda c, p, v: [TargetVersion[val.upper()] for val in v],
+    multiple=True,
+    help=(
+        "Python versions that should be supported by Black's output. [default: "
+        "per-file auto-detection]"
+    ),
+)
+@click.option(
     "--py36",
     is_flag=True,
     help=(
@@ -206,12 +270,6 @@ def read_pyproject_toml(
     "--skip-string-normalization",
     is_flag=True,
     help="Don't normalize string quotes or prefixes.",
-)
-@click.option(
-    "-N",
-    "--skip-numeric-underscore-normalization",
-    is_flag=True,
-    help="Don't normalize underscores in numeric literals.",
 )
 @click.option(
     "--check",
@@ -297,13 +355,13 @@ def read_pyproject_toml(
 def main(
     ctx: click.Context,
     line_length: int,
+    target_version: List[TargetVersion],
     check: bool,
     diff: bool,
     fast: bool,
     pyi: bool,
     py36: bool,
     skip_string_normalization: bool,
-    skip_numeric_underscore_normalization: bool,
     quiet: bool,
     verbose: bool,
     include: str,
@@ -313,11 +371,22 @@ def main(
 ) -> None:
     """The uncompromising code formatter."""
     write_back = WriteBack.from_configuration(check=check, diff=diff)
-    mode = FileMode.from_configuration(
-        py36=py36,
-        pyi=pyi,
-        skip_string_normalization=skip_string_normalization,
-        skip_numeric_underscore_normalization=skip_numeric_underscore_normalization,
+    if target_version:
+        if py36:
+            err(f"Cannot use both --target-version and --py36")
+            ctx.exit(2)
+        else:
+            versions = set(target_version)
+    elif py36:
+        versions = PY36_VERSIONS
+    else:
+        # We'll autodetect later.
+        versions = set()
+    mode = FileMode(
+        target_versions=versions,
+        line_length=line_length,
+        is_pyi=pyi,
+        string_normalization=not skip_string_normalization,
     )
     if config and verbose:
         out(f"Using configuration from {config}.", bold=False, fg="blue")
@@ -353,7 +422,6 @@ def main(
     if len(sources) == 1:
         reformat_one(
             src=sources.pop(),
-            line_length=line_length,
             fast=fast,
             write_back=write_back,
             mode=mode,
@@ -366,7 +434,6 @@ def main(
             loop.run_until_complete(
                 schedule_formatting(
                     sources=sources,
-                    line_length=line_length,
                     fast=fast,
                     write_back=write_back,
                     mode=mode,
@@ -385,12 +452,7 @@ def main(
 
 
 def reformat_one(
-    src: Path,
-    line_length: int,
-    fast: bool,
-    write_back: WriteBack,
-    mode: FileMode,
-    report: "Report",
+    src: Path, fast: bool, write_back: WriteBack, mode: FileMode, report: "Report"
 ) -> None:
     """Reformat a single file under `src` without spawning child processes.
 
@@ -401,29 +463,23 @@ def reformat_one(
     try:
         changed = Changed.NO
         if not src.is_file() and str(src) == "-":
-            if format_stdin_to_stdout(
-                line_length=line_length, fast=fast, write_back=write_back, mode=mode
-            ):
+            if format_stdin_to_stdout(fast=fast, write_back=write_back, mode=mode):
                 changed = Changed.YES
         else:
             cache: Cache = {}
             if write_back != WriteBack.DIFF:
-                cache = read_cache(line_length, mode)
+                cache = read_cache(mode)
                 res_src = src.resolve()
                 if res_src in cache and cache[res_src] == get_cache_info(res_src):
                     changed = Changed.CACHED
             if changed is not Changed.CACHED and format_file_in_place(
-                src,
-                line_length=line_length,
-                fast=fast,
-                write_back=write_back,
-                mode=mode,
+                src, fast=fast, write_back=write_back, mode=mode
             ):
                 changed = Changed.YES
             if (write_back is WriteBack.YES and changed is not Changed.CACHED) or (
                 write_back is WriteBack.CHECK and changed is Changed.NO
             ):
-                write_cache(cache, [src], line_length, mode)
+                write_cache(cache, [src], mode)
         report.done(src, changed)
     except Exception as exc:
         report.failed(src, str(exc))
@@ -431,7 +487,6 @@ def reformat_one(
 
 async def schedule_formatting(
     sources: Set[Path],
-    line_length: int,
     fast: bool,
     write_back: WriteBack,
     mode: FileMode,
@@ -448,7 +503,7 @@ async def schedule_formatting(
     """
     cache: Cache = {}
     if write_back != WriteBack.DIFF:
-        cache = read_cache(line_length, mode)
+        cache = read_cache(mode)
         sources, cached = filter_cached(cache, sources)
         for src in sorted(cached):
             report.done(src, Changed.CACHED)
@@ -466,14 +521,7 @@ async def schedule_formatting(
     tasks = {
         asyncio.ensure_future(
             loop.run_in_executor(
-                executor,
-                format_file_in_place,
-                src,
-                line_length,
-                fast,
-                write_back,
-                mode,
-                lock,
+                executor, format_file_in_place, src, fast, mode, write_back, lock
             )
         ): src
         for src in sorted(sources)
@@ -505,15 +553,14 @@ async def schedule_formatting(
     if cancelled:
         await asyncio.gather(*cancelled, loop=loop, return_exceptions=True)
     if sources_to_cache:
-        write_cache(cache, sources_to_cache, line_length, mode)
+        write_cache(cache, sources_to_cache, mode)
 
 
 def format_file_in_place(
     src: Path,
-    line_length: int,
     fast: bool,
+    mode: FileMode,
     write_back: WriteBack = WriteBack.NO,
-    mode: FileMode = FileMode.AUTO_DETECT,
     lock: Any = None,  # multiprocessing.Manager().Lock() is some crazy proxy
 ) -> bool:
     """Format file under `src` path. Return True if changed.
@@ -523,15 +570,13 @@ def format_file_in_place(
     `line_length` and `fast` options are passed to :func:`format_file_contents`.
     """
     if src.suffix == ".pyi":
-        mode |= FileMode.PYI
+        mode = evolve(mode, is_pyi=True)
 
     then = datetime.utcfromtimestamp(src.stat().st_mtime)
     with open(src, "rb") as buf:
         src_contents, encoding, newline = decode_bytes(buf.read())
     try:
-        dst_contents = format_file_contents(
-            src_contents, line_length=line_length, fast=fast, mode=mode
-        )
+        dst_contents = format_file_contents(src_contents, fast=fast, mode=mode)
     except NothingChanged:
         return False
 
@@ -561,23 +606,19 @@ def format_file_in_place(
 
 
 def format_stdin_to_stdout(
-    line_length: int,
-    fast: bool,
-    write_back: WriteBack = WriteBack.NO,
-    mode: FileMode = FileMode.AUTO_DETECT,
+    fast: bool, *, write_back: WriteBack = WriteBack.NO, mode: FileMode
 ) -> bool:
     """Format file on stdin. Return True if changed.
 
     If `write_back` is YES, write reformatted code back to stdout. If it is DIFF,
-    write a diff to stdout.
-    `line_length`, `fast`, `is_pyi`, and `force_py36` arguments are passed to
+    write a diff to stdout. The `mode` argument is passed to
     :func:`format_file_contents`.
     """
     then = datetime.utcnow()
     src, encoding, newline = decode_bytes(sys.stdin.buffer.read())
     dst = src
     try:
-        dst = format_file_contents(src, line_length=line_length, fast=fast, mode=mode)
+        dst = format_file_contents(src, fast=fast, mode=mode)
         return True
 
     except NothingChanged:
@@ -598,11 +639,7 @@ def format_stdin_to_stdout(
 
 
 def format_file_contents(
-    src_contents: str,
-    *,
-    line_length: int,
-    fast: bool,
-    mode: FileMode = FileMode.AUTO_DETECT,
+    src_contents: str, *, fast: bool, mode: FileMode
 ) -> FileContent:
     """Reformat contents a file and return new contents.
 
@@ -613,38 +650,36 @@ def format_file_contents(
     if src_contents.strip() == "":
         raise NothingChanged
 
-    dst_contents = format_str(src_contents, line_length=line_length, mode=mode)
+    dst_contents = format_str(src_contents, mode=mode)
     if src_contents == dst_contents:
         raise NothingChanged
 
     if not fast:
         assert_equivalent(src_contents, dst_contents)
-        assert_stable(src_contents, dst_contents, line_length=line_length, mode=mode)
+        assert_stable(src_contents, dst_contents, mode=mode)
     return dst_contents
 
 
-def format_str(
-    src_contents: str, line_length: int, *, mode: FileMode = FileMode.AUTO_DETECT
-) -> FileContent:
+def format_str(src_contents: str, *, mode: FileMode) -> FileContent:
     """Reformat a string and return new contents.
 
     `line_length` determines how many characters per line are allowed.
     """
-    src_node = lib2to3_parse(src_contents.lstrip())
+    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)
     dst_contents = ""
     future_imports = get_future_imports(src_node)
-    is_pyi = bool(mode & FileMode.PYI)
-    py36 = bool(mode & FileMode.PYTHON36) or is_python36(src_node)
-    normalize_strings = not bool(mode & FileMode.NO_STRING_NORMALIZATION)
+    if mode.target_versions:
+        versions = mode.target_versions
+    else:
+        versions = detect_target_versions(src_node)
     normalize_fmt_off(src_node)
     lines = LineGenerator(
-        remove_u_prefix=py36 or "unicode_literals" in future_imports,
-        is_pyi=is_pyi,
-        normalize_strings=normalize_strings,
-        allow_underscores=py36
-        and not bool(mode & FileMode.NO_NUMERIC_UNDERSCORE_NORMALIZATION),
+        remove_u_prefix="unicode_literals" in future_imports
+        or supports_feature(versions, Feature.UNICODE_LITERALS),
+        is_pyi=mode.is_pyi,
+        normalize_strings=mode.string_normalization,
     )
-    elt = EmptyLineTracker(is_pyi=is_pyi)
+    elt = EmptyLineTracker(is_pyi=mode.is_pyi)
     empty_line = Line()
     after = 0
     for current_line in lines.visit(src_node):
@@ -653,7 +688,11 @@ def format_str(
         before, after = elt.maybe_empty_lines(current_line)
         for _ in range(before):
             dst_contents += str(empty_line)
-        for line in split_line(current_line, line_length=line_length, py36=py36):
+        for line in split_line(
+            current_line,
+            line_length=mode.line_length,
+            supports_trailing_commas=supports_feature(versions, Feature.TRAILING_COMMA),
+        ):
             dst_contents += str(line)
     return dst_contents
 
@@ -682,11 +721,25 @@ GRAMMARS = [
 ]
 
 
-def lib2to3_parse(src_txt: str) -> Node:
+def get_grammars(target_versions: Set[TargetVersion]) -> List[Grammar]:
+    if not target_versions:
+        return GRAMMARS
+    elif all(not version.is_python2() for version in target_versions):
+        # Python 2-compatible code, so don't try Python 3 grammar.
+        return [
+            pygram.python_grammar_no_print_statement_no_exec_statement,
+            pygram.python_grammar_no_print_statement,
+        ]
+    else:
+        return [pygram.python_grammar]
+
+
+def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -> Node:
     """Given a string with source, return the lib2to3 Node."""
     if src_txt[-1:] != "\n":
         src_txt += "\n"
-    for grammar in GRAMMARS:
+
+    for grammar in get_grammars(set(target_versions)):
         drv = driver.Driver(grammar, pytree.convert)
         try:
             result = drv.parse_string(src_txt, True)
@@ -1429,7 +1482,6 @@ class LineGenerator(Visitor[Line]):
     normalize_strings: bool = True
     current_line: Line = Factory(Line)
     remove_u_prefix: bool = False
-    allow_underscores: bool = False
 
     def line(self, indent: int = 0) -> Iterator[Line]:
         """Generate a line.
@@ -1472,7 +1524,7 @@ class LineGenerator(Visitor[Line]):
                 normalize_string_prefix(node, remove_u_prefix=self.remove_u_prefix)
                 normalize_string_quotes(node)
             if node.type == token.NUMBER:
-                normalize_numeric_literal(node, self.allow_underscores)
+                normalize_numeric_literal(node)
             if node.type not in WHITESPACE:
                 self.current_line.append(node)
         yield from super().visit_default(node)
@@ -1608,7 +1660,7 @@ BRACKETS = OPENING_BRACKETS | CLOSING_BRACKETS
 ALWAYS_NO_SPACE = CLOSING_BRACKETS | {token.COMMA, STANDALONE_COMMENT}
 
 
-def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa C901
+def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
     """Return whitespace prefix if needed for the given `leaf`.
 
     `complex_subscript` signals whether the given leaf is part of a subscription
@@ -2095,7 +2147,10 @@ def make_comment(content: str) -> str:
 
 
 def split_line(
-    line: Line, line_length: int, inner: bool = False, py36: bool = False
+    line: Line,
+    line_length: int,
+    inner: bool = False,
+    supports_trailing_commas: bool = False,
 ) -> Iterator[Line]:
     """Split a `line` into potentially many lines.
 
@@ -2104,8 +2159,7 @@ def split_line(
     current `line`, possibly transitively. This means we can fallback to splitting
     by delimiters if the LHS/RHS don't yield any results.
 
-    If `py36` is True, splitting may generate syntax that is only compatible
-    with Python 3.6 and later.
+    If `supports_trailing_commas` is True, splitting may use the TRAILING_COMMA feature.
     """
     if line.is_comment:
         yield line
@@ -2134,9 +2188,13 @@ def split_line(
         split_funcs = [left_hand_split]
     else:
 
-        def rhs(line: Line, py36: bool = False) -> Iterator[Line]:
+        def rhs(line: Line, supports_trailing_commas: bool = False) -> Iterator[Line]:
             for omit in generate_trailers_to_omit(line, line_length):
-                lines = list(right_hand_split(line, line_length, py36, omit=omit))
+                lines = list(
+                    right_hand_split(
+                        line, line_length, supports_trailing_commas, omit=omit
+                    )
+                )
                 if is_line_short_enough(lines[0], line_length=line_length):
                     yield from lines
                     return
@@ -2144,7 +2202,7 @@ def split_line(
             # All splits failed, best effort split with no omits.
             # This mostly happens to multiline strings that are by definition
             # reported as not fitting a single line.
-            yield from right_hand_split(line, py36)
+            yield from right_hand_split(line, supports_trailing_commas)
 
         if line.inside_brackets:
             split_funcs = [delimiter_split, standalone_comment_split, rhs]
@@ -2156,12 +2214,17 @@ def split_line(
         # split altogether.
         result: List[Line] = []
         try:
-            for l in split_func(line, py36):
+            for l in split_func(line, supports_trailing_commas):
                 if str(l).strip("\n") == line_str:
                     raise CannotSplit("Split function returned an unchanged result")
 
                 result.extend(
-                    split_line(l, line_length=line_length, inner=True, py36=py36)
+                    split_line(
+                        l,
+                        line_length=line_length,
+                        inner=True,
+                        supports_trailing_commas=supports_trailing_commas,
+                    )
                 )
         except CannotSplit:
             continue
@@ -2174,7 +2237,9 @@ def split_line(
         yield line
 
 
-def left_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
+def left_hand_split(
+    line: Line, supports_trailing_commas: bool = False
+) -> Iterator[Line]:
     """Split line into many lines, starting with the first matching bracket pair.
 
     Note: this usually looks weird, only use this for function definitions.
@@ -2211,7 +2276,10 @@ def left_hand_split(line: Line, py36: bool = False) -> Iterator[Line]:
 
 
 def right_hand_split(
-    line: Line, line_length: int, py36: bool = False, omit: Collection[LeafID] = ()
+    line: Line,
+    line_length: int,
+    supports_trailing_commas: bool = False,
+    omit: Collection[LeafID] = (),
 ) -> Iterator[Line]:
     """Split line into many lines, starting with the last matching bracket pair.
 
@@ -2269,7 +2337,12 @@ def right_hand_split(
     ):
         omit = {id(closing_bracket), *omit}
         try:
-            yield from right_hand_split(line, line_length, py36=py36, omit=omit)
+            yield from right_hand_split(
+                line,
+                line_length,
+                supports_trailing_commas=supports_trailing_commas,
+                omit=omit,
+            )
             return
 
         except CannotSplit:
@@ -2358,8 +2431,10 @@ def dont_increase_indentation(split_func: SplitFunc) -> SplitFunc:
     """
 
     @wraps(split_func)
-    def split_wrapper(line: Line, py36: bool = False) -> Iterator[Line]:
-        for l in split_func(line, py36):
+    def split_wrapper(
+        line: Line, supports_trailing_commas: bool = False
+    ) -> Iterator[Line]:
+        for l in split_func(line, supports_trailing_commas):
             normalize_prefix(l.leaves[0], inside_brackets=True)
             yield l
 
@@ -2367,7 +2442,9 @@ def dont_increase_indentation(split_func: SplitFunc) -> SplitFunc:
 
 
 @dont_increase_indentation
-def delimiter_split(line: Line, py36: bool = False) -> Iterator[Line]:
+def delimiter_split(
+    line: Line, supports_trailing_commas: bool = False
+) -> Iterator[Line]:
     """Split according to delimiters of the highest priority.
 
     If `py36` is True, the split will add trailing commas also in function
@@ -2413,7 +2490,7 @@ def delimiter_split(line: Line, py36: bool = False) -> Iterator[Line]:
         if leaf.bracket_depth == lowest_depth and is_vararg(
             leaf, within=VARARGS_PARENTS
         ):
-            trailing_comma_safe = trailing_comma_safe and py36
+            trailing_comma_safe = trailing_comma_safe and supports_trailing_commas
         leaf_priority = bt.delimiters.get(id(leaf))
         if leaf_priority == delimiter_priority:
             yield current_line
@@ -2431,7 +2508,9 @@ def delimiter_split(line: Line, py36: bool = False) -> Iterator[Line]:
 
 
 @dont_increase_indentation
-def standalone_comment_split(line: Line, py36: bool = False) -> Iterator[Line]:
+def standalone_comment_split(
+    line: Line, supports_trailing_commas: bool = False
+) -> Iterator[Line]:
     """Split standalone comments from the rest of the line."""
     if not line.contains_standalone_comments(0):
         raise CannotSplit("Line does not have any standalone comments")
@@ -2584,11 +2663,11 @@ def normalize_string_quotes(leaf: Leaf) -> None:
     leaf.value = f"{prefix}{new_quote}{new_body}{new_quote}"
 
 
-def normalize_numeric_literal(leaf: Leaf, allow_underscores: bool) -> None:
+def normalize_numeric_literal(leaf: Leaf) -> None:
     """Normalizes numeric (float, int, and complex) literals.
 
     All letters used in the representation are normalized to lowercase (except
-    in Python 2 long literals), and long number literals are split using underscores.
+    in Python 2 long literals).
     """
     text = leaf.value.lower()
     if text.startswith(("0o", "0b")):
@@ -2606,8 +2685,7 @@ def normalize_numeric_literal(leaf: Leaf, allow_underscores: bool) -> None:
             sign = "-"
         elif after.startswith("+"):
             after = after[1:]
-        before = format_float_or_int_string(before, allow_underscores)
-        after = format_int_string(after, allow_underscores)
+        before = format_float_or_int_string(before)
         text = f"{before}e{sign}{after}"
     elif text.endswith(("j", "l")):
         number = text[:-1]
@@ -2615,50 +2693,19 @@ def normalize_numeric_literal(leaf: Leaf, allow_underscores: bool) -> None:
         # Capitalize in "2L" because "l" looks too similar to "1".
         if suffix == "l":
             suffix = "L"
-        text = f"{format_float_or_int_string(number, allow_underscores)}{suffix}"
+        text = f"{format_float_or_int_string(number)}{suffix}"
     else:
-        text = format_float_or_int_string(text, allow_underscores)
+        text = format_float_or_int_string(text)
     leaf.value = text
 
 
-def format_float_or_int_string(text: str, allow_underscores: bool) -> str:
+def format_float_or_int_string(text: str) -> str:
     """Formats a float string like "1.0"."""
     if "." not in text:
-        return format_int_string(text, allow_underscores)
+        return text
 
     before, after = text.split(".")
-    before = format_int_string(before, allow_underscores) if before else "0"
-    if after:
-        after = format_int_string(after, allow_underscores, count_from_end=False)
-    else:
-        after = "0"
-    return f"{before}.{after}"
-
-
-def format_int_string(
-    text: str, allow_underscores: bool, count_from_end: bool = True
-) -> str:
-    """Normalizes underscores in a string to e.g. 1_000_000.
-
-    Input must be a string of digits and optional underscores.
-    If count_from_end is False, we add underscores after groups of three digits
-    counting from the beginning instead of the end of the strings. This is used
-    for the fractional part of float literals.
-    """
-    if not allow_underscores:
-        return text
-
-    text = text.replace("_", "")
-    if len(text) <= 5:
-        # No underscores for numbers <= 5 digits long.
-        return text
-
-    if count_from_end:
-        # Avoid removing leading zeros, which are important if we're formatting
-        # part of a number like "0.001".
-        return format(int("1" + text), "3_")[1:].lstrip("_")
-    else:
-        return "_".join(text[i : i + 3] for i in range(0, len(text), 3))
+    return f"{before or 0}.{after or 0}"
 
 
 def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
@@ -2990,23 +3037,24 @@ def should_explode(line: Line, opening_bracket: Leaf) -> bool:
     return max_priority == COMMA_PRIORITY
 
 
-def is_python36(node: Node) -> bool:
-    """Return True if the current file is using Python 3.6+ features.
+def get_features_used(node: Node) -> Set[Feature]:
+    """Return a set of (relatively) new Python features used in this file.
 
     Currently looking for:
     - f-strings;
     - underscores in numeric literals; and
     - trailing commas after * or ** in function signatures and calls.
     """
+    features: Set[Feature] = set()
     for n in node.pre_order():
         if n.type == token.STRING:
             value_head = n.value[:2]  # type: ignore
             if value_head in {'f"', 'F"', "f'", "F'", "rf", "fr", "RF", "FR"}:
-                return True
+                features.add(Feature.F_STRINGS)
 
         elif n.type == token.NUMBER:
             if "_" in n.value:  # type: ignore
-                return True
+                features.add(Feature.NUMERIC_UNDERSCORES)
 
         elif (
             n.type in {syms.typedargslist, syms.arglist}
@@ -3015,14 +3063,22 @@ def is_python36(node: Node) -> bool:
         ):
             for ch in n.children:
                 if ch.type in STARS:
-                    return True
+                    features.add(Feature.TRAILING_COMMA)
 
                 if ch.type == syms.argument:
                     for argch in ch.children:
                         if argch.type in STARS:
-                            return True
+                            features.add(Feature.TRAILING_COMMA)
 
-    return False
+    return features
+
+
+def detect_target_versions(node: Node) -> Set[TargetVersion]:
+    """Detect the version to target based on the nodes used."""
+    features = get_features_used(node)
+    return {
+        version for version in TargetVersion if features <= VERSION_TO_FEATURES[version]
+    }
 
 
 def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[LeafID]]:
@@ -3339,11 +3395,9 @@ def assert_equivalent(src: str, dst: str) -> None:
         ) from None
 
 
-def assert_stable(
-    src: str, dst: str, line_length: int, mode: FileMode = FileMode.AUTO_DETECT
-) -> None:
+def assert_stable(src: str, dst: str, mode: FileMode) -> None:
     """Raise AssertionError if `dst` reformats differently the second time."""
-    newdst = format_str(dst, line_length=line_length, mode=mode)
+    newdst = format_str(dst, mode=mode)
     if dst != newdst:
         log = dump_to_file(
             diff(src, dst, "source", "first pass"),
@@ -3600,16 +3654,16 @@ def can_omit_invisible_parens(line: Line, line_length: int) -> bool:
     return False
 
 
-def get_cache_file(line_length: int, mode: FileMode) -> Path:
-    return CACHE_DIR / f"cache.{line_length}.{mode.value}.pickle"
+def get_cache_file(mode: FileMode) -> Path:
+    return CACHE_DIR / f"cache.{mode.get_cache_key()}.pickle"
 
 
-def read_cache(line_length: int, mode: FileMode) -> Cache:
+def read_cache(mode: FileMode) -> Cache:
     """Read the cache if it exists and is well formed.
 
     If it is not well formed, the call to write_cache later should resolve the issue.
     """
-    cache_file = get_cache_file(line_length, mode)
+    cache_file = get_cache_file(mode)
     if not cache_file.exists():
         return {}
 
@@ -3644,11 +3698,9 @@ def filter_cached(cache: Cache, sources: Iterable[Path]) -> Tuple[Set[Path], Set
     return todo, done
 
 
-def write_cache(
-    cache: Cache, sources: Iterable[Path], line_length: int, mode: FileMode
-) -> None:
+def write_cache(cache: Cache, sources: Iterable[Path], mode: FileMode) -> None:
     """Update the cache file."""
-    cache_file = get_cache_file(line_length, mode)
+    cache_file = get_cache_file(mode)
     try:
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         new_cache = {**cache, **{src.resolve(): get_cache_info(src) for src in sources}}

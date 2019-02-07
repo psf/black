@@ -1,4 +1,4 @@
-name: jupyterhub
+name: black
 type: sphinx
 conda:
     file: docs/environment.yml
