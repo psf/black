@@ -71,46 +71,60 @@ black {source_file_or_directory}
 black [OPTIONS] [SRC]...
 
 Options:
-  -l, --line-length INTEGER   Where to wrap around.  [default: 88]
-  --py36                      Allow using Python 3.6-only syntax on all input
-                              files.  This will put trailing commas in function
-                              signatures and calls also after *args and
-                              **kwargs.  [default: per-file auto-detection]
-  --pyi                       Format all input files like typing stubs
-                              regardless of file extension (useful when piping
-                              source on standard input).
+  -l, --line-length INTEGER       How many characters per line to allow.
+                                  [default: 88]
+  -t, --target-version [pypy35|cpy27|cpy33|cpy34|cpy35|cpy36|cpy37|cpy38]
+                                  Python versions that should be supported by
+                                  Black's output. [default: per-file auto-
+                                  detection]
+  --py36                          Allow using Python 3.6-only syntax on all
+                                  input files.  This will put trailing commas
+                                  in function signatures and calls also after
+                                  *args and **kwargs.  [default: per-file
+                                  auto-detection]
+  --pyi                           Format all input files like typing stubs
+                                  regardless of file extension (useful when
+                                  piping source on standard input).
   -S, --skip-string-normalization
-                              Don't normalize string quotes or prefixes.
+                                  Don't normalize string quotes or prefixes.
   -N, --skip-numeric-underscore-normalization
-                              Don't normalize underscores in numeric literals.
-  --check                     Don't write the files back, just return the
-                              status.  Return code 0 means nothing would
-                              change.  Return code 1 means some files would be
-                              reformatted.  Return code 123 means there was an
-                              internal error.
-  --diff                      Don't write the files back, just output a diff
-                              for each file on stdout.
-  --fast / --safe             If --fast given, skip temporary sanity checks.
-                              [default: --safe]
-  --include TEXT              A regular expression that matches files and
-                              directories that should be included on
-                              recursive searches. On Windows, use forward
-                              slashes for directories.  [default: \.pyi?$]
-  --exclude TEXT              A regular expression that matches files and
-                              directories that should be excluded on
-                              recursive searches. On Windows, use forward
-                              slashes for directories.  [default:
-                              build/|buck-out/|dist/|_build/|\.eggs/|\.git/|
-                              \.hg/|\.mypy_cache/|\.nox/|\.tox/|\.venv/]
-  -q, --quiet                 Don't emit non-error messages to stderr. Errors
-                              are still emitted, silence those with
-                              2>/dev/null.
-  -v, --verbose               Also emit messages to stderr about files
-                              that were not changed or were ignored due to
-                              --exclude=.
-  --version                   Show the version and exit.
-  --config PATH               Read configuration from PATH.
-  --help                      Show this message and exit.
+                                  Don't normalize underscores in numeric
+                                  literals.
+  --check                         Don't write the files back, just return the
+                                  status.  Return code 0 means nothing would
+                                  change.  Return code 1 means some files
+                                  would be reformatted.  Return code 123 means
+                                  there was an internal error.
+  --diff                          Don't write the files back, just output a
+                                  diff for each file on stdout.
+  --fast / --safe                 If --fast given, skip temporary sanity
+                                  checks. [default: --safe]
+  --include TEXT                  A regular expression that matches files and
+                                  directories that should be included on
+                                  recursive searches.  An empty value means
+                                  all files are included regardless of the
+                                  name.  Use forward slashes for directories
+                                  on all platforms (Windows, too).  Exclusions
+                                  are calculated first, inclusions later.
+                                  [default: \.pyi?$]
+  --exclude TEXT                  A regular expression that matches files and
+                                  directories that should be excluded on
+                                  recursive searches.  An empty value means no
+                                  paths are excluded. Use forward slashes for
+                                  directories on all platforms (Windows, too).
+                                  Exclusions are calculated first, inclusions
+                                  later.  [default: /(\.eggs|\.git|\.hg|\.mypy
+                                  _cache|\.nox|\.tox|\.venv|_build|buck-
+                                  out|build|dist)/]
+  -q, --quiet                     Don't emit non-error messages to stderr.
+                                  Errors are still emitted, silence those with
+                                  2>/dev/null.
+  -v, --verbose                   Also emit messages to stderr about files
+                                  that were not changed or were ignored due to
+                                  --exclude=.
+  --version                       Show the version and exit.
+  --config PATH                   Read configuration from PATH.
+  -h, --help                      Show this message and exit.
 ```
 
 *Black* is a well-behaved Unix-style command-line tool:
@@ -815,8 +829,9 @@ The headers controlling how code is formatted are:
     passed the `--fast` command line flag.
  - `X-Python-Variant`: if set to `pyi`, `blackd` will act as *Black* does when
     passed the `--pyi` command line flag. Otherwise, its value must correspond to
-    a Python version. If this value represents at least Python 3.6, `blackd` will
-    act as *Black* does when passed the `--py36` command line flag.
+    a Python version or a set of comma-separated Python versions, optionally
+    prefixed with `cpy` or `pypy`. For example, to request code that is compatible
+    with PyPy 3.5 and CPython 3.5, set the header to `pypy3.5,cpy3.5`.
 
 If any of these headers are set to invalid values, `blackd` returns a `HTTP 400`
 error response, mentioning the name of the problematic header in the message body.
@@ -934,6 +949,11 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 
 ## Change Log
+
+### 18.11b0
+
+* new option `--target-version` to control which Python versions
+  *Black*-formatted code should target
 
 ### 18.9b0
 
