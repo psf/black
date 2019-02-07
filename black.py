@@ -464,7 +464,7 @@ async def schedule_formatting(
         manager = Manager()
         lock = manager.Lock()
     tasks = {
-        asyncio.create_task(
+        asyncio.ensure_future(
             loop.run_in_executor(
                 executor,
                 format_file_in_place,
