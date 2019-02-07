@@ -437,9 +437,7 @@ class BlackTestCase(unittest.TestCase):
     @patch("black.dump_to_file", dump_to_stderr)
     def test_numeric_literals_ignoring_underscores(self) -> None:
         source, expected = read_data("numeric_literals_skip_underscores")
-        mode = black.FileMode(
-            numeric_underscore_normalization=False, target_versions=black.PY36_VERSIONS
-        )
+        mode = black.FileMode(target_versions=black.PY36_VERSIONS)
         actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
@@ -828,8 +826,7 @@ class BlackTestCase(unittest.TestCase):
         )
         node = black.lib2to3_parse(expected)
         self.assertEqual(
-            black.get_features_used(node),
-            {Feature.TRAILING_COMMA, Feature.F_STRINGS, Feature.NUMERIC_UNDERSCORES},
+            black.get_features_used(node), {Feature.TRAILING_COMMA, Feature.F_STRINGS}
         )
         source, expected = read_data("expression")
         node = black.lib2to3_parse(source)

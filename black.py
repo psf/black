@@ -168,7 +168,6 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
 class FileMode:
     target_versions: Set[TargetVersion] = Factory(set)
     line_length: int = DEFAULT_LINE_LENGTH
-    numeric_underscore_normalization: bool = True
     string_normalization: bool = True
     is_pyi: bool = False
 
@@ -183,7 +182,6 @@ class FileMode:
         parts = [
             version_str,
             str(self.line_length),
-            str(int(self.numeric_underscore_normalization)),
             str(int(self.string_normalization)),
             str(int(self.is_pyi)),
         ]
@@ -272,12 +270,6 @@ def read_pyproject_toml(
     "--skip-string-normalization",
     is_flag=True,
     help="Don't normalize string quotes or prefixes.",
-)
-@click.option(
-    "-N",
-    "--skip-numeric-underscore-normalization",
-    is_flag=True,
-    help="Don't normalize underscores in numeric literals.",
 )
 @click.option(
     "--check",
@@ -370,7 +362,6 @@ def main(
     pyi: bool,
     py36: bool,
     skip_string_normalization: bool,
-    skip_numeric_underscore_normalization: bool,
     quiet: bool,
     verbose: bool,
     include: str,
@@ -396,7 +387,6 @@ def main(
         line_length=line_length,
         is_pyi=pyi,
         string_normalization=not skip_string_normalization,
-        numeric_underscore_normalization=not skip_numeric_underscore_normalization,
     )
     if config and verbose:
         out(f"Using configuration from {config}.", bold=False, fg="blue")
@@ -686,8 +676,6 @@ def format_str(src_contents: str, *, mode: FileMode) -> FileContent:
         or supports_feature(versions, Feature.UNICODE_LITERALS),
         is_pyi=mode.is_pyi,
         normalize_strings=mode.string_normalization,
-        allow_underscores=mode.numeric_underscore_normalization
-        and supports_feature(versions, Feature.NUMERIC_UNDERSCORES),
     )
     elt = EmptyLineTracker(is_pyi=mode.is_pyi)
     empty_line = Line()
@@ -1492,7 +1480,6 @@ class LineGenerator(Visitor[Line]):
     normalize_strings: bool = True
     current_line: Line = Factory(Line)
     remove_u_prefix: bool = False
-    allow_underscores: bool = False
 
     def line(self, indent: int = 0) -> Iterator[Line]:
         """Generate a line.
@@ -1535,7 +1522,7 @@ class LineGenerator(Visitor[Line]):
                 normalize_string_prefix(node, remove_u_prefix=self.remove_u_prefix)
                 normalize_string_quotes(node)
             if node.type == token.NUMBER:
-                normalize_numeric_literal(node, self.allow_underscores)
+                normalize_numeric_literal(node)
             if node.type not in WHITESPACE:
                 self.current_line.append(node)
         yield from super().visit_default(node)
@@ -2674,11 +2661,11 @@ def normalize_string_quotes(leaf: Leaf) -> None:
     leaf.value = f"{prefix}{new_quote}{new_body}{new_quote}"
 
 
-def normalize_numeric_literal(leaf: Leaf, allow_underscores: bool) -> None:
+def normalize_numeric_literal(leaf: Leaf) -> None:
     """Normalizes numeric (float, int, and complex) literals.
 
     All letters used in the representation are normalized to lowercase (except
-    in Python 2 long literals), and long number literals are split using underscores.
+    in Python 2 long literals).
     """
     text = leaf.value.lower()
     if text.startswith(("0o", "0b")):
@@ -2696,8 +2683,7 @@ def normalize_numeric_literal(leaf: Leaf, allow_underscores: bool) -> None:
             sign = "-"
         elif after.startswith("+"):
             after = after[1:]
-        before = format_float_or_int_string(before, allow_underscores)
-        after = format_int_string(after, allow_underscores)
+        before = format_float_or_int_string(before)
         text = f"{before}e{sign}{after}"
     elif text.endswith(("j", "l")):
         number = text[:-1]
@@ -2705,50 +2691,19 @@ def normalize_numeric_literal(leaf: Leaf, allow_underscores: bool) -> None:
         # Capitalize in "2L" because "l" looks too similar to "1".
         if suffix == "l":
             suffix = "L"
-        text = f"{format_float_or_int_string(number, allow_underscores)}{suffix}"
+        text = f"{format_float_or_int_string(number)}{suffix}"
     else:
-        text = format_float_or_int_string(text, allow_underscores)
+        text = format_float_or_int_string(text)
     leaf.value = text
 
 
-def format_float_or_int_string(text: str, allow_underscores: bool) -> str:
+def format_float_or_int_string(text: str) -> str:
     """Formats a float string like "1.0"."""
     if "." not in text:
-        return format_int_string(text, allow_underscores)
+        return text
 
     before, after = text.split(".")
-    before = format_int_string(before, allow_underscores) if before else "0"
-    if after:
-        after = format_int_string(after, allow_underscores, count_from_end=False)
-    else:
-        after = "0"
-    return f"{before}.{after}"
-
-
-def format_int_string(
-    text: str, allow_underscores: bool, count_from_end: bool = True
-) -> str:
-    """Normalizes underscores in a string to e.g. 1_000_000.
-
-    Input must be a string of digits and optional underscores.
-    If count_from_end is False, we add underscores after groups of three digits
-    counting from the beginning instead of the end of the strings. This is used
-    for the fractional part of float literals.
-    """
-    if not allow_underscores:
-        return text
-
-    text = text.replace("_", "")
-    if len(text) <= 5:
-        # No underscores for numbers <= 5 digits long.
-        return text
-
-    if count_from_end:
-        # Avoid removing leading zeros, which are important if we're formatting
-        # part of a number like "0.001".
-        return format(int("1" + text), "3_")[1:].lstrip("_")
-    else:
-        return "_".join(text[i : i + 3] for i in range(0, len(text), 3))
+    return f"{before or 0}.{after or 0}"
 
 
 def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
