@@ -3351,8 +3351,8 @@ def assert_equivalent(src: str, dst: str) -> None:
 
             if isinstance(value, list):
                 for item in value:
-                    # Ignore nested tuples within del statements, because we may insert parentheses and
-                    # they change the AST.
+                    # Ignore nested tuples within del statements, because we may insert
+                    # parentheses and they change the AST.
                     if (
                         field == "targets"
                         and isinstance(node, ast.Delete)

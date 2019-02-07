@@ -941,7 +941,7 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ### 19.2b0
 
-* long `del` statements are now split into multiple lines
+* long `del` statements are now split into multiple lines (#698)
 
 * *Black* no longer normalizes numeric literals to include `_` separators (#696)
 
