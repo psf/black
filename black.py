@@ -182,7 +182,6 @@ class FileMode:
         parts = [
             version_str,
             str(self.line_length),
-            str(int(self.numeric_underscore_normalization)),
             str(int(self.string_normalization)),
             str(int(self.is_pyi)),
         ]
