@@ -661,7 +661,7 @@ $ where black
         - Scope: Project Files
         - Program: <install_location_from_step_2>
         - Arguments: `$FilePath$`
-        - Output paths to refresh: `$FilePathRelativeToProjectRoot$`
+        - Output paths to refresh: `$FilePath$`
         - Working directory: `$ProjectFileDir$`
 
 ### Vim
