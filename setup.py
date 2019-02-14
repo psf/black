@@ -42,7 +42,7 @@ setup(
     python_requires=">=3.6",
     zip_safe=False,
     install_requires=["click>=6.5", "attrs>=18.1.0", "appdirs", "toml>=0.9.4"],
-    extras_require={"d": ["aiohttp>=3.3.2"]},
+    extras_require={"d": ["aiohttp>=3.3.2", "aiohttp-cors"]},
     test_suite="tests.test_black",
     classifiers=[
         "Development Status :: 4 - Beta",
