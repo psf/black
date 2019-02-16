@@ -189,12 +189,12 @@ brackets and put that in a separate indented line.
 ```py3
 # in:
 
-TracebackException.from_exception(exc, limit, lookup_lines, capture_locals)
+ImportantClass.important_method(exc, limit, lookup_lines, capture_locals, extra_argument)
 
 # out:
 
-TracebackException.from_exception(
-    exc, limit, lookup_lines, capture_locals
+ImportantClass.important_method(
+    exc, limit, lookup_lines, capture_locals, extra_argument
 )
 ```
 
@@ -208,7 +208,7 @@ separate lines.
 ```py3
 # in:
 
-def very_important_function(template: str, *variables, file: os.PathLike, debug: bool = False):
+def very_important_function(template: str, *variables, file: os.PathLike, engine: str, header: bool = True, debug: bool = False):
     """Applies `variables` to the `template` and writes to `file`."""
     with open(file, 'w') as f:
         ...
@@ -219,6 +219,8 @@ def very_important_function(
     template: str,
     *variables,
     file: os.PathLike,
+    engine: str, 
+    header: bool = True
     debug: bool = False,
 ):
     """Applies `variables` to the `template` and writes to `file`."""
