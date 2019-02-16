@@ -1356,7 +1356,6 @@ class BlackTestCase(unittest.TestCase):
             except RuntimeError as re:
                 self.fail(f"`patch_click()` failed, exception still raised: {re}")
 
-    @unittest.expectedFailure
     def test_root_logger_not_used_directly(self) -> None:
         def fail(*args: Any, **kwargs: Any) -> None:
             self.fail("Record created with root logger")
