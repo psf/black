@@ -13,6 +13,7 @@ from pathlib import Path
 import pickle
 import re
 import signal
+import subprocess
 import sys
 import tempfile
 import tokenize
@@ -316,6 +317,9 @@ def read_pyproject_toml(
     show_default=True,
 )
 @click.option(
+    "--entire-repo", is_flag=True, help=("Format all python files in the repo.")
+)
+@click.option(
     "-q",
     "--quiet",
     is_flag=True,
@@ -368,6 +372,7 @@ def main(
     exclude: str,
     src: Tuple[str],
     config: Optional[str],
+    entire_repo: bool,
 ) -> None:
     """The uncompromising code formatter."""
     write_back = WriteBack.from_configuration(check=check, diff=diff)
@@ -401,19 +406,25 @@ def main(
         err(f"Invalid regular expression for exclude given: {exclude!r}")
         ctx.exit(2)
     report = Report(check=check, quiet=quiet, verbose=verbose)
-    root = find_project_root(src)
     sources: Set[Path] = set()
-    for s in src:
-        p = Path(s)
-        if p.is_dir():
-            sources.update(
-                gen_python_files_in_dir(p, root, include_regex, exclude_regex, report)
-            )
-        elif p.is_file() or s == "-":
-            # if a file was explicitly given, we don't care about its extension
-            sources.add(p)
-        else:
-            err(f"invalid path: {s}")
+    if entire_repo:
+        root = find_project_root(".")
+        sources.update(gen_python_files_via_vcs(ctx, root))
+    else:
+        root = find_project_root(src)
+        for s in src:
+            p = Path(s)
+            if p.is_dir():
+                sources.update(
+                    gen_python_files_in_dir(
+                        p, root, include_regex, exclude_regex, report
+                    )
+                )
+            elif p.is_file() or s == "-":
+                # if a file was explicitly given, we don't care about its extension
+                sources.add(p)
+            else:
+                err(f"invalid path: {s}")
     if len(sources) == 0:
         if verbose or not quiet:
             out("No paths given. Nothing to do 😴")
@@ -3170,6 +3181,35 @@ def get_future_imports(node: Node) -> Set[str]:
         else:
             break
     return imports
+
+
+def gen_python_files_via_vcs(ctx: click.Context, root: Path) -> Iterator[Path]:
+    """Generate all python files in a repo under VCS
+    using `git ls-files` for Git Repos and `hg locate` for Mercurial Repos
+
+    `include` and `exclude` are not considered.
+    """
+
+    def make_path(path_as_str: str) -> Path:
+        return root / path_as_str
+
+    if (root / ".git").is_dir():
+        # Git Repo
+        proc = subprocess.run(
+            ["git", "ls-files", "--error-unmatch", "*.py"],
+            stdout=subprocess.PIPE,
+            cwd=root,
+        )
+        return map(make_path, proc.stdout.decode().splitlines())
+    elif (root / ".hg").is_dir():
+        # Mercurial Repo
+        proc = subprocess.run(
+            ["hg", "locate", "*.py"], stdout=subprocess.PIPE, cwd=root
+        )
+        return map(make_path, proc.stdout.decode().splitlines())
+    else:
+        err("Cannot find VCS root, are you in a VCS directory?")
+        ctx.exit(2)
 
 
 def gen_python_files_in_dir(
