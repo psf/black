@@ -941,10 +941,12 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * removed `--py36` (use `--target-version=cpy36` instead) (#724)
 
+* long `del` statements are now split into multiple lines (#698)
+
 * *Black* no longer normalizes numeric literals to include `_` separators (#696)
 
 * new option `--target-version` to control which Python versions
-  *Black*-formatted code should target
+  *Black*-formatted code should target (#618)
 
 ### 18.9b0
 
