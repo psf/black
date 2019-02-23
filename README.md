@@ -939,7 +939,7 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ### 19.2b0
 
-* removed `--py36` (use `--target-version=cpy36` instead)
+* removed `--py36` (use `--target-version=cpy36` instead) (#724)
 
 * *Black* no longer normalizes numeric literals to include `_` separators (#696)
 
