@@ -1166,7 +1166,7 @@ class BlackTestCase(unittest.TestCase):
             self.invokeBlack([str(path), *PY36_ARGS])
             with open(path, "r") as fh:
                 actual = fh.read()
-            # verify cache with for --target-version is separate
+            # verify cache with --target-version is separate
             py36_cache = black.read_cache(py36_mode)
             self.assertIn(path, py36_cache)
             normal_cache = black.read_cache(reg_mode)
