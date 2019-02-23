@@ -77,11 +77,6 @@ Options:
                                   Python versions that should be supported by
                                   Black's output. [default: per-file auto-
                                   detection]
-  --py36                          Allow using Python 3.6-only syntax on all
-                                  input files.  This will put trailing commas
-                                  in function signatures and calls also after
-                                  *args and **kwargs.  [default: per-file
-                                  auto-detection]
   --pyi                           Format all input files like typing stubs
                                   regardless of file extension (useful when
                                   piping source on standard input).
@@ -576,7 +571,7 @@ to denote a significant space character.
 ```toml
 [tool.black]
 line-length = 88
-py36 = true
+target_version = ['cpy37']
 include = '\.pyi?$'
 exclude = '''
 
@@ -944,7 +939,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ### 19.2b0
 
-* *Black* no longer normalizes numeric literals to include `_` separators.
+* removed `--py36` (use `--target-version=cpy36` instead)
+
+* *Black* no longer normalizes numeric literals to include `_` separators (#696)
 
 * new option `--target-version` to control which Python versions
   *Black*-formatted code should target
