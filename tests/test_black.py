@@ -43,6 +43,9 @@ fs = partial(black.format_str, mode=black.FileMode())
 THIS_FILE = Path(__file__)
 THIS_DIR = THIS_FILE.parent
 EMPTY_LINE = "# EMPTY LINE WITH WHITESPACE" + " (this comment will be removed)"
+PY36_ARGS = [
+    f"--target-version={version.name.lower()}" for version in black.PY36_VERSIONS
+]
 T = TypeVar("T")
 R = TypeVar("R")
 
@@ -1160,10 +1163,10 @@ class BlackTestCase(unittest.TestCase):
             path = (workspace / "file.py").resolve()
             with open(path, "w") as fh:
                 fh.write(source)
-            self.invokeBlack([str(path), "--py36"])
+            self.invokeBlack([str(path), *PY36_ARGS])
             with open(path, "r") as fh:
                 actual = fh.read()
-            # verify cache with --py36 is separate
+            # verify cache with --target-version is separate
             py36_cache = black.read_cache(py36_mode)
             self.assertIn(path, py36_cache)
             normal_cache = black.read_cache(reg_mode)
@@ -1183,12 +1186,12 @@ class BlackTestCase(unittest.TestCase):
             for path in paths:
                 with open(path, "w") as fh:
                     fh.write(source)
-            self.invokeBlack([str(p) for p in paths] + ["--py36"])
+            self.invokeBlack([str(p) for p in paths] + PY36_ARGS)
             for path in paths:
                 with open(path, "r") as fh:
                     actual = fh.read()
                 self.assertEqual(actual, expected)
-            # verify cache with --py36 is separate
+            # verify cache with --target-version is separate
             pyi_cache = black.read_cache(py36_mode)
             normal_cache = black.read_cache(reg_mode)
             for path in paths:
@@ -1198,7 +1201,9 @@ class BlackTestCase(unittest.TestCase):
     def test_pipe_force_py36(self) -> None:
         source, expected = read_data("force_py36")
         result = CliRunner().invoke(
-            black.main, ["-", "-q", "--py36"], input=BytesIO(source.encode("utf8"))
+            black.main,
+            ["-", "-q", "--target-version=cpy36"],
+            input=BytesIO(source.encode("utf8")),
         )
         self.assertEqual(result.exit_code, 0)
         actual = result.output

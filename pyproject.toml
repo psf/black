@@ -7,7 +7,7 @@
 
 [tool.black]
 line-length = 88
-py36 = true
+target_version = ['cpy36', 'cpy37', 'cpy38']
 include = '\.pyi?$'
 exclude = '''
 /(

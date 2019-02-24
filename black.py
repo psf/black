@@ -249,15 +249,6 @@ def read_pyproject_toml(
     ),
 )
 @click.option(
-    "--py36",
-    is_flag=True,
-    help=(
-        "Allow using Python 3.6-only syntax on all input files.  This will put "
-        "trailing commas in function signatures and calls also after *args and "
-        "**kwargs.  [default: per-file auto-detection]"
-    ),
-)
-@click.option(
     "--pyi",
     is_flag=True,
     help=(
@@ -360,7 +351,6 @@ def main(
     diff: bool,
     fast: bool,
     pyi: bool,
-    py36: bool,
     skip_string_normalization: bool,
     quiet: bool,
     verbose: bool,
@@ -372,13 +362,7 @@ def main(
     """The uncompromising code formatter."""
     write_back = WriteBack.from_configuration(check=check, diff=diff)
     if target_version:
-        if py36:
-            err(f"Cannot use both --target-version and --py36")
-            ctx.exit(2)
-        else:
-            versions = set(target_version)
-    elif py36:
-        versions = PY36_VERSIONS
+        versions = set(target_version)
     else:
         # We'll autodetect later.
         versions = set()
@@ -2446,8 +2430,8 @@ def delimiter_split(
 ) -> Iterator[Line]:
     """Split according to delimiters of the highest priority.
 
-    If `py36` is True, the split will add trailing commas also in function
-    signatures that contain `*` and `**`.
+    If `supports_trailing_commas` is True, the split will add trailing commas
+    also in function signatures that contain `*` and `**`.
     """
     try:
         last_leaf = line.leaves[-1]
