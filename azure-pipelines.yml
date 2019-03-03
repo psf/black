@@ -1,9 +1,6 @@
-trigger:
-- master
-
 jobs:
 
-- job: 'Testing_black_Mac'
+- job: 'Testing_Black_Mac'
   pool:
     vmImage: 'macOS-10.13'
   strategy:
@@ -15,7 +12,7 @@ jobs:
         python.version: '3.7'
         ci.env: 'py37'
 
-- job: 'Testing_black_Windows'
+- job: 'Testing_Black_Windows'
   pool:
     vmImage: 'vs2017-win2016'
   strategy:
@@ -34,4 +31,4 @@ jobs:
       architecture: 'x64'
 
   - script: python setup.py test
-    displayName: 'Running black tests for $(ci.env)'
+    displayName: 'Running Black tests for $(ci.env)'
