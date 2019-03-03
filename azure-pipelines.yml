@@ -1,0 +1,37 @@
+trigger:
+- master
+
+jobs:
+
+- job: 'Testing_black_Mac'
+  pool:
+    vmImage: 'macOS-10.13'
+  strategy:
+    matrix:
+      Python36:
+        python.version: '3.6'
+        ci.env: 'py36'
+      Python37:
+        python.version: '3.7'
+        ci.env: 'py37'
+
+- job: 'Testing_black_Windows'
+  pool:
+    vmImage: 'vs2017-win2016'
+  strategy:
+    matrix:
+      Python36:
+        python.version: '3.6'
+        ci.env: 'py36'
+      Python37:
+        python.version: '3.7'
+        ci.env: 'py37'
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+      architecture: 'x64'
+
+  - script: python setup.py test
+    displayName: 'Running black tests for $(ci.env)'
