@@ -114,7 +114,10 @@ def Black():
   else:
     cursor = vim.current.window.cursor
     vim.current.buffer[:] = new_buffer_str.split('\n')[:-1]
-    vim.current.window.cursor = cursor
+    try:
+      vim.current.window.cursor = cursor
+    except vim.error:
+      vim.current.window.cursor = (len(vim.current.buffer), 0)
     print(f'Reformatted in {time.time() - start:.4f}s.')
 
 def BlackUpgrade():
