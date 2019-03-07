@@ -1202,7 +1202,7 @@ class BlackTestCase(unittest.TestCase):
         source, expected = read_data("force_py36")
         result = CliRunner().invoke(
             black.main,
-            ["-", "-q", "--target-version=cpy36"],
+            ["-", "-q", "--target-version=py36"],
             input=BytesIO(source.encode("utf8")),
         )
         self.assertEqual(result.exit_code, 0)
@@ -1425,9 +1425,9 @@ class BlackTestCase(unittest.TestCase):
             await check("lol")
             await check("ruby3.5")
             await check("pyi3.6")
-            await check("cpy1.5")
+            await check("py1.5")
             await check("2.8")
-            await check("cpy2.8")
+            await check("py2.8")
             await check("3.0")
             await check("pypy3.0")
             await check("jython3.4")
@@ -1466,17 +1466,15 @@ class BlackTestCase(unittest.TestCase):
                 self.assertEqual(response.status, expected_status)
 
             await check("3.6", 200)
-            await check("cpy3.6", 200)
+            await check("py3.6", 200)
             await check("3.5,3.7", 200)
-            await check("3.5,cpy3.7", 200)
+            await check("3.5,py3.7", 200)
 
             await check("2", 204)
             await check("2.7", 204)
-            await check("cpy2.7", 204)
-            await check("pypy2.7", 204)
+            await check("py2.7", 204)
             await check("3.4", 204)
-            await check("cpy3.4", 204)
-            await check("pypy3.4", 204)
+            await check("py3.4", 204)
 
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test

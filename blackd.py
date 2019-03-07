@@ -127,12 +127,8 @@ def parse_python_variant_header(value: str) -> Tuple[bool, Set[black.TargetVersi
     else:
         versions = set()
         for version in value.split(","):
-            tag = "cpy"
-            if version.startswith("cpy"):
-                version = version[len("cpy") :]
-            elif version.startswith("pypy"):
-                tag = "pypy"
-                version = version[len("pypy") :]
+            if version.startswith("py"):
+                version = version[len("py") :]
             major_str, *rest = version.split(".")
             try:
                 major = int(major_str)
@@ -147,16 +143,12 @@ def parse_python_variant_header(value: str) -> Tuple[bool, Set[black.TargetVersi
                 else:
                     # Default to lowest supported minor version.
                     minor = 7 if major == 2 else 3
-                version_str = f"{tag.upper()}{major}{minor}"
-                # If PyPY is the same as CPython in some version, use
-                # the corresponding CPython version.
-                if tag == "pypy" and not hasattr(black.TargetVersion, version_str):
-                    version_str = f"CPY{major}{minor}"
+                version_str = f"PY{major}{minor}"
                 if major == 3 and not hasattr(black.TargetVersion, version_str):
                     raise InvalidVariantHeader(f"3.{minor} is not supported")
                 versions.add(black.TargetVersion[version_str])
             except (KeyError, ValueError):
-                raise InvalidVariantHeader("expected e.g. '3.7', 'pypy3.5'")
+                raise InvalidVariantHeader("expected e.g. '3.7', 'py3.5'")
         return False, versions
 
 
