@@ -73,7 +73,7 @@ black [OPTIONS] [SRC]...
 Options:
   -l, --line-length INTEGER       How many characters per line to allow.
                                   [default: 88]
-  -t, --target-version [pypy35|cpy27|cpy33|cpy34|cpy35|cpy36|cpy37|cpy38]
+  -t, --target-version [py27|py33|py34|py35|py36|py37|py38]
                                   Python versions that should be supported by
                                   Black's output. [default: per-file auto-
                                   detection]
@@ -571,7 +571,7 @@ to denote a significant space character.
 ```toml
 [tool.black]
 line-length = 88
-target_version = ['cpy37']
+target_version = ['py37']
 include = '\.pyi?$'
 exclude = '''
 
@@ -817,8 +817,8 @@ The headers controlling how code is formatted are:
  - `X-Python-Variant`: if set to `pyi`, `blackd` will act as *Black* does when
     passed the `--pyi` command line flag. Otherwise, its value must correspond to
     a Python version or a set of comma-separated Python versions, optionally
-    prefixed with `cpy` or `pypy`. For example, to request code that is compatible
-    with PyPy 3.5 and CPython 3.5, set the header to `pypy3.5,cpy3.5`.
+    prefixed with `py`. For example, to request code that is compatible
+    with Python 3.5 and 3.6, set the header to `py3.5,py3.6`.
 
 If any of these headers are set to invalid values, `blackd` returns a `HTTP 400`
 error response, mentioning the name of the problematic header in the message body.
@@ -939,7 +939,7 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ### 19.2b0
 
-* removed `--py36` (use `--target-version=cpy36` instead) (#724)
+* removed `--py36` (use `--target-version=py36` instead) (#724)
 
 * long `del` statements are now split into multiple lines (#698)
 

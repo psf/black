@@ -113,20 +113,19 @@ class Changed(Enum):
 
 
 class TargetVersion(Enum):
-    PYPY35 = 1
-    CPY27 = 2
-    CPY33 = 3
-    CPY34 = 4
-    CPY35 = 5
-    CPY36 = 6
-    CPY37 = 7
-    CPY38 = 8
+    PY27 = 2
+    PY33 = 3
+    PY34 = 4
+    PY35 = 5
+    PY36 = 6
+    PY37 = 7
+    PY38 = 8
 
     def is_python2(self) -> bool:
-        return self is TargetVersion.CPY27
+        return self is TargetVersion.PY27
 
 
-PY36_VERSIONS = {TargetVersion.CPY36, TargetVersion.CPY37, TargetVersion.CPY38}
+PY36_VERSIONS = {TargetVersion.PY36, TargetVersion.PY37, TargetVersion.PY38}
 
 
 class Feature(Enum):
@@ -138,24 +137,23 @@ class Feature(Enum):
 
 
 VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
-    TargetVersion.CPY27: set(),
-    TargetVersion.PYPY35: {Feature.UNICODE_LITERALS, Feature.F_STRINGS},
-    TargetVersion.CPY33: {Feature.UNICODE_LITERALS},
-    TargetVersion.CPY34: {Feature.UNICODE_LITERALS},
-    TargetVersion.CPY35: {Feature.UNICODE_LITERALS, Feature.TRAILING_COMMA},
-    TargetVersion.CPY36: {
+    TargetVersion.PY27: set(),
+    TargetVersion.PY33: {Feature.UNICODE_LITERALS},
+    TargetVersion.PY34: {Feature.UNICODE_LITERALS},
+    TargetVersion.PY35: {Feature.UNICODE_LITERALS, Feature.TRAILING_COMMA},
+    TargetVersion.PY36: {
         Feature.UNICODE_LITERALS,
         Feature.F_STRINGS,
         Feature.NUMERIC_UNDERSCORES,
         Feature.TRAILING_COMMA,
     },
-    TargetVersion.CPY37: {
+    TargetVersion.PY37: {
         Feature.UNICODE_LITERALS,
         Feature.F_STRINGS,
         Feature.NUMERIC_UNDERSCORES,
         Feature.TRAILING_COMMA,
     },
-    TargetVersion.CPY38: {
+    TargetVersion.PY38: {
         Feature.UNICODE_LITERALS,
         Feature.F_STRINGS,
         Feature.NUMERIC_UNDERSCORES,
