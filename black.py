@@ -55,6 +55,7 @@ DEFAULT_EXCLUDES = (
     r"/(\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|_build|buck-out|build|dist)/"
 )
 DEFAULT_INCLUDES = r"\.pyi?$"
+DEFAULT_SRC = (".",)
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 
 
@@ -200,7 +201,7 @@ def read_pyproject_toml(
     """
     assert not isinstance(value, (int, bool)), "Invalid parameter type passed"
     if not value:
-        root = find_project_root(ctx.params.get("src", ()))
+        root = find_project_root(ctx.params.get("src", DEFAULT_SRC))
         path = root / "pyproject.toml"
         if path.is_file():
             value = str(path)
@@ -385,6 +386,8 @@ def main(
     report = Report(check=check, quiet=quiet, verbose=verbose)
     root = find_project_root(src)
     sources: Set[Path] = set()
+    if not src:
+        src = DEFAULT_SRC
     for s in src:
         p = Path(s)
         if p.is_dir():
