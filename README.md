@@ -952,6 +952,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * improved performance of formatting deeply nested data structures (#509)
 
+* *Black* now properly formats multiple files in parallel on
+  Windows (#632)
+
 * `blackd` now supports CORS (#622)
 
 ### 18.9b0
