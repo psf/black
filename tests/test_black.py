@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import asyncio
+import logging
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, redirect_stderr
 from functools import partial, wraps
@@ -36,7 +37,6 @@ except ImportError:
     has_blackd_deps = False
 else:
     has_blackd_deps = True
-
 
 ff = partial(black.format_file_in_place, mode=black.FileMode(), fast=True)
 fs = partial(black.format_str, mode=black.FileMode())
@@ -1355,6 +1355,21 @@ class BlackTestCase(unittest.TestCase):
                 _unicodefun._verify_python3_env()
             except RuntimeError as re:
                 self.fail(f"`patch_click()` failed, exception still raised: {re}")
+
+    def test_root_logger_not_used_directly(self) -> None:
+        def fail(*args: Any, **kwargs: Any) -> None:
+            self.fail("Record created with root logger")
+
+        with patch.multiple(
+            logging.root,
+            debug=fail,
+            info=fail,
+            warning=fail,
+            error=fail,
+            critical=fail,
+            log=fail,
+        ):
+            ff(THIS_FILE)
 
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
