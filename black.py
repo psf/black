@@ -726,13 +726,13 @@ def get_grammars(target_versions: Set[TargetVersion]) -> List[Grammar]:
     if not target_versions:
         return GRAMMARS
     elif all(not version.is_python2() for version in target_versions):
-        # Python 2-compatible code, so don't try Python 3 grammar.
+        # Python 3-compatible code, so don't try Python 2 grammar
         return [
             pygram.python_grammar_no_print_statement_no_exec_statement,
             pygram.python_grammar_no_print_statement,
         ]
     else:
-        return [pygram.python_grammar]
+        return [pygram.python_grammar_no_print_statement, pygram.python_grammar]
 
 
 def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -> Node:

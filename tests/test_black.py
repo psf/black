@@ -462,6 +462,14 @@ class BlackTestCase(unittest.TestCase):
         black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
+    def test_python2_print_function(self) -> None:
+        source, expected = read_data("python2_print_function")
+        mode = black.FileMode(target_versions={black.TargetVersion.PY27})
+        actual = fs(source, mode=mode)
+        self.assertFormatEqual(expected, actual)
+        black.assert_stable(source, actual, mode)
+
+    @patch("black.dump_to_file", dump_to_stderr)
     def test_python2_unicode_literals(self) -> None:
         source, expected = read_data("python2_unicode_literals")
         actual = fs(source)
