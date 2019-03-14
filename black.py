@@ -1061,9 +1061,7 @@ class Line:
 
     depth: int = 0
     leaves: List[Leaf] = Factory(list)
-    # The LeafID keys of comments must remain ordered by the corresponding leaf's index
-    # in leaves
-    comments: Dict[LeafID, List[Leaf]] = Factory(dict)
+    comments: Dict[LeafID, List[Leaf]] = Factory(dict)  # keys ordered like `leaves`
     bracket_tracker: BracketTracker = Factory(BracketTracker)
     inside_brackets: bool = False
     should_explode: bool = False
@@ -1275,13 +1273,8 @@ class Line:
             comment.prefix = ""
             return False
 
-        else:
-            leaf_id = id(self.leaves[-1])
-            if leaf_id not in self.comments:
-                self.comments[leaf_id] = [comment]
-            else:
-                self.comments[leaf_id].append(comment)
-            return True
+        self.comments.setdefault(id(self.leaves[-1]), []).append(comment)
+        return True
 
     def comments_after(self, leaf: Leaf) -> List[Leaf]:
         """Generate comments that should appear directly after `leaf`."""
@@ -1289,17 +1282,11 @@ class Line:
 
     def remove_trailing_comma(self) -> None:
         """Remove the trailing comma and moves the comments attached to it."""
-        # Remember, the LeafID keys of self.comments are ordered by the
-        # corresponding leaf's index in self.leaves
-        # If id(self.leaves[-2]) is in self.comments, the order doesn't change.
-        # Otherwise, we insert it into self.comments, and it becomes the last entry.
-        # However, since we delete id(self.leaves[-1]) from self.comments, the invariant
-        # is maintained
-        self.comments.setdefault(id(self.leaves[-2]), []).extend(
-            self.comments.get(id(self.leaves[-1]), [])
+        trailing_comma = self.leaves.pop()
+        trailing_comma_comments = self.comments.pop(id(trailing_comma), [])
+        self.comments.setdefault(id(self.leaves[-1]), []).extend(
+            trailing_comma_comments
         )
-        self.comments.pop(id(self.leaves[-1]), None)
-        self.leaves.pop()
 
     def is_complex_subscript(self, leaf: Leaf) -> bool:
         """Return True iff `leaf` is part of a slice with non-trivial exprs."""

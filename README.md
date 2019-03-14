@@ -937,7 +937,7 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Change Log
 
-### 19.2b0
+### 19.3b0
 
 * removed `--py36` (use `--target-version=py36` instead) (#724)
 
@@ -947,6 +947,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * new option `--target-version` to control which Python versions
   *Black*-formatted code should target (#618)
+
+* improved performance of formatting deeply nested data structures (#509)
 
 ### 18.9b0
 
@@ -1354,6 +1356,7 @@ Multiple contributions by:
 * [Christian Heimes](mailto:christian@python.org)
 * [Daniel M. Capella](mailto:polycitizen@gmail.com)
 * [Eli Treuherz](mailto:eli@treuherz.com)
+* hauntsaninja
 * Hugo van Kemenade
 * [Ivan Katanić](mailto:ivan.katanic@gmail.com)
 * [Jonas Obrist](mailto:ojiidotch@gmail.com)
