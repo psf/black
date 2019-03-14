@@ -52,6 +52,7 @@ def f(
     another_really_really_long_element_with_a_unnecessarily_long_name_to_describe_what_it_does_enterprise_style = (
         3
     )  # type: int
+    an_element_with_a_long_value = calls() or more_calls() and more()  # type: bool
 
     tup = (
         another_element,  # type: int
@@ -66,3 +67,20 @@ def f(
         + another_element
         + another_element_with_long_name
     )  # type: int
+
+
+def func(
+    a=some_list[0],  # type: int
+):  # type: () -> int
+    c = call(
+        0.0123,
+        0.0456,
+        0.0789,
+        0.0123,
+        0.0456,
+        0.0789,
+        0.0123,
+        0.0456,
+        0.0789,
+        a[-1],  # type: ignore
+    )

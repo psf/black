@@ -1192,6 +1192,29 @@ class Line:
             if leaf.type == STANDALONE_COMMENT:
                 if leaf.bracket_depth <= depth_limit:
                     return True
+        return False
+
+    def contains_inner_type_comments(self) -> bool:
+        ignored_ids = set()
+        try:
+            last_leaf = self.leaves[-1]
+            ignored_ids.add(id(last_leaf))
+            if last_leaf.type == token.COMMA:
+                # When trailing commas are inserted by Black for consistency, comments
+                # after the previous last element are not moved (they don't have to,
+                # rendering will still be correct).  So we ignore trailing commas.
+                last_leaf = self.leaves[-2]
+                ignored_ids.add(id(last_leaf))
+        except IndexError:
+            return False
+
+        for leaf_id, comments in self.comments.items():
+            if leaf_id in ignored_ids:
+                continue
+
+            for comment in comments:
+                if is_type_comment(comment):
+                    return True
 
         return False
 
@@ -2135,16 +2158,8 @@ def split_line(
 
     line_str = str(line).strip("\n")
 
-    # we don't want to split special comments like type annotations
-    # https://github.com/python/typing/issues/186
-    has_special_comment = False
-    for leaf in line.leaves:
-        for comment in line.comments_after(leaf):
-            if leaf.type == token.COMMA and is_special_comment(comment):
-                has_special_comment = True
-
     if (
-        not has_special_comment
+        not line.contains_inner_type_comments()
         and not line.should_explode
         and is_line_short_enough(line, line_length=line_length, line_str=line_str)
     ):
@@ -2520,14 +2535,12 @@ def is_import(leaf: Leaf) -> bool:
     )
 
 
-def is_special_comment(leaf: Leaf) -> bool:
+def is_type_comment(leaf: Leaf) -> bool:
     """Return True if the given leaf is a special comment.
     Only returns true for type comments for now."""
     t = leaf.type
     v = leaf.value
-    return bool(
-        (t == token.COMMENT or t == STANDALONE_COMMENT) and (v.startswith("# type:"))
-    )
+    return t in {token.COMMENT, t == STANDALONE_COMMENT} and v.startswith("# type:")
 
 
 def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:

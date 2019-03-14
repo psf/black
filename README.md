@@ -948,6 +948,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * long `del` statements are now split into multiple lines (#698)
 
+* type comments are no longer mangled in function signatures
+
 * improved performance of formatting deeply nested data structures (#509)
 
 * `blackd` now supports CORS (#622)
@@ -1370,5 +1372,6 @@ Multiple contributions by:
 * [Peter Bengtsson](mailto:mail@peterbe.com)
 * [Stavros Korokithakis](mailto:hi@stavros.io)
 * [Sunil Kapil](mailto:snlkapil@gmail.com)
+* [Utsav Shah](mailto:ukshah2@illinois.edu)
 * [Vishwas B Sharma](mailto:sharma.vishwas88@gmail.com)
 * [Chuck Wooters](mailto:chuck.wooters@microsoft.com)

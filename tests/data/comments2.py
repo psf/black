@@ -65,12 +65,18 @@ def inline_comments_in_brackets_ruin_everything():
             body,
             children[-1],  # )1
         ]
+        parameters.children = [
+            children[0],
+            body,
+            children[-1],  # type: ignore
+        ]
     else:
         parameters.children = [
             parameters.children[0],  # (2 what if this was actually long
             body,
             parameters.children[-1],  # )2
         ]
+        parameters.children = [parameters.what_if_this_was_actually_long.children[0], body, parameters.children[-1]]  # type: ignore
     if (self._proc is not None
             # has the child process finished?
             and self._returncode is None
@@ -217,12 +223,22 @@ else:
 def inline_comments_in_brackets_ruin_everything():
     if typedargslist:
         parameters.children = [children[0], body, children[-1]]  # (1  # )1
+        parameters.children = [
+            children[0],
+            body,
+            children[-1],  # type: ignore
+        ]
     else:
         parameters.children = [
             parameters.children[0],  # (2 what if this was actually long
             body,
             parameters.children[-1],  # )2
         ]
+        parameters.children = [
+            parameters.what_if_this_was_actually_long.children[0],
+            body,
+            parameters.children[-1],
+        ]  # type: ignore
     if (
         self._proc is not None
         # has the child process finished?
