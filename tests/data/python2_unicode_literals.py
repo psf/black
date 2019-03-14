@@ -6,6 +6,7 @@ from __future__ import print_function as lol, with_function
 u'hello'
 U"hello"
 Ur"hello"
+print("no spaces here please")
 
 # output
 
@@ -18,3 +19,4 @@ from __future__ import print_function as lol, with_function
 "hello"
 "hello"
 r"hello"
+print("no spaces here please")
