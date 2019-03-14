@@ -939,16 +939,18 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ### 19.3b0
 
-* removed `--py36` (use `--target-version=py36` instead) (#724)
-
-* long `del` statements are now split into multiple lines (#698)
-
-* *Black* no longer normalizes numeric literals to include `_` separators (#696)
-
 * new option `--target-version` to control which Python versions
   *Black*-formatted code should target (#618)
 
+* removed `--py36` (use `--target-version=py36` instead) (#724)
+
+* *Black* no longer normalizes numeric literals to include `_` separators (#696)
+
+* long `del` statements are now split into multiple lines (#698)
+
 * improved performance of formatting deeply nested data structures (#509)
+
+* `blackd` now supports CORS (#622)
 
 ### 18.9b0
 
