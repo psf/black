@@ -614,7 +614,7 @@ configuration from different levels of the file hierarchy.
 Use [proofit404/blacken](https://github.com/proofit404/blacken).
 
 
-### PyCharm/IntelliJ
+### PyCharm/IntelliJ IDEA
 
 1. Install `black`.
 
