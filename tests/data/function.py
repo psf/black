@@ -144,7 +144,7 @@ def function_signature_stress_test(
 
 
 def spaces(a=1, b=(), c=[], d={}, e=True, f=-1, g=1 if False else 2, h="", i=r""):
-    offset = attr.ib(default=attr.Factory(lambda: _r.uniform(10000, 200_000)))
+    offset = attr.ib(default=attr.Factory(lambda: _r.uniform(10000, 200000)))
     assert task._cancel_stack[: len(old_stack)] == old_stack
 
 

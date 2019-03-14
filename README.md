@@ -71,46 +71,52 @@ black {source_file_or_directory}
 black [OPTIONS] [SRC]...
 
 Options:
-  -l, --line-length INTEGER   Where to wrap around.  [default: 88]
-  --py36                      Allow using Python 3.6-only syntax on all input
-                              files.  This will put trailing commas in function
-                              signatures and calls also after *args and
-                              **kwargs.  [default: per-file auto-detection]
-  --pyi                       Format all input files like typing stubs
-                              regardless of file extension (useful when piping
-                              source on standard input).
+  -l, --line-length INTEGER       How many characters per line to allow.
+                                  [default: 88]
+  -t, --target-version [py27|py33|py34|py35|py36|py37|py38]
+                                  Python versions that should be supported by
+                                  Black's output. [default: per-file auto-
+                                  detection]
+  --pyi                           Format all input files like typing stubs
+                                  regardless of file extension (useful when
+                                  piping source on standard input).
   -S, --skip-string-normalization
-                              Don't normalize string quotes or prefixes.
-  -N, --skip-numeric-underscore-normalization
-                              Don't normalize underscores in numeric literals.
-  --check                     Don't write the files back, just return the
-                              status.  Return code 0 means nothing would
-                              change.  Return code 1 means some files would be
-                              reformatted.  Return code 123 means there was an
-                              internal error.
-  --diff                      Don't write the files back, just output a diff
-                              for each file on stdout.
-  --fast / --safe             If --fast given, skip temporary sanity checks.
-                              [default: --safe]
-  --include TEXT              A regular expression that matches files and
-                              directories that should be included on
-                              recursive searches. On Windows, use forward
-                              slashes for directories.  [default: \.pyi?$]
-  --exclude TEXT              A regular expression that matches files and
-                              directories that should be excluded on
-                              recursive searches. On Windows, use forward
-                              slashes for directories.  [default:
-                              build/|buck-out/|dist/|_build/|\.eggs/|\.git/|
-                              \.hg/|\.mypy_cache/|\.nox/|\.tox/|\.venv/]
-  -q, --quiet                 Don't emit non-error messages to stderr. Errors
-                              are still emitted, silence those with
-                              2>/dev/null.
-  -v, --verbose               Also emit messages to stderr about files
-                              that were not changed or were ignored due to
-                              --exclude=.
-  --version                   Show the version and exit.
-  --config PATH               Read configuration from PATH.
-  --help                      Show this message and exit.
+                                  Don't normalize string quotes or prefixes.
+  --check                         Don't write the files back, just return the
+                                  status.  Return code 0 means nothing would
+                                  change.  Return code 1 means some files
+                                  would be reformatted.  Return code 123 means
+                                  there was an internal error.
+  --diff                          Don't write the files back, just output a
+                                  diff for each file on stdout.
+  --fast / --safe                 If --fast given, skip temporary sanity
+                                  checks. [default: --safe]
+  --include TEXT                  A regular expression that matches files and
+                                  directories that should be included on
+                                  recursive searches.  An empty value means
+                                  all files are included regardless of the
+                                  name.  Use forward slashes for directories
+                                  on all platforms (Windows, too).  Exclusions
+                                  are calculated first, inclusions later.
+                                  [default: \.pyi?$]
+  --exclude TEXT                  A regular expression that matches files and
+                                  directories that should be excluded on
+                                  recursive searches.  An empty value means no
+                                  paths are excluded. Use forward slashes for
+                                  directories on all platforms (Windows, too).
+                                  Exclusions are calculated first, inclusions
+                                  later.  [default: /(\.eggs|\.git|\.hg|\.mypy
+                                  _cache|\.nox|\.tox|\.venv|_build|buck-
+                                  out|build|dist)/]
+  -q, --quiet                     Don't emit non-error messages to stderr.
+                                  Errors are still emitted, silence those with
+                                  2>/dev/null.
+  -v, --verbose                   Also emit messages to stderr about files
+                                  that were not changed or were ignored due to
+                                  --exclude=.
+  --version                       Show the version and exit.
+  --config PATH                   Read configuration from PATH.
+  -h, --help                      Show this message and exit.
 ```
 
 *Black* is a well-behaved Unix-style command-line tool:
@@ -178,12 +184,12 @@ brackets and put that in a separate indented line.
 ```py3
 # in:
 
-TracebackException.from_exception(exc, limit, lookup_lines, capture_locals)
+ImportantClass.important_method(exc, limit, lookup_lines, capture_locals, extra_argument)
 
 # out:
 
-TracebackException.from_exception(
-    exc, limit, lookup_lines, capture_locals
+ImportantClass.important_method(
+    exc, limit, lookup_lines, capture_locals, extra_argument
 )
 ```
 
@@ -197,7 +203,7 @@ separate lines.
 ```py3
 # in:
 
-def very_important_function(template: str, *variables, file: os.PathLike, debug: bool = False):
+def very_important_function(template: str, *variables, file: os.PathLike, engine: str, header: bool = True, debug: bool = False):
     """Applies `variables` to the `template` and writes to `file`."""
     with open(file, 'w') as f:
         ...
@@ -208,6 +214,8 @@ def very_important_function(
     template: str,
     *variables,
     file: os.PathLike,
+    engine: str,
+    header: bool = True,
     debug: bool = False,
 ):
     """Applies `variables` to the `template` and writes to `file`."""
@@ -381,14 +389,8 @@ an adoption helper, avoid using this for new projects.
 *Black* standardizes most numeric literals to use lowercase letters for the
 syntactic parts and uppercase letters for the digits themselves: `0xAB`
 instead of `0XAB` and `1e10` instead of `1E10`. Python 2 long literals are
-styled as `2L` instead of `2l` to avoid confusion between `l` and `1`. In
-Python 3.6+, *Black* adds underscores to long numeric literals to aid
-readability: `100000000` becomes `100_000_000`.
+styled as `2L` instead of `2l` to avoid confusion between `l` and `1`.
 
-For regions where numerals are grouped differently (like [India](https://en.wikipedia.org/wiki/Indian_numbering_system)
-and [China](https://en.wikipedia.org/wiki/Chinese_numerals#Whole_numbers)),
-the `-N` or `--skip-numeric-underscore-normalization` command line option
-makes *Black* preserve underscores in numeric literals.
 
 ### Line breaks & binary operators
 
@@ -569,25 +571,26 @@ to denote a significant space character.
 ```toml
 [tool.black]
 line-length = 88
-py36 = true
+target_version = ['py37']
 include = '\.pyi?$'
 exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
 
-  # The following are specific to Black, you probably don't want those.
-  | blib2to3
-  | tests/data
-)/
+(
+  /(
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+  )/
+  | foo.py           # also separately exclude a file named foo.py in
+                     # the root of the project
+)
 '''
 ```
 
@@ -635,28 +638,37 @@ $ where black
 %LocalAppData%\Programs\Python\Python36-32\Scripts\black.exe  # possible location
 ```
 
-3. Open External tools in PyCharm/IntelliJ with `File -> Settings -> Tools -> External Tools`.
+3. Open External tools in PyCharm/IntelliJ IDEA
+
+  On macOS:
+  
+```PyCharm -> Preferences -> Tools -> External Tools```
+
+  On Windows / Linux / BSD:
+  
+```File -> Settings -> Tools -> External Tools```
 
 4. Click the + icon to add a new external tool with the following values:
     - Name: Black
     - Description: Black is the uncompromising Python code formatter.
     - Program: <install_location_from_step_2>
-    - Arguments: `$FilePath$`
+    - Arguments: `"$FilePath$"`
 
 5. Format the currently opened file by selecting `Tools -> External Tools -> black`.
-    - Alternatively, you can set a keyboard shortcut by navigating to `Preferences -> Keymap -> External Tools -> External Tools - Black`.
+    - Alternatively, you can set a keyboard shortcut by navigating to `Preferences or Settings -> Keymap -> External Tools -> External Tools - Black`.
 
 6. Optionally, run Black on every file save:
 
     1. Make sure you have the [File Watcher](https://plugins.jetbrains.com/plugin/7177-file-watchers) plugin installed.
-    2. Go to `Preferences -> Tools -> File Watchers` and click `+` to add a new watcher:
+    2. Go to `Preferences or Settings -> Tools -> File Watchers` and click `+` to add a new watcher:
         - Name: Black
         - File type: Python
         - Scope: Project Files
         - Program: <install_location_from_step_2>
         - Arguments: `$FilePath$`
-        - Output paths to refresh: `$FilePathRelativeToProjectRoot$`
+        - Output paths to refresh: `$FilePath$`
         - Working directory: `$ProjectFileDir$`
+	- Uncheck "Auto-save edited files to trigger the watcher"
 
 ### Vim
 
@@ -808,14 +820,13 @@ The headers controlling how code is formatted are:
  - `X-Skip-String-Normalization`: corresponds to the `--skip-string-normalization`
     command line flag. If present and its value is not the empty string, no string
     normalization will be performed.
- - `X-Skip-Numeric-Underscore-Normalization`: corresponds to the
-    `--skip-numeric-underscore-normalization` command line flag.
  - `X-Fast-Or-Safe`: if set to `fast`, `blackd` will act as *Black* does when
     passed the `--fast` command line flag.
  - `X-Python-Variant`: if set to `pyi`, `blackd` will act as *Black* does when
     passed the `--pyi` command line flag. Otherwise, its value must correspond to
-    a Python version. If this value represents at least Python 3.6, `blackd` will
-    act as *Black* does when passed the `--py36` command line flag.
+    a Python version or a set of comma-separated Python versions, optionally
+    prefixed with `py`. For example, to request code that is compatible
+    with Python 3.5 and 3.6, set the header to `py3.5,py3.6`.
 
 If any of these headers are set to invalid values, `blackd` returns a `HTTP 400`
 error response, mentioning the name of the problematic header in the message body.
@@ -933,6 +944,26 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 
 ## Change Log
+
+### 19.3b0
+
+* new option `--target-version` to control which Python versions
+  *Black*-formatted code should target (#618)
+
+* removed `--py36` (use `--target-version=py36` instead) (#724)
+
+* *Black* no longer normalizes numeric literals to include `_` separators (#696)
+
+* long `del` statements are now split into multiple lines (#698)
+
+* type comments are no longer mangled in function signatures
+
+* improved performance of formatting deeply nested data structures (#509)
+
+* *Black* now properly formats multiple files in parallel on
+  Windows (#632)
+
+* `blackd` now supports CORS (#622)
 
 ### 18.9b0
 
@@ -1340,6 +1371,7 @@ Multiple contributions by:
 * [Christian Heimes](mailto:christian@python.org)
 * [Daniel M. Capella](mailto:polycitizen@gmail.com)
 * [Eli Treuherz](mailto:eli@treuherz.com)
+* hauntsaninja
 * Hugo van Kemenade
 * [Ivan Katanić](mailto:ivan.katanic@gmail.com)
 * [Jonas Obrist](mailto:ojiidotch@gmail.com)
@@ -1351,5 +1383,6 @@ Multiple contributions by:
 * [Peter Bengtsson](mailto:mail@peterbe.com)
 * [Stavros Korokithakis](mailto:hi@stavros.io)
 * [Sunil Kapil](mailto:snlkapil@gmail.com)
+* [Utsav Shah](mailto:ukshah2@illinois.edu)
 * [Vishwas B Sharma](mailto:sharma.vishwas88@gmail.com)
 * [Chuck Wooters](mailto:chuck.wooters@microsoft.com)
