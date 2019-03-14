@@ -32,7 +32,7 @@ class Driver(object):
     def __init__(self, grammar, convert=None, logger=None):
         self.grammar = grammar
         if logger is None:
-            logger = logging.getLogger()
+            logger = logging.getLogger(__name__)
         self.logger = logger
         self.convert = convert
 
@@ -131,10 +131,8 @@ class Driver(object):
                     current_line = ""
                     current_column = 0
                     wait_for_nl = False
-            elif char == ' ':
+            elif char in ' \t':
                 current_column += 1
-            elif char == '\t':
-                current_column += 4
             elif char == '\n':
                 # unexpected empty line
                 current_column = 0
@@ -159,7 +157,7 @@ def load_grammar(gt="Grammar.txt", gp=None,
                  save=True, force=False, logger=None):
     """Load the grammar (maybe from a pickle)."""
     if logger is None:
-        logger = logging.getLogger()
+        logger = logging.getLogger(__name__)
     gp = _generate_pickle_name(gt) if gp is None else gp
     if force or not _newer(gp, gt):
         logger.info("Generating grammar tables from %s", gt)

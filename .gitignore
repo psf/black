@@ -8,3 +8,4 @@ __pycache__
 black.egg-info
 build/
 dist/
+pip-wheel-metadata/
