@@ -526,18 +526,27 @@ class BlackTestCase(unittest.TestCase):
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, black.FileMode())
 
-    def test_comment_indentation(self) -> None:
+    def test_tab_comment_indentation(self) -> None:
         contents_tab = "if 1:\n\tif 2:\n\t\tpass\n\t# comment\n\tpass\n"
         contents_spc = "if 1:\n    if 2:\n        pass\n    # comment\n    pass\n"
-
-        self.assertFormatEqual(fs(contents_spc), contents_spc)
-        self.assertFormatEqual(fs(contents_tab), contents_spc)
+        self.assertFormatEqual(contents_spc, fs(contents_spc))
+        self.assertFormatEqual(contents_spc, fs(contents_tab))
 
         contents_tab = "if 1:\n\tif 2:\n\t\tpass\n\t\t# comment\n\tpass\n"
         contents_spc = "if 1:\n    if 2:\n        pass\n        # comment\n    pass\n"
+        self.assertFormatEqual(contents_spc, fs(contents_spc))
+        self.assertFormatEqual(contents_spc, fs(contents_tab))
 
-        self.assertFormatEqual(fs(contents_tab), contents_spc)
-        self.assertFormatEqual(fs(contents_spc), contents_spc)
+        # mixed tabs and spaces (valid Python 2 code)
+        contents_tab = "if 1:\n        if 2:\n\t\tpass\n\t# comment\n        pass\n"
+        contents_spc = "if 1:\n    if 2:\n        pass\n    # comment\n    pass\n"
+        self.assertFormatEqual(contents_spc, fs(contents_spc))
+        self.assertFormatEqual(contents_spc, fs(contents_tab))
+
+        contents_tab = "if 1:\n        if 2:\n\t\tpass\n\t\t# comment\n        pass\n"
+        contents_spc = "if 1:\n    if 2:\n        pass\n        # comment\n    pass\n"
+        self.assertFormatEqual(contents_spc, fs(contents_spc))
+        self.assertFormatEqual(contents_spc, fs(contents_tab))
 
     def test_report_verbose(self) -> None:
         report = black.Report(verbose=True)

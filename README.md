@@ -966,6 +966,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * *Black* now creates cache files atomically which allows it to be used
   in parallel pipelines (like `xargs -P8`) (#673)
 
+* *Black* now correctly indents comments in files that were previously
+  formatted with tabs (#262)
+
 * `blackd` now supports CORS (#622)
 
 ### 18.9b0
