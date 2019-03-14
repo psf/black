@@ -13,7 +13,7 @@ fallback token code OP, but the parser needs the actual token code.
 """
 
 # Python imports
-import os.path
+import os
 import pickle
 import tempfile
 

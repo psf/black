@@ -963,6 +963,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * *Black* now properly formats multiple files in parallel on
   Windows (#632)
 
+* *Black* now creates cache files atomically which allows it to be used
+  in parallel pipelines (like `xargs -P8`) (#673)
+
 * `blackd` now supports CORS (#622)
 
 ### 18.9b0
