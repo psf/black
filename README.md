@@ -693,7 +693,7 @@ $ pip install black
 $ black --help
 ```
 
-3. In Wing IDE, activate **OS Commands** panel  and define the command **black **with e.g. the following values, to execute black on the currently selected file, using key binding **F1**:
+3. In Wing IDE, activate **OS Commands** panel  and define the command  **black ** with e.g. the following values, to execute black on the currently selected file, using key binding **F1**:
 
 - right-click on a panel -> Insert Tool -> OS Commands
 - click on **+** in **OS Commands** -> New: Command line..
