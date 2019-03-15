@@ -71,6 +71,7 @@ black {source_file_or_directory}
 black [OPTIONS] [SRC]...
 
 Options:
+  -c, --command TEXT              Format the code passed in as a string.
   -l, --line-length INTEGER       How many characters per line to allow.
                                   [default: 88]
   -t, --target-version [py27|py33|py34|py35|py36|py37|py38]
@@ -950,6 +951,10 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 
 ## Change Log
+
+### 19.3b1
+
+* add `black -c` as a way to format code passed from the command line
 
 ### 19.3b0
 
