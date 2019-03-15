@@ -647,11 +647,11 @@ $ where black
 3. Open External tools in PyCharm/IntelliJ IDEA
 
   On macOS:
-  
+
 ```PyCharm -> Preferences -> Tools -> External Tools```
 
   On Windows / Linux / BSD:
-  
+
 ```File -> Settings -> Tools -> External Tools```
 
 4. Click the + icon to add a new external tool with the following values:
@@ -661,6 +661,7 @@ $ where black
     - Arguments: `"$FilePath$"`
 
 5. Format the currently opened file by selecting `Tools -> External Tools -> black`.
+
     - Alternatively, you can set a keyboard shortcut by navigating to `Preferences or Settings -> Keymap -> External Tools -> External Tools - Black`.
 
 6. Optionally, run Black on every file save:
@@ -675,6 +676,36 @@ $ where black
         - Output paths to refresh: `$FilePath$`
         - Working directory: `$ProjectFileDir$`
 	- Uncheck "Auto-save edited files to trigger the watcher"
+
+
+
+### Wing IDE
+
+1. Install `black`.
+
+```console
+$ pip install black
+```
+
+2. Make sure it runs from the command line, e.g.
+
+```console
+$ black --help
+```
+
+3. In Wing IDE, activate **OS Commands** panel  and define the command **black **with e.g. the following values, to execute black on the currently selected file, using key binding **F1**:
+
+- right-click on a panel -> Insert Tool -> OS Commands
+- click on **+** in **OS Commands** -> New: Command line..
+  - Title: black
+  - Command Line: black %s
+  - I/O Encoding: Use Default 
+  - Key Binding: F1
+  - [x] Raise OS Commands when executed
+  - [x] Auto-save files before execution
+  - [x] Line mode
+
+4. Select a file in the editor and press **F1** , or whatever Key Binding you selected in step 3, to reformat the file.
 
 ### Vim
 
