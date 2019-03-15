@@ -951,6 +951,11 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Change Log
 
+### 19.3b1
+
+* fix bug that led *Black* format some code with a line length target of 1
+  (#762)
+
 ### 19.3b0
 
 * new option `--target-version` to control which Python versions
