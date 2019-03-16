@@ -715,24 +715,20 @@ def decode_bytes(src: bytes) -> Tuple[FileContent, Encoding, NewLine]:
         return tiow.read(), encoding, newline
 
 
-GRAMMARS = [
-    pygram.python_grammar_no_print_statement_no_exec_statement,
-    pygram.python_grammar_no_print_statement,
-    pygram.python_grammar,
-]
-
-
 def get_grammars(target_versions: Set[TargetVersion]) -> List[Grammar]:
     if not target_versions:
-        return GRAMMARS
-    elif all(not version.is_python2() for version in target_versions):
-        # Python 3-compatible code, so don't try Python 2 grammar
+        # No target_version specified, so try all grammars.
         return [
             pygram.python_grammar_no_print_statement_no_exec_statement,
             pygram.python_grammar_no_print_statement,
+            pygram.python_grammar,
         ]
-    else:
+    elif all(version.is_python2() for version in target_versions):
+        # Python 2-only code, so try Python 2 grammars.
         return [pygram.python_grammar_no_print_statement, pygram.python_grammar]
+    else:
+        # Python 3-compatible code, so only try Python 3 grammar.
+        return [pygram.python_grammar_no_print_statement_no_exec_statement]
 
 
 def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -> Node:

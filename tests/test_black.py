@@ -28,7 +28,7 @@ from click import unstyle
 from click.testing import CliRunner
 
 import black
-from black import Feature
+from black import Feature, TargetVersion
 
 try:
     import blackd
@@ -464,7 +464,7 @@ class BlackTestCase(unittest.TestCase):
     @patch("black.dump_to_file", dump_to_stderr)
     def test_python2_print_function(self) -> None:
         source, expected = read_data("python2_print_function")
-        mode = black.FileMode(target_versions={black.TargetVersion.PY27})
+        mode = black.FileMode(target_versions={TargetVersion.PY27})
         actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
         black.assert_stable(source, actual, mode)
@@ -827,6 +827,31 @@ class BlackTestCase(unittest.TestCase):
                 "2 files would be reformatted, 3 files would be left unchanged, "
                 "2 files would fail to reformat.",
             )
+
+    def test_lib2to3_parse(self) -> None:
+        with self.assertRaises(black.InvalidInput):
+            black.lib2to3_parse("invalid syntax")
+
+        straddling = "x + y"
+        black.lib2to3_parse(straddling)
+        black.lib2to3_parse(straddling, {TargetVersion.PY27})
+        black.lib2to3_parse(straddling, {TargetVersion.PY36})
+        black.lib2to3_parse(straddling, {TargetVersion.PY27, TargetVersion.PY36})
+
+        py2_only = "print x"
+        black.lib2to3_parse(py2_only)
+        black.lib2to3_parse(py2_only, {TargetVersion.PY27})
+        with self.assertRaises(black.InvalidInput):
+            black.lib2to3_parse(py2_only, {TargetVersion.PY36})
+        with self.assertRaises(black.InvalidInput):
+            black.lib2to3_parse(py2_only, {TargetVersion.PY27, TargetVersion.PY36})
+
+        py3_only = "exec(x, end=y)"
+        black.lib2to3_parse(py3_only)
+        with self.assertRaises(black.InvalidInput):
+            black.lib2to3_parse(py3_only, {TargetVersion.PY27})
+        black.lib2to3_parse(py3_only, {TargetVersion.PY36})
+        black.lib2to3_parse(py3_only, {TargetVersion.PY27, TargetVersion.PY36})
 
     def test_get_features_used(self) -> None:
         node = black.lib2to3_parse("def f(*, arg): ...\n")
