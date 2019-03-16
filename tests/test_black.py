@@ -1504,8 +1504,8 @@ class BlackTestCase(unittest.TestCase):
 
             await check("3.6", 200)
             await check("py3.6", 200)
-            await check("3.5,3.7", 200)
-            await check("3.5,py3.7", 200)
+            await check("3.6,3.7", 200)
+            await check("3.6,py3.7", 200)
 
             await check("2", 204)
             await check("2.7", 204)
