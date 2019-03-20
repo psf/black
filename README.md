@@ -577,7 +577,7 @@ to denote a significant space character.
 ```toml
 [tool.black]
 line-length = 88
-target_version = ['py37']
+target-version = ['py37']
 include = '\.pyi?$'
 exclude = '''
 
