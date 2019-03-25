@@ -857,7 +857,11 @@ class BlackTestCase(unittest.TestCase):
         node = black.lib2to3_parse("def f(*, arg): ...\n")
         self.assertEqual(black.get_features_used(node), set())
         node = black.lib2to3_parse("def f(*, arg,): ...\n")
-        self.assertEqual(black.get_features_used(node), {Feature.TRAILING_COMMA})
+        self.assertEqual(black.get_features_used(node), {Feature.TRAILING_COMMA_IN_DEF})
+        node = black.lib2to3_parse("f(*arg,)\n")
+        self.assertEqual(
+            black.get_features_used(node), {Feature.TRAILING_COMMA_IN_CALL}
+        )
         node = black.lib2to3_parse("def f(*, arg): f'string'\n")
         self.assertEqual(black.get_features_used(node), {Feature.F_STRINGS})
         node = black.lib2to3_parse("123_456\n")
@@ -866,13 +870,14 @@ class BlackTestCase(unittest.TestCase):
         self.assertEqual(black.get_features_used(node), set())
         source, expected = read_data("function")
         node = black.lib2to3_parse(source)
-        self.assertEqual(
-            black.get_features_used(node), {Feature.TRAILING_COMMA, Feature.F_STRINGS}
-        )
+        expected_features = {
+            Feature.TRAILING_COMMA_IN_CALL,
+            Feature.TRAILING_COMMA_IN_DEF,
+            Feature.F_STRINGS,
+        }
+        self.assertEqual(black.get_features_used(node), expected_features)
         node = black.lib2to3_parse(expected)
-        self.assertEqual(
-            black.get_features_used(node), {Feature.TRAILING_COMMA, Feature.F_STRINGS}
-        )
+        self.assertEqual(black.get_features_used(node), expected_features)
         source, expected = read_data("expression")
         node = black.lib2to3_parse(source)
         self.assertEqual(black.get_features_used(node), set())
@@ -1524,8 +1529,8 @@ class BlackTestCase(unittest.TestCase):
 
             await check("3.6", 200)
             await check("py3.6", 200)
-            await check("3.5,3.7", 200)
-            await check("3.5,py3.7", 200)
+            await check("3.6,3.7", 200)
+            await check("3.6,py3.7", 200)
 
             await check("2", 204)
             await check("2.7", 204)
