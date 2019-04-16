@@ -1451,6 +1451,11 @@ class EmptyLineTracker:
         if self.previous_line.is_decorator:
             return 0, 0
 
+        if self.previous_line.is_class and (
+            current_line.is_def or current_line.is_decorator
+        ):
+            return before, 0
+
         if self.previous_line.depth < current_line.depth and (
             self.previous_line.is_class or self.previous_line.is_def
         ):
