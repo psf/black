@@ -707,7 +707,7 @@ $ black --help
   - [x] Auto-save files before execution
   - [x] Line mode
 
-4. Select a file in the editor and press **F1** , or whatever Key Binding you selected in step 3, to reformat the file.
+4. Select a file in the editor and press **F1** , or whatever key binding you selected in step 3, to reformat the file.
 
 ### Vim
 
