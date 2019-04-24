@@ -679,7 +679,9 @@ $ where black
 
 
 
-### Wing IDE
+### Wing IDE 
+
+Wing supports black via the OS Commands tool, as explained in the Wing documentation on [pep8 formatting](https://wingware.com/doc/edit/pep8). The detailed procedure is:
 
 1. Install `black`.
 
@@ -693,9 +695,9 @@ $ pip install black
 $ black --help
 ```
 
-3. In Wing IDE, activate **OS Commands** panel  and define the command  **black** with e.g. the following values, to execute black on the currently selected file, using key binding **F1**:
+3. In Wing IDE, activate the **OS Commands** panel  and define the command  **black** to execute black on the currently selected file:
 
-- right-click on a panel -> Insert Tool -> OS Commands
+- Use the Tools -> OS Commands menu selection
 - click on **+** in **OS Commands** -> New: Command line..
   - Title: black
   - Command Line: black %s
