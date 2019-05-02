@@ -3146,7 +3146,7 @@ def get_future_imports(node: Node) -> Set[str]:
             elif child.type == syms.import_as_names:
                 yield from get_imports_from_children(child.children)
             else:
-                assert False, "Invalid syntax parsing imports"
+                raise AssertionError("Invalid syntax parsing imports")
 
     for child in node.children:
         if child.type != syms.simple_stmt:
