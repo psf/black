@@ -11,7 +11,7 @@ In terms of inspiration, *Black* is about as configurable as *gofmt*.
 This is deliberate.
 
 Bug reports and fixes are always welcome!  Please follow the [issue
-template on GitHub](https://github.com/ambv/black/issues/new) for best 
+template on GitHub](https://github.com/python/black/issues/new) for best 
 results.
 
 Before you suggest a new feature or configuration knob, ask yourself why
