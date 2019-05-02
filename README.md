@@ -1,14 +1,14 @@
-![Black Logo](https://raw.githubusercontent.com/ambv/black/master/docs/_static/logo2-readme.png)
+![Black Logo](https://raw.githubusercontent.com/python/black/master/docs/_static/logo2-readme.png)
 <h2 align="center">The Uncompromising Code Formatter</h2>
 
 <p align="center">
-<a href="https://travis-ci.org/ambv/black"><img alt="Build Status" src="https://travis-ci.org/ambv/black.svg?branch=master"></a>
+<a href="https://travis-ci.org/python/black"><img alt="Build Status" src="https://travis-ci.org/python/black.svg?branch=master"></a>
 <a href="https://black.readthedocs.io/en/stable/?badge=stable"><img alt="Documentation Status" src="https://readthedocs.org/projects/black/badge/?version=stable"></a>
-<a href="https://coveralls.io/github/ambv/black?branch=master"><img alt="Coverage Status" src="https://coveralls.io/repos/github/ambv/black/badge.svg?branch=master"></a>
-<a href="https://github.com/ambv/black/blob/master/LICENSE"><img alt="License: MIT" src="https://black.readthedocs.io/en/stable/_static/license.svg"></a>
+<a href="https://coveralls.io/github/python/black?branch=master"><img alt="Coverage Status" src="https://coveralls.io/repos/github/python/black/badge.svg?branch=master"></a>
+<a href="https://github.com/python/black/blob/master/LICENSE"><img alt="License: MIT" src="https://black.readthedocs.io/en/stable/_static/license.svg"></a>
 <a href="https://pypi.org/project/black/"><img alt="PyPI" src="https://black.readthedocs.io/en/stable/_static/pypi.svg"></a>
 <a href="https://pepy.tech/project/black"><img alt="Downloads" src="https://pepy.tech/badge/black"></a>
-<a href="https://github.com/ambv/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
+<a href="https://github.com/python/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 </p>
 
 > “Any color you like.”
@@ -370,7 +370,7 @@ The main reason to standardize on a single form of quotes is aesthetics.
 Having one kind of quotes everywhere reduces reader distraction.
 It will also enable a future version of *Black* to merge consecutive
 string literals that ended up on the same line (see
-[#26](https://github.com/ambv/black/issues/26) for details).
+[#26](https://github.com/python/black/issues/26) for details).
 
 Why settle on double quotes?  They anticipate apostrophes in English
 text.  They match the docstring standard described in [PEP 257](https://www.python.org/dev/peps/pep-0257/#what-is-a-docstring).
@@ -694,16 +694,16 @@ Configuration:
 To install with [vim-plug](https://github.com/junegunn/vim-plug):
 
 ```
-Plug 'ambv/black'
+Plug 'python/black'
 ```
 
 or with [Vundle](https://github.com/VundleVim/Vundle.vim):
 
 ```
-Plugin 'ambv/black'
+Plugin 'python/black'
 ```
 
-or you can copy the plugin from [plugin/black.vim](https://github.com/ambv/black/tree/master/plugin/black.vim).
+or you can copy the plugin from [plugin/black.vim](https://github.com/python/black/tree/master/plugin/black.vim).
 Let me know if this requires any changes to work with Vim 8's builtin
 `packadd`, or Pathogen, and so on.
 
@@ -856,7 +856,7 @@ installed](https://pre-commit.com/#install), add this to the
 `.pre-commit-config.yaml` in your repository:
 ```yaml
 repos:
--   repo: https://github.com/ambv/black
+-   repo: https://github.com/python/black
     rev: stable
     hooks:
     - id: black
@@ -916,16 +916,16 @@ and [`pipenv`](https://docs.pipenv.org/):
 Use the badge in your project's README.md:
 
 ```markdown
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
 ```
 
 Using the badge in README.rst:
 ```
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-    :target: https://github.com/ambv/black
+    :target: https://github.com/python/black
 ```
 
-Looks like this: [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
+Looks like this: [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
 
 
 ## License
