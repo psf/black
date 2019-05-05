@@ -526,12 +526,14 @@ async def schedule_formatting(
         manager = Manager()
         lock = manager.Lock()
     tasks = {
-        loop.run_in_executor(
-            executor, format_file_in_place, src, fast, mode, write_back, lock
+        asyncio.ensure_future(
+            loop.run_in_executor(
+                executor, format_file_in_place, src, fast, mode, write_back, lock
+            )
         ): src
         for src in sorted(sources)
     }
-    pending: Iterable[asyncio.Task] = tasks.keys()
+    pending: Iterable[asyncio.Future] = tasks.keys()
     try:
         loop.add_signal_handler(signal.SIGINT, cancel, pending)
         loop.add_signal_handler(signal.SIGTERM, cancel, pending)
