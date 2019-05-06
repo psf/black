@@ -28,7 +28,7 @@ from click import unstyle
 from click.testing import CliRunner
 
 import black
-from black import Feature
+from black import Feature, TargetVersion
 
 try:
     import blackd
@@ -389,6 +389,14 @@ class BlackTestCase(unittest.TestCase):
         black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
+    def test_comments7(self) -> None:
+        source, expected = read_data("comments7")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+
+    @patch("black.dump_to_file", dump_to_stderr)
     def test_cantfit(self) -> None:
         source, expected = read_data("cantfit")
         actual = fs(source)
@@ -464,7 +472,7 @@ class BlackTestCase(unittest.TestCase):
     @patch("black.dump_to_file", dump_to_stderr)
     def test_python2_print_function(self) -> None:
         source, expected = read_data("python2_print_function")
-        mode = black.FileMode(target_versions={black.TargetVersion.PY27})
+        mode = black.FileMode(target_versions={TargetVersion.PY27})
         actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
         black.assert_stable(source, actual, mode)
@@ -828,11 +836,40 @@ class BlackTestCase(unittest.TestCase):
                 "2 files would fail to reformat.",
             )
 
+    def test_lib2to3_parse(self) -> None:
+        with self.assertRaises(black.InvalidInput):
+            black.lib2to3_parse("invalid syntax")
+
+        straddling = "x + y"
+        black.lib2to3_parse(straddling)
+        black.lib2to3_parse(straddling, {TargetVersion.PY27})
+        black.lib2to3_parse(straddling, {TargetVersion.PY36})
+        black.lib2to3_parse(straddling, {TargetVersion.PY27, TargetVersion.PY36})
+
+        py2_only = "print x"
+        black.lib2to3_parse(py2_only)
+        black.lib2to3_parse(py2_only, {TargetVersion.PY27})
+        with self.assertRaises(black.InvalidInput):
+            black.lib2to3_parse(py2_only, {TargetVersion.PY36})
+        with self.assertRaises(black.InvalidInput):
+            black.lib2to3_parse(py2_only, {TargetVersion.PY27, TargetVersion.PY36})
+
+        py3_only = "exec(x, end=y)"
+        black.lib2to3_parse(py3_only)
+        with self.assertRaises(black.InvalidInput):
+            black.lib2to3_parse(py3_only, {TargetVersion.PY27})
+        black.lib2to3_parse(py3_only, {TargetVersion.PY36})
+        black.lib2to3_parse(py3_only, {TargetVersion.PY27, TargetVersion.PY36})
+
     def test_get_features_used(self) -> None:
         node = black.lib2to3_parse("def f(*, arg): ...\n")
         self.assertEqual(black.get_features_used(node), set())
         node = black.lib2to3_parse("def f(*, arg,): ...\n")
-        self.assertEqual(black.get_features_used(node), {Feature.TRAILING_COMMA})
+        self.assertEqual(black.get_features_used(node), {Feature.TRAILING_COMMA_IN_DEF})
+        node = black.lib2to3_parse("f(*arg,)\n")
+        self.assertEqual(
+            black.get_features_used(node), {Feature.TRAILING_COMMA_IN_CALL}
+        )
         node = black.lib2to3_parse("def f(*, arg): f'string'\n")
         self.assertEqual(black.get_features_used(node), {Feature.F_STRINGS})
         node = black.lib2to3_parse("123_456\n")
@@ -841,13 +878,14 @@ class BlackTestCase(unittest.TestCase):
         self.assertEqual(black.get_features_used(node), set())
         source, expected = read_data("function")
         node = black.lib2to3_parse(source)
-        self.assertEqual(
-            black.get_features_used(node), {Feature.TRAILING_COMMA, Feature.F_STRINGS}
-        )
+        expected_features = {
+            Feature.TRAILING_COMMA_IN_CALL,
+            Feature.TRAILING_COMMA_IN_DEF,
+            Feature.F_STRINGS,
+        }
+        self.assertEqual(black.get_features_used(node), expected_features)
         node = black.lib2to3_parse(expected)
-        self.assertEqual(
-            black.get_features_used(node), {Feature.TRAILING_COMMA, Feature.F_STRINGS}
-        )
+        self.assertEqual(black.get_features_used(node), expected_features)
         source, expected = read_data("expression")
         node = black.lib2to3_parse(source)
         self.assertEqual(black.get_features_used(node), set())
@@ -1499,8 +1537,8 @@ class BlackTestCase(unittest.TestCase):
 
             await check("3.6", 200)
             await check("py3.6", 200)
-            await check("3.5,3.7", 200)
-            await check("3.5,py3.7", 200)
+            await check("3.6,3.7", 200)
+            await check("3.6,py3.7", 200)
 
             await check("2", 204)
             await check("2.7", 204)

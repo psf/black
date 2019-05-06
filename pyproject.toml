@@ -7,7 +7,7 @@
 
 [tool.black]
 line-length = 88
-target_version = ['py36', 'py37', 'py38']
+target-version = ['py36', 'py37', 'py38']
 include = '\.pyi?$'
 exclude = '''
 /(
@@ -46,7 +46,7 @@ authors = [
     "Mika Naylor <mail@autophagy.io>",
     "Zsolt Dollenstein <zsol.zsol@gmail.com>",
 ]
-homepage = "https://github.com/ambv/black/"
+homepage = "https://github.com/python/black/"
 documentation = "https://black.readthedocs.io/en/stable/"
 license = "MIT"
 keywords = ["automation", "formatter", "yapf", "autopep8", "gofmt"]

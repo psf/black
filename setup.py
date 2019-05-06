@@ -34,7 +34,7 @@ setup(
     keywords="automation formatter yapf autopep8 pyfmt gofmt rustfmt",
     author="Łukasz Langa",
     author_email="lukasz@langa.pl",
-    url="https://github.com/ambv/black",
+    url="https://github.com/python/black",
     license="MIT",
     py_modules=["black", "blackd"],
     packages=["blib2to3", "blib2to3.pgen2"],

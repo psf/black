@@ -20,7 +20,7 @@ deploy:
   provider: GitHub
   description: ''
   auth_token:
-    secure: caPP8BcGffPuTopDfdI4ZVKZkpD9l9UAcjO7rwm5/fFSMbsqh1v4S38nmMn4uSuD
+    secure: uplI9CJ2dTGcEBCbZuIn+Qb4rC38hOoRSH9lcwuGCr5g9fSnhK1MZdNT6Cjf/mFL
   on:
-    appveyor_repo_tag: true
+    APPVEYOR_REPO_TAG: true
 
