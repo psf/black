@@ -953,6 +953,14 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ### 19.3b1
 
+* don't produce invalid code for `from` ... `import` blocks with comments
+  (#829)
+
+* fix grammar selection (#765)
+
+* fix feature detection for trailing commas in function definitions and
+  call sites (#763)
+
 * fix bug that led *Black* format some code with a line length target of 1
   (#762)
 
