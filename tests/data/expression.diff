@@ -214,9 +214,10 @@
 +
  def gen():
      yield from outside_of_generator
-     a = (yield)
- 
+-    a = (yield)
++    a = yield
 +
+ 
  async def f():
      await some.complicated[0].call(with_args=(True or (1 is not 1)))
 -print(* [] or [1])
