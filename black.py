@@ -479,8 +479,11 @@ def reformat_one(
                 res_src = src.resolve()
                 if res_src in cache and cache[res_src] == get_cache_info(res_src):
                     changed = Changed.CACHED
-            if changed is not Changed.CACHED and format_file_in_place(
-                src, fast=fast, write_back=write_back, mode=mode
+            if (
+                changed is not Changed.CACHED
+                and format_file_in_place(
+                    src, fast=fast, write_back=write_back, mode=mode
+                )
             ):
                 changed = Changed.YES
             if (write_back is WriteBack.YES and changed is not Changed.CACHED) or (
@@ -550,8 +553,9 @@ async def schedule_formatting(
                 changed = Changed.YES if task.result() else Changed.NO
                 # If the file was written back or was successfully checked as
                 # well-formatted, store this information in the cache.
-                if write_back is WriteBack.YES or (
-                    write_back is WriteBack.CHECK and changed is Changed.NO
+                if (
+                    write_back is WriteBack.YES
+                    or (write_back is WriteBack.CHECK and changed is Changed.NO)
                 ):
                     sources_to_cache.append(src)
                 report.done(src, changed)
@@ -1349,8 +1353,9 @@ class Line:
 
             if subscript_start.type == syms.subscriptlist:
                 subscript_start = child_towards(subscript_start, leaf)
-        return subscript_start is not None and any(
-            n.type in TEST_DESCENDANTS for n in subscript_start.pre_order()
+        return (
+            subscript_start is not None
+            and any(n.type in TEST_DESCENDANTS for n in subscript_start.pre_order())
         )
 
     def __str__(self) -> str:
@@ -1451,8 +1456,9 @@ class EmptyLineTracker:
         if self.previous_line.is_decorator:
             return 0, 0
 
-        if self.previous_line.depth < current_line.depth and (
-            self.previous_line.is_class or self.previous_line.is_def
+        if (
+            self.previous_line.depth < current_line.depth
+            and (self.previous_line.is_class or self.previous_line.is_def)
         ):
             return 0, 0
 
@@ -1875,10 +1881,10 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
 
             prevp_parent = prevp.parent
             assert prevp_parent is not None
-            if prevp.type == token.COLON and prevp_parent.type in {
-                syms.subscript,
-                syms.sliceop,
-            }:
+            if (
+                prevp.type == token.COLON
+                and prevp_parent.type in {syms.subscript, syms.sliceop}
+            ):
                 return NO
 
             elif prevp.type == token.EQUAL and prevp_parent.type == syms.argument:
@@ -3655,7 +3661,10 @@ def can_omit_invisible_parens(line: Line, line_length: int) -> bool:
         for _index, leaf, leaf_length in enumerate_with_length(line):
             length += leaf_length
             if leaf is last.opening_bracket:
-                if seen_other_brackets or length <= line_length:
+                if seen_other_brackets or length <= int(0.5 * line_length):
+                    # Omit optionals if there are multiple brackets to split on
+                    # or if the first bracket starts in the first half of the line.
+                    # This tends to result in subjectively good results :)
                     return True
 
             elif leaf.type in OPENING_BRACKETS:
