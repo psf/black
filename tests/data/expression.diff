@@ -147,7 +147,7 @@
  slice[0:1:2]
  slice[:]
  slice[:-1]
-@@ -133,111 +156,169 @@
+@@ -133,113 +156,171 @@
  numpy[-(c + 1) :, d]
  numpy[:, l[-2]]
  numpy[:, ::-1]
@@ -215,7 +215,11 @@
  def gen():
      yield from outside_of_generator
 -    a = (yield)
+-    b = ((yield))
+-    c = (((yield)))
 +    a = yield
++    b = yield
++    c = yield
 +
  
  async def f():

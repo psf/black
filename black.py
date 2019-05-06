@@ -2861,7 +2861,7 @@ def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
         first.value = ""  # type: ignore
         last.value = ""  # type: ignore
         if len(node.children) > 1:
-            maybe_make_parens_invisible_in_atom(node.children[1], parent=node)
+            maybe_make_parens_invisible_in_atom(node.children[1], parent=parent)
         return False
 
     return True
