@@ -96,6 +96,10 @@ class C:
             key9: value9,
         }
 
+        assert (
+            something_long_very_long == something_else_very_long.method_call(xxxxxxxxx)
+        )
+
     def tricky_asserts(self) -> None:
         assert {
             key1: value1,
