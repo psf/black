@@ -441,7 +441,11 @@ def main(
         )
     else:
         loop = asyncio.get_event_loop()
-        executor = ProcessPoolExecutor(max_workers=os.cpu_count())
+        worker_count = os.cpu_count()
+        if sys.platform == "win32":
+            # Work around https://bugs.python.org/issue26903
+            worker_count = min(worker_count, 61)
+        executor = ProcessPoolExecutor(max_workers=worker_count)
         try:
             loop.run_until_complete(
                 schedule_formatting(
