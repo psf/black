@@ -661,7 +661,6 @@ $ where black
     - Arguments: `"$FilePath$"`
 
 5. Format the currently opened file by selecting `Tools -> External Tools -> black`.
-
     - Alternatively, you can set a keyboard shortcut by navigating to `Preferences or Settings -> Keymap -> External Tools -> External Tools - Black`.
 
 6. Optionally, run Black on every file save:
