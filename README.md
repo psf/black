@@ -648,11 +648,11 @@ $ where black
 3. Open External tools in PyCharm/IntelliJ IDEA
 
   On macOS:
-  
+
 ```PyCharm -> Preferences -> Tools -> External Tools```
 
   On Windows / Linux / BSD:
-  
+
 ```File -> Settings -> Tools -> External Tools```
 
 4. Click the + icon to add a new external tool with the following values:
@@ -676,6 +676,38 @@ $ where black
         - Output paths to refresh: `$FilePath$`
         - Working directory: `$ProjectFileDir$`
 	- Uncheck "Auto-save edited files to trigger the watcher"
+
+
+
+### Wing IDE 
+
+Wing supports black via the OS Commands tool, as explained in the Wing documentation on [pep8 formatting](https://wingware.com/doc/edit/pep8). The detailed procedure is:
+
+1. Install `black`.
+
+```console
+$ pip install black
+```
+
+2. Make sure it runs from the command line, e.g.
+
+```console
+$ black --help
+```
+
+3. In Wing IDE, activate the **OS Commands** panel  and define the command  **black** to execute black on the currently selected file:
+
+- Use the Tools -> OS Commands menu selection
+- click on **+** in **OS Commands** -> New: Command line..
+  - Title: black
+  - Command Line: black %s
+  - I/O Encoding: Use Default 
+  - Key Binding: F1
+  - [x] Raise OS Commands when executed
+  - [x] Auto-save files before execution
+  - [x] Line mode
+
+4. Select a file in the editor and press **F1** , or whatever key binding you selected in step 3, to reformat the file.
 
 ### Vim
 
