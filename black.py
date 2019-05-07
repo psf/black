@@ -486,7 +486,7 @@ def reformat_one(
 
 
 def reformat_many(
-    sources: List[Path],
+    sources: Set[Path],
     fast: bool,
     write_back: WriteBack,
     mode: FileMode,
