@@ -2,7 +2,7 @@
 import asyncio
 import logging
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import contextmanager, redirect_stderr
+from contextlib import contextmanager
 from functools import partial, wraps
 from io import BytesIO, TextIOWrapper
 import os
@@ -466,7 +466,7 @@ class BlackTestCase(unittest.TestCase):
         source, expected = read_data("python2")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        # black.assert_equivalent(source, actual)
+        black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
@@ -475,6 +475,7 @@ class BlackTestCase(unittest.TestCase):
         mode = black.FileMode(target_versions={TargetVersion.PY27})
         actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, mode)
 
     @patch("black.dump_to_file", dump_to_stderr)
@@ -482,6 +483,7 @@ class BlackTestCase(unittest.TestCase):
         source, expected = read_data("python2_unicode_literals")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
@@ -1553,20 +1555,6 @@ class BlackTestCase(unittest.TestCase):
             await check("py2.7", 204)
             await check("3.4", 204)
             await check("py3.4", 204)
-
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
-    @async_test
-    async def test_blackd_fast(self) -> None:
-        with open(os.devnull, "w") as dn, redirect_stderr(dn):
-            app = blackd.make_app()
-            async with TestClient(TestServer(app)) as client:
-                response = await client.post("/", data=b"ur'hello'")
-                self.assertEqual(response.status, 500)
-                self.assertIn("failed to parse source file", await response.text())
-                response = await client.post(
-                    "/", data=b"ur'hello'", headers={blackd.FAST_OR_SAFE_HEADER: "fast"}
-                )
-                self.assertEqual(response.status, 200)
 
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test

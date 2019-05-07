@@ -41,7 +41,13 @@ setup(
     package_data={"blib2to3": ["*.txt"]},
     python_requires=">=3.6",
     zip_safe=False,
-    install_requires=["click>=6.5", "attrs>=18.1.0", "appdirs", "toml>=0.9.4"],
+    install_requires=[
+        "click>=6.5",
+        "attrs>=18.1.0",
+        "appdirs",
+        "toml>=0.9.4",
+        "typed-ast>=1.3.1",
+    ],
     extras_require={"d": ["aiohttp>=3.3.2", "aiohttp-cors"]},
     test_suite="tests.test_black",
     classifiers=[

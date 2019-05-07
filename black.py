@@ -40,6 +40,7 @@ from appdirs import user_cache_dir
 from attr import dataclass, evolve, Factory
 import click
 import toml
+from typed_ast import ast3, ast27
 
 # lib2to3 fork
 from blib2to3.pytree import Node, Leaf, type_repr
@@ -3374,17 +3375,31 @@ class Report:
         return ", ".join(report) + "."
 
 
+def parse_ast(src: str) -> Union[ast3.AST, ast27.AST]:
+    try:
+        return ast3.parse(src)
+    except SyntaxError:
+        return ast27.parse(src)
+
+
 def assert_equivalent(src: str, dst: str) -> None:
     """Raise AssertionError if `src` and `dst` aren't equivalent."""
 
-    import ast
     import traceback
 
-    def _v(node: ast.AST, depth: int = 0) -> Iterator[str]:
+    def _v(node: Union[ast3.AST, ast27.AST], depth: int = 0) -> Iterator[str]:
         """Simple visitor generating strings to compare ASTs by content."""
         yield f"{'  ' * depth}{node.__class__.__name__}("
 
         for field in sorted(node._fields):
+            # TypeIgnore has only one field 'lineno' which breaks this comparison
+            if isinstance(node, (ast3.TypeIgnore, ast27.TypeIgnore)):
+                break
+
+            # Ignore str kind which is case sensitive / and ignores unicode_literals
+            if isinstance(node, (ast3.Str, ast27.Str, ast3.Bytes)) and field == "kind":
+                continue
+
             try:
                 value = getattr(node, field)
             except AttributeError:
@@ -3398,15 +3413,15 @@ def assert_equivalent(src: str, dst: str) -> None:
                     # parentheses and they change the AST.
                     if (
                         field == "targets"
-                        and isinstance(node, ast.Delete)
-                        and isinstance(item, ast.Tuple)
+                        and isinstance(node, (ast3.Delete, ast27.Delete))
+                        and isinstance(item, (ast3.Tuple, ast27.Tuple))
                     ):
                         for item in item.elts:
                             yield from _v(item, depth + 2)
-                    elif isinstance(item, ast.AST):
+                    elif isinstance(item, (ast3.AST, ast27.AST)):
                         yield from _v(item, depth + 2)
 
-            elif isinstance(value, ast.AST):
+            elif isinstance(value, (ast3.AST, ast27.AST)):
                 yield from _v(value, depth + 2)
 
             else:
@@ -3415,7 +3430,7 @@ def assert_equivalent(src: str, dst: str) -> None:
         yield f"{'  ' * depth})  # /{node.__class__.__name__}"
 
     try:
-        src_ast = ast.parse(src)
+        src_ast = parse_ast(src)
     except Exception as exc:
         major, minor = sys.version_info[:2]
         raise AssertionError(
@@ -3425,7 +3440,7 @@ def assert_equivalent(src: str, dst: str) -> None:
         )
 
     try:
-        dst_ast = ast.parse(dst)
+        dst_ast = parse_ast(dst)
     except Exception as exc:
         log = dump_to_file("".join(traceback.format_tb(exc.__traceback__)), dst)
         raise AssertionError(
