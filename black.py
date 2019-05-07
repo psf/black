@@ -231,6 +231,7 @@ def read_pyproject_toml(
 
 
 @click.command(context_settings=dict(help_option_names=["-h", "--help"]))
+@click.option("-c", "--code", type=str, help="Format the code passed in as a string.")
 @click.option(
     "-l",
     "--line-length",
@@ -357,6 +358,7 @@ def read_pyproject_toml(
 @click.pass_context
 def main(
     ctx: click.Context,
+    code: Optional[str],
     line_length: int,
     target_version: List[TargetVersion],
     check: bool,
@@ -397,6 +399,9 @@ def main(
     )
     if config and verbose:
         out(f"Using configuration from {config}.", bold=False, fg="blue")
+    if code is not None:
+        print(format_str(code, mode=mode))
+        ctx.exit(0)
     try:
         include_regex = re_compile_maybe_verbose(include)
     except re.error:

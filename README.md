@@ -71,6 +71,7 @@ black {source_file_or_directory}
 black [OPTIONS] [SRC]...
 
 Options:
+  -c, --code TEXT                 Format the code passed in as a string.
   -l, --line-length INTEGER       How many characters per line to allow.
                                   [default: 88]
   -t, --target-version [py27|py33|py34|py35|py36|py37|py38]
@@ -964,6 +965,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * fix feature detection for trailing commas in function definitions and
   call sites (#763)
+
+* add `black -c` as a way to format code passed from the command line (#761)
 
 * fix bug that led *Black* format some code with a line length target of 1
   (#762)
