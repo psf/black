@@ -43,9 +43,9 @@ import vim
 
 def _get_python_binary(exec_prefix):
   try:
-      default = vim.eval("g:pymode_python").strip()
-  except:
-      default = ""
+    default = vim.eval("g:pymode_python").strip()
+  except vim.error:
+    default = ""
   if default and os.path.exists(default):
     return default
   if sys.platform[:3] == "win":
