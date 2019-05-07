@@ -953,6 +953,10 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ### 19.5b0
 
+* remove unnecessary parentheses around `yield` expressions (#834)
+
+* add parentheses around long tuples in unpacking assignments (#832)
+
 * don't produce invalid code for `from` ... `import` blocks with comments
   (#829)
 
