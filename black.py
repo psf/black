@@ -2728,7 +2728,7 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
     for index, child in enumerate(list(node.children)):
         if check_lpar:
             if child.type == syms.atom:
-                if maybe_make_parens_invisible_in_atom(child):
+                if maybe_make_parens_invisible_in_atom(child, parent=node):
                     lpar = Leaf(token.LPAR, "")
                     rpar = Leaf(token.RPAR, "")
                     index = child.remove() or 0
@@ -2839,7 +2839,7 @@ def generate_ignored_nodes(leaf: Leaf) -> Iterator[LN]:
         container = container.next_sibling
 
 
-def maybe_make_parens_invisible_in_atom(node: LN) -> bool:
+def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
     """If it's safe, make the parens in the atom `node` invisible, recursively.
 
     Returns whether the node should itself be wrapped in invisible parentheses.
@@ -2849,7 +2849,7 @@ def maybe_make_parens_invisible_in_atom(node: LN) -> bool:
         node.type != syms.atom
         or is_empty_tuple(node)
         or is_one_tuple(node)
-        or is_yield(node)
+        or (is_yield(node) and parent.type != syms.expr_stmt)
         or max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
     ):
         return False
@@ -2861,7 +2861,7 @@ def maybe_make_parens_invisible_in_atom(node: LN) -> bool:
         first.value = ""  # type: ignore
         last.value = ""  # type: ignore
         if len(node.children) > 1:
-            maybe_make_parens_invisible_in_atom(node.children[1])
+            maybe_make_parens_invisible_in_atom(node.children[1], parent=parent)
         return False
 
     return True

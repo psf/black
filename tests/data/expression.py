@@ -169,6 +169,8 @@ mapping = {
 def gen():
     yield from outside_of_generator
     a = (yield)
+    b = ((yield))
+    c = (((yield)))
 
 async def f():
     await some.complicated[0].call(with_args=(True or (1 is not 1)))
@@ -458,7 +460,9 @@ mapping = {
 
 def gen():
     yield from outside_of_generator
-    a = (yield)
+    a = yield
+    b = yield
+    c = yield
 
 
 async def f():
