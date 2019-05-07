@@ -619,7 +619,8 @@ configuration from different levels of the file hierarchy.
 
 ### Emacs
 
-Use [proofit404/blacken](https://github.com/proofit404/blacken).
+Use [proofit404/blacken](https://github.com/proofit404/blacken) or
+[Elpy](https://github.com/jorgenschaefer/elpy).
 
 
 ### PyCharm/IntelliJ IDEA
