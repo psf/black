@@ -951,7 +951,7 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Change Log
 
-### 19.3b1
+### 19.5b0
 
 * don't produce invalid code for `from` ... `import` blocks with comments
   (#829)
