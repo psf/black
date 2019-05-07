@@ -986,7 +986,7 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ### 19.5b0
 
-* don't crash when run on a Windows machine with more than 62 cores (#838)
+* don't crash when run on a Windows machine with more than 61 cores (#838)
 
 * remove unnecessary parentheses around `yield` expressions (#834)
 
