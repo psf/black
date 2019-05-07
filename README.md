@@ -38,6 +38,7 @@ Try it out now using the [Black Playground](https://black.now.sh).
 **[blackd](#blackd)** |
 **[Version control integration](#version-control-integration)** |
 **[Ignoring unmodified files](#ignoring-unmodified-files)** |
+**[Used By](#used-by)** |
 **[Testimonials](#testimonials)** |
 **[Show your style](#show-your-style)** |
 **[Contributing](#contributing-to-black)** |
@@ -137,7 +138,7 @@ Options:
 
 ### NOTE: This is a beta product
 
-*Black* is already successfully used by several projects, small and big.
+*Black* is already [successfully used](#used-by) by many projects, small and big.
 It also sports a decent test suite.  However, it is still very new.
 Things will probably be wonky for a while. This is made explicit by the
 "Beta" trove classifier, as well as by the "b" in the version number.
@@ -921,6 +922,15 @@ is:
 
 `file-mode` is an int flag that determines whether the file was formatted as 3.6+ only,
 as .pyi, and whether string normalization was omitted.
+
+
+## Used By
+
+The following notable open-source projects trust *Black* with enforcing
+a consistent code style: pytest, tox, Pyramid, Django Channels, Hypothesis,
+attrs, SQLAlchemy, Poetry, PyPA applications (Warehouse, Pipenv, virtualenv).
+
+Are we missing anyone?  Let us know.
 
 
 ## Testimonials
