@@ -2726,6 +2726,14 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
 
     check_lpar = False
     for index, child in enumerate(list(node.children)):
+        # Add parentheses around long tuple unpacking in assignments.
+        if (
+            index == 0
+            and isinstance(child, Node)
+            and child.type == syms.testlist_star_expr
+        ):
+            check_lpar = True
+
         if check_lpar:
             if child.type == syms.atom:
                 if maybe_make_parens_invisible_in_atom(child, parent=node):
@@ -2757,7 +2765,11 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
                 lpar = Leaf(token.LPAR, "")
                 rpar = Leaf(token.RPAR, "")
                 index = child.remove() or 0
-                node.insert_child(index, Node(syms.atom, [lpar, child, rpar]))
+                prefix = child.prefix
+                child.prefix = ""
+                new_child = Node(syms.atom, [lpar, child, rpar])
+                new_child.prefix = prefix
+                node.insert_child(index, new_child)
 
         check_lpar = isinstance(child, Leaf) and child.value in parens_after
 
