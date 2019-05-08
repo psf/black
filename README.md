@@ -38,7 +38,7 @@ Try it out now using the [Black Playground](https://black.now.sh).
 **[blackd](#blackd)** |
 **[Version control integration](#version-control-integration)** |
 **[Ignoring unmodified files](#ignoring-unmodified-files)** |
-**[Used By](#used-by)** |
+**[Used by](#used-by)** |
 **[Testimonials](#testimonials)** |
 **[Show your style](#show-your-style)** |
 **[Contributing](#contributing-to-black)** |
@@ -925,7 +925,7 @@ is:
 as .pyi, and whether string normalization was omitted.
 
 
-## Used By
+## Used by
 
 The following notable open-source projects trust *Black* with enforcing
 a consistent code style: pytest, tox, Pyramid, Django Channels, Hypothesis,
