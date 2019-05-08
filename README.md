@@ -28,6 +28,7 @@ content instead.
 possible.
 
 Try it out now using the [Black Playground](https://black.now.sh).
+Watch the [PyCon 2019 talk](https://youtu.be/esZLCuWs_2Y) to learn more.
 
 ---
 
