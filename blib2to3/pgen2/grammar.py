@@ -85,6 +85,8 @@ class Grammar(object):
         self.tokens = {}
         self.symbol2label = {}
         self.start = 256
+        # Python 3.7+ parses async as a keyword, not an identifier
+        self.async_keywords = False
 
     def dump(self, filename):
         """Dump the grammar tables to a pickle file."""
@@ -113,6 +115,7 @@ class Grammar(object):
         new.labels = self.labels[:]
         new.states = self.states[:]
         new.start = self.start
+        new.async_keywords = self.async_keywords
         return new
 
     def report(self):

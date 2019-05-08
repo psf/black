@@ -33,6 +33,7 @@ def initialize(cache_dir=None):
     global python_grammar
     global python_grammar_no_print_statement
     global python_grammar_no_print_statement_no_exec_statement
+    global python_grammar_no_print_statement_no_exec_statement_async_keywords
     global python_symbols
     global pattern_grammar
     global pattern_symbols
@@ -47,10 +48,16 @@ def initialize(cache_dir=None):
     python_grammar_no_print_statement = python_grammar.copy()
     del python_grammar_no_print_statement.keywords["print"]
 
-    # Python 3
+    # Python 3.0-3.6
     python_grammar_no_print_statement_no_exec_statement = python_grammar.copy()
     del python_grammar_no_print_statement_no_exec_statement.keywords["print"]
     del python_grammar_no_print_statement_no_exec_statement.keywords["exec"]
+
+    # Python 3.7+
+    python_grammar_no_print_statement_no_exec_statement_async_keywords = (
+        python_grammar_no_print_statement_no_exec_statement.copy()
+    )
+    python_grammar_no_print_statement_no_exec_statement_async_keywords.async_keywords = True
 
     pattern_grammar = driver.load_packaged_grammar("blib2to3", _PATTERN_GRAMMAR_FILE,
                                                    cache_dir)

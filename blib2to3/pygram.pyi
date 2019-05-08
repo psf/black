@@ -118,6 +118,7 @@ class pattern_symbols(Symbols):
 python_grammar: Grammar
 python_grammar_no_print_statement: Grammar
 python_grammar_no_print_statement_no_exec_statement: Grammar
+python_grammar_no_print_statement_no_exec_statement_async_keywords: Grammar
 python_grammar_no_exec_statement: Grammar
 pattern_grammar: Grammar
 

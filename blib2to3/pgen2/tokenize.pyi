@@ -1,18 +1,15 @@
 # Stubs for lib2to3.pgen2.tokenize (Python 3.6)
 # NOTE: Only elements from __all__ are present.
 
-from typing import Callable, Iterable, Iterator, List, Text, Tuple
-from attr import dataclass
+from typing import Callable, Iterable, Iterator, List, Optional, Text, Tuple
 from blib2to3.pgen2.token import *  # noqa
+from blib2to3.pygram import Grammar
 
 
 _Coord = Tuple[int, int]
 _TokenEater = Callable[[int, Text, _Coord, _Coord, Text], None]
 _TokenInfo = Tuple[int, Text, _Coord, _Coord, Text]
 
-@dataclass(frozen=True)
-class TokenizerConfig:
-    async_is_reserved_keyword: bool = False
 
 class TokenError(Exception): ...
 class StopTokenizing(Exception): ...
@@ -30,5 +27,6 @@ class Untokenizer:
 
 def untokenize(iterable: Iterable[_TokenInfo]) -> Text: ...
 def generate_tokens(
-    readline: Callable[[], Text]
+    readline: Callable[[], Text],
+    grammar: Optional[Grammar] = ...
 ) -> Iterator[_TokenInfo]: ...
