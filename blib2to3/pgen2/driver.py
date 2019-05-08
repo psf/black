@@ -34,14 +34,12 @@ class Driver(object):
         grammar,
         convert=None,
         logger=None,
-        tokenizer_config=tokenize.TokenizerConfig(),
     ):
         self.grammar = grammar
         if logger is None:
             logger = logging.getLogger(__name__)
         self.logger = logger
         self.convert = convert
-        self.tokenizer_config = tokenizer_config
 
     def parse_tokens(self, tokens, debug=False):
         """Parse a series of tokens and return the syntax tree."""
@@ -104,7 +102,7 @@ class Driver(object):
 
     def parse_stream_raw(self, stream, debug=False):
         """Parse a stream and return the syntax tree."""
-        tokens = tokenize.generate_tokens(stream.readline, config=self.tokenizer_config)
+        tokens = tokenize.generate_tokens(stream.readline, grammar=self.grammar)
         return self.parse_tokens(tokens, debug)
 
     def parse_stream(self, stream, debug=False):
@@ -120,7 +118,7 @@ class Driver(object):
         """Parse a string and return the syntax tree."""
         tokens = tokenize.generate_tokens(
             io.StringIO(text).readline,
-            config=self.tokenizer_config,
+            grammar=self.grammar
         )
         return self.parse_tokens(tokens, debug)
 
