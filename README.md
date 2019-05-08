@@ -38,7 +38,7 @@ Try it out now using the [Black Playground](https://black.now.sh).
 **[blackd](#blackd)** |
 **[Version control integration](#version-control-integration)** |
 **[Ignoring unmodified files](#ignoring-unmodified-files)** |
-**[Used By](#used-by)** |
+**[Used by](#used-by)** |
 **[Testimonials](#testimonials)** |
 **[Show your style](#show-your-style)** |
 **[Contributing](#contributing-to-black)** |
@@ -666,7 +666,7 @@ $ where black
 5. Format the currently opened file by selecting `Tools -> External Tools -> black`.
     - Alternatively, you can set a keyboard shortcut by navigating to `Preferences or Settings -> Keymap -> External Tools -> External Tools - Black`.
 
-6. Optionally, run Black on every file save:
+6. Optionally, run *Black* on every file save:
 
     1. Make sure you have the [File Watcher](https://plugins.jetbrains.com/plugin/7177-file-watchers) plugin installed.
     2. Go to `Preferences or Settings -> Tools -> File Watchers` and click `+` to add a new watcher:
@@ -925,7 +925,7 @@ is:
 as .pyi, and whether string normalization was omitted.
 
 
-## Used By
+## Used by
 
 The following notable open-source projects trust *Black* with enforcing
 a consistent code style: pytest, tox, Pyramid, Django Channels, Hypothesis,
