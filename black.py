@@ -3382,10 +3382,15 @@ class Report:
 
 
 def parse_ast(src: str) -> Union[ast3.AST, ast27.AST]:
-    try:
-        return ast3.parse(src)
-    except SyntaxError:
-        return ast27.parse(src)
+    for feature_version in (7, 6):
+        try:
+            print(f"-- 3.{feature_version}")
+            return ast3.parse(src, feature_version=feature_version)
+        except SyntaxError:
+            continue
+
+    print(f"-- 2.7")
+    return ast27.parse(src)
 
 
 def assert_equivalent(src: str, dst: str) -> None:
@@ -3438,11 +3443,9 @@ def assert_equivalent(src: str, dst: str) -> None:
     try:
         src_ast = parse_ast(src)
     except Exception as exc:
-        major, minor = sys.version_info[:2]
         raise AssertionError(
-            f"cannot use --safe with this file; failed to parse source file "
-            f"with Python {major}.{minor}'s builtin AST. Re-run with --fast "
-            f"or stop using deprecated Python 2 syntax. AST error message: {exc}"
+            f"cannot use --safe with this file; failed to parse source file.  "
+            f"AST error message: {exc}"
         )
 
     try:
