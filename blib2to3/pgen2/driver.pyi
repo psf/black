@@ -8,13 +8,20 @@ from logging import Logger
 from blib2to3.pytree import _Convert, _NL
 from blib2to3.pgen2 import _Path
 from blib2to3.pgen2.grammar import Grammar
+from blib2to3.pgen2.tokenize import TokenizerConfig
 
 
 class Driver:
     grammar: Grammar
     logger: Logger
     convert: _Convert
-    def __init__(self, grammar: Grammar, convert: Optional[_Convert] = ..., logger: Optional[Logger] = ...) -> None: ...
+    def __init__(
+        self,
+        grammar: Grammar,
+        convert: Optional[_Convert] = ...,
+        logger: Optional[Logger] = ...,
+        tokenizer_config: TokenizerConfig = ...
+    ) -> None: ...
     def parse_tokens(self, tokens: Iterable[Any], debug: bool = ...) -> _NL: ...
     def parse_stream_raw(self, stream: IO[Text], debug: bool = ...) -> _NL: ...
     def parse_stream(self, stream: IO[Text], debug: bool = ...) -> _NL: ...

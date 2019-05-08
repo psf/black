@@ -503,7 +503,23 @@ class BlackTestCase(unittest.TestCase):
         black.assert_stable(source, actual, mode)
 
     @patch("black.dump_to_file", dump_to_stderr)
+    def test_async_as_identifier(self) -> None:
+        source_path = (THIS_DIR / "data" / "async_as_identifier.py").resolve()
+        source, expected = read_data("async_as_identifier")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        major, minor = sys.version_info[:2]
+        if major < 3 or (major <= 3 and minor < 7):
+            black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+        # ensure black can parse this when the target is 3.6
+        self.invokeBlack([str(source_path), "--target-version", "py36"])
+        # but not on 3.7, because async/await is no longer an identifier
+        self.invokeBlack([str(source_path), "--target-version", "py37"], exit_code=123)
+
+    @patch("black.dump_to_file", dump_to_stderr)
     def test_python37(self) -> None:
+        source_path = (THIS_DIR / "data" / "python37.py").resolve()
         source, expected = read_data("python37")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
@@ -511,6 +527,10 @@ class BlackTestCase(unittest.TestCase):
         if major > 3 or (major == 3 and minor >= 7):
             black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, black.FileMode())
+        # ensure black can parse this when the target is 3.7
+        self.invokeBlack([str(source_path), "--target-version", "py37"])
+        # but not on 3.6, because we use async as a reserved keyword
+        self.invokeBlack([str(source_path), "--target-version", "py36"], exit_code=123)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_fmtonoff(self) -> None:

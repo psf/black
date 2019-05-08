@@ -14,6 +14,14 @@ async def func():
                 self.async_inc, arange(8), batch_size=3
             )
         ]
+
+def awaited_generator_value(n):
+    return (await awaitable for awaitable in awaitable_list)
+
+def make_arange(n):
+    return (i * 2 for i in range(n) if await wrap(i))
+
+
 # output
 
 
@@ -39,3 +47,11 @@ async def func():
                 self.async_inc, arange(8), batch_size=3
             )
         ]
+
+
+def awaited_generator_value(n):
+    return (await awaitable for awaitable in awaitable_list)
+
+
+def make_arange(n):
+    return (i * 2 for i in range(n) if await wrap(i))
