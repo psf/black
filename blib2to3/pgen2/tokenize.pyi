@@ -2,6 +2,7 @@
 # NOTE: Only elements from __all__ are present.
 
 from typing import Callable, Iterable, Iterator, List, Text, Tuple
+from attr import dataclass
 from blib2to3.pgen2.token import *  # noqa
 
 
@@ -9,6 +10,9 @@ _Coord = Tuple[int, int]
 _TokenEater = Callable[[int, Text, _Coord, _Coord, Text], None]
 _TokenInfo = Tuple[int, Text, _Coord, _Coord, Text]
 
+@dataclass(frozen=True)
+class TokenizerConfig:
+    async_is_reserved_keyword: bool = False
 
 class TokenError(Exception): ...
 class StopTokenizing(Exception): ...

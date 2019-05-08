@@ -48,6 +48,7 @@ from blib2to3 import pygram, pytree
 from blib2to3.pgen2 import driver, token
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.parse import ParseError
+from blib2to3.pgen2.tokenize import TokenizerConfig
 
 
 __version__ = "19.3b0"
@@ -136,19 +137,28 @@ class Feature(Enum):
     NUMERIC_UNDERSCORES = 3
     TRAILING_COMMA_IN_CALL = 4
     TRAILING_COMMA_IN_DEF = 5
+    # The following two feature-flags are mutually exclusive, and exactly one should be
+    # set for every version of python.
+    ASYNC_IS_VALID_IDENTIFIER = 6
+    ASYNC_IS_RESERVED_KEYWORD = 7
 
 
 VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
-    TargetVersion.PY27: set(),
-    TargetVersion.PY33: {Feature.UNICODE_LITERALS},
-    TargetVersion.PY34: {Feature.UNICODE_LITERALS},
-    TargetVersion.PY35: {Feature.UNICODE_LITERALS, Feature.TRAILING_COMMA_IN_CALL},
+    TargetVersion.PY27: {Feature.ASYNC_IS_VALID_IDENTIFIER},
+    TargetVersion.PY33: {Feature.UNICODE_LITERALS, Feature.ASYNC_IS_VALID_IDENTIFIER},
+    TargetVersion.PY34: {Feature.UNICODE_LITERALS, Feature.ASYNC_IS_VALID_IDENTIFIER},
+    TargetVersion.PY35: {
+        Feature.UNICODE_LITERALS,
+        Feature.TRAILING_COMMA_IN_CALL,
+        Feature.ASYNC_IS_VALID_IDENTIFIER,
+    },
     TargetVersion.PY36: {
         Feature.UNICODE_LITERALS,
         Feature.F_STRINGS,
         Feature.NUMERIC_UNDERSCORES,
         Feature.TRAILING_COMMA_IN_CALL,
         Feature.TRAILING_COMMA_IN_DEF,
+        Feature.ASYNC_IS_VALID_IDENTIFIER,
     },
     TargetVersion.PY37: {
         Feature.UNICODE_LITERALS,
@@ -156,6 +166,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.NUMERIC_UNDERSCORES,
         Feature.TRAILING_COMMA_IN_CALL,
         Feature.TRAILING_COMMA_IN_DEF,
+        Feature.ASYNC_IS_RESERVED_KEYWORD,
     },
     TargetVersion.PY38: {
         Feature.UNICODE_LITERALS,
@@ -163,6 +174,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.NUMERIC_UNDERSCORES,
         Feature.TRAILING_COMMA_IN_CALL,
         Feature.TRAILING_COMMA_IN_DEF,
+        Feature.ASYNC_IS_RESERVED_KEYWORD,
     },
 }
 
@@ -748,20 +760,62 @@ def decode_bytes(src: bytes) -> Tuple[FileContent, Encoding, NewLine]:
         return tiow.read(), encoding, newline
 
 
-def get_grammars(target_versions: Set[TargetVersion]) -> List[Grammar]:
+@dataclass(frozen=True)
+class ParserConfig:
+    grammar: Grammar
+    tokenizer_config: TokenizerConfig = TokenizerConfig()
+
+
+def get_parser_configs(target_versions: Set[TargetVersion]) -> List[ParserConfig]:
     if not target_versions:
         # No target_version specified, so try all grammars.
         return [
-            pygram.python_grammar_no_print_statement_no_exec_statement,
-            pygram.python_grammar_no_print_statement,
-            pygram.python_grammar,
+            # Python 3.7+
+            ParserConfig(
+                pygram.python_grammar_no_print_statement_no_exec_statement,
+                TokenizerConfig(async_is_reserved_keyword=True),
+            ),
+            # Python 3.0-3.6
+            ParserConfig(
+                pygram.python_grammar_no_print_statement_no_exec_statement,
+                TokenizerConfig(async_is_reserved_keyword=False),
+            ),
+            # Python 2.7 with future print_function import
+            ParserConfig(pygram.python_grammar_no_print_statement),
+            # Python 2.7
+            ParserConfig(pygram.python_grammar),
         ]
     elif all(version.is_python2() for version in target_versions):
         # Python 2-only code, so try Python 2 grammars.
-        return [pygram.python_grammar_no_print_statement, pygram.python_grammar]
+        return [
+            # Python 2.7 with future print_function import
+            ParserConfig(pygram.python_grammar_no_print_statement),
+            # Python 2.7
+            ParserConfig(pygram.python_grammar),
+        ]
     else:
         # Python 3-compatible code, so only try Python 3 grammar.
-        return [pygram.python_grammar_no_print_statement_no_exec_statement]
+        configs = []
+        # If we have to parse both, try to parse async as a keyword first
+        if not supports_feature(target_versions, Feature.ASYNC_IS_VALID_IDENTIFIER):
+            # Python 3.7+
+            configs.append(
+                ParserConfig(
+                    pygram.python_grammar_no_print_statement_no_exec_statement,
+                    TokenizerConfig(async_is_reserved_keyword=True),
+                )
+            )
+        if not supports_feature(target_versions, Feature.ASYNC_IS_RESERVED_KEYWORD):
+            # Python 3.0-3.6
+            configs.append(
+                ParserConfig(
+                    pygram.python_grammar_no_print_statement_no_exec_statement,
+                    TokenizerConfig(async_is_reserved_keyword=False),
+                )
+            )
+        # At least one of the above branches must have been taken, because every Python
+        # version has exactly one of the two 'ASYNC_IS_*' flags
+        return configs
 
 
 def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -> Node:
@@ -769,8 +823,12 @@ def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -
     if src_txt[-1:] != "\n":
         src_txt += "\n"
 
-    for grammar in get_grammars(set(target_versions)):
-        drv = driver.Driver(grammar, pytree.convert)
+    for parser_config in get_parser_configs(set(target_versions)):
+        drv = driver.Driver(
+            parser_config.grammar,
+            pytree.convert,
+            tokenizer_config=parser_config.tokenizer_config,
+        )
         try:
             result = drv.parse_string(src_txt, True)
             break
