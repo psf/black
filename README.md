@@ -998,29 +998,32 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ### 19.5b0
 
-* don't crash when run on a Windows machine with more than 61 cores (#838)
-
-* remove unnecessary parentheses around `yield` expressions (#834)
-
-* add parentheses around long tuples in unpacking assignments (#832)
-
-* don't produce invalid code for `from` ... `import` blocks with comments
-  (#829)
-
-* fix grammar selection (#765)
-
-* fix feature detection for trailing commas in function definitions and
-  call sites (#763)
-
-* add `black -c` as a way to format code passed from the command line (#761)
-
-* fix bug that led *Black* format some code with a line length target of 1
-  (#762)
+* added `black -c` as a way to format code passed from the command line
+  (#761)
 
 * --safe now works with Python 2 code (#840)
 
+* fixed grammar selection for Python 2-specific code (#765)
+
+* fixed feature detection for trailing commas in function definitions
+  and call sites (#763)
+
+* *Black* no longer crashes on Windows machines with more than 61 cores
+  (#838)
+
 * *Black* no longer crashes on standalone comments prepended with
   a backslash (#767)
+
+* *Black* no longer crashes on `from` ... `import` blocks with comments
+  (#829)
+
+* removed unnecessary parentheses around `yield` expressions (#834)
+
+* added parentheses around long tuples in unpacking assignments (#832)
+
+* fixed bug that led *Black* format some code with a line length target
+  of 1 (#762)
+
 
 ### 19.3b0
 
@@ -1047,6 +1050,7 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
   formatted with tabs (#262)
 
 * `blackd` now supports CORS (#622)
+
 
 ### 18.9b0
 
