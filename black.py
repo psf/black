@@ -553,9 +553,8 @@ async def schedule_formatting(
                 changed = Changed.YES if task.result() else Changed.NO
                 # If the file was written back or was successfully checked as
                 # well-formatted, store this information in the cache.
-                if (
-                    write_back is WriteBack.YES
-                    or (write_back is WriteBack.CHECK and changed is Changed.NO)
+                if write_back is WriteBack.YES or (
+                    write_back is WriteBack.CHECK and changed is Changed.NO
                 ):
                     sources_to_cache.append(src)
                 report.done(src, changed)
@@ -1353,9 +1352,8 @@ class Line:
 
             if subscript_start.type == syms.subscriptlist:
                 subscript_start = child_towards(subscript_start, leaf)
-        return (
-            subscript_start is not None
-            and any(n.type in TEST_DESCENDANTS for n in subscript_start.pre_order())
+        return subscript_start is not None and any(
+            n.type in TEST_DESCENDANTS for n in subscript_start.pre_order()
         )
 
     def __str__(self) -> str:
@@ -1456,9 +1454,8 @@ class EmptyLineTracker:
         if self.previous_line.is_decorator:
             return 0, 0
 
-        if (
-            self.previous_line.depth < current_line.depth
-            and (self.previous_line.is_class or self.previous_line.is_def)
+        if self.previous_line.depth < current_line.depth and (
+            self.previous_line.is_class or self.previous_line.is_def
         ):
             return 0, 0
 
@@ -3658,10 +3655,18 @@ def can_omit_invisible_parens(line: Line, line_length: int) -> bool:
 
         length = 4 * line.depth
         seen_other_brackets = False
+        delimiter_lengths = []
         for _index, leaf, leaf_length in enumerate_with_length(line):
             length += leaf_length
+            if id(leaf) in line.bracket_tracker.delimiters:
+                delimiter_lengths.append(length)
             if leaf is last.opening_bracket:
-                if seen_other_brackets or length <= int(0.5 * line_length):
+                distance_from_first_delimiter = length - delimiter_lengths[0]
+                if (
+                    seen_other_brackets
+                    or 4 * line.depth + distance_from_first_delimiter
+                    <= int(0.5 * line_length)
+                ):
                     # Omit optionals if there are multiple brackets to split on
                     # or if the first bracket starts in the first half of the line.
                     # This tends to result in subjectively good results :)
