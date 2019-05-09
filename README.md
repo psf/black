@@ -1017,6 +1017,11 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * fix bug that led *Black* format some code with a line length target of 1
   (#762)
 
+* --safe now works with Python 2 code (#840)
+
+* *Black* no longer crashes on standalone comments prepended with
+  a backslash (#767)
+
 ### 19.3b0
 
 * new option `--target-version` to control which Python versions
