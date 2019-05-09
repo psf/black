@@ -1457,6 +1457,7 @@ Multiple contributions by:
 * hauntsaninja
 * Hugo van Kemenade
 * [Ivan Katanić](mailto:ivan.katanic@gmail.com)
+* [Jason Fried](mailto:me@jasonfried.info)
 * [Jonas Obrist](mailto:ojiidotch@gmail.com)
 * [Luka Sterbic](mailto:luka.sterbic@gmail.com)
 * [Miguel Gaiowski](mailto:miggaiowski@gmail.com)
