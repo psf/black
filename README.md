@@ -1008,6 +1008,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * fixed feature detection for trailing commas in function definitions
   and call sites (#763)
 
+* *Black* can now format async generators (#593)
+
 * *Black* no longer crashes on Windows machines with more than 61 cores
   (#838)
 
