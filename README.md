@@ -1451,6 +1451,7 @@ Maintained with [Carol Willing](mailto:carolcode@willingconsulting.com),
 Multiple contributions by:
 * [Anthony Sottile](mailto:asottile@umich.edu)
 * [Artem Malyshev](mailto:proofit404@gmail.com)
+* [Benjamin Woodruff](mailto:github@benjam.info)
 * [Christian Heimes](mailto:christian@python.org)
 * [Daniel M. Capella](mailto:polycitizen@gmail.com)
 * [Eli Treuherz](mailto:eli@treuherz.com)
