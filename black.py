@@ -3384,12 +3384,10 @@ class Report:
 def parse_ast(src: str) -> Union[ast3.AST, ast27.AST]:
     for feature_version in (7, 6):
         try:
-            print(f"-- 3.{feature_version}")
             return ast3.parse(src, feature_version=feature_version)
         except SyntaxError:
             continue
 
-    print(f"-- 2.7")
     return ast27.parse(src)
 
 
