@@ -335,7 +335,7 @@ class Leaf(Base):
     # Default values for instance variables
     _prefix = ""  # Whitespace and comments preceding this token in the input
     lineno = 0    # Line where this token starts in the input
-    column = 0    # Column where this token tarts in the input
+    column = 0    # Column where this token starts in the input
 
     def __init__(self, type, value,
                  context=None,
