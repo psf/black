@@ -457,8 +457,7 @@ def main(
         )
 
     if verbose or not quiet:
-        bang = "💥 💔 💥" if report.return_code else "✨ 🍰 ✨"
-        out(f"All done! {bang}")
+        out("Oh no! 💥 💔 💥" if report.return_code else "All done! ✨ 🍰 ✨")
         click.secho(str(report), err=True)
     ctx.exit(report.return_code)
 
