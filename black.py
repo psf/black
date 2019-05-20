@@ -707,7 +707,7 @@ def format_str(src_contents: str, *, mode: FileMode) -> FileContent:
     `line_length` determines how many characters per line are allowed.
     """
     src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)
-    dst_contents = ""
+    dst_contents = []
     future_imports = get_future_imports(src_node)
     if mode.target_versions:
         versions = mode.target_versions
@@ -730,15 +730,15 @@ def format_str(src_contents: str, *, mode: FileMode) -> FileContent:
     }
     for current_line in lines.visit(src_node):
         for _ in range(after):
-            dst_contents += str(empty_line)
+            dst_contents.append(str(empty_line))
         before, after = elt.maybe_empty_lines(current_line)
         for _ in range(before):
-            dst_contents += str(empty_line)
+            dst_contents.append(str(empty_line))
         for line in split_line(
             current_line, line_length=mode.line_length, features=split_line_features
         ):
-            dst_contents += str(line)
-    return dst_contents
+            dst_contents.append(str(line))
+    return "".join(dst_contents)
 
 
 def decode_bytes(src: bytes) -> Tuple[FileContent, Encoding, NewLine]:
