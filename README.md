@@ -844,6 +844,14 @@ Options:
   -h, --help                      Show this message and exit.
 ```
 
+There is no official blackd client tool (yet!). You can test that blackd is
+working using `curl`:
+
+```
+blackd --bind-port 9090 &  # or let blackd choose a port
+curl -s -XPOST "localhost:9090" -d "print('valid')"
+```
+
 ### Protocol
 
 `blackd` only accepts `POST` requests at the `/` path. The body of the request
