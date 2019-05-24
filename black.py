@@ -16,6 +16,7 @@ import signal
 import sys
 import tempfile
 import tokenize
+import traceback
 from typing import (
     Any,
     Callable,
@@ -336,7 +337,7 @@ def read_pyproject_toml(
     "--quiet",
     is_flag=True,
     help=(
-        "Don't emit non-error messages to stderr. Errors are still emitted, "
+        "Don't emit non-error messages to stderr. Errors are still emitted; "
         "silence those with 2>/dev/null."
     ),
 )
@@ -467,8 +468,7 @@ def reformat_one(
 ) -> None:
     """Reformat a single file under `src` without spawning child processes.
 
-    If `quiet` is True, non-error messages are not output. `line_length`,
-    `write_back`, `fast` and `pyi` options are passed to
+    `fast`, `write_back`, and `mode` options are passed to
     :func:`format_file_in_place` or :func:`format_stdin_to_stdout`.
     """
     try:
@@ -608,7 +608,7 @@ def format_file_in_place(
 
     If `write_back` is DIFF, write a diff to stdout. If it is YES, write reformatted
     code to the file.
-    `line_length` and `fast` options are passed to :func:`format_file_contents`.
+    `mode` and `fast` options are passed to :func:`format_file_contents`.
     """
     if src.suffix == ".pyi":
         mode = evolve(mode, is_pyi=True)
@@ -686,7 +686,7 @@ def format_file_contents(
 
     If `fast` is False, additionally confirm that the reformatted code is
     valid by calling :func:`assert_equivalent` and :func:`assert_stable` on it.
-    `line_length` is passed to :func:`format_str`.
+    `mode` is passed to :func:`format_str`.
     """
     if src_contents.strip() == "":
         raise NothingChanged
@@ -704,7 +704,8 @@ def format_file_contents(
 def format_str(src_contents: str, *, mode: FileMode) -> FileContent:
     """Reformat a string and return new contents.
 
-    `line_length` determines how many characters per line are allowed.
+    `mode` determines formatting options, such as how many characters per line are
+    allowed.
     """
     src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)
     dst_contents = []
@@ -1060,7 +1061,7 @@ class BracketTracker:
         """Return True if there is an yet unmatched open bracket on the line."""
         return bool(self.bracket_match)
 
-    def max_delimiter_priority(self, exclude: Iterable[LeafID] = ()) -> int:
+    def max_delimiter_priority(self, exclude: Iterable[LeafID] = ()) -> Priority:
         """Return the highest priority of a delimiter found on the line.
 
         Values are consistent with what `is_split_*_delimiter()` return.
@@ -1068,7 +1069,7 @@ class BracketTracker:
         """
         return max(v for k, v in self.delimiters.items() if k not in exclude)
 
-    def delimiter_count_with_priority(self, priority: int = 0) -> int:
+    def delimiter_count_with_priority(self, priority: Priority = 0) -> int:
         """Return the number of delimiters with the given `priority`.
 
         If no `priority` is passed, defaults to max priority on the line.
@@ -2034,7 +2035,7 @@ def container_of(leaf: Leaf) -> LN:
     return container
 
 
-def is_split_after_delimiter(leaf: Leaf, previous: Optional[Leaf] = None) -> int:
+def is_split_after_delimiter(leaf: Leaf, previous: Optional[Leaf] = None) -> Priority:
     """Return the priority of the `leaf` delimiter, given a line break after it.
 
     The delimiter priorities returned here are from those delimiters that would
@@ -2048,7 +2049,7 @@ def is_split_after_delimiter(leaf: Leaf, previous: Optional[Leaf] = None) -> int
     return 0
 
 
-def is_split_before_delimiter(leaf: Leaf, previous: Optional[Leaf] = None) -> int:
+def is_split_before_delimiter(leaf: Leaf, previous: Optional[Leaf] = None) -> Priority:
     """Return the priority of the `leaf` delimiter, given a line break before it.
 
     The delimiter priorities returned here are from those delimiters that would
@@ -2795,7 +2796,7 @@ def format_float_or_int_string(text: str) -> str:
 def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
     """Make existing optional parentheses invisible or create new ones.
 
-    `parens_after` is a set of string leaf values immeditely after which parens
+    `parens_after` is a set of string leaf values immediately after which parens
     should be put.
 
     Standardizes on visible parentheses for single-element tuples, and keeps
@@ -3073,7 +3074,7 @@ def is_stub_body(node: LN) -> bool:
     )
 
 
-def max_delimiter_priority_in_atom(node: LN) -> int:
+def max_delimiter_priority_in_atom(node: LN) -> Priority:
     """Return maximum delimiter priority inside `node`.
 
     This is specific to atoms with contents contained in a pair of parentheses.
@@ -3446,8 +3447,6 @@ def parse_ast(src: str) -> Union[ast3.AST, ast27.AST]:
 def assert_equivalent(src: str, dst: str) -> None:
     """Raise AssertionError if `src` and `dst` aren't equivalent."""
 
-    import traceback
-
     def _v(node: Union[ast3.AST, ast27.AST], depth: int = 0) -> Iterator[str]:
         """Simple visitor generating strings to compare ASTs by content."""
         yield f"{'  ' * depth}{node.__class__.__name__}("
@@ -3538,8 +3537,6 @@ def assert_stable(src: str, dst: str, mode: FileMode) -> None:
 
 def dump_to_file(*output: str) -> str:
     """Dump `output` to a temporary file. Return path to the file."""
-    import tempfile
-
     with tempfile.NamedTemporaryFile(
         mode="w", prefix="blk_", suffix=".log", delete=False, encoding="utf8"
     ) as f:
@@ -3637,7 +3634,6 @@ def enumerate_with_length(
         if "\n" in leaf.value:
             return  # Multiline strings, we can't continue.
 
-        comment: Optional[Leaf]
         for comment in line.comments_after(leaf):
             length += len(comment.value)
 
