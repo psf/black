@@ -39,6 +39,7 @@ Watch the [PyCon 2019 talk](https://youtu.be/esZLCuWs_2Y) to learn more.
 **[blackd](#blackd)** |
 **[Version control integration](#version-control-integration)** |
 **[Ignoring unmodified files](#ignoring-unmodified-files)** |
+**[Changing cache location](#changing-cache-location)** |
 **[Used by](#used-by)** |
 **[Testimonials](#testimonials)** |
 **[Show your style](#show-your-style)** |
@@ -933,6 +934,12 @@ is:
 `file-mode` is an int flag that determines whether the file was formatted as 3.6+ only,
 as .pyi, and whether string normalization was omitted.
 
+
+## Changing cache location
+
+*Black* uses [appdirs](https://pypi.org/project/appdirs/) to find the directory to write cache to. By default on Linux/Unix systems, it's in the current user's home directory: `~/.cache/black`. To override this behaviour, set the environment variable `XDG_CACHE_HOME` to your preferred location.
+
+For example, if you want to put the cache in the directory you're running *Black* from, set `XDG_CACHE_HOME=.cache`. *Black* will then write cache to `.cache/black`.
 
 ## Used by
 
