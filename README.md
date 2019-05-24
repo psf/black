@@ -1034,6 +1034,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * fixed bug that led *Black* format some code with a line length target
   of 1 (#762)
 
+* *Black* no longer introduces quotes in f-string subexpressions on string
+  boundaries (#863)
+
 
 ### 19.3b0
 
