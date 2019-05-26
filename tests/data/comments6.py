@@ -84,3 +84,6 @@ def func(
         0.0789,
         a[-1],  # type: ignore
     )
+
+
+result = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"  # aaa
