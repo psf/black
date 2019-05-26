@@ -31,6 +31,7 @@ myself and CentOS at work.
 Install all development dependencies using:
 ```
 $ pipenv install --dev
+$ pipenv shell
 $ pre-commit install
 ```
 If you haven't used `pipenv` before but are comfortable with virtualenvs,
