@@ -933,6 +933,10 @@ is:
 `file-mode` is an int flag that determines whether the file was formatted as 3.6+ only,
 as .pyi, and whether string normalization was omitted.
 
+To override the location of these files on macOS or Linux, set the environment variable
+`XDG_CACHE_HOME` to your preferred location. For example, if you want to put the cache in
+the directory you're running *Black* from, set `XDG_CACHE_HOME=.cache`. *Black* will then
+write the above files to `.cache/black/<version>/`.
 
 ## Used by
 
