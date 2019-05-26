@@ -39,7 +39,6 @@ Watch the [PyCon 2019 talk](https://youtu.be/esZLCuWs_2Y) to learn more.
 **[blackd](#blackd)** |
 **[Version control integration](#version-control-integration)** |
 **[Ignoring unmodified files](#ignoring-unmodified-files)** |
-**[Changing cache location](#changing-cache-location)** |
 **[Used by](#used-by)** |
 **[Testimonials](#testimonials)** |
 **[Show your style](#show-your-style)** |
