@@ -2728,7 +2728,15 @@ def normalize_string_quotes(leaf: Leaf) -> None:
         new_body = sub_twice(escaped_orig_quote, rf"\1\2{orig_quote}", new_body)
         new_body = sub_twice(unescaped_new_quote, rf"\1\\{new_quote}", new_body)
     if "f" in prefix.casefold():
-        matches = re.findall(r"[^{]\{(.*?)\}[^}]", new_body)
+        matches = re.findall(
+            r"""
+            (?:[^{]|^)\{  # start of the string or a non-{ followed by a single {
+                ([^{].*?)  # contents of the brackets except if begins with {{
+            \}(?:[^}]|$)  # A } followed by end of the string or a non-}
+            """,
+            new_body,
+            re.VERBOSE,
+        )
         for m in matches:
             if "\\" in str(m):
                 # Do not introduce backslashes in interpolated expressions
