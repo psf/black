@@ -2,21 +2,26 @@
 # "Version control integration" in README.md.
 exclude: ^(blib2to3/|profiling/|tests/data/)
 repos:
--   repo: local
+  - repo: local
     hooks:
-    - id: black
-      name: black
-      language: system
-      entry: black
-      types: [python]
-    - id: flake8
-      name: flake8
-      language: system
-      entry: flake8
-      types: [python]
-    - id: mypy
-      name: mypy
-      language: system
-      entry: mypy
-      types: [python]
-      exclude: ^docs/conf.py
+      - id: black
+        name: black
+        language: system
+        entry: black
+        types: [python]
+      - id: flake8
+        name: flake8
+        language: system
+        entry: flake8
+        types: [python]
+      - id: mypy
+        name: mypy
+        language: system
+        entry: mypy
+        types: [python]
+        exclude: ^docs/conf.py
+  - repo: https://github.com/prettier/prettier
+    rev: 1.17.1
+    hooks:
+      - id: prettier
+        args: [--prose-wrap=always, --print-width=88]
