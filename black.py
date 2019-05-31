@@ -42,6 +42,7 @@ from attr import dataclass, evolve, Factory
 import click
 import toml
 from typed_ast import ast3, ast27
+from pathspec import PathSpec
 
 # lib2to3 fork
 from blib2to3.pytree import Node, Leaf, type_repr
@@ -432,7 +433,9 @@ def main(
         p = Path(s)
         if p.is_dir():
             sources.update(
-                gen_python_files_in_dir(p, root, include_regex, exclude_regex, report)
+                gen_python_files_in_dir(
+                    p, root, include_regex, exclude_regex, report, get_gitignore(root)
+                )
             )
         elif p.is_file() or s == "-":
             # if a file was explicitly given, we don't care about its extension
@@ -3284,12 +3287,23 @@ def get_future_imports(node: Node) -> Set[str]:
     return imports
 
 
+@lru_cache()
+def get_gitignore(root: Path) -> PathSpec:
+    """ Return a PathSpec matching gitignore content if present."""
+    gitignore = root / ".gitignore"
+    if not gitignore.is_file():
+        return PathSpec.from_lines("gitwildmatch", [])
+    else:
+        return PathSpec.from_lines("gitwildmatch", gitignore.open())
+
+
 def gen_python_files_in_dir(
     path: Path,
     root: Path,
     include: Pattern[str],
     exclude: Pattern[str],
     report: "Report",
+    gitignore: PathSpec,
 ) -> Iterator[Path]:
     """Generate all files under `path` whose paths are not excluded by the
     `exclude` regex, but are included by the `include` regex.
@@ -3300,6 +3314,12 @@ def gen_python_files_in_dir(
     """
     assert root.is_absolute(), f"INTERNAL ERROR: `root` must be absolute but is {root}"
     for child in path.iterdir():
+        # First ignore files matching .gitignore
+        if gitignore.match_file(child.as_posix()):
+            report.path_ignored(child, f"matches the .gitignore file content")
+            continue
+
+        # Then ignore with `exclude` option.
         try:
             normalized_path = "/" + child.resolve().relative_to(root).as_posix()
         except ValueError:
@@ -3313,13 +3333,16 @@ def gen_python_files_in_dir(
 
         if child.is_dir():
             normalized_path += "/"
+
         exclude_match = exclude.search(normalized_path)
         if exclude_match and exclude_match.group(0):
             report.path_ignored(child, f"matches the --exclude regular expression")
             continue
 
         if child.is_dir():
-            yield from gen_python_files_in_dir(child, root, include, exclude, report)
+            yield from gen_python_files_in_dir(
+                child, root, include, exclude, report, gitignore
+            )
 
         elif child.is_file():
             include_match = include.search(normalized_path)

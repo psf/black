@@ -47,6 +47,7 @@ setup(
         "appdirs",
         "toml>=0.9.4",
         "typed-ast>=1.3.1",
+        "pathspec>=0.5.9, <1",
     ],
     extras_require={"d": ["aiohttp>=3.3.2", "aiohttp-cors"]},
     test_suite="tests.test_black",
