@@ -910,7 +910,7 @@ Then run `pre-commit install` and you're ready to go.
 
 Avoid using `args` in the hook.  Instead, store necessary configuration
 in `pyproject.toml` so that editors and command-line usage of Black all
-behave consistently for your project.  See *Black*'s own `pyproject.toml`
+behave consistently for your project.  See *Black*'s own [pyproject.toml](/pyproject.toml)
 for an example.
 
 If you're already using Python 3.7, switch the `language_version`
