@@ -942,7 +942,8 @@ write the above files to `.cache/black/<version>/`.
 
 The following notable open-source projects trust *Black* with enforcing
 a consistent code style: pytest, tox, Pyramid, Django Channels, Hypothesis,
-attrs, SQLAlchemy, Poetry, PyPA applications (Warehouse, Pipenv, virtualenv).
+attrs, SQLAlchemy, Poetry, PyPA applications (Warehouse, Pipenv, virtualenv),
+every Datadog Agent Integration.
 
 Are we missing anyone?  Let us know.
 
