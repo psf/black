@@ -434,12 +434,16 @@ def main(
             sources.update(
                 gen_python_files_in_dir(p, root, include_regex, exclude_regex, report)
             )
+            if len(os.listdir(p) ) == 0:
+                if verbose or not quiet:
+                    out(f"Directory {p} is empty.")
+                    continue
         elif p.is_file() or s == "-":
             # if a file was explicitly given, we don't care about its extension
             sources.add(p)
         else:
             err(f"invalid path: {s}")
-    if len(sources) == 0:
+    if len(src) == 0:
         if verbose or not quiet:
             out("No paths given. Nothing to do 😴")
         ctx.exit(0)
