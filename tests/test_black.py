@@ -265,6 +265,14 @@ class BlackTestCase(unittest.TestCase):
         black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
+    def test_function_trailing_comma(self) -> None:
+        source, expected = read_data("function_trailing_comma")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+
+    @patch("black.dump_to_file", dump_to_stderr)
     def test_expression(self) -> None:
         source, expected = read_data("expression")
         actual = fs(source)

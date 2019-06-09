@@ -1352,7 +1352,10 @@ class Line:
             bracket_depth = leaf.bracket_depth
             if bracket_depth == depth and leaf.type == token.COMMA:
                 commas += 1
-                if leaf.parent and leaf.parent.type == syms.arglist:
+                if leaf.parent and leaf.parent.type in {
+                    syms.arglist,
+                    syms.typedargslist,
+                }:
                     commas += 1
                     break
 
@@ -2488,9 +2491,13 @@ def bracket_split_build_line(
         if leaves:
             # Since body is a new indent level, remove spurious leading whitespace.
             normalize_prefix(leaves[0], inside_brackets=True)
-            # Ensure a trailing comma for imports, but be careful not to add one after
-            # any comments.
-            if original.is_import:
+            # Ensure a trailing comma for imports and standalone function arguments, but
+            # be careful not to add one after any comments.
+            no_commas = original.is_def and not any(
+                l.type == token.COMMA for l in leaves
+            )
+
+            if original.is_import or no_commas:
                 for i in range(len(leaves) - 1, -1, -1):
                     if leaves[i].type == STANDALONE_COMMENT:
                         continue
