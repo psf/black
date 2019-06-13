@@ -136,24 +136,6 @@ Options:
 * exits with code 0 unless an internal error occurred (or `--check` was
   used).
 
-
-### NOTE: This is a beta product
-
-*Black* is already [successfully used](#used-by) by many projects, small and big.
-It also sports a decent test suite.  However, it is still very new.
-Things will probably be wonky for a while. This is made explicit by the
-"Beta" trove classifier, as well as by the "b" in the version number.
-What this means for you is that **until the formatter becomes stable,
-you should expect some formatting to change in the future**.  That being
-said, no drastic stylistic changes are planned, mostly responses to bug
-reports.
-
-Also, as a temporary safety measure, *Black* will check that the
-reformatted code still produces a valid AST that is equivalent to the
-original.  This slows it down.  If you're feeling confident, use
-``--fast``.
-
-
 ## The *Black* code style
 
 *Black* reformats entire files in place.  It is not configurable.  It
