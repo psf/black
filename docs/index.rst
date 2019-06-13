@@ -16,11 +16,6 @@ can focus on the content instead.
 
 Try it out now using the `Black Playground <https://black.now.sh>`_.
 
-.. note::
-
-   `Black is beta <installation_and_usage.html#note-this-is-a-beta-product>`_.
-
-
 Testimonials
 ------------
 
