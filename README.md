@@ -1009,7 +1009,7 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Change Log
 
-### 19.5b0
+### unreleased
 
 * added `black -c` as a way to format code passed from the command line
   (#761)
@@ -1041,6 +1041,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * *Black* no longer introduces quotes in f-string subexpressions on string
   boundaries (#863)
+
+* if *Black* puts parenthesis around a single expression, it moves comments
+  to the wrapped expression instead of after the brackets (#872)
 
 
 ### 19.3b0
