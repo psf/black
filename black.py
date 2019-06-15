@@ -1282,10 +1282,13 @@ class Line:
         try:
             last_leaf = self.leaves[-1]
             ignored_ids.add(id(last_leaf))
-            if last_leaf.type == token.COMMA:
-                # When trailing commas are inserted by Black for consistency, comments
-                # after the previous last element are not moved (they don't have to,
-                # rendering will still be correct).  So we ignore trailing commas.
+            if last_leaf.type == token.COMMA or (
+                last_leaf.type == token.RPAR and not last_leaf.value
+            ):
+                # When trailing commas or optional parens are inserted by Black for
+                # consistency, comments after the previous last element are not moved
+                # (they don't have to, rendering will still be correct).  So we ignore
+                # trailing commas and invisible.
                 last_leaf = self.leaves[-2]
                 ignored_ids.add(id(last_leaf))
         except IndexError:
@@ -1382,7 +1385,23 @@ class Line:
             comment.prefix = ""
             return False
 
-        self.comments.setdefault(id(self.leaves[-1]), []).append(comment)
+        last_leaf = self.leaves[-1]
+        if (
+            last_leaf.type == token.RPAR
+            and not last_leaf.value
+            and last_leaf.parent
+            and len(list(last_leaf.parent.leaves())) <= 3
+            and not is_type_comment(comment)
+        ):
+            # Comments on an optional parens wrapping a single leaf should belong to
+            # the wrapped node except if it's a type comment. Pinning the comment like
+            # this avoids unstable formatting caused by comment migration.
+            if len(self.leaves) < 2:
+                comment.type = STANDALONE_COMMENT
+                comment.prefix = ""
+                return False
+            last_leaf = self.leaves[-2]
+        self.comments.setdefault(id(last_leaf), []).append(comment)
         return True
 
     def comments_after(self, leaf: Leaf) -> List[Leaf]:
