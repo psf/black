@@ -293,7 +293,7 @@ you are probably already using.  You'd do it like this:
 max-line-length = 80
 ...
 select = C,E,F,W,B,B950
-ignore = E501
+ignore = E501,W503
 ```
 
 You'll find *Black*'s own .flake8 config file is configured like this.
