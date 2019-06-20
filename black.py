@@ -438,7 +438,9 @@ def main(
             # if there is at least 1 py file, move on.
             if len(py_files_in_dir) > 0:
                 sources.update(
-                    gen_python_files_in_dir(p, root, include_regex, exclude_regex, report)
+                    gen_python_files_in_dir(
+                        p, root, include_regex, exclude_regex, report
+                    )
                 )
                 no_python_files = False
         elif p.is_file() or s == "-":
