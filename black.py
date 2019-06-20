@@ -425,23 +425,34 @@ def main(
     except re.error:
         err(f"Invalid regular expression for exclude given: {exclude!r}")
         ctx.exit(2)
+    no_python_files = True
     report = Report(check=check, quiet=quiet, verbose=verbose)
     root = find_project_root(src)
     sources: Set[Path] = set()
     for s in src:
         p = Path(s)
         if p.is_dir():
-            sources.update(
-                gen_python_files_in_dir(p, root, include_regex, exclude_regex, report)
-            )
+            # count the python files contained in the directory
+            py_files_in_dir = list(p.glob("*.py"))
+
+            # if there is at least 1 py file, move on.
+            if len(py_files_in_dir) > 0:
+                sources.update(
+                    gen_python_files_in_dir(p, root, include_regex, exclude_regex, report)
+                )
+                no_python_files = False
         elif p.is_file() or s == "-":
             # if a file was explicitly given, we don't care about its extension
             sources.add(p)
         else:
             err(f"invalid path: {s}")
-    if len(sources) == 0:
+
+    if len(sources) == 0 and no_python_files:
         if verbose or not quiet:
-            out("No paths given. Nothing to do 😴")
+            out("Directories given don't contain python files.")
+            ctx.exit(0)
+    elif len(sources) == 0 and verbose and not quiet:
+        out("No paths given. Nothing to do 😴")
         ctx.exit(0)
 
     if len(sources) == 1:
