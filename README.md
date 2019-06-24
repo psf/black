@@ -798,6 +798,14 @@ the [Python Language Server](https://github.com/palantir/python-language-server)
 
 Use [python-black](https://atom.io/packages/python-black).
 
+### Kakoune 
+
+Add the following hook to your kakrc, then run black with `:format`.
+```
+hook global WinSetOption filetype=python %{
+    set-option window formatcmd 'black -q  -'
+}
+``` 
 
 ### Other editors
 
