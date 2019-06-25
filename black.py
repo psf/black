@@ -1653,7 +1653,7 @@ class LineGenerator(Visitor[Line]):
         if child.type == syms.power and len(child.children) == 3:
             lpar = Leaf(token.LPAR, "(")
             rpar = Leaf(token.RPAR, ")")
-            index = child.remove()
+            index = child.remove() or 0
             node.insert_child(index, Node(syms.atom, [lpar, child, rpar]))
         yield from self.visit_default(node)
 
