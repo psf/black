@@ -4,6 +4,7 @@ _build
 .vscode
 docs/_static/pypi.svg
 .tox
+.idea
 __pycache__
 black.egg-info
 build/

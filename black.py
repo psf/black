@@ -53,6 +53,7 @@ from blib2to3.pgen2.parse import ParseError
 
 __version__ = "19.3b0"
 DEFAULT_LINE_LENGTH = 88
+DEFAULT_IMPORT_MODE = 0
 DEFAULT_EXCLUDES = (
     r"/(\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|_build|buck-out|build|dist)/"
 )
@@ -182,6 +183,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
 @dataclass
 class FileMode:
     target_versions: Set[TargetVersion] = Factory(set)
+    import_mode: int = DEFAULT_IMPORT_MODE
     line_length: int = DEFAULT_LINE_LENGTH
     string_normalization: bool = True
     is_pyi: bool = False
@@ -360,6 +362,14 @@ def read_pyproject_toml(
     is_eager=True,
 )
 @click.option(
+    "--import-mode",
+    default=DEFAULT_IMPORT_MODE,
+    help=(
+        "0-handle imports as usual. Default value\n"
+        "1-skip adding empty line between standalone comment and import\n"
+    ),
+)
+@click.option(
     "--config",
     type=click.Path(
         exists=False, file_okay=True, dir_okay=False, readable=True, allow_dash=False
@@ -370,6 +380,7 @@ def read_pyproject_toml(
 )
 @click.pass_context
 def main(
+    import_mode: int,
     ctx: click.Context,
     code: Optional[str],
     line_length: int,
@@ -406,6 +417,7 @@ def main(
         versions = set()
     mode = FileMode(
         target_versions=versions,
+        import_mode=import_mode,
         line_length=line_length,
         is_pyi=pyi,
         string_normalization=not skip_string_normalization,
@@ -721,7 +733,7 @@ def format_str(src_contents: str, *, mode: FileMode) -> FileContent:
         is_pyi=mode.is_pyi,
         normalize_strings=mode.string_normalization,
     )
-    elt = EmptyLineTracker(is_pyi=mode.is_pyi)
+    elt = EmptyLineTracker(is_pyi=mode.is_pyi, import_mode=mode.import_mode)
     empty_line = Line()
     after = 0
     split_line_features = {
@@ -1464,6 +1476,7 @@ class EmptyLineTracker:
     are consumed by `maybe_empty_lines()` and included in the computation.
     """
 
+    import_mode: int = DEFAULT_IMPORT_MODE
     is_pyi: bool = False
     previous_line: Optional[Line] = None
     previous_after: int = 0
@@ -1504,7 +1517,8 @@ class EmptyLineTracker:
             return self._maybe_empty_lines_for_class_or_def(current_line, before)
 
         if (
-            self.previous_line
+            self.import_mode == 0
+            and self.previous_line
             and self.previous_line.is_import
             and not current_line.is_import
             and depth == self.previous_line.depth
