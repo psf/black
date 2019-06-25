@@ -504,7 +504,7 @@ def reformat_many(
     report: "Report",
 ) -> None:
     """Reformat multiple files using a ProcessPoolExecutor."""
-    loop = asyncio.get_event_loop()
+    loop = cast(asyncio.BaseEventLoop, asyncio.get_event_loop())
     worker_count = os.cpu_count()
     if sys.platform == "win32":
         # Work around https://bugs.python.org/issue26903
