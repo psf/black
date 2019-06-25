@@ -1,5 +1,4 @@
 import asyncio
-from asyncio.base_events import BaseEventLoop
 from concurrent.futures import Executor, ProcessPoolExecutor
 from datetime import datetime
 from enum import Enum
@@ -532,7 +531,7 @@ async def schedule_formatting(
     write_back: WriteBack,
     mode: FileMode,
     report: "Report",
-    loop: BaseEventLoop,
+    loop: asyncio.AbstractEventLoop,
     executor: Executor,
 ) -> None:
     """Run formatting of `sources` in parallel using the provided `executor`.
@@ -3599,7 +3598,7 @@ def cancel(tasks: Iterable[asyncio.Task]) -> None:
         task.cancel()
 
 
-def shutdown(loop: BaseEventLoop) -> None:
+def shutdown(loop: asyncio.AbstractEventLoop) -> None:
     """Cancel all pending tasks on `loop`, wait for them, and close the loop."""
     try:
         if sys.version_info[:2] >= (3, 7):
