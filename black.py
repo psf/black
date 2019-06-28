@@ -538,7 +538,7 @@ async def schedule_formatting(
 
     (Use ProcessPoolExecutors for actual parallelism.)
 
-    `line_length`, `write_back`, `fast`, and `pyi` options are passed to
+    `write_back`, `fast`, and `mode` options are passed to
     :func:`format_file_in_place`.
     """
     cache: Cache = {}
