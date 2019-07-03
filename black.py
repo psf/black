@@ -482,8 +482,11 @@ def reformat_one(
                 res_src = src.resolve()
                 if res_src in cache and cache[res_src] == get_cache_info(res_src):
                     changed = Changed.CACHED
-            if changed is not Changed.CACHED and format_file_in_place(
-                src, fast=fast, write_back=write_back, mode=mode
+            if (
+                changed is not Changed.CACHED
+                and format_file_in_place(
+                    src, fast=fast, write_back=write_back, mode=mode
+                )
             ):
                 changed = Changed.YES
             if (write_back is WriteBack.YES and changed is not Changed.CACHED) or (
@@ -585,8 +588,9 @@ async def schedule_formatting(
                 changed = Changed.YES if task.result() else Changed.NO
                 # If the file was written back or was successfully checked as
                 # well-formatted, store this information in the cache.
-                if write_back is WriteBack.YES or (
-                    write_back is WriteBack.CHECK and changed is Changed.NO
+                if (
+                    write_back is WriteBack.YES
+                    or (write_back is WriteBack.CHECK and changed is Changed.NO)
                 ):
                     sources_to_cache.append(src)
                 report.done(src, changed)
@@ -1281,8 +1285,9 @@ class Line:
         try:
             last_leaf = self.leaves[-1]
             ignored_ids.add(id(last_leaf))
-            if last_leaf.type == token.COMMA or (
-                last_leaf.type == token.RPAR and not last_leaf.value
+            if (
+                last_leaf.type == token.COMMA
+                or (last_leaf.type == token.RPAR and not last_leaf.value)
             ):
                 # When trailing commas or optional parens are inserted by Black for
                 # consistency, comments after the previous last element are not moved
@@ -1429,8 +1434,9 @@ class Line:
 
             if subscript_start.type == syms.subscriptlist:
                 subscript_start = child_towards(subscript_start, leaf)
-        return subscript_start is not None and any(
-            n.type in TEST_DESCENDANTS for n in subscript_start.pre_order()
+        return (
+            subscript_start is not None
+            and any(n.type in TEST_DESCENDANTS for n in subscript_start.pre_order())
         )
 
     def __str__(self) -> str:
@@ -1531,8 +1537,9 @@ class EmptyLineTracker:
         if self.previous_line.is_decorator:
             return 0, 0
 
-        if self.previous_line.depth < current_line.depth and (
-            self.previous_line.is_class or self.previous_line.is_def
+        if (
+            self.previous_line.depth < current_line.depth
+            and (self.previous_line.is_class or self.previous_line.is_def)
         ):
             return 0, 0
 
@@ -2524,8 +2531,8 @@ def bracket_split_build_line(
             normalize_prefix(leaves[0], inside_brackets=True)
             # Ensure a trailing comma for imports and standalone function arguments, but
             # be careful not to add one after any comments.
-            no_commas = original.is_def and not any(
-                l.type == token.COMMA for l in leaves
+            no_commas = (
+                original.is_def and not any(l.type == token.COMMA for l in leaves)
             )
 
             if original.is_import or no_commas:
@@ -3791,8 +3798,7 @@ def can_omit_invisible_parens(line: Line, line_length: int) -> bool:
         # opening bracket doesn't match our rule, maybe the closing will.
 
     if (
-        last.type == token.RPAR
-        or last.type == token.RBRACE
+        last.type == token.RBRACE
         or (
             # don't use indexing for omitting optional parentheses;
             # it looks weird

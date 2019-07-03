@@ -154,7 +154,8 @@ class C:
             "in one line because it's too long"
         )
 
-        dis_c_instance_method = """\
+        dis_c_instance_method = (
+            """\
         %3d           0 LOAD_FAST                1 (x)
                       2 LOAD_CONST               1 (1)
                       4 COMPARE_OP               2 (==)
@@ -162,8 +163,8 @@ class C:
                       8 STORE_ATTR               0 (x)
                      10 LOAD_CONST               0 (None)
                      12 RETURN_VALUE
-        """ % (
-            _C.__init__.__code__.co_firstlineno + 1,
+        """
+            % (_C.__init__.__code__.co_firstlineno + 1,)
         )
 
         assert expectedexpectedexpectedexpectedexpectedexpectedexpectedexpectedexpect == {
