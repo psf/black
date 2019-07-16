@@ -1,5 +1,6 @@
 import asyncio
 from concurrent.futures import Executor, ProcessPoolExecutor
+from contextlib import contextmanager
 from datetime import datetime
 from enum import Enum
 from functools import lru_cache, partial, wraps
@@ -523,6 +524,7 @@ def reformat_many(
         )
     finally:
         shutdown(loop)
+        executor.shutdown()
 
 
 async def schedule_formatting(
@@ -628,9 +630,8 @@ def format_file_in_place(
         src_name = f"{src}\t{then} +0000"
         dst_name = f"{src}\t{now} +0000"
         diff_contents = diff(src_contents, dst_contents, src_name, dst_name)
-        if lock:
-            lock.acquire()
-        try:
+
+        with lock or nullcontext():
             f = io.TextIOWrapper(
                 sys.stdout.buffer,
                 encoding=encoding,
@@ -639,9 +640,7 @@ def format_file_in_place(
             )
             f.write(diff_contents)
             f.detach()
-        finally:
-            if lock:
-                lock.release()
+
     return True
 
 
@@ -3591,6 +3590,13 @@ def dump_to_file(*output: str) -> str:
             if lines and lines[-1] != "\n":
                 f.write("\n")
     return f.name
+
+
+@contextmanager
+def nullcontext():
+    """Return context manager that does nothing.
+    Similar to `nullcontext` from python 3.7"""
+    yield
 
 
 def diff(a: str, b: str, a_name: str, b_name: str) -> str:
