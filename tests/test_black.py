@@ -1355,6 +1355,8 @@ class BlackTestCase(unittest.TestCase):
         path = THIS_DIR / "data" / "include_exclude_tests"
         include = re.compile(r"\.pyi?$")
         exclude = re.compile(r"/exclude/|/\.definitely_exclude/")
+        check_shebang = False
+        empty = re.compile(r"")
         report = black.Report()
         sources: List[Path] = []
         expected = [
@@ -1363,12 +1365,15 @@ class BlackTestCase(unittest.TestCase):
         ]
         this_abs = THIS_DIR.resolve()
         sources.extend(
-            black.gen_python_files_in_dir(path, this_abs, include, exclude, report)
+            black.gen_python_files_in_dir(
+                path, this_abs, include, exclude, check_shebang, empty, report
+            )
         )
         self.assertEqual(sorted(expected), sorted(sources))
 
     def test_empty_include(self) -> None:
         path = THIS_DIR / "data" / "include_exclude_tests"
+        check_shebang = False
         report = black.Report()
         empty = re.compile(r"")
         sources: List[Path] = []
@@ -1386,13 +1391,20 @@ class BlackTestCase(unittest.TestCase):
         this_abs = THIS_DIR.resolve()
         sources.extend(
             black.gen_python_files_in_dir(
-                path, this_abs, empty, re.compile(black.DEFAULT_EXCLUDES), report
+                path,
+                this_abs,
+                empty,
+                re.compile(black.DEFAULT_EXCLUDES),
+                check_shebang,
+                empty,
+                report,
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))
 
     def test_empty_exclude(self) -> None:
         path = THIS_DIR / "data" / "include_exclude_tests"
+        check_shebang = False
         report = black.Report()
         empty = re.compile(r"")
         sources: List[Path] = []
@@ -1407,7 +1419,13 @@ class BlackTestCase(unittest.TestCase):
         this_abs = THIS_DIR.resolve()
         sources.extend(
             black.gen_python_files_in_dir(
-                path, this_abs, re.compile(black.DEFAULT_INCLUDES), empty, report
+                path,
+                this_abs,
+                re.compile(black.DEFAULT_INCLUDES),
+                empty,
+                check_shebang,
+                empty,
+                report,
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))
@@ -1415,6 +1433,38 @@ class BlackTestCase(unittest.TestCase):
     def test_invalid_include_exclude(self) -> None:
         for option in ["--include", "--exclude"]:
             self.invokeBlack(["-", option, "**()(!!*)"], exit_code=2)
+
+    def test_check_shebang(self) -> None:
+        test_path = THIS_DIR / "data" / "shebang_tests"
+        empty_config = ["--config", str(THIS_DIR / "empty.toml")]
+        runner = BlackRunner()
+
+        runner.invoke(
+            black.main, ["--check", "--check-shebang", str(test_path)] + empty_config
+        )
+        output = runner.stderr_bytes.decode()
+
+        self.assertIn(str(test_path / "default_shebang"), output)
+        self.assertNotIn(str(test_path / "decoding_error"), output)
+        self.assertIn("\n1 file would be reformatted", output)
+
+    def test_custom_shebang_regex(self) -> None:
+        test_path = THIS_DIR / "data" / "shebang_tests"
+        empty_config = ["--config", str(THIS_DIR / "empty.toml")]
+        runner = BlackRunner()
+
+        runner.invoke(
+            black.main,
+            ["--check", "--check-shebang", "--shebang", "^#!.*python", str(test_path)]
+            + empty_config,
+        )
+        output = runner.stderr_bytes.decode()
+
+        self.assertIn(str(test_path / "default_shebang"), output)
+        self.assertIn(str(test_path / "custom_shebang"), output)
+        self.assertNotIn(str(test_path / "too_long_shebang"), output)
+        self.assertNotIn(str(test_path / "decoding_error"), output)
+        self.assertIn("\n2 files would be reformatted", output)
 
     def test_preserves_line_endings(self) -> None:
         with TemporaryDirectory() as workspace:
@@ -1451,6 +1501,8 @@ class BlackTestCase(unittest.TestCase):
         child = MagicMock()
         include = re.compile(black.DEFAULT_INCLUDES)
         exclude = re.compile(black.DEFAULT_EXCLUDES)
+        check_shebang = False
+        shebang = re.compile(black.DEFAULT_SHEBANGS)
         report = black.Report()
         # `child` should behave like a symlink which resolved path is clearly
         # outside of the `root` directory.
@@ -1458,7 +1510,11 @@ class BlackTestCase(unittest.TestCase):
         child.resolve.return_value = Path("/a/b/c")
         child.is_symlink.return_value = True
         try:
-            list(black.gen_python_files_in_dir(path, root, include, exclude, report))
+            list(
+                black.gen_python_files_in_dir(
+                    path, root, include, exclude, check_shebang, shebang, report
+                )
+            )
         except ValueError as ve:
             self.fail(f"`get_python_files_in_dir()` failed: {ve}")
         path.iterdir.assert_called_once()
@@ -1468,7 +1524,11 @@ class BlackTestCase(unittest.TestCase):
         # outside of the `root` directory.
         child.is_symlink.return_value = False
         with self.assertRaises(ValueError):
-            list(black.gen_python_files_in_dir(path, root, include, exclude, report))
+            list(
+                black.gen_python_files_in_dir(
+                    path, root, include, exclude, check_shebang, shebang, report
+                )
+            )
         path.iterdir.assert_called()
         self.assertEqual(path.iterdir.call_count, 2)
         child.resolve.assert_called()

@@ -1,0 +1,2 @@
+#!/my/ultra/long/path/to/custom/interpreter/that/exceeds/the/default/shebang/length/defined/in/linux/kernel/at/compile/time/python
+''

@@ -117,6 +117,16 @@ Options:
                                   later.  [default: /(\.eggs|\.git|\.hg|\.mypy
                                   _cache|\.nox|\.tox|\.venv|_build|buck-
                                   out|build|dist)/]
+  --check-shebang                 Whether or not to perform shebang check in
+                                  order to discover python files.  The regex
+                                  can be overridden with --shebang option.
+                                  This might be slow with large number of
+                                  files in the directories to check.
+                                  Exclusions still apply.
+  --shebang TEXT                  A regular expression that will be matched to
+                                  the first line of each file in provided
+                                  directories.  [default: ^#!/usr/bin/env
+                                  python]
   -q, --quiet                     Don't emit non-error messages to stderr.
                                   Errors are still emitted, silence those with
                                   2>/dev/null.

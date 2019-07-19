@@ -58,8 +58,8 @@ DEFAULT_EXCLUDES = (
     r"/(\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|_build|buck-out|build|dist)/"
 )
 DEFAULT_INCLUDES = r"\.pyi?$"
+DEFAULT_SHEBANGS = r"^#!/usr/bin/env python"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
-
 
 # types
 FileContent = str
@@ -338,6 +338,25 @@ def read_pyproject_toml(
     show_default=True,
 )
 @click.option(
+    "--check-shebang",
+    is_flag=True,
+    help=(
+        "Whether or not to perform shebang check in order to discover python files.  "
+        "The regex can be overridden with --shebang option.  This might be slow with "
+        "large number of files in the directories to check.  Exclusions still apply."
+    ),
+)
+@click.option(
+    "--shebang",
+    type=str,
+    default=DEFAULT_SHEBANGS,
+    help=(
+        "A regular expression that will be matched to the first line of each file in "
+        "provided directories."
+    ),
+    show_default=True,
+)
+@click.option(
     "-q",
     "--quiet",
     is_flag=True,
@@ -389,6 +408,8 @@ def main(
     verbose: bool,
     include: str,
     exclude: str,
+    check_shebang: bool,
+    shebang: str,
     src: Tuple[str],
     config: Optional[str],
 ) -> None:
@@ -420,16 +441,18 @@ def main(
     if code is not None:
         print(format_str(code, mode=mode))
         ctx.exit(0)
-    try:
-        include_regex = re_compile_maybe_verbose(include)
-    except re.error:
-        err(f"Invalid regular expression for include given: {include!r}")
-        ctx.exit(2)
-    try:
-        exclude_regex = re_compile_maybe_verbose(exclude)
-    except re.error:
-        err(f"Invalid regular expression for exclude given: {exclude!r}")
-        ctx.exit(2)
+
+    def get_regex(raw_string: str, name: str) -> Pattern[str]:
+        try:
+            return re_compile_maybe_verbose(raw_string)
+        except re.error:
+            err(f"Invalid regular expression for {name} given: {raw_string!r}")
+            ctx.exit(2)
+
+    include_regex = get_regex(include, "include")
+    exclude_regex = get_regex(exclude, "exclude")
+    shebang_regex = get_regex(shebang, "shebang")
+
     report = Report(check=check, quiet=quiet, verbose=verbose)
     root = find_project_root(src)
     sources: Set[Path] = set()
@@ -438,7 +461,15 @@ def main(
         p = Path(s)
         if p.is_dir():
             sources.update(
-                gen_python_files_in_dir(p, root, include_regex, exclude_regex, report)
+                gen_python_files_in_dir(
+                    p,
+                    root,
+                    include_regex,
+                    exclude_regex,
+                    check_shebang,
+                    shebang_regex,
+                    report,
+                )
             )
         elif p.is_file() or s == "-":
             # if a file was explicitly given, we don't care about its extension
@@ -3406,15 +3437,31 @@ def get_future_imports(node: Node) -> Set[str]:
     return imports
 
 
+def matches_shebang(path: Path, shebang: Pattern[str]) -> bool:
+    """Return True if shebang of file in `path` matches `shebang` regex."""
+    max_shebang_length = 127  # default value in Linux kernel
+    try:
+        with open(path) as f:
+            first_line = f.readline(max_shebang_length)
+    except UnicodeDecodeError:
+        return False
+
+    return bool(shebang.match(first_line))
+
+
 def gen_python_files_in_dir(
     path: Path,
     root: Path,
     include: Pattern[str],
     exclude: Pattern[str],
+    check_shebang: bool,
+    shebang: Pattern[str],
     report: "Report",
 ) -> Iterator[Path]:
     """Generate all files under `path` whose paths are not excluded by the
-    `exclude` regex, but are included by the `include` regex.
+    `exclude` regex, but are included by the `include` regex. When
+    `check_shebang` is True, also include files that match the requested
+     `shebang` regex.
 
     Symbolic links pointing outside of the `root` directory are ignored.
 
@@ -3441,11 +3488,13 @@ def gen_python_files_in_dir(
             continue
 
         if child.is_dir():
-            yield from gen_python_files_in_dir(child, root, include, exclude, report)
+            yield from gen_python_files_in_dir(
+                child, root, include, exclude, check_shebang, shebang, report
+            )
 
         elif child.is_file():
             include_match = include.search(normalized_path)
-            if include_match:
+            if include_match or check_shebang and matches_shebang(child, shebang):
                 yield child
 
 
