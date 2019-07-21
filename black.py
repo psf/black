@@ -3443,7 +3443,7 @@ def matches_shebang(path: Path, shebang: Pattern[str]) -> bool:
     try:
         with open(path) as f:
             first_line = f.readline(max_shebang_length)
-    except UnicodeDecodeError:
+    except (UnicodeDecodeError, OSError):
         return False
 
     return bool(shebang.match(first_line))

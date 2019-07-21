@@ -1466,6 +1466,14 @@ class BlackTestCase(unittest.TestCase):
         self.assertNotIn(str(test_path / "decoding_error"), output)
         self.assertIn("\n2 files would be reformatted", output)
 
+    def test_matches_shebang_handles_os_errors(self) -> None:
+        raising_mock = MagicMock(side_effect=PermissionError)
+
+        with patch("builtins.open", raising_mock):
+            self.assertFalse(
+                black.matches_shebang(THIS_DIR / "some_file", re.compile(""))
+            )
+
     def test_preserves_line_endings(self) -> None:
         with TemporaryDirectory() as workspace:
             test_file = Path(workspace) / "test.py"
