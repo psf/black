@@ -280,6 +280,16 @@ class BlackTestCase(unittest.TestCase):
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, black.FileMode())
 
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_pep_572(self) -> None:
+        source, expected = read_data("pep_572")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_stable(source, actual, black.FileMode())
+        major, minor = sys.version_info[:2]
+        if major >= 3 and minor >= 8:
+            black.assert_equivalent(source, actual)
+
     def test_expression_ff(self) -> None:
         source, expected = read_data("expression")
         tmp_file = Path(black.dump_to_file(source))
