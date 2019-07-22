@@ -161,7 +161,7 @@ html_theme_options = {
     "show_related": False,
     "description": "“Any color you like.”",
     "github_button": True,
-    "github_user": "python",
+    "github_user": "psf",
     "github_repo": "black",
     "github_type": "star",
     "show_powered_by": True,

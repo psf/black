@@ -6,4 +6,4 @@ dependencies:
 - Sphinx==1.7.2
 - pip:
   - recommonmark==0.4.0
-  - git+https://git@github.com/python/black.git
+  - git+https://git@github.com/psf/black.git
