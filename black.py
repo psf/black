@@ -2863,6 +2863,8 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
             check_lpar = True
 
         if check_lpar:
+            if is_walrus_assignment(child):
+                continue
             if child.type == syms.atom:
                 if maybe_make_parens_invisible_in_atom(child, parent=node):
                     lpar = Leaf(token.LPAR, "")
@@ -3017,18 +3019,24 @@ def is_empty_tuple(node: LN) -> bool:
     )
 
 
+def unwrap_singleton_parenthesis(node: LN) -> Optional[LN]:
+    """Returns `wrapped` if `node` is of the shape ( wrapped ).
+
+    Parenthesis can be optional. Returns None otherwise"""
+    if len(node.children) != 3:
+        return None
+    lpar, wrapped, rpar = node.children
+    if not (lpar.type == token.LPAR and rpar.type == token.RPAR):
+        return None
+
+    return wrapped
+
+
 def is_one_tuple(node: LN) -> bool:
     """Return True if `node` holds a tuple with one element, with or without parens."""
     if node.type == syms.atom:
-        if len(node.children) != 3:
-            return False
-
-        lpar, gexp, rpar = node.children
-        if not (
-            lpar.type == token.LPAR
-            and gexp.type == syms.testlist_gexp
-            and rpar.type == token.RPAR
-        ):
+        gexp = unwrap_singleton_parenthesis(node)
+        if gexp is None or gexp.type != syms.testlist_gexp:
             return False
 
         return len(gexp.children) == 2 and gexp.children[1].type == token.COMMA
@@ -3038,6 +3046,12 @@ def is_one_tuple(node: LN) -> bool:
         and len(node.children) == 2
         and node.children[1].type == token.COMMA
     )
+
+
+def is_walrus_assignment(node: LN) -> bool:
+    """Return True iff `node` is of the shape ( test := test )"""
+    inner = unwrap_singleton_parenthesis(node)
+    return inner is not None and inner.type == syms.namedexpr_test
 
 
 def is_yield(node: LN) -> bool:

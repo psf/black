@@ -5,7 +5,7 @@ if (match := pattern.search(data)) is None:
 [y := f(x), y ** 2, y ** 3]
 filtered_data = [y for x in data if (y := f(x)) is None]
 (y := f(x))
-y0 = y1 := f(x)
+y0 = (y1 := f(x))
 foo(x=(y := f(x)))
 
 
@@ -21,7 +21,7 @@ lambda: (x := 1)
 (x := lambda: 1)
 (x := lambda: (y := 1))
 lambda line: (m := re.match(pattern, line)) and m.group(1)
-x = y := 0
+x = (y := 0)
 (z := (y := (x := 0)))
 (info := (name, phone, *rest))
 (x := 1, 2)
