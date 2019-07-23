@@ -49,5 +49,5 @@ deploy:
   skip_cleanup: true
   on:
     condition: $TRAVIS_PYTHON_VERSION == '3.6'
-    repo: python/black
+    repo: psf/black
     tags: true
