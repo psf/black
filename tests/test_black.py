@@ -286,8 +286,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_stable(source, actual, black.FileMode())
-        major, minor = sys.version_info[:2]
-        if major > 3 or major == 3 and minor >= 8:
+        if sys.version_info >= (3, 8):
             black.assert_equivalent(source, actual)
 
     def test_expression_ff(self) -> None:

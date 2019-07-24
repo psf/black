@@ -3495,25 +3495,37 @@ class Report:
 
 
 def parse_ast(src: str) -> Union[ast.AST, ast3.AST, ast27.AST]:
-    major, minor = sys.version_info[:2]
-    # TODO: support Python4+ ;)
-    if major == 3 and minor >= 8:
-        for minor_version in range(minor, 4, -1):
+    filename = "<unknown>"
+    if sys.version_info >= (3, 8):
+        # TODO: support Python 4+ ;)
+        for minor_version in range(sys.version_info[1], 4, -1):
             try:
-                # TODO: no typeshed for py3.8 `ast` yet
-                return ast.parse(  # type: ignore
-                    src, feature_version=(3, minor_version), type_comments=True
-                )
+                return ast.parse(src, filename, feature_version=(3, minor_version))
             except SyntaxError:
                 continue
     else:
         for feature_version in (7, 6):
             try:
-                return ast3.parse(src, feature_version=feature_version)
+                return ast3.parse(src, filename, feature_version=feature_version)
             except SyntaxError:
                 continue
 
     return ast27.parse(src)
+
+
+def _fixup_ast_constants(
+    node: Union[ast.AST, ast3.AST, ast27.AST]
+) -> Union[ast.AST, ast3.AST, ast27.AST]:
+    """Map ast nodes deprecated in 3.8 to Constant."""
+    # casts are required until this is released:
+    # https://github.com/python/typeshed/pull/3142
+    if isinstance(node, (ast.Str, ast3.Str, ast27.Str, ast.Bytes, ast3.Bytes)):
+        return cast(ast.AST, ast.Constant(value=node.s))
+    elif isinstance(node, (ast.Num, ast3.Num, ast27.Num)):
+        return cast(ast.AST, ast.Constant(value=node.n))
+    elif isinstance(node, (ast.NameConstant, ast3.NameConstant)):
+        return cast(ast.AST, ast.Constant(value=node.value))
+    return node
 
 
 def assert_equivalent(src: str, dst: str) -> None:
@@ -3521,16 +3533,15 @@ def assert_equivalent(src: str, dst: str) -> None:
 
     def _v(node: Union[ast.AST, ast3.AST, ast27.AST], depth: int = 0) -> Iterator[str]:
         """Simple visitor generating strings to compare ASTs by content."""
+
+        node = _fixup_ast_constants(node)
+
         yield f"{'  ' * depth}{node.__class__.__name__}("
 
         for field in sorted(node._fields):
             # TypeIgnore has only one field 'lineno' which breaks this comparison
-            if isinstance(node, (ast3.TypeIgnore, ast27.TypeIgnore)):
+            if isinstance(node, (ast.TypeIgnore, ast3.TypeIgnore, ast27.TypeIgnore)):
                 break
-
-            # Ignore str kind which is case sensitive / and ignores unicode_literals
-            if isinstance(node, (ast3.Str, ast27.Str, ast3.Bytes)) and field == "kind":
-                continue
 
             try:
                 value = getattr(node, field)
@@ -3545,15 +3556,15 @@ def assert_equivalent(src: str, dst: str) -> None:
                     # parentheses and they change the AST.
                     if (
                         field == "targets"
-                        and isinstance(node, (ast3.Delete, ast27.Delete))
-                        and isinstance(item, (ast3.Tuple, ast27.Tuple))
+                        and isinstance(node, (ast.Delete, ast3.Delete, ast27.Delete))
+                        and isinstance(item, (ast.Tuple, ast3.Tuple, ast27.Tuple))
                     ):
                         for item in item.elts:
                             yield from _v(item, depth + 2)
-                    elif isinstance(item, (ast3.AST, ast27.AST)):
+                    elif isinstance(item, (ast.AST, ast3.AST, ast27.AST)):
                         yield from _v(item, depth + 2)
 
-            elif isinstance(value, (ast3.AST, ast27.AST)):
+            elif isinstance(value, (ast.AST, ast3.AST, ast27.AST)):
                 yield from _v(value, depth + 2)
 
             else:
