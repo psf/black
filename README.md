@@ -730,13 +730,13 @@ Configuration:
 To install with [vim-plug](https://github.com/junegunn/vim-plug):
 
 ```
-Plug 'python/black'
+Plug 'psf/black'
 ```
 
 or with [Vundle](https://github.com/VundleVim/Vundle.vim):
 
 ```
-Plugin 'python/black'
+Plugin 'psf/black'
 ```
 
 or you can copy the plugin from [plugin/black.vim](https://github.com/psf/black/tree/master/plugin/black.vim).
