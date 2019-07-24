@@ -287,9 +287,8 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         black.assert_stable(source, actual, black.FileMode())
         major, minor = sys.version_info[:2]
-        # TODO: typed_ast doesn't support python 3.8
-        # if major >= 3 and minor >= 8:
-        #     black.assert_equivalent(source, actual)
+        if major > 3 or major == 3 and minor >= 8:
+            black.assert_equivalent(source, actual)
 
     def test_expression_ff(self) -> None:
         source, expected = read_data("expression")

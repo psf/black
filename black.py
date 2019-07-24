@@ -1,3 +1,4 @@
+import ast
 import asyncio
 from concurrent.futures import Executor, ProcessPoolExecutor
 from contextlib import contextmanager
@@ -3493,12 +3494,24 @@ class Report:
         return ", ".join(report) + "."
 
 
-def parse_ast(src: str) -> Union[ast3.AST, ast27.AST]:
-    for feature_version in (7, 6):
-        try:
-            return ast3.parse(src, feature_version=feature_version)
-        except SyntaxError:
-            continue
+def parse_ast(src: str) -> Union[ast.AST, ast3.AST, ast27.AST]:
+    major, minor = sys.version_info[:2]
+    # TODO: support Python4+ ;)
+    if major == 3 and minor >= 8:
+        for minor_version in range(minor, 4, -1):
+            try:
+                # TODO: no typeshed for py3.8 `ast` yet
+                return ast.parse(  # type: ignore
+                    src, feature_version=(3, minor_version), type_comments=True
+                )
+            except SyntaxError:
+                continue
+    else:
+        for feature_version in (7, 6):
+            try:
+                return ast3.parse(src, feature_version=feature_version)
+            except SyntaxError:
+                continue
 
     return ast27.parse(src)
 
@@ -3506,7 +3519,7 @@ def parse_ast(src: str) -> Union[ast3.AST, ast27.AST]:
 def assert_equivalent(src: str, dst: str) -> None:
     """Raise AssertionError if `src` and `dst` aren't equivalent."""
 
-    def _v(node: Union[ast3.AST, ast27.AST], depth: int = 0) -> Iterator[str]:
+    def _v(node: Union[ast.AST, ast3.AST, ast27.AST], depth: int = 0) -> Iterator[str]:
         """Simple visitor generating strings to compare ASTs by content."""
         yield f"{'  ' * depth}{node.__class__.__name__}("
 
