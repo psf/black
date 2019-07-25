@@ -740,6 +740,12 @@ Plugin 'psf/black'
 ```
 
 or you can copy the plugin from [plugin/black.vim](https://github.com/psf/black/tree/master/plugin/black.vim).
+
+```
+mkdir -p ~/.vim/pack/python/start/black/plugin
+curl https://raw.githubusercontent.com/psf/black/master/plugin/black.vim -o ~/.vim/pack/python/start/black/plugin/black.vim
+```
+
 Let me know if this requires any changes to work with Vim 8's builtin
 `packadd`, or Pathogen, and so on.
 
@@ -760,6 +766,12 @@ To run *Black* on save, add the following line to `.vimrc` or `init.vim`:
 
 ```
 autocmd BufWritePre *.py execute ':Black'
+```
+
+To run *Black* on a key press (e.g. F9 below), add this:
+
+```
+nnoremap <F9> :Black<CR>
 ```
 
 **How to get Vim with Python 3.6?**
