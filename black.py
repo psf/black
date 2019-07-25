@@ -3540,7 +3540,10 @@ def assert_equivalent(src: str, dst: str) -> None:
 
         for field in sorted(node._fields):
             # TypeIgnore has only one field 'lineno' which breaks this comparison
-            if isinstance(node, (ast.TypeIgnore, ast3.TypeIgnore, ast27.TypeIgnore)):
+            type_ignore_classes = (ast3.TypeIgnore, ast27.TypeIgnore)
+            if sys.version_info >= (3, 8):
+                type_ignore_classes += (ast.TypeIgnore,)
+            if isinstance(node, type_ignore_classes):
                 break
 
             try:
