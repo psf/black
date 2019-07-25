@@ -328,6 +328,24 @@ class BlackTestCase(unittest.TestCase):
         black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
+    def test_pep_570(self) -> None:
+        source, expected = read_data("pep_570")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_stable(source, actual, black.FileMode())
+        # TODO: enable after https://github.com/psf/black/pull/935 is merged
+        # if sys.version_info >= (3, 8):
+        #     black.assert_equivalent(source, actual)
+
+    def test_detect_pos_only_arguments(self) -> None:
+        source, _ = read_data("pep_570")
+        root = black.lib2to3_parse(source)
+        features = black.get_features_used(root)
+        self.assertIn(black.Feature.POS_ONLY_ARGUMENTS, features)
+        versions = black.detect_target_versions(root)
+        self.assertIn(black.TargetVersion.PY38, versions)
+
+    @patch("black.dump_to_file", dump_to_stderr)
     def test_string_quotes(self) -> None:
         source, expected = read_data("string_quotes")
         actual = fs(source)
