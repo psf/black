@@ -13,20 +13,20 @@ A clear and concise description of what the bug is.
 **To Reproduce**
 Steps to reproduce the behavior:
 1. Take this file '...'
-2. Run black on it with these arguments '....'
+2. Run *Black* on it with these arguments '....'
 3. See error
 
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
 **Environment (please complete the following information):**
-- Version [e.g. master]
+- Version: [e.g. master]
 - OS and Python version: [e.g. Linux/Python 3.7.4rc1]
 
 **Does this bug also happen on master?**
 To answer this, you have two options:
 1. Use the online formatter at https://black.now.sh/?version=master, which will use the latest master branch.
-2. Or run black on your machine:
+2. Or run *Black* on your machine:
     * create a new virtualenv (make sure it's the same Python version);
     * clone this repository;
     * run `pip install -e .`;
