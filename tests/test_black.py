@@ -236,7 +236,7 @@ class BlackTestCase(unittest.TestCase):
         )
         self.assertEqual(result.exit_code, 0)
         actual = diff_header.sub("[Deterministic header]", result.output)
-        actual = actual.rstrip() + "\n"  # the diff output has a trailing space
+        actual = "{}\n".format(actual.rstrip())  # the diff output has a trailing space
         self.assertEqual(expected, actual)
 
     @patch("black.dump_to_file", dump_to_stderr)
@@ -309,7 +309,7 @@ class BlackTestCase(unittest.TestCase):
             os.unlink(tmp_file)
         actual = result.output
         actual = diff_header.sub("[Deterministic header]", actual)
-        actual = actual.rstrip() + "\n"  # the diff output has a trailing space
+        actual = "{}\n".format(actual.rstrip())  # the diff output has a trailing space
         if expected != actual:
             dump = black.dump_to_file(actual)
             msg = (
