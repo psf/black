@@ -36,6 +36,5 @@ if env_base := os.environ.get("PYTHONUSERBASE", None):
 if self._is_special and (ans := self._check_nans(context=context)):
     return ans
 foo(b := 2, a=1)
-foo(b := 2, a=1)
 foo((b := 2), a=1)
 foo(c=(b := 2), a=1)
