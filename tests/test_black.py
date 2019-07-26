@@ -289,6 +289,14 @@ class BlackTestCase(unittest.TestCase):
         if sys.version_info >= (3, 8):
             black.assert_equivalent(source, actual)
 
+    def test_pep_572_version_detection(self) -> None:
+        source, _ = read_data("pep_572")
+        root = black.lib2to3_parse(source)
+        features = black.get_features_used(root)
+        self.assertIn(black.Feature.ASSIGNMENT_EXPRESSIONS, features)
+        versions = black.detect_target_versions(root)
+        self.assertIn(black.TargetVersion.PY38, versions)
+
     def test_expression_ff(self) -> None:
         source, expected = read_data("expression")
         tmp_file = Path(black.dump_to_file(source))

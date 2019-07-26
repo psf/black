@@ -142,6 +142,7 @@ class Feature(Enum):
     # set for every version of python.
     ASYNC_IDENTIFIERS = 6
     ASYNC_KEYWORDS = 7
+    ASSIGNMENT_EXPRESSIONS = 8
 
 
 VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
@@ -176,6 +177,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.TRAILING_COMMA_IN_CALL,
         Feature.TRAILING_COMMA_IN_DEF,
         Feature.ASYNC_KEYWORDS,
+        Feature.ASSIGNMENT_EXPRESSIONS,
     },
 }
 
@@ -3212,6 +3214,9 @@ def get_features_used(node: Node) -> Set[Feature]:
         elif n.type == token.NUMBER:
             if "_" in n.value:  # type: ignore
                 features.add(Feature.NUMERIC_UNDERSCORES)
+
+        elif n.type == token.COLONEQUAL:
+            features.add(Feature.ASSIGNMENT_EXPRESSIONS)
 
         elif (
             n.type in {syms.typedargslist, syms.arglist}
