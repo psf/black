@@ -350,9 +350,8 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_stable(source, actual, black.FileMode())
-        # TODO: enable after https://github.com/psf/black/pull/935 is merged
-        # if sys.version_info >= (3, 8):
-        #     black.assert_equivalent(source, actual)
+        if sys.version_info >= (3, 8):
+            black.assert_equivalent(source, actual)
 
     def test_detect_pos_only_arguments(self) -> None:
         source, _ = read_data("pep_570")
