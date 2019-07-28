@@ -143,6 +143,7 @@ class Feature(Enum):
     ASYNC_IDENTIFIERS = 6
     ASYNC_KEYWORDS = 7
     ASSIGNMENT_EXPRESSIONS = 8
+    POS_ONLY_ARGUMENTS = 9
 
 
 VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
@@ -178,6 +179,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.TRAILING_COMMA_IN_DEF,
         Feature.ASYNC_KEYWORDS,
         Feature.ASSIGNMENT_EXPRESSIONS,
+        Feature.POS_ONLY_ARGUMENTS,
     },
 }
 
@@ -935,6 +937,7 @@ MATH_OPERATORS = {
     token.DOUBLESTAR,
 }
 STARS = {token.STAR, token.DOUBLESTAR}
+VARARGS_SPECIALS = STARS | {token.SLASH}
 VARARGS_PARENTS = {
     syms.arglist,
     syms.argument,  # double star in arglist
@@ -1847,7 +1850,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
                     # that, too.
                     return prevp.prefix
 
-        elif prevp.type in STARS:
+        elif prevp.type in VARARGS_SPECIALS:
             if is_vararg(prevp, within=VARARGS_PARENTS | UNPACKING_PARENTS):
                 return NO
 
@@ -1937,7 +1940,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
             if not prevp or prevp.type == token.LPAR:
                 return NO
 
-        elif prev.type in {token.EQUAL} | STARS:
+        elif prev.type in {token.EQUAL} | VARARGS_SPECIALS:
             return NO
 
     elif p.type == syms.decorator:
@@ -3086,7 +3089,7 @@ def is_vararg(leaf: Leaf, within: Set[NodeType]) -> bool:
     extended iterable unpacking (PEP 3132) and additional unpacking
     generalizations (PEP 448).
     """
-    if leaf.type not in STARS or not leaf.parent:
+    if leaf.type not in VARARGS_SPECIALS or not leaf.parent:
         return False
 
     p = leaf.parent
@@ -3201,8 +3204,9 @@ def get_features_used(node: Node) -> Set[Feature]:
 
     Currently looking for:
     - f-strings;
-    - underscores in numeric literals; and
-    - trailing commas after * or ** in function signatures and calls.
+    - underscores in numeric literals;
+    - trailing commas after * or ** in function signatures and calls;
+    - positional only arguments in function signatures and lambdas;
     """
     features: Set[Feature] = set()
     for n in node.pre_order():
@@ -3214,6 +3218,10 @@ def get_features_used(node: Node) -> Set[Feature]:
         elif n.type == token.NUMBER:
             if "_" in n.value:  # type: ignore
                 features.add(Feature.NUMERIC_UNDERSCORES)
+
+        elif n.type == token.SLASH:
+            if n.parent and n.parent.type in {syms.typedargslist, syms.arglist}:
+                features.add(Feature.POS_ONLY_ARGUMENTS)
 
         elif n.type == token.COLONEQUAL:
             features.add(Feature.ASSIGNMENT_EXPRESSIONS)
