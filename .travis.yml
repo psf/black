@@ -33,10 +33,6 @@ matrix:
       python: 3.7
     - name: "3.8-dev"
       python: 3.8-dev
-  # aiohttp currently has a bug affecting 3.8
-  allow_failures:
-    - name: "3.8-dev"
-      python: 3.8-dev
 before_deploy:
   - pip install pyinstaller
   - pyinstaller --clean -F --add-data blib2to3/:blib2to3 black.py

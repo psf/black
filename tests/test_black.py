@@ -111,6 +111,15 @@ def async_test(f: Callable[..., Coroutine[Any, None, R]]) -> Callable[..., None]
     return wrapper
 
 
+@contextmanager
+def skip_if_exception(e: str) -> Iterator[None]:
+    try:
+        yield
+    except Exception as exc:
+        if exc.__class__.__name__ == e:
+            unittest.skip(f"Encountered expected exception {exc}, skipping")
+
+
 class BlackRunner(CliRunner):
     """Modify CliRunner so that stderr is not merged with stdout.
 
@@ -1514,6 +1523,9 @@ class BlackTestCase(unittest.TestCase):
         ):
             ff(THIS_FILE)
 
+    # TODO: remove these decorators once the below is released
+    # https://github.com/aio-libs/aiohttp/commit/bfb99eb92bbc4a7462bc51dda3e480feed43882d
+    @skip_if_exception("ClientOSError")
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
     async def test_blackd_request_needs_formatting(self) -> None:
@@ -1524,6 +1536,7 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(response.charset, "utf8")
             self.assertEqual(await response.read(), b'print("hello world")\n')
 
+    @skip_if_exception("ClientOSError")
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
     async def test_blackd_request_no_change(self) -> None:
@@ -1533,6 +1546,7 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(response.status, 204)
             self.assertEqual(await response.read(), b"")
 
+    @skip_if_exception("ClientOSError")
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
     async def test_blackd_request_syntax_error(self) -> None:
@@ -1546,6 +1560,7 @@ class BlackTestCase(unittest.TestCase):
                 msg=f"Expected error to start with 'Cannot parse', got {repr(content)}",
             )
 
+    @skip_if_exception("ClientOSError")
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
     async def test_blackd_unsupported_version(self) -> None:
@@ -1556,6 +1571,7 @@ class BlackTestCase(unittest.TestCase):
             )
             self.assertEqual(response.status, 501)
 
+    @skip_if_exception("ClientOSError")
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
     async def test_blackd_supported_version(self) -> None:
@@ -1566,6 +1582,7 @@ class BlackTestCase(unittest.TestCase):
             )
             self.assertEqual(response.status, 200)
 
+    @skip_if_exception("ClientOSError")
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
     async def test_blackd_invalid_python_variant(self) -> None:
@@ -1590,6 +1607,7 @@ class BlackTestCase(unittest.TestCase):
             await check("pypy3.0")
             await check("jython3.4")
 
+    @skip_if_exception("ClientOSError")
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
     async def test_blackd_pyi(self) -> None:
@@ -1602,6 +1620,7 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(response.status, 200)
             self.assertEqual(await response.text(), expected)
 
+    @skip_if_exception("ClientOSError")
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
     async def test_blackd_python_variant(self) -> None:
@@ -1634,6 +1653,7 @@ class BlackTestCase(unittest.TestCase):
             await check("3.4", 204)
             await check("py3.4", 204)
 
+    @skip_if_exception("ClientOSError")
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
     async def test_blackd_line_length(self) -> None:
@@ -1644,6 +1664,7 @@ class BlackTestCase(unittest.TestCase):
             )
             self.assertEqual(response.status, 200)
 
+    @skip_if_exception("ClientOSError")
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
     async def test_blackd_invalid_line_length(self) -> None:
