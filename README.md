@@ -1045,6 +1045,12 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * if *Black* puts parenthesis around a single expression, it moves comments
   to the wrapped expression instead of after the brackets (#872)
 
+* *Black* is now able to format Python code that uses assignment expressions
+  (`:=` as described in PEP-572) (#935)
+
+* *Black* is now able to format Python code that uses positional-only
+  arguments (`/` as described in PEP-570) (#946)
+
 
 ### 19.3b0
 
