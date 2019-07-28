@@ -736,8 +736,11 @@ def format_str(src_contents: str, *, mode: FileMode) -> FileContent:
         for _ in range(after):
             dst_contents.append(str(empty_line))
         before, after = elt.maybe_empty_lines(current_line)
-        for _ in range(before):
-            dst_contents.append(str(empty_line))
+        # Black should not insert empty lines at the beginning
+        # of the file
+        if len(dst_contents) > 0:
+            for _ in range(before):
+                dst_contents.append(str(empty_line))
         for line in split_line(
             current_line, line_length=mode.line_length, features=split_line_features
         ):

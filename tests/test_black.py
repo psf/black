@@ -639,6 +639,14 @@ class BlackTestCase(unittest.TestCase):
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, black.FileMode())
 
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_beginning_backslash(self) -> None:
+        source, expected = read_data("beginning_backslash")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+
     def test_tab_comment_indentation(self) -> None:
         contents_tab = "if 1:\n\tif 2:\n\t\tpass\n\t# comment\n\tpass\n"
         contents_spc = "if 1:\n    if 2:\n        pass\n    # comment\n    pass\n"
