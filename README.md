@@ -2,7 +2,7 @@
 <h2 align="center">The Uncompromising Code Formatter</h2>
 
 <p align="center">
-<a href="https://travis-ci.org/psf/black"><img alt="Build Status" src="https://travis-ci.org/psf/black.svg?branch=master"></a>
+<a href="https://travis-ci.com/psf/black"><img alt="Build Status" src="https://travis-ci.com/psf/black.svg?branch=master"></a>
 <a href="https://black.readthedocs.io/en/stable/?badge=stable"><img alt="Documentation Status" src="https://readthedocs.org/projects/black/badge/?version=stable"></a>
 <a href="https://coveralls.io/github/psf/black?branch=master"><img alt="Coverage Status" src="https://coveralls.io/repos/github/psf/black/badge.svg?branch=master"></a>
 <a href="https://github.com/psf/black/blob/master/LICENSE"><img alt="License: MIT" src="https://black.readthedocs.io/en/stable/_static/license.svg"></a>
@@ -730,13 +730,13 @@ Configuration:
 To install with [vim-plug](https://github.com/junegunn/vim-plug):
 
 ```
-Plug 'python/black'
+Plug 'psf/black'
 ```
 
 or with [Vundle](https://github.com/VundleVim/Vundle.vim):
 
 ```
-Plugin 'python/black'
+Plugin 'psf/black'
 ```
 
 or you can copy the plugin from [plugin/black.vim](https://github.com/psf/black/tree/master/plugin/black.vim).
