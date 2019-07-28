@@ -1524,7 +1524,7 @@ class BlackTestCase(unittest.TestCase):
             ff(THIS_FILE)
 
     # TODO: remove these decorators once the below is released
-    # https://github.com/aio-libs/aiohttp/commit/bfb99eb92bbc4a7462bc51dda3e480feed43882d
+    # https://github.com/aio-libs/aiohttp/pull/3727
     @skip_if_exception("ClientOSError")
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @async_test
