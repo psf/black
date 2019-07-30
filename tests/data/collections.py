@@ -81,7 +81,10 @@ from . import A, B, C
 from foo import bar
 
 # stays wrapped
-from foo import baz, qux
+from foo import (
+    baz,
+    qux,
+)
 
 # as doesn't get confusing when unwrapped
 from foo import xyzzy as magic

@@ -1413,12 +1413,6 @@ class Line:
         """Remove trailing comma if there is one and it's safe."""
         if not (self.leaves and self.leaves[-1].type == token.COMMA):
             return False
-        # Temporary: for now we unconditionally leave trailing commas
-        # in imports. This goes away on the next change when trailing
-        # commas imply exploding collections to multiple lines.
-        if closing.type == token.RPAR and self.is_import:
-            self.remove_trailing_comma()
-            return True
         # We remove trailing commas only in the case of importing a
         # single name from a module.
         if not (
