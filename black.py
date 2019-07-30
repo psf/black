@@ -1356,60 +1356,45 @@ class Line:
 
     def maybe_remove_trailing_comma(self, closing: Leaf) -> bool:
         """Remove trailing comma if there is one and it's safe."""
+        if not (self.leaves and self.leaves[-1].type == token.COMMA):
+            return False
+        # Temporary: for now we unconditionally leave trailing commas
+        # in imports. This goes away on the next change when trailing
+        # commas imply exploding collections to multiple lines.
+        if closing.type == token.RPAR and self.is_import:
+            self.remove_trailing_comma()
+            return True
+        # We remove trailing commas only in the case of importing a
+        # single name from a module.
         if not (
             self.leaves
+            and self.is_import
+            and len(self.leaves) > 4
             and self.leaves[-1].type == token.COMMA
             and closing.type in CLOSING_BRACKETS
+            and self.leaves[-4].type == token.NAME
+            and (
+                # regular `from foo import bar,`
+                self.leaves[-4].value == "import"
+                # `from foo import (bar as baz,)
+                or (
+                    len(self.leaves) > 6
+                    and self.leaves[-6].value == "import"
+                    and self.leaves[-3].value == "as"
+                )
+                # `from foo import bar as baz,`
+                or (
+                    len(self.leaves) > 5
+                    and self.leaves[-5].value == "import"
+                    and self.leaves[-3].value == "as"
+                )
+            )
+            and closing.type == token.RPAR
         ):
             return False
 
-        if closing.type == token.RBRACE:
-            self.remove_trailing_comma()
-            return True
-
-        if closing.type == token.RSQB:
-            comma = self.leaves[-1]
-            if comma.parent and comma.parent.type == syms.listmaker:
-                self.remove_trailing_comma()
-                return True
-
-        # For parens let's check if it's safe to remove the comma.
-        # Imports are always safe.
-        if self.is_import:
-            self.remove_trailing_comma()
-            return True
-
-        # Otherwise, if the trailing one is the only one, we might mistakenly
-        # change a tuple into a different type by removing the comma.
-        depth = closing.bracket_depth + 1
-        commas = 0
-        opening = closing.opening_bracket
-        for _opening_index, leaf in enumerate(self.leaves):
-            if leaf is opening:
-                break
-
-        else:
-            return False
-
-        for leaf in self.leaves[_opening_index + 1 :]:
-            if leaf is closing:
-                break
-
-            bracket_depth = leaf.bracket_depth
-            if bracket_depth == depth and leaf.type == token.COMMA:
-                commas += 1
-                if leaf.parent and leaf.parent.type in {
-                    syms.arglist,
-                    syms.typedargslist,
-                }:
-                    commas += 1
-                    break
-
-        if commas > 1:
-            self.remove_trailing_comma()
-            return True
-
-        return False
+        self.remove_trailing_comma()
+        return True
 
     def append_comment(self, comment: Leaf) -> bool:
         """Add an inline or standalone comment to the line."""

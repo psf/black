@@ -150,7 +150,7 @@ def single_literal_yapf_disable():
     BAZ = {
         (1, 2, 3, 4),
         (5, 6, 7, 8),
-        (9, 10, 11, 12),
+        (9, 10, 11, 12)
     }  # yapf: disable
 cfg.rule(
     "Default", "address",
