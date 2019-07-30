@@ -1241,6 +1241,61 @@ class Line:
         ]
 
     @property
+    def is_collection_with_optional_trailing_comma(self) -> bool:
+        """Is this line a collection literal with a trailing comma that's optional?
+
+        Note that the trailing comma in a 1-tuple is not optional.
+        """
+        if not self.leaves or len(self.leaves) < 4:
+            return False
+        # Look for and address a trailing colon.
+        if self.leaves[-1].type == token.COLON:
+            closer = self.leaves[-2]
+            close_index = -2
+        else:
+            closer = self.leaves[-1]
+            close_index = -1
+        if closer.type not in CLOSING_BRACKETS or self.inside_brackets:
+            return False
+        if closer.type == token.RPAR:
+            # Tuples require an extra check, because if there's only
+            # one element in the tuple removing the comma unmakes the
+            # tuple.
+            #
+            # We also check for parens before looking for the trailing
+            # comma because in some cases (eg assigning a dict
+            # literal) the literal gets wrapped in temporary parens
+            # during parsing. This case is covered by the
+            # collections.py test data.
+            opener = closer.opening_bracket
+            for _open_index, leaf in enumerate(self.leaves):
+                if leaf is opener:
+                    break
+            else:
+                # Couldn't find the matching opening paren, play it safe.
+                return False
+            commas = 0
+            comma_depth = self.leaves[close_index - 1].bracket_depth
+            for leaf in self.leaves[_open_index + 1 : close_index]:
+                if leaf.bracket_depth == comma_depth and leaf.type == token.COMMA:
+                    commas += 1
+            if commas > 1:
+                # We haven't looked yet for the trailing comma because
+                # we might also have caught noop parens.
+                return self.leaves[close_index - 1].type == token.COMMA
+            elif commas == 1:
+                return False  # it's either a one-tuple or didn't have a trailing comma
+            if self.leaves[close_index - 1].type in CLOSING_BRACKETS:
+                close_index -= 1
+                closer = self.leaves[close_index]
+                if closer.type == token.RPAR:
+                    # TODO: this is a gut feeling. Will we ever see this?
+                    return False
+        if self.leaves[close_index - 1].type != token.COMMA:
+            return False
+        return True
+
+    @property
     def is_def(self) -> bool:
         """Is this a function definition? (Also returns True for async defs.)"""
         try:
@@ -2339,6 +2394,7 @@ def split_line(
     if (
         not line.contains_uncollapsable_type_comments()
         and not line.should_explode
+        and not line.is_collection_with_optional_trailing_comma
         and (
             is_line_short_enough(line, line_length=line_length, line_str=line_str)
             or line.contains_unsplittable_type_ignore()
