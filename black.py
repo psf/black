@@ -2872,7 +2872,15 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
             if is_walrus_assignment(child):
                 continue
             if child.type == syms.atom:
-                if maybe_make_parens_invisible_in_atom(child, parent=node):
+                # Determines if the underlying atom should be surrounded with
+                # invisible params - also makes parens invisible recursively
+                # within the atom
+                should_surround_with_parens = maybe_make_parens_invisible_in_atom(
+                    child, parent=node
+                )
+                # Removes repeated invisible parens within in the atom
+                dedupe_invisible_atom_parens(child)
+                if should_surround_with_parens:
                     lpar = Leaf(token.LPAR, "")
                     rpar = Leaf(token.RPAR, "")
                     index = child.remove() or 0
@@ -3013,6 +3021,43 @@ def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
         return False
 
     return True
+
+
+def dedupe_invisible_atom_parens(node: LN) -> LN:
+    """Atom `node`'s can have repeated invisible parens before formatting,
+    e.g. `((((("abc123")))))`.  This function recursively removes said
+    redundant parens.
+    """
+    if isinstance(node, Leaf) or node.type != syms.atom:
+        return node
+
+    first, last = node.children[0], node.children[-1]
+    if first.type == token.LPAR and last.type == token.RPAR:
+        new_child = dedupe_invisible_atom_parens(node.children[1])
+        if is_atom_with_invisible_parens(node) and is_atom_with_invisible_parens(
+            new_child
+        ):
+            node.children[1].replace(new_child.children[1])
+
+    return node
+
+
+def is_atom_with_invisible_parens(node: LN) -> bool:
+    """Given a `LN`, determines whether it's an atom `node` with invisible
+    parens. Useful in dedupe-ing and normalizing parens.
+    """
+    if isinstance(node, Leaf) or node.type != syms.atom:
+        return False
+
+    first, last = node.children[0], node.children[-1]
+    return (
+        isinstance(first, Leaf)
+        and first.type == token.LPAR
+        and first.value == ""
+        and isinstance(last, Leaf)
+        and last.type == token.RPAR
+        and last.value == ""
+    )
 
 
 def is_empty_tuple(node: LN) -> bool:
