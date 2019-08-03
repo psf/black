@@ -1,3 +1,5 @@
+#SBATCH directives can't have a preceding space,
+#PBS are the same.
 # The percent-percent comments are Spyder IDE cells.
 
 #%%
