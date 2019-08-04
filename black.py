@@ -1480,7 +1480,13 @@ class EmptyLineTracker:
         lines (two on module-level).
         """
         before, after = self._maybe_empty_lines(current_line)
-        before -= self.previous_after
+        before = (
+            # Black should not insert empty lines at the beginning
+            # of the file
+            0
+            if self.previous_line is None
+            else before - self.previous_after
+        )
         self.previous_after = after
         self.previous_line = current_line
         return before, after
@@ -3016,8 +3022,7 @@ def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
         # make parentheses invisible
         first.value = ""  # type: ignore
         last.value = ""  # type: ignore
-        if len(node.children) > 1:
-            maybe_make_parens_invisible_in_atom(node.children[1], parent=parent)
+        maybe_make_parens_invisible_in_atom(node.children[1], parent=parent)
         return False
 
     return True
