@@ -1480,7 +1480,13 @@ class EmptyLineTracker:
         lines (two on module-level).
         """
         before, after = self._maybe_empty_lines(current_line)
-        before -= self.previous_after
+        before = (
+            # Black should not insert empty lines at the beginning
+            # of the file
+            0
+            if self.previous_line is None
+            else before - self.previous_after
+        )
         self.previous_after = after
         self.previous_line = current_line
         return before, after
