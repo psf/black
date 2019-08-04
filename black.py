@@ -2880,12 +2880,12 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
             if child.type == syms.atom:
                 # Determines if the underlying atom should be surrounded with
                 # invisible params - also makes parens invisible recursively
-                # within the atom
+                # within the atom and removes repeated invisible parens within
+                # the atom
                 should_surround_with_parens = maybe_make_parens_invisible_in_atom(
                     child, parent=node
                 )
-                # Removes repeated invisible parens within in the atom
-                dedupe_invisible_atom_parens(child)
+
                 if should_surround_with_parens:
                     lpar = Leaf(token.LPAR, "")
                     rpar = Leaf(token.RPAR, "")
@@ -3003,6 +3003,8 @@ def generate_ignored_nodes(leaf: Leaf) -> Iterator[LN]:
 
 def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
     """If it's safe, make the parens in the atom `node` invisible, recursively.
+    Additionally, remove repeated, adjacent invisible parens from the atom `node`
+    as they are redundant.
 
     Returns whether the node should itself be wrapped in invisible parentheses.
 
@@ -3019,32 +3021,20 @@ def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
     first = node.children[0]
     last = node.children[-1]
     if first.type == token.LPAR and last.type == token.RPAR:
+        middle = node.children[1]
         # make parentheses invisible
         first.value = ""  # type: ignore
         last.value = ""  # type: ignore
-        maybe_make_parens_invisible_in_atom(node.children[1], parent=parent)
+        maybe_make_parens_invisible_in_atom(middle, parent=parent)
+
+        if is_atom_with_invisible_parens(middle):
+            # Strip the invisible parens from `middle` by replacing
+            # it with the child in-between the invisible parens
+            middle.replace(middle.children[1])
+
         return False
 
     return True
-
-
-def dedupe_invisible_atom_parens(node: LN) -> LN:
-    """Atom `node`'s can have repeated invisible parens before formatting,
-    e.g. `((((("abc123")))))`.  This function recursively removes said
-    redundant parens.
-    """
-    if isinstance(node, Leaf) or node.type != syms.atom:
-        return node
-
-    first, last = node.children[0], node.children[-1]
-    if first.type == token.LPAR and last.type == token.RPAR:
-        new_child = dedupe_invisible_atom_parens(node.children[1])
-        if is_atom_with_invisible_parens(node) and is_atom_with_invisible_parens(
-            new_child
-        ):
-            node.children[1].replace(new_child.children[1])
-
-    return node
 
 
 def is_atom_with_invisible_parens(node: LN) -> bool:
