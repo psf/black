@@ -33,6 +33,7 @@ ff = partial(black.format_file_in_place, mode=black.FileMode(), fast=True)
 fs = partial(black.format_str, mode=black.FileMode())
 THIS_FILE = Path(__file__)
 THIS_DIR = THIS_FILE.parent
+DETERMINISTIC_HEADER = "[Deterministic header]"
 EMPTY_LINE = "# EMPTY LINE WITH WHITESPACE" + " (this comment will be removed)"
 PY36_ARGS = [
     f"--target-version={version.name.lower()}" for version in black.PY36_VERSIONS
@@ -226,7 +227,7 @@ class BlackTestCase(unittest.TestCase):
             black.main, args, input=BytesIO(source.encode("utf8"))
         )
         self.assertEqual(result.exit_code, 0)
-        actual = diff_header.sub("[Deterministic header]", result.output)
+        actual = diff_header.sub(DETERMINISTIC_HEADER, result.output)
         actual = actual.rstrip() + "\n"  # the diff output has a trailing space
         self.assertEqual(expected, actual)
 
@@ -316,7 +317,7 @@ class BlackTestCase(unittest.TestCase):
         finally:
             os.unlink(tmp_file)
         actual = result.output
-        actual = diff_header.sub("[Deterministic header]", actual)
+        actual = diff_header.sub(DETERMINISTIC_HEADER, actual)
         actual = actual.rstrip() + "\n"  # the diff output has a trailing space
         if expected != actual:
             dump = black.dump_to_file(actual)
@@ -1605,6 +1606,27 @@ class BlackDTestCase(AioHTTPTestCase):
         )
         self.assertEqual(response.status, 200)
         self.assertEqual(await response.text(), expected)
+
+    @skip_if_exception("ClientOSError")
+    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
+    @unittest_run_loop
+    async def test_blackd_diff(self) -> None:
+        diff_header = re.compile(
+            rf"(In|Out)\t\d\d\d\d-\d\d-\d\d "
+            rf"\d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
+        )
+
+        source, _ = read_data("blackd_diff.py")
+        expected, _ = read_data("blackd_diff.diff")
+
+        response = await self.client.post(
+            "/", data=source, headers={blackd.DIFF_HEADER: "true"}
+        )
+        self.assertEqual(response.status, 200)
+
+        actual = await response.text()
+        actual = diff_header.sub(DETERMINISTIC_HEADER, actual)
+        self.assertEqual(actual, expected)
 
     @skip_if_exception("ClientOSError")
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
