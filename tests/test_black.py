@@ -99,7 +99,7 @@ def skip_if_exception(e: str) -> Iterator[None]:
         if exc.__class__.__name__ == e:
             unittest.skip(f"Encountered expected exception {exc}, skipping")
         else:
-            raise exc
+            raise
 
 
 class BlackRunner(CliRunner):
