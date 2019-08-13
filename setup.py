@@ -14,6 +14,7 @@ def get_long_description() -> str:
     with open(readme_md, encoding="utf8") as ld_file:
         return ld_file.read()
 
+
 setup(
     name="black",
     version=versioneer.get_version(),
