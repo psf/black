@@ -26,7 +26,7 @@ setup(
     author_email="lukasz@langa.pl",
     url="https://github.com/psf/black",
     license="MIT",
-    py_modules=["black", "blackd"],
+    py_modules=["black", "blackd", "_version"],
     packages=["blib2to3", "blib2to3.pgen2"],
     package_data={"blib2to3": ["*.txt"]},
     python_requires=">=3.6",
