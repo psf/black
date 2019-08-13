@@ -129,7 +129,11 @@ def parse_python_variant_header(value: str) -> Tuple[bool, Set[black.TargetVersi
         for version in value.split(","):
             if version.startswith("py"):
                 version = version[len("py") :]
-            major_str, *rest = version.split(".")
+            if "." in version:
+                major_str, *rest = version.split(".")
+            else:
+                major_str = version[0]
+                rest = [version[1:]] if len(version) > 1 else []
             try:
                 major = int(major_str)
                 if major not in (2, 3):
