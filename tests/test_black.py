@@ -1624,18 +1624,25 @@ class BlackDTestCase(AioHTTPTestCase):
             response = await self.client.post(
                 "/", data=code, headers={blackd.PYTHON_VARIANT_HEADER: header_value}
             )
-            self.assertEqual(response.status, expected_status)
+            self.assertEqual(
+                response.status, expected_status, msg=await response.text()
+            )
 
         await check("3.6", 200)
         await check("py3.6", 200)
         await check("3.6,3.7", 200)
         await check("3.6,py3.7", 200)
+        await check("py36,py37", 200)
+        await check("36", 200)
+        await check("3.6.4", 200)
 
         await check("2", 204)
         await check("2.7", 204)
         await check("py2.7", 204)
         await check("3.4", 204)
         await check("py3.4", 204)
+        await check("py34,py36", 204)
+        await check("34", 204)
 
     @skip_if_exception("ClientOSError")
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
