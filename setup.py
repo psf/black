@@ -1,8 +1,7 @@
 # Copyright (C) 2018 Łukasz Langa
-import ast
-import re
 from setuptools import setup
 import sys
+import versioneer
 
 assert sys.version_info >= (3, 6, 0), "black requires Python 3.6+"
 from pathlib import Path  # noqa E402
@@ -15,19 +14,10 @@ def get_long_description() -> str:
     with open(readme_md, encoding="utf8") as ld_file:
         return ld_file.read()
 
-
-def get_version() -> str:
-    black_py = CURRENT_DIR / "black.py"
-    _version_re = re.compile(r"__version__\s+=\s+(?P<version>.*)")
-    with open(black_py, "r", encoding="utf8") as f:
-        match = _version_re.search(f.read())
-        version = match.group("version") if match is not None else '"unknown"'
-    return str(ast.literal_eval(version))
-
-
 setup(
     name="black",
-    version=get_version(),
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     description="The uncompromising code formatter.",
     long_description=get_long_description(),
     long_description_content_type="text/markdown",
