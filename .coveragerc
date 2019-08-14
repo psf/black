@@ -2,3 +2,4 @@
 omit =
   blib2to3/*
   */site-packages/*
+  _version.py
