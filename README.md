@@ -581,9 +581,9 @@ to denote a significant space character.
 [tool.black]
 line-length = 88
 target-version = ['py37']
+skip-string-normalization = 'true'
 include = '\.pyi?$'
 exclude = '''
-
 (
   /(
       \.eggs         # exclude a few common directories in the
