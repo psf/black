@@ -1434,6 +1434,7 @@ class BlackTestCase(unittest.TestCase):
         for option in ["--include", "--exclude"]:
             self.invokeBlack(["-", option, "**()(!!*)"], exit_code=2)
 
+    @event_loop(close=False)
     def test_check_shebang(self) -> None:
         test_path = THIS_DIR / "data" / "shebang_tests"
         empty_config = ["--config", str(THIS_DIR / "empty.toml")]
@@ -1448,6 +1449,7 @@ class BlackTestCase(unittest.TestCase):
         self.assertNotIn(str(test_path / "decoding_error"), output)
         self.assertIn("\n1 file would be reformatted", output)
 
+    @event_loop(close=False)
     def test_custom_shebang_regex(self) -> None:
         test_path = THIS_DIR / "data" / "shebang_tests"
         empty_config = ["--config", str(THIS_DIR / "empty.toml")]
