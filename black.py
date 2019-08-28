@@ -450,7 +450,7 @@ def main(
             err(f"invalid path: {s}")
     if len(sources) == 0:
         if verbose or not quiet:
-            out("No paths given. Nothing to do 😴")
+            out("No Python files are present. Nothing to do 😴")
         ctx.exit(0)
 
     if len(sources) == 1:
