@@ -1041,10 +1041,10 @@ class BlackTestCase(unittest.TestCase):
         just_nl = "\n"
         with self.assertRaises(black.NothingChanged):
             black.format_file_contents(just_nl, mode=mode, fast=False)
-        same = "l = [1, 2, 3]\n"
+        same = "j = [1, 2, 3]\n"
         with self.assertRaises(black.NothingChanged):
             black.format_file_contents(same, mode=mode, fast=False)
-        different = "l = [1,2,3]"
+        different = "j = [1,2,3]"
         expected = same
         actual = black.format_file_contents(different, mode=mode, fast=False)
         self.assertEqual(expected, actual)
@@ -1072,7 +1072,7 @@ class BlackTestCase(unittest.TestCase):
 
         with patch("black.out", out), patch("black.err", err):
             with self.assertRaises(AssertionError):
-                self.assertFormatEqual("l = [1, 2, 3]", "l = [1, 2, 3,]")
+                self.assertFormatEqual("j = [1, 2, 3]", "j = [1, 2, 3,]")
 
         out_str = "".join(out_lines)
         self.assertTrue("Expected tree:" in out_str)
