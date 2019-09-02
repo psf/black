@@ -435,6 +435,7 @@ def main(
         err(f"Invalid regular expression for exclude given: {exclude!r}")
         ctx.exit(2)
     report = Report(check=check, quiet=quiet, verbose=verbose)
+    path_empty(src, quiet, verbose, ctx)
     root = find_project_root(src)
     sources: Set[Path] = set()
     for s in src:
@@ -450,7 +451,7 @@ def main(
             err(f"invalid path: {s}")
     if len(sources) == 0:
         if verbose or not quiet:
-            out("No Python files are present. Nothing to do 😴")
+            out("No Python files are present to be formatted. Nothing to do 😴")
         ctx.exit(0)
 
     if len(sources) == 1:
@@ -470,6 +471,16 @@ def main(
         out("Oh no! 💥 💔 💥" if report.return_code else "All done! ✨ 🍰 ✨")
         click.secho(str(report), err=True)
     ctx.exit(report.return_code)
+
+
+def path_empty(src: Tuple[str], quiet: bool, verbose: bool, ctx: click.Context) -> None:
+    """
+    Exit if there is no `src` provided for formatting
+    """
+    if not src:
+        if verbose or not quiet:
+            out("No Path provided. Nothing to do 😴")
+            ctx.exit(0)
 
 
 def reformat_one(
