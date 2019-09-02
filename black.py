@@ -435,9 +435,9 @@ def main(
         err(f"Invalid regular expression for exclude given: {exclude!r}")
         ctx.exit(2)
     report = Report(check=check, quiet=quiet, verbose=verbose)
-    path_empty(src, quiet, verbose, ctx)
     root = find_project_root(src)
     sources: Set[Path] = set()
+    path_empty(src, quiet, verbose, ctx)
     for s in src:
         p = Path(s)
         if p.is_dir():
