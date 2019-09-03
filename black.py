@@ -192,6 +192,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
 class FileMode:
     target_versions: Set[TargetVersion] = Factory(set)
     line_length: int = DEFAULT_LINE_LENGTH
+    single_quotes: bool = False
     string_normalization: bool = True
     is_pyi: bool = False
 
@@ -208,6 +209,7 @@ class FileMode:
             str(self.line_length),
             str(int(self.string_normalization)),
             str(int(self.is_pyi)),
+            str(int(self.single_quotes)),
         ]
         return ".".join(parts)
 
@@ -261,6 +263,9 @@ def read_pyproject_toml(
     default=DEFAULT_LINE_LENGTH,
     help="How many characters per line to allow.",
     show_default=True,
+)
+@click.option(
+    "-s", "--single-quotes", is_flag=True, help="Set the prefered quote style."
 )
 @click.option(
     "-t",
@@ -395,6 +400,7 @@ def main(
     exclude: str,
     src: Tuple[str],
     config: Optional[str],
+    single_quotes: bool,
 ) -> None:
     """The uncompromising code formatter."""
     write_back = WriteBack.from_configuration(check=check, diff=diff)
@@ -418,6 +424,7 @@ def main(
         line_length=line_length,
         is_pyi=pyi,
         string_normalization=not skip_string_normalization,
+        single_quotes=single_quotes,
     )
     if config and verbose:
         out(f"Using configuration from {config}.", bold=False, fg="blue")
@@ -727,6 +734,7 @@ def format_str(src_contents: str, *, mode: FileMode) -> FileContent:
         or supports_feature(versions, Feature.UNICODE_LITERALS),
         is_pyi=mode.is_pyi,
         normalize_strings=mode.string_normalization,
+        single_quotes=mode.single_quotes,
     )
     elt = EmptyLineTracker(is_pyi=mode.is_pyi)
     empty_line = Line()
@@ -1589,6 +1597,7 @@ class LineGenerator(Visitor[Line]):
 
     is_pyi: bool = False
     normalize_strings: bool = True
+    single_quotes: bool = False
     current_line: Line = Factory(Line)
     remove_u_prefix: bool = False
 
@@ -1631,7 +1640,7 @@ class LineGenerator(Visitor[Line]):
             normalize_prefix(node, inside_brackets=any_open_brackets)
             if self.normalize_strings and node.type == token.STRING:
                 normalize_string_prefix(node, remove_u_prefix=self.remove_u_prefix)
-                normalize_string_quotes(node)
+                normalize_string_quotes(node, self.single_quotes)
             if node.type == token.NUMBER:
                 normalize_numeric_literal(node)
             if node.type not in WHITESPACE:
@@ -2734,7 +2743,7 @@ def normalize_string_prefix(leaf: Leaf, remove_u_prefix: bool = False) -> None:
     leaf.value = f"{new_prefix}{match.group(2)}"
 
 
-def normalize_string_quotes(leaf: Leaf) -> None:
+def normalize_string_quotes(leaf: Leaf, single_quotes: bool = False) -> None:
     """Prefer double quotes but only if it doesn't cause more escaping.
 
     Adds or removes backslashes as appropriate. Doesn't parse and fix
@@ -2803,8 +2812,9 @@ def normalize_string_quotes(leaf: Leaf) -> None:
     if new_escape_count > orig_escape_count:
         return  # Do not introduce more escaping
 
-    if new_escape_count == orig_escape_count and orig_quote == '"':
-        return  # Prefer double quotes
+    string_quote_style = "'" if single_quotes else '"'
+    if new_escape_count == orig_escape_count and orig_quote == string_quote_style:
+        return
 
     leaf.value = f"{prefix}{new_quote}{new_body}{new_quote}"
 
