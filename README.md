@@ -178,14 +178,14 @@ great.
 ```py3
 # in:
 
-l = [1,
+j = [1,
      2,
      3,
 ]
 
 # out:
 
-l = [1, 2, 3]
+j = [1, 2, 3]
 ```
 
 If not, *Black* will look at the contents of the first outer matching
