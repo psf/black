@@ -1,7 +1,6 @@
 # Copyright (C) 2018 Łukasz Langa
 from setuptools import setup
 import sys
-import versioneer
 
 assert sys.version_info >= (3, 6, 0), "black requires Python 3.6+"
 from pathlib import Path  # noqa E402
@@ -17,8 +16,7 @@ def get_long_description() -> str:
 
 setup(
     name="black",
-    version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
+    use_scm_version={"write_to": "_version.py"},
     description="The uncompromising code formatter.",
     long_description=get_long_description(),
     long_description_content_type="text/markdown",
