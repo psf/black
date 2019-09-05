@@ -18,7 +18,7 @@ setup(
     name="black",
     use_scm_version={
         "write_to": "_version.py",
-        "write_to_template": '__version__ = "{version}"\n',
+        "write_to_template": 'version = "{version}"\n',
     },
     description="The uncompromising code formatter.",
     long_description=get_long_description(),
