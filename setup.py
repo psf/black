@@ -16,7 +16,10 @@ def get_long_description() -> str:
 
 setup(
     name="black",
-    use_scm_version={"write_to": "_version.py"},
+    use_scm_version={
+        "write_to": "_version.py",
+        "write_to_template": '__version__ = "{version}"\n',
+    },
     description="The uncompromising code formatter.",
     long_description=get_long_description(),
     long_description_content_type="text/markdown",
