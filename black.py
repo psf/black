@@ -37,6 +37,7 @@ from typing import (
     Union,
     cast,
 )
+from typing_extensions import Final
 from mypy_extensions import mypyc_attr
 
 from appdirs import user_cache_dir
@@ -880,7 +881,15 @@ class Visitor(Generic[T]):
             name = token.tok_name[node.type]
         else:
             name = str(type_repr(node.type))
-        yield from getattr(self, f"visit_{name}", self.visit_default)(node)
+        # We explicitly branch on whether a visitor exists (instead of
+        # using self.visit_default as the default arg to getattr) in order
+        # to save needing to create a bound method object and so mypyc can
+        # generate a native call to visit_default.
+        visitf = getattr(self, f"visit_{name}", None)
+        if visitf:
+            yield from visitf(node)
+        else:
+            yield from self.visit_default(node)
 
     def visit_default(self, node: LN) -> Iterator[T]:
         """Default `visit_*()` implementation. Recurses to children of `node`."""
@@ -925,8 +934,8 @@ class DebugVisitor(Visitor[T]):
         list(v.visit(code))
 
 
-WHITESPACE = {token.DEDENT, token.INDENT, token.NEWLINE}
-STATEMENT = {
+WHITESPACE: Final = {token.DEDENT, token.INDENT, token.NEWLINE}
+STATEMENT: Final = {
     syms.if_stmt,
     syms.while_stmt,
     syms.for_stmt,
@@ -936,10 +945,10 @@ STATEMENT = {
     syms.funcdef,
     syms.classdef,
 }
-STANDALONE_COMMENT = 153
+STANDALONE_COMMENT: Final = 153
 token.tok_name[STANDALONE_COMMENT] = "STANDALONE_COMMENT"
-LOGIC_OPERATORS = {"and", "or"}
-COMPARATORS = {
+LOGIC_OPERATORS: Final = {"and", "or"}
+COMPARATORS: Final = {
     token.LESS,
     token.GREATER,
     token.EQEQUAL,
@@ -947,7 +956,7 @@ COMPARATORS = {
     token.LESSEQUAL,
     token.GREATEREQUAL,
 }
-MATH_OPERATORS = {
+MATH_OPERATORS: Final = {
     token.VBAR,
     token.CIRCUMFLEX,
     token.AMPER,
@@ -963,23 +972,23 @@ MATH_OPERATORS = {
     token.TILDE,
     token.DOUBLESTAR,
 }
-STARS = {token.STAR, token.DOUBLESTAR}
-VARARGS_SPECIALS = STARS | {token.SLASH}
-VARARGS_PARENTS = {
+STARS: Final = {token.STAR, token.DOUBLESTAR}
+VARARGS_SPECIALS: Final = STARS | {token.SLASH}
+VARARGS_PARENTS: Final = {
     syms.arglist,
     syms.argument,  # double star in arglist
     syms.trailer,  # single argument to call
     syms.typedargslist,
     syms.varargslist,  # lambdas
 }
-UNPACKING_PARENTS = {
+UNPACKING_PARENTS: Final = {
     syms.atom,  # single element of a list or set literal
     syms.dictsetmaker,
     syms.listmaker,
     syms.testlist_gexp,
     syms.testlist_star_expr,
 }
-TEST_DESCENDANTS = {
+TEST_DESCENDANTS: Final = {
     syms.test,
     syms.lambdef,
     syms.or_test,
@@ -996,7 +1005,7 @@ TEST_DESCENDANTS = {
     syms.term,
     syms.power,
 }
-ASSIGNMENTS = {
+ASSIGNMENTS: Final = {
     "=",
     "+=",
     "-=",
@@ -1012,13 +1021,13 @@ ASSIGNMENTS = {
     "**=",
     "//=",
 }
-COMPREHENSION_PRIORITY = 20
-COMMA_PRIORITY = 18
-TERNARY_PRIORITY = 16
-LOGIC_PRIORITY = 14
-STRING_PRIORITY = 12
-COMPARATOR_PRIORITY = 10
-MATH_PRIORITIES = {
+COMPREHENSION_PRIORITY: Final = 20
+COMMA_PRIORITY: Final = 18
+TERNARY_PRIORITY: Final = 16
+LOGIC_PRIORITY: Final = 14
+STRING_PRIORITY: Final = 12
+COMPARATOR_PRIORITY: Final = 10
+MATH_PRIORITIES: Final = {
     token.VBAR: 9,
     token.CIRCUMFLEX: 8,
     token.AMPER: 7,
@@ -1034,7 +1043,7 @@ MATH_PRIORITIES = {
     token.TILDE: 3,
     token.DOUBLESTAR: 2,
 }
-DOT_PRIORITY = 1
+DOT_PRIORITY: Final = 1
 
 
 @dataclass
