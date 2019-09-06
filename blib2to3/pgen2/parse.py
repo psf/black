@@ -12,12 +12,39 @@ how this parsing engine works.
 
 # Local imports
 from . import token
+from typing import (
+    Optional,
+    Text,
+    Sequence,
+    Any,
+    Union,
+    Tuple,
+    Dict,
+    List,
+    Callable,
+    Set,
+)
+from blib2to3.pgen2.grammar import Grammar
+from blib2to3.pytree import NL, Context, RawNode, Leaf, Node
+
+
+Results = Dict[Text, NL]
+Convert = Callable[[Grammar, RawNode], Union[Node, Leaf]]
+DFA = List[List[Tuple[int, int]]]
+DFAS = Tuple[DFA, Dict[int, int]]
+
+
+def lam_sub(grammar: Grammar, node: RawNode) -> NL:
+    assert node[3] is not None
+    return Node(type=node[0], children=node[3], context=node[2])
 
 
 class ParseError(Exception):
     """Exception to signal the parser is stuck."""
 
-    def __init__(self, msg, type, value, context):
+    def __init__(
+        self, msg: Text, type: Optional[int], value: Optional[Text], context: Context
+    ) -> None:
         Exception.__init__(
             self, "%s: type=%r, value=%r, context=%r" % (msg, type, value, context)
         )
@@ -57,7 +84,7 @@ class Parser(object):
 
     """
 
-    def __init__(self, grammar, convert=None):
+    def __init__(self, grammar: Grammar, convert: Optional[Convert] = None) -> None:
         """Constructor.
 
         The grammar argument is a grammar.Grammar instance; see the
@@ -87,9 +114,9 @@ class Parser(object):
 
         """
         self.grammar = grammar
-        self.convert = convert or (lambda grammar, node: node)
+        self.convert = convert or lam_sub
 
-    def setup(self, start=None):
+    def setup(self, start: Optional[int] = None) -> None:
         """Prepare for parsing.
 
         This *must* be called before starting to parse.
@@ -107,13 +134,13 @@ class Parser(object):
         # Each stack entry is a tuple: (dfa, state, node).
         # A node is a tuple: (type, value, context, children),
         # where children is a list of nodes or None, and context may be None.
-        newnode = (start, None, None, [])
+        newnode: RawNode = (start, None, None, [])
         stackentry = (self.grammar.dfas[start], 0, newnode)
-        self.stack = [stackentry]
-        self.rootnode = None
-        self.used_names = set()  # Aliased to self.rootnode.used_names in pop()
+        self.stack: List[Tuple[DFAS, int, RawNode]] = [stackentry]
+        self.rootnode: Optional[NL] = None
+        self.used_names: Set[str] = set()
 
-    def addtoken(self, type, value, context):
+    def addtoken(self, type: int, value: Optional[Text], context: Context) -> bool:
         """Add a token; return True iff this is the end of the program."""
         # Map from token to label
         ilabel = self.classify(type, value, context)
@@ -160,10 +187,11 @@ class Parser(object):
                     # No success finding a transition
                     raise ParseError("bad input", type, value, context)
 
-    def classify(self, type, value, context):
+    def classify(self, type: int, value: Optional[Text], context: Context) -> int:
         """Turn a token into a label.  (Internal)"""
         if type == token.NAME:
             # Keep a listing of all used names
+            assert value is not None
             self.used_names.add(value)
             # Check for reserved words
             ilabel = self.grammar.keywords.get(value)
@@ -174,29 +202,35 @@ class Parser(object):
             raise ParseError("bad token", type, value, context)
         return ilabel
 
-    def shift(self, type, value, newstate, context):
+    def shift(
+        self, type: int, value: Optional[Text], newstate: int, context: Context
+    ) -> None:
         """Shift a token.  (Internal)"""
         dfa, state, node = self.stack[-1]
-        newnode = (type, value, context, None)
-        newnode = self.convert(self.grammar, newnode)
+        assert value is not None
+        assert context is not None
+        rawnode: RawNode = (type, value, context, None)
+        newnode = self.convert(self.grammar, rawnode)
         if newnode is not None:
+            assert node[-1] is not None
             node[-1].append(newnode)
         self.stack[-1] = (dfa, newstate, node)
 
-    def push(self, type, newdfa, newstate, context):
+    def push(self, type: int, newdfa: DFAS, newstate: int, context: Context) -> None:
         """Push a nonterminal.  (Internal)"""
         dfa, state, node = self.stack[-1]
-        newnode = (type, None, context, [])
+        newnode: RawNode = (type, None, context, [])
         self.stack[-1] = (dfa, newstate, node)
         self.stack.append((newdfa, 0, newnode))
 
-    def pop(self):
+    def pop(self) -> None:
         """Pop a nonterminal.  (Internal)"""
         popdfa, popstate, popnode = self.stack.pop()
         newnode = self.convert(self.grammar, popnode)
         if newnode is not None:
             if self.stack:
                 dfa, state, node = self.stack[-1]
+                assert node[-1] is not None
                 node[-1].append(newnode)
             else:
                 self.rootnode = newnode

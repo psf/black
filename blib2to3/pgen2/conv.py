@@ -1,6 +1,8 @@
 # Copyright 2004-2005 Elemental Security, Inc. All Rights Reserved.
 # Licensed to PSF under a Contributor Agreement.
 
+# mypy: ignore-errors
+
 """Convert graminit.[ch] spit out by pgen to Python code.
 
 Pgen is the Python parser generator.  It is useful to quickly create a

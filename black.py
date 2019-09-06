@@ -585,7 +585,7 @@ async def schedule_formatting(
         ): src
         for src in sorted(sources)
     }
-    pending: Iterable[asyncio.Future] = tasks.keys()
+    pending: Iterable["asyncio.Future[bool]"] = tasks.keys()
     try:
         loop.add_signal_handler(signal.SIGINT, cancel, pending)
         loop.add_signal_handler(signal.SIGTERM, cancel, pending)
@@ -865,7 +865,7 @@ class Visitor(Generic[T]):
         if node.type < 256:
             name = token.tok_name[node.type]
         else:
-            name = type_repr(node.type)
+            name = str(type_repr(node.type))
         yield from getattr(self, f"visit_{name}", self.visit_default)(node)
 
     def visit_default(self, node: LN) -> Iterator[T]:
@@ -3829,7 +3829,7 @@ def diff(a: str, b: str, a_name: str, b_name: str) -> str:
     )
 
 
-def cancel(tasks: Iterable[asyncio.Task]) -> None:
+def cancel(tasks: Iterable["asyncio.Task[Any]"]) -> None:
     """asyncio signal handler that cancels all `tasks` and reports to stderr."""
     err("Aborted!")
     for task in tasks:
