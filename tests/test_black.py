@@ -1540,6 +1540,7 @@ class BlackTestCase(unittest.TestCase):
         # outside of the `root` directory.
         path.iterdir.return_value = [child]
         child.resolve.return_value = Path("/a/b/c")
+        child.as_posix.return_value = "/a/b/c"
         child.is_symlink.return_value = True
         try:
             list(

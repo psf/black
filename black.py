@@ -37,6 +37,7 @@ from typing import (
     Union,
     cast,
 )
+from mypy_extensions import mypyc_attr
 
 from appdirs import user_cache_dir
 from dataclasses import dataclass, field, replace
@@ -247,6 +248,17 @@ def read_pyproject_toml(
     return value
 
 
+def target_version_option_callback(
+    c: click.Context, p: Union[click.Option, click.Parameter], v: Tuple[str, ...]
+) -> List[TargetVersion]:
+    """Compute the target versions from a --target-version flag.
+
+    This is its own function because mypy couldn't infer the type correctly
+    when it was a lambda, causing mypyc trouble.
+    """
+    return [TargetVersion[val.upper()] for val in v]
+
+
 @click.command(context_settings=dict(help_option_names=["-h", "--help"]))
 @click.option("-c", "--code", type=str, help="Format the code passed in as a string.")
 @click.option(
@@ -261,7 +273,7 @@ def read_pyproject_toml(
     "-t",
     "--target-version",
     type=click.Choice([v.name.lower() for v in TargetVersion]),
-    callback=lambda c, p, v: [TargetVersion[val.upper()] for val in v],
+    callback=target_version_option_callback,
     multiple=True,
     help=(
         "Python versions that should be supported by Black's output. [default: "
@@ -388,7 +400,7 @@ def main(
     verbose: bool,
     include: str,
     exclude: str,
-    src: Tuple[str],
+    src: Tuple[str, ...],
     config: Optional[str],
 ) -> None:
     """The uncompromising code formatter."""
@@ -470,7 +482,9 @@ def main(
     ctx.exit(report.return_code)
 
 
-def path_empty(src: Tuple[str], quiet: bool, verbose: bool, ctx: click.Context) -> None:
+def path_empty(
+    src: Tuple[str, ...], quiet: bool, verbose: bool, ctx: click.Context
+) -> None:
     """
     Exit if there is no `src` provided for formatting
     """
@@ -639,10 +653,10 @@ def format_file_in_place(
     except NothingChanged:
         return False
 
-    if write_back == write_back.YES:
+    if write_back == WriteBack.YES:
         with open(src, "w", encoding=encoding, newline=newline) as f:
             f.write(dst_contents)
-    elif write_back == write_back.DIFF:
+    elif write_back == WriteBack.DIFF:
         now = datetime.utcnow()
         src_name = f"{src}\t{then} +0000"
         dst_name = f"{src}\t{now} +0000"
@@ -1729,13 +1743,13 @@ class LineGenerator(Visitor[Line]):
                 self.current_line.append(node)
         yield from super().visit_default(node)
 
-    def visit_INDENT(self, node: Node) -> Iterator[Line]:
+    def visit_INDENT(self, node: Leaf) -> Iterator[Line]:
         """Increase indentation level, maybe yield a line."""
         # In blib2to3 INDENT never holds comments.
         yield from self.line(+1)
         yield from self.visit_default(node)
 
-    def visit_DEDENT(self, node: Node) -> Iterator[Line]:
+    def visit_DEDENT(self, node: Leaf) -> Iterator[Line]:
         """Decrease indentation level, maybe yield a line."""
         # The current line might still wait for trailing comments.  At DEDENT time
         # there won't be any (they would be prefixes on the preceding NEWLINE).
@@ -2463,7 +2477,7 @@ def left_hand_split(line: Line, features: Collection[Feature] = ()) -> Iterator[
     body_leaves: List[Leaf] = []
     head_leaves: List[Leaf] = []
     current_leaves = head_leaves
-    matching_bracket = None
+    matching_bracket: Optional[Leaf] = None
     for leaf in line.leaves:
         if (
             current_leaves is body_leaves
@@ -2506,8 +2520,8 @@ def right_hand_split(
     body_leaves: List[Leaf] = []
     head_leaves: List[Leaf] = []
     current_leaves = tail_leaves
-    opening_bracket = None
-    closing_bracket = None
+    opening_bracket: Optional[Leaf] = None
+    closing_bracket: Optional[Leaf] = None
     for leaf in reversed(line.leaves):
         if current_leaves is body_leaves:
             if leaf is opening_bracket:
@@ -3028,7 +3042,7 @@ def convert_one_fmt_off_pair(node: Node) -> bool:
                     # That happens when one of the `ignored_nodes` ended with a NEWLINE
                     # leaf (possibly followed by a DEDENT).
                     hidden_value = hidden_value[:-1]
-                first_idx = None
+                first_idx: Optional[int] = None
                 for ignored in ignored_nodes:
                     index = ignored.remove()
                     if first_idx is None:
@@ -3399,8 +3413,8 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
     yield omit
 
     length = 4 * line.depth
-    opening_bracket = None
-    closing_bracket = None
+    opening_bracket: Optional[Leaf] = None
+    closing_bracket: Optional[Leaf] = None
     inner_brackets: Set[LeafID] = set()
     for index, leaf, leaf_length in enumerate_with_length(line, reversed=True):
         length += leaf_length
@@ -3797,6 +3811,7 @@ def assert_stable(src: str, dst: str, mode: FileMode) -> None:
         ) from None
 
 
+@mypyc_attr(patchable=True)
 def dump_to_file(*output: str) -> str:
     """Dump `output` to a temporary file. Return path to the file."""
     with tempfile.NamedTemporaryFile(
