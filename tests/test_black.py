@@ -195,6 +195,96 @@ class BlackTestCase(unittest.TestCase):
         black.assert_stable(source, actual, black.FileMode())
         self.assertFalse(ff(THIS_DIR / ".." / "black.py"))
 
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_pygram(self) -> None:
+        source, expected = read_data("../blib2to3/pygram", data=False)
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+        self.assertFalse(ff(THIS_DIR / ".." / "blib2to3" / "pygram.py"))
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_pytree(self) -> None:
+        source, expected = read_data("../blib2to3/pytree", data=False)
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+        self.assertFalse(ff(THIS_DIR / ".." / "blib2to3" / "pytree.py"))
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_conv(self) -> None:
+        source, expected = read_data("../blib2to3/pgen2/conv", data=False)
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+        self.assertFalse(ff(THIS_DIR / ".." / "blib2to3" / "pgen2" / "conv.py"))
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_driver(self) -> None:
+        source, expected = read_data("../blib2to3/pgen2/driver", data=False)
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+        self.assertFalse(ff(THIS_DIR / ".." / "blib2to3" / "pgen2" / "driver.py"))
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_grammar(self) -> None:
+        source, expected = read_data("../blib2to3/pgen2/grammar", data=False)
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+        self.assertFalse(ff(THIS_DIR / ".." / "blib2to3" / "pgen2" / "grammar.py"))
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_literals(self) -> None:
+        source, expected = read_data("../blib2to3/pgen2/literals", data=False)
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+        self.assertFalse(ff(THIS_DIR / ".." / "blib2to3" / "pgen2" / "literals.py"))
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_parse(self) -> None:
+        source, expected = read_data("../blib2to3/pgen2/parse", data=False)
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+        self.assertFalse(ff(THIS_DIR / ".." / "blib2to3" / "pgen2" / "parse.py"))
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_pgen(self) -> None:
+        source, expected = read_data("../blib2to3/pgen2/pgen", data=False)
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+        self.assertFalse(ff(THIS_DIR / ".." / "blib2to3" / "pgen2" / "pgen.py"))
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_tokenize(self) -> None:
+        source, expected = read_data("../blib2to3/pgen2/tokenize", data=False)
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+        self.assertFalse(ff(THIS_DIR / ".." / "blib2to3" / "pgen2" / "tokenize.py"))
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_token(self) -> None:
+        source, expected = read_data("../blib2to3/pgen2/token", data=False)
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+        self.assertFalse(ff(THIS_DIR / ".." / "blib2to3" / "pgen2" / "token.py"))
+
     def test_piping(self) -> None:
         source, expected = read_data("../black", data=False)
         result = BlackRunner().invoke(

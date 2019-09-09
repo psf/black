@@ -28,13 +28,7 @@ from . import grammar, parse, token, tokenize, pgen
 
 
 class Driver(object):
-
-    def __init__(
-        self,
-        grammar,
-        convert=None,
-        logger=None,
-    ):
+    def __init__(self, grammar, convert=None, logger=None):
         self.grammar = grammar
         if logger is None:
             logger = logging.getLogger(__name__)
@@ -73,8 +67,9 @@ class Driver(object):
             if type == token.OP:
                 type = grammar.opmap[value]
             if debug:
-                self.logger.debug("%s %r (prefix=%r)",
-                                  token.tok_name[type], value, prefix)
+                self.logger.debug(
+                    "%s %r (prefix=%r)", token.tok_name[type], value, prefix
+                )
             if type == token.INDENT:
                 indent_columns.append(len(value))
                 _prefix = prefix + value
@@ -96,8 +91,7 @@ class Driver(object):
                 column = 0
         else:
             # We never broke out -- EOF is too soon (how can this happen???)
-            raise parse.ParseError("incomplete input",
-                                   type, value, (prefix, start))
+            raise parse.ParseError("incomplete input", type, value, (prefix, start))
         return p.rootnode
 
     def parse_stream_raw(self, stream, debug=False):
@@ -117,8 +111,7 @@ class Driver(object):
     def parse_string(self, text, debug=False):
         """Parse a string and return the syntax tree."""
         tokens = tokenize.generate_tokens(
-            io.StringIO(text).readline,
-            grammar=self.grammar
+            io.StringIO(text).readline, grammar=self.grammar
         )
         return self.parse_tokens(tokens, debug)
 
@@ -130,24 +123,24 @@ class Driver(object):
         for char in prefix:
             current_line += char
             if wait_for_nl:
-                if char == '\n':
+                if char == "\n":
                     if current_line.strip() and current_column < column:
-                        res = ''.join(lines)
-                        return res, prefix[len(res):]
+                        res = "".join(lines)
+                        return res, prefix[len(res) :]
 
                     lines.append(current_line)
                     current_line = ""
                     current_column = 0
                     wait_for_nl = False
-            elif char in ' \t':
+            elif char in " \t":
                 current_column += 1
-            elif char == '\n':
+            elif char == "\n":
                 # unexpected empty line
                 current_column = 0
             else:
                 # indent is finished
                 wait_for_nl = True
-        return ''.join(lines), current_line
+        return "".join(lines), current_line
 
 
 def _generate_pickle_name(gt, cache_dir=None):
@@ -161,8 +154,7 @@ def _generate_pickle_name(gt, cache_dir=None):
         return name
 
 
-def load_grammar(gt="Grammar.txt", gp=None,
-                 save=True, force=False, logger=None):
+def load_grammar(gt="Grammar.txt", gp=None, save=True, force=False, logger=None):
     """Load the grammar (maybe from a pickle)."""
     if logger is None:
         logger = logging.getLogger(__name__)
@@ -219,11 +211,11 @@ def main(*args):
     """
     if not args:
         args = sys.argv[1:]
-    logging.basicConfig(level=logging.INFO, stream=sys.stdout,
-                        format='%(message)s')
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout, format="%(message)s")
     for gt in args:
         load_grammar(gt, save=True, force=True)
     return True
+
 
 if __name__ == "__main__":
     sys.exit(int(not main()))
