@@ -3,7 +3,7 @@ from concurrent.futures import Executor, ProcessPoolExecutor
 from functools import partial
 import logging
 from multiprocessing import freeze_support
-from typing import Set, Tuple
+from typing import Callable, Set, Tuple
 
 from aiohttp import web
 import aiohttp_cors
@@ -18,6 +18,7 @@ LINE_LENGTH_HEADER = "X-Line-Length"
 PYTHON_VARIANT_HEADER = "X-Python-Variant"
 SKIP_STRING_NORMALIZATION_HEADER = "X-Skip-String-Normalization"
 FAST_OR_SAFE_HEADER = "X-Fast-Or-Safe"
+SERVER_VERSION_HEADER = "X-Black-Version"
 
 BLACK_HEADERS = [
     VERSION_HEADER,
@@ -47,7 +48,7 @@ def main(bind_host: str, bind_port: int) -> None:
 
 
 def make_app() -> web.Application:
-    app = web.Application()
+    app = web.Application(middlewares=(add_server_version,))
     executor = ProcessPoolExecutor()
 
     cors = aiohttp_cors.setup(app)
@@ -62,6 +63,16 @@ def make_app() -> web.Application:
     )
 
     return app
+
+
+@web.middleware
+async def add_server_version(
+    request: web.Request,
+    handler: Callable[[web.Request], web.Response]
+) -> web.Response:
+    response = await handler(request)
+    response.headers[SERVER_VERSION_HEADER] = black.__version__
+    return response
 
 
 async def handle(request: web.Request, executor: Executor) -> web.Response:

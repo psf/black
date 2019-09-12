@@ -1662,6 +1662,14 @@ class BlackDTestCase(AioHTTPTestCase):
         )
         self.assertEqual(response.status, 400)
 
+    @skip_if_exception("ClientOSError")
+    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
+    @unittest_run_loop
+    async def test_blackd_returns_server_version(self) -> None:
+        response = await self.client.post("/", data=b"print('hello world')")
+        self.assertIn(blackd.SERVER_VERSION_HEADER, response.headers)
+        self.assertNotEqual(response.headers[blackd.SERVER_VERSION_HEADER], "")
+
 
 if __name__ == "__main__":
     unittest.main(module="test_black")
