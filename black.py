@@ -1296,7 +1296,7 @@ class Line:
                     return True
         return False
 
-    def contains_inner_type_comments(self) -> bool:
+    def contains_uncollapsable_type_comments(self) -> bool:
         ignored_ids = set()
         try:
             last_leaf = self.leaves[-1]
@@ -1313,13 +1313,19 @@ class Line:
         except IndexError:
             return False
 
+        # A type comment is uncollapsable if it is attached to a leaf
+        # that isn't at the end of the line (since that could cause it
+        # to get associated to a different argument) or if there are
+        # comments before it (since that could cause it to get hidden
+        # behind a comment.
+        comment_seen = False
         for leaf_id, comments in self.comments.items():
-            if leaf_id in ignored_ids:
-                continue
-
             for comment in comments:
                 if is_type_comment(comment):
-                    return True
+                    if leaf_id not in ignored_ids or comment_seen:
+                        return True
+
+            comment_seen = True
 
         return False
 
@@ -2328,7 +2334,7 @@ def split_line(
     line_str = str(line).strip("\n")
 
     if (
-        not line.contains_inner_type_comments()
+        not line.contains_uncollapsable_type_comments()
         and not line.should_explode
         and is_line_short_enough(line, line_length=line_length, line_str=line_str)
     ):

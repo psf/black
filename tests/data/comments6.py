@@ -69,6 +69,20 @@ def f(
     )  # type: int
 
 
+def f(
+    x,  # not a type comment
+    y,  # type: int
+):
+    # type: (...) -> None
+    pass
+
+
+def f(
+    x,  # not a type comment
+):  # type: (int) -> None
+    pass
+
+
 def func(
     a=some_list[0],  # type: int
 ):  # type: () -> int
