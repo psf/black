@@ -7,3 +7,4 @@ dependencies:
 - pip:
   - recommonmark==0.4.0
   - git+https://git@github.com/psf/black.git
+  - setuptools_scm==3.3.3
