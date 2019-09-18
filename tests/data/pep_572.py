@@ -39,5 +39,5 @@ foo(b := 2, a=1)
 foo((b := 2), a=1)
 foo(c=(b := 2), a=1)
 
-while x:= f(x):
+while x := f(x):
     pass
