@@ -12,26 +12,16 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import ast
 from pathlib import Path
 import re
 import shutil
 import string
 
+from setuptools_scm import get_version
 from recommonmark.parser import CommonMarkParser
 
 
 CURRENT_DIR = Path(__file__).parent
-
-
-def get_version():
-    import sys
-
-    sys.path.append(str(CURRENT_DIR.parent))
-    from _version import get_versions
-
-    v = get_versions()
-    return v.get("closest-tag", v["version"])
 
 
 def make_pypi_svg(version):
@@ -94,7 +84,7 @@ author = "Łukasz Langa and contributors to Black"
 
 # Autopopulate version
 # The full version, including alpha/beta/rc tags.
-release = get_version()
+release = get_version(root=CURRENT_DIR.parent)
 # The short X.Y version.
 version = release
 for sp in "abcfr":
