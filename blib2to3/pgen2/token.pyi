@@ -64,7 +64,7 @@ if sys.version_info >= (3, 5):
     AWAIT: int
     ASYNC: int
 ERRORTOKEN: int
-COLONEQUAL = 59
+COLONEQUAL: int
 N_TOKENS: int
 NT_OFFSET: int
 tok_name: Dict[int, Text]
