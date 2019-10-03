@@ -374,9 +374,7 @@ very_long_variable_name_filters: t.List[
 xxxx_xxxxx_xxxx_xxx: Callable[..., List[SomeClass]] = classmethod(  # type: ignore
     sync(async_xxxx_xxx_xxxx_xxxxx_xxxx_xxx.__func__)
 )
-xxxx_xxx_xxxx_xxxxx_xxxx_xxx: Callable[
-    ..., List[SomeClass]
-] = classmethod(  # type: ignore
+xxxx_xxx_xxxx_xxxxx_xxxx_xxx: Callable[..., List[SomeClass]] = classmethod(  # type: ignore
     sync(async_xxxx_xxx_xxxx_xxxxx_xxxx_xxx.__func__)
 )
 xxxx_xxx_xxxx_xxxxx_xxxx_xxx: Callable[..., List[SomeClass]] = classmethod(
