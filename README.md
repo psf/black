@@ -1054,6 +1054,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 * *Black* is now able to format Python code that uses positional-only
   arguments (`/` as described in PEP-570) (#946)
 
+* `blackd` now returns the version of *Black* in the response headers (#1013)
+
 
 ### 19.3b0
 
