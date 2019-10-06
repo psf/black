@@ -10,22 +10,28 @@ import aiohttp_cors
 import black
 import click
 
+from _version import version as __version__
+
 # This is used internally by tests to shut down the server prematurely
 _stop_signal = asyncio.Event()
 
-VERSION_HEADER = "X-Protocol-Version"
+# Request headers
+PROTOCOL_VERSION_HEADER = "X-Protocol-Version"
 LINE_LENGTH_HEADER = "X-Line-Length"
 PYTHON_VARIANT_HEADER = "X-Python-Variant"
 SKIP_STRING_NORMALIZATION_HEADER = "X-Skip-String-Normalization"
 FAST_OR_SAFE_HEADER = "X-Fast-Or-Safe"
 
 BLACK_HEADERS = [
-    VERSION_HEADER,
+    PROTOCOL_VERSION_HEADER,
     LINE_LENGTH_HEADER,
     PYTHON_VARIANT_HEADER,
     SKIP_STRING_NORMALIZATION_HEADER,
     FAST_OR_SAFE_HEADER,
 ]
+
+# Response headers
+BLACK_VERSION_HEADER = "X-Black-Version"
 
 
 class InvalidVariantHeader(Exception):
@@ -65,8 +71,9 @@ def make_app() -> web.Application:
 
 
 async def handle(request: web.Request, executor: Executor) -> web.Response:
+    headers = {BLACK_VERSION_HEADER: __version__}
     try:
-        if request.headers.get(VERSION_HEADER, "1") != "1":
+        if request.headers.get(PROTOCOL_VERSION_HEADER, "1") != "1":
             return web.Response(
                 status=501, text="This server only supports protocol version 1"
             )
@@ -110,15 +117,18 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
             executor, partial(black.format_file_contents, req_str, fast=fast, mode=mode)
         )
         return web.Response(
-            content_type=request.content_type, charset=charset, text=formatted_str
+            content_type=request.content_type,
+            charset=charset,
+            headers=headers,
+            text=formatted_str,
         )
     except black.NothingChanged:
-        return web.Response(status=204)
+        return web.Response(status=204, headers=headers)
     except black.InvalidInput as e:
-        return web.Response(status=400, text=str(e))
+        return web.Response(status=400, headers=headers, text=str(e))
     except Exception as e:
         logging.exception("Exception during handling a request")
-        return web.Response(status=500, text=str(e))
+        return web.Response(status=500, headers=headers, text=str(e))
 
 
 def parse_python_variant_header(value: str) -> Tuple[bool, Set[black.TargetVersion]]:
