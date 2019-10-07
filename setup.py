@@ -39,7 +39,7 @@ setup(
         "appdirs",
         "toml>=0.9.4",
         "typed-ast>=1.3.1",
-        "regex==2019.8.19",
+        "regex",
     ],
     extras_require={"d": ["aiohttp>=3.3.2", "aiohttp-cors"]},
     test_suite="tests.test_black",
