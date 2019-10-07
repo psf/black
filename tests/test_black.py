@@ -1562,7 +1562,7 @@ class BlackDTestCase(AioHTTPTestCase):
     @unittest_run_loop
     async def test_blackd_unsupported_version(self) -> None:
         response = await self.client.post(
-            "/", data=b"what", headers={blackd.VERSION_HEADER: "2"}
+            "/", data=b"what", headers={blackd.PROTOCOL_VERSION_HEADER: "2"}
         )
         self.assertEqual(response.status, 501)
 
@@ -1571,7 +1571,7 @@ class BlackDTestCase(AioHTTPTestCase):
     @unittest_run_loop
     async def test_blackd_supported_version(self) -> None:
         response = await self.client.post(
-            "/", data=b"what", headers={blackd.VERSION_HEADER: "1"}
+            "/", data=b"what", headers={blackd.PROTOCOL_VERSION_HEADER: "1"}
         )
         self.assertEqual(response.status, 200)
 
