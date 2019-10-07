@@ -39,7 +39,7 @@ from typing import (
 )
 
 from appdirs import user_cache_dir
-from attr import dataclass, evolve, Factory
+from dataclasses import dataclass, field
 import click
 import toml
 from typed_ast import ast3, ast27
@@ -185,7 +185,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
 
 @dataclass
 class FileMode:
-    target_versions: Set[TargetVersion] = Factory(set)
+    target_versions: Set[TargetVersion] = field(default_factory=set)
     line_length: int = DEFAULT_LINE_LENGTH
     string_normalization: bool = True
     is_pyi: bool = False
@@ -629,7 +629,12 @@ def format_file_in_place(
     `mode` and `fast` options are passed to :func:`format_file_contents`.
     """
     if src.suffix == ".pyi":
-        mode = evolve(mode, is_pyi=True)
+        mode = FileMode(
+            mode.target_versions,
+            mode.line_length,
+            mode.string_normalization,
+            is_pyi=True,
+        )
 
     then = datetime.utcfromtimestamp(src.stat().st_mtime)
     with open(src, "rb") as buf:
@@ -1028,11 +1033,11 @@ class BracketTracker:
     """Keeps track of brackets on a line."""
 
     depth: int = 0
-    bracket_match: Dict[Tuple[Depth, NodeType], Leaf] = Factory(dict)
-    delimiters: Dict[LeafID, Priority] = Factory(dict)
+    bracket_match: Dict[Tuple[Depth, NodeType], Leaf] = field(default_factory=dict)
+    delimiters: Dict[LeafID, Priority] = field(default_factory=dict)
     previous: Optional[Leaf] = None
-    _for_loop_depths: List[int] = Factory(list)
-    _lambda_argument_depths: List[int] = Factory(list)
+    _for_loop_depths: List[int] = field(default_factory=list)
+    _lambda_argument_depths: List[int] = field(default_factory=list)
 
     def mark(self, leaf: Leaf) -> None:
         """Mark `leaf` with bracket-related metadata. Keep track of delimiters.
@@ -1160,9 +1165,11 @@ class Line:
     """Holds leaves and comments. Can be printed with `str(line)`."""
 
     depth: int = 0
-    leaves: List[Leaf] = Factory(list)
-    comments: Dict[LeafID, List[Leaf]] = Factory(dict)  # keys ordered like `leaves`
-    bracket_tracker: BracketTracker = Factory(BracketTracker)
+    leaves: List[Leaf] = field(default_factory=list)
+    comments: Dict[LeafID, List[Leaf]] = field(
+        default_factory=dict
+    )  # keys ordered like `leaves`
+    bracket_tracker: BracketTracker = field(default_factory=BracketTracker)
     inside_brackets: bool = False
     should_explode: bool = False
 
@@ -1565,7 +1572,7 @@ class EmptyLineTracker:
     is_pyi: bool = False
     previous_line: Optional[Line] = None
     previous_after: int = 0
-    previous_defs: List[int] = Factory(list)
+    previous_defs: List[int] = field(default_factory=list)
 
     def maybe_empty_lines(self, current_line: Line) -> Tuple[int, int]:
         """Return the number of extra empty lines before and after the `current_line`.
@@ -1679,7 +1686,7 @@ class LineGenerator(Visitor[Line]):
 
     is_pyi: bool = False
     normalize_strings: bool = True
-    current_line: Line = Factory(Line)
+    current_line: Line = field(default_factory=Line)
     remove_u_prefix: bool = False
 
     def line(self, indent: int = 0) -> Iterator[Line]:
@@ -1844,7 +1851,7 @@ class LineGenerator(Visitor[Line]):
             node.insert_child(index, Node(syms.atom, [lpar, operand, rpar]))
         yield from self.visit_default(node)
 
-    def __attrs_post_init__(self) -> None:
+    def __post_init__(self) -> None:
         """You are in a twisty little maze of passages."""
         v = self.visit_stmt
         Ø: Set[str] = set()
@@ -3712,7 +3719,7 @@ def assert_equivalent(src: str, dst: str) -> None:
 
         yield f"{'  ' * depth}{node.__class__.__name__}("
 
-        for field in sorted(node._fields):
+        for field in sorted(node._fields):  # noqa: F402
             # TypeIgnore has only one field 'lineno' which breaks this comparison
             type_ignore_classes = (ast3.TypeIgnore, ast27.TypeIgnore)
             if sys.version_info >= (3, 8):

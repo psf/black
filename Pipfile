@@ -5,7 +5,6 @@ name = "pypi"
 
 [packages]
 aiohttp = ">=3.3.2"
-attrs = ">=18.1.0"
 click = ">=6.5"
 appdirs = "*"
 toml = ">=0.9.4"
@@ -14,6 +13,7 @@ aiohttp-cors = "*"
 typed-ast = "==1.4.0"
 regex = ">=2019.8"
 pathspec = ">=0.6"
+dataclasses = {version = ">=0.6", python_version = "< 3.7"}
 
 [dev-packages]
 pre-commit = "*"

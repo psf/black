@@ -42,7 +42,8 @@ setup(
         "typed-ast>=1.4.0",
         "regex",
         "pathspec>=0.6, <1",
-    ],
+    ]
+    + (["dataclasses>=0.6"] if sys.version_info < (3, 7) else []),
     extras_require={"d": ["aiohttp>=3.3.2", "aiohttp-cors"]},
     test_suite="tests.test_black",
     classifiers=[
