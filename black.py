@@ -12,7 +12,7 @@ from multiprocessing import Manager, freeze_support
 import os
 from pathlib import Path
 import pickle
-import re
+import regex as re
 import signal
 import sys
 import tempfile
@@ -3797,7 +3797,8 @@ def re_compile_maybe_verbose(regex: str) -> Pattern[str]:
     """
     if "\n" in regex:
         regex = "(?x)" + regex
-    return re.compile(regex)
+    compiled: Pattern[str] = re.compile(regex)
+    return compiled
 
 
 def enumerate_reversed(sequence: Sequence[T]) -> Iterator[Tuple[Index, T]]:

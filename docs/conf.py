@@ -13,7 +13,7 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 from pathlib import Path
-import re
+import regex as re
 import shutil
 import string
 

@@ -7,7 +7,7 @@ from functools import partial
 from io import BytesIO, TextIOWrapper
 import os
 from pathlib import Path
-import re
+import regex as re
 import sys
 from tempfile import TemporaryDirectory
 from typing import Any, BinaryIO, Generator, List, Tuple, Iterator, TypeVar
@@ -1244,6 +1244,13 @@ class BlackTestCase(unittest.TestCase):
             self.assertIn(path, one)
             two = black.read_cache(short_mode)
             self.assertNotIn(path, two)
+
+    def test_tricky_unicode_symbols(self) -> None:
+        source, expected = read_data("tricky_unicode_symbols")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
 
     def test_single_file_force_pyi(self) -> None:
         reg_mode = black.FileMode()

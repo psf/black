@@ -3,7 +3,7 @@
 
 """Safely evaluate Python string literals without using eval()."""
 
-import re
+import regex as re
 
 simple_escapes = {"a": "\a",
                   "b": "\b",
