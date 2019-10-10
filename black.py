@@ -1868,6 +1868,18 @@ class LineGenerator(Visitor[Line]):
             node.insert_child(index, Node(syms.atom, [lpar, operand, rpar]))
         yield from self.visit_default(node)
 
+    def visit_STRING(self, leaf: Leaf) -> Iterator[Line]:
+        # Check if it's a docstring
+        if prev_siblings_are(
+            leaf.parent, [None, token.NEWLINE, token.INDENT, syms.simple_stmt]
+        ) and is_multiline_string(leaf):
+            prefix = "    " * self.current_line.depth
+            docstring = fix_docstring(leaf.value[3:-3], prefix)
+            leaf.value = leaf.value[0:3] + docstring + leaf.value[-3:]
+            normalize_string_quotes(leaf)
+
+        yield from self.visit_default(leaf)
+
     def __post_init__(self) -> None:
         """You are in a twisty little maze of passages."""
         v = self.visit_stmt
@@ -2147,6 +2159,22 @@ def preceding_leaf(node: Optional[LN]) -> Optional[Leaf]:
 
         node = node.parent
     return None
+
+
+def prev_siblings_are(node: Optional[LN], tokens: List[Optional[NodeType]]) -> bool:
+    """Return if the `node` and its previous siblings match types against the provided
+    list of tokens; the provided `node`has its type matched against the last element in
+    the list.  `None` can be used as the first element to declare that the start of the
+    list is anchored at the start of its parent's children."""
+    if not tokens:
+        return True
+    if tokens[-1] is None:
+        return node is None
+    if not node:
+        return False
+    if node.type != tokens[-1]:
+        return False
+    return prev_siblings_are(node.prev_sibling, tokens[:-1])
 
 
 def child_towards(ancestor: Node, descendant: LN) -> Optional[LN]:
@@ -3770,7 +3798,17 @@ def assert_equivalent(src: str, dst: str) -> None:
                 yield from _v(value, depth + 2)
 
             else:
-                yield f"{'  ' * (depth+2)}{value!r},  # {value.__class__.__name__}"
+                # Constant strings may be indented across newlines, if they are
+                # docstrings; fold spaces after newlines when comparing
+                if (
+                    isinstance(node, ast.Constant)
+                    and field == "value"
+                    and isinstance(value, str)
+                ):
+                    normalized = re.sub(r"\n[ \t]+", "\n ", value)
+                else:
+                    normalized = value
+                yield f"{'  ' * (depth+2)}{normalized!r},  # {value.__class__.__name__}"
 
         yield f"{'  ' * depth})  # /{node.__class__.__name__}"
 
@@ -4158,6 +4196,33 @@ def patched_main() -> None:
     freeze_support()
     patch_click()
     main()
+
+
+def fix_docstring(docstring: str, prefix: str) -> str:
+    # https://www.python.org/dev/peps/pep-0257/#handling-docstring-indentation
+    if not docstring:
+        return ""
+    # Convert tabs to spaces (following the normal Python rules)
+    # and split into a list of lines:
+    lines = docstring.expandtabs().splitlines()
+    # Determine minimum indentation (first line doesn't count):
+    indent = sys.maxsize
+    for line in lines[1:]:
+        stripped = line.lstrip()
+        if stripped:
+            indent = min(indent, len(line) - len(stripped))
+    # Remove indentation (first line is special):
+    trimmed = [lines[0].strip()]
+    if indent < sys.maxsize:
+        last_line_idx = len(lines) - 2
+        for i, line in enumerate(lines[1:]):
+            stripped_line = line[indent:].rstrip()
+            if stripped_line or i == last_line_idx:
+                trimmed.append(prefix + stripped_line)
+            else:
+                trimmed.append("")
+    # Return a single string:
+    return "\n".join(trimmed)
 
 
 if __name__ == "__main__":
