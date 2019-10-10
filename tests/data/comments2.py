@@ -146,6 +146,7 @@ short
         ],
     )
 
+CONFIG_FILES = [CONFIG_FILE, ] + SHARED_CONFIG_FILES + USER_CONFIG_FILES  # type: Final
 
 #######################
 ### SECTION COMMENT ###
@@ -312,6 +313,8 @@ short
         [Node(statement, result), Leaf(token.NEWLINE, "\n")],  # FIXME: \r\n?
     )
 
+
+CONFIG_FILES = [CONFIG_FILE] + SHARED_CONFIG_FILES + USER_CONFIG_FILES  # type: Final
 
 #######################
 ### SECTION COMMENT ###

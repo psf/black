@@ -1321,7 +1321,7 @@ class Line:
                     if leaf_id not in ignored_ids or comment_seen:
                         return True
 
-            comment_seen = True
+                comment_seen = True
 
         return False
 
