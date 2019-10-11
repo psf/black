@@ -1340,10 +1340,23 @@ class Line:
         # (unfortunately) need to check the actual source lines and
         # only report an unsplittable 'type: ignore' if this line was
         # one line in the original code.
-        if self.leaves[0].lineno == self.leaves[-1].lineno:
-            for comment in self.comments.get(id(self.leaves[-1]), []):
-                if is_type_comment(comment, " ignore"):
-                    return True
+
+        # Like in the type comment check above, we need to skip a black added
+        # trailing comma or invisible paren, since it will be the original leaf
+        # before it that has the original line number.
+        last_idx = -1
+        last_leaf = self.leaves[-1]
+        if len(self.leaves) > 2 and (
+            last_leaf.type == token.COMMA
+            or (last_leaf.type == token.RPAR and not last_leaf.value)
+        ):
+            last_idx = -2
+
+        if self.leaves[0].lineno == self.leaves[last_idx].lineno:
+            for node in self.leaves[last_idx:]:
+                for comment in self.comments.get(id(node), []):
+                    if is_type_comment(comment, " ignore"):
+                        return True
 
         return False
 
