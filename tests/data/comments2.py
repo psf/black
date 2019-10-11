@@ -235,11 +235,7 @@ def inline_comments_in_brackets_ruin_everything():
             body,
             parameters.children[-1],  # )2
         ]
-        parameters.children = [
-            parameters.what_if_this_was_actually_long.children[0],
-            body,
-            parameters.children[-1],
-        ]  # type: ignore
+        parameters.children = [parameters.what_if_this_was_actually_long.children[0], body, parameters.children[-1]]  # type: ignore
     if (
         self._proc is not None
         # has the child process finished?
