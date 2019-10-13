@@ -27,7 +27,7 @@ without having to invoke the Python pgen C program.
 """
 
 # Python imports
-import re
+import regex as re
 
 # Local imports
 from pgen2 import grammar, token
