@@ -297,7 +297,7 @@ ignore = E501,W503,E203
 ```
 
 You'll find *Black*'s own .flake8 config file is configured like this.
-If you're curious about the reasoning behind B950, 
+If you're curious about the reasoning behind B950,
 [Bugbear's documentation](https://github.com/PyCQA/flake8-bugbear#opinionated-warnings)
 explains it.  The tl;dr is "it's like highway speed limits, we won't
 bother you if you overdo it by a few km/h".
@@ -682,7 +682,7 @@ $ where black
 
 
 
-### Wing IDE 
+### Wing IDE
 
 Wing supports black via the OS Commands tool, as explained in the Wing documentation on [pep8 formatting](https://wingware.com/doc/edit/pep8). The detailed procedure is:
 
@@ -704,7 +704,7 @@ $ black --help
 - click on **+** in **OS Commands** -> New: Command line..
   - Title: black
   - Command Line: black %s
-  - I/O Encoding: Use Default 
+  - I/O Encoding: Use Default
   - Key Binding: F1
   - [x] Raise OS Commands when executed
   - [x] Auto-save files before execution
@@ -893,6 +893,9 @@ Apart from the above, `blackd` can produce the following response codes:
  - `HTTP 500`: If there was any kind of error while trying to format the input.
 	The response body contains a textual representation of the error.
 
+The response headers include a `X-Black-Version` header containing the version
+of *Black*.
+
 ## Version control integration
 
 Use [pre-commit](https://pre-commit.com/). Once you [have it
@@ -1050,6 +1053,8 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * *Black* is now able to format Python code that uses positional-only
   arguments (`/` as described in PEP-570) (#946)
+
+* `blackd` now returns the version of *Black* in the response headers (#1013)
 
 
 ### 19.3b0

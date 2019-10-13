@@ -1569,7 +1569,7 @@ class BlackDTestCase(AioHTTPTestCase):
     @unittest_run_loop
     async def test_blackd_unsupported_version(self) -> None:
         response = await self.client.post(
-            "/", data=b"what", headers={blackd.VERSION_HEADER: "2"}
+            "/", data=b"what", headers={blackd.PROTOCOL_VERSION_HEADER: "2"}
         )
         self.assertEqual(response.status, 501)
 
@@ -1578,7 +1578,7 @@ class BlackDTestCase(AioHTTPTestCase):
     @unittest_run_loop
     async def test_blackd_supported_version(self) -> None:
         response = await self.client.post(
-            "/", data=b"what", headers={blackd.VERSION_HEADER: "1"}
+            "/", data=b"what", headers={blackd.PROTOCOL_VERSION_HEADER: "1"}
         )
         self.assertEqual(response.status, 200)
 
@@ -1668,6 +1668,13 @@ class BlackDTestCase(AioHTTPTestCase):
             "/", data=b'print("hello")\n', headers={blackd.LINE_LENGTH_HEADER: "NaN"}
         )
         self.assertEqual(response.status, 400)
+
+    @skip_if_exception("ClientOSError")
+    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
+    @unittest_run_loop
+    async def test_blackd_response_black_version_header(self) -> None:
+        response = await self.client.post("/")
+        self.assertIsNotNone(response.headers.get(blackd.BLACK_VERSION_HEADER))
 
 
 if __name__ == "__main__":
