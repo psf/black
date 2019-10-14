@@ -11,3 +11,4 @@ dist/
 pip-wheel-metadata/
 _version.py
 .idea
+.eggs
