@@ -112,3 +112,5 @@ call_to_some_function_asdf(
     foo,
     [AAAAAAAAAAAAAAAAAAAAAAA, AAAAAAAAAAAAAAAAAAAAAAA, AAAAAAAAAAAAAAAAAAAAAAA, BBBBBBBBBBBB],  # type: ignore
 )
+
+aaaaaaaaaaaaa, bbbbbbbbb = map(list, map(itertools.chain.from_iterable, zip(*items)))  # type: ignore[arg-type]

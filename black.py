@@ -1341,19 +1341,15 @@ class Line:
         # only report an unsplittable 'type: ignore' if this line was
         # one line in the original code.
 
-        # Like in the type comment check above, we need to skip a black added
-        # trailing comma or invisible paren, since it will be the original leaf
-        # before it that has the original line number.
-        last_idx = -1
-        last_leaf = self.leaves[-1]
-        if len(self.leaves) > 2 and (
-            last_leaf.type == token.COMMA
-            or (last_leaf.type == token.RPAR and not last_leaf.value)
-        ):
-            last_idx = -2
+        # Grab the first and last line numbers, skipping generated leaves
+        first_line = next((l.lineno for l in self.leaves if l.lineno != 0), 0)
+        last_line = next((l.lineno for l in reversed(self.leaves) if l.lineno != 0), 0)
 
-        if self.leaves[0].lineno == self.leaves[last_idx].lineno:
-            for node in self.leaves[last_idx:]:
+        if first_line == last_line:
+            # We look at the last two leaves since a comma or an
+            # invisible paren could have been added at the end of the
+            # line.
+            for node in self.leaves[-2:]:
                 for comment in self.comments.get(id(node), []):
                     if is_type_comment(comment, " ignore"):
                         return True
