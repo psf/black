@@ -1,14 +1,14 @@
-![Black Logo](https://raw.githubusercontent.com/python/black/master/docs/_static/logo2-readme.png)
+![Black Logo](https://raw.githubusercontent.com/psf/black/master/docs/_static/logo2-readme.png)
 <h2 align="center">The Uncompromising Code Formatter</h2>
 
 <p align="center">
-<a href="https://travis-ci.org/python/black"><img alt="Build Status" src="https://travis-ci.org/python/black.svg?branch=master"></a>
+<a href="https://travis-ci.com/psf/black"><img alt="Build Status" src="https://travis-ci.com/psf/black.svg?branch=master"></a>
 <a href="https://black.readthedocs.io/en/stable/?badge=stable"><img alt="Documentation Status" src="https://readthedocs.org/projects/black/badge/?version=stable"></a>
-<a href="https://coveralls.io/github/python/black?branch=master"><img alt="Coverage Status" src="https://coveralls.io/repos/github/python/black/badge.svg?branch=master"></a>
-<a href="https://github.com/python/black/blob/master/LICENSE"><img alt="License: MIT" src="https://black.readthedocs.io/en/stable/_static/license.svg"></a>
+<a href="https://coveralls.io/github/psf/black?branch=master"><img alt="Coverage Status" src="https://coveralls.io/repos/github/psf/black/badge.svg?branch=master"></a>
+<a href="https://github.com/psf/black/blob/master/LICENSE"><img alt="License: MIT" src="https://black.readthedocs.io/en/stable/_static/license.svg"></a>
 <a href="https://pypi.org/project/black/"><img alt="PyPI" src="https://black.readthedocs.io/en/stable/_static/pypi.svg"></a>
 <a href="https://pepy.tech/project/black"><img alt="Downloads" src="https://pepy.tech/badge/black"></a>
-<a href="https://github.com/python/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
+<a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 </p>
 
 > “Any color you like.”
@@ -178,14 +178,14 @@ great.
 ```py3
 # in:
 
-l = [1,
+j = [1,
      2,
      3,
 ]
 
 # out:
 
-l = [1, 2, 3]
+j = [1, 2, 3]
 ```
 
 If not, *Black* will look at the contents of the first outer matching
@@ -297,7 +297,7 @@ ignore = E501,W503,E203
 ```
 
 You'll find *Black*'s own .flake8 config file is configured like this.
-If you're curious about the reasoning behind B950, 
+If you're curious about the reasoning behind B950,
 [Bugbear's documentation](https://github.com/PyCQA/flake8-bugbear#opinionated-warnings)
 explains it.  The tl;dr is "it's like highway speed limits, we won't
 bother you if you overdo it by a few km/h".
@@ -373,7 +373,7 @@ The main reason to standardize on a single form of quotes is aesthetics.
 Having one kind of quotes everywhere reduces reader distraction.
 It will also enable a future version of *Black* to merge consecutive
 string literals that ended up on the same line (see
-[#26](https://github.com/python/black/issues/26) for details).
+[#26](https://github.com/psf/black/issues/26) for details).
 
 Why settle on double quotes?  They anticipate apostrophes in English
 text.  They match the docstring standard described in [PEP 257](https://www.python.org/dev/peps/pep-0257/#what-is-a-docstring).
@@ -682,7 +682,7 @@ $ where black
 
 
 
-### Wing IDE 
+### Wing IDE
 
 Wing supports black via the OS Commands tool, as explained in the Wing documentation on [pep8 formatting](https://wingware.com/doc/edit/pep8). The detailed procedure is:
 
@@ -704,7 +704,7 @@ $ black --help
 - click on **+** in **OS Commands** -> New: Command line..
   - Title: black
   - Command Line: black %s
-  - I/O Encoding: Use Default 
+  - I/O Encoding: Use Default
   - Key Binding: F1
   - [x] Raise OS Commands when executed
   - [x] Auto-save files before execution
@@ -725,21 +725,27 @@ Configuration:
 * `g:black_fast` (defaults to `0`)
 * `g:black_linelength` (defaults to `88`)
 * `g:black_skip_string_normalization` (defaults to `0`)
-* `g:black_virtualenv` (defaults to `~/.vim/black`)
+* `g:black_virtualenv` (defaults to `~/.vim/black` or `~/.local/share/nvim/black`)
 
 To install with [vim-plug](https://github.com/junegunn/vim-plug):
 
 ```
-Plug 'python/black'
+Plug 'psf/black'
 ```
 
 or with [Vundle](https://github.com/VundleVim/Vundle.vim):
 
 ```
-Plugin 'python/black'
+Plugin 'psf/black'
 ```
 
-or you can copy the plugin from [plugin/black.vim](https://github.com/python/black/tree/master/plugin/black.vim).
+or you can copy the plugin from [plugin/black.vim](https://github.com/psf/black/tree/master/plugin/black.vim).
+
+```
+mkdir -p ~/.vim/pack/python/start/black/plugin
+curl https://raw.githubusercontent.com/psf/black/master/plugin/black.vim -o ~/.vim/pack/python/start/black/plugin/black.vim
+```
+
 Let me know if this requires any changes to work with Vim 8's builtin
 `packadd`, or Pathogen, and so on.
 
@@ -760,6 +766,12 @@ To run *Black* on save, add the following line to `.vimrc` or `init.vim`:
 
 ```
 autocmd BufWritePre *.py execute ':Black'
+```
+
+To run *Black* on a key press (e.g. F9 below), add this:
+
+```
+nnoremap <F9> :Black<CR>
 ```
 
 **How to get Vim with Python 3.6?**
@@ -798,6 +810,14 @@ the [Python Language Server](https://github.com/palantir/python-language-server)
 
 Use [python-black](https://atom.io/packages/python-black).
 
+### Kakoune 
+
+Add the following hook to your kakrc, then run black with `:format`.
+```
+hook global WinSetOption filetype=python %{
+    set-option window formatcmd 'black -q  -'
+}
+``` 
 
 ### Other editors
 
@@ -893,6 +913,9 @@ Apart from the above, `blackd` can produce the following response codes:
  - `HTTP 500`: If there was any kind of error while trying to format the input.
 	The response body contains a textual representation of the error.
 
+The response headers include a `X-Black-Version` header containing the version
+of *Black*.
+
 ## Version control integration
 
 Use [pre-commit](https://pre-commit.com/). Once you [have it
@@ -900,7 +923,7 @@ installed](https://pre-commit.com/#install), add this to the
 `.pre-commit-config.yaml` in your repository:
 ```yaml
 repos:
--   repo: https://github.com/python/black
+-   repo: https://github.com/psf/black
     rev: stable
     hooks:
     - id: black
@@ -943,7 +966,7 @@ write the above files to `.cache/black/<version>/`.
 The following notable open-source projects trust *Black* with enforcing
 a consistent code style: pytest, tox, Pyramid, Django Channels, Hypothesis,
 attrs, SQLAlchemy, Poetry, PyPA applications (Warehouse, Pipenv, virtualenv),
-every Datadog Agent Integration.
+pandas, Pillow, every Datadog Agent Integration.
 
 Are we missing anyone?  Let us know.
 
@@ -974,16 +997,16 @@ and [`pipenv`](https://docs.pipenv.org/):
 Use the badge in your project's README.md:
 
 ```markdown
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 ```
 
 Using the badge in README.rst:
 ```
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-    :target: https://github.com/python/black
+    :target: https://github.com/psf/black
 ```
 
-Looks like this: [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
+Looks like this: [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 
 ## License
@@ -1044,6 +1067,14 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * if *Black* puts parenthesis around a single expression, it moves comments
   to the wrapped expression instead of after the brackets (#872)
+
+* *Black* is now able to format Python code that uses assignment expressions
+  (`:=` as described in PEP-572) (#935)
+
+* *Black* is now able to format Python code that uses positional-only
+  arguments (`/` as described in PEP-570) (#946)
+
+* `blackd` now returns the version of *Black* in the response headers (#1013)
 
 
 ### 19.3b0

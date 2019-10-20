@@ -31,12 +31,8 @@ matrix:
       python: 3.6
     - name: "3.7"
       python: 3.7
-    - name: "3.8-dev"
-      python: 3.8-dev
-  # aiohttp currently has a bug affecting 3.8
-  allow_failures:
-    - name: "3.8-dev"
-      python: 3.8-dev
+    - name: "3.8"
+      python: 3.8
 before_deploy:
   - pip install pyinstaller
   - pyinstaller --clean -F --add-data blib2to3/:blib2to3 black.py
@@ -49,5 +45,5 @@ deploy:
   skip_cleanup: true
   on:
     condition: $TRAVIS_PYTHON_VERSION == '3.6'
-    repo: python/black
+    repo: psf/black
     tags: true

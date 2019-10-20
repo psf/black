@@ -4,11 +4,12 @@
 # Pgen imports
 from . import grammar, token, tokenize
 
+
 class PgenGrammar(grammar.Grammar):
     pass
 
-class ParserGenerator(object):
 
+class ParserGenerator(object):
     def __init__(self, filename, stream=None):
         close_stream = None
         if stream is None:
@@ -17,11 +18,11 @@ class ParserGenerator(object):
         self.filename = filename
         self.stream = stream
         self.generator = tokenize.generate_tokens(stream.readline)
-        self.gettoken() # Initialize lookahead
+        self.gettoken()  # Initialize lookahead
         self.dfas, self.startsymbol = self.parse()
         if close_stream is not None:
             close_stream()
-        self.first = {} # map from symbol name to set of tokens
+        self.first = {}  # map from symbol name to set of tokens
         self.addfirstsets()
 
     def make_grammar(self):
@@ -96,7 +97,7 @@ class ParserGenerator(object):
                     return ilabel
             else:
                 # An operator (any non-numeric token)
-                itoken = grammar.opmap[value] # Fails if unknown token
+                itoken = grammar.opmap[value]  # Fails if unknown token
                 if itoken in c.tokens:
                     return c.tokens[itoken]
                 else:
@@ -110,11 +111,11 @@ class ParserGenerator(object):
         for name in names:
             if name not in self.first:
                 self.calcfirst(name)
-            #print name, self.first[name].keys()
+            # print name, self.first[name].keys()
 
     def calcfirst(self, name):
         dfa = self.dfas[name]
-        self.first[name] = None # dummy to detect left recursion
+        self.first[name] = None  # dummy to detect left recursion
         state = dfa[0]
         totalset = {}
         overlapcheck = {}
@@ -136,9 +137,11 @@ class ParserGenerator(object):
         for label, itsfirst in overlapcheck.items():
             for symbol in itsfirst:
                 if symbol in inverse:
-                    raise ValueError("rule %s is ambiguous; %s is in the"
-                                     " first sets of %s as well as %s" %
-                                     (name, symbol, label, inverse[symbol]))
+                    raise ValueError(
+                        "rule %s is ambiguous; %s is in the"
+                        " first sets of %s as well as %s"
+                        % (name, symbol, label, inverse[symbol])
+                    )
                 inverse[symbol] = label
         self.first[name] = totalset
 
@@ -154,14 +157,14 @@ class ParserGenerator(object):
             self.expect(token.OP, ":")
             a, z = self.parse_rhs()
             self.expect(token.NEWLINE)
-            #self.dump_nfa(name, a, z)
+            # self.dump_nfa(name, a, z)
             dfa = self.make_dfa(a, z)
-            #self.dump_dfa(name, dfa)
+            # self.dump_dfa(name, dfa)
             oldlen = len(dfa)
             self.simplify_dfa(dfa)
             newlen = len(dfa)
             dfas[name] = dfa
-            #print name, oldlen, newlen
+            # print name, oldlen, newlen
             if startsymbol is None:
                 startsymbol = name
         return dfas, startsymbol
@@ -173,10 +176,12 @@ class ParserGenerator(object):
         # values.
         assert isinstance(start, NFAState)
         assert isinstance(finish, NFAState)
+
         def closure(state):
             base = {}
             addclosure(state, base)
             return base
+
         def addclosure(state, base):
             assert isinstance(state, NFAState)
             if state in base:
@@ -185,8 +190,9 @@ class ParserGenerator(object):
             for label, next in state.arcs:
                 if label is None:
                     addclosure(next, base)
+
         states = [DFAState(closure(start), finish)]
-        for state in states: # NB states grows while we're iterating
+        for state in states:  # NB states grows while we're iterating
             arcs = {}
             for nfastate in state.nfaset:
                 for label, next in nfastate.arcs:
@@ -200,7 +206,7 @@ class ParserGenerator(object):
                     st = DFAState(nfaset, finish)
                     states.append(st)
                 state.addarc(st, label)
-        return states # List of DFAState instances; first one is start
+        return states  # List of DFAState instances; first one is start
 
     def dump_nfa(self, name, start, finish):
         print("Dump of NFA for", name)
@@ -236,10 +242,10 @@ class ParserGenerator(object):
         while changes:
             changes = False
             for i, state_i in enumerate(dfa):
-                for j in range(i+1, len(dfa)):
+                for j in range(i + 1, len(dfa)):
                     state_j = dfa[j]
                     if state_i == state_j:
-                        #print "  unify", i, j
+                        # print "  unify", i, j
                         del dfa[j]
                         for state in dfa:
                             state.unifystate(state_j, state_i)
@@ -266,8 +272,7 @@ class ParserGenerator(object):
     def parse_alt(self):
         # ALT: ITEM+
         a, b = self.parse_item()
-        while (self.value in ("(", "[") or
-               self.type in (token.NAME, token.STRING)):
+        while self.value in ("(", "[") or self.type in (token.NAME, token.STRING):
             c, d = self.parse_item()
             b.addarc(c)
             b = d
@@ -307,13 +312,15 @@ class ParserGenerator(object):
             self.gettoken()
             return a, z
         else:
-            self.raise_error("expected (...) or NAME or STRING, got %s/%s",
-                             self.type, self.value)
+            self.raise_error(
+                "expected (...) or NAME or STRING, got %s/%s", self.type, self.value
+            )
 
     def expect(self, type, value=None):
         if self.type != type or (value is not None and self.value != value):
-            self.raise_error("expected %s/%s, got %s/%s",
-                             type, value, self.type, self.value)
+            self.raise_error(
+                "expected %s/%s, got %s/%s", type, value, self.type, self.value
+            )
         value = self.value
         self.gettoken()
         return value
@@ -323,7 +330,7 @@ class ParserGenerator(object):
         while tup[0] in (tokenize.COMMENT, tokenize.NL):
             tup = next(self.generator)
         self.type, self.value, self.begin, self.end, self.line = tup
-        #print token.tok_name[self.type], repr(self.value)
+        # print token.tok_name[self.type], repr(self.value)
 
     def raise_error(self, msg, *args):
         if args:
@@ -331,28 +338,27 @@ class ParserGenerator(object):
                 msg = msg % args
             except:
                 msg = " ".join([msg] + list(map(str, args)))
-        raise SyntaxError(msg, (self.filename, self.end[0],
-                                self.end[1], self.line))
+        raise SyntaxError(msg, (self.filename, self.end[0], self.end[1], self.line))
+
 
 class NFAState(object):
-
     def __init__(self):
-        self.arcs = [] # list of (label, NFAState) pairs
+        self.arcs = []  # list of (label, NFAState) pairs
 
     def addarc(self, next, label=None):
         assert label is None or isinstance(label, str)
         assert isinstance(next, NFAState)
         self.arcs.append((label, next))
 
-class DFAState(object):
 
+class DFAState(object):
     def __init__(self, nfaset, final):
         assert isinstance(nfaset, dict)
         assert isinstance(next(iter(nfaset)), NFAState)
         assert isinstance(final, NFAState)
         self.nfaset = nfaset
         self.isfinal = final in nfaset
-        self.arcs = {} # map from label to DFAState
+        self.arcs = {}  # map from label to DFAState
 
     def addarc(self, next, label):
         assert isinstance(label, str)
@@ -379,7 +385,8 @@ class DFAState(object):
                 return False
         return True
 
-    __hash__ = None # For Py3 compatibility.
+    __hash__ = None  # For Py3 compatibility.
+
 
 def generate_grammar(filename="Grammar.txt"):
     p = ParserGenerator(filename)

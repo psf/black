@@ -63,7 +63,7 @@ def inline_comments_in_brackets_ruin_everything():
         parameters.children = [
             children[0],  # (1
             body,
-            children[-1],  # )1
+            children[-1]  # )1
         ]
         parameters.children = [
             children[0],
@@ -142,10 +142,11 @@ short
         syms.simple_stmt,
         [
             Node(statement, result),
-            Leaf(token.NEWLINE, '\n'),  # FIXME: \r\n?
+            Leaf(token.NEWLINE, '\n')  # FIXME: \r\n?
         ],
     )
 
+CONFIG_FILES = [CONFIG_FILE, ] + SHARED_CONFIG_FILES + USER_CONFIG_FILES  # type: Final
 
 #######################
 ### SECTION COMMENT ###
@@ -234,11 +235,7 @@ def inline_comments_in_brackets_ruin_everything():
             body,
             parameters.children[-1],  # )2
         ]
-        parameters.children = [
-            parameters.what_if_this_was_actually_long.children[0],
-            body,
-            parameters.children[-1],
-        ]  # type: ignore
+        parameters.children = [parameters.what_if_this_was_actually_long.children[0], body, parameters.children[-1]]  # type: ignore
     if (
         self._proc is not None
         # has the child process finished?
@@ -312,6 +309,8 @@ short
         [Node(statement, result), Leaf(token.NEWLINE, "\n")],  # FIXME: \r\n?
     )
 
+
+CONFIG_FILES = [CONFIG_FILE] + SHARED_CONFIG_FILES + USER_CONFIG_FILES  # type: Final
 
 #######################
 ### SECTION COMMENT ###

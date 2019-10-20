@@ -57,6 +57,7 @@ class python_symbols(Symbols):
     import_stmt: int
     lambdef: int
     listmaker: int
+    namedexpr_test: int
     not_test: int
     old_comp_for: int
     old_comp_if: int

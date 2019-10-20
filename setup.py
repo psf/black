@@ -1,6 +1,4 @@
 # Copyright (C) 2018 Łukasz Langa
-import ast
-import re
 from setuptools import setup
 import sys
 
@@ -16,27 +14,21 @@ def get_long_description() -> str:
         return ld_file.read()
 
 
-def get_version() -> str:
-    black_py = CURRENT_DIR / "black.py"
-    _version_re = re.compile(r"__version__\s+=\s+(?P<version>.*)")
-    with open(black_py, "r", encoding="utf8") as f:
-        match = _version_re.search(f.read())
-        version = match.group("version") if match is not None else '"unknown"'
-    return str(ast.literal_eval(version))
-
-
 setup(
     name="black",
-    version=get_version(),
+    use_scm_version={
+        "write_to": "_version.py",
+        "write_to_template": 'version = "{version}"\n',
+    },
     description="The uncompromising code formatter.",
     long_description=get_long_description(),
     long_description_content_type="text/markdown",
     keywords="automation formatter yapf autopep8 pyfmt gofmt rustfmt",
     author="Łukasz Langa",
     author_email="lukasz@langa.pl",
-    url="https://github.com/python/black",
+    url="https://github.com/psf/black",
     license="MIT",
-    py_modules=["black", "blackd"],
+    py_modules=["black", "blackd", "_version"],
     packages=["blib2to3", "blib2to3.pgen2"],
     package_data={"blib2to3": ["*.txt"]},
     python_requires=">=3.6",
@@ -47,6 +39,7 @@ setup(
         "appdirs",
         "toml>=0.9.4",
         "typed-ast>=1.3.1",
+        "regex",
     ],
     extras_require={"d": ["aiohttp>=3.3.2", "aiohttp-cors"]},
     test_suite="tests.test_black",
@@ -59,6 +52,7 @@ setup(
         "Programming Language :: Python",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3 :: Only",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Software Development :: Quality Assurance",
