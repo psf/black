@@ -21,7 +21,7 @@ repos:
         types: [python]
         exclude: ^docs/conf.py
   - repo: https://github.com/prettier/prettier
-    rev: 1.17.1
+    rev: 1.18.2
     hooks:
       - id: prettier
         args: [--prose-wrap=always, --print-width=88]
