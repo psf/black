@@ -4006,7 +4006,7 @@ def read_cache(mode: FileMode) -> Cache:
     with cache_file.open("rb") as fobj:
         try:
             cache: Cache = pickle.load(fobj)
-        except pickle.UnpicklingError:
+        except (pickle.UnpicklingError, ValueError):
             return {}
 
     return cache
@@ -4041,7 +4041,7 @@ def write_cache(cache: Cache, sources: Iterable[Path], mode: FileMode) -> None:
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         new_cache = {**cache, **{src.resolve(): get_cache_info(src) for src in sources}}
         with tempfile.NamedTemporaryFile(dir=str(cache_file.parent), delete=False) as f:
-            pickle.dump(new_cache, f, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(new_cache, f, protocol=4)
         os.replace(f.name, cache_file)
     except OSError:
         pass
