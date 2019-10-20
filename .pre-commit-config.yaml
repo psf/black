@@ -8,6 +8,7 @@ repos:
         name: black
         language: system
         entry: black
+        require_serial: true
         types: [python]
 
   - repo: https://gitlab.com/pycqa/flake8
