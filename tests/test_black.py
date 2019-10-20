@@ -159,6 +159,16 @@ class BlackTestCase(unittest.TestCase):
         self.assertEqual(result.exit_code, exit_code, msg=runner.stderr_bytes.decode())
 
     @patch("black.dump_to_file", dump_to_stderr)
+    def checkSourceFile(self, name: str) -> None:
+        path = THIS_DIR.parent / name
+        source, expected = read_data(str(path), data=False)
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+        self.assertFalse(ff(path))
+
+    @patch("black.dump_to_file", dump_to_stderr)
     def test_empty(self) -> None:
         source = expected = ""
         actual = fs(source)
@@ -177,23 +187,44 @@ class BlackTestCase(unittest.TestCase):
             os.unlink(tmp_file)
         self.assertFormatEqual(expected, actual)
 
-    @patch("black.dump_to_file", dump_to_stderr)
     def test_self(self) -> None:
-        source, expected = read_data("test_black", data=False)
-        actual = fs(source)
-        self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
-        self.assertFalse(ff(THIS_FILE))
+        self.checkSourceFile("tests/test_black.py")
 
-    @patch("black.dump_to_file", dump_to_stderr)
     def test_black(self) -> None:
-        source, expected = read_data("../black", data=False)
-        actual = fs(source)
-        self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
-        self.assertFalse(ff(THIS_DIR / ".." / "black.py"))
+        self.checkSourceFile("black.py")
+
+    def test_pygram(self) -> None:
+        self.checkSourceFile("blib2to3/pygram.py")
+
+    def test_pytree(self) -> None:
+        self.checkSourceFile("blib2to3/pytree.py")
+
+    def test_conv(self) -> None:
+        self.checkSourceFile("blib2to3/pgen2/conv.py")
+
+    def test_driver(self) -> None:
+        self.checkSourceFile("blib2to3/pgen2/driver.py")
+
+    def test_grammar(self) -> None:
+        self.checkSourceFile("blib2to3/pgen2/grammar.py")
+
+    def test_literals(self) -> None:
+        self.checkSourceFile("blib2to3/pgen2/literals.py")
+
+    def test_parse(self) -> None:
+        self.checkSourceFile("blib2to3/pgen2/parse.py")
+
+    def test_pgen(self) -> None:
+        self.checkSourceFile("blib2to3/pgen2/pgen.py")
+
+    def test_tokenize(self) -> None:
+        self.checkSourceFile("blib2to3/pgen2/tokenize.py")
+
+    def test_token(self) -> None:
+        self.checkSourceFile("blib2to3/pgen2/token.py")
+
+    def test_setup(self) -> None:
+        self.checkSourceFile("setup.py")
 
     def test_piping(self) -> None:
         source, expected = read_data("../black", data=False)
@@ -229,15 +260,6 @@ class BlackTestCase(unittest.TestCase):
         actual = diff_header.sub("[Deterministic header]", result.output)
         actual = actual.rstrip() + "\n"  # the diff output has a trailing space
         self.assertEqual(expected, actual)
-
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_setup(self) -> None:
-        source, expected = read_data("../setup", data=False)
-        actual = fs(source)
-        self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
-        self.assertFalse(ff(THIS_DIR / ".." / "setup.py"))
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_function(self) -> None:
