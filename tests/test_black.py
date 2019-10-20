@@ -1369,6 +1369,13 @@ class BlackTestCase(unittest.TestCase):
                 self.assertIn(path, pyi_cache)
                 self.assertNotIn(path, normal_cache)
 
+    def test_collections(self) -> None:
+        source, expected = read_data("collections")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+
     def test_pipe_force_py36(self) -> None:
         source, expected = read_data("force_py36")
         result = CliRunner().invoke(

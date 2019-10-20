@@ -63,7 +63,7 @@ def inline_comments_in_brackets_ruin_everything():
         parameters.children = [
             children[0],  # (1
             body,
-            children[-1],  # )1
+            children[-1]  # )1
         ]
         parameters.children = [
             children[0],
@@ -142,7 +142,7 @@ short
         syms.simple_stmt,
         [
             Node(statement, result),
-            Leaf(token.NEWLINE, '\n'),  # FIXME: \r\n?
+            Leaf(token.NEWLINE, '\n')  # FIXME: \r\n?
         ],
     )
 
