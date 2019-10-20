@@ -2,10 +2,13 @@
 # "Version control integration" in README.md.
 exclude: ^(blib2to3/|profiling/|tests/data/)
 repos:
-  - repo: https://github.com/psf/black
-    rev: 19.3b0
+  - repo: local
     hooks:
       - id: black
+        name: black
+        language: system
+        entry: black
+        types: [python]
 
   - repo: https://gitlab.com/pycqa/flake8
     rev: 3.7.8
