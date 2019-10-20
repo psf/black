@@ -1,6 +1,7 @@
+import ast
 import asyncio
-from asyncio.base_events import BaseEventLoop
 from concurrent.futures import Executor, ProcessPoolExecutor
+from contextlib import contextmanager
 from datetime import datetime
 from enum import Enum
 from functools import lru_cache, partial, wraps
@@ -11,7 +12,7 @@ from multiprocessing import Manager, freeze_support
 import os
 from pathlib import Path
 import pickle
-import re
+import regex as re
 import signal
 import sys
 import tempfile
@@ -50,12 +51,10 @@ from blib2to3.pgen2 import driver, token
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.parse import ParseError
 
+from _version import version as __version__
 
-__version__ = "19.3b0"
 DEFAULT_LINE_LENGTH = 88
-DEFAULT_EXCLUDES = (
-    r"/(\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|_build|buck-out|build|dist)/"
-)
+DEFAULT_EXCLUDES = r"/(\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_build|buck-out|build|dist)/"  # noqa: B950
 DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 
@@ -141,6 +140,8 @@ class Feature(Enum):
     # set for every version of python.
     ASYNC_IDENTIFIERS = 6
     ASYNC_KEYWORDS = 7
+    ASSIGNMENT_EXPRESSIONS = 8
+    POS_ONLY_ARGUMENTS = 9
 
 
 VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
@@ -175,6 +176,8 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.TRAILING_COMMA_IN_CALL,
         Feature.TRAILING_COMMA_IN_DEF,
         Feature.ASYNC_KEYWORDS,
+        Feature.ASSIGNMENT_EXPRESSIONS,
+        Feature.POS_ONLY_ARGUMENTS,
     },
 }
 
@@ -428,6 +431,7 @@ def main(
     report = Report(check=check, quiet=quiet, verbose=verbose)
     root = find_project_root(src)
     sources: Set[Path] = set()
+    path_empty(src, quiet, verbose, ctx)
     for s in src:
         p = Path(s)
         if p.is_dir():
@@ -441,7 +445,7 @@ def main(
             err(f"invalid path: {s}")
     if len(sources) == 0:
         if verbose or not quiet:
-            out("No paths given. Nothing to do 😴")
+            out("No Python files are present to be formatted. Nothing to do 😴")
         ctx.exit(0)
 
     if len(sources) == 1:
@@ -461,6 +465,16 @@ def main(
         out("Oh no! 💥 💔 💥" if report.return_code else "All done! ✨ 🍰 ✨")
         click.secho(str(report), err=True)
     ctx.exit(report.return_code)
+
+
+def path_empty(src: Tuple[str], quiet: bool, verbose: bool, ctx: click.Context) -> None:
+    """
+    Exit if there is no `src` provided for formatting
+    """
+    if not src:
+        if verbose or not quiet:
+            out("No Path provided. Nothing to do 😴")
+            ctx.exit(0)
 
 
 def reformat_one(
@@ -524,6 +538,7 @@ def reformat_many(
         )
     finally:
         shutdown(loop)
+        executor.shutdown()
 
 
 async def schedule_formatting(
@@ -532,14 +547,14 @@ async def schedule_formatting(
     write_back: WriteBack,
     mode: FileMode,
     report: "Report",
-    loop: BaseEventLoop,
+    loop: asyncio.AbstractEventLoop,
     executor: Executor,
 ) -> None:
     """Run formatting of `sources` in parallel using the provided `executor`.
 
     (Use ProcessPoolExecutors for actual parallelism.)
 
-    `line_length`, `write_back`, `fast`, and `pyi` options are passed to
+    `write_back`, `fast`, and `mode` options are passed to
     :func:`format_file_in_place`.
     """
     cache: Cache = {}
@@ -629,9 +644,8 @@ def format_file_in_place(
         src_name = f"{src}\t{then} +0000"
         dst_name = f"{src}\t{now} +0000"
         diff_contents = diff(src_contents, dst_contents, src_name, dst_name)
-        if lock:
-            lock.acquire()
-        try:
+
+        with lock or nullcontext():
             f = io.TextIOWrapper(
                 sys.stdout.buffer,
                 encoding=encoding,
@@ -640,9 +654,7 @@ def format_file_in_place(
             )
             f.write(diff_contents)
             f.detach()
-        finally:
-            if lock:
-                lock.release()
+
     return True
 
 
@@ -934,6 +946,7 @@ MATH_OPERATORS = {
     token.DOUBLESTAR,
 }
 STARS = {token.STAR, token.DOUBLESTAR}
+VARARGS_SPECIALS = STARS | {token.SLASH}
 VARARGS_PARENTS = {
     syms.arglist,
     syms.argument,  # double star in arglist
@@ -1226,6 +1239,61 @@ class Line:
         ]
 
     @property
+    def is_collection_with_optional_trailing_comma(self) -> bool:
+        """Is this line a collection literal with a trailing comma that's optional?
+
+        Note that the trailing comma in a 1-tuple is not optional.
+        """
+        if not self.leaves or len(self.leaves) < 4:
+            return False
+        # Look for and address a trailing colon.
+        if self.leaves[-1].type == token.COLON:
+            closer = self.leaves[-2]
+            close_index = -2
+        else:
+            closer = self.leaves[-1]
+            close_index = -1
+        if closer.type not in CLOSING_BRACKETS or self.inside_brackets:
+            return False
+        if closer.type == token.RPAR:
+            # Tuples require an extra check, because if there's only
+            # one element in the tuple removing the comma unmakes the
+            # tuple.
+            #
+            # We also check for parens before looking for the trailing
+            # comma because in some cases (eg assigning a dict
+            # literal) the literal gets wrapped in temporary parens
+            # during parsing. This case is covered by the
+            # collections.py test data.
+            opener = closer.opening_bracket
+            for _open_index, leaf in enumerate(self.leaves):
+                if leaf is opener:
+                    break
+            else:
+                # Couldn't find the matching opening paren, play it safe.
+                return False
+            commas = 0
+            comma_depth = self.leaves[close_index - 1].bracket_depth
+            for leaf in self.leaves[_open_index + 1 : close_index]:
+                if leaf.bracket_depth == comma_depth and leaf.type == token.COMMA:
+                    commas += 1
+            if commas > 1:
+                # We haven't looked yet for the trailing comma because
+                # we might also have caught noop parens.
+                return self.leaves[close_index - 1].type == token.COMMA
+            elif commas == 1:
+                return False  # it's either a one-tuple or didn't have a trailing comma
+            if self.leaves[close_index - 1].type in CLOSING_BRACKETS:
+                close_index -= 1
+                closer = self.leaves[close_index]
+                if closer.type == token.RPAR:
+                    # TODO: this is a gut feeling. Will we ever see this?
+                    return False
+        if self.leaves[close_index - 1].type != token.COMMA:
+            return False
+        return True
+
+    @property
     def is_def(self) -> bool:
         """Is this a function definition? (Also returns True for async defs.)"""
         try:
@@ -1277,27 +1345,67 @@ class Line:
                     return True
         return False
 
-    def contains_inner_type_comments(self) -> bool:
+    def contains_uncollapsable_type_comments(self) -> bool:
         ignored_ids = set()
         try:
             last_leaf = self.leaves[-1]
             ignored_ids.add(id(last_leaf))
-            if last_leaf.type == token.COMMA:
-                # When trailing commas are inserted by Black for consistency, comments
-                # after the previous last element are not moved (they don't have to,
-                # rendering will still be correct).  So we ignore trailing commas.
+            if last_leaf.type == token.COMMA or (
+                last_leaf.type == token.RPAR and not last_leaf.value
+            ):
+                # When trailing commas or optional parens are inserted by Black for
+                # consistency, comments after the previous last element are not moved
+                # (they don't have to, rendering will still be correct).  So we ignore
+                # trailing commas and invisible.
                 last_leaf = self.leaves[-2]
                 ignored_ids.add(id(last_leaf))
         except IndexError:
             return False
 
+        # A type comment is uncollapsable if it is attached to a leaf
+        # that isn't at the end of the line (since that could cause it
+        # to get associated to a different argument) or if there are
+        # comments before it (since that could cause it to get hidden
+        # behind a comment.
+        comment_seen = False
         for leaf_id, comments in self.comments.items():
-            if leaf_id in ignored_ids:
-                continue
-
             for comment in comments:
                 if is_type_comment(comment):
-                    return True
+                    if leaf_id not in ignored_ids or comment_seen:
+                        return True
+
+                comment_seen = True
+
+        return False
+
+    def contains_unsplittable_type_ignore(self) -> bool:
+        if not self.leaves:
+            return False
+
+        # If a 'type: ignore' is attached to the end of a line, we
+        # can't split the line, because we can't know which of the
+        # subexpressions the ignore was meant to apply to.
+        #
+        # We only want this to apply to actual physical lines from the
+        # original source, though: we don't want the presence of a
+        # 'type: ignore' at the end of a multiline expression to
+        # justify pushing it all onto one line. Thus we
+        # (unfortunately) need to check the actual source lines and
+        # only report an unsplittable 'type: ignore' if this line was
+        # one line in the original code.
+
+        # Grab the first and last line numbers, skipping generated leaves
+        first_line = next((l.lineno for l in self.leaves if l.lineno != 0), 0)
+        last_line = next((l.lineno for l in reversed(self.leaves) if l.lineno != 0), 0)
+
+        if first_line == last_line:
+            # We look at the last two leaves since a comma or an
+            # invisible paren could have been added at the end of the
+            # line.
+            for node in self.leaves[-2:]:
+                for comment in self.comments.get(id(node), []):
+                    if is_type_comment(comment, " ignore"):
+                        return True
 
         return False
 
@@ -1310,57 +1418,39 @@ class Line:
 
     def maybe_remove_trailing_comma(self, closing: Leaf) -> bool:
         """Remove trailing comma if there is one and it's safe."""
+        if not (self.leaves and self.leaves[-1].type == token.COMMA):
+            return False
+        # We remove trailing commas only in the case of importing a
+        # single name from a module.
         if not (
             self.leaves
+            and self.is_import
+            and len(self.leaves) > 4
             and self.leaves[-1].type == token.COMMA
             and closing.type in CLOSING_BRACKETS
+            and self.leaves[-4].type == token.NAME
+            and (
+                # regular `from foo import bar,`
+                self.leaves[-4].value == "import"
+                # `from foo import (bar as baz,)
+                or (
+                    len(self.leaves) > 6
+                    and self.leaves[-6].value == "import"
+                    and self.leaves[-3].value == "as"
+                )
+                # `from foo import bar as baz,`
+                or (
+                    len(self.leaves) > 5
+                    and self.leaves[-5].value == "import"
+                    and self.leaves[-3].value == "as"
+                )
+            )
+            and closing.type == token.RPAR
         ):
             return False
 
-        if closing.type == token.RBRACE:
-            self.remove_trailing_comma()
-            return True
-
-        if closing.type == token.RSQB:
-            comma = self.leaves[-1]
-            if comma.parent and comma.parent.type == syms.listmaker:
-                self.remove_trailing_comma()
-                return True
-
-        # For parens let's check if it's safe to remove the comma.
-        # Imports are always safe.
-        if self.is_import:
-            self.remove_trailing_comma()
-            return True
-
-        # Otherwise, if the trailing one is the only one, we might mistakenly
-        # change a tuple into a different type by removing the comma.
-        depth = closing.bracket_depth + 1
-        commas = 0
-        opening = closing.opening_bracket
-        for _opening_index, leaf in enumerate(self.leaves):
-            if leaf is opening:
-                break
-
-        else:
-            return False
-
-        for leaf in self.leaves[_opening_index + 1 :]:
-            if leaf is closing:
-                break
-
-            bracket_depth = leaf.bracket_depth
-            if bracket_depth == depth and leaf.type == token.COMMA:
-                commas += 1
-                if leaf.parent and leaf.parent.type == syms.arglist:
-                    commas += 1
-                    break
-
-        if commas > 1:
-            self.remove_trailing_comma()
-            return True
-
-        return False
+        self.remove_trailing_comma()
+        return True
 
     def append_comment(self, comment: Leaf) -> bool:
         """Add an inline or standalone comment to the line."""
@@ -1379,7 +1469,23 @@ class Line:
             comment.prefix = ""
             return False
 
-        self.comments.setdefault(id(self.leaves[-1]), []).append(comment)
+        last_leaf = self.leaves[-1]
+        if (
+            last_leaf.type == token.RPAR
+            and not last_leaf.value
+            and last_leaf.parent
+            and len(list(last_leaf.parent.leaves())) <= 3
+            and not is_type_comment(comment)
+        ):
+            # Comments on an optional parens wrapping a single leaf should belong to
+            # the wrapped node except if it's a type comment. Pinning the comment like
+            # this avoids unstable formatting caused by comment migration.
+            if len(self.leaves) < 2:
+                comment.type = STANDALONE_COMMENT
+                comment.prefix = ""
+                return False
+            last_leaf = self.leaves[-2]
+        self.comments.setdefault(id(last_leaf), []).append(comment)
         return True
 
     def comments_after(self, leaf: Leaf) -> List[Leaf]:
@@ -1454,7 +1560,13 @@ class EmptyLineTracker:
         lines (two on module-level).
         """
         before, after = self._maybe_empty_lines(current_line)
-        before -= self.previous_after
+        before = (
+            # Black should not insert empty lines at the beginning
+            # of the file
+            0
+            if self.previous_line is None
+            else before - self.previous_after
+        )
         self.previous_after = after
         self.previous_line = current_line
         return before, after
@@ -1602,25 +1714,18 @@ class LineGenerator(Visitor[Line]):
                 self.current_line.append(node)
         yield from super().visit_default(node)
 
-    def visit_atom(self, node: Node) -> Iterator[Line]:
-        # Always make parentheses invisible around a single node, because it should
-        # not be needed (except in the case of yield, where removing the parentheses
-        # produces a SyntaxError).
-        if (
-            len(node.children) == 3
-            and isinstance(node.children[0], Leaf)
-            and node.children[0].type == token.LPAR
-            and isinstance(node.children[2], Leaf)
-            and node.children[2].type == token.RPAR
-            and isinstance(node.children[1], Leaf)
-            and not (
-                node.children[1].type == token.NAME
-                and node.children[1].value == "yield"
-            )
-        ):
-            node.children[0].value = ""
-            node.children[2].value = ""
-        yield from super().visit_default(node)
+    def visit_factor(self, node: Node) -> Iterator[Line]:
+        """Force parentheses between a unary op and a binary power:
+
+        -2 ** 8 -> -(2 ** 8)
+        """
+        child = node.children[1]
+        if child.type == syms.power and len(child.children) == 3:
+            lpar = Leaf(token.LPAR, "(")
+            rpar = Leaf(token.RPAR, ")")
+            index = child.remove() or 0
+            node.insert_child(index, Node(syms.atom, [lpar, child, rpar]))
+        yield from self.visit_default(node)
 
     def visit_INDENT(self, node: Node) -> Iterator[Line]:
         """Increase indentation level, maybe yield a line."""
@@ -1811,7 +1916,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
                     # that, too.
                     return prevp.prefix
 
-        elif prevp.type in STARS:
+        elif prevp.type in VARARGS_SPECIALS:
             if is_vararg(prevp, within=VARARGS_PARENTS | UNPACKING_PARENTS):
                 return NO
 
@@ -1901,7 +2006,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
             if not prevp or prevp.type == token.LPAR:
                 return NO
 
-        elif prev.type in {token.EQUAL} | STARS:
+        elif prev.type in {token.EQUAL} | VARARGS_SPECIALS:
             return NO
 
     elif p.type == syms.decorator:
@@ -2268,9 +2373,13 @@ def split_line(
     line_str = str(line).strip("\n")
 
     if (
-        not line.contains_inner_type_comments()
+        not line.contains_uncollapsable_type_comments()
         and not line.should_explode
-        and is_line_short_enough(line, line_length=line_length, line_str=line_str)
+        and not line.is_collection_with_optional_trailing_comma
+        and (
+            is_line_short_enough(line, line_length=line_length, line_str=line_str)
+            or line.contains_unsplittable_type_ignore()
+        )
     ):
         yield line
         return
@@ -2488,9 +2597,13 @@ def bracket_split_build_line(
         if leaves:
             # Since body is a new indent level, remove spurious leading whitespace.
             normalize_prefix(leaves[0], inside_brackets=True)
-            # Ensure a trailing comma for imports, but be careful not to add one after
-            # any comments.
-            if original.is_import:
+            # Ensure a trailing comma for imports and standalone function arguments, but
+            # be careful not to add one after any comments.
+            no_commas = original.is_def and not any(
+                l.type == token.COMMA for l in leaves
+            )
+
+            if original.is_import or no_commas:
                 for i in range(len(leaves) - 1, -1, -1):
                     if leaves[i].type == STANDALONE_COMMENT:
                         continue
@@ -2639,12 +2752,12 @@ def is_import(leaf: Leaf) -> bool:
     )
 
 
-def is_type_comment(leaf: Leaf) -> bool:
+def is_type_comment(leaf: Leaf, suffix: str = "") -> bool:
     """Return True if the given leaf is a special comment.
     Only returns true for type comments for now."""
     t = leaf.type
     v = leaf.value
-    return t in {token.COMMENT, t == STANDALONE_COMMENT} and v.startswith("# type:")
+    return t in {token.COMMENT, STANDALONE_COMMENT} and v.startswith("# type:" + suffix)
 
 
 def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
@@ -2826,8 +2939,18 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
             check_lpar = True
 
         if check_lpar:
+            if is_walrus_assignment(child):
+                continue
             if child.type == syms.atom:
-                if maybe_make_parens_invisible_in_atom(child, parent=node):
+                # Determines if the underlying atom should be surrounded with
+                # invisible params - also makes parens invisible recursively
+                # within the atom and removes repeated invisible parens within
+                # the atom
+                should_surround_with_parens = maybe_make_parens_invisible_in_atom(
+                    child, parent=node
+                )
+
+                if should_surround_with_parens:
                     lpar = Leaf(token.LPAR, "")
                     rpar = Leaf(token.RPAR, "")
                     index = child.remove() or 0
@@ -2944,6 +3067,8 @@ def generate_ignored_nodes(leaf: Leaf) -> Iterator[LN]:
 
 def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
     """If it's safe, make the parens in the atom `node` invisible, recursively.
+    Additionally, remove repeated, adjacent invisible parens from the atom `node`
+    as they are redundant.
 
     Returns whether the node should itself be wrapped in invisible parentheses.
 
@@ -2960,14 +3085,38 @@ def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
     first = node.children[0]
     last = node.children[-1]
     if first.type == token.LPAR and last.type == token.RPAR:
+        middle = node.children[1]
         # make parentheses invisible
         first.value = ""  # type: ignore
         last.value = ""  # type: ignore
-        if len(node.children) > 1:
-            maybe_make_parens_invisible_in_atom(node.children[1], parent=parent)
+        maybe_make_parens_invisible_in_atom(middle, parent=parent)
+
+        if is_atom_with_invisible_parens(middle):
+            # Strip the invisible parens from `middle` by replacing
+            # it with the child in-between the invisible parens
+            middle.replace(middle.children[1])
+
         return False
 
     return True
+
+
+def is_atom_with_invisible_parens(node: LN) -> bool:
+    """Given a `LN`, determines whether it's an atom `node` with invisible
+    parens. Useful in dedupe-ing and normalizing parens.
+    """
+    if isinstance(node, Leaf) or node.type != syms.atom:
+        return False
+
+    first, last = node.children[0], node.children[-1]
+    return (
+        isinstance(first, Leaf)
+        and first.type == token.LPAR
+        and first.value == ""
+        and isinstance(last, Leaf)
+        and last.type == token.RPAR
+        and last.value == ""
+    )
 
 
 def is_empty_tuple(node: LN) -> bool:
@@ -2980,18 +3129,24 @@ def is_empty_tuple(node: LN) -> bool:
     )
 
 
+def unwrap_singleton_parenthesis(node: LN) -> Optional[LN]:
+    """Returns `wrapped` if `node` is of the shape ( wrapped ).
+
+    Parenthesis can be optional. Returns None otherwise"""
+    if len(node.children) != 3:
+        return None
+    lpar, wrapped, rpar = node.children
+    if not (lpar.type == token.LPAR and rpar.type == token.RPAR):
+        return None
+
+    return wrapped
+
+
 def is_one_tuple(node: LN) -> bool:
     """Return True if `node` holds a tuple with one element, with or without parens."""
     if node.type == syms.atom:
-        if len(node.children) != 3:
-            return False
-
-        lpar, gexp, rpar = node.children
-        if not (
-            lpar.type == token.LPAR
-            and gexp.type == syms.testlist_gexp
-            and rpar.type == token.RPAR
-        ):
+        gexp = unwrap_singleton_parenthesis(node)
+        if gexp is None or gexp.type != syms.testlist_gexp:
             return False
 
         return len(gexp.children) == 2 and gexp.children[1].type == token.COMMA
@@ -3001,6 +3156,12 @@ def is_one_tuple(node: LN) -> bool:
         and len(node.children) == 2
         and node.children[1].type == token.COMMA
     )
+
+
+def is_walrus_assignment(node: LN) -> bool:
+    """Return True iff `node` is of the shape ( test := test )"""
+    inner = unwrap_singleton_parenthesis(node)
+    return inner is not None and inner.type == syms.namedexpr_test
 
 
 def is_yield(node: LN) -> bool:
@@ -3032,7 +3193,7 @@ def is_vararg(leaf: Leaf, within: Set[NodeType]) -> bool:
     extended iterable unpacking (PEP 3132) and additional unpacking
     generalizations (PEP 448).
     """
-    if leaf.type not in STARS or not leaf.parent:
+    if leaf.type not in VARARGS_SPECIALS or not leaf.parent:
         return False
 
     p = leaf.parent
@@ -3114,7 +3275,7 @@ def ensure_visible(leaf: Leaf) -> None:
     """Make sure parentheses are visible.
 
     They could be invisible as part of some statements (see
-    :func:`normalize_invible_parens` and :func:`visit_import_from`).
+    :func:`normalize_invisible_parens` and :func:`visit_import_from`).
     """
     if leaf.type == token.LPAR:
         leaf.value = "("
@@ -3147,8 +3308,9 @@ def get_features_used(node: Node) -> Set[Feature]:
 
     Currently looking for:
     - f-strings;
-    - underscores in numeric literals; and
-    - trailing commas after * or ** in function signatures and calls.
+    - underscores in numeric literals;
+    - trailing commas after * or ** in function signatures and calls;
+    - positional only arguments in function signatures and lambdas;
     """
     features: Set[Feature] = set()
     for n in node.pre_order():
@@ -3160,6 +3322,13 @@ def get_features_used(node: Node) -> Set[Feature]:
         elif n.type == token.NUMBER:
             if "_" in n.value:  # type: ignore
                 features.add(Feature.NUMERIC_UNDERSCORES)
+
+        elif n.type == token.SLASH:
+            if n.parent and n.parent.type in {syms.typedargslist, syms.arglist}:
+                features.add(Feature.POS_ONLY_ARGUMENTS)
+
+        elif n.type == token.COLONEQUAL:
+            features.add(Feature.ASSIGNMENT_EXPRESSIONS)
 
         elif (
             n.type in {syms.typedargslist, syms.arglist}
@@ -3442,31 +3611,57 @@ class Report:
         return ", ".join(report) + "."
 
 
-def parse_ast(src: str) -> Union[ast3.AST, ast27.AST]:
-    for feature_version in (7, 6):
-        try:
-            return ast3.parse(src, feature_version=feature_version)
-        except SyntaxError:
-            continue
+def parse_ast(src: str) -> Union[ast.AST, ast3.AST, ast27.AST]:
+    filename = "<unknown>"
+    if sys.version_info >= (3, 8):
+        # TODO: support Python 4+ ;)
+        for minor_version in range(sys.version_info[1], 4, -1):
+            try:
+                return ast.parse(src, filename, feature_version=(3, minor_version))
+            except SyntaxError:
+                continue
+    else:
+        for feature_version in (7, 6):
+            try:
+                return ast3.parse(src, filename, feature_version=feature_version)
+            except SyntaxError:
+                continue
 
     return ast27.parse(src)
+
+
+def _fixup_ast_constants(
+    node: Union[ast.AST, ast3.AST, ast27.AST]
+) -> Union[ast.AST, ast3.AST, ast27.AST]:
+    """Map ast nodes deprecated in 3.8 to Constant."""
+    # casts are required until this is released:
+    # https://github.com/python/typeshed/pull/3142
+    if isinstance(node, (ast.Str, ast3.Str, ast27.Str, ast.Bytes, ast3.Bytes)):
+        return cast(ast.AST, ast.Constant(value=node.s))
+    elif isinstance(node, (ast.Num, ast3.Num, ast27.Num)):
+        return cast(ast.AST, ast.Constant(value=node.n))
+    elif isinstance(node, (ast.NameConstant, ast3.NameConstant)):
+        return cast(ast.AST, ast.Constant(value=node.value))
+    return node
 
 
 def assert_equivalent(src: str, dst: str) -> None:
     """Raise AssertionError if `src` and `dst` aren't equivalent."""
 
-    def _v(node: Union[ast3.AST, ast27.AST], depth: int = 0) -> Iterator[str]:
+    def _v(node: Union[ast.AST, ast3.AST, ast27.AST], depth: int = 0) -> Iterator[str]:
         """Simple visitor generating strings to compare ASTs by content."""
+
+        node = _fixup_ast_constants(node)
+
         yield f"{'  ' * depth}{node.__class__.__name__}("
 
         for field in sorted(node._fields):
             # TypeIgnore has only one field 'lineno' which breaks this comparison
-            if isinstance(node, (ast3.TypeIgnore, ast27.TypeIgnore)):
+            type_ignore_classes = (ast3.TypeIgnore, ast27.TypeIgnore)
+            if sys.version_info >= (3, 8):
+                type_ignore_classes += (ast.TypeIgnore,)
+            if isinstance(node, type_ignore_classes):
                 break
-
-            # Ignore str kind which is case sensitive / and ignores unicode_literals
-            if isinstance(node, (ast3.Str, ast27.Str, ast3.Bytes)) and field == "kind":
-                continue
 
             try:
                 value = getattr(node, field)
@@ -3481,15 +3676,15 @@ def assert_equivalent(src: str, dst: str) -> None:
                     # parentheses and they change the AST.
                     if (
                         field == "targets"
-                        and isinstance(node, (ast3.Delete, ast27.Delete))
-                        and isinstance(item, (ast3.Tuple, ast27.Tuple))
+                        and isinstance(node, (ast.Delete, ast3.Delete, ast27.Delete))
+                        and isinstance(item, (ast.Tuple, ast3.Tuple, ast27.Tuple))
                     ):
                         for item in item.elts:
                             yield from _v(item, depth + 2)
-                    elif isinstance(item, (ast3.AST, ast27.AST)):
+                    elif isinstance(item, (ast.AST, ast3.AST, ast27.AST)):
                         yield from _v(item, depth + 2)
 
-            elif isinstance(value, (ast3.AST, ast27.AST)):
+            elif isinstance(value, (ast.AST, ast3.AST, ast27.AST)):
                 yield from _v(value, depth + 2)
 
             else:
@@ -3511,7 +3706,7 @@ def assert_equivalent(src: str, dst: str) -> None:
         log = dump_to_file("".join(traceback.format_tb(exc.__traceback__)), dst)
         raise AssertionError(
             f"INTERNAL ERROR: Black produced invalid code: {exc}. "
-            f"Please report a bug on https://github.com/python/black/issues.  "
+            f"Please report a bug on https://github.com/psf/black/issues.  "
             f"This invalid output might be helpful: {log}"
         ) from None
 
@@ -3522,7 +3717,7 @@ def assert_equivalent(src: str, dst: str) -> None:
         raise AssertionError(
             f"INTERNAL ERROR: Black produced code that is not equivalent to "
             f"the source.  "
-            f"Please report a bug on https://github.com/python/black/issues.  "
+            f"Please report a bug on https://github.com/psf/black/issues.  "
             f"This diff might be helpful: {log}"
         ) from None
 
@@ -3538,7 +3733,7 @@ def assert_stable(src: str, dst: str, mode: FileMode) -> None:
         raise AssertionError(
             f"INTERNAL ERROR: Black produced different code on the second pass "
             f"of the formatter.  "
-            f"Please report a bug on https://github.com/python/black/issues.  "
+            f"Please report a bug on https://github.com/psf/black/issues.  "
             f"This diff might be helpful: {log}"
         ) from None
 
@@ -3553,6 +3748,13 @@ def dump_to_file(*output: str) -> str:
             if lines and lines[-1] != "\n":
                 f.write("\n")
     return f.name
+
+
+@contextmanager
+def nullcontext() -> Iterator[None]:
+    """Return context manager that does nothing.
+    Similar to `nullcontext` from python 3.7"""
+    yield
 
 
 def diff(a: str, b: str, a_name: str, b_name: str) -> str:
@@ -3573,7 +3775,7 @@ def cancel(tasks: Iterable[asyncio.Task]) -> None:
         task.cancel()
 
 
-def shutdown(loop: BaseEventLoop) -> None:
+def shutdown(loop: asyncio.AbstractEventLoop) -> None:
     """Cancel all pending tasks on `loop`, wait for them, and close the loop."""
     try:
         if sys.version_info[:2] >= (3, 7):
@@ -3615,7 +3817,8 @@ def re_compile_maybe_verbose(regex: str) -> Pattern[str]:
     """
     if "\n" in regex:
         regex = "(?x)" + regex
-    return re.compile(regex)
+    compiled: Pattern[str] = re.compile(regex)
+    return compiled
 
 
 def enumerate_reversed(sequence: Sequence[T]) -> Iterator[Tuple[Index, T]]:

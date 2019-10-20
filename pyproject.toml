@@ -46,7 +46,7 @@ authors = [
     "Mika Naylor <mail@autophagy.io>",
     "Zsolt Dollenstein <zsol.zsol@gmail.com>",
 ]
-homepage = "https://github.com/python/black/"
+homepage = "https://github.com/psf/black/"
 documentation = "https://black.readthedocs.io/en/stable/"
 license = "MIT"
 keywords = ["automation", "formatter", "yapf", "autopep8", "gofmt"]
@@ -75,6 +75,7 @@ click = "^6.5"
 toml = "^0.9.4"
 appdirs = "^1.4"
 aiohttp = { version = "^3.4", optional = true }
+regex = "^2019.8"
 
 [tool.poetry.extras]
 d = ["aiohttp"]

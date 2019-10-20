@@ -23,6 +23,38 @@ from .config import (
     #  DEFAULT_TYPE_ATTRIBUTES,
 )
 
+
+result = 1  # look ma, no comment migration xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+result = (
+    1  # look ma, no comment migration xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+)
+
+result = (
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"  # aaa
+)
+
+result = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"  # aaa
+
+
+def func():
+    c = call(
+        0.0123,
+        0.0456,
+        0.0789,
+        0.0123,
+        0.0789,
+        a[-1],  # type: ignore
+    )
+
+    # The type: ignore exception only applies to line length, not
+    # other types of formatting.
+    c = call(
+        "aaaaaaaa", "aaaaaaaa", "aaaaaaaa", "aaaaaaaa", "aaaaaaaa", "aaaaaaaa",  # type: ignore
+        "aaaaaaaa", "aaaaaaaa", "aaaaaaaa", "aaaaaaaa", "aaaaaaaa", "aaaaaaaa"
+    )
+
+
 # output
 
 from .config import (
@@ -49,3 +81,35 @@ from .config import (
     #  resolve_to_config_type,
     #  DEFAULT_TYPE_ATTRIBUTES,
 )
+
+
+result = 1  # look ma, no comment migration xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+result = 1  # look ma, no comment migration xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+result = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"  # aaa
+
+result = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"  # aaa
+
+
+def func():
+    c = call(
+        0.0123, 0.0456, 0.0789, 0.0123, 0.0789, a[-1],  # type: ignore
+    )
+
+    # The type: ignore exception only applies to line length, not
+    # other types of formatting.
+    c = call(
+        "aaaaaaaa",
+        "aaaaaaaa",
+        "aaaaaaaa",
+        "aaaaaaaa",
+        "aaaaaaaa",
+        "aaaaaaaa",  # type: ignore
+        "aaaaaaaa",
+        "aaaaaaaa",
+        "aaaaaaaa",
+        "aaaaaaaa",
+        "aaaaaaaa",
+        "aaaaaaaa",
+    )
