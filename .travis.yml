@@ -6,7 +6,7 @@ cache:
 env:
 - TEST_CMD="coverage run tests/test_black.py"
 install:
-- pip install coverage coveralls
+- pip install coverage coveralls pre-commit
 - pip install -e '.[d]'
 script:
 - $TEST_CMD
@@ -19,7 +19,6 @@ matrix:
   include:
     - name: "lint"
       python: 3.7
-      install: pip install pre-commit
       env:
         - TEST_CMD="pre-commit run --all-files"
     - name: "3.6"
