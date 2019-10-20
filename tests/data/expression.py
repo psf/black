@@ -424,7 +424,7 @@ numpy[np.newaxis, :]
 {"2.7": dead, "3.7": long_live or die_hard}
 {"2.7", "3.6", "3.7", "3.8", "3.9", "4.0" if gilectomy else "3.10"}
 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10 or A, 11 or B, 12 or C]
-SomeName
+(SomeName)
 SomeName
 (Good, Bad, Ugly)
 (i for i in (1, 2, 3))

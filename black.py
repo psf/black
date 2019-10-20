@@ -1714,26 +1714,6 @@ class LineGenerator(Visitor[Line]):
                 self.current_line.append(node)
         yield from super().visit_default(node)
 
-    def visit_atom(self, node: Node) -> Iterator[Line]:
-        # Always make parentheses invisible around a single node, because it should
-        # not be needed (except in the case of yield, where removing the parentheses
-        # produces a SyntaxError).
-        if (
-            len(node.children) == 3
-            and isinstance(node.children[0], Leaf)
-            and node.children[0].type == token.LPAR
-            and isinstance(node.children[2], Leaf)
-            and node.children[2].type == token.RPAR
-            and isinstance(node.children[1], Leaf)
-            and not (
-                node.children[1].type == token.NAME
-                and node.children[1].value == "yield"
-            )
-        ):
-            node.children[0].value = ""
-            node.children[2].value = ""
-        yield from super().visit_default(node)
-
     def visit_factor(self, node: Node) -> Iterator[Line]:
         """Force parentheses between a unary op and a binary power:
 
