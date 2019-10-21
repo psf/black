@@ -17,7 +17,7 @@ def get_long_description() -> str:
 setup(
     name="black",
     use_scm_version={
-        "write_to": "_version.py",
+        "write_to": "_black_version.py",
         "write_to_template": 'version = "{version}"\n',
     },
     description="The uncompromising code formatter.",
