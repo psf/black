@@ -22,3 +22,9 @@ repos:
     hooks:
       - id: mypy
         exclude: ^docs/conf.py
+
+  - repo: https://github.com/prettier/prettier
+    rev: 1.18.2
+    hooks:
+      - id: prettier
+        args: [--prose-wrap=always, --print-width=88]

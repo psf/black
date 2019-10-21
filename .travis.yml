@@ -4,14 +4,14 @@ cache:
   directories:
     - $HOME/.cache/pre-commit
 env:
-- TEST_CMD="coverage run tests/test_black.py"
+  - TEST_CMD="coverage run tests/test_black.py"
 install:
-- pip install coverage coveralls pre-commit
-- pip install -e '.[d]'
+  - pip install coverage coveralls pre-commit
+  - pip install -e '.[d]'
 script:
-- $TEST_CMD
+  - $TEST_CMD
 after_success:
-- coveralls
+  - coveralls
 notifications:
   on_success: change
   on_failure: always
