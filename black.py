@@ -3059,9 +3059,14 @@ def generate_ignored_nodes(leaf: Leaf) -> Iterator[LN]:
     """
     container: Optional[LN] = container_of(leaf)
     while container is not None and container.type != token.ENDMARKER:
+        is_fmt_on = False
         for comment in list_comments(container.prefix, is_endmarker=False):
             if comment.value in FMT_ON:
-                return
+                is_fmt_on = True
+            elif comment.value in FMT_OFF:
+                is_fmt_on = False
+        if is_fmt_on:
+            return
 
         yield container
 
