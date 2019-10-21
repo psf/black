@@ -10,7 +10,7 @@ import aiohttp_cors
 import black
 import click
 
-from _version import version as __version__
+from _black_version import version as __version__
 
 # This is used internally by tests to shut down the server prematurely
 _stop_signal = asyncio.Event()
