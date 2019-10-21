@@ -8,18 +8,21 @@ repos:
         name: black
         language: system
         entry: black
+        require_serial: true
         types: [python]
+
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: 3.7.8
+    hooks:
       - id: flake8
-        name: flake8
-        language: system
-        entry: flake8
-        types: [python]
+        additional_dependencies: [flake8-bugbear]
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v0.740
+    hooks:
       - id: mypy
-        name: mypy
-        language: system
-        entry: mypy
-        types: [python]
         exclude: ^docs/conf.py
+
   - repo: https://github.com/prettier/prettier
     rev: 1.18.2
     hooks:
