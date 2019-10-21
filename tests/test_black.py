@@ -29,6 +29,8 @@ except ImportError:
 else:
     has_blackd_deps = True
 
+from pathspec import PathSpec
+
 ff = partial(black.format_file_in_place, mode=black.FileMode(), fast=True)
 fs = partial(black.format_str, mode=black.FileMode())
 THIS_FILE = Path(__file__)
@@ -1392,6 +1394,7 @@ class BlackTestCase(unittest.TestCase):
         include = re.compile(r"\.pyi?$")
         exclude = re.compile(r"/exclude/|/\.definitely_exclude/")
         report = black.Report()
+        gitignore = PathSpec.from_lines("gitwildmatch", [])
         sources: List[Path] = []
         expected = [
             Path(path / "b/dont_exclude/a.py"),
@@ -1399,13 +1402,37 @@ class BlackTestCase(unittest.TestCase):
         ]
         this_abs = THIS_DIR.resolve()
         sources.extend(
-            black.gen_python_files_in_dir(path, this_abs, include, exclude, report)
+            black.gen_python_files_in_dir(
+                path, this_abs, include, exclude, report, gitignore
+            )
+        )
+        self.assertEqual(sorted(expected), sorted(sources))
+
+    def test_gitignore_exclude(self) -> None:
+        path = THIS_DIR / "data" / "include_exclude_tests"
+        include = re.compile(r"\.pyi?$")
+        exclude = re.compile(r"")
+        report = black.Report()
+        gitignore = PathSpec.from_lines(
+            "gitwildmatch", ["exclude/", ".definitely_exclude"]
+        )
+        sources: List[Path] = []
+        expected = [
+            Path(path / "b/dont_exclude/a.py"),
+            Path(path / "b/dont_exclude/a.pyi"),
+        ]
+        this_abs = THIS_DIR.resolve()
+        sources.extend(
+            black.gen_python_files_in_dir(
+                path, this_abs, include, exclude, report, gitignore
+            )
         )
         self.assertEqual(sorted(expected), sorted(sources))
 
     def test_empty_include(self) -> None:
         path = THIS_DIR / "data" / "include_exclude_tests"
         report = black.Report()
+        gitignore = PathSpec.from_lines("gitwildmatch", [])
         empty = re.compile(r"")
         sources: List[Path] = []
         expected = [
@@ -1422,7 +1449,12 @@ class BlackTestCase(unittest.TestCase):
         this_abs = THIS_DIR.resolve()
         sources.extend(
             black.gen_python_files_in_dir(
-                path, this_abs, empty, re.compile(black.DEFAULT_EXCLUDES), report
+                path,
+                this_abs,
+                empty,
+                re.compile(black.DEFAULT_EXCLUDES),
+                report,
+                gitignore,
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))
@@ -1430,6 +1462,7 @@ class BlackTestCase(unittest.TestCase):
     def test_empty_exclude(self) -> None:
         path = THIS_DIR / "data" / "include_exclude_tests"
         report = black.Report()
+        gitignore = PathSpec.from_lines("gitwildmatch", [])
         empty = re.compile(r"")
         sources: List[Path] = []
         expected = [
@@ -1443,7 +1476,12 @@ class BlackTestCase(unittest.TestCase):
         this_abs = THIS_DIR.resolve()
         sources.extend(
             black.gen_python_files_in_dir(
-                path, this_abs, re.compile(black.DEFAULT_INCLUDES), empty, report
+                path,
+                this_abs,
+                re.compile(black.DEFAULT_INCLUDES),
+                empty,
+                report,
+                gitignore,
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))
@@ -1488,13 +1526,18 @@ class BlackTestCase(unittest.TestCase):
         include = re.compile(black.DEFAULT_INCLUDES)
         exclude = re.compile(black.DEFAULT_EXCLUDES)
         report = black.Report()
+        gitignore = PathSpec.from_lines("gitwildmatch", [])
         # `child` should behave like a symlink which resolved path is clearly
         # outside of the `root` directory.
         path.iterdir.return_value = [child]
         child.resolve.return_value = Path("/a/b/c")
         child.is_symlink.return_value = True
         try:
-            list(black.gen_python_files_in_dir(path, root, include, exclude, report))
+            list(
+                black.gen_python_files_in_dir(
+                    path, root, include, exclude, report, gitignore
+                )
+            )
         except ValueError as ve:
             self.fail(f"`get_python_files_in_dir()` failed: {ve}")
         path.iterdir.assert_called_once()
@@ -1504,7 +1547,11 @@ class BlackTestCase(unittest.TestCase):
         # outside of the `root` directory.
         child.is_symlink.return_value = False
         with self.assertRaises(ValueError):
-            list(black.gen_python_files_in_dir(path, root, include, exclude, report))
+            list(
+                black.gen_python_files_in_dir(
+                    path, root, include, exclude, report, gitignore
+                )
+            )
         path.iterdir.assert_called()
         self.assertEqual(path.iterdir.call_count, 2)
         child.resolve.assert_called()
