@@ -12,12 +12,10 @@ from .pgen2 import driver
 
 # The grammar file
 _GRAMMAR_FILE = os.path.join(os.path.dirname(__file__), "Grammar.txt")
-_PATTERN_GRAMMAR_FILE = os.path.join(os.path.dirname(__file__),
-                                     "PatternGrammar.txt")
+_PATTERN_GRAMMAR_FILE = os.path.join(os.path.dirname(__file__), "PatternGrammar.txt")
 
 
 class Symbols(object):
-
     def __init__(self, grammar):
         """Initializer.
 
@@ -38,8 +36,7 @@ def initialize(cache_dir=None):
     global pattern_symbols
 
     # Python 2
-    python_grammar = driver.load_packaged_grammar("blib2to3", _GRAMMAR_FILE,
-                                                  cache_dir)
+    python_grammar = driver.load_packaged_grammar("blib2to3", _GRAMMAR_FILE, cache_dir)
 
     python_symbols = Symbols(python_grammar)
 
@@ -56,8 +53,11 @@ def initialize(cache_dir=None):
     python_grammar_no_print_statement_no_exec_statement_async_keywords = (
         python_grammar_no_print_statement_no_exec_statement.copy()
     )
-    python_grammar_no_print_statement_no_exec_statement_async_keywords.async_keywords = True
+    python_grammar_no_print_statement_no_exec_statement_async_keywords.async_keywords = (
+        True
+    )
 
-    pattern_grammar = driver.load_packaged_grammar("blib2to3", _PATTERN_GRAMMAR_FILE,
-                                                   cache_dir)
+    pattern_grammar = driver.load_packaged_grammar(
+        "blib2to3", _PATTERN_GRAMMAR_FILE, cache_dir
+    )
     pattern_symbols = Symbols(pattern_grammar)

@@ -24,7 +24,11 @@ endif
 
 let g:load_black = "py1.0"
 if !exists("g:black_virtualenv")
-  let g:black_virtualenv = "~/.vim/black"
+  if has("nvim")
+    let g:black_virtualenv = "~/.local/share/nvim/black"
+  else
+    let g:black_virtualenv = "~/.vim/black"
+  endif
 endif
 if !exists("g:black_fast")
   let g:black_fast = 0
@@ -94,8 +98,8 @@ def _initialize_black_env(upgrade=False):
     print('DONE! You are all set, thanks for waiting ✨ 🍰 ✨')
   if first_install:
     print('Pro-tip: to upgrade Black in the future, use the :BlackUpgrade command and restart Vim.\n')
-  if sys.path[0] != virtualenv_site_packages:
-    sys.path.insert(0, virtualenv_site_packages)
+  if virtualenv_site_packages not in sys.path:
+    sys.path.append(virtualenv_site_packages)
   return True
 
 if _initialize_black_env():
@@ -110,7 +114,29 @@ def Black():
     string_normalization=not bool(int(vim.eval("g:black_skip_string_normalization"))),
     is_pyi=vim.current.buffer.name.endswith('.pyi'),
   )
-  buffer_str = '\n'.join(vim.current.buffer) + '\n'
+  (cursor_line, cursor_column) = vim.current.window.cursor
+  cb = vim.current.buffer[:]
+  cb_bc = cb[0:cursor_line]
+  # Format all code before the cursor.
+  # Detect unclosed blocks, close them with pass.
+  last_line = cb_bc[-1]
+  if last_line.rstrip().endswith(":"):
+      cb_bc[-1] = last_line + " pass"
+  # Determine old:new cursor location mapping
+  buffer_str_before = '\n'.join(cb_bc)+'\n'
+  try:
+    new_buffer_str_before = black.format_file_contents(buffer_str_before, fast=fast, mode=mode)
+    new_cb = new_buffer_str_before.split('\n')[:-1]
+    new_cursor_line = len(new_cb)
+    new_cursor = (new_cursor_line, cursor_column)
+  except black.NothingChanged:
+    new_cursor_line = cursor_line
+    new_cursor = (new_cursor_line, cursor_column)
+  except Exception as exc:
+    print(exc)
+  # Now we know where the cursor should be
+  # when we format the entire buffer. Do it:
+  buffer_str = '\n'.join(cb) + '\n'
   try:
     new_buffer_str = black.format_file_contents(buffer_str, fast=fast, mode=mode)
   except black.NothingChanged:
@@ -118,10 +144,12 @@ def Black():
   except Exception as exc:
     print(exc)
   else:
-    cursor = vim.current.window.cursor
-    vim.current.buffer[:] = new_buffer_str.split('\n')[:-1]
+    # Replace the buffer
+    new_cb = new_buffer_str.split('\n')[:-1]
+    vim.current.buffer[:] = new_cb
+    # Restore the cursor to its rightful place
     try:
-      vim.current.window.cursor = cursor
+      vim.current.window.cursor = new_cursor
     except vim.error:
       vim.current.window.cursor = (len(vim.current.buffer), 0)
     print(f'Reformatted in {time.time() - start:.4f}s.')

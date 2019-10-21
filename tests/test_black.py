@@ -3,24 +3,14 @@ import asyncio
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
-from functools import partial, wraps
+from functools import partial
 from io import BytesIO, TextIOWrapper
 import os
 from pathlib import Path
-import re
+import regex as re
 import sys
 from tempfile import TemporaryDirectory
-from typing import (
-    Any,
-    BinaryIO,
-    Callable,
-    Coroutine,
-    Generator,
-    List,
-    Tuple,
-    Iterator,
-    TypeVar,
-)
+from typing import Any, BinaryIO, Generator, List, Tuple, Iterator, TypeVar
 import unittest
 from unittest.mock import patch, MagicMock
 
@@ -32,7 +22,8 @@ from black import Feature, TargetVersion
 
 try:
     import blackd
-    from aiohttp.test_utils import TestClient, TestServer
+    from aiohttp.test_utils import AioHTTPTestCase, unittest_run_loop
+    from aiohttp import web
 except ImportError:
     has_blackd_deps = False
 else:
@@ -92,25 +83,25 @@ def cache_dir(exists: bool = True) -> Iterator[Path]:
 @contextmanager
 def event_loop(close: bool) -> Iterator[None]:
     policy = asyncio.get_event_loop_policy()
-    old_loop = policy.get_event_loop()
     loop = policy.new_event_loop()
     asyncio.set_event_loop(loop)
     try:
         yield
 
     finally:
-        policy.set_event_loop(old_loop)
         if close:
             loop.close()
 
 
-def async_test(f: Callable[..., Coroutine[Any, None, R]]) -> Callable[..., None]:
-    @event_loop(close=True)
-    @wraps(f)
-    def wrapper(*args: Any, **kwargs: Any) -> None:
-        asyncio.get_event_loop().run_until_complete(f(*args, **kwargs))
-
-    return wrapper
+@contextmanager
+def skip_if_exception(e: str) -> Iterator[None]:
+    try:
+        yield
+    except Exception as exc:
+        if exc.__class__.__name__ == e:
+            unittest.skip(f"Encountered expected exception {exc}, skipping")
+        else:
+            raise
 
 
 class BlackRunner(CliRunner):
@@ -170,6 +161,16 @@ class BlackTestCase(unittest.TestCase):
         self.assertEqual(result.exit_code, exit_code, msg=runner.stderr_bytes.decode())
 
     @patch("black.dump_to_file", dump_to_stderr)
+    def checkSourceFile(self, name: str) -> None:
+        path = THIS_DIR.parent / name
+        source, expected = read_data(str(path), data=False)
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+        self.assertFalse(ff(path))
+
+    @patch("black.dump_to_file", dump_to_stderr)
     def test_empty(self) -> None:
         source = expected = ""
         actual = fs(source)
@@ -188,23 +189,44 @@ class BlackTestCase(unittest.TestCase):
             os.unlink(tmp_file)
         self.assertFormatEqual(expected, actual)
 
-    @patch("black.dump_to_file", dump_to_stderr)
     def test_self(self) -> None:
-        source, expected = read_data("test_black", data=False)
-        actual = fs(source)
-        self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
-        self.assertFalse(ff(THIS_FILE))
+        self.checkSourceFile("tests/test_black.py")
 
-    @patch("black.dump_to_file", dump_to_stderr)
     def test_black(self) -> None:
-        source, expected = read_data("../black", data=False)
-        actual = fs(source)
-        self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
-        self.assertFalse(ff(THIS_DIR / ".." / "black.py"))
+        self.checkSourceFile("black.py")
+
+    def test_pygram(self) -> None:
+        self.checkSourceFile("blib2to3/pygram.py")
+
+    def test_pytree(self) -> None:
+        self.checkSourceFile("blib2to3/pytree.py")
+
+    def test_conv(self) -> None:
+        self.checkSourceFile("blib2to3/pgen2/conv.py")
+
+    def test_driver(self) -> None:
+        self.checkSourceFile("blib2to3/pgen2/driver.py")
+
+    def test_grammar(self) -> None:
+        self.checkSourceFile("blib2to3/pgen2/grammar.py")
+
+    def test_literals(self) -> None:
+        self.checkSourceFile("blib2to3/pgen2/literals.py")
+
+    def test_parse(self) -> None:
+        self.checkSourceFile("blib2to3/pgen2/parse.py")
+
+    def test_pgen(self) -> None:
+        self.checkSourceFile("blib2to3/pgen2/pgen.py")
+
+    def test_tokenize(self) -> None:
+        self.checkSourceFile("blib2to3/pgen2/tokenize.py")
+
+    def test_token(self) -> None:
+        self.checkSourceFile("blib2to3/pgen2/token.py")
+
+    def test_setup(self) -> None:
+        self.checkSourceFile("setup.py")
 
     def test_piping(self) -> None:
         source, expected = read_data("../black", data=False)
@@ -242,15 +264,6 @@ class BlackTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
 
     @patch("black.dump_to_file", dump_to_stderr)
-    def test_setup(self) -> None:
-        source, expected = read_data("../setup", data=False)
-        actual = fs(source)
-        self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
-        self.assertFalse(ff(THIS_DIR / ".." / "setup.py"))
-
-    @patch("black.dump_to_file", dump_to_stderr)
     def test_function(self) -> None:
         source, expected = read_data("function")
         actual = fs(source)
@@ -267,12 +280,37 @@ class BlackTestCase(unittest.TestCase):
         black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
+    def test_function_trailing_comma(self) -> None:
+        source, expected = read_data("function_trailing_comma")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+
+    @patch("black.dump_to_file", dump_to_stderr)
     def test_expression(self) -> None:
         source, expected = read_data("expression")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, black.FileMode())
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_pep_572(self) -> None:
+        source, expected = read_data("pep_572")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_stable(source, actual, black.FileMode())
+        if sys.version_info >= (3, 8):
+            black.assert_equivalent(source, actual)
+
+    def test_pep_572_version_detection(self) -> None:
+        source, _ = read_data("pep_572")
+        root = black.lib2to3_parse(source)
+        features = black.get_features_used(root)
+        self.assertIn(black.Feature.ASSIGNMENT_EXPRESSIONS, features)
+        versions = black.detect_target_versions(root)
+        self.assertIn(black.TargetVersion.PY38, versions)
 
     def test_expression_ff(self) -> None:
         source, expected = read_data("expression")
@@ -320,6 +358,23 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, black.FileMode())
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_pep_570(self) -> None:
+        source, expected = read_data("pep_570")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_stable(source, actual, black.FileMode())
+        if sys.version_info >= (3, 8):
+            black.assert_equivalent(source, actual)
+
+    def test_detect_pos_only_arguments(self) -> None:
+        source, _ = read_data("pep_570")
+        root = black.lib2to3_parse(source)
+        features = black.get_features_used(root)
+        self.assertIn(black.Feature.POS_ONLY_ARGUMENTS, features)
+        versions = black.detect_target_versions(root)
+        self.assertIn(black.TargetVersion.PY38, versions)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_string_quotes(self) -> None:
@@ -585,6 +640,14 @@ class BlackTestCase(unittest.TestCase):
     @patch("black.dump_to_file", dump_to_stderr)
     def test_tuple_assign(self) -> None:
         source, expected = read_data("tupleassign")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_beginning_backslash(self) -> None:
+        source, expected = read_data("beginning_backslash")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
@@ -1002,10 +1065,10 @@ class BlackTestCase(unittest.TestCase):
         just_nl = "\n"
         with self.assertRaises(black.NothingChanged):
             black.format_file_contents(just_nl, mode=mode, fast=False)
-        same = "l = [1, 2, 3]\n"
+        same = "j = [1, 2, 3]\n"
         with self.assertRaises(black.NothingChanged):
             black.format_file_contents(same, mode=mode, fast=False)
-        different = "l = [1,2,3]"
+        different = "j = [1,2,3]"
         expected = same
         actual = black.format_file_contents(different, mode=mode, fast=False)
         self.assertEqual(expected, actual)
@@ -1033,7 +1096,7 @@ class BlackTestCase(unittest.TestCase):
 
         with patch("black.out", out), patch("black.err", err):
             with self.assertRaises(AssertionError):
-                self.assertFormatEqual("l = [1, 2, 3]", "l = [1, 2, 3,]")
+                self.assertFormatEqual("j = [1, 2, 3]", "j = [1, 2, 3,]")
 
         out_str = "".join(out_lines)
         self.assertTrue("Expected tree:" in out_str)
@@ -1206,6 +1269,13 @@ class BlackTestCase(unittest.TestCase):
             two = black.read_cache(short_mode)
             self.assertNotIn(path, two)
 
+    def test_tricky_unicode_symbols(self) -> None:
+        source, expected = read_data("tricky_unicode_symbols")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+
     def test_single_file_force_pyi(self) -> None:
         reg_mode = black.FileMode()
         pyi_mode = black.FileMode(is_pyi=True)
@@ -1300,6 +1370,13 @@ class BlackTestCase(unittest.TestCase):
             for path in paths:
                 self.assertIn(path, pyi_cache)
                 self.assertNotIn(path, normal_cache)
+
+    def test_collections(self) -> None:
+        source, expected = read_data("collections")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
 
     def test_pipe_force_py36(self) -> None:
         source, expected = read_data("force_py36")
@@ -1520,97 +1597,102 @@ class BlackTestCase(unittest.TestCase):
             ff(THIS_FILE)
 
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
-    @async_test
+    def test_blackd_main(self) -> None:
+        with patch("blackd.web.run_app"):
+            result = CliRunner().invoke(blackd.main, [])
+            if result.exception is not None:
+                raise result.exception
+            self.assertEqual(result.exit_code, 0)
+
+
+class BlackDTestCase(AioHTTPTestCase):
+    async def get_application(self) -> web.Application:
+        return blackd.make_app()
+
+    # TODO: remove these decorators once the below is released
+    # https://github.com/aio-libs/aiohttp/pull/3727
+    @skip_if_exception("ClientOSError")
+    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
+    @unittest_run_loop
     async def test_blackd_request_needs_formatting(self) -> None:
-        app = blackd.make_app()
-        async with TestClient(TestServer(app)) as client:
-            response = await client.post("/", data=b"print('hello world')")
-            self.assertEqual(response.status, 200)
-            self.assertEqual(response.charset, "utf8")
-            self.assertEqual(await response.read(), b'print("hello world")\n')
+        response = await self.client.post("/", data=b"print('hello world')")
+        self.assertEqual(response.status, 200)
+        self.assertEqual(response.charset, "utf8")
+        self.assertEqual(await response.read(), b'print("hello world")\n')
 
+    @skip_if_exception("ClientOSError")
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
-    @async_test
+    @unittest_run_loop
     async def test_blackd_request_no_change(self) -> None:
-        app = blackd.make_app()
-        async with TestClient(TestServer(app)) as client:
-            response = await client.post("/", data=b'print("hello world")\n')
-            self.assertEqual(response.status, 204)
-            self.assertEqual(await response.read(), b"")
+        response = await self.client.post("/", data=b'print("hello world")\n')
+        self.assertEqual(response.status, 204)
+        self.assertEqual(await response.read(), b"")
 
+    @skip_if_exception("ClientOSError")
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
-    @async_test
+    @unittest_run_loop
     async def test_blackd_request_syntax_error(self) -> None:
-        app = blackd.make_app()
-        async with TestClient(TestServer(app)) as client:
-            response = await client.post("/", data=b"what even ( is")
-            self.assertEqual(response.status, 400)
-            content = await response.text()
-            self.assertTrue(
-                content.startswith("Cannot parse"),
-                msg=f"Expected error to start with 'Cannot parse', got {repr(content)}",
-            )
+        response = await self.client.post("/", data=b"what even ( is")
+        self.assertEqual(response.status, 400)
+        content = await response.text()
+        self.assertTrue(
+            content.startswith("Cannot parse"),
+            msg=f"Expected error to start with 'Cannot parse', got {repr(content)}",
+        )
 
+    @skip_if_exception("ClientOSError")
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
-    @async_test
+    @unittest_run_loop
     async def test_blackd_unsupported_version(self) -> None:
-        app = blackd.make_app()
-        async with TestClient(TestServer(app)) as client:
-            response = await client.post(
-                "/", data=b"what", headers={blackd.VERSION_HEADER: "2"}
-            )
-            self.assertEqual(response.status, 501)
+        response = await self.client.post(
+            "/", data=b"what", headers={blackd.PROTOCOL_VERSION_HEADER: "2"}
+        )
+        self.assertEqual(response.status, 501)
 
+    @skip_if_exception("ClientOSError")
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
-    @async_test
+    @unittest_run_loop
     async def test_blackd_supported_version(self) -> None:
-        app = blackd.make_app()
-        async with TestClient(TestServer(app)) as client:
-            response = await client.post(
-                "/", data=b"what", headers={blackd.VERSION_HEADER: "1"}
-            )
-            self.assertEqual(response.status, 200)
+        response = await self.client.post(
+            "/", data=b"what", headers={blackd.PROTOCOL_VERSION_HEADER: "1"}
+        )
+        self.assertEqual(response.status, 200)
 
+    @skip_if_exception("ClientOSError")
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
-    @async_test
+    @unittest_run_loop
     async def test_blackd_invalid_python_variant(self) -> None:
-        app = blackd.make_app()
-        async with TestClient(TestServer(app)) as client:
-
-            async def check(header_value: str, expected_status: int = 400) -> None:
-                response = await client.post(
-                    "/",
-                    data=b"what",
-                    headers={blackd.PYTHON_VARIANT_HEADER: header_value},
-                )
-                self.assertEqual(response.status, expected_status)
-
-            await check("lol")
-            await check("ruby3.5")
-            await check("pyi3.6")
-            await check("py1.5")
-            await check("2.8")
-            await check("py2.8")
-            await check("3.0")
-            await check("pypy3.0")
-            await check("jython3.4")
-
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
-    @async_test
-    async def test_blackd_pyi(self) -> None:
-        app = blackd.make_app()
-        async with TestClient(TestServer(app)) as client:
-            source, expected = read_data("stub.pyi")
-            response = await client.post(
-                "/", data=source, headers={blackd.PYTHON_VARIANT_HEADER: "pyi"}
+        async def check(header_value: str, expected_status: int = 400) -> None:
+            response = await self.client.post(
+                "/", data=b"what", headers={blackd.PYTHON_VARIANT_HEADER: header_value}
             )
-            self.assertEqual(response.status, 200)
-            self.assertEqual(await response.text(), expected)
+            self.assertEqual(response.status, expected_status)
 
+        await check("lol")
+        await check("ruby3.5")
+        await check("pyi3.6")
+        await check("py1.5")
+        await check("2.8")
+        await check("py2.8")
+        await check("3.0")
+        await check("pypy3.0")
+        await check("jython3.4")
+
+    @skip_if_exception("ClientOSError")
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
-    @async_test
+    @unittest_run_loop
+    async def test_blackd_pyi(self) -> None:
+        source, expected = read_data("stub.pyi")
+        response = await self.client.post(
+            "/", data=source, headers={blackd.PYTHON_VARIANT_HEADER: "pyi"}
+        )
+        self.assertEqual(response.status, 200)
+        self.assertEqual(await response.text(), expected)
+
+    @skip_if_exception("ClientOSError")
+    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
+    @unittest_run_loop
     async def test_blackd_python_variant(self) -> None:
-        app = blackd.make_app()
         code = (
             "def f(\n"
             "    and_has_a_bunch_of,\n"
@@ -1620,54 +1702,55 @@ class BlackTestCase(unittest.TestCase):
             "):\n"
             "    pass\n"
         )
-        async with TestClient(TestServer(app)) as client:
 
-            async def check(header_value: str, expected_status: int) -> None:
-                response = await client.post(
-                    "/", data=code, headers={blackd.PYTHON_VARIANT_HEADER: header_value}
-                )
-                self.assertEqual(response.status, expected_status)
+        async def check(header_value: str, expected_status: int) -> None:
+            response = await self.client.post(
+                "/", data=code, headers={blackd.PYTHON_VARIANT_HEADER: header_value}
+            )
+            self.assertEqual(
+                response.status, expected_status, msg=await response.text()
+            )
 
-            await check("3.6", 200)
-            await check("py3.6", 200)
-            await check("3.6,3.7", 200)
-            await check("3.6,py3.7", 200)
+        await check("3.6", 200)
+        await check("py3.6", 200)
+        await check("3.6,3.7", 200)
+        await check("3.6,py3.7", 200)
+        await check("py36,py37", 200)
+        await check("36", 200)
+        await check("3.6.4", 200)
 
-            await check("2", 204)
-            await check("2.7", 204)
-            await check("py2.7", 204)
-            await check("3.4", 204)
-            await check("py3.4", 204)
+        await check("2", 204)
+        await check("2.7", 204)
+        await check("py2.7", 204)
+        await check("3.4", 204)
+        await check("py3.4", 204)
+        await check("py34,py36", 204)
+        await check("34", 204)
 
+    @skip_if_exception("ClientOSError")
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
-    @async_test
+    @unittest_run_loop
     async def test_blackd_line_length(self) -> None:
-        app = blackd.make_app()
-        async with TestClient(TestServer(app)) as client:
-            response = await client.post(
-                "/", data=b'print("hello")\n', headers={blackd.LINE_LENGTH_HEADER: "7"}
-            )
-            self.assertEqual(response.status, 200)
+        response = await self.client.post(
+            "/", data=b'print("hello")\n', headers={blackd.LINE_LENGTH_HEADER: "7"}
+        )
+        self.assertEqual(response.status, 200)
 
+    @skip_if_exception("ClientOSError")
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
-    @async_test
+    @unittest_run_loop
     async def test_blackd_invalid_line_length(self) -> None:
-        app = blackd.make_app()
-        async with TestClient(TestServer(app)) as client:
-            response = await client.post(
-                "/",
-                data=b'print("hello")\n',
-                headers={blackd.LINE_LENGTH_HEADER: "NaN"},
-            )
-            self.assertEqual(response.status, 400)
+        response = await self.client.post(
+            "/", data=b'print("hello")\n', headers={blackd.LINE_LENGTH_HEADER: "NaN"}
+        )
+        self.assertEqual(response.status, 400)
 
+    @skip_if_exception("ClientOSError")
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
-    def test_blackd_main(self) -> None:
-        with patch("blackd.web.run_app"):
-            result = CliRunner().invoke(blackd.main, [])
-            if result.exception is not None:
-                raise result.exception
-            self.assertEqual(result.exit_code, 0)
+    @unittest_run_loop
+    async def test_blackd_response_black_version_header(self) -> None:
+        response = await self.client.post("/")
+        self.assertIsNotNone(response.headers.get(blackd.BLACK_VERSION_HEADER))
 
 
 if __name__ == "__main__":

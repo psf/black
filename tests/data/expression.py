@@ -31,6 +31,7 @@ not great
 -1
 ~int and not v1 ^ 123 + v2 | True
 (~int) and (not ((v1 ^ (123 + v2)) | True))
++really ** -confusing ** ~operator ** -precedence
 flags & ~ select.EPOLLIN and waiters.write_task is not None
 lambda arg: None
 lambda a=True: a
@@ -280,6 +281,7 @@ not great
 -1
 ~int and not v1 ^ 123 + v2 | True
 (~int) and (not ((v1 ^ (123 + v2)) | True))
++(really ** -(confusing ** ~(operator ** -precedence)))
 flags & ~select.EPOLLIN and waiters.write_task is not None
 lambda arg: None
 lambda a=True: a
@@ -312,11 +314,23 @@ str or None if (1 if True else 2) else str or bytes or None
 (1, 2, 3)
 []
 [1, 2, 3, 4, 5, 6, 7, 8, 9, (10 or A), (11 or B), (12 or C)]
-[1, 2, 3]
+[
+    1,
+    2,
+    3,
+]
 [*a]
 [*range(10)]
-[*a, 4, 5]
-[4, *a, 5]
+[
+    *a,
+    4,
+    5,
+]
+[
+    4,
+    *a,
+    5,
+]
 [
     this_is_a_very_long_variable_which_will_force_a_delimiter_split,
     element,
@@ -365,16 +379,16 @@ call.me(maybe)
 list[str]
 dict[str, int]
 tuple[str, ...]
-tuple[str, int, float, dict[str, int]]
+tuple[
+    str, int, float, dict[str, int],
+]
 very_long_variable_name_filters: t.List[
     t.Tuple[str, t.Union[str, t.List[t.Optional[str]]]],
 ]
 xxxx_xxxxx_xxxx_xxx: Callable[..., List[SomeClass]] = classmethod(  # type: ignore
     sync(async_xxxx_xxx_xxxx_xxxxx_xxxx_xxx.__func__)
 )
-xxxx_xxx_xxxx_xxxxx_xxxx_xxx: Callable[
-    ..., List[SomeClass]
-] = classmethod(  # type: ignore
+xxxx_xxx_xxxx_xxxxx_xxxx_xxx: Callable[..., List[SomeClass]] = classmethod(  # type: ignore
     sync(async_xxxx_xxx_xxxx_xxxxx_xxxx_xxx.__func__)
 )
 xxxx_xxx_xxxx_xxxxx_xxxx_xxx: Callable[..., List[SomeClass]] = classmethod(
@@ -410,7 +424,7 @@ numpy[np.newaxis, :]
 {"2.7": dead, "3.7": long_live or die_hard}
 {"2.7", "3.6", "3.7", "3.8", "3.9", "4.0" if gilectomy else "3.10"}
 [1, 2, 3, 4, 5, 6, 7, 8, 9, 10 or A, 11 or B, 12 or C]
-SomeName
+(SomeName)
 SomeName
 (Good, Bad, Ugly)
 (i for i in (1, 2, 3))
@@ -445,7 +459,7 @@ result = (
     .filter(
         models.Customer.account_id == account_id, models.Customer.email == email_address
     )
-    .order_by(models.Customer.id.asc())
+    .order_by(models.Customer.id.asc(),)
     .all()
 )
 Ø = set()
