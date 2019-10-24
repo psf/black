@@ -3491,6 +3491,9 @@ def gen_python_files_in_dir(
         # Then ignore with `exclude` option.
         try:
             normalized_path = "/" + child.resolve().relative_to(root).as_posix()
+        except OSError as e:
+            report.path_ignored(child, f"cannot be read because {e}")
+            continue
         except ValueError:
             if child.is_symlink():
                 report.path_ignored(
