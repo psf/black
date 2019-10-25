@@ -2402,7 +2402,9 @@ def split_line(
             # All splits failed, best effort split with no omits.
             # This mostly happens to multiline strings that are by definition
             # reported as not fitting a single line.
-            yield from right_hand_split(line, line_length, features=features)
+            # line_length=1 is silly, but somehow produces better formatting
+            # than other things we've tried so far. See #762 and #781.
+            yield from right_hand_split(line, line_length=1, features=features)
 
         if line.inside_brackets:
             split_funcs = [delimiter_split, standalone_comment_split, rhs]
