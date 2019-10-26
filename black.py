@@ -3463,7 +3463,8 @@ def get_gitignore(root: Path) -> PathSpec:
     if not gitignore.is_file():
         return PathSpec.from_lines("gitwildmatch", [])
     else:
-        return PathSpec.from_lines("gitwildmatch", gitignore.open())
+        with gitignore.open() as f:
+            return PathSpec.from_lines("gitwildmatch", f)
 
 
 def gen_python_files_in_dir(
