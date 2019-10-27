@@ -277,15 +277,11 @@ select = C,E,F,W,B,B950
 ignore = E501,W503,E203
 ```
 
-<<<<<<< HEAD You'll find _Black_'s own .flake8 config file is configured like this. If
-you're curious about the reasoning behind B950, ======= You'll find _Black_'s own
-.flake8 config file is configured like this. If you're curious about the reasoning
-behind B950,
-
-> > > > > > > master
-> > > > > > > [Bugbear's documentation](https://github.com/PyCQA/flake8-bugbear#opinionated-warnings)
-> > > > > > > explains it. The tl;dr is "it's like highway speed limits, we won't bother
-> > > > > > > you if you overdo it by a few km/h".
+You'll find _Black_'s own .flake8 config file is configured like this. If you're curious
+about the reasoning behind B950,
+[Bugbear's documentation](https://github.com/PyCQA/flake8-bugbear#opinionated-warnings)
+explains it. The tl;dr is "it's like highway speed limits, we won't bother you if you
+overdo it by a few km/h".
 
 ### Empty lines
 
@@ -841,7 +837,8 @@ which if present, should have the value `1`, otherwise the request is rejected w
 
 The headers controlling how code is formatted are:
 
-<<<<<<< HEAD
+If any of these headers are set to invalid values, `blackd` returns a `HTTP 400` error
+response, mentioning the name of the problematic header in the message body. =======
 
 - `X-Line-Length`: corresponds to the `--line-length` command line flag.
 - `X-Skip-String-Normalization`: corresponds to the `--skip-string-normalization`
@@ -858,24 +855,7 @@ The headers controlling how code is formatted are:
   formats will be output.
 
 If any of these headers are set to invalid values, `blackd` returns a `HTTP 400` error
-response, mentioning the name of the problematic header in the message body. =======
-
-- `X-Line-Length`: corresponds to the `--line-length` command line flag.
-- `X-Skip-String-Normalization`: corresponds to the `--skip-string-normalization`
-  command line flag. If present and its value is not the empty string, no string
-  normalization will be performed.
-- `X-Fast-Or-Safe`: if set to `fast`, `blackd` will act as _Black_ does when passed the
-  `--fast` command line flag.
-- `X-Python-Variant`: if set to `pyi`, `blackd` will act as _Black_ does when passed the
-  `--pyi` command line flag. Otherwise, its value must correspond to a Python version or
-  a set of comma-separated Python versions, optionally prefixed with `py`. For example,
-  to request code that is compatible with Python 3.5 and 3.6, set the header to
-  `py3.5,py3.6`.
-
-If any of these headers are set to invalid values, `blackd` returns a `HTTP 400` error
 response, mentioning the name of the problematic header in the message body.
-
-> > > > > > > master
 
 Apart from the above, `blackd` can produce the following response codes:
 
