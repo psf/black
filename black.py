@@ -2601,9 +2601,11 @@ def bracket_split_build_line(
             # Since body is a new indent level, remove spurious leading whitespace.
             normalize_prefix(leaves[0], inside_brackets=True)
             # Ensure a trailing comma for imports and standalone function arguments, but
-            # be careful not to add one after any comments.
-            no_commas = original.is_def and not any(
-                l.type == token.COMMA for l in leaves
+            # be careful not to add one after any comments or within type annotations.
+            no_commas = (
+                original.is_def
+                and opening_bracket.value == "("
+                and not any(l.type == token.COMMA for l in leaves)
             )
 
             if original.is_import or no_commas:
