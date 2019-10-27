@@ -838,7 +838,7 @@ which if present, should have the value `1`, otherwise the request is rejected w
 The headers controlling how code is formatted are:
 
 If any of these headers are set to invalid values, `blackd` returns a `HTTP 400` error
-response, mentioning the name of the problematic header in the message body. =======
+response, mentioning the name of the problematic header in the message body.
 
 - `X-Line-Length`: corresponds to the `--line-length` command line flag.
 - `X-Skip-String-Normalization`: corresponds to the `--skip-string-normalization`
