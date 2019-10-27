@@ -12,7 +12,7 @@ from multiprocessing import Manager, freeze_support
 import os
 from pathlib import Path
 import pickle
-import re
+import regex as re
 import signal
 import sys
 import tempfile
@@ -43,6 +43,7 @@ from attr import dataclass, evolve, Factory
 import click
 import toml
 from typed_ast import ast3, ast27
+from pathspec import PathSpec
 
 # lib2to3 fork
 from blib2to3.pytree import Node, Leaf, type_repr
@@ -51,12 +52,10 @@ from blib2to3.pgen2 import driver, token
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.parse import ParseError
 
+from _black_version import version as __version__
 
-__version__ = "19.3b0"
 DEFAULT_LINE_LENGTH = 88
-DEFAULT_EXCLUDES = (
-    r"/(\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|_build|buck-out|build|dist)/"
-)
+DEFAULT_EXCLUDES = r"/(\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_build|buck-out|build|dist)/"  # noqa: B950
 DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 
@@ -433,11 +432,14 @@ def main(
     report = Report(check=check, quiet=quiet, verbose=verbose)
     root = find_project_root(src)
     sources: Set[Path] = set()
+    path_empty(src, quiet, verbose, ctx)
     for s in src:
         p = Path(s)
         if p.is_dir():
             sources.update(
-                gen_python_files_in_dir(p, root, include_regex, exclude_regex, report)
+                gen_python_files_in_dir(
+                    p, root, include_regex, exclude_regex, report, get_gitignore(root)
+                )
             )
         elif p.is_file() or s == "-":
             # if a file was explicitly given, we don't care about its extension
@@ -446,7 +448,7 @@ def main(
             err(f"invalid path: {s}")
     if len(sources) == 0:
         if verbose or not quiet:
-            out("No paths given. Nothing to do 😴")
+            out("No Python files are present to be formatted. Nothing to do 😴")
         ctx.exit(0)
 
     if len(sources) == 1:
@@ -466,6 +468,16 @@ def main(
         out("Oh no! 💥 💔 💥" if report.return_code else "All done! ✨ 🍰 ✨")
         click.secho(str(report), err=True)
     ctx.exit(report.return_code)
+
+
+def path_empty(src: Tuple[str], quiet: bool, verbose: bool, ctx: click.Context) -> None:
+    """
+    Exit if there is no `src` provided for formatting
+    """
+    if not src:
+        if verbose or not quiet:
+            out("No Path provided. Nothing to do 😴")
+            ctx.exit(0)
 
 
 def reformat_one(
@@ -1230,6 +1242,61 @@ class Line:
         ]
 
     @property
+    def is_collection_with_optional_trailing_comma(self) -> bool:
+        """Is this line a collection literal with a trailing comma that's optional?
+
+        Note that the trailing comma in a 1-tuple is not optional.
+        """
+        if not self.leaves or len(self.leaves) < 4:
+            return False
+        # Look for and address a trailing colon.
+        if self.leaves[-1].type == token.COLON:
+            closer = self.leaves[-2]
+            close_index = -2
+        else:
+            closer = self.leaves[-1]
+            close_index = -1
+        if closer.type not in CLOSING_BRACKETS or self.inside_brackets:
+            return False
+        if closer.type == token.RPAR:
+            # Tuples require an extra check, because if there's only
+            # one element in the tuple removing the comma unmakes the
+            # tuple.
+            #
+            # We also check for parens before looking for the trailing
+            # comma because in some cases (eg assigning a dict
+            # literal) the literal gets wrapped in temporary parens
+            # during parsing. This case is covered by the
+            # collections.py test data.
+            opener = closer.opening_bracket
+            for _open_index, leaf in enumerate(self.leaves):
+                if leaf is opener:
+                    break
+            else:
+                # Couldn't find the matching opening paren, play it safe.
+                return False
+            commas = 0
+            comma_depth = self.leaves[close_index - 1].bracket_depth
+            for leaf in self.leaves[_open_index + 1 : close_index]:
+                if leaf.bracket_depth == comma_depth and leaf.type == token.COMMA:
+                    commas += 1
+            if commas > 1:
+                # We haven't looked yet for the trailing comma because
+                # we might also have caught noop parens.
+                return self.leaves[close_index - 1].type == token.COMMA
+            elif commas == 1:
+                return False  # it's either a one-tuple or didn't have a trailing comma
+            if self.leaves[close_index - 1].type in CLOSING_BRACKETS:
+                close_index -= 1
+                closer = self.leaves[close_index]
+                if closer.type == token.RPAR:
+                    # TODO: this is a gut feeling. Will we ever see this?
+                    return False
+        if self.leaves[close_index - 1].type != token.COMMA:
+            return False
+        return True
+
+    @property
     def is_def(self) -> bool:
         """Is this a function definition? (Also returns True for async defs.)"""
         try:
@@ -1281,7 +1348,7 @@ class Line:
                     return True
         return False
 
-    def contains_inner_type_comments(self) -> bool:
+    def contains_uncollapsable_type_comments(self) -> bool:
         ignored_ids = set()
         try:
             last_leaf = self.leaves[-1]
@@ -1298,13 +1365,50 @@ class Line:
         except IndexError:
             return False
 
+        # A type comment is uncollapsable if it is attached to a leaf
+        # that isn't at the end of the line (since that could cause it
+        # to get associated to a different argument) or if there are
+        # comments before it (since that could cause it to get hidden
+        # behind a comment.
+        comment_seen = False
         for leaf_id, comments in self.comments.items():
-            if leaf_id in ignored_ids:
-                continue
-
             for comment in comments:
                 if is_type_comment(comment):
-                    return True
+                    if leaf_id not in ignored_ids or comment_seen:
+                        return True
+
+                comment_seen = True
+
+        return False
+
+    def contains_unsplittable_type_ignore(self) -> bool:
+        if not self.leaves:
+            return False
+
+        # If a 'type: ignore' is attached to the end of a line, we
+        # can't split the line, because we can't know which of the
+        # subexpressions the ignore was meant to apply to.
+        #
+        # We only want this to apply to actual physical lines from the
+        # original source, though: we don't want the presence of a
+        # 'type: ignore' at the end of a multiline expression to
+        # justify pushing it all onto one line. Thus we
+        # (unfortunately) need to check the actual source lines and
+        # only report an unsplittable 'type: ignore' if this line was
+        # one line in the original code.
+
+        # Grab the first and last line numbers, skipping generated leaves
+        first_line = next((l.lineno for l in self.leaves if l.lineno != 0), 0)
+        last_line = next((l.lineno for l in reversed(self.leaves) if l.lineno != 0), 0)
+
+        if first_line == last_line:
+            # We look at the last two leaves since a comma or an
+            # invisible paren could have been added at the end of the
+            # line.
+            for node in self.leaves[-2:]:
+                for comment in self.comments.get(id(node), []):
+                    if is_type_comment(comment, " ignore"):
+                        return True
 
         return False
 
@@ -1317,60 +1421,39 @@ class Line:
 
     def maybe_remove_trailing_comma(self, closing: Leaf) -> bool:
         """Remove trailing comma if there is one and it's safe."""
+        if not (self.leaves and self.leaves[-1].type == token.COMMA):
+            return False
+        # We remove trailing commas only in the case of importing a
+        # single name from a module.
         if not (
             self.leaves
+            and self.is_import
+            and len(self.leaves) > 4
             and self.leaves[-1].type == token.COMMA
             and closing.type in CLOSING_BRACKETS
+            and self.leaves[-4].type == token.NAME
+            and (
+                # regular `from foo import bar,`
+                self.leaves[-4].value == "import"
+                # `from foo import (bar as baz,)
+                or (
+                    len(self.leaves) > 6
+                    and self.leaves[-6].value == "import"
+                    and self.leaves[-3].value == "as"
+                )
+                # `from foo import bar as baz,`
+                or (
+                    len(self.leaves) > 5
+                    and self.leaves[-5].value == "import"
+                    and self.leaves[-3].value == "as"
+                )
+            )
+            and closing.type == token.RPAR
         ):
             return False
 
-        if closing.type == token.RBRACE:
-            self.remove_trailing_comma()
-            return True
-
-        if closing.type == token.RSQB:
-            comma = self.leaves[-1]
-            if comma.parent and comma.parent.type == syms.listmaker:
-                self.remove_trailing_comma()
-                return True
-
-        # For parens let's check if it's safe to remove the comma.
-        # Imports are always safe.
-        if self.is_import:
-            self.remove_trailing_comma()
-            return True
-
-        # Otherwise, if the trailing one is the only one, we might mistakenly
-        # change a tuple into a different type by removing the comma.
-        depth = closing.bracket_depth + 1
-        commas = 0
-        opening = closing.opening_bracket
-        for _opening_index, leaf in enumerate(self.leaves):
-            if leaf is opening:
-                break
-
-        else:
-            return False
-
-        for leaf in self.leaves[_opening_index + 1 :]:
-            if leaf is closing:
-                break
-
-            bracket_depth = leaf.bracket_depth
-            if bracket_depth == depth and leaf.type == token.COMMA:
-                commas += 1
-                if leaf.parent and leaf.parent.type in {
-                    syms.arglist,
-                    syms.typedargslist,
-                }:
-                    commas += 1
-                    break
-
-        if commas > 1:
-            self.remove_trailing_comma()
-            return True
-
-        return False
+        self.remove_trailing_comma()
+        return True
 
     def append_comment(self, comment: Leaf) -> bool:
         """Add an inline or standalone comment to the line."""
@@ -1632,26 +1715,6 @@ class LineGenerator(Visitor[Line]):
                 normalize_numeric_literal(node)
             if node.type not in WHITESPACE:
                 self.current_line.append(node)
-        yield from super().visit_default(node)
-
-    def visit_atom(self, node: Node) -> Iterator[Line]:
-        # Always make parentheses invisible around a single node, because it should
-        # not be needed (except in the case of yield, where removing the parentheses
-        # produces a SyntaxError).
-        if (
-            len(node.children) == 3
-            and isinstance(node.children[0], Leaf)
-            and node.children[0].type == token.LPAR
-            and isinstance(node.children[2], Leaf)
-            and node.children[2].type == token.RPAR
-            and isinstance(node.children[1], Leaf)
-            and not (
-                node.children[1].type == token.NAME
-                and node.children[1].value == "yield"
-            )
-        ):
-            node.children[0].value = ""
-            node.children[2].value = ""
         yield from super().visit_default(node)
 
     def visit_factor(self, node: Node) -> Iterator[Line]:
@@ -2313,9 +2376,13 @@ def split_line(
     line_str = str(line).strip("\n")
 
     if (
-        not line.contains_inner_type_comments()
+        not line.contains_uncollapsable_type_comments()
         and not line.should_explode
-        and is_line_short_enough(line, line_length=line_length, line_str=line_str)
+        and not line.is_collection_with_optional_trailing_comma
+        and (
+            is_line_short_enough(line, line_length=line_length, line_str=line_str)
+            or line.contains_unsplittable_type_ignore()
+        )
     ):
         yield line
         return
@@ -2534,9 +2601,11 @@ def bracket_split_build_line(
             # Since body is a new indent level, remove spurious leading whitespace.
             normalize_prefix(leaves[0], inside_brackets=True)
             # Ensure a trailing comma for imports and standalone function arguments, but
-            # be careful not to add one after any comments.
-            no_commas = original.is_def and not any(
-                l.type == token.COMMA for l in leaves
+            # be careful not to add one after any comments or within type annotations.
+            no_commas = (
+                original.is_def
+                and opening_bracket.value == "("
+                and not any(l.type == token.COMMA for l in leaves)
             )
 
             if original.is_import or no_commas:
@@ -2688,12 +2757,12 @@ def is_import(leaf: Leaf) -> bool:
     )
 
 
-def is_type_comment(leaf: Leaf) -> bool:
+def is_type_comment(leaf: Leaf, suffix: str = "") -> bool:
     """Return True if the given leaf is a special comment.
     Only returns true for type comments for now."""
     t = leaf.type
     v = leaf.value
-    return t in {token.COMMENT, t == STANDALONE_COMMENT} and v.startswith("# type:")
+    return t in {token.COMMENT, STANDALONE_COMMENT} and v.startswith("# type:" + suffix)
 
 
 def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
@@ -2878,7 +2947,15 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
             if is_walrus_assignment(child):
                 continue
             if child.type == syms.atom:
-                if maybe_make_parens_invisible_in_atom(child, parent=node):
+                # Determines if the underlying atom should be surrounded with
+                # invisible params - also makes parens invisible recursively
+                # within the atom and removes repeated invisible parens within
+                # the atom
+                should_surround_with_parens = maybe_make_parens_invisible_in_atom(
+                    child, parent=node
+                )
+
+                if should_surround_with_parens:
                     lpar = Leaf(token.LPAR, "")
                     rpar = Leaf(token.RPAR, "")
                     index = child.remove() or 0
@@ -2995,6 +3072,8 @@ def generate_ignored_nodes(leaf: Leaf) -> Iterator[LN]:
 
 def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
     """If it's safe, make the parens in the atom `node` invisible, recursively.
+    Additionally, remove repeated, adjacent invisible parens from the atom `node`
+    as they are redundant.
 
     Returns whether the node should itself be wrapped in invisible parentheses.
 
@@ -3011,13 +3090,38 @@ def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
     first = node.children[0]
     last = node.children[-1]
     if first.type == token.LPAR and last.type == token.RPAR:
+        middle = node.children[1]
         # make parentheses invisible
         first.value = ""  # type: ignore
         last.value = ""  # type: ignore
-        maybe_make_parens_invisible_in_atom(node.children[1], parent=parent)
+        maybe_make_parens_invisible_in_atom(middle, parent=parent)
+
+        if is_atom_with_invisible_parens(middle):
+            # Strip the invisible parens from `middle` by replacing
+            # it with the child in-between the invisible parens
+            middle.replace(middle.children[1])
+
         return False
 
     return True
+
+
+def is_atom_with_invisible_parens(node: LN) -> bool:
+    """Given a `LN`, determines whether it's an atom `node` with invisible
+    parens. Useful in dedupe-ing and normalizing parens.
+    """
+    if isinstance(node, Leaf) or node.type != syms.atom:
+        return False
+
+    first, last = node.children[0], node.children[-1]
+    return (
+        isinstance(first, Leaf)
+        and first.type == token.LPAR
+        and first.value == ""
+        and isinstance(last, Leaf)
+        and last.type == token.RPAR
+        and last.value == ""
+    )
 
 
 def is_empty_tuple(node: LN) -> bool:
@@ -3354,12 +3458,23 @@ def get_future_imports(node: Node) -> Set[str]:
     return imports
 
 
+@lru_cache()
+def get_gitignore(root: Path) -> PathSpec:
+    """ Return a PathSpec matching gitignore content if present."""
+    gitignore = root / ".gitignore"
+    if not gitignore.is_file():
+        return PathSpec.from_lines("gitwildmatch", [])
+    else:
+        return PathSpec.from_lines("gitwildmatch", gitignore.open())
+
+
 def gen_python_files_in_dir(
     path: Path,
     root: Path,
     include: Pattern[str],
     exclude: Pattern[str],
     report: "Report",
+    gitignore: PathSpec,
 ) -> Iterator[Path]:
     """Generate all files under `path` whose paths are not excluded by the
     `exclude` regex, but are included by the `include` regex.
@@ -3370,8 +3485,17 @@ def gen_python_files_in_dir(
     """
     assert root.is_absolute(), f"INTERNAL ERROR: `root` must be absolute but is {root}"
     for child in path.iterdir():
+        # First ignore files matching .gitignore
+        if gitignore.match_file(child.as_posix()):
+            report.path_ignored(child, f"matches the .gitignore file content")
+            continue
+
+        # Then ignore with `exclude` option.
         try:
             normalized_path = "/" + child.resolve().relative_to(root).as_posix()
+        except OSError as e:
+            report.path_ignored(child, f"cannot be read because {e}")
+            continue
         except ValueError:
             if child.is_symlink():
                 report.path_ignored(
@@ -3383,13 +3507,16 @@ def gen_python_files_in_dir(
 
         if child.is_dir():
             normalized_path += "/"
+
         exclude_match = exclude.search(normalized_path)
         if exclude_match and exclude_match.group(0):
             report.path_ignored(child, f"matches the --exclude regular expression")
             continue
 
         if child.is_dir():
-            yield from gen_python_files_in_dir(child, root, include, exclude, report)
+            yield from gen_python_files_in_dir(
+                child, root, include, exclude, report, gitignore
+            )
 
         elif child.is_file():
             include_match = include.search(normalized_path)
@@ -3718,7 +3845,8 @@ def re_compile_maybe_verbose(regex: str) -> Pattern[str]:
     """
     if "\n" in regex:
         regex = "(?x)" + regex
-    return re.compile(regex)
+    compiled: Pattern[str] = re.compile(regex)
+    return compiled
 
 
 def enumerate_reversed(sequence: Sequence[T]) -> Iterator[Tuple[Index, T]]:
@@ -3906,7 +4034,7 @@ def read_cache(mode: FileMode) -> Cache:
     with cache_file.open("rb") as fobj:
         try:
             cache: Cache = pickle.load(fobj)
-        except pickle.UnpicklingError:
+        except (pickle.UnpicklingError, ValueError):
             return {}
 
     return cache
@@ -3941,7 +4069,7 @@ def write_cache(cache: Cache, sources: Iterable[Path], mode: FileMode) -> None:
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         new_cache = {**cache, **{src.resolve(): get_cache_info(src) for src in sources}}
         with tempfile.NamedTemporaryFile(dir=str(cache_file.parent), delete=False) as f:
-            pickle.dump(new_cache, f, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(new_cache, f, protocol=4)
         os.replace(f.name, cache_file)
     except OSError:
         pass

@@ -18,15 +18,20 @@ from io import StringIO
 HUGE = 0x7FFFFFFF  # maximum repeat count, default max
 
 _type_reprs = {}
+
+
 def type_repr(type_num):
     global _type_reprs
     if not _type_reprs:
         from .pygram import python_symbols
+
         # printing tokens is possible but not as useful
         # from .pgen2 import token // token.__dict__.items():
         for name, val in python_symbols.__dict__.items():
-            if type(val) == int: _type_reprs[val] = name
+            if type(val) == int:
+                _type_reprs[val] = name
     return _type_reprs.setdefault(type_num, type_num)
+
 
 class Base(object):
 
@@ -40,7 +45,7 @@ class Base(object):
     """
 
     # Default values for instance variables
-    type = None    # int: token number (< 256) or symbol number (>= 256)
+    type = None  # int: token number (< 256) or symbol number (>= 256)
     parent = None  # Parent node pointer, or None
     children = ()  # Tuple of subnodes
     was_changed = False
@@ -61,7 +66,7 @@ class Base(object):
             return NotImplemented
         return self._eq(other)
 
-    __hash__ = None # For Py3 compatibility.
+    __hash__ = None  # For Py3 compatibility.
 
     def _eq(self, other):
         """
@@ -198,17 +203,16 @@ class Base(object):
         return next_sib.prefix
 
     if sys.version_info < (3, 0):
+
         def __str__(self):
             return str(self).encode("ascii")
+
 
 class Node(Base):
 
     """Concrete implementation for interior nodes."""
 
-    def __init__(self,type, children,
-                 context=None,
-                 prefix=None,
-                 fixers_applied=None):
+    def __init__(self, type, children, context=None, prefix=None, fixers_applied=None):
         """
         Initializer.
 
@@ -233,9 +237,11 @@ class Node(Base):
 
     def __repr__(self):
         """Return a canonical string representation."""
-        return "%s(%s, %r)" % (self.__class__.__name__,
-                               type_repr(self.type),
-                               self.children)
+        return "%s(%s, %r)" % (
+            self.__class__.__name__,
+            type_repr(self.type),
+            self.children,
+        )
 
     def __unicode__(self):
         """
@@ -254,8 +260,11 @@ class Node(Base):
 
     def clone(self):
         """Return a cloned (deep) copy of self."""
-        return Node(self.type, [ch.clone() for ch in self.children],
-                    fixers_applied=self.fixers_applied)
+        return Node(
+            self.type,
+            [ch.clone() for ch in self.children],
+            fixers_applied=self.fixers_applied,
+        )
 
     def post_order(self):
         """Return a post-order iterator for the tree."""
@@ -328,19 +337,17 @@ class Node(Base):
             previous = current
         _next[id(current)] = None
 
+
 class Leaf(Base):
 
     """Concrete implementation for leaf nodes."""
 
     # Default values for instance variables
     _prefix = ""  # Whitespace and comments preceding this token in the input
-    lineno = 0    # Line where this token starts in the input
-    column = 0    # Column where this token starts in the input
+    lineno = 0  # Line where this token starts in the input
+    column = 0  # Column where this token starts in the input
 
-    def __init__(self, type, value,
-                 context=None,
-                 prefix=None,
-                 fixers_applied=[]):
+    def __init__(self, type, value, context=None, prefix=None, fixers_applied=[]):
         """
         Initializer.
 
@@ -359,9 +366,12 @@ class Leaf(Base):
     def __repr__(self):
         """Return a canonical string representation."""
         from .pgen2.token import tok_name
-        return "%s(%s, %r)" % (self.__class__.__name__,
-                               tok_name.get(self.type, self.type),
-                               self.value)
+
+        return "%s(%s, %r)" % (
+            self.__class__.__name__,
+            tok_name.get(self.type, self.type),
+            self.value,
+        )
 
     def __unicode__(self):
         """
@@ -380,9 +390,12 @@ class Leaf(Base):
 
     def clone(self):
         """Return a cloned (deep) copy of self."""
-        return Leaf(self.type, self.value,
-                    (self.prefix, (self.lineno, self.column)),
-                    fixers_applied=self.fixers_applied)
+        return Leaf(
+            self.type,
+            self.value,
+            (self.prefix, (self.lineno, self.column)),
+            fixers_applied=self.fixers_applied,
+        )
 
     def leaves(self):
         yield self
@@ -406,6 +419,7 @@ class Leaf(Base):
     def prefix(self, prefix):
         self.changed()
         self._prefix = prefix
+
 
 def convert(gr, raw_node):
     """
@@ -443,9 +457,9 @@ class BasePattern(object):
     """
 
     # Defaults for instance variables
-    type = None     # Node type (token if < 256, symbol if >= 256)
+    type = None  # Node type (token if < 256, symbol if >= 256)
     content = None  # Optional content matching pattern
-    name = None     # Optional name used to store match in results dict
+    name = None  # Optional name used to store match in results dict
 
     def __new__(cls, *args, **kwds):
         """Constructor that prevents BasePattern from being instantiated."""
@@ -513,7 +527,6 @@ class BasePattern(object):
 
 
 class LeafPattern(BasePattern):
-
     def __init__(self, type=None, content=None, name=None):
         """
         Initializer.  Takes optional type, content, and name.
@@ -660,7 +673,7 @@ class WildcardPattern(BasePattern):
             # Check sanity of alternatives
             assert len(content), repr(content)  # Can't have zero alternatives
             for alt in content:
-                assert len(alt), repr(alt) # Can have empty alternatives
+                assert len(alt), repr(alt)  # Can have empty alternatives
         self.content = content
         self.min = min
         self.max = max
@@ -669,20 +682,29 @@ class WildcardPattern(BasePattern):
     def optimize(self):
         """Optimize certain stacked wildcard patterns."""
         subpattern = None
-        if (self.content is not None and
-            len(self.content) == 1 and len(self.content[0]) == 1):
+        if (
+            self.content is not None
+            and len(self.content) == 1
+            and len(self.content[0]) == 1
+        ):
             subpattern = self.content[0][0]
         if self.min == 1 and self.max == 1:
             if self.content is None:
                 return NodePattern(name=self.name)
-            if subpattern is not None and  self.name == subpattern.name:
+            if subpattern is not None and self.name == subpattern.name:
                 return subpattern.optimize()
-        if (self.min <= 1 and isinstance(subpattern, WildcardPattern) and
-            subpattern.min <= 1 and self.name == subpattern.name):
-            return WildcardPattern(subpattern.content,
-                                   self.min*subpattern.min,
-                                   self.max*subpattern.max,
-                                   subpattern.name)
+        if (
+            self.min <= 1
+            and isinstance(subpattern, WildcardPattern)
+            and subpattern.min <= 1
+            and self.name == subpattern.name
+        ):
+            return WildcardPattern(
+                subpattern.content,
+                self.min * subpattern.min,
+                self.max * subpattern.max,
+                subpattern.name,
+            )
         return self
 
     def match(self, node, results=None):
@@ -798,7 +820,7 @@ class WildcardPattern(BasePattern):
         if count < self.max:
             for alt in self.content:
                 for c0, r0 in generate_matches(alt, nodes):
-                    for c1, r1 in self._recursive_matches(nodes[c0:], count+1):
+                    for c1, r1 in self._recursive_matches(nodes[c0:], count + 1):
                         r = {}
                         r.update(r0)
                         r.update(r1)
@@ -806,7 +828,6 @@ class WildcardPattern(BasePattern):
 
 
 class NegatedPattern(BasePattern):
-
     def __init__(self, content=None):
         """
         Initializer.

@@ -69,6 +69,20 @@ def f(
     )  # type: int
 
 
+def f(
+    x,  # not a type comment
+    y,  # type: int
+):
+    # type: (...) -> None
+    pass
+
+
+def f(
+    x,  # not a type comment
+):  # type: (int) -> None
+    pass
+
+
 def func(
     a=some_list[0],  # type: int
 ):  # type: () -> int
@@ -85,5 +99,18 @@ def func(
         a[-1],  # type: ignore
     )
 
+    c = call(
+        "aaaaaaaa", "aaaaaaaa", "aaaaaaaa", "aaaaaaaa", "aaaaaaaa", "aaaaaaaa", "aaaaaaaa"  # type: ignore
+    )
+
 
 result = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"  # aaa
+
+AAAAAAAAAAAAA = [AAAAAAAAAAAAA] + SHARED_AAAAAAAAAAAAA + USER_AAAAAAAAAAAAA + AAAAAAAAAAAAA  # type: ignore
+
+call_to_some_function_asdf(
+    foo,
+    [AAAAAAAAAAAAAAAAAAAAAAA, AAAAAAAAAAAAAAAAAAAAAAA, AAAAAAAAAAAAAAAAAAAAAAA, BBBBBBBBBBBB],  # type: ignore
+)
+
+aaaaaaaaaaaaa, bbbbbbbbb = map(list, map(itertools.chain.from_iterable, zip(*items)))  # type: ignore[arg-type]

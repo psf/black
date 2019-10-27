@@ -75,6 +75,7 @@ click = "^6.5"
 toml = "^0.9.4"
 appdirs = "^1.4"
 aiohttp = { version = "^3.4", optional = true }
+regex = "^2019.8"
 
 [tool.poetry.extras]
 d = ["aiohttp"]

@@ -38,3 +38,6 @@ if self._is_special and (ans := self._check_nans(context=context)):
 foo(b := 2, a=1)
 foo((b := 2), a=1)
 foo(c=(b := 2), a=1)
+
+while x := f(x):
+    pass
