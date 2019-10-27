@@ -297,7 +297,7 @@ ignore = E501,W503,E203
 ```
 
 You'll find *Black*'s own .flake8 config file is configured like this.
-If you're curious about the reasoning behind B950, 
+If you're curious about the reasoning behind B950,
 [Bugbear's documentation](https://github.com/PyCQA/flake8-bugbear#opinionated-warnings)
 explains it.  The tl;dr is "it's like highway speed limits, we won't
 bother you if you overdo it by a few km/h".
@@ -682,7 +682,7 @@ $ where black
 
 
 
-### Wing IDE 
+### Wing IDE
 
 Wing supports black via the OS Commands tool, as explained in the Wing documentation on [pep8 formatting](https://wingware.com/doc/edit/pep8). The detailed procedure is:
 
@@ -704,7 +704,7 @@ $ black --help
 - click on **+** in **OS Commands** -> New: Command line..
   - Title: black
   - Command Line: black %s
-  - I/O Encoding: Use Default 
+  - I/O Encoding: Use Default
   - Key Binding: F1
   - [x] Raise OS Commands when executed
   - [x] Auto-save files before execution
@@ -877,6 +877,8 @@ The headers controlling how code is formatted are:
     a Python version or a set of comma-separated Python versions, optionally
     prefixed with `py`. For example, to request code that is compatible
     with Python 3.5 and 3.6, set the header to `py3.5,py3.6`.
+-   `X-Diff`: corresponds to the `--diff` command line flag. If present, a diff
+    of the formats will be output.
 
 If any of these headers are set to invalid values, `blackd` returns a `HTTP 400`
 error response, mentioning the name of the problematic header in the message body.
@@ -1050,6 +1052,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 * *Black* is now able to format Python code that uses positional-only
   arguments (`/` as described in PEP-570) (#946)
+
+* `blackd` can now output the diff of formats on source code when the `X-Diff`
+  header is provided (#969)
 
 
 ### 19.3b0
