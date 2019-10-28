@@ -1250,6 +1250,7 @@ class Line:
         """
         if not self.leaves or len(self.leaves) < 4:
             return False
+
         # Look for and address a trailing colon.
         if self.leaves[-1].type == token.COLON:
             closer = self.leaves[-2]
@@ -1259,6 +1260,7 @@ class Line:
             close_index = -1
         if closer.type not in CLOSING_BRACKETS or self.inside_brackets:
             return False
+
         if closer.type == token.RPAR:
             # Tuples require an extra check, because if there's only
             # one element in the tuple removing the comma unmakes the
@@ -1273,9 +1275,11 @@ class Line:
             for _open_index, leaf in enumerate(self.leaves):
                 if leaf is opener:
                     break
+
             else:
                 # Couldn't find the matching opening paren, play it safe.
                 return False
+
             commas = 0
             comma_depth = self.leaves[close_index - 1].bracket_depth
             for leaf in self.leaves[_open_index + 1 : close_index]:
@@ -1285,16 +1289,20 @@ class Line:
                 # We haven't looked yet for the trailing comma because
                 # we might also have caught noop parens.
                 return self.leaves[close_index - 1].type == token.COMMA
+
             elif commas == 1:
                 return False  # it's either a one-tuple or didn't have a trailing comma
+
             if self.leaves[close_index - 1].type in CLOSING_BRACKETS:
                 close_index -= 1
                 closer = self.leaves[close_index]
                 if closer.type == token.RPAR:
                     # TODO: this is a gut feeling. Will we ever see this?
                     return False
+
         if self.leaves[close_index - 1].type != token.COMMA:
             return False
+
         return True
 
     @property
@@ -1344,9 +1352,9 @@ class Line:
     def contains_standalone_comments(self, depth_limit: int = sys.maxsize) -> bool:
         """If so, needs to be split before emitting."""
         for leaf in self.leaves:
-            if leaf.type == STANDALONE_COMMENT:
-                if leaf.bracket_depth <= depth_limit:
-                    return True
+            if leaf.type == STANDALONE_COMMENT and leaf.bracket_depth <= depth_limit:
+                return True
+
         return False
 
     def contains_uncollapsable_type_comments(self) -> bool:
@@ -1424,6 +1432,7 @@ class Line:
         """Remove trailing comma if there is one and it's safe."""
         if not (self.leaves and self.leaves[-1].type == token.COMMA):
             return False
+
         # We remove trailing commas only in the case of importing a
         # single name from a module.
         if not (
@@ -1488,6 +1497,7 @@ class Line:
                 comment.type = STANDALONE_COMMENT
                 comment.prefix = ""
                 return False
+
             last_leaf = self.leaves[-2]
         self.comments.setdefault(id(last_leaf), []).append(comment)
         return True
@@ -2619,11 +2629,11 @@ def bracket_split_build_line(
                 for i in range(len(leaves) - 1, -1, -1):
                     if leaves[i].type == STANDALONE_COMMENT:
                         continue
-                    elif leaves[i].type == token.COMMA:
-                        break
-                    else:
+
+                    if leaves[i].type != token.COMMA:
                         leaves.insert(i + 1, Leaf(token.COMMA, ","))
-                        break
+                    break
+
     # Populate the line
     for leaf in leaves:
         result.append(leaf, preformatted=True)
@@ -2867,6 +2877,7 @@ def normalize_string_quotes(leaf: Leaf) -> None:
             if "\\" in str(m):
                 # Do not introduce backslashes in interpolated expressions
                 return
+
     if new_quote == '"""' and new_body[-1:] == '"':
         # edge case:
         new_body = new_body[:-1] + '\\"'
@@ -2953,6 +2964,7 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
         if check_lpar:
             if is_walrus_assignment(child):
                 continue
+
             if child.type == syms.atom:
                 # Determines if the underlying atom should be surrounded with
                 # invisible params - also makes parens invisible recursively
@@ -3147,6 +3159,7 @@ def unwrap_singleton_parenthesis(node: LN) -> Optional[LN]:
     Parenthesis can be optional. Returns None otherwise"""
     if len(node.children) != 3:
         return None
+
     lpar, wrapped, rpar = node.children
     if not (lpar.type == token.LPAR and rpar.type == token.RPAR):
         return None
@@ -3431,19 +3444,23 @@ def get_future_imports(node: Node) -> Set[str]:
             if isinstance(child, Leaf):
                 if child.type == token.NAME:
                     yield child.value
+
             elif child.type == syms.import_as_name:
                 orig_name = child.children[0]
                 assert isinstance(orig_name, Leaf), "Invalid syntax parsing imports"
                 assert orig_name.type == token.NAME, "Invalid syntax parsing imports"
                 yield orig_name.value
+
             elif child.type == syms.import_as_names:
                 yield from get_imports_from_children(child.children)
+
             else:
                 raise AssertionError("Invalid syntax parsing imports")
 
     for child in node.children:
         if child.type != syms.simple_stmt:
             break
+
         first_child = child.children[0]
         if isinstance(first_child, Leaf):
             # Continue looking if we see a docstring; otherwise stop.
@@ -3453,15 +3470,18 @@ def get_future_imports(node: Node) -> Set[str]:
                 and child.children[1].type == token.NEWLINE
             ):
                 continue
-            else:
-                break
+
+            break
+
         elif first_child.type == syms.import_from:
             module_name = first_child.children[1]
             if not isinstance(module_name, Leaf) or module_name.value != "__future__":
                 break
+
             imports |= set(get_imports_from_children(first_child.children[3:]))
         else:
             break
+
     return imports
 
 
@@ -3504,6 +3524,7 @@ def gen_python_files_in_dir(
         except OSError as e:
             report.path_ignored(child, f"cannot be read because {e}")
             continue
+
         except ValueError:
             if child.is_symlink():
                 report.path_ignored(
@@ -3672,10 +3693,13 @@ def _fixup_ast_constants(
     """Map ast nodes deprecated in 3.8 to Constant."""
     if isinstance(node, (ast.Str, ast3.Str, ast27.Str, ast.Bytes, ast3.Bytes)):
         return ast.Constant(value=node.s)
+
     if isinstance(node, (ast.Num, ast3.Num, ast27.Num)):
         return ast.Constant(value=node.n)
+
     if isinstance(node, (ast.NameConstant, ast3.NameConstant)):
         return ast.Constant(value=node.value)
+
     return node
 
 
@@ -3715,6 +3739,7 @@ def assert_equivalent(src: str, dst: str) -> None:
                     ):
                         for item in item.elts:
                             yield from _v(item, depth + 2)
+
                     elif isinstance(item, (ast.AST, ast3.AST, ast27.AST)):
                         yield from _v(item, depth + 2)
 
