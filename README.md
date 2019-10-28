@@ -274,11 +274,12 @@ You'd do it like this:
 max-line-length = 80
 ...
 select = C,E,F,W,B,B950
-ignore = E501,W503,E203
+ignore = E203, E501, W503
 ```
 
-You'll find _Black_'s own .flake8 config file is configured like this. If you're curious
-about the reasoning behind B950,
+You'll find _Black_'s own .flake8 config file is configured like this. Explanation of
+why W503 and E203 are disabled can be found further in this documentation. And if you're
+curious about the reasoning behind B950,
 [Bugbear's documentation](https://github.com/PyCQA/flake8-bugbear#opinionated-warnings)
 explains it. The tl;dr is "it's like highway speed limits, we won't bother you if you
 overdo it by a few km/h".
