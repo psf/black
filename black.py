@@ -3469,10 +3469,11 @@ def get_future_imports(node: Node) -> Set[str]:
 def get_gitignore(root: Path) -> PathSpec:
     """ Return a PathSpec matching gitignore content if present."""
     gitignore = root / ".gitignore"
-    if not gitignore.is_file():
-        return PathSpec.from_lines("gitwildmatch", [])
-    else:
-        return PathSpec.from_lines("gitwildmatch", gitignore.open())
+    lines: List[str] = []
+    if gitignore.is_file():
+        with gitignore.open() as gf:
+            lines = gf.readlines()
+    return PathSpec.from_lines("gitwildmatch", lines)
 
 
 def gen_python_files_in_dir(
