@@ -1006,6 +1006,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 - fixed feature detection for trailing commas in function definitions and call sites
   (#763)
 
+- `# fmt: off`/`# fmt: on` comment pairs placed multiple times within the same block of
+  code now behave correctly (#1005)
+
 - _Black_ no longer crashes on Windows machines with more than 61 cores (#838)
 
 - _Black_ no longer crashes on standalone comments prepended with a backslash (#767)
@@ -1472,6 +1475,7 @@ Multiple contributions by:
 - [Josh Bode](mailto:joshbode@fastmail.com)
 - [Juan Luis Cano Rodríguez](mailto:hello@juanlu.space)
 - [Katie McLaughlin](mailto:katie@glasnt.com)
+- Lawrence Chan
 - [Linus Groh](mailto:mail@linusgroh.de)
 - [Luka Sterbic](mailto:luka.sterbic@gmail.com)
 - Mariatta
