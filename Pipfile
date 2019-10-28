@@ -22,7 +22,7 @@ docutils = "==0.15"  # not a direct dependency, see https://github.com/pypa/pipe
 flake8 = "*"
 flake8-bugbear = "*"
 flake8-mypy = "*"
-mypy = ">=0.620"
+mypy = ">=0.740"
 readme_renderer = "*"
 recommonmark = "*"
 Sphinx = "*"

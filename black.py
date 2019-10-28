@@ -3669,14 +3669,12 @@ def _fixup_ast_constants(
     node: Union[ast.AST, ast3.AST, ast27.AST]
 ) -> Union[ast.AST, ast3.AST, ast27.AST]:
     """Map ast nodes deprecated in 3.8 to Constant."""
-    # casts are required until this is released:
-    # https://github.com/python/typeshed/pull/3142
     if isinstance(node, (ast.Str, ast3.Str, ast27.Str, ast.Bytes, ast3.Bytes)):
-        return cast(ast.AST, ast.Constant(value=node.s))
-    elif isinstance(node, (ast.Num, ast3.Num, ast27.Num)):
-        return cast(ast.AST, ast.Constant(value=node.n))
-    elif isinstance(node, (ast.NameConstant, ast3.NameConstant)):
-        return cast(ast.AST, ast.Constant(value=node.value))
+        return ast.Constant(value=node.s)
+    if isinstance(node, (ast.Num, ast3.Num, ast27.Num)):
+        return ast.Constant(value=node.n)
+    if isinstance(node, (ast.NameConstant, ast3.NameConstant)):
+        return ast.Constant(value=node.value)
     return node
 
 
