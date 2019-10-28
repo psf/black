@@ -38,7 +38,7 @@ setup(
         "attrs>=18.1.0",
         "appdirs",
         "toml>=0.9.4",
-        "typed-ast>=1.3.1",
+        "typed-ast>=1.4.0",
         "regex",
         "pathspec>=0.6, <1",
     ],
