@@ -3780,8 +3780,10 @@ def dump_to_file(*output: str) -> str:
 
 @contextmanager
 def nullcontext() -> Iterator[None]:
-    """Return context manager that does nothing.
-    Similar to `nullcontext` from python 3.7"""
+    """Return an empty context manager.
+
+    To be used like `nullcontext` in Python 3.7.
+    """
     yield
 
 
