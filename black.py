@@ -2406,8 +2406,8 @@ def split_line(
             # All splits failed, best effort split with no omits.
             # This mostly happens to multiline strings that are by definition
             # reported as not fitting a single line.
-            # line_length=1 is silly, but somehow produces better formatting
-            # than other things we've tried so far. See #762 and #781.
+            # line_length=1 here was historically a bug that somehow became a feature.
+            # See #762 and #781 for the full story.
             yield from right_hand_split(line, line_length=1, features=features)
 
         if line.inside_brackets:
