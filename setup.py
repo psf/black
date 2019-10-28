@@ -6,6 +6,7 @@ assert sys.version_info >= (3, 6, 0), "black requires Python 3.6+"
 from pathlib import Path  # noqa E402
 
 CURRENT_DIR = Path(__file__).parent
+sys.path.insert(0, str(CURRENT_DIR))  # for setuptools.build_meta
 
 
 def get_long_description() -> str:
