@@ -96,6 +96,9 @@ call.me(maybe)
 list[str]
 dict[str, int]
 tuple[str, ...]
+tuple[
+    str, int, float, dict[str, int]
+]
 tuple[str, int, float, dict[str, int],]
 very_long_variable_name_filters: t.List[
     t.Tuple[str, t.Union[str, t.List[t.Optional[str]]]],
@@ -157,6 +160,7 @@ f = 1, *range(10)
 g = 1, *"ten"
 what_is_up_with_those_new_coord_names = (coord_names + set(vars_to_create)) + set(vars_to_remove)
 what_is_up_with_those_new_coord_names = (coord_names | set(vars_to_create)) - set(vars_to_remove)
+result = session.query(models.Customer.id).filter(models.Customer.account_id == account_id, models.Customer.email == email_address).order_by(models.Customer.id.asc()).all()
 result = session.query(models.Customer.id).filter(models.Customer.account_id == account_id, models.Customer.email == email_address).order_by(models.Customer.id.asc(),).all()
 Ø = set()
 authors.łukasz.say_thanks()
@@ -379,8 +383,12 @@ call.me(maybe)
 list[str]
 dict[str, int]
 tuple[str, ...]
+tuple[str, int, float, dict[str, int]]
 tuple[
-    str, int, float, dict[str, int],
+    str,
+    int,
+    float,
+    dict[str, int],
 ]
 very_long_variable_name_filters: t.List[
     t.Tuple[str, t.Union[str, t.List[t.Optional[str]]]],
@@ -459,7 +467,17 @@ result = (
     .filter(
         models.Customer.account_id == account_id, models.Customer.email == email_address
     )
-    .order_by(models.Customer.id.asc(),)
+    .order_by(models.Customer.id.asc())
+    .all()
+)
+result = (
+    session.query(models.Customer.id)
+    .filter(
+        models.Customer.account_id == account_id, models.Customer.email == email_address
+    )
+    .order_by(
+        models.Customer.id.asc(),
+    )
     .all()
 )
 Ø = set()

@@ -1442,7 +1442,8 @@ class Line:
             )
         if self.inside_brackets or not preformatted:
             self.bracket_tracker.mark(leaf)
-            self.maybe_remove_trailing_comma(leaf)
+            if self.maybe_should_explode(leaf):
+                self.should_explode = True
         if not self.append_comment(leaf):
             self.leaves.append(leaf)
 
@@ -1618,59 +1619,26 @@ class Line:
     def contains_multiline_strings(self) -> bool:
         return any(is_multiline_string(leaf) for leaf in self.leaves)
 
-    def maybe_remove_trailing_comma(self, closing: Leaf) -> bool:
-        """Remove trailing comma if there is one and it's safe."""
+    def maybe_should_explode(self, closing: Leaf) -> bool:
+        """Return True if this line should explode (always be split), that is when:
+        - there's a pre-existing trailing comma here; and
+        - it's not a one-tuple.
+        """
         if not (
-            self.leaves
+            closing.type in CLOSING_BRACKETS
+            and self.leaves
             and self.leaves[-1].type == token.COMMA
-            and closing.type in CLOSING_BRACKETS
+            and not self.leaves[-1].was_checked  # pre-existing
         ):
             return False
 
-        if closing.type == token.RBRACE:
-            self.remove_trailing_comma()
+        if closing.type in {token.RBRACE, token.RSQB}:
             return True
 
-        if closing.type == token.RSQB:
-            comma = self.leaves[-1]
-            if comma.parent and comma.parent.type == syms.listmaker:
-                self.remove_trailing_comma()
-                return True
-
-        # For parens let's check if it's safe to remove the comma.
-        # Imports are always safe.
         if self.is_import:
-            self.remove_trailing_comma()
             return True
 
-        # Otherwise, if the trailing one is the only one, we might mistakenly
-        # change a tuple into a different type by removing the comma.
-        depth = closing.bracket_depth + 1
-        commas = 0
-        opening = closing.opening_bracket
-        for _opening_index, leaf in enumerate(self.leaves):
-            if leaf is opening:
-                break
-
-        else:
-            return False
-
-        for leaf in self.leaves[_opening_index + 1 :]:
-            if leaf is closing:
-                break
-
-            bracket_depth = leaf.bracket_depth
-            if bracket_depth == depth and leaf.type == token.COMMA:
-                commas += 1
-                if leaf.parent and leaf.parent.type in {
-                    syms.arglist,
-                    syms.typedargslist,
-                }:
-                    commas += 1
-                    break
-
-        if commas > 1:
-            self.remove_trailing_comma()
+        if not is_one_tuple_between(closing.opening_bracket, closing, self.leaves):
             return True
 
         return False
@@ -2647,7 +2615,7 @@ def transform_line(
             is_line_short_enough(line, line_length=mode.line_length, line_str=line_str)
             or line.contains_unsplittable_type_ignore()
         )
-        and not (line.contains_standalone_comments() and line.inside_brackets)
+        and not (line.inside_brackets and line.contains_standalone_comments())
     ):
         # Only apply basic string preprocessing, since lines shouldn't be split here.
         if mode.experimental_string_processing:
@@ -4772,10 +4740,8 @@ def right_hand_split(
     tail = bracket_split_build_line(tail_leaves, line, opening_bracket)
     bracket_split_succeeded_or_raise(head, body, tail)
     if (
-        # the body shouldn't be exploded
-        not body.should_explode
         # the opening bracket is an optional paren
-        and opening_bracket.type == token.LPAR
+        opening_bracket.type == token.LPAR
         and not opening_bracket.value
         # the closing bracket is an optional paren
         and closing_bracket.type == token.RPAR
@@ -4872,7 +4838,9 @@ def bracket_split_build_line(
                         continue
 
                     if leaves[i].type != token.COMMA:
-                        leaves.insert(i + 1, Leaf(token.COMMA, ","))
+                        new_comma = Leaf(token.COMMA, ",")
+                        new_comma.was_checked = True
+                        leaves.insert(i + 1, new_comma)
                     break
 
     # Populate the line
@@ -4880,8 +4848,8 @@ def bracket_split_build_line(
         result.append(leaf, preformatted=True)
         for comment_after in original.comments_after(leaf):
             result.append(comment_after, preformatted=True)
-    if is_body:
-        result.should_explode = should_explode(result, opening_bracket)
+    if is_body and should_split_body_explode(result, opening_bracket):
+        result.should_explode = True
     return result
 
 
@@ -4966,7 +4934,9 @@ def delimiter_split(line: Line, features: Collection[Feature] = ()) -> Iterator[
             and current_line.leaves[-1].type != token.COMMA
             and current_line.leaves[-1].type != STANDALONE_COMMENT
         ):
-            current_line.append(Leaf(token.COMMA, ","))
+            new_comma = Leaf(token.COMMA, ",")
+            new_comma.was_checked = True
+            current_line.append(new_comma)
         yield current_line
 
 
@@ -5588,24 +5558,60 @@ def ensure_visible(leaf: Leaf) -> None:
         leaf.value = ")"
 
 
-def should_explode(line: Line, opening_bracket: Leaf) -> bool:
+def should_split_body_explode(line: Line, opening_bracket: Leaf) -> bool:
     """Should `line` immediately be split with `delimiter_split()` after RHS?"""
 
-    if not (
-        opening_bracket.parent
-        and opening_bracket.parent.type in {syms.atom, syms.import_from}
-        and opening_bracket.value in "[{("
-    ):
+    if not (opening_bracket.parent and opening_bracket.value in "[{("):
         return False
 
+    # We're essentially checking if the body is delimited by commas and there's more
+    # than one of them (we're excluding the trailing comma and if the delimiter priority
+    # is still commas, that means there's more).
+    exclude = set()
+    pre_existing_trailing_comma = False
     try:
         last_leaf = line.leaves[-1]
-        exclude = {id(last_leaf)} if last_leaf.type == token.COMMA else set()
+        if last_leaf.type == token.COMMA:
+            pre_existing_trailing_comma = not last_leaf.was_checked
+            exclude.add(id(last_leaf))
         max_priority = line.bracket_tracker.max_delimiter_priority(exclude=exclude)
     except (IndexError, ValueError):
         return False
 
-    return max_priority == COMMA_PRIORITY
+    return max_priority == COMMA_PRIORITY and (
+        # always explode imports
+        opening_bracket.parent.type in {syms.atom, syms.import_from}
+        or pre_existing_trailing_comma
+    )
+
+
+def is_one_tuple_between(opening: Leaf, closing: Leaf, leaves: List[Leaf]) -> bool:
+    """Return True if content between `opening` and `closing` looks like a one-tuple."""
+    depth = closing.bracket_depth + 1
+    for _opening_index, leaf in enumerate(leaves):
+        if leaf is opening:
+            break
+
+    else:
+        raise LookupError("Opening paren not found in `leaves`")
+
+    commas = 0
+    _opening_index += 1
+    for leaf in leaves[_opening_index:]:
+        if leaf is closing:
+            break
+
+        bracket_depth = leaf.bracket_depth
+        if bracket_depth == depth and leaf.type == token.COMMA:
+            commas += 1
+            if leaf.parent and leaf.parent.type in {
+                syms.arglist,
+                syms.typedargslist,
+            }:
+                commas += 1
+                break
+
+    return commas < 2
 
 
 def get_features_used(node: Node) -> Set[Feature]:

@@ -127,7 +127,10 @@ DEFAULT_SLICE = slice(None)  # for flake8
 
 
 def download_and_extract_top_packages(
-    directory: Path, days: Days = 365, workers: int = 8, limit: slice = DEFAULT_SLICE,
+    directory: Path,
+    days: Days = 365,
+    workers: int = 8,
+    limit: slice = DEFAULT_SLICE,
 ) -> Generator[Path, None, None]:
     with ThreadPoolExecutor(max_workers=workers) as executor:
         bound_downloader = partial(get_package, version=None, directory=directory)
