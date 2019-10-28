@@ -2966,16 +2966,9 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
 
             if child.type == syms.atom:
                 if maybe_make_parens_invisible_in_atom(child, parent=node):
-                    lpar = Leaf(token.LPAR, "")
-                    rpar = Leaf(token.RPAR, "")
-                    index = child.remove() or 0
-                    node.insert_child(index, Node(syms.atom, [lpar, child, rpar]))
+                    wrap_in_parentheses(node, child, visible=False)
             elif is_one_tuple(child):
-                # wrap child in visible parentheses
-                lpar = Leaf(token.LPAR, "(")
-                rpar = Leaf(token.RPAR, ")")
-                child.remove()
-                node.insert_child(index, Node(syms.atom, [lpar, child, rpar]))
+                wrap_in_parentheses(node, child, visible=True)
             elif node.type == syms.import_from:
                 # "import from" nodes store parentheses directly as part of
                 # the statement
@@ -2990,15 +2983,7 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
                 break
 
             elif not (isinstance(child, Leaf) and is_multiline_string(child)):
-                # wrap child in invisible parentheses
-                lpar = Leaf(token.LPAR, "")
-                rpar = Leaf(token.RPAR, "")
-                index = child.remove() or 0
-                prefix = child.prefix
-                child.prefix = ""
-                new_child = Node(syms.atom, [lpar, child, rpar])
-                new_child.prefix = prefix
-                node.insert_child(index, new_child)
+                wrap_in_parentheses(node, child, visible=False)
 
         check_lpar = isinstance(child, Leaf) and child.value in parens_after
 
@@ -3156,6 +3141,24 @@ def unwrap_singleton_parenthesis(node: LN) -> Optional[LN]:
         return None
 
     return wrapped
+
+
+def wrap_in_parentheses(parent: Node, child: LN, *, visible: bool = True) -> None:
+    """Wrap `child` in parentheses.
+
+    This replaces `child` with an atom holding the parentheses and the old
+    child.  That requires moving the prefix.
+
+    If `visible` is False, the leaves will be valueless (and thus invisible).
+    """
+    lpar = Leaf(token.LPAR, "(" if visible else "")
+    rpar = Leaf(token.RPAR, ")" if visible else "")
+    prefix = child.prefix
+    child.prefix = ""
+    index = child.remove() or 0
+    new_child = Node(syms.atom, [lpar, child, rpar])
+    new_child.prefix = prefix
+    parent.insert_child(index, new_child)
 
 
 def is_one_tuple(node: LN) -> bool:
