@@ -128,7 +128,7 @@ class Driver(object):
         return self.parse_stream_raw(stream, debug)
 
     def parse_file(
-        self, filename: Path, encoding: Optional[Text] = None, debug: bool = False,
+        self, filename: Path, encoding: Optional[Text] = None, debug: bool = False
     ) -> NL:
         """Parse a file and return the syntax tree."""
         with io.open(filename, "r", encoding=encoding) as stream:

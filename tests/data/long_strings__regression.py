@@ -528,17 +528,23 @@ class A:
         xxxxxxxx = [
             xxxxxxxxxxxxxxxx(
                 "xxxx",
-                xxxxxxxxxxx={"xxxx": 1.0,},
+                xxxxxxxxxxx={
+                    "xxxx": 1.0,
+                },
                 xxxxxx={"xxxxxx 1": xxxxxx(xxxx="xxxxxx 1", xxxxxx=600.0)},
                 xxxxxxxx_xxxxxxx=0.0,
             ),
             xxxxxxxxxxxxxxxx(
                 "xxxxxxx",
-                xxxxxxxxxxx={"xxxx": 1.0,},
+                xxxxxxxxxxx={
+                    "xxxx": 1.0,
+                },
                 xxxxxx={"xxxxxx 1": xxxxxx(xxxx="xxxxxx 1", xxxxxx=200.0)},
                 xxxxxxxx_xxxxxxx=0.0,
             ),
-            xxxxxxxxxxxxxxxx("xxxx",),
+            xxxxxxxxxxxxxxxx(
+                "xxxx",
+            ),
         ]
 
 

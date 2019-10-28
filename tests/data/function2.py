@@ -25,7 +25,10 @@ def h():
 
 # output
 
-def f(a, **kwargs,) -> A:
+def f(
+    a,
+    **kwargs,
+) -> A:
     with cache_dir():
         if something:
             result = CliRunner().invoke(

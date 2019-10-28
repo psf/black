@@ -2,18 +2,18 @@ import core, time, a
 
 from . import A, B, C
 
-# unwraps
+# keeps existing trailing comma
 from foo import (
     bar,
 )
 
-# stays wrapped
+# also keeps existing structure
 from foo import (
     baz,
     qux,
 )
 
-# as doesn't get confusing when unwrapped
+# `as` works as well
 from foo import (
     xyzzy as magic,
 )
@@ -77,17 +77,21 @@ import core, time, a
 
 from . import A, B, C
 
-# unwraps
-from foo import bar
+# keeps existing trailing comma
+from foo import (
+    bar,
+)
 
-# stays wrapped
+# also keeps existing structure
 from foo import (
     baz,
     qux,
 )
 
-# as doesn't get confusing when unwrapped
-from foo import xyzzy as magic
+# `as` works as well
+from foo import (
+    xyzzy as magic,
+)
 
 a = {
     1,
@@ -151,11 +155,20 @@ if True:
 
 if True:
     ec2client.get_waiter("instance_stopped").wait(
-        InstanceIds=[instance.id], WaiterConfig={"Delay": 5,}
+        InstanceIds=[instance.id],
+        WaiterConfig={
+            "Delay": 5,
+        },
     )
     ec2client.get_waiter("instance_stopped").wait(
-        InstanceIds=[instance.id], WaiterConfig={"Delay": 5,},
+        InstanceIds=[instance.id],
+        WaiterConfig={
+            "Delay": 5,
+        },
     )
     ec2client.get_waiter("instance_stopped").wait(
-        InstanceIds=[instance.id], WaiterConfig={"Delay": 5,},
+        InstanceIds=[instance.id],
+        WaiterConfig={
+            "Delay": 5,
+        },
     )

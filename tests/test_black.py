@@ -5,13 +5,25 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from dataclasses import replace
 from functools import partial
+import inspect
 from io import BytesIO, TextIOWrapper
 import os
 from pathlib import Path
 import regex as re
 import sys
 from tempfile import TemporaryDirectory
-from typing import Any, BinaryIO, Dict, Generator, List, Tuple, Iterator, TypeVar
+import types
+from typing import (
+    Any,
+    BinaryIO,
+    Callable,
+    Dict,
+    Generator,
+    List,
+    Tuple,
+    Iterator,
+    TypeVar,
+)
 import unittest
 from unittest.mock import patch, MagicMock
 
@@ -153,6 +165,7 @@ class BlackRunner(CliRunner):
 
 class BlackTestCase(unittest.TestCase):
     maxDiff = None
+    _diffThreshold = 2 ** 20
 
     def assertFormatEqual(self, expected: str, actual: str) -> None:
         if actual != expected and not os.environ.get("SKIP_AST_PRINT"):
@@ -171,7 +184,7 @@ class BlackTestCase(unittest.TestCase):
                 list(bdv.visit(exp_node))
             except Exception as ve:
                 black.err(str(ve))
-        self.assertEqual(expected, actual)
+        self.assertMultiLineEqual(expected, actual)
 
     def invokeBlack(
         self, args: List[str], exit_code: int = 0, ignore_config: bool = True
@@ -331,6 +344,16 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, DEFAULT_MODE)
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_function_trailing_comma_wip(self) -> None:
+        source, expected = read_data("function_trailing_comma_wip")
+        # sys.settrace(tracefunc)
+        actual = fs(source)
+        # sys.settrace(None)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_function_trailing_comma(self) -> None:
@@ -2037,6 +2060,31 @@ class BlackDTestCase(AioHTTPTestCase):
     async def test_blackd_response_black_version_header(self) -> None:
         response = await self.client.post("/")
         self.assertIsNotNone(response.headers.get(blackd.BLACK_VERSION_HEADER))
+
+
+with open(black.__file__, "r") as _bf:
+    black_source_lines = _bf.readlines()
+
+
+def tracefunc(frame: types.FrameType, event: str, arg: Any) -> Callable:
+    """Show function calls `from black/__init__.py` as they happen.
+
+    Register this with `sys.settrace()` in a test you're debugging.
+    """
+    if event != "call":
+        return tracefunc
+
+    stack = len(inspect.stack()) - 19
+    filename = frame.f_code.co_filename
+    lineno = frame.f_lineno
+    func_sig_lineno = lineno - 1
+    funcname = black_source_lines[func_sig_lineno].strip()
+    while funcname.startswith("@"):
+        func_sig_lineno += 1
+        funcname = black_source_lines[func_sig_lineno].strip()
+    if "black/__init__.py" in filename:
+        print(f"{' ' * stack}{lineno}:{funcname}")
+    return tracefunc
 
 
 if __name__ == "__main__":

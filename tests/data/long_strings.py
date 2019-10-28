@@ -137,6 +137,20 @@ func_with_bad_comma(
     ), # comment after comma
 )
 
+func_with_bad_parens_that_wont_fit_in_one_line(
+    ("short string that should have parens stripped"),
+    x,
+    y,
+    z
+)
+
+func_with_bad_parens_that_wont_fit_in_one_line(
+    x,
+    y,
+    ("short string that should have parens stripped"),
+    z
+)
+
 func_with_bad_parens(
     ("short string that should have parens stripped"),
     x,
@@ -487,12 +501,26 @@ func_with_bad_comma(
     " which should NOT be there.",  # comment after comma
 )
 
-func_with_bad_parens(
-    "short string that should have parens stripped", x, y, z,
+func_with_bad_parens_that_wont_fit_in_one_line(
+    "short string that should have parens stripped", x, y, z
+)
+
+func_with_bad_parens_that_wont_fit_in_one_line(
+    x, y, "short string that should have parens stripped", z
 )
 
 func_with_bad_parens(
-    x, y, "short string that should have parens stripped", z,
+    "short string that should have parens stripped",
+    x,
+    y,
+    z,
+)
+
+func_with_bad_parens(
+    x,
+    y,
+    "short string that should have parens stripped",
+    z,
 )
 
 annotated_variable: Final = (

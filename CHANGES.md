@@ -4,6 +4,9 @@
 
 #### _Black_
 
+- re-implemented support for explicit trailing commas: now it works consistently within
+  any bracket pair, including nested structures (#1288 and duplicates)
+
 - reindent docstrings when reindenting code around it (#1053)
 
 - show colored diffs (#1266)
