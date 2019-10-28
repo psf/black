@@ -2950,7 +2950,6 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
         if pc.value in FMT_OFF:
             # This `node` has a prefix with `# fmt: off`, don't mess with parens.
             return
-
     check_lpar = False
     for index, child in enumerate(list(node.children)):
         # Add parentheses around long tuple unpacking in assignments.
@@ -2966,15 +2965,7 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
                 continue
 
             if child.type == syms.atom:
-                # Determines if the underlying atom should be surrounded with
-                # invisible params - also makes parens invisible recursively
-                # within the atom and removes repeated invisible parens within
-                # the atom
-                should_surround_with_parens = maybe_make_parens_invisible_in_atom(
-                    child, parent=node
-                )
-
-                if should_surround_with_parens:
+                if maybe_make_parens_invisible_in_atom(child, parent=node):
                     lpar = Leaf(token.LPAR, "")
                     rpar = Leaf(token.RPAR, "")
                     index = child.remove() or 0
