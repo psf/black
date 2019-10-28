@@ -7,9 +7,10 @@ def f(
             result = (
                 CliRunner().invoke(black.main, [str(src1), str(src2), "--diff", "--check"])
             )
+    limited.append(-limited.pop())  # negate top
     return A(
         very_long_argument_name1=very_long_value_for_the_argument,
-        very_long_argument_name2=very_long_value_for_the_argument,
+        very_long_argument_name2=-very.long.value.for_the_argument,
         **kwargs,
     )
 def g():
@@ -30,9 +31,10 @@ def f(a, **kwargs,) -> A:
             result = CliRunner().invoke(
                 black.main, [str(src1), str(src2), "--diff", "--check"]
             )
+    limited.append(-limited.pop())  # negate top
     return A(
         very_long_argument_name1=very_long_value_for_the_argument,
-        very_long_argument_name2=very_long_value_for_the_argument,
+        very_long_argument_name2=-very.long.value.for_the_argument,
         **kwargs,
     )
 

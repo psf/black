@@ -1717,19 +1717,6 @@ class LineGenerator(Visitor[Line]):
                 self.current_line.append(node)
         yield from super().visit_default(node)
 
-    def visit_factor(self, node: Node) -> Iterator[Line]:
-        """Force parentheses between a unary op and a binary power:
-
-        -2 ** 8 -> -(2 ** 8)
-        """
-        child = node.children[1]
-        if child.type == syms.power and len(child.children) == 3:
-            lpar = Leaf(token.LPAR, "(")
-            rpar = Leaf(token.RPAR, ")")
-            index = child.remove() or 0
-            node.insert_child(index, Node(syms.atom, [lpar, child, rpar]))
-        yield from self.visit_default(node)
-
     def visit_INDENT(self, node: Node) -> Iterator[Line]:
         """Increase indentation level, maybe yield a line."""
         # In blib2to3 INDENT never holds comments.
@@ -1828,6 +1815,23 @@ class LineGenerator(Visitor[Line]):
         if not self.current_line.bracket_tracker.any_open_brackets():
             yield from self.line()
         yield from self.visit_default(leaf)
+
+    def visit_factor(self, node: Node) -> Iterator[Line]:
+        """Force parentheses between a unary op and a binary power:
+
+        -2 ** 8 -> -(2 ** 8)
+        """
+        _operator, operand = node.children
+        if (
+            operand.type == syms.power
+            and len(operand.children) == 3
+            and operand.children[1].type == token.DOUBLESTAR
+        ):
+            lpar = Leaf(token.LPAR, "(")
+            rpar = Leaf(token.RPAR, ")")
+            index = operand.remove() or 0
+            node.insert_child(index, Node(syms.atom, [lpar, operand, rpar]))
+        yield from self.visit_default(node)
 
     def __attrs_post_init__(self) -> None:
         """You are in a twisty little maze of passages."""
