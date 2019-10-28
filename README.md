@@ -980,7 +980,16 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Change Log
 
-### unreleased
+### 19.10b0
+
+- added support for PEP 572 assignment expressions (#711)
+
+- added support for PEP 570 positional-only arguments (#943)
+
+- added support for async generators (#593)
+
+- added support for pre-splitting collections by putting an explicit trailing comma
+  inside (#826)
 
 - added `black -c` as a way to format code passed from the command line (#761)
 
@@ -991,17 +1000,28 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 - fixed feature detection for trailing commas in function definitions and call sites
   (#763)
 
-- _Black_ can now format async generators (#593)
-
 - _Black_ no longer crashes on Windows machines with more than 61 cores (#838)
 
 - _Black_ no longer crashes on standalone comments prepended with a backslash (#767)
 
 - _Black_ no longer crashes on `from` ... `import` blocks with comments (#829)
 
+- _Black_ no longer crashes on Python 3.7 on some platform configurations (#494)
+
+- _Black_ no longer fails on comments in from-imports (#671)
+
+- _Black_ no longer fails when the file starts with a backslash (#922)
+
+- _Black_ no longer merges regular comments with type comments (#1027)
+
+- _Black_ no longer splits long lines that contain type comments (#997)
+
 - removed unnecessary parentheses around `yield` expressions (#834)
 
 - added parentheses around long tuples in unpacking assignments (#832)
+
+- added parentheses around complex powers when they are prefixed by a unary operator
+  (#646)
 
 - fixed bug that led _Black_ format some code with a line length target of 1 (#762)
 
@@ -1010,12 +1030,6 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
 - if _Black_ puts parenthesis around a single expression, it moves comments to the
   wrapped expression instead of after the brackets (#872)
-
-- _Black_ is now able to format Python code that uses assignment expressions (`:=` as
-  described in PEP-572) (#935)
-
-- _Black_ is now able to format Python code that uses positional-only arguments (`/` as
-  described in PEP-570) (#946)
 
 - `blackd` now returns the version of _Black_ in the response headers (#1013)
 
