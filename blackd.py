@@ -1,5 +1,6 @@
 import asyncio
 from concurrent.futures import Executor, ProcessPoolExecutor
+from datetime import datetime
 from functools import partial
 import logging
 from multiprocessing import freeze_support
@@ -21,6 +22,7 @@ LINE_LENGTH_HEADER = "X-Line-Length"
 PYTHON_VARIANT_HEADER = "X-Python-Variant"
 SKIP_STRING_NORMALIZATION_HEADER = "X-Skip-String-Normalization"
 FAST_OR_SAFE_HEADER = "X-Fast-Or-Safe"
+DIFF_HEADER = "X-Diff"
 
 BLACK_HEADERS = [
     PROTOCOL_VERSION_HEADER,
@@ -28,6 +30,7 @@ BLACK_HEADERS = [
     PYTHON_VARIANT_HEADER,
     SKIP_STRING_NORMALIZATION_HEADER,
     FAST_OR_SAFE_HEADER,
+    DIFF_HEADER,
 ]
 
 # Response headers
@@ -112,10 +115,25 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
         req_bytes = await request.content.read()
         charset = request.charset if request.charset is not None else "utf8"
         req_str = req_bytes.decode(charset)
+        then = datetime.utcnow()
+
         loop = asyncio.get_event_loop()
         formatted_str = await loop.run_in_executor(
             executor, partial(black.format_file_contents, req_str, fast=fast, mode=mode)
         )
+
+        # Only output the diff in the HTTP response
+        only_diff = bool(request.headers.get(DIFF_HEADER, False))
+        if only_diff:
+            now = datetime.utcnow()
+            src_name = f"In\t{then} +0000"
+            dst_name = f"Out\t{now} +0000"
+            loop = asyncio.get_event_loop()
+            formatted_str = await loop.run_in_executor(
+                executor,
+                partial(black.diff, req_str, formatted_str, src_name, dst_name),
+            )
+
         return web.Response(
             content_type=request.content_type,
             charset=charset,

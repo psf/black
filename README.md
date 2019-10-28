@@ -838,6 +838,9 @@ which if present, should have the value `1`, otherwise the request is rejected w
 
 The headers controlling how code is formatted are:
 
+If any of these headers are set to invalid values, `blackd` returns a `HTTP 400` error
+response, mentioning the name of the problematic header in the message body.
+
 - `X-Line-Length`: corresponds to the `--line-length` command line flag.
 - `X-Skip-String-Normalization`: corresponds to the `--skip-string-normalization`
   command line flag. If present and its value is not the empty string, no string
@@ -849,6 +852,8 @@ The headers controlling how code is formatted are:
   a set of comma-separated Python versions, optionally prefixed with `py`. For example,
   to request code that is compatible with Python 3.5 and 3.6, set the header to
   `py3.5,py3.6`.
+- `X-Diff`: corresponds to the `--diff` command line flag. If present, a diff of the
+  formats will be output.
 
 If any of these headers are set to invalid values, `blackd` returns a `HTTP 400` error
 response, mentioning the name of the problematic header in the message body.
@@ -1033,6 +1038,9 @@ More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
   wrapped expression instead of after the brackets (#872)
 
 - `blackd` now returns the version of _Black_ in the response headers (#1013)
+
+- `blackd` can now output the diff of formats on source code when the `X-Diff` header is
+  provided (#969)
 
 ### 19.3b0
 
