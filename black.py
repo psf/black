@@ -787,7 +787,8 @@ def get_grammars(target_versions: Set[TargetVersion]) -> List[Grammar]:
             # Python 2.7
             pygram.python_grammar,
         ]
-    elif all(version.is_python2() for version in target_versions):
+
+    if all(version.is_python2() for version in target_versions):
         # Python 2-only code, so try Python 2 grammars.
         return [
             # Python 2.7 with future print_function import
@@ -795,21 +796,21 @@ def get_grammars(target_versions: Set[TargetVersion]) -> List[Grammar]:
             # Python 2.7
             pygram.python_grammar,
         ]
-    else:
-        # Python 3-compatible code, so only try Python 3 grammar.
-        grammars = []
-        # If we have to parse both, try to parse async as a keyword first
-        if not supports_feature(target_versions, Feature.ASYNC_IDENTIFIERS):
-            # Python 3.7+
-            grammars.append(
-                pygram.python_grammar_no_print_statement_no_exec_statement_async_keywords  # noqa: B950
-            )
-        if not supports_feature(target_versions, Feature.ASYNC_KEYWORDS):
-            # Python 3.0-3.6
-            grammars.append(pygram.python_grammar_no_print_statement_no_exec_statement)
-        # At least one of the above branches must have been taken, because every Python
-        # version has exactly one of the two 'ASYNC_*' flags
-        return grammars
+
+    # Python 3-compatible code, so only try Python 3 grammar.
+    grammars = []
+    # If we have to parse both, try to parse async as a keyword first
+    if not supports_feature(target_versions, Feature.ASYNC_IDENTIFIERS):
+        # Python 3.7+
+        grammars.append(
+            pygram.python_grammar_no_print_statement_no_exec_statement_async_keywords
+        )
+    if not supports_feature(target_versions, Feature.ASYNC_KEYWORDS):
+        # Python 3.0-3.6
+        grammars.append(pygram.python_grammar_no_print_statement_no_exec_statement)
+    # At least one of the above branches must have been taken, because every Python
+    # version has exactly one of the two 'ASYNC_*' flags
+    return grammars
 
 
 def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -> Node:
