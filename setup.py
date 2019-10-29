@@ -10,9 +10,11 @@ sys.path.insert(0, str(CURRENT_DIR))  # for setuptools.build_meta
 
 
 def get_long_description() -> str:
+    changes_md = CURRENT_DIR / "CHANGES.md"
     readme_md = CURRENT_DIR / "README.md"
-    with open(readme_md, encoding="utf8") as ld_file:
-        return ld_file.read()
+    with readme_md.open("r", encoding="utf8") as rmd_file:
+        with changes_md.open("r", encoding="utf8") as cmd_file:
+            return rmd_file.read() + "\n\n" + cmd_file.read()
 
 
 setup(
