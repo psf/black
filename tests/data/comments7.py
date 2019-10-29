@@ -93,9 +93,7 @@ result = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 
 def func():
-    c = call(
-        0.0123, 0.0456, 0.0789, 0.0123, 0.0789, a[-1],  # type: ignore
-    )
+    c = call(0.0123, 0.0456, 0.0789, 0.0123, 0.0789, a[-1],)  # type: ignore
 
     # The type: ignore exception only applies to line length, not
     # other types of formatting.
