@@ -39,7 +39,7 @@ from typing import (
 )
 
 from appdirs import user_cache_dir
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 import click
 import toml
 from typed_ast import ast3, ast27
@@ -629,7 +629,7 @@ def format_file_in_place(
     `mode` and `fast` options are passed to :func:`format_file_contents`.
     """
     if src.suffix == ".pyi":
-        mode = mode.replace(is_pyi=True)
+        mode = replace(mode, is_pyi=True)
 
     then = datetime.utcfromtimestamp(src.stat().st_mtime)
     with open(src, "rb") as buf:
@@ -1161,9 +1161,8 @@ class Line:
 
     depth: int = 0
     leaves: List[Leaf] = field(default_factory=list)
-    comments: Dict[LeafID, List[Leaf]] = field(
-        default_factory=dict
-    )  # keys ordered like `leaves`
+    # keys ordered like `leaves`
+    comments: Dict[LeafID, List[Leaf]] = field(default_factory=dict)
     bracket_tracker: BracketTracker = field(default_factory=BracketTracker)
     inside_brackets: bool = False
     should_explode: bool = False
