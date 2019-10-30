@@ -600,7 +600,6 @@ class BlackTestCase(unittest.TestCase):
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_python38(self) -> None:
-        source_path = (THIS_DIR / "data" / "python38.py").resolve()
         source, expected = read_data("python38")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
