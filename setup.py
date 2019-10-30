@@ -42,6 +42,7 @@ setup(
         "typed-ast>=1.4.0",
         "regex",
         "pathspec>=0.6, <1",
+        "dataclasses>=0.6; python_version < '3.7'",
     ],
     extras_require={"d": ["aiohttp>=3.3.2", "aiohttp-cors"]},
     test_suite="tests.test_black",
