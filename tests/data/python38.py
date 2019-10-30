@@ -6,6 +6,11 @@ def starred_return():
     return "value1", *my_list
 
 
+def starred_yield():
+    my_list = ["value2", "value3"]
+    yield "value1", *my_list
+
+
 # output
 
 
@@ -15,3 +20,8 @@ def starred_return():
 def starred_return():
     my_list = ["value2", "value3"]
     return "value1", *my_list
+
+
+def starred_yield():
+    my_list = ["value2", "value3"]
+    yield "value1", *my_list
