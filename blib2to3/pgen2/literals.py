@@ -3,9 +3,12 @@
 
 """Safely evaluate Python string literals without using eval()."""
 
-import regex as re
+import re
 
-simple_escapes = {
+from typing import Dict, Match, Text
+
+
+simple_escapes: Dict[Text, Text] = {
     "a": "\a",
     "b": "\b",
     "f": "\f",
@@ -19,7 +22,7 @@ simple_escapes = {
 }
 
 
-def escape(m):
+def escape(m: Match[Text]) -> Text:
     all, tail = m.group(0, 1)
     assert all.startswith("\\")
     esc = simple_escapes.get(tail)
@@ -41,7 +44,7 @@ def escape(m):
     return chr(i)
 
 
-def evalString(s):
+def evalString(s: Text) -> Text:
     assert s.startswith("'") or s.startswith('"'), repr(s[:1])
     q = s[0]
     if s[:3] == q * 3:
@@ -52,7 +55,7 @@ def evalString(s):
     return re.sub(r"\\(\'|\"|\\|[abfnrtv]|x.{0,2}|[0-7]{1,3})", escape, s)
 
 
-def test():
+def test() -> None:
     for i in range(256):
         c = chr(i)
         s = repr(c)

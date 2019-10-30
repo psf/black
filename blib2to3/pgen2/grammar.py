@@ -16,9 +16,16 @@ fallback token code OP, but the parser needs the actual token code.
 import os
 import pickle
 import tempfile
+from typing import Any, Dict, List, Optional, Text, Tuple, TypeVar, Union
 
 # Local imports
 from . import token
+
+_P = TypeVar("_P", bound="Grammar")
+Label = Tuple[int, Optional[Text]]
+DFA = List[List[Tuple[int, int]]]
+DFAS = Tuple[DFA, Dict[int, int]]
+Path = Union[str, "os.PathLike[str]"]
 
 
 class Grammar(object):
@@ -75,38 +82,51 @@ class Grammar(object):
 
     """
 
-    def __init__(self):
-        self.symbol2number = {}
-        self.number2symbol = {}
-        self.states = []
-        self.dfas = {}
-        self.labels = [(0, "EMPTY")]
-        self.keywords = {}
-        self.tokens = {}
-        self.symbol2label = {}
+    def __init__(self) -> None:
+        self.symbol2number: Dict[str, int] = {}
+        self.number2symbol: Dict[int, str] = {}
+        self.states: List[DFA] = []
+        self.dfas: Dict[int, DFAS] = {}
+        self.labels: List[Label] = [(0, "EMPTY")]
+        self.keywords: Dict[str, int] = {}
+        self.tokens: Dict[int, int] = {}
+        self.symbol2label: Dict[str, int] = {}
         self.start = 256
         # Python 3.7+ parses async as a keyword, not an identifier
         self.async_keywords = False
 
-    def dump(self, filename):
+    def dump(self, filename: Path) -> None:
         """Dump the grammar tables to a pickle file."""
+
+        # mypyc generates objects that don't have a __dict__, but they
+        # do have __getstate__ methods that will return an equivalent
+        # dictionary
+        if hasattr(self, "__dict__"):
+            d = self.__dict__
+        else:
+            d = self.__getstate__()  # type: ignore
+
         with tempfile.NamedTemporaryFile(
             dir=os.path.dirname(filename), delete=False
         ) as f:
-            pickle.dump(self.__dict__, f, pickle.HIGHEST_PROTOCOL)
+            pickle.dump(d, f, pickle.HIGHEST_PROTOCOL)
         os.replace(f.name, filename)
 
-    def load(self, filename):
+    def _update(self, attrs: Dict[str, Any]) -> None:
+        for k, v in attrs.items():
+            setattr(self, k, v)
+
+    def load(self, filename: Path) -> None:
         """Load the grammar tables from a pickle file."""
         with open(filename, "rb") as f:
             d = pickle.load(f)
-        self.__dict__.update(d)
+        self._update(d)
 
-    def loads(self, pkl):
+    def loads(self, pkl: bytes) -> None:
         """Load the grammar tables from a pickle bytes object."""
-        self.__dict__.update(pickle.loads(pkl))
+        self._update(pickle.loads(pkl))
 
-    def copy(self):
+    def copy(self: _P) -> _P:
         """
         Copy the grammar.
         """
@@ -126,7 +146,7 @@ class Grammar(object):
         new.async_keywords = self.async_keywords
         return new
 
-    def report(self):
+    def report(self) -> None:
         """Dump the grammar tables to standard output, for debugging."""
         from pprint import pprint
 
