@@ -2,8 +2,8 @@
 
 
 def starred_return():
-    my_list = ["test", "test2"]
-    return "asd", *my_list
+    my_list = ["value2", "value3"]
+    return "value1", *my_list
 
 
 # output
@@ -13,5 +13,5 @@ def starred_return():
 
 
 def starred_return():
-    my_list = ["test", "test2"]
-    return "asd", *my_list
+    my_list = ["value2", "value3"]
+    return "value1", *my_list
