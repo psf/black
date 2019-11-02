@@ -2445,8 +2445,11 @@ def split_line(
             # See #762 and #781 for the full story.
             yield from right_hand_split(line, line_length=1, features=features)
 
+        def str_split(line: Line, features: Collection[Feature]) -> Iterator[Line]:
+            yield from string_split(line, line_length, features)
+
         if line.inside_brackets:
-            split_funcs = [delimiter_split, standalone_comment_split, rhs]
+            split_funcs = [delimiter_split, standalone_comment_split, str_split, rhs]
         else:
             split_funcs = [rhs]
     for split_func in split_funcs:
@@ -2473,6 +2476,45 @@ def split_line(
 
     else:
         yield line
+
+
+def string_split(
+    line: Line, line_length: int, features: Collection[Feature] = ()
+) -> Iterator[Line]:
+    """Split long strings."""
+    leave_types = [t for t in [leaf.type for leaf in line.leaves]]
+    if (
+        len(leave_types) != 2
+        or leave_types[0] != token.STRING
+        or leave_types[1] != token.COMMA
+    ):
+        raise CannotSplit("String split only works on strings.")
+
+    rest = line
+    while True:
+        if is_line_short_enough(rest, line_length=line_length):
+            rest.append(Leaf(token.COMMA, ","))
+            yield rest
+            break
+
+        rest_value = rest.leaves[0].value
+        if rest_value[0] == "f":
+            raise CannotSplit("This split function cannot handle f-strings yet.")
+
+        idx = line_length - 2 - (line.depth * 4)
+        while rest_value[idx] != " ":
+            idx -= 1
+
+        result = Line(depth=line.depth)
+        result_value = '"' + rest_value[:idx].strip('"') + '"'
+
+        result.append(Leaf(token.STRING, result_value))
+
+        rest = Line(depth=line.depth)
+        new_result_value = '"' + rest_value[idx:].strip('"') + '"'
+        rest.append(Leaf(token.STRING, new_result_value))
+
+        yield result
 
 
 def left_hand_split(line: Line, features: Collection[Feature] = ()) -> Iterator[Line]:
