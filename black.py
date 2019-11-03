@@ -2479,10 +2479,10 @@ def split_line(
 
 
 def string_split(
-    line: Line, line_length: int, features: Collection[Feature] = ()
+    line: Line, line_length: int, _features: Collection[Feature] = ()
 ) -> Iterator[Line]:
     """Split long strings."""
-    leave_types = [t for t in [leaf.type for leaf in line.leaves]]
+    leave_types = [leaf.type for leaf in line.leaves]
     if (
         len(leave_types) != 2
         or leave_types[0] != token.STRING
@@ -2490,22 +2490,21 @@ def string_split(
     ):
         raise CannotSplit("This split function only works on strings.")
 
+    if is_line_short_enough(line, line_length=line_length):
+        raise CannotSplit("Line is already short enough. No reason to split.")
+
+    if line.leaves[0].value[0] == "f":
+        raise CannotSplit("This split function cannot handle f-strings yet.")
+
+    if re.search('^[a-z]?"""', line.leaves[0].value):
+        raise CannotSplit("This split function does not work on multiline strings.")
+
     rest = line
-    while True:
-        if is_line_short_enough(rest, line_length=line_length):
-            rest.append(Leaf(token.COMMA, ","))
-            yield rest
-            break
-
+    while not is_line_short_enough(rest, line_length=line_length):
         rest_value = rest.leaves[0].value
-        if rest_value[0] == "f":
-            raise CannotSplit("This split function cannot handle f-strings yet.")
-
-        if re.search('^[a-z]?"""', rest_value):
-            raise CannotSplit("This split function does not work on multiline strings.")
 
         idx = line_length - 2 - (line.depth * 4)
-        while rest_value[idx] != " ":
+        while 0 <= idx < len(rest_value) and rest_value[idx] != " ":
             idx -= 1
 
         result = Line(depth=line.depth)
@@ -2518,6 +2517,9 @@ def string_split(
         rest.append(Leaf(token.STRING, new_result_value))
 
         yield result
+
+    rest.append(Leaf(token.COMMA, ","))
+    yield rest
 
 
 def left_hand_split(line: Line, features: Collection[Feature] = ()) -> Iterator[Line]:
