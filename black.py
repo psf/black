@@ -2488,7 +2488,7 @@ def string_split(
         or leave_types[0] != token.STRING
         or leave_types[1] != token.COMMA
     ):
-        raise CannotSplit("String split only works on strings.")
+        raise CannotSplit("This split function only works on strings.")
 
     rest = line
     while True:
@@ -2500,6 +2500,9 @@ def string_split(
         rest_value = rest.leaves[0].value
         if rest_value[0] == "f":
             raise CannotSplit("This split function cannot handle f-strings yet.")
+
+        if re.search('^[a-z]?"""', rest_value):
+            raise CannotSplit("This split function does not work on multiline strings.")
 
         idx = line_length - 2 - (line.depth * 4)
         while rest_value[idx] != " ":
