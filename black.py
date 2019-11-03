@@ -2449,9 +2449,14 @@ def split_line(
             yield from string_split(line, line_length, features)
 
         if line.inside_brackets:
-            split_funcs = [delimiter_split, standalone_comment_split, str_split, rhs]
+            split_funcs = [
+                delimiter_split,
+                standalone_comment_split,
+                str_split,
+                rhs,
+            ]
         else:
-            split_funcs = [rhs]
+            split_funcs = [str_split, rhs]
     for split_func in split_funcs:
         # We are accumulating lines in `result` because we might want to abort
         # mission and return the original line in the end, or attempt a different
@@ -2479,47 +2484,93 @@ def split_line(
 
 
 def string_split(
-    line: Line, line_length: int, _features: Collection[Feature] = ()
+    line: Line, line_length: int, features: Collection[Feature] = ()
 ) -> Iterator[Line]:
     """Split long strings."""
-    leave_types = [leaf.type for leaf in line.leaves]
-    if (
-        len(leave_types) != 2
-        or leave_types[0] != token.STRING
-        or leave_types[1] != token.COMMA
-    ):
-        raise CannotSplit("This split function only works on strings.")
-
     if is_line_short_enough(line, line_length=line_length):
         raise CannotSplit("Line is already short enough. No reason to split.")
 
-    if line.leaves[0].value[0] == "f":
-        raise CannotSplit("This split function cannot handle f-strings yet.")
+    def validate_string(str_idx: int) -> None:
+        if line.leaves[str_idx].value[0] == "f":
+            raise CannotSplit("This split function cannot handle f-strings yet.")
 
-    if re.search('^[a-z]?"""', line.leaves[0].value):
-        raise CannotSplit("This split function does not work on multiline strings.")
+        if line.leaves[str_idx].value[0] == "r":
+            raise CannotSplit("This split function cannot handle raw strings yet.")
 
-    rest = line
-    while not is_line_short_enough(rest, line_length=line_length):
-        rest_value = rest.leaves[0].value
+        if re.search("^[a-z]?[\"']{3}", line.leaves[str_idx].value):
+            raise CannotSplit("This split function does not work on multiline strings.")
 
-        idx = line_length - 2 - (line.depth * 4)
-        while 0 <= idx < len(rest_value) and rest_value[idx] != " ":
+    tokens = tuple([leaf.type for leaf in line.leaves])
+    if tokens == (token.STRING, token.COMMA) or tokens == (token.STRING,):
+        validate_string(0)
+        yield from string_arg_split(line, line_length)
+    elif tokens == (token.NAME, token.EQUAL, token.LPAR, token.STRING, token.RPAR):
+        validate_string(3)
+        yield from string_assign_split(line, line_length)
+    else:
+        raise CannotSplit("This split function only works on strings.")
+
+
+def string_arg_split(line: Line, line_length: int) -> Iterator[Line]:
+    QUOTE = line.leaves[0].value[0]
+
+    rest_line = Line(depth=line.depth)
+    rest = line.leaves[0].value.replace("\\\n", "")
+    rest_line.append(Leaf(token.STRING, rest))
+    while not is_line_short_enough(rest_line, line_length=line_length - 1):
+        max_line_length = line_length - 1 - (line.depth * 4)
+
+        idx = max_line_length
+        while 0 < idx < len(rest) and rest[idx] != " ":
             idx -= 1
 
-        result = Line(depth=line.depth)
-        result_value = '"' + rest_value[:idx].strip('"') + '"'
+        if idx == 0:
+            idx = max_line_length
 
-        result.append(Leaf(token.STRING, result_value))
+        next_line = Line(depth=line.depth)
+        next_value = rest[:idx] + QUOTE
+        next_line.append(Leaf(token.STRING, next_value))
+        yield next_line
 
-        rest = Line(depth=line.depth)
-        new_result_value = '"' + rest_value[idx:].strip('"') + '"'
-        rest.append(Leaf(token.STRING, new_result_value))
+        rest = QUOTE + rest[idx:]
+        rest_line = Line(depth=line.depth)
+        rest_line.append(Leaf(token.STRING, rest))
 
-        yield result
+    if len(line.leaves) > 1 and line.leaves[1].type == token.COMMA:
+        rest_line.append(Leaf(token.COMMA, ","))
+    yield rest_line
 
-    rest.append(Leaf(token.COMMA, ","))
-    yield rest
+
+def string_assign_split(line: Line, line_length: int) -> Iterator[Line]:
+    first_leaves = [
+        Leaf(token.NAME, line.leaves[0].value),
+        Leaf(token.EQUAL, line.leaves[1].value),
+        Leaf(token.LPAR, "("),
+    ]
+
+    parent = Node(syms.expr_stmt, first_leaves)
+
+    first_line = Line(depth=line.depth)
+    for leaf in first_leaves:
+        first_line.append(leaf)
+
+    yield first_line
+
+    bracket_tracker = first_line.bracket_tracker
+
+    next_line = Line(depth=line.depth + 1, bracket_tracker=bracket_tracker)
+    next_leaf = Leaf(token.STRING, line.leaves[3].value)
+    parent.append_child(next_leaf)
+    next_line.append(next_leaf)
+    yield next_line
+
+    last_line = Line(
+        depth=line.depth, bracket_tracker=bracket_tracker, comments=line.comments
+    )
+    last_leaf = Leaf(token.RPAR, ")")
+    parent.append_child(last_leaf)
+    last_line.append(last_leaf)
+    yield last_line
 
 
 def left_hand_split(line: Line, features: Collection[Feature] = ()) -> Iterator[Line]:

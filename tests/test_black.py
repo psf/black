@@ -386,7 +386,7 @@ class BlackTestCase(unittest.TestCase):
         black.assert_stable(source, actual, black.FileMode())
         mode = black.FileMode(string_normalization=False)
         not_normalized = fs(source, mode=mode)
-        self.assertFormatEqual(source, not_normalized)
+        self.assertFormatEqual(source.replace("\\\n", ""), not_normalized)
         black.assert_equivalent(source, not_normalized)
         black.assert_stable(source, not_normalized, mode=mode)
 
