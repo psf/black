@@ -2501,17 +2501,17 @@ def string_split(
             raise CannotSplit("This split function does not work on multiline strings.")
 
     tokens = tuple([leaf.type for leaf in line.leaves])
-    if tokens == (token.STRING, token.COMMA) or tokens == (token.STRING,):
+    if tokens in [(token.STRING, token.COMMA), (token.STRING,)]:
         validate_string(0)
-        yield from string_arg_split(line, line_length)
+        yield from string_atomic_split(line, line_length)
     elif tokens == (token.NAME, token.EQUAL, token.LPAR, token.STRING, token.RPAR):
         validate_string(3)
-        yield from string_assign_split(line, line_length)
+        yield from string_assign_split(line)
     else:
         raise CannotSplit("This split function only works on strings.")
 
 
-def string_arg_split(line: Line, line_length: int) -> Iterator[Line]:
+def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
     QUOTE = line.leaves[0].value[0]
 
     rest_line = Line(depth=line.depth)
@@ -2533,7 +2533,7 @@ def string_arg_split(line: Line, line_length: int) -> Iterator[Line]:
         yield next_line
 
         rest = QUOTE + rest[idx:]
-        rest_line = Line(depth=line.depth)
+        rest_line = Line(depth=line.depth, comments=line.comments)
         rest_line.append(Leaf(token.STRING, rest))
 
     if len(line.leaves) > 1 and line.leaves[1].type == token.COMMA:
@@ -2541,14 +2541,16 @@ def string_arg_split(line: Line, line_length: int) -> Iterator[Line]:
     yield rest_line
 
 
-def string_assign_split(line: Line, line_length: int) -> Iterator[Line]:
+def string_assign_split(line: Line) -> Iterator[Line]:
     first_leaves = [
         Leaf(token.NAME, line.leaves[0].value),
         Leaf(token.EQUAL, line.leaves[1].value),
         Leaf(token.LPAR, "("),
     ]
 
-    parent = Node(syms.expr_stmt, first_leaves)
+    parent = Node(syms.expr_stmt, [])
+    for leaf in first_leaves:
+        parent.append_child(leaf)
 
     first_line = Line(depth=line.depth)
     for leaf in first_leaves:
