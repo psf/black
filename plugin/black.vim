@@ -36,7 +36,7 @@ endif
 if !exists("g:black_linelength")
   let g:black_linelength = 88
 endif
-if !exists("g:black_skip_string_normalization")
+if !exists("g:black_skip-string-normalization")
   let g:black_skip_string_normalization = 0
 endif
 
