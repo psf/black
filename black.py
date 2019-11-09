@@ -2449,12 +2449,7 @@ def split_line(
             yield from string_split(line, line_length, features)
 
         if line.inside_brackets:
-            split_funcs = [
-                delimiter_split,
-                standalone_comment_split,
-                str_split,
-                rhs,
-            ]
+            split_funcs = [delimiter_split, standalone_comment_split, str_split, rhs]
         else:
             split_funcs = [str_split, rhs]
     for split_func in split_funcs:
@@ -2504,28 +2499,47 @@ def string_split(
     if tokens in [(token.STRING, token.COMMA), (token.STRING,)]:
         validate_string(0)
         yield from string_atomic_split(line, line_length)
-    elif tokens == (token.NAME, token.EQUAL, token.LPAR, token.STRING, token.RPAR):
-        validate_string(3)
-        yield from string_assign_split(line)
+    elif tokens in [
+        (token.NAME, token.EQUAL, token.LPAR, token.STRING, token.RPAR),
+        (token.NAME, token.EQUAL, token.STRING, token.COMMA),
+    ]:
+        if tokens[2] == token.STRING:
+            string_idx = 2
+        else:
+            string_idx = 3
+
+        validate_string(string_idx)
+        yield from string_assignment_split(line, string_idx)
     else:
-        raise CannotSplit("This split function only works on strings.")
+        raise CannotSplit(
+            "This split function currently only supports lines of the"
+            " form:\n\t{}".format(
+                "\n\t".join(["STRING [COMMA]", "NAME EQUAL [LPAR] STRING [RPAR]"])
+            )
+        )
 
 
 def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
     QUOTE = line.leaves[0].value[0]
 
-    rest_line = Line(depth=line.depth)
     rest = line.leaves[0].value.replace("\\\n", "")
+    rest_line = Line(depth=line.depth)
     rest_line.append(Leaf(token.STRING, rest))
-    while not is_line_short_enough(rest_line, line_length=line_length - 1):
-        max_line_length = line_length - 1 - (line.depth * 4)
 
-        idx = max_line_length
+    ends_with_comma = False
+    if len(line.leaves) > 1 and line.leaves[1].type == token.COMMA:
+        ends_with_comma = True
+
+    max_rest_length = line_length - 1 if ends_with_comma else line_length
+    while not is_line_short_enough(rest_line, line_length=max_rest_length):
+        max_next_length = line_length - 1 - (line.depth * 4)
+
+        idx = max_next_length
         while 0 < idx < len(rest) and rest[idx] != " ":
             idx -= 1
 
         if idx == 0:
-            idx = max_line_length
+            idx = max_next_length
 
         next_line = Line(depth=line.depth)
         next_value = rest[:idx] + QUOTE
@@ -2533,45 +2547,61 @@ def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
         yield next_line
 
         rest = QUOTE + rest[idx:]
-        rest_line = Line(depth=line.depth, comments=line.comments)
+        rest_line = Line(depth=line.depth)
         rest_line.append(Leaf(token.STRING, rest))
 
-    if len(line.leaves) > 1 and line.leaves[1].type == token.COMMA:
+    rest_line.comments = line.comments
+    if ends_with_comma:
         rest_line.append(Leaf(token.COMMA, ","))
+
     yield rest_line
 
 
-def string_assign_split(line: Line) -> Iterator[Line]:
+def string_assignment_split(line: Line, string_idx: int) -> Iterator[Line]:
     first_leaves = [
         Leaf(token.NAME, line.leaves[0].value),
         Leaf(token.EQUAL, line.leaves[1].value),
         Leaf(token.LPAR, "("),
     ]
 
+    comma_idx = len(line.leaves) - 1
+    ends_with_comma = False
+    if line.leaves[comma_idx].type == token.COMMA:
+        ends_with_comma = True
+
     parent = Node(syms.expr_stmt, [])
-    for leaf in first_leaves:
+
+    def append_child(leaf: Leaf) -> None:
         parent.append_child(leaf)
 
     first_line = Line(depth=line.depth)
     for leaf in first_leaves:
+        append_child(leaf)
         first_line.append(leaf)
 
     yield first_line
 
     bracket_tracker = first_line.bracket_tracker
 
-    next_line = Line(depth=line.depth + 1, bracket_tracker=bracket_tracker)
-    next_leaf = Leaf(token.STRING, line.leaves[3].value)
-    parent.append_child(next_leaf)
-    next_line.append(next_leaf)
-    yield next_line
+    # Only need to yield one (possibly too long) line, since
+    # `string_atomic_split` will break it down further if necessary.
+    string_line = Line(depth=line.depth + 1, bracket_tracker=bracket_tracker)
+    string_leaf = Leaf(token.STRING, line.leaves[string_idx].value)
+    append_child(string_leaf)
+    string_line.append(string_leaf)
+    yield string_line
 
     last_line = Line(
         depth=line.depth, bracket_tracker=bracket_tracker, comments=line.comments
     )
     last_leaf = Leaf(token.RPAR, ")")
-    parent.append_child(last_leaf)
+    append_child(last_leaf)
     last_line.append(last_leaf)
+
+    if ends_with_comma:
+        comma_leaf = Leaf(token.COMMA, ",")
+        last_line.append(comma_leaf)
+
     yield last_line
 
 
