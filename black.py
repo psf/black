@@ -2505,8 +2505,13 @@ def string_split(
     ]:
         if tokens[2] == token.STRING:
             string_idx = 2
-        else:
+        elif tokens[3] == token.STRING:
             string_idx = 3
+        else:
+            raise RuntimeError(
+                "There must be a logic error in this conditional statement since this "
+                "exception should not be possible."
+            )
 
         validate_string(string_idx)
         yield from string_assignment_split(line, string_idx)
@@ -2514,12 +2519,19 @@ def string_split(
         raise CannotSplit(
             "This split function currently only supports lines of the"
             " form:\n\t{}".format(
-                "\n\t".join(["STRING [COMMA]", "NAME EQUAL [LPAR] STRING [RPAR]"])
+                "\n\t".join(
+                    ["STRING [COMMA]", "NAME EQUAL [LPAR] STRING [RPAR] [COMMA]"]
+                )
             )
         )
 
 
 def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
+    """Splits long strings that are on their own line already.
+
+    In other words, splits long lines of the form:
+        STRING [COMMA]
+    """
     QUOTE = line.leaves[0].value[0]
 
     rest = line.leaves[0].value.replace("\\\n", "")
@@ -2560,6 +2572,14 @@ def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
 
 
 def string_assignment_split(line: Line, string_idx: int) -> Iterator[Line]:
+    """
+    Splits long lines in which a variable is being assigned the value of a long constant
+    string or lines in which a function's keyword argument is being assigned the value
+    of a long constant string.
+
+    In other words, splits long lines of the form:
+        NAME EQUAL [LPAR] STRING [RPAR] [COMMA]
+    """
     first_leaves = [
         Leaf(token.NAME, line.leaves[0].value),
         Leaf(token.EQUAL, line.leaves[1].value),
@@ -2574,12 +2594,9 @@ def string_assignment_split(line: Line, string_idx: int) -> Iterator[Line]:
     else:
         parent = Node(syms.expr_stmt, [])
 
-    def append_child(leaf: Leaf) -> None:
-        parent.append_child(leaf)
-
     first_line = Line(depth=line.depth)
     for leaf in first_leaves:
-        append_child(leaf)
+        parent.append_child(leaf)
         first_line.append(leaf)
 
     yield first_line
@@ -2590,7 +2607,7 @@ def string_assignment_split(line: Line, string_idx: int) -> Iterator[Line]:
     # `string_atomic_split` will break it down further if necessary.
     string_line = Line(depth=line.depth + 1, bracket_tracker=bracket_tracker)
     string_leaf = Leaf(token.STRING, line.leaves[string_idx].value)
-    append_child(string_leaf)
+    parent.append_child(string_leaf)
     string_line.append(string_leaf)
     yield string_line
 
@@ -2598,7 +2615,7 @@ def string_assignment_split(line: Line, string_idx: int) -> Iterator[Line]:
         depth=line.depth, bracket_tracker=bracket_tracker, comments=line.comments
     )
     last_leaf = Leaf(token.RPAR, ")")
-    append_child(last_leaf)
+    parent.append_child(last_leaf)
     last_line.append(last_leaf)
 
     if ends_with_comma:
