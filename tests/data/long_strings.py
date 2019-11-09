@@ -31,9 +31,9 @@ fstring = f"f-strings definitely make things more {difficult} than they need to 
 # output
 
 x = (
-    "This is a really long string that can't possibly be expected to fit all together"
-    " on one line. In fact it may even take up three or more lines... like four or"
-    " five... but probably just three."
+    "This is a really long string that can't possibly be expected to fit all together "
+    "on one line. In fact it may even take up three or more lines... like four or "
+    "five... but probably just three."
 )
 
 print(
