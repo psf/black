@@ -2509,8 +2509,8 @@ def string_split(
             string_idx = 3
         else:
             raise RuntimeError(
-                "There must be a logic error in this conditional statement since this "
-                "exception should not be possible."
+                "There must be a logic error in the above conditional statement since "
+                "this exception should not be possible."
             )
 
         validate_string(string_idx)
@@ -2542,6 +2542,15 @@ def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
     if len(line.leaves) > 1 and line.leaves[1].type == token.COMMA:
         ends_with_comma = True
 
+        first_leaf = Leaf(token.LPAR, "(")
+        first_line = Line(depth=line.depth)
+        first_line.append(first_leaf)
+        yield first_line
+
+        string_depth = line.depth + 1
+    else:
+        string_depth = line.depth
+
     max_rest_length = line_length - 1 if ends_with_comma else line_length
     while not is_line_short_enough(rest_line, line_length=max_rest_length):
         max_next_length = line_length - 1 - (line.depth * 4)
@@ -2555,20 +2564,23 @@ def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
         else:
             idx = max_next_length
 
-        next_line = Line(depth=line.depth)
+        next_line = Line(depth=string_depth)
         next_value = rest[:idx] + QUOTE
         next_line.append(Leaf(token.STRING, next_value))
         yield next_line
 
         rest = QUOTE + rest[idx:]
-        rest_line = Line(depth=line.depth)
+        rest_line = Line(depth=string_depth)
         rest_line.append(Leaf(token.STRING, rest))
 
     rest_line.comments = line.comments
-    if ends_with_comma:
-        rest_line.append(Leaf(token.COMMA, ","))
-
     yield rest_line
+
+    if ends_with_comma:
+        last_line = Line(depth=line.depth, bracket_tracker=first_line.bracket_tracker)
+        last_line.append(Leaf(token.RPAR, ")"))
+        last_line.append(Leaf(token.COMMA, ","))
+        yield last_line
 
 
 def string_assignment_split(line: Line, string_idx: int) -> Iterator[Line]:
