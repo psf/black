@@ -2570,8 +2570,9 @@ def string_assignment_split(line: Line, string_idx: int) -> Iterator[Line]:
     ends_with_comma = False
     if line.leaves[comma_idx].type == token.COMMA:
         ends_with_comma = True
-
-    parent = Node(syms.expr_stmt, [])
+        parent = Node(syms.argument, [])
+    else:
+        parent = Node(syms.expr_stmt, [])
 
     def append_child(leaf: Leaf) -> None:
         parent.append_child(leaf)
