@@ -2538,7 +2538,9 @@ def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
         while 0 < idx < len(rest) and rest[idx] != " ":
             idx -= 1
 
-        if idx == 0:
+        if rest[idx] == " ":
+            idx += 1
+        else:
             idx = max_next_length
 
         next_line = Line(depth=line.depth)
