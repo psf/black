@@ -310,7 +310,7 @@ def target_version_option_callback(
     is_flag=True,
     help=(
         "Don't write the files back, just return the status.  Return code 0 means "
-        "nothing would change.  Return code 1 means some files would be reformatted.  "
+        "nothing would change.  Return code 1 means some files would be reformatted. "
         "Return code 123 means there was an internal error."
     ),
 )
@@ -2491,7 +2491,7 @@ def string_split(
             raise CannotSplit("This split function does not work on multiline strings.")
 
         if line.comments and re.match(
-            "^# [A-Za-z_0-9]+: .*$", list(line.comments.values())[0][0].value
+            "^# ([A-Za-z_0-9]+: .*|noqa)$", list(line.comments.values())[0][0].value
         ):
             raise CannotSplit(
                 "Line appears to end with an inline pragma comment. Splitting the line "
