@@ -287,16 +287,16 @@ def target_version_option_callback(
     help=(
         "Allow using Python 3.6-only syntax on all input files.  This will put "
         "trailing commas in function signatures and calls also after *args and "
-        "**kwargs. Deprecated; use --target-version instead. "
-        "[default: per-file auto-detection]"
+        "**kwargs. Deprecated; use --target-version instead. [default: per-file "
+        "auto-detection]"
     ),
 )
 @click.option(
     "--pyi",
     is_flag=True,
     help=(
-        "Format all input files like typing stubs regardless of file extension "
-        "(useful when piping source on standard input)."
+        "Format all input files like typing stubs regardless of file extension (useful "
+        "when piping source on standard input)."
     ),
 )
 @click.option(
@@ -309,9 +309,9 @@ def target_version_option_callback(
     "--check",
     is_flag=True,
     help=(
-        "Don't write the files back, just return the status.  Return code 0 "
-        "means nothing would change.  Return code 1 means some files would be "
-        "reformatted.  Return code 123 means there was an internal error."
+        "Don't write the files back, just return the status.  Return code 0 means "
+        "nothing would change.  Return code 1 means some files would be reformatted.  "
+        "Return code 123 means there was an internal error."
     ),
 )
 @click.option(
@@ -330,10 +330,9 @@ def target_version_option_callback(
     default=DEFAULT_INCLUDES,
     help=(
         "A regular expression that matches files and directories that should be "
-        "included on recursive searches.  An empty value means all files are "
-        "included regardless of the name.  Use forward slashes for directories on "
-        "all platforms (Windows, too).  Exclusions are calculated first, inclusions "
-        "later."
+        "included on recursive searches.  An empty value means all files are included "
+        "regardless of the name.  Use forward slashes for directories on all platforms "
+        "(Windows, too).  Exclusions are calculated first, inclusions later."
     ),
     show_default=True,
 )
@@ -354,8 +353,8 @@ def target_version_option_callback(
     "--quiet",
     is_flag=True,
     help=(
-        "Don't emit non-error messages to stderr. Errors are still emitted; "
-        "silence those with 2>/dev/null."
+        "Don't emit non-error messages to stderr. Errors are still emitted; silence "
+        "those with 2>/dev/null."
     ),
 )
 @click.option(
@@ -2482,157 +2481,270 @@ def string_split(
     line: Line, line_length: int, features: Collection[Feature] = ()
 ) -> Iterator[Line]:
     """Split long strings."""
-    if is_line_short_enough(line, line_length=line_length):
-        raise CannotSplit("Line is already short enough. No reason to split.")
+    tokens = tuple([leaf.type for leaf in line.leaves])
 
     def validate_string(str_idx: int) -> None:
-        if line.leaves[str_idx].value[0] == "f":
-            raise CannotSplit("This split function cannot handle f-strings yet.")
-
-        if line.leaves[str_idx].value[0] == "r":
-            raise CannotSplit("This split function cannot handle raw strings yet.")
+        if is_line_short_enough(line, line_length=line_length):
+            raise CannotSplit("Line is already short enough. No reason to split.")
 
         if re.search("^[a-z]?[\"']{3}", line.leaves[str_idx].value):
             raise CannotSplit("This split function does not work on multiline strings.")
 
-    tokens = tuple([leaf.type for leaf in line.leaves])
-    if tokens in [(token.STRING, token.COMMA), (token.STRING,)]:
-        validate_string(0)
-        yield from string_atomic_split(line, line_length)
-    elif tokens in [
-        (token.NAME, token.EQUAL, token.LPAR, token.STRING, token.RPAR),
-        (token.NAME, token.EQUAL, token.STRING, token.COMMA),
-    ]:
-        if tokens[2] == token.STRING:
-            string_idx = 2
-        elif tokens[3] == token.STRING:
-            string_idx = 3
-        else:
-            raise RuntimeError(
-                "There must be a logic error in the above conditional statement since "
-                "this exception should not be possible."
+        if line.comments and re.match(
+            "^# [A-Za-z_0-9]+: .*$", list(line.comments.values())[0][0].value
+        ):
+            raise CannotSplit(
+                "Line appears to end with an inline pragma comment. Splitting the line "
+                "could modify the pragma's behavior."
             )
 
-        validate_string(string_idx)
-        yield from string_assignment_split(line, string_idx)
+    if tokens[:2] in [
+        (token.STRING,),
+        (token.STRING, token.COMMA),
+        (token.STRING, token.DOT),
+        (token.STRING, token.PERCENT),
+    ]:
+        validate_string(0)
+        yield from string_atomic_split(line, line_length)
+    elif (tokens[:2] == (token.NAME, token.EQUAL) or tokens[1] == token.COLON) and (
+        tokens[2] == token.STRING or tokens[2:4] == (token.LPAR, token.STRING)
+    ):
+        str_idx = tokens[1:].index(token.STRING)
+        assert str_idx is not None, "String assignment line contains no string?"
+        validate_string(str_idx + 1)
+        yield from string_assignment_split(line, line_length)
     else:
         raise CannotSplit(
-            "This split function currently only supports lines of the"
-            " form:\n\t{}".format(
-                "\n\t".join(
-                    ["STRING [COMMA]", "NAME EQUAL [LPAR] STRING [RPAR] [COMMA]"]
-                )
-            )
+            f"Unable to match this line's tokens with a valid split function: {tokens}"
         )
 
 
 def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
-    """Splits long strings that are on their own line already.
+    """Splits long strings that are on their own line already."""
+    parent = line.leaves[0].parent
+    child_idx = None
+    if parent:
+        child_idx = line.leaves[0].remove()
+        if child_idx is None:
+            raise RuntimeError(
+                f"Something is wrong here. If {parent} is the parent of "
+                f"{line.leaves[0]}, then how is {line.leaves[0]} not a child of "
+                f"{parent}."
+            )
 
-    In other words, splits long lines of the form:
-        STRING [COMMA]
-    """
-    QUOTE = line.leaves[0].value[0]
+    def insert_child(child: LN) -> None:
+        nonlocal child_idx
+        if parent and child_idx is not None:
+            parent.insert_child(child_idx, child)
+            child_idx += 1
 
-    rest = line.leaves[0].value.replace("\\\n", "")
-    rest_line = Line(depth=line.depth)
-    rest_line.append(Leaf(token.STRING, rest))
-
+    comma_idx = len(line.leaves) - 1
     ends_with_comma = False
-    if len(line.leaves) > 1 and line.leaves[1].type == token.COMMA:
+    if line.leaves[comma_idx].type == token.COMMA:
         ends_with_comma = True
 
         first_leaf = Leaf(token.LPAR, "(")
+        insert_child(first_leaf)
+
         first_line = Line(depth=line.depth)
         first_line.append(first_leaf)
+        first_line.comments = line.comments
         yield first_line
 
         string_depth = line.depth + 1
     else:
         string_depth = line.depth
 
-    max_rest_length = line_length - 1 if ends_with_comma else line_length
+    rest = line.leaves[0].value.replace("\\\n", "")
+    prefix = ""
+    if rest[0] not in ["'", '"']:
+        prefix = rest[0]
+
+    rest_length_offset = 0
+    if ends_with_comma:
+        rest_length_offset += 1
+    if prefix:
+        rest_length_offset += 1
+
+    rest_line = Line(depth=line.depth)
+    rest_leaf = Leaf(token.STRING, rest)
+    rest_line.append(rest_leaf)
+
+    max_rest_length = line_length - rest_length_offset
+    QUOTE = rest[-1]
     while not is_line_short_enough(rest_line, line_length=max_rest_length):
-        max_next_length = line_length - 1 - (line.depth * 4)
+        max_next_length = line_length - (2 if prefix else 1) - (string_depth * 4)
 
         idx = max_next_length
-        while 0 < idx < len(rest) and rest[idx] != " ":
+        while 0 < idx < len(rest) and rest[idx - 1] != " ":
             idx -= 1
 
-        if rest[idx] == " ":
-            idx += 1
-        else:
-            idx = max_next_length
+        if rest[idx - 1] != " ":
+            raise CannotSplit("Long strings which contain no spaces are not split.")
 
         next_line = Line(depth=string_depth)
         next_value = rest[:idx] + QUOTE
-        next_line.append(Leaf(token.STRING, next_value))
+
+        if prefix == "f" and not re.search(r"\{.+\}", next_value):
+            next_value = next_value[1:]
+
+        next_leaf = Leaf(token.STRING, next_value)
+        next_line.append(next_leaf)
+        insert_child(next_leaf)
         yield next_line
 
-        rest = QUOTE + rest[idx:]
+        rest = prefix + QUOTE + rest[idx:]
         rest_line = Line(depth=string_depth)
-        rest_line.append(Leaf(token.STRING, rest))
+        rest_leaf = Leaf(token.STRING, rest)
+        rest_line.append(rest_leaf)
 
-    rest_line.comments = line.comments
+    if not ends_with_comma:
+        rest_line.comments = line.comments
+
+    insert_child(rest_leaf)
+
+    if len(line.leaves) > 1 and line.leaves[1].type == token.PERCENT:
+        end_idx = len(line.leaves) - (1 if ends_with_comma else 0)
+        for i in range(1, end_idx):
+            leaf = Leaf(line.leaves[i].type, line.leaves[i].value)
+            insert_child(leaf)
+            rest_line.append(leaf)
+
+    if len(line.leaves) > 1 and line.leaves[1].type == token.DOT:
+        end_idx = len(line.leaves) - (1 if ends_with_comma else 0)
+        trailer_node = Node(syms.trailer, [])
+        for i in range(1, end_idx):
+            leaf = Leaf(line.leaves[i].type, line.leaves[i].value)
+            trailer_node.append_child(leaf)
+            rest_line.append(leaf)
+        insert_child(trailer_node)
+
     yield rest_line
 
     if ends_with_comma:
         last_line = Line(depth=line.depth, bracket_tracker=first_line.bracket_tracker)
-        last_line.append(Leaf(token.RPAR, ")"))
-        last_line.append(Leaf(token.COMMA, ","))
+
+        rpar_leaf = Leaf(token.RPAR, ")")
+        insert_child(rpar_leaf)
+        last_line.append(rpar_leaf)
+
+        comma_leaf = Leaf(token.COMMA, ",")
+        insert_child(comma_leaf)
+        last_line.append(comma_leaf)
+
         yield last_line
 
 
-def string_assignment_split(line: Line, string_idx: int) -> Iterator[Line]:
+def string_assignment_split(line: Line, line_length: int) -> Iterator[Line]:
     """
-    Splits long lines in which a variable is being assigned the value of a long constant
-    string or lines in which a function's keyword argument is being assigned the value
-    of a long constant string.
+    Splits long lines in which a variable is being assigned the value of a long
+    constant string, long lines in which a function's keyword argument is being
+    assigned the value of a long constant string, or long lines in which a
+    dictionary key is being assigned to the value of a long constant string.
+    """
+    line_str = str(line).strip("\n")
+    line_str = re.sub(r"(% \(.*\)?|['\"]\.[A-Za-z_0-9]+\(.*\)?)", "", line_str)
+    if line.comments:
+        line_str = re.sub(
+            r"\s*{}".format(list(line.comments.values())[0][0].value), "", line_str
+        )
 
-    In other words, splits long lines of the form:
-        NAME EQUAL [LPAR] STRING [RPAR] [COMMA]
-    """
-    first_leaves = [
-        Leaf(token.NAME, line.leaves[0].value),
-        Leaf(token.EQUAL, line.leaves[1].value),
-        Leaf(token.LPAR, "("),
-    ]
+    if len(line_str) <= line_length:
+        raise CannotSplit(
+            "The string itself is not what is causing this line to be too long."
+        )
+
+    if line.leaves[2].type == token.STRING:
+        first_str_idx = 2
+    elif line.leaves[3].type == token.STRING:
+        first_str_idx = 3
+    else:
+        raise RuntimeError(
+            "Unable to locate token.STRING. This line does not appear to be a string "
+            f"assignment: {line}"
+        )
 
     comma_idx = len(line.leaves) - 1
     ends_with_comma = False
     if line.leaves[comma_idx].type == token.COMMA:
         ends_with_comma = True
-        parent = Node(syms.argument, [])
+        if line.leaves[1].type == token.EQUAL:
+            parent = Node(syms.argument, [])
+        elif line.leaves[1].type == token.COLON:
+            parent = Node(syms.dictsetmaker, [])
+        else:
+            raise RuntimeError(
+                "Something is wrong. How can you assign with "
+                f"'{line.leaves[1].value}'? Is this line even a string assignment?: "
+                f"{line}"
+            )
     else:
         parent = Node(syms.expr_stmt, [])
 
+    def append_leaf(line: Line, leaf: Leaf) -> None:
+        parent.append_child(leaf)
+        line.append(leaf)
+
+    first_leaves = [
+        Leaf(line.leaves[0].type, line.leaves[0].value),
+        Leaf(line.leaves[1].type, line.leaves[1].value),
+        Leaf(token.LPAR, "("),
+    ]
+
     first_line = Line(depth=line.depth)
     for leaf in first_leaves:
-        parent.append_child(leaf)
-        first_line.append(leaf)
+        append_leaf(first_line, leaf)
 
     yield first_line
 
-    bracket_tracker = first_line.bracket_tracker
+    # Only need to yield one (possibly too long) line, since `string_atomic_split` will
+    # break it down further if necessary.
+    next_str_idx = first_str_idx
+    string_value = ""
+    prefix = ""
+    QUOTE = line.leaves[next_str_idx].value[-1]
+    while line.leaves[next_str_idx].type == token.STRING:
+        next_string_value = line.leaves[next_str_idx].value
+        clean_current_string_value = string_value[1:] if prefix else string_value
 
-    # Only need to yield one (possibly too long) line, since
-    # `string_atomic_split` will break it down further if necessary.
-    string_line = Line(depth=line.depth + 1, bracket_tracker=bracket_tracker)
-    string_leaf = Leaf(token.STRING, line.leaves[string_idx].value)
-    parent.append_child(string_leaf)
-    string_line.append(string_leaf)
+        if next_string_value[0] == QUOTE:
+            clean_next_string_value = next_string_value
+        else:
+            prefix = next_string_value[0]
+            clean_next_string_value = next_string_value[1:]
+
+        clean_current_string_value = clean_current_string_value.strip(QUOTE)
+        clean_next_string_value = clean_next_string_value.strip(QUOTE)
+        string_value = (
+            prefix
+            + QUOTE
+            + clean_current_string_value
+            + clean_next_string_value
+            + QUOTE
+        )
+        next_str_idx += 1
+
+    string_line = Line(depth=line.depth + 1, bracket_tracker=first_line.bracket_tracker)
+    append_leaf(string_line, Leaf(token.STRING, string_value))
+
+    perc_or_dot_idx = next_str_idx
+    if len(line.leaves) - 1 >= perc_or_dot_idx and line.leaves[
+        perc_or_dot_idx
+    ].type in [token.PERCENT, token.DOT]:
+        for i in range(perc_or_dot_idx, len(line.leaves) - 1):
+            append_leaf(string_line, line.leaves[i])
+
     yield string_line
 
     last_line = Line(
-        depth=line.depth, bracket_tracker=bracket_tracker, comments=line.comments
+        depth=line.depth,
+        bracket_tracker=first_line.bracket_tracker,
+        comments=line.comments,
     )
-    last_leaf = Leaf(token.RPAR, ")")
-    parent.append_child(last_leaf)
-    last_line.append(last_leaf)
+    append_leaf(last_line, Leaf(token.RPAR, ")"))
 
     if ends_with_comma:
-        comma_leaf = Leaf(token.COMMA, ",")
-        last_line.append(comma_leaf)
+        append_leaf(last_line, Leaf(token.COMMA, ","))
 
     yield last_line
 
