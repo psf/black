@@ -962,7 +962,7 @@ def generate_matches(
         (count, results) tuples where:
         count: the entire sequence of patterns matches nodes[:count];
         results: dict containing named submatches.
-        """
+    """
     if not patterns:
         yield 0, {}
     else:
