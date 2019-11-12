@@ -737,6 +737,17 @@ default. On macOS with Homebrew run: `brew install vim --with-python3`. When bui
 Vim from source, use: `./configure --enable-python3interp=yes`. There's many guides
 online how to do this.
 
+If you can't install the plugin (maybe it's time to upgrade Vim?), you're using Bash as 
+your shell, and you have a `black` executable in your `PATH`, you can copy the following
+code to your `vimrc` or `init.vim` to format the current file.
+
+```
+" Format current Python file
+if executable('black')
+    command! Black %!black -q - < %
+endif
+```
+
 ### Visual Studio Code
 
 Use the
