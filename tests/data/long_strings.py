@@ -12,18 +12,42 @@ D3 = {x: "This is a really long string that can't possibly be expected to fit al
 
 func_with_keywords(my_arg, my_kwarg="Long keyword strings also need to be wrapped, but they will probably need to be handled a little bit differently.")
 
-bad_split = (
+bad_split1 = (
     "But what should happen when code has already been formatted but in the wrong way?"
     " Like with a space at the beginning instead of the end."
     " Or what about when it is split too soon?"
 )
 
-bad_split = (
+bad_split2 = (
     "But what should happen when code has already "
     "been formatted but in the wrong way? Like "
     "with a space at the beginning instead of the "
     "end. Or what about when it is split too "
     "soon?"
+)
+
+bad_split3 = (
+    "What if we have inline comments on "  # First Comment
+    "each line of a bad split? In that "  # Second Comment
+    "case, we should just leave it alone."  # Third Comment
+)
+
+bad_split_func1(
+    "But what should happen when code has already "
+    "been formatted but in the wrong way? Like "
+    "with a space at the beginning instead of the "
+    "end. Or what about when it is split too "
+    "soon?",
+    xxx, yyy, zzz
+)
+
+bad_split_func2(
+    xxx, yyy, zzz,
+    long_string_kwarg="But what should happen when code has already "
+                      "been formatted but in the wrong way? Like "
+                      "with a space at the beginning instead of the "
+                      "end. Or what about when it is split too "
+                      "soon?",
 )
 
 raw_string = r"This is a long raw string. When re-formatting this string, black needs to make sure it prepends the 'r' onto the new string."
@@ -45,7 +69,9 @@ comment_string = "Long lines with inline comments should have their comments app
 arg_comment_string = print("Long lines with inline comments which are apart of (and not the only member of) an argument list should have their comments appended to the reformatted string's enclosing left parentheses.",  # This comment gets thrown to the top.
     "Arg #2", "Arg #3", "Arg #4", "Arg #5")
 
-pragma_comment_string = "Lines which end with an inline pragma comment of the form `# <pragma>: <...>` should be left alone."  # noqa: E501
+pragma_comment_string1 = "Lines which end with an inline pragma comment of the form `# <pragma>: <...>` should be left alone."  # noqa: E501
+
+pragma_comment_string2 = "Lines which end with an inline pragma comment of the form `# <pragma>: <...>` should be left alone."  # noqa
 
 """This is a really really really long triple quote string and it should not be touched."""
 
@@ -121,16 +147,44 @@ func_with_keywords(
     ),
 )
 
-bad_split = (
+bad_split1 = (
     "But what should happen when code has already been formatted but in the wrong way? "
     "Like with a space at the beginning instead of the end. Or what about when it is "
     "split too soon?"
 )
 
-bad_split = (
+bad_split2 = (
     "But what should happen when code has already been formatted but in the wrong way? "
     "Like with a space at the beginning instead of the end. Or what about when it is "
     "split too soon?"
+)
+
+bad_split3 = (
+    "What if we have inline comments on "  # First Comment
+    "each line of a bad split? In that "  # Second Comment
+    "case, we should just leave it alone."  # Third Comment
+)
+
+bad_split_func1(
+    (
+        "But what should happen when code has already been formatted but in the wrong "
+        "way? Like with a space at the beginning instead of the end. Or what about "
+        "when it is split too soon?"
+    ),
+    xxx,
+    yyy,
+    zzz,
+)
+
+bad_split_func2(
+    xxx,
+    yyy,
+    zzz,
+    long_string_kwarg=(
+        "But what should happen when code has already been formatted but in the wrong "
+        "way? Like with a space at the beginning instead of the end. Or what about "
+        "when it is split too soon?"
+    ),
 )
 
 raw_string = (
@@ -193,7 +247,9 @@ arg_comment_string = print(
     "Arg #5",
 )
 
-pragma_comment_string = "Lines which end with an inline pragma comment of the form `# <pragma>: <...>` should be left alone."  # noqa: E501
+pragma_comment_string1 = "Lines which end with an inline pragma comment of the form `# <pragma>: <...>` should be left alone."  # noqa: E501
+
+pragma_comment_string2 = "Lines which end with an inline pragma comment of the form `# <pragma>: <...>` should be left alone."  # noqa
 
 """This is a really really really long triple quote string and it should not be touched."""
 

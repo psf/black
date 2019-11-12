@@ -60,6 +60,7 @@ DEFAULT_LINE_LENGTH = 88
 DEFAULT_EXCLUDES = r"/(\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_build|buck-out|build|dist)/"  # noqa: B950
 DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
+PREFIX_CHARS = "furbFURB"  # All possible string prefix characters.
 
 
 # types
@@ -413,8 +414,8 @@ def main(
             versions = set(target_version)
     elif py36:
         err(
-            "--py36 is deprecated and will be removed in a future version. "
-            "Use --target-version py36 instead."
+            "--py36 is deprecated and will be removed in a future version. Use "
+            "--target-version py36 instead."
         )
         versions = PY36_VERSIONS
     else:
@@ -2411,6 +2412,122 @@ def split_line(
         yield line
         return
 
+    leaves = [leaf for leaf in line.leaves]
+
+    num_of_inline_string_comments = 0
+    set_of_quotes = set()
+    set_of_prefixes = set()
+    for leaf in leaves:
+        if leaf.type == token.STRING:
+            set_of_quotes.add(leaf.value[-1])
+
+            tmp_prefix_idx = 0
+            tmp_prefix = ""
+            while leaf.value[tmp_prefix_idx] in PREFIX_CHARS:
+                tmp_prefix += leaf.value[tmp_prefix_idx]
+                tmp_prefix_idx += 1
+
+            if tmp_prefix:
+                set_of_prefixes.add(tmp_prefix)
+
+            if id(leaf) in line.comments:
+                num_of_inline_string_comments += 1
+
+    if (
+        num_of_inline_string_comments <= 1
+        and len(set_of_quotes) == 1
+        and len(set_of_prefixes) <= 1
+    ):
+        for i, leaf in enumerate(leaves):
+            if (
+                i + 1 < len(line.leaves)
+                and leaf.type == token.STRING
+                and leaves[i + 1].type == token.STRING
+            ):
+                atom_node = leaf.parent
+                first_str_idx = next_str_idx = i
+                string_value = ""
+                prefix = ""
+                prefix_idx = 0
+                QUOTE = line.leaves[next_str_idx].value[-1]
+                num_of_strings = 0
+                while line.leaves[next_str_idx].type == token.STRING:
+                    num_of_strings += 1
+
+                    naked_last_string_value = string_value[prefix_idx:].strip(QUOTE)
+
+                    next_string_value = line.leaves[next_str_idx].value
+                    if not prefix:
+                        while next_string_value[prefix_idx] in PREFIX_CHARS:
+                            prefix += next_string_value[prefix_idx]
+                            prefix_idx += 1
+
+                    naked_next_string_value = next_string_value[prefix_idx:].strip(
+                        QUOTE
+                    )
+
+                    string_value = (
+                        prefix
+                        + QUOTE
+                        + naked_last_string_value
+                        + naked_next_string_value
+                        + QUOTE
+                    )
+                    next_str_idx += 1
+
+                string_leaf = Leaf(token.STRING, string_value)
+                if atom_node:
+                    grandparent = atom_node.parent
+                    if grandparent is not None:
+                        child_idx = atom_node.remove()
+                        if child_idx is not None:
+                            grandparent.insert_child(child_idx, string_leaf)
+                        else:
+                            raise RuntimeError(
+                                "Something is wrong here. Atom node has parent but "
+                                "can't be removed from it?"
+                            )
+
+                old_comments = line.comments
+                new_comments = {}
+
+                line = Line(
+                    depth=line.depth,
+                    bracket_tracker=line.bracket_tracker,
+                    inside_brackets=line.inside_brackets,
+                    should_explode=line.should_explode,
+                )
+
+                for j, old_leaf in enumerate(leaves):
+                    if j == first_str_idx:
+                        line.append(string_leaf)
+
+                    if first_str_idx <= j < first_str_idx + num_of_strings:
+                        if id(old_leaf) in old_comments:
+                            new_comments[id(string_leaf)] = old_comments[id(old_leaf)]
+                        continue
+
+                    new_leaf = Leaf(old_leaf.type, old_leaf.value)
+
+                    if id(old_leaf) in old_comments:
+                        new_comments[id(new_leaf)] = old_comments[id(old_leaf)]
+
+                    old_parent = old_leaf.parent
+                    if old_parent:
+                        child_idx = old_leaf.remove()
+                        if child_idx is not None:
+                            old_parent.insert_child(child_idx, new_leaf)
+                        else:
+                            raise RuntimeError(
+                                "Something is wrong here. Old leaf has parent but "
+                                "can't be removed from it?"
+                            )
+
+                    line.append(new_leaf)
+
+                line.comments = new_comments
+                break
+
     line_str = str(line).strip("\n")
 
     if (
@@ -2483,20 +2600,35 @@ def string_split(
     """Split long strings."""
     tokens = tuple([leaf.type for leaf in line.leaves])
 
-    def validate_string(str_idx: int) -> None:
+    def validate_string() -> None:
         if is_line_short_enough(line, line_length=line_length):
             raise CannotSplit("Line is already short enough. No reason to split.")
 
-        if re.search("^[a-z]?[\"']{3}", line.leaves[str_idx].value):
-            raise CannotSplit("This split function does not work on multiline strings.")
+        if line.comments and len(line.comments.values()) > 1:
+            raise CannotSplit("Multiple inline comments detected.")
 
-        if line.comments and re.match(
-            "^# ([A-Za-z_0-9]+: .*|noqa)$", list(line.comments.values())[0][0].value
+        for leaf in line.leaves:
+            value = leaf.value.lstrip(PREFIX_CHARS)
+            if value[:3] in {'"""', "'''"}:
+                raise CannotSplit(
+                    "This split function does not work on multiline strings."
+                )
+
+        if (
+            line.comments
+            and list(line.comments.values())[0]
+            and re.match(
+                r"^#\s*([a-z_0-9]+:.*|noqa)\s*$",
+                list(line.comments.values())[0][0].value,
+                re.IGNORECASE,
+            )
         ):
             raise CannotSplit(
                 "Line appears to end with an inline pragma comment. Splitting the line "
                 "could modify the pragma's behavior."
             )
+
+    validate_string()
 
     if tokens[:2] in [
         (token.STRING,),
@@ -2504,15 +2636,13 @@ def string_split(
         (token.STRING, token.DOT),
         (token.STRING, token.PERCENT),
     ]:
-        validate_string(0)
-        yield from string_atomic_split(line, line_length)
+        for split_line in string_atomic_split(line, line_length):
+            yield split_line
     elif (tokens[:2] == (token.NAME, token.EQUAL) or tokens[1] == token.COLON) and (
         tokens[2] == token.STRING or tokens[2:4] == (token.LPAR, token.STRING)
     ):
-        str_idx = tokens[1:].index(token.STRING)
-        assert str_idx is not None, "String assignment line contains no string?"
-        validate_string(str_idx + 1)
-        yield from string_assignment_split(line, line_length)
+        for split_line in string_assignment_split(line, line_length):
+            yield split_line
     else:
         raise CannotSplit(
             f"Unable to match this line's tokens with a valid split function: {tokens}"
@@ -2555,47 +2685,63 @@ def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
     else:
         string_depth = line.depth
 
-    rest = line.leaves[0].value.replace("\\\n", "")
+    rest_value = line.leaves[0].value.replace("\\\n", "")
     prefix = ""
-    if rest[0] not in ["'", '"']:
-        prefix = rest[0]
+    prefix_idx = 0
+    while rest_value[prefix_idx] in PREFIX_CHARS:
+        prefix += rest_value[prefix_idx]
+        prefix_idx += 1
 
-    rest_length_offset = 0
+    drop_pointless_f_prefix = True
+    if "f" in prefix and not re.search(r"\{.+\}", rest_value):
+        drop_pointless_f_prefix = False
+
+    rest_length_offset = prefix_idx
     if ends_with_comma:
-        rest_length_offset += 1
-    if prefix:
         rest_length_offset += 1
 
     rest_line = Line(depth=line.depth)
-    rest_leaf = Leaf(token.STRING, rest)
+    rest_leaf = Leaf(token.STRING, rest_value)
     rest_line.append(rest_leaf)
 
     max_rest_length = line_length - rest_length_offset
-    QUOTE = rest[-1]
+    QUOTE = rest_value[-1]
     while not is_line_short_enough(rest_line, line_length=max_rest_length):
-        max_next_length = line_length - (2 if prefix else 1) - (string_depth * 4)
+        max_next_length = line_length - (1 + prefix_idx) - (string_depth * 4)
 
         idx = max_next_length
-        while 0 < idx < len(rest) and rest[idx - 1] != " ":
+        while 0 < idx < len(rest_value) and rest_value[idx - 1] != " ":
             idx -= 1
 
-        if rest[idx - 1] != " ":
+        if rest_value[idx - 1] != " ":
             raise CannotSplit("Long strings which contain no spaces are not split.")
 
+        next_value = rest_value[:idx] + QUOTE
+        if (
+            "f" in prefix
+            and not re.search(r"\{.+\}", next_value)
+            and drop_pointless_f_prefix
+        ):
+            tmp_prefix = prefix.replace("f", "")
+            next_value = tmp_prefix + next_value[prefix_idx:]
+
         next_line = Line(depth=string_depth)
-        next_value = rest[:idx] + QUOTE
-
-        if prefix == "f" and not re.search(r"\{.+\}", next_value):
-            next_value = next_value[1:]
-
         next_leaf = Leaf(token.STRING, next_value)
         next_line.append(next_leaf)
         insert_child(next_leaf)
         yield next_line
 
-        rest = prefix + QUOTE + rest[idx:]
+        rest_value = prefix + QUOTE + rest_value[idx:]
+        if (
+            "f" in prefix
+            and not re.search(r"\{.+\}", rest_value)
+            and drop_pointless_f_prefix
+        ):
+            tmp_prefix = prefix.replace("f", "")
+            rest_value = tmp_prefix + rest_value[prefix_idx:]
+
         rest_line = Line(depth=string_depth)
-        rest_leaf = Leaf(token.STRING, rest)
+        rest_leaf = Leaf(token.STRING, rest_value)
         rest_line.append(rest_leaf)
 
     if not ends_with_comma:
@@ -2702,19 +2848,19 @@ def string_assignment_split(line: Line, line_length: int) -> Iterator[Line]:
     next_str_idx = first_str_idx
     string_value = ""
     prefix = ""
+    prefix_idx = 0
     QUOTE = line.leaves[next_str_idx].value[-1]
     while line.leaves[next_str_idx].type == token.STRING:
         next_string_value = line.leaves[next_str_idx].value
-        clean_current_string_value = string_value[1:] if prefix else string_value
+        clean_current_string_value = string_value[prefix_idx:]
 
-        if next_string_value[0] == QUOTE:
-            clean_next_string_value = next_string_value
-        else:
-            prefix = next_string_value[0]
-            clean_next_string_value = next_string_value[1:]
+        if not prefix:
+            while next_string_value[prefix_idx] in PREFIX_CHARS:
+                prefix += next_string_value[prefix_idx]
+                prefix_idx += 1
 
         clean_current_string_value = clean_current_string_value.strip(QUOTE)
-        clean_next_string_value = clean_next_string_value.strip(QUOTE)
+        clean_next_string_value = next_string_value[prefix_idx:].strip(QUOTE)
         string_value = (
             prefix
             + QUOTE
@@ -2863,8 +3009,7 @@ def right_hand_split(
                 raise CannotSplit(
                     "The current optional pair of parentheses is bound to fail to "
                     "satisfy the splitting algorithm because the head or the tail "
-                    "contains multiline strings which by definition never fit one "
-                    "line."
+                    "contains multiline strings which by definition never fit one line."
                 )
 
     ensure_visible(opening_bracket)
@@ -2895,8 +3040,8 @@ def bracket_split_succeeded_or_raise(head: Line, body: Line, tail: Line) -> None
 
         elif tail_len < 3:
             raise CannotSplit(
-                f"Splitting brackets on an empty body to save "
-                f"{tail_len} characters is not worth it"
+                f"Splitting brackets on an empty body to save {tail_len} characters "
+                "is not worth it"
             )
 
 
@@ -3105,7 +3250,7 @@ def normalize_string_prefix(leaf: Leaf, remove_u_prefix: bool = False) -> None:
 
     Note: Mutates its argument.
     """
-    match = re.match(r"^([furbFURB]*)(.*)$", leaf.value, re.DOTALL)
+    match = re.match(r"^([" + PREFIX_CHARS + r"]*)(.*)$", leaf.value, re.DOTALL)
     assert match is not None, f"failed to match string {leaf.value!r}"
     orig_prefix = match.group(1)
     new_prefix = orig_prefix.lower()
@@ -3122,7 +3267,7 @@ def normalize_string_quotes(leaf: Leaf) -> None:
 
     Note: Mutates its argument.
     """
-    value = leaf.value.lstrip("furbFURB")
+    value = leaf.value.lstrip(PREFIX_CHARS)
     if value[:3] == '"""':
         return
 
@@ -3532,7 +3677,7 @@ def is_vararg(leaf: Leaf, within: Set[NodeType]) -> bool:
 
 def is_multiline_string(leaf: Leaf) -> bool:
     """Return True if `leaf` is a multiline string that actually spans many lines."""
-    value = leaf.value.lstrip("furbFURB")
+    value = leaf.value.lstrip(PREFIX_CHARS)
     return value[:3] in {'"""', "'''"} and "\n" in value
 
 
@@ -4052,8 +4197,8 @@ def assert_equivalent(src: str, dst: str) -> None:
         src_ast = parse_ast(src)
     except Exception as exc:
         raise AssertionError(
-            f"cannot use --safe with this file; failed to parse source file.  "
-            f"AST error message: {exc}"
+            "cannot use --safe with this file; failed to parse source file.  AST "
+            f"error message: {exc}"
         )
 
     try:
@@ -4061,9 +4206,9 @@ def assert_equivalent(src: str, dst: str) -> None:
     except Exception as exc:
         log = dump_to_file("".join(traceback.format_tb(exc.__traceback__)), dst)
         raise AssertionError(
-            f"INTERNAL ERROR: Black produced invalid code: {exc}. "
-            f"Please report a bug on https://github.com/psf/black/issues.  "
-            f"This invalid output might be helpful: {log}"
+            f"INTERNAL ERROR: Black produced invalid code: {exc}. Please report a bug "
+            "on https://github.com/psf/black/issues.  This invalid output might be "
+            f"helpful: {log}"
         ) from None
 
     src_ast_str = "\n".join(_v(src_ast))
@@ -4071,9 +4216,8 @@ def assert_equivalent(src: str, dst: str) -> None:
     if src_ast_str != dst_ast_str:
         log = dump_to_file(diff(src_ast_str, dst_ast_str, "src", "dst"))
         raise AssertionError(
-            f"INTERNAL ERROR: Black produced code that is not equivalent to "
-            f"the source.  "
-            f"Please report a bug on https://github.com/psf/black/issues.  "
+            "INTERNAL ERROR: Black produced code that is not equivalent to the "
+            "source.  Please report a bug on https://github.com/psf/black/issues.  "
             f"This diff might be helpful: {log}"
         ) from None
 
@@ -4087,10 +4231,9 @@ def assert_stable(src: str, dst: str, mode: FileMode) -> None:
             diff(dst, newdst, "first pass", "second pass"),
         )
         raise AssertionError(
-            f"INTERNAL ERROR: Black produced different code on the second pass "
-            f"of the formatter.  "
-            f"Please report a bug on https://github.com/psf/black/issues.  "
-            f"This diff might be helpful: {log}"
+            "INTERNAL ERROR: Black produced different code on the second pass of the "
+            "formatter.  Please report a bug on https://github.com/psf/black/issues. "
+            f" This diff might be helpful: {log}"
         ) from None
 
 
