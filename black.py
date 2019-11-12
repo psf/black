@@ -2394,10 +2394,7 @@ def make_comment(content: str) -> str:
 
 
 def split_line(
-    line: Line,
-    line_length: int,
-    inner: bool = False,
-    features: Collection[Feature] = (),
+    line: Line, line_length: int, features: Collection[Feature] = (),
 ) -> Iterator[Line]:
     """Split a `line` into potentially many lines.
 
@@ -2412,122 +2409,7 @@ def split_line(
         yield line
         return
 
-    leaves = [leaf for leaf in line.leaves]
-
-    num_of_inline_string_comments = 0
-    set_of_quotes = set()
-    set_of_prefixes = set()
-    for leaf in leaves:
-        if leaf.type == token.STRING:
-            set_of_quotes.add(leaf.value[-1])
-
-            tmp_prefix_idx = 0
-            tmp_prefix = ""
-            while leaf.value[tmp_prefix_idx] in PREFIX_CHARS:
-                tmp_prefix += leaf.value[tmp_prefix_idx]
-                tmp_prefix_idx += 1
-
-            if tmp_prefix:
-                set_of_prefixes.add(tmp_prefix)
-
-            if id(leaf) in line.comments:
-                num_of_inline_string_comments += 1
-
-    if (
-        num_of_inline_string_comments <= 1
-        and len(set_of_quotes) == 1
-        and len(set_of_prefixes) <= 1
-    ):
-        for i, leaf in enumerate(leaves):
-            if (
-                i + 1 < len(line.leaves)
-                and leaf.type == token.STRING
-                and leaves[i + 1].type == token.STRING
-            ):
-                atom_node = leaf.parent
-                first_str_idx = next_str_idx = i
-                string_value = ""
-                prefix = ""
-                prefix_idx = 0
-                QUOTE = line.leaves[next_str_idx].value[-1]
-                num_of_strings = 0
-                while line.leaves[next_str_idx].type == token.STRING:
-                    num_of_strings += 1
-
-                    naked_last_string_value = string_value[prefix_idx:].strip(QUOTE)
-
-                    next_string_value = line.leaves[next_str_idx].value
-                    if not prefix:
-                        while next_string_value[prefix_idx] in PREFIX_CHARS:
-                            prefix += next_string_value[prefix_idx]
-                            prefix_idx += 1
-
-                    naked_next_string_value = next_string_value[prefix_idx:].strip(
-                        QUOTE
-                    )
-
-                    string_value = (
-                        prefix
-                        + QUOTE
-                        + naked_last_string_value
-                        + naked_next_string_value
-                        + QUOTE
-                    )
-                    next_str_idx += 1
-
-                string_leaf = Leaf(token.STRING, string_value)
-                if atom_node:
-                    grandparent = atom_node.parent
-                    if grandparent is not None:
-                        child_idx = atom_node.remove()
-                        if child_idx is not None:
-                            grandparent.insert_child(child_idx, string_leaf)
-                        else:
-                            raise RuntimeError(
-                                "Something is wrong here. Atom node has parent but "
-                                "can't be removed from it?"
-                            )
-
-                old_comments = line.comments
-                new_comments = {}
-
-                line = Line(
-                    depth=line.depth,
-                    bracket_tracker=line.bracket_tracker,
-                    inside_brackets=line.inside_brackets,
-                    should_explode=line.should_explode,
-                )
-
-                for j, old_leaf in enumerate(leaves):
-                    if j == first_str_idx:
-                        line.append(string_leaf)
-
-                    if first_str_idx <= j < first_str_idx + num_of_strings:
-                        if id(old_leaf) in old_comments:
-                            new_comments[id(string_leaf)] = old_comments[id(old_leaf)]
-                        continue
-
-                    new_leaf = Leaf(old_leaf.type, old_leaf.value)
-
-                    if id(old_leaf) in old_comments:
-                        new_comments[id(new_leaf)] = old_comments[id(old_leaf)]
-
-                    old_parent = old_leaf.parent
-                    if old_parent:
-                        child_idx = old_leaf.remove()
-                        if child_idx is not None:
-                            old_parent.insert_child(child_idx, new_leaf)
-                        else:
-                            raise RuntimeError(
-                                "Something is wrong here. Old leaf has parent but "
-                                "can't be removed from it?"
-                            )
-
-                    line.append(new_leaf)
-
-                line.comments = new_comments
-                break
-
+    line = merge_strings(line)
     line_str = str(line).strip("\n")
 
     if (
@@ -2578,11 +2460,7 @@ def split_line(
                 if str(l).strip("\n") == line_str:
                     raise CannotSplit("Split function returned an unchanged result")
 
-                result.extend(
-                    split_line(
-                        l, line_length=line_length, inner=True, features=features
-                    )
-                )
+                result.extend(split_line(l, line_length=line_length, features=features))
         except CannotSplit:
             continue
 
@@ -2594,8 +2472,130 @@ def split_line(
         yield line
 
 
+def merge_strings(line: Line) -> Line:
+    first_str_idx = next_str_idx = get_string_group_index(line)
+
+    if first_str_idx < 0:
+        return line
+
+    atom_node = line.leaves[first_str_idx].parent
+    string_value = ""
+    prefix = ""
+    prefix_idx = 0
+    QUOTE = line.leaves[next_str_idx].value[-1]
+    num_of_strings = 0
+    while line.leaves[next_str_idx].type == token.STRING:
+        num_of_strings += 1
+
+        naked_last_string_value = string_value[prefix_idx:].strip(QUOTE)
+
+        next_string_value = line.leaves[next_str_idx].value
+        if not prefix:
+            while next_string_value[prefix_idx] in PREFIX_CHARS:
+                prefix += next_string_value[prefix_idx]
+                prefix_idx += 1
+
+        naked_next_string_value = next_string_value[prefix_idx:].strip(QUOTE)
+
+        string_value = (
+            prefix + QUOTE + naked_last_string_value + naked_next_string_value + QUOTE
+        )
+        next_str_idx += 1
+
+    string_leaf = Leaf(token.STRING, string_value)
+    if atom_node:
+        grandparent = atom_node.parent
+        if grandparent is not None:
+            child_idx = atom_node.remove()
+            if child_idx is not None:
+                grandparent.insert_child(child_idx, string_leaf)
+            else:
+                raise RuntimeError(
+                    "Something is wrong here. Atom node has parent but can't be "
+                    "removed from it?"
+                )
+
+    old_comments = line.comments
+    new_comments = {}
+
+    new_line = Line(
+        depth=line.depth,
+        bracket_tracker=line.bracket_tracker,
+        inside_brackets=line.inside_brackets,
+        should_explode=line.should_explode,
+    )
+
+    for i, old_leaf in enumerate(line.leaves):
+        if i == first_str_idx:
+            new_line.append(string_leaf)
+
+        if first_str_idx <= i < first_str_idx + num_of_strings:
+            if id(old_leaf) in old_comments:
+                new_comments[id(string_leaf)] = old_comments[id(old_leaf)]
+            continue
+
+        new_leaf = Leaf(old_leaf.type, old_leaf.value)
+
+        if id(old_leaf) in old_comments:
+            new_comments[id(new_leaf)] = old_comments[id(old_leaf)]
+
+        old_parent = old_leaf.parent
+        if old_parent:
+            child_idx = old_leaf.remove()
+            if child_idx is not None:
+                old_parent.insert_child(child_idx, new_leaf)
+            else:
+                raise RuntimeError(
+                    "Something is wrong here. Old leaf has parent but can't be removed "
+                    "from it?"
+                )
+
+        new_line.append(new_leaf)
+
+    new_line.comments = new_comments
+    return new_line
+
+
+def get_string_group_index(line: Line) -> int:
+    num_of_inline_string_comments = 0
+    set_of_quotes = set()
+    set_of_prefixes = set()
+    for leaf in line.leaves:
+        if leaf.type == token.STRING:
+            set_of_quotes.add(leaf.value[-1])
+
+            tmp_prefix_idx = 0
+            tmp_prefix = ""
+            while leaf.value[tmp_prefix_idx] in PREFIX_CHARS:
+                tmp_prefix += leaf.value[tmp_prefix_idx]
+                tmp_prefix_idx += 1
+
+            if tmp_prefix:
+                set_of_prefixes.add(tmp_prefix)
+
+            if id(leaf) in line.comments:
+                num_of_inline_string_comments += 1
+
+    if (
+        num_of_inline_string_comments > 1
+        or len(set_of_quotes) != 1
+        or len(set_of_prefixes) > 1
+    ):
+        return -1
+
+    for i, leaf in enumerate(line.leaves):
+        if (
+            i + 1 < len(line.leaves)
+            and leaf.type == token.STRING
+            and line.leaves[i + 1].type == token.STRING
+        ):
+            return i
+
+    return -1
+
+
 def string_split(
-    line: Line, line_length: int, features: Collection[Feature] = ()
+    line: Line, line_length: int, _features: Collection[Feature] = ()
 ) -> Iterator[Line]:
     """Split long strings."""
     tokens = tuple([leaf.type for leaf in line.leaves])
@@ -2636,13 +2636,13 @@ def string_split(
         (token.STRING, token.DOT),
         (token.STRING, token.PERCENT),
     ]:
-        for split_line in string_atomic_split(line, line_length):
-            yield split_line
+        for new_line in string_atomic_split(line, line_length):
+            yield new_line
     elif (tokens[:2] == (token.NAME, token.EQUAL) or tokens[1] == token.COLON) and (
         tokens[2] == token.STRING or tokens[2:4] == (token.LPAR, token.STRING)
     ):
-        for split_line in string_assignment_split(line, line_length):
-            yield split_line
+        for new_line in string_assignment_split(line, line_length):
+            yield new_line
     else:
         raise CannotSplit(
             f"Unable to match this line's tokens with a valid split function: {tokens}"
@@ -2686,11 +2686,8 @@ def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
         string_depth = line.depth
 
     rest_value = line.leaves[0].value.replace("\\\n", "")
-    prefix = ""
-    prefix_idx = 0
-    while rest_value[prefix_idx] in PREFIX_CHARS:
-        prefix += rest_value[prefix_idx]
-        prefix_idx += 1
+    prefix = get_string_prefix(rest_value)
+    prefix_idx = len(prefix)
 
     drop_pointless_f_prefix = True
     if "f" in prefix and not re.search(r"\{.+\}", rest_value):
@@ -2717,13 +2714,11 @@ def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
             raise CannotSplit("Long strings which contain no spaces are not split.")
 
         next_value = rest_value[:idx] + QUOTE
-        if (
-            "f" in prefix
-            and not re.search(r"\{.+\}", next_value)
-            and drop_pointless_f_prefix
-        ):
-            tmp_prefix = prefix.replace("f", "")
-            next_value = tmp_prefix + next_value[prefix_idx:]
+        next_value = (
+            normalize_f_string(next_value, prefix)
+            if drop_pointless_f_prefix
+            else next_value
+        )
 
         next_line = Line(depth=string_depth)
         next_leaf = Leaf(token.STRING, next_value)
@@ -2779,6 +2774,24 @@ def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
         last_line.append(comma_leaf)
 
         yield last_line
+
+
+def normalize_f_string(string: str, prefix: str) -> str:
+    if "f" in prefix and not re.search(r"\{.+\}", string):
+        tmp_prefix = prefix.replace("f", "")
+        return tmp_prefix + string[len(prefix) :]
+
+    return string
+
+
+def get_string_prefix(string: str) -> str:
+    prefix = ""
+    prefix_idx = 0
+    while string[prefix_idx] in PREFIX_CHARS:
+        prefix += string[prefix_idx]
+        prefix_idx += 1
+
+    return prefix
 
 
 def string_assignment_split(line: Line, line_length: int) -> Iterator[Line]:
@@ -2871,7 +2884,7 @@ def string_assignment_split(line: Line, line_length: int) -> Iterator[Line]:
     yield last_line
 
 
-def left_hand_split(line: Line, features: Collection[Feature] = ()) -> Iterator[Line]:
+def left_hand_split(line: Line, _features: Collection[Feature] = ()) -> Iterator[Line]:
     """Split line into many lines, starting with the first matching bracket pair.
 
     Note: this usually looks weird, only use this for function definitions.
