@@ -2845,35 +2845,11 @@ def string_assignment_split(line: Line, line_length: int) -> Iterator[Line]:
 
     # Only need to yield one (possibly too long) line, since `string_atomic_split` will
     # break it down further if necessary.
-    next_str_idx = first_str_idx
-    string_value = ""
-    prefix = ""
-    prefix_idx = 0
-    QUOTE = line.leaves[next_str_idx].value[-1]
-    while line.leaves[next_str_idx].type == token.STRING:
-        next_string_value = line.leaves[next_str_idx].value
-        clean_current_string_value = string_value[prefix_idx:]
-
-        if not prefix:
-            while next_string_value[prefix_idx] in PREFIX_CHARS:
-                prefix += next_string_value[prefix_idx]
-                prefix_idx += 1
-
-        clean_current_string_value = clean_current_string_value.strip(QUOTE)
-        clean_next_string_value = next_string_value[prefix_idx:].strip(QUOTE)
-        string_value = (
-            prefix
-            + QUOTE
-            + clean_current_string_value
-            + clean_next_string_value
-            + QUOTE
-        )
-        next_str_idx += 1
-
+    string_value = line.leaves[first_str_idx].value
     string_line = Line(depth=line.depth + 1, bracket_tracker=first_line.bracket_tracker)
     append_leaf(string_line, Leaf(token.STRING, string_value))
 
-    perc_or_dot_idx = next_str_idx
+    perc_or_dot_idx = first_str_idx + 1
     if len(line.leaves) - 1 >= perc_or_dot_idx and line.leaves[
         perc_or_dot_idx
     ].type in [token.PERCENT, token.DOT]:
