@@ -61,6 +61,7 @@ DEFAULT_EXCLUDES = r"/(\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_
 DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 PREFIX_CHARS = "furbFURB"  # All possible string prefix characters.
+STRING_CHILD_IDX_MAP = {}
 
 
 # types
@@ -2447,9 +2448,15 @@ def split_line(
             yield from string_split(line, line_length, features)
 
         if line.inside_brackets:
-            split_funcs = [delimiter_split, standalone_comment_split, str_split, rhs]
+            split_funcs = [
+                delimiter_split,
+                standalone_comment_split,
+                str_split,
+                rhs,
+                string_assert_split,
+            ]
         else:
-            split_funcs = [str_split, rhs]
+            split_funcs = [str_split, rhs, string_assert_split]
     for split_func in split_funcs:
         # We are accumulating lines in `result` because we might want to abort
         # mission and return the original line in the end, or attempt a different
@@ -2654,25 +2661,99 @@ def string_split(
         )
 
 
-def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
-    """Splits long strings that are on their own line already."""
-    string_parent = line.leaves[0].parent
+def string_assert_split(
+    line: Line, _features: Collection[Feature] = ()
+) -> Iterator[Line]:
+    parent = line.leaves[0].parent
+    is_assert_stmt = False
+    while parent:
+        if parent.type == syms.assert_stmt:
+            is_assert_stmt = True
+            break
+        parent = parent.parent
+
+    if not is_assert_stmt:
+        raise CannotSplit("This split function only handles assertion statements.")
+
+    tokens = tuple([leaf.type for leaf in line.leaves])
+    if tokens[-2:] != (token.COMMA, token.STRING) and tokens[-4:] != (
+        token.COMMA,
+        token.LPAR,
+        token.STRING,
+        token.RPAR,
+    ):
+        raise CannotSplit(
+            "This split function only handles assert statements which end with "
+            "constant strings."
+        )
+
+    if line.leaves[-1].type == token.STRING:
+        str_idx = -1
+    elif line.leaves[-2].type == token.STRING:
+        str_idx = -2
+    else:
+        raise RuntimeError(
+            f"Something is wrong here. Is this line really an assert statement?: {line}"
+        )
+
+    insert_str_child = insert_str_child_factory(line.leaves[str_idx])
+
+    first_line = Line(depth=line.depth, bracket_tracker=line.bracket_tracker)
+    for old_leaf in line.leaves[: -1 if str_idx == -1 else -3]:
+        new_leaf = Leaf(old_leaf.type, old_leaf.value)
+        replace_child(old_leaf, new_leaf)
+        first_line.append(new_leaf, preformatted=True)
+
+    lpar_leaf = Leaf(token.LPAR, "(")
+    if line.leaves[-3].type == token.LPAR:
+        replace_child(line.leaves[-3], lpar_leaf)
+    else:
+        insert_str_child(lpar_leaf)
+    first_line.append(lpar_leaf)
+    yield first_line
+
+    string_line = Line(depth=line.depth + 1)
+    string_leaf = Leaf(line.leaves[str_idx].type, line.leaves[str_idx].value)
+    insert_str_child(string_leaf)
+    string_line.append(string_leaf)
+    yield string_line
+
+    last_line = Line(depth=line.depth, bracket_tracker=first_line.bracket_tracker)
+    rpar_leaf = Leaf(token.RPAR, ")")
+    if line.leaves[-1].type == token.RPAR:
+        replace_child(line.leaves[-1], rpar_leaf)
+    else:
+        insert_str_child(rpar_leaf)
+    last_line.append(rpar_leaf)
+    yield last_line
+
+
+def insert_str_child_factory(string_leaf: Leaf) -> Callable[[LN], None]:
+    string_parent = string_leaf.parent
+
     child_idx = None
     if string_parent:
-        child_idx = line.leaves[0].remove()
+        child_idx = string_leaf.remove()
+        STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx
         if child_idx is None:
             raise RuntimeError(
                 f"Something is wrong here. If {string_parent} is the parent of "
-                f"{line.leaves[0]}, then how is {line.leaves[0]} not a child of "
+                f"{string_leaf}, then how is {string_leaf} not a child of "
                 f"{string_parent}."
             )
 
     def insert_str_child(child: LN) -> None:
-        nonlocal child_idx
+        child_idx = STRING_CHILD_IDX_MAP.get(id(string_leaf), None)
         if string_parent and child_idx is not None:
             string_parent.insert_child(child_idx, child)
-            child_idx += 1
+            STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx + 1
 
+    return insert_str_child
+
+
+def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
+    """Splits long strings that are on their own line already."""
+    insert_str_child = insert_str_child_factory(line.leaves[0])
     comma_idx = len(line.leaves) - 1
     ends_with_comma = False
     if line.leaves[comma_idx].type == token.COMMA:
@@ -2834,22 +2915,7 @@ def string_assignment_split(line: Line, line_length: int) -> Iterator[Line]:
             f"assignment: {line}"
         )
 
-    string_parent = line.leaves[str_idx].parent
-    child_idx = None
-    if string_parent:
-        child_idx = line.leaves[str_idx].remove()
-        if child_idx is None:
-            raise RuntimeError(
-                f"Something is wrong here. If {string_parent} is the parent of "
-                f"{line.leaves[0]}, then how is {line.leaves[0]} not a child of "
-                f"{string_parent}."
-            )
-
-    def insert_str_child(child: LN) -> None:
-        nonlocal child_idx
-        if string_parent and child_idx is not None:
-            string_parent.insert_child(child_idx, child)
-            child_idx += 1
+    insert_str_child = insert_str_child_factory(line.leaves[str_idx])
 
     comma_idx = len(line.leaves) - 1
     ends_with_comma = False

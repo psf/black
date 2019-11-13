@@ -81,6 +81,8 @@ triple_quote_string = """This is a really really really long triple quote string
 long_tuple = ('Apple', 'Berry', 'Cherry', 'Dill', 'Evergreen', 'Fig',
            'Grape', 'Harry', 'Iglu', 'Jaguar')
 
+assert some_type_of_boolean_expression, "Followed by a really really really long string that is used to provide context to the AssertionError exception."
+
 # output
 
 x = (
@@ -271,4 +273,11 @@ long_tuple = (
     "Harry",
     "Iglu",
     "Jaguar",
+)
+
+assert (
+    some_type_of_boolean_expression
+), (
+    "Followed by a really really really long string that is used to provide context to "
+    "the AssertionError exception."
 )

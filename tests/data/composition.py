@@ -153,7 +153,10 @@ class C:
             key7: value7,
             key8: value8,
             key9: value9,
-        }, "Not what we expected and the message is too long to fit in one line because it's too long"
+        }, (
+            "Not what we expected and the message is too long to fit in one line "
+            "because it's too long"
+        )
 
         dis_c_instance_method = """\
         %3d           0 LOAD_FAST                1 (x)
