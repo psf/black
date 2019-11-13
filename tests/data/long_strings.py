@@ -77,6 +77,10 @@ pragma_comment_string2 = "Lines which end with an inline pragma comment of the f
 
 triple_quote_string = """This is a really really really long triple quote string assignment and it should not be touched."""
 
+# Regression test. There was a bug where tuples were being identified as long strings.
+long_tuple = ('Apple', 'Berry', 'Cherry', 'Dill', 'Evergreen', 'Fig',
+           'Grape', 'Harry', 'Iglu', 'Jaguar')
+
 # output
 
 x = (
@@ -254,3 +258,17 @@ pragma_comment_string2 = "Lines which end with an inline pragma comment of the f
 """This is a really really really long triple quote string and it should not be touched."""
 
 triple_quote_string = """This is a really really really long triple quote string assignment and it should not be touched."""
+
+# Regression test. There was a bug where tuples were being identified as long strings.
+long_tuple = (
+    "Apple",
+    "Berry",
+    "Cherry",
+    "Dill",
+    "Evergreen",
+    "Fig",
+    "Grape",
+    "Harry",
+    "Iglu",
+    "Jaguar",
+)

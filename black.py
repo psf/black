@@ -2394,7 +2394,7 @@ def make_comment(content: str) -> str:
 
 
 def split_line(
-    line: Line, line_length: int, features: Collection[Feature] = (),
+    line: Line, line_length: int, features: Collection[Feature] = ()
 ) -> Iterator[Line]:
     """Split a `line` into potentially many lines.
 
@@ -2409,7 +2409,7 @@ def split_line(
         yield line
         return
 
-    line = merge_strings(line)
+    line = merge_first_string_group(line)
     line_str = str(line).strip("\n")
 
     if (
@@ -2472,7 +2472,7 @@ def split_line(
         yield line
 
 
-def merge_strings(line: Line) -> Line:
+def merge_first_string_group(line: Line) -> Line:
     first_str_idx = next_str_idx = get_string_group_index(line)
 
     if first_str_idx < 0:
@@ -2638,8 +2638,13 @@ def string_split(
     ]:
         for new_line in string_atomic_split(line, line_length):
             yield new_line
-    elif (tokens[:2] == (token.NAME, token.EQUAL) or tokens[1] == token.COLON) and (
-        tokens[2] == token.STRING or tokens[2:4] == (token.LPAR, token.STRING)
+    elif (
+        tokens[1]
+        in [token.EQUAL, token.COLON, token.PLUSEQUAL, token.MINEQUAL, token.STAREQUAL]
+    ) and (
+        tokens[2] == token.STRING
+        or tokens[2:4] == (token.LPAR, token.STRING)
+        and (len(tokens) < 5 or tokens[4] != token.COMMA)
     ):
         for new_line in string_assignment_split(line, line_length):
             yield new_line
@@ -2651,21 +2656,21 @@ def string_split(
 
 def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
     """Splits long strings that are on their own line already."""
-    parent = line.leaves[0].parent
+    string_parent = line.leaves[0].parent
     child_idx = None
-    if parent:
+    if string_parent:
         child_idx = line.leaves[0].remove()
         if child_idx is None:
             raise RuntimeError(
-                f"Something is wrong here. If {parent} is the parent of "
+                f"Something is wrong here. If {string_parent} is the parent of "
                 f"{line.leaves[0]}, then how is {line.leaves[0]} not a child of "
-                f"{parent}."
+                f"{string_parent}."
             )
 
-    def insert_child(child: LN) -> None:
+    def insert_str_child(child: LN) -> None:
         nonlocal child_idx
-        if parent and child_idx is not None:
-            parent.insert_child(child_idx, child)
+        if string_parent and child_idx is not None:
+            string_parent.insert_child(child_idx, child)
             child_idx += 1
 
     comma_idx = len(line.leaves) - 1
@@ -2674,7 +2679,7 @@ def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
         ends_with_comma = True
 
         first_leaf = Leaf(token.LPAR, "(")
-        insert_child(first_leaf)
+        insert_str_child(first_leaf)
 
         first_line = Line(depth=line.depth)
         first_line.append(first_leaf)
@@ -2723,7 +2728,7 @@ def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
         next_line = Line(depth=string_depth)
         next_leaf = Leaf(token.STRING, next_value)
         next_line.append(next_leaf)
-        insert_child(next_leaf)
+        insert_str_child(next_leaf)
         yield next_line
 
         rest_value = prefix + QUOTE + rest_value[idx:]
@@ -2742,38 +2747,44 @@ def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
     if not ends_with_comma:
         rest_line.comments = line.comments
 
-    insert_child(rest_leaf)
+    insert_str_child(rest_leaf)
 
-    if len(line.leaves) > 1 and line.leaves[1].type == token.PERCENT:
+    if len(line.leaves) > 1 and line.leaves[1].type in [token.PERCENT, token.DOT]:
         end_idx = len(line.leaves) - (1 if ends_with_comma else 0)
         for i in range(1, end_idx):
             leaf = Leaf(line.leaves[i].type, line.leaves[i].value)
-            insert_child(leaf)
+            replace_child(line.leaves[i], leaf)
             rest_line.append(leaf)
 
-    if len(line.leaves) > 1 and line.leaves[1].type == token.DOT:
-        end_idx = len(line.leaves) - (1 if ends_with_comma else 0)
-        trailer_node = Node(syms.trailer, [])
-        for i in range(1, end_idx):
-            leaf = Leaf(line.leaves[i].type, line.leaves[i].value)
-            trailer_node.append_child(leaf)
-            rest_line.append(leaf)
-        insert_child(trailer_node)
+        if ends_with_comma:
+            comma_leaf = Leaf(token.COMMA, ",")
+            replace_child(line.leaves[comma_idx], comma_leaf)
+            rest_line.append(comma_leaf)
 
-    yield rest_line
-
-    if ends_with_comma:
+        yield rest_line
+    elif ends_with_comma:
         last_line = Line(depth=line.depth, bracket_tracker=first_line.bracket_tracker)
 
         rpar_leaf = Leaf(token.RPAR, ")")
-        insert_child(rpar_leaf)
+        insert_str_child(rpar_leaf)
         last_line.append(rpar_leaf)
 
         comma_leaf = Leaf(token.COMMA, ",")
-        insert_child(comma_leaf)
+        replace_child(line.leaves[comma_idx], comma_leaf)
         last_line.append(comma_leaf)
 
+        yield rest_line
         yield last_line
+    else:
+        yield rest_line
+
+
+def replace_child(old_child: LN, new_child: LN) -> None:
+    tmp_parent = old_child.parent
+    if tmp_parent:
+        tmp_child_idx = old_child.remove()
+        if tmp_child_idx is not None:
+            tmp_parent.insert_child(tmp_child_idx, new_child)
 
 
 def normalize_f_string(string: str, prefix: str) -> str:
@@ -2814,60 +2825,69 @@ def string_assignment_split(line: Line, line_length: int) -> Iterator[Line]:
         )
 
     if line.leaves[2].type == token.STRING:
-        first_str_idx = 2
+        str_idx = 2
     elif line.leaves[3].type == token.STRING:
-        first_str_idx = 3
+        str_idx = 3
     else:
         raise RuntimeError(
             "Unable to locate token.STRING. This line does not appear to be a string "
             f"assignment: {line}"
         )
 
+    string_parent = line.leaves[str_idx].parent
+    child_idx = None
+    if string_parent:
+        child_idx = line.leaves[str_idx].remove()
+        if child_idx is None:
+            raise RuntimeError(
+                f"Something is wrong here. If {string_parent} is the parent of "
+                f"{line.leaves[0]}, then how is {line.leaves[0]} not a child of "
+                f"{string_parent}."
+            )
+
+    def insert_str_child(child: LN) -> None:
+        nonlocal child_idx
+        if string_parent and child_idx is not None:
+            string_parent.insert_child(child_idx, child)
+            child_idx += 1
+
     comma_idx = len(line.leaves) - 1
     ends_with_comma = False
     if line.leaves[comma_idx].type == token.COMMA:
         ends_with_comma = True
-        if line.leaves[1].type == token.EQUAL:
-            parent = Node(syms.argument, [])
-        elif line.leaves[1].type == token.COLON:
-            parent = Node(syms.dictsetmaker, [])
-        else:
-            raise RuntimeError(
-                "Something is wrong. How can you assign with "
-                f"'{line.leaves[1].value}'? Is this line even a string assignment?: "
-                f"{line}"
-            )
-    else:
-        parent = Node(syms.expr_stmt, [])
-
-    def append_leaf(line: Line, leaf: Leaf) -> None:
-        parent.append_child(leaf)
-        line.append(leaf)
-
-    first_leaves = [
-        Leaf(line.leaves[0].type, line.leaves[0].value),
-        Leaf(line.leaves[1].type, line.leaves[1].value),
-        Leaf(token.LPAR, "("),
-    ]
 
     first_line = Line(depth=line.depth)
-    for leaf in first_leaves:
-        append_leaf(first_line, leaf)
+
+    for i in range(2):
+        leaf = Leaf(line.leaves[i].type, line.leaves[i].value)
+        replace_child(line.leaves[i], leaf)
+        first_line.append(leaf)
+
+    lpar_leaf = Leaf(token.LPAR, "(")
+    if line.leaves[2].type == token.LPAR:
+        replace_child(line.leaves[2], lpar_leaf)
+    else:
+        insert_str_child(lpar_leaf)
+    first_line.append(lpar_leaf)
 
     yield first_line
 
     # Only need to yield one (possibly too long) line, since `string_atomic_split` will
     # break it down further if necessary.
-    string_value = line.leaves[first_str_idx].value
+    string_value = line.leaves[str_idx].value
     string_line = Line(depth=line.depth + 1, bracket_tracker=first_line.bracket_tracker)
-    append_leaf(string_line, Leaf(token.STRING, string_value))
+    string_leaf = Leaf(token.STRING, string_value)
+    insert_str_child(string_leaf)
+    string_line.append(string_leaf)
 
-    perc_or_dot_idx = first_str_idx + 1
+    perc_or_dot_idx = str_idx + 1
     if len(line.leaves) - 1 >= perc_or_dot_idx and line.leaves[
         perc_or_dot_idx
     ].type in [token.PERCENT, token.DOT]:
         for i in range(perc_or_dot_idx, len(line.leaves) - 1):
-            append_leaf(string_line, line.leaves[i])
+            leaf = Leaf(line.leaves[i].type, line.leaves[i].value)
+            replace_child(line.leaves[i], leaf)
+            string_line.append(leaf)
 
     yield string_line
 
@@ -2876,10 +2896,14 @@ def string_assignment_split(line: Line, line_length: int) -> Iterator[Line]:
         bracket_tracker=first_line.bracket_tracker,
         comments=line.comments,
     )
-    append_leaf(last_line, Leaf(token.RPAR, ")"))
+    rpar_leaf = Leaf(token.RPAR, ")")
+    last_line.append(rpar_leaf)
+    insert_str_child(rpar_leaf)
 
     if ends_with_comma:
-        append_leaf(last_line, Leaf(token.COMMA, ","))
+        comma_leaf = Leaf(token.COMMA, ",")
+        replace_child(line.leaves[comma_idx], comma_leaf)
+        last_line.append(comma_leaf)
 
     yield last_line
 
