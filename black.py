@@ -2494,21 +2494,19 @@ def merge_first_string_group(line: Line) -> Line:
     atom_node = line.leaves[first_str_idx].parent
     string_value = ""
     prefix = ""
-    prefix_idx = 0
     QUOTE = line.leaves[next_str_idx].value[-1]
     num_of_strings = 0
     while line.leaves[next_str_idx].type == token.STRING:
         num_of_strings += 1
 
-        naked_last_string_value = string_value[prefix_idx:].strip(QUOTE)
+        naked_last_string_value = string_value[len(prefix) :].strip(QUOTE)
 
         next_string_value = line.leaves[next_str_idx].value
-        if not prefix:
-            while next_string_value[prefix_idx] in PREFIX_CHARS:
-                prefix += next_string_value[prefix_idx]
-                prefix_idx += 1
 
-        naked_next_string_value = next_string_value[prefix_idx:].strip(QUOTE)
+        if not prefix:
+            prefix = get_string_prefix(next_string_value)
+
+        naked_next_string_value = next_string_value[len(prefix) :].strip(QUOTE)
 
         string_value = (
             prefix + QUOTE + naked_last_string_value + naked_next_string_value + QUOTE
@@ -2567,12 +2565,7 @@ def get_string_group_index(line: Line) -> int:
         if leaf.type == token.STRING:
             set_of_quotes.add(leaf.value[-1])
 
-            tmp_prefix_idx = 0
-            tmp_prefix = ""
-            while leaf.value[tmp_prefix_idx] in PREFIX_CHARS:
-                tmp_prefix += leaf.value[tmp_prefix_idx]
-                tmp_prefix_idx += 1
-
+            tmp_prefix = get_string_prefix(leaf.value)
             if tmp_prefix:
                 set_of_prefixes.add(tmp_prefix)
 
@@ -2930,7 +2923,7 @@ def insert_str_child_factory(string_leaf: Leaf) -> Callable[[LN], None]:
             raise RuntimeError(
                 f"Something is wrong here. If {string_parent} is the parent of "
                 f"{string_leaf}, then how is {string_leaf} not a child of "
-                f"{string_parent}."
+                f"{string_parent}?"
             )
 
     def insert_str_child(child: LN) -> None:
