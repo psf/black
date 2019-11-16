@@ -2552,17 +2552,7 @@ def merge_first_string_group(line: Line) -> Line:
         if id(old_leaf) in old_comments:
             new_comments[id(new_leaf)] = old_comments[id(old_leaf)]
 
-        old_parent = old_leaf.parent
-        if old_parent:
-            child_idx = old_leaf.remove()
-            if child_idx is not None:
-                old_parent.insert_child(child_idx, new_leaf)
-            else:
-                raise RuntimeError(
-                    "Something is wrong here. Old leaf has parent but can't be removed "
-                    "from it?"
-                )
-
+        replace_child(old_leaf, new_leaf)
         new_line.append(new_leaf)
 
     new_line.comments = new_comments
