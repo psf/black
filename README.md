@@ -312,7 +312,7 @@ _Black_ will add trailing commas to expressions that are split by comma where ea
 element is on its own line. This includes function signatures.
 
 Unnecessary trailing commas are removed if an expression fits in one line. This makes it
-1% more likely that your line won't exceed the allotted line length limit. Moreover, in
+1.25% more likely that your line won't exceed the allotted line length limit. Moreover, in
 this scenario, if you added another argument to your call, you'd probably fit it in the
 same line anyway. That doesn't make diffs any larger.
 
