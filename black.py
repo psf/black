@@ -2603,37 +2603,7 @@ def string_split(
     """Split long strings."""
     tokens = tuple([leaf.type for leaf in line.leaves])
 
-    def validate_string() -> None:
-        if is_line_short_enough(line, line_length=line_length):
-            raise CannotSplit("Line is already short enough. No reason to split.")
-
-        check_that_string_is_the_problem(line, line_length)
-
-        if line.comments and len(line.comments.values()) > 1:
-            raise CannotSplit("Multiple inline comments detected.")
-
-        for leaf in line.leaves:
-            value = leaf.value.lstrip(PREFIX_CHARS)
-            if value[:3] in {'"""', "'''"}:
-                raise CannotSplit(
-                    "This split function does not work on multiline strings."
-                )
-
-        if (
-            line.comments
-            and list(line.comments.values())[0]
-            and re.match(
-                r"^#\s*([a-z_0-9]+:.*|noqa)\s*$",
-                list(line.comments.values())[0][0].value,
-                re.IGNORECASE,
-            )
-        ):
-            raise CannotSplit(
-                "Line appears to end with an inline pragma comment. Splitting the line "
-                "could modify the pragma's behavior."
-            )
-
-    validate_string()
+    validate_string_split(line, line_length)
 
     if tokens[:2] in [
         (token.STRING,),
@@ -2678,6 +2648,44 @@ def string_split(
                 "Unable to match this line's tokens with a valid split function: "
                 f"{tokens}"
             )
+
+
+def validate_string_split(line: Line, line_length: int) -> None:
+    if is_line_short_enough(line, line_length=line_length):
+        raise CannotSplit("Line is already short enough. No reason to split.")
+
+    line_str = str(line).strip("\n")
+    line_str = re.sub(r"(% \(.*\)?|['\"]\.[A-Za-z_0-9]+\(.*\)?)", "", line_str)
+    if line.comments and list(line.comments.values())[0]:
+        line_str = line_str.replace(str(list(line.comments.values())[0][0]), "")
+        line_str = re.sub(r"\s*$", "", line_str)
+
+    if len(line_str) <= line_length:
+        raise CannotSplit(
+            "The string itself is not what is causing this line to be too long."
+        )
+
+    if line.comments and len(line.comments.values()) > 1:
+        raise CannotSplit("Multiple inline comments detected.")
+
+    for leaf in line.leaves:
+        value = leaf.value.lstrip(PREFIX_CHARS)
+        if value[:3] in {'"""', "'''"}:
+            raise CannotSplit("This split function does not work on multiline strings.")
+
+    if (
+        line.comments
+        and list(line.comments.values())[0]
+        and re.match(
+            r"^#\s*([a-z_0-9]+:.*|noqa)\s*$",
+            list(line.comments.values())[0][0].value,
+            re.IGNORECASE,
+        )
+    ):
+        raise CannotSplit(
+            "Line appears to end with an inline pragma comment. Splitting the line "
+            "could modify the pragma's behavior."
+        )
 
 
 def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
@@ -2958,19 +2966,6 @@ def get_string_prefix(string: str) -> str:
         prefix_idx += 1
 
     return prefix
-
-
-def check_that_string_is_the_problem(line: Line, line_length: int) -> None:
-    line_str = str(line).strip("\n")
-    line_str = re.sub(r"(% \(.*\)?|['\"]\.[A-Za-z_0-9]+\(.*\)?)", "", line_str)
-    if line.comments and list(line.comments.values())[0]:
-        line_str = line_str.replace(str(list(line.comments.values())[0][0]), "")
-        line_str = re.sub(r"\s*$", "", line_str)
-
-    if len(line_str) <= line_length:
-        raise CannotSplit(
-            "The string itself is not what is causing this line to be too long."
-        )
 
 
 def left_hand_split(line: Line, _features: Collection[Feature] = ()) -> Iterator[Line]:
