@@ -2497,12 +2497,15 @@ def merge_first_string_group(line: Line) -> Line:
     prefix = ""
     QUOTE = line.leaves[next_str_idx].value[-1]
     num_of_strings = 0
+    at_least_one_string_contains_spaces = False
     while line.leaves[next_str_idx].type == token.STRING:
         num_of_strings += 1
 
         naked_last_string_value = string_value[len(prefix) :].strip(QUOTE)
 
         next_string_value = line.leaves[next_str_idx].value
+        if " " in next_string_value:
+            at_least_one_string_contains_spaces = True
 
         if not prefix:
             prefix = get_string_prefix(next_string_value)
@@ -2513,6 +2516,9 @@ def merge_first_string_group(line: Line) -> Line:
             prefix + QUOTE + naked_last_string_value + naked_next_string_value + QUOTE
         )
         next_str_idx += 1
+
+    if not at_least_one_string_contains_spaces:
+        return line
 
     string_leaf = Leaf(token.STRING, string_value)
     if atom_node:
