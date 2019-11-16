@@ -2936,11 +2936,13 @@ def insert_str_child_factory(string_leaf: Leaf) -> Callable[[LN], None]:
 
 
 def replace_child(old_child: LN, new_child: LN) -> None:
-    tmp_parent = old_child.parent
-    if tmp_parent:
-        tmp_child_idx = old_child.remove()
-        if tmp_child_idx is not None:
-            tmp_parent.insert_child(tmp_child_idx, new_child)
+    parent = old_child.parent
+    if not parent:
+        return
+
+    child_idx = old_child.remove()
+    if child_idx is not None:
+        parent.insert_child(child_idx, new_child)
 
 
 def normalize_f_string(string: str, prefix: str) -> str:
