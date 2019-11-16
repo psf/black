@@ -2410,6 +2410,7 @@ def split_line(
         yield line
         return
 
+    # Merge strings that were split across multiple lines using backslashes.
     for leaf in line.leaves:
         if leaf.type == token.STRING and leaf.value.lstrip(PREFIX_CHARS)[:3] not in {
             '"""',
@@ -2610,9 +2611,14 @@ def string_split(
         tokens[1]
         in [token.EQUAL, token.COLON, token.PLUSEQUAL, token.MINEQUAL, token.STAREQUAL]
     ) and (
-        tokens[2] == token.STRING
-        or tokens[2:4] == (token.LPAR, token.STRING)
-        and (len(tokens) < 5 or tokens[4] != token.COMMA)
+        tokens[2:5]
+        in [
+            (token.STRING,),
+            (token.STRING, token.COMMA),
+            (token.LPAR, token.STRING, token.RPAR),
+            (token.LPAR, token.STRING, token.PERCENT),
+            (token.LPAR, token.STRING, token.DOT),
+        ]
     ):
         for new_line in string_assignment_split(line):
             yield new_line
