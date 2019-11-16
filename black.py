@@ -2687,74 +2687,6 @@ def string_split(
             )
 
 
-def string_assert_split(line: Line, line_length: int) -> Iterator[Line]:
-    if line.leaves[-1].type == token.STRING:
-        str_idx = -1
-    elif line.leaves[-2].type == token.STRING:
-        str_idx = -2
-    else:
-        raise RuntimeError(
-            f"Something is wrong here. Is this line really an assert statement?: {line}"
-        )
-
-    insert_str_child = insert_str_child_factory(line.leaves[str_idx])
-
-    first_line = Line(depth=line.depth, bracket_tracker=line.bracket_tracker)
-    for old_leaf in line.leaves[: -1 if str_idx == -1 else -3]:
-        new_leaf = Leaf(old_leaf.type, old_leaf.value)
-        replace_child(old_leaf, new_leaf)
-        first_line.append(
-            new_leaf,
-            preformatted=new_leaf.type in [token.RPAR, token.RSQB, token.RBRACE],
-        )
-
-    lpar_leaf = Leaf(token.LPAR, "(")
-    if line.leaves[-3].type == token.LPAR:
-        replace_child(line.leaves[-3], lpar_leaf)
-    else:
-        insert_str_child(lpar_leaf)
-    first_line.append(lpar_leaf)
-    yield first_line
-
-    string_line = Line(depth=line.depth + 1)
-    string_leaf = Leaf(line.leaves[str_idx].type, line.leaves[str_idx].value)
-    insert_str_child(string_leaf)
-    string_line.append(string_leaf)
-    yield string_line
-
-    last_line = Line(depth=line.depth, bracket_tracker=first_line.bracket_tracker)
-    rpar_leaf = Leaf(token.RPAR, ")")
-    if line.leaves[-1].type == token.RPAR:
-        replace_child(line.leaves[-1], rpar_leaf)
-    else:
-        insert_str_child(rpar_leaf)
-    last_line.append(rpar_leaf)
-    yield last_line
-
-
-def insert_str_child_factory(string_leaf: Leaf) -> Callable[[LN], None]:
-    string_parent = string_leaf.parent
-
-    child_idx = None
-    if string_parent:
-        child_idx = string_leaf.remove()
-        STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx
-        if child_idx is None:
-            raise RuntimeError(
-                f"Something is wrong here. If {string_parent} is the parent of "
-                f"{string_leaf}, then how is {string_leaf} not a child of "
-                f"{string_parent}."
-            )
-
-    def insert_str_child(child: LN) -> None:
-        child_idx = STRING_CHILD_IDX_MAP.get(id(string_leaf), None)
-        if string_parent and child_idx is not None:
-            string_parent.insert_child(child_idx, child)
-            STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx + 1
-
-    return insert_str_child
-
-
 def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
     """Splits long strings that are on their own line already."""
     insert_str_child = insert_str_child_factory(line.leaves[0])
@@ -2823,13 +2755,8 @@ def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
         yield next_line
 
         rest_value = prefix + QUOTE + rest_value[idx:]
-        if (
-            "f" in prefix
-            and not re.search(r"\{.+\}", rest_value)
-            and drop_pointless_f_prefix
-        ):
-            tmp_prefix = prefix.replace("f", "")
-            rest_value = tmp_prefix + rest_value[prefix_idx:]
+        if drop_pointless_f_prefix:
+            rest_value = normalize_f_string(rest_value, prefix)
 
         rest_line = Line(depth=string_depth)
         rest_leaf = Leaf(token.STRING, rest_value)
@@ -2962,7 +2889,10 @@ def string_assert_split(line: Line, line_length: int) -> Iterator[Line]:
     for old_leaf in line.leaves[: -1 if str_idx == -1 else -3]:
         new_leaf = Leaf(old_leaf.type, old_leaf.value)
         replace_child(old_leaf, new_leaf)
-        first_line.append(new_leaf, preformatted=True)
+        first_line.append(
+            new_leaf,
+            preformatted=new_leaf.type in [token.RPAR, token.RSQB, token.RBRACE],
+        )
 
     lpar_leaf = Leaf(token.LPAR, "(")
     if line.leaves[-3].type == token.LPAR:
