@@ -2410,6 +2410,10 @@ def split_line(
         yield line
         return
 
+    for leaf in line.leaves:
+        if leaf.type == token.STRING and leaf.value[:3] not in {'"""', "'''"}:
+            leaf.value = leaf.value.replace("\\\n", "")
+
     line = merge_first_string_group(line)
     line_str = str(line).strip("\n")
 
@@ -2753,12 +2757,20 @@ def insert_str_child_factory(string_leaf: Leaf) -> Callable[[LN], None]:
 
 def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
     """Splits long strings that are on their own line already."""
+    check_that_string_is_the_problem(line, line_length)
+
     insert_str_child = insert_str_child_factory(line.leaves[0])
     comma_idx = len(line.leaves) - 1
+
+    has_percent_or_dot = False
+    if len(line.leaves) > 1 and line.leaves[1].type in [token.PERCENT, token.DOT]:
+        has_percent_or_dot = True
+
     ends_with_comma = False
     if line.leaves[comma_idx].type == token.COMMA:
         ends_with_comma = True
 
+    if not has_percent_or_dot and ends_with_comma:
         first_leaf = Leaf(token.LPAR, "(")
         insert_str_child(first_leaf)
 
@@ -2771,7 +2783,7 @@ def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
     else:
         string_depth = line.depth
 
-    rest_value = line.leaves[0].value.replace("\\\n", "")
+    rest_value = line.leaves[0].value
     prefix = get_string_prefix(rest_value)
     prefix_idx = len(prefix)
 
@@ -2830,7 +2842,7 @@ def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
 
     insert_str_child(rest_leaf)
 
-    if len(line.leaves) > 1 and line.leaves[1].type in [token.PERCENT, token.DOT]:
+    if has_percent_or_dot:
         end_idx = len(line.leaves) - (1 if ends_with_comma else 0)
         for i in range(1, end_idx):
             leaf = Leaf(line.leaves[i].type, line.leaves[i].value)
@@ -2893,17 +2905,7 @@ def string_assignment_split(line: Line, line_length: int) -> Iterator[Line]:
     assigned the value of a long constant string, or long lines in which a
     dictionary key is being assigned to the value of a long constant string.
     """
-    line_str = str(line).strip("\n")
-    line_str = re.sub(r"(% \(.*\)?|['\"]\.[A-Za-z_0-9]+\(.*\)?)", "", line_str)
-    if line.comments:
-        line_str = re.sub(
-            r"\s*{}".format(list(line.comments.values())[0][0].value), "", line_str
-        )
-
-    if len(line_str) <= line_length:
-        raise CannotSplit(
-            "The string itself is not what is causing this line to be too long."
-        )
+    check_that_string_is_the_problem(line, line_length)
 
     if line.leaves[2].type == token.STRING:
         str_idx = 2
@@ -2972,6 +2974,20 @@ def string_assignment_split(line: Line, line_length: int) -> Iterator[Line]:
         last_line.append(comma_leaf)
 
     yield last_line
+
+
+def check_that_string_is_the_problem(line: Line, line_length: int) -> None:
+    line_str = str(line).strip("\n")
+    line_str = re.sub(r"(% \(.*\)?|['\"]\.[A-Za-z_0-9]+\(.*\)?)", "", line_str)
+    if line.comments:
+        line_str = re.sub(
+            r"\s*{}".format(list(line.comments.values())[0][0].value), "", line_str
+        )
+
+    if len(line_str) <= line_length:
+        raise CannotSplit(
+            "The string itself is not what is causing this line to be too long."
+        )
 
 
 def left_hand_split(line: Line, _features: Collection[Feature] = ()) -> Iterator[Line]:
