@@ -2870,32 +2870,6 @@ def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
         yield rest_line
 
 
-def replace_child(old_child: LN, new_child: LN) -> None:
-    tmp_parent = old_child.parent
-    if tmp_parent:
-        tmp_child_idx = old_child.remove()
-        if tmp_child_idx is not None:
-            tmp_parent.insert_child(tmp_child_idx, new_child)
-
-
-def normalize_f_string(string: str, prefix: str) -> str:
-    if "f" in prefix and not re.search(r"\{.+\}", string):
-        tmp_prefix = prefix.replace("f", "")
-        return tmp_prefix + string[len(prefix) :]
-
-    return string
-
-
-def get_string_prefix(string: str) -> str:
-    prefix = ""
-    prefix_idx = 0
-    while string[prefix_idx] in PREFIX_CHARS:
-        prefix += string[prefix_idx]
-        prefix_idx += 1
-
-    return prefix
-
-
 def string_assignment_split(line: Line, line_length: int) -> Iterator[Line]:
     """
     Splits long lines in which a variable is being assigned the value of a long
@@ -2970,6 +2944,97 @@ def string_assignment_split(line: Line, line_length: int) -> Iterator[Line]:
         last_line.append(comma_leaf)
 
     yield last_line
+
+
+def string_assert_split(line: Line, line_length: int) -> Iterator[Line]:
+    if line.leaves[-1].type == token.STRING:
+        str_idx = -1
+    elif line.leaves[-2].type == token.STRING:
+        str_idx = -2
+    else:
+        raise RuntimeError(
+            f"Something is wrong here. Is this line really an assert statement?: {line}"
+        )
+
+    insert_str_child = insert_str_child_factory(line.leaves[str_idx])
+
+    first_line = Line(depth=line.depth, bracket_tracker=line.bracket_tracker)
+    for old_leaf in line.leaves[: -1 if str_idx == -1 else -3]:
+        new_leaf = Leaf(old_leaf.type, old_leaf.value)
+        replace_child(old_leaf, new_leaf)
+        first_line.append(new_leaf, preformatted=True)
+
+    lpar_leaf = Leaf(token.LPAR, "(")
+    if line.leaves[-3].type == token.LPAR:
+        replace_child(line.leaves[-3], lpar_leaf)
+    else:
+        insert_str_child(lpar_leaf)
+    first_line.append(lpar_leaf)
+    yield first_line
+
+    string_line = Line(depth=line.depth + 1)
+    string_leaf = Leaf(line.leaves[str_idx].type, line.leaves[str_idx].value)
+    insert_str_child(string_leaf)
+    string_line.append(string_leaf)
+    yield string_line
+
+    last_line = Line(depth=line.depth, bracket_tracker=first_line.bracket_tracker)
+    rpar_leaf = Leaf(token.RPAR, ")")
+    if line.leaves[-1].type == token.RPAR:
+        replace_child(line.leaves[-1], rpar_leaf)
+    else:
+        insert_str_child(rpar_leaf)
+    last_line.append(rpar_leaf)
+    yield last_line
+
+
+def insert_str_child_factory(string_leaf: Leaf) -> Callable[[LN], None]:
+    string_parent = string_leaf.parent
+
+    child_idx = None
+    if string_parent:
+        child_idx = string_leaf.remove()
+        STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx
+        if child_idx is None:
+            raise RuntimeError(
+                f"Something is wrong here. If {string_parent} is the parent of "
+                f"{string_leaf}, then how is {string_leaf} not a child of "
+                f"{string_parent}."
+            )
+
+    def insert_str_child(child: LN) -> None:
+        child_idx = STRING_CHILD_IDX_MAP.get(id(string_leaf), None)
+        if string_parent and child_idx is not None:
+            string_parent.insert_child(child_idx, child)
+            STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx + 1
+
+    return insert_str_child
+
+
+def replace_child(old_child: LN, new_child: LN) -> None:
+    tmp_parent = old_child.parent
+    if tmp_parent:
+        tmp_child_idx = old_child.remove()
+        if tmp_child_idx is not None:
+            tmp_parent.insert_child(tmp_child_idx, new_child)
+
+
+def normalize_f_string(string: str, prefix: str) -> str:
+    if "f" in prefix and not re.search(r"\{.+\}", string):
+        tmp_prefix = prefix.replace("f", "")
+        return tmp_prefix + string[len(prefix) :]
+
+    return string
+
+
+def get_string_prefix(string: str) -> str:
+    prefix = ""
+    prefix_idx = 0
+    while string[prefix_idx] in PREFIX_CHARS:
+        prefix += string[prefix_idx]
+        prefix_idx += 1
+
+    return prefix
 
 
 def check_that_string_is_the_problem(line: Line, line_length: int) -> None:
