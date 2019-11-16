@@ -2411,7 +2411,10 @@ def split_line(
         return
 
     for leaf in line.leaves:
-        if leaf.type == token.STRING and leaf.value[:3] not in {'"""', "'''"}:
+        if leaf.type == token.STRING and leaf.value.lstrip(PREFIX_CHARS)[:3] not in {
+            '"""',
+            "'''",
+        }:
             leaf.value = leaf.value.replace("\\\n", "")
 
     line = merge_first_string_group(line)
