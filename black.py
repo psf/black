@@ -2457,10 +2457,9 @@ def split_line(
                 standalone_comment_split,
                 str_split,
                 rhs,
-                string_assert_split,
             ]
         else:
-            split_funcs = [str_split, rhs, string_assert_split]
+            split_funcs = [str_split, rhs]
     for split_func in split_funcs:
         # We are accumulating lines in `result` because we might want to abort
         # mission and return the original line in the end, or attempt a different
@@ -2615,6 +2614,8 @@ def string_split(
         if is_line_short_enough(line, line_length=line_length):
             raise CannotSplit("Line is already short enough. No reason to split.")
 
+        check_that_string_is_the_problem(line, line_length)
+
         if line.comments and len(line.comments.values()) > 1:
             raise CannotSplit("Multiple inline comments detected.")
 
@@ -2660,37 +2661,33 @@ def string_split(
         for new_line in string_assignment_split(line, line_length):
             yield new_line
     else:
-        raise CannotSplit(
-            f"Unable to match this line's tokens with a valid split function: {tokens}"
-        )
+        parent = line.leaves[0].parent
+        is_assert_stmt = False
+        while parent:
+            if parent.type == syms.assert_stmt:
+                is_assert_stmt = True
+                break
+            parent = parent.parent
+
+        tokens = tuple([leaf.type for leaf in line.leaves])
+        is_last_line_with_string = False
+        if (
+            tokens[-2:] == (token.COMMA, token.STRING)
+            or tokens[-4:] == (token.COMMA, token.LPAR, token.STRING, token.RPAR,)
+        ) and tokens[0] in [token.RPAR, token.RSQB, token.RBRACE]:
+            is_last_line_with_string = True
+
+        if is_assert_stmt and is_last_line_with_string:
+            for new_line in string_assert_split(line, line_length):
+                yield new_line
+        else:
+            raise CannotSplit(
+                "Unable to match this line's tokens with a valid split function: "
+                f"{tokens}"
+            )
 
 
-def string_assert_split(
-    line: Line, _features: Collection[Feature] = ()
-) -> Iterator[Line]:
-    parent = line.leaves[0].parent
-    is_assert_stmt = False
-    while parent:
-        if parent.type == syms.assert_stmt:
-            is_assert_stmt = True
-            break
-        parent = parent.parent
-
-    if not is_assert_stmt:
-        raise CannotSplit("This split function only handles assertion statements.")
-
-    tokens = tuple([leaf.type for leaf in line.leaves])
-    if tokens[-2:] != (token.COMMA, token.STRING) and tokens[-4:] != (
-        token.COMMA,
-        token.LPAR,
-        token.STRING,
-        token.RPAR,
-    ):
-        raise CannotSplit(
-            "This split function only handles assert statements which end with "
-            "constant strings."
-        )
-
+def string_assert_split(line: Line, line_length: int) -> Iterator[Line]:
     if line.leaves[-1].type == token.STRING:
         str_idx = -1
     elif line.leaves[-2].type == token.STRING:
@@ -2706,7 +2703,10 @@ def string_assert_split(
     for old_leaf in line.leaves[: -1 if str_idx == -1 else -3]:
         new_leaf = Leaf(old_leaf.type, old_leaf.value)
         replace_child(old_leaf, new_leaf)
-        first_line.append(new_leaf, preformatted=True)
+        first_line.append(
+            new_leaf,
+            preformatted=new_leaf.type in [token.RPAR, token.RSQB, token.RBRACE],
+        )
 
     lpar_leaf = Leaf(token.LPAR, "(")
     if line.leaves[-3].type == token.LPAR:
@@ -2757,8 +2757,6 @@ def insert_str_child_factory(string_leaf: Leaf) -> Callable[[LN], None]:
 
 def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
     """Splits long strings that are on their own line already."""
-    check_that_string_is_the_problem(line, line_length)
-
     insert_str_child = insert_str_child_factory(line.leaves[0])
     comma_idx = len(line.leaves) - 1
 
@@ -2905,8 +2903,6 @@ def string_assignment_split(line: Line, line_length: int) -> Iterator[Line]:
     assigned the value of a long constant string, or long lines in which a
     dictionary key is being assigned to the value of a long constant string.
     """
-    check_that_string_is_the_problem(line, line_length)
-
     if line.leaves[2].type == token.STRING:
         str_idx = 2
     elif line.leaves[3].type == token.STRING:
@@ -2979,10 +2975,9 @@ def string_assignment_split(line: Line, line_length: int) -> Iterator[Line]:
 def check_that_string_is_the_problem(line: Line, line_length: int) -> None:
     line_str = str(line).strip("\n")
     line_str = re.sub(r"(% \(.*\)?|['\"]\.[A-Za-z_0-9]+\(.*\)?)", "", line_str)
-    if line.comments:
-        line_str = re.sub(
-            r"\s*{}".format(list(line.comments.values())[0][0].value), "", line_str
-        )
+    if line.comments and list(line.comments.values())[0]:
+        line_str = line_str.replace(str(list(line.comments.values())[0][0]), "")
+        line_str = re.sub(r"\s*$", "", line_str)
 
     if len(line_str) <= line_length:
         raise CannotSplit(
