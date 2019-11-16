@@ -2565,9 +2565,9 @@ def get_string_group_index(line: Line) -> int:
         if leaf.type == token.STRING:
             set_of_quotes.add(leaf.value[-1])
 
-            tmp_prefix = get_string_prefix(leaf.value)
-            if tmp_prefix:
-                set_of_prefixes.add(tmp_prefix)
+            prefix = get_string_prefix(leaf.value)
+            if prefix:
+                set_of_prefixes.add(prefix)
 
             if id(leaf) in line.comments:
                 num_of_inline_string_comments += 1
@@ -2947,10 +2947,9 @@ def replace_child(old_child: LN, new_child: LN) -> None:
 
 def normalize_f_string(string: str, prefix: str) -> str:
     if "f" in prefix and not re.search(r"\{.+\}", string):
-        tmp_prefix = prefix.replace("f", "")
-        return tmp_prefix + string[len(prefix) :]
-
-    return string
+        return prefix.replace("f", "") + string[len(prefix) :]
+    else:
+        return string
 
 
 def get_string_prefix(string: str) -> str:
