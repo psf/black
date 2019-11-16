@@ -275,9 +275,7 @@ long_tuple = (
     "Jaguar",
 )
 
-assert (
-    some_type_of_boolean_expression
-), (
+assert some_type_of_boolean_expression, (
     "Followed by a really really really long string that is used to provide context to "
     "the AssertionError exception."
 )

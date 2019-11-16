@@ -2614,33 +2614,18 @@ def string_split(
         or tokens[2:4] == (token.LPAR, token.STRING)
         and (len(tokens) < 5 or tokens[4] != token.COMMA)
     ):
-        for new_line in string_assignment_split(line, line_length):
+        for new_line in string_assignment_split(line):
+            yield new_line
+    elif line.leaves[0].value == "assert" and tokens[-2:] in [
+        (token.COMMA, token.STRING),
+        (token.STRING, token.RPAR),
+    ]:
+        for new_line in string_assert_split(line):
             yield new_line
     else:
-        parent = line.leaves[0].parent
-        is_assert_stmt = False
-        while parent:
-            if parent.type == syms.assert_stmt:
-                is_assert_stmt = True
-                break
-            parent = parent.parent
-
-        tokens = tuple([leaf.type for leaf in line.leaves])
-        is_last_line_with_string = False
-        if (
-            tokens[-2:] == (token.COMMA, token.STRING)
-            or tokens[-4:] == (token.COMMA, token.LPAR, token.STRING, token.RPAR,)
-        ) and tokens[0] in [token.RPAR, token.RSQB, token.RBRACE]:
-            is_last_line_with_string = True
-
-        if is_assert_stmt and is_last_line_with_string:
-            for new_line in string_assert_split(line, line_length):
-                yield new_line
-        else:
-            raise CannotSplit(
-                "Unable to match this line's tokens with a valid split function: "
-                f"{tokens}"
-            )
+        raise CannotSplit(
+            f"Unable to match this line's tokens with a valid split function: {tokens}"
+        )
 
 
 def validate_string_split(line: Line, line_length: int) -> None:
@@ -2648,7 +2633,9 @@ def validate_string_split(line: Line, line_length: int) -> None:
         raise CannotSplit("Line is already short enough. No reason to split.")
 
     line_str = str(line).strip("\n")
-    line_str = re.sub(r"(% \(.*\)?|['\"]\.[A-Za-z_0-9]+\(.*\)?)", "", line_str)
+    line_str = re.sub(
+        r"(assert .*,|% \(.*\)?|['\"]\.[A-Za-z_0-9]+\(.*\)?)", "", line_str
+    )
     if line.comments and list(line.comments.values())[0]:
         line_str = line_str.replace(str(list(line.comments.values())[0][0]), "")
         line_str = re.sub(r"\s*$", "", line_str)
@@ -2791,7 +2778,7 @@ def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
         yield rest_line
 
 
-def string_assignment_split(line: Line, line_length: int) -> Iterator[Line]:
+def string_assignment_split(line: Line) -> Iterator[Line]:
     """
     Splits long lines in which a variable is being assigned the value of a long
     constant string, long lines in which a function's keyword argument is being
@@ -2867,7 +2854,7 @@ def string_assignment_split(line: Line, line_length: int) -> Iterator[Line]:
     yield last_line
 
 
-def string_assert_split(line: Line, line_length: int) -> Iterator[Line]:
+def string_assert_split(line: Line) -> Iterator[Line]:
     if line.leaves[-1].type == token.STRING:
         str_idx = -1
     elif line.leaves[-2].type == token.STRING:
@@ -2883,10 +2870,7 @@ def string_assert_split(line: Line, line_length: int) -> Iterator[Line]:
     for old_leaf in line.leaves[: -1 if str_idx == -1 else -3]:
         new_leaf = Leaf(old_leaf.type, old_leaf.value)
         replace_child(old_leaf, new_leaf)
-        first_line.append(
-            new_leaf,
-            preformatted=new_leaf.type in [token.RPAR, token.RSQB, token.RBRACE],
-        )
+        first_line.append(new_leaf)
 
     lpar_leaf = Leaf(token.LPAR, "(")
     if line.leaves[-3].type == token.LPAR:
