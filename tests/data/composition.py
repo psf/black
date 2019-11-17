@@ -44,8 +44,7 @@ class C:
             items=items[:num_items]
         )
         return (
-            "Utterly failed doctest test for %s\n"
-            '  File "%s", line %s, in %s\n\n%s'
+            'Utterly failed doctest test for %s\n   File "%s", line %s, in %s\n\n%s'
             % (test.name, test.filename, lineno, lname, err)
         )
 

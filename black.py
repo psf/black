@@ -767,7 +767,10 @@ def format_str(src_contents: str, *, mode: FileMode) -> FileContent:
         for _ in range(before):
             dst_contents.append(str(empty_line))
         for line in split_line(
-            current_line, line_length=mode.line_length, features=split_line_features
+            current_line,
+            line_length=mode.line_length,
+            normalize_strings=mode.string_normalization,
+            features=split_line_features,
         ):
             dst_contents.append(str(line))
     return "".join(dst_contents)
@@ -2395,7 +2398,10 @@ def make_comment(content: str) -> str:
 
 
 def split_line(
-    line: Line, line_length: int, features: Collection[Feature] = ()
+    line: Line,
+    line_length: int,
+    normalize_strings: bool,
+    features: Collection[Feature] = (),
 ) -> Iterator[Line]:
     """Split a `line` into potentially many lines.
 
@@ -2418,7 +2424,7 @@ def split_line(
         }:
             leaf.value = leaf.value.replace("\\\n", "")
 
-    line = merge_first_string_group(line)
+    line = merge_first_string_group(line, normalize_strings=normalize_strings)
     line_str = str(line).strip("\n")
 
     if (
@@ -2453,7 +2459,7 @@ def split_line(
             yield from right_hand_split(line, line_length=1, features=features)
 
         def str_split(line: Line, features: Collection[Feature]) -> Iterator[Line]:
-            yield from string_split(line, line_length, features)
+            yield from string_split(line, line_length, normalize_strings, features)
 
         if line.inside_brackets:
             split_funcs = [
@@ -2474,7 +2480,14 @@ def split_line(
                 if str(l).strip("\n") == line_str:
                     raise CannotSplit("Split function returned an unchanged result")
 
-                result.extend(split_line(l, line_length=line_length, features=features))
+                result.extend(
+                    split_line(
+                        l,
+                        line_length=line_length,
+                        normalize_strings=normalize_strings,
+                        features=features,
+                    )
+                )
         except CannotSplit:
             continue
 
@@ -2486,7 +2499,7 @@ def split_line(
         yield line
 
 
-def merge_first_string_group(line: Line) -> Line:
+def merge_first_string_group(line: Line, normalize_strings: bool) -> Line:
     first_str_idx = next_str_idx = get_string_group_index(line)
 
     if first_str_idx < 0:
@@ -2510,7 +2523,16 @@ def merge_first_string_group(line: Line) -> Line:
         if not prefix:
             prefix = get_string_prefix(next_string_value)
 
-        naked_next_string_value = next_string_value[len(prefix) :].strip(QUOTE)
+        naked_next_string_value = next_string_value[len(prefix) :].strip(
+            next_string_value[-1]
+        )
+
+        if QUOTE in naked_next_string_value:
+            QUOTE = "'"
+            other_quote = '"' if QUOTE == "'" else "'"
+            naked_next_string_value = naked_next_string_value.replace(
+                QUOTE, "\\" + QUOTE
+            ).replace("\\" + other_quote, other_quote)
 
         string_value = (
             prefix + QUOTE + naked_last_string_value + naked_next_string_value + QUOTE
@@ -2521,6 +2543,9 @@ def merge_first_string_group(line: Line) -> Line:
         return line
 
     string_leaf = Leaf(token.STRING, string_value)
+    if normalize_strings:
+        normalize_string_quotes(string_leaf)
+
     if atom_node:
         grandparent = atom_node.parent
         if grandparent is not None:
@@ -2566,12 +2591,9 @@ def merge_first_string_group(line: Line) -> Line:
 
 def get_string_group_index(line: Line) -> int:
     num_of_inline_string_comments = 0
-    set_of_quotes = set()
     set_of_prefixes = set()
     for leaf in line.leaves:
         if leaf.type == token.STRING:
-            set_of_quotes.add(leaf.value[-1])
-
             prefix = get_string_prefix(leaf.value)
             if prefix:
                 set_of_prefixes.add(prefix)
@@ -2579,11 +2601,7 @@ def get_string_group_index(line: Line) -> int:
             if id(leaf) in line.comments:
                 num_of_inline_string_comments += 1
 
-    if (
-        num_of_inline_string_comments > 1
-        or len(set_of_quotes) != 1
-        or len(set_of_prefixes) > 1
-    ):
+    if num_of_inline_string_comments > 1 or len(set_of_prefixes) > 1:
         return -1
 
     for i, leaf in enumerate(line.leaves):
@@ -2598,7 +2616,10 @@ def get_string_group_index(line: Line) -> int:
 
 
 def string_split(
-    line: Line, line_length: int, _features: Collection[Feature] = ()
+    line: Line,
+    line_length: int,
+    normalize_strings: bool,
+    _features: Collection[Feature] = (),
 ) -> Iterator[Line]:
     """Split long strings."""
     tokens = tuple([leaf.type for leaf in line.leaves])
@@ -2611,7 +2632,7 @@ def string_split(
         (token.STRING, token.DOT),
         (token.STRING, token.PERCENT),
     ]:
-        for new_line in string_atomic_split(line, line_length):
+        for new_line in string_atomic_split(line, line_length, normalize_strings):
             yield new_line
     elif (
         tokens[1]
@@ -2628,10 +2649,10 @@ def string_split(
     ):
         for new_line in string_assignment_split(line):
             yield new_line
-    elif line.leaves[0].value == "assert" and tokens[-2:] in [
-        (token.COMMA, token.STRING),
-        (token.STRING, token.RPAR),
-    ]:
+    elif line.leaves[0].value == "assert" and (
+        tokens[-2:] == (token.COMMA, token.STRING)
+        or tokens[-4:] == (token.COMMA, token.LPAR, token.STRING, token.RPAR)
+    ):
         for new_line in string_assert_split(line):
             yield new_line
     else:
@@ -2680,7 +2701,9 @@ def validate_string_split(line: Line, line_length: int) -> None:
         )
 
 
-def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
+def string_atomic_split(
+    line: Line, line_length: int, normalize_strings: bool
+) -> Iterator[Line]:
     """Splits long strings that are on their own line already."""
     insert_str_child = insert_str_child_factory(line.leaves[0])
     comma_idx = len(line.leaves) - 1
@@ -2745,6 +2768,10 @@ def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
         next_leaf = Leaf(token.STRING, next_value)
         next_line.append(next_leaf)
         insert_str_child(next_leaf)
+
+        if normalize_strings:
+            normalize_string_quotes(next_leaf)
+
         yield next_line
 
         rest_value = prefix + QUOTE + rest_value[idx:]
@@ -2759,6 +2786,9 @@ def string_atomic_split(line: Line, line_length: int) -> Iterator[Line]:
         rest_line.comments = line.comments
 
     insert_str_child(rest_leaf)
+
+    if normalize_strings:
+        normalize_string_quotes(rest_leaf)
 
     if has_percent_or_dot:
         end_idx = len(line.leaves) - (1 if ends_with_comma else 0)
@@ -2842,8 +2872,18 @@ def string_assignment_split(line: Line) -> Iterator[Line]:
     if len(line.leaves) - 1 >= perc_or_dot_idx and line.leaves[
         perc_or_dot_idx
     ].type in [token.PERCENT, token.DOT]:
+        lpar_count = 0
         for i in range(perc_or_dot_idx, len(line.leaves) - 1):
             leaf = Leaf(line.leaves[i].type, line.leaves[i].value)
+
+            if leaf.type == token.LPAR:
+                lpar_count += 1
+            if leaf.type == token.RPAR:
+                if lpar_count > 0:
+                    lpar_count -= 1
+                else:
+                    break
+
             replace_child(line.leaves[i], leaf)
             string_line.append(leaf)
 
