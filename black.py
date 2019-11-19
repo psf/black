@@ -1290,7 +1290,7 @@ class Line:
             if depth_counter < 2 and leaf.type == token.COMMA:
                 comma_indexes.append(leaf_index)
             if leaf.type in OPENING_BRACKETS:
-                # we have more that one top-level collection, abort
+                # more that one top-level collection
                 if depth_counter == 0 and opener is not None and opener.value:
                     return False
 
@@ -1313,7 +1313,7 @@ class Line:
                 if leaf.value:
                     depth_counter -= 1
 
-                # brackets are not valid, abort just in case
+                # brackets are not valid
                 if depth_counter < 0:
                     return False
 
@@ -1324,21 +1324,21 @@ class Line:
                 closer = leaf
                 closer_index = leaf_index
 
-        # no brackets found - abort
+        # no brackets found
         if opener is None or closer is None:
             return False
 
-        # no commas found in collection - abort
+        # no commas found in collection
         if not comma_indexes:
             return False
 
-        # 1-item tuple - abort
+        # 1-item tuple
         if opener.type == token.LPAR and len(comma_indexes) == 1:
             return False
 
         last_comma_index = comma_indexes[-1]
 
-        # last comma is not just before closing bracket - abort
+        # last comma is not just before closing bracket
         if last_comma_index != closer_index - 1:
             return False
 
