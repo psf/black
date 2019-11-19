@@ -1272,9 +1272,6 @@ class Line:
 
         Note that the trailing comma in a 1-tuple and a 1-subscript is not optional.
         """
-        if self.is_def or self.is_import:
-            return False
-
         if self.inside_brackets:
             return False
 
@@ -1290,7 +1287,7 @@ class Line:
         depth_counter = 0
         for leaf_index, leaf in enumerate(self.leaves):
             # use comma indexes only on in the top-level collection
-            if depth_counter == 1 and leaf.type == token.COMMA:
+            if depth_counter < 2 and leaf.type == token.COMMA:
                 comma_indexes.append(leaf_index)
             if leaf.type in OPENING_BRACKETS:
                 # we have more that one top-level collection, abort

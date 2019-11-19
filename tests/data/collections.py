@@ -50,6 +50,15 @@ for (x,) in (1,), (2,), (3,):
 division_result_tuple = (6/2,)
 print("foo %r", (foo.bar,))
 
+subscript_one_item[1]
+subscript_multiple_items[1, 2, {3: 4}]
+subscript_one_item = subscript_one_item[1]
+subscript_multiple_items = subscript_multiple_items[1, 2, {3: 4}]
+subscript_one_item[1,]
+subscript_multiple_items[1, 2, {3: 4},]
+subscript_one_item = subscript_one_item[1,]
+subscript_multiple_items = subscript_multiple_items[1, 2, {3: 4},]
+
 if True:
     IGNORED_TYPES_FOR_ATTRIBUTE_CHECKING = (
         Config.IGNORED_TYPES_FOR_ATTRIBUTE_CHECKING
@@ -142,6 +151,21 @@ for (x,) in (1,), (2,), (3,):
 
 division_result_tuple = (6 / 2,)
 print("foo %r", (foo.bar,))
+
+subscript_one_item[1]
+subscript_multiple_items[1, 2, {3: 4}]
+subscript_one_item = subscript_one_item[1]
+subscript_multiple_items = subscript_multiple_items[1, 2, {3: 4}]
+subscript_one_item[
+    1,
+]
+subscript_multiple_items[
+    1, 2, {3: 4},
+]
+subscript_one_item = subscript_one_item[1,]
+subscript_multiple_items = subscript_multiple_items[
+    1, 2, {3: 4},
+]
 
 if True:
     IGNORED_TYPES_FOR_ATTRIBUTE_CHECKING = (
