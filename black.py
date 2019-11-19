@@ -1270,85 +1270,79 @@ class Line:
     def is_collection_with_optional_trailing_comma(self) -> bool:
         """Is this line a collection literal with a trailing comma that's optional?
 
-        Note that the trailing comma in a 1-tuple is not optional.
+        Note that the trailing comma in a 1-tuple and a 1-subscript is not optional.
         """
+        if self.is_def or self.is_import:
+            return False
+
         if self.inside_brackets:
             return False
 
         if not self.leaves or len(self.leaves) < 4:
             return False
 
-        # Look for and address a trailing colon.
-        close_index = len(self.leaves) - 1
-        closer = self.leaves[close_index]
-
-        # ignore trailing colon
-        if closer.type == token.COLON:
-            close_index -= 1
-            closer = self.leaves[close_index]
-
-        if closer.type not in CLOSING_BRACKETS:
-            return False
-
-        # try to find the last visible closer
-        # if it exists - use it as a closer
-        if closer.value == "":
-            visible_close_index = close_index
-            while visible_close_index > 0:
-                visible_close_index -= 1
-                visible_closer = self.leaves[visible_close_index]
-                if visible_closer.type not in CLOSING_BRACKETS:
-                    break
-                if visible_closer.value == "":
-                    continue
-
-                closer = visible_closer
-                close_index = visible_close_index
-                break
-
-        if closer.type not in CLOSING_BRACKETS:
-            return False
-
-        if closer.type == token.RPAR:
-            # Tuples require an extra check, because if there's only
-            # one element in the tuple removing the comma unmakes the
-            # tuple.
-            #
-            # We also check for parens before looking for the trailing
-            # comma because in some cases (eg assigning a dict
-            # literal) the literal gets wrapped in temporary parens
-            # during parsing. This case is covered by the
-            # collections.py test data.
-            opener = closer.opening_bracket
-            for _open_index, leaf in enumerate(self.leaves):
-                if leaf is opener:
-                    break
-
-            else:
-                # Couldn't find the matching opening paren, play it safe.
-                return False
-
-            commas = 0
-            comma_depth = self.leaves[close_index - 1].bracket_depth
-            for leaf in self.leaves[_open_index + 1 : close_index]:
-                if leaf.bracket_depth == comma_depth and leaf.type == token.COMMA:
-                    commas += 1
-            if commas > 1:
-                # We haven't looked yet for the trailing comma because
-                # we might also have caught noop parens.
-                return self.leaves[close_index - 1].type == token.COMMA
-
-            elif commas == 1:
-                return False  # it's either a one-tuple or didn't have a trailing comma
-
-            if self.leaves[close_index - 1].type in CLOSING_BRACKETS:
-                close_index -= 1
-                closer = self.leaves[close_index]
-                if closer.type == token.RPAR:
-                    # TODO: this is a gut feeling. Will we ever see this?
+        # make sure that we have only one top-level collection
+        opener: Optional[Leaf] = None
+        closer: Optional[Leaf] = None
+        opener_index: int = 0
+        closer_index: int = 0
+        comma_indexes: List[int] = []
+        depth_counter = 0
+        for leaf_index, leaf in enumerate(self.leaves):
+            # use comma indexes only on in the top-level collection
+            if depth_counter == 1 and leaf.type == token.COMMA:
+                comma_indexes.append(leaf_index)
+            if leaf.type in OPENING_BRACKETS:
+                # we have more that one top-level collection, abort
+                if depth_counter == 0 and opener is not None and opener.value:
                     return False
 
-        if self.leaves[close_index - 1].type != token.COMMA:
+                # do not increase depth in bracket is invisible
+                if leaf.value:
+                    depth_counter += 1
+
+                # visible opener already found, skip the rest
+                if opener and opener.value:
+                    continue
+
+                # this opener is not right after the previous one, skip it
+                if opener and leaf_index > opener_index + 1:
+                    continue
+
+                opener_index = leaf_index
+                opener = leaf
+            if leaf.type in CLOSING_BRACKETS:
+                # do not decrease depth in bracket is invisible
+                if leaf.value:
+                    depth_counter -= 1
+
+                # brackets are not valid, abort just in case
+                if depth_counter < 0:
+                    return False
+
+                # visible closer already found, skip invisible
+                if closer and not leaf.value and leaf_index == closer_index + 1:
+                    continue
+
+                closer = leaf
+                closer_index = leaf_index
+
+        # no brackets found - abort
+        if opener is None or closer is None:
+            return False
+
+        # no commas found in collection - abort
+        if not comma_indexes:
+            return False
+
+        # 1-item tuple - abort
+        if opener.type == token.LPAR and len(comma_indexes) == 1:
+            return False
+
+        last_comma_index = comma_indexes[-1]
+
+        # last comma is not just before closing bracket - abort
+        if last_comma_index != closer_index - 1:
             return False
 
         return True
