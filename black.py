@@ -1281,9 +1281,9 @@ class Line:
         # make sure that we have only one top-level collection
         opener: Optional[Leaf] = None
         closer: Optional[Leaf] = None
-        opener_index: int = 0
-        closer_index: int = 0
-        comma_indexes: List[int] = []
+        opener_index: LeafID = 0
+        closer_index: LeafID = 0
+        comma_indexes: List[LeafID] = []
         depth_counter = 0
         for leaf_index, leaf in enumerate(self.leaves):
             # use comma indexes only on in the top-level collection
