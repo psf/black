@@ -1278,15 +1278,33 @@ class Line:
         if not self.leaves or len(self.leaves) < 4:
             return False
 
-        # Look for and address a visible trailing colon.
-        # ignore trailing colon
+        # Look for and address a trailing colon.
         close_index = len(self.leaves) - 1
         closer = self.leaves[close_index]
-        while closer.type == token.COLON or closer.value == "":
-            close_index = close_index - 1
-            if close_index == 0:
-                return False
+
+        # ignore trailing colon
+        if closer.type == token.COLON:
+            close_index -= 1
             closer = self.leaves[close_index]
+
+        if closer.type not in CLOSING_BRACKETS:
+            return False
+
+        # try to find the last visible closer
+        # if it exists - use it as a closer
+        if closer.value == "":
+            visible_close_index = close_index
+            while visible_close_index > 0:
+                visible_close_index -= 1
+                visible_closer = self.leaves[visible_close_index]
+                if visible_closer.type not in CLOSING_BRACKETS:
+                    break
+                if visible_closer.value == "":
+                    continue
+
+                closer = visible_closer
+                close_index = visible_close_index
+                break
 
         if closer.type not in CLOSING_BRACKETS:
             return False
