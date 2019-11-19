@@ -55,6 +55,19 @@ def example8():
     return (((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((None)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
 
 
+
+def example_tuple():
+    return ((((1, 2, 3))))
+
+
+def example_tuple_trailing_comma():
+    return (((1, 2, 3,)))
+
+
+def example_list():
+    return ((([1, 2, 3])))
+
+
 # output
 x = 1
 x = 1.2
@@ -142,3 +155,18 @@ def example7():
 def example8():
     return None
 
+
+def example_tuple():
+    return (1, 2, 3)
+
+
+def example_tuple_trailing_comma():
+    return (
+        1,
+        2,
+        3,
+    )
+
+
+def example_list():
+    return [1, 2, 3]

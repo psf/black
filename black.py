@@ -1272,17 +1272,23 @@ class Line:
 
         Note that the trailing comma in a 1-tuple is not optional.
         """
+        if self.inside_brackets:
+            return False
+
         if not self.leaves or len(self.leaves) < 4:
             return False
 
-        # Look for and address a trailing colon.
-        if self.leaves[-1].type == token.COLON:
-            closer = self.leaves[-2]
-            close_index = -2
-        else:
-            closer = self.leaves[-1]
-            close_index = -1
-        if closer.type not in CLOSING_BRACKETS or self.inside_brackets:
+        # Look for and address a visible trailing colon.
+        # ignore trailing colon
+        close_index = len(self.leaves) - 1
+        closer = self.leaves[close_index]
+        while closer.type == token.COLON or closer.value == "":
+            close_index = close_index - 1
+            if close_index == 0:
+                return False
+            closer = self.leaves[close_index]
+
+        if closer.type not in CLOSING_BRACKETS:
             return False
 
         if closer.type == token.RPAR:
