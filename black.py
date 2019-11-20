@@ -72,7 +72,7 @@ LeafID = int
 Priority = int
 Index = int
 LN = Union[Leaf, Node]
-SplitFunc = Callable[["Line", Collection["Feature"], int], Iterator["Line"]]
+SplitFunc = Callable[["Line", Collection["Feature"], int, int], Iterator["Line"]]
 Timestamp = float
 FileSize = int
 CacheInfo = Tuple[Timestamp, FileSize]
@@ -1266,18 +1266,30 @@ class Line:
             Leaf(token.DOT, ".") for _ in range(3)
         ]
 
-    def get_assignment_leaf_id(self) -> Optional[LeafID]:
+    def get_assignment_index(self) -> Optional[int]:
+        """
+        Get fthe first unbracketed assignment index.
+        """
         depth = 0
-        for leaf_id, leaf in enumerate(self.leaves):
+        for leaf_index, leaf in enumerate(self.leaves):
             if leaf.type in OPENING_BRACKETS:
                 depth += 1
             if leaf.type in CLOSING_BRACKETS:
                 depth -= 1
             if leaf.value in ASSIGNMENTS and depth == 0:
-                return leaf_id
+                return leaf_index
         return None
 
     def get_left_hand_side(self) -> Optional["Line"]:
+        """
+        Get left hand side of line or None.
+
+        - function definition - full line is LHS-value
+        - if line is inside brackets - LHS is None
+        - if line has uncollapsable type comment - LHS is None
+        - if line has no unbracketed assignment - LHS is None
+        - if line has unbracketed assignment - LHS is line before it
+        """
         if self.is_def:
             return self
 
@@ -1287,14 +1299,14 @@ class Line:
         if self.inside_brackets:
             return None
 
-        assignment_leaf_id = self.get_assignment_leaf_id()
-        if assignment_leaf_id is None:
+        assignment_index = self.get_assignment_index()
+        if assignment_index is None:
             return None
 
-        leaves = self.leaves[:assignment_leaf_id]
+        leaves = self.leaves[:assignment_index]
         comments: Dict[LeafID, List[Leaf]] = {}
         for comment_leaf_id, comment_leaves in self.comments.items():
-            if comment_leaf_id < assignment_leaf_id:
+            if comment_leaf_id < assignment_index:
                 comments[comment_leaf_id] = comment_leaves
 
         return Line(
@@ -1306,6 +1318,15 @@ class Line:
         )
 
     def get_right_hand_side(self) -> Optional["Line"]:
+        """
+        Get right hand side of line or None.
+
+        - function definition - RHS is None
+        - if line is inside brackets - Full line is RHS
+        - if line has uncollapsable type comment - Full line is RHS
+        - if line has no unbracketed assignment - Full line is RHS
+        - if line has unbracketed assignment - LHS is line starting from it
+        """
         if self.is_def:
             return None
 
@@ -1315,14 +1336,14 @@ class Line:
         if self.inside_brackets:
             return self
 
-        assignment_leaf_id = self.get_assignment_leaf_id()
-        if assignment_leaf_id is None:
+        assignment_index = self.get_assignment_index()
+        if assignment_index is None:
             return self
 
-        leaves = self.leaves[assignment_leaf_id:]
+        leaves = self.leaves[assignment_index:]
         comments: Dict[LeafID, List[Leaf]] = {}
         for comment_leaf_id, comment_leaves in self.comments.items():
-            if comment_leaf_id >= assignment_leaf_id:
+            if comment_leaf_id >= assignment_index:
                 comments[comment_leaf_id] = comment_leaves
 
         return Line(
@@ -1334,7 +1355,7 @@ class Line:
             should_explode=self.should_explode,
         )
 
-    def get_optional_trailing_comma_leaf_id(self) -> Optional[LeafID]:
+    def get_optional_trailing_comma_index(self) -> Optional[int]:
         """Is this line a collection literal with a trailing comma that's optional?
 
         Note that the trailing comma in a 1-tuple and a 1-subscript is not optional.
@@ -1348,9 +1369,9 @@ class Line:
         # make sure that we have only one top-level collection
         opener: Optional[Leaf] = None
         closer: Optional[Leaf] = None
-        opener_index: LeafID = 0
-        closer_index: LeafID = 0
-        comma_indexes: List[LeafID] = []
+        opener_index: int = 0
+        closer_index: int = 0
+        comma_indexes: List[int] = []
         depth_counter = 0
         for leaf_index, leaf in enumerate(self.leaves):
             # use comma indexes only on in the top-level collection
@@ -2477,6 +2498,41 @@ def make_comment(content: str) -> str:
     return "#" + content
 
 
+def should_be_rendered_as_single_line(line: Line, line_length: int) -> bool:
+    """
+    Whether `line` should be rendered with no line breaks.
+
+    Returns `False` if `line`:
+
+    - contains uncollapsable type comments
+    - should explode
+    - does not fit `line_length` and does not have unsplittable type ignore
+    - line has optional trailing comma and is not a function definition
+
+    Arguments:
+        line -- Original line.
+        line_length -- Max line length.
+
+    Returns:
+        True if line does not meet any conditions above.
+    """
+    if line.contains_uncollapsable_type_comments():
+        return False
+
+    if line.should_explode:
+        return False
+
+    if not is_line_short_enough(line, line_length=line_length):
+        if not line.contains_unsplittable_type_ignore():
+            return False
+
+    optional_trailing_comma_index = line.get_optional_trailing_comma_index()
+    if optional_trailing_comma_index is not None and not line.is_def:
+        return False
+
+    return True
+
+
 def split_line_side(
     line: Line,
     first_line_length: int,
@@ -2485,24 +2541,42 @@ def split_line_side(
     features: Collection[Feature] = (),
     split_funcs: Collection[SplitFunc] = (),
 ) -> Iterator[Line]:
-    optional_trailing_comma_leaf_id = line.get_optional_trailing_comma_leaf_id()
-    if optional_trailing_comma_leaf_id and line.is_def:
-        line.leaves[optional_trailing_comma_leaf_id].value = ""
-        optional_trailing_comma_leaf_id = None
+    """
+    Split LHS or RHS line.
 
-    line_str = str(line).strip("\n")
-    if (
-        not line.contains_uncollapsable_type_comments()
-        and not line.should_explode
-        and optional_trailing_comma_leaf_id is None
-        and (
-            is_line_short_enough(line, line_str=line_str, line_length=first_line_length)
-            or line.contains_unsplittable_type_ignore()
-        )
-    ):
+    - if line fits in `first_line_length` and should not be exploded
+      and is not a function definition it is yielded unchanged.
+    - if line fits in `first_line_length` and should not be exploded
+      and is a function definition it is yielded without optional trailing comma.
+    
+    Otherwise, `split_funcs` are applied one by one:
+
+    - if `split_func` fails with `CannotSplit` - next `split_func` is used
+    - if the last `split_func` fails with `CannotSplit` - line is yielded unchainged
+    - if `split_func` was successful - all lines from it's result are yieded
+
+    Arguments:
+        line -- LHS or RHS line.
+        first_line_length -- Ma length of the first line, used for RHS.
+        line_length -- FOllowing lines max length.
+        inner -- Whether line has brackets outside.
+        features -- Features to use.
+        split_funcs -- Split functions to apply.
+
+    Yields:
+        A `Line` part of the original `Line`.
+    """
+    if should_be_rendered_as_single_line(line, first_line_length):
+        # remove trailing comma from function definitions
+        if line.is_def:
+            optional_trailing_comma_index = line.get_optional_trailing_comma_index()
+            if optional_trailing_comma_index is not None:
+                line.leaves[optional_trailing_comma_index].value = ""
+
         yield line
         return
 
+    line_str = str(line).strip("\n")
     for split_func in split_funcs:
         # We are accumulating lines in `result` because we might want to abort
         # mission and return the original line in the end, or attempt a different
@@ -2510,7 +2584,7 @@ def split_line_side(
         result: List[Line] = []
         try:
             for sub_line_index, sub_line in enumerate(
-                split_func(line, features=features, line_length=line_length)
+                split_func(line, features, line_length, first_line_length)
             ):
                 if str(sub_line).strip("\n") == line_str:
                     raise CannotSplit("Split function returned an unchanged result")
@@ -2535,15 +2609,30 @@ def split_line_side(
 
 
 def right_hand_split_with_omit(
-    line: Line, features: Collection[Feature], line_length: int = 999
+    line: Line, features: Collection[Feature], line_length: int, first_line_length: int
 ) -> Iterator[Line]:
+    """Split line into many lines, starting with the last matching bracket pair.
+
+    Acts like `right_hand_split`, but on fail adds trailers to omit one by one.
+    On last fail splits line with a minimum `line_length` (probably this code is outdated),
+
+    Note: running this function modifies `bracket_depth` on the leaves of `line`.
+    """
     for omit in generate_trailers_to_omit(line, line_length):
         try:
             lines = list(
                 right_hand_split(
-                    line, features=features, line_length=line_length, omit=omit
+                    line,
+                    features=features,
+                    line_length=line_length,
+                    first_line_length=first_line_length,
+                    omit=omit,
                 )
             )
+            if lines and not is_line_short_enough(
+                lines[0], line_length=first_line_length
+            ):
+                raise CannotSplit("First line is too long")
         except CannotSplit:
             continue
 
@@ -2555,7 +2644,9 @@ def right_hand_split_with_omit(
     # reported as not fitting a single line.
     # line_length=1 here was historically a bug that somehow became a feature.
     # See #762 and #781 for the full story.
-    yield from right_hand_split(line, features=features, line_length=1)
+    yield from right_hand_split(
+        line, features=features, line_length=1, first_line_length=1
+    )
 
 
 def split_line(
@@ -2579,9 +2670,6 @@ def split_line(
 
     left_hand_side = line.get_left_hand_side()
     right_hand_side = line.get_right_hand_side()
-    # print('line', str(line))
-    # print('left_hand_side', left_hand_side and left_hand_side.leaves)
-    # print('right_hand_side', right_hand_side and right_hand_side.leaves)
 
     split_funcs: List[SplitFunc] = [left_hand_split]
     if line.inside_brackets:
@@ -2602,7 +2690,9 @@ def split_line(
     if right_hand_side:
         first_line_length = line_length
         if result:
-            first_line_length = max(line_length - len(str(result[-1]).rstrip("\n").lstrip()), 1)
+            first_line_length = max(
+                line_length - len(str(result[-1]).rstrip("\n").lstrip()), 1
+            )
         split_funcs = [right_hand_split_with_omit]
         if line.inside_brackets:
             split_funcs = [
@@ -2631,7 +2721,10 @@ def split_line(
 
 
 def left_hand_split(
-    line: Line, features: Collection[Feature], line_length: int,
+    line: Line,
+    features: Collection[Feature],
+    line_length: int,
+    _first_line_length: int,
 ) -> Iterator[Line]:
     """Split line into many lines, starting with the first matching bracket pair.
 
@@ -2672,6 +2765,7 @@ def right_hand_split(
     line: Line,
     features: Collection[Feature],
     line_length: int,
+    first_line_length: int,
     omit: Collection[LeafID] = (),
 ) -> Iterator[Line]:
     """Split line into many lines, starting with the last matching bracket pair.
@@ -2726,19 +2820,25 @@ def right_hand_split(
         # there are no standalone comments in the body
         and not body.contains_standalone_comments(0)
         # and we can actually remove the parens
-        and can_omit_invisible_parens(body, line_length)
+        and can_omit_invisible_parens(body, first_line_length)
     ):
         omit = {id(closing_bracket), *omit}
         try:
             yield from right_hand_split(
-                line, features=features, line_length=line_length, omit=omit
+                line,
+                features=features,
+                line_length=line_length,
+                first_line_length=line_length,
+                omit=omit,
             )
         except CannotSplit as e:
             pass
         else:
             return
 
-        if not can_be_split(body) and not is_line_short_enough(body, line_length=line_length):
+        if not can_be_split(body) and not is_line_short_enough(
+            body, line_length=line_length
+        ):
             raise CannotSplit(
                 "Splitting failed, body is still too long and can't be split.",
             )
@@ -2834,9 +2934,12 @@ def dont_increase_indentation(split_func: SplitFunc) -> SplitFunc:
 
     @wraps(split_func)
     def split_wrapper(
-        line: Line, features: Collection[Feature], line_length: int = 999
+        line: Line,
+        features: Collection[Feature],
+        line_length: int,
+        first_line_length: int,
     ) -> Iterator[Line]:
-        for l in split_func(line, features, line_length):
+        for l in split_func(line, features, line_length, first_line_length):
             normalize_prefix(l.leaves[0], inside_brackets=True)
             yield l
 
@@ -2845,7 +2948,10 @@ def dont_increase_indentation(split_func: SplitFunc) -> SplitFunc:
 
 @dont_increase_indentation
 def delimiter_split(
-    line: Line, features: Collection[Feature], _line_length: int = 999
+    line: Line,
+    features: Collection[Feature],
+    _line_length: int,
+    _first_line_length: int,
 ) -> Iterator[Line]:
     """Split according to delimiters of the highest priority.
 
@@ -2917,7 +3023,10 @@ def delimiter_split(
 
 @dont_increase_indentation
 def standalone_comment_split(
-    line: Line, features: Collection[Feature] = (), _line_length: int = 999,
+    line: Line,
+    features: Collection[Feature],
+    _line_length: int,
+    _first_line_length: int,
 ) -> Iterator[Line]:
     """Split standalone comments from the rest of the line."""
     if not line.contains_standalone_comments(0):

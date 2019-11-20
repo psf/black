@@ -11,11 +11,11 @@ def xxxxxxxxxxxxxxxxxxxxxxxxxxxx() -> Set[
 
 # output
 
-def f(a,):
+def f(a):
     ...
 
 
-def f(a: int = 1,):
+def f(a: int = 1):
     ...
 
 
