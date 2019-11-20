@@ -1320,17 +1320,6 @@ class Line:
             should_explode=self.should_explode,
         )
 
-        for comment_leaf_id, comment_leaves in self.comments.items():
-            for leaf in self.leaves:
-                if id(leaf) == comment_leaf_id:
-                    break
-            else:
-                leaf = None
-
-            # add comments for leaves in LHS
-            if comment_leaf_id < assignment_index:
-                comments[comment_leaf_id] = comment_leaves
-
         # add unsplittable type ignore from RHS if it is on the same lines
         unsplittable_type_ignore_data = self.get_unsplittable_type_ignore()
         if unsplittable_type_ignore_data:
@@ -1630,7 +1619,7 @@ class Line:
             A tuple with line `leaf` and comment `leaf` or None.
         """
         if not self.leaves:
-            return False
+            return None
 
         # If a 'type: ignore' is attached to the end of a line, we
         # can't split the line, because we can't know which of the
@@ -1770,9 +1759,7 @@ class Line:
             n.type in TEST_DESCENDANTS for n in subscript_start.pre_order()
         )
 
-    def is_short_enough(
-        self, first_line_length: int = None, line_length: int = 0
-    ) -> bool:
+    def is_short_enough(self, first_line_length: int, line_length: int = 0) -> bool:
         """Return True if `line` is no longer than `line_length`.
 
         Handles multi lines.
@@ -2771,10 +2758,10 @@ def split_line(
 
     left_hand_side = line.get_left_hand_side()
     right_hand_side = line.get_right_hand_side()
-
+    split_funcs: List[SplitFunc]
     result: List[Line] = []
     if left_hand_side:
-        split_funcs: List[SplitFunc] = [left_hand_split]
+        split_funcs = [left_hand_split]
         if line.inside_brackets:
             split_funcs = [delimiter_split, standalone_comment_split, left_hand_split]
         last_line_length = line_length
@@ -2782,8 +2769,10 @@ def split_line(
             if right_hand_side.get_unsplittable_type_ignore():
                 last_line_length = 1
             else:
-                assignment = line.leaves[line.get_assignment_index()]
-                last_line_length = line_length - len(assignment.value) - 3
+                assignment_index = line.get_assignment_index()
+                if assignment_index:
+                    assignment = line.leaves[assignment_index]
+                    last_line_length = line_length - len(assignment.value) - 3
         for left_hand_side_line in split_line_side(
             line=left_hand_side,
             line_length=line_length,
@@ -2801,7 +2790,7 @@ def split_line(
             first_line_length = max(
                 line_length - len(str(result[-1]).rstrip("\n").lstrip()), 1
             )
-        split_funcs: List[SplitFunc] = [right_hand_split_with_omit]
+        split_funcs = [right_hand_split_with_omit]
         if line.inside_brackets:
             split_funcs = [
                 delimiter_split,
@@ -3387,9 +3376,7 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
                 if child.type == token.LPAR:
                     # make parentheses invisible
                     child.value = ""  # type: ignore
-                    node.children[
-                        -1
-                    ].value = ""  # type: ignore
+                    node.children[-1].value = ""  # type: ignore
                 elif child.type != token.STAR:
                     # insert invisible parentheses
                     node.insert_child(index, Leaf(token.LPAR, ""))
