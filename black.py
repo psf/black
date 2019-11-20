@@ -243,7 +243,9 @@ def read_pyproject_toml(
 
     if ctx.default_map is None:
         ctx.default_map = {}
-    ctx.default_map.update({k.replace("--", "").replace("-", "_"): v for k, v in config.items()})  # type: ignore  # bad types in .pyi
+    ctx.default_map.update(  # type: ignore  # bad types in .pyi
+        {k.replace("--", "").replace("-", "_"): v for k, v in config.items()}
+    )
     return value
 
 
