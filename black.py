@@ -1266,7 +1266,7 @@ class Line:
             Leaf(token.DOT, ".") for _ in range(3)
         ]
 
-    def get_assignment_index(self) -> Optional[int]:
+    def _get_assignment_index(self) -> Optional[int]:
         """
         Get fthe first unbracketed assignment index.
         """
@@ -1305,7 +1305,7 @@ class Line:
         if self.inside_brackets:
             return None
 
-        assignment_index = self.get_assignment_index()
+        assignment_index = self._get_assignment_index()
         if assignment_index is None:
             return None
 
@@ -1345,7 +1345,7 @@ class Line:
         if self.inside_brackets:
             return self
 
-        assignment_index = self.get_assignment_index()
+        assignment_index = self._get_assignment_index()
         if assignment_index is None:
             return self
 
@@ -2765,14 +2765,12 @@ def split_line(
         if line.inside_brackets:
             split_funcs = [delimiter_split, standalone_comment_split, left_hand_split]
         last_line_length = line_length
-        if right_hand_side:
+        if right_hand_side and right_hand_side.leaves:
             if right_hand_side.get_unsplittable_type_ignore():
                 last_line_length = 1
             else:
-                assignment_index = line.get_assignment_index()
-                if assignment_index:
-                    assignment = line.leaves[assignment_index]
-                    last_line_length = line_length - len(assignment.value) - 3
+                assignment = right_hand_side.leaves[0]
+                last_line_length = line_length - len(assignment.value) - 3
         for left_hand_side_line in split_line_side(
             line=left_hand_side,
             line_length=line_length,
