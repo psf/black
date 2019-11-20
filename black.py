@@ -1651,7 +1651,6 @@ class Line:
             # invisible paren could have been added at the end of the
             # line.
             for node in self.leaves[-2:]:
-                leaf_id = id(node)
                 for comment in self.comments.get(id(node), []):
                     if is_type_comment(comment, " ignore"):
                         return node, comment
