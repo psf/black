@@ -2644,7 +2644,8 @@ def split_line_side(
 
     Arguments:
         line -- LHS or RHS line.
-        first_line_length -- Ma length of the first line, used for RHS.
+        first_line_length -- Max length of the first line, used for RHS.
+        last_line_length -- Max length of the last line, used for LHS.
         line_length -- FOllowing lines max length.
         inner -- Whether line has brackets outside.
         features -- Features to use.
