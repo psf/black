@@ -2837,16 +2837,19 @@ def right_hand_split(
     ):
         omit = {id(closing_bracket), *omit}
         try:
-            yield from right_hand_split(
-                line,
-                features=features,
-                line_length=line_length,
-                first_line_length=line_length,
-                omit=omit,
+            sub_lines = list(
+                right_hand_split(
+                    line,
+                    features=features,
+                    line_length=line_length,
+                    first_line_length=first_line_length,
+                    omit=omit,
+                )
             )
         except CannotSplit as e:
             pass
         else:
+            yield from sub_lines
             return
 
         if not can_be_split(body) and not is_line_short_enough(
