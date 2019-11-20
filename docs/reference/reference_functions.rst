@@ -127,8 +127,6 @@ Utilities
 
 .. autofunction:: black.format_float_or_int_string
 
-.. autofunction:: black.format_int_string
-
 .. autofunction:: black.ensure_visible
 
 .. autofunction:: black.enumerate_reversed
