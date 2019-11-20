@@ -4225,8 +4225,7 @@ def is_line_short_enough(line: Line, line_length: int) -> bool:
 
     Uses the provided `line_str` rendering, if any, otherwise computes a new one.
     """
-    if not line_str:
-        line_str = str(line).strip("\n")
+    line_str = str(line).strip("\n")
     return (
         len(line_str) <= line_length
         and "\n" not in line_str  # multiline strings
