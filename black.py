@@ -2212,7 +2212,14 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
         ):
             return NO
 
-        elif prevp.type == token.RIGHTSHIFT and prevp.parent and prevp.parent.type == syms.shift_expr and prevp.prev_sibling and prevp.prev_sibling.type == token.NAME and prevp.prev_sibling.value == "print":  # type: ignore
+        elif (
+            prevp.type == token.RIGHTSHIFT
+            and prevp.parent
+            and prevp.parent.type == syms.shift_expr
+            and prevp.prev_sibling
+            and prevp.prev_sibling.type == token.NAME
+            and prevp.prev_sibling.value == "print"  # type: ignore
+        ):
             # Python 2 print chevron
             return NO
 
