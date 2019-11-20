@@ -243,9 +243,7 @@ def read_pyproject_toml(
 
     if ctx.default_map is None:
         ctx.default_map = {}
-    ctx.default_map.update(  # type: ignore  # bad types in .pyi
-        {k.replace("--", "").replace("-", "_"): v for k, v in config.items()}
-    )
+    ctx.default_map.update({k.replace("--", "").replace("-", "_"): v for k, v in config.items()})  # type: ignore  # bad types in .pyi
     return value
 
 
@@ -1266,7 +1264,7 @@ class Line:
             Leaf(token.DOT, ".") for _ in range(3)
         ]
 
-    def _get_assignment_index(self) -> Optional[int]:
+    def get_assignment_index(self) -> Optional[int]:
         """
         Get fthe first unbracketed assignment index.
         """
@@ -1280,36 +1278,39 @@ class Line:
                 return leaf_index
         return None
 
+    def get_source_line_numbers(self) -> Set[int]:
+        """
+        Get a set of `lineno` of all leaves.
+
+        Does not include `0` line number of generated nodes.
+
+        Can be used to check if line has multiple lines in source.
+        """
+        return set([i.lineno for i in self.leaves if i.lineno])
+
     def get_left_hand_side(self) -> Optional["Line"]:
         """
         Get left hand side of line or None.
 
         - function definition - full line is LHS-value
         - if line is inside brackets - LHS is None
-        - if line has uncollapsable type comment - LHS is None
         - if line has no unbracketed assignment - LHS is None
         - if line has unbracketed assignment - LHS is line before it
         """
         if self.is_def:
             return self
 
-        if self.contains_uncollapsable_type_comments():
-            return None
-
         if self.inside_brackets:
             return None
 
-        assignment_index = self._get_assignment_index()
+        assignment_index = self.get_assignment_index()
         if assignment_index is None:
             return None
 
         leaves = self.leaves[:assignment_index]
         comments: Dict[LeafID, List[Leaf]] = {}
-        for comment_leaf_id, comment_leaves in self.comments.items():
-            if comment_leaf_id < assignment_index:
-                comments[comment_leaf_id] = comment_leaves
 
-        return Line(
+        result = Line(
             depth=self.depth,
             leaves=leaves,
             comments=comments,
@@ -1317,26 +1318,43 @@ class Line:
             should_explode=self.should_explode,
         )
 
+        for comment_leaf_id, comment_leaves in self.comments.items():
+            for leaf in self.leaves:
+                if id(leaf) == comment_leaf_id:
+                    break
+            else:
+                leaf = None
+
+            # add comments for leaves in LHS
+            if comment_leaf_id < assignment_index:
+                comments[comment_leaf_id] = comment_leaves
+
+        # add unsplittable type ignore from RHS if it is on the same lines
+        unsplittable_type_ignore_data = self.get_unsplittable_type_ignore()
+        if unsplittable_type_ignore_data:
+            line_leaf, comment_leaf = unsplittable_type_ignore_data
+            line_numbers = result.get_source_line_numbers().union({0})
+            if line_leaf.lineno in line_numbers:
+                comments[id(line_leaf)] = [comment_leaf]
+
+        return result
+
     def get_right_hand_side(self) -> Optional["Line"]:
         """
         Get right hand side of line or None.
 
         - function definition - RHS is None
         - if line is inside brackets - Full line is RHS
-        - if line has uncollapsable type comment - Full line is RHS
         - if line has no unbracketed assignment - Full line is RHS
         - if line has unbracketed assignment - LHS is line starting from it
         """
         if self.is_def:
             return None
 
-        if self.contains_uncollapsable_type_comments():
-            return self
-
         if self.inside_brackets:
             return self
 
-        assignment_index = self._get_assignment_index()
+        assignment_index = self.get_assignment_index()
         if assignment_index is None:
             return self
 
@@ -1359,27 +1377,38 @@ class Line:
         """
         Whether line should be rendered with no line breaks.
 
+        Returns `True` if line:
+
+        - contains uncollapsable type comments and has single line in source
+
         Returns `False` if line:
 
-        - contains uncollapsable type comments
+        - contains uncollapsable type comments and has multiple lines in source
         - should explode
         - does not fit `line_length` and does not have unsplittable type ignore
         - line has optional trailing comma and is not a function definition
+
+        If no conditions are met, returns `True`
 
         Arguments:
             line_length -- Max line length.
 
         Returns:
-            True if line does not meet any conditions above.
+            Boolean according to conditions above.
         """
         if self.contains_uncollapsable_type_comments():
-            return False
+            # split lines to leave uncollapsable type comments where they were
+            if len(self.get_source_line_numbers()) > 1:
+                return False
+
+            # otherwise, always render as single line
+            return True
 
         if self.should_explode:
             return False
 
         if not is_line_short_enough(self, line_length=line_length):
-            if not self.contains_unsplittable_type_ignore():
+            if not self.get_unsplittable_type_ignore():
                 return False
 
         optional_trailing_comma_index = self.get_optional_trailing_comma_index()
@@ -1589,7 +1618,15 @@ class Line:
 
         return False
 
-    def contains_unsplittable_type_ignore(self) -> bool:
+    def get_unsplittable_type_ignore(self) -> Optional[Tuple[Leaf, Leaf]]:
+        """
+        Get line leaf and comment leaf of unsplittable type ignore.
+
+        If there is no unsplittable type ignore in line - returns `None`.
+
+        Returns:
+            A tuple with line `leaf` and comment `leaf` or None.
+        """
         if not self.leaves:
             return False
 
@@ -1614,11 +1651,12 @@ class Line:
             # invisible paren could have been added at the end of the
             # line.
             for node in self.leaves[-2:]:
+                leaf_id = id(node)
                 for comment in self.comments.get(id(node), []):
                     if is_type_comment(comment, " ignore"):
-                        return True
+                        return node, comment
 
-        return False
+        return None
 
     def contains_multiline_strings(self) -> bool:
         for leaf in self.leaves:
@@ -2173,14 +2211,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
         ):
             return NO
 
-        elif (
-            prevp.type == token.RIGHTSHIFT
-            and prevp.parent
-            and prevp.parent.type == syms.shift_expr
-            and prevp.prev_sibling
-            and prevp.prev_sibling.type == token.NAME
-            and prevp.prev_sibling.value == "print"  # type: ignore
-        ):
+        elif prevp.type == token.RIGHTSHIFT and prevp.parent and prevp.parent.type == syms.shift_expr and prevp.prev_sibling and prevp.prev_sibling.type == token.NAME and prevp.prev_sibling.value == "print":  # type: ignore
             # Python 2 print chevron
             return NO
 
@@ -2596,6 +2627,7 @@ def make_comment(content: str) -> str:
 def split_line_side(
     line: Line,
     first_line_length: int,
+    last_line_length: int,
     line_length: int,
     inner: bool = False,
     features: Collection[Feature] = (),
@@ -2626,7 +2658,8 @@ def split_line_side(
     Yields:
         A `Line` part of the original `Line`.
     """
-    if line.should_be_rendered_as_single_line(first_line_length):
+    single_line_length = min(first_line_length, last_line_length)
+    if line.should_be_rendered_as_single_line(single_line_length):
         # remove trailing comma from function definitions
         if line.is_def:
             optional_trailing_comma_index = line.get_optional_trailing_comma_index()
@@ -2731,16 +2764,23 @@ def split_line(
     left_hand_side = line.get_left_hand_side()
     right_hand_side = line.get_right_hand_side()
 
-    split_funcs: List[SplitFunc] = [left_hand_split]
-    if line.inside_brackets:
-        split_funcs = [delimiter_split, standalone_comment_split, left_hand_split]
-
     result: List[Line] = []
     if left_hand_side:
+        split_funcs: List[SplitFunc] = [left_hand_split]
+        if line.inside_brackets:
+            split_funcs = [delimiter_split, standalone_comment_split, left_hand_split]
+        last_line_length = line_length
+        if right_hand_side:
+            if right_hand_side.get_unsplittable_type_ignore():
+                last_line_length = 1
+            else:
+                assignment = line.leaves[line.get_assignment_index()]
+                last_line_length = line_length - len(assignment.value) - 3
         for left_hand_side_line in split_line_side(
             line=left_hand_side,
             line_length=line_length,
             first_line_length=line_length,
+            last_line_length=last_line_length,
             inner=inner,
             features=features,
             split_funcs=split_funcs,
@@ -2753,7 +2793,7 @@ def split_line(
             first_line_length = max(
                 line_length - len(str(result[-1]).rstrip("\n").lstrip()), 1
             )
-        split_funcs = [right_hand_split_with_omit]
+        split_funcs: List[SplitFunc] = [right_hand_split_with_omit]
         if line.inside_brackets:
             split_funcs = [
                 delimiter_split,
@@ -2765,6 +2805,7 @@ def split_line(
                 line=right_hand_side,
                 line_length=line_length,
                 first_line_length=first_line_length,
+                last_line_length=line_length,
                 inner=inner,
                 features=features,
                 split_funcs=split_funcs,
@@ -2809,13 +2850,20 @@ def left_hand_split(
             if leaf.type in OPENING_BRACKETS:
                 matching_bracket = leaf
                 current_leaves = body_leaves
+        if current_leaves is tail_leaves:
+            if leaf.type in CLOSING_BRACKETS:
+                opening_bracket = leaf.opening_bracket
+                closing_bracket = leaf
     if not matching_bracket:
-        raise CannotSplit("No brackets found")
+        raise CannotSplit("No brackets found: List[SplitFunc]")
 
     head = bracket_split_build_line(head_leaves, line, matching_bracket)
     body = bracket_split_build_line(body_leaves, line, matching_bracket, is_body=True)
     tail = bracket_split_build_line(tail_leaves, line, matching_bracket)
     bracket_split_succeeded_or_raise(head, body, tail)
+
+    ensure_visible(opening_bracket)
+    ensure_visible(closing_bracket)
     for result in (head, body, tail):
         if result:
             yield result
@@ -3331,7 +3379,9 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
                 if child.type == token.LPAR:
                     # make parentheses invisible
                     child.value = ""  # type: ignore
-                    node.children[-1].value = ""  # type: ignore
+                    node.children[
+                        -1
+                    ].value = ""  # type: ignore
                 elif child.type != token.STAR:
                     # insert invisible parentheses
                     node.insert_child(index, Leaf(token.LPAR, ""))
