@@ -2863,7 +2863,7 @@ def left_hand_split(
                 opening_bracket = leaf.opening_bracket
                 closing_bracket = leaf
     if not matching_bracket:
-        raise CannotSplit("No brackets found: List[SplitFunc]")
+        raise CannotSplit("No brackets found")
 
     head = bracket_split_build_line(head_leaves, line, matching_bracket)
     body = bracket_split_build_line(body_leaves, line, matching_bracket, is_body=True)
