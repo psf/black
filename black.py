@@ -57,9 +57,7 @@ from blib2to3.pgen2.parse import ParseError
 from _black_version import version as __version__
 
 DEFAULT_LINE_LENGTH = 88
-DEFAULT_EXCLUDES = (
-    r"/(\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_build|buck-out|build|dist)/"  # noqa: B950
-)
+DEFAULT_EXCLUDES = r"/(\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_build|buck-out|build|dist)/"  # noqa: B950
 DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 
@@ -2883,10 +2881,6 @@ def right_hand_split(
         and not body.contains_standalone_comments(0)
         # and we can actually remove the parens
         and can_omit_invisible_parens(body, first_line_length)
-        and (
-            not can_be_split(head)
-            or head.is_short_enough(first_line_length, line_length)
-        )
     ):
         omit = {id(closing_bracket), *omit}
         try:
