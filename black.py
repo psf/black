@@ -1298,6 +1298,9 @@ class Line:
         - if line is inside brackets - LHS is None
         - if line has no unbracketed assignment - LHS is None
         - if line has unbracketed assignment - LHS is line before it
+
+        Returns:
+            A new `Line` or itself.
         """
         if self.is_def:
             return self
@@ -1338,6 +1341,9 @@ class Line:
         - if line is inside brackets - Full line is RHS
         - if line has no unbracketed assignment - Full line is RHS
         - if line has unbracketed assignment - LHS is line starting from it
+
+        Returns:
+            A new `Line` or itself.
         """
         if self.is_def:
             return None
