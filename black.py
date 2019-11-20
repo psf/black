@@ -57,7 +57,9 @@ from blib2to3.pgen2.parse import ParseError
 from _black_version import version as __version__
 
 DEFAULT_LINE_LENGTH = 88
-DEFAULT_EXCLUDES = r"/(\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_build|buck-out|build|dist)/"  # noqa: B950
+DEFAULT_EXCLUDES = (
+    r"/(\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_build|buck-out|build|dist)/"  # noqa: B950
+)
 DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 
@@ -1266,7 +1268,7 @@ class Line:
             Leaf(token.DOT, ".") for _ in range(3)
         ]
 
-    def get_assignment_index(self) -> Optional[int]:
+    def _get_assignment_index(self) -> Optional[int]:
         """
         Get fthe first unbracketed assignment index.
         """
@@ -1299,7 +1301,7 @@ class Line:
         if self.inside_brackets:
             return None
 
-        assignment_index = self.get_assignment_index()
+        assignment_index = self._get_assignment_index()
         if assignment_index is None:
             return None
 
@@ -1336,7 +1338,7 @@ class Line:
         if self.inside_brackets:
             return self
 
-        assignment_index = self.get_assignment_index()
+        assignment_index = self._get_assignment_index()
         if assignment_index is None:
             return self
 
@@ -1388,33 +1390,23 @@ class Line:
 
         return True
 
-    def get_optional_trailing_comma_index(self) -> Optional[int]:
+    def _get_top_level_collection_indexes(self) -> Optional[Tuple[int, int, List[int]]]:
         """
-        Get index of the top-level optional trailing comma or `None`.
+        Get top level colelction opener, closer and comma indexes.
 
-        Does not lookup trailing commas if line:
+        - if top-level collection is not found - return `None`
+        - if there is more than one top-level collection - return `None`
+        - if brackets are invalid - return `None`
+        - if collection has visible brackets - `opener_index` and `closer_index`
+          point to them
+        - if collection has only invisible brackets - `opener_index` and `closer_index`
+          point to them
+        - `comma_indexes` include only top-level collection comma indexes,
+          nested are not included
 
-        - is inside brackets
-        - has less than 4 leaves
-
-        Index can be found for:
-
-        - function definitions
-        - tuples with multiple items
-        - implicit tuples with multiple items
-        - subscripts with multiple items
-        - lists, dicts, sets
-        - import statements
-
-        Note: the trailing comma in a 1-tuple and a 1-subscript is not optional.
+        Returns:
+            A tuple of `opener_index`, `closer_index` and `comma_indexes` or `None`.
         """
-        if self.inside_brackets:
-            return None
-
-        if not self.leaves or len(self.leaves) < 4:
-            return None
-
-        # make sure that we have only one top-level collection
         opener: Optional[Leaf] = None
         closer: Optional[Leaf] = None
         opener_index: int = 0
@@ -1460,9 +1452,42 @@ class Line:
                 closer = leaf
                 closer_index = leaf_index
 
-        # no brackets found
-        if opener is None or closer is None:
+        return opener_index, closer_index, comma_indexes
+
+    def get_optional_trailing_comma_index(self) -> Optional[int]:
+        """
+        Get index of the top-level optional trailing comma or `None`.
+
+        Does not lookup trailing commas if line:
+
+        - is inside brackets
+        - has less than 4 leaves
+
+        Index can be found for:
+
+        - function definitions
+        - tuples with multiple items
+        - implicit tuples with multiple items
+        - subscripts with multiple items
+        - lists, dicts, sets
+        - import statements
+
+        Note: the trailing comma in a 1-tuple and a 1-subscript is not optional.
+        """
+        if self.inside_brackets:
             return None
+
+        if not self.leaves or len(self.leaves) < 4:
+            return None
+
+        top_level_collection_indexes = self._get_top_level_collection_indexes()
+
+        # no top level collection found or multiple collections
+        if top_level_collection_indexes is None:
+            return None
+
+        opener_index, closer_index, comma_indexes = top_level_collection_indexes
+        opener = self.leaves[opener_index]
 
         # no commas found in collection
         if not comma_indexes:
@@ -1707,6 +1732,30 @@ class Line:
         return subscript_start is not None and any(
             n.type in TEST_DESCENDANTS for n in subscript_start.pre_order()
         )
+
+    def is_short_enough(
+        self, first_line_length: int = None, line_length: int = 0
+    ) -> bool:
+        """Return True if `line` is no longer than `line_length`.
+
+        Handles multi lines.
+        """
+        if self.contains_standalone_comments():
+            return False
+
+        line_str = str(self).strip("\n")
+        if line_length == 0 and "\n" in line_str:
+            return False
+
+        sub_lines = line_str.split("\n")
+        sub_line_length = first_line_length
+        for sub_line in sub_lines:
+            if len(sub_line) > sub_line_length:
+                return False
+
+            sub_line_length = line_length
+
+        return True
 
     def __str__(self) -> str:
         """Render the line."""
@@ -2561,7 +2610,7 @@ def split_line_side(
       and is not a function definition it is yielded unchanged.
     - if line fits in `first_line_length` and should not be exploded
       and is a function definition it is yielded without optional trailing comma.
-    
+
     Otherwise, `split_funcs` are applied one by one:
 
     - if `split_func` fails with `CannotSplit` - next `split_func` is used
@@ -2627,7 +2676,7 @@ def right_hand_split_with_omit(
     """Split line into many lines, starting with the last matching bracket pair.
 
     Acts like `right_hand_split`, but on fail adds trailers to omit one by one.
-    On last fail splits line with a minimum `line_length` (probably this code is outdated),
+    On last fail splits line with a minimum `line_length`.
 
     Note: running this function modifies `bracket_depth` on the leaves of `line`.
     """
@@ -2834,6 +2883,10 @@ def right_hand_split(
         and not body.contains_standalone_comments(0)
         # and we can actually remove the parens
         and can_omit_invisible_parens(body, first_line_length)
+        and (
+            not can_be_split(head)
+            or head.is_short_enough(first_line_length, line_length)
+        )
     ):
         omit = {id(closing_bracket), *omit}
         try:
@@ -2846,15 +2899,13 @@ def right_hand_split(
                     omit=omit,
                 )
             )
-        except CannotSplit as e:
+        except CannotSplit:
             pass
         else:
             yield from sub_lines
             return
 
-        if not can_be_split(body) and not is_line_short_enough(
-            body, line_length=line_length
-        ):
+        if not can_be_split(body) and not body.is_short_enough(line_length):
             raise CannotSplit(
                 "Splitting failed, body is still too long and can't be split.",
             )
@@ -4229,6 +4280,7 @@ def is_line_short_enough(line: Line, line_length: int) -> bool:
     Uses the provided `line_str` rendering, if any, otherwise computes a new one.
     """
     line_str = str(line).strip("\n")
+
     return (
         len(line_str) <= line_length
         and "\n" not in line_str  # multiline strings
