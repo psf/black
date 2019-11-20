@@ -149,8 +149,14 @@ class Feature(Enum):
 
 VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
     TargetVersion.PY27: {Feature.ASYNC_IDENTIFIERS},
-    TargetVersion.PY33: {Feature.UNICODE_LITERALS, Feature.ASYNC_IDENTIFIERS},
-    TargetVersion.PY34: {Feature.UNICODE_LITERALS, Feature.ASYNC_IDENTIFIERS},
+    TargetVersion.PY33: {
+        Feature.UNICODE_LITERALS,
+        Feature.ASYNC_IDENTIFIERS,
+    },
+    TargetVersion.PY34: {
+        Feature.UNICODE_LITERALS,
+        Feature.ASYNC_IDENTIFIERS,
+    },
     TargetVersion.PY35: {
         Feature.UNICODE_LITERALS,
         Feature.TRAILING_COMMA_IN_CALL,
@@ -1409,83 +1415,59 @@ class Line:
                 return False
 
         optional_trailing_comma_index = self.get_optional_trailing_comma_index()
-        if optional_trailing_comma_index is not None and not self.is_def:
+        if optional_trailing_comma_index is not None:
             return False
 
         return True
 
-    def _get_top_level_collection_indexes(self) -> Optional[Tuple[int, int, List[int]]]:
+    def _get_collection_comma_indexes(
+        self, opener_index: int, closer_index: int
+    ) -> List[int]:
         """
-        Get top level colelction opener, closer and comma indexes.
+        Get top level comma indexes in `leaves`.
 
-        - if top-level collection is not found - return `None`
-        - if there is more than one top-level collection - return `None`
-        - if brackets are invalid - return `None`
-        - if collection has visible brackets - `opener_index` and `closer_index`
-          point to them
-        - if collection has only invisible brackets - `opener_index` and `closer_index`
-          point to them
-        - `comma_indexes` include only top-level collection comma indexes,
-          nested are not included
+        Arguments:
+            opener_index -- Index of opening bracket in `leaves`.
+            closer_index -- Index of opening bracket in `leaves`.
 
         Returns:
-            A tuple of `opener_index`, `closer_index` and `comma_indexes` or `None`.
+            A list of top-level comma indexes in `leaves`.
         """
-        opener: Optional[Leaf] = None
-        closer: Optional[Leaf] = None
-        opener_index: int = 0
-        closer_index: int = 0
-        comma_indexes: List[int] = []
+        result: List[int] = []
+
         depth_counter = 0
-        for leaf_index, leaf in enumerate(self.leaves):
-            # use comma indexes only on in the top-level collection
-            if depth_counter < 2 and leaf.type == token.COMMA:
-                comma_indexes.append(leaf_index)
+        for collection_leaf_index, leaf in enumerate(
+            self.leaves[opener_index + 1 : closer_index]
+        ):
+            # use comma indexes only on the top-level
+            if depth_counter == 0 and leaf.type == token.COMMA:
+                result.append(opener_index + collection_leaf_index + 1)
             if leaf.type in OPENING_BRACKETS:
-                # more that one top-level collection
-                if depth_counter == 0 and opener is not None and opener.value:
-                    return None
-
-                # do not increase depth in bracket is invisible
-                if leaf.value:
-                    depth_counter += 1
-
-                # visible opener already found, skip the rest
-                if opener and opener.value:
-                    continue
-
-                # this opener is not right after the previous one, skip it
-                if opener and leaf_index > opener_index + 1:
-                    continue
-
-                opener_index = leaf_index
-                opener = leaf
+                depth_counter += 1
             if leaf.type in CLOSING_BRACKETS:
-                # do not decrease depth in bracket is invisible
-                if leaf.value:
-                    depth_counter -= 1
+                depth_counter -= 1
 
-                # brackets are not valid
-                if depth_counter < 0:
-                    return None
+        return result
 
-                # visible closer already found, skip invisible
-                if closer and not leaf.value and leaf_index == closer_index + 1:
-                    continue
+    def get_leaf_index(self, leaf: Leaf) -> Optional[int]:
+        """
+        Get leaf index in `leaves`.
 
-                closer = leaf
-                closer_index = leaf_index
+        Arguments:
+            leaf -- Line leaf.
 
-        return opener_index, closer_index, comma_indexes
+        Returns:
+            Leaf index in `leaves` or `None`.
+        """
+        for leaf_index, line_leaf in enumerate(self.leaves):
+            if leaf is line_leaf:
+                return leaf_index
 
-    def get_optional_trailing_comma_index(self) -> Optional[int]:
+        return None
+
+    def get_optional_trailing_comma_index(self, max_depth: int = 0) -> Optional[int]:
         """
         Get index of the top-level optional trailing comma or `None`.
-
-        Does not lookup trailing commas if line:
-
-        - is inside brackets
-        - has less than 4 leaves
 
         Index can be found for:
 
@@ -1498,37 +1480,52 @@ class Line:
 
         Note: the trailing comma in a 1-tuple and a 1-subscript is not optional.
         """
-        if self.inside_brackets:
-            return None
+        top_comma_indexes = self._get_collection_comma_indexes(0, len(self.leaves))
+        if top_comma_indexes and len(top_comma_indexes) > 1:
+            last_comma_index = top_comma_indexes[-1]
+            if last_comma_index == len(self.leaves) - 1:
+                return last_comma_index
 
-        if not self.leaves or len(self.leaves) < 4:
-            return None
+        depth = 0
+        for leaf_reversed_index, leaf in enumerate(reversed(self.leaves)):
+            if leaf.type in CLOSING_BRACKETS:
+                depth += 1
+            if leaf.type in OPENING_BRACKETS:
+                depth -= 1
+            if max_depth and depth > max_depth:
+                continue
+            if leaf.type not in CLOSING_BRACKETS:
+                continue
 
-        top_level_collection_indexes = self._get_top_level_collection_indexes()
+            closer_index = len(self.leaves) - leaf_reversed_index - 1
+            opener_index = self.get_leaf_index(leaf.opening_bracket)
+            if opener_index is None:
+                continue
 
-        # no top level collection found or multiple collections
-        if top_level_collection_indexes is None:
-            return None
+            comma_indexes = self._get_collection_comma_indexes(
+                opener_index, closer_index
+            )
+            if not comma_indexes:
+                continue
 
-        opener_index, closer_index, comma_indexes = top_level_collection_indexes
-        opener = self.leaves[opener_index]
+            last_comma_index = comma_indexes[-1]
+            if last_comma_index != closer_index - 1:
+                continue
 
-        # no commas found in collection
-        if not comma_indexes:
-            return None
+            # potential 1-item subscript
+            if leaf.type == token.RSQB and len(comma_indexes) == 1 and opener_index > 0:
+                head_index = opener_index - 1
+                head = self.leaves[head_index]
+                # it is a 1-item subscript
+                if head.type in SUBSCRIPT_HEADS:
+                    continue
 
-        # 1-item tuple or subscript
-        if opener.type == token.LPAR and len(comma_indexes) == 1:
-            if not self.is_def and not self.is_import:
-                return None
+            is_def = self.is_def and depth == 1
+            if leaf.type == token.RPAR and not is_def and len(comma_indexes) == 1:
+                continue
+            return last_comma_index
 
-        last_comma_index = comma_indexes[-1]
-
-        # last comma is not just before closing bracket
-        if last_comma_index != closer_index - 1:
-            return None
-
-        return last_comma_index
+        return None
 
     @property
     def is_def(self) -> bool:
@@ -1583,35 +1580,15 @@ class Line:
         return False
 
     def contains_uncollapsable_type_comments(self) -> bool:
-        ignored_ids = set()
-        try:
-            last_leaf = self.leaves[-1]
-            ignored_ids.add(id(last_leaf))
-            if last_leaf.type == token.COMMA or (
-                last_leaf.type == token.RPAR and not last_leaf.value
-            ):
-                # When trailing commas or optional parens are inserted by Black for
-                # consistency, comments after the previous last element are not moved
-                # (they don't have to, rendering will still be correct).  So we ignore
-                # trailing commas and invisible.
-                last_leaf = self.leaves[-2]
-                ignored_ids.add(id(last_leaf))
-        except IndexError:
-            return False
-
         # A type comment is uncollapsable if it is attached to a leaf
         # that isn't at the end of the line (since that could cause it
         # to get associated to a different argument) or if there are
         # comments before it (since that could cause it to get hidden
         # behind a comment.
-        comment_seen = False
-        for leaf_id, comments in self.comments.items():
+        for comments in self.comments.values():
             for comment in comments:
                 if is_type_comment(comment):
-                    if leaf_id not in ignored_ids or comment_seen:
-                        return True
-
-                comment_seen = True
+                    return True
 
         return False
 
@@ -2131,6 +2108,7 @@ OPENING_BRACKETS = set(BRACKET.keys())
 CLOSING_BRACKETS = set(BRACKET.values())
 BRACKETS = OPENING_BRACKETS | CLOSING_BRACKETS
 ALWAYS_NO_SPACE = CLOSING_BRACKETS | {token.COMMA, STANDALONE_COMMENT}
+SUBSCRIPT_HEADS = CLOSING_BRACKETS | {token.STRING, token.NAME}
 
 
 def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
@@ -2633,6 +2611,7 @@ def split_line_side(
     inner: bool = False,
     features: Collection[Feature] = (),
     split_funcs: Collection[SplitFunc] = (),
+    inside_blackets_split_funcs: Collection[SplitFunc] = (),
 ) -> Iterator[Line]:
     """
     Split LHS or RHS line.
@@ -2662,17 +2641,15 @@ def split_line_side(
     """
     single_line_length = min(first_line_length, last_line_length)
     if line.should_be_rendered_as_single_line(single_line_length):
-        # remove trailing comma from function definitions
-        if line.is_def:
-            optional_trailing_comma_index = line.get_optional_trailing_comma_index()
-            if optional_trailing_comma_index is not None:
-                line.leaves[optional_trailing_comma_index].value = ""
-
         yield line
         return
 
+    line_split_funcs = split_funcs
+    if line.inside_brackets:
+        line_split_funcs = [*inside_blackets_split_funcs, *split_funcs]
+
     line_str = str(line).strip("\n")
-    for split_func in split_funcs:
+    for split_func in line_split_funcs:
         # We are accumulating lines in `result` because we might want to abort
         # mission and return the original line in the end, or attempt a different
         # split altogether.
@@ -2684,16 +2661,20 @@ def split_line_side(
                 if str(sub_line).strip("\n") == line_str:
                     raise CannotSplit("Split function returned an unchanged result")
 
-                sub_line_length = first_line_length
+                first_sub_line_length = first_line_length
                 if sub_line_index > 0:
-                    sub_line_length = line_length
+                    first_sub_line_length = line_length
 
                 result.extend(
-                    split_line(
+                    split_line_side(
                         sub_line,
-                        line_length=sub_line_length,
+                        line_length=line_length,
+                        first_line_length=first_sub_line_length,
+                        last_line_length=line_length,
                         inner=True,
                         features=features,
+                        split_funcs=split_funcs,
+                        inside_blackets_split_funcs=inside_blackets_split_funcs,
                     )
                 )
         except CannotSplit:
@@ -2768,9 +2749,6 @@ def split_line(
     split_funcs: List[SplitFunc]
     result: List[Line] = []
     if left_hand_side:
-        split_funcs = [left_hand_split]
-        if line.inside_brackets:
-            split_funcs = [delimiter_split, standalone_comment_split, left_hand_split]
         last_line_length = line_length
         if right_hand_side and right_hand_side.leaves:
             if right_hand_side.get_unsplittable_type_ignore():
@@ -2785,7 +2763,8 @@ def split_line(
             last_line_length=last_line_length,
             inner=inner,
             features=features,
-            split_funcs=split_funcs,
+            split_funcs=[left_hand_split],
+            inside_blackets_split_funcs=[delimiter_split, standalone_comment_split],
         ):
             result.append(left_hand_side_line)
 
@@ -2795,13 +2774,6 @@ def split_line(
             first_line_length = max(
                 line_length - len(str(result[-1]).rstrip("\n").lstrip()), 1
             )
-        split_funcs = [right_hand_split_with_omit]
-        if line.inside_brackets:
-            split_funcs = [
-                delimiter_split,
-                standalone_comment_split,
-                right_hand_split_with_omit,
-            ]
         for line_index, right_hand_side_line in enumerate(
             split_line_side(
                 line=right_hand_side,
@@ -2810,7 +2782,8 @@ def split_line(
                 last_line_length=line_length,
                 inner=inner,
                 features=features,
-                split_funcs=split_funcs,
+                split_funcs=[right_hand_split_with_omit],
+                inside_blackets_split_funcs=[delimiter_split, standalone_comment_split],
             )
         ):
             if line_index == 0 and result:

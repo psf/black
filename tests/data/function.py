@@ -82,8 +82,7 @@ def trailing_comma():
     D: 0.1 * (10.0 / 12),
 }
 def f(
-  a,
-  **kwargs,
+  a, **kwargs,
 ) -> A:
     return (
         yield from A(
@@ -230,7 +229,10 @@ def trailing_comma():
     }
 
 
-def f(a, **kwargs) -> A:
+def f(
+    a,
+    **kwargs,
+) -> A:
     return (
         yield from A(
             very_long_argument_name1=very_long_value_for_the_argument,

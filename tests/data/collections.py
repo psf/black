@@ -69,11 +69,11 @@ if True:
     ec2client.get_waiter('instance_stopped').wait(
         InstanceIds=[instance.id],
         WaiterConfig={
-            'Delay': 5,
+            'Delay': 5
         })
     ec2client.get_waiter("instance_stopped").wait(
         InstanceIds=[instance.id],
-        WaiterConfig={"Delay": 5,},
+        WaiterConfig={"Delay": 5},
     )
     ec2client.get_waiter("instance_stopped").wait(
         InstanceIds=[instance.id], WaiterConfig={"Delay": 5,},
@@ -156,15 +156,17 @@ subscript_one_item[1]
 subscript_multiple_items[1, 2, {3: 4}]
 subscript_one_item = subscript_one_item[1]
 subscript_multiple_items = subscript_multiple_items[1, 2, {3: 4}]
-subscript_one_item[
-    1,
-]
+subscript_one_item[1,]
 subscript_multiple_items[
-    1, 2, {3: 4},
+    1,
+    2,
+    {3: 4},
 ]
 subscript_one_item = subscript_one_item[1,]
 subscript_multiple_items = subscript_multiple_items[
-    1, 2, {3: 4},
+    1,
+    2,
+    {3: 4},
 ]
 
 if True:
@@ -175,11 +177,15 @@ if True:
 
 if True:
     ec2client.get_waiter("instance_stopped").wait(
-        InstanceIds=[instance.id], WaiterConfig={"Delay": 5,}
+        InstanceIds=[instance.id], WaiterConfig={"Delay": 5}
     )
     ec2client.get_waiter("instance_stopped").wait(
-        InstanceIds=[instance.id], WaiterConfig={"Delay": 5,},
+        InstanceIds=[instance.id],
+        WaiterConfig={"Delay": 5},
     )
     ec2client.get_waiter("instance_stopped").wait(
-        InstanceIds=[instance.id], WaiterConfig={"Delay": 5,},
+        InstanceIds=[instance.id],
+        WaiterConfig={
+            "Delay": 5,
+        },
     )

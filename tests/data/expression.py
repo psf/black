@@ -378,7 +378,10 @@ list[str]
 dict[str, int]
 tuple[str, ...]
 tuple[
-    str, int, float, dict[str, int],
+    str,
+    int,
+    float,
+    dict[str, int],
 ]
 very_long_variable_name_filters: t.List[
     t.Tuple[str, t.Union[str, t.List[t.Optional[str]]]],
