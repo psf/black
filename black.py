@@ -1355,10 +1355,58 @@ class Line:
             should_explode=self.should_explode,
         )
 
-    def get_optional_trailing_comma_index(self) -> Optional[int]:
-        """Is this line a collection literal with a trailing comma that's optional?
+    def should_be_rendered_as_single_line(self, line_length: int) -> bool:
+        """
+        Whether line should be rendered with no line breaks.
 
-        Note that the trailing comma in a 1-tuple and a 1-subscript is not optional.
+        Returns `False` if line:
+
+        - contains uncollapsable type comments
+        - should explode
+        - does not fit `line_length` and does not have unsplittable type ignore
+        - line has optional trailing comma and is not a function definition
+
+        Arguments:
+            line_length -- Max line length.
+
+        Returns:
+            True if line does not meet any conditions above.
+        """
+        if self.contains_uncollapsable_type_comments():
+            return False
+
+        if self.should_explode:
+            return False
+
+        if not is_line_short_enough(self, line_length=line_length):
+            if not self.contains_unsplittable_type_ignore():
+                return False
+
+        optional_trailing_comma_index = self.get_optional_trailing_comma_index()
+        if optional_trailing_comma_index is not None and not self.is_def:
+            return False
+
+        return True
+
+    def get_optional_trailing_comma_index(self) -> Optional[int]:
+        """
+        Get index of the top-level optional trailing comma or `None`.
+
+        Does not lookup trailing commas if line:
+
+        - is inside brackets
+        - has less than 4 leaves
+
+        Index can be found for:
+
+        - function definitions
+        - tuples with multiple items
+        - implicit tuples with multiple items
+        - subscripts with multiple items
+        - lists, dicts, sets
+        - import statements
+
+        Note: the trailing comma in a 1-tuple and a 1-subscript is not optional.
         """
         if self.inside_brackets:
             return None
@@ -2498,41 +2546,6 @@ def make_comment(content: str) -> str:
     return "#" + content
 
 
-def should_be_rendered_as_single_line(line: Line, line_length: int) -> bool:
-    """
-    Whether `line` should be rendered with no line breaks.
-
-    Returns `False` if `line`:
-
-    - contains uncollapsable type comments
-    - should explode
-    - does not fit `line_length` and does not have unsplittable type ignore
-    - line has optional trailing comma and is not a function definition
-
-    Arguments:
-        line -- Original line.
-        line_length -- Max line length.
-
-    Returns:
-        True if line does not meet any conditions above.
-    """
-    if line.contains_uncollapsable_type_comments():
-        return False
-
-    if line.should_explode:
-        return False
-
-    if not is_line_short_enough(line, line_length=line_length):
-        if not line.contains_unsplittable_type_ignore():
-            return False
-
-    optional_trailing_comma_index = line.get_optional_trailing_comma_index()
-    if optional_trailing_comma_index is not None and not line.is_def:
-        return False
-
-    return True
-
-
 def split_line_side(
     line: Line,
     first_line_length: int,
@@ -2566,7 +2579,7 @@ def split_line_side(
     Yields:
         A `Line` part of the original `Line`.
     """
-    if should_be_rendered_as_single_line(line, first_line_length):
+    if line.should_be_rendered_as_single_line(first_line_length):
         # remove trailing comma from function definitions
         if line.is_def:
             optional_trailing_comma_index = line.get_optional_trailing_comma_index()
