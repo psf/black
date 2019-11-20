@@ -525,7 +525,6 @@ def reformat_one(
                 write_cache(cache, [src], mode)
         report.done(src, changed)
     except Exception as exc:
-        raise
         report.failed(src, str(exc))
 
 
@@ -2510,13 +2509,22 @@ def split_line_side(
         # split altogether.
         result: List[Line] = []
         try:
-            for l in split_func(line, features=features, line_length=line_length):
-                if str(l).strip("\n") == line_str:
+            for sub_line_index, sub_line in enumerate(
+                split_func(line, features=features, line_length=line_length)
+            ):
+                if str(sub_line).strip("\n") == line_str:
                     raise CannotSplit("Split function returned an unchanged result")
+
+                sub_line_length = first_line_length
+                if sub_line_index > 0:
+                    sub_line_length = line_length
 
                 result.extend(
                     split_line(
-                        l, line_length=line_length, inner=True, features=features
+                        sub_line,
+                        line_length=sub_line_length,
+                        inner=True,
+                        features=features,
                     )
                 )
         except CannotSplit:
@@ -2530,14 +2538,17 @@ def right_hand_split_with_omit(
     line: Line, features: Collection[Feature], line_length: int = 999
 ) -> Iterator[Line]:
     for omit in generate_trailers_to_omit(line, line_length):
-        lines = list(
-            right_hand_split(
-                line, features=features, line_length=line_length, omit=omit
+        try:
+            lines = list(
+                right_hand_split(
+                    line, features=features, line_length=line_length, omit=omit
+                )
             )
-        )
-        if is_line_short_enough(lines[0], line_length=line_length):
-            yield from lines
-            return
+        except CannotSplit:
+            continue
+
+        yield from lines
+        return
 
     # All splits failed, best effort split with no omits.
     # This mostly happens to multiline strings that are by definition
@@ -2591,7 +2602,7 @@ def split_line(
     if right_hand_side:
         first_line_length = line_length
         if result:
-            first_line_length = line_length - len(str(result[-1]).rstrip("\n").lstrip())
+            first_line_length = max(line_length - len(str(result[-1]).rstrip("\n").lstrip()), 1)
         split_funcs = [right_hand_split_with_omit]
         if line.inside_brackets:
             split_funcs = [
@@ -2722,24 +2733,23 @@ def right_hand_split(
             yield from right_hand_split(
                 line, features=features, line_length=line_length, omit=omit
             )
+        except CannotSplit as e:
+            pass
+        else:
             return
 
-        except CannotSplit:
-            if not (
-                can_be_split(body)
-                or is_line_short_enough(body, line_length=line_length)
-            ):
-                raise CannotSplit(
-                    "Splitting failed, body is still too long and can't be split."
-                )
+        if not can_be_split(body) and not is_line_short_enough(body, line_length=line_length):
+            raise CannotSplit(
+                "Splitting failed, body is still too long and can't be split.",
+            )
 
-            elif head.contains_multiline_strings() or tail.contains_multiline_strings():
-                raise CannotSplit(
-                    "The current optional pair of parentheses is bound to fail to "
-                    "satisfy the splitting algorithm because the head or the tail "
-                    "contains multiline strings which by definition never fit one "
-                    "line."
-                )
+        if head.contains_multiline_strings() or tail.contains_multiline_strings():
+            raise CannotSplit(
+                "The current optional pair of parentheses is bound to fail to "
+                "satisfy the splitting algorithm because the head or the tail "
+                "contains multiline strings which by definition never fit one "
+                "line."
+            )
 
     ensure_visible(opening_bracket)
     ensure_visible(closing_bracket)
