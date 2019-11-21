@@ -266,7 +266,7 @@ class BlackTestCase(unittest.TestCase):
             TargetVersion.PY33,
             TargetVersion.PY34,
         }
-        target_version_args = []
+        target_version_args: List[str] = []
         for target_version in target_versions:
             target_version_args.extend(("-t", target_version.arg_name))
         args = [
@@ -384,7 +384,7 @@ class BlackTestCase(unittest.TestCase):
             TargetVersion.PY33,
             TargetVersion.PY34,
         }
-        target_version_args = []
+        target_version_args: List[str] = []
         for target_version in target_versions:
             target_version_args.extend(("-t", target_version.arg_name))
         diff_header = re.compile(
