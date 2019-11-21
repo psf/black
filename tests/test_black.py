@@ -1041,6 +1041,104 @@ class BlackTestCase(unittest.TestCase):
         black.lib2to3_parse(py3_only, {TargetVersion.PY36})
         black.lib2to3_parse(py3_only, {TargetVersion.PY27, TargetVersion.PY36})
 
+    @patch("black.Node")
+    @patch("black.pytree.convert")
+    @patch("black.driver.Driver")
+    @patch("black.get_grammars")
+    def test_lib2to3_parse_mocked(
+        self, get_grammars_mock, DriverMock, convert_mock, NodeMock
+    ) -> None:
+        get_grammars_mock.return_value = ["grammar", "grammar2"]
+        LeafMock = MagicMock(spec=black.Leaf)
+        DriverMock().parse_string.return_value = LeafMock
+        self.assertEqual(
+            black.lib2to3_parse("src_txt", {TargetVersion.PY37}), NodeMock()
+        )
+        get_grammars_mock.assert_called_once_with({TargetVersion.PY37})
+        DriverMock.assert_called_with("grammar", convert_mock)
+        DriverMock().parse_string.assert_called_once_with("src_txt\n", True)
+        NodeMock.assert_any_call(black.syms.file_input, [LeafMock])
+
+        DriverMock().parse_string.return_value = "NonLeaf"
+        self.assertEqual(
+            black.lib2to3_parse("src_txt", {TargetVersion.PY37}), "NonLeaf"
+        )
+
+        DriverMock().parse_string.side_effect = black.ParseError(
+            msg="msg", type=1, value=None, context=[None, (0, 5)]
+        )
+        with self.assertRaisesRegex(black.InvalidInput, "Cannot parse: 0:5: src_txt"):
+            black.lib2to3_parse("src_txt", {TargetVersion.PY37})
+
+        DriverMock().parse_string.side_effect = black.ParseError(
+            msg="msg", type=1, value=None, context=[None, (3, 5)]
+        )
+        with self.assertRaisesRegex(
+            black.InvalidInput, "Cannot parse: 3:5: <line number missing in source>"
+        ):
+            black.lib2to3_parse("src_txt", {TargetVersion.PY37})
+
+    @patch("black.TYPED_AST")
+    @patch("black.TargetVersion")
+    @patch("black.ast27")
+    @patch("black.ast3")
+    @patch("black.ast")
+    def test_parse_ast(
+        self, ast_mock, ast3_mock, ast27_mock, TargetVersionMock, TYPED_AST_MOCK
+    ) -> None:
+        TYPED_AST_MOCK.__bool__.return_value = True
+        TargetVersionMock.PY38.has_new_ast = True
+        TargetVersionMock.PY37.has_new_ast = False
+        TargetVersionMock.get_sys_version.return_value = TargetVersionMock.PY38
+        mode = MagicMock()
+        mode.target_versions = {TargetVersionMock.PY38}
+        ast_mock.parse.return_value = "ast_mock"
+        self.assertEqual(black.parse_ast("src", mode), "ast_mock")
+        ast_mock.parse.assert_called_with(
+            "src", feature_version=TargetVersionMock.PY38.get_ast_feature_version()
+        )
+
+        mode.target_versions = {TargetVersionMock.PY27}
+        ast27_mock.parse.return_value = "ast27_mock"
+        self.assertEqual(black.parse_ast("src", mode), "ast27_mock")
+        ast27_mock.parse.assert_called_with("src")
+
+        mode.target_versions = {TargetVersionMock.PY33}
+        ast3_mock.parse.return_value = "ast3_mock"
+        self.assertEqual(black.parse_ast("src", mode), "ast3_mock")
+        ast3_mock.parse.assert_called_with(
+            "src",
+            feature_version=TargetVersionMock.PY33.get_typed_ast3_feature_version(),
+        )
+
+        TYPED_AST_MOCK.__bool__.return_value = False
+
+        mode.target_versions = {TargetVersionMock.PY38}
+        ast_mock.parse.return_value = "ast_mock"
+        self.assertEqual(black.parse_ast("src", mode), "ast_mock")
+        ast_mock.parse.assert_called_with(
+            "src", feature_version=TargetVersionMock.PY38.get_ast_feature_version()
+        )
+
+        mode.target_versions = {TargetVersionMock.PY38}
+        TargetVersionMock.get_sys_version.return_value = TargetVersionMock.PY37
+        with self.assertRaisesRegex(ModuleNotFoundError, "Use"):
+            black.parse_ast("src", mode)
+
+        mode.target_versions = {TargetVersionMock.PY37}
+        TargetVersionMock.get_sys_version.return_value = TargetVersionMock.PY37
+        ast_mock.parse.return_value = "ast_mock"
+        self.assertEqual(black.parse_ast("src", mode), "ast_mock")
+        ast_mock.parse.assert_called_with("src")
+
+        mode.target_versions = {TargetVersionMock.PY27}
+        with self.assertRaisesRegex(ModuleNotFoundError, "Install typed_ast package"):
+            black.parse_ast("src", mode)
+
+        mode.target_versions = {TargetVersionMock.PY33}
+        with self.assertRaisesRegex(ModuleNotFoundError, "Install typed_ast package"):
+            black.parse_ast("src", mode)
+
     def test_get_features_used(self) -> None:
         node = black.lib2to3_parse("def f(*, arg): ...\n")
         self.assertEqual(black.get_features_used(node), set())
@@ -1673,6 +1771,11 @@ class BlackTestCase(unittest.TestCase):
             if result.exception is not None:
                 raise result.exception
             self.assertEqual(result.exit_code, 0)
+
+    def test_lib2to3_unparse(self):
+        node_mock = MagicMock()
+        node_mock.__str__.return_value = "node_mock_str"
+        self.assertEqual(black.lib2to3_unparse(node_mock), "node_mock_str")
 
 
 class BlackDTestCase(AioHTTPTestCase):
