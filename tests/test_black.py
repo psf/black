@@ -1046,7 +1046,11 @@ class BlackTestCase(unittest.TestCase):
     @patch("black.driver.Driver")
     @patch("black.get_grammars")
     def test_lib2to3_parse_mocked(
-        self, get_grammars_mock, DriverMock, convert_mock, NodeMock
+        self,
+        get_grammars_mock: MagicMock,
+        DriverMock: MagicMock,
+        convert_mock: MagicMock,
+        NodeMock: MagicMock,
     ) -> None:
         get_grammars_mock.return_value = ["grammar", "grammar2"]
         LeafMock = MagicMock(spec=black.Leaf)
@@ -1065,13 +1069,13 @@ class BlackTestCase(unittest.TestCase):
         )
 
         DriverMock().parse_string.side_effect = black.ParseError(
-            msg="msg", type=1, value=None, context=[None, (0, 5)]
+            msg="msg", type=1, value=None, context=("context", (0, 5))
         )
         with self.assertRaisesRegex(black.InvalidInput, "Cannot parse: 0:5: src_txt"):
             black.lib2to3_parse("src_txt", {TargetVersion.PY37})
 
         DriverMock().parse_string.side_effect = black.ParseError(
-            msg="msg", type=1, value=None, context=[None, (3, 5)]
+            msg="msg", type=1, value=None, context=("context", (3, 5))
         )
         with self.assertRaisesRegex(
             black.InvalidInput, "Cannot parse: 3:5: <line number missing in source>"
@@ -1084,7 +1088,12 @@ class BlackTestCase(unittest.TestCase):
     @patch("black.ast3")
     @patch("black.ast")
     def test_parse_ast(
-        self, ast_mock, ast3_mock, ast27_mock, TargetVersionMock, TYPED_AST_MOCK
+        self,
+        ast_mock: MagicMock,
+        ast3_mock: MagicMock,
+        ast27_mock: MagicMock,
+        TargetVersionMock: MagicMock,
+        TYPED_AST_MOCK: MagicMock,
     ) -> None:
         TYPED_AST_MOCK.__bool__.return_value = True
         TargetVersionMock.PY38.has_new_ast = True
@@ -1772,7 +1781,7 @@ class BlackTestCase(unittest.TestCase):
                 raise result.exception
             self.assertEqual(result.exit_code, 0)
 
-    def test_lib2to3_unparse(self):
+    def test_lib2to3_unparse(self) -> None:
         node_mock = MagicMock()
         node_mock.__str__.return_value = "node_mock_str"
         self.assertEqual(black.lib2to3_unparse(node_mock), "node_mock_str")
@@ -1948,36 +1957,36 @@ class BlackDTestCase(AioHTTPTestCase):
 
 
 class TargetVersionTestCase(unittest.TestCase):
-    def test_arg_name(self):
+    def test_arg_name(self) -> None:
         self.assertEqual(TargetVersion.PY27.arg_name, "py27")
         self.assertEqual(TargetVersion.PY38.arg_name, "py38")
 
-    def test_title(self):
+    def test_title(self) -> None:
         self.assertEqual(TargetVersion.PY27.title, "Python 2.7")
         self.assertEqual(TargetVersion.PY38.title, "Python 3.8")
 
-    def test_is_python2(self):
+    def test_is_python2(self) -> None:
         self.assertTrue(TargetVersion.PY27.is_python2())
         self.assertFalse(TargetVersion.PY38.is_python2())
 
-    def test_has_new_ast(self):
+    def test_has_new_ast(self) -> None:
         self.assertFalse(TargetVersion.PY27.has_new_ast)
         self.assertTrue(TargetVersion.PY38.has_new_ast)
 
-    def test_get_ast_feature_version(self):
+    def test_get_ast_feature_version(self) -> None:
         with self.assertRaises(ValueError):
-            self.assertEqual(TargetVersion.PY27.get_ast_feature_version())
+            TargetVersion.PY27.get_ast_feature_version()
         with self.assertRaises(ValueError):
-            self.assertEqual(TargetVersion.PY33.get_ast_feature_version())
+            TargetVersion.PY33.get_ast_feature_version()
         self.assertEqual(TargetVersion.PY38.get_ast_feature_version(), (3, 8))
 
-    def test_get_typed_ast3_feature_version(self):
+    def test_get_typed_ast3_feature_version(self) -> None:
         with self.assertRaises(ValueError):
-            self.assertEqual(TargetVersion.PY27.get_typed_ast3_feature_version())
+            TargetVersion.PY27.get_typed_ast3_feature_version()
         self.assertEqual(TargetVersion.PY38.get_typed_ast3_feature_version(), 8)
 
     @patch("black.sys")
-    def test_get_sys_version(self, sys_mock):
+    def test_get_sys_version(self, sys_mock: MagicMock) -> None:
         sys_mock.version_info = (3, 5)
         self.assertEqual(TargetVersion.get_sys_version(), TargetVersion.PY35)
         sys_mock.version_info = (2, 7)
@@ -1989,7 +1998,7 @@ class TargetVersionTestCase(unittest.TestCase):
         sys_mock.version_info = (4, 1)
         self.assertEqual(TargetVersion.get_sys_version(), TargetVersion.PY38)
 
-    def test_comparison(self):
+    def test_comparison(self) -> None:
         self.assertTrue(TargetVersion.PY35 < TargetVersion.PY38)
         self.assertTrue(TargetVersion.PY27 < TargetVersion.PY33)
 
