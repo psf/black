@@ -248,6 +248,7 @@ class BlackTestCase(unittest.TestCase):
         black.assert_equivalent(source, result.output, black.FileMode())
         black.assert_stable(source, result.output, black.FileMode())
 
+    @unittest.skipIf(IS_PYPY, "Unicode symbols are not supported in PyPy")
     def test_piping_diff(self) -> None:
         diff_header = re.compile(
             rf"(STDIN|STDOUT)\t\d\d\d\d-\d\d-\d\d "
