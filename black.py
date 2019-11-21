@@ -831,14 +831,14 @@ def format_str(src_contents: str, *, mode: FileMode) -> FileContent:
 
     `mode` determines formatting options, such as how many characters per line are
     allowed.
+
+    Note: populates `mode.target_versions` with detected versions if it was empty.
     """
     src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)
     dst_contents = []
     future_imports = get_future_imports(src_node)
-    if mode.target_versions:
-        versions = mode.target_versions
-    else:
-        versions = detect_target_versions(src_node)
+    versions = mode.target_versions or detect_target_versions(src_node)
+
     normalize_fmt_off(src_node)
     lines = LineGenerator(
         remove_u_prefix="unicode_literals" in future_imports
@@ -3787,8 +3787,38 @@ class Report:
 
 
 def parse_ast(src: str, mode: FileMode) -> AST:
+    """
+    Parse `src` to ast using `typed_ast` or `ast`.
+
+    - uses `mode.target_versions` from the latest to the oldest
+    - if `mode.target_versions` is empty - `py34`, `py35`, `py36`, `py37`
+      and system version
+    - for `py27` uses `typed_ast.ast27`, fails if it is not installed
+    - for `py33` uses `typed_ast.ast3`, fails if it is not installed
+    - for `py38` uses `ast` if system version is 3.8+
+    - for `py38` uses `typed_ast.ast3` if system version is <3.8,
+      fails if it is not installed
+    - for other versions uses `typed_ast.ast3`, fallback to `ast`
+      if `typed_ast is not installed, fallback fails if `typed_ast` is not installed
+
+    Raises:
+        SyntaxError -- If src parse failed for all target versions
+        ModuleNotFoundError -- If `typed_ast` is required but missing or
+            Python 3.8+ required
+    """
     system_version = TargetVersion.get_sys_version()
-    versions = mode.target_versions or {TargetVersion.get_sys_version()}
+    versions = mode.target_versions
+
+    # all versions that are safe to parse and system if it is Python 3.8+
+    if not versions:
+        versions = {
+            TargetVersion.PY34,
+            TargetVersion.PY35,
+            TargetVersion.PY36,
+            TargetVersion.PY37,
+            TargetVersion.get_sys_version(),
+        }
+
     for target_version_index, target_version in enumerate(
         sorted(versions, reverse=True)
     ):
@@ -3843,6 +3873,7 @@ def parse_ast(src: str, mode: FileMode) -> AST:
         except ModuleNotFoundError:
             raise
 
+    # never happens
     raise SyntaxError("Cannot parse AST")
 
 
