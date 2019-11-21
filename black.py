@@ -152,29 +152,76 @@ class TargetVersion(Enum):
 
     @property
     def arg_name(self) -> str:
+        """
+        CLI argument name
+        """
         return self.name.lower()
 
     def is_python2(self) -> bool:
+        """
+        Whether this is a Python 2.7
+        """
         return self is TargetVersion.PY27
 
     def get_ast_feature_version(self) -> Tuple[int, int]:
+        """
+        Get feature version for py38+ `ast.parse`.
+
+        Versions lower than 3.4 are not supported.
+
+        Returns:
+            A tuple `(3, <item.value>)`.
+
+        Raises:
+            ValueError -- If version is not supported.
+        """
         if self is TargetVersion.PY27:
-            return (2, 7)
+            raise ValueError("Python 2.7 is not supported in ast")
+        if self is TargetVersion.PY33:
+            raise ValueError("Python 3.3 is not supported in ast")
 
         return (3, self.value)
 
-    def get_typed_ast_feature_version(self) -> int:
+    def get_typed_ast3_feature_version(self) -> int:
+        """
+        Get feature version for `typed_ast.ast3.parse`.
+
+        Version 2.7 is not supported, use `typed_ast.ast27.parse` instead.
+
+        Returns:
+            Item `value`.
+
+        Raises:
+            ValueError -- If version is not supported.
+        """
+        if self is TargetVersion.PY27:
+            raise ValueError("Python 2.7 is not supported in typed_ast.ast3")
+
         return int(self.value)
 
     @classmethod
     def get_sys_version(cls) -> "TargetVersion":
+        """
+        Get `TargetVersion` from `sys.version_info`.
+
+        If version not found - returns `PY38`.
+        """
         major, minor = sys.version_info[:2]
         if major == 2:
             return TargetVersion.PY27
 
-        return TargetVersion(minor)
+        try:
+            return TargetVersion(minor)
+        except ValueError:
+            pass
+
+        # fallback to latest stable on unknown Python version
+        return TargetVersion.PY38
 
     def __lt__(self, other: "TargetVersion") -> bool:
+        """
+        Enough for sorting sets. To sort a list, implement `__eq__`.
+        """
         return bool(self.value < other.value)
 
 
@@ -3757,7 +3804,7 @@ def parse_ast(src: str, mode: FileMode) -> AST:
                 if TYPED_AST:
                     return ast3.parse(
                         src,
-                        feature_version=target_version.get_typed_ast_feature_version(),
+                        feature_version=target_version.get_typed_ast3_feature_version(),
                     )
 
                 raise ModuleNotFoundError(
@@ -3766,18 +3813,15 @@ def parse_ast(src: str, mode: FileMode) -> AST:
 
             if TYPED_AST:
                 return ast3.parse(
-                    src, feature_version=target_version.get_typed_ast_feature_version()
+                    src, feature_version=target_version.get_typed_ast3_feature_version()
                 )
 
             if system_version is TargetVersion.PY38:
-                return ast3.parse(
-                    src,
-                    feature_version=(
-                        target_version.get_ast_feature_version()  # type: ignore
-                    ),
+                return ast.parse(  # type: ignore
+                    src, feature_version=target_version.get_ast_feature_version()
                 )
 
-            return ast3.parse(src)
+            return ast.parse(src)
         except SyntaxError:
             if target_version_index == len(mode.target_versions) - 1:
                 raise
