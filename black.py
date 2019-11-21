@@ -3764,7 +3764,6 @@ def assert_equivalent(src: str, dst: str) -> None:
         for field in sorted(node._fields):  # noqa: F402
             # TypeIgnore has only one field 'lineno' which breaks this comparison
             if isinstance(node, TYPE_IGNORE_NODE_CLASSES):
-                print(node)
                 break
 
             try:
