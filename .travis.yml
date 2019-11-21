@@ -7,7 +7,7 @@ env:
   - TEST_CMD="coverage run tests/test_black.py"
 install:
   - pip install coverage coveralls pre-commit
-  - pip install -e '.[d,typed_ast]'
+  - pip install -e .[d,typed_ast]
 script:
   - $TEST_CMD
 after_success:
