@@ -150,8 +150,32 @@ class TargetVersion(Enum):
     PY37 = 7
     PY38 = 8
 
+    @property
+    def arg_name(self) -> str:
+        return self.name.lower()
+
     def is_python2(self) -> bool:
         return self is TargetVersion.PY27
+
+    def get_ast_feature_version(self) -> Tuple[int, int]:
+        if self is TargetVersion.PY27:
+            return (2, 7)
+
+        return (3, self.value)
+
+    def get_typed_ast_feature_version(self) -> int:
+        return self.value
+
+    @classmethod
+    def get_sys_version(cls) -> "TargetVersion":
+        major, minor = sys.version_info[:2]
+        if major == 2:
+            return TargetVersion.PY27
+
+        return TargetVersion(minor)
+
+    def __lt__(self, other: "TargetVersion") -> bool:
+        return self.value < other.value
 
 
 PY36_VERSIONS = {TargetVersion.PY36, TargetVersion.PY37, TargetVersion.PY38}
@@ -220,8 +244,7 @@ class FileMode:
     def get_cache_key(self) -> str:
         if self.target_versions:
             version_str = ",".join(
-                str(version.value)
-                for version in sorted(self.target_versions, key=lambda v: v.value)
+                str(version.value) for version in sorted(self.target_versions)
             )
         else:
             version_str = "-"
@@ -298,7 +321,7 @@ def target_version_option_callback(
 @click.option(
     "-t",
     "--target-version",
-    type=click.Choice([v.name.lower() for v in TargetVersion]),
+    type=click.Choice([v.arg_name for v in TargetVersion]),
     callback=target_version_option_callback,
     multiple=True,
     help=(
@@ -751,7 +774,7 @@ def format_file_contents(
         raise NothingChanged
 
     if not fast:
-        assert_equivalent(src_contents, dst_contents)
+        assert_equivalent(src_contents, dst_contents, mode=mode)
         assert_stable(src_contents, dst_contents, mode=mode)
     return dst_contents
 
@@ -772,7 +795,7 @@ def format_str(src_contents: str, *, mode: FileMode) -> FileContent:
     normalize_fmt_off(src_node)
     lines = LineGenerator(
         remove_u_prefix="unicode_literals" in future_imports
-        or supports_feature(versions, Feature.UNICODE_LITERALS),
+        or supports_feature(mode.target_versions, Feature.UNICODE_LITERALS),
         is_pyi=mode.is_pyi,
         normalize_strings=mode.string_normalization,
     )
@@ -782,7 +805,7 @@ def format_str(src_contents: str, *, mode: FileMode) -> FileContent:
     split_line_features = {
         feature
         for feature in {Feature.TRAILING_COMMA_IN_CALL, Feature.TRAILING_COMMA_IN_DEF}
-        if supports_feature(versions, feature)
+        if supports_feature(mode.target_versions, feature)
     }
     for current_line in lines.visit(src_node):
         for _ in range(after):
@@ -3716,25 +3739,48 @@ class Report:
         return ", ".join(report) + "."
 
 
-def parse_ast(src: str) -> AST:
-    filename = "<unknown>"
-    if sys.version_info >= (3, 8):
-        # TODO: support Python 4+ ;)
-        for minor_version in range(sys.version_info[1], 4, -1):
-            try:
-                return ast.parse(src, filename, feature_version=(3, minor_version))
-            except SyntaxError:
-                continue
-
-    for feature_version in (7, 6):
+def parse_ast(src: str, mode: FileMode) -> AST:
+    system_version = TargetVersion.get_sys_version()
+    versions = mode.target_versions or {TargetVersion.get_sys_version()}
+    versions = sorted(versions, reverse=True)
+    for target_version_index, target_version in enumerate(
+        sorted(versions, reverse=True)
+    ):
         try:
-            return ast3.parse(src, filename, feature_version=feature_version)
-        except SyntaxError:
-            continue
-        except TypeError:
-            break
+            if target_version is TargetVersion.PY27:
+                if TYPED_AST:
+                    return ast27.parse(src)
 
-    return ast27.parse(src)
+                raise ModuleNotFoundError(
+                    f"Install typed_ast package to parse {target_version.name}."
+                )
+            if target_version is TargetVersion.PY33:
+                if TYPED_AST:
+                    return ast3.parse(
+                        src,
+                        feature_version=target_version.get_typed_ast_feature_version(),
+                    )
+
+                raise ModuleNotFoundError(
+                    f"Install typed_ast package to parse {target_version.name}."
+                )
+
+            if TYPED_AST:
+                return ast3.parse(
+                    src, feature_version=target_version.get_typed_ast_feature_version()
+                )
+
+            if system_version is TargetVersion.PY38:
+                return ast3.parse(
+                    src, feature_version=target_version.get_ast_feature_version()
+                )
+
+            return ast3.parse(src)
+        except SyntaxError:
+            if target_version_index == len(mode.target_versions) - 1:
+                raise
+        except ModuleNotFoundError:
+            raise
 
 
 def _fixup_ast_constants(node: AST) -> AST:
@@ -3751,14 +3797,13 @@ def _fixup_ast_constants(node: AST) -> AST:
     return node
 
 
-def assert_equivalent(src: str, dst: str) -> None:
+def assert_equivalent(src: str, dst: str, mode: FileMode) -> None:
     """Raise AssertionError if `src` and `dst` aren't equivalent."""
 
     def _v(node: AST, depth: int = 0) -> Iterator[str]:
         """Simple visitor generating strings to compare ASTs by content."""
 
         node = _fixup_ast_constants(node)
-
         yield f"{'  ' * depth}{node.__class__.__name__}("
 
         for field in sorted(node._fields):  # noqa: F402
@@ -3797,7 +3842,7 @@ def assert_equivalent(src: str, dst: str) -> None:
         yield f"{'  ' * depth})  # /{node.__class__.__name__}"
 
     try:
-        src_ast = parse_ast(src)
+        src_ast = parse_ast(src, mode)
     except Exception as exc:
         raise AssertionError(
             f"cannot use --safe with this file; failed to parse source file.  "
@@ -3805,7 +3850,7 @@ def assert_equivalent(src: str, dst: str) -> None:
         )
 
     try:
-        dst_ast = parse_ast(dst)
+        dst_ast = parse_ast(dst, mode)
     except Exception as exc:
         log = dump_to_file("".join(traceback.format_tb(exc.__traceback__)), dst)
         raise AssertionError(
