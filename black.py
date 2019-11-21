@@ -3,7 +3,7 @@ import asyncio
 from concurrent.futures import Executor, ProcessPoolExecutor
 from contextlib import contextmanager
 from datetime import datetime
-from enum import Enum
+from enum import IntEnum
 from functools import lru_cache, partial, wraps
 import io
 import itertools
@@ -121,7 +121,7 @@ class InvalidInput(ValueError):
     """Raised when input source code fails all parse attempts."""
 
 
-class WriteBack(Enum):
+class WriteBack(IntEnum):
     NO = 0
     YES = 1
     DIFF = 2
@@ -135,13 +135,13 @@ class WriteBack(Enum):
         return cls.DIFF if diff else cls.YES
 
 
-class Changed(Enum):
+class Changed(IntEnum):
     NO = 0
     CACHED = 1
     YES = 2
 
 
-class TargetVersion(Enum):
+class TargetVersion(IntEnum):
     PY27 = 2
     PY33 = 3
     PY34 = 4
@@ -211,7 +211,7 @@ class TargetVersion(Enum):
         if self is TargetVersion.PY27:
             raise ValueError("Python 2.7 is not supported in typed_ast.ast3")
 
-        return int(self.value)
+        return self.value
 
     @classmethod
     def get_sys_version(cls) -> "TargetVersion":
@@ -234,17 +234,11 @@ class TargetVersion(Enum):
         # fallback to latest stable on unknown Python version
         return TargetVersion.PY38
 
-    def __lt__(self, other: "TargetVersion") -> bool:
-        """
-        Enough for sorting sets. To sort a list, implement `__eq__`.
-        """
-        return bool(self.value < other.value)
-
 
 PY36_VERSIONS = {TargetVersion.PY36, TargetVersion.PY37, TargetVersion.PY38}
 
 
-class Feature(Enum):
+class Feature(IntEnum):
     # All string literals are unicode
     UNICODE_LITERALS = 1
     F_STRINGS = 2
