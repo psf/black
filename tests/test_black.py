@@ -1786,6 +1786,44 @@ class BlackTestCase(unittest.TestCase):
         node_mock.__str__.return_value = "node_mock_str"
         self.assertEqual(black.lib2to3_unparse(node_mock), "node_mock_str")
 
+    @patch("black.main")
+    @patch("black.patch_click")
+    @patch("black.freeze_support")
+    def test_patched_main(
+        self,
+        freeze_support_mock: MagicMock,
+        patch_click_mock: MagicMock,
+        main_mock: MagicMock,
+    ) -> None:
+        black.patched_main()
+        freeze_support_mock.assert_called_once_with()
+        patch_click_mock.assert_called_once_with()
+        main_mock.assert_called_once_with()
+
+    def test_patch_click(self) -> None:
+        click_mock = MagicMock()
+        click_mock.core._verify_python3_env = False
+        del click_mock._unicodefun._verify_python3_env
+        with patch("builtins.__import__", side_effect=lambda name, *args: click_mock):
+            black.patch_click()
+            self.assertTrue(click_mock.core._verify_python3_env)
+            with self.assertRaises(AttributeError):
+                click_mock._unicodefun._verify_python3_env()
+
+        click_mock.core._verify_python3_env = False
+        with patch("builtins.__import__", side_effect=ModuleNotFoundError()):
+            black.patch_click()
+            self.assertFalse(click_mock.core._verify_python3_env)
+
+    @patch("black.err")
+    def test_cancel(self, err_mock: MagicMock) -> None:
+        task1_mock = MagicMock()
+        task2_mock = MagicMock()
+        black.cancel([task1_mock, task2_mock])
+        err_mock.assert_called_once_with("Aborted!")
+        task1_mock.cancel.assert_called_once_with()
+        task2_mock.cancel.assert_called_once_with()
+
 
 class BlackDTestCase(AioHTTPTestCase):
     async def get_application(self) -> web.Application:
