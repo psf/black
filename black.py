@@ -3810,6 +3810,21 @@ def parse_ast(src: str, mode: FileMode) -> AST:
                 raise ModuleNotFoundError(
                     f"Install typed_ast package to parse {target_version.name}."
                 )
+            if target_version is TargetVersion.PY38:
+                if system_version is TargetVersion.PY38:
+                    return ast.parse(  # type: ignore
+                        src, feature_version=target_version.get_ast_feature_version()
+                    )
+
+                if TYPED_AST:
+                    return ast3.parse(
+                        src,
+                        feature_version=target_version.get_typed_ast3_feature_version(),
+                    )
+
+                raise ModuleNotFoundError(
+                    f"Use Pyhon 3.8+ to parse {target_version.name}."
+                )
 
             if TYPED_AST:
                 return ast3.parse(

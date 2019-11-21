@@ -323,11 +323,12 @@ class BlackTestCase(unittest.TestCase):
     @patch("black.dump_to_file", dump_to_stderr)
     def test_pep_572(self) -> None:
         source, expected = read_data("pep_572")
-        actual = fs(source)
+        mode = black.FileMode(target_versions={TargetVersion.PY38})
+        actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, mode=mode)
         if sys.version_info >= (3, 8):
-            black.assert_equivalent(source, actual, black.FileMode())
+            black.assert_equivalent(source, actual, mode=mode)
 
     def test_pep_572_version_detection(self) -> None:
         source, _ = read_data("pep_572")
@@ -412,11 +413,12 @@ class BlackTestCase(unittest.TestCase):
     @patch("black.dump_to_file", dump_to_stderr)
     def test_pep_570(self) -> None:
         source, expected = read_data("pep_570")
-        actual = fs(source)
+        mode = black.FileMode(target_versions={TargetVersion.PY38})
+        actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, mode)
         if sys.version_info >= (3, 8):
-            black.assert_equivalent(source, actual, black.FileMode())
+            black.assert_equivalent(source, actual, mode)
 
     def test_detect_pos_only_arguments(self) -> None:
         source, _ = read_data("pep_570")
