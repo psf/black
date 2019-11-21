@@ -7,7 +7,8 @@ env:
   - TEST_CMD="coverage run tests/test_black.py"
 install:
   - pip install coverage coveralls pre-commit
-  - pip install -e .[d,typed_ast]
+  - if [[ "IS_PYPY" == "" ]]; then pip install -e .[d,typed_ast] fi;
+  - if [[ "IS_PYPY" == "1" ]]; then pip install -e .[d] fi;
 script:
   - $TEST_CMD
 after_success:
@@ -18,15 +19,19 @@ notifications:
 matrix:
   include:
     - name: "lint"
-      python: 3.7
+      python: "3.7"
       env:
         - TEST_CMD="pre-commit run --all-files"
     - name: "3.6"
-      python: 3.6
+      python: "3.6"
     - name: "3.7"
-      python: 3.7
+      python: "3.7"
     - name: "3.8"
-      python: 3.8
+      python: "3.8"
+    - name: "PyPy3"
+      python: "pypy3"
+      env:
+        - IS_PYPY=1
 before_deploy:
   - pip install pyinstaller
   - pyinstaller --clean -F --add-data blib2to3/:blib2to3 black.py
