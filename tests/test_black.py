@@ -378,7 +378,6 @@ class BlackTestCase(unittest.TestCase):
         target_version_args = []
         for target_version in target_versions:
             target_version_args.extend(("-t", target_version.arg_name))
-        print(target_version_args)
         diff_header = re.compile(
             rf"{re.escape(str(tmp_file))}\t\d\d\d\d-\d\d-\d\d "
             rf"\d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
