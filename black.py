@@ -44,7 +44,16 @@ from appdirs import user_cache_dir
 from dataclasses import dataclass, field, replace
 import click
 import toml
-from typed_ast import ast3, ast27
+
+try:
+    from typed_ast import ast3, ast27
+except ModuleNotFoundError:
+    # fallback to builtin AST
+    TYPED_AST = False
+    import ast as ast27  # type: ignore
+    import ast as ast3  # type: ignore
+else:
+    TYPED_AST = True
 from pathspec import PathSpec
 
 # lib2to3 fork
@@ -79,6 +88,22 @@ CacheInfo = Tuple[Timestamp, FileSize]
 Cache = Dict[Path, CacheInfo]
 out = partial(click.secho, bold=True, err=True)
 err = partial(click.secho, fg="red", err=True)
+AST = Union[ast.AST, ast3.AST, ast27.AST]
+
+
+# AST node types
+TYPE_IGNORE_NODE_CLASSES = tuple()
+AST_NODE_CLASSES = (ast.AST, ast3.AST, ast27.AST)
+STR_NODE_CLASSES = (ast.Str, ast3.Str, ast27.Str, ast.Bytes, ast3.Bytes)
+NUM_NODE_CLASSES = (ast.Num, ast3.Num, ast27.Num)
+NAME_CONSTANT_NODE_CLASSES = (ast.NameConstant, ast3.NameConstant)
+DELETE_NODE_CLASSES = (ast.Delete, ast3.Delete, ast27.Delete)
+TUPLE_NODE_CLASSES = (ast.Tuple, ast3.Tuple, ast27.Tuple)
+if sys.version_info >= (3, 8):
+    TYPE_IGNORE_NODE_CLASSES += (ast.TypeIgnore,)
+if TYPED_AST:
+    TYPE_IGNORE_NODE_CLASSES += (ast3.TypeIgnore, ast27.TypeIgnore)
+
 
 pygram.initialize(CACHE_DIR)
 syms = pygram.python_symbols
@@ -3691,7 +3716,7 @@ class Report:
         return ", ".join(report) + "."
 
 
-def parse_ast(src: str) -> Union[ast.AST, ast3.AST, ast27.AST]:
+def parse_ast(src: str) -> AST:
     filename = "<unknown>"
     if sys.version_info >= (3, 8):
         # TODO: support Python 4+ ;)
@@ -3700,27 +3725,27 @@ def parse_ast(src: str) -> Union[ast.AST, ast3.AST, ast27.AST]:
                 return ast.parse(src, filename, feature_version=(3, minor_version))
             except SyntaxError:
                 continue
-    else:
-        for feature_version in (7, 6):
-            try:
-                return ast3.parse(src, filename, feature_version=feature_version)
-            except SyntaxError:
-                continue
+
+    for feature_version in (7, 6):
+        try:
+            return ast3.parse(src, filename, feature_version=feature_version)
+        except SyntaxError:
+            continue
+        except TypeError:
+            break
 
     return ast27.parse(src)
 
 
-def _fixup_ast_constants(
-    node: Union[ast.AST, ast3.AST, ast27.AST]
-) -> Union[ast.AST, ast3.AST, ast27.AST]:
+def _fixup_ast_constants(node: AST) -> AST:
     """Map ast nodes deprecated in 3.8 to Constant."""
-    if isinstance(node, (ast.Str, ast3.Str, ast27.Str, ast.Bytes, ast3.Bytes)):
+    if isinstance(node, STR_NODE_CLASSES):
         return ast.Constant(value=node.s)
 
-    if isinstance(node, (ast.Num, ast3.Num, ast27.Num)):
+    if isinstance(node, NUM_NODE_CLASSES):
         return ast.Constant(value=node.n)
 
-    if isinstance(node, (ast.NameConstant, ast3.NameConstant)):
+    if isinstance(node, NAME_CONSTANT_NODE_CLASSES):
         return ast.Constant(value=node.value)
 
     return node
@@ -3729,7 +3754,7 @@ def _fixup_ast_constants(
 def assert_equivalent(src: str, dst: str) -> None:
     """Raise AssertionError if `src` and `dst` aren't equivalent."""
 
-    def _v(node: Union[ast.AST, ast3.AST, ast27.AST], depth: int = 0) -> Iterator[str]:
+    def _v(node: AST, depth: int = 0) -> Iterator[str]:
         """Simple visitor generating strings to compare ASTs by content."""
 
         node = _fixup_ast_constants(node)
@@ -3738,10 +3763,8 @@ def assert_equivalent(src: str, dst: str) -> None:
 
         for field in sorted(node._fields):  # noqa: F402
             # TypeIgnore has only one field 'lineno' which breaks this comparison
-            type_ignore_classes = (ast3.TypeIgnore, ast27.TypeIgnore)
-            if sys.version_info >= (3, 8):
-                type_ignore_classes += (ast.TypeIgnore,)
-            if isinstance(node, type_ignore_classes):
+            if isinstance(node, TYPE_IGNORE_NODE_CLASSES):
+                print(node)
                 break
 
             try:
@@ -3757,16 +3780,16 @@ def assert_equivalent(src: str, dst: str) -> None:
                     # parentheses and they change the AST.
                     if (
                         field == "targets"
-                        and isinstance(node, (ast.Delete, ast3.Delete, ast27.Delete))
-                        and isinstance(item, (ast.Tuple, ast3.Tuple, ast27.Tuple))
+                        and isinstance(node, DELETE_NODE_CLASSES)
+                        and isinstance(item, TUPLE_NODE_CLASSES)
                     ):
                         for item in item.elts:
                             yield from _v(item, depth + 2)
 
-                    elif isinstance(item, (ast.AST, ast3.AST, ast27.AST)):
+                    elif isinstance(item, AST_NODE_CLASSES):
                         yield from _v(item, depth + 2)
 
-            elif isinstance(value, (ast.AST, ast3.AST, ast27.AST)):
+            elif isinstance(value, AST_NODE_CLASSES):
                 yield from _v(value, depth + 2)
 
             else:
