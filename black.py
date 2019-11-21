@@ -3823,7 +3823,7 @@ def parse_ast(src: str, mode: FileMode) -> AST:
 
             return ast.parse(src)
         except SyntaxError:
-            if target_version_index == len(mode.target_versions) - 1:
+            if target_version_index == len(versions) - 1:
                 raise
         except ModuleNotFoundError:
             raise
