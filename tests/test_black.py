@@ -1844,5 +1844,52 @@ class BlackDTestCase(AioHTTPTestCase):
         self.assertIsNotNone(response.headers.get(blackd.BLACK_VERSION_HEADER))
 
 
+class TargetVersionTestCase(unittest.TestCase):
+    def test_arg_name(self):
+        self.assertEqual(TargetVersion.PY27.arg_name, "py27")
+        self.assertEqual(TargetVersion.PY38.arg_name, "py38")
+
+    def test_title(self):
+        self.assertEqual(TargetVersion.PY27.title, "Python 2.7")
+        self.assertEqual(TargetVersion.PY38.title, "Python 3.8")
+
+    def test_is_python2(self):
+        self.assertTrue(TargetVersion.PY27.is_python2())
+        self.assertFalse(TargetVersion.PY38.is_python2())
+
+    def test_has_new_ast(self):
+        self.assertFalse(TargetVersion.PY27.has_new_ast)
+        self.assertTrue(TargetVersion.PY38.has_new_ast)
+
+    def test_get_ast_feature_version(self):
+        with self.assertRaises(ValueError):
+            self.assertEqual(TargetVersion.PY27.get_ast_feature_version())
+        with self.assertRaises(ValueError):
+            self.assertEqual(TargetVersion.PY33.get_ast_feature_version())
+        self.assertEqual(TargetVersion.PY38.get_ast_feature_version(), (3, 8))
+
+    def test_get_typed_ast3_feature_version(self):
+        with self.assertRaises(ValueError):
+            self.assertEqual(TargetVersion.PY27.get_typed_ast3_feature_version())
+        self.assertEqual(TargetVersion.PY38.get_typed_ast3_feature_version(), 8)
+
+    @patch("black.sys")
+    def test_get_sys_version(self, sys_mock):
+        sys_mock.version_info = (3, 5)
+        self.assertEqual(TargetVersion.get_sys_version(), TargetVersion.PY35)
+        sys_mock.version_info = (2, 7)
+        self.assertEqual(TargetVersion.get_sys_version(), TargetVersion.PY27)
+        sys_mock.version_info = (2, 7)
+        self.assertEqual(TargetVersion.get_sys_version(), TargetVersion.PY27)
+        sys_mock.version_info = (3, 9)
+        self.assertEqual(TargetVersion.get_sys_version(), TargetVersion.PY38)
+        sys_mock.version_info = (4, 1)
+        self.assertEqual(TargetVersion.get_sys_version(), TargetVersion.PY38)
+
+    def test_comparison(self):
+        self.assertTrue(TargetVersion.PY35 < TargetVersion.PY38)
+        self.assertTrue(TargetVersion.PY27 < TargetVersion.PY33)
+
+
 if __name__ == "__main__":
     unittest.main(module="test_black")
