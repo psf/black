@@ -153,15 +153,35 @@ class TargetVersion(Enum):
     @property
     def arg_name(self) -> str:
         """
-        CLI argument name
+        CLI argument name.
         """
         return self.name.lower()
+
+    @property
+    def title(self) -> str:
+        """
+        Human readable title.
+        """
+        if self.is_python2():
+            return "Python 2.7"
+
+        return f"Python 3.{self.value}"
 
     def is_python2(self) -> bool:
         """
         Whether this is a Python 2.7
         """
         return self is TargetVersion.PY27
+
+    @property
+    def has_new_ast(self) -> bool:
+        """
+        Whether built-in `ast` module of this version supports features
+        and preferred over `typed_ast.ast3`.
+
+        Note: add PY39 here.
+        """
+        return self is TargetVersion.PY38
 
     def get_ast_feature_version(self) -> Tuple[int, int]:
         """
@@ -204,7 +224,9 @@ class TargetVersion(Enum):
         """
         Get `TargetVersion` from `sys.version_info`.
 
-        If version not found - returns `PY38`.
+        If version not found - returns latest stable: `PY38`.
+
+        Note: change to PY39 once it is stable.
         """
         major, minor = sys.version_info[:2]
         if major == 2:
@@ -830,9 +852,7 @@ def format_str(src_contents: str, *, mode: FileMode) -> FileContent:
     """Reformat a string and return new contents.
 
     `mode` determines formatting options, such as how many characters per line are
-    allowed.
-
-    Note: populates `mode.target_versions` with detected versions if it was empty.
+    allowed. If `mode.target_version` is empty - detects versions from parsed AST.
     """
     src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)
     dst_contents = []
@@ -3840,8 +3860,8 @@ def parse_ast(src: str, mode: FileMode) -> AST:
                 raise ModuleNotFoundError(
                     f"Install typed_ast package to parse {target_version.name}."
                 )
-            if target_version is TargetVersion.PY38:
-                if system_version is TargetVersion.PY38:
+            if target_version.has_new_ast:
+                if system_version.has_new_ast:
                     return ast.parse(  # type: ignore
                         src, feature_version=target_version.get_ast_feature_version()
                     )
@@ -3853,7 +3873,7 @@ def parse_ast(src: str, mode: FileMode) -> AST:
                     )
 
                 raise ModuleNotFoundError(
-                    f"Use Pyhon 3.8+ to parse {target_version.name}."
+                    f"Use {target_version.title}+ to parse {target_version.name}."
                 )
 
             if TYPED_AST:
