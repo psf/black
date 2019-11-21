@@ -1986,7 +1986,7 @@ class LineGenerator(Visitor[Line]):
     def __post_init__(self) -> None:
         """You are in a twisty little maze of passages."""
         v = self.visit_stmt
-        Ø: Set[str] = set()
+        empty_set: Set[str] = set()
         self.visit_assert_stmt = partial(v, keywords={"assert"}, parens={"assert", ","})
         self.visit_if_stmt = partial(
             v, keywords={"if", "else", "elif"}, parens={"if", "elif"}
@@ -1994,16 +1994,16 @@ class LineGenerator(Visitor[Line]):
         self.visit_while_stmt = partial(v, keywords={"while", "else"}, parens={"while"})
         self.visit_for_stmt = partial(v, keywords={"for", "else"}, parens={"for", "in"})
         self.visit_try_stmt = partial(
-            v, keywords={"try", "except", "else", "finally"}, parens=Ø
+            v, keywords={"try", "except", "else", "finally"}, parens=empty_set
         )
-        self.visit_except_clause = partial(v, keywords={"except"}, parens=Ø)
-        self.visit_with_stmt = partial(v, keywords={"with"}, parens=Ø)
-        self.visit_funcdef = partial(v, keywords={"def"}, parens=Ø)
-        self.visit_classdef = partial(v, keywords={"class"}, parens=Ø)
-        self.visit_expr_stmt = partial(v, keywords=Ø, parens=ASSIGNMENTS)
+        self.visit_except_clause = partial(v, keywords={"except"}, parens=empty_set)
+        self.visit_with_stmt = partial(v, keywords={"with"}, parens=empty_set)
+        self.visit_funcdef = partial(v, keywords={"def"}, parens=empty_set)
+        self.visit_classdef = partial(v, keywords={"class"}, parens=empty_set)
+        self.visit_expr_stmt = partial(v, keywords=empty_set, parens=ASSIGNMENTS)
         self.visit_return_stmt = partial(v, keywords={"return"}, parens={"return"})
-        self.visit_import_from = partial(v, keywords=Ø, parens={"import"})
-        self.visit_del_stmt = partial(v, keywords=Ø, parens={"del"})
+        self.visit_import_from = partial(v, keywords=empty_set, parens={"import"})
+        self.visit_del_stmt = partial(v, keywords=empty_set, parens={"del"})
         self.visit_async_funcdef = self.visit_async_stmt
         self.visit_decorated = self.visit_decorators
 
@@ -3839,9 +3839,11 @@ def parse_ast(src: str, mode: FileMode) -> AST:
             TargetVersion.get_sys_version(),
         }
 
-    for target_version_index, target_version in enumerate(
-        sorted(versions, reverse=True)
-    ):
+    # try to parse with current version first
+    versions_sorted = list(sorted(versions, reverse=True))
+    versions_sorted.sort(key=lambda v: v != system_version)
+
+    for target_version_index, target_version in enumerate(versions_sorted):
         try:
             if target_version is TargetVersion.PY27:
                 if TYPED_AST:
@@ -3888,7 +3890,7 @@ def parse_ast(src: str, mode: FileMode) -> AST:
 
             return ast.parse(src)
         except SyntaxError:
-            if target_version_index == len(versions) - 1:
+            if target_version_index == len(versions_sorted) - 1:
                 raise
         except ModuleNotFoundError:
             raise
@@ -4272,7 +4274,7 @@ def read_cache(mode: FileMode) -> Cache:
     with cache_file.open("rb") as fobj:
         try:
             cache: Cache = pickle.load(fobj)
-        except (pickle.UnpicklingError, ValueError):
+        except (pickle.UnpicklingError, ValueError, IndexError):
             return {}
 
     return cache
