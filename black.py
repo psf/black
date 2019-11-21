@@ -49,11 +49,9 @@ try:
     from typed_ast import ast3, ast27
 except ModuleNotFoundError:
     # fallback to builtin AST
-    TYPED_AST = False
     import ast as ast27  # type: ignore
     import ast as ast3  # type: ignore
-else:
-    TYPED_AST = True
+
 from pathspec import PathSpec
 
 # lib2to3 fork
@@ -92,6 +90,7 @@ AST = Union[ast.AST, ast3.AST, ast27.AST]
 
 
 # AST node types
+TYPED_AST = ast3.__name__ == "typed_ast.ast3"
 TYPE_IGNORE_NODE_CLASSES: Tuple[type, ...] = tuple()
 AST_NODE_CLASSES = (ast.AST, ast3.AST, ast27.AST)
 STR_NODE_CLASSES = (ast.Str, ast3.Str, ast27.Str, ast.Bytes, ast3.Bytes)
@@ -162,7 +161,7 @@ class TargetVersion(IntEnum):
         """
         Human readable title.
         """
-        if self == TargetVersion.PY27:
+        if self is TargetVersion.PY27:
             return "Python 2.7"
 
         return f"Python 3.{self.value}"
