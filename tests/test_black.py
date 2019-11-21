@@ -32,6 +32,7 @@ else:
 
 from pathspec import PathSpec
 
+IS_NEW_AST = black.TYPED_AST or TargetVersion.get_sys_version() is TargetVersion.PY38
 IS_PYPY = platform.python_implementation() == "PyPy"
 ff = partial(black.format_file_in_place, mode=black.FileMode(), fast=True)
 fs = partial(black.format_str, mode=black.FileMode())
@@ -258,13 +259,13 @@ class BlackTestCase(unittest.TestCase):
         expected, _ = read_data("expression.diff")
         config = THIS_DIR / "data" / "empty_pyproject.toml"
         target_versions = {
-            TargetVersion.PY37,
-            TargetVersion.PY36,
-            TargetVersion.PY38,
             TargetVersion.PY27,
-            TargetVersion.PY35,
             TargetVersion.PY33,
             TargetVersion.PY34,
+            TargetVersion.PY35,
+            TargetVersion.PY36,
+            TargetVersion.PY37,
+            TargetVersion.PY38,
         }
         target_version_args: List[str] = []
         for target_version in target_versions:
@@ -315,13 +316,13 @@ class BlackTestCase(unittest.TestCase):
         source, expected = read_data("expression")
         mode = black.FileMode(
             target_versions={
-                TargetVersion.PY37,
-                TargetVersion.PY36,
-                TargetVersion.PY38,
                 TargetVersion.PY27,
-                TargetVersion.PY35,
                 TargetVersion.PY33,
                 TargetVersion.PY34,
+                TargetVersion.PY35,
+                TargetVersion.PY36,
+                TargetVersion.PY37,
+                TargetVersion.PY38,
             }
         )
         actual = fs(source, mode=mode)
@@ -353,13 +354,13 @@ class BlackTestCase(unittest.TestCase):
         tmp_file = Path(black.dump_to_file(source))
         mode = black.FileMode(
             target_versions={
-                TargetVersion.PY37,
-                TargetVersion.PY36,
-                TargetVersion.PY38,
                 TargetVersion.PY27,
-                TargetVersion.PY35,
                 TargetVersion.PY33,
                 TargetVersion.PY34,
+                TargetVersion.PY35,
+                TargetVersion.PY36,
+                TargetVersion.PY37,
+                TargetVersion.PY38,
             }
         )
         try:
@@ -379,13 +380,13 @@ class BlackTestCase(unittest.TestCase):
         expected, _ = read_data("expression.diff")
         tmp_file = Path(black.dump_to_file(source))
         target_versions = {
-            TargetVersion.PY37,
-            TargetVersion.PY36,
-            TargetVersion.PY38,
             TargetVersion.PY27,
-            TargetVersion.PY35,
             TargetVersion.PY33,
             TargetVersion.PY34,
+            TargetVersion.PY35,
+            TargetVersion.PY36,
+            TargetVersion.PY37,
+            TargetVersion.PY38,
         }
         target_version_args: List[str] = []
         for target_version in target_versions:
@@ -635,20 +636,22 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         black.assert_stable(source, actual, mode)
 
+    @unittest.skipIf(not IS_NEW_AST, "typed_ast is not installed")
     @unittest.skipIf(os.environ.get("SKIP_AST_PRINT"), "user set SKIP_AST_PRINT")
     @patch("black.dump_to_file", dump_to_stderr)
     def test_async_as_identifier(self) -> None:
         source_path = (THIS_DIR / "data" / "async_as_identifier.py").resolve()
         source, expected = read_data("async_as_identifier")
-        mode = black.FileMode(target_versions={TargetVersion.PY36})
-        actual = fs(source, mode=mode)
+        mode36 = black.FileMode(target_versions={TargetVersion.PY36})
+        mode37 = black.FileMode(target_versions={TargetVersion.PY37})
+        actual = fs(source, mode=mode36)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual, mode)
-        black.assert_stable(source, actual, mode)
+        black.assert_equivalent(source, actual, mode36)
+        black.assert_stable(source, actual, mode36)
         # ensure black can parse this when the target is 3.6
-        self.invokeBlack([str(source_path), "--target-version", "py36"])
+        self.invokeBlack([str(source_path)], mode=mode36)
         # but not on 3.7, because async/await is no longer an identifier
-        self.invokeBlack([str(source_path), "--target-version", "py37"], exit_code=123)
+        self.invokeBlack([str(source_path)], mode=mode37, exit_code=123)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_python37(self) -> None:
