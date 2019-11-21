@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import regex as re
 import sys
+import platform
 from tempfile import TemporaryDirectory
 from typing import Any, BinaryIO, Generator, List, Tuple, Iterator, TypeVar, Optional
 import unittest
@@ -31,15 +32,13 @@ else:
 
 from pathspec import PathSpec
 
+IS_PYPY = platform.python_implementation() == "PyPy"
 ff = partial(black.format_file_in_place, mode=black.FileMode(), fast=True)
 fs = partial(black.format_str, mode=black.FileMode())
 THIS_FILE = Path(__file__)
 THIS_DIR = THIS_FILE.parent
 DETERMINISTIC_HEADER = "[Deterministic header]"
 EMPTY_LINE = "# EMPTY LINE WITH WHITESPACE" + " (this comment will be removed)"
-PY36_ARGS = [
-    f"--target-version={version.name.lower()}" for version in black.PY36_VERSIONS
-]
 T = TypeVar("T")
 R = TypeVar("R")
 
@@ -309,6 +308,7 @@ class BlackTestCase(unittest.TestCase):
         black.assert_equivalent(source, actual, black.FileMode())
         black.assert_stable(source, actual, black.FileMode())
 
+    @unittest.skipIf(IS_PYPY, "Unicode symbols are not supported in PyPy")
     @patch("black.dump_to_file", dump_to_stderr)
     def test_expression(self) -> None:
         source, expected = read_data("expression")
@@ -346,6 +346,7 @@ class BlackTestCase(unittest.TestCase):
         versions = black.detect_target_versions(root)
         self.assertIn(black.TargetVersion.PY38, versions)
 
+    @unittest.skipIf(IS_PYPY, "Unicode symbols are not supported in PyPy")
     def test_expression_ff(self) -> None:
         source, expected = read_data("expression")
         tmp_file = Path(black.dump_to_file(source))
@@ -371,6 +372,7 @@ class BlackTestCase(unittest.TestCase):
             black.assert_equivalent(source, actual, mode)
             black.assert_stable(source, actual, mode)
 
+    @unittest.skipIf(IS_PYPY, "Unicode symbols are not supported in PyPy")
     def test_expression_diff(self) -> None:
         source, _ = read_data("expression.py")
         expected, _ = read_data("expression.diff")
@@ -572,7 +574,7 @@ class BlackTestCase(unittest.TestCase):
     @patch("black.dump_to_file", dump_to_stderr)
     def test_numeric_literals(self) -> None:
         source, expected = read_data("numeric_literals")
-        mode = black.FileMode(target_versions=black.PY36_VERSIONS)
+        mode = black.FileMode(target_versions={TargetVersion.PY36})
         actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual, mode)
@@ -581,7 +583,7 @@ class BlackTestCase(unittest.TestCase):
     @patch("black.dump_to_file", dump_to_stderr)
     def test_numeric_literals_ignoring_underscores(self) -> None:
         source, expected = read_data("numeric_literals_skip_underscores")
-        mode = black.FileMode(target_versions=black.PY36_VERSIONS)
+        mode = black.FileMode(target_versions={TargetVersion.PY36})
         actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual, mode)
@@ -594,6 +596,7 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         black.assert_stable(source, actual, black.FileMode())
 
+    @unittest.skipIf(not black.TYPED_AST, "typed_ast is not installed")
     @patch("black.dump_to_file", dump_to_stderr)
     def test_python2(self) -> None:
         source, expected = read_data("python2")
@@ -603,6 +606,7 @@ class BlackTestCase(unittest.TestCase):
         black.assert_equivalent(source, actual, mode)
         black.assert_stable(source, actual, mode)
 
+    @unittest.skipIf(not black.TYPED_AST, "typed_ast is not installed")
     @patch("black.dump_to_file", dump_to_stderr)
     def test_python2_print_function(self) -> None:
         source, expected = read_data("python2_print_function")
@@ -612,6 +616,7 @@ class BlackTestCase(unittest.TestCase):
         black.assert_equivalent(source, actual, mode)
         black.assert_stable(source, actual, mode)
 
+    @unittest.skipIf(not black.TYPED_AST, "typed_ast is not installed")
     @patch("black.dump_to_file", dump_to_stderr)
     def test_python2_unicode_literals(self) -> None:
         source, expected = read_data("python2_unicode_literals")
@@ -629,11 +634,12 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         black.assert_stable(source, actual, mode)
 
+    @unittest.skipIf(os.environ.get("SKIP_AST_PRINT"), "user set SKIP_AST_PRINT")
     @patch("black.dump_to_file", dump_to_stderr)
     def test_async_as_identifier(self) -> None:
         source_path = (THIS_DIR / "data" / "async_as_identifier.py").resolve()
         source, expected = read_data("async_as_identifier")
-        mode = black.FileMode(target_versions=black.PY36_VERSIONS)
+        mode = black.FileMode(target_versions={TargetVersion.PY36})
         actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual, mode)
@@ -1148,6 +1154,7 @@ class BlackTestCase(unittest.TestCase):
         with self.assertRaisesRegex(ModuleNotFoundError, "Install typed_ast package"):
             black.parse_ast("src", mode)
 
+    @unittest.skipIf(IS_PYPY, "Unicode symbols are not supported in PyPy")
     def test_get_features_used(self) -> None:
         node = black.lib2to3_parse("def f(*, arg): ...\n")
         self.assertEqual(black.get_features_used(node), set())
@@ -1445,6 +1452,7 @@ class BlackTestCase(unittest.TestCase):
             two = black.read_cache(short_mode)
             self.assertNotIn(path, two)
 
+    @unittest.skipIf(IS_PYPY, "Unicode symbols are not supported in PyPy")
     def test_tricky_unicode_symbols(self) -> None:
         source, expected = read_data("tricky_unicode_symbols")
         actual = fs(source)
@@ -1506,13 +1514,13 @@ class BlackTestCase(unittest.TestCase):
 
     def test_single_file_force_py36(self) -> None:
         reg_mode = black.FileMode()
-        py36_mode = black.FileMode(target_versions=black.PY36_VERSIONS)
+        py36_mode = black.FileMode(target_versions={TargetVersion.PY36})
         source, expected = read_data("force_py36")
         with cache_dir() as workspace:
             path = (workspace / "file.py").resolve()
             with open(path, "w") as fh:
                 fh.write(source)
-            self.invokeBlack([str(path), *PY36_ARGS])
+            self.invokeBlack([str(path)], mode=py36_mode)
             with open(path, "r") as fh:
                 actual = fh.read()
             # verify cache with --target-version is separate
@@ -1525,7 +1533,7 @@ class BlackTestCase(unittest.TestCase):
     @event_loop(close=False)
     def test_multi_file_force_py36(self) -> None:
         reg_mode = black.FileMode()
-        py36_mode = black.FileMode(target_versions=black.PY36_VERSIONS)
+        py36_mode = black.FileMode(target_versions={TargetVersion.PY36})
         source, expected = read_data("force_py36")
         with cache_dir() as workspace:
             paths = [
@@ -1535,7 +1543,7 @@ class BlackTestCase(unittest.TestCase):
             for path in paths:
                 with open(path, "w") as fh:
                     fh.write(source)
-            self.invokeBlack([str(p) for p in paths] + PY36_ARGS)
+            self.invokeBlack([str(p) for p in paths], mode=py36_mode)
             for path in paths:
                 with open(path, "r") as fh:
                     actual = fh.read()
