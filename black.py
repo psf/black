@@ -92,7 +92,7 @@ AST = Union[ast.AST, ast3.AST, ast27.AST]
 
 
 # AST node types
-TYPE_IGNORE_NODE_CLASSES = tuple()
+TYPE_IGNORE_NODE_CLASSES: Tuple[type, ...] = tuple()
 AST_NODE_CLASSES = (ast.AST, ast3.AST, ast27.AST)
 STR_NODE_CLASSES = (ast.Str, ast3.Str, ast27.Str, ast.Bytes, ast3.Bytes)
 NUM_NODE_CLASSES = (ast.Num, ast3.Num, ast27.Num)
@@ -164,7 +164,7 @@ class TargetVersion(Enum):
         return (3, self.value)
 
     def get_typed_ast_feature_version(self) -> int:
-        return self.value
+        return int(self.value)
 
     @classmethod
     def get_sys_version(cls) -> "TargetVersion":
@@ -175,7 +175,7 @@ class TargetVersion(Enum):
         return TargetVersion(minor)
 
     def __lt__(self, other: "TargetVersion") -> bool:
-        return self.value < other.value
+        return bool(self.value < other.value)
 
 
 PY36_VERSIONS = {TargetVersion.PY36, TargetVersion.PY37, TargetVersion.PY38}
@@ -795,7 +795,7 @@ def format_str(src_contents: str, *, mode: FileMode) -> FileContent:
     normalize_fmt_off(src_node)
     lines = LineGenerator(
         remove_u_prefix="unicode_literals" in future_imports
-        or supports_feature(mode.target_versions, Feature.UNICODE_LITERALS),
+        or supports_feature(versions, Feature.UNICODE_LITERALS),
         is_pyi=mode.is_pyi,
         normalize_strings=mode.string_normalization,
     )
@@ -805,7 +805,7 @@ def format_str(src_contents: str, *, mode: FileMode) -> FileContent:
     split_line_features = {
         feature
         for feature in {Feature.TRAILING_COMMA_IN_CALL, Feature.TRAILING_COMMA_IN_DEF}
-        if supports_feature(mode.target_versions, feature)
+        if supports_feature(versions, feature)
     }
     for current_line in lines.visit(src_node):
         for _ in range(after):
@@ -3742,7 +3742,6 @@ class Report:
 def parse_ast(src: str, mode: FileMode) -> AST:
     system_version = TargetVersion.get_sys_version()
     versions = mode.target_versions or {TargetVersion.get_sys_version()}
-    versions = sorted(versions, reverse=True)
     for target_version_index, target_version in enumerate(
         sorted(versions, reverse=True)
     ):
@@ -3772,7 +3771,10 @@ def parse_ast(src: str, mode: FileMode) -> AST:
 
             if system_version is TargetVersion.PY38:
                 return ast3.parse(
-                    src, feature_version=target_version.get_ast_feature_version()
+                    src,
+                    feature_version=(
+                        target_version.get_ast_feature_version()  # type: ignore
+                    ),
                 )
 
             return ast3.parse(src)
@@ -3781,6 +3783,8 @@ def parse_ast(src: str, mode: FileMode) -> AST:
                 raise
         except ModuleNotFoundError:
             raise
+
+    raise SyntaxError("Cannot parse AST")
 
 
 def _fixup_ast_constants(node: AST) -> AST:
