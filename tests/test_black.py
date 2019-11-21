@@ -2012,10 +2012,6 @@ class TargetVersionTestCase(unittest.TestCase):
         self.assertEqual(TargetVersion.PY27.title, "Python 2.7")
         self.assertEqual(TargetVersion.PY38.title, "Python 3.8")
 
-    def test_is_python2(self) -> None:
-        self.assertTrue(TargetVersion.PY27.is_python2())
-        self.assertFalse(TargetVersion.PY38.is_python2())
-
     def test_has_new_ast(self) -> None:
         self.assertFalse(TargetVersion.PY27.has_new_ast)
         self.assertTrue(TargetVersion.PY38.has_new_ast)

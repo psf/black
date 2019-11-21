@@ -162,16 +162,10 @@ class TargetVersion(Enum):
         """
         Human readable title.
         """
-        if self.is_python2():
+        if self == TargetVersion.PY27:
             return "Python 2.7"
 
         return f"Python 3.{self.value}"
-
-    def is_python2(self) -> bool:
-        """
-        Whether this is a Python 2.7
-        """
-        return self is TargetVersion.PY27
 
     @property
     def has_new_ast(self) -> bool:
@@ -918,7 +912,7 @@ def get_grammars(target_versions: Set[TargetVersion]) -> List[Grammar]:
             pygram.python_grammar,
         ]
 
-    if all(version.is_python2() for version in target_versions):
+    if target_versions == {TargetVersion.PY27}:
         # Python 2-only code, so try Python 2 grammars.
         return [
             # Python 2.7 with future print_function import
