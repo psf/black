@@ -284,6 +284,14 @@ curious about the reasoning behind B950,
 explains it. The tl;dr is "it's like highway speed limits, we won't bother you if you
 overdo it by a few km/h".
 
+**If you're looking for a minimal, black-compatible flake8 configuration:**
+
+```ini
+[flake8]
+max-line-length = 88
+extend-ignore = E203
+```
+
 ### Empty lines
 
 _Black_ avoids spurious vertical whitespace. This is in the spirit of PEP 8 which says
