@@ -1274,7 +1274,7 @@ class Line:
 
     def _get_assignment_index(self) -> Optional[int]:
         """
-        Get fthe first unbracketed assignment index.
+        Get the first unbracketed assignment index.
         """
         depth = 0
         for leaf_index, leaf in enumerate(self.leaves):
