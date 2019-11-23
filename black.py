@@ -3826,8 +3826,10 @@ def parse_ast(src: str, mode: FileMode) -> AST:
             TargetVersion.get_sys_version(),
         }
 
-    # try to parse with current version first
-    versions_sorted = list(sorted(versions, reverse=True))
+    # sort versions from the latest to the oldest
+    versions_sorted = sorted(versions, reverse=True)
+
+    # put sys version to the first place to parse source with it first
     versions_sorted.sort(key=lambda v: v != system_version)
 
     for target_version_index, target_version in enumerate(versions_sorted):
