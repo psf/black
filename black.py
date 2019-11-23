@@ -149,14 +149,8 @@ class Feature(Enum):
 
 VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
     TargetVersion.PY27: {Feature.ASYNC_IDENTIFIERS},
-    TargetVersion.PY33: {
-        Feature.UNICODE_LITERALS,
-        Feature.ASYNC_IDENTIFIERS,
-    },
-    TargetVersion.PY34: {
-        Feature.UNICODE_LITERALS,
-        Feature.ASYNC_IDENTIFIERS,
-    },
+    TargetVersion.PY33: {Feature.UNICODE_LITERALS, Feature.ASYNC_IDENTIFIERS},
+    TargetVersion.PY34: {Feature.UNICODE_LITERALS, Feature.ASYNC_IDENTIFIERS},
     TargetVersion.PY35: {
         Feature.UNICODE_LITERALS,
         Feature.TRAILING_COMMA_IN_CALL,
