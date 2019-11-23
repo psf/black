@@ -1294,7 +1294,7 @@ class Line:
 
         Can be used to check if line has multiple lines in source.
         """
-        return set([i.lineno for i in self.leaves if i.lineno])
+        return {i.lineno for i in self.leaves if i.lineno}
 
     def get_left_hand_side(self) -> Optional["Line"]:
         """
@@ -4291,7 +4291,7 @@ def enumerate_with_length(
         yield index, leaf, length
 
 
-def is_line_short_enough(line: Line, line_length: int) -> bool:
+def is_line_short_enough(line: Line, *, line_length: int) -> bool:
     """Return True if `line` is no longer than `line_length`.
 
     Uses the provided `line_str` rendering, if any, otherwise computes a new one.
