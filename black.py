@@ -1407,7 +1407,10 @@ class Line:
         for leaf_id, comments in self.comments.items():
             for comment in comments:
                 if is_type_comment(comment):
-                    if leaf_id not in ignored_ids or comment_seen:
+                    if comment_seen or (
+                        not is_type_comment(comment, " ignore")
+                        and leaf_id not in ignored_ids
+                    ):
                         return True
 
                 comment_seen = True
