@@ -162,7 +162,7 @@ statement per line. If this fits the allotted line length, great.
 
 j = [1,
      2,
-     3,
+     3
 ]
 
 # out:
