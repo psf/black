@@ -2413,15 +2413,7 @@ def split_line(
         yield line
         return
 
-    # Merge strings that were split across multiple lines using backslashes.
-    for leaf in line.leaves:
-        if leaf.type == token.STRING and leaf.value.lstrip(PREFIX_CHARS)[:3] not in {
-            '"""',
-            "'''",
-        }:
-            leaf.value = leaf.value.replace("\\\n", "")
-
-    line = merge_first_string_group(line, normalize_strings=normalize_strings)
+    line = merge_string_groups(line, normalize_strings=normalize_strings)
     line_str = str(line).strip("\n")
 
     if (
@@ -2496,11 +2488,31 @@ def split_line(
         yield line
 
 
-def merge_first_string_group(line: Line, normalize_strings: bool) -> Line:
+def merge_string_groups(line: Line, normalize_strings: bool) -> Line:
+    # Merge strings that were split across multiple lines using backslashes.
+    for leaf in line.leaves:
+        if leaf.type == token.STRING and leaf.value.lstrip(PREFIX_CHARS)[:3] not in {
+            '"""',
+            "'''",
+        }:
+            leaf.value = leaf.value.replace("\\\n", "")
+
+    (new_line, line_was_changed) = merge_first_string_group(
+        line, normalize_strings=normalize_strings
+    )
+    while line_was_changed:
+        (new_line, line_was_changed) = merge_first_string_group(
+            new_line, normalize_strings=normalize_strings
+        )
+
+    return new_line
+
+
+def merge_first_string_group(line: Line, normalize_strings: bool) -> Tuple[Line, bool]:
     first_str_idx = next_str_idx = get_string_group_index(line)
 
     if first_str_idx < 0:
-        return line
+        return (line, False)
 
     atom_node = line.leaves[first_str_idx].parent
     string_value = ""
@@ -2514,7 +2526,7 @@ def merge_first_string_group(line: Line, normalize_strings: bool) -> Line:
             .value.lstrip(PREFIX_CHARS)
             .startswith(("'''", '"""'))
         ):
-            return line
+            return (line, False)
 
         num_of_strings += 1
 
@@ -2575,7 +2587,7 @@ def merge_first_string_group(line: Line, normalize_strings: bool) -> Line:
         next_str_idx += 1
 
     if not at_least_one_string_contains_spaces:
-        return line
+        return (line, False)
 
     string_leaf = Leaf(token.STRING, string_value)
     if normalize_strings:
@@ -2612,7 +2624,7 @@ def merge_first_string_group(line: Line, normalize_strings: bool) -> Line:
         new_line.append(new_leaf)
 
     new_line.comments = new_comments
-    return new_line
+    return (new_line, True)
 
 
 def get_string_group_index(line: Line) -> int:
