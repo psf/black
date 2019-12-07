@@ -2828,11 +2828,10 @@ def string_atomic_split(
     while not is_line_short_enough(rest_line, line_length=max_rest_length) or (
         len(custom_breakpoints) > 1 and use_custom_breakpoints
     ):
-        idx = get_atomic_str_idx(
-            rest_value,
-            max_next_length,
-            custom_breakpoints if use_custom_breakpoints else None,
-        )
+        if use_custom_breakpoints:
+            idx = custom_breakpoints.pop(0)
+        else:
+            idx = get_atomic_str_idx(rest_value, max_next_length)
 
         next_value = rest_value[:idx] + QUOTE
 
@@ -2899,22 +2898,19 @@ def string_atomic_split(
         yield last_line
 
 
-def get_atomic_str_idx(
-    string_value: str, max_length: int, custom_breakpoints: List[int] = None
-) -> int:
-    if custom_breakpoints is None:
-        idx = max_length
-        while 0 < idx < len(string_value) and string_value[idx - 1] != " ":
-            idx -= 1
+def get_atomic_str_idx(string_value: str, max_length: int) -> int:
+    idx = max_length
+    while 0 < idx < len(string_value) and string_value[idx - 1] != " ":
+        idx -= 1
 
+    if string_value[idx - 1] != " ":
+        # This line is going to be longer than the specified line length, but
+        # let's try to split it anyway.
+        idx = max_length + 1
+        while idx < len(string_value) and string_value[idx - 1] != " ":
+            idx += 1
         if string_value[idx - 1] != " ":
-            idx = max_length + 1
-            while idx < len(string_value) and string_value[idx - 1] != " ":
-                idx += 1
-            if string_value[idx - 1] != " ":
-                raise CannotSplit("Long strings which contain no spaces are not split.")
-    else:
-        idx = custom_breakpoints.pop(0)
+            raise CannotSplit("Long strings which contain no spaces are not split.")
 
     return idx
 
