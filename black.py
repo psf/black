@@ -2681,7 +2681,10 @@ def string_split(
     ]:
         for new_line in string_atomic_split(line, line_length, normalize_strings):
             yield new_line
-    elif (
+    elif tokens in [
+        (token.PLUS, token.STRING),
+        (token.PLUS, token.STRING, token.COMMA),
+    ] or (
         len(tokens) >= 3
         and tokens[0] != token.RSQB
         and (
@@ -2773,7 +2776,6 @@ def string_atomic_split(
     line: Line, line_length: int, normalize_strings: bool
 ) -> Iterator[Line]:
     """Splits long strings that are on their own line already."""
-    insert_str_child = insert_str_child_factory(line.leaves[0])
     comma_idx = len(line.leaves) - 1
 
     has_percent_or_dot = False
@@ -2784,7 +2786,20 @@ def string_atomic_split(
     if line.leaves[comma_idx].type == token.COMMA:
         ends_with_comma = True
 
-    if ends_with_comma:
+    parent = line.leaves[0].parent
+    wrap_in_parens = ends_with_comma
+    if parent is not None and parent.type == syms.arith_expr:
+        for i, child in enumerate(parent.children):
+            if id(child) == id(line.leaves[0]):
+                if (
+                    i + 1 < len(parent.children)
+                    and parent.children[i + 1].type == token.PLUS
+                ):
+                    wrap_in_parens = True
+                break
+
+    insert_str_child = insert_str_child_factory(line.leaves[0])
+    if wrap_in_parens:
         first_leaf = Leaf(token.LPAR, "(")
         insert_str_child(first_leaf)
 
@@ -2861,7 +2876,7 @@ def string_atomic_split(
         rest_leaf = Leaf(token.STRING, rest_value)
         rest_line.append(rest_leaf)
 
-    if not ends_with_comma:
+    if not wrap_in_parens:
         rest_line.comments = line.comments
 
     insert_str_child(rest_leaf)
@@ -2878,16 +2893,17 @@ def string_atomic_split(
 
     yield rest_line
 
-    if ends_with_comma:
+    if wrap_in_parens:
         last_line = Line(depth=line.depth, bracket_tracker=first_line.bracket_tracker)
 
         rpar_leaf = Leaf(token.RPAR, ")")
         insert_str_child(rpar_leaf)
         last_line.append(rpar_leaf)
 
-        comma_leaf = Leaf(token.COMMA, ",")
-        replace_child(line.leaves[comma_idx], comma_leaf)
-        last_line.append(comma_leaf)
+        if ends_with_comma:
+            comma_leaf = Leaf(token.COMMA, ",")
+            replace_child(line.leaves[comma_idx], comma_leaf)
+            last_line.append(comma_leaf)
 
         yield last_line
 
@@ -2923,7 +2939,9 @@ def string_assignment_split(line: Line) -> Iterator[Line]:
     assigned the value of a long constant string, or long lines in which a
     dictionary key is being assigned to the value of a long constant string.
     """
-    if line.leaves[2].type == token.STRING:
+    if line.leaves[1].type == token.STRING:
+        str_idx = 1
+    elif line.leaves[2].type == token.STRING:
         str_idx = 2
     elif line.leaves[3].type == token.STRING:
         str_idx = 3
@@ -2942,13 +2960,13 @@ def string_assignment_split(line: Line) -> Iterator[Line]:
 
     first_line = Line(depth=line.depth)
 
-    for i in range(2):
+    for i in range(min(str_idx, 2)):
         leaf = Leaf(line.leaves[i].type, line.leaves[i].value)
         replace_child(line.leaves[i], leaf)
         first_line.append(leaf)
 
     lpar_leaf = Leaf(token.LPAR, "(")
-    if line.leaves[2].type == token.LPAR:
+    if len(line.leaves) > 2 and line.leaves[2].type == token.LPAR:
         replace_child(line.leaves[2], lpar_leaf)
     else:
         insert_str_child(lpar_leaf)
