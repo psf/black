@@ -781,6 +781,10 @@ hook global WinSetOption filetype=python %{
 }
 ```
 
+### Thonny
+
+Use [Thonny-black-code-format](https://github.com/Franccisco/thonny-black-code-format).
+
 ### Other editors
 
 Other editors will require external contributions.
