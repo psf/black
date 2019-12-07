@@ -2743,7 +2743,7 @@ def validate_string_split(line: Line, line_length: int) -> None:
 
     line_str = str(line).strip("\n")
     line_str = re.sub(r"^ *assert .*, ?(['\"].*?)", r"\1", line_str)
-    line_str = re.sub(r"(.*)['\"] ?% ?\(?.*\)?", r"\1", line_str)
+    line_str = re.sub(r"(['\"].*[^\\]['\"]) ?% ?\(?.*\)?", r"\1", line_str)
     line_str = re.sub(r"(['\"]\.[A-Za-z_0-9]+\().*\)?", r"\1", line_str)
     line_str = re.sub(r"(.*['\"]) ?\+.*", r"\1", line_str)
     line_str = re.sub(r".* ?\+ ?(['\"].*)", r"\1", line_str)
