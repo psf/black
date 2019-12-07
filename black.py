@@ -2891,6 +2891,8 @@ def string_atomic_split(
 
         yield last_line
 
+    del CUSTOM_STRING_BREAKPOINTS[line.leaves[0].value]
+
 
 def get_atomic_str_idx(string_value: str, max_length: int) -> int:
     idx = max_length
