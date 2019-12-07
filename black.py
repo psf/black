@@ -2413,7 +2413,7 @@ def split_line(
         yield line
         return
 
-    line = merge_string_groups(line, normalize_strings=normalize_strings)
+    line = merge_strings(line, normalize_strings=normalize_strings)
     line_str = str(line).strip("\n")
 
     if (
@@ -2488,7 +2488,7 @@ def split_line(
         yield line
 
 
-def merge_string_groups(line: Line, normalize_strings: bool) -> Line:
+def merge_strings(line: Line, normalize_strings: bool) -> Line:
     # Merge strings that were split across multiple lines using backslashes.
     for leaf in line.leaves:
         if leaf.type == token.STRING and leaf.value.lstrip(PREFIX_CHARS)[:3] not in {
