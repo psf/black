@@ -2509,14 +2509,16 @@ def merge_string_groups(line: Line, normalize_strings: bool) -> Line:
 
 
 def merge_first_string_group(line: Line, normalize_strings: bool) -> Tuple[Line, bool]:
-    first_str_idx = next_str_idx = get_string_group_index(line)
+    first_str_idx = get_string_group_index(line)
 
-    if first_str_idx < 0:
+    if first_str_idx is None:
         return (line, False)
 
     atom_node = line.leaves[first_str_idx].parent
     string_value = ""
     prefix = ""
+
+    next_str_idx = first_str_idx
     QUOTE = line.leaves[next_str_idx].value[-1]
     num_of_strings = 0
     at_least_one_string_contains_spaces = False
@@ -2627,7 +2629,7 @@ def merge_first_string_group(line: Line, normalize_strings: bool) -> Tuple[Line,
     return (new_line, True)
 
 
-def get_string_group_index(line: Line) -> int:
+def get_string_group_index(line: Line) -> Optional[int]:
     num_of_inline_string_comments = 0
     set_of_prefixes = set()
     for leaf in line.leaves:
@@ -2640,7 +2642,7 @@ def get_string_group_index(line: Line) -> int:
                 num_of_inline_string_comments += 1
 
     if num_of_inline_string_comments > 1 or len(set_of_prefixes) > 1:
-        return -1
+        return None
 
     for i, leaf in enumerate(line.leaves):
         if (
@@ -2650,7 +2652,7 @@ def get_string_group_index(line: Line) -> int:
         ):
             return i
 
-    return -1
+    return None
 
 
 def string_split(
