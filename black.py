@@ -2451,30 +2451,30 @@ def split_line(
             # See #762 and #781 for the full story.
             yield from right_hand_split(line, line_length=1, features=features)
 
-        def init_ss(string_splitter: Type[StringSplitter]) -> StringSplitter:
+        def init_ss(SS: Type[StringSplitter]) -> StringSplitter:
             """Initialize String Splitter"""
-            return string_splitter(line_length, normalize_strings)
+            return SS(line_length, normalize_strings)
 
-        string_arith_expr_splitter = init_ss(StringArithExprSplitter)
-        string_atomic_splitter = init_ss(StringAtomicSplitter)
-        string_assignment_splitter = init_ss(StringAssignmentSplitter)
-        string_assert_splitter = init_ss(StringAssertSplitter)
+        string_arith_expr_split = init_ss(StringArithExprSplitter)
+        string_atomic_split = init_ss(StringAtomicSplitter)
+        string_assignment_split = init_ss(StringAssignmentSplitter)
+        string_assert_split = init_ss(StringAssertSplitter)
 
         if line.inside_brackets:
             split_funcs = [
-                string_arith_expr_splitter,
+                string_arith_expr_split,
                 delimiter_split,
                 standalone_comment_split,
-                string_atomic_splitter,
-                string_assignment_splitter,
-                string_assert_splitter,
+                string_atomic_split,
+                string_assignment_split,
+                string_assert_split,
                 rhs,
             ]
         else:
             split_funcs = [
-                string_atomic_splitter,
-                string_assignment_splitter,
-                string_assert_splitter,
+                string_atomic_split,
+                string_assignment_split,
+                string_assert_split,
                 rhs,
             ]
     for split_func in split_funcs:
@@ -2521,7 +2521,7 @@ class StringSplitter(metaclass=ABCMeta):
         pass
 
     def __call__(self, line: Line, _features: Collection[Feature]) -> Iterator[Line]:
-        self.__validate_string_split(line)
+        self.__validate(line)
 
         if not self.do_validate(line):
             raise CannotSplit(
@@ -2531,7 +2531,7 @@ class StringSplitter(metaclass=ABCMeta):
 
         yield from self.do_split(line)
 
-    def __validate_string_split(self, line: Line) -> None:
+    def __validate(self, line: Line) -> None:
         line_length = self.line_length
         if is_line_short_enough(line, line_length=line_length):
             raise CannotSplit("Line is already short enough. No reason to split.")
