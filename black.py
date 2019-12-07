@@ -2631,8 +2631,7 @@ def merge_first_string_group(line: Line, normalize_strings: bool) -> Tuple[Line,
 
     new_line.comments = new_comments
 
-    if not CUSTOM_STRING_BREAKPOINTS[string_leaf.value]:
-        CUSTOM_STRING_BREAKPOINTS[string_leaf.value] = tuple(custom_breakpoints)
+    CUSTOM_STRING_BREAKPOINTS[string_leaf.value] = tuple(custom_breakpoints)
 
     return (new_line, True)
 
