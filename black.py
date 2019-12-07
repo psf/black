@@ -2581,17 +2581,8 @@ def merge_first_string_group(line: Line, normalize_strings: bool) -> Line:
     if normalize_strings:
         normalize_string_quotes(string_leaf)
 
-    if atom_node:
-        grandparent = atom_node.parent
-        if grandparent is not None:
-            child_idx = atom_node.remove()
-            if child_idx is not None:
-                grandparent.insert_child(child_idx, string_leaf)
-            else:
-                raise RuntimeError(
-                    "Something is wrong here. Atom node has parent but can't be "
-                    "removed from it?"
-                )
+    if atom_node is not None:
+        replace_child(atom_node, string_leaf)
 
     old_comments = line.comments
     new_comments = {}
@@ -2657,9 +2648,9 @@ def string_split(
     _features: Collection[Feature] = (),
 ) -> Iterator[Line]:
     """Split long strings."""
-    tokens = tuple([leaf.type for leaf in line.leaves])
-
     validate_string_split(line, line_length)
+
+    tokens = tuple([leaf.type for leaf in line.leaves])
 
     if tokens[:2] in [
         (token.STRING,),
