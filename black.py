@@ -2838,16 +2838,11 @@ def string_atomic_split(
         if (
             next_value != normalize_f_string(next_value, prefix)
             and drop_pointless_f_prefix
-            and use_custom_breakpoints
         ):
-            idx += 1
-            next_value = rest_value[:idx] + QUOTE
-
-        next_value = (
-            normalize_f_string(next_value, prefix)
-            if drop_pointless_f_prefix
-            else next_value
-        )
+            if use_custom_breakpoints:
+                idx += 1
+                next_value = rest_value[:idx] + QUOTE
+            next_value = normalize_f_string(next_value, prefix)
 
         next_line = Line(depth=string_depth)
         next_leaf = Leaf(token.STRING, next_value)
