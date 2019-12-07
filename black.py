@@ -2816,7 +2816,11 @@ def string_atomic_split(
             idx -= 1
 
         if rest_value[idx - 1] != " ":
-            raise CannotSplit("Long strings which contain no spaces are not split.")
+            idx = max_next_length + 1
+            while idx < len(rest_value) and rest_value[idx - 1] != " ":
+                idx += 1
+            if rest_value[idx - 1] != " ":
+                raise CannotSplit("Long strings which contain no spaces are not split.")
 
         next_value = rest_value[:idx] + QUOTE
         next_value = (
