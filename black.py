@@ -2584,9 +2584,6 @@ def merge_first_string_group(line: Line, normalize_strings: bool) -> Tuple[Line,
         )
 
         if QUOTE in naked_next_string_value:
-            if normalize_strings:
-                QUOTE = "'"
-
             other_quote = '"' if QUOTE == "'" else "'"
 
             naked_last_string_value = (
@@ -2686,6 +2683,14 @@ def string_split(
     validate_string_split(line, line_length)
 
     tokens = tuple([leaf.type for leaf in line.leaves])
+    line_str = str(line).strip("\n")
+    assert_match = re.match(
+        (
+            r"^ *assert .*, "
+            r"?\(?(\".*?[^\\]\"|'.*?[^\\]')(\.[A-Za-z0-9_]+\(.*| ?% ?.*)?\)?$"
+        ),
+        line_str,
+    )
 
     if tokens[:2] in [
         (token.STRING,),
@@ -2722,11 +2727,9 @@ def string_split(
     ):
         for new_line in string_assignment_split(line):
             yield new_line
-    elif line.leaves[0].value == "assert" and (
-        tokens[-2:] == (token.COMMA, token.STRING)
-        or tokens[-4:] == (token.COMMA, token.LPAR, token.STRING, token.RPAR)
-    ):
-        for new_line in string_assert_split(line):
+    elif assert_match:
+        string_value = assert_match.groups()[0]
+        for new_line in string_assert_split(line, string_value):
             yield new_line
     else:
         raise CannotSplit(
@@ -2739,8 +2742,8 @@ def validate_string_split(line: Line, line_length: int) -> None:
         raise CannotSplit("Line is already short enough. No reason to split.")
 
     line_str = str(line).strip("\n")
-    line_str = re.sub(r"assert .*,(.*)", r"\1", line_str)
-    line_str = re.sub(r"(.*)% \(?.*\)?", r"\1", line_str)
+    line_str = re.sub(r"^ *assert .*, ?(['\"].*?)", r"\1", line_str)
+    line_str = re.sub(r"(.*)['\"] ?% ?\(?.*\)?", r"\1", line_str)
     line_str = re.sub(r"(['\"]\.[A-Za-z_0-9]+\().*\)?", r"\1", line_str)
     line_str = re.sub(r"(.*['\"]) ?\+.*", r"\1", line_str)
     line_str = re.sub(r".* ?\+ ?(['\"].*)", r"\1", line_str)
@@ -2815,7 +2818,7 @@ def string_atomic_split(
         first_leaf = Leaf(token.LPAR, "(")
         insert_str_child(first_leaf)
 
-        first_line = Line(depth=line.depth)
+        first_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
         first_line.append(first_leaf)
         first_line.comments = line.comments
         yield first_line
@@ -2835,7 +2838,8 @@ def string_atomic_split(
     if ends_with_comma:
         rest_length_offset += 1
 
-    rest_line = Line(depth=line.depth)
+    string_is_inside_brackets = line.inside_brackets or ends_with_comma
+    rest_line = Line(depth=line.depth, inside_brackets=string_is_inside_brackets)
     rest_leaf = Leaf(token.STRING, rest_value)
     rest_line.append(rest_leaf)
 
@@ -2876,7 +2880,7 @@ def string_atomic_split(
                 next_value = rest_value[:idx] + QUOTE
             next_value = normalize_f_string(next_value, prefix)
 
-        next_line = Line(depth=string_depth)
+        next_line = Line(depth=string_depth, inside_brackets=string_is_inside_brackets)
         if prepend_plus:
             plus_leaf = Leaf(token.PLUS, "+")
             replace_child(line.leaves[0], plus_leaf)
@@ -2894,7 +2898,7 @@ def string_atomic_split(
         if drop_pointless_f_prefix:
             rest_value = normalize_f_string(rest_value, prefix)
 
-        rest_line = Line(depth=string_depth)
+        rest_line = Line(depth=string_depth, inside_brackets=string_is_inside_brackets)
         rest_leaf = Leaf(token.STRING, rest_value)
         rest_line.append(rest_leaf)
 
@@ -2918,7 +2922,11 @@ def string_atomic_split(
     yield rest_line
 
     if ends_with_comma:
-        last_line = Line(depth=line.depth, bracket_tracker=first_line.bracket_tracker)
+        last_line = Line(
+            depth=line.depth,
+            inside_brackets=line.inside_brackets,
+            bracket_tracker=first_line.bracket_tracker,
+        )
 
         rpar_leaf = Leaf(token.RPAR, ")")
         insert_str_child(rpar_leaf)
@@ -3043,11 +3051,11 @@ def string_assignment_split(line: Line) -> Iterator[Line]:
     yield last_line
 
 
-def string_assert_split(line: Line) -> Iterator[Line]:
-    if line.leaves[-1].type == token.STRING:
-        str_idx = -1
-    elif line.leaves[-2].type == token.STRING:
-        str_idx = -2
+def string_assert_split(line: Line, string_value: str) -> Iterator[Line]:
+    for i, leaf in enumerate(line.leaves):
+        if leaf.type == token.STRING and leaf.value == string_value:
+            str_idx = i
+            break
     else:
         raise RuntimeError(
             f"Something is wrong here. Is this line really an assert statement?: {line}"
@@ -3056,23 +3064,37 @@ def string_assert_split(line: Line) -> Iterator[Line]:
     insert_str_child = insert_str_child_factory(line.leaves[str_idx])
 
     first_line = Line(depth=line.depth, bracket_tracker=line.bracket_tracker)
-    for old_leaf in line.leaves[: -1 if str_idx == -1 else -3]:
+    pre_str_idx = (
+        str_idx - 1 if line.leaves[str_idx - 1].type == token.LPAR else str_idx
+    )
+    for old_leaf in line.leaves[:pre_str_idx]:
         new_leaf = Leaf(old_leaf.type, old_leaf.value)
         replace_child(old_leaf, new_leaf)
         first_line.append(new_leaf)
 
     lpar_leaf = Leaf(token.LPAR, "(")
-    if line.leaves[-3].type == token.LPAR:
-        replace_child(line.leaves[-3], lpar_leaf)
+    if line.leaves[str_idx - 1].type == token.LPAR:
+        replace_child(line.leaves[str_idx - 1], lpar_leaf)
     else:
         insert_str_child(lpar_leaf)
     first_line.append(lpar_leaf)
+    first_line.comments = line.comments
     yield first_line
 
-    string_line = Line(depth=line.depth + 1)
+    string_line = Line(depth=line.depth + 1, bracket_tracker=first_line.bracket_tracker)
     string_leaf = Leaf(line.leaves[str_idx].type, line.leaves[str_idx].value)
     insert_str_child(string_leaf)
     string_line.append(string_leaf)
+
+    post_string_leaves = line.leaves[str_idx:]
+    post_string_leaves.pop(0)
+
+    if post_string_leaves:
+        for old_leaf in post_string_leaves[:-1]:
+            new_leaf = Leaf(old_leaf.type, old_leaf.value)
+            replace_child(old_leaf, new_leaf)
+            string_line.append(new_leaf)
+
     yield string_line
 
     last_line = Line(depth=line.depth, bracket_tracker=first_line.bracket_tracker)
@@ -3093,6 +3115,7 @@ def string_arith_expr_split(line: Line) -> Iterator[Line]:
     if parent is not None:
         parent.insert_child(0, lpar_leaf)
     first_line.append(lpar_leaf)
+    first_line.comments = line.comments
     yield first_line
 
     string_line = Line(depth=line.depth + 1, inside_brackets=True)
