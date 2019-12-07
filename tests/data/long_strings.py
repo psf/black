@@ -13,18 +13,17 @@ D3 = {x: "This is a really long string that can't possibly be expected to fit al
 func_with_keywords(my_arg, my_kwarg="Long keyword strings also need to be wrapped, but they will probably need to be handled a little bit differently.")
 
 bad_split1 = (
-    "But what should happen when code has already been formatted but in the wrong way?"
-    " Like with a space at the beginning instead of the end."
-    " Or what about when it is split too soon?"
+    "But what should happen when code has already been formatted but in the wrong way? Like"
+    " with a space at the beginning instead of the end. Or what about when it is split too soon?"
 )
 
-bad_split2 = (
-    "But what should happen when code has already "
-    "been formatted but in the wrong way? Like "
-    "with a space at the beginning instead of the "
-    "end. Or what about when it is split too "
-    "soon?"
-)
+bad_split2 = "But what should happen when code has already " \
+             "been formatted but in the wrong way? Like " \
+             "with a space at the beginning instead of the " \
+             "end. Or what about when it is split too " \
+             "soon? In the case of a split that is too " \
+             "short, black will try to honer the custom " \
+             "split."
 
 bad_split3 = (
     "What if we have inline comments on "  # First Comment
@@ -37,16 +36,16 @@ bad_split_func1(
     "been formatted but in the wrong way? Like "
     "with a space at the beginning instead of the "
     "end. Or what about when it is split too "
-    "soon?",
+    "soon? In the case of a split that is too "
+    "short, black will try to honer the custom "
+    "split.",
     xxx, yyy, zzz
 )
 
 bad_split_func2(
     xxx, yyy, zzz,
-    long_string_kwarg="But what should happen when code has already "
-                      "been formatted but in the wrong way? Like "
-                      "with a space at the beginning instead of the "
-                      "end. Or what about when it is split too "
+    long_string_kwarg="But what should happen when code has already been formatted but in the wrong way? Like "
+                      "with a space at the beginning instead of the end. Or what about when it is split too "
                       "soon?",
 )
 
@@ -160,9 +159,13 @@ bad_split1 = (
 )
 
 bad_split2 = (
-    "But what should happen when code has already been formatted but in the wrong way? "
-    "Like with a space at the beginning instead of the end. Or what about when it is "
-    "split too soon?"
+    "But what should happen when code has already "
+    "been formatted but in the wrong way? Like "
+    "with a space at the beginning instead of the "
+    "end. Or what about when it is split too "
+    "soon? In the case of a split that is too "
+    "short, black will try to honer the custom "
+    "split."
 )
 
 bad_split3 = (
@@ -173,9 +176,13 @@ bad_split3 = (
 
 bad_split_func1(
     (
-        "But what should happen when code has already been formatted but in the wrong "
-        "way? Like with a space at the beginning instead of the end. Or what about "
-        "when it is split too soon?"
+        "But what should happen when code has already "
+        "been formatted but in the wrong way? Like "
+        "with a space at the beginning instead of the "
+        "end. Or what about when it is split too "
+        "soon? In the case of a split that is too "
+        "short, black will try to honer the custom "
+        "split."
     ),
     xxx,
     yyy,

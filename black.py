@@ -1,5 +1,6 @@
 import ast
 import asyncio
+from collections import defaultdict
 from concurrent.futures import Executor, ProcessPoolExecutor
 from contextlib import contextmanager
 from datetime import datetime
@@ -62,6 +63,7 @@ DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 PREFIX_CHARS = "furbFURB"  # All possible string prefix characters.
 STRING_CHILD_IDX_MAP = {}
+STRING_LEAF_CUSTOM_BREAKPOINTS = defaultdict(list)  # type: Dict[str, List[int]]
 
 
 # types
@@ -2522,6 +2524,7 @@ def merge_first_string_group(line: Line, normalize_strings: bool) -> Tuple[Line,
     QUOTE = line.leaves[next_str_idx].value[-1]
     num_of_strings = 0
     at_least_one_string_contains_spaces = False
+    custom_breakpoints = []
     while line.leaves[next_str_idx].type == token.STRING:
         if (
             line.leaves[next_str_idx]
@@ -2531,6 +2534,7 @@ def merge_first_string_group(line: Line, normalize_strings: bool) -> Tuple[Line,
             return (line, False)
 
         num_of_strings += 1
+        custom_breakpoints.append(len(line.leaves[next_str_idx].value) - 1)
 
         naked_last_string_value = string_value[len(prefix) :]
         if naked_last_string_value:
@@ -2626,6 +2630,10 @@ def merge_first_string_group(line: Line, normalize_strings: bool) -> Tuple[Line,
         new_line.append(new_leaf)
 
     new_line.comments = new_comments
+
+    if not STRING_LEAF_CUSTOM_BREAKPOINTS[string_leaf.value]:
+        STRING_LEAF_CUSTOM_BREAKPOINTS[string_leaf.value] = custom_breakpoints
+
     return (new_line, True)
 
 
@@ -2792,13 +2800,12 @@ def string_atomic_split(
 
     rest_value = line.leaves[0].value
     prefix = get_string_prefix(rest_value)
-    prefix_idx = len(prefix)
 
     drop_pointless_f_prefix = True
     if "f" in prefix and not re.search(r"\{.+\}", rest_value):
         drop_pointless_f_prefix = False
 
-    rest_length_offset = prefix_idx
+    rest_length_offset = len(prefix)
     if ends_with_comma:
         rest_length_offset += 1
 
@@ -2807,22 +2814,45 @@ def string_atomic_split(
     rest_line.append(rest_leaf)
 
     max_rest_length = line_length - rest_length_offset
+    max_next_length = line_length - (1 + len(prefix)) - (string_depth * 4)
     QUOTE = rest_value[-1]
-    while not is_line_short_enough(rest_line, line_length=max_rest_length):
-        max_next_length = line_length - (1 + prefix_idx) - (string_depth * 4)
 
-        idx = max_next_length
-        while 0 < idx < len(rest_value) and rest_value[idx - 1] != " ":
-            idx -= 1
+    custom_breakpoints = STRING_LEAF_CUSTOM_BREAKPOINTS[line.leaves[0].value][:]
+    use_custom_breakpoints = False
+    if custom_breakpoints and all(
+        breakpoint <= max_next_length for breakpoint in custom_breakpoints
+    ):
+        use_custom_breakpoints = True
 
-        if rest_value[idx - 1] != " ":
-            idx = max_next_length + 1
-            while idx < len(rest_value) and rest_value[idx - 1] != " ":
-                idx += 1
+    while not is_line_short_enough(rest_line, line_length=max_rest_length) or (
+        len(custom_breakpoints) > 1 and use_custom_breakpoints
+    ):
+        if use_custom_breakpoints:
+            idx = custom_breakpoints.pop(0)
+        else:
+            idx = max_next_length
+            while 0 < idx < len(rest_value) and rest_value[idx - 1] != " ":
+                idx -= 1
+
             if rest_value[idx - 1] != " ":
-                raise CannotSplit("Long strings which contain no spaces are not split.")
+                idx = max_next_length + 1
+                while idx < len(rest_value) and rest_value[idx - 1] != " ":
+                    idx += 1
+                if rest_value[idx - 1] != " ":
+                    raise CannotSplit(
+                        "Long strings which contain no spaces are not split."
+                    )
 
         next_value = rest_value[:idx] + QUOTE
+
+        if (
+            next_value != normalize_f_string(next_value, prefix)
+            and drop_pointless_f_prefix
+            and use_custom_breakpoints
+        ):
+            idx += 1
+            next_value = rest_value[:idx] + QUOTE
+
         next_value = (
             normalize_f_string(next_value, prefix)
             if drop_pointless_f_prefix
