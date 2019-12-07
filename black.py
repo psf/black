@@ -63,7 +63,7 @@ DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 PREFIX_CHARS = "furbFURB"  # All possible string prefix characters.
 STRING_CHILD_IDX_MAP = {}
-STRING_LEAF_CUSTOM_BREAKPOINTS = defaultdict(list)  # type: Dict[str, List[int]]
+CUSTOM_STRING_BREAKPOINTS: Dict[str, Tuple[int, ...]] = defaultdict(tuple)
 
 
 # types
@@ -2631,8 +2631,8 @@ def merge_first_string_group(line: Line, normalize_strings: bool) -> Tuple[Line,
 
     new_line.comments = new_comments
 
-    if not STRING_LEAF_CUSTOM_BREAKPOINTS[string_leaf.value]:
-        STRING_LEAF_CUSTOM_BREAKPOINTS[string_leaf.value] = custom_breakpoints
+    if not CUSTOM_STRING_BREAKPOINTS[string_leaf.value]:
+        CUSTOM_STRING_BREAKPOINTS[string_leaf.value] = tuple(custom_breakpoints)
 
     return (new_line, True)
 
@@ -2817,7 +2817,7 @@ def string_atomic_split(
     max_next_length = line_length - (1 + len(prefix)) - (string_depth * 4)
     QUOTE = rest_value[-1]
 
-    custom_breakpoints = STRING_LEAF_CUSTOM_BREAKPOINTS[line.leaves[0].value][:]
+    custom_breakpoints = list(CUSTOM_STRING_BREAKPOINTS[line.leaves[0].value])
 
     use_custom_breakpoints = False
     if custom_breakpoints and all(
