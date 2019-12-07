@@ -2406,9 +2406,6 @@ def split_line(
     """Split a `line` into potentially many lines.
 
     They should fit in the allotted `line_length` but might not be able to.
-    `inner` signifies that there were a pair of brackets somewhere around the
-    current `line`, possibly transitively. This means we can fallback to splitting
-    by delimiters if the LHS/RHS don't yield any results.
 
     `features` are syntactical features that may be used in the output.
     """
@@ -2512,9 +2509,27 @@ def merge_first_string_group(line: Line, normalize_strings: bool) -> Line:
     num_of_strings = 0
     at_least_one_string_contains_spaces = False
     while line.leaves[next_str_idx].type == token.STRING:
+        if (
+            line.leaves[next_str_idx]
+            .value.lstrip(PREFIX_CHARS)
+            .startswith(("'''", '"""'))
+        ):
+            return line
+
         num_of_strings += 1
 
-        naked_last_string_value = string_value[len(prefix) :].strip(QUOTE)
+        naked_last_string_value = string_value[len(prefix) :]
+        if naked_last_string_value:
+            naked_last_string_value = (
+                naked_last_string_value[1:]
+                if naked_last_string_value[0] == QUOTE
+                else naked_last_string_value
+            )
+            naked_last_string_value = (
+                naked_last_string_value[:-1]
+                if naked_last_string_value[-1] == QUOTE
+                else naked_last_string_value
+            )
 
         next_string_value = line.leaves[next_str_idx].value
         if " " in next_string_value:
@@ -2523,16 +2538,36 @@ def merge_first_string_group(line: Line, normalize_strings: bool) -> Line:
         if not prefix:
             prefix = get_string_prefix(next_string_value)
 
-        naked_next_string_value = next_string_value[len(prefix) :].strip(
-            next_string_value[-1]
+        naked_next_string_value = next_string_value[len(prefix) :]
+        q = naked_next_string_value[-1]
+        naked_next_string_value = (
+            naked_next_string_value[1:]
+            if naked_next_string_value[0] == q
+            else naked_next_string_value
+        )
+        naked_next_string_value = (
+            naked_next_string_value[:-1]
+            if naked_next_string_value[-1] == q
+            else naked_next_string_value
         )
 
         if QUOTE in naked_next_string_value:
-            QUOTE = "'"
+            if normalize_strings:
+                QUOTE = "'"
+
             other_quote = '"' if QUOTE == "'" else "'"
-            naked_next_string_value = naked_next_string_value.replace(
-                QUOTE, "\\" + QUOTE
-            ).replace("\\" + other_quote, other_quote)
+
+            naked_last_string_value = (
+                naked_last_string_value.replace(QUOTE, "\\" + QUOTE)
+                .replace("\\\\" + QUOTE, "\\" + QUOTE)
+                .replace("\\{}".format(other_quote), other_quote)
+            )
+
+            naked_next_string_value = (
+                naked_next_string_value.replace(QUOTE, "\\" + QUOTE)
+                .replace("\\\\" + QUOTE, "\\" + QUOTE)
+                .replace("\\{}".format(other_quote), other_quote)
+            )
 
         string_value = (
             prefix + QUOTE + naked_last_string_value + naked_next_string_value + QUOTE
@@ -2635,17 +2670,28 @@ def string_split(
         for new_line in string_atomic_split(line, line_length, normalize_strings):
             yield new_line
     elif (
-        tokens[1]
-        in [token.EQUAL, token.COLON, token.PLUSEQUAL, token.MINEQUAL, token.STAREQUAL]
-    ) and (
-        tokens[2:5]
-        in [
-            (token.STRING,),
-            (token.STRING, token.COMMA),
-            (token.LPAR, token.STRING, token.RPAR),
-            (token.LPAR, token.STRING, token.PERCENT),
-            (token.LPAR, token.STRING, token.DOT),
-        ]
+        len(tokens) >= 3
+        and tokens[0] != token.RSQB
+        and (
+            tokens[1]
+            in [
+                token.EQUAL,
+                token.COLON,
+                token.PLUSEQUAL,
+                token.MINEQUAL,
+                token.STAREQUAL,
+            ]
+        )
+        and (
+            tokens[2:5]
+            in [
+                (token.STRING,),
+                (token.STRING, token.COMMA),
+                (token.LPAR, token.STRING, token.RPAR),
+                (token.LPAR, token.STRING, token.PERCENT),
+                (token.LPAR, token.STRING, token.DOT),
+            ]
+        )
     ):
         for new_line in string_assignment_split(line):
             yield new_line
@@ -2666,9 +2712,10 @@ def validate_string_split(line: Line, line_length: int) -> None:
         raise CannotSplit("Line is already short enough. No reason to split.")
 
     line_str = str(line).strip("\n")
-    line_str = re.sub(
-        r"(assert .*,|% \(.*\)?|['\"]\.[A-Za-z_0-9]+\(.*\)?)", "", line_str
-    )
+    line_str = re.sub(r"assert .*,(.*)", r"\1", line_str)
+    line_str = re.sub(r"(.*)% \(?.*\)?", r"\1", line_str)
+    line_str = re.sub(r"(['\"]\.[A-Za-z_0-9]+\().*\)?", r"\1", line_str)
+
     if line.comments and list(line.comments.values())[0]:
         line_str = line_str.replace(str(list(line.comments.values())[0][0]), "")
         line_str = re.sub(r"\s*$", "", line_str)
@@ -2682,9 +2729,18 @@ def validate_string_split(line: Line, line_length: int) -> None:
         raise CannotSplit("Multiple inline comments detected.")
 
     for leaf in line.leaves:
-        value = leaf.value.lstrip(PREFIX_CHARS)
-        if value[:3] in {'"""', "'''"}:
-            raise CannotSplit("This split function does not work on multiline strings.")
+        if leaf.type == token.STRING:
+            if not leaf.parent or [L.type for L in leaf.parent.children] == [
+                token.STRING,
+                token.NEWLINE,
+            ]:
+                raise CannotSplit("This string appears to be pointless.")
+
+            value = leaf.value.lstrip(PREFIX_CHARS)
+            if value[:3] in {'"""', "'''"}:
+                raise CannotSplit(
+                    "This split function does not work on multiline strings."
+                )
 
     if (
         line.comments
@@ -2716,7 +2772,7 @@ def string_atomic_split(
     if line.leaves[comma_idx].type == token.COMMA:
         ends_with_comma = True
 
-    if not has_percent_or_dot and ends_with_comma:
+    if ends_with_comma:
         first_leaf = Leaf(token.LPAR, "(")
         insert_str_child(first_leaf)
 
@@ -2797,13 +2853,7 @@ def string_atomic_split(
             replace_child(line.leaves[i], leaf)
             rest_line.append(leaf)
 
-        if ends_with_comma:
-            comma_leaf = Leaf(token.COMMA, ",")
-            replace_child(line.leaves[comma_idx], comma_leaf)
-            rest_line.append(comma_leaf)
-
-        yield rest_line
-    elif ends_with_comma:
+    if ends_with_comma:
         last_line = Line(depth=line.depth, bracket_tracker=first_line.bracket_tracker)
 
         rpar_leaf = Leaf(token.RPAR, ")")
