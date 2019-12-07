@@ -2818,6 +2818,7 @@ def string_atomic_split(
     QUOTE = rest_value[-1]
 
     custom_breakpoints = STRING_LEAF_CUSTOM_BREAKPOINTS[line.leaves[0].value][:]
+
     use_custom_breakpoints = False
     if custom_breakpoints and all(
         breakpoint <= max_next_length for breakpoint in custom_breakpoints
@@ -2827,21 +2828,11 @@ def string_atomic_split(
     while not is_line_short_enough(rest_line, line_length=max_rest_length) or (
         len(custom_breakpoints) > 1 and use_custom_breakpoints
     ):
-        if use_custom_breakpoints:
-            idx = custom_breakpoints.pop(0)
-        else:
-            idx = max_next_length
-            while 0 < idx < len(rest_value) and rest_value[idx - 1] != " ":
-                idx -= 1
-
-            if rest_value[idx - 1] != " ":
-                idx = max_next_length + 1
-                while idx < len(rest_value) and rest_value[idx - 1] != " ":
-                    idx += 1
-                if rest_value[idx - 1] != " ":
-                    raise CannotSplit(
-                        "Long strings which contain no spaces are not split."
-                    )
+        idx = get_atomic_str_idx(
+            rest_value,
+            max_next_length,
+            custom_breakpoints if use_custom_breakpoints else None,
+        )
 
         next_value = rest_value[:idx] + QUOTE
 
@@ -2906,6 +2897,26 @@ def string_atomic_split(
         last_line.append(comma_leaf)
 
         yield last_line
+
+
+def get_atomic_str_idx(
+    string_value: str, max_length: int, custom_breakpoints: List[int] = None
+) -> int:
+    if custom_breakpoints is None:
+        idx = max_length
+        while 0 < idx < len(string_value) and string_value[idx - 1] != " ":
+            idx -= 1
+
+        if string_value[idx - 1] != " ":
+            idx = max_length + 1
+            while idx < len(string_value) and string_value[idx - 1] != " ":
+                idx += 1
+            if string_value[idx - 1] != " ":
+                raise CannotSplit("Long strings which contain no spaces are not split.")
+    else:
+        idx = custom_breakpoints.pop(0)
+
+    return idx
 
 
 def string_assignment_split(line: Line) -> Iterator[Line]:
