@@ -2910,6 +2910,13 @@ def get_atomic_str_idx(string_value: str, max_length: int) -> int:
     return idx
 
 
+def normalize_f_string(string: str, prefix: str) -> str:
+    if "f" in prefix and not re.search(r"\{.+\}", string):
+        return prefix.replace("f", "") + string[len(prefix) :]
+    else:
+        return string
+
+
 def string_assignment_split(line: Line) -> Iterator[Line]:
     """
     Splits long lines in which a variable is being assigned the value of a long
@@ -3069,13 +3076,6 @@ def replace_child(old_child: LN, new_child: LN) -> None:
     child_idx = old_child.remove()
     if child_idx is not None:
         parent.insert_child(child_idx, new_child)
-
-
-def normalize_f_string(string: str, prefix: str) -> str:
-    if "f" in prefix and not re.search(r"\{.+\}", string):
-        return prefix.replace("f", "") + string[len(prefix) :]
-    else:
-        return string
 
 
 def get_string_prefix(string: str) -> str:
