@@ -82,6 +82,10 @@ long_tuple = ('Apple', 'Berry', 'Cherry', 'Dill', 'Evergreen', 'Fig',
 
 assert some_type_of_boolean_expression, "Followed by a really really really long string that is used to provide context to the AssertionError exception."
 
+some_function_call("With a reallly generic name and with a really really long string that is, at some point down the line, " + added + " to a variable and then added to another string.")
+
+some_function_call("With a reallly generic name and with a really really long string that is, at some point down the line, " + added + " to a variable and then added to another string. But then what happens when the final string is also supppppperrrrr long?! Well then that second (realllllllly long) string should be split too.", "and a second argument", and_a_third)
+
 # output
 
 x = (
@@ -285,4 +289,24 @@ long_tuple = (
 assert some_type_of_boolean_expression, (
     "Followed by a really really really long string that is used to provide context to "
     "the AssertionError exception."
+)
+
+some_function_call(
+    "With a reallly generic name and with a really really long string that is, at some "
+    "point down the line, "
+    + added
+    + " to a variable and then added to another string."
+)
+
+some_function_call(
+    (
+        "With a reallly generic name and with a really really long string that is, at "
+        "some point down the line, "
+        + added
+        + " to a variable and then added to another string. But then what happens when "
+        "the final string is also supppppperrrrr long?! Well then that second "
+        "(realllllllly long) string should be split too."
+    ),
+    "and a second argument",
+    and_a_third,
 )

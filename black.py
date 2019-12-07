@@ -2452,8 +2452,19 @@ def split_line(
         def str_split(line: Line, features: Collection[Feature]) -> Iterator[Line]:
             yield from string_split(line, line_length, normalize_strings, features)
 
+        def str_arith_expr_split(
+            line: Line, features: Collection[Feature]
+        ) -> Iterator[Line]:
+            validate_string_split(line, line_length)
+            tokens = tuple([leaf.type for leaf in line.leaves])
+            if tokens[:2] == (token.STRING, token.PLUS) and tokens[-1] == token.COMMA:
+                yield from string_arith_expr_split(line)
+            else:
+                raise CannotSplit("Not an arithmetic string expression.")
+
         if line.inside_brackets:
             split_funcs = [
+                str_arith_expr_split,
                 delimiter_split,
                 standalone_comment_split,
                 str_split,
@@ -2525,7 +2536,10 @@ def merge_first_string_group(line: Line, normalize_strings: bool) -> Tuple[Line,
     num_of_strings = 0
     at_least_one_string_contains_spaces = False
     custom_breakpoints = []
-    while line.leaves[next_str_idx].type == token.STRING:
+    while (
+        len(line.leaves) > next_str_idx
+        and line.leaves[next_str_idx].type == token.STRING
+    ):
         if (
             line.leaves[next_str_idx]
             .value.lstrip(PREFIX_CHARS)
@@ -2678,6 +2692,7 @@ def string_split(
         (token.STRING, token.COMMA),
         (token.STRING, token.DOT),
         (token.STRING, token.PERCENT),
+        (token.PLUS, token.STRING),
     ]:
         for new_line in string_atomic_split(line, line_length, normalize_strings):
             yield new_line
@@ -2727,6 +2742,8 @@ def validate_string_split(line: Line, line_length: int) -> None:
     line_str = re.sub(r"assert .*,(.*)", r"\1", line_str)
     line_str = re.sub(r"(.*)% \(?.*\)?", r"\1", line_str)
     line_str = re.sub(r"(['\"]\.[A-Za-z_0-9]+\().*\)?", r"\1", line_str)
+    line_str = re.sub(r"(.*['\"]) ?\+.*", r"\1", line_str)
+    line_str = re.sub(r".* ?\+ ?(['\"].*)", r"\1", line_str)
 
     if line.comments and list(line.comments.values())[0]:
         line_str = line_str.replace(str(list(line.comments.values())[0][0]), "")
@@ -2773,11 +2790,21 @@ def string_atomic_split(
     line: Line, line_length: int, normalize_strings: bool
 ) -> Iterator[Line]:
     """Splits long strings that are on their own line already."""
-    insert_str_child = insert_str_child_factory(line.leaves[0])
+    if line.leaves[0].type == token.PLUS:
+        str_idx = 1
+        starts_with_plus = True
+    else:
+        str_idx = 0
+        starts_with_plus = False
+
+    insert_str_child = insert_str_child_factory(line.leaves[str_idx])
     comma_idx = len(line.leaves) - 1
 
     has_percent_or_dot = False
-    if len(line.leaves) > 1 and line.leaves[1].type in [token.PERCENT, token.DOT]:
+    if len(line.leaves) > str_idx + 1 and line.leaves[str_idx + 1].type in [
+        token.PERCENT,
+        token.DOT,
+    ]:
         has_percent_or_dot = True
 
     ends_with_comma = False
@@ -2797,7 +2824,7 @@ def string_atomic_split(
     else:
         string_depth = line.depth
 
-    rest_value = line.leaves[0].value
+    rest_value = line.leaves[str_idx].value
     prefix = get_string_prefix(rest_value)
 
     drop_pointless_f_prefix = True
@@ -2816,7 +2843,7 @@ def string_atomic_split(
     max_next_length = line_length - (1 + len(prefix)) - (string_depth * 4)
     QUOTE = rest_value[-1]
 
-    custom_breakpoints = list(CUSTOM_STRING_BREAKPOINTS[line.leaves[0].value])
+    custom_breakpoints = list(CUSTOM_STRING_BREAKPOINTS[line.leaves[str_idx].value])
 
     use_custom_breakpoints = False
     if custom_breakpoints and all(
@@ -2824,13 +2851,19 @@ def string_atomic_split(
     ):
         use_custom_breakpoints = True
 
+    first_string_line = True
     while not is_line_short_enough(rest_line, line_length=max_rest_length) or (
         len(custom_breakpoints) > 1 and use_custom_breakpoints
     ):
+        prepend_plus = False
+        if first_string_line and starts_with_plus:
+            prepend_plus = True
+
         if use_custom_breakpoints:
             idx = custom_breakpoints.pop(0)
         else:
-            idx = get_atomic_str_idx(rest_value, max_next_length)
+            max_length = max_next_length - 2 if prepend_plus else max_next_length
+            idx = get_atomic_str_idx(rest_value, max_length)
 
         next_value = rest_value[:idx] + QUOTE
 
@@ -2844,9 +2877,13 @@ def string_atomic_split(
             next_value = normalize_f_string(next_value, prefix)
 
         next_line = Line(depth=string_depth)
+        if prepend_plus:
+            plus_leaf = Leaf(token.PLUS, "+")
+            replace_child(line.leaves[0], plus_leaf)
+            next_line.append(plus_leaf)
         next_leaf = Leaf(token.STRING, next_value)
-        next_line.append(next_leaf)
         insert_str_child(next_leaf)
+        next_line.append(next_leaf)
 
         if normalize_strings:
             normalize_string_quotes(next_leaf)
@@ -2861,6 +2898,8 @@ def string_atomic_split(
         rest_leaf = Leaf(token.STRING, rest_value)
         rest_line.append(rest_leaf)
 
+        first_string_line = False
+
     if not ends_with_comma:
         rest_line.comments = line.comments
 
@@ -2871,7 +2910,7 @@ def string_atomic_split(
 
     if has_percent_or_dot:
         end_idx = len(line.leaves) - (1 if ends_with_comma else 0)
-        for i in range(1, end_idx):
+        for i in range(str_idx + 1, end_idx):
             leaf = Leaf(line.leaves[i].type, line.leaves[i].value)
             replace_child(line.leaves[i], leaf)
             rest_line.append(leaf)
@@ -2891,7 +2930,7 @@ def string_atomic_split(
 
         yield last_line
 
-    del CUSTOM_STRING_BREAKPOINTS[line.leaves[0].value]
+    del CUSTOM_STRING_BREAKPOINTS[line.leaves[str_idx].value]
 
 
 def get_atomic_str_idx(string_value: str, max_length: int) -> int:
@@ -3043,6 +3082,35 @@ def string_assert_split(line: Line) -> Iterator[Line]:
     else:
         insert_str_child(rpar_leaf)
     last_line.append(rpar_leaf)
+    yield last_line
+
+
+def string_arith_expr_split(line: Line) -> Iterator[Line]:
+    parent = line.leaves[0].parent
+
+    first_line = Line(depth=line.depth)
+    lpar_leaf = Leaf(token.LPAR, "(")
+    if parent is not None:
+        parent.insert_child(0, lpar_leaf)
+    first_line.append(lpar_leaf)
+    yield first_line
+
+    string_line = Line(depth=line.depth + 1, inside_brackets=True)
+    for old_leaf in line.leaves[:-1]:
+        new_leaf = Leaf(old_leaf.type, old_leaf.value)
+        replace_child(old_leaf, new_leaf)
+        string_line.append(new_leaf)
+    yield string_line
+
+    last_line = Line(depth=line.depth, bracket_tracker=first_line.bracket_tracker)
+    rpar_leaf = Leaf(token.RPAR, ")")
+    replace_child(line.leaves[-1], rpar_leaf)
+    last_line.append(rpar_leaf)
+    comma_leaf = Leaf(token.COMMA, ",")
+    if parent:
+        comma_idx = len(parent.children)
+        parent.insert_child(comma_idx, comma_leaf)
+    last_line.append(comma_leaf)
     yield last_line
 
 
