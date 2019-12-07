@@ -2844,6 +2844,8 @@ def string_atomic_split(
             replace_child(line.leaves[i], leaf)
             rest_line.append(leaf)
 
+    yield rest_line
+
     if ends_with_comma:
         last_line = Line(depth=line.depth, bracket_tracker=first_line.bracket_tracker)
 
@@ -2855,10 +2857,7 @@ def string_atomic_split(
         replace_child(line.leaves[comma_idx], comma_leaf)
         last_line.append(comma_leaf)
 
-        yield rest_line
         yield last_line
-    else:
-        yield rest_line
 
 
 def string_assignment_split(line: Line) -> Iterator[Line]:
