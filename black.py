@@ -65,7 +65,7 @@ DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 STRING_PREFIX_CHARS = "furbFURB"  # All possible string prefix characters.
 STRING_CHILD_IDX_MAP = {}
-CUSTOM_STRING_BREAKPOINTS: Dict[str, Tuple[int, ...]] = defaultdict(tuple)
+CUSTOM_STRING_BREAKPOINTS: Dict[str, Tuple[Tuple[bool, int], ...]] = defaultdict(tuple)
 STRING_REGEXP = (
     "["
     + STRING_PREFIX_CHARS
@@ -2672,7 +2672,7 @@ class StringAtomicSplitter(StringSplitter):
             r"\{.+\}", rest_value
         )
         use_custom_breakpoints = custom_breakpoints and all(
-            breakpoint <= max_next_length for breakpoint in custom_breakpoints
+            breakpoint <= max_next_length for (_, breakpoint) in custom_breakpoints
         )
 
         first_string_line = True
@@ -2682,7 +2682,9 @@ class StringAtomicSplitter(StringSplitter):
             prepend_plus = first_string_line and starts_with_plus
 
             if use_custom_breakpoints:
-                idx = custom_breakpoints.pop(0)
+                has_prefix, idx = custom_breakpoints.pop(0)
+                if not has_prefix and prefix not in ["", "f"]:
+                    rest_value = re.sub("^" + prefix, "", rest_value)
             else:
                 max_length = max_next_length - 2 if prepend_plus else max_next_length
                 idx = self.get_break_idx(rest_value, max_length)
@@ -2720,6 +2722,12 @@ class StringAtomicSplitter(StringSplitter):
             rest_leaf = Leaf(token.STRING, rest_value)
 
             first_string_line = False
+
+        if use_custom_breakpoints:
+            has_prefix, _ = custom_breakpoints.pop(0)
+            if not has_prefix and prefix not in ["", "f"]:
+                rest_value = re.sub("^" + prefix, "", rest_value)
+                rest_leaf = Leaf(token.STRING, rest_value)
 
         if normalize_strings:
             normalize_string_quotes(rest_leaf)
@@ -3002,7 +3010,6 @@ def merge_first_string_group(line: Line, normalize_strings: bool) -> Tuple[Line,
             return (line, False)
 
         num_of_strings += 1
-        custom_breakpoints.append(len(line.leaves[next_str_idx].value) - 1)
 
         naked_last_string_value = string_value[len(prefix) :]
         if naked_last_string_value:
@@ -3021,8 +3028,13 @@ def merge_first_string_group(line: Line, normalize_strings: bool) -> Tuple[Line,
         if " " in next_string_value:
             at_least_one_string_contains_spaces = True
 
+        next_prefix = get_string_prefix(next_string_value)
         if not prefix:
-            prefix = get_string_prefix(next_string_value)
+            prefix = next_prefix
+
+        custom_breakpoints.append(
+            (next_prefix != "", len(line.leaves[next_str_idx].value) - 1)
+        )
 
         naked_next_string_value = next_string_value[len(prefix) :]
         q = naked_next_string_value[-1]

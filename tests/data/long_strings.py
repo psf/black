@@ -55,6 +55,21 @@ bad_split_func2(
                       "soon?",
 )
 
+bad_split_func3(
+    (
+        "But what should happen when code has already "
+        r"been formatted but in the wrong way? Like "
+        "with a space at the beginning instead of the "
+        r"end. Or what about when it is split too "
+        r"soon? In the case of a split that is too "
+        "short, black will try to honer the custom "
+        "split."
+    ),
+    xxx,
+    yyy,
+    zzz,
+)
+
 raw_string = r"This is a long raw string. When re-formatting this string, black needs to make sure it prepends the 'r' onto the new string."
 
 fmt_string1 = "We also need to be sure to preserve any and all {} which may or may not be attached to the string in question.".format("method calls")
@@ -237,6 +252,21 @@ bad_split_func2(
         "way? Like with a space at the beginning instead of the end. Or what about "
         "when it is split too soon?"
     ),
+)
+
+bad_split_func3(
+    (
+        "But what should happen when code has already "
+        r"been formatted but in the wrong way? Like "
+        "with a space at the beginning instead of the "
+        r"end. Or what about when it is split too "
+        r"soon? In the case of a split that is too "
+        "short, black will try to honer the custom "
+        "split."
+    ),
+    xxx,
+    yyy,
+    zzz,
 )
 
 raw_string = (
