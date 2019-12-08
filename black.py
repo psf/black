@@ -2651,7 +2651,7 @@ class StringAtomicSplitter(StringSplitter):
 
         rest_length_offset = len(prefix)
 
-        rest_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
+        rest_line = clone_line(line)
         rest_leaf = Leaf(token.STRING, rest_value)
         rest_line.append(rest_leaf)
 
@@ -2694,7 +2694,7 @@ class StringAtomicSplitter(StringSplitter):
                     next_value = rest_value[:idx] + QUOTE
                 next_value = self.normalize_f_string(next_value, prefix)
 
-            next_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
+            next_line = clone_line(line)
             if prepend_plus:
                 plus_leaf = Leaf(token.PLUS, "+")
                 replace_child(line.leaves[0], plus_leaf)
@@ -2712,7 +2712,7 @@ class StringAtomicSplitter(StringSplitter):
             if drop_pointless_f_prefix:
                 rest_value = self.normalize_f_string(rest_value, prefix)
 
-            rest_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
+            rest_line = clone_line(line)
             rest_leaf = Leaf(token.STRING, rest_value)
             rest_line.append(rest_leaf)
 
@@ -2782,12 +2782,7 @@ class StringCompoundSplitter(StringSplitter):
         if line.leaves[comma_idx].type == token.COMMA:
             ends_with_comma = True
 
-        first_line = Line(
-            depth=line.depth,
-            comments=line.comments,
-            inside_brackets=line.inside_brackets,
-        )
-
+        first_line = clone_line(line, comments=line.comments)
         left_leaves = line.leaves[: self.string_idx]
         old_parens_exist = False
         if left_leaves and left_leaves[-1].type == token.LPAR:
@@ -2811,7 +2806,11 @@ class StringCompoundSplitter(StringSplitter):
         # Only need to yield one (possibly too long) line, since the
         # `StringAtomicSplitter` will break it down further if necessary.
         string_value = line.leaves[self.string_idx].value
-        string_line = Line(depth=line.depth + 1, inside_brackets=True,)
+        string_line = Line(
+            depth=line.depth + 1,
+            inside_brackets=True,
+            should_explode=line.should_explode,
+        )
         string_leaf = Leaf(token.STRING, string_value)
         insert_str_child(string_leaf)
         string_line.append(string_leaf)
@@ -2839,6 +2838,7 @@ class StringCompoundSplitter(StringSplitter):
             depth=line.depth,
             bracket_tracker=first_line.bracket_tracker,
             inside_brackets=line.inside_brackets,
+            should_explode=line.should_explode,
         )
         new_rpar_leaf = Leaf(token.RPAR, ")")
         if old_rpar_leaf is not None:
@@ -2904,7 +2904,50 @@ def merge_strings(line: Line, normalize_strings: bool) -> Line:
             new_line, normalize_strings=normalize_strings
         )
 
+    new_line = remove_bad_trailing_commas(new_line)
+
     return new_line
+
+
+def remove_bad_trailing_commas(line: Line) -> Line:
+    line_str = str(line).strip("\n")
+    if not re.match(r"^[A-Za-z0-9_]+\(\(?" + STRING_REGEXP + r"\)?,\)", line_str):
+        return line
+
+    already_seen_lpar = False
+    skip_next_rpar = False
+
+    new_line = clone_line(line)
+    for old_leaf in line.leaves:
+        if old_leaf.type == token.COMMA:
+            continue
+
+        if already_seen_lpar and old_leaf.type == token.LPAR:
+            skip_next_rpar = True
+            continue
+
+        if old_leaf.type == token.LPAR:
+            already_seen_lpar = True
+
+        if skip_next_rpar and old_leaf.type == token.RPAR:
+            skip_next_rpar = False
+            continue
+
+        new_leaf = Leaf(old_leaf.type, old_leaf.value)
+        replace_child(old_leaf, new_leaf)
+        new_line.append(new_leaf)
+
+    return new_line
+
+
+def clone_line(line: Line, comments: Dict[LeafID, List[Leaf]] = None) -> Line:
+    return Line(
+        depth=line.depth,
+        bracket_tracker=line.bracket_tracker,
+        inside_brackets=line.inside_brackets,
+        should_explode=line.should_explode,
+        comments=comments or dict(),
+    )
 
 
 def merge_first_string_group(line: Line, normalize_strings: bool) -> Tuple[Line, bool]:
@@ -2996,12 +3039,7 @@ def merge_first_string_group(line: Line, normalize_strings: bool) -> Tuple[Line,
     old_comments = line.comments
     new_comments = {}
 
-    new_line = Line(
-        depth=line.depth,
-        bracket_tracker=line.bracket_tracker,
-        inside_brackets=line.inside_brackets,
-        should_explode=line.should_explode,
-    )
+    new_line = clone_line(line)
 
     for i, old_leaf in enumerate(line.leaves):
         if i == first_str_idx:

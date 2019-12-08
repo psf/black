@@ -2,6 +2,10 @@ x = "This is a really long string that can't possibly be expected to fit all tog
 
 x += "This is a really long string that can't possibly be expected to fit all together on one line. In fact it may even take up three or more lines... like four or five... but probably just three."
 
+y = (
+    "Short string"
+)
+
 print("This is a really long string inside of a print statement with extra arguments attached at the end of it.", x, y, z)
 
 print("This is a really long string inside of a print statement with no extra arguments attached at the end of it.")
@@ -96,6 +100,17 @@ some_function_call("With a reallly generic name and with a really really long st
 
 return "A really really really really really really really really really really really really really long {} {}".format("return", "value")
 
+func_with_bad_comma(
+    "This is a really long string argument to a function that has a trailing comma which should NOT be there.",
+)
+
+func_with_bad_comma(
+    (
+        "This is a really long string argument to a function that has a trailing comma "
+        "which should NOT be there."
+    ),
+)
+
 # output
 
 x = (
@@ -109,6 +124,8 @@ x += (
     "on one line. In fact it may even take up three or more lines... like four or "
     "five... but probably just three."
 )
+
+y = "Short string"
 
 print(
     (
@@ -349,4 +366,14 @@ some_function_call(
 return (
     "A really really really really really really really really really really really "
     "really really long {} {}".format("return", "value")
+)
+
+func_with_bad_comma(
+    "This is a really long string argument to a function that has a trailing comma "
+    "which should NOT be there."
+)
+
+func_with_bad_comma(
+    "This is a really long string argument to a function that has a trailing comma "
+    "which should NOT be there."
 )
