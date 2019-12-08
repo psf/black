@@ -2528,27 +2528,26 @@ class StringSplitter(metaclass=ABCMeta):
         pass
 
     def __call__(self, line: Line, _features: Collection[Feature]) -> Iterator[Line]:
-        self.__validate(line)
-
         line_str = str(line).strip("\n")
         match = re.match(self.my_regexp, line_str)
 
-        if match:
-            string_value = match.groups()[0]
-            for i, leaf in enumerate(line.leaves):
-                if leaf.type == token.STRING and leaf.value == string_value:
-                    self.string_idx = i
-                    break
-            else:
-                raise RuntimeError(
-                    f"Logic Error. {self.__class__.__name__} claims to know the "
-                    f"string value is {string_value} but is unable to find a "
-                    "leaf in this line that contains this string."
-                )
-        else:
+        if not match:
             raise CannotSplit(
                 f"The string splitter {self.__class__.__name__} does not "
                 "recognize this line as one that it can split."
+            )
+
+        self.__validate(line)
+        string_value = match.groups()[0]
+        for i, leaf in enumerate(line.leaves):
+            if leaf.type == token.STRING and leaf.value == string_value:
+                self.string_idx = i
+                break
+        else:
+            raise RuntimeError(
+                f"Logic Error. {self.__class__.__name__} claims to know the "
+                f"string value is {string_value} but is unable to find a "
+                "leaf in this line that contains this string."
             )
 
         yield from self.do_split(line)
@@ -2558,13 +2557,13 @@ class StringSplitter(metaclass=ABCMeta):
         if is_line_short_enough(line, line_length=line_length):
             raise CannotSplit("Line is already short enough. No reason to split.")
 
-        # TODO(bugyi): Use self.my_regexp to handle this better.
         line_str = str(line).strip("\n")
-        line_str = re.sub(r"^ *assert .*, ?(['\"].*?)", r"\1", line_str)
-        line_str = re.sub(r"(['\"].*[^\\]['\"]) ?% ?\(?.*\)?", r"\1", line_str)
-        line_str = re.sub(r"(['\"]\.[A-Za-z_0-9]+\().*\)?", r"\1", line_str)
-        line_str = re.sub(r"(.*['\"]) ?\+.*", r"\1", line_str)
-        line_str = re.sub(r".* ?\+ ?(['\"].*)", r"\1", line_str)
+        line_str = re.sub(
+            STRING_GROUP_REGEXP + STRING_DOT_OR_PERC_REGEXP, r"\1", line_str
+        )
+        line_str = re.sub(r"^ *assert .*, ?" + STRING_GROUP_REGEXP, r"\1", line_str)
+        line_str = re.sub(STRING_GROUP_REGEXP + r" ?\+.*", r"\1", line_str)
+        line_str = re.sub(r".* ?\+ ?" + STRING_GROUP_REGEXP, r"\1", line_str)
 
         if line.comments and list(line.comments.values())[0]:
             line_str = line_str.replace(str(list(line.comments.values())[0][0]), "")
