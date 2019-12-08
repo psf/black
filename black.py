@@ -2644,18 +2644,10 @@ class StringAtomicSplitter(StringSplitter):
         line_length = self.line_length
         normalize_strings = self.normalize_strings
 
-        starts_with_plus = False
-        if line.leaves[0].type == token.PLUS:
-            starts_with_plus = True
-
         insert_str_child = self.insert_str_child_factory(line.leaves[self.string_idx])
 
         rest_value = line.leaves[self.string_idx].value
         prefix = get_string_prefix(rest_value)
-
-        drop_pointless_f_prefix = True
-        if "f" in prefix and not re.search(r"\{.+\}", rest_value):
-            drop_pointless_f_prefix = False
 
         rest_length_offset = len(prefix)
 
@@ -2671,19 +2663,19 @@ class StringAtomicSplitter(StringSplitter):
             CUSTOM_STRING_BREAKPOINTS[line.leaves[self.string_idx].value]
         )
 
-        use_custom_breakpoints = False
-        if custom_breakpoints and all(
+        starts_with_plus = line.leaves[0].type == token.PLUS
+        drop_pointless_f_prefix = ("f" not in prefix) or re.search(
+            r"\{.+\}", rest_value
+        )
+        use_custom_breakpoints = custom_breakpoints and all(
             breakpoint <= max_next_length for breakpoint in custom_breakpoints
-        ):
-            use_custom_breakpoints = True
+        )
 
         first_string_line = True
         while not is_line_short_enough(rest_line, line_length=max_rest_length) or (
             len(custom_breakpoints) > 1 and use_custom_breakpoints
         ):
-            prepend_plus = False
-            if first_string_line and starts_with_plus:
-                prepend_plus = True
+            prepend_plus = first_string_line and starts_with_plus
 
             if use_custom_breakpoints:
                 idx = custom_breakpoints.pop(0)
@@ -2901,7 +2893,7 @@ def merge_strings(line: Line, normalize_strings: bool) -> Line:
     for leaf in line.leaves:
         if leaf.type == token.STRING and leaf.value.lstrip(STRING_PREFIX_CHARS)[
             :3
-        ] not in {'"""', "'''",}:
+        ] not in {'"""', "'''"}:
             leaf.value = leaf.value.replace("\\\n", "")
 
     (new_line, line_was_changed) = merge_first_string_group(
