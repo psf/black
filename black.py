@@ -2517,7 +2517,7 @@ def split_line(
 class StringSplitter(metaclass=ABCMeta):
     line_length: int
     normalize_strings: bool
-    string_idx: int = field(init=False)
+    string_idx: int = field(init=False, repr=False)
 
     @abstractproperty
     def my_regexp(self) -> str:
@@ -2636,7 +2636,6 @@ class StringAtomicSplitter(StringSplitter):
             r"^ *(?:\+ *)?"
             + STRING_GROUP_REGEXP
             + STRING_DOT_OR_PERC_REGEXP
-            + ",?"
             + END_COMMENT_REGEXP
             + "$"
         )
@@ -2650,30 +2649,6 @@ class StringAtomicSplitter(StringSplitter):
             starts_with_plus = True
 
         insert_str_child = self.insert_str_child_factory(line.leaves[self.string_idx])
-        comma_idx = len(line.leaves) - 1
-
-        has_percent_or_dot = False
-        if len(line.leaves) > self.string_idx + 1 and line.leaves[
-            self.string_idx + 1
-        ].type in [token.PERCENT, token.DOT]:
-            has_percent_or_dot = True
-
-        ends_with_comma = False
-        if line.leaves[comma_idx].type == token.COMMA:
-            ends_with_comma = True
-
-        if ends_with_comma:
-            first_leaf = Leaf(token.LPAR, "(")
-            insert_str_child(first_leaf)
-
-            first_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
-            first_line.append(first_leaf)
-            first_line.comments = line.comments
-            yield first_line
-
-            string_depth = line.depth + 1
-        else:
-            string_depth = line.depth
 
         rest_value = line.leaves[self.string_idx].value
         prefix = get_string_prefix(rest_value)
@@ -2683,16 +2658,13 @@ class StringAtomicSplitter(StringSplitter):
             drop_pointless_f_prefix = False
 
         rest_length_offset = len(prefix)
-        if ends_with_comma:
-            rest_length_offset += 1
 
-        string_is_inside_brackets = line.inside_brackets or ends_with_comma
-        rest_line = Line(depth=line.depth, inside_brackets=string_is_inside_brackets)
+        rest_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
         rest_leaf = Leaf(token.STRING, rest_value)
         rest_line.append(rest_leaf)
 
         max_rest_length = line_length - rest_length_offset
-        max_next_length = line_length - (1 + len(prefix)) - (string_depth * 4)
+        max_next_length = line_length - (1 + len(prefix)) - (line.depth * 4)
         QUOTE = rest_value[-1]
 
         custom_breakpoints = list(
@@ -2730,9 +2702,7 @@ class StringAtomicSplitter(StringSplitter):
                     next_value = rest_value[:idx] + QUOTE
                 next_value = self.normalize_f_string(next_value, prefix)
 
-            next_line = Line(
-                depth=string_depth, inside_brackets=string_is_inside_brackets
-            )
+            next_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
             if prepend_plus:
                 plus_leaf = Leaf(token.PLUS, "+")
                 replace_child(line.leaves[0], plus_leaf)
@@ -2750,53 +2720,26 @@ class StringAtomicSplitter(StringSplitter):
             if drop_pointless_f_prefix:
                 rest_value = self.normalize_f_string(rest_value, prefix)
 
-            rest_line = Line(
-                depth=string_depth, inside_brackets=string_is_inside_brackets
-            )
+            rest_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
             rest_leaf = Leaf(token.STRING, rest_value)
             rest_line.append(rest_leaf)
 
             first_string_line = False
 
-        if not ends_with_comma:
-            rest_line.comments = line.comments
+        rest_line.comments = line.comments
 
         insert_str_child(rest_leaf)
 
         if normalize_strings:
             normalize_string_quotes(rest_leaf)
 
-        if has_percent_or_dot:
-            end_idx = len(line.leaves) - (1 if ends_with_comma else 0)
-            for i in range(self.string_idx + 1, end_idx):
-                leaf = Leaf(line.leaves[i].type, line.leaves[i].value)
-                replace_child(line.leaves[i], leaf)
-                rest_line.append(leaf)
+        if len(line.leaves) > (self.string_idx + 1):
+            for old_leaf in line.leaves[self.string_idx + 1 :]:
+                new_leaf = Leaf(old_leaf.type, old_leaf.value)
+                replace_child(old_leaf, new_leaf)
+                rest_line.append(new_leaf)
 
-        if ends_with_comma:
-            if (self.string_idx + 1) < comma_idx:
-                for old_leaf in line.leaves[self.string_idx + 1 : comma_idx]:
-                    new_leaf = Leaf(old_leaf.type, old_leaf.value)
-                    replace_child(old_leaf, new_leaf)
-                    rest_line.append(new_leaf)
-
-            yield rest_line
-            last_line = Line(
-                depth=line.depth,
-                inside_brackets=line.inside_brackets,
-                bracket_tracker=first_line.bracket_tracker,
-            )
-
-            rpar_leaf = Leaf(token.RPAR, ")")
-            insert_str_child(rpar_leaf)
-            last_line.append(rpar_leaf)
-
-            comma_leaf = Leaf(token.COMMA, ",")
-            last_line.append(comma_leaf)
-
-            yield last_line
-        else:
-            yield rest_line
+        yield rest_line
 
         del CUSTOM_STRING_BREAKPOINTS[line.leaves[self.string_idx].value]
 
@@ -2825,26 +2768,13 @@ class StringAtomicSplitter(StringSplitter):
             return string
 
 
-class StringArithExprSplitter(StringAtomicSplitter):
-    @property
-    def my_regexp(self) -> str:
-        return (
-            "^ *"
-            + STRING_GROUP_REGEXP
-            + STRING_DOT_OR_PERC_REGEXP
-            + r" ?\+ .+,"
-            + END_COMMENT_REGEXP
-            + "$"
-        )
-
-
 class StringCompoundSplitter(StringSplitter):
     @property
     def my_regexp(self) -> str:
         return (
             r"^ *(?:return |assert .*, ?|(?:[^ ]*?|"
             + STRING_REGEXP
-            + ") ?(?::|=) ?)"
+            + ") ?(?::|=) ?)?"
             + STRING_GROUP_REGEXP
             + STRING_DOT_OR_PERC_REGEXP
             + ",?"
@@ -2860,10 +2790,16 @@ class StringCompoundSplitter(StringSplitter):
         if line.leaves[comma_idx].type == token.COMMA:
             ends_with_comma = True
 
-        first_line = Line(depth=line.depth)
+        first_line = Line(
+            depth=line.depth,
+            comments=line.comments,
+            inside_brackets=line.inside_brackets,
+        )
 
         left_leaves = line.leaves[: self.string_idx]
-        if left_leaves[-1].type == token.LPAR:
+        old_parens_exist = False
+        if left_leaves and left_leaves[-1].type == token.LPAR:
+            old_parens_exist = True
             left_leaves.pop()
 
         for old_leaf in left_leaves:
@@ -2872,7 +2808,7 @@ class StringCompoundSplitter(StringSplitter):
             first_line.append(new_leaf)
 
         lpar_leaf = Leaf(token.LPAR, "(")
-        if line.leaves[self.string_idx - 1].type == token.LPAR:
+        if old_parens_exist:
             replace_child(line.leaves[self.string_idx - 1], lpar_leaf)
         else:
             insert_str_child(lpar_leaf)
@@ -2880,24 +2816,25 @@ class StringCompoundSplitter(StringSplitter):
 
         yield first_line
 
-        # Only need to yield one (possibly too long) line, since
-        # `string_atomic_split` will break it down further if necessary.
+        # Only need to yield one (possibly too long) line, since the
+        # `StringAtomicSplitter` will break it down further if necessary.
         string_value = line.leaves[self.string_idx].value
-        string_line = Line(
-            depth=line.depth + 1, bracket_tracker=first_line.bracket_tracker
-        )
+        string_line = Line(depth=line.depth + 1, inside_brackets=True,)
         string_leaf = Leaf(token.STRING, string_value)
         insert_str_child(string_leaf)
         string_line.append(string_leaf)
 
-        existing_rpar = None
+        old_rpar_leaf = None
         if len(line.leaves) > self.string_idx + 1:
             right_leaves = line.leaves[self.string_idx + 1 :]
             if ends_with_comma:
                 right_leaves.pop()
 
-            if right_leaves and right_leaves[-1].type == token.RPAR:
-                existing_rpar = right_leaves.pop()
+            if old_parens_exist:
+                assert (
+                    right_leaves and right_leaves[-1].type == token.RPAR
+                ), "Apparently, old parenthesis do NOT exist?!"
+                old_rpar_leaf = right_leaves.pop()
 
             for old_leaf in right_leaves:
                 new_leaf = Leaf(old_leaf.type, old_leaf.value)
@@ -2909,14 +2846,14 @@ class StringCompoundSplitter(StringSplitter):
         last_line = Line(
             depth=line.depth,
             bracket_tracker=first_line.bracket_tracker,
-            comments=line.comments,
+            inside_brackets=line.inside_brackets,
         )
-        rpar_leaf = Leaf(token.RPAR, ")")
-        if existing_rpar is not None:
-            replace_child(existing_rpar, rpar_leaf)
+        new_rpar_leaf = Leaf(token.RPAR, ")")
+        if old_rpar_leaf is not None:
+            replace_child(old_rpar_leaf, new_rpar_leaf)
         else:
-            insert_str_child(rpar_leaf)
-        last_line.append(rpar_leaf)
+            insert_str_child(new_rpar_leaf)
+        last_line.append(new_rpar_leaf)
 
         if ends_with_comma:
             comma_leaf = Leaf(token.COMMA, ",")
@@ -2924,6 +2861,19 @@ class StringCompoundSplitter(StringSplitter):
             last_line.append(comma_leaf)
 
         yield last_line
+
+
+class StringArithExprSplitter(StringCompoundSplitter):
+    @property
+    def my_regexp(self) -> str:
+        return (
+            "^ *"
+            + STRING_GROUP_REGEXP
+            + STRING_DOT_OR_PERC_REGEXP
+            + r" ?\+ .+,"
+            + END_COMMENT_REGEXP
+            + "$"
+        )
 
 
 def replace_child(old_child: LN, new_child: LN) -> None:

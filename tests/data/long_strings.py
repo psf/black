@@ -63,7 +63,7 @@ old_fmt_string3 = "Whereas only the strings after the percent sign were long in 
 
 fstring = f"f-strings definitely make things more {difficult} than they need to be for black. But boy they sure are handy. The problem is that some lines will need to have the 'f' whereas others do not. This {line}, for example, needs one."
 
-comment_string = "Long lines with inline comments should have their comments appended to the reformatted string's enclosing right parentheses."  # This comment gets thrown to the bottom.
+comment_string = "Long lines with inline comments should have their comments appended to the reformatted string's enclosing right parentheses."  # This comment gets thrown to the top.
 
 arg_comment_string = print("Long lines with inline comments which are apart of (and not the only member of) an argument list should have their comments appended to the reformatted string's enclosing left parentheses.",  # This comment gets thrown to the top.
     "Arg #2", "Arg #3", "Arg #4", "Arg #5")
@@ -229,7 +229,8 @@ fmt_string2 = "But what about when the string is {} but {}".format(
 
 old_fmt_string1 = (
     "While we are on the topic of %s, we should also note that old-style formatting "
-    "must also be preserved, since some %s still uses it." % ("formatting", "code")
+    "must also be preserved, since some %s still uses it."
+    % ("formatting", "code")
 )
 
 old_fmt_string2 = "This is a %s %s %s %s" % (
@@ -241,7 +242,8 @@ old_fmt_string2 = "This is a %s %s %s %s" % (
 
 old_fmt_string3 = (
     "Whereas only the strings after the percent sign were long in the last example, "
-    "this example uses a long initial string as well. This is another %s %s %s %s" % (
+    "this example uses a long initial string as well. This is another %s %s %s %s"
+    % (
         "really really really really really",
         "old",
         "way to format strings!",
@@ -255,10 +257,10 @@ fstring = (
     f"have the 'f' whereas others do not. This {line}, for example, needs one."
 )
 
-comment_string = (
+comment_string = (  # This comment gets thrown to the top.
     "Long lines with inline comments should have their comments appended to the "
     "reformatted string's enclosing right parentheses."
-)  # This comment gets thrown to the bottom.
+)
 
 arg_comment_string = print(
     (  # This comment gets thrown to the top.
@@ -306,7 +308,8 @@ assert some_type_of_boolean_expression, (
 
 assert some_type_of_boolean_expression, (
     "Followed by a really really really long string that is used to provide context to "
-    "the AssertionError exception, which uses dynamic string %s." % "formatting"
+    "the AssertionError exception, which uses dynamic string %s."
+    % "formatting"
 )
 
 assert some_type_of_boolean_expression, (
