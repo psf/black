@@ -63,19 +63,19 @@ DEFAULT_LINE_LENGTH = 88
 DEFAULT_EXCLUDES = r"/(\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_build|buck-out|build|dist)/"  # noqa: B950
 DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
-PREFIX_CHARS = "furbFURB"  # All possible string prefix characters.
+STRING_PREFIX_CHARS = "furbFURB"  # All possible string prefix characters.
 STRING_CHILD_IDX_MAP = {}
 CUSTOM_STRING_BREAKPOINTS: Dict[str, Tuple[int, ...]] = defaultdict(tuple)
 STRING_REGEXP = (
     "["
-    + PREFIX_CHARS
+    + STRING_PREFIX_CHARS
     + "]{0,"
-    + str(len(PREFIX_CHARS))
+    + str(len(STRING_PREFIX_CHARS))
     + r"}(?:'(?:[^']|\\')*?[^\\]'|\"(?:[^\"]|\\\")*?[^\\]\")"
 )
 STRING_GROUP_REGEXP = "(" + STRING_REGEXP + ")"
 STRING_DOT_OR_PERC_REGEXP = r"(?:\.[A-Za-z0-9_]+\(.*| ?% ?.*)?"
-END_COMMENT_REGEXP = r" *(?:#.*)?"
+STRING_END_COMMENT_REGEXP = r" *(?:#.*)?"
 
 
 # types
@@ -2585,7 +2585,7 @@ class StringSplitter(metaclass=ABCMeta):
                 ]:
                     raise CannotSplit("This string appears to be pointless.")
 
-                value = leaf.value.lstrip(PREFIX_CHARS)
+                value = leaf.value.lstrip(STRING_PREFIX_CHARS)
                 if value[:3] in {'"""', "'''"}:
                     raise CannotSplit(
                         "This split function does not work on multiline strings."
@@ -2636,7 +2636,7 @@ class StringAtomicSplitter(StringSplitter):
             r"^ *(?:\+ *)?"
             + STRING_GROUP_REGEXP
             + STRING_DOT_OR_PERC_REGEXP
-            + END_COMMENT_REGEXP
+            + STRING_END_COMMENT_REGEXP
             + "$"
         )
 
@@ -2778,7 +2778,7 @@ class StringCompoundSplitter(StringSplitter):
             + STRING_GROUP_REGEXP
             + STRING_DOT_OR_PERC_REGEXP
             + ",?"
-            + END_COMMENT_REGEXP
+            + STRING_END_COMMENT_REGEXP
             + "$"
         )
 
@@ -2871,7 +2871,7 @@ class StringArithExprSplitter(StringCompoundSplitter):
             + STRING_GROUP_REGEXP
             + STRING_DOT_OR_PERC_REGEXP
             + r" ?\+ .+,"
-            + END_COMMENT_REGEXP
+            + STRING_END_COMMENT_REGEXP
             + "$"
         )
 
@@ -2889,7 +2889,7 @@ def replace_child(old_child: LN, new_child: LN) -> None:
 def get_string_prefix(string: str) -> str:
     prefix = ""
     prefix_idx = 0
-    while string[prefix_idx] in PREFIX_CHARS:
+    while string[prefix_idx] in STRING_PREFIX_CHARS:
         prefix += string[prefix_idx]
         prefix_idx += 1
 
@@ -2899,10 +2899,9 @@ def get_string_prefix(string: str) -> str:
 def merge_strings(line: Line, normalize_strings: bool) -> Line:
     # Merge strings that were split across multiple lines using backslashes.
     for leaf in line.leaves:
-        if leaf.type == token.STRING and leaf.value.lstrip(PREFIX_CHARS)[:3] not in {
-            '"""',
-            "'''",
-        }:
+        if leaf.type == token.STRING and leaf.value.lstrip(STRING_PREFIX_CHARS)[
+            :3
+        ] not in {'"""', "'''",}:
             leaf.value = leaf.value.replace("\\\n", "")
 
     (new_line, line_was_changed) = merge_first_string_group(
@@ -2937,7 +2936,7 @@ def merge_first_string_group(line: Line, normalize_strings: bool) -> Tuple[Line,
     ):
         if (
             line.leaves[next_str_idx]
-            .value.lstrip(PREFIX_CHARS)
+            .value.lstrip(STRING_PREFIX_CHARS)
             .startswith(("'''", '"""'))
         ):
             return (line, False)
@@ -3417,7 +3416,7 @@ def normalize_string_prefix(leaf: Leaf, remove_u_prefix: bool = False) -> None:
 
     Note: Mutates its argument.
     """
-    match = re.match(r"^([" + PREFIX_CHARS + r"]*)(.*)$", leaf.value, re.DOTALL)
+    match = re.match(r"^([" + STRING_PREFIX_CHARS + r"]*)(.*)$", leaf.value, re.DOTALL)
     assert match is not None, f"failed to match string {leaf.value!r}"
     orig_prefix = match.group(1)
     new_prefix = orig_prefix.lower()
@@ -3434,7 +3433,7 @@ def normalize_string_quotes(leaf: Leaf) -> None:
 
     Note: Mutates its argument.
     """
-    value = leaf.value.lstrip(PREFIX_CHARS)
+    value = leaf.value.lstrip(STRING_PREFIX_CHARS)
     if value[:3] == '"""':
         return
 
@@ -3844,7 +3843,7 @@ def is_vararg(leaf: Leaf, within: Set[NodeType]) -> bool:
 
 def is_multiline_string(leaf: Leaf) -> bool:
     """Return True if `leaf` is a multiline string that actually spans many lines."""
-    value = leaf.value.lstrip(PREFIX_CHARS)
+    value = leaf.value.lstrip(STRING_PREFIX_CHARS)
     return value[:3] in {'"""', "'''"} and "\n" in value
 
 
