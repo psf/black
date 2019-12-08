@@ -2558,6 +2558,7 @@ class StringSplitter(metaclass=ABCMeta):
         if is_line_short_enough(line, line_length=line_length):
             raise CannotSplit("Line is already short enough. No reason to split.")
 
+        # TODO(bugyi): Use self.my_regexp to handle this better.
         line_str = str(line).strip("\n")
         line_str = re.sub(r"^ *assert .*, ?(['\"].*?)", r"\1", line_str)
         line_str = re.sub(r"(['\"].*[^\\]['\"]) ?% ?\(?.*\)?", r"\1", line_str)
@@ -2774,7 +2775,7 @@ class StringCompoundSplitter(StringSplitter):
         return (
             r"^ *(?:return |assert .*, ?|(?:[^ ]*?|"
             + STRING_REGEXP
-            + ") ?(?::|=) ?)?"
+            + r") ?(?:\+?=|:) ?)?"
             + STRING_GROUP_REGEXP
             + STRING_DOT_OR_PERC_REGEXP
             + ",?"

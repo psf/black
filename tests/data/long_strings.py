@@ -1,5 +1,7 @@
 x = "This is a really long string that can't possibly be expected to fit all together on one line. In fact it may even take up three or more lines... like four or five... but probably just three."
 
+x += "This is a really long string that can't possibly be expected to fit all together on one line. In fact it may even take up three or more lines... like four or five... but probably just three."
+
 print("This is a really long string inside of a print statement with extra arguments attached at the end of it.", x, y, z)
 
 print("This is a really long string inside of a print statement with no extra arguments attached at the end of it.")
@@ -97,6 +99,12 @@ return "A really really really really really really really really really really 
 # output
 
 x = (
+    "This is a really long string that can't possibly be expected to fit all together "
+    "on one line. In fact it may even take up three or more lines... like four or "
+    "five... but probably just three."
+)
+
+x += (
     "This is a really long string that can't possibly be expected to fit all together "
     "on one line. In fact it may even take up three or more lines... like four or "
     "five... but probably just three."
