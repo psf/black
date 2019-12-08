@@ -2757,16 +2757,16 @@ class StringAtomicSplitter(StringSplitter):
     @staticmethod
     def get_break_idx(string_value: str, max_length: int) -> int:
         idx = max_length
-        while 0 < idx < len(string_value) and string_value[idx - 1] != " ":
+        while 0 < idx + 1 < len(string_value) and string_value[idx] != " ":
             idx -= 1
 
-        if string_value[idx - 1] != " ":
+        if string_value[idx] != " ":
             # This line is going to be longer than the specified line length, but
             # let's try to split it anyway.
             idx = max_length + 1
-            while idx < len(string_value) and string_value[idx - 1] != " ":
+            while idx + 1 < len(string_value) and string_value[idx] != " ":
                 idx += 1
-            if string_value[idx - 1] != " ":
+            if string_value[idx] != " ":
                 raise CannotSplit("Long strings which contain no spaces are not split.")
 
         return idx
