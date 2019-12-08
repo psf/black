@@ -1767,7 +1767,6 @@ class BlackDTestCase(AioHTTPTestCase):
     @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @unittest_run_loop
     async def test_blackd_python_variant(self) -> None:
-        # fmt: off
         code = (
             "def f(\n"
             "    and_has_a_bunch_of,\n"
@@ -1777,7 +1776,6 @@ class BlackDTestCase(AioHTTPTestCase):
             "):\n"
             "    pass\n"
         )
-        # fmt: on
 
         async def check(header_value: str, expected_status: int) -> None:
             response = await self.client.post(
