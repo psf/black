@@ -111,6 +111,8 @@ func_with_bad_comma(
     ),
 )
 
+stupid_format_method_bug = "Some really long string that just so happens to be the {} {} to force the 'format' method to hang over the line length boundary. This is pretty annoying.".format("perfect" "length")
+
 # output
 
 x = (
@@ -376,4 +378,10 @@ func_with_bad_comma(
 func_with_bad_comma(
     "This is a really long string argument to a function that has a trailing comma "
     "which should NOT be there."
+)
+
+stupid_format_method_bug = (
+    "Some really long string that just so happens to be the {} {} to force the "
+    "'format' method to hang over the line length boundary. This is pretty annoying."
+    .format("perfect" "length")
 )

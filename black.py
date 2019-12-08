@@ -2428,7 +2428,7 @@ def split_line(
         return
 
     line = merge_strings(line, normalize_strings=normalize_strings)
-    line_str = str(line).strip("\n")
+    line_str = line_to_string(line)
 
     if (
         not line.contains_uncollapsable_type_comments()
@@ -2513,6 +2513,10 @@ def split_line(
         yield line
 
 
+def line_to_string(line: Line) -> str:
+    return str(line).strip("\n")
+
+
 @dataclass  # type: ignore
 class StringSplitter(metaclass=ABCMeta):
     line_length: int
@@ -2528,7 +2532,7 @@ class StringSplitter(metaclass=ABCMeta):
         pass
 
     def __call__(self, line: Line, _features: Collection[Feature]) -> Iterator[Line]:
-        line_str = str(line).strip("\n")
+        line_str = line_to_string(line)
         match = re.match(self.my_regexp, line_str)
 
         if not match:
@@ -2557,7 +2561,7 @@ class StringSplitter(metaclass=ABCMeta):
         if is_line_short_enough(line, line_length=line_length):
             raise CannotSplit("Line is already short enough. No reason to split.")
 
-        line_str = str(line).strip("\n")
+        line_str = line_to_string(line)
         line_str = re.sub(
             STRING_GROUP_REGEXP + STRING_DOT_OR_PERC_REGEXP, r"\1", line_str
         )
@@ -2714,24 +2718,45 @@ class StringAtomicSplitter(StringSplitter):
 
             rest_line = clone_line(line)
             rest_leaf = Leaf(token.STRING, rest_value)
-            rest_line.append(rest_leaf)
 
             first_string_line = False
-
-        rest_line.comments = line.comments
-
-        insert_str_child(rest_leaf)
 
         if normalize_strings:
             normalize_string_quotes(rest_leaf)
 
+        insert_str_child(rest_leaf)
+        rest_line.append(rest_leaf)
+
         if len(line.leaves) > (self.string_idx + 1):
+            non_string_line = clone_line(rest_line)
+
             for old_leaf in line.leaves[self.string_idx + 1 :]:
                 new_leaf = Leaf(old_leaf.type, old_leaf.value)
                 replace_child(old_leaf, new_leaf)
-                rest_line.append(new_leaf)
+                non_string_line.append(new_leaf)
 
-        yield rest_line
+            if (
+                len(line_to_string(rest_line))
+                + len(line_to_string(non_string_line))
+                - non_string_line.depth * 4
+            ) <= line_length:
+                last_line = clone_line(line)
+                last_line.comments = line.comments
+
+                for old_leaf in rest_line.leaves + non_string_line.leaves:
+                    new_leaf = Leaf(old_leaf.type, old_leaf.value)
+                    replace_child(old_leaf, new_leaf)
+                    last_line.append(new_leaf)
+
+                yield last_line
+            else:
+                yield rest_line
+
+                non_string_line.comments = line.comments
+                yield non_string_line
+        else:
+            rest_line.comments = line.comments
+            yield rest_line
 
         del CUSTOM_STRING_BREAKPOINTS[line.leaves[self.string_idx].value]
 
@@ -2910,7 +2935,7 @@ def merge_strings(line: Line, normalize_strings: bool) -> Line:
 
 
 def remove_bad_trailing_commas(line: Line) -> Line:
-    line_str = str(line).strip("\n")
+    line_str = line_to_string(line)
     if not re.match(r"^[A-Za-z0-9_]+\(\(?" + STRING_REGEXP + r"\)?,\)", line_str):
         return line
 
@@ -4555,7 +4580,7 @@ def is_line_short_enough(line: Line, *, line_length: int, line_str: str = "") ->
     Uses the provided `line_str` rendering, if any, otherwise computes a new one.
     """
     if not line_str:
-        line_str = str(line).strip("\n")
+        line_str = line_to_string(line)
     return (
         len(line_str) <= line_length
         and "\n" not in line_str  # multiline strings
