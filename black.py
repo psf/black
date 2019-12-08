@@ -1,6 +1,6 @@
 import ast
 import asyncio
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, abstractproperty
 from collections import defaultdict
 from concurrent.futures import Executor, ProcessPoolExecutor
 from contextlib import contextmanager
@@ -66,6 +66,16 @@ CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 PREFIX_CHARS = "furbFURB"  # All possible string prefix characters.
 STRING_CHILD_IDX_MAP = {}
 CUSTOM_STRING_BREAKPOINTS: Dict[str, Tuple[int, ...]] = defaultdict(tuple)
+STRING_REGEXP = (
+    "["
+    + PREFIX_CHARS
+    + "]{0,"
+    + str(len(PREFIX_CHARS))
+    + r"}(?:'(?:[^']|\\')*?[^\\]'|\"(?:[^\"]|\\\")*?[^\\]\")"
+)
+STRING_GROUP_REGEXP = "(" + STRING_REGEXP + ")"
+STRING_DOT_OR_PERC_REGEXP = r"(?:\.[A-Za-z0-9_]+\(.*| ?% ?.*)?"
+END_COMMENT_REGEXP = r" *(?:#.*)?"
 
 
 # types
@@ -2457,8 +2467,7 @@ def split_line(
 
         string_arith_expr_split = init_ss(StringArithExprSplitter)
         string_atomic_split = init_ss(StringAtomicSplitter)
-        string_assignment_split = init_ss(StringAssignmentSplitter)
-        string_assert_split = init_ss(StringAssertSplitter)
+        string_compound_split = init_ss(StringCompoundSplitter)
 
         if line.inside_brackets:
             split_funcs = [
@@ -2466,15 +2475,13 @@ def split_line(
                 delimiter_split,
                 standalone_comment_split,
                 string_atomic_split,
-                string_assignment_split,
-                string_assert_split,
+                string_compound_split,
                 rhs,
             ]
         else:
             split_funcs = [
                 string_atomic_split,
-                string_assignment_split,
-                string_assert_split,
+                string_compound_split,
                 rhs,
             ]
     for split_func in split_funcs:
@@ -2510,10 +2517,10 @@ def split_line(
 class StringSplitter(metaclass=ABCMeta):
     line_length: int
     normalize_strings: bool
-    string_value: Optional[str] = None
+    string_idx: int = field(init=False)
 
-    @abstractmethod
-    def do_validate(self, line: Line) -> bool:
+    @abstractproperty
+    def my_regexp(self) -> str:
         pass
 
     @abstractmethod
@@ -2523,10 +2530,25 @@ class StringSplitter(metaclass=ABCMeta):
     def __call__(self, line: Line, _features: Collection[Feature]) -> Iterator[Line]:
         self.__validate(line)
 
-        if not self.do_validate(line):
+        line_str = str(line).strip("\n")
+        match = re.match(self.my_regexp, line_str)
+
+        if match:
+            string_value = match.groups()[0]
+            for i, leaf in enumerate(line.leaves):
+                if leaf.type == token.STRING and leaf.value == string_value:
+                    self.string_idx = i
+                    break
+            else:
+                raise RuntimeError(
+                    f"Logic Error. {self.__class__.__name__} claims to know the "
+                    f"string value is {string_value} but is unable to find a "
+                    "leaf in this line that contains this string."
+                )
+        else:
             raise CannotSplit(
-                f"The string splitter {self.__class__.__name__} does not recognize "
-                "this line as one that it can split."
+                f"The string splitter {self.__class__.__name__} does not "
+                "recognize this line as one that it can split."
             )
 
         yield from self.do_split(line)
@@ -2608,37 +2630,32 @@ class StringSplitter(metaclass=ABCMeta):
 
 
 class StringAtomicSplitter(StringSplitter):
-    def do_validate(self, line: Line) -> bool:
-        tokens = tuple([leaf.type for leaf in line.leaves])
-        if tokens[:2] in [
-            (token.STRING,),
-            (token.STRING, token.COMMA),
-            (token.STRING, token.DOT),
-            (token.STRING, token.PERCENT),
-            (token.PLUS, token.STRING),
-        ]:
-            return True
-        return False
+    @property
+    def my_regexp(self) -> str:
+        return (
+            r"^ *(?:\+ *)?"
+            + STRING_GROUP_REGEXP
+            + STRING_DOT_OR_PERC_REGEXP
+            + ",?"
+            + END_COMMENT_REGEXP
+            + "$"
+        )
 
     def do_split(self, line: Line) -> Iterator[Line]:
         line_length = self.line_length
         normalize_strings = self.normalize_strings
 
+        starts_with_plus = False
         if line.leaves[0].type == token.PLUS:
-            str_idx = 1
             starts_with_plus = True
-        else:
-            str_idx = 0
-            starts_with_plus = False
 
-        insert_str_child = self.insert_str_child_factory(line.leaves[str_idx])
+        insert_str_child = self.insert_str_child_factory(line.leaves[self.string_idx])
         comma_idx = len(line.leaves) - 1
 
         has_percent_or_dot = False
-        if len(line.leaves) > str_idx + 1 and line.leaves[str_idx + 1].type in [
-            token.PERCENT,
-            token.DOT,
-        ]:
+        if len(line.leaves) > self.string_idx + 1 and line.leaves[
+            self.string_idx + 1
+        ].type in [token.PERCENT, token.DOT]:
             has_percent_or_dot = True
 
         ends_with_comma = False
@@ -2658,7 +2675,7 @@ class StringAtomicSplitter(StringSplitter):
         else:
             string_depth = line.depth
 
-        rest_value = line.leaves[str_idx].value
+        rest_value = line.leaves[self.string_idx].value
         prefix = get_string_prefix(rest_value)
 
         drop_pointless_f_prefix = True
@@ -2678,7 +2695,9 @@ class StringAtomicSplitter(StringSplitter):
         max_next_length = line_length - (1 + len(prefix)) - (string_depth * 4)
         QUOTE = rest_value[-1]
 
-        custom_breakpoints = list(CUSTOM_STRING_BREAKPOINTS[line.leaves[str_idx].value])
+        custom_breakpoints = list(
+            CUSTOM_STRING_BREAKPOINTS[line.leaves[self.string_idx].value]
+        )
 
         use_custom_breakpoints = False
         if custom_breakpoints and all(
@@ -2698,7 +2717,7 @@ class StringAtomicSplitter(StringSplitter):
                 idx = custom_breakpoints.pop(0)
             else:
                 max_length = max_next_length - 2 if prepend_plus else max_next_length
-                idx = self.get_atomic_str_idx(rest_value, max_length)
+                idx = self.get_break_idx(rest_value, max_length)
 
             next_value = rest_value[:idx] + QUOTE
 
@@ -2749,14 +2768,19 @@ class StringAtomicSplitter(StringSplitter):
 
         if has_percent_or_dot:
             end_idx = len(line.leaves) - (1 if ends_with_comma else 0)
-            for i in range(str_idx + 1, end_idx):
+            for i in range(self.string_idx + 1, end_idx):
                 leaf = Leaf(line.leaves[i].type, line.leaves[i].value)
                 replace_child(line.leaves[i], leaf)
                 rest_line.append(leaf)
 
-        yield rest_line
-
         if ends_with_comma:
+            if (self.string_idx + 1) < comma_idx:
+                for old_leaf in line.leaves[self.string_idx + 1 : comma_idx]:
+                    new_leaf = Leaf(old_leaf.type, old_leaf.value)
+                    replace_child(old_leaf, new_leaf)
+                    rest_line.append(new_leaf)
+
+            yield rest_line
             last_line = Line(
                 depth=line.depth,
                 inside_brackets=line.inside_brackets,
@@ -2768,15 +2792,16 @@ class StringAtomicSplitter(StringSplitter):
             last_line.append(rpar_leaf)
 
             comma_leaf = Leaf(token.COMMA, ",")
-            replace_child(line.leaves[comma_idx], comma_leaf)
             last_line.append(comma_leaf)
 
             yield last_line
+        else:
+            yield rest_line
 
-        del CUSTOM_STRING_BREAKPOINTS[line.leaves[str_idx].value]
+        del CUSTOM_STRING_BREAKPOINTS[line.leaves[self.string_idx].value]
 
     @staticmethod
-    def get_atomic_str_idx(string_value: str, max_length: int) -> int:
+    def get_break_idx(string_value: str, max_length: int) -> int:
         idx = max_length
         while 0 < idx < len(string_value) and string_value[idx - 1] != " ":
             idx -= 1
@@ -2800,48 +2825,35 @@ class StringAtomicSplitter(StringSplitter):
             return string
 
 
-class StringAssignmentSplitter(StringSplitter):
-    def do_validate(self, line: Line) -> bool:
-        tokens = tuple([leaf.type for leaf in line.leaves])
-        if (
-            len(tokens) >= 3
-            and tokens[0] != token.RSQB
-            and (
-                tokens[1]
-                in [
-                    token.EQUAL,
-                    token.COLON,
-                    token.PLUSEQUAL,
-                    token.MINEQUAL,
-                    token.STAREQUAL,
-                ]
-            )
-            and (
-                tokens[2:5]
-                in [
-                    (token.STRING,),
-                    (token.STRING, token.COMMA),
-                    (token.LPAR, token.STRING, token.RPAR),
-                    (token.LPAR, token.STRING, token.PERCENT),
-                    (token.LPAR, token.STRING, token.DOT),
-                ]
-            )
-        ):
-            return True
-        return False
+class StringArithExprSplitter(StringAtomicSplitter):
+    @property
+    def my_regexp(self) -> str:
+        return (
+            "^ *"
+            + STRING_GROUP_REGEXP
+            + STRING_DOT_OR_PERC_REGEXP
+            + r" ?\+ .+,"
+            + END_COMMENT_REGEXP
+            + "$"
+        )
+
+
+class StringCompoundSplitter(StringSplitter):
+    @property
+    def my_regexp(self) -> str:
+        return (
+            r"^ *(?:return |assert .*, ?|(?:[^ ]*?|"
+            + STRING_REGEXP
+            + ") ?(?::|=) ?)"
+            + STRING_GROUP_REGEXP
+            + STRING_DOT_OR_PERC_REGEXP
+            + ",?"
+            + END_COMMENT_REGEXP
+            + "$"
+        )
 
     def do_split(self, line: Line) -> Iterator[Line]:
-        if line.leaves[2].type == token.STRING:
-            str_idx = 2
-        elif line.leaves[3].type == token.STRING:
-            str_idx = 3
-        else:
-            raise RuntimeError(
-                "Unable to locate token.STRING. This line does not appear to be a "
-                f"string assignment: {line}"
-            )
-
-        insert_str_child = self.insert_str_child_factory(line.leaves[str_idx])
+        insert_str_child = self.insert_str_child_factory(line.leaves[self.string_idx])
 
         comma_idx = len(line.leaves) - 1
         ends_with_comma = False
@@ -2850,14 +2862,18 @@ class StringAssignmentSplitter(StringSplitter):
 
         first_line = Line(depth=line.depth)
 
-        for i in range(2):
-            leaf = Leaf(line.leaves[i].type, line.leaves[i].value)
-            replace_child(line.leaves[i], leaf)
-            first_line.append(leaf)
+        left_leaves = line.leaves[: self.string_idx]
+        if left_leaves[-1].type == token.LPAR:
+            left_leaves.pop()
+
+        for old_leaf in left_leaves:
+            new_leaf = Leaf(old_leaf.type, old_leaf.value)
+            replace_child(old_leaf, new_leaf)
+            first_line.append(new_leaf)
 
         lpar_leaf = Leaf(token.LPAR, "(")
-        if line.leaves[2].type == token.LPAR:
-            replace_child(line.leaves[2], lpar_leaf)
+        if line.leaves[self.string_idx - 1].type == token.LPAR:
+            replace_child(line.leaves[self.string_idx - 1], lpar_leaf)
         else:
             insert_str_child(lpar_leaf)
         first_line.append(lpar_leaf)
@@ -2866,7 +2882,7 @@ class StringAssignmentSplitter(StringSplitter):
 
         # Only need to yield one (possibly too long) line, since
         # `string_atomic_split` will break it down further if necessary.
-        string_value = line.leaves[str_idx].value
+        string_value = line.leaves[self.string_idx].value
         string_line = Line(
             depth=line.depth + 1, bracket_tracker=first_line.bracket_tracker
         )
@@ -2874,24 +2890,19 @@ class StringAssignmentSplitter(StringSplitter):
         insert_str_child(string_leaf)
         string_line.append(string_leaf)
 
-        perc_or_dot_idx = str_idx + 1
-        if len(line.leaves) - 1 >= perc_or_dot_idx and line.leaves[
-            perc_or_dot_idx
-        ].type in [token.PERCENT, token.DOT]:
-            lpar_count = 0
-            for i in range(perc_or_dot_idx, len(line.leaves) - 1):
-                leaf = Leaf(line.leaves[i].type, line.leaves[i].value)
+        existing_rpar = None
+        if len(line.leaves) > self.string_idx + 1:
+            right_leaves = line.leaves[self.string_idx + 1 :]
+            if ends_with_comma:
+                right_leaves.pop()
 
-                if leaf.type == token.LPAR:
-                    lpar_count += 1
-                if leaf.type == token.RPAR:
-                    if lpar_count > 0:
-                        lpar_count -= 1
-                    else:
-                        break
+            if right_leaves and right_leaves[-1].type == token.RPAR:
+                existing_rpar = right_leaves.pop()
 
-                replace_child(line.leaves[i], leaf)
-                string_line.append(leaf)
+            for old_leaf in right_leaves:
+                new_leaf = Leaf(old_leaf.type, old_leaf.value)
+                replace_child(old_leaf, new_leaf)
+                string_line.append(new_leaf)
 
         yield string_line
 
@@ -2901,127 +2912,17 @@ class StringAssignmentSplitter(StringSplitter):
             comments=line.comments,
         )
         rpar_leaf = Leaf(token.RPAR, ")")
+        if existing_rpar is not None:
+            replace_child(existing_rpar, rpar_leaf)
+        else:
+            insert_str_child(rpar_leaf)
         last_line.append(rpar_leaf)
-        insert_str_child(rpar_leaf)
 
         if ends_with_comma:
             comma_leaf = Leaf(token.COMMA, ",")
             replace_child(line.leaves[comma_idx], comma_leaf)
             last_line.append(comma_leaf)
 
-        yield last_line
-
-
-class StringArithExprSplitter(StringSplitter):
-    def do_validate(self, line: Line) -> bool:
-        tokens = tuple([leaf.type for leaf in line.leaves])
-        if tokens[:2] == (token.STRING, token.PLUS) and tokens[-1] == token.COMMA:
-            return True
-        return False
-
-    def do_split(self, line: Line) -> Iterator[Line]:
-        parent = line.leaves[0].parent
-
-        first_line = Line(depth=line.depth)
-        lpar_leaf = Leaf(token.LPAR, "(")
-        if parent is not None:
-            parent.insert_child(0, lpar_leaf)
-        first_line.append(lpar_leaf)
-        first_line.comments = line.comments
-        yield first_line
-
-        string_line = Line(depth=line.depth + 1, inside_brackets=True)
-        for old_leaf in line.leaves[:-1]:
-            new_leaf = Leaf(old_leaf.type, old_leaf.value)
-            replace_child(old_leaf, new_leaf)
-            string_line.append(new_leaf)
-        yield string_line
-
-        last_line = Line(depth=line.depth, bracket_tracker=first_line.bracket_tracker)
-        rpar_leaf = Leaf(token.RPAR, ")")
-        replace_child(line.leaves[-1], rpar_leaf)
-        last_line.append(rpar_leaf)
-        comma_leaf = Leaf(token.COMMA, ",")
-        if parent:
-            comma_idx = len(parent.children)
-            parent.insert_child(comma_idx, comma_leaf)
-        last_line.append(comma_leaf)
-        yield last_line
-
-
-class StringAssertSplitter(StringSplitter):
-    def do_validate(self, line: Line) -> bool:
-        line_str = str(line).strip("\n")
-        assert_match = re.match(
-            (
-                r"^ *assert .*, "
-                r"?\(?(\".*?[^\\]\"|'.*?[^\\]')(\.[A-Za-z0-9_]+\(.*| ?% ?.*)?\)?$"
-            ),
-            line_str,
-        )
-
-        if assert_match:
-            self.string_value = assert_match.groups()[0]
-            return True
-
-        return False
-
-    def do_split(self, line: Line) -> Iterator[Line]:
-        for i, leaf in enumerate(line.leaves):
-            if leaf.type == token.STRING and leaf.value == self.string_value:
-                str_idx = i
-                break
-        else:
-            raise RuntimeError(
-                "Something is wrong here. Is this line really an assert statement?: "
-                f"{line}"
-            )
-
-        insert_str_child = self.insert_str_child_factory(line.leaves[str_idx])
-
-        first_line = Line(depth=line.depth, bracket_tracker=line.bracket_tracker)
-        pre_str_idx = (
-            str_idx - 1 if line.leaves[str_idx - 1].type == token.LPAR else str_idx
-        )
-        for old_leaf in line.leaves[:pre_str_idx]:
-            new_leaf = Leaf(old_leaf.type, old_leaf.value)
-            replace_child(old_leaf, new_leaf)
-            first_line.append(new_leaf)
-
-        lpar_leaf = Leaf(token.LPAR, "(")
-        if line.leaves[str_idx - 1].type == token.LPAR:
-            replace_child(line.leaves[str_idx - 1], lpar_leaf)
-        else:
-            insert_str_child(lpar_leaf)
-        first_line.append(lpar_leaf)
-        first_line.comments = line.comments
-        yield first_line
-
-        string_line = Line(
-            depth=line.depth + 1, bracket_tracker=first_line.bracket_tracker
-        )
-        string_leaf = Leaf(line.leaves[str_idx].type, line.leaves[str_idx].value)
-        insert_str_child(string_leaf)
-        string_line.append(string_leaf)
-
-        post_string_leaves = line.leaves[str_idx:]
-        post_string_leaves.pop(0)
-
-        if post_string_leaves:
-            for old_leaf in post_string_leaves[:-1]:
-                new_leaf = Leaf(old_leaf.type, old_leaf.value)
-                replace_child(old_leaf, new_leaf)
-                string_line.append(new_leaf)
-
-        yield string_line
-
-        last_line = Line(depth=line.depth, bracket_tracker=first_line.bracket_tracker)
-        rpar_leaf = Leaf(token.RPAR, ")")
-        if line.leaves[-1].type == token.RPAR:
-            replace_child(line.leaves[-1], rpar_leaf)
-        else:
-            insert_str_child(rpar_leaf)
-        last_line.append(rpar_leaf)
         yield last_line
 
 
@@ -3128,19 +3029,13 @@ def merge_first_string_group(line: Line, normalize_strings: bool) -> Tuple[Line,
         )
 
         if QUOTE in naked_next_string_value:
-            other_quote = '"' if QUOTE == "'" else "'"
+            naked_last_string_value = naked_last_string_value.replace(
+                QUOTE, "\\" + QUOTE
+            ).replace("\\\\" + QUOTE, "\\" + QUOTE)
 
-            naked_last_string_value = (
-                naked_last_string_value.replace(QUOTE, "\\" + QUOTE)
-                .replace("\\\\" + QUOTE, "\\" + QUOTE)
-                .replace("\\{}".format(other_quote), other_quote)
-            )
-
-            naked_next_string_value = (
-                naked_next_string_value.replace(QUOTE, "\\" + QUOTE)
-                .replace("\\\\" + QUOTE, "\\" + QUOTE)
-                .replace("\\{}".format(other_quote), other_quote)
-            )
+            naked_next_string_value = naked_next_string_value.replace(
+                QUOTE, "\\" + QUOTE
+            ).replace("\\\\" + QUOTE, "\\" + QUOTE)
 
         string_value = (
             prefix + QUOTE + naked_last_string_value + naked_next_string_value + QUOTE
