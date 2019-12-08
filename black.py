@@ -2513,10 +2513,6 @@ def split_line(
         yield line
 
 
-def line_to_string(line: Line) -> str:
-    return str(line).strip("\n")
-
-
 @dataclass  # type: ignore
 class StringSplitter(metaclass=ABCMeta):
     line_length: int
@@ -2645,22 +2641,17 @@ class StringAtomicSplitter(StringSplitter):
         )
 
     def do_split(self, line: Line) -> Iterator[Line]:
-        line_length = self.line_length
-        normalize_strings = self.normalize_strings
-
         insert_str_child = self.insert_str_child_factory(line.leaves[self.string_idx])
 
         rest_value = line.leaves[self.string_idx].value
         prefix = get_string_prefix(rest_value)
 
-        rest_length_offset = len(prefix)
-
         rest_line = clone_line(line)
         rest_leaf = Leaf(token.STRING, rest_value)
         rest_line.append(rest_leaf)
 
-        max_rest_length = line_length - rest_length_offset
-        max_next_length = line_length - (1 + len(prefix)) - (line.depth * 4)
+        max_rest_length = self.line_length - len(prefix)
+        max_next_length = self.line_length - (1 + len(prefix)) - (line.depth * 4)
         QUOTE = rest_value[-1]
 
         custom_breakpoints = list(
@@ -2676,7 +2667,7 @@ class StringAtomicSplitter(StringSplitter):
         )
 
         first_string_line = True
-        while not is_line_short_enough(rest_line, line_length=max_rest_length) or (
+        while len(line_to_string(rest_line)) > max_rest_length or (
             len(custom_breakpoints) > 1 and use_custom_breakpoints
         ):
             prepend_plus = first_string_line and starts_with_plus
@@ -2684,7 +2675,7 @@ class StringAtomicSplitter(StringSplitter):
             if use_custom_breakpoints:
                 has_prefix, idx = custom_breakpoints.pop(0)
                 if not has_prefix and prefix not in ["", "f"]:
-                    rest_value = re.sub("^" + prefix, "", rest_value)
+                    rest_value = rest_value.lstrip(prefix)
             else:
                 max_length = max_next_length - 2 if prepend_plus else max_next_length
                 idx = self.get_break_idx(rest_value, max_length)
@@ -2701,15 +2692,17 @@ class StringAtomicSplitter(StringSplitter):
                 next_value = self.normalize_f_string(next_value, prefix)
 
             next_line = clone_line(line)
+
             if prepend_plus:
                 plus_leaf = Leaf(token.PLUS, "+")
                 replace_child(line.leaves[0], plus_leaf)
                 next_line.append(plus_leaf)
+
             next_leaf = Leaf(token.STRING, next_value)
             insert_str_child(next_leaf)
             next_line.append(next_leaf)
 
-            if normalize_strings:
+            if self.normalize_strings:
                 normalize_string_quotes(next_leaf)
 
             yield next_line
@@ -2726,10 +2719,10 @@ class StringAtomicSplitter(StringSplitter):
         if use_custom_breakpoints:
             has_prefix, _ = custom_breakpoints.pop(0)
             if not has_prefix and prefix not in ["", "f"]:
-                rest_value = re.sub("^" + prefix, "", rest_value)
+                rest_value = rest_value.lstrip(prefix)
                 rest_leaf = Leaf(token.STRING, rest_value)
 
-        if normalize_strings:
+        if self.normalize_strings:
             normalize_string_quotes(rest_leaf)
 
         insert_str_child(rest_leaf)
@@ -2737,24 +2730,17 @@ class StringAtomicSplitter(StringSplitter):
 
         if len(line.leaves) > (self.string_idx + 1):
             non_string_line = clone_line(rest_line)
-
-            for old_leaf in line.leaves[self.string_idx + 1 :]:
-                new_leaf = Leaf(old_leaf.type, old_leaf.value)
-                replace_child(old_leaf, new_leaf)
-                non_string_line.append(new_leaf)
+            append_leaves(non_string_line, line.leaves[self.string_idx + 1 :])
 
             if (
                 len(line_to_string(rest_line))
                 + len(line_to_string(non_string_line))
                 - non_string_line.depth * 4
-            ) <= line_length:
+            ) <= self.line_length:
                 last_line = clone_line(line)
                 last_line.comments = line.comments
 
-                for old_leaf in rest_line.leaves + non_string_line.leaves:
-                    new_leaf = Leaf(old_leaf.type, old_leaf.value)
-                    replace_child(old_leaf, new_leaf)
-                    last_line.append(new_leaf)
+                append_leaves(last_line, rest_line.leaves + non_string_line.leaves)
 
                 yield last_line
             else:
@@ -2822,10 +2808,7 @@ class StringCompoundSplitter(StringSplitter):
             old_parens_exist = True
             left_leaves.pop()
 
-        for old_leaf in left_leaves:
-            new_leaf = Leaf(old_leaf.type, old_leaf.value)
-            replace_child(old_leaf, new_leaf)
-            first_line.append(new_leaf)
+        append_leaves(first_line, left_leaves)
 
         lpar_leaf = Leaf(token.LPAR, "(")
         if old_parens_exist:
@@ -2860,10 +2843,7 @@ class StringCompoundSplitter(StringSplitter):
                 ), "Apparently, old parenthesis do NOT exist?!"
                 old_rpar_leaf = right_leaves.pop()
 
-            for old_leaf in right_leaves:
-                new_leaf = Leaf(old_leaf.type, old_leaf.value)
-                replace_child(old_leaf, new_leaf)
-                string_line.append(new_leaf)
+            append_leaves(string_line, right_leaves)
 
         yield string_line
 
@@ -2899,6 +2879,17 @@ class StringArithExprSplitter(StringCompoundSplitter):
             + STRING_END_COMMENT_REGEXP
             + "$"
         )
+
+
+def line_to_string(line: Line) -> str:
+    return str(line).strip("\n")
+
+
+def append_leaves(line: Line, leaves: List[Leaf]) -> None:
+    for old_leaf in leaves:
+        new_leaf = Leaf(old_leaf.type, old_leaf.value)
+        replace_child(old_leaf, new_leaf)
+        line.append(new_leaf)
 
 
 def replace_child(old_child: LN, new_child: LN) -> None:
