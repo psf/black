@@ -2984,11 +2984,14 @@ def merge_first_string_group(line: Line, normalize_strings: bool) -> Tuple[Line,
     string_value = ""
     prefix = ""
 
+    BREAK_MARK = "@@@@@ BLACK BREAKPOINT MARKER @@@@@"
+
     next_str_idx = first_str_idx
     QUOTE = line.leaves[next_str_idx].value[-1]
     num_of_strings = 0
     at_least_one_string_contains_spaces = False
     custom_breakpoints = []
+    prefix_tracker = []
     while (
         len(line.leaves) > next_str_idx
         and line.leaves[next_str_idx].type == token.STRING
@@ -3013,8 +3016,7 @@ def merge_first_string_group(line: Line, normalize_strings: bool) -> Tuple[Line,
             prefix = next_prefix
 
         has_prefix = next_prefix != ""
-        breakpoint_idx = len(line.leaves[next_str_idx].value) - 1
-        custom_breakpoints.append((has_prefix, breakpoint_idx))
+        prefix_tracker.append(has_prefix)
 
         naked_next_string_value = next_string_value[len(next_prefix) + 1 : -1]
         naked_next_string_value = re.sub(
@@ -3022,16 +3024,34 @@ def merge_first_string_group(line: Line, normalize_strings: bool) -> Tuple[Line,
         )
 
         string_value = (
-            prefix + QUOTE + naked_string_value + naked_next_string_value + QUOTE
+            prefix
+            + QUOTE
+            + naked_string_value
+            + naked_next_string_value
+            + BREAK_MARK
+            + QUOTE
         )
         next_str_idx += 1
 
     if not at_least_one_string_contains_spaces:
         return (line, False)
 
-    string_leaf = Leaf(token.STRING, string_value)
+    temp_string_leaf = Leaf(token.STRING, string_value)
     if normalize_strings:
-        normalize_string_quotes(string_leaf)
+        normalize_string_quotes(temp_string_leaf)
+
+    naked_string_value = temp_string_leaf.value[len(prefix) + 1 : -1]
+    for has_prefix in prefix_tracker:
+        found_idx = naked_string_value.find(BREAK_MARK)
+        assert (
+            found_idx >= 0
+        ), "Logic error while filling the custom string breakpoint cache."
+
+        naked_string_value = naked_string_value[found_idx + len(BREAK_MARK) :]
+        breakpoint_idx = found_idx + (len(prefix) if has_prefix else 0) + 1
+        custom_breakpoints.append((has_prefix, breakpoint_idx))
+
+    string_leaf = Leaf(token.STRING, temp_string_leaf.value.replace(BREAK_MARK, ""))
 
     if atom_node is not None:
         replace_child(atom_node, string_leaf)
