@@ -3002,18 +3002,7 @@ def merge_first_string_group(line: Line, normalize_strings: bool) -> Tuple[Line,
 
         num_of_strings += 1
 
-        naked_last_string_value = string_value[len(prefix) :]
-        if naked_last_string_value:
-            naked_last_string_value = (
-                naked_last_string_value[1:]
-                if naked_last_string_value[0] == QUOTE
-                else naked_last_string_value
-            )
-            naked_last_string_value = (
-                naked_last_string_value[:-1]
-                if naked_last_string_value[-1] == QUOTE
-                else naked_last_string_value
-            )
+        naked_string_value = string_value[len(prefix) + 1 : -1]
 
         next_string_value = line.leaves[next_str_idx].value
         if " " in next_string_value:
@@ -3023,34 +3012,17 @@ def merge_first_string_group(line: Line, normalize_strings: bool) -> Tuple[Line,
         if not prefix:
             prefix = next_prefix
 
-        custom_breakpoints.append(
-            (next_prefix != "", len(line.leaves[next_str_idx].value) - 1)
-        )
+        has_prefix = next_prefix != ""
+        breakpoint_idx = len(line.leaves[next_str_idx].value) - 1
+        custom_breakpoints.append((has_prefix, breakpoint_idx))
 
-        naked_next_string_value = next_string_value[len(prefix) :]
-        q = naked_next_string_value[-1]
-        naked_next_string_value = (
-            naked_next_string_value[1:]
-            if naked_next_string_value[0] == q
-            else naked_next_string_value
+        naked_next_string_value = next_string_value[len(next_prefix) + 1 : -1]
+        naked_next_string_value = re.sub(
+            r"([^\\])" + QUOTE, r"\1\\" + QUOTE, naked_next_string_value
         )
-        naked_next_string_value = (
-            naked_next_string_value[:-1]
-            if naked_next_string_value[-1] == q
-            else naked_next_string_value
-        )
-
-        if QUOTE in naked_next_string_value:
-            naked_last_string_value = naked_last_string_value.replace(
-                QUOTE, "\\" + QUOTE
-            ).replace("\\\\" + QUOTE, "\\" + QUOTE)
-
-            naked_next_string_value = naked_next_string_value.replace(
-                QUOTE, "\\" + QUOTE
-            ).replace("\\\\" + QUOTE, "\\" + QUOTE)
 
         string_value = (
-            prefix + QUOTE + naked_last_string_value + naked_next_string_value + QUOTE
+            prefix + QUOTE + naked_string_value + naked_next_string_value + QUOTE
         )
         next_str_idx += 1
 
