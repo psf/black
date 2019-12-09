@@ -65,7 +65,7 @@ DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 STRING_PREFIX_CHARS = "furbFURB"  # All possible string prefix characters.
 STRING_CHILD_IDX_MAP = {}
-CUSTOM_STRING_BREAKPOINTS: Dict[str, Tuple[Tuple[bool, int], ...]] = defaultdict(tuple)
+CUSTOM_STRING_BREAKPOINTS: Dict[int, Tuple[Tuple[bool, int], ...]] = defaultdict(tuple)
 STRING_REGEXP = (
     "["
     + STRING_PREFIX_CHARS
@@ -2655,7 +2655,7 @@ class StringAtomicSplitter(StringSplitter):
         QUOTE = rest_value[-1]
 
         custom_breakpoints = list(
-            CUSTOM_STRING_BREAKPOINTS[line.leaves[self.string_idx].value]
+            CUSTOM_STRING_BREAKPOINTS[id(line.leaves[self.string_idx].value)]
         )
 
         starts_with_plus = line.leaves[0].type == token.PLUS
@@ -2752,7 +2752,7 @@ class StringAtomicSplitter(StringSplitter):
             rest_line.comments = line.comments
             yield rest_line
 
-        del CUSTOM_STRING_BREAKPOINTS[line.leaves[self.string_idx].value]
+        del CUSTOM_STRING_BREAKPOINTS[id(line.leaves[self.string_idx].value)]
 
     @staticmethod
     def get_break_idx(string_value: str, max_length: int) -> int:
@@ -2783,7 +2783,7 @@ class StringCompoundSplitter(StringSplitter):
     @property
     def my_regexp(self) -> str:
         return (
-            r"^ *(?:return |assert .*, ?|(?:[^ ]*?|"
+            r"^ *(?:return |assert .*, ?|(?:[A-Za-z0-9\._]*?|"
             + STRING_REGEXP
             + r") ?(?:\+?=|:) ?)?"
             + STRING_GROUP_REGEXP
@@ -2847,12 +2847,7 @@ class StringCompoundSplitter(StringSplitter):
 
         yield string_line
 
-        last_line = Line(
-            depth=line.depth,
-            bracket_tracker=first_line.bracket_tracker,
-            inside_brackets=line.inside_brackets,
-            should_explode=line.should_explode,
-        )
+        last_line = clone_line(line)
         new_rpar_leaf = Leaf(token.RPAR, ")")
         if old_rpar_leaf is not None:
             replace_child(old_rpar_leaf, new_rpar_leaf)
@@ -3005,16 +3000,18 @@ def merge_first_string_group(line: Line, normalize_strings: bool) -> Tuple[Line,
 
         num_of_strings += 1
 
-        naked_string_value = string_value[len(prefix) + 1 : -1]
-
         next_string_value = line.leaves[next_str_idx].value
         if " " in next_string_value:
             at_least_one_string_contains_spaces = True
 
+        naked_string_value = string_value[len(prefix) + 1 : -1]
+        naked_string_value = re.sub(
+            r"([^\\])" + QUOTE, r"\1\\" + QUOTE, naked_string_value
+        )
+
         next_prefix = get_string_prefix(next_string_value)
         if not prefix:
             prefix = next_prefix
-
         has_prefix = next_prefix != ""
         prefix_tracker.append(has_prefix)
 
@@ -3080,7 +3077,7 @@ def merge_first_string_group(line: Line, normalize_strings: bool) -> Tuple[Line,
 
     new_line.comments = new_comments
 
-    CUSTOM_STRING_BREAKPOINTS[string_leaf.value] = tuple(custom_breakpoints)
+    CUSTOM_STRING_BREAKPOINTS[id(string_leaf.value)] = tuple(custom_breakpoints)
 
     return (new_line, True)
 
