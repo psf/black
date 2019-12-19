@@ -14,7 +14,12 @@
 "    - restore cursor/window position after formatting
 
 if v:version < 700 || !has('python3')
-    echo "This script requires vim7.0+ with Python 3.6 support."
+    func! __BLACK_MISSING()
+        echo "This command requires vim7.0+ with Python 3.6 support."
+    endfunc
+    command! Black :call __BLACK_MISSING()
+    command! BlackUpgrade :call __BLACK_MISSING()
+    command! BlackVersion :call __BLACK_MISSING()
     finish
 endif
 
