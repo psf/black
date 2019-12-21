@@ -128,6 +128,7 @@ func_with_bad_comma(
 
 stupid_format_method_bug = "Some really long string that just so happens to be the {} {} to force the 'format' method to hang over the line length boundary. This is pretty annoying.".format("perfect" "length")
 
+### REGRESSION TESTS
 class A:
     def foo():
         os.system("This is a regression test. xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxxx.".format("xxxxxxxxxx", "xxxxxx", "xxxxxxxxxx"))
@@ -157,6 +158,15 @@ class A:
                 varX,
                 varY,
                 varZ,
+            )
+
+def foo(xxxx):
+    for (xxx_xxxx, _xxx_xxx, _xxx_xxxxx, xxx_xxxx) in xxxx:
+        for xxx in xxx_xxxx:
+            assert ("x" in xxx) or (
+                xxx in xxx_xxx_xxxxx
+            ), "{0} xxxxxxx xx {1}, xxx {1} xx xxx xx xxxx xx xxx xxxx: xxx xxxx {2}".format(
+                xxx_xxxx, xxx, xxxxxx.xxxxxxx(xxx_xxx_xxxxx)
             )
 
 # output
@@ -447,7 +457,7 @@ stupid_format_method_bug = (
     .format("perfect" "length")
 )
 
-
+### REGRESSION TESTS
 class A:
     def foo():
         os.system(
@@ -485,4 +495,13 @@ class A:
                 varX,
                 varY,
                 varZ,
+            )
+
+
+def foo(xxxx):
+    for (xxx_xxxx, _xxx_xxx, _xxx_xxxxx, xxx_xxxx) in xxxx:
+        for xxx in xxx_xxxx:
+            assert ("x" in xxx) or (xxx in xxx_xxx_xxxxx), (
+                "{0} xxxxxxx xx {1}, xxx {1} xx xxx xx xxxx xx xxx xxxx: xxx xxxx {2}"
+                .format(xxx_xxxx, xxx, xxxxxx.xxxxxxx(xxx_xxx_xxxxx))
             )

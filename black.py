@@ -2751,7 +2751,7 @@ class StringSplitter(metaclass=ABCMeta):
             raise CannotSplit("Line is already short enough. No reason to split.")
 
         line_str = line_to_string(line)
-        line_str = re.sub(r"^ *assert .*, ?" + STRING_GROUP_REGEXP, r"\1", line_str)
+        line_str = re.sub(r"^ *assert .*(\)?, ?" + STRING_REGEXP + ")", r"\1", line_str)
         line_str = re.sub(STRING_GROUP_REGEXP + r" ?\+.*", r"\1", line_str)
         line_str = re.sub(r".* ?\+ ?" + STRING_GROUP_REGEXP, r"\1", line_str)
         line_str = re.sub("(" + STRING_REGEXP + " ?% ?" + ").*", r"\1", line_str)
@@ -2763,7 +2763,8 @@ class StringSplitter(metaclass=ABCMeta):
             line_str = line_str.replace(str(list(line.comments.values())[0][0]), "")
             line_str = re.sub(r"\s*$", "", line_str)
 
-        if len(line_str) <= line_length:
+        max_line_length = line_length - (line.depth * 4)
+        if len(line_str) <= max_line_length:
             raise CannotSplit(
                 "The string itself is not what is causing this line to be too long."
             )
