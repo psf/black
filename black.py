@@ -2713,16 +2713,16 @@ class StringSplitter(metaclass=ABCMeta):
     STRING_CHILD_IDX_MAP: ClassVar[Dict[int, Optional[int]]] = {}
 
     @abstractproperty
-    def my_regexp(self) -> str:
+    def _my_regexp(self) -> str:
         pass
 
     @abstractmethod
-    def do_split(self, line: Line) -> Iterator[Line]:
+    def _do_split(self, line: Line) -> Iterator[Line]:
         pass
 
     def __call__(self, line: Line, _features: Collection[Feature]) -> Iterator[Line]:
         line_str = line_to_string(line)
-        match = re.match(self.my_regexp, line_str)
+        match = re.match(self._my_regexp, line_str)
 
         if not match:
             raise CannotSplit(
@@ -2743,7 +2743,7 @@ class StringSplitter(metaclass=ABCMeta):
                 "leaf in this line that contains this string."
             )
 
-        yield from self.do_split(line)
+        yield from self._do_split(line)
 
     def __validate(self, line: Line) -> None:
         line_length = self.line_length
@@ -2801,7 +2801,7 @@ class StringSplitter(metaclass=ABCMeta):
             )
 
     @staticmethod
-    def insert_str_child_factory(string_leaf: Leaf) -> Callable[[LN], None]:
+    def _insert_str_child_factory(string_leaf: Leaf) -> Callable[[LN], None]:
         string_parent = string_leaf.parent
 
         child_idx = None
@@ -2826,7 +2826,7 @@ class StringSplitter(metaclass=ABCMeta):
 
 class StringAtomicSplitter(StringSplitter):
     @property
-    def my_regexp(self) -> str:
+    def _my_regexp(self) -> str:
         return (
             r"^ *(?:\+ *)?"
             + STRING_GROUP_REGEXP
@@ -2835,8 +2835,8 @@ class StringAtomicSplitter(StringSplitter):
             + "$"
         )
 
-    def do_split(self, line: Line) -> Iterator[Line]:
-        insert_str_child = self.insert_str_child_factory(line.leaves[self.string_idx])
+    def _do_split(self, line: Line) -> Iterator[Line]:
+        insert_str_child = self._insert_str_child_factory(line.leaves[self.string_idx])
 
         rest_value = line.leaves[self.string_idx].value
         prefix = get_string_prefix(rest_value)
@@ -2977,7 +2977,7 @@ class StringAtomicSplitter(StringSplitter):
 
 class StringCompoundSplitter(StringSplitter):
     @property
-    def my_regexp(self) -> str:
+    def _my_regexp(self) -> str:
         return (
             r"^ *(?:return |else |assert .*, ?|(?:[A-Za-z0-9\._]*?|"
             + STRING_REGEXP
@@ -2989,8 +2989,8 @@ class StringCompoundSplitter(StringSplitter):
             + "$"
         )
 
-    def do_split(self, line: Line) -> Iterator[Line]:
-        insert_str_child = self.insert_str_child_factory(line.leaves[self.string_idx])
+    def _do_split(self, line: Line) -> Iterator[Line]:
+        insert_str_child = self._insert_str_child_factory(line.leaves[self.string_idx])
 
         comma_idx = len(line.leaves) - 1
         ends_with_comma = False
@@ -3061,7 +3061,7 @@ class StringCompoundSplitter(StringSplitter):
 
 class StringArithExprSplitter(StringCompoundSplitter):
     @property
-    def my_regexp(self) -> str:
+    def _my_regexp(self) -> str:
         return (
             "^ *"
             + STRING_GROUP_REGEXP
