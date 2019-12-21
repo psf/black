@@ -145,6 +145,20 @@ class A:
             )
         )
 
+class A:
+    class B:
+        def foo():
+            bar(
+                (
+                    "[{}]: xxx_xxxxxxxxxx(xxxxx={}, xxxx={}, xxxxx={}"
+                    " xxxx_xxxx_xxxxxxxxxx={}, xxxx={})"
+                    .format(xxxx._xxxxxxxxxxxxxx, xxxxx, xxxx, xxxx_xxxx_xxxxxxxxxx, xxxxxxx)
+                ),
+                varX,
+                varY,
+                varZ,
+            )
+
 # output
 
 x = (
@@ -455,3 +469,20 @@ class A:
                 my_other_var,
             )
         )
+
+
+class A:
+    class B:
+        def foo():
+            bar(
+                (
+                    "[{}]: xxx_xxxxxxxxxx(xxxxx={}, xxxx={}, xxxxx={}"
+                    " xxxx_xxxx_xxxxxxxxxx={}, xxxx={})"
+                    .format(
+                        xxxx._xxxxxxxxxxxxxx, xxxxx, xxxx, xxxx_xxxx_xxxxxxxxxx, xxxxxxx
+                    )
+                ),
+                varX,
+                varY,
+                varZ,
+            )
