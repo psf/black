@@ -2855,8 +2855,11 @@ class StringAtomicSplitter(StringSplitter):
         drop_pointless_f_prefix = ("f" not in prefix) or re.search(
             r"\{.+\}", rest_value
         )
-        use_custom_breakpoints = custom_breakpoints and all(
-            breakpoint <= max_next_length for (_, breakpoint) in custom_breakpoints
+        use_custom_breakpoints = bool(
+            custom_breakpoints
+            and all(
+                breakpoint <= max_next_length for (_, breakpoint) in custom_breakpoints
+            )
         )
 
         first_string_line = True
@@ -2906,20 +2909,19 @@ class StringAtomicSplitter(StringSplitter):
 
             rest_line = clone_line(line)
             rest_leaf = Leaf(token.STRING, rest_value)
+            rest_line.append(rest_leaf)
 
             first_string_line = False
 
         if use_custom_breakpoints:
             has_prefix, _ = custom_breakpoints.pop(0)
             if not has_prefix and prefix not in ["", "f"]:
-                rest_value = rest_value.lstrip(prefix)
-                rest_leaf = Leaf(token.STRING, rest_value)
+                rest_leaf.value = rest_leaf.value.lstrip(prefix)
 
         if self.normalize_strings:
             normalize_string_quotes(rest_leaf)
 
         insert_str_child(rest_leaf)
-        rest_line.append(rest_leaf)
 
         if len(line.leaves) > (self.string_idx + 1):
             non_string_line = clone_line(rest_line)
@@ -3105,7 +3107,7 @@ def clone_line(
     depth: int = None,
     bracket_tracker: BracketTracker = None,
     inside_brackets: bool = None,
-    should_explode_: bool = None,
+    should_explode: bool = None,
     comments: Dict[LeafID, List[Leaf]] = None,
 ) -> Line:
     depth = line.depth if depth is None else depth
@@ -3115,16 +3117,14 @@ def clone_line(
     inside_brackets = (
         line.inside_brackets if inside_brackets is None else inside_brackets
     )
-    should_explode_ = (
-        line.should_explode if should_explode_ is None else should_explode_
-    )
+    should_explode = line.should_explode if should_explode is None else should_explode
     comments = dict() if comments is None else comments
 
     return Line(
         depth=depth,
         bracket_tracker=bracket_tracker,
         inside_brackets=inside_brackets,
-        should_explode=should_explode_,
+        should_explode=should_explode,
         comments=comments,
     )
 

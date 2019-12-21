@@ -128,6 +128,10 @@ func_with_bad_comma(
 
 stupid_format_method_bug = "Some really long string that just so happens to be the {} {} to force the 'format' method to hang over the line length boundary. This is pretty annoying.".format("perfect" "length")
 
+class A:
+    def foo():
+        os.system("This is a regression test. xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxxx.".format("xxxxxxxxxx", "xxxxxx", "xxxxxxxxxx"))
+
 # output
 
 x = (
@@ -415,3 +419,12 @@ stupid_format_method_bug = (
     " method to hang over the line length boundary. This is pretty annoying."
     .format("perfect" "length")
 )
+
+
+class A:
+    def foo():
+        os.system(
+            "This is a regression test. xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx"
+            " xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx"
+            " xxxx.".format("xxxxxxxxxx", "xxxxxx", "xxxxxxxxxx")
+        )
