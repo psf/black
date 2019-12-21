@@ -2979,7 +2979,7 @@ class StringCompoundSplitter(StringSplitter):
     @property
     def my_regexp(self) -> str:
         return (
-            r"^ *(?:return |assert .*, ?|(?:[A-Za-z0-9\._]*?|"
+            r"^ *(?:return |else |assert .*, ?|(?:[A-Za-z0-9\._]*?|"
             + STRING_REGEXP
             + r") ?(?:\+?=|:) ?)?"
             + STRING_GROUP_REGEXP
