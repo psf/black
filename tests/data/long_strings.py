@@ -132,6 +132,19 @@ class A:
     def foo():
         os.system("This is a regression test. xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxxx.".format("xxxxxxxxxx", "xxxxxx", "xxxxxxxxxx"))
 
+
+class A:
+    def foo():
+        XXXXXXXXXXXX.append(
+            (
+                "xxx_xxxxxxxxxx(xxxxx={}, xxxx={}, xxxxx, xxxx_xxxx_xxxxxxxxxx={})".format(
+                    xxxxx, xxxx, xxxx_xxxx_xxxxxxxxxx
+                ),
+                my_var,
+                my_other_var,
+            )
+        )
+
 # output
 
 x = (
@@ -427,4 +440,18 @@ class A:
             "This is a regression test. xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx"
             " xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx"
             " xxxx.".format("xxxxxxxxxx", "xxxxxx", "xxxxxxxxxx")
+        )
+
+
+class A:
+    def foo():
+        XXXXXXXXXXXX.append(
+            (
+                (
+                    "xxx_xxxxxxxxxx(xxxxx={}, xxxx={}, xxxxx, xxxx_xxxx_xxxxxxxxxx={})"
+                    .format(xxxxx, xxxx, xxxx_xxxx_xxxxxxxxxx)
+                ),
+                my_var,
+                my_other_var,
+            )
         )

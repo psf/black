@@ -74,7 +74,7 @@ STRING_REGEXP = (
     + r"}(?:'(?:[^']|\\')*?[^\\]'|\"(?:[^\"]|\\\")*?[^\\]\")"
 )
 STRING_GROUP_REGEXP = "(" + STRING_REGEXP + ")"
-STRING_DOT_OR_PERC_REGEXP = r"(?:\.[A-Za-z0-9_]+\(.*| ?% ?.*)?"
+STRING_DOT_OR_PERC_REGEXP = r"(?:\.[A-Za-z0-9_]+\(.*?\)| ?% ?.*)?"
 STRING_END_COMMENT_REGEXP = r" *(?:#.*)?"
 
 
@@ -2751,12 +2751,13 @@ class StringSplitter(metaclass=ABCMeta):
             raise CannotSplit("Line is already short enough. No reason to split.")
 
         line_str = line_to_string(line)
-        line_str = re.sub(
-            STRING_GROUP_REGEXP + STRING_DOT_OR_PERC_REGEXP, r"\1", line_str
-        )
         line_str = re.sub(r"^ *assert .*, ?" + STRING_GROUP_REGEXP, r"\1", line_str)
         line_str = re.sub(STRING_GROUP_REGEXP + r" ?\+.*", r"\1", line_str)
         line_str = re.sub(r".* ?\+ ?" + STRING_GROUP_REGEXP, r"\1", line_str)
+        line_str = re.sub("(" + STRING_REGEXP + " ?% ?" + ").*", r"\1", line_str)
+        line_str = re.sub(
+            "(" + STRING_REGEXP + r"\.[A-Za-z0-9_]+\(" + ").*", r"\1", line_str
+        )
 
         if line.comments and list(line.comments.values())[0]:
             line_str = line_str.replace(str(list(line.comments.values())[0][0]), "")
