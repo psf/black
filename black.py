@@ -23,6 +23,7 @@ import traceback
 from typing import (
     Any,
     Callable,
+    ClassVar,
     Collection,
     Dict,
     Generator,
@@ -64,7 +65,6 @@ DEFAULT_EXCLUDES = r"/(\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_
 DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 STRING_PREFIX_CHARS = "furbFURB"  # All possible string prefix characters.
-STRING_CHILD_IDX_MAP = {}
 CUSTOM_STRING_BREAKPOINTS: Dict[int, Tuple[Tuple[bool, int], ...]] = defaultdict(tuple)
 STRING_REGEXP = (
     "["
@@ -2519,6 +2519,8 @@ class StringSplitter(metaclass=ABCMeta):
     normalize_strings: bool
     string_idx: int = field(init=False, repr=False)
 
+    STRING_CHILD_IDX_MAP: ClassVar[Dict[int, Optional[int]]] = {}
+
     @abstractproperty
     def my_regexp(self) -> str:
         pass
@@ -2612,7 +2614,7 @@ class StringSplitter(metaclass=ABCMeta):
         child_idx = None
         if string_parent:
             child_idx = string_leaf.remove()
-            STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx
+            StringSplitter.STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx
             if child_idx is None:
                 raise RuntimeError(
                     f"Something is wrong here. If {string_parent} is the parent of "
@@ -2621,10 +2623,10 @@ class StringSplitter(metaclass=ABCMeta):
                 )
 
         def insert_str_child(child: LN) -> None:
-            child_idx = STRING_CHILD_IDX_MAP.get(id(string_leaf), None)
+            child_idx = StringSplitter.STRING_CHILD_IDX_MAP.get(id(string_leaf), None)
             if string_parent and child_idx is not None:
                 string_parent.insert_child(child_idx, child)
-                STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx + 1
+                StringSplitter.STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx + 1
 
         return insert_str_child
 
@@ -2907,6 +2909,16 @@ def get_string_prefix(string: str) -> str:
     return prefix
 
 
+def clone_line(line: Line, comments: Dict[LeafID, List[Leaf]] = None) -> Line:
+    return Line(
+        depth=line.depth,
+        bracket_tracker=line.bracket_tracker,
+        inside_brackets=line.inside_brackets,
+        should_explode=line.should_explode,
+        comments=comments or dict(),
+    )
+
+
 def merge_strings(line: Line, normalize_strings: bool) -> Line:
     # Merge strings that were split across multiple lines using backslashes.
     for leaf in line.leaves:
@@ -2957,16 +2969,6 @@ def remove_bad_trailing_commas(line: Line) -> Line:
         new_line.append(new_leaf)
 
     return new_line
-
-
-def clone_line(line: Line, comments: Dict[LeafID, List[Leaf]] = None) -> Line:
-    return Line(
-        depth=line.depth,
-        bracket_tracker=line.bracket_tracker,
-        inside_brackets=line.inside_brackets,
-        should_explode=line.should_explode,
-        comments=comments or dict(),
-    )
 
 
 def merge_first_string_group(line: Line, normalize_strings: bool) -> Tuple[Line, bool]:
