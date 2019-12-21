@@ -2927,7 +2927,7 @@ class StringAtomicSplitter(StringSplitter):
 
         if len(line.leaves) > (self.string_idx + 1):
             non_string_line = clone_line(rest_line)
-            append_leaves(non_string_line, line.leaves[self.string_idx + 1 :])
+            append_leaves(non_string_line, line, line.leaves[self.string_idx + 1 :])
 
             if (
                 len(line_to_string(rest_line))
@@ -2935,15 +2935,14 @@ class StringAtomicSplitter(StringSplitter):
                 - non_string_line.depth * 4
             ) <= self.line_length:
                 last_line = clone_line(line)
-                last_line.comments = line.comments
 
-                append_leaves(last_line, rest_line.leaves + non_string_line.leaves)
+                append_leaves(
+                    last_line, line, rest_line.leaves + non_string_line.leaves
+                )
 
                 yield last_line
             else:
                 yield rest_line
-
-                non_string_line.comments = line.comments
                 yield non_string_line
         else:
             rest_line.comments = line.comments
@@ -3005,7 +3004,7 @@ class StringCompoundSplitter(StringSplitter):
             old_parens_exist = True
             left_leaves.pop()
 
-        append_leaves(first_line, left_leaves)
+        append_leaves(first_line, line, left_leaves)
 
         lpar_leaf = Leaf(token.LPAR, "(")
         if old_parens_exist:
@@ -3040,7 +3039,7 @@ class StringCompoundSplitter(StringSplitter):
                 ), "Apparently, old parenthesis do NOT exist?!"
                 old_rpar_leaf = right_leaves.pop()
 
-            append_leaves(string_line, right_leaves)
+            append_leaves(string_line, line, right_leaves)
 
         yield string_line
 
@@ -3077,11 +3076,14 @@ def line_to_string(line: Line) -> str:
     return str(line).strip("\n")
 
 
-def append_leaves(line: Line, leaves: List[Leaf]) -> None:
+def append_leaves(new_line: Line, old_line: Line, leaves: List[Leaf]) -> None:
     for old_leaf in leaves:
         new_leaf = Leaf(old_leaf.type, old_leaf.value)
         replace_child(old_leaf, new_leaf)
-        line.append(new_leaf)
+        new_line.append(new_leaf)
+
+        for comment_leaf in old_line.comments_after(old_leaf):
+            new_line.append(comment_leaf, preformatted=True)
 
 
 def replace_child(old_child: LN, new_child: LN) -> None:

@@ -169,6 +169,24 @@ def foo(xxxx):
                 xxx_xxxx, xxx, xxxxxx.xxxxxxx(xxx_xxx_xxxxx)
             )
 
+class A:
+    def disappearing_comment():
+        return (
+            (  # xx -x xxxxxxx xx xxx xxxxxxx.
+                '{{xxx_xxxxxxxxxx_xxxxxxxx}} xxx xxxx'
+                ' {} {{xxxx}} >&2'
+                .format(
+                    "{xxxx} {xxxxxx}"
+                    if xxxxx.xx_xxxxxxxxxx
+                    else ( # Disappearing Comment
+                        "--xxxxxxx --xxxxxx=x --xxxxxx-xxxxx=xxxxxx"
+                        " --xxxxxx-xxxx=xxxxxxxxxxx.xxx"
+                    )
+                )
+            ),
+            (x, y, z),
+        )
+
 # output
 
 x = (
@@ -505,3 +523,22 @@ def foo(xxxx):
                 "{0} xxxxxxx xx {1}, xxx {1} xx xxx xx xxxx xx xxx xxxx: xxx xxxx {2}"
                 .format(xxx_xxxx, xxx, xxxxxx.xxxxxxx(xxx_xxx_xxxxx))
             )
+
+
+class A:
+    def disappearing_comment():
+        return (
+            (  # xx -x xxxxxxx xx xxx xxxxxxx.
+                "{{xxx_xxxxxxxxxx_xxxxxxxx}} xxx xxxx"
+                " {} {{xxxx}} >&2"
+                .format(
+                    "{xxxx} {xxxxxx}"
+                    if xxxxx.xx_xxxxxxxxxx
+                    else (  # Disappearing Comment
+                        "--xxxxxxx --xxxxxx=x --xxxxxx-xxxxx=xxxxxx"
+                        " --xxxxxx-xxxx=xxxxxxxxxxx.xxx"
+                    )
+                )
+            ),
+            (x, y, z),
+        )
