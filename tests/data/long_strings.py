@@ -126,9 +126,9 @@ func_with_bad_comma(
     ),
 )
 
+########## REGRESSION TESTS ##########
 stupid_format_method_bug = "Some really long string that just so happens to be the {} {} to force the 'format' method to hang over the line length boundary. This is pretty annoying.".format("perfect" "length")
 
-### REGRESSION TESTS
 class A:
     def foo():
         os.system("This is a regression test. xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxx xxxx.".format("xxxxxxxxxx", "xxxxxx", "xxxxxxxxxx"))
@@ -469,13 +469,14 @@ func_with_bad_comma(
     " which should NOT be there."
 )
 
+########## REGRESSION TESTS ##########
 stupid_format_method_bug = (
     "Some really long string that just so happens to be the {} {} to force the 'format'"
     " method to hang over the line length boundary. This is pretty annoying."
     .format("perfect" "length")
 )
 
-### REGRESSION TESTS
+
 class A:
     def foo():
         os.system(
