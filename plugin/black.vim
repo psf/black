@@ -39,6 +39,9 @@ endif
 if !exists("g:black_skip_string_normalization")
   let g:black_skip_string_normalization = 0
 endif
+if !exists("g:black_quiet")
+  let g:black_quiet = 0
+endif
 
 python3 << endpython3
 import os
@@ -109,6 +112,7 @@ if _initialize_black_env():
 def Black():
   start = time.time()
   fast = bool(int(vim.eval("g:black_fast")))
+  quiet = bool(int(vim.eval("g:black_quiet")))
   mode = black.FileMode(
     line_length=int(vim.eval("g:black_linelength")),
     string_normalization=not bool(int(vim.eval("g:black_skip_string_normalization"))),
@@ -118,7 +122,8 @@ def Black():
   try:
     new_buffer_str = black.format_file_contents(buffer_str, fast=fast, mode=mode)
   except black.NothingChanged:
-    print(f'Already well formatted, good job. (took {time.time() - start:.4f}s)')
+    if not quiet:
+      print(f'Already well formatted, good job. (took {time.time() - start:.4f}s)')
   except Exception as exc:
     print(exc)
   else:
@@ -136,7 +141,8 @@ def Black():
         window.cursor = cursor
       except vim.error:
         window.cursor = (len(window.buffer), 0)
-    print(f'Reformatted in {time.time() - start:.4f}s.')
+    if not quiet:
+      print(f'Reformatted in {time.time() - start:.4f}s.')
 
 def BlackUpgrade():
   _initialize_black_env(upgrade=True)
