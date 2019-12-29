@@ -2529,7 +2529,7 @@ class StringTransformer(metaclass=ABCMeta):
     normalize_strings: bool
 
     @abstractmethod
-    def __call__(self, line: Line, _features: Collection[Feature]) -> Iterator[Line]:
+    def __call__(self, line: Line, features: Collection[Feature]) -> Iterator[Line]:
         pass
 
 
@@ -2587,16 +2587,16 @@ class StringMerger(StringTransformerMixin):
             ] not in {'"""', "'''"}:
                 leaf.value = leaf.value.replace("\\\n", "")
 
-        (new_line, line_was_changed) = self.merge_first_string_group(line)
+        (new_line, line_was_changed) = self.__merge_first_string_group(line)
         while line_was_changed:
-            (new_line, line_was_changed) = self.merge_first_string_group(new_line)
+            (new_line, line_was_changed) = self.__merge_first_string_group(new_line)
 
-        new_line = self.remove_bad_trailing_commas(new_line)
+        new_line = self.__remove_bad_trailing_commas(new_line)
 
         yield new_line
 
-    def merge_first_string_group(self, line: Line) -> Tuple[Line, bool]:
-        first_str_idx = self.get_string_group_index(line)
+    def __merge_first_string_group(self, line: Line) -> Tuple[Line, bool]:
+        first_str_idx = self.__get_string_group_index(line)
 
         if first_str_idx is None:
             return (line, False)
@@ -2708,7 +2708,7 @@ class StringMerger(StringTransformerMixin):
         return (new_line, True)
 
     @staticmethod
-    def get_string_group_index(line: Line) -> Optional[int]:
+    def __get_string_group_index(line: Line) -> Optional[int]:
         num_of_inline_string_comments = 0
         set_of_prefixes = set()
         for leaf in line.leaves:
@@ -2734,7 +2734,7 @@ class StringMerger(StringTransformerMixin):
         return None
 
     @staticmethod
-    def remove_bad_trailing_commas(line: Line) -> Line:
+    def __remove_bad_trailing_commas(line: Line) -> Line:
         line_str = line_to_string(line)
         if not re.match(r"^[A-Za-z0-9_]+\(\(?" + STRING_REGEXP + r"\)?,\)", line_str):
             return line
@@ -2912,18 +2912,18 @@ class StringAtomicSplitter(StringSplitterMixin):
                     rest_value = rest_value.lstrip(prefix)
             else:
                 max_length = max_next_length - 2 if prepend_plus else max_next_length
-                idx = self.get_break_idx(rest_value, max_length)
+                idx = self.__get_break_idx(rest_value, max_length)
 
             next_value = rest_value[:idx] + QUOTE
 
             if (
-                next_value != self.normalize_f_string(next_value, prefix)
+                next_value != self.__normalize_f_string(next_value, prefix)
                 and drop_pointless_f_prefix
             ):
                 if use_custom_breakpoints:
                     idx += 1
                     next_value = rest_value[:idx] + QUOTE
-                next_value = self.normalize_f_string(next_value, prefix)
+                next_value = self.__normalize_f_string(next_value, prefix)
 
             next_line = line.clone()
 
@@ -2943,7 +2943,7 @@ class StringAtomicSplitter(StringSplitterMixin):
 
             rest_value = prefix + QUOTE + rest_value[idx:]
             if drop_pointless_f_prefix:
-                rest_value = self.normalize_f_string(rest_value, prefix)
+                rest_value = self.__normalize_f_string(rest_value, prefix)
 
             rest_line = line.clone()
             rest_leaf = Leaf(token.STRING, rest_value)
@@ -2987,7 +2987,7 @@ class StringAtomicSplitter(StringSplitterMixin):
         del CUSTOM_STRING_BREAKPOINTS[id(line.leaves[self.string_idx].value)]
 
     @staticmethod
-    def get_break_idx(string_value: str, max_length: int) -> int:
+    def __get_break_idx(string_value: str, max_length: int) -> int:
         idx = max_length
         while 0 < idx + 1 < len(string_value) and string_value[idx] != " ":
             idx -= 1
@@ -3004,7 +3004,7 @@ class StringAtomicSplitter(StringSplitterMixin):
         return idx
 
     @staticmethod
-    def normalize_f_string(string: str, prefix: str) -> str:
+    def __normalize_f_string(string: str, prefix: str) -> str:
         if "f" in prefix and not re.search(r"\{.+\}", string):
             return prefix.replace("f", "") + string[len(prefix) :]
         else:
