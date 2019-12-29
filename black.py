@@ -3107,29 +3107,13 @@ def get_string_prefix(string: str) -> str:
     return prefix
 
 
-def clone_line(
-    line: Line,
-    depth: int = None,
-    bracket_tracker: BracketTracker = None,
-    inside_brackets: bool = None,
-    should_explode: bool = None,
-    comments: Dict[LeafID, List[Leaf]] = None,
-) -> Line:
-    depth = line.depth if depth is None else depth
-    bracket_tracker = (
-        line.bracket_tracker if bracket_tracker is None else bracket_tracker
-    )
-    inside_brackets = (
-        line.inside_brackets if inside_brackets is None else inside_brackets
-    )
-    should_explode = line.should_explode if should_explode is None else should_explode
+def clone_line(line: Line, comments: Dict[LeafID, List[Leaf]] = None,) -> Line:
     comments = dict() if comments is None else comments
-
     return Line(
-        depth=depth,
-        bracket_tracker=bracket_tracker,
-        inside_brackets=inside_brackets,
-        should_explode=should_explode,
+        depth=line.depth,
+        bracket_tracker=line.bracket_tracker,
+        inside_brackets=line.inside_brackets,
+        should_explode=line.should_explode,
         comments=comments,
     )
 
