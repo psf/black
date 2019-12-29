@@ -2527,6 +2527,13 @@ def split_line(
 class StringTransformer(metaclass=ABCMeta):
     line_length: int
     normalize_strings: bool
+
+    @abstractmethod
+    def __call__(self, line: Line, _features: Collection[Feature]) -> Iterator[Line]:
+        pass
+
+
+class StringTransformerMixin(StringTransformer, metaclass=ABCMeta):
     string_idx: int = field(init=False, repr=False)
 
     @abstractproperty
@@ -2537,7 +2544,7 @@ class StringTransformer(metaclass=ABCMeta):
     def _do_split(self, line: Line) -> Iterator[Line]:
         pass
 
-    def _validate_hook(self, line: Line) -> None:
+    def _do_validate(self, line: Line) -> None:
         pass
 
     def __call__(self, line: Line, _features: Collection[Feature]) -> Iterator[Line]:
@@ -2550,7 +2557,7 @@ class StringTransformer(metaclass=ABCMeta):
                 "recognize this line as one that it can split."
             )
 
-        self._validate_hook(line)
+        self._do_validate(line)
         if match.groups():
             string_value = match.groups()[0]
             for i, leaf in enumerate(line.leaves):
@@ -2567,7 +2574,7 @@ class StringTransformer(metaclass=ABCMeta):
         yield from self._do_split(line)
 
 
-class StringMerger(StringTransformer):
+class StringMerger(StringTransformerMixin):
     @property
     def _my_regexp(self) -> str:
         return r"^[\s\S]*$"
@@ -2758,7 +2765,7 @@ class StringMerger(StringTransformer):
         return new_line
 
 
-class StringSplitter(StringTransformer, metaclass=ABCMeta):
+class StringSplitterMixin(StringTransformerMixin, metaclass=ABCMeta):
     STRING_CHILD_IDX_MAP: ClassVar[Dict[int, Optional[int]]] = {}
 
     @abstractproperty
@@ -2769,7 +2776,7 @@ class StringSplitter(StringTransformer, metaclass=ABCMeta):
     def _do_split(self, line: Line) -> Iterator[Line]:
         pass
 
-    def _validate_hook(self, line: Line) -> None:
+    def _do_validate(self, line: Line) -> None:
         line_length = self.line_length
         if is_line_short_enough(line, line_length=line_length):
             raise CannotSplit("Line is already short enough. No reason to split.")
@@ -2832,7 +2839,7 @@ class StringSplitter(StringTransformer, metaclass=ABCMeta):
         child_idx = None
         if string_parent:
             child_idx = string_leaf.remove()
-            StringSplitter.STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx
+            StringSplitterMixin.STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx
             if child_idx is None:
                 raise RuntimeError(
                     f"Something is wrong here. If {string_parent} is the parent of "
@@ -2841,15 +2848,19 @@ class StringSplitter(StringTransformer, metaclass=ABCMeta):
                 )
 
         def insert_str_child(child: LN) -> None:
-            child_idx = StringSplitter.STRING_CHILD_IDX_MAP.get(id(string_leaf), None)
+            child_idx = StringSplitterMixin.STRING_CHILD_IDX_MAP.get(
+                id(string_leaf), None
+            )
             if string_parent and child_idx is not None:
                 string_parent.insert_child(child_idx, child)
-                StringSplitter.STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx + 1
+                StringSplitterMixin.STRING_CHILD_IDX_MAP[id(string_leaf)] = (
+                    child_idx + 1
+                )
 
         return insert_str_child
 
 
-class StringAtomicSplitter(StringSplitter):
+class StringAtomicSplitter(StringSplitterMixin):
     @property
     def _my_regexp(self) -> str:
         return (
@@ -3000,7 +3011,7 @@ class StringAtomicSplitter(StringSplitter):
             return string
 
 
-class StringNonAtomicSplitter(StringSplitter, metaclass=ABCMeta):
+class StringExprSplitterMixin(StringSplitterMixin, metaclass=ABCMeta):
     @abstractproperty
     def _my_regexp(self) -> str:
         pass
@@ -3076,7 +3087,7 @@ class StringNonAtomicSplitter(StringSplitter, metaclass=ABCMeta):
         yield last_line
 
 
-class StringExprSplitter(StringNonAtomicSplitter):
+class StringExprSplitter(StringExprSplitterMixin):
     @property
     def _my_regexp(self) -> str:
         return (
@@ -3091,7 +3102,7 @@ class StringExprSplitter(StringNonAtomicSplitter):
         )
 
 
-class StringArithExprSplitter(StringNonAtomicSplitter):
+class StringArithExprSplitter(StringExprSplitterMixin):
     @property
     def _my_regexp(self) -> str:
         return (
