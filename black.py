@@ -2579,7 +2579,6 @@ class StringMerger(StringTransformerMixin):
         return r"^[\s\S]*$"
 
     def _do_transform(self, line: Line, _string_idx: Optional[int]) -> Iterator[Line]:
-        # Merge strings that were split across multiple lines using backslashes.
         new_line = self.__remove_backslash_line_continuation_chars(line)
 
         (new_line, line_was_changed) = self.__merge_first_string_group(new_line)
@@ -2589,6 +2588,30 @@ class StringMerger(StringTransformerMixin):
         new_line = self.__remove_bad_trailing_commas(new_line)
 
         yield new_line
+
+    @staticmethod
+    def __remove_backslash_line_continuation_chars(line: Line) -> Line:
+        """Merge strings that were split across multiple lines using backslashes."""
+        for leaf in line.leaves:
+            if (
+                leaf.type == token.STRING
+                and "\\\n" in leaf.value
+                and leaf.value.lstrip(STRING_PREFIX_CHARS)[:3] not in {'"""', "'''"}
+            ):
+                break
+        else:
+            return line
+
+        new_line = line.clone()
+        new_line.comments = line.comments
+        append_leaves(new_line, line, line.leaves)
+        for leaf in new_line.leaves:
+            if leaf.type == token.STRING and leaf.value.lstrip(STRING_PREFIX_CHARS)[
+                :3
+            ] not in {'"""', "'''"}:
+                leaf.value = leaf.value.replace("\\\n", "")
+
+        return new_line
 
     def __merge_first_string_group(self, line: Line) -> Tuple[Line, bool]:
         first_str_idx = self.__get_string_group_index(line)
@@ -2703,55 +2726,6 @@ class StringMerger(StringTransformerMixin):
         return (new_line, True)
 
     @staticmethod
-    def __get_string_group_index(line: Line) -> Optional[int]:
-        num_of_inline_string_comments = 0
-        set_of_prefixes = set()
-        for leaf in line.leaves:
-            if leaf.type == token.STRING:
-                prefix = get_string_prefix(leaf.value)
-                if prefix:
-                    set_of_prefixes.add(prefix)
-
-                if id(leaf) in line.comments:
-                    num_of_inline_string_comments += 1
-
-        if num_of_inline_string_comments > 1 or len(set_of_prefixes) > 1:
-            return None
-
-        for i, leaf in enumerate(line.leaves):
-            if (
-                i + 1 < len(line.leaves)
-                and leaf.type == token.STRING
-                and line.leaves[i + 1].type == token.STRING
-            ):
-                return i
-
-        return None
-
-    @staticmethod
-    def __remove_backslash_line_continuation_chars(line: Line) -> Line:
-        for leaf in line.leaves:
-            if (
-                leaf.type == token.STRING
-                and "\\\n" in leaf.value
-                and leaf.value.lstrip(STRING_PREFIX_CHARS)[:3] not in {'"""', "'''"}
-            ):
-                break
-        else:
-            return line
-
-        new_line = line.clone()
-        new_line.comments = line.comments
-        append_leaves(new_line, line, line.leaves)
-        for leaf in new_line.leaves:
-            if leaf.type == token.STRING and leaf.value.lstrip(STRING_PREFIX_CHARS)[
-                :3
-            ] not in {'"""', "'''"}:
-                leaf.value = leaf.value.replace("\\\n", "")
-
-        return new_line
-
-    @staticmethod
     def __remove_bad_trailing_commas(line: Line) -> Line:
         line_str = line_to_string(line)
         if not re.match(r"^[A-Za-z0-9_]+\(\(?" + STRING_REGEXP + r"\)?,\)", line_str):
@@ -2781,6 +2755,32 @@ class StringMerger(StringTransformerMixin):
             new_line.append(new_leaf)
 
         return new_line
+
+    @staticmethod
+    def __get_string_group_index(line: Line) -> Optional[int]:
+        num_of_inline_string_comments = 0
+        set_of_prefixes = set()
+        for leaf in line.leaves:
+            if leaf.type == token.STRING:
+                prefix = get_string_prefix(leaf.value)
+                if prefix:
+                    set_of_prefixes.add(prefix)
+
+                if id(leaf) in line.comments:
+                    num_of_inline_string_comments += 1
+
+        if num_of_inline_string_comments > 1 or len(set_of_prefixes) > 1:
+            return None
+
+        for i, leaf in enumerate(line.leaves):
+            if (
+                i + 1 < len(line.leaves)
+                and leaf.type == token.STRING
+                and line.leaves[i + 1].type == token.STRING
+            ):
+                return i
+
+        return None
 
 
 class StringSplitterMixin(StringTransformerMixin):
