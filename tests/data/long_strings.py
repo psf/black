@@ -530,9 +530,7 @@ class A:
     def disappearing_comment():
         return (
             (  # xx -x xxxxxxx xx xxx xxxxxxx.
-                "{{xxx_xxxxxxxxxx_xxxxxxxx}} xxx xxxx"
-                " {} {{xxxx}} >&2"
-                .format(
+                "{{xxx_xxxxxxxxxx_xxxxxxxx}} xxx xxxx {} {{xxxx}} >&2".format(
                     "{xxxx} {xxxxxx}"
                     if xxxxx.xx_xxxxxxxxxx
                     else (  # Disappearing Comment

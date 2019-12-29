@@ -2751,7 +2751,8 @@ class StringSplitter(metaclass=ABCMeta):
             raise CannotSplit("Line is already short enough. No reason to split.")
 
         line_str = line_to_string(line)
-        line_str = re.sub(r"^ *assert .*(\)?, ?" + STRING_REGEXP + ")", r"\1", line_str)
+        line_str = re.sub(r"^ *", "", line_str)
+        line_str = re.sub(r"^assert .*(\)?, ?" + STRING_REGEXP + ")", r"\1", line_str)
         line_str = re.sub(STRING_GROUP_REGEXP + r" ?\+.*", r"\1", line_str)
         line_str = re.sub(r".* ?\+ ?" + STRING_GROUP_REGEXP, r"\1", line_str)
         line_str = re.sub("(" + STRING_REGEXP + " ?% ?" + ").*", r"\1", line_str)
