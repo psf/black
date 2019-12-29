@@ -64,18 +64,18 @@ DEFAULT_LINE_LENGTH = 88
 DEFAULT_EXCLUDES = r"/(\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_build|buck-out|build|dist)/"  # noqa: B950
 DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
-STRING_PREFIX_CHARS = "furbFURB"  # All possible string prefix characters.
+STRING_PREFIX_CHARS: Final = "furbFURB"  # All possible string prefix characters.
 CUSTOM_STRING_BREAKPOINTS: Dict[int, Tuple[Tuple[bool, int], ...]] = defaultdict(tuple)
-STRING_REGEXP = (
+STRING_REGEXP: Final = (
     "["
     + STRING_PREFIX_CHARS
     + "]{0,"
     + str(len(STRING_PREFIX_CHARS))
     + r"}(?:'(?:[^']|\\')*?[^\\]'|\"(?:[^\"]|\\\")*?[^\\]\")"
 )
-STRING_GROUP_REGEXP = "(" + STRING_REGEXP + ")"
-STRING_DOT_OR_PERC_REGEXP = r"(?:\.[A-Za-z0-9_]+\(.*?\)| ?% ?.*)?"
-STRING_END_COMMENT_REGEXP = r" *(?:#.*)?"
+STRING_GROUP_REGEXP: Final = "(" + STRING_REGEXP + ")"
+STRING_DOT_OR_PERC_REGEXP: Final = r"(?:\.[A-Za-z0-9_]+\(.*?\)| ?% ?.*)?"
+STRING_END_COMMENT_REGEXP: Final = r" *(?:#.*)?"
 
 
 # types
