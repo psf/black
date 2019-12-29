@@ -2557,7 +2557,7 @@ class StringTransformerMixin(StringTransformer):
 
         self._do_validate(line)
         string_idx = None
-        if match.groups():
+        if match.groups() and match.groups()[0]:
             string_value = match.groups()[0]
             for i, leaf in enumerate(line.leaves):
                 if leaf.type == token.STRING and leaf.value == string_value:
@@ -2576,14 +2576,23 @@ class StringTransformerMixin(StringTransformer):
 class StringMerger(StringTransformerMixin):
     @property
     def _my_regexp(self) -> str:
-        return r"^[\s\S]*$"
+        return (
+            "^ *"
+            + r"(?:[^'\"]|"
+            + STRING_REGEXP
+            + ")*?"
+            + STRING_GROUP_REGEXP
+            + "(?: *"
+            + STRING_REGEXP
+            + ")+.*"
+            "$|" + r"^[\s\S]*$"
+        )
 
-    def _do_transform(self, line: Line, _string_idx: Optional[int]) -> Iterator[Line]:
+    def _do_transform(self, line: Line, string_idx: Optional[int]) -> Iterator[Line]:
         new_line = self.__remove_backslash_line_continuation_chars(line)
 
-        (new_line, line_was_changed) = self.__merge_first_string_group(new_line)
-        while line_was_changed:
-            (new_line, line_was_changed) = self.__merge_first_string_group(new_line)
+        if string_idx is not None:
+            new_line = self.__merge_first_string_group(new_line, string_idx)
 
         new_line = self.__remove_bad_trailing_commas(new_line)
 
@@ -2613,11 +2622,9 @@ class StringMerger(StringTransformerMixin):
 
         return new_line
 
-    def __merge_first_string_group(self, line: Line) -> Tuple[Line, bool]:
-        first_str_idx = self.__get_string_group_index(line)
-
-        if first_str_idx is None:
-            return (line, False)
+    def __merge_first_string_group(self, line: Line, first_str_idx: int) -> Line:
+        if not self.__is_okay_to_merge(line):
+            return line
 
         atom_node = line.leaves[first_str_idx].parent
         string_value = ""
@@ -2640,7 +2647,7 @@ class StringMerger(StringTransformerMixin):
                 .value.lstrip(STRING_PREFIX_CHARS)
                 .startswith(("'''", '"""'))
             ):
-                return (line, False)
+                return line
 
             num_of_strings += 1
 
@@ -2675,7 +2682,7 @@ class StringMerger(StringTransformerMixin):
             next_str_idx += 1
 
         if not at_least_one_string_contains_spaces:
-            return (line, False)
+            return line
 
         temp_string_leaf = Leaf(token.STRING, string_value)
         if self.normalize_strings:
@@ -2723,7 +2730,7 @@ class StringMerger(StringTransformerMixin):
 
         CUSTOM_STRING_BREAKPOINTS[id(string_leaf.value)] = tuple(custom_breakpoints)
 
-        return (new_line, True)
+        return new_line
 
     @staticmethod
     def __remove_bad_trailing_commas(line: Line) -> Line:
@@ -2757,7 +2764,7 @@ class StringMerger(StringTransformerMixin):
         return new_line
 
     @staticmethod
-    def __get_string_group_index(line: Line) -> Optional[int]:
+    def __is_okay_to_merge(line: Line) -> bool:
         num_of_inline_string_comments = 0
         set_of_prefixes = set()
         for leaf in line.leaves:
@@ -2770,17 +2777,9 @@ class StringMerger(StringTransformerMixin):
                     num_of_inline_string_comments += 1
 
         if num_of_inline_string_comments > 1 or len(set_of_prefixes) > 1:
-            return None
+            return False
 
-        for i, leaf in enumerate(line.leaves):
-            if (
-                i + 1 < len(line.leaves)
-                and leaf.type == token.STRING
-                and line.leaves[i + 1].type == token.STRING
-            ):
-                return i
-
-        return None
+        return True
 
 
 class StringSplitterMixin(StringTransformerMixin):
