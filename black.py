@@ -2534,14 +2534,12 @@ class StringTransformer(metaclass=ABCMeta):
 
 
 class StringTransformerMixin(StringTransformer):
-    string_idx: int = field(init=False, repr=False)
-
     @abstractproperty
     def _my_regexp(self) -> str:
         pass
 
     @abstractmethod
-    def _do_transform(self, line: Line) -> Iterator[Line]:
+    def _do_transform(self, line: Line, string_idx: Optional[int]) -> Iterator[Line]:
         pass
 
     def _do_validate(self, line: Line) -> None:
@@ -2558,11 +2556,12 @@ class StringTransformerMixin(StringTransformer):
             )
 
         self._do_validate(line)
+        string_idx = None
         if match.groups():
             string_value = match.groups()[0]
             for i, leaf in enumerate(line.leaves):
                 if leaf.type == token.STRING and leaf.value == string_value:
-                    self.string_idx = i
+                    string_idx = i
                     break
             else:
                 raise RuntimeError(
@@ -2571,7 +2570,7 @@ class StringTransformerMixin(StringTransformer):
                     "leaf in this line that contains this string."
                 )
 
-        yield from self._do_transform(line)
+        yield from self._do_transform(line, string_idx)
 
 
 class StringMerger(StringTransformerMixin):
@@ -2579,7 +2578,7 @@ class StringMerger(StringTransformerMixin):
     def _my_regexp(self) -> str:
         return r"^[\s\S]*$"
 
-    def _do_transform(self, line: Line) -> Iterator[Line]:
+    def _do_transform(self, line: Line, _string_idx: Optional[int]) -> Iterator[Line]:
         # Merge strings that were split across multiple lines using backslashes.
         for leaf in line.leaves:
             if leaf.type == token.STRING and leaf.value.lstrip(STRING_PREFIX_CHARS)[
@@ -2773,7 +2772,7 @@ class StringSplitterMixin(StringTransformerMixin):
         pass
 
     @abstractmethod
-    def _do_transform(self, line: Line) -> Iterator[Line]:
+    def _do_transform(self, line: Line, string_idx: Optional[int]) -> Iterator[Line]:
         pass
 
     def _do_validate(self, line: Line) -> None:
@@ -2871,10 +2870,12 @@ class StringTermSplitter(StringSplitterMixin):
             + "$"
         )
 
-    def _do_transform(self, line: Line) -> Iterator[Line]:
-        insert_str_child = self._insert_str_child_factory(line.leaves[self.string_idx])
+    def _do_transform(self, line: Line, string_idx: Optional[int]) -> Iterator[Line]:
+        assert string_idx is not None
 
-        rest_value = line.leaves[self.string_idx].value
+        insert_str_child = self._insert_str_child_factory(line.leaves[string_idx])
+
+        rest_value = line.leaves[string_idx].value
         prefix = get_string_prefix(rest_value)
 
         rest_line = line.clone()
@@ -2886,7 +2887,7 @@ class StringTermSplitter(StringSplitterMixin):
         QUOTE = rest_value[-1]
 
         custom_breakpoints = list(
-            CUSTOM_STRING_BREAKPOINTS[id(line.leaves[self.string_idx].value)]
+            CUSTOM_STRING_BREAKPOINTS[id(line.leaves[string_idx].value)]
         )
 
         starts_with_plus = line.leaves[0].type == token.PLUS
@@ -2961,9 +2962,9 @@ class StringTermSplitter(StringSplitterMixin):
 
         insert_str_child(rest_leaf)
 
-        if len(line.leaves) > (self.string_idx + 1):
+        if len(line.leaves) > (string_idx + 1):
             non_string_line = rest_line.clone()
-            append_leaves(non_string_line, line, line.leaves[self.string_idx + 1 :])
+            append_leaves(non_string_line, line, line.leaves[string_idx + 1 :])
 
             if (
                 len(line_to_string(rest_line))
@@ -2984,7 +2985,7 @@ class StringTermSplitter(StringSplitterMixin):
             rest_line.comments = line.comments
             yield rest_line
 
-        del CUSTOM_STRING_BREAKPOINTS[id(line.leaves[self.string_idx].value)]
+        del CUSTOM_STRING_BREAKPOINTS[id(line.leaves[string_idx].value)]
 
     @staticmethod
     def __get_break_idx(string_value: str, max_length: int) -> int:
@@ -3016,8 +3017,10 @@ class StringExprSplitterMixin(StringSplitterMixin):
     def _my_regexp(self) -> str:
         pass
 
-    def _do_transform(self, line: Line) -> Iterator[Line]:
-        insert_str_child = self._insert_str_child_factory(line.leaves[self.string_idx])
+    def _do_transform(self, line: Line, string_idx: Optional[int]) -> Iterator[Line]:
+        assert string_idx is not None
+
+        insert_str_child = self._insert_str_child_factory(line.leaves[string_idx])
 
         comma_idx = len(line.leaves) - 1
         ends_with_comma = False
@@ -3026,7 +3029,7 @@ class StringExprSplitterMixin(StringSplitterMixin):
 
         first_line = line.clone()
         first_line.comments = line.comments
-        left_leaves = line.leaves[: self.string_idx]
+        left_leaves = line.leaves[:string_idx]
         old_parens_exist = False
         if left_leaves and left_leaves[-1].type == token.LPAR:
             old_parens_exist = True
@@ -3036,7 +3039,7 @@ class StringExprSplitterMixin(StringSplitterMixin):
 
         lpar_leaf = Leaf(token.LPAR, "(")
         if old_parens_exist:
-            replace_child(line.leaves[self.string_idx - 1], lpar_leaf)
+            replace_child(line.leaves[string_idx - 1], lpar_leaf)
         else:
             insert_str_child(lpar_leaf)
         first_line.append(lpar_leaf)
@@ -3045,7 +3048,7 @@ class StringExprSplitterMixin(StringSplitterMixin):
 
         # Only need to yield one (possibly too long) line, since the
         # `StringTermSplitter` will break it down further if necessary.
-        string_value = line.leaves[self.string_idx].value
+        string_value = line.leaves[string_idx].value
         string_line = Line(
             depth=line.depth + 1,
             inside_brackets=True,
@@ -3056,8 +3059,8 @@ class StringExprSplitterMixin(StringSplitterMixin):
         string_line.append(string_leaf)
 
         old_rpar_leaf = None
-        if len(line.leaves) > self.string_idx + 1:
-            right_leaves = line.leaves[self.string_idx + 1 :]
+        if len(line.leaves) > string_idx + 1:
+            right_leaves = line.leaves[string_idx + 1 :]
             if ends_with_comma:
                 right_leaves.pop()
 
