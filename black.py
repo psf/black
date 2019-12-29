@@ -2435,13 +2435,6 @@ def split_line(
         yield line
         return
 
-    # Merge strings that were split across multiple lines using backslashes.
-    for leaf in line.leaves:
-        if leaf.type == token.STRING and leaf.value.lstrip(STRING_PREFIX_CHARS)[
-            :3
-        ] not in {'"""', "'''"}:
-            leaf.value = leaf.value.replace("\\\n", "")
-
     line_str = line_to_string(line)
 
     if (
@@ -2658,13 +2651,20 @@ class StringMerger(StringSplitter):
 
     @property
     def _my_regexp(self) -> str:
-        return "^.*$"
+        return r"^[\s\S]*$"
 
     def _do_split(self, line: Line) -> Iterator[Line]:
         yield merge_strings(line, self.normalize_strings)
 
 
 def merge_strings(line: Line, normalize_strings: bool) -> Line:
+    # Merge strings that were split across multiple lines using backslashes.
+    for leaf in line.leaves:
+        if leaf.type == token.STRING and leaf.value.lstrip(STRING_PREFIX_CHARS)[
+            :3
+        ] not in {'"""', "'''"}:
+            leaf.value = leaf.value.replace("\\\n", "")
+
     (new_line, line_was_changed) = merge_first_string_group(
         line, normalize_strings=normalize_strings
     )
