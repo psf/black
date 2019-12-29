@@ -2623,7 +2623,7 @@ class StringMerger(StringTransformerMixin):
         return new_line
 
     def __merge_first_string_group(self, line: Line, first_str_idx: int) -> Line:
-        if not self.__is_okay_to_merge(line):
+        if not self.__is_okay_to_merge(line, first_str_idx):
             return line
 
         atom_node = line.leaves[first_str_idx].parent
@@ -2764,17 +2764,19 @@ class StringMerger(StringTransformerMixin):
         return new_line
 
     @staticmethod
-    def __is_okay_to_merge(line: Line) -> bool:
+    def __is_okay_to_merge(line: Line, first_str_idx: int) -> bool:
         num_of_inline_string_comments = 0
         set_of_prefixes = set()
-        for leaf in line.leaves:
-            if leaf.type == token.STRING:
-                prefix = get_string_prefix(leaf.value)
-                if prefix:
-                    set_of_prefixes.add(prefix)
+        for leaf in line.leaves[first_str_idx:]:
+            if leaf.type != token.STRING:
+                break
 
-                if id(leaf) in line.comments:
-                    num_of_inline_string_comments += 1
+            prefix = get_string_prefix(leaf.value)
+            if prefix:
+                set_of_prefixes.add(prefix)
+
+            if id(leaf) in line.comments:
+                num_of_inline_string_comments += 1
 
         if num_of_inline_string_comments > 1 or len(set_of_prefixes) > 1:
             return False
