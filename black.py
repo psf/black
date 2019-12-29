@@ -1574,6 +1574,14 @@ class Line:
             n.type in TEST_DESCENDANTS for n in subscript_start.pre_order()
         )
 
+    def clone(self) -> "Line":
+        return Line(
+            depth=self.depth,
+            bracket_tracker=self.bracket_tracker,
+            inside_brackets=self.inside_brackets,
+            should_explode=self.should_explode,
+        )
+
     def __str__(self) -> str:
         """Render the line."""
         if not self:
@@ -2542,7 +2550,7 @@ def remove_bad_trailing_commas(line: Line) -> Line:
     already_seen_lpar = False
     skip_next_rpar = False
 
-    new_line = clone_line(line)
+    new_line = line.clone()
     for old_leaf in line.leaves:
         if old_leaf.type == token.COMMA:
             continue
@@ -2652,7 +2660,7 @@ def merge_first_string_group(line: Line, normalize_strings: bool) -> Tuple[Line,
     old_comments = line.comments
     new_comments = {}
 
-    new_line = clone_line(line)
+    new_line = line.clone()
 
     for i, old_leaf in enumerate(line.leaves):
         if i == first_str_idx:
@@ -2842,7 +2850,7 @@ class StringAtomicSplitter(StringSplitter):
         rest_value = line.leaves[self.string_idx].value
         prefix = get_string_prefix(rest_value)
 
-        rest_line = clone_line(line)
+        rest_line = line.clone()
         rest_leaf = Leaf(token.STRING, rest_value)
         rest_line.append(rest_leaf)
 
@@ -2890,7 +2898,7 @@ class StringAtomicSplitter(StringSplitter):
                     next_value = rest_value[:idx] + QUOTE
                 next_value = self.normalize_f_string(next_value, prefix)
 
-            next_line = clone_line(line)
+            next_line = line.clone()
 
             if prepend_plus:
                 plus_leaf = Leaf(token.PLUS, "+")
@@ -2910,7 +2918,7 @@ class StringAtomicSplitter(StringSplitter):
             if drop_pointless_f_prefix:
                 rest_value = self.normalize_f_string(rest_value, prefix)
 
-            rest_line = clone_line(line)
+            rest_line = line.clone()
             rest_leaf = Leaf(token.STRING, rest_value)
             rest_line.append(rest_leaf)
 
@@ -2927,7 +2935,7 @@ class StringAtomicSplitter(StringSplitter):
         insert_str_child(rest_leaf)
 
         if len(line.leaves) > (self.string_idx + 1):
-            non_string_line = clone_line(rest_line)
+            non_string_line = rest_line.clone()
             append_leaves(non_string_line, line, line.leaves[self.string_idx + 1 :])
 
             if (
@@ -2935,7 +2943,7 @@ class StringAtomicSplitter(StringSplitter):
                 + len(line_to_string(non_string_line))
                 - non_string_line.depth * 4
             ) <= self.line_length:
-                last_line = clone_line(line)
+                last_line = line.clone()
 
                 append_leaves(
                     last_line, line, rest_line.leaves + non_string_line.leaves
@@ -2998,7 +3006,8 @@ class StringCompoundSplitter(StringSplitter):
         if line.leaves[comma_idx].type == token.COMMA:
             ends_with_comma = True
 
-        first_line = clone_line(line, comments=line.comments)
+        first_line = line.clone()
+        first_line.comments = line.comments
         left_leaves = line.leaves[: self.string_idx]
         old_parens_exist = False
         if left_leaves and left_leaves[-1].type == token.LPAR:
@@ -3044,7 +3053,7 @@ class StringCompoundSplitter(StringSplitter):
 
         yield string_line
 
-        last_line = clone_line(line)
+        last_line = line.clone()
         new_rpar_leaf = Leaf(token.RPAR, ")")
         if old_rpar_leaf is not None:
             replace_child(old_rpar_leaf, new_rpar_leaf)
@@ -3105,17 +3114,6 @@ def get_string_prefix(string: str) -> str:
         prefix_idx += 1
 
     return prefix
-
-
-def clone_line(line: Line, comments: Dict[LeafID, List[Leaf]] = None,) -> Line:
-    comments = dict() if comments is None else comments
-    return Line(
-        depth=line.depth,
-        bracket_tracker=line.bracket_tracker,
-        inside_brackets=line.inside_brackets,
-        should_explode=line.should_explode,
-        comments=comments,
-    )
 
 
 def left_hand_split(line: Line, _features: Collection[Feature] = ()) -> Iterator[Line]:
