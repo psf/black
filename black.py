@@ -2473,6 +2473,7 @@ def split_line(
             return ST(line_length, normalize_strings)
 
         string_merge = init_st(StringMerger)
+        string_fix = init_st(StringFixer)
         string_arith_expr_split = init_st(StringArithExprSplitter)
         string_term_split = init_st(StringTermSplitter)
         string_expr_split = init_st(StringExprSplitter)
@@ -2480,6 +2481,7 @@ def split_line(
         if line.inside_brackets:
             split_funcs = [
                 string_merge,
+                string_fix,
                 string_arith_expr_split,
                 delimiter_split,
                 standalone_comment_split,
@@ -2490,6 +2492,7 @@ def split_line(
         else:
             split_funcs = [
                 string_merge,
+                string_fix,
                 string_term_split,
                 string_expr_split,
                 rhs,
@@ -2573,6 +2576,38 @@ class StringTransformerMixin(StringTransformer):
         yield from self._do_transform(line, string_idx)
 
 
+class StringFixer(StringTransformerMixin):
+    @property
+    def _my_regexp(self) -> str:
+        return r"^[A-Za-z0-9_]+\(\(?" + STRING_GROUP_REGEXP + r"\)?,\)"
+
+    def _do_transform(self, line: Line, string_idx: Optional[int]) -> Iterator[Line]:
+        already_seen_lpar = False
+        skip_next_rpar = False
+
+        new_line = line.clone()
+        for old_leaf in line.leaves:
+            if old_leaf.type == token.COMMA:
+                continue
+
+            if already_seen_lpar and old_leaf.type == token.LPAR:
+                skip_next_rpar = True
+                continue
+
+            if old_leaf.type == token.LPAR:
+                already_seen_lpar = True
+
+            if skip_next_rpar and old_leaf.type == token.RPAR:
+                skip_next_rpar = False
+                continue
+
+            new_leaf = Leaf(old_leaf.type, old_leaf.value)
+            replace_child(old_leaf, new_leaf)
+            new_line.append(new_leaf)
+
+        yield new_line
+
+
 class StringMerger(StringTransformerMixin):
     @property
     def _my_regexp(self) -> str:
@@ -2593,8 +2628,6 @@ class StringMerger(StringTransformerMixin):
 
         if string_idx is not None:
             new_line = self.__merge_first_string_group(new_line, string_idx)
-
-        new_line = self.__remove_bad_trailing_commas(new_line)
 
         yield new_line
 
@@ -2729,37 +2762,6 @@ class StringMerger(StringTransformerMixin):
         new_line.comments = new_comments
 
         CUSTOM_STRING_BREAKPOINTS[id(string_leaf.value)] = tuple(custom_breakpoints)
-
-        return new_line
-
-    @staticmethod
-    def __remove_bad_trailing_commas(line: Line) -> Line:
-        line_str = line_to_string(line)
-        if not re.match(r"^[A-Za-z0-9_]+\(\(?" + STRING_REGEXP + r"\)?,\)", line_str):
-            return line
-
-        already_seen_lpar = False
-        skip_next_rpar = False
-
-        new_line = line.clone()
-        for old_leaf in line.leaves:
-            if old_leaf.type == token.COMMA:
-                continue
-
-            if already_seen_lpar and old_leaf.type == token.LPAR:
-                skip_next_rpar = True
-                continue
-
-            if old_leaf.type == token.LPAR:
-                already_seen_lpar = True
-
-            if skip_next_rpar and old_leaf.type == token.RPAR:
-                skip_next_rpar = False
-                continue
-
-            new_leaf = Leaf(old_leaf.type, old_leaf.value)
-            replace_child(old_leaf, new_leaf)
-            new_line.append(new_leaf)
 
         return new_line
 
