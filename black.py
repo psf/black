@@ -2541,7 +2541,7 @@ class StringTransformerMixin(StringTransformer):
         pass
 
     @abstractmethod
-    def _do_split(self, line: Line) -> Iterator[Line]:
+    def _do_transform(self, line: Line) -> Iterator[Line]:
         pass
 
     def _do_validate(self, line: Line) -> None:
@@ -2571,7 +2571,7 @@ class StringTransformerMixin(StringTransformer):
                     "leaf in this line that contains this string."
                 )
 
-        yield from self._do_split(line)
+        yield from self._do_transform(line)
 
 
 class StringMerger(StringTransformerMixin):
@@ -2579,7 +2579,7 @@ class StringMerger(StringTransformerMixin):
     def _my_regexp(self) -> str:
         return r"^[\s\S]*$"
 
-    def _do_split(self, line: Line) -> Iterator[Line]:
+    def _do_transform(self, line: Line) -> Iterator[Line]:
         # Merge strings that were split across multiple lines using backslashes.
         for leaf in line.leaves:
             if leaf.type == token.STRING and leaf.value.lstrip(STRING_PREFIX_CHARS)[
@@ -2773,7 +2773,7 @@ class StringSplitterMixin(StringTransformerMixin):
         pass
 
     @abstractmethod
-    def _do_split(self, line: Line) -> Iterator[Line]:
+    def _do_transform(self, line: Line) -> Iterator[Line]:
         pass
 
     def _do_validate(self, line: Line) -> None:
@@ -2871,7 +2871,7 @@ class StringAtomicSplitter(StringSplitterMixin):
             + "$"
         )
 
-    def _do_split(self, line: Line) -> Iterator[Line]:
+    def _do_transform(self, line: Line) -> Iterator[Line]:
         insert_str_child = self._insert_str_child_factory(line.leaves[self.string_idx])
 
         rest_value = line.leaves[self.string_idx].value
@@ -3016,7 +3016,7 @@ class StringExprSplitterMixin(StringSplitterMixin):
     def _my_regexp(self) -> str:
         pass
 
-    def _do_split(self, line: Line) -> Iterator[Line]:
+    def _do_transform(self, line: Line) -> Iterator[Line]:
         insert_str_child = self._insert_str_child_factory(line.leaves[self.string_idx])
 
         comma_idx = len(line.leaves) - 1
