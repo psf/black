@@ -2654,198 +2654,189 @@ class StringMerger(StringSplitter):
         return r"^[\s\S]*$"
 
     def _do_split(self, line: Line) -> Iterator[Line]:
-        yield merge_strings(line, self.normalize_strings)
+        # Merge strings that were split across multiple lines using backslashes.
+        for leaf in line.leaves:
+            if leaf.type == token.STRING and leaf.value.lstrip(STRING_PREFIX_CHARS)[
+                :3
+            ] not in {'"""', "'''"}:
+                leaf.value = leaf.value.replace("\\\n", "")
 
+        (new_line, line_was_changed) = self.merge_first_string_group(line)
+        while line_was_changed:
+            (new_line, line_was_changed) = self.merge_first_string_group(new_line)
 
-def merge_strings(line: Line, normalize_strings: bool) -> Line:
-    # Merge strings that were split across multiple lines using backslashes.
-    for leaf in line.leaves:
-        if leaf.type == token.STRING and leaf.value.lstrip(STRING_PREFIX_CHARS)[
-            :3
-        ] not in {'"""', "'''"}:
-            leaf.value = leaf.value.replace("\\\n", "")
+        new_line = self.remove_bad_trailing_commas(new_line)
 
-    (new_line, line_was_changed) = merge_first_string_group(
-        line, normalize_strings=normalize_strings
-    )
-    while line_was_changed:
-        (new_line, line_was_changed) = merge_first_string_group(
-            new_line, normalize_strings=normalize_strings
-        )
+        yield new_line
 
-    new_line = remove_bad_trailing_commas(new_line)
+    def merge_first_string_group(self, line: Line) -> Tuple[Line, bool]:
+        first_str_idx = self.get_string_group_index(line)
 
-    return new_line
-
-
-def remove_bad_trailing_commas(line: Line) -> Line:
-    line_str = line_to_string(line)
-    if not re.match(r"^[A-Za-z0-9_]+\(\(?" + STRING_REGEXP + r"\)?,\)", line_str):
-        return line
-
-    already_seen_lpar = False
-    skip_next_rpar = False
-
-    new_line = line.clone()
-    for old_leaf in line.leaves:
-        if old_leaf.type == token.COMMA:
-            continue
-
-        if already_seen_lpar and old_leaf.type == token.LPAR:
-            skip_next_rpar = True
-            continue
-
-        if old_leaf.type == token.LPAR:
-            already_seen_lpar = True
-
-        if skip_next_rpar and old_leaf.type == token.RPAR:
-            skip_next_rpar = False
-            continue
-
-        new_leaf = Leaf(old_leaf.type, old_leaf.value)
-        replace_child(old_leaf, new_leaf)
-        new_line.append(new_leaf)
-
-    return new_line
-
-
-def merge_first_string_group(line: Line, normalize_strings: bool) -> Tuple[Line, bool]:
-    first_str_idx = get_string_group_index(line)
-
-    if first_str_idx is None:
-        return (line, False)
-
-    atom_node = line.leaves[first_str_idx].parent
-    string_value = ""
-    prefix = ""
-
-    BREAK_MARK = "@@@@@ BLACK BREAKPOINT MARKER @@@@@"
-
-    next_str_idx = first_str_idx
-    QUOTE = line.leaves[next_str_idx].value[-1]
-    num_of_strings = 0
-    at_least_one_string_contains_spaces = False
-    custom_breakpoints = []
-    prefix_tracker = []
-    while (
-        len(line.leaves) > next_str_idx
-        and line.leaves[next_str_idx].type == token.STRING
-    ):
-        if (
-            line.leaves[next_str_idx]
-            .value.lstrip(STRING_PREFIX_CHARS)
-            .startswith(("'''", '"""'))
-        ):
+        if first_str_idx is None:
             return (line, False)
 
-        num_of_strings += 1
+        atom_node = line.leaves[first_str_idx].parent
+        string_value = ""
+        prefix = ""
 
-        next_string_value = line.leaves[next_str_idx].value
-        if " " in next_string_value:
-            at_least_one_string_contains_spaces = True
+        BREAK_MARK = "@@@@@ BLACK BREAKPOINT MARKER @@@@@"
 
-        naked_string_value = string_value[len(prefix) + 1 : -1]
-        naked_string_value = re.sub(
-            r"([^\\])" + QUOTE, r"\1\\" + QUOTE, naked_string_value
-        )
+        next_str_idx = first_str_idx
+        QUOTE = line.leaves[next_str_idx].value[-1]
+        num_of_strings = 0
+        at_least_one_string_contains_spaces = False
+        custom_breakpoints = []
+        prefix_tracker = []
+        while (
+            len(line.leaves) > next_str_idx
+            and line.leaves[next_str_idx].type == token.STRING
+        ):
+            if (
+                line.leaves[next_str_idx]
+                .value.lstrip(STRING_PREFIX_CHARS)
+                .startswith(("'''", '"""'))
+            ):
+                return (line, False)
 
-        next_prefix = get_string_prefix(next_string_value)
-        if not prefix:
-            prefix = next_prefix
-        has_prefix = next_prefix != ""
-        prefix_tracker.append(has_prefix)
+            num_of_strings += 1
 
-        naked_next_string_value = next_string_value[len(next_prefix) + 1 : -1]
-        naked_next_string_value = re.sub(
-            r"([^\\])" + QUOTE, r"\1\\" + QUOTE, naked_next_string_value
-        )
+            next_string_value = line.leaves[next_str_idx].value
+            if " " in next_string_value:
+                at_least_one_string_contains_spaces = True
 
-        string_value = (
-            prefix
-            + QUOTE
-            + naked_string_value
-            + naked_next_string_value
-            + BREAK_MARK
-            + QUOTE
-        )
-        next_str_idx += 1
+            naked_string_value = string_value[len(prefix) + 1 : -1]
+            naked_string_value = re.sub(
+                r"([^\\])" + QUOTE, r"\1\\" + QUOTE, naked_string_value
+            )
 
-    if not at_least_one_string_contains_spaces:
-        return (line, False)
+            next_prefix = get_string_prefix(next_string_value)
+            if not prefix:
+                prefix = next_prefix
+            has_prefix = next_prefix != ""
+            prefix_tracker.append(has_prefix)
 
-    temp_string_leaf = Leaf(token.STRING, string_value)
-    if normalize_strings:
-        normalize_string_quotes(temp_string_leaf)
+            naked_next_string_value = next_string_value[len(next_prefix) + 1 : -1]
+            naked_next_string_value = re.sub(
+                r"([^\\])" + QUOTE, r"\1\\" + QUOTE, naked_next_string_value
+            )
 
-    naked_string_value = temp_string_leaf.value[len(prefix) + 1 : -1]
-    for has_prefix in prefix_tracker:
-        found_idx = naked_string_value.find(BREAK_MARK)
-        assert (
-            found_idx >= 0
-        ), "Logic error while filling the custom string breakpoint cache."
+            string_value = (
+                prefix
+                + QUOTE
+                + naked_string_value
+                + naked_next_string_value
+                + BREAK_MARK
+                + QUOTE
+            )
+            next_str_idx += 1
 
-        naked_string_value = naked_string_value[found_idx + len(BREAK_MARK) :]
-        breakpoint_idx = found_idx + (len(prefix) if has_prefix else 0) + 1
-        custom_breakpoints.append((has_prefix, breakpoint_idx))
+        if not at_least_one_string_contains_spaces:
+            return (line, False)
 
-    string_leaf = Leaf(token.STRING, temp_string_leaf.value.replace(BREAK_MARK, ""))
+        temp_string_leaf = Leaf(token.STRING, string_value)
+        if self.normalize_strings:
+            normalize_string_quotes(temp_string_leaf)
 
-    if atom_node is not None:
-        replace_child(atom_node, string_leaf)
+        naked_string_value = temp_string_leaf.value[len(prefix) + 1 : -1]
+        for has_prefix in prefix_tracker:
+            found_idx = naked_string_value.find(BREAK_MARK)
+            assert (
+                found_idx >= 0
+            ), "Logic error while filling the custom string breakpoint cache."
 
-    old_comments = line.comments
-    new_comments = {}
+            naked_string_value = naked_string_value[found_idx + len(BREAK_MARK) :]
+            breakpoint_idx = found_idx + (len(prefix) if has_prefix else 0) + 1
+            custom_breakpoints.append((has_prefix, breakpoint_idx))
 
-    new_line = line.clone()
+        string_leaf = Leaf(token.STRING, temp_string_leaf.value.replace(BREAK_MARK, ""))
 
-    for i, old_leaf in enumerate(line.leaves):
-        if i == first_str_idx:
-            new_line.append(string_leaf)
+        if atom_node is not None:
+            replace_child(atom_node, string_leaf)
 
-        if first_str_idx <= i < first_str_idx + num_of_strings:
+        old_comments = line.comments
+        new_comments = {}
+
+        new_line = line.clone()
+
+        for i, old_leaf in enumerate(line.leaves):
+            if i == first_str_idx:
+                new_line.append(string_leaf)
+
+            if first_str_idx <= i < first_str_idx + num_of_strings:
+                if id(old_leaf) in old_comments:
+                    new_comments[id(string_leaf)] = old_comments[id(old_leaf)]
+                continue
+
+            new_leaf = Leaf(old_leaf.type, old_leaf.value)
+
             if id(old_leaf) in old_comments:
-                new_comments[id(string_leaf)] = old_comments[id(old_leaf)]
-            continue
+                new_comments[id(new_leaf)] = old_comments[id(old_leaf)]
 
-        new_leaf = Leaf(old_leaf.type, old_leaf.value)
+            replace_child(old_leaf, new_leaf)
+            new_line.append(new_leaf)
 
-        if id(old_leaf) in old_comments:
-            new_comments[id(new_leaf)] = old_comments[id(old_leaf)]
+        new_line.comments = new_comments
 
-        replace_child(old_leaf, new_leaf)
-        new_line.append(new_leaf)
+        CUSTOM_STRING_BREAKPOINTS[id(string_leaf.value)] = tuple(custom_breakpoints)
 
-    new_line.comments = new_comments
+        return (new_line, True)
 
-    CUSTOM_STRING_BREAKPOINTS[id(string_leaf.value)] = tuple(custom_breakpoints)
+    @staticmethod
+    def get_string_group_index(line: Line) -> Optional[int]:
+        num_of_inline_string_comments = 0
+        set_of_prefixes = set()
+        for leaf in line.leaves:
+            if leaf.type == token.STRING:
+                prefix = get_string_prefix(leaf.value)
+                if prefix:
+                    set_of_prefixes.add(prefix)
 
-    return (new_line, True)
+                if id(leaf) in line.comments:
+                    num_of_inline_string_comments += 1
 
+        if num_of_inline_string_comments > 1 or len(set_of_prefixes) > 1:
+            return None
 
-def get_string_group_index(line: Line) -> Optional[int]:
-    num_of_inline_string_comments = 0
-    set_of_prefixes = set()
-    for leaf in line.leaves:
-        if leaf.type == token.STRING:
-            prefix = get_string_prefix(leaf.value)
-            if prefix:
-                set_of_prefixes.add(prefix)
+        for i, leaf in enumerate(line.leaves):
+            if (
+                i + 1 < len(line.leaves)
+                and leaf.type == token.STRING
+                and line.leaves[i + 1].type == token.STRING
+            ):
+                return i
 
-            if id(leaf) in line.comments:
-                num_of_inline_string_comments += 1
-
-    if num_of_inline_string_comments > 1 or len(set_of_prefixes) > 1:
         return None
 
-    for i, leaf in enumerate(line.leaves):
-        if (
-            i + 1 < len(line.leaves)
-            and leaf.type == token.STRING
-            and line.leaves[i + 1].type == token.STRING
-        ):
-            return i
+    @staticmethod
+    def remove_bad_trailing_commas(line: Line) -> Line:
+        line_str = line_to_string(line)
+        if not re.match(r"^[A-Za-z0-9_]+\(\(?" + STRING_REGEXP + r"\)?,\)", line_str):
+            return line
 
-    return None
+        already_seen_lpar = False
+        skip_next_rpar = False
+
+        new_line = line.clone()
+        for old_leaf in line.leaves:
+            if old_leaf.type == token.COMMA:
+                continue
+
+            if already_seen_lpar and old_leaf.type == token.LPAR:
+                skip_next_rpar = True
+                continue
+
+            if old_leaf.type == token.LPAR:
+                already_seen_lpar = True
+
+            if skip_next_rpar and old_leaf.type == token.RPAR:
+                skip_next_rpar = False
+                continue
+
+            new_leaf = Leaf(old_leaf.type, old_leaf.value)
+            replace_child(old_leaf, new_leaf)
+            new_line.append(new_leaf)
+
+        return new_line
 
 
 class StringAtomicSplitter(StringSplitter):
