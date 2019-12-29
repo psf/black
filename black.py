@@ -2435,7 +2435,13 @@ def split_line(
         yield line
         return
 
-    line = merge_strings(line, normalize_strings=normalize_strings)
+    # Merge strings that were split across multiple lines using backslashes.
+    for leaf in line.leaves:
+        if leaf.type == token.STRING and leaf.value.lstrip(STRING_PREFIX_CHARS)[
+            :3
+        ] not in {'"""', "'''"}:
+            leaf.value = leaf.value.replace("\\\n", "")
+
     line_str = line_to_string(line)
 
     if (
@@ -2473,12 +2479,14 @@ def split_line(
             """Initialize String Splitter"""
             return SS(line_length, normalize_strings)
 
+        string_merge = init_ss(StringMerger)
         string_arith_expr_split = init_ss(StringArithExprSplitter)
         string_atomic_split = init_ss(StringAtomicSplitter)
         string_expr_split = init_ss(StringExprSplitter)
 
         if line.inside_brackets:
             split_funcs = [
+                string_merge,
                 string_arith_expr_split,
                 delimiter_split,
                 standalone_comment_split,
@@ -2488,6 +2496,7 @@ def split_line(
             ]
         else:
             split_funcs = [
+                string_merge,
                 string_atomic_split,
                 string_expr_split,
                 rhs,
@@ -2521,14 +2530,141 @@ def split_line(
         yield line
 
 
-def merge_strings(line: Line, normalize_strings: bool) -> Line:
-    # Merge strings that were split across multiple lines using backslashes.
-    for leaf in line.leaves:
-        if leaf.type == token.STRING and leaf.value.lstrip(STRING_PREFIX_CHARS)[
-            :3
-        ] not in {'"""', "'''"}:
-            leaf.value = leaf.value.replace("\\\n", "")
+@dataclass  # type: ignore
+class StringSplitter(metaclass=ABCMeta):
+    line_length: int
+    normalize_strings: bool
+    string_idx: int = field(init=False, repr=False)
 
+    STRING_CHILD_IDX_MAP: ClassVar[Dict[int, Optional[int]]] = {}
+
+    @abstractproperty
+    def _my_regexp(self) -> str:
+        pass
+
+    @abstractmethod
+    def _do_split(self, line: Line) -> Iterator[Line]:
+        pass
+
+    def __call__(self, line: Line, _features: Collection[Feature]) -> Iterator[Line]:
+        line_str = line_to_string(line)
+        match = re.match(self._my_regexp, line_str)
+
+        if not match:
+            raise CannotSplit(
+                f"The string splitter {self.__class__.__name__} does not "
+                "recognize this line as one that it can split."
+            )
+
+        self._validate(line)
+        if match.groups():
+            string_value = match.groups()[0]
+            for i, leaf in enumerate(line.leaves):
+                if leaf.type == token.STRING and leaf.value == string_value:
+                    self.string_idx = i
+                    break
+            else:
+                raise RuntimeError(
+                    f"Logic Error. {self.__class__.__name__} claims to know the "
+                    f"string value is {string_value} but is unable to find a "
+                    "leaf in this line that contains this string."
+                )
+
+        yield from self._do_split(line)
+
+    def _validate(self, line: Line) -> None:
+        line_length = self.line_length
+        if is_line_short_enough(line, line_length=line_length):
+            raise CannotSplit("Line is already short enough. No reason to split.")
+
+        line_str = line_to_string(line)
+        line_str = re.sub(r"^ *", "", line_str)
+        line_str = re.sub(r"^assert .*(\)?, ?" + STRING_REGEXP + ")", r"\1", line_str)
+        line_str = re.sub(STRING_GROUP_REGEXP + r" ?\+.*", r"\1", line_str)
+        line_str = re.sub(r".* ?\+ ?" + STRING_GROUP_REGEXP, r"\1", line_str)
+        line_str = re.sub("(" + STRING_REGEXP + " ?% ?" + ").*", r"\1", line_str)
+        line_str = re.sub(
+            "(" + STRING_REGEXP + r"\.[A-Za-z0-9_]+\(" + ").*", r"\1", line_str
+        )
+
+        if line.comments and list(line.comments.values())[0]:
+            line_str = line_str.replace(str(list(line.comments.values())[0][0]), "")
+            line_str = re.sub(r"\s*$", "", line_str)
+
+        max_line_length = line_length - (line.depth * 4)
+        if len(line_str) <= max_line_length:
+            raise CannotSplit(
+                "The string itself is not what is causing this line to be too long."
+            )
+
+        if line.comments and len(line.comments.values()) > 1:
+            raise CannotSplit("Multiple inline comments detected.")
+
+        for leaf in line.leaves:
+            if leaf.type == token.STRING:
+                if not leaf.parent or [L.type for L in leaf.parent.children] == [
+                    token.STRING,
+                    token.NEWLINE,
+                ]:
+                    raise CannotSplit("This string appears to be pointless.")
+
+                value = leaf.value.lstrip(STRING_PREFIX_CHARS)
+                if value[:3] in {'"""', "'''"}:
+                    raise CannotSplit(
+                        "This split function does not work on multiline strings."
+                    )
+
+        if (
+            line.comments
+            and list(line.comments.values())[0]
+            and re.match(
+                r"^#\s*([a-z_0-9]+:.*|noqa)\s*$",
+                list(line.comments.values())[0][0].value,
+                re.IGNORECASE,
+            )
+        ):
+            raise CannotSplit(
+                "Line appears to end with an inline pragma comment. Splitting the line "
+                "could modify the pragma's behavior."
+            )
+
+    @staticmethod
+    def _insert_str_child_factory(string_leaf: Leaf) -> Callable[[LN], None]:
+        string_parent = string_leaf.parent
+
+        child_idx = None
+        if string_parent:
+            child_idx = string_leaf.remove()
+            StringSplitter.STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx
+            if child_idx is None:
+                raise RuntimeError(
+                    f"Something is wrong here. If {string_parent} is the parent of "
+                    f"{string_leaf}, then how is {string_leaf} not a child of "
+                    f"{string_parent}?"
+                )
+
+        def insert_str_child(child: LN) -> None:
+            child_idx = StringSplitter.STRING_CHILD_IDX_MAP.get(id(string_leaf), None)
+            if string_parent and child_idx is not None:
+                string_parent.insert_child(child_idx, child)
+                StringSplitter.STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx + 1
+
+        return insert_str_child
+
+
+class StringMerger(StringSplitter):
+    def _validate(self, line: Line) -> None:
+        pass
+
+    @property
+    def _my_regexp(self) -> str:
+        return "^.*$"
+
+    def _do_split(self, line: Line) -> Iterator[Line]:
+        yield merge_strings(line, self.normalize_strings)
+
+
+def merge_strings(line: Line, normalize_strings: bool) -> Line:
     (new_line, line_was_changed) = merge_first_string_group(
         line, normalize_strings=normalize_strings
     )
@@ -2710,127 +2846,6 @@ def get_string_group_index(line: Line) -> Optional[int]:
             return i
 
     return None
-
-
-@dataclass  # type: ignore
-class StringSplitter(metaclass=ABCMeta):
-    line_length: int
-    normalize_strings: bool
-    string_idx: int = field(init=False, repr=False)
-
-    STRING_CHILD_IDX_MAP: ClassVar[Dict[int, Optional[int]]] = {}
-
-    @abstractproperty
-    def _my_regexp(self) -> str:
-        pass
-
-    @abstractmethod
-    def _do_split(self, line: Line) -> Iterator[Line]:
-        pass
-
-    def __call__(self, line: Line, _features: Collection[Feature]) -> Iterator[Line]:
-        line_str = line_to_string(line)
-        match = re.match(self._my_regexp, line_str)
-
-        if not match:
-            raise CannotSplit(
-                f"The string splitter {self.__class__.__name__} does not "
-                "recognize this line as one that it can split."
-            )
-
-        self.__validate(line)
-        string_value = match.groups()[0]
-        for i, leaf in enumerate(line.leaves):
-            if leaf.type == token.STRING and leaf.value == string_value:
-                self.string_idx = i
-                break
-        else:
-            raise RuntimeError(
-                f"Logic Error. {self.__class__.__name__} claims to know the "
-                f"string value is {string_value} but is unable to find a "
-                "leaf in this line that contains this string."
-            )
-
-        yield from self._do_split(line)
-
-    def __validate(self, line: Line) -> None:
-        line_length = self.line_length
-        if is_line_short_enough(line, line_length=line_length):
-            raise CannotSplit("Line is already short enough. No reason to split.")
-
-        line_str = line_to_string(line)
-        line_str = re.sub(r"^ *", "", line_str)
-        line_str = re.sub(r"^assert .*(\)?, ?" + STRING_REGEXP + ")", r"\1", line_str)
-        line_str = re.sub(STRING_GROUP_REGEXP + r" ?\+.*", r"\1", line_str)
-        line_str = re.sub(r".* ?\+ ?" + STRING_GROUP_REGEXP, r"\1", line_str)
-        line_str = re.sub("(" + STRING_REGEXP + " ?% ?" + ").*", r"\1", line_str)
-        line_str = re.sub(
-            "(" + STRING_REGEXP + r"\.[A-Za-z0-9_]+\(" + ").*", r"\1", line_str
-        )
-
-        if line.comments and list(line.comments.values())[0]:
-            line_str = line_str.replace(str(list(line.comments.values())[0][0]), "")
-            line_str = re.sub(r"\s*$", "", line_str)
-
-        max_line_length = line_length - (line.depth * 4)
-        if len(line_str) <= max_line_length:
-            raise CannotSplit(
-                "The string itself is not what is causing this line to be too long."
-            )
-
-        if line.comments and len(line.comments.values()) > 1:
-            raise CannotSplit("Multiple inline comments detected.")
-
-        for leaf in line.leaves:
-            if leaf.type == token.STRING:
-                if not leaf.parent or [L.type for L in leaf.parent.children] == [
-                    token.STRING,
-                    token.NEWLINE,
-                ]:
-                    raise CannotSplit("This string appears to be pointless.")
-
-                value = leaf.value.lstrip(STRING_PREFIX_CHARS)
-                if value[:3] in {'"""', "'''"}:
-                    raise CannotSplit(
-                        "This split function does not work on multiline strings."
-                    )
-
-        if (
-            line.comments
-            and list(line.comments.values())[0]
-            and re.match(
-                r"^#\s*([a-z_0-9]+:.*|noqa)\s*$",
-                list(line.comments.values())[0][0].value,
-                re.IGNORECASE,
-            )
-        ):
-            raise CannotSplit(
-                "Line appears to end with an inline pragma comment. Splitting the line "
-                "could modify the pragma's behavior."
-            )
-
-    @staticmethod
-    def _insert_str_child_factory(string_leaf: Leaf) -> Callable[[LN], None]:
-        string_parent = string_leaf.parent
-
-        child_idx = None
-        if string_parent:
-            child_idx = string_leaf.remove()
-            StringSplitter.STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx
-            if child_idx is None:
-                raise RuntimeError(
-                    f"Something is wrong here. If {string_parent} is the parent of "
-                    f"{string_leaf}, then how is {string_leaf} not a child of "
-                    f"{string_parent}?"
-                )
-
-        def insert_str_child(child: LN) -> None:
-            child_idx = StringSplitter.STRING_CHILD_IDX_MAP.get(id(string_leaf), None)
-            if string_parent and child_idx is not None:
-                string_parent.insert_child(child_idx, child)
-                StringSplitter.STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx + 1
-
-        return insert_str_child
 
 
 class StringAtomicSplitter(StringSplitter):
