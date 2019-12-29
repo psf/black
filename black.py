@@ -2533,7 +2533,7 @@ class StringTransformer(metaclass=ABCMeta):
         pass
 
 
-class StringTransformerMixin(StringTransformer, metaclass=ABCMeta):
+class StringTransformerMixin(StringTransformer):
     string_idx: int = field(init=False, repr=False)
 
     @abstractproperty
@@ -2765,7 +2765,7 @@ class StringMerger(StringTransformerMixin):
         return new_line
 
 
-class StringSplitterMixin(StringTransformerMixin, metaclass=ABCMeta):
+class StringSplitterMixin(StringTransformerMixin):
     STRING_CHILD_IDX_MAP: ClassVar[Dict[int, Optional[int]]] = {}
 
     @abstractproperty
@@ -3011,7 +3011,7 @@ class StringAtomicSplitter(StringSplitterMixin):
             return string
 
 
-class StringExprSplitterMixin(StringSplitterMixin, metaclass=ABCMeta):
+class StringExprSplitterMixin(StringSplitterMixin):
     @abstractproperty
     def _my_regexp(self) -> str:
         pass
