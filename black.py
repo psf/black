@@ -2475,7 +2475,7 @@ def split_line(
 
         string_arith_expr_split = init_ss(StringArithExprSplitter)
         string_atomic_split = init_ss(StringAtomicSplitter)
-        string_compound_split = init_ss(StringCompoundSplitter)
+        string_expr_split = init_ss(StringExprSplitter)
 
         if line.inside_brackets:
             split_funcs = [
@@ -2483,13 +2483,13 @@ def split_line(
                 delimiter_split,
                 standalone_comment_split,
                 string_atomic_split,
-                string_compound_split,
+                string_expr_split,
                 rhs,
             ]
         else:
             split_funcs = [
                 string_atomic_split,
-                string_compound_split,
+                string_expr_split,
                 rhs,
             ]
     for split_func in split_funcs:
@@ -2984,19 +2984,10 @@ class StringAtomicSplitter(StringSplitter):
             return string
 
 
-class StringCompoundSplitter(StringSplitter):
-    @property
+class StringNonAtomicSplitter(StringSplitter, metaclass=ABCMeta):
+    @abstractproperty
     def _my_regexp(self) -> str:
-        return (
-            r"^ *(?:return |else |assert .*, ?|(?:[A-Za-z0-9\._]*?|"
-            + STRING_REGEXP
-            + r") ?(?:\+?=|:) ?)?"
-            + STRING_GROUP_REGEXP
-            + STRING_DOT_OR_PERC_REGEXP
-            + ",?"
-            + STRING_END_COMMENT_REGEXP
-            + "$"
-        )
+        pass
 
     def _do_split(self, line: Line) -> Iterator[Line]:
         insert_str_child = self._insert_str_child_factory(line.leaves[self.string_idx])
@@ -3069,7 +3060,22 @@ class StringCompoundSplitter(StringSplitter):
         yield last_line
 
 
-class StringArithExprSplitter(StringCompoundSplitter):
+class StringExprSplitter(StringNonAtomicSplitter):
+    @property
+    def _my_regexp(self) -> str:
+        return (
+            r"^ *(?:return |else |assert .*, ?|(?:[A-Za-z0-9\._]*?|"
+            + STRING_REGEXP
+            + r") ?(?:\+?=|:) ?)?"
+            + STRING_GROUP_REGEXP
+            + STRING_DOT_OR_PERC_REGEXP
+            + ",?"
+            + STRING_END_COMMENT_REGEXP
+            + "$"
+        )
+
+
+class StringArithExprSplitter(StringNonAtomicSplitter):
     @property
     def _my_regexp(self) -> str:
         return (
