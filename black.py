@@ -2474,7 +2474,7 @@ def split_line(
 
         string_merge = init_st(StringMerger)
         string_arith_expr_split = init_st(StringArithExprSplitter)
-        string_atomic_split = init_st(StringAtomicSplitter)
+        string_term_split = init_st(StringTermSplitter)
         string_expr_split = init_st(StringExprSplitter)
 
         if line.inside_brackets:
@@ -2483,14 +2483,14 @@ def split_line(
                 string_arith_expr_split,
                 delimiter_split,
                 standalone_comment_split,
-                string_atomic_split,
+                string_term_split,
                 string_expr_split,
                 rhs,
             ]
         else:
             split_funcs = [
                 string_merge,
-                string_atomic_split,
+                string_term_split,
                 string_expr_split,
                 rhs,
             ]
@@ -2860,7 +2860,7 @@ class StringSplitterMixin(StringTransformerMixin):
         return insert_str_child
 
 
-class StringAtomicSplitter(StringSplitterMixin):
+class StringTermSplitter(StringSplitterMixin):
     @property
     def _my_regexp(self) -> str:
         return (
@@ -3044,7 +3044,7 @@ class StringExprSplitterMixin(StringSplitterMixin):
         yield first_line
 
         # Only need to yield one (possibly too long) line, since the
-        # `StringAtomicSplitter` will break it down further if necessary.
+        # `StringTermSplitter` will break it down further if necessary.
         string_value = line.leaves[self.string_idx].value
         string_line = Line(
             depth=line.depth + 1,
