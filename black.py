@@ -2760,7 +2760,7 @@ class StringMerger(StringTransformerMixin):
 class StringArgCommaStripper(StringTransformerMixin):
     @property
     def _my_regexp(self) -> str:
-        return r"^[A-Za-z0-9_]+\(" + STRING_GROUP_REGEXP + r",\).*$"
+        return r"^.*?[A-Za-z0-9_]+\(" + STRING_GROUP_REGEXP + r",\).*$"
 
     def _do_transform(self, line: Line, string_idx: Optional[int]) -> Iterator[Line]:
         assert string_idx is not None
