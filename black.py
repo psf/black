@@ -2473,7 +2473,8 @@ def split_line(
             return ST(line_length, normalize_strings)
 
         string_merge = init_st(StringMerger)
-        string_fix = init_st(StringFixer)
+        string_arg_comma_strip = init_st(StringArgCommaStripper)
+        string_parens_strip = init_st(StringParensStripper)
         string_arith_expr_split = init_st(StringArithExprSplitter)
         string_term_split = init_st(StringTermSplitter)
         string_expr_split = init_st(StringExprSplitter)
@@ -2481,7 +2482,8 @@ def split_line(
         if line.inside_brackets:
             split_funcs = [
                 string_merge,
-                string_fix,
+                string_arg_comma_strip,
+                string_parens_strip,
                 string_arith_expr_split,
                 delimiter_split,
                 standalone_comment_split,
@@ -2492,7 +2494,8 @@ def split_line(
         else:
             split_funcs = [
                 string_merge,
-                string_fix,
+                string_arg_comma_strip,
+                string_parens_strip,
                 string_term_split,
                 string_expr_split,
                 rhs,
@@ -2574,38 +2577,6 @@ class StringTransformerMixin(StringTransformer):
                 )
 
         yield from self._do_transform(line, string_idx)
-
-
-class StringFixer(StringTransformerMixin):
-    @property
-    def _my_regexp(self) -> str:
-        return r"^[A-Za-z0-9_]+\(\(?" + STRING_GROUP_REGEXP + r"\)?,\)"
-
-    def _do_transform(self, line: Line, string_idx: Optional[int]) -> Iterator[Line]:
-        already_seen_lpar = False
-        skip_next_rpar = False
-
-        new_line = line.clone()
-        for old_leaf in line.leaves:
-            if old_leaf.type == token.COMMA:
-                continue
-
-            if already_seen_lpar and old_leaf.type == token.LPAR:
-                skip_next_rpar = True
-                continue
-
-            if old_leaf.type == token.LPAR:
-                already_seen_lpar = True
-
-            if skip_next_rpar and old_leaf.type == token.RPAR:
-                skip_next_rpar = False
-                continue
-
-            new_leaf = Leaf(old_leaf.type, old_leaf.value)
-            replace_child(old_leaf, new_leaf)
-            new_line.append(new_leaf)
-
-        yield new_line
 
 
 class StringMerger(StringTransformerMixin):
@@ -2784,6 +2755,71 @@ class StringMerger(StringTransformerMixin):
             return False
 
         return True
+
+
+class StringArgCommaStripper(StringTransformerMixin):
+    @property
+    def _my_regexp(self) -> str:
+        return r"^[A-Za-z0-9_]+\(" + STRING_GROUP_REGEXP + r",\).*$"
+
+    def _do_transform(self, line: Line, string_idx: Optional[int]) -> Iterator[Line]:
+        assert string_idx is not None
+        comma_idx = string_idx + 1
+        comma_leaf = line.leaves[comma_idx]
+
+        new_line = line.clone()
+        new_line.comments = line.comments.copy()
+
+        for i, old_leaf in enumerate(line.leaves):
+            if i == comma_idx:
+                continue
+
+            new_leaf = Leaf(old_leaf.type, old_leaf.value)
+            replace_child(old_leaf, new_leaf)
+            new_line.append(new_leaf)
+
+            if new_leaf.type == token.STRING and id(comma_leaf) in new_line.comments:
+                new_line.comments[id(new_leaf)] = new_line.comments[
+                    id(comma_leaf)
+                ].copy()
+                del new_line.comments[id(comma_leaf)]
+
+        yield new_line
+
+
+class StringParensStripper(StringTransformerMixin):
+    @property
+    def _my_regexp(self) -> str:
+        return r"^.*?" + r"[^A-z0-9_'\"] *\(" + STRING_GROUP_REGEXP + r"\)(?:[^\.].*)?$"
+
+    def _do_transform(self, line: Line, string_idx: Optional[int]) -> Iterator[Line]:
+        assert string_idx is not None
+
+        if (
+            id(line.leaves[string_idx - 1]) in line.comments
+            and id(line.leaves[string_idx + 1]) in line.comments
+        ):
+            raise CannotSplit(
+                "Cannot strip parens from string when both parens have inline comments."
+            )
+
+        new_line = line.clone()
+        new_line.comments = line.comments.copy()
+
+        append_leaves(new_line, line, line.leaves[: string_idx - 1])
+
+        string_leaf = Leaf(token.STRING, line.leaves[string_idx].value)
+        replace_child(line.leaves[string_idx - 1], string_leaf)
+        new_line.append(string_leaf)
+
+        for leaf in [line.leaves[string_idx - 1], line.leaves[string_idx + 1]]:
+            if id(leaf) in new_line.comments:
+                new_line.comments[id(string_leaf)] = new_line.comments[id(leaf)].copy()
+                del new_line.comments[id(leaf)]
+
+        append_leaves(new_line, line, line.leaves[string_idx + 2 :])
+
+        yield new_line
 
 
 class StringSplitterMixin(StringTransformerMixin):

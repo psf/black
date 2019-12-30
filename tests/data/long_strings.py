@@ -120,10 +120,35 @@ func_with_bad_comma(
 )
 
 func_with_bad_comma(
+    "This is a really long string argument to a function that has a trailing comma which should NOT be there.", # comment after comma
+)
+
+func_with_bad_comma(
     (
         "This is a really long string argument to a function that has a trailing comma"
         " which should NOT be there."
     ),
+)
+
+func_with_bad_comma(
+    (
+        "This is a really long string argument to a function that has a trailing comma"
+        " which should NOT be there."
+    ), # comment after comma
+)
+
+func_with_bad_parens(
+    ("short string that should have parens stripped"),
+    x,
+    y,
+    z,
+)
+
+func_with_bad_parens(
+    x,
+    y,
+    ("short string that should have parens stripped"),
+    z,
 )
 
 ########## REGRESSION TESTS ##########
@@ -466,7 +491,25 @@ func_with_bad_comma(
 
 func_with_bad_comma(
     "This is a really long string argument to a function that has a trailing comma"
+    " which should NOT be there."  # comment after comma
+)
+
+func_with_bad_comma(
+    "This is a really long string argument to a function that has a trailing comma"
     " which should NOT be there."
+)
+
+func_with_bad_comma(
+    "This is a really long string argument to a function that has a trailing comma"
+    " which should NOT be there."  # comment after comma
+)
+
+func_with_bad_parens(
+    "short string that should have parens stripped", x, y, z,
+)
+
+func_with_bad_parens(
+    x, y, "short string that should have parens stripped", z,
 )
 
 ########## REGRESSION TESTS ##########
