@@ -2843,11 +2843,11 @@ class StringSplitterMixin(StringTransformerMixin):
         line_str = re.sub(r"^ *", "", line_str)
         line_str = re.sub(r"^assert .*(\)?, ?" + STRING_REGEXP + ")", r"\1", line_str)
         line_str = re.sub(STRING_GROUP_REGEXP + r" ?\+.*", r"\1", line_str)
-        line_str = re.sub(r".* ?\+ ?" + STRING_GROUP_REGEXP, r"\1", line_str)
         line_str = re.sub("(" + STRING_REGEXP + " ?% ?" + ").*", r"\1", line_str)
         line_str = re.sub(
             "(" + STRING_REGEXP + r"\.[A-Za-z0-9_]+\(" + ").*", r"\1", line_str
         )
+        line_str = re.sub(r".* ?\+ ?" + STRING_GROUP_REGEXP, r"\1", line_str)
 
         if line.comments and list(line.comments.values())[0]:
             line_str = line_str.replace(str(list(line.comments.values())[0][0]), "")

@@ -212,6 +212,20 @@ class A:
             (x, y, z),
         )
 
+class A:
+    class B:
+        def foo():
+            xxxxx_xxxx(
+                xx, "\t"
+                "@xxxxxx '{xxxx_xxx}\t' > {xxxxxx_xxxx}.xxxxxxx;"
+                "{xxxx_xxx} >> {xxxxxx_xxxx}.xxxxxxx 2>&1; xx=$$?;"
+                "xxxx $$xx"
+                .format(xxxx_xxx=xxxx_xxxxxxx, xxxxxx_xxxx=xxxxxxx + "/" + xxxx_xxx_xxxx, x=xxx_xxxxx_xxxxx_xxx),
+                x,
+                y,
+                z,
+            )
+
 # output
 
 x = (
@@ -584,3 +598,25 @@ class A:
             ),
             (x, y, z),
         )
+
+
+class A:
+    class B:
+        def foo():
+            xxxxx_xxxx(
+                xx,
+                (
+                    "\t"
+                    "@xxxxxx '{xxxx_xxx}\t' > {xxxxxx_xxxx}.xxxxxxx;"
+                    "{xxxx_xxx} >> {xxxxxx_xxxx}.xxxxxxx 2>&1; xx=$$?;"
+                    "xxxx $$xx"
+                    .format(
+                        xxxx_xxx=xxxx_xxxxxxx,
+                        xxxxxx_xxxx=xxxxxxx + "/" + xxxx_xxx_xxxx,
+                        x=xxx_xxxxx_xxxxx_xxx,
+                    )
+                ),
+                x,
+                y,
+                z,
+            )
