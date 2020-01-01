@@ -2745,13 +2745,14 @@ class StringMerger(StringTransformerMixin):
                 break
 
             prefix = get_string_prefix(leaf.value)
-            if prefix:
-                set_of_prefixes.add(prefix)
+            set_of_prefixes.add(prefix)
 
             if id(leaf) in line.comments:
                 num_of_inline_string_comments += 1
 
-        if num_of_inline_string_comments > 1 or len(set_of_prefixes) > 1:
+        if num_of_inline_string_comments > 1 or (
+            len(set_of_prefixes) > 1 and set_of_prefixes != {"", "f"}
+        ):
             return False
 
         return True
@@ -3204,7 +3205,7 @@ def get_string_prefix(string: str) -> str:
     prefix = ""
     prefix_idx = 0
     while string[prefix_idx] in STRING_PREFIX_CHARS:
-        prefix += string[prefix_idx]
+        prefix += string[prefix_idx].lower()
         prefix_idx += 1
 
     return prefix
