@@ -3045,6 +3045,7 @@ class StringTermSplitter(StringSplitterMixin):
                 idx_result = self.__get_break_idx(rest_value, max_length)
                 if isinstance(idx_result, STError):
                     yield idx_result
+                    return
 
                 idx = idx_result
 
