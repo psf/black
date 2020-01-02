@@ -2548,7 +2548,7 @@ class StringTransformerMixin(StringTransformer):
     def _do_transform(self, line: Line, string_idx: Optional[int]) -> Iterator[Line]:
         pass
 
-    def _do_validate(self, line: Line) -> None:
+    def _do_validate(self, line: Line, string_idx: Optional[int]) -> None:
         pass
 
     def __call__(self, line: Line, _features: Collection[Feature]) -> Iterator[Line]:
@@ -2561,7 +2561,6 @@ class StringTransformerMixin(StringTransformer):
                 "recognize this line as one that it can split."
             )
 
-        self._do_validate(line)
         string_idx = None
         if match.groups() and match.groups()[0]:
             string_value = match.groups()[0]
@@ -2575,6 +2574,8 @@ class StringTransformerMixin(StringTransformer):
                     f"string value is {string_value} but is unable to find a "
                     "leaf in this line that contains this string."
                 )
+
+        self._do_validate(line, string_idx)
 
         yield from self._do_transform(line, string_idx)
 
@@ -2834,47 +2835,52 @@ class StringSplitterMixin(StringTransformerMixin):
     def _do_transform(self, line: Line, string_idx: Optional[int]) -> Iterator[Line]:
         pass
 
-    def _do_validate(self, line: Line) -> None:
-        line_length = self.line_length
-        if is_line_short_enough(line, line_length=line_length):
+    def _do_validate(self, line: Line, string_idx: Optional[int]) -> None:
+        if string_idx is None:
+            raise CannotSplit(
+                "StringSplitter MUST have a specific string in mind to split. [ERROR:"
+                " `string_idx` is None]"
+            )
+
+        if is_line_short_enough(line, line_length=self.line_length):
             raise CannotSplit("Line is already short enough. No reason to split.")
 
-        line_str = line_to_string(line)
-        line_str = re.sub(r"^ *", "", line_str)
-        line_str = re.sub(r"^assert .*(\)?, ?" + STRING_REGEXP + ")", r"\1", line_str)
-        line_str = re.sub(STRING_GROUP_REGEXP + r" ?\+.*", r"\1", line_str)
-        line_str = re.sub("(" + STRING_REGEXP + " ?% ?" + ").*", r"\1", line_str)
-        line_str = re.sub(
-            "(" + STRING_REGEXP + r"\.[A-Za-z0-9_]+\(" + ").*", r"\1", line_str
-        )
-        line_str = re.sub(r".* ?\+ ?" + STRING_GROUP_REGEXP, r"\1", line_str)
+        string_leaf = line.leaves[string_idx]
 
-        if line.comments and list(line.comments.values())[0]:
-            line_str = line_str.replace(str(list(line.comments.values())[0][0]), "")
-            line_str = re.sub(r"\s*$", "", line_str)
+        # We set `offset` initially to 3 since, in the worst case, we may have
+        # a line such as: `), <STRING>`
+        #
+        # Hence, we choose to make `offset == len('), ')`.
+        offset = 3
 
-        max_line_length = line_length - (line.depth * 4)
-        if len(line_str) <= max_line_length:
+        next_node = string_leaf.next_sibling
+        if (
+            next_node is not None
+            and next_node.type == syms.trailer
+            and [leaf.type for leaf in next_node.leaves()] == [token.DOT, token.NAME]
+            and len(line.leaves) > string_idx + 3
+            and line.leaves[string_idx + 3].type == token.LPAR
+        ):
+            offset += 2
+
+            name_leaf = line.leaves[string_idx + 1]
+            assert name_leaf.type == token.NAME
+            offset += len(name_leaf.value)
+
+        max_line_length = self.line_length - (line.depth * 4) - offset
+        if len(string_leaf.value) <= max_line_length:
             raise CannotSplit(
                 "The string itself is not what is causing this line to be too long."
             )
 
-        if line.comments and len(line.comments.values()) > 1:
-            raise CannotSplit("Multiple inline comments detected.")
-
-        for leaf in line.leaves:
-            if leaf.type == token.STRING:
-                if not leaf.parent or [L.type for L in leaf.parent.children] == [
-                    token.STRING,
-                    token.NEWLINE,
-                ]:
-                    raise CannotSplit("This string appears to be pointless.")
-
-                value = leaf.value.lstrip(STRING_PREFIX_CHARS)
-                if value[:3] in {'"""', "'''"}:
-                    raise CannotSplit(
-                        "This split function does not work on multiline strings."
-                    )
+        if not string_leaf.parent or [L.type for L in string_leaf.parent.children] == [
+            token.STRING,
+            token.NEWLINE,
+        ]:
+            raise CannotSplit(
+                "This string ({}) appears to be pointless (i.e. has no parent)."
+                .format(string_leaf.value)
+            )
 
         if (
             line.comments
@@ -2943,6 +2949,13 @@ class StringTermSplitter(StringSplitterMixin):
 
         max_rest_length = self.line_length - len(prefix)
         max_next_length = self.line_length - (1 + len(prefix)) - (line.depth * 4)
+        if max_next_length < 0:
+            raise CannotSplit(
+                "Unable to split {} at such high of a line depth: {}".format(
+                    line.leaves[string_idx].value, line.depth
+                )
+            )
+
         QUOTE = rest_value[-1]
 
         custom_breakpoints = list(
@@ -3048,6 +3061,8 @@ class StringTermSplitter(StringSplitterMixin):
 
     @staticmethod
     def __get_break_idx(string_value: str, max_length: int) -> int:
+        assert max_length > 0
+
         idx = max_length
         while 0 < idx + 1 < len(string_value) and string_value[idx] != " ":
             idx -= 1
