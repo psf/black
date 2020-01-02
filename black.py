@@ -2646,12 +2646,30 @@ class StringMerger(StringTransformerMixin):
         return error
 
     def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
-        new_line = self.__remove_backslash_line_continuation_chars(line, string_idx)
-        new_line = self.__merge_first_string_group(new_line, string_idx)
-        yield new_line
+        new_line = line
+        rblc_result = self.__remove_backslash_line_continuation_chars(
+            new_line, string_idx
+        )
+        if isinstance(rblc_result, Line):
+            new_line = rblc_result
+
+        mfsg_result = self.__merge_first_string_group(new_line, string_idx)
+        if isinstance(mfsg_result, Line):
+            new_line = mfsg_result
+
+        if isinstance(rblc_result, STError) and isinstance(mfsg_result, STError):
+            mfsg_result.__cause__ = rblc_result
+
+            error = STError("StringMerger failed to merge any strings in this line.")
+            error.__cause__ = mfsg_result
+            yield error
+        else:
+            yield new_line
 
     @staticmethod
-    def __remove_backslash_line_continuation_chars(line: Line, string_idx: int) -> Line:
+    def __remove_backslash_line_continuation_chars(
+        line: Line, string_idx: int
+    ) -> STResult[Line]:
         """Merge strings that were split across multiple lines using backslashes."""
         string_leaf = line.leaves[string_idx]
         if not (
@@ -2659,7 +2677,10 @@ class StringMerger(StringTransformerMixin):
             and "\\\n" in string_leaf.value
             and string_leaf.value.lstrip(STRING_PREFIX_CHARS)[:3] not in {'"""', "'''"}
         ):
-            return line
+            return STError(
+                f"String leaf {string_leaf} does not contain any backslash line"
+                " continuation characters."
+            )
 
         new_line = line.clone()
         new_line.comments = line.comments
@@ -2670,9 +2691,12 @@ class StringMerger(StringTransformerMixin):
 
         return new_line
 
-    def __merge_first_string_group(self, line: Line, first_str_idx: int) -> Line:
-        if not self.__is_okay_to_merge(line, first_str_idx):
-            return line
+    def __merge_first_string_group(
+        self, line: Line, first_str_idx: int
+    ) -> STResult[Line]:
+        vresult = self.__validate(line, first_str_idx)
+        if isinstance(vresult, STError):
+            return vresult
 
         atom_node = line.leaves[first_str_idx].parent
         string_value = ""
@@ -2683,25 +2707,15 @@ class StringMerger(StringTransformerMixin):
         next_str_idx = first_str_idx
         QUOTE = line.leaves[next_str_idx].value[-1]
         num_of_strings = 0
-        at_least_one_string_contains_spaces = False
         custom_splits = []
         prefix_tracker = []
         while (
             len(line.leaves) > next_str_idx
             and line.leaves[next_str_idx].type == token.STRING
         ):
-            if (
-                line.leaves[next_str_idx]
-                .value.lstrip(STRING_PREFIX_CHARS)
-                .startswith(("'''", '"""'))
-            ):
-                return line
-
             num_of_strings += 1
 
             next_string_value = line.leaves[next_str_idx].value
-            if " " in next_string_value:
-                at_least_one_string_contains_spaces = True
 
             naked_string_value = string_value[len(prefix) + 1 : -1]
             naked_string_value = re.sub(
@@ -2728,9 +2742,6 @@ class StringMerger(StringTransformerMixin):
                 + QUOTE
             )
             next_str_idx += 1
-
-        if not at_least_one_string_contains_spaces:
-            return line
 
         temp_string_leaf = Leaf(token.STRING, string_value)
         if self.normalize_strings:
@@ -2781,7 +2792,7 @@ class StringMerger(StringTransformerMixin):
         return new_line
 
     @staticmethod
-    def __is_okay_to_merge(line: Line, first_str_idx: int) -> bool:
+    def __validate(line: Line, first_str_idx: int) -> STResult[None]:
         num_of_inline_string_comments = 0
         set_of_prefixes = set()
         for leaf in line.leaves[first_str_idx:]:
@@ -2794,12 +2805,22 @@ class StringMerger(StringTransformerMixin):
             if id(leaf) in line.comments:
                 num_of_inline_string_comments += 1
 
-        if num_of_inline_string_comments > 1 or (
-            len(set_of_prefixes) > 1 and set_of_prefixes != {"", "f"}
-        ):
-            return False
+            if leaf.value.lstrip(STRING_PREFIX_CHARS).startswith(("'''", '"""')):
+                return STError(
+                    "One of the strings that we were attempting to merge was a"
+                    f" multi-line string ({leaf.value}). StringMerger does NOT merge"
+                    " multi-line strings."
+                )
 
-        return True
+        if num_of_inline_string_comments > 1:
+            return STError(
+                f"Too many inline string comments ({num_of_inline_string_comments})."
+            )
+
+        if len(set_of_prefixes) > 1 and set_of_prefixes != {"", "f"}:
+            return STError(f"Too many different prefixes ({set_of_prefixes}).")
+
+        return None
 
 
 class StringArgCommaStripper(StringTransformerMixin):

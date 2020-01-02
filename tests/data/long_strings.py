@@ -152,7 +152,7 @@ func_with_bad_parens(
 )
 
 ########## REGRESSION TESTS ##########
-stupid_format_method_bug = "Some really long string that just so happens to be the {} {} to force the 'format' method to hang over the line length boundary. This is pretty annoying.".format("perfect" "length")
+stupid_format_method_bug = "Some really long string that just so happens to be the {} {} to force the 'format' method to hang over the line length boundary. This is pretty annoying.".format("perfect", "length")
 
 class A:
     def foo():
@@ -530,7 +530,7 @@ func_with_bad_parens(
 stupid_format_method_bug = (
     "Some really long string that just so happens to be the {} {} to force the 'format'"
     " method to hang over the line length boundary. This is pretty annoying."
-    .format("perfect" "length")
+    .format("perfect", "length")
 )
 
 
