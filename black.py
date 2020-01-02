@@ -2646,34 +2646,27 @@ class StringMerger(StringTransformerMixin):
         return error
 
     def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
-        new_line = self.__remove_backslash_line_continuation_chars(line)
-
-        if string_idx is not None:
-            new_line = self.__merge_first_string_group(new_line, string_idx)
-
+        new_line = self.__remove_backslash_line_continuation_chars(line, string_idx)
+        new_line = self.__merge_first_string_group(new_line, string_idx)
         yield new_line
 
     @staticmethod
-    def __remove_backslash_line_continuation_chars(line: Line) -> Line:
+    def __remove_backslash_line_continuation_chars(line: Line, string_idx: int) -> Line:
         """Merge strings that were split across multiple lines using backslashes."""
-        for leaf in line.leaves:
-            if (
-                leaf.type == token.STRING
-                and "\\\n" in leaf.value
-                and leaf.value.lstrip(STRING_PREFIX_CHARS)[:3] not in {'"""', "'''"}
-            ):
-                break
-        else:
+        string_leaf = line.leaves[string_idx]
+        if not (
+            string_leaf.type == token.STRING
+            and "\\\n" in string_leaf.value
+            and string_leaf.value.lstrip(STRING_PREFIX_CHARS)[:3] not in {'"""', "'''"}
+        ):
             return line
 
         new_line = line.clone()
         new_line.comments = line.comments
         append_leaves(new_line, line, line.leaves)
-        for leaf in new_line.leaves:
-            if leaf.type == token.STRING and leaf.value.lstrip(STRING_PREFIX_CHARS)[
-                :3
-            ] not in {'"""', "'''"}:
-                leaf.value = leaf.value.replace("\\\n", "")
+
+        new_string_leaf = new_line.leaves[string_idx]
+        new_string_leaf.value = new_string_leaf.value.replace("\\\n", "")
 
         return new_line
 
