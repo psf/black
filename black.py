@@ -2551,17 +2551,6 @@ class StringTransformerMixin(StringTransformer):
     def _do_match(self, line: Line) -> STResult[str]:
         pass
 
-    @staticmethod
-    def _do_regex_match(line: Line, pattern: str) -> STResult[str]:
-        match = re.match(pattern, line_to_string(line))
-
-        if match is not None:
-            result = match.groups()[0]
-            assert isinstance(result, str)
-            return result
-        else:
-            return CannotSplit()
-
     @abstractmethod
     def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
         pass
@@ -2584,6 +2573,21 @@ class StringTransformerMixin(StringTransformer):
                 ) from line_result
             yield line_result
 
+    @staticmethod
+    def _regex_match(line: Line, pattern: str) -> STResult[str]:
+        line_str = line_to_string(line)
+        match = re.match(pattern, line_str)
+
+        if match is not None:
+            result = match.groups()[0]
+            assert isinstance(result, str)
+            return result
+        else:
+            return CannotSplit(
+                f"Line ({line_str}) does not match regular expression pattern"
+                f" ({pattern})."
+            )
+
     def _get_string_idx(self, leaves: List[Leaf], string_value: str) -> int:
         for i, leaf in enumerate(leaves):
             if leaf.type == token.STRING and leaf.value == string_value:
@@ -2598,7 +2602,7 @@ class StringTransformerMixin(StringTransformer):
 
 class StringMerger(StringTransformerMixin):
     def _do_match(self, line: Line) -> STResult[str]:
-        result = self._do_regex_match(
+        match_result = self._regex_match(
             line,
             "^ *"
             + r"(?:[^'\"]|"
@@ -2610,8 +2614,8 @@ class StringMerger(StringTransformerMixin):
             + ")+.*$",
         )
 
-        if isinstance(result, str):
-            return result
+        if isinstance(match_result, str):
+            return match_result
 
         for leaf in line.leaves:
             if (
@@ -2621,7 +2625,9 @@ class StringMerger(StringTransformerMixin):
             ):
                 return leaf.value
 
-        return CannotSplit()
+        error = CannotSplit("Nothing to merge.")
+        error.__cause__ = match_result
+        return error
 
     def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
         new_line = self.__remove_backslash_line_continuation_chars(line)
@@ -2789,7 +2795,7 @@ class StringMerger(StringTransformerMixin):
 
 class StringArgCommaStripper(StringTransformerMixin):
     def _do_match(self, line: Line) -> STResult[str]:
-        return self._do_regex_match(
+        return self._regex_match(
             line, r"^.*?[A-Za-z0-9_]+\(" + STRING_GROUP_REGEXP + r",\).*$"
         )
 
@@ -2819,7 +2825,7 @@ class StringArgCommaStripper(StringTransformerMixin):
 
 class StringParensStripper(StringTransformerMixin):
     def _do_match(self, line: Line) -> STResult[str]:
-        return self._do_regex_match(
+        return self._regex_match(
             line,
             r"^.*?" + r"[^A-z0-9_'\"] *\(" + STRING_GROUP_REGEXP + r"\)(?:[^\.].*)?$",
         )
@@ -2962,7 +2968,7 @@ class StringSplitterMixin(StringTransformerMixin):
 
 class StringTermSplitter(StringSplitterMixin):
     def _do_splitter_match(self, line: Line) -> STResult[str]:
-        return self._do_regex_match(
+        return self._regex_match(
             line,
             r"^ *(?:\+ *)?"
             + STRING_GROUP_REGEXP
@@ -3203,7 +3209,7 @@ class StringExprSplitterMixin(StringSplitterMixin):
 
 class StringExprSplitter(StringExprSplitterMixin):
     def _do_splitter_match(self, line: Line) -> STResult[str]:
-        return self._do_regex_match(
+        return self._regex_match(
             line,
             r"^ *(?:return |else |assert .*, ?|(?:[A-Za-z0-9\._]*?|"
             + STRING_REGEXP
@@ -3218,7 +3224,7 @@ class StringExprSplitter(StringExprSplitterMixin):
 
 class StringArithExprSplitter(StringExprSplitterMixin):
     def _do_splitter_match(self, line: Line) -> STResult[str]:
-        return self._do_regex_match(
+        return self._regex_match(
             line,
             "^ *"
             + STRING_GROUP_REGEXP
