@@ -2693,20 +2693,18 @@ class StringMerger(StringTransformerMixin):
 
         return new_line
 
-    def __merge_first_string_group(
-        self, line: Line, first_str_idx: int
-    ) -> STResult[Line]:
-        vresult = self.__validate_mfsg(line, first_str_idx)
+    def __merge_first_string_group(self, line: Line, string_idx: int) -> STResult[Line]:
+        vresult = self.__validate_mfsg(line, string_idx)
         if isinstance(vresult, STError):
             return vresult
 
-        atom_node = line.leaves[first_str_idx].parent
+        atom_node = line.leaves[string_idx].parent
         string_value = ""
         prefix = ""
 
         BREAK_MARK = "@@@@@ BLACK BREAKPOINT MARKER @@@@@"
 
-        next_str_idx = first_str_idx
+        next_str_idx = string_idx
         QUOTE = line.leaves[next_str_idx].value[-1]
         num_of_strings = 0
         custom_splits = []
@@ -2771,10 +2769,10 @@ class StringMerger(StringTransformerMixin):
         new_line = line.clone()
 
         for i, old_leaf in enumerate(line.leaves):
-            if i == first_str_idx:
+            if i == string_idx:
                 new_line.append(string_leaf)
 
-            if first_str_idx <= i < first_str_idx + num_of_strings:
+            if string_idx <= i < string_idx + num_of_strings:
                 if id(old_leaf) in old_comments:
                     new_comments[id(string_leaf)] = old_comments[id(old_leaf)]
                 continue
@@ -2794,10 +2792,10 @@ class StringMerger(StringTransformerMixin):
         return new_line
 
     @staticmethod
-    def __validate_mfsg(line: Line, first_str_idx: int) -> STResult[None]:
+    def __validate_mfsg(line: Line, string_idx: int) -> STResult[None]:
         num_of_inline_string_comments = 0
         set_of_prefixes = set()
-        for leaf in line.leaves[first_str_idx:]:
+        for leaf in line.leaves[string_idx:]:
             if leaf.type != token.STRING:
                 break
 
