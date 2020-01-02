@@ -120,6 +120,7 @@ Ok = TypeVar("Ok")
 Err = TypeVar("Err", bound=Exception)
 Result = Union[Ok, Err]
 STResult = Result[Ok, STError]  # StringTransformer Result
+STMatchResult = STResult[str]  # StringTransformer Match Result
 
 
 class WriteBack(Enum):
@@ -2551,7 +2552,7 @@ class StringTransformer(metaclass=ABCMeta):
 
 class StringTransformerMixin(StringTransformer):
     @abstractmethod
-    def _do_match(self, line: Line) -> STResult[str]:
+    def _do_match(self, line: Line) -> STMatchResult:
         pass
 
     @abstractmethod
@@ -2581,7 +2582,7 @@ class StringTransformerMixin(StringTransformer):
             yield line_result
 
     @staticmethod
-    def _regex_match(line: Line, pattern: str) -> STResult[str]:
+    def _regex_match(line: Line, pattern: str) -> STMatchResult:
         line_str = line_to_string(line)
         match = re.match(pattern, line_str)
 
@@ -2610,8 +2611,8 @@ class StringTransformerMixin(StringTransformer):
 
 
 class StringMerger(StringTransformerMixin):
-    def _do_match(self, line: Line) -> STResult[str]:
-        match_result = self._regex_match(
+    def _do_match(self, line: Line) -> STMatchResult:
+        regex_match_result = self._regex_match(
             line,
             "^ *"
             + r"(?:[^'\"]|"
@@ -2623,8 +2624,8 @@ class StringMerger(StringTransformerMixin):
             + ")+.*$",
         )
 
-        if isinstance(match_result, str):
-            return match_result
+        if isinstance(regex_match_result, str):
+            return regex_match_result
 
         for leaf in line.leaves:
             if (
@@ -2635,7 +2636,7 @@ class StringMerger(StringTransformerMixin):
                 return leaf.value
 
         error = STError("Nothing to merge.")
-        error.__cause__ = match_result
+        error.__cause__ = regex_match_result
         return error
 
     def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
@@ -2803,7 +2804,7 @@ class StringMerger(StringTransformerMixin):
 
 
 class StringArgCommaStripper(StringTransformerMixin):
-    def _do_match(self, line: Line) -> STResult[str]:
+    def _do_match(self, line: Line) -> STMatchResult:
         return self._regex_match(
             line, r"^.*?[A-Za-z0-9_]+\(" + STRING_GROUP_REGEXP + r",\).*$"
         )
@@ -2833,7 +2834,7 @@ class StringArgCommaStripper(StringTransformerMixin):
 
 
 class StringParensStripper(StringTransformerMixin):
-    def _do_match(self, line: Line) -> STResult[str]:
+    def _do_match(self, line: Line) -> STMatchResult:
         return self._regex_match(
             line,
             r"^.*?" + r"[^A-z0-9_'\"] *\(" + STRING_GROUP_REGEXP + r"\)(?:[^\.].*)?$",
@@ -2871,14 +2872,14 @@ class StringSplitterMixin(StringTransformerMixin):
     STRING_CHILD_IDX_MAP: ClassVar[Dict[int, Optional[int]]] = {}
 
     @abstractmethod
-    def _do_splitter_match(self, line: Line) -> STResult[str]:
+    def _do_splitter_match(self, line: Line) -> STMatchResult:
         pass
 
     @abstractmethod
     def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
         pass
 
-    def _do_match(self, line: Line) -> STResult[str]:
+    def _do_match(self, line: Line) -> STMatchResult:
         result = self._do_splitter_match(line)
         if isinstance(result, STError):
             return result
@@ -2982,7 +2983,7 @@ class StringSplitterMixin(StringTransformerMixin):
 
 
 class StringTermSplitter(StringSplitterMixin):
-    def _do_splitter_match(self, line: Line) -> STResult[str]:
+    def _do_splitter_match(self, line: Line) -> STMatchResult:
         return self._regex_match(
             line,
             r"^ *(?:\+ *)?"
@@ -3146,7 +3147,7 @@ class StringTermSplitter(StringSplitterMixin):
 
 class StringExprSplitterMixin(StringSplitterMixin):
     @abstractmethod
-    def _do_splitter_match(self, line: Line) -> STResult[str]:
+    def _do_splitter_match(self, line: Line) -> STMatchResult:
         pass
 
     def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
@@ -3221,7 +3222,7 @@ class StringExprSplitterMixin(StringSplitterMixin):
 
 
 class StringExprSplitter(StringExprSplitterMixin):
-    def _do_splitter_match(self, line: Line) -> STResult[str]:
+    def _do_splitter_match(self, line: Line) -> STMatchResult:
         return self._regex_match(
             line,
             r"^ *(?:return |else |assert .*, ?|(?:[A-Za-z0-9\._]*?|"
@@ -3236,7 +3237,7 @@ class StringExprSplitter(StringExprSplitterMixin):
 
 
 class StringArithExprSplitter(StringExprSplitterMixin):
-    def _do_splitter_match(self, line: Line) -> STResult[str]:
+    def _do_splitter_match(self, line: Line) -> STMatchResult:
         return self._regex_match(
             line,
             "^ *"
