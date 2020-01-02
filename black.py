@@ -96,10 +96,6 @@ Cache = Dict[Path, CacheInfo]
 out = partial(click.secho, bold=True, err=True)
 err = partial(click.secho, fg="red", err=True)
 
-Ok = TypeVar("Ok")
-Err = TypeVar("Err", bound=Exception)
-Result = Union[Ok, Err]
-
 pygram.initialize(CACHE_DIR)
 syms = pygram.python_symbols
 
@@ -112,8 +108,18 @@ class CannotSplit(Exception):
     """A readable split that fits the allotted line length is impossible."""
 
 
+class STError(CannotSplit):
+    """Raised when a StringTransformer instance fails."""
+
+
 class InvalidInput(ValueError):
     """Raised when input source code fails all parse attempts."""
+
+
+Ok = TypeVar("Ok")
+Err = TypeVar("Err", bound=Exception)
+Result = Union[Ok, Err]
+STResult = Result[Ok, STError]  # StringTransformer Result
 
 
 class WriteBack(Enum):
@@ -2543,10 +2549,6 @@ class StringTransformer(metaclass=ABCMeta):
         pass
 
 
-# StringTransformer Result Type
-STResult = Result[Ok, CannotSplit]
-
-
 class StringTransformerMixin(StringTransformer):
     @abstractmethod
     def _do_match(self, line: Line) -> STResult[str]:
@@ -2559,7 +2561,7 @@ class StringTransformerMixin(StringTransformer):
     def __call__(self, line: Line, _features: Collection[Feature]) -> Iterator[Line]:
         result = self._do_match(line)
 
-        if isinstance(result, CannotSplit):
+        if isinstance(result, STError):
             raise CannotSplit(
                 f"The string splitter {self.__class__.__name__} does not recognize"
                 " this line as one that it can split."
@@ -2572,7 +2574,7 @@ class StringTransformerMixin(StringTransformer):
         string_idx = idx_result
 
         for line_result in self._do_transform(line, string_idx):
-            if isinstance(line_result, CannotSplit):
+            if isinstance(line_result, STError):
                 raise CannotSplit(
                     "StringTransformer failed while attempted to transform string."
                 ) from line_result
@@ -2588,7 +2590,7 @@ class StringTransformerMixin(StringTransformer):
             assert isinstance(result, str)
             return result
         else:
-            return CannotSplit(
+            return STError(
                 f"Line ({line_str}) does not match regular expression pattern"
                 f" ({pattern})."
             )
@@ -2632,7 +2634,7 @@ class StringMerger(StringTransformerMixin):
             ):
                 return leaf.value
 
-        error = CannotSplit("Nothing to merge.")
+        error = STError("Nothing to merge.")
         error.__cause__ = match_result
         return error
 
@@ -2842,7 +2844,7 @@ class StringParensStripper(StringTransformerMixin):
             id(line.leaves[string_idx - 1]) in line.comments
             and id(line.leaves[string_idx + 1]) in line.comments
         ):
-            yield CannotSplit(
+            yield STError(
                 "Cannot strip parens from string when both parens have inline comments."
             )
 
@@ -2878,7 +2880,7 @@ class StringSplitterMixin(StringTransformerMixin):
 
     def _do_match(self, line: Line) -> STResult[str]:
         result = self._do_splitter_match(line)
-        if isinstance(result, CannotSplit):
+        if isinstance(result, STError):
             return result
 
         idx_result = self._get_string_idx(line.leaves, result)
@@ -2889,14 +2891,14 @@ class StringSplitterMixin(StringTransformerMixin):
 
         string_idx = idx_result
         vresult = self.__validate(line, string_idx)
-        if isinstance(vresult, CannotSplit):
+        if isinstance(vresult, STError):
             return vresult
 
         return result
 
     def __validate(self, line: Line, string_idx: int) -> STResult[None]:
         if is_line_short_enough(line, line_length=self.line_length):
-            return CannotSplit("Line is already short enough. No reason to split.")
+            return STError("Line is already short enough. No reason to split.")
 
         string_leaf = line.leaves[string_idx]
 
@@ -2922,7 +2924,7 @@ class StringSplitterMixin(StringTransformerMixin):
 
         max_line_length = self.line_length - (line.depth * 4) - offset
         if len(string_leaf.value) <= max_line_length:
-            return CannotSplit(
+            return STError(
                 "The string itself is not what is causing this line to be too long."
             )
 
@@ -2930,7 +2932,7 @@ class StringSplitterMixin(StringTransformerMixin):
             token.STRING,
             token.NEWLINE,
         ]:
-            return CannotSplit(
+            return STError(
                 f"This string ({string_leaf.value}) appears to be pointless (i.e. has"
                 " no parent)."
             )
@@ -2944,7 +2946,7 @@ class StringSplitterMixin(StringTransformerMixin):
                 re.IGNORECASE,
             )
         ):
-            return CannotSplit(
+            return STError(
                 "Line appears to end with an inline pragma comment. Splitting the line "
                 "could modify the pragma's behavior."
             )
@@ -3003,7 +3005,7 @@ class StringTermSplitter(StringSplitterMixin):
         max_rest_length = self.line_length - len(prefix)
         max_next_length = self.line_length - (1 + len(prefix)) - (line.depth * 4)
         if max_next_length < 0:
-            yield CannotSplit(
+            yield STError(
                 f"Unable to split {line.leaves[string_idx].value} at such high of a"
                 f" line depth: {line.depth}"
             )
@@ -3038,7 +3040,7 @@ class StringTermSplitter(StringSplitterMixin):
             else:
                 max_length = max_next_length - 2 if prepend_plus else max_next_length
                 idx_result = self.__get_break_idx(rest_value, max_length)
-                if isinstance(idx_result, CannotSplit):
+                if isinstance(idx_result, STError):
                     yield idx_result
 
                 idx = idx_result
@@ -3130,9 +3132,7 @@ class StringTermSplitter(StringSplitterMixin):
             while idx + 1 < len(string_value) and string_value[idx] != " ":
                 idx += 1
             if string_value[idx] != " ":
-                return CannotSplit(
-                    "Long strings which contain no spaces are not split."
-                )
+                return STError("Long strings which contain no spaces are not split.")
 
         return idx
 
