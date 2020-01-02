@@ -2564,7 +2564,11 @@ class StringTransformerMixin(StringTransformer):
                 " this line as one that it can split."
             ) from result
 
-        string_idx = self._get_string_idx(line.leaves, result)
+        idx_result = self._get_string_idx(line.leaves, result)
+        if isinstance(idx_result, ValueError):
+            raise RuntimeError("Logic Error.") from idx_result
+
+        string_idx = idx_result
 
         for line_result in self._do_transform(line, string_idx):
             if isinstance(line_result, CannotSplit):
@@ -2588,15 +2592,17 @@ class StringTransformerMixin(StringTransformer):
                 f" ({pattern})."
             )
 
-    def _get_string_idx(self, leaves: List[Leaf], string_value: str) -> int:
+    def _get_string_idx(
+        self, leaves: List[Leaf], string_value: str
+    ) -> Result[int, ValueError]:
         for i, leaf in enumerate(leaves):
             if leaf.type == token.STRING and leaf.value == string_value:
                 return i
 
-        raise RuntimeError(
-            f"Logic Error. {self.__class__.__name__} claims to know the "
-            f"string value is {string_value} but is unable to find a "
-            "leaf in this line that contains this string."
+        return ValueError(
+            f"{self.__class__.__name__} claims to know the string value is"
+            f" {string_value} but is unable to find a leaf in this line that contains"
+            " this string."
         )
 
 
@@ -2866,7 +2872,11 @@ class StringSplitterMixin(StringTransformerMixin):
         if isinstance(result, CannotSplit):
             return result
 
-        string_idx = self._get_string_idx(line.leaves, result)
+        idx_result = self._get_string_idx(line.leaves, result)
+        if isinstance(idx_result, ValueError):
+            raise RuntimeError("Logic Error.") from idx_result
+
+        string_idx = idx_result
         vresult = self.__validate(line, string_idx)
         if vresult is not None:
             return vresult
