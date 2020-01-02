@@ -2570,7 +2570,9 @@ class StringTransformerMixin(StringTransformer):
 
         idx_result = self._get_string_idx(line.leaves, result)
         if isinstance(idx_result, ValueError):
-            raise RuntimeError("Logic Error.") from idx_result
+            raise RuntimeError(
+                f"Logic Error in `{self.__class__.__name__}._do_match` method."
+            ) from idx_result
 
         string_idx = idx_result
 
@@ -2908,7 +2910,7 @@ class StringSplitterMixin(StringTransformerMixin):
         idx_result = self._get_string_idx(line.leaves, result)
         if isinstance(idx_result, ValueError):
             raise RuntimeError(
-                f"Logic error in {self.__class__.__name__}._do_splitter_match method."
+                f"Logic error in `{self.__class__.__name__}._do_splitter_match` method."
             ) from idx_result
 
         string_idx = idx_result
