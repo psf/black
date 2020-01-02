@@ -2850,6 +2850,7 @@ class StringParensStripper(StringTransformerMixin):
             yield STError(
                 "Cannot strip parens from string when both parens have inline comments."
             )
+            return
 
         new_line = line.clone()
         new_line.comments = line.comments.copy()
@@ -3012,6 +3013,7 @@ class StringTermSplitter(StringSplitterMixin):
                 f"Unable to split {line.leaves[string_idx].value} at such high of a"
                 f" line depth: {line.depth}"
             )
+            return
 
         QUOTE = rest_value[-1]
 
