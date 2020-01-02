@@ -2694,7 +2694,7 @@ class StringMerger(StringTransformerMixin):
     def __merge_first_string_group(
         self, line: Line, first_str_idx: int
     ) -> STResult[Line]:
-        vresult = self.__validate(line, first_str_idx)
+        vresult = self.__validate_mfsg(line, first_str_idx)
         if isinstance(vresult, STError):
             return vresult
 
@@ -2792,7 +2792,7 @@ class StringMerger(StringTransformerMixin):
         return new_line
 
     @staticmethod
-    def __validate(line: Line, first_str_idx: int) -> STResult[None]:
+    def __validate_mfsg(line: Line, first_str_idx: int) -> STResult[None]:
         num_of_inline_string_comments = 0
         set_of_prefixes = set()
         for leaf in line.leaves[first_str_idx:]:
