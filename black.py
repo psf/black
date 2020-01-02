@@ -96,6 +96,10 @@ Cache = Dict[Path, CacheInfo]
 out = partial(click.secho, bold=True, err=True)
 err = partial(click.secho, fg="red", err=True)
 
+Ok = TypeVar("Ok")
+Err = TypeVar("Err", bound=Exception)
+Result = Union[Ok, Err]
+
 pygram.initialize(CACHE_DIR)
 syms = pygram.python_symbols
 
@@ -2539,51 +2543,58 @@ class StringTransformer(metaclass=ABCMeta):
         pass
 
 
+STResult = Result[str, CannotSplit]
+
+
 class StringTransformerMixin(StringTransformer):
-    @abstractproperty
-    def _my_regexp(self) -> str:
+    @abstractmethod
+    def _do_match(self, line: Line) -> STResult:
         pass
+
+    @staticmethod
+    def _do_regex_match(line: Line, pattern: str) -> STResult:
+        match = re.match(pattern, line_to_string(line),)
+
+        if match is not None:
+            result = match.groups()[0]
+            assert isinstance(result, str)
+            return result
+        else:
+            return CannotSplit()
 
     @abstractmethod
-    def _do_transform(self, line: Line, string_idx: Optional[int]) -> Iterator[Line]:
-        pass
-
-    def _do_validate(self, line: Line, string_idx: Optional[int]) -> None:
+    def _do_transform(self, line: Line, string_idx: int) -> Iterator[Line]:
         pass
 
     def __call__(self, line: Line, _features: Collection[Feature]) -> Iterator[Line]:
-        line_str = line_to_string(line)
-        match = re.match(self._my_regexp, line_str)
+        result = self._do_match(line)
 
-        if not match:
+        if isinstance(result, CannotSplit):
             raise CannotSplit(
-                f"The string splitter {self.__class__.__name__} does not "
-                "recognize this line as one that it can split."
-            )
+                f"The string splitter {self.__class__.__name__} does not recognize"
+                " this line as one that it can split."
+            ) from result
 
-        string_idx = None
-        if match.groups() and match.groups()[0]:
-            string_value = match.groups()[0]
-            for i, leaf in enumerate(line.leaves):
-                if leaf.type == token.STRING and leaf.value == string_value:
-                    string_idx = i
-                    break
-            else:
-                raise RuntimeError(
-                    f"Logic Error. {self.__class__.__name__} claims to know the "
-                    f"string value is {string_value} but is unable to find a "
-                    "leaf in this line that contains this string."
-                )
-
-        self._do_validate(line, string_idx)
+        string_idx = self._get_string_idx(line.leaves, result)
 
         yield from self._do_transform(line, string_idx)
 
+    def _get_string_idx(self, leaves: List[Leaf], string_value: str) -> int:
+        for i, leaf in enumerate(leaves):
+            if leaf.type == token.STRING and leaf.value == string_value:
+                return i
+
+        raise RuntimeError(
+            f"Logic Error. {self.__class__.__name__} claims to know the "
+            f"string value is {string_value} but is unable to find a "
+            "leaf in this line that contains this string."
+        )
+
 
 class StringMerger(StringTransformerMixin):
-    @property
-    def _my_regexp(self) -> str:
-        return (
+    def _do_match(self, line: Line) -> STResult:
+        result = self._do_regex_match(
+            line,
             "^ *"
             + r"(?:[^'\"]|"
             + STRING_REGEXP
@@ -2591,11 +2602,23 @@ class StringMerger(StringTransformerMixin):
             + STRING_GROUP_REGEXP
             + "(?: *"
             + STRING_REGEXP
-            + ")+.*"
-            "$|" + r"^[\s\S]*$"
+            + ")+.*$",
         )
 
-    def _do_transform(self, line: Line, string_idx: Optional[int]) -> Iterator[Line]:
+        if isinstance(result, str):
+            return result
+
+        for leaf in line.leaves:
+            if (
+                leaf.type == token.STRING
+                and "\\\n" in leaf.value
+                and leaf.value.lstrip(STRING_PREFIX_CHARS)[:3] not in {'"""', "'''"}
+            ):
+                return leaf.value
+
+        return CannotSplit()
+
+    def _do_transform(self, line: Line, string_idx: int) -> Iterator[Line]:
         new_line = self.__remove_backslash_line_continuation_chars(line)
 
         if string_idx is not None:
@@ -2760,12 +2783,12 @@ class StringMerger(StringTransformerMixin):
 
 
 class StringArgCommaStripper(StringTransformerMixin):
-    @property
-    def _my_regexp(self) -> str:
-        return r"^.*?[A-Za-z0-9_]+\(" + STRING_GROUP_REGEXP + r",\).*$"
+    def _do_match(self, line: Line) -> STResult:
+        return self._do_regex_match(
+            line, r"^.*?[A-Za-z0-9_]+\(" + STRING_GROUP_REGEXP + r",\).*$"
+        )
 
-    def _do_transform(self, line: Line, string_idx: Optional[int]) -> Iterator[Line]:
-        assert string_idx is not None
+    def _do_transform(self, line: Line, string_idx: int) -> Iterator[Line]:
         comma_idx = string_idx + 1
         comma_leaf = line.leaves[comma_idx]
 
@@ -2790,13 +2813,13 @@ class StringArgCommaStripper(StringTransformerMixin):
 
 
 class StringParensStripper(StringTransformerMixin):
-    @property
-    def _my_regexp(self) -> str:
-        return r"^.*?" + r"[^A-z0-9_'\"] *\(" + STRING_GROUP_REGEXP + r"\)(?:[^\.].*)?$"
+    def _do_match(self, line: Line) -> STResult:
+        return self._do_regex_match(
+            line,
+            r"^.*?" + r"[^A-z0-9_'\"] *\(" + STRING_GROUP_REGEXP + r"\)(?:[^\.].*)?$",
+        )
 
-    def _do_transform(self, line: Line, string_idx: Optional[int]) -> Iterator[Line]:
-        assert string_idx is not None
-
+    def _do_transform(self, line: Line, string_idx: int) -> Iterator[Line]:
         if (
             id(line.leaves[string_idx - 1]) in line.comments
             and id(line.leaves[string_idx + 1]) in line.comments
@@ -2827,23 +2850,29 @@ class StringParensStripper(StringTransformerMixin):
 class StringSplitterMixin(StringTransformerMixin):
     STRING_CHILD_IDX_MAP: ClassVar[Dict[int, Optional[int]]] = {}
 
-    @abstractproperty
-    def _my_regexp(self) -> str:
+    def _do_match(self, line: Line) -> STResult:
+        result = self._do_splitter_match(line)
+        if isinstance(result, CannotSplit):
+            return result
+
+        string_idx = self._get_string_idx(line.leaves, result)
+        vresult = self.__validate(line, string_idx)
+        if vresult is not None:
+            return vresult
+
+        return result
+
+    @abstractmethod
+    def _do_splitter_match(self, line: Line) -> STResult:
         pass
 
     @abstractmethod
-    def _do_transform(self, line: Line, string_idx: Optional[int]) -> Iterator[Line]:
+    def _do_transform(self, line: Line, string_idx: int) -> Iterator[Line]:
         pass
 
-    def _do_validate(self, line: Line, string_idx: Optional[int]) -> None:
-        if string_idx is None:
-            raise CannotSplit(
-                "StringSplitter MUST have a specific string in mind to split. [ERROR:"
-                " `string_idx` is None]"
-            )
-
+    def __validate(self, line: Line, string_idx: int) -> Optional[CannotSplit]:
         if is_line_short_enough(line, line_length=self.line_length):
-            raise CannotSplit("Line is already short enough. No reason to split.")
+            return CannotSplit("Line is already short enough. No reason to split.")
 
         string_leaf = line.leaves[string_idx]
 
@@ -2863,13 +2892,13 @@ class StringSplitterMixin(StringTransformerMixin):
         ):
             offset += 2
 
-            name_leaf = line.leaves[string_idx + 1]
+            name_leaf = line.leaves[string_idx + 2]
             assert name_leaf.type == token.NAME
             offset += len(name_leaf.value)
 
         max_line_length = self.line_length - (line.depth * 4) - offset
         if len(string_leaf.value) <= max_line_length:
-            raise CannotSplit(
+            return CannotSplit(
                 "The string itself is not what is causing this line to be too long."
             )
 
@@ -2877,9 +2906,9 @@ class StringSplitterMixin(StringTransformerMixin):
             token.STRING,
             token.NEWLINE,
         ]:
-            raise CannotSplit(
-                "This string ({}) appears to be pointless (i.e. has no parent)."
-                .format(string_leaf.value)
+            return CannotSplit(
+                f"This string ({string_leaf.value}) appears to be pointless (i.e. has"
+                " no parent)."
             )
 
         if (
@@ -2891,10 +2920,12 @@ class StringSplitterMixin(StringTransformerMixin):
                 re.IGNORECASE,
             )
         ):
-            raise CannotSplit(
+            return CannotSplit(
                 "Line appears to end with an inline pragma comment. Splitting the line "
                 "could modify the pragma's behavior."
             )
+
+        return None
 
     @staticmethod
     def _insert_str_child_factory(string_leaf: Leaf) -> Callable[[LN], None]:
@@ -2925,19 +2956,17 @@ class StringSplitterMixin(StringTransformerMixin):
 
 
 class StringTermSplitter(StringSplitterMixin):
-    @property
-    def _my_regexp(self) -> str:
-        return (
+    def _do_splitter_match(self, line: Line) -> STResult:
+        return self._do_regex_match(
+            line,
             r"^ *(?:\+ *)?"
             + STRING_GROUP_REGEXP
             + STRING_DOT_OR_PERC_REGEXP
             + STRING_END_COMMENT_REGEXP
-            + "$"
+            + "$",
         )
 
-    def _do_transform(self, line: Line, string_idx: Optional[int]) -> Iterator[Line]:
-        assert string_idx is not None
-
+    def _do_transform(self, line: Line, string_idx: int) -> Iterator[Line]:
         insert_str_child = self._insert_str_child_factory(line.leaves[string_idx])
 
         rest_value = line.leaves[string_idx].value
@@ -2951,9 +2980,8 @@ class StringTermSplitter(StringSplitterMixin):
         max_next_length = self.line_length - (1 + len(prefix)) - (line.depth * 4)
         if max_next_length < 0:
             raise CannotSplit(
-                "Unable to split {} at such high of a line depth: {}".format(
-                    line.leaves[string_idx].value, line.depth
-                )
+                f"Unable to split {line.leaves[string_idx].value} at such high of a"
+                f" line depth: {line.depth}"
             )
 
         QUOTE = rest_value[-1]
@@ -3087,13 +3115,11 @@ class StringTermSplitter(StringSplitterMixin):
 
 
 class StringExprSplitterMixin(StringSplitterMixin):
-    @abstractproperty
-    def _my_regexp(self) -> str:
+    @abstractmethod
+    def _do_splitter_match(self, line: Line) -> STResult:
         pass
 
-    def _do_transform(self, line: Line, string_idx: Optional[int]) -> Iterator[Line]:
-        assert string_idx is not None
-
+    def _do_transform(self, line: Line, string_idx: int) -> Iterator[Line]:
         insert_str_child = self._insert_str_child_factory(line.leaves[string_idx])
 
         comma_idx = len(line.leaves) - 1
@@ -3165,9 +3191,9 @@ class StringExprSplitterMixin(StringSplitterMixin):
 
 
 class StringExprSplitter(StringExprSplitterMixin):
-    @property
-    def _my_regexp(self) -> str:
-        return (
+    def _do_splitter_match(self, line: Line) -> STResult:
+        return self._do_regex_match(
+            line,
             r"^ *(?:return |else |assert .*, ?|(?:[A-Za-z0-9\._]*?|"
             + STRING_REGEXP
             + r") ?(?:\+?=|:) ?)?"
@@ -3175,20 +3201,20 @@ class StringExprSplitter(StringExprSplitterMixin):
             + STRING_DOT_OR_PERC_REGEXP
             + ",?"
             + STRING_END_COMMENT_REGEXP
-            + "$"
+            + "$",
         )
 
 
 class StringArithExprSplitter(StringExprSplitterMixin):
-    @property
-    def _my_regexp(self) -> str:
-        return (
+    def _do_splitter_match(self, line: Line) -> STResult:
+        return self._do_regex_match(
+            line,
             "^ *"
             + STRING_GROUP_REGEXP
             + STRING_DOT_OR_PERC_REGEXP
             + r" ?\+ .+,"
             + STRING_END_COMMENT_REGEXP
-            + "$"
+            + "$",
         )
 
 
