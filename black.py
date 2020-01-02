@@ -3597,7 +3597,7 @@ def find_project_root(srcs: Iterable[str]) -> Path:
         # Append a fake file so `parents` below returns `common_base_dir`, too.
         common_base /= "fake-file"
     for directory in common_base.parents:
-        if (directory / ".git").is_dir():
+        if (directory / ".git").exists():
             return directory
 
         if (directory / ".hg").is_dir():
