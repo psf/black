@@ -2543,6 +2543,7 @@ class StringTransformer(metaclass=ABCMeta):
         pass
 
 
+# StringTransformer Result Type
 STResult = Result[Ok, CannotSplit]
 
 
@@ -2867,22 +2868,6 @@ class StringParensStripper(StringTransformerMixin):
 class StringSplitterMixin(StringTransformerMixin):
     STRING_CHILD_IDX_MAP: ClassVar[Dict[int, Optional[int]]] = {}
 
-    def _do_match(self, line: Line) -> STResult[str]:
-        result = self._do_splitter_match(line)
-        if isinstance(result, CannotSplit):
-            return result
-
-        idx_result = self._get_string_idx(line.leaves, result)
-        if isinstance(idx_result, ValueError):
-            raise RuntimeError("Logic Error.") from idx_result
-
-        string_idx = idx_result
-        vresult = self.__validate(line, string_idx)
-        if vresult is not None:
-            return vresult
-
-        return result
-
     @abstractmethod
     def _do_splitter_match(self, line: Line) -> STResult[str]:
         pass
@@ -2891,7 +2876,25 @@ class StringSplitterMixin(StringTransformerMixin):
     def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
         pass
 
-    def __validate(self, line: Line, string_idx: int) -> Optional[CannotSplit]:
+    def _do_match(self, line: Line) -> STResult[str]:
+        result = self._do_splitter_match(line)
+        if isinstance(result, CannotSplit):
+            return result
+
+        idx_result = self._get_string_idx(line.leaves, result)
+        if isinstance(idx_result, ValueError):
+            raise RuntimeError(
+                f"Logic error in {self.__class__.__name__}._do_splitter_match method."
+            ) from idx_result
+
+        string_idx = idx_result
+        vresult = self.__validate(line, string_idx)
+        if isinstance(vresult, CannotSplit):
+            return vresult
+
+        return result
+
+    def __validate(self, line: Line, string_idx: int) -> STResult[None]:
         if is_line_short_enough(line, line_length=self.line_length):
             return CannotSplit("Line is already short enough. No reason to split.")
 
