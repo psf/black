@@ -31,6 +31,7 @@ from typing import (
     Iterable,
     Iterator,
     List,
+    NamedTuple,
     Optional,
     Pattern,
     Sequence,
@@ -65,7 +66,6 @@ DEFAULT_EXCLUDES = r"/(\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_
 DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 STRING_PREFIX_CHARS: Final = "furbFURB"  # All possible string prefix characters.
-CUSTOM_STRING_BREAKPOINTS: Dict[int, Tuple[Tuple[bool, int], ...]] = defaultdict(tuple)
 STRING_REGEXP: Final = (
     "["
     + STRING_PREFIX_CHARS
@@ -2610,6 +2610,10 @@ class StringTransformerMixin(StringTransformer):
         )
 
 
+CustomSplit = NamedTuple("CustomSplit", [("has_prefix", bool), ("break_idx", int)])
+CUSTOM_SPLITS: Dict[LeafID, Tuple[CustomSplit, ...]] = defaultdict(tuple)
+
+
 class StringMerger(StringTransformerMixin):
     def _do_match(self, line: Line) -> STMatchResult:
         regex_match_result = self._regex_match(
@@ -2687,7 +2691,7 @@ class StringMerger(StringTransformerMixin):
         QUOTE = line.leaves[next_str_idx].value[-1]
         num_of_strings = 0
         at_least_one_string_contains_spaces = False
-        custom_breakpoints = []
+        custom_splits = []
         prefix_tracker = []
         while (
             len(line.leaves) > next_str_idx
@@ -2748,7 +2752,7 @@ class StringMerger(StringTransformerMixin):
 
             naked_string_value = naked_string_value[found_idx + len(BREAK_MARK) :]
             breakpoint_idx = found_idx + (len(prefix) if has_prefix else 0) + 1
-            custom_breakpoints.append((has_prefix, breakpoint_idx))
+            custom_splits.append(CustomSplit(has_prefix, breakpoint_idx))
 
         string_leaf = Leaf(token.STRING, temp_string_leaf.value.replace(BREAK_MARK, ""))
 
@@ -2779,7 +2783,7 @@ class StringMerger(StringTransformerMixin):
 
         new_line.comments = new_comments
 
-        CUSTOM_STRING_BREAKPOINTS[id(string_leaf.value)] = tuple(custom_breakpoints)
+        CUSTOM_SPLITS[id(string_leaf.value)] = tuple(custom_splits)
 
         return new_line
 
@@ -3017,31 +3021,29 @@ class StringTermSplitter(StringSplitterMixin):
 
         QUOTE = rest_value[-1]
 
-        custom_breakpoints = list(
-            CUSTOM_STRING_BREAKPOINTS[id(line.leaves[string_idx].value)]
-        )
+        custom_splits = list(CUSTOM_SPLITS[id(line.leaves[string_idx].value)])
 
         starts_with_plus = line.leaves[0].type == token.PLUS
         drop_pointless_f_prefix = ("f" not in prefix) or re.search(
             r"\{.+\}", rest_value
         )
         use_custom_breakpoints = bool(
-            custom_breakpoints
-            and all(
-                breakpoint <= max_next_length for (_, breakpoint) in custom_breakpoints
-            )
+            custom_splits
+            and all(csplit.break_idx <= max_next_length for csplit in custom_splits)
         )
 
         first_string_line = True
         while len(line_to_string(rest_line)) > max_rest_length or (
-            len(custom_breakpoints) > 1 and use_custom_breakpoints
+            len(custom_splits) > 1 and use_custom_breakpoints
         ):
             prepend_plus = first_string_line and starts_with_plus
 
             if use_custom_breakpoints:
-                has_prefix, idx = custom_breakpoints.pop(0)
-                if not has_prefix and prefix not in ["", "f"]:
+                csplit = custom_splits.pop(0)
+                if not csplit.has_prefix and prefix not in ["", "f"]:
                     rest_value = rest_value.lstrip(prefix)
+
+                idx = csplit.break_idx
             else:
                 max_length = max_next_length - 2 if prepend_plus else max_next_length
                 idx_result = self.__get_break_idx(rest_value, max_length)
@@ -3089,8 +3091,8 @@ class StringTermSplitter(StringSplitterMixin):
             first_string_line = False
 
         if use_custom_breakpoints:
-            has_prefix, _ = custom_breakpoints.pop(0)
-            if not has_prefix and prefix not in ["", "f"]:
+            csplit = custom_splits.pop(0)
+            if not csplit.has_prefix and prefix not in ["", "f"]:
                 rest_leaf.value = rest_leaf.value.lstrip(prefix)
 
         if self.normalize_strings:
@@ -3121,7 +3123,7 @@ class StringTermSplitter(StringSplitterMixin):
             rest_line.comments = line.comments
             yield rest_line
 
-        del CUSTOM_STRING_BREAKPOINTS[id(line.leaves[string_idx].value)]
+        del CUSTOM_SPLITS[id(line.leaves[string_idx].value)]
 
     @staticmethod
     def __get_break_idx(string_value: str, max_length: int) -> STResult[int]:
