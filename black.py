@@ -1,6 +1,6 @@
 import ast
 import asyncio
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 from concurrent.futures import Executor, ProcessPoolExecutor
 from contextlib import contextmanager
@@ -2618,7 +2618,7 @@ CUSTOM_SPLITS: Dict[LeafID, Tuple[CustomSplit, ...]] = defaultdict(tuple)
 
 class StringMerger(StringTransformerMixin):
     def _do_match(self, line: Line) -> STMatchResult:
-        regex_match_result = self._regex_match(
+        regex_result = self._regex_match(
             line,
             "^ *"
             + r"(?:[^'\"]|"
@@ -2630,8 +2630,8 @@ class StringMerger(StringTransformerMixin):
             + ")+.*$",
         )
 
-        if isinstance(regex_match_result, str):
-            return regex_match_result
+        if isinstance(regex_result, str):
+            return regex_result
 
         for leaf in line.leaves:
             if (
@@ -2644,7 +2644,7 @@ class StringMerger(StringTransformerMixin):
         error = STError(
             f"This line ({line_to_string(line)}) has no strings that need merging."
         )
-        error.__cause__ = regex_match_result
+        error.__cause__ = regex_result
         return error
 
     def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
@@ -3244,17 +3244,58 @@ class StringExprSplitterMixin(StringSplitterMixin):
 
 class StringExprSplitter(StringExprSplitterMixin):
     def _do_splitter_match(self, line: Line) -> STMatchResult:
-        return self._regex_match(
+        regex_result = self._regex_match(
             line,
-            r"^ *(?:return |else |assert .*, ?|(?:[A-Za-z0-9\._]*?|"
-            + STRING_REGEXP
-            + r") ?(?:\+?=|:) ?)?"
+            r"^ *(?:return |else |assert .*, ?|[A-Za-z0-9\._]*?"
+            + r" ?\+?= ?)?"
             + STRING_GROUP_REGEXP
             + STRING_DOT_OR_PERC_REGEXP
             + ",?"
             + STRING_END_COMMENT_REGEXP
             + "$",
         )
+
+        if isinstance(regex_result, str):
+            return regex_result
+
+        dict_regex_result = self._regex_match(
+            line,
+            r"^ *(?:[^'\":{}]|"
+            + STRING_REGEXP
+            + ")*?: *"
+            + STRING_GROUP_REGEXP
+            + STRING_DOT_OR_PERC_REGEXP
+            + ",?"
+            + STRING_END_COMMENT_REGEXP
+            + "$",
+        )
+
+        if isinstance(dict_regex_result, STError):
+            dict_regex_result.__cause__ = regex_result
+            return dict_regex_result
+
+        idx_result = self._get_string_idx(line.leaves, dict_regex_result)
+        bad_dict_match_error = STError(
+            f"Bad dictionary regular expression match: ({dict_regex_result})"
+        )
+        if isinstance(idx_result, ValueError):
+            idx_result.__cause__ = regex_result
+            bad_dict_match_error.__cause__ = idx_result
+            return bad_dict_match_error
+
+        string_idx = idx_result
+        node = line.leaves[string_idx].parent
+        while node is not None:
+            if node.type == syms.dictsetmaker:
+                return dict_regex_result
+
+            if node.type not in [syms.power, syms.term, syms.atom]:
+                break
+
+            node = node.parent
+
+        bad_dict_match_error.__cause__ = regex_result
+        return bad_dict_match_error
 
 
 class StringArithExprSplitter(StringExprSplitterMixin):

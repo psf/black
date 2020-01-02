@@ -16,6 +16,8 @@ D2 = {1.0: "This is a really long string that can't possibly be expected to fit 
 
 D3 = {x: "This is a really long string that can't possibly be expected to fit all together on one line. Also it is inside a dictionary, so formatting is more difficult.", y: "This is another really really (not really) long string that also can't be expected to fit on one line and is, like the other string, inside a dictionary."}
 
+D4 = {"A long and ridiculous {}".format(string_key): "This is a really really really long string that has to go i,side of a dictionary. It is soooo bad.", some_func("calling", "some", "stuff"): "This is a really really really long string that has to go inside of a dictionary. It is {soooo} bad (#{x}).".format(sooo="soooo", x=2), "A %s %s" % ("formatted", "string"): "This is a really really really long string that has to go inside of a dictionary. It is %s bad (#%d)." % ("soooo", 2)}
+
 func_with_keywords(my_arg, my_kwarg="Long keyword strings also need to be wrapped, but they will probably need to be handled a little bit differently.")
 
 bad_split1 = (
@@ -294,6 +296,23 @@ D3 = {
         " expected to fit on one line and is, like the other string, inside a"
         " dictionary."
     ),
+}
+
+D4 = {
+    "A long and ridiculous {}".format(string_key): (
+        "This is a really really really long string that has to go i,side of a"
+        " dictionary. It is soooo bad."
+    ),
+    some_func("calling", "some", "stuff"): (
+        "This is a really really really long string that has to go inside of a"
+        " dictionary. It is {soooo} bad (#{x}).".format(sooo="soooo", x=2)
+    ),
+    "A %s %s"
+    % ("formatted", "string"): (
+        "This is a really really really long string that has to go inside of a"
+        " dictionary. It is %s bad (#%d)."
+    )
+    % ("soooo", 2),
 }
 
 func_with_keywords(
