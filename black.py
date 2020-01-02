@@ -2635,7 +2635,9 @@ class StringMerger(StringTransformerMixin):
             ):
                 return leaf.value
 
-        error = STError("Nothing to merge.")
+        error = STError(
+            f"This line ({line_to_string(line)}) has no strings that need merging."
+        )
         error.__cause__ = regex_match_result
         return error
 
