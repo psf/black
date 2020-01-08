@@ -60,7 +60,7 @@ DEFAULT_LINE_LENGTH = 88
 DEFAULT_EXCLUDES = r"/(\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_build|buck-out|build|dist)/"  # noqa: B950
 DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
-
+CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 # types
 FileContent = str
@@ -4126,7 +4126,6 @@ def write_cache(cache: Cache, sources: Iterable[Path], mode: FileMode) -> None:
     """Update the cache file."""
     cache_file = get_cache_file(mode)
     try:
-        CACHE_DIR.mkdir(parents=True, exist_ok=True)
         new_cache = {**cache, **{src.resolve(): get_cache_info(src) for src in sources}}
         with tempfile.NamedTemporaryFile(dir=str(cache_file.parent), delete=False) as f:
             pickle.dump(new_cache, f, protocol=4)
