@@ -778,6 +778,13 @@ class BlackTestCase(unittest.TestCase):
                 "2 files would be reformatted, 3 files would be left unchanged, "
                 "2 files would fail to reformat.",
             )
+            report.check = False
+            report.diff = True
+            self.assertEqual(
+                unstyle(str(report)),
+                "2 files would be reformatted, 3 files would be left unchanged, "
+                "2 files would fail to reformat.",
+            )
 
     def test_report_quiet(self) -> None:
         report = black.Report(quiet=True)
@@ -860,6 +867,13 @@ class BlackTestCase(unittest.TestCase):
             )
             self.assertEqual(report.return_code, 123)
             report.check = True
+            self.assertEqual(
+                unstyle(str(report)),
+                "2 files would be reformatted, 3 files would be left unchanged, "
+                "2 files would fail to reformat.",
+            )
+            report.check = False
+            report.diff = True
             self.assertEqual(
                 unstyle(str(report)),
                 "2 files would be reformatted, 3 files would be left unchanged, "
@@ -950,6 +964,13 @@ class BlackTestCase(unittest.TestCase):
             )
             self.assertEqual(report.return_code, 123)
             report.check = True
+            self.assertEqual(
+                unstyle(str(report)),
+                "2 files would be reformatted, 3 files would be left unchanged, "
+                "2 files would fail to reformat.",
+            )
+            report.check = False
+            report.diff = True
             self.assertEqual(
                 unstyle(str(report)),
                 "2 files would be reformatted, 3 files would be left unchanged, "
