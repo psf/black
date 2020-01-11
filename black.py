@@ -2579,7 +2579,7 @@ class StringTransformerMixin(StringTransformer):
         for line_result in self._do_transform(line, string_idx):
             if isinstance(line_result, STError):
                 raise CannotSplit(
-                    "StringTransformer failed while attempted to transform string."
+                    "StringTransformer failed while attempting to transform string."
                 ) from line_result
             yield line_result
 
