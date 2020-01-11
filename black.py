@@ -2923,6 +2923,33 @@ class StringSplitterMixin(StringTransformerMixin):
 
         return result
 
+    @staticmethod
+    def _insert_str_child_factory(string_leaf: Leaf) -> Callable[[LN], None]:
+        string_parent = string_leaf.parent
+
+        child_idx = None
+        if string_parent:
+            child_idx = string_leaf.remove()
+            StringSplitterMixin.STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx
+            if child_idx is None:
+                raise RuntimeError(
+                    f"Something is wrong here. If {string_parent} is the parent of "
+                    f"{string_leaf}, then how is {string_leaf} not a child of "
+                    f"{string_parent}?"
+                )
+
+        def insert_str_child(child: LN) -> None:
+            child_idx = StringSplitterMixin.STRING_CHILD_IDX_MAP.get(
+                id(string_leaf), None
+            )
+            if string_parent and child_idx is not None:
+                string_parent.insert_child(child_idx, child)
+                StringSplitterMixin.STRING_CHILD_IDX_MAP[id(string_leaf)] = (
+                    child_idx + 1
+                )
+
+        return insert_str_child
+
     def __validate(self, line: Line, string_idx: int) -> STResult[None]:
         if is_line_short_enough(line, line_length=self.line_length):
             return STError("Line is already short enough. No reason to split.")
@@ -2979,33 +3006,6 @@ class StringSplitterMixin(StringTransformerMixin):
             )
 
         return None
-
-    @staticmethod
-    def _insert_str_child_factory(string_leaf: Leaf) -> Callable[[LN], None]:
-        string_parent = string_leaf.parent
-
-        child_idx = None
-        if string_parent:
-            child_idx = string_leaf.remove()
-            StringSplitterMixin.STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx
-            if child_idx is None:
-                raise RuntimeError(
-                    f"Something is wrong here. If {string_parent} is the parent of "
-                    f"{string_leaf}, then how is {string_leaf} not a child of "
-                    f"{string_parent}?"
-                )
-
-        def insert_str_child(child: LN) -> None:
-            child_idx = StringSplitterMixin.STRING_CHILD_IDX_MAP.get(
-                id(string_leaf), None
-            )
-            if string_parent and child_idx is not None:
-                string_parent.insert_child(child_idx, child)
-                StringSplitterMixin.STRING_CHILD_IDX_MAP[id(string_leaf)] = (
-                    child_idx + 1
-                )
-
-        return insert_str_child
 
 
 class StringTermSplitter(StringSplitterMixin):
