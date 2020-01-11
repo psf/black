@@ -2612,7 +2612,12 @@ class StringTransformerMixin(StringTransformer):
         )
 
 
-CustomSplit = NamedTuple("CustomSplit", [("has_prefix", bool), ("break_idx", int)])
+@dataclass
+class CustomSplit:
+    has_prefix: bool
+    break_idx: int
+
+
 CUSTOM_SPLITS: Dict[LeafID, Tuple[CustomSplit, ...]] = defaultdict(tuple)
 
 
