@@ -900,7 +900,9 @@ Then run `pre-commit install` and you're ready to go.
 
 Avoid using `args` in the hook. Instead, store necessary configuration in
 `pyproject.toml` so that editors and command-line usage of Black all behave consistently
-for your project. See _Black_'s own [pyproject.toml](/pyproject.toml) for an example.
+for your project. See _Black_'s own
+[pyproject.toml](https://github.com/psf/black/blob/master/pyproject.toml) for an
+example.
 
 If you're already using Python 3.7, switch the `language_version` accordingly. Finally,
 `stable` is a tag that is pinned to the latest release on PyPI. If you'd rather run on
