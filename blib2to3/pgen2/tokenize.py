@@ -129,9 +129,6 @@ Bracket = "[][(){}]"
 Special = group(r"\r?\n", r"[:;.,`@]")
 Funny = group(Operator, Bracket, Special)
 
-PlainToken = group(Number, Funny, String, Name)
-Token = Ignore + PlainToken
-
 # First (or only) line of ' or " string.
 ContStr = group(
     _litprefix + r"'[^\n'\\]*(?:\\.[^\n'\\]*)*" + group("'", r"\\\r?\n"),
@@ -140,7 +137,6 @@ ContStr = group(
 PseudoExtras = group(r"\\\r?\n", Comment, Triple)
 PseudoToken = Whitespace + group(PseudoExtras, Number, Funny, ContStr, Name)
 
-tokenprog = re.compile(Token, re.UNICODE)
 pseudoprog = re.compile(PseudoToken, re.UNICODE)
 single3prog = re.compile(Single3)
 double3prog = re.compile(Double3)
