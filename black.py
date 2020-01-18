@@ -1,6 +1,6 @@
 import ast
 import asyncio
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from collections import defaultdict
 from concurrent.futures import Executor, ProcessPoolExecutor
 from contextlib import contextmanager
@@ -2541,7 +2541,7 @@ def split_line(
 
 
 @dataclass  # type: ignore
-class StringTransformer(metaclass=ABCMeta):
+class StringTransformer(ABC):
     line_length: int
     normalize_strings: bool
 
