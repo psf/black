@@ -599,6 +599,16 @@ class BlackTestCase(unittest.TestCase):
         self.invokeBlack([str(source_path), "--target-version", "py36"], exit_code=123)
 
     @patch("black.dump_to_file", dump_to_stderr)
+    def test_python38(self) -> None:
+        source, expected = read_data("python38")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        major, minor = sys.version_info[:2]
+        if major > 3 or (major == 3 and minor >= 8):
+            black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+
+    @patch("black.dump_to_file", dump_to_stderr)
     def test_fmtonoff(self) -> None:
         source, expected = read_data("fmtonoff")
         actual = fs(source)
