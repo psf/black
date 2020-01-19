@@ -45,9 +45,8 @@ _Contents:_ **[Installation and usage](#installation-and-usage)** |
 
 ### Installation
 
-_Black_ can be installed by running `pip install black` or
-`conda install -c conda-forge black`. It requires Python 3.6.0+ to
-run but you can reformat Python 2 code with it, too.
+_Black_ can be installed by running `pip install black` or `conda install -c conda-forge black`.
+It requires Python 3.6.0+ to run but you can reformat Python 2 code with it, too.
 
 ### Usage
 
