@@ -2663,6 +2663,15 @@ class StringMerger(StringTransformerMixin):
         )
 
         if isinstance(regex_result, str):
+            for leaf in line.leaves:
+                if leaf.type == token.STRING and leaf.value == regex_result:
+                    break
+            else:
+                return STError(
+                    f"Found string match ({regex_result}), however, we could not find"
+                    " a leaf that it belongs to."
+                )
+
             return regex_result
 
         for leaf in line.leaves:

@@ -307,6 +307,18 @@ class A:
             xxxxx_xxxxxxxxxxxx('xxx xxxxxx xxx xxxxxxxxx.xx xx xxxxxxxx.  xxx xxxxxxxxxxxxx.xx xxxxxxx '
                                + 'xx xxxxxx xxxxxx xxxxxx xx xxxxxxx xxx xxx ${0} xx x xxxxxxxx xxxxx'.xxxxxx(xxxxxx_xxxxxx_xxx))
 
+class A:
+    class B:
+        def foo():
+            row = {
+                'xxxxxxxxxxxxxxx' : xxxxxx_xxxxx_xxxx,
+                # 'xxxxxxxxxxxxxxxxxxxxxxx'
+                # 'xxxxxxxxxxxxxxxxxxxxxx'
+                # 'xxxxxxxxxxxxxxxxxx'
+                # 'xxxxxxxxxxxxxxxxx'
+                'xxxxxxxxxx' : xxxxx_xxxxx,
+                }
+
 # output
 
 x = (
@@ -832,3 +844,16 @@ class A:
                 + "xx xxxxxx xxxxxx xxxxxx xx xxxxxxx xxx xxx ${0} xx x xxxxxxxx xxxxx"
                 .xxxxxx(xxxxxx_xxxxxx_xxx)
             )
+
+
+class A:
+    class B:
+        def foo():
+            row = {
+                "xxxxxxxxxxxxxxx": xxxxxx_xxxxx_xxxx,
+                # 'xxxxxxxxxxxxxxxxxxxxxxx'
+                # 'xxxxxxxxxxxxxxxxxxxxxx'
+                # 'xxxxxxxxxxxxxxxxxx'
+                # 'xxxxxxxxxxxxxxxxx'
+                "xxxxxxxxxx": xxxxx_xxxxx,
+            }
