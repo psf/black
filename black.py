@@ -86,10 +86,10 @@ RE_STRING: Final = (
     + RE_BALANCED_QUOTES
 )
 RE_STRING_GROUP: Final = "(?<string>" + RE_STRING + ")"
-RE_DOT_OR_PERC_REGEXP: Final = (
+RE_DOT_OR_PERC: Final = (
     r"(?<dot_or_perc>\.[A-Za-z0-9_]+" + RE_BALANCED_PARENS + "| ?% ?.*)?"
 )
-RE_END_COMMENT_REGEXP: Final = r" *(?:#.*)?"
+RE_END_COMMENT: Final = r" *(?:#.*)?"
 
 
 # types
@@ -2855,7 +2855,7 @@ class StringArgCommaStripper(StringTransformerMixin):
             line,
             r"^.*?[A-Za-z0-9_]+\("
             + RE_STRING_GROUP
-            + RE_DOT_OR_PERC_REGEXP
+            + RE_DOT_OR_PERC
             + r",\).*$",
         )
 
@@ -2905,7 +2905,7 @@ class StringParensStripper(StringTransformerMixin):
             r"^.*?"
             + r"[^A-z0-9_'\"] *\("
             + RE_STRING_GROUP
-            + RE_DOT_OR_PERC_REGEXP
+            + RE_DOT_OR_PERC
             + r"\)(?<end>[^\.].*)?$",
         )
 
@@ -3078,8 +3078,8 @@ class StringTermSplitter(StringSplitterMixin):
             line,
             r"^ *(?:\+ *)?"
             + RE_STRING_GROUP
-            + RE_DOT_OR_PERC_REGEXP
-            + RE_END_COMMENT_REGEXP
+            + RE_DOT_OR_PERC
+            + RE_END_COMMENT
             + "$",
         )
 
@@ -3320,9 +3320,9 @@ class StringExprSplitter(StringExprSplitterMixin):
             + RE_BALANCED_BRACKETS
             + r"?)? ?\+?= ?)?"
             + RE_STRING_GROUP
-            + RE_DOT_OR_PERC_REGEXP
+            + RE_DOT_OR_PERC
             + ",?"
-            + RE_END_COMMENT_REGEXP
+            + RE_END_COMMENT
             + "$",
         )
 
@@ -3335,9 +3335,9 @@ class StringExprSplitter(StringExprSplitterMixin):
             + RE_STRING
             + ")*?: *"
             + RE_STRING_GROUP
-            + RE_DOT_OR_PERC_REGEXP
+            + RE_DOT_OR_PERC
             + ",?"
-            + RE_END_COMMENT_REGEXP
+            + RE_END_COMMENT
             + "$",
         )
 
@@ -3375,9 +3375,9 @@ class StringArithExprSplitter(StringExprSplitterMixin):
             line,
             "^ *"
             + RE_STRING_GROUP
-            + RE_DOT_OR_PERC_REGEXP
+            + RE_DOT_OR_PERC
             + r" ?\+ .+,"
-            + RE_END_COMMENT_REGEXP
+            + RE_END_COMMENT
             + "$",
         )
 
