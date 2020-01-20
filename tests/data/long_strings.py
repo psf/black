@@ -350,6 +350,12 @@ some_dictionary = {
                  'xxx-xxx xxxxx3xxxx1xx2xxxxxxxxxxxxxx6xxxxxxxxxxxxxx9xxxxxxxxxxxxx3xxx9xxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxx2xxxx2xxx6xxxxx/xx54xxxxxxxxx4xxx3xxxxxx9xx3xxxxx39xxxxxxxxx5xx91xxxx7xxxxxx8xxxxxxxxxxxxxxxx9xxx93xxxxxxxxxxxxxxxxx7xxx8xx8xx4/x1xxxxx1x3xxxxxxxxxxxxx3xxxxxx9xx4xx4x7xxxxxxxxxxxxx1xxxxxxxxx7xxxxxxxxxxxxxx4xx6xxxxxxxxx9xxx7xxxx2xxxxxxxxxxxxxxxxxxxxxx8xxxxxxxxxxxxxxxxxxxx6xx== xxxxx010 xxxxxxxxxx\n']
 }
 
+def foo():
+    xxx_xxx = (
+        'xxxx xxx xxxxxxxx_xxxx xx "xxxxxxxxxx".'
+        '\n xxx: xxxxxx xxxxxxxx_xxxx=xxxxxxxxxx'
+    ) # xxxx xxxxxxxxxx xxxx xx xxxx xx xxx xxxxxxxx xxxxxx xxxxx.
+
 # output
 
 x = (
@@ -927,3 +933,9 @@ some_dictionary = {
         ),
     ],
 }
+
+
+def foo():
+    xxx_xxx = (  # xxxx xxxxxxxxxx xxxx xx xxxx xx xxx xxxxxxxx xxxxxx xxxxx.
+        'xxxx xxx xxxxxxxx_xxxx xx "xxxxxxxxxx".\n xxx: xxxxxx xxxxxxxx_xxxx=xxxxxxxxxx'
+    )

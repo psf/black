@@ -2814,9 +2814,6 @@ class StringMerger(StringTransformerMixin):
         if atom_node is not None:
             replace_child(atom_node, string_leaf)
 
-        old_comments = line.comments
-        new_comments = {}
-
         new_line = line.clone()
 
         for i, old_leaf in enumerate(line.leaves):
@@ -2824,19 +2821,11 @@ class StringMerger(StringTransformerMixin):
                 new_line.append(string_leaf)
 
             if string_idx <= i < string_idx + num_of_strings:
-                if id(old_leaf) in old_comments:
-                    new_comments[id(string_leaf)] = old_comments[id(old_leaf)]
+                for comment_leaf in line.comments_after(line.leaves[i]):
+                    new_line.append(comment_leaf, preformatted=True)
                 continue
 
-            new_leaf = Leaf(old_leaf.type, old_leaf.value)
-
-            if id(old_leaf) in old_comments:
-                new_comments[id(new_leaf)] = old_comments[id(old_leaf)]
-
-            replace_child(old_leaf, new_leaf)
-            new_line.append(new_leaf)
-
-        new_line.comments = new_comments
+            append_leaves(new_line, line, [old_leaf])
 
         CUSTOM_SPLITS[id(string_leaf.value)] = tuple(custom_splits)
 
@@ -3014,11 +3003,8 @@ class StringParensStripper(StringTransformerMixin):
                 continue
 
             unmatched_parens = 0
-            for (j, inner_leaf) in enumerate(line.leaves[i + 1 :]):
-                if (
-                    inner_leaf.type == token.RPAR
-                    and unmatched_parens == 0
-                ):
+            for inner_leaf in line.leaves[i + 1 :]:
+                if inner_leaf.type == token.RPAR and unmatched_parens == 0:
                     self.string_idx = i
                     break
 
@@ -3164,6 +3150,13 @@ class StringSplitterMixin(StringTransformerMixin):
             name_leaf = line.leaves[string_idx + 2]
             assert name_leaf.type == token.NAME
             offset += len(name_leaf.value)
+
+        has_comments = False
+        for comment_leaf in line.comments_after(line.leaves[string_idx]):
+            if not has_comments:
+                has_comments = True
+                offset += 2
+            offset += len(comment_leaf.value)
 
         max_line_length = self.line_length - (line.depth * 4) - offset
         if len(string_leaf.value) <= max_line_length:
