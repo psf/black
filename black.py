@@ -3337,11 +3337,9 @@ class StringTermSplitter(StringSplitterMixin):
         # Ensure the substring:
         #   1) starts with a space
         #   2) contains at least a 5-letter word
-        while (
-            0 < idx + 1 < len(string_value)
-            and string_value[idx] != " "
-            or len(string_value[idx:]) < 6
-        ):
+        while (0 < idx + 1 < len(string_value) and string_value[idx] != " ") or len(
+            string_value[idx:]
+        ) < 6:
             idx -= 1
 
         if string_value[idx] != " ":
