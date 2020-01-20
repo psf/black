@@ -151,7 +151,7 @@ func_with_bad_parens(
 
 annotated_variable: Final = "This is a large " + STRING + " that has been " + CONCATENATED + "using the '+' operator."
 annotated_variable: Final = "This is a large string that has a type annotation attached to it. A type annotation should NOT stop a long string from being wrapped."
-annotated_variable: Dict[str, Any] = "This is a large string that has a type annotation attached to it. A type annotation should NOT stop a long string from being wrapped."
+annotated_variable: Literal["fakse_literal"] = "This is a large string that has a type annotation attached to it. A type annotation should NOT stop a long string from being wrapped."
 
 ########## REGRESSION TESTS ##########
 # There was a bug where tuples were being identified as long strings.
@@ -552,7 +552,7 @@ annotated_variable: Final = (
     "This is a large string that has a type annotation attached to it. A type"
     " annotation should NOT stop a long string from being wrapped."
 )
-annotated_variable: Dict[str, Any] = (
+annotated_variable: Literal["fakse_literal"] = (
     "This is a large string that has a type annotation attached to it. A type"
     " annotation should NOT stop a long string from being wrapped."
 )

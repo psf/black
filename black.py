@@ -80,7 +80,7 @@ RE_BALANCED_QUOTES: Final = (
 )
 RE_BALANCED_BRACKETS: Final = r"(?<bbrackets>\[(?:[^\[\]]++|(?&bbrackets))*\])"
 RE_BALANCED_PARENS: Final = r"(?<bparens>\((?:[^()]++|(?&bparens))*\))"
-RE_REGEXP: Final = (
+RE_STRING: Final = (
     "["
     + STRING_PREFIX_CHARS
     + "]{0,"
@@ -88,7 +88,7 @@ RE_REGEXP: Final = (
     + r"}"
     + RE_BALANCED_QUOTES
 )
-RE_GROUP_REGEXP: Final = "(?<string>" + RE_REGEXP.replace("NNN", "") + ")"
+RE_STRING_GROUP: Final = "(?<string>" + RE_STRING.replace("NNN", "") + ")"
 RE_DOT_OR_PERC_REGEXP: Final = (
     r"(?<dot_or_perc>\.[A-Za-z0-9_]+" + RE_BALANCED_PARENS + "| ?% ?.*)?"
 )
@@ -107,7 +107,7 @@ def string_regexp() -> str:
     setattr(string_regexp, "N", N + 1)
 
     M = N + 100
-    return RE_REGEXP.replace("NNN", f"{N}").replace("MMM", f"{M}")
+    return RE_STRING.replace("NNN", f"{N}").replace("MMM", f"{M}")
 
 
 # types
@@ -2661,7 +2661,7 @@ class StringMerger(StringTransformerMixin):
             + r"(?:[^'\"]|"
             + string_regexp()
             + ")*?"
-            + RE_GROUP_REGEXP
+            + RE_STRING_GROUP
             + "(?: *"
             + string_regexp()
             + ")+.*$",
@@ -2865,7 +2865,7 @@ class StringArgCommaStripper(StringTransformerMixin):
         return self._regex_match(
             line,
             r"^.*?[A-Za-z0-9_]+\("
-            + RE_GROUP_REGEXP
+            + RE_STRING_GROUP
             + RE_DOT_OR_PERC_REGEXP
             + r",\).*$",
         )
@@ -2915,7 +2915,7 @@ class StringParensStripper(StringTransformerMixin):
             line,
             r"^.*?"
             + r"[^A-z0-9_'\"] *\("
-            + RE_GROUP_REGEXP
+            + RE_STRING_GROUP
             + RE_DOT_OR_PERC_REGEXP
             + r"\)(?<end>[^\.].*)?$",
         )
@@ -3088,7 +3088,7 @@ class StringTermSplitter(StringSplitterMixin):
         return self._regex_match(
             line,
             r"^ *(?:\+ *)?"
-            + RE_GROUP_REGEXP
+            + RE_STRING_GROUP
             + RE_DOT_OR_PERC_REGEXP
             + RE_END_COMMENT_REGEXP
             + "$",
@@ -3330,7 +3330,7 @@ class StringExprSplitter(StringExprSplitterMixin):
             + r"[A-Za-z0-9\._]*?(?<type>: ?[A-Za-z0-9_]+"
             + RE_BALANCED_BRACKETS
             + r"?)? ?\+?= ?)?"
-            + RE_GROUP_REGEXP
+            + RE_STRING_GROUP
             + RE_DOT_OR_PERC_REGEXP
             + ",?"
             + RE_END_COMMENT_REGEXP
@@ -3345,7 +3345,7 @@ class StringExprSplitter(StringExprSplitterMixin):
             r"^ *(?:[^'\":{}]|"
             + string_regexp()
             + ")*?: *"
-            + RE_GROUP_REGEXP
+            + RE_STRING_GROUP
             + RE_DOT_OR_PERC_REGEXP
             + ",?"
             + RE_END_COMMENT_REGEXP
@@ -3385,7 +3385,7 @@ class StringArithExprSplitter(StringExprSplitterMixin):
         return self._regex_match(
             line,
             "^ *"
-            + RE_GROUP_REGEXP
+            + RE_STRING_GROUP
             + RE_DOT_OR_PERC_REGEXP
             + r" ?\+ .+,"
             + RE_END_COMMENT_REGEXP
