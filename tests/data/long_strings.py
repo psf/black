@@ -293,6 +293,14 @@ class A:
             ('xxxxxxxxxxx',),
         ),
 
+xxxxxxx = { 'xx' : 'xxxx xxxxxxx xxxxxxxxx -x xxx -x /xxx/{0} -x xxx,xxx -xx {1} \
+-xx {1} -xx xxx=xxx_xxxx,xxx_xx,xxx_xxx,xxx_xxxx,xxx_xx,xxx_xxx |\
+ xxxxxx -x xxxxxxxx -x xxxxxxxx -x',
+         'xx' : 'xxxx xxxxxxx xxxxxxxxx -x xxx -x /xxx/{0} -x xxx,xxx -xx {1} \
+-xx {1} -xx xxx=xxx_xxxx_xxx_xxxx,xxx_xx_xxx_xxxx,xxx_xxxx_xxx_xxxx,\
+xxx_xx_xxxx_xxxx,xxx_xxx_xxxx,xxx_xxx_xxxx xxxx=xxx | xxxxxx -x xxxxxxxx -x xxxxxxxx -x'
+}
+
 # output
 
 x = (
@@ -795,3 +803,15 @@ class A:
             None,
             ("xxxxxxxxxxx",),
         ),
+
+
+xxxxxxx = {
+    "xx": (
+        "xxxx xxxxxxx xxxxxxxxx -x xxx -x /xxx/{0} -x xxx,xxx -xx {1} -xx {1} -xx"
+        " xxx=xxx_xxxx,xxx_xx,xxx_xxx,xxx_xxxx,xxx_xx,xxx_xxx | xxxxxx -x xxxxxxxx -x"
+        " xxxxxxxx -x"
+    ),
+    "xx": (
+        "xxxx xxxxxxx xxxxxxxxx -x xxx -x /xxx/{0} -x xxx,xxx -xx {1} -xx {1} -xx xxx=xxx_xxxx_xxx_xxxx,xxx_xx_xxx_xxxx,xxx_xxxx_xxx_xxxx,xxx_xx_xxxx_xxxx,xxx_xxx_xxxx,xxx_xxx_xxxx xxxx=xxx | xxxxxx -x xxxxxxxx -x xxxxxxxx -x"
+    ),
+}

@@ -2831,10 +2831,12 @@ class StringMerger(StringTransformerMixin):
     def __validate_mfsg(line: Line, string_idx: int) -> STResult[None]:
         num_of_inline_string_comments = 0
         set_of_prefixes = set()
+        num_of_strings = 0
         for leaf in line.leaves[string_idx:]:
             if leaf.type != token.STRING:
                 break
 
+            num_of_strings += 1
             prefix = get_string_prefix(leaf.value)
             set_of_prefixes.add(prefix)
 
@@ -2847,6 +2849,11 @@ class StringMerger(StringTransformerMixin):
                     f" multi-line string ({leaf.value}). StringMerger does NOT merge"
                     " multi-line strings."
                 )
+
+        if num_of_strings < 2:
+            return STError(
+                f"Not enough strings to merge (num_of_strings={num_of_strings})."
+            )
 
         if num_of_inline_string_comments > 1:
             return STError(
@@ -2882,7 +2889,10 @@ class StringArgCommaStripper(StringTransformerMixin):
             r"^(?:[^'\"]|"
             + RE_BALANCED_QUOTES
             + r")*?"
-            + r"[A-Za-z0-9_]+\(" + RE_STRING_GROUP + RE_DOT_OR_PERC + r",\).*$",
+            + r"[A-Za-z0-9_]+\("
+            + RE_STRING_GROUP
+            + RE_DOT_OR_PERC
+            + r",\).*$",
         )
 
     def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
@@ -3232,6 +3242,9 @@ class StringTermSplitter(StringSplitterMixin):
                 idx += 1
             if string_value[idx] != " ":
                 return STError("Long strings which contain no spaces are not split.")
+
+        if idx < 2:
+            return STError(f"Invalid break index (idx={idx}).")
 
         return idx
 
