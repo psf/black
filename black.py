@@ -2723,12 +2723,14 @@ class StringMerger(StringTransformerMixin):
 
         BREAK_MARK = "@@@@@ BLACK BREAKPOINT MARKER @@@@@"
 
+        # An even number of backslashes.
+        RE_EVEN_BACKSLASHES = r"(?:(?<!\\)(?:\\{2})*)"
+
         next_str_idx = string_idx
         QUOTE = line.leaves[next_str_idx].value[-1]
         num_of_strings = 0
         custom_splits = []
         prefix_tracker = []
-        RE_EVEN_BACKSLASHES = r"((?<!\\)(?:\\{2})*)"
         while (
             len(line.leaves) > next_str_idx
             and line.leaves[next_str_idx].type == token.STRING
@@ -2739,7 +2741,9 @@ class StringMerger(StringTransformerMixin):
 
             naked_string_value = string_value[len(prefix) + 1 : -1]
             naked_string_value = re.sub(
-                RE_EVEN_BACKSLASHES + QUOTE, r"\1\\" + QUOTE, naked_string_value
+                "(" + RE_EVEN_BACKSLASHES + ")" + QUOTE,
+                r"\1\\" + QUOTE,
+                naked_string_value,
             )
 
             next_prefix = get_string_prefix(next_string_value)
@@ -2750,7 +2754,9 @@ class StringMerger(StringTransformerMixin):
 
             naked_next_string_value = next_string_value[len(next_prefix) + 1 : -1]
             naked_next_string_value = re.sub(
-                RE_EVEN_BACKSLASHES + QUOTE, r"\1\\" + QUOTE, naked_next_string_value
+                "(" + RE_EVEN_BACKSLASHES + ")" + QUOTE,
+                r"\1\\" + QUOTE,
+                naked_next_string_value,
             )
 
             string_value = (
