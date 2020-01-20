@@ -2892,7 +2892,10 @@ def get_first_unmatched_rpar_idx(leaves: List[Leaf]) -> Result[int, ValueError]:
             return i
 
         if leaf.type == token.RPAR:
-            unmatched_parens -= 1
+            if unmatched_parens > 0:
+                unmatched_parens -= 1
+            else:
+                return ValueError("Found RPAR that matches LPAR from the past!")
 
     return ValueError("No RPAR found!")
 
@@ -2910,46 +2913,47 @@ class StringArgCommaStripper(StringTransformerMixin):
             + r",\).*$",
         )
 
-        if isinstance(regex_result, str):
-            string_value = regex_result
+        if isinstance(regex_result, STError):
+            return regex_result
 
-            for (i, leaf) in enumerate(line.leaves):
-                if i == 0 or i + 2 >= len(line.leaves):
-                    continue
+        string_value = regex_result
+        for (i, leaf) in enumerate(line.leaves):
+            if i == 0 or i + 2 >= len(line.leaves):
+                continue
 
-                if (
-                    leaf.type == token.STRING
-                    and leaf.value == string_value
-                    and line.leaves[i - 1].type == token.LPAR
-                ):
-                    unmatched_parens = 0
-                    for (j, inner_leaf) in enumerate(line.leaves[i + 1 :]):
-                        if (
-                            inner_leaf.type == token.COMMA
-                            and line.leaves[i + j + 2].type == token.RPAR
-                            and unmatched_parens == 0
-                        ):
-                            self.string_idx = i
+            if (
+                leaf.type == token.STRING
+                and leaf.value == string_value
+                and line.leaves[i - 1].type == token.LPAR
+            ):
+                unmatched_parens = 0
+                for (j, inner_leaf) in enumerate(line.leaves[i + 1 :]):
+                    if (
+                        inner_leaf.type == token.COMMA
+                        and line.leaves[i + j + 2].type == token.RPAR
+                        and unmatched_parens == 0
+                    ):
+                        self.string_idx = i
+                        break
+
+                    if inner_leaf.type == token.LPAR:
+                        unmatched_parens += 1
+
+                    if inner_leaf.type == token.RPAR:
+                        if unmatched_parens > 0:
+                            unmatched_parens -= 1
+                        else:
                             break
 
-                        if inner_leaf.type == token.LPAR:
-                            unmatched_parens += 1
+                if self.string_idx is not None:
+                    break
+        else:
+            raise RuntimeError(
+                f"Logic Error. {self.__class__.__name__} was unable to set"
+                " 'self.string_idx' for some reason."
+            )
 
-                        if inner_leaf.type == token.RPAR:
-                            if unmatched_parens > 0:
-                                unmatched_parens -= 1
-                            else:
-                                break
-
-                    if self.string_idx is not None:
-                        break
-            else:
-                raise RuntimeError(
-                    f"Logic Error. {self.__class__.__name__} was unable to set"
-                    " 'self.string_idx' for some reason."
-                )
-
-        return regex_result
+        return string_value
 
     def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
         new_line = line.clone()
@@ -2984,7 +2988,7 @@ class StringArgCommaStripper(StringTransformerMixin):
 
 class StringParensStripper(StringTransformerMixin):
     def _do_match(self, line: Line) -> STMatchResult:
-        return self._regex_match(
+        regex_result = self._regex_match(
             line,
             r"^(?:[^'\"]|"
             + RE_BALANCED_QUOTES
@@ -2994,6 +2998,48 @@ class StringParensStripper(StringTransformerMixin):
             + RE_DOT_OR_PERC
             + r"\)(?<end>[^\.].*)?$",
         )
+
+        if isinstance(regex_result, STError):
+            return regex_result
+
+        string_value = regex_result
+        for (i, leaf) in enumerate(line.leaves):
+            if i == 0 or i + 1 >= len(line.leaves):
+                continue
+
+            if leaf.type != token.STRING or leaf.value != string_value:
+                continue
+
+            if line.leaves[i - 1].type != token.LPAR:
+                continue
+
+            unmatched_parens = 0
+            for (j, inner_leaf) in enumerate(line.leaves[i + 1 :]):
+                if (
+                    inner_leaf.type == token.RPAR
+                    and unmatched_parens == 0
+                ):
+                    self.string_idx = i
+                    break
+
+                if inner_leaf.type == token.LPAR:
+                    unmatched_parens += 1
+
+                if inner_leaf.type == token.RPAR:
+                    if unmatched_parens > 0:
+                        unmatched_parens -= 1
+                    else:
+                        break
+
+            if self.string_idx is not None:
+                break
+        else:
+            raise RuntimeError(
+                f"Logic Error. {self.__class__.__name__} was unable to set"
+                " 'self.string_idx' for some reason."
+            )
+
+        return string_value
 
     def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
         idx_result = get_first_unmatched_rpar_idx(line.leaves[string_idx + 1 :])
