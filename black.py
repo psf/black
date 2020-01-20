@@ -67,7 +67,9 @@ DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 
 # Regular expressions used for matching strings.
-STRING_EVEN_BACKSLASHES_N: Final = r"(?<ebsNNN>(?:\\\\(?&ebsNNN))*?)"
+STRING_EVEN_BACKSLASHES_N: Final = (
+    r"(?<even_backslashes__NNN>(?:\\\\(?&even_backslashes__NNN))*?)"
+)
 STRING_EVEN_BACKSLASHES_M: Final = STRING_EVEN_BACKSLASHES_N.replace("NNN", "MMM")
 STRING_BALANCED_SQUOTES: Final = r"(?:'(?:" + STRING_EVEN_BACKSLASHES_N + r"[^'])+?')"
 STRING_BALANCED_DQUOTES: Final = r'(?:"(?:' + STRING_EVEN_BACKSLASHES_M + r'[^"])+?")'
