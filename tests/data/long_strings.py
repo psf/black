@@ -228,6 +228,12 @@ class A:
                 z,
             )
 
+func_call_where_string_arg_has_method_call_and_bad_parens(
+    (
+        "A long string with {}. This string is so long that it is ridiculous. It can't fit on one line at alllll.".format("formatting")
+    ),
+)
+
 # output
 
 x = (
@@ -639,3 +645,9 @@ class A:
                 y,
                 z,
             )
+
+
+func_call_where_string_arg_has_method_call_and_bad_parens(
+    "A long string with {}. This string is so long that it is ridiculous. It can't fit"
+    " on one line at alllll.".format("formatting")
+)

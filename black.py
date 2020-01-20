@@ -73,8 +73,9 @@ STRING_REGEXP: Final = (
     + str(len(STRING_PREFIX_CHARS))
     + r"}(?:'(?:[^']|\\')*?[^\\]'|\"(?:[^\"]|\\\")*?[^\\]\")"
 )
-STRING_GROUP_REGEXP: Final = "(" + STRING_REGEXP + ")"
-STRING_DOT_OR_PERC_REGEXP: Final = r"(?:\.[A-Za-z0-9_]+\(.*?\)| ?% ?.*)?"
+STRING_GROUP_REGEXP: Final = "(?<string>" + STRING_REGEXP + ")"
+STRING_BALANCED_PARENS: Final = r"(?<bparens>\((?:[^()]++|(?&bparens))+\))"
+STRING_DOT_OR_PERC_REGEXP: Final = r"(?<dot_or_perc>\.[A-Za-z0-9_]+" + STRING_BALANCED_PARENS + "| ?% ?.*)?"
 STRING_END_COMMENT_REGEXP: Final = r" *(?:#.*)?"
 
 
@@ -2589,7 +2590,7 @@ class StringTransformerMixin(StringTransformer):
         match = re.match(pattern, line_str)
 
         if match is not None:
-            result = match.groups()[0]
+            result = match.groupdict()["string"]
             assert isinstance(result, str)
             return result
         else:
@@ -2831,16 +2832,35 @@ class StringMerger(StringTransformerMixin):
 class StringArgCommaStripper(StringTransformerMixin):
     def _do_match(self, line: Line) -> STMatchResult:
         return self._regex_match(
-            line, r"^.*?[A-Za-z0-9_]+\(" + STRING_GROUP_REGEXP + r",\).*$"
+            line,
+            r"^.*?[A-Za-z0-9_]+\("
+            + STRING_GROUP_REGEXP
+            + STRING_DOT_OR_PERC_REGEXP
+            + r",\).*$",
         )
 
     def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
-        comma_idx = string_idx + 1
-        comma_leaf = line.leaves[comma_idx]
-
         new_line = line.clone()
         new_line.comments = line.comments.copy()
 
+        unmatched_parens = 0
+        for (i, leaf) in enumerate(line.leaves[string_idx + 2 :]):
+            if leaf.type == token.LPAR:
+                unmatched_parens += 1
+
+            if leaf.type == token.RPAR and unmatched_parens == 0:
+                comma_idx = i + string_idx + 1
+                break
+
+            if leaf.type == token.RPAR:
+                unmatched_parens -= 1
+        else:
+            raise RuntimeError(
+                "Logic Error. Found the LPAR leaf but was unable to"
+                " find a matching RPAR leaf."
+            )
+
+        comma_leaf = line.leaves[comma_idx]
         for i, old_leaf in enumerate(line.leaves):
             if i == comma_idx:
                 continue
@@ -2862,16 +2882,38 @@ class StringParensStripper(StringTransformerMixin):
     def _do_match(self, line: Line) -> STMatchResult:
         return self._regex_match(
             line,
-            r"^.*?" + r"[^A-z0-9_'\"] *\(" + STRING_GROUP_REGEXP + r"\)(?:[^\.].*)?$",
+            r"^.*?"
+            + r"[^A-z0-9_'\"] *\("
+            + STRING_GROUP_REGEXP
+            + STRING_DOT_OR_PERC_REGEXP
+            + r"\)(?<end>[^\.].*)?$",
         )
 
     def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
+        unmatched_parens = 0
+        for (i, leaf) in enumerate(line.leaves[string_idx + 1 :]):
+            if leaf.type == token.LPAR:
+                unmatched_parens += 1
+
+            if leaf.type == token.RPAR and unmatched_parens == 0:
+                rpar_idx = i + string_idx + 1
+                break
+
+            if leaf.type == token.RPAR:
+                unmatched_parens -= 1
+        else:
+            raise RuntimeError(
+                "Logic Error. Found the LPAR leaf but was unable to"
+                " find a matching RPAR leaf."
+            )
+
         if (
             id(line.leaves[string_idx - 1]) in line.comments
-            and id(line.leaves[string_idx + 1]) in line.comments
+            or id(line.leaves[rpar_idx]) in line.comments
         ):
             yield STError(
-                "Cannot strip parens from string when both parens have inline comments."
+                "Cannot strip parens from string when either side (LPAR or RPAR) has"
+                " inline comments."
             )
             return
 
@@ -2881,15 +2923,17 @@ class StringParensStripper(StringTransformerMixin):
         append_leaves(new_line, line, line.leaves[: string_idx - 1])
 
         string_leaf = Leaf(token.STRING, line.leaves[string_idx].value)
-        replace_child(line.leaves[string_idx - 1], string_leaf)
+        line.leaves[string_idx - 1].remove()
+        replace_child(line.leaves[string_idx], string_leaf)
         new_line.append(string_leaf)
 
-        for leaf in [line.leaves[string_idx - 1], line.leaves[string_idx + 1]]:
-            if id(leaf) in new_line.comments:
-                new_line.comments[id(string_leaf)] = new_line.comments[id(leaf)].copy()
-                del new_line.comments[id(leaf)]
+        append_leaves(
+            new_line,
+            line,
+            line.leaves[string_idx + 1 : rpar_idx] + line.leaves[rpar_idx + 1 :],
+        )
 
-        append_leaves(new_line, line, line.leaves[string_idx + 2 :])
+        line.leaves[rpar_idx].remove()
 
         yield new_line
 
