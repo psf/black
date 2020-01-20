@@ -153,6 +153,10 @@ annotated_variable: Final = "This is a large " + STRING + " that has been " + CO
 annotated_variable: Final = "This is a large string that has a type annotation attached to it. A type annotation should NOT stop a long string from being wrapped."
 annotated_variable: Literal["fakse_literal"] = "This is a large string that has a type annotation attached to it. A type annotation should NOT stop a long string from being wrapped."
 
+backslashes = "This is a really long string with \"embedded\" double quotes and 'single' quotes that also handles checking for an even number of backslashes \\"
+backslashes = "This is a really long string with \"embedded\" double quotes and 'single' quotes that also handles checking for an even number of backslashes \\\\"
+backslashes = "This is a really long string with \"embedded\" double quotes and 'single' quotes that also handles checking for an odd number of backslashes \\\", like this...\\\\\\"
+
 ########## REGRESSION TESTS ##########
 # There was a bug where tuples were being identified as long strings.
 long_tuple = ('Apple', 'Berry', 'Cherry', 'Dill', 'Evergreen', 'Fig',
@@ -555,6 +559,20 @@ annotated_variable: Final = (
 annotated_variable: Literal["fakse_literal"] = (
     "This is a large string that has a type annotation attached to it. A type"
     " annotation should NOT stop a long string from being wrapped."
+)
+
+backslashes = (
+    "This is a really long string with \"embedded\" double quotes and 'single' quotes"
+    " that also handles checking for an even number of backslashes \\"
+)
+backslashes = (
+    "This is a really long string with \"embedded\" double quotes and 'single' quotes"
+    " that also handles checking for an even number of backslashes \\\\"
+)
+backslashes = (
+    "This is a really long string with \"embedded\" double quotes and 'single' quotes"
+    ' that also handles checking for an odd number of backslashes \\", like'
+    " this...\\\\\\"
 )
 
 ########## REGRESSION TESTS ##########

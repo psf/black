@@ -69,12 +69,9 @@ CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 STRING_PREFIX_CHARS: Final = "furbFURB"  # All possible string prefix characters.
 
 # Regular expressions used for matching strings.
-RE_EVEN_BACKSLASHES_N: Final = (
-    r"(?<even_backslashes__NNN>(?:\\\\(?&even_backslashes__NNN))*?)"
-)
-RE_EVEN_BACKSLASHES_M: Final = RE_EVEN_BACKSLASHES_N.replace("NNN", "MMM")
-RE_BALANCED_SQUOTES: Final = r"(?:'(?:" + RE_EVEN_BACKSLASHES_N + r"[^'])+?')"
-RE_BALANCED_DQUOTES: Final = r'(?:"(?:' + RE_EVEN_BACKSLASHES_M + r'[^"])+?")'
+RE_NOT_QUOTE: Final = r"(?:(?:(?<!\\)(?:\\{{2}})*\\{0})|[^{0}])"
+RE_BALANCED_SQUOTES: Final = r"(?:'" + RE_NOT_QUOTE.format("'") + r"+?')"
+RE_BALANCED_DQUOTES: Final = r'(?:"' + RE_NOT_QUOTE.format('"') + r'+?")'
 RE_BALANCED_QUOTES: Final = (
     r"(?:" + RE_BALANCED_SQUOTES + "|" + RE_BALANCED_DQUOTES + ")"
 )
@@ -93,21 +90,6 @@ RE_DOT_OR_PERC_REGEXP: Final = (
     r"(?<dot_or_perc>\.[A-Za-z0-9_]+" + RE_BALANCED_PARENS + "| ?% ?.*)?"
 )
 RE_END_COMMENT_REGEXP: Final = r" *(?:#.*)?"
-
-
-def string_regexp() -> str:
-    N = getattr(string_regexp, "N", None)
-
-    # Ordinal representations of a-z is 65-90.
-    if N is None:
-        N = 1
-    else:
-        N %= 100
-
-    setattr(string_regexp, "N", N + 1)
-
-    M = N + 100
-    return RE_STRING.replace("NNN", f"{N}").replace("MMM", f"{M}")
 
 
 # types
@@ -2659,11 +2641,11 @@ class StringMerger(StringTransformerMixin):
             line,
             "^ *"
             + r"(?:[^'\"]|"
-            + string_regexp()
+            + RE_STRING
             + ")*?"
             + RE_STRING_GROUP
             + "(?: *"
-            + string_regexp()
+            + RE_STRING
             + ")+.*$",
         )
 
@@ -2746,6 +2728,7 @@ class StringMerger(StringTransformerMixin):
         num_of_strings = 0
         custom_splits = []
         prefix_tracker = []
+        RE_EVEN_BACKSLASHES = r"((?<!\\)(?:\\{2})*)"
         while (
             len(line.leaves) > next_str_idx
             and line.leaves[next_str_idx].type == token.STRING
@@ -2756,7 +2739,7 @@ class StringMerger(StringTransformerMixin):
 
             naked_string_value = string_value[len(prefix) + 1 : -1]
             naked_string_value = re.sub(
-                r"([^\\])" + QUOTE, r"\1\\" + QUOTE, naked_string_value
+                RE_EVEN_BACKSLASHES + QUOTE, r"\1\\" + QUOTE, naked_string_value
             )
 
             next_prefix = get_string_prefix(next_string_value)
@@ -2767,7 +2750,7 @@ class StringMerger(StringTransformerMixin):
 
             naked_next_string_value = next_string_value[len(next_prefix) + 1 : -1]
             naked_next_string_value = re.sub(
-                r"([^\\])" + QUOTE, r"\1\\" + QUOTE, naked_next_string_value
+                RE_EVEN_BACKSLASHES + QUOTE, r"\1\\" + QUOTE, naked_next_string_value
             )
 
             string_value = (
@@ -3343,7 +3326,7 @@ class StringExprSplitter(StringExprSplitterMixin):
         dict_regex_result = self._regex_match(
             line,
             r"^ *(?:[^'\":{}]|"
-            + string_regexp()
+            + RE_STRING
             + ")*?: *"
             + RE_STRING_GROUP
             + RE_DOT_OR_PERC_REGEXP
