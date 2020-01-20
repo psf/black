@@ -155,7 +155,7 @@ annotated_variable: Literal["fakse_literal"] = "This is a large string that has 
 
 backslashes = "This is a really long string with \"embedded\" double quotes and 'single' quotes that also handles checking for an even number of backslashes \\"
 backslashes = "This is a really long string with \"embedded\" double quotes and 'single' quotes that also handles checking for an even number of backslashes \\\\"
-backslashes = "This is a really long string with \"embedded\" double quotes and 'single' quotes that also handles checking for an odd number of backslashes \\\", like this...\\\\\\"
+backslashes = "This is a really 'long' string with \"embedded double quotes\" and 'single' quotes that also handles checking for an odd number of backslashes \\\", like this...\\\\\\"
 
 ########## REGRESSION TESTS ##########
 # There was a bug where tuples were being identified as long strings.
@@ -267,6 +267,19 @@ class A:
                                       x,
                                       xxxx.xxxxxxxxxxxxxx( xx)
                                       )))
+
+class A:
+    def foo():
+        some_func_call(
+            'xxxxxxxxxx',
+            (
+                "xx {xxxxxxxxxxx}/xxxxxxxxxxx.xxx xxxx.xxx && xxxxxx -x "
+                "\"xxxx xxxxxxx xxxxxx xxxx; xxxx xxxxxx_xxxxx xxxxxx xxxx; "
+                "xxxx.xxxx_xxxxxx(['xxxx.xxx'], xxxx.xxxxxxx().xxxxxxxxxx)\" "
+            ),
+            None,
+            ('xxxxxxxxxxx',),
+        ),
 
 # output
 
@@ -596,7 +609,7 @@ backslashes = (
     " that also handles checking for an even number of backslashes \\\\"
 )
 backslashes = (
-    "This is a really long string with \"embedded\" double quotes and 'single' quotes"
+    "This is a really 'long' string with \"embedded double quotes\" and 'single' quotes"
     ' that also handles checking for an odd number of backslashes \\", like'
     " this...\\\\\\"
 )
@@ -743,3 +756,17 @@ class A:
                     xxxx.xxxxxxxxxxxxxx(xx),
                 )
             )
+
+
+class A:
+    def foo():
+        some_func_call(
+            "xxxxxxxxxx",
+            (
+                "xx {xxxxxxxxxxx}/xxxxxxxxxxx.xxx xxxx.xxx && xxxxxx -x "
+                '"xxxx xxxxxxx xxxxxx xxxx; xxxx xxxxxx_xxxxx xxxxxx xxxx; '
+                "xxxx.xxxx_xxxxxx(['xxxx.xxx'], xxxx.xxxxxxx().xxxxxxxxxx)\" "
+            ),
+            None,
+            ("xxxxxxxxxxx",),
+        ),

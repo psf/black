@@ -68,9 +68,10 @@ CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 STRING_PREFIX_CHARS: Final = "furbFURB"  # All possible string prefix characters.
 
 # Regular expressions used for matching strings.
-RE_NOT_QUOTE = r"(?:(?:(?<!\\)(?:\\{{2}})*\\{0})|[^{0}])".format
-RE_BALANCED_SQUOTES: Final = r"(?:'" + RE_NOT_QUOTE("'") + r"+?')"
-RE_BALANCED_DQUOTES: Final = r'(?:"' + RE_NOT_QUOTE('"') + r'+?")'
+RE_NOT_QUOTE = r"(?:(?:(?<!\\)(?:\\{{2}})*\\[{0}])|[^\\{0}]|\\[^{0}])".format
+RE_EVEN_BACKSLASHES = r"(?:(?<!\\)(?:\\{2})*)"
+RE_BALANCED_SQUOTES: Final = r"(?:(?<!\\)'" + RE_NOT_QUOTE("'") + r"+?')"
+RE_BALANCED_DQUOTES: Final = r'(?:(?<!\\)"' + RE_NOT_QUOTE('"') + r'+?")'
 RE_BALANCED_QUOTES: Final = (
     r"(?:" + RE_BALANCED_SQUOTES + "|" + RE_BALANCED_DQUOTES + ")"
 )
@@ -95,6 +96,10 @@ RE_DOT_OR_PERC: Final = (
     + r"))?"
 )
 RE_EOL: Final = r" *(?:#.*)?"
+
+
+def named_group(regexp: str, name: str) -> str:
+    return f"(?<{name}>{regexp})"
 
 
 # types
@@ -2593,7 +2598,8 @@ class StringTransformerMixin(StringTransformer):
         idx_result = self._get_string_idx(line.leaves, result)
         if isinstance(idx_result, ValueError):
             raise RuntimeError(
-                f"Logic Error in `{self.__class__.__name__}._do_match` method."
+                f"Logic Error in `{self.__class__.__name__}._do_match`"
+                f" method.\n\nSTRING: {result}\n\nLINE: {line}\n"
             ) from idx_result
 
         string_idx = idx_result
@@ -2647,14 +2653,13 @@ class StringMerger(StringTransformerMixin):
     def _do_match(self, line: Line) -> STMatchResult:
         regex_result = self._regex_match(
             line,
-            "^ *"
-            + r"(?:[^'\"]|"
-            + RE_STRING
-            + ")*?"
+            r"^(?:[^'\"]|"
+            + RE_BALANCED_QUOTES
+            + r")*?"
             + RE_STRING_GROUP
-            + "(?: *"
-            + RE_STRING
-            + ")+.*$",
+            + " *"
+            + named_group(RE_STRING, "other_string")
+            + ".*$",
         )
 
         if isinstance(regex_result, str):
@@ -2730,9 +2735,6 @@ class StringMerger(StringTransformerMixin):
         prefix = ""
 
         BREAK_MARK = "@@@@@ BLACK BREAKPOINT MARKER @@@@@"
-
-        # An even number of backslashes.
-        RE_EVEN_BACKSLASHES = r"(?:(?<!\\)(?:\\{2})*)"
 
         next_str_idx = string_idx
         QUOTE = line.leaves[next_str_idx].value[-1]
