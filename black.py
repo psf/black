@@ -2857,6 +2857,22 @@ class StringMerger(StringTransformerMixin):
         return None
 
 
+def get_first_unmatched_rpar_idx(leaves: List[Leaf]) -> Result[int, ValueError]:
+    unmatched_parens = 0
+    for (i, leaf) in enumerate(leaves):
+        if leaf.type == token.LPAR:
+            unmatched_parens += 1
+            continue
+
+        if leaf.type == token.RPAR and unmatched_parens == 0:
+            return i
+
+        if leaf.type == token.RPAR:
+            unmatched_parens -= 1
+
+    return ValueError("No RPAR found!")
+
+
 class StringArgCommaStripper(StringTransformerMixin):
     def _do_match(self, line: Line) -> STMatchResult:
         return self._regex_match(
@@ -2867,24 +2883,15 @@ class StringArgCommaStripper(StringTransformerMixin):
         new_line = line.clone()
         new_line.comments = line.comments.copy()
 
-        unmatched_parens = 0
-        for (i, leaf) in enumerate(line.leaves[string_idx + 2 :]):
-            if leaf.type == token.LPAR:
-                unmatched_parens += 1
-
-            if leaf.type == token.RPAR and unmatched_parens == 0:
-                comma_idx = i + string_idx + 1
-                break
-
-            if leaf.type == token.RPAR:
-                unmatched_parens -= 1
-        else:
+        idx_result = get_first_unmatched_rpar_idx(line.leaves[string_idx + 2 :])
+        if isinstance(idx_result, ValueError):
             raise RuntimeError(
                 f"Logic Error. {self.__class__.__name__} was unable to find the ending"
                 " RPAR leaf for the following string and line:\n\nSTRING:"
                 f" {line.leaves[string_idx]}\n\nLINE: {line_to_string(line)}\n"
-            )
+            ) from idx_result
 
+        comma_idx = idx_result + string_idx + 1
         comma_leaf = line.leaves[comma_idx]
         for i, old_leaf in enumerate(line.leaves):
             if i == comma_idx:
@@ -2915,24 +2922,15 @@ class StringParensStripper(StringTransformerMixin):
         )
 
     def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
-        unmatched_parens = 0
-        for (i, leaf) in enumerate(line.leaves[string_idx + 1 :]):
-            if leaf.type == token.LPAR:
-                unmatched_parens += 1
-                continue
-
-            if leaf.type == token.RPAR and unmatched_parens == 0:
-                rpar_idx = i + string_idx + 1
-                break
-
-            if leaf.type == token.RPAR:
-                unmatched_parens -= 1
-        else:
+        idx_result = get_first_unmatched_rpar_idx(line.leaves[string_idx + 1 :])
+        if isinstance(idx_result, ValueError):
             raise RuntimeError(
                 f"Logic Error. {self.__class__.__name__} was unable to find the ending"
                 " RPAR leaf for the following string and line:\n\nSTRING:"
                 f" {line.leaves[string_idx]}\n\nLINE: {line_to_string(line)}\n"
-            )
+            ) from idx_result
+
+        rpar_idx = idx_result + string_idx + 1
 
         if (
             id(line.leaves[string_idx - 1]) in line.comments
