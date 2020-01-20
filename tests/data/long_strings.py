@@ -281,6 +281,18 @@ class A:
             ('xxxxxxxxxxx',),
         ),
 
+class A:
+    def foo():
+        some_func_call(
+            (
+                "xx {xxxxxxxxxxx}/xxxxxxxxxxx.xxx xxxx.xxx && xxxxxx -x "
+                "xxxx, ('xxxxxxx xxxxxx xxxx, xxxx') xxxxxx_xxxxx xxxxxx xxxx; "
+                "xxxx.xxxx_xxxxxx(['xxxx.xxx'], xxxx.xxxxxxx().xxxxxxxxxx)\" "
+            ),
+            None,
+            ('xxxxxxxxxxx',),
+        ),
+
 # output
 
 x = (
@@ -765,6 +777,19 @@ class A:
             (
                 "xx {xxxxxxxxxxx}/xxxxxxxxxxx.xxx xxxx.xxx && xxxxxx -x "
                 '"xxxx xxxxxxx xxxxxx xxxx; xxxx xxxxxx_xxxxx xxxxxx xxxx; '
+                "xxxx.xxxx_xxxxxx(['xxxx.xxx'], xxxx.xxxxxxx().xxxxxxxxxx)\" "
+            ),
+            None,
+            ("xxxxxxxxxxx",),
+        ),
+
+
+class A:
+    def foo():
+        some_func_call(
+            (
+                "xx {xxxxxxxxxxx}/xxxxxxxxxxx.xxx xxxx.xxx && xxxxxx -x "
+                "xxxx, ('xxxxxxx xxxxxx xxxx, xxxx') xxxxxx_xxxxx xxxxxx xxxx; "
                 "xxxx.xxxx_xxxxxx(['xxxx.xxx'], xxxx.xxxxxxx().xxxxxxxxxx)\" "
             ),
             None,

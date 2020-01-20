@@ -2878,7 +2878,11 @@ def get_first_unmatched_rpar_idx(leaves: List[Leaf]) -> Result[int, ValueError]:
 class StringArgCommaStripper(StringTransformerMixin):
     def _do_match(self, line: Line) -> STMatchResult:
         return self._regex_match(
-            line, r"^.*?[A-Za-z0-9_]+\(" + RE_STRING_GROUP + RE_DOT_OR_PERC + r",\).*$",
+            line,
+            r"^(?:[^'\"]|"
+            + RE_BALANCED_QUOTES
+            + r")*?"
+            + r"[A-Za-z0-9_]+\(" + RE_STRING_GROUP + RE_DOT_OR_PERC + r",\).*$",
         )
 
     def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
@@ -2916,7 +2920,9 @@ class StringParensStripper(StringTransformerMixin):
     def _do_match(self, line: Line) -> STMatchResult:
         return self._regex_match(
             line,
-            r"^.*?"
+            r"^(?:[^'\"]|"
+            + RE_BALANCED_QUOTES
+            + r")*?"
             + r"[^A-z0-9_'\"] *\("
             + RE_STRING_GROUP
             + RE_DOT_OR_PERC
