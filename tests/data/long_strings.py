@@ -301,6 +301,12 @@ xxxxxxx = { 'xx' : 'xxxx xxxxxxx xxxxxxxxx -x xxx -x /xxx/{0} -x xxx,xxx -xx {1}
 xxx_xx_xxxx_xxxx,xxx_xxx_xxxx,xxx_xxx_xxxx xxxx=xxx | xxxxxx -x xxxxxxxx -x xxxxxxxx -x'
 }
 
+class A:
+    def foo(self):
+        if True:
+            xxxxx_xxxxxxxxxxxx('xxx xxxxxx xxx xxxxxxxxx.xx xx xxxxxxxx.  xxx xxxxxxxxxxxxx.xx xxxxxxx '
+                               + 'xx xxxxxx xxxxxx xxxxxx xx xxxxxxx xxx xxx ${0} xx x xxxxxxxx xxxxx'.xxxxxx(xxxxxx_xxxxxx_xxx))
+
 # output
 
 x = (
@@ -815,3 +821,14 @@ xxxxxxx = {
         "xxxx xxxxxxx xxxxxxxxx -x xxx -x /xxx/{0} -x xxx,xxx -xx {1} -xx {1} -xx xxx=xxx_xxxx_xxx_xxxx,xxx_xx_xxx_xxxx,xxx_xxxx_xxx_xxxx,xxx_xx_xxxx_xxxx,xxx_xxx_xxxx,xxx_xxx_xxxx xxxx=xxx | xxxxxx -x xxxxxxxx -x xxxxxxxx -x"
     ),
 }
+
+
+class A:
+    def foo(self):
+        if True:
+            xxxxx_xxxxxxxxxxxx(
+                "xxx xxxxxx xxx xxxxxxxxx.xx xx xxxxxxxx.  xxx xxxxxxxxxxxxx.xx"
+                " xxxxxxx "
+                + "xx xxxxxx xxxxxx xxxxxx xx xxxxxxx xxx xxx ${0} xx x xxxxxxxx xxxxx"
+                .xxxxxx(xxxxxx_xxxxxx_xxx)
+            )

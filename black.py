@@ -3134,6 +3134,13 @@ class StringTermSplitter(StringSplitterMixin):
         )
 
         first_string_line = True
+
+        def maybe_prepend_plus(new_line: Line) -> None:
+            if first_string_line and starts_with_plus:
+                plus_leaf = Leaf(token.PLUS, "+")
+                replace_child(line.leaves[0], plus_leaf)
+                new_line.append(plus_leaf)
+
         while len(line_to_string(rest_line)) > max_rest_length or (
             len(custom_splits) > 1 and use_custom_breakpoints
         ):
@@ -3167,10 +3174,7 @@ class StringTermSplitter(StringSplitterMixin):
 
             next_line = line.clone()
 
-            if prepend_plus:
-                plus_leaf = Leaf(token.PLUS, "+")
-                replace_child(line.leaves[0], plus_leaf)
-                next_line.append(plus_leaf)
+            maybe_prepend_plus(next_line)
 
             next_leaf = Leaf(token.STRING, next_value)
             insert_str_child(next_leaf)
@@ -3202,6 +3206,9 @@ class StringTermSplitter(StringSplitterMixin):
         insert_str_child(rest_leaf)
 
         if len(line.leaves) > (string_idx + 1):
+            last_line = line.clone()
+            maybe_prepend_plus(last_line)
+
             non_string_line = rest_line.clone()
             append_leaves(non_string_line, line, line.leaves[string_idx + 1 :])
 
@@ -3210,15 +3217,15 @@ class StringTermSplitter(StringSplitterMixin):
                 + len(line_to_string(non_string_line))
                 - non_string_line.depth * 4
             ) <= self.line_length:
-                last_line = line.clone()
-
                 append_leaves(
                     last_line, line, rest_line.leaves + non_string_line.leaves
                 )
 
                 yield last_line
             else:
-                yield rest_line
+                append_leaves(last_line, line, rest_line.leaves)
+                yield last_line
+
                 yield non_string_line
         else:
             rest_line.comments = line.comments
@@ -3231,7 +3238,15 @@ class StringTermSplitter(StringSplitterMixin):
         assert max_length > 0
 
         idx = max_length
-        while 0 < idx + 1 < len(string_value) and string_value[idx] != " ":
+
+        # Ensure the substring:
+        #   1) starts with a space
+        #   2) contains at least a 5-letter word
+        while (
+            0 < idx + 1 < len(string_value)
+            and string_value[idx] != " "
+            or len(string_value[idx:]) < 6
+        ):
             idx -= 1
 
         if string_value[idx] != " ":
