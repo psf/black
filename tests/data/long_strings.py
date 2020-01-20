@@ -99,10 +99,6 @@ pragma_comment_string2 = "Lines which end with an inline pragma comment of the f
 
 triple_quote_string = """This is a really really really long triple quote string assignment and it should not be touched."""
 
-# Regression test. There was a bug where tuples were being identified as long strings.
-long_tuple = ('Apple', 'Berry', 'Cherry', 'Dill', 'Evergreen', 'Fig',
-           'Grape', 'Harry', 'Iglu', 'Jaguar')
-
 assert some_type_of_boolean_expression, "Followed by a really really really long string that is used to provide context to the AssertionError exception."
 
 assert some_type_of_boolean_expression, "Followed by a really really really long string that is used to provide context to the AssertionError exception, which uses dynamic string {}.".format("formatting")
@@ -158,6 +154,10 @@ annotated_variable: Final = "This is a large string that has a type annotation a
 annotated_variable: Dict[str, Any] = "This is a large string that has a type annotation attached to it. A type annotation should NOT stop a long string from being wrapped."
 
 ########## REGRESSION TESTS ##########
+# There was a bug where tuples were being identified as long strings.
+long_tuple = ('Apple', 'Berry', 'Cherry', 'Dill', 'Evergreen', 'Fig',
+           'Grape', 'Harry', 'Iglu', 'Jaguar')
+
 stupid_format_method_bug = "Some really long string that just so happens to be the {} {} to force the 'format' method to hang over the line length boundary. This is pretty annoying.".format("perfect", "length")
 
 class A:
@@ -466,20 +466,6 @@ pragma_comment_string2 = "Lines which end with an inline pragma comment of the f
 
 triple_quote_string = """This is a really really really long triple quote string assignment and it should not be touched."""
 
-# Regression test. There was a bug where tuples were being identified as long strings.
-long_tuple = (
-    "Apple",
-    "Berry",
-    "Cherry",
-    "Dill",
-    "Evergreen",
-    "Fig",
-    "Grape",
-    "Harry",
-    "Iglu",
-    "Jaguar",
-)
-
 assert some_type_of_boolean_expression, (
     "Followed by a really really really long string that is used to provide context to"
     " the AssertionError exception."
@@ -572,6 +558,20 @@ annotated_variable: Dict[str, Any] = (
 )
 
 ########## REGRESSION TESTS ##########
+# There was a bug where tuples were being identified as long strings.
+long_tuple = (
+    "Apple",
+    "Berry",
+    "Cherry",
+    "Dill",
+    "Evergreen",
+    "Fig",
+    "Grape",
+    "Harry",
+    "Iglu",
+    "Jaguar",
+)
+
 stupid_format_method_bug = (
     "Some really long string that just so happens to be the {} {} to force the 'format'"
     " method to hang over the line length boundary. This is pretty annoying."
