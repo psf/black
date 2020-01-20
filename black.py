@@ -482,7 +482,7 @@ def main(
     except re.error:
         err(f"Invalid regular expression for exclude given: {exclude!r}")
         ctx.exit(2)
-    report = Report(check=check, quiet=quiet, verbose=verbose)
+    report = Report(check=check, diff=diff, quiet=quiet, verbose=verbose)
     root = find_project_root(src)
     sources: Set[Path] = set()
     path_empty(src, quiet, verbose, ctx)
@@ -1450,7 +1450,10 @@ class Line:
         for leaf_id, comments in self.comments.items():
             for comment in comments:
                 if is_type_comment(comment):
-                    if leaf_id not in ignored_ids or comment_seen:
+                    if comment_seen or (
+                        not is_type_comment(comment, " ignore")
+                        and leaf_id not in ignored_ids
+                    ):
                         return True
 
                 comment_seen = True
@@ -2852,11 +2855,7 @@ class StringMerger(StringTransformerMixin):
 class StringArgCommaStripper(StringTransformerMixin):
     def _do_match(self, line: Line) -> STMatchResult:
         return self._regex_match(
-            line,
-            r"^.*?[A-Za-z0-9_]+\("
-            + RE_STRING_GROUP
-            + RE_DOT_OR_PERC
-            + r",\).*$",
+            line, r"^.*?[A-Za-z0-9_]+\(" + RE_STRING_GROUP + RE_DOT_OR_PERC + r",\).*$",
         )
 
     def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
@@ -3076,11 +3075,7 @@ class StringTermSplitter(StringSplitterMixin):
     def _do_splitter_match(self, line: Line) -> STMatchResult:
         return self._regex_match(
             line,
-            r"^ *(?:\+ *)?"
-            + RE_STRING_GROUP
-            + RE_DOT_OR_PERC
-            + RE_END_COMMENT
-            + "$",
+            r"^ *(?:\+ *)?" + RE_STRING_GROUP + RE_DOT_OR_PERC + RE_END_COMMENT + "$",
         )
 
     def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
@@ -4537,7 +4532,7 @@ def find_project_root(srcs: Iterable[str]) -> Path:
         # Append a fake file so `parents` below returns `common_base_dir`, too.
         common_base /= "fake-file"
     for directory in common_base.parents:
-        if (directory / ".git").is_dir():
+        if (directory / ".git").exists():
             return directory
 
         if (directory / ".hg").is_dir():
@@ -4554,6 +4549,7 @@ class Report:
     """Provides a reformatting counter. Can be rendered with `str(report)`."""
 
     check: bool = False
+    diff: bool = False
     quiet: bool = False
     verbose: bool = False
     change_count: int = 0
@@ -4563,7 +4559,7 @@ class Report:
     def done(self, src: Path, changed: Changed) -> None:
         """Increment the counter for successful reformatting. Write out a message."""
         if changed is Changed.YES:
-            reformatted = "would reformat" if self.check else "reformatted"
+            reformatted = "would reformat" if self.check or self.diff else "reformatted"
             if self.verbose or not self.quiet:
                 out(f"{reformatted} {src}")
             self.change_count += 1
@@ -4609,7 +4605,7 @@ class Report:
 
         Use `click.unstyle` to remove colors.
         """
-        if self.check:
+        if self.check or self.diff:
             reformatted = "would be reformatted"
             unchanged = "would be left unchanged"
             failed = "would fail to reformat"

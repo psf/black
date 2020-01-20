@@ -4,6 +4,7 @@
 
 <p align="center">
 <a href="https://travis-ci.com/psf/black"><img alt="Build Status" src="https://travis-ci.com/psf/black.svg?branch=master"></a>
+<a href="https://github.com/psf/black/actions"><img alt="Actions Status" src="https://github.com/psf/black/workflows/Test/badge.svg"></a>
 <a href="https://black.readthedocs.io/en/stable/?badge=stable"><img alt="Documentation Status" src="https://readthedocs.org/projects/black/badge/?version=stable"></a>
 <a href="https://coveralls.io/github/psf/black?branch=master"><img alt="Coverage Status" src="https://coveralls.io/repos/github/psf/black/badge.svg?branch=master"></a>
 <a href="https://github.com/psf/black/blob/master/LICENSE"><img alt="License: MIT" src="https://black.readthedocs.io/en/stable/_static/license.svg"></a>
@@ -162,7 +163,7 @@ statement per line. If this fits the allotted line length, great.
 
 j = [1,
      2,
-     3,
+     3
 ]
 
 # out:
@@ -283,6 +284,14 @@ curious about the reasoning behind B950,
 [Bugbear's documentation](https://github.com/PyCQA/flake8-bugbear#opinionated-warnings)
 explains it. The tl;dr is "it's like highway speed limits, we won't bother you if you
 overdo it by a few km/h".
+
+**If you're looking for a minimal, black-compatible flake8 configuration:**
+
+```ini
+[flake8]
+max-line-length = 88
+extend-ignore = E203
+```
 
 ### Empty lines
 
@@ -772,6 +781,10 @@ hook global WinSetOption filetype=python %{
 }
 ```
 
+### Thonny
+
+Use [Thonny-black-code-format](https://github.com/Franccisco/thonny-black-code-format).
+
 ### Other editors
 
 Other editors will require external contributions.
@@ -887,7 +900,9 @@ Then run `pre-commit install` and you're ready to go.
 
 Avoid using `args` in the hook. Instead, store necessary configuration in
 `pyproject.toml` so that editors and command-line usage of Black all behave consistently
-for your project. See _Black_'s own [pyproject.toml](/pyproject.toml) for an example.
+for your project. See _Black_'s own
+[pyproject.toml](https://github.com/psf/black/blob/master/pyproject.toml) for an
+example.
 
 If you're already using Python 3.7, switch the `language_version` accordingly. Finally,
 `stable` is a tag that is pinned to the latest release on PyPI. If you'd rather run on
@@ -920,7 +935,7 @@ then write the above files to `.cache/black/<version>/`.
 The following notable open-source projects trust _Black_ with enforcing a consistent
 code style: pytest, tox, Pyramid, Django Channels, Hypothesis, attrs, SQLAlchemy,
 Poetry, PyPA applications (Warehouse, Pipenv, virtualenv), pandas, Pillow, every Datadog
-Agent Integration.
+Agent Integration, Home Assistant.
 
 Are we missing anyone? Let us know.
 

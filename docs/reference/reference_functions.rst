@@ -26,8 +26,6 @@ Assertions and checks
 
 .. autofunction:: black.is_one_tuple
 
-.. autofunction:: black.is_python36
-
 .. autofunction:: black.is_split_after_delimiter
 
 .. autofunction:: black.is_split_before_delimiter
@@ -126,8 +124,6 @@ Utilities
 .. autofunction:: black.dont_increase_indentation
 
 .. autofunction:: black.format_float_or_int_string
-
-.. autofunction:: black.format_int_string
 
 .. autofunction:: black.ensure_visible
 

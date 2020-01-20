@@ -148,6 +148,12 @@ short
 
 CONFIG_FILES = [CONFIG_FILE, ] + SHARED_CONFIG_FILES + USER_CONFIG_FILES  # type: Final
 
+class Test:
+    def _init_host(self, parsed) -> None:
+        if (parsed.hostname is None or  # type: ignore
+                not parsed.hostname.strip()):
+            pass
+
 #######################
 ### SECTION COMMENT ###
 #######################
@@ -311,6 +317,13 @@ short
 
 
 CONFIG_FILES = [CONFIG_FILE,] + SHARED_CONFIG_FILES + USER_CONFIG_FILES  # type: Final
+
+
+class Test:
+    def _init_host(self, parsed) -> None:
+        if parsed.hostname is None or not parsed.hostname.strip():  # type: ignore
+            pass
+
 
 #######################
 ### SECTION COMMENT ###
