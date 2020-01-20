@@ -65,21 +65,46 @@ DEFAULT_LINE_LENGTH = 88
 DEFAULT_EXCLUDES = r"/(\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_build|buck-out|build|dist)/"  # noqa: B950
 DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
+
+# Regular expressions used for matching strings.
+STRING_EVEN_BACKSLASHES_N: Final = r"(?<ebsNNN>(?:\\\\(?&ebsNNN))*?)"
+STRING_EVEN_BACKSLASHES_M: Final = STRING_EVEN_BACKSLASHES_N.replace("NNN", "MMM")
+STRING_BALANCED_SQUOTES: Final = r"(?:'(?:" + STRING_EVEN_BACKSLASHES_N + r"[^'])+?')"
+STRING_BALANCED_DQUOTES: Final = r'(?:"(?:' + STRING_EVEN_BACKSLASHES_M + r'[^"])+?")'
+STRING_BALANCED_QUOTES: Final = (
+    r"(?:" + STRING_BALANCED_SQUOTES + "|" + STRING_BALANCED_DQUOTES + ")"
+)
+STRING_BALANCED_BRACKETS: Final = r"(?<bbrackets>\[(?:[^\[\]]++|(?&bbrackets))*\])"
+STRING_BALANCED_PARENS: Final = r"(?<bparens>\((?:[^()]++|(?&bparens))*\))"
 STRING_PREFIX_CHARS: Final = "furbFURB"  # All possible string prefix characters.
 STRING_REGEXP: Final = (
     "["
     + STRING_PREFIX_CHARS
     + "]{0,"
     + str(len(STRING_PREFIX_CHARS))
-    + r"}(?:'(?:[^']|\\')*?[^\\]'|\"(?:[^\"]|\\\")*?[^\\]\")"
+    + r"}"
+    + STRING_BALANCED_QUOTES
 )
-STRING_GROUP_REGEXP: Final = "(?<string>" + STRING_REGEXP + ")"
-STRING_BALANCED_BRACKETS: Final = r"(?<bbrackets>\[(?:[^\[\]]++|(?&bbrackets))*\])"
-STRING_BALANCED_PARENS: Final = r"(?<bparens>\((?:[^()]++|(?&bparens))*\))"
+STRING_GROUP_REGEXP: Final = "(?<string>" + STRING_REGEXP.replace("NNN", "") + ")"
 STRING_DOT_OR_PERC_REGEXP: Final = (
     r"(?<dot_or_perc>\.[A-Za-z0-9_]+" + STRING_BALANCED_PARENS + "| ?% ?.*)?"
 )
 STRING_END_COMMENT_REGEXP: Final = r" *(?:#.*)?"
+
+
+def string_regexp() -> str:
+    N = getattr(string_regexp, "N", None)
+
+    # Ordinal representations of a-z is 65-90.
+    if N is None:
+        N = 1
+    else:
+        N %= 100
+
+    setattr(string_regexp, "N", N + 1)
+
+    M = N + 100
+    return STRING_REGEXP.replace("NNN", f"{N}").replace("MMM", f"{M}")
 
 
 # types
@@ -2631,11 +2656,11 @@ class StringMerger(StringTransformerMixin):
             line,
             "^ *"
             + r"(?:[^'\"]|"
-            + STRING_REGEXP
+            + string_regexp()
             + ")*?"
             + STRING_GROUP_REGEXP
             + "(?: *"
-            + STRING_REGEXP
+            + string_regexp()
             + ")+.*$",
         )
 
@@ -3315,7 +3340,7 @@ class StringExprSplitter(StringExprSplitterMixin):
         dict_regex_result = self._regex_match(
             line,
             r"^ *(?:[^'\":{}]|"
-            + STRING_REGEXP
+            + string_regexp()
             + ")*?: *"
             + STRING_GROUP_REGEXP
             + STRING_DOT_OR_PERC_REGEXP
