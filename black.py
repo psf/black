@@ -74,8 +74,11 @@ STRING_REGEXP: Final = (
     + r"}(?:'(?:[^']|\\')*?[^\\]'|\"(?:[^\"]|\\\")*?[^\\]\")"
 )
 STRING_GROUP_REGEXP: Final = "(?<string>" + STRING_REGEXP + ")"
-STRING_BALANCED_PARENS: Final = r"(?<bparens>\((?:[^()]++|(?&bparens))+\))"
-STRING_DOT_OR_PERC_REGEXP: Final = r"(?<dot_or_perc>\.[A-Za-z0-9_]+" + STRING_BALANCED_PARENS + "| ?% ?.*)?"
+STRING_BALANCED_BRACKETS: Final = r"(?<bbrackets>\[(?:[^\[\]]++|(?&bbrackets))*\])"
+STRING_BALANCED_PARENS: Final = r"(?<bparens>\((?:[^()]++|(?&bparens))*\))"
+STRING_DOT_OR_PERC_REGEXP: Final = (
+    r"(?<dot_or_perc>\.[A-Za-z0-9_]+" + STRING_BALANCED_PARENS + "| ?% ?.*)?"
+)
 STRING_END_COMMENT_REGEXP: Final = r" *(?:#.*)?"
 
 
@@ -3295,8 +3298,10 @@ class StringExprSplitter(StringExprSplitterMixin):
     def _do_splitter_match(self, line: Line) -> STMatchResult:
         regex_result = self._regex_match(
             line,
-            r"^ *(?:return |else |assert .*, ?|[A-Za-z0-9\._]*?"
-            + r" ?\+?= ?)?"
+            r"^ *(?:return |else |assert .*, ?|"
+            + r"[A-Za-z0-9\._]*?(?<type>: ?[A-Za-z0-9_]+"
+            + STRING_BALANCED_BRACKETS
+            + r"?)? ?\+?= ?)?"
             + STRING_GROUP_REGEXP
             + STRING_DOT_OR_PERC_REGEXP
             + ",?"
@@ -3894,6 +3899,9 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
             return
     check_lpar = False
     for index, child in enumerate(list(node.children)):
+        if isinstance(child, Node) and child.type == syms.annassign:
+            normalize_invisible_parens(child, parens_after=parens_after)
+
         # Add parentheses around long tuple unpacking in assignments.
         if (
             index == 0

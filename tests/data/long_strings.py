@@ -153,6 +153,10 @@ func_with_bad_parens(
     z,
 )
 
+annotated_variable: Final = "This is a large " + STRING + " that has been " + CONCATENATED + "using the '+' operator."
+annotated_variable: Final = "This is a large string that has a type annotation attatched to it. A type annotation should NOT stop a long string from being wrapped."
+annotated_variable: Dict[str, Any] = "This is a large string that has a type annotation attatched to it. A type annotation should NOT stop a long string from being wrapped."
+
 ########## REGRESSION TESTS ##########
 stupid_format_method_bug = "Some really long string that just so happens to be the {} {} to force the 'format' method to hang over the line length boundary. This is pretty annoying.".format("perfect", "length")
 
@@ -549,6 +553,22 @@ func_with_bad_parens(
 
 func_with_bad_parens(
     x, y, "short string that should have parens stripped", z,
+)
+
+annotated_variable: Final = (
+    "This is a large "
+    + STRING
+    + " that has been "
+    + CONCATENATED
+    + "using the '+' operator."
+)
+annotated_variable: Final = (
+    "This is a large string that has a type annotation attatched to it. A type"
+    " annotation should NOT stop a long string from being wrapped."
+)
+annotated_variable: Dict[str, Any] = (
+    "This is a large string that has a type annotation attatched to it. A type"
+    " annotation should NOT stop a long string from being wrapped."
 )
 
 ########## REGRESSION TESTS ##########
