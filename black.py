@@ -85,7 +85,7 @@ RE_STRING: Final = (
     + r"}"
     + RE_BALANCED_QUOTES
 )
-RE_STRING_GROUP: Final = "(?<string>" + RE_STRING.replace("NNN", "") + ")"
+RE_STRING_GROUP: Final = "(?<string>" + RE_STRING + ")"
 RE_DOT_OR_PERC_REGEXP: Final = (
     r"(?<dot_or_perc>\.[A-Za-z0-9_]+" + RE_BALANCED_PARENS + "| ?% ?.*)?"
 )
