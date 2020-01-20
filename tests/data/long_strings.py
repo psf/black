@@ -242,6 +242,18 @@ func_call_where_string_arg_has_method_call_and_bad_parens(
     ),
 )
 
+func_call_where_string_arg_has_old_fmt_and_bad_parens(
+    (
+        "A long string with {}. This string is so long that it is ridiculous. It can't fit on one line at alllll." % "formatting"
+    ),
+)
+
+func_call_where_string_arg_has_old_fmt_and_bad_parens(
+    (
+        "A long string with {}. This {} is so long that it is ridiculous. It can't fit on one line at alllll." % ("formatting", "string")
+    ),
+)
+
 # output
 
 x = (
@@ -688,4 +700,16 @@ class A:
 func_call_where_string_arg_has_method_call_and_bad_parens(
     "A long string with {}. This string is so long that it is ridiculous. It can't fit"
     " on one line at alllll.".format("formatting")
+)
+
+func_call_where_string_arg_has_old_fmt_and_bad_parens(
+    "A long string with {}. This string is so long that it is ridiculous. It can't fit"
+    " on one line at alllll."
+    % "formatting"
+)
+
+func_call_where_string_arg_has_old_fmt_and_bad_parens(
+    "A long string with {}. This {} is so long that it is ridiculous. It can't fit on"
+    " one line at alllll."
+    % ("formatting", "string")
 )
