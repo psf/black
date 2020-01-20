@@ -254,6 +254,20 @@ func_call_where_string_arg_has_old_fmt_and_bad_parens(
     ),
 )
 
+class A:
+    def append(self):
+        if True:
+            xxxx.xxxxxxx.xxxxx( ('xxxxxxxxxx xxxx xx xxxxxx(%x) xx %x xxxx xx xxx %x.xx'
+                                 % (len(self) + 1,
+                                    xxxx.xxxxxxxxxx,
+                                    xxxx.xxxxxxxxxx))
+                                + (' %.3f (%s) to %.3f (%s).\n'
+                                   % (xxxx.xxxxxxxxx,
+                                      xxxx.xxxxxxxxxxxxxx(xxxx.xxxxxxxxx),
+                                      x,
+                                      xxxx.xxxxxxxxxxxxxx( xx)
+                                      )))
+
 # output
 
 x = (
@@ -713,3 +727,19 @@ func_call_where_string_arg_has_old_fmt_and_bad_parens(
     " one line at alllll."
     % ("formatting", "string")
 )
+
+
+class A:
+    def append(self):
+        if True:
+            xxxx.xxxxxxx.xxxxx(
+                "xxxxxxxxxx xxxx xx xxxxxx(%x) xx %x xxxx xx xxx %x.xx"
+                % (len(self) + 1, xxxx.xxxxxxxxxx, xxxx.xxxxxxxxxx)
+                + " %.3f (%s) to %.3f (%s).\n"
+                % (
+                    xxxx.xxxxxxxxx,
+                    xxxx.xxxxxxxxxxxxxx(xxxx.xxxxxxxxx),
+                    x,
+                    xxxx.xxxxxxxxxxxxxx(xx),
+                )
+            )

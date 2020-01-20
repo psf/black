@@ -75,7 +75,7 @@ RE_BALANCED_QUOTES: Final = (
     r"(?:" + RE_BALANCED_SQUOTES + "|" + RE_BALANCED_DQUOTES + ")"
 )
 RE_BALANCED_BRACKETS: Final = r"(?<bbrackets>\[(?:[^\[\]]++|(?&bbrackets))*\])"
-RE_BALANCED_PARENS: Final = r"(?<bparens>\((?:[^()]++|(?&bparens))*\))"
+RE_BALANCED_PARENS: Final = r"(?<bparens{0}>\((?:[^()]++|(?&bparens{0}))*\))".format
 RE_STRING: Final = (
     "["
     + STRING_PREFIX_CHARS
@@ -86,7 +86,13 @@ RE_STRING: Final = (
 )
 RE_STRING_GROUP: Final = "(?<string>" + RE_STRING + ")"
 RE_DOT_OR_PERC: Final = (
-    r"(?<dot_or_perc>\.[A-Za-z0-9_]+" + RE_BALANCED_PARENS + "| ?% ?.*)?"
+    r"(?<dot_or_perc>\.[A-Za-z0-9_]+"
+    + RE_BALANCED_PARENS("1")
+    + "| ?% ?(?:"
+    + RE_BALANCED_PARENS("2")
+    + r"|"
+    + RE_BALANCED_QUOTES
+    + r"))?"
 )
 RE_EOL: Final = r" *(?:#.*)?"
 
@@ -2874,8 +2880,9 @@ class StringArgCommaStripper(StringTransformerMixin):
                 unmatched_parens -= 1
         else:
             raise RuntimeError(
-                "Logic Error. Found the LPAR leaf but was unable to"
-                " find a matching RPAR leaf."
+                f"Logic Error. {self.__class__.__name__} was unable to find the ending"
+                " RPAR leaf for the following string and line:\n\nSTRING:"
+                f" {line.leaves[string_idx]}\n\nLINE: {line_to_string(line)}\n"
             )
 
         comma_leaf = line.leaves[comma_idx]
@@ -2912,6 +2919,7 @@ class StringParensStripper(StringTransformerMixin):
         for (i, leaf) in enumerate(line.leaves[string_idx + 1 :]):
             if leaf.type == token.LPAR:
                 unmatched_parens += 1
+                continue
 
             if leaf.type == token.RPAR and unmatched_parens == 0:
                 rpar_idx = i + string_idx + 1
@@ -2921,8 +2929,9 @@ class StringParensStripper(StringTransformerMixin):
                 unmatched_parens -= 1
         else:
             raise RuntimeError(
-                "Logic Error. Found the LPAR leaf but was unable to"
-                " find a matching RPAR leaf."
+                f"Logic Error. {self.__class__.__name__} was unable to find the ending"
+                " RPAR leaf for the following string and line:\n\nSTRING:"
+                f" {line.leaves[string_idx]}\n\nLINE: {line_to_string(line)}\n"
             )
 
         if (
