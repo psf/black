@@ -31,7 +31,6 @@ from typing import (
     Iterable,
     Iterator,
     List,
-    NamedTuple,
     Optional,
     Pattern,
     Sequence,
