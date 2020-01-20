@@ -319,6 +319,30 @@ class A:
                 'xxxxxxxxxx' : xxxxx_xxxxx,
                 }
 
+class A:
+    def xxxx_xxx_xx_xxxxxxxxxx_xxxx_xxxxxxxxx(xxxx):
+        xxxxxxxx = [
+            xxxxxxxxxxxxxxxx(
+                'xxxx',
+                xxxxxxxxxxx={
+                    'xxxx' : 1.0,
+                },
+                xxxxxx={'xxxxxx 1' : xxxxxx(xxxx='xxxxxx 1', xxxxxx=600.0)},
+                xxxxxxxx_xxxxxxx=0.0,
+            ),
+            xxxxxxxxxxxxxxxx(
+                'xxxxxxx',
+                xxxxxxxxxxx={
+                    'xxxx' : 1.0,
+                },
+                xxxxxx={'xxxxxx 1' : xxxxxx(xxxx='xxxxxx 1', xxxxxx=200.0)},
+                xxxxxxxx_xxxxxxx=0.0,
+            ),
+            xxxxxxxxxxxxxxxx(
+                'xxxx',
+            ),
+        ]
+
 # output
 
 x = (
@@ -857,3 +881,22 @@ class A:
                 # 'xxxxxxxxxxxxxxxxx'
                 "xxxxxxxxxx": xxxxx_xxxxx,
             }
+
+
+class A:
+    def xxxx_xxx_xx_xxxxxxxxxx_xxxx_xxxxxxxxx(xxxx):
+        xxxxxxxx = [
+            xxxxxxxxxxxxxxxx(
+                "xxxx",
+                xxxxxxxxxxx={"xxxx": 1.0,},
+                xxxxxx={"xxxxxx 1": xxxxxx(xxxx="xxxxxx 1", xxxxxx=600.0)},
+                xxxxxxxx_xxxxxxx=0.0,
+            ),
+            xxxxxxxxxxxxxxxx(
+                "xxxxxxx",
+                xxxxxxxxxxx={"xxxx": 1.0,},
+                xxxxxx={"xxxxxx 1": xxxxxx(xxxx="xxxxxx 1", xxxxxx=200.0)},
+                xxxxxxxx_xxxxxxx=0.0,
+            ),
+            xxxxxxxxxxxxxxxx("xxxx"),
+        ]
