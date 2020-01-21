@@ -76,7 +76,7 @@ RE_BALANCED_QUOTES: Final = (
     r"(?:" + RE_BALANCED_SQUOTES + "|" + RE_BALANCED_DQUOTES + ")"
 )
 RE_BALANCED_BRACKETS: Final = r"(?<bbrackets>\[(?:[^\[\]]++|(?&bbrackets))*\])"
-RE_BALANCED_PARENS: Final = r"(?<bparens{0}>\((?:[^()]++|(?&bparens{0}))*\))".format
+RE_BALANCED_PARENS = r"(?<bparens{0}>\((?:[^()]++|(?&bparens{0}))*\))".format
 RE_STRING: Final = (
     "["
     + STRING_PREFIX_CHARS
@@ -3332,14 +3332,16 @@ class StringTermSplitter(StringSplitterMixin):
     def __get_break_idx(string_value: str, max_length: int) -> STResult[int]:
         assert max_length > 0
 
+        MIN_WORD_SIZE = 6
         idx = max_length
 
         # Ensure the substring:
         #   1) starts with a space
         #   2) contains at least a 5-letter word
-        while (0 < idx + 1 < len(string_value) and string_value[idx] != " ") or len(
-            string_value[idx:]
-        ) < 6:
+        while (
+            (MIN_WORD_SIZE - 1) <= idx + 1 < len(string_value)
+            and string_value[idx] != " "
+        ) or len(string_value[idx:]) < MIN_WORD_SIZE:
             idx -= 1
 
         if string_value[idx] != " ":
@@ -3348,8 +3350,14 @@ class StringTermSplitter(StringSplitterMixin):
             idx = max_length + 1
             while idx + 1 < len(string_value) and string_value[idx] != " ":
                 idx += 1
+
             if string_value[idx] != " ":
                 return STError("Long strings which contain no spaces are not split.")
+
+            if len(string_value[idx:]) < MIN_WORD_SIZE:
+                return STError(
+                    f"All substrings must be {MIN_WORD_SIZE} long or longer."
+                )
 
         if idx < 2:
             return STError(f"Invalid break index (idx={idx}).")
