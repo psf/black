@@ -742,7 +742,7 @@ nnoremap <F9> :Black<CR>
 ```
 
 **How to get Vim with Python 3.6?** On Ubuntu 17.10 Vim comes with Python 3.6 by
-default. On macOS with Homebrew run: `brew install vim --with-python3`. When building
+default. On macOS with Homebrew run: `brew install vim`. When building
 Vim from source, use: `./configure --enable-python3interp=yes`. There's many guides
 online how to do this.
 
