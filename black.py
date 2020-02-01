@@ -76,7 +76,8 @@ RE_BALANCED_QUOTES: Final = (
     r"(?:" + RE_BALANCED_SQUOTES + "|" + RE_BALANCED_DQUOTES + ")"
 )
 RE_BALANCED_BRACKETS: Final = r"(?<bbrackets>\[(?:[^\[\]]++|(?&bbrackets))*\])"
-RE_BALANCED_PARENS = r"(?<bparens{0}>\((?:[^()]++|(?&bparens{0}))*\))".format
+re_balanced_parens = r"(?<bparens{0}>\((?:[^()]++|(?&bparens{0}))*\))".format
+RE_BALANCED_PARENS = re_balanced_parens("")
 RE_STRING: Final = (
     "["
     + STRING_PREFIX_CHARS
@@ -88,9 +89,9 @@ RE_STRING: Final = (
 RE_STRING_GROUP: Final = "(?<string>" + RE_STRING + ")"
 RE_DOT_OR_PERC: Final = (
     r"(?<dot_or_perc>\.[A-Za-z0-9_]+"
-    + RE_BALANCED_PARENS("1")
+    + re_balanced_parens("1")
     + "?| ?% ?(?:"
-    + RE_BALANCED_PARENS("2")
+    + re_balanced_parens("2")
     + r"|"
     + RE_BALANCED_QUOTES
     + r"))?"
@@ -3340,11 +3341,7 @@ class StringTermSplitter(StringSplitterMixin):
 
             if (
                 len(line_to_string(rest_line))
-                + len(
-                    re.sub(
-                        RE_BALANCED_PARENS("1"), "(", line_to_string(non_string_line)
-                    )
-                )
+                + len(re.sub(RE_BALANCED_PARENS, "(", line_to_string(non_string_line)))
                 - non_string_line.depth * 4
             ) <= self.line_length:
                 append_leaves(
