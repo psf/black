@@ -361,6 +361,10 @@ some_variable = "This string is long but not so long that it needs to be split j
 some_variable = "This string is long, just long enough that it needs to be split, u get?"
 some_variable = "This string is long, just long enough that it needs to be split, u get? So we stay"
 some_variable = "This string is long, just long enough that it needs to be split, u get? So we split"
+some_variable = "This string is long but not so long that it needs hahahah toooooo be so greatttt {} that I just can't think of any more good words to say about it at alll".format("ha")
+some_variable = "This string is long but not so long that it needs hahahah toooooo be so greatttt {} that I just can't think of any more good words to say about it at allll".format("ha")
+some_variable = "This string is long but not so long that it needs hahahah toooooo be so greatttt {} that I just can't think of any more good words to say about it at alllllllllll".format("ha")
+some_variable = "This string is long but not so long that it needs hahahah toooooo be so greatttt {} that I just can't think of any more good words to say about it at allllllllllll".format("ha")
 
 # output
 
@@ -712,8 +716,9 @@ long_tuple = (
 
 stupid_format_method_bug = (
     "Some really long string that just so happens to be the {} {} to force the 'format'"
-    " method to hang over the line length boundary. This is pretty annoying."
-    .format("perfect", "length")
+    " method to hang over the line length boundary. This is pretty annoying.".format(
+        "perfect", "length"
+    )
 )
 
 
@@ -746,8 +751,7 @@ class A:
             bar(
                 (
                     "[{}]: xxx_xxxxxxxxxx(xxxxx={}, xxxx={}, xxxxx={}"
-                    " xxxx_xxxx_xxxxxxxxxx={}, xxxx={})"
-                    .format(
+                    " xxxx_xxxx_xxxxxxxxxx={}, xxxx={})".format(
                         xxxx._xxxxxxxxxxxxxx, xxxxx, xxxx, xxxx_xxxx_xxxxxxxxxx, xxxxxxx
                     )
                 ),
@@ -792,8 +796,7 @@ class A:
                     "\t"
                     "@xxxxxx '{xxxx_xxx}\t' > {xxxxxx_xxxx}.xxxxxxx;"
                     "{xxxx_xxx} >> {xxxxxx_xxxx}.xxxxxxx 2>&1; xx=$$?;"
-                    "xxxx $$xx"
-                    .format(
+                    "xxxx $$xx".format(
                         xxxx_xxx=xxxx_xxxxxxx,
                         xxxxxx_xxxx=xxxxxxx + "/" + xxxx_xxx_xxxx,
                         x=xxx_xxxxx_xxxxx_xxx,
@@ -968,4 +971,25 @@ some_variable = (
 some_variable = (
     "This string is long, just long enough that it needs to be split, u get? So we"
     " split"
+)
+some_variable = (
+    "This string is long but not so long that it needs hahahah toooooo be so greatttt"
+    " {} that I just can't think of any more good words to say about it at alll".format(
+        "ha"
+    )
+)
+some_variable = (
+    "This string is long but not so long that it needs hahahah toooooo be so greatttt"
+    " {} that I just can't think of any more good words to say about it at allll"
+    .format("ha")
+)
+some_variable = (
+    "This string is long but not so long that it needs hahahah toooooo be so greatttt"
+    " {} that I just can't think of any more good words to say about it at alllllllllll"
+    .format("ha")
+)
+some_variable = (
+    "This string is long but not so long that it needs hahahah toooooo be so greatttt"
+    " {} that I just can't think of any more good words to say about it at"
+    " allllllllllll".format("ha")
 )

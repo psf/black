@@ -3336,7 +3336,11 @@ class StringTermSplitter(StringSplitterMixin):
 
             if (
                 len(line_to_string(rest_line))
-                + len(line_to_string(non_string_line))
+                + len(
+                    re.sub(
+                        RE_BALANCED_PARENS("1"), "(", line_to_string(non_string_line)
+                    )
+                )
                 - non_string_line.depth * 4
             ) <= self.line_length:
                 append_leaves(
