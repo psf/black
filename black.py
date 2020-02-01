@@ -76,7 +76,7 @@ def non_cap_group(pttrn: str) -> str:
     return "(?:" + pttrn + ")"
 
 
-def named_group(pttrn: str, name: str) -> str:
+def named_group(name: str, pttrn: str) -> str:
     """
     Helper function for transforming the regex pattern @pttrn into a named
     cature group.
@@ -88,15 +88,33 @@ def named_group(pttrn: str, name: str) -> str:
 RE_EVEN_BACKSLASHES = non_cap_group(r"(?<!\\)(?:\\{2})*")
 RE_ODD_BACKSLASHES = non_cap_group(r"(?<!\\)(?:\\{{2}})*\\")
 re_not_quote = non_cap_group(
-    r"(?:" + RE_ODD_BACKSLASHES + "[{0}])|[^\\{0}]|\\[^{0}]"
+    non_cap_group(RE_ODD_BACKSLASHES + "[{0}]")  # an escaped quote
+    + r"|[^\\{0}]"  # OR not a quote or backslash
+    + r"|\\[^{0}]"  # OR a backslash followed by a non-quote
 ).format
 RE_BALANCED_SQUOTES: Final = non_cap_group(r"(?<!\\)'" + re_not_quote("'") + r"+?'")
 RE_BALANCED_DQUOTES: Final = non_cap_group(r'(?<!\\)"' + re_not_quote('"') + r'+?"')
 RE_BALANCED_QUOTES: Final = non_cap_group(
     RE_BALANCED_SQUOTES + "|" + RE_BALANCED_DQUOTES
 )
-RE_BALANCED_BRACKETS: Final = r"(?<bbrackets>\[(?:[^\[\]]++|(?&bbrackets))*\])"
-re_balanced_parens = r"(?<bparens{0}>\((?:[^()]++|(?&bparens{0}))*\))".format
+RE_BALANCED_BRACKETS: Final = named_group(
+    "bbrackets",
+    (
+        r"\[(?:"
+        + r"[^\[\]]++"  # not a bracket
+        + r"|(?&bbrackets)"  # OR a RE_BALANCED_BRACKETS regular expression
+        + r")*\]"
+    ),
+)
+re_balanced_parens = named_group(
+    "bparens{0}",
+    (
+        r"\((?:"
+        + r"[^()]++"  # not a paren
+        + r"|(?&bparens{0})"  # OR a RE_BALANCED_PARENS regular expression
+        + r")*\)"
+    ),
+).format
 RE_BALANCED_PARENS = re_balanced_parens("")
 RE_STRING: Final = (
     "["
@@ -106,7 +124,7 @@ RE_STRING: Final = (
     + r"}"
     + RE_BALANCED_QUOTES
 )
-RE_STRING_GROUP: Final = "(?<string>" + RE_STRING + ")"
+RE_STRING_GROUP: Final = named_group("string", RE_STRING)
 RE_DOT_OR_PERC: Final = (
     r"(?<dot_or_perc>\.[A-Za-z0-9_]+"
     + re_balanced_parens("1")
@@ -2678,7 +2696,7 @@ class StringMerger(StringTransformerMixin):
             + r"*?"
             + RE_STRING_GROUP
             + " *"
-            + named_group(RE_STRING, "other_string")
+            + named_group("other_string", RE_STRING)
             + ".*$",
         )
 
