@@ -67,11 +67,29 @@ CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 
 STRING_PREFIX_CHARS: Final = "furbFURB"  # All possible string prefix characters.
 
+
+def nc_group(pttrn: str) -> str:
+    """
+    Helper function for transforming the regex pattern @pttrn into a
+    non-capturing group.
+    """
+    return "(?:" + pttrn + ")"
+
+
+def named_group(pttrn: str, name: str) -> str:
+    """
+    Helper function for transforming the regex pattern @pttrn into a named
+    cature group.
+    """
+    return f"(?<{name}>{pttrn})"
+
+
 # Regular expressions used for matching strings.
-re_not_quote = r"(?:(?:(?<!\\)(?:\\{{2}})*\\[{0}])|[^\\{0}]|\\[^{0}])".format
-RE_EVEN_BACKSLASHES = r"(?:(?<!\\)(?:\\{2})*)"
-RE_BALANCED_SQUOTES: Final = r"(?:(?<!\\)'" + re_not_quote("'") + r"+?')"
-RE_BALANCED_DQUOTES: Final = r'(?:(?<!\\)"' + re_not_quote('"') + r'+?")'
+RE_EVEN_BACKSLASHES = nc_group(r"(?<!\\)(?:\\{2})*")
+RE_ODD_BACKSLASHES = nc_group(r"(?<!\\)(?:\\{{2}})*\\")
+re_not_quote = nc_group(r"(?:" + RE_ODD_BACKSLASHES + "[{0}])|[^\\{0}]|\\[^{0}]").format
+RE_BALANCED_SQUOTES: Final = nc_group(r"(?<!\\)'" + re_not_quote("'") + r"+?'")
+RE_BALANCED_DQUOTES: Final = nc_group(r'(?<!\\)"' + re_not_quote('"') + r'+?"')
 RE_BALANCED_QUOTES: Final = (
     r"(?:" + RE_BALANCED_SQUOTES + "|" + RE_BALANCED_DQUOTES + ")"
 )
@@ -97,10 +115,6 @@ RE_DOT_OR_PERC: Final = (
     + r"))?"
 )
 RE_EOL: Final = r" *(?:#.*)?"
-
-
-def named_group(regexp: str, name: str) -> str:
-    return f"(?<{name}>{regexp})"
 
 
 # types
