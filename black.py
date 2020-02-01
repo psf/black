@@ -3128,11 +3128,41 @@ class StringSplitterMixin(StringTransformerMixin):
     def __validate(self, line: Line, string_idx: int) -> STResult[None]:
         string_leaf = line.leaves[string_idx]
 
-        # We set `offset` initially to 3 since, in the worst case, we may have
-        # a line such as: `), <STRING>`
-        #
-        # Hence, we choose to make `offset == len('), ')`.
-        offset = 3
+        offset = 0
+        if string_idx >= 2:
+            p_idx = string_idx - 1
+            if (
+                line.leaves[string_idx - 1].type == token.LPAR
+                and line.leaves[string_idx - 1].value == ""
+                and string_idx >= 3
+            ):
+                p_idx -= 1
+
+            P = line.leaves[p_idx]
+            PP = line.leaves[p_idx - 1]
+
+            if [PP.type, P.type] == [token.RPAR, token.COMMA]:
+                offset += 3
+
+            if P.type in [token.COLON, token.EQUAL]:
+                offset += 2
+                if P.type == token.EQUAL:
+                    offset += 1
+
+                for leaf in line.leaves[:p_idx]:
+                    offset += len(leaf.value)
+
+        if len(line.leaves) > string_idx + 1:
+            N = line.leaves[string_idx + 1]
+            if (
+                N.type == token.RPAR
+                and N.value == ""
+                and len(line.leaves) > string_idx + 2
+            ):
+                N = line.leaves[string_idx + 2]
+
+            if N.type == token.COMMA:
+                offset += 1
 
         next_node = string_leaf.next_sibling
         if (
@@ -3155,8 +3185,8 @@ class StringSplitterMixin(StringTransformerMixin):
                 offset += 2
             offset += len(comment_leaf.value)
 
-        max_line_length = self.line_length - (line.depth * 4) - offset
-        if len(string_leaf.value) <= max_line_length:
+        max_string_length = self.line_length - (line.depth * 4) - offset
+        if len(string_leaf.value) <= max_string_length:
             return STError(
                 "The string itself is not what is causing this line to be too long."
             )

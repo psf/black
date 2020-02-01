@@ -356,6 +356,12 @@ def foo():
         '\n xxx: xxxxxx xxxxxxxx_xxxx=xxxxxxxxxx'
     ) # xxxx xxxxxxxxxx xxxx xx xxxx xx xxx xxxxxxxx xxxxxx xxxxx.
 
+########## EDGE-CASE TESTS ##########
+some_variable = "This string is long but not so long that it needs to be split just yet"
+some_variable = "This string is long, just long enough that it needs to be split, u get?"
+some_variable = "This string is long, just long enough that it needs to be split, u get? So we stay"
+some_variable = "This string is long, just long enough that it needs to be split, u get? So we split"
+
 # output
 
 x = (
@@ -949,3 +955,17 @@ def foo():
     xxx_xxx = (  # xxxx xxxxxxxxxx xxxx xx xxxx xx xxx xxxxxxxx xxxxxx xxxxx.
         'xxxx xxx xxxxxxxx_xxxx xx "xxxxxxxxxx".\n xxx: xxxxxx xxxxxxxx_xxxx=xxxxxxxxxx'
     )
+
+
+########## EDGE-CASE TESTS ##########
+some_variable = "This string is long but not so long that it needs to be split just yet"
+some_variable = (
+    "This string is long, just long enough that it needs to be split, u get?"
+)
+some_variable = (
+    "This string is long, just long enough that it needs to be split, u get? So we stay"
+)
+some_variable = (
+    "This string is long, just long enough that it needs to be split, u get? So we"
+    " split"
+)
