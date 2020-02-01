@@ -2870,26 +2870,36 @@ class StringMerger(StringTransformerMixin):
         return None
 
 
-def get_first_unmatched_rpar_idx(leaves: List[Leaf]) -> Result[int, ValueError]:
-    unmatched_parens = 0
-    for (i, leaf) in enumerate(leaves):
-        if leaf.type == token.LPAR:
-            unmatched_parens += 1
-            continue
+class StringStripperMixin(StringTransformerMixin):
+    @abstractmethod
+    def _do_match(self, line: Line) -> STResult[str]:
+        pass
 
-        if leaf.type == token.RPAR and unmatched_parens == 0:
-            return i
+    @abstractmethod
+    def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
+        pass
 
-        if leaf.type == token.RPAR:
-            if unmatched_parens > 0:
-                unmatched_parens -= 1
-            else:
-                return ValueError("Found RPAR that matches LPAR from the past!")
+    @staticmethod
+    def get_first_unmatched_rpar_idx(leaves: List[Leaf]) -> Result[int, ValueError]:
+        unmatched_parens = 0
+        for (i, leaf) in enumerate(leaves):
+            if leaf.type == token.LPAR:
+                unmatched_parens += 1
+                continue
 
-    return ValueError("No RPAR found!")
+            if leaf.type == token.RPAR and unmatched_parens == 0:
+                return i
+
+            if leaf.type == token.RPAR:
+                if unmatched_parens > 0:
+                    unmatched_parens -= 1
+                else:
+                    return ValueError("Found RPAR that matches LPAR from the past!")
+
+        return ValueError("No RPAR found!")
 
 
-class StringArgCommaStripper(StringTransformerMixin):
+class StringArgCommaStripper(StringStripperMixin):
     def _do_match(self, line: Line) -> STResult[str]:
         regex_result = self._regex_match(
             line,
@@ -2948,7 +2958,7 @@ class StringArgCommaStripper(StringTransformerMixin):
         new_line = line.clone()
         new_line.comments = line.comments.copy()
 
-        idx_result = get_first_unmatched_rpar_idx(line.leaves[string_idx + 2 :])
+        idx_result = self.get_first_unmatched_rpar_idx(line.leaves[string_idx + 2 :])
         if isinstance(idx_result, ValueError):
             raise RuntimeError(
                 f"Logic Error. {self.__class__.__name__} was unable to find the ending"
@@ -2975,7 +2985,7 @@ class StringArgCommaStripper(StringTransformerMixin):
         yield new_line
 
 
-class StringParensStripper(StringTransformerMixin):
+class StringParensStripper(StringStripperMixin):
     def _do_match(self, line: Line) -> STResult[str]:
         regex_result = self._regex_match(
             line,
@@ -3028,7 +3038,7 @@ class StringParensStripper(StringTransformerMixin):
         return string_value
 
     def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
-        idx_result = get_first_unmatched_rpar_idx(line.leaves[string_idx + 1 :])
+        idx_result = self.get_first_unmatched_rpar_idx(line.leaves[string_idx + 1 :])
         if isinstance(idx_result, ValueError):
             raise RuntimeError(
                 f"Logic Error. {self.__class__.__name__} was unable to find the ending"
