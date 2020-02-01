@@ -79,8 +79,8 @@ def re_named_group(name: str, pttrn: str) -> str:
 
 
 # Regular expressions used for matching strings.
-RE_EVEN_BACKSLASHES = re_group(r"(?<!\\)(?:\\{2})*")
-RE_ODD_BACKSLASHES = re_group(r"(?<!\\)(?:\\{{2}})*\\")
+RE_EVEN_BACKSLASHES = re_group(r"(?<!\\)(?:\\\\)*")
+RE_ODD_BACKSLASHES = re_group(r"(?<!\\)(?:\\\\)*\\")
 re_balanced_quotes = re_group(
     r"(?<!\\){0}"
     + re_group(
@@ -93,26 +93,27 @@ re_balanced_quotes = re_group(
 RE_BALANCED_QUOTES: Final = re_group(
     re_balanced_quotes("'") + "|" + re_balanced_quotes('"')
 )
-RE_BALANCED_BRACKETS: Final = re_named_group(
-    "bbrackets",
+re_balanced_brackets = re_named_group(
+    "bbrackets_{0}",
     (
         r"\[(?:"
         + r"[^\[\]]++"  # not a bracket
-        + r"|(?&bbrackets)"  # OR a RE_BALANCED_BRACKETS expression
+        + r"|(?&bbrackets_{0})"  # OR a RE_BALANCED_BRACKETS expression
         + r")*\]"
     ),
-)
+).format
+RE_BALANCED_BRACKETS: Final = re_balanced_brackets("main")
 re_balanced_parens = re_named_group(
-    "bparens{0}",
+    "bparens_{0}",
     (
         r"\((?:"
         + r"[^()]++"  # not a paren
-        + r"|(?&bparens{0})"  # OR a RE_BALANCED_PARENS expression
+        + r"|(?&bparens_{0})"  # OR a RE_BALANCED_PARENS expression
         + r")*\)"
     ),
 ).format
-RE_BALANCED_PARENS = re_balanced_parens("")
-RE_STRING: Final = (
+RE_BALANCED_PARENS = re_balanced_parens("main")
+RE_STRING: Final = re_group(
     "["
     + STRING_PREFIX_CHARS
     + "]{0,"
@@ -121,16 +122,14 @@ RE_STRING: Final = (
     + RE_BALANCED_QUOTES
 )
 RE_STRING_GROUP: Final = re_named_group("string", RE_STRING)
-RE_DOT_OR_PERC: Final = re_named_group(
-    "dot_or_perc",
-    (
-        re_group(r"\.[A-Za-z0-9_]+" + re_balanced_parens("1") + "?")  # a method call
-        + "|"  # OR
-        + re_group(  # an old-style '%' formatting expression
-            r" ?% ?" + re_group(re_balanced_parens("2") + r"|" + RE_BALANCED_QUOTES)
-        )
-    ),
-)
+re_dot_or_perc = re_group(
+    re_group(r"\.[A-Za-z0-9_]+" + re_balanced_parens("{0}_1") + "?")  # a method call
+    + "|"  # OR
+    + re_group(  # an old-style '%' formatting expression
+        r" ?% ?" + re_group(re_balanced_parens("{0}_2") + r"|" + RE_BALANCED_QUOTES)
+    )
+).format
+RE_DOT_OR_PERC: Final = re_dot_or_perc("main")
 RE_EOL: Final = r" *(?:#.*)?$"
 
 
@@ -3522,14 +3521,34 @@ class StringExprSplitterMixin(StringSplitterMixin):
 
 class StringExprSplitter(StringExprSplitterMixin):
     def _do_splitter_match(self, line: Line) -> STResult[str]:
+        RE_ASSIGNMENT = (
+            r"[A-Za-z0-9\._]*?"
+            + re_named_group(
+                "type", r": ?[A-Za-z0-9_]+" + re_balanced_brackets("type") + r"?"
+            )
+            + r"? ?\+?= ?"
+        )
+        RE_DICT_KEY = re_group(
+            re_group(
+                r"[A-Za-z0-9\._]+?"
+                + re_group(
+                    re_balanced_parens("dict_key")
+                    + "|"
+                    + re_balanced_brackets("dict_key")
+                )
+                + "*|"
+                + RE_STRING
+                + "?"
+                + re_dot_or_perc("dict_key")
+                + "?"
+            )
+            + ": *"
+        )
         RE_STREXPR_PREFIX = re_group(
-            "return |else |assert .*, ?|"
-            + r"[A-Za-z0-9\._]*?(?<type>: ?[A-Za-z0-9_]+"
-            + RE_BALANCED_BRACKETS
-            + r"?)? ?\+?= ?"
+            "return |else |assert .*, ?|" + RE_ASSIGNMENT + "|" + RE_DICT_KEY
         )
 
-        regex_result = self._regex_match(
+        return self._regex_match(
             line,
             r"^ *"
             + RE_STREXPR_PREFIX
@@ -3539,47 +3558,6 @@ class StringExprSplitter(StringExprSplitterMixin):
             + "?,?"
             + RE_EOL,
         )
-
-        if isinstance(regex_result, str):
-            return regex_result
-
-        dict_regex_result = self._regex_match(
-            line,
-            r"^ *"
-            + re_group("[^'\":{}]|" + RE_STRING)
-            + "*?: *"
-            + RE_STRING_GROUP
-            + RE_DOT_OR_PERC
-            + "?,?"
-            + RE_EOL,
-        )
-
-        if isinstance(dict_regex_result, STError):
-            dict_regex_result.__cause__ = regex_result
-            return dict_regex_result
-
-        idx_result = self._get_string_idx(line.leaves, dict_regex_result)
-        bad_dict_match_error = STError(
-            f"Bad dictionary regular expression match: ({dict_regex_result})"
-        )
-        if isinstance(idx_result, ValueError):
-            idx_result.__cause__ = regex_result
-            bad_dict_match_error.__cause__ = idx_result
-            return bad_dict_match_error
-
-        string_idx = idx_result
-        node = line.leaves[string_idx].parent
-        while node is not None:
-            if node.type == syms.dictsetmaker:
-                return dict_regex_result
-
-            if node.type not in [syms.power, syms.term, syms.atom]:
-                break
-
-            node = node.parent
-
-        bad_dict_match_error.__cause__ = regex_result
-        return bad_dict_match_error
 
 
 class StringArithExprSplitter(StringExprSplitterMixin):
