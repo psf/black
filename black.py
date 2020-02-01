@@ -3033,13 +3033,10 @@ class StringParensStripper(StringStripperMixin):
 
         string_value = regex_result
         for (i, leaf) in enumerate(line.leaves):
-            if i == 0 or i + 1 >= len(line.leaves):
-                continue
-
             if leaf.type != token.STRING or leaf.value != string_value:
                 continue
 
-            if line.leaves[i - 1].type != token.LPAR:
+            if i == 0 or line.leaves[i - 1].type != token.LPAR:
                 continue
 
             unmatched_parens = 0
@@ -3314,8 +3311,6 @@ class StringTermSplitter(StringSplitterMixin):
 
             if use_custom_breakpoints:
                 csplit = custom_splits.pop(0)
-                if not csplit.has_prefix and prefix not in ["", "f"]:
-                    rest_value = rest_value.lstrip(prefix)
 
                 idx = csplit.break_idx
             else:
@@ -3363,8 +3358,6 @@ class StringTermSplitter(StringSplitterMixin):
 
         if use_custom_breakpoints:
             csplit = custom_splits.pop(0)
-            if not csplit.has_prefix and prefix not in ["", "f"]:
-                rest_leaf.value = rest_leaf.value.lstrip(prefix)
 
         if self.normalize_strings:
             normalize_string_quotes(rest_leaf)
