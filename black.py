@@ -3363,16 +3363,16 @@ class StringTermSplitter(StringSplitterMixin):
     def __get_break_idx(string_value: str, max_length: int) -> STResult[int]:
         assert max_length > 0
 
-        MIN_WORD_SIZE = 6
+        MIN_SUBSTR_SIZE = 6
         idx = max_length
 
         # Ensure the substring:
         #   1) starts with a space
         #   2) contains at least a 5-letter word
         while (
-            (MIN_WORD_SIZE - 1) <= idx + 1 < len(string_value)
+            (MIN_SUBSTR_SIZE - 1) <= idx + 1 < len(string_value)
             and string_value[idx] != " "
-        ) or len(string_value[idx:]) < MIN_WORD_SIZE:
+        ) or len(string_value[idx:]) < MIN_SUBSTR_SIZE:
             idx -= 1
 
         if string_value[idx] != " ":
@@ -3385,9 +3385,9 @@ class StringTermSplitter(StringSplitterMixin):
             if string_value[idx] != " ":
                 return STError("Long strings which contain no spaces are not split.")
 
-            if len(string_value[idx:]) < MIN_WORD_SIZE:
+            if len(string_value[idx:]) < MIN_SUBSTR_SIZE:
                 return STError(
-                    f"All substrings must be {MIN_WORD_SIZE} long or longer."
+                    f"All substrings must be {MIN_SUBSTR_SIZE} long or longer."
                 )
 
         if idx < 2:
