@@ -68,10 +68,10 @@ CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 STRING_PREFIX_CHARS: Final = "furbFURB"  # All possible string prefix characters.
 
 # Regular expressions used for matching strings.
-RE_NOT_QUOTE = r"(?:(?:(?<!\\)(?:\\{{2}})*\\[{0}])|[^\\{0}]|\\[^{0}])".format
+re_not_quote = r"(?:(?:(?<!\\)(?:\\{{2}})*\\[{0}])|[^\\{0}]|\\[^{0}])".format
 RE_EVEN_BACKSLASHES = r"(?:(?<!\\)(?:\\{2})*)"
-RE_BALANCED_SQUOTES: Final = r"(?:(?<!\\)'" + RE_NOT_QUOTE("'") + r"+?')"
-RE_BALANCED_DQUOTES: Final = r'(?:(?<!\\)"' + RE_NOT_QUOTE('"') + r'+?")'
+RE_BALANCED_SQUOTES: Final = r"(?:(?<!\\)'" + re_not_quote("'") + r"+?')"
+RE_BALANCED_DQUOTES: Final = r'(?:(?<!\\)"' + re_not_quote('"') + r'+?")'
 RE_BALANCED_QUOTES: Final = (
     r"(?:" + RE_BALANCED_SQUOTES + "|" + RE_BALANCED_DQUOTES + ")"
 )
