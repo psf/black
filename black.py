@@ -145,7 +145,6 @@ Ok = TypeVar("Ok")
 Err = TypeVar("Err", bound=Exception)
 Result = Union[Ok, Err]
 STResult = Result[Ok, STError]  # StringTransformer Result
-STMatchResult = STResult[str]  # StringTransformer Match Result
 
 
 class WriteBack(Enum):
@@ -2583,7 +2582,7 @@ class StringTransformerMixin(StringTransformer):
     string_idx: Optional[int] = None
 
     @abstractmethod
-    def _do_match(self, line: Line) -> STMatchResult:
+    def _do_match(self, line: Line) -> STResult[str]:
         pass
 
     @abstractmethod
@@ -2619,7 +2618,7 @@ class StringTransformerMixin(StringTransformer):
             yield line_result
 
     @staticmethod
-    def _regex_match(line: Line, pattern: str) -> STMatchResult:
+    def _regex_match(line: Line, pattern: str) -> STResult[str]:
         line_str = line_to_string(line)
         match = re.match(pattern, line_str)
 
@@ -2657,7 +2656,7 @@ CUSTOM_SPLITS: Dict[LeafID, Tuple[CustomSplit, ...]] = defaultdict(tuple)
 
 
 class StringMerger(StringTransformerMixin):
-    def _do_match(self, line: Line) -> STMatchResult:
+    def _do_match(self, line: Line) -> STResult[str]:
         regex_result = self._regex_match(
             line,
             r"^(?:[^'\"]|"
@@ -2891,7 +2890,7 @@ def get_first_unmatched_rpar_idx(leaves: List[Leaf]) -> Result[int, ValueError]:
 
 
 class StringArgCommaStripper(StringTransformerMixin):
-    def _do_match(self, line: Line) -> STMatchResult:
+    def _do_match(self, line: Line) -> STResult[str]:
         regex_result = self._regex_match(
             line,
             r"^(?:[^'\"]|"
@@ -2977,7 +2976,7 @@ class StringArgCommaStripper(StringTransformerMixin):
 
 
 class StringParensStripper(StringTransformerMixin):
-    def _do_match(self, line: Line) -> STMatchResult:
+    def _do_match(self, line: Line) -> STResult[str]:
         regex_result = self._regex_match(
             line,
             r"^(?:[^'\"]|"
@@ -3074,14 +3073,14 @@ class StringSplitterMixin(StringTransformerMixin):
     STRING_CHILD_IDX_MAP: ClassVar[Dict[int, Optional[int]]] = {}
 
     @abstractmethod
-    def _do_splitter_match(self, line: Line) -> STMatchResult:
+    def _do_splitter_match(self, line: Line) -> STResult[str]:
         pass
 
     @abstractmethod
     def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
         pass
 
-    def _do_match(self, line: Line) -> STMatchResult:
+    def _do_match(self, line: Line) -> STResult[str]:
         result = self._do_splitter_match(line)
         if isinstance(result, STError):
             return result
@@ -3223,7 +3222,7 @@ class StringSplitterMixin(StringTransformerMixin):
 
 
 class StringTermSplitter(StringSplitterMixin):
-    def _do_splitter_match(self, line: Line) -> STMatchResult:
+    def _do_splitter_match(self, line: Line) -> STResult[str]:
         return self._regex_match(
             line, r"^ *(?:\+ *)?" + RE_STRING_GROUP + RE_DOT_OR_PERC + RE_EOL + "$",
         )
@@ -3406,7 +3405,7 @@ class StringTermSplitter(StringSplitterMixin):
 
 class StringExprSplitterMixin(StringSplitterMixin):
     @abstractmethod
-    def _do_splitter_match(self, line: Line) -> STMatchResult:
+    def _do_splitter_match(self, line: Line) -> STResult[str]:
         pass
 
     def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
@@ -3481,7 +3480,7 @@ class StringExprSplitterMixin(StringSplitterMixin):
 
 
 class StringExprSplitter(StringExprSplitterMixin):
-    def _do_splitter_match(self, line: Line) -> STMatchResult:
+    def _do_splitter_match(self, line: Line) -> STResult[str]:
         regex_result = self._regex_match(
             line,
             r"^ *(?:return |else |assert .*, ?|"
@@ -3539,7 +3538,7 @@ class StringExprSplitter(StringExprSplitterMixin):
 
 
 class StringArithExprSplitter(StringExprSplitterMixin):
-    def _do_splitter_match(self, line: Line) -> STMatchResult:
+    def _do_splitter_match(self, line: Line) -> STResult[str]:
         return self._regex_match(
             line, "^ *" + RE_STRING_GROUP + RE_DOT_OR_PERC + r" ?\+ .+," + RE_EOL + "$",
         )
