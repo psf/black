@@ -68,7 +68,7 @@ CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 STRING_PREFIX_CHARS: Final = "furbFURB"  # All possible string prefix characters.
 
 
-def nc_group(pttrn: str) -> str:
+def non_cap_group(pttrn: str) -> str:
     """
     Helper function for transforming the regex pattern @pttrn into a
     non-capturing group.
@@ -85,13 +85,15 @@ def named_group(pttrn: str, name: str) -> str:
 
 
 # Regular expressions used for matching strings.
-RE_EVEN_BACKSLASHES = nc_group(r"(?<!\\)(?:\\{2})*")
-RE_ODD_BACKSLASHES = nc_group(r"(?<!\\)(?:\\{{2}})*\\")
-re_not_quote = nc_group(r"(?:" + RE_ODD_BACKSLASHES + "[{0}])|[^\\{0}]|\\[^{0}]").format
-RE_BALANCED_SQUOTES: Final = nc_group(r"(?<!\\)'" + re_not_quote("'") + r"+?'")
-RE_BALANCED_DQUOTES: Final = nc_group(r'(?<!\\)"' + re_not_quote('"') + r'+?"')
-RE_BALANCED_QUOTES: Final = (
-    r"(?:" + RE_BALANCED_SQUOTES + "|" + RE_BALANCED_DQUOTES + ")"
+RE_EVEN_BACKSLASHES = non_cap_group(r"(?<!\\)(?:\\{2})*")
+RE_ODD_BACKSLASHES = non_cap_group(r"(?<!\\)(?:\\{{2}})*\\")
+re_not_quote = non_cap_group(
+    r"(?:" + RE_ODD_BACKSLASHES + "[{0}])|[^\\{0}]|\\[^{0}]"
+).format
+RE_BALANCED_SQUOTES: Final = non_cap_group(r"(?<!\\)'" + re_not_quote("'") + r"+?'")
+RE_BALANCED_DQUOTES: Final = non_cap_group(r'(?<!\\)"' + re_not_quote('"') + r'+?"')
+RE_BALANCED_QUOTES: Final = non_cap_group(
+    RE_BALANCED_SQUOTES + "|" + RE_BALANCED_DQUOTES
 )
 RE_BALANCED_BRACKETS: Final = r"(?<bbrackets>\[(?:[^\[\]]++|(?&bbrackets))*\])"
 re_balanced_parens = r"(?<bparens{0}>\((?:[^()]++|(?&bparens{0}))*\))".format
@@ -108,11 +110,9 @@ RE_STRING_GROUP: Final = "(?<string>" + RE_STRING + ")"
 RE_DOT_OR_PERC: Final = (
     r"(?<dot_or_perc>\.[A-Za-z0-9_]+"
     + re_balanced_parens("1")
-    + "?| ?% ?(?:"
-    + re_balanced_parens("2")
-    + r"|"
-    + RE_BALANCED_QUOTES
-    + r"))?"
+    + "?| ?% ?"
+    + non_cap_group(re_balanced_parens("2") + r"|" + RE_BALANCED_QUOTES)
+    + r")?"
 )
 RE_EOL: Final = r" *(?:#.*)?"
 
@@ -2673,9 +2673,9 @@ class StringMerger(StringTransformerMixin):
     def _do_match(self, line: Line) -> STResult[str]:
         regex_result = self._regex_match(
             line,
-            r"^(?:[^'\"]|"
-            + RE_BALANCED_QUOTES
-            + r")*?"
+            r"^"
+            + non_cap_group("[^'\"]|" + RE_BALANCED_QUOTES)
+            + r"*?"
             + RE_STRING_GROUP
             + " *"
             + named_group(RE_STRING, "other_string")
@@ -2917,9 +2917,9 @@ class StringArgCommaStripper(StringStripperMixin):
     def _do_match(self, line: Line) -> STResult[str]:
         regex_result = self._regex_match(
             line,
-            r"^(?:[^'\"]|"
-            + RE_BALANCED_QUOTES
-            + r")*?"
+            r"^"
+            + non_cap_group("[^'\"]|" + RE_BALANCED_QUOTES)
+            + r"*?"
             + r"[A-Za-z0-9_]+\("
             + RE_STRING_GROUP
             + RE_DOT_OR_PERC
@@ -3003,9 +3003,9 @@ class StringParensStripper(StringStripperMixin):
     def _do_match(self, line: Line) -> STResult[str]:
         regex_result = self._regex_match(
             line,
-            r"^(?:[^'\"]|"
-            + RE_BALANCED_QUOTES
-            + r")*?"
+            r"^"
+            + non_cap_group("[^'\"]|" + RE_BALANCED_QUOTES)
+            + r"*?"
             + r"[^A-z0-9_'\"] *\("
             + RE_STRING_GROUP
             + RE_DOT_OR_PERC
@@ -3505,12 +3505,18 @@ class StringExprSplitterMixin(StringSplitterMixin):
 
 class StringExprSplitter(StringExprSplitterMixin):
     def _do_splitter_match(self, line: Line) -> STResult[str]:
-        regex_result = self._regex_match(
-            line,
-            r"^ *(?:return |else |assert .*, ?|"
+        RE_STREXPR_PREFIX = non_cap_group(
+            "return |else |assert .*, ?|"
             + r"[A-Za-z0-9\._]*?(?<type>: ?[A-Za-z0-9_]+"
             + RE_BALANCED_BRACKETS
-            + r"?)? ?\+?= ?)?"
+            + r"?)? ?\+?= ?"
+        )
+
+        regex_result = self._regex_match(
+            line,
+            r"^ *"
+            + RE_STREXPR_PREFIX
+            + "?"
             + RE_STRING_GROUP
             + RE_DOT_OR_PERC
             + ",?"
@@ -3523,9 +3529,9 @@ class StringExprSplitter(StringExprSplitterMixin):
 
         dict_regex_result = self._regex_match(
             line,
-            r"^ *(?:[^'\":{}]|"
-            + RE_STRING
-            + ")*?: *"
+            r"^ *"
+            + non_cap_group("[^'\":{}]|" + RE_STRING)
+            + "*?: *"
             + RE_STRING_GROUP
             + RE_DOT_OR_PERC
             + ",?"
