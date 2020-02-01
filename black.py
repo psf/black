@@ -2652,7 +2652,7 @@ class CustomSplit:
     break_idx: int
 
 
-CUSTOM_SPLITS: Dict[LeafID, Tuple[CustomSplit, ...]] = defaultdict(tuple)
+CUSTOM_SPLIT_MAP: Dict[LeafID, Tuple[CustomSplit, ...]] = defaultdict(tuple)
 
 
 class StringMerger(StringTransformerMixin):
@@ -2827,7 +2827,7 @@ class StringMerger(StringTransformerMixin):
 
             append_leaves(new_line, line, [old_leaf])
 
-        CUSTOM_SPLITS[id(string_leaf.value)] = tuple(custom_splits)
+        CUSTOM_SPLIT_MAP[id(string_leaf.value)] = tuple(custom_splits)
 
         return new_line
 
@@ -3258,7 +3258,7 @@ class StringTermSplitter(StringSplitterMixin):
 
         QUOTE = rest_value[-1]
 
-        custom_splits = list(CUSTOM_SPLITS[id(line.leaves[string_idx].value)])
+        custom_splits = list(CUSTOM_SPLIT_MAP[id(line.leaves[string_idx].value)])
 
         starts_with_plus = line.leaves[0].type == token.PLUS
         drop_pointless_f_prefix = ("f" not in prefix) or re.search(
@@ -3367,7 +3367,7 @@ class StringTermSplitter(StringSplitterMixin):
             rest_line.comments = line.comments
             yield rest_line
 
-        del CUSTOM_SPLITS[id(line.leaves[string_idx].value)]
+        del CUSTOM_SPLIT_MAP[id(line.leaves[string_idx].value)]
 
     @staticmethod
     def __get_break_idx(string_value: str, max_length: int) -> STResult[int]:
