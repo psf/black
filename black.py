@@ -3126,9 +3126,6 @@ class StringSplitterMixin(StringTransformerMixin):
         return insert_str_child
 
     def __validate(self, line: Line, string_idx: int) -> STResult[None]:
-        if is_line_short_enough(line, line_length=self.line_length):
-            return STError("Line is already short enough. No reason to split.")
-
         string_leaf = line.leaves[string_idx]
 
         # We set `offset` initially to 3 since, in the worst case, we may have
