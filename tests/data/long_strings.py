@@ -365,6 +365,7 @@ some_variable = "This string is long but not so long that it needs hahahah toooo
 some_variable = "This string is long but not so long that it needs hahahah toooooo be so greatttt {} that I just can't think of any more good words to say about it at allll".format("ha")
 some_variable = "This string is long but not so long that it needs hahahah toooooo be so greatttt {} that I just can't think of any more good words to say about it at alllllllllll".format("ha")
 some_variable = "This string is long but not so long that it needs hahahah toooooo be so greatttt {} that I just can't think of any more good words to say about it at allllllllllll".format("ha")
+some_variable = "This is a long string that will end with a method that is not calleddd".format
 
 # output
 
@@ -992,4 +993,7 @@ some_variable = (
     "This string is long but not so long that it needs hahahah toooooo be so greatttt"
     " {} that I just can't think of any more good words to say about it at"
     " allllllllllll".format("ha")
+)
+some_variable = (
+    "This is a long string that will end with a method that is not calleddd".format
 )

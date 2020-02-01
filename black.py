@@ -89,7 +89,7 @@ RE_STRING_GROUP: Final = "(?<string>" + RE_STRING + ")"
 RE_DOT_OR_PERC: Final = (
     r"(?<dot_or_perc>\.[A-Za-z0-9_]+"
     + RE_BALANCED_PARENS("1")
-    + "| ?% ?(?:"
+    + "?| ?% ?(?:"
     + RE_BALANCED_PARENS("2")
     + r"|"
     + RE_BALANCED_QUOTES
@@ -3169,10 +3169,14 @@ class StringSplitterMixin(StringTransformerMixin):
             next_node is not None
             and next_node.type == syms.trailer
             and [leaf.type for leaf in next_node.leaves()] == [token.DOT, token.NAME]
-            and len(line.leaves) > string_idx + 3
-            and line.leaves[string_idx + 3].type == token.LPAR
         ):
-            offset += 2
+            offset += 1
+
+            if (
+                len(line.leaves) > string_idx + 3
+                and line.leaves[string_idx + 3].type == token.LPAR
+            ):
+                offset += 1
 
             name_leaf = line.leaves[string_idx + 2]
             assert name_leaf.type == token.NAME
