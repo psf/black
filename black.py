@@ -81,20 +81,24 @@ def re_named_group(name: str, pttrn: str) -> str:
 # Regular expressions used for matching strings.
 RE_EVEN_BACKSLASHES = re_group(r"(?<!\\)(?:\\{2})*")
 RE_ODD_BACKSLASHES = re_group(r"(?<!\\)(?:\\{{2}})*\\")
-re_not_quote = re_group(
-    re_group(RE_ODD_BACKSLASHES + "[{0}]")  # an escaped quote
-    + r"|[^\\{0}]"  # OR not a quote or backslash
-    + r"|\\[^{0}]"  # OR a backslash followed by a non-quote
+re_balanced_quotes = re_group(
+    r"(?<!\\){0}"
+    + re_group(
+        re_group(RE_ODD_BACKSLASHES + "[{0}]")  # an escaped quote
+        + r"|[^\\{0}]"  # OR anything but a quote or a backslash
+        + r"|\\[^{0}]"  # OR a backslash followed by a non-quote
+    )
+    + r"+?{0}"
 ).format
-RE_BALANCED_SQUOTES: Final = re_group(r"(?<!\\)'" + re_not_quote("'") + r"+?'")
-RE_BALANCED_DQUOTES: Final = re_group(r'(?<!\\)"' + re_not_quote('"') + r'+?"')
-RE_BALANCED_QUOTES: Final = re_group(RE_BALANCED_SQUOTES + "|" + RE_BALANCED_DQUOTES)
+RE_BALANCED_QUOTES: Final = re_group(
+    re_balanced_quotes("'") + "|" + re_balanced_quotes('"')
+)
 RE_BALANCED_BRACKETS: Final = re_named_group(
     "bbrackets",
     (
         r"\[(?:"
         + r"[^\[\]]++"  # not a bracket
-        + r"|(?&bbrackets)"  # OR a RE_BALANCED_BRACKETS regular expression
+        + r"|(?&bbrackets)"  # OR a RE_BALANCED_BRACKETS expression
         + r")*\]"
     ),
 )
@@ -103,7 +107,7 @@ re_balanced_parens = re_named_group(
     (
         r"\((?:"
         + r"[^()]++"  # not a paren
-        + r"|(?&bparens{0})"  # OR a RE_BALANCED_PARENS regular expression
+        + r"|(?&bparens{0})"  # OR a RE_BALANCED_PARENS expression
         + r")*\)"
     ),
 ).format
@@ -122,9 +126,9 @@ RE_DOT_OR_PERC: Final = re_named_group(
     (
         re_group(r"\.[A-Za-z0-9_]+" + re_balanced_parens("1") + "?")  # a method call
         + "|"  # OR
-        + re_group(
+        + re_group(  # an old-style '%' formatting expression
             r" ?% ?" + re_group(re_balanced_parens("2") + r"|" + RE_BALANCED_QUOTES)
-        )  # an old-style '%' formatting expression
+        )
     ),
 )
 RE_EOL: Final = r" *(?:#.*)?"
