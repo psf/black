@@ -125,12 +125,14 @@ RE_STRING: Final = (
     + RE_BALANCED_QUOTES
 )
 RE_STRING_GROUP: Final = re_named_group("string", RE_STRING)
-RE_DOT_OR_PERC: Final = (
-    r"(?<dot_or_perc>\.[A-Za-z0-9_]+"
-    + re_balanced_parens("1")
-    + "?| ?% ?"
-    + re_noncap_group(re_balanced_parens("2") + r"|" + RE_BALANCED_QUOTES)
-    + r")"
+RE_DOT_OR_PERC: Final = re_named_group(
+    "dot_or_perc",
+    (
+        r"\.[A-Za-z0-9_]+"
+        + re_balanced_parens("1")
+        + "?| ?% ?"
+        + re_noncap_group(re_balanced_parens("2") + r"|" + RE_BALANCED_QUOTES)
+    ),
 )
 RE_EOL: Final = r" *(?:#.*)?"
 
