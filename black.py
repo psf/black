@@ -128,10 +128,14 @@ RE_STRING_GROUP: Final = re_named_group("string", RE_STRING)
 RE_DOT_OR_PERC: Final = re_named_group(
     "dot_or_perc",
     (
-        r"\.[A-Za-z0-9_]+"
-        + re_balanced_parens("1")
-        + "?| ?% ?"
-        + re_noncap_group(re_balanced_parens("2") + r"|" + RE_BALANCED_QUOTES)
+        re_noncap_group(
+            r"\.[A-Za-z0-9_]+" + re_balanced_parens("1") + "?"
+        )  # a method call
+        + "|"  # OR
+        + re_noncap_group(
+            r" ?% ?"
+            + re_noncap_group(re_balanced_parens("2") + r"|" + RE_BALANCED_QUOTES)
+        )  # an old-style '%' formatting expression
     ),
 )
 RE_EOL: Final = r" *(?:#.*)?"
