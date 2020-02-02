@@ -3786,11 +3786,17 @@ class StringExprSplitter(StringExprSplitterMixin):
         return self._regex_match(
             line,
             r"^ *"
-            + RE_STREXPR_PREFIX
-            + "?"
-            + RE_STRING_GROUP
-            + RE_STRING_TRAILER
-            + ",?"
+            + re_group(
+                re_group(
+                    RE_STREXPR_PREFIX
+                    + "?"
+                    + RE_STRING_GROUP
+                    + re_string_trailer("string1")
+                    + ",?"
+                )
+                + "|"
+                + re_group(RE_STRING_GROUP + re_string_trailer("string2") + ",")
+            )
             + RE_EOL,
         )
 
