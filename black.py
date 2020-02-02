@@ -4374,6 +4374,8 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
             return
     check_lpar = False
     for index, child in enumerate(list(node.children)):
+        # Fixes a bug where invisible parens are not properly stripped from
+        # assignment statements that contain type annotations.
         if isinstance(child, Node) and child.type == syms.annassign:
             normalize_invisible_parens(child, parens_after=parens_after)
 
