@@ -140,6 +140,7 @@ NewLine = str
 Depth = int
 NodeType = int
 LeafID = int
+StringID = int
 Priority = int
 Index = int
 LN = Union[Leaf, Node]
@@ -2597,28 +2598,84 @@ def split_line(
 
 @dataclass  # type: ignore
 class StringTransformer(ABC):
+    """
+    The class-based equivalent of the SplitFunc type, with the difference being
+    that, while a StringTransformer MAY split the line, it does not promise to
+    do so. It will, however, perform some arbitrary transformation on some or
+    all of the strings contained in the given line.
+    """
+
     line_length: int
     normalize_strings: bool
 
     @abstractmethod
     def __call__(self, line: Line, features: Collection[Feature]) -> Iterator[Line]:
-        pass
+        """
+        StringTransformer instances have a call signature that mirrors that of
+        the SplitFunc type.
+        """
 
 
 class StringTransformerMixin(StringTransformer):
-    # Might be set by _do_match(...).
+    """
+    An implementation of the StringTransformer protocol that relies on its
+    subclasses overriding the template methods `do_match(...)` and
+    `do_transform(...)`.
+
+    The following two sections can be found among the docstrings of each class
+    that makes use of this mixin's functionality.
+
+    Requirements:
+        Which requirements must be met of the given line for this
+        StringTransformer to be applied?
+
+    Transformations:
+        If the given line meets all of the above requirments, which string
+        transformations can you expect to be applied to it by this
+        StringTransformer?
+
+    Collaborations:
+        What contractual agreements does this StringTransformer have with other
+        StringTransfomers? Such collaborations should be eliminated/minimized
+        as much as possible. Hence, this section is optional.
+    """
+
     string_idx: Optional[int] = None
 
     @abstractmethod
-    def _do_match(self, line: Line) -> STResult[str]:
-        pass
+    def do_match(self, line: Line) -> STResult[str]:
+        """
+        Returns:
+            * The value of the matched string, if a match was able to be made.
+                OR
+            * An STError, if a match was not able to be made.
+
+        Side Effects:
+            This method MAY choose to initialize `self.string_idx` with a
+            suitable value.
+        """
 
     @abstractmethod
-    def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
-        pass
+    def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
+        """
+        Yields:
+            * A Line, in most cases.
+                OR
+            * An STError if the transformation failed for some reason.  The
+            `do_match(...)` template method should usually be used to reject
+            the form of the given Line, but in some cases it is difficult to
+            know whether or not a Line meets the StringTransformer's
+            requirements until the transformation is already midway.
+
+        Side Effects:
+            This method should not mutate @line directly, but it may mutate the
+            Line's underlying Node structure. (WARNING: If the underlying Node
+            structure IS altered, then this method should NOT be allowed to
+            yield an STError after that point.)
+        """
 
     def __call__(self, line: Line, _features: Collection[Feature]) -> Iterator[Line]:
-        result = self._do_match(line)
+        result = self.do_match(line)
 
         if isinstance(result, STError):
             raise CannotSplit(
@@ -2630,7 +2687,7 @@ class StringTransformerMixin(StringTransformer):
             idx_result = self._get_string_idx(line.leaves, result)
             if isinstance(idx_result, ValueError):
                 raise RuntimeError(
-                    f"Logic Error in `{self.__class__.__name__}._do_match`"
+                    f"Logic Error in `{self.__class__.__name__}.do_match`"
                     f" method.\n\nSTRING: {result}\n\nLINE: {line}\n"
                 ) from idx_result
 
@@ -2638,7 +2695,7 @@ class StringTransformerMixin(StringTransformer):
         else:
             string_idx = self.string_idx
 
-        for line_result in self._do_transform(line, string_idx):
+        for line_result in self.do_transform(line, string_idx):
             if isinstance(line_result, STError):
                 raise CannotSplit(
                     "StringTransformer failed while attempting to transform string."
@@ -2676,15 +2733,58 @@ class StringTransformerMixin(StringTransformer):
 
 @dataclass
 class CustomSplit:
+    """A custom (i.e. manual) string split.
+
+    A single CustomSplit instance represents a single substring.
+
+    Examples:
+        Consider the following string:
+        ```
+        "Hi there friend."
+        " This is a custom"
+        f" string {split}."
+        ```
+
+        This string will correspond to the following three CustomSplit instances:
+        ```
+        CustomSplit(False, 16)
+        CustomSplit(False, 17)
+        CustomSplit(True, 16)
+        ```
+    """
+
     has_prefix: bool
     break_idx: int
 
 
-CUSTOM_SPLIT_MAP: Dict[LeafID, Tuple[CustomSplit, ...]] = defaultdict(tuple)
+# This mapping is used to record custom string splits before merging strings in
+# StringMerger. StringTermSplitter then checks this mapping for valid custom
+# splits before applying its own split algorithm.
+CUSTOM_SPLIT_MAP: Dict[StringID, Tuple[CustomSplit, ...]] = defaultdict(tuple)
 
 
 class StringMerger(StringTransformerMixin):
-    def _do_match(self, line: Line) -> STResult[str]:
+    """StringTransformer that merges strings together.
+
+    Requirements:
+        * The line contains adjacent strings such that at most one substring
+        has inline comments AND the set of all substring prefixes is either of
+        length 1 or equal to {"", "f"}.
+            OR
+        * The line contains a string which uses line continuation backslashes.
+
+    Transformations:
+        * Line continuation backslashes are removed from all strings.
+        * The first set (and ONLY the first set) of adjacent strings (if any
+        exist) are merged.
+
+    Side Effects:
+        Before merging any adjacent strings, a record of how long each
+        substring was and whether or not it had a string prefix (e.g. 'f' or
+        'r') is saved to CUSTOM_SPLIT_MAP.
+    """
+
+    def do_match(self, line: Line) -> STResult[str]:
         regex_result = self._regex_match(
             line,
             r"^"
@@ -2722,7 +2822,7 @@ class StringMerger(StringTransformerMixin):
         error.__cause__ = regex_result
         return error
 
-    def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
+    def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
         new_line = line
         rblc_result = self.__remove_backslash_line_continuation_chars(
             new_line, string_idx
@@ -2899,16 +2999,29 @@ class StringMerger(StringTransformerMixin):
 
 
 class StringStripperMixin(StringTransformerMixin):
-    @abstractmethod
-    def _do_match(self, line: Line) -> STResult[str]:
-        pass
+    """
+    Mixin class for StringTransformers which transform a Line's STRING leaves
+    by stripping certain characters from their left or right sides (e.g.
+    undesirable parenthesis or commas).
+    """
 
     @abstractmethod
-    def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
-        pass
+    def do_match(self, line: Line) -> STResult[str]:
+        """Refer to `help(StringTransformerMixin.do_match)`."""
+
+    @abstractmethod
+    def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
+        """Refer to `help(StringTransformerMixin.do_transform)`."""
 
     @staticmethod
     def get_first_unmatched_rpar_idx(leaves: List[Leaf]) -> Result[int, ValueError]:
+        """
+        Returns:
+            * The index of the first RPAR leaf that doesn't match any of the
+            LPAR leaves found in @leaves.
+                OR
+            * A ValueError if no such leaf can be found.
+        """
         unmatched_parens = 0
         for (i, leaf) in enumerate(leaves):
             if leaf.type == token.LPAR:
@@ -2928,7 +3041,23 @@ class StringStripperMixin(StringTransformerMixin):
 
 
 class StringArgCommaStripper(StringStripperMixin):
-    def _do_match(self, line: Line) -> STResult[str]:
+    """StringTransformer that strips unnecessary trailing commas from string arguments.
+
+    Requirements:
+        The line contains a function call where the ONLY argument provided is a
+        string, is positional, and is trailed by a comma.
+
+    Transformations:
+        The trailing comma mentioned in the 'Requirements' section is stripped.
+
+    Collaborations:
+        This transformer is necessary to ensure that a string argument to a
+        function call is transformed by StringExprSplitter ONLY when other
+        function arguments exist (i.e. the string is not the only argument
+        provided to the function).
+    """
+
+    def do_match(self, line: Line) -> STResult[str]:
         regex_result = self._regex_match(
             line,
             r"^"
@@ -2982,7 +3111,7 @@ class StringArgCommaStripper(StringStripperMixin):
 
         return string_value
 
-    def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
+    def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
         new_line = line.clone()
         new_line.comments = line.comments.copy()
 
@@ -3014,7 +3143,17 @@ class StringArgCommaStripper(StringStripperMixin):
 
 
 class StringParensStripper(StringStripperMixin):
-    def _do_match(self, line: Line) -> STResult[str]:
+    """StringTransformer that strips surrounding parentheses from strings.
+
+    Requirements:
+        The line contains a string which is surrounded by parentheses (and is
+        NOT the only argument to a function call).
+
+    Transformations:
+        The parentheses mentioned in the 'Requirements' section are stripped.
+    """
+
+    def do_match(self, line: Line) -> STResult[str]:
         regex_result = self._regex_match(
             line,
             r"^"
@@ -3062,7 +3201,7 @@ class StringParensStripper(StringStripperMixin):
 
         return string_value
 
-    def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
+    def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
         idx_result = self.get_first_unmatched_rpar_idx(line.leaves[string_idx + 1 :])
         if isinstance(idx_result, ValueError):
             raise RuntimeError(
@@ -3105,25 +3244,38 @@ class StringParensStripper(StringStripperMixin):
 
 
 class StringSplitterMixin(StringTransformerMixin):
+    """
+    Mixin class for StringTransformers which transform a Line's strings by
+    splitting them or placing them on their own lines where necessary to avoid
+    going over the configured line length.
+    """
+
     STRING_CHILD_IDX_MAP: ClassVar[Dict[int, Optional[int]]] = {}
 
     @abstractmethod
-    def _do_splitter_match(self, line: Line) -> STResult[str]:
-        pass
+    def do_splitter_match(self, line: Line) -> STResult[str]:
+        """
+        StringSplitterMixin asks its clients to override this method instead of
+        `StringTransformerMixin.do_match(...)`.
+
+        Follows the same protocol as `StringTransformerMixin.do_match(...)`.
+
+        Refer to `help(StringTransformerMixin.do_match)`.
+        """
 
     @abstractmethod
-    def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
-        pass
+    def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
+        """Refer to `help(StringTransformerMixin.do_transform)`."""
 
-    def _do_match(self, line: Line) -> STResult[str]:
-        result = self._do_splitter_match(line)
+    def do_match(self, line: Line) -> STResult[str]:
+        result = self.do_splitter_match(line)
         if isinstance(result, STError):
             return result
 
         idx_result = self._get_string_idx(line.leaves, result)
         if isinstance(idx_result, ValueError):
             raise RuntimeError(
-                f"Logic error in `{self.__class__.__name__}._do_splitter_match` method."
+                f"Logic error in `{self.__class__.__name__}.do_splitter_match` method."
             ) from idx_result
 
         string_idx = idx_result
@@ -3257,12 +3409,47 @@ class StringSplitterMixin(StringTransformerMixin):
 
 
 class StringTermSplitter(StringSplitterMixin):
-    def _do_splitter_match(self, line: Line) -> STResult[str]:
+    """
+    StringTransformer that splits atomic strings (i.e. strings which exist on
+    lines by themselves).
+
+    Requirements:
+        The line consists ONLY of a single string (with the exception of a '+'
+        symbol which MAY be at the start of the line).
+
+    Transformations:
+        The string mentioned in the 'Requirements' section is split into as
+        many substrings as necessary to adhere to the configured line length.
+
+        In the final set of substrings, no substring should be smaller than 6
+        characters (i.e. a space and a 5-letter word).
+
+        The string will ONLY be split on spaces (i.e. each new substring should
+        start with a space).
+
+        If the string that is being split has an associated set of custom split
+        records (contained in the global CUSTOM_SPLIT_MAP mapping) and those
+        custom splits will not result in any line going over the configured
+        line length, those custom splits are used. Otherwise the string is
+        split as late as possible (from left-to-right) while still adhering to
+        the transformation rules listed above.
+
+    Collaborations:
+        * This transformer relies on the StringMerger transformer to add the
+        appropriate (and properly configured) CustomSplit objects to the
+        CUSTOM_SPLIT_MAP.
+
+    Side Effects:
+        Any custom split data that was used to split the string is deleted from
+        the CUSTOM_SPLIT_MAP.
+    """
+
+    def do_splitter_match(self, line: Line) -> STResult[str]:
         return self._regex_match(
             line, r"^ *(?:\+ *)?" + RE_STRING_GROUP + RE_DOT_OR_PERC + "?" + RE_EOL,
         )
 
-    def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
+    def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
         insert_str_child = self._insert_str_child_factory(line.leaves[string_idx])
 
         rest_value = line.leaves[string_idx].value
@@ -3435,11 +3622,36 @@ class StringTermSplitter(StringSplitterMixin):
 
 
 class StringExprSplitterMixin(StringSplitterMixin):
+    """
+    Mixin for StringTransformers that split non-atomic strings (i.e. strings
+    that do NOT exist on lines by themselves).
+
+    Requirements:
+        Refer to the 'Requirements' section given by this mixin's clients (i.e.
+        subclasses).
+
+    Transformations:
+        The chosen string (decided by this mixin's clients/subclasses) is
+        wrapped in parentheses and then split at the LPAR.
+
+        We then have one line which ends with an LPAR and another line that
+        starts with the chosen string. The latter line is then split again at
+        the RPAR. This results in the RPAR (and possibly a trailing comma)
+        being placed on its own line.
+
+        NOTE: If any leaves exist to the right of the chosen string (except
+        for a trailing comma, which would be placed after the RPAR), those
+        leaves are placed inside the parentheses.  In effect, the chosen
+        string is not necessarily being "wrapped" by parentheses. We can,
+        however, count on the LPAR being placed directly before the chosen
+        string.
+    """
+
     @abstractmethod
-    def _do_splitter_match(self, line: Line) -> STResult[str]:
+    def do_splitter_match(self, line: Line) -> STResult[str]:
         pass
 
-    def _do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
+    def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
         insert_str_child = self._insert_str_child_factory(line.leaves[string_idx])
 
         comma_idx = len(line.leaves) - 1
@@ -3511,15 +3723,47 @@ class StringExprSplitterMixin(StringSplitterMixin):
 
 
 class StringExprSplitter(StringExprSplitterMixin):
-    def _do_splitter_match(self, line: Line) -> STResult[str]:
+    """
+    StringTransformer that splits most non-atomic strings (i.e. strings that do
+    not exist on lines by themselves).
+
+    Requirements:
+        * The line is a return statement, which returns a string.
+            OR
+        * The line is part of a ternary expression (e.g. `x = y if cond else
+        z`) such that the line starts with `else STRING`, where STRING is some
+        string.
+            OR
+        * The line is an assert statement, which ends with a string.
+            OR
+        * The line is an assignment statement (e.g. `x = 1` or `x += 1`) such
+        that the variable is being assigned the value of some string.
+            OR
+        * The line is a dictionary key assignment where the key is being
+        assigned the value of some string.
+            OR
+        * The line is a single string followed by a comma.
+
+    Transformations:
+        Refer to `help(StringExprSplitterMixin)`.
+
+    Collaborations:
+        This transformer relies on StringArgCommaStripper to strip any
+        unnecessary commas from string function arguments. This is necessary
+        since this transformer matches string arguments by checking for a
+        trailing comma and we do NOT want to match string arguments when they
+        are the function call's ONLY argument.
+    """
+
+    def do_splitter_match(self, line: Line) -> STResult[str]:
         RE_ASSIGNMENT = (
             r"[A-Za-z0-9\._]*?"
             + re_named_group(
-                "type", r": ?[A-Za-z0-9_]+" + re_balanced_brackets("type") + r"?"
+                "type_a", r": ?[A-Za-z0-9_]+" + re_balanced_brackets("type_a") + r"?"
             )
             + r"? ?\+?= ?"
         )
-        RE_DICT_KEY = re_group(
+        RE_DICT_KEY = (
             re_group(
                 r"[A-Za-z0-9\._]+?"
                 + re_group(
@@ -3552,17 +3796,47 @@ class StringExprSplitter(StringExprSplitterMixin):
 
 
 class StringArithExprSplitter(StringExprSplitterMixin):
-    def _do_splitter_match(self, line: Line) -> STResult[str]:
+    """
+    This StringTransformer is a hack. We use it because we need to split these
+    lines (of the form specified in the 'Requirements' section) early in the
+    chain of responsibility, but the StringExprSplitter transformer is too
+    generalized to be placed that high up the chain.
+
+    See the `split_line(...)` function implementation and
+    https://refactoring.guru/design-patterns/chain-of-responsibility if
+    you do not understand what I mean by "chain of responsibility".
+
+    Requirements:
+        The line starts with a string followed by a '+' sign.
+
+    Transformations:
+        Refer to `help(StringExprSplitterMixin)`.
+    """
+
+    def do_splitter_match(self, line: Line) -> STResult[str]:
         return self._regex_match(
             line, "^ *" + RE_STRING_GROUP + RE_DOT_OR_PERC + r"? ?\+ .+," + RE_EOL,
         )
 
 
 def line_to_string(line: Line) -> str:
+    """Returns the string representation of @line."""
     return str(line).strip("\n")
 
 
 def append_leaves(new_line: Line, old_line: Line, leaves: List[Leaf]) -> None:
+    """
+    Append leaves (taken from @old_line) to @new_line, making sure to fix the
+    underlying Node structure where appropriate.
+
+    Pre-conditions:
+        @leaves is a subset of @old_line.leaves.
+
+    Algorithm:
+        All of the leaves in @leaves are duplicated. The duplicates are then
+        appended to @new_line and used to replace their originals in the
+        underlying Node structure.
+    """
     for old_leaf in leaves:
         new_leaf = Leaf(old_leaf.type, old_leaf.value)
         replace_child(old_leaf, new_leaf)
@@ -3573,6 +3847,10 @@ def append_leaves(new_line: Line, old_line: Line, leaves: List[Leaf]) -> None:
 
 
 def replace_child(old_child: LN, new_child: LN) -> None:
+    """
+    Replace @old_child with @new_child in @old_child's underlying Node
+    structure.
+    """
     parent = old_child.parent
     if not parent:
         return
@@ -3583,6 +3861,14 @@ def replace_child(old_child: LN, new_child: LN) -> None:
 
 
 def get_string_prefix(string: str) -> str:
+    """
+    Pre-conditions:
+        @string starts with <prefix>' or <prefix>" where `set(<prefix>)` is
+        some subset of `set(STRING_PREFIX_CHARS)` (possibly the null set).
+
+    Returns:
+        @string's prefix (e.g. '', 'r', 'f', or 'rf').
+    """
     prefix = ""
     prefix_idx = 0
     while string[prefix_idx] in STRING_PREFIX_CHARS:
