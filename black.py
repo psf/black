@@ -2505,6 +2505,18 @@ def split_line(
 
     line_str = line_to_string(line)
 
+    def init_st(ST: Type[StringTransformer]) -> StringTransformer:
+        """Initialize String Transformer"""
+        return ST(line_length, normalize_strings)
+
+    string_merge = init_st(StringMerger)
+    string_arg_comma_strip = init_st(StringArgCommaStripper)
+    string_parens_strip = init_st(StringParensStripper)
+    string_arith_expr_split = init_st(StringArithExprSplitter)
+    string_term_split = init_st(StringTermSplitter)
+    string_expr_split = init_st(StringExprSplitter)
+
+    split_funcs: List[SplitFunc]
     if (
         not line.contains_uncollapsable_type_comments()
         and not line.should_explode
@@ -2514,11 +2526,8 @@ def split_line(
             or line.contains_unsplittable_type_ignore()
         )
     ):
-        yield line
-        return
-
-    split_funcs: List[SplitFunc]
-    if line.is_def:
+        split_funcs = [string_merge, string_arg_comma_strip, string_parens_strip]
+    elif line.is_def:
         split_funcs = [left_hand_split]
     else:
 
@@ -2535,17 +2544,6 @@ def split_line(
             # line_length=1 here was historically a bug that somehow became a feature.
             # See #762 and #781 for the full story.
             yield from right_hand_split(line, line_length=1, features=features)
-
-        def init_st(ST: Type[StringTransformer]) -> StringTransformer:
-            """Initialize String Transformer"""
-            return ST(line_length, normalize_strings)
-
-        string_merge = init_st(StringMerger)
-        string_arg_comma_strip = init_st(StringArgCommaStripper)
-        string_parens_strip = init_st(StringParensStripper)
-        string_arith_expr_split = init_st(StringArithExprSplitter)
-        string_term_split = init_st(StringTermSplitter)
-        string_expr_split = init_st(StringExprSplitter)
 
         if line.inside_brackets:
             split_funcs = [
