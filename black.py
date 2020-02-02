@@ -2622,8 +2622,8 @@ class StringTransformerMixin(StringTransformer):
     subclasses overriding the template methods `do_match(...)` and
     `do_transform(...)`.
 
-    The following two sections can be found among the docstrings of each class
-    that makes use of this mixin's functionality.
+    The following two sections can be found among the docstrings of each
+    concrete class that makes use of this mixin's functionality.
 
     Requirements:
         Which requirements must be met of the given line for this
@@ -3625,10 +3625,6 @@ class StringExprSplitterMixin(StringSplitterMixin):
     """
     Mixin for StringTransformers that split non-atomic strings (i.e. strings
     that do NOT exist on lines by themselves).
-
-    Requirements:
-        Refer to the 'Requirements' section given by this mixin's clients (i.e.
-        subclasses).
 
     Transformations:
         The chosen string (decided by this mixin's clients/subclasses) is
