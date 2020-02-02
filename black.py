@@ -75,7 +75,7 @@ def re_group(pttrn: str) -> str:
 
 def re_named_group(name: str, pttrn: str) -> str:
     """Returns a named RE group."""
-    return f"(?<{name}>{pttrn})"
+    return f"(?P<{name}>{pttrn})"
 
 
 # Regular expressions used for matching strings.
@@ -129,13 +129,14 @@ re_string_trailer = re_group(
         )
         + "|"  # OR
         + re_group(  # an old-style '%' formatting expression
-            r" ?% ?" + re_group(re_balanced_parens("{0}_2") + r"|" + RE_BALANCED_QUOTES)
+            r"[ ]?%[ ]?"
+            + re_group(re_balanced_parens("{0}_2") + r"|" + RE_BALANCED_QUOTES)
         )
     )
     + "?"
 ).format
 RE_STRING_TRAILER: Final = re_string_trailer("main")
-RE_EOL: Final = r" *(?:#.*)?$"
+RE_EOL: Final = r"[ ]*(?:\#.*)?$"
 
 
 # types
@@ -2710,7 +2711,23 @@ class StringTransformerMixin(StringTransformer):
     @staticmethod
     def _regex_match(line: Line, pattern: str) -> STResult[str]:
         line_str = line_to_string(line)
-        match = re.match(pattern, line_str)
+        try:
+            match = re.match(pattern, line_str, re.VERBOSE)
+        except re.error as e:
+            if e.pos is not None:
+                pattern = (
+                    pattern[: e.pos - 5]
+                    + "\033[93m"
+                    + pattern[e.pos - 5 : e.pos]
+                    + "\033[91m"
+                    + pattern[e.pos]
+                    + "\033[93m"
+                    + pattern[e.pos + 1 : e.pos + 6]
+                    + "\033[0m"
+                    + pattern[e.pos + 6 :]
+                )
+
+            raise ValueError(f"Bad Regular Expression\n\n{pattern}") from e
 
         if match is not None:
             result = match.groupdict()["string"]
@@ -2796,7 +2813,7 @@ class StringMerger(StringTransformerMixin):
             + re_group("[^'\"]|" + RE_BALANCED_QUOTES)
             + r"*?"
             + RE_STRING_GROUP
-            + " *"
+            + "[ ]*"
             + re_named_group("other_string", RE_STRING)
             + ".*$",
         )
@@ -3164,7 +3181,7 @@ class StringParensStripper(StringStripperMixin):
             r"^"
             + re_group("[^'\"]|" + RE_BALANCED_QUOTES)
             + r"*?"
-            + r"[^A-z0-9_'\"] *\("
+            + r"[^A-z0-9_'\"][ ]*\("
             + RE_STRING_GROUP
             + RE_STRING_TRAILER
             + r"\)(?<end>[^\.].*)?$",
@@ -3451,7 +3468,7 @@ class StringTermSplitter(StringSplitterMixin):
 
     def do_splitter_match(self, line: Line) -> STResult[str]:
         return self._regex_match(
-            line, r"^ *(?:\+ *)?" + RE_STRING_GROUP + RE_STRING_TRAILER + RE_EOL,
+            line, r"^[ ]*(?:\+[ ]*)?" + RE_STRING_GROUP + RE_STRING_TRAILER + RE_EOL,
         )
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
@@ -3760,9 +3777,9 @@ class StringExprSplitter(StringExprSplitterMixin):
         RE_ASSIGNMENT = (
             r"[A-Za-z0-9\._]*?"
             + re_named_group(
-                "type_a", r": ?[A-Za-z0-9_]+" + re_balanced_brackets("type_a") + r"?"
+                "type_a", r":[ ]?[A-Za-z0-9_]+" + re_balanced_brackets("type_a") + r"?"
             )
-            + r"? ?\+?= ?"
+            + r"?[ ]?\+?=[ ]?"
         )
         RE_DICT_KEY = (
             re_group(
@@ -3777,15 +3794,15 @@ class StringExprSplitter(StringExprSplitterMixin):
                 + "?"
                 + re_string_trailer("dict_key")
             )
-            + ": *"
+            + ":[ ]*"
         )
         RE_STREXPR_PREFIX = re_group(
-            "return |else |assert .*, ?|" + RE_ASSIGNMENT + "|" + RE_DICT_KEY
+            "return[ ]|else[ ]|assert[ ].*,[ ]?|" + RE_ASSIGNMENT + "|" + RE_DICT_KEY
         )
 
         return self._regex_match(
             line,
-            r"^ *"
+            r"^[ ]*"
             + re_group(
                 re_group(
                     RE_STREXPR_PREFIX
@@ -3821,7 +3838,8 @@ class StringArithExprSplitter(StringExprSplitterMixin):
 
     def do_splitter_match(self, line: Line) -> STResult[str]:
         return self._regex_match(
-            line, "^ *" + RE_STRING_GROUP + RE_STRING_TRAILER + r" ?\+ .+," + RE_EOL,
+            line,
+            "^[ ]*" + RE_STRING_GROUP + RE_STRING_TRAILER + r"[ ]?\+[ ].+," + RE_EOL,
         )
 
 
