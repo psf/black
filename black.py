@@ -123,11 +123,16 @@ RE_STRING: Final = re_group(
 )
 RE_STRING_GROUP: Final = re_named_group("string", RE_STRING)
 re_dot_or_perc = re_group(
-    re_group(r"\.[A-Za-z0-9_]+" + re_balanced_parens("{0}_1") + "?")  # a method call
-    + "|"  # OR
-    + re_group(  # an old-style '%' formatting expression
-        r" ?% ?" + re_group(re_balanced_parens("{0}_2") + r"|" + RE_BALANCED_QUOTES)
+    re_group(
+        re_group(  # a method call
+            r"\.[A-Za-z0-9_]+" + re_balanced_parens("{0}_1") + "?"
+        )
+        + "|"  # OR
+        + re_group(  # an old-style '%' formatting expression
+            r" ?% ?" + re_group(re_balanced_parens("{0}_2") + r"|" + RE_BALANCED_QUOTES)
+        )
     )
+    + "?"
 ).format
 RE_DOT_OR_PERC: Final = re_dot_or_perc("main")
 RE_EOL: Final = r" *(?:#.*)?$"
@@ -3066,7 +3071,7 @@ class StringArgCommaStripper(StringStripperMixin):
             + r"[A-Za-z0-9_]+\("
             + RE_STRING_GROUP
             + RE_DOT_OR_PERC
-            + r"?,\).*$",
+            + r",\).*$",
         )
 
         if isinstance(regex_result, STError):
@@ -3162,7 +3167,7 @@ class StringParensStripper(StringStripperMixin):
             + r"[^A-z0-9_'\"] *\("
             + RE_STRING_GROUP
             + RE_DOT_OR_PERC
-            + r"?\)(?<end>[^\.].*)?$",
+            + r"\)(?<end>[^\.].*)?$",
         )
 
         if isinstance(regex_result, STError):
@@ -3446,7 +3451,7 @@ class StringTermSplitter(StringSplitterMixin):
 
     def do_splitter_match(self, line: Line) -> STResult[str]:
         return self._regex_match(
-            line, r"^ *(?:\+ *)?" + RE_STRING_GROUP + RE_DOT_OR_PERC + "?" + RE_EOL,
+            line, r"^ *(?:\+ *)?" + RE_STRING_GROUP + RE_DOT_OR_PERC + RE_EOL,
         )
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
@@ -3771,7 +3776,6 @@ class StringExprSplitter(StringExprSplitterMixin):
                 + RE_STRING
                 + "?"
                 + re_dot_or_perc("dict_key")
-                + "?"
             )
             + ": *"
         )
@@ -3786,7 +3790,7 @@ class StringExprSplitter(StringExprSplitterMixin):
             + "?"
             + RE_STRING_GROUP
             + RE_DOT_OR_PERC
-            + "?,?"
+            + ",?"
             + RE_EOL,
         )
 
@@ -3811,7 +3815,7 @@ class StringArithExprSplitter(StringExprSplitterMixin):
 
     def do_splitter_match(self, line: Line) -> STResult[str]:
         return self._regex_match(
-            line, "^ *" + RE_STRING_GROUP + RE_DOT_OR_PERC + r"? ?\+ .+," + RE_EOL,
+            line, "^ *" + RE_STRING_GROUP + RE_DOT_OR_PERC + r" ?\+ .+," + RE_EOL,
         )
 
 
