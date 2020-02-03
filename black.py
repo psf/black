@@ -3223,20 +3223,19 @@ class StringParensStripper(StringStripperMixin):
         return string_value
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
-        idx_result = self.get_first_unmatched_rpar_idx(line.leaves[string_idx + 1 :])
+        LL = line.leaves
+
+        idx_result = self.get_first_unmatched_rpar_idx(LL[string_idx + 1 :])
         if isinstance(idx_result, ValueError):
             raise RuntimeError(
                 f"Logic Error. {self.__class__.__name__} was unable to find the ending"
                 " RPAR leaf for the following string and line:\n\nSTRING:"
-                f" {line.leaves[string_idx]}\n\nLINE: {line_to_string(line)}\n"
+                f" {LL[string_idx]}\n\nLINE: {line_to_string(line)}\n"
             ) from idx_result
 
         rpar_idx = idx_result + string_idx + 1
 
-        if (
-            id(line.leaves[string_idx - 1]) in line.comments
-            or id(line.leaves[rpar_idx]) in line.comments
-        ):
+        if id(LL[string_idx - 1]) in line.comments or id(LL[rpar_idx]) in line.comments:
             yield STError(
                 "Cannot strip parens from string when either side (LPAR or RPAR) has"
                 " inline comments."
@@ -3246,20 +3245,18 @@ class StringParensStripper(StringStripperMixin):
         new_line = line.clone()
         new_line.comments = line.comments.copy()
 
-        append_leaves(new_line, line, line.leaves[: string_idx - 1])
+        append_leaves(new_line, line, LL[: string_idx - 1])
 
-        string_leaf = Leaf(token.STRING, line.leaves[string_idx].value)
-        line.leaves[string_idx - 1].remove()
-        replace_child(line.leaves[string_idx], string_leaf)
+        string_leaf = Leaf(token.STRING, LL[string_idx].value)
+        LL[string_idx - 1].remove()
+        replace_child(LL[string_idx], string_leaf)
         new_line.append(string_leaf)
 
         append_leaves(
-            new_line,
-            line,
-            line.leaves[string_idx + 1 : rpar_idx] + line.leaves[rpar_idx + 1 :],
+            new_line, line, LL[string_idx + 1 : rpar_idx] + LL[rpar_idx + 1 :],
         )
 
-        line.leaves[rpar_idx].remove()
+        LL[rpar_idx].remove()
 
         yield new_line
 
@@ -3334,20 +3331,21 @@ class StringSplitterMixin(StringTransformerMixin):
         return insert_str_child
 
     def __validate(self, line: Line, string_idx: int) -> STResult[None]:
-        string_leaf = line.leaves[string_idx]
+        LL = line.leaves
+        string_leaf = LL[string_idx]
 
         offset = 0
         if string_idx >= 2:
             p_idx = string_idx - 1
             if (
-                line.leaves[string_idx - 1].type == token.LPAR
-                and line.leaves[string_idx - 1].value == ""
+                LL[string_idx - 1].type == token.LPAR
+                and LL[string_idx - 1].value == ""
                 and string_idx >= 3
             ):
                 p_idx -= 1
 
-            P = line.leaves[p_idx]
-            PP = line.leaves[p_idx - 1]
+            P = LL[p_idx]
+            PP = LL[p_idx - 1]
 
             if [PP.type, P.type] == [token.RPAR, token.COMMA]:
                 offset += 3
@@ -3357,17 +3355,13 @@ class StringSplitterMixin(StringTransformerMixin):
                 if P.type == token.EQUAL:
                     offset += 1
 
-                for leaf in line.leaves[:p_idx]:
+                for leaf in LL[:p_idx]:
                     offset += len(leaf.value)
 
-        if len(line.leaves) > string_idx + 1:
-            N = line.leaves[string_idx + 1]
-            if (
-                N.type == token.RPAR
-                and N.value == ""
-                and len(line.leaves) > string_idx + 2
-            ):
-                N = line.leaves[string_idx + 2]
+        if len(LL) > string_idx + 1:
+            N = LL[string_idx + 1]
+            if N.type == token.RPAR and N.value == "" and len(LL) > string_idx + 2:
+                N = LL[string_idx + 2]
 
             if N.type == token.COMMA:
                 offset += 1
@@ -3380,18 +3374,15 @@ class StringSplitterMixin(StringTransformerMixin):
         ):
             offset += 1
 
-            if (
-                len(line.leaves) > string_idx + 3
-                and line.leaves[string_idx + 3].type == token.LPAR
-            ):
+            if len(LL) > string_idx + 3 and LL[string_idx + 3].type == token.LPAR:
                 offset += 1
 
-            name_leaf = line.leaves[string_idx + 2]
+            name_leaf = LL[string_idx + 2]
             assert name_leaf.type == token.NAME
             offset += len(name_leaf.value)
 
         has_comments = False
-        for comment_leaf in line.comments_after(line.leaves[string_idx]):
+        for comment_leaf in line.comments_after(LL[string_idx]):
             if not has_comments:
                 has_comments = True
                 offset += 2
@@ -3471,20 +3462,20 @@ class StringTermSplitter(StringSplitterMixin):
         )
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
-        insert_str_child = self._insert_str_child_factory(line.leaves[string_idx])
+        LL = line.leaves
+        insert_str_child = self._insert_str_child_factory(LL[string_idx])
 
-        rest_value = line.leaves[string_idx].value
+        rest_value = LL[string_idx].value
         prefix = get_string_prefix(rest_value)
 
         rest_line = line.clone()
         rest_leaf = Leaf(token.STRING, rest_value)
         rest_line.append(rest_leaf)
 
-        max_rest_length = self.line_length - len(prefix)
-        max_next_length = self.line_length - (1 + len(prefix)) - (line.depth * 4)
-        if max_next_length < 0:
+        max_next_value = self.line_length - (1 + len(prefix)) - (line.depth * 4)
+        if max_next_value < 0:
             yield STError(
-                f"Unable to split {line.leaves[string_idx].value} at such high of a"
+                f"Unable to split {LL[string_idx].value} at such high of a"
                 f" line depth: {line.depth}"
             )
             return
@@ -3492,16 +3483,14 @@ class StringTermSplitter(StringSplitterMixin):
         QUOTE = rest_value[-1]
 
         custom_splits = list(
-            CUSTOM_SPLIT_MAP[
-                (id(line.leaves[string_idx].value), line.leaves[string_idx].value)
-            ]
+            CUSTOM_SPLIT_MAP[(id(LL[string_idx].value), LL[string_idx].value)]
         )
 
-        starts_with_plus = line.leaves[0].type == token.PLUS
+        starts_with_plus = LL[0].type == token.PLUS
         drop_pointless_f_prefix = ("f" in prefix) and re.search(r"\{.+\}", rest_value)
         use_custom_breakpoints = bool(
             custom_splits
-            and all(csplit.break_idx <= max_next_length for csplit in custom_splits)
+            and all(csplit.break_idx <= max_next_value for csplit in custom_splits)
         )
 
         first_string_line = True
@@ -3509,10 +3498,11 @@ class StringTermSplitter(StringSplitterMixin):
         def maybe_prepend_plus(new_line: Line) -> None:
             if first_string_line and starts_with_plus:
                 plus_leaf = Leaf(token.PLUS, "+")
-                replace_child(line.leaves[0], plus_leaf)
+                replace_child(LL[0], plus_leaf)
                 new_line.append(plus_leaf)
 
-        while len(line_to_string(rest_line)) > max_rest_length or (
+        max_rest_line = self.line_length - len(prefix)
+        while len(line_to_string(rest_line)) > max_rest_line or (
             len(custom_splits) > 1 and use_custom_breakpoints
         ):
             prepend_plus = first_string_line and starts_with_plus
@@ -3522,8 +3512,8 @@ class StringTermSplitter(StringSplitterMixin):
 
                 idx = csplit.break_idx
             else:
-                max_length = max_next_length - 2 if prepend_plus else max_next_length
-                idx_result = self.__get_break_idx(rest_value, max_length)
+                mnv = max_next_value - 2 if prepend_plus else max_next_value
+                idx_result = self.__get_break_idx(rest_value, mnv)
                 if isinstance(idx_result, STError):
                     yield idx_result
                     return
@@ -3572,12 +3562,12 @@ class StringTermSplitter(StringSplitterMixin):
 
         insert_str_child(rest_leaf)
 
-        if len(line.leaves) > (string_idx + 1):
+        if len(LL) > (string_idx + 1):
             last_line = line.clone()
             maybe_prepend_plus(last_line)
 
             non_string_line = rest_line.clone()
-            append_leaves(non_string_line, line, line.leaves[string_idx + 1 :])
+            append_leaves(non_string_line, line, LL[string_idx + 1 :])
 
             if (
                 len(line_to_string(rest_line))
@@ -3605,9 +3595,7 @@ class StringTermSplitter(StringSplitterMixin):
             rest_line.comments = line.comments
             yield rest_line
 
-        del CUSTOM_SPLIT_MAP[
-            (id(line.leaves[string_idx].value), line.leaves[string_idx].value)
-        ]
+        del CUSTOM_SPLIT_MAP[(id(LL[string_idx].value), LL[string_idx].value)]
 
     @staticmethod
     def __get_break_idx(string_value: str, max_length: int) -> STResult[int]:
@@ -3680,16 +3668,17 @@ class StringExprSplitterMixin(StringSplitterMixin):
         pass
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
-        insert_str_child = self._insert_str_child_factory(line.leaves[string_idx])
+        LL = line.leaves
+        insert_str_child = self._insert_str_child_factory(LL[string_idx])
 
-        comma_idx = len(line.leaves) - 1
+        comma_idx = len(LL) - 1
         ends_with_comma = False
-        if line.leaves[comma_idx].type == token.COMMA:
+        if LL[comma_idx].type == token.COMMA:
             ends_with_comma = True
 
         first_line = line.clone()
         first_line.comments = line.comments
-        left_leaves = line.leaves[:string_idx]
+        left_leaves = LL[:string_idx]
         old_parens_exist = False
         if left_leaves and left_leaves[-1].type == token.LPAR:
             old_parens_exist = True
@@ -3699,7 +3688,7 @@ class StringExprSplitterMixin(StringSplitterMixin):
 
         lpar_leaf = Leaf(token.LPAR, "(")
         if old_parens_exist:
-            replace_child(line.leaves[string_idx - 1], lpar_leaf)
+            replace_child(LL[string_idx - 1], lpar_leaf)
         else:
             insert_str_child(lpar_leaf)
         first_line.append(lpar_leaf)
@@ -3708,7 +3697,7 @@ class StringExprSplitterMixin(StringSplitterMixin):
 
         # Only need to yield one (possibly too long) line, since the
         # `StringTermSplitter` will break it down further if necessary.
-        string_value = line.leaves[string_idx].value
+        string_value = LL[string_idx].value
         string_line = Line(
             depth=line.depth + 1,
             inside_brackets=True,
@@ -3719,8 +3708,8 @@ class StringExprSplitterMixin(StringSplitterMixin):
         string_line.append(string_leaf)
 
         old_rpar_leaf = None
-        if len(line.leaves) > string_idx + 1:
-            right_leaves = line.leaves[string_idx + 1 :]
+        if len(LL) > string_idx + 1:
+            right_leaves = LL[string_idx + 1 :]
             if ends_with_comma:
                 right_leaves.pop()
 
@@ -3744,7 +3733,7 @@ class StringExprSplitterMixin(StringSplitterMixin):
 
         if ends_with_comma:
             comma_leaf = Leaf(token.COMMA, ",")
-            replace_child(line.leaves[comma_idx], comma_leaf)
+            replace_child(LL[comma_idx], comma_leaf)
             last_line.append(comma_leaf)
 
         yield last_line
