@@ -2702,15 +2702,15 @@ class StringTransformerMixin(StringTransformer):
         except re.error as e:
             if e.pos is not None:
                 pattern = (
-                    pattern[: e.pos - 5]
+                    pattern[: e.pos - 10]
                     + "\033[93m"
-                    + pattern[e.pos - 5 : e.pos]
+                    + pattern[e.pos - 10 : e.pos]
                     + "\033[91m"
                     + pattern[e.pos]
                     + "\033[93m"
-                    + pattern[e.pos + 1 : e.pos + 6]
+                    + pattern[e.pos + 1 : e.pos + 11]
                     + "\033[0m"
-                    + pattern[e.pos + 6 :]
+                    + pattern[e.pos + 11 :]
                 )
 
             raise ValueError(f"Bad Regular Expression\n\n{pattern}") from e
@@ -3490,7 +3490,7 @@ class StringTermSplitter(StringSplitterMixin):
         custom_splits = list(CUSTOM_SPLIT_MAP[id(line.leaves[string_idx].value)])
 
         starts_with_plus = line.leaves[0].type == token.PLUS
-        drop_pointless_f_prefix = ("f" not in prefix) or re.search(
+        drop_pointless_f_prefix = ("f" in prefix) and re.search(
             r"\{.+\}", rest_value
         )
         use_custom_breakpoints = bool(
