@@ -3822,6 +3822,7 @@ class StringArithExprSplitter(StringExprSplitterMixin):
 
     Requirements:
         * The line begins with a string that is immediately followed by a '+' sign.
+            AND
         * The line ends with a comma.
 
     Transformations:
