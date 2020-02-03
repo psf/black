@@ -3441,13 +3441,13 @@ class StringTermSplitter(StringSplitterMixin):
 
         If the string that is being split has an associated set of custom split
         records (contained in the global CUSTOM_SPLIT_MAP mapping) and those
-        custom splits will not result in any line going over the configured
+        custom splits will NOT result in any line going over the configured
         line length, those custom splits are used. Otherwise the string is
         split as late as possible (from left-to-right) while still adhering to
         the transformation rules listed above.
 
     Collaborations:
-        * This transformer relies on the StringMerger transformer to add the
+        This transformer relies on the StringMerger transformer to add the
         appropriate (and properly configured) CustomSplit objects to the
         CUSTOM_SPLIT_MAP.
 
