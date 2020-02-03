@@ -68,73 +68,59 @@ CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 STRING_PREFIX_CHARS: Final = "furbFURB"  # All possible string prefix characters.
 
 
-def re_group(pttrn: str) -> str:
-    """Returns a non-capturing RE group."""
-    return f"(?:{pttrn})"
-
-
-def re_named_group(name: str, pttrn: str) -> str:
-    """Returns a named RE group."""
-    return f"(?P<{name}>{pttrn})"
-
-
 # Regular expressions used for matching strings.
-RE_EVEN_BACKSLASHES = re_group(r"(?<!\\)(?:\\\\)*")
-RE_ODD_BACKSLASHES = re_group(r"(?<!\\)(?:\\\\)*\\")
-re_balanced_quotes = re_group(
-    r"(?<!\\){0}"
-    + re_group(
-        re_group(RE_ODD_BACKSLASHES + "[{0}]")  # an escaped quote
-        + r"|[^\\{0}]"  # OR anything but a quote or a backslash
-        + r"|\\[^{0}]"  # OR a backslash followed by a non-quote
+RE_EVEN_BACKSLASHES = r"(?:(?<!\\)(?:\\\\)*)"
+RE_ODD_BACKSLASHES = r"(?:(?<!\\)(?:\\\\)*\\)"
+re_balanced_quotes = fr"""
+(?:
+    (?<!\\){{0}}
+    (?:
+        {RE_ODD_BACKSLASHES}[{{0}}]  # an escaped quote
+        | [^\\{{0}}]  # OR anything but a quote or a backslash
+        | \\[^{{0}}]  # OR a backslash followed by a non-quote
     )
-    + r"+?{0}"
-).format
-RE_BALANCED_QUOTES: Final = re_group(
-    re_balanced_quotes("'") + "|" + re_balanced_quotes('"')
+    +?{{0}}
 )
-re_balanced_brackets = re_named_group(
-    "bbrackets_{0}",
-    (
-        r"\[(?:"
-        + r"[^\[\]]++"  # not a bracket
-        + r"|(?&bbrackets_{0})"  # OR a RE_BALANCED_BRACKETS expression
-        + r")*\]"
-    ),
-).format
+""".format
+RE_BALANCED_QUOTES: Final = fr"""
+(?:{re_balanced_quotes("'")} | {re_balanced_quotes('"')})
+"""
+re_balanced_brackets = r"""
+(?P<bbrackets_{0}>
+    \[(?:
+        [^\[\]]++  # not a bracket
+        | (?&bbrackets_{0})  # OR a RE_BALANCED_BRACKETS expression
+    )*\]
+)
+""".format
 RE_BALANCED_BRACKETS: Final = re_balanced_brackets("main")
-re_balanced_parens = re_named_group(
-    "bparens_{0}",
-    (
-        r"\((?:"
-        + r"[^()]++"  # not a paren
-        + r"|(?&bparens_{0})"  # OR a RE_BALANCED_PARENS expression
-        + r")*\)"
-    ),
-).format
-RE_BALANCED_PARENS = re_balanced_parens("main")
-RE_STRING: Final = re_group(
-    "["
-    + STRING_PREFIX_CHARS
-    + "]{0,"
-    + str(len(STRING_PREFIX_CHARS))
-    + r"}"
-    + RE_BALANCED_QUOTES
+re_balanced_parens = r"""
+(?P<bparens_{0}>
+    \((?:
+        [^\(\)]++  # not a paren
+        | (?&bparens_{0})  # OR a RE_BALANCED_PARENS expression
+    )*\)
 )
-RE_STRING_GROUP: Final = re_named_group("string", RE_STRING)
-re_string_trailer = re_group(
-    re_group(
-        re_group(  # a method call
-            r"\.[A-Za-z0-9_]+" + re_balanced_parens("{0}_1") + "?"
-        )
-        + "|"  # OR
-        + re_group(  # an old-style '%' formatting expression
-            r"[ ]?%[ ]?"
-            + re_group(re_balanced_parens("{0}_2") + r"|" + RE_BALANCED_QUOTES)
-        )
-    )
-    + "?"
-).format
+""".format
+RE_BALANCED_PARENS = re_balanced_parens("main")
+RE_STRING: Final = fr"""
+(?:
+    [{STRING_PREFIX_CHARS}]{{0,{len(STRING_PREFIX_CHARS)}}}{RE_BALANCED_QUOTES}
+)
+"""
+RE_STRING_GROUP: Final = fr"(?P<string>{RE_STRING})"
+re_string_trailer = fr"""
+(?:
+    (?:
+        \.[A-Za-z0-9_]+{re_balanced_parens("{0}_1")}  # a method call
+        | [ ]?%[ ]?  # OR an old-style '%' formatting expression
+            (?:
+                {re_balanced_parens("{0}_2")}
+                | {RE_BALANCED_QUOTES}
+            )
+    )?
+)
+""".format
 RE_STRING_TRAILER: Final = re_string_trailer("main")
 RE_EOL: Final = r"[ ]*(?:\#.*)?$"
 
@@ -2809,13 +2795,15 @@ class StringMerger(StringTransformerMixin):
     def do_match(self, line: Line) -> STResult[str]:
         regex_result = self._regex_match(
             line,
-            r"^"
-            + re_group("[^'\"]|" + RE_BALANCED_QUOTES)
-            + r"*?"
-            + RE_STRING_GROUP
-            + "[ ]*"
-            + re_named_group("other_string", RE_STRING)
-            + ".*$",
+            fr"""
+            ^
+            (?:
+                [^'"]
+                | {RE_BALANCED_QUOTES}
+            )*?
+            {RE_STRING_GROUP}[ ]*{RE_STRING}  # Two Adjacent Strings
+            .*$
+            """,
         )
 
         if isinstance(regex_result, str):
@@ -3082,13 +3070,17 @@ class StringArgCommaStripper(StringStripperMixin):
     def do_match(self, line: Line) -> STResult[str]:
         regex_result = self._regex_match(
             line,
-            r"^"
-            + re_group("[^'\"]|" + RE_BALANCED_QUOTES)
-            + r"*?"
-            + r"[A-Za-z0-9_]+\("
-            + RE_STRING_GROUP
-            + RE_STRING_TRAILER
-            + r",\).*$",
+            fr"""
+            ^
+            (?:
+                [^'"]
+                | {RE_BALANCED_QUOTES}
+            )*?
+            [A-Za-z0-9_]+\(
+                {RE_STRING_GROUP}{RE_STRING_TRAILER},
+            \)
+            .*$
+            """,
         )
 
         if isinstance(regex_result, STError):
@@ -3178,13 +3170,16 @@ class StringParensStripper(StringStripperMixin):
     def do_match(self, line: Line) -> STResult[str]:
         regex_result = self._regex_match(
             line,
-            r"^"
-            + re_group("[^'\"]|" + RE_BALANCED_QUOTES)
-            + r"*?"
-            + r"[^A-z0-9_'\"][ ]*\("
-            + RE_STRING_GROUP
-            + RE_STRING_TRAILER
-            + r"\)(?<end>[^\.].*)?$",
+            fr"""
+            ^
+            (?:
+                [^'"]
+                | {RE_BALANCED_QUOTES}
+            )*?
+            [^A-Za-z0-9_'"][ ]*
+            \({RE_STRING_GROUP}{RE_STRING_TRAILER}\)[^\.]
+            .*$
+            """,
         )
 
         if isinstance(regex_result, STError):
@@ -3468,7 +3463,7 @@ class StringTermSplitter(StringSplitterMixin):
 
     def do_splitter_match(self, line: Line) -> STResult[str]:
         return self._regex_match(
-            line, r"^[ ]*(?:\+[ ]*)?" + RE_STRING_GROUP + RE_STRING_TRAILER + RE_EOL,
+            line, fr"^[ ]*(?:\+[ ]*)?{RE_STRING_GROUP}{RE_STRING_TRAILER}{RE_EOL}"
         )
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
@@ -3580,7 +3575,14 @@ class StringTermSplitter(StringSplitterMixin):
 
             if (
                 len(line_to_string(rest_line))
-                + len(re.sub(RE_BALANCED_PARENS, "(", line_to_string(non_string_line)))
+                + len(
+                    re.sub(
+                        RE_BALANCED_PARENS,
+                        "(",
+                        line_to_string(non_string_line),
+                        flags=re.VERBOSE,
+                    )
+                )
                 - non_string_line.depth * 4
             ) <= self.line_length:
                 append_leaves(
@@ -3774,47 +3776,36 @@ class StringExprSplitter(StringExprSplitterMixin):
     """
 
     def do_splitter_match(self, line: Line) -> STResult[str]:
-        RE_ASSIGNMENT = (
-            r"[A-Za-z0-9\._]*?"
-            + re_named_group(
-                "type_a", r":[ ]?[A-Za-z0-9_]+" + re_balanced_brackets("type_a") + r"?"
-            )
-            + r"?[ ]?\+?=[ ]?"
-        )
-        RE_DICT_KEY = (
-            re_group(
-                r"[A-Za-z0-9\._]+?"
-                + re_group(
-                    re_balanced_parens("dict_key")
-                    + "|"
-                    + re_balanced_brackets("dict_key")
-                )
-                + "*|"
-                + RE_STRING
-                + "?"
-                + re_string_trailer("dict_key")
-            )
-            + ":[ ]*"
-        )
-        RE_STREXPR_PREFIX = re_group(
-            "return[ ]|else[ ]|assert[ ].*,[ ]?|" + RE_ASSIGNMENT + "|" + RE_DICT_KEY
-        )
-
         return self._regex_match(
             line,
-            r"^[ ]*"
-            + re_group(
-                re_group(
-                    RE_STREXPR_PREFIX
-                    + "?"
-                    + RE_STRING_GROUP
-                    + re_string_trailer("string1")
-                    + ",?"
+            fr"""
+            ^[ ]*
+            (?:
+                (?:
+                    (?:
+                        return[ ]  # a 'return' statement
+                        | else[ ]  # OR the 'else' part of a ternary expression
+                        | assert[ ].*,[ ]?  # OR an 'assert' statement
+                        | [A-Za-z0-9\._]*?  # OR an assignment statement
+                          (?:
+                            # optional type annotation
+                            :[ ]?[A-Za-z0-9_]+{re_balanced_brackets("type_a")}?
+                          )?
+                          [ ]?\+?=[ ]?
+                        | (?:  # OR a dictionary item assignment
+                            [A-Za-z0-9\._]+?
+                              (?:
+                                  {re_balanced_parens("dict")}
+                                  | {re_balanced_brackets("dict")}
+                              )*
+                            | {RE_STRING}?{re_string_trailer("dict")}
+                          ):[ ]*
+                    )?
+                    {RE_STRING_GROUP}{re_string_trailer("string1")},?
                 )
-                + "|"
-                + re_group(RE_STRING_GROUP + re_string_trailer("string2") + ",")
-            )
-            + RE_EOL,
+                | {RE_STRING_GROUP}{re_string_trailer("string2")},
+            ){RE_EOL}
+            """,
         )
 
 
@@ -3838,8 +3829,7 @@ class StringArithExprSplitter(StringExprSplitterMixin):
 
     def do_splitter_match(self, line: Line) -> STResult[str]:
         return self._regex_match(
-            line,
-            "^[ ]*" + RE_STRING_GROUP + RE_STRING_TRAILER + r"[ ]?\+[ ].+," + RE_EOL,
+            line, fr"^[ ]*{RE_STRING_GROUP}{RE_STRING_TRAILER}[ ]?\+[ ].+,{RE_EOL}"
         )
 
 
