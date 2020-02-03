@@ -2768,7 +2768,9 @@ class CustomSplit:
 # This mapping is used to record custom string splits before merging strings in
 # StringMerger. StringTermSplitter then checks this mapping for valid custom
 # splits before applying its own split algorithm.
-CUSTOM_SPLIT_MAP: Dict[StringID, Tuple[CustomSplit, ...]] = defaultdict(tuple)
+CUSTOM_SPLIT_MAP: Dict[Tuple[StringID, str], Tuple[CustomSplit, ...]] = defaultdict(
+    tuple
+)
 
 
 class StringMerger(StringTransformerMixin):
@@ -2965,7 +2967,9 @@ class StringMerger(StringTransformerMixin):
 
             append_leaves(new_line, line, [old_leaf])
 
-        CUSTOM_SPLIT_MAP[id(string_leaf.value)] = tuple(custom_splits)
+        CUSTOM_SPLIT_MAP[(id(string_leaf.value), string_leaf.value)] = tuple(
+            custom_splits
+        )
 
         return new_line
 
@@ -3487,12 +3491,14 @@ class StringTermSplitter(StringSplitterMixin):
 
         QUOTE = rest_value[-1]
 
-        custom_splits = list(CUSTOM_SPLIT_MAP[id(line.leaves[string_idx].value)])
+        custom_splits = list(
+            CUSTOM_SPLIT_MAP[
+                (id(line.leaves[string_idx].value), line.leaves[string_idx].value)
+            ]
+        )
 
         starts_with_plus = line.leaves[0].type == token.PLUS
-        drop_pointless_f_prefix = ("f" in prefix) and re.search(
-            r"\{.+\}", rest_value
-        )
+        drop_pointless_f_prefix = ("f" in prefix) and re.search(r"\{.+\}", rest_value)
         use_custom_breakpoints = bool(
             custom_splits
             and all(csplit.break_idx <= max_next_length for csplit in custom_splits)
@@ -3599,7 +3605,9 @@ class StringTermSplitter(StringSplitterMixin):
             rest_line.comments = line.comments
             yield rest_line
 
-        del CUSTOM_SPLIT_MAP[id(line.leaves[string_idx].value)]
+        del CUSTOM_SPLIT_MAP[
+            (id(line.leaves[string_idx].value), line.leaves[string_idx].value)
+        ]
 
     @staticmethod
     def __get_break_idx(string_value: str, max_length: int) -> STResult[int]:
