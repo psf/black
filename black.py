@@ -3751,8 +3751,8 @@ class StringExprSplitter(StringExprSplitterMixin):
         * The line is a return statement, which returns a string.
             OR
         * The line is part of a ternary expression (e.g. `x = y if cond else
-        z`) such that the line starts with `else STRING`, where STRING is some
-        string.
+        z`) such that the line starts with `else <string>`, where <string> is
+        some string.
             OR
         * The line is an assert statement, which ends with a string.
             OR
@@ -3821,7 +3821,8 @@ class StringArithExprSplitter(StringExprSplitterMixin):
     you do not understand what I mean by "chain of responsibility".
 
     Requirements:
-        The line starts with a string followed by a '+' sign.
+        * The line begins with a string that is immediately followed by a '+' sign.
+        * The line ends with a comma.
 
     Transformations:
         Refer to `help(StringExprSplitterMixin)`.
