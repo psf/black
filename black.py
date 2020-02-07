@@ -381,6 +381,11 @@ def target_version_option_callback(
     help="Don't write the files back, just output a diff for each file on stdout.",
 )
 @click.option(
+    "--color",
+    is_flag=True,
+    help="Show colored diff. Only applies when `--diff` is given.",
+)
+@click.option(
     "--fast/--safe",
     is_flag=True,
     help="If --fast given, skip temporary sanity checks. [default: --safe]",
@@ -458,6 +463,7 @@ def main(
     target_version: List[TargetVersion],
     check: bool,
     diff: bool,
+    color: bool,
     fast: bool,
     pyi: bool,
     py36: bool,
