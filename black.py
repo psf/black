@@ -140,11 +140,17 @@ class WriteBack(Enum):
     YES = 1
     DIFF = 2
     CHECK = 3
+    COLOR_DIFF = 4
 
     @classmethod
-    def from_configuration(cls, *, check: bool, diff: bool) -> "WriteBack":
+    def from_configuration(
+        cls, *, check: bool, diff: bool, color: bool = False
+    ) -> "WriteBack":
         if check and not diff:
             return cls.CHECK
+
+        if diff and color:
+            return cls.COLOR_DIFF
 
         return cls.DIFF if diff else cls.YES
 
@@ -476,7 +482,7 @@ def main(
     config: Optional[str],
 ) -> None:
     """The uncompromising code formatter."""
-    write_back = WriteBack.from_configuration(check=check, diff=diff)
+    write_back = WriteBack.from_configuration(check=check, diff=diff, color=color)
     if target_version:
         if py36:
             err("Cannot use both --target-version and --py36")
@@ -724,7 +730,7 @@ def format_file_in_place(
     if write_back == WriteBack.YES:
         with open(src, "w", encoding=encoding, newline=newline) as f:
             f.write(dst_contents)
-    elif write_back == WriteBack.DIFF:
+    elif write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
         now = datetime.utcnow()
         src_name = f"{src}\t{then} +0000"
         dst_name = f"{src}\t{now} +0000"
