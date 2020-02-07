@@ -352,6 +352,25 @@ class BlackTestCase(unittest.TestCase):
             )
             self.assertEqual(expected, actual, msg)
 
+    def test_expression_diff_with_color(self) -> None:
+        source, _ = read_data("expression.py")
+        expected, _ = read_data("expression.diff")
+        tmp_file = Path(black.dump_to_file(source))
+        try:
+            result = BlackRunner().invoke(
+                black.main, ["--diff", "--color", str(tmp_file)]
+            )
+        finally:
+            os.unlink(tmp_file)
+        actual = result.output
+        # We check the contents of the diff in `test_expression_diff`. All
+        # we need to check here is that color codes exist in the result.
+        self.assertIn("\033[1;37m", actual)
+        self.assertIn("\033[36m", actual)
+        self.assertIn("\033[32m", actual)
+        self.assertIn("\033[31m", actual)
+        self.assertIn("\033[0m", actual)
+
     @patch("black.dump_to_file", dump_to_stderr)
     def test_fstring(self) -> None:
         source, expected = read_data("fstring")
