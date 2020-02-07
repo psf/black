@@ -736,6 +736,9 @@ def format_file_in_place(
         dst_name = f"{src}\t{now} +0000"
         diff_contents = diff(src_contents, dst_contents, src_name, dst_name)
 
+        if write_back == write_back.COLOR_DIFF:
+            diff_contents = color_diff(diff_contents)
+
         with lock or nullcontext():
             f = io.TextIOWrapper(
                 sys.stdout.buffer,
@@ -747,6 +750,24 @@ def format_file_in_place(
             f.detach()
 
     return True
+
+
+def color_diff(contents: str) -> str:
+    """
+    Color the contents returned by `diff()`.
+    """
+    lines = contents.split("\n")
+    for i, line in enumerate(lines):
+        if line.startswith("+++") or line.startswith("---"):
+            line = "\033[1;37m" + line + "\033[0m"  # bold white, reset
+        if line.startswith("@@"):
+            line = "\033[36m" + line + "\033[0m"  # cyan, reset
+        if line.startswith("+"):
+            line = "\033[32m" + line + "\033[0m"  # green, reset
+        elif line.startswith("-"):
+            line = "\033[31m" + line + "\033[0m"  # red, reset
+        lines[i] = line
+    return "\n".join(lines)
 
 
 def format_stdin_to_stdout(
