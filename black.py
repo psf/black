@@ -3864,6 +3864,7 @@ def append_leaves(new_line: Line, old_line: Line, leaves: List[Leaf]) -> None:
         appended to @new_line and used to replace their originals in the
         underlying Node structure.
     """
+    # TODO(bugyi): Add assertion here for pre-conditions
     for old_leaf in leaves:
         new_leaf = Leaf(old_leaf.type, old_leaf.value)
         replace_child(old_leaf, new_leaf)
@@ -3896,6 +3897,20 @@ def get_string_prefix(string: str) -> str:
     Returns:
         @string's prefix (e.g. '', 'r', 'f', or 'rf').
     """
+    dquote_idx = string.find('"')
+    squote_idx = string.find("'")
+    if dquote_idx == -1:
+        quote_idx = squote_idx
+    elif squote_idx == -1:
+        quote_idx = dquote_idx
+    else:
+        quote_idx = min(squote_idx, dquote_idx)
+
+    assert quote_idx >= 0, f"{string!r} does not contain a quote character (' or \")."
+    assert set(string[:quote_idx]).issubset(
+        set(STRING_PREFIX_CHARS)
+    ), f"{set(string[:quote_idx])} is NOT a subset of {set(STRING_PREFIX_CHARS)}."
+
     prefix = ""
     prefix_idx = 0
     while string[prefix_idx] in STRING_PREFIX_CHARS:
