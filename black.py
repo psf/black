@@ -112,10 +112,10 @@ RE_STRING_GROUP: Final = fr"(?P<string>{RE_STRING})"
 re_string_trailer = fr"""
 (?:
     (?:
-        \.[A-Za-z0-9_]+{re_balanced_parens("{0}_1")}  # a method call
+        \.[A-Za-z0-9_]+{re_balanced_parens("{0}_trailer_1")}  # a method call
         | [ ]?%[ ]?  # OR an old-style '%' formatting expression
             (?:
-                {re_balanced_parens("{0}_2")}
+                {re_balanced_parens("{0}_trailer_2")}
                 | {RE_BALANCED_QUOTES}
             )
     )?
@@ -168,7 +168,9 @@ Ok = TypeVar("Ok")
 Err = TypeVar("Err", bound=Exception)
 Result = Union[Ok, Err]
 STResult = Result[Ok, STError]  # StringTransformer Result
-STMatchResult = STResult[str]  # StringTransformerMixin.do_match(...) Result
+STMatchResult = STResult[
+    Tuple[str, Result[int, ValueError]]
+]  # StringTransformerMixin.do_match(...) Result
 
 
 class WriteBack(Enum):
@@ -2633,19 +2635,21 @@ class StringTransformerMixin(StringTransformer):
         as much as possible. Hence, this section is optional.
     """
 
-    string_idx: Optional[int] = None
-
     @abstractmethod
     def do_match(self, line: Line) -> STMatchResult:
         """
         Returns:
-            * The value of the matched string, if a match was able to be made.
+            * (string_value, string_idx) such that
+            `line.leaves[string_idx].value == string_value`, if a match was
+            able to be made.
+                OR
+            * (string_value, ValueError(...)), if a match was able to be made,
+            but no special algorithm for determining the string index is
+            necessary.  In this case, the string index will be determined using
+            a generic algorithm (e.g. by looping over all of the leaves and
+            stopping when a leaf is found that has the right type and value).
                 OR
             * An STError, if a match was not able to be made.
-
-        Side Effects:
-            This method MAY choose to initialize `self.string_idx` with a
-            suitable value.
         """
 
     @abstractmethod
@@ -2676,17 +2680,16 @@ class StringTransformerMixin(StringTransformer):
                 " this line as one that it can split."
             ) from result
 
-        if self.string_idx is None:
-            idx_result = self._get_string_idx(line.leaves, result)
+        (string_value, string_idx) = result
+        if isinstance(string_idx, ValueError):
+            idx_result = self._get_string_idx(line.leaves, string_value)
             if isinstance(idx_result, ValueError):
                 raise RuntimeError(
                     f"Logic Error in `{self.__class__.__name__}.do_match`"
-                    f" method.\n\nSTRING: {result}\n\nLINE: {line}\n"
+                    f" method.\n\nSTRING: {string_value}\n\nLINE: {line}\n"
                 ) from idx_result
 
             string_idx = idx_result
-        else:
-            string_idx = self.string_idx
 
         for line_result in self.do_transform(line, string_idx):
             if isinstance(line_result, STError):
@@ -2696,7 +2699,7 @@ class StringTransformerMixin(StringTransformer):
             yield line_result
 
     @staticmethod
-    def _regex_match(line: Line, pattern: str) -> STMatchResult:
+    def _regex_match(line: Line, pattern: str) -> STResult[str]:
         line_str = line_to_string(line)
         try:
             match = re.match(pattern, line_str, re.VERBOSE)
@@ -2810,24 +2813,27 @@ class StringMerger(StringTransformerMixin):
         )
 
         if isinstance(regex_result, str):
-            for leaf in line.leaves:
-                if leaf.type == token.STRING and leaf.value == regex_result:
-                    break
-            else:
-                return STError(
-                    f"Found string match ({regex_result}), however, we could not find"
-                    " a leaf that it belongs to."
-                )
+            for i, leaf in enumerate(line.leaves):
+                if (
+                    leaf.type == token.STRING
+                    and leaf.value == regex_result
+                    and len(line.leaves) > i + 1
+                    and line.leaves[i + 1].type == token.STRING
+                ):
+                    return (regex_result, i)
 
-            return regex_result
+            return STError(
+                f"Found string match ({regex_result}), however, we could not find"
+                " a leaf that it belongs to."
+            )
 
-        for leaf in line.leaves:
+        for i, leaf in enumerate(line.leaves):
             if (
                 leaf.type == token.STRING
                 and "\\\n" in leaf.value
                 and leaf.value.lstrip(STRING_PREFIX_CHARS)[:3] not in {'"""', "'''"}
             ):
-                return leaf.value
+                return (leaf.value, i)
 
         error = STError(
             f"This line ({line_to_string(line)}) has no strings that need merging."
@@ -3108,8 +3114,7 @@ class StringArgCommaStripper(StringStripperMixin):
                         and line.leaves[i + j + 2].type == token.RPAR
                         and unmatched_parens == 0
                     ):
-                        self.string_idx = i
-                        break
+                        return (string_value, i)
 
                     if inner_leaf.type == token.LPAR:
                         unmatched_parens += 1
@@ -3120,15 +3125,10 @@ class StringArgCommaStripper(StringStripperMixin):
                         else:
                             break
 
-                if self.string_idx is not None:
-                    break
-        else:
-            raise RuntimeError(
-                f"Logic Error. {self.__class__.__name__} was unable to set"
-                " 'self.string_idx' for some reason."
-            )
-
-        return string_value
+        raise RuntimeError(
+            f"Logic Error. {self.__class__.__name__} was unable to determine a string"
+            " index for some reason."
+        )
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
         new_line = line.clone()
@@ -3201,8 +3201,7 @@ class StringParensStripper(StringStripperMixin):
             unmatched_parens = 0
             for inner_leaf in line.leaves[i + 1 :]:
                 if inner_leaf.type == token.RPAR and unmatched_parens == 0:
-                    self.string_idx = i
-                    break
+                    return (string_value, i)
 
                 if inner_leaf.type == token.LPAR:
                     unmatched_parens += 1
@@ -3213,15 +3212,10 @@ class StringParensStripper(StringStripperMixin):
                     else:
                         break
 
-            if self.string_idx is not None:
-                break
-        else:
-            raise RuntimeError(
-                f"Logic Error. {self.__class__.__name__} was unable to set"
-                " 'self.string_idx' for some reason."
-            )
-
-        return string_value
+        raise RuntimeError(
+            f"Logic Error. {self.__class__.__name__} was unable to determine a string"
+            " index for some reason."
+        )
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
         LL = line.leaves
@@ -3291,13 +3285,17 @@ class StringSplitterMixin(StringTransformerMixin):
         if isinstance(result, STError):
             return result
 
-        idx_result = self._get_string_idx(line.leaves, result)
-        if isinstance(idx_result, ValueError):
-            raise RuntimeError(
-                f"Logic error in `{self.__class__.__name__}.do_splitter_match` method."
-            ) from idx_result
+        (string_value, string_idx) = result
+        if isinstance(string_idx, ValueError):
+            idx_result = self._get_string_idx(line.leaves, string_value)
+            if isinstance(idx_result, ValueError):
+                raise RuntimeError(
+                    f"Logic error in `{self.__class__.__name__}.do_splitter_match`"
+                    " method."
+                ) from idx_result
 
-        string_idx = idx_result
+            string_idx = idx_result
+
         vresult = self.__validate(line, string_idx)
         if isinstance(vresult, STError):
             return vresult
@@ -3458,9 +3456,14 @@ class StringTermSplitter(StringSplitterMixin):
     """
 
     def do_splitter_match(self, line: Line) -> STMatchResult:
-        return self._regex_match(
+        regex_result = self._regex_match(
             line, fr"^[ ]*(?:\+[ ]*)?{RE_STRING_GROUP}{RE_STRING_TRAILER}{RE_EOL}"
         )
+
+        if isinstance(regex_result, STError):
+            return regex_result
+
+        return (regex_result, ValueError())
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
         LL = line.leaves
@@ -3774,7 +3777,7 @@ class StringExprSplitter(StringExprSplitterMixin):
     """
 
     def do_splitter_match(self, line: Line) -> STMatchResult:
-        return self._regex_match(
+        regex_result = self._regex_match(
             line,
             fr"""
             ^[ ]*
@@ -3806,6 +3809,11 @@ class StringExprSplitter(StringExprSplitterMixin):
             """,
         )
 
+        if isinstance(regex_result, STError):
+            return regex_result
+
+        return (regex_result, ValueError())
+
 
 class StringArithExprSplitter(StringExprSplitterMixin):
     """
@@ -3828,9 +3836,14 @@ class StringArithExprSplitter(StringExprSplitterMixin):
     """
 
     def do_splitter_match(self, line: Line) -> STMatchResult:
-        return self._regex_match(
+        regex_result = self._regex_match(
             line, fr"^[ ]*{RE_STRING_GROUP}{RE_STRING_TRAILER}[ ]?\+[ ].+,{RE_EOL}"
         )
+
+        if isinstance(regex_result, STError):
+            return regex_result
+
+        return (regex_result, ValueError())
 
 
 def line_to_string(line: Line) -> str:
