@@ -1308,8 +1308,16 @@ class Line:
                 leaf, complex_subscript=self.is_complex_subscript(leaf)
             )
         if self.inside_brackets or not preformatted:
-            self.bracket_tracker.mark(leaf)
-            self.maybe_remove_trailing_comma(leaf)
+            try:
+                self.bracket_tracker.mark(leaf)
+                self.maybe_remove_trailing_comma(leaf)
+            except KeyError:
+                err(
+                    "Aborting line append due to a problem with the BracketTracker."
+                    " The problemed Line, as it looks now, is shown"
+                    f" below:\n\n{line_to_string(line)}\n"
+                )
+                raise
         if not self.append_comment(leaf):
             self.leaves.append(leaf)
 
