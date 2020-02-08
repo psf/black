@@ -2599,6 +2599,13 @@ def split_line(
                 )
         except CannotSplit:
             continue
+        except Exception as e:
+            err(
+                f"{e.__class__.__name__} raised while attempting to split the"
+                f" following line using the {split_func}"
+                f" splitter:\n\n{line_to_string(line)}\n"
+            )
+            raise
         else:
             yield from result
             break
