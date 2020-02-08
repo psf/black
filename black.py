@@ -186,8 +186,9 @@ class Err(Generic[E]):
 
 Result = Union[Ok[T], Err[E]]
 STResult = Result[T, STError]  # StringTransformer Result
+StringIndex = int
 STMatchResult = STResult[  # StringTransformerMixin.do_match(...) Result
-    Tuple[str, Optional[int]]
+    Tuple[str, Optional[StringIndex]]
 ]
 
 
