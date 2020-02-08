@@ -3646,13 +3646,11 @@ class StringTermSplitter(StringSplitterMixin):
                 )
                 - non_string_line.depth * 4
             ) <= self.line_length:
-                append_leaves(
-                    last_line, line, rest_line.leaves + non_string_line.leaves
-                )
-
+                append_leaves(last_line, rest_line, rest_line.leaves)
+                append_leaves(last_line, non_string_line, non_string_line.leaves)
                 yield Ok(last_line)
             else:
-                append_leaves(last_line, line, rest_line.leaves)
+                append_leaves(last_line, rest_line, rest_line.leaves)
                 yield Ok(last_line)
 
                 yield Ok(non_string_line)
@@ -3932,15 +3930,16 @@ def append_leaves(new_line: Line, old_line: Line, leaves: List[Leaf]) -> None:
     underlying Node structure where appropriate.
 
     Pre-conditions:
-        @leaves is a subset of @old_line.leaves.
+        set(@leaves) is a subset of set(@old_line.leaves).
 
     Algorithm:
         All of the leaves in @leaves are duplicated. The duplicates are then
         appended to @new_line and used to replace their originals in the
         underlying Node structure.
     """
-    # TODO(bugyi): Add assertion here for pre-conditions
     for old_leaf in leaves:
+        assert old_leaf in old_line.leaves
+
         new_leaf = Leaf(old_leaf.type, old_leaf.value)
         replace_child(old_leaf, new_leaf)
         new_line.append(new_leaf)
