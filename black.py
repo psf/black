@@ -186,9 +186,9 @@ class Err(Generic[E]):
 
 Result = Union[Ok[T], Err[E]]
 STResult = Result[T, STError]  # StringTransformer Result
-STMatchResult = STResult[
+STMatchResult = STResult[  # StringTransformerMixin.do_match(...) Result
     Tuple[str, Optional[int]]
-]  # StringTransformerMixin.do_match(...) Result
+]
 
 
 class WriteBack(Enum):
