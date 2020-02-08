@@ -70,7 +70,7 @@ STRING_PREFIX_CHARS: Final = "furbFURB"  # All possible string prefix characters
 
 # Regular expressions used for matching strings.
 RE_EVEN_BACKSLASHES = r"(?:(?<!\\)(?:\\\\)*)"
-RE_ODD_BACKSLASHES = r"(?:(?<!\\)(?:\\\\)*\\)"
+RE_ODD_BACKSLASHES = fr"(?:{RE_EVEN_BACKSLASHES}\\)"
 re_balanced_quotes = fr"""
 (?:
     (?<!\\){{0}}
