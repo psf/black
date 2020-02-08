@@ -2762,8 +2762,8 @@ class StringTransformerMixin(StringTransformer):
 
         value_error = ValueError(
             f"{self.__class__.__name__} claims to know the string value is"
-            f" {string_value} but is unable to find a leaf in this line that contains"
-            " this string."
+            f" {string_value} but we are unable to find a leaf in this line that"
+            " contains this string."
         )
         return Err(value_error)
 
