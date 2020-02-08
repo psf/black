@@ -2617,8 +2617,8 @@ class StringTransformerMixin(StringTransformer):
     subclasses overriding the template methods `do_match(...)` and
     `do_transform(...)`.
 
-    The following two sections can be found among the docstrings of each
-    concrete class that makes use of this mixin's functionality.
+    The following sections can be found among the docstrings of each concrete
+    class that makes use of this mixin's functionality.
 
     Requirements:
         Which requirements must be met of the given line for this
@@ -2665,7 +2665,7 @@ class StringTransformerMixin(StringTransformer):
             requirements until the transformation is already midway.
 
         Side Effects:
-            This method should not mutate @line directly, but it may mutate the
+            This method should NOT mutate @line directly, but it MAY mutate the
             Line's underlying Node structure. (WARNING: If the underlying Node
             structure IS altered, then this method should NOT be allowed to
             yield an STError after that point.)
@@ -3603,6 +3603,10 @@ class StringTermSplitter(StringSplitterMixin):
 
     @staticmethod
     def __get_break_idx(string_value: str, max_length: int) -> STResult[int]:
+        """
+        Pre-Conditions:
+            * @max_length > 0
+        """
         assert max_length > 0
 
         MIN_SUBSTR_SIZE = 6
@@ -3760,7 +3764,7 @@ class StringExprSplitter(StringExprSplitterMixin):
         * The line is an assignment statement (e.g. `x = 1` or `x += 1`) such
         that the variable is being assigned the value of some string.
             OR
-        * The line is a dictionary key assignment where the key is being
+        * The line is a dictionary key assignment where some valid key is being
         assigned the value of some string.
             OR
         * The line is a single string followed by a comma.
