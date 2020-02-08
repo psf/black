@@ -2824,6 +2824,8 @@ class StringMerger(StringTransformerMixin):
     """
 
     def do_match(self, line: Line) -> STMatchResult:
+        LL = line.leaves
+
         regex_result = self._regex_match(
             line,
             fr"""
@@ -2839,12 +2841,12 @@ class StringMerger(StringTransformerMixin):
 
         if isinstance(regex_result, Ok):
             string_value = regex_result.ok()
-            for i, leaf in enumerate(line.leaves):
+            for i, leaf in enumerate(LL):
                 if (
                     leaf.type == token.STRING
                     and leaf.value == string_value
-                    and len(line.leaves) > i + 1
-                    and line.leaves[i + 1].type == token.STRING
+                    and len(LL) > i + 1
+                    and LL[i + 1].type == token.STRING
                 ):
                     return Ok((string_value, i))
 
@@ -2854,7 +2856,7 @@ class StringMerger(StringTransformerMixin):
             )
             return Err(st_error)
 
-        for i, leaf in enumerate(line.leaves):
+        for i, leaf in enumerate(LL):
             if (
                 leaf.type == token.STRING
                 and "\\\n" in leaf.value
@@ -2896,7 +2898,9 @@ class StringMerger(StringTransformerMixin):
         line: Line, string_idx: int
     ) -> STResult[Line]:
         """Merge strings that were split across multiple lines using backslashes."""
-        string_leaf = line.leaves[string_idx]
+        LL = line.leaves
+
+        string_leaf = LL[string_idx]
         if not (
             string_leaf.type == token.STRING
             and "\\\n" in string_leaf.value
@@ -2910,7 +2914,7 @@ class StringMerger(StringTransformerMixin):
 
         new_line = line.clone()
         new_line.comments = line.comments
-        append_leaves(new_line, line, line.leaves)
+        append_leaves(new_line, line, LL)
 
         new_string_leaf = new_line.leaves[string_idx]
         new_string_leaf.value = new_string_leaf.value.replace("\\\n", "")
@@ -2918,28 +2922,27 @@ class StringMerger(StringTransformerMixin):
         return Ok(new_line)
 
     def __merge_first_string_group(self, line: Line, string_idx: int) -> STResult[Line]:
+        LL = line.leaves
+
         vresult = self.__validate_mfsg(line, string_idx)
         if isinstance(vresult, Err):
             return vresult
 
-        atom_node = line.leaves[string_idx].parent
+        atom_node = LL[string_idx].parent
         string_value = ""
         prefix = ""
 
         BREAK_MARK = "@@@@@ BLACK BREAKPOINT MARKER @@@@@"
 
         next_str_idx = string_idx
-        QUOTE = line.leaves[next_str_idx].value[-1]
+        QUOTE = LL[next_str_idx].value[-1]
         num_of_strings = 0
         custom_splits = []
         prefix_tracker = []
-        while (
-            len(line.leaves) > next_str_idx
-            and line.leaves[next_str_idx].type == token.STRING
-        ):
+        while len(LL) > next_str_idx and LL[next_str_idx].type == token.STRING:
             num_of_strings += 1
 
-            next_string_value = line.leaves[next_str_idx].value
+            next_string_value = LL[next_str_idx].value
 
             naked_string_value = string_value[len(prefix) + 1 : -1]
             naked_string_value = re.sub(
@@ -2993,12 +2996,12 @@ class StringMerger(StringTransformerMixin):
 
         new_line = line.clone()
 
-        for i, old_leaf in enumerate(line.leaves):
+        for i, old_leaf in enumerate(LL):
             if i == string_idx:
                 new_line.append(string_leaf)
 
             if string_idx <= i < string_idx + num_of_strings:
-                for comment_leaf in line.comments_after(line.leaves[i]):
+                for comment_leaf in line.comments_after(LL[i]):
                     new_line.append(comment_leaf, preformatted=True)
                 continue
 
@@ -3117,6 +3120,8 @@ class StringArgCommaStripper(StringStripperMixin):
     """
 
     def do_match(self, line: Line) -> STMatchResult:
+        LL = line.leaves
+
         regex_result = self._regex_match(
             line,
             fr"""
@@ -3136,20 +3141,20 @@ class StringArgCommaStripper(StringStripperMixin):
             return regex_result
 
         string_value = regex_result.ok()
-        for (i, leaf) in enumerate(line.leaves):
-            if i == 0 or i + 2 >= len(line.leaves):
+        for (i, leaf) in enumerate(LL):
+            if i == 0 or i + 2 >= len(LL):
                 continue
 
             if (
                 leaf.type == token.STRING
                 and leaf.value == string_value
-                and line.leaves[i - 1].type == token.LPAR
+                and LL[i - 1].type == token.LPAR
             ):
                 unmatched_parens = 0
-                for (j, inner_leaf) in enumerate(line.leaves[i + 1 :]):
+                for (j, inner_leaf) in enumerate(LL[i + 1 :]):
                     if (
                         inner_leaf.type == token.COMMA
-                        and line.leaves[i + j + 2].type == token.RPAR
+                        and LL[i + j + 2].type == token.RPAR
                         and unmatched_parens == 0
                     ):
                         return Ok((string_value, i))
@@ -3169,24 +3174,24 @@ class StringArgCommaStripper(StringStripperMixin):
         )
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
+        LL = line.leaves
+
         new_line = line.clone()
         new_line.comments = line.comments.copy()
 
-        rpar_idx_result = self.get_first_unmatched_rpar_idx(
-            line.leaves[string_idx + 2 :]
-        )
+        rpar_idx_result = self.get_first_unmatched_rpar_idx(LL[string_idx + 2 :])
         if isinstance(rpar_idx_result, Err):
             value_error = rpar_idx_result.err()
             raise RuntimeError(
                 f"Logic Error. {self.__class__.__name__} was unable to find the ending"
                 " RPAR leaf for the following string and line:\n\nSTRING:"
-                f" {line.leaves[string_idx]}\n\nLINE: {line_to_string(line)}\n"
+                f" {LL[string_idx]}\n\nLINE: {line_to_string(line)}\n"
             ) from value_error
 
         rpar_idx = rpar_idx_result.ok()
         comma_idx = rpar_idx + string_idx + 1
-        comma_leaf = line.leaves[comma_idx]
-        for i, old_leaf in enumerate(line.leaves):
+        comma_leaf = LL[comma_idx]
+        for i, old_leaf in enumerate(LL):
             if i == comma_idx:
                 continue
 
@@ -3215,6 +3220,8 @@ class StringParensStripper(StringStripperMixin):
     """
 
     def do_match(self, line: Line) -> STMatchResult:
+        LL = line.leaves
+
         regex_result = self._regex_match(
             line,
             fr"""
@@ -3233,15 +3240,15 @@ class StringParensStripper(StringStripperMixin):
             return regex_result
 
         string_value = regex_result.ok()
-        for (i, leaf) in enumerate(line.leaves):
+        for (i, leaf) in enumerate(LL):
             if leaf.type != token.STRING or leaf.value != string_value:
                 continue
 
-            if i == 0 or line.leaves[i - 1].type != token.LPAR:
+            if i == 0 or LL[i - 1].type != token.LPAR:
                 continue
 
             unmatched_parens = 0
-            for inner_leaf in line.leaves[i + 1 :]:
+            for inner_leaf in LL[i + 1 :]:
                 if inner_leaf.type == token.RPAR and unmatched_parens == 0:
                     return Ok((string_value, i))
 
@@ -3377,6 +3384,7 @@ class StringSplitterMixin(StringTransformerMixin):
 
     def __validate(self, line: Line, string_idx: int) -> STResult[None]:
         LL = line.leaves
+
         string_leaf = LL[string_idx]
 
         offset = 0
@@ -3517,6 +3525,7 @@ class StringTermSplitter(StringSplitterMixin):
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
         LL = line.leaves
+
         insert_str_child = self._insert_str_child_factory(LL[string_idx])
 
         rest_value = LL[string_idx].value
@@ -3733,6 +3742,7 @@ class StringExprSplitterMixin(StringSplitterMixin):
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
         LL = line.leaves
+
         insert_str_child = self._insert_str_child_factory(LL[string_idx])
 
         comma_idx = len(LL) - 1
