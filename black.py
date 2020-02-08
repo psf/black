@@ -164,10 +164,28 @@ class InvalidInput(ValueError):
     """Raised when input source code fails all parse attempts."""
 
 
-Ok = TypeVar("Ok")
-Err = TypeVar("Err", bound=Exception)
-Result = Union[Ok, Err]
-STResult = Result[Ok, STError]  # StringTransformer Result
+T = TypeVar("T")
+E = TypeVar("E", bound=Exception)
+
+
+class Ok(Generic[T]):
+    def __init__(self, value: T) -> None:
+        self._value = value
+
+    def ok(self) -> T:
+        return self._value
+
+
+class Err(Generic[E]):
+    def __init__(self, e: E) -> None:
+        self._e = e
+
+    def err(self) -> E:
+        return self._e
+
+
+Result = Union[Ok[T], Err[E]]
+STResult = Result[T, STError]  # StringTransformer Result
 STMatchResult = STResult[
     Tuple[str, Result[int, ValueError]]
 ]  # StringTransformerMixin.do_match(...) Result
@@ -938,9 +956,6 @@ def lib2to3_unparse(node: Node) -> str:
     """Given a lib2to3 node, return its string representation."""
     code = str(node)
     return code
-
-
-T = TypeVar("T")
 
 
 class Visitor(Generic[T]):
@@ -2608,6 +2623,10 @@ class StringTransformer(ABC):
         """
         StringTransformer instances have a call signature that mirrors that of
         the SplitFunc type.
+
+        Raises:
+            CannotSplit(...) if the concrete StringTransformer class is unable
+            to transform @line.
         """
 
 
@@ -2674,29 +2693,35 @@ class StringTransformerMixin(StringTransformer):
     def __call__(self, line: Line, _features: Collection[Feature]) -> Iterator[Line]:
         result = self.do_match(line)
 
-        if isinstance(result, STError):
+        if isinstance(result, Err):
+            st_error = result.err()
             raise CannotSplit(
                 f"The string splitter {self.__class__.__name__} does not recognize"
                 " this line as one that it can split."
-            ) from result
+            ) from st_error
 
-        (string_value, string_idx) = result
-        if isinstance(string_idx, ValueError):
-            idx_result = self._get_string_idx(line.leaves, string_value)
-            if isinstance(idx_result, ValueError):
+        (string_value, string_idx_result) = result.ok()
+        if isinstance(string_idx_result, Ok):
+            string_idx = string_idx_result.ok()
+        else:
+            other_idx_result = self._get_string_idx(line.leaves, string_value)
+            if isinstance(other_idx_result, Err):
+                value_error = other_idx_result.err()
                 raise RuntimeError(
                     f"Logic Error in `{self.__class__.__name__}.do_match`"
                     f" method.\n\nSTRING: {string_value}\n\nLINE: {line}\n"
-                ) from idx_result
+                ) from value_error
 
-            string_idx = idx_result
+            string_idx = other_idx_result.ok()
 
         for line_result in self.do_transform(line, string_idx):
-            if isinstance(line_result, STError):
+            if isinstance(line_result, Err):
+                st_error = line_result.err()
                 raise CannotSplit(
                     "StringTransformer failed while attempting to transform string."
-                ) from line_result
-            yield line_result
+                ) from st_error
+            line = line_result.ok()
+            yield line
 
     @staticmethod
     def _regex_match(line: Line, pattern: str) -> STResult[str]:
@@ -2720,27 +2745,29 @@ class StringTransformerMixin(StringTransformer):
             raise ValueError(f"Bad Regular Expression\n\n{pattern}") from e
 
         if match is not None:
-            result = match.groupdict()["string"]
-            assert isinstance(result, str)
-            return result
+            string = match.groupdict()["string"]
+            assert isinstance(string, str)
+            return Ok(string)
         else:
-            return STError(
+            st_error = STError(
                 f"Line ({line_str}) does not match regular expression pattern"
                 f" ({pattern})."
             )
+            return Err(st_error)
 
     def _get_string_idx(
         self, leaves: List[Leaf], string_value: str
     ) -> Result[int, ValueError]:
         for i, leaf in enumerate(leaves):
             if leaf.type == token.STRING and leaf.value == string_value:
-                return i
+                return Ok(i)
 
-        return ValueError(
+        value_error = ValueError(
             f"{self.__class__.__name__} claims to know the string value is"
             f" {string_value} but is unable to find a leaf in this line that contains"
             " this string."
         )
+        return Err(value_error)
 
 
 @dataclass
@@ -2812,20 +2839,22 @@ class StringMerger(StringTransformerMixin):
             """,
         )
 
-        if isinstance(regex_result, str):
+        if isinstance(regex_result, Ok):
+            string_value = regex_result.ok()
             for i, leaf in enumerate(line.leaves):
                 if (
                     leaf.type == token.STRING
-                    and leaf.value == regex_result
+                    and leaf.value == string_value
                     and len(line.leaves) > i + 1
                     and line.leaves[i + 1].type == token.STRING
                 ):
-                    return (regex_result, i)
+                    return Ok((string_value, Ok(i)))
 
-            return STError(
+            st_error = STError(
                 f"Found string match ({regex_result}), however, we could not find"
                 " a leaf that it belongs to."
             )
+            return Err(st_error)
 
         for i, leaf in enumerate(line.leaves):
             if (
@@ -2833,34 +2862,36 @@ class StringMerger(StringTransformerMixin):
                 and "\\\n" in leaf.value
                 and leaf.value.lstrip(STRING_PREFIX_CHARS)[:3] not in {'"""', "'''"}
             ):
-                return (leaf.value, i)
+                return Ok((leaf.value, Ok(i)))
 
-        error = STError(
+        st_error = STError(
             f"This line ({line_to_string(line)}) has no strings that need merging."
         )
-        error.__cause__ = regex_result
-        return error
+        st_error.__cause__ = regex_result.err()
+        return Err(st_error)
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
         new_line = line
         rblc_result = self.__remove_backslash_line_continuation_chars(
             new_line, string_idx
         )
-        if isinstance(rblc_result, Line):
-            new_line = rblc_result
+        if isinstance(rblc_result, Ok):
+            new_line = rblc_result.ok()
 
         mfsg_result = self.__merge_first_string_group(new_line, string_idx)
-        if isinstance(mfsg_result, Line):
-            new_line = mfsg_result
+        if isinstance(mfsg_result, Ok):
+            new_line = mfsg_result.ok()
 
-        if isinstance(rblc_result, STError) and isinstance(mfsg_result, STError):
-            mfsg_result.__cause__ = rblc_result
+        if isinstance(rblc_result, Err) and isinstance(mfsg_result, Err):
+            mfsg_st_error = mfsg_result.err()
+            rblc_st_error = rblc_result.err()
+            mfsg_st_error.__cause__ = rblc_st_error
 
-            error = STError("StringMerger failed to merge any strings in this line.")
-            error.__cause__ = mfsg_result
-            yield error
+            st_error = STError("StringMerger failed to merge any strings in this line.")
+            st_error.__cause__ = mfsg_st_error
+            yield Err(st_error)
         else:
-            yield new_line
+            yield Ok(new_line)
 
     @staticmethod
     def __remove_backslash_line_continuation_chars(
@@ -2873,10 +2904,11 @@ class StringMerger(StringTransformerMixin):
             and "\\\n" in string_leaf.value
             and string_leaf.value.lstrip(STRING_PREFIX_CHARS)[:3] not in {'"""', "'''"}
         ):
-            return STError(
+            st_error = STError(
                 f"String leaf {string_leaf} does not contain any backslash line"
                 " continuation characters."
             )
+            return Err(st_error)
 
         new_line = line.clone()
         new_line.comments = line.comments
@@ -2885,11 +2917,11 @@ class StringMerger(StringTransformerMixin):
         new_string_leaf = new_line.leaves[string_idx]
         new_string_leaf.value = new_string_leaf.value.replace("\\\n", "")
 
-        return new_line
+        return Ok(new_line)
 
     def __merge_first_string_group(self, line: Line, string_idx: int) -> STResult[Line]:
         vresult = self.__validate_mfsg(line, string_idx)
-        if isinstance(vresult, STError):
+        if isinstance(vresult, Err):
             return vresult
 
         atom_node = line.leaves[string_idx].parent
@@ -2978,7 +3010,7 @@ class StringMerger(StringTransformerMixin):
             custom_splits
         )
 
-        return new_line
+        return Ok(new_line)
 
     @staticmethod
     def __validate_mfsg(line: Line, string_idx: int) -> STResult[None]:
@@ -2997,26 +3029,30 @@ class StringMerger(StringTransformerMixin):
                 num_of_inline_string_comments += 1
 
             if leaf.value.lstrip(STRING_PREFIX_CHARS).startswith(("'''", '"""')):
-                return STError(
+                st_error = STError(
                     "One of the strings that we were attempting to merge was a"
                     f" multi-line string ({leaf.value}). StringMerger does NOT merge"
                     " multi-line strings."
                 )
+                return Err(st_error)
 
         if num_of_strings < 2:
-            return STError(
+            st_error = STError(
                 f"Not enough strings to merge (num_of_strings={num_of_strings})."
             )
+            return Err(st_error)
 
         if num_of_inline_string_comments > 1:
-            return STError(
+            st_error = STError(
                 f"Too many inline string comments ({num_of_inline_string_comments})."
             )
+            return Err(st_error)
 
         if len(set_of_prefixes) > 1 and set_of_prefixes != {"", "f"}:
-            return STError(f"Too many different prefixes ({set_of_prefixes}).")
+            st_error = STError(f"Too many different prefixes ({set_of_prefixes}).")
+            return Err(st_error)
 
-        return None
+        return Ok(None)
 
 
 class StringStripperMixin(StringTransformerMixin):
@@ -3050,15 +3086,19 @@ class StringStripperMixin(StringTransformerMixin):
                 continue
 
             if leaf.type == token.RPAR and unmatched_parens == 0:
-                return i
+                return Ok(i)
 
             if leaf.type == token.RPAR:
                 if unmatched_parens > 0:
                     unmatched_parens -= 1
                 else:
-                    return ValueError("Found RPAR that matches LPAR from the past!")
+                    value_error = ValueError(
+                        "Found RPAR that matches LPAR from the past!"
+                    )
+                    return Err(value_error)
 
-        return ValueError("No RPAR found!")
+        value_error = ValueError("No RPAR found!")
+        return Err(value_error)
 
 
 class StringArgCommaStripper(StringStripperMixin):
@@ -3094,10 +3134,10 @@ class StringArgCommaStripper(StringStripperMixin):
             """,
         )
 
-        if isinstance(regex_result, STError):
+        if isinstance(regex_result, Err):
             return regex_result
 
-        string_value = regex_result
+        string_value = regex_result.ok()
         for (i, leaf) in enumerate(line.leaves):
             if i == 0 or i + 2 >= len(line.leaves):
                 continue
@@ -3114,7 +3154,7 @@ class StringArgCommaStripper(StringStripperMixin):
                         and line.leaves[i + j + 2].type == token.RPAR
                         and unmatched_parens == 0
                     ):
-                        return (string_value, i)
+                        return Ok((string_value, Ok(i)))
 
                     if inner_leaf.type == token.LPAR:
                         unmatched_parens += 1
@@ -3134,15 +3174,19 @@ class StringArgCommaStripper(StringStripperMixin):
         new_line = line.clone()
         new_line.comments = line.comments.copy()
 
-        idx_result = self.get_first_unmatched_rpar_idx(line.leaves[string_idx + 2 :])
-        if isinstance(idx_result, ValueError):
+        rpar_idx_result = self.get_first_unmatched_rpar_idx(
+            line.leaves[string_idx + 2 :]
+        )
+        if isinstance(rpar_idx_result, Err):
+            value_error = rpar_idx_result.err()
             raise RuntimeError(
                 f"Logic Error. {self.__class__.__name__} was unable to find the ending"
                 " RPAR leaf for the following string and line:\n\nSTRING:"
                 f" {line.leaves[string_idx]}\n\nLINE: {line_to_string(line)}\n"
-            ) from idx_result
+            ) from value_error
 
-        comma_idx = idx_result + string_idx + 1
+        rpar_idx = rpar_idx_result.ok()
+        comma_idx = rpar_idx + string_idx + 1
         comma_leaf = line.leaves[comma_idx]
         for i, old_leaf in enumerate(line.leaves):
             if i == comma_idx:
@@ -3158,7 +3202,7 @@ class StringArgCommaStripper(StringStripperMixin):
                 ].copy()
                 del new_line.comments[id(comma_leaf)]
 
-        yield new_line
+        yield Ok(new_line)
 
 
 class StringParensStripper(StringStripperMixin):
@@ -3187,10 +3231,10 @@ class StringParensStripper(StringStripperMixin):
             """,
         )
 
-        if isinstance(regex_result, STError):
+        if isinstance(regex_result, Err):
             return regex_result
 
-        string_value = regex_result
+        string_value = regex_result.ok()
         for (i, leaf) in enumerate(line.leaves):
             if leaf.type != token.STRING or leaf.value != string_value:
                 continue
@@ -3201,7 +3245,7 @@ class StringParensStripper(StringStripperMixin):
             unmatched_parens = 0
             for inner_leaf in line.leaves[i + 1 :]:
                 if inner_leaf.type == token.RPAR and unmatched_parens == 0:
-                    return (string_value, i)
+                    return Ok((string_value, Ok(i)))
 
                 if inner_leaf.type == token.LPAR:
                     unmatched_parens += 1
@@ -3220,21 +3264,24 @@ class StringParensStripper(StringStripperMixin):
     def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
         LL = line.leaves
 
-        idx_result = self.get_first_unmatched_rpar_idx(LL[string_idx + 1 :])
-        if isinstance(idx_result, ValueError):
+        rpar_idx_result = self.get_first_unmatched_rpar_idx(LL[string_idx + 1 :])
+        if isinstance(rpar_idx_result, Err):
+            value_error = rpar_idx_result.err()
             raise RuntimeError(
                 f"Logic Error. {self.__class__.__name__} was unable to find the ending"
                 " RPAR leaf for the following string and line:\n\nSTRING:"
                 f" {LL[string_idx]}\n\nLINE: {line_to_string(line)}\n"
-            ) from idx_result
+            ) from value_error
 
-        rpar_idx = idx_result + string_idx + 1
+        unmatched_rpar_idx = rpar_idx_result.ok()
+        rpar_idx = unmatched_rpar_idx + string_idx + 1
 
         if id(LL[string_idx - 1]) in line.comments or id(LL[rpar_idx]) in line.comments:
-            yield STError(
+            st_error = STError(
                 "Cannot strip parens from string when either side (LPAR or RPAR) has"
                 " inline comments."
             )
+            yield Err(st_error)
             return
 
         new_line = line.clone()
@@ -3253,7 +3300,7 @@ class StringParensStripper(StringStripperMixin):
 
         LL[rpar_idx].remove()
 
-        yield new_line
+        yield Ok(new_line)
 
 
 class StringSplitterMixin(StringTransformerMixin):
@@ -3281,26 +3328,29 @@ class StringSplitterMixin(StringTransformerMixin):
         """Refer to `help(StringTransformerMixin.do_transform)`."""
 
     def do_match(self, line: Line) -> STMatchResult:
-        result = self.do_splitter_match(line)
-        if isinstance(result, STError):
-            return result
+        match_result = self.do_splitter_match(line)
+        if isinstance(match_result, Err):
+            return match_result
 
-        (string_value, string_idx) = result
-        if isinstance(string_idx, ValueError):
-            idx_result = self._get_string_idx(line.leaves, string_value)
-            if isinstance(idx_result, ValueError):
+        (string_value, string_idx_result) = match_result.ok()
+        if isinstance(string_idx_result, Ok):
+            string_idx = string_idx_result.ok()
+        else:
+            other_idx_result = self._get_string_idx(line.leaves, string_value)
+            if isinstance(other_idx_result, Err):
+                value_error = other_idx_result.err()
                 raise RuntimeError(
                     f"Logic error in `{self.__class__.__name__}.do_splitter_match`"
                     " method."
-                ) from idx_result
+                ) from value_error
 
-            string_idx = idx_result
+            string_idx = other_idx_result.ok()
 
         vresult = self.__validate(line, string_idx)
-        if isinstance(vresult, STError):
+        if isinstance(vresult, Err):
             return vresult
 
-        return result
+        return match_result
 
     @staticmethod
     def _insert_str_child_factory(string_leaf: Leaf) -> Callable[[LN], None]:
@@ -3389,18 +3439,20 @@ class StringSplitterMixin(StringTransformerMixin):
 
         max_string_length = self.line_length - (line.depth * 4) - offset
         if len(string_leaf.value) <= max_string_length:
-            return STError(
+            st_error = STError(
                 "The string itself is not what is causing this line to be too long."
             )
+            return Err(st_error)
 
         if not string_leaf.parent or [L.type for L in string_leaf.parent.children] == [
             token.STRING,
             token.NEWLINE,
         ]:
-            return STError(
+            st_error = STError(
                 f"This string ({string_leaf.value}) appears to be pointless (i.e. has"
                 " no parent)."
             )
+            return Err(st_error)
 
         if (
             line.comments
@@ -3411,12 +3463,13 @@ class StringSplitterMixin(StringTransformerMixin):
                 re.IGNORECASE,
             )
         ):
-            return STError(
+            st_error = STError(
                 "Line appears to end with an inline pragma comment. Splitting the line "
                 "could modify the pragma's behavior."
             )
+            return Err(st_error)
 
-        return None
+        return Ok(None)
 
 
 class StringTermSplitter(StringSplitterMixin):
@@ -3460,10 +3513,11 @@ class StringTermSplitter(StringSplitterMixin):
             line, fr"^[ ]*(?:\+[ ]*)?{RE_STRING_GROUP}{RE_STRING_TRAILER}{RE_EOL}"
         )
 
-        if isinstance(regex_result, STError):
+        if isinstance(regex_result, Err):
             return regex_result
 
-        return (regex_result, ValueError())
+        string_value = regex_result.ok()
+        return Ok((string_value, Err(ValueError())))
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
         LL = line.leaves
@@ -3478,10 +3532,11 @@ class StringTermSplitter(StringSplitterMixin):
 
         max_next_value = self.line_length - (1 + len(prefix)) - (line.depth * 4)
         if max_next_value < 0:
-            yield STError(
+            st_error = STError(
                 f"Unable to split {LL[string_idx].value} at such high of a"
                 f" line depth: {line.depth}"
             )
+            yield Err(st_error)
             return
 
         QUOTE = rest_value[-1]
@@ -3518,11 +3573,11 @@ class StringTermSplitter(StringSplitterMixin):
             else:
                 mnv = max_next_value - 2 if prepend_plus else max_next_value
                 idx_result = self.__get_break_idx(rest_value, mnv)
-                if isinstance(idx_result, STError):
+                if isinstance(idx_result, Err):
                     yield idx_result
                     return
 
-                idx = idx_result
+                idx = idx_result.ok()
 
             next_value = rest_value[:idx] + QUOTE
 
@@ -3546,7 +3601,7 @@ class StringTermSplitter(StringSplitterMixin):
             if self.normalize_strings:
                 normalize_string_quotes(next_leaf)
 
-            yield next_line
+            yield Ok(next_line)
 
             rest_value = prefix + QUOTE + rest_value[idx:]
             if drop_pointless_f_prefix:
@@ -3589,15 +3644,15 @@ class StringTermSplitter(StringSplitterMixin):
                     last_line, line, rest_line.leaves + non_string_line.leaves
                 )
 
-                yield last_line
+                yield Ok(last_line)
             else:
                 append_leaves(last_line, line, rest_line.leaves)
-                yield last_line
+                yield Ok(last_line)
 
-                yield non_string_line
+                yield Ok(non_string_line)
         else:
             rest_line.comments = line.comments
-            yield rest_line
+            yield Ok(rest_line)
 
         del CUSTOM_SPLIT_MAP[(id(LL[string_idx].value), LL[string_idx].value)]
 
@@ -3629,17 +3684,22 @@ class StringTermSplitter(StringSplitterMixin):
                 idx += 1
 
             if string_value[idx] != " ":
-                return STError("Long strings which contain no spaces are not split.")
+                st_error = STError(
+                    "Long strings which contain no spaces are not split."
+                )
+                return Err(st_error)
 
             if len(string_value[idx:]) < MIN_SUBSTR_SIZE:
-                return STError(
+                st_error = STError(
                     f"All substrings must be {MIN_SUBSTR_SIZE} long or longer."
                 )
+                return Err(st_error)
 
         if idx < 2:
-            return STError(f"Invalid break index (idx={idx}).")
+            st_error = STError(f"Invalid break index (idx={idx}).")
+            return Err(st_error)
 
-        return idx
+        return Ok(idx)
 
     @staticmethod
     def __normalize_f_string(string: str, prefix: str) -> str:
@@ -3701,7 +3761,7 @@ class StringExprSplitterMixin(StringSplitterMixin):
             insert_str_child(lpar_leaf)
         first_line.append(lpar_leaf)
 
-        yield first_line
+        yield Ok(first_line)
 
         # Only need to yield one (possibly too long) line, since the
         # `StringTermSplitter` will break it down further if necessary.
@@ -3729,7 +3789,7 @@ class StringExprSplitterMixin(StringSplitterMixin):
 
             append_leaves(string_line, line, right_leaves)
 
-        yield string_line
+        yield Ok(string_line)
 
         last_line = line.clone()
         new_rpar_leaf = Leaf(token.RPAR, ")")
@@ -3744,7 +3804,7 @@ class StringExprSplitterMixin(StringSplitterMixin):
             replace_child(LL[comma_idx], comma_leaf)
             last_line.append(comma_leaf)
 
-        yield last_line
+        yield Ok(last_line)
 
 
 class StringExprSplitter(StringExprSplitterMixin):
@@ -3813,10 +3873,11 @@ class StringExprSplitter(StringExprSplitterMixin):
             """,
         )
 
-        if isinstance(regex_result, STError):
+        if isinstance(regex_result, Err):
             return regex_result
 
-        return (regex_result, ValueError())
+        string_value = regex_result.ok()
+        return Ok((string_value, Err(ValueError())))
 
 
 class StringArithExprSplitter(StringExprSplitterMixin):
@@ -3844,10 +3905,11 @@ class StringArithExprSplitter(StringExprSplitterMixin):
             line, fr"^[ ]*{RE_STRING_GROUP}{RE_STRING_TRAILER}[ ]?\+[ ].+,{RE_EOL}"
         )
 
-        if isinstance(regex_result, STError):
+        if isinstance(regex_result, Err):
             return regex_result
 
-        return (regex_result, ValueError())
+        string_value = regex_result.ok()
+        return Ok((string_value, Err(ValueError())))
 
 
 def line_to_string(line: Line) -> str:
