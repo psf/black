@@ -59,6 +59,11 @@ from blib2to3.pgen2.parse import ParseError
 
 from _black_version import version as __version__
 
+# This is needed for MyPy static type analysis.
+# See https://stackoverflow.com/a/38962160/1354930
+if False:
+    import colorama  # noqa: F401
+
 DEFAULT_LINE_LENGTH = 88
 DEFAULT_EXCLUDES = r"/(\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_build|buck-out|build|dist)/"  # noqa: B950
 DEFAULT_INCLUDES = r"\.pyi?$"
@@ -746,6 +751,7 @@ def format_file_in_place(
                 newline=newline,
                 write_through=True,
             )
+            f = wrap_stream_for_windows(f)
             f.write(diff_contents)
             f.detach()
 
@@ -768,6 +774,33 @@ def color_diff(contents: str) -> str:
             line = "\033[31m" + line + "\033[0m"  # red, reset
         lines[i] = line
     return "\n".join(lines)
+
+
+def wrap_stream_for_windows(
+    f: io.TextIOWrapper,
+) -> Union[io.TextIOWrapper, "colorama.AnsiToWin32.AnsiToWin32"]:
+    """
+    Wrap the stream in colorama's wrap_stream so colors are shown on Windows.
+
+    If `colorama` is not found, then no change is made. If `colorama` does
+    exist, then it handles the logic to determine whether or not to change
+    things.
+    """
+    try:
+        from colorama import initialise
+
+        # These are the defaults for colorama.init()
+        f = initialise.wrap_stream(
+            f, convert=None, strip=None, autoreset=False, wrap=True
+        )
+
+        # wrap_stream returns a `colorama.AnsiToWin32.AnsiToWin32` object
+        # which does not have a `detach()` method. So we fake one.
+        f.detach = lambda *args, **kwargs: None  # type: ignore
+    except ImportError:
+        pass
+
+    return f
 
 
 def format_stdin_to_stdout(
@@ -802,6 +835,7 @@ def format_stdin_to_stdout(
             d = diff(src, dst, src_name, dst_name)
             if write_back == WriteBack.COLOR_DIFF:
                 d = color_diff(d)
+                f = wrap_stream_for_windows(f)
             f.write(d)
         f.detach()
 
