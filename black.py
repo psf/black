@@ -157,7 +157,7 @@ class CannotSplit(Exception):
 
 
 class STError(CannotSplit):
-    """Raised when a StringTransformer instance fails."""
+    """Custom error type used by the StringTransformer family of classes."""
 
 
 class InvalidInput(ValueError):
