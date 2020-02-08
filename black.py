@@ -795,11 +795,14 @@ def format_stdin_to_stdout(
         )
         if write_back == WriteBack.YES:
             f.write(dst)
-        elif write_back == WriteBack.DIFF:
+        elif write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
             now = datetime.utcnow()
             src_name = f"STDIN\t{then} +0000"
             dst_name = f"STDOUT\t{now} +0000"
-            f.write(diff(src, dst, src_name, dst_name))
+            d = diff(src, dst, src_name, dst_name)
+            if write_back == WriteBack.COLOR_DIFF:
+                d = color_diff(d)
+            f.write(d)
         f.detach()
 
 
