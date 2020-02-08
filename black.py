@@ -1665,7 +1665,6 @@ class Line:
     def clone(self) -> "Line":
         return Line(
             depth=self.depth,
-            bracket_tracker=self.bracket_tracker,
             inside_brackets=self.inside_brackets,
             should_explode=self.should_explode,
         )
