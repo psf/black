@@ -2579,7 +2579,6 @@ def split_line(
                 rhs,
             ]
 
-    split_records = []
     for split_func in split_funcs:
         # We are accumulating lines in `result` because we might want to abort
         # mission and return the original line in the end, or attempt a different
@@ -2598,20 +2597,8 @@ def split_line(
                         features=features,
                     )
                 )
-            split_records.append(split_func)
         except CannotSplit:
             continue
-        except Exception as e:
-            print(
-                f"{e.__class__.__name__} raised while attempting to split the"
-                f" following line using the {split_func}"
-                f" splitter:\n\n{line_to_string(line)}\n"
-            )
-            if split_records:
-                print("========== Split History ==========")
-                for record in split_records:
-                    print(f"* {record}")
-            raise
         else:
             yield from result
             break
