@@ -168,6 +168,7 @@ Ok = TypeVar("Ok")
 Err = TypeVar("Err", bound=Exception)
 Result = Union[Ok, Err]
 STResult = Result[Ok, STError]  # StringTransformer Result
+STMatchResult = STResult[str]  # StringTransformerMixin.do_match(...) Result
 
 
 class WriteBack(Enum):
@@ -2635,7 +2636,7 @@ class StringTransformerMixin(StringTransformer):
     string_idx: Optional[int] = None
 
     @abstractmethod
-    def do_match(self, line: Line) -> STResult[str]:
+    def do_match(self, line: Line) -> STMatchResult:
         """
         Returns:
             * The value of the matched string, if a match was able to be made.
@@ -2695,7 +2696,7 @@ class StringTransformerMixin(StringTransformer):
             yield line_result
 
     @staticmethod
-    def _regex_match(line: Line, pattern: str) -> STResult[str]:
+    def _regex_match(line: Line, pattern: str) -> STMatchResult:
         line_str = line_to_string(line)
         try:
             match = re.match(pattern, line_str, re.VERBOSE)
@@ -2794,7 +2795,7 @@ class StringMerger(StringTransformerMixin):
         'r') is saved to CUSTOM_SPLIT_MAP.
     """
 
-    def do_match(self, line: Line) -> STResult[str]:
+    def do_match(self, line: Line) -> STMatchResult:
         regex_result = self._regex_match(
             line,
             fr"""
@@ -3020,7 +3021,7 @@ class StringStripperMixin(StringTransformerMixin):
     """
 
     @abstractmethod
-    def do_match(self, line: Line) -> STResult[str]:
+    def do_match(self, line: Line) -> STMatchResult:
         """Refer to `help(StringTransformerMixin.do_match)`."""
 
     @abstractmethod
@@ -3071,7 +3072,7 @@ class StringArgCommaStripper(StringStripperMixin):
         provided to the function).
     """
 
-    def do_match(self, line: Line) -> STResult[str]:
+    def do_match(self, line: Line) -> STMatchResult:
         regex_result = self._regex_match(
             line,
             fr"""
@@ -3171,7 +3172,7 @@ class StringParensStripper(StringStripperMixin):
         The parentheses mentioned in the 'Requirements' section are stripped.
     """
 
-    def do_match(self, line: Line) -> STResult[str]:
+    def do_match(self, line: Line) -> STMatchResult:
         regex_result = self._regex_match(
             line,
             fr"""
@@ -3271,7 +3272,7 @@ class StringSplitterMixin(StringTransformerMixin):
     STRING_CHILD_IDX_MAP: ClassVar[Dict[int, Optional[int]]] = {}
 
     @abstractmethod
-    def do_splitter_match(self, line: Line) -> STResult[str]:
+    def do_splitter_match(self, line: Line) -> STMatchResult:
         """
         StringSplitterMixin asks its clients to override this method instead of
         `StringTransformerMixin.do_match(...)`.
@@ -3285,7 +3286,7 @@ class StringSplitterMixin(StringTransformerMixin):
     def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
         """Refer to `help(StringTransformerMixin.do_transform)`."""
 
-    def do_match(self, line: Line) -> STResult[str]:
+    def do_match(self, line: Line) -> STMatchResult:
         result = self.do_splitter_match(line)
         if isinstance(result, STError):
             return result
@@ -3456,7 +3457,7 @@ class StringTermSplitter(StringSplitterMixin):
         the CUSTOM_SPLIT_MAP.
     """
 
-    def do_splitter_match(self, line: Line) -> STResult[str]:
+    def do_splitter_match(self, line: Line) -> STMatchResult:
         return self._regex_match(
             line, fr"^[ ]*(?:\+[ ]*)?{RE_STRING_GROUP}{RE_STRING_TRAILER}{RE_EOL}"
         )
@@ -3664,7 +3665,7 @@ class StringExprSplitterMixin(StringSplitterMixin):
     """
 
     @abstractmethod
-    def do_splitter_match(self, line: Line) -> STResult[str]:
+    def do_splitter_match(self, line: Line) -> STMatchResult:
         pass
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
@@ -3772,7 +3773,7 @@ class StringExprSplitter(StringExprSplitterMixin):
         are the function call's ONLY argument.
     """
 
-    def do_splitter_match(self, line: Line) -> STResult[str]:
+    def do_splitter_match(self, line: Line) -> STMatchResult:
         return self._regex_match(
             line,
             fr"""
@@ -3826,7 +3827,7 @@ class StringArithExprSplitter(StringExprSplitterMixin):
         Refer to `help(StringExprSplitterMixin)`.
     """
 
-    def do_splitter_match(self, line: Line) -> STResult[str]:
+    def do_splitter_match(self, line: Line) -> STMatchResult:
         return self._regex_match(
             line, fr"^[ ]*{RE_STRING_GROUP}{RE_STRING_TRAILER}[ ]?\+[ ].+,{RE_EOL}"
         )
