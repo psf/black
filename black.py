@@ -1315,7 +1315,7 @@ class Line:
                 err(
                     "Aborting line append due to a problem with the BracketTracker."
                     " The problemed Line, as it looks now, is shown"
-                    f" below:\n\n{line_to_string(line)}\n"
+                    f" below:\n\n{line_to_string(self)}\n"
                 )
                 raise
         if not self.append_comment(leaf):
