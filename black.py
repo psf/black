@@ -2578,7 +2578,10 @@ def split_line(
                 string_expr_split,
                 rhs,
             ]
+
+    DEBUG_SPLIT_LINE = False
     split_records = []
+
     for split_func in split_funcs:
         # We are accumulating lines in `result` because we might want to abort
         # mission and return the original line in the end, or attempt a different
@@ -2597,15 +2600,17 @@ def split_line(
                         features=features,
                     )
                 )
+            if DEBUG_SPLIT_LINE:
                 split_records.append(split_func)
         except CannotSplit:
             continue
         except Exception as e:
             print(
-                f"{e!r} raised while attempting to split the following"
-                f" line:\n\n\t{line_to_string(line)}\n"
+                f"{e.__class__.__name__} raised while attempting to split the"
+                f" following line using the {split_func}"
+                f" splitter:\n\n{line_to_string(line)}\n"
             )
-            if split_records:
+            if DEBUG_SPLIT_LINE and split_records:
                 print("========== Split History ==========")
                 for record in split_records:
                     print(f"* {record}")
@@ -3810,6 +3815,8 @@ class StringExprSplitterMixin(StringSplitterMixin):
         yield Ok(string_line)
 
         last_line = line.clone()
+        last_line.bracket_tracker = first_line.bracket_tracker
+
         new_rpar_leaf = Leaf(token.RPAR, ")")
         if old_rpar_leaf is not None:
             replace_child(old_rpar_leaf, new_rpar_leaf)
