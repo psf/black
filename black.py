@@ -2658,26 +2658,26 @@ class StringTransformerMixin(StringTransformer):
     def do_match(self, line: Line) -> STMatchResult:
         """
         Returns:
-            * (string_value, string_idx) such that
+            * Ok((string_value, string_idx)) such that
             `line.leaves[string_idx].value == string_value`, if a match was
             able to be made.
                 OR
-            * (string_value, ValueError(...)), if a match was able to be made,
+            * Ok((string_value, None)), if a match was able to be made,
             but no special algorithm for determining the string index is
             necessary.  In this case, the string index will be determined using
             a generic algorithm (e.g. by looping over all of the leaves and
             stopping when a leaf is found that has the right type and value).
                 OR
-            * An STError, if a match was not able to be made.
+            * Err(STError), if a match was not able to be made.
         """
 
     @abstractmethod
     def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
         """
         Yields:
-            * A Line, in most cases.
+            * Ok(new_line) where new_line is the new transformed line.
                 OR
-            * An STError if the transformation failed for some reason.  The
+            * Err(STError) if the transformation failed for some reason.  The
             `do_match(...)` template method should usually be used to reject
             the form of the given Line, but in some cases it is difficult to
             know whether or not a Line meets the StringTransformer's
