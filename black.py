@@ -187,7 +187,7 @@ class Err(Generic[E]):
 Result = Union[Ok[T], Err[E]]
 STResult = Result[T, STError]  # StringTransformer Result
 STMatchResult = STResult[
-    Tuple[str, Result[int, ValueError]]
+    Tuple[str, Optional[int]]
 ]  # StringTransformerMixin.do_match(...) Result
 
 
@@ -2700,19 +2700,17 @@ class StringTransformerMixin(StringTransformer):
                 " this line as one that it can split."
             ) from st_error
 
-        (string_value, string_idx_result) = result.ok()
-        if isinstance(string_idx_result, Ok):
-            string_idx = string_idx_result.ok()
-        else:
-            other_idx_result = self._get_string_idx(line.leaves, string_value)
-            if isinstance(other_idx_result, Err):
-                value_error = other_idx_result.err()
+        (string_value, string_idx) = result.ok()
+        if string_idx is None:
+            string_idx_result = self._get_string_idx(line.leaves, string_value)
+            if isinstance(string_idx_result, Err):
+                value_error = string_idx_result.err()
                 raise RuntimeError(
                     f"Logic Error in `{self.__class__.__name__}.do_match`"
                     f" method.\n\nSTRING: {string_value}\n\nLINE: {line}\n"
                 ) from value_error
 
-            string_idx = other_idx_result.ok()
+            string_idx = string_idx_result.ok()
 
         for line_result in self.do_transform(line, string_idx):
             if isinstance(line_result, Err):
@@ -2848,7 +2846,7 @@ class StringMerger(StringTransformerMixin):
                     and len(line.leaves) > i + 1
                     and line.leaves[i + 1].type == token.STRING
                 ):
-                    return Ok((string_value, Ok(i)))
+                    return Ok((string_value, i))
 
             st_error = STError(
                 f"Found string match ({regex_result}), however, we could not find"
@@ -2862,7 +2860,7 @@ class StringMerger(StringTransformerMixin):
                 and "\\\n" in leaf.value
                 and leaf.value.lstrip(STRING_PREFIX_CHARS)[:3] not in {'"""', "'''"}
             ):
-                return Ok((leaf.value, Ok(i)))
+                return Ok((leaf.value, i))
 
         st_error = STError(
             f"This line ({line_to_string(line)}) has no strings that need merging."
@@ -3154,7 +3152,7 @@ class StringArgCommaStripper(StringStripperMixin):
                         and line.leaves[i + j + 2].type == token.RPAR
                         and unmatched_parens == 0
                     ):
-                        return Ok((string_value, Ok(i)))
+                        return Ok((string_value, i))
 
                     if inner_leaf.type == token.LPAR:
                         unmatched_parens += 1
@@ -3245,7 +3243,7 @@ class StringParensStripper(StringStripperMixin):
             unmatched_parens = 0
             for inner_leaf in line.leaves[i + 1 :]:
                 if inner_leaf.type == token.RPAR and unmatched_parens == 0:
-                    return Ok((string_value, Ok(i)))
+                    return Ok((string_value, i))
 
                 if inner_leaf.type == token.LPAR:
                     unmatched_parens += 1
@@ -3332,19 +3330,17 @@ class StringSplitterMixin(StringTransformerMixin):
         if isinstance(match_result, Err):
             return match_result
 
-        (string_value, string_idx_result) = match_result.ok()
-        if isinstance(string_idx_result, Ok):
-            string_idx = string_idx_result.ok()
-        else:
-            other_idx_result = self._get_string_idx(line.leaves, string_value)
-            if isinstance(other_idx_result, Err):
-                value_error = other_idx_result.err()
+        (string_value, string_idx) = match_result.ok()
+        if string_idx is None:
+            string_idx_result = self._get_string_idx(line.leaves, string_value)
+            if isinstance(string_idx_result, Err):
+                value_error = string_idx_result.err()
                 raise RuntimeError(
                     f"Logic error in `{self.__class__.__name__}.do_splitter_match`"
                     " method."
                 ) from value_error
 
-            string_idx = other_idx_result.ok()
+            string_idx = string_idx_result.ok()
 
         vresult = self.__validate(line, string_idx)
         if isinstance(vresult, Err):
@@ -3517,7 +3513,7 @@ class StringTermSplitter(StringSplitterMixin):
             return regex_result
 
         string_value = regex_result.ok()
-        return Ok((string_value, Err(ValueError())))
+        return Ok((string_value, None))
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
         LL = line.leaves
@@ -3877,7 +3873,7 @@ class StringExprSplitter(StringExprSplitterMixin):
             return regex_result
 
         string_value = regex_result.ok()
-        return Ok((string_value, Err(ValueError())))
+        return Ok((string_value, None))
 
 
 class StringArithExprSplitter(StringExprSplitterMixin):
@@ -3909,7 +3905,7 @@ class StringArithExprSplitter(StringExprSplitterMixin):
             return regex_result
 
         string_value = regex_result.ok()
-        return Ok((string_value, Err(ValueError())))
+        return Ok((string_value, None))
 
 
 def line_to_string(line: Line) -> str:
