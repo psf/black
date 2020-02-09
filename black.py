@@ -2958,11 +2958,45 @@ class StringMerger(StringTransformerMixin):
         if isinstance(vresult, Err):
             return vresult
 
+        # If the string group is wrapped inside an Atom node, we must make sure
+        # to later replace that Atom with our new (merged) string leaf.
         atom_node = LL[string_idx].parent
+
+        # We will place BREAK_MARK in between every two substrings that we
+        # merge. We will then later go through our final result and use the
+        # various instances of BREAK_MARK we find to add the right values to
+        # CUSTOM_SPLIT_MAP.
         BREAK_MARK = "@@@@@ BLACK BREAKPOINT MARKER @@@@@"
+
         QUOTE = LL[string_idx].value[-1]
 
-        string_value = ""
+        def make_naked(string: str, string_prefix: str) -> str:
+            """Strip @string (i.e. make it a "naked" string)
+
+            Pre-conditions:
+                Refer to `help(assert_is_leaf_string)`.
+
+            Returns:
+                A string S that is identical to @string except that
+                @string_prefix has been stripped, the surrounding QUOTE
+                characters have been removed, and any remaining QUOTE
+                characters have been escaped.
+            """
+            assert_is_leaf_string(string)
+            naked_string = string[len(string_prefix) + 1 : -1]
+            naked_string = re.sub(
+                "(" + RE_EVEN_BACKSLASHES + ")" + QUOTE, r"\1\\" + QUOTE, naked_string
+            )
+            return naked_string
+
+        # --- KEY ---
+        # S: string
+        # NS: naked string
+        # SS: next string
+        # NSS: naked next string
+
+        S = ""
+        NS = ""
         prefix = ""
         next_str_idx = string_idx
         num_of_strings = 0
@@ -2971,50 +3005,33 @@ class StringMerger(StringTransformerMixin):
         while len(LL) > next_str_idx and LL[next_str_idx].type == token.STRING:
             num_of_strings += 1
 
-            next_string_value = LL[next_str_idx].value
+            SS = LL[next_str_idx].value
+            next_prefix = get_string_prefix(SS)
+            NSS = make_naked(SS, next_prefix)
 
-            naked_string_value = string_value[len(prefix) + 1 : -1]
-            naked_string_value = re.sub(
-                "(" + RE_EVEN_BACKSLASHES + ")" + QUOTE,
-                r"\1\\" + QUOTE,
-                naked_string_value,
-            )
-
-            next_prefix = get_string_prefix(next_string_value)
             if not prefix:
                 prefix = next_prefix
+
             has_prefix = next_prefix != ""
             prefix_tracker.append(has_prefix)
 
-            naked_next_string_value = next_string_value[len(next_prefix) + 1 : -1]
-            naked_next_string_value = re.sub(
-                "(" + RE_EVEN_BACKSLASHES + ")" + QUOTE,
-                r"\1\\" + QUOTE,
-                naked_next_string_value,
-            )
+            S = prefix + QUOTE + NS + NSS + BREAK_MARK + QUOTE
+            NS = make_naked(S, prefix)
 
-            string_value = (
-                prefix
-                + QUOTE
-                + naked_string_value
-                + naked_next_string_value
-                + BREAK_MARK
-                + QUOTE
-            )
             next_str_idx += 1
 
-        temp_string_leaf = Leaf(token.STRING, string_value)
+        temp_string_leaf = Leaf(token.STRING, S)
         if self.normalize_strings:
             normalize_string_quotes(temp_string_leaf)
 
-        naked_string_value = temp_string_leaf.value[len(prefix) + 1 : -1]
+        temp_string = temp_string_leaf.value[len(prefix) + 1 : -1]
         for has_prefix in prefix_tracker:
-            found_idx = naked_string_value.find(BREAK_MARK)
+            found_idx = temp_string.find(BREAK_MARK)
             assert (
                 found_idx >= 0
             ), "Logic error while filling the custom string breakpoint cache."
 
-            naked_string_value = naked_string_value[found_idx + len(BREAK_MARK) :]
+            temp_string = temp_string[found_idx + len(BREAK_MARK) :]
             breakpoint_idx = found_idx + (len(prefix) if has_prefix else 0) + 1
             custom_splits.append(CustomSplit(has_prefix, breakpoint_idx))
 
@@ -3968,11 +3985,34 @@ def replace_child(old_child: LN, new_child: LN) -> None:
 def get_string_prefix(string: str) -> str:
     """
     Pre-conditions:
-        @string starts with <prefix>' or <prefix>" where `set(<prefix>)` is
-        some subset of `set(STRING_PREFIX_CHARS)` (possibly the null set).
+        Refer to `help(assert_is_leaf_string)`.
 
     Returns:
         @string's prefix (e.g. '', 'r', 'f', or 'rf').
+    """
+    assert_is_leaf_string(string)
+    prefix = ""
+    prefix_idx = 0
+    while string[prefix_idx] in STRING_PREFIX_CHARS:
+        prefix += string[prefix_idx].lower()
+        prefix_idx += 1
+
+    return prefix
+
+
+def assert_is_leaf_string(string: str) -> None:
+    """
+    Checks the pre-condition that @string has the format that you would expect
+    of `leaf.value` where `leaf` is some Leaf such that `leaf.type ==
+    token.STRING`. A more precise description of the pre-conditions that are
+    checked are listed below.
+
+    Pre-conditions:
+        @string starts with <prefix>' or <prefix>" where `set(<prefix>)` is
+        some subset of `set(STRING_PREFIX_CHARS)` (possibly the null set).
+
+    Raises:
+        An AssertionError if the pre-condition is not met.
     """
     dquote_idx = string.find('"')
     squote_idx = string.find("'")
@@ -3985,14 +4025,6 @@ def get_string_prefix(string: str) -> str:
     assert set(string[:quote_idx]).issubset(
         set(STRING_PREFIX_CHARS)
     ), f"{set(string[:quote_idx])} is NOT a subset of {set(STRING_PREFIX_CHARS)}."
-
-    prefix = ""
-    prefix_idx = 0
-    while string[prefix_idx] in STRING_PREFIX_CHARS:
-        prefix += string[prefix_idx].lower()
-        prefix_idx += 1
-
-    return prefix
 
 
 def left_hand_split(line: Line, _features: Collection[Feature] = ()) -> Iterator[Line]:
