@@ -3126,13 +3126,12 @@ class StringArgCommaStripper(StringStripperMixin):
 
         string_value = regex_result.ok()
         for (i, leaf) in enumerate(LL):
-            if i == 0 or i + 2 >= len(LL):
-                continue
-
             if (
                 leaf.type == token.STRING
                 and leaf.value == string_value
+                and i > 0
                 and LL[i - 1].type == token.LPAR
+                and i + 2 < len(LL)
             ):
                 unmatched_parens = 0
                 for (j, inner_leaf) in enumerate(LL[i + 1 :]):
@@ -3233,17 +3232,14 @@ class StringParensStripper(StringStripperMixin):
 
             unmatched_parens = 0
             for inner_leaf in LL[i + 1 :]:
-                if inner_leaf.type == token.RPAR and unmatched_parens == 0:
-                    return Ok((string_value, i))
+                if inner_leaf.type == token.RPAR:
+                    if unmatched_parens == 0:
+                        return Ok((string_value, i))
+                    else:
+                        unmatched_parens -= 1
 
                 if inner_leaf.type == token.LPAR:
                     unmatched_parens += 1
-
-                if inner_leaf.type == token.RPAR:
-                    if unmatched_parens > 0:
-                        unmatched_parens -= 1
-                    else:
-                        break
 
         raise RuntimeError(
             f"Logic Error. {self.__class__.__name__} was unable to determine a string"
@@ -3725,7 +3721,7 @@ class StringExprSplitterMixin(StringSplitterMixin):
 
     @abstractmethod
     def do_splitter_match(self, line: Line) -> STMatchResult:
-        pass
+        """Refer to `help(StringSplitterMixin.do_splitter_match)`."""
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
         LL = line.leaves
