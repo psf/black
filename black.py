@@ -2642,11 +2642,11 @@ class StringTransformerMixin(StringTransformer):
     class that makes use of this mixin's functionality.
 
     Requirements:
-        Which requirements must be met of the given line for this
+        Which requirements must be met of the given Line for this
         StringTransformer to be applied?
 
     Transformations:
-        If the given line meets all of the above requirments, which string
+        If the given Line meets all of the above requirments, which string
         transformations can you expect to be applied to it by this
         StringTransformer?
 
@@ -2656,7 +2656,7 @@ class StringTransformerMixin(StringTransformer):
         as much as possible. Hence, this section is optional.
     """
 
-    RE_CACHE: ClassVar[Dict[str, Pattern[str]]] = {}
+    PATTERN_CACHE: ClassVar[Dict[str, Pattern[str]]] = {}
 
     @abstractmethod
     def do_match(self, line: Line) -> STMatchResult:
@@ -2666,11 +2666,11 @@ class StringTransformerMixin(StringTransformer):
             `line.leaves[string_idx].value == string_value`, if a match was
             able to be made.
                 OR
-            * Ok((string_value, None)), if a match was able to be made,
+            * Ok((string_value, None)), if a match was able to be made
             but no special algorithm for determining the string index is
             necessary.  In this case, the string index will be determined using
             a generic algorithm (e.g. by looping over all of the leaves and
-            stopping when a leaf is found that has the right type and value).
+            stopping when a string leaf is found with the right value).
                 OR
             * Err(STError), if a match was not able to be made.
         """
@@ -2681,7 +2681,7 @@ class StringTransformerMixin(StringTransformer):
         Yields:
             * Ok(new_line) where new_line is the new transformed line.
                 OR
-            * Err(STError) if the transformation failed for some reason.  The
+            * Err(STError) if the transformation failed for some reason. The
             `do_match(...)` template method should usually be used to reject
             the form of the given Line, but in some cases it is difficult to
             know whether or not a Line meets the StringTransformer's
@@ -2729,22 +2729,22 @@ class StringTransformerMixin(StringTransformer):
             yield line
 
     def _regex_match(self, pattern: str) -> STResult[str]:
-        if pattern not in self.RE_CACHE:
-            self.RE_CACHE[pattern] = re.compile(pattern, re.VERBOSE)
+        if pattern not in self.PATTERN_CACHE:
+            self.PATTERN_CACHE[pattern] = re.compile(pattern, re.VERBOSE)
 
-        pttrn = self.RE_CACHE[pattern]
+        pttrn = self.PATTERN_CACHE[pattern]
         match = pttrn.match(self.line_str)
 
-        if match is not None:
-            string = match.groupdict()["string"]
-            assert isinstance(string, str)
-            return Ok(string)
-        else:
+        if match is None:
             st_error = STError(
                 f"Line ({self.line_str}) does not match regular expression pattern"
                 f" ({pattern})."
             )
             return Err(st_error)
+
+        string = match.groupdict()["string"]
+        assert isinstance(string, str)
+        return Ok(string)
 
     def _get_string_idx(
         self, leaves: List[Leaf], string_value: str
@@ -2806,9 +2806,9 @@ class StringMerger(StringTransformerMixin):
         * The line contains a string which uses line continuation backslashes.
 
     Transformations:
-        * Line continuation backslashes are removed from all strings.
-        * The first set (and ONLY the first set) of adjacent strings (if any
-        exist) are merged.
+        * Line continuation backslashes are removed from the target string.
+            OR
+        * The string group associated with the target string is merged.
 
     Side Effects:
         Before merging any adjacent strings, a record of how long each
@@ -2819,7 +2819,8 @@ class StringMerger(StringTransformerMixin):
     def do_match(self, line: Line) -> STMatchResult:
         LL = line.leaves
 
-        pattern = fr"""
+        regex_result = self._regex_match(
+            fr"""
             ^
             (?:
                 [^'"]
@@ -2828,8 +2829,7 @@ class StringMerger(StringTransformerMixin):
             {RE_STRING_GROUP}[ ]*{RE_STRING}  # Two Adjacent Strings
             .*$
             """
-
-        regex_result = self._regex_match(pattern)
+        )
 
         if isinstance(regex_result, Ok):
             string_value = regex_result.ok()
