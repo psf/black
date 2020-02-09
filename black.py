@@ -2728,7 +2728,7 @@ class StringTransformerMixin(StringTransformer):
             line = line_result.ok()
             yield line
 
-    def _regex_match(self, line: Line, pattern: str) -> STResult[str]:
+    def _regex_match(self, pattern: str) -> STResult[str]:
         if pattern in self.RE_CACHE:
             pttrn = self.RE_CACHE[pattern]
         else:
@@ -2831,7 +2831,7 @@ class StringMerger(StringTransformerMixin):
             .*$
             """
 
-        regex_result = self._regex_match(line, pattern)
+        regex_result = self._regex_match(pattern)
 
         if isinstance(regex_result, Ok):
             string_value = regex_result.ok()
@@ -3117,7 +3117,6 @@ class StringArgCommaStripper(StringStripperMixin):
         LL = line.leaves
 
         regex_result = self._regex_match(
-            line,
             fr"""
             ^
             (?:
@@ -3216,7 +3215,6 @@ class StringParensStripper(StringStripperMixin):
         LL = line.leaves
 
         regex_result = self._regex_match(
-            line,
             fr"""
             ^
             (?:
@@ -3509,7 +3507,7 @@ class StringTermSplitter(StringSplitterMixin):
 
     def do_splitter_match(self, line: Line) -> STMatchResult:
         regex_result = self._regex_match(
-            line, fr"^[ ]*(?:\+[ ]*)?{RE_STRING_GROUP}{RE_STRING_TRAILER}{RE_EOL}"
+            fr"^[ ]*(?:\+[ ]*)?{RE_STRING_GROUP}{RE_STRING_TRAILER}{RE_EOL}"
         )
 
         if isinstance(regex_result, Err):
@@ -3851,7 +3849,6 @@ class StringExprSplitter(StringExprSplitterMixin):
 
     def do_splitter_match(self, line: Line) -> STMatchResult:
         regex_result = self._regex_match(
-            line,
             fr"""
             ^[ ]*
             (?:
@@ -3911,7 +3908,7 @@ class StringArithExprSplitter(StringExprSplitterMixin):
 
     def do_splitter_match(self, line: Line) -> STMatchResult:
         regex_result = self._regex_match(
-            line, fr"^[ ]*{RE_STRING_GROUP}{RE_STRING_TRAILER}[ ]?\+[ ].+,{RE_EOL}"
+            fr"^[ ]*{RE_STRING_GROUP}{RE_STRING_TRAILER}[ ]?\+[ ].+,{RE_EOL}"
         )
 
         if isinstance(regex_result, Err):
