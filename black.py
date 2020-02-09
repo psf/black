@@ -3281,9 +3281,9 @@ class StringParensStripper(StringStripperMixin):
         unmatched_rpar_idx = rpar_idx_result.ok()
         rpar_idx = unmatched_rpar_idx + string_idx + 1
 
-        if id(LL[string_idx - 1]) in line.comments or id(LL[rpar_idx]) in line.comments:
+        if line.comments_after(LL[string_idx - 1]) and line.comments_after(LL[rpar_idx]):
             st_error = STError(
-                "Cannot strip parens from string when either side (LPAR or RPAR) has"
+                "Cannot strip parens from string when both sides (LPAR and RPAR) have"
                 " inline comments."
             )
             yield Err(st_error)
@@ -3298,6 +3298,9 @@ class StringParensStripper(StringStripperMixin):
         LL[string_idx - 1].remove()
         replace_child(LL[string_idx], string_leaf)
         new_line.append(string_leaf)
+        for leaf in (LL[string_idx - 1], LL[rpar_idx]):
+            for comment_leaf in line.comments_after(leaf):
+                new_line.append(comment_leaf, preformatted=True)
 
         append_leaves(
             new_line, line, LL[string_idx + 1 : rpar_idx] + LL[rpar_idx + 1 :],
@@ -3748,12 +3751,16 @@ class StringExprSplitterMixin(StringSplitterMixin):
         if LL[comma_idx].type == token.COMMA:
             ends_with_comma = True
 
+        leaves_to_steal_comments_from = [LL[string_idx]]
+        if ends_with_comma:
+            leaves_to_steal_comments_from.append(LL[comma_idx])
+
         first_line = line.clone()
-        first_line.comments = line.comments
         left_leaves = LL[:string_idx]
         old_parens_exist = False
         if left_leaves and left_leaves[-1].type == token.LPAR:
             old_parens_exist = True
+            leaves_to_steal_comments_from.append(left_leaves[-1])
             left_leaves.pop()
 
         append_leaves(first_line, line, left_leaves)
@@ -3764,6 +3771,10 @@ class StringExprSplitterMixin(StringSplitterMixin):
         else:
             insert_str_child(lpar_leaf)
         first_line.append(lpar_leaf)
+
+        for leaf in leaves_to_steal_comments_from:
+            for comment_leaf in line.comments_after(leaf):
+                first_line.append(comment_leaf, preformatted=True)
 
         yield Ok(first_line)
 

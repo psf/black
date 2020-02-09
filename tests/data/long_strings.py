@@ -370,6 +370,18 @@ def foo():
 
 some_tuple = ("some string", "some string" " which should be joined")
 
+some_commented_string = (
+    "This string is long but not so long that it needs hahahah toooooo be so greatttt"  # thrown to the top
+    " {} that I just can't think of any more good words to say about it at"
+    " allllllllllll".format("ha")  # comments here are fine
+)
+
+some_commented_string = (
+    "This string is long but not so long that it needs hahahah toooooo be so greatttt"  # But these
+    " {} that I just can't think of any more good words to say about it at"  # comments will stay
+    " allllllllllll".format("ha")  # comments here are fine
+)
+
 ########## EDGE-CASE TESTS ##########
 some_variable = "This string is long but not so long that it needs to be split just yet"
 some_variable = "This string is long, just long enough that it needs to be split, u get?"
@@ -980,6 +992,18 @@ def foo():
 
 
 some_tuple = ("some string", "some string which should be joined")
+
+some_commented_string = (  # thrown to the top
+    "This string is long but not so long that it needs hahahah toooooo be so greatttt"
+    " {} that I just can't think of any more good words to say about it at"
+    " allllllllllll".format("ha")  # comments here are fine
+)
+
+some_commented_string = (
+    "This string is long but not so long that it needs hahahah toooooo be so greatttt"  # But these
+    " {} that I just can't think of any more good words to say about it at"  # comments will stay
+    " allllllllllll".format("ha")  # comments here are fine
+)
 
 ########## EDGE-CASE TESTS ##########
 some_variable = "This string is long but not so long that it needs to be split just yet"
