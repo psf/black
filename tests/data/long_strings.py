@@ -169,6 +169,8 @@ func_call(
     )
 )
 
+raw_strings = r"Don't" " get" r" merged" " unless they are all raw."
+
 ########## REGRESSION TESTS ##########
 # There was a bug where tuples were being identified as long strings.
 long_tuple = ('Apple', 'Berry', 'Cherry', 'Dill', 'Evergreen', 'Fig',
@@ -371,7 +373,7 @@ def foo():
 some_tuple = ("some string", "some string" " which should be joined")
 
 some_commented_string = (
-    "This string is long but not so long that it needs hahahah toooooo be so greatttt"  # thrown to the top
+    "This string is long but not so long that it needs hahahah toooooo be so greatttt"  # This comment gets thrown to the top.
     " {} that I just can't think of any more good words to say about it at"
     " allllllllllll".format("ha")  # comments here are fine
 )
@@ -730,6 +732,8 @@ short_string = "Hi there."
 
 func_call(short_string="Hi there.")
 
+raw_strings = r"Don't" " get" r" merged" " unless they are all raw."
+
 ########## REGRESSION TESTS ##########
 # There was a bug where tuples were being identified as long strings.
 long_tuple = (
@@ -993,7 +997,7 @@ def foo():
 
 some_tuple = ("some string", "some string which should be joined")
 
-some_commented_string = (  # thrown to the top
+some_commented_string = (  # This comment gets thrown to the top.
     "This string is long but not so long that it needs hahahah toooooo be so greatttt"
     " {} that I just can't think of any more good words to say about it at"
     " allllllllllll".format("ha")  # comments here are fine
