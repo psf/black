@@ -3225,7 +3225,6 @@ class StringArgCommaStripper(StringStripperMixin):
         LL = line.leaves
 
         new_line = line.clone()
-        new_line.comments = line.comments.copy()
 
         rpar_idx_result = self.get_first_unmatched_rpar_idx(LL[string_idx + 2 :])
         if isinstance(rpar_idx_result, Err):
@@ -3247,14 +3246,13 @@ class StringArgCommaStripper(StringStripperMixin):
             replace_child(old_leaf, new_leaf)
             new_line.append(new_leaf)
 
-            if i == string_idx and id(comma_leaf) in new_line.comments:
-                new_line.comments[id(new_leaf)] = new_line.comments[
-                    id(comma_leaf)
-                ].copy()
-                del new_line.comments[id(comma_leaf)]
+            leaves_to_take_comments_from = [old_leaf]
+            if i == string_idx:
+                leaves_to_take_comments_from.append(comma_leaf)
 
-            for comment_leaf in line.comments_after(old_leaf):
-                new_line.append(comment_leaf, preformatted=True)
+            for leaf in leaves_to_take_comments_from:
+                for comment_leaf in line.comments_after(leaf):
+                    new_line.append(comment_leaf, preformatted=True)
 
         yield Ok(new_line)
 
