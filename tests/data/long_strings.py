@@ -384,6 +384,10 @@ some_commented_string = (
     " allllllllllll".format("ha")  # comments here are fine
 )
 
+lpar_and_rpar_have_comments = func_call(  # LPAR Comment
+    "Long really ridiculous type of string that shouldn't really even exist at all. I mean commmme onnn!!!",  # Comma Comment
+)  # RPAR Comment
+
 ########## EDGE-CASE TESTS ##########
 some_variable = "This string is long but not so long that it needs to be split just yet"
 some_variable = "This string is long, just long enough that it needs to be split, u get?"
@@ -1008,6 +1012,11 @@ some_commented_string = (
     " {} that I just can't think of any more good words to say about it at"  # comments will stay
     " allllllllllll".format("ha")  # comments here are fine
 )
+
+lpar_and_rpar_have_comments = func_call(  # LPAR Comment
+    "Long really ridiculous type of string that shouldn't really even exist at all. I"
+    " mean commmme onnn!!!"  # Comma Comment
+)  # RPAR Comment
 
 ########## EDGE-CASE TESTS ##########
 some_variable = "This string is long but not so long that it needs to be split just yet"

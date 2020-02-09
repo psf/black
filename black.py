@@ -3126,10 +3126,10 @@ class StringStripperMixin(StringTransformerMixin):
     def get_first_unmatched_rpar_idx(leaves: List[Leaf]) -> Result[int, ValueError]:
         """
         Returns:
-            * The index of the first RPAR leaf that doesn't match any of the
-            LPAR leaves found in @leaves.
+            * Ok(idx) where idx is the index of the first RPAR leaf that
+            doesn't match any of the LPAR leaves found in @leaves.
                 OR
-            * A ValueError if no such leaf can be found.
+            * Err(ValueError) if no such leaf can be found.
         """
         unmatched_parens = 0
         for (i, leaf) in enumerate(leaves):
@@ -3239,7 +3239,7 @@ class StringArgCommaStripper(StringStripperMixin):
         rpar_idx = rpar_idx_result.ok()
         comma_idx = rpar_idx + string_idx + 1
         comma_leaf = LL[comma_idx]
-        for i, old_leaf in enumerate(LL):
+        for (i, old_leaf) in enumerate(LL):
             if i == comma_idx:
                 continue
 
@@ -3247,11 +3247,14 @@ class StringArgCommaStripper(StringStripperMixin):
             replace_child(old_leaf, new_leaf)
             new_line.append(new_leaf)
 
-            if new_leaf.type == token.STRING and id(comma_leaf) in new_line.comments:
+            if i == string_idx and id(comma_leaf) in new_line.comments:
                 new_line.comments[id(new_leaf)] = new_line.comments[
                     id(comma_leaf)
                 ].copy()
                 del new_line.comments[id(comma_leaf)]
+
+            for comment_leaf in line.comments_after(old_leaf):
+                new_line.append(comment_leaf, preformatted=True)
 
         yield Ok(new_line)
 
