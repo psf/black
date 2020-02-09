@@ -2724,23 +2724,7 @@ class StringTransformerMixin(StringTransformer):
     @staticmethod
     def _regex_match(line: Line, pattern: str) -> STResult[str]:
         line_str = line_to_string(line)
-        try:
-            match = re.match(pattern, line_str, re.VERBOSE)
-        except re.error as e:
-            if e.pos is not None:
-                pattern = (
-                    pattern[: e.pos - 10]
-                    + "\033[93m"
-                    + pattern[e.pos - 10 : e.pos]
-                    + "\033[91m"
-                    + pattern[e.pos]
-                    + "\033[93m"
-                    + pattern[e.pos + 1 : e.pos + 11]
-                    + "\033[0m"
-                    + pattern[e.pos + 11 :]
-                )
-
-            raise ValueError(f"Bad Regular Expression\n\n{pattern}") from e
+        match = re.match(pattern, line_str, re.VERBOSE)
 
         if match is not None:
             string = match.groupdict()["string"]
