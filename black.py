@@ -3061,6 +3061,19 @@ class StringMerger(StringTransformerMixin):
 
     @staticmethod
     def __validate_msg(line: Line, string_idx: int) -> STResult[None]:
+        """
+        Transform-time string validation logic for __merge_string_group(...).
+
+        Returns:
+            * Ok(None), if all validation checks (listed below) pass.
+                OR
+            * Err(STError) if any of the following are true:
+                - The target string is not in a string group (i.e. it has no
+                  adjacent strings).
+                - The string group has more than one inline comment.
+                - The set of all string prefixes in the string group is of
+                  length greater than one and is not equal to {"", "f"}.
+        """
         num_of_inline_string_comments = 0
         set_of_prefixes = set()
         num_of_strings = 0
