@@ -1674,6 +1674,7 @@ class Line:
             res += str(leaf)
         for comment in itertools.chain.from_iterable(self.comments.values()):
             res += str(comment)
+
         return res + "\n"
 
     def __bool__(self) -> bool:
@@ -2518,7 +2519,7 @@ def split_line(
 
     def init_st(ST: Type[StringTransformer]) -> StringTransformer:
         """Initialize String Transformer"""
-        return ST(line_length, normalize_strings)
+        return ST(line_str, line_length, normalize_strings)
 
     string_merge = init_st(StringMerger)
     string_arg_comma_strip = init_st(StringArgCommaStripper)
@@ -2615,6 +2616,7 @@ class StringTransformer(ABC):
     all of the strings contained in the given line.
     """
 
+    line_str: str
     line_length: int
     normalize_strings: bool
 
@@ -2654,6 +2656,8 @@ class StringTransformerMixin(StringTransformer):
         as much as possible. Hence, this section is optional.
     """
 
+    RE_CACHE: ClassVar[Dict[str, Pattern[str]]] = {}
+
     @abstractmethod
     def do_match(self, line: Line) -> STMatchResult:
         """
@@ -2691,6 +2695,9 @@ class StringTransformerMixin(StringTransformer):
         """
 
     def __call__(self, line: Line, _features: Collection[Feature]) -> Iterator[Line]:
+        if not any(leaf.type == token.STRING for leaf in line.leaves):
+            raise CannotSplit("There are no strings in this line.")
+
         result = self.do_match(line)
 
         if isinstance(result, Err):
@@ -2721,10 +2728,14 @@ class StringTransformerMixin(StringTransformer):
             line = line_result.ok()
             yield line
 
-    @staticmethod
-    def _regex_match(line: Line, pattern: str) -> STResult[str]:
-        line_str = line_to_string(line)
-        match = re.match(pattern, line_str, re.VERBOSE)
+    def _regex_match(self, line: Line, pattern: str) -> STResult[str]:
+        if pattern in self.RE_CACHE:
+            pttrn = self.RE_CACHE[pattern]
+        else:
+            pttrn = re.compile(pattern, re.VERBOSE)
+            self.RE_CACHE[pattern] = pttrn
+
+        match = pttrn.match(self.line_str)
 
         if match is not None:
             string = match.groupdict()["string"]
@@ -2732,7 +2743,7 @@ class StringTransformerMixin(StringTransformer):
             return Ok(string)
         else:
             st_error = STError(
-                f"Line ({line_str}) does not match regular expression pattern"
+                f"Line ({self.line_str}) does not match regular expression pattern"
                 f" ({pattern})."
             )
             return Err(st_error)
@@ -2810,9 +2821,7 @@ class StringMerger(StringTransformerMixin):
     def do_match(self, line: Line) -> STMatchResult:
         LL = line.leaves
 
-        regex_result = self._regex_match(
-            line,
-            fr"""
+        pattern = fr"""
             ^
             (?:
                 [^'"]
@@ -2820,8 +2829,9 @@ class StringMerger(StringTransformerMixin):
             )*?
             {RE_STRING_GROUP}[ ]*{RE_STRING}  # Two Adjacent Strings
             .*$
-            """,
-        )
+            """
+
+        regex_result = self._regex_match(line, pattern)
 
         if isinstance(regex_result, Ok):
             string_value = regex_result.ok()
@@ -2849,7 +2859,7 @@ class StringMerger(StringTransformerMixin):
                 return Ok((leaf.value, i))
 
         st_error = STError(
-            f"This line ({line_to_string(line)}) has no strings that need merging."
+            f"This line ({self.line_str}) has no strings that need merging."
         )
         st_error.__cause__ = regex_result.err()
         return Err(st_error)
@@ -3168,7 +3178,7 @@ class StringArgCommaStripper(StringStripperMixin):
             raise RuntimeError(
                 f"Logic Error. {self.__class__.__name__} was unable to find the ending"
                 " RPAR leaf for the following string and line:\n\nSTRING:"
-                f" {LL[string_idx]}\n\nLINE: {line_to_string(line)}\n"
+                f" {LL[string_idx]}\n\nLINE: {self.line_str}\n"
             ) from value_error
 
         rpar_idx = rpar_idx_result.ok()
@@ -3255,7 +3265,7 @@ class StringParensStripper(StringStripperMixin):
             raise RuntimeError(
                 f"Logic Error. {self.__class__.__name__} was unable to find the ending"
                 " RPAR leaf for the following string and line:\n\nSTRING:"
-                f" {LL[string_idx]}\n\nLINE: {line_to_string(line)}\n"
+                f" {LL[string_idx]}\n\nLINE: {self.line_str}\n"
             ) from value_error
 
         unmatched_rpar_idx = rpar_idx_result.ok()
