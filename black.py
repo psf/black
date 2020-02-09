@@ -373,26 +373,25 @@ def target_version_option_callback(
     callback=target_version_option_callback,
     multiple=True,
     help=(
-        "Python versions that should be supported by Black's output. [default: "
-        "per-file auto-detection]"
+        "Python versions that should be supported by Black's output. [default: per-file"
+        " auto-detection]"
     ),
 )
 @click.option(
     "--py36",
     is_flag=True,
     help=(
-        "Allow using Python 3.6-only syntax on all input files.  This will put "
-        "trailing commas in function signatures and calls also after *args and "
-        "**kwargs. Deprecated; use --target-version instead. [default: per-file "
-        "auto-detection]"
+        "Allow using Python 3.6-only syntax on all input files.  This will put trailing"
+        " commas in function signatures and calls also after *args and **kwargs."
+        " Deprecated; use --target-version instead. [default: per-file auto-detection]"
     ),
 )
 @click.option(
     "--pyi",
     is_flag=True,
     help=(
-        "Format all input files like typing stubs regardless of file extension (useful "
-        "when piping source on standard input)."
+        "Format all input files like typing stubs regardless of file extension (useful"
+        " when piping source on standard input)."
     ),
 )
 @click.option(
@@ -405,9 +404,9 @@ def target_version_option_callback(
     "--check",
     is_flag=True,
     help=(
-        "Don't write the files back, just return the status.  Return code 0 means "
-        "nothing would change.  Return code 1 means some files would be reformatted. "
-        "Return code 123 means there was an internal error."
+        "Don't write the files back, just return the status.  Return code 0 means"
+        " nothing would change.  Return code 1 means some files would be reformatted."
+        " Return code 123 means there was an internal error."
     ),
 )
 @click.option(
@@ -425,10 +424,10 @@ def target_version_option_callback(
     type=str,
     default=DEFAULT_INCLUDES,
     help=(
-        "A regular expression that matches files and directories that should be "
-        "included on recursive searches.  An empty value means all files are included "
-        "regardless of the name.  Use forward slashes for directories on all platforms "
-        "(Windows, too).  Exclusions are calculated first, inclusions later."
+        "A regular expression that matches files and directories that should be"
+        " included on recursive searches.  An empty value means all files are included"
+        " regardless of the name.  Use forward slashes for directories on all platforms"
+        " (Windows, too).  Exclusions are calculated first, inclusions later."
     ),
     show_default=True,
 )
@@ -437,10 +436,10 @@ def target_version_option_callback(
     type=str,
     default=DEFAULT_EXCLUDES,
     help=(
-        "A regular expression that matches files and directories that should be "
-        "excluded on recursive searches.  An empty value means no paths are excluded. "
-        "Use forward slashes for directories on all platforms (Windows, too).  "
-        "Exclusions are calculated first, inclusions later."
+        "A regular expression that matches files and directories that should be"
+        " excluded on recursive searches.  An empty value means no paths are excluded."
+        " Use forward slashes for directories on all platforms (Windows, too). "
+        " Exclusions are calculated first, inclusions later."
     ),
     show_default=True,
 )
@@ -449,8 +448,8 @@ def target_version_option_callback(
     "--quiet",
     is_flag=True,
     help=(
-        "Don't emit non-error messages to stderr. Errors are still emitted; silence "
-        "those with 2>/dev/null."
+        "Don't emit non-error messages to stderr. Errors are still emitted; silence"
+        " those with 2>/dev/null."
     ),
 )
 @click.option(
@@ -458,8 +457,8 @@ def target_version_option_callback(
     "--verbose",
     is_flag=True,
     help=(
-        "Also emit messages to stderr about files that were not changed or were "
-        "ignored due to --exclude=."
+        "Also emit messages to stderr about files that were not changed or were ignored"
+        " due to --exclude=."
     ),
 )
 @click.version_option(version=__version__)
@@ -509,8 +508,8 @@ def main(
             versions = set(target_version)
     elif py36:
         err(
-            "--py36 is deprecated and will be removed in a future version. Use "
-            "--target-version py36 instead."
+            "--py36 is deprecated and will be removed in a future version. Use"
+            " --target-version py36 instead."
         )
         versions = PY36_VERSIONS
     else:
@@ -2843,8 +2842,8 @@ class StringMerger(StringTransformerMixin):
                     return Ok((string_value, i))
 
             st_error = STError(
-                f"Found string match ({regex_result}), however, we could not find"
-                " a leaf that it belongs to."
+                f"Found string match ({regex_result}), however, we could not find a"
+                " leaf that it belongs to."
             )
             return Err(st_error)
 
@@ -3356,9 +3355,9 @@ class StringSplitterMixin(StringTransformerMixin):
             StringSplitterMixin.STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx
             if child_idx is None:
                 raise RuntimeError(
-                    f"Something is wrong here. If {string_parent} is the parent of "
-                    f"{string_leaf}, then how is {string_leaf} not a child of "
-                    f"{string_parent}?"
+                    f"Something is wrong here. If {string_parent} is the parent of"
+                    f" {string_leaf}, then how is {string_leaf} not a child of"
+                    f" {string_parent}?"
                 )
 
         def insert_str_child(child: LN) -> None:
@@ -3459,8 +3458,8 @@ class StringSplitterMixin(StringTransformerMixin):
             )
         ):
             st_error = STError(
-                "Line appears to end with an inline pragma comment. Splitting the line "
-                "could modify the pragma's behavior."
+                "Line appears to end with an inline pragma comment. Splitting the line"
+                " could modify the pragma's behavior."
             )
             return Err(st_error)
 
@@ -3529,8 +3528,8 @@ class StringTermSplitter(StringSplitterMixin):
         max_next_value = self.line_length - (1 + len(prefix)) - (line.depth * 4)
         if max_next_value < 0:
             st_error = STError(
-                f"Unable to split {LL[string_idx].value} at such high of a"
-                f" line depth: {line.depth}"
+                f"Unable to split {LL[string_idx].value} at such high of a line depth:"
+                f" {line.depth}"
             )
             yield Err(st_error)
             return
@@ -4106,9 +4105,10 @@ def right_hand_split(
 
             elif head.contains_multiline_strings() or tail.contains_multiline_strings():
                 raise CannotSplit(
-                    "The current optional pair of parentheses is bound to fail to "
-                    "satisfy the splitting algorithm because the head or the tail "
-                    "contains multiline strings which by definition never fit one line."
+                    "The current optional pair of parentheses is bound to fail to"
+                    " satisfy the splitting algorithm because the head or the tail"
+                    " contains multiline strings which by definition never fit one"
+                    " line."
                 )
 
     ensure_visible(opening_bracket)
@@ -4139,8 +4139,8 @@ def bracket_split_succeeded_or_raise(head: Line, body: Line, tail: Line) -> None
 
         elif tail_len < 3:
             raise CannotSplit(
-                f"Splitting brackets on an empty body to save {tail_len} characters "
-                "is not worth it"
+                f"Splitting brackets on an empty body to save {tail_len} characters is"
+                " not worth it"
             )
 
 
@@ -5302,8 +5302,8 @@ def assert_equivalent(src: str, dst: str) -> None:
         src_ast = parse_ast(src)
     except Exception as exc:
         raise AssertionError(
-            "cannot use --safe with this file; failed to parse source file.  AST "
-            f"error message: {exc}"
+            "cannot use --safe with this file; failed to parse source file.  AST"
+            f" error message: {exc}"
         )
 
     try:
@@ -5311,9 +5311,9 @@ def assert_equivalent(src: str, dst: str) -> None:
     except Exception as exc:
         log = dump_to_file("".join(traceback.format_tb(exc.__traceback__)), dst)
         raise AssertionError(
-            f"INTERNAL ERROR: Black produced invalid code: {exc}. Please report a bug "
-            "on https://github.com/psf/black/issues.  This invalid output might be "
-            f"helpful: {log}"
+            f"INTERNAL ERROR: Black produced invalid code: {exc}. Please report a bug"
+            " on https://github.com/psf/black/issues.  This invalid output might be"
+            f" helpful: {log}"
         ) from None
 
     src_ast_str = "\n".join(_v(src_ast))
@@ -5321,9 +5321,9 @@ def assert_equivalent(src: str, dst: str) -> None:
     if src_ast_str != dst_ast_str:
         log = dump_to_file(diff(src_ast_str, dst_ast_str, "src", "dst"))
         raise AssertionError(
-            "INTERNAL ERROR: Black produced code that is not equivalent to the "
-            "source.  Please report a bug on https://github.com/psf/black/issues.  "
-            f"This diff might be helpful: {log}"
+            "INTERNAL ERROR: Black produced code that is not equivalent to the"
+            " source.  Please report a bug on https://github.com/psf/black/issues. "
+            f" This diff might be helpful: {log}"
         ) from None
 
 
@@ -5336,9 +5336,9 @@ def assert_stable(src: str, dst: str, mode: FileMode) -> None:
             diff(dst, newdst, "first pass", "second pass"),
         )
         raise AssertionError(
-            "INTERNAL ERROR: Black produced different code on the second pass of the "
-            "formatter.  Please report a bug on https://github.com/psf/black/issues. "
-            f" This diff might be helpful: {log}"
+            "INTERNAL ERROR: Black produced different code on the second pass of the"
+            " formatter.  Please report a bug on https://github.com/psf/black/issues."
+            f"  This diff might be helpful: {log}"
         ) from None
 
 
