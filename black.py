@@ -2698,16 +2698,16 @@ class StringTransformerMixin(StringTransformer):
         if not any(leaf.type == token.STRING for leaf in line.leaves):
             raise CannotSplit("There are no strings in this line.")
 
-        result = self.do_match(line)
+        match_result = self.do_match(line)
 
-        if isinstance(result, Err):
-            st_error = result.err()
+        if isinstance(match_result, Err):
+            st_error = match_result.err()
             raise CannotSplit(
                 f"The string splitter {self.__class__.__name__} does not recognize"
                 " this line as one that it can split."
             ) from st_error
 
-        (string_value, string_idx) = result.ok()
+        (string_value, string_idx) = match_result.ok()
         if string_idx is None:
             string_idx_result = self._get_string_idx(line.leaves, string_value)
             if isinstance(string_idx_result, Err):
@@ -2729,12 +2729,10 @@ class StringTransformerMixin(StringTransformer):
             yield line
 
     def _regex_match(self, pattern: str) -> STResult[str]:
-        if pattern in self.RE_CACHE:
-            pttrn = self.RE_CACHE[pattern]
-        else:
-            pttrn = re.compile(pattern, re.VERBOSE)
-            self.RE_CACHE[pattern] = pttrn
+        if pattern not in self.RE_CACHE:
+            self.RE_CACHE[pattern] = re.compile(pattern, re.VERBOSE)
 
+        pttrn = self.RE_CACHE[pattern]
         match = pttrn.match(self.line_str)
 
         if match is not None:
