@@ -3887,8 +3887,8 @@ class StringExprSplitter(StringExprSplitterMixin):
 class StringArithExprSplitter(StringExprSplitterMixin):
     """
     This StringTransformer is a hack. We use it because we need to split these
-    lines (of the form specified in the 'Requirements' section) early in the
-    chain of responsibility, but the StringExprSplitter transformer is too
+    lines (of the form specified in the 'Requirements' section below) early in
+    the chain of responsibility, but the StringExprSplitter transformer is too
     generalized to be placed that high up the chain.
 
     See the `split_line(...)` function implementation and
@@ -3917,7 +3917,10 @@ class StringArithExprSplitter(StringExprSplitterMixin):
 
 
 def line_to_string(line: Line) -> str:
-    """Returns the string representation of @line."""
+    """Returns the string representation of @line.
+
+    WARNING: This is known to be computationally expensive.
+    """
     return str(line).strip("\n")
 
 
