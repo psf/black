@@ -3374,13 +3374,8 @@ class StringSplitterMixin(StringTransformerMixin):
         child_idx = None
         if string_parent:
             child_idx = string_leaf.remove()
+            assert child_idx is not None
             StringSplitterMixin.STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx
-            if child_idx is None:
-                raise RuntimeError(
-                    f"Something is wrong here. If {string_parent} is the parent of"
-                    f" {string_leaf}, then how is {string_leaf} not a child of"
-                    f" {string_parent}?"
-                )
 
         def insert_str_child(child: LN) -> None:
             child_idx = StringSplitterMixin.STRING_CHILD_IDX_MAP.get(
@@ -3704,16 +3699,6 @@ class StringTermSplitter(StringSplitterMixin):
                 )
                 return Err(st_error)
 
-            if len(string_value[idx:]) < MIN_SUBSTR_SIZE:
-                st_error = STError(
-                    f"All substrings must be {MIN_SUBSTR_SIZE} long or longer."
-                )
-                return Err(st_error)
-
-        if idx < 2:
-            st_error = STError(f"Invalid break index (idx={idx}).")
-            return Err(st_error)
-
         return Ok(idx)
 
     @staticmethod
@@ -3994,10 +3979,8 @@ def get_string_prefix(string: str) -> str:
     """
     dquote_idx = string.find('"')
     squote_idx = string.find("'")
-    if dquote_idx == -1:
-        quote_idx = squote_idx
-    elif squote_idx == -1:
-        quote_idx = dquote_idx
+    if -1 in [dquote_idx, squote_idx]:
+        quote_idx = max(dquote_idx, squote_idx)
     else:
         quote_idx = min(squote_idx, dquote_idx)
 
