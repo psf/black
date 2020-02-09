@@ -2884,10 +2884,7 @@ class StringMerger(StringTransformerMixin):
             return Err(st_error)
 
         for i, leaf in enumerate(LL):
-            if (
-                leaf.type == token.STRING
-                and "\\\n" in leaf.value
-            ):
+            if leaf.type == token.STRING and "\\\n" in leaf.value:
                 return Ok((leaf.value, i))
 
         st_error = STError(
