@@ -67,15 +67,14 @@ CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 
 STRING_PREFIX_CHARS: Final = "furbFURB"  # All possible string prefix characters.
 
-
 # Regular expressions used for matching strings.
 RE_EVEN_BACKSLASHES = r"(?:(?<!\\)(?:\\\\)*)"
 RE_ODD_BACKSLASHES = fr"(?:{RE_EVEN_BACKSLASHES}\\)"
 re_balanced_quotes = fr"""
 (?:
-    (?<!\\){{0}}
+    (?<![\\{{0}}]){{0}}
     (?:
-        {RE_ODD_BACKSLASHES}[{{0}}]  # an escaped quote
+        {RE_ODD_BACKSLASHES}{{0}}  # an escaped quote
         | [^\\{{0}}]  # OR anything but a quote or a backslash
         | \\[^{{0}}]  # OR a backslash followed by a non-quote
     )
@@ -184,6 +183,9 @@ class Err(Generic[E]):
         return self._e
 
 
+# The 'Result' return type is used to implement an error-handling model heavily
+# influenced by that used by the Rust programming language
+# (see https://doc.rust-lang.org/book/ch09-00-error-handling.html).
 Result = Union[Ok[T], Err[E]]
 STResult = Result[T, STError]  # StringTransformer Result
 StringIndex = int
@@ -2537,6 +2539,7 @@ def split_line(
             or line.contains_unsplittable_type_ignore()
         )
     ):
+        # Only apply basic string preprocessing, since strings can't be split here.
         split_funcs = [string_merge, string_arg_comma_strip, string_parens_strip]
     elif line.is_def:
         split_funcs = [left_hand_split]
@@ -2615,6 +2618,9 @@ class StringTransformer(ABC):
     all of the strings contained in the given line.
     """
 
+    # We could technically calculate 'line_str' at call-time, since we will
+    # have access to the associated Line object. Doing so is computationally
+    # expensive, however, so we cache 'line_str' here.
     line_str: str
     line_length: int
     normalize_strings: bool
@@ -2655,6 +2661,8 @@ class StringTransformerMixin(StringTransformer):
         as much as possible. Hence, this section is optional.
     """
 
+    # Compiling re.Pattern objects is computationally expensive, so we cache
+    # them here.
     PATTERN_CACHE: ClassVar[Dict[str, Pattern[str]]] = {}
 
     @abstractmethod
@@ -2694,6 +2702,8 @@ class StringTransformerMixin(StringTransformer):
         """
 
     def __call__(self, line: Line, _features: Collection[Feature]) -> Iterator[Line]:
+        # Optimization to avoid calling `self.do_match(...)` when the line does
+        # not contain any string.
         if not any(leaf.type == token.STRING for leaf in line.leaves):
             raise CannotSplit("There are no strings in this line.")
 
@@ -2727,7 +2737,16 @@ class StringTransformerMixin(StringTransformer):
             line = line_result.ok()
             yield line
 
-    def _regex_match(self, pattern: str) -> STResult[str]:
+    def _re_string_match(self, pattern: str) -> STResult[str]:
+        """
+        Wrapper around `re.match(...)` for matching the <string> named group.
+
+        Returns:
+            * Ok(S) where S is the <string> named group in @pattern, if the
+            match was successful.
+                OR
+            * Err(STError), if the match was unsuccessful.
+        """
         if pattern not in self.PATTERN_CACHE:
             self.PATTERN_CACHE[pattern] = re.compile(pattern, re.VERBOSE)
 
@@ -2748,6 +2767,19 @@ class StringTransformerMixin(StringTransformer):
     def _get_string_idx(
         self, leaves: List[Leaf], string_value: str
     ) -> Result[int, ValueError]:
+        """
+        Generic algorithm for determining the index of @string_value in
+        @leaves.
+
+        Used when `self.do_match(...)` returns None where it could otherwise
+        have returned a string index.
+
+        Returns:
+            * Ok(idx) such that `leaves[idx].value == string_value`, when
+            the search is successful.
+                OR
+            * Err(STError), when the search is unsuccessful.
+        """
         for i, leaf in enumerate(leaves):
             if leaf.type == token.STRING and leaf.value == string_value:
                 return Ok(i)
@@ -2805,9 +2837,13 @@ class StringMerger(StringTransformerMixin):
         * The line contains a string which uses line continuation backslashes.
 
     Transformations:
-        * Line continuation backslashes are removed from the target string.
+        * All line-continuation backslashes are removed from the target string.
             OR
         * The string group associated with the target string is merged.
+
+    Collaborations:
+        StringMerger provides custom split information (via CUSTOM_SPLIT_MAP)
+        to StringTermSplitter.
 
     Side Effects:
         Before merging any adjacent strings, a record of how long each
@@ -2818,10 +2854,10 @@ class StringMerger(StringTransformerMixin):
     def do_match(self, line: Line) -> STMatchResult:
         LL = line.leaves
 
-        regex_result = self._regex_match(
+        regex_result = self._re_string_match(
             fr"""
             ^
-            (?:
+            (?: # Ensures that we don't mistake an end quote for a starting quote.
                 [^'"]
                 | {RE_BALANCED_QUOTES}
             )*?
@@ -2832,7 +2868,7 @@ class StringMerger(StringTransformerMixin):
 
         if isinstance(regex_result, Ok):
             string_value = regex_result.ok()
-            for i, leaf in enumerate(LL):
+            for (i, leaf) in enumerate(LL):
                 if (
                     leaf.type == token.STRING
                     and leaf.value == string_value
@@ -2851,7 +2887,6 @@ class StringMerger(StringTransformerMixin):
             if (
                 leaf.type == token.STRING
                 and "\\\n" in leaf.value
-                and leaf.value.lstrip(STRING_PREFIX_CHARS)[:3] not in {'"""', "'''"}
             ):
                 return Ok((leaf.value, i))
 
@@ -2869,17 +2904,17 @@ class StringMerger(StringTransformerMixin):
         if isinstance(rblc_result, Ok):
             new_line = rblc_result.ok()
 
-        mfsg_result = self.__merge_first_string_group(new_line, string_idx)
-        if isinstance(mfsg_result, Ok):
-            new_line = mfsg_result.ok()
+        msg_result = self.__merge_string_group(new_line, string_idx)
+        if isinstance(msg_result, Ok):
+            new_line = msg_result.ok()
 
-        if isinstance(rblc_result, Err) and isinstance(mfsg_result, Err):
-            mfsg_st_error = mfsg_result.err()
+        if isinstance(rblc_result, Err) and isinstance(msg_result, Err):
+            msg_st_error = msg_result.err()
             rblc_st_error = rblc_result.err()
-            mfsg_st_error.__cause__ = rblc_st_error
+            msg_st_error.__cause__ = rblc_st_error
 
             st_error = STError("StringMerger failed to merge any strings in this line.")
-            st_error.__cause__ = mfsg_st_error
+            st_error.__cause__ = msg_st_error
             yield Err(st_error)
         else:
             yield Ok(new_line)
@@ -2888,7 +2923,10 @@ class StringMerger(StringTransformerMixin):
     def __remove_backslash_line_continuation_chars(
         line: Line, string_idx: int
     ) -> STResult[Line]:
-        """Merge strings that were split across multiple lines using backslashes."""
+        """
+        Merge strings that were split across multiple lines using
+        line-continuation backslashes.
+        """
         LL = line.leaves
 
         string_leaf = LL[string_idx]
@@ -2912,21 +2950,24 @@ class StringMerger(StringTransformerMixin):
 
         return Ok(new_line)
 
-    def __merge_first_string_group(self, line: Line, string_idx: int) -> STResult[Line]:
+    def __merge_string_group(self, line: Line, string_idx: int) -> STResult[Line]:
+        """
+        Merges string group (i.e. set of adjacent strings) where the first
+        string in the group is `line.leaves[string_idx]`.
+        """
         LL = line.leaves
 
-        vresult = self.__validate_mfsg(line, string_idx)
+        vresult = self.__validate_msg(line, string_idx)
         if isinstance(vresult, Err):
             return vresult
 
         atom_node = LL[string_idx].parent
+        BREAK_MARK = "@@@@@ BLACK BREAKPOINT MARKER @@@@@"
+        QUOTE = LL[string_idx].value[-1]
+
         string_value = ""
         prefix = ""
-
-        BREAK_MARK = "@@@@@ BLACK BREAKPOINT MARKER @@@@@"
-
         next_str_idx = string_idx
-        QUOTE = LL[next_str_idx].value[-1]
         num_of_strings = 0
         custom_splits = []
         prefix_tracker = []
@@ -3005,7 +3046,7 @@ class StringMerger(StringTransformerMixin):
         return Ok(new_line)
 
     @staticmethod
-    def __validate_mfsg(line: Line, string_idx: int) -> STResult[None]:
+    def __validate_msg(line: Line, string_idx: int) -> STResult[None]:
         num_of_inline_string_comments = 0
         set_of_prefixes = set()
         num_of_strings = 0
@@ -3019,14 +3060,6 @@ class StringMerger(StringTransformerMixin):
 
             if id(leaf) in line.comments:
                 num_of_inline_string_comments += 1
-
-            if leaf.value.lstrip(STRING_PREFIX_CHARS).startswith(("'''", '"""')):
-                st_error = STError(
-                    "One of the strings that we were attempting to merge was a"
-                    f" multi-line string ({leaf.value}). StringMerger does NOT merge"
-                    " multi-line strings."
-                )
-                return Err(st_error)
 
         if num_of_strings < 2:
             st_error = STError(
@@ -3077,12 +3110,11 @@ class StringStripperMixin(StringTransformerMixin):
                 unmatched_parens += 1
                 continue
 
-            if leaf.type == token.RPAR and unmatched_parens == 0:
-                return Ok(i)
-
             if leaf.type == token.RPAR:
                 if unmatched_parens > 0:
                     unmatched_parens -= 1
+                elif unmatched_parens == 0:
+                    return Ok(i)
                 else:
                     value_error = ValueError(
                         "Found RPAR that matches LPAR from the past!"
@@ -3113,10 +3145,10 @@ class StringArgCommaStripper(StringStripperMixin):
     def do_match(self, line: Line) -> STMatchResult:
         LL = line.leaves
 
-        regex_result = self._regex_match(
+        regex_result = self._re_string_match(
             fr"""
             ^
-            (?:
+            (?: # Ensures that we don't mistake an end quote for a starting quote.
                 [^'"]
                 | {RE_BALANCED_QUOTES}
             )*?
@@ -3211,10 +3243,10 @@ class StringParensStripper(StringStripperMixin):
     def do_match(self, line: Line) -> STMatchResult:
         LL = line.leaves
 
-        regex_result = self._regex_match(
+        regex_result = self._re_string_match(
             fr"""
             ^
-            (?:
+            (?: # Ensures that we don't mistake an end quote for a starting quote.
                 [^'"]
                 | {RE_BALANCED_QUOTES}
             )*?
@@ -3503,7 +3535,7 @@ class StringTermSplitter(StringSplitterMixin):
     """
 
     def do_splitter_match(self, line: Line) -> STMatchResult:
-        regex_result = self._regex_match(
+        regex_result = self._re_string_match(
             fr"^[ ]*(?:\+[ ]*)?{RE_STRING_GROUP}{RE_STRING_TRAILER}{RE_EOL}"
         )
 
@@ -3845,7 +3877,7 @@ class StringExprSplitter(StringExprSplitterMixin):
     """
 
     def do_splitter_match(self, line: Line) -> STMatchResult:
-        regex_result = self._regex_match(
+        regex_result = self._re_string_match(
             fr"""
             ^[ ]*
             (?:
@@ -3904,7 +3936,7 @@ class StringArithExprSplitter(StringExprSplitterMixin):
     """
 
     def do_splitter_match(self, line: Line) -> STMatchResult:
-        regex_result = self._regex_match(
+        regex_result = self._re_string_match(
             fr"^[ ]*{RE_STRING_GROUP}{RE_STRING_TRAILER}[ ]?\+[ ].+,{RE_EOL}"
         )
 
