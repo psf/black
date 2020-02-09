@@ -3281,7 +3281,9 @@ class StringParensStripper(StringStripperMixin):
         unmatched_rpar_idx = rpar_idx_result.ok()
         rpar_idx = unmatched_rpar_idx + string_idx + 1
 
-        if line.comments_after(LL[string_idx - 1]) and line.comments_after(LL[rpar_idx]):
+        if line.comments_after(LL[string_idx - 1]) and line.comments_after(
+            LL[rpar_idx]
+        ):
             st_error = STError(
                 "Cannot strip parens from string when both sides (LPAR and RPAR) have"
                 " inline comments."
