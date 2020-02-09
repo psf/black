@@ -760,11 +760,9 @@ def format_str(src_contents: str, *, mode: FileMode) -> FileContent:
         if supports_feature(versions, feature)
     }
     for current_line in lines.visit(src_node):
-        for _ in range(after):
-            dst_contents.append(str(empty_line))
+        dst_contents.append(str(empty_line) * after)
         before, after = elt.maybe_empty_lines(current_line)
-        for _ in range(before):
-            dst_contents.append(str(empty_line))
+        dst_contents.append(str(empty_line) * before)
         for line in split_line(
             current_line, line_length=mode.line_length, features=split_line_features
         ):
@@ -1449,11 +1447,7 @@ class Line:
         return False
 
     def contains_multiline_strings(self) -> bool:
-        for leaf in self.leaves:
-            if is_multiline_string(leaf):
-                return True
-
-        return False
+        return any(is_multiline_string(leaf) for leaf in self.leaves)
 
     def maybe_remove_trailing_comma(self, closing: Leaf) -> bool:
         """Remove trailing comma if there is one and it's safe."""
