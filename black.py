@@ -61,6 +61,12 @@ DEFAULT_EXCLUDES = r"/(\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_
 DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 
+# Emojis for output strings
+EMOJIS: Dict[str, str] = {
+    "all_done": " ✨ 🍰 ✨",
+    "oh_no": " 💥 💔 💥",
+    "nothing_to_do": " 😴",
+}
 
 # types
 FileContent = str
@@ -461,7 +467,10 @@ def main(
             err(f"invalid path: {s}")
     if len(sources) == 0:
         if verbose or not quiet:
-            out("No Python files are present to be formatted. Nothing to do 😴")
+            out(
+                "No Python files are present to be formatted."
+                f"Nothing to do{EMOJIS['nothing_to_do']}"
+            )
         ctx.exit(0)
 
     if len(sources) == 1:
@@ -478,7 +487,11 @@ def main(
         )
 
     if verbose or not quiet:
-        out("Oh no! 💥 💔 💥" if report.return_code else "All done! ✨ 🍰 ✨")
+        out(
+            f"Oh no!{EMOJIS['oh_no']}"
+            if report.return_code
+            else f"All done!{EMOJIS['all_done']}"
+        )
         click.secho(str(report), err=True)
     ctx.exit(report.return_code)
 
@@ -491,7 +504,7 @@ def path_empty(
     """
     if not src:
         if verbose or not quiet:
-            out("No Path provided. Nothing to do 😴")
+            out(f"No Path provided. Nothing to do{EMOJIS['nothing_to_do']}")
             ctx.exit(0)
 
 
