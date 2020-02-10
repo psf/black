@@ -3487,7 +3487,9 @@ class StringTermSplitter(StringSplitterMixin):
         ends_with_comma = (
             string_idx + 1 < len(LL) and LL[string_idx + 1].type == token.COMMA
         )
-        drop_pointless_f_prefix = ("f" in prefix) and re.search(RE_FEXPR, rest_value, re.VERBOSE)
+        drop_pointless_f_prefix = ("f" in prefix) and re.search(
+            RE_FEXPR, rest_value, re.VERBOSE
+        )
         use_custom_breakpoints = bool(
             custom_splits
             and all(csplit.break_idx <= max_next_value for csplit in custom_splits)
