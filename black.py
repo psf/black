@@ -759,9 +759,7 @@ def format_file_in_place(
 
 
 def color_diff(contents: str) -> str:
-    """
-    Color the contents returned by `diff()`.
-    """
+    """Inject the ANSI color codes to the diff."""
     lines = contents.split("\n")
     for i, line in enumerate(lines):
         if line.startswith("+++") or line.startswith("---"):
