@@ -123,6 +123,7 @@ re_string_trailer = fr"""
 RE_STRING_TRAILER: Final = re_string_trailer("main")
 RE_EOL: Final = r"[ ]*(?:\#.*)?$"
 RE_FEXPR = r"""
+# Matches an "f-expression" (e.g. {var}) that might be found in an f-string.
 (?<!\{)\{
     (?:
         [^\{\}]
@@ -3003,17 +3004,25 @@ class StringMerger(StringTransformerMixin):
         NS = ""
         prefix = ""
         num_of_strings = 0
+
+        # Holds the CustomSplit objects that will later be added to CUSTOM_SPLIT_MAP.
         custom_splits = []
+
+        # Temporary storage for the 'has_prefix' part of the CustomSplit objects.
         prefix_tracker = []
 
+        # Sets the 'prefix' variable. This is the prefix that the final merged
+        # string will have.
         next_str_idx = string_idx
-        while len(LL) > next_str_idx and LL[next_str_idx].type == token.STRING:
-            if prefix:
-                break
-
+        while (
+            not prefix
+            and len(LL) > next_str_idx
+            and LL[next_str_idx].type == token.STRING
+        ):
             prefix = get_string_prefix(LL[next_str_idx].value)
             next_str_idx += 1
 
+        # Merges the string group. The final string will be contained in 'S'.
         next_str_idx = string_idx
         while len(LL) > next_str_idx and LL[next_str_idx].type == token.STRING:
             num_of_strings += 1
@@ -3033,11 +3042,12 @@ class StringMerger(StringTransformerMixin):
 
             next_str_idx += 1
 
-        temp_string_leaf = Leaf(token.STRING, S)
+        S_leaf = Leaf(token.STRING, S)
         if self.normalize_strings:
-            normalize_string_quotes(temp_string_leaf)
+            normalize_string_quotes(S_leaf)
 
-        temp_string = temp_string_leaf.value[len(prefix) + 1 : -1]
+        # Fill the 'custom_splits' list with the appropriate CustomSplit objects.
+        temp_string = S_leaf.value[len(prefix) + 1 : -1]
         for has_prefix in prefix_tracker:
             found_idx = temp_string.find(BREAK_MARK)
             assert (
@@ -3048,14 +3058,14 @@ class StringMerger(StringTransformerMixin):
             breakpoint_idx = found_idx + (len(prefix) if has_prefix else 0) + 1
             custom_splits.append(CustomSplit(has_prefix, breakpoint_idx))
 
-        string_leaf = Leaf(token.STRING, temp_string_leaf.value.replace(BREAK_MARK, ""))
+        string_leaf = Leaf(token.STRING, S_leaf.value.replace(BREAK_MARK, ""))
 
         if atom_node is not None:
             replace_child(atom_node, string_leaf)
 
+        # Build the final line ('new_line') that this method will later return.
         new_line = line.clone()
-
-        for i, old_leaf in enumerate(LL):
+        for i, leaf in enumerate(LL):
             if i == string_idx:
                 new_line.append(string_leaf)
 
@@ -3064,7 +3074,7 @@ class StringMerger(StringTransformerMixin):
                     new_line.append(comment_leaf, preformatted=True)
                 continue
 
-            append_leaves(new_line, line, [old_leaf])
+            append_leaves(new_line, line, [leaf])
 
         CUSTOM_SPLIT_MAP[(id(string_leaf.value), string_leaf.value)] = tuple(
             custom_splits
