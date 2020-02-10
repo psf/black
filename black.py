@@ -3259,9 +3259,19 @@ class StringSplitterMixin(StringTransformerMixin):
     Mixin class for StringTransformers which transform a Line's strings by
     splitting them or placing them on their own lines where necessary to avoid
     going over the configured line length.
-    """
 
-    # TODO(bugyi): Add Requirements section
+    Requirements:
+        * The target string value is responsible for the line going over the
+        line_length limit. It follows that after all of black's other line
+        split methods have been exhausted, this line would still be over the
+        line_length limit if we do not split this string.
+            AND
+        * The target string is NOT a "pointless" string (i.e. a string that has
+        no parent or siblings).
+            AND
+        * The target string is not followed by an inline comment that appears
+        to be a pragma.
+    """
 
     STRING_CHILD_IDX_MAP: ClassVar[Dict[int, Optional[int]]] = {}
 
@@ -3412,7 +3422,7 @@ class StringSplitterMixin(StringTransformerMixin):
             line.comments
             and list(line.comments.values())[0]
             and re.match(
-                r"^#\s*([a-z_0-9]+:.*|noqa)\s*$",
+                r"^#\s*([A-Za-z_0-9]+:.*|noqa)\s*$",
                 list(line.comments.values())[0][0].value,
                 re.IGNORECASE,
             )
@@ -3432,8 +3442,10 @@ class StringTermSplitter(StringSplitterMixin):
     lines by themselves).
 
     Requirements:
-        The line consists ONLY of a single string (with the exception of a '+'
+        * The line consists ONLY of a single string (with the exception of a '+'
         symbol which MAY be at the start of the line).
+            AND
+        * All of the requirements listed in StringSplitterMixin's docstring.
 
     Transformations:
         The string mentioned in the 'Requirements' section is split into as
@@ -3461,8 +3473,6 @@ class StringTermSplitter(StringSplitterMixin):
         Any custom split data that was used to split the string is deleted from
         the CUSTOM_SPLIT_MAP.
     """
-
-    # TODO(bugyi): Mention StringSplitterMixin Requirements section
 
     def do_splitter_match(self, line: Line) -> STMatchResult:
         regex_result = self._re_string_match(
@@ -3710,6 +3720,9 @@ class StringExprSplitter(StringSplitterMixin):
     not exist on lines by themselves).
 
     Requirements:
+        All of the requirements listed in StringSplitterMixin's docstring in
+        addition to the requirements listed below:
+
         * The line is a return statement, which returns a string.
             OR
         * The line is part of a ternary expression (e.g. `x = y if cond else
@@ -3742,8 +3755,6 @@ class StringExprSplitter(StringSplitterMixin):
         however, count on the LPAR being placed directly before the chosen
         string.
     """
-
-    # TODO(bugyi): Mention StringSplitterMixin Requirements section
 
     def do_splitter_match(self, line: Line) -> STMatchResult:
         regex_result = self._re_string_match(
