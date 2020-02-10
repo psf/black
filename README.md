@@ -607,6 +607,9 @@ $ where black
 %LocalAppData%\Programs\Python\Python36-32\Scripts\black.exe  # possible location
 ```
 
+Note that if you are using a virtual environment detected by PyCharm, this is an unneeded step.
+In this case the path to `black` is `$PyInterpreterDirectory$/black`.
+
 3. Open External tools in PyCharm/IntelliJ IDEA
 
 On macOS:
