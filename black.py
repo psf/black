@@ -2823,15 +2823,28 @@ class CustomSplit:
     break_idx: int
 
 
-# This mapping is used to record custom string splits before merging strings in
-# StringMerger. StringTermSplitter then checks this mapping for valid custom
-# splits before applying its own split algorithm.
-CUSTOM_SPLIT_MAP: Dict[Tuple[StringID, str], Tuple[CustomSplit, ...]] = defaultdict(
-    tuple
-)
+class CustomSplitMixin:
+    """
+    This mixin class is used to map merged strings to a sequence of CustomSplits.
+    """
+
+    _CUSTOM_SPLIT_MAP: Dict[
+        Tuple[StringID, str], Tuple[CustomSplit, ...]
+    ] = defaultdict(tuple)
+
+    def pop_custom_splits(self, string: str) -> List[CustomSplit]:
+        key = (id(string), string)
+
+        result = self._CUSTOM_SPLIT_MAP[key]
+        del self._CUSTOM_SPLIT_MAP[key]
+
+        return list(result)
+
+    def add_custom_splits(self, string: str, csplits: Iterable[CustomSplit]) -> None:
+        self._CUSTOM_SPLIT_MAP[id(string), string] = tuple(csplits)
 
 
-class StringMerger(StringTransformerMixin):
+class StringMerger(StringTransformerMixin, CustomSplitMixin):
     """StringTransformer that merges strings together.
 
     Requirements:
@@ -2849,13 +2862,7 @@ class StringMerger(StringTransformerMixin):
         (B) All line-continuation backslashes are removed from the target string.
 
     Collaborations:
-        StringMerger provides custom split information (via CUSTOM_SPLIT_MAP)
-        to StringTermSplitter.
-
-    Side Effects:
-        Before merging any adjacent strings, a record of how long each
-        substring was and whether or not it had a string prefix (e.g. 'f' or
-        'r') is saved to CUSTOM_SPLIT_MAP.
+        StringMerger provides custom split information to StringTermSplitter.
     """
 
     def do_match(self, line: Line) -> STMatchResult:
@@ -2984,7 +2991,7 @@ class StringMerger(StringTransformerMixin):
         # We will place BREAK_MARK in between every two substrings that we
         # merge. We will then later go through our final result and use the
         # various instances of BREAK_MARK we find to add the right values to
-        # CUSTOM_SPLIT_MAP.
+        # the custom split map.
         BREAK_MARK = "@@@@@ BLACK BREAKPOINT MARKER @@@@@"
 
         QUOTE = LL[string_idx].value[-1]
@@ -3008,7 +3015,8 @@ class StringMerger(StringTransformerMixin):
             )
             return naked_string
 
-        # Holds the CustomSplit objects that will later be added to CUSTOM_SPLIT_MAP.
+        # Holds the CustomSplit objects that will later be added to the custom
+        # split map.
         custom_splits = []
 
         # Temporary storage for the 'has_prefix' part of the CustomSplit objects.
@@ -3091,10 +3099,7 @@ class StringMerger(StringTransformerMixin):
 
             append_leaves(new_line, line, [leaf])
 
-        CUSTOM_SPLIT_MAP[(id(string_leaf.value), string_leaf.value)] = tuple(
-            custom_splits
-        )
-
+        self.add_custom_splits(string_leaf.value, custom_splits)
         return Ok(new_line)
 
     @staticmethod
@@ -3344,9 +3349,7 @@ class StringSplitterMixin(StringTransformerMixin):
 
             assert string_parent is not None
             string_parent.insert_child(child_idx, child)
-            StringSplitterMixin.STRING_CHILD_IDX_MAP[id(string_leaf)] = (
-                child_idx + 1
-            )
+            StringSplitterMixin.STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx + 1
 
         return insert_str_child
 
@@ -3451,7 +3454,7 @@ class StringSplitterMixin(StringTransformerMixin):
         return Ok(None)
 
 
-class StringTermSplitter(StringSplitterMixin):
+class StringTermSplitter(StringSplitterMixin, CustomSplitMixin):
     """
     StringTransformer that splits atomic strings (i.e. strings which exist on
     lines by themselves).
@@ -3473,20 +3476,15 @@ class StringTermSplitter(StringSplitterMixin):
         start with a space).
 
         If the string that is being split has an associated set of custom split
-        records (contained in the global CUSTOM_SPLIT_MAP mapping) and those
-        custom splits will NOT result in any line going over the configured
-        line length, those custom splits are used. Otherwise the string is
-        split as late as possible (from left-to-right) while still adhering to
-        the transformation rules listed above.
+        records and those custom splits will NOT result in any line going over
+        the configured line length, those custom splits are used. Otherwise the
+        string is split as late as possible (from left-to-right) while still
+        adhering to the transformation rules listed above.
 
     Collaborations:
         This transformer relies on the StringMerger transformer to add the
         appropriate (and properly configured) CustomSplit objects to the
-        CUSTOM_SPLIT_MAP.
-
-    Side Effects:
-        Any custom split data that was used to split the string is deleted from
-        the CUSTOM_SPLIT_MAP.
+        custom split map.
     """
 
     def do_splitter_match(self, line: Line) -> STMatchResult:
@@ -3523,9 +3521,7 @@ class StringTermSplitter(StringSplitterMixin):
 
         QUOTE = rest_value[-1]
 
-        custom_splits = list(
-            CUSTOM_SPLIT_MAP[(id(LL[string_idx].value), LL[string_idx].value)]
-        )
+        custom_splits = self.pop_custom_splits(LL[string_idx].value)
 
         starts_with_plus = LL[0].type == token.PLUS
         ends_with_comma = (
@@ -3645,8 +3641,6 @@ class StringTermSplitter(StringSplitterMixin):
             append_leaves(last_line, rest_line, rest_line.leaves)
             last_line.comments = line.comments.copy()
             yield Ok(last_line)
-
-        del CUSTOM_SPLIT_MAP[(id(LL[string_idx].value), LL[string_idx].value)]
 
     @staticmethod
     def __get_break_idx(string: str, max_length: int) -> STResult[int]:
