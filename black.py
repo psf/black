@@ -392,7 +392,7 @@ def target_version_option_callback(
     help="Don't write the files back, just output a diff for each file on stdout.",
 )
 @click.option(
-    "--color",
+    "--color/--no-color",
     is_flag=True,
     help="Show colored diff. Only applies when `--diff` is given.",
 )
