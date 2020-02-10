@@ -122,6 +122,15 @@ re_string_trailer = fr"""
 """.format
 RE_STRING_TRAILER: Final = re_string_trailer("main")
 RE_EOL: Final = r"[ ]*(?:\#.*)?$"
+RE_FEXPR = r"""
+(?<!\{)\{
+    (?:
+        [^\{\}]
+        | \{\{
+        | \}\}
+    )+?
+(?<!\})(?:\}\})*\}(?!\})
+"""
 
 
 # types
@@ -3603,15 +3612,6 @@ class StringTermSplitter(StringSplitterMixin):
             if ranges is None:
                 ranges = []
 
-                RE_FEXPR = r"""
-                (?<!\{)\{
-                    (?:
-                        [^\{\}]
-                        | \{\{
-                        | \}\}
-                    )+?
-                (?<!\})(?:\}\})*\}(?!\})
-                """
                 for match in re.finditer(RE_FEXPR, string, re.VERBOSE):
                     ranges.append(match.span())
 
@@ -3660,8 +3660,16 @@ class StringTermSplitter(StringSplitterMixin):
 
     @staticmethod
     def __normalize_f_string(string: str, prefix: str) -> str:
-        if "f" in prefix and not re.search(r"\{.+\}", string):
-            return prefix.replace("f", "") + string[len(prefix) :]
+        assert_is_leaf_string(string)
+        if "f" in prefix and not re.search(RE_FEXPR, string, re.VERBOSE):
+            new_prefix = prefix.replace("f", "")
+
+            temp = string[len(prefix) :]
+            temp = re.sub(r"\{\{", "{", temp)
+            temp = re.sub(r"\}\}", "}", temp)
+            new_string = temp
+
+            return f"{new_prefix}{new_string}"
         else:
             return string
 

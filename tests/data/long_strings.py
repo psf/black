@@ -399,6 +399,8 @@ cmd = f"sudo -E deluge-console info --detailed --sort-reverse=time_added {'{{}}'
 
 cmd = f"sudo -E deluge-console info --detailed --sort-reverse=time_added {{'' if ID is None else ID}} | perl -nE 'print if /^{field}:/'"
 
+fstring = f"This string really doesn't need to be an {{{{fstring}}}}, but this one most certainly, absolutely {does}."
+
 fstring = f"We have to remember to escape {braces}" ", like {these}."
 
 ########## EDGE-CASE TESTS ##########
@@ -1039,6 +1041,11 @@ cmd = (
 cmd = (
     "sudo -E deluge-console info --detailed --sort-reverse=time_added {'' if ID is"
     f" None else ID}} | perl -nE 'print if /^{field}:/'"
+)
+
+fstring = (
+    "This string really doesn't need to be an {{fstring}}, but this one most"
+    f" certainly, absolutely {does}."
 )
 
 fstring = f"We have to remember to escape {braces}, like {{these}}."
