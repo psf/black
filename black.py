@@ -142,6 +142,7 @@ Depth = int
 NodeType = int
 LeafID = int
 StringID = int
+StringIndex = int
 Priority = int
 Index = int
 LN = Union[Leaf, Node]
@@ -198,7 +199,6 @@ class Err(Generic[E]):
 # (see https://doc.rust-lang.org/book/ch09-00-error-handling.html).
 Result = Union[Ok[T], Err[E]]
 STResult = Result[T, STError]  # StringTransformer Result
-StringIndex = int
 STMatchResult = STResult[  # StringTransformerMixin.do_match(...) Result
     Tuple[str, Optional[StringIndex]]
 ]
@@ -3305,9 +3305,6 @@ class StringSplitterMixin(StringTransformerMixin):
         to be a pragma.
     """
 
-    # TODO(bugyi): Add comments...
-    _STRING_CHILD_IDX_MAP: ClassVar[Dict[LeafID, int]] = {}
-
     @abstractmethod
     def do_splitter_match(self, line: Line) -> STMatchResult:
         """
@@ -3349,18 +3346,16 @@ class StringSplitterMixin(StringTransformerMixin):
     @staticmethod
     def _insert_str_child_factory(string_leaf: Leaf) -> Callable[[LN], None]:
         string_parent = string_leaf.parent
-
-        child_idx = string_leaf.remove()
-        assert child_idx is not None
-
-        StringSplitterMixin._STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx
+        string_child_idx = string_leaf.remove()
 
         def insert_str_child(child: LN) -> None:
-            child_idx = StringSplitterMixin._STRING_CHILD_IDX_MAP[id(string_leaf)]
+            nonlocal string_child_idx
 
             assert string_parent is not None
-            string_parent.insert_child(child_idx, child)
-            StringSplitterMixin._STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx + 1
+            assert string_child_idx is not None
+
+            string_parent.insert_child(string_child_idx, child)
+            string_child_idx += 1
 
         return insert_str_child
 
