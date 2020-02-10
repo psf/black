@@ -2832,11 +2832,13 @@ class CustomSplitMixin:
         Tuple[StringID, str], Tuple[CustomSplit, ...]
     ] = defaultdict(tuple)
 
-    def add_custom_splits(self, string: str, csplits: Iterable[CustomSplit]) -> None:
+    @staticmethod
+    def add_custom_splits(string: str, csplits: Iterable[CustomSplit]) -> None:
         """Map the custom splits @csplits to @string."""
-        self._CUSTOM_SPLIT_MAP[id(string), string] = tuple(csplits)
+        CustomSplitMixin._CUSTOM_SPLIT_MAP[id(string), string] = tuple(csplits)
 
-    def pop_custom_splits(self, string: str) -> List[CustomSplit]:
+    @staticmethod
+    def pop_custom_splits(string: str) -> List[CustomSplit]:
         """
         Returns:
             The custom splits that are mapped to @string (if any exist).
@@ -2847,8 +2849,8 @@ class CustomSplitMixin:
         """
         key = (id(string), string)
 
-        result = self._CUSTOM_SPLIT_MAP[key]
-        del self._CUSTOM_SPLIT_MAP[key]
+        result = CustomSplitMixin._CUSTOM_SPLIT_MAP[key]
+        del CustomSplitMixin._CUSTOM_SPLIT_MAP[key]
 
         return list(result)
 
@@ -3303,8 +3305,8 @@ class StringSplitterMixin(StringTransformerMixin):
         to be a pragma.
     """
 
-    # TODO(bugyi): Describe STRING_CHILD_IDX_MAP
-    STRING_CHILD_IDX_MAP: ClassVar[Dict[LeafID, int]] = {}
+    # TODO(bugyi): Add comments...
+    _STRING_CHILD_IDX_MAP: ClassVar[Dict[LeafID, int]] = {}
 
     @abstractmethod
     def do_splitter_match(self, line: Line) -> STMatchResult:
@@ -3351,14 +3353,14 @@ class StringSplitterMixin(StringTransformerMixin):
         child_idx = string_leaf.remove()
         assert child_idx is not None
 
-        StringSplitterMixin.STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx
+        StringSplitterMixin._STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx
 
         def insert_str_child(child: LN) -> None:
-            child_idx = StringSplitterMixin.STRING_CHILD_IDX_MAP[id(string_leaf)]
+            child_idx = StringSplitterMixin._STRING_CHILD_IDX_MAP[id(string_leaf)]
 
             assert string_parent is not None
             string_parent.insert_child(child_idx, child)
-            StringSplitterMixin.STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx + 1
+            StringSplitterMixin._STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx + 1
 
         return insert_str_child
 
