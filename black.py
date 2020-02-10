@@ -3273,7 +3273,7 @@ class StringSplitterMixin(StringTransformerMixin):
         to be a pragma.
     """
 
-    STRING_CHILD_IDX_MAP: ClassVar[Dict[int, Optional[int]]] = {}
+    STRING_CHILD_IDX_MAP: ClassVar[Dict[LeafID, int]] = {}
 
     @abstractmethod
     def do_splitter_match(self, line: Line) -> STMatchResult:
@@ -3317,21 +3317,19 @@ class StringSplitterMixin(StringTransformerMixin):
     def _insert_str_child_factory(string_leaf: Leaf) -> Callable[[LN], None]:
         string_parent = string_leaf.parent
 
-        child_idx = None
-        if string_parent:
-            child_idx = string_leaf.remove()
-            assert child_idx is not None
-            StringSplitterMixin.STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx
+        child_idx = string_leaf.remove()
+        assert child_idx is not None
+
+        StringSplitterMixin.STRING_CHILD_IDX_MAP[id(string_leaf)] = child_idx
 
         def insert_str_child(child: LN) -> None:
-            child_idx = StringSplitterMixin.STRING_CHILD_IDX_MAP.get(
-                id(string_leaf), None
+            child_idx = StringSplitterMixin.STRING_CHILD_IDX_MAP[id(string_leaf)]
+
+            assert string_parent is not None
+            string_parent.insert_child(child_idx, child)
+            StringSplitterMixin.STRING_CHILD_IDX_MAP[id(string_leaf)] = (
+                child_idx + 1
             )
-            if string_parent and child_idx is not None:
-                string_parent.insert_child(child_idx, child)
-                StringSplitterMixin.STRING_CHILD_IDX_MAP[id(string_leaf)] = (
-                    child_idx + 1
-                )
 
         return insert_str_child
 
