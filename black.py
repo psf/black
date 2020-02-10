@@ -3345,6 +3345,11 @@ class StringSplitterMixin(StringTransformerMixin):
 
     @staticmethod
     def _insert_str_child_factory(string_leaf: Leaf) -> Callable[[LN], None]:
+        """
+        Factory for a convenience function that is used to orphan @string_leaf
+        and then insert multiple new leaves into the same part of the node
+        structure that @string_leaf had originally occupied.
+        """
         string_parent = string_leaf.parent
         string_child_idx = string_leaf.remove()
 
