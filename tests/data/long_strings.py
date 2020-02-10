@@ -88,7 +88,7 @@ fstring = f"f-strings definitely make things more {difficult} than they need to 
 
 comment_string = "Long lines with inline comments should have their comments appended to the reformatted string's enclosing right parentheses."  # This comment gets thrown to the top.
 
-arg_comment_string = print("Long lines with inline comments which are apart of (and not the only member of) an argument list should have their comments appended to the reformatted string's enclosing left parentheses.",  # This comment gets thrown to the top.
+arg_comment_string = print("Long lines with inline comments which are apart of (and not the only member of) an argument list should have their comments appended to the reformatted string's enclosing left parentheses.",  # This comment stays on the bottom.
     "Arg #2", "Arg #3", "Arg #4", "Arg #5")
 
 pragma_comment_string1 = "Lines which end with an inline pragma comment of the form `# <pragma>: <...>` should be left alone."  # noqa: E501
@@ -398,6 +398,22 @@ some_variable = "This string is long but not so long that it needs hahahah toooo
 some_variable = "This string is long but not so long that it needs hahahah toooooo be so greatttt {} that I just can't think of any more good words to say about it at alllllllllll".format("ha")
 some_variable = "This string is long but not so long that it needs hahahah toooooo be so greatttt {} that I just can't think of any more good words to say about it at allllllllllll".format("ha")
 some_variable = "This is a long string that will end with a method that is not calleddd".format
+addition_inside_tuple = (
+    some_string_inside_a_variable
+    + "Some string that is just long enough to cause a split to take place.............",
+    xyz,
+    "Some really long string that needs to get split eventually but I'm running out of things to say" + some_string_inside_a_variable
+)
+addition_inside_tuple = (
+    some_string_inside_a_variable
+    + "Some string that is just long enough to cause a split to take place.............."
+)
+return "Hi there. This is areally really reallllly long string that needs to be split!!!"
+ternary_expression = (
+    "Short String"
+    if some_condition
+    else "This is a really long string that will eventually need to be split right here."
+)
 
 # output
 
@@ -416,10 +432,8 @@ x += (
 y = "Short string"
 
 print(
-    (
-        "This is a really long string inside of a print statement with extra arguments"
-        " attached at the end of it."
-    ),
+    "This is a really long string inside of a print statement with extra arguments"
+    " attached at the end of it.",
     x,
     y,
     z,
@@ -517,15 +531,13 @@ bad_split3 = (
 )
 
 bad_split_func1(
-    (
-        "But what should happen when code has already "
-        "been formatted but in the wrong way? Like "
-        "with a space at the beginning instead of the "
-        "end. Or what about when it is split too "
-        "soon? In the case of a split that is too "
-        "short, black will try to honer the custom "
-        "split."
-    ),
+    "But what should happen when code has already "
+    "been formatted but in the wrong way? Like "
+    "with a space at the beginning instead of the "
+    "end. Or what about when it is split too "
+    "soon? In the case of a split that is too "
+    "short, black will try to honer the custom "
+    "split.",
     xxx,
     yyy,
     zzz,
@@ -608,11 +620,9 @@ comment_string = (  # This comment gets thrown to the top.
 )
 
 arg_comment_string = print(
-    (  # This comment gets thrown to the top.
-        "Long lines with inline comments which are apart of (and not the only member"
-        " of) an argument list should have their comments appended to the reformatted"
-        " string's enclosing left parentheses."
-    ),
+    "Long lines with inline comments which are apart of (and not the only member of) an"
+    " argument list should have their comments appended to the reformatted string's"
+    " enclosing left parentheses.",  # This comment stays on the bottom.
     "Arg #2",
     "Arg #3",
     "Arg #4",
@@ -657,14 +667,12 @@ some_function_call(
 )
 
 some_function_call(
-    (
-        "With a reallly generic name and with a really really long string that is, at"
-        " some point down the line, "
-        + added
-        + " to a variable and then added to another string. But then what happens when"
-        " the final string is also supppppperrrrr long?! Well then that second"
-        " (realllllllly long) string should be split too."
-    ),
+    "With a reallly generic name and with a really really long string that is, at some"
+    " point down the line, "
+    + added
+    + " to a variable and then added to another string. But then what happens when the"
+    " final string is also supppppperrrrr long?! Well then that second (realllllllly"
+    " long) string should be split too.",
     "and a second argument",
     and_a_third,
 )
@@ -676,22 +684,22 @@ return (
 
 func_with_bad_comma(
     "This is a really long string argument to a function that has a trailing comma"
-    " which should NOT be there."
+    " which should NOT be there.",
 )
 
 func_with_bad_comma(
     "This is a really long string argument to a function that has a trailing comma"
-    " which should NOT be there."  # comment after comma
+    " which should NOT be there.",  # comment after comma
 )
 
 func_with_bad_comma(
     "This is a really long string argument to a function that has a trailing comma"
-    " which should NOT be there."
+    " which should NOT be there.",
 )
 
 func_with_bad_comma(
     "This is a really long string argument to a function that has a trailing comma"
-    " which should NOT be there."  # comment after comma
+    " which should NOT be there.",  # comment after comma
 )
 
 func_with_bad_parens(
@@ -774,10 +782,8 @@ class A:
     def foo():
         XXXXXXXXXXXX.append(
             (
-                (
-                    "xxx_xxxxxxxxxx(xxxxx={}, xxxx={}, xxxxx, xxxx_xxxx_xxxxxxxxxx={})"
-                    .format(xxxxx, xxxx, xxxx_xxxx_xxxxxxxxxx)
-                ),
+                "xxx_xxxxxxxxxx(xxxxx={}, xxxx={}, xxxxx, xxxx_xxxx_xxxxxxxxxx={})"
+                .format(xxxxx, xxxx, xxxx_xxxx_xxxxxxxxxx),
                 my_var,
                 my_other_var,
             )
@@ -788,11 +794,9 @@ class A:
     class B:
         def foo():
             bar(
-                (
-                    "[{}]: xxx_xxxxxxxxxx(xxxxx={}, xxxx={}, xxxxx={}"
-                    " xxxx_xxxx_xxxxxxxxxx={}, xxxx={})".format(
-                        xxxx._xxxxxxxxxxxxxx, xxxxx, xxxx, xxxx_xxxx_xxxxxxxxxx, xxxxxxx
-                    )
+                "[{}]: xxx_xxxxxxxxxx(xxxxx={}, xxxx={}, xxxxx={}"
+                " xxxx_xxxx_xxxxxxxxxx={}, xxxx={})".format(
+                    xxxx._xxxxxxxxxxxxxx, xxxxx, xxxx, xxxx_xxxx_xxxxxxxxxx, xxxxxxx
                 ),
                 varX,
                 varY,
@@ -831,15 +835,13 @@ class A:
         def foo():
             xxxxx_xxxx(
                 xx,
-                (
-                    "\t"
-                    "@xxxxxx '{xxxx_xxx}\t' > {xxxxxx_xxxx}.xxxxxxx;"
-                    "{xxxx_xxx} >> {xxxxxx_xxxx}.xxxxxxx 2>&1; xx=$$?;"
-                    "xxxx $$xx".format(
-                        xxxx_xxx=xxxx_xxxxxxx,
-                        xxxxxx_xxxx=xxxxxxx + "/" + xxxx_xxx_xxxx,
-                        x=xxx_xxxxx_xxxxx_xxx,
-                    )
+                "\t"
+                "@xxxxxx '{xxxx_xxx}\t' > {xxxxxx_xxxx}.xxxxxxx;"
+                "{xxxx_xxx} >> {xxxxxx_xxxx}.xxxxxxx 2>&1; xx=$$?;"
+                "xxxx $$xx".format(
+                    xxxx_xxx=xxxx_xxxxxxx,
+                    xxxxxx_xxxx=xxxxxxx + "/" + xxxx_xxx_xxxx,
+                    x=xxx_xxxxx_xxxxx_xxx,
                 ),
                 x,
                 y,
@@ -849,19 +851,19 @@ class A:
 
 func_call_where_string_arg_has_method_call_and_bad_parens(
     "A long string with {}. This string is so long that it is ridiculous. It can't fit"
-    " on one line at alllll.".format("formatting")
+    " on one line at alllll.".format("formatting"),
 )
 
 func_call_where_string_arg_has_old_fmt_and_bad_parens(
     "A long string with {}. This string is so long that it is ridiculous. It can't fit"
     " on one line at alllll."
-    % "formatting"
+    % "formatting",
 )
 
 func_call_where_string_arg_has_old_fmt_and_bad_parens(
     "A long string with {}. This {} is so long that it is ridiculous. It can't fit on"
     " one line at alllll."
-    % ("formatting", "string")
+    % ("formatting", "string"),
 )
 
 
@@ -885,11 +887,9 @@ class A:
     def foo():
         some_func_call(
             "xxxxxxxxxx",
-            (
-                "xx {xxxxxxxxxxx}/xxxxxxxxxxx.xxx xxxx.xxx && xxxxxx -x "
-                '"xxxx xxxxxxx xxxxxx xxxx; xxxx xxxxxx_xxxxx xxxxxx xxxx; '
-                "xxxx.xxxx_xxxxxx(['xxxx.xxx'], xxxx.xxxxxxx().xxxxxxxxxx)\" "
-            ),
+            "xx {xxxxxxxxxxx}/xxxxxxxxxxx.xxx xxxx.xxx && xxxxxx -x "
+            '"xxxx xxxxxxx xxxxxx xxxx; xxxx xxxxxx_xxxxx xxxxxx xxxx; '
+            "xxxx.xxxx_xxxxxx(['xxxx.xxx'], xxxx.xxxxxxx().xxxxxxxxxx)\" ",
             None,
             ("xxxxxxxxxxx",),
         ),
@@ -898,11 +898,9 @@ class A:
 class A:
     def foo():
         some_func_call(
-            (
-                "xx {xxxxxxxxxxx}/xxxxxxxxxxx.xxx xxxx.xxx && xxxxxx -x "
-                "xxxx, ('xxxxxxx xxxxxx xxxx, xxxx') xxxxxx_xxxxx xxxxxx xxxx; "
-                "xxxx.xxxx_xxxxxx(['xxxx.xxx'], xxxx.xxxxxxx().xxxxxxxxxx)\" "
-            ),
+            "xx {xxxxxxxxxxx}/xxxxxxxxxxx.xxx xxxx.xxx && xxxxxx -x "
+            "xxxx, ('xxxxxxx xxxxxx xxxx, xxxx') xxxxxx_xxxxx xxxxxx xxxx; "
+            "xxxx.xxxx_xxxxxx(['xxxx.xxx'], xxxx.xxxxxxx().xxxxxxxxxx)\" ",
             None,
             ("xxxxxxxxxxx",),
         ),
@@ -961,34 +959,26 @@ class A:
                 xxxxxx={"xxxxxx 1": xxxxxx(xxxx="xxxxxx 1", xxxxxx=200.0)},
                 xxxxxxxx_xxxxxxx=0.0,
             ),
-            xxxxxxxxxxxxxxxx("xxxx"),
+            xxxxxxxxxxxxxxxx("xxxx",),
         ]
 
 
 some_dictionary = {
     "xxxxx006": [
-        (
-            "xxx-xxx"
-            " xxxxx3xxxx1xx2xxxxxxxxxxxxxx0xx6xxxxxxxxxx2xxxxxx9xxxxxxxxxx0xxxxx1xxx2x/xx9xx6+x+xxxxxxxxxxxxxx4xxxxxxxxxxxxxxxxxxxxx43xxx2xx2x4x++xxx6xxxxxxxxx+xxxxx/xx9x+xxxxxxxxxxxxxx8x15xxxxxxxxxxxxxxxxx82xx/xxxxxxxxxxxxxx/x5xxxxxxxxxxxxxx6xxxxxx74x4/xxx4x+xxxxxxxxx2xxxxxxxx87xxxxx4xxxxxxxx3xx0xxxxx4xxx1xx9xx5xxxxxxx/xxxxx5xx6xx4xxxx1x/x2xxxxxxxxxxxx64xxxxxxx1x0xx5xxxxxxxxxxxxxx=="
-            " xxxxx000 xxxxxxxxxx\n"
-        ),
-        (
-            "xxx-xxx"
-            " xxxxx3xxxx1xx2xxxxxxxxxxxxxx6xxxxxxxxxxxxxx9xxxxxxxxxxxxx3xxx9xxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxx2xxxx2xxx6xxxxx/xx54xxxxxxxxx4xxx3xxxxxx9xx3xxxxx39xxxxxxxxx5xx91xxxx7xxxxxx8xxxxxxxxxxxxxxxx9xxx93xxxxxxxxxxxxxxxxx7xxx8xx8xx4/x1xxxxx1x3xxxxxxxxxxxxx3xxxxxx9xx4xx4x7xxxxxxxxxxxxx1xxxxxxxxx7xxxxxxxxxxxxxx4xx6xxxxxxxxx9xxx7xxxx2xxxxxxxxxxxxxxxxxxxxxx8xxxxxxxxxxxxxxxxxxxx6xx=="
-            " xxxxx010 xxxxxxxxxx\n"
-        ),
+        "xxx-xxx"
+        " xxxxx3xxxx1xx2xxxxxxxxxxxxxx0xx6xxxxxxxxxx2xxxxxx9xxxxxxxxxx0xxxxx1xxx2x/xx9xx6+x+xxxxxxxxxxxxxx4xxxxxxxxxxxxxxxxxxxxx43xxx2xx2x4x++xxx6xxxxxxxxx+xxxxx/xx9x+xxxxxxxxxxxxxx8x15xxxxxxxxxxxxxxxxx82xx/xxxxxxxxxxxxxx/x5xxxxxxxxxxxxxx6xxxxxx74x4/xxx4x+xxxxxxxxx2xxxxxxxx87xxxxx4xxxxxxxx3xx0xxxxx4xxx1xx9xx5xxxxxxx/xxxxx5xx6xx4xxxx1x/x2xxxxxxxxxxxx64xxxxxxx1x0xx5xxxxxxxxxxxxxx=="
+        " xxxxx000 xxxxxxxxxx\n",
+        "xxx-xxx"
+        " xxxxx3xxxx1xx2xxxxxxxxxxxxxx6xxxxxxxxxxxxxx9xxxxxxxxxxxxx3xxx9xxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxx2xxxx2xxx6xxxxx/xx54xxxxxxxxx4xxx3xxxxxx9xx3xxxxx39xxxxxxxxx5xx91xxxx7xxxxxx8xxxxxxxxxxxxxxxx9xxx93xxxxxxxxxxxxxxxxx7xxx8xx8xx4/x1xxxxx1x3xxxxxxxxxxxxx3xxxxxx9xx4xx4x7xxxxxxxxxxxxx1xxxxxxxxx7xxxxxxxxxxxxxx4xx6xxxxxxxxx9xxx7xxxx2xxxxxxxxxxxxxxxxxxxxxx8xxxxxxxxxxxxxxxxxxxx6xx=="
+        " xxxxx010 xxxxxxxxxx\n",
     ],
     "xxxxx016": [
-        (
-            "xxx-xxx"
-            " xxxxx3xxxx1xx2xxxxxxxxxxxxxx0xx6xxxxxxxxxx2xxxxxx9xxxxxxxxxx0xxxxx1xxx2x/xx9xx6+x+xxxxxxxxxxxxxx4xxxxxxxxxxxxxxxxxxxxx43xxx2xx2x4x++xxx6xxxxxxxxx+xxxxx/xx9x+xxxxxxxxxxxxxx8x15xxxxxxxxxxxxxxxxx82xx/xxxxxxxxxxxxxx/x5xxxxxxxxxxxxxx6xxxxxx74x4/xxx4x+xxxxxxxxx2xxxxxxxx87xxxxx4xxxxxxxx3xx0xxxxx4xxx1xx9xx5xxxxxxx/xxxxx5xx6xx4xxxx1x/x2xxxxxxxxxxxx64xxxxxxx1x0xx5xxxxxxxxxxxxxx=="
-            " xxxxx000 xxxxxxxxxx\n"
-        ),
-        (
-            "xxx-xxx"
-            " xxxxx3xxxx1xx2xxxxxxxxxxxxxx6xxxxxxxxxxxxxx9xxxxxxxxxxxxx3xxx9xxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxx2xxxx2xxx6xxxxx/xx54xxxxxxxxx4xxx3xxxxxx9xx3xxxxx39xxxxxxxxx5xx91xxxx7xxxxxx8xxxxxxxxxxxxxxxx9xxx93xxxxxxxxxxxxxxxxx7xxx8xx8xx4/x1xxxxx1x3xxxxxxxxxxxxx3xxxxxx9xx4xx4x7xxxxxxxxxxxxx1xxxxxxxxx7xxxxxxxxxxxxxx4xx6xxxxxxxxx9xxx7xxxx2xxxxxxxxxxxxxxxxxxxxxx8xxxxxxxxxxxxxxxxxxxx6xx=="
-            " xxxxx010 xxxxxxxxxx\n"
-        ),
+        "xxx-xxx"
+        " xxxxx3xxxx1xx2xxxxxxxxxxxxxx0xx6xxxxxxxxxx2xxxxxx9xxxxxxxxxx0xxxxx1xxx2x/xx9xx6+x+xxxxxxxxxxxxxx4xxxxxxxxxxxxxxxxxxxxx43xxx2xx2x4x++xxx6xxxxxxxxx+xxxxx/xx9x+xxxxxxxxxxxxxx8x15xxxxxxxxxxxxxxxxx82xx/xxxxxxxxxxxxxx/x5xxxxxxxxxxxxxx6xxxxxx74x4/xxx4x+xxxxxxxxx2xxxxxxxx87xxxxx4xxxxxxxx3xx0xxxxx4xxx1xx9xx5xxxxxxx/xxxxx5xx6xx4xxxx1x/x2xxxxxxxxxxxx64xxxxxxx1x0xx5xxxxxxxxxxxxxx=="
+        " xxxxx000 xxxxxxxxxx\n",
+        "xxx-xxx"
+        " xxxxx3xxxx1xx2xxxxxxxxxxxxxx6xxxxxxxxxxxxxx9xxxxxxxxxxxxx3xxx9xxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxx2xxxx2xxx6xxxxx/xx54xxxxxxxxx4xxx3xxxxxx9xx3xxxxx39xxxxxxxxx5xx91xxxx7xxxxxx8xxxxxxxxxxxxxxxx9xxx93xxxxxxxxxxxxxxxxx7xxx8xx8xx4/x1xxxxx1x3xxxxxxxxxxxxx3xxxxxx9xx4xx4x7xxxxxxxxxxxxx1xxxxxxxxx7xxxxxxxxxxxxxx4xx6xxxxxxxxx9xxx7xxxx2xxxxxxxxxxxxxxxxxxxxxx8xxxxxxxxxxxxxxxxxxxx6xx=="
+        " xxxxx010 xxxxxxxxxx\n",
     ],
 }
 
@@ -1015,7 +1005,7 @@ some_commented_string = (
 
 lpar_and_rpar_have_comments = func_call(  # LPAR Comment
     "Long really ridiculous type of string that shouldn't really even exist at all. I"
-    " mean commmme onnn!!!"  # Comma Comment
+    " mean commmme onnn!!!",  # Comma Comment
 )  # RPAR Comment
 
 ########## EDGE-CASE TESTS ##########
@@ -1053,4 +1043,28 @@ some_variable = (
 )
 some_variable = (
     "This is a long string that will end with a method that is not calleddd".format
+)
+addition_inside_tuple = (
+    some_string_inside_a_variable
+    + "Some string that is just long enough to cause a split to take"
+    " place.............",
+    xyz,
+    "Some really long string that needs to get split eventually but I'm running out of"
+    " things to say"
+    + some_string_inside_a_variable,
+)
+addition_inside_tuple = (
+    some_string_inside_a_variable
+    + "Some string that is just long enough to cause a split to take"
+    " place.............."
+)
+return (
+    "Hi there. This is areally really reallllly long string that needs to be split!!!"
+)
+ternary_expression = (
+    "Short String"
+    if some_condition
+    else (
+        "This is a really long string that will eventually need to be split right here."
+    )
 )

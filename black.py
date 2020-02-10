@@ -2523,9 +2523,7 @@ def split_line(
         return ST(line_str, line_length, normalize_strings)
 
     string_merge = init_st(StringMerger)
-    string_arg_comma_strip = init_st(StringArgCommaStripper)
     string_parens_strip = init_st(StringParensStripper)
-    string_arith_expr_split = init_st(StringArithExprSplitter)
     string_term_split = init_st(StringTermSplitter)
     string_expr_split = init_st(StringExprSplitter)
 
@@ -2540,7 +2538,7 @@ def split_line(
         )
     ):
         # Only apply basic string preprocessing, since strings can't be split here.
-        split_funcs = [string_merge, string_arg_comma_strip, string_parens_strip]
+        split_funcs = [string_merge, string_parens_strip]
     elif line.is_def:
         split_funcs = [left_hand_split]
     else:
@@ -2562,9 +2560,7 @@ def split_line(
         if line.inside_brackets:
             split_funcs = [
                 string_merge,
-                string_arg_comma_strip,
                 string_parens_strip,
-                string_arith_expr_split,
                 delimiter_split,
                 standalone_comment_split,
                 string_term_split,
@@ -2574,7 +2570,6 @@ def split_line(
         else:
             split_funcs = [
                 string_merge,
-                string_arg_comma_strip,
                 string_parens_strip,
                 string_term_split,
                 string_expr_split,
@@ -2778,7 +2773,7 @@ class StringTransformerMixin(StringTransformer):
             * Ok(idx) such that `leaves[idx].value == string_value`, when
             the search is successful.
                 OR
-            * Err(STError), when the search is unsuccessful.
+            * Err(ValueError), when the search is unsuccessful.
         """
         for i, leaf in enumerate(leaves):
             if leaf.type == token.STRING and leaf.value == string_value:
@@ -3067,7 +3062,7 @@ class StringMerger(StringTransformerMixin):
         Returns:
             * Ok(None), if all validation checks (listed below) pass.
                 OR
-            * Err(STError) if any of the following are true:
+            * Err(STError), if any of the following are true:
                 - The target string is not in a string group (i.e. it has no
                   adjacent strings).
                 - The string group has more than one inline comment.
@@ -3107,157 +3102,7 @@ class StringMerger(StringTransformerMixin):
         return Ok(None)
 
 
-class StringStripperMixin(StringTransformerMixin):
-    """
-    Mixin class for StringTransformers which transform a Line's STRING leaves
-    by stripping certain characters from their left or right sides (e.g.
-    undesirable parenthesis or commas).
-    """
-
-    @abstractmethod
-    def do_match(self, line: Line) -> STMatchResult:
-        """Refer to `help(StringTransformerMixin.do_match)`."""
-
-    @abstractmethod
-    def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
-        """Refer to `help(StringTransformerMixin.do_transform)`."""
-
-    @staticmethod
-    def get_first_unmatched_rpar_idx(leaves: List[Leaf]) -> Result[int, ValueError]:
-        """
-        Returns:
-            * Ok(idx) where idx is the index of the first RPAR leaf that
-            doesn't match any of the LPAR leaves found in @leaves.
-                OR
-            * Err(ValueError) if no such leaf can be found.
-        """
-        unmatched_parens = 0
-        for (i, leaf) in enumerate(leaves):
-            if leaf.type == token.LPAR:
-                unmatched_parens += 1
-                continue
-
-            if leaf.type == token.RPAR:
-                if unmatched_parens > 0:
-                    unmatched_parens -= 1
-                elif unmatched_parens == 0:
-                    return Ok(i)
-                else:
-                    value_error = ValueError(
-                        "Found RPAR that matches LPAR from the past!"
-                    )
-                    return Err(value_error)
-
-        value_error = ValueError("No RPAR found!")
-        return Err(value_error)
-
-
-class StringArgCommaStripper(StringStripperMixin):
-    """StringTransformer that strips unnecessary trailing commas from string arguments.
-
-    Requirements:
-        The line contains a function call where the ONLY argument provided is a
-        string, is positional, and is trailed by a comma.
-
-    Transformations:
-        The trailing comma mentioned in the 'Requirements' section is stripped.
-
-    Collaborations:
-        This transformer is necessary to ensure that a string argument to a
-        function call is transformed by StringExprSplitter ONLY when other
-        function arguments exist (i.e. the string is not the only argument
-        provided to the function).
-    """
-
-    def do_match(self, line: Line) -> STMatchResult:
-        LL = line.leaves
-
-        regex_result = self._re_string_match(
-            fr"""
-            ^
-            (?: # Ensures that we don't mistake an end quote for a starting quote.
-                [^'"]
-                | {RE_BALANCED_QUOTES}
-            )*?
-            [A-Za-z0-9_]+\(
-                {RE_STRING_GROUP}{RE_STRING_TRAILER},
-            \)
-            .*$
-            """,
-        )
-
-        if isinstance(regex_result, Err):
-            return regex_result
-
-        string_value = regex_result.ok()
-        for (i, leaf) in enumerate(LL):
-            if (
-                leaf.type == token.STRING
-                and leaf.value == string_value
-                and i > 0
-                and LL[i - 1].type == token.LPAR
-                and i + 2 < len(LL)
-            ):
-                unmatched_parens = 0
-                for (j, inner_leaf) in enumerate(LL[i + 1 :]):
-                    if (
-                        inner_leaf.type == token.COMMA
-                        and LL[i + j + 2].type == token.RPAR
-                        and unmatched_parens == 0
-                    ):
-                        return Ok((string_value, i))
-
-                    if inner_leaf.type == token.LPAR:
-                        unmatched_parens += 1
-
-                    if inner_leaf.type == token.RPAR:
-                        if unmatched_parens > 0:
-                            unmatched_parens -= 1
-                        else:
-                            break
-
-        raise RuntimeError(
-            f"Logic Error. {self.__class__.__name__} was unable to determine a string"
-            " index for some reason."
-        )
-
-    def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
-        LL = line.leaves
-
-        new_line = line.clone()
-
-        rpar_idx_result = self.get_first_unmatched_rpar_idx(LL[string_idx + 2 :])
-        if isinstance(rpar_idx_result, Err):
-            value_error = rpar_idx_result.err()
-            raise RuntimeError(
-                f"Logic Error. {self.__class__.__name__} was unable to find the ending"
-                " RPAR leaf for the following string and line:\n\nSTRING:"
-                f" {LL[string_idx]}\n\nLINE: {self.line_str}\n"
-            ) from value_error
-
-        rpar_idx = rpar_idx_result.ok()
-        comma_idx = rpar_idx + string_idx + 1
-        comma_leaf = LL[comma_idx]
-        for (i, old_leaf) in enumerate(LL):
-            if i == comma_idx:
-                continue
-
-            new_leaf = Leaf(old_leaf.type, old_leaf.value)
-            replace_child(old_leaf, new_leaf)
-            new_line.append(new_leaf)
-
-            leaves_to_take_comments_from = [old_leaf]
-            if i == string_idx:
-                leaves_to_take_comments_from.append(comma_leaf)
-
-            for leaf in leaves_to_take_comments_from:
-                for comment_leaf in line.comments_after(leaf):
-                    new_line.append(comment_leaf, preformatted=True)
-
-        yield Ok(new_line)
-
-
-class StringParensStripper(StringStripperMixin):
+class StringParensStripper(StringTransformerMixin):
     """StringTransformer that strips surrounding parentheses from strings.
 
     Requirements:
@@ -3278,7 +3123,7 @@ class StringParensStripper(StringStripperMixin):
                 [^'"]
                 | {RE_BALANCED_QUOTES}
             )*?
-            [^A-Za-z0-9_'"][ ]*
+            [^A-Za-z0-9_'"][ ]*  # NOT a function call!
             \({RE_STRING_GROUP}{RE_STRING_TRAILER}\)[^\.]
             .*$
             """,
@@ -3314,7 +3159,7 @@ class StringParensStripper(StringStripperMixin):
     def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
         LL = line.leaves
 
-        rpar_idx_result = self.get_first_unmatched_rpar_idx(LL[string_idx + 1 :])
+        rpar_idx_result = self._get_first_unmatched_rpar_idx(LL[string_idx + 1 :])
         if isinstance(rpar_idx_result, Err):
             value_error = rpar_idx_result.err()
             raise RuntimeError(
@@ -3326,6 +3171,13 @@ class StringParensStripper(StringStripperMixin):
         unmatched_rpar_idx = rpar_idx_result.ok()
         rpar_idx = unmatched_rpar_idx + string_idx + 1
 
+        for leaf in (LL[string_idx - 1], LL[rpar_idx]):
+            if line.comments_after(leaf):
+                st_error = STError(
+                    "Will not strip parentheses which have comments attached to them."
+                )
+                yield Err(st_error)
+
         new_line = line.clone()
         new_line.comments = line.comments.copy()
 
@@ -3335,9 +3187,6 @@ class StringParensStripper(StringStripperMixin):
         LL[string_idx - 1].remove()
         replace_child(LL[string_idx], string_leaf)
         new_line.append(string_leaf)
-        for leaf in (LL[string_idx - 1], LL[rpar_idx]):
-            for comment_leaf in line.comments_after(leaf):
-                new_line.append(comment_leaf, preformatted=True)
 
         append_leaves(
             new_line, line, LL[string_idx + 1 : rpar_idx] + LL[rpar_idx + 1 :],
@@ -3347,6 +3196,35 @@ class StringParensStripper(StringStripperMixin):
 
         yield Ok(new_line)
 
+    @staticmethod
+    def _get_first_unmatched_rpar_idx(leaves: List[Leaf]) -> Result[int, ValueError]:
+        """
+        Returns:
+            * Ok(idx) where idx is the index of the first RPAR leaf that
+            doesn't match any of the LPAR leaves found in @leaves.
+                OR
+            * Err(ValueError) if no such leaf can be found.
+        """
+        unmatched_parens = 0
+        for (i, leaf) in enumerate(leaves):
+            if leaf.type == token.LPAR:
+                unmatched_parens += 1
+                continue
+
+            if leaf.type == token.RPAR:
+                if unmatched_parens > 0:
+                    unmatched_parens -= 1
+                elif unmatched_parens == 0:
+                    return Ok(i)
+                else:
+                    value_error = ValueError(
+                        "Found RPAR that matches LPAR from the past!"
+                    )
+                    return Err(value_error)
+
+        value_error = ValueError("No RPAR found!")
+        return Err(value_error)
+
 
 class StringSplitterMixin(StringTransformerMixin):
     """
@@ -3354,6 +3232,8 @@ class StringSplitterMixin(StringTransformerMixin):
     splitting them or placing them on their own lines where necessary to avoid
     going over the configured line length.
     """
+
+    # TODO(bugyi): Add Requirements section
 
     STRING_CHILD_IDX_MAP: ClassVar[Dict[int, Optional[int]]] = {}
 
@@ -3423,28 +3303,26 @@ class StringSplitterMixin(StringTransformerMixin):
         string_leaf = LL[string_idx]
 
         offset = 0
-        if string_idx >= 2:
+        if string_idx >= 1:
             p_idx = string_idx - 1
             if (
                 LL[string_idx - 1].type == token.LPAR
                 and LL[string_idx - 1].value == ""
-                and string_idx >= 3
+                and string_idx >= 2
             ):
                 p_idx -= 1
 
             P = LL[p_idx]
-            PP = LL[p_idx - 1]
+            if P.type == token.PLUS:
+                offset += 2
 
-            if [PP.type, P.type] == [token.RPAR, token.COMMA]:
+            if P.type == token.COMMA:
                 offset += 3
 
-            if P.type in [token.COLON, token.EQUAL]:
-                offset += 2
-                if P.type == token.EQUAL:
-                    offset += 1
-
-                for leaf in LL[:p_idx]:
-                    offset += len(leaf.value)
+            if P.type in [token.COLON, token.EQUAL, token.NAME]:
+                offset += 1
+                for leaf in LL[: p_idx + 1]:
+                    offset += len(str(leaf))
 
         if len(LL) > string_idx + 1:
             N = LL[string_idx + 1]
@@ -3547,9 +3425,11 @@ class StringTermSplitter(StringSplitterMixin):
         the CUSTOM_SPLIT_MAP.
     """
 
+    # TODO(bugyi): Mention StringSplitterMixin Requirements section
+
     def do_splitter_match(self, line: Line) -> STMatchResult:
         regex_result = self._re_string_match(
-            fr"^[ ]*(?:\+[ ]*)?{RE_STRING_GROUP}{RE_STRING_TRAILER}{RE_EOL}"
+            fr"^[ ]*(?:\+[ ]*)?{RE_STRING_GROUP}{RE_STRING_TRAILER},?{RE_EOL}"
         )
 
         if isinstance(regex_result, Err):
@@ -3586,6 +3466,9 @@ class StringTermSplitter(StringSplitterMixin):
         )
 
         starts_with_plus = LL[0].type == token.PLUS
+        ends_with_comma = (
+            string_idx + 1 < len(LL) and LL[string_idx + 1].type == token.COMMA
+        )
         drop_pointless_f_prefix = ("f" in prefix) and re.search(r"\{.+\}", rest_value)
         use_custom_breakpoints = bool(
             custom_splits
@@ -3601,10 +3484,17 @@ class StringTermSplitter(StringSplitterMixin):
                 new_line.append(plus_leaf)
 
         max_rest_line = self.line_length - len(prefix)
+        if ends_with_comma:
+            max_rest_line -= 1
+        if starts_with_plus:
+            max_rest_line -= 2
+
         while len(line_to_string(rest_line)) > max_rest_line or (
             len(custom_splits) > 1 and use_custom_breakpoints
         ):
             prepend_plus = first_string_line and starts_with_plus
+            if prepend_plus:
+                max_rest_line += 2
 
             if use_custom_breakpoints:
                 csplit = custom_splits.pop(0)
@@ -3661,10 +3551,9 @@ class StringTermSplitter(StringSplitterMixin):
 
         insert_str_child(rest_leaf)
 
+        last_line = line.clone()
+        maybe_prepend_plus(last_line)
         if len(LL) > (string_idx + 1):
-            last_line = line.clone()
-            maybe_prepend_plus(last_line)
-
             non_string_line = rest_line.clone()
             append_leaves(non_string_line, line, LL[string_idx + 1 :])
 
@@ -3689,8 +3578,9 @@ class StringTermSplitter(StringSplitterMixin):
 
                 yield Ok(non_string_line)
         else:
-            rest_line.comments = line.comments
-            yield Ok(rest_line)
+            append_leaves(last_line, rest_line, rest_line.leaves)
+            last_line.comments = line.comments.copy()
+            yield Ok(last_line)
 
         del CUSTOM_SPLIT_MAP[(id(LL[string_idx].value), LL[string_idx].value)]
 
@@ -3737,10 +3627,27 @@ class StringTermSplitter(StringSplitterMixin):
             return string
 
 
-class StringExprSplitterMixin(StringSplitterMixin):
+class StringExprSplitter(StringSplitterMixin):
     """
-    Mixin for StringTransformers that split non-atomic strings (i.e. strings
-    that do NOT exist on lines by themselves).
+    StringTransformer that splits most non-atomic strings (i.e. strings that do
+    not exist on lines by themselves).
+
+    Requirements:
+        * The line is a return statement, which returns a string.
+            OR
+        * The line is part of a ternary expression (e.g. `x = y if cond else
+        z`) such that the line starts with `else <string>`, where <string> is
+        some string.
+            OR
+        * The line is an assert statement, which ends with a string.
+            OR
+        * The line is an assignment statement (e.g. `x = 1` or `x += 1`) such
+        that the variable is being assigned the value of some string.
+            OR
+        * The line is a dictionary key assignment where some valid key is being
+        assigned the value of some string.
+            OR
+        * The line is a single string followed by a comma.
 
     Transformations:
         The chosen string (decided by this mixin's clients/subclasses) is
@@ -3759,9 +3666,42 @@ class StringExprSplitterMixin(StringSplitterMixin):
         string.
     """
 
-    @abstractmethod
+    # TODO(bugyi): Mention StringSplitterMixin Requirements section
+
     def do_splitter_match(self, line: Line) -> STMatchResult:
-        """Refer to `help(StringSplitterMixin.do_splitter_match)`."""
+        regex_result = self._re_string_match(
+            fr"""
+            ^[ ]*
+            (?:
+                (?:
+                    return[ ]  # a 'return' statement
+                    | else[ ]  # OR the 'else' part of a ternary expression
+                    | assert[ ].*,[ ]?  # OR an 'assert' statement
+                    | [A-Za-z0-9\._]*?  # OR an assignment statement
+                      (?:
+                        # optional type annotation
+                        :[ ]?[A-Za-z0-9_]+{re_balanced_brackets("type_a")}?
+                      )?
+                      [ ]?\+?=[ ]?
+                    | (?:  # OR a dictionary item assignment
+                        [A-Za-z0-9\._]+?
+                          (?:
+                              {re_balanced_parens("dict")}
+                              | {re_balanced_brackets("dict")}
+                          )*
+                        | {RE_STRING}?{re_string_trailer("dict")}
+                      ):[ ]*
+                )?
+                {RE_STRING_GROUP}{re_string_trailer("string1")},?
+            ){RE_EOL}
+            """,
+        )
+
+        if isinstance(regex_result, Err):
+            return regex_result
+
+        string_value = regex_result.ok()
+        return Ok((string_value, None))
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
         LL = line.leaves
@@ -3844,110 +3784,6 @@ class StringExprSplitterMixin(StringSplitterMixin):
             last_line.append(comma_leaf)
 
         yield Ok(last_line)
-
-
-class StringExprSplitter(StringExprSplitterMixin):
-    """
-    StringTransformer that splits most non-atomic strings (i.e. strings that do
-    not exist on lines by themselves).
-
-    Requirements:
-        * The line is a return statement, which returns a string.
-            OR
-        * The line is part of a ternary expression (e.g. `x = y if cond else
-        z`) such that the line starts with `else <string>`, where <string> is
-        some string.
-            OR
-        * The line is an assert statement, which ends with a string.
-            OR
-        * The line is an assignment statement (e.g. `x = 1` or `x += 1`) such
-        that the variable is being assigned the value of some string.
-            OR
-        * The line is a dictionary key assignment where some valid key is being
-        assigned the value of some string.
-            OR
-        * The line is a single string followed by a comma.
-
-    Transformations:
-        Refer to `help(StringExprSplitterMixin)`.
-
-    Collaborations:
-        This transformer relies on StringArgCommaStripper to strip any
-        unnecessary commas from string function arguments. This is necessary
-        since this transformer matches string arguments by checking for a
-        trailing comma and we do NOT want to match string arguments when they
-        are the function call's ONLY argument.
-    """
-
-    def do_splitter_match(self, line: Line) -> STMatchResult:
-        regex_result = self._re_string_match(
-            fr"""
-            ^[ ]*
-            (?:
-                (?:
-                    (?:
-                        return[ ]  # a 'return' statement
-                        | else[ ]  # OR the 'else' part of a ternary expression
-                        | assert[ ].*,[ ]?  # OR an 'assert' statement
-                        | [A-Za-z0-9\._]*?  # OR an assignment statement
-                          (?:
-                            # optional type annotation
-                            :[ ]?[A-Za-z0-9_]+{re_balanced_brackets("type_a")}?
-                          )?
-                          [ ]?\+?=[ ]?
-                        | (?:  # OR a dictionary item assignment
-                            [A-Za-z0-9\._]+?
-                              (?:
-                                  {re_balanced_parens("dict")}
-                                  | {re_balanced_brackets("dict")}
-                              )*
-                            | {RE_STRING}?{re_string_trailer("dict")}
-                          ):[ ]*
-                    )?
-                    {RE_STRING_GROUP}{re_string_trailer("string1")},?
-                )
-                | {RE_STRING_GROUP}{re_string_trailer("string2")},
-            ){RE_EOL}
-            """,
-        )
-
-        if isinstance(regex_result, Err):
-            return regex_result
-
-        string_value = regex_result.ok()
-        return Ok((string_value, None))
-
-
-class StringArithExprSplitter(StringExprSplitterMixin):
-    """
-    This StringTransformer is a hack. We use it because we need to split these
-    lines (of the form specified in the 'Requirements' section below) early in
-    the chain of responsibility, but the StringExprSplitter transformer is too
-    generalized to be placed that high up the chain.
-
-    See the `split_line(...)` function implementation and
-    https://refactoring.guru/design-patterns/chain-of-responsibility if
-    you do not understand what I mean by "chain of responsibility".
-
-    Requirements:
-        * The line begins with a string that is immediately followed by a '+' sign.
-            AND
-        * The line ends with a comma.
-
-    Transformations:
-        Refer to `help(StringExprSplitterMixin)`.
-    """
-
-    def do_splitter_match(self, line: Line) -> STMatchResult:
-        regex_result = self._re_string_match(
-            fr"^[ ]*{RE_STRING_GROUP}{RE_STRING_TRAILER}[ ]?\+[ ].+,{RE_EOL}"
-        )
-
-        if isinstance(regex_result, Err):
-            return regex_result
-
-        string_value = regex_result.ok()
-        return Ok((string_value, None))
 
 
 def line_to_string(line: Line) -> str:
