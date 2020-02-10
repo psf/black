@@ -84,7 +84,9 @@ old_fmt_string2 = "This is a %s %s %s %s" % ("really really really really really
 
 old_fmt_string3 = "Whereas only the strings after the percent sign were long in the last example, this example uses a long initial string as well. This is another %s %s %s %s" % ("really really really really really", "old", "way to format strings!", "Use f-strings instead!")
 
-fstring = f"f-strings definitely make things more {difficult} than they need to be for black. But boy they sure are handy. The problem is that some lines will need to have the 'f' whereas others do not. This {line}, for example, needs one."
+fstring = f"f-strings definitely make things more {difficult} than they need to be for {{black}}. But boy they sure are handy. The problem is that some lines will need to have the 'f' whereas others do not. This {line}, for example, needs one."
+
+fstring_with_no_fexprs = f"Some regular string that needs to get split certainly but is NOT an fstring by any means whatsoever."
 
 comment_string = "Long lines with inline comments should have their comments appended to the reformatted string's enclosing right parentheses."  # This comment gets thrown to the top.
 
@@ -629,8 +631,13 @@ old_fmt_string3 = (
 
 fstring = (
     f"f-strings definitely make things more {difficult} than they need to be for"
-    " black. But boy they sure are handy. The problem is that some lines will need to"
-    f" have the 'f' whereas others do not. This {line}, for example, needs one."
+    " {black}. But boy they sure are handy. The problem is that some lines will"
+    f" need to have the 'f' whereas others do not. This {line}, for example, needs one."
+)
+
+fstring_with_no_fexprs = (
+    f"Some regular string that needs to get split certainly but is NOT an fstring by"
+    f" any means whatsoever."
 )
 
 comment_string = (  # This comment gets thrown to the top.

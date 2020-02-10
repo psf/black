@@ -3487,7 +3487,7 @@ class StringTermSplitter(StringSplitterMixin):
         ends_with_comma = (
             string_idx + 1 < len(LL) and LL[string_idx + 1].type == token.COMMA
         )
-        drop_pointless_f_prefix = ("f" in prefix) and re.search(r"\{.+\}", rest_value)
+        drop_pointless_f_prefix = ("f" in prefix) and re.search(RE_FEXPR, rest_value, re.VERBOSE)
         use_custom_breakpoints = bool(
             custom_splits
             and all(csplit.break_idx <= max_next_value for csplit in custom_splits)
@@ -3501,7 +3501,7 @@ class StringTermSplitter(StringSplitterMixin):
                 replace_child(LL[0], plus_leaf)
                 new_line.append(plus_leaf)
 
-        max_rest_line = self.line_length - len(prefix)
+        max_rest_line = self.line_length
         if ends_with_comma:
             max_rest_line -= 1
         if starts_with_plus:
