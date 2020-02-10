@@ -2835,16 +2835,18 @@ class StringMerger(StringTransformerMixin):
     """StringTransformer that merges strings together.
 
     Requirements:
-        * The line contains adjacent strings such that at most one substring
+        (A) The line contains adjacent strings such that at most one substring
         has inline comments AND the set of all substring prefixes is either of
         length 1 or equal to {"", "f"}.
             OR
-        * The line contains a string which uses line continuation backslashes.
+        (B) The line contains a string which uses line continuation backslashes.
 
     Transformations:
-        * All line-continuation backslashes are removed from the target string.
+        Depending on which of the two requirements above where met, either:
+
+        (A) The string group associated with the target string is merged.
             OR
-        * The string group associated with the target string is merged.
+        (B) All line-continuation backslashes are removed from the target string.
 
     Collaborations:
         StringMerger provides custom split information (via CUSTOM_SPLIT_MAP)
@@ -2994,17 +2996,6 @@ class StringMerger(StringTransformerMixin):
             )
             return naked_string
 
-        # --- KEY ---
-        # S: string
-        # NS: naked string
-        # SS: next string
-        # NSS: naked next string
-
-        S = ""
-        NS = ""
-        prefix = ""
-        num_of_strings = 0
-
         # Holds the CustomSplit objects that will later be added to CUSTOM_SPLIT_MAP.
         custom_splits = []
 
@@ -3014,6 +3005,7 @@ class StringMerger(StringTransformerMixin):
         # Sets the 'prefix' variable. This is the prefix that the final merged
         # string will have.
         next_str_idx = string_idx
+        prefix = ""
         while (
             not prefix
             and len(LL) > next_str_idx
@@ -3022,7 +3014,18 @@ class StringMerger(StringTransformerMixin):
             prefix = get_string_prefix(LL[next_str_idx].value)
             next_str_idx += 1
 
-        # Merges the string group. The final string will be contained in 'S'.
+        # The next loop merges the string group. The final string will be
+        # contained in 'S'.
+        #
+        # The following convenience variables are used:
+        #
+        #   S: string
+        #   NS: naked string
+        #   SS: next string
+        #   NSS: naked next string
+        S = ""
+        NS = ""
+        num_of_strings = 0
         next_str_idx = string_idx
         while len(LL) > next_str_idx and LL[next_str_idx].type == token.STRING:
             num_of_strings += 1
