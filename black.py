@@ -3585,12 +3585,50 @@ class StringTermSplitter(StringSplitterMixin):
         del CUSTOM_SPLIT_MAP[(id(LL[string_idx].value), LL[string_idx].value)]
 
     @staticmethod
-    def __get_break_idx(string_value: str, max_length: int) -> STResult[int]:
+    def __get_break_idx(string: str, max_length: int) -> STResult[int]:
         """
         Pre-Conditions:
             * @max_length > 0
+            * Refer to `help(assert_is_leaf_string)`.
         """
         assert max_length > 0
+        assert_is_leaf_string(string)
+
+        is_fstring = "f" in get_string_prefix(string)
+
+        def fexpr_ranges() -> Tuple[Tuple[int, int]]:
+            this = fexpr_ranges
+
+            ranges: Tuple[Tuple[int, int]] = getattr(this, "ranges", None)
+            if ranges is None:
+                ranges = []
+
+                RE_FEXPR = r"""
+                (?<!\{)\{
+                    (?:
+                        [^\{\}]
+                        | \{\{
+                        | \}\}
+                    )+?
+                (?<!\})(?:\}\})*\}(?!\})
+                """
+                for match in re.finditer(RE_FEXPR, string, re.VERBOSE):
+                    ranges.append(match.span())
+
+                ranges = tuple(ranges)
+                setattr(this, "ranges", ranges)  # noqa: B010
+
+            return ranges
+
+        def breaks_fstring_expression(index: int) -> bool:
+            if not is_fstring:
+                return False
+
+            for (start, end) in fexpr_ranges():
+                if start <= index < end:
+                    return True
+
+            return False
 
         MIN_SUBSTR_SIZE = 6
         idx = max_length
@@ -3599,19 +3637,20 @@ class StringTermSplitter(StringSplitterMixin):
         #   1) starts with a space
         #   2) contains at least a 5-letter word
         while (
-            (MIN_SUBSTR_SIZE - 1) <= idx + 1 < len(string_value)
-            and string_value[idx] != " "
-        ) or len(string_value[idx:]) < MIN_SUBSTR_SIZE:
+            ((MIN_SUBSTR_SIZE - 1) <= idx + 1 < len(string) and string[idx] != " ")
+            or breaks_fstring_expression(idx)
+            or len(string[idx:]) < MIN_SUBSTR_SIZE
+        ):
             idx -= 1
 
-        if string_value[idx] != " ":
+        if string[idx] != " ":
             # This line is going to be longer than the specified line length, but
             # let's try to split it anyway.
             idx = max_length + 1
-            while idx + 1 < len(string_value) and string_value[idx] != " ":
+            while idx + 1 < len(string) and string[idx] != " ":
                 idx += 1
 
-            if string_value[idx] != " ":
+            if string[idx] != " ":
                 st_error = STError(
                     "Long strings which contain no spaces are not split."
                 )

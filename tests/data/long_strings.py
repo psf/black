@@ -393,6 +393,14 @@ cmd = (
     f"{'' if ID is None else ID} | perl -nE 'print if /^{field}:/'"
 )
 
+cmd = f"sudo -E deluge-console info --detailed --sort-reverse=time_added {'' if ID is None else ID} | perl -nE 'print if /^{field}:/'"
+
+cmd = f"sudo -E deluge-console info --detailed --sort-reverse=time_added {'{{}}' if ID is None else ID} | perl -nE 'print if /^{field}:/'"
+
+cmd = f"sudo -E deluge-console info --detailed --sort-reverse=time_added {{'' if ID is None else ID}} | perl -nE 'print if /^{field}:/'"
+
+fstring = f"We have to remember to escape {braces}" ", like {these}."
+
 ########## EDGE-CASE TESTS ##########
 some_variable = "This string is long but not so long that it needs to be split just yet"
 some_variable = "This string is long, just long enough that it needs to be split, u get?"
@@ -1017,6 +1025,23 @@ cmd = (
     "sudo -E deluge-console info --detailed --sort-reverse=time_added "
     f"{'' if ID is None else ID} | perl -nE 'print if /^{field}:/'"
 )
+
+cmd = (
+    "sudo -E deluge-console info --detailed --sort-reverse=time_added"
+    f" {'' if ID is None else ID} | perl -nE 'print if /^{field}:/'"
+)
+
+cmd = (
+    "sudo -E deluge-console info --detailed --sort-reverse=time_added"
+    f" {'{{}}' if ID is None else ID} | perl -nE 'print if /^{field}:/'"
+)
+
+cmd = (
+    "sudo -E deluge-console info --detailed --sort-reverse=time_added {'' if ID is"
+    f" None else ID}} | perl -nE 'print if /^{field}:/'"
+)
+
+fstring = f"We have to remember to escape {braces}, like {{these}}."
 
 ########## EDGE-CASE TESTS ##########
 some_variable = "This string is long but not so long that it needs to be split just yet"
