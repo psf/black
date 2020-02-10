@@ -3326,6 +3326,15 @@ class StringSplitterMixin(StringTransformerMixin):
         return insert_str_child
 
     def __validate(self, line: Line, string_idx: int) -> STResult[None]:
+        """
+        Checks that @line meets all of the requirements listed in this Mixin's
+        docstring.
+
+        Returns:
+            * Ok(None), if ALL of the requirements are met.
+                OR
+            * Err(STError), if ANY of the requirements are NOT met.
+        """
         LL = line.leaves
 
         string_leaf = LL[string_idx]
