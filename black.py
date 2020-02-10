@@ -3515,7 +3515,7 @@ class StringTermSplitter(StringSplitterMixin):
                 next_value != self.__normalize_f_string(next_value, prefix)
                 and drop_pointless_f_prefix
             ):
-                if use_custom_breakpoints:
+                if use_custom_breakpoints and not csplit.has_prefix:
                     idx += 1
                     next_value = rest_value[:idx] + QUOTE
                 next_value = self.__normalize_f_string(next_value, prefix)

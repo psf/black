@@ -388,6 +388,11 @@ lpar_and_rpar_have_comments = func_call(  # LPAR Comment
     "Long really ridiculous type of string that shouldn't really even exist at all. I mean commmme onnn!!!",  # Comma Comment
 )  # RPAR Comment
 
+cmd = (
+    f"sudo -E deluge-console info --detailed --sort-reverse=time_added "
+    f"{'' if ID is None else ID} | perl -nE 'print if /^{field}:/'"
+)
+
 ########## EDGE-CASE TESTS ##########
 some_variable = "This string is long but not so long that it needs to be split just yet"
 some_variable = "This string is long, just long enough that it needs to be split, u get?"
@@ -1007,6 +1012,11 @@ lpar_and_rpar_have_comments = func_call(  # LPAR Comment
     "Long really ridiculous type of string that shouldn't really even exist at all. I"
     " mean commmme onnn!!!",  # Comma Comment
 )  # RPAR Comment
+
+cmd = (
+    "sudo -E deluge-console info --detailed --sort-reverse=time_added "
+    f"{'' if ID is None else ID} | perl -nE 'print if /^{field}:/'"
+)
 
 ########## EDGE-CASE TESTS ##########
 some_variable = "This string is long but not so long that it needs to be split just yet"
