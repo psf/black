@@ -2832,16 +2832,25 @@ class CustomSplitMixin:
         Tuple[StringID, str], Tuple[CustomSplit, ...]
     ] = defaultdict(tuple)
 
+    def add_custom_splits(self, string: str, csplits: Iterable[CustomSplit]) -> None:
+        """Map the custom splits @csplits to @string."""
+        self._CUSTOM_SPLIT_MAP[id(string), string] = tuple(csplits)
+
     def pop_custom_splits(self, string: str) -> List[CustomSplit]:
+        """
+        Returns:
+            The custom splits that are mapped to @string (if any exist).
+
+        Side Effects:
+            Destroys the mapping between @string and its associated custom
+            splits (which are returned to the caller).
+        """
         key = (id(string), string)
 
         result = self._CUSTOM_SPLIT_MAP[key]
         del self._CUSTOM_SPLIT_MAP[key]
 
         return list(result)
-
-    def add_custom_splits(self, string: str, csplits: Iterable[CustomSplit]) -> None:
-        self._CUSTOM_SPLIT_MAP[id(string), string] = tuple(csplits)
 
 
 class StringMerger(StringTransformerMixin, CustomSplitMixin):
