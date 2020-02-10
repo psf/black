@@ -264,6 +264,28 @@ class BlackTestCase(unittest.TestCase):
         actual = actual.rstrip() + "\n"  # the diff output has a trailing space
         self.assertEqual(expected, actual)
 
+    def test_piping_diff_with_color(self) -> None:
+        source, _ = read_data("expression.py")
+        config = THIS_DIR / "data" / "empty_pyproject.toml"
+        args = [
+            "-",
+            "--fast",
+            f"--line-length={black.DEFAULT_LINE_LENGTH}",
+            "--diff",
+            "--color",
+            f"--config={config}",
+        ]
+        result = BlackRunner().invoke(
+            black.main, args, input=BytesIO(source.encode("utf8"))
+        )
+        actual = result.output
+        # Again, the contents are checked in a different test, so only look for colors.
+        self.assertIn("\033[1;37m", actual)
+        self.assertIn("\033[36m", actual)
+        self.assertIn("\033[32m", actual)
+        self.assertIn("\033[31m", actual)
+        self.assertIn("\033[0m", actual)
+
     @patch("black.dump_to_file", dump_to_stderr)
     def test_function(self) -> None:
         source, expected = read_data("function")
