@@ -3002,19 +3002,28 @@ class StringMerger(StringTransformerMixin):
         S = ""
         NS = ""
         prefix = ""
-        next_str_idx = string_idx
         num_of_strings = 0
         custom_splits = []
         prefix_tracker = []
+
+        next_str_idx = string_idx
+        while len(LL) > next_str_idx and LL[next_str_idx].type == token.STRING:
+            if prefix:
+                break
+
+            prefix = get_string_prefix(LL[next_str_idx].value)
+            next_str_idx += 1
+
+        next_str_idx = string_idx
         while len(LL) > next_str_idx and LL[next_str_idx].type == token.STRING:
             num_of_strings += 1
 
             SS = LL[next_str_idx].value
             next_prefix = get_string_prefix(SS)
-            NSS = make_naked(SS, next_prefix)
+            if "f" in prefix and "f" not in next_prefix:
+                SS = re.subf(r"(\{|\})", "{1}{1}", SS)
 
-            if not prefix:
-                prefix = next_prefix
+            NSS = make_naked(SS, next_prefix)
 
             has_prefix = next_prefix != ""
             prefix_tracker.append(has_prefix)

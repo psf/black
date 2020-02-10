@@ -401,7 +401,11 @@ cmd = f"sudo -E deluge-console info --detailed --sort-reverse=time_added {{'' if
 
 fstring = f"This string really doesn't need to be an {{{{fstring}}}}, but this one most certainly, absolutely {does}."
 
-fstring = f"We have to remember to escape {braces}" ", like {these}."
+fstring = (
+    f"We have to remember to escape {braces}."
+    " Like {these}."
+    f" But not {this}."
+)
 
 ########## EDGE-CASE TESTS ##########
 some_variable = "This string is long but not so long that it needs to be split just yet"
@@ -1048,7 +1052,7 @@ fstring = (
     f" certainly, absolutely {does}."
 )
 
-fstring = f"We have to remember to escape {braces}, like {{these}}."
+fstring = f"We have to remember to escape {braces}. Like {{these}}. But not {this}."
 
 ########## EDGE-CASE TESTS ##########
 some_variable = "This string is long but not so long that it needs to be split just yet"
