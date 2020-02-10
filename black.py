@@ -787,9 +787,10 @@ def wrap_stream_for_windows(
     try:
         from colorama import initialise
 
-        # These are the defaults for colorama.init()
+        # We set `strip=False` so that we can don't have to modify
+        # test_express_diff_with_color.
         f = initialise.wrap_stream(
-            f, convert=None, strip=None, autoreset=False, wrap=True
+            f, convert=None, strip=False, autoreset=False, wrap=True
         )
 
         # wrap_stream returns a `colorama.AnsiToWin32.AnsiToWin32` object
