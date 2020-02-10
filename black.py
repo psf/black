@@ -2930,6 +2930,12 @@ class StringMerger(StringTransformerMixin):
         """
         Merge strings that were split across multiple lines using
         line-continuation backslashes.
+
+        Returns:
+            Ok(new_line), if @line contains backslash line-continuation
+            characters.
+                OR
+            Err(STError), otherwise.
         """
         LL = line.leaves
 
@@ -2958,6 +2964,12 @@ class StringMerger(StringTransformerMixin):
         """
         Merges string group (i.e. set of adjacent strings) where the first
         string in the group is `line.leaves[string_idx]`.
+
+        Returns:
+            Ok(new_line), if ALL of the validation checks found in
+            __validate_msg(...) pass.
+                OR
+            Err(STError), otherwise.
         """
         LL = line.leaves
 
@@ -3091,7 +3103,7 @@ class StringMerger(StringTransformerMixin):
         Transform-time string validation logic for __merge_string_group(...).
 
         Returns:
-            * Ok(None), if all validation checks (listed below) pass.
+            * Ok(None), if ALL validation checks (listed below) pass.
                 OR
             * Err(STError), if any of the following are true:
                 - The target string is not in a string group (i.e. it has no
@@ -3266,8 +3278,9 @@ class StringSplitterMixin(StringTransformerMixin):
     Requirements:
         * The target string value is responsible for the line going over the
         line_length limit. It follows that after all of black's other line
-        split methods have been exhausted, this line would still be over the
-        line_length limit if we do not split this string.
+        split methods have been exhausted, this line (or one of the resulting
+        lines after all line splits are performed) would still be over the
+        line_length limit unless we split this string.
             AND
         * The target string is NOT a "pointless" string (i.e. a string that has
         no parent or siblings).
@@ -3276,6 +3289,7 @@ class StringSplitterMixin(StringTransformerMixin):
         to be a pragma.
     """
 
+    # TODO(bugyi): Describe STRING_CHILD_IDX_MAP
     STRING_CHILD_IDX_MAP: ClassVar[Dict[LeafID, int]] = {}
 
     @abstractmethod
