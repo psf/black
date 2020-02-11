@@ -61,12 +61,7 @@ DEFAULT_EXCLUDES = r"/(\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_
 DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 
-# Emojis for output strings
-EMOJIS: Dict[str, str] = {
-    "all_done": " ✨ 🍰 ✨",
-    "oh_no": " 💥 💔 💥",
-    "nothing_to_do": " 😴",
-}
+NO_EMOJI = False
 
 # types
 FileContent = str
@@ -114,6 +109,12 @@ class WriteBack(Enum):
             return cls.CHECK
 
         return cls.DIFF if diff else cls.YES
+
+
+class Emoji(Enum):
+    ALL_DONE = " ✨ 🍰 ✨"
+    OH_NO = " 💥 💔 💥"
+    NOTHING_TO_DO = " 😴"
 
 
 class Changed(Enum):
@@ -356,6 +357,13 @@ def target_version_option_callback(
     show_default=True,
 )
 @click.option(
+    "-n",
+    "--no-emojis",
+    is_flag=True,
+    help=("Do not print emojis in completion messages."),
+    show_default=True,
+)
+@click.option(
     "-q",
     "--quiet",
     is_flag=True,
@@ -403,6 +411,7 @@ def main(
     pyi: bool,
     py36: bool,
     skip_string_normalization: bool,
+    no_emojis: bool,
     quiet: bool,
     verbose: bool,
     include: str,
@@ -411,6 +420,8 @@ def main(
     config: Optional[str],
 ) -> None:
     """The uncompromising code formatter."""
+    global NO_EMOJI
+    NO_EMOJI = no_emojis
     write_back = WriteBack.from_configuration(check=check, diff=diff)
     if target_version:
         if py36:
@@ -469,7 +480,7 @@ def main(
         if verbose or not quiet:
             out(
                 "No Python files are present to be formatted."
-                f"Nothing to do{EMOJIS['nothing_to_do']}"
+                f"Nothing to do{emoji(Emoji.NOTHING_TO_DO)}"
             )
         ctx.exit(0)
 
@@ -488,12 +499,16 @@ def main(
 
     if verbose or not quiet:
         out(
-            f"Oh no!{EMOJIS['oh_no']}"
+            f"Oh no!{emoji(Emoji.OH_NO)}"
             if report.return_code
-            else f"All done!{EMOJIS['all_done']}"
+            else f"All done!{emoji(Emoji.ALL_DONE)}"
         )
         click.secho(str(report), err=True)
     ctx.exit(report.return_code)
+
+
+def emoji(emoji: Emoji) -> str:
+    return "" if NO_EMOJI else str(emoji)
 
 
 def path_empty(
@@ -504,7 +519,7 @@ def path_empty(
     """
     if not src:
         if verbose or not quiet:
-            out(f"No Path provided. Nothing to do{EMOJIS['nothing_to_do']}")
+            out(f"No Path provided. Nothing to do{emoji(Emoji.NOTHING_TO_DO)}")
             ctx.exit(0)
 
 
