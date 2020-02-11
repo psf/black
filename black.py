@@ -3704,27 +3704,23 @@ class StringTermSplitter(StringSplitterMixin, CustomSplitMixin):
         assert_is_leaf_string(string)
 
         is_fstring = "f" in get_string_prefix(string)
+        _fexpr_slices: Optional[List[Tuple[int, int]]] = None
 
-        def fexpr_ranges() -> Tuple[Tuple[int, int]]:
-            this = fexpr_ranges
+        def fexpr_slices() -> List[Tuple[int, int]]:
+            nonlocal _fexpr_slices
 
-            ranges: Tuple[Tuple[int, int]] = getattr(this, "ranges", None)
-            if ranges is None:
-                ranges = []
-
+            if _fexpr_slices is None:
+                _fexpr_slices = []
                 for match in re.finditer(RE_FEXPR, string, re.VERBOSE):
-                    ranges.append(match.span())
+                    _fexpr_slices.append(match.span())
 
-                ranges = tuple(ranges)
-                setattr(this, "ranges", ranges)  # noqa: B010
-
-            return ranges
+            return _fexpr_slices
 
         def breaks_fstring_expression(index: int) -> bool:
             if not is_fstring:
                 return False
 
-            for (start, end) in fexpr_ranges():
+            for (start, end) in fexpr_slices():
                 if start <= index < end:
                     return True
 
