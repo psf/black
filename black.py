@@ -3418,6 +3418,46 @@ class StringSplitterMixin(StringTransformerMixin):
 
         string_leaf = LL[string_idx]
 
+        offset = self.__get_max_string_length_offset(line, string_idx)
+        max_string_length = self.line_length - (line.depth * 4) - offset
+        if len(string_leaf.value) <= max_string_length:
+            st_error = STError(
+                "The string itself is not what is causing this line to be too long."
+            )
+            return Err(st_error)
+
+        if not string_leaf.parent or [L.type for L in string_leaf.parent.children] == [
+            token.STRING,
+            token.NEWLINE,
+        ]:
+            st_error = STError(
+                f"This string ({string_leaf.value}) appears to be pointless (i.e. has"
+                " no parent)."
+            )
+            return Err(st_error)
+
+        if (
+            line.comments
+            and list(line.comments.values())[0]
+            and re.match(
+                r"^#\s*([A-Za-z_0-9]+:.*|noqa)\s*$",
+                list(line.comments.values())[0][0].value,
+                re.IGNORECASE,
+            )
+        ):
+            st_error = STError(
+                "Line appears to end with an inline pragma comment. Splitting the line"
+                " could modify the pragma's behavior."
+            )
+            return Err(st_error)
+
+        return Ok(None)
+
+    @staticmethod
+    def __get_max_string_length_offset(line: Line, string_idx: int) -> int:
+        LL = line.leaves
+
+        string_leaf = LL[string_idx]
         offset = 0
         if string_idx >= 1:
             p_idx = string_idx - 1
@@ -3470,39 +3510,7 @@ class StringSplitterMixin(StringTransformerMixin):
                 offset += 2
             offset += len(comment_leaf.value)
 
-        max_string_length = self.line_length - (line.depth * 4) - offset
-        if len(string_leaf.value) <= max_string_length:
-            st_error = STError(
-                "The string itself is not what is causing this line to be too long."
-            )
-            return Err(st_error)
-
-        if not string_leaf.parent or [L.type for L in string_leaf.parent.children] == [
-            token.STRING,
-            token.NEWLINE,
-        ]:
-            st_error = STError(
-                f"This string ({string_leaf.value}) appears to be pointless (i.e. has"
-                " no parent)."
-            )
-            return Err(st_error)
-
-        if (
-            line.comments
-            and list(line.comments.values())[0]
-            and re.match(
-                r"^#\s*([A-Za-z_0-9]+:.*|noqa)\s*$",
-                list(line.comments.values())[0][0].value,
-                re.IGNORECASE,
-            )
-        ):
-            st_error = STError(
-                "Line appears to end with an inline pragma comment. Splitting the line"
-                " could modify the pragma's behavior."
-            )
-            return Err(st_error)
-
-        return Ok(None)
+        return offset
 
 
 class StringTermSplitter(StringSplitterMixin, CustomSplitMixin):
