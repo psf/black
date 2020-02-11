@@ -3489,7 +3489,6 @@ class StringSplitterMixin(StringTransformerMixin):
         # Finally, we use the following convenience variables:
         #
         #   P: The leaf that is before the target string leaf.
-        #   PP: The leaf that is before P.
         #   N: The leaf that is after the target string leaf.
 
         # WMA4 the whitespace at the beginning of the line.
