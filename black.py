@@ -2825,7 +2825,9 @@ class CustomSplit:
 
 class CustomSplitMixin:
     """
-    This mixin class is used to map merged strings to a sequence of CustomSplits.
+    This mixin class is used to map merged strings to a sequence of
+    CustomSplits, which will then be used to re-split the strings iff none of
+    the resultant substrings go over the configured max line length.
     """
 
     _CUSTOM_SPLIT_MAP: Dict[
@@ -3083,13 +3085,13 @@ class StringMerger(StringTransformerMixin, CustomSplitMixin):
         # Fill the 'custom_splits' list with the appropriate CustomSplit objects.
         temp_string = S_leaf.value[len(prefix) + 1 : -1]
         for has_prefix in prefix_tracker:
-            found_idx = temp_string.find(BREAK_MARK)
+            mark_idx = temp_string.find(BREAK_MARK)
             assert (
-                found_idx >= 0
+                mark_idx >= 0
             ), "Logic error while filling the custom string breakpoint cache."
 
-            temp_string = temp_string[found_idx + len(BREAK_MARK) :]
-            breakpoint_idx = found_idx + (len(prefix) if has_prefix else 0) + 1
+            temp_string = temp_string[mark_idx + len(BREAK_MARK) :]
+            breakpoint_idx = mark_idx + (len(prefix) if has_prefix else 0) + 1
             custom_splits.append(CustomSplit(has_prefix, breakpoint_idx))
 
         string_leaf = Leaf(token.STRING, S_leaf.value.replace(BREAK_MARK, ""))
@@ -3115,7 +3117,8 @@ class StringMerger(StringTransformerMixin, CustomSplitMixin):
 
     @staticmethod
     def __validate_msg(line: Line, string_idx: int) -> STResult[None]:
-        """
+        """Validate (M)erge (S)tring (G)roup
+
         Transform-time string validation logic for __merge_string_group(...).
 
         Returns:
@@ -3293,7 +3296,7 @@ class StringSplitterMixin(StringTransformerMixin):
 
     Requirements:
         * The target string value is responsible for the line going over the
-        line_length limit. It follows that after all of black's other line
+        line length limit. It follows that after all of black's other line
         split methods have been exhausted, this line (or one of the resulting
         lines after all line splits are performed) would still be over the
         line_length limit unless we split this string.
@@ -3419,7 +3422,7 @@ class StringSplitterMixin(StringTransformerMixin):
         string_leaf = LL[string_idx]
 
         offset = self.__get_max_string_length_offset(line, string_idx)
-        max_string_length = self.line_length - (line.depth * 4) - offset
+        max_string_length = self.line_length - offset
         if len(string_leaf.value) <= max_string_length:
             st_error = STError(
                 "The string itself is not what is causing this line to be too long."
@@ -3455,10 +3458,37 @@ class StringSplitterMixin(StringTransformerMixin):
 
     @staticmethod
     def __get_max_string_length_offset(line: Line, string_idx: int) -> int:
+        """
+        Calculates the appropriate offset to subtract from `self.line_length`
+        when attempting to determine whether or not the target string is
+        responsible for causing the line to go over the line length limit.
+
+        WARNING: This method is tightly coupled to both StringTermSplitter and
+        (especially) StringExprSplitter. There is probably a better way to
+        accomplish what is being done here.
+
+        Returns:
+            offset: such that `line.leaves[string_idx].value > self.line_length
+            - offset` implies that the target string IS responsible for causing
+            this line to exceed the line length limit.
+        """
         LL = line.leaves
 
         string_leaf = LL[string_idx]
-        offset = 0
+
+        # We use the shorthand "WMA4" in comments to abbreviate "We must
+        # account for". When giving examples, we use STRING to mean some/any
+        # valid string.
+        #
+        # Finally, we use the following convenience variables:
+        #
+        #   P: The leaf that is before the target string leaf.
+        #   PP: The leaf that is before P.
+        #   N: The leaf that is after the target string leaf.
+
+        # WMA4 the whitespace at the beginning of the line.
+        offset = line.depth * 4
+
         if string_idx >= 1:
             p_idx = string_idx - 1
             if (
@@ -3466,26 +3496,38 @@ class StringSplitterMixin(StringTransformerMixin):
                 and LL[string_idx - 1].value == ""
                 and string_idx >= 2
             ):
+                # If the previous leaf is an empty LPAR placeholder, we should skip it.
                 p_idx -= 1
 
             P = LL[p_idx]
             if P.type == token.PLUS:
+                # WMA4 a space and a '+' character (e.g. `+ STRING`).
                 offset += 2
 
             if P.type == token.COMMA:
+                # WMA4 a space, a comma, and a closing bracket [e.g. `), STRING`].
                 offset += 3
 
             if P.type in [token.COLON, token.EQUAL, token.NAME]:
+                # This conditional branch is meant to handle dictionary keys,
+                # variable assignments, 'return STRING' statement lines, and
+                # 'else STRING' ternary expression lines.
+
+                # WMA4 a single space.
                 offset += 1
+
+                # WMA4 the lengths of any leaves that came before that space.
                 for leaf in LL[: p_idx + 1]:
                     offset += len(str(leaf))
 
         if len(LL) > string_idx + 1:
             N = LL[string_idx + 1]
             if N.type == token.RPAR and N.value == "" and len(LL) > string_idx + 2:
+                # If the next leaf is an empty RPAR placeholder, we should skip it.
                 N = LL[string_idx + 2]
 
             if N.type == token.COMMA:
+                # WMA4 a single comma at the end of the string (e.g `STRING,`).
                 offset += 1
 
         next_node = string_leaf.next_sibling
@@ -3494,20 +3536,30 @@ class StringSplitterMixin(StringTransformerMixin):
             and next_node.type == syms.trailer
             and [leaf.type for leaf in next_node.leaves()] == [token.DOT, token.NAME]
         ):
+            # This conditional branch is meant to handle method calls invoked
+            # off of a string literal up to and including the LPAR character.
+
+            # WMA4 the '.' character.
             offset += 1
 
             if len(LL) > string_idx + 3 and LL[string_idx + 3].type == token.LPAR:
+                # WMA4 the left parenthesis character.
                 offset += 1
 
             name_leaf = LL[string_idx + 2]
             assert name_leaf.type == token.NAME
+
+            # WMA4 the length of the method's name.
             offset += len(name_leaf.value)
 
         has_comments = False
         for comment_leaf in line.comments_after(LL[string_idx]):
             if not has_comments:
                 has_comments = True
+                # WMA4 two spaces before the '#' character.
                 offset += 2
+
+            # WMA4 the length of the inline comment.
             offset += len(comment_leaf.value)
 
         return offset
