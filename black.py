@@ -2836,17 +2836,22 @@ class CustomSplitMapMixin:
 
     @staticmethod
     def add_custom_splits(string: str, csplits: Iterable[CustomSplit]) -> None:
-        """Map the custom splits @csplits to @string."""
+        """Custom Split Map Setter Method
+
+        Side Effects:
+            Adds a mapping from @string to the custom splits @csplits.
+        """
         CustomSplitMapMixin._CUSTOM_SPLIT_MAP[id(string), string] = tuple(csplits)
 
     @staticmethod
     def pop_custom_splits(string: str) -> List[CustomSplit]:
-        """
+        """Custom Split Map Getter Method
+
         Returns:
             The custom splits that are mapped to @string (if any exist).
 
         Side Effects:
-            Destroys the mapping between @string and its associated custom
+            Deletes the mapping between @string and its associated custom
             splits (which are returned to the caller).
         """
         key = (id(string), string)
@@ -3022,6 +3027,7 @@ class StringMerger(StringTransformerMixin, CustomSplitMapMixin):
                 characters have been escaped.
             """
             assert_is_leaf_string(string)
+
             naked_string = string[len(string_prefix) + 1 : -1]
             naked_string = re.sub(
                 "(" + RE_EVEN_BACKSLASHES + ")" + QUOTE, r"\1\\" + QUOTE, naked_string
@@ -3593,9 +3599,8 @@ class StringTermSplitter(StringSplitterMixin, CustomSplitMapMixin):
         adhering to the transformation rules listed above.
 
     Collaborations:
-        This transformer relies on the StringMerger transformer to add the
-        appropriate (and properly configured) CustomSplit objects to the
-        custom split map.
+        StringTermSplitter relies on StringMerger to construct the appropriate
+        CustomSplit objects and add them to the custom split map.
     """
 
     def do_splitter_match(self, line: Line) -> STMatchResult:
@@ -4051,6 +4056,7 @@ def get_string_prefix(string: str) -> str:
         @string's prefix (e.g. '', 'r', 'f', or 'rf').
     """
     assert_is_leaf_string(string)
+
     prefix = ""
     prefix_idx = 0
     while string[prefix_idx] in STRING_PREFIX_CHARS:
