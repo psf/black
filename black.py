@@ -2823,7 +2823,7 @@ class CustomSplit:
     break_idx: int
 
 
-class CustomSplitMixin:
+class CustomSplitMapMixin:
     """
     This mixin class is used to map merged strings to a sequence of
     CustomSplits, which will then be used to re-split the strings iff none of
@@ -2837,7 +2837,7 @@ class CustomSplitMixin:
     @staticmethod
     def add_custom_splits(string: str, csplits: Iterable[CustomSplit]) -> None:
         """Map the custom splits @csplits to @string."""
-        CustomSplitMixin._CUSTOM_SPLIT_MAP[id(string), string] = tuple(csplits)
+        CustomSplitMapMixin._CUSTOM_SPLIT_MAP[id(string), string] = tuple(csplits)
 
     @staticmethod
     def pop_custom_splits(string: str) -> List[CustomSplit]:
@@ -2851,13 +2851,13 @@ class CustomSplitMixin:
         """
         key = (id(string), string)
 
-        result = CustomSplitMixin._CUSTOM_SPLIT_MAP[key]
-        del CustomSplitMixin._CUSTOM_SPLIT_MAP[key]
+        result = CustomSplitMapMixin._CUSTOM_SPLIT_MAP[key]
+        del CustomSplitMapMixin._CUSTOM_SPLIT_MAP[key]
 
         return list(result)
 
 
-class StringMerger(StringTransformerMixin, CustomSplitMixin):
+class StringMerger(StringTransformerMixin, CustomSplitMapMixin):
     """StringTransformer that merges strings together.
 
     Requirements:
@@ -3565,7 +3565,7 @@ class StringSplitterMixin(StringTransformerMixin):
         return offset
 
 
-class StringTermSplitter(StringSplitterMixin, CustomSplitMixin):
+class StringTermSplitter(StringSplitterMixin, CustomSplitMapMixin):
     """
     StringTransformer that splits atomic strings (i.e. strings which exist on
     lines by themselves).
@@ -3763,7 +3763,6 @@ class StringTermSplitter(StringSplitterMixin, CustomSplitMixin):
         assert max_length > 0
         assert_is_leaf_string(string)
 
-        is_fstring = "f" in get_string_prefix(string)
         _fexpr_slices: Optional[List[Tuple[int, int]]] = None
 
         def fexpr_slices() -> List[Tuple[int, int]]:
@@ -3775,6 +3774,8 @@ class StringTermSplitter(StringSplitterMixin, CustomSplitMixin):
                     _fexpr_slices.append(match.span())
 
             return _fexpr_slices
+
+        is_fstring = "f" in get_string_prefix(string)
 
         def breaks_fstring_expression(index: int) -> bool:
             if not is_fstring:
@@ -3816,7 +3817,12 @@ class StringTermSplitter(StringSplitterMixin, CustomSplitMixin):
 
     @staticmethod
     def __normalize_f_string(string: str, prefix: str) -> str:
+        """
+        Pre-Conditions:
+            Refer to `help(assert_is_leaf_string)`.
+        """
         assert_is_leaf_string(string)
+
         if "f" in prefix and not re.search(RE_FEXPR, string, re.VERBOSE):
             new_prefix = prefix.replace("f", "")
 
