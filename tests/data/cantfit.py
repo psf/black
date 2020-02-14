@@ -36,6 +36,7 @@ for key in """
     if key in self.connect_kwargs:
         raise ValueError(err.format(key))
 concatenated_strings = "some strings that are" "concatenated implicitly, so if you put them on separate" "lines it will fit"
+del concatenated_strings, string_variable_name, normal_function_name, normal_name, need_more_to_make_the_line_long_enough
 
 
 # output
@@ -46,8 +47,8 @@ this_is_a_ridiculously_long_name_and_nobody_in_their_right_mind_would_use_one_li
     0
 )
 this_is_a_ridiculously_long_name_and_nobody_in_their_right_mind_would_use_one_like_it = (
-    1
-)  # with a comment
+    1  # with a comment
+)
 this_is_a_ridiculously_long_name_and_nobody_in_their_right_mind_would_use_one_like_it = [
     1,
     2,
@@ -90,4 +91,11 @@ concatenated_strings = (
     "some strings that are"
     "concatenated implicitly, so if you put them on separate"
     "lines it will fit"
+)
+del (
+    concatenated_strings,
+    string_variable_name,
+    normal_function_name,
+    normal_name,
+    need_more_to_make_the_line_long_enough,
 )

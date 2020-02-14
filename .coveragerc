@@ -1,4 +1,5 @@
 [report]
 omit =
   blib2to3/*
+  tests/data/*
   */site-packages/*

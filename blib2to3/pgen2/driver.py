@@ -22,21 +22,42 @@ import os
 import logging
 import pkgutil
 import sys
+from typing import (
+    Any,
+    Callable,
+    IO,
+    Iterable,
+    List,
+    Optional,
+    Text,
+    Tuple,
+    Union,
+    Sequence,
+)
 
 # Pgen imports
 from . import grammar, parse, token, tokenize, pgen
+from logging import Logger
+from blib2to3.pytree import _Convert, NL
+from blib2to3.pgen2.grammar import Grammar
+
+Path = Union[str, "os.PathLike[str]"]
 
 
 class Driver(object):
-
-    def __init__(self, grammar, convert=None, logger=None):
+    def __init__(
+        self,
+        grammar: Grammar,
+        convert: Optional[_Convert] = None,
+        logger: Optional[Logger] = None,
+    ) -> None:
         self.grammar = grammar
         if logger is None:
-            logger = logging.getLogger()
+            logger = logging.getLogger(__name__)
         self.logger = logger
         self.convert = convert
 
-    def parse_tokens(self, tokens, debug=False):
+    def parse_tokens(self, tokens: Iterable[Any], debug: bool = False) -> NL:
         """Parse a series of tokens and return the syntax tree."""
         # XXX Move the prefix computation into a wrapper around tokenize.
         p = parse.Parser(self.grammar, self.convert)
@@ -68,8 +89,9 @@ class Driver(object):
             if type == token.OP:
                 type = grammar.opmap[value]
             if debug:
-                self.logger.debug("%s %r (prefix=%r)",
-                                  token.tok_name[type], value, prefix)
+                self.logger.debug(
+                    "%s %r (prefix=%r)", token.tok_name[type], value, prefix
+                )
             if type == token.INDENT:
                 indent_columns.append(len(value))
                 _prefix = prefix + value
@@ -91,60 +113,63 @@ class Driver(object):
                 column = 0
         else:
             # We never broke out -- EOF is too soon (how can this happen???)
-            raise parse.ParseError("incomplete input",
-                                   type, value, (prefix, start))
+            assert start is not None
+            raise parse.ParseError("incomplete input", type, value, (prefix, start))
+        assert p.rootnode is not None
         return p.rootnode
 
-    def parse_stream_raw(self, stream, debug=False):
+    def parse_stream_raw(self, stream: IO[Text], debug: bool = False) -> NL:
         """Parse a stream and return the syntax tree."""
-        tokens = tokenize.generate_tokens(stream.readline)
+        tokens = tokenize.generate_tokens(stream.readline, grammar=self.grammar)
         return self.parse_tokens(tokens, debug)
 
-    def parse_stream(self, stream, debug=False):
+    def parse_stream(self, stream: IO[Text], debug: bool = False) -> NL:
         """Parse a stream and return the syntax tree."""
         return self.parse_stream_raw(stream, debug)
 
-    def parse_file(self, filename, encoding=None, debug=False):
+    def parse_file(
+        self, filename: Path, encoding: Optional[Text] = None, debug: bool = False,
+    ) -> NL:
         """Parse a file and return the syntax tree."""
         with io.open(filename, "r", encoding=encoding) as stream:
             return self.parse_stream(stream, debug)
 
-    def parse_string(self, text, debug=False):
+    def parse_string(self, text: Text, debug: bool = False) -> NL:
         """Parse a string and return the syntax tree."""
-        tokens = tokenize.generate_tokens(io.StringIO(text).readline)
+        tokens = tokenize.generate_tokens(
+            io.StringIO(text).readline, grammar=self.grammar
+        )
         return self.parse_tokens(tokens, debug)
 
-    def _partially_consume_prefix(self, prefix, column):
-        lines = []
+    def _partially_consume_prefix(self, prefix: Text, column: int) -> Tuple[Text, Text]:
+        lines: List[str] = []
         current_line = ""
         current_column = 0
         wait_for_nl = False
         for char in prefix:
             current_line += char
             if wait_for_nl:
-                if char == '\n':
+                if char == "\n":
                     if current_line.strip() and current_column < column:
-                        res = ''.join(lines)
-                        return res, prefix[len(res):]
+                        res = "".join(lines)
+                        return res, prefix[len(res) :]
 
                     lines.append(current_line)
                     current_line = ""
                     current_column = 0
                     wait_for_nl = False
-            elif char == ' ':
+            elif char in " \t":
                 current_column += 1
-            elif char == '\t':
-                current_column += 4
-            elif char == '\n':
+            elif char == "\n":
                 # unexpected empty line
                 current_column = 0
             else:
                 # indent is finished
                 wait_for_nl = True
-        return ''.join(lines), current_line
+        return "".join(lines), current_line
 
 
-def _generate_pickle_name(gt, cache_dir=None):
+def _generate_pickle_name(gt: Path, cache_dir: Optional[Path] = None) -> Text:
     head, tail = os.path.splitext(gt)
     if tail == ".txt":
         tail = ""
@@ -155,15 +180,20 @@ def _generate_pickle_name(gt, cache_dir=None):
         return name
 
 
-def load_grammar(gt="Grammar.txt", gp=None,
-                 save=True, force=False, logger=None):
+def load_grammar(
+    gt: Text = "Grammar.txt",
+    gp: Optional[Text] = None,
+    save: bool = True,
+    force: bool = False,
+    logger: Optional[Logger] = None,
+) -> Grammar:
     """Load the grammar (maybe from a pickle)."""
     if logger is None:
-        logger = logging.getLogger()
+        logger = logging.getLogger(__name__)
     gp = _generate_pickle_name(gt) if gp is None else gp
     if force or not _newer(gp, gt):
         logger.info("Generating grammar tables from %s", gt)
-        g = pgen.generate_grammar(gt)
+        g: grammar.Grammar = pgen.generate_grammar(gt)
         if save:
             logger.info("Writing grammar tables to %s", gp)
             try:
@@ -176,7 +206,7 @@ def load_grammar(gt="Grammar.txt", gp=None,
     return g
 
 
-def _newer(a, b):
+def _newer(a: Text, b: Text) -> bool:
     """Inquire whether file a was written since file b."""
     if not os.path.exists(a):
         return False
@@ -185,7 +215,9 @@ def _newer(a, b):
     return os.path.getmtime(a) >= os.path.getmtime(b)
 
 
-def load_packaged_grammar(package, grammar_source, cache_dir=None):
+def load_packaged_grammar(
+    package: str, grammar_source: Text, cache_dir: Optional[Path] = None
+) -> grammar.Grammar:
     """Normally, loads a pickled grammar by doing
         pkgutil.get_data(package, pickled_grammar)
     where *pickled_grammar* is computed from *grammar_source* by adding the
@@ -201,23 +233,24 @@ def load_packaged_grammar(package, grammar_source, cache_dir=None):
         return load_grammar(grammar_source, gp=gp)
     pickled_name = _generate_pickle_name(os.path.basename(grammar_source), cache_dir)
     data = pkgutil.get_data(package, pickled_name)
+    assert data is not None
     g = grammar.Grammar()
     g.loads(data)
     return g
 
 
-def main(*args):
+def main(*args: Text) -> bool:
     """Main program, when run as a script: produce grammar pickle files.
 
     Calls load_grammar for each argument, a path to a grammar text file.
     """
     if not args:
-        args = sys.argv[1:]
-    logging.basicConfig(level=logging.INFO, stream=sys.stdout,
-                        format='%(message)s')
+        args = tuple(sys.argv[1:])
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout, format="%(message)s")
     for gt in args:
         load_grammar(gt, save=True, force=True)
     return True
+
 
 if __name__ == "__main__":
     sys.exit(int(not main()))

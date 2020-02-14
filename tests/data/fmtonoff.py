@@ -39,7 +39,7 @@ def function_signature_stress_test(number:int,no_annotation=None,text:str='defau
  return text[number:-1]
 # fmt: on
 def spaces(a=1, b=(), c=[], d={}, e=True, f=-1, g=1 if False else 2, h="", i=r''):
- offset = attr.ib(default=attr.Factory( lambda: _r.uniform(10000, 200000)))
+ offset = attr.ib(default=attr.Factory( lambda: _r.uniform(1, 2)))
  assert task._cancel_stack[:len(old_stack)] == old_stack
 def spaces_types(a: int = 1, b: tuple = (), c: list = [], d: dict = {}, e: bool = True, f: int = -1, g: int = 1 if False else 2, h: str = "", i: str = r''): ...
 def spaces2(result= _core.Value(None)):
@@ -108,9 +108,13 @@ def on_and_off_broken():
     # fmt: on
     # fmt: off
     this=should.not_be.formatted()
-    but=it  is  formatted
+    and_=indeed . it  is  not  formatted
     because . the . handling . inside . generate_ignored_nodes()
-    doesnt . consider . ordering . within . one . prefix
+    now . considers . multiple . fmt . directives . within . one . prefix
+    # fmt: on
+    # fmt: off
+        # ...but comments still get reformatted even though they should not be
+    # fmt: on
 def long_lines():
     if True:
         typedargslist.extend(
@@ -150,7 +154,7 @@ def single_literal_yapf_disable():
     BAZ = {
         (1, 2, 3, 4),
         (5, 6, 7, 8),
-        (9, 10, 11, 12),
+        (9, 10, 11, 12)
     }  # yapf: disable
 cfg.rule(
     "Default", "address",
@@ -225,7 +229,7 @@ def function_signature_stress_test(number:int,no_annotation=None,text:str='defau
  return text[number:-1]
 # fmt: on
 def spaces(a=1, b=(), c=[], d={}, e=True, f=-1, g=1 if False else 2, h="", i=r""):
-    offset = attr.ib(default=attr.Factory(lambda: _r.uniform(10000, 200_000)))
+    offset = attr.ib(default=attr.Factory(lambda: _r.uniform(1, 2)))
     assert task._cancel_stack[: len(old_stack)] == old_stack
 
 
@@ -318,10 +322,14 @@ def on_and_off_broken():
     """Another known limitation."""
     # fmt: on
     # fmt: off
-    this = should.not_be.formatted()
-    but = it is formatted
-    because.the.handling.inside.generate_ignored_nodes()
-    doesnt.consider.ordering.within.one.prefix
+    this=should.not_be.formatted()
+    and_=indeed . it  is  not  formatted
+    because . the . handling . inside . generate_ignored_nodes()
+    now . considers . multiple . fmt . directives . within . one . prefix
+    # fmt: on
+    # fmt: off
+    # ...but comments still get reformatted even though they should not be
+    # fmt: on
 
 
 def long_lines():
