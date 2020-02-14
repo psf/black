@@ -129,7 +129,6 @@ def _initialize_black_env(upgrade=False):
 if _initialize_black_env():
   import black
   import time
-  import toml
 
 def Black():
   start = time.time()
