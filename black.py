@@ -213,7 +213,7 @@ def supports_feature(target_versions: Set[TargetVersion], feature: Feature) -> b
     return all(feature in VERSION_TO_FEATURES[version] for version in target_versions)
 
 
-def abspath_pyproject_toml(path_search_start: str) -> Optional[str]:
+def find_pyproject_toml(path_search_start: str) -> Optional[str]:
     """Find the absolute filepath to a pyproject.toml if it exists"""
     path_project_root = find_project_root(path_search_start)
     path_pyproject_toml = path_project_root / "pyproject.toml"
@@ -240,7 +240,7 @@ def read_pyproject_toml(
     """
     assert not isinstance(value, (int, bool)), "Invalid parameter type passed"
     if not value:
-        value = abspath_pyproject_toml(ctx.params.get("src", ()))
+        value = find_pyproject_toml(ctx.params.get("src", ()))
         if value is None:
             return None
 
