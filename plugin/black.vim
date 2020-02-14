@@ -41,9 +41,33 @@ if !exists("g:black_skip_string_normalization")
 endif
 
 python3 << endpython3
+import collections
 import os
 import sys
 import vim
+
+
+class Flag(collections.namedtuple("FlagBase", "name, cast")):
+  @property
+  def var_name(self):
+    return self.name.replace("-", "_")
+
+  @property
+  def vim_rc_name(self):
+    name = self.var_name
+    if name == "line_length":
+      name = name.replace("_", "")
+    if name == "string_normalization":
+      name = "skip_" + name
+    return "g:black_" + name
+
+
+FLAGS = [
+  Flag(name="line_length", cast=int),
+  Flag(name="fast", cast=bool),
+  Flag(name="string_normalization", cast=bool),
+]
+
 
 def _get_python_binary(exec_prefix):
   try:
@@ -147,18 +171,13 @@ def Black():
 def get_configs():
   path_pyproject_toml = black.find_pyproject_toml(vim.eval("fnamemodify(getcwd(), ':t')"))
   if path_pyproject_toml:
-    config_pyproject_toml = black.parse_pyproject_toml(path_pyproject_toml)
+    toml_config = black.parse_pyproject_toml(path_pyproject_toml)
   else:
-    config_pyproject_toml = {}
-
-  vim_rc_line_length = int(vim.eval("g:black_linelength"))
-  vim_rc_fast = bool(int(vim.eval("g:black_fast")))
-  vim_rc_skip_string_normalization = bool(int(vim.eval("g:black_skip_string_normalization")))
+    toml_config = {}
 
   return {
-    "line_length": config_pyproject_toml.get("line_length", vim_rc_line_length),
-    "fast": config_pyproject_toml.get("fast", vim_rc_fast),
-    "string_normalization": not config_pyproject_toml.get("skip_string_normalization", vim_rc_string_normalization),
+    flag.var_name: toml_config.get(flag.name, flag.cast(vim.eval(flag.vim_rc_name)))
+    for flag in FLAGS
   }
 
 
