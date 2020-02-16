@@ -76,7 +76,6 @@ setup(
         "mypy_extensions>=0.4.3",
     ],
     extras_require={"d": ["aiohttp>=3.3.2", "aiohttp-cors"]},
-    test_suite="tests.test_black",
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Console",
