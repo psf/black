@@ -2860,43 +2860,20 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
     def do_match(self, line: Line) -> FixMatchResult:
         LL = line.leaves
 
-        regex_result = self._re_string_match(
-            fr"""
-            ^
-            (?: # Ensures that we don't mistake an end quote for a starting quote.
-                [^'"]
-                | {RE_BALANCED_QUOTES}
-            )*?
-            {RE_STRING_GROUP}[ ]*{RE_STRING}  # Two Adjacent Strings
-            .*$
-            """
-        )
+        for (i, leaf) in enumerate(LL):
+            if (
+                leaf.type == token.STRING
+                and len(LL) > i + 1
+                and LL[i + 1].type == token.STRING
+            ):
+                return Ok(i)
 
-        if isinstance(regex_result, Ok):
-            string_value = regex_result.ok()
-            for (i, leaf) in enumerate(LL):
-                if (
-                    leaf.type == token.STRING
-                    and leaf.value == string_value
-                    and len(LL) > i + 1
-                    and LL[i + 1].type == token.STRING
-                ):
-                    return Ok(i)
-
-            cant_fix = CantFix(
-                f"Found string match ({regex_result}), however, we could not find a"
-                " leaf that it belongs to."
-            )
-            return Err(cant_fix)
-
-        for i, leaf in enumerate(LL):
             if leaf.type == token.STRING and "\\\n" in leaf.value:
                 return Ok(i)
 
         cant_fix = CantFix(
             f"This line ({self.line_str}) has no strings that need merging."
         )
-        cant_fix.__cause__ = regex_result.err()
         return Err(cant_fix)
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[FixResult[Line]]:
