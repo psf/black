@@ -3481,16 +3481,15 @@ class StringSplitterMixin(StringTransformerMixin):
         """
         LL = line.leaves
 
-        string_leaf = LL[string_idx]
-
         # We use the shorthand "WMA4" in comments to abbreviate "We must
         # account for". When giving examples, we use STRING to mean some/any
         # valid string.
         #
         # Finally, we use the following convenience variables:
         #
-        #   P: The leaf that is before the target string leaf.
-        #   N: The leaf that is after the target string leaf.
+        #   P:  The leaf that is before the target string leaf.
+        #   N:  The leaf that is after the target string leaf.
+        #   NN: The leaf that is after N.
 
         # WMA4 the whitespace at the beginning of the line.
         offset = line.depth * 4
@@ -3536,27 +3535,25 @@ class StringSplitterMixin(StringTransformerMixin):
                 # WMA4 a single comma at the end of the string (e.g `STRING,`).
                 offset += 1
 
-        next_node = string_leaf.next_sibling
-        if (
-            next_node is not None
-            and next_node.type == syms.trailer
-            and [leaf.type for leaf in next_node.leaves()] == [token.DOT, token.NAME]
-        ):
-            # This conditional branch is meant to handle method calls invoked
-            # off of a string literal up to and including the LPAR character.
+            if len(LL) > string_idx + 2:
+                NN = LL[string_idx + 2]
 
-            # WMA4 the '.' character.
-            offset += 1
+                if N.type == token.DOT and NN.type == token.NAME:
+                    # This conditional branch is meant to handle method calls invoked
+                    # off of a string literal up to and including the LPAR character.
 
-            if len(LL) > string_idx + 3 and LL[string_idx + 3].type == token.LPAR:
-                # WMA4 the left parenthesis character.
-                offset += 1
+                    # WMA4 the '.' character.
+                    offset += 1
 
-            name_leaf = LL[string_idx + 2]
-            assert name_leaf.type == token.NAME
+                    if (
+                        len(LL) > string_idx + 3
+                        and LL[string_idx + 3].type == token.LPAR
+                    ):
+                        # WMA4 the left parenthesis character.
+                        offset += 1
 
-            # WMA4 the length of the method's name.
-            offset += len(name_leaf.value)
+                    # WMA4 the length of the method's name.
+                    offset += len(NN.value)
 
         has_comments = False
         for comment_leaf in line.comments_after(LL[string_idx]):
@@ -3627,7 +3624,7 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
 
         prefix = get_string_prefix(LL[string_idx].value)
 
-        # --- Max Index (for string value) Calculation
+        # --- Calculate Target Index (for string value)
         # We start with the line length limit
         target_idx = self.line_length
         # The last index of a string of length N is N-1.
@@ -3672,8 +3669,8 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
         def max_last_string() -> int:
             """
             Returns:
-                The max length of the string value used for the last line we
-                will construct.
+                The max allowed length of the string value used for the last
+                line we will construct.
             """
             ends_with_comma = (
                 string_idx + 1 < len(LL) and LL[string_idx + 1].type == token.COMMA
@@ -3698,13 +3695,13 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
         # can't fit onto the line currently being constructed.
         rest_value = LL[string_idx].value
 
-        def keep_splitting() -> bool:
+        def more_splits_should_be_made() -> bool:
             if use_custom_breakpoints:
                 return len(custom_splits) > 1
             else:
                 return len(rest_value) > max_last_string()
 
-        while keep_splitting():
+        while more_splits_should_be_made():
             if use_custom_breakpoints:
                 # Custom User Split (manual)
                 csplit = custom_splits.pop(0)
@@ -3728,7 +3725,7 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
                 and next_value != self.__normalize_f_string(next_value, prefix)
             ):
                 # If the current custom split did NOT originally use a prefix,
-                # then `csplit.break_idx` will be off by one after removoing
+                # then `csplit.break_idx` will be off by one after removing
                 # the 'f' prefix.
                 if use_custom_breakpoints and not csplit.has_prefix:
                     idx += 1
@@ -3824,8 +3821,8 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
         def fexpr_slices() -> Iterator[Tuple[int, int]]:
             """
             Yields:
-                Ranges of @string which, if @string were split there, would
-                result in the splitting of an f-expression (which is NOT
+                All ranges of @string which, if @string were to be split there,
+                would result in the splitting of an f-expression (which is NOT
                 allowed).
             """
             nonlocal _fexpr_slices
@@ -3842,10 +3839,8 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
         def breaks_fstring_expression(i: int) -> bool:
             """
             Returns:
-                True, if returning @i would result in the breaking of an
+                True iff returning @i would result in the splitting of an
                 f-expression (which is NOT allowed).
-                    OR
-                False, otherwise.
             """
             if not is_fstring:
                 return False
@@ -3859,37 +3854,34 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
         def is_valid_index(i: int) -> bool:
             return 0 <= i < len(string)
 
-        def fails_check(i: int) -> bool:
+        def passes_all_checks(i: int) -> bool:
             """
             Returns:
-                True, if any of the conditions listed in the 'Transformations'
-                section of this classes' docstring would be NOT be met by
-                returning @i.
-                    OR
-                False, otherwise.
+                True iff ALL of the conditions listed in the 'Transformations'
+                section of this classes' docstring would be be met by returning @i.
             """
             not_space = string[i] != " "
             not_big_enough = (
                 len(string[i:]) < MIN_SUBSTR_SIZE or len(string[:i]) < MIN_SUBSTR_SIZE
             )
-            return not_space or not_big_enough or breaks_fstring_expression(i)
+            return not (not_space or not_big_enough or breaks_fstring_expression(i))
 
         # First, we check all indices BELOW @target_idx.
         idx = target_idx
-        while is_valid_index(idx - 1) and fails_check(idx):
+        while is_valid_index(idx - 1) and not passes_all_checks(idx):
             idx -= 1
 
-        if fails_check(idx):
+        if not passes_all_checks(idx):
             # If that fails, we check all indices ABOVE @target_idx.
             #
             # If we are able to find a valid index here, the next line is going
             # to be longer than the specified line length, but it's probably
             # better than doing nothing at all.
             idx = target_idx + 1
-            while is_valid_index(idx + 1) and fails_check(idx):
+            while is_valid_index(idx + 1) and not passes_all_checks(idx):
                 idx += 1
 
-            if not is_valid_index(idx) or fails_check(idx):
+            if not is_valid_index(idx) or not passes_all_checks(idx):
                 st_error = STError(
                     f"Unable to find a good place to split string ({string!r})."
                 )
@@ -3975,10 +3967,10 @@ class StringNonAtomicSplitter(StringSplitterMixin):
         can then be split again by StringAtomicSplitter, if necessary.
 
     Collaborations:
-        In the event that the string that StringNonAtomicSplitter split is changed
-        such that it no longer needs to be given its own line,
-        StringNonAtomicSplitter delegates the job of cleaning up the parentheses it
-        created to StringParensStripper.
+        In the event that the string that StringNonAtomicSplitter split is
+        changed such that it no longer needs to be given its own line,
+        StringNonAtomicSplitter relies on StringParensStripper to clean up the
+        parentheses it created.
     """
 
     def do_splitter_match(self, line: Line) -> STMatchResult:
