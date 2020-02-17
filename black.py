@@ -3718,6 +3718,7 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
             else:
                 return len(rest_value) > max_last_string()
 
+        string_line_results = []
         while more_splits_should_be_made():
             if use_custom_breakpoints:
                 # Custom User Split (manual)
@@ -3731,7 +3732,10 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
                     # If we are unable to algorthmically determine a good split
                     # and this string has custom splits registered to it, we
                     # fall back to using them.
-                    if custom_splits and first_string_line:
+                    if custom_splits:
+                        rest_value = LL[string_idx].value
+                        string_line_results = []
+                        first_string_line = True
                         use_custom_breakpoints = True
                         continue
 
@@ -3766,10 +3770,12 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
             next_line = line.clone()
             maybe_append_plus(next_line)
             next_line.append(next_leaf)
-            yield Ok(next_line)
+            string_line_results.append(Ok(next_line))
 
             rest_value = prefix + QUOTE + rest_value[idx:]
             first_string_line = False
+
+        yield from string_line_results
 
         if drop_pointless_f_prefix:
             rest_value = self.__normalize_f_string(rest_value, prefix)
