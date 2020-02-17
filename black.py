@@ -3920,7 +3920,7 @@ class StringNonAtomicSplitter(StringSplitterMixin):
         All of the requirements listed in StringSplitterMixin's docstring in
         addition to the requirements listed below:
 
-        * The line is a return statement, which returns a string.
+        * The line is a return/yield statement, which returns/yields a string.
             OR
         * The line is part of a ternary expression (e.g. `x = y if cond else
         z`) such that the line starts with `else <string>`, where <string> is
@@ -3969,6 +3969,7 @@ class StringNonAtomicSplitter(StringSplitterMixin):
             (?:
                 (?:
                     return[ ]  # a 'return' statement
+                    | yield[ ]  # a 'yield' statement
                     | else[ ]  # OR the 'else' part of a ternary expression
                     | assert[ ].*,[ ]?  # OR an 'assert' statement
                     | [A-Za-z0-9\._]*?  # OR an assignment statement

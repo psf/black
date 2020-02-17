@@ -173,6 +173,9 @@ func_call(
 
 raw_strings = r"Don't" " get" r" merged" " unless they are all raw."
 
+def foo():
+    yield "This is a really long string that can't possibly be expected to fit all together on one line. In fact it may even take up three or more lines... like four or five... but probably just three."
+
 ########## REGRESSION TESTS ##########
 # There was a bug where tuples were being identified as long strings.
 long_tuple = ('Apple', 'Berry', 'Cherry', 'Dill', 'Evergreen', 'Fig',
@@ -783,6 +786,15 @@ short_string = "Hi there."
 func_call(short_string="Hi there.")
 
 raw_strings = r"Don't" " get" r" merged" " unless they are all raw."
+
+
+def foo():
+    yield (
+        "This is a really long string that can't possibly be expected to fit all"
+        " together on one line. In fact it may even take up three or more lines... like"
+        " four or five... but probably just three."
+    )
+
 
 ########## REGRESSION TESTS ##########
 # There was a bug where tuples were being identified as long strings.
