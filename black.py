@@ -3625,12 +3625,12 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
 
         # --- Max Index (for string value) Calculation
         # We start with the line length limit
-        max_idx = self.line_length
+        target_idx = self.line_length
         # The last index of a string of length N is N-1.
-        max_idx -= 1
+        target_idx -= 1
         # Leading whitespace is not present in the string value (e.g. Leaf.value).
-        max_idx -= line.depth * 4
-        if max_idx < 0:
+        target_idx -= line.depth * 4
+        if target_idx < 0:
             st_error = STError(
                 f"Unable to split {LL[string_idx].value} at such high of a line depth:"
                 f" {line.depth}"
@@ -3638,7 +3638,7 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
             yield Err(st_error)
             return
 
-        # We MAY choose to drop the 'f' prefix from substrings that don't have
+        # We MAY choose to drop the 'f' prefix from substrings that don't
         # contain any f-expressions, but ONLY if the original f-string
         # containes at least one f-expression. Otherwise, we will alter the AST
         # of the program.
@@ -3649,6 +3649,9 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
         first_string_line = True
         starts_with_plus = LL[0].type == token.PLUS
 
+        def line_needs_plus() -> bool:
+            return first_string_line and starts_with_plus
+
         def maybe_append_plus(new_line: Line) -> None:
             """
             Side Effects:
@@ -3657,13 +3660,10 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
                 and replaces the old PLUS leaf in the node structure. Otherwise
                 this function does nothing.
             """
-            if first_string_line and starts_with_plus:
+            if line_needs_plus():
                 plus_leaf = Leaf(token.PLUS, "+")
                 replace_child(LL[0], plus_leaf)
                 new_line.append(plus_leaf)
-
-        def prepend_plus() -> bool:
-            return first_string_line and starts_with_plus
 
         def max_last_string() -> int:
             """
@@ -3671,18 +3671,14 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
                 The max length of the string value used for the last line we
                 will construct.
             """
-            result = self.line_length
-            result -= line.depth * 4
-
             ends_with_comma = (
                 string_idx + 1 < len(LL) and LL[string_idx + 1].type == token.COMMA
             )
-            if ends_with_comma:
-                result -= 1
 
-            if prepend_plus():
-                result -= 2
-
+            result = self.line_length
+            result -= line.depth * 4
+            result -= 1 if ends_with_comma else 0
+            result -= 2 if line_needs_plus() else 0
             return result
 
         # Check if StringMerger registered any custom splits.
@@ -3691,7 +3687,7 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
         # line limit.
         use_custom_breakpoints = bool(
             custom_splits
-            and all(csplit.break_idx <= max_idx for csplit in custom_splits)
+            and all(csplit.break_idx <= target_idx for csplit in custom_splits)
         )
 
         # Temporary storage for the remaining chunk of the string line that
@@ -3701,7 +3697,8 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
         def keep_splitting() -> bool:
             if use_custom_breakpoints:
                 return len(custom_splits) > 1
-            return len(rest_value) > max_last_string()
+            else:
+                return len(rest_value) > max_last_string()
 
         while keep_splitting():
             if use_custom_breakpoints:
@@ -3710,16 +3707,15 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
                 idx = csplit.break_idx
             else:
                 # Algorithmic Split (automatic)
-                temp_max_idx = max_idx - 2 if prepend_plus() else max_idx
-                idx_result = self.__get_break_idx(rest_value, temp_max_idx)
+                tidx = target_idx - 2 if line_needs_plus() else target_idx
+                idx_result = self.__get_break_idx(rest_value, tidx)
                 if isinstance(idx_result, Err):
                     yield idx_result
                     return
 
                 idx = idx_result.ok()
 
-            # --- Calculate the string value that will be used for the next
-            # --- line we construct.
+            # --- Construct `next_value`
             next_value = rest_value[:idx] + QUOTE
             if (
                 # Are we allowed to try to drop a pointless 'f' prefix?
@@ -3738,8 +3734,7 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
             # --- Construct `next_leaf`
             next_leaf = Leaf(token.STRING, next_value)
             insert_str_child(next_leaf)
-            if self.normalize_strings:
-                normalize_string_quotes(next_leaf)
+            self.__maybe_normalize_string_quotes(next_leaf)
 
             # --- Construct and yield `next_line`
             next_line = line.clone()
@@ -3748,7 +3743,6 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
             yield Ok(next_line)
 
             rest_value = prefix + QUOTE + rest_value[idx:]
-
             first_string_line = False
 
         if drop_pointless_f_prefix:
@@ -3757,8 +3751,8 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
         rest_leaf = Leaf(token.STRING, rest_value)
         insert_str_child(rest_leaf)
 
-        if self.normalize_strings:
-            normalize_string_quotes(rest_leaf)
+        # TODO(bugyi): Write test that fails when you remove these two lines.
+        self.__maybe_normalize_string_quotes(rest_leaf)
 
         last_line = line.clone()
         maybe_append_plus(last_line)
@@ -3792,14 +3786,26 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
             yield Ok(last_line)
 
     @staticmethod
-    def __get_break_idx(string: str, max_idx: int) -> STResult[int]:
+    def __get_break_idx(string: str, target_idx: int) -> STResult[int]:
         """
+        Algorithm that determines where to split a string.
+
         Pre-Conditions:
-            * @max_idx > 0
+            * @target_idx > 0
             * Refer to `help(assert_is_leaf_string)`.
+
+        Returns:
+            Ok(idx), if we are able to find a  such that @string[idx - 1] will
+            be the last character of the next string line to be constructed,
+            which makes @string[idx] the first character of the string line
+            that will be constructed after that.
+                OR
+            Err(STError)
         """
-        assert max_idx > 0
+        assert target_idx > 0
         assert_is_leaf_string(string)
+
+        MIN_SUBSTR_SIZE = 6
 
         _fexpr_slices: Optional[List[Tuple[int, int]]] = None
 
@@ -3825,33 +3831,43 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
 
             return False
 
-        MIN_SUBSTR_SIZE = 6
-        idx = max_idx
-
-        # Ensure the substring:
+        # Ensure the resultant substring:
         #   1) starts with a space
-        #   2) contains at least a 5-letter word
-        while (
-            ((MIN_SUBSTR_SIZE - 1) <= idx + 1 < len(string) and string[idx] != " ")
-            or breaks_fstring_expression(idx)
-            or len(string[idx:]) < MIN_SUBSTR_SIZE
-        ):
+        #   2) Does not split any f-expressions (if @string is an f-string)
+        #   3) contains at least a 5-letter word
+        def bounds_are_good(index: int) -> bool:
+            return 0 <= index < len(string)
+
+        def idx_is_bad(index: int) -> bool:
+            not_space = string[index] != " "
+            not_big_enough = (
+                len(string[idx:]) < MIN_SUBSTR_SIZE
+                or len(string[:idx]) < MIN_SUBSTR_SIZE
+            )
+            return not_space or not_big_enough or breaks_fstring_expression(index)
+
+        idx = target_idx
+        while bounds_are_good(idx - 1) and idx_is_bad(idx):
             idx -= 1
 
-        if string[idx] != " ":
+        if idx_is_bad(idx):
             # This line is going to be longer than the specified line length, but
             # let's try to split it anyway.
-            idx = max_idx + 1
-            while idx + 1 < len(string) and string[idx] != " ":
+            idx = target_idx + 1
+            while bounds_are_good(idx + 1) and idx_is_bad(idx):
                 idx += 1
 
-            if string[idx] != " ":
+            if not bounds_are_good(idx) or idx_is_bad(idx):
                 st_error = STError(
-                    "Long strings which contain no spaces are not split."
+                    "Unable to find a good place to split string ({string!r})."
                 )
                 return Err(st_error)
 
         return Ok(idx)
+
+    def __maybe_normalize_string_quotes(self, leaf: Leaf) -> None:
+        if self.normalize_strings:
+            normalize_string_quotes(leaf)
 
     @staticmethod
     def __normalize_f_string(string: str, prefix: str) -> str:
