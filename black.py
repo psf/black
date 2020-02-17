@@ -2668,7 +2668,7 @@ class StringTransformerMixin(StringTransformer):
 
     # Compiling re.Pattern objects is computationally expensive, so we cache
     # them here.
-    PATTERN_CACHE: ClassVar[Dict[str, Pattern[str]]] = {}
+    __PATTERN_CACHE: ClassVar[Dict[str, Pattern[str]]] = {}
 
     @abstractmethod
     def do_match(self, line: Line) -> STMatchResult:
@@ -2752,10 +2752,10 @@ class StringTransformerMixin(StringTransformer):
                 OR
             * Err(STError), if the match was unsuccessful.
         """
-        if pattern not in self.PATTERN_CACHE:
-            self.PATTERN_CACHE[pattern] = re.compile(pattern, re.VERBOSE)
+        if pattern not in self.__PATTERN_CACHE:
+            self.__PATTERN_CACHE[pattern] = re.compile(pattern, re.VERBOSE)
 
-        pttrn = self.PATTERN_CACHE[pattern]
+        pttrn = self.__PATTERN_CACHE[pattern]
         match = pttrn.match(self.line_str)
 
         if match is None:
@@ -2830,7 +2830,7 @@ class CustomSplitMapMixin:
     the resultant substrings go over the configured max line length.
     """
 
-    _CUSTOM_SPLIT_MAP: Dict[
+    __CUSTOM_SPLIT_MAP: Dict[
         Tuple[StringID, str], Tuple[CustomSplit, ...]
     ] = defaultdict(tuple)
 
@@ -2841,7 +2841,7 @@ class CustomSplitMapMixin:
         Side Effects:
             Adds a mapping from @string to the custom splits @csplits.
         """
-        CustomSplitMapMixin._CUSTOM_SPLIT_MAP[id(string), string] = tuple(csplits)
+        CustomSplitMapMixin.__CUSTOM_SPLIT_MAP[id(string), string] = tuple(csplits)
 
     @staticmethod
     def pop_custom_splits(string: str) -> List[CustomSplit]:
@@ -2856,8 +2856,8 @@ class CustomSplitMapMixin:
         """
         key = (id(string), string)
 
-        result = CustomSplitMapMixin._CUSTOM_SPLIT_MAP[key]
-        del CustomSplitMapMixin._CUSTOM_SPLIT_MAP[key]
+        result = CustomSplitMapMixin.__CUSTOM_SPLIT_MAP[key]
+        del CustomSplitMapMixin.__CUSTOM_SPLIT_MAP[key]
 
         return list(result)
 
@@ -3324,10 +3324,6 @@ class StringSplitterMixin(StringTransformerMixin):
 
         Refer to `help(StringTransformerMixin.do_match)`.
         """
-
-    @abstractmethod
-    def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
-        """Refer to `help(StringTransformerMixin.do_transform)`."""
 
     def do_match(self, line: Line) -> STMatchResult:
         match_result = self.do_splitter_match(line)
