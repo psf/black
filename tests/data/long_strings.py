@@ -453,6 +453,21 @@ class A:
                     "https://docs.djangoproject.com/en/%s/topics/migrations/#serializing-values"
                     % (name, module_name, get_docs_version()))
 
+class A:
+    class B:
+        def foo():
+            if not hasattr(module, name):
+                raise ValueError(
+                    "Could not find object %s in %s.\nPlease note that you cannot serialize things like inner classes. Please move the object into the main module body to use migrations.\nFor more information, see https://docs.djangoproject.com/en/%s/topics/migrations/#serializing-values"
+                    % (name, module_name, get_docs_version()))
+
+x = (
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+)
+
 ########## EDGE-CASE TESTS ##########
 some_variable = "This string is long but not so long that it needs to be split just yet"
 some_variable = 'This string is long but not so long that it needs to be split just yet'
@@ -1166,6 +1181,26 @@ class A:
                     % (name, module_name, get_docs_version())
                 )
 
+
+class A:
+    class B:
+        def foo():
+            if not hasattr(module, name):
+                raise ValueError(
+                    "Could not find object %s in %s.\nPlease note that you cannot"
+                    " serialize things like inner classes. Please move the object into"
+                    " the main module body to use migrations.\nFor more information,"
+                    " see https://docs.djangoproject.com/en/%s/topics/migrations/#serializing-values"
+                    % (name, module_name, get_docs_version())
+                )
+
+
+x = (
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+)
 
 ########## EDGE-CASE TESTS ##########
 some_variable = "This string is long but not so long that it needs to be split just yet"

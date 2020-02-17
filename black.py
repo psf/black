@@ -3728,7 +3728,7 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
                 # Algorithmic Split (automatic)
                 tidx = target_idx - 2 if line_needs_plus() else target_idx
                 idx_result = self.__get_break_idx(rest_value, tidx)
-                if isinstance(idx_result, Err):
+                if idx_result is None:
                     # If we are unable to algorthmically determine a good split
                     # and this string has custom splits registered to it, we
                     # fall back to using them.
@@ -3738,10 +3738,9 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
                         first_string_line = True
                         use_custom_breakpoints = True
                         continue
-
-                    # Otherwise, we have failed to split this string line.
-                    yield idx_result
-                    return
+                    # Otherwise, we stop splitting here.
+                    else:
+                        break
 
                 idx = idx_result.ok()
 
@@ -3766,7 +3765,7 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
             insert_str_child(next_leaf)
             self.__maybe_normalize_string_quotes(next_leaf)
 
-            # --- Construct and yield `next_line`
+            # --- Construct `next_line`
             next_line = line.clone()
             maybe_append_plus(next_line)
             next_line.append(next_leaf)
@@ -3823,7 +3822,7 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
             yield Ok(last_line)
 
     @staticmethod
-    def __get_break_idx(string: str, target_idx: int) -> STResult[int]:
+    def __get_break_idx(string: str, target_idx: int) -> Optional[int]:
         """
         This method contains the algorithm that StringAtomicSplitter uses to
         determine which character to split each string at.
@@ -3841,11 +3840,11 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
             * 0 <= @target_idx < len(@string)
 
         Returns:
-            Ok(idx), if an index is able to be found that meets all of the
+            idx, if an index is able to be found that meets all of the
             conditions listed in the 'Transformations' section of this classes'
             docstring.
                 OR
-            Err(STError), otherwise.
+            None, otherwise.
         """
         assert 0 <= target_idx < len(string)
         assert_is_leaf_string(string)
@@ -3919,10 +3918,7 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
                 idx += 1
 
             if not is_valid_index(idx) or not passes_all_checks(idx):
-                st_error = STError(
-                    f"Unable to find a good place to split string ({string!r})."
-                )
-                return Err(st_error)
+                return None
 
         return Ok(idx)
 
