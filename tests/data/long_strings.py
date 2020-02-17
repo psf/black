@@ -420,6 +420,26 @@ class A:
                 " no parent)."
             )
 
+def foo():
+    user_regex = _lazy_re_compile(
+        r"(^[-!#$%&'*+/=?^_`{}|~0-9A-Z]+(\.[-!#$%&'*+/=?^_`{}|~0-9A-Z]+)*\Z"  # dot-atom
+        r'|^"([\001-\010\013\014\016-\037!#-\[\]-\177]|\\[\001-\011\013\014\016-\177])*"\Z)',  # quoted-string
+        re.IGNORECASE)
+
+def foo():
+    user_regex = _lazy_re_compile(
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"  # dot-atom
+        'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',  # quoted-string
+        xyz
+    )
+
+def foo():
+    user_regex = _lazy_re_compile(
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"  # dot-atom
+        'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',  # quoted-string
+        xyz
+    )
+
 ########## EDGE-CASE TESTS ##########
 some_variable = "This string is long but not so long that it needs to be split just yet"
 some_variable = 'This string is long but not so long that it needs to be split just yet'
@@ -1093,6 +1113,30 @@ class A:
                 f"This string ({string_leaf.value}) appears to be pointless (i.e. has"
                 " no parent)."
             )
+
+
+def foo():
+    user_regex = _lazy_re_compile(
+        r"(^[-!#$%&'*+/=?^_`{}|~0-9A-Z]+(\.[-!#$%&'*+/=?^_`{}|~0-9A-Z]+)*\Z"  # dot-atom
+        r'|^"([\001-\010\013\014\016-\037!#-\[\]-\177]|\\[\001-\011\013\014\016-\177])*"\Z)',  # quoted-string
+        re.IGNORECASE,
+    )
+
+
+def foo():
+    user_regex = _lazy_re_compile(
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"  # dot-atom
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",  # quoted-string
+        xyz,
+    )
+
+
+def foo():
+    user_regex = _lazy_re_compile(
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"  # dot-atom
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",  # quoted-string
+        xyz,
+    )
 
 
 ########## EDGE-CASE TESTS ##########

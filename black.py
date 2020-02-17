@@ -2869,7 +2869,8 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
     Requirements:
         (A) The line contains adjacent strings such that at most one substring
         has inline comments AND the set of all substring prefixes is either of
-        length 1 or equal to {"", "f"}.
+        length 1 or equal to {"", "f"} AND none of the substrings are raw
+        strings (i.e. are prefixed with 'r').
             OR
         (B) The line contains a string which uses line continuation backslashes.
 
@@ -3137,16 +3138,26 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
                 - The string group has more than one inline comment.
                 - The set of all string prefixes in the string group is of
                   length greater than one and is not equal to {"", "f"}.
+                - The string group consists of raw strings.
         """
         num_of_inline_string_comments = 0
         set_of_prefixes = set()
         num_of_strings = 0
         for leaf in line.leaves[string_idx:]:
             if leaf.type != token.STRING:
+                # If the string group is trailed by a comma, we count the
+                # comments trailing the comma to be one of the string group's
+                # comments.
+                if leaf.type == token.COMMA and id(leaf) in line.comments:
+                    num_of_inline_string_comments += 1
                 break
 
             num_of_strings += 1
             prefix = get_string_prefix(leaf.value)
+            if "r" in prefix:
+                st_error = STError("StringMerger does NOT merge raw strings.")
+                return Err(st_error)
+
             set_of_prefixes.add(prefix)
 
             if id(leaf) in line.comments:
@@ -3717,6 +3728,14 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
                 tidx = target_idx - 2 if line_needs_plus() else target_idx
                 idx_result = self.__get_break_idx(rest_value, tidx)
                 if isinstance(idx_result, Err):
+                    # If we are unable to algorthmically determine a good split
+                    # and this string has custom splits registered to it, we
+                    # fall back to using them.
+                    if custom_splits and first_string_line:
+                        use_custom_breakpoints = True
+                        continue
+
+                    # Otherwise, we have failed to split this string line.
                     yield idx_result
                     return
 
@@ -3775,7 +3794,10 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
                     break
 
             # Try to fit them all on the same line with the last substring...
-            if len(last_value) <= max_last_string():
+            if (
+                len(last_value) <= max_last_string()
+                or LL[string_idx + 1].type == token.COMMA
+            ):
                 last_line.append(rest_leaf)
                 append_leaves(last_line, line, LL[string_idx + 1 :])
                 yield Ok(last_line)
