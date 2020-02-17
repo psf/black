@@ -3018,7 +3018,7 @@ class StringMerger(StringTransformerMixin, CustomSplitMapMixin):
             """Strip @string (i.e. make it a "naked" string)
 
             Pre-conditions:
-                Refer to `help(assert_is_leaf_string)`.
+                * assert_is_leaf_string(@string)
 
             Returns:
                 A string S that is identical to @string except that
@@ -3788,11 +3788,12 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
     @staticmethod
     def __get_break_idx(string: str, target_idx: int) -> STResult[int]:
         """
-        Algorithm that determines where to split a string.
+        This method contains the algorithm that StringAtomicSplitter uses to
+        determine which character to split each string at.
 
         Pre-Conditions:
+            * assert_is_leaf_string(@string)
             * @target_idx > 0
-            * Refer to `help(assert_is_leaf_string)`.
 
         Returns:
             Ok(idx), if we are able to find a  such that @string[idx - 1] will
@@ -3872,7 +3873,7 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
     def __normalize_f_string(string: str, prefix: str) -> str:
         """
         Pre-Conditions:
-            Refer to `help(assert_is_leaf_string)`.
+            * assert_is_leaf_string(@string)
         """
         assert_is_leaf_string(string)
 
@@ -4107,7 +4108,7 @@ def replace_child(old_child: LN, new_child: LN) -> None:
 def get_string_prefix(string: str) -> str:
     """
     Pre-conditions:
-        Refer to `help(assert_is_leaf_string)`.
+        * assert_is_leaf_string(@string)
 
     Returns:
         @string's prefix (e.g. '', 'r', 'f', or 'rf').
