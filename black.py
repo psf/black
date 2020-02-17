@@ -3835,31 +3835,30 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
         #   1) starts with a space
         #   2) Does not split any f-expressions (if @string is an f-string)
         #   3) contains at least a 5-letter word
-        def bounds_are_good(index: int) -> bool:
-            return 0 <= index < len(string)
+        def is_valid_index(i: int) -> bool:
+            return 0 <= i < len(string)
 
-        def idx_is_bad(index: int) -> bool:
-            not_space = string[index] != " "
+        def conditions_are_bad(i: int) -> bool:
+            not_space = string[i] != " "
             not_big_enough = (
-                len(string[idx:]) < MIN_SUBSTR_SIZE
-                or len(string[:idx]) < MIN_SUBSTR_SIZE
+                len(string[i:]) < MIN_SUBSTR_SIZE or len(string[:i]) < MIN_SUBSTR_SIZE
             )
-            return not_space or not_big_enough or breaks_fstring_expression(index)
+            return not_space or not_big_enough or breaks_fstring_expression(i)
 
         idx = target_idx
-        while bounds_are_good(idx - 1) and idx_is_bad(idx):
+        while is_valid_index(idx - 1) and conditions_are_bad(idx):
             idx -= 1
 
-        if idx_is_bad(idx):
+        if conditions_are_bad(idx):
             # This line is going to be longer than the specified line length, but
             # let's try to split it anyway.
             idx = target_idx + 1
-            while bounds_are_good(idx + 1) and idx_is_bad(idx):
+            while is_valid_index(idx + 1) and conditions_are_bad(idx):
                 idx += 1
 
-            if not bounds_are_good(idx) or idx_is_bad(idx):
+            if not is_valid_index(idx) or conditions_are_bad(idx):
                 st_error = STError(
-                    "Unable to find a good place to split string ({string!r})."
+                    f"Unable to find a good place to split string ({string!r})."
                 )
                 return Err(st_error)
 
