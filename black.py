@@ -2617,12 +2617,15 @@ def transform_line(
 @dataclass  # type: ignore
 class StringTransformer(ABC):
     """
-    An implementation of the StringTransformer protocol that relies on its
+    An implementation of the LineTransformer protocol that relies on its
     subclasses overriding the template methods `do_match(...)` and
     `do_transform(...)`.
 
+    This LineTransformer works exclusively on strings (for example, by merging
+    or splitting them).
+
     The following sections can be found among the docstrings of each concrete
-    class that makes use of this mixin's functionality.
+    StringTransformer subclass.
 
     Requirements:
         Which requirements must be met of the given Line for this
@@ -3287,7 +3290,7 @@ class StringParensStripper(StringTransformer):
         return Err(value_error)
 
 
-class StringSplitterMixin(StringTransformer):
+class StringSplitter(StringTransformer):
     """
     Mixin class for StringTransformers which transform a Line's strings by
     splitting them or placing them on their own lines where necessary to avoid
@@ -3310,7 +3313,7 @@ class StringSplitterMixin(StringTransformer):
     @abstractmethod
     def do_splitter_match(self, line: Line) -> STMatchResult:
         """
-        StringSplitterMixin asks its clients to override this method instead of
+        StringSplitter asks its clients to override this method instead of
         `StringTransformer.do_match(...)`.
 
         Follows the same protocol as `StringTransformer.do_match(...)`.
@@ -3404,7 +3407,7 @@ class StringSplitterMixin(StringTransformer):
     def __validate(self, line: Line, string_idx: int) -> STResult[None]:
         """
         Checks that @line meets all of the requirements listed in this classes'
-        docstring. Refer to `help(StringSplitterMixin)` for a detailed
+        docstring. Refer to `help(StringSplitter)` for a detailed
         description of those requirements.
 
         Returns:
@@ -3556,7 +3559,7 @@ class StringSplitterMixin(StringTransformer):
         return offset
 
 
-class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
+class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
     """
     StringTransformer that splits "atom" strings (i.e. strings which exist on
     lines by themselves).
@@ -3565,7 +3568,7 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
         * The line consists ONLY of a single string (with the exception of a '+'
         symbol which MAY exist at the start of the line).
             AND
-        * All of the requirements listed in StringSplitterMixin's docstring.
+        * All of the requirements listed in StringSplitter's docstring.
 
     Transformations:
         The string mentioned in the 'Requirements' section is split into as
@@ -3684,6 +3687,11 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
         rest_value = LL[string_idx].value
 
         def more_splits_should_be_made() -> bool:
+            """
+            Returns:
+                True iff `rest_value` (the remaining string value from the last
+                split), should be split again.
+            """
             if use_custom_breakpoints:
                 return len(custom_splits) > 1
             else:
@@ -3911,13 +3919,13 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
             return string
 
 
-class StringNonAtomicSplitter(StringSplitterMixin):
+class StringNonAtomicSplitter(StringSplitter):
     """
     StringTransformer that splits non-"atom" strings (i.e. strings that do not
     exist on lines by themselves).
 
     Requirements:
-        All of the requirements listed in StringSplitterMixin's docstring in
+        All of the requirements listed in StringSplitter's docstring in
         addition to the requirements listed below:
 
         * The line is a return/yield statement, which returns/yields a string.
