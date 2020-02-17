@@ -162,11 +162,15 @@ class NothingChanged(UserWarning):
     """Raised when reformatted code is the same as source."""
 
 
-class CannotSplit(Exception):
+class LineTransformerError(Exception):
+    """Base class for errors raised by LineTransformers."""
+
+
+class CannotSplit(LineTransformerError):
     """A readable split that fits the allotted line length is impossible."""
 
 
-class STError(CannotSplit):
+class STError(LineTransformerError):
     """Custom error type used by the StringTransformer family of classes."""
 
 
@@ -2594,7 +2598,9 @@ def transform_line(
         try:
             for l in split_func(line, features):
                 if str(l).strip("\n") == line_str:
-                    raise CannotSplit("Split function returned an unchanged result")
+                    raise LineTransformerError(
+                        "Line transformer returned an unchanged result"
+                    )
 
                 result.extend(
                     transform_line(
@@ -2604,7 +2610,7 @@ def transform_line(
                         features=features,
                     )
                 )
-        except CannotSplit:
+        except LineTransformerError:
             continue
         else:
             yield from result
@@ -2695,7 +2701,7 @@ class StringTransformer(ABC):
         the LineTransformer type.
 
         Raises:
-            CannotSplit(...) if the concrete StringTransformer class is unable
+            STError(...) if the concrete StringTransformer class is unable
             to transform @line.
         """
         # Optimization to avoid calling `self.do_match(...)` when the line does
@@ -2727,7 +2733,7 @@ class StringTransformer(ABC):
         for line_result in self.do_transform(line, string_idx):
             if isinstance(line_result, Err):
                 st_error = line_result.err()
-                raise CannotSplit(
+                raise STError(
                     "StringTransformer failed while attempting to transform string."
                 ) from st_error
             line = line_result.ok()
@@ -3292,7 +3298,7 @@ class StringParensStripper(StringTransformer):
 
 class StringSplitter(StringTransformer):
     """
-    Mixin class for StringTransformers which transform a Line's strings by
+    Abstract class for StringTransformers which transform a Line's strings by
     splitting them or placing them on their own lines where necessary to avoid
     going over the configured line length.
 
