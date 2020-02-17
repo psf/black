@@ -2535,7 +2535,7 @@ def fix_line(
     string_atomic_split = init_sf(StringAtomicSplitter)
     string_non_atomic_split = init_sf(StringNonAtomicSplitter)
 
-    transformers: List[Fixer]
+    fixers: List[Fixer]
     if (
         not line.contains_uncollapsable_type_comments()
         and not line.should_explode
@@ -2546,9 +2546,9 @@ def fix_line(
         )
     ):
         # Only apply basic string preprocessing, since lines shouldn't be split here.
-        transformers = [string_merge, string_parens_strip]
+        fixers = [string_merge, string_parens_strip]
     elif line.is_def:
-        transformers = [left_hand_split]
+        fixers = [left_hand_split]
     else:
 
         def rhs(line: Line, features: Collection[Feature]) -> Iterator[Line]:
@@ -2566,7 +2566,7 @@ def fix_line(
             yield from right_hand_split(line, line_length=1, features=features)
 
         if line.inside_brackets:
-            transformers = [
+            fixers = [
                 string_merge,
                 string_parens_strip,
                 delimiter_split,
@@ -2576,7 +2576,7 @@ def fix_line(
                 rhs,
             ]
         else:
-            transformers = [
+            fixers = [
                 string_merge,
                 string_parens_strip,
                 string_atomic_split,
@@ -2584,13 +2584,13 @@ def fix_line(
                 rhs,
             ]
 
-    for split_func in transformers:
+    for fix in fixers:
         # We are accumulating lines in `result` because we might want to abort
         # mission and return the original line in the end, or attempt a different
         # split altogether.
         result: List[Line] = []
         try:
-            for l in split_func(line, features):
+            for l in fix(line, features):
                 if str(l).strip("\n") == line_str:
                     raise CantFix("Line fixer returned an unchanged result")
 
