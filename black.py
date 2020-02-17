@@ -3859,11 +3859,12 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
         def is_valid_index(i: int) -> bool:
             return 0 <= i < len(string)
 
-        def conditions_are_bad(i: int) -> bool:
+        def fails_check(i: int) -> bool:
             """
             Returns:
-                True, if all of the conditions listed in the 'Transformations'
-                section of this classes' docstring would be met by returning @i.
+                True, if any of the conditions listed in the 'Transformations'
+                section of this classes' docstring would be NOT be met by
+                returning @i.
                     OR
                 False, otherwise.
             """
@@ -3875,20 +3876,20 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
 
         # First, we check all indices BELOW @target_idx.
         idx = target_idx
-        while is_valid_index(idx - 1) and conditions_are_bad(idx):
+        while is_valid_index(idx - 1) and fails_check(idx):
             idx -= 1
 
-        if conditions_are_bad(idx):
+        if fails_check(idx):
             # If that fails, we check all indices ABOVE @target_idx.
             #
             # If we are able to find a valid index here, the next line is going
             # to be longer than the specified line length, but it's probably
             # better than doing nothing at all.
             idx = target_idx + 1
-            while is_valid_index(idx + 1) and conditions_are_bad(idx):
+            while is_valid_index(idx + 1) and fails_check(idx):
                 idx += 1
 
-            if not is_valid_index(idx) or conditions_are_bad(idx):
+            if not is_valid_index(idx) or fails_check(idx):
                 st_error = STError(
                     f"Unable to find a good place to split string ({string!r})."
                 )
