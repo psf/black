@@ -3769,7 +3769,7 @@ class StringTermSplitter(StringSplitterMixin, CustomSplitMapMixin):
 
         _fexpr_slices: Optional[List[Tuple[int, int]]] = None
 
-        def fexpr_slices() -> List[Tuple[int, int]]:
+        def fexpr_slices() -> Iterator[Tuple[int, int]]:
             nonlocal _fexpr_slices
 
             if _fexpr_slices is None:
@@ -3777,7 +3777,7 @@ class StringTermSplitter(StringSplitterMixin, CustomSplitMapMixin):
                 for match in re.finditer(RE_FEXPR, string, re.VERBOSE):
                     _fexpr_slices.append(match.span())
 
-            return _fexpr_slices
+            yield from _fexpr_slices
 
         is_fstring = "f" in get_string_prefix(string)
 
