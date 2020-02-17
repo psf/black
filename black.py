@@ -3617,17 +3617,20 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
     def do_transform(self, line: Line, string_idx: int) -> Iterator[STResult[Line]]:
         LL = line.leaves
 
+        QUOTE = LL[string_idx].value[-1]
+
         insert_str_child = self._insert_str_child_factory(LL[string_idx])
 
-        rest_value = LL[string_idx].value
-        prefix = get_string_prefix(rest_value)
+        prefix = get_string_prefix(LL[string_idx].value)
 
-        rest_line = line.clone()
-        rest_leaf = Leaf(token.STRING, rest_value)
-        rest_line.append(rest_leaf)
-
-        max_next_value = self.line_length - (1 + len(prefix)) - (line.depth * 4)
-        if max_next_value < 0:
+        # --- Max Index (for string value) Calculation
+        # We start with the line length limit
+        max_idx = self.line_length
+        # The last index of a string of length N is N-1.
+        max_idx -= 1
+        # Leading whitespace is not present in the string value (e.g. Leaf.value).
+        max_idx -= line.depth * 4
+        if max_idx < 0:
             st_error = STError(
                 f"Unable to split {LL[string_idx].value} at such high of a line depth:"
                 f" {line.depth}"
@@ -3635,137 +3638,167 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
             yield Err(st_error)
             return
 
-        QUOTE = rest_value[-1]
-
-        custom_splits = self.pop_custom_splits(LL[string_idx].value)
-
-        starts_with_plus = LL[0].type == token.PLUS
-        ends_with_comma = (
-            string_idx + 1 < len(LL) and LL[string_idx + 1].type == token.COMMA
-        )
+        # We MAY choose to drop the 'f' prefix from substrings that don't have
+        # contain any f-expressions, but ONLY if the original f-string
+        # containes at least one f-expression. Otherwise, we will alter the AST
+        # of the program.
         drop_pointless_f_prefix = ("f" in prefix) and re.search(
-            RE_FEXPR, rest_value, re.VERBOSE
-        )
-        use_custom_breakpoints = bool(
-            custom_splits
-            and all(csplit.break_idx <= max_next_value for csplit in custom_splits)
+            RE_FEXPR, LL[string_idx].value, re.VERBOSE
         )
 
         first_string_line = True
+        starts_with_plus = LL[0].type == token.PLUS
 
-        def maybe_prepend_plus(new_line: Line) -> None:
+        def maybe_append_plus(new_line: Line) -> None:
+            """
+            Side Effects:
+                If @line starts with a plus and this is the first line we are
+                constructing, this function appends a PLUS leaf to @new_line
+                and replaces the old PLUS leaf in the node structure. Otherwise
+                this function does nothing.
+            """
             if first_string_line and starts_with_plus:
                 plus_leaf = Leaf(token.PLUS, "+")
                 replace_child(LL[0], plus_leaf)
                 new_line.append(plus_leaf)
 
-        max_rest_line = self.line_length
-        if ends_with_comma:
-            max_rest_line -= 1
-        if starts_with_plus:
-            max_rest_line -= 2
+        def prepend_plus() -> bool:
+            return first_string_line and starts_with_plus
 
-        while len(line_to_string(rest_line)) > max_rest_line or (
-            len(custom_splits) > 1 and use_custom_breakpoints
-        ):
-            prepend_plus = first_string_line and starts_with_plus
-            if prepend_plus:
-                max_rest_line += 2
+        def max_last_string() -> int:
+            """
+            Returns:
+                The max length of the string value used for the last line we
+                will construct.
+            """
+            result = self.line_length
+            result -= line.depth * 4
 
+            ends_with_comma = (
+                string_idx + 1 < len(LL) and LL[string_idx + 1].type == token.COMMA
+            )
+            if ends_with_comma:
+                result -= 1
+
+            if prepend_plus():
+                result -= 2
+
+            return result
+
+        # Check if StringMerger registered any custom splits.
+        custom_splits = self.pop_custom_splits(LL[string_idx].value)
+        # We use them ONLY if none of them would produce lines that exceed the
+        # line limit.
+        use_custom_breakpoints = bool(
+            custom_splits
+            and all(csplit.break_idx <= max_idx for csplit in custom_splits)
+        )
+
+        # Temporary storage for the remaining chunk of the string line that
+        # can't fit onto the line currently being constructed.
+        rest_value = LL[string_idx].value
+
+        def keep_splitting() -> bool:
             if use_custom_breakpoints:
-                csplit = custom_splits.pop(0)
+                return len(custom_splits) > 1
+            return len(rest_value) > max_last_string()
 
+        while keep_splitting():
+            if use_custom_breakpoints:
+                # Custom User Split (manual)
+                csplit = custom_splits.pop(0)
                 idx = csplit.break_idx
             else:
-                mnv = max_next_value - 2 if prepend_plus else max_next_value
-                idx_result = self.__get_break_idx(rest_value, mnv)
+                # Algorithmic Split (automatic)
+                temp_max_idx = max_idx - 2 if prepend_plus() else max_idx
+                idx_result = self.__get_break_idx(rest_value, temp_max_idx)
                 if isinstance(idx_result, Err):
                     yield idx_result
                     return
 
                 idx = idx_result.ok()
 
+            # --- Calculate the string value that will be used for the next
+            # --- line we construct.
             next_value = rest_value[:idx] + QUOTE
-
             if (
-                next_value != self.__normalize_f_string(next_value, prefix)
-                and drop_pointless_f_prefix
+                # Are we allowed to try to drop a pointless 'f' prefix?
+                drop_pointless_f_prefix
+                # If we are, will we be successful?
+                and next_value != self.__normalize_f_string(next_value, prefix)
             ):
+                # If the current custom split did NOT originally use a prefix,
+                # then `csplit.break_idx` will be off by one after removoing
+                # the 'f' prefix.
                 if use_custom_breakpoints and not csplit.has_prefix:
                     idx += 1
                     next_value = rest_value[:idx] + QUOTE
                 next_value = self.__normalize_f_string(next_value, prefix)
 
-            next_line = line.clone()
-
-            maybe_prepend_plus(next_line)
-
+            # --- Construct `next_leaf`
             next_leaf = Leaf(token.STRING, next_value)
             insert_str_child(next_leaf)
-            next_line.append(next_leaf)
-
             if self.normalize_strings:
                 normalize_string_quotes(next_leaf)
 
+            # --- Construct and yield `next_line`
+            next_line = line.clone()
+            maybe_append_plus(next_line)
+            next_line.append(next_leaf)
             yield Ok(next_line)
 
             rest_value = prefix + QUOTE + rest_value[idx:]
-            if drop_pointless_f_prefix:
-                rest_value = self.__normalize_f_string(rest_value, prefix)
-
-            rest_line = line.clone()
-            rest_leaf = Leaf(token.STRING, rest_value)
-            rest_line.append(rest_leaf)
 
             first_string_line = False
 
-        if use_custom_breakpoints:
-            csplit = custom_splits.pop(0)
+        if drop_pointless_f_prefix:
+            rest_value = self.__normalize_f_string(rest_value, prefix)
+
+        rest_leaf = Leaf(token.STRING, rest_value)
+        insert_str_child(rest_leaf)
 
         if self.normalize_strings:
             normalize_string_quotes(rest_leaf)
 
-        insert_str_child(rest_leaf)
-
         last_line = line.clone()
-        maybe_prepend_plus(last_line)
+        maybe_append_plus(last_line)
+
+        # If there are any leaves to the right of the target string...
         if len(LL) > (string_idx + 1):
-            non_string_line = rest_line.clone()
-            append_leaves(non_string_line, line, LL[string_idx + 1 :])
+            last_value = rest_value
+            for leaf in LL[string_idx + 1 :]:
+                last_value += str(leaf)
+                if leaf.type == token.LPAR:
+                    break
 
-            if (
-                len(line_to_string(rest_line))
-                + len(
-                    re.sub(
-                        RE_BALANCED_PARENS,
-                        "(",
-                        line_to_string(non_string_line),
-                        flags=re.VERBOSE,
-                    )
-                )
-                - non_string_line.depth * 4
-            ) <= self.line_length:
-                append_leaves(last_line, rest_line, rest_line.leaves)
-                append_leaves(last_line, non_string_line, non_string_line.leaves)
+            # Try to fit them all on the same line with the last substring...
+            if len(last_value) <= max_last_string():
+                last_line.append(rest_leaf)
+                append_leaves(last_line, line, LL[string_idx + 1 :])
                 yield Ok(last_line)
+            # Otherwise, place the last substring on one line and everything
+            # else on a line below that...
             else:
-                append_leaves(last_line, rest_line, rest_line.leaves)
+                last_line.append(rest_leaf)
                 yield Ok(last_line)
 
+                non_string_line = line.clone()
+                append_leaves(non_string_line, line, LL[string_idx + 1 :])
                 yield Ok(non_string_line)
+        # Else the target string was the last leaf...
         else:
-            append_leaves(last_line, rest_line, rest_line.leaves)
+            last_line.append(rest_leaf)
             last_line.comments = line.comments.copy()
             yield Ok(last_line)
 
     @staticmethod
-    def __get_break_idx(string: str, max_length: int) -> STResult[int]:
+    def __get_break_idx(string: str, max_idx: int) -> STResult[int]:
         """
         Pre-Conditions:
-            * @max_length > 0
+            * @max_idx > 0
             * Refer to `help(assert_is_leaf_string)`.
         """
-        assert max_length > 0
+        assert max_idx > 0
         assert_is_leaf_string(string)
 
         _fexpr_slices: Optional[List[Tuple[int, int]]] = None
@@ -3793,7 +3826,7 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
             return False
 
         MIN_SUBSTR_SIZE = 6
-        idx = max_length
+        idx = max_idx
 
         # Ensure the substring:
         #   1) starts with a space
@@ -3808,7 +3841,7 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
         if string[idx] != " ":
             # This line is going to be longer than the specified line length, but
             # let's try to split it anyway.
-            idx = max_length + 1
+            idx = max_idx + 1
             while idx + 1 < len(string) and string[idx] != " ":
                 idx += 1
 

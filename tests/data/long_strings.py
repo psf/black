@@ -3,10 +3,10 @@ x = "This is a really long string that can't possibly be expected to fit all tog
 x += "This is a really long string that can't possibly be expected to fit all together on one line. In fact it may even take up three or more lines... like four or five... but probably just three."
 
 y = (
-    "Short string"
+    'Short string'
 )
 
-print("This is a really long string inside of a print statement with extra arguments attached at the end of it.", x, y, z)
+print('This is a really long string inside of a print statement with extra arguments attached at the end of it.', x, y, z)
 
 print("This is a really long string inside of a print statement with no extra arguments attached at the end of it.")
 
@@ -21,7 +21,7 @@ D4 = {"A long and ridiculous {}".format(string_key): "This is a really really re
 func_with_keywords(my_arg, my_kwarg="Long keyword strings also need to be wrapped, but they will probably need to be handled a little bit differently.")
 
 bad_split1 = (
-    "But what should happen when code has already been formatted but in the wrong way? Like"
+    'But what should happen when code has already been formatted but in the wrong way? Like'
     " with a space at the beginning instead of the end. Or what about when it is split too soon?"
 )
 
@@ -409,11 +409,23 @@ fstring = (
     f" But not {this}."
 )
 
+class A:
+    class B:
+        def foo():
+            st_error = STError(
+                f"This string ({string_leaf.value}) appears to be pointless (i.e. has"
+                " no parent)."
+            )
+
 ########## EDGE-CASE TESTS ##########
 some_variable = "This string is long but not so long that it needs to be split just yet"
+some_variable = 'This string is long but not so long that it needs to be split just yet'
 some_variable = "This string is long, just long enough that it needs to be split, u get?"
+some_variable = 'This string is long, just long enough that it needs to be split, u get?'
 some_variable = "This string is long, just long enough that it needs to be split, u get? So we stay"
+some_variable = 'This string is long, just long enough that it needs to be split, u get? So we stay'
 some_variable = "This string is long, just long enough that it needs to be split, u get? So we split"
+some_variable = 'This string is long, just long enough that it needs to be split, u get? So we split'
 some_variable = "This string is long but not so long that it needs hahahah toooooo be so greatttt {} that I just can't think of any more good words to say about it at alll".format("ha")
 some_variable = "This string is long but not so long that it needs hahahah toooooo be so greatttt {} that I just can't think of any more good words to say about it at allll".format("ha")
 some_variable = "This string is long but not so long that it needs hahahah toooooo be so greatttt {} that I just can't think of any more good words to say about it at alllllllllll".format("ha")
@@ -631,8 +643,8 @@ old_fmt_string3 = (
 
 fstring = (
     f"f-strings definitely make things more {difficult} than they need to be for"
-    " {black}. But boy they sure are handy. The problem is that some lines will"
-    f" need to have the 'f' whereas others do not. This {line}, for example, needs one."
+    " {black}. But boy they sure are handy. The problem is that some lines will need"
+    f" to have the 'f' whereas others do not. This {line}, for example, needs one."
 )
 
 fstring_with_no_fexprs = (
@@ -1061,13 +1073,34 @@ fstring = (
 
 fstring = f"We have to remember to escape {braces}. Like {{these}}. But not {this}."
 
+
+class A:
+    class B:
+        def foo():
+            st_error = STError(
+                f"This string ({string_leaf.value}) appears to be pointless (i.e. has"
+                " no parent)."
+            )
+
+
 ########## EDGE-CASE TESTS ##########
+some_variable = "This string is long but not so long that it needs to be split just yet"
 some_variable = "This string is long but not so long that it needs to be split just yet"
 some_variable = (
     "This string is long, just long enough that it needs to be split, u get?"
 )
 some_variable = (
+    "This string is long, just long enough that it needs to be split, u get?"
+)
+some_variable = (
     "This string is long, just long enough that it needs to be split, u get? So we stay"
+)
+some_variable = (
+    "This string is long, just long enough that it needs to be split, u get? So we stay"
+)
+some_variable = (
+    "This string is long, just long enough that it needs to be split, u get? So we"
+    " split"
 )
 some_variable = (
     "This string is long, just long enough that it needs to be split, u get? So we"
