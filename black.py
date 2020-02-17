@@ -199,7 +199,7 @@ class Err(Generic[E]):
 # (see https://doc.rust-lang.org/book/ch09-00-error-handling.html).
 Result = Union[Ok[T], Err[E]]
 FixResult = Result[T, CantFix]
-FixMatchResult = FixResult[Tuple[str, Optional[StringIndex]]]
+FixMatchResult = FixResult[StringIndex]
 
 
 class WriteBack(Enum):
@@ -2655,15 +2655,8 @@ class StringFixer(ABC):
     def do_match(self, line: Line) -> FixMatchResult:
         """
         Returns:
-            * Ok((string_value, string_idx)) such that
-            `line.leaves[string_idx].value == string_value`, if a match was
-            able to be made.
-                OR
-            * Ok((string_value, None)), if a match was able to be made
-            but no special algorithm for determining the string index is
-            necessary.  In this case, the string index will be determined using
-            a generic algorithm (e.g. by looping over all of the leaves and
-            stopping when a string leaf is found with the right value).
+            * Ok(string_idx) such that `line.leaves[string_idx]` is our target
+            string, if a match was able to be made.
                 OR
             * Err(CantFix), if a match was not able to be made.
         """
@@ -2710,17 +2703,7 @@ class StringFixer(ABC):
                 " this line as one that it can split."
             ) from cant_fix
 
-        (string_value, string_idx) = match_result.ok()
-        if string_idx is None:
-            string_idx_result = self._get_string_idx(line.leaves, string_value)
-            if isinstance(string_idx_result, Err):
-                value_error = string_idx_result.err()
-                raise RuntimeError(
-                    f"Logic Error in `{self.__class__.__name__}.do_match`"
-                    f" method.\n\nSTRING: {string_value}\n\nLINE: {line}\n"
-                ) from value_error
-
-            string_idx = string_idx_result.ok()
+        string_idx = match_result.ok()
 
         for line_result in self.do_transform(line, string_idx):
             if isinstance(line_result, Err):
@@ -2764,9 +2747,6 @@ class StringFixer(ABC):
         """
         Generic algorithm for determining the index of @string_value in
         @leaves.
-
-        Used when `self.do_match(...)` returns None where it could otherwise
-        have returned a string index.
 
         Returns:
             * Ok(idx) such that `leaves[idx].value == string_value`, when
@@ -2901,7 +2881,7 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
                     and len(LL) > i + 1
                     and LL[i + 1].type == token.STRING
                 ):
-                    return Ok((string_value, i))
+                    return Ok(i)
 
             cant_fix = CantFix(
                 f"Found string match ({regex_result}), however, we could not find a"
@@ -2911,7 +2891,7 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
 
         for i, leaf in enumerate(LL):
             if leaf.type == token.STRING and "\\\n" in leaf.value:
-                return Ok((leaf.value, i))
+                return Ok(i)
 
         cant_fix = CantFix(
             f"This line ({self.line_str}) has no strings that need merging."
@@ -3221,7 +3201,7 @@ class StringParensStripper(StringFixer):
             for inner_leaf in LL[i + 1 :]:
                 if inner_leaf.type == token.RPAR:
                     if unmatched_parens == 0:
-                        return Ok((string_value, i))
+                        return Ok(i)
                     else:
                         unmatched_parens -= 1
 
@@ -3339,18 +3319,7 @@ class StringSplitter(StringFixer):
         if isinstance(match_result, Err):
             return match_result
 
-        (string_value, string_idx) = match_result.ok()
-        if string_idx is None:
-            string_idx_result = self._get_string_idx(line.leaves, string_value)
-            if isinstance(string_idx_result, Err):
-                value_error = string_idx_result.err()
-                raise RuntimeError(
-                    f"Logic error in `{self.__class__.__name__}.do_splitter_match`"
-                    " method."
-                ) from value_error
-
-            string_idx = string_idx_result.ok()
-
+        string_idx = match_result.ok()
         vresult = self.__validate(line, string_idx)
         if isinstance(vresult, Err):
             return vresult
@@ -3617,7 +3586,12 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
             return regex_result
 
         string_value = regex_result.ok()
-        return Ok((string_value, None))
+        idx_result = self._get_string_idx(line.leaves, string_value)
+        if isinstance(idx_result, Err):
+            raise idx_result.err()
+
+        string_idx = idx_result.ok()
+        return Ok(string_idx)
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[FixResult[Line]]:
         LL = line.leaves
@@ -4032,7 +4006,12 @@ class StringNonAtomicSplitter(StringSplitter):
             return regex_result
 
         string_value = regex_result.ok()
-        return Ok((string_value, None))
+        idx_result = self._get_string_idx(line.leaves, string_value)
+        if isinstance(idx_result, Err):
+            raise idx_result.err()
+
+        string_idx = idx_result.ok()
+        return Ok(string_idx)
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[FixResult[Line]]:
         LL = line.leaves
