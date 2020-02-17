@@ -2547,7 +2547,7 @@ def split_line(
             or line.contains_unsplittable_type_ignore()
         )
     ):
-        # Only apply basic string preprocessing, since strings can't be split here.
+        # Only apply basic string preprocessing, since lines shouldn't be split here.
         split_funcs = [string_merge, string_parens_strip]
     elif line.is_def:
         split_funcs = [left_hand_split]
