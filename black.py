@@ -146,7 +146,7 @@ StringIndex = int
 Priority = int
 Index = int
 LN = Union[Leaf, Node]
-SplitFunc = Callable[["Line", Collection["Feature"]], Iterator["Line"]]
+LineTransformer = Callable[["Line", Collection["Feature"]], Iterator["Line"]]
 Timestamp = float
 FileSize = int
 CacheInfo = Tuple[Timestamp, FileSize]
@@ -199,7 +199,7 @@ class Err(Generic[E]):
 # (see https://doc.rust-lang.org/book/ch09-00-error-handling.html).
 Result = Union[Ok[T], Err[E]]
 STResult = Result[T, STError]  # StringTransformer Result
-STMatchResult = STResult[  # StringTransformerMixin.do_match(...) Result
+STMatchResult = STResult[  # StringTransformer.do_match(...) Result
     Tuple[str, Optional[StringIndex]]
 ]
 
@@ -871,7 +871,7 @@ def format_str(src_contents: str, *, mode: FileMode) -> FileContent:
         before, after = elt.maybe_empty_lines(current_line)
         for _ in range(before):
             dst_contents.append(str(empty_line))
-        for line in split_line(
+        for line in transform_line(
             current_line,
             line_length=mode.line_length,
             normalize_strings=mode.string_normalization,
@@ -2510,7 +2510,7 @@ def make_comment(content: str) -> str:
     return "#" + content
 
 
-def split_line(
+def transform_line(
     line: Line,
     line_length: int,
     normalize_strings: bool,
@@ -2537,7 +2537,7 @@ def split_line(
     string_atomic_split = init_st(StringAtomicSplitter)
     string_non_atomic_split = init_st(StringNonAtomicSplitter)
 
-    split_funcs: List[SplitFunc]
+    split_funcs: List[LineTransformer]
     if (
         not line.contains_uncollapsable_type_comments()
         and not line.should_explode
@@ -2597,7 +2597,7 @@ def split_line(
                     raise CannotSplit("Split function returned an unchanged result")
 
                 result.extend(
-                    split_line(
+                    transform_line(
                         l,
                         line_length=line_length,
                         normalize_strings=normalize_strings,
@@ -2616,33 +2616,6 @@ def split_line(
 
 @dataclass  # type: ignore
 class StringTransformer(ABC):
-    """
-    The class-based equivalent of the SplitFunc type, with the difference being
-    that, while a StringTransformer MAY split the line, it does not promise to
-    do so. It will, however, perform some arbitrary transformation on some or
-    all of the strings contained in the given line.
-    """
-
-    # We could technically calculate 'line_str' at call-time, since we will
-    # have access to the associated Line object. Doing so is computationally
-    # expensive, however, so we cache 'line_str' here.
-    line_str: str
-    line_length: int
-    normalize_strings: bool
-
-    @abstractmethod
-    def __call__(self, line: Line, features: Collection[Feature]) -> Iterator[Line]:
-        """
-        StringTransformer instances have a call signature that mirrors that of
-        the SplitFunc type.
-
-        Raises:
-            CannotSplit(...) if the concrete StringTransformer class is unable
-            to transform @line.
-        """
-
-
-class StringTransformerMixin(StringTransformer):
     """
     An implementation of the StringTransformer protocol that relies on its
     subclasses overriding the template methods `do_match(...)` and
@@ -2665,6 +2638,13 @@ class StringTransformerMixin(StringTransformer):
         StringTransfomers? Such collaborations should be eliminated/minimized
         as much as possible.
     """
+
+    # We could technically calculate 'line_str' at call-time, since we will
+    # have access to the associated Line object. Doing so is computationally
+    # expensive, however, so we cache 'line_str' here.
+    line_str: str
+    line_length: int
+    normalize_strings: bool
 
     # Compiling re.Pattern objects is computationally expensive, so we cache
     # them here.
@@ -2707,6 +2687,14 @@ class StringTransformerMixin(StringTransformer):
         """
 
     def __call__(self, line: Line, _features: Collection[Feature]) -> Iterator[Line]:
+        """
+        StringTransformer instances have a call signature that mirrors that of
+        the LineTransformer type.
+
+        Raises:
+            CannotSplit(...) if the concrete StringTransformer class is unable
+            to transform @line.
+        """
         # Optimization to avoid calling `self.do_match(...)` when the line does
         # not contain any string.
         if not any(leaf.type == token.STRING for leaf in line.leaves):
@@ -2862,7 +2850,7 @@ class CustomSplitMapMixin:
         return list(result)
 
 
-class StringMerger(StringTransformerMixin, CustomSplitMapMixin):
+class StringMerger(StringTransformer, CustomSplitMapMixin):
     """StringTransformer that merges strings together.
 
     Requirements:
@@ -3170,7 +3158,7 @@ class StringMerger(StringTransformerMixin, CustomSplitMapMixin):
         return Ok(None)
 
 
-class StringParensStripper(StringTransformerMixin):
+class StringParensStripper(StringTransformer):
     """StringTransformer that strips surrounding parentheses from strings.
 
     Requirements:
@@ -3299,7 +3287,7 @@ class StringParensStripper(StringTransformerMixin):
         return Err(value_error)
 
 
-class StringSplitterMixin(StringTransformerMixin):
+class StringSplitterMixin(StringTransformer):
     """
     Mixin class for StringTransformers which transform a Line's strings by
     splitting them or placing them on their own lines where necessary to avoid
@@ -3323,11 +3311,11 @@ class StringSplitterMixin(StringTransformerMixin):
     def do_splitter_match(self, line: Line) -> STMatchResult:
         """
         StringSplitterMixin asks its clients to override this method instead of
-        `StringTransformerMixin.do_match(...)`.
+        `StringTransformer.do_match(...)`.
 
-        Follows the same protocol as `StringTransformerMixin.do_match(...)`.
+        Follows the same protocol as `StringTransformer.do_match(...)`.
 
-        Refer to `help(StringTransformerMixin.do_match)`.
+        Refer to `help(StringTransformer.do_match)`.
         """
 
     def do_match(self, line: Line) -> STMatchResult:
@@ -4377,7 +4365,7 @@ def bracket_split_build_line(
     return result
 
 
-def dont_increase_indentation(split_func: SplitFunc) -> SplitFunc:
+def dont_increase_indentation(split_func: LineTransformer) -> LineTransformer:
     """Normalize prefix of the first leaf in every line returned by `split_func`.
 
     This is a decorator over relevant split functions.
