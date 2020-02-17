@@ -2663,7 +2663,7 @@ class StringTransformerMixin(StringTransformer):
     Collaborations:
         What contractual agreements does this StringTransformer have with other
         StringTransfomers? Such collaborations should be eliminated/minimized
-        as much as possible. Hence, this section is optional.
+        as much as possible.
     """
 
     # Compiling re.Pattern objects is computationally expensive, so we cache
@@ -3179,6 +3179,11 @@ class StringParensStripper(StringTransformerMixin):
 
     Transformations:
         The parentheses mentioned in the 'Requirements' section are stripped.
+
+    Collaborations:
+        StringParensStripper has its own inherent usefulness, but it is also
+        relied on to clean up the parentheses created by StringExprSplitter (in
+        the event that they are no longer needed).
     """
 
     def do_match(self, line: Line) -> STMatchResult:
@@ -3876,6 +3881,12 @@ class StringExprSplitter(StringSplitterMixin):
         string is not necessarily being "wrapped" by parentheses. We can,
         however, count on the LPAR being placed directly before the chosen
         string.
+
+    Collaborations:
+        In the event that the string that StringExprSplitter split is changed
+        such that it no longer needs to be given its own line,
+        StringExprSplitter delegates the job of cleaning up the parentheses it
+        created to StringParensStripper.
     """
 
     def do_splitter_match(self, line: Line) -> STMatchResult:
