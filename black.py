@@ -3737,15 +3737,18 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
 
         # If there are any leaves to the right of the target string...
         if len(LL) > (string_idx + 1):
-            last_value = rest_value
+            # We use `temp_value` here to determine how long the last line
+            # would be if we were to append all the leaves to the right of the
+            # target string to the last string line.
+            temp_value = rest_value
             for leaf in LL[string_idx + 1 :]:
-                last_value += str(leaf)
+                temp_value += str(leaf)
                 if leaf.type == token.LPAR:
                     break
 
             # Try to fit them all on the same line with the last substring...
             if (
-                len(last_value) <= max_last_string()
+                len(temp_value) <= max_last_string()
                 or LL[string_idx + 1].type == token.COMMA
             ):
                 last_line.append(rest_leaf)
