@@ -3592,6 +3592,10 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
         The string will ONLY be split on spaces (i.e. each new substring should
         start with a space).
 
+        If the string is an f-string, it will NOT be split in the middle of an
+        f-expression (e.g. in f"FooBar: {foo() if x else bar()}", {foo() if x
+        else bar()} is an f-expression).
+
         If the string that is being split has an associated set of custom split
         records and those custom splits will NOT result in any line going over
         the configured line length, those custom splits are used. Otherwise the
@@ -3791,19 +3795,26 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
         This method contains the algorithm that StringAtomicSplitter uses to
         determine which character to split each string at.
 
+        Args:
+            @string: The substring that we are attempting to split.
+            @target_idx: The ideal break index. We will return this value if it
+            meets all the necessary conditions. In the likely event that it
+            doesn't we will try to find the closest index BELOW @target_idx
+            that does. If that fails, we will expand our search by also
+            considering all valid indices ABOVE @target_idx.
+
         Pre-Conditions:
             * assert_is_leaf_string(@string)
-            * @target_idx > 0
+            * 0 <= @target_idx < len(@string)
 
         Returns:
-            Ok(idx), if we are able to find a  such that @string[idx - 1] will
-            be the last character of the next string line to be constructed,
-            which makes @string[idx] the first character of the string line
-            that will be constructed after that.
+            Ok(idx), if an index is able to be found that meets all of the
+            conditions listed in the 'Transformations' section of this classes'
+            docstring.
                 OR
-            Err(STError)
+            Err(STError), otherwise.
         """
-        assert target_idx > 0
+        assert 0 <= target_idx < len(string)
         assert_is_leaf_string(string)
 
         MIN_SUBSTR_SIZE = 6
@@ -3811,6 +3822,12 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
         _fexpr_slices: Optional[List[Tuple[int, int]]] = None
 
         def fexpr_slices() -> Iterator[Tuple[int, int]]:
+            """
+            Yields:
+                Ranges of @string which, if @string were split there, would
+                result in the splitting of an f-expression (which is NOT
+                allowed).
+            """
             nonlocal _fexpr_slices
 
             if _fexpr_slices is None:
@@ -3822,37 +3839,51 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
 
         is_fstring = "f" in get_string_prefix(string)
 
-        def breaks_fstring_expression(index: int) -> bool:
+        def breaks_fstring_expression(i: int) -> bool:
+            """
+            Returns:
+                True, if returning @i would result in the breaking of an
+                f-expression (which is NOT allowed).
+                    OR
+                False, otherwise.
+            """
             if not is_fstring:
                 return False
 
             for (start, end) in fexpr_slices():
-                if start <= index < end:
+                if start <= i < end:
                     return True
 
             return False
 
-        # Ensure the resultant substring:
-        #   1) starts with a space
-        #   2) Does not split any f-expressions (if @string is an f-string)
-        #   3) contains at least a 5-letter word
         def is_valid_index(i: int) -> bool:
             return 0 <= i < len(string)
 
         def conditions_are_bad(i: int) -> bool:
+            """
+            Returns:
+                True, if all of the conditions listed in the 'Transformations'
+                section of this classes' docstring would be met by returning @i.
+                    OR
+                False, otherwise.
+            """
             not_space = string[i] != " "
             not_big_enough = (
                 len(string[i:]) < MIN_SUBSTR_SIZE or len(string[:i]) < MIN_SUBSTR_SIZE
             )
             return not_space or not_big_enough or breaks_fstring_expression(i)
 
+        # First, we check all indices BELOW @target_idx.
         idx = target_idx
         while is_valid_index(idx - 1) and conditions_are_bad(idx):
             idx -= 1
 
         if conditions_are_bad(idx):
-            # This line is going to be longer than the specified line length, but
-            # let's try to split it anyway.
+            # If that fails, we check all indices ABOVE @target_idx.
+            #
+            # If we are able to find a valid index here, the next line is going
+            # to be longer than the specified line length, but it's probably
+            # better than doing nothing at all.
             idx = target_idx + 1
             while is_valid_index(idx + 1) and conditions_are_bad(idx):
                 idx += 1
@@ -3874,6 +3905,14 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
         """
         Pre-Conditions:
             * assert_is_leaf_string(@string)
+
+        Returns:
+            * If @string is an f-string that contains no f-expressions, we
+            return a string identical to @string except that the 'f' prefix
+            has been stripped and all double braces (i.e. '{{' or '}}') have
+            been normalized (i.e. turned into '{' or '}').
+                OR
+            * Otherwise, we return @string.
         """
         assert_is_leaf_string(string)
 
