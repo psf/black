@@ -3433,8 +3433,7 @@ class StringSplitter(StringFixer):
 
         string_leaf = LL[string_idx]
 
-        offset = self.__get_max_string_length_offset(line, string_idx)
-        max_string_length = self.line_length - offset
+        max_string_length = self.__get_max_string_length(line, string_idx)
         if len(string_leaf.value) <= max_string_length:
             cant_fix = CantFix(
                 "The string itself is not what is causing this line to be too long."
@@ -3468,21 +3467,20 @@ class StringSplitter(StringFixer):
 
         return Ok(None)
 
-    @staticmethod
-    def __get_max_string_length_offset(line: Line, string_idx: int) -> int:
+    def __get_max_string_length(self, line: Line, string_idx: int) -> int:
         """
-        Calculates the appropriate offset to subtract from `self.line_length`
-        when attempting to determine whether or not the target string is
-        responsible for causing the line to go over the line length limit.
+        Calculates the max string length used when attempting to determine
+        whether or not the target string is responsible for causing the line to
+        go over the line length limit.
 
         WARNING: This method is tightly coupled to both StringAtomicSplitter and
         (especially) StringNonAtomicSplitter. There is probably a better way to
         accomplish what is being done here.
 
         Returns:
-            offset: such that `line.leaves[string_idx].value > self.line_length
-            - offset` implies that the target string IS responsible for causing
-            this line to exceed the line length limit.
+            max_string_length: such that `line.leaves[string_idx].value >
+            max_string_length` implies that the target string IS responsible
+            for causing this line to exceed the line length limit.
         """
         LL = line.leaves
 
@@ -3570,7 +3568,8 @@ class StringSplitter(StringFixer):
             # WMA4 the length of the inline comment.
             offset += len(comment_leaf.value)
 
-        return offset
+        max_string_length = self.line_length - offset
+        return max_string_length
 
 
 class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
@@ -3746,6 +3745,7 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
                 # If we are, will we be successful?
                 and next_value != self.__normalize_f_string(next_value, prefix)
             ):
+                # TODO(bugyi): Find a way to remove this hack.
                 # If the current custom split did NOT originally use a prefix,
                 # then `csplit.break_idx` will be off by one after removing
                 # the 'f' prefix.
