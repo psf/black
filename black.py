@@ -3021,7 +3021,7 @@ class StringMerger(StringTransformerMixin, CustomSplitMapMixin):
                 * assert_is_leaf_string(@string)
 
             Returns:
-                A string S that is identical to @string except that
+                A string that is identical to @string except that
                 @string_prefix has been stripped, the surrounding QUOTE
                 characters have been removed, and any remaining QUOTE
                 characters have been escaped.
@@ -3860,11 +3860,12 @@ class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
                 True iff ALL of the conditions listed in the 'Transformations'
                 section of this classes' docstring would be be met by returning @i.
             """
-            not_space = string[i] != " "
-            not_big_enough = (
-                len(string[i:]) < MIN_SUBSTR_SIZE or len(string[:i]) < MIN_SUBSTR_SIZE
+            is_space = string[i] == " "
+            is_big_enough = (
+                len(string[i:]) >= MIN_SUBSTR_SIZE
+                and len(string[:i]) >= MIN_SUBSTR_SIZE
             )
-            return not (not_space or not_big_enough or breaks_fstring_expression(i))
+            return is_space and is_big_enough and not breaks_fstring_expression(i)
 
         # First, we check all indices BELOW @target_idx.
         idx = target_idx
