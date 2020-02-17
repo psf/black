@@ -2534,8 +2534,8 @@ def split_line(
 
     string_merge = init_st(StringMerger)
     string_parens_strip = init_st(StringParensStripper)
-    string_term_split = init_st(StringTermSplitter)
-    string_expr_split = init_st(StringExprSplitter)
+    string_atomic_split = init_st(StringAtomicSplitter)
+    string_non_atomic_split = init_st(StringNonAtomicSplitter)
 
     split_funcs: List[SplitFunc]
     if (
@@ -2573,16 +2573,16 @@ def split_line(
                 string_parens_strip,
                 delimiter_split,
                 standalone_comment_split,
-                string_term_split,
-                string_expr_split,
+                string_atomic_split,
+                string_non_atomic_split,
                 rhs,
             ]
         else:
             split_funcs = [
                 string_merge,
                 string_parens_strip,
-                string_term_split,
-                string_expr_split,
+                string_atomic_split,
+                string_non_atomic_split,
                 rhs,
             ]
 
@@ -2880,7 +2880,7 @@ class StringMerger(StringTransformerMixin, CustomSplitMapMixin):
         (B) All line-continuation backslashes are removed from the target string.
 
     Collaborations:
-        StringMerger provides custom split information to StringTermSplitter.
+        StringMerger provides custom split information to StringAtomicSplitter.
     """
 
     def do_match(self, line: Line) -> STMatchResult:
@@ -3182,7 +3182,7 @@ class StringParensStripper(StringTransformerMixin):
 
     Collaborations:
         StringParensStripper has its own inherent usefulness, but it is also
-        relied on to clean up the parentheses created by StringExprSplitter (in
+        relied on to clean up the parentheses created by StringNonAtomicSplitter (in
         the event that they are no longer needed).
     """
 
@@ -3470,8 +3470,8 @@ class StringSplitterMixin(StringTransformerMixin):
         when attempting to determine whether or not the target string is
         responsible for causing the line to go over the line length limit.
 
-        WARNING: This method is tightly coupled to both StringTermSplitter and
-        (especially) StringExprSplitter. There is probably a better way to
+        WARNING: This method is tightly coupled to both StringAtomicSplitter and
+        (especially) StringNonAtomicSplitter. There is probably a better way to
         accomplish what is being done here.
 
         Returns:
@@ -3571,14 +3571,14 @@ class StringSplitterMixin(StringTransformerMixin):
         return offset
 
 
-class StringTermSplitter(StringSplitterMixin, CustomSplitMapMixin):
+class StringAtomicSplitter(StringSplitterMixin, CustomSplitMapMixin):
     """
-    StringTransformer that splits atomic strings (i.e. strings which exist on
+    StringTransformer that splits "atom" strings (i.e. strings which exist on
     lines by themselves).
 
     Requirements:
         * The line consists ONLY of a single string (with the exception of a '+'
-        symbol which MAY be at the start of the line).
+        symbol which MAY exist at the start of the line).
             AND
         * All of the requirements listed in StringSplitterMixin's docstring.
 
@@ -3599,7 +3599,7 @@ class StringTermSplitter(StringSplitterMixin, CustomSplitMapMixin):
         adhering to the transformation rules listed above.
 
     Collaborations:
-        StringTermSplitter relies on StringMerger to construct the appropriate
+        StringAtomicSplitter relies on StringMerger to construct the appropriate
         CustomSplit objects and add them to the custom split map.
     """
 
@@ -3841,10 +3841,10 @@ class StringTermSplitter(StringSplitterMixin, CustomSplitMapMixin):
             return string
 
 
-class StringExprSplitter(StringSplitterMixin):
+class StringNonAtomicSplitter(StringSplitterMixin):
     """
-    StringTransformer that splits most non-atomic strings (i.e. strings that do
-    not exist on lines by themselves).
+    StringTransformer that splits non-"atom" strings (i.e. strings that do not
+    exist on lines by themselves).
 
     Requirements:
         All of the requirements listed in StringSplitterMixin's docstring in
@@ -3882,10 +3882,13 @@ class StringExprSplitter(StringSplitterMixin):
         however, count on the LPAR being placed directly before the chosen
         string.
 
+        In other words, StringNonAtomicSplitter creates "atom" strings. These
+        can then be split again by StringAtomicSplitter, if necessary.
+
     Collaborations:
-        In the event that the string that StringExprSplitter split is changed
+        In the event that the string that StringNonAtomicSplitter split is changed
         such that it no longer needs to be given its own line,
-        StringExprSplitter delegates the job of cleaning up the parentheses it
+        StringNonAtomicSplitter delegates the job of cleaning up the parentheses it
         created to StringParensStripper.
     """
 
@@ -3962,7 +3965,7 @@ class StringExprSplitter(StringSplitterMixin):
         yield Ok(first_line)
 
         # Only need to yield one (possibly too long) line, since the
-        # `StringTermSplitter` will break it down further if necessary.
+        # `StringAtomicSplitter` will break it down further if necessary.
         string_value = LL[string_idx].value
         string_line = Line(
             depth=line.depth + 1,
