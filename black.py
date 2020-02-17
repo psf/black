@@ -2541,7 +2541,7 @@ def transform_line(
     string_atomic_split = init_st(StringAtomicSplitter)
     string_non_atomic_split = init_st(StringNonAtomicSplitter)
 
-    split_funcs: List[LineTransformer]
+    transformers: List[LineTransformer]
     if (
         not line.contains_uncollapsable_type_comments()
         and not line.should_explode
@@ -2552,9 +2552,9 @@ def transform_line(
         )
     ):
         # Only apply basic string preprocessing, since lines shouldn't be split here.
-        split_funcs = [string_merge, string_parens_strip]
+        transformers = [string_merge, string_parens_strip]
     elif line.is_def:
-        split_funcs = [left_hand_split]
+        transformers = [left_hand_split]
     else:
 
         def rhs(line: Line, features: Collection[Feature]) -> Iterator[Line]:
@@ -2572,7 +2572,7 @@ def transform_line(
             yield from right_hand_split(line, line_length=1, features=features)
 
         if line.inside_brackets:
-            split_funcs = [
+            transformers = [
                 string_merge,
                 string_parens_strip,
                 delimiter_split,
@@ -2582,7 +2582,7 @@ def transform_line(
                 rhs,
             ]
         else:
-            split_funcs = [
+            transformers = [
                 string_merge,
                 string_parens_strip,
                 string_atomic_split,
@@ -2590,7 +2590,7 @@ def transform_line(
                 rhs,
             ]
 
-    for split_func in split_funcs:
+    for split_func in transformers:
         # We are accumulating lines in `result` because we might want to abort
         # mission and return the original line in the end, or attempt a different
         # split altogether.
@@ -4120,13 +4120,13 @@ def append_leaves(new_line: Line, old_line: Line, leaves: List[Leaf]) -> None:
     Append leaves (taken from @old_line) to @new_line, making sure to fix the
     underlying Node structure where appropriate.
 
+    All of the leaves in @leaves are duplicated. The duplicates are then
+    appended to @new_line and used to replace their originals in the underlying
+    Node structure. Any comments attatched to the old leaves are reattached to
+    the new leaves.
+
     Pre-conditions:
         set(@leaves) is a subset of set(@old_line.leaves).
-
-    Algorithm:
-        All of the leaves in @leaves are duplicated. The duplicates are then
-        appended to @new_line and used to replace their originals in the
-        underlying Node structure.
     """
     for old_leaf in leaves:
         assert old_leaf in old_line.leaves
@@ -4141,8 +4141,11 @@ def append_leaves(new_line: Line, old_line: Line, leaves: List[Leaf]) -> None:
 
 def replace_child(old_child: LN, new_child: LN) -> None:
     """
-    Replace @old_child with @new_child in @old_child's underlying Node
-    structure.
+    Side Effects:
+        * If @old_child.parent is set, replace @old_child with @new_child in
+        @old_child's underlying Node structure.
+            OR
+        * Otherwise, this function does nothing.
     """
     parent = old_child.parent
     if not parent:
@@ -4184,7 +4187,8 @@ def assert_is_leaf_string(string: str) -> None:
         some subset of `set(STRING_PREFIX_CHARS)` (possibly the null set).
 
     Raises:
-        An AssertionError if the pre-condition is not met.
+        AssertionError(...) if the pre-conditions listed above are not
+        satisfied.
     """
     dquote_idx = string.find('"')
     squote_idx = string.find("'")
