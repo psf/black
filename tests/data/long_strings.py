@@ -393,16 +393,16 @@ lpar_and_rpar_have_comments = func_call(  # LPAR Comment
     "Long really ridiculous type of string that shouldn't really even exist at all. I mean commmme onnn!!!",  # Comma Comment
 )  # RPAR Comment
 
-cmd = (
+cmd_fstring = (
     f"sudo -E deluge-console info --detailed --sort-reverse=time_added "
     f"{'' if ID is None else ID} | perl -nE 'print if /^{field}:/'"
 )
 
-cmd = f"sudo -E deluge-console info --detailed --sort-reverse=time_added {'' if ID is None else ID} | perl -nE 'print if /^{field}:/'"
+cmd_fstring = f"sudo -E deluge-console info --detailed --sort-reverse=time_added {'' if ID is None else ID} | perl -nE 'print if /^{field}:/'"
 
-cmd = f"sudo -E deluge-console info --detailed --sort-reverse=time_added {'{{}}' if ID is None else ID} | perl -nE 'print if /^{field}:/'"
+cmd_fstring = f"sudo -E deluge-console info --detailed --sort-reverse=time_added {'{{}}' if ID is None else ID} | perl -nE 'print if /^{field}:/'"
 
-cmd = f"sudo -E deluge-console info --detailed --sort-reverse=time_added {{'' if ID is None else ID}} | perl -nE 'print if /^{field}:/'"
+cmd_fstring = f"sudo -E deluge-console info --detailed --sort-reverse=time_added {{'' if ID is None else ID}} | perl -nE 'print if /^{field}:/'"
 
 fstring = f"This string really doesn't need to be an {{{{fstring}}}}, but this one most certainly, absolutely {does}."
 
@@ -1058,22 +1058,22 @@ lpar_and_rpar_have_comments = func_call(  # LPAR Comment
     " mean commmme onnn!!!",  # Comma Comment
 )  # RPAR Comment
 
-cmd = (
+cmd_fstring = (
     "sudo -E deluge-console info --detailed --sort-reverse=time_added "
     f"{'' if ID is None else ID} | perl -nE 'print if /^{field}:/'"
 )
 
-cmd = (
+cmd_fstring = (
     "sudo -E deluge-console info --detailed --sort-reverse=time_added"
     f" {'' if ID is None else ID} | perl -nE 'print if /^{field}:/'"
 )
 
-cmd = (
+cmd_fstring = (
     "sudo -E deluge-console info --detailed --sort-reverse=time_added"
     f" {'{{}}' if ID is None else ID} | perl -nE 'print if /^{field}:/'"
 )
 
-cmd = (
+cmd_fstring = (
     "sudo -E deluge-console info --detailed --sort-reverse=time_added {'' if ID is"
     f" None else ID}} | perl -nE 'print if /^{field}:/'"
 )

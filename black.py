@@ -2832,20 +2832,24 @@ class CustomSplitMapMixin:
     ] = defaultdict(tuple)
 
     @staticmethod
-    def add_custom_splits(string: str, csplits: Iterable[CustomSplit]) -> None:
+    def add_custom_splits(string: str, custom_splits: Iterable[CustomSplit]) -> None:
         """Custom Split Map Setter Method
 
         Side Effects:
-            Adds a mapping from @string to the custom splits @csplits.
+            Adds a mapping from @string to the custom splits @custom_splits.
         """
-        CustomSplitMapMixin.__CUSTOM_SPLIT_MAP[id(string), string] = tuple(csplits)
+        key = (id(string), string)
+        CustomSplitMapMixin.__CUSTOM_SPLIT_MAP[key] = tuple(custom_splits)
 
     @staticmethod
     def pop_custom_splits(string: str) -> List[CustomSplit]:
         """Custom Split Map Getter Method
 
         Returns:
-            The custom splits that are mapped to @string (if any exist).
+            * A list of the custom splits that are mapped to @string, if any
+            exist.
+                OR
+            * [], otherwise.
 
         Side Effects:
             Deletes the mapping between @string and its associated custom
@@ -2853,10 +2857,10 @@ class CustomSplitMapMixin:
         """
         key = (id(string), string)
 
-        result = CustomSplitMapMixin.__CUSTOM_SPLIT_MAP[key]
+        custom_splits = CustomSplitMapMixin.__CUSTOM_SPLIT_MAP[key]
         del CustomSplitMapMixin.__CUSTOM_SPLIT_MAP[key]
 
-        return list(result)
+        return list(custom_splits)
 
 
 class StringMerger(StringTransformer, CustomSplitMapMixin):
