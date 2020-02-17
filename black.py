@@ -3748,7 +3748,9 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
         rest_leaf = Leaf(token.STRING, rest_value)
         insert_str_child(rest_leaf)
 
-        # TODO(bugyi): Write test that fails when you remove these two lines.
+        # NOTE: I could not find a test case that verifies that the following
+        # line is actually necessary, but it seems to be. Otherwise we risk
+        # not normalizing the last substring, right?
         self.__maybe_normalize_string_quotes(rest_leaf)
 
         last_line = line.clone()
@@ -3936,17 +3938,15 @@ class StringNonAtomicSplitter(StringSplitter):
             OR
         * The line is an assert statement, which ends with a string.
             OR
-        * The line is an assignment statement (e.g. `x = 1` or `x += 1`) such
-        that the variable is being assigned the value of some string.
+        * The line is an assignment statement (e.g. `x = <string>` or `x +=
+        <string>`) such that the variable is being assigned the value of some
+        string.
             OR
         * The line is a dictionary key assignment where some valid key is being
         assigned the value of some string.
-            OR
-        * The line is a single string followed by a comma.
 
     Transformations:
-        The chosen string (decided by this mixin's clients/subclasses) is
-        wrapped in parentheses and then split at the LPAR.
+        The chosen string is wrapped in parentheses and then split at the LPAR.
 
         We then have one line which ends with an LPAR and another line that
         starts with the chosen string. The latter line is then split again at
@@ -3964,7 +3964,7 @@ class StringNonAtomicSplitter(StringSplitter):
         can then be split again by StringAtomicSplitter, if necessary.
 
     Collaborations:
-        In the event that the string that StringNonAtomicSplitter split is
+        In the event that a string line split by StringNonAtomicSplitter is
         changed such that it no longer needs to be given its own line,
         StringNonAtomicSplitter relies on StringParensStripper to clean up the
         parentheses it created.
@@ -3994,7 +3994,7 @@ class StringNonAtomicSplitter(StringSplitter):
                           )*
                         | {RE_STRING}?{re_string_trailer("dict")}
                       ):[ ]*
-                )?
+                )
                 {RE_STRING_GROUP}{re_string_trailer("string1")},?
             ){RE_EOL}
             """,
@@ -4020,8 +4020,13 @@ class StringNonAtomicSplitter(StringSplitter):
         if ends_with_comma:
             leaves_to_steal_comments_from.append(LL[comma_idx])
 
+        # --- First Line
         first_line = line.clone()
         left_leaves = LL[:string_idx]
+
+        # We have to remember to account for (possibly invisible) LPAR and RPAR
+        # leaves that already wrapped the target string. If these leaves do
+        # exist, we will replace them with our own LPAR and RPAR leaves.
         old_parens_exist = False
         if left_leaves and left_leaves[-1].type == token.LPAR:
             old_parens_exist = True
@@ -4037,13 +4042,17 @@ class StringNonAtomicSplitter(StringSplitter):
             insert_str_child(lpar_leaf)
         first_line.append(lpar_leaf)
 
+        # We throw inline comments that were originally to the right of the
+        # target string to the top line. They will now be shown to the right of
+        # the LPAR.
         for leaf in leaves_to_steal_comments_from:
             for comment_leaf in line.comments_after(leaf):
                 first_line.append(comment_leaf, preformatted=True)
 
         yield Ok(first_line)
 
-        # Only need to yield one (possibly too long) line, since the
+        # --- Middle (String) Line
+        # We only need to yield one (possibly too long) string line, since the
         # `StringAtomicSplitter` will break it down further if necessary.
         string_value = LL[string_idx].value
         string_line = Line(
@@ -4064,13 +4073,14 @@ class StringNonAtomicSplitter(StringSplitter):
             if old_parens_exist:
                 assert (
                     right_leaves and right_leaves[-1].type == token.RPAR
-                ), "Apparently, old parenthesis do NOT exist?!"
+                ), "Apparently, old parentheses do NOT exist?!"
                 old_rpar_leaf = right_leaves.pop()
 
             append_leaves(string_line, line, right_leaves)
 
         yield Ok(string_line)
 
+        # --- Last Line
         last_line = line.clone()
         last_line.bracket_tracker = first_line.bracket_tracker
 
@@ -4081,6 +4091,8 @@ class StringNonAtomicSplitter(StringSplitter):
             insert_str_child(new_rpar_leaf)
         last_line.append(new_rpar_leaf)
 
+        # If the target string ended with a comma, we place this comma to the
+        # right of the RPAR on the last line.
         if ends_with_comma:
             comma_leaf = Leaf(token.COMMA, ",")
             replace_child(LL[comma_idx], comma_leaf)
