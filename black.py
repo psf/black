@@ -61,6 +61,7 @@ from blib2to3.pgen2.parse import ParseError
 
 from _black_version import version as __version__
 
+DEBUG = False
 DEFAULT_LINE_LENGTH = 88
 DEFAULT_EXCLUDES = r"/(\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_build|buck-out|build|dist)/"  # noqa: B950
 DEFAULT_INCLUDES = r"\.pyi?$"
@@ -2526,6 +2527,10 @@ def fix_line(
         return
 
     line_str = line_to_string(line)
+    if DEBUG:
+        print(repr(line.leaves[0].parent))
+        print()
+
     def init_sf(SF: Type[StringFixer]) -> StringFixer:
         """Initialize StringFixer"""
         return SF(line_str, line_length, normalize_strings)
