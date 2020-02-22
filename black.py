@@ -3260,38 +3260,35 @@ class StringParensStripper(StringFixer):
     def do_match(self, line: Line) -> FixMatchResult:
         LL = line.leaves
 
-        for (i, leaf) in enumerate(LL):
+        for (idx, leaf) in enumerate(LL):
             if leaf.type != token.STRING:
                 continue
 
-            if i == 0 or LL[i - 1].type != token.LPAR:
+            if idx == 0 or LL[idx - 1].type != token.LPAR:
                 continue
 
-            if i >= 2 and LL[i - 2].type == token.NAME:
+            if idx >= 2 and LL[idx - 2].type == token.NAME:
                 continue
 
-            if i + 1 >= len(LL):
+            if idx + 1 >= len(LL):
                 continue
 
             trailer = StringTrailerParser()
-            after_string_idx = trailer.parse(LL, i)
+            next_idx = trailer.parse(LL, idx)
 
             if (
-                after_string_idx < len(LL)
-                and LL[after_string_idx].type == token.RPAR
-                and LL[after_string_idx].value == ")"
+                next_idx < len(LL)
+                and LL[next_idx].type == token.RPAR
+                and LL[next_idx].value == ")"
             ):
-                if (
-                    after_string_idx + 1 < len(LL)
-                    and LL[after_string_idx + 1].type == token.DOT
-                ):
+                if next_idx + 1 < len(LL) and LL[next_idx + 1].type == token.DOT:
                     cant_fix = CantFix(
                         "String is wrapped in parens, but the RPAR is directly followed"
                         " by a dot, which is a deal breaker."
                     )
                     return Err(cant_fix)
 
-                return Ok(i)
+                return Ok(idx)
 
         cant_fix = CantFix(
             f"This line ({self.line_str!r}) has no strings wrapped in parens."
@@ -3519,6 +3516,10 @@ class StringSplitter(StringFixer):
             )
             return Err(cant_fix)
 
+        if is_multiline_string(string_leaf):
+            cant_fix = CantFix("We cannot split multiline strings.")
+            return Err(cant_fix)
+
         return Ok(None)
 
     def __get_max_string_length(self, line: Line, string_idx: int) -> int:
@@ -3632,8 +3633,9 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
     lines by themselves).
 
     Requirements:
-        * The line consists ONLY of a single string (with the exception of a '+'
-        symbol which MAY exist at the start of the line).
+        * The line consists ONLY of a single string (with the exception of a
+        '+' symbol which MAY exist at the start of the line), MAYBE a string
+        trailer, and MAYBE a trailing comma.
             AND
         * All of the requirements listed in StringSplitter's docstring.
 
@@ -3663,19 +3665,34 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
     """
 
     def do_splitter_match(self, line: Line) -> FixMatchResult:
-        regex_result = self._re_string_match(
-            fr"^[ ]*(?:\+[ ]*)?{RE_STRING_GROUP}{RE_STRING_TRAILER},?{RE_EOL}"
-        )
+        LL = line.leaves
 
-        if isinstance(regex_result, Err):
-            return regex_result
+        idx = 0
+        if idx < len(LL) and LL[idx].type == token.PLUS:
+            idx += 1
 
-        string_value = regex_result.ok()
-        idx_result = self._get_string_idx(line.leaves, string_value)
-        if isinstance(idx_result, Err):
-            raise idx_result.err()
+        if idx < len(LL) and LL[idx].type == token.LPAR and LL[idx].value == "":
+            idx += 1
 
-        string_idx = idx_result.ok()
+        if idx >= len(LL) or LL[idx].type != token.STRING:
+            cant_fix = CantFix("Line does not start with a string.")
+            return Err(cant_fix)
+
+        string_idx = idx
+
+        trailer = StringTrailerParser()
+        idx = trailer.parse(LL, string_idx)
+
+        if idx < len(LL) and LL[idx].type == token.RPAR and LL[idx].value == "":
+            idx += 1
+
+        if idx < len(LL) and LL[idx].type == token.COMMA:
+            idx += 1
+
+        if idx < len(LL):
+            cant_fix = CantFix("This line does not end with a string.")
+            return Err(cant_fix)
+
         return Ok(string_idx)
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[FixResult[Line]]:
