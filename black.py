@@ -2687,7 +2687,7 @@ class StringFixer(ABC):
 
         Raises:
             CantFix(...) if the concrete StringFixer class is unable
-            to transform @line.
+            to fix @line.
         """
         # Optimization to avoid calling `self.do_match(...)` when the line does
         # not contain any string.
@@ -2709,7 +2709,7 @@ class StringFixer(ABC):
             if isinstance(line_result, Err):
                 cant_fix = line_result.err()
                 raise CantFix(
-                    "StringFixer failed while attempting to transform string."
+                    "StringFixer failed while attempting to fix string."
                 ) from cant_fix
             line = line_result.ok()
             yield line
@@ -3262,9 +3262,9 @@ class StringParensStripper(StringFixer):
 
 class StringSplitter(StringFixer):
     """
-    Abstract class for StringFixers which transform a Line's strings by
-    splitting them or placing them on their own lines where necessary to avoid
-    going over the configured line length.
+    Abstract class for StringFixers which fix a Line's strings by splitting
+    them or placing them on their own lines where necessary to avoid going over
+    the configured line length.
 
     Requirements:
         * The target string value is responsible for the line going over the
