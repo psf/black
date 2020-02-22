@@ -3032,24 +3032,6 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
         return Ok(None)
 
 
-class STP_State(Enum):
-    """(S)tring (T)railer (P)arser State"""
-
-    START = auto()
-
-    DOT = auto()
-    NAME = auto()
-
-    PERCENT = auto()
-    SINGLE_FMT_ARG = auto()
-
-    LPAR = auto()
-    RPAR = auto()
-
-    DONE = auto()
-    ERROR = auto()
-
-
 class StringTrailerParser:
     """
     A state machine that aids in parsing a string's "trailer", which can be
@@ -3060,28 +3042,38 @@ class StringTrailerParser:
     NOTE: A new StringTrailerParser object must be instantiated for each string
     trailer we parse.
     """
+    # Possible States
+    START = 1
+    DOT = 2
+    NAME = 3
+    PERCENT = 4
+    SINGLE_FMT_ARG = 5
+    LPAR = 6
+    RPAR = 7
+    DONE = 8
+    ERROR = 9
 
     def __init__(self) -> None:
-        self.state = STP_State.START
+        self.state = self.START
         self.unmatched_lpars = 0
 
-        self.goto: Dict[Tuple[STP_State, int], STP_State] = defaultdict(
-            lambda: STP_State.ERROR
+        self.goto: Dict[Tuple[int, int], int] = defaultdict(
+            lambda: self.ERROR
         )
 
-        self.goto[STP_State.START, token.DOT] = STP_State.DOT
-        self.goto[STP_State.START, token.PERCENT] = STP_State.PERCENT
-        self.goto[STP_State.START, -1] = STP_State.DONE
+        self.goto[self.START, token.DOT] = self.DOT
+        self.goto[self.START, token.PERCENT] = self.PERCENT
+        self.goto[self.START, -1] = self.DONE
 
-        self.goto[STP_State.DOT, token.NAME] = STP_State.NAME
+        self.goto[self.DOT, token.NAME] = self.NAME
 
-        self.goto[STP_State.NAME, token.LPAR] = STP_State.LPAR
+        self.goto[self.NAME, token.LPAR] = self.LPAR
 
-        self.goto[STP_State.PERCENT, token.LPAR] = STP_State.LPAR
-        self.goto[STP_State.PERCENT, -1] = STP_State.SINGLE_FMT_ARG
-        self.goto[STP_State.SINGLE_FMT_ARG, -1] = STP_State.DONE
+        self.goto[self.PERCENT, token.LPAR] = self.LPAR
+        self.goto[self.PERCENT, -1] = self.SINGLE_FMT_ARG
+        self.goto[self.SINGLE_FMT_ARG, -1] = self.DONE
 
-        self.goto[STP_State.RPAR, -1] = STP_State.DONE
+        self.goto[self.RPAR, -1] = self.DONE
 
     def parse(self, leaves: List[Leaf], string_idx: int) -> int:
         """
@@ -3123,21 +3115,21 @@ class StringTrailerParser:
             self.unmatched_lpars += 1
 
         last_state = self.state
-        if last_state == STP_State.LPAR:
+        if last_state == self.LPAR:
             if next_token == token.RPAR:
                 self.unmatched_lpars -= 1
                 if self.unmatched_lpars == 0:
-                    self.state = STP_State.RPAR
+                    self.state = self.RPAR
         else:
             self.state = self.goto[last_state, next_token]
 
-            if self.state == STP_State.ERROR:
+            if self.state == self.ERROR:
                 if (last_state, -1) in self.goto:
                     self.state = self.goto[last_state, -1]
                 else:
                     raise RuntimeError(f"{self.__class__.__name__} ERROR!")
 
-            if self.state == STP_State.DONE:
+            if self.state == self.DONE:
                 return False
 
         return True
