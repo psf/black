@@ -4164,10 +4164,9 @@ def assert_is_leaf_string(string: str) -> None:
     checked are listed below.
 
     Pre-conditions:
-        @string starts with either ', ", <prefix>', or <prefix>" where
+        * @string starts with either ', ", <prefix>', or <prefix>" where
         `set(<prefix>)` is some subset of `set(STRING_PREFIX_CHARS)`.
-            AND
-        @string ends with a quote character (' or ").
+        * @string ends with a quote character (' or ").
 
     Raises:
         AssertionError(...) if the pre-conditions listed above are not
