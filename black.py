@@ -4186,7 +4186,7 @@ def assert_is_leaf_string(string: str) -> None:
     assert string[-1] in (
         "'",
         '"',
-    ), f"{string!r} does not end with a quote character (' or \")."
+    ), f"{string!r} is missing an ending quote character (' or \")."
     assert set(string[:quote_idx]).issubset(
         set(STRING_PREFIX_CHARS)
     ), f"{set(string[:quote_idx])} is NOT a subset of {set(STRING_PREFIX_CHARS)}."
