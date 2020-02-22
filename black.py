@@ -3042,6 +3042,7 @@ class StringTrailerParser:
     NOTE: A new StringTrailerParser object must be instantiated for each string
     trailer we parse.
     """
+
     # Possible States
     START = 1
     DOT = 2
@@ -3057,9 +3058,7 @@ class StringTrailerParser:
         self.state = self.START
         self.unmatched_lpars = 0
 
-        self.goto: Dict[Tuple[int, int], int] = defaultdict(
-            lambda: self.ERROR
-        )
+        self.goto: Dict[Tuple[int, int], int] = defaultdict(lambda: self.ERROR)
 
         self.goto[self.START, token.DOT] = self.DOT
         self.goto[self.START, token.PERCENT] = self.PERCENT
@@ -3973,78 +3972,115 @@ class StringNonAtomicSplitter(StringSplitter):
 
     def do_splitter_match(self, line: Line) -> FixMatchResult:
         LL = line.leaves
-        in_bounds = in_bounds_factory(LL)
 
-        def parent_type(leaf: Optional[LN]) -> Optional[int]:
-            if leaf is None or leaf.parent is None:
-                return None
-
-            return leaf.parent.type
-
+        string_idx = None
         if parent_type(LL[0]) in [syms.return_stmt, syms.yield_expr]:
-            idx = 2 if in_bounds(1) and is_empty_paren(LL[1]) else 1
-            if in_bounds(idx) and LL[idx].type == token.STRING:
-                return Ok(idx)
+            string_idx = self._return_match(LL)
 
         if (
             parent_type(LL[0]) == syms.test
             and LL[0].type == token.NAME
             and LL[0].value == "else"
         ):
-            idx = 2 if in_bounds(1) and is_empty_paren(LL[1]) else 1
-            if in_bounds(idx) and LL[idx].type == token.STRING:
-                return Ok(idx)
+            string_idx = self._else_match(LL)
 
         if parent_type(LL[0]) == syms.assert_stmt:
-            for (i, leaf) in enumerate(LL):
-                if leaf.type == token.COMMA:
-                    idx = i + 2 if is_empty_paren(LL[i + 1]) else i + 1
-                    if in_bounds(idx) and LL[idx].type == token.STRING:
-                        string_idx = idx
-
-                        trailer = StringTrailerParser()
-                        idx = trailer.parse(LL, string_idx)
-                        if not in_bounds(idx):
-                            return Ok(string_idx)
+            string_idx = self._assert_match(LL)
 
         if parent_type(LL[0]) in [syms.expr_stmt, syms.argument]:
-            for (i, leaf) in enumerate(LL):
-                if leaf.type in [token.EQUAL, token.PLUSEQUAL]:
-                    idx = i + 2 if is_empty_paren(LL[i + 1]) else i + 1
-                    if in_bounds(idx) and LL[idx].type == token.STRING:
-                        string_idx = idx
-
-                        trailer = StringTrailerParser()
-                        idx = trailer.parse(LL, string_idx)
-
-                        if (
-                            parent_type(LL[0]) == syms.argument
-                            and in_bounds(idx)
-                            and LL[idx].type == token.COMMA
-                        ):
-                            idx += 1
-
-                        if not in_bounds(idx):
-                            return Ok(string_idx)
+            string_idx = self._assign_match(LL)
 
         if syms.dictsetmaker in [parent_type(LL[0]), parent_type(LL[0].parent)]:
-            for (i, leaf) in enumerate(LL):
-                if leaf.type == token.COLON:
-                    idx = i + 2 if is_empty_paren(LL[i + 1]) else i + 1
-                    if in_bounds(idx) and LL[idx].type == token.STRING:
-                        string_idx = idx
+            string_idx = self._dict_match(LL)
 
-                        trailer = StringTrailerParser()
-                        idx = trailer.parse(LL, string_idx)
-
-                        if in_bounds(idx) and LL[idx].type == token.COMMA:
-                            idx += 1
-
-                        if not in_bounds(idx):
-                            return Ok(string_idx)
+        if string_idx is not None:
+            return Ok(string_idx)
 
         cant_fix = CantFix("This line does not contain any non-atomic strings.")
         return Err(cant_fix)
+
+    @staticmethod
+    def _return_match(LL: List[Leaf]) -> Optional[int]:
+        in_bounds = in_bounds_factory(LL)
+
+        idx = 2 if in_bounds(1) and is_empty_paren(LL[1]) else 1
+        if in_bounds(idx) and LL[idx].type == token.STRING:
+            return idx
+
+        return None
+
+    @staticmethod
+    def _else_match(LL: List[Leaf]) -> Optional[int]:
+        in_bounds = in_bounds_factory(LL)
+
+        idx = 2 if in_bounds(1) and is_empty_paren(LL[1]) else 1
+        if in_bounds(idx) and LL[idx].type == token.STRING:
+            return idx
+
+        return None
+
+    @staticmethod
+    def _assert_match(LL: List[Leaf]) -> Optional[int]:
+        in_bounds = in_bounds_factory(LL)
+
+        for (i, leaf) in enumerate(LL):
+            if leaf.type == token.COMMA:
+                idx = i + 2 if is_empty_paren(LL[i + 1]) else i + 1
+                if in_bounds(idx) and LL[idx].type == token.STRING:
+                    string_idx = idx
+
+                    trailer = StringTrailerParser()
+                    idx = trailer.parse(LL, string_idx)
+                    if not in_bounds(idx):
+                        return string_idx
+
+        return None
+
+    @staticmethod
+    def _assign_match(LL: List[Leaf]) -> Optional[int]:
+        in_bounds = in_bounds_factory(LL)
+
+        for (i, leaf) in enumerate(LL):
+            if leaf.type in [token.EQUAL, token.PLUSEQUAL]:
+                idx = i + 2 if is_empty_paren(LL[i + 1]) else i + 1
+                if in_bounds(idx) and LL[idx].type == token.STRING:
+                    string_idx = idx
+
+                    trailer = StringTrailerParser()
+                    idx = trailer.parse(LL, string_idx)
+
+                    if (
+                        parent_type(LL[0]) == syms.argument
+                        and in_bounds(idx)
+                        and LL[idx].type == token.COMMA
+                    ):
+                        idx += 1
+
+                    if not in_bounds(idx):
+                        return string_idx
+
+        return None
+
+    @staticmethod
+    def _dict_match(LL: List[Leaf]) -> Optional[int]:
+        in_bounds = in_bounds_factory(LL)
+
+        for (i, leaf) in enumerate(LL):
+            if leaf.type == token.COLON:
+                idx = i + 2 if is_empty_paren(LL[i + 1]) else i + 1
+                if in_bounds(idx) and LL[idx].type == token.STRING:
+                    string_idx = idx
+
+                    trailer = StringTrailerParser()
+                    idx = trailer.parse(LL, string_idx)
+
+                    if in_bounds(idx) and LL[idx].type == token.COMMA:
+                        idx += 1
+
+                    if not in_bounds(idx):
+                        return string_idx
+
+        return None
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[FixResult[Line]]:
         LL = line.leaves
@@ -4139,6 +4175,13 @@ class StringNonAtomicSplitter(StringSplitter):
             last_line.append(comma_leaf)
 
         yield Ok(last_line)
+
+
+def parent_type(leaf: Optional[LN]) -> Optional[int]:
+    if leaf is None or leaf.parent is None:
+        return None
+
+    return leaf.parent.type
 
 
 def is_empty_paren(leaf: Leaf) -> bool:
