@@ -4182,7 +4182,7 @@ def assert_is_leaf_string(string: str) -> None:
 
     assert (
         quote_idx >= 0 and quote_idx != len(string) - 1
-    ), f"{string!r} is not missing a starting quote character (' or \")."
+    ), f"{string!r} is missing a starting quote character (' or \")."
     assert string[-1] in (
         "'",
         '"',
