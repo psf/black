@@ -34,6 +34,7 @@ from typing import (
     Optional,
     Pattern,
     Sequence,
+    Sized,
     Set,
     Tuple,
     Type,
@@ -2525,7 +2526,6 @@ def fix_line(
         return
 
     line_str = line_to_string(line)
-
     def init_sf(SF: Type[StringFixer]) -> StringFixer:
         """Initialize StringFixer"""
         return SF(line_str, line_length, normalize_strings)
@@ -3516,7 +3516,7 @@ class StringSplitter(StringFixer):
             )
             return Err(cant_fix)
 
-        if is_multiline_string(string_leaf):
+        if string_leaf.value.lstrip(STRING_PREFIX_CHARS)[:3] in {'"""', "'''"}:
             cant_fix = CantFix("We cannot split multiline strings.")
             return Err(cant_fix)
 
@@ -4078,45 +4078,79 @@ class StringNonAtomicSplitter(StringSplitter):
     """
 
     def do_splitter_match(self, line: Line) -> FixMatchResult:
-        regex_result = self._re_string_match(
-            fr"""
-            ^[ ]*
-            (?:
-                (?:
-                    return[ ]  # a 'return' statement
-                    | yield[ ]  # a 'yield' statement
-                    | else[ ]  # OR the 'else' part of a ternary expression
-                    | assert[ ].*,[ ]?  # OR an 'assert' statement
-                    | [A-Za-z0-9\._]*?  # OR an assignment statement
-                      (?:
-                        # optional type annotation
-                        :[ ]?[A-Za-z0-9_]+{re_balanced_brackets("type_a")}?
-                      )?
-                      [ ]?\+?=[ ]?
-                    | (?:  # OR a dictionary item assignment
-                        [A-Za-z0-9\._]+?
-                          (?:
-                              {re_balanced_parens("dict")}
-                              | {re_balanced_brackets("dict")}
-                          )*
-                        | {RE_STRING}?{re_string_trailer("dict")}
-                      ):[ ]*
-                )
-                {RE_STRING_GROUP}{re_string_trailer("string1")},?
-            ){RE_EOL}
-            """,
-        )
+        LL = line.leaves
+        in_bounds = in_bounds_factory(LL)
 
-        if isinstance(regex_result, Err):
-            return regex_result
+        def parent_type(leaf: Optional[LN]) -> Optional[int]:
+            if leaf is None or leaf.parent is None:
+                return None
 
-        string_value = regex_result.ok()
-        idx_result = self._get_string_idx(line.leaves, string_value)
-        if isinstance(idx_result, Err):
-            raise idx_result.err()
+            return leaf.parent.type
 
-        string_idx = idx_result.ok()
-        return Ok(string_idx)
+        if parent_type(LL[0]) in [syms.return_stmt, syms.yield_expr]:
+            idx = 2 if in_bounds(1) and is_empty_paren(LL[1]) else 1
+            if in_bounds(idx) and LL[idx].type == token.STRING:
+                return Ok(idx)
+
+        if (
+            parent_type(LL[0]) == syms.test
+            and LL[0].type == token.NAME
+            and LL[0].value == "else"
+        ):
+            idx = 2 if in_bounds(1) and is_empty_paren(LL[1]) else 1
+            if in_bounds(idx) and LL[idx].type == token.STRING:
+                return Ok(idx)
+
+        if parent_type(LL[0]) == syms.assert_stmt:
+            for (i, leaf) in enumerate(LL):
+                if leaf.type == token.COMMA:
+                    idx = i + 2 if is_empty_paren(LL[i + 1]) else i + 1
+                    if in_bounds(idx) and LL[idx].type == token.STRING:
+                        string_idx = idx
+
+                        trailer = StringTrailerParser()
+                        idx = trailer.parse(LL, string_idx)
+                        if not in_bounds(idx):
+                            return Ok(string_idx)
+
+        if parent_type(LL[0]) in [syms.expr_stmt, syms.argument]:
+            for (i, leaf) in enumerate(LL):
+                if leaf.type in [token.EQUAL, token.PLUSEQUAL]:
+                    idx = i + 2 if is_empty_paren(LL[i + 1]) else i + 1
+                    if in_bounds(idx) and LL[idx].type == token.STRING:
+                        string_idx = idx
+
+                        trailer = StringTrailerParser()
+                        idx = trailer.parse(LL, string_idx)
+
+                        if (
+                            parent_type(LL[0]) == syms.argument
+                            and in_bounds(idx)
+                            and LL[idx].type == token.COMMA
+                        ):
+                            idx += 1
+
+                        if not in_bounds(idx):
+                            return Ok(string_idx)
+
+        if syms.dictsetmaker in [parent_type(LL[0]), parent_type(LL[0].parent)]:
+            for (i, leaf) in enumerate(LL):
+                if leaf.type == token.COLON:
+                    idx = i + 2 if is_empty_paren(LL[i + 1]) else i + 1
+                    if in_bounds(idx) and LL[idx].type == token.STRING:
+                        string_idx = idx
+
+                        trailer = StringTrailerParser()
+                        idx = trailer.parse(LL, string_idx)
+
+                        if in_bounds(idx) and LL[idx].type == token.COMMA:
+                            idx += 1
+
+                        if not in_bounds(idx):
+                            return Ok(string_idx)
+
+        cant_fix = CantFix("This line does not contain any non-atomic strings.")
+        return Err(cant_fix)
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[FixResult[Line]]:
         LL = line.leaves
@@ -4211,6 +4245,22 @@ class StringNonAtomicSplitter(StringSplitter):
             last_line.append(comma_leaf)
 
         yield Ok(last_line)
+
+
+def is_empty_paren(leaf: Leaf) -> bool:
+    # TODO(bugyi): docstring
+    # TODO(bugyi): make better use of this function
+    is_paren = leaf.type in [token.LPAR, token.RPAR]
+    return is_paren and leaf.value == ""
+
+
+def in_bounds_factory(obj: Sized) -> Callable[[int], bool]:
+    # TODO(bugyi): docstring
+    # TODO(bugyi): make better use of this function
+    def in_bounds(idx: int) -> bool:
+        return 0 <= idx < len(obj)
+
+    return in_bounds
 
 
 def line_to_string(line: Line) -> str:
