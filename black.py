@@ -71,59 +71,6 @@ STRING_PREFIX_CHARS: Final = "furbFURB"  # All possible string prefix characters
 
 # Regular expressions used for matching strings.
 RE_EVEN_BACKSLASHES: Final = r"(?:(?<!\\)(?:\\\\)*)"
-RE_ODD_BACKSLASHES: Final = fr"(?:{RE_EVEN_BACKSLASHES}\\)"
-re_balanced_quotes = fr"""
-(?:
-    (?<![\\{{0}}]){{0}}
-    (?:
-        {RE_ODD_BACKSLASHES}{{0}}  # an escaped quote
-        | [^\\{{0}}]  # OR anything but a quote or a backslash
-        | \\[^{{0}}]  # OR a backslash followed by a non-quote
-    )
-    +?{{0}}
-)
-""".format
-RE_BALANCED_QUOTES: Final = fr"""
-(?:{re_balanced_quotes("'")} | {re_balanced_quotes('"')})
-"""
-re_balanced_brackets = r"""
-(?P<bbrackets_{0}>
-    \[(?:
-        [^\[\]]++  # not a bracket
-        | (?&bbrackets_{0})  # OR a RE_BALANCED_BRACKETS expression
-    )*\]
-)
-""".format
-RE_BALANCED_BRACKETS: Final = re_balanced_brackets("main")
-re_balanced_parens = r"""
-(?P<bparens_{0}>
-    \((?:
-        [^\(\)]++  # not a paren
-        | (?&bparens_{0})  # OR a RE_BALANCED_PARENS expression
-    )*\)
-)
-""".format
-RE_BALANCED_PARENS = re_balanced_parens("main")
-RE_STRING: Final = fr"""
-(?:
-    [{STRING_PREFIX_CHARS}]{{0,{len(STRING_PREFIX_CHARS)}}}{RE_BALANCED_QUOTES}
-)
-"""
-RE_STRING_GROUP: Final = fr"(?P<string>{RE_STRING})"
-re_string_trailer = fr"""
-(?:
-    (?:
-        \.[A-Za-z0-9_]+{re_balanced_parens("{0}_trailer_1")}  # a method call
-        | [ ]?%[ ]?  # OR an old-style '%' formatting expression
-            (?:
-                {re_balanced_parens("{0}_trailer_2")}
-                | {RE_BALANCED_QUOTES}
-            )
-    )?
-)
-""".format
-RE_STRING_TRAILER: Final = re_string_trailer("main")
-RE_EOL: Final = r"[ ]*(?:\#.*)?$"
 RE_FEXPR: Final = r"""
 # Matches an "f-expression" (e.g. {var}) that might be found in an f-string.
 (?<!\{)\{
@@ -2719,57 +2666,6 @@ class StringFixer(ABC):
             line = line_result.ok()
             yield line
 
-    def _re_string_match(self, pattern: str) -> FixResult[str]:
-        """
-        Wrapper around `re.match(...)` for matching the <string> named group.
-
-        Returns:
-            * Ok(S) where S is the <string> named group in @pattern, if the
-            match was successful.
-                OR
-            * Err(CantFix), if the match was unsuccessful.
-        """
-        if pattern not in self.__PATTERN_CACHE:
-            self.__PATTERN_CACHE[pattern] = re.compile(pattern, re.VERBOSE)
-
-        pttrn = self.__PATTERN_CACHE[pattern]
-        match = pttrn.match(self.line_str)
-
-        if match is None:
-            cant_fix = CantFix(
-                f"Line ({self.line_str}) does not match regular expression pattern"
-                f" ({pattern})."
-            )
-            return Err(cant_fix)
-
-        string = match.groupdict()["string"]
-        assert isinstance(string, str)
-        return Ok(string)
-
-    def _get_string_idx(
-        self, leaves: List[Leaf], string_value: str
-    ) -> Result[int, ValueError]:
-        """
-        Generic algorithm for determining the index of @string_value in
-        @leaves.
-
-        Returns:
-            * Ok(idx) such that `leaves[idx].value == string_value`, when
-            the search is successful.
-                OR
-            * Err(ValueError), when the search is unsuccessful.
-        """
-        for i, leaf in enumerate(leaves):
-            if leaf.type == token.STRING and leaf.value == string_value:
-                return Ok(i)
-
-        value_error = ValueError(
-            f"{self.__class__.__name__} claims to know the string value is"
-            f" {string_value} but we are unable to find a leaf in this line that"
-            " contains this string."
-        )
-        return Err(value_error)
-
 
 @dataclass
 class CustomSplit:
@@ -3198,6 +3094,7 @@ class StringTrailerParser:
                 OR
             string_idx + 1, if no string "trailer" exists.
         """
+        # TODO(bugyi): rename?
         assert leaves[string_idx].type == token.STRING
 
         idx = string_idx + 1
