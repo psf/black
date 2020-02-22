@@ -2803,18 +2803,18 @@ class CustomSplitMapMixin:
         Tuple[StringID, str], Tuple[CustomSplit, ...]
     ] = defaultdict(tuple)
 
-    @staticmethod
-    def add_custom_splits(string: str, custom_splits: Iterable[CustomSplit]) -> None:
+    def add_custom_splits(
+        self, string: str, custom_splits: Iterable[CustomSplit]
+    ) -> None:
         """Custom Split Map Setter Method
 
         Side Effects:
             Adds a mapping from @string to the custom splits @custom_splits.
         """
         key = (id(string), string)
-        CustomSplitMapMixin.__CUSTOM_SPLIT_MAP[key] = tuple(custom_splits)
+        self.__CUSTOM_SPLIT_MAP[key] = tuple(custom_splits)
 
-    @staticmethod
-    def pop_custom_splits(string: str) -> List[CustomSplit]:
+    def pop_custom_splits(self, string: str) -> List[CustomSplit]:
         """Custom Split Map Getter Method
 
         Returns:
@@ -2829,8 +2829,8 @@ class CustomSplitMapMixin:
         """
         key = (id(string), string)
 
-        custom_splits = CustomSplitMapMixin.__CUSTOM_SPLIT_MAP[key]
-        del CustomSplitMapMixin.__CUSTOM_SPLIT_MAP[key]
+        custom_splits = self.__CUSTOM_SPLIT_MAP[key]
+        del self.__CUSTOM_SPLIT_MAP[key]
 
         return list(custom_splits)
 
