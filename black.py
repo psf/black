@@ -2480,7 +2480,7 @@ def fix_line(
 
     def init_sf(SF: Type[StringFixer]) -> StringFixer:
         """Initialize StringFixer"""
-        return SF(line_str, line_length, normalize_strings)
+        return SF(line_length, normalize_strings)
 
     string_merge = init_sf(StringMerger)
     string_parens_strip = init_sf(StringParensStripper)
@@ -2592,10 +2592,6 @@ class StringFixer(ABC):
         as much as possible.
     """
 
-    # We could technically calculate 'line_str' at call-time, since we will
-    # have access to the associated Line object. Doing so is computationally
-    # expensive, however, so we cache 'line_str' here.
-    line_str: str
     line_length: int
     normalize_strings: bool
 
@@ -2772,9 +2768,7 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
             if leaf.type == token.STRING and "\\\n" in leaf.value:
                 return Ok(i)
 
-        cant_fix = CantFix(
-            f"This line ({self.line_str!r}) has no strings that need merging."
-        )
+        cant_fix = CantFix(f"This line has no strings that need merging.")
         return Err(cant_fix)
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[FixResult[Line]]:
@@ -3183,9 +3177,7 @@ class StringParensStripper(StringFixer):
 
                 return Ok(idx)
 
-        cant_fix = CantFix(
-            f"This line ({self.line_str!r}) has no strings wrapped in parens."
-        )
+        cant_fix = CantFix(f"This line has no strings wrapped in parens.")
         return Err(cant_fix)
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[FixResult[Line]]:
@@ -3197,7 +3189,7 @@ class StringParensStripper(StringFixer):
             raise RuntimeError(
                 f"Logic Error. {self.__class__.__name__} was unable to find the ending"
                 " RPAR leaf for the following string and line:\n\nSTRING:"
-                f" {LL[string_idx]}\n\nLINE: {self.line_str}\n"
+                f" {LL[string_idx]}\n"
             ) from value_error
 
         unmatched_rpar_idx = rpar_idx_result.ok()
@@ -4001,6 +3993,7 @@ class StringNonAtomicSplitter(StringSplitter):
 
     @staticmethod
     def _return_match(LL: List[Leaf]) -> Optional[int]:
+        # TODO(bugyi): docstring
         in_bounds = in_bounds_factory(LL)
 
         idx = 2 if in_bounds(1) and is_empty_paren(LL[1]) else 1
@@ -4011,6 +4004,7 @@ class StringNonAtomicSplitter(StringSplitter):
 
     @staticmethod
     def _else_match(LL: List[Leaf]) -> Optional[int]:
+        # TODO(bugyi): docstring
         in_bounds = in_bounds_factory(LL)
 
         idx = 2 if in_bounds(1) and is_empty_paren(LL[1]) else 1
@@ -4021,6 +4015,7 @@ class StringNonAtomicSplitter(StringSplitter):
 
     @staticmethod
     def _assert_match(LL: List[Leaf]) -> Optional[int]:
+        # TODO(bugyi): docstring
         in_bounds = in_bounds_factory(LL)
 
         for (i, leaf) in enumerate(LL):
@@ -4038,6 +4033,7 @@ class StringNonAtomicSplitter(StringSplitter):
 
     @staticmethod
     def _assign_match(LL: List[Leaf]) -> Optional[int]:
+        # TODO(bugyi): docstring
         in_bounds = in_bounds_factory(LL)
 
         for (i, leaf) in enumerate(LL):
@@ -4063,6 +4059,7 @@ class StringNonAtomicSplitter(StringSplitter):
 
     @staticmethod
     def _dict_match(LL: List[Leaf]) -> Optional[int]:
+        # TODO(bugyi): docstring
         in_bounds = in_bounds_factory(LL)
 
         for (i, leaf) in enumerate(LL):
@@ -4178,6 +4175,7 @@ class StringNonAtomicSplitter(StringSplitter):
 
 
 def parent_type(leaf: Optional[LN]) -> Optional[int]:
+    # TODO(bugyi): docstring
     if leaf is None or leaf.parent is None:
         return None
 
