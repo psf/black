@@ -5,7 +5,7 @@ from collections import defaultdict
 from concurrent.futures import Executor, ProcessPoolExecutor
 from contextlib import contextmanager
 from datetime import datetime
-from enum import Enum
+from enum import auto, Enum
 from functools import lru_cache, partial, wraps
 import io
 import itertools
@@ -2872,7 +2872,7 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
                 return Ok(i)
 
         cant_fix = CantFix(
-            f"This line ({self.line_str}) has no strings that need merging."
+            f"This line ({self.line_str!r}) has no strings that need merging."
         )
         return Err(cant_fix)
 
@@ -3131,6 +3131,116 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
         return Ok(None)
 
 
+class STP_State(Enum):
+    """(S)tring (T)railer (P)arser State"""
+
+    START = auto()
+
+    DOT = auto()
+    NAME = auto()
+
+    PERCENT = auto()
+    SINGLE_FMT_ARG = auto()
+
+    LPAR = auto()
+    RPAR = auto()
+
+    DONE = auto()
+    ERROR = auto()
+
+
+class StringTrailerParser:
+    """
+    A state machine that aids in parsing a string's "trailer", which can be
+    either non-existant, an old-style formatting sequence (e.g. `% varX` or `%
+    (varX, varY)`), or a method-call / attribute access (e.g. `.format(varX,
+    varY)`).
+
+    NOTE: A new StringTrailerParser object must be instantiated for each string
+    trailer we parse.
+    """
+
+    def __init__(self) -> None:
+        self.state = STP_State.START
+        self.unmatched_lpars = 0
+
+        self.goto: Dict[Tuple[STP_State, int], STP_State] = defaultdict(
+            lambda: STP_State.ERROR
+        )
+
+        self.goto[STP_State.START, token.DOT] = STP_State.DOT
+        self.goto[STP_State.START, token.PERCENT] = STP_State.PERCENT
+        self.goto[STP_State.START, -1] = STP_State.DONE
+
+        self.goto[STP_State.DOT, token.NAME] = STP_State.NAME
+
+        self.goto[STP_State.NAME, token.LPAR] = STP_State.LPAR
+
+        self.goto[STP_State.PERCENT, token.LPAR] = STP_State.LPAR
+        self.goto[STP_State.PERCENT, -1] = STP_State.SINGLE_FMT_ARG
+        self.goto[STP_State.SINGLE_FMT_ARG, -1] = STP_State.DONE
+
+        self.goto[STP_State.RPAR, -1] = STP_State.DONE
+
+    def parse(self, leaves: List[Leaf], string_idx: int) -> int:
+        """
+        Pre-conditions:
+            * `leaves[string_idx].type == token.STRING`
+
+        Returns:
+            The index directly after the last leaf which is apart of the string
+            trailer, if a "trailer" exists.
+                OR
+            string_idx + 1, if no string "trailer" exists.
+        """
+        assert leaves[string_idx].type == token.STRING
+
+        idx = string_idx + 1
+        while idx < len(leaves) and self._parse(leaves[idx]):
+            idx += 1
+        return idx
+
+    def _parse(self, leaf: Leaf) -> bool:
+        """
+        Pre-conditions:
+            * On the first call to this function @leaf MUST be the leaf that
+            was directly after the string leaf in question (e.g. if our target
+            string is `line.leaves[i]` then the first call to this method must
+            be `line.leaves[i + 1]`).
+            * On the next call to this function, the leaf paramater passed in
+            MUST be the leaf directly following @leaf.
+
+        Returns:
+            True iff @leaf is apart of the string's trailer.
+        """
+        if leaf.type in [token.LPAR, token.RPAR] and leaf.value == "":
+            return True
+
+        next_token = leaf.type
+        if next_token == token.LPAR:
+            self.unmatched_lpars += 1
+
+        last_state = self.state
+        if last_state == STP_State.LPAR:
+            if next_token == token.RPAR:
+                self.unmatched_lpars -= 1
+                if self.unmatched_lpars == 0:
+                    self.state = STP_State.RPAR
+        else:
+            self.state = self.goto[last_state, next_token]
+
+            if self.state == STP_State.ERROR:
+                if (last_state, -1) in self.goto:
+                    self.state = self.goto[last_state, -1]
+                else:
+                    raise RuntimeError(f"{self.__class__.__name__} ERROR!")
+
+            if self.state == STP_State.DONE:
+                return False
+
+        return True
+
+
 class StringParensStripper(StringFixer):
     """StringFixer that strips surrounding parentheses from strings.
 
@@ -3150,45 +3260,43 @@ class StringParensStripper(StringFixer):
     def do_match(self, line: Line) -> FixMatchResult:
         LL = line.leaves
 
-        regex_result = self._re_string_match(
-            fr"""
-            ^
-            (?: # Ensures that we don't mistake an end quote for a starting quote.
-                [^'"]
-                | {RE_BALANCED_QUOTES}
-            )*?
-            [^A-Za-z0-9_'"][ ]*  # NOT a function call!
-            \({RE_STRING_GROUP}{RE_STRING_TRAILER}\)[^\.]
-            .*$
-            """,
-        )
-
-        if isinstance(regex_result, Err):
-            return regex_result
-
-        string_value = regex_result.ok()
         for (i, leaf) in enumerate(LL):
-            if leaf.type != token.STRING or leaf.value != string_value:
+            if leaf.type != token.STRING:
                 continue
 
             if i == 0 or LL[i - 1].type != token.LPAR:
                 continue
 
-            unmatched_parens = 0
-            for inner_leaf in LL[i + 1 :]:
-                if inner_leaf.type == token.RPAR:
-                    if unmatched_parens == 0:
-                        return Ok(i)
-                    else:
-                        unmatched_parens -= 1
+            if i >= 2 and LL[i - 2].type == token.NAME:
+                continue
 
-                if inner_leaf.type == token.LPAR:
-                    unmatched_parens += 1
+            if i + 1 >= len(LL):
+                continue
 
-        raise RuntimeError(
-            f"Logic Error. {self.__class__.__name__} was unable to determine a string"
-            " index for some reason."
+            trailer = StringTrailerParser()
+            after_string_idx = trailer.parse(LL, i)
+
+            if (
+                after_string_idx < len(LL)
+                and LL[after_string_idx].type == token.RPAR
+                and LL[after_string_idx].value == ")"
+            ):
+                if (
+                    after_string_idx + 1 < len(LL)
+                    and LL[after_string_idx + 1].type == token.DOT
+                ):
+                    cant_fix = CantFix(
+                        "String is wrapped in parens, but the RPAR is directly followed"
+                        " by a dot, which is a deal breaker."
+                    )
+                    return Err(cant_fix)
+
+                return Ok(i)
+
+        cant_fix = CantFix(
+            f"This line ({self.line_str!r}) has no strings wrapped in parens."
         )
+        return Err(cant_fix)
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[FixResult[Line]]:
         LL = line.leaves
