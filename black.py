@@ -2595,10 +2595,6 @@ class StringFixer(ABC):
     line_length: int
     normalize_strings: bool
 
-    # Compiling re.Pattern objects is computationally expensive, so we cache
-    # them here.
-    __PATTERN_CACHE: ClassVar[Dict[str, Pattern[str]]] = {}
-
     @abstractmethod
     def do_match(self, line: Line) -> FixMatchResult:
         """
