@@ -4166,6 +4166,8 @@ def assert_is_leaf_string(string: str) -> None:
     Pre-conditions:
         @string starts with <prefix>' or <prefix>" where `set(<prefix>)` is
         some subset of `set(STRING_PREFIX_CHARS)` (possibly the null set).
+            AND
+        @string ends with a quote character (' or ").
 
     Raises:
         AssertionError(...) if the pre-conditions listed above are not
@@ -4179,6 +4181,10 @@ def assert_is_leaf_string(string: str) -> None:
         quote_idx = min(squote_idx, dquote_idx)
 
     assert quote_idx >= 0, f"{string!r} does not contain a quote character (' or \")."
+    assert string[-1] in (
+        "'",
+        '"',
+    ), f"{string!r} does not end with a quote character (' or \")."
     assert set(string[:quote_idx]).issubset(
         set(STRING_PREFIX_CHARS)
     ), f"{set(string[:quote_idx])} is NOT a subset of {set(STRING_PREFIX_CHARS)}."
