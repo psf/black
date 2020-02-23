@@ -4213,12 +4213,11 @@ def is_empty_rpar(leaf: Leaf) -> bool:
     return leaf.type == token.RPAR and leaf.value == ""
 
 
-def is_valid_index_factory(obj: Sized) -> Callable[[int], bool]:
+def is_valid_index_factory(seq: Sequence[Any]) -> Callable[[int], bool]:
     # TODO(bugyi): docstring
     # TODO(bugyi): make better use of this function
-    # TODO(bugyi): Fix type and variable name for `obj`
     def is_valid_index(idx: int) -> bool:
-        return 0 <= idx < len(obj)
+        return 0 <= idx < len(seq)
 
     return is_valid_index
 
