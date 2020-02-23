@@ -2774,7 +2774,9 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             rblc_cant_fix = rblc_result.err()
             msg_cant_fix.__cause__ = rblc_cant_fix
 
-            cant_fix = CantTransform("StringMerger failed to merge any strings in this line.")
+            cant_fix = CantTransform(
+                "StringMerger failed to merge any strings in this line."
+            )
             cant_fix.__cause__ = msg_cant_fix
             yield Err(cant_fix)
         else:
@@ -2986,7 +2988,9 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
                 break
 
             if has_triple_quotes(leaf.value):
-                cant_fix = CantTransform("StringMerger does NOT merge multiline strings.")
+                cant_fix = CantTransform(
+                    "StringMerger does NOT merge multiline strings."
+                )
                 return Err(cant_fix)
 
             num_of_strings += 1
@@ -3013,7 +3017,9 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             return Err(cant_fix)
 
         if len(set_of_prefixes) > 1 and set_of_prefixes != {"", "f"}:
-            cant_fix = CantTransform(f"Too many different prefixes ({set_of_prefixes}).")
+            cant_fix = CantTransform(
+                f"Too many different prefixes ({set_of_prefixes})."
+            )
             return Err(cant_fix)
 
         return Ok(None)
@@ -4244,6 +4250,7 @@ def is_valid_index_factory(seq: Sequence[Any]) -> Callable[[int], bool]:
     assert not is_valid_index(-1)
     ```
     """
+
     def is_valid_index(idx: int) -> bool:
         """
         Returns:
