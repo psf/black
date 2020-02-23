@@ -2629,20 +2629,20 @@ class StringTransformer(ABC):
         match_result = self.do_match(line)
 
         if isinstance(match_result, Err):
-            cant_fix = match_result.err()
+            cant_trans = match_result.err()
             raise CantTransform(
                 f"The string transformer {self.__class__.__name__} does not recognize"
                 " this line as one that it can transform."
-            ) from cant_fix
+            ) from cant_trans
 
         string_idx = match_result.ok()
 
         for line_result in self.do_transform(line, string_idx):
             if isinstance(line_result, Err):
-                cant_fix = line_result.err()
+                cant_trans = line_result.err()
                 raise CantTransform(
                     "StringTransformer failed while attempting to transform string."
-                ) from cant_fix
+                ) from cant_trans
             line = line_result.ok()
             yield line
 
@@ -2754,8 +2754,8 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             if leaf.type == token.STRING and "\\\n" in leaf.value:
                 return Ok(i)
 
-        cant_fix = CantTransform(f"This line has no strings that need merging.")
-        return Err(cant_fix)
+        cant_trans = CantTransform(f"This line has no strings that need merging.")
+        return Err(cant_trans)
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[TResult[Line]]:
         new_line = line
@@ -2774,11 +2774,11 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             rblc_cant_fix = rblc_result.err()
             msg_cant_fix.__cause__ = rblc_cant_fix
 
-            cant_fix = CantTransform(
+            cant_trans = CantTransform(
                 "StringMerger failed to merge any strings in this line."
             )
-            cant_fix.__cause__ = msg_cant_fix
-            yield Err(cant_fix)
+            cant_trans.__cause__ = msg_cant_fix
+            yield Err(cant_trans)
         else:
             yield Ok(new_line)
 
@@ -2804,11 +2804,11 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             and "\\\n" in string_leaf.value
             and not has_triple_quotes(string_leaf.value)
         ):
-            cant_fix = CantTransform(
+            cant_trans = CantTransform(
                 f"String leaf {string_leaf} does not contain any backslash line"
                 " continuation characters."
             )
-            return Err(cant_fix)
+            return Err(cant_trans)
 
         new_line = line.clone()
         new_line.comments = line.comments
@@ -2988,16 +2988,16 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
                 break
 
             if has_triple_quotes(leaf.value):
-                cant_fix = CantTransform(
+                cant_trans = CantTransform(
                     "StringMerger does NOT merge multiline strings."
                 )
-                return Err(cant_fix)
+                return Err(cant_trans)
 
             num_of_strings += 1
             prefix = get_string_prefix(leaf.value)
             if "r" in prefix:
-                cant_fix = CantTransform("StringMerger does NOT merge raw strings.")
-                return Err(cant_fix)
+                cant_trans = CantTransform("StringMerger does NOT merge raw strings.")
+                return Err(cant_trans)
 
             set_of_prefixes.add(prefix)
 
@@ -3005,22 +3005,22 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
                 num_of_inline_string_comments += 1
 
         if num_of_strings < 2:
-            cant_fix = CantTransform(
+            cant_trans = CantTransform(
                 f"Not enough strings to merge (num_of_strings={num_of_strings})."
             )
-            return Err(cant_fix)
+            return Err(cant_trans)
 
         if num_of_inline_string_comments > 1:
-            cant_fix = CantTransform(
+            cant_trans = CantTransform(
                 f"Too many inline string comments ({num_of_inline_string_comments})."
             )
-            return Err(cant_fix)
+            return Err(cant_trans)
 
         if len(set_of_prefixes) > 1 and set_of_prefixes != {"", "f"}:
-            cant_fix = CantTransform(
+            cant_trans = CantTransform(
                 f"Too many different prefixes ({set_of_prefixes})."
             )
-            return Err(cant_fix)
+            return Err(cant_trans)
 
         return Ok(None)
 
@@ -3072,16 +3072,16 @@ class StringParensStripper(StringTransformer):
                 and LL[next_idx].value == ")"
             ):
                 if is_valid_index(next_idx + 1) and LL[next_idx + 1].type == token.DOT:
-                    cant_fix = CantTransform(
+                    cant_trans = CantTransform(
                         "String is wrapped in parens, but the RPAR is directly followed"
                         " by a dot, which is a deal breaker."
                     )
-                    return Err(cant_fix)
+                    return Err(cant_trans)
 
                 return Ok(string_idx)
 
-        cant_fix = CantTransform(f"This line has no strings wrapped in parens.")
-        return Err(cant_fix)
+        cant_trans = CantTransform(f"This line has no strings wrapped in parens.")
+        return Err(cant_trans)
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[TResult[Line]]:
         LL = line.leaves
@@ -3100,10 +3100,10 @@ class StringParensStripper(StringTransformer):
 
         for leaf in (LL[string_idx - 1], LL[rpar_idx]):
             if line.comments_after(leaf):
-                cant_fix = CantTransform(
+                cant_trans = CantTransform(
                     "Will not strip parentheses which have comments attached to them."
                 )
-                yield Err(cant_fix)
+                yield Err(cant_trans)
 
         new_line = line.clone()
         new_line.comments = line.comments.copy()
@@ -3275,20 +3275,20 @@ class StringSplitter(StringTransformer):
 
         max_string_length = self.__get_max_string_length(line, string_idx)
         if len(string_leaf.value) <= max_string_length:
-            cant_fix = CantTransform(
+            cant_trans = CantTransform(
                 "The string itself is not what is causing this line to be too long."
             )
-            return Err(cant_fix)
+            return Err(cant_trans)
 
         if not string_leaf.parent or [L.type for L in string_leaf.parent.children] == [
             token.STRING,
             token.NEWLINE,
         ]:
-            cant_fix = CantTransform(
+            cant_trans = CantTransform(
                 f"This string ({string_leaf.value}) appears to be pointless (i.e. has"
                 " no parent)."
             )
-            return Err(cant_fix)
+            return Err(cant_trans)
 
         if (
             line.comments
@@ -3299,15 +3299,15 @@ class StringSplitter(StringTransformer):
                 re.IGNORECASE,
             )
         ):
-            cant_fix = CantTransform(
+            cant_trans = CantTransform(
                 "Line appears to end with an inline pragma comment. Splitting the line"
                 " could modify the pragma's behavior."
             )
-            return Err(cant_fix)
+            return Err(cant_trans)
 
         if has_triple_quotes(string_leaf.value):
-            cant_fix = CantTransform("We cannot split multiline strings.")
-            return Err(cant_fix)
+            cant_trans = CantTransform("We cannot split multiline strings.")
+            return Err(cant_trans)
 
         return Ok(None)
 
@@ -3455,6 +3455,8 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
         CustomSplit objects and add them to the custom split map.
     """
 
+    # TODO(bugyi): Would a recursive "balanced brackets" regular expression
+    # work better here?
     RE_FEXPR = r"""
     # Matches an "f-expression" (e.g. {var}) that might be found in an f-string.
     (?<!\{)\{
@@ -3479,8 +3481,8 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
             idx += 1
 
         if not is_valid_index(idx) or LL[idx].type != token.STRING:
-            cant_fix = CantTransform("Line does not start with a string.")
-            return Err(cant_fix)
+            cant_trans = CantTransform("Line does not start with a string.")
+            return Err(cant_trans)
 
         string_idx = idx
 
@@ -3494,8 +3496,8 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
             idx += 1
 
         if is_valid_index(idx):
-            cant_fix = CantTransform("This line does not end with a string.")
-            return Err(cant_fix)
+            cant_trans = CantTransform("This line does not end with a string.")
+            return Err(cant_trans)
 
         return Ok(string_idx)
 
@@ -3517,11 +3519,11 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
         # Leading whitespace is not present in the string value (e.g. Leaf.value).
         target_idx -= line.depth * 4
         if target_idx < 0:
-            cant_fix = CantTransform(
+            cant_trans = CantTransform(
                 f"Unable to split {LL[string_idx].value} at such high of a line depth:"
                 f" {line.depth}"
             )
-            yield Err(cant_fix)
+            yield Err(cant_trans)
             return
 
         # We MAY choose to drop the 'f' prefix from substrings that don't
@@ -3908,8 +3910,8 @@ class StringNonAtomicSplitter(StringSplitter):
         if string_idx is not None:
             return Ok(string_idx)
 
-        cant_fix = CantTransform("This line does not contain any non-atomic strings.")
-        return Err(cant_fix)
+        cant_trans = CantTransform("This line does not contain any non-atomic strings.")
+        return Err(cant_trans)
 
     @staticmethod
     def _return_match(LL: List[Leaf]) -> Optional[int]:
