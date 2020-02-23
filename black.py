@@ -3702,13 +3702,13 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
                 # If we are, will we be successful?
                 and next_value != self.__normalize_f_string(next_value, prefix)
             ):
-                # TODO(bugyi): Find a way to remove this hack.
                 # If the current custom split did NOT originally use a prefix,
                 # then `csplit.break_idx` will be off by one after removing
                 # the 'f' prefix.
-                if use_custom_breakpoints and not csplit.has_prefix:
-                    idx += 1
-                    next_value = rest_value[:idx] + QUOTE
+                idx = (
+                    idx + 1 if use_custom_breakpoints and not csplit.has_prefix else idx
+                )
+                next_value = rest_value[:idx] + QUOTE
                 next_value = self.__normalize_f_string(next_value, prefix)
 
             # --- Construct `next_leaf`
