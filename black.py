@@ -2739,10 +2739,12 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
     def do_match(self, line: Line) -> FixMatchResult:
         LL = line.leaves
 
+        is_valid_index = is_valid_index_factory(LL)
+
         for (i, leaf) in enumerate(LL):
             if (
                 leaf.type == token.STRING
-                and len(LL) > i + 1
+                and is_valid_index(i + 1)
                 and LL[i + 1].type == token.STRING
             ):
                 return Ok(i)
@@ -2766,12 +2768,12 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
             new_line = msg_result.ok()
 
         if isinstance(rblc_result, Err) and isinstance(msg_result, Err):
-            msg_st_error = msg_result.err()
-            rblc_st_error = rblc_result.err()
-            msg_st_error.__cause__ = rblc_st_error
+            msg_cant_fix = msg_result.err()
+            rblc_cant_fix = rblc_result.err()
+            msg_cant_fix.__cause__ = rblc_cant_fix
 
             cant_fix = CantFix("StringMerger failed to merge any strings in this line.")
-            cant_fix.__cause__ = msg_st_error
+            cant_fix.__cause__ = msg_cant_fix
             yield Err(cant_fix)
         else:
             yield Ok(new_line)
@@ -2796,7 +2798,7 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
         if not (
             string_leaf.type == token.STRING
             and "\\\n" in string_leaf.value
-            and string_leaf.value.lstrip(STRING_PREFIX_CHARS)[:3] not in {'"""', "'''"}
+            and not has_triple_quotes(string_leaf.value)
         ):
             cant_fix = CantFix(
                 f"String leaf {string_leaf} does not contain any backslash line"
@@ -2825,6 +2827,8 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
             Err(CantFix), otherwise.
         """
         LL = line.leaves
+
+        is_valid_index = is_valid_index_factory(LL)
 
         vresult = self.__validate_msg(line, string_idx)
         if isinstance(vresult, Err):
@@ -2876,7 +2880,7 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
         prefix = ""
         while (
             not prefix
-            and len(LL) > next_str_idx
+            and is_valid_index(next_str_idx)
             and LL[next_str_idx].type == token.STRING
         ):
             prefix = get_string_prefix(LL[next_str_idx].value)
@@ -2895,7 +2899,7 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
         NS = ""
         num_of_strings = 0
         next_str_idx = string_idx
-        while len(LL) > next_str_idx and LL[next_str_idx].type == token.STRING:
+        while is_valid_index(next_str_idx) and LL[next_str_idx].type == token.STRING:
             num_of_strings += 1
 
             SS = LL[next_str_idx].value
@@ -2905,7 +2909,7 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
 
             NSS = make_naked(SS, next_prefix)
 
-            has_prefix = next_prefix != ""
+            has_prefix = bool(next_prefix)
             prefix_tracker.append(has_prefix)
 
             S = prefix + QUOTE + NS + NSS + BREAK_MARK + QUOTE
@@ -2936,7 +2940,7 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
 
         # Build the final line ('new_line') that this method will later return.
         new_line = line.clone()
-        for i, leaf in enumerate(LL):
+        for (i, leaf) in enumerate(LL):
             if i == string_idx:
                 new_line.append(string_leaf)
 
@@ -2980,7 +2984,7 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
                 break
 
             if has_triple_quotes(leaf.value):
-                cant_fix = CantFix("Cannot merge multiline strings.")
+                cant_fix = CantFix("StringMerger does NOT merge multiline strings.")
                 return Err(cant_fix)
 
             num_of_strings += 1
@@ -3011,111 +3015,6 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
             return Err(cant_fix)
 
         return Ok(None)
-
-
-class StringTrailerParser:
-    """
-    A state machine that aids in parsing a string's "trailer", which can be
-    either non-existant, an old-style formatting sequence (e.g. `% varX` or `%
-    (varX, varY)`), or a method-call / attribute access (e.g. `.format(varX,
-    varY)`).
-
-    NOTE: A new StringTrailerParser object must be instantiated for each string
-    trailer we need to parse.
-    """
-
-    # Possible States
-    START = 1
-    DOT = 2
-    NAME = 3
-    PERCENT = 4
-    SINGLE_FMT_ARG = 5
-    LPAR = 6
-    RPAR = 7
-    DONE = 8
-    ERROR = 9
-
-    def __init__(self) -> None:
-        self.state = self.START
-        self.unmatched_lpars = 0
-
-        # TODO(bugyi): Use a dictionary literal to build the state table.
-        self.goto: Dict[Tuple[ParserState, NodeType], ParserState] = defaultdict(
-            lambda: self.ERROR
-        )
-
-        self.goto[self.START, token.DOT] = self.DOT
-        self.goto[self.START, token.PERCENT] = self.PERCENT
-        self.goto[self.START, -1] = self.DONE
-
-        self.goto[self.DOT, token.NAME] = self.NAME
-
-        self.goto[self.NAME, token.LPAR] = self.LPAR
-
-        self.goto[self.PERCENT, token.LPAR] = self.LPAR
-        self.goto[self.PERCENT, -1] = self.SINGLE_FMT_ARG
-        self.goto[self.SINGLE_FMT_ARG, -1] = self.DONE
-
-        self.goto[self.RPAR, -1] = self.DONE
-
-    def parse(self, leaves: List[Leaf], string_idx: int) -> int:
-        """
-        Pre-conditions:
-            * `leaves[string_idx].type == token.STRING`
-
-        Returns:
-            The index directly after the last leaf which is apart of the string
-            trailer, if a "trailer" exists.
-                OR
-            string_idx + 1, if no string "trailer" exists.
-        """
-        # TODO(bugyi): rename?
-        assert leaves[string_idx].type == token.STRING
-
-        idx = string_idx + 1
-        while idx < len(leaves) and self._parse(leaves[idx]):
-            idx += 1
-        return idx
-
-    def _parse(self, leaf: Leaf) -> bool:
-        """
-        Pre-conditions:
-            * On the first call to this function @leaf MUST be the leaf that
-            was directly after the string leaf in question (e.g. if our target
-            string is `line.leaves[i]` then the first call to this method must
-            be `line.leaves[i + 1]`).
-            * On the next call to this function, the leaf paramater passed in
-            MUST be the leaf directly following @leaf.
-
-        Returns:
-            True iff @leaf is apart of the string's trailer.
-        """
-        if is_empty_par(leaf):
-            return True
-
-        next_token = leaf.type
-        if next_token == token.LPAR:
-            self.unmatched_lpars += 1
-
-        last_state = self.state
-        if last_state == self.LPAR:
-            if next_token == token.RPAR:
-                self.unmatched_lpars -= 1
-                if self.unmatched_lpars == 0:
-                    self.state = self.RPAR
-        else:
-            self.state = self.goto[last_state, next_token]
-
-            if self.state == self.ERROR:
-                if (last_state, -1) in self.goto:
-                    self.state = self.goto[last_state, -1]
-                else:
-                    raise RuntimeError(f"{self.__class__.__name__} ERROR!")
-
-            if self.state == self.DONE:
-                return False
-
-        return True
 
 
 class StringParensStripper(StringFixer):
@@ -3156,8 +3055,8 @@ class StringParensStripper(StringFixer):
 
             string_idx = idx
 
-            trailer = StringTrailerParser()
-            next_idx = trailer.parse(LL, string_idx)
+            parser = StringParser()
+            next_idx = parser.parse(LL, string_idx)
 
             if (
                 is_valid_index(next_idx)
@@ -3336,6 +3235,7 @@ class StringSplitter(StringFixer):
                 ]
             )
         """
+        # TODO(bugyi): Make this a stand-alone function
         string_parent = string_leaf.parent
         string_child_idx = string_leaf.remove()
 
@@ -3576,8 +3476,8 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
 
         string_idx = idx
 
-        trailer = StringTrailerParser()
-        idx = trailer.parse(LL, string_idx)
+        parser = StringParser()
+        idx = parser.parse(LL, string_idx)
 
         if is_valid_index(idx) and is_empty_rpar(LL[idx]):
             idx += 1
@@ -3972,6 +3872,8 @@ class StringNonAtomicSplitter(StringSplitter):
         parentheses it created.
     """
 
+    # TODO(bugyi): _*_match(...) functions should return FixMatchResult
+
     def do_splitter_match(self, line: Line) -> FixMatchResult:
         LL = line.leaves
 
@@ -4034,8 +3936,8 @@ class StringNonAtomicSplitter(StringSplitter):
                 if is_valid_index(idx) and LL[idx].type == token.STRING:
                     string_idx = idx
 
-                    trailer = StringTrailerParser()
-                    idx = trailer.parse(LL, string_idx)
+                    parser = StringParser()
+                    idx = parser.parse(LL, string_idx)
                     if not is_valid_index(idx):
                         return string_idx
 
@@ -4052,8 +3954,8 @@ class StringNonAtomicSplitter(StringSplitter):
                 if is_valid_index(idx) and LL[idx].type == token.STRING:
                     string_idx = idx
 
-                    trailer = StringTrailerParser()
-                    idx = trailer.parse(LL, string_idx)
+                    parser = StringParser()
+                    idx = parser.parse(LL, string_idx)
 
                     if (
                         parent_type(LL[0]) == syms.argument
@@ -4078,8 +3980,8 @@ class StringNonAtomicSplitter(StringSplitter):
                 if is_valid_index(idx) and LL[idx].type == token.STRING:
                     string_idx = idx
 
-                    trailer = StringTrailerParser()
-                    idx = trailer.parse(LL, string_idx)
+                    parser = StringParser()
+                    idx = parser.parse(LL, string_idx)
 
                     if is_valid_index(idx) and LL[idx].type == token.COMMA:
                         idx += 1
@@ -4183,6 +4085,113 @@ class StringNonAtomicSplitter(StringSplitter):
             last_line.append(comma_leaf)
 
         yield Ok(last_line)
+
+
+class StringParser:
+    """
+    A state machine that aids in parsing a string's "trailer", which can be
+    either non-existant, an old-style formatting sequence (e.g. `% varX` or `%
+    (varX, varY)`), or a method-call / attribute access (e.g. `.format(varX,
+    varY)`).
+
+    NOTE: A new StringParser object must be instantiated for each string
+    trailer we need to parse.
+    """
+
+    # TODO(bugyi): Add examples to docstrings
+
+    # Possible States
+    START = 1
+    DOT = 2
+    NAME = 3
+    PERCENT = 4
+    SINGLE_FMT_ARG = 5
+    LPAR = 6
+    RPAR = 7
+    DONE = 8
+    ERROR = 9
+
+    def __init__(self) -> None:
+        self.state = self.START
+        self.unmatched_lpars = 0
+
+        # TODO(bugyi): Use a dictionary literal to build the state table.
+        # TODO(bugyi): Make this class variable.
+        self._goto: Dict[Tuple[ParserState, NodeType], ParserState] = defaultdict(
+            lambda: self.ERROR
+        )
+
+        self._goto[self.START, token.DOT] = self.DOT
+        self._goto[self.START, token.PERCENT] = self.PERCENT
+        self._goto[self.START, -1] = self.DONE
+
+        self._goto[self.DOT, token.NAME] = self.NAME
+
+        self._goto[self.NAME, token.LPAR] = self.LPAR
+
+        self._goto[self.PERCENT, token.LPAR] = self.LPAR
+        self._goto[self.PERCENT, -1] = self.SINGLE_FMT_ARG
+        self._goto[self.SINGLE_FMT_ARG, -1] = self.DONE
+
+        self._goto[self.RPAR, -1] = self.DONE
+
+    def parse(self, leaves: List[Leaf], string_idx: int) -> int:
+        """
+        Pre-conditions:
+            * `leaves[string_idx].type == token.STRING`
+
+        Returns:
+            The index directly after the last leaf which is apart of the string
+            trailer, if a "trailer" exists.
+                OR
+            string_idx + 1, if no string "trailer" exists.
+        """
+        assert leaves[string_idx].type == token.STRING
+
+        idx = string_idx + 1
+        while idx < len(leaves) and self._next_state(leaves[idx]):
+            idx += 1
+        return idx
+
+    def _next_state(self, leaf: Leaf) -> bool:
+        """
+        Pre-conditions:
+            * On the first call to this function @leaf MUST be the leaf that
+            was directly after the string leaf in question (e.g. if our target
+            string is `line.leaves[i]` then the first call to this method must
+            be `line.leaves[i + 1]`).
+            * On the next call to this function, the leaf paramater passed in
+            MUST be the leaf directly following @leaf.
+
+        Returns:
+            True iff @leaf is apart of the string's trailer.
+        """
+        if is_empty_par(leaf):
+            return True
+
+        next_token = leaf.type
+        if next_token == token.LPAR:
+            self.unmatched_lpars += 1
+
+        last_state = self.state
+        if last_state == self.LPAR:
+            if next_token == token.RPAR:
+                self.unmatched_lpars -= 1
+                if self.unmatched_lpars == 0:
+                    self.state = self.RPAR
+        else:
+            self.state = self._goto[last_state, next_token]
+
+            if self.state == self.ERROR:
+                if (last_state, -1) in self._goto:
+                    self.state = self._goto[last_state, -1]
+                else:
+                    raise RuntimeError(f"{self.__class__.__name__} ERROR!")
+
+            if self.state == self.DONE:
+                return False
+
+        return True
 
 
 def has_triple_quotes(string: str) -> bool:
