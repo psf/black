@@ -2754,6 +2754,9 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
         LL = line.leaves
 
         for (i, leaf) in enumerate(LL):
+            if leaf.type == token.STRING and has_triple_quotes(leaf.value):
+                continue
+
             if (
                 leaf.type == token.STRING
                 and len(LL) > i + 1
@@ -3397,7 +3400,7 @@ class StringSplitter(StringFixer):
             )
             return Err(cant_fix)
 
-        if string_leaf.value.lstrip(STRING_PREFIX_CHARS)[:3] in {'"""', "'''"}:
+        if has_triple_quotes(string_leaf.value):
             cant_fix = CantFix("We cannot split multiline strings.")
             return Err(cant_fix)
 
@@ -4168,6 +4171,13 @@ class StringNonAtomicSplitter(StringSplitter):
             last_line.append(comma_leaf)
 
         yield Ok(last_line)
+
+
+def has_triple_quotes(string: str) -> bool:
+    # TODO(bugyi): docstring
+    assert_is_leaf_string(string)
+    raw_string = string.lstrip(STRING_PREFIX_CHARS)
+    return raw_string[:3] in {'"""', "'''"}
 
 
 def parent_type(leaf: Optional[LN]) -> Optional[int]:
@@ -5085,8 +5095,7 @@ def is_vararg(leaf: Leaf, within: Set[NodeType]) -> bool:
 
 def is_multiline_string(leaf: Leaf) -> bool:
     """Return True if `leaf` is a multiline string that actually spans many lines."""
-    value = leaf.value.lstrip(STRING_PREFIX_CHARS)
-    return value[:3] in {'"""', "'''"} and "\n" in value
+    return has_triple_quotes(leaf.value) and "\n" in leaf.value
 
 
 def is_stub_suite(node: Node) -> bool:
