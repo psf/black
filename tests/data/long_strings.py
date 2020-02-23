@@ -177,6 +177,11 @@ def foo():
     yield "This is a really long string that can't possibly be expected to fit all together on one line. In fact it may even take up three or more lines... like four or five... but probably just three."
 
 ########## REGRESSION TESTS ##########
+class A:
+    def foo():
+        result = type(message)("")
+
+
 # Don't merge multiline (e.g. triple-quoted) strings.
 def foo():
     query = (
@@ -851,6 +856,11 @@ def foo():
 
 
 ########## REGRESSION TESTS ##########
+class A:
+    def foo():
+        result = type(message)("")
+
+
 # Don't merge multiline (e.g. triple-quoted) strings.
 def foo():
     query = (

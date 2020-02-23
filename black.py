@@ -3154,7 +3154,9 @@ class StringParensStripper(StringFixer):
             if idx == 0 or LL[idx - 1].type != token.LPAR:
                 continue
 
-            if idx >= 2 and LL[idx - 2].type == token.NAME:
+            if idx >= 2 and (
+                LL[idx - 2].type == token.NAME or LL[idx - 2].type in CLOSING_BRACKETS
+            ):
                 continue
 
             if idx + 1 >= len(LL):
