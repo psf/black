@@ -2455,6 +2455,7 @@ def fix_line(
 
     `features` are syntactical features that may be used in the output.
     """
+    # TODO(bugyi): Fix this docstring
     if line.is_comment:
         yield line
         return
@@ -3872,12 +3873,12 @@ class StringNonAtomicSplitter(StringSplitter):
         parentheses it created.
     """
 
-    # TODO(bugyi): _*_match(...) functions should return FixMatchResult
-
     def do_splitter_match(self, line: Line) -> FixMatchResult:
         LL = line.leaves
 
         string_idx = None
+
+        # TODO(bugyi): Place these conditional statements in _*_match(...) functions.
         if parent_type(LL[0]) in [syms.return_stmt, syms.yield_expr]:
             string_idx = self._return_match(LL)
 
@@ -4195,13 +4196,21 @@ class StringParser:
 
 
 def has_triple_quotes(string: str) -> bool:
-    # TODO(bugyi): docstring
+    """
+    Returns:
+        True iff @string starts with three quotation characters.
+    """
     raw_string = string.lstrip(STRING_PREFIX_CHARS)
     return raw_string[:3] in {'"""', "'''"}
 
 
 def parent_type(node: Optional[LN]) -> Optional[NodeType]:
-    # TODO(bugyi): docstring
+    """
+    Returns:
+        @node.parent.type, if @node is not None and has a parent.
+            OR
+        None, otherwise.
+    """
     if node is None or node.parent is None:
         return None
 
@@ -4209,25 +4218,37 @@ def parent_type(node: Optional[LN]) -> Optional[NodeType]:
 
 
 def is_empty_par(leaf: Leaf) -> bool:
-    # TODO(bugyi): docstring
-    # TODO(bugyi): make better use of this function
     return is_empty_lpar(leaf) or is_empty_rpar(leaf)
 
 
 def is_empty_lpar(leaf: Leaf) -> bool:
-    # TODO(bugyi): docstring
     return leaf.type == token.LPAR and leaf.value == ""
 
 
 def is_empty_rpar(leaf: Leaf) -> bool:
-    # TODO(bugyi): docstring
     return leaf.type == token.RPAR and leaf.value == ""
 
 
 def is_valid_index_factory(seq: Sequence[Any]) -> Callable[[int], bool]:
-    # TODO(bugyi): docstring
-    # TODO(bugyi): make better use of this function
+    """
+    Examples:
+    ```
+    my_list = [1, 2, 3]
+
+    is_valid_index = is_valid_index_factory(my_list)
+
+    assert is_valid_index(0)
+    assert is_valid_index(2)
+    assert not is_valid_index(3)
+    assert not is_valid_index(-1)
+    ```
+    """
     def is_valid_index(idx: int) -> bool:
+        """
+        Returns:
+            True iff @idx is positive AND seq[@idx] does NOT raise an
+            IndexError.
+        """
         return 0 <= idx < len(seq)
 
     return is_valid_index
