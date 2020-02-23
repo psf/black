@@ -69,19 +69,6 @@ CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 
 STRING_PREFIX_CHARS: Final = "furbFURB"  # All possible string prefix characters.
 
-# Regular expressions used for matching strings.
-RE_EVEN_BACKSLASHES: Final = r"(?:(?<!\\)(?:\\\\)*)"
-RE_FEXPR: Final = r"""
-# Matches an "f-expression" (e.g. {var}) that might be found in an f-string.
-(?<!\{)\{
-    (?:
-        [^\{\}]
-        | \{\{
-        | \}\}
-    )+?
-(?<!\})(?:\}\})*\}(?!\})
-"""
-
 
 # types
 FileContent = str
@@ -91,7 +78,6 @@ Depth = int
 NodeType = int
 LeafID = int
 StringID = int
-StringIndex = int
 Priority = int
 Index = int
 LN = Union[Leaf, Node]
@@ -148,7 +134,7 @@ class Err(Generic[E]):
 # (see https://doc.rust-lang.org/book/ch09-00-error-handling.html).
 Result = Union[Ok[T], Err[E]]
 FixResult = Result[T, CantFix]
-FixMatchResult = FixResult[StringIndex]
+FixMatchResult = FixResult[Index]
 
 
 class WriteBack(Enum):
@@ -2870,6 +2856,7 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
             """
             assert_is_leaf_string(string)
 
+            RE_EVEN_BACKSLASHES = r"(?:(?<!\\)(?:\\\\)*)"
             naked_string = string[len(string_prefix) + 1 : -1]
             naked_string = re.sub(
                 "(" + RE_EVEN_BACKSLASHES + ")" + QUOTE, r"\1\\" + QUOTE, naked_string
@@ -3551,6 +3538,17 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
         CustomSplit objects and add them to the custom split map.
     """
 
+    RE_FEXPR = r"""
+    # Matches an "f-expression" (e.g. {var}) that might be found in an f-string.
+    (?<!\{)\{
+        (?:
+            [^\{\}]
+            | \{\{
+            | \}\}
+        )+?
+    (?<!\})(?:\}\})*\}(?!\})
+    """
+
     def do_splitter_match(self, line: Line) -> FixMatchResult:
         LL = line.leaves
 
@@ -3611,7 +3609,7 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
         # containes at least one f-expression. Otherwise, we will alter the AST
         # of the program.
         drop_pointless_f_prefix = ("f" in prefix) and re.search(
-            RE_FEXPR, LL[string_idx].value, re.VERBOSE
+            self.RE_FEXPR, LL[string_idx].value, re.VERBOSE
         )
 
         first_string_line = True
@@ -3781,8 +3779,7 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
             last_line.comments = line.comments.copy()
             yield Ok(last_line)
 
-    @staticmethod
-    def __get_break_idx(string: str, target_idx: int) -> Optional[int]:
+    def __get_break_idx(self, string: str, target_idx: int) -> Optional[int]:
         """
         This method contains the algorithm that StringAtomicSplitter uses to
         determine which character to split each string at.
@@ -3824,7 +3821,7 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
 
             if _fexpr_slices is None:
                 _fexpr_slices = []
-                for match in re.finditer(RE_FEXPR, string, re.VERBOSE):
+                for match in re.finditer(self.RE_FEXPR, string, re.VERBOSE):
                     _fexpr_slices.append(match.span())
 
             yield from _fexpr_slices
@@ -3886,8 +3883,7 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
         if self.normalize_strings:
             normalize_string_quotes(leaf)
 
-    @staticmethod
-    def __normalize_f_string(string: str, prefix: str) -> str:
+    def __normalize_f_string(self, string: str, prefix: str) -> str:
         """
         Pre-Conditions:
             * assert_is_leaf_string(@string)
@@ -3902,7 +3898,7 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
         """
         assert_is_leaf_string(string)
 
-        if "f" in prefix and not re.search(RE_FEXPR, string, re.VERBOSE):
+        if "f" in prefix and not re.search(self.RE_FEXPR, string, re.VERBOSE):
             new_prefix = prefix.replace("f", "")
 
             temp = string[len(prefix) :]
@@ -4182,12 +4178,12 @@ def has_triple_quotes(string: str) -> bool:
     return raw_string[:3] in {'"""', "'''"}
 
 
-def parent_type(leaf: Optional[LN]) -> Optional[int]:
+def parent_type(node: Optional[LN]) -> Optional[NodeType]:
     # TODO(bugyi): docstring
-    if leaf is None or leaf.parent is None:
+    if node is None or node.parent is None:
         return None
 
-    return leaf.parent.type
+    return node.parent.type
 
 
 def is_empty_paren(leaf: Leaf) -> bool:
@@ -4200,6 +4196,7 @@ def is_empty_paren(leaf: Leaf) -> bool:
 def in_bounds_factory(obj: Sized) -> Callable[[int], bool]:
     # TODO(bugyi): docstring
     # TODO(bugyi): make better use of this function
+    # TODO(bugyi): Fix type and variable name for `obj`
     def in_bounds(idx: int) -> bool:
         return 0 <= idx < len(obj)
 
