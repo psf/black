@@ -23,7 +23,6 @@ import traceback
 from typing import (
     Any,
     Callable,
-    ClassVar,
     Collection,
     Dict,
     Generator,
@@ -76,6 +75,7 @@ Encoding = str
 NewLine = str
 Depth = int
 NodeType = int
+ParserState = int
 LeafID = int
 StringID = int
 Priority = int
@@ -3021,7 +3021,7 @@ class StringTrailerParser:
     varY)`).
 
     NOTE: A new StringTrailerParser object must be instantiated for each string
-    trailer we parse.
+    trailer we need to parse.
     """
 
     # Possible States
@@ -3039,7 +3039,10 @@ class StringTrailerParser:
         self.state = self.START
         self.unmatched_lpars = 0
 
-        self.goto: Dict[Tuple[int, int], int] = defaultdict(lambda: self.ERROR)
+        # TODO(bugyi): Use a dictionary literal to build the state table.
+        self.goto: Dict[Tuple[ParserState, NodeType], ParserState] = defaultdict(
+            lambda: self.ERROR
+        )
 
         self.goto[self.START, token.DOT] = self.DOT
         self.goto[self.START, token.PERCENT] = self.PERCENT
@@ -3087,7 +3090,7 @@ class StringTrailerParser:
         Returns:
             True iff @leaf is apart of the string's trailer.
         """
-        if leaf.type in [token.LPAR, token.RPAR] and leaf.value == "":
+        if is_empty_par(leaf):
             return True
 
         next_token = leaf.type
@@ -3149,8 +3152,10 @@ class StringParensStripper(StringFixer):
             if idx + 1 >= len(LL):
                 continue
 
+            string_idx = idx
+
             trailer = StringTrailerParser()
-            next_idx = trailer.parse(LL, idx)
+            next_idx = trailer.parse(LL, string_idx)
 
             if (
                 next_idx < len(LL)
@@ -3164,7 +3169,7 @@ class StringParensStripper(StringFixer):
                     )
                     return Err(cant_fix)
 
-                return Ok(idx)
+                return Ok(string_idx)
 
         cant_fix = CantFix(f"This line has no strings wrapped in parens.")
         return Err(cant_fix)
@@ -3413,6 +3418,8 @@ class StringSplitter(StringFixer):
         """
         LL = line.leaves
 
+        is_valid_index = is_valid_index_factory(LL)
+
         # We use the shorthand "WMA4" in comments to abbreviate "We must
         # account for". When giving examples, we use STRING to mean some/any
         # valid string.
@@ -3426,7 +3433,7 @@ class StringSplitter(StringFixer):
         # WMA4 the whitespace at the beginning of the line.
         offset = line.depth * 4
 
-        if string_idx >= 1:
+        if is_valid_index(string_idx - 1):
             p_idx = string_idx - 1
             if (
                 LL[string_idx - 1].type == token.LPAR
@@ -3457,7 +3464,7 @@ class StringSplitter(StringFixer):
                 for leaf in LL[: p_idx + 1]:
                     offset += len(str(leaf))
 
-        if len(LL) > string_idx + 1:
+        if is_valid_index(string_idx + 1):
             N = LL[string_idx + 1]
             if N.type == token.RPAR and N.value == "" and len(LL) > string_idx + 2:
                 # If the next leaf is an empty RPAR placeholder, we should skip it.
@@ -3467,7 +3474,7 @@ class StringSplitter(StringFixer):
                 # WMA4 a single comma at the end of the string (e.g `STRING,`).
                 offset += 1
 
-            if len(LL) > string_idx + 2:
+            if is_valid_index(string_idx + 2):
                 NN = LL[string_idx + 2]
 
                 if N.type == token.DOT and NN.type == token.NAME:
@@ -3478,7 +3485,7 @@ class StringSplitter(StringFixer):
                     offset += 1
 
                     if (
-                        len(LL) > string_idx + 3
+                        is_valid_index(string_idx + 3)
                         and LL[string_idx + 3].type == token.LPAR
                     ):
                         # WMA4 the left parenthesis character.
@@ -3552,14 +3559,16 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
     def do_splitter_match(self, line: Line) -> FixMatchResult:
         LL = line.leaves
 
+        is_valid_index = is_valid_index_factory(LL)
+
         idx = 0
-        if idx < len(LL) and LL[idx].type == token.PLUS:
+        if is_valid_index(idx) and LL[idx].type == token.PLUS:
             idx += 1
 
-        if idx < len(LL) and LL[idx].type == token.LPAR and LL[idx].value == "":
+        if is_valid_index(idx) and is_empty_lpar(LL[idx]):
             idx += 1
 
-        if idx >= len(LL) or LL[idx].type != token.STRING:
+        if not is_valid_index(idx) or LL[idx].type != token.STRING:
             cant_fix = CantFix("Line does not start with a string.")
             return Err(cant_fix)
 
@@ -3568,13 +3577,13 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
         trailer = StringTrailerParser()
         idx = trailer.parse(LL, string_idx)
 
-        if idx < len(LL) and LL[idx].type == token.RPAR and LL[idx].value == "":
+        if is_valid_index(idx) and is_empty_rpar(LL[idx]):
             idx += 1
 
-        if idx < len(LL) and LL[idx].type == token.COMMA:
+        if is_valid_index(idx) and LL[idx].type == token.COMMA:
             idx += 1
 
-        if idx < len(LL):
+        if is_valid_index(idx):
             cant_fix = CantFix("This line does not end with a string.")
             return Err(cant_fix)
 
@@ -3585,6 +3594,7 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
 
         QUOTE = LL[string_idx].value[-1]
 
+        is_valid_index = is_valid_index_factory(LL)
         insert_str_child = self._insert_str_child_factory(LL[string_idx])
 
         prefix = get_string_prefix(LL[string_idx].value)
@@ -3638,7 +3648,8 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
                 line we will construct.
             """
             ends_with_comma = (
-                string_idx + 1 < len(LL) and LL[string_idx + 1].type == token.COMMA
+                is_valid_index(string_idx + 1)
+                and LL[string_idx + 1].type == token.COMMA
             )
 
             result = self.line_length
@@ -3746,7 +3757,7 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
         maybe_append_plus(last_line)
 
         # If there are any leaves to the right of the target string...
-        if len(LL) > (string_idx + 1):
+        if is_valid_index(string_idx + 1):
             # We use `temp_value` here to determine how long the last line
             # would be if we were to append all the leaves to the right of the
             # target string to the last string line.
@@ -3803,14 +3814,16 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
                 OR
             None, otherwise.
         """
-        assert 0 <= target_idx < len(string)
+        is_valid_index = is_valid_index_factory(string)
+
+        assert is_valid_index(target_idx)
         assert_is_leaf_string(string)
 
         MIN_SUBSTR_SIZE = 6
 
-        _fexpr_slices: Optional[List[Tuple[int, int]]] = None
+        _fexpr_slices: Optional[List[Tuple[Index, Index]]] = None
 
-        def fexpr_slices() -> Iterator[Tuple[int, int]]:
+        def fexpr_slices() -> Iterator[Tuple[Index, Index]]:
             """
             Yields:
                 All ranges of @string which, if @string were to be split there,
@@ -3828,7 +3841,7 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
 
         is_fstring = "f" in get_string_prefix(string)
 
-        def breaks_fstring_expression(i: int) -> bool:
+        def breaks_fstring_expression(i: Index) -> bool:
             """
             Returns:
                 True iff returning @i would result in the splitting of an
@@ -3843,10 +3856,7 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
 
             return False
 
-        def is_valid_index(i: int) -> bool:
-            return 0 <= i < len(string)
-
-        def passes_all_checks(i: int) -> bool:
+        def passes_all_checks(i: Index) -> bool:
             """
             Returns:
                 True iff ALL of the conditions listed in the 'Transformations'
@@ -3992,10 +4002,10 @@ class StringNonAtomicSplitter(StringSplitter):
     @staticmethod
     def _return_match(LL: List[Leaf]) -> Optional[int]:
         # TODO(bugyi): docstring
-        in_bounds = in_bounds_factory(LL)
+        is_valid_index = is_valid_index_factory(LL)
 
-        idx = 2 if in_bounds(1) and is_empty_paren(LL[1]) else 1
-        if in_bounds(idx) and LL[idx].type == token.STRING:
+        idx = 2 if is_valid_index(1) and is_empty_par(LL[1]) else 1
+        if is_valid_index(idx) and LL[idx].type == token.STRING:
             return idx
 
         return None
@@ -4003,10 +4013,10 @@ class StringNonAtomicSplitter(StringSplitter):
     @staticmethod
     def _else_match(LL: List[Leaf]) -> Optional[int]:
         # TODO(bugyi): docstring
-        in_bounds = in_bounds_factory(LL)
+        is_valid_index = is_valid_index_factory(LL)
 
-        idx = 2 if in_bounds(1) and is_empty_paren(LL[1]) else 1
-        if in_bounds(idx) and LL[idx].type == token.STRING:
+        idx = 2 if is_valid_index(1) and is_empty_par(LL[1]) else 1
+        if is_valid_index(idx) and LL[idx].type == token.STRING:
             return idx
 
         return None
@@ -4014,17 +4024,17 @@ class StringNonAtomicSplitter(StringSplitter):
     @staticmethod
     def _assert_match(LL: List[Leaf]) -> Optional[int]:
         # TODO(bugyi): docstring
-        in_bounds = in_bounds_factory(LL)
+        is_valid_index = is_valid_index_factory(LL)
 
         for (i, leaf) in enumerate(LL):
             if leaf.type == token.COMMA:
-                idx = i + 2 if is_empty_paren(LL[i + 1]) else i + 1
-                if in_bounds(idx) and LL[idx].type == token.STRING:
+                idx = i + 2 if is_empty_par(LL[i + 1]) else i + 1
+                if is_valid_index(idx) and LL[idx].type == token.STRING:
                     string_idx = idx
 
                     trailer = StringTrailerParser()
                     idx = trailer.parse(LL, string_idx)
-                    if not in_bounds(idx):
+                    if not is_valid_index(idx):
                         return string_idx
 
         return None
@@ -4032,12 +4042,12 @@ class StringNonAtomicSplitter(StringSplitter):
     @staticmethod
     def _assign_match(LL: List[Leaf]) -> Optional[int]:
         # TODO(bugyi): docstring
-        in_bounds = in_bounds_factory(LL)
+        is_valid_index = is_valid_index_factory(LL)
 
         for (i, leaf) in enumerate(LL):
             if leaf.type in [token.EQUAL, token.PLUSEQUAL]:
-                idx = i + 2 if is_empty_paren(LL[i + 1]) else i + 1
-                if in_bounds(idx) and LL[idx].type == token.STRING:
+                idx = i + 2 if is_empty_par(LL[i + 1]) else i + 1
+                if is_valid_index(idx) and LL[idx].type == token.STRING:
                     string_idx = idx
 
                     trailer = StringTrailerParser()
@@ -4045,12 +4055,12 @@ class StringNonAtomicSplitter(StringSplitter):
 
                     if (
                         parent_type(LL[0]) == syms.argument
-                        and in_bounds(idx)
+                        and is_valid_index(idx)
                         and LL[idx].type == token.COMMA
                     ):
                         idx += 1
 
-                    if not in_bounds(idx):
+                    if not is_valid_index(idx):
                         return string_idx
 
         return None
@@ -4058,21 +4068,21 @@ class StringNonAtomicSplitter(StringSplitter):
     @staticmethod
     def _dict_match(LL: List[Leaf]) -> Optional[int]:
         # TODO(bugyi): docstring
-        in_bounds = in_bounds_factory(LL)
+        is_valid_index = is_valid_index_factory(LL)
 
         for (i, leaf) in enumerate(LL):
             if leaf.type == token.COLON:
-                idx = i + 2 if is_empty_paren(LL[i + 1]) else i + 1
-                if in_bounds(idx) and LL[idx].type == token.STRING:
+                idx = i + 2 if is_empty_par(LL[i + 1]) else i + 1
+                if is_valid_index(idx) and LL[idx].type == token.STRING:
                     string_idx = idx
 
                     trailer = StringTrailerParser()
                     idx = trailer.parse(LL, string_idx)
 
-                    if in_bounds(idx) and LL[idx].type == token.COMMA:
+                    if is_valid_index(idx) and LL[idx].type == token.COMMA:
                         idx += 1
 
-                    if not in_bounds(idx):
+                    if not is_valid_index(idx):
                         return string_idx
 
         return None
@@ -4080,6 +4090,7 @@ class StringNonAtomicSplitter(StringSplitter):
     def do_transform(self, line: Line, string_idx: int) -> Iterator[FixResult[Line]]:
         LL = line.leaves
 
+        is_valid_index = is_valid_index_factory(LL)
         insert_str_child = self._insert_str_child_factory(LL[string_idx])
 
         comma_idx = len(LL) - 1
@@ -4136,7 +4147,7 @@ class StringNonAtomicSplitter(StringSplitter):
         string_line.append(string_leaf)
 
         old_rpar_leaf = None
-        if len(LL) > string_idx + 1:
+        if is_valid_index(string_idx + 1):
             right_leaves = LL[string_idx + 1 :]
             if ends_with_comma:
                 right_leaves.pop()
@@ -4186,21 +4197,30 @@ def parent_type(node: Optional[LN]) -> Optional[NodeType]:
     return node.parent.type
 
 
-def is_empty_paren(leaf: Leaf) -> bool:
+def is_empty_par(leaf: Leaf) -> bool:
     # TODO(bugyi): docstring
     # TODO(bugyi): make better use of this function
-    is_paren = leaf.type in [token.LPAR, token.RPAR]
-    return is_paren and leaf.value == ""
+    return is_empty_lpar(leaf) or is_empty_rpar(leaf)
 
 
-def in_bounds_factory(obj: Sized) -> Callable[[int], bool]:
+def is_empty_lpar(leaf: Leaf) -> bool:
+    # TODO(bugyi): docstring
+    return leaf.type == token.LPAR and leaf.value == ""
+
+
+def is_empty_rpar(leaf: Leaf) -> bool:
+    # TODO(bugyi): docstring
+    return leaf.type == token.RPAR and leaf.value == ""
+
+
+def is_valid_index_factory(obj: Sized) -> Callable[[int], bool]:
     # TODO(bugyi): docstring
     # TODO(bugyi): make better use of this function
     # TODO(bugyi): Fix type and variable name for `obj`
-    def in_bounds(idx: int) -> bool:
+    def is_valid_index(idx: int) -> bool:
         return 0 <= idx < len(obj)
 
-    return in_bounds
+    return is_valid_index
 
 
 def line_to_string(line: Line) -> str:
