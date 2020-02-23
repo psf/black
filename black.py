@@ -4175,7 +4175,6 @@ class StringNonAtomicSplitter(StringSplitter):
 
 def has_triple_quotes(string: str) -> bool:
     # TODO(bugyi): docstring
-    assert_is_leaf_string(string)
     raw_string = string.lstrip(STRING_PREFIX_CHARS)
     return raw_string[:3] in {'"""', "'''"}
 
