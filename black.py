@@ -81,7 +81,7 @@ StringID = int
 Priority = int
 Index = int
 LN = Union[Leaf, Node]
-Fixer = Callable[["Line", Collection["Feature"]], Iterator["Line"]]
+Transformer = Callable[["Line", Collection["Feature"]], Iterator["Line"]]
 Timestamp = float
 FileSize = int
 CacheInfo = Tuple[Timestamp, FileSize]
@@ -97,11 +97,11 @@ class NothingChanged(UserWarning):
     """Raised when reformatted code is the same as source."""
 
 
-class CantFix(Exception):
-    """Base class for errors raised by Fixers."""
+class CantTransform(Exception):
+    """Base class for errors raised by Transformers."""
 
 
-class CantSplit(CantFix):
+class CantSplit(CantTransform):
     """A readable split that fits the allotted line length is impossible."""
 
 
@@ -133,8 +133,9 @@ class Err(Generic[E]):
 # influenced by that used by the Rust programming language
 # (see https://doc.rust-lang.org/book/ch09-00-error-handling.html).
 Result = Union[Ok[T], Err[E]]
-FixResult = Result[T, CantFix]
-FixMatchResult = FixResult[Index]
+TResult = Result[T, CantTransform]  # (T)ransform Result
+TMatchResult = TResult[Index]
+# TODO(bugyi): Make TErr helper function.
 
 
 class WriteBack(Enum):
@@ -804,7 +805,7 @@ def format_str(src_contents: str, *, mode: FileMode) -> FileContent:
         before, after = elt.maybe_empty_lines(current_line)
         for _ in range(before):
             dst_contents.append(str(empty_line))
-        for line in fix_line(
+        for line in transform_line(
             current_line,
             line_length=mode.line_length,
             normalize_strings=mode.string_normalization,
@@ -2443,7 +2444,7 @@ def make_comment(content: str) -> str:
     return "#" + content
 
 
-def fix_line(
+def transform_line(
     line: Line,
     line_length: int,
     normalize_strings: bool,
@@ -2465,16 +2466,16 @@ def fix_line(
         print(repr(line.leaves[0].parent))
         print()
 
-    def init_sf(SF: Type[StringFixer]) -> StringFixer:
-        """Initialize StringFixer"""
-        return SF(line_length, normalize_strings)
+    def init_st(ST: Type[StringTransformer]) -> StringTransformer:
+        """Initialize StringTransformer"""
+        return ST(line_length, normalize_strings)
 
-    string_merge = init_sf(StringMerger)
-    string_parens_strip = init_sf(StringParensStripper)
-    string_atomic_split = init_sf(StringAtomicSplitter)
-    string_non_atomic_split = init_sf(StringNonAtomicSplitter)
+    string_merge = init_st(StringMerger)
+    string_parens_strip = init_st(StringParensStripper)
+    string_atomic_split = init_st(StringAtomicSplitter)
+    string_non_atomic_split = init_st(StringNonAtomicSplitter)
 
-    fixers: List[Fixer]
+    transformers: List[Transformer]
     if (
         not line.contains_uncollapsable_type_comments()
         and not line.should_explode
@@ -2485,9 +2486,9 @@ def fix_line(
         )
     ):
         # Only apply basic string preprocessing, since lines shouldn't be split here.
-        fixers = [string_merge, string_parens_strip]
+        transformers = [string_merge, string_parens_strip]
     elif line.is_def:
-        fixers = [left_hand_split]
+        transformers = [left_hand_split]
     else:
 
         def rhs(line: Line, features: Collection[Feature]) -> Iterator[Line]:
@@ -2505,7 +2506,7 @@ def fix_line(
             yield from right_hand_split(line, line_length=1, features=features)
 
         if line.inside_brackets:
-            fixers = [
+            transformers = [
                 string_merge,
                 string_parens_strip,
                 delimiter_split,
@@ -2515,7 +2516,7 @@ def fix_line(
                 rhs,
             ]
         else:
-            fixers = [
+            transformers = [
                 string_merge,
                 string_parens_strip,
                 string_atomic_split,
@@ -2523,25 +2524,25 @@ def fix_line(
                 rhs,
             ]
 
-    for fix in fixers:
+    for transform in transformers:
         # We are accumulating lines in `result` because we might want to abort
         # mission and return the original line in the end, or attempt a different
         # split altogether.
         result: List[Line] = []
         try:
-            for l in fix(line, features):
+            for l in transform(line, features):
                 if str(l).strip("\n") == line_str:
-                    raise CantFix("Line fixer returned an unchanged result")
+                    raise CantTransform("Line transformer returned an unchanged result")
 
                 result.extend(
-                    fix_line(
+                    transform_line(
                         l,
                         line_length=line_length,
                         normalize_strings=normalize_strings,
                         features=features,
                     )
                 )
-        except CantFix:
+        except CantTransform:
             continue
         else:
             yield from result
@@ -2552,29 +2553,29 @@ def fix_line(
 
 
 @dataclass  # type: ignore
-class StringFixer(ABC):
+class StringTransformer(ABC):
     """
-    An implementation of the Fixer protocol that relies on its
+    An implementation of the Transformer protocol that relies on its
     subclasses overriding the template methods `do_match(...)` and
     `do_transform(...)`.
 
-    This Fixer works exclusively on strings (for example, by merging
+    This Transformer works exclusively on strings (for example, by merging
     or splitting them).
 
     The following sections can be found among the docstrings of each concrete
-    StringFixer subclass.
+    StringTransformer subclass.
 
     Requirements:
         Which requirements must be met of the given Line for this
-        StringFixer to be applied?
+        StringTransformer to be applied?
 
     Transformations:
         If the given Line meets all of the above requirments, which string
         transformations can you expect to be applied to it by this
-        StringFixer?
+        StringTransformer?
 
     Collaborations:
-        What contractual agreements does this StringFixer have with other
+        What contractual agreements does this StringTransformer have with other
         StringTransfomers? Such collaborations should be eliminated/minimized
         as much as possible.
     """
@@ -2583,55 +2584,55 @@ class StringFixer(ABC):
     normalize_strings: bool
 
     @abstractmethod
-    def do_match(self, line: Line) -> FixMatchResult:
+    def do_match(self, line: Line) -> TMatchResult:
         """
         Returns:
             * Ok(string_idx) such that `line.leaves[string_idx]` is our target
             string, if a match was able to be made.
                 OR
-            * Err(CantFix), if a match was not able to be made.
+            * Err(CantTransform), if a match was not able to be made.
         """
 
     @abstractmethod
-    def do_transform(self, line: Line, string_idx: int) -> Iterator[FixResult[Line]]:
+    def do_transform(self, line: Line, string_idx: int) -> Iterator[TResult[Line]]:
         """
         Yields:
             * Ok(new_line) where new_line is the new transformed line.
                 OR
-            * Err(CantFix) if the transformation failed for some reason. The
+            * Err(CantTransform) if the transformation failed for some reason. The
             `do_match(...)` template method should usually be used to reject
             the form of the given Line, but in some cases it is difficult to
-            know whether or not a Line meets the StringFixer's
+            know whether or not a Line meets the StringTransformer's
             requirements until the transformation is already midway.
 
         Side Effects:
             This method should NOT mutate @line directly, but it MAY mutate the
             Line's underlying Node structure. (WARNING: If the underlying Node
             structure IS altered, then this method should NOT be allowed to
-            yield an CantFix after that point.)
+            yield an CantTransform after that point.)
         """
 
     def __call__(self, line: Line, _features: Collection[Feature]) -> Iterator[Line]:
         """
-        StringFixer instances have a call signature that mirrors that of
-        the Fixer type.
+        StringTransformer instances have a call signature that mirrors that of
+        the Transformer type.
 
         Raises:
-            CantFix(...) if the concrete StringFixer class is unable
-            to fix @line.
+            CantTransform(...) if the concrete StringTransformer class is unable
+            to transform @line.
         """
         # Optimization to avoid calling `self.do_match(...)` when the line does
         # not contain any string.
         if not any(leaf.type == token.STRING for leaf in line.leaves):
-            raise CantSplit("There are no strings in this line.")
+            raise CantTransform("There are no strings in this line.")
 
         match_result = self.do_match(line)
 
         if isinstance(match_result, Err):
             cant_fix = match_result.err()
-            raise CantSplit(
-                f"The string splitter {self.__class__.__name__} does not recognize"
-                " this line as one that it can split."
+            raise CantTransform(
+                f"The string transformer {self.__class__.__name__} does not recognize"
+                " this line as one that it can transform."
             ) from cant_fix
 
         string_idx = match_result.ok()
@@ -2639,8 +2640,8 @@ class StringFixer(ABC):
         for line_result in self.do_transform(line, string_idx):
             if isinstance(line_result, Err):
                 cant_fix = line_result.err()
-                raise CantFix(
-                    "StringFixer failed while attempting to fix string."
+                raise CantTransform(
+                    "StringTransformer failed while attempting to transform string."
                 ) from cant_fix
             line = line_result.ok()
             yield line
@@ -2715,8 +2716,8 @@ class CustomSplitMapMixin:
         return list(custom_splits)
 
 
-class StringMerger(StringFixer, CustomSplitMapMixin):
-    """StringFixer that merges strings together.
+class StringMerger(StringTransformer, CustomSplitMapMixin):
+    """StringTransformer that merges strings together.
 
     Requirements:
         (A) The line contains adjacent strings such that at most one substring
@@ -2737,7 +2738,7 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
         StringMerger provides custom split information to StringAtomicSplitter.
     """
 
-    def do_match(self, line: Line) -> FixMatchResult:
+    def do_match(self, line: Line) -> TMatchResult:
         LL = line.leaves
 
         is_valid_index = is_valid_index_factory(LL)
@@ -2753,10 +2754,10 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
             if leaf.type == token.STRING and "\\\n" in leaf.value:
                 return Ok(i)
 
-        cant_fix = CantFix(f"This line has no strings that need merging.")
+        cant_fix = CantTransform(f"This line has no strings that need merging.")
         return Err(cant_fix)
 
-    def do_transform(self, line: Line, string_idx: int) -> Iterator[FixResult[Line]]:
+    def do_transform(self, line: Line, string_idx: int) -> Iterator[TResult[Line]]:
         new_line = line
         rblc_result = self.__remove_backslash_line_continuation_chars(
             new_line, string_idx
@@ -2773,7 +2774,7 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
             rblc_cant_fix = rblc_result.err()
             msg_cant_fix.__cause__ = rblc_cant_fix
 
-            cant_fix = CantFix("StringMerger failed to merge any strings in this line.")
+            cant_fix = CantTransform("StringMerger failed to merge any strings in this line.")
             cant_fix.__cause__ = msg_cant_fix
             yield Err(cant_fix)
         else:
@@ -2782,7 +2783,7 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
     @staticmethod
     def __remove_backslash_line_continuation_chars(
         line: Line, string_idx: int
-    ) -> FixResult[Line]:
+    ) -> TResult[Line]:
         """
         Merge strings that were split across multiple lines using
         line-continuation backslashes.
@@ -2791,7 +2792,7 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
             Ok(new_line), if @line contains backslash line-continuation
             characters.
                 OR
-            Err(CantFix), otherwise.
+            Err(CantTransform), otherwise.
         """
         LL = line.leaves
 
@@ -2801,7 +2802,7 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
             and "\\\n" in string_leaf.value
             and not has_triple_quotes(string_leaf.value)
         ):
-            cant_fix = CantFix(
+            cant_fix = CantTransform(
                 f"String leaf {string_leaf} does not contain any backslash line"
                 " continuation characters."
             )
@@ -2816,7 +2817,7 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
 
         return Ok(new_line)
 
-    def __merge_string_group(self, line: Line, string_idx: int) -> FixResult[Line]:
+    def __merge_string_group(self, line: Line, string_idx: int) -> TResult[Line]:
         """
         Merges string group (i.e. set of adjacent strings) where the first
         string in the group is `line.leaves[string_idx]`.
@@ -2825,7 +2826,7 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
             Ok(new_line), if ALL of the validation checks found in
             __validate_msg(...) pass.
                 OR
-            Err(CantFix), otherwise.
+            Err(CantTransform), otherwise.
         """
         LL = line.leaves
 
@@ -2956,7 +2957,7 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
         return Ok(new_line)
 
     @staticmethod
-    def __validate_msg(line: Line, string_idx: int) -> FixResult[None]:
+    def __validate_msg(line: Line, string_idx: int) -> TResult[None]:
         """Validate (M)erge (S)tring (G)roup
 
         Transform-time string validation logic for __merge_string_group(...).
@@ -2964,7 +2965,7 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
         Returns:
             * Ok(None), if ALL validation checks (listed below) pass.
                 OR
-            * Err(CantFix), if any of the following are true:
+            * Err(CantTransform), if any of the following are true:
                 - The target string is not in a string group (i.e. it has no
                   adjacent strings).
                 - The string group has more than one inline comment.
@@ -2985,13 +2986,13 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
                 break
 
             if has_triple_quotes(leaf.value):
-                cant_fix = CantFix("StringMerger does NOT merge multiline strings.")
+                cant_fix = CantTransform("StringMerger does NOT merge multiline strings.")
                 return Err(cant_fix)
 
             num_of_strings += 1
             prefix = get_string_prefix(leaf.value)
             if "r" in prefix:
-                cant_fix = CantFix("StringMerger does NOT merge raw strings.")
+                cant_fix = CantTransform("StringMerger does NOT merge raw strings.")
                 return Err(cant_fix)
 
             set_of_prefixes.add(prefix)
@@ -3000,26 +3001,26 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
                 num_of_inline_string_comments += 1
 
         if num_of_strings < 2:
-            cant_fix = CantFix(
+            cant_fix = CantTransform(
                 f"Not enough strings to merge (num_of_strings={num_of_strings})."
             )
             return Err(cant_fix)
 
         if num_of_inline_string_comments > 1:
-            cant_fix = CantFix(
+            cant_fix = CantTransform(
                 f"Too many inline string comments ({num_of_inline_string_comments})."
             )
             return Err(cant_fix)
 
         if len(set_of_prefixes) > 1 and set_of_prefixes != {"", "f"}:
-            cant_fix = CantFix(f"Too many different prefixes ({set_of_prefixes}).")
+            cant_fix = CantTransform(f"Too many different prefixes ({set_of_prefixes}).")
             return Err(cant_fix)
 
         return Ok(None)
 
 
-class StringParensStripper(StringFixer):
-    """StringFixer that strips surrounding parentheses from strings.
+class StringParensStripper(StringTransformer):
+    """StringTransformer that strips surrounding parentheses from strings.
 
     Requirements:
         The line contains a string which is surrounded by parentheses (and is
@@ -3034,7 +3035,7 @@ class StringParensStripper(StringFixer):
         the event that they are no longer needed).
     """
 
-    def do_match(self, line: Line) -> FixMatchResult:
+    def do_match(self, line: Line) -> TMatchResult:
         LL = line.leaves
 
         is_valid_index = is_valid_index_factory(LL)
@@ -3065,7 +3066,7 @@ class StringParensStripper(StringFixer):
                 and LL[next_idx].value == ")"
             ):
                 if is_valid_index(next_idx + 1) and LL[next_idx + 1].type == token.DOT:
-                    cant_fix = CantFix(
+                    cant_fix = CantTransform(
                         "String is wrapped in parens, but the RPAR is directly followed"
                         " by a dot, which is a deal breaker."
                     )
@@ -3073,10 +3074,10 @@ class StringParensStripper(StringFixer):
 
                 return Ok(string_idx)
 
-        cant_fix = CantFix(f"This line has no strings wrapped in parens.")
+        cant_fix = CantTransform(f"This line has no strings wrapped in parens.")
         return Err(cant_fix)
 
-    def do_transform(self, line: Line, string_idx: int) -> Iterator[FixResult[Line]]:
+    def do_transform(self, line: Line, string_idx: int) -> Iterator[TResult[Line]]:
         LL = line.leaves
 
         rpar_idx_result = self._get_first_unmatched_rpar_idx(LL[string_idx + 1 :])
@@ -3093,7 +3094,7 @@ class StringParensStripper(StringFixer):
 
         for leaf in (LL[string_idx - 1], LL[rpar_idx]):
             if line.comments_after(leaf):
-                cant_fix = CantFix(
+                cant_fix = CantTransform(
                     "Will not strip parentheses which have comments attached to them."
                 )
                 yield Err(cant_fix)
@@ -3146,9 +3147,9 @@ class StringParensStripper(StringFixer):
         return Err(value_error)
 
 
-class StringSplitter(StringFixer):
+class StringSplitter(StringTransformer):
     """
-    Abstract class for StringFixers which fix a Line's strings by splitting
+    Abstract class for StringTransformers which transform a Line's strings by splitting
     them or placing them on their own lines where necessary to avoid going over
     the configured line length.
 
@@ -3167,17 +3168,17 @@ class StringSplitter(StringFixer):
     """
 
     @abstractmethod
-    def do_splitter_match(self, line: Line) -> FixMatchResult:
+    def do_splitter_match(self, line: Line) -> TMatchResult:
         """
         StringSplitter asks its clients to override this method instead of
-        `StringFixer.do_match(...)`.
+        `StringTransformer.do_match(...)`.
 
-        Follows the same protocol as `StringFixer.do_match(...)`.
+        Follows the same protocol as `StringTransformer.do_match(...)`.
 
-        Refer to `help(StringFixer.do_match)`.
+        Refer to `help(StringTransformer.do_match)`.
         """
 
-    def do_match(self, line: Line) -> FixMatchResult:
+    def do_match(self, line: Line) -> TMatchResult:
         match_result = self.do_splitter_match(line)
         if isinstance(match_result, Err):
             return match_result
@@ -3251,7 +3252,7 @@ class StringSplitter(StringFixer):
 
         return insert_str_child
 
-    def __validate(self, line: Line, string_idx: int) -> FixResult[None]:
+    def __validate(self, line: Line, string_idx: int) -> TResult[None]:
         """
         Checks that @line meets all of the requirements listed in this classes'
         docstring. Refer to `help(StringSplitter)` for a detailed
@@ -3260,7 +3261,7 @@ class StringSplitter(StringFixer):
         Returns:
             * Ok(None), if ALL of the requirements are met.
                 OR
-            * Err(CantFix), if ANY of the requirements are NOT met.
+            * Err(CantTransform), if ANY of the requirements are NOT met.
         """
         LL = line.leaves
 
@@ -3268,7 +3269,7 @@ class StringSplitter(StringFixer):
 
         max_string_length = self.__get_max_string_length(line, string_idx)
         if len(string_leaf.value) <= max_string_length:
-            cant_fix = CantFix(
+            cant_fix = CantTransform(
                 "The string itself is not what is causing this line to be too long."
             )
             return Err(cant_fix)
@@ -3277,7 +3278,7 @@ class StringSplitter(StringFixer):
             token.STRING,
             token.NEWLINE,
         ]:
-            cant_fix = CantFix(
+            cant_fix = CantTransform(
                 f"This string ({string_leaf.value}) appears to be pointless (i.e. has"
                 " no parent)."
             )
@@ -3292,14 +3293,14 @@ class StringSplitter(StringFixer):
                 re.IGNORECASE,
             )
         ):
-            cant_fix = CantFix(
+            cant_fix = CantTransform(
                 "Line appears to end with an inline pragma comment. Splitting the line"
                 " could modify the pragma's behavior."
             )
             return Err(cant_fix)
 
         if has_triple_quotes(string_leaf.value):
-            cant_fix = CantFix("We cannot split multiline strings.")
+            cant_fix = CantTransform("We cannot split multiline strings.")
             return Err(cant_fix)
 
         return Ok(None)
@@ -3413,7 +3414,7 @@ class StringSplitter(StringFixer):
 
 class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
     """
-    StringFixer that splits "atom" strings (i.e. strings which exist on
+    StringTransformer that splits "atom" strings (i.e. strings which exist on
     lines by themselves).
 
     Requirements:
@@ -3459,7 +3460,7 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
     (?<!\})(?:\}\})*\}(?!\})
     """
 
-    def do_splitter_match(self, line: Line) -> FixMatchResult:
+    def do_splitter_match(self, line: Line) -> TMatchResult:
         LL = line.leaves
 
         is_valid_index = is_valid_index_factory(LL)
@@ -3472,7 +3473,7 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
             idx += 1
 
         if not is_valid_index(idx) or LL[idx].type != token.STRING:
-            cant_fix = CantFix("Line does not start with a string.")
+            cant_fix = CantTransform("Line does not start with a string.")
             return Err(cant_fix)
 
         string_idx = idx
@@ -3487,12 +3488,12 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
             idx += 1
 
         if is_valid_index(idx):
-            cant_fix = CantFix("This line does not end with a string.")
+            cant_fix = CantTransform("This line does not end with a string.")
             return Err(cant_fix)
 
         return Ok(string_idx)
 
-    def do_transform(self, line: Line, string_idx: int) -> Iterator[FixResult[Line]]:
+    def do_transform(self, line: Line, string_idx: int) -> Iterator[TResult[Line]]:
         LL = line.leaves
 
         QUOTE = LL[string_idx].value[-1]
@@ -3510,7 +3511,7 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
         # Leading whitespace is not present in the string value (e.g. Leaf.value).
         target_idx -= line.depth * 4
         if target_idx < 0:
-            cant_fix = CantFix(
+            cant_fix = CantTransform(
                 f"Unable to split {LL[string_idx].value} at such high of a line depth:"
                 f" {line.depth}"
             )
@@ -3826,7 +3827,7 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
 
 class StringNonAtomicSplitter(StringSplitter):
     """
-    StringFixer that splits non-"atom" strings (i.e. strings that do not
+    StringTransformer that splits non-"atom" strings (i.e. strings that do not
     exist on lines by themselves).
 
     Requirements:
@@ -3873,7 +3874,7 @@ class StringNonAtomicSplitter(StringSplitter):
         parentheses it created.
     """
 
-    def do_splitter_match(self, line: Line) -> FixMatchResult:
+    def do_splitter_match(self, line: Line) -> TMatchResult:
         LL = line.leaves
 
         string_idx = None
@@ -3901,7 +3902,7 @@ class StringNonAtomicSplitter(StringSplitter):
         if string_idx is not None:
             return Ok(string_idx)
 
-        cant_fix = CantFix("This line does not contain any non-atomic strings.")
+        cant_fix = CantTransform("This line does not contain any non-atomic strings.")
         return Err(cant_fix)
 
     @staticmethod
@@ -3992,7 +3993,7 @@ class StringNonAtomicSplitter(StringSplitter):
 
         return None
 
-    def do_transform(self, line: Line, string_idx: int) -> Iterator[FixResult[Line]]:
+    def do_transform(self, line: Line, string_idx: int) -> Iterator[TResult[Line]]:
         LL = line.leaves
 
         is_valid_index = is_valid_index_factory(LL)
@@ -4550,7 +4551,7 @@ def bracket_split_build_line(
     return result
 
 
-def dont_increase_indentation(split_func: Fixer) -> Fixer:
+def dont_increase_indentation(split_func: Transformer) -> Transformer:
     """Normalize prefix of the first leaf in every line returned by `split_func`.
 
     This is a decorator over relevant split functions.
