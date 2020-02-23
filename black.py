@@ -3137,19 +3137,21 @@ class StringParensStripper(StringFixer):
     def do_match(self, line: Line) -> FixMatchResult:
         LL = line.leaves
 
+        is_valid_index = is_valid_index_factory(LL)
+
         for (idx, leaf) in enumerate(LL):
             if leaf.type != token.STRING:
                 continue
 
-            if idx == 0 or LL[idx - 1].type != token.LPAR:
+            if not is_valid_index(idx - 1) or LL[idx - 1].type != token.LPAR:
                 continue
 
-            if idx >= 2 and (
+            if is_valid_index(idx - 2) and (
                 LL[idx - 2].type == token.NAME or LL[idx - 2].type in CLOSING_BRACKETS
             ):
                 continue
 
-            if idx + 1 >= len(LL):
+            if not is_valid_index(idx + 1):
                 continue
 
             string_idx = idx
@@ -3158,11 +3160,11 @@ class StringParensStripper(StringFixer):
             next_idx = trailer.parse(LL, string_idx)
 
             if (
-                next_idx < len(LL)
+                is_valid_index(next_idx)
                 and LL[next_idx].type == token.RPAR
                 and LL[next_idx].value == ")"
             ):
-                if next_idx + 1 < len(LL) and LL[next_idx + 1].type == token.DOT:
+                if is_valid_index(next_idx + 1) and LL[next_idx + 1].type == token.DOT:
                     cant_fix = CantFix(
                         "String is wrapped in parens, but the RPAR is directly followed"
                         " by a dot, which is a deal breaker."
