@@ -2754,9 +2754,6 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
         LL = line.leaves
 
         for (i, leaf) in enumerate(LL):
-            if leaf.type == token.STRING and has_triple_quotes(leaf.value):
-                continue
-
             if (
                 leaf.type == token.STRING
                 and len(LL) > i + 1
@@ -2994,6 +2991,10 @@ class StringMerger(StringFixer, CustomSplitMapMixin):
                 if leaf.type == token.COMMA and id(leaf) in line.comments:
                     num_of_inline_string_comments += 1
                 break
+
+            if has_triple_quotes(leaf.value):
+                cant_fix = CantFix("Cannot merge multiline strings.")
+                return Err(cant_fix)
 
             num_of_strings += 1
             prefix = get_string_prefix(leaf.value)

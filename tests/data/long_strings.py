@@ -177,6 +177,12 @@ def foo():
     yield "This is a really long string that can't possibly be expected to fit all together on one line. In fact it may even take up three or more lines... like four or five... but probably just three."
 
 ########## REGRESSION TESTS ##########
+# Don't merge multiline (e.g. triple-quoted) strings.
+def foo():
+    query = (
+        """SELECT xxxxxxxxxxxxxxxxxxxx(xxx)"""
+        """ FROM xxxxxxxxxxxxxxxx WHERE xxxxxxxxxx AND xxx <> xxxxxxxxxxxxxx()""")
+
 # There was a bug where tuples were being identified as long strings.
 long_tuple = ('Apple', 'Berry', 'Cherry', 'Dill', 'Evergreen', 'Fig',
            'Grape', 'Harry', 'Iglu', 'Jaguar')
@@ -845,6 +851,14 @@ def foo():
 
 
 ########## REGRESSION TESTS ##########
+# Don't merge multiline (e.g. triple-quoted) strings.
+def foo():
+    query = (
+        """SELECT xxxxxxxxxxxxxxxxxxxx(xxx)"""
+        """ FROM xxxxxxxxxxxxxxxx WHERE xxxxxxxxxx AND xxx <> xxxxxxxxxxxxxx()"""
+    )
+
+
 # There was a bug where tuples were being identified as long strings.
 long_tuple = (
     "Apple",
