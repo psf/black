@@ -241,6 +241,14 @@ def read_pyproject_toml(
     if not config:
         return None
 
+    target_version = config.get("target-version") or config.get("--target-version")
+    if not isinstance(target_version, list):
+        raise click.BadOptionUsage(
+            "target-version",
+            "Config key target-version in %s must be a list"
+            % path.relative_to(Path.cwd()),
+        )
+
     if ctx.default_map is None:
         ctx.default_map = {}
     ctx.default_map.update(  # type: ignore  # bad types in .pyi
