@@ -3390,12 +3390,16 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
         is_valid_index = is_valid_index_factory(LL)
 
         idx = 0
+
+        # The first leaf MAY be a '+' symbol...
         if is_valid_index(idx) and LL[idx].type == token.PLUS:
             idx += 1
 
+        # The next/first leaf MAY be an empty LPAR...
         if is_valid_index(idx) and is_empty_lpar(LL[idx]):
             idx += 1
 
+        # The next/first leaf MUST be a string...
         if not is_valid_index(idx) or LL[idx].type != token.STRING:
             return TErr("Line does not start with a string.")
 
@@ -3404,12 +3408,15 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
         string_parser = StringParser()
         idx = string_parser.parse(LL, string_idx)
 
+        # That string MAY be followed by an empty RPAR...
         if is_valid_index(idx) and is_empty_rpar(LL[idx]):
             idx += 1
 
+        # The next/first leaf MAY be a comma...
         if is_valid_index(idx) and LL[idx].type == token.COMMA:
             idx += 1
 
+        # But no more leaves are allowed...
         if is_valid_index(idx):
             return TErr("This line does not end with a string.")
 
