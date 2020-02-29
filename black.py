@@ -4137,8 +4137,8 @@ class StringParser:
     )
 
     def __init__(self) -> None:
-        self.state = self.START
-        self.unmatched_lpars = 0
+        self._state = self.START
+        self._unmatched_lpars = 0
 
         # ----- Initialize Lookup Table
         # String trailer may start with '.' OR '%'.
@@ -4200,24 +4200,24 @@ class StringParser:
 
         next_token = leaf.type
         if next_token == token.LPAR:
-            self.unmatched_lpars += 1
+            self._unmatched_lpars += 1
 
-        last_state = self.state
+        last_state = self._state
         if last_state == self.LPAR:
             if next_token == token.RPAR:
-                self.unmatched_lpars -= 1
-                if self.unmatched_lpars == 0:
-                    self.state = self.RPAR
+                self._unmatched_lpars -= 1
+                if self._unmatched_lpars == 0:
+                    self._state = self.RPAR
         else:
-            self.state = self._goto[last_state, next_token]
+            self._state = self._goto[last_state, next_token]
 
-            if self.state == self.ERROR:
+            if self._state == self.ERROR:
                 if (last_state, -1) in self._goto:
-                    self.state = self._goto[last_state, -1]
+                    self._state = self._goto[last_state, -1]
                 else:
                     raise RuntimeError(f"{self.__class__.__name__} ERROR!")
 
-            if self.state == self.DONE:
+            if self._state == self.DONE:
                 return False
 
         return True
