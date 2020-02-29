@@ -2464,9 +2464,9 @@ def transform_line(
         return ST(line_length, normalize_strings)
 
     string_merge = init_st(StringMerger)
-    string_parens_strip = init_st(StringParensStripper)
-    string_atomic_split = init_st(StringAtomicSplitter)
-    string_non_atomic_split = init_st(StringNonAtomicSplitter)
+    string_paren_strip = init_st(StringParenStripper)
+    string_split = init_st(StringSplitter)
+    string_paren_wrap = init_st(StringParenWrapper)
 
     transformers: List[Transformer]
     if (
@@ -2479,7 +2479,7 @@ def transform_line(
         )
     ):
         # Only apply basic string preprocessing, since lines shouldn't be split here.
-        transformers = [string_merge, string_parens_strip]
+        transformers = [string_merge, string_paren_strip]
     elif line.is_def:
         transformers = [left_hand_split]
     else:
@@ -2501,19 +2501,19 @@ def transform_line(
         if line.inside_brackets:
             transformers = [
                 string_merge,
-                string_parens_strip,
+                string_paren_strip,
                 delimiter_split,
                 standalone_comment_split,
-                string_atomic_split,
-                string_non_atomic_split,
+                string_split,
+                string_paren_wrap,
                 rhs,
             ]
         else:
             transformers = [
                 string_merge,
-                string_parens_strip,
-                string_atomic_split,
-                string_non_atomic_split,
+                string_paren_strip,
+                string_split,
+                string_paren_wrap,
                 rhs,
             ]
 
@@ -2728,7 +2728,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
         (B) All line-continuation backslashes are removed from the target string.
 
     Collaborations:
-        StringMerger provides custom split information to StringAtomicSplitter.
+        StringMerger provides custom split information to StringSplitter.
     """
 
     def do_match(self, line: Line) -> TMatchResult:
@@ -2899,7 +2899,11 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
 
             SS = LL[next_str_idx].value
             next_prefix = get_string_prefix(SS)
+
+            # If this is an f-string group but this substring is not prefixed
+            # with 'f'...
             if "f" in prefix and "f" not in next_prefix:
+                # Then we must escape any braces contained in this substring.
                 SS = re.subf(r"(\{|\})", "{1}{1}", SS)
 
             NSS = make_naked(SS, next_prefix)
@@ -3007,7 +3011,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
         return Ok(None)
 
 
-class StringParensStripper(StringTransformer):
+class StringParenStripper(StringTransformer):
     """StringTransformer that strips surrounding parentheses from strings.
 
     Requirements:
@@ -3018,8 +3022,8 @@ class StringParensStripper(StringTransformer):
         The parentheses mentioned in the 'Requirements' section are stripped.
 
     Collaborations:
-        StringParensStripper has its own inherent usefulness, but it is also
-        relied on to clean up the parentheses created by StringNonAtomicSplitter (in
+        StringParenStripper has its own inherent usefulness, but it is also
+        relied on to clean up the parentheses created by StringParenWrapper (in
         the event that they are no longer needed).
     """
 
@@ -3138,7 +3142,7 @@ class StringParensStripper(StringTransformer):
         return Err(value_error)
 
 
-class StringSplitter(StringTransformer):
+class BaseStringSplitter(StringTransformer):
     """
     Abstract class for StringTransformers which transform a Line's strings by splitting
     them or placing them on their own lines where necessary to avoid going over
@@ -3161,7 +3165,7 @@ class StringSplitter(StringTransformer):
     @abstractmethod
     def do_splitter_match(self, line: Line) -> TMatchResult:
         """
-        StringSplitter asks its clients to override this method instead of
+        BaseStringSplitter asks its clients to override this method instead of
         `StringTransformer.do_match(...)`.
 
         Follows the same protocol as `StringTransformer.do_match(...)`.
@@ -3184,7 +3188,7 @@ class StringSplitter(StringTransformer):
     def __validate(self, line: Line, string_idx: int) -> TResult[None]:
         """
         Checks that @line meets all of the requirements listed in this classes'
-        docstring. Refer to `help(StringSplitter)` for a detailed
+        docstring. Refer to `help(BaseStringSplitter)` for a detailed
         description of those requirements.
 
         Returns:
@@ -3236,8 +3240,8 @@ class StringSplitter(StringTransformer):
         whether or not the target string is responsible for causing the line to
         go over the line length limit.
 
-        WARNING: This method is tightly coupled to both StringAtomicSplitter and
-        (especially) StringNonAtomicSplitter. There is probably a better way to
+        WARNING: This method is tightly coupled to both StringSplitter and
+        (especially) StringParenWrapper. There is probably a better way to
         accomplish what is being done here.
 
         Returns:
@@ -3337,7 +3341,7 @@ class StringSplitter(StringTransformer):
         return max_string_length
 
 
-class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
+class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
     """
     StringTransformer that splits "atom" strings (i.e. strings which exist on
     lines by themselves).
@@ -3347,7 +3351,7 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
         '+' symbol which MAY exist at the start of the line), MAYBE a string
         trailer, and MAYBE a trailing comma.
             AND
-        * All of the requirements listed in StringSplitter's docstring.
+        * All of the requirements listed in BaseStringSplitter's docstring.
 
     Transformations:
         The string mentioned in the 'Requirements' section is split into as
@@ -3370,7 +3374,7 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
         adhering to the transformation rules listed above.
 
     Collaborations:
-        StringAtomicSplitter relies on StringMerger to construct the appropriate
+        StringSplitter relies on StringMerger to construct the appropriate
         CustomSplit objects and add them to the custom split map.
     """
 
@@ -3626,7 +3630,7 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
 
     def __get_break_idx(self, string: str, target_idx: int) -> Optional[int]:
         """
-        This method contains the algorithm that StringAtomicSplitter uses to
+        This method contains the algorithm that StringSplitter uses to
         determine which character to split each string at.
 
         Args:
@@ -3755,13 +3759,13 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
             return string
 
 
-class StringNonAtomicSplitter(StringSplitter):
+class StringParenWrapper(BaseStringSplitter):
     """
     StringTransformer that splits non-"atom" strings (i.e. strings that do not
     exist on lines by themselves).
 
     Requirements:
-        All of the requirements listed in StringSplitter's docstring in
+        All of the requirements listed in BaseStringSplitter's docstring in
         addition to the requirements listed below:
 
         * The line is a return/yield statement, which returns/yields a string.
@@ -3794,13 +3798,13 @@ class StringNonAtomicSplitter(StringSplitter):
         however, count on the LPAR being placed directly before the chosen
         string.
 
-        In other words, StringNonAtomicSplitter creates "atom" strings. These
-        can then be split again by StringAtomicSplitter, if necessary.
+        In other words, StringParenWrapper creates "atom" strings. These
+        can then be split again by StringSplitter, if necessary.
 
     Collaborations:
-        In the event that a string line split by StringNonAtomicSplitter is
+        In the event that a string line split by StringParenWrapper is
         changed such that it no longer needs to be given its own line,
-        StringNonAtomicSplitter relies on StringParensStripper to clean up the
+        StringParenWrapper relies on StringParenStripper to clean up the
         parentheses it created.
     """
 
@@ -4040,7 +4044,7 @@ class StringNonAtomicSplitter(StringSplitter):
 
         # --- Middle (String) Line
         # We only need to yield one (possibly too long) string line, since the
-        # `StringAtomicSplitter` will break it down further if necessary.
+        # `StringSplitter` will break it down further if necessary.
         string_value = LL[string_idx].value
         string_line = Line(
             depth=line.depth + 1,
