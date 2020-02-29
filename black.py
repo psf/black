@@ -4049,7 +4049,7 @@ class StringParser:
     (varX, varY)`), or a method-call / attribute access (e.g. `.format(varX,
     varY)`).
 
-    NOTE: A new StringParser object must be instantiated for each string
+    NOTE: A new StringParser object MUST be instantiated for each string
     trailer we need to parse.
 
     Examples:
@@ -4067,10 +4067,12 @@ class StringParser:
         The following code snippet then holds:
         ```
         string_parser = StringParser()
-        idx = parser.parse(line.leaves, string_idx)
+        idx = string_parser.parse(line.leaves, string_idx)
         assert line.leaves[idx].type == token.PLUS
         ```
     """
+
+    DEFAULT_TOKEN = -1
 
     # String Parser States
     START = 1
@@ -4081,40 +4083,32 @@ class StringParser:
     LPAR = 6
     RPAR = 7
     DONE = 8
-    ERROR = 9
 
     # Lookup Table for Next State
-    _goto: Dict[Tuple[ParserState, NodeType], ParserState] = defaultdict(
-        lambda: StringParser.ERROR
-    )
+    _goto: Dict[Tuple[ParserState, NodeType], ParserState] = {
+        # String trailer may start with '.' OR '%'.
+        (START, token.DOT): DOT,
+        (START, token.PERCENT): PERCENT,
+        (START, DEFAULT_TOKEN): DONE,
+        # A '.' MUST be followed by an attribute or method name.
+        (DOT, token.NAME): NAME,
+        # A method name MUST be followed by an '(', whereas an attribute name
+        # is the last symbol in the string trailer.
+        (NAME, token.LPAR): LPAR,
+        (NAME, DEFAULT_TOKEN): DONE,
+        # A '%' symbol can be followed by an '(' or a single agument (e.g. a
+        # string or variable name).
+        (PERCENT, token.LPAR): LPAR,
+        (PERCENT, DEFAULT_TOKEN): SINGLE_FMT_ARG,
+        (SINGLE_FMT_ARG, DEFAULT_TOKEN): DONE,
+        # If present, a ')' symbol is always the last symbol in a string
+        # trailer.
+        (RPAR, DEFAULT_TOKEN): DONE,
+    }
 
     def __init__(self) -> None:
         self._state = self.START
         self._unmatched_lpars = 0
-
-        # ----- Initialize Lookup Table
-        # String trailer may start with '.' OR '%'.
-        self._goto[self.START, token.DOT] = self.DOT
-        self._goto[self.START, token.PERCENT] = self.PERCENT
-        self._goto[self.START, -1] = self.DONE
-
-        # A '.' MUST be followed by an attribute or method name.
-        self._goto[self.DOT, token.NAME] = self.NAME
-
-        # A method name MUST be followed by an '(', whereas an attribute name
-        # is the last symbol in the string trailer.
-        self._goto[self.NAME, token.LPAR] = self.LPAR
-        self._goto[self.NAME, -1] = self.DONE
-
-        # A '%' sign can be followed by an '(' or a single agument (e.g. a
-        # string or variable name).
-        self._goto[self.PERCENT, token.LPAR] = self.LPAR
-        self._goto[self.PERCENT, -1] = self.SINGLE_FMT_ARG
-        self._goto[self.SINGLE_FMT_ARG, -1] = self.DONE
-
-        # If present, a ')' symbol is always the last symbol in a string
-        # trailer.
-        self._goto[self.RPAR, -1] = self.DONE
 
     def parse(self, leaves: List[Leaf], string_idx: int) -> int:
         """
@@ -4137,7 +4131,7 @@ class StringParser:
     def _next_state(self, leaf: Leaf) -> bool:
         """
         Pre-conditions:
-            * On the first call to this function @leaf MUST be the leaf that
+            * On the first call to this function, @leaf MUST be the leaf that
             was directly after the string leaf in question (e.g. if our target
             string is `line.leaves[i]` then the first call to this method must
             be `line.leaves[i + 1]`).
@@ -4147,6 +4141,7 @@ class StringParser:
         Returns:
             True iff @leaf is apart of the string's trailer.
         """
+        # We ignore empty LPAR or RPAR leaves.
         if is_empty_par(leaf):
             return True
 
@@ -4154,18 +4149,28 @@ class StringParser:
         if next_token == token.LPAR:
             self._unmatched_lpars += 1
 
-        last_state = self._state
-        if last_state == self.LPAR:
+        current_state = self._state
+
+        # The LPAR parser state is a special case. We will return True until we
+        # find the matching RPAR token.
+        if current_state == self.LPAR:
             if next_token == token.RPAR:
                 self._unmatched_lpars -= 1
                 if self._unmatched_lpars == 0:
                     self._state = self.RPAR
+        # Otherwise, we use a lookup table to determine the next state.
         else:
-            self._state = self._goto[last_state, next_token]
 
-            if self._state == self.ERROR:
-                if (last_state, -1) in self._goto:
-                    self._state = self._goto[last_state, -1]
+            # If the lookup table matches the current state to the next
+            # token, we use the lookup table.
+            if (current_state, next_token) in self._goto:
+                self._state = self._goto[current_state, next_token]
+            else:
+                # Otherwise, we check if a the current state was assigned a
+                # default. If no default has been assigned, then this parser
+                # has a logic error.
+                if (current_state, self.DEFAULT_TOKEN) in self._goto:
+                    self._state = self._goto[current_state, self.DEFAULT_TOKEN]
                 else:
                     raise RuntimeError(f"{self.__class__.__name__} ERROR!")
 
@@ -4289,6 +4294,7 @@ def is_valid_index_factory(seq: Sequence[Any]) -> Callable[[int], bool]:
 
         assert is_valid_index(0)
         assert is_valid_index(2)
+
         assert not is_valid_index(3)
         assert not is_valid_index(-1)
         ```
