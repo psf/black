@@ -3374,8 +3374,8 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
         CustomSplit objects and add them to the custom split map.
     """
 
-    RE_FEXPR = r"""
     # Matches an "f-expression" (e.g. {var}) that might be found in an f-string.
+    RE_FEXPR = r"""
     (?<!\{)\{
         (?:
             [^\{\}]
