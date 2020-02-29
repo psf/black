@@ -3414,7 +3414,7 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
         if is_valid_index(idx) and is_empty_rpar(LL[idx]):
             idx += 1
 
-        # The next/first leaf MAY be a comma...
+        # That string / empty RPAR leaf MAY be followed by a comma...
         if is_valid_index(idx) and LL[idx].type == token.COMMA:
             idx += 1
 
