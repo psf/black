@@ -5,7 +5,7 @@ from collections import defaultdict
 from concurrent.futures import Executor, ProcessPoolExecutor
 from contextlib import contextmanager
 from datetime import datetime
-from enum import auto, Enum
+from enum import Enum
 from functools import lru_cache, partial, wraps
 import io
 import itertools
@@ -33,7 +33,6 @@ from typing import (
     Optional,
     Pattern,
     Sequence,
-    Sized,
     Set,
     Tuple,
     Type,
