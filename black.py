@@ -3062,8 +3062,8 @@ class StringParensStripper(StringTransformer):
 
             string_idx = idx
 
-            parser = StringParser()
-            next_idx = parser.parse(LL, string_idx)
+            string_parser = StringParser()
+            next_idx = string_parser.parse(LL, string_idx)
 
             if (
                 is_valid_index(next_idx)
@@ -3485,8 +3485,8 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
 
         string_idx = idx
 
-        parser = StringParser()
-        idx = parser.parse(LL, string_idx)
+        string_parser = StringParser()
+        idx = string_parser.parse(LL, string_idx)
 
         if is_valid_index(idx) and is_empty_rpar(LL[idx]):
             idx += 1
@@ -3945,8 +3945,8 @@ class StringNonAtomicSplitter(StringSplitter):
                 if is_valid_index(idx) and LL[idx].type == token.STRING:
                     string_idx = idx
 
-                    parser = StringParser()
-                    idx = parser.parse(LL, string_idx)
+                    string_parser = StringParser()
+                    idx = string_parser.parse(LL, string_idx)
                     if not is_valid_index(idx):
                         return string_idx
 
@@ -3963,8 +3963,8 @@ class StringNonAtomicSplitter(StringSplitter):
                 if is_valid_index(idx) and LL[idx].type == token.STRING:
                     string_idx = idx
 
-                    parser = StringParser()
-                    idx = parser.parse(LL, string_idx)
+                    string_parser = StringParser()
+                    idx = string_parser.parse(LL, string_idx)
 
                     if (
                         parent_type(LL[0]) == syms.argument
@@ -3989,8 +3989,8 @@ class StringNonAtomicSplitter(StringSplitter):
                 if is_valid_index(idx) and LL[idx].type == token.STRING:
                     string_idx = idx
 
-                    parser = StringParser()
-                    idx = parser.parse(LL, string_idx)
+                    string_parser = StringParser()
+                    idx = string_parser.parse(LL, string_idx)
 
                     if is_valid_index(idx) and LL[idx].type == token.COMMA:
                         idx += 1
