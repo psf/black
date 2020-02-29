@@ -3055,7 +3055,7 @@ class StringParenStripper(StringTransformer):
 
             string_idx = idx
 
-            # Skip the string trailer (if one exists).
+            # (Skip the string trailer, if one exists.)
             string_parser = StringParser()
             next_idx = string_parser.parse(LL, string_idx)
 
@@ -3160,6 +3160,8 @@ class BaseStringSplitter(StringTransformer):
             AND
         * The target string is not followed by an inline comment that appears
         to be a pragma.
+            AND
+        * The target string is not a multiline (i.e. triple-quote) string.
     """
 
     @abstractmethod
@@ -3410,7 +3412,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
 
         string_idx = idx
 
-        # Skip the string trailer (if one exists).
+        # (Skip the string trailer, if one exists.)
         string_parser = StringParser()
         idx = string_parser.parse(LL, string_idx)
 
@@ -3842,7 +3844,7 @@ class StringParenWrapper(BaseStringSplitter):
             is_valid_index = is_valid_index_factory(LL)
 
             idx = 2 if is_valid_index(1) and is_empty_par(LL[1]) else 1
-            # And the next visible leaf contains a string...
+            # The next visible leaf MUST contain a string...
             if is_valid_index(idx) and LL[idx].type == token.STRING:
                 return idx
 
@@ -3869,7 +3871,7 @@ class StringParenWrapper(BaseStringSplitter):
             is_valid_index = is_valid_index_factory(LL)
 
             idx = 2 if is_valid_index(1) and is_empty_par(LL[1]) else 1
-            # And the next visible leaf contains a string...
+            # The next visible leaf MUST contain a string...
             if is_valid_index(idx) and LL[idx].type == token.STRING:
                 return idx
 
@@ -3892,20 +3894,19 @@ class StringParenWrapper(BaseStringSplitter):
             is_valid_index = is_valid_index_factory(LL)
 
             for (i, leaf) in enumerate(LL):
-                # If we find a comma...
+                # We MUST find a comma...
                 if leaf.type == token.COMMA:
                     idx = i + 2 if is_empty_par(LL[i + 1]) else i + 1
 
-                    # And that comma is followed by a string...
+                    # That comma MUST be followed by a string...
                     if is_valid_index(idx) and LL[idx].type == token.STRING:
                         string_idx = idx
 
-                        # Skip the string trailer (if one exists).
+                        # (Skip the string trailer, if one exists.)
                         string_parser = StringParser()
                         idx = string_parser.parse(LL, string_idx)
 
-                        # And that string (or possibly that string's trailer)
-                        # is the last leaf on this line...
+                        # But no more leaves are allowed...
                         if not is_valid_index(idx):
                             return string_idx
 
@@ -3931,15 +3932,15 @@ class StringParenWrapper(BaseStringSplitter):
             is_valid_index = is_valid_index_factory(LL)
 
             for (i, leaf) in enumerate(LL):
-                # If we find an '=' or '+=' symbol...
+                # We MUST find either an '=' or '+=' symbol...
                 if leaf.type in [token.EQUAL, token.PLUSEQUAL]:
                     idx = i + 2 if is_empty_par(LL[i + 1]) else i + 1
 
-                    # And that symbol is followed by a string...
+                    # That symbol MUST be followed by a string...
                     if is_valid_index(idx) and LL[idx].type == token.STRING:
                         string_idx = idx
 
-                        # Skip the string trailer (if one exists).
+                        # (Skip the string trailer, if one exists.)
                         string_parser = StringParser()
                         idx = string_parser.parse(LL, string_idx)
 
@@ -3974,15 +3975,15 @@ class StringParenWrapper(BaseStringSplitter):
             is_valid_index = is_valid_index_factory(LL)
 
             for (i, leaf) in enumerate(LL):
-                # If we find a colon...
+                # We MUST find a colon...
                 if leaf.type == token.COLON:
                     idx = i + 2 if is_empty_par(LL[i + 1]) else i + 1
 
-                    # And that colon is followed by a string...
+                    # That colon MUST be followed by a string...
                     if is_valid_index(idx) and LL[idx].type == token.STRING:
                         string_idx = idx
 
-                        # Skip the string trailer (if one exists).
+                        # (Skip the string trailer, if one exists.)
                         string_parser = StringParser()
                         idx = string_parser.parse(LL, string_idx)
 
