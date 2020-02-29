@@ -3051,6 +3051,7 @@ class StringParensStripper(StringTransformer):
 
             string_idx = idx
 
+            # Skip the string trailer (if one exists).
             string_parser = StringParser()
             next_idx = string_parser.parse(LL, string_idx)
 
@@ -3405,6 +3406,7 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
 
         string_idx = idx
 
+        # Skip the string trailer (if one exists).
         string_parser = StringParser()
         idx = string_parser.parse(LL, string_idx)
 
@@ -3872,6 +3874,7 @@ class StringNonAtomicSplitter(StringSplitter):
                 OR
             None, otherwise.
         """
+        # TODO(bugyi): Add inline comments.
         if parent_type(LL[0]) == syms.assert_stmt:
             is_valid_index = is_valid_index_factory(LL)
 
@@ -3881,6 +3884,7 @@ class StringNonAtomicSplitter(StringSplitter):
                     if is_valid_index(idx) and LL[idx].type == token.STRING:
                         string_idx = idx
 
+                        # Skip the string trailer (if one exists).
                         string_parser = StringParser()
                         idx = string_parser.parse(LL, string_idx)
                         if not is_valid_index(idx):
@@ -3899,6 +3903,7 @@ class StringNonAtomicSplitter(StringSplitter):
                 OR
             None, otherwise.
         """
+        # TODO(bugyi): Add inline comments.
         if parent_type(LL[0]) in [syms.expr_stmt, syms.argument]:
             is_valid_index = is_valid_index_factory(LL)
 
@@ -3908,6 +3913,7 @@ class StringNonAtomicSplitter(StringSplitter):
                     if is_valid_index(idx) and LL[idx].type == token.STRING:
                         string_idx = idx
 
+                        # Skip the string trailer (if one exists).
                         string_parser = StringParser()
                         idx = string_parser.parse(LL, string_idx)
 
@@ -3934,6 +3940,7 @@ class StringNonAtomicSplitter(StringSplitter):
                 OR
             None, otherwise.
         """
+        # TODO(bugyi): Add inline comments.
         if syms.dictsetmaker in [parent_type(LL[0]), parent_type(LL[0].parent)]:
             is_valid_index = is_valid_index_factory(LL)
 
@@ -3943,6 +3950,7 @@ class StringNonAtomicSplitter(StringSplitter):
                     if is_valid_index(idx) and LL[idx].type == token.STRING:
                         string_idx = idx
 
+                        # Skip the string trailer (if one exists).
                         string_parser = StringParser()
                         idx = string_parser.parse(LL, string_idx)
 
