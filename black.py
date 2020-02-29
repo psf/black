@@ -2622,20 +2622,20 @@ class StringTransformer(ABC):
         match_result = self.do_match(line)
 
         if isinstance(match_result, Err):
-            cant_trans = match_result.err()
+            cant_transform = match_result.err()
             raise CantTransform(
                 f"The string transformer {self.__class__.__name__} does not recognize"
                 " this line as one that it can transform."
-            ) from cant_trans
+            ) from cant_transform
 
         string_idx = match_result.ok()
 
         for line_result in self.do_transform(line, string_idx):
             if isinstance(line_result, Err):
-                cant_trans = line_result.err()
+                cant_transform = line_result.err()
                 raise CantTransform(
                     "StringTransformer failed while attempting to transform string."
-                ) from cant_trans
+                ) from cant_transform
             line = line_result.ok()
             yield line
 
@@ -2762,15 +2762,15 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             new_line = msg_result.ok()
 
         if isinstance(rblc_result, Err) and isinstance(msg_result, Err):
-            msg_cant_fix = msg_result.err()
-            rblc_cant_fix = rblc_result.err()
-            msg_cant_fix.__cause__ = rblc_cant_fix
+            msg_cant_transform = msg_result.err()
+            rblc_cant_transform = rblc_result.err()
+            msg_cant_transform.__cause__ = rblc_cant_transform
 
-            cant_trans = CantTransform(
+            cant_transform = CantTransform(
                 "StringMerger failed to merge any strings in this line."
             )
-            cant_trans.__cause__ = msg_cant_fix
-            yield Err(cant_trans)
+            cant_transform.__cause__ = msg_cant_transform
+            yield Err(cant_transform)
         else:
             yield Ok(new_line)
 
