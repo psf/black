@@ -2747,7 +2747,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             if leaf.type == token.STRING and "\\\n" in leaf.value:
                 return Ok(i)
 
-        return TErr(f"This line has no strings that need merging.")
+        return TErr("This line has no strings that need merging.")
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[TResult[Line]]:
         new_line = line
@@ -3882,19 +3882,26 @@ class StringNonAtomicSplitter(StringSplitter):
                 OR
             None, otherwise.
         """
-        # TODO(bugyi): Add inline comments.
-        if parent_type(LL[0]) == syms.assert_stmt:
+        # If this line is apart of an assert statement and the first leaf
+        # contains the "assert" keyword...
+        if parent_type(LL[0]) == syms.assert_stmt and LL[0].value == "assert":
             is_valid_index = is_valid_index_factory(LL)
 
             for (i, leaf) in enumerate(LL):
+                # If we find a comma...
                 if leaf.type == token.COMMA:
                     idx = i + 2 if is_empty_par(LL[i + 1]) else i + 1
+
+                    # And that comma is followed by a string...
                     if is_valid_index(idx) and LL[idx].type == token.STRING:
                         string_idx = idx
 
                         # Skip the string trailer (if one exists).
                         string_parser = StringParser()
                         idx = string_parser.parse(LL, string_idx)
+
+                        # And that string (or possibly that string's trailer)
+                        # is the last leaf on this line...
                         if not is_valid_index(idx):
                             return string_idx
 
@@ -3911,13 +3918,20 @@ class StringNonAtomicSplitter(StringSplitter):
                 OR
             None, otherwise.
         """
-        # TODO(bugyi): Add inline comments.
-        if parent_type(LL[0]) in [syms.expr_stmt, syms.argument]:
+        # If this line is apart of an expression statement or is a function
+        # argument AND the first leaf contains a variable name...
+        if (
+            parent_type(LL[0]) in [syms.expr_stmt, syms.argument]
+            and LL[0].type == token.NAME
+        ):
             is_valid_index = is_valid_index_factory(LL)
 
             for (i, leaf) in enumerate(LL):
+                # If we find an '=' or '+=' symbol...
                 if leaf.type in [token.EQUAL, token.PLUSEQUAL]:
                     idx = i + 2 if is_empty_par(LL[i + 1]) else i + 1
+
+                    # And that symbol is followed by a string...
                     if is_valid_index(idx) and LL[idx].type == token.STRING:
                         string_idx = idx
 
@@ -3925,6 +3939,8 @@ class StringNonAtomicSplitter(StringSplitter):
                         string_parser = StringParser()
                         idx = string_parser.parse(LL, string_idx)
 
+                        # The next leaf MAY be a comma iff this line is apart
+                        # of a function argument...
                         if (
                             parent_type(LL[0]) == syms.argument
                             and is_valid_index(idx)
@@ -3932,6 +3948,7 @@ class StringNonAtomicSplitter(StringSplitter):
                         ):
                             idx += 1
 
+                        # But no more leaves are allowed...
                         if not is_valid_index(idx):
                             return string_idx
 
@@ -3948,13 +3965,16 @@ class StringNonAtomicSplitter(StringSplitter):
                 OR
             None, otherwise.
         """
-        # TODO(bugyi): Add inline comments.
+        # If this line is apart of a dictionary key assignment...
         if syms.dictsetmaker in [parent_type(LL[0]), parent_type(LL[0].parent)]:
             is_valid_index = is_valid_index_factory(LL)
 
             for (i, leaf) in enumerate(LL):
+                # If we find a colon...
                 if leaf.type == token.COLON:
                     idx = i + 2 if is_empty_par(LL[i + 1]) else i + 1
+
+                    # And that colon is followed by a string...
                     if is_valid_index(idx) and LL[idx].type == token.STRING:
                         string_idx = idx
 
@@ -3962,9 +3982,11 @@ class StringNonAtomicSplitter(StringSplitter):
                         string_parser = StringParser()
                         idx = string_parser.parse(LL, string_idx)
 
+                        # That string MAY be followed by a comma...
                         if is_valid_index(idx) and LL[idx].type == token.COMMA:
                             idx += 1
 
+                        # But no more leaves are allowed...
                         if not is_valid_index(idx):
                             return string_idx
 
