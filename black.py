@@ -3029,18 +3029,24 @@ class StringParensStripper(StringTransformer):
         is_valid_index = is_valid_index_factory(LL)
 
         for (idx, leaf) in enumerate(LL):
+            # Should be a string...
             if leaf.type != token.STRING:
                 continue
 
-            if not is_valid_index(idx - 1) or LL[idx - 1].type != token.LPAR:
-                continue
-
-            if is_valid_index(idx - 2) and (
-                LL[idx - 2].type == token.NAME or LL[idx - 2].type in CLOSING_BRACKETS
+            # Should be preceded by a non-empty LPAR...
+            if (
+                not is_valid_index(idx - 1)
+                or LL[idx - 1].type != token.LPAR
+                or is_empty_lpar(LL[idx - 1])
             ):
                 continue
 
-            if not is_valid_index(idx + 1):
+            # That LPAR should NOT be preceded by a function name or a closing
+            # bracket (which could be a function which returns a function or a
+            # list/dictionary that contains a function)...
+            if is_valid_index(idx - 2) and (
+                LL[idx - 2].type == token.NAME or LL[idx - 2].type in CLOSING_BRACKETS
+            ):
                 continue
 
             string_idx = idx
@@ -3048,16 +3054,15 @@ class StringParensStripper(StringTransformer):
             string_parser = StringParser()
             next_idx = string_parser.parse(LL, string_idx)
 
+            # Should be followed by a non-empty RPAR...
             if (
                 is_valid_index(next_idx)
                 and LL[next_idx].type == token.RPAR
-                and LL[next_idx].value == ")"
+                and not is_empty_rpar(LL[next_idx])
             ):
+                # That RPAR should NOT be followed by a '.' symbol.
                 if is_valid_index(next_idx + 1) and LL[next_idx + 1].type == token.DOT:
-                    return TErr(
-                        "String is wrapped in parens, but the RPAR is directly followed"
-                        " by a dot, which is a deal breaker."
-                    )
+                    continue
 
                 return Ok(string_idx)
 
