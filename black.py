@@ -3899,7 +3899,15 @@ class StringNonAtomicSplitter(StringSplitter):
 
     @staticmethod
     def _return_match(LL: List[Leaf]) -> Optional[int]:
-        # TODO(bugyi): docstring
+        """
+        Returns:
+            string_idx such that @LL[string_idx] is equal to our target (i.e.
+            matched) string, if this line matches the return/yield statement
+            requirements listed in the 'Requirements' section of this classes'
+            docstring.
+                OR
+            None, otherwise.
+        """
         if parent_type(LL[0]) in [syms.return_stmt, syms.yield_expr]:
             is_valid_index = is_valid_index_factory(LL)
 
@@ -3911,7 +3919,15 @@ class StringNonAtomicSplitter(StringSplitter):
 
     @staticmethod
     def _else_match(LL: List[Leaf]) -> Optional[int]:
-        # TODO(bugyi): docstring
+        """
+        Returns:
+            string_idx such that @LL[string_idx] is equal to our target (i.e.
+            matched) string, if this line matches the ternary expression
+            requirements listed in the 'Requirements' section of this classes'
+            docstring.
+                OR
+            None, otherwise.
+        """
         if (
             parent_type(LL[0]) == syms.test
             and LL[0].type == token.NAME
@@ -3927,7 +3943,15 @@ class StringNonAtomicSplitter(StringSplitter):
 
     @staticmethod
     def _assert_match(LL: List[Leaf]) -> Optional[int]:
-        # TODO(bugyi): docstring
+        """
+        Returns:
+            string_idx such that @LL[string_idx] is equal to our target (i.e.
+            matched) string, if this line matches the assert statement
+            requirements listed in the 'Requirements' section of this classes'
+            docstring.
+                OR
+            None, otherwise.
+        """
         if parent_type(LL[0]) == syms.assert_stmt:
             is_valid_index = is_valid_index_factory(LL)
 
@@ -3946,7 +3970,15 @@ class StringNonAtomicSplitter(StringSplitter):
 
     @staticmethod
     def _assign_match(LL: List[Leaf]) -> Optional[int]:
-        # TODO(bugyi): docstring
+        """
+        Returns:
+            string_idx such that @LL[string_idx] is equal to our target (i.e.
+            matched) string, if this line matches the assignment statement
+            requirements listed in the 'Requirements' section of this classes'
+            docstring.
+                OR
+            None, otherwise.
+        """
         if parent_type(LL[0]) in [syms.expr_stmt, syms.argument]:
             is_valid_index = is_valid_index_factory(LL)
 
@@ -3973,7 +4005,15 @@ class StringNonAtomicSplitter(StringSplitter):
 
     @staticmethod
     def _dict_match(LL: List[Leaf]) -> Optional[int]:
-        # TODO(bugyi): docstring
+        """
+        Returns:
+            string_idx such that @LL[string_idx] is equal to our target (i.e.
+            matched) string, if this line matches the dictionary key assignment
+            statement requirements listed in the 'Requirements' section of this
+            classes' docstring.
+                OR
+            None, otherwise.
+        """
         if syms.dictsetmaker in [parent_type(LL[0]), parent_type(LL[0].parent)]:
             is_valid_index = is_valid_index_factory(LL)
 
