@@ -3195,68 +3195,6 @@ class StringSplitter(StringTransformer):
 
         return match_result
 
-    @staticmethod
-    def _insert_str_child_factory(string_leaf: Leaf) -> Callable[[LN], None]:
-        """
-        Factory for a convenience function that is used to orphan @string_leaf
-        and then insert multiple new leaves into the same part of the node
-        structure that @string_leaf had originally occupied.
-
-        Examples:
-            Let `string_leaf = Leaf(token.STRING, '"foo"')` and `N =
-            string_leaf.parent`. Assume the node `N` has the following
-            original structure:
-
-            Node(
-                expr_stmt, [
-                    Leaf(NAME, 'x'),
-                    Leaf(EQUAL, '='),
-                    Leaf(STRING, '"foo"'),
-                ]
-            )
-
-            We then run the code snippet shown below.
-            ```
-            insert_str_child = self._insert_str_child_factory(string_leaf)
-
-            lpar = Leaf(token.LPAR, '(')
-            insert_str_child(lpar)
-
-            bar = Leaf(token.STRING, '"bar"')
-            insert_str_child(bar)
-
-            rpar = Leaf(token.RPAR, ')')
-            insert_str_child(rpar)
-            ```
-
-            After which point, it follows that `string_leaf.parent is None` and
-            the node `N` now has the following structure:
-
-            Node(
-                expr_stmt, [
-                    Leaf(NAME, 'x'),
-                    Leaf(EQUAL, '='),
-                    Leaf(LPAR, '('),
-                    Leaf(STRING, '"bar"'),
-                    Leaf(RPAR, ')'),
-                ]
-            )
-        """
-        # TODO(bugyi): Make this a stand-alone function
-        string_parent = string_leaf.parent
-        string_child_idx = string_leaf.remove()
-
-        def insert_str_child(child: LN) -> None:
-            nonlocal string_child_idx
-
-            assert string_parent is not None
-            assert string_child_idx is not None
-
-            string_parent.insert_child(string_child_idx, child)
-            string_child_idx += 1
-
-        return insert_str_child
-
     def __validate(self, line: Line, string_idx: int) -> TResult[None]:
         """
         Checks that @line meets all of the requirements listed in this classes'
@@ -3454,8 +3392,6 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
         CustomSplit objects and add them to the custom split map.
     """
 
-    # TODO(bugyi): Would a recursive "balanced brackets" regular expression
-    # work better here?
     RE_FEXPR = r"""
     # Matches an "f-expression" (e.g. {var}) that might be found in an f-string.
     (?<!\{)\{
@@ -3506,7 +3442,7 @@ class StringAtomicSplitter(StringSplitter, CustomSplitMapMixin):
         QUOTE = LL[string_idx].value[-1]
 
         is_valid_index = is_valid_index_factory(LL)
-        insert_str_child = self._insert_str_child_factory(LL[string_idx])
+        insert_str_child = insert_str_child_factory(LL[string_idx])
 
         prefix = get_string_prefix(LL[string_idx].value)
 
@@ -4038,7 +3974,7 @@ class StringNonAtomicSplitter(StringSplitter):
         LL = line.leaves
 
         is_valid_index = is_valid_index_factory(LL)
-        insert_str_child = self._insert_str_child_factory(LL[string_idx])
+        insert_str_child = insert_str_child_factory(LL[string_idx])
 
         comma_idx = len(LL) - 1
         ends_with_comma = False
@@ -4261,6 +4197,67 @@ class StringParser:
                 return False
 
         return True
+
+
+def insert_str_child_factory(string_leaf: Leaf) -> Callable[[LN], None]:
+    """
+    Factory for a convenience function that is used to orphan @string_leaf
+    and then insert multiple new leaves into the same part of the node
+    structure that @string_leaf had originally occupied.
+
+    Examples:
+        Let `string_leaf = Leaf(token.STRING, '"foo"')` and `N =
+        string_leaf.parent`. Assume the node `N` has the following
+        original structure:
+
+        Node(
+            expr_stmt, [
+                Leaf(NAME, 'x'),
+                Leaf(EQUAL, '='),
+                Leaf(STRING, '"foo"'),
+            ]
+        )
+
+        We then run the code snippet shown below.
+        ```
+        insert_str_child = insert_str_child_factory(string_leaf)
+
+        lpar = Leaf(token.LPAR, '(')
+        insert_str_child(lpar)
+
+        bar = Leaf(token.STRING, '"bar"')
+        insert_str_child(bar)
+
+        rpar = Leaf(token.RPAR, ')')
+        insert_str_child(rpar)
+        ```
+
+        After which point, it follows that `string_leaf.parent is None` and
+        the node `N` now has the following structure:
+
+        Node(
+            expr_stmt, [
+                Leaf(NAME, 'x'),
+                Leaf(EQUAL, '='),
+                Leaf(LPAR, '('),
+                Leaf(STRING, '"bar"'),
+                Leaf(RPAR, ')'),
+            ]
+        )
+    """
+    string_parent = string_leaf.parent
+    string_child_idx = string_leaf.remove()
+
+    def insert_str_child(child: LN) -> None:
+        nonlocal string_child_idx
+
+        assert string_parent is not None
+        assert string_child_idx is not None
+
+        string_parent.insert_child(string_child_idx, child)
+        string_child_idx += 1
+
+    return insert_str_child
 
 
 def has_triple_quotes(string: str) -> bool:
