@@ -2449,13 +2449,12 @@ def transform_line(
     normalize_strings: bool,
     features: Collection[Feature] = (),
 ) -> Iterator[Line]:
-    """Split a `line` into potentially many lines.
+    """Transform a `line`, potentially splitting it into many lines.
 
     They should fit in the allotted `line_length` but might not be able to.
 
     `features` are syntactical features that may be used in the output.
     """
-    # TODO(bugyi): Fix this docstring
     if line.is_comment:
         yield line
         return
