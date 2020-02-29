@@ -3885,26 +3885,11 @@ class StringNonAtomicSplitter(StringSplitter):
         LL = line.leaves
 
         string_idx = None
-
-        # TODO(bugyi): Place these conditional statements in _*_match(...) functions.
-        if parent_type(LL[0]) in [syms.return_stmt, syms.yield_expr]:
-            string_idx = self._return_match(LL)
-
-        if (
-            parent_type(LL[0]) == syms.test
-            and LL[0].type == token.NAME
-            and LL[0].value == "else"
-        ):
-            string_idx = self._else_match(LL)
-
-        if parent_type(LL[0]) == syms.assert_stmt:
-            string_idx = self._assert_match(LL)
-
-        if parent_type(LL[0]) in [syms.expr_stmt, syms.argument]:
-            string_idx = self._assign_match(LL)
-
-        if syms.dictsetmaker in [parent_type(LL[0]), parent_type(LL[0].parent)]:
-            string_idx = self._dict_match(LL)
+        string_idx = string_idx or self._return_match(LL)
+        string_idx = string_idx or self._else_match(LL)
+        string_idx = string_idx or self._assert_match(LL)
+        string_idx = string_idx or self._assign_match(LL)
+        string_idx = string_idx or self._dict_match(LL)
 
         if string_idx is not None:
             return Ok(string_idx)
@@ -3915,88 +3900,97 @@ class StringNonAtomicSplitter(StringSplitter):
     @staticmethod
     def _return_match(LL: List[Leaf]) -> Optional[int]:
         # TODO(bugyi): docstring
-        is_valid_index = is_valid_index_factory(LL)
+        if parent_type(LL[0]) in [syms.return_stmt, syms.yield_expr]:
+            is_valid_index = is_valid_index_factory(LL)
 
-        idx = 2 if is_valid_index(1) and is_empty_par(LL[1]) else 1
-        if is_valid_index(idx) and LL[idx].type == token.STRING:
-            return idx
+            idx = 2 if is_valid_index(1) and is_empty_par(LL[1]) else 1
+            if is_valid_index(idx) and LL[idx].type == token.STRING:
+                return idx
 
         return None
 
     @staticmethod
     def _else_match(LL: List[Leaf]) -> Optional[int]:
         # TODO(bugyi): docstring
-        is_valid_index = is_valid_index_factory(LL)
+        if (
+            parent_type(LL[0]) == syms.test
+            and LL[0].type == token.NAME
+            and LL[0].value == "else"
+        ):
+            is_valid_index = is_valid_index_factory(LL)
 
-        idx = 2 if is_valid_index(1) and is_empty_par(LL[1]) else 1
-        if is_valid_index(idx) and LL[idx].type == token.STRING:
-            return idx
+            idx = 2 if is_valid_index(1) and is_empty_par(LL[1]) else 1
+            if is_valid_index(idx) and LL[idx].type == token.STRING:
+                return idx
 
         return None
 
     @staticmethod
     def _assert_match(LL: List[Leaf]) -> Optional[int]:
         # TODO(bugyi): docstring
-        is_valid_index = is_valid_index_factory(LL)
+        if parent_type(LL[0]) == syms.assert_stmt:
+            is_valid_index = is_valid_index_factory(LL)
 
-        for (i, leaf) in enumerate(LL):
-            if leaf.type == token.COMMA:
-                idx = i + 2 if is_empty_par(LL[i + 1]) else i + 1
-                if is_valid_index(idx) and LL[idx].type == token.STRING:
-                    string_idx = idx
+            for (i, leaf) in enumerate(LL):
+                if leaf.type == token.COMMA:
+                    idx = i + 2 if is_empty_par(LL[i + 1]) else i + 1
+                    if is_valid_index(idx) and LL[idx].type == token.STRING:
+                        string_idx = idx
 
-                    string_parser = StringParser()
-                    idx = string_parser.parse(LL, string_idx)
-                    if not is_valid_index(idx):
-                        return string_idx
+                        string_parser = StringParser()
+                        idx = string_parser.parse(LL, string_idx)
+                        if not is_valid_index(idx):
+                            return string_idx
 
         return None
 
     @staticmethod
     def _assign_match(LL: List[Leaf]) -> Optional[int]:
         # TODO(bugyi): docstring
-        is_valid_index = is_valid_index_factory(LL)
+        if parent_type(LL[0]) in [syms.expr_stmt, syms.argument]:
+            is_valid_index = is_valid_index_factory(LL)
 
-        for (i, leaf) in enumerate(LL):
-            if leaf.type in [token.EQUAL, token.PLUSEQUAL]:
-                idx = i + 2 if is_empty_par(LL[i + 1]) else i + 1
-                if is_valid_index(idx) and LL[idx].type == token.STRING:
-                    string_idx = idx
+            for (i, leaf) in enumerate(LL):
+                if leaf.type in [token.EQUAL, token.PLUSEQUAL]:
+                    idx = i + 2 if is_empty_par(LL[i + 1]) else i + 1
+                    if is_valid_index(idx) and LL[idx].type == token.STRING:
+                        string_idx = idx
 
-                    string_parser = StringParser()
-                    idx = string_parser.parse(LL, string_idx)
+                        string_parser = StringParser()
+                        idx = string_parser.parse(LL, string_idx)
 
-                    if (
-                        parent_type(LL[0]) == syms.argument
-                        and is_valid_index(idx)
-                        and LL[idx].type == token.COMMA
-                    ):
-                        idx += 1
+                        if (
+                            parent_type(LL[0]) == syms.argument
+                            and is_valid_index(idx)
+                            and LL[idx].type == token.COMMA
+                        ):
+                            idx += 1
 
-                    if not is_valid_index(idx):
-                        return string_idx
+                        if not is_valid_index(idx):
+                            return string_idx
 
         return None
 
     @staticmethod
     def _dict_match(LL: List[Leaf]) -> Optional[int]:
         # TODO(bugyi): docstring
-        is_valid_index = is_valid_index_factory(LL)
+        if syms.dictsetmaker in [parent_type(LL[0]), parent_type(LL[0].parent)]:
+            is_valid_index = is_valid_index_factory(LL)
 
-        for (i, leaf) in enumerate(LL):
-            if leaf.type == token.COLON:
-                idx = i + 2 if is_empty_par(LL[i + 1]) else i + 1
-                if is_valid_index(idx) and LL[idx].type == token.STRING:
-                    string_idx = idx
+            for (i, leaf) in enumerate(LL):
+                if leaf.type == token.COLON:
+                    idx = i + 2 if is_empty_par(LL[i + 1]) else i + 1
+                    if is_valid_index(idx) and LL[idx].type == token.STRING:
+                        string_idx = idx
 
-                    string_parser = StringParser()
-                    idx = string_parser.parse(LL, string_idx)
+                        string_parser = StringParser()
+                        idx = string_parser.parse(LL, string_idx)
 
-                    if is_valid_index(idx) and LL[idx].type == token.COMMA:
-                        idx += 1
+                        if is_valid_index(idx) and LL[idx].type == token.COMMA:
+                            idx += 1
 
-                    if not is_valid_index(idx):
-                        return string_idx
+                        if not is_valid_index(idx):
+                            return string_idx
 
         return None
 
