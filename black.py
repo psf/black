@@ -4099,9 +4099,26 @@ class StringParser:
 
     NOTE: A new StringParser object must be instantiated for each string
     trailer we need to parse.
-    """
 
-    # TODO(bugyi): Add examples to docstrings
+    Examples:
+        We shall assume that `line` equals the `Line` object that corresponds
+        to the following line of python code:
+        ```
+        x = "Some {}.".format("String") + some_other_string
+        ```
+
+        Furthermore, we will assume that `string_idx` is some index such that:
+        ```
+        assert line.leaves[string_idx].value == "Some {}."
+        ```
+
+        The following code snippet then holds:
+        ```
+        string_parser = StringParser()
+        idx = parser.parse(line.leaves, string_idx)
+        assert line.leaves[idx].type == token.PLUS
+        ```
+    """
 
     # String Parser States
     START = 1
