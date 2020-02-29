@@ -3831,14 +3831,14 @@ class StringNonAtomicSplitter(StringSplitter):
             None, otherwise.
         """
         # If this line is apart of a return/yield statement and the first leaf
-        # is either the "return" or "yield" keyword...
+        # contains either the "return" or "yield" keywords...
         if parent_type(LL[0]) in [syms.return_stmt, syms.yield_expr] and LL[
             0
         ].value in ["return", "yield"]:
             is_valid_index = is_valid_index_factory(LL)
 
             idx = 2 if is_valid_index(1) and is_empty_par(LL[1]) else 1
-            # And the next visible leaf is a string...
+            # And the next visible leaf contains a string...
             if is_valid_index(idx) and LL[idx].type == token.STRING:
                 return idx
 
@@ -3855,6 +3855,8 @@ class StringNonAtomicSplitter(StringSplitter):
                 OR
             None, otherwise.
         """
+        # If this line is apart of a ternary expression and the first leaf
+        # contains the "else" keyword...
         if (
             parent_type(LL[0]) == syms.test
             and LL[0].type == token.NAME
@@ -3863,6 +3865,7 @@ class StringNonAtomicSplitter(StringSplitter):
             is_valid_index = is_valid_index_factory(LL)
 
             idx = 2 if is_valid_index(1) and is_empty_par(LL[1]) else 1
+            # And the next visible leaf contains a string...
             if is_valid_index(idx) and LL[idx].type == token.STRING:
                 return idx
 
