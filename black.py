@@ -4147,13 +4147,13 @@ class StringParser:
     def parse(self, leaves: List[Leaf], string_idx: int) -> int:
         """
         Pre-conditions:
-            * `leaves[string_idx].type == token.STRING`
+            * @leaves[@string_idx].type == token.STRING
 
         Returns:
             The index directly after the last leaf which is apart of the string
             trailer, if a "trailer" exists.
                 OR
-            string_idx + 1, if no string "trailer" exists.
+            @string_idx + 1, if no string "trailer" exists.
         """
         assert leaves[string_idx].type == token.STRING
 
@@ -4240,16 +4240,16 @@ def is_empty_rpar(leaf: Leaf) -> bool:
 def is_valid_index_factory(seq: Sequence[Any]) -> Callable[[int], bool]:
     """
     Examples:
-    ```
-    my_list = [1, 2, 3]
+        ```
+        my_list = [1, 2, 3]
 
-    is_valid_index = is_valid_index_factory(my_list)
+        is_valid_index = is_valid_index_factory(my_list)
 
-    assert is_valid_index(0)
-    assert is_valid_index(2)
-    assert not is_valid_index(3)
-    assert not is_valid_index(-1)
-    ```
+        assert is_valid_index(0)
+        assert is_valid_index(2)
+        assert not is_valid_index(3)
+        assert not is_valid_index(-1)
+        ```
     """
 
     def is_valid_index(idx: int) -> bool:
