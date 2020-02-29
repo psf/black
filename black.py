@@ -4109,7 +4109,7 @@ class StringParser:
 
     # TODO(bugyi): Add examples to docstrings
 
-    # Possible States
+    # String Parser States
     START = 1
     DOT = 2
     NAME = 3
@@ -4120,28 +4120,37 @@ class StringParser:
     DONE = 8
     ERROR = 9
 
+    # Lookup Table for Next State
+    _goto: Dict[Tuple[ParserState, NodeType], ParserState] = defaultdict(
+        lambda: StringParser.ERROR
+    )
+
     def __init__(self) -> None:
         self.state = self.START
         self.unmatched_lpars = 0
 
-        # TODO(bugyi): Use a dictionary literal to build the state table.
-        # TODO(bugyi): Make this class variable.
-        self._goto: Dict[Tuple[ParserState, NodeType], ParserState] = defaultdict(
-            lambda: self.ERROR
-        )
-
+        # ----- Initialize Lookup Table
+        # String trailer may start with '.' OR '%'.
         self._goto[self.START, token.DOT] = self.DOT
         self._goto[self.START, token.PERCENT] = self.PERCENT
         self._goto[self.START, -1] = self.DONE
 
+        # A '.' MUST be followed by an attribute or method name.
         self._goto[self.DOT, token.NAME] = self.NAME
 
+        # A method name MUST be followed by an '(', whereas an attribute name
+        # is the last symbol in the string trailer.
         self._goto[self.NAME, token.LPAR] = self.LPAR
+        self._goto[self.NAME, -1] = self.DONE
 
+        # A '%' sign can be followed by an '(' or a single agument (e.g. a
+        # string or variable name).
         self._goto[self.PERCENT, token.LPAR] = self.LPAR
         self._goto[self.PERCENT, -1] = self.SINGLE_FMT_ARG
         self._goto[self.SINGLE_FMT_ARG, -1] = self.DONE
 
+        # If present, a ')' symbol is always the last symbol in a string
+        # trailer.
         self._goto[self.RPAR, -1] = self.DONE
 
     def parse(self, leaves: List[Leaf], string_idx: int) -> int:
