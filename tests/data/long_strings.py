@@ -176,6 +176,8 @@ raw_strings = r"Don't" " get" r" merged" " unless they are all raw."
 def foo():
     yield "This is a really long string that can't possibly be expected to fit all together on one line. In fact it may even take up three or more lines... like four or five... but probably just three."
 
+x = f"This is a {{really}} long string that needs to be split without a doubt (i.e. most definitely). In short, this {string} that can't possibly be {{expected}} to fit all together on one line. In {fact} it may even take up three or more lines... like four or five... but probably just four."
+
 ########## REGRESSION TESTS ##########
 class A:
     def foo():
@@ -854,6 +856,13 @@ def foo():
         " four or five... but probably just three."
     )
 
+
+x = (
+    "This is a {really} long string that needs to be split without a doubt (i.e."
+    f" most definitely). In short, this {string} that can't possibly be {{expected}} to"
+    f" fit all together on one line. In {fact} it may even take up three or more"
+    " lines... like four or five... but probably just four."
+)
 
 ########## REGRESSION TESTS ##########
 class A:
