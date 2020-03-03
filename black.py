@@ -2834,7 +2834,6 @@ def normalize_string_prefix(leaf: Leaf, remove_u_prefix: bool = False) -> None:
     new_prefix = orig_prefix.replace("F", "f").replace("B", "b").replace("U", "u")
     if remove_u_prefix:
         new_prefix = new_prefix.replace("u", "")
-    new_prefix = "".join(sorted(new_prefix, reverse=True))
     leaf.value = f"{new_prefix}{match.group(2)}"
 
 
