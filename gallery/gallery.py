@@ -12,7 +12,7 @@ PYPI_INSTANCE = "https://pypi.org/pypi"
 ArchiveKind = Union[tarfile.TarFile, zipfile.ZipFile]
 
 
-def get_package_source(package: str) -> None:
+def get_pypi_download_url(package: str, version: Optional[str]) -> str:
     with urlopen(PYPI_INSTANCE + f"/{package}/json") as page:
         metadata = json.load(page)
 
@@ -22,6 +22,21 @@ def get_package_source(package: str) -> None:
     else:
         raise ValueError(f"Couldn't find any sources for {package}")
     return source["url"]
+
+
+def get_package_source(package: str, version: Optional[str]) -> str:
+    if package == "cpython":
+        if version is None:
+            version = "master"
+        return f"https://github.com/python/cpython/archive/{version}.zip"
+    elif package == "pypy":
+        if version is None:
+            version = "branch/default"
+        return (
+            f"https://foss.heptapod.net/pypy/pypy/repository/{version}/archive.tar.bz2"
+        )
+    else:
+        return get_pypi_download_url(package, version)
 
 
 def get_archive_manager(local_file: Path) -> ArchiveKind:
@@ -49,8 +64,10 @@ def download_and_extract(package: str, directory: Path) -> Path:
         result_dir = get_first_archive_member(archive)
     return directory / result_dir
 
+
 def create_git_repository(directory: Path) -> None:
-    subprocess.run(["git", "init"], cwd = directory)
+    subprocess.run(["git", "init"], cwd=directory)
+
 
 def main() -> None:
     parser = ArgumentParser()
@@ -67,6 +84,7 @@ def main() -> None:
 
     source_directory = download_and_extract(options.pypi_package, options.output)
     create_git_repository(source_directory)
+
 
 if __name__ == "__main__":
     main()
