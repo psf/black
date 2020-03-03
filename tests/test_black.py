@@ -599,6 +599,16 @@ class BlackTestCase(unittest.TestCase):
         self.invokeBlack([str(source_path), "--target-version", "py36"], exit_code=123)
 
     @patch("black.dump_to_file", dump_to_stderr)
+    def test_python38(self) -> None:
+        source, expected = read_data("python38")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        major, minor = sys.version_info[:2]
+        if major > 3 or (major == 3 and minor >= 8):
+            black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+
+    @patch("black.dump_to_file", dump_to_stderr)
     def test_fmtonoff(self) -> None:
         source, expected = read_data("fmtonoff")
         actual = fs(source)
@@ -778,6 +788,13 @@ class BlackTestCase(unittest.TestCase):
                 "2 files would be reformatted, 3 files would be left unchanged, "
                 "2 files would fail to reformat.",
             )
+            report.check = False
+            report.diff = True
+            self.assertEqual(
+                unstyle(str(report)),
+                "2 files would be reformatted, 3 files would be left unchanged, "
+                "2 files would fail to reformat.",
+            )
 
     def test_report_quiet(self) -> None:
         report = black.Report(quiet=True)
@@ -860,6 +877,13 @@ class BlackTestCase(unittest.TestCase):
             )
             self.assertEqual(report.return_code, 123)
             report.check = True
+            self.assertEqual(
+                unstyle(str(report)),
+                "2 files would be reformatted, 3 files would be left unchanged, "
+                "2 files would fail to reformat.",
+            )
+            report.check = False
+            report.diff = True
             self.assertEqual(
                 unstyle(str(report)),
                 "2 files would be reformatted, 3 files would be left unchanged, "
@@ -950,6 +974,13 @@ class BlackTestCase(unittest.TestCase):
             )
             self.assertEqual(report.return_code, 123)
             report.check = True
+            self.assertEqual(
+                unstyle(str(report)),
+                "2 files would be reformatted, 3 files would be left unchanged, "
+                "2 files would fail to reformat.",
+            )
+            report.check = False
+            report.diff = True
             self.assertEqual(
                 unstyle(str(report)),
                 "2 files would be reformatted, 3 files would be left unchanged, "
