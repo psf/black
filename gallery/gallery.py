@@ -2,6 +2,7 @@ import json
 import tarfile
 import tempfile
 import zipfile
+import subprocess
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import Union
@@ -48,6 +49,8 @@ def download_and_extract(package: str, directory: Path) -> Path:
         result_dir = get_first_archive_member(archive)
     return directory / result_dir
 
+def create_git_repository(directory: Path) -> None:
+    subprocess.run(["git", "init"], cwd = directory)
 
 def main() -> None:
     parser = ArgumentParser()
@@ -63,8 +66,7 @@ def main() -> None:
     options.output.mkdir(exist_ok=True)
 
     source_directory = download_and_extract(options.pypi_package, options.output)
-    print(source_directory)
-
+    create_git_repository(source_directory)
 
 if __name__ == "__main__":
     main()
