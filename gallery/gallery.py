@@ -2,14 +2,12 @@ import json
 import subprocess
 import sys
 import tarfile
-import tempfile
 import zipfile
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
-from typing import NamedTuple, Optional, Union
+from typing import List, NamedTuple, Optional, Union, cast
 from urllib.request import urlopen, urlretrieve
 
-GIT_AUTHOR = "black/gallery <>"
 PYPI_INSTANCE = "https://pypi.org/pypi"
 
 ArchiveKind = Union[tarfile.TarFile, zipfile.ZipFile]
@@ -17,7 +15,7 @@ ArchiveKind = Union[tarfile.TarFile, zipfile.ZipFile]
 
 class BlackVersion(NamedTuple):
     version: str
-    pyproject_toml: Optional[str] = None
+    config: Optional[str] = None
 
 
 def get_pypi_download_url(package: str, version: Optional[str]) -> str:
@@ -31,7 +29,8 @@ def get_pypi_download_url(package: str, version: Optional[str]) -> str:
             sources = metadata["releases"][version]
         else:
             raise ValueError(
-                f"No releases found with given version ('{version}') tag. Releases: {metadata['releases'].keys()}"
+                f"No releases found with given version ('{version}') tag. "
+                f"Releases: {metadata['releases'].keys()}"
             )
 
     for source in sources:
@@ -40,7 +39,7 @@ def get_pypi_download_url(package: str, version: Optional[str]) -> str:
     else:
         raise ValueError(f"Couldn't find any sources for {package}")
 
-    return source["url"]
+    return cast(str, source["url"])
 
 
 def get_package_source(package: str, version: Optional[str]) -> str:
@@ -58,7 +57,7 @@ def get_package_source(package: str, version: Optional[str]) -> str:
         return get_pypi_download_url(package, version)
 
 
-def get_archive_manager(local_file: Path) -> ArchiveKind:
+def get_archive_manager(local_file: str) -> ArchiveKind:
     if tarfile.is_tarfile(local_file):
         return tarfile.open(local_file)
     elif zipfile.is_zipfile(local_file):
@@ -84,21 +83,25 @@ def download_and_extract(package: str, version: Optional[str], directory: Path) 
     return directory / result_dir
 
 
-def git_create_repository(directory: Path) -> None:
-    subprocess.run(["git", "init"], cwd=directory)
-    git_add_and_commit(msg="Inital commit", repo=directory)
+def git_create_repository(repo: Path) -> None:
+    subprocess.run(["git", "init"], cwd=repo)
+    git_add_and_commit(msg="Inital commit", repo=repo)
 
 
 def git_add_and_commit(msg: str, repo: Path) -> None:
-    subprocess.run(["git", "add", "."])
-    subprocess.run(["git", "commit", "-m", msg, "--author", GIT_AUTHOR])
+    subprocess.run(["git", "add", "."], cwd=repo)
+    subprocess.run(["git", "commit", "-m", msg, "--allow-empty"], cwd=repo)
 
 
-def git_switch_branch(branch: str, repo: Path, new=False) -> None:
+def git_switch_branch(
+    branch: str, repo: Path, new: bool = False, from_branch: Optional[str] = None
+) -> None:
     args = ["git", "checkout"]
     if new:
         args.append("-b")
     args.append(branch)
+    if from_branch:
+        args.append(from_branch)
     subprocess.run(args, cwd=repo)
 
 
@@ -113,28 +116,43 @@ def init_repo(options: Namespace) -> Path:
 
 
 def format_repo_with_version(
-    repo: Path, black_version: BlackVersion, black_repo: Path
-) -> None:
+    repo: Path,
+    from_branch: Optional[str],
+    black_repo: Path,
+    black_version: BlackVersion,
+    input_directory: Path,
+) -> str:
+    current_branch = f"black-{black_version.version}"
     git_switch_branch(black_version.version, repo=black_repo)
-    git_switch_branch(f"black-{black_version.version}", repo=black_repo, new=True)
-    formatter = [sys.executable, (black_repo / "black.py").resolve(), "."]
-    if black_version.pyproject_toml:
-        formatter.extend(["--config", black_version.pyproject_toml])
+    git_switch_branch(current_branch, repo=repo, new=True, from_branch=from_branch)
+
+    formatter: List[Union[Path, str]] = [
+        sys.executable,
+        (black_repo / "black.py").resolve(),
+        ".",
+    ]
+    if black_version.config:
+        formatter.extend(["--config", input_directory / black_version.config])
     subprocess.run(formatter, cwd=repo)
-    subprocess.run(
-        ["git", "commit", "-m", "Format with black", "--author", "Black Gallery <>"],
-        cwd=repo,
-    )
+    git_add_and_commit(f"Format with black v{black_version.version}", repo=repo)
+
+    return current_branch
 
 
 def format_repo(repo: Path, options: Namespace) -> None:
     black_versions = (BlackVersion(*version.split(":")) for version in options.versions)
 
+    from_branch = None
     for black_version in black_versions:
-        format_repo_with_version(
-            repo=repo, black_version=black_version, black_repo=options.black_repo,
+        from_branch = format_repo_with_version(
+            repo=repo,
+            from_branch=from_branch,
+            black_repo=options.black_repo,
+            black_version=black_version,
+            input_directory=options.input,
         )
     git_switch_branch("master", repo=repo)
+    git_switch_branch("master", repo=options.black_repo)
 
 
 def main() -> None:
@@ -150,9 +168,15 @@ def main() -> None:
         "-v", "--version", help="Version for PyPI package", default=None
     )
     parser.add_argument(
+        "-i",
+        "--input",
+        default=Path("/input"),
+        help="Input directory to read pyproject.toml's from",
+    )
+    parser.add_argument(
         "-o",
         "--output",
-        default=Path("output/"),
+        default=Path("/output"),
         help="Output directory to download packages",
     )
     parser.add_argument("versions", nargs="*", default=("master",), help="")
