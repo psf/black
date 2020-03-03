@@ -30,7 +30,7 @@ def get_pypi_download_url(package: str, version: Optional[str]) -> str:
         else:
             raise ValueError(
                 f"No releases found with given version ('{version}') tag. "
-                f"Releases: {metadata['releases'].keys()}"
+                f"Found releases: {metadata['releases'].keys()}"
             )
 
     for source in sources:
@@ -156,28 +156,32 @@ def format_repo(repo: Path, options: Namespace) -> None:
 
 
 def main() -> None:
-    parser = ArgumentParser()
+    parser = ArgumentParser(
+        description="""Black Gallery is a script that
+    automates process of applying different black versions to a selected
+    PyPI package and seeing the results between versions."""
+    )
 
     parser.add_argument(
-        "-p", "--pypi-package", help="PyPI package to download", required=True
+        "-p", "--pypi-package", help="PyPI package to download.", required=True
     )
     parser.add_argument(
-        "-b", "--black-repo", help="Black's git repository", type=Path, required=True
+        "-b", "--black-repo", help="Black's git repository.", type=Path, required=True
     )
     parser.add_argument(
-        "-v", "--version", help="Version for PyPI package", default=None
+        "-v", "--version", help="Version for PyPI given pypi package.", default=None
     )
     parser.add_argument(
         "-i",
         "--input",
         default=Path("/input"),
-        help="Input directory to read pyproject.toml's from",
+        help="Input directory to read configurations.",
     )
     parser.add_argument(
         "-o",
         "--output",
         default=Path("/output"),
-        help="Output directory to download packages",
+        help="Output directory to download and put result artifacts.",
     )
     parser.add_argument("versions", nargs="*", default=("master",), help="")
 
