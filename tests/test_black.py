@@ -1442,8 +1442,8 @@ class BlackTestCase(unittest.TestCase):
         ]
         this_abs = THIS_DIR.resolve()
         sources.extend(
-            black.gen_python_files_in_dir(
-                path, this_abs, include, exclude, report, gitignore
+            black.gen_python_files(
+                path.iterdir(), this_abs, include, exclude, report, gitignore
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))
@@ -1463,8 +1463,8 @@ class BlackTestCase(unittest.TestCase):
         ]
         this_abs = THIS_DIR.resolve()
         sources.extend(
-            black.gen_python_files_in_dir(
-                path, this_abs, include, exclude, report, gitignore
+            black.gen_python_files(
+                path.iterdir(), this_abs, include, exclude, report, gitignore
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))
@@ -1488,8 +1488,8 @@ class BlackTestCase(unittest.TestCase):
         ]
         this_abs = THIS_DIR.resolve()
         sources.extend(
-            black.gen_python_files_in_dir(
-                path,
+            black.gen_python_files(
+                path.iterdir(),
                 this_abs,
                 empty,
                 re.compile(black.DEFAULT_EXCLUDES),
@@ -1515,8 +1515,8 @@ class BlackTestCase(unittest.TestCase):
         ]
         this_abs = THIS_DIR.resolve()
         sources.extend(
-            black.gen_python_files_in_dir(
-                path,
+            black.gen_python_files(
+                path.iterdir(),
                 this_abs,
                 re.compile(black.DEFAULT_INCLUDES),
                 empty,
@@ -1575,8 +1575,8 @@ class BlackTestCase(unittest.TestCase):
         child.is_symlink.return_value = True
         try:
             list(
-                black.gen_python_files_in_dir(
-                    path, root, include, exclude, report, gitignore
+                black.gen_python_files(
+                    path.iterdir(), root, include, exclude, report, gitignore
                 )
             )
         except ValueError as ve:
@@ -1589,8 +1589,8 @@ class BlackTestCase(unittest.TestCase):
         child.is_symlink.return_value = False
         with self.assertRaises(ValueError):
             list(
-                black.gen_python_files_in_dir(
-                    path, root, include, exclude, report, gitignore
+                black.gen_python_files(
+                    path.iterdir(), root, include, exclude, report, gitignore
                 )
             )
         path.iterdir.assert_called()
