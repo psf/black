@@ -4,7 +4,7 @@ name = R"Łukasz"
 F"hello {name}"
 B"hello"
 r"hello"
-fr"hello"
+fR"hello"
 
 # output
 
@@ -15,4 +15,4 @@ name = R"Łukasz"
 f"hello {name}"
 b"hello"
 r"hello"
-fr"hello"
+fR"hello"
