@@ -2,11 +2,11 @@
 from typing import List, Optional
 
 import argparse
+from pathlib import Path
 import re
-import pathlib
 import subprocess
 
-from virtualenv import cli_run
+from virtualenv import cli_run  # type: ignore
 
 # https://www.regexmagic.com/manual.html#xmpversion
 VERSION_RE = re.compile(
@@ -20,46 +20,27 @@ def version_regex(arg_value: str) -> str:
     return arg_value
 
 
-def download_package(
-    package: str, version: Optional[str], path: pathlib.Path
-) -> List[pathlib.Path]:
-    p = subprocess.Popen(["git", "init", str(path)], cwd=str(path))
-    p.wait()
+def _find_package_folders(path: Path) -> List[Path]:
+    top_level = list(path.glob("*.dist-info/top_level.txt"))[0]
+
+    with open(top_level) as tl:
+        package_names = tl.read().splitlines()
+
+    packages = [child for child in path.iterdir() if child.name in package_names]
+    return packages
+
+
+def download_package(package: str, version: Optional[str], path: Path) -> List[Path]:
     if version is None:
         package = f"{package}=={version}"
-    p = subprocess.Popen(
-        ["pip", "download", package, "--no-deps", "--dest", str(path)], cwd=str(path)
-    )
-    p.wait()
-    package_whl = list(
-        filter(lambda i: package.lower() in str(i).lower(), sorted(path.glob("*.whl")))
-    )[0]
-    p = subprocess.Popen(["wheel", "unpack", str(package_whl), "--dest", str(path)])
-    p.wait()
 
-    top_level = list(path.glob("*/*.dist-info/top_level.txt"))[0]
-    with open(top_level) as tl:
-        packages = tl.read().splitlines()
-    package_paths = [
-        subchild
-        for child in path.iterdir()
-        if child.is_dir()
-        for subchild in child.iterdir()
-        if (str(subchild.name) in packages)
-    ]
+    subprocess.run(["pip", "install", package, "--no-deps", "--target", path], cwd=path)
 
-    p = subprocess.Popen(["git", "add", *package_paths], cwd=str(path))
-    p.wait()
-    p = subprocess.Popen(
-        ["git", "config", "user.email", "black@psf.org"], cwd=str(path)
-    )
-    p.wait()
-    p = subprocess.Popen(["git", "commit", "-m", "Initial commit"], cwd=str(path))
-    p.wait()
-    return package_paths
+    # TODO: delete all meta folders and files
+    return _find_package_folders(path)
 
 
-def cleanup_path(path: pathlib.Path) -> None:
+def cleanup_path(path: Path) -> None:
     for child in path.iterdir():
         if child.is_dir():
             cleanup_path(child)
@@ -68,19 +49,29 @@ def cleanup_path(path: pathlib.Path) -> None:
             child.unlink()
 
 
-def install_black(version: str, path: pathlib.Path, *packages: pathlib.Path) -> None:
+def git_init(path: Path, packages: List[Path]) -> None:
+    subprocess.run(["git", "init", path], cwd=path)
+    subprocess.run(["git", "add", *packages], cwd=path)
+    subprocess.run(["git", "config", "user.email", "black@psf.org"], cwd=path)
+    subprocess.run(["git", "commit", "-m", "Initial commit"], cwd=path)
+
+
+def git_create_branch(branch: str, path: Path) -> None:
+    subprocess.run(["git", "checkout", "-b", branch], cwd=path)
+
+
+def git_commit(message: str, path: Path) -> None:
+    subprocess.run(["git", "add", "-u"], cwd=path)
+    subprocess.run(["git", "commit", "-m", message], cwd=path)
+
+
+def install_black(version: str, path: Path, *packages: Path) -> None:
     venv_path = path / f"venv-{version}"
     cli_run([str(venv_path)])
-    p = subprocess.Popen([f"{venv_path}/bin/pip", "install", f"black=={version}"])
-    p.wait()
-    p = subprocess.Popen(["git", "checkout", "-b", f"black-{version}"], cwd=str(path))
-    p.wait()
-    p = subprocess.Popen([f"{venv_path}/bin/black", *packages])
-    p.wait()
-    p = subprocess.Popen(["git", "add", "-u"], cwd=str(path))
-    p.wait()
-    p = subprocess.Popen(["git", "commit", "-m", f"black-{version}"], cwd=str(path))
-    p.wait()
+    subprocess.run([f"{venv_path}/bin/pip", "install", f"black=={version}"])
+    git_create_branch(f"black-{version}", path)
+    subprocess.run([f"{venv_path}/bin/black", *packages])
+    git_commit(f"black-{version}", path)
 
 
 def main() -> None:
@@ -92,10 +83,11 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    path = pathlib.Path("/output")
+    path = Path("/output")
     cleanup_path(path)
     path.mkdir(exist_ok=True)
     packages = download_package(args.package, args.version, path)
+    git_init(path, packages)
     for black_version in args.blacks:
         install_black(black_version, path, *packages)
     print("done!")
