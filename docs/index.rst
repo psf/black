@@ -50,6 +50,7 @@ Contents
 
    installation_and_usage
    the_black_code_style
+   pragmatism
    pyproject_toml
    editor_integration
    blackd

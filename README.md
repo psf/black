@@ -31,11 +31,11 @@ Try it out now using the [Black Playground](https://black.now.sh). Watch the
 ---
 
 _Contents:_ **[Installation and usage](#installation-and-usage)** |
-**[Code style](#the-black-code-style)** | **[pyproject.toml](#pyprojecttoml)** |
-**[Editor integration](#editor-integration)** | **[blackd](#blackd)** |
-**[Version control integration](#version-control-integration)** |
-**[Ignoring unmodified files](#ignoring-unmodified-files)** | **[Used by](#used-by)** |
-**[Testimonials](#testimonials)** | **[Show your style](#show-your-style)** |
+**[Code style](#the-black-code-style)** | **[Pragmatism](#pragmatism)**
+**[pyproject.toml](#pyprojecttoml)** | **[Editor integration](#editor-integration)** |
+**[blackd](#blackd)** | **[Version control integration](#version-control-integration)**
+| **[Ignoring unmodified files](#ignoring-unmodified-files)** | **[Used by](#used-by)**
+| **[Testimonials](#testimonials)** | **[Show your style](#show-your-style)** |
 **[Contributing](#contributing-to-black)** | **[Change Log](#change-log)** |
 **[Authors](#authors)**
 
@@ -488,6 +488,47 @@ file that are not enforced yet but might be in a future version of the formatter
   versions of Python;
 - for arguments that default to `None`, use `Optional[]` explicitly;
 - use `float` instead of `Union[int, float]`.
+
+## Pragmatism
+
+Early versions of _Black_ used to be absolutist in some respects. They took after its
+initial author. This was fine at the time as it made the implementation simpler and
+there were not many users anyway. Not many edge cases were reported. As a mature tool,
+_Black_ does make some exceptions to rules it otherwise holds. This section documents
+what those exceptions are and why this is the case.
+
+### The magic trailling comma
+
+_Black_ in general does not take existing formatting into account.
+
+However, there are cases where you put a short collection or function call in your code
+but you anticipate it will grow in the future.
+
+For example:
+
+```py3
+TRANSLATIONS = {
+    "en_us": "English (US)",
+    "pl_pl": "polski",
+}
+```
+
+Early versions of _Black_ used to ruthlessly collapse those into one line (it fits!).
+Now, you can communicate that you don't want that by putting a trailing comma in the
+collection yourself. When you do, _Black_ will know to always explode your collection
+into one item per line.
+
+How do you make it stop? Just delete that trailing comma and _Black_ will collapse your
+collection into one line if it fits.
+
+### r"strings" and R"strings"
+
+_Black_ normalizes string quotes as well as string prefixes, making them lowercase. One
+exception to this rule is r-strings. It turns out that the very popular
+[MagicPython](https://github.com/MagicStack/MagicPython/) syntax highlighter, used by
+default by (among others) GitHub and Visual Studio Code, differentiates between
+r-strings and R-strings. The former are syntax highlighted as regular expressions while
+the latter are treated as true raw strings with no special semantics.
 
 ## pyproject.toml
 
