@@ -1,6 +1,9 @@
 FROM python:3
 
-RUN pip install git+https://github.com/psf/black.git
+WORKDIR /src
+COPY . .
+RUN pip install .
+
 RUN git config --global user.email "nobody@example.com"
 RUN git config --global user.name "BlackBot"
 

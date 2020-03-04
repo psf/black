@@ -7,7 +7,7 @@ This tool allows you to view the format changes that Black would make on a given
 Build the image:
 
 ```
-docker build -t black_gallery .
+docker build -t black_gallery .. -f Dockerfile
 
 ## Usage
 
@@ -16,10 +16,12 @@ You'll want to bind-mount a volume on your host, e.g. `-v /tmp/output/:/output`,
 Then, run with a command such as the following:
 
 ```
+
 docker run -ti -v /tmp/output/:/output black_gallery \
-  -p Django \
-  -v 3.0.3 \
-  19.3b0 19.10b0 master
+ -p Django \
+ -v 3.0.3 \
+ 19.3b0 19.10b0 master
+
 ```
 
 where:
@@ -36,23 +38,31 @@ To run Black with a custom config, you can place a Black config file in `/tmp/ou
 
 # Django 3.0.3 with various Black version/config permutations
 ```
+
 docker run -ti -v /tmp/output/:/output black_gallery \
-  -p Django \
-  -v 3.0.3 \
-  19.3b0:someconfig.toml 19.10b0:someotherconfig.toml master:pyproject.toml
+ -p Django \
+ -v 3.0.3 \
+ 19.3b0:someconfig.toml 19.10b0:someotherconfig.toml master:pyproject.toml
+
 ```
 
 ### latest Twisted with various Black version/config permutations
 
 ```
+
 docker run -it -v /tmp/output:/output black_gallery \
-  -p Twisted \
-  19.10b0:pyproject-19.10b0.toml master:pyproject-master.toml
+ -p Twisted \
+ 19.10b0:pyproject-19.10b0.toml master:pyproject-master.toml
+
 ```
 
 ### cpython version 3.9.0a4 with Black master
 
 ```
+
 docker run -it -v /tmp/output:/output black_gallery \
-  -p cpython -v v3.9.0a4
+ -p cpython -v v3.9.0a4
+
+```
+
 ```
