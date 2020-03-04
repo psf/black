@@ -186,7 +186,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
 
 
 @dataclass
-class FileMode:
+class Mode:
     target_versions: Set[TargetVersion] = field(default_factory=set)
     line_length: int = DEFAULT_LINE_LENGTH
     string_normalization: bool = True
@@ -207,6 +207,10 @@ class FileMode:
             str(int(self.is_pyi)),
         ]
         return ".".join(parts)
+
+
+# Legacy name, left for integrations.
+FileMode = Mode
 
 
 def supports_feature(target_versions: Set[TargetVersion], feature: Feature) -> bool:
@@ -432,7 +436,7 @@ def main(
     else:
         # We'll autodetect later.
         versions = set()
-    mode = FileMode(
+    mode = Mode(
         target_versions=versions,
         line_length=line_length,
         is_pyi=pyi,
@@ -507,7 +511,7 @@ def path_empty(
 
 
 def reformat_one(
-    src: Path, fast: bool, write_back: WriteBack, mode: FileMode, report: "Report"
+    src: Path, fast: bool, write_back: WriteBack, mode: Mode, report: "Report"
 ) -> None:
     """Reformat a single file under `src` without spawning child processes.
 
@@ -540,11 +544,7 @@ def reformat_one(
 
 
 def reformat_many(
-    sources: Set[Path],
-    fast: bool,
-    write_back: WriteBack,
-    mode: FileMode,
-    report: "Report",
+    sources: Set[Path], fast: bool, write_back: WriteBack, mode: Mode, report: "Report"
 ) -> None:
     """Reformat multiple files using a ProcessPoolExecutor."""
     loop = asyncio.get_event_loop()
@@ -574,7 +574,7 @@ async def schedule_formatting(
     sources: Set[Path],
     fast: bool,
     write_back: WriteBack,
-    mode: FileMode,
+    mode: Mode,
     report: "Report",
     loop: asyncio.AbstractEventLoop,
     executor: Executor,
@@ -644,7 +644,7 @@ async def schedule_formatting(
 def format_file_in_place(
     src: Path,
     fast: bool,
-    mode: FileMode,
+    mode: Mode,
     write_back: WriteBack = WriteBack.NO,
     lock: Any = None,  # multiprocessing.Manager().Lock() is some crazy proxy
 ) -> bool:
@@ -688,7 +688,7 @@ def format_file_in_place(
 
 
 def format_stdin_to_stdout(
-    fast: bool, *, write_back: WriteBack = WriteBack.NO, mode: FileMode
+    fast: bool, *, write_back: WriteBack = WriteBack.NO, mode: Mode
 ) -> bool:
     """Format file on stdin. Return True if changed.
 
@@ -720,9 +720,7 @@ def format_stdin_to_stdout(
         f.detach()
 
 
-def format_file_contents(
-    src_contents: str, *, fast: bool, mode: FileMode
-) -> FileContent:
+def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileContent:
     """Reformat contents a file and return new contents.
 
     If `fast` is False, additionally confirm that the reformatted code is
@@ -742,14 +740,14 @@ def format_file_contents(
     return dst_contents
 
 
-def format_str(src_contents: str, *, mode: FileMode) -> FileContent:
+def format_str(src_contents: str, *, mode: Mode) -> FileContent:
     """Reformat a string and return new contents.
 
     `mode` determines formatting options, such as how many characters per line are
     allowed.  Example:
 
     >>> import black
-    >>> print(black.format_str("def f(arg:str='')->None:...", mode=FileMode()))
+    >>> print(black.format_str("def f(arg:str='')->None:...", mode=Mode()))
     def f(arg: str = "") -> None:
         ...
 
@@ -757,7 +755,7 @@ def format_str(src_contents: str, *, mode: FileMode) -> FileContent:
     >>> print(
     ...   black.format_str(
     ...     "def f(arg:str='')->None: hey",
-    ...     mode=black.FileMode(
+    ...     mode=black.Mode(
     ...       target_versions={black.TargetVersion.PY36},
     ...       line_length=10,
     ...       string_normalization=False,
@@ -3836,7 +3834,7 @@ def assert_equivalent(src: str, dst: str) -> None:
         ) from None
 
 
-def assert_stable(src: str, dst: str, mode: FileMode) -> None:
+def assert_stable(src: str, dst: str, mode: Mode) -> None:
     """Raise AssertionError if `dst` reformats differently the second time."""
     newdst = format_str(dst, mode=mode)
     if dst != newdst:
@@ -4107,11 +4105,11 @@ def can_omit_invisible_parens(line: Line, line_length: int) -> bool:
     return False
 
 
-def get_cache_file(mode: FileMode) -> Path:
+def get_cache_file(mode: Mode) -> Path:
     return CACHE_DIR / f"cache.{mode.get_cache_key()}.pickle"
 
 
-def read_cache(mode: FileMode) -> Cache:
+def read_cache(mode: Mode) -> Cache:
     """Read the cache if it exists and is well formed.
 
     If it is not well formed, the call to write_cache later should resolve the issue.
@@ -4151,7 +4149,7 @@ def filter_cached(cache: Cache, sources: Iterable[Path]) -> Tuple[Set[Path], Set
     return todo, done
 
 
-def write_cache(cache: Cache, sources: Iterable[Path], mode: FileMode) -> None:
+def write_cache(cache: Cache, sources: Iterable[Path], mode: Mode) -> None:
     """Update the cache file."""
     cache_file = get_cache_file(mode)
     try:
