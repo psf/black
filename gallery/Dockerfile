@@ -6,8 +6,6 @@ RUN apt-get install git apt-utils -y
 
 RUN git config --global user.email "black@psf.github.com"
 RUN git config --global user.name "Gallery/Black"
-RUN git clone https://github.com/psf/black.git black
-RUN pip install -e black/
 
 COPY gallery.py /
-ENTRYPOINT ["python", "/gallery.py", "-b", "black"]
+ENTRYPOINT ["python", "/gallery.py"]

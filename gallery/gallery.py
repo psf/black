@@ -9,6 +9,7 @@ from typing import List, NamedTuple, Optional, Union, cast
 from urllib.request import urlopen, urlretrieve
 
 PYPI_INSTANCE = "https://pypi.org/pypi"
+INTERNAL_BLACK_REPO = "__black"  # This shouldn't be conflict with any real package
 
 ArchiveKind = Union[tarfile.TarFile, zipfile.ZipFile]
 
@@ -112,6 +113,18 @@ def init_repo(options: Namespace) -> Path:
         package=options.pypi_package, version=options.version, directory=options.output
     )
     git_create_repository(source_directory)
+    if options.black_repo is None:
+        subprocess.run(
+            ["git", "clone", "https://github.com/psf/black.git", INTERNAL_BLACK_REPO],
+            cwd=options.output,
+        )
+        subprocess.run(
+            ["pip", "install", "-e", INTERNAL_BLACK_REPO], cwd=options.output
+        )
+        options.black_repo = options.output / INTERNAL_BLACK_REPO
+    else:
+        subprocess.run(["pip", "install", "black"])
+
     return source_directory
 
 
@@ -134,7 +147,7 @@ def format_repo_with_version(
     if black_version.config:
         formatter.extend(["--config", input_directory / black_version.config])
     subprocess.run(formatter, cwd=repo)
-    git_add_and_commit(f"Format with black v{black_version.version}", repo=repo)
+    git_add_and_commit(f"Format with black:{black_version.version}", repo=repo)
 
     return current_branch
 
@@ -165,9 +178,7 @@ def main() -> None:
     parser.add_argument(
         "-p", "--pypi-package", help="PyPI package to download.", required=True
     )
-    parser.add_argument(
-        "-b", "--black-repo", help="Black's git repository.", type=Path, required=True
-    )
+    parser.add_argument("-b", "--black-repo", help="Black's git repository.", type=Path)
     parser.add_argument(
         "-v", "--version", help="Version for PyPI given pypi package.", default=None
     )
