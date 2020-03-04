@@ -115,6 +115,9 @@ main() {
 
         # create a new branch (-B will reset if it already exists)
         branch="black-${bv}"
+        if [ ! -z "${toml}" ]; then
+            branch="${branch}-${toml}"
+        fi
         git checkout -B "${branch}"
 
         echo "Formatting ${PROJECT} with ${bv}; outputting to ${TARGET}"
