@@ -996,6 +996,12 @@ still try but prepare to be disappointed.
 
 More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
 
+## Change Log
+
+The log's become rather long. It moved to its own file.
+
+See [CHANGES](CHANGES.md).
+
 ## Authors
 
 Glued together by [Łukasz Langa](mailto:lukasz@langa.pl).
