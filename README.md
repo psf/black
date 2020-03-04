@@ -1009,8 +1009,9 @@ Glued together by [Łukasz Langa](mailto:lukasz@langa.pl).
 Maintained with [Carol Willing](mailto:carolcode@willingconsulting.com),
 [Carl Meyer](mailto:carl@oddbird.net),
 [Jelle Zijlstra](mailto:jelle.zijlstra@gmail.com),
-[Mika Naylor](mailto:mail@autophagy.io), and
-[Zsolt Dollenstein](mailto:zsol.zsol@gmail.com).
+[Mika Naylor](mailto:mail@autophagy.io),
+[Zsolt Dollenstein](mailto:zsol.zsol@gmail.com), and
+[Cooper Lees](mailto:me@cooperlees.com).
 
 Multiple contributions by:
 
