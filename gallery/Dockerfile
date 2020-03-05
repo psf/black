@@ -1,8 +1,6 @@
-FROM python:3
+FROM python:3-slim
 
-WORKDIR /src
-COPY . .
-RUN pip install .
+RUN apt-get update && apt-get install -y git
 
 RUN git config --global user.email "nobody@example.com"
 RUN git config --global user.name "BlackBot"
