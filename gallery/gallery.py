@@ -1,17 +1,23 @@
 import json
 import subprocess
-import sys
 import tarfile
+import tempfile
+import venv
 import zipfile
 from argparse import ArgumentParser, Namespace
+from contextlib import contextmanager
+from functools import partial
 from pathlib import Path
-from typing import List, NamedTuple, Optional, Union, cast
+from typing import Generator, List, NamedTuple, Optional, Union, cast
 from urllib.request import urlopen, urlretrieve
 
 PYPI_INSTANCE = "https://pypi.org/pypi"
-INTERNAL_BLACK_REPO = "__black"  # This shouldn't be conflict with any real package
+INTERNAL_BLACK_REPO = f"{tempfile.gettempdir()}/__black"
 
 ArchiveKind = Union[tarfile.TarFile, zipfile.ZipFile]
+
+subprocess.run = partial(subprocess.run, check=True)  # type: ignore
+# https://github.com/python/mypy/issues/1484
 
 
 class BlackVersion(NamedTuple):
@@ -118,14 +124,19 @@ def init_repo(options: Namespace) -> Path:
             ["git", "clone", "https://github.com/psf/black.git", INTERNAL_BLACK_REPO],
             cwd=options.output,
         )
-        subprocess.run(
-            ["pip", "install", "-e", INTERNAL_BLACK_REPO], cwd=options.output
-        )
         options.black_repo = options.output / INTERNAL_BLACK_REPO
-    else:
-        subprocess.run(["pip", "install", "black"])
 
     return source_directory
+
+
+@contextmanager
+def new_venv() -> Generator[Path, None, None]:
+    try:
+        directory = tempfile.TemporaryDirectory()
+        venv.create(directory.name, with_pip=True)
+        yield Path(directory.name) / "bin" / "python"
+    finally:
+        directory.cleanup()
 
 
 def format_repo_with_version(
@@ -140,13 +151,16 @@ def format_repo_with_version(
     git_switch_branch(current_branch, repo=repo, new=True, from_branch=from_branch)
 
     formatter: List[Union[Path, str]] = [
-        sys.executable,
         (black_repo / "black.py").resolve(),
         ".",
     ]
     if black_version.config:
         formatter.extend(["--config", input_directory / black_version.config])
-    subprocess.run(formatter, cwd=repo)
+
+    with new_venv() as python:
+        subprocess.run([python, "-m", "pip", "install", "-e", black_repo])
+        subprocess.run([python, *formatter], cwd=repo)
+
     git_add_and_commit(f"Format with black:{black_version.version}", repo=repo)
 
     return current_branch
@@ -186,12 +200,14 @@ def main() -> None:
         "-i",
         "--input",
         default=Path("/input"),
+        type=Path,
         help="Input directory to read configurations.",
     )
     parser.add_argument(
         "-o",
         "--output",
         default=Path("/output"),
+        type=Path,
         help="Output directory to download and put result artifacts.",
     )
     parser.add_argument("versions", nargs="*", default=("master",), help="")
