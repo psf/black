@@ -8,6 +8,7 @@ Build the image:
 
 ```
 docker build -t black_gallery .. -f Dockerfile
+```
 
 ## Usage
 
@@ -16,16 +17,14 @@ You'll want to bind-mount a volume on your host, e.g. `-v /tmp/output/:/output`,
 Then, run with a command such as the following:
 
 ```
-
 docker run -ti -v /tmp/output/:/output black_gallery \
  -p Django \
  -v 3.0.3 \
  19.3b0 19.10b0 master
-
 ```
 
 where:
-- `-p` is the package to test (`cpython` and `mypy` values are specially treated)
+- `-p` is the package to test (`cpython` and `pypy` values are specially treated)
 - `-v` is the package version
 
 Any further arguments are interpreted as versions of Black, e.g. `master`.

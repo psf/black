@@ -11,14 +11,7 @@ prepare() {
 
     echo "Package: ${PROJECT}"
     echo "Black versions: ${BLACK_VERSIONS[*]}"
-
     echo "------------------------------------"
-    read -p "Continue? " -n 1 -r
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo " Aborting."
-        exit 1
-    fi
-    echo # newline, for aesthetics
 }
 
 get_source_for_project() {
@@ -37,7 +30,7 @@ get_source_for_project() {
         wget "${src}" -P /tmp
         unzip -qd "${target}" "/tmp/${version}.zip"
         ;;
-    mypy)
+    pypy)
         version="${version:-branch/default}" # assume "branch/default" if version not specified
         src="https://foss.heptapod.net/pypy/pypy/repository/${version}/archive.tar.bz2"
         echo "getting source: ${src}"
@@ -47,8 +40,8 @@ get_source_for_project() {
         if [ ! -z "${version}" ]; then
             project="${project}==${version}"
         fi
-        echo "Running: pip install --quiet --no-warn-script-location --no-deps --no-binary all --no-cache '--prefix=${target}' '${project}'"
-        pip install --quiet --no-warn-script-location --no-deps --no-binary all --no-cache "--prefix=${target}" "${project}"
+        echo "Running: pip install --quiet --no-warn-script-location --no-deps --no-binary :all: --no-cache '--prefix=${target}' '${project}'"
+        pip install --quiet --no-warn-script-location --no-deps --no-binary :all: --no-cache "--prefix=${target}" "${project}"
         ;;
     esac
 
@@ -90,11 +83,14 @@ init_git() {
     fi
 
     git init .
-    git add .
-    git commit -q -m "Initial commit"
+    git checkout -qB master
+    git add --ignore-errors .
+    git commit -q --allow-empty -m "Initial commit"
 }
 
 main() {
+    init_git "${TARGET}"
+
     for bv in "${BLACK_VERSIONS[@]}"; do
 
         # extract .toml file if present
@@ -109,7 +105,6 @@ main() {
         IFS=' '
 
         config=$(get_config_str "${toml}")
-        init_git "${TARGET}"
         get_black "${bv}"
         black --version
 
@@ -121,6 +116,7 @@ main() {
         git checkout -B "${branch}"
 
         echo "Formatting ${PROJECT} with ${bv}; outputting to ${TARGET}"
+        echo "Running: black ${config} ${TARGET}"
         # shellcheck disable=SC2086
         black ${config} "${TARGET}"
 
