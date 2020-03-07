@@ -4137,7 +4137,7 @@ class StringParser:
 
     # Lookup Table for Next State
     _goto: Dict[Tuple[ParserState, NodeType], ParserState] = {
-        # String trailer may start with '.' OR '%'.
+        # A string trailer may start with '.' OR '%'.
         (START, token.DOT): DOT,
         (START, token.PERCENT): PERCENT,
         (START, DEFAULT_TOKEN): DONE,
@@ -4147,13 +4147,17 @@ class StringParser:
         # is the last symbol in the string trailer.
         (NAME, token.LPAR): LPAR,
         (NAME, DEFAULT_TOKEN): DONE,
-        # A '%' symbol can be followed by an '(' or a single agument (e.g. a
+        # A '%' symbol can be followed by an '(' or a single argument (e.g. a
         # string or variable name).
         (PERCENT, token.LPAR): LPAR,
         (PERCENT, DEFAULT_TOKEN): SINGLE_FMT_ARG,
+        # If a '%' symbol is followed by a single argument, that argument is
+        # the last leaf in the string trailer.
         (SINGLE_FMT_ARG, DEFAULT_TOKEN): DONE,
-        # If present, a ')' symbol is always the last symbol in a string
-        # trailer.
+        # If present, a ')' symbol is the last symbol in a string trailer.
+        # (NOTE: LPARS and nested RPARS are not included in this lookup table,
+        # since they are treated as a special case by the parsing logic in this
+        # classes' implementation.)
         (RPAR, DEFAULT_TOKEN): DONE,
     }
 
@@ -4218,12 +4222,13 @@ class StringParser:
                 self._state = self._goto[current_state, next_token]
             else:
                 # Otherwise, we check if a the current state was assigned a
-                # default. If no default has been assigned, then this parser
-                # has a logic error.
+                # default.
                 if (current_state, self.DEFAULT_TOKEN) in self._goto:
                     self._state = self._goto[current_state, self.DEFAULT_TOKEN]
+                # If no default has been assigned, then this parser has a logic
+                # error.
                 else:
-                    raise RuntimeError(f"{self.__class__.__name__} ERROR!")
+                    raise RuntimeError(f"{self.__class__.__name__} LOGIC ERROR!")
 
             if self._state == self.DONE:
                 return False
