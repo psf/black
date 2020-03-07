@@ -95,11 +95,11 @@ class NothingChanged(UserWarning):
     """Raised when reformatted code is the same as source."""
 
 
-class CantTransform(Exception):
+class CannotTransform(Exception):
     """Base class for errors raised by Transformers."""
 
 
-class CantSplit(CantTransform):
+class CannotSplit(CannotTransform):
     """A readable split that fits the allotted line length is impossible."""
 
 
@@ -131,7 +131,7 @@ class Err(Generic[E]):
 # influenced by that used by the Rust programming language
 # (see https://doc.rust-lang.org/book/ch09-00-error-handling.html).
 Result = Union[Ok[T], Err[E]]
-TResult = Result[T, CantTransform]  # (T)ransform Result
+TResult = Result[T, CannotTransform]  # (T)ransform Result
 TMatchResult = TResult[Index]
 
 
@@ -2525,7 +2525,9 @@ def transform_line(
         try:
             for l in transform(line, features):
                 if str(l).strip("\n") == line_str:
-                    raise CantTransform("Line transformer returned an unchanged result")
+                    raise CannotTransform(
+                        "Line transformer returned an unchanged result"
+                    )
 
                 result.extend(
                     transform_line(
@@ -2535,7 +2537,7 @@ def transform_line(
                         features=features,
                     )
                 )
-        except CantTransform:
+        except CannotTransform:
             continue
         else:
             yield from result
@@ -2583,7 +2585,7 @@ class StringTransformer(ABC):
             * Ok(string_idx) such that `line.leaves[string_idx]` is our target
             string, if a match was able to be made.
                 OR
-            * Err(CantTransform), if a match was not able to be made.
+            * Err(CannotTransform), if a match was not able to be made.
         """
 
     @abstractmethod
@@ -2592,7 +2594,7 @@ class StringTransformer(ABC):
         Yields:
             * Ok(new_line) where new_line is the new transformed line.
                 OR
-            * Err(CantTransform) if the transformation failed for some reason. The
+            * Err(CannotTransform) if the transformation failed for some reason. The
             `do_match(...)` template method should usually be used to reject
             the form of the given Line, but in some cases it is difficult to
             know whether or not a Line meets the StringTransformer's
@@ -2602,7 +2604,7 @@ class StringTransformer(ABC):
             This method should NOT mutate @line directly, but it MAY mutate the
             Line's underlying Node structure. (WARNING: If the underlying Node
             structure IS altered, then this method should NOT be allowed to
-            yield an CantTransform after that point.)
+            yield an CannotTransform after that point.)
         """
 
     def __call__(self, line: Line, _features: Collection[Feature]) -> Iterator[Line]:
@@ -2611,19 +2613,19 @@ class StringTransformer(ABC):
         the Transformer type.
 
         Raises:
-            CantTransform(...) if the concrete StringTransformer class is unable
+            CannotTransform(...) if the concrete StringTransformer class is unable
             to transform @line.
         """
         # Optimization to avoid calling `self.do_match(...)` when the line does
         # not contain any string.
         if not any(leaf.type == token.STRING for leaf in line.leaves):
-            raise CantTransform("There are no strings in this line.")
+            raise CannotTransform("There are no strings in this line.")
 
         match_result = self.do_match(line)
 
         if isinstance(match_result, Err):
             cant_transform = match_result.err()
-            raise CantTransform(
+            raise CannotTransform(
                 f"The string transformer {self.__class__.__name__} does not recognize"
                 " this line as one that it can transform."
             ) from cant_transform
@@ -2633,7 +2635,7 @@ class StringTransformer(ABC):
         for line_result in self.do_transform(line, string_idx):
             if isinstance(line_result, Err):
                 cant_transform = line_result.err()
-                raise CantTransform(
+                raise CannotTransform(
                     "StringTransformer failed while attempting to transform string."
                 ) from cant_transform
             line = line_result.ok()
@@ -2766,7 +2768,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             rblc_cant_transform = rblc_result.err()
             msg_cant_transform.__cause__ = rblc_cant_transform
 
-            cant_transform = CantTransform(
+            cant_transform = CannotTransform(
                 "StringMerger failed to merge any strings in this line."
             )
             cant_transform.__cause__ = msg_cant_transform
@@ -2786,7 +2788,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             Ok(new_line), if @line contains backslash line-continuation
             characters.
                 OR
-            Err(CantTransform), otherwise.
+            Err(CannotTransform), otherwise.
         """
         LL = line.leaves
 
@@ -2819,7 +2821,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             Ok(new_line), if ALL of the validation checks found in
             __validate_msg(...) pass.
                 OR
-            Err(CantTransform), otherwise.
+            Err(CannotTransform), otherwise.
         """
         LL = line.leaves
 
@@ -2962,7 +2964,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
         Returns:
             * Ok(None), if ALL validation checks (listed below) pass.
                 OR
-            * Err(CantTransform), if any of the following are true:
+            * Err(CannotTransform), if any of the following are true:
                 - The target string is not in a string group (i.e. it has no
                   adjacent strings).
                 - The string group has more than one inline comment.
@@ -3196,7 +3198,7 @@ class BaseStringSplitter(StringTransformer):
         Returns:
             * Ok(None), if ALL of the requirements are met.
                 OR
-            * Err(CantTransform), if ANY of the requirements are NOT met.
+            * Err(CannotTransform), if ANY of the requirements are NOT met.
         """
         LL = line.leaves
 
@@ -4236,12 +4238,12 @@ class StringParser:
         return True
 
 
-def TErr(msg: str) -> Err[CantTransform]:
+def TErr(msg: str) -> Err[CannotTransform]:
     """(T)ransform Err
 
     Convenience function used when working with the TResult type.
     """
-    cant_transform = CantTransform(msg)
+    cant_transform = CannotTransform(msg)
     return Err(cant_transform)
 
 
@@ -4495,7 +4497,7 @@ def left_hand_split(line: Line, _features: Collection[Feature] = ()) -> Iterator
                 matching_bracket = leaf
                 current_leaves = body_leaves
     if not matching_bracket:
-        raise CantSplit("No brackets found")
+        raise CannotSplit("No brackets found")
 
     head = bracket_split_build_line(head_leaves, line, matching_bracket)
     body = bracket_split_build_line(body_leaves, line, matching_bracket, is_body=True)
@@ -4540,7 +4542,7 @@ def right_hand_split(
         # If there is no opening or closing_bracket that means the split failed and
         # all content is in the tail.  Otherwise, if `head_leaves` are empty, it means
         # the matching `opening_bracket` wasn't available on `line` anymore.
-        raise CantSplit("No brackets found")
+        raise CannotSplit("No brackets found")
 
     tail_leaves.reverse()
     body_leaves.reverse()
@@ -4571,17 +4573,17 @@ def right_hand_split(
             yield from right_hand_split(line, line_length, features=features, omit=omit)
             return
 
-        except CantSplit:
+        except CannotSplit:
             if not (
                 can_be_split(body)
                 or is_line_short_enough(body, line_length=line_length)
             ):
-                raise CantSplit(
+                raise CannotSplit(
                     "Splitting failed, body is still too long and can't be split."
                 )
 
             elif head.contains_multiline_strings() or tail.contains_multiline_strings():
-                raise CantSplit(
+                raise CannotSplit(
                     "The current optional pair of parentheses is bound to fail to"
                     " satisfy the splitting algorithm because the head or the tail"
                     " contains multiline strings which by definition never fit one"
@@ -4596,7 +4598,7 @@ def right_hand_split(
 
 
 def bracket_split_succeeded_or_raise(head: Line, body: Line, tail: Line) -> None:
-    """Raise :exc:`CantSplit` if the last left- or right-hand split failed.
+    """Raise :exc:`CannotSplit` if the last left- or right-hand split failed.
 
     Do nothing otherwise.
 
@@ -4612,10 +4614,10 @@ def bracket_split_succeeded_or_raise(head: Line, body: Line, tail: Line) -> None
     tail_len = len(str(tail).strip())
     if not body:
         if tail_len == 0:
-            raise CantSplit("Splitting brackets produced the same line")
+            raise CannotSplit("Splitting brackets produced the same line")
 
         elif tail_len < 3:
-            raise CantSplit(
+            raise CannotSplit(
                 f"Splitting brackets on an empty body to save {tail_len} characters is"
                 " not worth it"
             )
@@ -4688,17 +4690,17 @@ def delimiter_split(line: Line, features: Collection[Feature] = ()) -> Iterator[
     try:
         last_leaf = line.leaves[-1]
     except IndexError:
-        raise CantSplit("Line empty")
+        raise CannotSplit("Line empty")
 
     bt = line.bracket_tracker
     try:
         delimiter_priority = bt.max_delimiter_priority(exclude={id(last_leaf)})
     except ValueError:
-        raise CantSplit("No delimiters found")
+        raise CannotSplit("No delimiters found")
 
     if delimiter_priority == DOT_PRIORITY:
         if bt.delimiter_count_with_priority(delimiter_priority) == 1:
-            raise CantSplit("Splitting a single attribute from its owner looks wrong")
+            raise CannotSplit("Splitting a single attribute from its owner looks wrong")
 
     current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
     lowest_depth = sys.maxsize
@@ -4754,7 +4756,7 @@ def standalone_comment_split(
 ) -> Iterator[Line]:
     """Split standalone comments from the rest of the line."""
     if not line.contains_standalone_comments(0):
-        raise CantSplit("Line does not have any standalone comments")
+        raise CannotSplit("Line does not have any standalone comments")
 
     current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
 
