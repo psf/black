@@ -3221,7 +3221,7 @@ class BaseStringSplitter(StringTransformer):
             line.comments
             and list(line.comments.values())[0]
             and re.match(
-                r"^#\s*([A-Za-z_0-9]+:.*|noqa)\s*$",
+                r"^#\s*([a-z_0-9]+:.*|noqa)\s*$",
                 list(line.comments.values())[0][0].value,
                 re.IGNORECASE,
             )
