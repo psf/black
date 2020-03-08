@@ -178,6 +178,21 @@ def foo():
 
 x = f"This is a {{really}} long string that needs to be split without a doubt (i.e. most definitely). In short, this {string} that can't possibly be {{expected}} to fit all together on one line. In {fact} it may even take up three or more lines... like four or five... but probably just four."
 
+long_unmergable_string_with_pragma = (
+    "This is a really long string that can't be merged because it has a likely pragma at the end"  # type: ignore
+    " of it."
+)
+
+long_unmergable_string_with_pragma = (
+    "This is a really long string that can't be merged because it has a likely pragma at the end"  # noqa
+    " of it."
+)
+
+long_unmergable_string_with_pragma = (
+    "This is a really long string that can't be merged because it has a likely pragma at the end"  # pylint: disable=some-pylint-check
+    " of it."
+)
+
 ########## REGRESSION TESTS ##########
 class A:
     def foo():
@@ -862,6 +877,21 @@ x = (
     f" most definitely). In short, this {string} that can't possibly be {{expected}} to"
     f" fit all together on one line. In {fact} it may even take up three or more"
     " lines... like four or five... but probably just four."
+)
+
+long_unmergable_string_with_pragma = (
+    "This is a really long string that can't be merged because it has a likely pragma at the end"  # type: ignore
+    " of it."
+)
+
+long_unmergable_string_with_pragma = (
+    "This is a really long string that can't be merged because it has a likely pragma at the end"  # noqa
+    " of it."
+)
+
+long_unmergable_string_with_pragma = (
+    "This is a really long string that can't be merged because it has a likely pragma at the end"  # pylint: disable=some-pylint-check
+    " of it."
 )
 
 ########## REGRESSION TESTS ##########

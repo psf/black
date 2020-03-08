@@ -2984,6 +2984,11 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
                     num_of_inline_string_comments += 1
                 break
 
+            if id(leaf) in line.comments and contains_pragma_comment(
+                line.comments[id(leaf)]
+            ):
+                return TErr("Cannot merge strings which have pragma comments.")
+
             if has_triple_quotes(leaf.value):
                 return TErr("StringMerger does NOT merge multiline strings.")
 
@@ -3219,14 +3224,8 @@ class BaseStringSplitter(StringTransformer):
                 " no parent)."
             )
 
-        if (
-            line.comments
-            and list(line.comments.values())[0]
-            and re.match(
-                r"^#\s*([a-z_0-9]+:.*|noqa)\s*$",
-                list(line.comments.values())[0][0].value,
-                re.IGNORECASE,
-            )
+        if id(line.leaves[string_idx]) in line.comments and contains_pragma_comment(
+            line.comments[id(line.leaves[string_idx])]
         ):
             return TErr(
                 "Line appears to end with an inline pragma comment. Splitting the line"
@@ -4245,6 +4244,14 @@ def TErr(msg: str) -> Err[CannotTransform]:
     """
     cant_transform = CannotTransform(msg)
     return Err(cant_transform)
+
+
+def contains_pragma_comment(comment_list: List[Leaf]) -> bool:
+    for comment in comment_list:
+        if comment.value.startswith(("# type:", "# noqa", "# pylint:")):
+            return True
+
+    return False
 
 
 def insert_str_child_factory(string_leaf: Leaf) -> Callable[[LN], None]:
