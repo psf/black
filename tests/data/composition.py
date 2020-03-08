@@ -10,13 +10,13 @@ class C:
             )
             self.assertEqual(
                 unstyle(str(report)),
-                "2 files reformatted, 1 file left unchanged, 1 file failed to "
-                "reformat.",
+                "2 files reformatted, 1 file left unchanged, 1 file failed to"
+                " reformat.",
             )
             self.assertEqual(
                 unstyle(str(report)),
-                "2 files reformatted, 2 files left unchanged, 2 files failed to "
-                "reformat.",
+                "2 files reformatted, 2 files left unchanged, 2 files failed to"
+                " reformat.",
             )
             for i in (a,):
                 if (
