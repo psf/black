@@ -1056,7 +1056,7 @@ Maintained with [Carol Willing](mailto:carolcode@willingconsulting.com),
 
 Multiple contributions by:
 
-- [Abdur-Rahmaan Janhangeer](mailto:cryptolabour@gmail.com)
+- [Abdur-Rahmaan Janhangeer](mailto:arj.python@gmail.com)
 - [Adam Johnson](mailto:me@adamj.eu)
 - [Alexander Huynh](mailto:github@grande.coffee)
 - [Andrew Thorp](mailto:andrew.thorp.dev@gmail.com)
