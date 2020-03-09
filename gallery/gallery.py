@@ -51,7 +51,7 @@ def get_pypi_download_url(package: str, version: Optional[str]) -> str:
             sources = metadata["releases"][version]
         else:
             raise ValueError(
-                f"No releases found with given version ('{version}') tag. "
+                f"No releases found with version ('{version}') tag. "
                 f"Found releases: {metadata['releases'].keys()}"
             )
 
@@ -253,22 +253,22 @@ def format_repos(repos: Tuple[Path, ...], options: Namespace) -> None:
 def main() -> None:
     parser = ArgumentParser(
         description="""Black Gallery is a script that
-    automates process of applying different black versions to a selected
+    automates the process of applying different Black versions to a selected
     PyPI package and seeing the results between versions."""
     )
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-p", "--pypi-package", help="PyPI package to download.")
     group.add_argument(
-        "-t", "--top-packages", help="Top n PyPI package to download.", type=int
+        "-t", "--top-packages", help="Top n PyPI packages to download.", type=int
     )
 
-    parser.add_argument("-b", "--black-repo", help="Black's git repository.", type=Path)
+    parser.add_argument("-b", "--black-repo", help="Black's Git repository.", type=Path)
     parser.add_argument(
         "-v",
         "--version",
         help=(
-            "Version for PyPI given pypi package. "
+            "Version for given PyPI package. "
             "Will be discarded if used with -t option."
         ),
     )
@@ -276,8 +276,8 @@ def main() -> None:
         "-w",
         "--workers",
         help=(
-            "Maximum amount of threads to download at the sametime. "
-            "Will be discard if used with -p option."
+            "Maximum number of threads to download with at the same time. "
+            "Will be discarded if used with -p option."
         ),
     )
     parser.add_argument(
@@ -285,7 +285,7 @@ def main() -> None:
         "--input",
         default=Path("/input"),
         type=Path,
-        help="Input directory to read configurations.",
+        help="Input directory to read configuration.",
     )
     parser.add_argument(
         "-o",
