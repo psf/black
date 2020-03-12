@@ -497,7 +497,7 @@ there were not many users anyway. Not many edge cases were reported. As a mature
 _Black_ does make some exceptions to rules it otherwise holds. This section documents
 what those exceptions are and why this is the case.
 
-### The magic trailling comma
+### The magic trailing comma
 
 _Black_ in general does not take existing formatting into account.
 
