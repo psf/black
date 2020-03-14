@@ -4237,12 +4237,12 @@ class StringParser:
         return True
 
 
-def TErr(msg: str) -> Err[CannotTransform]:
+def TErr(err_msg: str) -> Err[CannotTransform]:
     """(T)ransform Err
 
     Convenience function used when working with the TResult type.
     """
-    cant_transform = CannotTransform(msg)
+    cant_transform = CannotTransform(err_msg)
     return Err(cant_transform)
 
 
