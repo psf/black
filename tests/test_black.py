@@ -392,7 +392,26 @@ class BlackTestCase(unittest.TestCase):
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_long_strings(self) -> None:
+        """Tests for splitting long strings."""
         source, expected = read_data("long_strings")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_long_strings__edge_case(self) -> None:
+        """Edge-case tests for splitting long strings."""
+        source, expected = read_data("long_strings__edge_case")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_long_strings__regression(self) -> None:
+        """Regression tests for splitting long strings."""
+        source, expected = read_data("long_strings__regression")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
