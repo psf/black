@@ -3440,17 +3440,16 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
                 replace_child(LL[0], plus_leaf)
                 new_line.append(plus_leaf)
 
+        ends_with_comma = (
+            is_valid_index(string_idx + 1) and LL[string_idx + 1].type == token.COMMA
+        )
+
         def max_last_string() -> int:
             """
             Returns:
                 The max allowed length of the string value used for the last
                 line we will construct.
             """
-            ends_with_comma = (
-                is_valid_index(string_idx + 1)
-                and LL[string_idx + 1].type == token.COMMA
-            )
-
             result = self.line_length
             result -= line.depth * 4
             result -= 1 if ends_with_comma else 0
