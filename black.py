@@ -3151,7 +3151,7 @@ class BaseStringSplitter(StringTransformer):
 
         Follows the same protocol as `StringTransformer.do_match(...)`.
 
-        Refer to `help(StringTransformer.do_match)`.
+        Refer to `help(StringTransformer.do_match)` for more information.
         """
 
     def do_match(self, line: Line) -> TMatchResult:
@@ -3413,20 +3413,6 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
 
         prefix = get_string_prefix(LL[string_idx].value)
 
-        # --- Calculate Target Index (for string value)
-        # We start with the line length limit
-        target_idx = self.line_length
-        # The last index of a string of length N is N-1.
-        target_idx -= 1
-        # Leading whitespace is not present in the string value (e.g. Leaf.value).
-        target_idx -= line.depth * 4
-        if target_idx < 0:
-            yield TErr(
-                f"Unable to split {LL[string_idx].value} at such high of a line depth:"
-                f" {line.depth}"
-            )
-            return
-
         # We MAY choose to drop the 'f' prefix from substrings that don't
         # contain any f-expressions, but ONLY if the original f-string
         # containes at least one f-expression. Otherwise, we will alter the AST
@@ -3471,13 +3457,27 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
             result -= 2 if line_needs_plus() else 0
             return result
 
+        # --- Calculate Ideal Index (for string value)
+        # We start with the line length limit
+        ideal_idx = self.line_length
+        # The last index of a string of length N is N-1.
+        ideal_idx -= 1
+        # Leading whitespace is not present in the string value (e.g. Leaf.value).
+        ideal_idx -= line.depth * 4
+        if ideal_idx < 0:
+            yield TErr(
+                f"Unable to split {LL[string_idx].value} at such high of a line depth:"
+                f" {line.depth}"
+            )
+            return
+
         # Check if StringMerger registered any custom splits.
         custom_splits = self.pop_custom_splits(LL[string_idx].value)
         # We use them ONLY if none of them would produce lines that exceed the
         # line limit.
         use_custom_breakpoints = bool(
             custom_splits
-            and all(csplit.break_idx <= target_idx for csplit in custom_splits)
+            and all(csplit.break_idx <= ideal_idx for csplit in custom_splits)
         )
 
         # Temporary storage for the remaining chunk of the string line that
@@ -3503,8 +3503,8 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
                 idx = csplit.break_idx
             else:
                 # Algorithmic Split (automatic)
-                tidx = target_idx - 2 if line_needs_plus() else target_idx
-                maybe_idx = self.__get_break_idx(rest_value, tidx)
+                iidx = ideal_idx - 2 if line_needs_plus() else ideal_idx
+                maybe_idx = self.__get_break_idx(rest_value, iidx)
                 if maybe_idx is None:
                     # If we are unable to algorthmically determine a good split
                     # and this string has custom splits registered to it, we
@@ -3603,22 +3603,22 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
             last_line.comments = line.comments.copy()
             yield Ok(last_line)
 
-    def __get_break_idx(self, string: str, target_idx: int) -> Optional[int]:
+    def __get_break_idx(self, string: str, ideal_idx: int) -> Optional[int]:
         """
         This method contains the algorithm that StringSplitter uses to
         determine which character to split each string at.
 
         Args:
             @string: The substring that we are attempting to split.
-            @target_idx: The ideal break index. We will return this value if it
+            @ideal_idx: The ideal break index. We will return this value if it
             meets all the necessary conditions. In the likely event that it
-            doesn't we will try to find the closest index BELOW @target_idx
+            doesn't we will try to find the closest index BELOW @ideal_idx
             that does. If that fails, we will expand our search by also
-            considering all valid indices ABOVE @target_idx.
+            considering all valid indices ABOVE @ideal_idx.
 
         Pre-Conditions:
             * assert_is_leaf_string(@string)
-            * 0 <= @target_idx < len(@string)
+            * 0 <= @ideal_idx < len(@string)
 
         Returns:
             idx, if an index is able to be found that meets all of the
@@ -3629,7 +3629,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         """
         is_valid_index = is_valid_index_factory(string)
 
-        assert is_valid_index(target_idx)
+        assert is_valid_index(ideal_idx)
         assert_is_leaf_string(string)
 
         MIN_SUBSTR_SIZE = 6
@@ -3682,18 +3682,18 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
             )
             return is_space and is_big_enough and not breaks_fstring_expression(i)
 
-        # First, we check all indices BELOW @target_idx.
-        idx = target_idx
+        # First, we check all indices BELOW @ideal_idx.
+        idx = ideal_idx
         while is_valid_index(idx - 1) and not passes_all_checks(idx):
             idx -= 1
 
         if not passes_all_checks(idx):
-            # If that fails, we check all indices ABOVE @target_idx.
+            # If that fails, we check all indices ABOVE @ideal_idx.
             #
             # If we are able to find a valid index here, the next line is going
             # to be longer than the specified line length, but it's probably
             # better than doing nothing at all.
-            idx = target_idx + 1
+            idx = ideal_idx + 1
             while is_valid_index(idx + 1) and not passes_all_checks(idx):
                 idx += 1
 
