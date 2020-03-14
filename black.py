@@ -2675,9 +2675,12 @@ class CustomSplitMapMixin:
     the resultant substrings go over the configured max line length.
     """
 
-    __CUSTOM_SPLIT_MAP: Dict[
-        Tuple[StringID, str], Tuple[CustomSplit, ...]
-    ] = defaultdict(tuple)
+    _Key = Tuple[StringID, str]
+    _CUSTOM_SPLIT_MAP: Dict[_Key, Tuple[CustomSplit, ...]] = defaultdict(tuple)
+
+    @staticmethod
+    def _get_key(string: str) -> _Key:
+        return (id(string), string)
 
     def add_custom_splits(
         self, string: str, custom_splits: Iterable[CustomSplit]
@@ -2687,8 +2690,8 @@ class CustomSplitMapMixin:
         Side Effects:
             Adds a mapping from @string to the custom splits @custom_splits.
         """
-        key = (id(string), string)
-        self.__CUSTOM_SPLIT_MAP[key] = tuple(custom_splits)
+        key = self._get_key(string)
+        self._CUSTOM_SPLIT_MAP[key] = tuple(custom_splits)
 
     def pop_custom_splits(self, string: str) -> List[CustomSplit]:
         """Custom Split Map Getter Method
@@ -2703,10 +2706,10 @@ class CustomSplitMapMixin:
             Deletes the mapping between @string and its associated custom
             splits (which are returned to the caller).
         """
-        key = (id(string), string)
+        key = self._get_key(string)
 
-        custom_splits = self.__CUSTOM_SPLIT_MAP[key]
-        del self.__CUSTOM_SPLIT_MAP[key]
+        custom_splits = self._CUSTOM_SPLIT_MAP[key]
+        del self._CUSTOM_SPLIT_MAP[key]
 
         return list(custom_splits)
 
