@@ -2719,7 +2719,7 @@ class CustomSplitMapMixin:
         return list(custom_splits)
 
 
-class StringMerger(StringTransformer, CustomSplitMapMixin):
+class StringMerger(CustomSplitMapMixin, StringTransformer):
     """StringTransformer that merges strings together.
 
     Requirements:
@@ -3352,7 +3352,7 @@ class BaseStringSplitter(StringTransformer):
         return max_string_length
 
 
-class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
+class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
     """
     StringTransformer that splits "atom" strings (i.e. strings which exist on
     lines by themselves).
