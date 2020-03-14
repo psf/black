@@ -2679,7 +2679,7 @@ class CustomSplitMapMixin:
     _CUSTOM_SPLIT_MAP: Dict[_Key, Tuple[CustomSplit, ...]] = defaultdict(tuple)
 
     @staticmethod
-    def _get_key(string: str) -> _Key:
+    def _get_key(string: str) -> "CustomSplitMapMixin._Key":
         """
         Returns:
             A unique identifier that is used internally to map @string to a
