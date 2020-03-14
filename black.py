@@ -2680,6 +2680,11 @@ class CustomSplitMapMixin:
 
     @staticmethod
     def _get_key(string: str) -> _Key:
+        """
+        Returns:
+            A unique identifier that is used internally to map @string to a
+            group of custom splits.
+        """
         return (id(string), string)
 
     def add_custom_splits(
