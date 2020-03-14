@@ -2724,9 +2724,10 @@ class StringMerger(CustomSplitMapMixin, StringTransformer):
 
     Requirements:
         (A) The line contains adjacent strings such that at most one substring
-        has inline comments AND the set of all substring prefixes is either of
-        length 1 or equal to {"", "f"} AND none of the substrings are raw
-        strings (i.e. are prefixed with 'r').
+        has inline comments AND none of those inline comments are pragmas AND
+        the set of all substring prefixes is either of length 1 or equal to
+        {"", "f"} AND none of the substrings are raw strings (i.e. are prefixed
+        with 'r').
             OR
         (B) The line contains a string which uses line continuation backslashes.
 
@@ -2992,11 +2993,6 @@ class StringMerger(CustomSplitMapMixin, StringTransformer):
                     num_of_inline_string_comments += 1
                 break
 
-            if id(leaf) in line.comments and contains_pragma_comment(
-                line.comments[id(leaf)]
-            ):
-                return TErr("Cannot merge strings which have pragma comments.")
-
             if has_triple_quotes(leaf.value):
                 return TErr("StringMerger does NOT merge multiline strings.")
 
@@ -3009,6 +3005,8 @@ class StringMerger(CustomSplitMapMixin, StringTransformer):
 
             if id(leaf) in line.comments:
                 num_of_inline_string_comments += 1
+                if contains_pragma_comment(line.comments[id(leaf)]):
+                    return TErr("Cannot merge strings which have pragma comments.")
 
         if num_of_strings < 2:
             return TErr(
