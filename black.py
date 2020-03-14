@@ -2775,12 +2775,14 @@ class StringMerger(CustomSplitMapMixin, StringTransformer):
         if isinstance(rblc_result, Err) and isinstance(msg_result, Err):
             msg_cant_transform = msg_result.err()
             rblc_cant_transform = rblc_result.err()
-            msg_cant_transform.__cause__ = rblc_cant_transform
-
             cant_transform = CannotTransform(
                 "StringMerger failed to merge any strings in this line."
             )
+
+            # Chain the errors together using `__cause__`.
+            msg_cant_transform.__cause__ = rblc_cant_transform
             cant_transform.__cause__ = msg_cant_transform
+
             yield Err(cant_transform)
         else:
             yield Ok(new_line)
@@ -2977,6 +2979,7 @@ class StringMerger(CustomSplitMapMixin, StringTransformer):
                 - The target string is not in a string group (i.e. it has no
                   adjacent strings).
                 - The string group has more than one inline comment.
+                - The string group has an inline comment that appears to be a pragma.
                 - The set of all string prefixes in the string group is of
                   length greater than one and is not equal to {"", "f"}.
                 - The string group consists of raw strings.
@@ -3028,8 +3031,9 @@ class StringParenStripper(StringTransformer):
     """StringTransformer that strips surrounding parentheses from strings.
 
     Requirements:
-        The line contains a string which is surrounded by parentheses (and is
-        NOT the only argument to a function call).
+        The line contains a string which is surrounded by parentheses and:
+            - The target string is NOT the only argument to a function call).
+            - The RPAR is NOT followed by an attribute access (i.e. a dot).
 
     Transformations:
         The parentheses mentioned in the 'Requirements' section are stripped.
@@ -3089,17 +3093,8 @@ class StringParenStripper(StringTransformer):
     def do_transform(self, line: Line, string_idx: int) -> Iterator[TResult[Line]]:
         LL = line.leaves
 
-        rpar_idx_result = self._get_first_unmatched_rpar_idx(LL[string_idx + 1 :])
-        if isinstance(rpar_idx_result, Err):
-            value_error = rpar_idx_result.err()
-            raise RuntimeError(
-                f"Logic Error. {self.__class__.__name__} was unable to find the ending"
-                " RPAR leaf for the following string and line:\n\nSTRING:"
-                f" {LL[string_idx]}\n"
-            ) from value_error
-
-        unmatched_rpar_idx = rpar_idx_result.ok()
-        rpar_idx = unmatched_rpar_idx + string_idx + 1
+        string_parser = StringParser()
+        rpar_idx = string_parser.parse(LL, string_idx)
 
         for leaf in (LL[string_idx - 1], LL[rpar_idx]):
             if line.comments_after(leaf):
@@ -3124,35 +3119,6 @@ class StringParenStripper(StringTransformer):
         LL[rpar_idx].remove()
 
         yield Ok(new_line)
-
-    @staticmethod
-    def _get_first_unmatched_rpar_idx(leaves: List[Leaf]) -> Result[int, ValueError]:
-        """
-        Returns:
-            * Ok(idx) where idx is the index of the first RPAR leaf that
-            doesn't match any of the LPAR leaves found in @leaves.
-                OR
-            * Err(ValueError) if no such leaf can be found.
-        """
-        unmatched_parens = 0
-        for (i, leaf) in enumerate(leaves):
-            if leaf.type == token.LPAR:
-                unmatched_parens += 1
-                continue
-
-            if leaf.type == token.RPAR:
-                if unmatched_parens > 0:
-                    unmatched_parens -= 1
-                elif unmatched_parens == 0:
-                    return Ok(i)
-                else:
-                    value_error = ValueError(
-                        "Found RPAR that matches LPAR from the past!"
-                    )
-                    return Err(value_error)
-
-        value_error = ValueError("No RPAR found!")
-        return Err(value_error)
 
 
 class BaseStringSplitter(StringTransformer):
