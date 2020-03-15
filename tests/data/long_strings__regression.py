@@ -300,6 +300,15 @@ x = (
     "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 )
 
+class Step(StepBase):
+    def who(self):
+        self.cmd = 'SR AAAA-CORRECT NAME IS {last_name} {first_name}{middle_name} {title}/P{passenger_association}'.format(
+            last_name=last_name,
+            first_name=first_name,
+            middle_name=middle_name,
+            title=title,
+            passenger_association=passenger_association,
+        )
 
 # output
 
@@ -673,3 +682,17 @@ x = (
     "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
     "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 )
+
+
+class Step(StepBase):
+    def who(self):
+        self.cmd = (
+            "SR AAAA-CORRECT NAME IS {last_name} {first_name}{middle_name}"
+            " {title}/P{passenger_association}".format(
+                last_name=last_name,
+                first_name=first_name,
+                middle_name=middle_name,
+                title=title,
+                passenger_association=passenger_association,
+            )
+        )

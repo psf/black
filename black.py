@@ -3924,7 +3924,7 @@ class StringParenWrapper(BaseStringSplitter):
         # If this line is apart of an expression statement or is a function
         # argument AND the first leaf contains a variable name...
         if (
-            parent_type(LL[0]) in [syms.expr_stmt, syms.argument]
+            parent_type(LL[0]) in [syms.expr_stmt, syms.argument, syms.power]
             and LL[0].type == token.NAME
         ):
             is_valid_index = is_valid_index_factory(LL)
