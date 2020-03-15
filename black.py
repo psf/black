@@ -3759,7 +3759,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
             return string
 
 
-class StringParenWrapper(BaseStringSplitter):
+class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
     """
     StringTransformer that splits non-"atom" strings (i.e. strings that do not
     exist on lines by themselves).
@@ -3819,6 +3819,19 @@ class StringParenWrapper(BaseStringSplitter):
         string_idx = string_idx or self._dict_match(LL)
 
         if string_idx is not None:
+            string_value = line.leaves[string_idx].value
+            if " " not in string_value:
+                max_string_length = self.line_length - ((line.depth + 1) * 4)
+                custom_splits = self.pop_custom_splits(string_value)
+                if custom_splits:
+                    self.add_custom_splits(string_value, custom_splits)
+                else:
+                    if len(string_value) > max_string_length:
+                        return TErr(
+                            "We do not wrap long strings in parentheses when the"
+                            " resultant line would still be over the specified line"
+                            " length."
+                        )
             return Ok(string_idx)
 
         return TErr("This line does not contain any non-atomic strings.")

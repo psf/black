@@ -27,6 +27,8 @@ ternary_expression = (
     if some_condition
     else "This is a really long string that will eventually need to be split right here."
 )
+return f'{x}/b/c/d/d/d/dadfjsadjsaidoaisjdsfjaofjdfijaidfjaodfjaoifjodjafojdoajaaaaaaaaaaa'
+return f'{x}/b/c/d/d/d/dadfjsadjsaidoaisjdsfjaofjdfijaidfjaodfjaoifjodjafojdoajaaaaaaaaaaaa'
 
 
 # output
@@ -102,3 +104,7 @@ ternary_expression = (
         "This is a really long string that will eventually need to be split right here."
     )
 )
+return (
+    f"{x}/b/c/d/d/d/dadfjsadjsaidoaisjdsfjaofjdfijaidfjaodfjaoifjodjafojdoajaaaaaaaaaaa"
+)
+return f"{x}/b/c/d/d/d/dadfjsadjsaidoaisjdsfjaofjdfijaidfjaodfjaoifjodjafojdoajaaaaaaaaaaaa"
