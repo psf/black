@@ -3759,7 +3759,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
             return string
 
 
-class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
+class StringParenWrapper(CustomSplitMapMixin, BaseStringSplitter):
     """
     StringTransformer that splits non-"atom" strings (i.e. strings that do not
     exist on lines by themselves).
