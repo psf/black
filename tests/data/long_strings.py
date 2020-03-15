@@ -22,13 +22,13 @@ func_with_keywords(my_arg, my_kwarg="Long keyword strings also need to be wrappe
 
 bad_split1 = (
     'But what should happen when code has already been formatted but in the wrong way? Like'
-    " with a space at the beginning instead of the end. Or what about when it is split too soon?"
+    " with a space at the end instead of the beginning. Or what about when it is split too soon?"
 )
 
 bad_split2 = "But what should happen when code has already " \
              "been formatted but in the wrong way? Like " \
-             "with a space at the beginning instead of the " \
-             "end. Or what about when it is split too " \
+             "with a space at the end instead of the " \
+             "beginning. Or what about when it is split too " \
              "soon? In the case of a split that is too " \
              "short, black will try to honer the custom " \
              "split."
@@ -42,8 +42,8 @@ bad_split3 = (
 bad_split_func1(
     "But what should happen when code has already "
     "been formatted but in the wrong way? Like "
-    "with a space at the beginning instead of the "
-    "end. Or what about when it is split too "
+    "with a space at the end instead of the "
+    "beginning. Or what about when it is split too "
     "soon? In the case of a split that is too "
     "short, black will try to honer the custom "
     "split.",
@@ -53,7 +53,7 @@ bad_split_func1(
 bad_split_func2(
     xxx, yyy, zzz,
     long_string_kwarg="But what should happen when code has already been formatted but in the wrong way? Like "
-                      "with a space at the beginning instead of the end. Or what about when it is split too "
+                      "with a space at the end instead of the beginning. Or what about when it is split too "
                       "soon?",
 )
 
@@ -61,8 +61,8 @@ bad_split_func3(
     (
         "But what should happen when code has already "
         r"been formatted but in the wrong way? Like "
-        "with a space at the beginning instead of the "
-        r"end. Or what about when it is split too "
+        "with a space at the end instead of the "
+        r"beginning. Or what about when it is split too "
         r"soon? In the case of a split that is too "
         "short, black will try to honer the custom "
         "split."
@@ -290,15 +290,15 @@ func_with_keywords(
 
 bad_split1 = (
     "But what should happen when code has already been formatted but in the wrong way?"
-    " Like with a space at the beginning instead of the end. Or what about when it is"
+    " Like with a space at the end instead of the beginning. Or what about when it is"
     " split too soon?"
 )
 
 bad_split2 = (
     "But what should happen when code has already "
     "been formatted but in the wrong way? Like "
-    "with a space at the beginning instead of the "
-    "end. Or what about when it is split too "
+    "with a space at the end instead of the "
+    "beginning. Or what about when it is split too "
     "soon? In the case of a split that is too "
     "short, black will try to honer the custom "
     "split."
@@ -313,8 +313,8 @@ bad_split3 = (
 bad_split_func1(
     "But what should happen when code has already "
     "been formatted but in the wrong way? Like "
-    "with a space at the beginning instead of the "
-    "end. Or what about when it is split too "
+    "with a space at the end instead of the "
+    "beginning. Or what about when it is split too "
     "soon? In the case of a split that is too "
     "short, black will try to honer the custom "
     "split.",
@@ -329,7 +329,7 @@ bad_split_func2(
     zzz,
     long_string_kwarg=(
         "But what should happen when code has already been formatted but in the wrong"
-        " way? Like with a space at the beginning instead of the end. Or what about"
+        " way? Like with a space at the end instead of the beginning. Or what about"
         " when it is split too soon?"
     ),
 )
@@ -338,8 +338,8 @@ bad_split_func3(
     (
         "But what should happen when code has already "
         r"been formatted but in the wrong way? Like "
-        "with a space at the beginning instead of the "
-        r"end. Or what about when it is split too "
+        "with a space at the end instead of the "
+        r"beginning. Or what about when it is split too "
         r"soon? In the case of a split that is too "
         "short, black will try to honer the custom "
         "split."
