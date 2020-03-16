@@ -3358,8 +3358,8 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         The string mentioned in the 'Requirements' section is split into as
         many substrings as necessary to adhere to the configured line length.
 
-        In the final set of substrings, no substring should be smaller than 6
-        characters (i.e. a space and a 5-letter word).
+        In the final set of substrings, no substring should be smaller than
+        MIN_SUBSTR_SIZE characters.
 
         The string will ONLY be split on spaces (i.e. each new substring should
         start with a space).
@@ -3379,6 +3379,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         CustomSplit objects and add them to the custom split map.
     """
 
+    MIN_SUBSTR_SIZE = 6
     # Matches an "f-expression" (e.g. {var}) that might be found in an f-string.
     RE_FEXPR = r"""
     (?<!\{)\{
@@ -3659,8 +3660,6 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         assert is_valid_index(max_break_idx)
         assert_is_leaf_string(string)
 
-        MIN_SUBSTR_SIZE = 6
-
         _fexpr_slices: Optional[List[Tuple[Index, Index]]] = None
 
         def fexpr_slices() -> Iterator[Tuple[Index, Index]]:
@@ -3704,8 +3703,8 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
             """
             is_space = string[i] == " "
             is_big_enough = (
-                len(string[i:]) >= MIN_SUBSTR_SIZE
-                and len(string[:i]) >= MIN_SUBSTR_SIZE
+                len(string[i:]) >= self.MIN_SUBSTR_SIZE
+                and len(string[:i]) >= self.MIN_SUBSTR_SIZE
             )
             return is_space and is_big_enough and not breaks_fstring_expression(i)
 
