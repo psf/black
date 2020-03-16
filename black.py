@@ -2744,6 +2744,14 @@ class CustomSplitMapMixin:
 
         return list(custom_splits)
 
+    def has_custom_splits(self, string: str) -> bool:
+        """
+        Returns:
+            True iff @string is associated with a set of custom splits.
+        """
+        key = self._get_key(string)
+        return key in self._CUSTOM_SPLIT_MAP
+
 
 class StringMerger(CustomSplitMapMixin, StringTransformer):
     """StringTransformer that merges strings together.
@@ -3823,15 +3831,12 @@ class StringParenWrapper(CustomSplitMapMixin, BaseStringSplitter):
             string_value = line.leaves[string_idx].value
             # If the string has no spaces...
             if " " not in string_value:
-                max_string_length = self.line_length - ((line.depth + 1) * 4)
                 # And will still violate the line length limit when split...
+                max_string_length = self.line_length - ((line.depth + 1) * 4)
                 if len(string_value) > max_string_length:
                     # And has no associated custom splits...
-                    custom_splits = self.pop_custom_splits(string_value)
-                    if custom_splits:
-                        self.add_custom_splits(string_value, custom_splits)
-                    else:
-                        # Then we shouldn't put this string on its own line.
+                    if not self.has_custom_splits(string_value):
+                        # Then we should NOT put this string on its own line.
                         return TErr(
                             "We do not wrap long strings in parentheses when the"
                             " resultant line would still be over the specified line"
@@ -4231,7 +4236,6 @@ class StringParser:
                     self._state = self.RPAR
         # Otherwise, we use a lookup table to determine the next state.
         else:
-
             # If the lookup table matches the current state to the next
             # token, we use the lookup table.
             if (current_state, next_token) in self._goto:
