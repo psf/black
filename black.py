@@ -3482,14 +3482,14 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
             result -= 2 if line_needs_plus() else 0
             return result
 
-        # --- Calculate Ideal Index (for string value)
+        # --- Calculate Max Break Index (for string value)
         # We start with the line length limit
-        ideal_idx = self.line_length
+        max_break_idx = self.line_length
         # The last index of a string of length N is N-1.
-        ideal_idx -= 1
+        max_break_idx -= 1
         # Leading whitespace is not present in the string value (e.g. Leaf.value).
-        ideal_idx -= line.depth * 4
-        if ideal_idx < 0:
+        max_break_idx -= line.depth * 4
+        if max_break_idx < 0:
             yield TErr(
                 f"Unable to split {LL[string_idx].value} at such high of a line depth:"
                 f" {line.depth}"
@@ -3502,7 +3502,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         # line limit.
         use_custom_breakpoints = bool(
             custom_splits
-            and all(csplit.break_idx <= ideal_idx for csplit in custom_splits)
+            and all(csplit.break_idx <= max_break_idx for csplit in custom_splits)
         )
 
         # Temporary storage for the remaining chunk of the string line that
@@ -3525,12 +3525,12 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
             if use_custom_breakpoints:
                 # Custom User Split (manual)
                 csplit = custom_splits.pop(0)
-                idx = csplit.break_idx
+                break_idx = csplit.break_idx
             else:
                 # Algorithmic Split (automatic)
-                iidx = ideal_idx - 2 if line_needs_plus() else ideal_idx
-                maybe_idx = self.__get_break_idx(rest_value, iidx)
-                if maybe_idx is None:
+                max_bidx = max_break_idx - 2 if line_needs_plus() else max_break_idx
+                maybe_break_idx = self.__get_break_idx(rest_value, max_bidx)
+                if maybe_break_idx is None:
                     # If we are unable to algorthmically determine a good split
                     # and this string has custom splits registered to it, we
                     # fall back to using them--which means we have to start
@@ -3545,10 +3545,10 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
                     # Otherwise, we stop splitting here.
                     break
 
-                idx = maybe_idx
+                break_idx = maybe_break_idx
 
             # --- Construct `next_value`
-            next_value = rest_value[:idx] + QUOTE
+            next_value = rest_value[:break_idx] + QUOTE
             if (
                 # Are we allowed to try to drop a pointless 'f' prefix?
                 drop_pointless_f_prefix
@@ -3558,10 +3558,12 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
                 # If the current custom split did NOT originally use a prefix,
                 # then `csplit.break_idx` will be off by one after removing
                 # the 'f' prefix.
-                idx = (
-                    idx + 1 if use_custom_breakpoints and not csplit.has_prefix else idx
+                break_idx = (
+                    break_idx + 1
+                    if use_custom_breakpoints and not csplit.has_prefix
+                    else break_idx
                 )
-                next_value = rest_value[:idx] + QUOTE
+                next_value = rest_value[:break_idx] + QUOTE
                 next_value = self.__normalize_f_string(next_value, prefix)
 
             # --- Construct `next_leaf`
@@ -3575,7 +3577,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
             next_line.append(next_leaf)
             string_line_results.append(Ok(next_line))
 
-            rest_value = prefix + QUOTE + rest_value[idx:]
+            rest_value = prefix + QUOTE + rest_value[break_idx:]
             first_string_line = False
 
         yield from string_line_results
@@ -3628,25 +3630,25 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
             last_line.comments = line.comments.copy()
             yield Ok(last_line)
 
-    def __get_break_idx(self, string: str, ideal_idx: int) -> Optional[int]:
+    def __get_break_idx(self, string: str, max_break_idx: int) -> Optional[int]:
         """
         This method contains the algorithm that StringSplitter uses to
         determine which character to split each string at.
 
         Args:
             @string: The substring that we are attempting to split.
-            @ideal_idx: The ideal break index. We will return this value if it
+            @max_break_idx: The ideal break index. We will return this value if it
             meets all the necessary conditions. In the likely event that it
-            doesn't we will try to find the closest index BELOW @ideal_idx
+            doesn't we will try to find the closest index BELOW @max_break_idx
             that does. If that fails, we will expand our search by also
-            considering all valid indices ABOVE @ideal_idx.
+            considering all valid indices ABOVE @max_break_idx.
 
         Pre-Conditions:
             * assert_is_leaf_string(@string)
-            * 0 <= @ideal_idx < len(@string)
+            * 0 <= @max_break_idx < len(@string)
 
         Returns:
-            idx, if an index is able to be found that meets all of the
+            break_idx, if an index is able to be found that meets all of the
             conditions listed in the 'Transformations' section of this classes'
             docstring.
                 OR
@@ -3654,7 +3656,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         """
         is_valid_index = is_valid_index_factory(string)
 
-        assert is_valid_index(ideal_idx)
+        assert is_valid_index(max_break_idx)
         assert_is_leaf_string(string)
 
         MIN_SUBSTR_SIZE = 6
@@ -3707,25 +3709,25 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
             )
             return is_space and is_big_enough and not breaks_fstring_expression(i)
 
-        # First, we check all indices BELOW @ideal_idx.
-        idx = ideal_idx
-        while is_valid_index(idx - 1) and not passes_all_checks(idx):
-            idx -= 1
+        # First, we check all indices BELOW @max_break_idx.
+        break_idx = max_break_idx
+        while is_valid_index(break_idx - 1) and not passes_all_checks(break_idx):
+            break_idx -= 1
 
-        if not passes_all_checks(idx):
-            # If that fails, we check all indices ABOVE @ideal_idx.
+        if not passes_all_checks(break_idx):
+            # If that fails, we check all indices ABOVE @max_break_idx.
             #
             # If we are able to find a valid index here, the next line is going
             # to be longer than the specified line length, but it's probably
             # better than doing nothing at all.
-            idx = ideal_idx + 1
-            while is_valid_index(idx + 1) and not passes_all_checks(idx):
-                idx += 1
+            break_idx = max_break_idx + 1
+            while is_valid_index(break_idx + 1) and not passes_all_checks(break_idx):
+                break_idx += 1
 
-            if not is_valid_index(idx) or not passes_all_checks(idx):
+            if not is_valid_index(break_idx) or not passes_all_checks(break_idx):
                 return None
 
-        return idx
+        return break_idx
 
     def __maybe_normalize_string_quotes(self, leaf: Leaf) -> None:
         if self.normalize_strings:
