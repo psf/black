@@ -3821,17 +3821,21 @@ class StringParenWrapper(CustomSplitMapMixin, BaseStringSplitter):
 
         if string_idx is not None:
             string_value = line.leaves[string_idx].value
+            # If the string has no spaces...
             if " " not in string_value:
                 max_string_length = self.line_length - ((line.depth + 1) * 4)
-                custom_splits = self.pop_custom_splits(string_value)
-                if custom_splits:
-                    self.add_custom_splits(string_value, custom_splits)
-                else:
-                    if len(string_value) > max_string_length:
+                # And will still violate the line length limit when split...
+                if len(string_value) > max_string_length:
+                    # And has no associated custom splits...
+                    custom_splits = self.pop_custom_splits(string_value)
+                    if custom_splits:
+                        self.add_custom_splits(string_value, custom_splits)
+                    else:
+                        # Then we shouldn't put this string on its own line.
                         return TErr(
                             "We do not wrap long strings in parentheses when the"
                             " resultant line would still be over the specified line"
-                            " length."
+                            " length and can't be split further by StringSplitter."
                         )
             return Ok(string_idx)
 
