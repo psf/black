@@ -6,13 +6,13 @@ a selected PyPI package and seeing the results between _Black_ versions.
 ## Build
 
 ```console
-$ [sudo] docker build -t black_gallery .
+$ docker build -t black_gallery .
 ```
 
 ## Run
 
 ```console
-$ sudo docker run -it -v /host/output:/output -v /host/input:/input black_gallery:latest [args]
+$ docker run -it -v /host/output:/output -v /host/input:/input black_gallery:latest [args]
 ```
 
 ```
