@@ -787,6 +787,64 @@ default. On macOS with Homebrew run: `brew install vim`. When building Vim from 
 use: `./configure --enable-python3interp=yes`. There's many guides online how to do
 this.
 
+**I get an import error when using Black from a virtual environment**: If you get an error
+message like this
+
+```text
+Traceback (most recent call last):
+  File "<string>", line 63, in <module>
+  File "/home/gui/.vim/black/lib/python3.7/site-packages/black.py", line 45, in <module>
+    from typed_ast import ast3, ast27
+  File "/home/gui/.vim/black/lib/python3.7/site-packages/typed_ast/ast3.py", line 40, in <module>
+    from typed_ast import _ast3
+ImportError: /home/gui/.vim/black/lib/python3.7/site-packages/typed_ast/_ast3.cpython-37m-x86_64-linux-gnu.so: undefined symbo
+```
+
+then you need to install `typed_ast` and `regex` directly from the source code. The error happens because
+`pip` will download [Python Wheels](https://pythonwheels.com/) if they are available. Python wheels
+are a new standard of distributing python packages and packages that have cython and extensions
+written in C are already compiled, so the installation is much more faster. The problem here
+is that somehow the python environment inside `vim` does not match with those already compiled
+C extensions and these kind of errors are the result. Luckily there is an easy fix: installing
+the packages from the source code.
+
+The two packages that cause the problem are:
+
+- [regex](https://pypi.org/project/regex/)
+- [typed-ast](https://pypi.org/project/typed-ast/)
+
+To get the correct versions you need to execute this:
+
+```bash
+$ source ~/.vim/black/bin/activate
+$ pip freeze | grep "\(regex\|typed-ast\)"
+regex==2020.2.20
+typed-ast==1.4.1
+```
+
+Now remove those two packages
+
+```bash
+$ pip uninstall regex typed-ast -y
+```
+
+Go to [`regex`'s release history](https://pypi.org/project/regex/#history), select the correct version
+and then click on *Download files*. Look for the `.tar.gz` file and download it.
+
+Repeat the same for [`typed-ast`](https://pypi.org/project/typed-ast/#history).
+
+Now install those packages
+
+```bash
+$ cd your-download-directory
+$ pip install regex-2020.2.20.tar.gz typed_ast-1.4.1.tar.gz
+```
+
+The C extensions will be compiled and now vim's python environment will match. Note that you need to have
+the GCC compiler and the python development files installed (on Ubuntu/Debian
+do `sudo apt-get install build-essential python3-dev`).
+
+
 ### Visual Studio Code
 
 Use the
