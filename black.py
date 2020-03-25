@@ -2451,6 +2451,7 @@ def split_line(
             is_line_short_enough(line, line_length=line_length, line_str=line_str)
             or line.contains_unsplittable_type_ignore()
         )
+        and not (line.contains_standalone_comments() and line.inside_brackets)
     ):
         yield line
         return
