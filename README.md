@@ -797,7 +797,7 @@ Traceback (most recent call last):
     from typed_ast import ast3, ast27
   File "/home/gui/.vim/black/lib/python3.7/site-packages/typed_ast/ast3.py", line 40, in <module>
     from typed_ast import _ast3
-ImportError: /home/gui/.vim/black/lib/python3.7/site-packages/typed_ast/_ast3.cpython-37m-x86_64-linux-gnu.so: undefined symbo
+ImportError: /home/gui/.vim/black/lib/python3.7/site-packages/typed_ast/_ast3.cpython-37m-x86_64-linux-gnu.so: undefined symbool: PyExc_KeyboardInterrupt
 ```
 
 then you need to install `typed_ast` and `regex` directly from the source code. The error happens because
