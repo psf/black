@@ -814,37 +814,27 @@ The two packages that cause the problem are:
 - [regex](https://pypi.org/project/regex/)
 - [typed-ast](https://pypi.org/project/typed-ast/)
 
-To get the correct versions you need to execute this:
-
-```console
-$ source ~/.vim/black/bin/activate
-$ pip freeze | grep "\(regex\|typed-ast\)"
-regex==2020.2.20
-typed-ast==1.4.1
-```
-
 Now remove those two packages:
 
 ```console
 $ pip uninstall regex typed-ast -y
 ```
 
-Go to [`regex`'s release history](https://pypi.org/project/regex/#history), select the
-correct version and then click on _Download files_. Look for the `.tar.gz` file and
-download it.
-
-Repeat the same for [`typed-ast`](https://pypi.org/project/typed-ast/#history).
-
-Now install those packages:
+And now you can install them with:
 
 ```console
-$ cd your-download-directory
-$ pip install regex-2020.2.20.tar.gz typed_ast-1.4.1.tar.gz
+$ pip install --no-binary :all: regex typed-ast
 ```
 
 The C extensions will be compiled and now Vim's Python environment will match. Note that
 you need to have the GCC compiler and the Python development files installed (on
 Ubuntu/Debian do `sudo apt-get install build-essential python3-dev`).
+
+If you later want to update _Black_, you should do it like this:
+
+```console
+$ pip install -U black --no-binary regex,typed-ast
+```
 
 ### Visual Studio Code
 
