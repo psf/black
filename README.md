@@ -787,8 +787,8 @@ default. On macOS with Homebrew run: `brew install vim`. When building Vim from 
 use: `./configure --enable-python3interp=yes`. There's many guides online how to do
 this.
 
-**I get an import error when using _Black_ from a virtual environment**: If you get an error
-message like this:
+**I get an import error when using _Black_ from a virtual environment**: If you get an
+error message like this:
 
 ```text
 Traceback (most recent call last):
@@ -800,13 +800,14 @@ Traceback (most recent call last):
 ImportError: /home/gui/.vim/black/lib/python3.7/site-packages/typed_ast/_ast3.cpython-37m-x86_64-linux-gnu.so: undefined symbool: PyExc_KeyboardInterrupt
 ```
 
-Then you need to install `typed_ast` and `regex` directly from the source code. The error happens because
-`pip` will download [Python wheels](https://pythonwheels.com/) if they are available. Python wheels
-are a new standard of distributing Python packages and packages that have Cython and extensions
-written in C are already compiled, so the installation is much more faster. The problem here
-is that somehow the Python environment inside Vim does not match with those already compiled
-C extensions and these kind of errors are the result. Luckily there is an easy fix: installing
-the packages from the source code.
+Then you need to install `typed_ast` and `regex` directly from the source code. The
+error happens because `pip` will download [Python wheels](https://pythonwheels.com/) if
+they are available. Python wheels are a new standard of distributing Python packages and
+packages that have Cython and extensions written in C are already compiled, so the
+installation is much more faster. The problem here is that somehow the Python
+environment inside Vim does not match with those already compiled C extensions and these
+kind of errors are the result. Luckily there is an easy fix: installing the packages
+from the source code.
 
 The two packages that cause the problem are:
 
@@ -828,8 +829,9 @@ Now remove those two packages:
 $ pip uninstall regex typed-ast -y
 ```
 
-Go to [`regex`'s release history](https://pypi.org/project/regex/#history), select the correct version
-and then click on *Download files*. Look for the `.tar.gz` file and download it.
+Go to [`regex`'s release history](https://pypi.org/project/regex/#history), select the
+correct version and then click on _Download files_. Look for the `.tar.gz` file and
+download it.
 
 Repeat the same for [`typed-ast`](https://pypi.org/project/typed-ast/#history).
 
@@ -840,10 +842,9 @@ $ cd your-download-directory
 $ pip install regex-2020.2.20.tar.gz typed_ast-1.4.1.tar.gz
 ```
 
-The C extensions will be compiled and now Vim's Python environment will match. Note that you need to have
-the GCC compiler and the Python development files installed (on Ubuntu/Debian
-do `sudo apt-get install build-essential python3-dev`).
-
+The C extensions will be compiled and now Vim's Python environment will match. Note that
+you need to have the GCC compiler and the Python development files installed (on
+Ubuntu/Debian do `sudo apt-get install build-essential python3-dev`).
 
 ### Visual Studio Code
 
