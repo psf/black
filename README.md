@@ -822,7 +822,7 @@ regex==2020.2.20
 typed-ast==1.4.1
 ```
 
-Now remove those two packages
+Now remove those two packages:
 
 ```bash
 $ pip uninstall regex typed-ast -y
