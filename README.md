@@ -788,7 +788,7 @@ use: `./configure --enable-python3interp=yes`. There's many guides online how to
 this.
 
 **I get an import error when using _Black_ from a virtual environment**: If you get an error
-message like this
+message like this:
 
 ```text
 Traceback (most recent call last):
