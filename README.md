@@ -824,7 +824,7 @@ typed-ast==1.4.1
 
 Now remove those two packages:
 
-```bash
+```console
 $ pip uninstall regex typed-ast -y
 ```
 
