@@ -835,7 +835,7 @@ Repeat the same for [`typed-ast`](https://pypi.org/project/typed-ast/#history).
 
 Now install those packages:
 
-```bash
+```console
 $ cd your-download-directory
 $ pip install regex-2020.2.20.tar.gz typed_ast-1.4.1.tar.gz
 ```
