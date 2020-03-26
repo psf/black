@@ -800,7 +800,7 @@ Traceback (most recent call last):
 ImportError: /home/gui/.vim/black/lib/python3.7/site-packages/typed_ast/_ast3.cpython-37m-x86_64-linux-gnu.so: undefined symbool: PyExc_KeyboardInterrupt
 ```
 
-then you need to install `typed_ast` and `regex` directly from the source code. The error happens because
+Then you need to install `typed_ast` and `regex` directly from the source code. The error happens because
 `pip` will download [Python Wheels](https://pythonwheels.com/) if they are available. Python wheels
 are a new standard of distributing python packages and packages that have cython and extensions
 written in C are already compiled, so the installation is much more faster. The problem here
