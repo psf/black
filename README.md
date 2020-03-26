@@ -815,7 +815,7 @@ The two packages that cause the problem are:
 
 To get the correct versions you need to execute this:
 
-```bash
+```console
 $ source ~/.vim/black/bin/activate
 $ pip freeze | grep "\(regex\|typed-ast\)"
 regex==2020.2.20
