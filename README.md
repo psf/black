@@ -802,7 +802,7 @@ ImportError: /home/gui/.vim/black/lib/python3.7/site-packages/typed_ast/_ast3.cp
 
 Then you need to install `typed_ast` and `regex` directly from the source code. The error happens because
 `pip` will download [Python wheels](https://pythonwheels.com/) if they are available. Python wheels
-are a new standard of distributing python packages and packages that have cython and extensions
+are a new standard of distributing Python packages and packages that have Cython and extensions
 written in C are already compiled, so the installation is much more faster. The problem here
 is that somehow the python environment inside `vim` does not match with those already compiled
 C extensions and these kind of errors are the result. Luckily there is an easy fix: installing
