@@ -840,7 +840,7 @@ $ cd your-download-directory
 $ pip install regex-2020.2.20.tar.gz typed_ast-1.4.1.tar.gz
 ```
 
-The C extensions will be compiled and now vim's python environment will match. Note that you need to have
+The C extensions will be compiled and now Vim's Python environment will match. Note that you need to have
 the GCC compiler and the python development files installed (on Ubuntu/Debian
 do `sudo apt-get install build-essential python3-dev`).
 
