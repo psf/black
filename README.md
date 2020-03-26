@@ -833,7 +833,7 @@ and then click on *Download files*. Look for the `.tar.gz` file and download it.
 
 Repeat the same for [`typed-ast`](https://pypi.org/project/typed-ast/#history).
 
-Now install those packages
+Now install those packages:
 
 ```bash
 $ cd your-download-directory
