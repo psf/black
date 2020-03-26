@@ -787,7 +787,7 @@ default. On macOS with Homebrew run: `brew install vim`. When building Vim from 
 use: `./configure --enable-python3interp=yes`. There's many guides online how to do
 this.
 
-**I get an import error when using Black from a virtual environment**: If you get an error
+**I get an import error when using _Black_ from a virtual environment**: If you get an error
 message like this
 
 ```text
