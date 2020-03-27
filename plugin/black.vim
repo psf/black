@@ -166,6 +166,10 @@ def Black(**kwargs):
   configs = get_configs()
   line_length = kwargs.get("line_length") or configs["line_length"]
   string_normalization = kwargs.get("string_normalization") or configs["string_normalization"]
+  try:
+    fast = bool(kwargs["fast"])
+  except:
+    fast = configs["fast"]
   target_version = kwargs.get("target_version") or configs["target_version"]
   if not isinstance(target_version, (list, set)):
     target_version = [target_version]
@@ -182,7 +186,7 @@ def Black(**kwargs):
   try:
     new_buffer_str = black.format_file_contents(
       buffer_str,
-      fast=configs["fast"],
+      fast=fast,
       mode=mode,
     )
   except black.NothingChanged:
@@ -235,6 +239,7 @@ function BlackComplete(ArgLead, CmdLine, CursorPos)
 \    'target_version="py38"',
 \    'line_length=',
 \    'string_normalization=',
+\    'fast=',
 \  ]
 endfunction
 

@@ -724,7 +724,7 @@ $ black --help
 
 Commands and shortcuts:
 
-- `:Black [target_version=TV],[line_length=int],[string_normalization=int]` to format
+- `:Black [target_version=TV],[line_length=int],[string_normalization=int],[fast=int/bool]` to format
   the entire file (ranges not supported), all arguments are optional and `TV` can be one
   of:
   - `"py27"`
