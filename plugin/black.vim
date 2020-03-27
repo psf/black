@@ -165,7 +165,10 @@ def Black(**kwargs):
   start = time.time()
   configs = get_configs()
   line_length = kwargs.get("line_length") or configs["line_length"]
-  string_normalization = kwargs.get("string_normalization") or configs["string_normalization"]
+  try:
+    string_normalization = bool(kwargs["string_normalization"])
+  except:
+    string_normalization = configs["string_normalization"]
   try:
     fast = bool(kwargs["fast"])
   except:
