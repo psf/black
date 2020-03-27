@@ -44,6 +44,9 @@ endif
 if !exists("g:black_skip_string_normalization")
   let g:black_skip_string_normalization = 0
 endif
+if !exists("g:black_target_version")
+  let g:black_target_version = ""
+endif
 
 python3 << endpython3
 import collections
@@ -71,6 +74,7 @@ FLAGS = [
   Flag(name="line_length", cast=int),
   Flag(name="fast", cast=bool),
   Flag(name="string_normalization", cast=bool),
+  Flag(name="target_version", cast=str),
 ]
 
 
@@ -135,12 +139,42 @@ if _initialize_black_env():
   import black
   import time
 
-def Black():
+def get_target_version(tv):
+  if isinstance(tv, black.TargetVersion):
+    return tv
+  ret = None
+  try:
+    ret = black.TargetVersion[tv.upper()]
+  except:
+    pass
+  return ret
+
+def Black(**kwargs):
+  """
+  kwargs allows you to override the values for
+  line_length, string_normalization and target_version.
+  target_version needs to be cleaned because black.FileMode
+  expects the target_versions argument to be a set of TargetVersion enums.
+
+  Allow kwargs["target_version"] to be a string to allow
+  to type it more quickly.
+
+  Using also target_version instead of target_versions to remain
+  consistent to Black's documentation of the structure of pyproject.toml.
+  """
   start = time.time()
   configs = get_configs()
+  line_length = kwargs.get("line_length") or configs["line_length"]
+  string_normalization = kwargs.get("string_normalization") or configs["string_normalization"]
+  target_version = kwargs.get("target_version") or configs["target_version"]
+  if not isinstance(target_version, (list, set)):
+    target_version = [target_version]
+  target_version = set(filter(lambda x: x, map(lambda tv: get_target_version(tv), target_version)))
+
   mode = black.FileMode(
-    line_length=configs["line_length"],
-    string_normalization=configs["string_normalization"],
+    target_versions = target_version,
+    line_length=line_length,
+    string_normalization=string_normalization,
     is_pyi=vim.current.buffer.name.endswith('.pyi'),
   )
 
@@ -193,6 +227,17 @@ def BlackVersion():
 
 endpython3
 
-command! Black :py3 Black()
+function BlackComplete(ArgLead, CmdLine, CursorPos)
+  return [
+\    'target_version="py27"',
+\    'target_version="py36"',
+\    'target_version="py37"',
+\    'target_version="py38"',
+\    'line_length=',
+\    'string_normalization=',
+\  ]
+endfunction
+
+command! -nargs=* -complete=customlist,BlackComplete Black :py3 Black(<args>)
 command! BlackUpgrade :py3 BlackUpgrade()
 command! BlackVersion :py3 BlackVersion()
