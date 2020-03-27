@@ -31,7 +31,7 @@ Try it out now using the [Black Playground](https://black.now.sh). Watch the
 ---
 
 _Contents:_ **[Installation and usage](#installation-and-usage)** |
-**[Code style](#the-black-code-style)** | **[Pragmatism](#pragmatism)**
+**[Code style](#the-black-code-style)** | **[Pragmatism](#pragmatism)** |
 **[pyproject.toml](#pyprojecttoml)** | **[Editor integration](#editor-integration)** |
 **[blackd](#blackd)** | **[Version control integration](#version-control-integration)**
 | **[Ignoring unmodified files](#ignoring-unmodified-files)** | **[Used by](#used-by)**
