@@ -1,5 +1,4 @@
 version: 2
-type: sphinx
 python:
   version: 3.8
   install:
