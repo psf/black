@@ -3118,9 +3118,33 @@ def generate_ignored_nodes(leaf: Leaf) -> Iterator[LN]:
         if is_fmt_on:
             return
 
-        yield container
+        # fix for fmt: on in children
+        if contains_fmt_on_at_column(container, leaf.column):
+            for child in container.children:
+                if not contains_fmt_on_at_column(child, leaf.column):
+                    yield child
+            return
+        else:
+            yield container
+            container = container.next_sibling
 
-        container = container.next_sibling
+
+def contains_fmt_on_at_column(container, column):
+    for child in container.children:
+        if (isinstance(child, Node) and first_leaf_column(child) == column
+            or isinstance(child, Leaf) and child.column == column):
+            for comment in list_comments(child.prefix, is_endmarker=False):
+                if comment.value in FMT_ON:
+                    return True
+
+    return False
+
+
+def first_leaf_column(node):
+    for child in node.children:
+        if isinstance(child, Leaf):
+            return child.column
+    return None
 
 
 def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
