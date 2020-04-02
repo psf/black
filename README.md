@@ -750,7 +750,7 @@ Plugin 'psf/black'
 and execute the following in a terminal:
 
 ```console
-$ cd ~/.ssh/bundle/black
+$ cd ~/.vim/bundle/black
 $ git checkout origin/stable -b stable
 ```
 
