@@ -3109,33 +3109,40 @@ def generate_ignored_nodes(leaf: Leaf) -> Iterator[LN]:
     """
     container: Optional[LN] = container_of(leaf)
     while container is not None and container.type != token.ENDMARKER:
-        is_fmt_on = False
-        for comment in list_comments(container.prefix, is_endmarker=False):
-            if comment.value in FMT_ON:
-                is_fmt_on = True
-            elif comment.value in FMT_OFF:
-                is_fmt_on = False
-        if is_fmt_on:
+        if fmt_on(container):
             return
 
         # fix for fmt: on in children
         if contains_fmt_on_at_column(container, leaf.column):
             for child in container.children:
-                if not contains_fmt_on_at_column(child, leaf.column):
-                    yield child
-            return
+                if contains_fmt_on_at_column(child, leaf.column):
+                    return
+                yield child
         else:
             yield container
             container = container.next_sibling
 
 
+def fmt_on(container):
+    is_fmt_on = False
+    for comment in list_comments(container.prefix, is_endmarker=False):
+        if comment.value in FMT_ON:
+            is_fmt_on = True
+        elif comment.value in FMT_OFF:
+            is_fmt_on = False
+    return is_fmt_on
+
+
 def contains_fmt_on_at_column(container, column):
     for child in container.children:
-        if (isinstance(child, Node) and first_leaf_column(child) == column
-            or isinstance(child, Leaf) and child.column == column):
-            for comment in list_comments(child.prefix, is_endmarker=False):
-                if comment.value in FMT_ON:
-                    return True
+        if (
+            isinstance(child, Node)
+            and first_leaf_column(child) == column
+            or isinstance(child, Leaf)
+            and child.column == column
+        ):
+            if fmt_on(child):
+                return True
 
     return False
 
