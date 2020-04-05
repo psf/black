@@ -3123,7 +3123,7 @@ def generate_ignored_nodes(leaf: Leaf) -> Iterator[LN]:
             container = container.next_sibling
 
 
-def fmt_on(container):
+def fmt_on(container: LN) -> bool:
     is_fmt_on = False
     for comment in list_comments(container.prefix, is_endmarker=False):
         if comment.value in FMT_ON:
@@ -3133,7 +3133,7 @@ def fmt_on(container):
     return is_fmt_on
 
 
-def contains_fmt_on_at_column(container, column):
+def contains_fmt_on_at_column(container: LN, column: int) -> bool:
     for child in container.children:
         if (
             isinstance(child, Node)
@@ -3147,7 +3147,7 @@ def contains_fmt_on_at_column(container, column):
     return False
 
 
-def first_leaf_column(node):
+def first_leaf_column(node: Node) -> Optional[int]:
     for child in node.children:
         if isinstance(child, Leaf):
             return child.column
