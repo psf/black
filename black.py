@@ -423,7 +423,7 @@ def main(
     write_back = WriteBack.from_configuration(check=check, diff=diff)
     if target_version:
         if py36:
-            err(f"Cannot use both --target-version and --py36")
+            err("Cannot use both --target-version and --py36")
             ctx.exit(2)
         else:
             versions = set(target_version)
@@ -3567,7 +3567,7 @@ def gen_python_files_in_dir(
     for child in path.iterdir():
         # First ignore files matching .gitignore
         if gitignore.match_file(child.as_posix()):
-            report.path_ignored(child, f"matches the .gitignore file content")
+            report.path_ignored(child, "matches the .gitignore file content")
             continue
 
         # Then ignore with `exclude` option.
@@ -3591,7 +3591,7 @@ def gen_python_files_in_dir(
 
         exclude_match = exclude.search(normalized_path)
         if exclude_match and exclude_match.group(0):
-            report.path_ignored(child, f"matches the --exclude regular expression")
+            report.path_ignored(child, "matches the --exclude regular expression")
             continue
 
         if child.is_dir():
