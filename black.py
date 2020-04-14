@@ -3106,7 +3106,7 @@ class StringParenStripper(StringTransformer):
 
             string_idx = idx
 
-            # (Skip the string trailer, if one exists.)
+            # Skip the string trailer, if one exists.
             string_parser = StringParser()
             next_idx = string_parser.parse(LL, string_idx)
 
@@ -3420,7 +3420,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
 
         string_idx = idx
 
-        # (Skip the string trailer, if one exists.)
+        # Skip the string trailer, if one exists.
         string_parser = StringParser()
         idx = string_parser.parse(LL, string_idx)
 
@@ -3923,7 +3923,7 @@ class StringParenWrapper(CustomSplitMapMixin, BaseStringSplitter):
                     if is_valid_index(idx) and LL[idx].type == token.STRING:
                         string_idx = idx
 
-                        # (Skip the string trailer, if one exists.)
+                        # Skip the string trailer, if one exists.
                         string_parser = StringParser()
                         idx = string_parser.parse(LL, string_idx)
 
@@ -3961,7 +3961,7 @@ class StringParenWrapper(CustomSplitMapMixin, BaseStringSplitter):
                     if is_valid_index(idx) and LL[idx].type == token.STRING:
                         string_idx = idx
 
-                        # (Skip the string trailer, if one exists.)
+                        # Skip the string trailer, if one exists.
                         string_parser = StringParser()
                         idx = string_parser.parse(LL, string_idx)
 
@@ -4004,7 +4004,7 @@ class StringParenWrapper(CustomSplitMapMixin, BaseStringSplitter):
                     if is_valid_index(idx) and LL[idx].type == token.STRING:
                         string_idx = idx
 
-                        # (Skip the string trailer, if one exists.)
+                        # Skip the string trailer, if one exists.
                         string_parser = StringParser()
                         idx = string_parser.parse(LL, string_idx)
 
