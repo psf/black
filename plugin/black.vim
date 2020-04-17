@@ -62,17 +62,16 @@ class Flag(collections.namedtuple("FlagBase", "name, cast")):
     name = self.var_name
     if name == "line_length":
       name = name.replace("_", "")
-    if name == "string_normalization":
-      name = "skip_" + name
     return "g:black_" + name
 
+def strbool(x):
+    return bool(int(x))
 
 FLAGS = [
   Flag(name="line_length", cast=int),
-  Flag(name="fast", cast=bool),
-  Flag(name="string_normalization", cast=bool),
+  Flag(name="fast", cast=strbool),
+  Flag(name="skip_string_normalization", cast=strbool),
 ]
-
 
 def _get_python_binary(exec_prefix):
   try:
@@ -140,7 +139,7 @@ def Black():
   configs = get_configs()
   mode = black.FileMode(
     line_length=configs["line_length"],
-    string_normalization=configs["string_normalization"],
+    string_normalization=not configs["skip_string_normalization"],
     is_pyi=vim.current.buffer.name.endswith('.pyi'),
   )
 
