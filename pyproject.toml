@@ -7,7 +7,7 @@
 
 [tool.black]
 line-length = 88
-py36 = true
+target-version = ['py36', 'py37', 'py38']
 include = '\.pyi?$'
 exclude = '''
 /(
@@ -30,62 +30,9 @@ exclude = '''
 '''
 
 
-# Poetry package information below.
+# Build system information below.
 # NOTE: You don't need this in your own Black configuration.
 
-[tool.poetry]
-name = "black"
-version = "18.9b0"
-description = "The uncompromising code formatter."
-readme = "README.md"
-authors = [
-    "Łukasz Langa <lukasz@langa.pl>",
-    "Carol Willing <carolcode@willingconsulting.com>",
-    "Carl Meyer <carl@oddbird.net>",
-    "Jelle Zijlstra <jelle.zijlstra@gmail.com>",
-    "Mika Naylor <mail@autophagy.io>",
-    "Zsolt Dollenstein <zsol.zsol@gmail.com>",
-]
-homepage = "https://github.com/ambv/black/"
-documentation = "https://black.readthedocs.io/en/stable/"
-license = "MIT"
-keywords = ["automation", "formatter", "yapf", "autopep8", "gofmt"]
-classifiers=[
-    "Development Status :: 4 - Beta",
-    "Environment :: Console",
-    "Intended Audience :: Developers",
-    "Operating System :: OS Independent",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-    "Topic :: Software Development :: Quality Assurance",
-]
-
-packages = [
-    {include = "black.py"},
-    {include = "blib2to3"}
-]
-
-[tool.poetry.scripts]
-black = "black:main"
-# blackd = "blackd:main"  # TODO: how to make this only appear on `poetry install -E d`?
-
-[tool.poetry.dependencies]
-python = "^3.6"
-attrs = "^18.1"
-click = "^6.5"
-toml = "^0.9.4"
-appdirs = "^1.4"
-aiohttp = { version = "^3.4", optional = true }
-
-[tool.poetry.extras]
-d = ["aiohttp"]
-
-[tool.poetry.dev-dependencies]
-Sphinx = "^1.7"
-pre-commit = "^1.10"
-coverage = "^4.5"
-flake8 = "^3.5"
-flake8-bugbear = "^18.2"
-flake8-mypy = "^17.8"
-mypy = "^0.620"
-readme_renderer = "^21.0"
-recommonmark = "^0.4.0"
+[build-system]
+requires = ["setuptools>=41.0", "setuptools-scm", "wheel"]
+build-backend = "setuptools.build_meta"

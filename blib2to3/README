@@ -11,3 +11,6 @@ Reasons for forking:
 - better ability to debug (better reprs)
 - INDENT and DEDENT don't hold whitespace and comment prefixes
 - ability to Cythonize
+
+Change Log:
+- Changes default logger used by Driver

@@ -12,24 +12,16 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import ast
 from pathlib import Path
 import re
 import shutil
 import string
 
+from pkg_resources import get_distribution
 from recommonmark.parser import CommonMarkParser
 
 
 CURRENT_DIR = Path(__file__).parent
-
-
-def get_version():
-    black_py = CURRENT_DIR / ".." / "black.py"
-    _version_re = re.compile(r"__version__\s+=\s+(?P<version>.*)")
-    with open(str(black_py), "r", encoding="utf8") as f:
-        version = _version_re.search(f.read()).group("version")
-    return str(ast.literal_eval(version))
 
 
 def make_pypi_svg(version):
@@ -91,8 +83,8 @@ copyright = "2018, Łukasz Langa and contributors to Black"
 author = "Łukasz Langa and contributors to Black"
 
 # Autopopulate version
-# The full version, including alpha/beta/rc tags.
-release = get_version()
+# The version, including alpha/beta/rc tags, but not commit hash and datestamps
+release = get_distribution("black").version.split("+")[0]
 # The short X.Y version.
 version = release
 for sp in "abcfr":
@@ -161,7 +153,7 @@ html_theme_options = {
     "show_related": False,
     "description": "“Any color you like.”",
     "github_button": True,
-    "github_user": "ambv",
+    "github_user": "psf",
     "github_repo": "black",
     "github_type": "star",
     "show_powered_by": True,

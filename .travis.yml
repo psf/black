@@ -1,39 +1,32 @@
-sudo: required
-dist: xenial
 language: python
-cache: pip
+cache:
+  pip: true
+  directories:
+    - $HOME/.cache/pre-commit
 env:
-- TEST_CMD="coverage run tests/test_black.py"
+  - TEST_CMD="coverage run tests/test_black.py"
 install:
-- pip install coverage coveralls flake8 flake8-bugbear mypy
-- pip install -e '.[d]'
+  - pip install coverage coveralls pre-commit
+  - pip install -e '.[d]'
 script:
-- $TEST_CMD
+  - $TEST_CMD
 after_success:
-- coveralls
+  - coveralls
 notifications:
   on_success: change
   on_failure: always
 matrix:
   include:
-    - name: "mypy"
-      python: 3.6
-      env:
-        - TEST_CMD="mypy black.py blackd.py tests/test_black.py"
-    - name: "black"
+    - name: "lint"
       python: 3.7
       env:
-        - TEST_CMD="black --check --verbose ."
-    - name: "flake8"
-      python: 3.7
-      env:
-        - TEST_CMD="flake8 black.py blackd.py tests/test_black.py"
+        - TEST_CMD="pre-commit run --all-files"
     - name: "3.6"
       python: 3.6
     - name: "3.7"
       python: 3.7
-    - name: "3.8-dev"
-      python: 3.8-dev
+    - name: "3.8"
+      python: 3.8
 before_deploy:
   - pip install pyinstaller
   - pyinstaller --clean -F --add-data blib2to3/:blib2to3 black.py
@@ -46,5 +39,5 @@ deploy:
   skip_cleanup: true
   on:
     condition: $TRAVIS_PYTHON_VERSION == '3.6'
-    repo: ambv/black
+    repo: psf/black
     tags: true

@@ -8,3 +8,8 @@ __pycache__
 black.egg-info
 build/
 dist/
+pip-wheel-metadata/
+_black_version.py
+.idea
+.eggs
+.dmypy.json

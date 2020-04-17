@@ -14,7 +14,12 @@
 "    - restore cursor/window position after formatting
 
 if v:version < 700 || !has('python3')
-    echo "This script requires vim7.0+ with Python 3.6 support."
+    func! __BLACK_MISSING()
+        echo "The black.vim plugin requires vim7.0+ with Python 3.6 support."
+    endfunc
+    command! Black :call __BLACK_MISSING()
+    command! BlackUpgrade :call __BLACK_MISSING()
+    command! BlackVersion :call __BLACK_MISSING()
     finish
 endif
 
@@ -24,7 +29,11 @@ endif
 
 let g:load_black = "py1.0"
 if !exists("g:black_virtualenv")
-  let g:black_virtualenv = "~/.vim/black"
+  if has("nvim")
+    let g:black_virtualenv = "~/.local/share/nvim/black"
+  else
+    let g:black_virtualenv = "~/.vim/black"
+  endif
 endif
 if !exists("g:black_fast")
   let g:black_fast = 0
@@ -36,11 +45,42 @@ if !exists("g:black_skip_string_normalization")
   let g:black_skip_string_normalization = 0
 endif
 
-python3 << endpython3
+python3 << EndPython3
+import collections
+import os
 import sys
 import vim
 
+
+class Flag(collections.namedtuple("FlagBase", "name, cast")):
+  @property
+  def var_name(self):
+    return self.name.replace("-", "_")
+
+  @property
+  def vim_rc_name(self):
+    name = self.var_name
+    if name == "line_length":
+      name = name.replace("_", "")
+    if name == "string_normalization":
+      name = "skip_" + name
+    return "g:black_" + name
+
+
+FLAGS = [
+  Flag(name="line_length", cast=int),
+  Flag(name="fast", cast=bool),
+  Flag(name="string_normalization", cast=bool),
+]
+
+
 def _get_python_binary(exec_prefix):
+  try:
+    default = vim.eval("g:pymode_python").strip()
+  except vim.error:
+    default = ""
+  if default and os.path.exists(default):
+    return default
   if sys.platform[:3] == "win":
     return exec_prefix / 'python.exe'
   return exec_prefix / 'bin' / 'python3'
@@ -87,8 +127,8 @@ def _initialize_black_env(upgrade=False):
     print('DONE! You are all set, thanks for waiting ✨ 🍰 ✨')
   if first_install:
     print('Pro-tip: to upgrade Black in the future, use the :BlackUpgrade command and restart Vim.\n')
-  if sys.path[0] != virtualenv_site_packages:
-    sys.path.insert(0, virtualenv_site_packages)
+  if virtualenv_site_packages not in sys.path:
+    sys.path.append(virtualenv_site_packages)
   return True
 
 if _initialize_black_env():
@@ -97,23 +137,53 @@ if _initialize_black_env():
 
 def Black():
   start = time.time()
-  fast = bool(int(vim.eval("g:black_fast")))
-  line_length = int(vim.eval("g:black_linelength"))
-  mode = black.FileMode.AUTO_DETECT
-  if bool(int(vim.eval("g:black_skip_string_normalization"))):
-    mode |= black.FileMode.NO_STRING_NORMALIZATION
+  configs = get_configs()
+  mode = black.FileMode(
+    line_length=configs["line_length"],
+    string_normalization=configs["string_normalization"],
+    is_pyi=vim.current.buffer.name.endswith('.pyi'),
+  )
+
   buffer_str = '\n'.join(vim.current.buffer) + '\n'
   try:
-    new_buffer_str = black.format_file_contents(buffer_str, line_length=line_length, fast=fast, mode=mode)
+    new_buffer_str = black.format_file_contents(
+      buffer_str,
+      fast=configs["fast"],
+      mode=mode,
+    )
   except black.NothingChanged:
     print(f'Already well formatted, good job. (took {time.time() - start:.4f}s)')
   except Exception as exc:
     print(exc)
   else:
-    cursor = vim.current.window.cursor
+    current_buffer = vim.current.window.buffer
+    cursors = []
+    for i, tabpage in enumerate(vim.tabpages):
+      if tabpage.valid:
+        for j, window in enumerate(tabpage.windows):
+          if window.valid and window.buffer == current_buffer:
+            cursors.append((i, j, window.cursor))
     vim.current.buffer[:] = new_buffer_str.split('\n')[:-1]
-    vim.current.window.cursor = cursor
+    for i, j, cursor in cursors:
+      window = vim.tabpages[i].windows[j]
+      try:
+        window.cursor = cursor
+      except vim.error:
+        window.cursor = (len(window.buffer), 0)
     print(f'Reformatted in {time.time() - start:.4f}s.')
+
+def get_configs():
+  path_pyproject_toml = black.find_pyproject_toml(vim.eval("fnamemodify(getcwd(), ':t')"))
+  if path_pyproject_toml:
+    toml_config = black.parse_pyproject_toml(path_pyproject_toml)
+  else:
+    toml_config = {}
+
+  return {
+    flag.var_name: toml_config.get(flag.name, flag.cast(vim.eval(flag.vim_rc_name)))
+    for flag in FLAGS
+  }
+
 
 def BlackUpgrade():
   _initialize_black_env(upgrade=True)
@@ -121,7 +191,7 @@ def BlackUpgrade():
 def BlackVersion():
   print(f'Black, version {black.__version__} on Python {sys.version}.')
 
-endpython3
+EndPython3
 
 command! Black :py3 Black()
 command! BlackUpgrade :py3 BlackUpgrade()

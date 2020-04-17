@@ -75,6 +75,8 @@ class Foo:
 
 @fast(really=True)
 async def wat():
+    # This comment, for some reason \
+    # contains a trailing backslash.
     async with X.open_async() as x:  # Some more comments
         result = await x.method1()
     # Comment after ending a block.

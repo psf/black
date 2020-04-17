@@ -1,7 +1,8 @@
--   id: black
-    name: black
-    description: 'Black: The uncompromising Python code formatter'
-    entry: black
-    language: python
-    language_version: python3
-    types: [python]
+- id: black
+  name: black
+  description: "Black: The uncompromising Python code formatter"
+  entry: black
+  language: python
+  language_version: python3
+  require_serial: true
+  types: [python]
