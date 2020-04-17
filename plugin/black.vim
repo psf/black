@@ -45,7 +45,7 @@ if !exists("g:black_skip_string_normalization")
   let g:black_skip_string_normalization = 0
 endif
 
-python3 << endpython3
+python3 << EndPython3
 import collections
 import os
 import sys
@@ -191,7 +191,7 @@ def BlackUpgrade():
 def BlackVersion():
   print(f'Black, version {black.__version__} on Python {sys.version}.')
 
-endpython3
+EndPython3
 
 command! Black :py3 Black()
 command! BlackUpgrade :py3 BlackUpgrade()
