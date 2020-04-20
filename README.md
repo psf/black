@@ -15,8 +15,8 @@
 
 > “Any color you like.”
 
-_Black_ is the uncompromising Python code formatter. By using it, you agree to cede
-control over minutiae of hand-formatting. In return, _Black_ gives you speed,
+_Black_ is the uncompromising Python code formatter. By using it, you agree to code
+control over minutes of hand-formatting. In return, _Black_ gives you speed,
 determinism, and freedom from `pycodestyle` nagging about formatting. You will save time
 and mental energy for more important matters.
 
