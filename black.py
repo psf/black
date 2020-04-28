@@ -32,6 +32,7 @@ from typing import (
     Pattern,
     Sequence,
     Set,
+    Sized,
     Tuple,
     TypeVar,
     Union,
@@ -472,7 +473,7 @@ def main(
     report = Report(check=check, diff=diff, quiet=quiet, verbose=verbose)
     root = find_project_root(src)
     sources: Set[Path] = set()
-    path_empty(src, quiet, verbose, ctx)
+    path_empty(src, "No Path provided. Nothing to do 😴", quiet, verbose, ctx)
     for s in src:
         p = Path(s)
         if p.is_dir():
@@ -497,10 +498,13 @@ def main(
         else:
             err(f"invalid path: {s}")
 
-    if len(sources) == 0:
-        if verbose or not quiet:
-            out("No Python files are present to be formatted. Nothing to do 😴")
-        ctx.exit(0)
+    path_empty(
+        sources,
+        "No Python files are present to be formatted. Nothing to do 😴",
+        quiet,
+        verbose,
+        ctx,
+    )
 
     if len(sources) == 1:
         reformat_one(
@@ -522,14 +526,14 @@ def main(
 
 
 def path_empty(
-    src: Tuple[str, ...], quiet: bool, verbose: bool, ctx: click.Context
+    src: Sized, msg: str, quiet: bool, verbose: bool, ctx: click.Context
 ) -> None:
     """
     Exit if there is no `src` provided for formatting
     """
-    if not src:
+    if len(src) == 0:
         if verbose or not quiet:
-            out("No Path provided. Nothing to do 😴")
+            out(msg)
             ctx.exit(0)
 
 
