@@ -119,7 +119,7 @@ max-line-length=88
 
 ```cfg
 [pylint]
-max-line-length = 79
+max-line-length = 88
 
 [pylint.messages_control]
 disable = bad-continuation, bad-whitespace
