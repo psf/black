@@ -1645,6 +1645,16 @@ class BlackTestCase(unittest.TestCase):
                 raise result.exception
             self.assertEqual(result.exit_code, 0)
 
+    def test_invalid_config_return_code(self) -> None:
+        tmp_file = Path(black.dump_to_file())
+        try:
+            tmp_config = Path(black.dump_to_file())
+            tmp_config.unlink()
+            args = ["--config", str(tmp_config), str(tmp_file)]
+            self.invokeBlack(args, exit_code=2, ignore_config=False)
+        finally:
+            tmp_file.unlink()
+
 
 class BlackDTestCase(AioHTTPTestCase):
     async def get_application(self) -> web.Application:
