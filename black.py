@@ -394,7 +394,7 @@ def target_version_option_callback(
 @click.option(
     "--config",
     type=click.Path(
-        exists=False, file_okay=True, dir_okay=False, readable=True, allow_dash=False
+        exists=True, file_okay=True, dir_okay=False, readable=True, allow_dash=False
     ),
     is_eager=True,
     callback=read_pyproject_toml,
