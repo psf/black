@@ -141,11 +141,11 @@ extend-ignore = E203, W503
 
 </details>
 
-## pylint
+## Pylint
 
-[pylint](https://pypi.org/p/pylint/) is also a code linter like flake8. It has the same
+[Pylint](https://pypi.org/p/pylint/) is also a code linter like flake8. It has the same
 checks as flake8 and more. In particular, it has more formatting checks regarding style
-conventions like variable naming. With so many checks, pylint is bound to have some
+conventions like variable naming. With so many checks, Pylint is bound to have some
 mixed feelings about _Black_'s formatting style.
 
 When _Black_ is folding very long expressions, the closing brackets will be dedented.
@@ -158,16 +158,16 @@ ImportantClass.important_method(
 )
 ```
 
-Although, while this style is PEP 8 compliant, pylint will raise
+Although, while this style is PEP 8 compliant, Pylint will raise
 `C0330: Wrong hanging indentation before block (add 4 spaces)` warnings. Since _Black_
-isn't configurable on this style, pylint should be told to ignore these warnings via
+isn't configurable on this style, Pylint should be told to ignore these warnings via
 `disable = C0330`.
 
-Also, since _Black_ deals with whitespace around operators and brackets, pylint's
+Also, since _Black_ deals with whitespace around operators and brackets, Pylint's
 warning `C0326: Bad whitespace` should be disabled using `disable = C0326`.
 
-Plus, as usual, pylint should be configured to complain about lines that surpass `88`
-characters via `max-line-length == 88` so pylint will respect _Black_'s default.
+Plus, as usual, Pylint should be configured to complain about lines that surpass `88`
+characters via `max-line-length == 88` so Pylint will respect _Black_'s default.
 
 ### Formats
 
