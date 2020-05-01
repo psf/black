@@ -106,10 +106,10 @@ extend-ignore = E203, W503
 
 ```rc
 [MESSAGES CONTROL]
-disable=bad-continuation,bad-whitespace
+disable = C0330, C0326
 
 [format]
-max-line-length=88
+max-line-length = 88
 ```
 
 </details>
@@ -122,8 +122,7 @@ max-line-length=88
 max-line-length = 88
 
 [pylint.messages_control]
-disable = bad-continuation, bad-whitespace
-enable = line-too-long
+disable = C0330, C0326
 ```
 
 </details>
@@ -133,11 +132,10 @@ enable = line-too-long
 
 ```toml
 [tool.pylint.messages_control]
-disable="bad-continuation,bad-whitespace"
-enable="line-too-long"
+disable = "C0330, C0326"
 
 [tool.pylint.format]
-max-line-length="88"
+max-line-length = "88"
 ```
 
 </details>
