@@ -35,6 +35,7 @@ ff = partial(black.format_file_in_place, mode=black.FileMode(), fast=True)
 fs = partial(black.format_str, mode=black.FileMode())
 THIS_FILE = Path(__file__)
 THIS_DIR = THIS_FILE.parent
+PROJECT_ROOT = THIS_DIR.parent
 DETERMINISTIC_HEADER = "[Deterministic header]"
 EMPTY_LINE = "# EMPTY LINE WITH WHITESPACE" + " (this comment will be removed)"
 PY36_ARGS = [
@@ -54,7 +55,7 @@ def read_data(name: str, data: bool = True) -> Tuple[str, str]:
         name += ".py"
     _input: List[str] = []
     _output: List[str] = []
-    base_dir = THIS_DIR / "data" if data else THIS_DIR
+    base_dir = THIS_DIR / "data" if data else PROJECT_ROOT
     with open(base_dir / name, "r", encoding="utf8") as test:
         lines = test.readlines()
     result = _input
@@ -202,43 +203,43 @@ class BlackTestCase(unittest.TestCase):
         self.checkSourceFile("tests/test_black.py")
 
     def test_black(self) -> None:
-        self.checkSourceFile("black.py")
+        self.checkSourceFile("src/black/__init__.py")
 
     def test_pygram(self) -> None:
-        self.checkSourceFile("blib2to3/pygram.py")
+        self.checkSourceFile("src/blib2to3/pygram.py")
 
     def test_pytree(self) -> None:
-        self.checkSourceFile("blib2to3/pytree.py")
+        self.checkSourceFile("src/blib2to3/pytree.py")
 
     def test_conv(self) -> None:
-        self.checkSourceFile("blib2to3/pgen2/conv.py")
+        self.checkSourceFile("src/blib2to3/pgen2/conv.py")
 
     def test_driver(self) -> None:
-        self.checkSourceFile("blib2to3/pgen2/driver.py")
+        self.checkSourceFile("src/blib2to3/pgen2/driver.py")
 
     def test_grammar(self) -> None:
-        self.checkSourceFile("blib2to3/pgen2/grammar.py")
+        self.checkSourceFile("src/blib2to3/pgen2/grammar.py")
 
     def test_literals(self) -> None:
-        self.checkSourceFile("blib2to3/pgen2/literals.py")
+        self.checkSourceFile("src/blib2to3/pgen2/literals.py")
 
     def test_parse(self) -> None:
-        self.checkSourceFile("blib2to3/pgen2/parse.py")
+        self.checkSourceFile("src/blib2to3/pgen2/parse.py")
 
     def test_pgen(self) -> None:
-        self.checkSourceFile("blib2to3/pgen2/pgen.py")
+        self.checkSourceFile("src/blib2to3/pgen2/pgen.py")
 
     def test_tokenize(self) -> None:
-        self.checkSourceFile("blib2to3/pgen2/tokenize.py")
+        self.checkSourceFile("src/blib2to3/pgen2/tokenize.py")
 
     def test_token(self) -> None:
-        self.checkSourceFile("blib2to3/pgen2/token.py")
+        self.checkSourceFile("src/blib2to3/pgen2/token.py")
 
     def test_setup(self) -> None:
         self.checkSourceFile("setup.py")
 
     def test_piping(self) -> None:
-        source, expected = read_data("../black", data=False)
+        source, expected = read_data("src/black/__init__", data=False)
         result = BlackRunner().invoke(
             black.main,
             ["-", "--fast", f"--line-length={black.DEFAULT_LINE_LENGTH}"],
@@ -1663,7 +1664,7 @@ class BlackTestCase(unittest.TestCase):
 
     def test_symlink_out_of_root_directory(self) -> None:
         path = MagicMock()
-        root = THIS_DIR
+        root = THIS_DIR.resolve()
         child = MagicMock()
         include = re.compile(black.DEFAULT_INCLUDES)
         exclude = re.compile(black.DEFAULT_EXCLUDES)

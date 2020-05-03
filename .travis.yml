@@ -33,7 +33,7 @@ matrix:
     - python: 3.9-dev
 before_deploy:
   - pip install pyinstaller
-  - pyinstaller --clean -F --add-data blib2to3/:blib2to3 black.py
+  - pyinstaller --clean -F --add-data src/blib2to3/:blib2to3 src/black/__init__.py
 deploy:
   provider: releases
   api_key:

@@ -7,12 +7,12 @@ build: off
 
 test_script:
   - C:\Python36\python.exe tests/test_black.py
-  - C:\Python36\python.exe -m mypy black.py blackd.py tests/test_black.py blib2to3
+  - C:\Python36\python.exe -m mypy src/black src/blackd tests/test_black.py src/blib2to3
 
 after_test:
   - C:\Python36\python.exe -m pip install pyinstaller
   - "%CMD_IN_ENV% C:\\Python36\\python.exe -m PyInstaller --clean -F --add-data
-    blib2to3/;blib2to3 black.py"
+    src/blib2to3/;blib2to3 src/black/__init__.py"
 
 artifacts:
   - path: dist/black.exe
