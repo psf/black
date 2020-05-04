@@ -111,7 +111,9 @@ def _initialize_black_env(upgrade=False):
     print('Please wait, one time setup for Black.')
     _executable = sys.executable
     try:
-      sys.executable = str(_get_python_binary(Path(sys.exec_prefix)))
+      executable = str(_get_python_binary(Path(sys.exec_prefix)))
+      sys.executable = executable
+      sys._base_executable = executable
       print(f'Creating a virtualenv in {virtualenv_path}...')
       print('(this path can be customized in .vimrc by setting g:black_virtualenv)')
       venv.create(virtualenv_path, with_pip=True)
