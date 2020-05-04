@@ -117,6 +117,12 @@ def _initialize_black_env(upgrade=False):
       print(f'Creating a virtualenv in {virtualenv_path}...')
       print('(this path can be customized in .vimrc by setting g:black_virtualenv)')
       venv.create(virtualenv_path, with_pip=True)
+    except Exception:
+      print('Encountered exception while creating virtualenv (see traceback below).')
+      print(f'Removing {virtualenv_path}...')
+      import shutil
+      shutil.rmtree(virtualenv_path)
+      raise
     finally:
       sys.executable = _executable
     first_install = True
