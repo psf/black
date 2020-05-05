@@ -110,6 +110,7 @@ def _initialize_black_env(upgrade=False):
   if not virtualenv_path.is_dir():
     print('Please wait, one time setup for Black.')
     _executable = sys.executable
+    _base_executable = getattr(sys, "_base_executable", _executable)
     try:
       executable = str(_get_python_binary(Path(sys.exec_prefix)))
       sys.executable = executable
@@ -125,6 +126,7 @@ def _initialize_black_env(upgrade=False):
       raise
     finally:
       sys.executable = _executable
+      sys._base_executable = _base_executable
     first_install = True
   if first_install:
     print('Installing Black with pip...')
