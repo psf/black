@@ -35,9 +35,9 @@ isort should be configured to wrap imports when they surpass _Black_'s default l
 ```cfg
 [settings]
 multi_line_output = 3
-include_trailing_comma = true
+include_trailing_comma = True
 force_grid_wrap = 0
-combine_as_imports = true
+use_parentheses = True
 line_length = 88
 ```
 
@@ -49,9 +49,9 @@ line_length = 88
 ```cfg
 [isort]
 multi_line_output = 3
-include_trailing_comma = true
+include_trailing_comma = True
 force_grid_wrap = 0
-combine_as_imports = true
+use_parentheses = True
 line_length = 88
 ```
 
@@ -63,9 +63,9 @@ line_length = 88
 ```toml
 [tool.isort]
 multi_line_output = 3
-include_trailing_comma = true
+include_trailing_comma = True
 force_grid_wrap = 0
-combine_as_imports = true
+use_parentheses = True
 line_length = 88
 ```
 
@@ -77,9 +77,9 @@ line_length = 88
 ```ini
 [*.py]
 multi_line_output = 3
-include_trailing_comma = true
+include_trailing_comma = True
 force_grid_wrap = 0
-combine_as_imports = true
+use_parentheses = True
 line_length = 88
 ```
 
