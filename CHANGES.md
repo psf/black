@@ -3,6 +3,7 @@
 ### Unreleased
 
 - reindent docstrings when reindenting code around it (#1053)
+- show colored diffs (#1266)
 
 ### 19.10b0
 

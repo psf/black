@@ -39,6 +39,7 @@ from typing import (
     TypeVar,
     Union,
     cast,
+    TYPE_CHECKING,
 )
 from typing_extensions import Final
 from mypy_extensions import mypyc_attr
@@ -59,9 +60,7 @@ from blib2to3.pgen2.parse import ParseError
 
 from _black_version import version as __version__
 
-# This is needed for MyPy static type analysis.
-# See https://stackoverflow.com/a/38962160/1354930
-if False:
+if TYPE_CHECKING:
     import colorama  # noqa: F401
 
 DEFAULT_LINE_LENGTH = 88
