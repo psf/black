@@ -2544,6 +2544,7 @@ def transform_line(
             is_line_short_enough(line, line_length=line_length, line_str=line_str)
             or line.contains_unsplittable_type_ignore()
         )
+        and not (line.contains_standalone_comments() and line.inside_brackets)
     ):
         # Only apply basic string preprocessing, since lines shouldn't be split here.
         transformers = [string_merge, string_paren_strip]

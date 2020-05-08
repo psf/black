@@ -22,6 +22,11 @@ except ImportError:
 
 
 # Some comment before a function.
+y = 1
+(
+    # some strings
+    y  # type: ignore
+)
 
 
 def function(default=None):
