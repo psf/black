@@ -11,9 +11,11 @@ sys.path.insert(0, str(CURRENT_DIR))  # for setuptools.build_meta
 
 
 def get_long_description() -> str:
-    readme_md = CURRENT_DIR / "README.md"
-    with open(readme_md, encoding="utf8") as ld_file:
-        return ld_file.read()
+    return (
+        (CURRENT_DIR / "README.md").read_text(encoding="utf8")
+        + "\n\n"
+        + (CURRENT_DIR / "CHANGES.md").read_text(encoding="utf8")
+    )
 
 
 USE_MYPYC = False
@@ -69,7 +71,7 @@ setup(
         "appdirs",
         "toml>=0.9.4",
         "typed-ast>=1.4.0",
-        "regex",
+        "regex>=2020.1.8",
         "pathspec>=0.6, <1",
         "dataclasses>=0.6; python_version < '3.7'",
         "typing_extensions>=3.7.4",

@@ -243,8 +243,8 @@ class BlackTestCase(unittest.TestCase):
 
     def test_piping_diff(self) -> None:
         diff_header = re.compile(
-            rf"(STDIN|STDOUT)\t\d\d\d\d-\d\d-\d\d "
-            rf"\d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
+            rf"(STDIN|STDOUT)\t\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d\d\d\d "
+            rf"\+\d\d\d\d"
         )
         source, _ = read_data("expression.py")
         expected, _ = read_data("expression.diff")
@@ -333,7 +333,7 @@ class BlackTestCase(unittest.TestCase):
         tmp_file = Path(black.dump_to_file(source))
         diff_header = re.compile(
             rf"{re.escape(str(tmp_file))}\t\d\d\d\d-\d\d-\d\d "
-            rf"\d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
+            r"\d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
         )
         try:
             result = BlackRunner().invoke(black.main, ["--diff", str(tmp_file)])
@@ -346,9 +346,9 @@ class BlackTestCase(unittest.TestCase):
         if expected != actual:
             dump = black.dump_to_file(actual)
             msg = (
-                f"Expected diff isn't equal to the actual. If you made changes "
-                f"to expression.py and this is an anticipated difference, "
-                f"overwrite tests/data/expression.diff with {dump}"
+                "Expected diff isn't equal to the actual. If you made changes to"
+                " expression.py and this is an anticipated difference, overwrite"
+                f" tests/data/expression.diff with {dump}"
             )
             self.assertEqual(expected, actual, msg)
 
@@ -386,13 +386,39 @@ class BlackTestCase(unittest.TestCase):
         black.assert_stable(source, actual, black.FileMode())
         mode = black.FileMode(string_normalization=False)
         not_normalized = fs(source, mode=mode)
-        self.assertFormatEqual(source, not_normalized)
+        self.assertFormatEqual(source.replace("\\\n", ""), not_normalized)
         black.assert_equivalent(source, not_normalized)
         black.assert_stable(source, not_normalized, mode=mode)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_docstring(self) -> None:
         source, expected = read_data("docstring")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+
+    def test_long_strings(self) -> None:
+        """Tests for splitting long strings."""
+        source, expected = read_data("long_strings")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_long_strings__edge_case(self) -> None:
+        """Edge-case tests for splitting long strings."""
+        source, expected = read_data("long_strings__edge_case")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_long_strings__regression(self) -> None:
+        """Regression tests for splitting long strings."""
+        source, expected = read_data("long_strings__regression")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
@@ -607,6 +633,16 @@ class BlackTestCase(unittest.TestCase):
         self.invokeBlack([str(source_path), "--target-version", "py36"], exit_code=123)
 
     @patch("black.dump_to_file", dump_to_stderr)
+    def test_python38(self) -> None:
+        source, expected = read_data("python38")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        major, minor = sys.version_info[:2]
+        if major > 3 or (major == 3 and minor >= 8):
+            black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+
+    @patch("black.dump_to_file", dump_to_stderr)
     def test_fmtonoff(self) -> None:
         source, expected = read_data("fmtonoff")
         actual = fs(source)
@@ -625,6 +661,14 @@ class BlackTestCase(unittest.TestCase):
     @patch("black.dump_to_file", dump_to_stderr)
     def test_fmtonoff3(self) -> None:
         source, expected = read_data("fmtonoff3")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_fmtonoff4(self) -> None:
+        source, expected = read_data("fmtonoff4")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
@@ -736,8 +780,8 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(err_lines[-1], "error: cannot format e1: boom")
             self.assertEqual(
                 unstyle(str(report)),
-                "1 file reformatted, 2 files left unchanged, "
-                "1 file failed to reformat.",
+                "1 file reformatted, 2 files left unchanged, 1 file failed to"
+                " reformat.",
             )
             self.assertEqual(report.return_code, 123)
             report.done(Path("f3"), black.Changed.YES)
@@ -746,8 +790,8 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(out_lines[-1], "reformatted f3")
             self.assertEqual(
                 unstyle(str(report)),
-                "2 files reformatted, 2 files left unchanged, "
-                "1 file failed to reformat.",
+                "2 files reformatted, 2 files left unchanged, 1 file failed to"
+                " reformat.",
             )
             self.assertEqual(report.return_code, 123)
             report.failed(Path("e2"), "boom")
@@ -756,8 +800,8 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(err_lines[-1], "error: cannot format e2: boom")
             self.assertEqual(
                 unstyle(str(report)),
-                "2 files reformatted, 2 files left unchanged, "
-                "2 files failed to reformat.",
+                "2 files reformatted, 2 files left unchanged, 2 files failed to"
+                " reformat.",
             )
             self.assertEqual(report.return_code, 123)
             report.path_ignored(Path("wat"), "no match")
@@ -766,8 +810,8 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(out_lines[-1], "wat ignored: no match")
             self.assertEqual(
                 unstyle(str(report)),
-                "2 files reformatted, 2 files left unchanged, "
-                "2 files failed to reformat.",
+                "2 files reformatted, 2 files left unchanged, 2 files failed to"
+                " reformat.",
             )
             self.assertEqual(report.return_code, 123)
             report.done(Path("f4"), black.Changed.NO)
@@ -776,15 +820,22 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(out_lines[-1], "f4 already well formatted, good job.")
             self.assertEqual(
                 unstyle(str(report)),
-                "2 files reformatted, 3 files left unchanged, "
-                "2 files failed to reformat.",
+                "2 files reformatted, 3 files left unchanged, 2 files failed to"
+                " reformat.",
             )
             self.assertEqual(report.return_code, 123)
             report.check = True
             self.assertEqual(
                 unstyle(str(report)),
-                "2 files would be reformatted, 3 files would be left unchanged, "
-                "2 files would fail to reformat.",
+                "2 files would be reformatted, 3 files would be left unchanged, 2 files"
+                " would fail to reformat.",
+            )
+            report.check = False
+            report.diff = True
+            self.assertEqual(
+                unstyle(str(report)),
+                "2 files would be reformatted, 3 files would be left unchanged, 2 files"
+                " would fail to reformat.",
             )
 
     def test_report_quiet(self) -> None:
@@ -826,8 +877,8 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(err_lines[-1], "error: cannot format e1: boom")
             self.assertEqual(
                 unstyle(str(report)),
-                "1 file reformatted, 2 files left unchanged, "
-                "1 file failed to reformat.",
+                "1 file reformatted, 2 files left unchanged, 1 file failed to"
+                " reformat.",
             )
             self.assertEqual(report.return_code, 123)
             report.done(Path("f3"), black.Changed.YES)
@@ -835,8 +886,8 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(len(err_lines), 1)
             self.assertEqual(
                 unstyle(str(report)),
-                "2 files reformatted, 2 files left unchanged, "
-                "1 file failed to reformat.",
+                "2 files reformatted, 2 files left unchanged, 1 file failed to"
+                " reformat.",
             )
             self.assertEqual(report.return_code, 123)
             report.failed(Path("e2"), "boom")
@@ -845,8 +896,8 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(err_lines[-1], "error: cannot format e2: boom")
             self.assertEqual(
                 unstyle(str(report)),
-                "2 files reformatted, 2 files left unchanged, "
-                "2 files failed to reformat.",
+                "2 files reformatted, 2 files left unchanged, 2 files failed to"
+                " reformat.",
             )
             self.assertEqual(report.return_code, 123)
             report.path_ignored(Path("wat"), "no match")
@@ -854,8 +905,8 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(len(err_lines), 2)
             self.assertEqual(
                 unstyle(str(report)),
-                "2 files reformatted, 2 files left unchanged, "
-                "2 files failed to reformat.",
+                "2 files reformatted, 2 files left unchanged, 2 files failed to"
+                " reformat.",
             )
             self.assertEqual(report.return_code, 123)
             report.done(Path("f4"), black.Changed.NO)
@@ -863,15 +914,22 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(len(err_lines), 2)
             self.assertEqual(
                 unstyle(str(report)),
-                "2 files reformatted, 3 files left unchanged, "
-                "2 files failed to reformat.",
+                "2 files reformatted, 3 files left unchanged, 2 files failed to"
+                " reformat.",
             )
             self.assertEqual(report.return_code, 123)
             report.check = True
             self.assertEqual(
                 unstyle(str(report)),
-                "2 files would be reformatted, 3 files would be left unchanged, "
-                "2 files would fail to reformat.",
+                "2 files would be reformatted, 3 files would be left unchanged, 2 files"
+                " would fail to reformat.",
+            )
+            report.check = False
+            report.diff = True
+            self.assertEqual(
+                unstyle(str(report)),
+                "2 files would be reformatted, 3 files would be left unchanged, 2 files"
+                " would fail to reformat.",
             )
 
     def test_report_normal(self) -> None:
@@ -915,8 +973,8 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(err_lines[-1], "error: cannot format e1: boom")
             self.assertEqual(
                 unstyle(str(report)),
-                "1 file reformatted, 2 files left unchanged, "
-                "1 file failed to reformat.",
+                "1 file reformatted, 2 files left unchanged, 1 file failed to"
+                " reformat.",
             )
             self.assertEqual(report.return_code, 123)
             report.done(Path("f3"), black.Changed.YES)
@@ -925,8 +983,8 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(out_lines[-1], "reformatted f3")
             self.assertEqual(
                 unstyle(str(report)),
-                "2 files reformatted, 2 files left unchanged, "
-                "1 file failed to reformat.",
+                "2 files reformatted, 2 files left unchanged, 1 file failed to"
+                " reformat.",
             )
             self.assertEqual(report.return_code, 123)
             report.failed(Path("e2"), "boom")
@@ -935,8 +993,8 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(err_lines[-1], "error: cannot format e2: boom")
             self.assertEqual(
                 unstyle(str(report)),
-                "2 files reformatted, 2 files left unchanged, "
-                "2 files failed to reformat.",
+                "2 files reformatted, 2 files left unchanged, 2 files failed to"
+                " reformat.",
             )
             self.assertEqual(report.return_code, 123)
             report.path_ignored(Path("wat"), "no match")
@@ -944,8 +1002,8 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(len(err_lines), 2)
             self.assertEqual(
                 unstyle(str(report)),
-                "2 files reformatted, 2 files left unchanged, "
-                "2 files failed to reformat.",
+                "2 files reformatted, 2 files left unchanged, 2 files failed to"
+                " reformat.",
             )
             self.assertEqual(report.return_code, 123)
             report.done(Path("f4"), black.Changed.NO)
@@ -953,15 +1011,22 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(len(err_lines), 2)
             self.assertEqual(
                 unstyle(str(report)),
-                "2 files reformatted, 3 files left unchanged, "
-                "2 files failed to reformat.",
+                "2 files reformatted, 3 files left unchanged, 2 files failed to"
+                " reformat.",
             )
             self.assertEqual(report.return_code, 123)
             report.check = True
             self.assertEqual(
                 unstyle(str(report)),
-                "2 files would be reformatted, 3 files would be left unchanged, "
-                "2 files would fail to reformat.",
+                "2 files would be reformatted, 3 files would be left unchanged, 2 files"
+                " would fail to reformat.",
+            )
+            report.check = False
+            report.diff = True
+            self.assertEqual(
+                unstyle(str(report)),
+                "2 files would be reformatted, 3 files would be left unchanged, 2 files"
+                " would fail to reformat.",
             )
 
     def test_lib2to3_parse(self) -> None:
@@ -1622,6 +1687,16 @@ class BlackTestCase(unittest.TestCase):
                 raise result.exception
             self.assertEqual(result.exit_code, 0)
 
+    def test_invalid_config_return_code(self) -> None:
+        tmp_file = Path(black.dump_to_file())
+        try:
+            tmp_config = Path(black.dump_to_file())
+            tmp_config.unlink()
+            args = ["--config", str(tmp_config), str(tmp_file)]
+            self.invokeBlack(args, exit_code=2, ignore_config=False)
+        finally:
+            tmp_file.unlink()
+
 
 class BlackDTestCase(AioHTTPTestCase):
     async def get_application(self) -> web.Application:
@@ -1712,8 +1787,7 @@ class BlackDTestCase(AioHTTPTestCase):
     @unittest_run_loop
     async def test_blackd_diff(self) -> None:
         diff_header = re.compile(
-            rf"(In|Out)\t\d\d\d\d-\d\d-\d\d "
-            rf"\d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
+            rf"(In|Out)\t\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
         )
 
         source, _ = read_data("blackd_diff.py")
