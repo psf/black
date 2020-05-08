@@ -247,8 +247,6 @@ def read_pyproject_toml(
         if value is None:
             return None
 
-        value = path.as_posix()
-
     try:
         config = parse_pyproject_toml(value)
     except (toml.TomlDecodeError, OSError) as e:
