@@ -985,6 +985,8 @@ code style: pytest, tox, Pyramid, Django Channels, Hypothesis, attrs, SQLAlchemy
 Poetry, PyPA applications (Warehouse, Pipenv, virtualenv), pandas, Pillow, every Datadog
 Agent Integration, Home Assistant.
 
+The following organizations use _Black_: Dropbox.
+
 Are we missing anyone? Let us know.
 
 ## Testimonials
