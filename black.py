@@ -369,8 +369,8 @@ def target_version_option_callback(
     "--force-exclude",
     type=str,
     help=(
-        "Like --exclude, but files and directories matching this regex will be excluded "
-        "even when they are passed explicitly as arguments"
+        "Like --exclude, but files and directories matching this regex will be "
+        "excluded even when they are passed explicitly as arguments"
     ),
 )
 @click.option(
@@ -457,53 +457,17 @@ def main(
     if code is not None:
         print(format_str(code, mode=mode))
         ctx.exit(0)
-    try:
-        include_regex = re_compile_maybe_verbose(include)
-    except re.error:
-        err(f"Invalid regular expression for include given: {include!r}")
-        ctx.exit(2)
-    try:
-        exclude_regex = re_compile_maybe_verbose(exclude)
-    except re.error:
-        err(f"Invalid regular expression for exclude given: {exclude!r}")
-        ctx.exit(2)
-    try:
-        force_exclude_regex = (
-            re_compile_maybe_verbose(force_exclude) if force_exclude else None
-        )
-    except re.error:
-        err(f"Invalid regular expression for force_exclude given: {force_exclude!r}")
-        ctx.exit(2)
     report = Report(check=check, diff=diff, quiet=quiet, verbose=verbose)
-    root = find_project_root(src)
-    sources: Set[Path] = set()
-    path_empty(src, "No Path provided. Nothing to do 😴", quiet, verbose, ctx)
-    exclude_regexes = [exclude_regex]
-    if force_exclude_regex is not None:
-        exclude_regexes.append(force_exclude_regex)
-    for s in src:
-        p = Path(s)
-        if p.is_dir():
-            sources.update(
-                gen_python_files(
-                    p.iterdir(),
-                    root,
-                    include_regex,
-                    exclude_regexes,
-                    report,
-                    get_gitignore(root),
-                )
-            )
-        elif s == "-":
-            sources.add(p)
-        elif p.is_file():
-            sources.update(
-                gen_python_files(
-                    [p], root, None, exclude_regexes, report, get_gitignore(root)
-                )
-            )
-        else:
-            err(f"invalid path: {s}")
+    sources = get_sources(
+        ctx=ctx,
+        src=src,
+        quiet=quiet,
+        verbose=verbose,
+        include=include,
+        exclude=exclude,
+        force_exclude=force_exclude,
+        report=report,
+    )
 
     path_empty(
         sources,
@@ -530,6 +494,69 @@ def main(
         out("Oh no! 💥 💔 💥" if report.return_code else "All done! ✨ 🍰 ✨")
         click.secho(str(report), err=True)
     ctx.exit(report.return_code)
+
+
+def get_sources(
+    *,
+    ctx: click.Context,
+    src: Tuple[str, ...],
+    quiet: bool,
+    verbose: bool,
+    include: str,
+    exclude: str,
+    force_exclude: Optional[str],
+    report: "Report",
+) -> Set[Path]:
+    """Compute the set of files to be formatted."""
+    try:
+        include_regex = re_compile_maybe_verbose(include)
+    except re.error:
+        err(f"Invalid regular expression for include given: {include!r}")
+        ctx.exit(2)
+    try:
+        exclude_regex = re_compile_maybe_verbose(exclude)
+    except re.error:
+        err(f"Invalid regular expression for exclude given: {exclude!r}")
+        ctx.exit(2)
+    try:
+        force_exclude_regex = (
+            re_compile_maybe_verbose(force_exclude) if force_exclude else None
+        )
+    except re.error:
+        err(f"Invalid regular expression for force_exclude given: {force_exclude!r}")
+        ctx.exit(2)
+
+    root = find_project_root(src)
+    sources: Set[Path] = set()
+    path_empty(src, "No Path provided. Nothing to do 😴", quiet, verbose, ctx)
+    exclude_regexes = [exclude_regex]
+    if force_exclude_regex is not None:
+        exclude_regexes.append(force_exclude_regex)
+
+    for s in src:
+        p = Path(s)
+        if p.is_dir():
+            sources.update(
+                gen_python_files(
+                    p.iterdir(),
+                    root,
+                    include_regex,
+                    exclude_regexes,
+                    report,
+                    get_gitignore(root),
+                )
+            )
+        elif s == "-":
+            sources.add(p)
+        elif p.is_file():
+            sources.update(
+                gen_python_files(
+                    [p], root, None, exclude_regexes, report, get_gitignore(root)
+                )
+            )
+        else:
+            err(f"invalid path: {s}")
+    return sources
 
 
 def path_empty(
