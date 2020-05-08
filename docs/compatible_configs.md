@@ -1,10 +1,10 @@
 # _Black_ compatible configurations
 
-Most of the changes that _Black_ make are harmless, but a few do conflict against other
-tools. It is not uncommon to be using other tools alongside _Black_ like linters and
-type checkers. Some of them need a bit of tweaking to resolve the conflicts. Listed
-below are _Black_ compatible configurations in various formats for the common tools out
-there.
+All of Black's changes are harmless (or at least, they should be), but a few do conflict
+against other tools. It is not uncommon to be using other tools alongside _Black_ like
+linters and type checkers. Some of them need a bit of tweaking to resolve the conflicts.
+Listed below are _Black_ compatible configurations in various formats for the common
+tools out there.
 
 ## isort
 
@@ -118,12 +118,12 @@ line_length = 88
 
 </details>
 
-## flake8
+## Flake8
 
-[flake8](https://pypi.org/p/flake8/) is a code linter. It warns you of syntax errors,
-possible bugs, stylistic errors, etc. For the most part, flake8 follows
+[Flake8](https://pypi.org/p/flake8/) is a code linter. It warns you of syntax errors,
+possible bugs, stylistic errors, etc. For the most part, Flake8 follows
 [PEP 8](https://www.python.org/dev/peps/pep-0008/) when warning about stylistic errors.
-Except, there are a few deviations that cause incompatiblities with _Black_.
+There are a few deviations that cause incompatibilities with _Black_.
 
 ### Configuration
 
@@ -139,10 +139,10 @@ with PEP 8, but this behaviour will cause flake8 to raise
 `W503 line break before binary operator` warnings.
 
 In some cases, as determined by PEP 8, _Black_ will enforce an equal amount of
-whitespace around slice operators. Due to this, flake8 will raise
+whitespace around slice operators. Due to this, Flake8 will raise
 `E203 whitespace before ':'` warnings.
 
-Since both of these warnings are not PEP 8 compliant, flake8 should be configured to
+Since both of these warnings are not PEP 8 compliant, Flake8 should be configured to
 ignore these warnings via `extend-ignore = E203, W503`.
 
 Also, as like with isort, flake8 should be configured to allow lines up to the length
@@ -185,7 +185,7 @@ extend-ignore = E203, W503
 
 ## Pylint
 
-[Pylint](https://pypi.org/p/pylint/) is also a code linter like flake8. It has the same
+[Pylint](https://pypi.org/p/pylint/) is also a code linter like Flake8. It has the same
 checks as flake8 and more. In particular, it has more formatting checks regarding style
 conventions like variable naming. With so many checks, Pylint is bound to have some
 mixed feelings about _Black_'s formatting style.
@@ -208,7 +208,7 @@ ImportantClass.important_method(
 )
 ```
 
-Although, while this style is PEP 8 compliant, Pylint will raise
+Although, this style is PEP 8 compliant, Pylint will raise
 `C0330: Wrong hanging indentation before block (add 4 spaces)` warnings. Since _Black_
 isn't configurable on this style, Pylint should be told to ignore these warnings via
 `disable = C0330`.

@@ -130,7 +130,7 @@ _Black_ is a well-behaved Unix-style command-line tool:
 ### Using _Black_ with other tools
 
 While _Black_ enforces formatting that conforms to PEP 8, other tools may raise warnings
-about _Black_'s changes or will overwrite _Black_'s changes... I am looking at you
+about _Black_'s changes or will overwrite _Black_'s changes. A good example of this is
 [isort](https://pypi.org/p/isort). Since _Black_ is barely configurable, these tools
 should be configured to neither warn about nor overwrite _Black_'s changes.
 
