@@ -1,6 +1,6 @@
 # Note: don't use this config for your own repositories. Instead, see
 # "Version control integration" in README.md.
-exclude: ^(blib2to3/|profiling/|tests/data/)
+exclude: ^(src/blib2to3/|profiling/|tests/data/)
 repos:
   - repo: local
     hooks:

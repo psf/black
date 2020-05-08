@@ -1,4 +1,4 @@
-# Copyright (C) 2018 Łukasz Langa
+# Copyright (C) 2020 Łukasz Langa
 from setuptools import setup
 import sys
 import os
@@ -28,14 +28,14 @@ if os.getenv("BLACK_USE_MYPYC", None) == "1":
 
 if USE_MYPYC:
     mypyc_targets = [
-        "black.py",
-        "blib2to3/pytree.py",
-        "blib2to3/pygram.py",
-        "blib2to3/pgen2/parse.py",
-        "blib2to3/pgen2/grammar.py",
-        "blib2to3/pgen2/token.py",
-        "blib2to3/pgen2/driver.py",
-        "blib2to3/pgen2/pgen.py",
+        "src/black/__init__.py",
+        "src/blib2to3/pytree.py",
+        "src/blib2to3/pygram.py",
+        "src/blib2to3/pgen2/parse.py",
+        "src/blib2to3/pgen2/grammar.py",
+        "src/blib2to3/pgen2/token.py",
+        "src/blib2to3/pgen2/driver.py",
+        "src/blib2to3/pgen2/pgen.py",
     ]
 
     from mypyc.build import mypycify
@@ -48,7 +48,7 @@ else:
 setup(
     name="black",
     use_scm_version={
-        "write_to": "_black_version.py",
+        "write_to": "src/_black_version.py",
         "write_to_template": 'version = "{version}"\n',
     },
     description="The uncompromising code formatter.",
@@ -60,9 +60,10 @@ setup(
     url="https://github.com/psf/black",
     project_urls={"Changelog": "https://github.com/psf/black/blob/master/CHANGES.md"},
     license="MIT",
-    py_modules=["black", "blackd", "_black_version"],
+    py_modules=["_black_version"],
     ext_modules=ext_modules,
-    packages=["blib2to3", "blib2to3.pgen2"],
+    packages=["blackd", "black", "blib2to3", "blib2to3.pgen2"],
+    package_dir={"": "src"},
     package_data={"blib2to3": ["*.txt"]},
     python_requires=">=3.6",
     zip_safe=False,
