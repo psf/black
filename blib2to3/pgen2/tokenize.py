@@ -78,7 +78,9 @@ def _combinations(*l):
 Whitespace = r"[ \f\t]*"
 Comment = r"#[^\r\n]*"
 Ignore = Whitespace + any(r"\\\r?\n" + Whitespace) + maybe(Comment)
-Name = r"\w+"  # this is invalid but it's fine because Name comes after Number in all groups
+Name = (  # this is invalid but it's fine because Name comes after Number in all groups
+    r"\w+"
+)
 
 Binnumber = r"0[bB]_?[01]+(?:_[01]+)*"
 Hexnumber = r"0[xX]_?[\da-fA-F]+(?:_[\da-fA-F]+)*[lL]?"

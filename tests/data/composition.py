@@ -10,13 +10,13 @@ class C:
             )
             self.assertEqual(
                 unstyle(str(report)),
-                "2 files reformatted, 1 file left unchanged, "
-                "1 file failed to reformat.",
+                "2 files reformatted, 1 file left unchanged, 1 file failed to"
+                " reformat.",
             )
             self.assertEqual(
                 unstyle(str(report)),
-                "2 files reformatted, 2 files left unchanged, "
-                "2 files failed to reformat.",
+                "2 files reformatted, 2 files left unchanged, 2 files failed to"
+                " reformat.",
             )
             for i in (a,):
                 if (
@@ -40,8 +40,7 @@ class C:
             items=items[:num_items]
         )
         return (
-            "Utterly failed doctest test for %s\n"
-            '  File "%s", line %s, in %s\n\n%s'
+            'Utterly failed doctest test for %s\n   File "%s", line %s, in %s\n\n%s'
             % (test.name, test.filename, lineno, lname, err)
         )
 
@@ -150,8 +149,8 @@ class C:
             key8: value8,
             key9: value9,
         }, (
-            "Not what we expected and the message is too long to fit "
-            "in one line because it's too long"
+            "Not what we expected and the message is too long to fit in one line"
+            " because it's too long"
         )
 
         dis_c_instance_method = """\

@@ -268,8 +268,7 @@ def main() -> None:
         "-v",
         "--version",
         help=(
-            "Version for given PyPI package. "
-            "Will be discarded if used with -t option."
+            "Version for given PyPI package. Will be discarded if used with -t option."
         ),
     )
     parser.add_argument(
