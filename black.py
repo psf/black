@@ -5682,7 +5682,6 @@ def get_gitignore(root: Path) -> PathSpec:
     if gitignore.is_file():
         with gitignore.open() as gf:
             lines = gf.readlines()
-    out(f"gitignore file {gitignore} contained lines {lines}")
     return PathSpec.from_lines("gitwildmatch", lines)
 
 
@@ -5703,18 +5702,12 @@ def gen_python_files(
     """
     assert root.is_absolute(), f"INTERNAL ERROR: `root` must be absolute but is {root}"
     for child in paths:
-        # First ignore files matching .gitignore
-        if gitignore.match_file(child.relative_to(root).as_posix()):
-            report.path_ignored(child, "matches the .gitignore file content")
-            continue
-
         # Then ignore with `exclude` option.
         try:
-            normalized_path = "/" + child.resolve().relative_to(root).as_posix()
+            normalized_path = child.resolve().relative_to(root).as_posix()
         except OSError as e:
             report.path_ignored(child, f"cannot be read because {e}")
             continue
-
         except ValueError:
             if child.is_symlink():
                 report.path_ignored(
@@ -5724,6 +5717,12 @@ def gen_python_files(
 
             raise
 
+        # First ignore files matching .gitignore
+        if gitignore.match_file(normalized_path):
+            report.path_ignored(child, "matches the .gitignore file content")
+            continue
+
+        normalized_path = "/" + normalized_path
         if child.is_dir():
             normalized_path += "/"
 
