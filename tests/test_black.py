@@ -391,6 +391,13 @@ class BlackTestCase(unittest.TestCase):
         black.assert_stable(source, not_normalized, mode=mode)
 
     @patch("black.dump_to_file", dump_to_stderr)
+    def test_docstring(self) -> None:
+        source, expected = read_data("docstring")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+
     def test_long_strings(self) -> None:
         """Tests for splitting long strings."""
         source, expected = read_data("long_strings")
