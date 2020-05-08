@@ -159,7 +159,11 @@ class BlackTestCase(unittest.TestCase):
         if ignore_config:
             args = ["--config", str(THIS_DIR / "empty.toml"), *args]
         result = runner.invoke(black.main, args)
-        self.assertEqual(result.exit_code, exit_code, msg=runner.stderr_bytes.decode())
+        self.assertEqual(
+            result.exit_code,
+            exit_code,
+            msg=f"Failed with args: {args}. Stderr: {runner.stderr_bytes.decode()!r}",
+        )
 
     @patch("black.dump_to_file", dump_to_stderr)
     def checkSourceFile(self, name: str) -> None:
