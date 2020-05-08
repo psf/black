@@ -12,7 +12,7 @@
 
 #### vim plugin
 
-- prefer virtualenv packges over global packages (#1383)
+- prefer virtualenv packages over global packages (#1383)
 
 ### 19.10b0
 
