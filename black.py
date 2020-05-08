@@ -235,14 +235,13 @@ def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
 
 
 def read_pyproject_toml(
-    ctx: click.Context, param: click.Parameter, value: Union[str, int, bool, None]
+    ctx: click.Context, param: click.Parameter, value: Optional[str]
 ) -> Optional[str]:
     """Inject Black configuration from "pyproject.toml" into defaults in `ctx`.
 
     Returns the path to a successfully found and read configuration file, None
     otherwise.
     """
-    assert not isinstance(value, (int, bool)), "Invalid parameter type passed"
     if not value:
         value = find_pyproject_toml(ctx.params.get("src", ()))
         if value is None:
@@ -258,9 +257,12 @@ def read_pyproject_toml(
     if not config:
         return None
 
-    if ctx.default_map is None:
-        ctx.default_map = {}
-    ctx.default_map.update(config)  # type: ignore  # bad types in .pyi
+    default_map: Dict[str, Any] = {}
+    if ctx.default_map:
+        default_map.update(ctx.default_map)
+    default_map.update(config)
+
+    ctx.default_map = default_map
     return value
 
 
@@ -394,7 +396,12 @@ def target_version_option_callback(
 @click.option(
     "--config",
     type=click.Path(
-        exists=True, file_okay=True, dir_okay=False, readable=True, allow_dash=False
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        allow_dash=False,
+        path_type=str,
     ),
     is_eager=True,
     callback=read_pyproject_toml,
