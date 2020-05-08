@@ -1363,16 +1363,15 @@ class BlackTestCase(unittest.TestCase):
             mock.side_effect = OSError
             black.write_cache({}, [], mode)
 
-    @patch("black.ProcessPoolExecutor", autospec=True)
-    def test_works_in_mono_process_only_environment(self, executor: MagicMock) -> None:
-        self.skipTest("this test fails when run with the rest of the suite")
-        executor.side_effect = OSError()
+    @event_loop(close=False)
+    @patch("black.ProcessPoolExecutor", MagicMock(side_effect=OSError))
+    def test_works_in_mono_process_only_environment(self) -> None:
         with cache_dir() as workspace:
             for f in [
                 (workspace / "one.py").resolve(),
                 (workspace / "two.py").resolve(),
             ]:
-                f.write_text("print('hello')")
+                f.write_text('print("hello")\n')
             self.invokeBlack([str(workspace)])
 
     @event_loop(close=False)
