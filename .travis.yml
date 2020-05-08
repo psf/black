@@ -4,7 +4,7 @@ cache:
   directories:
     - $HOME/.cache/pre-commit
 env:
-  - TEST_CMD="coverage run tests/test_black.py"
+  - TEST_CMD="coverage run -m unittest"
 install:
   - pip install coverage coveralls pre-commit
   - pip install -e '.[d]'

@@ -135,6 +135,12 @@ Utilities
 
 .. autofunction:: black.generate_ignored_nodes
 
+.. autofunction:: black.is_fmt_on
+
+.. autofunction:: black.contains_fmt_on_at_column
+
+.. autofunction:: black.first_leaf_column
+
 .. autofunction:: black.generate_trailers_to_omit
 
 .. autofunction:: black.get_future_imports

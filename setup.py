@@ -58,6 +58,7 @@ setup(
     author="Łukasz Langa",
     author_email="lukasz@langa.pl",
     url="https://github.com/psf/black",
+    project_urls={"Changelog": "https://github.com/psf/black/blob/master/CHANGES.md"},
     license="MIT",
     py_modules=["black", "blackd", "_black_version"],
     ext_modules=ext_modules,
@@ -77,7 +78,10 @@ setup(
         "typing_extensions>=3.7.4",
         "mypy_extensions>=0.4.3",
     ],
-    extras_require={"d": ["aiohttp>=3.3.2", "aiohttp-cors"]},
+    extras_require={
+        "d": ["aiohttp>=3.3.2", "aiohttp-cors"],
+        "colorama": ["colorama>=0.4.3"],
+    },
     test_suite="tests.test_black",
     classifiers=[
         "Development Status :: 4 - Beta",

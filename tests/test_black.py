@@ -268,6 +268,28 @@ class BlackTestCase(unittest.TestCase):
         actual = actual.rstrip() + "\n"  # the diff output has a trailing space
         self.assertEqual(expected, actual)
 
+    def test_piping_diff_with_color(self) -> None:
+        source, _ = read_data("expression.py")
+        config = THIS_DIR / "data" / "empty_pyproject.toml"
+        args = [
+            "-",
+            "--fast",
+            f"--line-length={black.DEFAULT_LINE_LENGTH}",
+            "--diff",
+            "--color",
+            f"--config={config}",
+        ]
+        result = BlackRunner().invoke(
+            black.main, args, input=BytesIO(source.encode("utf8"))
+        )
+        actual = result.output
+        # Again, the contents are checked in a different test, so only look for colors.
+        self.assertIn("\033[1;37m", actual)
+        self.assertIn("\033[36m", actual)
+        self.assertIn("\033[32m", actual)
+        self.assertIn("\033[31m", actual)
+        self.assertIn("\033[0m", actual)
+
     @patch("black.dump_to_file", dump_to_stderr)
     def test_function(self) -> None:
         source, expected = read_data("function")
@@ -355,6 +377,25 @@ class BlackTestCase(unittest.TestCase):
                 f" tests/data/expression.diff with {dump}"
             )
             self.assertEqual(expected, actual, msg)
+
+    def test_expression_diff_with_color(self) -> None:
+        source, _ = read_data("expression.py")
+        expected, _ = read_data("expression.diff")
+        tmp_file = Path(black.dump_to_file(source))
+        try:
+            result = BlackRunner().invoke(
+                black.main, ["--diff", "--color", str(tmp_file)]
+            )
+        finally:
+            os.unlink(tmp_file)
+        actual = result.output
+        # We check the contents of the diff in `test_expression_diff`. All
+        # we need to check here is that color codes exist in the result.
+        self.assertIn("\033[1;37m", actual)
+        self.assertIn("\033[36m", actual)
+        self.assertIn("\033[32m", actual)
+        self.assertIn("\033[31m", actual)
+        self.assertIn("\033[0m", actual)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_fstring(self) -> None:
@@ -1316,6 +1357,18 @@ class BlackTestCase(unittest.TestCase):
         with cache_dir(), patch.object(Path, "open") as mock:
             mock.side_effect = OSError
             black.write_cache({}, [], mode)
+
+    @patch("black.ProcessPoolExecutor", autospec=True)
+    def test_works_in_mono_process_only_environment(self, executor: MagicMock) -> None:
+        self.skipTest("this test fails when run with the rest of the suite")
+        executor.side_effect = OSError()
+        with cache_dir() as workspace:
+            for f in [
+                (workspace / "one.py").resolve(),
+                (workspace / "two.py").resolve(),
+            ]:
+                f.write_text("print('hello')")
+            self.invokeBlack([str(workspace)])
 
     @event_loop(close=False)
     def test_check_diff_use_together(self) -> None:

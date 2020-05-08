@@ -110,13 +110,23 @@ def _initialize_black_env(upgrade=False):
   if not virtualenv_path.is_dir():
     print('Please wait, one time setup for Black.')
     _executable = sys.executable
+    _base_executable = getattr(sys, "_base_executable", _executable)
     try:
-      sys.executable = str(_get_python_binary(Path(sys.exec_prefix)))
+      executable = str(_get_python_binary(Path(sys.exec_prefix)))
+      sys.executable = executable
+      sys._base_executable = executable
       print(f'Creating a virtualenv in {virtualenv_path}...')
       print('(this path can be customized in .vimrc by setting g:black_virtualenv)')
       venv.create(virtualenv_path, with_pip=True)
+    except Exception:
+      print('Encountered exception while creating virtualenv (see traceback below).')
+      print(f'Removing {virtualenv_path}...')
+      import shutil
+      shutil.rmtree(virtualenv_path)
+      raise
     finally:
       sys.executable = _executable
+      sys._base_executable = _base_executable
     first_install = True
   if first_install:
     print('Installing Black with pip...')
@@ -128,7 +138,7 @@ def _initialize_black_env(upgrade=False):
   if first_install:
     print('Pro-tip: to upgrade Black in the future, use the :BlackUpgrade command and restart Vim.\n')
   if virtualenv_site_packages not in sys.path:
-    sys.path.append(virtualenv_site_packages)
+    sys.path.insert(0, virtualenv_site_packages)
   return True
 
 if _initialize_black_env():

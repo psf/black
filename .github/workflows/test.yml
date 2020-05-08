@@ -27,4 +27,4 @@ jobs:
 
       - name: Unit tests
         run: |
-          coverage run tests/test_black.py
+          coverage run -m unittest

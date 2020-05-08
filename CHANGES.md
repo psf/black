@@ -1,5 +1,19 @@
 ## Change Log
 
+### Unreleased
+
+#### _Black_
+
+- reindent docstrings when reindenting code around it (#1053)
+
+- show colored diffs (#1266)
+
+- move to 'py3' tagged wheels (#1388)
+
+#### Vim plugin
+
+- prefer virtualenv packages over global packages (#1383)
+
 ### 19.10b0
 
 - added support for PEP 572 assignment expressions (#711)
