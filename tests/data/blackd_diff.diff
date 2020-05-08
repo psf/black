@@ -1,6 +1,6 @@
 --- [Deterministic header]
 +++ [Deterministic header]
-@@ -1,7 +1,6 @@
+@@ -1,6 +1,5 @@
 -def abc ():
 -    return ["hello", "world",
 -            "!"]
@@ -9,6 +9,5 @@
  
 -print(   "Incorrect formatting"    
 -)
- 
-+print("Incorrect formatting")
 +
++print("Incorrect formatting")

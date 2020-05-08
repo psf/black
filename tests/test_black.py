@@ -633,6 +633,14 @@ class BlackTestCase(unittest.TestCase):
         black.assert_stable(source, actual, black.FileMode())
 
     @patch("black.dump_to_file", dump_to_stderr)
+    def test_fmtonoff4(self) -> None:
+        source, expected = read_data("fmtonoff4")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, black.FileMode())
+
+    @patch("black.dump_to_file", dump_to_stderr)
     def test_remove_empty_parentheses_after_class(self) -> None:
         source, expected = read_data("class_blank_parentheses")
         actual = fs(source)
@@ -1644,6 +1652,16 @@ class BlackTestCase(unittest.TestCase):
             if result.exception is not None:
                 raise result.exception
             self.assertEqual(result.exit_code, 0)
+
+    def test_invalid_config_return_code(self) -> None:
+        tmp_file = Path(black.dump_to_file())
+        try:
+            tmp_config = Path(black.dump_to_file())
+            tmp_config.unlink()
+            args = ["--config", str(tmp_config), str(tmp_file)]
+            self.invokeBlack(args, exit_code=2, ignore_config=False)
+        finally:
+            tmp_file.unlink()
 
 
 class BlackDTestCase(AioHTTPTestCase):

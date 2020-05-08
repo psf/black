@@ -13,11 +13,11 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 from pathlib import Path
-import regex as re
+import re
 import shutil
 import string
 
-from setuptools_scm import get_version
+from pkg_resources import get_distribution
 from recommonmark.parser import CommonMarkParser
 
 
@@ -83,8 +83,8 @@ copyright = "2018, Łukasz Langa and contributors to Black"
 author = "Łukasz Langa and contributors to Black"
 
 # Autopopulate version
-# The full version, including alpha/beta/rc tags.
-release = get_version(root=CURRENT_DIR.parent)
+# The version, including alpha/beta/rc tags, but not commit hash and datestamps
+release = get_distribution("black").version.split("+")[0]
 # The short X.Y version.
 version = release
 for sp in "abcfr":
