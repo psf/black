@@ -618,7 +618,14 @@ def reformat_many(
     if sys.platform == "win32":
         # Work around https://bugs.python.org/issue26903
         worker_count = min(worker_count, 61)
-    executor = ProcessPoolExecutor(max_workers=worker_count)
+    try:
+        executor = ProcessPoolExecutor(max_workers=worker_count)
+    except OSError:
+        # we arrive here if the underlying system does not support multi-processing
+        # like in AWS Lambda, in which case we gracefully fallback to the default
+        # mono-process Executor by using None
+        executor = None
+
     try:
         loop.run_until_complete(
             schedule_formatting(
@@ -633,7 +640,8 @@ def reformat_many(
         )
     finally:
         shutdown(loop)
-        executor.shutdown()
+        if executor is not None:
+            executor.shutdown()
 
 
 async def schedule_formatting(
@@ -643,7 +651,7 @@ async def schedule_formatting(
     mode: Mode,
     report: "Report",
     loop: asyncio.AbstractEventLoop,
-    executor: Executor,
+    executor: Optional[Executor],
 ) -> None:
     """Run formatting of `sources` in parallel using the provided `executor`.
 
