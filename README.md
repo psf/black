@@ -148,7 +148,7 @@ about _Black_'s changes or will overwrite _Black_'s changes. A good example of t
 should be configured to neither warn about nor overwrite _Black_'s changes.
 
 Actual details on _Black_ compatible configurations for various tools can be found in
-[compatible_configs](./docs/compatible_configs.md).
+[compatible_configs](https://github.com/psf/black/blob/master/docs/compatible_configs.md).
 
 ### NOTE: This is a beta product
 
@@ -1122,13 +1122,14 @@ other hand, if your answer is "because I don't like a particular formatting" the
 not ready to embrace _Black_ yet. Such changes are unlikely to get accepted. You can
 still try but prepare to be disappointed.
 
-More details can be found in [CONTRIBUTING](CONTRIBUTING.md).
+More details can be found in
+[CONTRIBUTING](https://github.com/psf/black/blob/master/CONTRIBUTING.md).
 
 ## Change Log
 
 The log's become rather long. It moved to its own file.
 
-See [CHANGES](CHANGES.md).
+See [CHANGES](https://github.com/psf/black/blob/master/CHANGES.md).
 
 ## Authors
 
