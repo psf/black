@@ -5704,7 +5704,7 @@ def gen_python_files(
     assert root.is_absolute(), f"INTERNAL ERROR: `root` must be absolute but is {root}"
     for child in paths:
         # First ignore files matching .gitignore
-        if gitignore.match_file(child.as_posix()):
+        if gitignore.match_file(child.relative_to(root).as_posix()):
             report.path_ignored(child, "matches the .gitignore file content")
             continue
 

@@ -159,14 +159,10 @@ class BlackTestCase(unittest.TestCase):
         if ignore_config:
             args = ["--verbose", "--config", str(THIS_DIR / "empty.toml"), *args]
         result = runner.invoke(black.main, args)
-        black.get_gitignore.cache_clear()
         self.assertEqual(
             result.exit_code,
             exit_code,
-            msg=(
-                f"Failed with args: {args} {[os.path.exists(arg) for arg in args]}. "
-                f"Stderr: {runner.stderr_bytes.decode()!r}"
-            ),
+            msg=(f"Failed with args: {args}. Stderr: {runner.stderr_bytes.decode()!r}"),
         )
 
     @patch("black.dump_to_file", dump_to_stderr)
