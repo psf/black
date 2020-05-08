@@ -644,8 +644,11 @@ file hierarchy.
 
 ### Emacs
 
-Use [proofit404/blacken](https://github.com/proofit404/blacken) or
-[Elpy](https://github.com/jorgenschaefer/elpy).
+Options include the following:
+
+- [purcell/reformatter.el](https://github.com/purcell/reformatter.el)
+- [proofit404/blacken](https://github.com/proofit404/blacken)
+- [Elpy](https://github.com/jorgenschaefer/elpy).
 
 ### PyCharm/IntelliJ IDEA
 
