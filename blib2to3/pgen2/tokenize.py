@@ -1,6 +1,8 @@
 # Copyright (c) 2001, 2002, 2003, 2004, 2005, 2006 Python Software Foundation.
 # All rights reserved.
 
+# mypy: allow-untyped-defs, allow-untyped-calls
+
 """Tokenization help for Python programs.
 
 generate_tokens(readline) is a generator that breaks a stream of
@@ -25,6 +27,21 @@ are the same, except instead of generating tokens, tokeneater is a callback
 function to which the 5 fields described above are passed as 5 arguments,
 each time a new token is found."""
 
+from typing import (
+    Callable,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Text,
+    Tuple,
+    Pattern,
+    Union,
+    cast,
+)
+from blib2to3.pgen2.token import *
+from blib2to3.pgen2.grammar import Grammar
+
 __author__ = "Ka-Ping Yee <ping@lfw.org>"
 __credits__ = "GvR, ESR, Tim Peters, Thomas Wouters, Fred Drake, Skip Montanaro"
 
@@ -40,13 +57,6 @@ __all__ = [x for x in dir(token) if x[0] != "_"] + [
     "untokenize",
 ]
 del token
-
-try:
-    bytes
-except NameError:
-    # Support bytes type in Python <= 2.5, so 2to3 turns itself into
-    # valid Python 3 code.
-    bytes = str
 
 
 def group(*choices):
@@ -119,9 +129,6 @@ Bracket = "[][(){}]"
 Special = group(r"\r?\n", r"[:;.,`@]")
 Funny = group(Operator, Bracket, Special)
 
-PlainToken = group(Number, Funny, String, Name)
-Token = Ignore + PlainToken
-
 # First (or only) line of ' or " string.
 ContStr = group(
     _litprefix + r"'[^\n'\\]*(?:\\.[^\n'\\]*)*" + group("'", r"\\\r?\n"),
@@ -130,7 +137,6 @@ ContStr = group(
 PseudoExtras = group(r"\\\r?\n", Comment, Triple)
 PseudoToken = Whitespace + group(PseudoExtras, Number, Funny, ContStr, Name)
 
-tokenprog = re.compile(Token, re.UNICODE)
 pseudoprog = re.compile(PseudoToken, re.UNICODE)
 single3prog = re.compile(Single3)
 double3prog = re.compile(Double3)
@@ -181,7 +187,11 @@ def printtoken(type, token, xxx_todo_changeme, xxx_todo_changeme1, line):  # for
     )
 
 
-def tokenize(readline, tokeneater=printtoken):
+Coord = Tuple[int, int]
+TokenEater = Callable[[int, Text, Coord, Coord, Text], None]
+
+
+def tokenize(readline: Callable[[], Text], tokeneater: TokenEater = printtoken) -> None:
     """
     The tokenize() function accepts two parameters: one representing the
     input stream, and one providing an output mechanism for tokenize().
@@ -206,25 +216,36 @@ def tokenize_loop(readline, tokeneater):
         tokeneater(*token_info)
 
 
+GoodTokenInfo = Tuple[int, Text, Coord, Coord, Text]
+TokenInfo = Union[Tuple[int, str], GoodTokenInfo]
+
+
 class Untokenizer:
-    def __init__(self):
+
+    tokens: List[Text]
+    prev_row: int
+    prev_col: int
+
+    def __init__(self) -> None:
         self.tokens = []
         self.prev_row = 1
         self.prev_col = 0
 
-    def add_whitespace(self, start):
+    def add_whitespace(self, start: Coord) -> None:
         row, col = start
         assert row <= self.prev_row
         col_offset = col - self.prev_col
         if col_offset:
             self.tokens.append(" " * col_offset)
 
-    def untokenize(self, iterable):
+    def untokenize(self, iterable: Iterable[TokenInfo]) -> Text:
         for t in iterable:
             if len(t) == 2:
-                self.compat(t, iterable)
+                self.compat(cast(Tuple[int, str], t), iterable)
                 break
-            tok_type, token, start, end, line = t
+            tok_type, token, start, end, line = cast(
+                Tuple[int, Text, Coord, Coord, Text], t
+            )
             self.add_whitespace(start)
             self.tokens.append(token)
             self.prev_row, self.prev_col = end
@@ -233,7 +254,7 @@ class Untokenizer:
                 self.prev_col = 0
         return "".join(self.tokens)
 
-    def compat(self, token, iterable):
+    def compat(self, token: Tuple[int, Text], iterable: Iterable[TokenInfo]) -> None:
         startline = False
         indents = []
         toks_append = self.tokens.append
@@ -266,7 +287,7 @@ cookie_re = re.compile(r"^[ \t\f]*#.*?coding[:=][ \t]*([-\w.]+)", re.ASCII)
 blank_re = re.compile(br"^[ \t\f]*(?:[#\r\n]|$)", re.ASCII)
 
 
-def _get_normal_name(orig_enc):
+def _get_normal_name(orig_enc: str) -> str:
     """Imitates get_normal_name in tokenizer.c."""
     # Only care about the first 12 characters.
     enc = orig_enc[:12].lower().replace("_", "-")
@@ -279,7 +300,7 @@ def _get_normal_name(orig_enc):
     return orig_enc
 
 
-def detect_encoding(readline):
+def detect_encoding(readline: Callable[[], bytes]) -> Tuple[str, List[bytes]]:
     """
     The detect_encoding() function is used to detect the encoding that should
     be used to decode a Python source file. It requires one argument, readline,
@@ -301,13 +322,13 @@ def detect_encoding(readline):
     encoding = None
     default = "utf-8"
 
-    def read_or_stop():
+    def read_or_stop() -> bytes:
         try:
             return readline()
         except StopIteration:
             return bytes()
 
-    def find_cookie(line):
+    def find_cookie(line: bytes) -> Optional[str]:
         try:
             line_string = line.decode("ascii")
         except UnicodeDecodeError:
@@ -354,7 +375,7 @@ def detect_encoding(readline):
     return default, [first, second]
 
 
-def untokenize(iterable):
+def untokenize(iterable: Iterable[TokenInfo]) -> Text:
     """Transform tokens back into Python source code.
 
     Each element returned by the iterable must be a token sequence
@@ -364,7 +385,7 @@ def untokenize(iterable):
     Round-trip invariant for full input:
         Untokenized source will match input source exactly
 
-    Round-trip invariant for limited intput:
+    Round-trip invariant for limited input:
         # Output text will tokenize the back to the input
         t1 = [tok[:2] for tok in generate_tokens(f.readline)]
         newcode = untokenize(t1)
@@ -376,7 +397,9 @@ def untokenize(iterable):
     return ut.untokenize(iterable)
 
 
-def generate_tokens(readline, grammar=None):
+def generate_tokens(
+    readline: Callable[[], Text], grammar: Optional[Grammar] = None
+) -> Iterator[GoodTokenInfo]:
     """
     The generate_tokens() generator requires one argument, readline, which
     must be a callable object which provides the same interface as the
@@ -395,7 +418,7 @@ def generate_tokens(readline, grammar=None):
     lnum = parenlev = continued = 0
     numchars = "0123456789"
     contstr, needcont = "", 0
-    contline = None
+    contline: Optional[str] = None
     indents = [0]
 
     # If we know we're parsing 3.7+, we can unconditionally parse `async` and
@@ -407,6 +430,9 @@ def generate_tokens(readline, grammar=None):
     async_def_indent = 0
     async_def_nl = False
 
+    strstart: Tuple[int, int]
+    endprog: Pattern[str]
+
     while 1:  # loop over lines in stream
         try:
             line = readline()
@@ -416,6 +442,7 @@ def generate_tokens(readline, grammar=None):
         pos, max = 0, len(line)
 
         if contstr:  # continued string
+            assert contline is not None
             if not line:
                 raise TokenError("EOF in multi-line string", strstart)
             endmatch = endprog.match(line)

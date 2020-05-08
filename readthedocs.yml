@@ -1,6 +1,7 @@
-name: black
-type: sphinx
-conda:
-  file: docs/environment.yml
+version: 2
 python:
-  version: 3
+  version: 3.8
+  install:
+    - requirements: docs/requirements.txt
+    - method: setuptools
+      path: .

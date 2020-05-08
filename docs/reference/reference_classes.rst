@@ -61,10 +61,10 @@ Enums
     :show-inheritance:
     :members:
 
-:class:`FileMode`
+:class:`Mode`
 -----------------
 
-.. autoclass:: black.FileMode
+.. autoclass:: black.Mode
     :show-inheritance:
     :members:
 

@@ -12,3 +12,4 @@ pip-wheel-metadata/
 _black_version.py
 .idea
 .eggs
+.dmypy.json

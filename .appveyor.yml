@@ -7,7 +7,7 @@ build: off
 
 test_script:
   - C:\Python36\python.exe tests/test_black.py
-  - C:\Python36\python.exe -m mypy black.py blackd.py tests/test_black.py
+  - C:\Python36\python.exe -m mypy black.py blackd.py tests/test_black.py blib2to3
 
 after_test:
   - C:\Python36\python.exe -m pip install pyinstaller
