@@ -1443,7 +1443,7 @@ class BlackTestCase(unittest.TestCase):
         this_abs = THIS_DIR.resolve()
         sources.extend(
             black.gen_python_files(
-                path.iterdir(), this_abs, include, exclude, report, gitignore
+                path.iterdir(), this_abs, include, [exclude], report, gitignore
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))
@@ -1464,7 +1464,7 @@ class BlackTestCase(unittest.TestCase):
         this_abs = THIS_DIR.resolve()
         sources.extend(
             black.gen_python_files(
-                path.iterdir(), this_abs, include, exclude, report, gitignore
+                path.iterdir(), this_abs, include, [exclude], report, gitignore
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))
@@ -1492,7 +1492,7 @@ class BlackTestCase(unittest.TestCase):
                 path.iterdir(),
                 this_abs,
                 empty,
-                re.compile(black.DEFAULT_EXCLUDES),
+                [re.compile(black.DEFAULT_EXCLUDES)],
                 report,
                 gitignore,
             )
@@ -1519,7 +1519,7 @@ class BlackTestCase(unittest.TestCase):
                 path.iterdir(),
                 this_abs,
                 re.compile(black.DEFAULT_INCLUDES),
-                empty,
+                [empty],
                 report,
                 gitignore,
             )
