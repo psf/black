@@ -71,12 +71,6 @@ Options:
                                   Python versions that should be supported by
                                   Black's output. [default: per-file auto-
                                   detection]
-  --py36                          Allow using Python 3.6-only syntax on all
-                                  input files.  This will put trailing commas
-                                  in function signatures and calls also after
-                                  *args and **kwargs. Deprecated; use
-                                  --target-version instead. [default: per-file
-                                  auto-detection]
   --pyi                           Format all input files like typing stubs
                                   regardless of file extension (useful when
                                   piping source on standard input).
