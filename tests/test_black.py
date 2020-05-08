@@ -1273,27 +1273,6 @@ class BlackTestCase(unittest.TestCase):
             self.assertIn(one, cache)
             self.assertIn(two, cache)
 
-    @patch("black.ProcessPoolExecutor", autospec=True)
-    def test_works_in_mono_process_only_environment(self, mock_executor) -> None:
-        mock_executor.side_effect = OSError()
-        mode = black.FileMode()
-        with cache_dir() as workspace:
-            one = (workspace / "one.py").resolve()
-            with one.open("w") as fobj:
-                fobj.write("print('hello')")
-            two = (workspace / "two.py").resolve()
-            with two.open("w") as fobj:
-                fobj.write("print('hello')")
-            black.write_cache({}, [one], mode)
-            self.invokeBlack([str(workspace)])
-            with one.open("r") as fobj:
-                self.assertEqual(fobj.read(), "print('hello')")
-            with two.open("r") as fobj:
-                self.assertEqual(fobj.read(), 'print("hello")\n')
-            cache = black.read_cache(mode)
-            self.assertIn(one, cache)
-            self.assertIn(two, cache)
-
     def test_no_cache_when_writeback_diff(self) -> None:
         mode = black.FileMode()
         with cache_dir() as workspace:
@@ -1374,6 +1353,17 @@ class BlackTestCase(unittest.TestCase):
         with cache_dir(), patch.object(Path, "open") as mock:
             mock.side_effect = OSError
             black.write_cache({}, [], mode)
+
+    @patch("black.ProcessPoolExecutor", autospec=True)
+    def test_works_in_mono_process_only_environment(self, executor: MagicMock) -> None:
+        executor.side_effect = OSError()
+        with cache_dir() as workspace:
+            for f in [
+                (workspace / "one.py").resolve(),
+                (workspace / "two.py").resolve(),
+            ]:
+                f.write_text("print('hello')")
+            self.invokeBlack([str(workspace)])
 
     @event_loop(close=False)
     def test_check_diff_use_together(self) -> None:
