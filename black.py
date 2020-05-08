@@ -5156,7 +5156,7 @@ def generate_ignored_nodes(leaf: Leaf) -> Iterator[LN]:
     """
     container: Optional[LN] = container_of(leaf)
     while container is not None and container.type != token.ENDMARKER:
-        if fmt_on(container):
+        if is_fmt_on(container):
             return
 
         # fix for fmt: on in children
@@ -5170,17 +5170,21 @@ def generate_ignored_nodes(leaf: Leaf) -> Iterator[LN]:
             container = container.next_sibling
 
 
-def fmt_on(container: LN) -> bool:
-    is_fmt_on = False
+def is_fmt_on(container: LN) -> bool:
+    """Determine whether formatting is switched on within a container.
+    Determined by whether the last `# fmt:` comment is `on` or `off`.
+    """
+    fmt_on = False
     for comment in list_comments(container.prefix, is_endmarker=False):
         if comment.value in FMT_ON:
-            is_fmt_on = True
+            fmt_on = True
         elif comment.value in FMT_OFF:
-            is_fmt_on = False
-    return is_fmt_on
+            fmt_on = False
+    return fmt_on
 
 
 def contains_fmt_on_at_column(container: LN, column: int) -> bool:
+    """Determine if children at a given column have formatting switched on."""
     for child in container.children:
         if (
             isinstance(child, Node)
@@ -5188,13 +5192,14 @@ def contains_fmt_on_at_column(container: LN, column: int) -> bool:
             or isinstance(child, Leaf)
             and child.column == column
         ):
-            if fmt_on(child):
+            if is_fmt_on(child):
                 return True
 
     return False
 
 
 def first_leaf_column(node: Node) -> Optional[int]:
+    """Returns the column of the first leaf child of a node."""
     for child in node.children:
         if isinstance(child, Leaf):
             return child.column
