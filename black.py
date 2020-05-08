@@ -2,7 +2,7 @@ import ast
 import asyncio
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from concurrent.futures import Executor, ProcessPoolExecutor
+from concurrent.futures import Executor, ThreadPoolExecutor, ProcessPoolExecutor
 from contextlib import contextmanager
 from datetime import datetime
 from enum import Enum
@@ -613,6 +613,7 @@ def reformat_many(
     sources: Set[Path], fast: bool, write_back: WriteBack, mode: Mode, report: "Report"
 ) -> None:
     """Reformat multiple files using a ProcessPoolExecutor."""
+    executor: Executor
     loop = asyncio.get_event_loop()
     worker_count = os.cpu_count()
     if sys.platform == "win32":
@@ -622,9 +623,10 @@ def reformat_many(
         executor = ProcessPoolExecutor(max_workers=worker_count)
     except OSError:
         # we arrive here if the underlying system does not support multi-processing
-        # like in AWS Lambda, in which case we gracefully fallback to the default
-        # mono-process Executor by using None
-        executor = None
+        # like in AWS Lambda, in which case we gracefully fallback to
+        # a ThreadPollExecutor with just a single worker (more workers would not do us
+        # any good due to the Global Interpreter Lock)
+        executor = ThreadPoolExecutor(max_workers=1)
 
     try:
         loop.run_until_complete(
@@ -651,7 +653,7 @@ async def schedule_formatting(
     mode: Mode,
     report: "Report",
     loop: asyncio.AbstractEventLoop,
-    executor: Optional[Executor],
+    executor: Executor,
 ) -> None:
     """Run formatting of `sources` in parallel using the provided `executor`.
 
