@@ -37,7 +37,7 @@ from the cloned _Black_ repo. It will do the correct thing.
 Before submitting pull requests, run tests with:
 
 ```
-$ python setup.py test
+$ python -m unittest
 ```
 
 ## Hygiene
