@@ -162,8 +162,10 @@ class BlackTestCase(unittest.TestCase):
         self.assertEqual(
             result.exit_code,
             exit_code,
-            msg=f"Failed with args: {args} {os.path.exist(arg) for arg in args}. "
-            f"Stderr: {runner.stderr_bytes.decode()!r}",
+            msg=(
+                f"Failed with args: {args} {os.path.exists(arg) for arg in args}. "
+                f"Stderr: {runner.stderr_bytes.decode()!r}"
+            ),
         )
 
     @patch("black.dump_to_file", dump_to_stderr)
