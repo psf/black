@@ -10,7 +10,7 @@
 
 - move to 'py3' tagged wheels (#1388)
 
-#### vim plugin
+#### Vim plugin
 
 - prefer virtualenv packages over global packages (#1383)
 
