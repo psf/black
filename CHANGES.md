@@ -2,7 +2,7 @@
 
 ### Unreleased
 
-#### black
+#### _Black_
 
 - reindent docstrings when reindenting code around it (#1053)
 
