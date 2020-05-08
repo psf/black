@@ -64,7 +64,7 @@ setup(
     ext_modules=ext_modules,
     packages=["blackd", "black", "blib2to3", "blib2to3.pgen2"],
     package_dir={"": "src"},
-    package_data={"blib2to3": ["*.txt"]},
+    package_data={"blib2to3": ["*.txt"], "black": ["py.typed"]},
     python_requires=">=3.6",
     zip_safe=False,
     install_requires=[
