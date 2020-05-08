@@ -157,9 +157,13 @@ class BlackTestCase(unittest.TestCase):
     ) -> None:
         runner = BlackRunner()
         if ignore_config:
-            args = ["--config", str(THIS_DIR / "empty.toml"), *args]
+            args = ["--verbose", "--config", str(THIS_DIR / "empty.toml"), *args]
         result = runner.invoke(black.main, args)
-        self.assertEqual(result.exit_code, exit_code, msg=runner.stderr_bytes.decode())
+        self.assertEqual(
+            result.exit_code,
+            exit_code,
+            msg=f"Failed with args: {args}. Stderr: {runner.stderr_bytes.decode()!r}",
+        )
 
     @patch("black.dump_to_file", dump_to_stderr)
     def checkSourceFile(self, name: str) -> None:
@@ -1537,8 +1541,8 @@ class BlackTestCase(unittest.TestCase):
         ]
         this_abs = THIS_DIR.resolve()
         sources.extend(
-            black.gen_python_files_in_dir(
-                path, this_abs, include, exclude, report, gitignore
+            black.gen_python_files(
+                path.iterdir(), this_abs, include, [exclude], report, gitignore
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))
@@ -1558,8 +1562,8 @@ class BlackTestCase(unittest.TestCase):
         ]
         this_abs = THIS_DIR.resolve()
         sources.extend(
-            black.gen_python_files_in_dir(
-                path, this_abs, include, exclude, report, gitignore
+            black.gen_python_files(
+                path.iterdir(), this_abs, include, [exclude], report, gitignore
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))
@@ -1583,11 +1587,11 @@ class BlackTestCase(unittest.TestCase):
         ]
         this_abs = THIS_DIR.resolve()
         sources.extend(
-            black.gen_python_files_in_dir(
-                path,
+            black.gen_python_files(
+                path.iterdir(),
                 this_abs,
                 empty,
-                re.compile(black.DEFAULT_EXCLUDES),
+                [re.compile(black.DEFAULT_EXCLUDES)],
                 report,
                 gitignore,
             )
@@ -1610,11 +1614,11 @@ class BlackTestCase(unittest.TestCase):
         ]
         this_abs = THIS_DIR.resolve()
         sources.extend(
-            black.gen_python_files_in_dir(
-                path,
+            black.gen_python_files(
+                path.iterdir(),
                 this_abs,
                 re.compile(black.DEFAULT_INCLUDES),
-                empty,
+                [empty],
                 report,
                 gitignore,
             )
@@ -1670,8 +1674,8 @@ class BlackTestCase(unittest.TestCase):
         child.is_symlink.return_value = True
         try:
             list(
-                black.gen_python_files_in_dir(
-                    path, root, include, exclude, report, gitignore
+                black.gen_python_files(
+                    path.iterdir(), root, include, exclude, report, gitignore
                 )
             )
         except ValueError as ve:
@@ -1684,8 +1688,8 @@ class BlackTestCase(unittest.TestCase):
         child.is_symlink.return_value = False
         with self.assertRaises(ValueError):
             list(
-                black.gen_python_files_in_dir(
-                    path, root, include, exclude, report, gitignore
+                black.gen_python_files(
+                    path.iterdir(), root, include, exclude, report, gitignore
                 )
             )
         path.iterdir.assert_called()

@@ -61,7 +61,7 @@ File operations
 
 .. autofunction:: black.find_project_root
 
-.. autofunction:: black.gen_python_files_in_dir
+.. autofunction:: black.gen_python_files
 
 .. autofunction:: black.read_pyproject_toml
 

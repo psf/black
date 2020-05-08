@@ -34,6 +34,7 @@ from typing import (
     Pattern,
     Sequence,
     Set,
+    Sized,
     Tuple,
     Type,
     TypeVar,
@@ -425,6 +426,14 @@ def target_version_option_callback(
     show_default=True,
 )
 @click.option(
+    "--force-exclude",
+    type=str,
+    help=(
+        "Like --exclude, but files and directories matching this regex will be "
+        "excluded even when they are passed explicitly as arguments"
+    ),
+)
+@click.option(
     "-q",
     "--quiet",
     is_flag=True,
@@ -482,6 +491,7 @@ def main(
     verbose: bool,
     include: str,
     exclude: str,
+    force_exclude: Optional[str],
     src: Tuple[str, ...],
     config: Optional[str],
 ) -> None:
@@ -513,37 +523,25 @@ def main(
     if code is not None:
         print(format_str(code, mode=mode))
         ctx.exit(0)
-    try:
-        include_regex = re_compile_maybe_verbose(include)
-    except re.error:
-        err(f"Invalid regular expression for include given: {include!r}")
-        ctx.exit(2)
-    try:
-        exclude_regex = re_compile_maybe_verbose(exclude)
-    except re.error:
-        err(f"Invalid regular expression for exclude given: {exclude!r}")
-        ctx.exit(2)
     report = Report(check=check, diff=diff, quiet=quiet, verbose=verbose)
-    root = find_project_root(src)
-    sources: Set[Path] = set()
-    path_empty(src, quiet, verbose, ctx)
-    for s in src:
-        p = Path(s)
-        if p.is_dir():
-            sources.update(
-                gen_python_files_in_dir(
-                    p, root, include_regex, exclude_regex, report, get_gitignore(root)
-                )
-            )
-        elif p.is_file() or s == "-":
-            # if a file was explicitly given, we don't care about its extension
-            sources.add(p)
-        else:
-            err(f"invalid path: {s}")
-    if len(sources) == 0:
-        if verbose or not quiet:
-            out("No Python files are present to be formatted. Nothing to do 😴")
-        ctx.exit(0)
+    sources = get_sources(
+        ctx=ctx,
+        src=src,
+        quiet=quiet,
+        verbose=verbose,
+        include=include,
+        exclude=exclude,
+        force_exclude=force_exclude,
+        report=report,
+    )
+
+    path_empty(
+        sources,
+        "No Python files are present to be formatted. Nothing to do 😴",
+        quiet,
+        verbose,
+        ctx,
+    )
 
     if len(sources) == 1:
         reformat_one(
@@ -564,15 +562,78 @@ def main(
     ctx.exit(report.return_code)
 
 
+def get_sources(
+    *,
+    ctx: click.Context,
+    src: Tuple[str, ...],
+    quiet: bool,
+    verbose: bool,
+    include: str,
+    exclude: str,
+    force_exclude: Optional[str],
+    report: "Report",
+) -> Set[Path]:
+    """Compute the set of files to be formatted."""
+    try:
+        include_regex = re_compile_maybe_verbose(include)
+    except re.error:
+        err(f"Invalid regular expression for include given: {include!r}")
+        ctx.exit(2)
+    try:
+        exclude_regex = re_compile_maybe_verbose(exclude)
+    except re.error:
+        err(f"Invalid regular expression for exclude given: {exclude!r}")
+        ctx.exit(2)
+    try:
+        force_exclude_regex = (
+            re_compile_maybe_verbose(force_exclude) if force_exclude else None
+        )
+    except re.error:
+        err(f"Invalid regular expression for force_exclude given: {force_exclude!r}")
+        ctx.exit(2)
+
+    root = find_project_root(src)
+    sources: Set[Path] = set()
+    path_empty(src, "No Path provided. Nothing to do 😴", quiet, verbose, ctx)
+    exclude_regexes = [exclude_regex]
+    if force_exclude_regex is not None:
+        exclude_regexes.append(force_exclude_regex)
+
+    for s in src:
+        p = Path(s)
+        if p.is_dir():
+            sources.update(
+                gen_python_files(
+                    p.iterdir(),
+                    root,
+                    include_regex,
+                    exclude_regexes,
+                    report,
+                    get_gitignore(root),
+                )
+            )
+        elif s == "-":
+            sources.add(p)
+        elif p.is_file():
+            sources.update(
+                gen_python_files(
+                    [p], root, None, exclude_regexes, report, get_gitignore(root)
+                )
+            )
+        else:
+            err(f"invalid path: {s}")
+    return sources
+
+
 def path_empty(
-    src: Tuple[str, ...], quiet: bool, verbose: bool, ctx: click.Context
+    src: Sized, msg: str, quiet: bool, verbose: bool, ctx: click.Context
 ) -> None:
     """
     Exit if there is no `src` provided for formatting
     """
-    if not src:
+    if len(src) == 0:
         if verbose or not quiet:
-            out("No Path provided. Nothing to do 😴")
+            out(msg)
             ctx.exit(0)
 
 
@@ -5708,11 +5769,11 @@ def get_gitignore(root: Path) -> PathSpec:
     return PathSpec.from_lines("gitwildmatch", lines)
 
 
-def gen_python_files_in_dir(
-    path: Path,
+def gen_python_files(
+    paths: Iterable[Path],
     root: Path,
-    include: Pattern[str],
-    exclude: Pattern[str],
+    include: Optional[Pattern[str]],
+    exclude_regexes: Iterable[Pattern[str]],
     report: "Report",
     gitignore: PathSpec,
 ) -> Iterator[Path]:
@@ -5724,19 +5785,13 @@ def gen_python_files_in_dir(
     `report` is where output about exclusions goes.
     """
     assert root.is_absolute(), f"INTERNAL ERROR: `root` must be absolute but is {root}"
-    for child in path.iterdir():
-        # First ignore files matching .gitignore
-        if gitignore.match_file(child.as_posix()):
-            report.path_ignored(child, "matches the .gitignore file content")
-            continue
-
+    for child in paths:
         # Then ignore with `exclude` option.
         try:
-            normalized_path = "/" + child.resolve().relative_to(root).as_posix()
+            normalized_path = child.resolve().relative_to(root).as_posix()
         except OSError as e:
             report.path_ignored(child, f"cannot be read because {e}")
             continue
-
         except ValueError:
             if child.is_symlink():
                 report.path_ignored(
@@ -5746,21 +5801,32 @@ def gen_python_files_in_dir(
 
             raise
 
+        # First ignore files matching .gitignore
+        if gitignore.match_file(normalized_path):
+            report.path_ignored(child, "matches the .gitignore file content")
+            continue
+
+        normalized_path = "/" + normalized_path
         if child.is_dir():
             normalized_path += "/"
 
-        exclude_match = exclude.search(normalized_path)
-        if exclude_match and exclude_match.group(0):
-            report.path_ignored(child, "matches the --exclude regular expression")
+        is_excluded = False
+        for exclude in exclude_regexes:
+            exclude_match = exclude.search(normalized_path) if exclude else None
+            if exclude_match and exclude_match.group(0):
+                report.path_ignored(child, "matches the --exclude regular expression")
+                is_excluded = True
+                break
+        if is_excluded:
             continue
 
         if child.is_dir():
-            yield from gen_python_files_in_dir(
-                child, root, include, exclude, report, gitignore
+            yield from gen_python_files(
+                child.iterdir(), root, include, exclude_regexes, report, gitignore
             )
 
         elif child.is_file():
-            include_match = include.search(normalized_path)
+            include_match = include.search(normalized_path) if include else True
             if include_match:
                 yield child
 
