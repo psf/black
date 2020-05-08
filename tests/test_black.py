@@ -163,7 +163,7 @@ class BlackTestCase(unittest.TestCase):
             result.exit_code,
             exit_code,
             msg=(
-                f"Failed with args: {args} {os.path.exists(arg) for arg in args}. "
+                f"Failed with args: {args} {[os.path.exists(arg) for arg in args]}. "
                 f"Stderr: {runner.stderr_bytes.decode()!r}"
             ),
         )

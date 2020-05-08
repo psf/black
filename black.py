@@ -5682,6 +5682,7 @@ def get_gitignore(root: Path) -> PathSpec:
     if gitignore.is_file():
         with gitignore.open() as gf:
             lines = gf.readlines()
+    out(f"gitignore file {gitignore} contained lines {lines}")
     return PathSpec.from_lines("gitwildmatch", lines)
 
 
