@@ -260,8 +260,7 @@ def read_pyproject_toml(
     target_version = config.get("target_version")
     if target_version is not None and not isinstance(target_version, list):
         raise click.BadOptionUsage(
-            "target-version",
-            f"Config key target-version must be a list"
+            "target-version", f"Config key target-version must be a list"
         )
 
     default_map: Dict[str, Any] = {}
