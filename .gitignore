@@ -13,3 +13,4 @@ _black_version.py
 .idea
 .eggs
 .dmypy.json
+*.swp
