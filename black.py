@@ -39,6 +39,7 @@ from typing import (
     TypeVar,
     Union,
     cast,
+    TYPE_CHECKING,
 )
 from typing_extensions import Final
 from mypy_extensions import mypyc_attr
@@ -58,6 +59,9 @@ from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.parse import ParseError
 
 from _black_version import version as __version__
+
+if TYPE_CHECKING:
+    import colorama  # noqa: F401
 
 DEFAULT_LINE_LENGTH = 88
 DEFAULT_EXCLUDES = r"/(\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_build|buck-out|build|dist)/"  # noqa: B950
@@ -140,11 +144,17 @@ class WriteBack(Enum):
     YES = 1
     DIFF = 2
     CHECK = 3
+    COLOR_DIFF = 4
 
     @classmethod
-    def from_configuration(cls, *, check: bool, diff: bool) -> "WriteBack":
+    def from_configuration(
+        cls, *, check: bool, diff: bool, color: bool = False
+    ) -> "WriteBack":
         if check and not diff:
             return cls.CHECK
+
+        if diff and color:
+            return cls.COLOR_DIFF
 
         return cls.DIFF if diff else cls.YES
 
@@ -381,6 +391,11 @@ def target_version_option_callback(
     help="Don't write the files back, just output a diff for each file on stdout.",
 )
 @click.option(
+    "--color/--no-color",
+    is_flag=True,
+    help="Show colored diff. Only applies when `--diff` is given.",
+)
+@click.option(
     "--fast/--safe",
     is_flag=True,
     help="If --fast given, skip temporary sanity checks. [default: --safe]",
@@ -458,6 +473,7 @@ def main(
     target_version: List[TargetVersion],
     check: bool,
     diff: bool,
+    color: bool,
     fast: bool,
     pyi: bool,
     py36: bool,
@@ -470,7 +486,7 @@ def main(
     config: Optional[str],
 ) -> None:
     """The uncompromising code formatter."""
-    write_back = WriteBack.from_configuration(check=check, diff=diff)
+    write_back = WriteBack.from_configuration(check=check, diff=diff, color=color)
     if target_version:
         if py36:
             err("Cannot use both --target-version and --py36")
@@ -718,11 +734,14 @@ def format_file_in_place(
     if write_back == WriteBack.YES:
         with open(src, "w", encoding=encoding, newline=newline) as f:
             f.write(dst_contents)
-    elif write_back == WriteBack.DIFF:
+    elif write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
         now = datetime.utcnow()
         src_name = f"{src}\t{then} +0000"
         dst_name = f"{src}\t{now} +0000"
         diff_contents = diff(src_contents, dst_contents, src_name, dst_name)
+
+        if write_back == write_back.COLOR_DIFF:
+            diff_contents = color_diff(diff_contents)
 
         with lock or nullcontext():
             f = io.TextIOWrapper(
@@ -731,10 +750,55 @@ def format_file_in_place(
                 newline=newline,
                 write_through=True,
             )
+            f = wrap_stream_for_windows(f)
             f.write(diff_contents)
             f.detach()
 
     return True
+
+
+def color_diff(contents: str) -> str:
+    """Inject the ANSI color codes to the diff."""
+    lines = contents.split("\n")
+    for i, line in enumerate(lines):
+        if line.startswith("+++") or line.startswith("---"):
+            line = "\033[1;37m" + line + "\033[0m"  # bold white, reset
+        if line.startswith("@@"):
+            line = "\033[36m" + line + "\033[0m"  # cyan, reset
+        if line.startswith("+"):
+            line = "\033[32m" + line + "\033[0m"  # green, reset
+        elif line.startswith("-"):
+            line = "\033[31m" + line + "\033[0m"  # red, reset
+        lines[i] = line
+    return "\n".join(lines)
+
+
+def wrap_stream_for_windows(
+    f: io.TextIOWrapper,
+) -> Union[io.TextIOWrapper, "colorama.AnsiToWin32.AnsiToWin32"]:
+    """
+    Wrap the stream in colorama's wrap_stream so colors are shown on Windows.
+
+    If `colorama` is not found, then no change is made. If `colorama` does
+    exist, then it handles the logic to determine whether or not to change
+    things.
+    """
+    try:
+        from colorama import initialise
+
+        # We set `strip=False` so that we can don't have to modify
+        # test_express_diff_with_color.
+        f = initialise.wrap_stream(
+            f, convert=None, strip=False, autoreset=False, wrap=True
+        )
+
+        # wrap_stream returns a `colorama.AnsiToWin32.AnsiToWin32` object
+        # which does not have a `detach()` method. So we fake one.
+        f.detach = lambda *args, **kwargs: None  # type: ignore
+    except ImportError:
+        pass
+
+    return f
 
 
 def format_stdin_to_stdout(
@@ -762,11 +826,15 @@ def format_stdin_to_stdout(
         )
         if write_back == WriteBack.YES:
             f.write(dst)
-        elif write_back == WriteBack.DIFF:
+        elif write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
             now = datetime.utcnow()
             src_name = f"STDIN\t{then} +0000"
             dst_name = f"STDOUT\t{now} +0000"
-            f.write(diff(src, dst, src_name, dst_name))
+            d = diff(src, dst, src_name, dst_name)
+            if write_back == WriteBack.COLOR_DIFF:
+                d = color_diff(d)
+                f = wrap_stream_for_windows(f)
+            f.write(d)
         f.detach()
 
 
