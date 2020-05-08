@@ -10,6 +10,10 @@
 
 - move to 'py3' tagged wheels (#1388)
 
+- remove deprecated `--py36` option (#1236)
+
+- add `--force-exclude` argument (#1032)
+
 #### Vim plugin
 
 - prefer virtualenv packages over global packages (#1383)

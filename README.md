@@ -61,30 +61,41 @@ black {source_file_or_directory}
 _Black_ doesn't provide many options. You can list them by running `black --help`:
 
 ```text
-black [OPTIONS] [SRC]...
+Usage: black [OPTIONS] [SRC]...
+
+  The uncompromising code formatter.
 
 Options:
   -c, --code TEXT                 Format the code passed in as a string.
   -l, --line-length INTEGER       How many characters per line to allow.
                                   [default: 88]
+
   -t, --target-version [py27|py33|py34|py35|py36|py37|py38]
                                   Python versions that should be supported by
                                   Black's output. [default: per-file auto-
                                   detection]
+
   --pyi                           Format all input files like typing stubs
                                   regardless of file extension (useful when
                                   piping source on standard input).
+
   -S, --skip-string-normalization
                                   Don't normalize string quotes or prefixes.
   --check                         Don't write the files back, just return the
                                   status.  Return code 0 means nothing would
                                   change.  Return code 1 means some files
-                                  would be reformatted.  Return code 123 means
+                                  would be reformatted. Return code 123 means
                                   there was an internal error.
+
   --diff                          Don't write the files back, just output a
                                   diff for each file on stdout.
+
+  --color / --no-color            Show colored diff. Only applies when
+                                  `--diff` is given.
+
   --fast / --safe                 If --fast given, skip temporary sanity
                                   checks. [default: --safe]
+
   --include TEXT                  A regular expression that matches files and
                                   directories that should be included on
                                   recursive searches.  An empty value means
@@ -93,6 +104,7 @@ Options:
                                   on all platforms (Windows, too).  Exclusions
                                   are calculated first, inclusions later.
                                   [default: \.pyi?$]
+
   --exclude TEXT                  A regular expression that matches files and
                                   directories that should be excluded on
                                   recursive searches.  An empty value means no
@@ -100,16 +112,23 @@ Options:
                                   directories on all platforms (Windows, too).
                                   Exclusions are calculated first, inclusions
                                   later.  [default: /(\.eggs|\.git|\.hg|\.mypy
-                                  _cache|\.nox|\.tox|\.venv|_build|buck-
+                                  _cache|\.nox|\.tox|\.venv|\.svn|_build|buck-
                                   out|build|dist)/]
+
+  --force-exclude TEXT            Like --exclude, but files and directories
+                                  matching this regex will be excluded even
+                                  when they are passed explicitly as arguments
+
   -q, --quiet                     Don't emit non-error messages to stderr.
-                                  Errors are still emitted, silence those with
+                                  Errors are still emitted; silence those with
                                   2>/dev/null.
+
   -v, --verbose                   Also emit messages to stderr about files
                                   that were not changed or were ignored due to
                                   --exclude=.
+
   --version                       Show the version and exit.
-  --config PATH                   Read configuration from PATH.
+  --config FILE                   Read configuration from PATH.
   -h, --help                      Show this message and exit.
 ```
 
