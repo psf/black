@@ -167,8 +167,8 @@ class ParserGenerator(object):
             for symbol in itsfirst:
                 if symbol in inverse:
                     raise ValueError(
-                        "rule %s is ambiguous; %s is in the"
-                        " first sets of %s as well as %s"
+                        "rule %s is ambiguous; %s is in the first sets of %s as well"
+                        " as %s"
                         % (name, symbol, label, inverse[symbol])
                     )
                 inverse[symbol] = label
