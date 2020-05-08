@@ -1,5 +1,9 @@
 ## Change Log
 
+### Unreleased
+
+- reindent docstrings when reindenting code around it (#1053)
+
 ### 19.10b0
 
 - added support for PEP 572 assignment expressions (#711)
