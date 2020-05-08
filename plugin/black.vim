@@ -138,7 +138,7 @@ def _initialize_black_env(upgrade=False):
   if first_install:
     print('Pro-tip: to upgrade Black in the future, use the :BlackUpgrade command and restart Vim.\n')
   if virtualenv_site_packages not in sys.path:
-    sys.path.append(virtualenv_site_packages)
+    sys.path.insert(0, virtualenv_site_packages)
   return True
 
 if _initialize_black_env():
