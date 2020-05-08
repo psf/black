@@ -257,12 +257,11 @@ def read_pyproject_toml(
     if not config:
         return None
 
-    target_version = config.get("target-version") or config.get("--target-version")
-    if "target_version" in config and not isinstance(config["target_version"], list):
-        relative_path = path.relative_to(Path.cwd())
+    target_version = config.get("target_version")
+    if target_version is not None and not isinstance(target_version, list):
         raise click.BadOptionUsage(
             "target-version",
-            f"Config key target-version in {relative_path} must be a list"
+            f"Config key target-version must be a list"
         )
 
     default_map: Dict[str, Any] = {}
