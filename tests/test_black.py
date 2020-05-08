@@ -82,7 +82,7 @@ def cache_dir(exists: bool = True) -> Iterator[Path]:
 
 
 @contextmanager
-def event_loop(close: bool) -> Iterator[None]:
+def event_loop() -> Iterator[None]:
     policy = asyncio.get_event_loop_policy()
     loop = policy.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -90,8 +90,7 @@ def event_loop(close: bool) -> Iterator[None]:
         yield
 
     finally:
-        if close:
-            loop.close()
+        loop.close()
 
 
 @contextmanager
@@ -1260,7 +1259,7 @@ class BlackTestCase(unittest.TestCase):
             with src.open("r") as fobj:
                 self.assertEqual(fobj.read(), "print('hello')")
 
-    @event_loop(close=False)
+    @event_loop()
     def test_cache_multiple_files(self) -> None:
         mode = black.FileMode()
         with cache_dir() as workspace, patch(
@@ -1340,7 +1339,7 @@ class BlackTestCase(unittest.TestCase):
             black.write_cache({}, [], mode)
             self.assertTrue(workspace.exists())
 
-    @event_loop(close=False)
+    @event_loop()
     def test_failed_formatting_does_not_get_cached(self) -> None:
         mode = black.FileMode()
         with cache_dir() as workspace, patch(
@@ -1363,7 +1362,7 @@ class BlackTestCase(unittest.TestCase):
             mock.side_effect = OSError
             black.write_cache({}, [], mode)
 
-    @event_loop(close=False)
+    @event_loop()
     @patch("black.ProcessPoolExecutor", MagicMock(side_effect=OSError))
     def test_works_in_mono_process_only_environment(self) -> None:
         with cache_dir() as workspace:
@@ -1374,7 +1373,7 @@ class BlackTestCase(unittest.TestCase):
                 f.write_text('print("hello")\n')
             self.invokeBlack([str(workspace)])
 
-    @event_loop(close=False)
+    @event_loop()
     def test_check_diff_use_together(self) -> None:
         with cache_dir():
             # Files which will be reformatted.
@@ -1437,7 +1436,7 @@ class BlackTestCase(unittest.TestCase):
             self.assertNotIn(path, normal_cache)
         self.assertEqual(actual, expected)
 
-    @event_loop(close=False)
+    @event_loop()
     def test_multi_file_force_pyi(self) -> None:
         reg_mode = black.FileMode()
         pyi_mode = black.FileMode(is_pyi=True)
@@ -1489,7 +1488,7 @@ class BlackTestCase(unittest.TestCase):
             self.assertNotIn(path, normal_cache)
         self.assertEqual(actual, expected)
 
-    @event_loop(close=False)
+    @event_loop()
     def test_multi_file_force_py36(self) -> None:
         reg_mode = black.FileMode()
         py36_mode = black.FileMode(target_versions=black.PY36_VERSIONS)
