@@ -238,6 +238,69 @@ def very_important_function(
         ...
 ```
 
+_Black_ prefers parentheses over backslashes, and will remove backslashes if found.
+
+```py3
+# in:
+
+if some_short_rule1 \
+  and some_short_rule2:
+      ...
+
+# out:
+
+if some_short_rule1 and some_short_rule2:
+  ...
+
+
+# in:
+
+if some_long_rule1 \
+  and some_long_rule2:
+    ...
+
+# out:
+
+if (
+    some_long_rule1
+    and some_long_rule2
+):
+    ...
+
+```
+
+Backslashes and multiline strings are one of the two places in the Python grammar that
+break significant indentation. You never need backslashes, they are used to force the
+grammar to accept breaks that would otherwise be parse errors. That makes them confusing
+to look at and brittle to modify. This is why _Black_ always gets rid of them.
+
+If you're reaching for backslashes, that's a clear signal that you can do better if you
+slightly refactor your code. I hope some of the examples above show you that there are
+many ways in which you can do it.
+
+However there is one exception: `with` statements using multiple context managers.
+Python's grammar does not allow organizing parentheses around the series of context
+managers.
+
+We don't want formatting like:
+
+```py3
+with make_context_manager1() as cm1, make_context_manager2() as cm2, make_context_manager3() as cm3, make_context_manager4() as cm4:
+    ...  # nothing to split on - line too long
+```
+
+So _Black_ will now format it like this:
+
+```py3
+with \
+     make_context_manager(1) as cm1, \
+     make_context_manager(2) as cm2, \
+     make_context_manager(3) as cm3, \
+     make_context_manager(4) as cm4 \
+:
+    ...  # backslashes and an ugly stranded colon
+```
+
 You might have noticed that closing brackets are always dedented and that a trailing
 comma is always added. Such formatting produces smaller diffs; when you add or remove an
 element, it's always just one line. Also, having the closing bracket dedented provides a
