@@ -52,9 +52,10 @@ async def async_main(
         return -1
 
     try:
-        return await lib.process_queue(
+        ret_val = await lib.process_queue(
             config, work_path, workers, keep, long_checkouts, rebase
         )
+        return int(ret_val)
     finally:
         if not keep and work_path.exists():
             LOG.debug(f"Removing {work_path}")
@@ -120,7 +121,12 @@ async def async_main(
 def main(ctx: click.core.Context, **kwargs: Any) -> None:
     """primer - prime projects for blackening ... 🏴"""
     LOG.debug(f"Starting {sys.argv[0]}")
-    ctx.exit(asyncio.run(async_main(**kwargs)))
+    # TODO: Change to asyncio.run when black >= 3.7 only
+    loop = asyncio.get_event_loop()
+    try:
+        ctx.exit(loop.run_until_complete(async_main(**kwargs)))
+    finally:
+        loop.close()
 
 
 if __name__ == "__main__":
