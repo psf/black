@@ -16,6 +16,7 @@ mypy_extensions = ">=0.4.3"
 regex = ">=2019.8"
 pathspec = ">=0.6"
 dataclasses = {version = ">=0.6",python_version = "< 3.7"}
+pytest = "*"
 
 [dev-packages]
 pre-commit = "*"

@@ -40,7 +40,7 @@
 :class:`Report`
 ---------------
 
-.. autoclass:: black.Report
+.. autoclass:: black.reporting.Report
     :members:
     :special-members: __str__
 
@@ -57,7 +57,7 @@ Enums
 :class:`Changed`
 ----------------
 
-.. autoclass:: black.Changed
+.. autoclass:: black.source.Changed
     :show-inheritance:
     :members:
 
@@ -71,6 +71,6 @@ Enums
 :class:`WriteBack`
 ------------------
 
-.. autoclass:: black.WriteBack
+.. autoclass:: black.source.WriteBack
     :show-inheritance:
     :members:

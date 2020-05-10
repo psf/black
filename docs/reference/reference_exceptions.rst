@@ -7,6 +7,6 @@
 
 .. autoexception:: black.CannotSplit
 
-.. autoexception:: black.NothingChanged
+.. autoexception:: black.formatter.NothingChanged
 
-.. autoexception:: black.InvalidInput
+.. autoexception:: black.parse.InvalidInput

@@ -148,7 +148,7 @@ if _initialize_black_env():
 def Black():
   start = time.time()
   configs = get_configs()
-  mode = black.FileMode(
+  mode = black.formatter.FileMode(
     line_length=configs["line_length"],
     string_normalization=configs["string_normalization"],
     is_pyi=vim.current.buffer.name.endswith('.pyi'),
@@ -156,12 +156,11 @@ def Black():
 
   buffer_str = '\n'.join(vim.current.buffer) + '\n'
   try:
-    new_buffer_str = black.format_file_contents(
+    new_buffer_str = black.formatter.Formatter(mode).format(
       buffer_str,
       fast=configs["fast"],
-      mode=mode,
     )
-  except black.NothingChanged:
+  except black.formatter.NothingChanged:
     print(f'Already well formatted, good job. (took {time.time() - start:.4f}s)')
   except Exception as exc:
     print(exc)

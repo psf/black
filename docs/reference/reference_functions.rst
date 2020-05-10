@@ -57,11 +57,11 @@ Formatting
 File operations
 ---------------
 
-.. autofunction:: black.dump_to_file
+.. autofunction:: black.util.dump_to_file
 
 .. autofunction:: black.find_project_root
 
-.. autofunction:: black.gen_python_files
+.. autofunction:: black.source.gen_python_files
 
 .. autofunction:: black.read_pyproject_toml
 
@@ -70,7 +70,7 @@ Parsing
 
 .. autofunction:: black.decode_bytes
 
-.. autofunction:: black.lib2to3_parse
+.. autofunction:: black.parse.lib2to3_parse
 
 .. autofunction:: black.lib2to3_unparse
 
@@ -94,11 +94,11 @@ Split functions
 Caching
 -------
 
-.. autofunction:: black.filter_cached
+.. autofunction:: black.caching.filter_cached
 
 .. autofunction:: black.get_cache_file
 
-.. autofunction:: black.get_cache_info
+.. autofunction:: black.caching.get_cache_info
 
 .. autofunction:: black.read_cache
 
@@ -107,7 +107,7 @@ Caching
 Utilities
 ---------
 
-.. py:function:: black.DebugVisitor.show(code: str) -> None
+.. py:function:: black.visitors.DebugVisitor.show(code: str) -> None
 
     Pretty-print the lib2to3 AST of a given string of `code`.
 
@@ -119,7 +119,7 @@ Utilities
 
 .. autofunction:: black.convert_one_fmt_off_pair
 
-.. autofunction:: black.diff
+.. autofunction:: black.util.diff
 
 .. autofunction:: black.dont_increase_indentation
 
@@ -143,7 +143,7 @@ Utilities
 
 .. autofunction:: black.generate_trailers_to_omit
 
-.. autofunction:: black.get_future_imports
+.. autofunction:: black.formatter.get_future_imports
 
 .. autofunction:: black.list_comments
 
@@ -165,7 +165,7 @@ Utilities
 
 .. autofunction:: black.normalize_invisible_parens
 
-.. autofunction:: black.patch_click
+.. autofunction:: black.__main__.patch_click
 
 .. autofunction:: black.preceding_leaf
 
