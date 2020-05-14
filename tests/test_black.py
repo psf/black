@@ -252,8 +252,8 @@ class BlackTestCase(unittest.TestCase):
 
     def test_piping_diff(self) -> None:
         diff_header = re.compile(
-            rf"(STDIN|STDOUT)\t\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d\d\d\d "
-            rf"\+\d\d\d\d"
+            r"(STDIN|STDOUT)\t\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d\d\d\d "
+            r"\+\d\d\d\d"
         )
         source, _ = read_data("expression.py")
         expected, _ = read_data("expression.diff")
@@ -1848,7 +1848,7 @@ class BlackDTestCase(AioHTTPTestCase):
     @unittest_run_loop
     async def test_blackd_diff(self) -> None:
         diff_header = re.compile(
-            rf"(In|Out)\t\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
+            r"(In|Out)\t\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
         )
 
         source, _ = read_data("blackd_diff.py")

@@ -57,7 +57,7 @@ async def analyze_results(project_count: int, results: Results) -> int:
     failed_pct = round(((results.stats["failed"] / project_count) * 100), 2)
     success_pct = round(((results.stats["success"] / project_count) * 100), 2)
 
-    click.secho(f"-- primer results 📊 --\n", bold=True)
+    click.secho("-- primer results 📊 --\n", bold=True)
     click.secho(
         f"{results.stats['success']} / {project_count} succeeded ({success_pct}%) ✅",
         bold=True,
@@ -77,7 +77,7 @@ async def analyze_results(project_count: int, results: Results) -> int:
     )
 
     if results.failed_projects:
-        click.secho(f"\nFailed Projects:\n", bold=True)
+        click.secho("\nFailed Projects:\n", bold=True)
 
     for project_name, project_cpe in results.failed_projects.items():
         print(f"## {project_name}:")
@@ -125,7 +125,7 @@ async def git_checkout_or_rebase(
     """git Clone project or rebase"""
     git_bin = str(which("git"))
     if not git_bin:
-        LOG.error(f"No git binary found")
+        LOG.error("No git binary found")
         return None
 
     repo_url_parts = urlparse(project_config["git_clone_url"])
