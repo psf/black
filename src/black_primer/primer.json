@@ -3,9 +3,7 @@
   "projects": {
     "aioexabgp": {
       "cli_arguments": [],
-      "disabled": true,
-      "disabled_reason": "TOT black hits a bug - Need to debug it - @cooperlees",
-      "expect_formatting_changes": false,
+      "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/cooperlees/aioexabgp.git",
       "long_checkout": false,
       "py_versions": ["all"]
@@ -19,9 +17,7 @@
     },
     "bandersnatch": {
       "cli_arguments": [],
-      "disabled": true,
-      "disabled_reason": "TOT black hits a bug - Need to debug it - @cooperlees",
-      "expect_formatting_changes": false,
+      "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/pypa/bandersnatch.git",
       "long_checkout": false,
       "py_versions": ["all"]
