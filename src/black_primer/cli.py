@@ -3,7 +3,8 @@
 import asyncio
 import logging
 import sys
-from os import cpu_count, getpid
+from datetime import datetime
+from os import cpu_count
 from pathlib import Path
 from shutil import rmtree, which
 from tempfile import gettempdir
@@ -15,7 +16,8 @@ from black_primer import lib
 
 
 DEFAULT_CONFIG = Path(__file__).parent / "primer.json"
-DEFAULT_WORKDIR = Path(gettempdir()) / f"primer.{getpid()}"
+_timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+DEFAULT_WORKDIR = Path(gettempdir()) / f"primer.{_timestamp}"
 LOG = logging.getLogger(__name__)
 
 

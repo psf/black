@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
 from pathlib import Path
-from shutil import which
+from shutil import rmtree, which
 from subprocess import CalledProcessError
 from sys import version_info
 from typing import Any, Dict, NamedTuple, Optional, Sequence, Tuple
@@ -101,7 +103,7 @@ async def black_run(
         _stdout, _stderr = await _gen_check_output(cmd, cwd=repo_path)
     except asyncio.TimeoutError:
         results.stats["failed"] += 1
-        LOG.error(f"Running black for {repo_path} timedout ({cmd})")
+        LOG.error(f"Running black for {repo_path} timed out ({cmd})")
     except CalledProcessError as cpe:
         # TODO: This might need to be tuned and made smarter for higher signal
         if not project_config["expect_formatting_changes"] and cpe.returncode == 1:
@@ -113,7 +115,11 @@ async def black_run(
 
 
 async def git_checkout_or_rebase(
-    work_path: Path, project_config: Dict[str, Any], rebase: bool = False
+    work_path: Path,
+    project_config: Dict[str, Any],
+    rebase: bool = False,
+    *,
+    depth: int = 1,
 ) -> Optional[Path]:
     """git Clone project or rebase"""
     git_bin = str(which("git"))
@@ -125,7 +131,7 @@ async def git_checkout_or_rebase(
     path_parts = repo_url_parts.path[1:].split("/", maxsplit=1)
 
     repo_path: Path = work_path / path_parts[1].replace(".git", "")
-    cmd = [git_bin, "clone", project_config["git_clone_url"]]
+    cmd = [git_bin, "clone", "--depth", str(depth), project_config["git_clone_url"]]
     cwd = work_path
     if repo_path.exists() and rebase:
         cmd = [git_bin, "pull", "--rebase"]
@@ -167,8 +173,10 @@ async def project_runner(
     results: Results,
     long_checkouts: bool = False,
     rebase: bool = False,
+    keep: bool = False,
 ) -> None:
     """Checkout project and run black on it + record result"""
+    loop = asyncio.get_event_loop()
     py_version = f"{version_info[0]}.{version_info[1]}"
     while True:
         try:
@@ -205,6 +213,10 @@ async def project_runner(
             continue
         await black_run(repo_path, project_config, results)
 
+        if not keep:
+            LOG.debug(f"Removing {repo_path}")
+            await loop.run_in_executor(None, rmtree, repo_path)
+
 
 async def process_queue(
     config_file: str,
@@ -237,7 +249,9 @@ async def process_queue(
     # Wait until we finish running all the projects before analyzing
     await asyncio.gather(
         *[
-            project_runner(i, config, queue, work_path, results, long_checkouts, rebase)
+            project_runner(
+                i, config, queue, work_path, results, long_checkouts, rebase, keep
+            )
             for i in range(workers)
         ]
     )
