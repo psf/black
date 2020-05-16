@@ -1,0 +1,9 @@
+name: "Black"
+description: "The uncompromising Python code formatter."
+author: "Łukasz Langa and contributors to Black"
+branding:
+  color: "black"
+  icon: "check-circle"
+runs:
+  using: "docker"
+  image: "Dockerfile"
