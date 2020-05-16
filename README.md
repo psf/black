@@ -481,9 +481,12 @@ PEP 8
 [recommends](https://www.python.org/dev/peps/pep-0008/#whitespace-in-expressions-and-statements)
 to treat `:` in slices as a binary operator with the lowest priority, and to leave an
 equal amount of space on either side, except if a parameter is omitted (e.g.
-`ham[1 + 1 :]`). It also states that for extended slices, both `:` operators have to
-have the same amount of spacing, except if a parameter is omitted (`ham[1 + 1 ::]`).
-_Black_ enforces these rules consistently.
+`ham[1 + 1 :]`). It recommends no spaces around `:` operators for "simple expressions"
+(`ham[lower:upper]`), and extra space for "complex expressions"
+(`ham[lower : upper + offset]`). _Black_ treats anything more than variable names as
+"complex" (`ham[lower : upper + 1]`). It also states that for extended slices, both `:`
+operators have to have the same amount of spacing, except if a parameter is omitted
+(`ham[1 + 1 ::]`). _Black_ enforces these rules consistently.
 
 This behaviour may raise `E203 whitespace before ':'` warnings in style guide
 enforcement tools like Flake8. Since `E203` is not PEP 8 compliant, you should tell
