@@ -190,7 +190,9 @@ $ git config blame.ignoreRevsFile .git-blame-ignore-revs
 
 **The one caveat is that GitHub and GitLab do not yet support ignoring revisions using
 in their native UI of blame.** So blame information will be cluttered with a reformating
-commit on those platforms.
+commit on those platforms. (If you'd like this feature, there's an open issue for
+[GitLab](https://gitlab.com/gitlab-org/gitlab/-/issues/31423) and please let GitHub
+know!)
 
 ### NOTE: This is a beta product
 
