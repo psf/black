@@ -153,8 +153,8 @@ Actual details on _Black_ compatible configurations for various tools can be fou
 ### Migrating your code style without ruining git blame
 
 A long-standing counterargument against moving to automated code formatters like _Black_
-is that the migration will clutter up the output of `git blame`. This used to be a valid
-argument, but not anymore. Since `git` version 2.23, git natively supports
+is that the migration will clutter up the output of `git blame`. This was a valid
+argument, but since `git` version 2.23, git natively supports
 [ignoring revisions in blame](https://git-scm.com/docs/git-blame#Documentation/git-blame.txt---ignore-revltrevgt)
 with the `--ignore-rev` option. You can also pass a file listing the revisions to ignore
 using the `--ignore-revs-file` option. The changes made by the revision will be ignored
