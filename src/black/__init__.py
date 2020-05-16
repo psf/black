@@ -6006,13 +6006,14 @@ def _stringify_ast(
 
         else:
             # Constant strings may be indented across newlines, if they are
-            # docstrings; fold spaces after newlines when comparing
+            # docstrings; fold spaces after newlines when comparing. Similarly,
+            # trailing and leading space may be removed.
             if (
                 isinstance(node, ast.Constant)
                 and field == "value"
                 and isinstance(value, str)
             ):
-                normalized = re.sub(r"\n[ \t]+", "\n ", value)
+                normalized = re.sub(r" *\n[ \t]+", "\n ", value).strip()
             else:
                 normalized = value
             yield f"{'  ' * (depth+2)}{normalized!r},  # {value.__class__.__name__}"

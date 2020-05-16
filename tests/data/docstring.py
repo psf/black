@@ -1,5 +1,5 @@
 class MyClass:
-  """Multiline
+  """ Multiline
   class docstring
   """
 
@@ -11,7 +11,7 @@ class MyClass:
 
 
 def foo():
-  """This is a docstring with
+  """This is a docstring with             
   some lines of text here
   """
   return
@@ -65,6 +65,13 @@ def over_indent():
     - And the closing quote is too deep
     """
   pass
+
+
+def single_line():
+    """But with a newline after it!
+
+    """
+    pass
 
 # output
 
@@ -135,4 +142,9 @@ def over_indent():
       - But some lines are deeper
       - And the closing quote is too deep
     """
+    pass
+
+
+def single_line():
+    """But with a newline after it!"""
     pass
