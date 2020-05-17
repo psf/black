@@ -33,7 +33,8 @@ Try it out now using the [Black Playground](https://black.now.sh). Watch the
 _Contents:_ **[Installation and usage](#installation-and-usage)** |
 **[Code style](#the-black-code-style)** | **[Pragmatism](#pragmatism)** |
 **[pyproject.toml](#pyprojecttoml)** | **[Editor integration](#editor-integration)** |
-**[blackd](#blackd)** | **[Version control integration](#version-control-integration)**
+**[blackd](#blackd)** | **[black-primer](#black-primer)**
+| **[Version control integration](#version-control-integration)**
 | **[Ignoring unmodified files](#ignoring-unmodified-files)** | **[Used by](#used-by)**
 | **[Testimonials](#testimonials)** | **[Show your style](#show-your-style)** |
 **[Contributing](#contributing-to-black)** | **[Change Log](#change-log)** |
@@ -52,7 +53,7 @@ run but you can reformat Python 2 code with it, too.
 
 To get started right away with sensible defaults:
 
-```
+```console
 black {source_file_or_directory}
 ```
 
@@ -1068,7 +1069,7 @@ Options:
 There is no official blackd client tool (yet!). You can test that blackd is working
 using `curl`:
 
-```
+```console
 blackd --bind-port 9090 &  # or let blackd choose a port
 curl -s -XPOST "localhost:9090" -d "print('valid')"
 ```
@@ -1116,6 +1117,122 @@ Apart from the above, `blackd` can produce the following response codes:
 
 The response headers include a `X-Black-Version` header containing the version of
 _Black_.
+
+## black-primer
+
+`black-primer` is a tool built for CI (and huumans) to have black `--check` a number of
+(configured in `primer.json`) Git accessible projects in parallel.
+*(A PR will be accepted to add hg support)*.
+
+### Run flow
+
+- Ensure we have a `black` + `git` in PATH
+- Load projects from `primer.json`
+- Run projects in parallel with `--worker` workers (defaults to CPU Count / 2)
+  - Checkout projects
+  - Run black and record result
+  - Clean up repository checkout *(can optionally be disabled via `--keep`)*
+- Display results summary to screen
+- Default to cleaning up `--work-dir` (which defaults to tempfile schemantics)
+- Return
+  - 0 for successful run
+  - < 0 for environment / internal error
+  - > 0 for each project with an error
+
+### Speed up Runs 🏎
+
+If you're running locally yourself to test black on lots of code try:
+
+- Using `-k` / `--keep` + `-w` / `--work-dir` so you don't have to re-checkout the repo each run
+
+### CLI Arguments
+
+```console
+Usage: black-primer [OPTIONS]
+
+  primer - prime projects for blackening ... 🏴
+
+Options:
+  -c, --config PATH      JSON config file path  [default: /Users/cooper/repos/
+                         black/src/black_primer/primer.json]
+
+  --debug                Turn on debug logging  [default: False]
+  -k, --keep             Keep workdir + repos post run  [default: False]
+  -L, --long-checkouts   Pull big projects to test  [default: False]
+  -R, --rebase           Rebase project if already checked out  [default:
+                         False]
+
+  -w, --workdir PATH     Directory Path for repo checkouts  [default: /var/fol
+                         ders/tc/hbwxh76j1hn6gqjd2n2sjn4j9k1glp/T/primer.20200
+                         517125229]
+
+  -W, --workers INTEGER  Number of parallel worker coroutines  [default: 69]
+  -h, --help             Show this message and exit.
+```
+
+### primer config file
+
+The config is `JSON` format. It's main element is the `"projects"` dictionary. Below explains each parameter:
+
+```json
+{
+  "projects": {
+    "00_Example": {
+      "cli_arguments": "List of extra CLI arguments to pass black for this project",
+      "expect_formatting_changes": "Boolean to indicate that the version of black is expected to cause changes",
+      "git_clone_url": "URL you would pass `git clone` to checkout this repo",
+      "long_checkout": "Boolean to have repo skipped by defauult unless `--long-checkouts` is specified",
+      "py_versions": "List of major Python versions to run this project with - all will do as you'd expect - Run on ALL versions"
+    },
+    "aioexabgp": {
+      "cli_arguments": [],
+      "expect_formatting_changes": true,
+      "git_clone_url": "https://github.com/cooperlees/aioexabgp.git",
+      "long_checkout": false,
+      "py_versions": ["all", "3.8"]  // "all" ignores all other versions
+    }
+  }
+}
+```
+
+### Example Run
+
+```console
+cooper-mbp:black cooper$ ~/venvs/b/bin/black-primer
+[2020-05-17 13:06:40,830] INFO: 4 projects to run black over (lib.py:270)
+[2020-05-17 13:06:44,215] INFO: Analyzing results (lib.py:285)
+-- primer results 📊 --
+
+3 / 4 succeeded (75.0%) ✅
+1 / 4 FAILED (25.0%) 💩
+ - 0 projects Disabled by config
+ - 0 projects skipped due to Python Version
+ - 0 skipped due to long checkout
+
+Failed Projects:
+
+## flake8-bugbear:
+ - Returned 1
+ - stdout:
+--- tests/b303_b304.py	2020-05-17 20:04:09.991227 +0000
++++ tests/b303_b304.py	2020-05-17 20:06:42.753851 +0000
+@@ -26,11 +26,11 @@
+     maxint = 5  # this is okay
+     # the following shouldn't crash
+     (a, b, c) = list(range(3))
+     # it's different than this
+     a, b, c = list(range(3))
+-    a, b, c, = list(range(3))
++    a, b, c = list(range(3))
+     # and different than this
+     (a, b), c = list(range(3))
+     a, *b, c = [1, 2, 3, 4, 5]
+     b[1:3] = [0, 0]
+
+would reformat tests/b303_b304.py
+Oh no! 💥 💔 💥
+1 file would be reformatted, 22 files would be left unchanged.
+```
 
 ## Version control integration
 
@@ -1170,10 +1287,10 @@ then write the above files to `.cache/black/<version>/`.
 
 The following notable open-source projects trust _Black_ with enforcing a consistent
 code style: pytest, tox, Pyramid, Django Channels, Hypothesis, attrs, SQLAlchemy,
-Poetry, PyPA applications (Warehouse, Pipenv, virtualenv), pandas, Pillow, every Datadog
-Agent Integration, Home Assistant.
+Poetry, PyPA applications (Warehouse, Bandersnatch, Pipenv, virtualenv), pandas, Pillow,
+every Datadog Agent Integration, Home Assistant.
 
-The following organizations use _Black_: Dropbox.
+The following organizations use _Black_: Facebook, Dropbox.
 
 Are we missing anyone? Let us know.
 
