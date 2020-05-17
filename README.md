@@ -154,7 +154,7 @@ Actual details on _Black_ compatible configurations for various tools can be fou
 
 A long-standing argument against moving to automated code formatters like _Black_ is
 that the migration will clutter up the output of `git blame`. This was a valid argument,
-but since `git` version 2.23, git natively supports
+but since Git version 2.23, Git natively supports
 [ignoring revisions in blame](https://git-scm.com/docs/git-blame#Documentation/git-blame.txt---ignore-revltrevgt)
 with the `--ignore-rev` option. You can also pass a file listing the revisions to ignore
 using the `--ignore-revs-file` option. The changes made by the revision will be ignored
@@ -170,10 +170,10 @@ identifier(s) into a file.
 5b4ab991dede475d393e9d69ec388fd6bd949699
 ```
 
-Afterwards, you can pass that file to `git blame` and see clean amd meaningful blame
+Afterwards, you can pass that file to `git blame` and see clean and meaningful blame
 information.
 
-```
+```console
 $ git blame important.py --ignore-revs-file .git-blame-ignore-revs
 7a1ae265 (John Smith 2019-04-15 15:55:13 -0400 1) def very_important_function(text, file):
 abdfd8b0 (Alice Doe  2019-09-23 11:39:32 -0400 2)     text = text.lstrip()
@@ -184,12 +184,12 @@ abdfd8b0 (Alice Doe  2019-09-23 11:39:32 -0400 2)     text = text.lstrip()
 You can even configure `git` to automatically ignore revisions listed in a file on every
 call to `git blame`.
 
-```shell
+```console
 $ git config blame.ignoreRevsFile .git-blame-ignore-revs
 ```
 
 **The one caveat is that GitHub and GitLab do not yet support ignoring revisions using
-in their native UI of blame.** So blame information will be cluttered with a reformating
+their native UI of blame.** So blame information will be cluttered with a reformatting
 commit on those platforms. (If you'd like this feature, there's an open issue for
 [GitLab](https://gitlab.com/gitlab-org/gitlab/-/issues/31423) and please let GitHub
 know!)
