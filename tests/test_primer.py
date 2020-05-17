@@ -59,6 +59,8 @@ def event_loop() -> Iterator[None]:
     policy = asyncio.get_event_loop_policy()
     loop = policy.new_event_loop()
     asyncio.set_event_loop(loop)
+    if sys.platform == "win32":
+        asyncio.set_event_loop(asyncio.ProactorEventLoop())
     try:
         yield
     finally:

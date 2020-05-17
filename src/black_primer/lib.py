@@ -3,6 +3,7 @@
 import asyncio
 import json
 import logging
+import sys
 from pathlib import Path
 from platform import system
 from shutil import rmtree, which
@@ -23,10 +24,9 @@ LOG = logging.getLogger(__name__)
 # Windows needs a ProactorEventLoop if you want to exec subprocesses
 # Startng 3.8 this is the default - Can remove when black >= 3.8
 # mypy only respects sys.platform if directly in the evaluation
-# but CI seems to not apply the event loop type with it ...
 # # https://mypy.readthedocs.io/en/latest/common_issues.html#python-version-and-system-platform-checks  # noqa: B950
-if WINDOWS:
-    asyncio.set_event_loop(asyncio.ProactorEventLoop())  # type: ignore
+if sys.platform == "win32":
+    asyncio.set_event_loop(asyncio.ProactorEventLoop())
 
 
 class Results(NamedTuple):
