@@ -1141,7 +1141,7 @@ for your project. See _Black_'s own
 example.
 
 If you're already using Python 3.7, switch the `language_version` accordingly. Finally,
-`stable` is a tag that is pinned to the latest release on PyPI. If you'd rather run on
+`stable` is a branch that tracks the latest release on PyPI. If you'd rather run on
 master, this is also an option.
 
 ## Ignoring unmodified files
