@@ -130,7 +130,7 @@ class PrimerLibTests(unittest.TestCase):
     def test_gen_check_output(self) -> None:
         loop = asyncio.get_event_loop()
         stdout, stderr = loop.run_until_complete(
-            lib._gen_check_output(["black", "--help"])
+            lib._gen_check_output([lib.BLACK_BINARY, "--help"])
         )
         self.assertTrue("The uncompromising code formatter" in stdout.decode("utf8"))
         self.assertEqual(None, stderr)
