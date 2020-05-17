@@ -50,7 +50,7 @@ async def async_main(
         work_path.mkdir()
 
     if not which("black"):
-        LOG.error(f"Can not find 'black' executable in PATH. No point in running")
+        LOG.error("Can not find 'black' executable in PATH. No point in running")
         return -1
 
     try:
