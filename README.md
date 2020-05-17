@@ -33,10 +33,10 @@ Try it out now using the [Black Playground](https://black.now.sh). Watch the
 _Contents:_ **[Installation and usage](#installation-and-usage)** |
 **[Code style](#the-black-code-style)** | **[Pragmatism](#pragmatism)** |
 **[pyproject.toml](#pyprojecttoml)** | **[Editor integration](#editor-integration)** |
-**[blackd](#blackd)** | **[black-primer](#black-primer)**
-| **[Version control integration](#version-control-integration)**
-| **[Ignoring unmodified files](#ignoring-unmodified-files)** | **[Used by](#used-by)**
-| **[Testimonials](#testimonials)** | **[Show your style](#show-your-style)** |
+**[blackd](#blackd)** | **[black-primer](#black-primer)** |
+**[Version control integration](#version-control-integration)** |
+**[Ignoring unmodified files](#ignoring-unmodified-files)** | **[Used by](#used-by)** |
+**[Testimonials](#testimonials)** | **[Show your style](#show-your-style)** |
 **[Contributing](#contributing-to-black)** | **[Change Log](#change-log)** |
 **[Authors](#authors)**
 
@@ -1121,8 +1121,8 @@ _Black_.
 ## black-primer
 
 `black-primer` is a tool built for CI (and huumans) to have black `--check` a number of
-(configured in `primer.json`) Git accessible projects in parallel.
-*(A PR will be accepted to add hg support)*.
+(configured in `primer.json`) Git accessible projects in parallel. _(A PR will be
+accepted to add hg support)_.
 
 ### Run flow
 
@@ -1131,7 +1131,7 @@ _Black_.
 - Run projects in parallel with `--worker` workers (defaults to CPU Count / 2)
   - Checkout projects
   - Run black and record result
-  - Clean up repository checkout *(can optionally be disabled via `--keep`)*
+  - Clean up repository checkout _(can optionally be disabled via `--keep`)_
 - Display results summary to screen
 - Default to cleaning up `--work-dir` (which defaults to tempfile schemantics)
 - Return
@@ -1143,7 +1143,8 @@ _Black_.
 
 If you're running locally yourself to test black on lots of code try:
 
-- Using `-k` / `--keep` + `-w` / `--work-dir` so you don't have to re-checkout the repo each run
+- Using `-k` / `--keep` + `-w` / `--work-dir` so you don't have to re-checkout the repo
+  each run
 
 ### CLI Arguments
 
@@ -1172,7 +1173,8 @@ Options:
 
 ### primer config file
 
-The config is `JSON` format. It's main element is the `"projects"` dictionary. Below explains each parameter:
+The config is `JSON` format. It's main element is the `"projects"` dictionary. Below
+explains each parameter:
 
 ```json
 {
@@ -1189,7 +1191,7 @@ The config is `JSON` format. It's main element is the `"projects"` dictionary. B
       "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/cooperlees/aioexabgp.git",
       "long_checkout": false,
-      "py_versions": ["all", "3.8"]  // "all" ignores all other versions
+      "py_versions": ["all", "3.8"] // "all" ignores all other versions
     }
   }
 }
