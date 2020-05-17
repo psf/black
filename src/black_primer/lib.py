@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
-# Module '__future__' has no attribute 'annotations'
-from __future__ import annotations  # type: ignore
-
 import asyncio
 import json
 import logging
+import sys
 from pathlib import Path
+from platform import system
 from shutil import rmtree, which
 from subprocess import CalledProcessError
 from sys import version_info
@@ -16,7 +15,18 @@ from urllib.parse import urlparse
 import click
 
 
+WINDOWS = system() == "Windows"
+BLACK_BINARY = "black.exe" if WINDOWS else "black"
+GIT_BIANRY = "git.exe" if WINDOWS else "git"
 LOG = logging.getLogger(__name__)
+
+
+# Windows needs a ProactorEventLoop if you want to exec subprocesses
+# Startng 3.8 this is the default - Can remove when black >= 3.8
+# mypy only respects sys.platform if directly in the evaluation
+# # https://mypy.readthedocs.io/en/latest/common_issues.html#python-version-and-system-platform-checks  # noqa: B950
+if sys.platform == "win32":
+    asyncio.set_event_loop(asyncio.ProactorEventLoop())
 
 
 class Results(NamedTuple):
@@ -53,7 +63,7 @@ async def _gen_check_output(
     return (stdout, stderr)
 
 
-async def analyze_results(project_count: int, results: Results) -> int:
+def analyze_results(project_count: int, results: Results) -> int:
     failed_pct = round(((results.stats["failed"] / project_count) * 100), 2)
     success_pct = round(((results.stats["success"] / project_count) * 100), 2)
 
@@ -95,8 +105,8 @@ async def black_run(
     repo_path: Path, project_config: Dict[str, Any], results: Results
 ) -> None:
     """Run black and record failures"""
-    cmd = [str(which("black"))]
-    if project_config["cli_arguments"]:
+    cmd = [str(which(BLACK_BINARY))]
+    if "cli_arguments" in project_config and project_config["cli_arguments"]:
         cmd.extend(*project_config["cli_arguments"])
     cmd.extend(["--check", "--diff", "."])
 
@@ -106,11 +116,26 @@ async def black_run(
         results.stats["failed"] += 1
         LOG.error(f"Running black for {repo_path} timed out ({cmd})")
     except CalledProcessError as cpe:
-        # TODO: This might need to be tuned and made smarter for higher signal
-        if not project_config["expect_formatting_changes"] and cpe.returncode == 1:
-            results.stats["failed"] += 1
-            results.failed_projects[repo_path.name] = cpe
+        # TODO: Tune for smarter for higher signal
+        # If any other reutrn value than 1 we raise - can disable project in config
+        if cpe.returncode == 1:
+            if not project_config["expect_formatting_changes"]:
+                results.stats["failed"] += 1
+                results.failed_projects[repo_path.name] = cpe
+            else:
+                results.stats["success"] += 1
             return
+
+        LOG.error(f"Unkown error with {repo_path}")
+        raise
+
+    # If we get here and expect formatting changes something is up
+    if project_config["expect_formatting_changes"]:
+        results.stats["failed"] += 1
+        results.failed_projects[repo_path.name] = CalledProcessError(
+            0, cmd, b"Expected formatting changes but didn't get any!", b""
+        )
+        return
 
     results.stats["success"] += 1
 
@@ -123,7 +148,7 @@ async def git_checkout_or_rebase(
     depth: int = 1,
 ) -> Optional[Path]:
     """git Clone project or rebase"""
-    git_bin = str(which("git"))
+    git_bin = str(which(GIT_BIANRY))
     if not git_bin:
         LOG.error("No git binary found")
         return None
@@ -151,7 +176,7 @@ async def git_checkout_or_rebase(
 
 async def load_projects_queue(
     config_path: Path,
-) -> Tuple[Dict[str, Any], asyncio.Queue[str]]:
+) -> Tuple[Dict[str, Any], asyncio.Queue]:
     """Load project config and fill queue with all the project names"""
     with config_path.open("r") as cfp:
         config = json.load(cfp)
@@ -159,7 +184,7 @@ async def load_projects_queue(
     # TODO: Offer more options here
     # e.g. Run on X random packages or specific sub list etc.
     project_names = sorted(config["projects"].keys())
-    queue: asyncio.Queue[str] = asyncio.Queue(maxsize=len(project_names))
+    queue: asyncio.Queue = asyncio.Queue(maxsize=len(project_names))
     for project in project_names:
         await queue.put(project)
 
@@ -169,7 +194,7 @@ async def load_projects_queue(
 async def project_runner(
     idx: int,
     config: Dict[str, Any],
-    queue: asyncio.Queue[str],
+    queue: asyncio.Queue,
     work_path: Path,
     results: Results,
     long_checkouts: bool = False,
@@ -243,7 +268,7 @@ async def process_queue(
     config, queue = await load_projects_queue(Path(config_file))
     project_count = queue.qsize()
     LOG.info(f"{project_count} projects to run black over")
-    if not project_count:
+    if project_count < 1:
         return -1
 
     LOG.debug(f"Using {workers} parallel workers to run black")
@@ -258,4 +283,8 @@ async def process_queue(
     )
 
     LOG.info("Analyzing results")
-    return await analyze_results(project_count, results)
+    return analyze_results(project_count, results)
+
+
+if __name__ == "__main__":  # pragma: nocover
+    raise NotImplementedError("lib is a library, funnily enough.")

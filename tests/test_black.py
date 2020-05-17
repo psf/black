@@ -31,6 +31,10 @@ else:
 
 from pathspec import PathSpec
 
+# Import other test classes
+from .test_primer import PrimerCLITests  # noqa: F401
+
+
 ff = partial(black.format_file_in_place, mode=black.FileMode(), fast=True)
 fs = partial(black.format_str, mode=black.FileMode())
 THIS_FILE = Path(__file__)
