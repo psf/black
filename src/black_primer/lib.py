@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-from __future__ import annotations
+# Module '__future__' has no attribute 'annotations'
+from __future__ import annotations  # type: ignore
 
 import asyncio
 import json
