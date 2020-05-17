@@ -20,6 +20,12 @@ _timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
 DEFAULT_WORKDIR = Path(gettempdir()) / f"primer.{_timestamp}"
 LOG = logging.getLogger(__name__)
 
+# Windows needs to use a ProactorEventLoop for subprocesses
+# Need to use sys.platform for mypy to understand
+# https://mypy.readthedocs.io/en/latest/common_issues.html#python-version-and-system-platform-checks  # noqa: B950
+if sys.platform == "win32":
+    asyncio.set_event_loop(asyncio.ProactorEventLoop())
+
 
 def _handle_debug(
     ctx: click.core.Context,

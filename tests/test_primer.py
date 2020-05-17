@@ -8,6 +8,7 @@ from copy import deepcopy
 from io import StringIO
 from os import getpid
 from pathlib import Path
+from platform import system
 from subprocess import CalledProcessError
 from tempfile import TemporaryDirectory, gettempdir
 from typing import Any, Callable, Generator, Iterator, Tuple
@@ -138,8 +139,9 @@ class PrimerLibTests(unittest.TestCase):
         if lib.WINDOWS:
             return
 
+        false_bin = "/usr/bin/false" if system() == "Darwin" else "/bin/false"
         with self.assertRaises(CalledProcessError):
-            loop.run_until_complete(lib._gen_check_output(["/usr/bin/false"]))
+            loop.run_until_complete(lib._gen_check_output([false_bin]))
 
         with self.assertRaises(asyncio.TimeoutError):
             loop.run_until_complete(
