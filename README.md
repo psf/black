@@ -1120,8 +1120,8 @@ _Black_.
 
 ## black-primer
 
-`black-primer` is a tool built for CI (and huumans) to have _Black_ `--check` a number of
-(configured in `primer.json`) Git accessible projects in parallel. _(A PR will be
+`black-primer` is a tool built for CI (and huumans) to have _Black_ `--check` a number
+of (configured in `primer.json`) Git accessible projects in parallel. _(A PR will be
 accepted to add Mercurial support.)_
 
 ### Run flow
