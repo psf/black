@@ -36,7 +36,7 @@ class Results(NamedTuple):
 
 async def _gen_check_output(
     cmd: Sequence[str],
-    timeout: float = 30,
+    timeout: float = 300,
     env: Optional[Dict[str, str]] = None,
     cwd: Optional[Path] = None,
 ) -> Tuple[bytes, bytes]:
@@ -212,6 +212,7 @@ async def project_runner(
         except asyncio.QueueEmpty:
             LOG.debug(f"project_runner {idx} exiting")
             return
+        LOG.debug(f"worker {idx} workng on {project_name}")
 
         project_config = config["projects"][project_name]
 
@@ -244,6 +245,8 @@ async def project_runner(
         if not keep:
             LOG.debug(f"Removing {repo_path}")
             await loop.run_in_executor(None, rmtree, repo_path)
+
+        LOG.info(f"Finished {project_name}")
 
 
 async def process_queue(

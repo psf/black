@@ -28,3 +28,7 @@ jobs:
       - name: Unit tests
         run: |
           coverage run -m unittest
+
+      - name: primer run
+        run: |
+          black-primer

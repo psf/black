@@ -4,7 +4,6 @@ import asyncio
 import logging
 import sys
 from datetime import datetime
-from os import cpu_count
 from pathlib import Path
 from shutil import rmtree, which
 from tempfile import gettempdir
@@ -114,7 +113,7 @@ async def async_main(
 @click.option(
     "-W",
     "--workers",
-    default=int((cpu_count() or 4) / 2) or 1,
+    default=2,
     type=int,
     show_default=True,
     help="Number of parallel worker coroutines",
