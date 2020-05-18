@@ -22,9 +22,9 @@ LOG = logging.getLogger(__name__)
 
 
 # Windows needs a ProactorEventLoop if you want to exec subprocesses
-# Startng 3.8 this is the default - Can remove when black >= 3.8
+# Starting with 3.8 this is the default - can remove when Black >= 3.8
 # mypy only respects sys.platform if directly in the evaluation
-# # https://mypy.readthedocs.io/en/latest/common_issues.html#python-version-and-system-platform-checks  # noqa: B950
+# https://mypy.readthedocs.io/en/latest/common_issues.html#python-version-and-system-platform-checks  # noqa: B950
 if sys.platform == "win32":
     asyncio.set_event_loop(asyncio.ProactorEventLoop())
 
@@ -89,7 +89,7 @@ def analyze_results(project_count: int, results: Results) -> int:
     )
 
     if results.failed_projects:
-        click.secho("\nFailed Projects:\n", bold=True)
+        click.secho("\nFailed projects:\n", bold=True)
 
     for project_name, project_cpe in results.failed_projects.items():
         print(f"## {project_name}:")
@@ -106,7 +106,7 @@ def analyze_results(project_count: int, results: Results) -> int:
 async def black_run(
     repo_path: Path, project_config: Dict[str, Any], results: Results
 ) -> None:
-    """Run black and record failures"""
+    """Run Black and record failures"""
     cmd = [str(which(BLACK_BINARY))]
     if "cli_arguments" in project_config and project_config["cli_arguments"]:
         cmd.extend(*project_config["cli_arguments"])
@@ -203,7 +203,7 @@ async def project_runner(
     rebase: bool = False,
     keep: bool = False,
 ) -> None:
-    """Checkout project and run black on it + record result"""
+    """Check out project and run Black on it + record result"""
     loop = asyncio.get_event_loop()
     py_version = f"{version_info[0]}.{version_info[1]}"
     while True:
