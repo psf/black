@@ -54,6 +54,7 @@ Contents
    pyproject_toml
    editor_integration
    blackd
+   black-primer
    version_control_integration
    ignoring_unmodified_files
    contributing
