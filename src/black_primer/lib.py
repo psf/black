@@ -78,9 +78,11 @@ def analyze_results(project_count: int, results: Results) -> int:
         bold=bool(results.stats["failed"]),
         fg="red",
     )
-    click.echo(f" - {results.stats['disabled']} projects Disabled by config")
+    s = "" if results.stats["disabled"] == 1 else "s"
+    click.echo(f" - {results.stats['disabled']} project{s} disabled by config")
+    s = "" if results.stats["wrong_py_ver"] == 1 else "s"
     click.echo(
-        f" - {results.stats['wrong_py_ver']} projects skipped due to Python Version"
+        f" - {results.stats['wrong_py_ver']} project{s} skipped due to Python version"
     )
     click.echo(
         f" - {results.stats['skipped_long_checkout']} skipped due to long checkout"
@@ -267,11 +269,13 @@ async def process_queue(
 
     config, queue = await load_projects_queue(Path(config_file))
     project_count = queue.qsize()
-    LOG.info(f"{project_count} projects to run black over")
+    s = "" if project_count == 1 else "s"
+    LOG.info(f"{project_count} project{s} to run Black over")
     if project_count < 1:
         return -1
 
-    LOG.debug(f"Using {workers} parallel workers to run black")
+    s = "" if workers == 1 else "s"
+    LOG.debug(f"Using {workers} parallel worker{s} to run Black")
     # Wait until we finish running all the projects before analyzing
     await asyncio.gather(
         *[
