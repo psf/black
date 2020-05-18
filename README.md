@@ -53,7 +53,7 @@ run but you can reformat Python 2 code with it, too.
 
 To get started right away with sensible defaults:
 
-```console
+```sh
 black {source_file_or_directory}
 ```
 
@@ -1069,7 +1069,7 @@ Options:
 There is no official blackd client tool (yet!). You can test that blackd is working
 using `curl`:
 
-```console
+```sh
 blackd --bind-port 9090 &  # or let blackd choose a port
 curl -s -XPOST "localhost:9090" -d "print('valid')"
 ```
@@ -1120,15 +1120,15 @@ _Black_.
 
 ## black-primer
 
-`black-primer` is a tool built for CI (and huumans) to have black `--check` a number of
+`black-primer` is a tool built for CI (and huumans) to have _Black_ `--check` a number of
 (configured in `primer.json`) Git accessible projects in parallel. _(A PR will be
-accepted to add hg support)_.
+accepted to add Mercurial support.)_
 
 ### Run flow
 
 - Ensure we have a `black` + `git` in PATH
 - Load projects from `primer.json`
-- Run projects in parallel with `--worker` workers (defaults to CPU Count / 2)
+- Run projects in parallel with `--worker` workers (defaults to CPU count / 2)
   - Checkout projects
   - Run black and record result
   - Clean up repository checkout _(can optionally be disabled via `--keep`)_
@@ -1148,7 +1148,7 @@ If you're running locally yourself to test black on lots of code try:
 
 ### CLI Arguments
 
-```console
+```text
 Usage: black-primer [OPTIONS]
 
   primer - prime projects for blackening ... 🏴
@@ -1180,11 +1180,11 @@ explains each parameter:
 {
   "projects": {
     "00_Example": {
-      "cli_arguments": "List of extra CLI arguments to pass black for this project",
-      "expect_formatting_changes": "Boolean to indicate that the version of black is expected to cause changes",
-      "git_clone_url": "URL you would pass `git clone` to checkout this repo",
+      "cli_arguments": "List of extra CLI arguments to pass Black for this project",
+      "expect_formatting_changes": "Boolean to indicate that the version of Black is expected to cause changes",
+      "git_clone_url": "URL you would pass `git clone` to check out this repo",
       "long_checkout": "Boolean to have repo skipped by defauult unless `--long-checkouts` is specified",
-      "py_versions": "List of major Python versions to run this project with - all will do as you'd expect - Run on ALL versions"
+      "py_versions": "List of major Python versions to run this project with - all will do as you'd expect - run on ALL versions"
     },
     "aioexabgp": {
       "cli_arguments": [],
@@ -1197,7 +1197,7 @@ explains each parameter:
 }
 ```
 
-### Example Run
+### Example run
 
 ```console
 cooper-mbp:black cooper$ ~/venvs/b/bin/black-primer
