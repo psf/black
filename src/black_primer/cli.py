@@ -109,7 +109,7 @@ async def async_main(
     default=str(DEFAULT_WORKDIR),
     type=click.Path(exists=False),
     show_default=True,
-    help="Directory Path for repo checkouts",
+    help="Directory path for repo checkouts",
 )
 @click.option(
     "-W",
@@ -121,9 +121,9 @@ async def async_main(
 )
 @click.pass_context
 def main(ctx: click.core.Context, **kwargs: Any) -> None:
-    """primer - prime projects for blackening ... 🏴"""
+    """primer - prime projects for blackening... 🏴"""
     LOG.debug(f"Starting {sys.argv[0]}")
-    # TODO: Change to asyncio.run when black >= 3.7 only
+    # TODO: Change to asyncio.run when Black >= 3.7 only
     loop = asyncio.get_event_loop()
     try:
         ctx.exit(loop.run_until_complete(async_main(**kwargs)))
