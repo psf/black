@@ -138,7 +138,7 @@ def download_and_extract_top_packages(
 
 def git_create_repository(repo: Path) -> None:
     subprocess.run(["git", "init"], cwd=repo)
-    git_add_and_commit(msg="Inital commit", repo=repo)
+    git_add_and_commit(msg="Initial commit", repo=repo)
 
 
 def git_add_and_commit(msg: str, repo: Path) -> None:

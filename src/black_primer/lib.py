@@ -119,7 +119,7 @@ async def black_run(
         LOG.error(f"Running black for {repo_path} timed out ({cmd})")
     except CalledProcessError as cpe:
         # TODO: Tune for smarter for higher signal
-        # If any other reutrn value than 1 we raise - can disable project in config
+        # If any other return value than 1 we raise - can disable project in config
         if cpe.returncode == 1:
             if not project_config["expect_formatting_changes"]:
                 results.stats["failed"] += 1
@@ -128,7 +128,7 @@ async def black_run(
                 results.stats["success"] += 1
             return
 
-        LOG.error(f"Unkown error with {repo_path}")
+        LOG.error(f"Unknown error with {repo_path}")
         raise
 
     # If we get here and expect formatting changes something is up

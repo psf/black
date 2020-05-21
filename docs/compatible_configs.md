@@ -25,7 +25,7 @@ line_length = 88
 ### Why those options above?
 
 _Black_ wraps imports that surpass `line-length` by moving identifiers into their own
-indented line. If that still doesn't fit the bill, it will put all of them in seperate
+indented line. If that still doesn't fit the bill, it will put all of them in separate
 lines and put a trailing comma. A more detailed explanation of this behaviour can be
 [found here](https://github.com/psf/black#how-black-wraps-lines).
 
