@@ -813,7 +813,7 @@ On Windows / Linux / BSD:
 6. Optionally, run _Black_ on every file save:
 
    1. Make sure you have the
-      [File Watcher](https://plugins.jetbrains.com/plugin/7177-file-watchers) plugin
+      [File Watchers](https://plugins.jetbrains.com/plugin/7177-file-watchers) plugin
       installed.
    2. Go to `Preferences or Settings -> Tools -> File Watchers` and click `+` to add a
       new watcher:
