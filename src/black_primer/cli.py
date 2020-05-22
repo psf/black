@@ -60,7 +60,7 @@ async def async_main(
     finally:
         if not keep and work_path.exists():
             LOG.debug(f"Removing {work_path}")
-            rmtree(work_path)
+            rmtree(work_path, onerror=lib.handle_PermissionError)
 
     return -2
 

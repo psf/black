@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 
 import asyncio
+import errno
 import json
 import logging
+import os
+import stat
 import sys
+from functools import partial
 from pathlib import Path
 from platform import system
 from shutil import rmtree, which
 from subprocess import CalledProcessError
 from sys import version_info
-from typing import Any, Dict, NamedTuple, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, NamedTuple, Optional, Sequence, Tuple
 from urllib.parse import urlparse
 
 import click
@@ -176,6 +180,30 @@ async def git_checkout_or_rebase(
     return repo_path
 
 
+def handle_PermissionError(
+    func: Callable, path: Path, exc: Tuple[Any, Any, Any]
+) -> None:
+    """
+    Handle PermissionError during shutil.rmtree.
+
+    This checks if the erroring function is either 'os.rmdir' or 'os.unlink', and that
+    the error was EACCES (i.e. Permission denied). If true, the path is set writable,
+    readable, and executable by everyone. Finally, it tries the error causing delete
+    operation again.
+
+    If the check is false, then the original error will be reraised as this function
+    can't handle it.
+    """
+    excvalue = exc[1]
+    LOG.debug(f"Handling {excvalue} from {func.__name__} ... ")
+    if func in (os.rmdir, os.unlink) and excvalue.errno == errno.EACCES:
+        LOG.debug(f"Setting {path} writable, readable, and executable by everyone... ")
+        os.chmod(path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)  # chmod 0777
+        func(path)  # Try the error causing delete operation again
+    else:
+        raise
+
+
 async def load_projects_queue(
     config_path: Path,
 ) -> Tuple[Dict[str, Any], asyncio.Queue]:
@@ -212,7 +240,7 @@ async def project_runner(
         except asyncio.QueueEmpty:
             LOG.debug(f"project_runner {idx} exiting")
             return
-        LOG.debug(f"worker {idx} workng on {project_name}")
+        LOG.debug(f"worker {idx} working on {project_name}")
 
         project_config = config["projects"][project_name]
 
@@ -244,7 +272,10 @@ async def project_runner(
 
         if not keep:
             LOG.debug(f"Removing {repo_path}")
-            await loop.run_in_executor(None, rmtree, repo_path)
+            rmtree_partial = partial(
+                rmtree, path=repo_path, onerror=handle_PermissionError
+            )
+            await loop.run_in_executor(None, rmtree_partial)
 
         LOG.info(f"Finished {project_name}")
 
