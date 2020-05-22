@@ -2092,7 +2092,6 @@ class LineGenerator(Visitor[Line]):
             prefix = "    " * self.current_line.depth
             docstring = fix_docstring(leaf.value[3:-3], prefix)
             leaf.value = leaf.value[0:3] + docstring + leaf.value[-3:]
-            normalize_string_quotes(leaf)
 
         yield from self.visit_default(leaf)
 
