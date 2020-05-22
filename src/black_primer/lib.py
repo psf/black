@@ -195,7 +195,7 @@ def handle_PermissionError(
     can't handle it.
     """
     excvalue = exc[1]
-    LOG.debug(f"Handling {excvalue} from {func.__name__} ... ")
+    LOG.debug(f"Handling {excvalue} from {func.__name__}... ")
     if func in (os.rmdir, os.unlink) and excvalue.errno == errno.EACCES:
         LOG.debug(f"Setting {path} writable, readable, and executable by everyone... ")
         os.chmod(path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)  # chmod 0777
