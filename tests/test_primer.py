@@ -67,8 +67,12 @@ def event_loop() -> Iterator[None]:
         loop.close()
 
 
-async def raise_subprocess_error(*args: Any, **kwargs: Any) -> None:
+async def raise_subprocess_error_1(*args: Any, **kwargs: Any) -> None:
     raise CalledProcessError(1, ["unittest", "error"], b"", b"")
+
+
+async def raise_subprocess_error_123(*args: Any, **kwargs: Any) -> None:
+    raise CalledProcessError(123, ["unittest", "error"], b"", b"")
 
 
 async def return_false(*args: Any, **kwargs: Any) -> bool:
@@ -123,10 +127,15 @@ class PrimerLibTests(unittest.TestCase):
         # Test a fail based on returning 1 and not expecting formatting changes
         project_config["expect_formatting_changes"] = False
         results = lib.Results({"failed": 0, "success": 0}, {})
-        with patch("black_primer.lib._gen_check_output", raise_subprocess_error):
+        with patch("black_primer.lib._gen_check_output", raise_subprocess_error_1):
             loop.run_until_complete(lib.black_run(repo_path, project_config, results))
         self.assertEqual(1, results.stats["failed"])
         self.assertTrue(results.failed_projects)
+
+        # Test a formatting error based on returning 123
+        with patch("black_primer.lib._gen_check_output", raise_subprocess_error_123):
+            loop.run_until_complete(lib.black_run(repo_path, project_config, results))
+        self.assertEqual(2, results.stats["failed"])
 
     @event_loop()
     def test_gen_check_output(self) -> None:
