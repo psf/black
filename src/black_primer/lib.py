@@ -131,6 +131,10 @@ async def black_run(
             else:
                 results.stats["success"] += 1
             return
+        elif cpe.returncode > 1:
+            results.stats["failed"] += 1
+            results.failed_projects[repo_path.name] = cpe
+            return
 
         LOG.error(f"Unknown error with {repo_path}")
         raise
