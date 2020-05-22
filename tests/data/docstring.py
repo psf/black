@@ -73,10 +73,42 @@ def single_line():
     """
     pass
 
+
+def containing_quotes():
+    """No quotes here
+
+    "quotes here" """
+    pass
+
+
+def containing_unbalanced_quotes():
+    """No quotes here
+
+    quote here" """
+    pass
+
+
+def entirely_space():
+    """
+      
+    """
+    pass
+
+
+def just_quote():
+    """ " """
+    pass
+
+
+def escaped_already():
+    """
+    foo\""""
+    pass
+
 # output
 
 class MyClass:
-    """Multiline
+    """ Multiline
     class docstring
     """
 
@@ -88,7 +120,7 @@ class MyClass:
 
 
 def foo():
-    """This is a docstring with
+    """This is a docstring with             
     some lines of text here
     """
     return
@@ -146,5 +178,39 @@ def over_indent():
 
 
 def single_line():
-    """But with a newline after it!"""
+    """But with a newline after it!
+
+    """
+    pass
+
+
+def containing_quotes():
+    """No quotes here
+
+    "quotes here" """
+    pass
+
+
+def containing_unbalanced_quotes():
+    """No quotes here
+
+    quote here" """
+    pass
+
+
+def entirely_space():
+    """
+
+    """
+    pass
+
+
+def just_quote():
+    """ " """
+    pass
+
+
+def escaped_already():
+    """
+    foo\""""
     pass

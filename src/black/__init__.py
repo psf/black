@@ -6025,14 +6025,13 @@ def _stringify_ast(
 
         else:
             # Constant strings may be indented across newlines, if they are
-            # docstrings; fold spaces after newlines when comparing. Similarly,
-            # trailing and leading space may be removed.
+            # docstrings; fold spaces after newlines when comparing
             if (
                 isinstance(node, ast.Constant)
                 and field == "value"
                 and isinstance(value, str)
             ):
-                normalized = re.sub(r" *\n[ \t]+", "\n ", value).strip()
+                normalized = re.sub(r"\n([ \t]+|(?=\n))", "\n ", value)
             else:
                 normalized = value
             yield f"{'  ' * (depth+2)}{normalized!r},  # {value.__class__.__name__}"
@@ -6440,13 +6439,22 @@ def fix_docstring(docstring: str, prefix: str) -> str:
         if stripped:
             indent = min(indent, len(line) - len(stripped))
     # Remove indentation (first line is special):
-    trimmed = [lines[0].strip()]
-    if indent < sys.maxsize:
+    trimmed = [lines[0]]
+    if indent == sys.maxsize:
+        # We got no indent information from the later lines; they were
+        # all just whitespace.  Preserve the number of newlines.
+        for _ in lines[1:-1]:
+            trimmed.append("")
+        if len(lines) > 1:
+            trimmed.append(prefix)
+    else:
         last_line_idx = len(lines) - 2
         for i, line in enumerate(lines[1:]):
             stripped_line = line[indent:].rstrip()
-            if stripped_line or i == last_line_idx:
-                trimmed.append(prefix + stripped_line)
+            if stripped_line:
+                trimmed.append(prefix + line[indent:])
+            elif i == last_line_idx:
+                trimmed.append(prefix)
             else:
                 trimmed.append("")
     # Return a single string:
