@@ -1,4 +1,4 @@
-name: Test
+name: Primer
 
 on: [push, pull_request]
 
@@ -22,9 +22,10 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install --upgrade coverage
           python -m pip install -e ".[d]"
 
-      - name: Unit tests
+      - name: Primer run
+        env:
+          pythonioencoding: utf-8
         run: |
-          coverage run -m unittest
+          black-primer
