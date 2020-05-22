@@ -28,3 +28,9 @@ jobs:
       - name: Unit tests
         run: |
           coverage run -m unittest
+
+      - name: primer run
+        env:
+          pythonioencoding: utf-8
+        run: |
+          black-primer
