@@ -49,15 +49,14 @@ Contents
    :maxdepth: 2
 
    installation_and_usage
-   the_black_code_style
-   pragmatism
+   the_black_code_style_and_pragmatism
    pyproject_toml
    editor_integration
    blackd
-   black-primer
+   black_primer
    version_control_integration
    ignoring_unmodified_files
-   contributing
+   contributing_to_black
    show_your_style
    change_log
    reference/reference_summary
