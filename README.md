@@ -538,6 +538,7 @@ Multiple contributions by:
 - [Pablo Galindo](mailto:Pablogsal@gmail.com)
 - [Peter Bengtsson](mailto:mail@peterbe.com)
 - pmacosta
+- Richard Si
 - [Rishikesh Jha](mailto:rishijha424@gmail.com)
 - [Stavros Korokithakis](mailto:hi@stavros.io)
 - [Stephen Rosen](mailto:sirosen@globus.org)
