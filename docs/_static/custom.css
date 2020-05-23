@@ -1,0 +1,38 @@
+/* Make the sidebar scrollable. Fixes https://github.com/psf/black/issues/990 */
+div.sphinxsidebar {
+  max-height: calc(100% - 18px);
+  overflow-y: auto;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+div.sphinxsidebar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE 6, 7 and 8 */
+@media \0screen\, screen\9 {
+  div.sphinxsidebar {
+    -ms-overflow-style: none;
+  }
+}
+
+/* Hide scrollbar for IE 9 and 10 */
+/* backslash-9 removes ie11+ & old Safari 4 */
+@media screen and (min-width: 0\0) {
+  div.sphinxsidebar {
+    -ms-overflow-style: none\9;
+  }
+}
+
+/* Hide scrollbar for IE 11 and up */
+_:-ms-fullscreen,
+:root div.sphinxsidebar {
+  -ms-overflow-style: none;
+}
+
+/* Hide scrollbar for Edge */
+@supports (-ms-ime-align: auto) {
+  div.sphinxsidebar {
+    -ms-overflow-style: none;
+  }
+}
