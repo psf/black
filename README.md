@@ -245,7 +245,7 @@ from a `pyproject.toml` file. This is especially useful for specifying custom
 
 [PEP 518](https://www.python.org/dev/peps/pep-0518/) defines `pyproject.toml` as a
 configuration file to store build system requirements for Python projects. With the help
-of tools like [Poetry](https://poetry.eustace.io/) or
+of tools like [Poetry](https://python-poetry.org/) or
 [Flit](https://flit.readthedocs.io/en/latest/) it can fully replace the need for
 `setup.py` and `setup.cfg` files.
 
@@ -424,7 +424,7 @@ Twisted and CPython:
 > At least the name is good.
 
 **Kenneth Reitz**, creator of [`requests`](http://python-requests.org/) and
-[`pipenv`](https://docs.pipenv.org/):
+[`pipenv`](https://readthedocs.org/projects/pipenv/):
 
 > This vastly improves the formatting of our code. Thanks a ton!
 

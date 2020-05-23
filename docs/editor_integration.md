@@ -5,7 +5,7 @@
 Options include the following:
 
 - [purcell/reformatter.el](https://github.com/purcell/reformatter.el)
-- [proofit404/blacken](https://github.com/proofit404/blacken)
+- [proofit404/blacken](https://github.com/pythonic-emacs/blacken)
 - [Elpy](https://github.com/jorgenschaefer/elpy).
 
 ## PyCharm/IntelliJ IDEA
