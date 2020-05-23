@@ -1214,7 +1214,7 @@ cooper-mbp:black cooper$ ~/venvs/b/bin/black-primer
 
 Failed projects:
 
-## flake8-bugbear:
+### flake8-bugbear:
  - Returned 1
  - stdout:
 --- tests/b303_b304.py	2020-05-17 20:04:09.991227 +0000
