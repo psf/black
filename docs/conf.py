@@ -211,16 +211,8 @@ for sp in "abcfr":
     version = version.split(sp)[0]
 
 custom_sections = [
-    DocSection(
-        "the_black_code_style",
-        CURRENT_DIR / "the_black_code_style_and_pragmatism.md",
-        out_filename="the_black_code_style_and_pragmatism.md",
-    ),
-    DocSection(
-        "pragmatism",
-        CURRENT_DIR / "the_black_code_style_and_pragmatism.md",
-        out_filename="the_black_code_style_and_pragmatism.md",
-    ),
+    DocSection("the_black_code_style", CURRENT_DIR / "the_black_code_style.md",),
+    DocSection("pragmatism", CURRENT_DIR / "the_black_code_style.md",),
     DocSection("editor_integration", CURRENT_DIR / "editor_integration.md"),
     DocSection("blackd", CURRENT_DIR / "blackd.md"),
     DocSection("black_primer", CURRENT_DIR / "black_primer.md"),

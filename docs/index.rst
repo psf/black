@@ -49,7 +49,7 @@ Contents
    :maxdepth: 2
 
    installation_and_usage
-   the_black_code_style_and_pragmatism
+   the_black_code_style
    pyproject_toml
    editor_integration
    blackd

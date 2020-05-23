@@ -38,7 +38,7 @@ _Contents:_ **[Installation and usage](#installation-and-usage)** |
 **[Version control integration](#version-control-integration)** |
 **[Ignoring unmodified files](#ignoring-unmodified-files)** | **[Used by](#used-by)** |
 **[Testimonials](#testimonials)** | **[Show your style](#show-your-style)** |
-**[Contributing](#contributing-to-black)** | **[Change Log](#change-log)** |
+**[Contributing](#contributing-to-black)** | **[Change log](#change-log)** |
 **[Authors](#authors)**
 
 ---
@@ -216,7 +216,7 @@ place. It is not configurable. It doesn't take previous formatting into account.
 main option of configuring _Black_ is that it doesn't reformat blocks that start with
 `# fmt: off` and end with `# fmt: on`. `# fmt: on/off` have to be on the same level of
 indentation. To learn more about _Black_'s opinions, to go
-[the_black_code_style_and_pragmatism](https://github.com/psf/black/blob/master/docs/the_black_code_style_and_pragmatism.md).
+[the_black_code_style](https://github.com/psf/black/blob/master/docs/the_black_code_style.md).
 
 Please refer to this document before submitting an issue. What seems like a bug might be
 intended behaviour.
@@ -227,7 +227,7 @@ Early versions of _Black_ used to be absolutist in some respects. They took afte
 initial author. This was fine at the time as it made the implementation simpler and
 there were not many users anyway. Not many edge cases were reported. As a mature tool,
 _Black_ does make some exceptions to rules it otherwise holds. This
-[section](https://github.com/psf/black/blob/master/docs/the_black_code_style_and_pragmatism.md#pragmatism)
+[section](https://github.com/psf/black/blob/master/docs/the_black_code_style.md#pragmatism)
 of `the_black_code_style` describes what those exceptions are and why this is the case.
 
 Please refer to this document before submitting an issue just like with the document
@@ -466,7 +466,7 @@ still try but prepare to be disappointed.
 More details can be found in
 [CONTRIBUTING](https://github.com/psf/black/blob/master/CONTRIBUTING.md).
 
-## Change Log
+## Change log
 
 The log's become rather long. It moved to its own file.
 

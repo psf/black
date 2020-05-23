@@ -1,6 +1,6 @@
-# The _Black_ code style & Pragmatism
+# The _Black_ code style
 
-## The _Black_ code style
+## Code style
 
 _Black_ reformats entire files in place. It is not configurable. It doesn't take
 previous formatting into account. It doesn't reformat blocks that start with
