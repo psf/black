@@ -31,7 +31,7 @@ If you're running locally yourself to test black on lots of code try:
 ```text
 Usage: black-primer [OPTIONS]
 
-  primer - prime projects for blackening ... 🏴
+  primer - prime projects for blackening... 🏴
 
 Options:
   -c, --config PATH      JSON config file path  [default: /Users/cooper/repos/
@@ -53,7 +53,7 @@ Options:
 
 ## primer config file
 
-The config is `JSON` format. It's main element is the `"projects"` dictionary. Below
+The config is JSON format. Its main element is the `"projects"` dictionary. Below
 explains each parameter:
 
 ```json
@@ -81,17 +81,17 @@ explains each parameter:
 
 ```console
 cooper-mbp:black cooper$ ~/venvs/b/bin/black-primer
-[2020-05-17 13:06:40,830] INFO: 4 projects to run black over (lib.py:270)
+[2020-05-17 13:06:40,830] INFO: 4 projects to run Black over (lib.py:270)
 [2020-05-17 13:06:44,215] INFO: Analyzing results (lib.py:285)
 -- primer results 📊 --
 
 3 / 4 succeeded (75.0%) ✅
 1 / 4 FAILED (25.0%) 💩
- - 0 projects Disabled by config
- - 0 projects skipped due to Python Version
+ - 0 projects disabled by config
+ - 0 projects skipped due to Python version
  - 0 skipped due to long checkout
 
-Failed Projects:
+Failed projects:
 
 ## flake8-bugbear:
  - Returned 1

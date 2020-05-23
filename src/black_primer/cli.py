@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
+# coding=utf8
+
 import asyncio
 import logging
 import sys
 from datetime import datetime
-from os import cpu_count
 from pathlib import Path
 from shutil import rmtree, which
 from tempfile import gettempdir
@@ -61,7 +62,7 @@ async def async_main(
     finally:
         if not keep and work_path.exists():
             LOG.debug(f"Removing {work_path}")
-            rmtree(work_path)
+            rmtree(work_path, onerror=lib.handle_PermissionError)
 
     return -2
 
@@ -109,21 +110,21 @@ async def async_main(
     default=str(DEFAULT_WORKDIR),
     type=click.Path(exists=False),
     show_default=True,
-    help="Directory Path for repo checkouts",
+    help="Directory path for repo checkouts",
 )
 @click.option(
     "-W",
     "--workers",
-    default=int((cpu_count() or 4) / 2) or 1,
+    default=2,
     type=int,
     show_default=True,
     help="Number of parallel worker coroutines",
 )
 @click.pass_context
 def main(ctx: click.core.Context, **kwargs: Any) -> None:
-    """primer - prime projects for blackening ... 🏴"""
+    """primer - prime projects for blackening... 🏴"""
     LOG.debug(f"Starting {sys.argv[0]}")
-    # TODO: Change to asyncio.run when black >= 3.7 only
+    # TODO: Change to asyncio.run when Black >= 3.7 only
     loop = asyncio.get_event_loop()
     try:
         ctx.exit(loop.run_until_complete(async_main(**kwargs)))

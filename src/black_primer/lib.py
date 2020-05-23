@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 
 import asyncio
+import errno
 import json
 import logging
+import os
+import stat
 import sys
+from functools import partial
 from pathlib import Path
 from platform import system
 from shutil import rmtree, which
 from subprocess import CalledProcessError
 from sys import version_info
-from typing import Any, Dict, NamedTuple, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, NamedTuple, Optional, Sequence, Tuple
 from urllib.parse import urlparse
 
 import click
@@ -22,9 +26,9 @@ LOG = logging.getLogger(__name__)
 
 
 # Windows needs a ProactorEventLoop if you want to exec subprocesses
-# Startng 3.8 this is the default - Can remove when black >= 3.8
+# Starting with 3.8 this is the default - can remove when Black >= 3.8
 # mypy only respects sys.platform if directly in the evaluation
-# # https://mypy.readthedocs.io/en/latest/common_issues.html#python-version-and-system-platform-checks  # noqa: B950
+# https://mypy.readthedocs.io/en/latest/common_issues.html#python-version-and-system-platform-checks  # noqa: B950
 if sys.platform == "win32":
     asyncio.set_event_loop(asyncio.ProactorEventLoop())
 
@@ -36,7 +40,7 @@ class Results(NamedTuple):
 
 async def _gen_check_output(
     cmd: Sequence[str],
-    timeout: float = 30,
+    timeout: float = 300,
     env: Optional[Dict[str, str]] = None,
     cwd: Optional[Path] = None,
 ) -> Tuple[bytes, bytes]:
@@ -78,16 +82,18 @@ def analyze_results(project_count: int, results: Results) -> int:
         bold=bool(results.stats["failed"]),
         fg="red",
     )
-    click.echo(f" - {results.stats['disabled']} projects Disabled by config")
+    s = "" if results.stats["disabled"] == 1 else "s"
+    click.echo(f" - {results.stats['disabled']} project{s} disabled by config")
+    s = "" if results.stats["wrong_py_ver"] == 1 else "s"
     click.echo(
-        f" - {results.stats['wrong_py_ver']} projects skipped due to Python Version"
+        f" - {results.stats['wrong_py_ver']} project{s} skipped due to Python version"
     )
     click.echo(
         f" - {results.stats['skipped_long_checkout']} skipped due to long checkout"
     )
 
     if results.failed_projects:
-        click.secho("\nFailed Projects:\n", bold=True)
+        click.secho("\nFailed projects:\n", bold=True)
 
     for project_name, project_cpe in results.failed_projects.items():
         print(f"## {project_name}:")
@@ -104,7 +110,7 @@ def analyze_results(project_count: int, results: Results) -> int:
 async def black_run(
     repo_path: Path, project_config: Dict[str, Any], results: Results
 ) -> None:
-    """Run black and record failures"""
+    """Run Black and record failures"""
     cmd = [str(which(BLACK_BINARY))]
     if "cli_arguments" in project_config and project_config["cli_arguments"]:
         cmd.extend(*project_config["cli_arguments"])
@@ -117,7 +123,7 @@ async def black_run(
         LOG.error(f"Running black for {repo_path} timed out ({cmd})")
     except CalledProcessError as cpe:
         # TODO: Tune for smarter for higher signal
-        # If any other reutrn value than 1 we raise - can disable project in config
+        # If any other return value than 1 we raise - can disable project in config
         if cpe.returncode == 1:
             if not project_config["expect_formatting_changes"]:
                 results.stats["failed"] += 1
@@ -125,8 +131,12 @@ async def black_run(
             else:
                 results.stats["success"] += 1
             return
+        elif cpe.returncode > 1:
+            results.stats["failed"] += 1
+            results.failed_projects[repo_path.name] = cpe
+            return
 
-        LOG.error(f"Unkown error with {repo_path}")
+        LOG.error(f"Unknown error with {repo_path}")
         raise
 
     # If we get here and expect formatting changes something is up
@@ -174,6 +184,30 @@ async def git_checkout_or_rebase(
     return repo_path
 
 
+def handle_PermissionError(
+    func: Callable, path: Path, exc: Tuple[Any, Any, Any]
+) -> None:
+    """
+    Handle PermissionError during shutil.rmtree.
+
+    This checks if the erroring function is either 'os.rmdir' or 'os.unlink', and that
+    the error was EACCES (i.e. Permission denied). If true, the path is set writable,
+    readable, and executable by everyone. Finally, it tries the error causing delete
+    operation again.
+
+    If the check is false, then the original error will be reraised as this function
+    can't handle it.
+    """
+    excvalue = exc[1]
+    LOG.debug(f"Handling {excvalue} from {func.__name__}... ")
+    if func in (os.rmdir, os.unlink) and excvalue.errno == errno.EACCES:
+        LOG.debug(f"Setting {path} writable, readable, and executable by everyone... ")
+        os.chmod(path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)  # chmod 0777
+        func(path)  # Try the error causing delete operation again
+    else:
+        raise
+
+
 async def load_projects_queue(
     config_path: Path,
 ) -> Tuple[Dict[str, Any], asyncio.Queue]:
@@ -201,7 +235,7 @@ async def project_runner(
     rebase: bool = False,
     keep: bool = False,
 ) -> None:
-    """Checkout project and run black on it + record result"""
+    """Check out project and run Black on it + record result"""
     loop = asyncio.get_event_loop()
     py_version = f"{version_info[0]}.{version_info[1]}"
     while True:
@@ -210,6 +244,7 @@ async def project_runner(
         except asyncio.QueueEmpty:
             LOG.debug(f"project_runner {idx} exiting")
             return
+        LOG.debug(f"worker {idx} working on {project_name}")
 
         project_config = config["projects"][project_name]
 
@@ -241,7 +276,12 @@ async def project_runner(
 
         if not keep:
             LOG.debug(f"Removing {repo_path}")
-            await loop.run_in_executor(None, rmtree, repo_path)
+            rmtree_partial = partial(
+                rmtree, path=repo_path, onerror=handle_PermissionError
+            )
+            await loop.run_in_executor(None, rmtree_partial)
+
+        LOG.info(f"Finished {project_name}")
 
 
 async def process_queue(
@@ -267,11 +307,13 @@ async def process_queue(
 
     config, queue = await load_projects_queue(Path(config_file))
     project_count = queue.qsize()
-    LOG.info(f"{project_count} projects to run black over")
+    s = "" if project_count == 1 else "s"
+    LOG.info(f"{project_count} project{s} to run Black over")
     if project_count < 1:
         return -1
 
-    LOG.debug(f"Using {workers} parallel workers to run black")
+    s = "" if workers == 1 else "s"
+    LOG.debug(f"Using {workers} parallel worker{s} to run Black")
     # Wait until we finish running all the projects before analyzing
     await asyncio.gather(
         *[

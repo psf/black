@@ -2754,7 +2754,7 @@ class StringTransformer(ABC):
         StringTransformer to be applied?
 
     Transformations:
-        If the given Line meets all of the above requirments, which string
+        If the given Line meets all of the above requirements, which string
         transformations can you expect to be applied to it by this
         StringTransformer?
 
@@ -3613,7 +3613,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
 
         # We MAY choose to drop the 'f' prefix from substrings that don't
         # contain any f-expressions, but ONLY if the original f-string
-        # containes at least one f-expression. Otherwise, we will alter the AST
+        # contains at least one f-expression. Otherwise, we will alter the AST
         # of the program.
         drop_pointless_f_prefix = ("f" in prefix) and re.search(
             self.RE_FEXPR, LL[string_idx].value, re.VERBOSE
@@ -3703,7 +3703,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
                 max_bidx = max_break_idx - 2 if line_needs_plus() else max_break_idx
                 maybe_break_idx = self.__get_break_idx(rest_value, max_bidx)
                 if maybe_break_idx is None:
-                    # If we are unable to algorthmically determine a good split
+                    # If we are unable to algorithmically determine a good split
                     # and this string has custom splits registered to it, we
                     # fall back to using them--which means we have to start
                     # over from the beginning.
@@ -4280,7 +4280,7 @@ class StringParenWrapper(CustomSplitMapMixin, BaseStringSplitter):
 class StringParser:
     """
     A state machine that aids in parsing a string's "trailer", which can be
-    either non-existant, an old-style formatting sequence (e.g. `% varX` or `%
+    either non-existent, an old-style formatting sequence (e.g. `% varX` or `%
     (varX, varY)`), or a method-call / attribute access (e.g. `.format(varX,
     varY)`).
 
@@ -4374,7 +4374,7 @@ class StringParser:
             was directly after the string leaf in question (e.g. if our target
             string is `line.leaves[i]` then the first call to this method must
             be `line.leaves[i + 1]`).
-            * On the next call to this function, the leaf paramater passed in
+            * On the next call to this function, the leaf parameter passed in
             MUST be the leaf directly following @leaf.
 
         Returns:
@@ -4579,7 +4579,7 @@ def append_leaves(new_line: Line, old_line: Line, leaves: List[Leaf]) -> None:
 
     All of the leaves in @leaves are duplicated. The duplicates are then
     appended to @new_line and used to replace their originals in the underlying
-    Node structure. Any comments attatched to the old leaves are reattached to
+    Node structure. Any comments attached to the old leaves are reattached to
     the new leaves.
 
     Pre-conditions:

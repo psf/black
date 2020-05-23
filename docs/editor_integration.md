@@ -60,7 +60,7 @@ On Windows / Linux / BSD:
 6. Optionally, run _Black_ on every file save:
 
    1. Make sure you have the
-      [File Watcher](https://plugins.jetbrains.com/plugin/7177-file-watchers) plugin
+      [File Watchers](https://plugins.jetbrains.com/plugin/7177-file-watchers) plugin
       installed.
    2. Go to `Preferences or Settings -> Tools -> File Watchers` and click `+` to add a
       new watcher:
@@ -72,7 +72,7 @@ On Windows / Linux / BSD:
       - Output paths to refresh: `$FilePath$`
       - Working directory: `$ProjectFileDir$`
 
-   - Uncheck "Auto-save edited files to trigger the watcher"
+   - Uncheck "Auto-save edited files to trigger the watcher" in Advanced Options
 
 ## Wing IDE
 
@@ -257,7 +257,7 @@ Use [python-black](https://atom.io/packages/python-black).
 
 ## Kakoune
 
-Add the following hook to your kakrc, then run black with `:format`.
+Add the following hook to your kakrc, then run _Black_ with `:format`.
 
 ```
 hook global WinSetOption filetype=python %{
