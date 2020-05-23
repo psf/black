@@ -1,7 +1,7 @@
 # black-primer
 
-`black-primer` is a tool built for CI (and huumans) to have _Black_ `--check` a number
-of (configured in `primer.json`) Git accessible projects in parallel. _(A PR will be
+`black-primer` is a tool built for CI (and humans) to have _Black_ `--check` a number of
+(configured in `primer.json`) Git accessible projects in parallel. _(A PR will be
 accepted to add Mercurial support.)_
 
 ## Run flow
@@ -17,16 +17,16 @@ accepted to add Mercurial support.)_
 - Return
   - 0 for successful run
   - < 0 for environment / internal error
-  - > 0 for each project with an error
+  - \> 0 for each project with an error
 
-## Speed up Runs 🏎
+## Speed up runs 🏎
 
 If you're running locally yourself to test black on lots of code try:
 
 - Using `-k` / `--keep` + `-w` / `--work-dir` so you don't have to re-checkout the repo
   each run
 
-## CLI Arguments
+## CLI arguments
 
 ```text
 Usage: black-primer [OPTIONS]
@@ -43,11 +43,11 @@ Options:
   -R, --rebase           Rebase project if already checked out  [default:
                          False]
 
-  -w, --workdir PATH     Directory Path for repo checkouts  [default: /var/fol
+  -w, --workdir PATH     Directory path for repo checkouts  [default: /var/fol
                          ders/tc/hbwxh76j1hn6gqjd2n2sjn4j9k1glp/T/primer.20200
                          517125229]
 
-  -W, --workers INTEGER  Number of parallel worker coroutines  [default: 69]
+  -W, --workers INTEGER  Number of parallel worker coroutines  [default: 2]
   -h, --help             Show this message and exit.
 ```
 
@@ -63,7 +63,7 @@ explains each parameter:
       "cli_arguments": "List of extra CLI arguments to pass Black for this project",
       "expect_formatting_changes": "Boolean to indicate that the version of Black is expected to cause changes",
       "git_clone_url": "URL you would pass `git clone` to check out this repo",
-      "long_checkout": "Boolean to have repo skipped by defauult unless `--long-checkouts` is specified",
+      "long_checkout": "Boolean to have repo skipped by default unless `--long-checkouts` is specified",
       "py_versions": "List of major Python versions to run this project with - all will do as you'd expect - run on ALL versions"
     },
     "aioexabgp": {
