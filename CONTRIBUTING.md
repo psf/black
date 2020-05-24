@@ -24,7 +24,7 @@ You can use any operating system. I am using macOS myself and CentOS at work.
 
 Install all development dependencies using:
 
-```sh
+```console
 $ pipenv install --dev
 $ pipenv shell
 $ pre-commit install
@@ -34,9 +34,9 @@ If you haven't used `pipenv` before but are comfortable with virtualenvs, just r
 `pip install pipenv` in the virtualenv you're already using and invoke the command above
 from the cloned _Black_ repo. It will do the correct thing.
 
-Before submitting pull requests, run lints, tests + CI with:
+Before submitting pull requests, run lints and tests with:
 
-```sh
+```console
 $ pre-commit run -a
 $ python -m unittest
 $ black-primer [-k -w /tmp/black_test_repos]
@@ -44,9 +44,9 @@ $ black-primer [-k -w /tmp/black_test_repos]
 
 ## black-primer
 
-`black-primer` is used by CI to pull down well know _Black_ formatted projects and see
+`black-primer` is used by CI to pull down well-known _Black_ formatted projects and see
 if we get soure code changes. It will error on formatting changes or errors. Please run
-before pusing your PR to see if you get the actions you would expect from _Black_ with
+before pushing your PR to see if you get the actions you would expect from _Black_ with
 your PR. You may need to change
 [primer.json](https://github.com/psf/black/blob/master/src/black_primer/primer.json)
 configuration for it to pass.
