@@ -14,28 +14,76 @@
 #
 from pathlib import Path
 import re
-import shutil
 import string
+from typing import Callable, List, Optional, Pattern, Tuple, Set
+from dataclasses import dataclass
+import os
+import logging
 
 from pkg_resources import get_distribution
 from recommonmark.parser import CommonMarkParser
 
+logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
 
-CURRENT_DIR = Path(__file__).parent
+LOG = logging.getLogger(__name__)
+
+# Get a relative path so logs printing out SRC isn't too long.
+CURRENT_DIR = Path(__file__).parent.relative_to(os.getcwd())
+README = CURRENT_DIR / ".." / "README.md"
+REFERENCE_DIR = CURRENT_DIR / "reference"
+STATIC_DIR = CURRENT_DIR / "_static"
 
 
-def make_pypi_svg(version):
-    template = CURRENT_DIR / "_static" / "pypi_template.svg"
-    target = CURRENT_DIR / "_static" / "pypi.svg"
+@dataclass
+class SrcRange:
+    """Tracks which part of a file to get a section's content.
+
+    Data:
+        start_line: The line where the section starts (i.e. its sub-header) (inclusive).
+        end_line: The line where the section ends (usually next sub-header) (exclusive).
+    """
+
+    start_line: int
+    end_line: int
+
+
+@dataclass
+class DocSection:
+    """Tracks information about a section of documentation.
+
+    Data:
+        name: The section's name. This will used to detect duplicate sections.
+        src: The filepath to get its contents.
+        processors: The processors to run before writing the section to CURRENT_DIR.
+        out_filename: The filename to use when writing the section to CURRENT_DIR.
+        src_range: The line range of SRC to gets its contents.
+    """
+
+    name: str
+    src: Path
+    src_range: SrcRange = SrcRange(0, 1_000_000)
+    out_filename: str = ""
+    processors: Tuple[Callable, ...] = ()
+
+    def get_out_filename(self) -> str:
+        if not self.out_filename:
+            return self.name + ".md"
+        else:
+            return self.out_filename
+
+
+def make_pypi_svg(version: str) -> None:
+    template: Path = CURRENT_DIR / "_static" / "pypi_template.svg"
+    target: Path = CURRENT_DIR / "_static" / "pypi.svg"
     with open(str(template), "r", encoding="utf8") as f:
-        svg = string.Template(f.read()).substitute(version=version)
+        svg: str = string.Template(f.read()).substitute(version=version)
     with open(str(target), "w", encoding="utf8") as f:
         f.write(svg)
 
 
-def make_filename(line):
-    non_letters = re.compile(r"[^a-z]+")
-    filename = line[3:].rstrip().lower()
+def make_filename(line: str) -> str:
+    non_letters: Pattern = re.compile(r"[^a-z]+")
+    filename: str = line[3:].rstrip().lower()
     filename = non_letters.sub("_", filename)
     if filename.startswith("_"):
         filename = filename[1:]
@@ -44,36 +92,109 @@ def make_filename(line):
     return filename + ".md"
 
 
-def generate_sections_from_readme():
-    target_dir = CURRENT_DIR / "_build" / "generated"
-    readme = CURRENT_DIR / ".." / "README.md"
-    shutil.rmtree(str(target_dir), ignore_errors=True)
-    target_dir.mkdir(parents=True)
+def get_contents(section: DocSection) -> str:
+    """Gets the contents for the DocSection."""
+    contents: List[str] = []
+    src: Path = section.src
+    start_line: int = section.src_range.start_line
+    end_line: int = section.src_range.end_line
+    with open(src, "r", encoding="utf-8") as f:
+        for lineno, line in enumerate(f, start=1):
+            if lineno >= start_line and lineno < end_line:
+                contents.append(line)
+    return "".join(contents)
 
-    output = None
-    target_dir = target_dir.relative_to(CURRENT_DIR)
-    with open(str(readme), "r", encoding="utf8") as f:
-        for line in f:
+
+def get_sections_from_readme() -> List[DocSection]:
+    """Gets the sections from README so they can be processed by process_sections.
+
+    It opens README and goes down line by line looking for sub-header lines which
+    denotes a section. Once it finds a sub-header line, it will create a DocSection
+    object with all of the information currently available. Then on every line, it will
+    track the ending line index of the section. And it repeats this for every sub-header
+    line it finds.
+    """
+    sections: List[DocSection] = []
+    section: Optional[DocSection] = None
+    with open(README, "r", encoding="utf-8") as f:
+        for lineno, line in enumerate(f, start=1):
             if line.startswith("## "):
-                if output is not None:
-                    output.close()
                 filename = make_filename(line)
-                output_path = CURRENT_DIR / filename
-                if output_path.is_symlink() or output_path.is_file():
-                    output_path.unlink()
-                output_path.symlink_to(target_dir / filename)
-                output = open(str(output_path), "w", encoding="utf8")
-                output.write(
-                    "[//]: # (NOTE: THIS FILE IS AUTOGENERATED FROM README.md)\n\n"
+                section_name = filename[:-3]
+                section = DocSection(
+                    name=str(section_name),
+                    src=README,
+                    src_range=SrcRange(lineno, lineno),
+                    out_filename=filename,
+                    processors=(fix_headers,),
                 )
+                sections.append(section)
+            if section is not None:
+                section.src_range.end_line += 1
+    return sections
 
-            if output is None:
-                continue
 
-            if line.startswith("##"):
-                line = line[1:]
+def fix_headers(contents: str) -> str:
+    """Fixes the headers of sections copied from README.
 
-            output.write(line)
+    Removes one octothorpe (#) from all headers since the contents are no longer nested
+    in a root document (i.e. the README).
+    """
+    lines: List[str] = contents.splitlines()
+    fixed_contents: List[str] = []
+    for line in lines:
+        if line.startswith("##"):
+            line = line[1:]
+        fixed_contents.append(line + "\n")  # splitlines strips the leading newlines
+    return "".join(fixed_contents)
+
+
+def process_sections(
+    custom_sections: List[DocSection], readme_sections: List[DocSection]
+) -> None:
+    """Reads, processes, and writes sections to CURRENT_DIR.
+
+    For each section, the contents will be fetched, processed by processors
+    required by the section, and written to CURRENT_DIR. If it encounters duplicate
+    sections (i.e. shares the same name attribute), it will skip processing the
+    duplicates.
+
+    It processes custom sections before the README generated sections so sections in the
+    README can be overwritten with custom options.
+    """
+    processed_sections: Set[str] = set()
+    modified_files: Set[Path] = set()
+    sections: List[DocSection] = custom_sections
+    sections.extend(readme_sections)
+    for section in sections:
+        LOG.info(f"Processing '{section.name}' from {section.src}")
+        if section.name in processed_sections:
+            LOG.info(
+                f"Skipping '{section.name}' from '{section.src}' as it is a duplicate"
+            )
+            continue
+
+        target_path: Path = CURRENT_DIR / section.get_out_filename()
+        if target_path in modified_files:
+            LOG.warning(
+                f"{target_path} has been already written to, its contents will be"
+                " OVERWRITTEN and notices will be duplicated"
+            )
+        contents: str = get_contents(section)
+
+        # processors goes here
+        if fix_headers in section.processors:
+            contents = fix_headers(contents)
+
+        with open(target_path, "w", encoding="utf-8") as f:
+            if section.src.suffix == ".md":
+                f.write(
+                    "[//]: # (NOTE: THIS FILE WAS AUTOGENERATED FROM"
+                    f" {section.src})\n\n"
+                )
+            f.write(contents)
+        processed_sections.add(section.name)
+        modified_files.add(target_path)
 
 
 # -- Project information -----------------------------------------------------
@@ -89,8 +210,21 @@ release = get_distribution("black").version.split("+")[0]
 version = release
 for sp in "abcfr":
     version = version.split(sp)[0]
+
+custom_sections = [
+    DocSection("the_black_code_style", CURRENT_DIR / "the_black_code_style.md",),
+    DocSection("pragmatism", CURRENT_DIR / "the_black_code_style.md",),
+    DocSection("editor_integration", CURRENT_DIR / "editor_integration.md"),
+    DocSection("blackd", CURRENT_DIR / "blackd.md"),
+    DocSection("black_primer", CURRENT_DIR / "black_primer.md"),
+    DocSection("contributing_to_black", CURRENT_DIR / ".." / "CONTRIBUTING.md"),
+    DocSection("change_log", CURRENT_DIR / ".." / "CHANGES.md"),
+]
+
+
 make_pypi_svg(release)
-generate_sections_from_readme()
+readme_sections = get_sections_from_readme()
+process_sections(custom_sections, readme_sections)
 
 
 # -- General configuration ---------------------------------------------------
@@ -126,6 +260,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path .
+
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # The name of the Pygments (syntax highlighting) style to use.
