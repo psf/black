@@ -2,6 +2,7 @@ import ast
 import asyncio
 from abc import ABC, abstractmethod
 from collections import defaultdict
+import collections.abc
 from concurrent.futures import Executor, ThreadPoolExecutor, ProcessPoolExecutor
 from contextlib import contextmanager
 from datetime import datetime
@@ -318,7 +319,10 @@ def read_pyproject_toml(
         default_map.update(ctx.default_map)
     default_map.update(config)
 
-    ctx.default_map = default_map
+    ctx.default_map = {
+        k: str(v) if not isinstance(v, collections.abc.Iterable) else v
+        for k, v in default_map.items()
+    }
     return value
 
 
