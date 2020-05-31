@@ -317,12 +317,14 @@ def read_pyproject_toml(
     default_map: Dict[str, Any] = {}
     if ctx.default_map:
         default_map.update(ctx.default_map)
-    default_map.update(config)
+    default_map.update(
+        {
+            k: str(v) if not isinstance(v, collections.abc.Iterable) else v
+            for k, v in config.items()
+        }
+    )
 
-    ctx.default_map = {
-        k: str(v) if not isinstance(v, collections.abc.Iterable) else v
-        for k, v in default_map.items()
-    }
+    ctx.default_map = default_map
     return value
 
 
