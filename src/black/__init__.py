@@ -281,7 +281,12 @@ def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
     """
     pyproject_toml = toml.load(path_config)
     config = pyproject_toml.get("tool", {}).get("black", {})
-    return {k.replace("--", "").replace("-", "_"): v for k, v in config.items()}
+    return {
+        k.replace("--", "").replace("-", "_"): str(v)
+        if not isinstance(v, (list, dict))
+        else v
+        for k, v in config.items()
+    }
 
 
 def read_pyproject_toml(
