@@ -2,7 +2,6 @@ import ast
 import asyncio
 from abc import ABC, abstractmethod
 from collections import defaultdict
-import collections.abc
 from concurrent.futures import Executor, ThreadPoolExecutor, ProcessPoolExecutor
 from contextlib import contextmanager
 from datetime import datetime
@@ -282,7 +281,12 @@ def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
     """
     pyproject_toml = toml.load(path_config)
     config = pyproject_toml.get("tool", {}).get("black", {})
-    return {k.replace("--", "").replace("-", "_"): v for k, v in config.items()}
+    return {
+        k.replace("--", "").replace("-", "_"): str(v)
+        if not isinstance(v, (list, dict))
+        else v
+        for k, v in config.items()
+    }
 
 
 def read_pyproject_toml(
@@ -317,12 +321,7 @@ def read_pyproject_toml(
     default_map: Dict[str, Any] = {}
     if ctx.default_map:
         default_map.update(ctx.default_map)
-    default_map.update(
-        {
-            k: str(v) if not isinstance(v, collections.abc.Iterable) else v
-            for k, v in config.items()
-        }
-    )
+    default_map.update(config)
 
     ctx.default_map = default_map
     return value
