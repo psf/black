@@ -35,7 +35,7 @@ _Contents:_ **[Installation and usage](#installation-and-usage)** |
 **[Code style](#the-black-code-style)** | **[Pragmatism](#pragmatism)** |
 **[pyproject.toml](#pyprojecttoml)** | **[Editor integration](#editor-integration)** |
 **[blackd](#blackd)** | **[black-primer](#black-primer)** |
-**[Version control integration](#version-control-integration)** | |
+**[Version control integration](#version-control-integration)** |
 **[GitHub Actions](#github-actions)** |
 **[Ignoring unmodified files](#ignoring-unmodified-files)** | **[Used by](#used-by)** |
 **[Testimonials](#testimonials)** | **[Show your style](#show-your-style)** |
