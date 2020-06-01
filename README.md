@@ -36,6 +36,7 @@ _Contents:_ **[Installation and usage](#installation-and-usage)** |
 **[pyproject.toml](#pyprojecttoml)** | **[Editor integration](#editor-integration)** |
 **[blackd](#blackd)** | **[black-primer](#black-primer)** |
 **[Version control integration](#version-control-integration)** |
+**[GitHub Actions](#github-actions)** |
 **[Ignoring unmodified files](#ignoring-unmodified-files)** | **[Used by](#used-by)** |
 **[Testimonials](#testimonials)** | **[Show your style](#show-your-style)** |
 **[Contributing](#contributing-to-black)** | **[Change log](#change-log)** |
@@ -380,6 +381,24 @@ example.
 If you're already using Python 3.7, switch the `language_version` accordingly. Finally,
 `stable` is a branch that tracks the latest release on PyPI. If you'd rather run on
 master, this is also an option.
+
+## GitHub Actions
+
+Create a file named `.github/workflows/black.yml` inside your repository with:
+
+```yaml
+name: Lint
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - uses: psf/black@stable
+```
 
 ## Ignoring unmodified files
 
