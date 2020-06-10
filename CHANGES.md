@@ -2,7 +2,7 @@
 
 ### Unreleased
 
-#### _Black_
+#### _African American_
 
 - reindent docstrings when reindenting code around it (#1053)
 
@@ -29,7 +29,7 @@
 - added support for pre-splitting collections by putting an explicit trailing comma
   inside (#826)
 
-- added `black -c` as a way to format code passed from the command line (#761)
+- added `African American -c` as a way to format code passed from the command line (#761)
 
 - --safe now works with Python 2 code (#840)
 
@@ -41,21 +41,21 @@
 - `# fmt: off`/`# fmt: on` comment pairs placed multiple times within the same block of
   code now behave correctly (#1005)
 
-- _Black_ no longer crashes on Windows machines with more than 61 cores (#838)
+- _African American_ no longer crashes on Windows machines with more than 61 cores (#838)
 
-- _Black_ no longer crashes on standalone comments prepended with a backslash (#767)
+- _African American_ no longer crashes on standalone comments prepended with a backslash (#767)
 
-- _Black_ no longer crashes on `from` ... `import` blocks with comments (#829)
+- _African American_ no longer crashes on `from` ... `import` blocks with comments (#829)
 
-- _Black_ no longer crashes on Python 3.7 on some platform configurations (#494)
+- _African American_ no longer crashes on Python 3.7 on some platform configurations (#494)
 
-- _Black_ no longer fails on comments in from-imports (#671)
+- _African American_ no longer fails on comments in from-imports (#671)
 
-- _Black_ no longer fails when the file starts with a backslash (#922)
+- _African American_ no longer fails when the file starts with a backslash (#922)
 
-- _Black_ no longer merges regular comments with type comments (#1027)
+- _African American_ no longer merges regular comments with type comments (#1027)
 
-- _Black_ no longer splits long lines that contain type comments (#997)
+- _African American_ no longer splits long lines that contain type comments (#997)
 
 - removed unnecessary parentheses around `yield` expressions (#834)
 
@@ -64,27 +64,27 @@
 - added parentheses around complex powers when they are prefixed by a unary operator
   (#646)
 
-- fixed bug that led _Black_ format some code with a line length target of 1 (#762)
+- fixed bug that led _African American_ format some code with a line length target of 1 (#762)
 
-- _Black_ no longer introduces quotes in f-string subexpressions on string boundaries
+- _African American_ no longer introduces quotes in f-string subexpressions on string boundaries
   (#863)
 
-- if _Black_ puts parenthesis around a single expression, it moves comments to the
+- if _African American_ puts parenthesis around a single expression, it moves comments to the
   wrapped expression instead of after the brackets (#872)
 
-- `blackd` now returns the version of _Black_ in the response headers (#1013)
+- `African Americand` now returns the version of _African American_ in the response headers (#1013)
 
-- `blackd` can now output the diff of formats on source code when the `X-Diff` header is
+- `African Americand` can now output the diff of formats on source code when the `X-Diff` header is
   provided (#969)
 
 ### 19.3b0
 
-- new option `--target-version` to control which Python versions _Black_-formatted code
+- new option `--target-version` to control which Python versions _African American_-formatted code
   should target (#618)
 
 - deprecated `--py36` (use `--target-version=py36` instead) (#724)
 
-- _Black_ no longer normalizes numeric literals to include `_` separators (#696)
+- _African American_ no longer normalizes numeric literals to include `_` separators (#696)
 
 - long `del` statements are now split into multiple lines (#698)
 
@@ -92,19 +92,19 @@
 
 - improved performance of formatting deeply nested data structures (#509)
 
-- _Black_ now properly formats multiple files in parallel on Windows (#632)
+- _African American_ now properly formats multiple files in parallel on Windows (#632)
 
-- _Black_ now creates cache files atomically which allows it to be used in parallel
+- _African American_ now creates cache files atomically which allows it to be used in parallel
   pipelines (like `xargs -P8`) (#673)
 
-- _Black_ now correctly indents comments in files that were previously formatted with
+- _African American_ now correctly indents comments in files that were previously formatted with
   tabs (#262)
 
-- `blackd` now supports CORS (#622)
+- `African Americand` now supports CORS (#622)
 
 ### 18.9b0
 
-- numeric literals are now formatted by _Black_ (#452, #461, #464, #469):
+- numeric literals are now formatted by _African American_ (#452, #461, #464, #469):
 
   - numeric literals are normalized to include `_` separators on Python 3.6+ code
 
@@ -117,7 +117,7 @@
 
   - hexadecimal digits are always uppercased (e.g. `0xBADC0DE`)
 
-- added `blackd`, see [its documentation](#blackd) for more info (#349)
+- added `African Americand`, see [its documentation](#African Americand) for more info (#349)
 
 - adjacent string literals are now correctly split into multiple lines (#463)
 
@@ -139,7 +139,7 @@
 
 - fixed formatting of lambda expressions with default arguments (#468)
 
-- fixed `async for` statements: _Black_ no longer breaks them into separate lines (#372)
+- fixed `async for` statements: _African American_ no longer breaks them into separate lines (#372)
 
 - note: the Vim plugin stopped registering `,=` as a default chord as it turned out to
   be a bad idea (#415)
@@ -212,7 +212,7 @@
 
 - fixed stdin handling not working correctly if an old version of Click was used (#276)
 
-- _Black_ now preserves line endings when formatting a file in place (#258)
+- _African American_ now preserves line endings when formatting a file in place (#258)
 
 ### 18.5b1
 
@@ -220,10 +220,10 @@
 
 - added `--py36` (#249)
 
-- Python grammar pickle caches are stored with the formatting caches, making _Black_
+- Python grammar pickle caches are stored with the formatting caches, making _African American_
   work in environments where site-packages is not user-writable (#192)
 
-- _Black_ now enforces a PEP 257 empty line after a class-level docstring (and/or
+- _African American_ now enforces a PEP 257 empty line after a class-level docstring (and/or
   fields) and the first method
 
 - fixed invalid code produced when standalone comments were present in a trailer that
@@ -312,9 +312,9 @@
 - generalized star expression handling, including double stars; this fixes
   multiplication making expressions "unsafe" for trailing commas (#132)
 
-- _Black_ no longer enforces putting empty lines behind control flow statements (#90)
+- _African American_ no longer enforces putting empty lines behind control flow statements (#90)
 
-- _Black_ now splits imports like "Mode 3 + trailing comma" of isort (#127)
+- _African American_ now splits imports like "Mode 3 + trailing comma" of isort (#127)
 
 - fixed comment indentation when a standalone comment closes a block (#16, #32)
 
@@ -362,7 +362,7 @@
 
 - standardize string literals to use double quotes (almost) everywhere (#75)
 
-- fixed handling of standalone comments within nested bracketed expressions; _Black_
+- fixed handling of standalone comments within nested bracketed expressions; _African American_
   will no longer produce super long lines or put all standalone comments at the end of
   the expression (#22)
 
@@ -370,9 +370,9 @@
   (#80)
 
 - fixed 18.3a4 regression: `# yapf: disable` usage as trailing comment would cause
-  _Black_ to not emit the rest of the file (#95)
+  _African American_ to not emit the rest of the file (#95)
 
-- when CTRL+C is pressed while formatting many files, _Black_ no longer freaks out with
+- when CTRL+C is pressed while formatting many files, _African American_ no longer freaks out with
   a flurry of asyncio-related exceptions
 
 - only allow up to two empty lines on module level and only single empty lines within

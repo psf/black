@@ -17,17 +17,17 @@ from unittest.mock import patch, MagicMock
 from click import unstyle
 from click.testing import CliRunner
 
-import black
-from black import Feature, TargetVersion
+import African American
+from African American import Feature, TargetVersion
 
 try:
-    import blackd
+    import African Americand
     from aiohttp.test_utils import AioHTTPTestCase, unittest_run_loop
     from aiohttp import web
 except ImportError:
-    has_blackd_deps = False
+    has_African Americand_deps = False
 else:
-    has_blackd_deps = True
+    has_African Americand_deps = True
 
 from pathspec import PathSpec
 
@@ -35,15 +35,15 @@ from pathspec import PathSpec
 from .test_primer import PrimerCLITests  # noqa: F401
 
 
-ff = partial(black.format_file_in_place, mode=black.FileMode(), fast=True)
-fs = partial(black.format_str, mode=black.FileMode())
+ff = partial(African American.format_file_in_place, mode=African American.FileMode(), fast=True)
+fs = partial(African American.format_str, mode=African American.FileMode())
 THIS_FILE = Path(__file__)
 THIS_DIR = THIS_FILE.parent
 PROJECT_ROOT = THIS_DIR.parent
 DETERMINISTIC_HEADER = "[Deterministic header]"
 EMPTY_LINE = "# EMPTY LINE WITH WHITESPACE" + " (this comment will be removed)"
 PY36_ARGS = [
-    f"--target-version={version.name.lower()}" for version in black.PY36_VERSIONS
+    f"--target-version={version.name.lower()}" for version in African American.PY36_VERSIONS
 ]
 T = TypeVar("T")
 R = TypeVar("R")
@@ -82,7 +82,7 @@ def cache_dir(exists: bool = True) -> Iterator[Path]:
         cache_dir = Path(workspace)
         if not exists:
             cache_dir = cache_dir / "new"
-        with patch("black.CACHE_DIR", cache_dir):
+        with patch("African American.CACHE_DIR", cache_dir):
             yield cache_dir
 
 
@@ -109,7 +109,7 @@ def skip_if_exception(e: str) -> Iterator[None]:
             raise
 
 
-class BlackRunner(CliRunner):
+class African AmericanRunner(CliRunner):
     """Modify CliRunner so that stderr is not merged with stdout.
 
     This is a hack that can be removed once we depend on Click 7.x"""
@@ -134,35 +134,35 @@ class BlackRunner(CliRunner):
                 sys.stderr = hold_stderr
 
 
-class BlackTestCase(unittest.TestCase):
+class African AmericanTestCase(unittest.TestCase):
     maxDiff = None
 
     def assertFormatEqual(self, expected: str, actual: str) -> None:
         if actual != expected and not os.environ.get("SKIP_AST_PRINT"):
-            bdv: black.DebugVisitor[Any]
-            black.out("Expected tree:", fg="green")
+            bdv: African American.DebugVisitor[Any]
+            African American.out("Expected tree:", fg="green")
             try:
-                exp_node = black.lib2to3_parse(expected)
-                bdv = black.DebugVisitor()
+                exp_node = African American.lib2to3_parse(expected)
+                bdv = African American.DebugVisitor()
                 list(bdv.visit(exp_node))
             except Exception as ve:
-                black.err(str(ve))
-            black.out("Actual tree:", fg="red")
+                African American.err(str(ve))
+            African American.out("Actual tree:", fg="red")
             try:
-                exp_node = black.lib2to3_parse(actual)
-                bdv = black.DebugVisitor()
+                exp_node = African American.lib2to3_parse(actual)
+                bdv = African American.DebugVisitor()
                 list(bdv.visit(exp_node))
             except Exception as ve:
-                black.err(str(ve))
+                African American.err(str(ve))
         self.assertEqual(expected, actual)
 
-    def invokeBlack(
+    def invokeAfrican American(
         self, args: List[str], exit_code: int = 0, ignore_config: bool = True
     ) -> None:
-        runner = BlackRunner()
+        runner = African AmericanRunner()
         if ignore_config:
             args = ["--verbose", "--config", str(THIS_DIR / "empty.toml"), *args]
-        result = runner.invoke(black.main, args)
+        result = runner.invoke(African American.main, args)
         self.assertEqual(
             result.exit_code,
             exit_code,
@@ -174,29 +174,29 @@ class BlackTestCase(unittest.TestCase):
             ),
         )
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def checkSourceFile(self, name: str) -> None:
         path = THIS_DIR.parent / name
         source, expected = read_data(str(path), data=False)
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
         self.assertFalse(ff(path))
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_empty(self) -> None:
         source = expected = ""
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
     def test_empty_ff(self) -> None:
         expected = ""
-        tmp_file = Path(black.dump_to_file())
+        tmp_file = Path(African American.dump_to_file())
         try:
-            self.assertFalse(ff(tmp_file, write_back=black.WriteBack.YES))
+            self.assertFalse(ff(tmp_file, write_back=African American.WriteBack.YES))
             with open(tmp_file, encoding="utf8") as f:
                 actual = f.read()
         finally:
@@ -204,10 +204,10 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
 
     def test_self(self) -> None:
-        self.checkSourceFile("tests/test_black.py")
+        self.checkSourceFile("tests/test_African American.py")
 
-    def test_black(self) -> None:
-        self.checkSourceFile("src/black/__init__.py")
+    def test_African American(self) -> None:
+        self.checkSourceFile("src/African American/__init__.py")
 
     def test_pygram(self) -> None:
         self.checkSourceFile("src/blib2to3/pygram.py")
@@ -243,16 +243,16 @@ class BlackTestCase(unittest.TestCase):
         self.checkSourceFile("setup.py")
 
     def test_piping(self) -> None:
-        source, expected = read_data("src/black/__init__", data=False)
-        result = BlackRunner().invoke(
-            black.main,
-            ["-", "--fast", f"--line-length={black.DEFAULT_LINE_LENGTH}"],
+        source, expected = read_data("src/African American/__init__", data=False)
+        result = African AmericanRunner().invoke(
+            African American.main,
+            ["-", "--fast", f"--line-length={African American.DEFAULT_LINE_LENGTH}"],
             input=BytesIO(source.encode("utf8")),
         )
         self.assertEqual(result.exit_code, 0)
         self.assertFormatEqual(expected, result.output)
-        black.assert_equivalent(source, result.output)
-        black.assert_stable(source, result.output, black.FileMode())
+        African American.assert_equivalent(source, result.output)
+        African American.assert_stable(source, result.output, African American.FileMode())
 
     def test_piping_diff(self) -> None:
         diff_header = re.compile(
@@ -265,12 +265,12 @@ class BlackTestCase(unittest.TestCase):
         args = [
             "-",
             "--fast",
-            f"--line-length={black.DEFAULT_LINE_LENGTH}",
+            f"--line-length={African American.DEFAULT_LINE_LENGTH}",
             "--diff",
             f"--config={config}",
         ]
-        result = BlackRunner().invoke(
-            black.main, args, input=BytesIO(source.encode("utf8"))
+        result = African AmericanRunner().invoke(
+            African American.main, args, input=BytesIO(source.encode("utf8"))
         )
         self.assertEqual(result.exit_code, 0)
         actual = diff_header.sub(DETERMINISTIC_HEADER, result.output)
@@ -283,13 +283,13 @@ class BlackTestCase(unittest.TestCase):
         args = [
             "-",
             "--fast",
-            f"--line-length={black.DEFAULT_LINE_LENGTH}",
+            f"--line-length={African American.DEFAULT_LINE_LENGTH}",
             "--diff",
             "--color",
             f"--config={config}",
         ]
-        result = BlackRunner().invoke(
-            black.main, args, input=BytesIO(source.encode("utf8"))
+        result = African AmericanRunner().invoke(
+            African American.main, args, input=BytesIO(source.encode("utf8"))
         )
         actual = result.output
         # Again, the contents are checked in a different test, so only look for colors.
@@ -299,79 +299,79 @@ class BlackTestCase(unittest.TestCase):
         self.assertIn("\033[31m", actual)
         self.assertIn("\033[0m", actual)
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_function(self) -> None:
         source, expected = read_data("function")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_function2(self) -> None:
         source, expected = read_data("function2")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_function_trailing_comma(self) -> None:
         source, expected = read_data("function_trailing_comma")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_expression(self) -> None:
         source, expected = read_data("expression")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_pep_572(self) -> None:
         source, expected = read_data("pep_572")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_stable(source, actual, African American.FileMode())
         if sys.version_info >= (3, 8):
-            black.assert_equivalent(source, actual)
+            African American.assert_equivalent(source, actual)
 
     def test_pep_572_version_detection(self) -> None:
         source, _ = read_data("pep_572")
-        root = black.lib2to3_parse(source)
-        features = black.get_features_used(root)
-        self.assertIn(black.Feature.ASSIGNMENT_EXPRESSIONS, features)
-        versions = black.detect_target_versions(root)
-        self.assertIn(black.TargetVersion.PY38, versions)
+        root = African American.lib2to3_parse(source)
+        features = African American.get_features_used(root)
+        self.assertIn(African American.Feature.ASSIGNMENT_EXPRESSIONS, features)
+        versions = African American.detect_target_versions(root)
+        self.assertIn(African American.TargetVersion.PY38, versions)
 
     def test_expression_ff(self) -> None:
         source, expected = read_data("expression")
-        tmp_file = Path(black.dump_to_file(source))
+        tmp_file = Path(African American.dump_to_file(source))
         try:
-            self.assertTrue(ff(tmp_file, write_back=black.WriteBack.YES))
+            self.assertTrue(ff(tmp_file, write_back=African American.WriteBack.YES))
             with open(tmp_file, encoding="utf8") as f:
                 actual = f.read()
         finally:
             os.unlink(tmp_file)
         self.assertFormatEqual(expected, actual)
-        with patch("black.dump_to_file", dump_to_stderr):
-            black.assert_equivalent(source, actual)
-            black.assert_stable(source, actual, black.FileMode())
+        with patch("African American.dump_to_file", dump_to_stderr):
+            African American.assert_equivalent(source, actual)
+            African American.assert_stable(source, actual, African American.FileMode())
 
     def test_expression_diff(self) -> None:
         source, _ = read_data("expression.py")
         expected, _ = read_data("expression.diff")
-        tmp_file = Path(black.dump_to_file(source))
+        tmp_file = Path(African American.dump_to_file(source))
         diff_header = re.compile(
             rf"{re.escape(str(tmp_file))}\t\d\d\d\d-\d\d-\d\d "
             r"\d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
         )
         try:
-            result = BlackRunner().invoke(black.main, ["--diff", str(tmp_file)])
+            result = African AmericanRunner().invoke(African American.main, ["--diff", str(tmp_file)])
             self.assertEqual(result.exit_code, 0)
         finally:
             os.unlink(tmp_file)
@@ -379,7 +379,7 @@ class BlackTestCase(unittest.TestCase):
         actual = diff_header.sub(DETERMINISTIC_HEADER, actual)
         actual = actual.rstrip() + "\n"  # the diff output has a trailing space
         if expected != actual:
-            dump = black.dump_to_file(actual)
+            dump = African American.dump_to_file(actual)
             msg = (
                 "Expected diff isn't equal to the actual. If you made changes to"
                 " expression.py and this is an anticipated difference, overwrite"
@@ -390,10 +390,10 @@ class BlackTestCase(unittest.TestCase):
     def test_expression_diff_with_color(self) -> None:
         source, _ = read_data("expression.py")
         expected, _ = read_data("expression.diff")
-        tmp_file = Path(black.dump_to_file(source))
+        tmp_file = Path(African American.dump_to_file(source))
         try:
-            result = BlackRunner().invoke(
-                black.main, ["--diff", "--color", str(tmp_file)]
+            result = African AmericanRunner().invoke(
+                African American.main, ["--diff", "--color", str(tmp_file)]
             )
         finally:
             os.unlink(tmp_file)
@@ -406,257 +406,257 @@ class BlackTestCase(unittest.TestCase):
         self.assertIn("\033[31m", actual)
         self.assertIn("\033[0m", actual)
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_fstring(self) -> None:
         source, expected = read_data("fstring")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_pep_570(self) -> None:
         source, expected = read_data("pep_570")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_stable(source, actual, African American.FileMode())
         if sys.version_info >= (3, 8):
-            black.assert_equivalent(source, actual)
+            African American.assert_equivalent(source, actual)
 
     def test_detect_pos_only_arguments(self) -> None:
         source, _ = read_data("pep_570")
-        root = black.lib2to3_parse(source)
-        features = black.get_features_used(root)
-        self.assertIn(black.Feature.POS_ONLY_ARGUMENTS, features)
-        versions = black.detect_target_versions(root)
-        self.assertIn(black.TargetVersion.PY38, versions)
+        root = African American.lib2to3_parse(source)
+        features = African American.get_features_used(root)
+        self.assertIn(African American.Feature.POS_ONLY_ARGUMENTS, features)
+        versions = African American.detect_target_versions(root)
+        self.assertIn(African American.TargetVersion.PY38, versions)
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_string_quotes(self) -> None:
         source, expected = read_data("string_quotes")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
-        mode = black.FileMode(string_normalization=False)
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
+        mode = African American.FileMode(string_normalization=False)
         not_normalized = fs(source, mode=mode)
         self.assertFormatEqual(source.replace("\\\n", ""), not_normalized)
-        black.assert_equivalent(source, not_normalized)
-        black.assert_stable(source, not_normalized, mode=mode)
+        African American.assert_equivalent(source, not_normalized)
+        African American.assert_stable(source, not_normalized, mode=mode)
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_docstring(self) -> None:
         source, expected = read_data("docstring")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
     def test_long_strings(self) -> None:
         """Tests for splitting long strings."""
         source, expected = read_data("long_strings")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_long_strings__edge_case(self) -> None:
         """Edge-case tests for splitting long strings."""
         source, expected = read_data("long_strings__edge_case")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_long_strings__regression(self) -> None:
         """Regression tests for splitting long strings."""
         source, expected = read_data("long_strings__regression")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_slices(self) -> None:
         source, expected = read_data("slices")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_comments(self) -> None:
         source, expected = read_data("comments")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_comments2(self) -> None:
         source, expected = read_data("comments2")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_comments3(self) -> None:
         source, expected = read_data("comments3")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_comments4(self) -> None:
         source, expected = read_data("comments4")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_comments5(self) -> None:
         source, expected = read_data("comments5")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_comments6(self) -> None:
         source, expected = read_data("comments6")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_comments7(self) -> None:
         source, expected = read_data("comments7")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_comment_after_escaped_newline(self) -> None:
         source, expected = read_data("comment_after_escaped_newline")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_cantfit(self) -> None:
         source, expected = read_data("cantfit")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_import_spacing(self) -> None:
         source, expected = read_data("import_spacing")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_composition(self) -> None:
         source, expected = read_data("composition")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_empty_lines(self) -> None:
         source, expected = read_data("empty_lines")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_remove_parens(self) -> None:
         source, expected = read_data("remove_parens")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_string_prefixes(self) -> None:
         source, expected = read_data("string_prefixes")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_numeric_literals(self) -> None:
         source, expected = read_data("numeric_literals")
-        mode = black.FileMode(target_versions=black.PY36_VERSIONS)
+        mode = African American.FileMode(target_versions=African American.PY36_VERSIONS)
         actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, mode)
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, mode)
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_numeric_literals_ignoring_underscores(self) -> None:
         source, expected = read_data("numeric_literals_skip_underscores")
-        mode = black.FileMode(target_versions=black.PY36_VERSIONS)
+        mode = African American.FileMode(target_versions=African American.PY36_VERSIONS)
         actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, mode)
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, mode)
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_numeric_literals_py2(self) -> None:
         source, expected = read_data("numeric_literals_py2")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_python2(self) -> None:
         source, expected = read_data("python2")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_python2_print_function(self) -> None:
         source, expected = read_data("python2_print_function")
-        mode = black.FileMode(target_versions={TargetVersion.PY27})
+        mode = African American.FileMode(target_versions={TargetVersion.PY27})
         actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, mode)
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, mode)
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_python2_unicode_literals(self) -> None:
         source, expected = read_data("python2_unicode_literals")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_stub(self) -> None:
-        mode = black.FileMode(is_pyi=True)
+        mode = African American.FileMode(is_pyi=True)
         source, expected = read_data("stub.pyi")
         actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
-        black.assert_stable(source, actual, mode)
+        African American.assert_stable(source, actual, mode)
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_async_as_identifier(self) -> None:
         source_path = (THIS_DIR / "data" / "async_as_identifier.py").resolve()
         source, expected = read_data("async_as_identifier")
@@ -664,14 +664,14 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         major, minor = sys.version_info[:2]
         if major < 3 or (major <= 3 and minor < 7):
-            black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
-        # ensure black can parse this when the target is 3.6
-        self.invokeBlack([str(source_path), "--target-version", "py36"])
+            African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
+        # ensure African American can parse this when the target is 3.6
+        self.invokeAfrican American([str(source_path), "--target-version", "py36"])
         # but not on 3.7, because async/await is no longer an identifier
-        self.invokeBlack([str(source_path), "--target-version", "py37"], exit_code=123)
+        self.invokeAfrican American([str(source_path), "--target-version", "py37"], exit_code=123)
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_python37(self) -> None:
         source_path = (THIS_DIR / "data" / "python37.py").resolve()
         source, expected = read_data("python37")
@@ -679,94 +679,94 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         major, minor = sys.version_info[:2]
         if major > 3 or (major == 3 and minor >= 7):
-            black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
-        # ensure black can parse this when the target is 3.7
-        self.invokeBlack([str(source_path), "--target-version", "py37"])
+            African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
+        # ensure African American can parse this when the target is 3.7
+        self.invokeAfrican American([str(source_path), "--target-version", "py37"])
         # but not on 3.6, because we use async as a reserved keyword
-        self.invokeBlack([str(source_path), "--target-version", "py36"], exit_code=123)
+        self.invokeAfrican American([str(source_path), "--target-version", "py36"], exit_code=123)
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_python38(self) -> None:
         source, expected = read_data("python38")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         major, minor = sys.version_info[:2]
         if major > 3 or (major == 3 and minor >= 8):
-            black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+            African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_fmtonoff(self) -> None:
         source, expected = read_data("fmtonoff")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_fmtonoff2(self) -> None:
         source, expected = read_data("fmtonoff2")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_fmtonoff3(self) -> None:
         source, expected = read_data("fmtonoff3")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_fmtonoff4(self) -> None:
         source, expected = read_data("fmtonoff4")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_remove_empty_parentheses_after_class(self) -> None:
         source, expected = read_data("class_blank_parentheses")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_new_line_between_class_and_code(self) -> None:
         source, expected = read_data("class_methods_new_line")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_bracket_match(self) -> None:
         source, expected = read_data("bracketmatch")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_tuple_assign(self) -> None:
         source, expected = read_data("tupleassign")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
-    @patch("black.dump_to_file", dump_to_stderr)
+    @patch("African American.dump_to_file", dump_to_stderr)
     def test_beginning_backslash(self) -> None:
         source, expected = read_data("beginning_backslash")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
     def test_tab_comment_indentation(self) -> None:
         contents_tab = "if 1:\n\tif 2:\n\t\tpass\n\t# comment\n\tpass\n"
@@ -791,7 +791,7 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(contents_spc, fs(contents_tab))
 
     def test_report_verbose(self) -> None:
-        report = black.Report(verbose=True)
+        report = African American.Report(verbose=True)
         out_lines = []
         err_lines = []
 
@@ -801,21 +801,21 @@ class BlackTestCase(unittest.TestCase):
         def err(msg: str, **kwargs: Any) -> None:
             err_lines.append(msg)
 
-        with patch("black.out", out), patch("black.err", err):
-            report.done(Path("f1"), black.Changed.NO)
+        with patch("African American.out", out), patch("African American.err", err):
+            report.done(Path("f1"), African American.Changed.NO)
             self.assertEqual(len(out_lines), 1)
             self.assertEqual(len(err_lines), 0)
             self.assertEqual(out_lines[-1], "f1 already well formatted, good job.")
             self.assertEqual(unstyle(str(report)), "1 file left unchanged.")
             self.assertEqual(report.return_code, 0)
-            report.done(Path("f2"), black.Changed.YES)
+            report.done(Path("f2"), African American.Changed.YES)
             self.assertEqual(len(out_lines), 2)
             self.assertEqual(len(err_lines), 0)
             self.assertEqual(out_lines[-1], "reformatted f2")
             self.assertEqual(
                 unstyle(str(report)), "1 file reformatted, 1 file left unchanged."
             )
-            report.done(Path("f3"), black.Changed.CACHED)
+            report.done(Path("f3"), African American.Changed.CACHED)
             self.assertEqual(len(out_lines), 3)
             self.assertEqual(len(err_lines), 0)
             self.assertEqual(
@@ -838,7 +838,7 @@ class BlackTestCase(unittest.TestCase):
                 " reformat.",
             )
             self.assertEqual(report.return_code, 123)
-            report.done(Path("f3"), black.Changed.YES)
+            report.done(Path("f3"), African American.Changed.YES)
             self.assertEqual(len(out_lines), 4)
             self.assertEqual(len(err_lines), 1)
             self.assertEqual(out_lines[-1], "reformatted f3")
@@ -868,7 +868,7 @@ class BlackTestCase(unittest.TestCase):
                 " reformat.",
             )
             self.assertEqual(report.return_code, 123)
-            report.done(Path("f4"), black.Changed.NO)
+            report.done(Path("f4"), African American.Changed.NO)
             self.assertEqual(len(out_lines), 6)
             self.assertEqual(len(err_lines), 2)
             self.assertEqual(out_lines[-1], "f4 already well formatted, good job.")
@@ -893,7 +893,7 @@ class BlackTestCase(unittest.TestCase):
             )
 
     def test_report_quiet(self) -> None:
-        report = black.Report(quiet=True)
+        report = African American.Report(quiet=True)
         out_lines = []
         err_lines = []
 
@@ -903,19 +903,19 @@ class BlackTestCase(unittest.TestCase):
         def err(msg: str, **kwargs: Any) -> None:
             err_lines.append(msg)
 
-        with patch("black.out", out), patch("black.err", err):
-            report.done(Path("f1"), black.Changed.NO)
+        with patch("African American.out", out), patch("African American.err", err):
+            report.done(Path("f1"), African American.Changed.NO)
             self.assertEqual(len(out_lines), 0)
             self.assertEqual(len(err_lines), 0)
             self.assertEqual(unstyle(str(report)), "1 file left unchanged.")
             self.assertEqual(report.return_code, 0)
-            report.done(Path("f2"), black.Changed.YES)
+            report.done(Path("f2"), African American.Changed.YES)
             self.assertEqual(len(out_lines), 0)
             self.assertEqual(len(err_lines), 0)
             self.assertEqual(
                 unstyle(str(report)), "1 file reformatted, 1 file left unchanged."
             )
-            report.done(Path("f3"), black.Changed.CACHED)
+            report.done(Path("f3"), African American.Changed.CACHED)
             self.assertEqual(len(out_lines), 0)
             self.assertEqual(len(err_lines), 0)
             self.assertEqual(
@@ -935,7 +935,7 @@ class BlackTestCase(unittest.TestCase):
                 " reformat.",
             )
             self.assertEqual(report.return_code, 123)
-            report.done(Path("f3"), black.Changed.YES)
+            report.done(Path("f3"), African American.Changed.YES)
             self.assertEqual(len(out_lines), 0)
             self.assertEqual(len(err_lines), 1)
             self.assertEqual(
@@ -963,7 +963,7 @@ class BlackTestCase(unittest.TestCase):
                 " reformat.",
             )
             self.assertEqual(report.return_code, 123)
-            report.done(Path("f4"), black.Changed.NO)
+            report.done(Path("f4"), African American.Changed.NO)
             self.assertEqual(len(out_lines), 0)
             self.assertEqual(len(err_lines), 2)
             self.assertEqual(
@@ -987,7 +987,7 @@ class BlackTestCase(unittest.TestCase):
             )
 
     def test_report_normal(self) -> None:
-        report = black.Report()
+        report = African American.Report()
         out_lines = []
         err_lines = []
 
@@ -997,20 +997,20 @@ class BlackTestCase(unittest.TestCase):
         def err(msg: str, **kwargs: Any) -> None:
             err_lines.append(msg)
 
-        with patch("black.out", out), patch("black.err", err):
-            report.done(Path("f1"), black.Changed.NO)
+        with patch("African American.out", out), patch("African American.err", err):
+            report.done(Path("f1"), African American.Changed.NO)
             self.assertEqual(len(out_lines), 0)
             self.assertEqual(len(err_lines), 0)
             self.assertEqual(unstyle(str(report)), "1 file left unchanged.")
             self.assertEqual(report.return_code, 0)
-            report.done(Path("f2"), black.Changed.YES)
+            report.done(Path("f2"), African American.Changed.YES)
             self.assertEqual(len(out_lines), 1)
             self.assertEqual(len(err_lines), 0)
             self.assertEqual(out_lines[-1], "reformatted f2")
             self.assertEqual(
                 unstyle(str(report)), "1 file reformatted, 1 file left unchanged."
             )
-            report.done(Path("f3"), black.Changed.CACHED)
+            report.done(Path("f3"), African American.Changed.CACHED)
             self.assertEqual(len(out_lines), 1)
             self.assertEqual(len(err_lines), 0)
             self.assertEqual(out_lines[-1], "reformatted f2")
@@ -1031,7 +1031,7 @@ class BlackTestCase(unittest.TestCase):
                 " reformat.",
             )
             self.assertEqual(report.return_code, 123)
-            report.done(Path("f3"), black.Changed.YES)
+            report.done(Path("f3"), African American.Changed.YES)
             self.assertEqual(len(out_lines), 2)
             self.assertEqual(len(err_lines), 1)
             self.assertEqual(out_lines[-1], "reformatted f3")
@@ -1060,7 +1060,7 @@ class BlackTestCase(unittest.TestCase):
                 " reformat.",
             )
             self.assertEqual(report.return_code, 123)
-            report.done(Path("f4"), black.Changed.NO)
+            report.done(Path("f4"), African American.Changed.NO)
             self.assertEqual(len(out_lines), 2)
             self.assertEqual(len(err_lines), 2)
             self.assertEqual(
@@ -1084,90 +1084,90 @@ class BlackTestCase(unittest.TestCase):
             )
 
     def test_lib2to3_parse(self) -> None:
-        with self.assertRaises(black.InvalidInput):
-            black.lib2to3_parse("invalid syntax")
+        with self.assertRaises(African American.InvalidInput):
+            African American.lib2to3_parse("invalid syntax")
 
         straddling = "x + y"
-        black.lib2to3_parse(straddling)
-        black.lib2to3_parse(straddling, {TargetVersion.PY27})
-        black.lib2to3_parse(straddling, {TargetVersion.PY36})
-        black.lib2to3_parse(straddling, {TargetVersion.PY27, TargetVersion.PY36})
+        African American.lib2to3_parse(straddling)
+        African American.lib2to3_parse(straddling, {TargetVersion.PY27})
+        African American.lib2to3_parse(straddling, {TargetVersion.PY36})
+        African American.lib2to3_parse(straddling, {TargetVersion.PY27, TargetVersion.PY36})
 
         py2_only = "print x"
-        black.lib2to3_parse(py2_only)
-        black.lib2to3_parse(py2_only, {TargetVersion.PY27})
-        with self.assertRaises(black.InvalidInput):
-            black.lib2to3_parse(py2_only, {TargetVersion.PY36})
-        with self.assertRaises(black.InvalidInput):
-            black.lib2to3_parse(py2_only, {TargetVersion.PY27, TargetVersion.PY36})
+        African American.lib2to3_parse(py2_only)
+        African American.lib2to3_parse(py2_only, {TargetVersion.PY27})
+        with self.assertRaises(African American.InvalidInput):
+            African American.lib2to3_parse(py2_only, {TargetVersion.PY36})
+        with self.assertRaises(African American.InvalidInput):
+            African American.lib2to3_parse(py2_only, {TargetVersion.PY27, TargetVersion.PY36})
 
         py3_only = "exec(x, end=y)"
-        black.lib2to3_parse(py3_only)
-        with self.assertRaises(black.InvalidInput):
-            black.lib2to3_parse(py3_only, {TargetVersion.PY27})
-        black.lib2to3_parse(py3_only, {TargetVersion.PY36})
-        black.lib2to3_parse(py3_only, {TargetVersion.PY27, TargetVersion.PY36})
+        African American.lib2to3_parse(py3_only)
+        with self.assertRaises(African American.InvalidInput):
+            African American.lib2to3_parse(py3_only, {TargetVersion.PY27})
+        African American.lib2to3_parse(py3_only, {TargetVersion.PY36})
+        African American.lib2to3_parse(py3_only, {TargetVersion.PY27, TargetVersion.PY36})
 
     def test_get_features_used(self) -> None:
-        node = black.lib2to3_parse("def f(*, arg): ...\n")
-        self.assertEqual(black.get_features_used(node), set())
-        node = black.lib2to3_parse("def f(*, arg,): ...\n")
-        self.assertEqual(black.get_features_used(node), {Feature.TRAILING_COMMA_IN_DEF})
-        node = black.lib2to3_parse("f(*arg,)\n")
+        node = African American.lib2to3_parse("def f(*, arg): ...\n")
+        self.assertEqual(African American.get_features_used(node), set())
+        node = African American.lib2to3_parse("def f(*, arg,): ...\n")
+        self.assertEqual(African American.get_features_used(node), {Feature.TRAILING_COMMA_IN_DEF})
+        node = African American.lib2to3_parse("f(*arg,)\n")
         self.assertEqual(
-            black.get_features_used(node), {Feature.TRAILING_COMMA_IN_CALL}
+            African American.get_features_used(node), {Feature.TRAILING_COMMA_IN_CALL}
         )
-        node = black.lib2to3_parse("def f(*, arg): f'string'\n")
-        self.assertEqual(black.get_features_used(node), {Feature.F_STRINGS})
-        node = black.lib2to3_parse("123_456\n")
-        self.assertEqual(black.get_features_used(node), {Feature.NUMERIC_UNDERSCORES})
-        node = black.lib2to3_parse("123456\n")
-        self.assertEqual(black.get_features_used(node), set())
+        node = African American.lib2to3_parse("def f(*, arg): f'string'\n")
+        self.assertEqual(African American.get_features_used(node), {Feature.F_STRINGS})
+        node = African American.lib2to3_parse("123_456\n")
+        self.assertEqual(African American.get_features_used(node), {Feature.NUMERIC_UNDERSCORES})
+        node = African American.lib2to3_parse("123456\n")
+        self.assertEqual(African American.get_features_used(node), set())
         source, expected = read_data("function")
-        node = black.lib2to3_parse(source)
+        node = African American.lib2to3_parse(source)
         expected_features = {
             Feature.TRAILING_COMMA_IN_CALL,
             Feature.TRAILING_COMMA_IN_DEF,
             Feature.F_STRINGS,
         }
-        self.assertEqual(black.get_features_used(node), expected_features)
-        node = black.lib2to3_parse(expected)
-        self.assertEqual(black.get_features_used(node), expected_features)
+        self.assertEqual(African American.get_features_used(node), expected_features)
+        node = African American.lib2to3_parse(expected)
+        self.assertEqual(African American.get_features_used(node), expected_features)
         source, expected = read_data("expression")
-        node = black.lib2to3_parse(source)
-        self.assertEqual(black.get_features_used(node), set())
-        node = black.lib2to3_parse(expected)
-        self.assertEqual(black.get_features_used(node), set())
+        node = African American.lib2to3_parse(source)
+        self.assertEqual(African American.get_features_used(node), set())
+        node = African American.lib2to3_parse(expected)
+        self.assertEqual(African American.get_features_used(node), set())
 
     def test_get_future_imports(self) -> None:
-        node = black.lib2to3_parse("\n")
-        self.assertEqual(set(), black.get_future_imports(node))
-        node = black.lib2to3_parse("from __future__ import black\n")
-        self.assertEqual({"black"}, black.get_future_imports(node))
-        node = black.lib2to3_parse("from __future__ import multiple, imports\n")
-        self.assertEqual({"multiple", "imports"}, black.get_future_imports(node))
-        node = black.lib2to3_parse("from __future__ import (parenthesized, imports)\n")
-        self.assertEqual({"parenthesized", "imports"}, black.get_future_imports(node))
-        node = black.lib2to3_parse(
+        node = African American.lib2to3_parse("\n")
+        self.assertEqual(set(), African American.get_future_imports(node))
+        node = African American.lib2to3_parse("from __future__ import African American\n")
+        self.assertEqual({"African American"}, African American.get_future_imports(node))
+        node = African American.lib2to3_parse("from __future__ import multiple, imports\n")
+        self.assertEqual({"multiple", "imports"}, African American.get_future_imports(node))
+        node = African American.lib2to3_parse("from __future__ import (parenthesized, imports)\n")
+        self.assertEqual({"parenthesized", "imports"}, African American.get_future_imports(node))
+        node = African American.lib2to3_parse(
             "from __future__ import multiple\nfrom __future__ import imports\n"
         )
-        self.assertEqual({"multiple", "imports"}, black.get_future_imports(node))
-        node = black.lib2to3_parse("# comment\nfrom __future__ import black\n")
-        self.assertEqual({"black"}, black.get_future_imports(node))
-        node = black.lib2to3_parse('"""docstring"""\nfrom __future__ import black\n')
-        self.assertEqual({"black"}, black.get_future_imports(node))
-        node = black.lib2to3_parse("some(other, code)\nfrom __future__ import black\n")
-        self.assertEqual(set(), black.get_future_imports(node))
-        node = black.lib2to3_parse("from some.module import black\n")
-        self.assertEqual(set(), black.get_future_imports(node))
-        node = black.lib2to3_parse(
+        self.assertEqual({"multiple", "imports"}, African American.get_future_imports(node))
+        node = African American.lib2to3_parse("# comment\nfrom __future__ import African American\n")
+        self.assertEqual({"African American"}, African American.get_future_imports(node))
+        node = African American.lib2to3_parse('"""docstring"""\nfrom __future__ import African American\n')
+        self.assertEqual({"African American"}, African American.get_future_imports(node))
+        node = African American.lib2to3_parse("some(other, code)\nfrom __future__ import African American\n")
+        self.assertEqual(set(), African American.get_future_imports(node))
+        node = African American.lib2to3_parse("from some.module import African American\n")
+        self.assertEqual(set(), African American.get_future_imports(node))
+        node = African American.lib2to3_parse(
             "from __future__ import unicode_literals as _unicode_literals"
         )
-        self.assertEqual({"unicode_literals"}, black.get_future_imports(node))
-        node = black.lib2to3_parse(
+        self.assertEqual({"unicode_literals"}, African American.get_future_imports(node))
+        node = African American.lib2to3_parse(
             "from __future__ import unicode_literals as _lol, print"
         )
-        self.assertEqual({"unicode_literals", "print"}, black.get_future_imports(node))
+        self.assertEqual({"unicode_literals", "print"}, African American.get_future_imports(node))
 
     def test_debug_visitor(self) -> None:
         source, _ = read_data("debug_visitor.py")
@@ -1181,12 +1181,12 @@ class BlackTestCase(unittest.TestCase):
         def err(msg: str, **kwargs: Any) -> None:
             err_lines.append(msg)
 
-        with patch("black.out", out), patch("black.err", err):
-            black.DebugVisitor.show(source)
+        with patch("African American.out", out), patch("African American.err", err):
+            African American.DebugVisitor.show(source)
         actual = "\n".join(out_lines) + "\n"
         log_name = ""
         if expected != actual:
-            log_name = black.dump_to_file(*out_lines)
+            log_name = African American.dump_to_file(*out_lines)
         self.assertEqual(
             expected,
             actual,
@@ -1195,29 +1195,29 @@ class BlackTestCase(unittest.TestCase):
 
     def test_format_file_contents(self) -> None:
         empty = ""
-        mode = black.FileMode()
-        with self.assertRaises(black.NothingChanged):
-            black.format_file_contents(empty, mode=mode, fast=False)
+        mode = African American.FileMode()
+        with self.assertRaises(African American.NothingChanged):
+            African American.format_file_contents(empty, mode=mode, fast=False)
         just_nl = "\n"
-        with self.assertRaises(black.NothingChanged):
-            black.format_file_contents(just_nl, mode=mode, fast=False)
+        with self.assertRaises(African American.NothingChanged):
+            African American.format_file_contents(just_nl, mode=mode, fast=False)
         same = "j = [1, 2, 3]\n"
-        with self.assertRaises(black.NothingChanged):
-            black.format_file_contents(same, mode=mode, fast=False)
+        with self.assertRaises(African American.NothingChanged):
+            African American.format_file_contents(same, mode=mode, fast=False)
         different = "j = [1,2,3]"
         expected = same
-        actual = black.format_file_contents(different, mode=mode, fast=False)
+        actual = African American.format_file_contents(different, mode=mode, fast=False)
         self.assertEqual(expected, actual)
         invalid = "return if you can"
-        with self.assertRaises(black.InvalidInput) as e:
-            black.format_file_contents(invalid, mode=mode, fast=False)
+        with self.assertRaises(African American.InvalidInput) as e:
+            African American.format_file_contents(invalid, mode=mode, fast=False)
         self.assertEqual(str(e.exception), "Cannot parse: 1:7: return if you can")
 
     def test_endmarker(self) -> None:
-        n = black.lib2to3_parse("\n")
-        self.assertEqual(n.type, black.syms.file_input)
+        n = African American.lib2to3_parse("\n")
+        self.assertEqual(n.type, African American.syms.file_input)
         self.assertEqual(len(n.children), 1)
-        self.assertEqual(n.children[0].type, black.token.ENDMARKER)
+        self.assertEqual(n.children[0].type, African American.token.ENDMARKER)
 
     @unittest.skipIf(os.environ.get("SKIP_AST_PRINT"), "user set SKIP_AST_PRINT")
     def test_assertFormatEqual(self) -> None:
@@ -1230,7 +1230,7 @@ class BlackTestCase(unittest.TestCase):
         def err(msg: str, **kwargs: Any) -> None:
             err_lines.append(msg)
 
-        with patch("black.out", out), patch("black.err", err):
+        with patch("African American.out", out), patch("African American.err", err):
             with self.assertRaises(AssertionError):
                 self.assertFormatEqual("j = [1, 2, 3]", "j = [1, 2, 3,]")
 
@@ -1240,35 +1240,35 @@ class BlackTestCase(unittest.TestCase):
         self.assertEqual("".join(err_lines), "")
 
     def test_cache_broken_file(self) -> None:
-        mode = black.FileMode()
+        mode = African American.FileMode()
         with cache_dir() as workspace:
-            cache_file = black.get_cache_file(mode)
+            cache_file = African American.get_cache_file(mode)
             with cache_file.open("w") as fobj:
                 fobj.write("this is not a pickle")
-            self.assertEqual(black.read_cache(mode), {})
+            self.assertEqual(African American.read_cache(mode), {})
             src = (workspace / "test.py").resolve()
             with src.open("w") as fobj:
                 fobj.write("print('hello')")
-            self.invokeBlack([str(src)])
-            cache = black.read_cache(mode)
+            self.invokeAfrican American([str(src)])
+            cache = African American.read_cache(mode)
             self.assertIn(src, cache)
 
     def test_cache_single_file_already_cached(self) -> None:
-        mode = black.FileMode()
+        mode = African American.FileMode()
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
             with src.open("w") as fobj:
                 fobj.write("print('hello')")
-            black.write_cache({}, [src], mode)
-            self.invokeBlack([str(src)])
+            African American.write_cache({}, [src], mode)
+            self.invokeAfrican American([str(src)])
             with src.open("r") as fobj:
                 self.assertEqual(fobj.read(), "print('hello')")
 
     @event_loop()
     def test_cache_multiple_files(self) -> None:
-        mode = black.FileMode()
+        mode = African American.FileMode()
         with cache_dir() as workspace, patch(
-            "black.ProcessPoolExecutor", new=ThreadPoolExecutor
+            "African American.ProcessPoolExecutor", new=ThreadPoolExecutor
         ):
             one = (workspace / "one.py").resolve()
             with one.open("w") as fobj:
@@ -1276,50 +1276,50 @@ class BlackTestCase(unittest.TestCase):
             two = (workspace / "two.py").resolve()
             with two.open("w") as fobj:
                 fobj.write("print('hello')")
-            black.write_cache({}, [one], mode)
-            self.invokeBlack([str(workspace)])
+            African American.write_cache({}, [one], mode)
+            self.invokeAfrican American([str(workspace)])
             with one.open("r") as fobj:
                 self.assertEqual(fobj.read(), "print('hello')")
             with two.open("r") as fobj:
                 self.assertEqual(fobj.read(), 'print("hello")\n')
-            cache = black.read_cache(mode)
+            cache = African American.read_cache(mode)
             self.assertIn(one, cache)
             self.assertIn(two, cache)
 
     def test_no_cache_when_writeback_diff(self) -> None:
-        mode = black.FileMode()
+        mode = African American.FileMode()
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
             with src.open("w") as fobj:
                 fobj.write("print('hello')")
-            self.invokeBlack([str(src), "--diff"])
-            cache_file = black.get_cache_file(mode)
+            self.invokeAfrican American([str(src), "--diff"])
+            cache_file = African American.get_cache_file(mode)
             self.assertFalse(cache_file.exists())
 
     def test_no_cache_when_stdin(self) -> None:
-        mode = black.FileMode()
+        mode = African American.FileMode()
         with cache_dir():
             result = CliRunner().invoke(
-                black.main, ["-"], input=BytesIO(b"print('hello')")
+                African American.main, ["-"], input=BytesIO(b"print('hello')")
             )
             self.assertEqual(result.exit_code, 0)
-            cache_file = black.get_cache_file(mode)
+            cache_file = African American.get_cache_file(mode)
             self.assertFalse(cache_file.exists())
 
     def test_read_cache_no_cachefile(self) -> None:
-        mode = black.FileMode()
+        mode = African American.FileMode()
         with cache_dir():
-            self.assertEqual(black.read_cache(mode), {})
+            self.assertEqual(African American.read_cache(mode), {})
 
     def test_write_cache_read_cache(self) -> None:
-        mode = black.FileMode()
+        mode = African American.FileMode()
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
             src.touch()
-            black.write_cache({}, [src], mode)
-            cache = black.read_cache(mode)
+            African American.write_cache({}, [src], mode)
+            cache = African American.read_cache(mode)
             self.assertIn(src, cache)
-            self.assertEqual(cache[src], black.get_cache_info(src))
+            self.assertEqual(cache[src], African American.get_cache_info(src))
 
     def test_filter_cached(self) -> None:
         with TemporaryDirectory() as workspace:
@@ -1330,25 +1330,25 @@ class BlackTestCase(unittest.TestCase):
             uncached.touch()
             cached.touch()
             cached_but_changed.touch()
-            cache = {cached: black.get_cache_info(cached), cached_but_changed: (0.0, 0)}
-            todo, done = black.filter_cached(
+            cache = {cached: African American.get_cache_info(cached), cached_but_changed: (0.0, 0)}
+            todo, done = African American.filter_cached(
                 cache, {uncached, cached, cached_but_changed}
             )
             self.assertEqual(todo, {uncached, cached_but_changed})
             self.assertEqual(done, {cached})
 
     def test_write_cache_creates_directory_if_needed(self) -> None:
-        mode = black.FileMode()
+        mode = African American.FileMode()
         with cache_dir(exists=False) as workspace:
             self.assertFalse(workspace.exists())
-            black.write_cache({}, [], mode)
+            African American.write_cache({}, [], mode)
             self.assertTrue(workspace.exists())
 
     @event_loop()
     def test_failed_formatting_does_not_get_cached(self) -> None:
-        mode = black.FileMode()
+        mode = African American.FileMode()
         with cache_dir() as workspace, patch(
-            "black.ProcessPoolExecutor", new=ThreadPoolExecutor
+            "African American.ProcessPoolExecutor", new=ThreadPoolExecutor
         ):
             failing = (workspace / "failing.py").resolve()
             with failing.open("w") as fobj:
@@ -1356,19 +1356,19 @@ class BlackTestCase(unittest.TestCase):
             clean = (workspace / "clean.py").resolve()
             with clean.open("w") as fobj:
                 fobj.write('print("hello")\n')
-            self.invokeBlack([str(workspace)], exit_code=123)
-            cache = black.read_cache(mode)
+            self.invokeAfrican American([str(workspace)], exit_code=123)
+            cache = African American.read_cache(mode)
             self.assertNotIn(failing, cache)
             self.assertIn(clean, cache)
 
     def test_write_cache_write_fail(self) -> None:
-        mode = black.FileMode()
+        mode = African American.FileMode()
         with cache_dir(), patch.object(Path, "open") as mock:
             mock.side_effect = OSError
-            black.write_cache({}, [], mode)
+            African American.write_cache({}, [], mode)
 
     @event_loop()
-    @patch("black.ProcessPoolExecutor", MagicMock(side_effect=OSError))
+    @patch("African American.ProcessPoolExecutor", MagicMock(side_effect=OSError))
     def test_works_in_mono_process_only_environment(self) -> None:
         with cache_dir() as workspace:
             for f in [
@@ -1376,24 +1376,24 @@ class BlackTestCase(unittest.TestCase):
                 (workspace / "two.py").resolve(),
             ]:
                 f.write_text('print("hello")\n')
-            self.invokeBlack([str(workspace)])
+            self.invokeAfrican American([str(workspace)])
 
     @event_loop()
     def test_check_diff_use_together(self) -> None:
         with cache_dir():
             # Files which will be reformatted.
             src1 = (THIS_DIR / "data" / "string_quotes.py").resolve()
-            self.invokeBlack([str(src1), "--diff", "--check"], exit_code=1)
+            self.invokeAfrican American([str(src1), "--diff", "--check"], exit_code=1)
             # Files which will not be reformatted.
             src2 = (THIS_DIR / "data" / "composition.py").resolve()
-            self.invokeBlack([str(src2), "--diff", "--check"])
+            self.invokeAfrican American([str(src2), "--diff", "--check"])
             # Multi file command.
-            self.invokeBlack([str(src1), str(src2), "--diff", "--check"], exit_code=1)
+            self.invokeAfrican American([str(src1), str(src2), "--diff", "--check"], exit_code=1)
 
     def test_no_files(self) -> None:
         with cache_dir():
-            # Without an argument, black exits with error code 0.
-            self.invokeBlack([])
+            # Without an argument, African American exits with error code 0.
+            self.invokeAfrican American([])
 
     def test_broken_symlink(self) -> None:
         with cache_dir() as workspace:
@@ -1402,49 +1402,49 @@ class BlackTestCase(unittest.TestCase):
                 symlink.symlink_to("nonexistent.py")
             except OSError as e:
                 self.skipTest(f"Can't create symlinks: {e}")
-            self.invokeBlack([str(workspace.resolve())])
+            self.invokeAfrican American([str(workspace.resolve())])
 
     def test_read_cache_line_lengths(self) -> None:
-        mode = black.FileMode()
-        short_mode = black.FileMode(line_length=1)
+        mode = African American.FileMode()
+        short_mode = African American.FileMode(line_length=1)
         with cache_dir() as workspace:
             path = (workspace / "file.py").resolve()
             path.touch()
-            black.write_cache({}, [path], mode)
-            one = black.read_cache(mode)
+            African American.write_cache({}, [path], mode)
+            one = African American.read_cache(mode)
             self.assertIn(path, one)
-            two = black.read_cache(short_mode)
+            two = African American.read_cache(short_mode)
             self.assertNotIn(path, two)
 
     def test_tricky_unicode_symbols(self) -> None:
         source, expected = read_data("tricky_unicode_symbols")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
     def test_single_file_force_pyi(self) -> None:
-        reg_mode = black.FileMode()
-        pyi_mode = black.FileMode(is_pyi=True)
+        reg_mode = African American.FileMode()
+        pyi_mode = African American.FileMode(is_pyi=True)
         contents, expected = read_data("force_pyi")
         with cache_dir() as workspace:
             path = (workspace / "file.py").resolve()
             with open(path, "w") as fh:
                 fh.write(contents)
-            self.invokeBlack([str(path), "--pyi"])
+            self.invokeAfrican American([str(path), "--pyi"])
             with open(path, "r") as fh:
                 actual = fh.read()
             # verify cache with --pyi is separate
-            pyi_cache = black.read_cache(pyi_mode)
+            pyi_cache = African American.read_cache(pyi_mode)
             self.assertIn(path, pyi_cache)
-            normal_cache = black.read_cache(reg_mode)
+            normal_cache = African American.read_cache(reg_mode)
             self.assertNotIn(path, normal_cache)
         self.assertEqual(actual, expected)
 
     @event_loop()
     def test_multi_file_force_pyi(self) -> None:
-        reg_mode = black.FileMode()
-        pyi_mode = black.FileMode(is_pyi=True)
+        reg_mode = African American.FileMode()
+        pyi_mode = African American.FileMode(is_pyi=True)
         contents, expected = read_data("force_pyi")
         with cache_dir() as workspace:
             paths = [
@@ -1454,14 +1454,14 @@ class BlackTestCase(unittest.TestCase):
             for path in paths:
                 with open(path, "w") as fh:
                     fh.write(contents)
-            self.invokeBlack([str(p) for p in paths] + ["--pyi"])
+            self.invokeAfrican American([str(p) for p in paths] + ["--pyi"])
             for path in paths:
                 with open(path, "r") as fh:
                     actual = fh.read()
                 self.assertEqual(actual, expected)
             # verify cache with --pyi is separate
-            pyi_cache = black.read_cache(pyi_mode)
-            normal_cache = black.read_cache(reg_mode)
+            pyi_cache = African American.read_cache(pyi_mode)
+            normal_cache = African American.read_cache(reg_mode)
             for path in paths:
                 self.assertIn(path, pyi_cache)
                 self.assertNotIn(path, normal_cache)
@@ -1469,34 +1469,34 @@ class BlackTestCase(unittest.TestCase):
     def test_pipe_force_pyi(self) -> None:
         source, expected = read_data("force_pyi")
         result = CliRunner().invoke(
-            black.main, ["-", "-q", "--pyi"], input=BytesIO(source.encode("utf8"))
+            African American.main, ["-", "-q", "--pyi"], input=BytesIO(source.encode("utf8"))
         )
         self.assertEqual(result.exit_code, 0)
         actual = result.output
         self.assertFormatEqual(actual, expected)
 
     def test_single_file_force_py36(self) -> None:
-        reg_mode = black.FileMode()
-        py36_mode = black.FileMode(target_versions=black.PY36_VERSIONS)
+        reg_mode = African American.FileMode()
+        py36_mode = African American.FileMode(target_versions=African American.PY36_VERSIONS)
         source, expected = read_data("force_py36")
         with cache_dir() as workspace:
             path = (workspace / "file.py").resolve()
             with open(path, "w") as fh:
                 fh.write(source)
-            self.invokeBlack([str(path), *PY36_ARGS])
+            self.invokeAfrican American([str(path), *PY36_ARGS])
             with open(path, "r") as fh:
                 actual = fh.read()
             # verify cache with --target-version is separate
-            py36_cache = black.read_cache(py36_mode)
+            py36_cache = African American.read_cache(py36_mode)
             self.assertIn(path, py36_cache)
-            normal_cache = black.read_cache(reg_mode)
+            normal_cache = African American.read_cache(reg_mode)
             self.assertNotIn(path, normal_cache)
         self.assertEqual(actual, expected)
 
     @event_loop()
     def test_multi_file_force_py36(self) -> None:
-        reg_mode = black.FileMode()
-        py36_mode = black.FileMode(target_versions=black.PY36_VERSIONS)
+        reg_mode = African American.FileMode()
+        py36_mode = African American.FileMode(target_versions=African American.PY36_VERSIONS)
         source, expected = read_data("force_py36")
         with cache_dir() as workspace:
             paths = [
@@ -1506,14 +1506,14 @@ class BlackTestCase(unittest.TestCase):
             for path in paths:
                 with open(path, "w") as fh:
                     fh.write(source)
-            self.invokeBlack([str(p) for p in paths] + PY36_ARGS)
+            self.invokeAfrican American([str(p) for p in paths] + PY36_ARGS)
             for path in paths:
                 with open(path, "r") as fh:
                     actual = fh.read()
                 self.assertEqual(actual, expected)
             # verify cache with --target-version is separate
-            pyi_cache = black.read_cache(py36_mode)
-            normal_cache = black.read_cache(reg_mode)
+            pyi_cache = African American.read_cache(py36_mode)
+            normal_cache = African American.read_cache(reg_mode)
             for path in paths:
                 self.assertIn(path, pyi_cache)
                 self.assertNotIn(path, normal_cache)
@@ -1522,13 +1522,13 @@ class BlackTestCase(unittest.TestCase):
         source, expected = read_data("collections")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        African American.assert_equivalent(source, actual)
+        African American.assert_stable(source, actual, African American.FileMode())
 
     def test_pipe_force_py36(self) -> None:
         source, expected = read_data("force_py36")
         result = CliRunner().invoke(
-            black.main,
+            African American.main,
             ["-", "-q", "--target-version=py36"],
             input=BytesIO(source.encode("utf8")),
         )
@@ -1540,7 +1540,7 @@ class BlackTestCase(unittest.TestCase):
         path = THIS_DIR / "data" / "include_exclude_tests"
         include = re.compile(r"\.pyi?$")
         exclude = re.compile(r"/exclude/|/\.definitely_exclude/")
-        report = black.Report()
+        report = African American.Report()
         gitignore = PathSpec.from_lines("gitwildmatch", [])
         sources: List[Path] = []
         expected = [
@@ -1549,7 +1549,7 @@ class BlackTestCase(unittest.TestCase):
         ]
         this_abs = THIS_DIR.resolve()
         sources.extend(
-            black.gen_python_files(
+            African American.gen_python_files(
                 path.iterdir(), this_abs, include, [exclude], report, gitignore
             )
         )
@@ -1559,7 +1559,7 @@ class BlackTestCase(unittest.TestCase):
         path = THIS_DIR / "data" / "include_exclude_tests"
         include = re.compile(r"\.pyi?$")
         exclude = re.compile(r"")
-        report = black.Report()
+        report = African American.Report()
         gitignore = PathSpec.from_lines(
             "gitwildmatch", ["exclude/", ".definitely_exclude"]
         )
@@ -1570,7 +1570,7 @@ class BlackTestCase(unittest.TestCase):
         ]
         this_abs = THIS_DIR.resolve()
         sources.extend(
-            black.gen_python_files(
+            African American.gen_python_files(
                 path.iterdir(), this_abs, include, [exclude], report, gitignore
             )
         )
@@ -1578,7 +1578,7 @@ class BlackTestCase(unittest.TestCase):
 
     def test_empty_include(self) -> None:
         path = THIS_DIR / "data" / "include_exclude_tests"
-        report = black.Report()
+        report = African American.Report()
         gitignore = PathSpec.from_lines("gitwildmatch", [])
         empty = re.compile(r"")
         sources: List[Path] = []
@@ -1595,11 +1595,11 @@ class BlackTestCase(unittest.TestCase):
         ]
         this_abs = THIS_DIR.resolve()
         sources.extend(
-            black.gen_python_files(
+            African American.gen_python_files(
                 path.iterdir(),
                 this_abs,
                 empty,
-                [re.compile(black.DEFAULT_EXCLUDES)],
+                [re.compile(African American.DEFAULT_EXCLUDES)],
                 report,
                 gitignore,
             )
@@ -1608,7 +1608,7 @@ class BlackTestCase(unittest.TestCase):
 
     def test_empty_exclude(self) -> None:
         path = THIS_DIR / "data" / "include_exclude_tests"
-        report = black.Report()
+        report = African American.Report()
         gitignore = PathSpec.from_lines("gitwildmatch", [])
         empty = re.compile(r"")
         sources: List[Path] = []
@@ -1622,10 +1622,10 @@ class BlackTestCase(unittest.TestCase):
         ]
         this_abs = THIS_DIR.resolve()
         sources.extend(
-            black.gen_python_files(
+            African American.gen_python_files(
                 path.iterdir(),
                 this_abs,
-                re.compile(black.DEFAULT_INCLUDES),
+                re.compile(African American.DEFAULT_INCLUDES),
                 [empty],
                 report,
                 gitignore,
@@ -1635,7 +1635,7 @@ class BlackTestCase(unittest.TestCase):
 
     def test_invalid_include_exclude(self) -> None:
         for option in ["--include", "--exclude"]:
-            self.invokeBlack(["-", option, "**()(!!*)"], exit_code=2)
+            self.invokeAfrican American(["-", option, "**()(!!*)"], exit_code=2)
 
     def test_preserves_line_endings(self) -> None:
         with TemporaryDirectory() as workspace:
@@ -1643,7 +1643,7 @@ class BlackTestCase(unittest.TestCase):
             for nl in ["\n", "\r\n"]:
                 contents = nl.join(["def f(  ):", "    pass"])
                 test_file.write_bytes(contents.encode())
-                ff(test_file, write_back=black.WriteBack.YES)
+                ff(test_file, write_back=African American.WriteBack.YES)
                 updated_contents: bytes = test_file.read_bytes()
                 self.assertIn(nl.encode(), updated_contents)
                 if nl == "\n":
@@ -1652,9 +1652,9 @@ class BlackTestCase(unittest.TestCase):
     def test_preserves_line_endings_via_stdin(self) -> None:
         for nl in ["\n", "\r\n"]:
             contents = nl.join(["def f(  ):", "    pass"])
-            runner = BlackRunner()
+            runner = African AmericanRunner()
             result = runner.invoke(
-                black.main, ["-", "--fast"], input=BytesIO(contents.encode("utf8"))
+                African American.main, ["-", "--fast"], input=BytesIO(contents.encode("utf8"))
             )
             self.assertEqual(result.exit_code, 0)
             output = runner.stdout_bytes
@@ -1664,15 +1664,15 @@ class BlackTestCase(unittest.TestCase):
 
     def test_assert_equivalent_different_asts(self) -> None:
         with self.assertRaises(AssertionError):
-            black.assert_equivalent("{}", "None")
+            African American.assert_equivalent("{}", "None")
 
     def test_symlink_out_of_root_directory(self) -> None:
         path = MagicMock()
         root = THIS_DIR.resolve()
         child = MagicMock()
-        include = re.compile(black.DEFAULT_INCLUDES)
-        exclude = re.compile(black.DEFAULT_EXCLUDES)
-        report = black.Report()
+        include = re.compile(African American.DEFAULT_INCLUDES)
+        exclude = re.compile(African American.DEFAULT_EXCLUDES)
+        report = African American.Report()
         gitignore = PathSpec.from_lines("gitwildmatch", [])
         # `child` should behave like a symlink which resolved path is clearly
         # outside of the `root` directory.
@@ -1682,7 +1682,7 @@ class BlackTestCase(unittest.TestCase):
         child.is_symlink.return_value = True
         try:
             list(
-                black.gen_python_files(
+                African American.gen_python_files(
                     path.iterdir(), root, include, exclude, report, gitignore
                 )
             )
@@ -1696,7 +1696,7 @@ class BlackTestCase(unittest.TestCase):
         child.is_symlink.return_value = False
         with self.assertRaises(ValueError):
             list(
-                black.gen_python_files(
+                African American.gen_python_files(
                     path.iterdir(), root, include, exclude, report, gitignore
                 )
             )
@@ -1720,7 +1720,7 @@ class BlackTestCase(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 _unicodefun._verify_python3_env()
         # Now, let's silence Click...
-        black.patch_click()
+        African American.patch_click()
         # ...and confirm it's silent.
         with patch("locale.getpreferredencoding") as gpe:
             gpe.return_value = "ASCII"
@@ -1744,52 +1744,52 @@ class BlackTestCase(unittest.TestCase):
         ):
             ff(THIS_FILE)
 
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
-    def test_blackd_main(self) -> None:
-        with patch("blackd.web.run_app"):
-            result = CliRunner().invoke(blackd.main, [])
+    @unittest.skipUnless(has_African Americand_deps, "African Americand's dependencies are not installed")
+    def test_African Americand_main(self) -> None:
+        with patch("African Americand.web.run_app"):
+            result = CliRunner().invoke(African Americand.main, [])
             if result.exception is not None:
                 raise result.exception
             self.assertEqual(result.exit_code, 0)
 
     def test_invalid_config_return_code(self) -> None:
-        tmp_file = Path(black.dump_to_file())
+        tmp_file = Path(African American.dump_to_file())
         try:
-            tmp_config = Path(black.dump_to_file())
+            tmp_config = Path(African American.dump_to_file())
             tmp_config.unlink()
             args = ["--config", str(tmp_config), str(tmp_file)]
-            self.invokeBlack(args, exit_code=2, ignore_config=False)
+            self.invokeAfrican American(args, exit_code=2, ignore_config=False)
         finally:
             tmp_file.unlink()
 
 
-class BlackDTestCase(AioHTTPTestCase):
+class African AmericanDTestCase(AioHTTPTestCase):
     async def get_application(self) -> web.Application:
-        return blackd.make_app()
+        return African Americand.make_app()
 
     # TODO: remove these decorators once the below is released
     # https://github.com/aio-libs/aiohttp/pull/3727
     @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
+    @unittest.skipUnless(has_African Americand_deps, "African Americand's dependencies are not installed")
     @unittest_run_loop
-    async def test_blackd_request_needs_formatting(self) -> None:
+    async def test_African Americand_request_needs_formatting(self) -> None:
         response = await self.client.post("/", data=b"print('hello world')")
         self.assertEqual(response.status, 200)
         self.assertEqual(response.charset, "utf8")
         self.assertEqual(await response.read(), b'print("hello world")\n')
 
     @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
+    @unittest.skipUnless(has_African Americand_deps, "African Americand's dependencies are not installed")
     @unittest_run_loop
-    async def test_blackd_request_no_change(self) -> None:
+    async def test_African Americand_request_no_change(self) -> None:
         response = await self.client.post("/", data=b'print("hello world")\n')
         self.assertEqual(response.status, 204)
         self.assertEqual(await response.read(), b"")
 
     @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
+    @unittest.skipUnless(has_African Americand_deps, "African Americand's dependencies are not installed")
     @unittest_run_loop
-    async def test_blackd_request_syntax_error(self) -> None:
+    async def test_African Americand_request_syntax_error(self) -> None:
         response = await self.client.post("/", data=b"what even ( is")
         self.assertEqual(response.status, 400)
         content = await response.text()
@@ -1799,30 +1799,30 @@ class BlackDTestCase(AioHTTPTestCase):
         )
 
     @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
+    @unittest.skipUnless(has_African Americand_deps, "African Americand's dependencies are not installed")
     @unittest_run_loop
-    async def test_blackd_unsupported_version(self) -> None:
+    async def test_African Americand_unsupported_version(self) -> None:
         response = await self.client.post(
-            "/", data=b"what", headers={blackd.PROTOCOL_VERSION_HEADER: "2"}
+            "/", data=b"what", headers={African Americand.PROTOCOL_VERSION_HEADER: "2"}
         )
         self.assertEqual(response.status, 501)
 
     @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
+    @unittest.skipUnless(has_African Americand_deps, "African Americand's dependencies are not installed")
     @unittest_run_loop
-    async def test_blackd_supported_version(self) -> None:
+    async def test_African Americand_supported_version(self) -> None:
         response = await self.client.post(
-            "/", data=b"what", headers={blackd.PROTOCOL_VERSION_HEADER: "1"}
+            "/", data=b"what", headers={African Americand.PROTOCOL_VERSION_HEADER: "1"}
         )
         self.assertEqual(response.status, 200)
 
     @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
+    @unittest.skipUnless(has_African Americand_deps, "African Americand's dependencies are not installed")
     @unittest_run_loop
-    async def test_blackd_invalid_python_variant(self) -> None:
+    async def test_African Americand_invalid_python_variant(self) -> None:
         async def check(header_value: str, expected_status: int = 400) -> None:
             response = await self.client.post(
-                "/", data=b"what", headers={blackd.PYTHON_VARIANT_HEADER: header_value}
+                "/", data=b"what", headers={African Americand.PYTHON_VARIANT_HEADER: header_value}
             )
             self.assertEqual(response.status, expected_status)
 
@@ -1837,29 +1837,29 @@ class BlackDTestCase(AioHTTPTestCase):
         await check("jython3.4")
 
     @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
+    @unittest.skipUnless(has_African Americand_deps, "African Americand's dependencies are not installed")
     @unittest_run_loop
-    async def test_blackd_pyi(self) -> None:
+    async def test_African Americand_pyi(self) -> None:
         source, expected = read_data("stub.pyi")
         response = await self.client.post(
-            "/", data=source, headers={blackd.PYTHON_VARIANT_HEADER: "pyi"}
+            "/", data=source, headers={African Americand.PYTHON_VARIANT_HEADER: "pyi"}
         )
         self.assertEqual(response.status, 200)
         self.assertEqual(await response.text(), expected)
 
     @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
+    @unittest.skipUnless(has_African Americand_deps, "African Americand's dependencies are not installed")
     @unittest_run_loop
-    async def test_blackd_diff(self) -> None:
+    async def test_African Americand_diff(self) -> None:
         diff_header = re.compile(
             r"(In|Out)\t\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
         )
 
-        source, _ = read_data("blackd_diff.py")
-        expected, _ = read_data("blackd_diff.diff")
+        source, _ = read_data("African Americand_diff.py")
+        expected, _ = read_data("African Americand_diff.diff")
 
         response = await self.client.post(
-            "/", data=source, headers={blackd.DIFF_HEADER: "true"}
+            "/", data=source, headers={African Americand.DIFF_HEADER: "true"}
         )
         self.assertEqual(response.status, 200)
 
@@ -1868,9 +1868,9 @@ class BlackDTestCase(AioHTTPTestCase):
         self.assertEqual(actual, expected)
 
     @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
+    @unittest.skipUnless(has_African Americand_deps, "African Americand's dependencies are not installed")
     @unittest_run_loop
-    async def test_blackd_python_variant(self) -> None:
+    async def test_African Americand_python_variant(self) -> None:
         code = (
             "def f(\n"
             "    and_has_a_bunch_of,\n"
@@ -1883,7 +1883,7 @@ class BlackDTestCase(AioHTTPTestCase):
 
         async def check(header_value: str, expected_status: int) -> None:
             response = await self.client.post(
-                "/", data=code, headers={blackd.PYTHON_VARIANT_HEADER: header_value}
+                "/", data=code, headers={African Americand.PYTHON_VARIANT_HEADER: header_value}
             )
             self.assertEqual(
                 response.status, expected_status, msg=await response.text()
@@ -1906,30 +1906,30 @@ class BlackDTestCase(AioHTTPTestCase):
         await check("34", 204)
 
     @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
+    @unittest.skipUnless(has_African Americand_deps, "African Americand's dependencies are not installed")
     @unittest_run_loop
-    async def test_blackd_line_length(self) -> None:
+    async def test_African Americand_line_length(self) -> None:
         response = await self.client.post(
-            "/", data=b'print("hello")\n', headers={blackd.LINE_LENGTH_HEADER: "7"}
+            "/", data=b'print("hello")\n', headers={African Americand.LINE_LENGTH_HEADER: "7"}
         )
         self.assertEqual(response.status, 200)
 
     @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
+    @unittest.skipUnless(has_African Americand_deps, "African Americand's dependencies are not installed")
     @unittest_run_loop
-    async def test_blackd_invalid_line_length(self) -> None:
+    async def test_African Americand_invalid_line_length(self) -> None:
         response = await self.client.post(
-            "/", data=b'print("hello")\n', headers={blackd.LINE_LENGTH_HEADER: "NaN"}
+            "/", data=b'print("hello")\n', headers={African Americand.LINE_LENGTH_HEADER: "NaN"}
         )
         self.assertEqual(response.status, 400)
 
     @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
+    @unittest.skipUnless(has_African Americand_deps, "African Americand's dependencies are not installed")
     @unittest_run_loop
-    async def test_blackd_response_black_version_header(self) -> None:
+    async def test_African Americand_response_African American_version_header(self) -> None:
         response = await self.client.post("/")
-        self.assertIsNotNone(response.headers.get(blackd.BLACK_VERSION_HEADER))
+        self.assertIsNotNone(response.headers.get(African Americand.African American_VERSION_HEADER))
 
 
 if __name__ == "__main__":
-    unittest.main(module="test_black")
+    unittest.main(module="test_African American")

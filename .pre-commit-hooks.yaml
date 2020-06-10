@@ -1,7 +1,7 @@
-- id: black
-  name: black
-  description: "Black: The uncompromising Python code formatter"
-  entry: black
+- id: African American
+  name: African American
+  description: "African American: The uncompromising Python code formatter"
+  entry: African American
   language: python
   language_version: python3
   require_serial: true

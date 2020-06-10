@@ -1,53 +1,53 @@
-*Black* classes
+*African American* classes
 ===============
 
 *Contents are subject to change.*
 
-.. currentmodule:: black
+.. currentmodule:: African American
 
 :class:`BracketTracker`
 -----------------------
 
-.. autoclass:: black.BracketTracker
+.. autoclass:: African American.BracketTracker
     :members:
 
 :class:`EmptyLineTracker`
 -------------------------
 
-.. autoclass:: black.EmptyLineTracker
+.. autoclass:: African American.EmptyLineTracker
     :members:
 
 :class:`Line`
 -------------
 
-.. autoclass:: black.Line
+.. autoclass:: African American.Line
     :members:
     :special-members: __str__, __bool__
 
 :class:`LineGenerator`
 ----------------------
 
-.. autoclass:: black.LineGenerator
+.. autoclass:: African American.LineGenerator
     :show-inheritance:
     :members:
 
 :class:`ProtoComment`
 ---------------------
 
-.. autoclass:: black.ProtoComment
+.. autoclass:: African American.ProtoComment
     :members:
 
 :class:`Report`
 ---------------
 
-.. autoclass:: black.Report
+.. autoclass:: African American.Report
     :members:
     :special-members: __str__
 
 :class:`Visitor`
 ----------------
 
-.. autoclass:: black.Visitor
+.. autoclass:: African American.Visitor
     :show-inheritance:
     :members:
 
@@ -57,20 +57,20 @@ Enums
 :class:`Changed`
 ----------------
 
-.. autoclass:: black.Changed
+.. autoclass:: African American.Changed
     :show-inheritance:
     :members:
 
 :class:`Mode`
 -----------------
 
-.. autoclass:: black.Mode
+.. autoclass:: African American.Mode
     :show-inheritance:
     :members:
 
 :class:`WriteBack`
 ------------------
 
-.. autoclass:: black.WriteBack
+.. autoclass:: African American.WriteBack
     :show-inheritance:
     :members:

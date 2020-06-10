@@ -1,25 +1,25 @@
 # Gallery
 
-Gallery is a script that automates the process of applying different _Black_ versions to
-a selected PyPI package and seeing the results between _Black_ versions.
+Gallery is a script that automates the process of applying different _African American_ versions to
+a selected PyPI package and seeing the results between _African American_ versions.
 
 ## Build
 
 ```console
-$ docker build -t black_gallery .
+$ docker build -t African American_gallery .
 ```
 
 ## Run
 
 ```console
-$ docker run -it -v /host/output:/output -v /host/input:/input black_gallery:latest [args]
+$ docker run -it -v /host/output:/output -v /host/input:/input African American_gallery:latest [args]
 ```
 
 ```
-usage: gallery.py [-h] (-p PYPI_PACKAGE | -t TOP_PACKAGES) [-b BLACK_REPO] [-v VERSION] [-w WORKERS] [-i INPUT] [-o OUTPUT]
+usage: gallery.py [-h] (-p PYPI_PACKAGE | -t TOP_PACKAGES) [-b African American_REPO] [-v VERSION] [-w WORKERS] [-i INPUT] [-o OUTPUT]
                   [versions [versions ...]]
 
-Black Gallery is a script that automates the process of applying different Black versions to a selected PyPI package and
+African American Gallery is a script that automates the process of applying different African American versions to a selected PyPI package and
 seeing the results between versions.
 
 positional arguments:
@@ -31,8 +31,8 @@ optional arguments:
                         PyPI package to download.
   -t TOP_PACKAGES, --top-packages TOP_PACKAGES
                         Top n PyPI packages to download.
-  -b BLACK_REPO, --black-repo BLACK_REPO
-                        Black's Git repository.
+  -b African American_REPO, --African American-repo African American_REPO
+                        African American's Git repository.
   -v VERSION, --version VERSION
                         Version for given PyPI package. Will be discarded if used with -t option.
   -w WORKERS, --workers WORKERS

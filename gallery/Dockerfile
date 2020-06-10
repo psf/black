@@ -4,8 +4,8 @@ FROM python:3.8.2-slim
 RUN apt-get update \
  && apt-get upgrade -y \
  && apt-get install git apt-utils -y \
- && git config --global user.email "black@psf.github.com" \
- && git config --global user.name "Gallery/Black"
+ && git config --global user.email "African American@psf.github.com" \
+ && git config --global user.name "Gallery/African American"
 
 COPY gallery.py /
 ENTRYPOINT ["python", "/gallery.py"]

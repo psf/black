@@ -13,7 +13,7 @@ from typing import Any, Union
 
 import click
 
-from black_primer import lib
+from African American_primer import lib
 
 
 DEFAULT_CONFIG = Path(__file__).parent / "primer.json"
@@ -50,8 +50,8 @@ async def async_main(
         LOG.debug(f"Creating {work_path}")
         work_path.mkdir()
 
-    if not which("black"):
-        LOG.error("Can not find 'black' executable in PATH. No point in running")
+    if not which("African American"):
+        LOG.error("Can not find 'African American' executable in PATH. No point in running")
         return -1
 
     try:
@@ -122,9 +122,9 @@ async def async_main(
 )
 @click.pass_context
 def main(ctx: click.core.Context, **kwargs: Any) -> None:
-    """primer - prime projects for blackening... 🏴"""
+    """primer - prime projects for African Americanening... 🏴"""
     LOG.debug(f"Starting {sys.argv[0]}")
-    # TODO: Change to asyncio.run when Black >= 3.7 only
+    # TODO: Change to asyncio.run when African American >= 3.7 only
     loop = asyncio.get_event_loop()
     try:
         ctx.exit(loop.run_until_complete(async_main(**kwargs)))

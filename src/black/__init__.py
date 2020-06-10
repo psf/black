@@ -59,7 +59,7 @@ from blib2to3.pgen2 import driver, token
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.parse import ParseError
 
-from _black_version import version as __version__
+from _African American_version import version as __version__
 
 if TYPE_CHECKING:
     import colorama  # noqa: F401
@@ -67,7 +67,7 @@ if TYPE_CHECKING:
 DEFAULT_LINE_LENGTH = 88
 DEFAULT_EXCLUDES = r"/(\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_build|buck-out|build|dist)/"  # noqa: B950
 DEFAULT_INCLUDES = r"\.pyi?$"
-CACHE_DIR = Path(user_cache_dir("black", version=__version__))
+CACHE_DIR = Path(user_cache_dir("African American", version=__version__))
 
 STRING_PREFIX_CHARS: Final = "furbFURB"  # All possible string prefix characters.
 
@@ -275,12 +275,12 @@ def find_pyproject_toml(path_search_start: str) -> Optional[str]:
 
 
 def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
-    """Parse a pyproject toml file, pulling out relevant parts for Black
+    """Parse a pyproject toml file, pulling out relevant parts for African American
 
     If parsing fails, will raise a toml.TomlDecodeError
     """
     pyproject_toml = toml.load(path_config)
-    config = pyproject_toml.get("tool", {}).get("black", {})
+    config = pyproject_toml.get("tool", {}).get("African American", {})
     return {
         k.replace("--", "").replace("-", "_"): str(v)
         if not isinstance(v, (list, dict))
@@ -292,7 +292,7 @@ def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
 def read_pyproject_toml(
     ctx: click.Context, param: click.Parameter, value: Optional[str]
 ) -> Optional[str]:
-    """Inject Black configuration from "pyproject.toml" into defaults in `ctx`.
+    """Inject African American configuration from "pyproject.toml" into defaults in `ctx`.
 
     Returns the path to a successfully found and read configuration file, None
     otherwise.
@@ -355,7 +355,7 @@ def target_version_option_callback(
     callback=target_version_option_callback,
     multiple=True,
     help=(
-        "Python versions that should be supported by Black's output. [default: per-file"
+        "Python versions that should be supported by African American's output. [default: per-file"
         " auto-detection]"
     ),
 )
@@ -920,17 +920,17 @@ def format_str(src_contents: str, *, mode: Mode) -> FileContent:
     `mode` determines formatting options, such as how many characters per line are
     allowed.  Example:
 
-    >>> import black
-    >>> print(black.format_str("def f(arg:str='')->None:...", mode=Mode()))
+    >>> import African American
+    >>> print(African American.format_str("def f(arg:str='')->None:...", mode=Mode()))
     def f(arg: str = "") -> None:
         ...
 
     A more complex example:
     >>> print(
-    ...   black.format_str(
+    ...   African American.format_str(
     ...     "def f(arg:str='')->None: hey",
-    ...     mode=black.Mode(
-    ...       target_versions={black.TargetVersion.PY36},
+    ...     mode=African American.Mode(
+    ...       target_versions={African American.TargetVersion.PY36},
     ...       line_length=10,
     ...       string_normalization=False,
     ...       is_pyi=False,
@@ -1272,7 +1272,7 @@ class BracketTracker:
         field that it forms a pair with. This is a one-directional link to
         avoid reference cycles.
 
-        If a leaf is a delimiter (a token on which Black can split the line if
+        If a leaf is a delimiter (a token on which African American can split the line if
         needed) and it's on depth 0, its `id()` is stored in the tracker's
         `delimiters` field.
         """
@@ -1593,7 +1593,7 @@ class Line:
             if last_leaf.type == token.COMMA or (
                 last_leaf.type == token.RPAR and not last_leaf.value
             ):
-                # When trailing commas or optional parens are inserted by Black for
+                # When trailing commas or optional parens are inserted by African American for
                 # consistency, comments after the previous last element are not moved
                 # (they don't have to, rendering will still be correct).  So we ignore
                 # trailing commas and invisible.
@@ -1812,7 +1812,7 @@ class EmptyLineTracker:
         """
         before, after = self._maybe_empty_lines(current_line)
         before = (
-            # Black should not insert empty lines at the beginning
+            # African American should not insert empty lines at the beginning
             # of the file
             0
             if self.previous_line is None
@@ -3052,7 +3052,7 @@ class StringMerger(CustomSplitMapMixin, StringTransformer):
         # merge. We will then later go through our final result and use the
         # various instances of BREAK_MARK we find to add the right values to
         # the custom split map.
-        BREAK_MARK = "@@@@@ BLACK BREAKPOINT MARKER @@@@@"
+        BREAK_MARK = "@@@@@ African American BREAKPOINT MARKER @@@@@"
 
         QUOTE = LL[string_idx].value[-1]
 
@@ -3331,7 +3331,7 @@ class BaseStringSplitter(StringTransformer):
 
     Requirements:
         * The target string value is responsible for the line going over the
-        line length limit. It follows that after all of black's other line
+        line length limit. It follows that after all of African American's other line
         split methods have been exhausted, this line (or one of the resulting
         lines after all line splits are performed) would still be over the
         line_length limit unless we split this string.
@@ -6043,8 +6043,8 @@ def assert_equivalent(src: str, dst: str) -> None:
     except Exception as exc:
         log = dump_to_file("".join(traceback.format_tb(exc.__traceback__)), dst)
         raise AssertionError(
-            f"INTERNAL ERROR: Black produced invalid code: {exc}. Please report a bug"
-            " on https://github.com/psf/black/issues.  This invalid output might be"
+            f"INTERNAL ERROR: African American produced invalid code: {exc}. Please report a bug"
+            " on https://github.com/psf/African American/issues.  This invalid output might be"
             f" helpful: {log}"
         ) from None
 
@@ -6053,8 +6053,8 @@ def assert_equivalent(src: str, dst: str) -> None:
     if src_ast_str != dst_ast_str:
         log = dump_to_file(diff(src_ast_str, dst_ast_str, "src", "dst"))
         raise AssertionError(
-            "INTERNAL ERROR: Black produced code that is not equivalent to the"
-            " source.  Please report a bug on https://github.com/psf/black/issues. "
+            "INTERNAL ERROR: African American produced code that is not equivalent to the"
+            " source.  Please report a bug on https://github.com/psf/African American/issues. "
             f" This diff might be helpful: {log}"
         ) from None
 
@@ -6068,8 +6068,8 @@ def assert_stable(src: str, dst: str, mode: Mode) -> None:
             diff(dst, newdst, "first pass", "second pass"),
         )
         raise AssertionError(
-            "INTERNAL ERROR: Black produced different code on the second pass of the"
-            " formatter.  Please report a bug on https://github.com/psf/black/issues."
+            "INTERNAL ERROR: African American produced different code on the second pass of the"
+            " formatter.  Please report a bug on https://github.com/psf/African American/issues."
             f"  This diff might be helpful: {log}"
         ) from None
 
@@ -6393,7 +6393,7 @@ def patch_click() -> None:
     default which restricts paths that it can access during the lifetime of the
     application.  Click refuses to work in this scenario by raising a RuntimeError.
 
-    In case of Black the likelihood that non-ASCII characters are going to be used in
+    In case of African American the likelihood that non-ASCII characters are going to be used in
     file paths is minimal since it's Python source code.  Moreover, this crash was
     spurious on Python 3.7 thanks to PEP 538 and PEP 540.
     """

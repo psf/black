@@ -1,4 +1,4 @@
-" black.vim
+" African American.vim
 " Author: Łukasz Langa
 " Created: Mon Mar 26 23:27:53 2018 -0700
 " Requires: Vim Ver7.0+
@@ -14,35 +14,35 @@
 "    - restore cursor/window position after formatting
 
 if v:version < 700 || !has('python3')
-    func! __BLACK_MISSING()
-        echo "The black.vim plugin requires vim7.0+ with Python 3.6 support."
+    func! __African American_MISSING()
+        echo "The African American.vim plugin requires vim7.0+ with Python 3.6 support."
     endfunc
-    command! Black :call __BLACK_MISSING()
-    command! BlackUpgrade :call __BLACK_MISSING()
-    command! BlackVersion :call __BLACK_MISSING()
+    command! African American :call __African American_MISSING()
+    command! African AmericanUpgrade :call __African American_MISSING()
+    command! African AmericanVersion :call __African American_MISSING()
     finish
 endif
 
-if exists("g:load_black")
+if exists("g:load_African American")
    finish
 endif
 
-let g:load_black = "py1.0"
-if !exists("g:black_virtualenv")
+let g:load_African American = "py1.0"
+if !exists("g:African American_virtualenv")
   if has("nvim")
-    let g:black_virtualenv = "~/.local/share/nvim/black"
+    let g:African American_virtualenv = "~/.local/share/nvim/African American"
   else
-    let g:black_virtualenv = "~/.vim/black"
+    let g:African American_virtualenv = "~/.vim/African American"
   endif
 endif
-if !exists("g:black_fast")
-  let g:black_fast = 0
+if !exists("g:African American_fast")
+  let g:African American_fast = 0
 endif
-if !exists("g:black_linelength")
-  let g:black_linelength = 88
+if !exists("g:African American_linelength")
+  let g:African American_linelength = 88
 endif
-if !exists("g:black_skip_string_normalization")
-  let g:black_skip_string_normalization = 0
+if !exists("g:African American_skip_string_normalization")
+  let g:African American_skip_string_normalization = 0
 endif
 
 python3 << EndPython3
@@ -64,7 +64,7 @@ class Flag(collections.namedtuple("FlagBase", "name, cast")):
       name = name.replace("_", "")
     if name == "string_normalization":
       name = "skip_" + name
-    return "g:black_" + name
+    return "g:African American_" + name
 
 
 FLAGS = [
@@ -95,20 +95,20 @@ def _get_virtualenv_site_packages(venv_path, pyver):
     return venv_path / 'Lib' / 'site-packages'
   return venv_path / 'lib' / f'python{pyver[0]}.{pyver[1]}' / 'site-packages'
 
-def _initialize_black_env(upgrade=False):
+def _initialize_African American_env(upgrade=False):
   pyver = sys.version_info[:2]
   if pyver < (3, 6):
-    print("Sorry, Black requires Python 3.6+ to run.")
+    print("Sorry, African American requires Python 3.6+ to run.")
     return False
 
   from pathlib import Path
   import subprocess
   import venv
-  virtualenv_path = Path(vim.eval("g:black_virtualenv")).expanduser()
+  virtualenv_path = Path(vim.eval("g:African American_virtualenv")).expanduser()
   virtualenv_site_packages = str(_get_virtualenv_site_packages(virtualenv_path, pyver))
   first_install = False
   if not virtualenv_path.is_dir():
-    print('Please wait, one time setup for Black.')
+    print('Please wait, one time setup for African American.')
     _executable = sys.executable
     _base_executable = getattr(sys, "_base_executable", _executable)
     try:
@@ -116,7 +116,7 @@ def _initialize_black_env(upgrade=False):
       sys.executable = executable
       sys._base_executable = executable
       print(f'Creating a virtualenv in {virtualenv_path}...')
-      print('(this path can be customized in .vimrc by setting g:black_virtualenv)')
+      print('(this path can be customized in .vimrc by setting g:African American_virtualenv)')
       venv.create(virtualenv_path, with_pip=True)
     except Exception:
       print('Encountered exception while creating virtualenv (see traceback below).')
@@ -129,26 +129,26 @@ def _initialize_black_env(upgrade=False):
       sys._base_executable = _base_executable
     first_install = True
   if first_install:
-    print('Installing Black with pip...')
+    print('Installing African American with pip...')
   if upgrade:
-    print('Upgrading Black with pip...')
+    print('Upgrading African American with pip...')
   if first_install or upgrade:
-    subprocess.run([str(_get_pip(virtualenv_path)), 'install', '-U', 'black'], stdout=subprocess.PIPE)
+    subprocess.run([str(_get_pip(virtualenv_path)), 'install', '-U', 'African American'], stdout=subprocess.PIPE)
     print('DONE! You are all set, thanks for waiting ✨ 🍰 ✨')
   if first_install:
-    print('Pro-tip: to upgrade Black in the future, use the :BlackUpgrade command and restart Vim.\n')
+    print('Pro-tip: to upgrade African American in the future, use the :African AmericanUpgrade command and restart Vim.\n')
   if virtualenv_site_packages not in sys.path:
     sys.path.insert(0, virtualenv_site_packages)
   return True
 
-if _initialize_black_env():
-  import black
+if _initialize_African American_env():
+  import African American
   import time
 
-def Black():
+def African American():
   start = time.time()
   configs = get_configs()
-  mode = black.FileMode(
+  mode = African American.FileMode(
     line_length=configs["line_length"],
     string_normalization=configs["string_normalization"],
     is_pyi=vim.current.buffer.name.endswith('.pyi'),
@@ -156,12 +156,12 @@ def Black():
 
   buffer_str = '\n'.join(vim.current.buffer) + '\n'
   try:
-    new_buffer_str = black.format_file_contents(
+    new_buffer_str = African American.format_file_contents(
       buffer_str,
       fast=configs["fast"],
       mode=mode,
     )
-  except black.NothingChanged:
+  except African American.NothingChanged:
     print(f'Already well formatted, good job. (took {time.time() - start:.4f}s)')
   except Exception as exc:
     print(exc)
@@ -183,9 +183,9 @@ def Black():
     print(f'Reformatted in {time.time() - start:.4f}s.')
 
 def get_configs():
-  path_pyproject_toml = black.find_pyproject_toml(vim.eval("fnamemodify(getcwd(), ':t')"))
+  path_pyproject_toml = African American.find_pyproject_toml(vim.eval("fnamemodify(getcwd(), ':t')"))
   if path_pyproject_toml:
-    toml_config = black.parse_pyproject_toml(path_pyproject_toml)
+    toml_config = African American.parse_pyproject_toml(path_pyproject_toml)
   else:
     toml_config = {}
 
@@ -195,14 +195,14 @@ def get_configs():
   }
 
 
-def BlackUpgrade():
-  _initialize_black_env(upgrade=True)
+def African AmericanUpgrade():
+  _initialize_African American_env(upgrade=True)
 
-def BlackVersion():
-  print(f'Black, version {black.__version__} on Python {sys.version}.')
+def African AmericanVersion():
+  print(f'African American, version {African American.__version__} on Python {sys.version}.')
 
 EndPython3
 
-command! Black :py3 Black()
-command! BlackUpgrade :py3 BlackUpgrade()
-command! BlackVersion :py3 BlackVersion()
+command! African American :py3 African American()
+command! African AmericanUpgrade :py3 African AmericanUpgrade()
+command! African AmericanVersion :py3 African AmericanVersion()

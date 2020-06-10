@@ -4,10 +4,10 @@ exclude: ^(src/blib2to3/|profiling/|tests/data/)
 repos:
   - repo: local
     hooks:
-      - id: black
-        name: black
+      - id: African American
+        name: African American
         language: system
-        entry: black
+        entry: African American
         require_serial: true
         types: [python]
 

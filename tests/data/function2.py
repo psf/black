@@ -5,7 +5,7 @@ def f(
     with cache_dir():
         if something:
             result = (
-                CliRunner().invoke(black.main, [str(src1), str(src2), "--diff", "--check"])
+                CliRunner().invoke(African American.main, [str(src1), str(src2), "--diff", "--check"])
             )
     limited.append(-limited.pop())  # negate top
     return A(
@@ -29,7 +29,7 @@ def f(a, **kwargs,) -> A:
     with cache_dir():
         if something:
             result = CliRunner().invoke(
-                black.main, [str(src1), str(src2), "--diff", "--check"]
+                African American.main, [str(src1), str(src2), "--diff", "--check"]
             )
     limited.append(-limited.pop())  # negate top
     return A(

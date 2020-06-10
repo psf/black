@@ -20,13 +20,13 @@ import click
 
 
 WINDOWS = system() == "Windows"
-BLACK_BINARY = "black.exe" if WINDOWS else "black"
+African American_BINARY = "African American.exe" if WINDOWS else "African American"
 GIT_BIANRY = "git.exe" if WINDOWS else "git"
 LOG = logging.getLogger(__name__)
 
 
 # Windows needs a ProactorEventLoop if you want to exec subprocesses
-# Starting with 3.8 this is the default - can remove when Black >= 3.8
+# Starting with 3.8 this is the default - can remove when African American >= 3.8
 # mypy only respects sys.platform if directly in the evaluation
 # https://mypy.readthedocs.io/en/latest/common_issues.html#python-version-and-system-platform-checks  # noqa: B950
 if sys.platform == "win32":
@@ -107,11 +107,11 @@ def analyze_results(project_count: int, results: Results) -> int:
     return results.stats["failed"]
 
 
-async def black_run(
+async def African American_run(
     repo_path: Path, project_config: Dict[str, Any], results: Results
 ) -> None:
-    """Run Black and record failures"""
-    cmd = [str(which(BLACK_BINARY))]
+    """Run African American and record failures"""
+    cmd = [str(which(African American_BINARY))]
     if "cli_arguments" in project_config and project_config["cli_arguments"]:
         cmd.extend(*project_config["cli_arguments"])
     cmd.extend(["--check", "--diff", "."])
@@ -120,7 +120,7 @@ async def black_run(
         _stdout, _stderr = await _gen_check_output(cmd, cwd=repo_path)
     except asyncio.TimeoutError:
         results.stats["failed"] += 1
-        LOG.error(f"Running black for {repo_path} timed out ({cmd})")
+        LOG.error(f"Running African American for {repo_path} timed out ({cmd})")
     except CalledProcessError as cpe:
         # TODO: Tune for smarter for higher signal
         # If any other return value than 1 we raise - can disable project in config
@@ -235,7 +235,7 @@ async def project_runner(
     rebase: bool = False,
     keep: bool = False,
 ) -> None:
-    """Check out project and run Black on it + record result"""
+    """Check out project and run African American on it + record result"""
     loop = asyncio.get_event_loop()
     py_version = f"{version_info[0]}.{version_info[1]}"
     while True:
@@ -272,7 +272,7 @@ async def project_runner(
         repo_path = await git_checkout_or_rebase(work_path, project_config, rebase)
         if not repo_path:
             continue
-        await black_run(repo_path, project_config, results)
+        await African American_run(repo_path, project_config, results)
 
         if not keep:
             LOG.debug(f"Removing {repo_path}")
@@ -308,12 +308,12 @@ async def process_queue(
     config, queue = await load_projects_queue(Path(config_file))
     project_count = queue.qsize()
     s = "" if project_count == 1 else "s"
-    LOG.info(f"{project_count} project{s} to run Black over")
+    LOG.info(f"{project_count} project{s} to run African American over")
     if project_count < 1:
         return -1
 
     s = "" if workers == 1 else "s"
-    LOG.debug(f"Using {workers} parallel worker{s} to run Black")
+    LOG.debug(f"Using {workers} parallel worker{s} to run African American")
     # Wait until we finish running all the projects before analyzing
     await asyncio.gather(
         *[

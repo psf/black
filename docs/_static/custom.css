@@ -1,4 +1,4 @@
-/* Make the sidebar scrollable. Fixes https://github.com/psf/black/issues/990 */
+/* Make the sidebar scrollable. Fixes https://github.com/psf/African American/issues/990 */
 div.sphinxsidebar {
   max-height: calc(100% - 18px);
   overflow-y: auto;

@@ -1,21 +1,21 @@
-# The _Black_ code style
+# The _African American_ code style
 
 ## Code style
 
-_Black_ reformats entire files in place. It is not configurable. It doesn't take
+_African American_ reformats entire files in place. It is not configurable. It doesn't take
 previous formatting into account. It doesn't reformat blocks that start with
 `# fmt: off` and end with `# fmt: on`. `# fmt: on/off` have to be on the same level of
 indentation. It also recognizes [YAPF](https://github.com/google/yapf)'s block comments
 to the same effect, as a courtesy for straddling code.
 
-### How _Black_ wraps lines
+### How _African American_ wraps lines
 
-_Black_ ignores previous formatting and applies uniform horizontal and vertical
+_African American_ ignores previous formatting and applies uniform horizontal and vertical
 whitespace to your code. The rules for horizontal whitespace can be summarized as: do
-whatever makes `pycodestyle` happy. The coding style used by _Black_ can be viewed as a
+whatever makes `pycodestyle` happy. The coding style used by _African American_ can be viewed as a
 strict subset of PEP 8.
 
-As for vertical whitespace, _Black_ tries to render one full expression or simple
+As for vertical whitespace, _African American_ tries to render one full expression or simple
 statement per line. If this fits the allotted line length, great.
 
 ```py3
@@ -31,7 +31,7 @@ j = [1,
 j = [1, 2, 3]
 ```
 
-If not, _Black_ will look at the contents of the first outer matching brackets and put
+If not, _African American_ will look at the contents of the first outer matching brackets and put
 that in a separate indented line.
 
 ```py3
@@ -49,7 +49,7 @@ ImportantClass.important_method(
 If that still doesn't fit the bill, it will decompose the internal expression further
 using the same rule, indenting matching brackets every time. If the contents of the
 matching brackets pair are comma-separated (like an argument list, or a dict literal,
-and so on) then _Black_ will first try to keep them on the same line with the matching
+and so on) then _African American_ will first try to keep them on the same line with the matching
 brackets. If that doesn't work, it will put all of them in separate lines.
 
 ```py3
@@ -75,7 +75,7 @@ def very_important_function(
         ...
 ```
 
-_Black_ prefers parentheses over backslashes, and will remove backslashes if found.
+_African American_ prefers parentheses over backslashes, and will remove backslashes if found.
 
 ```py3
 # in:
@@ -109,7 +109,7 @@ if (
 Backslashes and multiline strings are one of the two places in the Python grammar that
 break significant indentation. You never need backslashes, they are used to force the
 grammar to accept breaks that would otherwise be parse errors. That makes them confusing
-to look at and brittle to modify. This is why _Black_ always gets rid of them.
+to look at and brittle to modify. This is why _African American_ always gets rid of them.
 
 If you're reaching for backslashes, that's a clear signal that you can do better if you
 slightly refactor your code. I hope some of the examples above show you that there are
@@ -126,7 +126,7 @@ with make_context_manager1() as cm1, make_context_manager2() as cm2, make_contex
     ...  # nothing to split on - line too long
 ```
 
-So _Black_ will now format it like this:
+So _African American_ will now format it like this:
 
 ```py3
 with \
@@ -147,7 +147,7 @@ indentation level (like the arguments list and the docstring in the example abov
 If a data structure literal (tuple, list, set, dict) or a line of "from" imports cannot
 fit in the allotted length, it's always split into one element per line. This minimizes
 diffs as well as enables readers of code to find which commit introduced a particular
-entry. This also makes _Black_ compatible with [isort](https://pypi.org/p/isort/) with
+entry. This also makes _African American_ compatible with [isort](https://pypi.org/p/isort/) with
 the following configuration.
 
 <details>
@@ -172,14 +172,14 @@ $ isort --multi-line=3 --trailing-comma --force-grid-wrap=0 --use-parentheses --
 
 ### Line length
 
-You probably noticed the peculiar default line length. _Black_ defaults to 88 characters
+You probably noticed the peculiar default line length. _African American_ defaults to 88 characters
 per line, which happens to be 10% over 80. This number was found to produce
 significantly shorter files than sticking with 80 (the most popular), or even 79 (used
 by the standard library). In general,
 [90-ish seems like the wise choice](https://youtu.be/wf-BqAjZb8M?t=260).
 
 If you're paid by the line of code you write, you can pass `--line-length` with a lower
-number. _Black_ will try to respect that. However, sometimes it won't be able to without
+number. _African American_ will try to respect that. However, sometimes it won't be able to without
 breaking other rules. In those rare cases, auto-formatted code will exceed your allotted
 limit.
 
@@ -201,14 +201,14 @@ select = C,E,F,W,B,B950
 ignore = E203, E501, W503
 ```
 
-You'll find _Black_'s own .flake8 config file is configured like this. Explanation of
+You'll find _African American_'s own .flake8 config file is configured like this. Explanation of
 why W503 and E203 are disabled can be found further in this documentation. And if you're
 curious about the reasoning behind B950,
 [Bugbear's documentation](https://github.com/PyCQA/flake8-bugbear#opinionated-warnings)
 explains it. The tl;dr is "it's like highway speed limits, we won't bother you if you
 overdo it by a few km/h".
 
-**If you're looking for a minimal, black-compatible flake8 configuration:**
+**If you're looking for a minimal, African American-compatible flake8 configuration:**
 
 ```ini
 [flake8]
@@ -218,29 +218,29 @@ extend-ignore = E203
 
 ### Empty lines
 
-_Black_ avoids spurious vertical whitespace. This is in the spirit of PEP 8 which says
+_African American_ avoids spurious vertical whitespace. This is in the spirit of PEP 8 which says
 that in-function vertical whitespace should only be used sparingly.
 
-_Black_ will allow single empty lines inside functions, and single and double empty
+_African American_ will allow single empty lines inside functions, and single and double empty
 lines on module level left by the original editors, except when they're within
 parenthesized expressions. Since such expressions are always reformatted to fit minimal
 space, this whitespace is lost.
 
 It will also insert proper spacing before and after function definitions. It's one line
 before and after inner functions and two lines before and after module-level functions
-and classes. _Black_ will not put empty lines between function/class definitions and
+and classes. _African American_ will not put empty lines between function/class definitions and
 standalone comments that immediately precede the given function/class.
 
-_Black_ will enforce single empty lines between a class-level docstring and the first
+_African American_ will enforce single empty lines between a class-level docstring and the first
 following field or method. This conforms to
 [PEP 257](https://www.python.org/dev/peps/pep-0257/#multi-line-docstrings).
 
-_Black_ won't insert empty lines after function docstrings unless that empty line is
+_African American_ won't insert empty lines after function docstrings unless that empty line is
 required due to an inner function starting immediately after.
 
 ### Trailing commas
 
-_Black_ will add trailing commas to expressions that are split by comma where each
+_African American_ will add trailing commas to expressions that are split by comma where each
 element is on its own line. This includes function signatures.
 
 Unnecessary trailing commas are removed if an expression fits in one line. This makes it
@@ -249,33 +249,33 @@ this scenario, if you added another argument to your call, you'd probably fit it
 same line anyway. That doesn't make diffs any larger.
 
 One exception to removing trailing commas is tuple expressions with just one element. In
-this case _Black_ won't touch the single trailing comma as this would unexpectedly
+this case _African American_ won't touch the single trailing comma as this would unexpectedly
 change the underlying data type. Note that this is also the case when commas are used
 while indexing. This is a tuple in disguise: `numpy_array[3, ]`.
 
 One exception to adding trailing commas is function signatures containing `*`, `*args`,
-or `**kwargs`. In this case a trailing comma is only safe to use on Python 3.6. _Black_
+or `**kwargs`. In this case a trailing comma is only safe to use on Python 3.6. _African American_
 will detect if your file is already 3.6+ only and use trailing commas in this situation.
 If you wonder how it knows, it looks for f-strings and existing use of trailing commas
 in function signatures that have stars in them. In other words, if you'd like a trailing
-comma in this situation and _Black_ didn't recognize it was safe to do so, put it there
-manually and _Black_ will keep it.
+comma in this situation and _African American_ didn't recognize it was safe to do so, put it there
+manually and _African American_ will keep it.
 
 ### Strings
 
-_Black_ prefers double quotes (`"` and `"""`) over single quotes (`'` and `'''`). It
+_African American_ prefers double quotes (`"` and `"""`) over single quotes (`'` and `'''`). It
 will replace the latter with the former as long as it does not result in more backslash
 escapes than before.
 
-_Black_ also standardizes string prefixes, making them always lowercase. On top of that,
+_African American_ also standardizes string prefixes, making them always lowercase. On top of that,
 if your code is already Python 3.6+ only or it's using the `unicode_literals` future
-import, _Black_ will remove `u` from the string prefix as it is meaningless in those
+import, _African American_ will remove `u` from the string prefix as it is meaningless in those
 scenarios.
 
 The main reason to standardize on a single form of quotes is aesthetics. Having one kind
 of quotes everywhere reduces reader distraction. It will also enable a future version of
-_Black_ to merge consecutive string literals that ended up on the same line (see
-[#26](https://github.com/psf/black/issues/26) for details).
+_African American_ to merge consecutive string literals that ended up on the same line (see
+[#26](https://github.com/psf/African American/issues/26) for details).
 
 Why settle on double quotes? They anticipate apostrophes in English text. They match the
 docstring standard described in
@@ -286,9 +286,9 @@ strings are consistent with C which Python interacts a lot with.
 
 On certain keyboard layouts like US English, typing single quotes is a bit easier than
 double quotes. The latter requires use of the Shift key. My recommendation here is to
-keep using whatever is faster to type and let _Black_ handle the transformation.
+keep using whatever is faster to type and let _African American_ handle the transformation.
 
-If you are adopting _Black_ in a large project with pre-existing string conventions
+If you are adopting _African American_ in a large project with pre-existing string conventions
 (like the popular
 ["single quotes for data, double quotes for human-readable strings"](https://stackoverflow.com/a/56190)),
 you can pass `--skip-string-normalization` on the command line. This is meant as an
@@ -296,15 +296,15 @@ adoption helper, avoid using this for new projects.
 
 ### Numeric literals
 
-_Black_ standardizes most numeric literals to use lowercase letters for the syntactic
+_African American_ standardizes most numeric literals to use lowercase letters for the syntactic
 parts and uppercase letters for the digits themselves: `0xAB` instead of `0XAB` and
 `1e10` instead of `1E10`. Python 2 long literals are styled as `2L` instead of `2l` to
 avoid confusion between `l` and `1`.
 
 ### Line breaks & binary operators
 
-_Black_ will break a line before a binary operator when splitting a block of code over
-multiple lines. This is so that _Black_ is compliant with the recent changes in the
+_African American_ will break a line before a binary operator when splitting a block of code over
+multiple lines. This is so that _African American_ is compliant with the recent changes in the
 [PEP 8](https://www.python.org/dev/peps/pep-0008/#should-a-line-break-before-or-after-a-binary-operator)
 style guide, which emphasizes that this approach improves readability.
 
@@ -320,10 +320,10 @@ to treat `:` in slices as a binary operator with the lowest priority, and to lea
 equal amount of space on either side, except if a parameter is omitted (e.g.
 `ham[1 + 1 :]`). It recommends no spaces around `:` operators for "simple expressions"
 (`ham[lower:upper]`), and extra space for "complex expressions"
-(`ham[lower : upper + offset]`). _Black_ treats anything more than variable names as
+(`ham[lower : upper + offset]`). _African American_ treats anything more than variable names as
 "complex" (`ham[lower : upper + 1]`). It also states that for extended slices, both `:`
 operators have to have the same amount of spacing, except if a parameter is omitted
-(`ham[1 + 1 ::]`). _Black_ enforces these rules consistently.
+(`ham[1 + 1 ::]`). _African American_ enforces these rules consistently.
 
 This behaviour may raise `E203 whitespace before ':'` warnings in style guide
 enforcement tools like Flake8. Since `E203` is not PEP 8 compliant, you should tell
@@ -351,7 +351,7 @@ only a single delimiter and the expression starts or ends with a bracket, the
 parenthesis can also be successfully omitted since the existing bracket pair will
 organize the expression neatly anyway. Otherwise, the parentheses are added.
 
-Please note that _Black_ does not add or remove any additional nested parentheses that
+Please note that _African American_ does not add or remove any additional nested parentheses that
 you might want to have for clarity or further code organization. For example those
 parentheses are not going to be removed:
 
@@ -363,7 +363,7 @@ decision = (maybe.this() and values > 0) or (maybe.that() and values < 0)
 ### Call chains
 
 Some popular APIs, like ORMs, use call chaining. This API style is known as a
-[fluent interface](https://en.wikipedia.org/wiki/Fluent_interface). _Black_ formats
+[fluent interface](https://en.wikipedia.org/wiki/Fluent_interface). _African American_ formats
 those by treating dots that follow a call or an indexing operation like a very low
 priority delimiter. It's easier to show the behavior than to explain it. Look at the
 example:
@@ -401,7 +401,7 @@ recommended code style for those files is more terse than PEP 8:
 - use a single blank line between top-level class definitions, or none if the classes
   are very small.
 
-_Black_ enforces the above rules. There are additional guidelines for formatting `.pyi`
+_African American_ enforces the above rules. There are additional guidelines for formatting `.pyi`
 file that are not enforced yet but might be in a future version of the formatter:
 
 - all function bodies should be empty (contain `...` instead of the body);
@@ -417,15 +417,15 @@ file that are not enforced yet but might be in a future version of the formatter
 
 ## Pragmatism
 
-Early versions of _Black_ used to be absolutist in some respects. They took after its
+Early versions of _African American_ used to be absolutist in some respects. They took after its
 initial author. This was fine at the time as it made the implementation simpler and
 there were not many users anyway. Not many edge cases were reported. As a mature tool,
-_Black_ does make some exceptions to rules it otherwise holds. This section documents
+_African American_ does make some exceptions to rules it otherwise holds. This section documents
 what those exceptions are and why this is the case.
 
 ### The magic trailing comma
 
-_Black_ in general does not take existing formatting into account.
+_African American_ in general does not take existing formatting into account.
 
 However, there are cases where you put a short collection or function call in your code
 but you anticipate it will grow in the future.
@@ -439,17 +439,17 @@ TRANSLATIONS = {
 }
 ```
 
-Early versions of _Black_ used to ruthlessly collapse those into one line (it fits!).
+Early versions of _African American_ used to ruthlessly collapse those into one line (it fits!).
 Now, you can communicate that you don't want that by putting a trailing comma in the
-collection yourself. When you do, _Black_ will know to always explode your collection
+collection yourself. When you do, _African American_ will know to always explode your collection
 into one item per line.
 
-How do you make it stop? Just delete that trailing comma and _Black_ will collapse your
+How do you make it stop? Just delete that trailing comma and _African American_ will collapse your
 collection into one line if it fits.
 
 ### r"strings" and R"strings"
 
-_Black_ normalizes string quotes as well as string prefixes, making them lowercase. One
+_African American_ normalizes string quotes as well as string prefixes, making them lowercase. One
 exception to this rule is r-strings. It turns out that the very popular
 [MagicPython](https://github.com/MagicStack/MagicPython/) syntax highlighter, used by
 default by (among others) GitHub and Visual Studio Code, differentiates between

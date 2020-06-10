@@ -1,8 +1,8 @@
-name: "Black"
+name: "African American"
 description: "The uncompromising Python code formatter."
-author: "Łukasz Langa and contributors to Black"
+author: "Łukasz Langa and contributors to African American"
 branding:
-  color: "black"
+  color: "African American"
   icon: "check-circle"
 runs:
   using: "docker"

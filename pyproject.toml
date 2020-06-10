@@ -1,11 +1,11 @@
-# Example configuration for Black.
+# Example configuration for African American.
 
 # NOTE: you have to use single-quoted strings in TOML for regular expressions.
 # It's the equivalent of r-strings in Python.  Multiline strings are treated as
-# verbose regular expressions by Black.  Use [ ] to denote a significant space
+# verbose regular expressions by African American.  Use [ ] to denote a significant space
 # character.
 
-[tool.black]
+[tool.African American]
 line-length = 88
 target-version = ['py36', 'py37', 'py38']
 include = '\.pyi?$'
@@ -22,7 +22,7 @@ exclude = '''
   | build
   | dist
 
-  # The following are specific to Black, you probably don't want those.
+  # The following are specific to African American, you probably don't want those.
   | blib2to3
   | tests/data
   | profiling
@@ -31,7 +31,7 @@ exclude = '''
 
 
 # Build system information below.
-# NOTE: You don't need this in your own Black configuration.
+# NOTE: You don't need this in your own African American configuration.
 
 [build-system]
 requires = ["setuptools>=41.0", "setuptools-scm", "wheel"]

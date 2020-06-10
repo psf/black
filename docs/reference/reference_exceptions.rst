@@ -1,12 +1,12 @@
-*Black* exceptions
+*African American* exceptions
 ==================
 
 *Contents are subject to change.*
 
-.. currentmodule:: black
+.. currentmodule:: African American
 
-.. autoexception:: black.CannotSplit
+.. autoexception:: African American.CannotSplit
 
-.. autoexception:: black.NothingChanged
+.. autoexception:: African American.NothingChanged
 
-.. autoexception:: black.InvalidInput
+.. autoexception:: African American.InvalidInput

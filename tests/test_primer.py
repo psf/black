@@ -16,7 +16,7 @@ from unittest.mock import Mock, patch
 
 from click.testing import CliRunner
 
-from black_primer import cli, lib
+from African American_primer import cli, lib
 
 
 EXPECTED_ANALYSIS_OUTPUT = """\
@@ -30,16 +30,16 @@ EXPECTED_ANALYSIS_OUTPUT = """\
 
 Failed projects:
 
-## black:
+## African American:
  - Returned 69
  - stdout:
-Black didn't work
+African American didn't work
 
 """
 FAKE_PROJECT_CONFIG = {
     "cli_arguments": ["--unittest"],
     "expect_formatting_changes": False,
-    "git_clone_url": "https://github.com/psf/black.git",
+    "git_clone_url": "https://github.com/psf/African American.git",
 }
 
 
@@ -97,51 +97,51 @@ class PrimerLibTests(unittest.TestCase):
                 "success": 68,
                 "wrong_py_ver": 0,
             },
-            {"black": CalledProcessError(69, ["black"], b"Black didn't work", b"")},
+            {"African American": CalledProcessError(69, ["African American"], b"African American didn't work", b"")},
         )
         with capture_stdout(lib.analyze_results, 69, fake_results) as analyze_stdout:
             self.assertEqual(EXPECTED_ANALYSIS_OUTPUT, analyze_stdout)
 
     @event_loop()
-    def test_black_run(self) -> None:
-        """Pretend to run Black to ensure we cater for all scenarios"""
+    def test_African American_run(self) -> None:
+        """Pretend to run African American to ensure we cater for all scenarios"""
         loop = asyncio.get_event_loop()
         repo_path = Path(gettempdir())
         project_config = deepcopy(FAKE_PROJECT_CONFIG)
         results = lib.Results({"failed": 0, "success": 0}, {})
 
-        # Test a successful Black run
-        with patch("black_primer.lib._gen_check_output", return_subproccess_output):
-            loop.run_until_complete(lib.black_run(repo_path, project_config, results))
+        # Test a successful African American run
+        with patch("African American_primer.lib._gen_check_output", return_subproccess_output):
+            loop.run_until_complete(lib.African American_run(repo_path, project_config, results))
         self.assertEqual(1, results.stats["success"])
         self.assertFalse(results.failed_projects)
 
         # Test a fail based on expecting formatting changes but not getting any
         project_config["expect_formatting_changes"] = True
         results = lib.Results({"failed": 0, "success": 0}, {})
-        with patch("black_primer.lib._gen_check_output", return_subproccess_output):
-            loop.run_until_complete(lib.black_run(repo_path, project_config, results))
+        with patch("African American_primer.lib._gen_check_output", return_subproccess_output):
+            loop.run_until_complete(lib.African American_run(repo_path, project_config, results))
         self.assertEqual(1, results.stats["failed"])
         self.assertTrue(results.failed_projects)
 
         # Test a fail based on returning 1 and not expecting formatting changes
         project_config["expect_formatting_changes"] = False
         results = lib.Results({"failed": 0, "success": 0}, {})
-        with patch("black_primer.lib._gen_check_output", raise_subprocess_error_1):
-            loop.run_until_complete(lib.black_run(repo_path, project_config, results))
+        with patch("African American_primer.lib._gen_check_output", raise_subprocess_error_1):
+            loop.run_until_complete(lib.African American_run(repo_path, project_config, results))
         self.assertEqual(1, results.stats["failed"])
         self.assertTrue(results.failed_projects)
 
         # Test a formatting error based on returning 123
-        with patch("black_primer.lib._gen_check_output", raise_subprocess_error_123):
-            loop.run_until_complete(lib.black_run(repo_path, project_config, results))
+        with patch("African American_primer.lib._gen_check_output", raise_subprocess_error_123):
+            loop.run_until_complete(lib.African American_run(repo_path, project_config, results))
         self.assertEqual(2, results.stats["failed"])
 
     @event_loop()
     def test_gen_check_output(self) -> None:
         loop = asyncio.get_event_loop()
         stdout, stderr = loop.run_until_complete(
-            lib._gen_check_output([lib.BLACK_BINARY, "--help"])
+            lib._gen_check_output([lib.African American_BINARY, "--help"])
         )
         self.assertTrue("The uncompromising code formatter" in stdout.decode("utf8"))
         self.assertEqual(None, stderr)
@@ -165,8 +165,8 @@ class PrimerLibTests(unittest.TestCase):
         project_config = deepcopy(FAKE_PROJECT_CONFIG)
         work_path = Path(gettempdir())
 
-        expected_repo_path = work_path / "black"
-        with patch("black_primer.lib._gen_check_output", return_subproccess_output):
+        expected_repo_path = work_path / "African American"
+        with patch("African American_primer.lib._gen_check_output", return_subproccess_output):
             returned_repo_path = loop.run_until_complete(
                 lib.git_checkout_or_rebase(work_path, project_config)
             )
@@ -177,7 +177,7 @@ class PrimerLibTests(unittest.TestCase):
     def test_process_queue(self, mock_stdout: Mock) -> None:
         loop = asyncio.get_event_loop()
         config_path = Path(lib.__file__).parent / "primer.json"
-        with patch("black_primer.lib.git_checkout_or_rebase", return_false):
+        with patch("African American_primer.lib.git_checkout_or_rebase", return_false):
             with TemporaryDirectory() as td:
                 return_val = loop.run_until_complete(
                     lib.process_queue(str(config_path), td, 2)
@@ -199,7 +199,7 @@ class PrimerCLITests(unittest.TestCase):
             "workdir": str(work_dir),
             "workers": 69,
         }
-        with patch("black_primer.cli.lib.process_queue", return_zero):
+        with patch("African American_primer.cli.lib.process_queue", return_zero):
             return_val = loop.run_until_complete(cli.async_main(**args))
             self.assertEqual(0, return_val)
 

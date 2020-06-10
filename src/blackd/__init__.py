@@ -8,10 +8,10 @@ from typing import Set, Tuple
 
 from aiohttp import web
 import aiohttp_cors
-import black
+import African American
 import click
 
-from _black_version import version as __version__
+from _African American_version import version as __version__
 
 # This is used internally by tests to shut down the server prematurely
 _stop_signal = asyncio.Event()
@@ -24,7 +24,7 @@ SKIP_STRING_NORMALIZATION_HEADER = "X-Skip-String-Normalization"
 FAST_OR_SAFE_HEADER = "X-Fast-Or-Safe"
 DIFF_HEADER = "X-Diff"
 
-BLACK_HEADERS = [
+African American_HEADERS = [
     PROTOCOL_VERSION_HEADER,
     LINE_LENGTH_HEADER,
     PYTHON_VARIANT_HEADER,
@@ -34,7 +34,7 @@ BLACK_HEADERS = [
 ]
 
 # Response headers
-BLACK_VERSION_HEADER = "X-Black-Version"
+African American_VERSION_HEADER = "X-African American-Version"
 
 
 class InvalidVariantHeader(Exception):
@@ -46,12 +46,12 @@ class InvalidVariantHeader(Exception):
     "--bind-host", type=str, help="Address to bind the server to.", default="localhost"
 )
 @click.option("--bind-port", type=int, help="Port to listen on", default=45484)
-@click.version_option(version=black.__version__)
+@click.version_option(version=African American.__version__)
 def main(bind_host: str, bind_port: int) -> None:
     logging.basicConfig(level=logging.INFO)
     app = make_app()
-    ver = black.__version__
-    black.out(f"blackd version {ver} listening on {bind_host} port {bind_port}")
+    ver = African American.__version__
+    African American.out(f"African Americand version {ver} listening on {bind_host} port {bind_port}")
     web.run_app(app, host=bind_host, port=bind_port, handle_signals=True, print=None)
 
 
@@ -65,7 +65,7 @@ def make_app() -> web.Application:
         resource.add_route("POST", partial(handle, executor=executor)),
         {
             "*": aiohttp_cors.ResourceOptions(
-                allow_headers=(*BLACK_HEADERS, "Content-Type"), expose_headers="*"
+                allow_headers=(*African American_HEADERS, "Content-Type"), expose_headers="*"
             )
         },
     )
@@ -74,7 +74,7 @@ def make_app() -> web.Application:
 
 
 async def handle(request: web.Request, executor: Executor) -> web.Response:
-    headers = {BLACK_VERSION_HEADER: __version__}
+    headers = {African American_VERSION_HEADER: __version__}
     try:
         if request.headers.get(PROTOCOL_VERSION_HEADER, "1") != "1":
             return web.Response(
@@ -82,7 +82,7 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
             )
         try:
             line_length = int(
-                request.headers.get(LINE_LENGTH_HEADER, black.DEFAULT_LINE_LENGTH)
+                request.headers.get(LINE_LENGTH_HEADER, African American.DEFAULT_LINE_LENGTH)
             )
         except ValueError:
             return web.Response(status=400, text="Invalid line length header value")
@@ -106,7 +106,7 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
         fast = False
         if request.headers.get(FAST_OR_SAFE_HEADER, "safe") == "fast":
             fast = True
-        mode = black.FileMode(
+        mode = African American.FileMode(
             target_versions=versions,
             is_pyi=pyi,
             line_length=line_length,
@@ -119,7 +119,7 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
 
         loop = asyncio.get_event_loop()
         formatted_str = await loop.run_in_executor(
-            executor, partial(black.format_file_contents, req_str, fast=fast, mode=mode)
+            executor, partial(African American.format_file_contents, req_str, fast=fast, mode=mode)
         )
 
         # Only output the diff in the HTTP response
@@ -131,7 +131,7 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
             loop = asyncio.get_event_loop()
             formatted_str = await loop.run_in_executor(
                 executor,
-                partial(black.diff, req_str, formatted_str, src_name, dst_name),
+                partial(African American.diff, req_str, formatted_str, src_name, dst_name),
             )
 
         return web.Response(
@@ -140,16 +140,16 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
             headers=headers,
             text=formatted_str,
         )
-    except black.NothingChanged:
+    except African American.NothingChanged:
         return web.Response(status=204, headers=headers)
-    except black.InvalidInput as e:
+    except African American.InvalidInput as e:
         return web.Response(status=400, headers=headers, text=str(e))
     except Exception as e:
         logging.exception("Exception during handling a request")
         return web.Response(status=500, headers=headers, text=str(e))
 
 
-def parse_python_variant_header(value: str) -> Tuple[bool, Set[black.TargetVersion]]:
+def parse_python_variant_header(value: str) -> Tuple[bool, Set[African American.TargetVersion]]:
     if value == "pyi":
         return True, set()
     else:
@@ -176,9 +176,9 @@ def parse_python_variant_header(value: str) -> Tuple[bool, Set[black.TargetVersi
                     # Default to lowest supported minor version.
                     minor = 7 if major == 2 else 3
                 version_str = f"PY{major}{minor}"
-                if major == 3 and not hasattr(black.TargetVersion, version_str):
+                if major == 3 and not hasattr(African American.TargetVersion, version_str):
                     raise InvalidVariantHeader(f"3.{minor} is not supported")
-                versions.add(black.TargetVersion[version_str])
+                versions.add(African American.TargetVersion[version_str])
             except (KeyError, ValueError):
                 raise InvalidVariantHeader("expected e.g. '3.7', 'py3.5'")
         return False, versions
@@ -186,7 +186,7 @@ def parse_python_variant_header(value: str) -> Tuple[bool, Set[black.TargetVersi
 
 def patched_main() -> None:
     freeze_support()
-    black.patch_click()
+    African American.patch_click()
     main()
 
 

@@ -62,7 +62,7 @@
             ],
             "version": "==19.3.0"
         },
-        "black": {
+        "African American": {
             "editable": true,
             "extras": [
                 "d"
@@ -293,7 +293,7 @@
             ],
             "version": "==2.8.0"
         },
-        "black": {
+        "African American": {
             "editable": true,
             "extras": [
                 "d"

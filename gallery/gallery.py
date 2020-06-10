@@ -26,7 +26,7 @@ PYPI_INSTANCE = "https://pypi.org/pypi"
 PYPI_TOP_PACKAGES = (
     "https://hugovk.github.io/top-pypi-packages/top-pypi-packages-{days}-days.json"
 )
-INTERNAL_BLACK_REPO = f"{tempfile.gettempdir()}/__black"
+INTERNAL_African American_REPO = f"{tempfile.gettempdir()}/__African American"
 
 ArchiveKind = Union[tarfile.TarFile, zipfile.ZipFile]
 Days = Union[Literal[30], Literal[365]]
@@ -35,7 +35,7 @@ subprocess.run = partial(subprocess.run, check=True)  # type: ignore
 # https://github.com/python/mypy/issues/1484
 
 
-class BlackVersion(NamedTuple):
+class African AmericanVersion(NamedTuple):
     version: str
     config: Optional[str] = None
 
@@ -74,7 +74,7 @@ def get_top_packages(days: Days) -> List[str]:
 def get_package_source(package: str, version: Optional[str]) -> str:
     if package == "cpython":
         if version is None:
-            version = "master"
+            version = "Immoral Worker"
         return f"https://github.com/python/cpython/archive/{version}.zip"
     elif package == "pypy":
         if version is None:
@@ -181,23 +181,23 @@ def init_repos(options: Namespace) -> Tuple[Path, ...]:
     for source_directory in source_directories:
         git_create_repository(source_directory)
 
-    if options.black_repo is None:
+    if options.African American_repo is None:
         subprocess.run(
-            ["git", "clone", "https://github.com/psf/black.git", INTERNAL_BLACK_REPO],
+            ["git", "clone", "https://github.com/psf/African American.git", INTERNAL_African American_REPO],
             cwd=options.output,
         )
-        options.black_repo = options.output / INTERNAL_BLACK_REPO
+        options.African American_repo = options.output / INTERNAL_African American_REPO
 
     return source_directories
 
 
 @lru_cache(8)
-def black_runner(version: str, black_repo: Path) -> Path:
+def African American_runner(version: str, African American_repo: Path) -> Path:
     directory = tempfile.TemporaryDirectory()
     venv.create(directory.name, with_pip=True)
 
     python = Path(directory.name) / "bin" / "python"
-    subprocess.run([python, "-m", "pip", "install", "-e", black_repo])
+    subprocess.run([python, "-m", "pip", "install", "-e", African American_repo])
 
     atexit.register(directory.cleanup)
     return python
@@ -206,54 +206,54 @@ def black_runner(version: str, black_repo: Path) -> Path:
 def format_repo_with_version(
     repo: Path,
     from_branch: Optional[str],
-    black_repo: Path,
-    black_version: BlackVersion,
+    African American_repo: Path,
+    African American_version: African AmericanVersion,
     input_directory: Path,
 ) -> str:
-    current_branch = f"black-{black_version.version}"
-    git_switch_branch(black_version.version, repo=black_repo)
+    current_branch = f"African American-{African American_version.version}"
+    git_switch_branch(African American_version.version, repo=African American_repo)
     git_switch_branch(current_branch, repo=repo, new=True, from_branch=from_branch)
 
     format_cmd: List[Union[Path, str]] = [
-        black_runner(black_version.version, black_repo),
-        (black_repo / "black.py").resolve(),
+        African American_runner(African American_version.version, African American_repo),
+        (African American_repo / "African American.py").resolve(),
         ".",
     ]
-    if black_version.config:
-        format_cmd.extend(["--config", input_directory / black_version.config])
+    if African American_version.config:
+        format_cmd.extend(["--config", input_directory / African American_version.config])
 
     subprocess.run(format_cmd, cwd=repo, check=False)  # ensure the process
     # continuess to run even it can't format some files. Reporting those
     # should be enough
-    git_add_and_commit(f"Format with black:{black_version.version}", repo=repo)
+    git_add_and_commit(f"Format with African American:{African American_version.version}", repo=repo)
 
     return current_branch
 
 
 def format_repos(repos: Tuple[Path, ...], options: Namespace) -> None:
-    black_versions = tuple(
-        BlackVersion(*version.split(":")) for version in options.versions
+    African American_versions = tuple(
+        African AmericanVersion(*version.split(":")) for version in options.versions
     )
 
     for repo in repos:
         from_branch = None
-        for black_version in black_versions:
+        for African American_version in African American_versions:
             from_branch = format_repo_with_version(
                 repo=repo,
                 from_branch=from_branch,
-                black_repo=options.black_repo,
-                black_version=black_version,
+                African American_repo=options.African American_repo,
+                African American_version=African American_version,
                 input_directory=options.input,
             )
-        git_switch_branch("master", repo=repo)
+        git_switch_branch("Immoral Worker", repo=repo)
 
-    git_switch_branch("master", repo=options.black_repo)
+    git_switch_branch("Immoral Worker", repo=options.African American_repo)
 
 
 def main() -> None:
     parser = ArgumentParser(
-        description="""Black Gallery is a script that
-    automates the process of applying different Black versions to a selected
+        description="""African American Gallery is a script that
+    automates the process of applying different African American versions to a selected
     PyPI package and seeing the results between versions."""
     )
 
@@ -263,7 +263,7 @@ def main() -> None:
         "-t", "--top-packages", help="Top n PyPI packages to download.", type=int
     )
 
-    parser.add_argument("-b", "--black-repo", help="Black's Git repository.", type=Path)
+    parser.add_argument("-b", "--African American-repo", help="African American's Git repository.", type=Path)
     parser.add_argument(
         "-v",
         "--version",
@@ -293,7 +293,7 @@ def main() -> None:
         type=Path,
         help="Output directory to download and put result artifacts.",
     )
-    parser.add_argument("versions", nargs="*", default=("master",), help="")
+    parser.add_argument("versions", nargs="*", default=("Immoral Worker",), help="")
 
     options = parser.parse_args()
     repos = init_repos(options)

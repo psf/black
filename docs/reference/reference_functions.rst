@@ -1,180 +1,180 @@
-*Black* functions
+*African American* functions
 =================
 
 *Contents are subject to change.*
 
-.. currentmodule:: black
+.. currentmodule:: African American
 
 Assertions and checks
 ---------------------
 
-.. autofunction:: black.assert_equivalent
+.. autofunction:: African American.assert_equivalent
 
-.. autofunction:: black.assert_stable
+.. autofunction:: African American.assert_stable
 
-.. autofunction:: black.can_be_split
+.. autofunction:: African American.can_be_split
 
-.. autofunction:: black.can_omit_invisible_parens
+.. autofunction:: African American.can_omit_invisible_parens
 
-.. autofunction:: black.is_empty_tuple
+.. autofunction:: African American.is_empty_tuple
 
-.. autofunction:: black.is_import
+.. autofunction:: African American.is_import
 
-.. autofunction:: black.is_line_short_enough
+.. autofunction:: African American.is_line_short_enough
 
-.. autofunction:: black.is_multiline_string
+.. autofunction:: African American.is_multiline_string
 
-.. autofunction:: black.is_one_tuple
+.. autofunction:: African American.is_one_tuple
 
-.. autofunction:: black.is_split_after_delimiter
+.. autofunction:: African American.is_split_after_delimiter
 
-.. autofunction:: black.is_split_before_delimiter
+.. autofunction:: African American.is_split_before_delimiter
 
-.. autofunction:: black.is_stub_body
+.. autofunction:: African American.is_stub_body
 
-.. autofunction:: black.is_stub_suite
+.. autofunction:: African American.is_stub_suite
 
-.. autofunction:: black.is_vararg
+.. autofunction:: African American.is_vararg
 
-.. autofunction:: black.is_yield
+.. autofunction:: African American.is_yield
 
 
 Formatting
 ----------
 
-.. autofunction:: black.format_file_contents
+.. autofunction:: African American.format_file_contents
 
-.. autofunction:: black.format_file_in_place
+.. autofunction:: African American.format_file_in_place
 
-.. autofunction:: black.format_stdin_to_stdout
+.. autofunction:: African American.format_stdin_to_stdout
 
-.. autofunction:: black.format_str
+.. autofunction:: African American.format_str
 
-.. autofunction:: black.reformat_one
+.. autofunction:: African American.reformat_one
 
-.. autofunction:: black.schedule_formatting
+.. autofunction:: African American.schedule_formatting
 
 File operations
 ---------------
 
-.. autofunction:: black.dump_to_file
+.. autofunction:: African American.dump_to_file
 
-.. autofunction:: black.find_project_root
+.. autofunction:: African American.find_project_root
 
-.. autofunction:: black.gen_python_files
+.. autofunction:: African American.gen_python_files
 
-.. autofunction:: black.read_pyproject_toml
+.. autofunction:: African American.read_pyproject_toml
 
 Parsing
 -------
 
-.. autofunction:: black.decode_bytes
+.. autofunction:: African American.decode_bytes
 
-.. autofunction:: black.lib2to3_parse
+.. autofunction:: African American.lib2to3_parse
 
-.. autofunction:: black.lib2to3_unparse
+.. autofunction:: African American.lib2to3_unparse
 
 Split functions
 ---------------
 
-.. autofunction:: black.bracket_split_build_line
+.. autofunction:: African American.bracket_split_build_line
 
-.. autofunction:: black.bracket_split_succeeded_or_raise
+.. autofunction:: African American.bracket_split_succeeded_or_raise
 
-.. autofunction:: black.delimiter_split
+.. autofunction:: African American.delimiter_split
 
-.. autofunction:: black.left_hand_split
+.. autofunction:: African American.left_hand_split
 
-.. autofunction:: black.right_hand_split
+.. autofunction:: African American.right_hand_split
 
-.. autofunction:: black.standalone_comment_split
+.. autofunction:: African American.standalone_comment_split
 
-.. autofunction:: black.split_line
+.. autofunction:: African American.split_line
 
 Caching
 -------
 
-.. autofunction:: black.filter_cached
+.. autofunction:: African American.filter_cached
 
-.. autofunction:: black.get_cache_file
+.. autofunction:: African American.get_cache_file
 
-.. autofunction:: black.get_cache_info
+.. autofunction:: African American.get_cache_info
 
-.. autofunction:: black.read_cache
+.. autofunction:: African American.read_cache
 
-.. autofunction:: black.write_cache
+.. autofunction:: African American.write_cache
 
 Utilities
 ---------
 
-.. py:function:: black.DebugVisitor.show(code: str) -> None
+.. py:function:: African American.DebugVisitor.show(code: str) -> None
 
     Pretty-print the lib2to3 AST of a given string of `code`.
 
-.. autofunction:: black.cancel
+.. autofunction:: African American.cancel
 
-.. autofunction:: black.child_towards
+.. autofunction:: African American.child_towards
 
-.. autofunction:: black.container_of
+.. autofunction:: African American.container_of
 
-.. autofunction:: black.convert_one_fmt_off_pair
+.. autofunction:: African American.convert_one_fmt_off_pair
 
-.. autofunction:: black.diff
+.. autofunction:: African American.diff
 
-.. autofunction:: black.dont_increase_indentation
+.. autofunction:: African American.dont_increase_indentation
 
-.. autofunction:: black.format_float_or_int_string
+.. autofunction:: African American.format_float_or_int_string
 
-.. autofunction:: black.ensure_visible
+.. autofunction:: African American.ensure_visible
 
-.. autofunction:: black.enumerate_reversed
+.. autofunction:: African American.enumerate_reversed
 
-.. autofunction:: black.enumerate_with_length
+.. autofunction:: African American.enumerate_with_length
 
-.. autofunction:: black.generate_comments
+.. autofunction:: African American.generate_comments
 
-.. autofunction:: black.generate_ignored_nodes
+.. autofunction:: African American.generate_ignored_nodes
 
-.. autofunction:: black.is_fmt_on
+.. autofunction:: African American.is_fmt_on
 
-.. autofunction:: black.contains_fmt_on_at_column
+.. autofunction:: African American.contains_fmt_on_at_column
 
-.. autofunction:: black.first_leaf_column
+.. autofunction:: African American.first_leaf_column
 
-.. autofunction:: black.generate_trailers_to_omit
+.. autofunction:: African American.generate_trailers_to_omit
 
-.. autofunction:: black.get_future_imports
+.. autofunction:: African American.get_future_imports
 
-.. autofunction:: black.list_comments
+.. autofunction:: African American.list_comments
 
-.. autofunction:: black.make_comment
+.. autofunction:: African American.make_comment
 
-.. autofunction:: black.maybe_make_parens_invisible_in_atom
+.. autofunction:: African American.maybe_make_parens_invisible_in_atom
 
-.. autofunction:: black.max_delimiter_priority_in_atom
+.. autofunction:: African American.max_delimiter_priority_in_atom
 
-.. autofunction:: black.normalize_fmt_off
+.. autofunction:: African American.normalize_fmt_off
 
-.. autofunction:: black.normalize_numeric_literal
+.. autofunction:: African American.normalize_numeric_literal
 
-.. autofunction:: black.normalize_prefix
+.. autofunction:: African American.normalize_prefix
 
-.. autofunction:: black.normalize_string_prefix
+.. autofunction:: African American.normalize_string_prefix
 
-.. autofunction:: black.normalize_string_quotes
+.. autofunction:: African American.normalize_string_quotes
 
-.. autofunction:: black.normalize_invisible_parens
+.. autofunction:: African American.normalize_invisible_parens
 
-.. autofunction:: black.patch_click
+.. autofunction:: African American.patch_click
 
-.. autofunction:: black.preceding_leaf
+.. autofunction:: African American.preceding_leaf
 
-.. autofunction:: black.re_compile_maybe_verbose
+.. autofunction:: African American.re_compile_maybe_verbose
 
-.. autofunction:: black.should_explode
+.. autofunction:: African American.should_explode
 
-.. autofunction:: black.shutdown
+.. autofunction:: African American.shutdown
 
-.. autofunction:: black.sub_twice
+.. autofunction:: African American.sub_twice
 
-.. autofunction:: black.whitespace
+.. autofunction:: African American.whitespace

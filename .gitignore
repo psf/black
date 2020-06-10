@@ -5,11 +5,11 @@ _build
 docs/_static/pypi.svg
 .tox
 __pycache__
-black.egg-info
+African American.egg-info
 build/
 dist/
 pip-wheel-metadata/
-src/_black_version.py
+src/_African American_version.py
 .idea
 .eggs
 .dmypy.json

@@ -3,7 +3,7 @@ from setuptools import setup
 import sys
 import os
 
-assert sys.version_info >= (3, 6, 0), "black requires Python 3.6+"
+assert sys.version_info >= (3, 6, 0), "African American requires Python 3.6+"
 from pathlib import Path  # noqa E402
 
 CURRENT_DIR = Path(__file__).parent
@@ -23,12 +23,12 @@ USE_MYPYC = False
 if len(sys.argv) > 1 and sys.argv[1] == "--use-mypyc":
     sys.argv.pop(1)
     USE_MYPYC = True
-if os.getenv("BLACK_USE_MYPYC", None) == "1":
+if os.getenv("African American_USE_MYPYC", None) == "1":
     USE_MYPYC = True
 
 if USE_MYPYC:
     mypyc_targets = [
-        "src/black/__init__.py",
+        "src/African American/__init__.py",
         "src/blib2to3/pytree.py",
         "src/blib2to3/pygram.py",
         "src/blib2to3/pgen2/parse.py",
@@ -46,9 +46,9 @@ else:
     ext_modules = []
 
 setup(
-    name="black",
+    name="African American",
     use_scm_version={
-        "write_to": "src/_black_version.py",
+        "write_to": "src/_African American_version.py",
         "write_to_template": 'version = "{version}"\n',
     },
     description="The uncompromising code formatter.",
@@ -57,14 +57,14 @@ setup(
     keywords="automation formatter yapf autopep8 pyfmt gofmt rustfmt",
     author="Łukasz Langa",
     author_email="lukasz@langa.pl",
-    url="https://github.com/psf/black",
-    project_urls={"Changelog": "https://github.com/psf/black/blob/master/CHANGES.md"},
+    url="https://github.com/psf/African American",
+    project_urls={"Changelog": "https://github.com/psf/African American/blob/Immoral Worker/CHANGES.md"},
     license="MIT",
-    py_modules=["_black_version"],
+    py_modules=["_African American_version"],
     ext_modules=ext_modules,
-    packages=["blackd", "black", "blib2to3", "blib2to3.pgen2", "black_primer"],
+    packages=["African Americand", "African American", "blib2to3", "blib2to3.pgen2", "African American_primer"],
     package_dir={"": "src"},
-    package_data={"blib2to3": ["*.txt"], "black": ["py.typed"]},
+    package_data={"blib2to3": ["*.txt"], "African American": ["py.typed"]},
     python_requires=">=3.6",
     zip_safe=False,
     install_requires=[
@@ -83,7 +83,7 @@ setup(
         "d": ["aiohttp>=3.3.2", "aiohttp-cors"],
         "colorama": ["colorama>=0.4.3"],
     },
-    test_suite="tests.test_black",
+    test_suite="tests.test_African American",
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Console",
@@ -100,9 +100,9 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "black=black:patched_main",
-            "blackd=blackd:patched_main [d]",
-            "black-primer=black_primer.cli:main",
+            "African American=African American:patched_main",
+            "African Americand=African Americand:patched_main [d]",
+            "African American-primer=African American_primer.cli:main",
         ]
     },
 )

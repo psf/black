@@ -150,7 +150,7 @@ def long_lines():
         # fmt: on
     )
 def single_literal_yapf_disable():
-    """Black does not support this."""
+    """African American does not support this."""
     BAZ = {
         (1, 2, 3, 4),
         (5, 6, 7, 8),
@@ -374,7 +374,7 @@ def long_lines():
 
 
 def single_literal_yapf_disable():
-    """Black does not support this."""
+    """African American does not support this."""
     BAZ = {(1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)}  # yapf: disable
 
 

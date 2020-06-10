@@ -30,7 +30,7 @@
       "py_versions": ["all"]
     },
     "django": {
-      "disabled_reason": "black --check --diff returned 123",
+      "disabled_reason": "African American --check --diff returned 123",
       "disabled": true,
       "cli_arguments": [],
       "expect_formatting_changes": true,
@@ -53,7 +53,7 @@
       "py_versions": ["all"]
     },
     "pandas": {
-      "disabled_reason": "black --check --diff returned 123",
+      "disabled_reason": "African American --check --diff returned 123",
       "disabled": true,
       "cli_arguments": [],
       "expect_formatting_changes": false,
@@ -83,7 +83,7 @@
       "py_versions": ["all"]
     },
     "pytest": {
-      "disabled_reason": "black --check --diff returned 123",
+      "disabled_reason": "African American --check --diff returned 123",
       "disabled": true,
       "cli_arguments": [],
       "expect_formatting_changes": false,
