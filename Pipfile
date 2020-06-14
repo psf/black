@@ -1,35 +1,35 @@
 [[source]]
+name = "pypi"
 url = "https://pypi.python.org/simple"
 verify_ssl = true
-name = "pypi"
-
-[packages]
-aiohttp = ">=3.3.2"
-click = ">=6.5"
-appdirs = "*"
-toml = ">=0.9.4"
-black = {path = ".",extras = ["d"],editable = true}
-aiohttp-cors = "*"
-typed-ast = "==1.4.0"
-typing_extensions = ">=3.7.4"
-mypy_extensions = ">=0.4.3"
-regex = ">=2019.8"
-pathspec = ">=0.6"
-dataclasses = {version = ">=0.6",python_version = "< 3.7"}
 
 [dev-packages]
-pre-commit = "*"
+Sphinx = "*"
 coverage = "*"
 docutils = "==0.15"  # not a direct dependency, see https://github.com/pypa/pipenv/issues/3865
 flake8 = "*"
 flake8-bugbear = "*"
 flake8-mypy = "*"
 mypy = ">=0.740"
+pre-commit = "*"
 readme_renderer = "*"
 recommonmark = "*"
-Sphinx = "*"
 setuptools = ">=39.2.0"
+setuptools-scm = "*"
 twine = ">=1.11.0"
 wheel = ">=0.31.1"
-setuptools-scm = "*"
-black = {path = ".",extras = ["d"],editable = true}
+black = {editable = true,extras = ["d"],path = "."}
+
+[packages]
+aiohttp = ">=3.3.2"
+aiohttp-cors = "*"
+appdirs = "*"
+click = ">=6.5"
+mypy_extensions = ">=0.4.3"
+pathspec = ">=0.6"
+regex = ">=2019.8"
+toml = "==0.10.1"
+typed-ast = "==1.4.0"
+typing_extensions = ">=3.7.4"
+black = {editable = true,extras = ["d"],path = "."}
+dataclasses = {"python_version <" = "3.7","version >" = "0.6"}
