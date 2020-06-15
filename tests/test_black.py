@@ -10,10 +10,11 @@ from pathlib import Path
 import regex as re
 import sys
 from tempfile import TemporaryDirectory
-from typing import Any, BinaryIO, Generator, List, Tuple, Iterator, TypeVar
+from typing import Any, BinaryIO, Dict, Generator, List, Tuple, Iterator, TypeVar
 import unittest
 from unittest.mock import patch, MagicMock
 
+import click
 from click import unstyle
 from click.testing import CliRunner
 
@@ -1776,14 +1777,19 @@ class BlackTestCase(unittest.TestCase):
 
     def test_read_pyproject_toml(self) -> None:
         test_toml_file = THIS_DIR / "test.toml"
-        # Fake a click context
-        class FakeContext:
+
+        # Fake a click context and parameter so mypy stays happy
+        class FakeContext(click.Context):
             def __init__(self) -> None:
-                self.default_map = {}
+                self.default_map: Dict[str, Any] = {}
+
+        class FakeParameter(click.Parameter):
+            def __init__(self) -> None:
+                pass
 
         fake_ctx = FakeContext()
         black.read_pyproject_toml(
-            fake_ctx, "this parameter isn't even used", str(test_toml_file)
+            fake_ctx, FakeParameter(), str(test_toml_file),
         )
         config = fake_ctx.default_map
         self.assertEqual(config["verbose"], "1")
