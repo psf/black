@@ -10,10 +10,11 @@ from pathlib import Path
 import regex as re
 import sys
 from tempfile import TemporaryDirectory
-from typing import Any, BinaryIO, Generator, List, Tuple, Iterator, TypeVar
+from typing import Any, BinaryIO, Dict, Generator, List, Tuple, Iterator, TypeVar
 import unittest
 from unittest.mock import patch, MagicMock
 
+import click
 from click import unstyle
 from click.testing import CliRunner
 
@@ -1761,6 +1762,44 @@ class BlackTestCase(unittest.TestCase):
             self.invokeBlack(args, exit_code=2, ignore_config=False)
         finally:
             tmp_file.unlink()
+
+    def test_parse_pyproject_toml(self) -> None:
+        test_toml_file = THIS_DIR / "test.toml"
+        config = black.parse_pyproject_toml(str(test_toml_file))
+        self.assertEqual(config["verbose"], 1)
+        self.assertEqual(config["check"], "no")
+        self.assertEqual(config["diff"], "y")
+        self.assertEqual(config["color"], True)
+        self.assertEqual(config["line_length"], 79)
+        self.assertEqual(config["target_version"], ["py36", "py37", "py38"])
+        self.assertEqual(config["exclude"], r"\.pyi?$")
+        self.assertEqual(config["include"], r"\.py?$")
+
+    def test_read_pyproject_toml(self) -> None:
+        test_toml_file = THIS_DIR / "test.toml"
+
+        # Fake a click context and parameter so mypy stays happy
+        class FakeContext(click.Context):
+            def __init__(self) -> None:
+                self.default_map: Dict[str, Any] = {}
+
+        class FakeParameter(click.Parameter):
+            def __init__(self) -> None:
+                pass
+
+        fake_ctx = FakeContext()
+        black.read_pyproject_toml(
+            fake_ctx, FakeParameter(), str(test_toml_file),
+        )
+        config = fake_ctx.default_map
+        self.assertEqual(config["verbose"], "1")
+        self.assertEqual(config["check"], "no")
+        self.assertEqual(config["diff"], "y")
+        self.assertEqual(config["color"], "True")
+        self.assertEqual(config["line_length"], "79")
+        self.assertEqual(config["target_version"], ["py36", "py37", "py38"])
+        self.assertEqual(config["exclude"], r"\.pyi?$")
+        self.assertEqual(config["include"], r"\.py?$")
 
 
 class BlackDTestCase(AioHTTPTestCase):

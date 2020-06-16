@@ -281,12 +281,7 @@ def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
     """
     pyproject_toml = toml.load(path_config)
     config = pyproject_toml.get("tool", {}).get("black", {})
-    return {
-        k.replace("--", "").replace("-", "_"): str(v)
-        if not isinstance(v, (list, dict))
-        else v
-        for k, v in config.items()
-    }
+    return {k.replace("--", "").replace("-", "_"): v for k, v in config.items()}
 
 
 def read_pyproject_toml(
@@ -311,6 +306,14 @@ def read_pyproject_toml(
 
     if not config:
         return None
+    else:
+        # Sanitize the values to be Click friendly. For more information please see:
+        # https://github.com/psf/black/issues/1458
+        # https://github.com/pallets/click/issues/1567
+        config = {
+            k: str(v) if not isinstance(v, (list, dict)) else v
+            for k, v in config.items()
+        }
 
     target_version = config.get("target_version")
     if target_version is not None and not isinstance(target_version, list):
