@@ -1,13 +1,13 @@
 ## blackd
 
 `blackd` is a small HTTP server that exposes _Black_'s functionality over a simple
-protocol. The main benefit of using it is to avoid paying the cost of starting up a new
-_Black_ process every time you want to blacken a file.
+protocol. The main benefit of using it is to avoid the cost of starting up a new _Black_
+process every time you want to blacken a file.
 
 ### Usage
 
 `blackd` is not packaged alongside _Black_ by default because it has additional
-dependencies. You will need to do `pip install black[d]` to install it.
+dependencies. You will need to execute `pip install black[d]` to install it.
 
 You can start the server on the default port, binding only to the local interface by
 running `blackd`. You will see a single line mentioning the server's version, and the
@@ -28,7 +28,7 @@ Options:
   -h, --help                      Show this message and exit.
 ```
 
-There is no official blackd client tool (yet!). You can test that blackd is working
+There is no official `blackd` client tool (yet!). You can test that blackd is working
 using `curl`:
 
 ```sh
@@ -43,12 +43,12 @@ contain the python source code to be formatted, encoded according to the `charse
 in the `Content-Type` request header. If no `charset` is specified, `blackd` assumes
 `UTF-8`.
 
-There are a few HTTP headers that control how the source is formatted. These correspond
-to command line flags for _Black_. There is one exception to this: `X-Protocol-Version`
-which if present, should have the value `1`, otherwise the request is rejected with
-`HTTP 501` (Not Implemented).
+There are a few HTTP headers that control how the source code is formatted. These
+correspond to command line flags for _Black_. There is one exception to this:
+`X-Protocol-Version` which if present, should have the value `1`, otherwise the request
+is rejected with `HTTP 501` (Not Implemented).
 
-The headers controlling how code is formatted are:
+The headers controlling how source code is formatted are:
 
 - `X-Line-Length`: corresponds to the `--line-length` command line flag.
 - `X-Skip-String-Normalization`: corresponds to the `--skip-string-normalization`
@@ -74,7 +74,7 @@ Apart from the above, `blackd` can produce the following response codes:
   blackened Python code, and the `Content-Type` header is set accordingly.
 - `HTTP 400`: If the input contains a syntax error. Details of the error are returned in
   the response body.
-- `HTTP 500`: If there was any kind of error while trying to format the input. The
+- `HTTP 500`: If there was any other kind of error while trying to format the input. The
   response body contains a textual representation of the error.
 
 The response headers include a `X-Black-Version` header containing the version of
