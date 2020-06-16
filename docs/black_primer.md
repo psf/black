@@ -51,10 +51,10 @@ Options:
   -h, --help             Show this message and exit.
 ```
 
-## primer config file
+## Primer config file
 
-The config is JSON format. Its main element is the `"projects"` dictionary. Below
-explains each parameter:
+The config file is in JSON format. Its main element is the `"projects"` dictionary and
+each parameter is explained below:
 
 ```json
 {
@@ -76,6 +76,9 @@ explains each parameter:
   }
 }
 ```
+
+An example primer config file is used by Black
+[here](https://github.com/psf/black/blob/master/src/black_primer/primer.json)
 
 ## Example run
 
