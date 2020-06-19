@@ -6,6 +6,10 @@ linters and type checkers. Some of them need a bit of tweaking to resolve the co
 Listed below are _Black_ compatible configurations in various formats for the common
 tools out there.
 
+**Please note** that _Black_ only supports the TOML file format for its configuration
+(e.g. `pyproject.toml`). The provided examples are to only configure their corresponding
+tools, using **their** supported file formats.
+
 ## isort
 
 [isort](https://pypi.org/p/isort/) helps to sort and format imports in your Python code.
