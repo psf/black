@@ -28,7 +28,7 @@ click = ">=6.5"
 mypy_extensions = ">=0.4.3"
 pathspec = ">=0.6"
 regex = ">=2019.8"
-toml = "==0.10.1"
+toml = ">=0.10.1"
 typed-ast = "==1.4.0"
 typing_extensions = ">=3.7.4"
 black = {editable = true,extras = ["d"],path = "."}
