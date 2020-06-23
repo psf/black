@@ -641,10 +641,9 @@ def path_empty(
     """
     Exit if there is no `src` provided for formatting
     """
-    if len(src) == 0:
-        if verbose or not quiet:
-            out(msg)
-            ctx.exit(0)
+    if not src and (verbose or not quiet):
+        out(msg)
+        ctx.exit(0)
 
 
 def reformat_one(
@@ -928,7 +927,7 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
     valid by calling :func:`assert_equivalent` and :func:`assert_stable` on it.
     `mode` is passed to :func:`format_str`.
     """
-    if src_contents.strip() == "":
+    if not src_contents.strip():
         raise NothingChanged
 
     dst_contents = format_str(src_contents, mode=mode)
@@ -1062,7 +1061,7 @@ def get_grammars(target_versions: Set[TargetVersion]) -> List[Grammar]:
 
 def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -> Node:
     """Given a string with source, return the lib2to3 Node."""
-    if src_txt[-1:] != "\n":
+    if not src_txt.endswith("\n"):
         src_txt += "\n"
 
     for grammar in get_grammars(set(target_versions)):
@@ -1547,11 +1546,10 @@ class Line:
 
     def contains_standalone_comments(self, depth_limit: int = sys.maxsize) -> bool:
         """If so, needs to be split before emitting."""
-        for leaf in self.leaves:
-            if leaf.type == STANDALONE_COMMENT and leaf.bracket_depth <= depth_limit:
-                return True
-
-        return False
+        return any(
+            leaf.type == STANDALONE_COMMENT and leaf.bracket_depth <= depth_limit
+            for leaf in self.leaves
+        )
 
     def contains_uncollapsable_type_comments(self) -> bool:
         ignored_ids = set()
@@ -3992,12 +3990,13 @@ class StringParenWrapper(CustomSplitMapMixin, BaseStringSplitter):
     def do_splitter_match(self, line: Line) -> TMatchResult:
         LL = line.leaves
 
-        string_idx = None
-        string_idx = string_idx or self._return_match(LL)
-        string_idx = string_idx or self._else_match(LL)
-        string_idx = string_idx or self._assert_match(LL)
-        string_idx = string_idx or self._assign_match(LL)
-        string_idx = string_idx or self._dict_match(LL)
+        string_idx = (
+            self._return_match(LL)
+            or self._else_match(LL)
+            or self._assert_match(LL)
+            or self._assign_match(LL)
+            or self._dict_match(LL)
+        )
 
         if string_idx is not None:
             string_value = line.leaves[string_idx].value
@@ -4196,7 +4195,7 @@ class StringParenWrapper(CustomSplitMapMixin, BaseStringSplitter):
         is_valid_index = is_valid_index_factory(LL)
         insert_str_child = insert_str_child_factory(LL[string_idx])
 
-        comma_idx = len(LL) - 1
+        comma_idx = -1
         ends_with_comma = False
         if LL[comma_idx].type == token.COMMA:
             ends_with_comma = True
@@ -4444,11 +4443,10 @@ def contains_pragma_comment(comment_list: List[Leaf]) -> bool:
         of the more common static analysis tools for python (e.g. mypy, flake8,
         pylint).
     """
-    for comment in comment_list:
-        if comment.value.startswith(("# type:", "# noqa", "# pylint:")):
-            return True
-
-    return False
+    return any(
+        comment.value.startswith(("# type:", "# noqa", "# pylint:"))
+        for comment in comment_list
+    )
 
 
 def insert_str_child_factory(string_leaf: Leaf) -> Callable[[LN], None]:
