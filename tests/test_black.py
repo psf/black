@@ -1801,6 +1801,28 @@ class BlackTestCase(unittest.TestCase):
         self.assertEqual(config["exclude"], r"\.pyi?$")
         self.assertEqual(config["include"], r"\.py?$")
 
+    def test_find_project_root(self) -> None:
+        with TemporaryDirectory() as workspace:
+            root = Path(workspace)
+            test_dir = root / "test"
+            test_dir.mkdir()
+
+            src_dir = root / "src"
+            src_dir.mkdir()
+
+            root_pyproject = root / "pyproject.toml"
+            root_pyproject.touch()
+            src_pyproject = src_dir / "pyproject.toml"
+            src_pyproject.touch()
+            src_python = src_dir / "foo.py"
+            src_python.touch()
+
+            self.assertEqual(
+                black.find_project_root((src_dir, test_dir)), root.resolve()
+            )
+            self.assertEqual(black.find_project_root((src_dir,)), src_dir.resolve())
+            self.assertEqual(black.find_project_root((src_python,)), src_dir.resolve())
+
 
 class BlackDTestCase(AioHTTPTestCase):
     async def get_application(self) -> web.Application:
