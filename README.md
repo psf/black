@@ -51,6 +51,12 @@ _Contents:_ **[Installation and usage](#installation-and-usage)** |
 _Black_ can be installed by running `pip install black`. It requires Python 3.6.0+ to
 run but you can reformat Python 2 code with it, too.
 
+#### Install from GitHub
+
+If you can't wait for the latest _hotness_ and want to install from GitHub, use:
+
+`pip install git+git://github.com/psf/black`
+
 ### Usage
 
 To get started right away with sensible defaults:
