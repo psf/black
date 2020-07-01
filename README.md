@@ -53,7 +53,7 @@ run but you can reformat Python 2 code with it, too.
 
 #### Install from GitHub
 
-If you can't wait for the latest *hotness* and want to install from GitHub, use:
+If you can't wait for the latest _hotness_ and want to install from GitHub, use:
 
 `pip install git+git://github.com/psf/black`
 
