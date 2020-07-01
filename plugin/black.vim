@@ -51,6 +51,10 @@ import os
 import sys
 import vim
 
+from typing import Any, Dict, Iterable, Optional
+from pathlib import Path
+from functools import lru_cache
+
 
 class Flag(collections.namedtuple("FlagBase", "name, cast")):
   @property
@@ -62,15 +66,13 @@ class Flag(collections.namedtuple("FlagBase", "name, cast")):
     name = self.var_name
     if name == "line_length":
       name = name.replace("_", "")
-    if name == "string_normalization":
-      name = "skip_" + name
     return "g:black_" + name
 
 
 FLAGS = [
   Flag(name="line_length", cast=int),
-  Flag(name="fast", cast=bool),
-  Flag(name="string_normalization", cast=bool),
+  Flag(name="fast", cast=lambda val: val.strip().lower() in ('1', 'true')),
+  Flag(name="skip_string_normalization", cast=lambda val: val.strip().lower() in ('1', 'true')),
 ]
 
 
@@ -140,7 +142,7 @@ def Black():
   configs = get_configs()
   mode = black.FileMode(
     line_length=configs["line_length"],
-    string_normalization=configs["string_normalization"],
+    string_normalization=not configs["skip_string_normalization"],
     is_pyi=vim.current.buffer.name.endswith('.pyi'),
   )
 
@@ -172,12 +174,74 @@ def Black():
         window.cursor = (len(window.buffer), 0)
     print(f'Reformatted in {time.time() - start:.4f}s.')
 
+
+def find_pyproject_toml(path_search_start: Iterable[str]) -> Optional[str]:
+    """Find the absolute filepath to a pyproject.toml if it exists"""
+    path_project_root = find_project_root(path_search_start)
+    path_pyproject_toml = path_project_root / "pyproject.toml"
+    return str(path_pyproject_toml) if path_pyproject_toml.is_file() else None
+
+@lru_cache()
+def find_project_root(srcs: Iterable[str]) -> Path:
+    """Return a directory containing .git, .hg, or pyproject.toml.
+    That directory will be a common parent of all files and directories
+    passed in `srcs`.
+    If no directory in the tree contains a marker that would specify it's the
+    project root, the root of the file system is returned.
+    """
+    if not srcs:
+        return Path("/").resolve()
+
+    path_srcs = [Path(src).resolve() for src in srcs]
+
+    # A list of lists of parents for each 'src'. 'src' is included as a
+    # "parent" of itself if it is a directory
+    src_parents = [
+        list(path.parents) + ([path] if path.is_dir() else []) for path in path_srcs
+    ]
+
+    common_base = max(
+        set.intersection(*(set(parents) for parents in src_parents)),
+        key=lambda path: path.parts,
+    )
+
+    for directory in (common_base, *common_base.parents):
+        if (directory / ".git").exists():
+            return directory
+
+        if (directory / ".hg").is_dir():
+            return directory
+
+        if (directory / "pyproject.toml").is_file():
+            return directory
+
+    return directory
+
+
+def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
+    """Parse a pyproject toml file, pulling out relevant parts for Black
+    If parsing fails, will raise a toml.TomlDecodeError
+    """
+    import toml
+    pyproject_toml = toml.load(path_config)
+    config = pyproject_toml.get("tool", {}).get("black", {})
+    return {k.replace("--", "").replace("-", "_"): v for k, v in config.items()}
+
+
 def get_configs():
-  path_pyproject_toml = black.find_pyproject_toml(vim.eval("fnamemodify(getcwd(), ':t')"))
-  if path_pyproject_toml:
-    toml_config = black.parse_pyproject_toml(path_pyproject_toml)
+  # Old versions of black
+  old_version = os.path.basename(black.__file__) == 'black.py'
+  if old_version:
+      path_pyproject_toml = find_pyproject_toml(vim.eval("fnamemodify(getcwd(), ':t')"))
   else:
-    toml_config = {}
+      path_pyproject_toml = black.find_pyproject_toml(vim.eval("fnamemodify(getcwd(), ':t')"))
+
+  toml_config = {}
+  if path_pyproject_toml:
+      if old_version:
+          toml_config = parse_pyproject_toml(path_pyproject_toml)
+      else:
+          toml_config = black.parse_pyproject_toml(path_pyproject_toml)
 
   return {
     flag.var_name: toml_config.get(flag.name, flag.cast(vim.eval(flag.vim_rc_name)))
