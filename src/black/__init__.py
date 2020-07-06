@@ -471,7 +471,7 @@ def target_version_option_callback(
     ),
     is_eager=True,
     callback=read_pyproject_toml,
-    help="Read configuration from PATH.",
+    help="Read configuration from FILE path.",
 )
 @click.pass_context
 def main(
