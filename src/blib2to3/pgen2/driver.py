@@ -194,12 +194,26 @@ def load_grammar(
     if force or not _newer(gp, gt):
         logger.info("Generating grammar tables from %s", gt)
         g: grammar.Grammar = pgen.generate_grammar(gt)
-        if save:
+        if save and os.path.exists(os.path.dirname(gp)):
             logger.info("Writing grammar tables to %s", gp)
             try:
                 g.dump(gp)
             except OSError as e:
                 logger.info("Writing failed: %s", e)
+        else:
+            # If we arrive here, it's mostly likely because the directory where gp
+            # would be saved to doesn't exist. This happens when Black hasn't created
+            # the cache directory yet because it hasn't been run. Usually a problem
+            # when using Black as a library. Being unable to write pickled grammar
+            # tables isn't a huge problem though, just some performance is lost.
+            if not save:
+                reason = "saving was disabled"
+            else:
+                gpdir = os.path.dirname(gp)
+                reason = (
+                    f"the directory they would be saved to is non-existent: {gpdir}"
+                )
+            logger.info(f"Skipping writing grammar tables to {gp} because {reason}")
     else:
         g = grammar.Grammar()
         g.load(gp)
