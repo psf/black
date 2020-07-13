@@ -45,7 +45,7 @@ $ black-primer [-k -w /tmp/black_test_repos]
 ## black-primer
 
 `black-primer` is used by CI to pull down well-known _Black_ formatted projects and see
-if we get soure code changes. It will error on formatting changes or errors. Please run
+if we get source code changes. It will error on formatting changes or errors. Please run
 before pushing your PR to see if you get the actions you would expect from _Black_ with
 your PR. You may need to change
 [primer.json](https://github.com/psf/black/blob/master/src/black_primer/primer.json)
