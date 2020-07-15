@@ -5834,7 +5834,7 @@ def find_project_root(srcs: Iterable[str]) -> Path:
     if not srcs:
         return Path("/").resolve()
 
-    path_srcs = [Path(src).resolve() for src in srcs]
+    path_srcs = [Path(Path.cwd(), src).resolve() for src in srcs]
 
     # A list of lists of parents for each 'src'. 'src' is included as a
     # "parent" of itself if it is a directory
