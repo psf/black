@@ -20,7 +20,7 @@ matrix:
     - name: "lint"
       python: 3.7
       env:
-        - TEST_CMD="pre-commit run --all-files"
+        - TEST_CMD="pre-commit run --all-files --show-diff-on-failure"
     - name: "3.6"
       python: 3.6
     - name: "3.7"
