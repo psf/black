@@ -370,10 +370,10 @@ Use [pre-commit](https://pre-commit.com/). Once you
 ```yaml
 repos:
   - repo: https://github.com/psf/black
-    rev: stable
+    rev: 19.10b0 # Replace by any tag/version: https://github.com/psf/black/tags
     hooks:
       - id: black
-        language_version: python3.6
+        language_version: python3 # Should be a command that runs python3.6+
 ```
 
 Then run `pre-commit install` and you're ready to go.
