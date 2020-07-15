@@ -146,7 +146,7 @@ or you can copy the plugin from
 
 ```
 mkdir -p ~/.vim/pack/python/start/black/plugin
-curl https://raw.githubusercontent.com/psf/black/master/plugin/black.vim -o ~/.vim/pack/python/start/black/plugin/black.vim
+curl https://raw.githubusercontent.com/psf/black/stable/plugin/black.vim -o ~/.vim/pack/python/start/black/plugin/black.vim
 ```
 
 Let me know if this requires any changes to work with Vim 8's builtin `packadd`, or
