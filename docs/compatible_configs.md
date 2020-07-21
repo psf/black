@@ -63,15 +63,19 @@ The option `force_grid_wrap = 0` is just to tell isort to only wrap imports that
 the `line_length` limit.
 
 Finally, isort should be told to wrap imports when they surpass _Black_'s default limit
-of 88 characters via `line_length = 88` as well as `ensure_newline_before_comments = True`
-to ensure spacing import sections with comments works the same as with _Black_.
+of 88 characters via `line_length = 88` as well as
+`ensure_newline_before_comments = True` to ensure spacing import sections with comments
+works the same as with _Black_.
 
 ---
 
 NOTE
 
-`ensure_newline_before_comments = True` only works since isort >= 5 but does not break previous ones so you can keep it if you are running previous versions. If only isort >= 5 is used you can add `profile = black` instead of all the options since
-[profiles](https://timothycrosley.github.io/isort/docs/configuration/profiles/) are available and do the configuring for you.
+`ensure_newline_before_comments = True` only works since isort >= 5 but does not break
+previous ones so you can keep it if you are running previous versions. If only isort >=
+5 is used you can add `profile = black` instead of all the options since
+[profiles](https://timothycrosley.github.io/isort/docs/configuration/profiles/) are
+available and do the configuring for you.
 
 ---
 
