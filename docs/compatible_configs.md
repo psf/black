@@ -113,10 +113,10 @@ line_length = 88
 ```toml
 [tool.isort]
 multi_line_output = 3
-include_trailing_comma = True
+include_trailing_comma = true
 force_grid_wrap = 0
-use_parentheses = True
-ensure_newline_before_comments = True
+use_parentheses = true
+ensure_newline_before_comments = true
 line_length = 88
 ```
 
