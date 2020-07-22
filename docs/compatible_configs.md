@@ -67,17 +67,11 @@ of 88 characters via `line_length = 88` as well as
 `ensure_newline_before_comments = True` to ensure spacing import sections with comments
 works the same as with _Black_.
 
----
-
-NOTE
-
-`ensure_newline_before_comments = True` only works since isort >= 5 but does not break
-older versions so you can keep it if you are running previous versions. If only isort >=
-5 is used you can add `profile = black` instead of all the options since
-[profiles](https://timothycrosley.github.io/isort/docs/configuration/profiles/) are
-available and do the configuring for you.
-
----
+**Please note** `ensure_newline_before_comments = True` only works since isort >= 5 but
+does not break older versions so you can keep it if you are running previous versions.
+If only isort >= 5 is used you can add `profile = black` instead of all the options
+since [profiles](https://timothycrosley.github.io/isort/docs/configuration/profiles/)
+are available and do the configuring for you.
 
 ### Formats
 
