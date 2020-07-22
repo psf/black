@@ -23,6 +23,7 @@ multi_line_output = 3
 include_trailing_comma = True
 force_grid_wrap = 0
 use_parentheses = True
+ensure_newline_before_comments = True
 line_length = 88
 ```
 
@@ -62,7 +63,15 @@ The option `force_grid_wrap = 0` is just to tell isort to only wrap imports that
 the `line_length` limit.
 
 Finally, isort should be told to wrap imports when they surpass _Black_'s default limit
-of 88 characters via `line_length = 88`.
+of 88 characters via `line_length = 88` as well as
+`ensure_newline_before_comments = True` to ensure spacing import sections with comments
+works the same as with _Black_.
+
+**Please note** `ensure_newline_before_comments = True` only works since isort >= 5 but
+does not break older versions so you can keep it if you are running previous versions.
+If only isort >= 5 is used you can add `profile = black` instead of all the options
+since [profiles](https://timothycrosley.github.io/isort/docs/configuration/profiles/)
+are available and do the configuring for you.
 
 ### Formats
 
@@ -75,6 +84,7 @@ multi_line_output = 3
 include_trailing_comma = True
 force_grid_wrap = 0
 use_parentheses = True
+ensure_newline_before_comments = True
 line_length = 88
 ```
 
@@ -89,6 +99,7 @@ multi_line_output = 3
 include_trailing_comma = True
 force_grid_wrap = 0
 use_parentheses = True
+ensure_newline_before_comments = True
 line_length = 88
 ```
 
@@ -103,6 +114,7 @@ multi_line_output = 3
 include_trailing_comma = true
 force_grid_wrap = 0
 use_parentheses = true
+ensure_newline_before_comments = true
 line_length = 88
 ```
 
@@ -117,6 +129,7 @@ multi_line_output = 3
 include_trailing_comma = True
 force_grid_wrap = 0
 use_parentheses = True
+ensure_newline_before_comments = True
 line_length = 88
 ```
 
