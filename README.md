@@ -548,6 +548,7 @@ Multiple contributions by:
 - [Christian Clauss](mailto:cclauss@bluewin.ch)
 - [Christian Heimes](mailto:christian@python.org)
 - [Chuck Wooters](mailto:chuck.wooters@microsoft.com)
+- [Chris Rose](mailto:offline@offby1.net)
 - Codey Oxley
 - [Cong](mailto:congusbongus@gmail.com)
 - [Cooper Ry Lees](mailto:me@cooperlees.com)
