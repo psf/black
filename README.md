@@ -354,7 +354,7 @@ rolling.
 
 ## black-primer
 
-`black-primer` is a tool built for CI (and huumans) to have _Black_ `--check` a number
+`black-primer` is a tool built for CI (and humans) to have _Black_ `--check` a number
 of (configured in `primer.json`) Git accessible projects in parallel.
 [black_primer](https://github.com/psf/black/blob/master/docs/black_primer.md) has more
 information regarding its usage and configuration.
