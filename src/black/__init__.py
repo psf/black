@@ -5041,7 +5041,7 @@ def normalize_string_prefix(leaf: Leaf, remove_u_prefix: bool = False) -> None:
 
 
 def normalize_string_quotes(leaf: Leaf) -> None:
-    """Prefer double quotes but only if it doesn't cause more escaping.
+    """Prefer single quotes but only if it doesn't cause more escaping.
 
     Adds or removes backslashes as appropriate. Doesn't parse and fix
     strings nested in f-strings (yet).
@@ -5049,18 +5049,18 @@ def normalize_string_quotes(leaf: Leaf) -> None:
     Note: Mutates its argument.
     """
     value = leaf.value.lstrip(STRING_PREFIX_CHARS)
-    if value[:3] == '"""':
+    if value[:3] == "'''":
         return
 
-    elif value[:3] == "'''":
-        orig_quote = "'''"
-        new_quote = '"""'
-    elif value[0] == '"':
-        orig_quote = '"'
-        new_quote = "'"
-    else:
+    elif value[:3] == '"""':
+        orig_quote = '"""'
+        new_quote = "'''"
+    elif value[0] == "'":
         orig_quote = "'"
         new_quote = '"'
+    else:
+        orig_quote = '"'
+        new_quote = "'"
     first_quote_pos = leaf.value.find(orig_quote)
     if first_quote_pos == -1:
         return  # There's an internal error
@@ -5102,16 +5102,16 @@ def normalize_string_quotes(leaf: Leaf) -> None:
                 # Do not introduce backslashes in interpolated expressions
                 return
 
-    if new_quote == '"""' and new_body[-1:] == '"':
+    if new_quote == "'''" and new_body[-1:] == "'":
         # edge case:
-        new_body = new_body[:-1] + '\\"'
+        new_body = new_body[:-1] + "\\'"
     orig_escape_count = body.count("\\")
     new_escape_count = new_body.count("\\")
     if new_escape_count > orig_escape_count:
         return  # Do not introduce more escaping
 
-    if new_escape_count == orig_escape_count and orig_quote == '"':
-        return  # Prefer double quotes
+    if new_escape_count == orig_escape_count and orig_quote == "'":
+        return  # Prefer single quotes
 
     leaf.value = f"{prefix}{new_quote}{new_body}{new_quote}"
 
@@ -6421,6 +6421,7 @@ def patch_click() -> None:
 
 
 def patched_main() -> None:
+    print(" ===== RUNNING CUSTOM BLACK ===== ")
     freeze_support()
     patch_click()
     main()
