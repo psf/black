@@ -5048,19 +5048,24 @@ def normalize_string_quotes(leaf: Leaf) -> None:
 
     Note: Mutates its argument.
     """
+    good_docquote = '"""'
+    bad_docquote = "'''"
+    good_quote = '"'
+    bad_quote = "'"
+
     value = leaf.value.lstrip(STRING_PREFIX_CHARS)
-    if value[:3] == '"""':
+    if value[:3] == good_docquote:
         return
 
-    elif value[:3] == "'''":
-        orig_quote = "'''"
-        new_quote = '"""'
-    elif value[0] == '"':
-        orig_quote = '"'
-        new_quote = "'"
+    elif value[:3] == bad_docquote:
+        orig_quote = bad_docquote
+        new_quote = good_docquote
+    elif value[0] == good_quote:
+        orig_quote = good_quote
+        new_quote = bad_quote
     else:
-        orig_quote = "'"
-        new_quote = '"'
+        orig_quote = bad_quote
+        new_quote = good_quote
     first_quote_pos = leaf.value.find(orig_quote)
     if first_quote_pos == -1:
         return  # There's an internal error
@@ -5102,15 +5107,15 @@ def normalize_string_quotes(leaf: Leaf) -> None:
                 # Do not introduce backslashes in interpolated expressions
                 return
 
-    if new_quote == '"""' and new_body[-1:] == '"':
+    if new_quote == good_docquote and new_body[-1:] == good_docquote[0]:
         # edge case:
-        new_body = new_body[:-1] + '\\"'
+        new_body = new_body[:-1] + f"\\{good_docquote[0]}"
     orig_escape_count = body.count("\\")
     new_escape_count = new_body.count("\\")
     if new_escape_count > orig_escape_count:
         return  # Do not introduce more escaping
 
-    if new_escape_count == orig_escape_count and orig_quote == '"':
+    if new_escape_count == orig_escape_count and orig_quote == good_quote:
         return  # Prefer double quotes
 
     leaf.value = f"{prefix}{new_quote}{new_body}{new_quote}"
