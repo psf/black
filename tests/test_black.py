@@ -110,6 +110,20 @@ def skip_if_exception(e: str) -> Iterator[None]:
             raise
 
 
+class FakeContext(click.Context):
+    """A fake click Context for when calling functions that need it."""
+
+    def __init__(self) -> None:
+        self.default_map: Dict[str, Any] = {}
+
+
+class FakeParameter(click.Parameter):
+    """A fake click Parameter for when calling functions that need it."""
+
+    def __init__(self) -> None:
+        pass
+
+
 class BlackRunner(CliRunner):
     """Modify CliRunner so that stderr is not merged with stdout.
 
@@ -1556,6 +1570,31 @@ class BlackTestCase(unittest.TestCase):
         )
         self.assertEqual(sorted(expected), sorted(sources))
 
+    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
+    def test_exclude_for_issue_1572(self) -> None:
+        # Exclude shouldn't touch files that were explicitly given to Black through the
+        # CLI. Exclude is supposed to only apply to the recursive discovery of files.
+        # https://github.com/psf/black/issues/1572
+        path = THIS_DIR / "data" / "include_exclude_tests"
+        include = ""
+        exclude = r"/exclude/|a\.py"
+        src = str(path / "b/exclude/a.py")
+        report = black.Report()
+        expected = [Path(path / "b/exclude/a.py")]
+        sources = list(
+            black.get_sources(
+                ctx=FakeContext(),
+                src=(src,),
+                quiet=True,
+                verbose=False,
+                include=include,
+                exclude=exclude,
+                force_exclude=None,
+                report=report,
+            )
+        )
+        self.assertEqual(sorted(expected), sorted(sources))
+
     def test_gitignore_exclude(self) -> None:
         path = THIS_DIR / "data" / "include_exclude_tests"
         include = re.compile(r"\.pyi?$")
@@ -1777,16 +1816,6 @@ class BlackTestCase(unittest.TestCase):
 
     def test_read_pyproject_toml(self) -> None:
         test_toml_file = THIS_DIR / "test.toml"
-
-        # Fake a click context and parameter so mypy stays happy
-        class FakeContext(click.Context):
-            def __init__(self) -> None:
-                self.default_map: Dict[str, Any] = {}
-
-        class FakeParameter(click.Parameter):
-            def __init__(self) -> None:
-                pass
-
         fake_ctx = FakeContext()
         black.read_pyproject_toml(
             fake_ctx, FakeParameter(), str(test_toml_file),
