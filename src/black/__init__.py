@@ -3238,7 +3238,8 @@ class StringParenStripper(StringTransformer):
     Requirements:
         The line contains a string which is surrounded by parentheses and:
             - The target string is NOT the only argument to a function call).
-            - The RPAR is NOT followed by an attribute access (i.e. a dot).
+            - The RPAR is NOT followed by an operator with higher precedence
+              than PERCENT.
 
     Transformations:
         The parentheses mentioned in the 'Requirements' section are stripped.
@@ -3287,8 +3288,14 @@ class StringParenStripper(StringTransformer):
                 and LL[next_idx].type == token.RPAR
                 and not is_empty_rpar(LL[next_idx])
             ):
-                # That RPAR should NOT be followed by a '.' symbol.
-                if is_valid_index(next_idx + 1) and LL[next_idx + 1].type == token.DOT:
+                # That RPAR should NOT be followed by anything with higher
+                # precedence than PERCENT
+                if is_valid_index(next_idx + 1) and LL[next_idx + 1].type in {
+                    token.DOUBLESTAR,
+                    token.LSQB,
+                    token.LPAR,
+                    token.DOT,
+                }:
                     continue
 
                 return Ok(string_idx)
