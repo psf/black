@@ -3238,8 +3238,9 @@ class StringParenStripper(StringTransformer):
     Requirements:
         The line contains a string which is surrounded by parentheses and:
             - The target string is NOT the only argument to a function call).
-            - The RPAR is NOT followed by an operator with higher precedence
-              than PERCENT.
+            - If the target string contains a PERCENT, the brackets are not
+              preceeded or followed by an operator with higher precedence than
+              PERCENT.
 
     Transformations:
         The parentheses mentioned in the 'Requirements' section are stripped.
@@ -3281,6 +3282,37 @@ class StringParenStripper(StringTransformer):
             # Skip the string trailer, if one exists.
             string_parser = StringParser()
             next_idx = string_parser.parse(LL, string_idx)
+
+            # if the leaves in the parsed string include a PERCENT, we need to
+            # make sure the initial LPAR is NOT preceded by an operator with
+            # higher or equal precedence to PERCENT
+            if (
+                is_valid_index(idx - 2)
+                and token.PERCENT in {leaf.type for leaf in LL[idx - 1 : next_idx]}
+                and (
+                    (
+                        LL[idx - 2].type
+                        in {
+                            token.STAR,
+                            token.AT,
+                            token.SLASH,
+                            token.DOUBLESLASH,
+                            token.PERCENT,
+                            token.TILDE,
+                            token.DOUBLESTAR,
+                            token.AWAIT,
+                            token.LSQB,
+                            token.LPAR,
+                        }
+                    )
+                    or (
+                        # only unary PLUS/MINUS
+                        not is_valid_index(idx - 3)
+                        and (LL[idx - 2].type in {token.PLUS, token.MINUS})
+                    )
+                )
+            ):
+                continue
 
             # Should be followed by a non-empty RPAR...
             if (
