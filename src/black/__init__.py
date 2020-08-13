@@ -583,9 +583,6 @@ def get_sources(
     root = find_project_root(src)
     sources: Set[Path] = set()
     path_empty(src, "No Path provided. Nothing to do 😴", quiet, verbose, ctx)
-    exclude_regexes = [exclude_regex]
-    if force_exclude_regex is not None:
-        exclude_regexes.append(force_exclude_regex)
     gitignore = get_gitignore(root)
 
     for s in src:
@@ -596,7 +593,8 @@ def get_sources(
                     p.iterdir(),
                     root,
                     include_regex,
-                    exclude_regexes,
+                    exclude_regex,
+                    force_exclude_regex,
                     report,
                     gitignore,
                 )
@@ -604,12 +602,12 @@ def get_sources(
         elif s == "-":
             sources.add(p)
         elif p.is_file():
-            # Hard-exclude any files that matches the `--force-exclude` regex.
             normalized_path = normalize_path_maybe_ignore(p, root, report)
             if normalized_path is None:
                 continue
 
             normalized_path = "/" + normalized_path
+            # Hard-exclude any files that matches the `--force-exclude` regex.
             if force_exclude_regex:
                 force_exclude_match = force_exclude_regex.search(normalized_path)
             else:
@@ -5797,12 +5795,13 @@ def gen_python_files(
     paths: Iterable[Path],
     root: Path,
     include: Optional[Pattern[str]],
-    exclude_regexes: Iterable[Pattern[str]],
+    exclude: Pattern[str],
+    force_exclude: Optional[Pattern[str]],
     report: "Report",
     gitignore: PathSpec,
 ) -> Iterator[Path]:
-    """Generate all files under `path` whose paths are not excluded by
-    `exclude_regexes`, but are included by the `include` regex.
+    """Generate all files under `path` whose paths are not excluded by the
+    `exclude_regex` or `force_exclude` regexes, but are included by the `include` regex.
 
     Symbolic links pointing outside of the `root` directory are ignored.
 
@@ -5819,24 +5818,32 @@ def gen_python_files(
             report.path_ignored(child, "matches the .gitignore file content")
             continue
 
-        # Then ignore with `exclude` and `--force-exclude` options.
+        # Then ignore with `--exclude` and `--force-exclude` options.
         normalized_path = "/" + normalized_path
         if child.is_dir():
             normalized_path += "/"
 
-        is_excluded = False
-        for opt_name, exclude in zip(("--exclude", "--force-exclude"), exclude_regexes):
-            exclude_match = exclude.search(normalized_path) if exclude else None
-            if exclude_match and exclude_match.group(0):
-                report.path_ignored(child, f"matches the {opt_name} regular expression")
-                is_excluded = True
-                break
-        if is_excluded:
+        exclude_match = exclude.search(normalized_path) if exclude else None
+        if exclude_match and exclude_match.group(0):
+            report.path_ignored(child, "matches the --exclude regular expression")
+            continue
+
+        force_exclude_match = (
+            force_exclude.search(normalized_path) if force_exclude else None
+        )
+        if force_exclude_match and force_exclude_match.group(0):
+            report.path_ignored(child, "matches the --force-exclude regular expression")
             continue
 
         if child.is_dir():
             yield from gen_python_files(
-                child.iterdir(), root, include, exclude_regexes, report, gitignore
+                child.iterdir(),
+                root,
+                include,
+                exclude,
+                force_exclude,
+                report,
+                gitignore,
             )
 
         elif child.is_file():

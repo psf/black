@@ -1565,7 +1565,7 @@ class BlackTestCase(unittest.TestCase):
         this_abs = THIS_DIR.resolve()
         sources.extend(
             black.gen_python_files(
-                path.iterdir(), this_abs, include, [exclude], report, gitignore
+                path.iterdir(), this_abs, include, exclude, None, report, gitignore
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))
@@ -1611,7 +1611,7 @@ class BlackTestCase(unittest.TestCase):
         this_abs = THIS_DIR.resolve()
         sources.extend(
             black.gen_python_files(
-                path.iterdir(), this_abs, include, [exclude], report, gitignore
+                path.iterdir(), this_abs, include, exclude, None, report, gitignore
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))
@@ -1639,7 +1639,8 @@ class BlackTestCase(unittest.TestCase):
                 path.iterdir(),
                 this_abs,
                 empty,
-                [re.compile(black.DEFAULT_EXCLUDES)],
+                re.compile(black.DEFAULT_EXCLUDES),
+                None,
                 report,
                 gitignore,
             )
@@ -1666,7 +1667,8 @@ class BlackTestCase(unittest.TestCase):
                 path.iterdir(),
                 this_abs,
                 re.compile(black.DEFAULT_INCLUDES),
-                [empty],
+                empty,
+                None,
                 report,
                 gitignore,
             )
@@ -1723,7 +1725,7 @@ class BlackTestCase(unittest.TestCase):
         try:
             list(
                 black.gen_python_files(
-                    path.iterdir(), root, include, exclude, report, gitignore
+                    path.iterdir(), root, include, exclude, None, report, gitignore
                 )
             )
         except ValueError as ve:
@@ -1737,7 +1739,7 @@ class BlackTestCase(unittest.TestCase):
         with self.assertRaises(ValueError):
             list(
                 black.gen_python_files(
-                    path.iterdir(), root, include, exclude, report, gitignore
+                    path.iterdir(), root, include, exclude, None, report, gitignore
                 )
             )
         path.iterdir.assert_called()
