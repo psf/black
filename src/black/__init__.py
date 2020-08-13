@@ -586,6 +586,7 @@ def get_sources(
     exclude_regexes = [exclude_regex]
     if force_exclude_regex is not None:
         exclude_regexes.append(force_exclude_regex)
+    gitignore = get_gitignore(root)
 
     for s in src:
         p = Path(s)
@@ -597,17 +598,27 @@ def get_sources(
                     include_regex,
                     exclude_regexes,
                     report,
-                    get_gitignore(root),
+                    gitignore,
                 )
             )
         elif s == "-":
             sources.add(p)
         elif p.is_file():
-            sources.update(
-                gen_python_files(
-                    [p], root, None, exclude_regexes, report, get_gitignore(root)
-                )
-            )
+            # Hard-exclude any files that matches the `--force-exclude` regex.
+            normalized_path = normalize_path_maybe_ignore(p, root, report)
+            if normalized_path is None:
+                continue
+
+            normalized_path = "/" + normalized_path
+            if force_exclude_regex:
+                force_exclude_match = force_exclude_regex.search(normalized_path)
+            else:
+                force_exclude_match = None
+            if force_exclude_match and force_exclude_match.group(0):
+                report.path_ignored(p, "matches the --force-exclude regular expression")
+                continue
+
+            sources.add(p)
         else:
             err(f"invalid path: {s}")
     return sources
@@ -5759,6 +5770,29 @@ def get_gitignore(root: Path) -> PathSpec:
     return PathSpec.from_lines("gitwildmatch", lines)
 
 
+def normalize_path_maybe_ignore(
+    path: Path, root: Path, report: "Report"
+) -> Optional[str]:
+    """Normalize `path`. May return `None` if `path` was ignored.
+
+    `report` is where "path ignored" output goes.
+    """
+    try:
+        normalized_path = path.resolve().relative_to(root).as_posix()
+    except OSError as e:
+        report.path_ignored(path, f"cannot be read because {e}")
+        return None
+
+    except ValueError:
+        if path.is_symlink():
+            report.path_ignored(path, f"is a symbolic link that points outside {root}")
+            return None
+
+        raise
+
+    return normalized_path
+
+
 def gen_python_files(
     paths: Iterable[Path],
     root: Path,
@@ -5767,8 +5801,8 @@ def gen_python_files(
     report: "Report",
     gitignore: PathSpec,
 ) -> Iterator[Path]:
-    """Generate all files under `path` whose paths are not excluded by the
-    `exclude` regex, but are included by the `include` regex.
+    """Generate all files under `path` whose paths are not excluded by
+    `exclude_regexes`, but are included by the `include` regex.
 
     Symbolic links pointing outside of the `root` directory are ignored.
 
@@ -5776,35 +5810,25 @@ def gen_python_files(
     """
     assert root.is_absolute(), f"INTERNAL ERROR: `root` must be absolute but is {root}"
     for child in paths:
-        # Then ignore with `exclude` option.
-        try:
-            normalized_path = child.resolve().relative_to(root).as_posix()
-        except OSError as e:
-            report.path_ignored(child, f"cannot be read because {e}")
+        normalized_path = normalize_path_maybe_ignore(child, root, report)
+        if normalized_path is None:
             continue
-        except ValueError:
-            if child.is_symlink():
-                report.path_ignored(
-                    child, f"is a symbolic link that points outside {root}"
-                )
-                continue
-
-            raise
 
         # First ignore files matching .gitignore
         if gitignore.match_file(normalized_path):
             report.path_ignored(child, "matches the .gitignore file content")
             continue
 
+        # Then ignore with `exclude` and `--force-exclude` options.
         normalized_path = "/" + normalized_path
         if child.is_dir():
             normalized_path += "/"
 
         is_excluded = False
-        for exclude in exclude_regexes:
+        for opt_name, exclude in zip(("--exclude", "--force-exclude"), exclude_regexes):
             exclude_match = exclude.search(normalized_path) if exclude else None
             if exclude_match and exclude_match.group(0):
-                report.path_ignored(child, "matches the --exclude regular expression")
+                report.path_ignored(child, f"matches the {opt_name} regular expression")
                 is_excluded = True
                 break
         if is_excluded:
