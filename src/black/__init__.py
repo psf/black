@@ -4594,8 +4594,6 @@ def append_leaves(new_line: Line, old_line: Line, leaves: List[Leaf]) -> None:
         set(@leaves) is a subset of set(@old_line.leaves).
     """
     for old_leaf in leaves:
-        assert old_leaf in old_line.leaves
-
         new_leaf = Leaf(old_leaf.type, old_leaf.value)
         replace_child(old_leaf, new_leaf)
         new_line.append(new_leaf)
