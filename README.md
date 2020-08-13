@@ -322,7 +322,8 @@ exclude = '''
 '''
 ```
 
-Note: `src`  specifies a list of source files / directories which will be formatted (which can be specified as command line argument)
+Note: `src` specifies a list of source files / directories which will be formatted
+(which can be specified as command line argument)
 
 </details>
 
