@@ -113,8 +113,9 @@ def skip_if_exception(e: str) -> Iterator[None]:
 class FakeContext(click.Context):
     """A fake click Context for when calling functions that need it."""
 
-    def __init__(self) -> None:
+    def __init__(self, params: Dict = None) -> None:
         self.default_map: Dict[str, Any] = {}
+        self.params = params or {}
 
 
 class FakeParameter(click.Parameter):
@@ -1831,6 +1832,42 @@ class BlackTestCase(unittest.TestCase):
         self.assertEqual(config["target_version"], ["py36", "py37", "py38"])
         self.assertEqual(config["exclude"], r"\.pyi?$")
         self.assertEqual(config["include"], r"\.py?$")
+
+    def test_read_pyproject_src_toml(self) -> None:
+        test_toml_file = THIS_DIR / "test_src.toml"
+        fake_ctx = FakeContext()
+        black.read_pyproject_toml(
+            fake_ctx, FakeParameter(), str(test_toml_file),
+        )
+        config = fake_ctx.default_map
+        self.assertEqual(config["verbose"], "1")
+        self.assertEqual(config["check"], "no")
+        self.assertEqual(config["diff"], "y")
+        self.assertEqual(config["color"], "True")
+        self.assertEqual(config["line_length"], "79")
+        self.assertEqual(config["target_version"], ["py36", "py37", "py38"])
+        self.assertEqual(config["exclude"], r"\.pyi?$")
+        self.assertEqual(config["include"], r"\.py?$")
+        self.assertEqual(config["src"], ["setup.py"])
+        self.assertEqual(fake_ctx.params.get("src"), ("setup.py",))
+
+    def test_read_pyproject_src_toml_with_src_also_on_cli(self) -> None:
+        test_toml_file = THIS_DIR / "test_src.toml"
+        fake_ctx = FakeContext()
+        fake_ctx.params["src"] = ("src",)
+        black.read_pyproject_toml(
+            fake_ctx, FakeParameter(), str(test_toml_file),
+        )
+        config = fake_ctx.default_map
+        self.assertEqual(config["verbose"], "1")
+        self.assertEqual(config["check"], "no")
+        self.assertEqual(config["diff"], "y")
+        self.assertEqual(config["color"], "True")
+        self.assertEqual(config["line_length"], "79")
+        self.assertEqual(config["target_version"], ["py36", "py37", "py38"])
+        self.assertEqual(config["exclude"], r"\.pyi?$")
+        self.assertEqual(config["include"], r"\.py?$")
+        self.assertEqual(fake_ctx.params.get("src"), ("src",))
 
     def test_find_project_root(self) -> None:
         with TemporaryDirectory() as workspace:

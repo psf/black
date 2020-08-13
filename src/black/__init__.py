@@ -293,7 +293,10 @@ def read_pyproject_toml(
     otherwise.
     """
     if not value:
-        value = find_pyproject_toml(ctx.params.get("src", ()))
+        src = ctx.params.get("src", ())
+        if not src:
+            src = tuple(".")
+        value = find_pyproject_toml(src)
         if value is None:
             return None
 
@@ -314,6 +317,9 @@ def read_pyproject_toml(
             k: str(v) if not isinstance(v, (list, dict)) else v
             for k, v in config.items()
         }
+
+    if "src" in config and "src" not in ctx.params:
+        ctx.params["src"] = tuple(config["src"])
 
     target_version = config.get("target_version")
     if target_version is not None and not isinstance(target_version, list):
