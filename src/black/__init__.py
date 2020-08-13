@@ -3318,7 +3318,7 @@ class StringParenStripper(StringTransformer):
         new_line.append(string_leaf)
 
         append_leaves(
-            new_line, line, LL[string_idx + 1 : rpar_idx] + LL[rpar_idx + 1 :],
+            new_line, line, LL[string_idx + 1 : rpar_idx] + LL[rpar_idx + 1 :]
         )
 
         LL[rpar_idx].remove()
@@ -6030,7 +6030,7 @@ def _stringify_ast(
                 and field == "value"
                 and isinstance(value, str)
             ):
-                normalized = re.sub(r" *(\n)+[ \t]+", r"\1 ", value).strip()
+                normalized = re.sub(r" *\n[ \t]*", "\n", value).strip()
             else:
                 normalized = value
             yield f"{'  ' * (depth+2)}{normalized!r},  # {value.__class__.__name__}"
