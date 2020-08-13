@@ -613,6 +613,7 @@ Multiple contributions by:
 - [LukasDrude](mailto:mail@lukas-drude.de)
 - Mahmoud Hossam
 - Mariatta
+- [Marc Rijken](mailto:marc@rijken.org)
 - [Matt VanEseltine](mailto:vaneseltine@gmail.com)
 - [Matthew Clapp](mailto:itsayellow+dev@gmail.com)
 - [Matthew Walster](mailto:matthew@walster.org)
