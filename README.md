@@ -298,6 +298,7 @@ expressions by Black. Use `[ ]` to denote a significant space character.
 ```toml
 [tool.black]
 line-length = 88
+src = ['src']
 target-version = ['py37']
 include = '\.pyi?$'
 exclude = '''
@@ -320,6 +321,8 @@ exclude = '''
 )
 '''
 ```
+
+Note: `src`  specifies a list of source files / directories which will be formatted (which can be specified as command line argument)
 
 </details>
 
