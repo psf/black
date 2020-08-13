@@ -655,6 +655,8 @@ def reformat_one(
                 write_cache(cache, [src], mode)
         report.done(src, changed)
     except Exception as exc:
+        if report.verbose:
+            traceback.print_exc()
         report.failed(src, str(exc))
 
 
@@ -3318,7 +3320,7 @@ class StringParenStripper(StringTransformer):
         new_line.append(string_leaf)
 
         append_leaves(
-            new_line, line, LL[string_idx + 1 : rpar_idx] + LL[rpar_idx + 1 :],
+            new_line, line, LL[string_idx + 1 : rpar_idx] + LL[rpar_idx + 1 :]
         )
 
         LL[rpar_idx].remove()
