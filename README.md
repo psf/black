@@ -613,8 +613,8 @@ Multiple contributions by:
 - [Luka Sterbic](mailto:luka.sterbic@gmail.com)
 - [LukasDrude](mailto:mail@lukas-drude.de)
 - Mahmoud Hossam
-- Mariatta
 - [Marc Rijken](mailto:marc@rijken.org)
+- Mariatta
 - [Matt VanEseltine](mailto:vaneseltine@gmail.com)
 - [Matthew Clapp](mailto:itsayellow+dev@gmail.com)
 - [Matthew Walster](mailto:matthew@walster.org)
