@@ -6063,7 +6063,7 @@ def _stringify_ast(
                 and field == "value"
                 and isinstance(value, str)
             ):
-                normalized = re.sub(r" *\n[ \t]+", "\n ", value).strip()
+                normalized = re.sub(r" *\n[ \t]*", "\n", value).strip()
             else:
                 normalized = value
             yield f"{'  ' * (depth+2)}{normalized!r},  # {value.__class__.__name__}"

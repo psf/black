@@ -46,7 +46,7 @@ def zort():
 
 def poit():
   """
-  Lorem ipsum dolor sit amet.
+  Lorem ipsum dolor sit amet.       
 
   Consectetur adipiscing elit:
    - sed do eiusmod tempor incididunt ut labore
@@ -54,6 +54,14 @@ def poit():
      - enim ad minim veniam
      - quis nostrud exercitation ullamco laboris nisi
    - aliquip ex ea commodo consequat
+  """
+  pass
+
+
+def under_indent():
+  """
+  These lines are indented in a way that does not
+make sense.
   """
   pass
 
@@ -132,6 +140,14 @@ def poit():
        - enim ad minim veniam
        - quis nostrud exercitation ullamco laboris nisi
      - aliquip ex ea commodo consequat
+    """
+    pass
+
+
+def under_indent():
+    """
+      These lines are indented in a way that does not
+    make sense.
     """
     pass
 
