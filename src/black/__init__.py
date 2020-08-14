@@ -3249,7 +3249,9 @@ class StringParenStripper(StringTransformer):
     Requirements:
         The line contains a string which is surrounded by parentheses and:
             - The target string is NOT the only argument to a function call).
-            - The RPAR is NOT followed by an attribute access (i.e. a dot).
+            - If the target string contains a PERCENT, the brackets are not
+              preceeded or followed by an operator with higher precedence than
+              PERCENT.
 
     Transformations:
         The parentheses mentioned in the 'Requirements' section are stripped.
@@ -3292,14 +3294,51 @@ class StringParenStripper(StringTransformer):
             string_parser = StringParser()
             next_idx = string_parser.parse(LL, string_idx)
 
+            # if the leaves in the parsed string include a PERCENT, we need to
+            # make sure the initial LPAR is NOT preceded by an operator with
+            # higher or equal precedence to PERCENT
+            if (
+                is_valid_index(idx - 2)
+                and token.PERCENT in {leaf.type for leaf in LL[idx - 1 : next_idx]}
+                and (
+                    (
+                        LL[idx - 2].type
+                        in {
+                            token.STAR,
+                            token.AT,
+                            token.SLASH,
+                            token.DOUBLESLASH,
+                            token.PERCENT,
+                            token.TILDE,
+                            token.DOUBLESTAR,
+                            token.AWAIT,
+                            token.LSQB,
+                            token.LPAR,
+                        }
+                    )
+                    or (
+                        # only unary PLUS/MINUS
+                        not is_valid_index(idx - 3)
+                        and (LL[idx - 2].type in {token.PLUS, token.MINUS})
+                    )
+                )
+            ):
+                continue
+
             # Should be followed by a non-empty RPAR...
             if (
                 is_valid_index(next_idx)
                 and LL[next_idx].type == token.RPAR
                 and not is_empty_rpar(LL[next_idx])
             ):
-                # That RPAR should NOT be followed by a '.' symbol.
-                if is_valid_index(next_idx + 1) and LL[next_idx + 1].type == token.DOT:
+                # That RPAR should NOT be followed by anything with higher
+                # precedence than PERCENT
+                if is_valid_index(next_idx + 1) and LL[next_idx + 1].type in {
+                    token.DOUBLESTAR,
+                    token.LSQB,
+                    token.LPAR,
+                    token.DOT,
+                }:
                     continue
 
                 return Ok(string_idx)
