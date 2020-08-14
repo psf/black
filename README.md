@@ -322,8 +322,9 @@ exclude = '''
 '''
 ```
 
-Note: `src` specifies a list of source files / directories which will be formatted
-(which can be specified as command line argument)
+Tip: `src` specifies a list of default source files / directories which will be
+formatted when _Black_ is run with no sources provided. Sources given on the command
+line will override the list of sources provided in the configuration file.
 
 </details>
 
