@@ -3297,12 +3297,12 @@ class StringParenStripper(StringTransformer):
             # if the leaves in the parsed string include a PERCENT, we need to
             # make sure the initial LPAR is NOT preceded by an operator with
             # higher or equal precedence to PERCENT
-            if (
-                is_valid_index(idx - 2)
-                and token.PERCENT in {leaf.type for leaf in LL[idx - 1 : next_idx]}
-                and (
+            if is_valid_index(idx - 2):
+                # mypy can't quite follow unless we name this
+                before_lpar = LL[idx - 2]
+                if token.PERCENT in {leaf.type for leaf in LL[idx - 1 : next_idx]} and (
                     (
-                        LL[idx - 2].type
+                        before_lpar.type
                         in {
                             token.STAR,
                             token.AT,
@@ -3318,12 +3318,12 @@ class StringParenStripper(StringTransformer):
                     )
                     or (
                         # only unary PLUS/MINUS
-                        not is_valid_index(idx - 3)
-                        and (LL[idx - 2].type in {token.PLUS, token.MINUS})
+                        before_lpar.parent
+                        and before_lpar.parent.type == syms.factor
+                        and (before_lpar.type in {token.PLUS, token.MINUS})
                     )
-                )
-            ):
-                continue
+                ):
+                    continue
 
             # Should be followed by a non-empty RPAR...
             if (
