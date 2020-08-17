@@ -293,7 +293,7 @@ the equivalent of r-strings in Python. Multiline strings are treated as verbose 
 expressions by Black. Use `[ ]` to denote a significant space character.
 
 <details>
-<summary>Example `pyproject.toml`</summary>
+<summary>Example <code>pyproject.toml</code></summary>
 
 ```toml
 [tool.black]
