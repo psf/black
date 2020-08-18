@@ -240,6 +240,7 @@ class Mode:
     target_versions: Set[TargetVersion] = field(default_factory=set)
     line_length: int = DEFAULT_LINE_LENGTH
     string_normalization: bool = True
+    experimental_string_processing: bool = False
     is_pyi: bool = False
 
     def get_cache_key(self) -> str:
@@ -377,6 +378,15 @@ def target_version_option_callback(
     help="Don't normalize string quotes or prefixes.",
 )
 @click.option(
+    "--experimental-string-processing",
+    is_flag=True,
+    hidden=True,
+    help=(
+        "Experimental option that performs more normalization on string literals."
+        " Currently disabled because it leads to some crashes."
+    ),
+)
+@click.option(
     "--check",
     is_flag=True,
     help=(
@@ -485,6 +495,7 @@ def main(
     fast: bool,
     pyi: bool,
     skip_string_normalization: bool,
+    experimental_string_processing: bool,
     quiet: bool,
     verbose: bool,
     include: str,
@@ -505,6 +516,7 @@ def main(
         line_length=line_length,
         is_pyi=pyi,
         string_normalization=not skip_string_normalization,
+        experimental_string_processing=experimental_string_processing,
     )
     if config and verbose:
         out(f"Using configuration from {config}.", bold=False, fg="blue")
@@ -984,10 +996,7 @@ def format_str(src_contents: str, *, mode: Mode) -> FileContent:
         before, after = elt.maybe_empty_lines(current_line)
         dst_contents.append(str(empty_line) * before)
         for line in transform_line(
-            current_line,
-            line_length=mode.line_length,
-            normalize_strings=mode.string_normalization,
-            features=split_line_features,
+            current_line, mode=mode, features=split_line_features
         ):
             dst_contents.append(str(line))
     return "".join(dst_contents)
@@ -2649,10 +2658,7 @@ def make_comment(content: str) -> str:
 
 
 def transform_line(
-    line: Line,
-    line_length: int,
-    normalize_strings: bool,
-    features: Collection[Feature] = (),
+    line: Line, mode: Mode, features: Collection[Feature] = ()
 ) -> Iterator[Line]:
     """Transform a `line`, potentially splitting it into many lines.
 
@@ -2668,7 +2674,7 @@ def transform_line(
 
     def init_st(ST: Type[StringTransformer]) -> StringTransformer:
         """Initialize StringTransformer"""
-        return ST(line_length, normalize_strings)
+        return ST(mode.line_length, mode.string_normalization)
 
     string_merge = init_st(StringMerger)
     string_paren_strip = init_st(StringParenStripper)
@@ -2681,21 +2687,26 @@ def transform_line(
         and not line.should_explode
         and not line.is_collection_with_optional_trailing_comma
         and (
-            is_line_short_enough(line, line_length=line_length, line_str=line_str)
+            is_line_short_enough(line, line_length=mode.line_length, line_str=line_str)
             or line.contains_unsplittable_type_ignore()
         )
         and not (line.contains_standalone_comments() and line.inside_brackets)
     ):
         # Only apply basic string preprocessing, since lines shouldn't be split here.
-        transformers = [string_merge, string_paren_strip]
+        if mode.experimental_string_processing:
+            transformers = [string_merge, string_paren_strip]
+        else:
+            transformers = []
     elif line.is_def:
         transformers = [left_hand_split]
     else:
 
         def rhs(line: Line, features: Collection[Feature]) -> Iterator[Line]:
-            for omit in generate_trailers_to_omit(line, line_length):
-                lines = list(right_hand_split(line, line_length, features, omit=omit))
-                if is_line_short_enough(lines[0], line_length=line_length):
+            for omit in generate_trailers_to_omit(line, mode.line_length):
+                lines = list(
+                    right_hand_split(line, mode.line_length, features, omit=omit)
+                )
+                if is_line_short_enough(lines[0], line_length=mode.line_length):
                     yield from lines
                     return
 
@@ -2706,24 +2717,30 @@ def transform_line(
             # See #762 and #781 for the full story.
             yield from right_hand_split(line, line_length=1, features=features)
 
-        if line.inside_brackets:
-            transformers = [
-                string_merge,
-                string_paren_strip,
-                delimiter_split,
-                standalone_comment_split,
-                string_split,
-                string_paren_wrap,
-                rhs,
-            ]
+        if mode.experimental_string_processing:
+            if line.inside_brackets:
+                transformers = [
+                    string_merge,
+                    string_paren_strip,
+                    delimiter_split,
+                    standalone_comment_split,
+                    string_split,
+                    string_paren_wrap,
+                    rhs,
+                ]
+            else:
+                transformers = [
+                    string_merge,
+                    string_paren_strip,
+                    string_split,
+                    string_paren_wrap,
+                    rhs,
+                ]
         else:
-            transformers = [
-                string_merge,
-                string_paren_strip,
-                string_split,
-                string_paren_wrap,
-                rhs,
-            ]
+            if line.inside_brackets:
+                transformers = [delimiter_split, standalone_comment_split, rhs]
+            else:
+                transformers = [rhs]
 
     for transform in transformers:
         # We are accumulating lines in `result` because we might want to abort
@@ -2738,12 +2755,7 @@ def transform_line(
                     )
 
                 result.extend(
-                    transform_line(
-                        transformed_line,
-                        line_length=line_length,
-                        normalize_strings=normalize_strings,
-                        features=features,
-                    )
+                    transform_line(transformed_line, mode=mode, features=features)
                 )
         except CannotTransform:
             continue
