@@ -10,7 +10,7 @@
     },
     "attrs": {
       "cli_arguments": [],
-      "expect_formatting_changes": true,
+      "expect_formatting_changes": false,
       "git_clone_url": "https://github.com/python-attrs/attrs.git",
       "long_checkout": false,
       "py_versions": ["all"]
@@ -47,7 +47,7 @@
     },
     "hypothesis": {
       "cli_arguments": [],
-      "expect_formatting_changes": true,
+      "expect_formatting_changes": false,
       "git_clone_url": "https://github.com/HypothesisWorks/hypothesis.git",
       "long_checkout": false,
       "py_versions": ["all"]
@@ -63,7 +63,7 @@
     },
     "poetry": {
       "cli_arguments": [],
-      "expect_formatting_changes": true,
+      "expect_formatting_changes": false,
       "git_clone_url": "https://github.com/python-poetry/poetry.git",
       "long_checkout": false,
       "py_versions": ["all"]
