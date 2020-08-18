@@ -3,6 +3,7 @@ import asyncio
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
+from dataclasses import replace
 from functools import partial
 from io import BytesIO, TextIOWrapper
 import os
@@ -36,8 +37,9 @@ from pathspec import PathSpec
 from .test_primer import PrimerCLITests  # noqa: F401
 
 
-ff = partial(black.format_file_in_place, mode=black.FileMode(), fast=True)
-fs = partial(black.format_str, mode=black.FileMode())
+DEFAULT_MODE = black.FileMode(experimental_string_processing=True)
+ff = partial(black.format_file_in_place, mode=DEFAULT_MODE, fast=True)
+fs = partial(black.format_str, mode=DEFAULT_MODE)
 THIS_FILE = Path(__file__)
 THIS_DIR = THIS_FILE.parent
 PROJECT_ROOT = THIS_DIR.parent
@@ -190,13 +192,13 @@ class BlackTestCase(unittest.TestCase):
         )
 
     @patch("black.dump_to_file", dump_to_stderr)
-    def checkSourceFile(self, name: str) -> None:
+    def checkSourceFile(self, name: str, mode: black.FileMode = DEFAULT_MODE) -> None:
         path = THIS_DIR.parent / name
         source, expected = read_data(str(path), data=False)
-        actual = fs(source)
+        actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, mode)
         self.assertFalse(ff(path))
 
     @patch("black.dump_to_file", dump_to_stderr)
@@ -205,7 +207,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     def test_empty_ff(self) -> None:
         expected = ""
@@ -267,7 +269,7 @@ class BlackTestCase(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
         self.assertFormatEqual(expected, result.output)
         black.assert_equivalent(source, result.output)
-        black.assert_stable(source, result.output, black.FileMode())
+        black.assert_stable(source, result.output, DEFAULT_MODE)
 
     def test_piping_diff(self) -> None:
         diff_header = re.compile(
@@ -320,7 +322,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_function2(self) -> None:
@@ -328,7 +330,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_function_trailing_comma(self) -> None:
@@ -336,7 +338,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_expression(self) -> None:
@@ -344,14 +346,14 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_pep_572(self) -> None:
         source, expected = read_data("pep_572")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
         if sys.version_info >= (3, 8):
             black.assert_equivalent(source, actual)
 
@@ -375,7 +377,7 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         with patch("black.dump_to_file", dump_to_stderr):
             black.assert_equivalent(source, actual)
-            black.assert_stable(source, actual, black.FileMode())
+            black.assert_stable(source, actual, DEFAULT_MODE)
 
     def test_expression_diff(self) -> None:
         source, _ = read_data("expression.py")
@@ -427,14 +429,14 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_pep_570(self) -> None:
         source, expected = read_data("pep_570")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
         if sys.version_info >= (3, 8):
             black.assert_equivalent(source, actual)
 
@@ -452,8 +454,8 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
-        mode = black.FileMode(string_normalization=False)
+        black.assert_stable(source, actual, DEFAULT_MODE)
+        mode = replace(DEFAULT_MODE, string_normalization=False)
         not_normalized = fs(source, mode=mode)
         self.assertFormatEqual(source.replace("\\\n", ""), not_normalized)
         black.assert_equivalent(source, not_normalized)
@@ -465,7 +467,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     def test_long_strings(self) -> None:
         """Tests for splitting long strings."""
@@ -473,7 +475,15 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
+
+    def test_long_strings_flag_disabled(self) -> None:
+        """Tests for turning off the string processing logic."""
+        source, _ = read_data("long_strings_flag_disabled")
+        mode = replace(DEFAULT_MODE, experimental_string_processing=False)
+        actual = fs(source, mode=mode)
+        self.assertFormatEqual(source, actual)
+        black.assert_stable(source, actual, mode)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_long_strings__edge_case(self) -> None:
@@ -482,7 +492,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_long_strings__regression(self) -> None:
@@ -491,7 +501,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_slices(self) -> None:
@@ -499,7 +509,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_percent_precedence(self) -> None:
@@ -507,7 +517,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_comments(self) -> None:
@@ -515,7 +525,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_comments2(self) -> None:
@@ -523,7 +533,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_comments3(self) -> None:
@@ -531,7 +541,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_comments4(self) -> None:
@@ -539,7 +549,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_comments5(self) -> None:
@@ -547,7 +557,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_comments6(self) -> None:
@@ -555,7 +565,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_comments7(self) -> None:
@@ -563,7 +573,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_comment_after_escaped_newline(self) -> None:
@@ -571,7 +581,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_cantfit(self) -> None:
@@ -579,7 +589,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_import_spacing(self) -> None:
@@ -587,7 +597,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_composition(self) -> None:
@@ -595,7 +605,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_empty_lines(self) -> None:
@@ -603,7 +613,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_remove_parens(self) -> None:
@@ -611,7 +621,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_string_prefixes(self) -> None:
@@ -619,12 +629,12 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_numeric_literals(self) -> None:
         source, expected = read_data("numeric_literals")
-        mode = black.FileMode(target_versions=black.PY36_VERSIONS)
+        mode = replace(DEFAULT_MODE, target_versions=black.PY36_VERSIONS)
         actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
@@ -633,7 +643,7 @@ class BlackTestCase(unittest.TestCase):
     @patch("black.dump_to_file", dump_to_stderr)
     def test_numeric_literals_ignoring_underscores(self) -> None:
         source, expected = read_data("numeric_literals_skip_underscores")
-        mode = black.FileMode(target_versions=black.PY36_VERSIONS)
+        mode = replace(DEFAULT_MODE, target_versions=black.PY36_VERSIONS)
         actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
@@ -644,7 +654,7 @@ class BlackTestCase(unittest.TestCase):
         source, expected = read_data("numeric_literals_py2")
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_python2(self) -> None:
@@ -652,12 +662,12 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_python2_print_function(self) -> None:
         source, expected = read_data("python2_print_function")
-        mode = black.FileMode(target_versions={TargetVersion.PY27})
+        mode = replace(DEFAULT_MODE, target_versions={TargetVersion.PY27})
         actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
@@ -669,11 +679,11 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_stub(self) -> None:
-        mode = black.FileMode(is_pyi=True)
+        mode = replace(DEFAULT_MODE, is_pyi=True)
         source, expected = read_data("stub.pyi")
         actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
@@ -688,7 +698,7 @@ class BlackTestCase(unittest.TestCase):
         major, minor = sys.version_info[:2]
         if major < 3 or (major <= 3 and minor < 7):
             black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
         # ensure black can parse this when the target is 3.6
         self.invokeBlack([str(source_path), "--target-version", "py36"])
         # but not on 3.7, because async/await is no longer an identifier
@@ -703,7 +713,7 @@ class BlackTestCase(unittest.TestCase):
         major, minor = sys.version_info[:2]
         if major > 3 or (major == 3 and minor >= 7):
             black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
         # ensure black can parse this when the target is 3.7
         self.invokeBlack([str(source_path), "--target-version", "py37"])
         # but not on 3.6, because we use async as a reserved keyword
@@ -717,7 +727,7 @@ class BlackTestCase(unittest.TestCase):
         major, minor = sys.version_info[:2]
         if major > 3 or (major == 3 and minor >= 8):
             black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_fmtonoff(self) -> None:
@@ -725,7 +735,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_fmtonoff2(self) -> None:
@@ -733,7 +743,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_fmtonoff3(self) -> None:
@@ -741,7 +751,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_fmtonoff4(self) -> None:
@@ -749,7 +759,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_remove_empty_parentheses_after_class(self) -> None:
@@ -757,7 +767,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_new_line_between_class_and_code(self) -> None:
@@ -765,7 +775,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_bracket_match(self) -> None:
@@ -773,7 +783,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_tuple_assign(self) -> None:
@@ -781,7 +791,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_beginning_backslash(self) -> None:
@@ -789,7 +799,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     def test_tab_comment_indentation(self) -> None:
         contents_tab = "if 1:\n\tif 2:\n\t\tpass\n\t# comment\n\tpass\n"
@@ -1218,7 +1228,7 @@ class BlackTestCase(unittest.TestCase):
 
     def test_format_file_contents(self) -> None:
         empty = ""
-        mode = black.FileMode()
+        mode = DEFAULT_MODE
         with self.assertRaises(black.NothingChanged):
             black.format_file_contents(empty, mode=mode, fast=False)
         just_nl = "\n"
@@ -1263,7 +1273,7 @@ class BlackTestCase(unittest.TestCase):
         self.assertEqual("".join(err_lines), "")
 
     def test_cache_broken_file(self) -> None:
-        mode = black.FileMode()
+        mode = DEFAULT_MODE
         with cache_dir() as workspace:
             cache_file = black.get_cache_file(mode)
             with cache_file.open("w") as fobj:
@@ -1277,7 +1287,7 @@ class BlackTestCase(unittest.TestCase):
             self.assertIn(src, cache)
 
     def test_cache_single_file_already_cached(self) -> None:
-        mode = black.FileMode()
+        mode = DEFAULT_MODE
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
             with src.open("w") as fobj:
@@ -1289,7 +1299,7 @@ class BlackTestCase(unittest.TestCase):
 
     @event_loop()
     def test_cache_multiple_files(self) -> None:
-        mode = black.FileMode()
+        mode = DEFAULT_MODE
         with cache_dir() as workspace, patch(
             "black.ProcessPoolExecutor", new=ThreadPoolExecutor
         ):
@@ -1310,7 +1320,7 @@ class BlackTestCase(unittest.TestCase):
             self.assertIn(two, cache)
 
     def test_no_cache_when_writeback_diff(self) -> None:
-        mode = black.FileMode()
+        mode = DEFAULT_MODE
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
             with src.open("w") as fobj:
@@ -1320,7 +1330,7 @@ class BlackTestCase(unittest.TestCase):
             self.assertFalse(cache_file.exists())
 
     def test_no_cache_when_stdin(self) -> None:
-        mode = black.FileMode()
+        mode = DEFAULT_MODE
         with cache_dir():
             result = CliRunner().invoke(
                 black.main, ["-"], input=BytesIO(b"print('hello')")
@@ -1330,12 +1340,12 @@ class BlackTestCase(unittest.TestCase):
             self.assertFalse(cache_file.exists())
 
     def test_read_cache_no_cachefile(self) -> None:
-        mode = black.FileMode()
+        mode = DEFAULT_MODE
         with cache_dir():
             self.assertEqual(black.read_cache(mode), {})
 
     def test_write_cache_read_cache(self) -> None:
-        mode = black.FileMode()
+        mode = DEFAULT_MODE
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
             src.touch()
@@ -1361,7 +1371,7 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(done, {cached})
 
     def test_write_cache_creates_directory_if_needed(self) -> None:
-        mode = black.FileMode()
+        mode = DEFAULT_MODE
         with cache_dir(exists=False) as workspace:
             self.assertFalse(workspace.exists())
             black.write_cache({}, [], mode)
@@ -1369,7 +1379,7 @@ class BlackTestCase(unittest.TestCase):
 
     @event_loop()
     def test_failed_formatting_does_not_get_cached(self) -> None:
-        mode = black.FileMode()
+        mode = DEFAULT_MODE
         with cache_dir() as workspace, patch(
             "black.ProcessPoolExecutor", new=ThreadPoolExecutor
         ):
@@ -1385,7 +1395,7 @@ class BlackTestCase(unittest.TestCase):
             self.assertIn(clean, cache)
 
     def test_write_cache_write_fail(self) -> None:
-        mode = black.FileMode()
+        mode = DEFAULT_MODE
         with cache_dir(), patch.object(Path, "open") as mock:
             mock.side_effect = OSError
             black.write_cache({}, [], mode)
@@ -1428,8 +1438,8 @@ class BlackTestCase(unittest.TestCase):
             self.invokeBlack([str(workspace.resolve())])
 
     def test_read_cache_line_lengths(self) -> None:
-        mode = black.FileMode()
-        short_mode = black.FileMode(line_length=1)
+        mode = DEFAULT_MODE
+        short_mode = replace(DEFAULT_MODE, line_length=1)
         with cache_dir() as workspace:
             path = (workspace / "file.py").resolve()
             path.touch()
@@ -1444,11 +1454,11 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     def test_single_file_force_pyi(self) -> None:
-        reg_mode = black.FileMode()
-        pyi_mode = black.FileMode(is_pyi=True)
+        reg_mode = DEFAULT_MODE
+        pyi_mode = replace(DEFAULT_MODE, is_pyi=True)
         contents, expected = read_data("force_pyi")
         with cache_dir() as workspace:
             path = (workspace / "file.py").resolve()
@@ -1466,8 +1476,8 @@ class BlackTestCase(unittest.TestCase):
 
     @event_loop()
     def test_multi_file_force_pyi(self) -> None:
-        reg_mode = black.FileMode()
-        pyi_mode = black.FileMode(is_pyi=True)
+        reg_mode = DEFAULT_MODE
+        pyi_mode = replace(DEFAULT_MODE, is_pyi=True)
         contents, expected = read_data("force_pyi")
         with cache_dir() as workspace:
             paths = [
@@ -1499,8 +1509,8 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(actual, expected)
 
     def test_single_file_force_py36(self) -> None:
-        reg_mode = black.FileMode()
-        py36_mode = black.FileMode(target_versions=black.PY36_VERSIONS)
+        reg_mode = DEFAULT_MODE
+        py36_mode = replace(DEFAULT_MODE, target_versions=black.PY36_VERSIONS)
         source, expected = read_data("force_py36")
         with cache_dir() as workspace:
             path = (workspace / "file.py").resolve()
@@ -1518,8 +1528,8 @@ class BlackTestCase(unittest.TestCase):
 
     @event_loop()
     def test_multi_file_force_py36(self) -> None:
-        reg_mode = black.FileMode()
-        py36_mode = black.FileMode(target_versions=black.PY36_VERSIONS)
+        reg_mode = DEFAULT_MODE
+        py36_mode = replace(DEFAULT_MODE, target_versions=black.PY36_VERSIONS)
         source, expected = read_data("force_py36")
         with cache_dir() as workspace:
             paths = [
@@ -1546,7 +1556,7 @@ class BlackTestCase(unittest.TestCase):
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
+        black.assert_stable(source, actual, DEFAULT_MODE)
 
     def test_pipe_force_py36(self) -> None:
         source, expected = read_data("force_py36")
@@ -1827,9 +1837,7 @@ class BlackTestCase(unittest.TestCase):
     def test_read_pyproject_toml(self) -> None:
         test_toml_file = THIS_DIR / "test.toml"
         fake_ctx = FakeContext()
-        black.read_pyproject_toml(
-            fake_ctx, FakeParameter(), str(test_toml_file),
-        )
+        black.read_pyproject_toml(fake_ctx, FakeParameter(), str(test_toml_file))
         config = fake_ctx.default_map
         self.assertEqual(config["verbose"], "1")
         self.assertEqual(config["check"], "no")
