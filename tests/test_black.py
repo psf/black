@@ -479,11 +479,11 @@ class BlackTestCase(unittest.TestCase):
 
     def test_long_strings_flag_disabled(self) -> None:
         """Tests for turning off the string processing logic."""
-        source, _ = read_data("long_strings_flag_disabled")
+        source, expected = read_data("long_strings_flag_disabled")
         mode = replace(DEFAULT_MODE, experimental_string_processing=False)
         actual = fs(source, mode=mode)
-        self.assertFormatEqual(source, actual)
-        black.assert_stable(source, actual, mode)
+        self.assertFormatEqual(expected, actual)
+        black.assert_stable(expected, actual, mode)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_long_strings__edge_case(self) -> None:
