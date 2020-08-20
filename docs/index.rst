@@ -51,10 +51,12 @@ Contents
    installation_and_usage
    the_black_code_style
    pyproject_toml
+   compatible_configs
    editor_integration
    blackd
    black_primer
    version_control_integration
+   github_actions
    ignoring_unmodified_files
    contributing_to_black
    show_your_style
@@ -66,5 +68,4 @@ Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`

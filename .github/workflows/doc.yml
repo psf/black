@@ -1,0 +1,36 @@
+name: Documentation Build
+
+on:
+  push:
+    paths:
+      - "docs/**"
+      - "README.md"
+      - "CHANGES.md"
+      - "CONTRIBUTING.md"
+  pull_request:
+    paths:
+      - "docs/**"
+      - "README.md"
+      - "CHANGES.md"
+      - "CONTRIBUTING.md"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install -e "."
+          python -m pip install -r "docs/requirements.txt"
+
+      - name: Build documentation
+        run: sphinx-build -a -b html -W docs/ docs/_build/

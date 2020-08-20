@@ -1,2 +1,3 @@
-recommonmark==0.4.0
-Sphinx==1.7.2
+recommonmark==0.6.0
+Sphinx==3.2.1
+Pygments==2.6.1
