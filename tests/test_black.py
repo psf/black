@@ -2062,7 +2062,7 @@ class BlackDTestCase(AioHTTPTestCase):
         self.assertIsNotNone(response.headers.get(blackd.BLACK_VERSION_HEADER))
 
 
-with open(black.__file__, "r") as _bf:
+with open(black.__file__, "r", encoding="utf-8") as _bf:
     black_source_lines = _bf.readlines()
 
 
