@@ -241,7 +241,7 @@ characters via `max-line-length = 88`.
 <details>
 <summary>pylintrc</summary>
 
-```rc
+```ini
 [MESSAGES CONTROL]
 disable = C0330, C0326
 

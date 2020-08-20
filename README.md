@@ -464,7 +464,7 @@ Twisted and CPython:
 
 Use the badge in your project's README.md:
 
-```markdown
+```md
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 ```
 
@@ -625,7 +625,7 @@ Multiple contributions by:
 - [Miroslav Shubernetskiy](mailto:miroslav@miki725.com)
 - MomIsBestFriend
 - [Nathan Goldbaum](mailto:ngoldbau@illinois.edu)
-- [Nathan Hunt](mailtoneighthan.hunt@gmail.com)
+- [Nathan Hunt](mailto:neighthan.hunt@gmail.com)
 - [Neraste](mailto:neraste.herr10@gmail.com)
 - [Nikolaus Waxweiler](mailto:madigens@gmail.com)
 - [Ofek Lev](mailto:ofekmeister@gmail.com)

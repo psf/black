@@ -952,6 +952,7 @@ def format_str(src_contents: str, *, mode: Mode) -> FileContent:
         ...
 
     A more complex example:
+
     >>> print(
     ...   black.format_str(
     ...     "def f(arg:str='')->None: hey",

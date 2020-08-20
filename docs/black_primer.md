@@ -71,7 +71,7 @@ each parameter is explained below:
       "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/cooperlees/aioexabgp.git",
       "long_checkout": false,
-      "py_versions": ["all", "3.8"] // "all" ignores all other versions
+      "py_versions": ["all", "3.8"]
     }
   }
 }
@@ -103,9 +103,9 @@ Failed projects:
 +++ tests/b303_b304.py	2020-05-17 20:06:42.753851 +0000
 @@ -26,11 +26,11 @@
      maxint = 5  # this is okay
-     # the following shouldn't crash
+     # the following should not crash
      (a, b, c) = list(range(3))
-     # it's different than this
+     # it is different than this
      a, b, c = list(range(3))
 -    a, b, c, = list(range(3))
 +    a, b, c = list(range(3))
