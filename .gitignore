@@ -14,3 +14,4 @@ src/_black_version.py
 .eggs
 .dmypy.json
 *.swp
+.hypothesis/
