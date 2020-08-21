@@ -1,0 +1,31 @@
+name: Fuzz
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade coverage
+          python -m pip install --upgrade hypothesmith
+          python -m pip install -e ".[d]"
+
+      - name: Run fuzz tests
+        run: |
+          coverage run fuzz.py
+          coverage report

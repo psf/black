@@ -684,3 +684,4 @@ Multiple contributions by:
 - Yazdan
 - [Yngve Høiseth](mailto:yngve@hoiseth.net)
 - [Yurii Karabas](mailto:1998uriyyo@gmail.com)
+- [Zac Hatfield-Dodds](mailto:zac@zhd.dev)
