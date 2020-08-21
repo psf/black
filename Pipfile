@@ -4,13 +4,13 @@ url = "https://pypi.python.org/simple"
 verify_ssl = true
 
 [dev-packages]
-Sphinx = "*"
+Sphinx = ">=3.1.2"
 coverage = "*"
 docutils = "==0.15"  # not a direct dependency, see https://github.com/pypa/pipenv/issues/3865
 flake8 = "*"
 flake8-bugbear = "*"
 flake8-mypy = "*"
-mypy = ">=0.740"
+mypy = ">=0.782"
 pre-commit = "*"
 readme_renderer = "*"
 recommonmark = "*"
