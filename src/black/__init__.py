@@ -5559,7 +5559,7 @@ def ensure_visible(leaf: Leaf) -> None:
 
 
 def should_split_body_explode(line: Line, opening_bracket: Leaf) -> bool:
-    """Should `line` immediately be split with `delimiter_split()` after RHS?"""
+    """Should `line` be immediately split with `delimiter_split()` after RHS?"""
 
     if not (opening_bracket.parent and opening_bracket.value in "[{("):
         return False
