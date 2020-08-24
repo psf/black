@@ -593,7 +593,8 @@ class BlackTestCase(unittest.TestCase):
     @patch("black.dump_to_file", dump_to_stderr)
     def test_comments7(self) -> None:
         source, expected = read_data("comments7")
-        actual = fs(source)
+        mode = replace(DEFAULT_MODE, target_versions={black.TargetVersion.PY38})
+        actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, DEFAULT_MODE)
@@ -633,7 +634,8 @@ class BlackTestCase(unittest.TestCase):
     @patch("black.dump_to_file", dump_to_stderr)
     def test_composition_no_trailing_comma(self) -> None:
         source, expected = read_data("composition_no_trailing_comma")
-        actual = fs(source)
+        mode = replace(DEFAULT_MODE, target_versions={black.TargetVersion.PY38})
+        actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, DEFAULT_MODE)
