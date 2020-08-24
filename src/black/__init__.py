@@ -195,6 +195,7 @@ class Feature(Enum):
     ASYNC_KEYWORDS = 7
     ASSIGNMENT_EXPRESSIONS = 8
     POS_ONLY_ARGUMENTS = 9
+    FORCE_OPTIONAL_PARENTHESES = 50
 
 
 VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
@@ -1284,6 +1285,7 @@ class BracketTracker:
     previous: Optional[Leaf] = None
     _for_loop_depths: List[int] = field(default_factory=list)
     _lambda_argument_depths: List[int] = field(default_factory=list)
+    invisible: List[Leaf] = field(default_factory=list)
 
     def mark(self, leaf: Leaf) -> None:
         """Mark `leaf` with bracket-related metadata. Keep track of delimiters.
@@ -1309,6 +1311,8 @@ class BracketTracker:
             self.depth -= 1
             opening_bracket = self.bracket_match.pop((self.depth, leaf.type))
             leaf.opening_bracket = opening_bracket
+            if not leaf.value:
+                self.invisible.append(leaf)
         leaf.bracket_depth = self.depth
         if self.depth == 0:
             delim = is_split_before_delimiter(leaf, self.previous)
@@ -1321,6 +1325,8 @@ class BracketTracker:
         if leaf.type in OPENING_BRACKETS:
             self.bracket_match[self.depth, BRACKET[leaf.type]] = leaf
             self.depth += 1
+            if not leaf.value:
+                self.invisible.append(leaf)
         self.previous = leaf
         self.maybe_increment_lambda_arguments(leaf)
         self.maybe_increment_for_loop_variable(leaf)
@@ -2627,20 +2633,31 @@ def transform_line(
     else:
 
         def rhs(line: Line, features: Collection[Feature]) -> Iterator[Line]:
+            """Wraps calls to `right_hand_split`.
+
+            The calls increasingly `omit` right-hand trailers (bracket pairs with
+            content), meaning the trailers get glued together to split on another
+            bracket pair instead.
+            """
             for omit in generate_trailers_to_omit(line, mode.line_length):
                 lines = list(
                     right_hand_split(line, mode.line_length, features, omit=omit)
                 )
+                # Note: this check is only able to figure out if the first line of the
+                # *current* transformation fits in the line length.  This is true only
+                # for simple cases.  All others require running more transforms via
+                # `transform_line()`.  This check doesn't know if those would succeed.
                 if is_line_short_enough(lines[0], line_length=mode.line_length):
                     yield from lines
                     return
 
             # All splits failed, best effort split with no omits.
             # This mostly happens to multiline strings that are by definition
-            # reported as not fitting a single line.
-            # line_length=1 here was historically a bug that somehow became a feature.
-            # See #762 and #781 for the full story.
-            yield from right_hand_split(line, line_length=1, features=features)
+            # reported as not fitting a single line, as well as lines that contain
+            # pre-existing trailing commas (those have to be exploded).
+            yield from right_hand_split(
+                line, line_length=mode.line_length, features=features
+            )
 
         if mode.experimental_string_processing:
             if line.inside_brackets:
@@ -2671,17 +2688,8 @@ def transform_line(
         # We are accumulating lines in `result` because we might want to abort
         # mission and return the original line in the end, or attempt a different
         # split altogether.
-        result: List[Line] = []
         try:
-            for transformed_line in transform(line, features):
-                if str(transformed_line).strip("\n") == line_str:
-                    raise CannotTransform(
-                        "Line transformer returned an unchanged result"
-                    )
-
-                result.extend(
-                    transform_line(transformed_line, mode=mode, features=features)
-                )
+            result = run_transformer(line, transform, mode, features, line_str=line_str)
         except CannotTransform:
             continue
         else:
@@ -2722,6 +2730,7 @@ class StringTransformer(ABC):
 
     line_length: int
     normalize_strings: bool
+    __name__ = "StringTransformer"
 
     @abstractmethod
     def do_match(self, line: Line) -> TMatchResult:
@@ -2968,7 +2977,7 @@ class StringMerger(CustomSplitMapMixin, StringTransformer):
             )
 
         new_line = line.clone()
-        new_line.comments = line.comments
+        new_line.comments = line.comments.copy()
         append_leaves(new_line, line, LL)
 
         new_string_leaf = new_line.leaves[string_idx]
@@ -3296,7 +3305,6 @@ class StringParenStripper(StringTransformer):
 
         new_line = line.clone()
         new_line.comments = line.comments.copy()
-
         append_leaves(new_line, line, LL[: string_idx - 1])
 
         string_leaf = Leaf(token.STRING, LL[string_idx].value)
@@ -4740,8 +4748,9 @@ def right_hand_split(
     tail = bracket_split_build_line(tail_leaves, line, opening_bracket)
     bracket_split_succeeded_or_raise(head, body, tail)
     if (
+        Feature.FORCE_OPTIONAL_PARENTHESES not in features
         # the opening bracket is an optional paren
-        opening_bracket.type == token.LPAR
+        and opening_bracket.type == token.LPAR
         and not opening_bracket.value
         # the closing bracket is an optional paren
         and closing_bracket.type == token.RPAR
@@ -4752,7 +4761,7 @@ def right_hand_split(
         # there are no standalone comments in the body
         and not body.contains_standalone_comments(0)
         # and we can actually remove the parens
-        and can_omit_invisible_parens(body, line_length)
+        and can_omit_invisible_parens(body, line_length, omit_on_explode=omit)
     ):
         omit = {id(closing_bracket), *omit}
         try:
@@ -5587,6 +5596,9 @@ def should_split_body_explode(line: Line, opening_bracket: Leaf) -> bool:
 
 def is_one_tuple_between(opening: Leaf, closing: Leaf, leaves: List[Leaf]) -> bool:
     """Return True if content between `opening` and `closing` looks like a one-tuple."""
+    if opening.type != token.LPAR and closing.type != token.RPAR:
+        return False
+
     depth = closing.bracket_depth + 1
     for _opening_index, leaf in enumerate(leaves):
         if leaf is opening:
@@ -5678,11 +5690,13 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
     a preceding closing bracket fits in one line.
 
     Yielded sets are cumulative (contain results of previous yields, too).  First
-    set is empty.
+    set is empty, unless the line should explode, in which case bracket pairs until
+    the one that needs to explode are omitted.
     """
 
     omit: Set[LeafID] = set()
-    yield omit
+    if not line.should_explode:
+        yield omit
 
     length = 4 * line.depth
     opening_bracket: Optional[Leaf] = None
@@ -5701,9 +5715,24 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
             if leaf is opening_bracket:
                 opening_bracket = None
             elif leaf.type in CLOSING_BRACKETS:
+                prev = line.leaves[index - 1] if index > 0 else None
+                if (
+                    line.should_explode
+                    and prev
+                    and prev.type == token.COMMA
+                    and not prev.was_checked
+                    and not is_one_tuple_between(
+                        leaf.opening_bracket, leaf, line.leaves
+                    )
+                ):
+                    # Never omit bracket pairs with pre-existing trailing commas.
+                    # We need to explode on those.
+                    break
+
                 inner_brackets.add(id(leaf))
         elif leaf.type in CLOSING_BRACKETS:
-            if index > 0 and line.leaves[index - 1].type in OPENING_BRACKETS:
+            prev = line.leaves[index - 1] if index > 0 else None
+            if prev and prev.type in OPENING_BRACKETS:
                 # Empty brackets would fail a split so treat them as "inner"
                 # brackets (e.g. only add them to the `omit` set if another
                 # pair of brackets was good enough.
@@ -5715,6 +5744,17 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
                 omit.update(inner_brackets)
                 inner_brackets.clear()
                 yield omit
+
+            if (
+                line.should_explode
+                and prev
+                and prev.type == token.COMMA
+                and not prev.was_checked
+                and not is_one_tuple_between(leaf.opening_bracket, leaf, line.leaves)
+            ):
+                # Never omit bracket pairs with pre-existing trailing commas.
+                # We need to explode on those.
+                break
 
             if leaf.value:
                 opening_bracket = leaf.opening_bracket
@@ -6297,7 +6337,11 @@ def can_be_split(line: Line) -> bool:
     return True
 
 
-def can_omit_invisible_parens(line: Line, line_length: int) -> bool:
+def can_omit_invisible_parens(
+    line: Line,
+    line_length: int,
+    omit_on_explode: Collection[LeafID] = (),
+) -> bool:
     """Does `line` have a shape safe to reformat without optional parens around it?
 
     Returns True for only a subset of potentially nice looking formattings but
@@ -6320,36 +6364,26 @@ def can_omit_invisible_parens(line: Line, line_length: int) -> bool:
 
     assert len(line.leaves) >= 2, "Stranded delimiter"
 
-    first = line.leaves[0]
-    second = line.leaves[1]
-    penultimate = line.leaves[-2]
-    last = line.leaves[-1]
-
     # With a single delimiter, omit if the expression starts or ends with
     # a bracket.
+    first = line.leaves[0]
+    second = line.leaves[1]
     if first.type in OPENING_BRACKETS and second.type not in CLOSING_BRACKETS:
-        remainder = False
-        length = 4 * line.depth
-        for _index, leaf, leaf_length in enumerate_with_length(line):
-            if leaf.type in CLOSING_BRACKETS and leaf.opening_bracket is first:
-                remainder = True
-            if remainder:
-                length += leaf_length
-                if length > line_length:
-                    break
-
-                if leaf.type in OPENING_BRACKETS:
-                    # There are brackets we can further split on.
-                    remainder = False
-
-        else:
-            # checked the entire string and line length wasn't exceeded
-            if len(line.leaves) == _index + 1:
-                return True
+        if _can_omit_opening_paren(line, first=first, line_length=line_length):
+            return True
 
         # Note: we are not returning False here because a line might have *both*
         # a leading opening bracket and a trailing closing bracket.  If the
         # opening bracket doesn't match our rule, maybe the closing will.
+
+    penultimate = line.leaves[-2]
+    last = line.leaves[-1]
+    if line.should_explode:
+        try:
+            penultimate, last = last_two_except(line.leaves, omit=omit_on_explode)
+        except LookupError:
+            # Turns out we'd omit everything.  We cannot skip the optional parentheses.
+            return False
 
     if (
         last.type == token.RPAR
@@ -6371,19 +6405,122 @@ def can_omit_invisible_parens(line: Line, line_length: int) -> bool:
             # unnecessary.
             return True
 
-        length = 4 * line.depth
-        seen_other_brackets = False
-        for _index, leaf, leaf_length in enumerate_with_length(line):
-            length += leaf_length
-            if leaf is last.opening_bracket:
-                if seen_other_brackets or length <= line_length:
-                    return True
+        if (
+            line.should_explode
+            and penultimate.type == token.COMMA
+            and not penultimate.was_checked
+        ):
+            # The rightmost non-omitted bracket pair is the one we want to explode on.
+            return True
 
-            elif leaf.type in OPENING_BRACKETS:
-                # There are brackets we can further split on.
-                seen_other_brackets = True
+        if _can_omit_closing_paren(line, last=last, line_length=line_length):
+            return True
 
     return False
+
+
+def _can_omit_opening_paren(line: Line, *, first: Leaf, line_length: int) -> bool:
+    """See `can_omit_invisible_parens`."""
+    remainder = False
+    length = 4 * line.depth
+    _index = -1
+    for _index, leaf, leaf_length in enumerate_with_length(line):
+        if leaf.type in CLOSING_BRACKETS and leaf.opening_bracket is first:
+            remainder = True
+        if remainder:
+            length += leaf_length
+            if length > line_length:
+                break
+
+            if leaf.type in OPENING_BRACKETS:
+                # There are brackets we can further split on.
+                remainder = False
+
+    else:
+        # checked the entire string and line length wasn't exceeded
+        if len(line.leaves) == _index + 1:
+            return True
+
+    return False
+
+
+def _can_omit_closing_paren(line: Line, *, last: Leaf, line_length: int) -> bool:
+    """See `can_omit_invisible_parens`."""
+    length = 4 * line.depth
+    seen_other_brackets = False
+    for _index, leaf, leaf_length in enumerate_with_length(line):
+        length += leaf_length
+        if leaf is last.opening_bracket:
+            if seen_other_brackets or length <= line_length:
+                return True
+
+        elif leaf.type in OPENING_BRACKETS:
+            # There are brackets we can further split on.
+            seen_other_brackets = True
+
+    return False
+
+
+def last_two_except(leaves: List[Leaf], omit: Collection[LeafID]) -> Tuple[Leaf, Leaf]:
+    """Return (penultimate, last) leaves skipping brackets in `omit` and contents."""
+    stop_after = None
+    last = None
+    for leaf in reversed(leaves):
+        if stop_after:
+            if leaf is stop_after:
+                stop_after = None
+            continue
+
+        if last:
+            return leaf, last
+
+        if id(leaf) in omit:
+            stop_after = leaf.opening_bracket
+        else:
+            last = leaf
+    else:
+        raise LookupError("Last two leaves were also skipped")
+
+
+def run_transformer(
+    line: Line,
+    transform: Transformer,
+    mode: Mode,
+    features: Collection[Feature],
+    *,
+    line_str: str = "",
+) -> List[Line]:
+    if not line_str:
+        line_str = line_to_string(line)
+    result: List[Line] = []
+    for transformed_line in transform(line, features):
+        if str(transformed_line).strip("\n") == line_str:
+            raise CannotTransform("Line transformer returned an unchanged result")
+
+        result.extend(transform_line(transformed_line, mode=mode, features=features))
+
+    if not (
+        transform.__name__ == "rhs"
+        and line.bracket_tracker.invisible
+        and not any(bracket.value for bracket in line.bracket_tracker.invisible)
+        and not line.contains_multiline_strings()
+        and not result[0].contains_uncollapsable_type_comments()
+        and not result[0].contains_unsplittable_type_ignore()
+        and not is_line_short_enough(result[0], line_length=mode.line_length)
+    ):
+        return result
+
+    line_copy = line.clone()
+    append_leaves(line_copy, line, line.leaves)
+    features_fop = set(features) | {Feature.FORCE_OPTIONAL_PARENTHESES}
+    second_opinion = run_transformer(
+        line_copy, transform, mode, features_fop, line_str=line_str
+    )
+    if all(
+        is_line_short_enough(ln, line_length=mode.line_length) for ln in second_opinion
+    ):
+        result = second_opinion
+    return result
 
 
 def get_cache_file(mode: Mode) -> Path:
