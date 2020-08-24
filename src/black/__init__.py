@@ -2635,11 +2635,19 @@ def transform_line(
                     yield from lines
                     return
 
-            # All splits failed, best effort split with no omits.
-            # This mostly happens to multiline strings that are by definition
-            # reported as not fitting a single line.
-            # line_length=1 here was historically a bug that somehow became a feature.
-            # See #762 and #781 for the full story.
+            # All splits failed, best effort split with no omits.  Mostly applies to:
+            # * multiline strings that are by definition reported as not fitting
+            #   a single line; and
+            # * lines with pre-existing trailing commas (which have `should_explode`).
+
+            # Attempt 1, potentially omitting optional parentheses:
+            lines = list(right_hand_split(line, mode.line_length, features))
+            if is_line_short_enough(lines[0], line_length=mode.line_length):
+                yield from lines
+                return
+
+            # Last resort, force emitting optional parentheses with line_length=1
+            # (see #762 and #781 for fun historical context).
             yield from right_hand_split(line, line_length=1, features=features)
 
         if mode.experimental_string_processing:
