@@ -9,15 +9,44 @@
 - re-implemented support for explicit trailing commas: now it works consistently within
   any bracket pair, including nested structures (#1288 and duplicates)
 
-- reindent docstrings when reindenting code around it (#1053)
+- `Black` now reindents docstrings when reindenting code around it (#1053)
 
-- show colored diffs (#1266)
+- `Black` now shows colored diffs (#1266)
 
-- move to 'py3' tagged wheels (#1388)
+- `Black` is now packaged using 'py3' tagged wheels (#1388)
 
-- remove deprecated `--py36` option (#1236)
+- `Black` now supports Python 3.8 code, e.g. star expressions in return statements
+  (#1121)
 
-- add `--force-exclude` argument (#1032)
+- `Black` no longer normalizes capital R-string prefixes as those have a
+  community-accepted meaning (#1244)
+
+- `Black` now uses exit code 2 when specified configuration file doesn't exit (#1361)
+
+- `Black` now works on AWS Lambda (#1141)
+
+- added `--force-exclude` argument (#1032)
+
+- removed deprecated `--py36` option (#1236)
+
+- fixed `--diff` output when EOF is encountered (#526)
+
+- fixed `# fmt: off` handling around decorators (#560)
+
+- fixed unstable formatting with some `# type: ignore` comments (#1113)
+
+- fixed invalid removal on organizing brackets followed by indexing (#1575)
+
+- introduced `black-primer`, a CI tool that allows us to run regression tests against
+  existing open source users of Black (#1402)
+
+- introduced property-based fuzzing to our test suite based on Hypothesis and
+  Hypothersmith (#1566)
+
+- implemented experimental and disabled by default long string rewrapping (#1132),
+  hidden under a `--experimental-string-processing` flag while it's being worked on;
+  this is an undocumented and unsupported feature, you lose Internet points for
+  depending on it (#1609)
 
 #### Vim plugin
 
