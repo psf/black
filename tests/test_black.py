@@ -631,6 +631,14 @@ class BlackTestCase(unittest.TestCase):
         black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
+    def test_composition_no_trailing_comma(self) -> None:
+        source, expected = read_data("composition_no_trailing_comma")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, DEFAULT_MODE)
+
+    @patch("black.dump_to_file", dump_to_stderr)
     def test_empty_lines(self) -> None:
         source, expected = read_data("empty_lines")
         actual = fs(source)
