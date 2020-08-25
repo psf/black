@@ -496,6 +496,11 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, DEFAULT_MODE)
+        mode = replace(DEFAULT_MODE, string_normalization=False)
+        not_normalized = fs(source, mode=mode)
+        self.assertFormatEqual(expected, not_normalized)
+        black.assert_equivalent(source, not_normalized)
+        black.assert_stable(source, not_normalized, mode=mode)
 
     def test_long_strings(self) -> None:
         """Tests for splitting long strings."""

@@ -81,6 +81,35 @@ def single_line():
     """
     pass
 
+
+def this():
+    r"""
+    'hey ho'
+    """
+
+
+def that():
+  """ "hey yah" """
+
+
+def and_that():
+  """
+  "hey yah" """
+
+
+def and_this():
+  ''' 
+  "hey yah"'''
+
+
+def believe_it_or_not_this_is_in_the_py_stdlib(): ''' 
+"hey yah"'''
+
+
+def ignored_docstring():
+    """a => \
+b"""  
+
 # output
 
 class MyClass:
@@ -164,3 +193,33 @@ def over_indent():
 def single_line():
     """But with a newline after it!"""
     pass
+
+
+def this():
+    r"""
+    'hey ho'
+    """
+
+
+def that():
+    """ "hey yah" """
+
+
+def and_that():
+    """
+    "hey yah" """
+
+
+def and_this():
+    '''
+    "hey yah"'''
+
+
+def believe_it_or_not_this_is_in_the_py_stdlib():
+    '''
+    "hey yah"'''
+
+
+def ignored_docstring():
+    """a => \
+b"""
