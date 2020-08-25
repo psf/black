@@ -57,7 +57,6 @@ Contents
    black_primer
    version_control_integration
    github_actions
-   spotless
    ignoring_unmodified_files
    contributing_to_black
    show_your_style
