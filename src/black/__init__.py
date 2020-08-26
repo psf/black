@@ -4444,10 +4444,11 @@ def contains_pragma_comment(comment_list: List[Leaf]) -> bool:
         of the more common static analysis tools for python (e.g. mypy, flake8,
         pylint).
     """
-    return any(
-        comment.value.startswith(("# type:", "# noqa", "# pylint:"))
-        for comment in comment_list
-    )
+    for comment in comment_list:
+        if comment.value.startswith(("# type:", "# noqa", "# pylint:")):
+            return True
+
+    return False
 
 
 def insert_str_child_factory(string_leaf: Leaf) -> Callable[[LN], None]:
