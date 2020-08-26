@@ -256,9 +256,7 @@ Sublime Text, Visual Studio Code and many more), you can use the
 Use [python-black](https://atom.io/packages/python-black).
 
 ## Gradle (the build tool)
-
-Use the
-[Spotless](https://github.com/diffplug/spotless/tree/main/plugin-gradle) plugin.
+Use the [Spotless](https://github.com/diffplug/spotless/tree/main/plugin-gradle) plugin.
 
 ## Kakoune
 
