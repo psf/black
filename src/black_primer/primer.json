@@ -3,7 +3,7 @@
   "projects": {
     "aioexabgp": {
       "cli_arguments": [],
-      "expect_formatting_changes": true,
+      "expect_formatting_changes": false,
       "git_clone_url": "https://github.com/cooperlees/aioexabgp.git",
       "long_checkout": false,
       "py_versions": ["all"]
@@ -17,7 +17,7 @@
     },
     "bandersnatch": {
       "cli_arguments": [],
-      "expect_formatting_changes": true,
+      "expect_formatting_changes": false,
       "git_clone_url": "https://github.com/pypa/bandersnatch.git",
       "long_checkout": false,
       "py_versions": ["all"]
@@ -30,7 +30,7 @@
       "py_versions": ["all"]
     },
     "django": {
-      "disabled_reason": "black --check --diff returned 123",
+      "disabled_reason": "black --check --diff returned 123 on two files",
       "disabled": true,
       "cli_arguments": [],
       "expect_formatting_changes": true,
@@ -40,7 +40,7 @@
     },
     "flake8-bugbear": {
       "cli_arguments": [],
-      "expect_formatting_changes": true,
+      "expect_formatting_changes": false,
       "git_clone_url": "https://github.com/PyCQA/flake8-bugbear.git",
       "long_checkout": false,
       "py_versions": ["all"]
@@ -53,10 +53,10 @@
       "py_versions": ["all"]
     },
     "pandas": {
-      "disabled_reason": "black --check --diff returned 123",
+      "disabled_reason": "black --check --diff returned 123 on one file",
       "disabled": true,
       "cli_arguments": [],
-      "expect_formatting_changes": false,
+      "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/pandas-dev/pandas.git",
       "long_checkout": false,
       "py_versions": ["all"]
@@ -83,10 +83,8 @@
       "py_versions": ["all"]
     },
     "pytest": {
-      "disabled_reason": "black --check --diff returned 123",
-      "disabled": true,
       "cli_arguments": [],
-      "expect_formatting_changes": false,
+      "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/pytest-dev/pytest.git",
       "long_checkout": false,
       "py_versions": ["all"]
