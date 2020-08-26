@@ -2050,7 +2050,6 @@ class LineGenerator(Visitor[Line]):
                 if leaf.value[tail_len + 1] == docstring[-1]:
                     docstring = docstring + " "
             leaf.value = leaf.value[0:lead_len] + docstring + leaf.value[tail_len:]
-            normalize_string_quotes(leaf)
 
         yield from self.visit_default(leaf)
 
