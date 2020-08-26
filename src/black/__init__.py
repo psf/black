@@ -1627,14 +1627,13 @@ class Line:
 
     def maybe_should_explode(self, closing: Leaf) -> bool:
         """Return True if this line should explode (always be split), that is when:
-        - there's a pre-existing trailing comma here; and
+        - there's a trailing comma here; and
         - it's not a one-tuple.
         """
         if not (
             closing.type in CLOSING_BRACKETS
             and self.leaves
             and self.leaves[-1].type == token.COMMA
-            and not self.leaves[-1].was_checked  # pre-existing
         ):
             return False
 
@@ -2661,7 +2660,7 @@ def transform_line(
             # All splits failed, best effort split with no omits.
             # This mostly happens to multiline strings that are by definition
             # reported as not fitting a single line, as well as lines that contain
-            # pre-existing trailing commas (those have to be exploded).
+            # trailing commas (those have to be exploded).
             yield from right_hand_split(
                 line, line_length=mode.line_length, features=features
             )
@@ -4855,7 +4854,6 @@ def bracket_split_build_line(
 
                     if leaves[i].type != token.COMMA:
                         new_comma = Leaf(token.COMMA, ",")
-                        new_comma.was_checked = True
                         leaves.insert(i + 1, new_comma)
                     break
 
@@ -4951,7 +4949,6 @@ def delimiter_split(line: Line, features: Collection[Feature] = ()) -> Iterator[
             and current_line.leaves[-1].type != STANDALONE_COMMENT
         ):
             new_comma = Leaf(token.COMMA, ",")
-            new_comma.was_checked = True
             current_line.append(new_comma)
         yield current_line
 
@@ -5584,20 +5581,20 @@ def should_split_body_explode(line: Line, opening_bracket: Leaf) -> bool:
     # than one of them (we're excluding the trailing comma and if the delimiter priority
     # is still commas, that means there's more).
     exclude = set()
-    pre_existing_trailing_comma = False
+    trailing_comma = False
     try:
         last_leaf = line.leaves[-1]
         if last_leaf.type == token.COMMA:
-            pre_existing_trailing_comma = not last_leaf.was_checked
+            trailing_comma = True
             exclude.add(id(last_leaf))
         max_priority = line.bracket_tracker.max_delimiter_priority(exclude=exclude)
     except (IndexError, ValueError):
         return False
 
     return max_priority == COMMA_PRIORITY and (
+        trailing_comma
         # always explode imports
-        opening_bracket.parent.type in {syms.atom, syms.import_from}
-        or pre_existing_trailing_comma
+        or opening_bracket.parent.type in {syms.atom, syms.import_from}
     )
 
 
@@ -5727,12 +5724,11 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
                     line.should_explode
                     and prev
                     and prev.type == token.COMMA
-                    and not prev.was_checked
                     and not is_one_tuple_between(
                         leaf.opening_bracket, leaf, line.leaves
                     )
                 ):
-                    # Never omit bracket pairs with pre-existing trailing commas.
+                    # Never omit bracket pairs with trailing commas.
                     # We need to explode on those.
                     break
 
@@ -5756,10 +5752,9 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
                 line.should_explode
                 and prev
                 and prev.type == token.COMMA
-                and not prev.was_checked
                 and not is_one_tuple_between(leaf.opening_bracket, leaf, line.leaves)
             ):
-                # Never omit bracket pairs with pre-existing trailing commas.
+                # Never omit bracket pairs with trailing commas.
                 # We need to explode on those.
                 break
 
@@ -6412,11 +6407,7 @@ def can_omit_invisible_parens(
             # unnecessary.
             return True
 
-        if (
-            line.should_explode
-            and penultimate.type == token.COMMA
-            and not penultimate.was_checked
-        ):
+        if line.should_explode and penultimate.type == token.COMMA:
             # The rightmost non-omitted bracket pair is the one we want to explode on.
             return True
 
