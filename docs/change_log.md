@@ -2,6 +2,13 @@
 
 ## Change Log
 
+### 20.8b1
+
+#### _Packaging_
+
+- explicitly depend on Click 7.1.2 or newer as `Black` no longer works with versions
+  older than 7.0
+
 ### 20.8b0
 
 #### _Black_
