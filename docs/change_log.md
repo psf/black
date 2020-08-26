@@ -2,6 +2,13 @@
 
 ## Change Log
 
+### Unreleased
+
+#### _Black_
+
+- `Black` now respects `--skip-string-normalization` when normalizing multiline
+  docstring quotes (#1637)
+
 ### 20.8b1
 
 #### _Packaging_

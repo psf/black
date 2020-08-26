@@ -517,11 +517,16 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, DEFAULT_MODE)
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_docstring_no_string_normalization(self) -> None:
+        """Like test_docstring but with string normalization off."""
+        source, expected = read_data("docstring_no_string_normalization")
         mode = replace(DEFAULT_MODE, string_normalization=False)
-        not_normalized = fs(source, mode=mode)
-        self.assertFormatEqual(expected, not_normalized)
-        black.assert_equivalent(source, not_normalized)
-        black.assert_stable(source, not_normalized, mode=mode)
+        actual = fs(source, mode=mode)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, mode)
 
     def test_long_strings(self) -> None:
         """Tests for splitting long strings."""
