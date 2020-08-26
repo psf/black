@@ -6163,6 +6163,7 @@ def assert_stable(src: str, dst: str, mode: Mode) -> None:
     newdst = format_str(dst, mode=mode)
     if dst != newdst:
         log = dump_to_file(
+            str(mode),
             diff(src, dst, "source", "first pass"),
             diff(dst, newdst, "first pass", "second pass"),
         )
