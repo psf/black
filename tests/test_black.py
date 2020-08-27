@@ -9,6 +9,7 @@ import inspect
 from io import BytesIO, TextIOWrapper
 import os
 from pathlib import Path
+from platform import system
 import regex as re
 import sys
 from tempfile import TemporaryDirectory
@@ -1938,6 +1939,23 @@ class BlackTestCase(unittest.TestCase):
             )
             self.assertEqual(black.find_project_root((src_dir,)), src_dir.resolve())
             self.assertEqual(black.find_project_root((src_python,)), src_dir.resolve())
+
+    def test_bpo_33660_workaround(self) -> None:
+        if system() == "Windows":
+            return
+
+        # https://bugs.python.org/issue33660
+
+        old_cwd = Path.cwd()
+        try:
+            root = Path("/")
+            os.chdir(str(root))
+            path = Path("workspace") / "project"
+            report = black.Report(verbose=True)
+            normalized_path = black.normalize_path_maybe_ignore(path, root, report)
+            self.assertEqual(normalized_path, "workspace/project")
+        finally:
+            os.chdir(str(old_cwd))
 
 
 class BlackDTestCase(AioHTTPTestCase):
