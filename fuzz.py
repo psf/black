@@ -42,8 +42,8 @@ def test_idempotent_any_syntatically_valid_python(
     try:
         dst_contents = black.format_str(src_contents, mode=mode)
     except black.InvalidInput:
-        # This is a bug - if it's valid Python code, as above, black should be
-        # able to code with it.  See issues #970, #1012, #1358, and #1557.
+        # This is a bug - if it's valid Python code, as above, Black should be
+        # able to cope with it.  See issues #970, #1012, #1358, and #1557.
         # TODO: remove this try-except block when issues are resolved.
         return
 
