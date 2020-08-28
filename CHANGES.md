@@ -7,6 +7,9 @@
 - `Black` now respects `--skip-string-normalization` when normalizing multiline
   docstring quotes (#1637)
 
+- `Black` no longer removes all empty lines between non-function code and decorators
+  when formatting typing stubs. Now `Black` enforces a single empty line. (#1646)
+
 - fixed a crash when PWD=/ on POSIX (#1631)
 
 ### 20.8b1

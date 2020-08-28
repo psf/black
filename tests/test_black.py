@@ -1527,7 +1527,6 @@ class BlackTestCase(unittest.TestCase):
         black.assert_stable(source, actual, DEFAULT_MODE)
 
     def test_single_file_force_pyi(self) -> None:
-        reg_mode = DEFAULT_MODE
         pyi_mode = replace(DEFAULT_MODE, is_pyi=True)
         contents, expected = read_data("force_pyi")
         with cache_dir() as workspace:
@@ -1540,9 +1539,11 @@ class BlackTestCase(unittest.TestCase):
             # verify cache with --pyi is separate
             pyi_cache = black.read_cache(pyi_mode)
             self.assertIn(path, pyi_cache)
-            normal_cache = black.read_cache(reg_mode)
+            normal_cache = black.read_cache(DEFAULT_MODE)
             self.assertNotIn(path, normal_cache)
-        self.assertEqual(actual, expected)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(contents, actual)
+        black.assert_stable(contents, actual, pyi_mode)
 
     @event_loop()
     def test_multi_file_force_pyi(self) -> None:
