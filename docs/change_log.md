@@ -9,6 +9,11 @@
 - `Black` now respects `--skip-string-normalization` when normalizing multiline
   docstring quotes (#1637)
 
+- `Black` no longer adds an incorrect space after a parenthesized assignment expression
+  in if/while statements (#1655)
+
+- fixed a crash when PWD=/ on POSIX (#1631)
+
 ### 20.8b1
 
 #### _Packaging_
