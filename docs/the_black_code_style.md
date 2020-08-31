@@ -199,12 +199,12 @@ You'd do it like this:
 max-line-length = 80
 ...
 select = C,E,F,W,B,B950
-ignore = E203, E501, W503
+extend-ignore = E203, E501
 ```
 
 You'll find _Black_'s own .flake8 config file is configured like this. Explanation of
-why W503 and E203 are disabled can be found further in this documentation. And if you're
-curious about the reasoning behind B950,
+why E203 is disabled can be found further in this documentation. And if you're curious
+about the reasoning behind B950,
 [Bugbear's documentation](https://github.com/PyCQA/flake8-bugbear#opinionated-warnings)
 explains it. The tl;dr is "it's like highway speed limits, we won't bother you if you
 overdo it by a few km/h".
@@ -308,10 +308,6 @@ _Black_ will break a line before a binary operator when splitting a block of cod
 multiple lines. This is so that _Black_ is compliant with the recent changes in the
 [PEP 8](https://www.python.org/dev/peps/pep-0008/#should-a-line-break-before-or-after-a-binary-operator)
 style guide, which emphasizes that this approach improves readability.
-
-This behaviour may raise `W503 line break before binary operator` warnings in style
-guide enforcement tools like Flake8. Since `W503` is not PEP 8 compliant, you should
-tell Flake8 to ignore these warnings.
 
 ### Slices
 
