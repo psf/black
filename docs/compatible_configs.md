@@ -156,6 +156,13 @@ whitespace around slice operators. Due to this, Flake8 will raise
 `E203 whitespace before ':'` warnings. Since this warning is not PEP 8 compliant, Flake8
 should be configured to ignore it via `extend-ignore = E203`.
 
+When breaking a line, _Black_ will break it before a binary operator. This is compliant
+with PEP 8 as of
+[April 2016](https://github.com/python/peps/commit/c59c4376ad233a62ca4b3a6060c81368bd21e85b#diff-64ec08cc46db7540f18f2af46037f599).
+There's a disabled-by-default warning in Flake8 which goes against this PEP 8
+recommendation called `W503 line break before binary operator`. It should not be enabled
+in your configuration.
+
 Also, as like with isort, flake8 should be configured to allow lines up to the length
 limit of `88`, _Black_'s default. This explains `max-line-length = 88`.
 
