@@ -880,7 +880,8 @@ def wrap_stream_for_windows(
 
         # wrap_stream returns a `colorama.AnsiToWin32.AnsiToWin32` object
         # which does not have a `detach()` method. So we fake one.
-        f.detach = lambda *args, **kwargs: None  # type: ignore
+        if not hasattr(f, "detach"):
+            f.detach = lambda: None  # type: ignore
     except ImportError:
         pass
 
