@@ -661,7 +661,7 @@ def reformat_one(
                 changed = Changed.YES
         else:
             cache: Cache = {}
-            if write_back != WriteBack.DIFF:
+            if write_back not in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
                 cache = read_cache(mode)
                 res_src = src.resolve()
                 if res_src in cache and cache[res_src] == get_cache_info(res_src):
@@ -735,7 +735,7 @@ async def schedule_formatting(
     :func:`format_file_in_place`.
     """
     cache: Cache = {}
-    if write_back != WriteBack.DIFF:
+    if write_back not in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
         cache = read_cache(mode)
         sources, cached = filter_cached(cache, sources)
         for src in sorted(cached):
@@ -746,7 +746,7 @@ async def schedule_formatting(
     cancelled = []
     sources_to_cache = []
     lock = None
-    if write_back == WriteBack.DIFF:
+    if write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
         # For diff output, we need locks to ensure we don't interleave output
         # from different processes.
         manager = Manager()
