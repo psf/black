@@ -861,31 +861,22 @@ def color_diff(contents: str) -> str:
 
 def wrap_stream_for_windows(
     f: io.TextIOWrapper,
-) -> Union[io.TextIOWrapper, "colorama.AnsiToWin32.AnsiToWin32"]:
+) -> Union[io.TextIOWrapper, "colorama.AnsiToWin32"]:
     """
-    Wrap the stream in colorama's wrap_stream so colors are shown on Windows.
+    Wrap stream with colorama's wrap_stream so colors are shown on Windows.
 
-    If `colorama` is not found, then no change is made. If `colorama` does
-    exist, then it handles the logic to determine whether or not to change
-    things.
+    If `colorama` is unavailable, the original stream is returned unmodified.
+    Otherwise, the `wrap_stream()` function determines whether the stream needs
+    to be wrapped for a Windows environment and will accordingly either return
+    an `AnsiToWin32` wrapper or the original stream.
     """
     try:
-        from colorama import initialise
-
-        # We set `strip=False` so that we can don't have to modify
-        # test_express_diff_with_color.
-        f = initialise.wrap_stream(
-            f, convert=None, strip=False, autoreset=False, wrap=True
-        )
-
-        # wrap_stream returns a `colorama.AnsiToWin32.AnsiToWin32` object
-        # which does not have a `detach()` method. So we fake one.
-        if not hasattr(f, "detach"):
-            f.detach = lambda: None  # type: ignore
+        from colorama.initialise import wrap_stream
     except ImportError:
-        pass
-
-    return f
+        return f
+    else:
+        # Set `strip=False` to avoid needing to modify test_express_diff_with_color.
+        return wrap_stream(f, convert=None, strip=False, autoreset=False, wrap=True)
 
 
 def format_stdin_to_stdout(
