@@ -1395,9 +1395,29 @@ class BlackTestCase(unittest.TestCase):
             src = (workspace / "test.py").resolve()
             with src.open("w") as fobj:
                 fobj.write("print('hello')")
-            self.invokeBlack([str(src), "--diff"])
-            cache_file = black.get_cache_file(mode)
-            self.assertFalse(cache_file.exists())
+            with patch("black.read_cache") as read_cache, patch(
+                "black.write_cache"
+            ) as write_cache:
+                self.invokeBlack([str(src), "--diff"])
+                cache_file = black.get_cache_file(mode)
+                self.assertFalse(cache_file.exists())
+                write_cache.assert_not_called()
+                read_cache.assert_not_called()
+
+    def test_no_cache_when_writeback_color_diff(self) -> None:
+        mode = DEFAULT_MODE
+        with cache_dir() as workspace:
+            src = (workspace / "test.py").resolve()
+            with src.open("w") as fobj:
+                fobj.write("print('hello')")
+            with patch("black.read_cache") as read_cache, patch(
+                "black.write_cache"
+            ) as write_cache:
+                self.invokeBlack([str(src), "--diff", "--color"])
+                cache_file = black.get_cache_file(mode)
+                self.assertFalse(cache_file.exists())
+                write_cache.assert_not_called()
+                read_cache.assert_not_called()
 
     def test_no_cache_when_stdin(self) -> None:
         mode = DEFAULT_MODE
