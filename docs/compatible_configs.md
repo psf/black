@@ -32,7 +32,7 @@ line_length = 88
 _Black_ wraps imports that surpass `line-length` by moving identifiers into their own
 indented line. If that still doesn't fit the bill, it will put all of them in separate
 lines and put a trailing comma. A more detailed explanation of this behaviour can be
-[found here](https://github.com/psf/black#how-black-wraps-lines).
+[found here](https://github.com/psf/black/blob/master/docs/the_black_code_style.md#how-black-wraps-lines).
 
 isort's default mode of wrapping imports that extend past the `line_length` limit is
 "Grid".
@@ -146,21 +146,22 @@ There are a few deviations that cause incompatibilities with _Black_.
 
 ```
 max-line-length = 88
-extend-ignore = E203, W503
+extend-ignore = E203
 ```
 
 ### Why those options above?
 
-When breaking a line, _Black_ will break it before a binary operator. This is compliant
-with PEP 8, but this behaviour will cause flake8 to raise
-`W503 line break before binary operator` warnings.
-
 In some cases, as determined by PEP 8, _Black_ will enforce an equal amount of
 whitespace around slice operators. Due to this, Flake8 will raise
-`E203 whitespace before ':'` warnings.
+`E203 whitespace before ':'` warnings. Since this warning is not PEP 8 compliant, Flake8
+should be configured to ignore it via `extend-ignore = E203`.
 
-Since both of these warnings are not PEP 8 compliant, Flake8 should be configured to
-ignore these warnings via `extend-ignore = E203, W503`.
+When breaking a line, _Black_ will break it before a binary operator. This is compliant
+with PEP 8 as of
+[April 2016](https://github.com/python/peps/commit/c59c4376ad233a62ca4b3a6060c81368bd21e85b#diff-64ec08cc46db7540f18f2af46037f599).
+There's a disabled-by-default warning in Flake8 which goes against this PEP 8
+recommendation called `W503 line break before binary operator`. It should not be enabled
+in your configuration.
 
 Also, as like with isort, flake8 should be configured to allow lines up to the length
 limit of `88`, _Black_'s default. This explains `max-line-length = 88`.
@@ -173,7 +174,7 @@ limit of `88`, _Black_'s default. This explains `max-line-length = 88`.
 ```ini
 [flake8]
 max-line-length = 88
-extend-ignore = E203, W503
+extend-ignore = E203
 ```
 
 </details>
@@ -184,7 +185,7 @@ extend-ignore = E203, W503
 ```cfg
 [flake8]
 max-line-length = 88
-extend-ignore = E203, W503
+extend-ignore = E203
 ```
 
 </details>
@@ -195,7 +196,7 @@ extend-ignore = E203, W503
 ```ini
 [flake8]
 max-line-length = 88
-extend-ignore = E203, W503
+extend-ignore = E203
 ```
 
 </details>

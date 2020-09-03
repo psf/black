@@ -199,12 +199,12 @@ You'd do it like this:
 max-line-length = 80
 ...
 select = C,E,F,W,B,B950
-ignore = E203, E501, W503
+extend-ignore = E203, E501
 ```
 
 You'll find _Black_'s own .flake8 config file is configured like this. Explanation of
-why W503 and E203 are disabled can be found further in this documentation. And if you're
-curious about the reasoning behind B950,
+why E203 is disabled can be found further in this documentation. And if you're curious
+about the reasoning behind B950,
 [Bugbear's documentation](https://github.com/PyCQA/flake8-bugbear#opinionated-warnings)
 explains it. The tl;dr is "it's like highway speed limits, we won't bother you if you
 overdo it by a few km/h".
@@ -244,16 +244,6 @@ required due to an inner function starting immediately after.
 _Black_ will add trailing commas to expressions that are split by comma where each
 element is on its own line. This includes function signatures.
 
-Unnecessary trailing commas are removed if an expression fits in one line. This makes it
-1% more likely that your line won't exceed the allotted line length limit. Moreover, in
-this scenario, if you added another argument to your call, you'd probably fit it in the
-same line anyway. That doesn't make diffs any larger.
-
-One exception to removing trailing commas is tuple expressions with just one element. In
-this case _Black_ won't touch the single trailing comma as this would unexpectedly
-change the underlying data type. Note that this is also the case when commas are used
-while indexing. This is a tuple in disguise: `numpy_array[3, ]`.
-
 One exception to adding trailing commas is function signatures containing `*`, `*args`,
 or `**kwargs`. In this case a trailing comma is only safe to use on Python 3.6. _Black_
 will detect if your file is already 3.6+ only and use trailing commas in this situation.
@@ -261,6 +251,10 @@ If you wonder how it knows, it looks for f-strings and existing use of trailing 
 in function signatures that have stars in them. In other words, if you'd like a trailing
 comma in this situation and _Black_ didn't recognize it was safe to do so, put it there
 manually and _Black_ will keep it.
+
+A pre-existing trailing comma informs _Black_ to always explode contents of the current
+bracket pair into one item per line. Read more about this in the
+[Pragmatism](#pragmatism) section below.
 
 ### Strings
 
@@ -308,10 +302,6 @@ _Black_ will break a line before a binary operator when splitting a block of cod
 multiple lines. This is so that _Black_ is compliant with the recent changes in the
 [PEP 8](https://www.python.org/dev/peps/pep-0008/#should-a-line-break-before-or-after-a-binary-operator)
 style guide, which emphasizes that this approach improves readability.
-
-This behaviour may raise `W503 line break before binary operator` warnings in style
-guide enforcement tools like Flake8. Since `W503` is not PEP 8 compliant, you should
-tell Flake8 to ignore these warnings.
 
 ### Slices
 

@@ -1,7 +1,7 @@
 [flake8]
-ignore = E203, E266, E501, W503
+extend-ignore = E203, E266, E501
 # line length is intentionally set to 80 here because black uses Bugbear
-# See https://github.com/psf/black/blob/master/README.md#line-length for more details
+# See https://github.com/psf/black/blob/master/docs/the_black_code_style.md#line-length for more details
 max-line-length = 80
 max-complexity = 18
 select = B,C,E,F,W,T4,B9

@@ -12,6 +12,9 @@
 - `Black` no longer removes all empty lines between non-function code and decorators
   when formatting typing stubs. Now `Black` enforces a single empty line. (#1646)
 
+- `Black` no longer adds an incorrect space after a parenthesized assignment expression
+  in if/while statements (#1655)
+
 - fixed a crash when PWD=/ on POSIX (#1631)
 
 ### 20.8b1
