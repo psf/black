@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import multiprocessing
 import asyncio
 import logging
 from concurrent.futures import ThreadPoolExecutor
@@ -1418,6 +1419,32 @@ class BlackTestCase(unittest.TestCase):
                 self.assertFalse(cache_file.exists())
                 write_cache.assert_not_called()
                 read_cache.assert_not_called()
+
+    @event_loop()
+    def test_output_locking_when_writeback_diff(self) -> None:
+        with cache_dir() as workspace:
+            for tag in range(0, 4):
+                src = (workspace / f"test{tag}.py").resolve()
+                with src.open("w") as fobj:
+                    fobj.write("print('hello')")
+            with patch("black.Manager", wraps=multiprocessing.Manager) as mgr:
+                self.invokeBlack(["--diff", str(workspace)], exit_code=123)
+                # this isn't quite doing what we want, but if it _isn't_
+                # called then we cannot be using the lock it provides
+                mgr.assert_called()
+
+    @event_loop()
+    def test_output_locking_when_writeback_color_diff(self) -> None:
+        with cache_dir() as workspace:
+            for tag in range(0, 4):
+                src = (workspace / f"test{tag}.py").resolve()
+                with src.open("w") as fobj:
+                    fobj.write("print('hello')")
+            with patch("black.Manager", wraps=multiprocessing.Manager) as mgr:
+                self.invokeBlack(["--diff", "--color", str(workspace)], exit_code=123)
+                # this isn't quite doing what we want, but if it _isn't_
+                # called then we cannot be using the lock it provides
+                mgr.assert_called()
 
     def test_no_cache_when_stdin(self) -> None:
         mode = DEFAULT_MODE
