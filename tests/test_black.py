@@ -1428,7 +1428,7 @@ class BlackTestCase(unittest.TestCase):
                 with src.open("w") as fobj:
                     fobj.write("print('hello')")
             with patch("black.Manager", wraps=multiprocessing.Manager) as mgr:
-                self.invokeBlack(["--diff", str(workspace)], exit_code=123)
+                self.invokeBlack(["--diff", str(workspace)], exit_code=0)
                 # this isn't quite doing what we want, but if it _isn't_
                 # called then we cannot be using the lock it provides
                 mgr.assert_called()
@@ -1441,7 +1441,7 @@ class BlackTestCase(unittest.TestCase):
                 with src.open("w") as fobj:
                     fobj.write("print('hello')")
             with patch("black.Manager", wraps=multiprocessing.Manager) as mgr:
-                self.invokeBlack(["--diff", "--color", str(workspace)], exit_code=123)
+                self.invokeBlack(["--diff", "--color", str(workspace)], exit_code=0)
                 # this isn't quite doing what we want, but if it _isn't_
                 # called then we cannot be using the lock it provides
                 mgr.assert_called()
