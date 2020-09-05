@@ -3507,9 +3507,12 @@ class BaseStringSplitter(StringTransformer):
                 # WMA4 a single space.
                 offset += 1
 
-                # WMA4 the lengths of any leaves that came before that space.
-                for leaf in LL[: p_idx + 1]:
+                # WMA4 the lengths of any leaves that came before that space,
+                # but after any closing bracket before that space.
+                for leaf in reversed(LL[: p_idx + 1]):
                     offset += len(str(leaf))
+                    if leaf.type in CLOSING_BRACKETS:
+                        break
 
         if is_valid_index(string_idx + 1):
             N = LL[string_idx + 1]
