@@ -12,6 +12,8 @@
 
 - fixed a crash when PWD=/ on POSIX (#1631)
 
+- Prevent coloured diff output being interleaved with multiple files (#1673)
+
 ### 20.8b1
 
 #### _Packaging_
