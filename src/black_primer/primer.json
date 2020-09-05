@@ -61,6 +61,13 @@
       "long_checkout": false,
       "py_versions": ["all"]
     },
+    "pillow": {
+      "cli_arguments": [],
+      "expect_formatting_changes": false,
+      "git_clone_url": "https://github.com/python-pillow/Pillow.git",
+      "long_checkout": false,
+      "py_versions": ["all"]
+    },
     "poetry": {
       "cli_arguments": [],
       "expect_formatting_changes": true,
