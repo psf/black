@@ -380,8 +380,7 @@ fmt_string2 = "But what about when the string is {} but {}".format(
 
 old_fmt_string1 = (
     "While we are on the topic of %s, we should also note that old-style formatting"
-    " must also be preserved, since some %s still uses it."
-    % ("formatting", "code")
+    " must also be preserved, since some %s still uses it." % ("formatting", "code")
 )
 
 old_fmt_string2 = "This is a %s %s %s %s" % (
@@ -448,8 +447,7 @@ assert some_type_of_boolean_expression, (
 
 assert some_type_of_boolean_expression, (
     "Followed by a really really really long string that is used to provide context to"
-    " the AssertionError exception, which uses dynamic string %s."
-    % "formatting"
+    " the AssertionError exception, which uses dynamic string %s." % "formatting"
 )
 
 assert some_type_of_boolean_expression, (
