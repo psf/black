@@ -112,6 +112,10 @@ class InvalidInput(ValueError):
     """Raised when input source code fails all parse attempts."""
 
 
+class BracketMatchError(KeyError):
+    """Raised when an opening bracket is unable to be matched to a closing bracket."""
+
+
 T = TypeVar("T")
 E = TypeVar("E", bound=Exception)
 
@@ -1308,7 +1312,13 @@ class BracketTracker:
         self.maybe_decrement_after_lambda_arguments(leaf)
         if leaf.type in CLOSING_BRACKETS:
             self.depth -= 1
-            opening_bracket = self.bracket_match.pop((self.depth, leaf.type))
+            try:
+                opening_bracket = self.bracket_match.pop((self.depth, leaf.type))
+            except KeyError as e:
+                raise BracketMatchError(
+                    "Unable to match a closing bracket to the following opening"
+                    f" bracket: {leaf}"
+                ) from e
             leaf.opening_bracket = opening_bracket
             if not leaf.value:
                 self.invisible.append(leaf)
@@ -3324,10 +3334,17 @@ class StringParenStripper(StringTransformer):
                 yield TErr(
                     "Will not strip parentheses which have comments attached to them."
                 )
+                return
 
         new_line = line.clone()
         new_line.comments = line.comments.copy()
-        append_leaves(new_line, line, LL[: string_idx - 1])
+        try:
+            append_leaves(new_line, line, LL[: string_idx - 1])
+        except BracketMatchError:
+            # HACK: I believe there is currently a bug somewhere in
+            # right_hand_split() that is causing brackets to not be tracked
+            # properly by a shared BracketTracker.
+            append_leaves(new_line, line, LL[: string_idx - 1], preformatted=True)
 
         string_leaf = Leaf(token.STRING, LL[string_idx].value)
         LL[string_idx - 1].remove()
@@ -4598,7 +4615,9 @@ def line_to_string(line: Line) -> str:
     return str(line).strip("\n")
 
 
-def append_leaves(new_line: Line, old_line: Line, leaves: List[Leaf]) -> None:
+def append_leaves(
+    new_line: Line, old_line: Line, leaves: List[Leaf], preformatted: bool = False
+) -> None:
     """
     Append leaves (taken from @old_line) to @new_line, making sure to fix the
     underlying Node structure where appropriate.
@@ -4614,7 +4633,7 @@ def append_leaves(new_line: Line, old_line: Line, leaves: List[Leaf]) -> None:
     for old_leaf in leaves:
         new_leaf = Leaf(old_leaf.type, old_leaf.value)
         replace_child(old_leaf, new_leaf)
-        new_line.append(new_leaf)
+        new_line.append(new_leaf, preformatted=preformatted)
 
         for comment_leaf in old_line.comments_after(old_leaf):
             new_line.append(comment_leaf, preformatted=True)
