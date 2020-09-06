@@ -310,6 +310,19 @@ class Step(StepBase):
             passenger_association=passenger_association,
         )
 
+xxxxxxx_xxxxxx_xxxxxxx = xxx(
+    [
+        xxxxxxxxxxxx(
+            xxxxxx_xxxxxxx=(
+                '((x.aaaaaaaaa = "xxxxxx.xxxxxxxxxxxxxxxxxxxxx") || (x.xxxxxxxxx = "xxxxxxxxxxxx")) && '
+                # xxxxx xxxxxxxxxxxx xxxx xxx (xxxxxxxxxxxxxxxx) xx x xxxxxxxxx xx xxxxxx.
+                "(x.bbbbbbbbbbbb.xxx != "
+                '"xxx:xxx:xxx::cccccccccccc:xxxxxxx-xxxx/xxxxxxxxxxx/xxxxxxxxxxxxxxxxx") && '
+            )
+        )
+    ]
+)
+
 if __name__ == "__main__":
     for i in range(4, 8):
         cmd = (
@@ -708,6 +721,20 @@ class Step(StepBase):
             )
         )
 
+
+xxxxxxx_xxxxxx_xxxxxxx = xxx(
+    [
+        xxxxxxxxxxxx(
+            xxxxxx_xxxxxxx=(
+                '((x.aaaaaaaaa = "xxxxxx.xxxxxxxxxxxxxxxxxxxxx") || (x.xxxxxxxxx ='
+                ' "xxxxxxxxxxxx")) && '
+                # xxxxx xxxxxxxxxxxx xxxx xxx (xxxxxxxxxxxxxxxx) xx x xxxxxxxxx xx xxxxxx.
+                "(x.bbbbbbbbbbbb.xxx != "
+                '"xxx:xxx:xxx::cccccccccccc:xxxxxxx-xxxx/xxxxxxxxxxx/xxxxxxxxxxxxxxxxx") && '
+            )
+        )
+    ]
+)
 
 if __name__ == "__main__":
     for i in range(4, 8):

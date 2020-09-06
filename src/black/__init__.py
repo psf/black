@@ -2889,11 +2889,8 @@ class StringMerger(CustomSplitMapMixin, StringTransformer):
     """StringTransformer that merges strings together.
 
     Requirements:
-        (A) The line contains adjacent strings such that at most one substring
-        has inline comments AND none of those inline comments are pragmas AND
-        the set of all substring prefixes is either of length 1 or equal to
-        {"", "f"} AND none of the substrings are raw strings (i.e. are prefixed
-        with 'r').
+        (A) The line contains adjacent strings such that ALL of the validation checks
+        listed in StringMerger.__validate_msg(...)'s docstring pass.
             OR
         (B) The line contains a string which uses line continuation backslashes.
 
@@ -3142,6 +3139,7 @@ class StringMerger(CustomSplitMapMixin, StringTransformer):
             * Ok(None), if ALL validation checks (listed below) pass.
                 OR
             * Err(CannotTransform), if any of the following are true:
+                - The target string group does not contain ANY stand-alone comments.
                 - The target string is not in a string group (i.e. it has no
                   adjacent strings).
                 - The string group has more than one inline comment.
@@ -3150,6 +3148,26 @@ class StringMerger(CustomSplitMapMixin, StringTransformer):
                   length greater than one and is not equal to {"", "f"}.
                 - The string group consists of raw strings.
         """
+        # We first check for "inner" stand-alone comments (i.e. stand-alone
+        # comments that have a string leaf before them AND after them).
+        for inc in [1, -1]:
+            i = string_idx
+            found_sa_comment = False
+            is_valid_index = is_valid_index_factory(line.leaves)
+            while is_valid_index(i) and line.leaves[i].type in [
+                token.STRING,
+                STANDALONE_COMMENT,
+            ]:
+                if line.leaves[i].type == STANDALONE_COMMENT:
+                    found_sa_comment = True
+                elif found_sa_comment:
+                    return TErr(
+                        "StringMerger does NOT merge string groups which contain "
+                        "stand-alone comments."
+                    )
+
+                i += inc
+
         num_of_inline_string_comments = 0
         set_of_prefixes = set()
         num_of_strings = 0
