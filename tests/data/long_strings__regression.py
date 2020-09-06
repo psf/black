@@ -330,6 +330,25 @@ if __name__ == "__main__":
             % (i)
         )
 
+def A():
+    def B():
+        def C():
+            def D():
+                def E():
+                    def F():
+                        def G():
+                            assert (
+                                c_float(val[0][0] / val[0][1]).value
+                                == c_float(value[0][0] / value[0][1]).value
+                            ), "%s didn't roundtrip" % tag
+
+class xxxxxxxxxxxxxxxxxxxxx(xxxx.xxxxxxxxxxxxx):
+    def xxxxxxx_xxxxxx(xxxx):
+        assert xxxxxxx_xxxx in [
+            x.xxxxx.xxxxxx.xxxxx.xxxxxx,
+            x.xxxxx.xxxxxx.xxxxx.xxxx,
+        ], ("xxxxxxxxxxx xxxxxxx xxxx (xxxxxx xxxx) %x xxx xxxxx" % xxxxxxx_xxxx)
+
 # output
 
 
@@ -741,4 +760,27 @@ if __name__ == "__main__":
         cmd = (
             r"for pid in $(ps aux | grep paster | grep -v grep | grep '\-%d' | awk"
             r" '{print $2}'); do kill $pid; done" % (i)
+        )
+
+
+def A():
+    def B():
+        def C():
+            def D():
+                def E():
+                    def F():
+                        def G():
+                            assert (
+                                c_float(val[0][0] / val[0][1]).value
+                                == c_float(value[0][0] / value[0][1]).value
+                            ), "%s didn't roundtrip" % tag
+
+
+class xxxxxxxxxxxxxxxxxxxxx(xxxx.xxxxxxxxxxxxx):
+    def xxxxxxx_xxxxxx(xxxx):
+        assert xxxxxxx_xxxx in [
+            x.xxxxx.xxxxxx.xxxxx.xxxxxx,
+            x.xxxxx.xxxxxx.xxxxx.xxxx,
+        ], (
+            "xxxxxxxxxxx xxxxxxx xxxx (xxxxxx xxxx) %x xxx xxxxx" % xxxxxxx_xxxx
         )
