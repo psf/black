@@ -2668,9 +2668,9 @@ def transform_line(
                 transformers = [
                     string_merge,
                     string_paren_strip,
+                    string_split,
                     delimiter_split,
                     standalone_comment_split,
-                    string_split,
                     string_paren_wrap,
                     rhs,
                 ]

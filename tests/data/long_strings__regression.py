@@ -310,6 +310,13 @@ class Step(StepBase):
             passenger_association=passenger_association,
         )
 
+if __name__ == "__main__":
+    for i in range(4, 8):
+        cmd = (
+            r"for pid in $(ps aux | grep paster | grep -v grep | grep '\-%d' | awk '{print $2}'); do kill $pid; done"
+            % (i)
+        )
+
 # output
 
 
@@ -435,14 +442,12 @@ func_call_where_string_arg_has_method_call_and_bad_parens(
 
 func_call_where_string_arg_has_old_fmt_and_bad_parens(
     "A long string with {}. This string is so long that it is ridiculous. It can't fit"
-    " on one line at alllll."
-    % "formatting",
+    " on one line at alllll." % "formatting",
 )
 
 func_call_where_string_arg_has_old_fmt_and_bad_parens(
     "A long string with {}. This {} is so long that it is ridiculous. It can't fit on"
-    " one line at alllll."
-    % ("formatting", "string"),
+    " one line at alllll." % ("formatting", "string"),
 )
 
 
@@ -701,4 +706,12 @@ class Step(StepBase):
                 title=title,
                 passenger_association=passenger_association,
             )
+        )
+
+
+if __name__ == "__main__":
+    for i in range(4, 8):
+        cmd = (
+            r"for pid in $(ps aux | grep paster | grep -v grep | grep '\-%d' | awk"
+            r" '{print $2}'); do kill $pid; done" % (i)
         )
