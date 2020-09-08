@@ -15,6 +15,8 @@
 
 - fixed a crash when PWD=/ on POSIX (#1631)
 
+- fixed "I/O operation on closed file" when using --diff (#1664)
+
 - Prevent coloured diff output being interleaved with multiple files (#1673)
 
 ### 20.8b1
