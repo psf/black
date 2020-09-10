@@ -1834,6 +1834,10 @@ class EmptyLineTracker:
             return 0, 0
 
         if self.previous_line.is_decorator:
+            if self.is_pyi and current_line.is_stub_class:
+                # Insert an empty line after a decorated stub class
+                return 0, 1
+
             return 0, 0
 
         if self.previous_line.depth < current_line.depth and (
@@ -1857,8 +1861,11 @@ class EmptyLineTracker:
                     newlines = 0
                 else:
                     newlines = 1
-            elif current_line.is_def and not self.previous_line.is_def:
-                # Blank line between a block of functions and a block of non-functions
+            elif (
+                current_line.is_def or current_line.is_decorator
+            ) and not self.previous_line.is_def:
+                # Blank line between a block of functions (maybe with preceding
+                # decorators) and a block of non-functions
                 newlines = 1
             else:
                 newlines = 0
