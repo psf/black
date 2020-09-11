@@ -48,6 +48,7 @@ from mypy_extensions import mypyc_attr
 from appdirs import user_cache_dir
 from dataclasses import dataclass, field, replace
 import click
+from click.types import LazyFile
 import toml
 from typed_ast import ast3, ast27
 from pathspec import PathSpec
@@ -70,7 +71,7 @@ DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 
 STRING_PREFIX_CHARS: Final = "furbFURB"  # All possible string prefix characters.
-
+DEFAULT_REPORT = "console"
 
 # types
 FileContent = str
@@ -163,6 +164,10 @@ class WriteBack(Enum):
 
         return cls.DIFF if diff else cls.YES
 
+
+class ReportType(Enum):
+    CONSOLE = 'report'
+    JUNIT = 'junit'
 
 class Changed(Enum):
     NO = 0
@@ -346,6 +351,16 @@ def target_version_option_callback(
     """
     return [TargetVersion[val.upper()] for val in v]
 
+def report_option_callback(
+    c: click.Context, p: Union[click.Option, click.Parameter], v: str
+) -> List[ReportType]:
+    """Compute the report type from a --report flag.
+
+    This is its own function because mypy couldn't infer the type correctly
+    when it was a lambda, causing mypyc trouble.
+    """
+    return ReportType[v.upper()]
+
 
 @click.command(context_settings=dict(help_option_names=["-h", "--help"]))
 @click.option("-c", "--code", type=str, help="Format the code passed in as a string.")
@@ -488,6 +503,22 @@ def target_version_option_callback(
     callback=read_pyproject_toml,
     help="Read configuration from FILE path.",
 )
+@click.option(
+    "--report",
+    type=click.Choice([v.name.lower() for v in ReportType]),
+    callback=report_option_callback,
+    default=DEFAULT_REPORT,
+    multiple=False,
+    help=(
+        "Option if the generated Report should be to the Console or a Junit XML File [default : Console]"
+    ),
+)
+@click.option(
+    "--junitxml",
+    type=click.File(
+    mode="w"
+    ),
+)
 @click.pass_context
 def main(
     ctx: click.Context,
@@ -508,6 +539,8 @@ def main(
     force_exclude: Optional[str],
     src: Tuple[str, ...],
     config: Optional[str],
+    report: str,
+    junitxml: LazyFile
 ) -> None:
     """The uncompromising code formatter."""
     write_back = WriteBack.from_configuration(check=check, diff=diff, color=color)
@@ -528,7 +561,13 @@ def main(
     if code is not None:
         print(format_str(code, mode=mode))
         ctx.exit(0)
-    report = Report(check=check, diff=diff, quiet=quiet, verbose=verbose)
+    if report is ReportType.JUNIT:
+        if junitxml is None:
+            print("Please provide a Filename for the JunitXml Report")
+            ctx.exit(1)
+        report = JunitReport(check=check, diff=diff, quiet=quiet, verbose=verbose)
+    else:
+        report = Report(check=check, diff=diff, quiet=quiet, verbose=verbose)
     sources = get_sources(
         ctx=ctx,
         src=src,
@@ -563,7 +602,10 @@ def main(
 
     if verbose or not quiet:
         out("Oh no! 💥 💔 💥" if report.return_code else "All done! ✨ 🍰 ✨")
-        click.secho(str(report), err=True)
+        if isinstance(report, JunitReport):
+            junitxml.write(str(report))
+        else:
+            click.secho(str(report), err=True)
     ctx.exit(report.return_code)
 
 
@@ -6068,6 +6110,94 @@ class Report:
                 click.style(f"{self.failure_count} file{s} {failed}", fg="red")
             )
         return ", ".join(report) + "."
+
+@dataclass
+class JunitReport:
+    """Provides a JunitXml formatted string that can be saved to a file"""
+
+    check: bool = False
+    diff: bool = False
+    quiet: bool = False
+    verbose: bool = False
+    change_count: int = 0
+    same_count: int = 0
+    skipped_count: int = 0
+    failure_count: int = 0
+    error_count: int = 0
+    tests = []
+
+    BODY = """<?xml version="1.0" encoding="utf-8"?>
+<testsuite errors="0" failures="{failed}" errors="{errors}" name="black" skipped="{skipped}" tests="{combined}">
+{tests}</testsuite>"""
+    PASS_MSG = """\t<testcase classname="black" file="{file}" name="black-{file}"></testcase>\n"""
+    SKIP_MSG = """\t<testcase classname="black" file="{file}" name="black-{file}">
+            <skipped message="{msg}" />
+    </testcase>\n"""
+    FAIL_MSG = """\t<testcase classname="black" file="{file}" name="black-{file}">
+            <failure message="{msg}" />
+    </testcase>\n"""
+    ERROR_MSG = """\t<testcase classname="black" file="{file}" name="black-{file}">
+            <error message="{msg}" />
+    </testcase>\n"""
+
+    def done(self, src: Path, changed: Changed) -> None:
+        """Increments the failure_counter if a file would be changed
+        and append the testcase section to the tests summary.
+        If the File would not be changed because already good formatted
+        or not changed since last run.
+        It creates a Pass testcase section in the tests summary and increment same_counter"""
+        if changed is Changed.YES:
+            reformatted = "would reformat" if self.check or self.diff else "reformatted"
+            if self.verbose or not self.quiet:
+                self.tests.append(self.FAIL_MSG.format(file=src, msg=reformatted))
+            self.failure_count += 1
+        else:
+            if changed is Changed.NO:
+                msg = f"{src} already well formatted, good job."
+                self.tests.append(self.PASS_MSG.format(file=src, msg=msg))
+            else:
+                msg = f"{src} wasn't modified on disk since last run."
+                self.tests.append(self.PASS_MSG.format(file=src, msg=msg))
+            self.same_count += 1
+
+    def failed(self, src: Path, message: str) -> None:
+        """Increment the counter for error reformatting. Adds a error Testcase section in tests summary."""
+        self.tests.append(self.ERROR_MSG.format(file=src, msg=f"error: cannot format {src}: {message}"))
+        self.error_count += 1
+
+    def path_ignored(self, path: Path, message: str) -> None:
+        """Increment the counter for skipped reformatting. Adds a skipped Testcase section in tests summary."""
+        if self.verbose:
+            self.tests.append(self.SKIP_MSG.format(file=path, msg=f"{path} ignored: {message}"))
+            self.skipped_count += 1
+
+    @property
+    def return_code(self) -> int:
+        """Return the exit code that the app should use.
+
+        This considers the current state of changed files and failures:
+        - if there were any failures, return 123;
+        - if any files were changed and --check is being used, return 1;
+        - otherwise return 0.
+        """
+        # According to http://tldp.org/LDP/abs/html/exitcodes.html starting with
+        # 126 we have special return codes reserved by the shell.
+        if self.failure_count:
+            return 123
+
+        elif self.change_count and self.check:
+            return 1
+
+        return 0
+
+    def __str__(self) -> str:
+        """
+        Combines the Body with the testcases sections to a JunitXML and returns it.
+        """
+        combined_tests = self.change_count + self.same_count + self.failure_count + self.skipped_count
+        report = [self.BODY.format(failed=self.failure_count, errors=self.error_count, skipped=self.skipped_count,
+                                   combined=combined_tests, tests="".join(self.tests))]
+        return "".join(report)
 
 
 def parse_ast(src: str) -> Union[ast.AST, ast3.AST, ast27.AST]:
