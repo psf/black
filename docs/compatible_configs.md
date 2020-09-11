@@ -16,6 +16,9 @@ tools, using **their** supported file formats.
 _Black_ also formats imports, but in a different way from isort's defaults which leads
 to conflicting changes.
 
+isort provides the following settings in a configuration profile called `black`, for
+convenience.
+
 ### Configuration
 
 ```
@@ -25,6 +28,12 @@ force_grid_wrap = 0
 use_parentheses = True
 ensure_newline_before_comments = True
 line_length = 88
+```
+
+Or, using the `black` profile included with isort:
+
+```
+profile = black
 ```
 
 ### Why those options above?
@@ -88,6 +97,13 @@ ensure_newline_before_comments = True
 line_length = 88
 ```
 
+Or, using the `black` profile included with isort:
+
+```cfg
+[settings]
+profile = black
+```
+
 </details>
 
 <details>
@@ -101,6 +117,13 @@ force_grid_wrap = 0
 use_parentheses = True
 ensure_newline_before_comments = True
 line_length = 88
+```
+
+Or, using the `black` profile included with isort:
+
+```cfg
+[isort]
+profile = black
 ```
 
 </details>
