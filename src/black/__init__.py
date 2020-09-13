@@ -925,7 +925,7 @@ def format_stdin_to_stdout(
 
 
 def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileContent:
-    """Reformat contents a file and return new contents.
+    """Reformat contents of a file and return new contents.
 
     If `fast` is False, additionally confirm that the reformatted code is
     valid by calling :func:`assert_equivalent` and :func:`assert_stable` on it.
