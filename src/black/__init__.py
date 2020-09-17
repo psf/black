@@ -6127,7 +6127,7 @@ class JunitReport:
     tests = []
 
     BODY = """<?xml version="1.0" encoding="utf-8"?>
-<testsuite errors="0" failures="{failed}" errors="{errors}" name="black" skipped="{skipped}" tests="{combined}">
+<testsuite failures="{failed}" errors="{errors}" name="black" skipped="{skipped}" tests="{combined}">
 {tests}</testsuite>"""
     PASS_MSG = """\t<testcase classname="black" file="{file}" name="black-{file}"></testcase>\n"""
     SKIP_MSG = """\t<testcase classname="black" file="{file}" name="black-{file}">
