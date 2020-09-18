@@ -178,12 +178,10 @@ class TargetVersion(Enum):
     PY36 = 6
     PY37 = 7
     PY38 = 8
+    PY39 = 9
 
     def is_python2(self) -> bool:
         return self is TargetVersion.PY27
-
-
-PY36_VERSIONS = {TargetVersion.PY36, TargetVersion.PY37, TargetVersion.PY38}
 
 
 class Feature(Enum):
@@ -199,6 +197,7 @@ class Feature(Enum):
     ASYNC_KEYWORDS = 7
     ASSIGNMENT_EXPRESSIONS = 8
     POS_ONLY_ARGUMENTS = 9
+    RELAXED_DECORATORS = 10
     FORCE_OPTIONAL_PARENTHESES = 50
 
 
@@ -235,6 +234,17 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.TRAILING_COMMA_IN_DEF,
         Feature.ASYNC_KEYWORDS,
         Feature.ASSIGNMENT_EXPRESSIONS,
+        Feature.POS_ONLY_ARGUMENTS,
+    },
+    TargetVersion.PY39: {
+        Feature.UNICODE_LITERALS,
+        Feature.F_STRINGS,
+        Feature.NUMERIC_UNDERSCORES,
+        Feature.TRAILING_COMMA_IN_CALL,
+        Feature.TRAILING_COMMA_IN_DEF,
+        Feature.ASYNC_KEYWORDS,
+        Feature.ASSIGNMENT_EXPRESSIONS,
+        Feature.RELAXED_DECORATORS,
         Feature.POS_ONLY_ARGUMENTS,
     },
 }
@@ -347,9 +357,9 @@ def target_version_option_callback(
     return [TargetVersion[val.upper()] for val in v]
 
 
-@click.command(context_settings=dict(help_option_names=["-h", "--help"]))
-@click.option("-c", "--code", type=str, help="Format the code passed in as a string.")
-@click.option(
+@ click.command(context_settings=dict(help_option_names=["-h", "--help"]))
+@ click.option("-c", "--code", type=str, help="Format the code passed in as a string.")
+@ click.option(
     "-l",
     "--line-length",
     type=int,
@@ -357,7 +367,7 @@ def target_version_option_callback(
     help="How many characters per line to allow.",
     show_default=True,
 )
-@click.option(
+@ click.option(
     "-t",
     "--target-version",
     type=click.Choice([v.name.lower() for v in TargetVersion]),
@@ -368,7 +378,7 @@ def target_version_option_callback(
         " auto-detection]"
     ),
 )
-@click.option(
+@ click.option(
     "--pyi",
     is_flag=True,
     help=(
@@ -376,13 +386,13 @@ def target_version_option_callback(
         " when piping source on standard input)."
     ),
 )
-@click.option(
+@ click.option(
     "-S",
     "--skip-string-normalization",
     is_flag=True,
     help="Don't normalize string quotes or prefixes.",
 )
-@click.option(
+@ click.option(
     "--experimental-string-processing",
     is_flag=True,
     hidden=True,
@@ -391,7 +401,7 @@ def target_version_option_callback(
         " Currently disabled because it leads to some crashes."
     ),
 )
-@click.option(
+@ click.option(
     "--check",
     is_flag=True,
     help=(
@@ -400,22 +410,22 @@ def target_version_option_callback(
         " Return code 123 means there was an internal error."
     ),
 )
-@click.option(
+@ click.option(
     "--diff",
     is_flag=True,
     help="Don't write the files back, just output a diff for each file on stdout.",
 )
-@click.option(
+@ click.option(
     "--color/--no-color",
     is_flag=True,
     help="Show colored diff. Only applies when `--diff` is given.",
 )
-@click.option(
+@ click.option(
     "--fast/--safe",
     is_flag=True,
     help="If --fast given, skip temporary sanity checks. [default: --safe]",
 )
-@click.option(
+@ click.option(
     "--include",
     type=str,
     default=DEFAULT_INCLUDES,
@@ -427,7 +437,7 @@ def target_version_option_callback(
     ),
     show_default=True,
 )
-@click.option(
+@ click.option(
     "--exclude",
     type=str,
     default=DEFAULT_EXCLUDES,
@@ -439,7 +449,7 @@ def target_version_option_callback(
     ),
     show_default=True,
 )
-@click.option(
+@ click.option(
     "--force-exclude",
     type=str,
     help=(
@@ -447,7 +457,7 @@ def target_version_option_callback(
         "excluded even when they are passed explicitly as arguments"
     ),
 )
-@click.option(
+@ click.option(
     "-q",
     "--quiet",
     is_flag=True,
@@ -456,7 +466,7 @@ def target_version_option_callback(
         " those with 2>/dev/null."
     ),
 )
-@click.option(
+@ click.option(
     "-v",
     "--verbose",
     is_flag=True,
@@ -465,8 +475,8 @@ def target_version_option_callback(
         " due to --exclude=."
     ),
 )
-@click.version_option(version=__version__)
-@click.argument(
+@ click.version_option(version=__version__)
+@ click.argument(
     "src",
     nargs=-1,
     type=click.Path(
@@ -474,7 +484,7 @@ def target_version_option_callback(
     ),
     is_eager=True,
 )
-@click.option(
+@ click.option(
     "--config",
     type=click.Path(
         exists=True,
@@ -488,7 +498,7 @@ def target_version_option_callback(
     callback=read_pyproject_toml,
     help="Read configuration from FILE path.",
 )
-@click.pass_context
+@ click.pass_context
 def main(
     ctx: click.Context,
     code: Optional[str],
@@ -2554,7 +2564,7 @@ class ProtoComment:
     consumed: int  # how many characters of the original leaf's prefix did we consume
 
 
-@lru_cache(maxsize=4096)
+@ lru_cache(maxsize=4096)
 def list_comments(prefix: str, *, is_endmarker: bool) -> List[ProtoComment]:
     """Return a list of :class:`ProtoComment` objects parsed from the given `prefix`."""
     result: List[ProtoComment] = []
@@ -4919,7 +4929,7 @@ def dont_increase_indentation(split_func: Transformer) -> Transformer:
     This is a decorator over relevant split functions.
     """
 
-    @wraps(split_func)
+    @ wraps(split_func)
     def split_wrapper(line: Line, features: Collection[Feature] = ()) -> Iterator[Line]:
         for line in split_func(line, features):
             normalize_prefix(line.leaves[0], inside_brackets=True)
@@ -5499,6 +5509,42 @@ def is_walrus_assignment(node: LN) -> bool:
     return inner is not None and inner.type == syms.namedexpr_test
 
 
+def is_simple_decorator_trailer(node: LN, last: bool = False) -> bool:
+    """Return True iff `node` is a trailer valid in a simple decorator"""
+    return node.type == syms.trailer and (
+        (
+            len(node.children) == 2
+            and node.children[0].type == token.DOT
+            and node.children[1].type == token.NAME
+        )
+        # last trailer can be arguments
+        or (
+            last
+            and len(node.children) == 3
+            and node.children[0].type == token.LPAR
+            # and node.children[1].type == syms.argument
+            and node.children[2].type == token.RPAR
+        )
+    )
+
+
+def is_simple_decorator_expression(node: LN) -> bool:
+    """Return True iff `node` is the 'dotted name' in the grammar @ dotted_name [arguments] NEWLINE"""
+    if node.type == token.NAME:
+        return True
+    if node.type == syms.power:
+        if node.children:
+            return (
+                node.children[0].type == token.NAME
+                and all(map(is_simple_decorator_trailer, node.children[1:-1]))
+                and (
+                    len(node.children) < 2
+                    or is_simple_decorator_trailer(node.children[-1], last=True)
+                )
+            )
+    return False
+
+
 def is_yield(node: LN) -> bool:
     """Return True if `node` holds a `yield` or `yield from` expression."""
     if node.type == syms.yield_expr:
@@ -5684,6 +5730,8 @@ def get_features_used(node: Node) -> Set[Feature]:
     - underscores in numeric literals;
     - trailing commas after * or ** in function signatures and calls;
     - positional only arguments in function signatures and lambdas;
+    - assignment expression;
+    - relaxed decorator syntax;
     """
     features: Set[Feature] = set()
     for n in node.pre_order():
@@ -5702,6 +5750,13 @@ def get_features_used(node: Node) -> Set[Feature]:
 
         elif n.type == token.COLONEQUAL:
             features.add(Feature.ASSIGNMENT_EXPRESSIONS)
+
+        elif n.type == syms.decorator:
+            if len(n.children) > 1 and is_simple_decorator_expression(n.children[1]):
+                print("found SIMPLE decorator: %s" % n)
+                features.add(Feature.RELAXED_DECORATORS)
+            else:
+                print("found RELAXED decorator: %s" % n)
 
         elif (
             n.type in {syms.typedargslist, syms.arglist}
@@ -5859,7 +5914,7 @@ def get_future_imports(node: Node) -> Set[str]:
     return imports
 
 
-@lru_cache()
+@ lru_cache()
 def get_gitignore(root: Path) -> PathSpec:
     """ Return a PathSpec matching gitignore content if present."""
     gitignore = root / ".gitignore"
@@ -5955,7 +6010,7 @@ def gen_python_files(
                 yield child
 
 
-@lru_cache()
+@ lru_cache()
 def find_project_root(srcs: Iterable[str]) -> Path:
     """Return a directory containing .git, .hg, or pyproject.toml.
 
@@ -6221,7 +6276,7 @@ def assert_stable(src: str, dst: str, mode: Mode) -> None:
         ) from None
 
 
-@mypyc_attr(patchable=True)
+@ mypyc_attr(patchable=True)
 def dump_to_file(*output: str) -> str:
     """Dump `output` to a temporary file. Return path to the file."""
     with tempfile.NamedTemporaryFile(
