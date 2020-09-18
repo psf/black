@@ -2194,7 +2194,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
         ):
             # Python 2 print chevron
             return NO
-        elif prevp.type == token.AT and p.parent.type == syms.decorator:
+        elif prevp.type == token.AT and p.parent and p.parent.type == syms.decorator:
             # no space in decorators
             return NO
 
