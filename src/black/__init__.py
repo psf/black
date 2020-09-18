@@ -5753,10 +5753,7 @@ def get_features_used(node: Node) -> Set[Feature]:
 
         elif n.type == syms.decorator:
             if len(n.children) > 1 and is_simple_decorator_expression(n.children[1]):
-                print("found SIMPLE decorator: %s" % n)
                 features.add(Feature.RELAXED_DECORATORS)
-            else:
-                print("found RELAXED decorator: %s" % n)
 
         elif (
             n.type in {syms.typedargslist, syms.arglist}
