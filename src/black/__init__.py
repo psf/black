@@ -357,9 +357,9 @@ def target_version_option_callback(
     return [TargetVersion[val.upper()] for val in v]
 
 
-@ click.command(context_settings=dict(help_option_names=["-h", "--help"]))
-@ click.option("-c", "--code", type=str, help="Format the code passed in as a string.")
-@ click.option(
+@click.command(context_settings=dict(help_option_names=["-h", "--help"]))
+@click.option("-c", "--code", type=str, help="Format the code passed in as a string.")
+@click.option(
     "-l",
     "--line-length",
     type=int,
@@ -367,7 +367,7 @@ def target_version_option_callback(
     help="How many characters per line to allow.",
     show_default=True,
 )
-@ click.option(
+@click.option(
     "-t",
     "--target-version",
     type=click.Choice([v.name.lower() for v in TargetVersion]),
@@ -378,7 +378,7 @@ def target_version_option_callback(
         " auto-detection]"
     ),
 )
-@ click.option(
+@click.option(
     "--pyi",
     is_flag=True,
     help=(
@@ -386,13 +386,13 @@ def target_version_option_callback(
         " when piping source on standard input)."
     ),
 )
-@ click.option(
+@click.option(
     "-S",
     "--skip-string-normalization",
     is_flag=True,
     help="Don't normalize string quotes or prefixes.",
 )
-@ click.option(
+@click.option(
     "--experimental-string-processing",
     is_flag=True,
     hidden=True,
@@ -401,7 +401,7 @@ def target_version_option_callback(
         " Currently disabled because it leads to some crashes."
     ),
 )
-@ click.option(
+@click.option(
     "--check",
     is_flag=True,
     help=(
@@ -410,22 +410,22 @@ def target_version_option_callback(
         " Return code 123 means there was an internal error."
     ),
 )
-@ click.option(
+@click.option(
     "--diff",
     is_flag=True,
     help="Don't write the files back, just output a diff for each file on stdout.",
 )
-@ click.option(
+@click.option(
     "--color/--no-color",
     is_flag=True,
     help="Show colored diff. Only applies when `--diff` is given.",
 )
-@ click.option(
+@click.option(
     "--fast/--safe",
     is_flag=True,
     help="If --fast given, skip temporary sanity checks. [default: --safe]",
 )
-@ click.option(
+@click.option(
     "--include",
     type=str,
     default=DEFAULT_INCLUDES,
@@ -437,7 +437,7 @@ def target_version_option_callback(
     ),
     show_default=True,
 )
-@ click.option(
+@click.option(
     "--exclude",
     type=str,
     default=DEFAULT_EXCLUDES,
@@ -449,7 +449,7 @@ def target_version_option_callback(
     ),
     show_default=True,
 )
-@ click.option(
+@click.option(
     "--force-exclude",
     type=str,
     help=(
@@ -457,7 +457,7 @@ def target_version_option_callback(
         "excluded even when they are passed explicitly as arguments"
     ),
 )
-@ click.option(
+@click.option(
     "-q",
     "--quiet",
     is_flag=True,
@@ -466,7 +466,7 @@ def target_version_option_callback(
         " those with 2>/dev/null."
     ),
 )
-@ click.option(
+@click.option(
     "-v",
     "--verbose",
     is_flag=True,
@@ -475,8 +475,8 @@ def target_version_option_callback(
         " due to --exclude=."
     ),
 )
-@ click.version_option(version=__version__)
-@ click.argument(
+@click.version_option(version=__version__)
+@click.argument(
     "src",
     nargs=-1,
     type=click.Path(
@@ -484,7 +484,7 @@ def target_version_option_callback(
     ),
     is_eager=True,
 )
-@ click.option(
+@click.option(
     "--config",
     type=click.Path(
         exists=True,
@@ -498,7 +498,7 @@ def target_version_option_callback(
     callback=read_pyproject_toml,
     help="Read configuration from FILE path.",
 )
-@ click.pass_context
+@click.pass_context
 def main(
     ctx: click.Context,
     code: Optional[str],
@@ -2194,6 +2194,9 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
         ):
             # Python 2 print chevron
             return NO
+        elif prevp.type == token.AT and p.parent.type == syms.decorator:
+            # no space in decorators
+            return NO
 
     elif prev.type in OPENING_BRACKETS:
         return NO
@@ -2564,7 +2567,7 @@ class ProtoComment:
     consumed: int  # how many characters of the original leaf's prefix did we consume
 
 
-@ lru_cache(maxsize=4096)
+@lru_cache(maxsize=4096)
 def list_comments(prefix: str, *, is_endmarker: bool) -> List[ProtoComment]:
     """Return a list of :class:`ProtoComment` objects parsed from the given `prefix`."""
     result: List[ProtoComment] = []
@@ -4929,7 +4932,7 @@ def dont_increase_indentation(split_func: Transformer) -> Transformer:
     This is a decorator over relevant split functions.
     """
 
-    @ wraps(split_func)
+    @wraps(split_func)
     def split_wrapper(line: Line, features: Collection[Feature] = ()) -> Iterator[Line]:
         for line in split_func(line, features):
             normalize_prefix(line.leaves[0], inside_brackets=True)
@@ -5529,7 +5532,14 @@ def is_simple_decorator_trailer(node: LN, last: bool = False) -> bool:
 
 
 def is_simple_decorator_expression(node: LN) -> bool:
-    """Return True iff `node` is the 'dotted name' in the grammar @ dotted_name [arguments] NEWLINE"""
+    """Return True iff `node` could be a 'dotted name' decorator
+
+    This function takes the node of the 'namedexpr_test' of the new decorator
+    grammar and test if it would be valid under the old decorator grammar.
+
+    The old grammar was: decorator: @ dotted_name [arguments] NEWLINE
+    The new grammar is : decorator: @ namedexpr_test NEWLINE
+    """
     if node.type == token.NAME:
         return True
     if node.type == syms.power:
@@ -5911,7 +5921,7 @@ def get_future_imports(node: Node) -> Set[str]:
     return imports
 
 
-@ lru_cache()
+@lru_cache()
 def get_gitignore(root: Path) -> PathSpec:
     """ Return a PathSpec matching gitignore content if present."""
     gitignore = root / ".gitignore"
@@ -6007,7 +6017,7 @@ def gen_python_files(
                 yield child
 
 
-@ lru_cache()
+@lru_cache()
 def find_project_root(srcs: Iterable[str]) -> Path:
     """Return a directory containing .git, .hg, or pyproject.toml.
 
@@ -6273,7 +6283,7 @@ def assert_stable(src: str, dst: str, mode: Mode) -> None:
         ) from None
 
 
-@ mypyc_attr(patchable=True)
+@mypyc_attr(patchable=True)
 def dump_to_file(*output: str) -> str:
     """Dump `output` to a temporary file. Return path to the file."""
     with tempfile.NamedTemporaryFile(
