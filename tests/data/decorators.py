@@ -1,9 +1,9 @@
-# This file doesn't use the standard decomposition
-# decorator syntax test cases are separated by double # comments
-# Those before the 'output' comment are valid under the old syntax
-# Those after the 'ouput' comment require PEP614 relaxed syntax
+# This file doesn't use the standard decomposition.
+# Decorator syntax test cases are separated by double # comments.
+# Those before the 'output' comment are valid under the old syntax.
+# Those after the 'ouput' comment require PEP614 relaxed syntax.
 # Do not remove the double # separator before the first test case, it allows
-# to the comment before the test case
+# the comment before the test case to be ignored.
 
 ##
 
