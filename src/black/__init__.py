@@ -6146,7 +6146,7 @@ class Report:
 
 def parse_ast(src: str) -> Union[ast.AST, ast3.AST, ast27.AST]:
     filename = "<unknown>"
-    if sys.version_info >= (3, 9):
+    if sys.version_info >= (3, 8):
         # TODO: support Python 4+ ;)
         for minor_version in range(sys.version_info[1], 4, -1):
             try:
@@ -6154,7 +6154,7 @@ def parse_ast(src: str) -> Union[ast.AST, ast3.AST, ast27.AST]:
             except SyntaxError:
                 continue
     else:
-        for feature_version in (8, 7, 6):
+        for feature_version in (7, 6):
             try:
                 return ast3.parse(src, filename, feature_version=feature_version)
             except SyntaxError:
