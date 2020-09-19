@@ -5762,7 +5762,9 @@ def get_features_used(node: Node) -> Set[Feature]:
             features.add(Feature.ASSIGNMENT_EXPRESSIONS)
 
         elif n.type == syms.decorator:
-            if len(n.children) > 1 and is_simple_decorator_expression(n.children[1]):
+            if len(n.children) > 1 and not is_simple_decorator_expression(
+                n.children[1]
+            ):
                 features.add(Feature.RELAXED_DECORATORS)
 
         elif (
