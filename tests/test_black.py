@@ -59,9 +59,13 @@ THIS_DIR = THIS_FILE.parent
 PROJECT_ROOT = THIS_DIR.parent
 DETERMINISTIC_HEADER = "[Deterministic header]"
 EMPTY_LINE = "# EMPTY LINE WITH WHITESPACE" + " (this comment will be removed)"
-PY36_ARGS = [
-    f"--target-version={version.name.lower()}" for version in black.PY36_VERSIONS
-]
+PY36_VERSIONS = {
+    TargetVersion.PY36,
+    TargetVersion.PY37,
+    TargetVersion.PY38,
+    TargetVersion.PY39,
+}
+PY36_ARGS = [f"--target-version={version.name.lower()}" for version in PY36_VERSIONS]
 T = TypeVar("T")
 R = TypeVar("R")
 
@@ -705,7 +709,7 @@ class BlackTestCase(unittest.TestCase):
     @patch("black.dump_to_file", dump_to_stderr)
     def test_numeric_literals(self) -> None:
         source, expected = read_data("numeric_literals")
-        mode = replace(DEFAULT_MODE, target_versions=black.PY36_VERSIONS)
+        mode = replace(DEFAULT_MODE, target_versions=PY36_VERSIONS)
         actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
@@ -714,7 +718,7 @@ class BlackTestCase(unittest.TestCase):
     @patch("black.dump_to_file", dump_to_stderr)
     def test_numeric_literals_ignoring_underscores(self) -> None:
         source, expected = read_data("numeric_literals_skip_underscores")
-        mode = replace(DEFAULT_MODE, target_versions=black.PY36_VERSIONS)
+        mode = replace(DEFAULT_MODE, target_versions=PY36_VERSIONS)
         actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
@@ -797,6 +801,16 @@ class BlackTestCase(unittest.TestCase):
         self.assertFormatEqual(expected, actual)
         major, minor = sys.version_info[:2]
         if major > 3 or (major == 3 and minor >= 8):
+            black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, DEFAULT_MODE)
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_python39(self) -> None:
+        source, expected = read_data("python39")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        major, minor = sys.version_info[:2]
+        if major > 3 or (major == 3 and minor >= 9):
             black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, DEFAULT_MODE)
 
@@ -1211,6 +1225,39 @@ class BlackTestCase(unittest.TestCase):
             black.lib2to3_parse(py3_only, {TargetVersion.PY27})
         black.lib2to3_parse(py3_only, {TargetVersion.PY36})
         black.lib2to3_parse(py3_only, {TargetVersion.PY27, TargetVersion.PY36})
+
+    def test_get_features_used_decorator(self) -> None:
+        # Test the feature detection of new decorator syntax
+        # since this makes some test cases of test_get_features_used()
+        # fails if it fails, this is tested first so that a useful case
+        # is identified
+        simples, relaxed = read_data("decorators")
+        # skip explanation comments at the top of the file
+        for simple_test in simples.split("##")[1:]:
+            node = black.lib2to3_parse(simple_test)
+            decorator = str(node.children[0].children[0]).strip()
+            self.assertNotIn(
+                Feature.RELAXED_DECORATORS,
+                black.get_features_used(node),
+                msg=(
+                    f"decorator '{decorator}' follows python<=3.8 syntax"
+                    "but is detected as 3.9+"
+                    # f"The full node is\n{node!r}"
+                ),
+            )
+        # skip the '# output' comment at the top of the output part
+        for relaxed_test in relaxed.split("##")[1:]:
+            node = black.lib2to3_parse(relaxed_test)
+            decorator = str(node.children[0].children[0]).strip()
+            self.assertIn(
+                Feature.RELAXED_DECORATORS,
+                black.get_features_used(node),
+                msg=(
+                    f"decorator '{decorator}' uses python3.9+ syntax"
+                    "but is detected as python<=3.8"
+                    # f"The full node is\n{node!r}"
+                ),
+            )
 
     def test_get_features_used(self) -> None:
         node = black.lib2to3_parse("def f(*, arg): ...\n")
@@ -1628,7 +1675,7 @@ class BlackTestCase(unittest.TestCase):
 
     def test_single_file_force_py36(self) -> None:
         reg_mode = DEFAULT_MODE
-        py36_mode = replace(DEFAULT_MODE, target_versions=black.PY36_VERSIONS)
+        py36_mode = replace(DEFAULT_MODE, target_versions=PY36_VERSIONS)
         source, expected = read_data("force_py36")
         with cache_dir() as workspace:
             path = (workspace / "file.py").resolve()
@@ -1647,7 +1694,7 @@ class BlackTestCase(unittest.TestCase):
     @event_loop()
     def test_multi_file_force_py36(self) -> None:
         reg_mode = DEFAULT_MODE
-        py36_mode = replace(DEFAULT_MODE, target_versions=black.PY36_VERSIONS)
+        py36_mode = replace(DEFAULT_MODE, target_versions=PY36_VERSIONS)
         source, expected = read_data("force_py36")
         with cache_dir() as workspace:
             paths = [
