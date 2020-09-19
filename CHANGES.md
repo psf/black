@@ -17,6 +17,8 @@
 
 - Prevent coloured diff output being interleaved with multiple files (#1673)
 
+- Added support for PEP 614 relaxed decorator syntax on python 3.9 (#1711)
+
 ### 20.8b1
 
 #### _Packaging_
