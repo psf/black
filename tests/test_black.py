@@ -805,6 +805,16 @@ class BlackTestCase(unittest.TestCase):
         black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
+    def test_python39(self) -> None:
+        source, expected = read_data("python39")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        major, minor = sys.version_info[:2]
+        if major > 3 or (major == 3 and minor >= 9):
+            black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, DEFAULT_MODE)
+
+    @patch("black.dump_to_file", dump_to_stderr)
     def test_fmtonoff(self) -> None:
         source, expected = read_data("fmtonoff")
         actual = fs(source)
@@ -1229,8 +1239,11 @@ class BlackTestCase(unittest.TestCase):
             self.assertNotIn(
                 Feature.RELAXED_DECORATORS,
                 black.get_features_used(node),
-                msg=f"decorator '{decorator}' follows python<=3.8 syntax but is detected as 3.9+"
-                # f"The full node is\n{node!r}"
+                msg=(
+                    f"decorator '{decorator}' follows python<=3.8 syntax"
+                    "but is detected as 3.9+"
+                    # f"The full node is\n{node!r}"
+                ),
             )
         # skip the '# output' comment at the top of the output part
         for relaxed_test in relaxed.split("##")[1:]:
@@ -1239,8 +1252,11 @@ class BlackTestCase(unittest.TestCase):
             self.assertIn(
                 Feature.RELAXED_DECORATORS,
                 black.get_features_used(node),
-                msg=f"decorator '{decorator}' uses python3.9+ syntax but is detected as python<=3.8"
-                # f"The full node is\n{node!r}"
+                msg=(
+                    f"decorator '{decorator}' uses python3.9+ syntax"
+                    "but is detected as python<=3.8"
+                    # f"The full node is\n{node!r}"
+                ),
             )
 
     def test_get_features_used(self) -> None:
