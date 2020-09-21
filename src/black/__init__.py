@@ -48,7 +48,6 @@ from mypy_extensions import mypyc_attr
 from appdirs import user_cache_dir
 from dataclasses import dataclass, field, replace
 import click
-from click.types import LazyFile
 import toml
 from typed_ast import ast3, ast27
 from pathspec import PathSpec
@@ -166,8 +165,9 @@ class WriteBack(Enum):
 
 
 class ReportType(Enum):
-    CONSOLE = 'report'
-    JUNIT = 'junit'
+    CONSOLE = "report"
+    JUNIT = "junit"
+
 
 class Changed(Enum):
     NO = 0
@@ -351,9 +351,10 @@ def target_version_option_callback(
     """
     return [TargetVersion[val.upper()] for val in v]
 
+
 def report_option_callback(
     c: click.Context, p: Union[click.Option, click.Parameter], v: str
-) -> List[ReportType]:
+) -> ReportType:
     """Compute the report type from a --report flag.
 
     This is its own function because mypy couldn't infer the type correctly
@@ -504,19 +505,22 @@ def report_option_callback(
     help="Read configuration from FILE path.",
 )
 @click.option(
-    "--report",
+    "--report-type",
     type=click.Choice([v.name.lower() for v in ReportType]),
     callback=report_option_callback,
     default=DEFAULT_REPORT,
     multiple=False,
     help=(
-        "Option if the generated Report should be to the Console or a Junit XML File [default : Console]"
+        "Option if the generated Report should be to the Console or a Junit XML File.\n"
+        "[default : console]"
     ),
 )
 @click.option(
     "--junitxml",
-    type=click.File(
-    mode="w"
+    type=click.File(mode="w"),
+    help=(
+        "Option is needed for --report-type junit it tells where to store the XML"
+        " Output.\nIf directory is not present it will be created"
     ),
 )
 @click.pass_context
@@ -539,8 +543,8 @@ def main(
     force_exclude: Optional[str],
     src: Tuple[str, ...],
     config: Optional[str],
-    report: str,
-    junitxml: LazyFile
+    report_type: str,
+    junitxml: click.utils.LazyFile,
 ) -> None:
     """The uncompromising code formatter."""
     write_back = WriteBack.from_configuration(check=check, diff=diff, color=color)
@@ -561,10 +565,15 @@ def main(
     if code is not None:
         print(format_str(code, mode=mode))
         ctx.exit(0)
-    if report is ReportType.JUNIT:
+    if report_type is ReportType.JUNIT:
         if junitxml is None:
-            print("Please provide a Filename for the JunitXml Report")
+            print("Please provide a Filename for the JunitXML Report")
             ctx.exit(1)
+        junitxml_path = os.path.dirname(os.path.abspath(junitxml.name))
+        if not os.path.exists(junitxml_path):
+            if not os.makedirs(junitxml_path):
+                print(f"Could not create path for JunitXML Report: {junitxml_path}")
+                ctx.exit(1)
         report = JunitReport(check=check, diff=diff, quiet=quiet, verbose=verbose)
     else:
         report = Report(check=check, diff=diff, quiet=quiet, verbose=verbose)
@@ -603,7 +612,8 @@ def main(
     if verbose or not quiet:
         out("Oh no! 💥 💔 💥" if report.return_code else "All done! ✨ 🍰 ✨")
         if isinstance(report, JunitReport):
-            junitxml.write(str(report))
+            junitxml.write(str(report))  # type: ignore
+            click.secho(str(report.summary()), err=True)
         else:
             click.secho(str(report), err=True)
     ctx.exit(report.return_code)
@@ -6111,6 +6121,7 @@ class Report:
             )
         return ", ".join(report) + "."
 
+
 @dataclass
 class JunitReport:
     """Provides a JunitXml formatted string that can be saved to a file"""
@@ -6123,8 +6134,7 @@ class JunitReport:
     same_count: int = 0
     skipped_count: int = 0
     failure_count: int = 0
-    error_count: int = 0
-    tests = []
+    tests: List[str] = field(default_factory=list)
 
     BODY = """<?xml version="1.0" encoding="utf-8"?>
 <testsuite failures="{failed}" errors="{errors}" name="black" skipped="{skipped}" tests="{combined}">
@@ -6150,7 +6160,7 @@ class JunitReport:
             reformatted = "would reformat" if self.check or self.diff else "reformatted"
             if self.verbose or not self.quiet:
                 self.tests.append(self.FAIL_MSG.format(file=src, msg=reformatted))
-            self.failure_count += 1
+            self.change_count += 1
         else:
             if changed is Changed.NO:
                 msg = f"{src} already well formatted, good job."
@@ -6162,13 +6172,19 @@ class JunitReport:
 
     def failed(self, src: Path, message: str) -> None:
         """Increment the counter for error reformatting. Adds a error Testcase section in tests summary."""
-        self.tests.append(self.ERROR_MSG.format(file=src, msg=f"error: cannot format {src}: {message}"))
-        self.error_count += 1
+        self.tests.append(
+            self.ERROR_MSG.format(
+                file=src, msg=f"error: cannot format {src}: {message}"
+            )
+        )
+        self.failure_count += 1
 
     def path_ignored(self, path: Path, message: str) -> None:
         """Increment the counter for skipped reformatting. Adds a skipped Testcase section in tests summary."""
         if self.verbose:
-            self.tests.append(self.SKIP_MSG.format(file=path, msg=f"{path} ignored: {message}"))
+            self.tests.append(
+                self.SKIP_MSG.format(file=path, msg=f"{path} ignored: {message}")
+            )
             self.skipped_count += 1
 
     @property
@@ -6194,10 +6210,51 @@ class JunitReport:
         """
         Combines the Body with the testcases sections to a JunitXML and returns it.
         """
-        combined_tests = self.change_count + self.same_count + self.failure_count + self.skipped_count
-        report = [self.BODY.format(failed=self.failure_count, errors=self.error_count, skipped=self.skipped_count,
-                                   combined=combined_tests, tests="".join(self.tests))]
+        combined_tests = (
+            self.change_count
+            + self.same_count
+            + self.failure_count
+            + self.skipped_count
+        )
+        report = [
+            self.BODY.format(
+                failed=self.change_count,
+                errors=self.failure_count,
+                skipped=self.skipped_count,
+                combined=combined_tests,
+                tests="".join(self.tests),
+            )
+        ]
         return "".join(report)
+
+    def summary(self) -> str:
+        """Render a color report of the current state.
+
+        Use `click.unstyle` to remove colors.
+        """
+        if self.check or self.diff:
+            reformatted = "would be reformatted"
+            unchanged = "would be left unchanged"
+            failed = "would fail to reformat"
+        else:
+            reformatted = "reformatted"
+            unchanged = "left unchanged"
+            failed = "failed to reformat"
+        report = []
+        if self.change_count:
+            s = "s" if self.change_count > 1 else ""
+            report.append(
+                click.style(f"{self.change_count} file{s} {reformatted}", bold=True)
+            )
+        if self.same_count:
+            s = "s" if self.same_count > 1 else ""
+            report.append(f"{self.same_count} file{s} {unchanged}")
+        if self.failure_count:
+            s = "s" if self.failure_count > 1 else ""
+            report.append(
+                click.style(f"{self.failure_count} file{s} {failed}", fg="red")
+            )
+        return ", ".join(report) + "."
 
 
 def parse_ast(src: str) -> Union[ast.AST, ast3.AST, ast27.AST]:
