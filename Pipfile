@@ -29,7 +29,7 @@ mypy_extensions = ">=0.4.3"
 pathspec = ">=0.6"
 regex = ">=2020.1.8"
 toml = ">=0.10.1"
-typed-ast = "==1.4.0"
+typed-ast = "==1.4.1"
 typing_extensions = ">=3.7.4"
 black = {editable = true,extras = ["d"],path = "."}
 dataclasses = {"python_version <" = "3.7","version >" = "0.6"}
