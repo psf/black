@@ -349,6 +349,10 @@ class xxxxxxxxxxxxxxxxxxxxx(xxxx.xxxxxxxxxxxxx):
             x.xxxxx.xxxxxx.xxxxx.xxxx,
         ], ("xxxxxxxxxxx xxxxxxx xxxx (xxxxxx xxxx) %x xxx xxxxx" % xxxxxxx_xxxx)
 
+value.__dict__[
+    key
+] = "test"  # set some Thrift field to non-None in the struct aa bb cc dd ee
+
 # output
 
 
@@ -784,3 +788,8 @@ class xxxxxxxxxxxxxxxxxxxxx(xxxx.xxxxxxxxxxxxx):
         ], (
             "xxxxxxxxxxx xxxxxxx xxxx (xxxxxx xxxx) %x xxx xxxxx" % xxxxxxx_xxxx
         )
+
+
+value.__dict__[
+    key
+] = "test"  # set some Thrift field to non-None in the struct aa bb cc dd ee

@@ -48,7 +48,6 @@ from mypy_extensions import mypyc_attr
 from appdirs import user_cache_dir
 from dataclasses import dataclass, field, replace
 import click
-from click.types import LazyFile
 import toml
 from typed_ast import ast3, ast27
 from pathspec import PathSpec
@@ -166,8 +165,9 @@ class WriteBack(Enum):
 
 
 class ReportType(Enum):
-    CONSOLE = 'report'
-    JUNIT = 'junit'
+    CONSOLE = "report"
+    JUNIT = "junit"
+
 
 class Changed(Enum):
     NO = 0
@@ -183,12 +183,10 @@ class TargetVersion(Enum):
     PY36 = 6
     PY37 = 7
     PY38 = 8
+    PY39 = 9
 
     def is_python2(self) -> bool:
         return self is TargetVersion.PY27
-
-
-PY36_VERSIONS = {TargetVersion.PY36, TargetVersion.PY37, TargetVersion.PY38}
 
 
 class Feature(Enum):
@@ -204,6 +202,7 @@ class Feature(Enum):
     ASYNC_KEYWORDS = 7
     ASSIGNMENT_EXPRESSIONS = 8
     POS_ONLY_ARGUMENTS = 9
+    RELAXED_DECORATORS = 10
     FORCE_OPTIONAL_PARENTHESES = 50
 
 
@@ -240,6 +239,17 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.TRAILING_COMMA_IN_DEF,
         Feature.ASYNC_KEYWORDS,
         Feature.ASSIGNMENT_EXPRESSIONS,
+        Feature.POS_ONLY_ARGUMENTS,
+    },
+    TargetVersion.PY39: {
+        Feature.UNICODE_LITERALS,
+        Feature.F_STRINGS,
+        Feature.NUMERIC_UNDERSCORES,
+        Feature.TRAILING_COMMA_IN_CALL,
+        Feature.TRAILING_COMMA_IN_DEF,
+        Feature.ASYNC_KEYWORDS,
+        Feature.ASSIGNMENT_EXPRESSIONS,
+        Feature.RELAXED_DECORATORS,
         Feature.POS_ONLY_ARGUMENTS,
     },
 }
@@ -351,9 +361,10 @@ def target_version_option_callback(
     """
     return [TargetVersion[val.upper()] for val in v]
 
+
 def report_option_callback(
     c: click.Context, p: Union[click.Option, click.Parameter], v: str
-) -> List[ReportType]:
+) -> ReportType:
     """Compute the report type from a --report flag.
 
     This is its own function because mypy couldn't infer the type correctly
@@ -504,19 +515,22 @@ def report_option_callback(
     help="Read configuration from FILE path.",
 )
 @click.option(
-    "--report",
+    "--report-type",
     type=click.Choice([v.name.lower() for v in ReportType]),
     callback=report_option_callback,
     default=DEFAULT_REPORT,
     multiple=False,
     help=(
-        "Option if the generated Report should be to the Console or a Junit XML File [default : Console]"
+        "Option if the generated Report should be to the Console or a Junit XML File.\n"
+        "[default : console]"
     ),
 )
 @click.option(
     "--junitxml",
-    type=click.File(
-    mode="w"
+    type=click.File(mode="w"),
+    help=(
+        "Option is needed for --report-type junit it tells where to store the XML"
+        " Output.\nIf directory is not present it will be created"
     ),
 )
 @click.pass_context
@@ -539,8 +553,8 @@ def main(
     force_exclude: Optional[str],
     src: Tuple[str, ...],
     config: Optional[str],
-    report: str,
-    junitxml: LazyFile
+    report_type: str,
+    junitxml: click.utils.LazyFile,
 ) -> None:
     """The uncompromising code formatter."""
     write_back = WriteBack.from_configuration(check=check, diff=diff, color=color)
@@ -561,10 +575,15 @@ def main(
     if code is not None:
         print(format_str(code, mode=mode))
         ctx.exit(0)
-    if report is ReportType.JUNIT:
+    if report_type is ReportType.JUNIT:
         if junitxml is None:
-            print("Please provide a Filename for the JunitXml Report")
+            print("Please provide a Filename for the JunitXML Report")
             ctx.exit(1)
+        junitxml_path = os.path.dirname(os.path.abspath(junitxml.name))
+        if not os.path.exists(junitxml_path):
+            if not os.makedirs(junitxml_path):
+                print(f"Could not create path for JunitXML Report: {junitxml_path}")
+                ctx.exit(1)
         report = JunitReport(check=check, diff=diff, quiet=quiet, verbose=verbose)
     else:
         report = Report(check=check, diff=diff, quiet=quiet, verbose=verbose)
@@ -603,7 +622,8 @@ def main(
     if verbose or not quiet:
         out("Oh no! 💥 💔 💥" if report.return_code else "All done! ✨ 🍰 ✨")
         if isinstance(report, JunitReport):
-            junitxml.write(str(report))
+            junitxml.write(str(report))  # type: ignore
+            click.secho(str(report.summary()), err=True)
         else:
             click.secho(str(report), err=True)
     ctx.exit(report.return_code)
@@ -967,7 +987,7 @@ def format_stdin_to_stdout(
 
 
 def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileContent:
-    """Reformat contents a file and return new contents.
+    """Reformat contents of a file and return new contents.
 
     If `fast` is False, additionally confirm that the reformatted code is
     valid by calling :func:`assert_equivalent` and :func:`assert_stable` on it.
@@ -1876,6 +1896,10 @@ class EmptyLineTracker:
             return 0, 0
 
         if self.previous_line.is_decorator:
+            if self.is_pyi and current_line.is_stub_class:
+                # Insert an empty line after a decorated stub class
+                return 0, 1
+
             return 0, 0
 
         if self.previous_line.depth < current_line.depth and (
@@ -1899,8 +1923,11 @@ class EmptyLineTracker:
                     newlines = 0
                 else:
                     newlines = 1
-            elif current_line.is_def and not self.previous_line.is_def:
-                # Blank line between a block of functions and a block of non-functions
+            elif (
+                current_line.is_def or current_line.is_decorator
+            ) and not self.previous_line.is_def:
+                # Blank line between a block of functions (maybe with preceding
+                # decorators) and a block of non-functions
                 newlines = 1
             else:
                 newlines = 0
@@ -2218,6 +2245,9 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
             and prevp.prev_sibling.value == "print"  # type: ignore
         ):
             # Python 2 print chevron
+            return NO
+        elif prevp.type == token.AT and p.parent and p.parent.type == syms.decorator:
+            # no space in decorators
             return NO
 
     elif prev.type in OPENING_BRACKETS:
@@ -3549,9 +3579,12 @@ class BaseStringSplitter(StringTransformer):
                 # WMA4 a single space.
                 offset += 1
 
-                # WMA4 the lengths of any leaves that came before that space.
-                for leaf in LL[: p_idx + 1]:
+                # WMA4 the lengths of any leaves that came before that space,
+                # but after any closing bracket before that space.
+                for leaf in reversed(LL[: p_idx + 1]):
                     offset += len(str(leaf))
+                    if leaf.type in CLOSING_BRACKETS:
+                        break
 
         if is_valid_index(string_idx + 1):
             N = LL[string_idx + 1]
@@ -5531,6 +5564,49 @@ def is_walrus_assignment(node: LN) -> bool:
     return inner is not None and inner.type == syms.namedexpr_test
 
 
+def is_simple_decorator_trailer(node: LN, last: bool = False) -> bool:
+    """Return True iff `node` is a trailer valid in a simple decorator"""
+    return node.type == syms.trailer and (
+        (
+            len(node.children) == 2
+            and node.children[0].type == token.DOT
+            and node.children[1].type == token.NAME
+        )
+        # last trailer can be arguments
+        or (
+            last
+            and len(node.children) == 3
+            and node.children[0].type == token.LPAR
+            # and node.children[1].type == syms.argument
+            and node.children[2].type == token.RPAR
+        )
+    )
+
+
+def is_simple_decorator_expression(node: LN) -> bool:
+    """Return True iff `node` could be a 'dotted name' decorator
+
+    This function takes the node of the 'namedexpr_test' of the new decorator
+    grammar and test if it would be valid under the old decorator grammar.
+
+    The old grammar was: decorator: @ dotted_name [arguments] NEWLINE
+    The new grammar is : decorator: @ namedexpr_test NEWLINE
+    """
+    if node.type == token.NAME:
+        return True
+    if node.type == syms.power:
+        if node.children:
+            return (
+                node.children[0].type == token.NAME
+                and all(map(is_simple_decorator_trailer, node.children[1:-1]))
+                and (
+                    len(node.children) < 2
+                    or is_simple_decorator_trailer(node.children[-1], last=True)
+                )
+            )
+    return False
+
+
 def is_yield(node: LN) -> bool:
     """Return True if `node` holds a `yield` or `yield from` expression."""
     if node.type == syms.yield_expr:
@@ -5716,6 +5792,8 @@ def get_features_used(node: Node) -> Set[Feature]:
     - underscores in numeric literals;
     - trailing commas after * or ** in function signatures and calls;
     - positional only arguments in function signatures and lambdas;
+    - assignment expression;
+    - relaxed decorator syntax;
     """
     features: Set[Feature] = set()
     for n in node.pre_order():
@@ -5734,6 +5812,12 @@ def get_features_used(node: Node) -> Set[Feature]:
 
         elif n.type == token.COLONEQUAL:
             features.add(Feature.ASSIGNMENT_EXPRESSIONS)
+
+        elif n.type == syms.decorator:
+            if len(n.children) > 1 and not is_simple_decorator_expression(
+                n.children[1]
+            ):
+                features.add(Feature.RELAXED_DECORATORS)
 
         elif (
             n.type in {syms.typedargslist, syms.arglist}
@@ -6111,6 +6195,7 @@ class Report:
             )
         return ", ".join(report) + "."
 
+
 @dataclass
 class JunitReport:
     """Provides a JunitXml formatted string that can be saved to a file"""
@@ -6123,8 +6208,7 @@ class JunitReport:
     same_count: int = 0
     skipped_count: int = 0
     failure_count: int = 0
-    error_count: int = 0
-    tests = []
+    tests: List[str] = field(default_factory=list)
 
     BODY = """<?xml version="1.0" encoding="utf-8"?>
 <testsuite failures="{failed}" errors="{errors}" name="black" skipped="{skipped}" tests="{combined}">
@@ -6150,7 +6234,7 @@ class JunitReport:
             reformatted = "would reformat" if self.check or self.diff else "reformatted"
             if self.verbose or not self.quiet:
                 self.tests.append(self.FAIL_MSG.format(file=src, msg=reformatted))
-            self.failure_count += 1
+            self.change_count += 1
         else:
             if changed is Changed.NO:
                 msg = f"{src} already well formatted, good job."
@@ -6162,13 +6246,19 @@ class JunitReport:
 
     def failed(self, src: Path, message: str) -> None:
         """Increment the counter for error reformatting. Adds a error Testcase section in tests summary."""
-        self.tests.append(self.ERROR_MSG.format(file=src, msg=f"error: cannot format {src}: {message}"))
-        self.error_count += 1
+        self.tests.append(
+            self.ERROR_MSG.format(
+                file=src, msg=f"error: cannot format {src}: {message}"
+            )
+        )
+        self.failure_count += 1
 
     def path_ignored(self, path: Path, message: str) -> None:
         """Increment the counter for skipped reformatting. Adds a skipped Testcase section in tests summary."""
         if self.verbose:
-            self.tests.append(self.SKIP_MSG.format(file=path, msg=f"{path} ignored: {message}"))
+            self.tests.append(
+                self.SKIP_MSG.format(file=path, msg=f"{path} ignored: {message}")
+            )
             self.skipped_count += 1
 
     @property
@@ -6194,10 +6284,51 @@ class JunitReport:
         """
         Combines the Body with the testcases sections to a JunitXML and returns it.
         """
-        combined_tests = self.change_count + self.same_count + self.failure_count + self.skipped_count
-        report = [self.BODY.format(failed=self.failure_count, errors=self.error_count, skipped=self.skipped_count,
-                                   combined=combined_tests, tests="".join(self.tests))]
+        combined_tests = (
+            self.change_count
+            + self.same_count
+            + self.failure_count
+            + self.skipped_count
+        )
+        report = [
+            self.BODY.format(
+                failed=self.change_count,
+                errors=self.failure_count,
+                skipped=self.skipped_count,
+                combined=combined_tests,
+                tests="".join(self.tests),
+            )
+        ]
         return "".join(report)
+
+    def summary(self) -> str:
+        """Render a color report of the current state.
+
+        Use `click.unstyle` to remove colors.
+        """
+        if self.check or self.diff:
+            reformatted = "would be reformatted"
+            unchanged = "would be left unchanged"
+            failed = "would fail to reformat"
+        else:
+            reformatted = "reformatted"
+            unchanged = "left unchanged"
+            failed = "failed to reformat"
+        report = []
+        if self.change_count:
+            s = "s" if self.change_count > 1 else ""
+            report.append(
+                click.style(f"{self.change_count} file{s} {reformatted}", bold=True)
+            )
+        if self.same_count:
+            s = "s" if self.same_count > 1 else ""
+            report.append(f"{self.same_count} file{s} {unchanged}")
+        if self.failure_count:
+            s = "s" if self.failure_count > 1 else ""
+            report.append(
+                click.style(f"{self.failure_count} file{s} {failed}", fg="red")
+            )
+        return ", ".join(report) + "."
 
 
 def parse_ast(src: str) -> Union[ast.AST, ast3.AST, ast27.AST]:
