@@ -454,7 +454,7 @@ def target_version_option_callback(
     type=str,
     help=(
         "Like --exclude, but files and directories matching this regex will be "
-        "excluded even when they are passed explicitly as arguments"
+        "excluded even when they are passed explicitly as arguments."
     ),
 )
 @click.option(
