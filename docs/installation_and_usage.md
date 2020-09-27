@@ -88,7 +88,7 @@ Options:
 
   --force-exclude TEXT            Like --exclude, but files and directories
                                   matching this regex will be excluded even
-                                  when they are passed explicitly as arguments
+                                  when they are passed explicitly as arguments.
 
   -q, --quiet                     Don't emit non-error messages to stderr.
                                   Errors are still emitted; silence those with
