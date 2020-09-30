@@ -48,6 +48,9 @@ if !exists("g:black_string_normalization")
     let g:black_string_normalization = 1
   endif
 endif
+if !exists("g:black_quiet")
+  let g:black_quiet = 0
+endif
 
 python3 << EndPython3
 import collections
@@ -74,6 +77,7 @@ FLAGS = [
   Flag(name="line_length", cast=int),
   Flag(name="fast", cast=strtobool),
   Flag(name="string_normalization", cast=strtobool),
+  Flag(name="quiet", cast=strtobool),
 ]
 
 
@@ -156,6 +160,7 @@ def Black():
     string_normalization=configs["string_normalization"],
     is_pyi=vim.current.buffer.name.endswith('.pyi'),
   )
+  quiet = configs["quiet"]
 
   buffer_str = '\n'.join(vim.current.buffer) + '\n'
   try:
@@ -165,7 +170,8 @@ def Black():
       mode=mode,
     )
   except black.NothingChanged:
-    print(f'Already well formatted, good job. (took {time.time() - start:.4f}s)')
+    if not quiet:
+      print(f'Already well formatted, good job. (took {time.time() - start:.4f}s)')
   except Exception as exc:
     print(exc)
   else:
@@ -183,7 +189,8 @@ def Black():
         window.cursor = cursor
       except vim.error:
         window.cursor = (len(window.buffer), 0)
-    print(f'Reformatted in {time.time() - start:.4f}s.')
+    if not quiet:
+      print(f'Reformatted in {time.time() - start:.4f}s.')
 
 def get_configs():
   path_pyproject_toml = black.find_pyproject_toml(vim.eval("fnamemodify(getcwd(), ':t')"))
