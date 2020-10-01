@@ -1,6 +1,6 @@
 ![Black Logo](https://raw.githubusercontent.com/psf/black/master/docs/_static/logo2-readme.png)
 
-<h2 align="center">The Uncompromising Code Formatter</h2>
+<h2 align="center">README-The Uncompromising Code Formatter</h2>
 
 <p align="center">
 <a href="https://travis-ci.com/psf/black"><img alt="Build Status" src="https://travis-ci.com/psf/black.svg?branch=master"></a>
