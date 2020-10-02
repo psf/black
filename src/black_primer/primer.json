@@ -77,7 +77,7 @@
     },
     "pyramid": {
       "cli_arguments": [],
-      "expect_formatting_changes": true,
+      "expect_formatting_changes": false,
       "git_clone_url": "https://github.com/Pylons/pyramid.git",
       "long_checkout": false,
       "py_versions": ["all"]
@@ -98,7 +98,7 @@
     },
     "sqlalchemy": {
       "cli_arguments": [],
-      "expect_formatting_changes": true,
+      "expect_formatting_changes": false,
       "git_clone_url": "https://github.com/sqlalchemy/sqlalchemy.git",
       "long_checkout": false,
       "py_versions": ["all"]
