@@ -110,6 +110,9 @@ def ignored_docstring():
     """a => \
 b"""  
 
+def single_line_docstring_with_whitespace():
+    """   This should be stripped """
+
 # output
 
 class MyClass:
@@ -223,3 +226,6 @@ def believe_it_or_not_this_is_in_the_py_stdlib():
 def ignored_docstring():
     """a => \
 b"""
+
+def single_line_docstring_with_whitespace():
+    """This should be stripped"""
