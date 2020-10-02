@@ -227,5 +227,6 @@ def ignored_docstring():
     """a => \
 b"""
 
+
 def single_line_docstring_with_whitespace():
     """This should be stripped"""
