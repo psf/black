@@ -167,7 +167,7 @@ know!)
 
 ## NOTE: This is a beta product
 
-_Black_ is already [successfully used](#used-by) by many projects, small and big. It
+_Black_ is already [successfully used](https://github.com/psf/black#used-by) by many projects, small and big. It
 also sports a decent test suite. However, it is still very new. Things will probably be
 wonky for a while. This is made explicit by the "Beta" trove classifier, as well as by
 the "b" in the version number. What this means for you is that **until the formatter
