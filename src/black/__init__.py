@@ -5915,14 +5915,23 @@ def get_future_imports(node: Node) -> Set[str]:
     return imports
 
 
+def get_gitignore_files(root: Path) -> Iterator[Path]:
+    """Yields list of `.gitignore` files paths."""
+    for path in root.iterdir():
+        gitignore = root / ".gitignore"
+        if gitignore.is_file():
+            yield gitignore
+        if path.is_dir():
+            yield from get_gitignore_files(path)
+
+
 @lru_cache()
 def get_gitignore(root: Path) -> PathSpec:
-    """ Return a PathSpec matching gitignore content if present."""
-    gitignore = root / ".gitignore"
-    lines: List[str] = []
-    if gitignore.is_file():
-        with gitignore.open() as gf:
-            lines = gf.readlines()
+    """Return a PathSpec matching gitignore content if present."""
+    lines: Set[str] = set()
+    for path in get_gitignore_files(root):
+        with path.open() as gf:
+            lines |= set(gf.readlines())
     return PathSpec.from_lines("gitwildmatch", lines)
 
 

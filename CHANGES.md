@@ -4,6 +4,9 @@
 
 #### _Black_
 
+- `Black` now respects `.gitignore` files in all levels, not only `root/.gitignore` file
+  (#1750).
+
 - `Black` now respects `--skip-string-normalization` when normalizing multiline
   docstring quotes (#1637)
 
