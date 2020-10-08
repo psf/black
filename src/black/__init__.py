@@ -5917,10 +5917,10 @@ def get_future_imports(node: Node) -> Set[str]:
 
 def get_gitignore_files(root: Path) -> Iterator[Path]:
     """Yields list of `.gitignore` files paths."""
+    gitignore = root / ".gitignore"
+    if gitignore.is_file():
+        yield gitignore
     for path in root.iterdir():
-        gitignore = root / ".gitignore"
-        if gitignore.is_file():
-            yield gitignore
         if path.is_dir():
             yield from get_gitignore_files(path)
 
