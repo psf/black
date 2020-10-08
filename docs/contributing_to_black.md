@@ -21,7 +21,7 @@ unlikely to get accepted. You can still try but prepare to be disappointed.
 
 ## Technicalities
 
-Development on the latest version of Python is preferred. As of this writing it's 3.8.
+Development on the latest version of Python is preferred. As of this writing it's 3.9.
 You can use any operating system. I am using macOS myself and CentOS at work.
 
 Install all development dependencies using:

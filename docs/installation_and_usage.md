@@ -41,7 +41,7 @@ Options:
   -l, --line-length INTEGER       How many characters per line to allow.
                                   [default: 88]
 
-  -t, --target-version [py27|py33|py34|py35|py36|py37|py38]
+  -t, --target-version [py27|py33|py34|py35|py36|py37|py38|py39]
                                   Python versions that should be supported by
                                   Black's output. [default: per-file auto-
                                   detection]
