@@ -132,6 +132,7 @@ Multiple contributions by:
 - [Paul Ganssle](mailto:p.ganssle@gmail.com)
 - [Paul Meinhardt](mailto:mnhrdt@gmail.com)
 - [Peter Bengtsson](mailto:mail@peterbe.com)
+- [Peter Grayson](mailto:pete@jpgrayson.net)
 - [Peter Stensmyr](mailto:peter.stensmyr@gmail.com)
 - pmacosta
 - [Quentin Pradet](mailto:quentin@pradet.me)

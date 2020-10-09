@@ -54,7 +54,7 @@ your PR. You may need to change
 configuration for it to pass.
 
 For more `black-primer` information visit the
-[documentation](https://github.com/psf/black/blob/master/docs/black_primer.md).
+[documentation](https://github.com/psf/black/blob/master/docs/black_primer.md#).
 
 ## Hygiene
 
