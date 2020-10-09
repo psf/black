@@ -574,6 +574,7 @@ Multiple contributions by:
 - [Gregory P. Smith](mailto:greg@krypto.org)
 - Gustavo Camargo
 - hauntsaninja
+- [Hadi Alqattan](mailto:alqattanhadizaki@gmail.com)
 - [Heaford](mailto:dan@heaford.com)
 - [Hugo Barrera](mailto::hugo@barrera.io)
 - Hugo van Kemenade
