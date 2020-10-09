@@ -109,6 +109,8 @@ $ black --help
 
 ## Vim
 
+### Official plugin
+
 Commands and shortcuts:
 
 - `:Black` to format the entire file (ranges not supported);
@@ -229,6 +231,17 @@ If you later want to update _Black_, you should do it like this:
 ```console
 $ pip install -U black --no-binary regex,typed-ast
 ```
+
+### With ALE
+
+1. Install [`ale`](https://github.com/dense-analysis/ale)
+2. Install `black`
+3. Add this to your vimrc:
+
+   ```vim
+   let g:ale_fixers = {}
+   let g:ale_fixers.python = ['black']
+   ```
 
 ## Visual Studio Code
 
