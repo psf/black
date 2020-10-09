@@ -5,4 +5,6 @@ ENV PYTHONUNBUFFERED 1
 
 RUN pip install --upgrade --no-cache-dir black
 
-ENTRYPOINT /usr/local/bin/black --check --diff  .
+COPY entrypoint.sh /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
