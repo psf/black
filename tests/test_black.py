@@ -67,8 +67,9 @@ def cache_dir(exists: bool = True) -> Iterator[Path]:
         cache_dir = Path(workspace)
         if not exists:
             cache_dir = cache_dir / "new"
-        with patch("black.CACHE_DIR", cache_dir):
-            yield cache_dir
+        with patch("black.get_gitignore_files"):
+            with patch("black.CACHE_DIR", cache_dir):
+                yield cache_dir
 
 
 @contextmanager
