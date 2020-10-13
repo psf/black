@@ -15,7 +15,7 @@ except ImportError as ie:
         f"aiohttp dependency is not installed: {ie}. "
         + "Please re-install black with the '[d]' extra install "
         + "to obtain aiohttp_cors: `pip install black[d]`",
-        file=sys.stderr
+        file=sys.stderr,
     )
     sys.exit(-1)
 
