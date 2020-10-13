@@ -1,13 +1,24 @@
 import asyncio
+import logging
+import sys
 from concurrent.futures import Executor, ProcessPoolExecutor
 from datetime import datetime
 from functools import partial
-import logging
 from multiprocessing import freeze_support
 from typing import Set, Tuple
 
-from aiohttp import web
-import aiohttp_cors
+try:
+    from aiohttp import web
+    import aiohttp_cors
+except ImportError as ie:
+    print(
+        f"aiohttp dependency is not installed: {ie}. "
+        + "Please re-install black with the '[d]' extra install "
+        + "to obtain aiohttp_cors: `pip install black[d]`",
+        file=sys.stderr,
+    )
+    sys.exit(-1)
+
 import black
 import click
 
