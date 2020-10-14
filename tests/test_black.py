@@ -22,7 +22,6 @@ from typing import (
     Dict,
     Generator,
     List,
-    Tuple,
     Iterator,
     TypeVar,
 )
