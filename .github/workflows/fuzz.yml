@@ -21,11 +21,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install --upgrade coverage
-          python -m pip install --upgrade hypothesmith
-          python -m pip install -e ".[d]"
+          python -m pip install --upgrade tox
 
       - name: Run fuzz tests
         run: |
-          coverage run fuzz.py
-          coverage report
+          tox -e fuzz

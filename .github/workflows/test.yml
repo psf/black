@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install --upgrade coverage tox
+          python -m pip install --upgrade tox
 
       - name: Unit tests
         run: |
