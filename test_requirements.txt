@@ -1,0 +1,4 @@
+pytest >= 6.0.1
+pytest-mock >= 3.2.0
+pytest-cases >= 2.1.2
+coverage >= 5.2.1
