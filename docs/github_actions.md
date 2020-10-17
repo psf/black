@@ -17,5 +17,5 @@ jobs:
       - uses: actions/setup-python@v2
       - uses: psf/black@stable # the default is equivalent to `black . --diff --check`.
         with: # (optional - override the default params).
-          args: [".", "--diff", "--check"]
+          args: ". --diff --check"
 ```
