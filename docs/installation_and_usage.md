@@ -119,7 +119,7 @@ about _Black_'s changes or will overwrite _Black_'s changes. A good example of t
 should be configured to neither warn about nor overwrite _Black_'s changes.
 
 Actual details on _Black_ compatible configurations for various tools can be found in
-[compatible_configs](https://github.com/psf/black/blob/master/docs/compatible_configs.md).
+[compatible_configs](https://github.com/psf/black/blob/master/docs/compatible_configs.md#).
 
 ## Migrating your code style without ruining git blame
 
@@ -167,12 +167,13 @@ know!)
 
 ## NOTE: This is a beta product
 
-_Black_ is already [successfully used](#used-by) by many projects, small and big. It
-also sports a decent test suite. However, it is still very new. Things will probably be
-wonky for a while. This is made explicit by the "Beta" trove classifier, as well as by
-the "b" in the version number. What this means for you is that **until the formatter
-becomes stable, you should expect some formatting to change in the future**. That being
-said, no drastic stylistic changes are planned, mostly responses to bug reports.
+_Black_ is already [successfully used](https://github.com/psf/black#used-by) by many
+projects, small and big. It also sports a decent test suite. However, it is still very
+new. Things will probably be wonky for a while. This is made explicit by the "Beta"
+trove classifier, as well as by the "b" in the version number. What this means for you
+is that **until the formatter becomes stable, you should expect some formatting to
+change in the future**. That being said, no drastic stylistic changes are planned,
+mostly responses to bug reports.
 
 Also, as a temporary safety measure, _Black_ will check that the reformatted code still
 produces a valid AST that is equivalent to the original. This slows it down. If you're
