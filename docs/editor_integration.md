@@ -72,7 +72,9 @@ On Windows / Linux / BSD:
       - Output paths to refresh: `$FilePath$`
       - Working directory: `$ProjectFileDir$`
 
-   - Uncheck "Auto-save edited files to trigger the watcher" in Advanced Options
+   - In Advanced Options
+     - Uncheck "Auto-save edited files to trigger the watcher"
+     - Uncheck "Trigger the watcher on external changes"
 
 ## Wing IDE
 
