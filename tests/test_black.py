@@ -22,7 +22,6 @@ from typing import (
     Dict,
     Generator,
     List,
-    Tuple,
     Iterator,
     TypeVar,
 )
@@ -36,18 +35,10 @@ from click.testing import CliRunner
 import black
 from black import Feature, TargetVersion
 
-try:
-    import blackd
-    from aiohttp.test_utils import AioHTTPTestCase, unittest_run_loop
-    from aiohttp import web
-except ImportError:
-    has_blackd_deps = False
-else:
-    has_blackd_deps = True
-
 from pathspec import PathSpec
 
 # Import other test classes
+from tests.util import THIS_DIR, read_data, DETERMINISTIC_HEADER
 from .test_primer import PrimerCLITests  # noqa: F401
 
 
@@ -55,10 +46,6 @@ DEFAULT_MODE = black.FileMode(experimental_string_processing=True)
 ff = partial(black.format_file_in_place, mode=DEFAULT_MODE, fast=True)
 fs = partial(black.format_str, mode=DEFAULT_MODE)
 THIS_FILE = Path(__file__)
-THIS_DIR = THIS_FILE.parent
-PROJECT_ROOT = THIS_DIR.parent
-DETERMINISTIC_HEADER = "[Deterministic header]"
-EMPTY_LINE = "# EMPTY LINE WITH WHITESPACE" + " (this comment will be removed)"
 PY36_VERSIONS = {
     TargetVersion.PY36,
     TargetVersion.PY37,
@@ -72,29 +59,6 @@ R = TypeVar("R")
 
 def dump_to_stderr(*output: str) -> str:
     return "\n" + "\n".join(output) + "\n"
-
-
-def read_data(name: str, data: bool = True) -> Tuple[str, str]:
-    """read_data('test_name') -> 'input', 'output'"""
-    if not name.endswith((".py", ".pyi", ".out", ".diff")):
-        name += ".py"
-    _input: List[str] = []
-    _output: List[str] = []
-    base_dir = THIS_DIR / "data" if data else PROJECT_ROOT
-    with open(base_dir / name, "r", encoding="utf8") as test:
-        lines = test.readlines()
-    result = _input
-    for line in lines:
-        line = line.replace(EMPTY_LINE, "")
-        if line.rstrip() == "# output":
-            result = _output
-            continue
-
-        result.append(line)
-    if _input and not _output:
-        # If there's no output marker, treat the entire file as already pre-formatted.
-        _output = _input[:]
-    return "".join(_input).strip() + "\n", "".join(_output).strip() + "\n"
 
 
 @contextmanager
@@ -117,17 +81,6 @@ def event_loop() -> Iterator[None]:
 
     finally:
         loop.close()
-
-
-@contextmanager
-def skip_if_exception(e: str) -> Iterator[None]:
-    try:
-        yield
-    except Exception as exc:
-        if exc.__class__.__name__ == e:
-            unittest.skip(f"Encountered expected exception {exc}, skipping")
-        else:
-            raise
 
 
 class FakeContext(click.Context):
@@ -239,8 +192,11 @@ class BlackTestCase(unittest.TestCase):
             os.unlink(tmp_file)
         self.assertFormatEqual(expected, actual)
 
-    def test_self(self) -> None:
+    def test_run_on_test_black(self) -> None:
         self.checkSourceFile("tests/test_black.py")
+
+    def test_run_on_test_blackd(self) -> None:
+        self.checkSourceFile("tests/test_blackd.py")
 
     def test_black(self) -> None:
         self.checkSourceFile("src/black/__init__.py")
@@ -1969,14 +1925,6 @@ class BlackTestCase(unittest.TestCase):
         ):
             ff(THIS_FILE)
 
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
-    def test_blackd_main(self) -> None:
-        with patch("blackd.web.run_app"):
-            result = CliRunner().invoke(blackd.main, [])
-            if result.exception is not None:
-                raise result.exception
-            self.assertEqual(result.exit_code, 0)
-
     def test_invalid_config_return_code(self) -> None:
         tmp_file = Path(black.dump_to_file())
         try:
@@ -2051,174 +1999,6 @@ class BlackTestCase(unittest.TestCase):
             self.assertEqual(normalized_path, "workspace/project")
         finally:
             os.chdir(str(old_cwd))
-
-
-class BlackDTestCase(AioHTTPTestCase):
-    async def get_application(self) -> web.Application:
-        return blackd.make_app()
-
-    # TODO: remove these decorators once the below is released
-    # https://github.com/aio-libs/aiohttp/pull/3727
-    @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
-    @unittest_run_loop
-    async def test_blackd_request_needs_formatting(self) -> None:
-        response = await self.client.post("/", data=b"print('hello world')")
-        self.assertEqual(response.status, 200)
-        self.assertEqual(response.charset, "utf8")
-        self.assertEqual(await response.read(), b'print("hello world")\n')
-
-    @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
-    @unittest_run_loop
-    async def test_blackd_request_no_change(self) -> None:
-        response = await self.client.post("/", data=b'print("hello world")\n')
-        self.assertEqual(response.status, 204)
-        self.assertEqual(await response.read(), b"")
-
-    @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
-    @unittest_run_loop
-    async def test_blackd_request_syntax_error(self) -> None:
-        response = await self.client.post("/", data=b"what even ( is")
-        self.assertEqual(response.status, 400)
-        content = await response.text()
-        self.assertTrue(
-            content.startswith("Cannot parse"),
-            msg=f"Expected error to start with 'Cannot parse', got {repr(content)}",
-        )
-
-    @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
-    @unittest_run_loop
-    async def test_blackd_unsupported_version(self) -> None:
-        response = await self.client.post(
-            "/", data=b"what", headers={blackd.PROTOCOL_VERSION_HEADER: "2"}
-        )
-        self.assertEqual(response.status, 501)
-
-    @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
-    @unittest_run_loop
-    async def test_blackd_supported_version(self) -> None:
-        response = await self.client.post(
-            "/", data=b"what", headers={blackd.PROTOCOL_VERSION_HEADER: "1"}
-        )
-        self.assertEqual(response.status, 200)
-
-    @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
-    @unittest_run_loop
-    async def test_blackd_invalid_python_variant(self) -> None:
-        async def check(header_value: str, expected_status: int = 400) -> None:
-            response = await self.client.post(
-                "/", data=b"what", headers={blackd.PYTHON_VARIANT_HEADER: header_value}
-            )
-            self.assertEqual(response.status, expected_status)
-
-        await check("lol")
-        await check("ruby3.5")
-        await check("pyi3.6")
-        await check("py1.5")
-        await check("2.8")
-        await check("py2.8")
-        await check("3.0")
-        await check("pypy3.0")
-        await check("jython3.4")
-
-    @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
-    @unittest_run_loop
-    async def test_blackd_pyi(self) -> None:
-        source, expected = read_data("stub.pyi")
-        response = await self.client.post(
-            "/", data=source, headers={blackd.PYTHON_VARIANT_HEADER: "pyi"}
-        )
-        self.assertEqual(response.status, 200)
-        self.assertEqual(await response.text(), expected)
-
-    @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
-    @unittest_run_loop
-    async def test_blackd_diff(self) -> None:
-        diff_header = re.compile(
-            r"(In|Out)\t\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
-        )
-
-        source, _ = read_data("blackd_diff.py")
-        expected, _ = read_data("blackd_diff.diff")
-
-        response = await self.client.post(
-            "/", data=source, headers={blackd.DIFF_HEADER: "true"}
-        )
-        self.assertEqual(response.status, 200)
-
-        actual = await response.text()
-        actual = diff_header.sub(DETERMINISTIC_HEADER, actual)
-        self.assertEqual(actual, expected)
-
-    @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
-    @unittest_run_loop
-    async def test_blackd_python_variant(self) -> None:
-        code = (
-            "def f(\n"
-            "    and_has_a_bunch_of,\n"
-            "    very_long_arguments_too,\n"
-            "    and_lots_of_them_as_well_lol,\n"
-            "    **and_very_long_keyword_arguments\n"
-            "):\n"
-            "    pass\n"
-        )
-
-        async def check(header_value: str, expected_status: int) -> None:
-            response = await self.client.post(
-                "/", data=code, headers={blackd.PYTHON_VARIANT_HEADER: header_value}
-            )
-            self.assertEqual(
-                response.status, expected_status, msg=await response.text()
-            )
-
-        await check("3.6", 200)
-        await check("py3.6", 200)
-        await check("3.6,3.7", 200)
-        await check("3.6,py3.7", 200)
-        await check("py36,py37", 200)
-        await check("36", 200)
-        await check("3.6.4", 200)
-
-        await check("2", 204)
-        await check("2.7", 204)
-        await check("py2.7", 204)
-        await check("3.4", 204)
-        await check("py3.4", 204)
-        await check("py34,py36", 204)
-        await check("34", 204)
-
-    @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
-    @unittest_run_loop
-    async def test_blackd_line_length(self) -> None:
-        response = await self.client.post(
-            "/", data=b'print("hello")\n', headers={blackd.LINE_LENGTH_HEADER: "7"}
-        )
-        self.assertEqual(response.status, 200)
-
-    @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
-    @unittest_run_loop
-    async def test_blackd_invalid_line_length(self) -> None:
-        response = await self.client.post(
-            "/", data=b'print("hello")\n', headers={blackd.LINE_LENGTH_HEADER: "NaN"}
-        )
-        self.assertEqual(response.status, 400)
-
-    @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
-    @unittest_run_loop
-    async def test_blackd_response_black_version_header(self) -> None:
-        response = await self.client.post("/")
-        self.assertIsNotNone(response.headers.get(blackd.BLACK_VERSION_HEADER))
 
 
 with open(black.__file__, "r", encoding="utf-8") as _bf:
