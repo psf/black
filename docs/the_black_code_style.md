@@ -151,7 +151,7 @@ entry. This also makes _Black_ compatible with [isort](https://pypi.org/p/isort/
 the following configuration.
 
 <details>
-<summary>A compatible `.isort.cfg`</summary>
+<summary>A compatible <code>.isort.cfg</code></summary>
 
 ```cfg
 [settings]
