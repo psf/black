@@ -69,7 +69,8 @@ DEFAULT_EXCLUDES = r"/(\.direnv|\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.ven
 DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 
-STRING_PREFIX_CHARS: Final = "furbFURB"  # All possible string prefix characters.
+# All possible string prefix characters.
+STRING_PREFIX_CHARS: Final = "furbFURB"
 
 
 # types
@@ -1901,7 +1902,8 @@ class LineGenerator(Visitor[Line]):
         """
         if not self.current_line:
             self.current_line.depth += indent
-            return  # Line is empty, don't emit. Creating a new one unnecessary.
+            # Line is empty, don't emit. Creating a new one unnecessary.
+            return
 
         complete_line = self.current_line
         self.current_line = Line(depth=complete_line.depth + indent)
@@ -5174,33 +5176,76 @@ def normalize_numeric_literal(leaf: Leaf) -> None:
     in Python 2 long literals).
     """
     text = leaf.value.lower()
-    if text.startswith(("0o", "0b")):
+    if is_oct_or_binary(text):
         # Leave octal and binary literals alone.
         pass
-    elif text.startswith("0x"):
-        # Change hex literals to lower case.
-        before, after = text[:2], text[2:]
-        text = f"{before}{after.lower()}"
-    elif "e" in text:
-        before, after = text.split("e")
-        sign = ""
-        if after.startswith("-"):
-            after = after[1:]
-            sign = "-"
-        elif after.startswith("+"):
-            after = after[1:]
-        before = format_float_or_int_string(before)
-        text = f"{before}e{sign}{after}"
-    elif text.endswith(("j", "l")):
-        number = text[:-1]
-        suffix = text[-1]
-        # Capitalize in "2L" because "l" looks too similar to "1".
-        if suffix == "l":
-            suffix = "L"
-        text = f"{format_float_or_int_string(number)}{suffix}"
+    elif is_hex(text):
+        text = format_hex(text)
+    elif is_scientific_notation(text):
+        text = format_scientific_notation(text)
+    elif is_long_or_complex_number(text):
+        text = format_long_or_complex_number(text)
     else:
         text = format_float_or_int_string(text)
     leaf.value = text
+
+
+def is_oct_or_binary(text: str) -> bool:
+    """
+    Checks if the supplied string is a number with octal or binary notation
+    """
+    return text.startswith(("0o", "0b"))
+
+
+def is_hex(text: str) -> bool:
+    """Checks if the supplied string is a number with hexadecimal notation"""
+    return text.startswith("0x")
+
+
+def format_hex(text: str) -> str:
+    """
+    Formats a hexidecimal strign like "0x12b3"
+
+    Uses lowercase because of similarity between "B" and "8", which
+    can cause security issues.
+    see: https://github.com/psf/black/issues/1692
+    """
+
+    before, after = text[:2], text[2:]
+    return f"{before}{after.lower()}"
+
+
+def is_scientific_notation(text: str) -> bool:
+    """Checks if the supplied string is a number with scientific notation"""
+    return "e" in text
+
+
+def format_scientific_notation(text: str) -> str:
+    """Formats a numeric string utilizing scentific notation"""
+    before, after = text.split("e")
+    sign = ""
+    if after.startswith("-"):
+        after = after[1:]
+        sign = "-"
+    elif after.startswith("+"):
+        after = after[1:]
+    before = format_float_or_int_string(before)
+    return f"{before}e{sign}{after}"
+
+
+def is_long_or_complex_number(text: str) -> bool:
+    """Checks if the supplied string is a long or complex number string"""
+    return text.endswith(("j", "l"))
+
+
+def format_long_or_complex_number(text: str) -> str:
+    """Formats a long or complex string like `10L` or `10j`"""
+    number = text[:-1]
+    suffix = text[-1]
+    # Capitalize in "2L" because "l" looks too similar to "1".
+    if suffix == "l":
+        suffix = "L"
+    return f"{format_float_or_int_string(number)}{suffix}"
 
 
 def format_float_or_int_string(text: str) -> str:
@@ -5296,7 +5341,8 @@ def convert_one_fmt_off_pair(node: Node) -> bool:
                 if not ignored_nodes:
                     continue
 
-                first = ignored_nodes[0]  # Can be a container node with the `leaf`.
+                # Can be a container node with the `leaf`.
+                first = ignored_nodes[0]
                 parent = first.parent
                 prefix = first.prefix
                 first.prefix = prefix[comment.consumed :]
