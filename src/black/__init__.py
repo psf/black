@@ -5178,9 +5178,9 @@ def normalize_numeric_literal(leaf: Leaf) -> None:
         # Leave octal and binary literals alone.
         pass
     elif text.startswith("0x"):
-        # Change hex literals to upper case.
+        # Change hex literals to lower case.
         before, after = text[:2], text[2:]
-        text = f"{before}{after.upper()}"
+        text = f"{before}{after.lower()}"
     elif "e" in text:
         before, after = text.split("e")
         sign = ""

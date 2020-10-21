@@ -34,7 +34,7 @@ __author__ = "Guido van Rossum <guido@python.org>"
 import sys
 from io import StringIO
 
-HUGE: int = 0x7FFFFFFF  # maximum repeat count, default max
+HUGE: int = 0x7fffffff  # maximum repeat count, default max
 
 _type_reprs: Dict[int, Union[Text, int]] = {}
 
