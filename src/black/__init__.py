@@ -458,6 +458,15 @@ def target_version_option_callback(
     ),
 )
 @click.option(
+    "--stdin-filename",
+    type=str,
+    help=(
+        "The name of the file when passing it through stdin. Useful to make "
+        "sure black will respect --exclude/--force-exclude options on some "
+        "editors that rely on using stdin."
+    ),
+)
+@click.option(
     "-q",
     "--quiet",
     is_flag=True,
@@ -516,6 +525,7 @@ def main(
     include: str,
     exclude: str,
     force_exclude: Optional[str],
+    stdin_filename: Optional[str],
     src: Tuple[str, ...],
     config: Optional[str],
 ) -> None:
@@ -548,6 +558,7 @@ def main(
         exclude=exclude,
         force_exclude=force_exclude,
         report=report,
+        stdin_filename=stdin_filename,
     )
 
     path_empty(
@@ -587,6 +598,7 @@ def get_sources(
     exclude: str,
     force_exclude: Optional[str],
     report: "Report",
+    stdin_filename: Optional[str],
 ) -> Set[Path]:
     """Compute the set of files to be formatted."""
     try:
@@ -613,7 +625,13 @@ def get_sources(
     gitignore = get_gitignore(root)
 
     for s in src:
-        p = Path(s)
+        if s == "-" and stdin_filename:
+            p = Path(stdin_filename)
+            is_stdin = True
+        else:
+            p = Path(s)
+            is_stdin = False
+
         if p.is_dir():
             sources.update(
                 gen_python_files(
@@ -626,8 +644,6 @@ def get_sources(
                     gitignore,
                 )
             )
-        elif s == "-":
-            sources.add(p)
         elif p.is_file():
             normalized_path = normalize_path_maybe_ignore(p, root, report)
             if normalized_path is None:
@@ -643,6 +659,11 @@ def get_sources(
                 report.path_ignored(p, "matches the --force-exclude regular expression")
                 continue
 
+            if is_stdin:
+                p = Path("__BLACK_STDIN_FILENAME__" / p)
+
+            sources.add(p)
+        elif s == "-":
             sources.add(p)
         else:
             err(f"invalid path: {s}")
@@ -670,7 +691,9 @@ def reformat_one(
     """
     try:
         changed = Changed.NO
-        if not src.is_file() and str(src) == "-":
+        if not src.is_file() and (
+            str(src) == "-" or str(src).startswith("__BLACK_STDIN_FILENAME__")
+        ):
             if format_stdin_to_stdout(fast=fast, write_back=write_back, mode=mode):
                 changed = Changed.YES
         else:

@@ -1730,6 +1730,7 @@ class BlackTestCase(unittest.TestCase):
                 exclude=exclude,
                 force_exclude=None,
                 report=report,
+                stdin_filename=None,
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))
