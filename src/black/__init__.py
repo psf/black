@@ -69,8 +69,7 @@ DEFAULT_EXCLUDES = r"/(\.direnv|\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.ven
 DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 
-# All possible string prefix characters.
-STRING_PREFIX_CHARS: Final = "furbFURB"
+STRING_PREFIX_CHARS: Final = "furbFURB"  # All possible string prefix characters.
 
 
 # types
@@ -1902,8 +1901,7 @@ class LineGenerator(Visitor[Line]):
         """
         if not self.current_line:
             self.current_line.depth += indent
-            # Line is empty, don't emit. Creating a new one unnecessary.
-            return
+            return  # Line is empty, don't emit. Creating a new one unnecessary.
 
         complete_line = self.current_line
         self.current_line = Line(depth=complete_line.depth + indent)
@@ -5341,8 +5339,7 @@ def convert_one_fmt_off_pair(node: Node) -> bool:
                 if not ignored_nodes:
                     continue
 
-                # Can be a container node with the `leaf`.
-                first = ignored_nodes[0]
+                first = ignored_nodes[0]  # Can be a container node with the `leaf`.
                 parent = first.parent
                 prefix = first.prefix
                 first.prefix = prefix[comment.consumed :]
