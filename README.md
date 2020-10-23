@@ -136,7 +136,7 @@ Options:
                                   when they are passed explicitly as arguments.
 
   --stdin-filename TEXT           The name of the file when passing it through
-                                  stdin. Useful to make sure black will respect
+                                  stdin. Useful to make sure Black will respect
                                   --force-exclude option on some editors that
                                   rely on using stdin.
 

@@ -463,7 +463,7 @@ def target_version_option_callback(
     type=str,
     help=(
         "The name of the file when passing it through stdin. Useful to make "
-        "sure black will respect --force-exclude option on some "
+        "sure Black will respect --force-exclude option on some "
         "editors that rely on using stdin."
     ),
 )
