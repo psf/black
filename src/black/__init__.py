@@ -644,7 +644,7 @@ def get_sources(
                     gitignore,
                 )
             )
-        elif p.is_file():
+        elif p.is_file() or is_stdin:
             normalized_path = normalize_path_maybe_ignore(p, root, report)
             if normalized_path is None:
                 continue
