@@ -68,6 +68,7 @@ DEFAULT_LINE_LENGTH = 88
 DEFAULT_EXCLUDES = r"/(\.direnv|\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_build|buck-out|build|dist)/"  # noqa: B950
 DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
+STDIN_PLACEHOLDER = "__BLACK_STDIN_FILENAME__"
 
 STRING_PREFIX_CHARS: Final = "furbFURB"  # All possible string prefix characters.
 
@@ -660,7 +661,7 @@ def get_sources(
                 continue
 
             if is_stdin:
-                p = Path("__BLACK_STDIN_FILENAME__" / p)
+                p = Path(f"{STDIN_PLACEHOLDER}{str(p)}")
 
             sources.add(p)
         elif s == "-":
@@ -691,9 +692,17 @@ def reformat_one(
     """
     try:
         changed = Changed.NO
-        if not src.is_file() and (
-            str(src) == "-" or str(src).startswith("__BLACK_STDIN_FILENAME__")
-        ):
+        is_stdin = False
+
+        if str(src) == "-":
+            is_stdin = True
+        elif str(src).startswith(STDIN_PLACEHOLDER):
+            is_stdin = True
+            # Use the original name again in case we want to print something
+            # to the user
+            src = Path(str(src)[len(STDIN_PLACEHOLDER) :])
+
+        if not src.is_file() and is_stdin:
             if format_stdin_to_stdout(fast=fast, write_back=write_back, mode=mode):
                 changed = Changed.YES
         else:
