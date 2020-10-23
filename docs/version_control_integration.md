@@ -24,8 +24,8 @@ for your project. See _Black_'s own
 example.
 
 When using the `--diff` flag with `pre-commit`, you must also use the `--check` flag.
-When you want to run `black` only on specific files in `pre-commit`, either use
-`pre-commits` own `files` and `exclude` or, when using `blacks` `--include`, set
+When you want to run *Black* only on specific files in pre-commit, either use
+pre-commit's own `files` and `exclude` or, when using *Black*'s `--include`, set
 `--force-exclude` to the negated regex of `--include`.
 
 If you're already using Python 3.7, switch the `language_version` accordingly. Finally,
