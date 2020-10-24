@@ -5174,30 +5174,18 @@ def normalize_numeric_literal(leaf: Leaf) -> None:
     in Python 2 long literals).
     """
     text = leaf.value.lower()
-    if is_oct_or_binary(text):
+    if text.startswith(("0o", "0b")):
         # Leave octal and binary literals alone.
         pass
-    elif is_hex(text):
+    elif text.startswith("0x"):
         text = format_hex(text)
-    elif is_scientific_notation(text):
+    elif "e" in text:
         text = format_scientific_notation(text)
-    elif is_long_or_complex_number(text):
+    elif text.endswith(("j", "l")):
         text = format_long_or_complex_number(text)
     else:
         text = format_float_or_int_string(text)
     leaf.value = text
-
-
-def is_oct_or_binary(text: str) -> bool:
-    """
-    Checks if the supplied string is a number with octal or binary notation
-    """
-    return text.startswith(("0o", "0b"))
-
-
-def is_hex(text: str) -> bool:
-    """Checks if the supplied string is a number with hexadecimal notation"""
-    return text.startswith("0x")
 
 
 def format_hex(text: str) -> str:
@@ -5213,11 +5201,6 @@ def format_hex(text: str) -> str:
     return f"{before}{after.lower()}"
 
 
-def is_scientific_notation(text: str) -> bool:
-    """Checks if the supplied string is a number with scientific notation"""
-    return "e" in text
-
-
 def format_scientific_notation(text: str) -> str:
     """Formats a numeric string utilizing scentific notation"""
     before, after = text.split("e")
@@ -5229,11 +5212,6 @@ def format_scientific_notation(text: str) -> str:
         after = after[1:]
     before = format_float_or_int_string(before)
     return f"{before}e{sign}{after}"
-
-
-def is_long_or_complex_number(text: str) -> bool:
-    """Checks if the supplied string is a long or complex number string"""
-    return text.endswith(("j", "l"))
 
 
 def format_long_or_complex_number(text: str) -> str:
