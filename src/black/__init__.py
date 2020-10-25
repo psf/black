@@ -692,7 +692,6 @@ def reformat_one(
     """
     try:
         changed = Changed.NO
-        is_stdin = False
 
         if str(src) == "-":
             is_stdin = True
@@ -701,8 +700,10 @@ def reformat_one(
             # Use the original name again in case we want to print something
             # to the user
             src = Path(str(src)[len(STDIN_PLACEHOLDER) :])
+        else:
+            is_stdin = False
 
-        if not src.is_file() and is_stdin:
+        if is_stdin:
             if format_stdin_to_stdout(fast=fast, write_back=write_back, mode=mode):
                 changed = Changed.YES
         else:

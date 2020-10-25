@@ -1869,6 +1869,30 @@ class BlackTestCase(unittest.TestCase):
             # __BLACK_STDIN_FILENAME__ should have been striped
             report.done.assert_called_with(expected, black.Changed.YES)
 
+    def test_reformat_one_with_stdin_and_existing_path(self) -> None:
+        with patch(
+            "black.format_stdin_to_stdout",
+            return_value=lambda *args, **kwargs: black.Changed.YES,
+        ) as fsts:
+            report = MagicMock()
+            # Even with an existing file, since we are forcing stdin, black
+            # should output to stdout and not modify the file inplace
+            p = Path(str(THIS_DIR / "data/collections.py"))
+            # Make sure is_file actually returns True
+            self.assertTrue(p.is_file())
+            path = Path(f"__BLACK_STDIN_FILENAME__{p}")
+            expected = Path(p)
+            black.reformat_one(
+                path,
+                fast=True,
+                write_back=black.WriteBack.YES,
+                mode=DEFAULT_MODE,
+                report=report,
+            )
+            fsts.assert_called_once()
+            # __BLACK_STDIN_FILENAME__ should have been striped
+            report.done.assert_called_with(expected, black.Changed.YES)
+
     def test_gitignore_exclude(self) -> None:
         path = THIS_DIR / "data" / "include_exclude_tests"
         include = re.compile(r"\.pyi?$")
