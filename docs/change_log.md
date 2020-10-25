@@ -23,6 +23,9 @@
 
 - Added support for PEP 614 relaxed decorator syntax on python 3.9 (#1711)
 
+- Added `--stdin-filename` argument to allow stdin to respect `--force-exclude` rules.
+  Works very alike to flake8's `--stdin-display-name` (#1780)
+
 ### 20.8b1
 
 #### _Packaging_
