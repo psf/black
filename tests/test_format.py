@@ -79,7 +79,7 @@ SOURCES = [
 class TestSimpleFormat(BlackBaseTestCase):
     @parameterized.expand(SIMPLE_CASES)
     @patch("black.dump_to_file", dump_to_stderr)
-    def test_simple_format(self, filename):
+    def test_simple_format(self, filename: str) -> None:
         source, expected = read_data(filename)
         actual = fs(source)
         self.assertFormatEqual(expected, actual)

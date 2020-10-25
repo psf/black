@@ -64,7 +64,7 @@ def read_data(name: str, data: bool = True) -> Tuple[str, str]:
     return read_data_from_file(base_dir / name)
 
 
-def read_data_from_file(file_name: Path):
+def read_data_from_file(file_name: Path) -> Tuple[str, str]:
     with open(file_name, "r", encoding="utf8") as test:
         lines = test.readlines()
     _input: List[str] = []
