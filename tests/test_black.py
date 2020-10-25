@@ -143,16 +143,6 @@ class BlackTestCase(BlackBaseTestCase):
         )
 
     @patch("black.dump_to_file", dump_to_stderr)
-    def checkSourceFile(self, name: str, mode: black.FileMode = DEFAULT_MODE) -> None:
-        path = THIS_DIR.parent / name
-        source, expected = read_data(str(path), data=False)
-        actual = fs(source, mode=mode)
-        self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, mode)
-        self.assertFalse(ff(path))
-
-    @patch("black.dump_to_file", dump_to_stderr)
     def test_empty(self) -> None:
         source = expected = ""
         actual = fs(source)
@@ -170,51 +160,6 @@ class BlackTestCase(BlackBaseTestCase):
         finally:
             os.unlink(tmp_file)
         self.assertFormatEqual(expected, actual)
-
-    def test_run_on_test_black(self) -> None:
-        self.checkSourceFile("tests/test_black.py")
-
-    def test_run_on_test_format(self) -> None:
-        self.checkSourceFile("tests/test_format.py")
-
-    def test_run_on_test_blackd(self) -> None:
-        self.checkSourceFile("tests/test_blackd.py")
-
-    def test_black(self) -> None:
-        self.checkSourceFile("src/black/__init__.py")
-
-    def test_pygram(self) -> None:
-        self.checkSourceFile("src/blib2to3/pygram.py")
-
-    def test_pytree(self) -> None:
-        self.checkSourceFile("src/blib2to3/pytree.py")
-
-    def test_conv(self) -> None:
-        self.checkSourceFile("src/blib2to3/pgen2/conv.py")
-
-    def test_driver(self) -> None:
-        self.checkSourceFile("src/blib2to3/pgen2/driver.py")
-
-    def test_grammar(self) -> None:
-        self.checkSourceFile("src/blib2to3/pgen2/grammar.py")
-
-    def test_literals(self) -> None:
-        self.checkSourceFile("src/blib2to3/pgen2/literals.py")
-
-    def test_parse(self) -> None:
-        self.checkSourceFile("src/blib2to3/pgen2/parse.py")
-
-    def test_pgen(self) -> None:
-        self.checkSourceFile("src/blib2to3/pgen2/pgen.py")
-
-    def test_tokenize(self) -> None:
-        self.checkSourceFile("src/blib2to3/pgen2/tokenize.py")
-
-    def test_token(self) -> None:
-        self.checkSourceFile("src/blib2to3/pgen2/token.py")
-
-    def test_setup(self) -> None:
-        self.checkSourceFile("setup.py")
 
     def test_piping(self) -> None:
         source, expected = read_data("src/black/__init__", data=False)
