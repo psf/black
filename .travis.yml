@@ -29,8 +29,6 @@ matrix:
       python: 3.8
     - name: "3.9"
       python: 3.9
-  allow_failures:
-    - python: 3.9
 before_deploy:
   - pip install pyinstaller
   - pyinstaller --clean -F --add-data src/blib2to3/:blib2to3 src/black/__init__.py
