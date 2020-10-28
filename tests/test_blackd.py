@@ -190,3 +190,14 @@ class BlackDTestCase(AioHTTPTestCase):
     async def test_blackd_response_black_version_header(self) -> None:
         response = await self.client.post("/")
         self.assertIsNotNone(response.headers.get(blackd.BLACK_VERSION_HEADER))
+
+    @skip_if_exception("ClientOSError")
+    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
+    @unittest_run_loop
+    async def test_blackd_single_quotes(self) -> None:
+        response = await self.client.post(
+            "/", data=b'print("hello")\n', headers={blackd.SINGLE_QUOTES_HEADER: "1"}
+        )
+        self.assertEqual(response.status, 200)
+        actual = await response.text()
+        assert actual == "print('hello')\n"
