@@ -122,6 +122,7 @@ Configuration:
 - `g:black_fast` (defaults to `0`)
 - `g:black_linelength` (defaults to `88`)
 - `g:black_skip_string_normalization` (defaults to `0`)
+- `g:black_single_quotes` (defaults to `0`)
 - `g:black_virtualenv` (defaults to `~/.vim/black` or `~/.local/share/nvim/black`)
 
 To install with [vim-plug](https://github.com/junegunn/vim-plug):

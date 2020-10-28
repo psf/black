@@ -48,6 +48,9 @@ if !exists("g:black_string_normalization")
     let g:black_string_normalization = 1
   endif
 endif
+if !exists("g:black_single_quotes")
+  let g:black_single_quotes = 0
+endif
 
 python3 << EndPython3
 import collections
