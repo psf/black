@@ -10,6 +10,9 @@ tools out there.
 (e.g. `pyproject.toml`). The provided examples are to only configure their corresponding
 tools, using **their** supported file formats.
 
+Compatible configuration files can be
+[found here](https://github.com/psf/black/blob/master/docs/compatible_configs/).
+
 ## isort
 
 [isort](https://pypi.org/p/isort/) helps to sort and format imports in your Python code.
