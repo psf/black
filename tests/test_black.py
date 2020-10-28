@@ -473,6 +473,20 @@ class BlackTestCase(unittest.TestCase):
         black.assert_stable(source, not_normalized, mode=mode)
 
     @patch("black.dump_to_file", dump_to_stderr)
+    def test_string_quotes_single(self) -> None:
+        mode = replace(DEFAULT_MODE, single_quotes=True)
+        source, expected = read_data("string_quotes_single")
+        actual = fs(source, mode=mode)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, mode)
+        mode = replace(DEFAULT_MODE, string_normalization=False, single_quotes=True)
+        not_normalized = fs(source, mode=mode)
+        self.assertFormatEqual(source.replace("\\\n", ""), not_normalized)
+        black.assert_equivalent(source, not_normalized)
+        black.assert_stable(source, not_normalized, mode=mode)
+
+    @patch("black.dump_to_file", dump_to_stderr)
     def test_docstring(self) -> None:
         source, expected = read_data("docstring")
         actual = fs(source)
