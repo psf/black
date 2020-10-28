@@ -255,6 +255,7 @@ class Mode:
     target_versions: Set[TargetVersion] = field(default_factory=set)
     line_length: int = DEFAULT_LINE_LENGTH
     string_normalization: bool = True
+    single_quotes: bool = False
     experimental_string_processing: bool = False
     is_pyi: bool = False
 
@@ -270,6 +271,7 @@ class Mode:
             version_str,
             str(self.line_length),
             str(int(self.string_normalization)),
+            str(int(self.single_quotes)),
             str(int(self.is_pyi)),
         ]
         return ".".join(parts)
@@ -393,6 +395,11 @@ def target_version_option_callback(
     help="Don't normalize string quotes or prefixes.",
 )
 @click.option(
+    "--single-quotes",
+    is_flag=True,
+    help="Prefer using single quotes.",
+)
+@click.option(
     "--experimental-string-processing",
     is_flag=True,
     hidden=True,
@@ -510,6 +517,7 @@ def main(
     fast: bool,
     pyi: bool,
     skip_string_normalization: bool,
+    single_quotes: bool,
     experimental_string_processing: bool,
     quiet: bool,
     verbose: bool,
@@ -531,6 +539,7 @@ def main(
         line_length=line_length,
         is_pyi=pyi,
         string_normalization=not skip_string_normalization,
+        single_quotes=single_quotes,
         experimental_string_processing=experimental_string_processing,
     )
     if config and verbose:
@@ -989,6 +998,7 @@ def format_str(src_contents: str, *, mode: Mode) -> FileContent:
         or supports_feature(versions, Feature.UNICODE_LITERALS),
         is_pyi=mode.is_pyi,
         normalize_strings=mode.string_normalization,
+        single_quotes=mode.single_quotes,
     )
     elt = EmptyLineTracker(is_pyi=mode.is_pyi)
     empty_line = Line()
@@ -1888,6 +1898,7 @@ class LineGenerator(Visitor[Line]):
 
     is_pyi: bool = False
     normalize_strings: bool = True
+    single_quotes: bool = False
     current_line: Line = field(default_factory=Line)
     remove_u_prefix: bool = False
 
@@ -1930,7 +1941,7 @@ class LineGenerator(Visitor[Line]):
             normalize_prefix(node, inside_brackets=any_open_brackets)
             if self.normalize_strings and node.type == token.STRING:
                 normalize_string_prefix(node, remove_u_prefix=self.remove_u_prefix)
-                normalize_string_quotes(node)
+                normalize_string_quotes(node, single_quotes=self.single_quotes)
             if node.type == token.NUMBER:
                 normalize_numeric_literal(node)
             if node.type not in WHITESPACE:
@@ -2632,7 +2643,11 @@ def transform_line(
 
     def init_st(ST: Type[StringTransformer]) -> StringTransformer:
         """Initialize StringTransformer"""
-        return ST(mode.line_length, mode.string_normalization)
+        return ST(
+            mode.line_length,
+            mode.string_normalization,
+            single_quotes=mode.single_quotes,
+        )
 
     string_merge = init_st(StringMerger)
     string_paren_strip = init_st(StringParenStripper)
@@ -2756,6 +2771,7 @@ class StringTransformer(ABC):
 
     line_length: int
     normalize_strings: bool
+    single_quotes: bool
     __name__ = "StringTransformer"
 
     @abstractmethod
@@ -3116,7 +3132,7 @@ class StringMerger(CustomSplitMapMixin, StringTransformer):
 
         S_leaf = Leaf(token.STRING, S)
         if self.normalize_strings:
-            normalize_string_quotes(S_leaf)
+            normalize_string_quotes(S_leaf, self.single_quotes)
 
         # Fill the 'custom_splits' list with the appropriate CustomSplit objects.
         temp_string = S_leaf.value[len(prefix) + 1 : -1]
@@ -3958,7 +3974,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
 
     def __maybe_normalize_string_quotes(self, leaf: Leaf) -> None:
         if self.normalize_strings:
-            normalize_string_quotes(leaf)
+            normalize_string_quotes(leaf, self.single_quotes)
 
     def __normalize_f_string(self, string: str, prefix: str) -> str:
         """
@@ -5091,7 +5107,7 @@ def normalize_string_prefix(leaf: Leaf, remove_u_prefix: bool = False) -> None:
     leaf.value = f"{new_prefix}{match.group(2)}"
 
 
-def normalize_string_quotes(leaf: Leaf) -> None:
+def normalize_string_quotes(leaf: Leaf, single_quotes: bool = False) -> None:
     """Prefer double quotes but only if it doesn't cause more escaping.
 
     Adds or removes backslashes as appropriate. Doesn't parse and fix
@@ -5100,12 +5116,26 @@ def normalize_string_quotes(leaf: Leaf) -> None:
     Note: Mutates its argument.
     """
     value = leaf.value.lstrip(STRING_PREFIX_CHARS)
-    if value[:3] == '"""':
-        return
+    d3 = '"""'
+    s3 = "'''"
 
-    elif value[:3] == "'''":
-        orig_quote = "'''"
-        new_quote = '"""'
+    # docstring handling taken from axblack
+    # see https://github.com/axiros/axblack/issues/6
+    if not single_quotes and value[:3] in (d3, s3):
+        if value[:3] == d3:
+            return
+        orig_quote = s3
+        new_quote = d3
+    elif value[:3] == d3:
+        if leaf.parent is not None and leaf.parent.type == syms.simple_stmt:
+            return
+        orig_quote = d3
+        new_quote = s3
+    elif value[:3] == s3:
+        if leaf.parent is not None and leaf.parent.type != syms.simple_stmt:
+            return
+        orig_quote = s3
+        new_quote = d3
     elif value[0] == '"':
         orig_quote = '"'
         new_quote = "'"
@@ -5161,8 +5191,9 @@ def normalize_string_quotes(leaf: Leaf) -> None:
     if new_escape_count > orig_escape_count:
         return  # Do not introduce more escaping
 
-    if new_escape_count == orig_escape_count and orig_quote == '"':
-        return  # Prefer double quotes
+    string_quote_style = "'" if single_quotes else '"'
+    if new_escape_count == orig_escape_count and orig_quote == string_quote_style:
+        return
 
     leaf.value = f"{prefix}{new_quote}{new_body}{new_quote}"
 
