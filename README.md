@@ -97,6 +97,7 @@ Options:
 
   -S, --skip-string-normalization
                                   Don't normalize string quotes or prefixes.
+  --single-quotes                 Prefer single quotes when normalizing strings.
   --check                         Don't write the files back, just return the
                                   status.  Return code 0 means nothing would
                                   change.  Return code 1 means some files

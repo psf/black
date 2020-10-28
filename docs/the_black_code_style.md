@@ -289,6 +289,10 @@ If you are adopting _Black_ in a large project with pre-existing string conventi
 you can pass `--skip-string-normalization` on the command line. This is meant as an
 adoption helper, avoid using this for new projects.
 
+If you prefer single quotes, you may use `--single-quotes` instead which will enforce
+single quotes except for triple-quoted docstrings and when it would result in (more)
+backslash escaping of quotes inside the string.
+
 ### Numeric literals
 
 _Black_ standardizes most numeric literals to use lowercase letters for the syntactic
