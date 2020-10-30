@@ -5190,7 +5190,7 @@ def normalize_numeric_literal(leaf: Leaf) -> None:
 
 def format_hex(text: str) -> str:
     """
-    Formats a hexidecimal strign like "0x12b3"
+    Formats a hexadecimal string like "0x12b3"
 
     Uses lowercase because of similarity between "B" and "8", which
     can cause security issues.
