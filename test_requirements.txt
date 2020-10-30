@@ -1,4 +1,5 @@
-pytest >= 6.0.1
-pytest-mock >= 3.2.0
-pytest-cases >= 2.1.2
-coverage >= 5.2.1
+pytest >= 6.1.1
+pytest-mock >= 3.3.1
+pytest-cases >= 2.3.0
+coverage >= 5.3
+parameterized >= 0.7.4
