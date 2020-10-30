@@ -9,7 +9,7 @@ Use [pre-commit](https://pre-commit.com/). Once you
 ```yaml
 repos:
   - repo: https://github.com/psf/black
-    rev: 19.10b0 # Replace by any tag/version: https://github.com/psf/black/tags
+    rev: 20.8b1 # Replace by any tag/version: https://github.com/psf/black/tags
     hooks:
       - id: black
         language_version: python3 # Should be a command that runs python3.6+
@@ -22,6 +22,11 @@ Avoid using `args` in the hook. Instead, store necessary configuration in
 for your project. See _Black_'s own
 [pyproject.toml](https://github.com/psf/black/blob/master/pyproject.toml) for an
 example.
+
+When using the `--diff` flag with `pre-commit`, you must also use the `--check` flag.
+When you want to run _Black_ only on specific files in pre-commit, either use
+pre-commit's own `files` and `exclude` or, when using _Black_'s `--include`, set
+`--force-exclude` to the negated regex of `--include`.
 
 If you're already using Python 3.7, switch the `language_version` accordingly. Finally,
 `stable` is a branch that tracks the latest release on PyPI. If you'd rather run on
