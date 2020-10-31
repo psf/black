@@ -5350,7 +5350,7 @@ def generate_ignored_nodes(leaf: Leaf, comment: ProtoComment) -> Iterator[LN]:
     If comment is skip, returns leaf only.
     Stops at the end of the block.
     """
-    if comment.value in FMT_SKIP:
+    if comment.value in FMT_SKIP and leaf.parent is not None:
         yield leaf.parent
         return
     container: Optional[LN] = container_of(leaf)
