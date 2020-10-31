@@ -3590,7 +3590,8 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         MIN_SUBSTR_SIZE characters.
 
         The string will ONLY be split on spaces (i.e. each new substring should
-        start with a space).
+        start with a space). Note that the string will NOT be split on a space
+        which is escaped with a backslash.
 
         If the string is an f-string, it will NOT be split in the middle of an
         f-expression (e.g. in f"FooBar: {foo() if x else bar()}", {foo() if x
@@ -3930,11 +3931,23 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
                 section of this classes' docstring would be be met by returning @i.
             """
             is_space = string[i] == " "
+
+            is_not_escaped = True
+            j = i - 1
+            while is_valid_index(j) and string[j] == "\\":
+                is_not_escaped = not is_not_escaped
+                j -= 1
+
             is_big_enough = (
                 len(string[i:]) >= self.MIN_SUBSTR_SIZE
                 and len(string[:i]) >= self.MIN_SUBSTR_SIZE
             )
-            return is_space and is_big_enough and not breaks_fstring_expression(i)
+            return (
+                is_space
+                and is_not_escaped
+                and is_big_enough
+                and not breaks_fstring_expression(i)
+            )
 
         # First, we check all indices BELOW @max_break_idx.
         break_idx = max_break_idx
