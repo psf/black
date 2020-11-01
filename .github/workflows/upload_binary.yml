@@ -1,0 +1,51 @@
+name: Upload self-contained binaries
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.7]
+        os: [ubuntu-16.04, windows-2019]
+        include:
+          - os: windows-2019
+            pathsep: ";"
+            executable_suffix: ".exe"
+            executable_mime: "application/vnd.microsoft.portable-executable"
+          - os: ubuntu-16.04
+            pathsep: ":"
+            executable_suffix: ".elf"
+            executable_mime: "application/x-executable"
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip wheel setuptools
+          python -m pip install .
+          python -m pip install pyinstaller
+
+      - name: Build binary
+        run: |
+          python -m PyInstaller -F --name black${{ matrix.executable_suffix }} --add-data 'src/blib2to3${{ matrix.pathsep }}blib2to3' src/black/__main__.py
+
+      - name: Upload binary as release asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: dist/black${{ matrix.executable_suffix }}
+          asset_name: black${{ matrix.executable_suffix }}
+          asset_content_type: ${{ matrix.executable_mime }}
