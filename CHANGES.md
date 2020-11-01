@@ -21,6 +21,11 @@
 
 - Added support for PEP 614 relaxed decorator syntax on python 3.9 (#1711)
 
+#### _Packaging_
+
+- Self-contained native _Black_ binaries are now provided for releases via GitHub
+  Releases (#1743)
+
 ### 20.8b1
 
 #### _Packaging_
