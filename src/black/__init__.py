@@ -633,7 +633,7 @@ def get_sources(
             p = Path(s)
             is_stdin = False
 
-        if p.is_dir():
+        if not is_stdin or p.is_dir():
             sources.update(
                 gen_python_files(
                     p.iterdir(),
@@ -645,7 +645,7 @@ def get_sources(
                     gitignore,
                 )
             )
-        elif p.is_file() or is_stdin:
+        elif is_stdin or p.is_file():
             normalized_path = normalize_path_maybe_ignore(p, root, report)
             if normalized_path is None:
                 continue
