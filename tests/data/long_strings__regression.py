@@ -371,6 +371,10 @@ RE_THREE_BACKSLASHES = {
     ),
 }
 
+# We do NOT split on f-string expressions.
+print(f"Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam. {[f'{i}' for i in range(10)]}")
+x = f"This is a long string which contains an f-expr that should not split {{{[i for i in range(5)]}}}."
+
 # output
 
 
@@ -830,3 +834,13 @@ RE_THREE_BACKSLASHES = {
         r"(?<!([0-9]\ ))(?<=(^|\ ))([A-Z]+(\ )?|[0-9](\ )|[a-z](\\\ )){4,7}([A-Z]|[0-9]|[a-z])($|\b)(?!(\ ?([0-9]\ )|(\.)))"
     ),
 }
+
+# We do NOT split on f-string expressions.
+print(
+    "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam."
+    f" {[f'{i}' for i in range(10)]}"
+)
+x = (
+    "This is a long string which contains an f-expr that should not split"
+    f" {{{[i for i in range(5)]}}}."
+)
