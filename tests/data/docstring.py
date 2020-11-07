@@ -110,6 +110,14 @@ def ignored_docstring():
     """a => \
 b"""  
 
+
+def docstring_with_inline_tabs():
+    """hey
+
+    tab	separated	value
+    	tab at a start of line and then a tab	separated	value
+    """
+
 # output
 
 class MyClass:
@@ -223,3 +231,11 @@ def believe_it_or_not_this_is_in_the_py_stdlib():
 def ignored_docstring():
     """a => \
 b"""
+
+
+def docstring_with_inline_tabs():
+    """hey
+
+    tab	separated	value
+    	tab at a start of line and then a tab	separated	value
+    """

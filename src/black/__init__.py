@@ -6748,9 +6748,10 @@ def fix_docstring(docstring: str, prefix: str) -> str:
     # https://www.python.org/dev/peps/pep-0257/#handling-docstring-indentation
     if not docstring:
         return ""
-    # Convert tabs to spaces (following the normal Python rules)
+    # Convert leading tabs to spaces (following the normal Python rules)
     # and split into a list of lines:
-    lines = docstring.expandtabs().splitlines()
+    docstring_expanded = re.sub(r"^\t+", "\t".expandtabs(), docstring, flags=re.M)
+    lines = docstring_expanded.splitlines()
     # Determine minimum indentation (first line doesn't count):
     indent = sys.maxsize
     for line in lines[1:]:
