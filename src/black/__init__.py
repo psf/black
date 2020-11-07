@@ -3611,13 +3611,14 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
     MIN_SUBSTR_SIZE = 6
     # Matches an "f-expression" (e.g. {var}) that might be found in an f-string.
     RE_FEXPR = r"""
-    (?<!\{)\{
+    (?<!\{) (?:\{\{)* \{ (?!\{)
         (?:
             [^\{\}]
             | \{\{
             | \}\}
+            | (?R)
         )+?
-    (?<!\})(?:\}\})*\}(?!\})
+    (?<!\}) \} (?:\}\})* (?!\})
     """
 
     def do_splitter_match(self, line: Line) -> TMatchResult:
