@@ -6744,14 +6744,33 @@ def is_docstring(leaf: Leaf) -> bool:
     return False
 
 
+def lines_with_leading_tabs_expanded(s: str) -> List[str]:
+    """
+    Splits string into lines and expands only leading tabs (following the normal
+    Python rules)
+    """
+    lines = []
+    for line in s.splitlines():
+        # Find the index of the first non-whitespace character after a string of
+        # whitespace that includes at least one tab
+        match = re.match(r"\s*\t+\s*(\S)", line)
+        if match:
+            first_non_whitespace_idx = match.start(1)
+
+            lines.append(
+                line[:first_non_whitespace_idx].expandtabs()
+                + line[first_non_whitespace_idx:]
+            )
+        else:
+            lines.append(line)
+    return lines
+
+
 def fix_docstring(docstring: str, prefix: str) -> str:
     # https://www.python.org/dev/peps/pep-0257/#handling-docstring-indentation
     if not docstring:
         return ""
-    # Convert leading tabs to spaces (following the normal Python rules)
-    # and split into a list of lines:
-    docstring_expanded = re.sub(r"^\t+", "\t".expandtabs(), docstring, flags=re.M)
-    lines = docstring_expanded.splitlines()
+    lines = lines_with_leading_tabs_expanded(docstring)
     # Determine minimum indentation (first line doesn't count):
     indent = sys.maxsize
     for line in lines[1:]:
