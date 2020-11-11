@@ -32,7 +32,7 @@ from click import unstyle
 from click.testing import CliRunner
 
 import black
-from black import Feature, TargetVersion
+from black import Feature, TargetVersion, SourceType
 
 from pathspec import PathSpec
 
@@ -406,7 +406,7 @@ class BlackTestCase(BlackBaseTestCase):
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_stub(self) -> None:
-        mode = replace(DEFAULT_MODE, is_pyi=True)
+        mode = replace(DEFAULT_MODE, source_type=SourceType.pyi)
         source, expected = read_data("stub.pyi")
         actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
@@ -1190,16 +1190,16 @@ class BlackTestCase(BlackBaseTestCase):
             self.assertNotIn(path, two)
 
     def test_single_file_force_pyi(self) -> None:
-        pyi_mode = replace(DEFAULT_MODE, is_pyi=True)
+        pyi_mode = replace(DEFAULT_MODE, source_type=SourceType.pyi)
         contents, expected = read_data("force_pyi")
         with cache_dir() as workspace:
             path = (workspace / "file.py").resolve()
             with open(path, "w") as fh:
                 fh.write(contents)
-            self.invokeBlack([str(path), "--pyi"])
+            self.invokeBlack([str(path), "--source-type=pyi"])
             with open(path, "r") as fh:
                 actual = fh.read()
-            # verify cache with --pyi is separate
+            # verify cache with --source-type=pyi is separate
             pyi_cache = black.read_cache(pyi_mode)
             self.assertIn(path, pyi_cache)
             normal_cache = black.read_cache(DEFAULT_MODE)
@@ -1211,7 +1211,7 @@ class BlackTestCase(BlackBaseTestCase):
     @event_loop()
     def test_multi_file_force_pyi(self) -> None:
         reg_mode = DEFAULT_MODE
-        pyi_mode = replace(DEFAULT_MODE, is_pyi=True)
+        pyi_mode = replace(DEFAULT_MODE, source_type=SourceType.pyi)
         contents, expected = read_data("force_pyi")
         with cache_dir() as workspace:
             paths = [
@@ -1221,12 +1221,12 @@ class BlackTestCase(BlackBaseTestCase):
             for path in paths:
                 with open(path, "w") as fh:
                     fh.write(contents)
-            self.invokeBlack([str(p) for p in paths] + ["--pyi"])
+            self.invokeBlack([str(p) for p in paths] + ["--source-type=pyi"])
             for path in paths:
                 with open(path, "r") as fh:
                     actual = fh.read()
                 self.assertEqual(actual, expected)
-            # verify cache with --pyi is separate
+            # verify cache with --source-type=pyi is separate
             pyi_cache = black.read_cache(pyi_mode)
             normal_cache = black.read_cache(reg_mode)
             for path in paths:
@@ -1236,7 +1236,7 @@ class BlackTestCase(BlackBaseTestCase):
     def test_pipe_force_pyi(self) -> None:
         source, expected = read_data("force_pyi")
         result = CliRunner().invoke(
-            black.main, ["-", "-q", "--pyi"], input=BytesIO(source.encode("utf8"))
+            black.main, ["-", "-q", "--source-type=pyi"], input=BytesIO(source.encode("utf8"))
         )
         self.assertEqual(result.exit_code, 0)
         actual = result.output

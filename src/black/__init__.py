@@ -5,7 +5,7 @@ from collections import defaultdict
 from concurrent.futures import Executor, ThreadPoolExecutor, ProcessPoolExecutor
 from contextlib import contextmanager
 from datetime import datetime
-from enum import Enum
+from enum import Enum, IntEnum
 from functools import lru_cache, partial, wraps
 import io
 import itertools
@@ -64,6 +64,8 @@ if sys.version_info < (3, 8):
     from typing_extensions import Final
 else:
     from typing import Final
+
+json = None
 
 if TYPE_CHECKING:
     import colorama  # noqa: F401
@@ -255,14 +257,23 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
 }
 
 
+class SourceType(IntEnum):
+    """The name must match the file extension, except value 0"""
+
+    auto = 0
+    py = 1
+    pyi = 2
+
+    # The formats requiring no sanity checks on them directly should have number greater than the one for ipynb
+    ipynb = 0xf0
+
 @dataclass
 class Mode:
     target_versions: Set[TargetVersion] = field(default_factory=set)
     line_length: int = DEFAULT_LINE_LENGTH
     string_normalization: bool = True
     experimental_string_processing: bool = False
-    is_pyi: bool = False
-
+    source_type: SourceType = SourceType.auto
     def get_cache_key(self) -> str:
         if self.target_versions:
             version_str = ",".join(
@@ -275,7 +286,7 @@ class Mode:
             version_str,
             str(self.line_length),
             str(int(self.string_normalization)),
-            str(int(self.is_pyi)),
+            str(int(self.source_type)),
         ]
         return ".".join(parts)
 
@@ -283,6 +294,13 @@ class Mode:
 # Legacy name, left for integrations.
 FileMode = Mode
 
+def lazy_import_json() -> None:
+    global json
+    if json is None:
+        try:
+            import ujson as json
+        except:
+            import json
 
 def supports_feature(target_versions: Set[TargetVersion], feature: Feature) -> bool:
     return all(feature in VERSION_TO_FEATURES[version] for version in target_versions)
@@ -388,8 +406,14 @@ def target_version_option_callback(
     is_flag=True,
     help=(
         "Format all input files like typing stubs regardless of file extension (useful"
-        " when piping source on standard input)."
+        " when piping source on standard input). deprecated, use --source-type"
     ),
+)
+@click.option(
+    "--source-type",
+    type=click.Choice([v.name.lower() for v in SourceType]),
+    help="allows you to override source type.",
+    default=SourceType.auto.name,
 )
 @click.option(
     "-S",
@@ -522,7 +546,7 @@ def main(
     diff: bool,
     color: bool,
     fast: bool,
-    pyi: bool,
+    source_type: Union[SourceType, str],
     skip_string_normalization: bool,
     experimental_string_processing: bool,
     quiet: bool,
@@ -533,6 +557,7 @@ def main(
     stdin_filename: Optional[str],
     src: Tuple[str, ...],
     config: Optional[str],
+    pyi: bool,
 ) -> None:
     """The uncompromising code formatter."""
     write_back = WriteBack.from_configuration(check=check, diff=diff, color=color)
@@ -541,10 +566,21 @@ def main(
     else:
         # We'll autodetect later.
         versions = set()
+
+    if source_type:
+        if isinstance(source_type, str):
+            source_type = SourceType[source_type]
+        else:
+            source_type = SourceType(source_type)
+    else:
+        if pyi:
+            print("--pyi flag is deprecated, use --source-type=pyi", file=sys.stderr)
+            source_type = SourceType.pyi
+
     mode = Mode(
         target_versions=versions,
         line_length=line_length,
-        is_pyi=pyi,
+        source_type=source_type,
         string_normalization=not skip_string_normalization,
         experimental_string_processing=experimental_string_processing,
     )
@@ -853,8 +889,14 @@ def format_file_in_place(
     code to the file.
     `mode` and `fast` options are passed to :func:`format_file_contents`.
     """
-    if src.suffix == ".pyi":
-        mode = replace(mode, is_pyi=True)
+    if mode.source_type == SourceType.auto:
+        try:
+            newSourceType = SourceType[src.suffix.lower()[1:]]
+        except KeyError:
+            newSourceType = None
+        if not newSourceType:
+            newSourceType = SourceType.python
+        mode = replace(mode, source_type=newSourceType)
 
     then = datetime.utcfromtimestamp(src.stat().st_mtime)
     with open(src, "rb") as buf:
@@ -970,6 +1012,7 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
     valid by calling :func:`assert_equivalent` and :func:`assert_stable` on it.
     `mode` is passed to :func:`format_str`.
     """
+
     if not src_contents.strip():
         raise NothingChanged
 
@@ -977,13 +1020,57 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
     if src_contents == dst_contents:
         raise NothingChanged
 
-    if not fast:
+    if not fast and mode.source_type < SourceType.ipynb:
         assert_equivalent(src_contents, dst_contents)
         assert_stable(src_contents, dst_contents, mode=mode)
     return dst_contents
 
 
-def format_str(src_contents: str, *, mode: Mode) -> FileContent:
+def get_python_language_version(metadata: dict) -> TargetVersion:
+    langInfo = metadata["language_info"]
+    if (
+        metadata["kernelspec"]["language"] == "python"
+        or langInfo["name"] == "python"
+        or langInfo["mimetype"] == "text/x-python"
+        or langInfo["file_extension"].lower() == ".py"
+    ):
+        return TargetVersion["PY" + "".join(langInfo["version"].split(".")[0:2])]
+
+
+def format_ipynb_string(
+    src_contents: str, *, mode: Mode, fast: bool = False
+) -> FileContent:
+    lazy_import_json()
+    nb = json.loads(src_contents)
+
+    langVersion = get_python_language_version(nb["metadata"])
+    if langVersion is not None:
+        mode = replace(mode, source_type=SourceType.py, target_versions={langVersion})
+        modified_cells = 0
+        for i, cell in enumerate(nb["cells"]):
+            if cell.get("cell_type", None) == "code":
+                try:
+                    cell["source"] = format_file_contents(
+                        "".join(cell["source"]), mode=mode, fast=fast
+                    ).splitlines(keepends=True)
+                    cell["source"][-1] = cell["source"][-1][
+                        :-1
+                    ]  # removes the finishing \n on the last line
+                    modified_cells += 1
+                except NothingChanged:
+                    pass
+        if modified_cells:
+            res = json.dumps(nb, indent=2)
+            if res == src_contents:
+                raise NothingChanged
+            return res
+        else:
+            raise NothingChanged
+    else:
+        out("Notebook ignored: not python")
+        raise NothingChanged
+
+def format_str(src_contents: str, *, mode: Mode, fast: bool = False) -> FileContent:
     """Reformat a string and return new contents.
 
     `mode` determines formatting options, such as how many characters per line are
@@ -1003,7 +1090,7 @@ def format_str(src_contents: str, *, mode: Mode) -> FileContent:
     ...       target_versions={black.TargetVersion.PY36},
     ...       line_length=10,
     ...       string_normalization=False,
-    ...       is_pyi=False,
+    ...       source_type=SourceType.auto,
     ...     ),
     ...   ),
     ... )
@@ -1013,6 +1100,10 @@ def format_str(src_contents: str, *, mode: Mode) -> FileContent:
         hey
 
     """
+
+    if mode.source_type == SourceType.ipynb:
+        return format_ipynb_string(src_contents, mode=mode)
+
     src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)
     dst_contents = []
     future_imports = get_future_imports(src_node)
@@ -1024,10 +1115,10 @@ def format_str(src_contents: str, *, mode: Mode) -> FileContent:
     lines = LineGenerator(
         remove_u_prefix="unicode_literals" in future_imports
         or supports_feature(versions, Feature.UNICODE_LITERALS),
-        is_pyi=mode.is_pyi,
+        source_type=mode.source_type,
         normalize_strings=mode.string_normalization,
     )
-    elt = EmptyLineTracker(is_pyi=mode.is_pyi)
+    elt = EmptyLineTracker(source_type=mode.source_type)
     empty_line = Line()
     after = 0
     split_line_features = {
@@ -1801,7 +1892,7 @@ class EmptyLineTracker:
     are consumed by `maybe_empty_lines()` and included in the computation.
     """
 
-    is_pyi: bool = False
+    source_type: SourceType = SourceType.auto
     previous_line: Optional[Line] = None
     previous_after: int = 0
     previous_defs: List[int] = field(default_factory=list)
@@ -1827,7 +1918,7 @@ class EmptyLineTracker:
     def _maybe_empty_lines(self, current_line: Line) -> Tuple[int, int]:
         max_allowed = 1
         if current_line.depth == 0:
-            max_allowed = 1 if self.is_pyi else 2
+            max_allowed = 1 if self.source_type == SourceType.pyi else 2
         if current_line.leaves:
             # Consume the first leaf's extra newlines.
             first_leaf = current_line.leaves[0]
@@ -1839,7 +1930,7 @@ class EmptyLineTracker:
         depth = current_line.depth
         while self.previous_defs and self.previous_defs[-1] >= depth:
             self.previous_defs.pop()
-            if self.is_pyi:
+            if self.source_type == SourceType.pyi:
                 before = 0 if depth else 1
             else:
                 before = 1 if depth else 2
@@ -1873,7 +1964,7 @@ class EmptyLineTracker:
             return 0, 0
 
         if self.previous_line.is_decorator:
-            if self.is_pyi and current_line.is_stub_class:
+            if self.source_type == SourceType.pyi and current_line.is_stub_class:
                 # Insert an empty line after a decorated stub class
                 return 0, 1
 
@@ -1891,7 +1982,7 @@ class EmptyLineTracker:
         ):
             return 0, 0
 
-        if self.is_pyi:
+        if self.source_type:
             if self.previous_line.depth > current_line.depth:
                 newlines = 1
             elif current_line.is_class or self.previous_line.is_class:
@@ -1923,7 +2014,7 @@ class LineGenerator(Visitor[Line]):
     in ways that will no longer stringify to valid Python code on the tree.
     """
 
-    is_pyi: bool = False
+    source_type: SourceType = SourceType.auto
     normalize_strings: bool = True
     current_line: Line = field(default_factory=Line)
     remove_u_prefix: bool = False
@@ -2017,7 +2108,7 @@ class LineGenerator(Visitor[Line]):
 
     def visit_suite(self, node: Node) -> Iterator[Line]:
         """Visit a suite."""
-        if self.is_pyi and is_stub_suite(node):
+        if self.source_type == SourceType.pyi and is_stub_suite(node):
             yield from self.visit(node.children[2])
         else:
             yield from self.visit_default(node)
@@ -2026,7 +2117,7 @@ class LineGenerator(Visitor[Line]):
         """Visit a statement without nested statements."""
         is_suite_like = node.parent and node.parent.type in STATEMENT
         if is_suite_like:
-            if self.is_pyi and is_stub_body(node):
+            if self.source_type == SourceType.pyi and is_stub_body(node):
                 yield from self.visit_default(node)
             else:
                 yield from self.line(+1)
@@ -2034,7 +2125,11 @@ class LineGenerator(Visitor[Line]):
                 yield from self.line(-1)
 
         else:
-            if not self.is_pyi or not node.parent or not is_stub_suite(node.parent):
+            if (
+                self.source_type != SourceType.pyi
+                or not node.parent
+                or not is_stub_suite(node.parent)
+            ):
                 yield from self.line()
             yield from self.visit_default(node)
 
