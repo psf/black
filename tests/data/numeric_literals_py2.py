@@ -3,7 +3,7 @@
 x = 123456789L
 x = 123456789l
 x = 123456789
-x = 0xb1acc
+x = 0xB1aCc
 
 # output
 
@@ -13,4 +13,4 @@ x = 0xb1acc
 x = 123456789L
 x = 123456789L
 x = 123456789
-x = 0xB1ACC
+x = 0xb1acc

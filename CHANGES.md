@@ -21,6 +21,8 @@
 
 - Added support for PEP 614 relaxed decorator syntax on python 3.9 (#1711)
 
+- use lowercase hex strings (#1692)
+
 #### _Packaging_
 
 - Self-contained native _Black_ binaries are now provided for releases via GitHub

@@ -5192,29 +5192,50 @@ def normalize_numeric_literal(leaf: Leaf) -> None:
         # Leave octal and binary literals alone.
         pass
     elif text.startswith("0x"):
-        # Change hex literals to upper case.
-        before, after = text[:2], text[2:]
-        text = f"{before}{after.upper()}"
+        text = format_hex(text)
     elif "e" in text:
-        before, after = text.split("e")
-        sign = ""
-        if after.startswith("-"):
-            after = after[1:]
-            sign = "-"
-        elif after.startswith("+"):
-            after = after[1:]
-        before = format_float_or_int_string(before)
-        text = f"{before}e{sign}{after}"
+        text = format_scientific_notation(text)
     elif text.endswith(("j", "l")):
-        number = text[:-1]
-        suffix = text[-1]
-        # Capitalize in "2L" because "l" looks too similar to "1".
-        if suffix == "l":
-            suffix = "L"
-        text = f"{format_float_or_int_string(number)}{suffix}"
+        text = format_long_or_complex_number(text)
     else:
         text = format_float_or_int_string(text)
     leaf.value = text
+
+
+def format_hex(text: str) -> str:
+    """
+    Formats a hexadecimal string like "0x12b3"
+
+    Uses lowercase because of similarity between "B" and "8", which
+    can cause security issues.
+    see: https://github.com/psf/black/issues/1692
+    """
+
+    before, after = text[:2], text[2:]
+    return f"{before}{after.lower()}"
+
+
+def format_scientific_notation(text: str) -> str:
+    """Formats a numeric string utilizing scentific notation"""
+    before, after = text.split("e")
+    sign = ""
+    if after.startswith("-"):
+        after = after[1:]
+        sign = "-"
+    elif after.startswith("+"):
+        after = after[1:]
+    before = format_float_or_int_string(before)
+    return f"{before}e{sign}{after}"
+
+
+def format_long_or_complex_number(text: str) -> str:
+    """Formats a long or complex string like `10L` or `10j`"""
+    number = text[:-1]
+    suffix = text[-1]
+    # Capitalize in "2L" because "l" looks too similar to "1".
+    if suffix == "l":
+        suffix = "L"
+    return f"{format_float_or_int_string(number)}{suffix}"
 
 
 def format_float_or_int_string(text: str) -> str:
