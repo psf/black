@@ -1336,9 +1336,168 @@ class BlackTestCase(BlackBaseTestCase):
                 exclude=exclude,
                 force_exclude=None,
                 report=report,
+                stdin_filename=None,
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))
+
+    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
+    def test_get_sources_with_stdin(self) -> None:
+        include = ""
+        exclude = r"/exclude/|a\.py"
+        src = "-"
+        report = black.Report()
+        expected = [Path("-")]
+        sources = list(
+            black.get_sources(
+                ctx=FakeContext(),
+                src=(src,),
+                quiet=True,
+                verbose=False,
+                include=include,
+                exclude=exclude,
+                force_exclude=None,
+                report=report,
+                stdin_filename=None,
+            )
+        )
+        self.assertEqual(sorted(expected), sorted(sources))
+
+    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
+    def test_get_sources_with_stdin_filename(self) -> None:
+        include = ""
+        exclude = r"/exclude/|a\.py"
+        src = "-"
+        report = black.Report()
+        stdin_filename = str(THIS_DIR / "data/collections.py")
+        expected = [Path(f"__BLACK_STDIN_FILENAME__{stdin_filename}")]
+        sources = list(
+            black.get_sources(
+                ctx=FakeContext(),
+                src=(src,),
+                quiet=True,
+                verbose=False,
+                include=include,
+                exclude=exclude,
+                force_exclude=None,
+                report=report,
+                stdin_filename=stdin_filename,
+            )
+        )
+        self.assertEqual(sorted(expected), sorted(sources))
+
+    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
+    def test_get_sources_with_stdin_filename_and_exclude(self) -> None:
+        # Exclude shouldn't exclude stdin_filename since it is mimicing the
+        # file being passed directly. This is the same as
+        # test_exclude_for_issue_1572
+        path = THIS_DIR / "data" / "include_exclude_tests"
+        include = ""
+        exclude = r"/exclude/|a\.py"
+        src = "-"
+        report = black.Report()
+        stdin_filename = str(path / "b/exclude/a.py")
+        expected = [Path(f"__BLACK_STDIN_FILENAME__{stdin_filename}")]
+        sources = list(
+            black.get_sources(
+                ctx=FakeContext(),
+                src=(src,),
+                quiet=True,
+                verbose=False,
+                include=include,
+                exclude=exclude,
+                force_exclude=None,
+                report=report,
+                stdin_filename=stdin_filename,
+            )
+        )
+        self.assertEqual(sorted(expected), sorted(sources))
+
+    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
+    def test_get_sources_with_stdin_filename_and_force_exclude(self) -> None:
+        # Force exclude should exclude the file when passing it through
+        # stdin_filename
+        path = THIS_DIR / "data" / "include_exclude_tests"
+        include = ""
+        force_exclude = r"/exclude/|a\.py"
+        src = "-"
+        report = black.Report()
+        stdin_filename = str(path / "b/exclude/a.py")
+        sources = list(
+            black.get_sources(
+                ctx=FakeContext(),
+                src=(src,),
+                quiet=True,
+                verbose=False,
+                include=include,
+                exclude="",
+                force_exclude=force_exclude,
+                report=report,
+                stdin_filename=stdin_filename,
+            )
+        )
+        self.assertEqual([], sorted(sources))
+
+    def test_reformat_one_with_stdin(self) -> None:
+        with patch(
+            "black.format_stdin_to_stdout",
+            return_value=lambda *args, **kwargs: black.Changed.YES,
+        ) as fsts:
+            report = MagicMock()
+            path = Path("-")
+            black.reformat_one(
+                path,
+                fast=True,
+                write_back=black.WriteBack.YES,
+                mode=DEFAULT_MODE,
+                report=report,
+            )
+            fsts.assert_called_once()
+            report.done.assert_called_with(path, black.Changed.YES)
+
+    def test_reformat_one_with_stdin_filename(self) -> None:
+        with patch(
+            "black.format_stdin_to_stdout",
+            return_value=lambda *args, **kwargs: black.Changed.YES,
+        ) as fsts:
+            report = MagicMock()
+            p = "foo.py"
+            path = Path(f"__BLACK_STDIN_FILENAME__{p}")
+            expected = Path(p)
+            black.reformat_one(
+                path,
+                fast=True,
+                write_back=black.WriteBack.YES,
+                mode=DEFAULT_MODE,
+                report=report,
+            )
+            fsts.assert_called_once()
+            # __BLACK_STDIN_FILENAME__ should have been striped
+            report.done.assert_called_with(expected, black.Changed.YES)
+
+    def test_reformat_one_with_stdin_and_existing_path(self) -> None:
+        with patch(
+            "black.format_stdin_to_stdout",
+            return_value=lambda *args, **kwargs: black.Changed.YES,
+        ) as fsts:
+            report = MagicMock()
+            # Even with an existing file, since we are forcing stdin, black
+            # should output to stdout and not modify the file inplace
+            p = Path(str(THIS_DIR / "data/collections.py"))
+            # Make sure is_file actually returns True
+            self.assertTrue(p.is_file())
+            path = Path(f"__BLACK_STDIN_FILENAME__{p}")
+            expected = Path(p)
+            black.reformat_one(
+                path,
+                fast=True,
+                write_back=black.WriteBack.YES,
+                mode=DEFAULT_MODE,
+                report=report,
+            )
+            fsts.assert_called_once()
+            # __BLACK_STDIN_FILENAME__ should have been striped
+            report.done.assert_called_with(expected, black.Changed.YES)
 
     def test_gitignore_exclude(self) -> None:
         path = THIS_DIR / "data" / "include_exclude_tests"
