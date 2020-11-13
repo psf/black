@@ -28,7 +28,7 @@ LOG = logging.getLogger(__name__)
 # Windows needs a ProactorEventLoop if you want to exec subprocesses
 # Starting with 3.8 this is the default - can remove when Black >= 3.8
 # mypy only respects sys.platform if directly in the evaluation
-# https://mypy.readthedocs.io/en/latest/common_issues.html#python-version-and-system-platform-checks  # noqa: B950
+# https://mypy.readthedocs.io/en/latest/common_issues.html#python-version-and-system-platform-checks  # noqa: B950 pylint:disable=line-too-long
 if sys.platform == "win32":
     asyncio.set_event_loop(asyncio.ProactorEventLoop())
 
@@ -122,7 +122,7 @@ async def black_run(
         _stdout, _stderr = await _gen_check_output(cmd, cwd=repo_path)
     except asyncio.TimeoutError:
         results.stats["failed"] += 1
-        LOG.error(f"Running black for {repo_path} timed out ({cmd})")
+        LOG.error("Running black for %s timed out (%s)", repo_path, cmd)
     except CalledProcessError as cpe:
         # TODO: Tune for smarter for higher signal
         # If any other return value than 1 we raise - can disable project in config
@@ -133,12 +133,12 @@ async def black_run(
             else:
                 results.stats["success"] += 1
             return
-        elif cpe.returncode > 1:
+        if cpe.returncode > 1:
             results.stats["failed"] += 1
             results.failed_projects[repo_path.name] = cpe
             return
 
-        LOG.error(f"Unknown error with {repo_path}")
+        LOG.error("Unknown error with %s", repo_path)
         raise
 
     # If we get here and expect formatting changes something is up
@@ -180,7 +180,9 @@ async def git_checkout_or_rebase(
     try:
         _stdout, _stderr = await _gen_check_output(cmd, cwd=cwd)
     except (asyncio.TimeoutError, CalledProcessError) as e:
-        LOG.error(f"Unable to git clone / pull {project_config['git_clone_url']}: {e}")
+        LOG.error(
+            "Unable to git clone / pull %s: %s", project_config["git_clone_url"], str(e)
+        )
         return None
 
     return repo_path
@@ -201,13 +203,13 @@ def handle_PermissionError(
     can't handle it.
     """
     excvalue = exc[1]
-    LOG.debug(f"Handling {excvalue} from {func.__name__}... ")
+    LOG.debug("Handling %s from %s... ", repr(excvalue), func.__name__)
     if func in (os.rmdir, os.unlink) and excvalue.errno == errno.EACCES:
-        LOG.debug(f"Setting {path} writable, readable, and executable by everyone... ")
+        LOG.debug("Setting %s writable, readable, and executable by everyone... ", path)
         os.chmod(path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)  # chmod 0777
         func(path)  # Try the error causing delete operation again
     else:
-        raise
+        raise  # pylint:disable=misplaced-bare-raise
 
 
 async def load_projects_queue(
@@ -244,16 +246,16 @@ async def project_runner(
         try:
             project_name = queue.get_nowait()
         except asyncio.QueueEmpty:
-            LOG.debug(f"project_runner {idx} exiting")
+            LOG.debug("project_runner %d exiting", idx)
             return
-        LOG.debug(f"worker {idx} working on {project_name}")
+        LOG.debug("worker %d working on {project_name}", idx)
 
         project_config = config["projects"][project_name]
 
         # Check if disabled by config
         if "disabled" in project_config and project_config["disabled"]:
             results.stats["disabled"] += 1
-            LOG.info(f"Skipping {project_name} as it's disabled via config")
+            LOG.info("Skipping %s as it's disabled via config", project_name)
             continue
 
         # Check if we should run on this version of Python
@@ -262,13 +264,15 @@ async def project_runner(
             and py_version not in project_config["py_versions"]
         ):
             results.stats["wrong_py_ver"] += 1
-            LOG.debug(f"Skipping {project_name} as it's not enabled for {py_version}")
+            LOG.debug(
+                "Skipping %s as it's not enabled for %s", project_name, py_version
+            )
             continue
 
         # Check if we're doing big projects / long checkouts
         if not long_checkouts and project_config["long_checkout"]:
             results.stats["skipped_long_checkout"] += 1
-            LOG.debug(f"Skipping {project_name} as it's configured as a long checkout")
+            LOG.debug("Skipping %s as it's configured as a long checkout", project_name)
             continue
 
         repo_path = await git_checkout_or_rebase(work_path, project_config, rebase)
@@ -277,13 +281,13 @@ async def project_runner(
         await black_run(repo_path, project_config, results)
 
         if not keep:
-            LOG.debug(f"Removing {repo_path}")
+            LOG.debug("Removing %s", repo_path)
             rmtree_partial = partial(
                 rmtree, path=repo_path, onerror=handle_PermissionError
             )
             await loop.run_in_executor(None, rmtree_partial)
 
-        LOG.info(f"Finished {project_name}")
+        LOG.info("Finished %s", project_name)
 
 
 async def process_queue(
@@ -310,12 +314,12 @@ async def process_queue(
     config, queue = await load_projects_queue(Path(config_file))
     project_count = queue.qsize()
     s = "" if project_count == 1 else "s"
-    LOG.info(f"{project_count} project{s} to run Black over")
+    LOG.info("%d project%s to run Black over", project_count, s)
     if project_count < 1:
         return -1
 
     s = "" if workers == 1 else "s"
-    LOG.debug(f"Using {workers} parallel worker{s} to run Black")
+    LOG.debug("Using %d parallel worker%s to run Black", workers, s)
     # Wait until we finish running all the projects before analyzing
     await asyncio.gather(
         *[

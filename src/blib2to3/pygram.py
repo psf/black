@@ -5,13 +5,10 @@
 
 # Python imports
 import os
-
 from typing import Union
 
 # Local imports
-from .pgen2 import token
 from .pgen2 import driver
-
 from .pgen2.grammar import Grammar
 
 # Moved into initialize because mypyc can't handle __file__ (XXX bug)
@@ -21,7 +18,7 @@ from .pgen2.grammar import Grammar
 #                                      "PatternGrammar.txt")
 
 
-class Symbols(object):
+class Symbols:
     def __init__(self, grammar: Grammar) -> None:
         """Initializer.
 
@@ -155,6 +152,7 @@ pattern_symbols: _pattern_symbols
 
 
 def initialize(cache_dir: Union[str, "os.PathLike[str]", None] = None) -> None:
+    # pylint:disable=global-statement
     global python_grammar
     global python_grammar_no_print_statement
     global python_grammar_no_print_statement_no_exec_statement
@@ -187,7 +185,7 @@ def initialize(cache_dir: Union[str, "os.PathLike[str]", None] = None) -> None:
     python_grammar_no_print_statement_no_exec_statement_async_keywords = (
         python_grammar_no_print_statement_no_exec_statement.copy()
     )
-    python_grammar_no_print_statement_no_exec_statement_async_keywords.async_keywords = (
+    python_grammar_no_print_statement_no_exec_statement_async_keywords.async_keywords = (  # pylint:disable=line-too-long
         True
     )
 

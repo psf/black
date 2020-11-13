@@ -47,7 +47,7 @@ async def async_main(
 ) -> int:
     work_path = Path(workdir)
     if not work_path.exists():
-        LOG.debug(f"Creating {work_path}")
+        LOG.debug("Creating %s", work_path)
         work_path.mkdir()
 
     if not which("black"):
@@ -61,7 +61,7 @@ async def async_main(
         return int(ret_val)
     finally:
         if not keep and work_path.exists():
-            LOG.debug(f"Removing {work_path}")
+            LOG.debug("Removing %f", work_path)
             rmtree(work_path, onerror=lib.handle_PermissionError)
 
     return -2
@@ -123,7 +123,7 @@ async def async_main(
 @click.pass_context
 def main(ctx: click.core.Context, **kwargs: Any) -> None:
     """primer - prime projects for blackening... 🏴"""
-    LOG.debug(f"Starting {sys.argv[0]}")
+    LOG.debug("Starting %s", sys.argv[0])
     # TODO: Change to asyncio.run when Black >= 3.7 only
     loop = asyncio.get_event_loop()
     try:

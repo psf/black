@@ -10,23 +10,23 @@ how this parsing engine works.
 
 """
 
-# Local imports
-from . import token
 from typing import (
-    Optional,
-    Text,
-    Sequence,
     Any,
-    Union,
-    Tuple,
+    Callable,
     Dict,
     List,
-    Callable,
+    Optional,
+    Sequence,
     Set,
+    Text,
+    Tuple,
+    Union,
 )
 from blib2to3.pgen2.grammar import Grammar
-from blib2to3.pytree import NL, Context, RawNode, Leaf, Node
+from blib2to3.pytree import NL, Context, Leaf, Node, RawNode
 
+# Local imports
+from . import token
 
 Results = Dict[Text, NL]
 Convert = Callable[[Grammar, RawNode], Union[Node, Leaf]]

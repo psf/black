@@ -1,26 +1,27 @@
 import ast
 import asyncio
-from abc import ABC, abstractmethod
-from collections import defaultdict
-from concurrent.futures import Executor, ThreadPoolExecutor, ProcessPoolExecutor
-from contextlib import contextmanager
-from datetime import datetime
-from enum import Enum
-from functools import lru_cache, partial, wraps
 import io
 import itertools
 import logging
-from multiprocessing import Manager, freeze_support
 import os
-from pathlib import Path
 import pickle
-import regex as re
 import signal
 import sys
 import tempfile
 import tokenize
 import traceback
+from abc import ABC, abstractmethod
+from collections import defaultdict
+from concurrent.futures import Executor, ProcessPoolExecutor, ThreadPoolExecutor
+from contextlib import contextmanager
+from dataclasses import dataclass, field, replace
+from datetime import datetime
+from enum import Enum
+from functools import lru_cache, partial, wraps
+from multiprocessing import Manager, freeze_support
+from pathlib import Path
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Collection,
@@ -40,23 +41,23 @@ from typing import (
     TypeVar,
     Union,
     cast,
-    TYPE_CHECKING,
 )
-from mypy_extensions import mypyc_attr
 
-from appdirs import user_cache_dir
-from dataclasses import dataclass, field, replace
 import click
+import regex as re
 import toml
-from typed_ast import ast3, ast27
+from appdirs import user_cache_dir
+from mypy_extensions import mypyc_attr
 from pathspec import PathSpec
+from typed_ast import ast3, ast27
+from typing_extensions import Final
 
 # lib2to3 fork
-from blib2to3.pytree import Node, Leaf, type_repr
 from blib2to3 import pygram, pytree
 from blib2to3.pgen2 import driver, token
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.parse import ParseError
+from blib2to3.pytree import Leaf, Node, type_repr
 
 from _black_version import version as __version__
 
@@ -69,7 +70,7 @@ if TYPE_CHECKING:
     import colorama  # noqa: F401
 
 DEFAULT_LINE_LENGTH = 88
-DEFAULT_EXCLUDES = r"/(\.direnv|\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_build|buck-out|build|dist)/"  # noqa: B950
+DEFAULT_EXCLUDES = r"/(\.direnv|\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_build|buck-out|build|dist)/"  # noqa: B950 pylint:disable=C0301
 DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 STDIN_PLACEHOLDER = "__BLACK_STDIN_FILENAME__"
@@ -327,14 +328,13 @@ def read_pyproject_toml(
 
     if not config:
         return None
-    else:
-        # Sanitize the values to be Click friendly. For more information please see:
-        # https://github.com/psf/black/issues/1458
-        # https://github.com/pallets/click/issues/1567
-        config = {
-            k: str(v) if not isinstance(v, (list, dict)) else v
-            for k, v in config.items()
-        }
+
+    # Sanitize the values to be Click friendly. For more information please see:
+    # https://github.com/psf/black/issues/1458
+    # https://github.com/pallets/click/issues/1567
+    config = {
+        k: str(v) if not isinstance(v, (list, dict)) else v for k, v in config.items()
+    }
 
     target_version = config.get("target_version")
     if target_version is not None and not isinstance(target_version, list):
@@ -601,9 +601,9 @@ def get_sources(
     verbose: bool,
     include: str,
     exclude: str,
-    force_exclude: Optional[str],
+    force_exclude: Optional[str]=None,
     report: "Report",
-    stdin_filename: Optional[str],
+    stdin_filename: Optional[str]=None,
 ) -> Set[Path]:
     """Compute the set of files to be formatted."""
     try:
@@ -726,7 +726,7 @@ def reformat_one(
             ):
                 write_cache(cache, [src], mode)
         report.done(src, changed)
-    except Exception as exc:
+    except Exception as exc:  # pylint:disable=broad-except
         if report.verbose:
             traceback.print_exc()
         report.failed(src, str(exc))
@@ -801,7 +801,7 @@ async def schedule_formatting(
         # For diff output, we need locks to ensure we don't interleave output
         # from different processes.
         manager = Manager()
-        lock = manager.Lock()
+        lock = manager.Lock()  # pylint:disable=no-member
     tasks = {
         asyncio.ensure_future(
             loop.run_in_executor(
@@ -918,7 +918,10 @@ def wrap_stream_for_windows(
     an `AnsiToWin32` wrapper or the original stream.
     """
     try:
-        from colorama.initialise import wrap_stream
+        # pylint:disable=import-outside-toplevel
+        from colorama.initialise import (
+            wrap_stream,
+        )
     except ImportError:
         return f
     else:
@@ -2049,7 +2052,7 @@ class LineGenerator(Visitor[Line]):
             if child.type == token.ASYNC:
                 break
 
-        internal_stmt = next(children)
+        internal_stmt = next(children)  # pylint:disable=stop-iteration-return
         for child in internal_stmt.children:
             yield from self.visit(child)
 
@@ -2111,7 +2114,7 @@ class LineGenerator(Visitor[Line]):
     def __post_init__(self) -> None:
         """You are in a twisty little maze of passages."""
         v = self.visit_stmt
-        Ø: Set[str] = set()
+        Ø: Set[str] = set()  # pylint:disable=non-ascii-name
         self.visit_assert_stmt = partial(v, keywords={"assert"}, parens={"assert", ","})
         self.visit_if_stmt = partial(
             v, keywords={"if", "else", "elif"}, parens={"if", "elif"}
@@ -2177,7 +2180,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
             if prevp.type == token.COLON:
                 return NO
 
-            elif prevp.type != token.COMMA and not complex_subscript:
+            if prevp.type != token.COMMA and not complex_subscript:
                 return NO
 
             return SPACE
@@ -2192,7 +2195,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
                 }:
                     return NO
 
-                elif prevp.parent.type == syms.typedargslist:
+                if prevp.parent.type == syms.typedargslist:
                     # A bit hacky: if the equal sign has whitespace, it means we
                     # previously found it's a typed argument.  So, we're using
                     # that, too.
@@ -2266,7 +2269,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
 
     elif p.type == syms.trailer:
         # attributes and calls
-        if t == token.LPAR or t == token.RPAR:
+        if t in (token.LPAR, token.RPAR):
             return NO
 
         if not prev:
@@ -2322,7 +2325,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
 
             return NO
 
-        elif not complex_subscript:
+        if not complex_subscript:
             return NO
 
     elif p.type == syms.atom:
@@ -2350,7 +2353,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
             }:
                 return NO
 
-            elif prevp.type == token.EQUAL and prevp_parent.type == syms.argument:
+            if prevp.type == token.EQUAL and prevp_parent.type == syms.argument:
                 return NO
 
         elif t in {token.NAME, token.NUMBER, token.STRING}:
@@ -3794,8 +3797,8 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
             """
             if use_custom_breakpoints:
                 return len(custom_splits) > 1
-            else:
-                return len(rest_value) > max_last_string()
+
+            return len(rest_value) > max_last_string()
 
         string_line_results: List[Ok[Line]] = []
         while more_splits_should_be_made():
@@ -4044,8 +4047,8 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
             new_string = temp
 
             return f"{new_prefix}{new_string}"
-        else:
-            return string
+
+        return string
 
 
 class StringParenWrapper(CustomSplitMapMixin, BaseStringSplitter):
@@ -4885,22 +4888,22 @@ def right_hand_split(
             yield from right_hand_split(line, line_length, features=features, omit=omit)
             return
 
-        except CannotSplit:
+        except CannotSplit as ex:
             if not (
                 can_be_split(body)
                 or is_line_short_enough(body, line_length=line_length)
             ):
                 raise CannotSplit(
                     "Splitting failed, body is still too long and can't be split."
-                )
+                ) from ex
 
-            elif head.contains_multiline_strings() or tail.contains_multiline_strings():
+            if head.contains_multiline_strings() or tail.contains_multiline_strings():
                 raise CannotSplit(
                     "The current optional pair of parentheses is bound to fail to"
                     " satisfy the splitting algorithm because the head or the tail"
                     " contains multiline strings which by definition never fit one"
                     " line."
-                )
+                ) from ex
 
     ensure_visible(opening_bracket)
     ensure_visible(closing_bracket)
@@ -4928,7 +4931,7 @@ def bracket_split_succeeded_or_raise(head: Line, body: Line, tail: Line) -> None
         if tail_len == 0:
             raise CannotSplit("Splitting brackets produced the same line")
 
-        elif tail_len < 3:
+        if tail_len < 3:
             raise CannotSplit(
                 f"Splitting brackets on an empty body to save {tail_len} characters is"
                 " not worth it"
@@ -4985,8 +4988,10 @@ def dont_increase_indentation(split_func: Transformer) -> Transformer:
     """
 
     @wraps(split_func)
-    def split_wrapper(line: Line, features: Collection[Feature] = ()) -> Iterator[Line]:
-        for line in split_func(line, features):
+    def split_wrapper(
+        lines: Line, features: Collection[Feature] = ()
+    ) -> Iterator[Line]:
+        for line in split_func(lines, features):
             normalize_prefix(line.leaves[0], inside_brackets=True)
             yield line
 
@@ -5002,14 +5007,14 @@ def delimiter_split(line: Line, features: Collection[Feature] = ()) -> Iterator[
     """
     try:
         last_leaf = line.leaves[-1]
-    except IndexError:
-        raise CannotSplit("Line empty")
+    except IndexError as ex:
+        raise CannotSplit("Line empty") from ex
 
     bt = line.bracket_tracker
     try:
         delimiter_priority = bt.max_delimiter_priority(exclude={id(last_leaf)})
-    except ValueError:
-        raise CannotSplit("No delimiters found")
+    except ValueError as ex:
+        raise CannotSplit("No delimiters found") from ex
 
     if delimiter_priority == DOT_PRIORITY:
         if bt.delimiter_count_with_priority(delimiter_priority) == 1:
@@ -5163,7 +5168,7 @@ def normalize_string_quotes(leaf: Leaf) -> None:
     if value[:3] == '"""':
         return
 
-    elif value[:3] == "'''":
+    if value[:3] == "'''":
         orig_quote = "'''"
         new_quote = '"""'
     elif value[0] == '"':
@@ -5787,7 +5792,7 @@ def is_one_tuple_between(opening: Leaf, closing: Leaf, leaves: List[Leaf]) -> bo
         raise LookupError("Opening paren not found in `leaves`")
 
     commas = 0
-    _opening_index += 1
+    _opening_index += 1  # pylint:disable=undefined-loop-variable
     for leaf in leaves[_opening_index:]:
         if leaf is closing:
             break
@@ -5889,7 +5894,7 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
     opening_bracket: Optional[Leaf] = None
     closing_bracket: Optional[Leaf] = None
     inner_brackets: Set[LeafID] = set()
-    for index, leaf, leaf_length in enumerate_with_length(line, reversed=True):
+    for index, leaf, leaf_length in enumerate_with_length(line, should_reverse=True):
         length += leaf_length
         if length > line_length:
             break
@@ -5984,7 +5989,7 @@ def get_future_imports(node: Node) -> Set[str]:
 
             break
 
-        elif first_child.type == syms.import_from:
+        if first_child.type == syms.import_from:
             module_name = first_child.children[1]
             if not isinstance(module_name, Leaf) or module_name.value != "__future__":
                 break
@@ -6128,7 +6133,7 @@ def find_project_root(srcs: Iterable[str]) -> Path:
         if (directory / "pyproject.toml").is_file():
             return directory
 
-    return directory
+    return directory  # pylint:disable=undefined-loop-variable
 
 
 @dataclass
@@ -6182,7 +6187,7 @@ class Report:
         if self.failure_count:
             return 123
 
-        elif self.change_count and self.check:
+        if self.change_count and self.check:
             return 1
 
         return 0
@@ -6217,7 +6222,9 @@ class Report:
         return ", ".join(report) + "."
 
 
-def parse_ast(src: str) -> Union[ast.AST, ast3.AST, ast27.AST]:
+def parse_ast(
+    src: str,
+) -> Union[ast.AST, ast3.AST, ast27.AST]:  # pylint:disable=no-member
     filename = "<unknown>"
     if sys.version_info >= (3, 8):
         # TODO: support Python 4+ ;)
@@ -6237,23 +6244,36 @@ def parse_ast(src: str) -> Union[ast.AST, ast3.AST, ast27.AST]:
 
 
 def _fixup_ast_constants(
-    node: Union[ast.AST, ast3.AST, ast27.AST]
-) -> Union[ast.AST, ast3.AST, ast27.AST]:
+    node: Union[ast.AST, ast3.AST, ast27.AST]  # pylint:disable=no-member
+) -> Union[ast.AST, ast3.AST, ast27.AST]:  # pylint:disable=no-member
     """Map ast nodes deprecated in 3.8 to Constant."""
-    if isinstance(node, (ast.Str, ast3.Str, ast27.Str, ast.Bytes, ast3.Bytes)):
+    if isinstance(
+        node,
+        (
+            # pylint:disable=no-member
+            ast.Str,
+            ast3.Str,
+            ast27.Str,
+            ast.Bytes,
+            ast3.Bytes,
+        ),
+    ):
         return ast.Constant(value=node.s)
 
-    if isinstance(node, (ast.Num, ast3.Num, ast27.Num)):
+    if isinstance(node, (ast.Num, ast3.Num, ast27.Num)):  # pylint:disable=no-member
         return ast.Constant(value=node.n)
 
-    if isinstance(node, (ast.NameConstant, ast3.NameConstant)):
+    if isinstance(
+        node, (ast.NameConstant, ast3.NameConstant)  # pylint:disable=no-member
+    ):
         return ast.Constant(value=node.value)
 
     return node
 
 
 def _stringify_ast(
-    node: Union[ast.AST, ast3.AST, ast27.AST], depth: int = 0
+    node: Union[ast.AST, ast3.AST, ast27.AST],  # pylint:disable=no-member
+    depth: int = 0,
 ) -> Iterator[str]:
     """Simple visitor generating strings to compare ASTs by content."""
 
@@ -6263,7 +6283,11 @@ def _stringify_ast(
 
     for field in sorted(node._fields):  # noqa: F402
         # TypeIgnore has only one field 'lineno' which breaks this comparison
-        type_ignore_classes = (ast3.TypeIgnore, ast27.TypeIgnore)
+        type_ignore_classes = (
+            # pylint:disable=no-member
+            ast3.TypeIgnore,
+            ast27.TypeIgnore,
+        )
         if sys.version_info >= (3, 8):
             type_ignore_classes += (ast.TypeIgnore,)
         if isinstance(node, type_ignore_classes):
@@ -6282,16 +6306,36 @@ def _stringify_ast(
                 # parentheses and they change the AST.
                 if (
                     field == "targets"
-                    and isinstance(node, (ast.Delete, ast3.Delete, ast27.Delete))
-                    and isinstance(item, (ast.Tuple, ast3.Tuple, ast27.Tuple))
+                    and isinstance(
+                        node,
+                        (
+                            # pylint:disable=no-member
+                            ast.Delete,
+                            ast3.Delete,
+                            ast27.Delete,
+                        ),
+                    )
+                    and isinstance(
+                        item,
+                        (
+                            # pylint:disable=no-member
+                            ast.Tuple,
+                            ast3.Tuple,
+                            ast27.Tuple,
+                        ),
+                    )
                 ):
                     for item in item.elts:
                         yield from _stringify_ast(item, depth + 2)
 
-                elif isinstance(item, (ast.AST, ast3.AST, ast27.AST)):
+                elif isinstance(
+                    item, (ast.AST, ast3.AST, ast27.AST)  # pylint:disable=no-member
+                ):
                     yield from _stringify_ast(item, depth + 2)
 
-        elif isinstance(value, (ast.AST, ast3.AST, ast27.AST)):
+        elif isinstance(
+            value, (ast.AST, ast3.AST, ast27.AST)  # pylint:disable=no-member
+        ):
             yield from _stringify_ast(value, depth + 2)
 
         else:
@@ -6319,7 +6363,7 @@ def assert_equivalent(src: str, dst: str) -> None:
         raise AssertionError(
             "cannot use --safe with this file; failed to parse source file.  AST"
             f" error message: {exc}"
-        )
+        ) from exc
 
     try:
         dst_ast = parse_ast(dst)
@@ -6382,7 +6426,7 @@ def nullcontext() -> Iterator[None]:
 
 def diff(a: str, b: str, a_name: str, b_name: str) -> str:
     """Return a unified diff string between strings `a` and `b`."""
-    import difflib
+    import difflib  # pylint:disable=import-outside-toplevel
 
     a_lines = [line + "\n" for line in a.splitlines()]
     b_lines = [line + "\n" for line in b.splitlines()]
@@ -6453,7 +6497,7 @@ def enumerate_reversed(sequence: Sequence[T]) -> Iterator[Tuple[Index, T]]:
 
 
 def enumerate_with_length(
-    line: Line, reversed: bool = False
+    line: Line, should_reverse: bool = False
 ) -> Iterator[Tuple[Index, Leaf, int]]:
     """Return an enumeration of leaves with their length.
 
@@ -6461,7 +6505,7 @@ def enumerate_with_length(
     """
     op = cast(
         Callable[[Sequence[Leaf]], Iterator[Tuple[Index, Leaf]]],
-        enumerate_reversed if reversed else enumerate,
+        enumerate_reversed if should_reverse else enumerate,
     )
     for index, leaf in op(line.leaves):
         length = len(leaf.prefix) + len(leaf.value)
@@ -6502,17 +6546,17 @@ def can_be_split(line: Line) -> bool:
     if leaves[0].type == token.STRING and leaves[1].type == token.DOT:
         call_count = 0
         dot_count = 0
-        next = leaves[-1]
+        nextEl = leaves[-1]
         for leaf in leaves[-2::-1]:
             if leaf.type in OPENING_BRACKETS:
-                if next.type not in CLOSING_BRACKETS:
+                if nextEl.type not in CLOSING_BRACKETS:
                     return False
 
                 call_count += 1
             elif leaf.type == token.DOT:
                 dot_count += 1
             elif leaf.type == token.NAME:
-                if not (next.type == token.DOT or next.type in OPENING_BRACKETS):
+                if not (nextEl.type == token.DOT or nextEl.type in OPENING_BRACKETS):
                     return False
 
             elif leaf.type not in CLOSING_BRACKETS:
@@ -6661,8 +6705,8 @@ def last_two_except(leaves: List[Leaf], omit: Collection[LeafID]) -> Tuple[Leaf,
             stop_after = leaf.opening_bracket
         else:
             last = leaf
-    else:
-        raise LookupError("Last two leaves were also skipped")
+
+    raise LookupError("Last two leaves were also skipped")
 
 
 def run_transformer(
@@ -6755,7 +6799,10 @@ def write_cache(cache: Cache, sources: Iterable[Path], mode: Mode) -> None:
     cache_file = get_cache_file(mode)
     try:
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        new_cache = {**cache, **{src.resolve(): get_cache_info(src) for src in sources}}
+        new_cache = {
+            **cache,
+            **{src.resolve(): get_cache_info(src) for src in sources},
+        }
         with tempfile.NamedTemporaryFile(dir=str(cache_file.parent), delete=False) as f:
             pickle.dump(new_cache, f, protocol=4)
         os.replace(f.name, cache_file)
@@ -6775,13 +6822,15 @@ def patch_click() -> None:
     spurious on Python 3.7 thanks to PEP 538 and PEP 540.
     """
     try:
-        from click import core
+        #  pylint:disable=import-outside-toplevel
         from click import _unicodefun  # type: ignore
+        from click import core
     except ModuleNotFoundError:
         return
 
     for module in (core, _unicodefun):
         if hasattr(module, "_verify_python3_env"):
+            #  pylint:disable=protected-access
             module._verify_python3_env = lambda: None
 
 

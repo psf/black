@@ -16,23 +16,22 @@ from typing import (
     Any,
     Callable,
     Dict,
+    Iterable,
     Iterator,
     List,
     Optional,
+    Set,
     Text,
     Tuple,
     TypeVar,
     Union,
-    Set,
-    Iterable,
-    Sequence,
 )
+import sys
+from io import StringIO
+
 from blib2to3.pgen2.grammar import Grammar
 
 __author__ = "Guido van Rossum <guido@python.org>"
-
-import sys
-from io import StringIO
 
 HUGE: int = 0x7fffffff  # maximum repeat count, default max
 
@@ -40,15 +39,14 @@ _type_reprs: Dict[int, Union[Text, int]] = {}
 
 
 def type_repr(type_num: int) -> Union[Text, int]:
-    global _type_reprs
     if not _type_reprs:
-        from .pygram import python_symbols
+        from .pygram import python_symbols  # pylint:disable=import-outside-toplevel
 
         # printing tokens is possible but not as useful
         # from .pgen2 import token // token.__dict__.items():
         for name in dir(python_symbols):
             val = getattr(python_symbols, name)
-            if type(val) == int:
+            if isinstance(val, int):
                 _type_reprs[val] = name
     return _type_reprs.setdefault(type_num, type_num)
 
@@ -60,7 +58,7 @@ Context = Tuple[Text, Tuple[int, int]]
 RawNode = Tuple[int, Optional[Text], Optional[Context], Optional[List[NL]]]
 
 
-class Base(object):
+class Base:
 
     """
     Abstract base class for Node and Leaf.
@@ -247,7 +245,7 @@ class Node(Base):
 
     def __init__(
         self,
-        type: int,
+        type_no: int,
         children: List[NL],
         context: Optional[Any] = None,
         prefix: Optional[Text] = None,
@@ -261,8 +259,10 @@ class Node(Base):
 
         As a side effect, the parent pointers of the children are updated.
         """
-        assert type >= 256, type
-        self.type = type
+        assert type_no >= 256, type
+        self.prev_sibling_map = None
+        self.next_sibling_map = None
+        self.type = type_no
         self.children = list(children)
         for ch in self.children:
             assert ch.parent is None, repr(ch)
@@ -297,8 +297,8 @@ class Node(Base):
         return (self.type, self.children) == (other.type, other.children)
 
     def clone(self) -> "Node":
-        assert self.type is not None
         """Return a cloned (deep) copy of self."""
+        assert self.type is not None
         return Node(
             self.type,
             [ch.clone() for ch in self.children],
@@ -376,7 +376,7 @@ class Node(Base):
             _prev[id(current)] = previous
             _next[id(previous)] = current
             previous = current
-        _next[id(current)] = None
+        _next[id(current)] = None  # pylint:disable=undefined-loop-variable
 
 
 class Leaf(Base):
@@ -393,9 +393,9 @@ class Leaf(Base):
     lineno: int = 0  # Line where this token starts in the input
     column: int = 0  # Column where this token starts in the input
 
-    def __init__(
+    def __init__(  # pylint:disable=dangerous-default-value
         self,
-        type: int,
+        type_no: int,
         value: Text,
         context: Optional[Context] = None,
         prefix: Optional[Text] = None,
@@ -408,10 +408,10 @@ class Leaf(Base):
         optional context keyword argument.
         """
 
-        assert 0 <= type < 256, type
+        assert 0 <= type_no < 256, type_no
         if context is not None:
             self._prefix, (self.lineno, self.column) = context
-        self.type = type
+        self.type = type_no
         self.value = value
         if prefix is not None:
             self._prefix = prefix
@@ -420,7 +420,7 @@ class Leaf(Base):
 
     def __repr__(self) -> str:
         """Return a canonical string representation."""
-        from .pgen2.token import tok_name
+        from .pgen2.token import tok_name  # pylint:disable=import-outside-toplevel
 
         assert self.type is not None
         return "%s(%s, %r)" % (
@@ -442,8 +442,8 @@ class Leaf(Base):
         return (self.type, self.value) == (other.type, other.value)
 
     def clone(self) -> "Leaf":
-        assert self.type is not None
         """Return a cloned (deep) copy of self."""
+        assert self.type is not None
         return Leaf(
             self.type,
             self.value,
@@ -483,22 +483,22 @@ def convert(gr: Grammar, raw_node: RawNode) -> NL:
     grammar rule produces a new complete node, so that the tree is build
     strictly bottom-up.
     """
-    type, value, context, children = raw_node
-    if children or type in gr.number2symbol:
+    type_no, value, context, children = raw_node
+    if children or type_no in gr.number2symbol:
         # If there's exactly one child, return that child instead of
         # creating a new node.
         assert children is not None
         if len(children) == 1:
             return children[0]
-        return Node(type, children, context=context)
-    else:
-        return Leaf(type, value or "", context=context)
+        return Node(type_no, children, context=context)
+
+    return Leaf(type_no, value or "", context=context)
 
 
 _Results = Dict[Text, NL]
 
 
-class BasePattern(object):
+class BasePattern:
 
     """
     A pattern is a tree matching pattern.
@@ -593,7 +593,7 @@ class BasePattern(object):
 class LeafPattern(BasePattern):
     def __init__(
         self,
-        type: Optional[int] = None,
+        type_no: Optional[int] = None,
         content: Optional[Text] = None,
         name: Optional[Text] = None,
     ) -> None:
@@ -608,11 +608,11 @@ class LeafPattern(BasePattern):
         If a name is given, the matching node is stored in the results
         dict under that key.
         """
-        if type is not None:
-            assert 0 <= type < 256, type
+        if type_no is not None:
+            assert 0 <= type_no < 256, type_no
         if content is not None:
             assert isinstance(content, str), repr(content)
-        self.type = type
+        self.type = type_no
         self.content = content
         self.name = name
 
@@ -644,7 +644,7 @@ class NodePattern(BasePattern):
 
     def __init__(
         self,
-        type: Optional[int] = None,
+        type_no: Optional[int] = None,
         content: Optional[Iterable[Text]] = None,
         name: Optional[Text] = None,
     ) -> None:
@@ -663,8 +663,8 @@ class NodePattern(BasePattern):
         If a name is given, the matching node is stored in the results
         dict under that key.
         """
-        if type is not None:
-            assert type >= 256, type
+        if type_no is not None:
+            assert type_no >= 256, type_no
         if content is not None:
             assert not isinstance(content, str), repr(content)
             newcontent = list(content)
@@ -672,7 +672,7 @@ class NodePattern(BasePattern):
                 assert isinstance(item, BasePattern), (i, item)
                 if isinstance(item, WildcardPattern):
                     self.wildcards = True
-        self.type = type
+        self.type = type_no
         self.content = newcontent
         self.name = name
 
@@ -724,8 +724,8 @@ class WildcardPattern(BasePattern):
     def __init__(
         self,
         content: Optional[Text] = None,
-        min: int = 0,
-        max: int = HUGE,
+        min_matches: int = 0,
+        max_matches: int = HUGE,
         name: Optional[Text] = None,
     ) -> None:
         """
@@ -735,34 +735,36 @@ class WildcardPattern(BasePattern):
             content: optional sequence of subsequences of patterns;
                      if absent, matches one node;
                      if present, each subsequence is an alternative [*]
-            min: optional minimum number of times to match, default 0
-            max: optional maximum number of times to match, default HUGE
+            min_matches: optional minimum number of times to match, default 0
+            max_matches: optional maximum number of times to match, default HUGE
             name: optional name assigned to this match
 
         [*] Thus, if content is [[a, b, c], [d, e], [f, g, h]] this is
             equivalent to (a b c | d e | f g h); if content is None,
             this is equivalent to '.' in regular expression terms.
-            The min and max parameters work as follows:
-                min=0, max=maxint: .*
-                min=1, max=maxint: .+
-                min=0, max=1: .?
-                min=1, max=1: .
+            The min_matches and max_matches parameters work as follows:
+                min_matches=0, max_matches=maxint: .*
+                min_matches=1, max_matches=maxint: .+
+                min_matches=0, max_matches=1: .?
+                min_matches=1, max_matches=1: .
             If content is not None, replace the dot with the parenthesized
             list of alternatives, e.g. (a b c | d e | f g h)*
         """
-        assert 0 <= min <= max <= HUGE, (min, max)
+        assert 0 <= min_matches <= max_matches <= HUGE, (min_matches, max_matches)
         if content is not None:
-            f = lambda s: tuple(s)
+            def f(s):
+                tuple(s)
+
             wrapped_content = tuple(map(f, content))  # Protect against alterations
             # Check sanity of alternatives
-            assert len(wrapped_content), repr(
+            assert wrapped_content, repr(
                 wrapped_content
             )  # Can't have zero alternatives
             for alt in wrapped_content:
-                assert len(alt), repr(alt)  # Can have empty alternatives
+                assert alt, repr(alt)  # Can have empty alternatives
         self.content = wrapped_content
-        self.min = min
-        self.max = max
+        self.min = min_matches
+        self.max = max_matches
         self.name = name
 
     def optimize(self) -> Any:
@@ -887,8 +889,8 @@ class WildcardPattern(BasePattern):
         count = 0
         r = {}  # type: _Results
         done = False
-        max = len(nodes)
-        while not done and count < max:
+        max_matches = len(nodes)
+        while not done and count < max_matches:
             done = True
             for leaf in self.content:
                 if leaf[0].match(nodes[count], r):
@@ -943,7 +945,7 @@ class NegatedPattern(BasePattern):
                 yield 0, {}
         else:
             # Return a match if the argument pattern has no matches
-            for c, r in self.content.generate_matches(nodes):
+            for c, r in self.content.generate_matches(nodes):  # pylint:disable=unused-variable
                 return
             yield 0, {}
 

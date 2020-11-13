@@ -18,28 +18,30 @@ __all__ = ["Driver", "load_grammar"]
 # Python imports
 import codecs
 import io
-import os
 import logging
+import os
 import pkgutil
 import sys
 from typing import (
+    IO,
     Any,
     Callable,
-    IO,
     Iterable,
     List,
     Optional,
+    Sequence,
     Text,
     Tuple,
     Union,
-    Sequence,
 )
 
+
+
 # Pgen imports
-from . import grammar, parse, token, tokenize, pgen
 from logging import Logger
-from blib2to3.pytree import _Convert, NL
 from blib2to3.pgen2.grammar import Grammar
+from blib2to3.pytree import NL, _Convert
+from . import grammar, parse, pgen, token, tokenize
 
 Path = Union[str, "os.PathLike[str]"]
 

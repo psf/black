@@ -1,27 +1,27 @@
 # Copyright 2004-2005 Elemental Security, Inc. All Rights Reserved.
 # Licensed to PSF under a Contributor Agreement.
 
-# Pgen imports
-from . import grammar, token, tokenize
-
+import os
 from typing import (
+	IO,
     Any,
     Dict,
-    IO,
     Iterable,
     Iterator,
     List,
+    NoReturn,
     Optional,
+    Sequence,
     Text,
     Tuple,
-    Union,
-    Sequence,
-    NoReturn,
+    Union
 )
+
 from blib2to3.pgen2 import grammar
 from blib2to3.pgen2.tokenize import GoodTokenInfo
-import os
 
+# Pgen imports
+from . import grammar, token, tokenize
 
 Path = Union[str, "os.PathLike[str]"]
 

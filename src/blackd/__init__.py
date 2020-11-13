@@ -19,9 +19,9 @@ except ImportError as ie:
     )
     sys.exit(-1)
 
-import black
 import click
 
+import black
 from _black_version import version as __version__
 
 # This is used internally by tests to shut down the server prematurely
@@ -155,7 +155,7 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
         return web.Response(status=204, headers=headers)
     except black.InvalidInput as e:
         return web.Response(status=400, headers=headers, text=str(e))
-    except Exception as e:
+    except Exception as e:  # pylint:disable=broad-except
         logging.exception("Exception during handling a request")
         return web.Response(status=500, headers=headers, text=str(e))
 
@@ -163,36 +163,34 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
 def parse_python_variant_header(value: str) -> Tuple[bool, Set[black.TargetVersion]]:
     if value == "pyi":
         return True, set()
-    else:
-        versions = set()
-        for version in value.split(","):
-            if version.startswith("py"):
-                version = version[len("py") :]
-            if "." in version:
-                major_str, *rest = version.split(".")
+
+    versions = set()
+    for version in value.split(","):
+        if version.startswith("py"):
+            version = version[len("py") :]
+        if "." in version:
+            major_str, *rest = version.split(".")
+        else:
+            major_str = version[0]
+            rest = [version[1:]] if len(version) > 1 else []
+        try:
+            major = int(major_str)
+            if major not in (2, 3):
+                raise InvalidVariantHeader("major version must be 2 or 3")
+            if len(rest) > 0:
+                minor = int(rest[0])
+                if major == 2 and minor != 7:
+                    raise InvalidVariantHeader("minor version must be 7 for Python 2")
             else:
-                major_str = version[0]
-                rest = [version[1:]] if len(version) > 1 else []
-            try:
-                major = int(major_str)
-                if major not in (2, 3):
-                    raise InvalidVariantHeader("major version must be 2 or 3")
-                if len(rest) > 0:
-                    minor = int(rest[0])
-                    if major == 2 and minor != 7:
-                        raise InvalidVariantHeader(
-                            "minor version must be 7 for Python 2"
-                        )
-                else:
-                    # Default to lowest supported minor version.
-                    minor = 7 if major == 2 else 3
-                version_str = f"PY{major}{minor}"
-                if major == 3 and not hasattr(black.TargetVersion, version_str):
-                    raise InvalidVariantHeader(f"3.{minor} is not supported")
-                versions.add(black.TargetVersion[version_str])
-            except (KeyError, ValueError):
-                raise InvalidVariantHeader("expected e.g. '3.7', 'py3.5'")
-        return False, versions
+                # Default to lowest supported minor version.
+                minor = 7 if major == 2 else 3
+            version_str = f"PY{major}{minor}"
+            if major == 3 and not hasattr(black.TargetVersion, version_str):
+                raise InvalidVariantHeader(f"3.{minor} is not supported")
+            versions.add(black.TargetVersion[version_str])
+        except (KeyError, ValueError) as ex:
+            raise InvalidVariantHeader("expected e.g. '3.7', 'py3.5'") from ex
+    return False, versions
 
 
 def patched_main() -> None:

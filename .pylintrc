@@ -1,0 +1,8 @@
+[MESSAGES CONTROL]
+disable=too-many-lines,invalid-name,missing-module-docstring,no-value-for-parameter,too-few-public-methods,missing-class-docstring,missing-function-docstring,too-many-locals,too-many-branches,too-many-statements,too-many-arguments,misplaced-comparison-constant,too-many-instance-attributes,too-many-boolean-expressions,too-many-return-statements,too-many-nested-blocks,unused-argument,abstract-method,redefined-outer-name,fixme
+
+[FORMAT]
+max-line-length=88
+
+[MASTER]
+ignore=src/blib2to3/pgen2

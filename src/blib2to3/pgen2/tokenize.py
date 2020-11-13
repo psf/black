@@ -33,20 +33,23 @@ from typing import (
     Iterator,
     List,
     Optional,
+    Pattern,
     Text,
     Tuple,
-    Pattern,
     Union,
     cast,
 )
-from blib2to3.pgen2.token import *
+
 from blib2to3.pgen2.grammar import Grammar
+from blib2to3.pgen2.token import *
 
 __author__ = "Ka-Ping Yee <ping@lfw.org>"
 __credits__ = "GvR, ESR, Tim Peters, Thomas Wouters, Fred Drake, Skip Montanaro"
 
-import regex as re
 from codecs import BOM_UTF8, lookup
+
+import regex as re
+
 from blib2to3.pgen2.token import *
 
 from . import token
