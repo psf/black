@@ -3590,7 +3590,8 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         MIN_SUBSTR_SIZE characters.
 
         The string will ONLY be split on spaces (i.e. each new substring should
-        start with a space).
+        start with a space). Note that the string will NOT be split on a space
+        which is escaped with a backslash.
 
         If the string is an f-string, it will NOT be split in the middle of an
         f-expression (e.g. in f"FooBar: {foo() if x else bar()}", {foo() if x
@@ -3610,13 +3611,14 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
     MIN_SUBSTR_SIZE = 6
     # Matches an "f-expression" (e.g. {var}) that might be found in an f-string.
     RE_FEXPR = r"""
-    (?<!\{)\{
+    (?<!\{) (?:\{\{)* \{ (?!\{)
         (?:
             [^\{\}]
             | \{\{
             | \}\}
+            | (?R)
         )+?
-    (?<!\})(?:\}\})*\}(?!\})
+    (?<!\}) \} (?:\}\})* (?!\})
     """
 
     def do_splitter_match(self, line: Line) -> TMatchResult:
@@ -3930,11 +3932,23 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
                 section of this classes' docstring would be be met by returning @i.
             """
             is_space = string[i] == " "
+
+            is_not_escaped = True
+            j = i - 1
+            while is_valid_index(j) and string[j] == "\\":
+                is_not_escaped = not is_not_escaped
+                j -= 1
+
             is_big_enough = (
                 len(string[i:]) >= self.MIN_SUBSTR_SIZE
                 and len(string[:i]) >= self.MIN_SUBSTR_SIZE
             )
-            return is_space and is_big_enough and not breaks_fstring_expression(i)
+            return (
+                is_space
+                and is_not_escaped
+                and is_big_enough
+                and not breaks_fstring_expression(i)
+            )
 
         # First, we check all indices BELOW @max_break_idx.
         break_idx = max_break_idx
@@ -6751,13 +6765,33 @@ def is_docstring(leaf: Leaf) -> bool:
     return False
 
 
+def lines_with_leading_tabs_expanded(s: str) -> List[str]:
+    """
+    Splits string into lines and expands only leading tabs (following the normal
+    Python rules)
+    """
+    lines = []
+    for line in s.splitlines():
+        # Find the index of the first non-whitespace character after a string of
+        # whitespace that includes at least one tab
+        match = re.match(r"\s*\t+\s*(\S)", line)
+        if match:
+            first_non_whitespace_idx = match.start(1)
+
+            lines.append(
+                line[:first_non_whitespace_idx].expandtabs()
+                + line[first_non_whitespace_idx:]
+            )
+        else:
+            lines.append(line)
+    return lines
+
+
 def fix_docstring(docstring: str, prefix: str) -> str:
     # https://www.python.org/dev/peps/pep-0257/#handling-docstring-indentation
     if not docstring:
         return ""
-    # Convert tabs to spaces (following the normal Python rules)
-    # and split into a list of lines:
-    lines = docstring.expandtabs().splitlines()
+    lines = lines_with_leading_tabs_expanded(docstring)
     # Determine minimum indentation (first line doesn't count):
     indent = sys.maxsize
     for line in lines[1:]:

@@ -23,6 +23,11 @@
 
 - use lowercase hex strings (#1692)
 
+#### _Packaging_
+
+- Self-contained native _Black_ binaries are now provided for releases via GitHub
+  Releases (#1743)
+
 ### 20.8b1
 
 #### _Packaging_
