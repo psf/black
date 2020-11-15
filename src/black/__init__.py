@@ -251,6 +251,9 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
 }
 
 
+MAGIC_TRAILING_COMMA = False
+
+
 @dataclass
 class Mode:
     target_versions: Set[TargetVersion] = field(default_factory=set)
@@ -1501,8 +1504,12 @@ class Line:
             )
         if self.inside_brackets or not preformatted:
             self.bracket_tracker.mark(leaf)
-            if self.maybe_should_explode(leaf):
-                self.should_explode = True
+            if MAGIC_TRAILING_COMMA:
+                if self.maybe_should_explode_from_trailing_comma(leaf):
+                    # We should explode (this line should always be split)
+                    self.should_explode = True
+            elif self.maybe_remove_trailing_comma(leaf):
+                self.remove_trailing_comma()
         if not self.append_comment(leaf):
             self.leaves.append(leaf)
 
@@ -1678,7 +1685,7 @@ class Line:
     def contains_multiline_strings(self) -> bool:
         return any(is_multiline_string(leaf) for leaf in self.leaves)
 
-    def maybe_should_explode(self, closing: Leaf) -> bool:
+    def maybe_should_explode_from_trailing_comma(self, closing: Leaf) -> bool:
         """Return True if this line should explode (always be split), that is when:
         - there's a trailing comma here; and
         - it's not a one-tuple.
@@ -1696,6 +1703,34 @@ class Line:
         if self.is_import:
             return True
 
+        if not is_one_tuple_between(closing.opening_bracket, closing, self.leaves):
+            return True
+
+        return False
+
+    def maybe_remove_trailing_comma(self, closing: Leaf) -> bool:
+        """Return True if it's safe to remove the trailing comma."""
+        if not (
+            closing.type in CLOSING_BRACKETS
+            and self.leaves
+            and self.leaves[-1].type == token.COMMA
+        ):
+            return False
+
+        if closing.type == token.RBRACE:
+            return True
+
+        if closing.type == token.RSQB:
+            comma = self.leaves[-1]
+            return bool(comma.parent and comma.parent.type == syms.listmaker)
+
+        # For parens let's check if it's safe to remove the comma.
+        # Imports are always safe.
+        if self.is_import:
+            return True
+
+        # Otherwise, if the trailing one is the only one, we might mistakenly
+        # change a tuple into a different type by removing the comma.
         if not is_one_tuple_between(closing.opening_bracket, closing, self.leaves):
             return True
 
@@ -5763,7 +5798,7 @@ def should_split_body_explode(line: Line, opening_bracket: Leaf) -> bool:
         return False
 
     return max_priority == COMMA_PRIORITY and (
-        trailing_comma
+        (MAGIC_TRAILING_COMMA and trailing_comma)
         # always explode imports
         or opening_bracket.parent.type in {syms.atom, syms.import_from}
     )
