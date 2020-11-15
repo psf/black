@@ -1509,10 +1509,9 @@ class Line:
         if self.inside_brackets or not preformatted:
             self.bracket_tracker.mark(leaf)
             if MAGIC_TRAILING_COMMA:
-                if self.maybe_should_explode_from_trailing_comma(leaf):
-                    # We should explode (this line should always be split)
+                if self.has_magic_trailing_comma(leaf):
                     self.should_explode = True
-            elif self.maybe_remove_trailing_comma(leaf):
+            elif self.has_magic_trailing_comma(leaf, ensure_removable=True):
                 self.remove_trailing_comma()
         if not self.append_comment(leaf):
             self.leaves.append(leaf)
@@ -1689,31 +1688,15 @@ class Line:
     def contains_multiline_strings(self) -> bool:
         return any(is_multiline_string(leaf) for leaf in self.leaves)
 
-    def maybe_should_explode_from_trailing_comma(self, closing: Leaf) -> bool:
-        """Return True if this line should explode (always be split), that is when:
-        - there's a trailing comma here; and
-        - it's not a one-tuple.
+    def has_magic_trailing_comma(
+        self, closing: Leaf, ensure_removable: bool = False
+    ) -> bool:
+        """Return True if we have a magic trailing comma, that is when:
+        - there's a trailing comma here
+        - it's not a one-tuple
+        Additionally, if ensure_removable:
+        - it's not from square bracket indexing
         """
-        if not (
-            closing.type in CLOSING_BRACKETS
-            and self.leaves
-            and self.leaves[-1].type == token.COMMA
-        ):
-            return False
-
-        if closing.type in {token.RBRACE, token.RSQB}:
-            return True
-
-        if self.is_import:
-            return True
-
-        if not is_one_tuple_between(closing.opening_bracket, closing, self.leaves):
-            return True
-
-        return False
-
-    def maybe_remove_trailing_comma(self, closing: Leaf) -> bool:
-        """Return True if it's safe to remove the trailing comma."""
         if not (
             closing.type in CLOSING_BRACKETS
             and self.leaves
@@ -1725,16 +1708,14 @@ class Line:
             return True
 
         if closing.type == token.RSQB:
+            if not ensure_removable:
+                return True
             comma = self.leaves[-1]
             return bool(comma.parent and comma.parent.type == syms.listmaker)
 
-        # For parens let's check if it's safe to remove the comma.
-        # Imports are always safe.
         if self.is_import:
             return True
 
-        # Otherwise, if the trailing one is the only one, we might mistakenly
-        # change a tuple into a different type by removing the comma.
         if not is_one_tuple_between(closing.opening_bracket, closing, self.leaves):
             return True
 
