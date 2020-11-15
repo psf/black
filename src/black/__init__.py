@@ -256,6 +256,7 @@ class Mode:
     target_versions: Set[TargetVersion] = field(default_factory=set)
     line_length: int = DEFAULT_LINE_LENGTH
     string_normalization: bool = True
+    magic_trailing_comma: bool = True
     experimental_string_processing: bool = False
     is_pyi: bool = False
 
@@ -394,6 +395,12 @@ def target_version_option_callback(
     help="Don't normalize string quotes or prefixes.",
 )
 @click.option(
+    "-C",
+    "--skip-magic-trailing-comma",
+    is_flag=True,
+    help="Don't treat trailing commas magically.",
+)
+@click.option(
     "--experimental-string-processing",
     is_flag=True,
     hidden=True,
@@ -520,6 +527,7 @@ def main(
     fast: bool,
     pyi: bool,
     skip_string_normalization: bool,
+    skip_magic_trailing_comma: bool,
     experimental_string_processing: bool,
     quiet: bool,
     verbose: bool,
@@ -542,6 +550,7 @@ def main(
         line_length=line_length,
         is_pyi=pyi,
         string_normalization=not skip_string_normalization,
+        magic_trailing_comma=not skip_magic_trailing_comma,
         experimental_string_processing=experimental_string_processing,
     )
     if config and verbose:
