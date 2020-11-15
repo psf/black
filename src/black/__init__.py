@@ -251,7 +251,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
 }
 
 
-MAGIC_TRAILING_COMMA = False
+MAGIC_TRAILING_COMMA = True
 
 
 @dataclass
@@ -262,6 +262,10 @@ class Mode:
     magic_trailing_comma: bool = True
     experimental_string_processing: bool = False
     is_pyi: bool = False
+
+    def __post_init__(self) -> None:
+        global MAGIC_TRAILING_COMMA
+        MAGIC_TRAILING_COMMA = self.magic_trailing_comma
 
     def get_cache_key(self) -> str:
         if self.target_versions:
