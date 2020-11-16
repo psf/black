@@ -438,6 +438,9 @@ into one item per line.
 How do you make it stop? Just delete that trailing comma and _Black_ will collapse your
 collection into one line if it fits.
 
+If you must, you can recover the behaviour of early versions of Black with the option
+`--skip-magic-trailing-comma` / `-C`.
+
 ### r"strings" and R"strings"
 
 _Black_ normalizes string quotes as well as string prefixes, making them lowercase. One
