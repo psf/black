@@ -1034,13 +1034,12 @@ def format_str(src_contents: str, *, mode: Mode) -> FileContent:
         versions = detect_target_versions(src_node)
     normalize_fmt_off(src_node)
     lines = LineGenerator(
+        mode=mode,
         remove_u_prefix="unicode_literals" in future_imports
         or supports_feature(versions, Feature.UNICODE_LITERALS),
-        is_pyi=mode.is_pyi,
-        normalize_strings=mode.string_normalization,
     )
     elt = EmptyLineTracker(is_pyi=mode.is_pyi)
-    empty_line = Line()
+    empty_line = Line(mode=mode)
     after = 0
     split_line_features = {
         feature
@@ -1476,6 +1475,7 @@ class BracketTracker:
 class Line:
     """Holds leaves and comments. Can be printed with `str(line)`."""
 
+    mode: Mode
     depth: int = 0
     leaves: List[Leaf] = field(default_factory=list)
     # keys ordered like `leaves`
@@ -1790,6 +1790,7 @@ class Line:
 
     def clone(self) -> "Line":
         return Line(
+            mode=self.mode,
             depth=self.depth,
             inside_brackets=self.inside_brackets,
             should_explode=self.should_explode,
@@ -1948,10 +1949,9 @@ class LineGenerator(Visitor[Line]):
     in ways that will no longer stringify to valid Python code on the tree.
     """
 
-    is_pyi: bool = False
-    normalize_strings: bool = True
-    current_line: Line = field(default_factory=Line)
+    mode: Mode
     remove_u_prefix: bool = False
+    current_line: Line = field(init=False)
 
     def line(self, indent: int = 0) -> Iterator[Line]:
         """Generate a line.
@@ -1966,7 +1966,7 @@ class LineGenerator(Visitor[Line]):
             return  # Line is empty, don't emit. Creating a new one unnecessary.
 
         complete_line = self.current_line
-        self.current_line = Line(depth=complete_line.depth + indent)
+        self.current_line = Line(mode=self.mode, depth=complete_line.depth + indent)
         yield complete_line
 
     def visit_default(self, node: LN) -> Iterator[Line]:
@@ -1990,7 +1990,7 @@ class LineGenerator(Visitor[Line]):
                     yield from self.line()
 
             normalize_prefix(node, inside_brackets=any_open_brackets)
-            if self.normalize_strings and node.type == token.STRING:
+            if self.mode.string_normalization and node.type == token.STRING:
                 normalize_string_prefix(node, remove_u_prefix=self.remove_u_prefix)
                 normalize_string_quotes(node)
             if node.type == token.NUMBER:
@@ -2042,7 +2042,7 @@ class LineGenerator(Visitor[Line]):
 
     def visit_suite(self, node: Node) -> Iterator[Line]:
         """Visit a suite."""
-        if self.is_pyi and is_stub_suite(node):
+        if self.mode.is_pyi and is_stub_suite(node):
             yield from self.visit(node.children[2])
         else:
             yield from self.visit_default(node)
@@ -2051,7 +2051,7 @@ class LineGenerator(Visitor[Line]):
         """Visit a statement without nested statements."""
         is_suite_like = node.parent and node.parent.type in STATEMENT
         if is_suite_like:
-            if self.is_pyi and is_stub_body(node):
+            if self.mode.is_pyi and is_stub_body(node):
                 yield from self.visit_default(node)
             else:
                 yield from self.line(+1)
@@ -2059,7 +2059,11 @@ class LineGenerator(Visitor[Line]):
                 yield from self.line(-1)
 
         else:
-            if not self.is_pyi or not node.parent or not is_stub_suite(node.parent):
+            if (
+                not self.mode.is_pyi
+                or not node.parent
+                or not is_stub_suite(node.parent)
+            ):
                 yield from self.line()
             yield from self.visit_default(node)
 
@@ -2135,6 +2139,8 @@ class LineGenerator(Visitor[Line]):
 
     def __post_init__(self) -> None:
         """You are in a twisty little maze of passages."""
+        self.current_line = Line(mode=self.mode)
+
         v = self.visit_stmt
         Ø: Set[str] = set()
         self.visit_assert_stmt = partial(v, keywords={"assert"}, parens={"assert", ","})
@@ -4366,6 +4372,7 @@ class StringParenWrapper(CustomSplitMapMixin, BaseStringSplitter):
         # `StringSplitter` will break it down further if necessary.
         string_value = LL[string_idx].value
         string_line = Line(
+            mode=line.mode,
             depth=line.depth + 1,
             inside_brackets=True,
             should_explode=line.should_explode,
@@ -4959,7 +4966,7 @@ def bracket_split_build_line(
     If `is_body` is True, the result line is one-indented inside brackets and as such
     has its first leaf's prefix normalized and a trailing comma added when expected.
     """
-    result = Line(depth=original.depth)
+    result = Line(mode=original.mode, depth=original.depth)
     if is_body:
         result.inside_brackets = True
         result.depth += 1
@@ -5031,7 +5038,9 @@ def delimiter_split(line: Line, features: Collection[Feature] = ()) -> Iterator[
         if bt.delimiter_count_with_priority(delimiter_priority) == 1:
             raise CannotSplit("Splitting a single attribute from its owner looks wrong")
 
-    current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
+    current_line = Line(
+        mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
+    )
     lowest_depth = sys.maxsize
     trailing_comma_safe = True
 
@@ -5043,7 +5052,9 @@ def delimiter_split(line: Line, features: Collection[Feature] = ()) -> Iterator[
         except ValueError:
             yield current_line
 
-            current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
+            current_line = Line(
+                mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
+            )
             current_line.append(leaf)
 
     for leaf in line.leaves:
@@ -5067,7 +5078,9 @@ def delimiter_split(line: Line, features: Collection[Feature] = ()) -> Iterator[
         if leaf_priority == delimiter_priority:
             yield current_line
 
-            current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
+            current_line = Line(
+                mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
+            )
     if current_line:
         if (
             trailing_comma_safe
@@ -5088,7 +5101,9 @@ def standalone_comment_split(
     if not line.contains_standalone_comments(0):
         raise CannotSplit("Line does not have any standalone comments")
 
-    current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
+    current_line = Line(
+        mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
+    )
 
     def append_to_line(leaf: Leaf) -> Iterator[Line]:
         """Append `leaf` to current line or to new line if appending impossible."""
@@ -5098,7 +5113,9 @@ def standalone_comment_split(
         except ValueError:
             yield current_line
 
-            current_line = Line(depth=line.depth, inside_brackets=line.inside_brackets)
+            current_line = Line(
+                line.mode, depth=line.depth, inside_brackets=line.inside_brackets
+            )
             current_line.append(leaf)
 
     for leaf in line.leaves:
