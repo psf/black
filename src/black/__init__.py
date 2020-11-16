@@ -251,9 +251,6 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
 }
 
 
-MAGIC_TRAILING_COMMA = True
-
-
 @dataclass
 class Mode:
     target_versions: Set[TargetVersion] = field(default_factory=set)
@@ -262,10 +259,6 @@ class Mode:
     magic_trailing_comma: bool = True
     experimental_string_processing: bool = False
     is_pyi: bool = False
-
-    def __post_init__(self) -> None:
-        global MAGIC_TRAILING_COMMA
-        MAGIC_TRAILING_COMMA = self.magic_trailing_comma
 
     def get_cache_key(self) -> str:
         if self.target_versions:
@@ -1508,7 +1501,7 @@ class Line:
             )
         if self.inside_brackets or not preformatted:
             self.bracket_tracker.mark(leaf)
-            if MAGIC_TRAILING_COMMA:
+            if self.mode.magic_trailing_comma:
                 if self.has_magic_trailing_comma(leaf):
                     self.should_explode = True
             elif self.has_magic_trailing_comma(leaf, ensure_removable=True):
@@ -5800,7 +5793,7 @@ def should_split_body_explode(line: Line, opening_bracket: Leaf) -> bool:
         return False
 
     return max_priority == COMMA_PRIORITY and (
-        (MAGIC_TRAILING_COMMA and trailing_comma)
+        (line.mode.magic_trailing_comma and trailing_comma)
         # always explode imports
         or opening_bracket.parent.type in {syms.atom, syms.import_from}
     )
