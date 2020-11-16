@@ -398,7 +398,7 @@ def target_version_option_callback(
     "-C",
     "--skip-magic-trailing-comma",
     is_flag=True,
-    help="Don't treat trailing commas magically.",
+    help="Don't use trailing commas as a reason to split lines.",
 )
 @click.option(
     "--experimental-string-processing",

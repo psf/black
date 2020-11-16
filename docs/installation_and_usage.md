@@ -53,7 +53,9 @@ Options:
   -S, --skip-string-normalization
                                   Don't normalize string quotes or prefixes.
   -C, --skip-magic-trailing-comma
-                                  Don't treat trailing commas magically.
+                                  Don't use trailing commas as a reason to
+                                  split lines.
+
   --check                         Don't write the files back, just return the
                                   status.  Return code 0 means nothing would
                                   change.  Return code 1 means some files
