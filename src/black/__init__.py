@@ -49,7 +49,11 @@ from appdirs import user_cache_dir
 from dataclasses import dataclass, field, replace
 import click
 import toml
-from typed_ast import ast3, ast27
+
+if sys.version_info >= (3, 10):
+    ast3 = ast27 = ast
+else:
+    from typed_ast import ast3, ast27
 from pathspec import PathSpec
 
 # lib2to3 fork
