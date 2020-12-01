@@ -263,7 +263,10 @@ class Mode:
         if self.target_versions:
             version_str = ",".join(
                 str(version.value)
-                for version in sorted(self.target_versions, key=lambda v: v.value)
+                # Returning Any from function declared to return "Set[TargetVersion]"
+                for version in sorted(
+                    self.target_versions, key=lambda v: v.value  # type: ignore
+                )
             )
         else:
             version_str = "-"
