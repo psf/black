@@ -5304,10 +5304,13 @@ def convert_one_fmt_off_pair(node: Node) -> bool:
             # We only want standalone comments. If there's no previous leaf or
             # the previous leaf is indentation, it's a standalone comment in
             # disguise.
-            if comment.value in FMT_OFF and comment.type != STANDALONE_COMMENT:
+            if comment.value in FMT_PASS and comment.type != STANDALONE_COMMENT:
                 prev = preceding_leaf(leaf)
-                if prev and prev.type not in WHITESPACE:
-                    continue
+                if prev:
+                    if comment.value in FMT_OFF and prev.type not in WHITESPACE:
+                        continue
+                    if comment.value in FMT_SKIP and prev.type in WHITESPACE:
+                        continue
 
             ignored_nodes = list(generate_ignored_nodes(leaf, comment))
             if not ignored_nodes:
