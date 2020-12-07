@@ -308,9 +308,10 @@ line-length = 88
 target-version = ['py37']
 include = '\.pyi?$'
 exclude = '''
-
-(
-  /(
+# A regex preceded with ^/ will apply only to files in the root of
+# the project.
+^/(
+  (
       \.eggs         # exclude a few common directories in the
     | \.git          # root of the project
     | \.hg
