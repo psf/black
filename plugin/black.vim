@@ -76,7 +76,7 @@ class Flag(collections.namedtuple("FlagBase", "name, cast")):
 FLAGS = [
   Flag(name="line_length", cast=int),
   Flag(name="fast", cast=strtobool),
-  Flag(name="string_normalization", cast=strtobool),
+  Flag(name="skip_string_normalization", cast=bool),
   Flag(name="quiet", cast=strtobool),
 ]
 
