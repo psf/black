@@ -47,6 +47,7 @@ if !exists("g:black_string_normalization")
   else
     let g:black_string_normalization = 1
   endif
+let g:black_skip_string_normalization = !g:black_string_normalization
 endif
 if !exists("g:black_quiet")
   let g:black_quiet = 0
@@ -58,6 +59,12 @@ import os
 import sys
 import vim
 from distutils.util import strtobool
+
+def tobool(b):
+    if isinstance(b, str):
+        return strtobool(b)
+    else:
+        return bool(b)
 
 
 class Flag(collections.namedtuple("FlagBase", "name, cast")):
@@ -75,9 +82,9 @@ class Flag(collections.namedtuple("FlagBase", "name, cast")):
 
 FLAGS = [
   Flag(name="line_length", cast=int),
-  Flag(name="fast", cast=strtobool),
-  Flag(name="skip_string_normalization", cast=bool),
-  Flag(name="quiet", cast=strtobool),
+  Flag(name="fast", cast=tobool),
+  Flag(name="skip_string_normalization", cast=tobool),
+  Flag(name="quiet", cast=tobool),
 ]
 
 
@@ -157,7 +164,7 @@ def Black():
   configs = get_configs()
   mode = black.FileMode(
     line_length=configs["line_length"],
-    string_normalization=configs["string_normalization"],
+    string_normalization=not configs["skip_string_normalization"],
     is_pyi=vim.current.buffer.name.endswith('.pyi'),
   )
   quiet = configs["quiet"]
