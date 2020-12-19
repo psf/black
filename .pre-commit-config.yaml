@@ -8,8 +8,9 @@ repos:
         name: black
         language: system
         entry: black
+        minimum_pre_commit_version: 2.9.0
         require_serial: true
-        types: [python]
+        types_or: [python, pyi]
 
   - repo: https://gitlab.com/pycqa/flake8
     rev: 3.8.1
