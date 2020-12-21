@@ -1733,14 +1733,6 @@ class Line:
         """Generate comments that should appear directly after `leaf`."""
         return self.comments.get(id(leaf), [])
 
-    def remove_trailing_comma(self) -> None:
-        """Remove the trailing comma and moves the comments attached to it."""
-        trailing_comma = self.leaves.pop()
-        trailing_comma_comments = self.comments.pop(id(trailing_comma), [])
-        self.comments.setdefault(id(self.leaves[-1]), []).extend(
-            trailing_comma_comments
-        )
-
     def is_complex_subscript(self, leaf: Leaf) -> bool:
         """Return True iff `leaf` is part of a slice with non-trivial exprs."""
         open_lsqb = self.bracket_tracker.get_open_lsqb()
