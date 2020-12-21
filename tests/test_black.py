@@ -360,6 +360,14 @@ class BlackTestCase(BlackBaseTestCase):
         black.assert_stable(source, not_normalized, mode=mode)
 
     @patch("black.dump_to_file", dump_to_stderr)
+    def test_multiline_strings(self) -> None:
+        source, expected = read_data("multiline_strings")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, DEFAULT_MODE)
+
+    @patch("black.dump_to_file", dump_to_stderr)
     def test_docstring_no_string_normalization(self) -> None:
         """Like test_docstring but with string normalization off."""
         source, expected = read_data("docstring_no_string_normalization")

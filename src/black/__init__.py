@@ -10,6 +10,7 @@ from functools import lru_cache, partial, wraps
 import io
 import itertools
 import logging
+import math
 from multiprocessing import Manager, freeze_support
 import os
 from pathlib import Path
@@ -6458,13 +6459,71 @@ def is_line_short_enough(line: Line, *, line_length: int, line_str: str = "") ->
 
     Uses the provided `line_str` rendering, if any, otherwise computes a new one.
     """
+
     if not line_str:
         line_str = line_to_string(line)
-    return (
-        len(line_str) <= line_length
-        and "\n" not in line_str  # multiline strings
-        and not line.contains_standalone_comments()
-    )
+    if line.contains_standalone_comments():
+        return False
+    if "\n" not in line_str:
+        # No multi-line strings present
+        return len(line_str) <= line_length
+    else:
+        first, *_, last = line_str.split("\n")
+        if len(first) > line_length or len(last) > line_length:
+            return False
+
+        commas: List[int] = []
+        multiline_string = None
+        multiline_string_contexts: List[LN] = []
+
+        max_level_to_update = math.inf
+        # TODO: need to take into account bits from BracketTracker re: fixups for for/in, lambdas
+        for i, leaf in enumerate(line.leaves):
+            if max_level_to_update == math.inf:
+                had_comma = None
+                if leaf.bracket_depth + 1 > len(commas):
+                    commas.append(0)
+                elif leaf.bracket_depth + 1 < len(commas):
+                    had_comma = commas.pop()
+                if (
+                    had_comma is not None
+                    and multiline_string is not None
+                    and multiline_string.bracket_depth == leaf.bracket_depth + 1
+                ):
+                    # Have left the level with the MLS, stop tracking commas
+                    max_level_to_update = leaf.bracket_depth
+                    if had_comma > 0:
+                        # MLS was in parens with at least one comma - force split
+                        return False
+
+            if leaf.bracket_depth <= max_level_to_update and leaf.type == token.COMMA:
+                # Ignore non-nested trailing comma
+                # directly after MLS/MLS-containing expression
+                ignore_ctxs: List[Optional[LN]] = [None]
+                ignore_ctxs += multiline_string_contexts
+                if not (leaf.prev_sibling in ignore_ctxs and i == len(line.leaves) - 1):
+                    commas[leaf.bracket_depth] += 1
+            if max_level_to_update != math.inf:
+                max_level_to_update = min(max_level_to_update, leaf.bracket_depth)
+
+            if is_multiline_string(leaf):
+                if len(multiline_string_contexts) > 0:
+                    # >1 multiline string cannot fit on a single line - force split
+                    return False
+                multiline_string = leaf
+                ctx: LN = leaf
+                while str(ctx) in line_str:
+                    multiline_string_contexts.append(ctx)
+                    if ctx.parent is None:
+                        break
+                    ctx = ctx.parent
+
+        # May not have a triple-quoted multiline string at all,
+        # in case of a regular string with embedded newlines and line continuations
+        if len(multiline_string_contexts) == 0:
+            return True
+
+        return all(val == 0 for val in commas)
 
 
 def can_be_split(line: Line) -> bool:
