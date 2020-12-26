@@ -387,6 +387,15 @@ x = f"This is a long string which contains an f-expr that should not split {{{[i
     " it has now"
 )
 
+# The parens should NOT be removed in this case.
+(
+    "my very long string"
+    " that should get formatted"
+    " if I'm careful to make sure"
+    " it goes over 88 characters which"
+    " it has now"
+)
+
 # output
 
 
@@ -867,4 +876,13 @@ x = (
 (
     "my very long string that should get formatted if I'm careful to make sure it goes"
     " over 88 characters which it has now"
+)
+
+# The parens should NOT be removed in this case.
+(
+    "my very long string"
+    " that should get formatted"
+    " if I'm careful to make sure"
+    " it goes over 88 characters which"
+    " it has now"
 )
