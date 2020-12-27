@@ -986,7 +986,7 @@ def format_str(src_contents: str, *, mode: Mode) -> FileContent:
     allowed.  Example:
 
     >>> import black
-    >>> print(black.format_str("def f(arg:str='')->None:...", mode=Mode()))
+    >>> print(black.format_str("def f(arg:str='')->None:...", mode=black.Mode()))
     def f(arg: str = "") -> None:
         ...
 
