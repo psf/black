@@ -375,6 +375,27 @@ RE_THREE_BACKSLASHES = {
 print(f"Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam. {[f'{i}' for i in range(10)]}")
 x = f"This is a long string which contains an f-expr that should not split {{{[i for i in range(5)]}}}."
 
+# The parens should NOT be removed in this case.
+(
+    "my very long string that should get formatted if I'm careful to make sure it goes"
+    " over 88 characters which it has now"
+)
+
+# The parens should NOT be removed in this case.
+(
+    "my very long string that should get formatted if I'm careful to make sure it goes over 88 characters which"
+    " it has now"
+)
+
+# The parens should NOT be removed in this case.
+(
+    "my very long string"
+    " that should get formatted"
+    " if I'm careful to make sure"
+    " it goes over 88 characters which"
+    " it has now"
+)
+
 # output
 
 
@@ -843,4 +864,25 @@ print(
 x = (
     "This is a long string which contains an f-expr that should not split"
     f" {{{[i for i in range(5)]}}}."
+)
+
+# The parens should NOT be removed in this case.
+(
+    "my very long string that should get formatted if I'm careful to make sure it goes"
+    " over 88 characters which it has now"
+)
+
+# The parens should NOT be removed in this case.
+(
+    "my very long string that should get formatted if I'm careful to make sure it goes"
+    " over 88 characters which it has now"
+)
+
+# The parens should NOT be removed in this case.
+(
+    "my very long string"
+    " that should get formatted"
+    " if I'm careful to make sure"
+    " it goes over 88 characters which"
+    " it has now"
 )
