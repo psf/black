@@ -71,7 +71,7 @@ setup(
         "click>=7.1.2",
         "appdirs",
         "toml>=0.10.1",
-        "typed-ast>=1.4.0",
+        "typed-ast>=1.4.2",
         "regex>=2020.1.8",
         "pathspec>=0.6, <1",
         "dataclasses>=0.6; python_version < '3.7'",
