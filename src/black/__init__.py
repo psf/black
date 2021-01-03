@@ -42,7 +42,6 @@ from typing import (
     cast,
     TYPE_CHECKING,
 )
-from typing_extensions import Final
 from mypy_extensions import mypyc_attr
 
 from appdirs import user_cache_dir
@@ -60,6 +59,11 @@ from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.parse import ParseError
 
 from _black_version import version as __version__
+
+if sys.version_info < (3, 8):
+    from typing_extensions import Final
+else:
+    from typing import Final
 
 if TYPE_CHECKING:
     import colorama  # noqa: F401
