@@ -287,6 +287,7 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_expression_diff(self) -> None:
         source, _ = read_data("expression.py")
+        config = THIS_DIR / "data" / "empty_pyproject.toml"
         expected, _ = read_data("expression.diff")
         tmp_file = Path(black.dump_to_file(source))
         diff_header = re.compile(
@@ -294,7 +295,9 @@ class BlackTestCase(BlackBaseTestCase):
             r"\d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
         )
         try:
-            result = BlackRunner().invoke(black.main, ["--diff", str(tmp_file)])
+            result = BlackRunner().invoke(
+                black.main, ["--diff", str(tmp_file), f"--config={config}"]
+            )
             self.assertEqual(result.exit_code, 0)
         finally:
             os.unlink(tmp_file)
@@ -312,11 +315,12 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_expression_diff_with_color(self) -> None:
         source, _ = read_data("expression.py")
+        config = THIS_DIR / "data" / "empty_pyproject.toml"
         expected, _ = read_data("expression.diff")
         tmp_file = Path(black.dump_to_file(source))
         try:
             result = BlackRunner().invoke(
-                black.main, ["--diff", "--color", str(tmp_file)]
+                black.main, ["--diff", "--color", str(tmp_file), f"--config={config}"]
             )
         finally:
             os.unlink(tmp_file)
