@@ -1043,7 +1043,29 @@ def format_str(src_contents: str, *, mode: Mode) -> FileContent:
             current_line, mode=mode, features=split_line_features
         ):
             dst_contents.append(str(line))
-    return "".join(dst_contents)
+    dst_contents = align_comments(dst_contents)
+    return dst_contents
+
+
+def align_comments(dst_contents: List[str]) -> str:
+    dst_contents = "".join(dst_contents)
+    dst_lines = dst_contents.split("\n")
+    inline_comment_line_counter = 0
+    max_hashtag_position = 0
+
+    def align_inline_comments(lines, hash_position, start_idx, end_idx):
+        for line_idx, line in enumerate(lines[start_idx:end_idx]):
+            curr_hash = line.find("#")
+            lines[start_idx + line_idx] = line[:curr_hash] + " "*(hash_position-curr_hash) + line[curr_hash:]
+    
+    for line_idx, line in enumerate(dst_lines):
+        if line.strip().find('#') not in (-1, 0):  # -1 for no comment, 0 for a standalone comment
+            inline_comment_line_counter += 1
+            max_hashtag_position = max(max_hashtag_position, line.find('#'))    # to be replaced by walrus operator?
+        elif inline_comment_line_counter:
+            align_inline_comments(dst_lines, max_hashtag_position, line_idx-inline_comment_line_counter, line_idx)
+            inline_comment_line_counter = max_hashtag_position = 0
+    return "\n".join(dst_lines)
 
 
 def decode_bytes(src: bytes) -> Tuple[FileContent, Encoding, NewLine]:
