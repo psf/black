@@ -1054,7 +1054,17 @@ def align_comments(dst_contents: List[str]) -> str:
     max_hashtag_position = 0
     num_triple_quotes = 0
     hashtag_positions_to_be_aligned = []
-    
+
+    def find_string_ranges(line):
+        quote_string_regex = re.compile('"(?:[^"\\\]|\\\.)*"')
+        apostrophe_string_regex = re.compile("'(?:[^'\\\]|\\\.)*'")
+        line_safe = line.replace('"""', "   ").replace("'''", "   ")
+        inline_strings = [
+            *(match.span() for match in quote_string_regex.finditer(line_safe)),
+            *(match.span() for match in apostrophe_string_regex.finditer(line_safe)),
+        ]
+        return inline_strings
+
     def align_inline_comments(
         lines, hash_position_to_set, start_idx, end_idx, hash_positions
     ):
@@ -1066,15 +1076,28 @@ def align_comments(dst_contents: List[str]) -> str:
                 + line[curr_hash:]
             )
 
-    def search_without_preceeding_backslash(pattern, string):
+    def search_without_preceeding_char(pattern, string):
         return [m.start() for m in re.finditer(f"(?<!\\\){pattern}", string)]
 
+    import time
+
     for line_idx, line in enumerate(dst_lines):
-        # For all the re.finditer() below, ensure there is no preceeding backslash
-        triple_quote_positions = search_without_preceeding_backslash('"""', line)
-        single_quote_positions = search_without_preceeding_backslash('"', line)
-        hashtag_positions = search_without_preceeding_backslash("#", line)
-        hashtag_position = -1
+        inline_string_ranges = find_string_ranges(line)
+
+        # Find all triple quoted strings that are not substrings within inline strings
+        triple_quote_positions = search_without_preceeding_char('"""', line)
+        triple_quote_positions.extend(search_without_preceeding_char("'''", line))
+        invalid_tqps = []
+        for tqp_idx, tqp in enumerate(triple_quote_positions):
+            if any(tqp > low and tqp < high for low, high in inline_string_ranges):
+                invalid_tqps.append(tqp_idx)
+        [
+            triple_quote_positions.pop(posn) for posn in invalid_tqps[::-1]
+        ]  # Safe pop all the triple quotes within an inline string (in reverse)
+
+        # Find the hashtag position in the comment, if any
+        hashtag_positions = search_without_preceeding_char("#", line)  # all hashtags
+        comment_position = -1                                          # hashtag corresponding to comment
         for curr_hash in hashtag_positions:
             closed_triple_quotes = (
                 num_triple_quotes  # multiline strings that are not yet closed
@@ -1082,18 +1105,18 @@ def align_comments(dst_contents: List[str]) -> str:
                     posn < curr_hash for posn in triple_quote_positions
                 )  # triple-quoted strings that begin in the same line, e.g. docstrings
             ) % 2 == 0
-            closed_single_quotes = all(
-                curr_hash > closing_single_quote
-                for closing_single_quote in single_quote_positions[1::2]
+            curr_hash_inside_inline_string = any(
+                curr_hash > low and curr_hash < high
+                for low, high in inline_string_ranges
             )
-            if closed_triple_quotes and closed_single_quotes:
-                hashtag_position = curr_hash
+            if closed_triple_quotes and not curr_hash_inside_inline_string:
+                comment_position = curr_hash
                 break
 
-        if line.strip().find("#") != 0 and hashtag_position != -1:
+        if line.strip().find("#") != 0 and comment_position != -1:
             inline_comment_line_counter += 1
-            hashtag_positions_to_be_aligned.append(hashtag_position)
-            max_hashtag_position = max(max_hashtag_position, hashtag_position)
+            hashtag_positions_to_be_aligned.append(comment_position)
+            max_hashtag_position = max(max_hashtag_position, comment_position)
         elif inline_comment_line_counter:
             align_inline_comments(
                 dst_lines,
