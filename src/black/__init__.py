@@ -5368,10 +5368,7 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
             check_lpar = True
 
         if check_lpar:
-            if is_walrus_assignment(child):
-                pass
-
-            elif child.type == syms.atom:
+            if child.type == syms.atom:
                 if maybe_make_parens_invisible_in_atom(child, parent=node):
                     wrap_in_parentheses(node, child, visible=False)
             elif is_one_tuple(child):
@@ -5549,6 +5546,9 @@ def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
         or is_one_tuple(node)
         or (is_yield(node) and parent.type != syms.expr_stmt)
         or max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
+        or parent.type == syms.expr_stmt
+        and parent.children[1].type == token.EQUAL
+        and is_walrus_assignment(node)
     ):
         return False
 

@@ -54,6 +54,9 @@ def example7():
 def example8():
     return (((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((None)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
 
+def example9():
+    if (foo := 0):
+        pass
 
 # output
 x = 1
@@ -142,3 +145,7 @@ def example7():
 def example8():
     return None
 
+
+def example9():
+    if foo := 0:
+        pass
