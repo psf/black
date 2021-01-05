@@ -1052,19 +1052,61 @@ def align_comments(dst_contents: List[str]) -> str:
     dst_lines = dst_contents.split("\n")
     inline_comment_line_counter = 0
     max_hashtag_position = 0
-
-    def align_inline_comments(lines, hash_position, start_idx, end_idx):
-        for line_idx, line in enumerate(lines[start_idx:end_idx]):
-            curr_hash = line.find("#")
-            lines[start_idx + line_idx] = line[:curr_hash] + " "*(hash_position-curr_hash) + line[curr_hash:]
+    num_triple_quotes = 0
+    hashtag_positions_to_be_aligned = []
     
+    def align_inline_comments(
+        lines, hash_position_to_set, start_idx, end_idx, hash_positions
+    ):
+        for line_sub_idx, line in enumerate(lines[start_idx:end_idx]):
+            curr_hash = hash_positions[line_sub_idx]
+            lines[start_idx + line_sub_idx] = (
+                line[:curr_hash]
+                + " " * (hash_position_to_set - curr_hash)
+                + line[curr_hash:]
+            )
+
+    def search_without_preceeding_backslash(pattern, string):
+        return [m.start() for m in re.finditer(f"(?<!\\\){pattern}", string)]
+
     for line_idx, line in enumerate(dst_lines):
-        if line.strip().find('#') not in (-1, 0):  # -1 for no comment, 0 for a standalone comment
+        # For all the re.finditer() below, ensure there is no preceeding backslash
+        triple_quote_positions = search_without_preceeding_backslash('"""', line)
+        single_quote_positions = search_without_preceeding_backslash('"', line)
+        hashtag_positions = search_without_preceeding_backslash("#", line)
+        hashtag_position = -1
+        for curr_hash in hashtag_positions:
+            closed_triple_quotes = (
+                num_triple_quotes  # multiline strings that are not yet closed
+                + sum(
+                    posn < curr_hash for posn in triple_quote_positions
+                )  # triple-quoted strings that begin in the same line, e.g. docstrings
+            ) % 2 == 0
+            closed_single_quotes = all(
+                curr_hash > closing_single_quote
+                for closing_single_quote in single_quote_positions[1::2]
+            )
+            if closed_triple_quotes and closed_single_quotes:
+                hashtag_position = curr_hash
+                break
+
+        if line.strip().find("#") != 0 and hashtag_position != -1:
             inline_comment_line_counter += 1
-            max_hashtag_position = max(max_hashtag_position, line.find('#'))    # to be replaced by walrus operator?
+            hashtag_positions_to_be_aligned.append(hashtag_position)
+            max_hashtag_position = max(max_hashtag_position, hashtag_position)
         elif inline_comment_line_counter:
-            align_inline_comments(dst_lines, max_hashtag_position, line_idx-inline_comment_line_counter, line_idx)
+            align_inline_comments(
+                dst_lines,
+                max_hashtag_position,
+                line_idx - inline_comment_line_counter,
+                line_idx,
+                hashtag_positions_to_be_aligned,
+            )
             inline_comment_line_counter = max_hashtag_position = 0
+            hashtag_positions_to_be_aligned = []
+
+        num_triple_quotes += len(triple_quote_positions)
+
     return "\n".join(dst_lines)
 
 
