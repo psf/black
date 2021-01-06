@@ -420,10 +420,6 @@ jobs:
 
 **optional**: Black input arguments. Defaults to `. --check --diff`.
 
-#### `fail_on_error`
-
-**optional**: Exit code when black formatting errors are found \[true, false]. Defaults to 'true'.
-
 ## Ignoring unmodified files
 
 _Black_ remembers files it has already formatted, unless the `--diff` flag is used or

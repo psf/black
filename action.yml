@@ -6,11 +6,6 @@ inputs:
     description: "Black input arguments."
     required: false
     default: ""
-  fail_on_error:
-    description: |
-      Exit code when black formatting errors are found [true, false]. Defaults to 'true'.
-    required: false
-    default: "true"
 branding:
   color: "black"
   icon: "check-circle"

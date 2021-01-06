@@ -14,9 +14,4 @@ else
   black_args+=("--check" "--diff")
 fi
 
-sh -c "black . ${black_args[@]}" || black_exit_val="$?"
-
-# Throw error if an error occurred and fail_on_error is true
-if [[ "${INPUT_FAIL_ON_ERROR,,}" = 'true' && "${black_error}" = 'true' ]]; then
-  exit 1
-fi
+sh -c "black . ${black_args[@]}"
