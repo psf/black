@@ -14,4 +14,4 @@ else
   black_args+=("--check" "--diff")
 fi
 
-sh -c "black . ${black_args[@]}"
+sh -c "black . ${black_args[*]}"
