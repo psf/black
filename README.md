@@ -414,6 +414,7 @@ jobs:
         with:
           black_args: ". --check"
 ```
+
 ### Inputs
 
 #### `black_args`
