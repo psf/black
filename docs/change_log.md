@@ -23,8 +23,15 @@
 
 - Added support for PEP 614 relaxed decorator syntax on python 3.9 (#1711)
 
-- Added `--stdin-filename` argument to allow stdin to respect `--force-exclude` rules.
-  Works very alike to flake8's `--stdin-display-name` (#1780)
+- Added parsing support for unparenthesized tuples and yield expressions in annotated
+  assignments (#1835)
+
+- use lowercase hex strings (#1692)
+
+#### _Packaging_
+
+- Self-contained native _Black_ binaries are now provided for releases via GitHub
+  Releases (#1743)
 
 ### 20.8b1
 

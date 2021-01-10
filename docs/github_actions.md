@@ -15,7 +15,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
-      - uses: psf/black@stable # the default is equivalent to `black . --diff --check`.
-        with: # (optional - override the default parameters).
-          args: ". --diff --check"
+      - uses: psf/black@stable
+        with:
+          black_args: ". --check"
 ```
+
+## Inputs
+
+### `black_args`
+
+**optional**: Black input arguments. Defaults to `. --check --diff`.
