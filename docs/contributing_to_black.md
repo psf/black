@@ -60,6 +60,16 @@ $ tox -e fuzz
 $ black-primer [-k -w /tmp/black_test_repos]
 ```
 
+### Docs Testing
+
+If you make changes to docs, you can test they still build locally too.
+
+```console
+$ pip install -r docs/requirements.txt
+$ pip install [-e] .[d]
+$ sphinx-build -a -b html -W docs/ docs/_build/
+```
+
 ## black-primer
 
 `black-primer` is used by CI to pull down well-known _Black_ formatted projects and see
@@ -70,7 +80,7 @@ your PR. You may need to change
 configuration for it to pass.
 
 For more `black-primer` information visit the
-[documentation](https://github.com/psf/black/blob/master/docs/black_primer.md#).
+[documentation](https://github.com/psf/black/blob/master/docs/black_primer.md).
 
 ## Hygiene
 
