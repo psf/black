@@ -221,7 +221,7 @@ max-line-length = 88
 ### Why those options above?
 
 When _Black_ is folding very long expressions, the closing brackets will
-[be dedented](https://github.com/psf/black#how-black-wraps-lines).
+[be dedented](https://github.com/psf/black/blob/master/docs/the_black_code_style.md#how-black-wraps-lines).
 
 ```py3
 ImportantClass.important_method(
