@@ -34,12 +34,38 @@ If you haven't used `pipenv` before but are comfortable with virtualenvs, just r
 `pip install pipenv` in the virtualenv you're already using and invoke the command above
 from the cloned _Black_ repo. It will do the correct thing.
 
-Before submitting pull requests, run lints and tests with:
+Non pipenv install works too:
 
 ```console
+$ pip install -r test_requirements
+$ pip install -e .[d]
+```
+
+Before submitting pull requests, run lints and tests with the following commands from
+the root of the black repo:
+
+```console
+# Linting
 $ pre-commit run -a
-$ python -m unittest
+
+# Unit tests
+$ tox -e py
+
+# Optional Fuzz testing
+$ tox -e fuzz
+
+# Optional CI run to test your changes on many popular python projects
 $ black-primer [-k -w /tmp/black_test_repos]
+```
+
+### Docs Testing
+
+If you make changes to docs, you can test they still build locally too.
+
+```console
+$ pip install -r docs/requirements.txt
+$ pip install [-e] .[d]
+$ sphinx-build -a -b html -W docs/ docs/_build/
 ```
 
 ## black-primer
@@ -52,7 +78,7 @@ your PR. You may need to change
 configuration for it to pass.
 
 For more `black-primer` information visit the
-[documentation](https://github.com/psf/black/blob/master/docs/black_primer.md#black-primer).
+[documentation](https://github.com/psf/black/blob/master/docs/black_primer.md).
 
 ## Hygiene
 
