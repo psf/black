@@ -5391,6 +5391,8 @@ def convert_one_fmt_off_pair(node: Node) -> bool:
             hidden_value = "".join(str(n) for n in ignored_nodes)
             if comment.value in FMT_OFF:
                 hidden_value = comment.value + "\n" + hidden_value
+            if comment.value in FMT_SKIP:
+                hidden_value += "  " + comment.value
             if hidden_value.endswith("\n"):
                 # That happens when one of the `ignored_nodes` ended with a NEWLINE
                 # leaf (possibly followed by a DEDENT).
@@ -5421,10 +5423,23 @@ def generate_ignored_nodes(leaf: Leaf, comment: ProtoComment) -> Iterator[LN]:
     If comment is skip, returns leaf only.
     Stops at the end of the block.
     """
-    if comment.value in FMT_SKIP and leaf.parent is not None:
-        yield leaf.parent
-        return
     container: Optional[LN] = container_of(leaf)
+    if comment.value in FMT_SKIP:
+        prev_sibling = leaf.prev_sibling
+        if comment.value in leaf.prefix and prev_sibling is not None:
+            leaf.prefix = leaf.prefix.replace(comment.value, "")
+            siblings = [prev_sibling]
+            while (
+                "\n" not in prev_sibling.prefix
+                and prev_sibling.prev_sibling is not None
+            ):
+                prev_sibling = prev_sibling.prev_sibling
+                siblings.insert(0, prev_sibling)
+            for sibling in siblings:
+                yield sibling
+        elif leaf.parent is not None:
+            yield leaf.parent
+        return
     while container is not None and container.type != token.ENDMARKER:
         if is_fmt_on(container):
             return
