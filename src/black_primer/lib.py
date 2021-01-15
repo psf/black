@@ -21,7 +21,7 @@ import click
 
 WINDOWS = system() == "Windows"
 BLACK_BINARY = "black.exe" if WINDOWS else "black"
-GIT_BIANRY = "git.exe" if WINDOWS else "git"
+GIT_BINARY = "git.exe" if WINDOWS else "git"
 LOG = logging.getLogger(__name__)
 
 
@@ -160,7 +160,7 @@ async def git_checkout_or_rebase(
     depth: int = 1,
 ) -> Optional[Path]:
     """git Clone project or rebase"""
-    git_bin = str(which(GIT_BIANRY))
+    git_bin = str(which(GIT_BINARY))
     if not git_bin:
         LOG.error("No git binary found")
         return None
