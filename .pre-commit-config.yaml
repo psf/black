@@ -8,8 +8,9 @@ repos:
         name: black
         language: system
         entry: black
+        minimum_pre_commit_version: 2.9.2
         require_serial: true
-        types: [python]
+        types_or: [python, pyi]
 
   - repo: https://gitlab.com/pycqa/flake8
     rev: 3.8.1
@@ -18,13 +19,13 @@ repos:
         additional_dependencies: [flake8-bugbear]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.770
+    rev: v0.780
     hooks:
       - id: mypy
         exclude: ^docs/conf.py
 
-  - repo: https://github.com/prettier/prettier
-    rev: 1.19.1
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v1.19.1
     hooks:
       - id: prettier
         args: [--prose-wrap=always, --print-width=88]

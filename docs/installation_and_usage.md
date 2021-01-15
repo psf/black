@@ -90,6 +90,11 @@ Options:
                                   matching this regex will be excluded even
                                   when they are passed explicitly as arguments.
 
+  --stdin-filename TEXT           The name of the file when passing it through
+                                  stdin. Useful to make sure Black will respect
+                                  --force-exclude option on some editors that
+                                  rely on using stdin.
+
   -q, --quiet                     Don't emit non-error messages to stderr.
                                   Errors are still emitted; silence those with
                                   2>/dev/null.
@@ -119,7 +124,7 @@ about _Black_'s changes or will overwrite _Black_'s changes. A good example of t
 should be configured to neither warn about nor overwrite _Black_'s changes.
 
 Actual details on _Black_ compatible configurations for various tools can be found in
-[compatible_configs](https://github.com/psf/black/blob/master/docs/compatible_configs.md#).
+[compatible_configs](https://github.com/psf/black/blob/master/docs/compatible_configs.md#black-compatible-configurations).
 
 ## Migrating your code style without ruining git blame
 

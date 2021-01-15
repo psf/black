@@ -1,6 +1,11 @@
 name: "Black"
 description: "The uncompromising Python code formatter."
 author: "Łukasz Langa and contributors to Black"
+inputs:
+  black_args:
+    description: "Black input arguments."
+    required: false
+    default: ""
 branding:
   color: "black"
   icon: "check-circle"

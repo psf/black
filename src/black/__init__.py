@@ -42,7 +42,6 @@ from typing import (
     cast,
     TYPE_CHECKING,
 )
-from typing_extensions import Final
 from mypy_extensions import mypyc_attr
 
 from appdirs import user_cache_dir
@@ -61,6 +60,11 @@ from blib2to3.pgen2.parse import ParseError
 
 from _black_version import version as __version__
 
+if sys.version_info < (3, 8):
+    from typing_extensions import Final
+else:
+    from typing import Final
+
 if TYPE_CHECKING:
     import colorama  # noqa: F401
 
@@ -68,6 +72,7 @@ DEFAULT_LINE_LENGTH = 88
 DEFAULT_EXCLUDES = r"/(\.direnv|\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_build|buck-out|build|dist)/"  # noqa: B950
 DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
+STDIN_PLACEHOLDER = "__BLACK_STDIN_FILENAME__"
 
 STRING_PREFIX_CHARS: Final = "furbFURB"  # All possible string prefix characters.
 
@@ -458,6 +463,15 @@ def target_version_option_callback(
     ),
 )
 @click.option(
+    "--stdin-filename",
+    type=str,
+    help=(
+        "The name of the file when passing it through stdin. Useful to make "
+        "sure Black will respect --force-exclude option on some "
+        "editors that rely on using stdin."
+    ),
+)
+@click.option(
     "-q",
     "--quiet",
     is_flag=True,
@@ -516,6 +530,7 @@ def main(
     include: str,
     exclude: str,
     force_exclude: Optional[str],
+    stdin_filename: Optional[str],
     src: Tuple[str, ...],
     config: Optional[str],
 ) -> None:
@@ -548,6 +563,7 @@ def main(
         exclude=exclude,
         force_exclude=force_exclude,
         report=report,
+        stdin_filename=stdin_filename,
     )
 
     path_empty(
@@ -587,6 +603,7 @@ def get_sources(
     exclude: str,
     force_exclude: Optional[str],
     report: "Report",
+    stdin_filename: Optional[str],
 ) -> Set[Path]:
     """Compute the set of files to be formatted."""
     try:
@@ -613,22 +630,14 @@ def get_sources(
     gitignore = get_gitignore(root)
 
     for s in src:
-        p = Path(s)
-        if p.is_dir():
-            sources.update(
-                gen_python_files(
-                    p.iterdir(),
-                    root,
-                    include_regex,
-                    exclude_regex,
-                    force_exclude_regex,
-                    report,
-                    gitignore,
-                )
-            )
-        elif s == "-":
-            sources.add(p)
-        elif p.is_file():
+        if s == "-" and stdin_filename:
+            p = Path(stdin_filename)
+            is_stdin = True
+        else:
+            p = Path(s)
+            is_stdin = False
+
+        if is_stdin or p.is_file():
             normalized_path = normalize_path_maybe_ignore(p, root, report)
             if normalized_path is None:
                 continue
@@ -643,6 +652,23 @@ def get_sources(
                 report.path_ignored(p, "matches the --force-exclude regular expression")
                 continue
 
+            if is_stdin:
+                p = Path(f"{STDIN_PLACEHOLDER}{str(p)}")
+
+            sources.add(p)
+        elif p.is_dir():
+            sources.update(
+                gen_python_files(
+                    p.iterdir(),
+                    root,
+                    include_regex,
+                    exclude_regex,
+                    force_exclude_regex,
+                    report,
+                    gitignore,
+                )
+            )
+        elif s == "-":
             sources.add(p)
         else:
             err(f"invalid path: {s}")
@@ -670,7 +696,18 @@ def reformat_one(
     """
     try:
         changed = Changed.NO
-        if not src.is_file() and str(src) == "-":
+
+        if str(src) == "-":
+            is_stdin = True
+        elif str(src).startswith(STDIN_PLACEHOLDER):
+            is_stdin = True
+            # Use the original name again in case we want to print something
+            # to the user
+            src = Path(str(src)[len(STDIN_PLACEHOLDER) :])
+        else:
+            is_stdin = False
+
+        if is_stdin:
             if format_stdin_to_stdout(fast=fast, write_back=write_back, mode=mode):
                 changed = Changed.YES
         else:
@@ -704,7 +741,7 @@ def reformat_many(
     worker_count = os.cpu_count()
     if sys.platform == "win32":
         # Work around https://bugs.python.org/issue26903
-        worker_count = min(worker_count, 61)
+        worker_count = min(worker_count, 60)
     try:
         executor = ProcessPoolExecutor(max_workers=worker_count)
     except (ImportError, OSError):
@@ -953,7 +990,7 @@ def format_str(src_contents: str, *, mode: Mode) -> FileContent:
     allowed.  Example:
 
     >>> import black
-    >>> print(black.format_str("def f(arg:str='')->None:...", mode=Mode()))
+    >>> print(black.format_str("def f(arg:str='')->None:...", mode=black.Mode()))
     def f(arg: str = "") -> None:
         ...
 
@@ -3240,7 +3277,8 @@ class StringParenStripper(StringTransformer):
 
     Requirements:
         The line contains a string which is surrounded by parentheses and:
-            - The target string is NOT the only argument to a function call).
+            - The target string is NOT the only argument to a function call.
+            - The target string is NOT a "pointless" string.
             - If the target string contains a PERCENT, the brackets are not
               preceeded or followed by an operator with higher precedence than
               PERCENT.
@@ -3262,6 +3300,14 @@ class StringParenStripper(StringTransformer):
         for (idx, leaf) in enumerate(LL):
             # Should be a string...
             if leaf.type != token.STRING:
+                continue
+
+            # If this is a "pointless" string...
+            if (
+                leaf.parent
+                and leaf.parent.parent
+                and leaf.parent.parent.type == syms.simple_stmt
+            ):
                 continue
 
             # Should be preceded by a non-empty LPAR...
@@ -3613,13 +3659,14 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
     MIN_SUBSTR_SIZE = 6
     # Matches an "f-expression" (e.g. {var}) that might be found in an f-string.
     RE_FEXPR = r"""
-    (?<!\{)\{
+    (?<!\{) (?:\{\{)* \{ (?!\{)
         (?:
             [^\{\}]
             | \{\{
             | \}\}
+            | (?R)
         )+?
-    (?<!\})(?:\}\})*\}(?!\})
+    (?<!\}) \} (?:\}\})* (?!\})
     """
 
     def do_splitter_match(self, line: Line) -> TMatchResult:
@@ -5193,29 +5240,50 @@ def normalize_numeric_literal(leaf: Leaf) -> None:
         # Leave octal and binary literals alone.
         pass
     elif text.startswith("0x"):
-        # Change hex literals to upper case.
-        before, after = text[:2], text[2:]
-        text = f"{before}{after.upper()}"
+        text = format_hex(text)
     elif "e" in text:
-        before, after = text.split("e")
-        sign = ""
-        if after.startswith("-"):
-            after = after[1:]
-            sign = "-"
-        elif after.startswith("+"):
-            after = after[1:]
-        before = format_float_or_int_string(before)
-        text = f"{before}e{sign}{after}"
+        text = format_scientific_notation(text)
     elif text.endswith(("j", "l")):
-        number = text[:-1]
-        suffix = text[-1]
-        # Capitalize in "2L" because "l" looks too similar to "1".
-        if suffix == "l":
-            suffix = "L"
-        text = f"{format_float_or_int_string(number)}{suffix}"
+        text = format_long_or_complex_number(text)
     else:
         text = format_float_or_int_string(text)
     leaf.value = text
+
+
+def format_hex(text: str) -> str:
+    """
+    Formats a hexadecimal string like "0x12b3"
+
+    Uses lowercase because of similarity between "B" and "8", which
+    can cause security issues.
+    see: https://github.com/psf/black/issues/1692
+    """
+
+    before, after = text[:2], text[2:]
+    return f"{before}{after.lower()}"
+
+
+def format_scientific_notation(text: str) -> str:
+    """Formats a numeric string utilizing scentific notation"""
+    before, after = text.split("e")
+    sign = ""
+    if after.startswith("-"):
+        after = after[1:]
+        sign = "-"
+    elif after.startswith("+"):
+        after = after[1:]
+    before = format_float_or_int_string(before)
+    return f"{before}e{sign}{after}"
+
+
+def format_long_or_complex_number(text: str) -> str:
+    """Formats a long or complex string like `10L` or `10j`"""
+    number = text[:-1]
+    suffix = text[-1]
+    # Capitalize in "2L" because "l" looks too similar to "1".
+    if suffix == "l":
+        suffix = "L"
+    return f"{format_float_or_int_string(number)}{suffix}"
 
 
 def format_float_or_int_string(text: str) -> str:
@@ -6752,13 +6820,33 @@ def is_docstring(leaf: Leaf) -> bool:
     return False
 
 
+def lines_with_leading_tabs_expanded(s: str) -> List[str]:
+    """
+    Splits string into lines and expands only leading tabs (following the normal
+    Python rules)
+    """
+    lines = []
+    for line in s.splitlines():
+        # Find the index of the first non-whitespace character after a string of
+        # whitespace that includes at least one tab
+        match = re.match(r"\s*\t+\s*(\S)", line)
+        if match:
+            first_non_whitespace_idx = match.start(1)
+
+            lines.append(
+                line[:first_non_whitespace_idx].expandtabs()
+                + line[first_non_whitespace_idx:]
+            )
+        else:
+            lines.append(line)
+    return lines
+
+
 def fix_docstring(docstring: str, prefix: str) -> str:
     # https://www.python.org/dev/peps/pep-0257/#handling-docstring-indentation
     if not docstring:
         return ""
-    # Convert tabs to spaces (following the normal Python rules)
-    # and split into a list of lines:
-    lines = docstring.expandtabs().splitlines()
+    lines = lines_with_leading_tabs_expanded(docstring)
     # Determine minimum indentation (first line doesn't count):
     indent = sys.maxsize
     for line in lines[1:]:
