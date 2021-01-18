@@ -395,6 +395,31 @@ class BlackTestCase(BlackBaseTestCase):
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, mode)
 
+    def test_skip_magic_trailing_comma(self) -> None:
+        source, _ = read_data("expression.py")
+        expected, _ = read_data("expression_skip_magic_trailing_comma.diff")
+        tmp_file = Path(black.dump_to_file(source))
+        diff_header = re.compile(
+            rf"{re.escape(str(tmp_file))}\t\d\d\d\d-\d\d-\d\d "
+            r"\d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
+        )
+        try:
+            result = BlackRunner().invoke(black.main, ["-C", "--diff", str(tmp_file)])
+            self.assertEqual(result.exit_code, 0)
+        finally:
+            os.unlink(tmp_file)
+        actual = result.output
+        actual = diff_header.sub(DETERMINISTIC_HEADER, actual)
+        actual = actual.rstrip() + "\n"  # the diff output has a trailing space
+        if expected != actual:
+            dump = black.dump_to_file(actual)
+            msg = (
+                "Expected diff isn't equal to the actual. If you made changes to"
+                " expression.py and this is an anticipated difference, overwrite"
+                f" tests/data/expression_skip_magic_trailing_comma.diff with {dump}"
+            )
+            self.assertEqual(expected, actual, msg)
+
     @patch("black.dump_to_file", dump_to_stderr)
     def test_python2_print_function(self) -> None:
         source, expected = read_data("python2_print_function")
