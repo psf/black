@@ -4,6 +4,7 @@
 
 import asyncio
 import logging
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -53,6 +54,9 @@ async def async_main(
     if not which("black"):
         LOG.error("Can not find 'black' executable in PATH. No point in running")
         return -1
+
+    # Prevents reading top-level user configs
+    os.environ["XDG_CONFIG_HOME"] = str(work_path)
 
     try:
         ret_val = await lib.process_queue(
