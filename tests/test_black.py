@@ -1752,6 +1752,34 @@ class BlackTestCase(BlackBaseTestCase):
             self.assertEqual(black.find_project_root((src_dir,)), src_dir.resolve())
             self.assertEqual(black.find_project_root((src_python,)), src_dir.resolve())
 
+    @patch("black.find_user_pyproject_toml", black.find_user_pyproject_toml.__wrapped__)
+    def test_find_user_pyproject_toml_linux(self) -> None:
+        if system() == "Windows":
+            return
+
+        # Test if XDG_CONFIG_HOME is checked
+        with TemporaryDirectory() as workspace:
+            tmp_user_config = Path(workspace) / "black"
+            with patch.dict("os.environ", {"XDG_CONFIG_HOME": workspace}):
+                self.assertEqual(
+                    black.find_user_pyproject_toml(), tmp_user_config.resolve()
+                )
+
+        # Test fallback for XDG_CONFIG_HOME
+        with patch.dict("os.environ"):
+            os.environ.pop("XDG_CONFIG_HOME", None)
+            fallback_user_config = Path("~/.config").expanduser() / "black"
+            self.assertEqual(
+                black.find_user_pyproject_toml(), fallback_user_config.resolve()
+            )
+
+    def test_find_user_pyproject_toml_windows(self) -> None:
+        if system() != "Windows":
+            return
+
+        user_config_path = Path.home() / ".black"
+        self.assertEqual(black.find_user_pyproject_toml(), user_config_path.resolve())
+
     def test_bpo_33660_workaround(self) -> None:
         if system() == "Windows":
             return
