@@ -6,9 +6,20 @@ inputs:
     description: "Black input arguments."
     required: false
     default: ""
+  black_version:
+    description: 'Version of black to use. E.g "==20.8b1"'
+    required: false
+    default: ""
 branding:
   color: "black"
   icon: "check-circle"
 runs:
-  using: "docker"
-  image: "action/Dockerfile"
+  using: composite
+  steps:
+    - run: pip install --upgrade --no-cache-dir black${{inputs.black_version}}
+      shell: bash
+    - id: run-black
+      run:
+        ${{ github.action_path }}/action/entrypoint.sh ${{ inputs.configuration }} ${{
+        inputs.sortPaths }}
+      shell: bash
