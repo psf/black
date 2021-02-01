@@ -59,12 +59,10 @@ async def _gen_check_output(
         raise
 
     if process.returncode != 0:
-        returncode = process.returncode
-        if returncode is None:
-            returncode = 69
-
         cmd_str = " ".join(cmd)
-        raise CalledProcessError(returncode, cmd_str, output=stdout, stderr=stderr)
+        raise CalledProcessError(
+            process.returncode, cmd_str, output=stdout, stderr=stderr
+        )
 
     return (stdout, stderr)
 
