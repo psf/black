@@ -20,6 +20,7 @@ import codecs
 import io
 import os
 import logging
+import pathlib
 import pkgutil
 import sys
 from typing import (
@@ -191,6 +192,8 @@ def load_grammar(
     if logger is None:
         logger = logging.getLogger(__name__)
     gp = _generate_pickle_name(gt) if gp is None else gp
+    pickle_directory = pathlib.Path(gp).parent
+    pickle_directory.mkdir(exist_ok=True, parents=True)
     if force or not _newer(gp, gt):
         logger.info("Generating grammar tables from %s", gt)
         g: grammar.Grammar = pgen.generate_grammar(gt)
