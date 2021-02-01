@@ -172,7 +172,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(result.exit_code, 0)
         self.assertFormatEqual(expected, result.output)
         black.assert_equivalent(source, result.output)
-        black.assert_stable(source, result.output, mode=LEGACY_MODE)
+        black.assert_stable(source, result.output, LEGACY_MODE)
 
     def test_piping_diff(self) -> None:
         diff_header = re.compile(
@@ -253,7 +253,7 @@ class BlackTestCase(BlackBaseTestCase):
     def test_trailing_comma_optional_parens_stability3(self) -> None:
         source, _expected = read_data("trailing_comma_optional_parens3")
         actual = fs(source, mode=LEGACY_MODE)
-        black.assert_stable(source, actual, mode=LEGACY_MODE)
+        black.assert_stable(source, actual, LEGACY_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_pep_572(self) -> None:
@@ -286,7 +286,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertFormatEqual(expected, actual)
         with patch("black.dump_to_file", dump_to_stderr):
             black.assert_equivalent(source, actual)
-            black.assert_stable(source, actual, mode=LEGACY_MODE)
+            black.assert_stable(source, actual, LEGACY_MODE)
 
     def test_expression_diff(self) -> None:
         source, _ = read_data("expression.py")

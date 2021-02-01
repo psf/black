@@ -86,7 +86,7 @@ class TestSimpleFormat(BlackBaseTestCase):
         actual = fs(source, mode=LEGACY_MODE)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, mode=LEGACY_MODE)
+        black.assert_stable(source, actual, LEGACY_MODE)
 
     @parameterized.expand(SOURCES)
     @patch("black.dump_to_file", dump_to_stderr)
@@ -96,5 +96,5 @@ class TestSimpleFormat(BlackBaseTestCase):
         actual = fs(source, mode=LEGACY_MODE)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, mode=LEGACY_MODE)
+        black.assert_stable(source, actual, LEGACY_MODE)
         self.assertFalse(ff(path, mode=LEGACY_MODE))
