@@ -303,7 +303,7 @@ class BlackTestCase(BlackBaseTestCase):
                     "--diff",
                     str(tmp_file),
                     "--line-length",
-                    LEGACY_MODE.line_length,
+                    str(LEGACY_MODE.line_length),
                 ],
             )
             self.assertEqual(result.exit_code, 0)
@@ -1209,7 +1209,7 @@ class BlackTestCase(BlackBaseTestCase):
                     "--diff",
                     "--check",
                     "--line-length",
-                    LEGACY_MODE.line_length,
+                    str(LEGACY_MODE.line_length),
                 ]
             )
             # Multi file command.
