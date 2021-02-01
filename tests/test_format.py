@@ -1,4 +1,3 @@
-from dataclasses import replace
 from unittest.mock import patch
 
 import black
@@ -8,7 +7,6 @@ from tests.util import (
     BlackBaseTestCase,
     fs,
     ff,
-    DEFAULT_MODE,
     LEGACY_MODE,
     dump_to_stderr,
     read_data,
