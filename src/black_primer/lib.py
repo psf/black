@@ -58,6 +58,11 @@ async def _gen_check_output(
         await process.wait()
         raise
 
+    # A non-optional timeout was supplied to asyncio.wait_for, guaranteeing
+    # a timeout or completed process.  A terminated Python process will have a
+    # non-empty returncode value.
+    assert process.returncode is not None
+
     if process.returncode != 0:
         cmd_str = " ".join(cmd)
         raise CalledProcessError(
