@@ -303,7 +303,7 @@ class BlackTestCase(BlackBaseTestCase):
                     "--diff",
                     str(tmp_file),
                     "--line-length",
-                    "88",
+                    LEGACY_MODE.line_length,
                 ],
             )
             self.assertEqual(result.exit_code, 0)
@@ -1203,7 +1203,15 @@ class BlackTestCase(BlackBaseTestCase):
             self.invokeBlack([str(src1), "--diff", "--check"], exit_code=1)
             # Files which will not be reformatted.
             src2 = (THIS_DIR / "data" / "composition.py").resolve()
-            self.invokeBlack([str(src2), "--diff", "--check", "--line-length", "88"])
+            self.invokeBlack(
+                [
+                    str(src2),
+                    "--diff",
+                    "--check",
+                    "--line-length",
+                    LEGACY_MODE.line_length,
+                ]
+            )
             # Multi file command.
             self.invokeBlack([str(src1), str(src2), "--diff", "--check"], exit_code=1)
 
