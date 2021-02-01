@@ -1,3 +1,4 @@
+from dataclasses import replace
 from unittest.mock import patch
 
 import black
@@ -81,18 +82,20 @@ class TestSimpleFormat(BlackBaseTestCase):
     @patch("black.dump_to_file", dump_to_stderr)
     def test_simple_format(self, filename: str) -> None:
         source, expected = read_data(filename)
-        actual = fs(source)
+        legacy_mode = replace(DEFAULT_MODE, line_length=88)
+        actual = fs(source, mode=legacy_mode)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, DEFAULT_MODE)
+        black.assert_stable(source, actual, mode=legacy_mode)
 
     @parameterized.expand(SOURCES)
     @patch("black.dump_to_file", dump_to_stderr)
     def test_source_is_formatted(self, filename: str) -> None:
         path = THIS_DIR.parent / filename
         source, expected = read_data(str(path), data=False)
-        actual = fs(source, mode=DEFAULT_MODE)
+        legacy_mode = replace(DEFAULT_MODE, line_length=88)
+        actual = fs(source, mode=legacy_mode)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, DEFAULT_MODE)
-        self.assertFalse(ff(path))
+        black.assert_stable(source, actual, mode=legacy_mode)
+        self.assertFalse(ff(path, mode=legacy_mode))

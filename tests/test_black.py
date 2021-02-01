@@ -163,15 +163,16 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_piping(self) -> None:
         source, expected = read_data("src/black/__init__", data=False)
+        legacy_mode = replace(DEFAULT_MODE, line_length=88)
         result = BlackRunner().invoke(
             black.main,
-            ["-", "--fast", f"--line-length={black.DEFAULT_LINE_LENGTH}"],
+            ["-", "--fast", f"--line-length={legacy_mode.line_length}"],
             input=BytesIO(source.encode("utf8")),
         )
         self.assertEqual(result.exit_code, 0)
         self.assertFormatEqual(expected, result.output)
         black.assert_equivalent(source, result.output)
-        black.assert_stable(source, result.output, DEFAULT_MODE)
+        black.assert_stable(source, result.output, mode=legacy_mode)
 
     def test_piping_diff(self) -> None:
         diff_header = re.compile(
@@ -180,11 +181,12 @@ class BlackTestCase(BlackBaseTestCase):
         )
         source, _ = read_data("expression.py")
         expected, _ = read_data("expression.diff")
+        legacy_mode = replace(DEFAULT_MODE, line_length=88)
         config = THIS_DIR / "data" / "empty_pyproject.toml"
         args = [
             "-",
             "--fast",
-            f"--line-length={black.DEFAULT_LINE_LENGTH}",
+            f"--line-length={legacy_mode.line_length}",
             "--diff",
             f"--config={config}",
         ]
@@ -251,8 +253,9 @@ class BlackTestCase(BlackBaseTestCase):
     @patch("black.dump_to_file", dump_to_stderr)
     def test_trailing_comma_optional_parens_stability3(self) -> None:
         source, _expected = read_data("trailing_comma_optional_parens3")
-        actual = fs(source)
-        black.assert_stable(source, actual, DEFAULT_MODE)
+        legacy_mode = replace(DEFAULT_MODE, line_length=88)
+        actual = fs(source, mode=legacy_mode)
+        black.assert_stable(source, actual, mode=legacy_mode)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_pep_572(self) -> None:
@@ -274,8 +277,11 @@ class BlackTestCase(BlackBaseTestCase):
     def test_expression_ff(self) -> None:
         source, expected = read_data("expression")
         tmp_file = Path(black.dump_to_file(source))
+        legacy_mode = replace(DEFAULT_MODE, line_length=88)
         try:
-            self.assertTrue(ff(tmp_file, write_back=black.WriteBack.YES))
+            self.assertTrue(
+                ff(tmp_file, write_back=black.WriteBack.YES, mode=legacy_mode)
+            )
             with open(tmp_file, encoding="utf8") as f:
                 actual = f.read()
         finally:
@@ -283,7 +289,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertFormatEqual(expected, actual)
         with patch("black.dump_to_file", dump_to_stderr):
             black.assert_equivalent(source, actual)
-            black.assert_stable(source, actual, DEFAULT_MODE)
+            black.assert_stable(source, actual, mode=legacy_mode)
 
     def test_expression_diff(self) -> None:
         source, _ = read_data("expression.py")
@@ -294,7 +300,15 @@ class BlackTestCase(BlackBaseTestCase):
             r"\d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
         )
         try:
-            result = BlackRunner().invoke(black.main, ["--diff", str(tmp_file)])
+            result = BlackRunner().invoke(
+                black.main,
+                [
+                    "--diff",
+                    str(tmp_file),
+                    "--line-length",
+                    "88",
+                ],
+            )
             self.assertEqual(result.exit_code, 0)
         finally:
             os.unlink(tmp_file)
@@ -398,13 +412,22 @@ class BlackTestCase(BlackBaseTestCase):
     def test_skip_magic_trailing_comma(self) -> None:
         source, _ = read_data("expression.py")
         expected, _ = read_data("expression_skip_magic_trailing_comma.diff")
+        legacy_mode = replace(DEFAULT_MODE, line_length=88)
         tmp_file = Path(black.dump_to_file(source))
         diff_header = re.compile(
             rf"{re.escape(str(tmp_file))}\t\d\d\d\d-\d\d-\d\d "
             r"\d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
         )
         try:
-            result = BlackRunner().invoke(black.main, ["-C", "--diff", str(tmp_file)])
+            result = BlackRunner().invoke(
+                black.main,
+                [
+                    "-C",
+                    "--diff",
+                    str(tmp_file),
+                    f"--line-length={legacy_mode.line_length}",
+                ],
+            )
             self.assertEqual(result.exit_code, 0)
         finally:
             os.unlink(tmp_file)
@@ -1184,7 +1207,7 @@ class BlackTestCase(BlackBaseTestCase):
             self.invokeBlack([str(src1), "--diff", "--check"], exit_code=1)
             # Files which will not be reformatted.
             src2 = (THIS_DIR / "data" / "composition.py").resolve()
-            self.invokeBlack([str(src2), "--diff", "--check"])
+            self.invokeBlack([str(src2), "--diff", "--check", "--line-length", "88"])
             # Multi file command.
             self.invokeBlack([str(src1), str(src2), "--diff", "--check"], exit_code=1)
 
