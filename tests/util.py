@@ -1,3 +1,4 @@
+from dataclasses import replace
 import os
 import unittest
 from contextlib import contextmanager
@@ -13,6 +14,7 @@ DETERMINISTIC_HEADER = "[Deterministic header]"
 
 
 DEFAULT_MODE = black.FileMode(experimental_string_processing=True)
+LEGACY_MODE = replace(DEFAULT_MODE, line_length=88)
 ff = partial(black.format_file_in_place, mode=DEFAULT_MODE, fast=True)
 fs = partial(black.format_str, mode=DEFAULT_MODE)
 

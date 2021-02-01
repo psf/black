@@ -9,6 +9,7 @@ from tests.util import (
     fs,
     ff,
     DEFAULT_MODE,
+    LEGACY_MODE,
     dump_to_stderr,
     read_data,
     THIS_DIR,
@@ -82,20 +83,18 @@ class TestSimpleFormat(BlackBaseTestCase):
     @patch("black.dump_to_file", dump_to_stderr)
     def test_simple_format(self, filename: str) -> None:
         source, expected = read_data(filename)
-        legacy_mode = replace(DEFAULT_MODE, line_length=88)
-        actual = fs(source, mode=legacy_mode)
+        actual = fs(source, mode=LEGACY_MODE)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, mode=legacy_mode)
+        black.assert_stable(source, actual, mode=LEGACY_MODE)
 
     @parameterized.expand(SOURCES)
     @patch("black.dump_to_file", dump_to_stderr)
     def test_source_is_formatted(self, filename: str) -> None:
         path = THIS_DIR.parent / filename
         source, expected = read_data(str(path), data=False)
-        legacy_mode = replace(DEFAULT_MODE, line_length=88)
-        actual = fs(source, mode=legacy_mode)
+        actual = fs(source, mode=LEGACY_MODE)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, mode=legacy_mode)
-        self.assertFalse(ff(path, mode=legacy_mode))
+        black.assert_stable(source, actual, mode=LEGACY_MODE)
+        self.assertFalse(ff(path, mode=LEGACY_MODE))
