@@ -233,6 +233,32 @@ If you later want to update _Black_, you should do it like this:
 $ pip install -U black --no-binary regex,typed-ast
 ```
 
+## Gedit
+gedit is the default text editor of the GNOME, Unix like Operating Systems.
+Open gedit as
+```console
+$ gedit <file_name>
+```
+1. `Go to edit > preferences > plugins`
+2.  Search for `external tools` and activate it.
+3.  In `Tools menu -> Manage external tools`
+4.  Add a new tool using `+` button.
+5.  Copy the below content to the code window.
+```console
+#!/bin/bash
+Name = $GEDIT_CURRENT_DOCUMENT_NAME
+black $Name
+```
+- Set a keyboard shortcut if you like, Ex. `ctrl-B`
+- Save: `Nothing`
+- Input: `Nothing`
+- Output: `Display in bottom pane` if you like.
+- Change the name of the tool if you like.
+  
+Use your keyboard shortcut or `Tools -> External Tools` to use your new tool.
+When you close and Reopen your File, black will be done with its job. 
+
+
 ## Visual Studio Code
 
 Use the
