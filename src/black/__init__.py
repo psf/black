@@ -5381,6 +5381,9 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
                     node.insert_child(index, Leaf(token.LPAR, ""))
                     node.append_child(Leaf(token.RPAR, ""))
                 break
+            elif node.type in [syms.assert_stmt, syms.return_stmt]:
+                if maybe_make_parens_invisible_in_atom(child, parent=node):
+                    wrap_in_parentheses(node, child, visible=False)
 
             elif not (isinstance(child, Leaf) and is_multiline_string(child)):
                 wrap_in_parentheses(node, child, visible=False)
