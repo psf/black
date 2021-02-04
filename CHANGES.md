@@ -28,6 +28,8 @@
 
 - speed up caching by avoiding pathlib (#1950)
 
+- Added support for tokenization of files that end with a backslash (#1012)
+
 #### _Packaging_
 
 - Self-contained native _Black_ binaries are now provided for releases via GitHub
