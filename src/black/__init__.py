@@ -6608,7 +6608,7 @@ def can_omit_invisible_parens(
     last = line.leaves[-1]
     if line.should_explode:
         try:
-            penultimate, last = last_two_except(line.leaves)
+            penultimate, last = last_two_except(line.leaves, omit=omit_on_explode)
         except LookupError:
             # Turns out we'd omit everything.  We cannot skip the optional parentheses.
             return False
@@ -6685,7 +6685,7 @@ def _can_omit_closing_paren(line: Line, *, last: Leaf, line_length: int) -> bool
     return False
 
 
-def last_two_except(leaves: List[Leaf]) -> Tuple[Leaf, Leaf]:
+def last_two_except(leaves: List[Leaf], omit: Collection[LeafID]) -> Tuple[Leaf, Leaf]:
     """Return (penultimate, last) leaves skipping brackets in `omit` and contents."""
     stop_after = None
     last = None
@@ -6698,7 +6698,10 @@ def last_two_except(leaves: List[Leaf]) -> Tuple[Leaf, Leaf]:
         if last:
             return leaf, last
 
-        last = leaf
+        if id(leaf) in omit:
+            stop_after = leaf.opening_bracket
+        else:
+            last = leaf
     else:
         raise LookupError("Last two leaves were also skipped")
 

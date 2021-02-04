@@ -239,12 +239,14 @@ class BlackTestCase(BlackBaseTestCase):
         actual = fs(source)
         black.assert_stable(source, actual, DEFAULT_MODE)
 
+    @unittest.expectedFailure
     @patch("black.dump_to_file", dump_to_stderr)
     def test_trailing_comma_optional_parens_stability1(self) -> None:
         source, _expected = read_data("trailing_comma_optional_parens1")
         actual = fs(source)
         black.assert_stable(source, actual, DEFAULT_MODE)
 
+    @unittest.expectedFailure
     @patch("black.dump_to_file", dump_to_stderr)
     def test_trailing_comma_optional_parens_stability2(self) -> None:
         source, _expected = read_data("trailing_comma_optional_parens2")
