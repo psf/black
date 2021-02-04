@@ -1480,7 +1480,7 @@ class Line:
     comments: Dict[LeafID, List[Leaf]] = field(default_factory=dict)
     bracket_tracker: BracketTracker = field(default_factory=BracketTracker)
     inside_brackets: bool = False
-    should_explode: bool = False
+    should_split: bool = False
     magic_trailing_comma: Optional[Leaf] = None
 
     def append(self, leaf: Leaf, preformatted: bool = False) -> None:
@@ -1792,7 +1792,7 @@ class Line:
             mode=self.mode,
             depth=self.depth,
             inside_brackets=self.inside_brackets,
-            should_explode=self.should_explode,
+            should_split=self.should_split,
             magic_trailing_comma=self.magic_trailing_comma,
         )
 
@@ -2712,7 +2712,7 @@ def transform_line(
     transformers: List[Transformer]
     if (
         not line.contains_uncollapsable_type_comments()
-        and not (line.should_explode or line.magic_trailing_comma)
+        and not (line.should_split or line.magic_trailing_comma)
         and (
             is_line_short_enough(line, line_length=mode.line_length, line_str=line_str)
             or line.contains_unsplittable_type_ignore()
@@ -4386,7 +4386,7 @@ class StringParenWrapper(CustomSplitMapMixin, BaseStringSplitter):
             mode=line.mode,
             depth=line.depth + 1,
             inside_brackets=True,
-            should_explode=line.should_explode,
+            should_split=line.should_split,
             magic_trailing_comma=line.magic_trailing_comma,
         )
         string_leaf = Leaf(token.STRING, string_value)
@@ -5009,7 +5009,7 @@ def bracket_split_build_line(
         for comment_after in original.comments_after(leaf):
             result.append(comment_after, preformatted=True)
     if is_body and should_split(result, opening_bracket):
-        result.should_explode = True
+        result.should_split = True
     return result
 
 
@@ -5949,7 +5949,7 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
     """
 
     omit: Set[LeafID] = set()
-    if not line.should_explode and not line.magic_trailing_comma:
+    if not line.should_split and not line.magic_trailing_comma:
         yield omit
 
     length = 4 * line.depth
@@ -6632,7 +6632,7 @@ def can_omit_invisible_parens(
 
     penultimate = line.leaves[-2]
     last = line.leaves[-1]
-    if line.should_explode or line.magic_trailing_comma:
+    if line.should_split or line.magic_trailing_comma:
         try:
             penultimate, last = last_two_except(line.leaves, omit=omit_on_explode)
         except LookupError:
