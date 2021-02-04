@@ -1790,6 +1790,10 @@ class BlackTestCase(BlackBaseTestCase):
         finally:
             os.chdir(str(old_cwd))
 
+    def test_backslash_eof_no_exception(self) -> None:
+        source = "\\"
+        black.format_str(source, mode=DEFAULT_MODE)
+
 
 with open(black.__file__, "r", encoding="utf-8") as _bf:
     black_source_lines = _bf.readlines()
