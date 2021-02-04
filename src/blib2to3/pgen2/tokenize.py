@@ -538,8 +538,6 @@ def generate_tokens(
                 async_def_indent = 0
 
         else:  # continued statement
-            if not line:
-                raise TokenError("EOF in multi-line statement", (lnum, 0))
             continued = 0
 
         while pos < max:
