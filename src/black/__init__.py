@@ -5971,7 +5971,7 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
             elif leaf.type in CLOSING_BRACKETS:
                 prev = line.leaves[index - 1] if index > 0 else None
                 if (
-                    (line.should_explode or line.magic_trailing_comma)
+                    line.magic_trailing_comma
                     and prev
                     and prev.type == token.COMMA
                     and not is_one_tuple_between(
@@ -5999,7 +5999,7 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
                 yield omit
 
             if (
-                (line.should_explode or line.magic_trailing_comma)
+                line.magic_trailing_comma
                 and prev
                 and prev.type == token.COMMA
                 and not is_one_tuple_between(leaf.opening_bracket, leaf, line.leaves)
@@ -6659,9 +6659,7 @@ def can_omit_invisible_parens(
             # unnecessary.
             return True
 
-        if (
-            line.should_explode or line.magic_trailing_comma
-        ) and penultimate.type == token.COMMA:
+        if line.magic_trailing_comma and penultimate.type == token.COMMA:
             # The rightmost non-omitted bracket pair is the one we want to explode on.
             return True
 
