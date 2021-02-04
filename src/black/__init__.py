@@ -93,7 +93,7 @@ Transformer = Callable[["Line", Collection["Feature"]], Iterator["Line"]]
 Timestamp = float
 FileSize = int
 CacheInfo = Tuple[Timestamp, FileSize]
-Cache = Dict[Path, CacheInfo]
+Cache = Dict[str, CacheInfo]
 out = partial(click.secho, bold=True, err=True)
 err = partial(click.secho, fg="red", err=True)
 
@@ -724,7 +724,8 @@ def reformat_one(
             if write_back not in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
                 cache = read_cache(mode)
                 res_src = src.resolve()
-                if res_src in cache and cache[res_src] == get_cache_info(res_src):
+                res_src_s = str(res_src)
+                if res_src_s in cache and cache[res_src_s] == get_cache_info(res_src):
                     changed = Changed.CACHED
             if changed is not Changed.CACHED and format_file_in_place(
                 src, fast=fast, write_back=write_back, mode=mode
@@ -6781,8 +6782,8 @@ def filter_cached(cache: Cache, sources: Iterable[Path]) -> Tuple[Set[Path], Set
     """
     todo, done = set(), set()
     for src in sources:
-        src = src.resolve()
-        if cache.get(src) != get_cache_info(src):
+        res_src = src.resolve()
+        if cache.get(str(res_src)) != get_cache_info(res_src):
             todo.add(src)
         else:
             done.add(src)
@@ -6794,7 +6795,10 @@ def write_cache(cache: Cache, sources: Iterable[Path], mode: Mode) -> None:
     cache_file = get_cache_file(mode)
     try:
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        new_cache = {**cache, **{src.resolve(): get_cache_info(src) for src in sources}}
+        new_cache = {
+            **cache,
+            **{str(src.resolve()): get_cache_info(src) for src in sources},
+        }
         with tempfile.NamedTemporaryFile(dir=str(cache_file.parent), delete=False) as f:
             pickle.dump(new_cache, f, protocol=4)
         os.replace(f.name, cache_file)
