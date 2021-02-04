@@ -5924,7 +5924,7 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
     """
 
     omit: Set[LeafID] = set()
-    if not line.should_split and not line.magic_trailing_comma:
+    if not line.magic_trailing_comma:
         yield omit
 
     length = 4 * line.depth
