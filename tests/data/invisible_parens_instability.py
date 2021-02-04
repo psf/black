@@ -40,11 +40,6 @@ def test_foo():
     ) == [{"raw": {"person": "1"}, "error": "Invalid field unknown", "status": "error"}]
 
 
-# https://github.com/psf/black/issues/1629#issuecomment-707066734
-my_string = '______________ %s _________________ %s _____________________________________________' % (
-    '____________', '________________', '___________________________________________')
-
-
 # https://github.com/psf/black/issues/1629#issuecomment-764562642
 class Foo(object):
     def bar(self):
