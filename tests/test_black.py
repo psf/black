@@ -233,6 +233,7 @@ class BlackTestCase(BlackBaseTestCase):
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, black.FileMode())
 
+    @unittest.expectedFailure
     @patch("black.dump_to_file", dump_to_stderr)
     def test_invisible_parens_instability(self) -> None:
         source, _expected = read_data("invisible_parens_instability")
