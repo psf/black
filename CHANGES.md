@@ -26,6 +26,8 @@
 
 - use lowercase hex strings (#1692)
 
+- speed up caching by avoiding pathlib (#1950)
+
 #### _Packaging_
 
 - Self-contained native _Black_ binaries are now provided for releases via GitHub
