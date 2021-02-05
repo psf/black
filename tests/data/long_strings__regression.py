@@ -347,7 +347,7 @@ class xxxxxxxxxxxxxxxxxxxxx(xxxx.xxxxxxxxxxxxx):
         assert xxxxxxx_xxxx in [
             x.xxxxx.xxxxxx.xxxxx.xxxxxx,
             x.xxxxx.xxxxxx.xxxxx.xxxx,
-        ], ("xxxxxxxxxxx xxxxxxx xxxx (xxxxxx xxxx) %x xxx xxxxx" % xxxxxxx_xxxx)
+        ], "xxxxxxxxxxx xxxxxxx xxxx (xxxxxx xxxx) %x xxx xxxxx" % xxxxxxx_xxxx
 
 value.__dict__[
     key
@@ -828,9 +828,7 @@ class xxxxxxxxxxxxxxxxxxxxx(xxxx.xxxxxxxxxxxxx):
         assert xxxxxxx_xxxx in [
             x.xxxxx.xxxxxx.xxxxx.xxxxxx,
             x.xxxxx.xxxxxx.xxxxx.xxxx,
-        ], (
-            "xxxxxxxxxxx xxxxxxx xxxx (xxxxxx xxxx) %x xxx xxxxx" % xxxxxxx_xxxx
-        )
+        ], "xxxxxxxxxxx xxxxxxx xxxx (xxxxxx xxxx) %x xxx xxxxx" % xxxxxxx_xxxx
 
 
 value.__dict__[
