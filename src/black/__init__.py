@@ -5374,10 +5374,6 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
             elif not (isinstance(child, Leaf) and is_multiline_string(child)):
                 wrap_in_parentheses(node, child, visible=False)
 
-            elif isinstance(child, Node):
-                if maybe_make_parens_invisible_in_atom(child, parent=node):
-                    wrap_in_parentheses(node, child, visible=False)
-
         check_lpar = isinstance(child, Leaf) and child.value in parens_after
 
 
