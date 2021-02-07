@@ -1793,6 +1793,12 @@ class BlackTestCase(BlackBaseTestCase):
         finally:
             os.chdir(str(old_cwd))
 
+    def test_newline_comment_interaction(self) -> None:
+        # Source: https://github.com/psf/black/pull/1958/checks?check_run_id=1849391379#step:5:72
+        source = "class A:\\\r\n# type: ignore\n pass\n"
+        output = black.format_str(source, mode=DEFAULT_MODE)
+        black.assert_stable(source, output, mode=DEFAULT_MODE)
+
 
 with open(black.__file__, "r", encoding="utf-8") as _bf:
     black_source_lines = _bf.readlines()
