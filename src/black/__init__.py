@@ -3059,7 +3059,7 @@ class StringMerger(CustomSplitMapMixin, StringTransformer):
             )
 
         new_line = line.clone()
-        new_line.comments = line.comments
+        new_line.comments = line.comments.copy()
         append_leaves(new_line, line, LL)
 
         new_string_leaf = new_line.leaves[string_idx]
