@@ -227,14 +227,6 @@ class BlackTestCase(BlackBaseTestCase):
         black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
-    def test_function2(self) -> None:
-        source, expected = read_data("function2")
-        actual = fs(source)
-        self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, DEFAULT_MODE)
-
-    @patch("black.dump_to_file", dump_to_stderr)
     def test_invisible_parens_instability(self) -> None:
         source, _expected = read_data("invisible_parens_instability")
         actual = fs(source)
