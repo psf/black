@@ -5908,7 +5908,8 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
     """
 
     omit: Set[LeafID] = set()
-    yield omit
+    if not line.magic_trailing_comma:
+        yield omit
 
     length = 4 * line.depth
     opening_bracket: Optional[Leaf] = None
@@ -5937,6 +5938,9 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
                 continue
 
             if closing_bracket:
+                if closing_bracket is line.magic_trailing_comma:
+                    line.magic_trailing_comma = None
+                    yield set()
                 omit.add(id(closing_bracket))
                 omit.update(inner_brackets)
                 inner_brackets.clear()
@@ -5945,6 +5949,9 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
             if leaf.value:
                 opening_bracket = leaf.opening_bracket
                 closing_bracket = leaf
+
+    if line.magic_trailing_comma:
+        yield set()
 
 
 def get_future_imports(node: Node) -> Set[str]:
