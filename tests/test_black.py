@@ -235,16 +235,6 @@ class BlackTestCase(BlackBaseTestCase):
         black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
-    def test_function_trailing_comma_wip(self) -> None:
-        source, expected = read_data("function_trailing_comma_wip")
-        # sys.settrace(tracefunc)
-        actual = fs(source)
-        # sys.settrace(None)
-        self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
-
-    @patch("black.dump_to_file", dump_to_stderr)
     def test_invisible_parens_instability(self) -> None:
         source, _expected = read_data("invisible_parens_instability")
         actual = fs(source)
