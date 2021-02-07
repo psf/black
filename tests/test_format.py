@@ -42,6 +42,7 @@ SIMPLE_CASES = [
     "function2",
     "function_trailing_comma",
     "import_spacing",
+    "invisible_parens_instability",
     "long_strings",
     "long_strings__edge_case",
     "long_strings__regression",
