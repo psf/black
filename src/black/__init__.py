@@ -6619,7 +6619,13 @@ def _can_omit_opening_paren(line: Line, *, first: Leaf, line_length: int) -> boo
         if leaf.type in CLOSING_BRACKETS and leaf.opening_bracket is first:
             remainder = True
         if remainder:
-            remainder = False
+            length += leaf_length
+            if length > line_length:
+                break
+
+            if leaf.type in OPENING_BRACKETS:
+                # There are brackets we can further split on.
+                remainder = False
     else:
         # checked the entire string and line length wasn't exceeded
         if len(line.leaves) == _index + 1:
