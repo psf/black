@@ -6569,11 +6569,11 @@ def can_omit_invisible_parens(line: Line, line_length: int) -> bool:
 
     assert len(line.leaves) >= 2, "Stranded delimiter"
 
+    # With a single delimiter, omit if the expression starts or ends with
+    # a bracket.
     first = line.leaves[0]
     second = line.leaves[1]
 
-    # With a single delimiter, omit if the expression starts or ends with
-    # a bracket.
     if first.type in OPENING_BRACKETS and second.type not in CLOSING_BRACKETS:
         if _can_omit_opening_paren(line, first=first, line_length=line_length):
             return True
