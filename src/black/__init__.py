@@ -3429,7 +3429,6 @@ class StringParenStripper(StringTransformer):
 
         new_line = line.clone()
         new_line.comments = line.comments.copy()
-
         append_leaves(new_line, line, LL[: string_idx - 1])
 
         string_leaf = Leaf(token.STRING, LL[string_idx].value)
