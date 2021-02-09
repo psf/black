@@ -2723,6 +2723,7 @@ def transform_line(
 
         def rhs(line: Line, features: Collection[Feature]) -> Iterator[Line]:
             """Wraps calls to `right_hand_split`.
+
             The calls increasingly `omit` right-hand trailers (bracket pairs with
             content), meaning the trailers get glued together to split on another
             bracket pair instead.
