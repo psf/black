@@ -6653,6 +6653,8 @@ def _can_omit_closing_paren(line: Line, *, last: Leaf, line_length: int) -> bool
             # There are brackets we can further split on.
             seen_other_brackets = True
 
+    return False
+
 
 def get_cache_file(mode: Mode) -> Path:
     return CACHE_DIR / f"cache.{mode.get_cache_key()}.pickle"
