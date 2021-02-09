@@ -1003,7 +1003,7 @@ class BlackTestCase(BlackBaseTestCase):
                 fobj.write("print('hello')")
             self.invokeBlack([str(src)])
             cache = black.read_cache(mode)
-            self.assertIn(src, cache)
+            self.assertIn(str(src), cache)
 
     def test_cache_single_file_already_cached(self) -> None:
         mode = DEFAULT_MODE
@@ -1035,8 +1035,8 @@ class BlackTestCase(BlackBaseTestCase):
             with two.open("r") as fobj:
                 self.assertEqual(fobj.read(), 'print("hello")\n')
             cache = black.read_cache(mode)
-            self.assertIn(one, cache)
-            self.assertIn(two, cache)
+            self.assertIn(str(one), cache)
+            self.assertIn(str(two), cache)
 
     def test_no_cache_when_writeback_diff(self) -> None:
         mode = DEFAULT_MODE
@@ -1116,8 +1116,8 @@ class BlackTestCase(BlackBaseTestCase):
             src.touch()
             black.write_cache({}, [src], mode)
             cache = black.read_cache(mode)
-            self.assertIn(src, cache)
-            self.assertEqual(cache[src], black.get_cache_info(src))
+            self.assertIn(str(src), cache)
+            self.assertEqual(cache[str(src)], black.get_cache_info(src))
 
     def test_filter_cached(self) -> None:
         with TemporaryDirectory() as workspace:
@@ -1128,7 +1128,10 @@ class BlackTestCase(BlackBaseTestCase):
             uncached.touch()
             cached.touch()
             cached_but_changed.touch()
-            cache = {cached: black.get_cache_info(cached), cached_but_changed: (0.0, 0)}
+            cache = {
+                str(cached): black.get_cache_info(cached),
+                str(cached_but_changed): (0.0, 0),
+            }
             todo, done = black.filter_cached(
                 cache, {uncached, cached, cached_but_changed}
             )
@@ -1156,8 +1159,8 @@ class BlackTestCase(BlackBaseTestCase):
                 fobj.write('print("hello")\n')
             self.invokeBlack([str(workspace)], exit_code=123)
             cache = black.read_cache(mode)
-            self.assertNotIn(failing, cache)
-            self.assertIn(clean, cache)
+            self.assertNotIn(str(failing), cache)
+            self.assertIn(str(clean), cache)
 
     def test_write_cache_write_fail(self) -> None:
         mode = DEFAULT_MODE
@@ -1210,9 +1213,9 @@ class BlackTestCase(BlackBaseTestCase):
             path.touch()
             black.write_cache({}, [path], mode)
             one = black.read_cache(mode)
-            self.assertIn(path, one)
+            self.assertIn(str(path), one)
             two = black.read_cache(short_mode)
-            self.assertNotIn(path, two)
+            self.assertNotIn(str(path), two)
 
     def test_single_file_force_pyi(self) -> None:
         pyi_mode = replace(DEFAULT_MODE, is_pyi=True)
@@ -1226,9 +1229,9 @@ class BlackTestCase(BlackBaseTestCase):
                 actual = fh.read()
             # verify cache with --pyi is separate
             pyi_cache = black.read_cache(pyi_mode)
-            self.assertIn(path, pyi_cache)
+            self.assertIn(str(path), pyi_cache)
             normal_cache = black.read_cache(DEFAULT_MODE)
-            self.assertNotIn(path, normal_cache)
+            self.assertNotIn(str(path), normal_cache)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(contents, actual)
         black.assert_stable(contents, actual, pyi_mode)
@@ -1255,8 +1258,8 @@ class BlackTestCase(BlackBaseTestCase):
             pyi_cache = black.read_cache(pyi_mode)
             normal_cache = black.read_cache(reg_mode)
             for path in paths:
-                self.assertIn(path, pyi_cache)
-                self.assertNotIn(path, normal_cache)
+                self.assertIn(str(path), pyi_cache)
+                self.assertNotIn(str(path), normal_cache)
 
     def test_pipe_force_pyi(self) -> None:
         source, expected = read_data("force_pyi")
@@ -1280,9 +1283,9 @@ class BlackTestCase(BlackBaseTestCase):
                 actual = fh.read()
             # verify cache with --target-version is separate
             py36_cache = black.read_cache(py36_mode)
-            self.assertIn(path, py36_cache)
+            self.assertIn(str(path), py36_cache)
             normal_cache = black.read_cache(reg_mode)
-            self.assertNotIn(path, normal_cache)
+            self.assertNotIn(str(path), normal_cache)
         self.assertEqual(actual, expected)
 
     @event_loop()
@@ -1307,8 +1310,8 @@ class BlackTestCase(BlackBaseTestCase):
             pyi_cache = black.read_cache(py36_mode)
             normal_cache = black.read_cache(reg_mode)
             for path in paths:
-                self.assertIn(path, pyi_cache)
-                self.assertNotIn(path, normal_cache)
+                self.assertIn(str(path), pyi_cache)
+                self.assertNotIn(str(path), normal_cache)
 
     def test_pipe_force_py36(self) -> None:
         source, expected = read_data("force_py36")

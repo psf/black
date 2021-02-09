@@ -25,7 +25,7 @@ repos:
         exclude: ^docs/conf.py
 
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v1.19.1
+    rev: v2.2.1
     hooks:
       - id: prettier
         args: [--prose-wrap=always, --print-width=88]
