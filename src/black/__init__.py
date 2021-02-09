@@ -5943,7 +5943,8 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
             elif leaf.type in CLOSING_BRACKETS:
                 inner_brackets.add(id(leaf))
         elif leaf.type in CLOSING_BRACKETS:
-            if index > 0 and line.leaves[index - 1].type in OPENING_BRACKETS:
+            prev = line.leaves[index - 1] if index > 0 else None
+            if prev and prev.type in OPENING_BRACKETS:
                 # Empty brackets would fail a split so treat them as "inner"
                 # brackets (e.g. only add them to the `omit` set if another
                 # pair of brackets was good enough.
