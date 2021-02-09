@@ -6577,24 +6577,8 @@ def can_omit_invisible_parens(line: Line, line_length: int) -> bool:
     # With a single delimiter, omit if the expression starts or ends with
     # a bracket.
     if first.type in OPENING_BRACKETS and second.type not in CLOSING_BRACKETS:
-        remainder = False
-        length = 4 * line.depth
-        for _index, leaf, leaf_length in enumerate_with_length(line):
-            if leaf.type in CLOSING_BRACKETS and leaf.opening_bracket is first:
-                remainder = True
-            if remainder:
-                length += leaf_length
-                if length > line_length:
-                    break
-
-                if leaf.type in OPENING_BRACKETS:
-                    # There are brackets we can further split on.
-                    remainder = False
-
-        else:
-            # checked the entire string and line length wasn't exceeded
-            if len(line.leaves) == _index + 1:
-                return True
+        if _can_omit_opening_paren(line, first=first, line_length=line_length):
+            return True
 
         # Note: we are not returning False here because a line might have *both*
         # a leading opening bracket and a trailing closing bracket.  If the
@@ -6620,19 +6604,43 @@ def can_omit_invisible_parens(line: Line, line_length: int) -> bool:
             # unnecessary.
             return True
 
-        length = 4 * line.depth
-        seen_other_brackets = False
-        for _index, leaf, leaf_length in enumerate_with_length(line):
-            length += leaf_length
-            if leaf is last.opening_bracket:
-                if seen_other_brackets or length <= line_length:
-                    return True
-
-            elif leaf.type in OPENING_BRACKETS:
-                # There are brackets we can further split on.
-                seen_other_brackets = True
+        if _can_omit_closing_paren(line, last=last, line_length=line_length):
+            return True
 
     return False
+
+
+def _can_omit_opening_paren(line: Line, *, first: Leaf, line_length: int) -> bool:
+    """See `can_omit_invisible_parens`."""
+    remainder = False
+    length = 4 * line.depth
+    _index = -1
+    for _index, leaf, leaf_length in enumerate_with_length(line):
+        if leaf.type in CLOSING_BRACKETS and leaf.opening_bracket is first:
+            remainder = True
+        if remainder:
+            remainder = False
+    else:
+        # checked the entire string and line length wasn't exceeded
+        if len(line.leaves) == _index + 1:
+            return True
+
+    return False
+
+
+def _can_omit_closing_paren(line: Line, *, last: Leaf, line_length: int) -> bool:
+    """See `can_omit_invisible_parens`."""
+    length = 4 * line.depth
+    seen_other_brackets = False
+    for _index, leaf, leaf_length in enumerate_with_length(line):
+        length += leaf_length
+        if leaf is last.opening_bracket:
+            if seen_other_brackets or length <= line_length:
+                return True
+
+        elif leaf.type in OPENING_BRACKETS:
+            # There are brackets we can further split on.
+            seen_other_brackets = True
 
 
 def get_cache_file(mode: Mode) -> Path:
