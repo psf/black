@@ -5917,7 +5917,8 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
     a preceding closing bracket fits in one line.
 
     Yielded sets are cumulative (contain results of previous yields, too).  First
-    set is empty.
+    set is empty, unless the line should explode, in which case bracket pairs until
+    the one that needs to explode are omitted.
     """
 
     omit: Set[LeafID] = set()
