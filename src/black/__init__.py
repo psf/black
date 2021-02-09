@@ -5815,6 +5815,9 @@ def should_split_line(line: Line, opening_bracket: Leaf) -> bool:
 
 def is_one_tuple_between(opening: Leaf, closing: Leaf, leaves: List[Leaf]) -> bool:
     """Return True if content between `opening` and `closing` looks like a one-tuple."""
+    if opening.type != token.LPAR and closing.type != token.RPAR:
+        return False
+
     depth = closing.bracket_depth + 1
     for _opening_index, leaf in enumerate(leaves):
         if leaf is opening:
