@@ -6571,8 +6571,6 @@ def can_omit_invisible_parens(line: Line, line_length: int) -> bool:
 
     first = line.leaves[0]
     second = line.leaves[1]
-    penultimate = line.leaves[-2]
-    last = line.leaves[-1]
 
     # With a single delimiter, omit if the expression starts or ends with
     # a bracket.
@@ -6583,6 +6581,9 @@ def can_omit_invisible_parens(line: Line, line_length: int) -> bool:
         # Note: we are not returning False here because a line might have *both*
         # a leading opening bracket and a trailing closing bracket.  If the
         # opening bracket doesn't match our rule, maybe the closing will.
+
+    penultimate = line.leaves[-2]
+    last = line.leaves[-1]
 
     if (
         last.type == token.RPAR
