@@ -5966,9 +5966,6 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
                 opening_bracket = leaf.opening_bracket
                 closing_bracket = leaf
 
-    if line.magic_trailing_comma:
-        yield omit
-
 
 def get_future_imports(node: Node) -> Set[str]:
     """Return a set of __future__ imports in the file."""
