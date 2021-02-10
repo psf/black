@@ -5953,8 +5953,10 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
                 continue
 
             if closing_bracket:
+                # Omit tokens to the right of brackets that contain a trailing comma
                 if closing_bracket is line.magic_trailing_comma:
                     yield omit
+                # TODO: Understand and explain this line; are there edge cases here?
                 if line.magic_trailing_comma and inner_brackets:
                     yield omit
                 omit.add(id(closing_bracket))
