@@ -5953,7 +5953,9 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
                 continue
 
             if closing_bracket:
-                if closing_bracket is line.magic_trailing_comma or inner_brackets:
+                if closing_bracket is line.magic_trailing_comma:
+                    yield omit
+                if inner_brackets:
                     yield omit
                 omit.add(id(closing_bracket))
                 omit.update(inner_brackets)
