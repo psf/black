@@ -1797,6 +1797,11 @@ class BlackTestCase(BlackBaseTestCase):
         source = "\\"
         black.format_str(source, mode=DEFAULT_MODE)
 
+    def test_newline_comment_interaction(self) -> None:
+        source = "class A:\\\r\n# type: ignore\n pass\n"
+        output = black.format_str(source, mode=DEFAULT_MODE)
+        black.assert_stable(source, output, mode=DEFAULT_MODE)
+
 
 with open(black.__file__, "r", encoding="utf-8") as _bf:
     black_source_lines = _bf.readlines()
