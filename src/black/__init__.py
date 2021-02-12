@@ -6634,10 +6634,6 @@ def can_omit_invisible_parens(
             # unnecessary.
             return True
 
-        if line.magic_trailing_comma and penultimate.type == token.COMMA:
-            # The rightmost non-omitted bracket pair is the one we want to explode on.
-            return True
-
         if _can_omit_closing_paren(line, last=last, line_length=line_length):
             return True
 
