@@ -2637,7 +2637,7 @@ def list_comments(prefix: str, *, is_endmarker: bool) -> List[ProtoComment]:
     consumed = 0
     nlines = 0
     ignored_lines = 0
-    for index, line in enumerate(prefix.split("\n")):
+    for index, line in enumerate(re.split("\r?\n", prefix)):
         consumed += len(line) + 1  # adding the length of the split '\n'
         line = line.lstrip()
         if not line:
