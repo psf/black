@@ -148,10 +148,9 @@ division_result_tuple = (6 / 2,)
 print("foo %r", (foo.bar,))
 
 if True:
-    IGNORED_TYPES_FOR_ATTRIBUTE_CHECKING = (
-        Config.IGNORED_TYPES_FOR_ATTRIBUTE_CHECKING
-        | {pylons.controllers.WSGIController}
-    )
+    IGNORED_TYPES_FOR_ATTRIBUTE_CHECKING = Config.IGNORED_TYPES_FOR_ATTRIBUTE_CHECKING | {
+        pylons.controllers.WSGIController
+    }
 
 if True:
     ec2client.get_waiter("instance_stopped").wait(
