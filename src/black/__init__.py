@@ -2742,10 +2742,11 @@ def transform_line(
 
             # All splits failed, best effort split with no omits.
             # This mostly happens to multiline strings that are by definition
-            # reported as not fitting a single line.
-            # line_length=1 here was historically a bug that somehow became a feature.
-            # See #762 and #781 for the full story.
-            yield from right_hand_split(line, line_length=1, features=features)
+            # reported as not fitting a single line, as well as lines that contain
+            # trailing commas (those have to be exploded).
+            yield from right_hand_split(
+                line, line_length=mode.line_length, features=features
+            )
 
         if mode.experimental_string_processing:
             if line.inside_brackets:
