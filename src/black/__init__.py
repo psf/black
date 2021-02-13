@@ -2631,7 +2631,7 @@ def list_comments(prefix: str, *, is_endmarker: bool) -> List[ProtoComment]:
     consumed = 0
     nlines = 0
     ignored_lines = 0
-    for index, line in enumerate(prefix.split("\n")):
+    for index, line in enumerate(re.split("\r?\n", prefix)):
         consumed += len(line) + 1  # adding the length of the split '\n'
         line = line.lstrip()
         if not line:
@@ -6609,10 +6609,6 @@ def can_omit_invisible_parens(line: Line, line_length: int) -> bool:
         if is_multiline_string(first):
             # Additional wrapping of a multiline string in this situation is
             # unnecessary.
-            return True
-
-        if line.magic_trailing_comma and penultimate.type == token.COMMA:
-            # The rightmost non-omitted bracket pair is the one we want to explode on.
             return True
 
         if _can_omit_closing_paren(line, last=last, line_length=line_length):
