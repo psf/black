@@ -4174,9 +4174,10 @@ class StringParenWrapper(CustomSplitMapMixin, BaseStringSplitter):
         """
         # If this line is apart of a return/yield statement and the first leaf
         # contains either the "return" or "yield" keywords...
-        if parent_type(LL[0]) in [syms.return_stmt, syms.yield_expr] and LL[
-            0
-        ].value in ["return", "yield"]:
+        if (
+            parent_type(LL[0]) in [syms.return_stmt, syms.yield_expr]
+            and LL[0].value in ["return", "yield"]
+        ):
             is_valid_index = is_valid_index_factory(LL)
 
             idx = 2 if is_valid_index(1) and is_empty_par(LL[1]) else 1
@@ -4913,7 +4914,7 @@ def right_hand_split(
         # there are no standalone comments in the body
         and not body.contains_standalone_comments(0)
         # and we can actually remove the parens
-        and can_omit_invisible_parens(body, line_length)
+        and can_omit_invisible_parens(body, line_length, omit)
     ):
         omit = {id(closing_bracket), *omit}
         try:
@@ -6552,7 +6553,9 @@ def can_be_split(line: Line) -> bool:
     return True
 
 
-def can_omit_invisible_parens(line: Line, line_length: int) -> bool:
+def can_omit_invisible_parens(
+    line: Line, line_length: int, omit: Collection[LeafID]
+) -> bool:
     """Does `line` have a shape safe to reformat without optional parens around it?
 
     Returns True for only a subset of potentially nice looking formattings but
@@ -6589,6 +6592,16 @@ def can_omit_invisible_parens(line: Line, line_length: int) -> bool:
 
     penultimate = line.leaves[-2]
     last = line.leaves[-1]
+    if omit:
+        try:
+            penultimate, last = last_two_except(line.leaves, omit)
+        except LookupError:
+            # Turns out we'd omit everything.  We cannot skip the optional parentheses.
+            return False
+
+    # TODO: Is this reasonable?
+    if last.type in COMPARATORS:
+        return True
 
     if (
         last.type == token.RPAR
@@ -6656,6 +6669,27 @@ def _can_omit_closing_paren(line: Line, *, last: Leaf, line_length: int) -> bool
             seen_other_brackets = True
 
     return False
+
+
+def last_two_except(leaves: List[Leaf], omit: Collection[LeafID]) -> Tuple[Leaf, Leaf]:
+    """Return (penultimate, last) leaves skipping brackets in `omit` and contents."""
+    stop_after = None
+    last = None
+    for leaf in reversed(leaves):
+        if stop_after:
+            if leaf is stop_after:
+                stop_after = None
+            continue
+
+        if last:
+            return leaf, last
+
+        if id(leaf) in omit:
+            stop_after = leaf.opening_bracket
+        else:
+            last = leaf
+    else:
+        raise LookupError("Last two leaves were also skipped")
 
 
 def get_cache_file(mode: Mode) -> Path:
