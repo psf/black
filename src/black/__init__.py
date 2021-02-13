@@ -6600,7 +6600,7 @@ def can_omit_invisible_parens(
             return False
 
     # TODO: Is this reasonable?
-    if last.type in COMPARATORS:
+    if last.type in COMPARATORS or last.type in MATH_OPERATORS:
         return True
 
     if (
