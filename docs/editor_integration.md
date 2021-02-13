@@ -247,7 +247,7 @@ $ gedit <file_name>
 
 ```console
 #!/bin/bash
-Name= $GEDIT_CURRENT_DOCUMENT_NAME
+Name=$GEDIT_CURRENT_DOCUMENT_NAME
 black $Name
 ```
 
