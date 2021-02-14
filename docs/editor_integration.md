@@ -258,7 +258,7 @@ black $Name
 - Change the name of the tool if you like.
 
 Use your keyboard shortcut or `Tools -> External Tools` to use your new tool.
-When you close and Reopen your File, black will be done with its job.
+When you close and reopen your File, _Black_ will be done with its job.
 
 ## Visual Studio Code
 
