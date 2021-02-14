@@ -454,7 +454,7 @@ then write the above files to `.cache/black/<version>/`.
 The following notable open-source projects trust _Black_ with enforcing a consistent
 code style: pytest, tox, Pyramid, Django Channels, Hypothesis, attrs, SQLAlchemy,
 Poetry, PyPA applications (Warehouse, Bandersnatch, Pipenv, virtualenv), pandas, Pillow,
-every Datadog Agent Integration, Home Assistant.
+every Datadog Agent Integration, Home Assistant, Zulip.
 
 The following organizations use _Black_: Facebook, Dropbox, Mozilla, Quora.
 
