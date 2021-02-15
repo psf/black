@@ -239,8 +239,9 @@ feeling confident, use `--fast`.
 _Black_ is a PEP 8 compliant opinionated formatter. _Black_ reformats entire files in
 place. It is not configurable. It doesn't take previous formatting into account. Your
 main option of configuring _Black_ is that it doesn't reformat blocks that start with
-`# fmt: off` and end with `# fmt: on`. `# fmt: on/off` have to be on the same level of
-indentation. To learn more about _Black_'s opinions, to go
+`# fmt: off` and end with `# fmt: on`, or lines that ends with `# fmt: skip`.
+Pay attention that `# fmt: on/off` have to be on the same level of indentation.
+To learn more about _Black_'s opinions, to go
 [the_black_code_style](https://github.com/psf/black/blob/master/docs/the_black_code_style.md).
 
 Please refer to this document before submitting an issue. What seems like a bug might be
