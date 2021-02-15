@@ -21,7 +21,7 @@ import click
 
 WINDOWS = system() == "Windows"
 BLACK_BINARY = "black.exe" if WINDOWS else "black"
-GIT_BIANRY = "git.exe" if WINDOWS else "git"
+GIT_BINARY = "git.exe" if WINDOWS else "git"
 LOG = logging.getLogger(__name__)
 
 
@@ -58,13 +58,16 @@ async def _gen_check_output(
         await process.wait()
         raise
 
-    if process.returncode != 0:
-        returncode = process.returncode
-        if returncode is None:
-            returncode = 69
+    # A non-optional timeout was supplied to asyncio.wait_for, guaranteeing
+    # a timeout or completed process.  A terminated Python process will have a
+    # non-empty returncode value.
+    assert process.returncode is not None
 
+    if process.returncode != 0:
         cmd_str = " ".join(cmd)
-        raise CalledProcessError(returncode, cmd_str, output=stdout, stderr=stderr)
+        raise CalledProcessError(
+            process.returncode, cmd_str, output=stdout, stderr=stderr
+        )
 
     return (stdout, stderr)
 
@@ -160,7 +163,7 @@ async def git_checkout_or_rebase(
     depth: int = 1,
 ) -> Optional[Path]:
     """git Clone project or rebase"""
-    git_bin = str(which(GIT_BIANRY))
+    git_bin = str(which(GIT_BINARY))
     if not git_bin:
         LOG.error("No git binary found")
         return None
