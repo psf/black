@@ -1113,6 +1113,8 @@ def get_grammars(target_versions: Set[TargetVersion]) -> List[Grammar]:
 
 def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -> Node:
     """Given a string with source, return the lib2to3 Node."""
+    if src_txt.endswith("\\"):
+        src_txt = src_txt.rstrip("\\")
     if not src_txt.endswith("\n"):
         src_txt += "\n"
 
