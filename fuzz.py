@@ -9,6 +9,7 @@ import hypothesmith
 from hypothesis import HealthCheck, given, settings, strategies as st
 
 import black
+from blib2to3.pgen2.tokenize import TokenError
 
 
 # This test uses the Hypothesis and Hypothesmith libraries to generate random
@@ -46,6 +47,16 @@ def test_idempotent_any_syntatically_valid_python(
         # able to cope with it.  See issues #970, #1012, #1358, and #1557.
         # TODO: remove this try-except block when issues are resolved.
         return
+    except TokenError as e:
+        # The Python3.7 'compile' method accepts input that terminates with a
+        # multi-line continuation character (\), but black rejects it.
+        # TODO: remove this special-case once py37 reaches end-of-life
+        exception_message = e.args[0]
+        if (
+            src_contents.endswith("\\")
+            and exception_message == "EOF in multi-line statement"
+        ):
+            return
 
     # And check that we got equivalent and stable output.
     black.assert_equivalent(src_contents, dst_contents)
