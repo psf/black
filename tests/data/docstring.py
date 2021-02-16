@@ -110,6 +110,32 @@ def ignored_docstring():
     """a => \
 b"""  
 
+
+def docstring_with_inline_tabs_and_space_indentation():
+    """hey
+
+    tab	separated	value
+    	tab at start of line and then a tab	separated	value
+    				multiple tabs at the beginning	and	inline
+    	 	  	mixed tabs and spaces at beginning. next line has mixed tabs and spaces only.
+    			 	  		
+    line ends with some tabs		
+    """
+
+
+def docstring_with_inline_tabs_and_tab_indentation():
+	"""hey
+
+	tab	separated	value
+		tab at start of line and then a tab	separated	value
+					multiple tabs at the beginning	and	inline
+		 	  	mixed tabs and spaces at beginning. next line has mixed tabs and spaces only.
+				 	  		
+	line ends with some tabs		
+	"""
+	pass
+        
+
 # output
 
 class MyClass:
@@ -223,3 +249,28 @@ def believe_it_or_not_this_is_in_the_py_stdlib():
 def ignored_docstring():
     """a => \
 b"""
+
+
+def docstring_with_inline_tabs_and_space_indentation():
+    """hey
+
+    tab	separated	value
+        tab at start of line and then a tab	separated	value
+                                multiple tabs at the beginning	and	inline
+                        mixed tabs and spaces at beginning. next line has mixed tabs and spaces only.
+
+    line ends with some tabs
+    """
+
+
+def docstring_with_inline_tabs_and_tab_indentation():
+    """hey
+
+    tab	separated	value
+            tab at start of line and then a tab	separated	value
+                                    multiple tabs at the beginning	and	inline
+                            mixed tabs and spaces at beginning. next line has mixed tabs and spaces only.
+
+    line ends with some tabs
+    """
+    pass

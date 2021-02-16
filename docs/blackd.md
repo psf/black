@@ -54,6 +54,9 @@ The headers controlling how source code is formatted are:
 - `X-Skip-String-Normalization`: corresponds to the `--skip-string-normalization`
   command line flag. If present and its value is not the empty string, no string
   normalization will be performed.
+- `X-Skip-Magic-Trailing-Comma`: corresponds to the `--skip-magic-trailing-comma`
+  command line flag. If present and its value is not the empty string, trailing commas
+  will not be used as a reason to split lines.
 - `X-Fast-Or-Safe`: if set to `fast`, `blackd` will act as _Black_ does when passed the
   `--fast` command line flag.
 - `X-Python-Variant`: if set to `pyi`, `blackd` will act as _Black_ does when passed the

@@ -71,11 +71,11 @@ setup(
         "click>=7.1.2",
         "appdirs",
         "toml>=0.10.1",
-        "typed-ast>=1.4.0",
+        "typed-ast>=1.4.2",
         "regex>=2020.1.8",
         "pathspec>=0.6, <1",
         "dataclasses>=0.6; python_version < '3.7'",
-        "typing_extensions>=3.7.4",
+        "typing_extensions>=3.7.4; python_version < '3.8'",
         "mypy_extensions>=0.4.3",
     ],
     extras_require={

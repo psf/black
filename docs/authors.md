@@ -69,6 +69,7 @@ Multiple contributions by:
 - [Gregory P. Smith](mailto:greg@krypto.org)
 - Gustavo Camargo
 - hauntsaninja
+- [Hadi Alqattan](mailto:alqattanhadizaki@gmail.com)
 - [Heaford](mailto:dan@heaford.com)
 - [Hugo Barrera](mailto::hugo@barrera.io)
 - Hugo van Kemenade
@@ -132,6 +133,7 @@ Multiple contributions by:
 - [Paul Ganssle](mailto:p.ganssle@gmail.com)
 - [Paul Meinhardt](mailto:mnhrdt@gmail.com)
 - [Peter Bengtsson](mailto:mail@peterbe.com)
+- [Peter Grayson](mailto:pete@jpgrayson.net)
 - [Peter Stensmyr](mailto:peter.stensmyr@gmail.com)
 - pmacosta
 - [Quentin Pradet](mailto:quentin@pradet.me)

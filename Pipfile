@@ -9,7 +9,6 @@ coverage = "*"
 docutils = "==0.15"  # not a direct dependency, see https://github.com/pypa/pipenv/issues/3865
 flake8 = "*"
 flake8-bugbear = "*"
-flake8-mypy = "*"
 mypy = ">=0.782"
 pre-commit = "*"
 readme_renderer = "*"
@@ -29,7 +28,7 @@ mypy_extensions = ">=0.4.3"
 pathspec = ">=0.6"
 regex = ">=2020.1.8"
 toml = ">=0.10.1"
-typed-ast = "==1.4.1"
-typing_extensions = ">=3.7.4"
+typed-ast = "==1.4.2"
+typing_extensions = {"python_version <" = "3.8","version >=" = "3.7.4"}
 black = {editable = true,extras = ["d"],path = "."}
 dataclasses = {"python_version <" = "3.7","version >" = "0.6"}

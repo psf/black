@@ -97,6 +97,10 @@ Options:
 
   -S, --skip-string-normalization
                                   Don't normalize string quotes or prefixes.
+  -C, --skip-magic-trailing-comma
+                                  Don't use trailing commas as a reason to
+                                  split lines.
+
   --check                         Don't write the files back, just return the
                                   status.  Return code 0 means nothing would
                                   change.  Return code 1 means some files
@@ -127,13 +131,19 @@ Options:
                                   paths are excluded. Use forward slashes for
                                   directories on all platforms (Windows, too).
                                   Exclusions are calculated first, inclusions
-                                  later.  [default: /(\.eggs|\.git|\.hg|\.mypy
-                                  _cache|\.nox|\.tox|\.venv|\.svn|_build|buck-
-                                  out|build|dist)/]
+                                  later.  [default: /(\.direnv|\.eggs|\.git|\.
+                                  hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_bu
+                                  ild|buck-out|build|dist)/]
 
   --force-exclude TEXT            Like --exclude, but files and directories
                                   matching this regex will be excluded even
-                                  when they are passed explicitly as arguments.
+                                  when they are passed explicitly as
+                                  arguments.
+
+  --stdin-filename TEXT           The name of the file when passing it through
+                                  stdin. Useful to make sure Black will
+                                  respect --force-exclude option on some
+                                  editors that rely on using stdin.
 
   -q, --quiet                     Don't emit non-error messages to stderr.
                                   Errors are still emitted; silence those with
@@ -164,7 +174,7 @@ about _Black_'s changes or will overwrite _Black_'s changes. A good example of t
 should be configured to neither warn about nor overwrite _Black_'s changes.
 
 Actual details on _Black_ compatible configurations for various tools can be found in
-[compatible_configs](https://github.com/psf/black/blob/master/docs/compatible_configs.md).
+[compatible_configs](https://github.com/psf/black/blob/master/docs/compatible_configs.md#black-compatible-configurations).
 
 ### Migrating your code style without ruining git blame
 
@@ -229,8 +239,9 @@ feeling confident, use `--fast`.
 _Black_ is a PEP 8 compliant opinionated formatter. _Black_ reformats entire files in
 place. It is not configurable. It doesn't take previous formatting into account. Your
 main option of configuring _Black_ is that it doesn't reformat blocks that start with
-`# fmt: off` and end with `# fmt: on`. `# fmt: on/off` have to be on the same level of
-indentation. To learn more about _Black_'s opinions, to go
+`# fmt: off` and end with `# fmt: on`, or lines that ends with `# fmt: skip`. Pay
+attention that `# fmt: on/off` have to be on the same level of indentation. To learn
+more about _Black_'s opinions, to go
 [the_black_code_style](https://github.com/psf/black/blob/master/docs/the_black_code_style.md).
 
 Please refer to this document before submitting an issue. What seems like a bug might be
@@ -303,9 +314,10 @@ line-length = 88
 target-version = ['py37']
 include = '\.pyi?$'
 exclude = '''
-
-(
-  /(
+# A regex preceded with ^/ will apply only to files and directories
+# in the root of the project.
+^/(
+  (
       \.eggs         # exclude a few common directories in the
     | \.git          # root of the project
     | \.hg
@@ -372,7 +384,7 @@ Use [pre-commit](https://pre-commit.com/). Once you
 ```yaml
 repos:
   - repo: https://github.com/psf/black
-    rev: 19.10b0 # Replace by any tag/version: https://github.com/psf/black/tags
+    rev: 20.8b1 # Replace by any tag/version: https://github.com/psf/black/tags
     hooks:
       - id: black
         language_version: python3 # Should be a command that runs python3.6+
@@ -406,7 +418,15 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
       - uses: psf/black@stable
+        with:
+          black_args: ". --check"
 ```
+
+### Inputs
+
+#### `black_args`
+
+**optional**: Black input arguments. Defaults to `. --check --diff`.
 
 ## Ignoring unmodified files
 
@@ -435,7 +455,7 @@ then write the above files to `.cache/black/<version>/`.
 The following notable open-source projects trust _Black_ with enforcing a consistent
 code style: pytest, tox, Pyramid, Django Channels, Hypothesis, attrs, SQLAlchemy,
 Poetry, PyPA applications (Warehouse, Bandersnatch, Pipenv, virtualenv), pandas, Pillow,
-every Datadog Agent Integration, Home Assistant.
+every Datadog Agent Integration, Home Assistant, Zulip.
 
 The following organizations use _Black_: Facebook, Dropbox, Mozilla, Quora.
 
@@ -574,6 +594,7 @@ Multiple contributions by:
 - [Gregory P. Smith](mailto:greg@krypto.org)
 - Gustavo Camargo
 - hauntsaninja
+- [Hadi Alqattan](mailto:alqattanhadizaki@gmail.com)
 - [Heaford](mailto:dan@heaford.com)
 - [Hugo Barrera](mailto::hugo@barrera.io)
 - Hugo van Kemenade

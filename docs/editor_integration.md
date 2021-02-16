@@ -72,7 +72,9 @@ On Windows / Linux / BSD:
       - Output paths to refresh: `$FilePath$`
       - Working directory: `$ProjectFileDir$`
 
-   - Uncheck "Auto-save edited files to trigger the watcher" in Advanced Options
+   - In Advanced Options
+     - Uncheck "Auto-save edited files to trigger the watcher"
+     - Uncheck "Trigger the watcher on external changes"
 
 ## Wing IDE
 
@@ -123,6 +125,7 @@ Configuration:
 - `g:black_linelength` (defaults to `88`)
 - `g:black_skip_string_normalization` (defaults to `0`)
 - `g:black_virtualenv` (defaults to `~/.vim/black` or `~/.local/share/nvim/black`)
+- `g:black_quiet` (defaults to `0`)
 
 To install with [vim-plug](https://github.com/junegunn/vim-plug):
 
@@ -242,6 +245,35 @@ $ pip install -U black --no-binary regex,typed-ast
    let g:ale_fixers = {}
    let g:ale_fixers.python = ['black']
    ```
+## Gedit
+
+gedit is the default text editor of the GNOME, Unix like Operating Systems. Open gedit
+as
+
+```console
+$ gedit <file_name>
+```
+
+1. `Go to edit > preferences > plugins`
+2. Search for `external tools` and activate it.
+3. In `Tools menu -> Manage external tools`
+4. Add a new tool using `+` button.
+5. Copy the below content to the code window.
+
+```console
+#!/bin/bash
+Name=$GEDIT_CURRENT_DOCUMENT_NAME
+black $Name
+```
+
+- Set a keyboard shortcut if you like, Ex. `ctrl-B`
+- Save: `Nothing`
+- Input: `Nothing`
+- Output: `Display in bottom pane` if you like.
+- Change the name of the tool if you like.
+
+Use your keyboard shortcut or `Tools -> External Tools` to use your new tool. When you
+close and reopen your File, _Black_ will be done with its job.
 
 ## Visual Studio Code
 

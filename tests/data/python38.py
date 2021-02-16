@@ -11,6 +11,14 @@ def starred_yield():
     yield "value1", *my_list
 
 
+# all right hand side expressions allowed in regular assignments are now also allowed in
+# annotated assignments
+a : Tuple[ str, int] = "1", 2
+a: Tuple[int , ... ] = b,  *c, d
+def t():
+    a : str =  yield "a"
+
+
 # output
 
 
@@ -25,3 +33,13 @@ def starred_return():
 def starred_yield():
     my_list = ["value2", "value3"]
     yield "value1", *my_list
+
+
+# all right hand side expressions allowed in regular assignments are now also allowed in
+# annotated assignments
+a: Tuple[str, int] = "1", 2
+a: Tuple[int, ...] = b, *c, d
+
+
+def t():
+    a: str = yield "a"

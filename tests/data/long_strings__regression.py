@@ -353,6 +353,49 @@ value.__dict__[
     key
 ] = "test"  # set some Thrift field to non-None in the struct aa bb cc dd ee
 
+RE_ONE_BACKSLASH = {
+    "asdf_hjkl_jkl": re.compile(
+        r"(?<!([0-9]\ ))(?<=(^|\ ))([A-Z]+(\ )?|[0-9](\ )|[a-z](\ )){4,7}([A-Z]|[0-9]|[a-z])($|\b)(?!(\ ?([0-9]\ )|(\.)))"
+    ),
+}
+
+RE_TWO_BACKSLASHES = {
+    "asdf_hjkl_jkl": re.compile(
+        r"(?<!([0-9]\ ))(?<=(^|\ ))([A-Z]+(\ )?|[0-9](\ )|[a-z](\\ )){4,7}([A-Z]|[0-9]|[a-z])($|\b)(?!(\ ?([0-9]\ )|(\.)))"
+    ),
+}
+
+RE_THREE_BACKSLASHES = {
+    "asdf_hjkl_jkl": re.compile(
+        r"(?<!([0-9]\ ))(?<=(^|\ ))([A-Z]+(\ )?|[0-9](\ )|[a-z](\\\ )){4,7}([A-Z]|[0-9]|[a-z])($|\b)(?!(\ ?([0-9]\ )|(\.)))"
+    ),
+}
+
+# We do NOT split on f-string expressions.
+print(f"Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam. {[f'{i}' for i in range(10)]}")
+x = f"This is a long string which contains an f-expr that should not split {{{[i for i in range(5)]}}}."
+
+# The parens should NOT be removed in this case.
+(
+    "my very long string that should get formatted if I'm careful to make sure it goes"
+    " over 88 characters which it has now"
+)
+
+# The parens should NOT be removed in this case.
+(
+    "my very long string that should get formatted if I'm careful to make sure it goes over 88 characters which"
+    " it has now"
+)
+
+# The parens should NOT be removed in this case.
+(
+    "my very long string"
+    " that should get formatted"
+    " if I'm careful to make sure"
+    " it goes over 88 characters which"
+    " it has now"
+)
+
 # output
 
 
@@ -793,3 +836,53 @@ class xxxxxxxxxxxxxxxxxxxxx(xxxx.xxxxxxxxxxxxx):
 value.__dict__[
     key
 ] = "test"  # set some Thrift field to non-None in the struct aa bb cc dd ee
+
+RE_ONE_BACKSLASH = {
+    "asdf_hjkl_jkl": re.compile(
+        r"(?<!([0-9]\ ))(?<=(^|\ ))([A-Z]+(\ )?|[0-9](\ )|[a-z](\ )){4,7}([A-Z]|[0-9]|[a-z])($|\b)(?!(\ ?([0-9]\ )|(\.)))"
+    ),
+}
+
+RE_TWO_BACKSLASHES = {
+    "asdf_hjkl_jkl": re.compile(
+        r"(?<!([0-9]\ ))(?<=(^|\ ))([A-Z]+(\ )?|[0-9](\ )|[a-z](\\"
+        r" )){4,7}([A-Z]|[0-9]|[a-z])($|\b)(?!(\ ?([0-9]\ )|(\.)))"
+    ),
+}
+
+RE_THREE_BACKSLASHES = {
+    "asdf_hjkl_jkl": re.compile(
+        r"(?<!([0-9]\ ))(?<=(^|\ ))([A-Z]+(\ )?|[0-9](\ )|[a-z](\\\ )){4,7}([A-Z]|[0-9]|[a-z])($|\b)(?!(\ ?([0-9]\ )|(\.)))"
+    ),
+}
+
+# We do NOT split on f-string expressions.
+print(
+    "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam."
+    f" {[f'{i}' for i in range(10)]}"
+)
+x = (
+    "This is a long string which contains an f-expr that should not split"
+    f" {{{[i for i in range(5)]}}}."
+)
+
+# The parens should NOT be removed in this case.
+(
+    "my very long string that should get formatted if I'm careful to make sure it goes"
+    " over 88 characters which it has now"
+)
+
+# The parens should NOT be removed in this case.
+(
+    "my very long string that should get formatted if I'm careful to make sure it goes"
+    " over 88 characters which it has now"
+)
+
+# The parens should NOT be removed in this case.
+(
+    "my very long string"
+    " that should get formatted"
+    " if I'm careful to make sure"
+    " it goes over 88 characters which"
+    " it has now"
+)

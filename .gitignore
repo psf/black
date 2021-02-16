@@ -1,3 +1,4 @@
+.venv
 .coverage
 _build
 .DS_Store
@@ -15,3 +16,4 @@ src/_black_version.py
 .dmypy.json
 *.swp
 .hypothesis/
+venv/
