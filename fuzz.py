@@ -5,6 +5,8 @@ generation.  You can run this file with `python`, `pytest`, or (soon)
 a coverage-guided fuzzer I'm working on.
 """
 
+import re
+
 import hypothesmith
 from hypothesis import HealthCheck, given, settings, strategies as st
 
@@ -48,15 +50,15 @@ def test_idempotent_any_syntatically_valid_python(
         # TODO: remove this try-except block when issues are resolved.
         return
     except TokenError as e:
-        # The Python3.7 'compile' method accepts input that terminates with a
-        # multi-line continuation character (\), but black rejects it.
-        # TODO: remove this special-case once py37 reaches end-of-life
+        newlines = r"(\n|\r\n)+"
+        backslash = r"\\"
         exception_message = e.args[0]
-        if (
-            src_contents.endswith("\\")
+        if (  # https://github.com/psf/black/issues/1012
+            re.findall(f"{newlines}{backslash}{newlines}", src_contents)
             and exception_message == "EOF in multi-line statement"
         ):
             return
+        raise
 
     # And check that we got equivalent and stable output.
     black.assert_equivalent(src_contents, dst_contents)
