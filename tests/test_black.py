@@ -1794,6 +1794,7 @@ def tracefunc(frame: types.FrameType, event: str, arg: Any) -> Callable:
         return tracefunc
 
     stack = len(inspect.stack()) - 19
+    stack *= 2
     filename = frame.f_code.co_filename
     lineno = frame.f_lineno
     func_sig_lineno = lineno - 1
