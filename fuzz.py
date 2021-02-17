@@ -57,6 +57,9 @@ def test_idempotent_any_syntatically_valid_python(
             re.findall(f"{newlines}{backslash}{newlines}", src_contents)
             and exception_message == "EOF in multi-line statement"
         ):
+            print('Warning: skipped fuzzer-generated input that contained a backslash')
+            print('See https://github.com/psf/black/issues/1012 for details')
+            print('To replay this fuzzer run, find the PYTHONHASHSEED environment value')
             return
         raise
 
