@@ -219,14 +219,6 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertIn("\033[0m", actual)
 
     @patch("black.dump_to_file", dump_to_stderr)
-    def test_function(self) -> None:
-        source, expected = read_data("function")
-        actual = fs(source)
-        self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, DEFAULT_MODE)
-
-    @patch("black.dump_to_file", dump_to_stderr)
     def test_trailing_comma_optional_parens_stability1(self) -> None:
         source, _expected = read_data("trailing_comma_optional_parens1")
         actual = fs(source)
