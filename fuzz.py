@@ -57,10 +57,8 @@ def test_idempotent_any_syntatically_valid_python(
             and re.search(r"\r?\n\\\r?\n", src_contents) is not None
         ):
             # At the time of writing, backslash-related tokenization errors occur
-            # relatively frequently when this fuzzer is run.  Once fixed upstream,
-            # we can remove this special-case test-pass logic.
-            # See https://github.com/psf/black/issues/1012
-            # See TODO: link to upstream issue report
+            # relatively frequently when this fuzzer is run.  Once fixed, we can remove
+            # this block.  See issue #1012.
             return
         raise
 
