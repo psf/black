@@ -50,16 +50,15 @@ def test_idempotent_any_syntatically_valid_python(
         # TODO: remove this try-except block when issues are resolved.
         return
     except TokenError as e:
-        newlines = r"(\n|\r\n)+"
-        backslash = r"\\"
-        exception_message = e.args[0]
-        if (  # https://github.com/psf/black/issues/1012
-            re.findall(f"{newlines}{backslash}{newlines}", src_contents)
-            and exception_message == "EOF in multi-line statement"
+        if (
+            sys.version_info[:2] <= (3, 7)
+            and e.args[0] == "EOF in multi-line statement"
+            and re.search(r"\r?\n\\\r?\n", src_contents) is not None
         ):
-            print('Warning: skipped fuzzer-generated input that contained a backslash')
-            print('See https://github.com/psf/black/issues/1012 for details')
-            print('To replay this fuzzer run, find the PYTHONHASHSEED environment value')
+            # A trailing backslash at EOF was accepted in Python <= 3.7, but a
+            # SyntaxError in later versions.  We've decided to just ignore this
+            # until the problem goes away when 3.7 reaches end of life in 2023.
+            # See https://github.com/psf/black/issues/1012
             return
         raise
 
