@@ -54,10 +54,11 @@ def test_idempotent_any_syntatically_valid_python(
             e.args[0] == "EOF in multi-line statement"
             and re.search(r"\r?\n\\\r?\n", src_contents) is not None
         ):
-            # A trailing backslash at EOF was accepted in Python <= 3.7, but a
-            # SyntaxError in later versions.  We've decided to just ignore this
-            # until the problem goes away when 3.7 reaches end of life in 2023.
+            # At the time of writing, backslash-related tokenization errors occur
+            # relatively frequently when this fuzzer is run.  Once fixed upstream,
+            # we can remove this special-case test-pass logic.
             # See https://github.com/psf/black/issues/1012
+            # See TODO: link to upstream issue report
             return
         raise
 
