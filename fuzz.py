@@ -56,9 +56,9 @@ def test_idempotent_any_syntatically_valid_python(
             e.args[0] == "EOF in multi-line statement"
             and re.search(r"\r?\n\\\r?\n", src_contents) is not None
         ):
-            # At the time of writing, backslash-related tokenization errors occur
-            # relatively frequently when this fuzzer is run.  Once fixed, we can remove
-            # this block.  See issue #1012.
+            # This is a bug - if it's valid Python code, as above, Black should be
+            # able to cope with it.  See issue #1012.
+            # TODO: remove this block when the issue is resolved.
             return
         raise
 
