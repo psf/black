@@ -51,8 +51,7 @@ def test_idempotent_any_syntatically_valid_python(
         return
     except TokenError as e:
         if (
-            sys.version_info[:2] <= (3, 7)
-            and e.args[0] == "EOF in multi-line statement"
+            e.args[0] == "EOF in multi-line statement"
             and re.search(r"\r?\n\\\r?\n", src_contents) is not None
         ):
             # A trailing backslash at EOF was accepted in Python <= 3.7, but a
