@@ -11,9 +11,7 @@ import hypothesmith
 from hypothesis import HealthCheck, given, settings, strategies as st
 
 import black
-from blib2to3.pgen2.tokenize import (  # NB: This intends to (and currently does) import the black-vendored blib2to3
-    TokenError,
-)
+from blib2to3.pgen2.tokenize import TokenError
 
 
 # This test uses the Hypothesis and Hypothesmith libraries to generate random
