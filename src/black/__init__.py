@@ -4916,7 +4916,7 @@ def right_hand_split(
         # there are no standalone comments in the body
         and not body.contains_standalone_comments(0)
         # and we can actually remove the parens
-        and can_omit_invisible_parens(body, line_length, omit)
+        and can_omit_invisible_parens(body, line_length, omit_on_explode=omit)
     ):
         omit = {id(closing_bracket), *omit}
         try:
