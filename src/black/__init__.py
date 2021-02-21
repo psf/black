@@ -6578,7 +6578,9 @@ def can_be_split(line: Line) -> bool:
 
 
 def can_omit_invisible_parens(
-    line: Line, line_length: int, omit: Collection[LeafID]
+    line: Line,
+    line_length: int,
+    omit_on_explode: Collection[LeafID] = (),
 ) -> bool:
     """Does `line` have a shape safe to reformat without optional parens around it?
 
@@ -6616,9 +6618,9 @@ def can_omit_invisible_parens(
 
     penultimate = line.leaves[-2]
     last = line.leaves[-1]
-    if omit:
+    if omit_on_explode:
         try:
-            penultimate, last = last_two_except(line.leaves, omit)
+            penultimate, last = last_two_except(line.leaves, omit=omit_on_explode)
         except LookupError:
             # Turns out we'd omit everything.  We cannot skip the optional parentheses.
             return False
