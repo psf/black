@@ -282,7 +282,6 @@ class BlackTestCase(BlackBaseTestCase):
             os.unlink(tmp_file)
         actual = result.output
         actual = diff_header.sub(DETERMINISTIC_HEADER, actual)
-        actual = actual.rstrip() + "\n"  # the diff output has a trailing space
         if expected != actual:
             dump = black.dump_to_file(actual)
             msg = (
@@ -1779,6 +1778,28 @@ class BlackTestCase(BlackBaseTestCase):
         source = "class A:\\\r\n# type: ignore\n pass\n"
         output = black.format_str(source, mode=DEFAULT_MODE)
         black.assert_stable(source, output, mode=DEFAULT_MODE)
+
+    def test_bpo_2142_workaround(self) -> None:
+
+        # https://bugs.python.org/issue2142
+
+        source, _ = read_data("missing_final_newline.py")
+        # read_data adds a trailing newline
+        source = source.rstrip()
+        expected, _ = read_data("missing_final_newline.diff")
+        tmp_file = Path(black.dump_to_file(source, ensure_final_newline=False))
+        diff_header = re.compile(
+            rf"{re.escape(str(tmp_file))}\t\d\d\d\d-\d\d-\d\d "
+            r"\d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
+        )
+        try:
+            result = BlackRunner().invoke(black.main, ["--diff", str(tmp_file)])
+            self.assertEqual(result.exit_code, 0)
+        finally:
+            os.unlink(tmp_file)
+        actual = result.output
+        actual = diff_header.sub(DETERMINISTIC_HEADER, actual)
+        self.assertEqual(actual, expected)
 
 
 with open(black.__file__, "r", encoding="utf-8") as _bf:
