@@ -883,7 +883,7 @@ def format_file_in_place(
         dst_name = f"{src}\t{now} +0000"
         diff_contents = diff(src_contents, dst_contents, src_name, dst_name)
 
-        if write_back == write_back.COLOR_DIFF:
+        if write_back == WriteBack.COLOR_DIFF:
             diff_contents = color_diff(diff_contents)
 
         with lock or nullcontext():
