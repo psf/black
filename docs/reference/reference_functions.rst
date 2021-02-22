@@ -171,7 +171,7 @@ Utilities
 
 .. autofunction:: black.re_compile_maybe_verbose
 
-.. autofunction:: black.should_split_body_explode
+.. autofunction:: black.should_split_line
 
 .. autofunction:: black.shutdown
 

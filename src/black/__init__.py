@@ -1480,7 +1480,7 @@ class Line:
     comments: Dict[LeafID, List[Leaf]] = field(default_factory=dict)
     bracket_tracker: BracketTracker = field(default_factory=BracketTracker)
     inside_brackets: bool = False
-    should_split: bool = False
+    should_split_rhs: bool = False
     magic_trailing_comma: Optional[Leaf] = None
 
     def append(self, leaf: Leaf, preformatted: bool = False) -> None:
@@ -1792,7 +1792,7 @@ class Line:
             mode=self.mode,
             depth=self.depth,
             inside_brackets=self.inside_brackets,
-            should_split=self.should_split,
+            should_split_rhs=self.should_split_rhs,
             magic_trailing_comma=self.magic_trailing_comma,
         )
 
@@ -2712,7 +2712,7 @@ def transform_line(
     transformers: List[Transformer]
     if (
         not line.contains_uncollapsable_type_comments()
-        and not line.should_split
+        and not line.should_split_rhs
         and not line.magic_trailing_comma
         and (
             is_line_short_enough(line, line_length=mode.line_length, line_str=line_str)
@@ -4387,7 +4387,7 @@ class StringParenWrapper(CustomSplitMapMixin, BaseStringSplitter):
             mode=line.mode,
             depth=line.depth + 1,
             inside_brackets=True,
-            should_split=line.should_split,
+            should_split_rhs=line.should_split_rhs,
             magic_trailing_comma=line.magic_trailing_comma,
         )
         string_leaf = Leaf(token.STRING, string_value)
@@ -5010,7 +5010,7 @@ def bracket_split_build_line(
         for comment_after in original.comments_after(leaf):
             result.append(comment_after, preformatted=True)
     if is_body and should_split_line(result, opening_bracket):
-        result.should_split = True
+        result.should_split_rhs = True
     return result
 
 
