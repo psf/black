@@ -30,6 +30,8 @@
 
 - `--diff` correctly indicates when a file doesn't end in a newline (#1662)
 
+- Reduce second-pass formatting stability errors (#1629)
+
 #### _Packaging_
 
 - Self-contained native _Black_ binaries are now provided for releases via GitHub
