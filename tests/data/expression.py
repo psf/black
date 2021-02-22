@@ -245,6 +245,10 @@ if (
     ~ aaaaaaaaaaaaaaaa.a + aaaaaaaaaaaaaaaa.b - aaaaaaaaaaaaaaaa.c * aaaaaaaaaaaaaaaa.d @ aaaaaaaaaaaaaaaa.e | aaaaaaaaaaaaaaaa.f & aaaaaaaaaaaaaaaa.g % aaaaaaaaaaaaaaaa.h ^ aaaaaaaaaaaaaaaa.i << aaaaaaaaaaaaaaaa.k >> aaaaaaaaaaaaaaaa.l ** aaaaaaaaaaaaaaaa.m // aaaaaaaaaaaaaaaa.n
 ):
     return True
+aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa - aaaaaaaaaaaaaaaa * (aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa) / (aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa)
+aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa >> aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa << aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+bbbb >> bbbb * bbbb
 last_call()
 # standalone comment at ENDMARKER
 
@@ -602,5 +606,19 @@ if (
     >> aaaaaaaaaaaaaaaa.l ** aaaaaaaaaaaaaaaa.m // aaaaaaaaaaaaaaaa.n
 ):
     return True
+(
+    aaaaaaaaaaaaaaaa
+    + aaaaaaaaaaaaaaaa
+    - aaaaaaaaaaaaaaaa
+    * (aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa)
+    / (aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa)
+)
+aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa
+(
+    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    >> aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    << aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+)
+bbbb >> bbbb * bbbb
 last_call()
 # standalone comment at ENDMARKER

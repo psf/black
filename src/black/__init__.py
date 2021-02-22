@@ -2046,6 +2046,8 @@ class LineGenerator(Visitor[Line]):
 
     def visit_simple_stmt(self, node: Node) -> Iterator[Line]:
         """Visit a statement without nested statements."""
+        if first_child_is_arith(node):
+            wrap_in_parentheses(node, node.children[0], visible=False)
         is_suite_like = node.parent and node.parent.type in STATEMENT
         if is_suite_like:
             if self.mode.is_pyi and is_stub_body(node):
@@ -5582,6 +5584,17 @@ def unwrap_singleton_parenthesis(node: LN) -> Optional[LN]:
         return None
 
     return wrapped
+
+
+def first_child_is_arith(node: Node) -> bool:
+    """Whether first child is an arithmetic or a binary arithmetic expression"""
+    expr_types = {
+        syms.arith_expr,
+        syms.shift_expr,
+        syms.xor_expr,
+        syms.and_expr,
+    }
+    return node.children and node.children[0].type in expr_types
 
 
 def wrap_in_parentheses(parent: Node, child: LN, *, visible: bool = True) -> None:
