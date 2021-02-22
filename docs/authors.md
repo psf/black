@@ -132,6 +132,7 @@ Multiple contributions by:
 - [Pablo Galindo](mailto:Pablogsal@gmail.com)
 - [Paul Ganssle](mailto:p.ganssle@gmail.com)
 - [Paul Meinhardt](mailto:mnhrdt@gmail.com)
+- [Paul "TBBle" Hampson](mailto:Paul.Hampson@Pobox.com)
 - [Peter Bengtsson](mailto:mail@peterbe.com)
 - [Peter Grayson](mailto:pete@jpgrayson.net)
 - [Peter Stensmyr](mailto:peter.stensmyr@gmail.com)
