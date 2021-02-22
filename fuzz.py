@@ -52,7 +52,7 @@ def test_idempotent_any_syntatically_valid_python(
     except TokenError as e:
         if (
             e.args[0] == "EOF in multi-line statement"
-            and re.search(r"\\\r?\n", src_contents) is not None
+            and re.search(r"\\($|\r?\n)", src_contents) is not None
         ):
             # This is a bug - if it's valid Python code, as above, Black should be
             # able to cope with it.  See issue #1012.
