@@ -5594,7 +5594,7 @@ def first_child_is_arith(node: Node) -> bool:
         syms.xor_expr,
         syms.and_expr,
     }
-    return node.children and node.children[0].type in expr_types
+    return bool(node.children and node.children[0].type in expr_types)
 
 
 def wrap_in_parentheses(parent: Node, child: LN, *, visible: bool = True) -> None:
