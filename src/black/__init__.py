@@ -5540,17 +5540,19 @@ def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
     Returns whether the node should itself be wrapped in invisible parentheses.
 
     """
+
     if (
         node.type != syms.atom
         or is_empty_tuple(node)
         or is_one_tuple(node)
         or (is_yield(node) and parent.type != syms.expr_stmt)
         or max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
-        or parent.type == syms.expr_stmt
-        and parent.children[1].type == token.EQUAL
-        and is_walrus_assignment(node)
     ):
         return False
+
+    if is_walrus_assignment(node):
+        if parent.type in [syms.annassign, syms.expr_stmt]:
+            return False
 
     first = node.children[0]
     last = node.children[-1]
