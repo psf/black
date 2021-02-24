@@ -135,10 +135,16 @@ Options:
                                   hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_bu
                                   ild|buck-out|build|dist)/]
 
+  --extend-exclude TEXT           Like --exclude, but adds additional files
+                                  and directories on top of the excluded
+                                  ones. (Useful if you simply want to add to
+                                  the default)
+
   --force-exclude TEXT            Like --exclude, but files and directories
                                   matching this regex will be excluded even
                                   when they are passed explicitly as
                                   arguments.
+
 
   --stdin-filename TEXT           The name of the file when passing it through
                                   stdin. Useful to make sure Black will
@@ -313,25 +319,10 @@ expressions by Black. Use `[ ]` to denote a significant space character.
 line-length = 88
 target-version = ['py37']
 include = '\.pyi?$'
-exclude = '''
+extend-exclude = '''
 # A regex preceded with ^/ will apply only to files and directories
 # in the root of the project.
-^/(
-  (
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.hg
-    | \.mypy_cache
-    | \.tox
-    | \.venv
-    | _build
-    | buck-out
-    | build
-    | dist
-  )/
-  | foo.py           # also separately exclude a file named foo.py in
-                     # the root of the project
-)
+^/foo.py  # exclude a file named foo.py in the root of the project (in addition to the defaults)
 '''
 ```
 
