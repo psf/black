@@ -1471,7 +1471,7 @@ class BlackTestCase(BlackBaseTestCase):
                 verbose=False,
                 include=include,
                 exclude="",
-                extend_exclude=None,
+                extend_exclude=extend_exclude,
                 force_exclude=None,
                 report=report,
                 stdin_filename=stdin_filename,

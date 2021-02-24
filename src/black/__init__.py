@@ -618,7 +618,7 @@ def test_regex(
     regex: Optional[str],
 ) -> Optional[Pattern]:
     try:
-        return re_compile_maybe_verbose(regex) if regex else None
+        return re_compile_maybe_verbose(regex) if regex is not None else None
     except re.error:
         err(f"Invalid regular expression for {regex_name} given: {regex!r}")
         ctx.exit(2)
@@ -641,6 +641,7 @@ def get_sources(
 
     include_regex = test_regex(ctx, "include", include)
     exclude_regex = test_regex(ctx, "exclude", exclude)
+    assert exclude_regex is not None
     extend_exclude_regex = test_regex(ctx, "extend_exclude", extend_exclude)
     force_exclude_regex = test_regex(ctx, "force_exclude", force_exclude)
 
@@ -6124,10 +6125,10 @@ def normalize_path_maybe_ignore(
 
 def path_is_excluded(
     normalized_path: str,
-    pattern: Pattern[str],
-):
+    pattern: Optional[Pattern[str]],
+) -> bool:
     match = pattern.search(normalized_path) if pattern else None
-    return match and match.group(0)
+    return bool(match and match.group(0))
 
 
 def gen_python_files(
