@@ -137,8 +137,8 @@ Options:
 
   --extend-exclude TEXT           Like --exclude, but adds additional files
                                   and directories on top of the excluded
-                                  ones. (Useful if you simply want to add to
-                                  the default)
+                                  ones (useful if you simply want to add to
+                                  the default).
 
   --force-exclude TEXT            Like --exclude, but files and directories
                                   matching this regex will be excluded even
