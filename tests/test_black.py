@@ -263,6 +263,15 @@ class BlackTestCase(BlackBaseTestCase):
         if sys.version_info >= (3, 8):
             black.assert_equivalent(source, actual)
 
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_pep_572_remove_parens(self) -> None:
+        source, expected = read_data("pep_572_remove_parens")
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_stable(source, actual, DEFAULT_MODE)
+        if sys.version_info >= (3, 8):
+            black.assert_equivalent(source, actual)
+
     def test_pep_572_version_detection(self) -> None:
         source, _ = read_data("pep_572")
         root = black.lib2to3_parse(source)
