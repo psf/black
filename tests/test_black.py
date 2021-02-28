@@ -1453,7 +1453,7 @@ class BlackTestCase(BlackBaseTestCase):
 
     @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
     def test_get_sources_with_stdin_filename_and_extend_exclude(self) -> None:
-        # Extend exclude shouldn't exclude stdin_filename since it is mimicing the
+        # Extend exclude shouldn't exclude stdin_filename since it is mimicking the
         # file being passed directly. This is the same as
         # test_exclude_for_issue_1572
         path = THIS_DIR / "data" / "include_exclude_tests"
