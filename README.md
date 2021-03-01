@@ -607,6 +607,7 @@ Multiple contributions by:
 - [Joseph Larson](mailto:larson.joseph@gmail.com)
 - [Josh Bode](mailto:joshbode@fastmail.com)
 - [Josh Bode](mailto:joshbode@fastmail.com)
+- [Josh Holland](mailto:anowlcalledjosh@gmail.com)
 - [Joshua Cannon](mailto:joshdcannon@gmail.com)
 - [José Padilla](mailto:jpadilla@webapplicate.com)
 - [Juan Luis Cano Rodríguez](mailto:hello@juanlu.space)
