@@ -28,6 +28,8 @@
 
 - use lowercase hex strings (#1692)
 
+- added `--extend-exclude` argument (#1571)
+
 #### _Packaging_
 
 - Self-contained native _Black_ binaries are now provided for releases via GitHub
