@@ -30,7 +30,8 @@
 
 - `--diff` correctly indicates when a file doesn't end in a newline (#1662)
 
-- Added `--stdin-filename` argument to allow stdin to respect `--force-exclude` rules (#1780)
+- Added `--stdin-filename` argument to allow stdin to respect `--force-exclude` rules
+  (#1780)
 
 #### _Packaging_
 
