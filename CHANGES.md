@@ -30,6 +30,9 @@
 
 - `--diff` correctly indicates when a file doesn't end in a newline (#1662)
 
+- Added `--stdin-filename` argument to allow stdin to respect `--force-exclude` rules.
+  Works very alike to flake8's `--stdin-display-name` (#1780)
+
 #### _Packaging_
 
 - Self-contained native _Black_ binaries are now provided for releases via GitHub
