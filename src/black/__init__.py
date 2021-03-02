@@ -365,7 +365,7 @@ def target_version_option_callback(
 
 def validate_regex(
     ctx: click.Context,
-    param: Union[click.Option, click.Parameter],
+    param: click.Parameter,
     value: Optional[str],
 ) -> Optional[Pattern]:
     try:
