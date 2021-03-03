@@ -1328,7 +1328,14 @@ class BlackTestCase(BlackBaseTestCase):
         this_abs = THIS_DIR.resolve()
         sources.extend(
             black.gen_python_files(
-                path.iterdir(), this_abs, include, exclude, None, report, gitignore
+                path.iterdir(),
+                this_abs,
+                include,
+                exclude,
+                None,
+                None,
+                report,
+                gitignore,
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))
@@ -1350,8 +1357,9 @@ class BlackTestCase(BlackBaseTestCase):
                 src=(src,),
                 quiet=True,
                 verbose=False,
-                include=include,
-                exclude=exclude,
+                include=re.compile(include),
+                exclude=re.compile(exclude),
+                extend_exclude=None,
                 force_exclude=None,
                 report=report,
                 stdin_filename=None,
@@ -1372,8 +1380,9 @@ class BlackTestCase(BlackBaseTestCase):
                 src=(src,),
                 quiet=True,
                 verbose=False,
-                include=include,
-                exclude=exclude,
+                include=re.compile(include),
+                exclude=re.compile(exclude),
+                extend_exclude=None,
                 force_exclude=None,
                 report=report,
                 stdin_filename=None,
@@ -1395,8 +1404,9 @@ class BlackTestCase(BlackBaseTestCase):
                 src=(src,),
                 quiet=True,
                 verbose=False,
-                include=include,
-                exclude=exclude,
+                include=re.compile(include),
+                exclude=re.compile(exclude),
+                extend_exclude=None,
                 force_exclude=None,
                 report=report,
                 stdin_filename=stdin_filename,
@@ -1422,8 +1432,37 @@ class BlackTestCase(BlackBaseTestCase):
                 src=(src,),
                 quiet=True,
                 verbose=False,
-                include=include,
-                exclude=exclude,
+                include=re.compile(include),
+                exclude=re.compile(exclude),
+                extend_exclude=None,
+                force_exclude=None,
+                report=report,
+                stdin_filename=stdin_filename,
+            )
+        )
+        self.assertEqual(sorted(expected), sorted(sources))
+
+    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
+    def test_get_sources_with_stdin_filename_and_extend_exclude(self) -> None:
+        # Extend exclude shouldn't exclude stdin_filename since it is mimicking the
+        # file being passed directly. This is the same as
+        # test_exclude_for_issue_1572
+        path = THIS_DIR / "data" / "include_exclude_tests"
+        include = ""
+        extend_exclude = r"/exclude/|a\.py"
+        src = "-"
+        report = black.Report()
+        stdin_filename = str(path / "b/exclude/a.py")
+        expected = [Path(f"__BLACK_STDIN_FILENAME__{stdin_filename}")]
+        sources = list(
+            black.get_sources(
+                ctx=FakeContext(),
+                src=(src,),
+                quiet=True,
+                verbose=False,
+                include=re.compile(include),
+                exclude=re.compile(""),
+                extend_exclude=re.compile(extend_exclude),
                 force_exclude=None,
                 report=report,
                 stdin_filename=stdin_filename,
@@ -1447,9 +1486,10 @@ class BlackTestCase(BlackBaseTestCase):
                 src=(src,),
                 quiet=True,
                 verbose=False,
-                include=include,
-                exclude="",
-                force_exclude=force_exclude,
+                include=re.compile(include),
+                exclude=re.compile(""),
+                extend_exclude=None,
+                force_exclude=re.compile(force_exclude),
                 report=report,
                 stdin_filename=stdin_filename,
             )
@@ -1533,7 +1573,14 @@ class BlackTestCase(BlackBaseTestCase):
         this_abs = THIS_DIR.resolve()
         sources.extend(
             black.gen_python_files(
-                path.iterdir(), this_abs, include, exclude, None, report, gitignore
+                path.iterdir(),
+                this_abs,
+                include,
+                exclude,
+                None,
+                None,
+                report,
+                gitignore,
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))
@@ -1563,33 +1610,6 @@ class BlackTestCase(BlackBaseTestCase):
                 empty,
                 re.compile(black.DEFAULT_EXCLUDES),
                 None,
-                report,
-                gitignore,
-            )
-        )
-        self.assertEqual(sorted(expected), sorted(sources))
-
-    def test_empty_exclude(self) -> None:
-        path = THIS_DIR / "data" / "include_exclude_tests"
-        report = black.Report()
-        gitignore = PathSpec.from_lines("gitwildmatch", [])
-        empty = re.compile(r"")
-        sources: List[Path] = []
-        expected = [
-            Path(path / "b/dont_exclude/a.py"),
-            Path(path / "b/dont_exclude/a.pyi"),
-            Path(path / "b/exclude/a.py"),
-            Path(path / "b/exclude/a.pyi"),
-            Path(path / "b/.definitely_exclude/a.py"),
-            Path(path / "b/.definitely_exclude/a.pyi"),
-        ]
-        this_abs = THIS_DIR.resolve()
-        sources.extend(
-            black.gen_python_files(
-                path.iterdir(),
-                this_abs,
-                re.compile(black.DEFAULT_INCLUDES),
-                empty,
                 None,
                 report,
                 gitignore,
@@ -1597,8 +1617,32 @@ class BlackTestCase(BlackBaseTestCase):
         )
         self.assertEqual(sorted(expected), sorted(sources))
 
-    def test_invalid_include_exclude(self) -> None:
-        for option in ["--include", "--exclude"]:
+    def test_extend_exclude(self) -> None:
+        path = THIS_DIR / "data" / "include_exclude_tests"
+        report = black.Report()
+        gitignore = PathSpec.from_lines("gitwildmatch", [])
+        sources: List[Path] = []
+        expected = [
+            Path(path / "b/exclude/a.py"),
+            Path(path / "b/dont_exclude/a.py"),
+        ]
+        this_abs = THIS_DIR.resolve()
+        sources.extend(
+            black.gen_python_files(
+                path.iterdir(),
+                this_abs,
+                re.compile(black.DEFAULT_INCLUDES),
+                re.compile(r"\.pyi$"),
+                re.compile(r"\.definitely_exclude"),
+                None,
+                report,
+                gitignore,
+            )
+        )
+        self.assertEqual(sorted(expected), sorted(sources))
+
+    def test_invalid_cli_regex(self) -> None:
+        for option in ["--include", "--exclude", "--extend-exclude", "--force-exclude"]:
             self.invokeBlack(["-", option, "**()(!!*)"], exit_code=2)
 
     def test_preserves_line_endings(self) -> None:
@@ -1647,7 +1691,14 @@ class BlackTestCase(BlackBaseTestCase):
         try:
             list(
                 black.gen_python_files(
-                    path.iterdir(), root, include, exclude, None, report, gitignore
+                    path.iterdir(),
+                    root,
+                    include,
+                    exclude,
+                    None,
+                    None,
+                    report,
+                    gitignore,
                 )
             )
         except ValueError as ve:
@@ -1661,7 +1712,14 @@ class BlackTestCase(BlackBaseTestCase):
         with self.assertRaises(ValueError):
             list(
                 black.gen_python_files(
-                    path.iterdir(), root, include, exclude, None, report, gitignore
+                    path.iterdir(),
+                    root,
+                    include,
+                    exclude,
+                    None,
+                    None,
+                    report,
+                    gitignore,
                 )
             )
         path.iterdir.assert_called()

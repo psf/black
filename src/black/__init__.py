@@ -362,6 +362,17 @@ def target_version_option_callback(
     return [TargetVersion[val.upper()] for val in v]
 
 
+def validate_regex(
+    ctx: click.Context,
+    param: click.Parameter,
+    value: Optional[str],
+) -> Optional[Pattern]:
+    try:
+        return re_compile_maybe_verbose(value) if value is not None else None
+    except re.error:
+        raise click.BadParameter("Not a valid regular expression")
+
+
 @click.command(context_settings=dict(help_option_names=["-h", "--help"]))
 @click.option("-c", "--code", type=str, help="Format the code passed in as a string.")
 @click.option(
@@ -440,6 +451,7 @@ def target_version_option_callback(
     "--include",
     type=str,
     default=DEFAULT_INCLUDES,
+    callback=validate_regex,
     help=(
         "A regular expression that matches files and directories that should be"
         " included on recursive searches.  An empty value means all files are included"
@@ -452,6 +464,7 @@ def target_version_option_callback(
     "--exclude",
     type=str,
     default=DEFAULT_EXCLUDES,
+    callback=validate_regex,
     help=(
         "A regular expression that matches files and directories that should be"
         " excluded on recursive searches.  An empty value means no paths are excluded."
@@ -461,8 +474,18 @@ def target_version_option_callback(
     show_default=True,
 )
 @click.option(
+    "--extend-exclude",
+    type=str,
+    callback=validate_regex,
+    help=(
+        "Like --exclude, but adds additional files and directories on top of the"
+        " excluded ones. (Useful if you simply want to add to the default)"
+    ),
+)
+@click.option(
     "--force-exclude",
     type=str,
+    callback=validate_regex,
     help=(
         "Like --exclude, but files and directories matching this regex will be "
         "excluded even when they are passed explicitly as arguments."
@@ -492,7 +515,7 @@ def target_version_option_callback(
     is_flag=True,
     help=(
         "Also emit messages to stderr about files that were not changed or were ignored"
-        " due to --exclude=."
+        " due to exclusion patterns."
     ),
 )
 @click.version_option(version=__version__)
@@ -534,9 +557,10 @@ def main(
     experimental_string_processing: bool,
     quiet: bool,
     verbose: bool,
-    include: str,
-    exclude: str,
-    force_exclude: Optional[str],
+    include: Pattern,
+    exclude: Pattern,
+    extend_exclude: Optional[Pattern],
+    force_exclude: Optional[Pattern],
     stdin_filename: Optional[str],
     src: Tuple[str, ...],
     config: Optional[str],
@@ -569,6 +593,7 @@ def main(
         verbose=verbose,
         include=include,
         exclude=exclude,
+        extend_exclude=extend_exclude,
         force_exclude=force_exclude,
         report=report,
         stdin_filename=stdin_filename,
@@ -607,30 +632,14 @@ def get_sources(
     src: Tuple[str, ...],
     quiet: bool,
     verbose: bool,
-    include: str,
-    exclude: str,
-    force_exclude: Optional[str],
+    include: Pattern[str],
+    exclude: Pattern[str],
+    extend_exclude: Optional[Pattern[str]],
+    force_exclude: Optional[Pattern[str]],
     report: "Report",
     stdin_filename: Optional[str],
 ) -> Set[Path]:
     """Compute the set of files to be formatted."""
-    try:
-        include_regex = re_compile_maybe_verbose(include)
-    except re.error:
-        err(f"Invalid regular expression for include given: {include!r}")
-        ctx.exit(2)
-    try:
-        exclude_regex = re_compile_maybe_verbose(exclude)
-    except re.error:
-        err(f"Invalid regular expression for exclude given: {exclude!r}")
-        ctx.exit(2)
-    try:
-        force_exclude_regex = (
-            re_compile_maybe_verbose(force_exclude) if force_exclude else None
-        )
-    except re.error:
-        err(f"Invalid regular expression for force_exclude given: {force_exclude!r}")
-        ctx.exit(2)
 
     root = find_project_root(src)
     sources: Set[Path] = set()
@@ -652,8 +661,8 @@ def get_sources(
 
             normalized_path = "/" + normalized_path
             # Hard-exclude any files that matches the `--force-exclude` regex.
-            if force_exclude_regex:
-                force_exclude_match = force_exclude_regex.search(normalized_path)
+            if force_exclude:
+                force_exclude_match = force_exclude.search(normalized_path)
             else:
                 force_exclude_match = None
             if force_exclude_match and force_exclude_match.group(0):
@@ -669,9 +678,10 @@ def get_sources(
                 gen_python_files(
                     p.iterdir(),
                     root,
-                    include_regex,
-                    exclude_regex,
-                    force_exclude_regex,
+                    include,
+                    exclude,
+                    extend_exclude,
+                    force_exclude,
                     report,
                     gitignore,
                 )
@@ -6099,17 +6109,27 @@ def normalize_path_maybe_ignore(
     return normalized_path
 
 
+def path_is_excluded(
+    normalized_path: str,
+    pattern: Optional[Pattern[str]],
+) -> bool:
+    match = pattern.search(normalized_path) if pattern else None
+    return bool(match and match.group(0))
+
+
 def gen_python_files(
     paths: Iterable[Path],
     root: Path,
     include: Optional[Pattern[str]],
     exclude: Pattern[str],
+    extend_exclude: Optional[Pattern[str]],
     force_exclude: Optional[Pattern[str]],
     report: "Report",
     gitignore: PathSpec,
 ) -> Iterator[Path]:
     """Generate all files under `path` whose paths are not excluded by the
-    `exclude_regex` or `force_exclude` regexes, but are included by the `include` regex.
+    `exclude_regex`, `extend_exclude`, or `force_exclude` regexes,
+    but are included by the `include` regex.
 
     Symbolic links pointing outside of the `root` directory are ignored.
 
@@ -6126,20 +6146,22 @@ def gen_python_files(
             report.path_ignored(child, "matches the .gitignore file content")
             continue
 
-        # Then ignore with `--exclude` and `--force-exclude` options.
+        # Then ignore with `--exclude` `--extend-exclude` and `--force-exclude` options.
         normalized_path = "/" + normalized_path
         if child.is_dir():
             normalized_path += "/"
 
-        exclude_match = exclude.search(normalized_path) if exclude else None
-        if exclude_match and exclude_match.group(0):
+        if path_is_excluded(normalized_path, exclude):
             report.path_ignored(child, "matches the --exclude regular expression")
             continue
 
-        force_exclude_match = (
-            force_exclude.search(normalized_path) if force_exclude else None
-        )
-        if force_exclude_match and force_exclude_match.group(0):
+        if path_is_excluded(normalized_path, extend_exclude):
+            report.path_ignored(
+                child, "matches the --extend-exclude regular expression"
+            )
+            continue
+
+        if path_is_excluded(normalized_path, force_exclude):
             report.path_ignored(child, "matches the --force-exclude regular expression")
             continue
 
@@ -6149,6 +6171,7 @@ def gen_python_files(
                 root,
                 include,
                 exclude,
+                extend_exclude,
                 force_exclude,
                 report,
                 gitignore,

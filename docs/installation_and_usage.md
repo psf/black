@@ -95,6 +95,11 @@ Options:
                                   when they are passed explicitly as
                                   arguments.
 
+  --extend-exclude TEXT           Like --exclude, but adds additional files
+                                  and directories on top of the excluded
+                                  ones. (useful if you simply want to add to
+                                  the default)
+
   --stdin-filename TEXT           The name of the file when passing it through
                                   stdin. Useful to make sure Black will
                                   respect --force-exclude option on some
@@ -106,7 +111,7 @@ Options:
 
   -v, --verbose                   Also emit messages to stderr about files
                                   that were not changed or were ignored due to
-                                  --exclude=.
+                                  exclusion patterns.
 
   --version                       Show the version and exit.
   --config FILE                   Read configuration from FILE path.

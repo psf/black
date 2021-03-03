@@ -9,19 +9,8 @@
 line-length = 88
 target-version = ['py36', 'py37', 'py38']
 include = '\.pyi?$'
-exclude = '''
+extend-exclude = '''
 /(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-
   # The following are specific to Black, you probably don't want those.
   | blib2to3
   | tests/data
