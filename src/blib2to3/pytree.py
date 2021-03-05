@@ -24,7 +24,7 @@ from typing import (
     TypeVar,
     Union,
     Set,
-    Iterable
+    Iterable,
 )
 from blib2to3.pgen2.grammar import Grammar
 

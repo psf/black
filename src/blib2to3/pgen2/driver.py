@@ -29,7 +29,7 @@ from typing import (
     Optional,
     Text,
     Tuple,
-    Union
+    Union,
 )
 
 # Pgen imports
