@@ -25,7 +25,6 @@ from typing import (
     Union,
     Set,
     Iterable,
-    Sequence,
 )
 from blib2to3.pgen2.grammar import Grammar
 

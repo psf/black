@@ -15,8 +15,6 @@ from . import token
 from typing import (
     Optional,
     Text,
-    Sequence,
-    Any,
     Union,
     Tuple,
     Dict,
