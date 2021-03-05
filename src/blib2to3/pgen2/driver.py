@@ -16,7 +16,6 @@ __author__ = "Guido van Rossum <guido@python.org>"
 __all__ = ["Driver", "load_grammar"]
 
 # Python imports
-import codecs
 import io
 import os
 import logging
@@ -24,15 +23,13 @@ import pkgutil
 import sys
 from typing import (
     Any,
-    Callable,
     IO,
     Iterable,
     List,
     Optional,
     Text,
     Tuple,
-    Union,
-    Sequence,
+    Union
 )
 
 # Pgen imports

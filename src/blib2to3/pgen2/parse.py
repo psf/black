@@ -15,14 +15,12 @@ from . import token
 from typing import (
     Optional,
     Text,
-    Sequence,
-    Any,
     Union,
     Tuple,
     Dict,
     List,
     Callable,
-    Set,
+    Set
 )
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pytree import NL, Context, RawNode, Leaf, Node

@@ -8,7 +8,6 @@ from typing import (
     Any,
     Dict,
     IO,
-    Iterable,
     Iterator,
     List,
     Optional,
@@ -16,7 +15,7 @@ from typing import (
     Tuple,
     Union,
     Sequence,
-    NoReturn,
+    NoReturn
 )
 from blib2to3.pgen2 import grammar
 from blib2to3.pgen2.tokenize import GoodTokenInfo
