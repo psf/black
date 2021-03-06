@@ -245,6 +245,7 @@ $ pip install -U black --no-binary regex,typed-ast
    let g:ale_fixers = {}
    let g:ale_fixers.python = ['black']
    ```
+
 ## Gedit
 
 gedit is the default text editor of the GNOME, Unix like Operating Systems. Open gedit
