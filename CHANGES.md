@@ -33,6 +33,8 @@
 - Added `--stdin-filename` argument to allow stdin to respect `--force-exclude` rules
   (#1780)
 
+- Lines ending with `fmt: skip` will now be not formatted (#1800)
+
 #### _Packaging_
 
 - Self-contained native _Black_ binaries are now provided for releases via GitHub
