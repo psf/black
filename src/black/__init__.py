@@ -6402,12 +6402,22 @@ def _stringify_ast(
             # Constant strings may be indented across newlines, if they are
             # docstrings; fold spaces after newlines when comparing. Similarly,
             # trailing and leading space may be removed.
+            # Note that when formatting Python 2 code, at least with Windows
+            # line-endings, docstrings can end up here as bytes instead of
+            # str so make sure that we handle both cases.
             if (
                 isinstance(node, ast.Constant)
                 and field == "value"
-                and isinstance(value, str)
+                and isinstance(value, (str, bytes))
             ):
-                normalized = re.sub(r" *\n[ \t]*", "\n", value).strip()
+                lineend = "\n" if isinstance(value, str) else b"\n"
+                # To normalize, we strip any leading and trailing space from
+                # each line...
+                stripped = [line.strip() for line in value.splitlines()]
+                normalized = lineend.join(stripped)  # type: ignore[attr-defined]
+                # ...and remove any blank lines at the beginning and end of
+                # the whole string
+                normalized = normalized.strip()
             else:
                 normalized = value
             yield f"{'  ' * (depth+2)}{normalized!r},  # {value.__class__.__name__}"
