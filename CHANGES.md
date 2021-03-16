@@ -40,6 +40,11 @@
 
 - Lines ending with `fmt: skip` will now be not formatted (#1800)
 
+- PR #2053: Black no longer relies on typed-ast for Python 3.8 and higher
+
+- PR #2053: Python 2 support is now optional, install with
+  `python3 -m pip install black[python2]` to maintain support.
+
 #### _Packaging_
 
 - Self-contained native _Black_ binaries are now provided for releases via GitHub
