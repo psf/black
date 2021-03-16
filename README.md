@@ -50,7 +50,8 @@ _Contents:_ **[Installation and usage](#installation-and-usage)** |
 ### Installation
 
 _Black_ can be installed by running `pip install black`. It requires Python 3.6.2+ to
-run but you can reformat Python 2 code with it, too.
+run. If you want to format Python 2 code as well, install with
+`pip install black[python2]`.
 
 #### Install from GitHub
 
