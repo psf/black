@@ -12,38 +12,38 @@ Options include the following:
 
 1. Install `black`.
 
-```console
-$ pip install black
-```
+   ```console
+   $ pip install black
+   ```
 
 2. Locate your `black` installation folder.
 
-On macOS / Linux / BSD:
+   On macOS / Linux / BSD:
 
-```console
-$ which black
-/usr/local/bin/black  # possible location
-```
+   ```console
+   $ which black
+   /usr/local/bin/black  # possible location
+   ```
 
-On Windows:
+   On Windows:
 
-```console
-$ where black
-%LocalAppData%\Programs\Python\Python36-32\Scripts\black.exe  # possible location
-```
+   ```console
+   $ where black
+   %LocalAppData%\Programs\Python\Python36-32\Scripts\black.exe  # possible location
+   ```
 
-Note that if you are using a virtual environment detected by PyCharm, this is an
-unneeded step. In this case the path to `black` is `$PyInterpreterDirectory$/black`.
+   Note that if you are using a virtual environment detected by PyCharm, this is an
+   unneeded step. In this case the path to `black` is `$PyInterpreterDirectory$/black`.
 
 3. Open External tools in PyCharm/IntelliJ IDEA
 
-On macOS:
+   On macOS:
 
-`PyCharm -> Preferences -> Tools -> External Tools`
+   `PyCharm -> Preferences -> Tools -> External Tools`
 
-On Windows / Linux / BSD:
+   On Windows / Linux / BSD:
 
-`File -> Settings -> Tools -> External Tools`
+   `File -> Settings -> Tools -> External Tools`
 
 4. Click the + icon to add a new external tool with the following values:
 
@@ -83,28 +83,28 @@ Wing supports black via the OS Commands tool, as explained in the Wing documenta
 
 1. Install `black`.
 
-```console
-$ pip install black
-```
+   ```console
+   $ pip install black
+   ```
 
 2. Make sure it runs from the command line, e.g.
 
-```console
-$ black --help
-```
+   ```console
+   $ black --help
+   ```
 
 3. In Wing IDE, activate the **OS Commands** panel and define the command **black** to
    execute black on the currently selected file:
 
-- Use the Tools -> OS Commands menu selection
-- click on **+** in **OS Commands** -> New: Command line..
-  - Title: black
-  - Command Line: black %s
-  - I/O Encoding: Use Default
-  - Key Binding: F1
-  - [x] Raise OS Commands when executed
-  - [x] Auto-save files before execution
-  - [x] Line mode
+   - Use the Tools -> OS Commands menu selection
+   - click on **+** in **OS Commands** -> New: Command line..
+     - Title: black
+     - Command Line: black %s
+     - I/O Encoding: Use Default
+     - Key Binding: F1
+     - [x] Raise OS Commands when executed
+     - [x] Auto-save files before execution
+     - [x] Line mode
 
 4. Select a file in the editor and press **F1** , or whatever key binding you selected
    in step 3, to reformat the file.
