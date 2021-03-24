@@ -26,6 +26,8 @@
 
 - use lowercase hex strings (#1692)
 
+- added `--extend-exclude` argument (PR #2005)
+
 - speed up caching by avoiding pathlib (#1950)
 
 - `--diff` correctly indicates when a file doesn't end in a newline (#1662)
