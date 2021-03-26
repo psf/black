@@ -13,6 +13,9 @@
 - `Black` no longer adds an incorrect space after a parenthesized assignment expression
   in if/while statements (#1655)
 
+- Added `--skip-magic-trailing-comma` / `-C` to avoid using trailing commas as a reason
+  to split lines (#1824)
+
 - fixed a crash when PWD=/ on POSIX (#1631)
 
 - fixed "I/O operation on closed file" when using --diff (#1664)
