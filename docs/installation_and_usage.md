@@ -41,7 +41,7 @@ Options:
   -l, --line-length INTEGER       How many characters per line to allow.
                                   [default: 88]
 
-  -t, --target-version [py27|py33|py34|py35|py36|py37|py38]
+  -t, --target-version [py27|py33|py34|py35|py36|py37|py38|py39]
                                   Python versions that should be supported by
                                   Black's output. [default: per-file auto-
                                   detection]
@@ -52,6 +52,10 @@ Options:
 
   -S, --skip-string-normalization
                                   Don't normalize string quotes or prefixes.
+  -C, --skip-magic-trailing-comma
+                                  Don't use trailing commas as a reason to
+                                  split lines.
+
   --check                         Don't write the files back, just return the
                                   status.  Return code 0 means nothing would
                                   change.  Return code 1 means some files
@@ -82,13 +86,24 @@ Options:
                                   paths are excluded. Use forward slashes for
                                   directories on all platforms (Windows, too).
                                   Exclusions are calculated first, inclusions
-                                  later.  [default: /(\.eggs|\.git|\.hg|\.mypy
-                                  _cache|\.nox|\.tox|\.venv|\.svn|_build|buck-
-                                  out|build|dist)/]
+                                  later.  [default: /(\.direnv|\.eggs|\.git|\.
+                                  hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_bu
+                                  ild|buck-out|build|dist)/]
 
   --force-exclude TEXT            Like --exclude, but files and directories
                                   matching this regex will be excluded even
-                                  when they are passed explicitly as arguments.
+                                  when they are passed explicitly as
+                                  arguments.
+
+  --extend-exclude TEXT           Like --exclude, but adds additional files
+                                  and directories on top of the excluded
+                                  ones. (useful if you simply want to add to
+                                  the default)
+
+  --stdin-filename TEXT           The name of the file when passing it through
+                                  stdin. Useful to make sure Black will
+                                  respect --force-exclude option on some
+                                  editors that rely on using stdin.
 
   -q, --quiet                     Don't emit non-error messages to stderr.
                                   Errors are still emitted; silence those with
@@ -96,7 +111,7 @@ Options:
 
   -v, --verbose                   Also emit messages to stderr about files
                                   that were not changed or were ignored due to
-                                  --exclude=.
+                                  exclusion patterns.
 
   --version                       Show the version and exit.
   --config FILE                   Read configuration from FILE path.
@@ -119,7 +134,7 @@ about _Black_'s changes or will overwrite _Black_'s changes. A good example of t
 should be configured to neither warn about nor overwrite _Black_'s changes.
 
 Actual details on _Black_ compatible configurations for various tools can be found in
-[compatible_configs](https://github.com/psf/black/blob/master/docs/compatible_configs.md).
+[compatible_configs](https://github.com/psf/black/blob/master/docs/compatible_configs.md#black-compatible-configurations).
 
 ## Migrating your code style without ruining git blame
 
@@ -167,12 +182,13 @@ know!)
 
 ## NOTE: This is a beta product
 
-_Black_ is already [successfully used](#used-by) by many projects, small and big. It
-also sports a decent test suite. However, it is still very new. Things will probably be
-wonky for a while. This is made explicit by the "Beta" trove classifier, as well as by
-the "b" in the version number. What this means for you is that **until the formatter
-becomes stable, you should expect some formatting to change in the future**. That being
-said, no drastic stylistic changes are planned, mostly responses to bug reports.
+_Black_ is already [successfully used](https://github.com/psf/black#used-by) by many
+projects, small and big. It also sports a decent test suite. However, it is still very
+new. Things will probably be wonky for a while. This is made explicit by the "Beta"
+trove classifier, as well as by the "b" in the version number. What this means for you
+is that **until the formatter becomes stable, you should expect some formatting to
+change in the future**. That being said, no drastic stylistic changes are planned,
+mostly responses to bug reports.
 
 Also, as a temporary safety measure, _Black_ will check that the reformatted code still
 produces a valid AST that is equivalent to the original. This slows it down. If you're

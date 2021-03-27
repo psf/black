@@ -4,7 +4,8 @@
 
 _Black_ is able to read project-specific default values for its command line options
 from a `pyproject.toml` file. This is especially useful for specifying custom
-`--include` and `--exclude` patterns for your project.
+`--include` and `--exclude`/`--force-exclude`/`--extend-exclude` patterns for your
+project.
 
 **Pro-tip**: If you're asking yourself "Do I need to configure anything?" the answer is
 "No". _Black_ is all about sensible defaults.
@@ -54,24 +55,10 @@ expressions by Black. Use `[ ]` to denote a significant space character.
 line-length = 88
 target-version = ['py37']
 include = '\.pyi?$'
-exclude = '''
-
-(
-  /(
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.hg
-    | \.mypy_cache
-    | \.tox
-    | \.venv
-    | _build
-    | buck-out
-    | build
-    | dist
-  )/
-  | foo.py           # also separately exclude a file named foo.py in
-                     # the root of the project
-)
+extend-exclude = '''
+# A regex preceded with ^/ will apply only to files and directories
+# in the root of the project.
+^/foo.py  # exclude a file named foo.py in the root of the project (in addition to the defaults)
 '''
 ```
 

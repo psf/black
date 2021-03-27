@@ -16,4 +16,12 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
       - uses: psf/black@stable
+        with:
+          black_args: ". --check"
 ```
+
+## Inputs
+
+### `black_args`
+
+**optional**: Black input arguments. Defaults to `. --check --diff`.

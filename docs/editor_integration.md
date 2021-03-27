@@ -12,38 +12,38 @@ Options include the following:
 
 1. Install `black`.
 
-```console
-$ pip install black
-```
+   ```console
+   $ pip install black
+   ```
 
 2. Locate your `black` installation folder.
 
-On macOS / Linux / BSD:
+   On macOS / Linux / BSD:
 
-```console
-$ which black
-/usr/local/bin/black  # possible location
-```
+   ```console
+   $ which black
+   /usr/local/bin/black  # possible location
+   ```
 
-On Windows:
+   On Windows:
 
-```console
-$ where black
-%LocalAppData%\Programs\Python\Python36-32\Scripts\black.exe  # possible location
-```
+   ```console
+   $ where black
+   %LocalAppData%\Programs\Python\Python36-32\Scripts\black.exe  # possible location
+   ```
 
-Note that if you are using a virtual environment detected by PyCharm, this is an
-unneeded step. In this case the path to `black` is `$PyInterpreterDirectory$/black`.
+   Note that if you are using a virtual environment detected by PyCharm, this is an
+   unneeded step. In this case the path to `black` is `$PyInterpreterDirectory$/black`.
 
 3. Open External tools in PyCharm/IntelliJ IDEA
 
-On macOS:
+   On macOS:
 
-`PyCharm -> Preferences -> Tools -> External Tools`
+   `PyCharm -> Preferences -> Tools -> External Tools`
 
-On Windows / Linux / BSD:
+   On Windows / Linux / BSD:
 
-`File -> Settings -> Tools -> External Tools`
+   `File -> Settings -> Tools -> External Tools`
 
 4. Click the + icon to add a new external tool with the following values:
 
@@ -72,7 +72,9 @@ On Windows / Linux / BSD:
       - Output paths to refresh: `$FilePath$`
       - Working directory: `$ProjectFileDir$`
 
-   - Uncheck "Auto-save edited files to trigger the watcher" in Advanced Options
+   - In Advanced Options
+     - Uncheck "Auto-save edited files to trigger the watcher"
+     - Uncheck "Trigger the watcher on external changes"
 
 ## Wing IDE
 
@@ -81,33 +83,35 @@ Wing supports black via the OS Commands tool, as explained in the Wing documenta
 
 1. Install `black`.
 
-```console
-$ pip install black
-```
+   ```console
+   $ pip install black
+   ```
 
 2. Make sure it runs from the command line, e.g.
 
-```console
-$ black --help
-```
+   ```console
+   $ black --help
+   ```
 
 3. In Wing IDE, activate the **OS Commands** panel and define the command **black** to
    execute black on the currently selected file:
 
-- Use the Tools -> OS Commands menu selection
-- click on **+** in **OS Commands** -> New: Command line..
-  - Title: black
-  - Command Line: black %s
-  - I/O Encoding: Use Default
-  - Key Binding: F1
-  - [x] Raise OS Commands when executed
-  - [x] Auto-save files before execution
-  - [x] Line mode
+   - Use the Tools -> OS Commands menu selection
+   - click on **+** in **OS Commands** -> New: Command line..
+     - Title: black
+     - Command Line: black %s
+     - I/O Encoding: Use Default
+     - Key Binding: F1
+     - [x] Raise OS Commands when executed
+     - [x] Auto-save files before execution
+     - [x] Line mode
 
 4. Select a file in the editor and press **F1** , or whatever key binding you selected
    in step 3, to reformat the file.
 
 ## Vim
+
+### Official plugin
 
 Commands and shortcuts:
 
@@ -121,6 +125,7 @@ Configuration:
 - `g:black_linelength` (defaults to `88`)
 - `g:black_skip_string_normalization` (defaults to `0`)
 - `g:black_virtualenv` (defaults to `~/.vim/black` or `~/.local/share/nvim/black`)
+- `g:black_quiet` (defaults to `0`)
 
 To install with [vim-plug](https://github.com/junegunn/vim-plug):
 
@@ -230,6 +235,47 @@ If you later want to update _Black_, you should do it like this:
 $ pip install -U black --no-binary regex,typed-ast
 ```
 
+### With ALE
+
+1. Install [`ale`](https://github.com/dense-analysis/ale)
+2. Install `black`
+3. Add this to your vimrc:
+
+   ```vim
+   let g:ale_fixers = {}
+   let g:ale_fixers.python = ['black']
+   ```
+
+## Gedit
+
+gedit is the default text editor of the GNOME, Unix like Operating Systems. Open gedit
+as
+
+```console
+$ gedit <file_name>
+```
+
+1. `Go to edit > preferences > plugins`
+2. Search for `external tools` and activate it.
+3. In `Tools menu -> Manage external tools`
+4. Add a new tool using `+` button.
+5. Copy the below content to the code window.
+
+```console
+#!/bin/bash
+Name=$GEDIT_CURRENT_DOCUMENT_NAME
+black $Name
+```
+
+- Set a keyboard shortcut if you like, Ex. `ctrl-B`
+- Save: `Nothing`
+- Input: `Nothing`
+- Output: `Display in bottom pane` if you like.
+- Change the name of the tool if you like.
+
+Use your keyboard shortcut or `Tools -> External Tools` to use your new tool. When you
+close and reopen your File, _Black_ will be done with its job.
+
 ## Visual Studio Code
 
 Use the
@@ -253,7 +299,8 @@ Sublime Text, Visual Studio Code and many more), you can use the
 
 ## Atom/Nuclide
 
-Use [python-black](https://atom.io/packages/python-black).
+Use [python-black](https://atom.io/packages/python-black) or
+[formatters-python](https://atom.io/packages/formatters-python).
 
 ## Gradle (the build tool)
 

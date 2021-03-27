@@ -13,6 +13,9 @@
 - `Black` no longer adds an incorrect space after a parenthesized assignment expression
   in if/while statements (#1655)
 
+- Added `--skip-magic-trailing-comma` / `-C` to avoid using trailing commas as a reason
+  to split lines (#1824)
+
 - fixed a crash when PWD=/ on POSIX (#1631)
 
 - fixed "I/O operation on closed file" when using --diff (#1664)
@@ -20,6 +23,27 @@
 - Prevent coloured diff output being interleaved with multiple files (#1673)
 
 - Added support for PEP 614 relaxed decorator syntax on python 3.9 (#1711)
+
+- Added parsing support for unparenthesized tuples and yield expressions in annotated
+  assignments (#1835)
+
+- use lowercase hex strings (#1692)
+
+- added `--extend-exclude` argument (PR #2005)
+
+- speed up caching by avoiding pathlib (#1950)
+
+- `--diff` correctly indicates when a file doesn't end in a newline (#1662)
+
+- Added `--stdin-filename` argument to allow stdin to respect `--force-exclude` rules
+  (#1780)
+
+- Lines ending with `fmt: skip` will now be not formatted (#1800)
+
+#### _Packaging_
+
+- Self-contained native _Black_ binaries are now provided for releases via GitHub
+  Releases (#1743)
 
 ### 20.8b1
 
