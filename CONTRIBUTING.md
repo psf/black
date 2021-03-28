@@ -58,6 +58,23 @@ $ tox -e fuzz
 $ black-primer [-k -w /tmp/black_test_repos]
 ```
 
+### News / Changelog Requirement
+
+`Black` has CI that will check for an entry corresponding to your PR in `CHANGES.md`. If
+you feel this PR not require a `CHANGES.md` please state that in a comment and a
+maintainer can add a `skip_news` tag to make the CI pass. Otherwise, please ensure you
+have a line in the following format:
+
+```md
+- `Black` is now more awesome (#X)
+```
+
+To workout X, checkout the latest issue and PR number and add 1. This is not perfect but
+saves a lot of release overhead as now the releaser does not need to go back and workout
+what to add to the `CHANGES.md` for each release.
+
+_Suggestions welcome on how this could be a better less invasive flow._
+
 ### Docs Testing
 
 If you make changes to docs, you can test they still build locally too.
