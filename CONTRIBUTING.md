@@ -61,8 +61,8 @@ $ black-primer [-k -w /tmp/black_test_repos]
 ### News / Changelog Requirement
 
 `Black` has CI that will check for an entry corresponding to your PR in `CHANGES.md`. If
-you feel this PR not require a `CHANGES.md` please state that in a comment and a
-maintainer can add a `skip_news` tag to make the CI pass. Otherwise, please ensure you
+you feel this PR not require a changelog entry please state that in a comment and a
+maintainer can add a `skip news` label to make the CI pass. Otherwise, please ensure you
 have a line in the following format:
 
 ```md
