@@ -166,7 +166,7 @@
  slice[0:1:2]
  slice[:]
  slice[:-1]
-@@ -137,113 +173,180 @@
+@@ -137,118 +173,199 @@
  numpy[-(c + 1) :, d]
  numpy[:, l[-2]]
  numpy[:, ::-1]
@@ -346,6 +346,9 @@
 -    return True
 -if (
 -    ~ aaaaaaaaaaaaaaaa.a + aaaaaaaaaaaaaaaa.b - aaaaaaaaaaaaaaaa.c * aaaaaaaaaaaaaaaa.d @ aaaaaaaaaaaaaaaa.e | aaaaaaaaaaaaaaaa.f & aaaaaaaaaaaaaaaa.g % aaaaaaaaaaaaaaaa.h ^ aaaaaaaaaaaaaaaa.i << aaaaaaaaaaaaaaaa.k >> aaaaaaaaaaaaaaaa.l ** aaaaaaaaaaaaaaaa.m // aaaaaaaaaaaaaaaa.n
+-):
+-    return True
+-aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa - aaaaaaaaaaaaaaaa * (aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa) / (aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa)
 +a = (
 +    aaaa.bbbb.cccc.dddd.eeee.ffff.gggg.hhhh.iiii.jjjj.kkkk.llll.mmmm.nnnn.oooo.pppp
 +    in qqqq.rrrr.ssss.tttt.uuuu.vvvv.xxxx.yyyy.zzzz
@@ -417,7 +420,28 @@
 +    ^ aaaaaaaaaaaaaaaa.i
 +    << aaaaaaaaaaaaaaaa.k
 +    >> aaaaaaaaaaaaaaaa.l ** aaaaaaaaaaaaaaaa.m // aaaaaaaaaaaaaaaa.n
- ):
-     return True
++):
++    return True
++(
++    aaaaaaaaaaaaaaaa
++    + aaaaaaaaaaaaaaaa
++    - aaaaaaaaaaaaaaaa
++    * (aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa)
++    / (aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa)
++)
+ aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa
+-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa >> aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa << aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
++(
++    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
++    >> aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
++    << aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
++)
+ bbbb >> bbbb * bbbb
+-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ^bbbb.a & aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
++(
++    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
++    ^ bbbb.a & aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
++    ^ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
++)
  last_call()
  # standalone comment at ENDMARKER

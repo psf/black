@@ -12,7 +12,7 @@ file_input: (NEWLINE | stmt)* ENDMARKER
 single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
 eval_input: testlist NEWLINE* ENDMARKER
 
-decorator: '@' dotted_name [ '(' [arglist] ')' ] NEWLINE
+decorator: '@' namedexpr_test NEWLINE
 decorators: decorator+
 decorated: decorators (classdef | funcdef | async_funcdef)
 async_funcdef: ASYNC funcdef
@@ -77,7 +77,7 @@ small_stmt: (expr_stmt | print_stmt  | del_stmt | pass_stmt | flow_stmt |
              import_stmt | global_stmt | exec_stmt | assert_stmt)
 expr_stmt: testlist_star_expr (annassign | augassign (yield_expr|testlist) |
                      ('=' (yield_expr|testlist_star_expr))*)
-annassign: ':' test ['=' test]
+annassign: ':' test ['=' (yield_expr|testlist_star_expr)]
 testlist_star_expr: (test|star_expr) (',' (test|star_expr))* [',']
 augassign: ('+=' | '-=' | '*=' | '@=' | '/=' | '%=' | '&=' | '|=' | '^=' |
             '<<=' | '>>=' | '**=' | '//=')

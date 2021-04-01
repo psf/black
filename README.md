@@ -11,6 +11,7 @@
 <a href="https://github.com/psf/black/blob/master/LICENSE"><img alt="License: MIT" src="https://black.readthedocs.io/en/stable/_static/license.svg"></a>
 <a href="https://pypi.org/project/black/"><img alt="PyPI" src="https://img.shields.io/pypi/v/black"></a>
 <a href="https://pepy.tech/project/black"><img alt="Downloads" src="https://pepy.tech/badge/black"></a>
+<a href="https://anaconda.org/conda-forge/black/"><img alt="conda-forge" src="https://img.shields.io/conda/dn/conda-forge/black.svg?label=conda-forge"></a>
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 </p>
 
@@ -48,8 +49,9 @@ _Contents:_ **[Installation and usage](#installation-and-usage)** |
 
 ### Installation
 
-_Black_ can be installed by running `pip install black`. It requires Python 3.6.0+ to
-run but you can reformat Python 2 code with it, too.
+_Black_ can be installed by running `pip install black`. It requires Python 3.6.2+ to
+run. If you want to format Python 2 code as well, install with
+`pip install black[python2]`.
 
 #### Install from GitHub
 
@@ -85,7 +87,7 @@ Options:
   -l, --line-length INTEGER       How many characters per line to allow.
                                   [default: 88]
 
-  -t, --target-version [py27|py33|py34|py35|py36|py37|py38]
+  -t, --target-version [py27|py33|py34|py35|py36|py37|py38|py39]
                                   Python versions that should be supported by
                                   Black's output. [default: per-file auto-
                                   detection]
@@ -96,6 +98,10 @@ Options:
 
   -S, --skip-string-normalization
                                   Don't normalize string quotes or prefixes.
+  -C, --skip-magic-trailing-comma
+                                  Don't use trailing commas as a reason to
+                                  split lines.
+
   --check                         Don't write the files back, just return the
                                   status.  Return code 0 means nothing would
                                   change.  Return code 1 means some files
@@ -130,10 +136,21 @@ Options:
                                   hg|\.mypy_cache|\.nox|\.tox|\.venv|venv|\.sv
                                   n|_build|buck-out|build|dist)/]
 
+  --extend-exclude TEXT           Like --exclude, but adds additional files
+                                  and directories on top of the excluded
+                                  ones (useful if you simply want to add to
+                                  the default).
 
   --force-exclude TEXT            Like --exclude, but files and directories
                                   matching this regex will be excluded even
-                                  when they are passed explicitly as arguments
+                                  when they are passed explicitly as
+                                  arguments.
+
+
+  --stdin-filename TEXT           The name of the file when passing it through
+                                  stdin. Useful to make sure Black will
+                                  respect --force-exclude option on some
+                                  editors that rely on using stdin.
 
   -q, --quiet                     Don't emit non-error messages to stderr.
                                   Errors are still emitted; silence those with
@@ -141,7 +158,7 @@ Options:
 
   -v, --verbose                   Also emit messages to stderr about files
                                   that were not changed or were ignored due to
-                                  --exclude=.
+                                  exclusion patterns.
 
   --version                       Show the version and exit.
   --config FILE                   Read configuration from FILE path.
@@ -164,7 +181,7 @@ about _Black_'s changes or will overwrite _Black_'s changes. A good example of t
 should be configured to neither warn about nor overwrite _Black_'s changes.
 
 Actual details on _Black_ compatible configurations for various tools can be found in
-[compatible_configs](https://github.com/psf/black/blob/master/docs/compatible_configs.md).
+[compatible_configs](https://github.com/psf/black/blob/master/docs/compatible_configs.md#black-compatible-configurations).
 
 ### Migrating your code style without ruining git blame
 
@@ -212,12 +229,13 @@ know!)
 
 ### NOTE: This is a beta product
 
-_Black_ is already [successfully used](#used-by) by many projects, small and big. It
-also sports a decent test suite. However, it is still very new. Things will probably be
-wonky for a while. This is made explicit by the "Beta" trove classifier, as well as by
-the "b" in the version number. What this means for you is that **until the formatter
-becomes stable, you should expect some formatting to change in the future**. That being
-said, no drastic stylistic changes are planned, mostly responses to bug reports.
+_Black_ is already [successfully used](https://github.com/psf/black#used-by) by many
+projects, small and big. It also sports a decent test suite. However, it is still very
+new. Things will probably be wonky for a while. This is made explicit by the "Beta"
+trove classifier, as well as by the "b" in the version number. What this means for you
+is that **until the formatter becomes stable, you should expect some formatting to
+change in the future**. That being said, no drastic stylistic changes are planned,
+mostly responses to bug reports.
 
 Also, as a temporary safety measure, _Black_ will check that the reformatted code still
 produces a valid AST that is equivalent to the original. This slows it down. If you're
@@ -228,8 +246,9 @@ feeling confident, use `--fast`.
 _Black_ is a PEP 8 compliant opinionated formatter. _Black_ reformats entire files in
 place. It is not configurable. It doesn't take previous formatting into account. Your
 main option of configuring _Black_ is that it doesn't reformat blocks that start with
-`# fmt: off` and end with `# fmt: on`. `# fmt: on/off` have to be on the same level of
-indentation. To learn more about _Black_'s opinions, to go
+`# fmt: off` and end with `# fmt: on`, or lines that ends with `# fmt: skip`. Pay
+attention that `# fmt: on/off` have to be on the same level of indentation. To learn
+more about _Black_'s opinions, to go
 [the_black_code_style](https://github.com/psf/black/blob/master/docs/the_black_code_style.md).
 
 Please refer to this document before submitting an issue. What seems like a bug might be
@@ -251,7 +270,7 @@ above. What seems like a bug might be intended behaviour.
 
 _Black_ is able to read project-specific default values for its command line options
 from a `pyproject.toml` file. This is especially useful for specifying custom
-`--include` and `--exclude` patterns for your project.
+`--include` and `--exclude`/`--extend-exclude` patterns for your project.
 
 **Pro-tip**: If you're asking yourself "Do I need to configure anything?" the answer is
 "No". _Black_ is all about sensible defaults.
@@ -273,6 +292,20 @@ parent directories. It stops looking when it finds the file, or a `.git` directo
 
 If you're formatting standard input, _Black_ will look for configuration starting from
 the current working directory.
+
+You can use a "global" configuration, stored in a specific location in your home
+directory. This will be used as a fallback configuration, that is, it will be used if
+and only if _Black_ doesn't find any configuration as mentioned above. Depending on your
+operating system, this configuration file should be stored as:
+
+- Windows: `~\.black`
+- Unix-like (Linux, MacOS, etc.): `$XDG_CONFIG_HOME/black` (`~/.config/black` if the
+  `XDG_CONFIG_HOME` environment variable is not set)
+
+Note that these are paths to the TOML file itself (meaning that they shouldn't be named
+as `pyproject.toml`), not directories where you store the configuration. Here, `~`
+refers to the path to your home directory. On Windows, this will be something like
+`C:\\Users\UserName`.
 
 You can also explicitly specify the path to a particular file that you want with
 `--config`. In this situation _Black_ will not look for any other file.
@@ -301,25 +334,10 @@ expressions by Black. Use `[ ]` to denote a significant space character.
 line-length = 88
 target-version = ['py37']
 include = '\.pyi?$'
-exclude = '''
-
-(
-  /(
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.hg
-    | \.mypy_cache
-    | \.tox
-    | \.venv
-    | venv
-    | _build
-    | buck-out
-    | build
-    | dist
-  )/
-  | foo.py           # also separately exclude a file named foo.py in
-                     # the root of the project
-)
+extend-exclude = '''
+# A regex preceded with ^/ will apply only to files and directories
+# in the root of the project.
+^/foo.py  # exclude a file named foo.py in the root of the project (in addition to the defaults)
 '''
 ```
 
@@ -372,7 +390,7 @@ Use [pre-commit](https://pre-commit.com/). Once you
 ```yaml
 repos:
   - repo: https://github.com/psf/black
-    rev: 19.10b0 # Replace by any tag/version: https://github.com/psf/black/tags
+    rev: 20.8b1 # Replace by any tag/version: https://github.com/psf/black/tags
     hooks:
       - id: black
         language_version: python3 # Should be a command that runs python3.6+
@@ -406,7 +424,15 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
       - uses: psf/black@stable
+        with:
+          args: ". --check"
 ```
+
+### Inputs
+
+#### `black_args`
+
+**optional**: Black input arguments. Defaults to `. --check --diff`.
 
 ## Ignoring unmodified files
 
@@ -435,7 +461,7 @@ then write the above files to `.cache/black/<version>/`.
 The following notable open-source projects trust _Black_ with enforcing a consistent
 code style: pytest, tox, Pyramid, Django Channels, Hypothesis, attrs, SQLAlchemy,
 Poetry, PyPA applications (Warehouse, Bandersnatch, Pipenv, virtualenv), pandas, Pillow,
-every Datadog Agent Integration, Home Assistant.
+every Datadog Agent Integration, Home Assistant, Zulip.
 
 The following organizations use _Black_: Facebook, Dropbox, Mozilla, Quora.
 
@@ -574,6 +600,7 @@ Multiple contributions by:
 - [Gregory P. Smith](mailto:greg@krypto.org)
 - Gustavo Camargo
 - hauntsaninja
+- [Hadi Alqattan](mailto:alqattanhadizaki@gmail.com)
 - [Heaford](mailto:dan@heaford.com)
 - [Hugo Barrera](mailto::hugo@barrera.io)
 - Hugo van Kemenade
@@ -595,6 +622,7 @@ Multiple contributions by:
 - [Joseph Larson](mailto:larson.joseph@gmail.com)
 - [Josh Bode](mailto:joshbode@fastmail.com)
 - [Josh Holland](mailto:anowlcalledjosh@gmail.com)
+- [Joshua Cannon](mailto:joshdcannon@gmail.com)
 - [José Padilla](mailto:jpadilla@webapplicate.com)
 - [Juan Luis Cano Rodríguez](mailto:hello@juanlu.space)
 - [kaiix](mailto:kvn.hou@gmail.com)
@@ -637,6 +665,7 @@ Multiple contributions by:
 - [Paul Ganssle](mailto:p.ganssle@gmail.com)
 - [Paul Meinhardt](mailto:mnhrdt@gmail.com)
 - [Peter Bengtsson](mailto:mail@peterbe.com)
+- [Peter Grayson](mailto:pete@jpgrayson.net)
 - [Peter Stensmyr](mailto:peter.stensmyr@gmail.com)
 - pmacosta
 - [Quentin Pradet](mailto:quentin@pradet.me)

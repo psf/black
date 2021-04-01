@@ -4,7 +4,8 @@
 
 _Black_ is able to read project-specific default values for its command line options
 from a `pyproject.toml` file. This is especially useful for specifying custom
-`--include` and `--exclude` patterns for your project.
+`--include` and `--exclude`/`--force-exclude`/`--extend-exclude` patterns for your
+project.
 
 **Pro-tip**: If you're asking yourself "Do I need to configure anything?" the answer is
 "No". _Black_ is all about sensible defaults.
@@ -26,6 +27,20 @@ parent directories. It stops looking when it finds the file, or a `.git` directo
 
 If you're formatting standard input, _Black_ will look for configuration starting from
 the current working directory.
+
+You can use a "global" configuration, stored in a specific location in your home
+directory. This will be used as a fallback configuration, that is, it will be used if
+and only if _Black_ doesn't find any configuration as mentioned above. Depending on your
+operating system, this configuration file should be stored as:
+
+- Windows: `~\.black`
+- Unix-like (Linux, MacOS, etc.): `$XDG_CONFIG_HOME/black` (`~/.config/black` if the
+  `XDG_CONFIG_HOME` environment variable is not set)
+
+Note that these are paths to the TOML file itself (meaning that they shouldn't be named
+as `pyproject.toml`), not directories where you store the configuration. Here, `~`
+refers to the path to your home directory. On Windows, this will be something like
+`C:\\Users\UserName`.
 
 You can also explicitly specify the path to a particular file that you want with
 `--config`. In this situation _Black_ will not look for any other file.
@@ -54,25 +69,10 @@ expressions by Black. Use `[ ]` to denote a significant space character.
 line-length = 88
 target-version = ['py37']
 include = '\.pyi?$'
-exclude = '''
-
-(
-  /(
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.hg
-    | \.mypy_cache
-    | \.tox
-    | \.venv
-    | venv
-    | _build
-    | buck-out
-    | build
-    | dist
-  )/
-  | foo.py           # also separately exclude a file named foo.py in
-                     # the root of the project
-)
+extend-exclude = '''
+# A regex preceded with ^/ will apply only to files and directories
+# in the root of the project.
+^/foo.py  # exclude a file named foo.py in the root of the project (in addition to the defaults)
 '''
 ```
 
