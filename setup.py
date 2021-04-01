@@ -3,7 +3,7 @@ from setuptools import setup
 import sys
 import os
 
-assert sys.version_info >= (3, 6, 0), "black requires Python 3.6+"
+assert sys.version_info >= (3, 6, 2), "black requires Python 3.6.2+"
 from pathlib import Path  # noqa E402
 
 CURRENT_DIR = Path(__file__).parent
@@ -65,13 +65,13 @@ setup(
     packages=["blackd", "black", "blib2to3", "blib2to3.pgen2", "black_primer"],
     package_dir={"": "src"},
     package_data={"blib2to3": ["*.txt"], "black": ["py.typed"]},
-    python_requires=">=3.6",
+    python_requires=">=3.6.2",
     zip_safe=False,
     install_requires=[
         "click>=7.1.2",
         "appdirs",
         "toml>=0.10.1",
-        "typed-ast>=1.4.2",
+        "typed-ast>=1.4.2; python_version < '3.8'",
         "regex>=2020.1.8",
         "pathspec>=0.6, <1",
         "dataclasses>=0.6; python_version < '3.7'",
@@ -81,6 +81,7 @@ setup(
     extras_require={
         "d": ["aiohttp>=3.3.2", "aiohttp-cors"],
         "colorama": ["colorama>=0.4.3"],
+        "python2": ["typed-ast>=1.4.2"],
     },
     test_suite="tests.test_black",
     classifiers=[

@@ -48,7 +48,20 @@ from appdirs import user_cache_dir
 from dataclasses import dataclass, field, replace
 import click
 import toml
-from typed_ast import ast3, ast27
+
+try:
+    from typed_ast import ast3, ast27
+except ImportError:
+    if sys.version_info < (3, 8):
+        print(
+            "The typed_ast package is not installed.\n"
+            "You can install it with `python3 -m pip install typed-ast`.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    else:
+        ast3 = ast27 = ast
+
 from pathspec import PathSpec
 
 # lib2to3 fork
@@ -6323,7 +6336,12 @@ def parse_ast(src: str) -> Union[ast.AST, ast3.AST, ast27.AST]:
                 return ast3.parse(src, filename, feature_version=feature_version)
             except SyntaxError:
                 continue
-
+    if ast27.__name__ == "ast":
+        raise SyntaxError(
+            "The requested source code has invalid Python 3 syntax.\n"
+            "If you are trying to format Python 2 files please reinstall Black"
+            " with the 'python2' extra: `python3 -m pip install black[python2]`."
+        )
     return ast27.parse(src)
 
 
