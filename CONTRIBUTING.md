@@ -69,11 +69,10 @@ have a line in the following format:
 - `Black` is now more awesome (#X)
 ```
 
-To workout X, checkout the latest issue and PR number and add 1. This is not perfect but
-saves a lot of release overhead as now the releaser does not need to go back and workout
-what to add to the `CHANGES.md` for each release.
-
-_Suggestions welcome on how this could be a better less invasive flow._
+To workout X, please use
+[Next PR Number](https://ichard26.github.io/next-pr-number/?owner=psf&name=black). This
+is not perfect but saves a lot of release overhead as now the releaser does not need to
+go back and workout what to add to the `CHANGES.md` for each release.
 
 ### Docs Testing
 
