@@ -13,7 +13,7 @@ repos:
         types_or: [python, pyi]
 
   - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.8.1
+    rev: 3.8.4
     hooks:
       - id: flake8
         additional_dependencies: [flake8-bugbear]
