@@ -306,7 +306,11 @@ def find_pyproject_toml(path_search_start: Iterable[str]) -> Optional[str]:
     """Find the absolute filepath to a pyproject.toml if it exists"""
     path_project_root = find_project_root(path_search_start)
     path_pyproject_toml = path_project_root / "pyproject.toml"
-    return str(path_pyproject_toml) if path_pyproject_toml.is_file() else None
+    if path_pyproject_toml.is_file():
+        return str(path_pyproject_toml)
+
+    path_user_pyproject_toml = find_user_pyproject_toml()
+    return str(path_user_pyproject_toml) if path_user_pyproject_toml.is_file() else None
 
 
 def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
@@ -6246,6 +6250,22 @@ def find_project_root(srcs: Iterable[str]) -> Path:
             return directory
 
     return directory
+
+
+@lru_cache()
+def find_user_pyproject_toml() -> Path:
+    r"""Return the path to the top-level user configuration for black.
+
+    This looks for ~\.black on Windows and ~/.config/black on Linux and other
+    Unix systems.
+    """
+    if sys.platform == "win32":
+        # Windows
+        user_config_path = Path.home() / ".black"
+    else:
+        config_root = os.environ.get("XDG_CONFIG_HOME", "~/.config")
+        user_config_path = Path(config_root).expanduser() / "black"
+    return user_config_path.resolve()
 
 
 @dataclass
