@@ -1,10 +1,13 @@
 FROM python:3-slim
 
-RUN pip install --upgrade pip setuptools wheel
-RUN apt update && apt install -y git
 RUN mkdir /src
 COPY . /src/
-RUN cd /src && pip install --no-cache-dir .[colorama,d]
-RUN rm -rf /src && apt remove -y git && apt autoremove -y
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && apt update && apt install -y git \
+    && cd /src \
+    && pip install --no-cache-dir .[colorama,d] \
+    && rm -rf /src \
+    && apt remove -y git \
+    && apt autoremove -y
 
 CMD ["black"]
