@@ -445,8 +445,8 @@ def validate_regex(
     "--check",
     is_flag=True,
     help=(
-        "Don't write the files back, just return the status.  Return code 0 means"
-        " nothing would change.  Return code 1 means some files would be reformatted."
+        "Don't write the files back, just return the status. Return code 0 means"
+        " nothing would change. Return code 1 means some files would be reformatted."
         " Return code 123 means there was an internal error."
     ),
 )
@@ -472,9 +472,9 @@ def validate_regex(
     callback=validate_regex,
     help=(
         "A regular expression that matches files and directories that should be"
-        " included on recursive searches.  An empty value means all files are included"
-        " regardless of the name.  Use forward slashes for directories on all platforms"
-        " (Windows, too).  Exclusions are calculated first, inclusions later."
+        " included on recursive searches. An empty value means all files are included"
+        " regardless of the name. Use forward slashes for directories on all platforms"
+        " (Windows, too). Exclusions are calculated first, inclusions later."
     ),
     show_default=True,
 )
@@ -485,8 +485,8 @@ def validate_regex(
     callback=validate_regex,
     help=(
         "A regular expression that matches files and directories that should be"
-        " excluded on recursive searches.  An empty value means no paths are excluded."
-        " Use forward slashes for directories on all platforms (Windows, too). "
+        " excluded on recursive searches. An empty value means no paths are excluded."
+        " Use forward slashes for directories on all platforms (Windows, too)."
         " Exclusions are calculated first, inclusions later."
     ),
     show_default=True,
