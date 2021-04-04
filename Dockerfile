@@ -8,6 +8,7 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
     && pip install --no-cache-dir .[colorama,d] \
     && rm -rf /src \
     && apt remove -y git \
-    && apt autoremove -y
+    && apt autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
 
 CMD ["black"]
