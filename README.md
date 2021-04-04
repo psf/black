@@ -103,8 +103,8 @@ Options:
                                   split lines.
 
   --check                         Don't write the files back, just return the
-                                  status.  Return code 0 means nothing would
-                                  change.  Return code 1 means some files
+                                  status. Return code 0 means nothing would
+                                  change. Return code 1 means some files
                                   would be reformatted. Return code 123 means
                                   there was an internal error.
 
@@ -119,20 +119,20 @@ Options:
 
   --include TEXT                  A regular expression that matches files and
                                   directories that should be included on
-                                  recursive searches.  An empty value means
+                                  recursive searches. An empty value means
                                   all files are included regardless of the
-                                  name.  Use forward slashes for directories
-                                  on all platforms (Windows, too).  Exclusions
+                                  name. Use forward slashes for directories
+                                  on all platforms (Windows, too). Exclusions
                                   are calculated first, inclusions later.
                                   [default: \.pyi?$]
 
   --exclude TEXT                  A regular expression that matches files and
                                   directories that should be excluded on
-                                  recursive searches.  An empty value means no
+                                  recursive searches. An empty value means no
                                   paths are excluded. Use forward slashes for
                                   directories on all platforms (Windows, too).
                                   Exclusions are calculated first, inclusions
-                                  later.  [default: /(\.direnv|\.eggs|\.git|\.
+                                  later. [default: /(\.direnv|\.eggs|\.git|\.
                                   hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_bu
                                   ild|buck-out|build|dist)/]
 
