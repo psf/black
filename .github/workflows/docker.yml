@@ -27,7 +27,7 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: cooperlees/black:latest
+          tags: pyfound/black:latest
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
