@@ -847,7 +847,7 @@ async def schedule_formatting(
         ): src
         for src in sorted(sources)
     }
-    pending: Iterable["asyncio.Future[bool]"] = tasks.keys()
+    pending = tasks.keys()
     try:
         loop.add_signal_handler(signal.SIGINT, cancel, pending)
         loop.add_signal_handler(signal.SIGTERM, cancel, pending)
