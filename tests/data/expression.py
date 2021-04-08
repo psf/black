@@ -290,7 +290,7 @@ not great
 -1
 ~int and not v1 ^ 123 + v2 | True
 (~int) and (not ((v1 ^ (123 + v2)) | True))
-+(really ** -(confusing ** ~(operator ** -precedence)))
++(really**-(confusing**~(operator**-precedence)))
 flags & ~select.EPOLLIN and waiters.write_task is not None
 lambda arg: None
 lambda a=True: a

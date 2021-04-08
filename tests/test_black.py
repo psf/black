@@ -407,6 +407,15 @@ class BlackTestCase(BlackBaseTestCase):
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, mode)
 
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_doublestar_math_op_no_spaces(self) -> None:
+        source, expected = read_data("doublestar_no_spaces")
+        mode = replace(DEFAULT_MODE, target_versions=PY36_VERSIONS)
+        actual = fs(source, mode=mode)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, mode)
+
     def test_skip_magic_trailing_comma(self) -> None:
         source, _ = read_data("expression.py")
         expected, _ = read_data("expression_skip_magic_trailing_comma.diff")

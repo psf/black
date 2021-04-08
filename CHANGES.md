@@ -4,6 +4,8 @@
 
 #### _Black_
 
+- `Black` wraps `**` if in math expression with more than 1 op (#2095)
+
 - `Black` now respects `--skip-string-normalization` when normalizing multiline
   docstring quotes (#1637)
 

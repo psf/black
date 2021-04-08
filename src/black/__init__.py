@@ -1078,6 +1078,7 @@ def format_str(src_contents: str, *, mode: Mode) -> FileContent:
         for line in transform_line(
             current_line, mode=mode, features=split_line_features
         ):
+            line = fix_doublestar_in_op(line)
             dst_contents.append(str(line))
     return "".join(dst_contents)
 
@@ -1842,6 +1843,40 @@ class Line:
     def __bool__(self) -> bool:
         """Return True if the line has leaves or comments."""
         return bool(self.leaves or self.comments)
+
+
+def fix_doublestar_in_op(line: Line) -> Line:
+    """Clone line without spaces on doublestar op if is math op."""
+    leaves: List[Leaf] = []
+    candidate_rep_count: int = 0
+    for idx, leaf in enumerate(line.leaves):
+        new_leaf = leaf.clone()
+        if new_leaf.type == token.DOUBLESTAR:
+            if idx > 0 and line.leaves[idx - 1].type in {token.NAME, token.NUMBER}:
+                new_leaf.prefix = ""
+                candidate_rep_count += 1
+        if (
+            idx > 1
+            and line.leaves[idx - 1].type == token.DOUBLESTAR
+            and line.leaves[idx - 2].type in {token.NAME, token.NUMBER}
+        ):
+            new_leaf.prefix = ""
+            candidate_rep_count += 1
+        leaves.append(new_leaf)
+
+    if candidate_rep_count <= 2:
+        leaves = line.leaves
+
+    return Line(
+        mode=line.mode,
+        depth=line.depth,
+        leaves=leaves,
+        comments=line.comments,
+        bracket_tracker=line.bracket_tracker,
+        inside_brackets=line.inside_brackets,
+        should_split_rhs=line.should_split_rhs,
+        magic_trailing_comma=line.magic_trailing_comma,
+    )
 
 
 @dataclass
