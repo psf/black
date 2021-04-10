@@ -45,6 +45,8 @@
 - PR #2053: Python 2 support is now optional, install with
   `python3 -m pip install black[python2]` to maintain support.
 
+- Exclude `venv` directory by default (#1683)
+
 #### _Packaging_
 
 - Self-contained native _Black_ binaries are now provided for releases via GitHub
