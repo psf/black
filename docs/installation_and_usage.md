@@ -87,8 +87,8 @@ Options:
                                   directories on all platforms (Windows, too).
                                   Exclusions are calculated first, inclusions
                                   later.  [default: /(\.direnv|\.eggs|\.git|\.
-                                  hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_bu
-                                  ild|buck-out|build|dist)/]
+                                  hg|\.mypy_cache|\.nox|\.tox|\.venv|venv|\.sv
+                                  n|_build|buck-out|build|dist)/]
 
   --force-exclude TEXT            Like --exclude, but files and directories
                                   matching this regex will be excluded even
