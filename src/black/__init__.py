@@ -2709,6 +2709,13 @@ def make_comment(content: str) -> str:
 
     if content[0] == "#":
         content = content[1:]
+    NON_BREAKING_SPACE = " "
+    if (
+        content
+        and content[0] == NON_BREAKING_SPACE
+        and not content.lstrip().startswith("type:")
+    ):
+        content = " " + content[1:]  # Replace NBSP by a simple space
     if content and content[0] not in " !:#'%":
         content = " " + content
     return "#" + content
