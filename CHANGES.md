@@ -4,7 +4,7 @@
 
 #### _Black_
 
-- `Black` now strips leading and trailing spaces from one-line docstrings (PR #1740)
+- `Black` now strips leading and trailing spaces from one-line docstrings (#1740)
 
 - `Black` now cleans up leading non-breaking spaces in comments (#2092)
 
