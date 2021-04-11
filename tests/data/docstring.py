@@ -102,6 +102,19 @@ def and_this():
   "hey yah"'''
 
 
+def empty():
+    '''
+    
+    
+    
+    
+    '''
+
+
+def oneline_empty():
+    '''      '''
+
+
 def believe_it_or_not_this_is_in_the_py_stdlib(): ''' 
 "hey yah"'''
 
@@ -240,6 +253,14 @@ def and_that():
 def and_this():
     '''
     "hey yah"'''
+
+
+def empty():
+    """ """
+
+
+def oneline_empty():
+    """ """
 
 
 def believe_it_or_not_this_is_in_the_py_stdlib():

@@ -2166,6 +2166,8 @@ class LineGenerator(Visitor[Line]):
                     docstring = " " + docstring
                 if leaf.value[tail_len + 1] == docstring[-1]:
                     docstring = docstring + " "
+            else:
+                docstring = " "
             leaf.value = leaf.value[0:lead_len] + docstring + leaf.value[tail_len:]
 
         yield from self.visit_default(leaf)
