@@ -2709,8 +2709,9 @@ def make_comment(content: str) -> str:
 
     if content[0] == "#":
         content = content[1:]
-    if content and content[0] == " ":  # This is a non-breaking space
-        content = " " + content[1:]  # And this is a simple space
+    NON_BREAKING_SPACE = " "
+    if content and content[0] == NON_BREAKING_SPACE and "type: ignore" not in content:
+        content = " " + content[1:]  # Replace NBSP by a simple space
     if content and content[0] not in " !:#'%":
         content = " " + content
     return "#" + content
