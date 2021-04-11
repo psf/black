@@ -4,7 +4,7 @@
 
 #### _Black_
 
-- `Black` now requires one-line docstrings to be stripped (PR #1740)
+- `Black` now strips leading and trailing spaces from one-line docstrings (PR #1740)
 
 - `Black` now respects `--skip-string-normalization` when normalizing multiline
   docstring quotes (#1637)
