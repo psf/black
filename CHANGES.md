@@ -4,6 +4,8 @@
 
 #### _Black_
 
+- `Black` now cleans up leading non-breaking spaces in comments (#2092)
+
 - `Black` now respects `--skip-string-normalization` when normalizing multiline
   docstring quotes (#1637)
 
