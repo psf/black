@@ -48,7 +48,20 @@ from appdirs import user_cache_dir
 from dataclasses import dataclass, field, replace
 import click
 import toml
-from typed_ast import ast3, ast27
+
+try:
+    from typed_ast import ast3, ast27
+except ImportError:
+    if sys.version_info < (3, 8):
+        print(
+            "The typed_ast package is not installed.\n"
+            "You can install it with `python3 -m pip install typed-ast`.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    else:
+        ast3 = ast27 = ast
+
 from pathspec import PathSpec
 
 # lib2to3 fork
@@ -69,7 +82,7 @@ if TYPE_CHECKING:
     import colorama  # noqa: F401
 
 DEFAULT_LINE_LENGTH = 88
-DEFAULT_EXCLUDES = r"/(\.direnv|\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_build|buck-out|build|dist)/"  # noqa: B950
+DEFAULT_EXCLUDES = r"/(\.direnv|\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|venv|\.svn|_build|buck-out|build|dist)/"  # noqa: B950
 DEFAULT_INCLUDES = r"\.pyi?$"
 CACHE_DIR = Path(user_cache_dir("black", version=__version__))
 STDIN_PLACEHOLDER = "__BLACK_STDIN_FILENAME__"
@@ -289,11 +302,15 @@ def supports_feature(target_versions: Set[TargetVersion], feature: Feature) -> b
     return all(feature in VERSION_TO_FEATURES[version] for version in target_versions)
 
 
-def find_pyproject_toml(path_search_start: Iterable[str]) -> Optional[str]:
+def find_pyproject_toml(path_search_start: Tuple[str, ...]) -> Optional[str]:
     """Find the absolute filepath to a pyproject.toml if it exists"""
     path_project_root = find_project_root(path_search_start)
     path_pyproject_toml = path_project_root / "pyproject.toml"
-    return str(path_pyproject_toml) if path_pyproject_toml.is_file() else None
+    if path_pyproject_toml.is_file():
+        return str(path_pyproject_toml)
+
+    path_user_pyproject_toml = find_user_pyproject_toml()
+    return str(path_user_pyproject_toml) if path_user_pyproject_toml.is_file() else None
 
 
 def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
@@ -428,8 +445,8 @@ def validate_regex(
     "--check",
     is_flag=True,
     help=(
-        "Don't write the files back, just return the status.  Return code 0 means"
-        " nothing would change.  Return code 1 means some files would be reformatted."
+        "Don't write the files back, just return the status. Return code 0 means"
+        " nothing would change. Return code 1 means some files would be reformatted."
         " Return code 123 means there was an internal error."
     ),
 )
@@ -455,9 +472,9 @@ def validate_regex(
     callback=validate_regex,
     help=(
         "A regular expression that matches files and directories that should be"
-        " included on recursive searches.  An empty value means all files are included"
-        " regardless of the name.  Use forward slashes for directories on all platforms"
-        " (Windows, too).  Exclusions are calculated first, inclusions later."
+        " included on recursive searches. An empty value means all files are included"
+        " regardless of the name. Use forward slashes for directories on all platforms"
+        " (Windows, too). Exclusions are calculated first, inclusions later."
     ),
     show_default=True,
 )
@@ -468,8 +485,8 @@ def validate_regex(
     callback=validate_regex,
     help=(
         "A regular expression that matches files and directories that should be"
-        " excluded on recursive searches.  An empty value means no paths are excluded."
-        " Use forward slashes for directories on all platforms (Windows, too). "
+        " excluded on recursive searches. An empty value means no paths are excluded."
+        " Use forward slashes for directories on all platforms (Windows, too)."
         " Exclusions are calculated first, inclusions later."
     ),
     show_default=True,
@@ -830,7 +847,7 @@ async def schedule_formatting(
         ): src
         for src in sorted(sources)
     }
-    pending: Iterable["asyncio.Future[bool]"] = tasks.keys()
+    pending = tasks.keys()
     try:
         loop.add_signal_handler(signal.SIGINT, cancel, pending)
         loop.add_signal_handler(signal.SIGTERM, cancel, pending)
@@ -2696,6 +2713,13 @@ def make_comment(content: str) -> str:
 
     if content[0] == "#":
         content = content[1:]
+    NON_BREAKING_SPACE = " "
+    if (
+        content
+        and content[0] == NON_BREAKING_SPACE
+        and not content.lstrip().startswith("type:")
+    ):
+        content = " " + content[1:]  # Replace NBSP by a simple space
     if content and content[0] not in " !:#'%":
         content = " " + content
     return "#" + content
@@ -6201,7 +6225,7 @@ def gen_python_files(
 
 
 @lru_cache()
-def find_project_root(srcs: Iterable[str]) -> Path:
+def find_project_root(srcs: Tuple[str, ...]) -> Path:
     """Return a directory containing .git, .hg, or pyproject.toml.
 
     That directory will be a common parent of all files and directories
@@ -6237,6 +6261,22 @@ def find_project_root(srcs: Iterable[str]) -> Path:
             return directory
 
     return directory
+
+
+@lru_cache()
+def find_user_pyproject_toml() -> Path:
+    r"""Return the path to the top-level user configuration for black.
+
+    This looks for ~\.black on Windows and ~/.config/black on Linux and other
+    Unix systems.
+    """
+    if sys.platform == "win32":
+        # Windows
+        user_config_path = Path.home() / ".black"
+    else:
+        config_root = os.environ.get("XDG_CONFIG_HOME", "~/.config")
+        user_config_path = Path(config_root).expanduser() / "black"
+    return user_config_path.resolve()
 
 
 @dataclass
@@ -6340,7 +6380,12 @@ def parse_ast(src: str) -> Union[ast.AST, ast3.AST, ast27.AST]:
                 return ast3.parse(src, filename, feature_version=feature_version)
             except SyntaxError:
                 continue
-
+    if ast27.__name__ == "ast":
+        raise SyntaxError(
+            "The requested source code has invalid Python 3 syntax.\n"
+            "If you are trying to format Python 2 files please reinstall Black"
+            " with the 'python2' extra: `python3 -m pip install black[python2]`."
+        )
     return ast27.parse(src)
 
 

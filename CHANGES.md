@@ -6,6 +6,8 @@
 
 - `Black` now strips leading and trailing spaces from one-line docstrings (PR #1740)
 
+- `Black` now cleans up leading non-breaking spaces in comments (#2092)
+
 - `Black` now respects `--skip-string-normalization` when normalizing multiline
   docstring quotes (#1637)
 
@@ -41,6 +43,13 @@
   (#1780)
 
 - Lines ending with `fmt: skip` will now be not formatted (#1800)
+
+- PR #2053: Black no longer relies on typed-ast for Python 3.8 and higher
+
+- PR #2053: Python 2 support is now optional, install with
+  `python3 -m pip install black[python2]` to maintain support.
+
+- Exclude `venv` directory by default (#1683)
 
 #### _Packaging_
 
