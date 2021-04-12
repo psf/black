@@ -268,7 +268,7 @@ def oneline_empty():
 
 
 def single_quotes():
-    """testing"""
+    "testing"
 
 
 def believe_it_or_not_this_is_in_the_py_stdlib():

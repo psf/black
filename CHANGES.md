@@ -5,8 +5,7 @@
 #### _Black_
 
 - `Black` now processes one-line docstrings by stripping leading and trailing spaces,
-  converting single quotes to triple quotes, and adding a padding space when the
-  docstring is empty or starts / ends with a quote. (#1740)
+  and adding a padding space when needed to break up """". (#1740)
 
 - `Black` now cleans up leading non-breaking spaces in comments (#2092)
 

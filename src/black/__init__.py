@@ -2154,30 +2154,34 @@ class LineGenerator(Visitor[Line]):
             # indentation of those changes the AST representation of the code.
             prefix = get_string_prefix(leaf.value)
             docstring = leaf.value[len(prefix) :]  # Remove the prefix
-            quote_type = docstring[0]
+            quote_char = docstring[0]
             # A natural way to remove the outer quotes is to do:
-            #   docstring = docstring.strip(quote_type)
-            # but that breaks on """""x""" (which is '""x')
+            #   docstring = docstring.strip(quote_char)
+            # but that breaks on """""x""" (which is '""x').
             # So we actually need to remove the first character and the next two
             # characters but only if they are the same as the first.
-            docstring = re.sub(r"^(.)(\1\1)?", "", docstring)
-            # But it is always safe to remove all of them from the right.
-            docstring = docstring.rstrip(quote_type)
+            quote_len = 1 if docstring[1] != quote_char else 3
+            docstring = docstring[quote_len:-quote_len]
+
             if is_multiline_string(leaf):
                 indent = " " * 4 * self.current_line.depth
                 docstring = fix_docstring(docstring, indent)
             else:
                 docstring = docstring.strip()
+
             if docstring:
-                # Add some padding if the docstring starts with a quote mark.
-                if docstring[0] == quote_type:
+                # Add some padding if the docstring starts / ends with a quote mark.
+                if docstring[0] == quote_char:
                     docstring = " " + docstring
-                if docstring[-1] == quote_type:
+                if docstring[-1] == quote_char:
                     docstring = docstring + " "
             else:
                 # Add some padding if the docstring is empty.
                 docstring = " "
-            leaf.value = prefix + quote_type * 3 + docstring + quote_type * 3
+
+            # We could enforce triple quotes at this point.
+            quote = quote_char * quote_len
+            leaf.value = prefix + quote + docstring + quote
 
         yield from self.visit_default(leaf)
 
