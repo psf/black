@@ -2153,22 +2153,31 @@ class LineGenerator(Visitor[Line]):
             # We're ignoring docstrings with backslash newline escapes because changing
             # indentation of those changes the AST representation of the code.
             prefix = get_string_prefix(leaf.value)
-            lead_len = len(prefix) + 3
-            tail_len = -3
-            docstring = leaf.value[lead_len:tail_len]
+            docstring = leaf.value[len(prefix) :]  # Remove the prefix
+            quote_type = docstring[0]
+            # A natural way to remove the outer quotes is to do:
+            #   docstring = docstring.strip(quote_type)
+            # but that breaks on """""x""" (which is '""x')
+            # So we actually need to remove the first character and the next two
+            # characters but only if they are the same as the first.
+            docstring = re.sub(r"^(.)(\1\1)?", "", docstring)
+            # But it is always safe to remove all of them from the right.
+            docstring = docstring.rstrip(quote_type)
             if is_multiline_string(leaf):
                 indent = " " * 4 * self.current_line.depth
                 docstring = fix_docstring(docstring, indent)
             else:
                 docstring = docstring.strip()
             if docstring:
-                if leaf.value[lead_len - 1] == docstring[0]:
+                # Add some padding if the docstring starts with a quote mark.
+                if docstring[0] == quote_type:
                     docstring = " " + docstring
-                if leaf.value[tail_len + 1] == docstring[-1]:
+                if docstring[-1] == quote_type:
                     docstring = docstring + " "
             else:
+                # Add some padding if the docstring is empty.
                 docstring = " "
-            leaf.value = leaf.value[0:lead_len] + docstring + leaf.value[tail_len:]
+            leaf.value = prefix + quote_type * 3 + docstring + quote_type * 3
 
         yield from self.visit_default(leaf)
 

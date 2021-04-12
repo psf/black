@@ -115,6 +115,10 @@ def oneline_empty():
     '''      '''
 
 
+def single_quotes():
+    'testing'
+
+
 def believe_it_or_not_this_is_in_the_py_stdlib(): ''' 
 "hey yah"'''
 
@@ -261,6 +265,10 @@ def empty():
 
 def oneline_empty():
     """ """
+
+
+def single_quotes():
+    """testing"""
 
 
 def believe_it_or_not_this_is_in_the_py_stdlib():

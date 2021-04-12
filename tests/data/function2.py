@@ -43,7 +43,7 @@ def f(
 
 
 def g():
-    "Docstring."
+    """Docstring."""
 
     def inner():
         pass
