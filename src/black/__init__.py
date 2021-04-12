@@ -2153,22 +2153,22 @@ class LineGenerator(Visitor[Line]):
             # We're ignoring docstrings with backslash newline escapes because changing
             # indentation of those changes the AST representation of the code.
             prefix = get_string_prefix(leaf.value)
-            lead_len = len(prefix) + 3
-            tail_len = -3
-            docstring = leaf.value[lead_len:tail_len]
+            docstring = leaf.value[len(prefix) :]  # Remove the prefix
+            quote_type = docstring[0]
+            docstring = docstring.strip(quote_type)  # Remove outer quotes
             if is_multiline_string(leaf):
                 indent = " " * 4 * self.current_line.depth
                 docstring = fix_docstring(docstring, indent)
             else:
                 docstring = docstring.strip()
             if docstring:
-                if leaf.value[lead_len - 1] == docstring[0]:
+                if docstring[0] == quote_type:
                     docstring = " " + docstring
-                if leaf.value[tail_len + 1] == docstring[-1]:
+                if docstring[-1] == quote_type:
                     docstring = docstring + " "
             else:
                 docstring = " "
-            leaf.value = leaf.value[0:lead_len] + docstring + leaf.value[tail_len:]
+            leaf.value = prefix + quote_type * 3 + docstring + quote_type * 3
 
         yield from self.visit_default(leaf)
 
