@@ -17,7 +17,7 @@ def func_no_args():
   exec("new-style exec", {}, {})
   return None
 async def coroutine(arg, exec=False):
- 'Single-line docstring. Multiline is harder to reformat.'
+ "Single-line docstring. Multiline is harder to reformat."
  async with some_connection() as conn:
      await conn.do_what_i_mean('SELECT bobby, tables FROM xkcd', timeout=2)
  await asyncio.sleep(1)
