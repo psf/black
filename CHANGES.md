@@ -65,8 +65,6 @@
 
 #### _Black_
 
-- Improve github issue template "running on your machine"'s instructions (#2100)
-
 - re-implemented support for explicit trailing commas: now it works consistently within
   any bracket pair, including nested structures (#1288 and duplicates)
 
