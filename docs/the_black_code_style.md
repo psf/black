@@ -297,6 +297,13 @@ parenthesized strings. Unnecessary parentheses are stripped. To enable experimen
 string processing, pass `--experimental-string-processing` on the command line. Because
 the functionality is experimental, feedback and issue reports are highly encouraged!
 
+_Black_ also processes docstrings. Firstly the indentation of docstrings is corrected
+for both quotations and the text within, although relative indentation in the text is
+preserved. Superfluous trailing whitespace on each line and unnecessary new lines at the
+end of the docstring are removed. All leading tabs are converted to spaces, but tabs
+inside text are preserved. Whitespace leading and trailing one-line docstrings is
+removed. The quotations of an empty docstring are separated with one space.
+
 ### Numeric literals
 
 _Black_ standardizes most numeric literals to use lowercase letters for the syntactic
