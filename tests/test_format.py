@@ -38,6 +38,8 @@ SIMPLE_CASES = [
     "fmtonoff2",
     "fmtonoff3",
     "fmtonoff4",
+    "fmtonoff5",
+    "fmtonoff5.5",
     "fmtskip",
     "fmtskip2",
     "fmtskip3",

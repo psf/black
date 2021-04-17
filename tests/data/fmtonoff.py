@@ -90,31 +90,6 @@ def example(session):
         .order_by(models.Customer.id.asc())\
         .all()
     # fmt: on
-def off_and_on_without_data():
-    """All comments here are technically on the same prefix.
-
-    The comments between will be formatted. This is a known limitation.
-    """
-    # fmt: off
-
-
-        #hey, that won't work
-
-
-    # fmt: on
-    pass
-def on_and_off_broken():
-    """Another known limitation."""
-    # fmt: on
-    # fmt: off
-    this=should.not_be.formatted()
-    and_=indeed . it  is  not  formatted
-    because . the . handling . inside . generate_ignored_nodes()
-    now . considers . multiple . fmt . directives . within . one . prefix
-    # fmt: on
-    # fmt: off
-        # ...but comments still get reformatted even though they should not be
-    # fmt: on
 def long_lines():
     if True:
         typedargslist.extend(
@@ -302,33 +277,6 @@ def example(session):
                 models.Customer.email == email_address)\
         .order_by(models.Customer.id.asc())\
         .all()
-    # fmt: on
-
-
-def off_and_on_without_data():
-    """All comments here are technically on the same prefix.
-
-    The comments between will be formatted. This is a known limitation.
-    """
-    # fmt: off
-
-    # hey, that won't work
-
-    # fmt: on
-    pass
-
-
-def on_and_off_broken():
-    """Another known limitation."""
-    # fmt: on
-    # fmt: off
-    this=should.not_be.formatted()
-    and_=indeed . it  is  not  formatted
-    because . the . handling . inside . generate_ignored_nodes()
-    now . considers . multiple . fmt . directives . within . one . prefix
-    # fmt: on
-    # fmt: off
-    # ...but comments still get reformatted even though they should not be
     # fmt: on
 
 
