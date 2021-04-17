@@ -5442,7 +5442,8 @@ def convert_one_fmt_off_pair(node: Node) -> bool:
     """
     for leaf in node.leaves():
         previous_consumed = 0
-        for comment in list_comments(leaf.prefix, is_endmarker=False):
+        comments = list_comments(leaf.prefix, is_endmarker=False)
+        for comment in comments:
             if comment.value not in FMT_PASS:
                 previous_consumed = comment.consumed
                 continue
@@ -5458,9 +5459,35 @@ def convert_one_fmt_off_pair(node: Node) -> bool:
                         continue
 
             ignored_nodes = list(generate_ignored_nodes(leaf, comment))
-            if not ignored_nodes:
-                continue
 
+            if len(ignored_nodes) < 2:
+                if comment.value in FMT_OFF:
+                    # print(f"has fmt: off: {leaf!r}")
+                    # TODO: make sure the fmt pair is actually on the same column
+                    if not any(com.value in FMT_ON for com in comments):
+                        continue
+
+                    fmt_on_index = leaf.prefix.find("# fmt: on")
+                    within_off = leaf.prefix[:fmt_on_index].strip()
+                    print(f"leaf.prefix||{leaf.prefix}||")
+                    print(f"within||{within_off}||")
+                    insert_pos = leaf.position_in_parent()
+                    assert leaf.parent and insert_pos is not None
+                    leaf.parent.insert_child(
+                        insert_pos,
+                        Leaf(
+                            STANDALONE_COMMENT,
+                            within_off,
+                            prefix=leaf.prefix[:previous_consumed]
+                            + "\n" * comment.newlines,
+                        ),
+                    )
+                    leaf.prefix = "\n" + leaf.prefix[fmt_on_index:]
+                    print(f"new leaf.prefix||{leaf.prefix}||")
+                    return True
+
+            *ignored_nodes, maybe_container = ignored_nodes
+            print(f"maybe_container: {maybe_container!r}")
             first = ignored_nodes[0]  # Can be a container node with the `leaf`.
             parent = first.parent
             prefix = first.prefix
@@ -5470,10 +5497,17 @@ def convert_one_fmt_off_pair(node: Node) -> bool:
                 hidden_value = comment.value + "\n" + hidden_value
             if comment.value in FMT_SKIP:
                 hidden_value += "  " + comment.value
-            if hidden_value.endswith("\n"):
+            if hidden_value.endswith("\n") and maybe_container is None:
                 # That happens when one of the `ignored_nodes` ended with a NEWLINE
                 # leaf (possibly followed by a DEDENT).
                 hidden_value = hidden_value[:-1]
+            if maybe_container is not None:
+                cutoff = maybe_container.prefix.find("# fmt: on")
+                hidden_value += maybe_container.prefix[:cutoff].lstrip()
+                if hidden_value.endswith("\n"):
+                    hidden_value = hidden_value[:-1]
+                maybe_container.prefix = maybe_container.prefix[cutoff:]
+                print(f"--{maybe_container.prefix!r}")
             first_idx: Optional[int] = None
             for ignored in ignored_nodes:
                 index = ignored.remove()
@@ -5481,6 +5515,7 @@ def convert_one_fmt_off_pair(node: Node) -> bool:
                     first_idx = index
             assert parent is not None, "INTERNAL ERROR: fmt: on/off handling (1)"
             assert first_idx is not None, "INTERNAL ERROR: fmt: on/off handling (2)"
+            print("yep")
             parent.insert_child(
                 first_idx,
                 Leaf(
@@ -5516,20 +5551,27 @@ def generate_ignored_nodes(leaf: Leaf, comment: ProtoComment) -> Iterator[LN]:
                 yield sibling
         elif leaf.parent is not None:
             yield leaf.parent
+        print("i got it")
+        yield None  # type: ignore
         return
     while container is not None and container.type != token.ENDMARKER:
         if is_fmt_on(container):
+            print("hooray")
+            yield container
             return
 
         # fix for fmt: on in children
         if contains_fmt_on_at_column(container, leaf.column):
             for child in container.children:
                 if contains_fmt_on_at_column(child, leaf.column):
+                    yield None  # type: ignore
                     return
                 yield child
         else:
             yield container
             container = container.next_sibling
+
+    yield None  # type: ignore
 
 
 def is_fmt_on(container: LN) -> bool:

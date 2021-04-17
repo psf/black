@@ -173,20 +173,28 @@ class Base(object):
             self.parent.changed()
         self.was_changed = True
 
+    def position_in_parent(self) -> Optional[int]:
+        if self.parent:
+            for i, node in enumerate(self.parent.children):
+                if node is self:
+                    return i
+
+        return None
+
     def remove(self) -> Optional[int]:
         """
         Remove the node from the tree. Returns the position of the node in its
         parent's children before it was removed.
         """
-        if self.parent:
-            for i, node in enumerate(self.parent.children):
-                if node is self:
-                    del self.parent.children[i]
-                    self.parent.changed()
-                    self.parent.invalidate_sibling_maps()
-                    self.parent = None
-                    return i
-        return None
+        pos = self.position_in_parent()
+        if pos is not None:
+            assert self.parent
+            del self.parent.children[pos]
+            self.parent.changed()
+            self.parent.invalidate_sibling_maps()
+            self.parent = None
+
+        return pos
 
     @property
     def next_sibling(self) -> Optional[NL]:
