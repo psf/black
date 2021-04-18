@@ -74,6 +74,12 @@ To workout X, please use
 is not perfect but saves a lot of release overhead as now the releaser does not need to
 go back and workout what to add to the `CHANGES.md` for each release.
 
+### Style Changes
+
+If a change would affect the advertised code style, please modify the documentation (The
+_Black_ code style) to reflect that change. Patches that fix unintended bugs in
+formatting don't need to be mentioned separately though.
+
 ### Docs Testing
 
 If you make changes to docs, you can test they still build locally too.
