@@ -426,13 +426,14 @@ jobs:
       - uses: psf/black@stable
 ```
 
-You may use `options` (Default is `'--check --diff'`) and `src` (Default is `'.'`) as follows:
+You may use `options` (Default is `'--check --diff'`) and `src` (Default is `'.'`) as
+follows:
 
 ```yaml
-      - uses: psf/black@stable
-        with:
-            options: '--check --verbose'
-            src: './src'
+- uses: psf/black@stable
+  with:
+    options: "--check --verbose"
+    src: "./src"
 ```
 
 ## Ignoring unmodified files

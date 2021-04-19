@@ -3,7 +3,9 @@ description: "The uncompromising Python code formatter."
 author: "Łukasz Langa and contributors to Black"
 inputs:
   options:
-    description: "Options passed to black. Use `black --help` to see available options. Default: '--check'"
+    description:
+      "Options passed to black. Use `black --help` to see available options. Default:
+      '--check'"
     required: false
     default: "--check --diff"
   src:
