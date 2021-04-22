@@ -52,6 +52,9 @@
 
 - Exclude `venv` directory by default (#1683)
 
+- Fixed "Black produced code that is not equivalent to the source" when formatting
+  Python 2 docstrings (#2037)
+
 #### _Packaging_
 
 - Self-contained native _Black_ binaries are now provided for releases via GitHub

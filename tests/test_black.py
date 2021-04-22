@@ -1918,6 +1918,26 @@ class BlackTestCase(BlackBaseTestCase):
         actual = diff_header.sub(DETERMINISTIC_HEADER, actual)
         self.assertEqual(actual, expected)
 
+    def test_docstring_reformat_for_py27(self) -> None:
+        """
+        Check that stripping trailing whitespace from Python 2 docstrings
+        doesn't trigger a "not equivalent to source" error
+        """
+        source = (
+            b'def foo():\r\n    """Testing\r\n    Testing """\r\n    print "Foo"\r\n'
+        )
+        expected = 'def foo():\n    """Testing\n    Testing"""\n    print "Foo"\n'
+
+        result = CliRunner().invoke(
+            black.main,
+            ["-", "-q", "--target-version=py27"],
+            input=BytesIO(source),
+        )
+
+        self.assertEqual(result.exit_code, 0)
+        actual = result.output
+        self.assertFormatEqual(actual, expected)
+
 
 with open(black.__file__, "r", encoding="utf-8") as _bf:
     black_source_lines = _bf.readlines()
