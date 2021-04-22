@@ -115,6 +115,10 @@ def oneline_empty():
     '''      '''
 
 
+def oneline_nothing():
+    """"""
+
+
 def single_quotes():
     'testing'
 
@@ -264,6 +268,10 @@ def empty():
 
 
 def oneline_empty():
+    """ """
+
+
+def oneline_nothing():
     """ """
 
 
