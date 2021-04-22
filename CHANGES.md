@@ -35,6 +35,9 @@
 
 - Lines ending with `fmt: skip` will now be not formatted (#1800)
 
+- Fixed "Black produced code that is not equivalent to the source" when formatting
+  Python2 docstrings
+
 #### _Packaging_
 
 - Self-contained native _Black_ binaries are now provided for releases via GitHub
