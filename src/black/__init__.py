@@ -2153,16 +2153,35 @@ class LineGenerator(Visitor[Line]):
             # We're ignoring docstrings with backslash newline escapes because changing
             # indentation of those changes the AST representation of the code.
             prefix = get_string_prefix(leaf.value)
-            lead_len = len(prefix) + 3
-            tail_len = -3
-            indent = " " * 4 * self.current_line.depth
-            docstring = fix_docstring(leaf.value[lead_len:tail_len], indent)
+            docstring = leaf.value[len(prefix) :]  # Remove the prefix
+            quote_char = docstring[0]
+            # A natural way to remove the outer quotes is to do:
+            #   docstring = docstring.strip(quote_char)
+            # but that breaks on """""x""" (which is '""x').
+            # So we actually need to remove the first character and the next two
+            # characters but only if they are the same as the first.
+            quote_len = 1 if docstring[1] != quote_char else 3
+            docstring = docstring[quote_len:-quote_len]
+
+            if is_multiline_string(leaf):
+                indent = " " * 4 * self.current_line.depth
+                docstring = fix_docstring(docstring, indent)
+            else:
+                docstring = docstring.strip()
+
             if docstring:
-                if leaf.value[lead_len - 1] == docstring[0]:
+                # Add some padding if the docstring starts / ends with a quote mark.
+                if docstring[0] == quote_char:
                     docstring = " " + docstring
-                if leaf.value[tail_len + 1] == docstring[-1]:
+                if docstring[-1] == quote_char:
                     docstring = docstring + " "
-            leaf.value = leaf.value[0:lead_len] + docstring + leaf.value[tail_len:]
+            else:
+                # Add some padding if the docstring is empty.
+                docstring = " "
+
+            # We could enforce triple quotes at this point.
+            quote = quote_char * quote_len
+            leaf.value = prefix + quote + docstring + quote
 
         yield from self.visit_default(leaf)
 
@@ -6113,7 +6132,7 @@ def get_future_imports(node: Node) -> Set[str]:
 
 @lru_cache()
 def get_gitignore(root: Path) -> PathSpec:
-    """ Return a PathSpec matching gitignore content if present."""
+    """Return a PathSpec matching gitignore content if present."""
     gitignore = root / ".gitignore"
     lines: List[str] = []
     if gitignore.is_file():
@@ -6953,11 +6972,6 @@ def patched_main() -> None:
 
 
 def is_docstring(leaf: Leaf) -> bool:
-    if not is_multiline_string(leaf):
-        # For the purposes of docstring re-indentation, we don't need to do anything
-        # with single-line docstrings.
-        return False
-
     if prev_siblings_are(
         leaf.parent, [None, token.NEWLINE, token.INDENT, syms.simple_stmt]
     ):

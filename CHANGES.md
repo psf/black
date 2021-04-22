@@ -4,6 +4,9 @@
 
 #### _Black_
 
+- `Black` now processes one-line docstrings by stripping leading and trailing spaces,
+  and adding a padding space when needed to break up """". (#1740)
+
 - `Black` now cleans up leading non-breaking spaces in comments (#2092)
 
 - `Black` now respects `--skip-string-normalization` when normalizing multiline
