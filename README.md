@@ -50,7 +50,8 @@ _Contents:_ **[Installation and usage](#installation-and-usage)** |
 ### Installation
 
 _Black_ can be installed by running `pip install black`. It requires Python 3.6.2+ to
-run but you can reformat Python 2 code with it, too.
+run. If you want to format Python 2 code as well, install with
+`pip install black[python2]`.
 
 #### Install from GitHub
 
@@ -102,8 +103,8 @@ Options:
                                   split lines.
 
   --check                         Don't write the files back, just return the
-                                  status.  Return code 0 means nothing would
-                                  change.  Return code 1 means some files
+                                  status. Return code 0 means nothing would
+                                  change. Return code 1 means some files
                                   would be reformatted. Return code 123 means
                                   there was an internal error.
 
@@ -118,22 +119,22 @@ Options:
 
   --include TEXT                  A regular expression that matches files and
                                   directories that should be included on
-                                  recursive searches.  An empty value means
+                                  recursive searches. An empty value means
                                   all files are included regardless of the
-                                  name.  Use forward slashes for directories
-                                  on all platforms (Windows, too).  Exclusions
+                                  name. Use forward slashes for directories
+                                  on all platforms (Windows, too). Exclusions
                                   are calculated first, inclusions later.
                                   [default: \.pyi?$]
 
   --exclude TEXT                  A regular expression that matches files and
                                   directories that should be excluded on
-                                  recursive searches.  An empty value means no
+                                  recursive searches. An empty value means no
                                   paths are excluded. Use forward slashes for
                                   directories on all platforms (Windows, too).
                                   Exclusions are calculated first, inclusions
-                                  later.  [default: /(\.direnv|\.eggs|\.git|\.
-                                  hg|\.mypy_cache|\.nox|\.tox|\.venv|\.svn|_bu
-                                  ild|buck-out|build|dist)/]
+                                  later. [default: /(\.direnv|\.eggs|\.git|\.
+                                  hg|\.mypy_cache|\.nox|\.tox|\.venv|venv|\.sv
+                                  n|_build|buck-out|build|dist)/]
 
   --extend-exclude TEXT           Like --exclude, but adds additional files
                                   and directories on top of the excluded
@@ -291,6 +292,20 @@ parent directories. It stops looking when it finds the file, or a `.git` directo
 
 If you're formatting standard input, _Black_ will look for configuration starting from
 the current working directory.
+
+You can use a "global" configuration, stored in a specific location in your home
+directory. This will be used as a fallback configuration, that is, it will be used if
+and only if _Black_ doesn't find any configuration as mentioned above. Depending on your
+operating system, this configuration file should be stored as:
+
+- Windows: `~\.black`
+- Unix-like (Linux, MacOS, etc.): `$XDG_CONFIG_HOME/black` (`~/.config/black` if the
+  `XDG_CONFIG_HOME` environment variable is not set)
+
+Note that these are paths to the TOML file itself (meaning that they shouldn't be named
+as `pyproject.toml`), not directories where you store the configuration. Here, `~`
+refers to the path to your home directory. On Windows, this will be something like
+`C:\\Users\UserName`.
 
 You can also explicitly specify the path to a particular file that you want with
 `--config`. In this situation _Black_ will not look for any other file.

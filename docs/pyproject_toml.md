@@ -28,11 +28,27 @@ parent directories. It stops looking when it finds the file, or a `.git` directo
 If you're formatting standard input, _Black_ will look for configuration starting from
 the current working directory.
 
+You can use a "global" configuration, stored in a specific location in your home
+directory. This will be used as a fallback configuration, that is, it will be used if
+and only if _Black_ doesn't find any configuration as mentioned above. Depending on your
+operating system, this configuration file should be stored as:
+
+- Windows: `~\.black`
+- Unix-like (Linux, MacOS, etc.): `$XDG_CONFIG_HOME/black` (`~/.config/black` if the
+  `XDG_CONFIG_HOME` environment variable is not set)
+
+Note that these are paths to the TOML file itself (meaning that they shouldn't be named
+as `pyproject.toml`), not directories where you store the configuration. Here, `~`
+refers to the path to your home directory. On Windows, this will be something like
+`C:\\Users\UserName`.
+
 You can also explicitly specify the path to a particular file that you want with
 `--config`. In this situation _Black_ will not look for any other file.
 
 If you're running with `--verbose`, you will see a blue message if a file was found and
 used.
+
+Files listed within a projects `.gitignore` file will not be formatted by _Black_.
 
 Please note `blackd` will not use `pyproject.toml` configuration.
 

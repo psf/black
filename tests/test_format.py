@@ -27,6 +27,7 @@ SIMPLE_CASES = [
     "comments5",
     "comments6",
     "comments7",
+    "comments_non_breaking_space",
     "comment_after_escaped_newline",
     "composition",
     "composition_no_trailing_comma",

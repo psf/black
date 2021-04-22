@@ -4,6 +4,11 @@
 
 #### _Black_
 
+- `Black` now processes one-line docstrings by stripping leading and trailing spaces,
+  and adding a padding space when needed to break up """". (#1740)
+
+- `Black` now cleans up leading non-breaking spaces in comments (#2092)
+
 - `Black` now respects `--skip-string-normalization` when normalizing multiline
   docstring quotes (#1637)
 
@@ -12,6 +17,9 @@
 
 - `Black` no longer adds an incorrect space after a parenthesized assignment expression
   in if/while statements (#1655)
+
+- Added `--skip-magic-trailing-comma` / `-C` to avoid using trailing commas as a reason
+  to split lines (#1824)
 
 - fixed a crash when PWD=/ on POSIX (#1631)
 
@@ -26,6 +34,8 @@
 
 - use lowercase hex strings (#1692)
 
+- added `--extend-exclude` argument (PR #2005)
+
 - speed up caching by avoiding pathlib (#1950)
 
 - `--diff` correctly indicates when a file doesn't end in a newline (#1662)
@@ -35,8 +45,15 @@
 
 - Lines ending with `fmt: skip` will now be not formatted (#1800)
 
+- PR #2053: Black no longer relies on typed-ast for Python 3.8 and higher
+
+- PR #2053: Python 2 support is now optional, install with
+  `python3 -m pip install black[python2]` to maintain support.
+
+- Exclude `venv` directory by default (#1683)
+
 - Fixed "Black produced code that is not equivalent to the source" when formatting
-  Python2 docstrings
+  Python 2 docstrings (#2037)
 
 #### _Packaging_
 

@@ -13,6 +13,7 @@ from platform import system
 from shutil import rmtree, which
 from subprocess import CalledProcessError
 from sys import version_info
+from tempfile import TemporaryDirectory
 from typing import Any, Callable, Dict, NamedTuple, Optional, Sequence, Tuple
 from urllib.parse import urlparse
 
@@ -121,28 +122,36 @@ async def black_run(
         cmd.extend(*project_config["cli_arguments"])
     cmd.extend(["--check", "--diff", "."])
 
-    try:
-        _stdout, _stderr = await _gen_check_output(cmd, cwd=repo_path)
-    except asyncio.TimeoutError:
-        results.stats["failed"] += 1
-        LOG.error(f"Running black for {repo_path} timed out ({cmd})")
-    except CalledProcessError as cpe:
-        # TODO: Tune for smarter for higher signal
-        # If any other return value than 1 we raise - can disable project in config
-        if cpe.returncode == 1:
-            if not project_config["expect_formatting_changes"]:
+    with TemporaryDirectory() as tmp_path:
+        # Prevent reading top-level user configs by manipulating envionment variables
+        env = {
+            **os.environ,
+            "XDG_CONFIG_HOME": tmp_path,  # Unix-like
+            "USERPROFILE": tmp_path,  # Windows (changes `Path.home()` output)
+        }
+
+        try:
+            _stdout, _stderr = await _gen_check_output(cmd, cwd=repo_path, env=env)
+        except asyncio.TimeoutError:
+            results.stats["failed"] += 1
+            LOG.error(f"Running black for {repo_path} timed out ({cmd})")
+        except CalledProcessError as cpe:
+            # TODO: Tune for smarter for higher signal
+            # If any other return value than 1 we raise - can disable project in config
+            if cpe.returncode == 1:
+                if not project_config["expect_formatting_changes"]:
+                    results.stats["failed"] += 1
+                    results.failed_projects[repo_path.name] = cpe
+                else:
+                    results.stats["success"] += 1
+                return
+            elif cpe.returncode > 1:
                 results.stats["failed"] += 1
                 results.failed_projects[repo_path.name] = cpe
-            else:
-                results.stats["success"] += 1
-            return
-        elif cpe.returncode > 1:
-            results.stats["failed"] += 1
-            results.failed_projects[repo_path.name] = cpe
-            return
+                return
 
-        LOG.error(f"Unknown error with {repo_path}")
-        raise
+            LOG.error(f"Unknown error with {repo_path}")
+            raise
 
     # If we get here and expect formatting changes something is up
     if project_config["expect_formatting_changes"]:
