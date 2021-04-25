@@ -1,5 +1,10 @@
 ## Change Log
 
+### Unreleased
+
+- Reflect the `--skip-magic-trailing-comma` and `--experimental-string-processing`
+  flags in the name of the cache file. (#2131)
+
 ### 21.4b0
 
 #### _Black_
