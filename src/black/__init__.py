@@ -5351,15 +5351,10 @@ def normalize_numeric_literal(leaf: Leaf) -> None:
 
 def format_hex(text: str) -> str:
     """
-    Formats a hexadecimal string like "0x12b3"
-
-    Uses lowercase because of similarity between "B" and "8", which
-    can cause security issues.
-    see: https://github.com/psf/black/issues/1692
+    Formats a hexadecimal string like "0x12B3"
     """
-
     before, after = text[:2], text[2:]
-    return f"{before}{after.lower()}"
+    return f"{before}{after.upper()}"
 
 
 def format_scientific_notation(text: str) -> str:
