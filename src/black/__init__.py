@@ -1016,7 +1016,17 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
 
     if not fast:
         assert_equivalent(src_contents, dst_contents)
-        assert_stable(src_contents, dst_contents, mode=mode)
+
+        # Forced second pass to work around optional trailing commas (becoming
+        # forced trailing commas on pass 2) interacting differently with optional
+        # parentheses.  Admittedly ugly.
+        dst_contents_pass2 = format_str(dst_contents, mode=mode)
+        if dst_contents != dst_contents_pass2:
+            dst_contents = dst_contents_pass2
+            assert_equivalent(src_contents, dst_contents, pass_num=2)
+            assert_stable(src_contents, dst_contents, mode=mode)
+        # Note: no need to explicitly call `assert_stable` if `dst_contents` was
+        # the same as `dst_contents_pass2`.
     return dst_contents
 
 
@@ -6489,7 +6499,7 @@ def _stringify_ast(
     yield f"{'  ' * depth})  # /{node.__class__.__name__}"
 
 
-def assert_equivalent(src: str, dst: str) -> None:
+def assert_equivalent(src: str, dst: str, *, pass_num: int = 1) -> None:
     """Raise AssertionError if `src` and `dst` aren't equivalent."""
     try:
         src_ast = parse_ast(src)
@@ -6504,9 +6514,9 @@ def assert_equivalent(src: str, dst: str) -> None:
     except Exception as exc:
         log = dump_to_file("".join(traceback.format_tb(exc.__traceback__)), dst)
         raise AssertionError(
-            f"INTERNAL ERROR: Black produced invalid code: {exc}. Please report a bug"
-            " on https://github.com/psf/black/issues.  This invalid output might be"
-            f" helpful: {log}"
+            f"INTERNAL ERROR: Black produced invalid code on pass {pass_num}: {exc}. "
+            "Please report a bug on https://github.com/psf/black/issues.  "
+            f"This invalid output might be helpful: {log}"
         ) from None
 
     src_ast_str = "\n".join(_stringify_ast(src_ast))
@@ -6515,8 +6525,8 @@ def assert_equivalent(src: str, dst: str) -> None:
         log = dump_to_file(diff(src_ast_str, dst_ast_str, "src", "dst"))
         raise AssertionError(
             "INTERNAL ERROR: Black produced code that is not equivalent to the"
-            " source.  Please report a bug on https://github.com/psf/black/issues. "
-            f" This diff might be helpful: {log}"
+            f" source on pass {pass_num}.  Please report a bug on "
+            f"https://github.com/psf/black/issues.  This diff might be helpful: {log}"
         ) from None
 
 
