@@ -6,7 +6,8 @@
 
 - Fixed a rare but annoying formatting instability created by the combination of
   optional trailing commas inserted by `Black` and optional parentheses looking at
-  pre-existing "magic" trailing commas (#2126)
+  pre-existing "magic" trailing commas. This fixes issue #1629 and all of its many many
+  duplicates. (#2126)
 
 - `Black` now processes one-line docstrings by stripping leading and trailing spaces,
   and adding a padding space when needed to break up """". (#1740)
