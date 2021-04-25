@@ -4,6 +4,10 @@
 
 #### _Black_
 
+- Fixed a rare but annoying formatting instability created by the combination of
+  optional trailing commas inserted by `Black` and optional parentheses looking at
+  pre-existing "magic" trailing commas (#2126)
+
 - `Black` now processes one-line docstrings by stripping leading and trailing spaces,
   and adding a padding space when needed to break up """". (#1740)
 
