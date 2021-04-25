@@ -2,6 +2,8 @@
 
 ### Unreleased
 
+#### _Black_
+
 - Reflect the `--skip-magic-trailing-comma` and `--experimental-string-processing` flags
   in the name of the cache file. Without this fix, changes in these flags would not take
   effect if the cache had already been populated. (#2131)
