@@ -102,6 +102,27 @@ def and_this():
   "hey yah"'''
 
 
+def empty():
+    '''
+    
+    
+    
+    
+    '''
+
+
+def oneline_empty():
+    '''      '''
+
+
+def oneline_nothing():
+    """"""
+
+
+def single_quotes():
+    'testing'
+
+
 def believe_it_or_not_this_is_in_the_py_stdlib(): ''' 
 "hey yah"'''
 
@@ -110,6 +131,8 @@ def ignored_docstring():
     """a => \
 b"""  
 
+def single_line_docstring_with_whitespace():
+    """   This should be stripped """
 
 def docstring_with_inline_tabs_and_space_indentation():
     """hey
@@ -134,7 +157,6 @@ def docstring_with_inline_tabs_and_tab_indentation():
 	line ends with some tabs		
 	"""
 	pass
-        
 
 # output
 
@@ -241,6 +263,22 @@ def and_this():
     "hey yah"'''
 
 
+def empty():
+    """ """
+
+
+def oneline_empty():
+    """ """
+
+
+def oneline_nothing():
+    """ """
+
+
+def single_quotes():
+    "testing"
+
+
 def believe_it_or_not_this_is_in_the_py_stdlib():
     '''
     "hey yah"'''
@@ -249,6 +287,10 @@ def believe_it_or_not_this_is_in_the_py_stdlib():
 def ignored_docstring():
     """a => \
 b"""
+
+
+def single_line_docstring_with_whitespace():
+    """This should be stripped"""
 
 
 def docstring_with_inline_tabs_and_space_indentation():

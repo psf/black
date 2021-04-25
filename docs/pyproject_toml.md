@@ -48,6 +48,8 @@ You can also explicitly specify the path to a particular file that you want with
 If you're running with `--verbose`, you will see a blue message if a file was found and
 used.
 
+Files listed within a projects `.gitignore` file will not be formatted by _Black_.
+
 Please note `blackd` will not use `pyproject.toml` configuration.
 
 ## Configuration format

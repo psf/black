@@ -3,7 +3,7 @@
   "projects": {
     "aioexabgp": {
       "cli_arguments": [],
-      "expect_formatting_changes": false,
+      "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/cooperlees/aioexabgp.git",
       "long_checkout": false,
       "py_versions": ["all"]
@@ -17,7 +17,7 @@
     },
     "bandersnatch": {
       "cli_arguments": [],
-      "expect_formatting_changes": false,
+      "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/pypa/bandersnatch.git",
       "long_checkout": false,
       "py_versions": ["all"]
@@ -47,7 +47,7 @@
     },
     "hypothesis": {
       "cli_arguments": [],
-      "expect_formatting_changes": true,
+      "expect_formatting_changes": false,
       "git_clone_url": "https://github.com/HypothesisWorks/hypothesis.git",
       "long_checkout": false,
       "py_versions": ["all"]
@@ -84,28 +84,28 @@
     },
     "ptr": {
       "cli_arguments": [],
-      "expect_formatting_changes": false,
+      "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/facebookincubator/ptr.git",
       "long_checkout": false,
       "py_versions": ["all"]
     },
     "pytest": {
       "cli_arguments": [],
-      "expect_formatting_changes": true,
+      "expect_formatting_changes": false,
       "git_clone_url": "https://github.com/pytest-dev/pytest.git",
       "long_checkout": false,
       "py_versions": ["all"]
     },
     "sqlalchemy": {
       "cli_arguments": [],
-      "expect_formatting_changes": false,
+      "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/sqlalchemy/sqlalchemy.git",
       "long_checkout": false,
       "py_versions": ["all"]
     },
     "tox": {
       "cli_arguments": [],
-      "expect_formatting_changes": false,
+      "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/tox-dev/tox.git",
       "long_checkout": false,
       "py_versions": ["all"]

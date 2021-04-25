@@ -28,7 +28,8 @@ assignees: ""
 2. Or run _Black_ on your machine:
    - create a new virtualenv (make sure it's the same Python version);
    - clone this repository;
-   - run `pip install -e .`;
+   - run `pip install -e .[d,python2]`;
+   - run `pip install -r test_requirements.txt`
    - make sure it's sane by running `python -m unittest`; and
    - run `black` like you did last time.
 
