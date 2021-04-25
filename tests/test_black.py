@@ -255,6 +255,24 @@ class BlackTestCase(BlackBaseTestCase):
         black.assert_stable(source, actual, DEFAULT_MODE)
 
     @patch("black.dump_to_file", dump_to_stderr)
+    def test_trailing_comma_optional_parens_stability1_pass2(self) -> None:
+        source, _expected = read_data("trailing_comma_optional_parens1")
+        actual = fs(fs(source))  # this is what `format_file_contents` does with --safe
+        black.assert_stable(source, actual, DEFAULT_MODE)
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_trailing_comma_optional_parens_stability2_pass2(self) -> None:
+        source, _expected = read_data("trailing_comma_optional_parens2")
+        actual = fs(fs(source))  # this is what `format_file_contents` does with --safe
+        black.assert_stable(source, actual, DEFAULT_MODE)
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_trailing_comma_optional_parens_stability3_pass2(self) -> None:
+        source, _expected = read_data("trailing_comma_optional_parens3")
+        actual = fs(fs(source))  # this is what `format_file_contents` does with --safe
+        black.assert_stable(source, actual, DEFAULT_MODE)
+
+    @patch("black.dump_to_file", dump_to_stderr)
     def test_pep_572(self) -> None:
         source, expected = read_data("pep_572")
         actual = fs(source)
