@@ -290,6 +290,14 @@ class BlackTestCase(BlackBaseTestCase):
         if sys.version_info >= (3, 8):
             black.assert_equivalent(source, actual)
 
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_pep_572_do_not_remove_parens(self) -> None:
+        source, expected = read_data("pep_572_do_not_remove_parens")
+        # the AST safety checks will fail, but that's expected, just make sure no
+        # parentheses are touched
+        actual = black.format_str(source, mode=DEFAULT_MODE)
+        self.assertFormatEqual(expected, actual)
+
     def test_pep_572_version_detection(self) -> None:
         source, _ = read_data("pep_572")
         root = black.lib2to3_parse(source)
