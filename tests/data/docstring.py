@@ -163,10 +163,16 @@ def backslash_space():
     """\ """
 
 
-def multiline_backslash():
+def multiline_backslash_1():
   '''
   hey\there\
   \ '''
+
+
+def multiline_backslash_2():
+  '''
+  hey there \ '''
+
 
 # output
 
@@ -332,7 +338,12 @@ def backslash_space():
     """\ """
 
 
-def multiline_backslash():
+def multiline_backslash_1():
     """
   hey\there\
   \ """
+
+
+def multiline_backslash_2():
+    """
+    hey there \ """
