@@ -8,6 +8,9 @@
   in the name of the cache file. Without this fix, changes in these flags would not take
   effect if the cache had already been populated. (#2131)
 
+- Don't remove necessary parentheses from assignment expression containing assert /
+  return statements. (#2143)
+
 ### 21.4b0
 
 #### _Black_
