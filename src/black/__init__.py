@@ -5613,7 +5613,12 @@ def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
         return False
 
     if is_walrus_assignment(node):
-        if parent.type in [syms.annassign, syms.expr_stmt]:
+        if parent.type in [
+            syms.annassign,
+            syms.expr_stmt,
+            syms.assert_stmt,
+            syms.return_stmt,
+        ]:
             return False
 
     first = node.children[0]
