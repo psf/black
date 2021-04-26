@@ -174,6 +174,11 @@ def multiline_backslash_2():
   hey there \ '''
 
 
+def multiline_backslash_3():
+  '''
+  already escaped \\ '''
+
+
 # output
 
 class MyClass:
@@ -347,3 +352,8 @@ def multiline_backslash_1():
 def multiline_backslash_2():
     """
     hey there \ """
+
+
+def multiline_backslash_3():
+    """
+    already escaped \\"""
