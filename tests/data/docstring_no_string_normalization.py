@@ -102,6 +102,26 @@ def shockingly_the_quotes_are_normalized_v2():
     '''
     pass
 
+
+def backslash_space():
+    '\ '
+
+
+def multiline_backslash_1():
+  '''
+  hey\there\
+  \ '''
+
+
+def multiline_backslash_2():
+  '''
+  hey there \ '''
+
+
+def multiline_backslash_3():
+  '''
+  already escaped \\ '''
+
 # output
 
 class ALonelyClass:
@@ -207,3 +227,23 @@ def shockingly_the_quotes_are_normalized_v2():
     Docstring Docstring Docstring
     '''
     pass
+
+
+def backslash_space():
+    '\ '
+
+
+def multiline_backslash_1():
+    '''
+  hey\there\
+  \ '''
+
+
+def multiline_backslash_2():
+    '''
+    hey there \ '''
+
+
+def multiline_backslash_3():
+    '''
+    already escaped \\'''

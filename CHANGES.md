@@ -6,6 +6,8 @@
 
 - Fix crash on docstrings ending with "\ ". (#2142)
 
+- Fix crash when atypical whitespace is cleaned out of dostrings (#2120)
+
 - Reflect the `--skip-magic-trailing-comma` and `--experimental-string-processing` flags
   in the name of the cache file. Without this fix, changes in these flags would not take
   effect if the cache had already been populated. (#2131)

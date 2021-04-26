@@ -174,6 +174,20 @@ def multiline_backslash_2():
   hey there \ '''
 
 
+def multiline_backslash_3():
+  '''
+  already escaped \\ '''
+
+
+def my_god_its_full_of_stars_1():
+    "I'm sorry Dave\u2001"
+
+
+# the space below is actually a \u2001, removed in output
+def my_god_its_full_of_stars_2():
+    "I'm sorry Dave "
+
+
 # output
 
 class MyClass:
@@ -347,3 +361,17 @@ def multiline_backslash_1():
 def multiline_backslash_2():
     """
     hey there \ """
+
+
+def multiline_backslash_3():
+    """
+    already escaped \\"""
+
+
+def my_god_its_full_of_stars_1():
+    "I'm sorry Dave\u2001"
+
+
+# the space below is actually a \u2001, removed in output
+def my_god_its_full_of_stars_2():
+    "I'm sorry Dave"
