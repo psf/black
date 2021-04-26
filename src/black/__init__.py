@@ -6776,6 +6776,13 @@ def can_omit_invisible_parens(
         # With more than one delimiter of a kind the optional parentheses read better.
         return False
 
+    if (
+        max_priority >= LOGIC_PRIORITY
+        and bt.delimiter_count_with_priority(max_priority) > 0
+    ):
+        # With at least one delimiter of kind LOGIC or above, optional parentheses are beter
+        return False
+
     if max_priority == DOT_PRIORITY:
         # A single stranded method call doesn't require optional parentheses.
         return True
