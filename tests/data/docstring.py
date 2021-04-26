@@ -158,6 +158,10 @@ def docstring_with_inline_tabs_and_tab_indentation():
 	"""
 	pass
 
+
+def backslash_space():
+    """\ """
+
 # output
 
 class MyClass:
@@ -316,3 +320,7 @@ def docstring_with_inline_tabs_and_tab_indentation():
     line ends with some tabs
     """
     pass
+
+
+def backslash_space():
+    """\ """

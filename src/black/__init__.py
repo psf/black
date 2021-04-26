@@ -2179,7 +2179,13 @@ class LineGenerator(Visitor[Line]):
                 indent = " " * 4 * self.current_line.depth
                 docstring = fix_docstring(docstring, indent)
             else:
-                docstring = docstring.strip()
+                new_docstring = docstring.strip()
+                # If the docstring ended with "\ ", stripping away the space
+                # will be a syntax error. Just put the trailing space back.
+                if new_docstring.endswith("\\"):
+                    docstring = docstring.lstrip()
+                else:
+                    docstring = new_docstring
 
             if docstring:
                 # Add some padding if the docstring starts / ends with a quote mark.
