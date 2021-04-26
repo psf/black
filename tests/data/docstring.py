@@ -162,6 +162,12 @@ def docstring_with_inline_tabs_and_tab_indentation():
 def backslash_space():
     """\ """
 
+
+def multiline_backslash():
+  '''
+  hey\there\
+  \ '''
+
 # output
 
 class MyClass:
@@ -324,3 +330,9 @@ def docstring_with_inline_tabs_and_tab_indentation():
 
 def backslash_space():
     """\ """
+
+
+def multiline_backslash():
+    """
+  hey\there\
+  \ """
