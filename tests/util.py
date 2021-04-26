@@ -12,7 +12,7 @@ EMPTY_LINE = "# EMPTY LINE WITH WHITESPACE" + " (this comment will be removed)"
 DETERMINISTIC_HEADER = "[Deterministic header]"
 
 
-DEFAULT_MODE = black.FileMode(experimental_string_processing=True)
+DEFAULT_MODE = black.Mode()
 ff = partial(black.format_file_in_place, mode=DEFAULT_MODE, fast=True)
 fs = partial(black.format_str, mode=DEFAULT_MODE)
 

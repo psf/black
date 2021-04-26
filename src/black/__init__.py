@@ -273,9 +273,9 @@ class Mode:
     target_versions: Set[TargetVersion] = field(default_factory=set)
     line_length: int = DEFAULT_LINE_LENGTH
     string_normalization: bool = True
+    is_pyi: bool = False
     magic_trailing_comma: bool = True
     experimental_string_processing: bool = False
-    is_pyi: bool = False
 
     def get_cache_key(self) -> str:
         if self.target_versions:
@@ -290,6 +290,8 @@ class Mode:
             str(self.line_length),
             str(int(self.string_normalization)),
             str(int(self.is_pyi)),
+            str(int(self.magic_trailing_comma)),
+            str(int(self.experimental_string_processing)),
         ]
         return ".".join(parts)
 
