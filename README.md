@@ -539,8 +539,8 @@ Maintained with [Carol Willing](mailto:carolcode@willingconsulting.com),
 [Carl Meyer](mailto:carl@oddbird.net),
 [Jelle Zijlstra](mailto:jelle.zijlstra@gmail.com),
 [Mika Naylor](mailto:mail@autophagy.io),
-[Zsolt Dollenstein](mailto:zsol.zsol@gmail.com), and
-[Cooper Lees](mailto:me@cooperlees.com).
+[Zsolt Dollenstein](mailto:zsol.zsol@gmail.com),
+[Cooper Lees](mailto:me@cooperlees.com), and Richard Si.
 
 Multiple contributions by:
 
