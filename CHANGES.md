@@ -37,8 +37,6 @@
 - Added parsing support for unparenthesized tuples and yield expressions in annotated
   assignments (#1835)
 
-- use lowercase hex strings (#1692)
-
 - added `--extend-exclude` argument (PR #2005)
 
 - speed up caching by avoiding pathlib (#1950)
