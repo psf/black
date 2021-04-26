@@ -219,7 +219,6 @@ custom_sections = [
     DocSection("blackd", CURRENT_DIR / "blackd.md"),
     DocSection("black_primer", CURRENT_DIR / "black_primer.md"),
     DocSection("contributing_to_black", CURRENT_DIR / ".." / "CONTRIBUTING.md"),
-    DocSection("change_log", CURRENT_DIR / ".." / "CHANGES.md"),
 ]
 
 # Sphinx complains when there is a source file that isn't referenced in any of the docs.
@@ -231,6 +230,7 @@ blocklisted_sections_from_readme = {
     "pragmatism",
     "testimonials",
     "used_by",
+    "change_log",
 }
 
 make_pypi_svg(release)
