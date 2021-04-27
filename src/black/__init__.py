@@ -318,8 +318,9 @@ def find_pyproject_toml(path_search_start: Tuple[str, ...]) -> Optional[str]:
             if path_user_pyproject_toml.is_file()
             else None
         )
-    except PermissionError:
+    except PermissionError as e:
         # We do not have access to the user-level config directory, so ignore it.
+        err(f"Ignoring user configuration directory due to {e!r}")
         return None
 
 
