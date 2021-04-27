@@ -313,7 +313,11 @@ def find_pyproject_toml(path_search_start: Tuple[str, ...]) -> Optional[str]:
 
     try:
         path_user_pyproject_toml = find_user_pyproject_toml()
-        return str(path_user_pyproject_toml) if path_user_pyproject_toml.is_file() else None
+        return (
+            str(path_user_pyproject_toml)
+            if path_user_pyproject_toml.is_file()
+            else None
+        )
     except PermissionError:
         # We do not have access to the user-level config directory, so ignore it.
         return None
