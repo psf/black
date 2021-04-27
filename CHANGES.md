@@ -6,6 +6,9 @@
 
 - Fix crash if the user configuration directory is inaccessible. (#2158)
 
+- Clarify that _Black_ may change the AST, especially when cleaning up docstrings.
+  (#2159)
+
 #### _Packaging_
 
 - Install `primer.json` (used by `black-primer` by default) with black. (#2154)
