@@ -4,6 +4,8 @@
 
 #### _Black_
 
+- Fix crash if the user configuration directory is inaccessible. (#2158)
+
 - Clarify that _Black_ may change the AST, especially when cleaning up docstrings.
   (#2159)
 
