@@ -112,7 +112,7 @@
     },
     "virtualenv": {
       "cli_arguments": [],
-      "expect_formatting_changes": true,
+      "expect_formatting_changes": false,
       "git_clone_url": "https://github.com/pypa/virtualenv.git",
       "long_checkout": false,
       "py_versions": ["all"]

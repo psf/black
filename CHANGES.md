@@ -15,6 +15,10 @@
 - Don't remove necessary parentheses from assignment expression containing assert /
   return statements. (#2143)
 
+#### _Packaging_
+
+- Bump pathspec to >= 0.8.1 to solve invalid .gitignore exclusion handling
+
 ### 21.4b0
 
 #### _Black_
