@@ -75,6 +75,13 @@
       "long_checkout": false,
       "py_versions": ["all"]
     },
+    "pyanalyze": {
+      "cli_arguments": [],
+      "expect_formatting_changes": false,
+      "git_clone_url": "https://github.com/quora/pyanalyze.git",
+      "long_checkout": false,
+      "py_versions": ["all"]
+    },
     "pyramid": {
       "cli_arguments": [],
       "expect_formatting_changes": true,
@@ -107,6 +114,13 @@
       "cli_arguments": [],
       "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/tox-dev/tox.git",
+      "long_checkout": false,
+      "py_versions": ["all"]
+    },
+    "typeshed": {
+      "cli_arguments": [],
+      "expect_formatting_changes": true,
+      "git_clone_url": "https://github.com/python/typeshed.git",
       "long_checkout": false,
       "py_versions": ["all"]
     },
