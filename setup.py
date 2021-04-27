@@ -64,7 +64,11 @@ setup(
     ext_modules=ext_modules,
     packages=["blackd", "black", "blib2to3", "blib2to3.pgen2", "black_primer"],
     package_dir={"": "src"},
-    package_data={"blib2to3": ["*.txt"], "black": ["py.typed"]},
+    package_data={
+        "blib2to3": ["*.txt"],
+        "black": ["py.typed"],
+        "black_primer": ["primer.json"],
+    },
     python_requires=">=3.6.2",
     zip_safe=False,
     install_requires=[
