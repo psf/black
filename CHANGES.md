@@ -1,5 +1,11 @@
 ## Change Log
 
+### Unreleased
+
+#### _Packaging_
+
+- Install `primer.json` (used by `black-primer` by default) with black. (#2154)
+
 ### 21.4b1
 
 #### _Black_
