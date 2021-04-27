@@ -2,6 +2,10 @@
 
 ### Unreleased
 
+#### _Black_
+
+- Fix crash if the user configuration directory is inaccessible. (#2158)
+
 #### _Packaging_
 
 - Install `primer.json` (used by `black-primer` by default) with black. (#2154)
