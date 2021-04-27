@@ -238,8 +238,10 @@ change in the future**. That being said, no drastic stylistic changes are planne
 mostly responses to bug reports.
 
 Also, as a temporary safety measure, _Black_ will check that the reformatted code still
-produces a valid AST that is equivalent to the original. This slows it down. If you're
-feeling confident, use `--fast`.
+produces a valid AST that is mostly equivalent to the original. This slows it down. If
+you're feeling confident, use `--fast`. In a few contexts, Black does make changes to
+the AST: it cleans up whitespace in docstrings, adds or removes parentheses in some
+`del` statements, and may move around type comments.
 
 ## The _Black_ code style
 
