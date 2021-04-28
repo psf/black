@@ -30,7 +30,7 @@ _Black_ makes code review faster by producing the smallest diffs possible.
 Try it out now using the [Black Playground](https://black.now.sh). Watch the
 [PyCon 2019 talk](https://youtu.be/esZLCuWs_2Y) to learn more.
 
----
+______________________________________________________________________
 
 _Contents:_ **[Installation and usage](#installation-and-usage)** |
 **[Code style](#the-black-code-style)** | **[Pragmatism](#pragmatism)** |
@@ -43,7 +43,7 @@ _Contents:_ **[Installation and usage](#installation-and-usage)** |
 **[Contributing](#contributing-to-black)** | **[Change log](#change-log)** |
 **[Authors](#authors)**
 
----
+______________________________________________________________________
 
 ## Installation and usage
 
@@ -447,8 +447,7 @@ run. The file is non-portable. The standard location on common operating systems
   `C:\\Users\<username>\AppData\Local\black\black\Cache\<version>\cache.<line-length>.<file-mode>.pickle`
 - macOS:
   `/Users/<username>/Library/Caches/black/<version>/cache.<line-length>.<file-mode>.pickle`
-- Linux:
-  `/home/<username>/.cache/black/<version>/cache.<line-length>.<file-mode>.pickle`
+- Linux: `/home/<username>/.cache/black/<version>/cache.<line-length>.<file-mode>.pickle`
 
 `file-mode` is an int flag that determines whether the file was formatted as 3.6+ only,
 as .pyi, and whether string normalization was omitted.

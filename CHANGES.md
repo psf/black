@@ -18,7 +18,7 @@
 
 #### _Black_
 
-- Fix crash on docstrings ending with "\ ". (#2142)
+- Fix crash on docstrings ending with "\\ ". (#2142)
 
 - Fix crash when atypical whitespace is cleaned out of dostrings (#2120)
 
@@ -26,8 +26,8 @@
   in the name of the cache file. Without this fix, changes in these flags would not take
   effect if the cache had already been populated. (#2131)
 
-- Don't remove necessary parentheses from assignment expression containing assert /
-  return statements. (#2143)
+- Don't remove necessary parentheses from assignment expression containing assert / return
+  statements. (#2143)
 
 #### _Packaging_
 
@@ -37,27 +37,27 @@
 
 #### _Black_
 
-- Fixed a rare but annoying formatting instability created by the combination of
-  optional trailing commas inserted by `Black` and optional parentheses looking at
-  pre-existing "magic" trailing commas. This fixes issue #1629 and all of its many many
-  duplicates. (#2126)
+- Fixed a rare but annoying formatting instability created by the combination of optional
+  trailing commas inserted by `Black` and optional parentheses looking at pre-existing
+  "magic" trailing commas. This fixes issue #1629 and all of its many many duplicates.
+  (#2126)
 
-- `Black` now processes one-line docstrings by stripping leading and trailing spaces,
-  and adding a padding space when needed to break up """". (#1740)
+- `Black` now processes one-line docstrings by stripping leading and trailing spaces, and
+  adding a padding space when needed to break up """". (#1740)
 
 - `Black` now cleans up leading non-breaking spaces in comments (#2092)
 
-- `Black` now respects `--skip-string-normalization` when normalizing multiline
-  docstring quotes (#1637)
+- `Black` now respects `--skip-string-normalization` when normalizing multiline docstring
+  quotes (#1637)
 
-- `Black` no longer removes all empty lines between non-function code and decorators
-  when formatting typing stubs. Now `Black` enforces a single empty line. (#1646)
+- `Black` no longer removes all empty lines between non-function code and decorators when
+  formatting typing stubs. Now `Black` enforces a single empty line. (#1646)
 
-- `Black` no longer adds an incorrect space after a parenthesized assignment expression
-  in if/while statements (#1655)
+- `Black` no longer adds an incorrect space after a parenthesized assignment expression in
+  if/while statements (#1655)
 
-- Added `--skip-magic-trailing-comma` / `-C` to avoid using trailing commas as a reason
-  to split lines (#1824)
+- Added `--skip-magic-trailing-comma` / `-C` to avoid using trailing commas as a reason to
+  split lines (#1824)
 
 - fixed a crash when PWD=/ on POSIX (#1631)
 
@@ -88,20 +88,20 @@
 
 - Exclude `venv` directory by default (#1683)
 
-- Fixed "Black produced code that is not equivalent to the source" when formatting
-  Python 2 docstrings (#2037)
+- Fixed "Black produced code that is not equivalent to the source" when formatting Python
+  2 docstrings (#2037)
 
 #### _Packaging_
 
-- Self-contained native _Black_ binaries are now provided for releases via GitHub
-  Releases (#1743)
+- Self-contained native _Black_ binaries are now provided for releases via GitHub Releases
+  (#1743)
 
 ### 20.8b1
 
 #### _Packaging_
 
-- explicitly depend on Click 7.1.2 or newer as `Black` no longer works with versions
-  older than 7.0
+- explicitly depend on Click 7.1.2 or newer as `Black` no longer works with versions older
+  than 7.0
 
 ### 20.8b0
 
@@ -116,8 +116,7 @@
 
 - `Black` is now packaged using 'py3' tagged wheels (#1388)
 
-- `Black` now supports Python 3.8 code, e.g. star expressions in return statements
-  (#1121)
+- `Black` now supports Python 3.8 code, e.g. star expressions in return statements (#1121)
 
 - `Black` no longer normalizes capital R-string prefixes as those have a
   community-accepted meaning (#1244)
@@ -144,10 +143,10 @@
 - introduced property-based fuzzing to our test suite based on Hypothesis and
   Hypothersmith (#1566)
 
-- implemented experimental and disabled by default long string rewrapping (#1132),
-  hidden under a `--experimental-string-processing` flag while it's being worked on;
-  this is an undocumented and unsupported feature, you lose Internet points for
-  depending on it (#1609)
+- implemented experimental and disabled by default long string rewrapping (#1132), hidden
+  under a `--experimental-string-processing` flag while it's being worked on; this is an
+  undocumented and unsupported feature, you lose Internet points for depending on it
+  (#1609)
 
 #### Vim plugin
 
@@ -161,8 +160,8 @@
 
 - added support for async generators (#593)
 
-- added support for pre-splitting collections by putting an explicit trailing comma
-  inside (#826)
+- added support for pre-splitting collections by putting an explicit trailing comma inside
+  (#826)
 
 - added `black -c` as a way to format code passed from the command line (#761)
 
@@ -204,8 +203,8 @@
 - _Black_ no longer introduces quotes in f-string subexpressions on string boundaries
   (#863)
 
-- if _Black_ puts parenthesis around a single expression, it moves comments to the
-  wrapped expression instead of after the brackets (#872)
+- if _Black_ puts parenthesis around a single expression, it moves comments to the wrapped
+  expression instead of after the brackets (#872)
 
 - `blackd` now returns the version of _Black_ in the response headers (#1013)
 
@@ -232,8 +231,8 @@
 - _Black_ now creates cache files atomically which allows it to be used in parallel
   pipelines (like `xargs -P8`) (#673)
 
-- _Black_ now correctly indents comments in files that were previously formatted with
-  tabs (#262)
+- _Black_ now correctly indents comments in files that were previously formatted with tabs
+  (#262)
 
 - `blackd` now supports CORS (#622)
 
@@ -243,8 +242,8 @@
 
   - numeric literals are normalized to include `_` separators on Python 3.6+ code
 
-  - added `--skip-numeric-underscore-normalization` to disable the above behavior and
-    leave numeric underscores as they were in the input
+  - added `--skip-numeric-underscore-normalization` to disable the above behavior and leave
+    numeric underscores as they were in the input
 
   - code with `_` in numeric literals is recognized as Python 3.6+
 
@@ -276,8 +275,8 @@
 
 - fixed `async for` statements: _Black_ no longer breaks them into separate lines (#372)
 
-- note: the Vim plugin stopped registering `,=` as a default chord as it turned out to
-  be a bad idea (#415)
+- note: the Vim plugin stopped registering `,=` as a default chord as it turned out to be
+  a bad idea (#415)
 
 ### 18.6b4
 
@@ -293,12 +292,12 @@
 
   - they now correctly work across function/class boundaries (#335)
 
-  - they now work when an indentation block starts with empty lines or misaligned
-    comments (#334)
+  - they now work when an indentation block starts with empty lines or misaligned comments
+    (#334)
 
-- made Click not fail on invalid environments; note that Click is right but the
-  likelihood we'll need to access non-ASCII file paths when dealing with Python source
-  code is low (#277)
+- made Click not fail on invalid environments; note that Click is right but the likelihood
+  we'll need to access non-ASCII file paths when dealing with Python source code is low
+  (#277)
 
 - fixed improper formatting of f-strings with quotes inside interpolated expressions
   (#322)
@@ -355,19 +354,19 @@
 
 - added `--py36` (#249)
 
-- Python grammar pickle caches are stored with the formatting caches, making _Black_
-  work in environments where site-packages is not user-writable (#192)
+- Python grammar pickle caches are stored with the formatting caches, making _Black_ work
+  in environments where site-packages is not user-writable (#192)
 
-- _Black_ now enforces a PEP 257 empty line after a class-level docstring (and/or
-  fields) and the first method
+- _Black_ now enforces a PEP 257 empty line after a class-level docstring (and/or fields)
+  and the first method
 
-- fixed invalid code produced when standalone comments were present in a trailer that
-  was omitted from line splitting on a large expression (#237)
+- fixed invalid code produced when standalone comments were present in a trailer that was
+  omitted from line splitting on a large expression (#237)
 
 - fixed optional parentheses being removed within `# fmt: off` sections (#224)
 
-- fixed invalid code produced when stars in very long imports were incorrectly wrapped
-  in optional parentheses (#234)
+- fixed invalid code produced when stars in very long imports were incorrectly wrapped in
+  optional parentheses (#234)
 
 - fixed unstable formatting when inline comments were moved around in a trailer that was
   omitted from line splitting on a large expression (#238)
@@ -375,8 +374,8 @@
 - fixed extra empty line between a class declaration and the first method if no class
   docstring or fields are present (#219)
 
-- fixed extra empty line between a function signature and an inner function or inner
-  class (#196)
+- fixed extra empty line between a function signature and an inner function or inner class
+  (#196)
 
 ### 18.5b0
 
@@ -388,28 +387,27 @@
 
 - slices are now formatted according to PEP 8 (#178)
 
-- parentheses are now also managed automatically on the right-hand side of assignments
-  and return statements (#140)
+- parentheses are now also managed automatically on the right-hand side of assignments and
+  return statements (#140)
 
-- math operators now use their respective priorities for delimiting multiline
-  expressions (#148)
+- math operators now use their respective priorities for delimiting multiline expressions
+  (#148)
 
-- optional parentheses are now omitted on expressions that start or end with a bracket
-  and only contain a single operator (#177)
+- optional parentheses are now omitted on expressions that start or end with a bracket and
+  only contain a single operator (#177)
 
 - empty parentheses in a class definition are now removed (#145, #180)
 
-- string prefixes are now standardized to lowercase and `u` is removed on Python 3.6+
-  only code and Python 2.7+ code with the `unicode_literals` future import (#188, #198,
-  #199)
+- string prefixes are now standardized to lowercase and `u` is removed on Python 3.6+ only
+  code and Python 2.7+ code with the `unicode_literals` future import (#188, #198, #199)
 
-- typing stub files (`.pyi`) are now formatted in a style that is consistent with PEP
-  484 (#207, #210)
+- typing stub files (`.pyi`) are now formatted in a style that is consistent with PEP 484
+  (#207, #210)
 
 - progress when reformatting many files is now reported incrementally
 
-- fixed trailers (content with brackets) being unnecessarily exploded into their own
-  lines after a dedented closing bracket (#119)
+- fixed trailers (content with brackets) being unnecessarily exploded into their own lines
+  after a dedented closing bracket (#119)
 
 - fixed an invalid trailing comma sometimes left in imports (#185)
 
@@ -421,15 +419,14 @@
 
 - fixed not splitting long from-imports with only a single name
 
-- fixed Python 3.6+ file discovery by also looking at function calls with unpacking.
-  This fixed non-deterministic formatting if trailing commas where used both in function
-  signatures with stars and function calls with stars but the former would be
-  reformatted to a single line.
+- fixed Python 3.6+ file discovery by also looking at function calls with unpacking. This
+  fixed non-deterministic formatting if trailing commas where used both in function
+  signatures with stars and function calls with stars but the former would be reformatted
+  to a single line.
 
 - fixed crash on dealing with optional parentheses (#193)
 
-- fixed "is", "is not", "in", and "not in" not considered operators for splitting
-  purposes
+- fixed "is", "is not", "in", and "not in" not considered operators for splitting purposes
 
 - fixed crash when dead symlinks where encountered
 
@@ -444,8 +441,8 @@
 
 - `--check` and `--diff` are no longer mutually exclusive (#149)
 
-- generalized star expression handling, including double stars; this fixes
-  multiplication making expressions "unsafe" for trailing commas (#132)
+- generalized star expression handling, including double stars; this fixes multiplication
+  making expressions "unsafe" for trailing commas (#132)
 
 - _Black_ no longer enforces putting empty lines behind control flow statements (#90)
 
@@ -453,13 +450,12 @@
 
 - fixed comment indentation when a standalone comment closes a block (#16, #32)
 
-- fixed standalone comments receiving extra empty lines if immediately preceding a
-  class, def, or decorator (#56, #154)
+- fixed standalone comments receiving extra empty lines if immediately preceding a class,
+  def, or decorator (#56, #154)
 
 - fixed `--diff` not showing entire path (#130)
 
-- fixed parsing of complex expressions after star and double stars in function calls
-  (#2)
+- fixed parsing of complex expressions after star and double stars in function calls (#2)
 
 - fixed invalid splitting on comma in lambda arguments (#133)
 
@@ -497,18 +493,18 @@
 
 - standardize string literals to use double quotes (almost) everywhere (#75)
 
-- fixed handling of standalone comments within nested bracketed expressions; _Black_
-  will no longer produce super long lines or put all standalone comments at the end of
-  the expression (#22)
+- fixed handling of standalone comments within nested bracketed expressions; _Black_ will
+  no longer produce super long lines or put all standalone comments at the end of the
+  expression (#22)
 
 - fixed 18.3a4 regression: don't crash and burn on empty lines with trailing whitespace
   (#80)
 
-- fixed 18.3a4 regression: `# yapf: disable` usage as trailing comment would cause
-  _Black_ to not emit the rest of the file (#95)
+- fixed 18.3a4 regression: `# yapf: disable` usage as trailing comment would cause _Black_
+  to not emit the rest of the file (#95)
 
-- when CTRL+C is pressed while formatting many files, _Black_ no longer freaks out with
-  a flurry of asyncio-related exceptions
+- when CTRL+C is pressed while formatting many files, _Black_ no longer freaks out with a
+  flurry of asyncio-related exceptions
 
 - only allow up to two empty lines on module level and only single empty lines within
   functions (#74)
@@ -517,11 +513,11 @@
 
 - `# fmt: off` and `# fmt: on` are implemented (#5)
 
-- automatic detection of deprecated Python 2 forms of print statements and exec
-  statements in the formatted file (#49)
+- automatic detection of deprecated Python 2 forms of print statements and exec statements
+  in the formatted file (#49)
 
-- use proper spaces for complex expressions in default values of typed function
-  arguments (#60)
+- use proper spaces for complex expressions in default values of typed function arguments
+  (#60)
 
 - only return exit code 1 when --check is used (#50)
 
@@ -547,23 +543,23 @@
 
 ### 18.3a2
 
-- changed positioning of binary operators to occur at beginning of lines instead of at
-  the end, following
+- changed positioning of binary operators to occur at beginning of lines instead of at the
+  end, following
   [a recent change to PEP 8](https://github.com/python/peps/commit/c59c4376ad233a62ca4b3a6060c81368bd21e85b)
   (#21)
 
-- ignore empty bracket pairs while splitting. This avoids very weirdly looking
-  formattings (#34, #35)
+- ignore empty bracket pairs while splitting. This avoids very weirdly looking formattings
+  (#34, #35)
 
 - remove a trailing comma if there is a single argument to a call
 
-- if top level functions were separated by a comment, don't put four empty lines after
-  the upper function
+- if top level functions were separated by a comment, don't put four empty lines after the
+  upper function
 
 - fixed unstable formatting of newlines with imports
 
-- fixed unintentional folding of post scriptum standalone comments into last statement
-  if it was a simple statement (#18, #28)
+- fixed unintentional folding of post scriptum standalone comments into last statement if
+  it was a simple statement (#18, #28)
 
 - fixed missing space in numpy-style array indexing (#33)
 
@@ -573,9 +569,9 @@
 
 - added `--check`
 
-- only put trailing commas in function signatures and calls if it's safe to do so. If
-  the file is Python 3.6+ it's always safe, otherwise only safe if there are no `*args`
-  or `**kwargs` used in the signature or call. (#8)
+- only put trailing commas in function signatures and calls if it's safe to do so. If the
+  file is Python 3.6+ it's always safe, otherwise only safe if there are no `*args` or
+  `**kwargs` used in the signature or call. (#8)
 
 - fixed invalid spacing of dots in relative imports (#6, #13)
 
