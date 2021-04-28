@@ -464,3 +464,32 @@ exception to this rule is r-strings. It turns out that the very popular
 default by (among others) GitHub and Visual Studio Code, differentiates between
 r-strings and R-strings. The former are syntax highlighted as regular expressions while
 the latter are treated as true raw strings with no special semantics.
+
+### AST before and after formatting
+
+When run with `--safe`, _Black_ checks that the code before and after is semantically
+equivalent. This check is done by comparing the AST of the source with the AST of the
+target. There are three limited cases in which the AST does differ:
+
+1. _Black_ cleans up leading and trailing whitespace of docstrings, re-indenting them if
+   needed. It's been one of the most popular user-reported features for the formatter to
+   fix whitespace issues with docstrings. While the result is technically an AST
+   difference, due to the various possibilities of forming docstrings, all realtime use
+   of docstrings that we're aware of sanitizes indentation and leading/trailing
+   whitespace anyway.
+
+2. _Black_ manages optional parentheses for some statements. In the case of the `del`
+   statement, presence of wrapping parentheses or lack of thereof changes the resulting
+   AST but is semantically equivalent in the interpreter.
+
+3. _Black_ might move comments around, which includes type comments. Those are part of
+   the AST as of Python 3.8. While the tool implements a number of special cases for
+   those comments, there is no guarantee they will remain where they were in the source.
+   Note that this doesn't change runtime behavior of the source code.
+
+To put things in perspective, the code equivalence check is a feature of _Black_ which
+other formatters don't implement at all. It is of crucial importance to us to ensure
+code behaves the way it did before it got reformatted. We treat this as a feature and
+there are no plans to relax this in the future. The exceptions enumerated above stem
+from either user feedback or implementation details of the tool. In each case we made
+due diligence to ensure that the AST divergence is of no practical consequence.

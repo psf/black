@@ -6,8 +6,9 @@
 
 - Fix crash if the user configuration directory is inaccessible. (#2158)
 
-- Clarify that _Black_ may change the AST, especially when cleaning up docstrings.
-  (#2159)
+- Clarify
+  [circumstances](https://github.com/psf/black/blob/master/docs/the_black_code_style.md#pragmatism)
+  in which _Black_ may change the AST (#2159)
 
 #### _Packaging_
 

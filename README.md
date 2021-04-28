@@ -237,11 +237,11 @@ is that **until the formatter becomes stable, you should expect some formatting 
 change in the future**. That being said, no drastic stylistic changes are planned,
 mostly responses to bug reports.
 
-Also, as a temporary safety measure, _Black_ will check that the reformatted code still
-produces a valid AST that is mostly equivalent to the original. This slows it down. If
-you're feeling confident, use `--fast`. In a few contexts, Black does make changes to
-the AST: it cleans up whitespace in docstrings, adds or removes parentheses in some
-`del` statements, and may move around type comments.
+Also, as a safety measure which slows down processing, _Black_ will check that the
+reformatted code still produces a valid AST that is effectively equivalent to the
+original (see the
+[Pragmatism](https://github.com/psf/black/blob/master/docs/the_black_code_style.md#pragmatism)
+section for details). If you're feeling confident, use `--fast`.
 
 ## The _Black_ code style
 
