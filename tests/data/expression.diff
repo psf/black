@@ -272,8 +272,8 @@
 -for addr_family, addr_type, addr_proto, addr_canonname, addr_sockaddr in socket.getaddrinfo('google.com', 'http'):
 +print(*lambda x: x)
 +assert not Test, "Short message"
-+assert this is ComplexTest and not requirements.fit_in_a_single_line(
-+    force=False
++assert (
++    this is ComplexTest and not requirements.fit_in_a_single_line(force=False)
 +), "Short message"
 +assert parens is TooMany
 +for (x,) in (1,), (2,), (3,):
