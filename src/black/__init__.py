@@ -772,12 +772,16 @@ def reformat_one(
                 res_src_s = str(res_src)
                 if res_src_s in cache and cache[res_src_s] == get_cache_info(res_src):
                     changed = Changed.CACHED
-            if changed is not Changed.CACHED and format_file_in_place(
-                src, fast=fast, write_back=write_back, mode=mode
+            if (
+                changed is not Changed.CACHED
+                and format_file_in_place(
+                    src, fast=fast, write_back=write_back, mode=mode
+                )
             ):
                 changed = Changed.YES
-            if (write_back is WriteBack.YES and changed is not Changed.CACHED) or (
-                write_back is WriteBack.CHECK and changed is Changed.NO
+            if (
+                (write_back is WriteBack.YES and changed is not Changed.CACHED)
+                or (write_back is WriteBack.CHECK and changed is Changed.NO)
             ):
                 write_cache(cache, [src], mode)
         report.done(src, changed)
@@ -884,8 +888,9 @@ async def schedule_formatting(
                 changed = Changed.YES if task.result() else Changed.NO
                 # If the file was written back or was successfully checked as
                 # well-formatted, store this information in the cache.
-                if write_back is WriteBack.YES or (
-                    write_back is WriteBack.CHECK and changed is Changed.NO
+                if (
+                    write_back is WriteBack.YES
+                    or (write_back is WriteBack.CHECK and changed is Changed.NO)
                 ):
                     sources_to_cache.append(src)
                 report.done(src, changed)
@@ -1614,9 +1619,10 @@ class Line:
     @property
     def is_stub_class(self) -> bool:
         """Is this line a class definition with a body consisting only of "..."?"""
-        return self.is_class and self.leaves[-3:] == [
-            Leaf(token.DOT, ".") for _ in range(3)
-        ]
+        return (
+            self.is_class
+            and self.leaves[-3:] == [Leaf(token.DOT, ".") for _ in range(3)]
+        )
 
     @property
     def is_def(self) -> bool:
@@ -1630,11 +1636,14 @@ class Line:
             second_leaf: Optional[Leaf] = self.leaves[1]
         except IndexError:
             second_leaf = None
-        return (first_leaf.type == token.NAME and first_leaf.value == "def") or (
-            first_leaf.type == token.ASYNC
-            and second_leaf is not None
-            and second_leaf.type == token.NAME
-            and second_leaf.value == "def"
+        return (
+            (first_leaf.type == token.NAME and first_leaf.value == "def")
+            or (
+                first_leaf.type == token.ASYNC
+                and second_leaf is not None
+                and second_leaf.type == token.NAME
+                and second_leaf.value == "def"
+            )
         )
 
     @property
@@ -1675,8 +1684,9 @@ class Line:
         try:
             last_leaf = self.leaves[-1]
             ignored_ids.add(id(last_leaf))
-            if last_leaf.type == token.COMMA or (
-                last_leaf.type == token.RPAR and not last_leaf.value
+            if (
+                last_leaf.type == token.COMMA
+                or (last_leaf.type == token.RPAR and not last_leaf.value)
             ):
                 # When trailing commas or optional parens are inserted by Black for
                 # consistency, comments after the previous last element are not moved
@@ -1696,9 +1706,12 @@ class Line:
         for leaf_id, comments in self.comments.items():
             for comment in comments:
                 if is_type_comment(comment):
-                    if comment_seen or (
-                        not is_type_comment(comment, " ignore")
-                        and leaf_id not in ignored_ids
+                    if (
+                        comment_seen
+                        or (
+                            not is_type_comment(comment, " ignore")
+                            and leaf_id not in ignored_ids
+                        )
                     ):
                         return True
 
@@ -1838,8 +1851,9 @@ class Line:
 
             if subscript_start.type == syms.subscriptlist:
                 subscript_start = child_towards(subscript_start, leaf)
-        return subscript_start is not None and any(
-            n.type in TEST_DESCENDANTS for n in subscript_start.pre_order()
+        return (
+            subscript_start is not None
+            and any(n.type in TEST_DESCENDANTS for n in subscript_start.pre_order())
         )
 
     def clone(self) -> "Line":
@@ -1960,8 +1974,9 @@ class EmptyLineTracker:
 
             return 0, 0
 
-        if self.previous_line.depth < current_line.depth and (
-            self.previous_line.is_class or self.previous_line.is_def
+        if (
+            self.previous_line.depth < current_line.depth
+            and (self.previous_line.is_class or self.previous_line.is_def)
         ):
             return 0, 0
 
@@ -1982,8 +1997,9 @@ class EmptyLineTracker:
                 else:
                     newlines = 1
             elif (
-                current_line.is_def or current_line.is_decorator
-            ) and not self.previous_line.is_def:
+                (current_line.is_def or current_line.is_decorator)
+                and not self.previous_line.is_def
+            ):
                 # Blank line between a block of functions (maybe with preceding
                 # decorators) and a block of non-functions
                 newlines = 1
@@ -2273,11 +2289,15 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
         return DOUBLESPACE
 
     assert p is not None, f"INTERNAL ERROR: hand-made leaf without parent: {leaf!r}"
-    if t == token.COLON and p.type not in {
-        syms.subscript,
-        syms.subscriptlist,
-        syms.sliceop,
-    }:
+    if (
+        t == token.COLON
+        and p.type
+        not in {
+            syms.subscript,
+            syms.subscriptlist,
+            syms.sliceop,
+        }
+    ):
         return NO
 
     prev = leaf.prev_sibling
@@ -2457,10 +2477,14 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
 
             prevp_parent = prevp.parent
             assert prevp_parent is not None
-            if prevp.type == token.COLON and prevp_parent.type in {
-                syms.subscript,
-                syms.sliceop,
-            }:
+            if (
+                prevp.type == token.COLON
+                and prevp_parent.type
+                in {
+                    syms.subscript,
+                    syms.sliceop,
+                }
+            ):
                 return NO
 
             elif prevp.type == token.EQUAL and prevp_parent.type == syms.argument:
@@ -3336,10 +3360,14 @@ class StringMerger(CustomSplitMapMixin, StringTransformer):
             i = string_idx
             found_sa_comment = False
             is_valid_index = is_valid_index_factory(line.leaves)
-            while is_valid_index(i) and line.leaves[i].type in [
-                token.STRING,
-                STANDALONE_COMMENT,
-            ]:
+            while (
+                is_valid_index(i)
+                and line.leaves[i].type
+                in [
+                    token.STRING,
+                    STANDALONE_COMMENT,
+                ]
+            ):
                 if line.leaves[i].type == STANDALONE_COMMENT:
                     found_sa_comment = True
                 elif found_sa_comment:
@@ -3442,8 +3470,12 @@ class StringParenStripper(StringTransformer):
             # That LPAR should NOT be preceded by a function name or a closing
             # bracket (which could be a function which returns a function or a
             # list/dictionary that contains a function)...
-            if is_valid_index(idx - 2) and (
-                LL[idx - 2].type == token.NAME or LL[idx - 2].type in CLOSING_BRACKETS
+            if (
+                is_valid_index(idx - 2)
+                and (
+                    LL[idx - 2].type == token.NAME
+                    or LL[idx - 2].type in CLOSING_BRACKETS
+                )
             ):
                 continue
 
@@ -3459,27 +3491,30 @@ class StringParenStripper(StringTransformer):
             if is_valid_index(idx - 2):
                 # mypy can't quite follow unless we name this
                 before_lpar = LL[idx - 2]
-                if token.PERCENT in {leaf.type for leaf in LL[idx - 1 : next_idx]} and (
-                    (
-                        before_lpar.type
-                        in {
-                            token.STAR,
-                            token.AT,
-                            token.SLASH,
-                            token.DOUBLESLASH,
-                            token.PERCENT,
-                            token.TILDE,
-                            token.DOUBLESTAR,
-                            token.AWAIT,
-                            token.LSQB,
-                            token.LPAR,
-                        }
-                    )
-                    or (
-                        # only unary PLUS/MINUS
-                        before_lpar.parent
-                        and before_lpar.parent.type == syms.factor
-                        and (before_lpar.type in {token.PLUS, token.MINUS})
+                if (
+                    token.PERCENT in {leaf.type for leaf in LL[idx - 1 : next_idx]}
+                    and (
+                        (
+                            before_lpar.type
+                            in {
+                                token.STAR,
+                                token.AT,
+                                token.SLASH,
+                                token.DOUBLESLASH,
+                                token.PERCENT,
+                                token.TILDE,
+                                token.DOUBLESTAR,
+                                token.AWAIT,
+                                token.LSQB,
+                                token.LPAR,
+                            }
+                        )
+                        or (
+                            # only unary PLUS/MINUS
+                            before_lpar.parent
+                            and before_lpar.parent.type == syms.factor
+                            and (before_lpar.type in {token.PLUS, token.MINUS})
+                        )
                     )
                 ):
                     continue
@@ -3492,12 +3527,16 @@ class StringParenStripper(StringTransformer):
             ):
                 # That RPAR should NOT be followed by anything with higher
                 # precedence than PERCENT
-                if is_valid_index(next_idx + 1) and LL[next_idx + 1].type in {
-                    token.DOUBLESTAR,
-                    token.LSQB,
-                    token.LPAR,
-                    token.DOT,
-                }:
+                if (
+                    is_valid_index(next_idx + 1)
+                    and LL[next_idx + 1].type
+                    in {
+                        token.DOUBLESTAR,
+                        token.LSQB,
+                        token.LPAR,
+                        token.DOT,
+                    }
+                ):
                     continue
 
                 return Ok(string_idx)
@@ -3607,17 +3646,22 @@ class BaseStringSplitter(StringTransformer):
                 "The string itself is not what is causing this line to be too long."
             )
 
-        if not string_leaf.parent or [L.type for L in string_leaf.parent.children] == [
-            token.STRING,
-            token.NEWLINE,
-        ]:
+        if (
+            not string_leaf.parent
+            or [L.type for L in string_leaf.parent.children]
+            == [
+                token.STRING,
+                token.NEWLINE,
+            ]
+        ):
             return TErr(
                 f"This string ({string_leaf.value}) appears to be pointless (i.e. has"
                 " no parent)."
             )
 
-        if id(line.leaves[string_idx]) in line.comments and contains_pragma_comment(
-            line.comments[id(line.leaves[string_idx])]
+        if (
+            id(line.leaves[string_idx]) in line.comments
+            and contains_pragma_comment(line.comments[id(line.leaves[string_idx])])
         ):
             return TErr(
                 "Line appears to end with an inline pragma comment. Splitting the line"
@@ -3843,8 +3887,9 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         # contain any f-expressions, but ONLY if the original f-string
         # contains at least one f-expression. Otherwise, we will alter the AST
         # of the program.
-        drop_pointless_f_prefix = ("f" in prefix) and re.search(
-            self.RE_FEXPR, LL[string_idx].value, re.VERBOSE
+        drop_pointless_f_prefix = (
+            ("f" in prefix)
+            and re.search(self.RE_FEXPR, LL[string_idx].value, re.VERBOSE)
         )
 
         first_string_line = True
@@ -4263,9 +4308,10 @@ class StringParenWrapper(CustomSplitMapMixin, BaseStringSplitter):
         """
         # If this line is apart of a return/yield statement and the first leaf
         # contains either the "return" or "yield" keywords...
-        if parent_type(LL[0]) in [syms.return_stmt, syms.yield_expr] and LL[
-            0
-        ].value in ["return", "yield"]:
+        if (
+            parent_type(LL[0]) in [syms.return_stmt, syms.yield_expr]
+            and LL[0].value in ["return", "yield"]
+        ):
             is_valid_index = is_valid_index_factory(LL)
 
             idx = 2 if is_valid_index(1) and is_empty_par(LL[1]) else 1
@@ -5760,26 +5806,29 @@ def is_walrus_assignment(node: LN) -> bool:
 
 def is_simple_decorator_trailer(node: LN, last: bool = False) -> bool:
     """Return True iff `node` is a trailer valid in a simple decorator"""
-    return node.type == syms.trailer and (
-        (
-            len(node.children) == 2
-            and node.children[0].type == token.DOT
-            and node.children[1].type == token.NAME
-        )
-        # last trailer can be an argument-less parentheses pair
-        or (
-            last
-            and len(node.children) == 2
-            and node.children[0].type == token.LPAR
-            and node.children[1].type == token.RPAR
-        )
-        # last trailer can be arguments
-        or (
-            last
-            and len(node.children) == 3
-            and node.children[0].type == token.LPAR
-            # and node.children[1].type == syms.argument
-            and node.children[2].type == token.RPAR
+    return (
+        node.type == syms.trailer
+        and (
+            (
+                len(node.children) == 2
+                and node.children[0].type == token.DOT
+                and node.children[1].type == token.NAME
+            )
+            # last trailer can be an argument-less parentheses pair
+            or (
+                last
+                and len(node.children) == 2
+                and node.children[0].type == token.LPAR
+                and node.children[1].type == token.RPAR
+            )
+            # last trailer can be arguments
+            or (
+                last
+                and len(node.children) == 3
+                and node.children[0].type == token.LPAR
+                # and node.children[1].type == syms.argument
+                and node.children[2].type == token.RPAR
+            )
         )
     )
 
@@ -5946,10 +5995,13 @@ def should_split_line(line: Line, opening_bracket: Leaf) -> bool:
     except (IndexError, ValueError):
         return False
 
-    return max_priority == COMMA_PRIORITY and (
-        (line.mode.magic_trailing_comma and trailing_comma)
-        # always explode imports
-        or opening_bracket.parent.type in {syms.atom, syms.import_from}
+    return (
+        max_priority == COMMA_PRIORITY
+        and (
+            (line.mode.magic_trailing_comma and trailing_comma)
+            # always explode imports
+            or opening_bracket.parent.type in {syms.atom, syms.import_from}
+        )
     )
 
 
@@ -5975,10 +6027,14 @@ def is_one_tuple_between(opening: Leaf, closing: Leaf, leaves: List[Leaf]) -> bo
         bracket_depth = leaf.bracket_depth
         if bracket_depth == depth and leaf.type == token.COMMA:
             commas += 1
-            if leaf.parent and leaf.parent.type in {
-                syms.arglist,
-                syms.typedargslist,
-            }:
+            if (
+                leaf.parent
+                and leaf.parent.type
+                in {
+                    syms.arglist,
+                    syms.typedargslist,
+                }
+            ):
                 commas += 1
                 break
 
@@ -6015,8 +6071,9 @@ def get_features_used(node: Node) -> Set[Feature]:
             features.add(Feature.ASSIGNMENT_EXPRESSIONS)
 
         elif n.type == syms.decorator:
-            if len(n.children) > 1 and not is_simple_decorator_expression(
-                n.children[1]
+            if (
+                len(n.children) > 1
+                and not is_simple_decorator_expression(n.children[1])
             ):
                 features.add(Feature.RELAXED_DECORATORS)
 
