@@ -6416,7 +6416,12 @@ def parse_ast(src: str) -> Union[ast.AST, ast3.AST, ast27.AST]:
         # TODO: support Python 4+ ;)
         for minor_version in range(sys.version_info[1], 4, -1):
             try:
-                return ast.parse(src, filename, feature_version=(3, minor_version))
+                return ast.parse(
+                    src,
+                    filename,
+                    feature_version=(3, minor_version),
+                    type_comments=True,
+                )
             except SyntaxError:
                 continue
     else:

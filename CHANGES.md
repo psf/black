@@ -1,5 +1,11 @@
 ## Change Log
 
+### Unreleased
+
+#### _Black_
+
+- Parse type comments when using ast module (#2165)
+
 ### 21.4b2
 
 #### _Black_
