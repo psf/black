@@ -755,6 +755,8 @@ def reformat_one(
             is_stdin = False
 
         if is_stdin:
+            if src.suffix == ".pyi":
+                mode = replace(mode, is_pyi=True)
             if format_stdin_to_stdout(fast=fast, write_back=write_back, mode=mode):
                 changed = Changed.YES
         else:
