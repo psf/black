@@ -22,6 +22,9 @@
   [circumstances](https://github.com/psf/black/blob/master/docs/the_black_code_style.md#pragmatism)
   in which _Black_ may change the AST (#2159)
 
+- Allow `.gitignore` rules to be overridden by specifying `exclude` in `pyproject.toml`
+  or on the command line. (#2170)
+
 #### _Packaging_
 
 - Install `primer.json` (used by `black-primer` by default) with black. (#2154)
