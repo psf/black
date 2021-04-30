@@ -86,6 +86,12 @@ Contents
    :maxdepth: 3
    :includehidden:
 
+   the_black_code_style/index
+
+.. toctree::
+   :maxdepth: 3
+   :includehidden:
+
    change_log
    authors
 
