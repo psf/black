@@ -87,6 +87,7 @@ Contents
    :includehidden:
 
    change_log
+   authors
 
 .. toctree::
    :hidden:
