@@ -101,6 +101,7 @@ Contents
    :maxdepth: 3
    :includehidden:
 
+   contributing/index
    change_log
    authors
 
