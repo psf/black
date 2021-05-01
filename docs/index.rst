@@ -95,6 +95,7 @@ Contents
    getting_started
    usage_and_configuration/index
    integrations/index
+   guides/index
 
 .. toctree::
    :maxdepth: 3
