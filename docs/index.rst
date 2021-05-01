@@ -93,6 +93,7 @@ Contents
    :includehidden:
 
    getting_started
+   usage_and_configuration/index
 
 .. toctree::
    :maxdepth: 3
