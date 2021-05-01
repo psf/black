@@ -92,6 +92,12 @@ Contents
    :maxdepth: 3
    :includehidden:
 
+   getting_started
+
+.. toctree::
+   :maxdepth: 3
+   :includehidden:
+
    change_log
    authors
 
