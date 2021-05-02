@@ -1,5 +1,11 @@
 ## Change Log
 
+### Unreleased
+
+#### _Black_
+
+- Set `--pyi` mode if `--stdin-filename` ends in `.pyi` (#2169)
+
 ### 21.4b2
 
 #### _Black_

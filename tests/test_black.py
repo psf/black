@@ -1578,8 +1578,34 @@ class BlackTestCase(BlackBaseTestCase):
                 mode=DEFAULT_MODE,
                 report=report,
             )
-            fsts.assert_called_once()
-            # __BLACK_STDIN_FILENAME__ should have been striped
+            fsts.assert_called_once_with(
+                fast=True, write_back=black.WriteBack.YES, mode=DEFAULT_MODE
+            )
+            # __BLACK_STDIN_FILENAME__ should have been stripped
+            report.done.assert_called_with(expected, black.Changed.YES)
+
+    def test_reformat_one_with_stdin_filename_pyi(self) -> None:
+        with patch(
+            "black.format_stdin_to_stdout",
+            return_value=lambda *args, **kwargs: black.Changed.YES,
+        ) as fsts:
+            report = MagicMock()
+            p = "foo.pyi"
+            path = Path(f"__BLACK_STDIN_FILENAME__{p}")
+            expected = Path(p)
+            black.reformat_one(
+                path,
+                fast=True,
+                write_back=black.WriteBack.YES,
+                mode=DEFAULT_MODE,
+                report=report,
+            )
+            fsts.assert_called_once_with(
+                fast=True,
+                write_back=black.WriteBack.YES,
+                mode=replace(DEFAULT_MODE, is_pyi=True),
+            )
+            # __BLACK_STDIN_FILENAME__ should have been stripped
             report.done.assert_called_with(expected, black.Changed.YES)
 
     def test_reformat_one_with_stdin_and_existing_path(self) -> None:
@@ -1603,7 +1629,7 @@ class BlackTestCase(BlackBaseTestCase):
                 report=report,
             )
             fsts.assert_called_once()
-            # __BLACK_STDIN_FILENAME__ should have been striped
+            # __BLACK_STDIN_FILENAME__ should have been stripped
             report.done.assert_called_with(expected, black.Changed.YES)
 
     def test_gitignore_exclude(self) -> None:
