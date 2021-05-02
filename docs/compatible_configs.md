@@ -27,7 +27,7 @@ interoperability with common code styles. You can set the black profile in any o
 [config files](https://pycqa.github.io/isort/docs/configuration/config_files/) supported
 by isort. Below, an example for `pyproject.toml`:
 
-```
+```toml
 [tool.isort]
 profile = "black"
 ```
