@@ -21,7 +21,11 @@ to conflicting changes.
 
 ### Profile
 
-Since version 5.0.0, isort supports [profiles](https://pycqa.github.io/isort/docs/configuration/profiles/) to allow easy interoperability with common code styles. You can set the black profile in `pyproject.toml`:
+Since version 5.0.0, isort supports
+[profiles](https://pycqa.github.io/isort/docs/configuration/profiles/) to allow easy
+interoperability with common code styles. You can set the black profile in any of the
+[config files](https://pycqa.github.io/isort/docs/configuration/config_files/) supported
+by isort. Below, an example for `pyproject.toml`:
 
 ```
 [tool.isort]
@@ -30,7 +34,9 @@ profile = "black"
 
 ### Custom Configuration
 
-If you're using an isort version that is older than 5.0.0 or you have some custom configuration for _Black_, you can tweak your isort configuration to make it compatible with _Black_. Below, an example for `.isort.cfg`:
+If you're using an isort version that is older than 5.0.0 or you have some custom
+configuration for _Black_, you can tweak your isort configuration to make it compatible
+with _Black_. Below, an example for `.isort.cfg`:
 
 ```
 multi_line_output = 3
