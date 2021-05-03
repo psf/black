@@ -30,7 +30,7 @@
       "py_versions": ["all"]
     },
     "django": {
-      "disabled_reason": "black --check --diff returned 123 on two files",
+      "disabled_reason": "black --check --diff returned 123 on tests_syntax_error.py",
       "disabled": true,
       "cli_arguments": [],
       "expect_formatting_changes": true,
@@ -53,8 +53,6 @@
       "py_versions": ["all"]
     },
     "pandas": {
-      "disabled_reason": "black --check --diff returned 123 on one file",
-      "disabled": true,
       "cli_arguments": [],
       "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/pandas-dev/pandas.git",
