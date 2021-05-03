@@ -115,7 +115,7 @@ async def black_run(
     repo_path: Path,
     project_config: Dict[str, Any],
     results: Results,
-    no_diff: bool,
+    no_diff: bool = False,
 ) -> None:
     """Run Black and record failures"""
     cmd = [str(which(BLACK_BINARY))]

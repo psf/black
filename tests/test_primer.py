@@ -198,6 +198,7 @@ class PrimerCLITests(unittest.TestCase):
             "rebase": False,
             "workdir": str(work_dir),
             "workers": 69,
+            "no_diff": False,
         }
         with patch("black_primer.cli.lib.process_queue", return_zero):
             return_val = loop.run_until_complete(cli.async_main(**args))
