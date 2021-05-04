@@ -7,6 +7,9 @@
 - Set `--pyi` mode if `--stdin-filename` ends in `.pyi` (#2169)
 - Add `--no-diff` to black-primer to suppress formatting changes (#2187)
 
+- Stop detecting target version as Python 3.9+ with pre-PEP-614 decorators that are
+  being called but with no arguments (#2182)
+
 ### 21.4b2
 
 #### _Black_

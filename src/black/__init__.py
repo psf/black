@@ -5761,6 +5761,13 @@ def is_simple_decorator_trailer(node: LN, last: bool = False) -> bool:
             and node.children[0].type == token.DOT
             and node.children[1].type == token.NAME
         )
+        # last trailer can be an argument-less parentheses pair
+        or (
+            last
+            and len(node.children) == 2
+            and node.children[0].type == token.LPAR
+            and node.children[1].type == token.RPAR
+        )
         # last trailer can be arguments
         or (
             last
