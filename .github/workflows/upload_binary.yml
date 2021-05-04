@@ -11,13 +11,13 @@ jobs:
       fail-fast: false
       matrix:
         python-version: [3.7]
-        os: [windows-2019, ubuntu-16.04, macos-11.0]
+        os: [windows-2019, ubuntu-20.04, macos-11.0]
         include:
           - os: windows-2019
             pathsep: ";"
             executable_suffix: ".exe"
             executable_mime: "application/vnd.microsoft.portable-executable"
-          - os: ubuntu-16.04
+          - os: ubuntu-20.04
             pathsep: ":"
             executable_suffix: ".elf"
             executable_mime: "application/x-executable"
