@@ -25,3 +25,6 @@ extend-exclude = '''
 [build-system]
 requires = ["setuptools>=41.0", "setuptools-scm", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+markers = ['python2', "without_python2"]

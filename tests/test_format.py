@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 import black
+import pytest
 from parameterized import parameterized
 
 from tests.util import (
@@ -46,14 +47,17 @@ SIMPLE_CASES = [
     "function2",
     "function_trailing_comma",
     "import_spacing",
-    "numeric_literals_py2",
-    "python2",
-    "python2_unicode_literals",
     "remove_parens",
     "slices",
     "string_prefixes",
     "tricky_unicode_symbols",
     "tupleassign",
+]
+
+SIMPLE_CASES_PY2 = [
+    "numeric_literals_py2",
+    "python2",
+    "python2_unicode_literals",
 ]
 
 EXPERIMENTAL_STRING_PROCESSING_CASES = [
@@ -86,6 +90,12 @@ SOURCES = [
 
 
 class TestSimpleFormat(BlackBaseTestCase):
+    @parameterized.expand(SIMPLE_CASES_PY2)
+    @pytest.mark.python2
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_simple_format_py2(self, filename: str) -> None:
+        self.check_file(filename, DEFAULT_MODE)
+
     @parameterized.expand(SIMPLE_CASES)
     @patch("black.dump_to_file", dump_to_stderr)
     def test_simple_format(self, filename: str) -> None:
