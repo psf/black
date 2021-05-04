@@ -9,6 +9,7 @@
   being called but with no arguments (#2182)
 
 #### _Black-Primer_
+
 - Add `--no-diff` to black-primer to suppress formatting changes (#2187)
 
 ### 21.4b2
