@@ -53,6 +53,8 @@
       "py_versions": ["all"]
     },
     "pandas": {
+      "disabled_reason": "black-primer runs failing on Pandas - #2193",
+      "disabled": true,
       "cli_arguments": [],
       "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/pandas-dev/pandas.git",
