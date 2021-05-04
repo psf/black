@@ -314,7 +314,6 @@ html_theme_options = {
     "show_powered_by": True,
     "fixed_sidebar": True,
     "logo": "logo2.png",
-    "travis_button": True,
 }
 
 
