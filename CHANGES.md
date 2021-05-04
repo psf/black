@@ -5,6 +5,7 @@
 #### _Black_
 
 - Set `--pyi` mode if `--stdin-filename` ends in `.pyi` (#2169)
+- Add `--no-diff` to black-primer to suppress formatting changes (#2187)
 
 ### 21.4b2
 
