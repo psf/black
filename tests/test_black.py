@@ -24,6 +24,7 @@ from typing import (
     Iterator,
     TypeVar,
 )
+import pytest
 import unittest
 from unittest.mock import patch, MagicMock
 
@@ -459,6 +460,34 @@ class BlackTestCase(BlackBaseTestCase):
             )
             self.assertEqual(expected, actual, msg)
 
+    @pytest.mark.without_python2
+    def test_python2_should_fail_without_optional_install(self) -> None:
+        # python 3.7 and below will install typed-ast and will be able to parse Python 2
+        if sys.version_info < (3, 8):
+            return
+        source = "x = 1234l"
+        tmp_file = Path(black.dump_to_file(source))
+        try:
+            runner = BlackRunner()
+            result = runner.invoke(black.main, [str(tmp_file)])
+            self.assertEqual(result.exit_code, 123)
+        finally:
+            os.unlink(tmp_file)
+        actual = (
+            runner.stderr_bytes.decode()
+            .replace("\n", "")
+            .replace("\\n", "")
+            .replace("\\r", "")
+            .replace("\r", "")
+        )
+        msg = (
+            "The requested source code has invalid Python 3 syntax."
+            "If you are trying to format Python 2 files please reinstall Black"
+            " with the 'python2' extra: `python3 -m pip install black[python2]`."
+        )
+        self.assertIn(msg, actual)
+
+    @pytest.mark.python2
     @patch("black.dump_to_file", dump_to_stderr)
     def test_python2_print_function(self) -> None:
         source, expected = read_data("python2_print_function")
@@ -1971,6 +2000,7 @@ class BlackTestCase(BlackBaseTestCase):
         actual = diff_header.sub(DETERMINISTIC_HEADER, actual)
         self.assertEqual(actual, expected)
 
+    @pytest.mark.python2
     def test_docstring_reformat_for_py27(self) -> None:
         """
         Check that stripping trailing whitespace from Python 2 docstrings
