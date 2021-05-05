@@ -40,6 +40,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip wheel setuptools
           python -m pip install .
+          git clone https://github.com/rokm/pyinstaller -b macos11-arm-support
+          cd pyinstaller/bootloader
+          python ./waf all
+          cd ../..
           python -m pip install https://github.com/rokm/pyinstaller/archive/macos11-arm-support.zip
 
       - name: Build binary
