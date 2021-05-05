@@ -56,8 +56,8 @@ jobs:
           git clone https://github.com/rokm/pyinstaller -b macos11-arm-support
           cd pyinstaller/bootloader
           mkdir -p build
-          clang -arch x86_64 -mmacos-version-min=10.7  `ls src/*.c` -o build/run-x86_64 -lm -lz
-          clang -isysroot /Applications/Xcode2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.*.sdk -arch arm64 -mmacos-version-min=11.0 -o build/run-arm64 `ls src/*.c` -lz -lc
+          clang -arch x86_64 -mmacos-version-min=10.7 `ls src/*.c` -o build/run-x86_64 -lm -lz
+          clang -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.*.sdk -arch arm64 -mmacos-version-min=11.0 -o build/run-arm64 `ls src/*.c` -lz -lc
           lipo -create -o ../PyInstaller/bootloader/Darwin-64bit/run build/run-arm64 build/run-x86_64
           lipo -archs ../PyInstaller/bootloader/Darwin-64bit/run
           cd ../..
