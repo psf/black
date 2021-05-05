@@ -37,18 +37,36 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
+        if: matrix.os != 'macos-11.0'
+        run: |
+          python -m pip install --upgrade pip wheel setuptools
+          python -m pip install .
+          python -m pip install pyinstaller
+
+      - name: Build binary
+        if: matrix.os != 'macos-11.0'
+        run: |
+          python -m PyInstaller -F --name black${{ matrix.executable_suffix }} --add-data 'src/blib2to3${{ matrix.pathsep }}blib2to3' src/black/__main__.py
+
+      - name: Install dependencies macOS
+        if: matrix.os == 'macos-11.0'
         run: |
           python -m pip install --upgrade pip wheel setuptools
           python -m pip install .
           git clone https://github.com/rokm/pyinstaller -b macos11-arm-support
           cd pyinstaller/bootloader
-          python ./waf all
+          mkdir -p build
+          clang -arch x86_64 -mmacos-version-min=10.7  `ls src/*.c` -o build/run-x86_64 -lm -lz
+          clang -isysroot /Applications/Xcode2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.*.sdk -arch arm64 -mmacos-version-min=11.0 -o build/run-arm64 `ls src/*.c` -lz -lc
+          lipo -create -o ../PyInstaller/bootloader/Darwin-64bit/run build/run-arm64 build/run-x86_64
+          lipo -archs ../PyInstaller/bootloader/Darwin-64bit/run
           cd ../..
-          python -m pip install https://github.com/rokm/pyinstaller/archive/macos11-arm-support.zip
+          python setup.py install
 
-      - name: Build binary
+      - name: Build binary macOS
+        if: matrix.os == 'macos-11.0'
         run: |
-          python -m PyInstaller -F --name black${{ matrix.executable_suffix }} --add-data 'src/blib2to3${{ matrix.pathsep }}blib2to3' src/black/__main__.py
+          CFLAGS="-arch arm64 -arch x86_64" python -m PyInstaller -F --name black${{ matrix.executable_suffix }} --add-data 'src/blib2to3${{ matrix.pathsep }}blib2to3' src/black/__main__.py
 
       - name: Upload binary as release asset
         uses: actions/upload-release-asset@v1
