@@ -27,4 +27,7 @@ requires = ["setuptools>=41.0", "setuptools-scm", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
-markers = ['python2', "without_python2"]
+# Option below requires `tests/optional.py`
+optional-tests = [
+  "no_python2: run when `python2` extra NOT installed",
+]
