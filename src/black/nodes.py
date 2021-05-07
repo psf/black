@@ -459,6 +459,25 @@ def container_of(leaf: Leaf) -> LN:
     return container
 
 
+def first_leaf_column(node: Node) -> Optional[int]:
+    """Returns the column of the first leaf child of a node."""
+    for child in node.children:
+        if isinstance(child, Leaf):
+            return child.column
+    return None
+
+
+def first_child_is_arith(node: Node) -> bool:
+    """Whether first child is an arithmetic or a binary arithmetic expression"""
+    expr_types = {
+        syms.arith_expr,
+        syms.shift_expr,
+        syms.xor_expr,
+        syms.and_expr,
+    }
+    return bool(node.children and node.children[0].type in expr_types)
+
+
 def is_docstring(leaf: Leaf) -> bool:
     if prev_siblings_are(
         leaf.parent, [None, token.NEWLINE, token.INDENT, syms.simple_stmt]
