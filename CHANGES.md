@@ -1,5 +1,11 @@
 ## Change Log
 
+#### _Black_
+
+- Adjusted line wrapping by inserting optional parentheses more often to
+  improve readability and make the code style more consistent.
+  **Almost every project will be affected by it!** (#2163)
+
 ### 21.5b0
 
 #### _Black_
