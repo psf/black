@@ -500,6 +500,7 @@ def validate_regex(
         " Exclusions are calculated first, inclusions later. [default:"
         f" {DEFAULT_EXCLUDES}]"
     ),
+    show_default=False,
 )
 @click.option(
     "--extend-exclude",
@@ -673,7 +674,6 @@ def get_sources(
     sources: Set[Path] = set()
     path_empty(src, "No Path provided. Nothing to do 😴", quiet, verbose, ctx)
 
-    # use default and gitignore exclusion rules if exclude option isn't specified
     if exclude is None:
         exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES)
         gitignore = get_gitignore(root)
@@ -6241,7 +6241,7 @@ def gen_python_files(
         if normalized_path is None:
             continue
 
-        # Ignore files matching .gitignore only if 'exclude' is not passed
+        # First ignore files matching .gitignore, if passed
         if gitignore is not None and gitignore.match_file(normalized_path):
             report.path_ignored(child, "matches the .gitignore file content")
             continue
