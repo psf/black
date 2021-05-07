@@ -492,15 +492,15 @@ def validate_regex(
 @click.option(
     "--exclude",
     type=str,
-    default=DEFAULT_EXCLUDES,
     callback=validate_regex,
     help=(
         "A regular expression that matches files and directories that should be"
         " excluded on recursive searches. An empty value means no paths are excluded."
         " Use forward slashes for directories on all platforms (Windows, too)."
-        " Exclusions are calculated first, inclusions later."
+        " Exclusions are calculated first, inclusions later. [default:"
+        f" {DEFAULT_EXCLUDES}]"
     ),
-    show_default=True,
+    show_default=False,
 )
 @click.option(
     "--extend-exclude",
@@ -587,7 +587,7 @@ def main(
     quiet: bool,
     verbose: bool,
     include: Pattern,
-    exclude: Pattern,
+    exclude: Optional[Pattern],
     extend_exclude: Optional[Pattern],
     force_exclude: Optional[Pattern],
     stdin_filename: Optional[str],
@@ -662,7 +662,7 @@ def get_sources(
     quiet: bool,
     verbose: bool,
     include: Pattern[str],
-    exclude: Pattern[str],
+    exclude: Optional[Pattern[str]],
     extend_exclude: Optional[Pattern[str]],
     force_exclude: Optional[Pattern[str]],
     report: "Report",
@@ -673,7 +673,12 @@ def get_sources(
     root = find_project_root(src)
     sources: Set[Path] = set()
     path_empty(src, "No Path provided. Nothing to do 😴", quiet, verbose, ctx)
-    gitignore = get_gitignore(root)
+
+    if exclude is None:
+        exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES)
+        gitignore = get_gitignore(root)
+    else:
+        gitignore = None
 
     for s in src:
         if s == "-" and stdin_filename:
@@ -6215,12 +6220,12 @@ def path_is_excluded(
 def gen_python_files(
     paths: Iterable[Path],
     root: Path,
-    include: Optional[Pattern[str]],
+    include: Pattern[str],
     exclude: Pattern[str],
     extend_exclude: Optional[Pattern[str]],
     force_exclude: Optional[Pattern[str]],
     report: "Report",
-    gitignore: PathSpec,
+    gitignore: Optional[PathSpec],
 ) -> Iterator[Path]:
     """Generate all files under `path` whose paths are not excluded by the
     `exclude_regex`, `extend_exclude`, or `force_exclude` regexes,
@@ -6236,8 +6241,8 @@ def gen_python_files(
         if normalized_path is None:
             continue
 
-        # First ignore files matching .gitignore
-        if gitignore.match_file(normalized_path):
+        # First ignore files matching .gitignore, if passed
+        if gitignore is not None and gitignore.match_file(normalized_path):
             report.path_ignored(child, "matches the .gitignore file content")
             continue
 
