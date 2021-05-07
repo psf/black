@@ -98,8 +98,9 @@ def pytest_collection_modifyitems(config: "Config", items: "List[Node]") -> None
     for item in items:
         all_markers_on_test = set(m.name for m in item.iter_markers())
         optional_markers_on_test = all_markers_on_test & all_possible_optional_markers
-        if not optional_markers_on_test or (
-            optional_markers_on_test & enabled_optional_markers
+        if (
+            not optional_markers_on_test
+            or (optional_markers_on_test & enabled_optional_markers)
         ):
             continue
         log.info("skipping non-requested optional", item)
