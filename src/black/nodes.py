@@ -3,7 +3,17 @@ blib2to3 Node/Leaf transformation-related utility functions.
 """
 
 import sys
-from typing import Generic, Iterator, List, Optional, Set, TypeVar, Union
+from typing import (
+    Collection,
+    Generic,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    TypeVar,
+    Union,
+)
 
 if sys.version_info < (3, 8):
     from typing_extensions import Final
@@ -26,6 +36,7 @@ syms = pygram.python_symbols
 # types
 T = TypeVar("T")
 LN = Union[Leaf, Node]
+LeafID = int
 NodeType = int
 
 
@@ -426,12 +437,63 @@ def prev_siblings_are(node: Optional[LN], tokens: List[Optional[NodeType]]) -> b
     return prev_siblings_are(node.prev_sibling, tokens[:-1])
 
 
+def last_two_except(leaves: List[Leaf], omit: Collection[LeafID]) -> Tuple[Leaf, Leaf]:
+    """Return (penultimate, last) leaves skipping brackets in `omit` and contents."""
+    stop_after = None
+    last = None
+    for leaf in reversed(leaves):
+        if stop_after:
+            if leaf is stop_after:
+                stop_after = None
+            continue
+
+        if last:
+            return leaf, last
+
+        if id(leaf) in omit:
+            stop_after = leaf.opening_bracket
+        else:
+            last = leaf
+    else:
+        raise LookupError("Last two leaves were also skipped")
+
+
+def parent_type(node: Optional[LN]) -> Optional[NodeType]:
+    """
+    Returns:
+        @node.parent.type, if @node is not None and has a parent.
+            OR
+        None, otherwise.
+    """
+    if node is None or node.parent is None:
+        return None
+
+    return node.parent.type
+
+
 def child_towards(ancestor: Node, descendant: LN) -> Optional[LN]:
     """Return the child of `ancestor` that contains `descendant`."""
     node: Optional[LN] = descendant
     while node and node.parent != ancestor:
         node = node.parent
     return node
+
+
+def replace_child(old_child: LN, new_child: LN) -> None:
+    """
+    Side Effects:
+        * If @old_child.parent is set, replace @old_child with @new_child in
+        @old_child's underlying Node structure.
+            OR
+        * Otherwise, this function does nothing.
+    """
+    parent = old_child.parent
+    if not parent:
+        return
+
+    child_idx = old_child.remove()
+    if child_idx is not None:
+        parent.insert_child(child_idx, new_child)
 
 
 def container_of(leaf: Leaf) -> LN:

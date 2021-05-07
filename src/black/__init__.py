@@ -52,17 +52,19 @@ from black.nodes import COMPARATORS, MATH_OPERATORS, STARS, VARARGS_PARENTS
 from black.nodes import UNPACKING_PARENTS, TEST_DESCENDANTS, ASSIGNMENTS
 from black.nodes import BRACKET, BRACKETS, OPENING_BRACKETS, CLOSING_BRACKETS
 from black.nodes import Visitor, syms, whitespace, child_towards, first_child_is_arith
+from black.nodes import replace_child, last_two_except, parent_type
 from black.nodes import is_docstring, is_empty_tuple, is_one_tuple, is_one_tuple_between
 from black.nodes import is_walrus_assignment, is_yield, is_vararg, is_multiline_string
 from black.nodes import is_stub_suite, is_stub_body, is_atom_with_invisible_parens
 from black.nodes import is_empty_par, is_empty_lpar, is_empty_rpar, is_import
 from black.nodes import is_type_comment, is_simple_decorator_expression
 from black.comments import generate_comments, list_comments, normalize_fmt_off, FMT_OFF
-from black.strings import sub_twice, re_compile_maybe_verbose
+from black.comments import contains_pragma_comment
+from black.strings import get_string_prefix, sub_twice, re_compile_maybe_verbose
 from black.strings import format_hex, format_scientific_notation
 from black.strings import format_long_or_complex_number, format_float_or_int_string
 from black.strings import dump_to_file, diff, color_diff
-from black.strings import has_triple_quotes, fix_docstring
+from black.strings import has_triple_quotes, fix_docstring, assert_is_leaf_string
 from black.mode import Mode, TargetVersion
 from black.mode import Feature, supports_feature, VERSION_TO_FEATURES
 from black.cache import read_cache, write_cache, get_cache_info, filter_cached, Cache
@@ -4007,20 +4009,6 @@ def TErr(err_msg: str) -> Err[CannotTransform]:
     return Err(cant_transform)
 
 
-def contains_pragma_comment(comment_list: List[Leaf]) -> bool:
-    """
-    Returns:
-        True iff one of the comments in @comment_list is a pragma used by one
-        of the more common static analysis tools for python (e.g. mypy, flake8,
-        pylint).
-    """
-    for comment in comment_list:
-        if comment.value.startswith(("# type:", "# noqa", "# pylint:")):
-            return True
-
-    return False
-
-
 def insert_str_child_factory(string_leaf: Leaf) -> Callable[[LN], None]:
     """
     Factory for a convenience function that is used to orphan @string_leaf
@@ -4082,19 +4070,6 @@ def insert_str_child_factory(string_leaf: Leaf) -> Callable[[LN], None]:
     return insert_str_child
 
 
-def parent_type(node: Optional[LN]) -> Optional[NodeType]:
-    """
-    Returns:
-        @node.parent.type, if @node is not None and has a parent.
-            OR
-        None, otherwise.
-    """
-    if node is None or node.parent is None:
-        return None
-
-    return node.parent.type
-
-
 def is_valid_index_factory(seq: Sequence[Any]) -> Callable[[int], bool]:
     """
     Examples:
@@ -4152,77 +4127,6 @@ def append_leaves(
 
         for comment_leaf in old_line.comments_after(old_leaf):
             new_line.append(comment_leaf, preformatted=True)
-
-
-def replace_child(old_child: LN, new_child: LN) -> None:
-    """
-    Side Effects:
-        * If @old_child.parent is set, replace @old_child with @new_child in
-        @old_child's underlying Node structure.
-            OR
-        * Otherwise, this function does nothing.
-    """
-    parent = old_child.parent
-    if not parent:
-        return
-
-    child_idx = old_child.remove()
-    if child_idx is not None:
-        parent.insert_child(child_idx, new_child)
-
-
-def get_string_prefix(string: str) -> str:
-    """
-    Pre-conditions:
-        * assert_is_leaf_string(@string)
-
-    Returns:
-        @string's prefix (e.g. '', 'r', 'f', or 'rf').
-    """
-    assert_is_leaf_string(string)
-
-    prefix = ""
-    prefix_idx = 0
-    while string[prefix_idx] in STRING_PREFIX_CHARS:
-        prefix += string[prefix_idx].lower()
-        prefix_idx += 1
-
-    return prefix
-
-
-def assert_is_leaf_string(string: str) -> None:
-    """
-    Checks the pre-condition that @string has the format that you would expect
-    of `leaf.value` where `leaf` is some Leaf such that `leaf.type ==
-    token.STRING`. A more precise description of the pre-conditions that are
-    checked are listed below.
-
-    Pre-conditions:
-        * @string starts with either ', ", <prefix>', or <prefix>" where
-        `set(<prefix>)` is some subset of `set(STRING_PREFIX_CHARS)`.
-        * @string ends with a quote character (' or ").
-
-    Raises:
-        AssertionError(...) if the pre-conditions listed above are not
-        satisfied.
-    """
-    dquote_idx = string.find('"')
-    squote_idx = string.find("'")
-    if -1 in [dquote_idx, squote_idx]:
-        quote_idx = max(dquote_idx, squote_idx)
-    else:
-        quote_idx = min(squote_idx, dquote_idx)
-
-    assert (
-        0 <= quote_idx < len(string) - 1
-    ), f"{string!r} is missing a starting quote character (' or \")."
-    assert string[-1] in (
-        "'",
-        '"',
-    ), f"{string!r} is missing an ending quote character (' or \")."
-    assert set(string[:quote_idx]).issubset(
-        set(STRING_PREFIX_CHARS)
-    ), f"{set(string[:quote_idx])} is NOT a subset of {set(STRING_PREFIX_CHARS)}."
 
 
 def left_hand_split(line: Line, _features: Collection[Feature] = ()) -> Iterator[Line]:
@@ -5698,27 +5602,6 @@ def _can_omit_closing_paren(line: Line, *, last: Leaf, line_length: int) -> bool
             seen_other_brackets = True
 
     return False
-
-
-def last_two_except(leaves: List[Leaf], omit: Collection[LeafID]) -> Tuple[Leaf, Leaf]:
-    """Return (penultimate, last) leaves skipping brackets in `omit` and contents."""
-    stop_after = None
-    last = None
-    for leaf in reversed(leaves):
-        if stop_after:
-            if leaf is stop_after:
-                stop_after = None
-            continue
-
-        if last:
-            return leaf, last
-
-        if id(leaf) in omit:
-            stop_after = leaf.opening_bracket
-        else:
-            last = leaf
-    else:
-        raise LookupError("Last two leaves were also skipped")
 
 
 def run_transformer(
