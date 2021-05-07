@@ -2,14 +2,14 @@
 
 from dataclasses import dataclass, field
 import sys
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 if sys.version_info < (3, 8):
     from typing_extensions import Final
 else:
     from typing import Final
 
-from blib2to3.pytree import Leaf
+from blib2to3.pytree import Leaf, Node
 from blib2to3.pgen2 import token
 
 from black.nodes import syms, is_vararg, VARARGS_PARENTS, UNPACKING_PARENTS
@@ -17,6 +17,7 @@ from black.nodes import BRACKET, OPENING_BRACKETS, CLOSING_BRACKETS
 from black.nodes import MATH_OPERATORS, COMPARATORS, LOGIC_OPERATORS
 
 # types
+LN = Union[Leaf, Node]
 Depth = int
 LeafID = int
 NodeType = int
@@ -303,3 +304,31 @@ def is_split_before_delimiter(leaf: Leaf, previous: Optional[Leaf] = None) -> Pr
         return LOGIC_PRIORITY
 
     return 0
+
+
+def max_delimiter_priority_in_atom(node: LN) -> Priority:
+    """Return maximum delimiter priority inside `node`.
+
+    This is specific to atoms with contents contained in a pair of parentheses.
+    If `node` isn't an atom or there are no enclosing parentheses, returns 0.
+    """
+    if node.type != syms.atom:
+        return 0
+
+    first = node.children[0]
+    last = node.children[-1]
+    if not (first.type == token.LPAR and last.type == token.RPAR):
+        return 0
+
+    bt = BracketTracker()
+    for c in node.children[1:-1]:
+        if isinstance(c, Leaf):
+            bt.mark(c)
+        else:
+            for leaf in c.leaves():
+                bt.mark(leaf)
+    try:
+        return bt.max_delimiter_priority()
+
+    except ValueError:
+        return 0

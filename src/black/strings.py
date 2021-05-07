@@ -9,7 +9,8 @@ from typing import List, Pattern
 
 from mypy_extensions import mypyc_attr
 
-from black.const import STRING_PREFIX_CHARS
+
+STRING_PREFIX_CHARS = "furbFURB"  # All possible string prefix characters.
 
 
 def sub_twice(regex: Pattern[str], replacement: str, original: str) -> str:
@@ -228,3 +229,91 @@ def assert_is_leaf_string(string: str) -> None:
     assert set(string[:quote_idx]).issubset(
         set(STRING_PREFIX_CHARS)
     ), f"{set(string[:quote_idx])} is NOT a subset of {set(STRING_PREFIX_CHARS)}."
+
+
+def normalize_string_prefix(s: str, remove_u_prefix: bool = False) -> str:
+    """Make all string prefixes lowercase.
+
+    If remove_u_prefix is given, also removes any u prefix from the string.
+    """
+    match = re.match(r"^([" + STRING_PREFIX_CHARS + r"]*)(.*)$", s, re.DOTALL)
+    assert match is not None, f"failed to match string {s!r}"
+    orig_prefix = match.group(1)
+    new_prefix = orig_prefix.replace("F", "f").replace("B", "b").replace("U", "u")
+    if remove_u_prefix:
+        new_prefix = new_prefix.replace("u", "")
+    return f"{new_prefix}{match.group(2)}"
+
+
+def normalize_string_quotes(s: str) -> str:
+    """Prefer double quotes but only if it doesn't cause more escaping.
+
+    Adds or removes backslashes as appropriate. Doesn't parse and fix
+    strings nested in f-strings.
+    """
+    value = s.lstrip(STRING_PREFIX_CHARS)
+    if value[:3] == '"""':
+        return s
+
+    elif value[:3] == "'''":
+        orig_quote = "'''"
+        new_quote = '"""'
+    elif value[0] == '"':
+        orig_quote = '"'
+        new_quote = "'"
+    else:
+        orig_quote = "'"
+        new_quote = '"'
+    first_quote_pos = s.find(orig_quote)
+    if first_quote_pos == -1:
+        return s  # There's an internal error
+
+    prefix = s[:first_quote_pos]
+    unescaped_new_quote = re.compile(rf"(([^\\]|^)(\\\\)*){new_quote}")
+    escaped_new_quote = re.compile(rf"([^\\]|^)\\((?:\\\\)*){new_quote}")
+    escaped_orig_quote = re.compile(rf"([^\\]|^)\\((?:\\\\)*){orig_quote}")
+    body = s[first_quote_pos + len(orig_quote) : -len(orig_quote)]
+    if "r" in prefix.casefold():
+        if unescaped_new_quote.search(body):
+            # There's at least one unescaped new_quote in this raw string
+            # so converting is impossible
+            return s
+
+        # Do not introduce or remove backslashes in raw strings
+        new_body = body
+    else:
+        # remove unnecessary escapes
+        new_body = sub_twice(escaped_new_quote, rf"\1\2{new_quote}", body)
+        if body != new_body:
+            # Consider the string without unnecessary escapes as the original
+            body = new_body
+            s = f"{prefix}{orig_quote}{body}{orig_quote}"
+        new_body = sub_twice(escaped_orig_quote, rf"\1\2{orig_quote}", new_body)
+        new_body = sub_twice(unescaped_new_quote, rf"\1\\{new_quote}", new_body)
+    if "f" in prefix.casefold():
+        matches = re.findall(
+            r"""
+            (?:[^{]|^)\{  # start of the string or a non-{ followed by a single {
+                ([^{].*?)  # contents of the brackets except if begins with {{
+            \}(?:[^}]|$)  # A } followed by end of the string or a non-}
+            """,
+            new_body,
+            re.VERBOSE,
+        )
+        for m in matches:
+            if "\\" in str(m):
+                # Do not introduce backslashes in interpolated expressions
+                return s
+
+    if new_quote == '"""' and new_body[-1:] == '"':
+        # edge case:
+        new_body = new_body[:-1] + '\\"'
+    orig_escape_count = body.count("\\")
+    new_escape_count = new_body.count("\\")
+    if new_escape_count > orig_escape_count:
+        return s  # Do not introduce more escaping
+
+    if new_escape_count == orig_escape_count and orig_quote == '"':
+        return s  # Prefer double quotes
+
+    return f"{prefix}{new_quote}{new_body}{new_quote}"
