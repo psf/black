@@ -799,6 +799,24 @@ def is_type_comment(leaf: Leaf, suffix: str = "") -> bool:
     return t in {token.COMMENT, STANDALONE_COMMENT} and v.startswith("# type:" + suffix)
 
 
+def wrap_in_parentheses(parent: Node, child: LN, *, visible: bool = True) -> None:
+    """Wrap `child` in parentheses.
+
+    This replaces `child` with an atom holding the parentheses and the old
+    child.  That requires moving the prefix.
+
+    If `visible` is False, the leaves will be valueless (and thus invisible).
+    """
+    lpar = Leaf(token.LPAR, "(" if visible else "")
+    rpar = Leaf(token.RPAR, ")" if visible else "")
+    prefix = child.prefix
+    child.prefix = ""
+    index = child.remove() or 0
+    new_child = Node(syms.atom, [lpar, child, rpar])
+    new_child.prefix = prefix
+    parent.insert_child(index, new_child)
+
+
 def unwrap_singleton_parenthesis(node: LN) -> Optional[LN]:
     """Returns `wrapped` if `node` is of the shape ( wrapped ).
 
@@ -811,3 +829,15 @@ def unwrap_singleton_parenthesis(node: LN) -> Optional[LN]:
         return None
 
     return wrapped
+
+
+def ensure_visible(leaf: Leaf) -> None:
+    """Make sure parentheses are visible.
+
+    They could be invisible as part of some statements (see
+    :func:`normalize_invisible_parens` and :func:`visit_import_from`).
+    """
+    if leaf.type == token.LPAR:
+        leaf.value = "("
+    elif leaf.type == token.RPAR:
+        leaf.value = ")"

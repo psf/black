@@ -36,11 +36,11 @@ from black.const import DEFAULT_LINE_LENGTH, DEFAULT_INCLUDES, DEFAULT_EXCLUDES
 from black.const import STDIN_PLACEHOLDER
 from black.nodes import WHITESPACE, STATEMENT, STANDALONE_COMMENT, STARS
 from black.nodes import ASSIGNMENTS, OPENING_BRACKETS, CLOSING_BRACKETS
-from black.nodes import Visitor, syms, first_child_is_arith
+from black.nodes import Visitor, syms, first_child_is_arith, ensure_visible
 from black.nodes import is_docstring, is_empty_tuple, is_one_tuple, is_one_tuple_between
 from black.nodes import is_walrus_assignment, is_yield, is_vararg, is_multiline_string
 from black.nodes import is_stub_suite, is_stub_body, is_atom_with_invisible_parens
-from black.nodes import is_simple_decorator_expression
+from black.nodes import is_simple_decorator_expression, wrap_in_parentheses
 from black.brackets import max_delimiter_priority_in_atom
 from black.brackets import DOT_PRIORITY, COMMA_PRIORITY
 from black.lines import Line, EmptyLineTracker, line_to_string, is_line_short_enough
@@ -1692,36 +1692,6 @@ def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
         return False
 
     return True
-
-
-def wrap_in_parentheses(parent: Node, child: LN, *, visible: bool = True) -> None:
-    """Wrap `child` in parentheses.
-
-    This replaces `child` with an atom holding the parentheses and the old
-    child.  That requires moving the prefix.
-
-    If `visible` is False, the leaves will be valueless (and thus invisible).
-    """
-    lpar = Leaf(token.LPAR, "(" if visible else "")
-    rpar = Leaf(token.RPAR, ")" if visible else "")
-    prefix = child.prefix
-    child.prefix = ""
-    index = child.remove() or 0
-    new_child = Node(syms.atom, [lpar, child, rpar])
-    new_child.prefix = prefix
-    parent.insert_child(index, new_child)
-
-
-def ensure_visible(leaf: Leaf) -> None:
-    """Make sure parentheses are visible.
-
-    They could be invisible as part of some statements (see
-    :func:`normalize_invisible_parens` and :func:`visit_import_from`).
-    """
-    if leaf.type == token.LPAR:
-        leaf.value = "("
-    elif leaf.type == token.RPAR:
-        leaf.value = ")"
 
 
 def should_split_line(line: Line, opening_bracket: Leaf) -> bool:
