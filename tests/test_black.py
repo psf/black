@@ -460,11 +460,15 @@ class BlackTestCase(BlackBaseTestCase):
             )
             self.assertEqual(expected, actual, msg)
 
-    @pytest.mark.without_python2
+    @pytest.mark.no_python2
     def test_python2_should_fail_without_optional_install(self) -> None:
-        # python 3.7 and below will install typed-ast and will be able to parse Python 2
         if sys.version_info < (3, 8):
-            return
+            self.skipTest(
+                "Python 3.6 and 3.7 will install typed-ast to work and as such will be"
+                " able to parse Python 2 syntax without explicitly specifying the"
+                " python2 extra"
+            )
+
         source = "x = 1234l"
         tmp_file = Path(black.dump_to_file(source))
         try:
@@ -1418,6 +1422,32 @@ class BlackTestCase(BlackBaseTestCase):
         )
         self.assertEqual(sorted(expected), sorted(sources))
 
+    def test_gitingore_used_as_default(self) -> None:
+        path = Path(THIS_DIR / "data" / "include_exclude_tests")
+        include = re.compile(r"\.pyi?$")
+        extend_exclude = re.compile(r"/exclude/")
+        src = str(path / "b/")
+        report = black.Report()
+        expected: List[Path] = [
+            path / "b/.definitely_exclude/a.py",
+            path / "b/.definitely_exclude/a.pyi",
+        ]
+        sources = list(
+            black.get_sources(
+                ctx=FakeContext(),
+                src=(src,),
+                quiet=True,
+                verbose=False,
+                include=include,
+                exclude=None,
+                extend_exclude=extend_exclude,
+                force_exclude=None,
+                report=report,
+                stdin_filename=None,
+            )
+        )
+        self.assertEqual(sorted(expected), sorted(sources))
+
     @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
     def test_exclude_for_issue_1572(self) -> None:
         # Exclude shouldn't touch files that were explicitly given to Black through the
@@ -1705,6 +1735,8 @@ class BlackTestCase(BlackBaseTestCase):
             Path(path / "b/.definitely_exclude/a.pie"),
             Path(path / "b/.definitely_exclude/a.py"),
             Path(path / "b/.definitely_exclude/a.pyi"),
+            Path(path / ".gitignore"),
+            Path(path / "pyproject.toml"),
         ]
         this_abs = THIS_DIR.resolve()
         sources.extend(

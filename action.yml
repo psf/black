@@ -2,8 +2,18 @@ name: "Black"
 description: "The uncompromising Python code formatter."
 author: "Łukasz Langa and contributors to Black"
 inputs:
+  options:
+    description:
+      "Options passed to black. Use `black --help` to see available options. Default:
+      '--check'"
+    required: false
+    default: "--check --diff"
+  src:
+    description: "Source to run black. Default: '.'"
+    required: false
+    default: "."
   black_args:
-    description: "Black input arguments."
+    description: "[DEPRECATED] Black input arguments."
     required: false
     default: ""
 branding:
