@@ -28,8 +28,7 @@ repos:
     rev: 0.7.5
     hooks:
       - id: mdformat
-        args: [--number, --wrap=88]
+        args: [--wrap=88]
         additional_dependencies:
           - mdformat-gfm
           - mdformat-myst
-        exclude: ^.github/ISSUE_TEMPLATE

@@ -26,7 +26,9 @@ python -m black {source_file_or_directory}
 
 ### Command line options
 
-_Black_ doesn't provide many options. You can list them by running `black --help`.
+_Black_ has quite a few knobs these days, although _Black_ is opinionated so style
+configuration options are deliberately limited and rarely added. You can list them by
+running `black --help`.
 
 <details>
 
@@ -212,8 +214,8 @@ file hierarchy.
 
 ## Next steps
 
-You have noted that not all of the options you can pass to _Black_ have been covered.
-Don't worry, the rest will be covered in a later section.
+You've probably noted that not all of the options you can pass to _Black_ have been
+covered. Don't worry, the rest will be covered in a later section.
 
 A good next step would be configuring auto-discovery so `black .` is all you need
 instead of laborously listing every file or directory. You can get started by heading

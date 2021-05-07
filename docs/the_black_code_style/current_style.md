@@ -2,9 +2,10 @@
 
 ## Code style
 
-_Black_ reformats entire files in place. It is not configurable. It doesn't take
-previous formatting into account. It doesn't reformat blocks that start with
-`# fmt: off` and end with `# fmt: on`, or lines that ends with `# fmt: skip`.
+_Black_ reformats entire files in place. Style configuration options are deliberately
+limited and rarely added. It doesn't take previous formatting into account, except for
+the magic trailing comma and preserving newlines. It doesn't reformat blocks that start
+with `# fmt: off` and end with `# fmt: on`, or lines that ends with `# fmt: skip`.
 `# fmt: on/off` have to be on the same level of indentation. It also recognizes
 [YAPF](https://github.com/google/yapf)'s block comments to the same effect, as a
 courtesy for straddling code.
@@ -269,13 +270,13 @@ If you are adopting _Black_ in a large project with pre-existing string conventi
 you can pass `--skip-string-normalization` on the command line. This is meant as an
 adoption helper, avoid using this for new projects.
 
-As an experimental option, _Black_ splits long strings (using parentheses where
-appropriate) and merges short ones. When split, parts of f-strings that don't need
-formatting are converted to plain strings. User-made splits are respected when they do
-not exceed the line length limit. Line continuation backslashes are converted into
-parenthesized strings. Unnecessary parentheses are stripped. To enable experimental
-string processing, pass `--experimental-string-processing` on the command line. Because
-the functionality is experimental, feedback and issue reports are highly encouraged!
+As an experimental option (can be enabled by `--experimental-string-processing`),
+_Black_ splits long strings (using parentheses where appropriate) and merges short ones.
+When split, parts of f-strings that don't need formatting are converted to plain
+strings. User-made splits are respected when they do not exceed the line length limit.
+Line continuation backslashes are converted into parenthesized strings. Unnecessary
+parentheses are stripped. Because the functionality is experimental, feedback and issue
+reports are highly encouraged!
 
 _Black_ also processes docstrings. Firstly the indentation of docstrings is corrected
 for both quotations and the text within, although relative indentation in the text is
@@ -334,7 +335,7 @@ pair of parentheses to form an atom. There are a few interesting cases:
 In those cases, parentheses are removed when the entire statement fits in one line, or
 if the inner expression doesn't have any delimiters to further split on. If there is
 only a single delimiter and the expression starts or ends with a bracket, the
-parenthesis can also be successfully omitted since the existing bracket pair will
+parentheses can also be successfully omitted since the existing bracket pair will
 organize the expression neatly anyway. Otherwise, the parentheses are added.
 
 Please note that _Black_ does not add or remove any additional nested parentheses that
@@ -458,11 +459,11 @@ target. There are three limited cases in which the AST does differ:
    docstrings that we're aware of sanitizes indentation and leading/trailing whitespace
    anyway.
 
-2. _Black_ manages optional parentheses for some statements. In the case of the `del`
+1. _Black_ manages optional parentheses for some statements. In the case of the `del`
    statement, presence of wrapping parentheses or lack of thereof changes the resulting AST
    but is semantically equivalent in the interpreter.
 
-3. _Black_ might move comments around, which includes type comments. Those are part of the
+1. _Black_ might move comments around, which includes type comments. Those are part of the
    AST as of Python 3.8. While the tool implements a number of special cases for those
    comments, there is no guarantee they will remain where they were in the source. Note
    that this doesn't change runtime behavior of the source code.

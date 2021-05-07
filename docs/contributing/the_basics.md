@@ -5,7 +5,7 @@ An overview on contributing to the _Black_ project.
 ## Technicalities
 
 Development on the latest version of Python is preferred. As of this writing it's 3.9.
-You can use any operating system. I am using macOS myself and CentOS at work.
+You can use any operating system.
 
 Install all development dependencies using:
 
@@ -46,7 +46,7 @@ $ black-primer [-k -w /tmp/black_test_repos]
 ### News / Changelog Requirement
 
 `Black` has CI that will check for an entry corresponding to your PR in `CHANGES.md`. If
-you feel this PR not require a changelog entry please state that in a comment and a
+you feel this PR does not require a changelog entry please state that in a comment and a
 maintainer can add a `skip news` label to make the CI pass. Otherwise, please ensure you
 have a line in the following format:
 
@@ -54,7 +54,7 @@ have a line in the following format:
 - `Black` is now more awesome (#X)
 ```
 
-To workout X, please use
+Note that X should be your PR number, not issue number! To workout X, please use
 [Next PR Number](https://ichard26.github.io/next-pr-number/?owner=psf&name=black). This
 is not perfect but saves a lot of release overhead as now the releaser does not need to
 go back and workout what to add to the `CHANGES.md` for each release.

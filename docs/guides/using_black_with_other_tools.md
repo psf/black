@@ -231,7 +231,7 @@ ImportantClass.important_method(
 )
 ```
 
-Although, this style is PEP 8 compliant, Pylint will raise
+Although this style is PEP 8 compliant, Pylint will raise
 `C0330: Wrong hanging indentation before block (add 4 spaces)` warnings. Since _Black_
 isn't configurable on this style, Pylint should be told to ignore these warnings via
 `disable = C0330`.

@@ -17,7 +17,7 @@ purposefully limited.
 Using many of these more advanced features of *Black* will require some configuration.
 Configuration that will either live on the command line or in a TOML configuration file.
 
-This section covers features of Black and configuring Black in detail:
+This section covers features of *Black* and configuring *Black* in detail:
 
 - :doc:`The basics <./the_basics>`
 - :doc:`File collection and discovery <file_collection_and_discovery>`

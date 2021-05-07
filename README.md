@@ -44,8 +44,6 @@ _Black_ can be installed by running `pip install black`. It requires Python 3.6.
 run. If you want to format Python 2 code as well, install with
 `pip install black[python2]`.
 
-#### Install from GitHub
-
 If you can't wait for the latest _hotness_ and want to install from GitHub, use:
 
 `pip install git+git://github.com/psf/black`
@@ -87,10 +85,8 @@ section for details). If you're feeling confident, use `--fast`.
 ## The _Black_ code style
 
 _Black_ is a PEP 8 compliant opinionated formatter. _Black_ reformats entire files in
-place. It is not configurable. It doesn't take previous formatting into account. Your
-main option of configuring _Black_ is that it doesn't reformat blocks that start with
-`# fmt: off` and end with `# fmt: on`, or lines that ends with `# fmt: skip`. Pay
-attention that `# fmt: on/off` have to be on the same level of indentation.
+place. Style configuration options are deliberately limited and rarely added. It doesn't
+take previous formatting into account (see [Pragmatism](#pragmatism) for exceptions).
 
 Our documentation covers the current _Black_ code style, but planned changes to it are
 also documented. They're both worth taking a look:
@@ -187,17 +183,8 @@ MIT
 
 ## Contributing
 
-In terms of inspiration, _Black_ is about as configurable as _gofmt_. This is
-deliberate.
-
-Bug reports and fixes are always welcome! However, before you suggest a new feature or
-configuration knob, ask yourself why you want it. If it enables better integration with
-some workflow, fixes an inconsistency, speeds things up, and so on - go for it! On the
-other hand, if your answer is "because I don't like a particular formatting" then you're
-not ready to embrace _Black_ yet. Such changes are unlikely to get accepted. You can
-still try but prepare to be disappointed.
-
-You can get started by reading this:
+Welcome! Happy to see you willing to make the project better. You can get started by
+reading this:
 
 - [Contributing: The basics](https://black.readthedocs.io/en/latest/contributing/the_basics.html)
 
@@ -211,7 +198,7 @@ developers:
 
 The log has become rather long. It moved to its own file.
 
-See [CHANGES](https://github.com/psf/black/blob/master/CHANGES.md).
+See [CHANGES](https://black.readthedocs.io/en/latest/change_log.html).
 
 ## Authors
 

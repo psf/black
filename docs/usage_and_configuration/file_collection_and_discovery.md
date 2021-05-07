@@ -1,6 +1,6 @@
 # File collection and discovery
 
-You can directly pass _Black_ files, but you can also pass directories and Black will
+You can directly pass _Black_ files, but you can also pass directories and _Black_ will
 walk them, collecting files to format. It determines what files to format or skip
 automatically using the inclusion and exclusion regexes and as well their modification
 time.
@@ -25,3 +25,12 @@ To override the location of these files on macOS or Linux, set the environment v
 `XDG_CACHE_HOME` to your preferred location. For example, if you want to put the cache
 in the directory you're running _Black_ from, set `XDG_CACHE_HOME=.cache`. _Black_ will
 then write the above files to `.cache/black/<version>/`.
+
+## .gitignore
+
+If `--exclude` is not set, _Black_ will automatically ignore files and directories in
+`.gitignore` file, if present. The `.gitignore` file must be in the project root be used
+and nested `.gitignore` aren't supported.
+
+If you want _Black_ to continue using `.gitignore` while also configuring the exclusion
+rules, please use `--extend-exclude`.
