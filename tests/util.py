@@ -2,8 +2,11 @@ import os
 import unittest
 from pathlib import Path
 from typing import List, Tuple, Any
-import black
 from functools import partial
+
+import black
+from black.output import out, err
+from black.debug import DebugVisitor
 
 THIS_DIR = Path(__file__).parent
 PROJECT_ROOT = THIS_DIR.parent
@@ -26,21 +29,21 @@ class BlackBaseTestCase(unittest.TestCase):
 
     def assertFormatEqual(self, expected: str, actual: str) -> None:
         if actual != expected and not os.environ.get("SKIP_AST_PRINT"):
-            bdv: black.DebugVisitor[Any]
-            black.out("Expected tree:", fg="green")
+            bdv: DebugVisitor[Any]
+            out("Expected tree:", fg="green")
             try:
                 exp_node = black.lib2to3_parse(expected)
-                bdv = black.DebugVisitor()
+                bdv = DebugVisitor()
                 list(bdv.visit(exp_node))
             except Exception as ve:
-                black.err(str(ve))
-            black.out("Actual tree:", fg="red")
+                err(str(ve))
+            out("Actual tree:", fg="red")
             try:
                 exp_node = black.lib2to3_parse(actual)
-                bdv = black.DebugVisitor()
+                bdv = DebugVisitor()
                 list(bdv.visit(exp_node))
             except Exception as ve:
-                black.err(str(ve))
+                err(str(ve))
         self.assertMultiLineEqual(expected, actual)
 
 

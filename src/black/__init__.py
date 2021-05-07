@@ -1,12 +1,10 @@
-import ast
 import asyncio
 from concurrent.futures import Executor, ThreadPoolExecutor, ProcessPoolExecutor
 from contextlib import contextmanager
 from datetime import datetime
 from enum import Enum
-from functools import lru_cache, partial, wraps
+from functools import partial, wraps
 import io
-import logging
 from multiprocessing import Manager, freeze_support
 import os
 from pathlib import Path
@@ -20,7 +18,6 @@ from typing import (
     Collection,
     Dict,
     Generator,
-    Iterable,
     Iterator,
     List,
     Optional,
@@ -30,12 +27,10 @@ from typing import (
     Tuple,
     TypeVar,
     Union,
-    TYPE_CHECKING,
 )
 
 from dataclasses import dataclass, field, replace
 import click
-import toml
 
 from black.const import DEFAULT_LINE_LENGTH, DEFAULT_INCLUDES, DEFAULT_EXCLUDES
 from black.const import STDIN_PLACEHOLDER
@@ -61,33 +56,21 @@ from black.trans import StringSplitter, StringParenWrapper, StringParenStripper
 from black.mode import Mode, TargetVersion
 from black.mode import Feature, supports_feature, VERSION_TO_FEATURES
 from black.cache import read_cache, write_cache, get_cache_info, filter_cached, Cache
+from black.concurrency import cancel, shutdown
+from black.output import out, err
+from black.report import Report, Changed
+from black.files import find_project_root, find_pyproject_toml, parse_pyproject_toml
+from black.files import gen_python_files, get_gitignore, normalize_path_maybe_ignore
+from black.files import wrap_stream_for_windows
+from black.parsing import InvalidInput  # noqa F401
+from black.parsing import lib2to3_parse, parse_ast, stringify_ast
 
-try:
-    from typed_ast import ast3, ast27
-except ImportError:
-    if sys.version_info < (3, 8):
-        print(
-            "The typed_ast package is not installed.\n"
-            "You can install it with `python3 -m pip install typed-ast`.",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-    else:
-        ast3 = ast27 = ast
-
-from pathspec import PathSpec
 
 # lib2to3 fork
-from blib2to3.pytree import Node, Leaf, type_repr
-from blib2to3 import pygram, pytree
-from blib2to3.pgen2 import driver, token
-from blib2to3.pgen2.grammar import Grammar
-from blib2to3.pgen2.parse import ParseError
+from blib2to3.pytree import Node, Leaf
+from blib2to3.pgen2 import token
 
 from _black_version import version as __version__
-
-if TYPE_CHECKING:
-    import colorama  # noqa: F401
 
 
 # types
@@ -97,8 +80,6 @@ Encoding = str
 NewLine = str
 LeafID = int
 LN = Union[Leaf, Node]
-out = partial(click.secho, bold=True, err=True)
-err = partial(click.secho, fg="red", err=True)
 
 
 class NothingChanged(UserWarning):
@@ -107,10 +88,6 @@ class NothingChanged(UserWarning):
 
 class CannotSplit(CannotTransform):
     """A readable split that fits the allotted line length is impossible."""
-
-
-class InvalidInput(ValueError):
-    """Raised when input source code fails all parse attempts."""
 
 
 class WriteBack(Enum):
@@ -133,44 +110,8 @@ class WriteBack(Enum):
         return cls.DIFF if diff else cls.YES
 
 
-class Changed(Enum):
-    NO = 0
-    CACHED = 1
-    YES = 2
-
-
 # Legacy name, left for integrations.
 FileMode = Mode
-
-
-def find_pyproject_toml(path_search_start: Tuple[str, ...]) -> Optional[str]:
-    """Find the absolute filepath to a pyproject.toml if it exists"""
-    path_project_root = find_project_root(path_search_start)
-    path_pyproject_toml = path_project_root / "pyproject.toml"
-    if path_pyproject_toml.is_file():
-        return str(path_pyproject_toml)
-
-    try:
-        path_user_pyproject_toml = find_user_pyproject_toml()
-        return (
-            str(path_user_pyproject_toml)
-            if path_user_pyproject_toml.is_file()
-            else None
-        )
-    except PermissionError as e:
-        # We do not have access to the user-level config directory, so ignore it.
-        err(f"Ignoring user configuration directory due to {e!r}")
-        return None
-
-
-def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
-    """Parse a pyproject toml file, pulling out relevant parts for Black
-
-    If parsing fails, will raise a toml.TomlDecodeError
-    """
-    pyproject_toml = toml.load(path_config)
-    config = pyproject_toml.get("tool", {}).get("black", {})
-    return {k.replace("--", "").replace("-", "_"): v for k, v in config.items()}
 
 
 def read_pyproject_toml(
@@ -188,7 +129,7 @@ def read_pyproject_toml(
 
     try:
         config = parse_pyproject_toml(value)
-    except (toml.TomlDecodeError, OSError) as e:
+    except (OSError, ValueError) as e:
         raise click.FileError(
             filename=value, hint=f"Error reading configuration file: {e}"
         )
@@ -784,26 +725,6 @@ def format_file_in_place(
     return True
 
 
-def wrap_stream_for_windows(
-    f: io.TextIOWrapper,
-) -> Union[io.TextIOWrapper, "colorama.AnsiToWin32"]:
-    """
-    Wrap stream with colorama's wrap_stream so colors are shown on Windows.
-
-    If `colorama` is unavailable, the original stream is returned unmodified.
-    Otherwise, the `wrap_stream()` function determines whether the stream needs
-    to be wrapped for a Windows environment and will accordingly either return
-    an `AnsiToWin32` wrapper or the original stream.
-    """
-    try:
-        from colorama.initialise import wrap_stream
-    except ImportError:
-        return f
-    else:
-        # Set `strip=False` to avoid needing to modify test_express_diff_with_color.
-        return wrap_stream(f, convert=None, strip=False, autoreset=False, wrap=True)
-
-
 def format_stdin_to_stdout(
     fast: bool, *, write_back: WriteBack = WriteBack.NO, mode: Mode
 ) -> bool:
@@ -948,114 +869,6 @@ def decode_bytes(src: bytes) -> Tuple[FileContent, Encoding, NewLine]:
     srcbuf.seek(0)
     with io.TextIOWrapper(srcbuf, encoding) as tiow:
         return tiow.read(), encoding, newline
-
-
-def get_grammars(target_versions: Set[TargetVersion]) -> List[Grammar]:
-    if not target_versions:
-        # No target_version specified, so try all grammars.
-        return [
-            # Python 3.7+
-            pygram.python_grammar_no_print_statement_no_exec_statement_async_keywords,
-            # Python 3.0-3.6
-            pygram.python_grammar_no_print_statement_no_exec_statement,
-            # Python 2.7 with future print_function import
-            pygram.python_grammar_no_print_statement,
-            # Python 2.7
-            pygram.python_grammar,
-        ]
-
-    if all(version.is_python2() for version in target_versions):
-        # Python 2-only code, so try Python 2 grammars.
-        return [
-            # Python 2.7 with future print_function import
-            pygram.python_grammar_no_print_statement,
-            # Python 2.7
-            pygram.python_grammar,
-        ]
-
-    # Python 3-compatible code, so only try Python 3 grammar.
-    grammars = []
-    # If we have to parse both, try to parse async as a keyword first
-    if not supports_feature(target_versions, Feature.ASYNC_IDENTIFIERS):
-        # Python 3.7+
-        grammars.append(
-            pygram.python_grammar_no_print_statement_no_exec_statement_async_keywords
-        )
-    if not supports_feature(target_versions, Feature.ASYNC_KEYWORDS):
-        # Python 3.0-3.6
-        grammars.append(pygram.python_grammar_no_print_statement_no_exec_statement)
-    # At least one of the above branches must have been taken, because every Python
-    # version has exactly one of the two 'ASYNC_*' flags
-    return grammars
-
-
-def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -> Node:
-    """Given a string with source, return the lib2to3 Node."""
-    if not src_txt.endswith("\n"):
-        src_txt += "\n"
-
-    for grammar in get_grammars(set(target_versions)):
-        drv = driver.Driver(grammar, pytree.convert)
-        try:
-            result = drv.parse_string(src_txt, True)
-            break
-
-        except ParseError as pe:
-            lineno, column = pe.context[1]
-            lines = src_txt.splitlines()
-            try:
-                faulty_line = lines[lineno - 1]
-            except IndexError:
-                faulty_line = "<line number missing in source>"
-            exc = InvalidInput(f"Cannot parse: {lineno}:{column}: {faulty_line}")
-    else:
-        raise exc from None
-
-    if isinstance(result, Leaf):
-        result = Node(syms.file_input, [result])
-    return result
-
-
-def lib2to3_unparse(node: Node) -> str:
-    """Given a lib2to3 node, return its string representation."""
-    code = str(node)
-    return code
-
-
-@dataclass
-class DebugVisitor(Visitor[T]):
-    tree_depth: int = 0
-
-    def visit_default(self, node: LN) -> Iterator[T]:
-        indent = " " * (2 * self.tree_depth)
-        if isinstance(node, Node):
-            _type = type_repr(node.type)
-            out(f"{indent}{_type}", fg="yellow")
-            self.tree_depth += 1
-            for child in node.children:
-                yield from self.visit(child)
-
-            self.tree_depth -= 1
-            out(f"{indent}/{_type}", fg="yellow", bold=False)
-        else:
-            _type = token.tok_name.get(node.type, str(node.type))
-            out(f"{indent}{_type}", fg="blue", nl=False)
-            if node.prefix:
-                # We don't have to handle prefixes for `Node` objects since
-                # that delegates to the first child anyway.
-                out(f" {node.prefix!r}", fg="green", bold=False, nl=False)
-            out(f" {node.value!r}", fg="blue", bold=False)
-
-    @classmethod
-    def show(cls, code: Union[str, Leaf, Node]) -> None:
-        """Pretty-print the lib2to3 AST of a given string of `code`.
-
-        Convenience method for debugging.
-        """
-        v: DebugVisitor[None] = DebugVisitor()
-        if isinstance(code, str):
-            code = lib2to3_parse(code)
-        list(v.visit(code))
 
 
 @dataclass
@@ -2127,365 +1940,6 @@ def get_future_imports(node: Node) -> Set[str]:
     return imports
 
 
-@lru_cache()
-def get_gitignore(root: Path) -> PathSpec:
-    """Return a PathSpec matching gitignore content if present."""
-    gitignore = root / ".gitignore"
-    lines: List[str] = []
-    if gitignore.is_file():
-        with gitignore.open() as gf:
-            lines = gf.readlines()
-    return PathSpec.from_lines("gitwildmatch", lines)
-
-
-def normalize_path_maybe_ignore(
-    path: Path, root: Path, report: "Report"
-) -> Optional[str]:
-    """Normalize `path`. May return `None` if `path` was ignored.
-
-    `report` is where "path ignored" output goes.
-    """
-    try:
-        abspath = path if path.is_absolute() else Path.cwd() / path
-        normalized_path = abspath.resolve().relative_to(root).as_posix()
-    except OSError as e:
-        report.path_ignored(path, f"cannot be read because {e}")
-        return None
-
-    except ValueError:
-        if path.is_symlink():
-            report.path_ignored(path, f"is a symbolic link that points outside {root}")
-            return None
-
-        raise
-
-    return normalized_path
-
-
-def path_is_excluded(
-    normalized_path: str,
-    pattern: Optional[Pattern[str]],
-) -> bool:
-    match = pattern.search(normalized_path) if pattern else None
-    return bool(match and match.group(0))
-
-
-def gen_python_files(
-    paths: Iterable[Path],
-    root: Path,
-    include: Pattern[str],
-    exclude: Pattern[str],
-    extend_exclude: Optional[Pattern[str]],
-    force_exclude: Optional[Pattern[str]],
-    report: "Report",
-    gitignore: Optional[PathSpec],
-) -> Iterator[Path]:
-    """Generate all files under `path` whose paths are not excluded by the
-    `exclude_regex`, `extend_exclude`, or `force_exclude` regexes,
-    but are included by the `include` regex.
-
-    Symbolic links pointing outside of the `root` directory are ignored.
-
-    `report` is where output about exclusions goes.
-    """
-    assert root.is_absolute(), f"INTERNAL ERROR: `root` must be absolute but is {root}"
-    for child in paths:
-        normalized_path = normalize_path_maybe_ignore(child, root, report)
-        if normalized_path is None:
-            continue
-
-        # First ignore files matching .gitignore, if passed
-        if gitignore is not None and gitignore.match_file(normalized_path):
-            report.path_ignored(child, "matches the .gitignore file content")
-            continue
-
-        # Then ignore with `--exclude` `--extend-exclude` and `--force-exclude` options.
-        normalized_path = "/" + normalized_path
-        if child.is_dir():
-            normalized_path += "/"
-
-        if path_is_excluded(normalized_path, exclude):
-            report.path_ignored(child, "matches the --exclude regular expression")
-            continue
-
-        if path_is_excluded(normalized_path, extend_exclude):
-            report.path_ignored(
-                child, "matches the --extend-exclude regular expression"
-            )
-            continue
-
-        if path_is_excluded(normalized_path, force_exclude):
-            report.path_ignored(child, "matches the --force-exclude regular expression")
-            continue
-
-        if child.is_dir():
-            yield from gen_python_files(
-                child.iterdir(),
-                root,
-                include,
-                exclude,
-                extend_exclude,
-                force_exclude,
-                report,
-                gitignore,
-            )
-
-        elif child.is_file():
-            include_match = include.search(normalized_path) if include else True
-            if include_match:
-                yield child
-
-
-@lru_cache()
-def find_project_root(srcs: Tuple[str, ...]) -> Path:
-    """Return a directory containing .git, .hg, or pyproject.toml.
-
-    That directory will be a common parent of all files and directories
-    passed in `srcs`.
-
-    If no directory in the tree contains a marker that would specify it's the
-    project root, the root of the file system is returned.
-    """
-    if not srcs:
-        return Path("/").resolve()
-
-    path_srcs = [Path(Path.cwd(), src).resolve() for src in srcs]
-
-    # A list of lists of parents for each 'src'. 'src' is included as a
-    # "parent" of itself if it is a directory
-    src_parents = [
-        list(path.parents) + ([path] if path.is_dir() else []) for path in path_srcs
-    ]
-
-    common_base = max(
-        set.intersection(*(set(parents) for parents in src_parents)),
-        key=lambda path: path.parts,
-    )
-
-    for directory in (common_base, *common_base.parents):
-        if (directory / ".git").exists():
-            return directory
-
-        if (directory / ".hg").is_dir():
-            return directory
-
-        if (directory / "pyproject.toml").is_file():
-            return directory
-
-    return directory
-
-
-@lru_cache()
-def find_user_pyproject_toml() -> Path:
-    r"""Return the path to the top-level user configuration for black.
-
-    This looks for ~\.black on Windows and ~/.config/black on Linux and other
-    Unix systems.
-    """
-    if sys.platform == "win32":
-        # Windows
-        user_config_path = Path.home() / ".black"
-    else:
-        config_root = os.environ.get("XDG_CONFIG_HOME", "~/.config")
-        user_config_path = Path(config_root).expanduser() / "black"
-    return user_config_path.resolve()
-
-
-@dataclass
-class Report:
-    """Provides a reformatting counter. Can be rendered with `str(report)`."""
-
-    check: bool = False
-    diff: bool = False
-    quiet: bool = False
-    verbose: bool = False
-    change_count: int = 0
-    same_count: int = 0
-    failure_count: int = 0
-
-    def done(self, src: Path, changed: Changed) -> None:
-        """Increment the counter for successful reformatting. Write out a message."""
-        if changed is Changed.YES:
-            reformatted = "would reformat" if self.check or self.diff else "reformatted"
-            if self.verbose or not self.quiet:
-                out(f"{reformatted} {src}")
-            self.change_count += 1
-        else:
-            if self.verbose:
-                if changed is Changed.NO:
-                    msg = f"{src} already well formatted, good job."
-                else:
-                    msg = f"{src} wasn't modified on disk since last run."
-                out(msg, bold=False)
-            self.same_count += 1
-
-    def failed(self, src: Path, message: str) -> None:
-        """Increment the counter for failed reformatting. Write out a message."""
-        err(f"error: cannot format {src}: {message}")
-        self.failure_count += 1
-
-    def path_ignored(self, path: Path, message: str) -> None:
-        if self.verbose:
-            out(f"{path} ignored: {message}", bold=False)
-
-    @property
-    def return_code(self) -> int:
-        """Return the exit code that the app should use.
-
-        This considers the current state of changed files and failures:
-        - if there were any failures, return 123;
-        - if any files were changed and --check is being used, return 1;
-        - otherwise return 0.
-        """
-        # According to http://tldp.org/LDP/abs/html/exitcodes.html starting with
-        # 126 we have special return codes reserved by the shell.
-        if self.failure_count:
-            return 123
-
-        elif self.change_count and self.check:
-            return 1
-
-        return 0
-
-    def __str__(self) -> str:
-        """Render a color report of the current state.
-
-        Use `click.unstyle` to remove colors.
-        """
-        if self.check or self.diff:
-            reformatted = "would be reformatted"
-            unchanged = "would be left unchanged"
-            failed = "would fail to reformat"
-        else:
-            reformatted = "reformatted"
-            unchanged = "left unchanged"
-            failed = "failed to reformat"
-        report = []
-        if self.change_count:
-            s = "s" if self.change_count > 1 else ""
-            report.append(
-                click.style(f"{self.change_count} file{s} {reformatted}", bold=True)
-            )
-        if self.same_count:
-            s = "s" if self.same_count > 1 else ""
-            report.append(f"{self.same_count} file{s} {unchanged}")
-        if self.failure_count:
-            s = "s" if self.failure_count > 1 else ""
-            report.append(
-                click.style(f"{self.failure_count} file{s} {failed}", fg="red")
-            )
-        return ", ".join(report) + "."
-
-
-def parse_ast(src: str) -> Union[ast.AST, ast3.AST, ast27.AST]:
-    filename = "<unknown>"
-    if sys.version_info >= (3, 8):
-        # TODO: support Python 4+ ;)
-        for minor_version in range(sys.version_info[1], 4, -1):
-            try:
-                return ast.parse(src, filename, feature_version=(3, minor_version))
-            except SyntaxError:
-                continue
-    else:
-        for feature_version in (7, 6):
-            try:
-                return ast3.parse(src, filename, feature_version=feature_version)
-            except SyntaxError:
-                continue
-    if ast27.__name__ == "ast":
-        raise SyntaxError(
-            "The requested source code has invalid Python 3 syntax.\n"
-            "If you are trying to format Python 2 files please reinstall Black"
-            " with the 'python2' extra: `python3 -m pip install black[python2]`."
-        )
-    return ast27.parse(src)
-
-
-def _fixup_ast_constants(
-    node: Union[ast.AST, ast3.AST, ast27.AST]
-) -> Union[ast.AST, ast3.AST, ast27.AST]:
-    """Map ast nodes deprecated in 3.8 to Constant."""
-    if isinstance(node, (ast.Str, ast3.Str, ast27.Str, ast.Bytes, ast3.Bytes)):
-        return ast.Constant(value=node.s)
-
-    if isinstance(node, (ast.Num, ast3.Num, ast27.Num)):
-        return ast.Constant(value=node.n)
-
-    if isinstance(node, (ast.NameConstant, ast3.NameConstant)):
-        return ast.Constant(value=node.value)
-
-    return node
-
-
-def _stringify_ast(
-    node: Union[ast.AST, ast3.AST, ast27.AST], depth: int = 0
-) -> Iterator[str]:
-    """Simple visitor generating strings to compare ASTs by content."""
-
-    node = _fixup_ast_constants(node)
-
-    yield f"{'  ' * depth}{node.__class__.__name__}("
-
-    for field in sorted(node._fields):  # noqa: F402
-        # TypeIgnore has only one field 'lineno' which breaks this comparison
-        type_ignore_classes = (ast3.TypeIgnore, ast27.TypeIgnore)
-        if sys.version_info >= (3, 8):
-            type_ignore_classes += (ast.TypeIgnore,)
-        if isinstance(node, type_ignore_classes):
-            break
-
-        try:
-            value = getattr(node, field)
-        except AttributeError:
-            continue
-
-        yield f"{'  ' * (depth+1)}{field}="
-
-        if isinstance(value, list):
-            for item in value:
-                # Ignore nested tuples within del statements, because we may insert
-                # parentheses and they change the AST.
-                if (
-                    field == "targets"
-                    and isinstance(node, (ast.Delete, ast3.Delete, ast27.Delete))
-                    and isinstance(item, (ast.Tuple, ast3.Tuple, ast27.Tuple))
-                ):
-                    for item in item.elts:
-                        yield from _stringify_ast(item, depth + 2)
-
-                elif isinstance(item, (ast.AST, ast3.AST, ast27.AST)):
-                    yield from _stringify_ast(item, depth + 2)
-
-        elif isinstance(value, (ast.AST, ast3.AST, ast27.AST)):
-            yield from _stringify_ast(value, depth + 2)
-
-        else:
-            # Constant strings may be indented across newlines, if they are
-            # docstrings; fold spaces after newlines when comparing. Similarly,
-            # trailing and leading space may be removed.
-            # Note that when formatting Python 2 code, at least with Windows
-            # line-endings, docstrings can end up here as bytes instead of
-            # str so make sure that we handle both cases.
-            if (
-                isinstance(node, ast.Constant)
-                and field == "value"
-                and isinstance(value, (str, bytes))
-            ):
-                lineend = "\n" if isinstance(value, str) else b"\n"
-                # To normalize, we strip any leading and trailing space from
-                # each line...
-                stripped = [line.strip() for line in value.splitlines()]
-                normalized = lineend.join(stripped)  # type: ignore[attr-defined]
-                # ...and remove any blank lines at the beginning and end of
-                # the whole string
-                normalized = normalized.strip()
-            else:
-                normalized = value
-            yield f"{'  ' * (depth+2)}{normalized!r},  # {value.__class__.__name__}"
-
-    yield f"{'  ' * depth})  # /{node.__class__.__name__}"
-
-
 def assert_equivalent(src: str, dst: str, *, pass_num: int = 1) -> None:
     """Raise AssertionError if `src` and `dst` aren't equivalent."""
     try:
@@ -2506,8 +1960,8 @@ def assert_equivalent(src: str, dst: str, *, pass_num: int = 1) -> None:
             f"This invalid output might be helpful: {log}"
         ) from None
 
-    src_ast_str = "\n".join(_stringify_ast(src_ast))
-    dst_ast_str = "\n".join(_stringify_ast(dst_ast))
+    src_ast_str = "\n".join(stringify_ast(src_ast))
+    dst_ast_str = "\n".join(stringify_ast(dst_ast))
     if src_ast_str != dst_ast_str:
         log = dump_to_file(diff(src_ast_str, dst_ast_str, "src", "dst"))
         raise AssertionError(
@@ -2540,39 +1994,6 @@ def nullcontext() -> Iterator[None]:
     To be used like `nullcontext` in Python 3.7.
     """
     yield
-
-
-def cancel(tasks: Iterable["asyncio.Task[Any]"]) -> None:
-    """asyncio signal handler that cancels all `tasks` and reports to stderr."""
-    err("Aborted!")
-    for task in tasks:
-        task.cancel()
-
-
-def shutdown(loop: asyncio.AbstractEventLoop) -> None:
-    """Cancel all pending tasks on `loop`, wait for them, and close the loop."""
-    try:
-        if sys.version_info[:2] >= (3, 7):
-            all_tasks = asyncio.all_tasks
-        else:
-            all_tasks = asyncio.Task.all_tasks
-        # This part is borrowed from asyncio/runners.py in Python 3.7b2.
-        to_cancel = [task for task in all_tasks(loop) if not task.done()]
-        if not to_cancel:
-            return
-
-        for task in to_cancel:
-            task.cancel()
-        loop.run_until_complete(
-            asyncio.gather(*to_cancel, loop=loop, return_exceptions=True)
-        )
-    finally:
-        # `concurrent.futures.Future` objects cannot be cancelled once they
-        # are already running. There might be some when the `shutdown()` happened.
-        # Silence their logger's spew about the event loop being closed.
-        cf_logger = logging.getLogger("concurrent.futures")
-        cf_logger.setLevel(logging.CRITICAL)
-        loop.close()
 
 
 def run_transformer(
