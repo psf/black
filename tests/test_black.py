@@ -171,8 +171,9 @@ class BlackTestCase(BlackBaseTestCase):
         )
         self.assertEqual(result.exit_code, 0)
         self.assertFormatEqual(expected, result.output)
-        black.assert_equivalent(source, result.output)
-        black.assert_stable(source, result.output, DEFAULT_MODE)
+        if source != result.output:
+            black.assert_equivalent(source, result.output)
+            black.assert_stable(source, result.output, DEFAULT_MODE)
 
     def test_piping_diff(self) -> None:
         diff_header = re.compile(
@@ -1900,7 +1901,7 @@ class BlackTestCase(BlackBaseTestCase):
             critical=fail,
             log=fail,
         ):
-            ff(THIS_FILE)
+            ff(THIS_DIR / "util.py")
 
     def test_invalid_config_return_code(self) -> None:
         tmp_file = Path(black.dump_to_file())
