@@ -295,8 +295,9 @@ def _get_normal_name(orig_enc: str) -> str:
     enc = orig_enc[:12].lower().replace("_", "-")
     if enc == "utf-8" or enc.startswith("utf-8-"):
         return "utf-8"
-    if enc in ("latin-1", "iso-8859-1", "iso-latin-1") or enc.startswith(
-        ("latin-1-", "iso-8859-1-", "iso-latin-1-")
+    if (
+        enc in ("latin-1", "iso-8859-1", "iso-latin-1")
+        or enc.startswith(("latin-1-", "iso-8859-1-", "iso-latin-1-"))
     ):
         return "iso-8859-1"
     return orig_enc
@@ -549,8 +550,8 @@ def generate_tokens(
                 spos, epos, pos = (lnum, start), (lnum, end), end
                 token, initial = line[start:end], line[start]
 
-                if initial in numchars or (
-                    initial == "." and token != "."
+                if (
+                    initial in numchars or (initial == "." and token != ".")
                 ):  # ordinary number
                     yield (NUMBER, token, spos, epos, line)
                 elif initial in "\r\n":
