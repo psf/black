@@ -1,5 +1,17 @@
 # Change Log
 
+## 21.5b0
+
+### _Black_
+
+- Set `--pyi` mode if `--stdin-filename` ends in `.pyi` (#2169)
+- Stop detecting target version as Python 3.9+ with pre-PEP-614 decorators that are being
+  called but with no arguments (#2182)
+
+### _Black-Primer_
+
+- Add `--no-diff` to black-primer to suppress formatting changes (#2187)
+
 ## 21.4b2
 
 ### _Black_
@@ -11,6 +23,9 @@
   in which _Black_ may change the AST (#2159)
 
 ### _Packaging_
+
+- Allow `.gitignore` rules to be overridden by specifying `exclude` in `pyproject.toml` or
+  on the command line. (#2170)
 
 - Install `primer.json` (used by `black-primer` by default) with black. (#2154)
 
@@ -592,4 +607,4 @@
 
 - alpha quality
 
-- date-versioned (see: https://calver.org/)
+- date-versioned (see: <https://calver.org/>)

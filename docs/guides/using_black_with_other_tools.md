@@ -21,7 +21,24 @@ Compatible configuration files can be
 _Black_ also formats imports, but in a different way from isort's defaults which leads
 to conflicting changes.
 
-#### Configuration
+#### Profile
+
+Since version 5.0.0, isort supports
+[profiles](https://pycqa.github.io/isort/docs/configuration/profiles/) to allow easy
+interoperability with common code styles. You can set the black profile in any of the
+[config files](https://pycqa.github.io/isort/docs/configuration/config_files/) supported
+by isort. Below, an example for `pyproject.toml`:
+
+```toml
+[tool.isort]
+profile = "black"
+```
+
+#### Custom Configuration
+
+If you're using an isort version that is older than 5.0.0 or you have some custom
+configuration for _Black_, you can tweak your isort configuration to make it compatible
+with _Black_. Below, an example for `.isort.cfg`:
 
 ```
 multi_line_output = 3
@@ -74,9 +91,6 @@ works the same as with _Black_.
 
 **Please note** `ensure_newline_before_comments = True` only works since isort >= 5 but
 does not break older versions so you can keep it if you are running previous versions.
-If only isort >= 5 is used you can add `profile = black` instead of all the options
-since [profiles](https://timothycrosley.github.io/isort/docs/configuration/profiles/)
-are available and do the configuring for you.
 
 #### Formats
 
@@ -85,12 +99,7 @@ are available and do the configuring for you.
 
 ```cfg
 [settings]
-multi_line_output = 3
-include_trailing_comma = True
-force_grid_wrap = 0
-use_parentheses = True
-ensure_newline_before_comments = True
-line_length = 88
+profile = black
 ```
 
 </details>
@@ -100,12 +109,7 @@ line_length = 88
 
 ```cfg
 [isort]
-multi_line_output = 3
-include_trailing_comma = True
-force_grid_wrap = 0
-use_parentheses = True
-ensure_newline_before_comments = True
-line_length = 88
+profile = black
 ```
 
 </details>
@@ -115,12 +119,7 @@ line_length = 88
 
 ```toml
 [tool.isort]
-multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
-ensure_newline_before_comments = true
-line_length = 88
+profile = 'black'
 ```
 
 </details>
@@ -130,12 +129,7 @@ line_length = 88
 
 ```ini
 [*.py]
-multi_line_output = 3
-include_trailing_comma = True
-force_grid_wrap = 0
-use_parentheses = True
-ensure_newline_before_comments = True
-line_length = 88
+profile = black
 ```
 
 </details>

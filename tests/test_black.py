@@ -24,6 +24,7 @@ from typing import (
     Iterator,
     TypeVar,
 )
+import pytest
 import unittest
 from unittest.mock import patch, MagicMock
 
@@ -459,6 +460,38 @@ class BlackTestCase(BlackBaseTestCase):
             )
             self.assertEqual(expected, actual, msg)
 
+    @pytest.mark.no_python2
+    def test_python2_should_fail_without_optional_install(self) -> None:
+        if sys.version_info < (3, 8):
+            self.skipTest(
+                "Python 3.6 and 3.7 will install typed-ast to work and as such will be"
+                " able to parse Python 2 syntax without explicitly specifying the"
+                " python2 extra"
+            )
+
+        source = "x = 1234l"
+        tmp_file = Path(black.dump_to_file(source))
+        try:
+            runner = BlackRunner()
+            result = runner.invoke(black.main, [str(tmp_file)])
+            self.assertEqual(result.exit_code, 123)
+        finally:
+            os.unlink(tmp_file)
+        actual = (
+            runner.stderr_bytes.decode()
+            .replace("\n", "")
+            .replace("\\n", "")
+            .replace("\\r", "")
+            .replace("\r", "")
+        )
+        msg = (
+            "The requested source code has invalid Python 3 syntax."
+            "If you are trying to format Python 2 files please reinstall Black"
+            " with the 'python2' extra: `python3 -m pip install black[python2]`."
+        )
+        self.assertIn(msg, actual)
+
+    @pytest.mark.python2
     @patch("black.dump_to_file", dump_to_stderr)
     def test_python2_print_function(self) -> None:
         source, expected = read_data("python2_print_function")
@@ -1389,6 +1422,32 @@ class BlackTestCase(BlackBaseTestCase):
         )
         self.assertEqual(sorted(expected), sorted(sources))
 
+    def test_gitingore_used_as_default(self) -> None:
+        path = Path(THIS_DIR / "data" / "include_exclude_tests")
+        include = re.compile(r"\.pyi?$")
+        extend_exclude = re.compile(r"/exclude/")
+        src = str(path / "b/")
+        report = black.Report()
+        expected: List[Path] = [
+            path / "b/.definitely_exclude/a.py",
+            path / "b/.definitely_exclude/a.pyi",
+        ]
+        sources = list(
+            black.get_sources(
+                ctx=FakeContext(),
+                src=(src,),
+                quiet=True,
+                verbose=False,
+                include=include,
+                exclude=None,
+                extend_exclude=extend_exclude,
+                force_exclude=None,
+                report=report,
+                stdin_filename=None,
+            )
+        )
+        self.assertEqual(sorted(expected), sorted(sources))
+
     @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
     def test_exclude_for_issue_1572(self) -> None:
         # Exclude shouldn't touch files that were explicitly given to Black through the
@@ -1578,8 +1637,34 @@ class BlackTestCase(BlackBaseTestCase):
                 mode=DEFAULT_MODE,
                 report=report,
             )
-            fsts.assert_called_once()
-            # __BLACK_STDIN_FILENAME__ should have been striped
+            fsts.assert_called_once_with(
+                fast=True, write_back=black.WriteBack.YES, mode=DEFAULT_MODE
+            )
+            # __BLACK_STDIN_FILENAME__ should have been stripped
+            report.done.assert_called_with(expected, black.Changed.YES)
+
+    def test_reformat_one_with_stdin_filename_pyi(self) -> None:
+        with patch(
+            "black.format_stdin_to_stdout",
+            return_value=lambda *args, **kwargs: black.Changed.YES,
+        ) as fsts:
+            report = MagicMock()
+            p = "foo.pyi"
+            path = Path(f"__BLACK_STDIN_FILENAME__{p}")
+            expected = Path(p)
+            black.reformat_one(
+                path,
+                fast=True,
+                write_back=black.WriteBack.YES,
+                mode=DEFAULT_MODE,
+                report=report,
+            )
+            fsts.assert_called_once_with(
+                fast=True,
+                write_back=black.WriteBack.YES,
+                mode=replace(DEFAULT_MODE, is_pyi=True),
+            )
+            # __BLACK_STDIN_FILENAME__ should have been stripped
             report.done.assert_called_with(expected, black.Changed.YES)
 
     def test_reformat_one_with_stdin_and_existing_path(self) -> None:
@@ -1603,7 +1688,7 @@ class BlackTestCase(BlackBaseTestCase):
                 report=report,
             )
             fsts.assert_called_once()
-            # __BLACK_STDIN_FILENAME__ should have been striped
+            # __BLACK_STDIN_FILENAME__ should have been stripped
             report.done.assert_called_with(expected, black.Changed.YES)
 
     def test_gitignore_exclude(self) -> None:
@@ -1650,6 +1735,8 @@ class BlackTestCase(BlackBaseTestCase):
             Path(path / "b/.definitely_exclude/a.pie"),
             Path(path / "b/.definitely_exclude/a.py"),
             Path(path / "b/.definitely_exclude/a.pyi"),
+            Path(path / ".gitignore"),
+            Path(path / "pyproject.toml"),
         ]
         this_abs = THIS_DIR.resolve()
         sources.extend(
@@ -1945,6 +2032,7 @@ class BlackTestCase(BlackBaseTestCase):
         actual = diff_header.sub(DETERMINISTIC_HEADER, actual)
         self.assertEqual(actual, expected)
 
+    @pytest.mark.python2
     def test_docstring_reformat_for_py27(self) -> None:
         """
         Check that stripping trailing whitespace from Python 2 docstrings

@@ -13,6 +13,12 @@ def f():
 
 ##
 
+@decorator()
+def f():
+    ...
+
+##
+
 @decorator(arg)
 def f():
     ...

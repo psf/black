@@ -33,4 +33,35 @@ jobs:
 
       - name: Unit tests
         run: |
-          tox -e py
+          tox -e py -- -v --color=yes
+
+      - name: Publish coverage to Coveralls
+        # If pushed / is a pull request against main repo AND
+        # we're running on Linux (this action only supports Linux)
+        if:
+          ((github.event_name == 'push' && github.repository == 'psf/black') ||
+          github.event.pull_request.base.repo.full_name == 'psf/black') && matrix.os ==
+          'ubuntu-latest'
+
+        uses: AndreMiras/coveralls-python-action@v20201129
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          parallel: true
+          flag-name: py${{ matrix.python-version }}-${{ matrix.os }}
+          debug: true
+
+  coveralls-finish:
+    needs: build
+    # If pushed / is a pull request against main repo
+    if:
+      (github.event_name == 'push' && github.repository == 'psf/black') ||
+      github.event.pull_request.base.repo.full_name == 'psf/black'
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Coveralls finished
+        uses: AndreMiras/coveralls-python-action@v20201129
+        with:
+          parallel-finished: true
+          debug: true

@@ -20,7 +20,7 @@ wheel = ">=0.31.1"
 black = {editable = true, extras = ["d"], path = "."}
 
 [packages]
-aiohttp = ">=3.3.2"
+aiohttp = ">=3.6.0"
 aiohttp-cors = "*"
 appdirs = "*"
 click = ">=7.1.2"
