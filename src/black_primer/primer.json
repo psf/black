@@ -3,7 +3,7 @@
   "projects": {
     "aioexabgp": {
       "cli_arguments": ["--experimental-string-processing"],
-      "expect_formatting_changes": false,
+      "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/cooperlees/aioexabgp.git",
       "long_checkout": false,
       "py_versions": ["all"]
@@ -40,7 +40,7 @@
     },
     "flake8-bugbear": {
       "cli_arguments": ["--experimental-string-processing"],
-      "expect_formatting_changes": false,
+      "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/PyCQA/flake8-bugbear.git",
       "long_checkout": false,
       "py_versions": ["all"]
@@ -77,7 +77,7 @@
     },
     "pyanalyze": {
       "cli_arguments": ["--experimental-string-processing"],
-      "expect_formatting_changes": false,
+      "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/quora/pyanalyze.git",
       "long_checkout": false,
       "py_versions": ["all"]
