@@ -71,10 +71,15 @@ EXPERIMENTAL_STRING_PROCESSING_CASES = [
 
 
 SOURCES = [
-    "tests/test_black.py",
-    "tests/test_format.py",
-    "tests/test_blackd.py",
     "src/black/__init__.py",
+    "src/black/__main__.py",
+    "src/black/cache.py",
+    "src/black/comments.py",
+    "src/black/const.py",
+    "src/black/mode.py",
+    "src/black/nodes.py",
+    "src/black/strings.py",
+    "src/blackd/__init__.py",
     "src/blib2to3/pygram.py",
     "src/blib2to3/pytree.py",
     "src/blib2to3/pgen2/conv.py",
@@ -86,6 +91,13 @@ SOURCES = [
     "src/blib2to3/pgen2/tokenize.py",
     "src/blib2to3/pgen2/token.py",
     "setup.py",
+    "tests/test_black.py",
+    "tests/test_blackd.py",
+    "tests/test_format.py",
+    "tests/test_primer.py",
+    "tests/optional.py",
+    "tests/util.py",
+    "tests/conftest.py",
 ]
 
 
