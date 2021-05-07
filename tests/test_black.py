@@ -34,6 +34,7 @@ from click.testing import CliRunner
 
 import black
 from black import Feature, TargetVersion
+from black.cache import get_cache_file
 
 from pathspec import PathSpec
 
@@ -69,7 +70,7 @@ def cache_dir(exists: bool = True) -> Iterator[Path]:
         cache_dir = Path(workspace)
         if not exists:
             cache_dir = cache_dir / "new"
-        with patch("black.CACHE_DIR", cache_dir):
+        with patch("black.cache.CACHE_DIR", cache_dir):
             yield cache_dir
 
 
@@ -1066,7 +1067,7 @@ class BlackTestCase(BlackBaseTestCase):
     def test_cache_broken_file(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir() as workspace:
-            cache_file = black.get_cache_file(mode)
+            cache_file = get_cache_file(mode)
             with cache_file.open("w") as fobj:
                 fobj.write("this is not a pickle")
             self.assertEqual(black.read_cache(mode), {})
@@ -1120,7 +1121,7 @@ class BlackTestCase(BlackBaseTestCase):
                 "black.write_cache"
             ) as write_cache:
                 self.invokeBlack([str(src), "--diff"])
-                cache_file = black.get_cache_file(mode)
+                cache_file = get_cache_file(mode)
                 self.assertFalse(cache_file.exists())
                 write_cache.assert_not_called()
                 read_cache.assert_not_called()
@@ -1135,7 +1136,7 @@ class BlackTestCase(BlackBaseTestCase):
                 "black.write_cache"
             ) as write_cache:
                 self.invokeBlack([str(src), "--diff", "--color"])
-                cache_file = black.get_cache_file(mode)
+                cache_file = get_cache_file(mode)
                 self.assertFalse(cache_file.exists())
                 write_cache.assert_not_called()
                 read_cache.assert_not_called()
@@ -1173,7 +1174,7 @@ class BlackTestCase(BlackBaseTestCase):
                 black.main, ["-"], input=BytesIO(b"print('hello')")
             )
             self.assertEqual(result.exit_code, 0)
-            cache_file = black.get_cache_file(mode)
+            cache_file = get_cache_file(mode)
             self.assertFalse(cache_file.exists())
 
     def test_read_cache_no_cachefile(self) -> None:

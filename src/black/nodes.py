@@ -15,7 +15,7 @@ from blib2to3.pytree import Node, Leaf, type_repr
 from blib2to3 import pygram
 from blib2to3.pgen2 import token
 
-from black.const import CACHE_DIR
+from black.cache import CACHE_DIR
 from black.strings import has_triple_quotes
 
 
