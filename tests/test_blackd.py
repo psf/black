@@ -1,10 +1,10 @@
 import re
-import unittest
 from unittest.mock import patch
 
 from click.testing import CliRunner
+import pytest
 
-from tests.util import read_data, DETERMINISTIC_HEADER, skip_if_exception
+from tests.util import read_data, DETERMINISTIC_HEADER
 
 try:
     import blackd
@@ -16,8 +16,8 @@ else:
     has_blackd_deps = True
 
 
+@pytest.mark.blackd
 class BlackDTestCase(AioHTTPTestCase):
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     def test_blackd_main(self) -> None:
         with patch("blackd.web.run_app"):
             result = CliRunner().invoke(blackd.main, [])
@@ -28,10 +28,6 @@ class BlackDTestCase(AioHTTPTestCase):
     async def get_application(self) -> web.Application:
         return blackd.make_app()
 
-    # TODO: remove these decorators once the below is released
-    # https://github.com/aio-libs/aiohttp/pull/3727
-    @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @unittest_run_loop
     async def test_blackd_request_needs_formatting(self) -> None:
         response = await self.client.post("/", data=b"print('hello world')")
@@ -39,16 +35,12 @@ class BlackDTestCase(AioHTTPTestCase):
         self.assertEqual(response.charset, "utf8")
         self.assertEqual(await response.read(), b'print("hello world")\n')
 
-    @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @unittest_run_loop
     async def test_blackd_request_no_change(self) -> None:
         response = await self.client.post("/", data=b'print("hello world")\n')
         self.assertEqual(response.status, 204)
         self.assertEqual(await response.read(), b"")
 
-    @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @unittest_run_loop
     async def test_blackd_request_syntax_error(self) -> None:
         response = await self.client.post("/", data=b"what even ( is")
@@ -59,8 +51,6 @@ class BlackDTestCase(AioHTTPTestCase):
             msg=f"Expected error to start with 'Cannot parse', got {repr(content)}",
         )
 
-    @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @unittest_run_loop
     async def test_blackd_unsupported_version(self) -> None:
         response = await self.client.post(
@@ -68,8 +58,6 @@ class BlackDTestCase(AioHTTPTestCase):
         )
         self.assertEqual(response.status, 501)
 
-    @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @unittest_run_loop
     async def test_blackd_supported_version(self) -> None:
         response = await self.client.post(
@@ -77,8 +65,6 @@ class BlackDTestCase(AioHTTPTestCase):
         )
         self.assertEqual(response.status, 200)
 
-    @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @unittest_run_loop
     async def test_blackd_invalid_python_variant(self) -> None:
         async def check(header_value: str, expected_status: int = 400) -> None:
@@ -97,8 +83,6 @@ class BlackDTestCase(AioHTTPTestCase):
         await check("pypy3.0")
         await check("jython3.4")
 
-    @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @unittest_run_loop
     async def test_blackd_pyi(self) -> None:
         source, expected = read_data("stub.pyi")
@@ -108,8 +92,6 @@ class BlackDTestCase(AioHTTPTestCase):
         self.assertEqual(response.status, 200)
         self.assertEqual(await response.text(), expected)
 
-    @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @unittest_run_loop
     async def test_blackd_diff(self) -> None:
         diff_header = re.compile(
@@ -128,8 +110,6 @@ class BlackDTestCase(AioHTTPTestCase):
         actual = diff_header.sub(DETERMINISTIC_HEADER, actual)
         self.assertEqual(actual, expected)
 
-    @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @unittest_run_loop
     async def test_blackd_python_variant(self) -> None:
         code = (
@@ -166,8 +146,6 @@ class BlackDTestCase(AioHTTPTestCase):
         await check("py34,py36", 204)
         await check("34", 204)
 
-    @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @unittest_run_loop
     async def test_blackd_line_length(self) -> None:
         response = await self.client.post(
@@ -175,8 +153,6 @@ class BlackDTestCase(AioHTTPTestCase):
         )
         self.assertEqual(response.status, 200)
 
-    @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @unittest_run_loop
     async def test_blackd_invalid_line_length(self) -> None:
         response = await self.client.post(
@@ -184,8 +160,6 @@ class BlackDTestCase(AioHTTPTestCase):
         )
         self.assertEqual(response.status, 400)
 
-    @skip_if_exception("ClientOSError")
-    @unittest.skipUnless(has_blackd_deps, "blackd's dependencies are not installed")
     @unittest_run_loop
     async def test_blackd_response_black_version_header(self) -> None:
         response = await self.client.post("/")

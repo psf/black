@@ -1,8 +1,7 @@
 import os
 import unittest
-from contextlib import contextmanager
 from pathlib import Path
-from typing import List, Tuple, Iterator, Any
+from typing import List, Tuple, Any
 import black
 from functools import partial
 
@@ -43,17 +42,6 @@ class BlackBaseTestCase(unittest.TestCase):
             except Exception as ve:
                 black.err(str(ve))
         self.assertMultiLineEqual(expected, actual)
-
-
-@contextmanager
-def skip_if_exception(e: str) -> Iterator[None]:
-    try:
-        yield
-    except Exception as exc:
-        if exc.__class__.__name__ == e:
-            unittest.skip(f"Encountered expected exception {exc}, skipping")
-        else:
-            raise
 
 
 def read_data(name: str, data: bool = True) -> Tuple[str, str]:
