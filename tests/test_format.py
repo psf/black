@@ -73,9 +73,11 @@ EXPERIMENTAL_STRING_PROCESSING_CASES = [
 SOURCES = [
     "src/black/__init__.py",
     "src/black/__main__.py",
+    "src/black/brackets.py",
     "src/black/cache.py",
     "src/black/comments.py",
     "src/black/const.py",
+    "src/black/lines.py",
     "src/black/mode.py",
     "src/black/nodes.py",
     "src/black/strings.py",
