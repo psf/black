@@ -8,7 +8,7 @@
 :class:`BracketTracker`
 -----------------------
 
-.. autoclass:: black.BracketTracker
+.. autoclass:: black.brackets.BracketTracker
     :members:
 
 :class:`EmptyLineTracker`
@@ -34,7 +34,7 @@
 :class:`ProtoComment`
 ---------------------
 
-.. autoclass:: black.ProtoComment
+.. autoclass:: black.comments.ProtoComment
     :members:
 
 :class:`Report`
@@ -47,7 +47,7 @@
 :class:`Visitor`
 ----------------
 
-.. autoclass:: black.Visitor
+.. autoclass:: black.nodes.Visitor
     :show-inheritance:
     :members:
 

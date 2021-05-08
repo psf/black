@@ -5,7 +5,7 @@
 
 .. currentmodule:: black
 
-.. autoexception:: black.CannotSplit
+.. autoexception:: black.linegen.CannotSplit
 
 .. autoexception:: black.NothingChanged
 
