@@ -1,10 +1,10 @@
-## blackd
+# Black as a server (blackd)
 
 `blackd` is a small HTTP server that exposes _Black_'s functionality over a simple
 protocol. The main benefit of using it is to avoid the cost of starting up a new _Black_
 process every time you want to blacken a file.
 
-### Usage
+## Usage
 
 `blackd` is not packaged alongside _Black_ by default because it has additional
 dependencies. You will need to execute `pip install black[d]` to install it.
@@ -36,7 +36,7 @@ blackd --bind-port 9090 &  # or let blackd choose a port
 curl -s -XPOST "localhost:9090" -d "print('valid')"
 ```
 
-### Protocol
+## Protocol
 
 `blackd` only accepts `POST` requests at the `/` path. The body of the request should
 contain the python source code to be formatted, encoded according to the `charset` field

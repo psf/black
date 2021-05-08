@@ -4,7 +4,7 @@
 
 Options include the following:
 
-- [purcell/reformatter.el](https://github.com/purcell/reformatter.el)
+- [wbolster/emacs-python-black](https://github.com/wbolster/emacs-python-black)
 - [proofit404/blacken](https://github.com/pythonic-emacs/blacken)
 - [Elpy](https://github.com/jorgenschaefer/elpy).
 
@@ -16,7 +16,7 @@ Options include the following:
    $ pip install black
    ```
 
-2. Locate your `black` installation folder.
+1. Locate your `black` installation folder.
 
    On macOS / Linux / BSD:
 
@@ -35,7 +35,7 @@ Options include the following:
    Note that if you are using a virtual environment detected by PyCharm, this is an
    unneeded step. In this case the path to `black` is `$PyInterpreterDirectory$/black`.
 
-3. Open External tools in PyCharm/IntelliJ IDEA
+1. Open External tools in PyCharm/IntelliJ IDEA
 
    On macOS:
 
@@ -45,29 +45,29 @@ Options include the following:
 
    `File -> Settings -> Tools -> External Tools`
 
-4. Click the + icon to add a new external tool with the following values:
+1. Click the + icon to add a new external tool with the following values:
 
    - Name: Black
    - Description: Black is the uncompromising Python code formatter.
-   - Program: <install_location_from_step_2>
+   - Program: \<install_location_from_step_2>
    - Arguments: `"$FilePath$"`
 
-5. Format the currently opened file by selecting `Tools -> External Tools -> black`.
+1. Format the currently opened file by selecting `Tools -> External Tools -> black`.
 
    - Alternatively, you can set a keyboard shortcut by navigating to
      `Preferences or Settings -> Keymap -> External Tools -> External Tools - Black`.
 
-6. Optionally, run _Black_ on every file save:
+1. Optionally, run _Black_ on every file save:
 
    1. Make sure you have the
       [File Watchers](https://plugins.jetbrains.com/plugin/7177-file-watchers) plugin
       installed.
-   2. Go to `Preferences or Settings -> Tools -> File Watchers` and click `+` to add a
+   1. Go to `Preferences or Settings -> Tools -> File Watchers` and click `+` to add a
       new watcher:
       - Name: Black
       - File type: Python
       - Scope: Project Files
-      - Program: <install_location_from_step_2>
+      - Program: \<install_location_from_step_2>
       - Arguments: `$FilePath$`
       - Output paths to refresh: `$FilePath$`
       - Working directory: `$ProjectFileDir$`
@@ -87,13 +87,13 @@ Wing supports black via the OS Commands tool, as explained in the Wing documenta
    $ pip install black
    ```
 
-2. Make sure it runs from the command line, e.g.
+1. Make sure it runs from the command line, e.g.
 
    ```console
    $ black --help
    ```
 
-3. In Wing IDE, activate the **OS Commands** panel and define the command **black** to
+1. In Wing IDE, activate the **OS Commands** panel and define the command **black** to
    execute black on the currently selected file:
 
    - Use the Tools -> OS Commands menu selection
@@ -106,7 +106,7 @@ Wing supports black via the OS Commands tool, as explained in the Wing documenta
      - [x] Auto-save files before execution
      - [x] Line mode
 
-4. Select a file in the editor and press **F1** , or whatever key binding you selected
+1. Select a file in the editor and press **F1** , or whatever key binding you selected
    in step 3, to reformat the file.
 
 ## Vim
@@ -238,8 +238,10 @@ $ pip install -U black --no-binary regex,typed-ast
 ### With ALE
 
 1. Install [`ale`](https://github.com/dense-analysis/ale)
-2. Install `black`
-3. Add this to your vimrc:
+
+1. Install `black`
+
+1. Add this to your vimrc:
 
    ```vim
    let g:ale_fixers = {}
@@ -256,10 +258,10 @@ $ gedit <file_name>
 ```
 
 1. `Go to edit > preferences > plugins`
-2. Search for `external tools` and activate it.
-3. In `Tools menu -> Manage external tools`
-4. Add a new tool using `+` button.
-5. Copy the below content to the code window.
+1. Search for `external tools` and activate it.
+1. In `Tools menu -> Manage external tools`
+1. Add a new tool using `+` button.
+1. Copy the below content to the code window.
 
 ```console
 #!/bin/bash
@@ -319,17 +321,3 @@ hook global WinSetOption filetype=python %{
 ## Thonny
 
 Use [Thonny-black-code-format](https://github.com/Franccisco/thonny-black-code-format).
-
-## Other integrations
-
-Other editors and tools will require external contributions.
-
-Patches welcome! ✨ 🍰 ✨
-
-Any tool that can pipe code through _Black_ using its stdio mode (just
-[use `-` as the file name](https://www.tldp.org/LDP/abs/html/special-chars.html#DASHREF2)).
-The formatted code will be returned on stdout (unless `--check` was passed). _Black_
-will still emit messages on stderr but that shouldn't affect your use case.
-
-This can be used for example with PyCharm's or IntelliJ's
-[File Watchers](https://www.jetbrains.com/help/pycharm/file-watchers.html).

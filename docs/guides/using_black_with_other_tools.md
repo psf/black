@@ -1,4 +1,6 @@
-# _Black_ compatible configurations
+# Using _Black_ with other tools
+
+## Black compatible configurations
 
 All of Black's changes are harmless (or at least, they should be), but a few do conflict
 against other tools. It is not uncommon to be using other tools alongside _Black_ like
@@ -13,13 +15,13 @@ tools, using **their** supported file formats.
 Compatible configuration files can be
 [found here](https://github.com/psf/black/blob/master/docs/compatible_configs/).
 
-## isort
+### isort
 
 [isort](https://pypi.org/p/isort/) helps to sort and format imports in your Python code.
 _Black_ also formats imports, but in a different way from isort's defaults which leads
 to conflicting changes.
 
-### Profile
+#### Profile
 
 Since version 5.0.0, isort supports
 [profiles](https://pycqa.github.io/isort/docs/configuration/profiles/) to allow easy
@@ -32,7 +34,7 @@ by isort. Below, an example for `pyproject.toml`:
 profile = "black"
 ```
 
-### Custom Configuration
+#### Custom Configuration
 
 If you're using an isort version that is older than 5.0.0 or you have some custom
 configuration for _Black_, you can tweak your isort configuration to make it compatible
@@ -47,12 +49,12 @@ ensure_newline_before_comments = True
 line_length = 88
 ```
 
-### Why those options above?
+#### Why those options above?
 
 _Black_ wraps imports that surpass `line-length` by moving identifiers into their own
 indented line. If that still doesn't fit the bill, it will put all of them in separate
 lines and put a trailing comma. A more detailed explanation of this behaviour can be
-[found here](https://github.com/psf/black/blob/master/docs/the_black_code_style.md#how-black-wraps-lines).
+[found here](../the_black_code_style/current_style.md#how-black-wraps-lines).
 
 isort's default mode of wrapping imports that extend past the `line_length` limit is
 "Grid".
@@ -90,7 +92,7 @@ works the same as with _Black_.
 **Please note** `ensure_newline_before_comments = True` only works since isort >= 5 but
 does not break older versions so you can keep it if you are running previous versions.
 
-### Formats
+#### Formats
 
 <details>
 <summary>.isort.cfg</summary>
@@ -132,21 +134,21 @@ profile = black
 
 </details>
 
-## Flake8
+### Flake8
 
 [Flake8](https://pypi.org/p/flake8/) is a code linter. It warns you of syntax errors,
 possible bugs, stylistic errors, etc. For the most part, Flake8 follows
 [PEP 8](https://www.python.org/dev/peps/pep-0008/) when warning about stylistic errors.
 There are a few deviations that cause incompatibilities with _Black_.
 
-### Configuration
+#### Configuration
 
 ```
 max-line-length = 88
 extend-ignore = E203
 ```
 
-### Why those options above?
+#### Why those options above?
 
 In some cases, as determined by PEP 8, _Black_ will enforce an equal amount of
 whitespace around slice operators. Due to this, Flake8 will raise
@@ -163,7 +165,7 @@ in your configuration.
 Also, as like with isort, flake8 should be configured to allow lines up to the length
 limit of `88`, _Black_'s default. This explains `max-line-length = 88`.
 
-### Formats
+#### Formats
 
 <details>
 <summary>.flake8</summary>
@@ -198,24 +200,24 @@ extend-ignore = E203
 
 </details>
 
-## Pylint
+### Pylint
 
 [Pylint](https://pypi.org/p/pylint/) is also a code linter like Flake8. It has the same
 checks as flake8 and more. In particular, it has more formatting checks regarding style
 conventions like variable naming. With so many checks, Pylint is bound to have some
 mixed feelings about _Black_'s formatting style.
 
-### Configuration
+#### Configuration
 
 ```
 disable = C0330, C0326
 max-line-length = 88
 ```
 
-### Why those options above?
+#### Why those options above?
 
 When _Black_ is folding very long expressions, the closing brackets will
-[be dedented](https://github.com/psf/black/blob/master/docs/the_black_code_style.md#how-black-wraps-lines).
+[be dedented](../the_black_code_style/current_style.md#how-black-wraps-lines).
 
 ```py3
 ImportantClass.important_method(
@@ -223,7 +225,7 @@ ImportantClass.important_method(
 )
 ```
 
-Although, this style is PEP 8 compliant, Pylint will raise
+Although this style is PEP 8 compliant, Pylint will raise
 `C0330: Wrong hanging indentation before block (add 4 spaces)` warnings. Since _Black_
 isn't configurable on this style, Pylint should be told to ignore these warnings via
 `disable = C0330`.
@@ -234,7 +236,7 @@ warning `C0326: Bad whitespace` should be disabled using `disable = C0326`.
 And as usual, Pylint should be configured to only complain about lines that surpass `88`
 characters via `max-line-length = 88`.
 
-### Formats
+#### Formats
 
 <details>
 <summary>pylintrc</summary>
