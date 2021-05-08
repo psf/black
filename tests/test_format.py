@@ -7,7 +7,6 @@ from parameterized import parameterized
 from tests.util import (
     BlackBaseTestCase,
     fs,
-    ff,
     DEFAULT_MODE,
     dump_to_stderr,
     read_data,
@@ -135,11 +134,11 @@ class TestSimpleFormat(BlackBaseTestCase):
     def test_source_is_formatted(self, filename: str) -> None:
         path = THIS_DIR.parent / filename
         self.check_file(str(path), DEFAULT_MODE, data=False)
-        self.assertFalse(ff(path))
 
     def check_file(self, filename: str, mode: black.Mode, *, data: bool = True) -> None:
         source, expected = read_data(filename, data=data)
         actual = fs(source, mode=mode)
         self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, mode)
+        if source != actual:
+            black.assert_equivalent(source, actual)
+            black.assert_stable(source, actual, mode)
