@@ -1,5 +1,13 @@
 # Change Log
 
+## Unreleased
+
+### Documentation
+
+- Sigificantly reorganized the documentation to make much more sense. Check them out by
+  heading over to [the stable docs on RTD](https://black.readthedocs.io/en/stable/).
+  (#2174)
+
 ## 21.5b0
 
 ### _Black_
@@ -22,10 +30,10 @@
   [circumstances](https://github.com/psf/black/blob/master/docs/the_black_code_style.md#pragmatism)
   in which _Black_ may change the AST (#2159)
 
-### _Packaging_
-
 - Allow `.gitignore` rules to be overridden by specifying `exclude` in `pyproject.toml` or
   on the command line. (#2170)
+
+### _Packaging_
 
 - Install `primer.json` (used by `black-primer` by default) with black. (#2154)
 
