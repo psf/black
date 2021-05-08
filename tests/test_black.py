@@ -34,6 +34,10 @@ from click.testing import CliRunner
 
 import black
 from black import Feature, TargetVersion
+from black.cache import get_cache_file
+from black.debug import DebugVisitor
+from black.report import Report
+import black.files
 
 from pathspec import PathSpec
 
@@ -69,7 +73,7 @@ def cache_dir(exists: bool = True) -> Iterator[Path]:
         cache_dir = Path(workspace)
         if not exists:
             cache_dir = cache_dir / "new"
-        with patch("black.CACHE_DIR", cache_dir):
+        with patch("black.cache.CACHE_DIR", cache_dir):
             yield cache_dir
 
 
@@ -171,8 +175,9 @@ class BlackTestCase(BlackBaseTestCase):
         )
         self.assertEqual(result.exit_code, 0)
         self.assertFormatEqual(expected, result.output)
-        black.assert_equivalent(source, result.output)
-        black.assert_stable(source, result.output, DEFAULT_MODE)
+        if source != result.output:
+            black.assert_equivalent(source, result.output)
+            black.assert_stable(source, result.output, DEFAULT_MODE)
 
     def test_piping_diff(self) -> None:
         diff_header = re.compile(
@@ -582,7 +587,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertFormatEqual(contents_spc, fs(contents_tab))
 
     def test_report_verbose(self) -> None:
-        report = black.Report(verbose=True)
+        report = Report(verbose=True)
         out_lines = []
         err_lines = []
 
@@ -592,7 +597,7 @@ class BlackTestCase(BlackBaseTestCase):
         def err(msg: str, **kwargs: Any) -> None:
             err_lines.append(msg)
 
-        with patch("black.out", out), patch("black.err", err):
+        with patch("black.output._out", out), patch("black.output._err", err):
             report.done(Path("f1"), black.Changed.NO)
             self.assertEqual(len(out_lines), 1)
             self.assertEqual(len(err_lines), 0)
@@ -684,7 +689,7 @@ class BlackTestCase(BlackBaseTestCase):
             )
 
     def test_report_quiet(self) -> None:
-        report = black.Report(quiet=True)
+        report = Report(quiet=True)
         out_lines = []
         err_lines = []
 
@@ -694,7 +699,7 @@ class BlackTestCase(BlackBaseTestCase):
         def err(msg: str, **kwargs: Any) -> None:
             err_lines.append(msg)
 
-        with patch("black.out", out), patch("black.err", err):
+        with patch("black.output._out", out), patch("black.output._err", err):
             report.done(Path("f1"), black.Changed.NO)
             self.assertEqual(len(out_lines), 0)
             self.assertEqual(len(err_lines), 0)
@@ -788,7 +793,7 @@ class BlackTestCase(BlackBaseTestCase):
         def err(msg: str, **kwargs: Any) -> None:
             err_lines.append(msg)
 
-        with patch("black.out", out), patch("black.err", err):
+        with patch("black.output._out", out), patch("black.output._err", err):
             report.done(Path("f1"), black.Changed.NO)
             self.assertEqual(len(out_lines), 0)
             self.assertEqual(len(err_lines), 0)
@@ -1005,8 +1010,8 @@ class BlackTestCase(BlackBaseTestCase):
         def err(msg: str, **kwargs: Any) -> None:
             err_lines.append(msg)
 
-        with patch("black.out", out), patch("black.err", err):
-            black.DebugVisitor.show(source)
+        with patch("black.debug.out", out):
+            DebugVisitor.show(source)
         actual = "\n".join(out_lines) + "\n"
         log_name = ""
         if expected != actual:
@@ -1054,7 +1059,7 @@ class BlackTestCase(BlackBaseTestCase):
         def err(msg: str, **kwargs: Any) -> None:
             err_lines.append(msg)
 
-        with patch("black.out", out), patch("black.err", err):
+        with patch("black.output._out", out), patch("black.output._err", err):
             with self.assertRaises(AssertionError):
                 self.assertFormatEqual("j = [1, 2, 3]", "j = [1, 2, 3,]")
 
@@ -1066,7 +1071,7 @@ class BlackTestCase(BlackBaseTestCase):
     def test_cache_broken_file(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir() as workspace:
-            cache_file = black.get_cache_file(mode)
+            cache_file = get_cache_file(mode)
             with cache_file.open("w") as fobj:
                 fobj.write("this is not a pickle")
             self.assertEqual(black.read_cache(mode), {})
@@ -1120,7 +1125,7 @@ class BlackTestCase(BlackBaseTestCase):
                 "black.write_cache"
             ) as write_cache:
                 self.invokeBlack([str(src), "--diff"])
-                cache_file = black.get_cache_file(mode)
+                cache_file = get_cache_file(mode)
                 self.assertFalse(cache_file.exists())
                 write_cache.assert_not_called()
                 read_cache.assert_not_called()
@@ -1135,7 +1140,7 @@ class BlackTestCase(BlackBaseTestCase):
                 "black.write_cache"
             ) as write_cache:
                 self.invokeBlack([str(src), "--diff", "--color"])
-                cache_file = black.get_cache_file(mode)
+                cache_file = get_cache_file(mode)
                 self.assertFalse(cache_file.exists())
                 write_cache.assert_not_called()
                 read_cache.assert_not_called()
@@ -1173,7 +1178,7 @@ class BlackTestCase(BlackBaseTestCase):
                 black.main, ["-"], input=BytesIO(b"print('hello')")
             )
             self.assertEqual(result.exit_code, 0)
-            cache_file = black.get_cache_file(mode)
+            cache_file = get_cache_file(mode)
             self.assertFalse(cache_file.exists())
 
     def test_read_cache_no_cachefile(self) -> None:
@@ -1900,7 +1905,7 @@ class BlackTestCase(BlackBaseTestCase):
             critical=fail,
             log=fail,
         ):
-            ff(THIS_FILE)
+            ff(THIS_DIR / "util.py")
 
     def test_invalid_config_return_code(self) -> None:
         tmp_file = Path(black.dump_to_file())
@@ -1960,7 +1965,10 @@ class BlackTestCase(BlackBaseTestCase):
             self.assertEqual(black.find_project_root((src_dir,)), src_dir.resolve())
             self.assertEqual(black.find_project_root((src_python,)), src_dir.resolve())
 
-    @patch("black.find_user_pyproject_toml", black.find_user_pyproject_toml.__wrapped__)
+    @patch(
+        "black.files.find_user_pyproject_toml",
+        black.files.find_user_pyproject_toml.__wrapped__,
+    )
     def test_find_user_pyproject_toml_linux(self) -> None:
         if system() == "Windows":
             return
@@ -1970,7 +1978,7 @@ class BlackTestCase(BlackBaseTestCase):
             tmp_user_config = Path(workspace) / "black"
             with patch.dict("os.environ", {"XDG_CONFIG_HOME": workspace}):
                 self.assertEqual(
-                    black.find_user_pyproject_toml(), tmp_user_config.resolve()
+                    black.files.find_user_pyproject_toml(), tmp_user_config.resolve()
                 )
 
         # Test fallback for XDG_CONFIG_HOME
@@ -1978,7 +1986,7 @@ class BlackTestCase(BlackBaseTestCase):
             os.environ.pop("XDG_CONFIG_HOME", None)
             fallback_user_config = Path("~/.config").expanduser() / "black"
             self.assertEqual(
-                black.find_user_pyproject_toml(), fallback_user_config.resolve()
+                black.files.find_user_pyproject_toml(), fallback_user_config.resolve()
             )
 
     def test_find_user_pyproject_toml_windows(self) -> None:
@@ -1986,7 +1994,9 @@ class BlackTestCase(BlackBaseTestCase):
             return
 
         user_config_path = Path.home() / ".black"
-        self.assertEqual(black.find_user_pyproject_toml(), user_config_path.resolve())
+        self.assertEqual(
+            black.files.find_user_pyproject_toml(), user_config_path.resolve()
+        )
 
     def test_bpo_33660_workaround(self) -> None:
         if system() == "Windows":

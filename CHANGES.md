@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### _Black_
+
+- Refactor `src/black/__init__.py` into many files (#2206)
+
 ### Documentation
 
 - Sigificantly reorganized the documentation to make much more sense. Check them out by
