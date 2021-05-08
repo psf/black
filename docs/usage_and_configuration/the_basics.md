@@ -124,6 +124,148 @@ running `black --help`.
 
 </details>
 
+### Code input alternatives
+
+#### Standard Input
+
+_Black_ supports formatting code via STDIN, with the result being printed to STDOUT.
+Just let _Black_ know with `-` as the path.
+
+```console
+$ echo "print ( 'hello, world' )" | black -
+print("hello, world")
+reformatted -
+All done! ✨ 🍰 ✨
+1 file reformatted.
+```
+
+**Tip:** if you need _Black_ to treat STDIN input as a file passed directly via the CLI,
+use `--stdin-filename`. Useful to make sure _Black_ will respect the `--force-exclude`
+option on some editors that rely on using stdin.
+
+#### As a string
+
+You can also pass code as a string using the `-c` / `--code` option.
+
+```console
+$ black --code "print ( 'hello, world' )"
+print("hello, world")
+```
+
+```{warning}
+--check, --diff, and --safe / --fast have no effect when using -c / --code. Safety
+checks normally turned on by default that verify _Black_'s output are disabled as well.
+```
+
+### Writeback and reporting
+
+By default _Black_ reformats the files given and/or found in place. Sometimes you need
+_Black_ to just tell you what it _would_ do without actually rewriting the Python files.
+
+There's two variations to this mode that are independently enabled by their respective
+flags. Both variations can be enabled at once.
+
+#### Exit code
+
+Passing `--check` will make _Black_ exit with:
+
+- code 0 if nothing would change;
+- code 1 if some files would be reformatted; or
+- code 123 if there was an internal error
+
+```console
+$ black test.py --check
+All done! ✨ 🍰 ✨
+1 file would be left unchanged.
+$ echo $?
+0
+
+$ black test.py --check
+would reformat test.py
+Oh no! 💥 💔 💥
+1 file would be reformatted.
+$ echo $?
+1
+
+$ black test.py --check
+error: cannot format test.py: INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_kjdr1oog.log
+Oh no! 💥 💔 💥
+1 file would fail to reformat.
+$ echo $?
+123
+```
+
+#### Diffs
+
+Passing `--diff` will make _Black_ print out diffs that indicate what changes _Black_
+would've made. They are printed to STDOUT so capturing them is simple.
+
+If you'd like coloured diffs, you can enable them with the `--color`.
+
+```console
+$ black test.py --diff
+--- test.py     2021-03-08 22:23:40.848954 +0000
++++ test.py     2021-03-08 22:23:47.126319 +0000
+@@ -1 +1 @@
+-print ( 'hello, world' )
++print("hello, world")
+would reformat test.py
+All done! ✨ 🍰 ✨
+1 file would be reformatted.
+```
+
+### Output verbosity
+
+_Black_ in generally tries to produce the right amount of output, balancing between
+usefulness and conciseness. By default, _Black_ emits files modified and errors
+messages, plus a short summary.
+
+```console
+$ black src/
+error: cannot format src/black_primer/cli.py: Cannot parse: 5:6: mport asyncio
+reformatted src/black_primer/lib.py
+reformatted src/blackd/__init__.py
+reformatted src/black/__init__.py
+Oh no! 💥 💔 💥
+3 files reformatted, 2 files left unchanged, 1 file failed to reformat.
+```
+
+Passing `-v` / `--verbose` will cause _Black_ to also emit messages about files that
+were not changed or were ignored due to exclusion patterns. If _Black_ is using a
+configuration file, a blue message detailing which one it is using will be emitted.
+
+```console
+$ black src/ -v
+Using configuration from /tmp/pyproject.toml.
+src/blib2to3 ignored: matches the --extend-exclude regular expression
+src/_black_version.py wasn't modified on disk since last run.
+src/black/__main__.py wasn't modified on disk since last run.
+error: cannot format src/black_primer/cli.py: Cannot parse: 5:6: mport asyncio
+reformatted src/black_primer/lib.py
+reformatted src/blackd/__init__.py
+reformatted src/black/__init__.py
+Oh no! 💥 💔 💥
+3 files reformatted, 2 files left unchanged, 1 file failed to reformat
+```
+
+Passing `-q` / `--quiet` will cause _Black_ to stop emitting all non-critial output.
+Error messages will still be emitted (which can silenced by `2>/dev/null`).
+
+```console
+$ black src/ -q
+error: cannot format src/black_primer/cli.py: Cannot parse: 5:6: mport asyncio
+```
+
+### Getting the version
+
+You can check the version of Black you have installed can be done using the `--version`
+flag.
+
+```console
+$ black --version
+black, version 20.8b1
+```
+
 ## Configuration via a file
 
 _Black_ is able to read project-specific default values for its command line options
