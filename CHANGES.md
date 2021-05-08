@@ -1,5 +1,11 @@
 ## Change Log
 
+### Unreleased
+
+#### _Black_
+
+- Refactor `src/black/__init__.py` into many files (#2206)
+
 ### 21.5b0
 
 #### _Black_
