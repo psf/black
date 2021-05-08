@@ -46,9 +46,8 @@ from black.brackets import DOT_PRIORITY, COMMA_PRIORITY
 from black.lines import Line, EmptyLineTracker, line_to_string, is_line_short_enough
 from black.lines import can_omit_invisible_parens, can_be_split, append_leaves
 from black.comments import generate_comments, list_comments, normalize_fmt_off, FMT_OFF
+from black.numerics import normalize_numeric_literal
 from black.strings import get_string_prefix, re_compile_maybe_verbose
-from black.strings import format_hex, format_scientific_notation
-from black.strings import format_long_or_complex_number, format_float_or_int_string
 from black.strings import dump_to_file, diff, color_diff, fix_docstring
 from black.strings import normalize_string_prefix, normalize_string_quotes
 from black.trans import Transformer, CannotTransform, StringMerger
@@ -1569,27 +1568,6 @@ def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
             return
 
     leaf.prefix = ""
-
-
-def normalize_numeric_literal(leaf: Leaf) -> None:
-    """Normalizes numeric (float, int, and complex) literals.
-
-    All letters used in the representation are normalized to lowercase (except
-    in Python 2 long literals).
-    """
-    text = leaf.value.lower()
-    if text.startswith(("0o", "0b")):
-        # Leave octal and binary literals alone.
-        pass
-    elif text.startswith("0x"):
-        text = format_hex(text)
-    elif "e" in text:
-        text = format_scientific_notation(text)
-    elif text.endswith(("j", "l")):
-        text = format_long_or_complex_number(text)
-    else:
-        text = format_float_or_int_string(text)
-    leaf.value = text
 
 
 def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
