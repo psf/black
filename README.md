@@ -26,7 +26,7 @@ becomes transparent after a while and you can focus on the content instead.
 
 _Black_ makes code review faster by producing the smallest diffs possible.
 
-Try it out now using the [Black Playground](https://black.now.sh). Watch the
+Try it out now using the [Black Playground](https://black.vercel.app). Watch the
 [PyCon 2019 talk](https://youtu.be/esZLCuWs_2Y) to learn more.
 
 ---

@@ -139,7 +139,6 @@ Multiple contributions by:
 - [Ralf Schmitt](mailto:ralf@systemexit.de)
 - [Ramón Valles](mailto:mroutis@protonmail.com)
 - [Richard Fearn](mailto:richardfearn@gmail.com)
-- Richard Si
 - [Rishikesh Jha](mailto:rishijha424@gmail.com)
 - [Rupert Bedford](mailto:rupert@rupertb.com)
 - Russell Davis

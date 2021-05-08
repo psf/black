@@ -23,8 +23,8 @@ assignees: ""
 
 **Does this bug also happen on master?** To answer this, you have two options:
 
-1. Use the online formatter at https://black.now.sh/?version=master, which will use the
-   latest master branch.
+1. Use the online formatter at <https://black.vercel.app/?version=master>, which will
+   use the latest master branch.
 1. Or run _Black_ on your machine:
    - create a new virtualenv (make sure it's the same Python version);
    - clone this repository;

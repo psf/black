@@ -32,7 +32,7 @@ def make_pypi_svg(version: str) -> None:
 # -- Project information -----------------------------------------------------
 
 project = "Black"
-copyright = "2018-present, Łukasz Langa and contributors to Black"
+copyright = "2018-Present, Łukasz Langa and contributors to Black"
 author = "Łukasz Langa and contributors to Black"
 
 # Autopopulate version

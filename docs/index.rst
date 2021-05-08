@@ -14,7 +14,7 @@ possible. Blackened code looks the same regardless of the project
 you're reading. Formatting becomes transparent after a while and you
 can focus on the content instead.
 
-Try it out now using the `Black Playground <https://black.now.sh>`_.
+Try it out now using the `Black Playground <https://black.vercel.app>`_.
 
 .. admonition:: Note - this is a beta product
 
