@@ -62,8 +62,8 @@ Options include the following:
    1. Make sure you have the
       [File Watchers](https://plugins.jetbrains.com/plugin/7177-file-watchers) plugin
       installed.
-   1. Go to `Preferences or Settings -> Tools -> File Watchers` and click `+` to add a new
-      watcher:
+   1. Go to `Preferences or Settings -> Tools -> File Watchers` and click `+` to add a
+      new watcher:
       - Name: Black
       - File type: Python
       - Scope: Project Files
@@ -106,8 +106,8 @@ Wing supports black via the OS Commands tool, as explained in the Wing documenta
      - [x] Auto-save files before execution
      - [x] Line mode
 
-1. Select a file in the editor and press **F1** , or whatever key binding you selected in
-   step 3, to reformat the file.
+1. Select a file in the editor and press **F1** , or whatever key binding you selected
+   in step 3, to reformat the file.
 
 ## Vim
 

@@ -29,11 +29,11 @@ _Black_ makes code review faster by producing the smallest diffs possible.
 Try it out now using the [Black Playground](https://black.now.sh). Watch the
 [PyCon 2019 talk](https://youtu.be/esZLCuWs_2Y) to learn more.
 
-______________________________________________________________________
+---
 
 **[Read the documentation on ReadTheDocs!](https://black.readthedocs.io/en/stable)**
 
-______________________________________________________________________
+---
 
 ## Installation and usage
 

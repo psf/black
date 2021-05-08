@@ -1,9 +1,9 @@
 ---
 name: Style issue
 about: Help us improve the Black style
-title: ''
+title: ""
 labels: design
-assignees: ''
+assignees: ""
 ---
 
 **Describe the style change** A clear and concise description of how the style can be

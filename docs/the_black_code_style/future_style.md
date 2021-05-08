@@ -7,7 +7,7 @@ _Black_. It's recommended that you read the latest version available.
 
 ## Using backslashes for with statements
 
-[Backslashes are bad and should be never be used](labels/why-no-backslashes)) however
+[Backslashes are bad and should be never be used](labels/why-no-backslashes) however
 there is one exception: `with` statements using multiple context managers. Before Python
 3.9 Python's grammar does not allow organizing parentheses around the series of context
 managers.

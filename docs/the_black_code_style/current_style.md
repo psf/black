@@ -79,7 +79,7 @@ def very_important_function(
 
 (labels/why-no-backslashes)=
 
-*Black* prefers parentheses over backslashes, and will remove backslashes if found.
+_Black_ prefers parentheses over backslashes, and will remove backslashes if found.
 
 ```py3
 # in:
@@ -383,10 +383,10 @@ structure of the file (listing globals, functions, and classes with their member
 recommended code style for those files is more terse than PEP 8:
 
 - prefer `...` on the same line as the class/function signature;
-- avoid vertical whitespace between consecutive module-level functions, names, or methods
-  and fields within a single class;
-- use a single blank line between top-level class definitions, or none if the classes are
-  very small.
+- avoid vertical whitespace between consecutive module-level functions, names, or
+  methods and fields within a single class;
+- use a single blank line between top-level class definitions, or none if the classes
+  are very small.
 
 _Black_ enforces the above rules. There are additional guidelines for formatting `.pyi`
 file that are not enforced yet but might be in a future version of the formatter:
@@ -455,18 +455,18 @@ target. There are three limited cases in which the AST does differ:
 1. _Black_ cleans up leading and trailing whitespace of docstrings, re-indenting them if
    needed. It's been one of the most popular user-reported features for the formatter to
    fix whitespace issues with docstrings. While the result is technically an AST
-   difference, due to the various possibilities of forming docstrings, all realtime use of
-   docstrings that we're aware of sanitizes indentation and leading/trailing whitespace
-   anyway.
+   difference, due to the various possibilities of forming docstrings, all realtime use
+   of docstrings that we're aware of sanitizes indentation and leading/trailing
+   whitespace anyway.
 
 1. _Black_ manages optional parentheses for some statements. In the case of the `del`
-   statement, presence of wrapping parentheses or lack of thereof changes the resulting AST
-   but is semantically equivalent in the interpreter.
+   statement, presence of wrapping parentheses or lack of thereof changes the resulting
+   AST but is semantically equivalent in the interpreter.
 
-1. _Black_ might move comments around, which includes type comments. Those are part of the
-   AST as of Python 3.8. While the tool implements a number of special cases for those
-   comments, there is no guarantee they will remain where they were in the source. Note
-   that this doesn't change runtime behavior of the source code.
+1. _Black_ might move comments around, which includes type comments. Those are part of
+   the AST as of Python 3.8. While the tool implements a number of special cases for
+   those comments, there is no guarantee they will remain where they were in the source.
+   Note that this doesn't change runtime behavior of the source code.
 
 To put things in perspective, the code equivalence check is a feature of _Black_ which
 other formatters don't implement at all. It is of crucial importance to us to ensure

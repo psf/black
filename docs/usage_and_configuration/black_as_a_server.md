@@ -51,18 +51,18 @@ is rejected with `HTTP 501` (Not Implemented).
 The headers controlling how source code is formatted are:
 
 - `X-Line-Length`: corresponds to the `--line-length` command line flag.
-- `X-Skip-String-Normalization`: corresponds to the `--skip-string-normalization` command
-  line flag. If present and its value is not the empty string, no string normalization
-  will be performed.
-- `X-Skip-Magic-Trailing-Comma`: corresponds to the `--skip-magic-trailing-comma` command
-  line flag. If present and its value is not the empty string, trailing commas will not be
-  used as a reason to split lines.
+- `X-Skip-String-Normalization`: corresponds to the `--skip-string-normalization`
+  command line flag. If present and its value is not the empty string, no string
+  normalization will be performed.
+- `X-Skip-Magic-Trailing-Comma`: corresponds to the `--skip-magic-trailing-comma`
+  command line flag. If present and its value is not the empty string, trailing commas
+  will not be used as a reason to split lines.
 - `X-Fast-Or-Safe`: if set to `fast`, `blackd` will act as _Black_ does when passed the
   `--fast` command line flag.
 - `X-Python-Variant`: if set to `pyi`, `blackd` will act as _Black_ does when passed the
-  `--pyi` command line flag. Otherwise, its value must correspond to a Python version or a
-  set of comma-separated Python versions, optionally prefixed with `py`. For example, to
-  request code that is compatible with Python 3.5 and 3.6, set the header to
+  `--pyi` command line flag. Otherwise, its value must correspond to a Python version or
+  a set of comma-separated Python versions, optionally prefixed with `py`. For example,
+  to request code that is compatible with Python 3.5 and 3.6, set the header to
   `py3.5,py3.6`.
 - `X-Diff`: corresponds to the `--diff` command line flag. If present, a diff of the
   formats will be output.
