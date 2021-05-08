@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from functools import lru_cache
 import regex as re
-from typing import Iterator, List, Optional, TypeVar, Union
+from typing import Iterator, List, Optional, Union
 
 from blib2to3.pytree import Node, Leaf
 from blib2to3.pgen2 import token
@@ -10,7 +10,6 @@ from black.nodes import first_leaf_column, preceding_leaf, container_of
 from black.nodes import STANDALONE_COMMENT, WHITESPACE
 
 # types
-T = TypeVar("T")
 LN = Union[Leaf, Node]
 
 

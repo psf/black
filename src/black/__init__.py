@@ -23,7 +23,6 @@ from typing import (
     Set,
     Sized,
     Tuple,
-    TypeVar,
     Union,
 )
 
@@ -59,7 +58,6 @@ from _black_version import version as __version__
 
 
 # types
-T = TypeVar("T")
 FileContent = str
 Encoding = str
 NewLine = str

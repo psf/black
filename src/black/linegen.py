@@ -3,7 +3,7 @@ Generating lines of code.
 """
 from functools import partial, wraps
 import sys
-from typing import Collection, Iterator, List, Optional, Set, TypeVar, Union
+from typing import Collection, Iterator, List, Optional, Set, Union
 
 from dataclasses import dataclass, field
 
