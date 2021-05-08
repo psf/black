@@ -3,13 +3,14 @@
 A lot of the time, your change will affect formatting and/or performance. Quantifying
 these changes is hard, so we have tooling to help make it easier.
 
-It's recommended you take a look at quantifable changes your change will cause before
-submitting a PR if it seems disruptive enough.
+It's recommended you evaluate the quantifiable changes your _Black_ formatting
+modification causes before submitting a PR. Think about if the change seems disruptive
+enough to cause frustration to projects that are already "black formatted".
 
 ## black-primer
 
 `black-primer` is a tool built for CI (and humans) to have _Black_ `--check` a number of
-(configured in `primer.json`) Git accessible projects in parallel. _(A PR will be
+Git accessible projects in parallel. (configured in `primer.json`) _(A PR will be
 accepted to add Mercurial support.)_
 
 ### Run flow

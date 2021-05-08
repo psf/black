@@ -32,7 +32,7 @@ def make_pypi_svg(version: str) -> None:
 # -- Project information -----------------------------------------------------
 
 project = "Black"
-copyright = "2021, Łukasz Langa and contributors to Black"
+copyright = "2018-present, Łukasz Langa and contributors to Black"
 author = "Łukasz Langa and contributors to Black"
 
 # Autopopulate version
@@ -94,6 +94,14 @@ pygments_style = "sphinx"
 # headers up to and including level 3.
 myst_heading_anchors = 3
 
+# Prettier support formatting some MyST syntax but not all, so let's disable the
+# unsupported yet still enabled by default ones.
+myst_disable_syntax = [
+    "myst_block_break",
+    "myst_line_comment",
+    "math_block",
+]
+
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -146,21 +154,6 @@ htmlhelp_basename = "blackdoc"
 
 
 # -- Options for LaTeX output ------------------------------------------------
-
-# latex_elements = {
-#     The paper size ('letterpaper' or 'a4paper').
-#
-#     'papersize': 'letterpaper',
-#     The font size ('10pt', '11pt' or '12pt').
-#
-#     'pointsize': '10pt',
-#     Additional stuff for the LaTeX preamble.
-#
-#     'preamble': '',
-#     Latex figure (float) alignment
-#
-#     'figure_align': 'htbp',
-# }
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,

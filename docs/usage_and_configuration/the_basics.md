@@ -132,7 +132,8 @@ from a `pyproject.toml` file. This is especially useful for specifying custom
 project.
 
 **Pro-tip**: If you're asking yourself "Do I need to configure anything?" the answer is
-"No". _Black_ is all about sensible defaults.
+"No". _Black_ is all about sensible defaults. Applying those defaults will have your
+code in compliance with many other _Black_ formatted projects.
 
 ### What on Earth is a `pyproject.toml` file?
 

@@ -68,12 +68,13 @@ Further information can be found in our docs:
 ### NOTE: This is a beta product
 
 _Black_ is already [successfully used](https://github.com/psf/black#used-by) by many
-projects, small and big. It also sports a decent test suite. However, it is still very
-new. Things will probably be wonky for a while. This is made explicit by the "Beta"
-trove classifier, as well as by the "b" in the version number. What this means for you
-is that **until the formatter becomes stable, you should expect some formatting to
-change in the future**. That being said, no drastic stylistic changes are planned,
-mostly responses to bug reports.
+projects, small and big. Black has a comprehensive test suite, with efficient parallel
+tests, and our own auto formatting and parallel Continuous Integration runner. However,
+_Black_ is still beta. Things will probably be wonky for a while. This is made explicit
+by the "Beta" trove classifier, as well as by the "b" in the version number. What this
+means for you is that **until the formatter becomes stable, you should expect some
+formatting to change in the future**. That being said, no drastic stylistic changes are
+planned, mostly responses to bug reports.
 
 Also, as a safety measure which slows down processing, _Black_ will check that the
 reformatted code still produces a valid AST that is effectively equivalent to the
@@ -124,7 +125,8 @@ And if you're looking for more general configuration documentation:
 - [Usage and Configuration](https://black.readthedocs.io/en/stable/usage_and_configuration/index.html)
 
 **Pro-tip**: If you're asking yourself "Do I need to configure anything?" the answer is
-"No". _Black_ is all about sensible defaults.
+"No". _Black_ is all about sensible defaults. Applying those defaults will have your
+code in compliance with many other _Black_ formatted projects.
 
 ## Used by
 

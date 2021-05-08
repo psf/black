@@ -21,6 +21,9 @@ jobs:
       - uses: psf/black@stable
 ```
 
+We recommend the use of the `@stable` tag, but per version tags also exist if you prefer
+that.
+
 You may use `options` (Default is `'--check --diff'`) and `src` (Default is `'.'`) as
 follows:
 
