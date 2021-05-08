@@ -35,13 +35,11 @@ from black.nodes import STARS, syms, is_simple_decorator_expression
 from black.lines import Line, EmptyLineTracker
 from black.linegen import transform_line, LineGenerator, LN
 from black.comments import normalize_fmt_off
-from black.strings import re_compile_maybe_verbose
-from black.strings import dump_to_file, diff, color_diff
 from black.mode import Mode, TargetVersion
 from black.mode import Feature, supports_feature, VERSION_TO_FEATURES
 from black.cache import read_cache, write_cache, get_cache_info, filter_cached, Cache
 from black.concurrency import cancel, shutdown
-from black.output import out, err
+from black.output import dump_to_file, diff, color_diff, out, err
 from black.report import Report, Changed
 from black.files import find_project_root, find_pyproject_toml, parse_pyproject_toml
 from black.files import gen_python_files, get_gitignore, normalize_path_maybe_ignore
@@ -146,6 +144,17 @@ def target_version_option_callback(
     when it was a lambda, causing mypyc trouble.
     """
     return [TargetVersion[val.upper()] for val in v]
+
+
+def re_compile_maybe_verbose(regex: str) -> Pattern[str]:
+    """Compile a regular expression string in `regex`.
+
+    If it contains newlines, use verbose mode.
+    """
+    if "\n" in regex:
+        regex = "(?x)" + regex
+    compiled: Pattern[str] = re.compile(regex)
+    return compiled
 
 
 def validate_regex(

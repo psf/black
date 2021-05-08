@@ -1,13 +1,10 @@
 """
-String-related utility functions.
+Formatting string literals.
 """
 
 import regex as re
 import sys
-import tempfile
 from typing import List, Pattern
-
-from mypy_extensions import mypyc_attr
 
 
 STRING_PREFIX_CHARS = "furbFURB"  # All possible string prefix characters.
@@ -22,17 +19,6 @@ def sub_twice(regex: Pattern[str], replacement: str, original: str) -> str:
     return regex.sub(replacement, regex.sub(replacement, original))
 
 
-def re_compile_maybe_verbose(regex: str) -> Pattern[str]:
-    """Compile a regular expression string in `regex`.
-
-    If it contains newlines, use verbose mode.
-    """
-    if "\n" in regex:
-        regex = "(?x)" + regex
-    compiled: Pattern[str] = re.compile(regex)
-    return compiled
-
-
 def has_triple_quotes(string: str) -> bool:
     """
     Returns:
@@ -40,19 +26,6 @@ def has_triple_quotes(string: str) -> bool:
     """
     raw_string = string.lstrip(STRING_PREFIX_CHARS)
     return raw_string[:3] in {'"""', "'''"}
-
-
-@mypyc_attr(patchable=True)
-def dump_to_file(*output: str, ensure_final_newline: bool = True) -> str:
-    """Dump `output` to a temporary file. Return path to the file."""
-    with tempfile.NamedTemporaryFile(
-        mode="w", prefix="blk_", suffix=".log", delete=False, encoding="utf8"
-    ) as f:
-        for lines in output:
-            f.write(lines)
-            if ensure_final_newline and lines and lines[-1] != "\n":
-                f.write("\n")
-    return f.name
 
 
 def lines_with_leading_tabs_expanded(s: str) -> List[str]:
@@ -99,42 +72,6 @@ def fix_docstring(docstring: str, prefix: str) -> str:
             else:
                 trimmed.append("")
     return "\n".join(trimmed)
-
-
-def diff(a: str, b: str, a_name: str, b_name: str) -> str:
-    """Return a unified diff string between strings `a` and `b`."""
-    import difflib
-
-    a_lines = [line for line in a.splitlines(keepends=True)]
-    b_lines = [line for line in b.splitlines(keepends=True)]
-    diff_lines = []
-    for line in difflib.unified_diff(
-        a_lines, b_lines, fromfile=a_name, tofile=b_name, n=5
-    ):
-        # Work around https://bugs.python.org/issue2142
-        # See https://www.gnu.org/software/diffutils/manual/html_node/Incomplete-Lines.html
-        if line[-1] == "\n":
-            diff_lines.append(line)
-        else:
-            diff_lines.append(line + "\n")
-            diff_lines.append("\\ No newline at end of file\n")
-    return "".join(diff_lines)
-
-
-def color_diff(contents: str) -> str:
-    """Inject the ANSI color codes to the diff."""
-    lines = contents.split("\n")
-    for i, line in enumerate(lines):
-        if line.startswith("+++") or line.startswith("---"):
-            line = "\033[1;37m" + line + "\033[0m"  # bold white, reset
-        elif line.startswith("@@"):
-            line = "\033[36m" + line + "\033[0m"  # cyan, reset
-        elif line.startswith("+"):
-            line = "\033[32m" + line + "\033[0m"  # green, reset
-        elif line.startswith("-"):
-            line = "\033[31m" + line + "\033[0m"  # red, reset
-        lines[i] = line
-    return "\n".join(lines)
 
 
 def get_string_prefix(string: str) -> str:
