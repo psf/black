@@ -128,8 +128,8 @@ running `black --help`.
 
 #### Standard Input
 
-_Black_ supports formatting code via STDIN, with the result being printed to STDOUT.
-Just let _Black_ know with `-` as the path.
+_Black_ supports formatting code via stdin, with the result being printed to stdin. Just
+let _Black_ know with `-` as the path.
 
 ```console
 $ echo "print ( 'hello, world' )" | black -
@@ -139,7 +139,7 @@ All done! ✨ 🍰 ✨
 1 file reformatted.
 ```
 
-**Tip:** if you need _Black_ to treat STDIN input as a file passed directly via the CLI,
+**Tip:** if you need _Black_ to treat stdin input as a file passed directly via the CLI,
 use `--stdin-filename`. Useful to make sure _Black_ will respect the `--force-exclude`
 option on some editors that rely on using stdin.
 
@@ -198,7 +198,7 @@ $ echo $?
 #### Diffs
 
 Passing `--diff` will make _Black_ print out diffs that indicate what changes _Black_
-would've made. They are printed to STDOUT so capturing them is simple.
+would've made. They are printed to stdout so capturing them is simple.
 
 If you'd like coloured diffs, you can enable them with the `--color`.
 
@@ -216,7 +216,7 @@ All done! ✨ 🍰 ✨
 
 ### Output verbosity
 
-_Black_ in generally tries to produce the right amount of output, balancing between
+_Black_ in general tries to produce the right amount of output, balancing between
 usefulness and conciseness. By default, _Black_ emits files modified and errors
 messages, plus a short summary.
 
@@ -258,8 +258,8 @@ error: cannot format src/black_primer/cli.py: Cannot parse: 5:6: mport asyncio
 
 ### Getting the version
 
-You can check the version of Black you have installed can be done using the `--version`
-flag.
+You can check the version of _Black_ you have installed can be done using the
+`--version` flag.
 
 ```console
 $ black --version
