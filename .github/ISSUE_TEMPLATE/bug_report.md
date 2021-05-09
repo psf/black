@@ -18,13 +18,13 @@ assignees: ""
 
 **Environment (please complete the following information):**
 
-- Version: \[e.g. master\]
+- Version: \[e.g. main\]
 - OS and Python version: \[e.g. Linux/Python 3.7.4rc1\]
 
-**Does this bug also happen on master?** To answer this, you have two options:
+**Does this bug also happen on main?** To answer this, you have two options:
 
-1. Use the online formatter at <https://black.vercel.app/?version=master>, which will
-   use the latest master branch.
+1. Use the online formatter at <https://black.vercel.app/?version=main>, which will use
+   the latest main branch.
 1. Or run _Black_ on your machine:
    - create a new virtualenv (make sure it's the same Python version);
    - clone this repository;

@@ -81,7 +81,7 @@ $ sphinx-build -a -b html -W docs/ docs/_build/
 if we get source code changes. It will error on formatting changes or errors. Please run
 before pushing your PR to see if you get the actions you would expect from _Black_ with
 your PR. You may need to change
-[primer.json](https://github.com/psf/black/blob/master/src/black_primer/primer.json)
+[primer.json](https://github.com/psf/black/blob/main/src/black_primer/primer.json)
 configuration for it to pass.
 
 For more `black-primer` information visit the

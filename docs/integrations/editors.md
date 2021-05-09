@@ -166,7 +166,7 @@ automatically installs _Black_. You can upgrade it later by calling `:BlackUpgra
 restarting Vim.
 
 If you need to do anything special to make your virtualenv work and install _Black_ (for
-example you want to run a version from master), create a virtualenv manually and point
+example you want to run a version from main), create a virtualenv manually and point
 `g:black_virtualenv` to it. The plugin will use it.
 
 To run _Black_ on save, add the following line to `.vimrc` or `init.vim`:
