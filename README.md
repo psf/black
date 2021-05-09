@@ -118,7 +118,7 @@ project.
 
 You can find more details in our documentation:
 
-- [The basics: Configuration via a file](https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html#configuration-via-a-file)
+- [The basics: Configuration via a file](https://black.readthedocs.io/en/stable/installation_and_usage.html#usage)
 
 And if you're looking for more general configuration documentation:
 
