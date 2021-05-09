@@ -37,25 +37,6 @@ If you're running locally yourself to test black on lots of code try:
 
 ### CLI arguments
 
-```text
-Usage: black-primer [OPTIONS]
+```{program-output} black-primer --help
 
-  primer - prime projects for blackening... 🏴
-
-Options:
-  -c, --config PATH      JSON config file path  [default: /Users/cooper/repos/
-                         black/src/black_primer/primer.json]
-
-  --debug                Turn on debug logging  [default: False]
-  -k, --keep             Keep workdir + repos post run  [default: False]
-  -L, --long-checkouts   Pull big projects to test  [default: False]
-  -R, --rebase           Rebase project if already checked out  [default:
-                         False]
-
-  -w, --workdir PATH     Directory path for repo checkouts  [default: /var/fol
-                         ders/tc/hbwxh76j1hn6gqjd2n2sjn4j9k1glp/T/primer.20200
-                         517125229]
-
-  -W, --workers INTEGER  Number of parallel worker coroutines  [default: 2]
-  -h, --help             Show this message and exit.
 ```

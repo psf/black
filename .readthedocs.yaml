@@ -1,7 +1,14 @@
 version: 2
+
+formats:
+  - htmlzip
+
 python:
   version: 3.8
   install:
     - requirements: docs/requirements.txt
-    - method: setuptools
+
+    - method: pip
       path: .
+      extra_requirements:
+        - d

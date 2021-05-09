@@ -1,2 +1,3 @@
-MyST-Parser==0.13.7
+MyST-Parser==0.14.0
 Sphinx==3.5.4
+sphinxcontrib-programoutput==0.17
