@@ -79,7 +79,7 @@ planned, mostly responses to bug reports.
 Also, as a safety measure which slows down processing, _Black_ will check that the
 reformatted code still produces a valid AST that is effectively equivalent to the
 original (see the
-[Pragmatism](https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html#ast-before-and-after-formatting)
+[AST Before and After Formatting](https://black.readthedocs.io/en/stable/the_black_code_style.html#ast-before-and-after-formatting)
 section for details). If you're feeling confident, use `--fast`.
 
 ## The _Black_ code style
