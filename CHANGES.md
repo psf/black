@@ -8,6 +8,10 @@
 
 ### Documentation
 
+- Replaced all remaining references to the
+  [`master`](https://github.com/psf/black/tree/main) branch with the
+  [`main`](https://github.com/psf/black/tree/main) branch. Some additional changes in
+  the source code were also made. (#2210)
 - Sigificantly reorganized the documentation to make much more sense. Check them out by
   heading over to [the stable docs on RTD](https://black.readthedocs.io/en/stable/).
   (#2174)

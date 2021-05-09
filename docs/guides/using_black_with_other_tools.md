@@ -13,7 +13,7 @@ tools out there.
 tools, using **their** supported file formats.
 
 Compatible configuration files can be
-[found here](https://github.com/psf/black/blob/master/docs/compatible_configs/).
+[found here](https://github.com/psf/black/blob/main/docs/compatible_configs/).
 
 ### isort
 
