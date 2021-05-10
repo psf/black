@@ -59,6 +59,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
     "myst_parser",
+    "sphinxcontrib.programoutput",
 ]
 
 # If you need extensions of a certain version or higher, list them here.

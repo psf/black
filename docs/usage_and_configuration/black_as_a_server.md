@@ -18,14 +18,8 @@ formatting requests.
 `blackd` provides even less options than _Black_. You can see them by running
 `blackd --help`:
 
-```text
-Usage: blackd [OPTIONS]
+```{program-output} blackd --help
 
-Options:
-  --bind-host TEXT                Address to bind the server to.
-  --bind-port INTEGER             Port to listen on
-  --version                       Show the version and exit.
-  -h, --help                      Show this message and exit.
 ```
 
 There is no official `blackd` client tool (yet!). You can test that blackd is working
