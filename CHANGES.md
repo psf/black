@@ -5,6 +5,7 @@
 ### _Black_
 
 - Refactor `src/black/__init__.py` into many files (#2206)
+- Provide a more useful error when parsing fails during AST safety checks (#2218)
 
 ### Documentation
 

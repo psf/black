@@ -108,18 +108,23 @@ def lib2to3_unparse(node: Node) -> str:
 
 def parse_ast(src: str) -> Union[ast.AST, ast3.AST, ast27.AST]:
     filename = "<unknown>"
+    error = None
     if sys.version_info >= (3, 8):
         # TODO: support Python 4+ ;)
         for minor_version in range(sys.version_info[1], 4, -1):
             try:
                 return ast.parse(src, filename, feature_version=(3, minor_version))
-            except SyntaxError:
+            except SyntaxError as e:
+                if error is None:
+                    error = str(e)
                 continue
     else:
         for feature_version in (7, 6):
             try:
                 return ast3.parse(src, filename, feature_version=feature_version)
-            except SyntaxError:
+            except SyntaxError as e:
+                if error is None:
+                    error = str(e)
                 continue
     if ast27.__name__ == "ast":
         raise SyntaxError(
@@ -127,7 +132,10 @@ def parse_ast(src: str) -> Union[ast.AST, ast3.AST, ast27.AST]:
             "If you are trying to format Python 2 files please reinstall Black"
             " with the 'python2' extra: `python3 -m pip install black[python2]`."
         )
-    return ast27.parse(src)
+    try:
+        return ast27.parse(src)
+    except SyntaxError as e:
+        raise SyntaxError(error or str(e))
 
 
 def stringify_ast(
