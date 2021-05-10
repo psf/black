@@ -480,6 +480,29 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertIn(msg, actual)
 
     @pytest.mark.python2
+    def test_safety_check_syntax_error(self) -> None:
+        source = "e = 'test'\nx = f'{'"
+        tmp_file = Path(black.dump_to_file(source))
+        try:
+            runner = BlackRunner()
+            result = runner.invoke(black.main, [str(tmp_file)])
+            self.assertEqual(result.exit_code, 123)
+        finally:
+            os.unlink(tmp_file)
+        actual = (
+            runner.stderr_bytes.decode()
+            .replace("\n", "")
+            .replace("\\n", "")
+            .replace("\\r", "")
+            .replace("\r", "")
+        )
+        msg = (
+            "cannot use --safe with this file; failed to parse source file."
+            "  AST error message: f-string: expecting '}' (<unknown>, line 2)"
+        )
+        self.assertIn(msg, actual)
+
+    @pytest.mark.python2
     @patch("black.dump_to_file", dump_to_stderr)
     def test_python2_print_function(self) -> None:
         source, expected = read_data("python2_print_function")
