@@ -128,8 +128,8 @@ running `black --help`.
 
 #### Standard Input
 
-_Black_ supports formatting code via stdin, with the result being printed to stdin. Just
-let _Black_ know with `-` as the path.
+_Black_ supports formatting code via stdin, with the result being printed to stdout.
+Just let _Black_ know with `-` as the path.
 
 ```console
 $ echo "print ( 'hello, world' )" | black -
@@ -155,6 +155,8 @@ print("hello, world")
 ```{warning}
 --check, --diff, and --safe / --fast have no effect when using -c / --code. Safety
 checks normally turned on by default that verify _Black_'s output are disabled as well.
+This is a bug which we intend to fix eventually. More details can be found this [bug
+report](https://github.com/psf/black/issues/2104).
 ```
 
 ### Writeback and reporting
@@ -200,7 +202,7 @@ $ echo $?
 Passing `--diff` will make _Black_ print out diffs that indicate what changes _Black_
 would've made. They are printed to stdout so capturing them is simple.
 
-If you'd like coloured diffs, you can enable them with the `--color`.
+If you'd like colored diffs, you can enable them with the `--color`.
 
 ```console
 $ black test.py --diff
@@ -217,8 +219,8 @@ All done! ✨ 🍰 ✨
 ### Output verbosity
 
 _Black_ in general tries to produce the right amount of output, balancing between
-usefulness and conciseness. By default, _Black_ emits files modified and errors
-messages, plus a short summary.
+usefulness and conciseness. By default, _Black_ emits files modified and error messages,
+plus a short summary.
 
 ```console
 $ black src/
@@ -258,12 +260,11 @@ error: cannot format src/black_primer/cli.py: Cannot parse: 5:6: mport asyncio
 
 ### Getting the version
 
-You can check the version of _Black_ you have installed can be done using the
-`--version` flag.
+You can check the version of _Black_ you have installed using the `--version` flag.
 
 ```console
 $ black --version
-black, version 20.8b1
+black, version 21.5b0
 ```
 
 ## Configuration via a file
