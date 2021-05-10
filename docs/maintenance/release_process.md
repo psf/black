@@ -1,7 +1,7 @@
 # Release process
 
-_Black_ has had a lot of work automating its release process. This document sets out
-to explain what everything does and how to release _Black_ using said automation.
+_Black_ has had a lot of work automating its release process. This document sets out to
+explain what everything does and how to release _Black_ using said automation.
 
 ## Cutting a Relase
 
@@ -52,8 +52,8 @@ This workflow uses the QEMU powered `buildx` feature of docker to upload a `arm6
 This workflow builds a Python
 [sdist](https://docs.python.org/3/distutils/sourcedist.html) and
 [wheel](https://pythonwheels.com) using the latest
-[setuptools](https://pypi.org/project/setuptools/)
-and [wheel](https://pypi.org/project/wheel/) modules.
+[setuptools](https://pypi.org/project/setuptools/) and
+[wheel](https://pypi.org/project/wheel/) modules.
 
 It will then use [twine](https://pypi.org/project/twine/) to upload both release formats
 to PyPI for general downloading of the _Black_ Python package. This is where
