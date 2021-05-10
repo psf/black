@@ -1,7 +1,7 @@
 # Release process
 
-_Black_ has had a lot of work automationg it's release process. This document sets out
-to explain what everything does and how to relase _Black_ using said automation.
+_Black_ has had a lot of work automating its release process. This document sets out
+to explain what everything does and how to release _Black_ using said automation.
 
 ## Cutting a Relase
 
@@ -10,7 +10,7 @@ access. Using this access, the release process is:
 
 1. Cut a new PR editing `CHANGES.md` to version the latest changes
    1. Example PR: https://github.com/psf/black/pull/2192
-   2. Examele Title: `Update CHANGES.md for XX.X release`
+   2. Example title: `Update CHANGES.md for XX.X release`
 2. Once the release PR is merged ensure all CI passes
    1. If not, ensure there is an Issue open for the cause of failing CI (generally we'd
       want this fixed before cutting a release)
@@ -35,8 +35,8 @@ file to reverse engineer your way to a fix/soluton.
 ## Release workflows
 
 All _Blacks_'s automation workflows use GitHub Actions. All workflows are therefore
-configured using `.yml` files in `.github/workflows` directory of the _Black_
-repositroy.
+configured using `.yml` files in the `.github/workflows` directory of the _Black_
+repository.
 
 Below are descriptions of our release workflows.
 
@@ -53,17 +53,17 @@ This workflow builds a Python
 [sdist](https://docs.python.org/3/distutils/sourcedist.html) and
 [wheel](https://pythonwheels.com) using the latest
 [setuptools](https://pypi.org/project/setuptools/)
-w/[wheel](https://pypi.org/project/wheel/) modules.
+and [wheel](https://pypi.org/project/wheel/) modules.
 
 It will then use [twine](https://pypi.org/project/twine/) to upload both release formats
-to PyPI for general downloading of the _Black_ python package. This is where
+to PyPI for general downloading of the _Black_ Python package. This is where
 [pip](https://pypi.org/project/pip/) looks by default.
 
-- Currently this workflow uses an API TOken associated with @ambv PyPI account
+- Currently this workflow uses an API token associated with @ambv's PyPI account
 
 ### Upload self-contained binaries
 
-This workflow builds self container binaries for multiple platforms. This allows people
+This workflow builds self-contained binaries for multiple platforms. This allows people
 to download the executable for their platform and run _Black_ without a
 [Python Runtime](https://wiki.python.org/moin/PythonImplementations) installed.
 
