@@ -5,7 +5,7 @@ explain what everything does and how to release _Black_ using said automation.
 
 ## Cutting a Relase
 
-To cut a realease, you must be a _Black_ maintainer with `GitHub Release` creation
+To cut a release, you must be a _Black_ maintainer with `GitHub Release` creation
 access. Using this access, the release process is:
 
 1. Cut a new PR editing `CHANGES.md` to version the latest changes
