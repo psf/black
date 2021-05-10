@@ -103,7 +103,6 @@ Contents
    :includehidden:
 
    contributing/index
-   maintenance/index
    change_log
    authors
 

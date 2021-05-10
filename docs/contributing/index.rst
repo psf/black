@@ -6,6 +6,7 @@ Contributing
 
   the_basics
   gauging_changes
+  release_process
   reference/reference_summary
 
 Welcome! Happy to see you willing to make the project better. Have you read the entire
@@ -31,6 +32,7 @@ This section covers the following topics:
 
 - :doc:`the_basics`
 - :doc:`gauging_changes`
+- :doc:`release_process`
 - :doc:`reference/reference_summary`
 
 For an overview on contributing to the *Black*, please checkout :doc:`the_basics`.
