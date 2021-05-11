@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from dataclasses import replace
 import inspect
-from io import BytesIO, TextIOWrapper
+from io import BytesIO
 import os
 from pathlib import Path
 from platform import system
@@ -16,10 +16,8 @@ from tempfile import TemporaryDirectory
 import types
 from typing import (
     Any,
-    BinaryIO,
     Callable,
     Dict,
-    Generator,
     List,
     Iterator,
     TypeVar,
@@ -52,7 +50,6 @@ from tests.util import (
     ff,
     dump_to_stderr,
 )
-from .test_primer import PrimerCLITests  # noqa: F401
 
 
 THIS_FILE = Path(__file__)
@@ -104,28 +101,10 @@ class FakeParameter(click.Parameter):
 
 
 class BlackRunner(CliRunner):
-    """Modify CliRunner so that stderr is not merged with stdout.
-
-    This is a hack that can be removed once we depend on Click 7.x"""
+    """Make sure STDOUT and STDERR are kept seperate when testing Black via its CLI."""
 
     def __init__(self) -> None:
-        self.stderrbuf = BytesIO()
-        self.stdoutbuf = BytesIO()
-        self.stdout_bytes = b""
-        self.stderr_bytes = b""
-        super().__init__()
-
-    @contextmanager
-    def isolation(self, *args: Any, **kwargs: Any) -> Generator[BinaryIO, None, None]:
-        with super().isolation(*args, **kwargs) as output:
-            try:
-                hold_stderr = sys.stderr
-                sys.stderr = TextIOWrapper(self.stderrbuf, encoding=self.charset)
-                yield output
-            finally:
-                self.stdout_bytes = sys.stdout.buffer.getvalue()  # type: ignore
-                self.stderr_bytes = sys.stderr.buffer.getvalue()  # type: ignore
-                sys.stderr = hold_stderr
+        super().__init__(mix_stderr=False)
 
 
 class BlackTestCase(BlackBaseTestCase):
@@ -141,8 +120,8 @@ class BlackTestCase(BlackBaseTestCase):
             exit_code,
             msg=(
                 f"Failed with args: {args}\n"
-                f"stdout: {runner.stdout_bytes.decode()!r}\n"
-                f"stderr: {runner.stderr_bytes.decode()!r}\n"
+                f"stdout: {result.stdout_bytes.decode()!r}\n"
+                f"stderr: {result.stderr_bytes.decode()!r}\n"
                 f"exception: {result.exception}"
             ),
         )
@@ -483,7 +462,7 @@ class BlackTestCase(BlackBaseTestCase):
         finally:
             os.unlink(tmp_file)
         actual = (
-            runner.stderr_bytes.decode()
+            result.stderr_bytes.decode()
             .replace("\n", "")
             .replace("\\n", "")
             .replace("\\r", "")
@@ -1806,7 +1785,7 @@ class BlackTestCase(BlackBaseTestCase):
                 black.main, ["-", "--fast"], input=BytesIO(contents.encode("utf8"))
             )
             self.assertEqual(result.exit_code, 0)
-            output = runner.stdout_bytes
+            output = result.stdout_bytes
             self.assertIn(nl.encode("utf8"), output)
             if nl == "\n":
                 self.assertNotIn(b"\r\n", output)
