@@ -118,11 +118,11 @@ project.
 
 You can find more details in our documentation:
 
-- [The basics: Configuration via a file](https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html#configuration-via-a-file)
+- [pyproject.toml](https://black.readthedocs.io/en/stable/pyproject_toml.html)
 
 And if you're looking for more general configuration documentation:
 
-- [Usage and Configuration](https://black.readthedocs.io/en/stable/usage_and_configuration/index.html)
+- [Usage](https://black.readthedocs.io/en/stable/installation_and_usage.html#usage)
 
 **Pro-tip**: If you're asking yourself "Do I need to configure anything?" the answer is
 "No". _Black_ is all about sensible defaults. Applying those defaults will have your
