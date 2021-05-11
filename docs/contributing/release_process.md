@@ -3,7 +3,7 @@
 _Black_ has had a lot of work automating its release process. This document sets out to
 explain what everything does and how to release _Black_ using said automation.
 
-## Cutting a Relase
+## Cutting a Release
 
 To cut a release, you must be a _Black_ maintainer with `GitHub Release` creation
 access. Using this access, the release process is:
@@ -70,3 +70,20 @@ to download the executable for their platform and run _Black_ without a
 The created binaries are attached/stored on the associated
 [GitHub Release](https://github.com/psf/black/releases) for download over _IPv4 only_
 (GitHub still does not have IPv6 access 😢).
+
+## Moving the `stable` tag
+
+_Black_ provides a stable tag for people who want to move along as _Black_ developers
+deem the newest version reliable. Here the _Black_ developers will move once the release
+has been problem free for at least ~24 hours from release. Given the large _Black_
+userbase we hear about bad bugs quickly. We do strive to continually improve our CI too.
+
+### Tag moving process
+
+#### stable
+
+From a rebased `main` checkout:
+
+1. `git tag -f stable VERSION_TAG`
+   1. e.g. `git tag -f stable 21.5b1`
+1. `git push --tags -f`
