@@ -1,20 +1,6 @@
 name: Documentation Build
 
-on:
-  push:
-    paths:
-      - "docs/**"
-      - "README.md"
-      - "CHANGES.md"
-      - "CONTRIBUTING.md"
-      - "AUTHORS.md"
-  pull_request:
-    paths:
-      - "docs/**"
-      - "README.md"
-      - "CHANGES.md"
-      - "CONTRIBUTING.md"
-      - "AUTHORS.md"
+on: [push, pull_request]
 
 jobs:
   build:

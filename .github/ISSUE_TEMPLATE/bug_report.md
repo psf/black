@@ -30,7 +30,7 @@ assignees: ""
    - clone this repository;
    - run `pip install -e .[d,python2]`;
    - run `pip install -r test_requirements.txt`
-   - make sure it's sane by running `python -m unittest`; and
+   - make sure it's sane by running `python -m pytest`; and
    - run `black` like you did last time.
 
 **Additional context** Add any other context about the problem here.
