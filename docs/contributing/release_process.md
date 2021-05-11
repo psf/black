@@ -73,9 +73,10 @@ The created binaries are attached/stored on the associated
 
 ## Moving the `stable` tag
 
-_Black_ provides a stable tag for people who want to move along as _Black_ developers see a version become reliable.
-Here the _Black_ developers will move once the release has been problem free for at least ~24 hours from release.
-Given the large _Black_ userbase we hear about bad bugs quickly. We do strive to continually improve our CI too.
+_Black_ provides a stable tag for people who want to move along as _Black_ developers
+see a version become reliable. Here the _Black_ developers will move once the release
+has been problem free for at least ~24 hours from release. Given the large _Black_
+userbase we hear about bad bugs quickly. We do strive to continually improve our CI too.
 
 ### Tag moving process
 
@@ -84,5 +85,5 @@ Given the large _Black_ userbase we hear about bad bugs quickly. We do strive to
 From a rebased `main` checkout:
 
 1. `git tag -f stable VERSION_TAG`
-  1. e.g. `git tag -f stable 21.5b1`
-2. `git push --tags -f`
+   1. e.g. `git tag -f stable 21.5b1`
+1. `git push --tags -f`
