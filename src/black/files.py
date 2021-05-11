@@ -212,7 +212,7 @@ def gen_python_files(
                 extend_exclude,
                 force_exclude,
                 report,
-                gitignore,
+                gitignore + get_gitignore(child),
             )
 
         elif child.is_file():
