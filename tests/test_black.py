@@ -1406,7 +1406,7 @@ class BlackTestCase(BlackBaseTestCase):
         )
         self.assertEqual(sorted(expected), sorted(sources))
 
-    def test_gitingore_used_as_default(self) -> None:
+    def test_gitignore_used_as_default(self) -> None:
         path = Path(THIS_DIR / "data" / "include_exclude_tests")
         include = re.compile(r"\.pyi?$")
         extend_exclude = re.compile(r"/exclude/")
