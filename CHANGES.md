@@ -1,5 +1,11 @@
 # Change Log
 
+## Unreleased
+
+### _Black_
+
+- Restored compatibility with Click 8.0 on Python 3.6 when LANG=C used (#2227)
+
 ## 21.5b1
 
 ### _Black_

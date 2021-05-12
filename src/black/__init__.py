@@ -1029,7 +1029,7 @@ def nullcontext() -> Iterator[None]:
 
 
 def patch_click() -> None:
-    """Make Click not crash.
+    """Make Click not crash on Python 3.6 with LANG=C.
 
     On certain misconfigured environments, Python 3 selects the ASCII encoding as the
     default which restricts paths that it can access during the lifetime of the
@@ -1047,7 +1047,9 @@ def patch_click() -> None:
 
     for module in (core, _unicodefun):
         if hasattr(module, "_verify_python3_env"):
-            module._verify_python3_env = lambda: None
+            module._verify_python3_env = lambda: None  # type: ignore
+        if hasattr(module, "_verify_python_env"):
+            module._verify_python_env = lambda: None  # type: ignore
 
 
 def patched_main() -> None:
