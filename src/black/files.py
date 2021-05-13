@@ -3,6 +3,7 @@ import io
 import os
 from pathlib import Path
 import sys
+import tokenize
 from typing import (
     Any,
     Dict,
@@ -118,8 +119,13 @@ def get_gitignore(root: Path) -> PathSpec:
     gitignore = root / ".gitignore"
     lines: List[str] = []
     if gitignore.is_file():
-        with gitignore.open(encoding="utf-8") as gf:
+        with open(gitignore, "rb") as buf:
+            srcbuf = io.BytesIO(buf.read())
+            encoding, _ = tokenize.detect_encoding(srcbuf.readline)
+            # Detect Encoding
+        with gitignore.open(encoding=encoding) as gf:
             lines = gf.readlines()
+            # Open .gitignore file with detected encoding
     return PathSpec.from_lines("gitwildmatch", lines)
 
 
