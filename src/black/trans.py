@@ -576,7 +576,7 @@ class StringParenStripper(StringTransformer):
             - The target string is NOT the only argument to a function call.
             - The target string is NOT a "pointless" string.
             - If the target string contains a PERCENT, the brackets are not
-              preceeded or followed by an operator with higher precedence than
+              preceded or followed by an operator with higher precedence than
               PERCENT.
 
     Transformations:
