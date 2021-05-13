@@ -128,7 +128,7 @@ async def black_run(
         cmd.extend(["--diff", "."])
 
     with TemporaryDirectory() as tmp_path:
-        # Prevent reading top-level user configs by manipulating envionment variables
+        # Prevent reading top-level user configs by manipulating environment variables
         env = {
             **os.environ,
             "XDG_CONFIG_HOME": tmp_path,  # Unix-like

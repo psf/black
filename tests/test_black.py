@@ -101,7 +101,7 @@ class FakeParameter(click.Parameter):
 
 
 class BlackRunner(CliRunner):
-    """Make sure STDOUT and STDERR are kept seperate when testing Black via its CLI."""
+    """Make sure STDOUT and STDERR are kept separate when testing Black via its CLI."""
 
     def __init__(self) -> None:
         super().__init__(mix_stderr=False)
@@ -1508,7 +1508,7 @@ class BlackTestCase(BlackBaseTestCase):
 
     @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
     def test_get_sources_with_stdin_filename_and_exclude(self) -> None:
-        # Exclude shouldn't exclude stdin_filename since it is mimicing the
+        # Exclude shouldn't exclude stdin_filename since it is mimicking the
         # file being passed directly. This is the same as
         # test_exclude_for_issue_1572
         path = THIS_DIR / "data" / "include_exclude_tests"
