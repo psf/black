@@ -106,7 +106,7 @@
     "sqlalchemy": {
       "no_cli_args_reason": "breaks black with new string parsing - #2188",
       "cli_arguments": [],
-      "expect_formatting_changes": true,
+      "expect_formatting_changes": false,
       "git_clone_url": "https://github.com/sqlalchemy/sqlalchemy.git",
       "long_checkout": false,
       "py_versions": ["all"]
