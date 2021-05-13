@@ -83,7 +83,7 @@ setup(
         "mypy_extensions>=0.4.3",
     ],
     extras_require={
-        "d": ["aiohttp>=3.6.0", "aiohttp-cors"],
+        "d": ["aiohttp>=3.6.0", "aiohttp-cors>=0.4.0"],
         "colorama": ["colorama>=0.4.3"],
         "python2": ["typed-ast>=1.4.2"],
     },
