@@ -3,7 +3,6 @@ import io
 import os
 from pathlib import Path
 import sys
-import tokenize
 from typing import (
     Any,
     Dict,
@@ -119,7 +118,7 @@ def get_gitignore(root: Path) -> PathSpec:
     gitignore = root / ".gitignore"
     lines: List[str] = []
     if gitignore.is_file():
-        with tokenize.open(gitignore) as gf:
+        with gitignore.open() as gf:
             lines = gf.readlines()
     return PathSpec.from_lines("gitwildmatch", lines)
 
