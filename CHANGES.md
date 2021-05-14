@@ -4,8 +4,7 @@
 
 ### _Black_
 
-- Fixed bug that Black doesn't do anything when
-  .gitignore file includes non-alphabetical(non-ascii) characters (#2229)
+- Fix handling of .gitignore files containing non-ASCII characters (#2229)
 - Fix typos discovered by codespell (#2228)
 - Restored compatibility with Click 8.0 on Python 3.6 when LANG=C used (#2227)
 
