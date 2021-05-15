@@ -147,8 +147,7 @@ $ git checkout origin/stable -b stable
 ```
 
 or you can copy the plugin files from
-[plugin/black.vim](https://github.com/psf/black/blob/stable/plugin/black.vim)
-and
+[plugin/black.vim](https://github.com/psf/black/blob/stable/plugin/black.vim) and
 [autoload/black.vim](https://github.com/psf/black/blob/stable/autoload/black.vim).
 
 ```
