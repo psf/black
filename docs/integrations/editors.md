@@ -146,12 +146,15 @@ $ cd ~/.vim/bundle/black
 $ git checkout origin/stable -b stable
 ```
 
-or you can copy the plugin from
-[plugin/black.vim](https://github.com/psf/black/blob/stable/plugin/black.vim).
+or you can copy the plugin files from
+[plugin/black.vim](https://github.com/psf/black/blob/stable/plugin/black.vim) and
+[autoload/black.vim](https://github.com/psf/black/blob/stable/autoload/black.vim).
 
 ```
 mkdir -p ~/.vim/pack/python/start/black/plugin
+mkdir -p ~/.vim/pack/python/start/black/autoload
 curl https://raw.githubusercontent.com/psf/black/stable/plugin/black.vim -o ~/.vim/pack/python/start/black/plugin/black.vim
+curl https://raw.githubusercontent.com/psf/black/stable/autoload/black.vim -o ~/.vim/pack/python/start/black/autoload/black.vim
 ```
 
 Let me know if this requires any changes to work with Vim 8's builtin `packadd`, or

@@ -6,6 +6,7 @@
 
 - Fix typos discovered by codespell (#2228)
 - Restored compatibility with Click 8.0 on Python 3.6 when LANG=C used (#2227)
+- Fix vim plugin installation instructions. (#2235)
 
 ### _Blackd_
 
