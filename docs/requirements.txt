@@ -1,3 +1,6 @@
+# Used by ReadTheDocs; pinned requirements for stability.
+
 MyST-Parser==0.14.0
 Sphinx==3.5.4
 sphinxcontrib-programoutput==0.17
+sphinx_copybutton==0.3.1

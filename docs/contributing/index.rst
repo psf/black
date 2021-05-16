@@ -6,6 +6,7 @@ Contributing
 
   the_basics
   gauging_changes
+  issue_triage
   release_process
   reference/reference_summary
 

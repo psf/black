@@ -60,6 +60,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "myst_parser",
     "sphinxcontrib.programoutput",
+    "sphinx_copybutton",
 ]
 
 # If you need extensions of a certain version or higher, list them here.
