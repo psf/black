@@ -4,7 +4,7 @@
 
 ### _Black_
 
-- Fix handling of .gitignore files containing non-ASCII characters (#2229)
+- Fix handling of .gitignore files containing non-ASCII characters on Windows (#2229)
 - Fix typos discovered by codespell (#2228)
 - Restored compatibility with Click 8.0 on Python 3.6 when LANG=C used (#2227)
 
