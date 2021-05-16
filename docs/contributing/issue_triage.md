@@ -64,7 +64,7 @@ the details are different:
    PR would be welcomed (`S: accepted`)
 5. **closed**: - the issue has been resolved, reasons include:
    - the suggested changes were implemented
-   - it was rejected (due technical concerns, ethos conflicts, etc.)
+   - it was rejected (due to technical concerns, ethos conflicts, etc.)
    - duplicate of a pre-existing issue or is invalid
 
 **Note**: documentation issues don't use the `S: accepted` label currently since they're
