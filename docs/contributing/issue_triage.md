@@ -8,7 +8,7 @@ also the current guidelines and recommendations.
 ```{tip}
 If you're looking for a way to contribute without submitting patches, this might be
 the area for you. Since _Black_ is a popular project, its issue tracker is quite busy
-and always needs more attention than that is available. While triage isn't the most
+and always needs more attention than is available. While triage isn't the most
 glamorous or technically challenging form of contribution, it's still important.
 For example, we would love to know whether that old bug report is still reproducible!
 
