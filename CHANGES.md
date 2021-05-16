@@ -6,13 +6,17 @@
 
 - Respect `.gitignore` files in all levels, not only `root/.gitignore` file (apply
   `.gitignore` rules like `git` does) (#2225)
-- Fix typos discovered by codespell (#2228)
 - Restored compatibility with Click 8.0 on Python 3.6 when LANG=C used (#2227)
 
 ### _Blackd_
 
 - Add a lower bound for the `aiohttp-cors` dependency. Only 0.4.0 or higher is
   supported. (#2231)
+
+### Documentation
+
+- Fix typos discovered by codespell (#2228)
+- Fix Vim plugin installation instructions. (#2235)
 
 ## 21.5b1
 

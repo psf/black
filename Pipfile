@@ -14,6 +14,7 @@ pre-commit = "*"
 readme_renderer = "*"
 MyST-Parser = ">=0.13.7"
 sphinxcontrib-programoutput = ">=0.17"
+sphinx-copybutton = ">=0.3.0"
 setuptools = ">=39.2.0"
 setuptools-scm = "*"
 twine = ">=1.11.0"
@@ -22,7 +23,7 @@ black = {editable = true, extras = ["d"], path = "."}
 
 [packages]
 aiohttp = ">=3.6.0"
-aiohttp-cors = "*"
+aiohttp-cors = ">=0.4.0"
 appdirs = "*"
 click = ">=7.1.2"
 mypy_extensions = ">=0.4.3"
