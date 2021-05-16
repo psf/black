@@ -30,8 +30,7 @@ then write the above files to `.cache/black/<version>/`.
 ## .gitignore
 
 If `--exclude` is not set, _Black_ will automatically ignore files and directories in
-`.gitignore` file, if present. The `.gitignore` file must be in the project root to be
-used and nested `.gitignore` aren't supported.
+`.gitignore` file(s), if present.
 
 If you want _Black_ to continue using `.gitignore` while also configuring the exclusion
 rules, please use `--extend-exclude`.

@@ -1406,7 +1406,7 @@ class BlackTestCase(BlackBaseTestCase):
         )
         self.assertEqual(sorted(expected), sorted(sources))
 
-    def test_gitingore_used_as_default(self) -> None:
+    def test_gitignore_used_as_default(self) -> None:
         path = Path(THIS_DIR / "data" / "include_exclude_tests")
         include = re.compile(r"\.pyi?$")
         extend_exclude = re.compile(r"/exclude/")
@@ -1699,6 +1699,33 @@ class BlackTestCase(BlackBaseTestCase):
                 None,
                 report,
                 gitignore,
+            )
+        )
+        self.assertEqual(sorted(expected), sorted(sources))
+
+    def test_nested_gitignore(self) -> None:
+        path = Path(THIS_DIR / "data" / "nested_gitignore_tests")
+        include = re.compile(r"\.pyi?$")
+        exclude = re.compile(r"")
+        root_gitignore = black.files.get_gitignore(path)
+        report = black.Report()
+        expected: List[Path] = [
+            Path(path / "x.py"),
+            Path(path / "root/b.py"),
+            Path(path / "root/c.py"),
+            Path(path / "root/child/c.py"),
+        ]
+        this_abs = THIS_DIR.resolve()
+        sources = list(
+            black.gen_python_files(
+                path.iterdir(),
+                this_abs,
+                include,
+                exclude,
+                None,
+                None,
+                report,
+                root_gitignore,
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))

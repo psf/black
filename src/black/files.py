@@ -204,6 +204,8 @@ def gen_python_files(
             continue
 
         if child.is_dir():
+            # If gitignore is None, gitignore usage is disabled, while a Falsey
+            # gitignore is when the directory doesn't have a .gitignore file.
             yield from gen_python_files(
                 child.iterdir(),
                 root,
@@ -212,7 +214,7 @@ def gen_python_files(
                 extend_exclude,
                 force_exclude,
                 report,
-                gitignore,
+                gitignore + get_gitignore(child) if gitignore is not None else None,
             )
 
         elif child.is_file():
