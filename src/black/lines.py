@@ -17,7 +17,8 @@ from typing import (
 from blib2to3.pytree import Node, Leaf
 from blib2to3.pgen2 import token
 
-from black.brackets import BracketTracker, DOT_PRIORITY
+from black.brackets import BracketTracker, DOT_PRIORITY, LOGIC_PRIORITY
+from black.const import Fixer
 from black.mode import Mode
 from black.nodes import STANDALONE_COMMENT, TEST_DESCENDANTS
 from black.nodes import BRACKETS, OPENING_BRACKETS, CLOSING_BRACKETS
@@ -609,6 +610,8 @@ def can_be_split(line: Line) -> bool:
 def can_omit_invisible_parens(
     line: Line,
     line_length: int,
+    opening_bracket: Leaf,
+    closing_bracket: Leaf,
     omit_on_explode: Collection[LeafID] = (),
 ) -> bool:
     """Does `line` have a shape safe to reformat without optional parens around it?
@@ -625,6 +628,16 @@ def can_omit_invisible_parens(
     max_priority = bt.max_delimiter_priority()
     if bt.delimiter_count_with_priority(max_priority) > 1:
         # With more than one delimiter of a kind the optional parentheses read better.
+        return False
+
+    if (
+        max_priority >= LOGIC_PRIORITY
+        and bt.delimiter_count_with_priority(max_priority) > 0
+        and Fixer.HIDE_PARENTHESES in opening_bracket.fixers_applied
+        and Fixer.HIDE_PARENTHESES in closing_bracket.fixers_applied
+    ):
+        # With at least one delimiter of kind LOGIC or above, optional parentheses are better.
+        # So don't remove them if added by user.
         return False
 
     if max_priority == DOT_PRIORITY:

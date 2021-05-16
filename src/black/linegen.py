@@ -26,6 +26,7 @@ from black.trans import Transformer, CannotTransform, StringMerger
 from black.trans import StringSplitter, StringParenWrapper, StringParenStripper
 from black.mode import Mode
 from black.mode import Feature
+from black.const import Fixer
 
 from blib2to3.pytree import Node, Leaf
 from blib2to3.pgen2 import token
@@ -495,7 +496,9 @@ def right_hand_split(
         # there are no standalone comments in the body
         and not body.contains_standalone_comments(0)
         # and we can actually remove the parens
-        and can_omit_invisible_parens(body, line_length, omit_on_explode=omit)
+        and can_omit_invisible_parens(
+            body, line_length, opening_bracket, closing_bracket, omit_on_explode=omit
+        )
     ):
         omit = {id(closing_bracket), *omit}
         try:
@@ -828,6 +831,9 @@ def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
     if first.type == token.LPAR and last.type == token.RPAR:
         middle = node.children[1]
         # make parentheses invisible
+        if first.value == "(" and last.value == ")":
+            first.fixers_applied.append(Fixer.HIDE_PARENTHESES)
+            last.fixers_applied.append(Fixer.HIDE_PARENTHESES)
         first.value = ""  # type: ignore
         last.value = ""  # type: ignore
         maybe_make_parens_invisible_in_atom(middle, parent=parent)
