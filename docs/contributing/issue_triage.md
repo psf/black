@@ -118,7 +118,7 @@ For most issues, closing the issue manually or automatically after a resolving P
 ideal. For bug reports specifically, if the bug has already been fixed, try to check in
 with the issue opener that their specific case has been resolved before closing.
 
-Design and enhancement issues should be also closed when its clear the proposed change
+Design and enhancement issues should be also closed when it's clear the proposed change
 won't be implemented, whether that has been determined after a lot of discussion or just
 simply goes against _Black_'s ethos. If such an issue turns heated, closing and locking
 is acceptable if it's severe enough (although checking in with the core team is probably
