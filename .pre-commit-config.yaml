@@ -28,4 +28,3 @@ repos:
     rev: v2.2.1
     hooks:
       - id: prettier
-        args: [--prose-wrap=always, --print-width=88]
