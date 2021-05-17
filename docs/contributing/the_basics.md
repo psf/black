@@ -22,7 +22,7 @@ from the cloned _Black_ repo. It will do the correct thing.
 Non pipenv install works too:
 
 ```console
-$ pip install -r test_requirements
+$ pip install -r test_requirements.txt
 $ pip install -e .[d]
 ```
 
