@@ -128,29 +128,9 @@ indentation level (like the arguments list and the docstring in the example abov
 If a data structure literal (tuple, list, set, dict) or a line of "from" imports cannot
 fit in the allotted length, it's always split into one element per line. This minimizes
 diffs as well as enables readers of code to find which commit introduced a particular
-entry. This also makes _Black_ compatible with [isort](https://pypi.org/p/isort/) with
-the following configuration.
-
-<details>
-<summary>A compatible `.isort.cfg`</summary>
-
-```cfg
-[settings]
-multi_line_output = 3
-include_trailing_comma = True
-force_grid_wrap = 0
-use_parentheses = True
-ensure_newline_before_comments = True
-line_length = 88
-```
-
-The equivalent command line is:
-
-```
-$ isort --multi-line=3 --trailing-comma --force-grid-wrap=0 --use-parentheses --line-width=88 [ file.py ]
-```
-
-</details>
+entry. This also makes _Black_ compatible with
+[isort](../guides/using_black_with_other_tools.md#isort) with the ready-made `black`
+profile or manual configuration.
 
 ### Line length
 
