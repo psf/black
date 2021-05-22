@@ -294,15 +294,15 @@ def and_this():
 
 
 def empty():
-    """ """
+    """"""
 
 
 def oneline_empty():
-    """ """
+    """"""
 
 
 def oneline_nothing():
-    """ """
+    """"""
 
 
 def single_quotes():

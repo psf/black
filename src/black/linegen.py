@@ -255,9 +255,6 @@ class LineGenerator(Visitor[Line]):
                         # Odd number of tailing backslashes, add some padding to
                         # avoid escaping the closing string quote.
                         docstring += " "
-            else:
-                # Add some padding if the docstring is empty.
-                docstring = " "
 
             # We could enforce triple quotes at this point.
             quote = quote_char * quote_len
