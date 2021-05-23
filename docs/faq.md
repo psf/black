@@ -9,7 +9,7 @@ The most common questions and issues users face are aggregated to this FAQ.
 
 ## Does Black have an API?
 
-Not currently. _Black_ is fundamentally a command line tool. Many
+Not yet. _Black_ is fundamentally a command line tool. Many
 [integrations](integrations/index.rst) are provided, but a Python interface is not one
 of them. A simple API is being [planned](https://github.com/psf/black/issues/779)
 though.
@@ -25,7 +25,7 @@ is raised and the file is left untouched.
 
 ## How stable is Black's style?
 
-Quite. _Black_ aims to enforce one style and one style only, with some room for
+Quite stable. _Black_ aims to enforce one style and one style only, with some room for
 pragmatism. However, _Black_ is still in beta so style changes are both planned and
 still proposed on the issue tracker. See
 [The Black Code Style](the_black_code_style/index.rst) for more details.
