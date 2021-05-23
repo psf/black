@@ -15,16 +15,15 @@ jobs:
         include:
           - os: windows-2019
             pathsep: ";"
-            executable_suffix: ".exe"
+            asset_name: black_windows.exe
             executable_mime: "application/vnd.microsoft.portable-executable"
           - os: ubuntu-20.04
             pathsep: ":"
-            executable_suffix: ".elf"
+            asset_name: black_linux
             executable_mime: "application/x-executable"
-
           - os: macos-latest
             pathsep: ":"
-            executable_suffix: ""
+            asset_name: black_macos
             executable_mime: "application/x-mach-binary"
 
     steps:
@@ -43,7 +42,7 @@ jobs:
 
       - name: Build binary
         run: |
-          python -m PyInstaller -F --name black${{ matrix.executable_suffix }} --add-data 'src/blib2to3${{ matrix.pathsep }}blib2to3' src/black/__main__.py
+          python -m PyInstaller -F --name ${{ asset_name }} --add-data 'src/blib2to3${{ matrix.pathsep }}blib2to3' src/black/__main__.py
 
       - name: Upload binary as release asset
         uses: actions/upload-release-asset@v1
@@ -51,6 +50,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: dist/black${{ matrix.executable_suffix }}
-          asset_name: black${{ matrix.executable_suffix }}
+          asset_path: dist/${{ asset_name }}
+          asset_name: ${{ asset_name }}
           asset_content_type: ${{ matrix.executable_mime }}
