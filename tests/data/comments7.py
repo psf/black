@@ -129,6 +129,8 @@ class C:
     ):
         ...
 
+square = Square(4) # type: Optional[Square]
+
 # output
 
 from .config import (
@@ -264,3 +266,6 @@ class C:
         self, pyramid_config, db_request, post_data, message
     ):
         ...
+
+
+square = Square(4)  # type: Optional[Square]

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import asyncio
 import errno
 import json
@@ -114,16 +112,23 @@ def analyze_results(project_count: int, results: Results) -> int:
 
 
 async def black_run(
-    repo_path: Path, project_config: Dict[str, Any], results: Results
+    repo_path: Path,
+    project_config: Dict[str, Any],
+    results: Results,
+    no_diff: bool = False,
 ) -> None:
     """Run Black and record failures"""
     cmd = [str(which(BLACK_BINARY))]
     if "cli_arguments" in project_config and project_config["cli_arguments"]:
-        cmd.extend(*project_config["cli_arguments"])
-    cmd.extend(["--check", "--diff", "."])
+        cmd.extend(project_config["cli_arguments"])
+    cmd.append("--check")
+    if no_diff:
+        cmd.append(".")
+    else:
+        cmd.extend(["--diff", "."])
 
     with TemporaryDirectory() as tmp_path:
-        # Prevent reading top-level user configs by manipulating envionment variables
+        # Prevent reading top-level user configs by manipulating environment variables
         env = {
             **os.environ,
             "XDG_CONFIG_HOME": tmp_path,  # Unix-like
@@ -248,6 +253,7 @@ async def project_runner(
     long_checkouts: bool = False,
     rebase: bool = False,
     keep: bool = False,
+    no_diff: bool = False,
 ) -> None:
     """Check out project and run Black on it + record result"""
     loop = asyncio.get_event_loop()
@@ -286,7 +292,7 @@ async def project_runner(
         repo_path = await git_checkout_or_rebase(work_path, project_config, rebase)
         if not repo_path:
             continue
-        await black_run(repo_path, project_config, results)
+        await black_run(repo_path, project_config, results, no_diff)
 
         if not keep:
             LOG.debug(f"Removing {repo_path}")
@@ -305,6 +311,7 @@ async def process_queue(
     keep: bool = False,
     long_checkouts: bool = False,
     rebase: bool = False,
+    no_diff: bool = False,
 ) -> int:
     """
     Process the queue with X workers and evaluate results
@@ -332,7 +339,15 @@ async def process_queue(
     await asyncio.gather(
         *[
             project_runner(
-                i, config, queue, work_path, results, long_checkouts, rebase, keep
+                i,
+                config,
+                queue,
+                work_path,
+                results,
+                long_checkouts,
+                rebase,
+                keep,
+                no_diff,
             )
             for i in range(workers)
         ]

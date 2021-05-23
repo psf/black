@@ -1,17 +1,9 @@
-#!/bin/bash
-set -e
+#!/bin/bash -e
 
-# If no arguments are given use current working directory
-black_args=(".")
-if [ "$#" -eq 0 ] && [ "${INPUT_BLACK_ARGS}" != "" ]; then
-  black_args+=(${INPUT_BLACK_ARGS})
-elif [ "$#" -ne 0 ] && [ "${INPUT_BLACK_ARGS}" != "" ]; then
-  black_args+=($* ${INPUT_BLACK_ARGS})
-elif [ "$#" -ne 0 ] && [ "${INPUT_BLACK_ARGS}" == "" ]; then
-  black_args+=($*)
-else
-  # Default (if no args provided).
-  black_args+=("--check" "--diff")
+if [ -n "$INPUT_BLACK_ARGS" ]; then
+  echo '::warning::Input `with.black_args` is deprecated. Use `with.options` and `with.src` instead.'
+  black $INPUT_BLACK_ARGS
+  exit $?
 fi
 
-sh -c "black . ${black_args[*]}"
+black $INPUT_OPTIONS $INPUT_SRC

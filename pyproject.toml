@@ -25,3 +25,10 @@ extend-exclude = '''
 [build-system]
 requires = ["setuptools>=41.0", "setuptools-scm", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+# Option below requires `tests/optional.py`
+optional-tests = [
+  "no_python2: run when `python2` extra NOT installed",
+  "no_blackd: run when `d` extra NOT installed",
+]
