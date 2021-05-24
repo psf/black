@@ -13,6 +13,10 @@
 - Add a lower bound for the `aiohttp-cors` dependency. Only 0.4.0 or higher is
   supported. (#2231)
 
+### _Packaging_
+
+- Release self-contained macOS binaries as part of the GitHub release pipeline (#2198)
+
 ### Documentation
 
 - Fix typos discovered by codespell (#2228)
