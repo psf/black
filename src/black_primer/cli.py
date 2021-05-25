@@ -13,6 +13,14 @@ import click
 
 from black_primer import lib
 
+# If our environment has uvloop installed lets use it
+try:
+    import uvloop
+
+    uvloop.install()
+except ImportError:
+    pass
+
 
 DEFAULT_CONFIG = Path(__file__).parent / "primer.json"
 _timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
