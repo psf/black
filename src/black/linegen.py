@@ -236,6 +236,7 @@ class LineGenerator(Visitor[Line]):
             # characters but only if they are the same as the first.
             quote_len = 1 if docstring[1] != quote_char else 3
             docstring = docstring[quote_len:-quote_len]
+            docstring_started_empty = not docstring
 
             if is_multiline_string(leaf):
                 indent = " " * 4 * self.current_line.depth
@@ -255,8 +256,7 @@ class LineGenerator(Visitor[Line]):
                         # Odd number of tailing backslashes, add some padding to
                         # avoid escaping the closing string quote.
                         docstring += " "
-            else:
-                # Add some padding if the docstring is empty.
+            elif not docstring_started_empty:
                 docstring = " "
 
             # We could enforce triple quotes at this point.

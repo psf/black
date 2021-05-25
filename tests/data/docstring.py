@@ -102,7 +102,7 @@ def and_this():
   "hey yah"'''
 
 
-def empty():
+def multiline_whitespace():
     '''
     
     
@@ -111,11 +111,11 @@ def empty():
     '''
 
 
-def oneline_empty():
+def oneline_whitespace():
     '''      '''
 
 
-def oneline_nothing():
+def empty():
     """"""
 
 
@@ -293,16 +293,16 @@ def and_this():
     "hey yah"'''
 
 
+def multiline_whitespace():
+    """ """
+
+
+def oneline_whitespace():
+    """ """
+
+
 def empty():
-    """ """
-
-
-def oneline_empty():
-    """ """
-
-
-def oneline_nothing():
-    """ """
+    """"""
 
 
 def single_quotes():

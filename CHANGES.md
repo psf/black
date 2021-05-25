@@ -4,6 +4,7 @@
 
 ### _Black_
 
+- A space is no longer inserted into empty docstrings (#2249)
 - Fix handling of .gitignore files containing non-ASCII characters on Windows (#2229)
 - Respect `.gitignore` files in all levels, not only `root/.gitignore` file (apply
   `.gitignore` rules like `git` does) (#2225)
