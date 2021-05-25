@@ -36,3 +36,9 @@ _:-ms-fullscreen,
     -ms-overflow-style: none;
   }
 }
+
+/* Nicer style for local document toc */
+.contents.topic {
+  background: none;
+  border: none;
+}
