@@ -97,6 +97,7 @@ Contents
    usage_and_configuration/index
    integrations/index
    guides/index
+   faq
 
 .. toctree::
    :maxdepth: 3

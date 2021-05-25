@@ -5,6 +5,7 @@
 ### _Black_
 
 - A space is no longer inserted into empty docstrings (#2249)
+- Fix handling of .gitignore files containing non-ASCII characters on Windows (#2229)
 - Respect `.gitignore` files in all levels, not only `root/.gitignore` file (apply
   `.gitignore` rules like `git` does) (#2225)
 - Restored compatibility with Click 8.0 on Python 3.6 when LANG=C used (#2227)
@@ -14,10 +15,15 @@
 - Add a lower bound for the `aiohttp-cors` dependency. Only 0.4.0 or higher is
   supported. (#2231)
 
+### _Packaging_
+
+- Release self-contained macOS binaries as part of the GitHub release pipeline (#2198)
+
 ### Documentation
 
 - Fix typos discovered by codespell (#2228)
 - Fix Vim plugin installation instructions. (#2235)
+- Add new Frequently Asked Questions page (#2247)
 
 ## 21.5b1
 
