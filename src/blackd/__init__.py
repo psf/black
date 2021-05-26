@@ -22,6 +22,14 @@ except ImportError as ie:
 import black
 import click
 
+# If our environment has uvloop installed lets use it
+try:
+    import uvloop
+
+    uvloop.install()
+except ImportError:
+    pass
+
 from _black_version import version as __version__
 
 # This is used internally by tests to shut down the server prematurely
