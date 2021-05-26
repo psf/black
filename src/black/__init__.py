@@ -55,6 +55,13 @@ from blib2to3.pgen2 import token
 
 from _black_version import version as __version__
 
+# If our environment has uvloop installed lets use it
+try:
+    import uvloop
+
+    uvloop.install()
+except ImportError:
+    pass
 
 # types
 FileContent = str

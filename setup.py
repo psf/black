@@ -86,6 +86,7 @@ setup(
         "d": ["aiohttp>=3.6.0", "aiohttp-cors>=0.4.0"],
         "colorama": ["colorama>=0.4.3"],
         "python2": ["typed-ast>=1.4.2"],
+        "uvloop": ["uvloop>=0.15.2"],
     },
     test_suite="tests.test_black",
     classifiers=[
