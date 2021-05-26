@@ -29,6 +29,7 @@ from typing import (
 from dataclasses import replace
 import click
 
+from black import output
 from black.const import DEFAULT_LINE_LENGTH, DEFAULT_INCLUDES, DEFAULT_EXCLUDES
 from black.const import STDIN_PLACEHOLDER
 from black.nodes import STARS, syms, is_simple_decorator_expression
@@ -378,8 +379,29 @@ def main(
     if config and verbose:
         out(f"Using configuration from {config}.", bold=False, fg="blue")
     if code is not None:
-        print(format_str(code, mode=mode))
+        then = datetime.utcnow()
+
+        try:
+            formatted = format_file_contents(code, fast=fast, mode=mode)
+        except NothingChanged:
+            formatted = code
+
+        if write_back is WriteBack.CHECK:
+            ctx.exit(0 if code == formatted else 1)
+        elif write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
+            now = datetime.utcnow()
+            src_name = f"STDIN\t{then} +0000"
+            dst_name = f"STDOUT\t{now} +0000"
+
+            diff_contents = output.diff(code, formatted, src_name, dst_name)
+            if write_back == WriteBack.COLOR_DIFF:
+                diff_contents = color_diff(diff_contents)
+            print(diff_contents)
+        else:
+            print(formatted)
+
         ctx.exit(0)
+
     report = Report(check=check, diff=diff, quiet=quiet, verbose=verbose)
     sources = get_sources(
         ctx=ctx,
