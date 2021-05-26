@@ -68,6 +68,7 @@ Multiple contributions by:
 - Gustavo Camargo
 - hauntsaninja
 - [Hadi Alqattan](mailto:alqattanhadizaki@gmail.com)
+- [Hassan Abouelela](mailto:hassan@hassanamr.com)
 - [Heaford](mailto:dan@heaford.com)
 - [Hugo Barrera](mailto::hugo@barrera.io)
 - Hugo van Kemenade

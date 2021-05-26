@@ -8,6 +8,7 @@
 - Respect `.gitignore` files in all levels, not only `root/.gitignore` file (apply
   `.gitignore` rules like `git` does) (#2225)
 - Restored compatibility with Click 8.0 on Python 3.6 when LANG=C used (#2227)
+- Fixed option usage when using the `--code` flag (#2259)
 
 ### _Blackd_
 
