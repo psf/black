@@ -34,6 +34,7 @@ import black
 from black import Feature, TargetVersion
 from black.cache import get_cache_file
 from black.debug import DebugVisitor
+from black.output import diff, color_diff
 from black.report import Report
 import black.files
 
@@ -62,6 +63,9 @@ PY36_VERSIONS = {
 PY36_ARGS = [f"--target-version={version.name.lower()}" for version in PY36_VERSIONS]
 T = TypeVar("T")
 R = TypeVar("R")
+
+# Match the time output in a diff, but nothing else
+DIFF_TIME = re.compile(r"\t[\d-:+\. ]+")
 
 
 @contextmanager
@@ -2068,6 +2072,102 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(result.exit_code, 0)
         actual = result.output
         self.assertFormatEqual(actual, expected)
+
+    def test_code_option(self) -> None:
+        """Test the code option with no changes."""
+        code = 'print("Hello world")\n'
+        args = ["--code", code]
+        result = CliRunner().invoke(black.main, args)
+
+        # The CLI prints an extra linebreak when exiting.
+        self.assertEqual(result.output, code + "\n")
+        self.assertEqual(result.exit_code, 0)
+
+    def test_code_option_changed(self) -> None:
+        """Test the code option when changes are required."""
+        code = "print('hello world')"
+        # The CLI prints an extra linebreak when exiting.
+        formatted = black.format_str(code, mode=DEFAULT_MODE) + "\n"
+
+        args = ["--code", code]
+        result = CliRunner().invoke(black.main, args)
+
+        self.assertEqual(result.output, formatted)
+        self.assertEqual(result.exit_code, 0)
+
+    def test_code_option_check(self) -> None:
+        """Test the code option when check is passed."""
+        args = ["--check", "--code", 'print("Hello world")\n']
+        result = CliRunner().invoke(black.main, args)
+
+        self.assertEqual(result.output, "")
+        self.assertEqual(result.exit_code, 0)
+
+    def test_code_option_check_changed(self) -> None:
+        """Test the code option when changes are required, and check is passed."""
+        args = ["--check", "--code", "print('hello world')"]
+        result = CliRunner().invoke(black.main, args)
+
+        self.assertEqual(result.output, "")
+        self.assertEqual(result.exit_code, 1)
+
+    def test_code_option_diff(self) -> None:
+        """Test the code option when diff is passed."""
+        code = "print('hello world')"
+        formatted = black.format_str(code, mode=DEFAULT_MODE)
+
+        # The CLI prints an extraline break when exiting.
+        result_diff = diff(code, formatted, "STDIN", "STDOUT") + "\n"
+
+        args = ["--diff", "--code", code]
+        result = CliRunner().invoke(black.main, args)
+
+        # Remove time from diff
+        output = DIFF_TIME.sub("", result.output)
+
+        self.assertEqual(output, result_diff)
+        self.assertEqual(result.exit_code, 0)
+
+    def test_code_option_color_diff(self) -> None:
+        """Test the code option when color and diff are passed."""
+        code = "print('hello world')"
+        formatted = black.format_str(code, mode=DEFAULT_MODE)
+
+        result_diff = diff(code, formatted, "STDIN", "STDOUT")
+        # The CLI prints an extraline break when exiting.
+        result_diff = color_diff(result_diff) + "\n"
+
+        args = ["--diff", "--color", "--code", code]
+        result = CliRunner().invoke(black.main, args)
+
+        # Remove time from diff
+        output = DIFF_TIME.sub("", result.output)
+
+        self.assertEqual(output, result_diff)
+        self.assertEqual(result.exit_code, 0)
+
+    def test_code_option_safe(self) -> None:
+        """Test that the code option throws an error when the sanity checks fail."""
+        # Patch black.assert_equivalent to ensure the sanity checks fail
+        with patch.object(black, "assert_equivalent", side_effect=AssertionError):
+            args = ["--safe", "--code", 'print("Hello world")']
+            result = CliRunner().invoke(black.main, args)
+
+            self.assertEqual(result.output, "")
+            self.assertEqual(result.exit_code, 1)
+
+    def test_code_option_fast(self) -> None:
+        """Test that the code option ignores errors when the sanity checks fail."""
+        # Patch black.assert_equivalent to ensure the sanity checks fail
+        with patch.object(black, "assert_equivalent", side_effect=AssertionError):
+            code = 'print("Hello world")'
+            formatted = black.format_str(code, mode=DEFAULT_MODE) + "\n"
+
+            args = ["--fast", "--code", code]
+            result = CliRunner().invoke(black.main, args)
+
+            self.assertEqual(result.output, formatted)
+            self.assertEqual(result.exit_code, 0)
 
 
 with open(black.__file__, "r", encoding="utf-8") as _bf:
