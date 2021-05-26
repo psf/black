@@ -393,19 +393,26 @@ def main(
         except NothingChanged:
             formatted = code
 
-        if write_back is WriteBack.CHECK:
-            ctx.exit(0 if code == formatted else 1)
-        elif write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
-            now = datetime.utcnow()
-            src_name = f"STDIN\t{then} +0000"
-            dst_name = f"STDOUT\t{now} +0000"
+        stream = io.TextIOWrapper(sys.stdout.buffer)
+        try:
+            if write_back is WriteBack.CHECK:
+                ctx.exit(0 if code == formatted else 1)
+            elif write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
+                now = datetime.utcnow()
+                src_name = f"STDIN\t{then} +0000"
+                dst_name = f"STDOUT\t{now} +0000"
 
-            diff_contents = output.diff(code, formatted, src_name, dst_name)
-            if write_back == WriteBack.COLOR_DIFF:
-                diff_contents = color_diff(diff_contents)
-            print(diff_contents)
-        else:
-            print(formatted)
+                diff_contents = output.diff(code, formatted, src_name, dst_name)
+                if write_back == WriteBack.COLOR_DIFF:
+                    diff_contents = color_diff(diff_contents)
+                    stream = wrap_stream_for_windows(stream)
+
+                stream.write(diff_contents)
+            else:
+                stream.write(formatted)
+        finally:
+            # Ensure the stream is cleaned up properly
+            stream.detach()
 
         ctx.exit(0)
 
