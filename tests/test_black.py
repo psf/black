@@ -2073,51 +2073,51 @@ class BlackTestCase(BlackBaseTestCase):
         actual = result.output
         self.assertFormatEqual(actual, expected)
 
+    @staticmethod
+    def compare_results(
+        result: click.testing.Result, expected_value: str, expected_exit_code: int
+    ) -> None:
+        """Helper method to test the value and exit code of a click Result."""
+        assert (
+            result.output == expected_value
+        ), "The output did not match the expected value."
+        assert result.exit_code == expected_exit_code, "The exit code is incorrect."
+
     def test_code_option(self) -> None:
         """Test the code option with no changes."""
         code = 'print("Hello world")\n'
         args = ["--code", code]
         result = CliRunner().invoke(black.main, args)
 
-        # The CLI prints an extra linebreak when exiting.
-        self.assertEqual(result.output, code + "\n")
-        self.assertEqual(result.exit_code, 0)
+        self.compare_results(result, code, 0)
 
     def test_code_option_changed(self) -> None:
         """Test the code option when changes are required."""
         code = "print('hello world')"
-        # The CLI prints an extra linebreak when exiting.
-        formatted = black.format_str(code, mode=DEFAULT_MODE) + "\n"
+        formatted = black.format_str(code, mode=DEFAULT_MODE)
 
         args = ["--code", code]
         result = CliRunner().invoke(black.main, args)
 
-        self.assertEqual(result.output, formatted)
-        self.assertEqual(result.exit_code, 0)
+        self.compare_results(result, formatted, 0)
 
     def test_code_option_check(self) -> None:
         """Test the code option when check is passed."""
         args = ["--check", "--code", 'print("Hello world")\n']
         result = CliRunner().invoke(black.main, args)
-
-        self.assertEqual(result.output, "")
-        self.assertEqual(result.exit_code, 0)
+        self.compare_results(result, "", 0)
 
     def test_code_option_check_changed(self) -> None:
         """Test the code option when changes are required, and check is passed."""
         args = ["--check", "--code", "print('hello world')"]
         result = CliRunner().invoke(black.main, args)
-
-        self.assertEqual(result.output, "")
-        self.assertEqual(result.exit_code, 1)
+        self.compare_results(result, "", 1)
 
     def test_code_option_diff(self) -> None:
         """Test the code option when diff is passed."""
         code = "print('hello world')"
         formatted = black.format_str(code, mode=DEFAULT_MODE)
-
-        # The CLI prints an extraline break when exiting.
-        result_diff = diff(code, formatted, "STDIN", "STDOUT") + "\n"
+        result_diff = diff(code, formatted, "STDIN", "STDOUT")
 
         args = ["--diff", "--code", code]
         result = CliRunner().invoke(black.main, args)
@@ -2125,8 +2125,8 @@ class BlackTestCase(BlackBaseTestCase):
         # Remove time from diff
         output = DIFF_TIME.sub("", result.output)
 
-        self.assertEqual(output, result_diff)
-        self.assertEqual(result.exit_code, 0)
+        assert output == result_diff, "The output did not match the expected value."
+        assert result.exit_code == 0, "The exit code is incorrect."
 
     def test_code_option_color_diff(self) -> None:
         """Test the code option when color and diff are passed."""
@@ -2134,8 +2134,7 @@ class BlackTestCase(BlackBaseTestCase):
         formatted = black.format_str(code, mode=DEFAULT_MODE)
 
         result_diff = diff(code, formatted, "STDIN", "STDOUT")
-        # The CLI prints an extraline break when exiting.
-        result_diff = color_diff(result_diff) + "\n"
+        result_diff = color_diff(result_diff)
 
         args = ["--diff", "--color", "--code", code]
         result = CliRunner().invoke(black.main, args)
@@ -2143,8 +2142,8 @@ class BlackTestCase(BlackBaseTestCase):
         # Remove time from diff
         output = DIFF_TIME.sub("", result.output)
 
-        self.assertEqual(output, result_diff)
-        self.assertEqual(result.exit_code, 0)
+        assert output == result_diff, "The output did not match the expected value."
+        assert result.exit_code == 0, "The exit code is incorrect."
 
     def test_code_option_safe(self) -> None:
         """Test that the code option throws an error when the sanity checks fail."""
@@ -2153,21 +2152,19 @@ class BlackTestCase(BlackBaseTestCase):
             args = ["--safe", "--code", 'print("Hello world")']
             result = CliRunner().invoke(black.main, args)
 
-            self.assertEqual(result.output, "")
-            self.assertEqual(result.exit_code, 1)
+            self.compare_results(result, "", 1)
 
     def test_code_option_fast(self) -> None:
         """Test that the code option ignores errors when the sanity checks fail."""
         # Patch black.assert_equivalent to ensure the sanity checks fail
         with patch.object(black, "assert_equivalent", side_effect=AssertionError):
             code = 'print("Hello world")'
-            formatted = black.format_str(code, mode=DEFAULT_MODE) + "\n"
+            formatted = black.format_str(code, mode=DEFAULT_MODE)
 
             args = ["--fast", "--code", code]
             result = CliRunner().invoke(black.main, args)
 
-            self.assertEqual(result.output, formatted)
-            self.assertEqual(result.exit_code, 0)
+            self.compare_results(result, formatted, 0)
 
 
 with open(black.__file__, "r", encoding="utf-8") as _bf:
