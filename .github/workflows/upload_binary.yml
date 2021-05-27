@@ -31,7 +31,7 @@ jobs:
       - name: Set up latest Python
         uses: actions/setup-python@v2
         with:
-          python-version: "3.x"
+          python-version: "*"
 
       - name: Install dependencies
         run: |
