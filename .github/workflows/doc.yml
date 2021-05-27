@@ -11,14 +11,17 @@ jobs:
       github.event_name == 'push' || github.event.pull_request.head.repo.full_name !=
       github.repository
 
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
 
-      - name: Set up Python 3.9
+      - name: Set up latest Python
         uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
 
       - name: Install dependencies
         run: |

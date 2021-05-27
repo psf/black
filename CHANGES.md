@@ -25,6 +25,7 @@
 - Fix typos discovered by codespell (#2228)
 - Fix Vim plugin installation instructions. (#2235)
 - Add new Frequently Asked Questions page (#2247)
+- Fix encoding + symlink issues preventing proper build on Windows (#2262)
 
 ## 21.5b1
 
