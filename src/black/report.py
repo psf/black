@@ -4,6 +4,7 @@ Summarize Black runs to users.
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
+import typing
 
 from click import style
 
@@ -28,7 +29,7 @@ class Report:
     same_count: int = 0
     failure_count: int = 0
 
-    def done(self, src: Path, changed: Changed) -> None:
+    def done(self, src: typing.Union[Path, str], changed: Changed) -> None:
         """Increment the counter for successful reformatting. Write out a message."""
         if changed is Changed.YES:
             reformatted = "would reformat" if self.check or self.diff else "reformatted"
@@ -44,7 +45,7 @@ class Report:
                 out(msg, bold=False)
             self.same_count += 1
 
-    def failed(self, src: Path, message: str) -> None:
+    def failed(self, src: typing.Union[Path, str], message: str) -> None:
         """Increment the counter for failed reformatting. Write out a message."""
         err(f"error: cannot format {src}: {message}")
         self.failure_count += 1
