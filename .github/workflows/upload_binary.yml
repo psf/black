@@ -10,7 +10,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7]
         os: [windows-2019, ubuntu-20.04, macos-latest]
         include:
           - os: windows-2019
@@ -29,10 +28,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up latest Python
         uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "*"
 
       - name: Install dependencies
         run: |

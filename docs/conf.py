@@ -12,8 +12,10 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-from pathlib import Path
+
+import os
 import string
+from pathlib import Path
 
 from pkg_resources import get_distribution
 
@@ -28,6 +30,10 @@ def make_pypi_svg(version: str) -> None:
     with open(str(target), "w", encoding="utf8") as f:
         f.write(svg)
 
+
+# Necessary so Click doesn't hit an encode error when called by
+# sphinxcontrib-programoutput on Windows.
+os.putenv("pythonioencoding", "utf-8")
 
 # -- Project information -----------------------------------------------------
 

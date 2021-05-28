@@ -20,6 +20,7 @@
 ### _Packaging_
 
 - Release self-contained macOS binaries as part of the GitHub release pipeline (#2198)
+- Always build binaries with the latest available Python (#2260)
 
 ### Documentation
 
@@ -27,6 +28,7 @@
 - Fix Vim plugin installation instructions. (#2235)
 - Add new Frequently Asked Questions page (#2247)
 - Removed safety checks warning for the `--code` option (#2259)
+- Fix encoding + symlink issues preventing proper build on Windows (#2262)
 
 ## 21.5b1
 
