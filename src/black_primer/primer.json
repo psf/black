@@ -91,7 +91,7 @@
     },
     "ptr": {
       "cli_arguments": ["--experimental-string-processing"],
-      "expect_formatting_changes": true,
+      "expect_formatting_changes": false,
       "git_clone_url": "https://github.com/facebookincubator/ptr.git",
       "long_checkout": false,
       "py_versions": ["all"]
