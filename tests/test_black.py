@@ -2169,6 +2169,27 @@ class BlackTestCase(BlackBaseTestCase):
 
             self.compare_results(result, formatted, 0)
 
+    def test_code_option_config(self) -> None:
+        """
+        Test that the code option finds the pyproject.toml in the current directory.
+        """
+        with patch.object(black, "parse_pyproject_toml", return_value={}) as parse:
+            # Create a temporary pyproject in the current directory
+            config = Path("pyproject.toml")
+            assert (
+                not config.exists()
+            ), "Creating a temporary config would override an existing file."
+            config.write_text("")
+
+            try:
+                args = ["--code", "print"]
+                CliRunner().invoke(black.main, args)
+
+                parse.assert_called_once_with(str(config.absolute()))
+            finally:
+                # Delete the pyproject file
+                config.unlink()
+
 
 with open(black.__file__, "r", encoding="utf-8") as _bf:
     black_source_lines = _bf.readlines()
