@@ -385,6 +385,11 @@ def main(
     if config and verbose:
         out(f"Using configuration from {config}.", bold=False, fg="blue")
 
+    if code is not None:
+        # Run in quiet mode by default with -c; the extra output isn't useful.
+        # You can still pass -v to get verbose output.
+        quiet = True
+
     report = Report(check=check, diff=diff, quiet=quiet, verbose=verbose)
 
     if code is not None:
