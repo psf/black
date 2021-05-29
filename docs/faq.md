@@ -21,7 +21,8 @@ _Black_ is still in [beta](index.rst), some edges are still a bit rough. To comb
 issues, the equivalence of code after formatting is
 [checked](the_black_code_style/current_style.md#ast-before-and-after-formatting) with
 limited special cases where the code is allowed to differ. If issues are found, an error
-is raised and the file is left untouched.
+is raised and the file is left untouched. Magical comments that influence linters and
+other tools, such as `# noqa`, may be moved by _Black_. See below for more details.
 
 ## How stable is Black's style?
 
@@ -50,3 +51,11 @@ For formatting, yes! [Install](getting_started.md#installation) with the `python
 to format Python 2 files too! There are no current plans to drop support, but most
 likely it is bound to happen. Sometime. Eventually. In terms of running _Black_ though,
 Python 3.6 or newer is required.
+
+## Why does my linter or typechecker complain after I format my code?
+
+Some linters and other tools use magical comments (e.g., `# noqa`, `# type: ignore`) to
+influence their behavior. While Black does its best to recognize such comments and leave
+them in the right place, this detection is not and cannot be perfect. Therefore, you'll
+sometimes have to manually move these comments to the right place after you format your
+codebase with _Black_.
