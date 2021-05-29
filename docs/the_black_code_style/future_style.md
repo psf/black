@@ -33,3 +33,10 @@ with \
 
 Although when the target version is Python 3.9 or higher, _Black_ will use parentheses
 instead since they're allowed in Python 3.9 and higher.
+
+## Improved string processing
+
+Currently, _Black_ does not split long strings to fit the line length limit. Currently,
+there is [an experimental option](labels/experimental-string) to enable splitting
+strings. We plan to enable this option by default once it is fully stable. This is
+tracked in [this issue](https://github.com/psf/black/issues/2188).

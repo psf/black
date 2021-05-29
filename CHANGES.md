@@ -24,6 +24,7 @@
 ### Documentation
 
 - Add discussion of magic comments to FAQ page (#2272)
+- `--experimental-string-processing` will be enabled by default in the future (#2273)
 - Fix typos discovered by codespell (#2228)
 - Fix Vim plugin installation instructions. (#2235)
 - Add new Frequently Asked Questions page (#2247)
