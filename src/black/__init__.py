@@ -54,6 +54,13 @@ from blib2to3.pgen2 import token
 
 from _black_version import version as __version__
 
+# If our environment has uvloop installed lets use it
+try:
+    import uvloop
+
+    uvloop.install()
+except ImportError:
+    pass
 
 # types
 FileContent = str
@@ -499,8 +506,9 @@ def path_empty(
     """
     Exit if there is no `src` provided for formatting
     """
-    if not src and (verbose or not quiet):
-        out(msg)
+    if not src:
+        if verbose or not quiet:
+            out(msg)
         ctx.exit(0)
 
 
