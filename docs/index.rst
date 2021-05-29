@@ -39,6 +39,13 @@ Try it out now using the `Black Playground <https://black.vercel.app>`_.
 Testimonials
 ------------
 
+**Mike Bayer**, author of `SQLAlchemy <https://www.sqlalchemy.org/>`_:
+
+   *I can't think of any single tool in my entire programming career that has given me a
+   bigger productivity increase by its introduction. I can now do refactorings in about
+   1% of the keystrokes that it would have taken me previously when we had no way for
+   code to format itself.*
+
 **Dusty Phillips**, `writer <https://smile.amazon.com/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=dusty+phillips>`_:
 
    *Black is opinionated so you don't have to be.*

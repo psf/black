@@ -520,8 +520,9 @@ def path_empty(
     """
     Exit if there is no `src` provided for formatting
     """
-    if not src and (verbose or not quiet):
-        out(msg)
+    if not src:
+        if verbose or not quiet:
+            out(msg)
         ctx.exit(0)
 
 
