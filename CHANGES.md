@@ -13,6 +13,11 @@
 - Add a lower bound for the `aiohttp-cors` dependency. Only 0.4.0 or higher is
   supported. (#2231)
 
+### Integrations
+
+- The official Black action now supports choosing what version to use, and supports the
+  major 3 OSes. (#1940)
+
 ### Documentation
 
 - Fix typos discovered by codespell (#2228)
