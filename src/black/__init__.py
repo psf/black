@@ -530,17 +530,18 @@ def reformat_code(
     `fast`, `write_back`, and `mode` options are passed to
     :func:`format_file_in_place` or :func:`format_stdin_to_stdout`.
     """
+    path = Path("<string>")
     try:
         changed = Changed.NO
         if format_stdin_to_stdout(
             content=content, fast=fast, write_back=write_back, mode=mode
         ):
             changed = Changed.YES
-        report.done(content, changed)
+        report.done(path, changed)
     except Exception as exc:
         if report.verbose:
             traceback.print_exc()
-        report.failed(content, str(exc))
+        report.failed(path, str(exc))
 
 
 def reformat_one(

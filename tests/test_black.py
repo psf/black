@@ -2150,7 +2150,7 @@ class BlackTestCase(BlackBaseTestCase):
         # Patch black.assert_equivalent to ensure the sanity checks fail
         with patch.object(black, "assert_equivalent", side_effect=AssertionError):
             code = 'print("Hello world")'
-            error_msg = f"{code}\nerror: cannot format {code}: \n"
+            error_msg = f"{code}\nerror: cannot format <string>: \n"
 
             args = ["--safe", "--quiet", "--code", code]
             result = CliRunner().invoke(black.main, args)
