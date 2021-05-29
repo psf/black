@@ -2086,7 +2086,7 @@ class BlackTestCase(BlackBaseTestCase):
     def test_code_option(self) -> None:
         """Test the code option with no changes."""
         code = 'print("Hello world")\n'
-        args = ["--quiet", "--code", code]
+        args = ["--code", code]
         result = CliRunner().invoke(black.main, args)
 
         self.compare_results(result, code, 0)
@@ -2096,20 +2096,20 @@ class BlackTestCase(BlackBaseTestCase):
         code = "print('hello world')"
         formatted = black.format_str(code, mode=DEFAULT_MODE)
 
-        args = ["--quiet", "--code", code]
+        args = ["--code", code]
         result = CliRunner().invoke(black.main, args)
 
         self.compare_results(result, formatted, 0)
 
     def test_code_option_check(self) -> None:
         """Test the code option when check is passed."""
-        args = ["--check", "--quiet", "--code", 'print("Hello world")\n']
+        args = ["--check", "--code", 'print("Hello world")\n']
         result = CliRunner().invoke(black.main, args)
         self.compare_results(result, "", 0)
 
     def test_code_option_check_changed(self) -> None:
         """Test the code option when changes are required, and check is passed."""
-        args = ["--check", "--quiet", "--code", "print('hello world')"]
+        args = ["--check", "--code", "print('hello world')"]
         result = CliRunner().invoke(black.main, args)
         self.compare_results(result, "", 1)
 
@@ -2119,7 +2119,7 @@ class BlackTestCase(BlackBaseTestCase):
         formatted = black.format_str(code, mode=DEFAULT_MODE)
         result_diff = diff(code, formatted, "STDIN", "STDOUT")
 
-        args = ["--diff", "--quiet", "--code", code]
+        args = ["--diff", "--code", code]
         result = CliRunner().invoke(black.main, args)
 
         # Remove time from diff
@@ -2136,7 +2136,7 @@ class BlackTestCase(BlackBaseTestCase):
         result_diff = diff(code, formatted, "STDIN", "STDOUT")
         result_diff = color_diff(result_diff)
 
-        args = ["--diff", "--quiet", "--color", "--code", code]
+        args = ["--diff", "--color", "--code", code]
         result = CliRunner().invoke(black.main, args)
 
         # Remove time from diff
@@ -2152,7 +2152,7 @@ class BlackTestCase(BlackBaseTestCase):
             code = 'print("Hello world")'
             error_msg = f"{code}\nerror: cannot format <string>: \n"
 
-            args = ["--safe", "--quiet", "--code", code]
+            args = ["--safe", "--code", code]
             result = CliRunner().invoke(black.main, args)
 
             self.compare_results(result, error_msg, 123)
@@ -2164,7 +2164,7 @@ class BlackTestCase(BlackBaseTestCase):
             code = 'print("Hello world")'
             formatted = black.format_str(code, mode=DEFAULT_MODE)
 
-            args = ["--fast", "--quiet", "--code", code]
+            args = ["--fast", "--code", code]
             result = CliRunner().invoke(black.main, args)
 
             self.compare_results(result, formatted, 0)
