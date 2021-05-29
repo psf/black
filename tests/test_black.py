@@ -2174,21 +2174,40 @@ class BlackTestCase(BlackBaseTestCase):
         Test that the code option finds the pyproject.toml in the current directory.
         """
         with patch.object(black, "parse_pyproject_toml", return_value={}) as parse:
-            # Create a temporary pyproject in the current directory
-            config = Path("pyproject.toml")
+            # Make sure we are in the project root with the pyproject file
+            if not Path("tests").exists():
+                os.chdir("..")
+
+            args = ["--code", "print"]
+            CliRunner().invoke(black.main, args)
+
+            pyproject_path = Path(Path().cwd(), "pyproject.toml").resolve()
             assert (
-                not config.exists()
-            ), "Creating a temporary config would override an existing file."
-            config.write_text("")
+                len(parse.mock_calls) >= 1
+            ), "Expected config parse to be called with the current directory."
+            assert (
+                parse.mock_calls[0].args[0].lower() == str(pyproject_path).lower()
+            ), "Incorrect config loaded."
 
-            try:
-                args = ["--code", "print"]
-                CliRunner().invoke(black.main, args)
+    def test_code_option_parent_config(self) -> None:
+        """
+        Test that the code option finds the pyproject.toml in the parent directory.
+        """
+        with patch.object(black, "parse_pyproject_toml", return_value={}) as parse:
+            # Make sure we are in the tests directory
+            if Path("tests").exists():
+                os.chdir("tests")
 
-                parse.assert_called_once_with(str(config.absolute()))
-            finally:
-                # Delete the pyproject file
-                config.unlink()
+            args = ["--code", "print"]
+            CliRunner().invoke(black.main, args)
+
+            pyproject_path = Path(Path().cwd().parent, "pyproject.toml").resolve()
+            assert (
+                len(parse.mock_calls) >= 1
+            ), "Expected config parse to be called with the current directory."
+            assert (
+                parse.mock_calls[0].args[0].lower() == str(pyproject_path).lower()
+            ), "Incorrect config loaded."
 
 
 with open(black.__file__, "r", encoding="utf-8") as _bf:
