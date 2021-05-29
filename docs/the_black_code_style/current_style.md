@@ -250,7 +250,7 @@ If you are adopting _Black_ in a large project with pre-existing string conventi
 you can pass `--skip-string-normalization` on the command line. This is meant as an
 adoption helper, avoid using this for new projects.
 
-(labels/string-processing)=
+(labels/experimental-string)=
 
 As an experimental option (can be enabled by `--experimental-string-processing`),
 _Black_ splits long strings (using parentheses where appropriate) and merges short ones.
