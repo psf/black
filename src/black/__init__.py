@@ -4199,6 +4199,11 @@ class StringParenWrapper(CustomSplitMapMixin, BaseStringSplitter):
     def do_splitter_match(self, line: Line) -> TMatchResult:
         LL = line.leaves
 
+        if line.leaves[-1].type in OPENING_BRACKETS:
+            return TErr(
+                "Cannot wrap parens around a line that ends in an opening bracket."
+            )
+
         string_idx = (
             self._return_match(LL)
             or self._else_match(LL)
