@@ -412,6 +412,33 @@ assert str(suffix_arr) == (
     "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
     "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
 )
+assert str(suffix_arr) != (
+    "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
+)
+assert str(suffix_arr) <= (
+    "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
+)
+assert str(suffix_arr) >= (
+    "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
+)
+assert str(suffix_arr) < (
+    "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
+)
+assert str(suffix_arr) > (
+    "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
+)
+assert str(suffix_arr) in "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', 'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', 'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
+assert str(suffix_arr) not in "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', 'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', 'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
 
 # output
 
@@ -920,4 +947,46 @@ assert (
     == "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
     "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
     "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
+)
+assert (
+    str(suffix_arr)
+    != "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
+)
+assert (
+    str(suffix_arr)
+    <= "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
+)
+assert (
+    str(suffix_arr)
+    >= "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
+)
+assert (
+    str(suffix_arr)
+    < "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
+)
+assert (
+    str(suffix_arr)
+    > "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
+)
+assert (
+    str(suffix_arr)
+    in "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', 'grykangaroo$',"
+    " 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', 'o$', 'oo$', 'roo$', 'rykangaroo$',"
+    " 'ykangaroo$']"
+)
+assert (
+    str(suffix_arr)
+    not in "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', 'grykangaroo$',"
+    " 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', 'o$', 'oo$', 'roo$',"
+    " 'rykangaroo$', 'ykangaroo$']"
 )
