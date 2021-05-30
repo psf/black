@@ -920,9 +920,9 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
     lines by themselves).
 
     Requirements:
-        * The line consists ONLY of a single string (with the exception of a
-        '+' symbol which MAY exist at the start of the line), MAYBE a string
-        trailer, and MAYBE a trailing comma.
+        * The line consists ONLY of a single string (possibly prefixed by a
+        string operator [e.g. '+' or '==']), MAYBE a string trailer, and MAYBE
+        a trailing comma.
             AND
         * All of the requirements listed in BaseStringSplitter's docstring.
 
@@ -952,6 +952,16 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         CustomSplit objects and add them to the custom split map.
     """
 
+    STRING_OPERATORS = [
+        token.PLUS,
+        token.STAR,
+        token.EQEQUAL,
+        token.NOTEQUAL,
+        token.LESS,
+        token.LESSEQUAL,
+        token.GREATER,
+        token.GREATEREQUAL,
+    ]
     MIN_SUBSTR_SIZE = 6
     # Matches an "f-expression" (e.g. {var}) that might be found in an f-string.
     RE_FEXPR = r"""
@@ -972,8 +982,20 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
 
         idx = 0
 
-        # The first leaf MAY be a '+' symbol...
-        if is_valid_index(idx) and LL[idx].type in [token.PLUS, token.EQEQUAL]:
+        # The first two leaves MAY be the 'not in' keywords...
+        if (
+            is_valid_index(idx)
+            and is_valid_index(idx + 1)
+            and [LL[idx].type, LL[idx + 1].type] == [token.NAME, token.NAME]
+            and str(LL[idx]) + str(LL[idx + 1]) == "not in"
+        ):
+            idx += 2
+        # Else the first leaf MAY be a string operator symbol or the 'in' keyword...
+        elif is_valid_index(idx) and (
+            LL[idx].type in self.STRING_OPERATORS
+            or LL[idx].type == token.NAME
+            and str(LL[idx]) == "in"
+        ):
             idx += 1
 
         # The next/first leaf MAY be an empty LPAR...
@@ -1024,27 +1046,24 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
 
         first_string_line = True
 
-        prefix_leaf = (
-            Leaf(LL[0].type, str(LL[0]))
-            if LL[0].type in [token.PLUS, token.EQEQUAL]
-            else None
+        string_op_leaves = self._get_string_operator_leaves(LL)
+        string_op_leaves_length = (
+            sum([len(str(prefix_leaf)) for prefix_leaf in string_op_leaves]) + 1
+            if string_op_leaves
+            else 0
         )
-        prefix_leaf_size = len(str(prefix_leaf)) + 1 if prefix_leaf else 0
 
-        def line_needs_prefix_leaf() -> bool:
-            return bool(first_string_line and prefix_leaf)
-
-        def maybe_append_prefix_leaf(new_line: Line) -> None:
+        def maybe_append_string_operators(new_line: Line) -> None:
             """
             Side Effects:
-                If @line starts with a plus and this is the first line we are
-                constructing, this function appends a PLUS leaf to @new_line
-                and replaces the old PLUS leaf in the node structure. Otherwise
-                this function does nothing.
+                If @line starts with a string operator and this is the first
+                line we are constructing, this function appends the string
+                operator to @new_line and replaces the old string operator leaf
+                in the node structure. Otherwise this function does nothing.
             """
-            if line_needs_prefix_leaf():
-                assert prefix_leaf is not None
-                replace_child(LL[0], prefix_leaf)
+            maybe_prefix_leaves = string_op_leaves if first_string_line else []
+            for i, prefix_leaf in enumerate(maybe_prefix_leaves):
+                replace_child(LL[i], prefix_leaf)
                 new_line.append(prefix_leaf)
 
         ends_with_comma = (
@@ -1060,7 +1079,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
             result = self.line_length
             result -= line.depth * 4
             result -= 1 if ends_with_comma else 0
-            result -= prefix_leaf_size
+            result -= string_op_leaves_length
             return result
 
         # --- Calculate Max Break Index (for string value)
@@ -1109,7 +1128,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
                 break_idx = csplit.break_idx
             else:
                 # Algorithmic Split (automatic)
-                max_bidx = max_break_idx - prefix_leaf_size
+                max_bidx = max_break_idx - string_op_leaves_length
                 maybe_break_idx = self._get_break_idx(rest_value, max_bidx)
                 if maybe_break_idx is None:
                     # If we are unable to algorithmically determine a good split
@@ -1154,7 +1173,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
 
             # --- Construct `next_line`
             next_line = line.clone()
-            maybe_append_prefix_leaf(next_line)
+            maybe_append_string_operators(next_line)
             next_line.append(next_leaf)
             string_line_results.append(Ok(next_line))
 
@@ -1175,7 +1194,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         self._maybe_normalize_string_quotes(rest_leaf)
 
         last_line = line.clone()
-        maybe_append_prefix_leaf(last_line)
+        maybe_append_string_operators(last_line)
 
         # If there are any leaves to the right of the target string...
         if is_valid_index(string_idx + 1):
@@ -1350,6 +1369,17 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
             return f"{new_prefix}{new_string}"
         else:
             return string
+
+    def _get_string_operator_leaves(self, leaves: Iterable[Leaf]) -> List[Leaf]:
+        LL = list(leaves)
+
+        string_op_leaves = []
+        i = 0
+        while LL[i].type in self.STRING_OPERATORS + [token.NAME]:
+            prefix_leaf = Leaf(LL[i].type, str(LL[i]).strip())
+            string_op_leaves.append(prefix_leaf)
+            i += 1
+        return string_op_leaves
 
 
 class StringParenWrapper(CustomSplitMapMixin, BaseStringSplitter):
