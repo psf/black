@@ -406,6 +406,13 @@ def _legacy_listen_examples():
         }
     )
 
+
+assert str(suffix_arr) == (
+    "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
+)
+
 # output
 
 
@@ -906,3 +913,11 @@ def _legacy_listen_examples():
             "since": since,
         }
     )
+
+
+assert (
+    str(suffix_arr)
+    == "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
+)
