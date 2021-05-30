@@ -11,6 +11,7 @@
 - Restored compatibility with Click 8.0 on Python 3.6 when LANG=C used (#2227)
 - Add extra uvloop install + import support if in python env (#2258)
 - Fix --experimental-string-processing crash when matching parens are not found (#2283)
+- Make sure to split lines that start with a string operator (#2286)
 
 ### _Blackd_
 
