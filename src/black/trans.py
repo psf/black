@@ -973,7 +973,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         idx = 0
 
         # The first leaf MAY be a '+' symbol...
-        if is_valid_index(idx) and LL[idx].type == token.PLUS:
+        if is_valid_index(idx) and LL[idx].type in [token.PLUS, token.EQEQUAL]:
             idx += 1
 
         # The next/first leaf MAY be an empty LPAR...
@@ -1023,12 +1023,18 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         )
 
         first_string_line = True
-        starts_with_plus = LL[0].type == token.PLUS
 
-        def line_needs_plus() -> bool:
-            return first_string_line and starts_with_plus
+        prefix_leaf = (
+            Leaf(LL[0].type, str(LL[0]))
+            if LL[0].type in [token.PLUS, token.EQEQUAL]
+            else None
+        )
+        prefix_leaf_size = len(str(prefix_leaf)) + 1 if prefix_leaf else 0
 
-        def maybe_append_plus(new_line: Line) -> None:
+        def line_needs_prefix_leaf() -> bool:
+            return bool(first_string_line and prefix_leaf)
+
+        def maybe_append_prefix_leaf(new_line: Line) -> None:
             """
             Side Effects:
                 If @line starts with a plus and this is the first line we are
@@ -1036,10 +1042,10 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
                 and replaces the old PLUS leaf in the node structure. Otherwise
                 this function does nothing.
             """
-            if line_needs_plus():
-                plus_leaf = Leaf(token.PLUS, "+")
-                replace_child(LL[0], plus_leaf)
-                new_line.append(plus_leaf)
+            if line_needs_prefix_leaf():
+                assert prefix_leaf is not None
+                replace_child(LL[0], prefix_leaf)
+                new_line.append(prefix_leaf)
 
         ends_with_comma = (
             is_valid_index(string_idx + 1) and LL[string_idx + 1].type == token.COMMA
@@ -1054,7 +1060,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
             result = self.line_length
             result -= line.depth * 4
             result -= 1 if ends_with_comma else 0
-            result -= 2 if line_needs_plus() else 0
+            result -= prefix_leaf_size
             return result
 
         # --- Calculate Max Break Index (for string value)
@@ -1103,7 +1109,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
                 break_idx = csplit.break_idx
             else:
                 # Algorithmic Split (automatic)
-                max_bidx = max_break_idx - 2 if line_needs_plus() else max_break_idx
+                max_bidx = max_break_idx - prefix_leaf_size
                 maybe_break_idx = self._get_break_idx(rest_value, max_bidx)
                 if maybe_break_idx is None:
                     # If we are unable to algorithmically determine a good split
@@ -1148,7 +1154,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
 
             # --- Construct `next_line`
             next_line = line.clone()
-            maybe_append_plus(next_line)
+            maybe_append_prefix_leaf(next_line)
             next_line.append(next_leaf)
             string_line_results.append(Ok(next_line))
 
@@ -1169,7 +1175,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         self._maybe_normalize_string_quotes(rest_leaf)
 
         last_line = line.clone()
-        maybe_append_plus(last_line)
+        maybe_append_prefix_leaf(last_line)
 
         # If there are any leaves to the right of the target string...
         if is_valid_index(string_idx + 1):
