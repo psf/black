@@ -4,6 +4,7 @@
 
 ### _Black_
 
+- Fix failure caused by `fmt: skip` and indentation (#2281)
 - Correct max string length calculation when there are string operators (#2292)
 
 ## 21.5b2
