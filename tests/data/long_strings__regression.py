@@ -396,6 +396,16 @@ x = f"This is a long string which contains an f-expr that should not split {{{[i
     " it has now"
 )
 
+
+def _legacy_listen_examples():
+    text += (
+        "    \"listen for the '%(event_name)s' event\"\n"
+        "\n    # ... (event logic logic logic) ...\n"
+        % {
+            "since": since,
+        }
+    )
+
 # output
 
 
@@ -886,3 +896,13 @@ x = (
     " it goes over 88 characters which"
     " it has now"
 )
+
+
+def _legacy_listen_examples():
+    text += (
+        "    \"listen for the '%(event_name)s' event\"\n"
+        "\n    # ... (event logic logic logic) ...\n"
+        % {
+            "since": since,
+        }
+    )

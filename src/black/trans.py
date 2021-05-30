@@ -25,7 +25,7 @@ from black.rusty import Result, Ok, Err
 from black.mode import Feature
 from black.nodes import syms, replace_child, parent_type
 from black.nodes import is_empty_par, is_empty_lpar, is_empty_rpar
-from black.nodes import CLOSING_BRACKETS, STANDALONE_COMMENT
+from black.nodes import OPENING_BRACKETS, CLOSING_BRACKETS, STANDALONE_COMMENT
 from black.lines import Line, append_leaves
 from black.brackets import BracketMatchError
 from black.comments import contains_pragma_comment
@@ -1398,6 +1398,11 @@ class StringParenWrapper(CustomSplitMapMixin, BaseStringSplitter):
     def do_splitter_match(self, line: Line) -> TMatchResult:
         LL = line.leaves
 
+        if line.leaves[-1].type in OPENING_BRACKETS:
+            return TErr(
+                "Cannot wrap parens around a line that ends in an opening bracket."
+            )
+
         string_idx = (
             self._return_match(LL)
             or self._else_match(LL)
@@ -1665,9 +1670,10 @@ class StringParenWrapper(CustomSplitMapMixin, BaseStringSplitter):
                 right_leaves.pop()
 
             if old_parens_exist:
-                assert (
-                    right_leaves and right_leaves[-1].type == token.RPAR
-                ), "Apparently, old parentheses do NOT exist?!"
+                assert right_leaves and right_leaves[-1].type == token.RPAR, (
+                    "Apparently, old parentheses do NOT exist?!"
+                    f" (left_leaves={left_leaves}, right_leaves={right_leaves})"
+                )
                 old_rpar_leaf = right_leaves.pop()
 
             append_leaves(string_line, line, right_leaves)
