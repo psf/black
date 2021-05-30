@@ -10,7 +10,7 @@
   `.gitignore` rules like `git` does) (#2225)
 - Restored compatibility with Click 8.0 on Python 3.6 when LANG=C used (#2227)
 - Add extra uvloop install + import support if in python env (#2258)
-- Conditional expressions are now always parenthesized (#2277)
+- Conditional expressions are now always parenthesized (#2278)
 
 ### _Blackd_
 
