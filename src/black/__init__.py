@@ -4466,9 +4466,10 @@ class StringParenWrapper(CustomSplitMapMixin, BaseStringSplitter):
                 right_leaves.pop()
 
             if old_parens_exist:
-                assert (
-                    right_leaves and right_leaves[-1].type == token.RPAR
-                ), "Apparently, old parentheses do NOT exist?!"
+                assert right_leaves and right_leaves[-1].type == token.RPAR, (
+                    "Apparently, old parentheses do NOT exist?!"
+                    f" (left_leaves={left_leaves}, right_leaves={right_leaves})"
+                )
                 old_rpar_leaf = right_leaves.pop()
 
             append_leaves(string_line, line, right_leaves)
