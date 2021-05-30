@@ -406,6 +406,13 @@ def _legacy_listen_examples():
         }
     )
 
+
+temp_msg = (
+    f"{f'{humanize_number(pos)}.': <{pound_len+2}} "
+    f"{balance: <{bal_len + 5}} "
+    f"<<{author.display_name}>>\n"
+)
+
 # output
 
 
@@ -906,3 +913,10 @@ def _legacy_listen_examples():
             "since": since,
         }
     )
+
+
+temp_msg = (
+    f"{f'{humanize_number(pos)}.': <{pound_len+2}} "
+    f"{balance: <{bal_len + 5}} "
+    f"<<{author.display_name}>>\n"
+)
