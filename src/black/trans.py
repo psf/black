@@ -961,8 +961,8 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
             | \{\{
             | \}\}
             | (?R)
-        )+?
-    (?<!\}) \} (?:\}\})* (?!\})
+        )+
+    \}
     """
 
     def do_splitter_match(self, line: Line) -> TMatchResult:
