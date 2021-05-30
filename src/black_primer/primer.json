@@ -30,8 +30,6 @@
       "py_versions": ["all"]
     },
     "django": {
-      "disabled_reason": "black --check --diff returned 123 on tests_syntax_error.py",
-      "disabled": true,
       "cli_arguments": ["--experimental-string-processing"],
       "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/django/django.git",
@@ -53,8 +51,6 @@
       "py_versions": ["all"]
     },
     "pandas": {
-      "disabled_reason": "black-primer runs failing on Pandas - #2193",
-      "disabled": true,
       "cli_arguments": ["--experimental-string-processing"],
       "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/pandas-dev/pandas.git",
