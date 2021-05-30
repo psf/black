@@ -1755,6 +1755,25 @@ class LineGenerator(Visitor[Line]):
                 self.current_line.append(node)
         yield from super().visit_default(node)
 
+    def visit_test(self, node: LN) -> Iterator[Line]:
+        """Visit an `x if y else z` test"""
+
+        # parenthesize conditional expressions which span multiple lines
+        already_parenthesized = (
+            node.prev_sibling and node.prev_sibling.type == token.LPAR
+        )
+        as_str = str(node)
+        multiline = "\n" in as_str and not (
+            as_str.startswith("\n") or as_str.endswith("\n")
+        )
+        if not already_parenthesized and multiline:
+            lpar = Leaf(token.LPAR, "(")
+            rpar = Leaf(token.RPAR, ")")
+            node.insert_child(0, lpar)
+            node.append_child(rpar)
+
+        yield from self.visit_default(node)
+
     def visit_INDENT(self, node: Leaf) -> Iterator[Line]:
         """Increase indentation level, maybe yield a line."""
         # In blib2to3 INDENT never holds comments.
