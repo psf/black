@@ -12,6 +12,7 @@
 - Add extra uvloop install + import support if in python env (#2258)
 - Fix --experimental-string-processing crash when matching parens are not found (#2283)
 - Make sure to split lines that start with a string operator (#2286)
+- Fix regular expression that black uses to identify f-expressions (#2287)
 
 ### _Blackd_
 
