@@ -21,7 +21,8 @@
 
 ### _Packaging_
 
-- Release self-contained x86_64 MacOS binaries as part of the GitHub release pipeline (#2198)
+- Release self-contained x86_64 MacOS binaries as part of the GitHub release pipeline
+  (#2198)
 - Always build binaries with the latest available Python (#2260)
 
 ### Documentation
