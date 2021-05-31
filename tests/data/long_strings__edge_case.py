@@ -29,6 +29,8 @@ ternary_expression = (
 )
 return f'{x}/b/c/d/d/d/dadfjsadjsaidoaisjdsfjaofjdfijaidfjaodfjaoifjodjafojdoajaaaaaaaaaaa'
 return f'{x}/b/c/d/d/d/dadfjsadjsaidoaisjdsfjaofjdfijaidfjaodfjaoifjodjafojdoajaaaaaaaaaaaa'
+assert str(result) == "This long string should be split at some point right close to or around hereeeeeee"
+assert str(result) < "This long string should be split at some point right close to or around hereeeeee"
 
 
 # output
@@ -108,3 +110,13 @@ return (
     f"{x}/b/c/d/d/d/dadfjsadjsaidoaisjdsfjaofjdfijaidfjaodfjaoifjodjafojdoajaaaaaaaaaaa"
 )
 return f"{x}/b/c/d/d/d/dadfjsadjsaidoaisjdsfjaofjdfijaidfjaodfjaoifjodjafojdoajaaaaaaaaaaaa"
+assert (
+    str(result)
+    == "This long string should be split at some point right close to or around"
+    " hereeeeeee"
+)
+assert (
+    str(result)
+    < "This long string should be split at some point right close to or around"
+    " hereeeeee"
+)
