@@ -739,14 +739,15 @@ class BaseStringSplitter(StringTransformer):
     """
 
     STRING_OPERATORS = [
-        token.PLUS,
-        token.STAR,
         token.EQEQUAL,
-        token.NOTEQUAL,
-        token.LESS,
-        token.LESSEQUAL,
         token.GREATER,
         token.GREATEREQUAL,
+        token.LESS,
+        token.LESSEQUAL,
+        token.NOTEQUAL,
+        token.PERCENT,
+        token.PLUS,
+        token.STAR,
     ]
 
     @abstractmethod
