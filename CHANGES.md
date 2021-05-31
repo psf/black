@@ -1,5 +1,11 @@
 # Change Log
 
+## Unreleased
+
+### _Black_
+
+- Correct max string length calculation when there are string operators (#2292)
+
 ## 21.5b2
 
 ### _Black_
