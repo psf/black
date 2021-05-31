@@ -16,6 +16,8 @@ inputs:
     description: "[DEPRECATED] Black input arguments."
     required: false
     default: ""
+    deprecationMessage:
+      "Input `with.black_args` is deprecated. Use `with.options` and `with.src` instead."
   version:
     description: 'Python Version specifier (PEP440) - e.g. "21.5b1"'
     required: false
@@ -28,11 +30,10 @@ runs:
   steps:
     - run: |
         # Exists since using github.action_path + path to main script doesn't work because bash
-        # interprets the bashslashes in github.action_path (which are used when the runner OS
+        # interprets the backslashes in github.action_path (which are used when the runner OS
         # is Windows) destroying the path to the target file.
-
+        #
         # Also semicolons are necessary because I can't get the newlines to work
-
         entrypoint="import sys;
         import subprocess;
         from pathlib import Path;

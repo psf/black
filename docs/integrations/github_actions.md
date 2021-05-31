@@ -32,7 +32,7 @@ We recommend the use of the `@stable` tag, but per version tags also exist if yo
 that. Note that the action's version you select is independent of the version of _Black_
 the action will use.
 
-The version of _Black_ the action will use can configured via `version`. The action
+The version of _Black_ the action will use can be configured via `version`. The action
 defaults to the latest release available on PyPI. Only versions available from PyPI are
 supported, so no commit SHAs or branch names.
 
