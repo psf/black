@@ -149,6 +149,9 @@ def normalize_string_prefix(s: str) -> str:
         .replace("U", "")
         .replace("u", "")
     )
+
+    if len(new_prefix) == 2 and "r" != new_prefix[0].lower():
+        new_prefix = new_prefix[::-1]
     return f"{new_prefix}{match.group(2)}"
 
 
