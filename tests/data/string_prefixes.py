@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python3
 
 name = "Łukasz"
 (f"hello {name}", F"hello {name}")
@@ -23,7 +23,7 @@ def docstring_multiline():
 # output
 
 
-#!/usr/bin/env python3.6
+#!/usr/bin/env python3
 
 name = "Łukasz"
 (f"hello {name}", f"hello {name}")
