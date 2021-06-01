@@ -738,6 +738,18 @@ class BaseStringSplitter(StringTransformer):
         * The target string is not a multiline (i.e. triple-quote) string.
     """
 
+    STRING_OPERATORS = [
+        token.EQEQUAL,
+        token.GREATER,
+        token.GREATEREQUAL,
+        token.LESS,
+        token.LESSEQUAL,
+        token.NOTEQUAL,
+        token.PERCENT,
+        token.PLUS,
+        token.STAR,
+    ]
+
     @abstractmethod
     def do_splitter_match(self, line: Line) -> TMatchResult:
         """
@@ -847,9 +859,9 @@ class BaseStringSplitter(StringTransformer):
                 p_idx -= 1
 
             P = LL[p_idx]
-            if P.type == token.PLUS:
-                # WMA4 a space and a '+' character (e.g. `+ STRING`).
-                offset += 2
+            if P.type in self.STRING_OPERATORS:
+                # WMA4 a space and a string operator (e.g. `+ STRING` or `== STRING`).
+                offset += len(str(P)) + 1
 
             if P.type == token.COMMA:
                 # WMA4 a space, a comma, and a closing bracket [e.g. `), STRING`].
@@ -952,16 +964,6 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         CustomSplit objects and add them to the custom split map.
     """
 
-    STRING_OPERATORS = [
-        token.PLUS,
-        token.STAR,
-        token.EQEQUAL,
-        token.NOTEQUAL,
-        token.LESS,
-        token.LESSEQUAL,
-        token.GREATER,
-        token.GREATEREQUAL,
-    ]
     MIN_SUBSTR_SIZE = 6
     # Matches an "f-expression" (e.g. {var}) that might be found in an f-string.
     RE_FEXPR = r"""
