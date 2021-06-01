@@ -25,7 +25,12 @@
 - Add a lower bound for the `aiohttp-cors` dependency. Only 0.4.0 or higher is
   supported. (#2231)
 
-### _Packaging_
+### Integrations
+
+- The official Black action now supports choosing what version to use, and supports the
+  major 3 OSes. (#1940)
+
+### Packaging
 
 - Release self-contained x86_64 MacOS binaries as part of the GitHub release pipeline
   (#2198)
