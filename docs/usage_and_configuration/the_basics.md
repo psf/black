@@ -68,13 +68,6 @@ $ black --code "print ( 'hello, world' )"
 print("hello, world")
 ```
 
-```{warning}
---check, --diff, and --safe / --fast have no effect when using -c / --code. Safety
-checks normally turned on by default that verify _Black_'s output are disabled as well.
-This is a bug which we intend to fix eventually. More details can be found in this [bug
-report](https://github.com/psf/black/issues/2104).
-```
-
 ### Writeback and reporting
 
 By default _Black_ reformats the files given and/or found in place. Sometimes you need

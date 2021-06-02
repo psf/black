@@ -15,6 +15,7 @@
 - Respect `.gitignore` files in all levels, not only `root/.gitignore` file (apply
   `.gitignore` rules like `git` does) (#2225)
 - Restored compatibility with Click 8.0 on Python 3.6 when LANG=C used (#2227)
+- Fixed option usage when using the `--code` flag (#2259)
 - Add extra uvloop install + import support if in python env (#2258)
 - Fix --experimental-string-processing crash when matching parens are not found (#2283)
 - Make sure to split lines that start with a string operator (#2286)
@@ -43,6 +44,7 @@
 - Fix typos discovered by codespell (#2228)
 - Fix Vim plugin installation instructions. (#2235)
 - Add new Frequently Asked Questions page (#2247)
+- Removed safety checks warning for the `--code` option (#2259)
 - Fix encoding + symlink issues preventing proper build on Windows (#2262)
 
 ## 21.5b1

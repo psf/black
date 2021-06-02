@@ -384,47 +384,61 @@ def main(
     )
     if config and verbose:
         out(f"Using configuration from {config}.", bold=False, fg="blue")
+
     if code is not None:
-        print(format_str(code, mode=mode))
-        ctx.exit(0)
+        # Run in quiet mode by default with -c; the extra output isn't useful.
+        # You can still pass -v to get verbose output.
+        quiet = True
+
     report = Report(check=check, diff=diff, quiet=quiet, verbose=verbose)
-    sources = get_sources(
-        ctx=ctx,
-        src=src,
-        quiet=quiet,
-        verbose=verbose,
-        include=include,
-        exclude=exclude,
-        extend_exclude=extend_exclude,
-        force_exclude=force_exclude,
-        report=report,
-        stdin_filename=stdin_filename,
-    )
 
-    path_empty(
-        sources,
-        "No Python files are present to be formatted. Nothing to do 😴",
-        quiet,
-        verbose,
-        ctx,
-    )
-
-    if len(sources) == 1:
-        reformat_one(
-            src=sources.pop(),
-            fast=fast,
-            write_back=write_back,
-            mode=mode,
-            report=report,
+    if code is not None:
+        reformat_code(
+            content=code, fast=fast, write_back=write_back, mode=mode, report=report
         )
     else:
-        reformat_many(
-            sources=sources, fast=fast, write_back=write_back, mode=mode, report=report
+        sources = get_sources(
+            ctx=ctx,
+            src=src,
+            quiet=quiet,
+            verbose=verbose,
+            include=include,
+            exclude=exclude,
+            extend_exclude=extend_exclude,
+            force_exclude=force_exclude,
+            report=report,
+            stdin_filename=stdin_filename,
         )
+
+        path_empty(
+            sources,
+            "No Python files are present to be formatted. Nothing to do 😴",
+            quiet,
+            verbose,
+            ctx,
+        )
+
+        if len(sources) == 1:
+            reformat_one(
+                src=sources.pop(),
+                fast=fast,
+                write_back=write_back,
+                mode=mode,
+                report=report,
+            )
+        else:
+            reformat_many(
+                sources=sources,
+                fast=fast,
+                write_back=write_back,
+                mode=mode,
+                report=report,
+            )
 
     if verbose or not quiet:
         out("Oh no! 💥 💔 💥" if report.return_code else "All done! ✨ 🍰 ✨")
-        click.secho(str(report), err=True)
+        if code is None:
+            click.secho(str(report), err=True)
     ctx.exit(report.return_code)
 
 
@@ -510,6 +524,30 @@ def path_empty(
         if verbose or not quiet:
             out(msg)
         ctx.exit(0)
+
+
+def reformat_code(
+    content: str, fast: bool, write_back: WriteBack, mode: Mode, report: Report
+) -> None:
+    """
+    Reformat and print out `content` without spawning child processes.
+    Similar to `reformat_one`, but for string content.
+
+    `fast`, `write_back`, and `mode` options are passed to
+    :func:`format_file_in_place` or :func:`format_stdin_to_stdout`.
+    """
+    path = Path("<string>")
+    try:
+        changed = Changed.NO
+        if format_stdin_to_stdout(
+            content=content, fast=fast, write_back=write_back, mode=mode
+        ):
+            changed = Changed.YES
+        report.done(path, changed)
+    except Exception as exc:
+        if report.verbose:
+            traceback.print_exc()
+        report.failed(path, str(exc))
 
 
 def reformat_one(
@@ -720,16 +758,27 @@ def format_file_in_place(
 
 
 def format_stdin_to_stdout(
-    fast: bool, *, write_back: WriteBack = WriteBack.NO, mode: Mode
+    fast: bool,
+    *,
+    content: Optional[str] = None,
+    write_back: WriteBack = WriteBack.NO,
+    mode: Mode,
 ) -> bool:
     """Format file on stdin. Return True if changed.
+
+    If content is None, it's read from sys.stdin.
 
     If `write_back` is YES, write reformatted code back to stdout. If it is DIFF,
     write a diff to stdout. The `mode` argument is passed to
     :func:`format_file_contents`.
     """
     then = datetime.utcnow()
-    src, encoding, newline = decode_bytes(sys.stdin.buffer.read())
+
+    if content is None:
+        src, encoding, newline = decode_bytes(sys.stdin.buffer.read())
+    else:
+        src, encoding, newline = content, "utf-8", ""
+
     dst = src
     try:
         dst = format_file_contents(src, fast=fast, mode=mode)
@@ -743,6 +792,8 @@ def format_stdin_to_stdout(
             sys.stdout.buffer, encoding=encoding, newline=newline, write_through=True
         )
         if write_back == WriteBack.YES:
+            # Make sure there's a newline after the content
+            dst += "" if dst[-1] == "\n" else "\n"
             f.write(dst)
         elif write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
             now = datetime.utcnow()
