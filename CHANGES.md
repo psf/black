@@ -5,6 +5,7 @@
 ### _Black_
 
 - Correct max string length calculation when there are string operators (#2292)
+- Fixed option usage when using the `--code` flag (#2259)
 
 ## 21.5b2
 
@@ -15,7 +16,6 @@
 - Respect `.gitignore` files in all levels, not only `root/.gitignore` file (apply
   `.gitignore` rules like `git` does) (#2225)
 - Restored compatibility with Click 8.0 on Python 3.6 when LANG=C used (#2227)
-- Fixed option usage when using the `--code` flag (#2259)
 - Add extra uvloop install + import support if in python env (#2258)
 - Fix --experimental-string-processing crash when matching parens are not found (#2283)
 - Make sure to split lines that start with a string operator (#2286)
