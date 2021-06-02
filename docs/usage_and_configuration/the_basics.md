@@ -176,18 +176,18 @@ $ black --version
 black, version 21.5b0
 ```
 
-An option to requiring a specific version to be running is also provided.
+An option to require a specific version to be running is also provided.
 
 ```console
-$ black --revision 21.5b2 -c "format = 'this'"
+$ black --required-version 21.5b2 -c "format = 'this'"
 format = "this"
-$ black --revision 31.5b2 -c "still = 'beta?!'"
-Oh no! 💥 💔 💥 The required revision does not match the running version!
+$ black --required-version 31.5b2 -c "still = 'beta?!'"
+Oh no! 💥 💔 💥 The required version does not match the running version!
 ```
 
 This is useful for example when running _Black_ in multiple environments that haven't
-necessarily installed the correct version. Setting this option can be done in a
-configuration file for consistent results across environments.
+necessarily installed the correct version. This option can be set in a configuration
+file for consistent results across environments.
 
 ## Configuration via a file
 

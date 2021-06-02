@@ -250,7 +250,7 @@ def validate_regex(
     help="If --fast given, skip temporary sanity checks. [default: --safe]",
 )
 @click.option(
-    "--revision",
+    "--required-version",
     type=str,
     help=(
         "Require a specific version of Black to be running (useful for unifying results"
@@ -367,7 +367,7 @@ def main(
     experimental_string_processing: bool,
     quiet: bool,
     verbose: bool,
-    revision: str,
+    required_version: str,
     include: Pattern,
     exclude: Optional[Pattern],
     extend_exclude: Optional[Pattern],
@@ -377,15 +377,15 @@ def main(
     config: Optional[str],
 ) -> None:
     """The uncompromising code formatter."""
+    if config and verbose:
+        out(f"Using configuration from {config}.", bold=False, fg="blue")
+
     error_msg = "Oh no! 💥 💔 💥"
-    if revision and revision != __version__:
-        msg = (
-            f"{error_msg} The required revision `{revision}` does not match"
+    if required_version and required_version != __version__:
+        err(
+            f"{error_msg} The required version `{required_version}` does not match"
             f" the running version `{__version__}`!"
         )
-        if ctx.default_map and revision == ctx.default_map.get("revision", None):
-            msg += f"\n(configuration read from `{config}`)"
-        err(msg)
         ctx.exit(1)
 
     write_back = WriteBack.from_configuration(check=check, diff=diff, color=color)
@@ -402,8 +402,6 @@ def main(
         magic_trailing_comma=not skip_magic_trailing_comma,
         experimental_string_processing=experimental_string_processing,
     )
-    if config and verbose:
-        out(f"Using configuration from {config}.", bold=False, fg="blue")
 
     if code is not None:
         # Run in quiet mode by default with -c; the extra output isn't useful.

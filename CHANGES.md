@@ -6,7 +6,7 @@
 
 - Correct max string length calculation when there are string operators (#2292)
 - Fixed option usage when using the `--code` flag (#2259)
-- Add `--revision` option to require a specific version to be running (#2300)
+- Added `--required-version` option to require a specific version to be running (#2300)
 
 ## 21.5b2
 
