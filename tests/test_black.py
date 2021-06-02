@@ -2185,8 +2185,10 @@ class BlackTestCase(BlackBaseTestCase):
             assert (
                 len(parse.mock_calls) >= 1
             ), "Expected config parse to be called with the current directory."
+
+            _, call_args, _ = parse.mock_calls[0]
             assert (
-                parse.mock_calls[0].args[0].lower() == str(pyproject_path).lower()
+                call_args[0].lower() == str(pyproject_path).lower()
             ), "Incorrect config loaded."
 
     def test_code_option_parent_config(self) -> None:
@@ -2205,8 +2207,10 @@ class BlackTestCase(BlackBaseTestCase):
             assert (
                 len(parse.mock_calls) >= 1
             ), "Expected config parse to be called with the current directory."
+
+            _, call_args, _ = parse.mock_calls[0]
             assert (
-                parse.mock_calls[0].args[0].lower() == str(pyproject_path).lower()
+                call_args[0].lower() == str(pyproject_path).lower()
             ), "Incorrect config loaded."
 
 
