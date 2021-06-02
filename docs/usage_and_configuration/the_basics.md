@@ -167,7 +167,7 @@ $ black src/ -q
 error: cannot format src/black_primer/cli.py: Cannot parse: 5:6: mport asyncio
 ```
 
-### Getting the version
+### Versions
 
 You can check the version of _Black_ you have installed using the `--version` flag.
 
@@ -175,6 +175,19 @@ You can check the version of _Black_ you have installed using the `--version` fl
 $ black --version
 black, version 21.5b0
 ```
+
+An option to requiring a specific version to be running is also provided.
+
+```console
+$ black --revision 21.5b2 -c "format = 'this'"
+format = "this"
+$ black --revision 31.5b2 -c "still = 'beta?!'"
+Oh no! 💥 💔 💥 The required revision does not match the running version!
+```
+
+This is useful for example when running _Black_ in multiple environments that haven't
+necessarily installed the correct version. Setting this option can be done in a
+configuration file for consistent results across environments.
 
 ## Configuration via a file
 

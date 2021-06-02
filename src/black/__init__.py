@@ -250,6 +250,14 @@ def validate_regex(
     help="If --fast given, skip temporary sanity checks. [default: --safe]",
 )
 @click.option(
+    "--revision",
+    type=str,
+    help=(
+        "Require a specific version of Black to be running (useful for unifying results"
+        " across many environments e.g. with a pyproject.toml file)."
+    ),
+)
+@click.option(
     "--include",
     type=str,
     default=DEFAULT_INCLUDES,
@@ -359,6 +367,7 @@ def main(
     experimental_string_processing: bool,
     quiet: bool,
     verbose: bool,
+    revision: str,
     include: Pattern,
     exclude: Optional[Pattern],
     extend_exclude: Optional[Pattern],
@@ -368,6 +377,17 @@ def main(
     config: Optional[str],
 ) -> None:
     """The uncompromising code formatter."""
+    error_msg = "Oh no! 💥 💔 💥"
+    if revision and revision != __version__:
+        msg = (
+            f"{error_msg} The required revision `{revision}` does not match"
+            f" the running version `{__version__}`!"
+        )
+        if ctx.default_map and revision == ctx.default_map.get("revision", None):
+            msg += f"\n(configuration read from `{config}`)"
+        err(msg)
+        ctx.exit(1)
+
     write_back = WriteBack.from_configuration(check=check, diff=diff, color=color)
     if target_version:
         versions = set(target_version)
@@ -436,9 +456,9 @@ def main(
             )
 
     if verbose or not quiet:
-        out("Oh no! 💥 💔 💥" if report.return_code else "All done! ✨ 🍰 ✨")
+        out(error_msg if report.return_code else "All done! ✨ 🍰 ✨")
         if code is None:
-            click.secho(str(report), err=True)
+            click.echo(str(report), err=True)
     ctx.exit(report.return_code)
 
 
