@@ -6,7 +6,7 @@
 
 - Correct max string length calculation when there are string operators (#2292)
 - Fixed option usage when using the `--code` flag (#2259)
-- Do not call `uvloop.install()` when *Black* is used as a library (#2303)
+- Do not call `uvloop.install()` when _Black_ is used as a library (#2303)
 
 ## 21.5b2
 
