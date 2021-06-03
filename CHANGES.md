@@ -8,6 +8,7 @@
 - Fixed option usage when using the `--code` flag (#2259)
 - Do not call `uvloop.install()` when _Black_ is used as a library (#2303)
 - Added `--required-version` option to require a specific version to be running (#2300)
+- Provide a more useful error when parsing fails during AST safety checks (#2304)
 
 ## 21.5b2
 
@@ -53,7 +54,6 @@
 ### _Black_
 
 - Refactor `src/black/__init__.py` into many files (#2206)
-- Provide a more useful error when parsing fails during AST safety checks (#2218)
 
 ### Documentation
 
