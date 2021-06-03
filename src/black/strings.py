@@ -151,7 +151,7 @@ def normalize_string_prefix(s: str) -> str:
     )
 
     # Python syntax guarantees max 2 prefixes and that one of them is "r"
-    if len(new_prefix) == 2 and "r" != new_prefix[0].lower():
+    if len(new_prefix) == 2 and "r" == new_prefix[0].lower():
         new_prefix = new_prefix[::-1]
     return f"{new_prefix}{match.group(2)}"
 
@@ -188,9 +188,9 @@ def normalize_string_quotes(s: str) -> str:
         return s  # There's an internal error
 
     prefix = s[:first_quote_pos]
-    unescaped_new_quote = _cached_compile(rf"(([^\\]|^)(\\\\)*){new_quote}")
-    escaped_new_quote = _cached_compile(rf"([^\\]|^)\\((?:\\\\)*){new_quote}")
-    escaped_orig_quote = _cached_compile(rf"([^\\]|^)\\((?:\\\\)*){orig_quote}")
+    unescaped_new_quote = _cached_compile(fr"(([^\\]|^)(\\\\)*){new_quote}")
+    escaped_new_quote = _cached_compile(fr"([^\\]|^)\\((?:\\\\)*){new_quote}")
+    escaped_orig_quote = _cached_compile(fr"([^\\]|^)\\((?:\\\\)*){orig_quote}")
     body = s[first_quote_pos + len(orig_quote) : -len(orig_quote)]
     if "r" in prefix.casefold():
         if unescaped_new_quote.search(body):
@@ -202,13 +202,13 @@ def normalize_string_quotes(s: str) -> str:
         new_body = body
     else:
         # remove unnecessary escapes
-        new_body = sub_twice(escaped_new_quote, rf"\1\2{new_quote}", body)
+        new_body = sub_twice(escaped_new_quote, fr"\1\2{new_quote}", body)
         if body != new_body:
             # Consider the string without unnecessary escapes as the original
             body = new_body
             s = f"{prefix}{orig_quote}{body}{orig_quote}"
-        new_body = sub_twice(escaped_orig_quote, rf"\1\2{orig_quote}", new_body)
-        new_body = sub_twice(unescaped_new_quote, rf"\1\\{new_quote}", new_body)
+        new_body = sub_twice(escaped_orig_quote, fr"\1\2{orig_quote}", new_body)
+        new_body = sub_twice(unescaped_new_quote, fr"\1\\{new_quote}", new_body)
     if "f" in prefix.casefold():
         matches = re.findall(
             r"""

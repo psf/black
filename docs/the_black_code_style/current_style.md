@@ -235,10 +235,10 @@ escapes than before.
 
 _Black_ also standardizes string prefixes. Prefix characters are made lowercase with the
 exception of [capital "R" prefixes](#rstrings-and-rstrings), and in the case of multiple
-characters "r" is put first as in spoken language: "raw f-string". On top of that, if
-your code is already Python 3.6+ only or it's using the `unicode_literals` future
-import, _Black_ will remove `u` from the string prefix as it is meaningless in those
-scenarios.
+characters "r" is put last as the common prefix and as required in Python 2. On top of
+that, if your code is already Python 3.6+ only or it's using the `unicode_literals`
+future import, _Black_ will remove `u` from the string prefix as it is meaningless in
+those scenarios.
 
 The main reason to standardize on a single form of quotes is aesthetics. Having one kind
 of quotes everywhere reduces reader distraction. It will also enable a future version of
