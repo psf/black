@@ -1796,6 +1796,16 @@ class BlackTestCase(BlackBaseTestCase):
         for option in ["--include", "--exclude", "--extend-exclude", "--force-exclude"]:
             self.invokeBlack(["-", option, "**()(!!*)"], exit_code=2)
 
+    def test_required_version_matches_version(self) -> None:
+        self.invokeBlack(
+            ["--required-version", black.__version__], exit_code=0, ignore_config=True
+        )
+
+    def test_required_version_does_not_match_version(self) -> None:
+        self.invokeBlack(
+            ["--required-version", "20.99b"], exit_code=1, ignore_config=True
+        )
+
     def test_preserves_line_endings(self) -> None:
         with TemporaryDirectory() as workspace:
             test_file = Path(workspace) / "test.py"
