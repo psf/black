@@ -3,7 +3,7 @@ Parse Python code and perform AST validation.
 """
 import ast
 import sys
-from typing import Iterable, Iterator, List, Set, Union
+from typing import Iterable, Iterator, List, Set, Union, Tuple
 
 # lib2to3 fork
 from blib2to3.pytree import Node, Leaf
@@ -106,29 +106,35 @@ def lib2to3_unparse(node: Node) -> str:
     return code
 
 
-def parse_ast(src: str) -> Union[ast.AST, ast3.AST, ast27.AST]:
+def parse_single_version(
+    src: str, version: Tuple[int, int]
+) -> Union[ast.AST, ast3.AST, ast27.AST]:
     filename = "<unknown>"
-    first_error = ""
+    if (3, 8) <= version < (4, 0):
+        return ast.parse(src, filename, feature_version=version)
+    elif version >= (3, 6):
+        return ast3.parse(src, filename, feature_version=version[1])
+    elif version == (2, 7):
+        return ast27.parse(src)
+    raise AssertionError("INTERNAL ERROR: Tried parsing unsupported Python version!")
+
+
+def parse_ast(src: str) -> Union[ast.AST, ast3.AST, ast27.AST]:
+    versions = [(3, 6), (3, 7)]
     if sys.version_info >= (3, 8):
         # TODO: support Python 4+ ;)
-        for minor_version in range(sys.version_info[1], 4, -1):
-            try:
-                return ast.parse(src, filename, feature_version=(3, minor_version))
-            except SyntaxError as e:
-                if not first_error:
-                    first_error = str(e)
-    else:
-        for feature_version in (7, 6):
-            try:
-                return ast3.parse(src, filename, feature_version=feature_version)
-            except SyntaxError:
-                pass
+        versions.extend([(3, minor) for minor in range(8, sys.version_info[1] + 1)])
 
     if ast27.__name__ != "ast":
+        versions.append((2, 7))
+
+    first_error = ""
+    for version in sorted(versions, reverse=True):
         try:
-            return ast27.parse(src)
-        except SyntaxError:
-            pass
+            return parse_single_version(src, version)
+        except SyntaxError as e:
+            if not first_error:
+                first_error = str(e)
 
     raise SyntaxError(first_error)
 
