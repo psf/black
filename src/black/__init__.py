@@ -38,7 +38,7 @@ from black.comments import normalize_fmt_off
 from black.mode import Mode, TargetVersion
 from black.mode import Feature, supports_feature, VERSION_TO_FEATURES
 from black.cache import read_cache, write_cache, get_cache_info, filter_cached, Cache
-from black.concurrency import cancel, shutdown
+from black.concurrency import cancel, shutdown, maybe_install_uvloop
 from black.output import dump_to_file, diff, color_diff, out, err
 from black.report import Report, Changed
 from black.files import find_project_root, find_pyproject_toml, parse_pyproject_toml
@@ -53,14 +53,6 @@ from blib2to3.pytree import Node, Leaf
 from blib2to3.pgen2 import token
 
 from _black_version import version as __version__
-
-# If our environment has uvloop installed lets use it
-try:
-    import uvloop
-
-    uvloop.install()
-except ImportError:
-    pass
 
 # types
 FileContent = str
@@ -1112,6 +1104,7 @@ def patch_click() -> None:
 
 
 def patched_main() -> None:
+    maybe_install_uvloop()
     freeze_support()
     patch_click()
     main()
