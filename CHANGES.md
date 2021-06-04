@@ -8,6 +8,7 @@
 - Fixed option usage when using the `--code` flag (#2259)
 - Do not call `uvloop.install()` when _Black_ is used as a library (#2303)
 - Added `--required-version` option to require a specific version to be running (#2300)
+- Fix regression where `R` prefixes would be lowercased for docstrings (#2285)
 
 ## 21.5b2
 

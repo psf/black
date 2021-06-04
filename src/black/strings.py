@@ -87,7 +87,7 @@ def get_string_prefix(string: str) -> str:
     prefix = ""
     prefix_idx = 0
     while string[prefix_idx] in STRING_PREFIX_CHARS:
-        prefix += string[prefix_idx].lower()
+        prefix += string[prefix_idx]
         prefix_idx += 1
 
     return prefix

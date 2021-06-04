@@ -446,6 +446,26 @@ assert str(suffix_arr) > (
 assert str(suffix_arr) in "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', 'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', 'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
 assert str(suffix_arr) not in "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', 'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', 'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
 
+# It shouldn't matter if the string prefixes are capitalized.
+temp_msg = (
+    F"{F'{humanize_number(pos)}.': <{pound_len+2}} "
+    F"{balance: <{bal_len + 5}} "
+    F"<<{author.display_name}>>\n"
+)
+
+fstring = (
+    F"We have to remember to escape {braces}."
+    " Like {these}."
+    F" But not {this}."
+)
+
+welcome_to_programming = R"hello," R" world!"
+
+fstring = F"f-strings definitely make things more {difficult} than they need to be for {{black}}. But boy they sure are handy. The problem is that some lines will need to have the 'f' whereas others do not. This {line}, for example, needs one."
+
+x = F"This is a long string which contains an f-expr that should not split {{{[i for i in range(5)]}}}."
+
+
 # output
 
 
@@ -1001,4 +1021,26 @@ assert (
     not in "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', 'grykangaroo$',"
     " 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', 'o$', 'oo$', 'roo$',"
     " 'rykangaroo$', 'ykangaroo$']"
+)
+
+# It shouldn't matter if the string prefixes are capitalized.
+temp_msg = (
+    f"{F'{humanize_number(pos)}.': <{pound_len+2}} "
+    f"{balance: <{bal_len + 5}} "
+    f"<<{author.display_name}>>\n"
+)
+
+fstring = f"We have to remember to escape {braces}. Like {{these}}. But not {this}."
+
+welcome_to_programming = R"hello," R" world!"
+
+fstring = (
+    f"f-strings definitely make things more {difficult} than they need to be for"
+    " {black}. But boy they sure are handy. The problem is that some lines will need"
+    f" to have the 'f' whereas others do not. This {line}, for example, needs one."
+)
+
+x = (
+    "This is a long string which contains an f-expr that should not split"
+    f" {{{[i for i in range(5)]}}}."
 )
