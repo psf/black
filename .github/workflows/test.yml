@@ -42,7 +42,7 @@ jobs:
 
       - name: Unit tests
         run: |
-          tox -e py -- -v --color=yes
+          tox -e ci-py -- -v --color=yes
 
       - name: Publish coverage to Coveralls
         # If pushed / is a pull request against main repo AND
