@@ -32,7 +32,7 @@ return f'{x}/b/c/d/d/d/dadfjsadjsaidoaisjdsfjaofjdfijaidfjaodfjaoifjodjafojdoaja
 assert str(result) == "This long string should be split at some point right close to or around hereeeeeee"
 assert str(result) < "This long string should be split at some point right close to or around hereeeeee"
 assert "A format string: %s" % "This long string should be split at some point right close to or around hereeeeeee" != result
-msg += "This long string should be split at some point right close to or around hereeeee"
+msg += "This long string should be wrapped in parens at some point right around hereeeee"
 msg += "This long string should be split at some point right close to or around hereeeeeeee"
 msg += "This long string should not be split at any point ever since it is just righttt"
 
@@ -131,7 +131,7 @@ assert (
     != result
 )
 msg += (
-    "This long string should be split at some point right close to or around hereeeee"
+    "This long string should be wrapped in parens at some point right around hereeeee"
 )
 msg += (
     "This long string should be split at some point right close to or around"
