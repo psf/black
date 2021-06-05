@@ -1166,7 +1166,6 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
             # If this substring is an f-string, we _could_ remove the 'f'
             # prefix, and the current custom split did NOT originally use a
             # prefix...
-
             if (
                 next_value != self._normalize_f_string(next_value, prefix)
                 and use_custom_breakpoints
