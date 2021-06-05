@@ -32,6 +32,7 @@
     "django": {
       "cli_arguments": [
         "--experimental-string-processing",
+        "--skip-string-normalization",
         "--extend-exclude",
         "/((docs|scripts)/|django/forms/models.py|tests/gis_tests/test_spatialrefsys.py|tests/test_runner_apps/tagged/tests_syntax_error.py)"
       ],
