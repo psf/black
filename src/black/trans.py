@@ -867,7 +867,7 @@ class BaseStringSplitter(StringTransformer):
                 # WMA4 a space, a comma, and a closing bracket [e.g. `), STRING`].
                 offset += 3
 
-            if P.type in [token.COLON, token.EQUAL, token.NAME]:
+            if P.type in [token.COLON, token.EQUAL, token.PLUSEQUAL, token.NAME]:
                 # This conditional branch is meant to handle dictionary keys,
                 # variable assignments, 'return STRING' statement lines, and
                 # 'else STRING' ternary expression lines.
