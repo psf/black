@@ -30,7 +30,11 @@
       "py_versions": ["all"]
     },
     "django": {
-      "cli_arguments": ["--experimental-string-processing"],
+      "cli_arguments": [
+        "--experimental-string-processing",
+        "--extend-exclude",
+        "/((docs|scripts)/|django/forms/models.py|tests/gis_tests/test_spatialrefsys.py|tests/test_runner_apps/tagged/tests_syntax_error.py)"
+      ],
       "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/django/django.git",
       "long_checkout": false,
