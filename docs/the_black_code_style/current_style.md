@@ -202,10 +202,11 @@ required due to an inner function starting immediately after.
 
 ### Comments
 
-_Black_ does not format comment contents, but two spaces between code and a comment on
-the same line, and a space after the comment text begins is enforced. Comments may
-sometimes be moved because of formatting changes though, which can break tools that
-assign special meaning to comments. See
+_Black_ does not format comment contents, but it enforces two spaces between code and a
+comment on the same line, and a space after the comment text begins. Some comments that
+are known to require contradictory spacing rules, like doc comments, are respected.
+Comments may sometimes be moved because of formatting changes though, which can break
+tools that assign special meaning to them. See
 [AST before and after formatting](#ast-before-and-after-formatting) for more discussion.
 
 ### Trailing commas
