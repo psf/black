@@ -359,7 +359,7 @@ def main(
     experimental_string_processing: bool,
     quiet: bool,
     verbose: bool,
-    required_version: str,
+    required_version: Optional[str],
     include: Pattern,
     exclude: Optional[Pattern],
     extend_exclude: Optional[Pattern],

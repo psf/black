@@ -3,7 +3,7 @@ Parse Python code and perform AST validation.
 """
 import ast
 import sys
-from typing import Iterable, Iterator, List, Set, Union
+from typing import Iterable, Iterator, List, Set, Tuple, Type, Union
 
 # lib2to3 fork
 from blib2to3.pytree import Node, Leaf
@@ -16,6 +16,8 @@ from black.mode import TargetVersion, Feature, supports_feature
 from black.nodes import syms
 
 try:
+    # TODO: currently the code assumes ast3 and ast27 will be availabe all the time,
+    # unfortunately this isn't the case these days
     from typed_ast import ast3, ast27
 except ImportError:
     if sys.version_info < (3, 8):
@@ -27,7 +29,7 @@ except ImportError:
         )
         sys.exit(1)
     else:
-        ast3 = ast27 = ast
+        pass
 
 
 class InvalidInput(ValueError):
@@ -121,12 +123,7 @@ def parse_ast(src: str) -> Union[ast.AST, ast3.AST, ast27.AST]:
                 return ast3.parse(src, filename, feature_version=feature_version)
             except SyntaxError:
                 continue
-    if ast27.__name__ == "ast":
-        raise SyntaxError(
-            "The requested source code has invalid Python 3 syntax.\n"
-            "If you are trying to format Python 2 files please reinstall Black"
-            " with the 'python2' extra: `python3 -m pip install black[python2]`."
-        )
+
     return ast27.parse(src)
 
 
@@ -141,7 +138,7 @@ def stringify_ast(
 
     for field in sorted(node._fields):  # noqa: F402
         # TypeIgnore has only one field 'lineno' which breaks this comparison
-        type_ignore_classes = (ast3.TypeIgnore, ast27.TypeIgnore)
+        type_ignore_classes: Tuple[Type, ...] = (ast3.TypeIgnore, ast27.TypeIgnore)
         if sys.version_info >= (3, 8):
             type_ignore_classes += (ast.TypeIgnore,)
         if isinstance(node, type_ignore_classes):

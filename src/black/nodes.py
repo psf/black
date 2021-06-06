@@ -439,8 +439,8 @@ def prev_siblings_are(node: Optional[LN], tokens: List[Optional[NodeType]]) -> b
 
 def last_two_except(leaves: List[Leaf], omit: Collection[LeafID]) -> Tuple[Leaf, Leaf]:
     """Return (penultimate, last) leaves skipping brackets in `omit` and contents."""
-    stop_after = None
-    last = None
+    stop_after: Optional[Leaf] = None
+    last: Optional[Leaf] = None
     for leaf in reversed(leaves):
         if stop_after:
             if leaf is stop_after:

@@ -29,11 +29,32 @@ if os.getenv("BLACK_USE_MYPYC", None) == "1":
 if USE_MYPYC:
     mypyc_targets = [
         "src/black/__init__.py",
+        "src/black/nodes.py",
+        "src/black/mode.py",
+        "src/black/files.py",
+        "src/black/concurrency.py",
+        "src/black/const.py",
+        "src/black/linegen.py",
+        "src/black/rusty.py",
+        "src/black/numerics.py",
+        "src/black/comments.py",
+        "src/black/report.py",
+        "src/black/cache.py",
+        "src/black/lines.py",
+        "src/black/debug.py",
+        "src/black/strings.py",
+        "src/black/parsing.py",
+        "src/black/output.py",
+        "src/black/brackets.py",
+        "src/black/trans.py",
         "src/blib2to3/pytree.py",
         "src/blib2to3/pygram.py",
+        "src/blib2to3/pgen2/conv.py",
+        "src/blib2to3/pgen2/literals.py",
         "src/blib2to3/pgen2/parse.py",
         "src/blib2to3/pgen2/grammar.py",
         "src/blib2to3/pgen2/token.py",
+        "src/blib2to3/pgen2/tokenize.py",
         "src/blib2to3/pgen2/driver.py",
         "src/blib2to3/pgen2/pgen.py",
     ]
@@ -41,7 +62,7 @@ if USE_MYPYC:
     from mypyc.build import mypycify
 
     opt_level = os.getenv("MYPYC_OPT_LEVEL", "3")
-    ext_modules = mypycify(mypyc_targets, opt_level=opt_level)
+    ext_modules = mypycify(mypyc_targets, opt_level=opt_level, verbose=True)
 else:
     ext_modules = []
 

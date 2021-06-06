@@ -49,7 +49,9 @@ MATH_PRIORITIES: Final = {
 DOT_PRIORITY: Final = 1
 
 
-class BracketMatchError(KeyError):
+# Ideally this would be a subclass of KeyError, but mypyc doesn't like that.
+# See also: https://mypyc.readthedocs.io/en/latest/native_classes.html#inheritance.
+class BracketMatchError(Exception):
     """Raised when an opening bracket is unable to be matched to a closing bracket."""
 
 

@@ -427,7 +427,7 @@ def generate_tokens(
     # `await` as keywords.
     async_keywords = False if grammar is None else grammar.async_keywords
     # 'stashed' and 'async_*' are used for async/await parsing
-    stashed = None
+    stashed: Optional[GoodTokenInfo] = None
     async_def = False
     async_def_indent = 0
     async_def_nl = False
