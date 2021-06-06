@@ -10,6 +10,7 @@ import tempfile
 from click import echo, style
 
 
+@mypyc_attr(patchable=True)
 def _out(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
     if message is not None:
         if "bold" not in styles:
@@ -18,6 +19,7 @@ def _out(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
     echo(message, nl=nl, err=True)
 
 
+@mypyc_attr(patchable=True)
 def _err(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
     if message is not None:
         if "fg" not in styles:
@@ -26,6 +28,7 @@ def _err(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
     echo(message, nl=nl, err=True)
 
 
+@mypyc_attr(patchable=True)
 def out(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
     _out(message, nl=nl, **styles)
 

@@ -38,10 +38,12 @@ if USE_MYPYC:
         "src/black/rusty.py",
         "src/black/numerics.py",
         "src/black/comments.py",
-        "src/black/report.py",
+        # Leave uncompiled to save bytes since this isn't performance sensitive at all.
+        # "src/black/report.py",
         "src/black/cache.py",
         "src/black/lines.py",
-        "src/black/debug.py",
+        # Kept uncompiled due being useless (and breaks tests) when compiled.
+        # "src/black/debug.py",
         "src/black/strings.py",
         "src/black/parsing.py",
         "src/black/output.py",

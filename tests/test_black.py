@@ -1596,6 +1596,7 @@ class BlackTestCase(BlackBaseTestCase):
         )
         self.assertEqual([], sorted(sources))
 
+    @pytest.mark.incompatible_with_mypyc
     def test_reformat_one_with_stdin(self) -> None:
         with patch(
             "black.format_stdin_to_stdout",
@@ -1613,6 +1614,7 @@ class BlackTestCase(BlackBaseTestCase):
             fsts.assert_called_once()
             report.done.assert_called_with(path, black.Changed.YES)
 
+    @pytest.mark.incompatible_with_mypyc
     def test_reformat_one_with_stdin_filename(self) -> None:
         with patch(
             "black.format_stdin_to_stdout",
@@ -1635,6 +1637,7 @@ class BlackTestCase(BlackBaseTestCase):
             # __BLACK_STDIN_FILENAME__ should have been stripped
             report.done.assert_called_with(expected, black.Changed.YES)
 
+    @pytest.mark.incompatible_with_mypyc
     def test_reformat_one_with_stdin_filename_pyi(self) -> None:
         with patch(
             "black.format_stdin_to_stdout",
@@ -1659,6 +1662,7 @@ class BlackTestCase(BlackBaseTestCase):
             # __BLACK_STDIN_FILENAME__ should have been stripped
             report.done.assert_called_with(expected, black.Changed.YES)
 
+    @pytest.mark.incompatible_with_mypyc
     def test_reformat_one_with_stdin_and_existing_path(self) -> None:
         with patch(
             "black.format_stdin_to_stdout",
@@ -1853,6 +1857,7 @@ class BlackTestCase(BlackBaseTestCase):
         with self.assertRaises(AssertionError):
             black.assert_equivalent("{}", "None")
 
+    @pytest.mark.incompatible_with_mypyc
     def test_symlink_out_of_root_directory(self) -> None:
         path = MagicMock()
         root = THIS_DIR.resolve()
@@ -1981,6 +1986,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(config["exclude"], r"\.pyi?$")
         self.assertEqual(config["include"], r"\.py?$")
 
+    @pytest.mark.incompatible_with_mypyc
     def test_find_project_root(self) -> None:
         with TemporaryDirectory() as workspace:
             root = Path(workspace)
@@ -2173,6 +2179,7 @@ class BlackTestCase(BlackBaseTestCase):
         assert output == result_diff, "The output did not match the expected value."
         assert result.exit_code == 0, "The exit code is incorrect."
 
+    @pytest.mark.incompatible_with_mypyc
     def test_code_option_safe(self) -> None:
         """Test that the code option throws an error when the sanity checks fail."""
         # Patch black.assert_equivalent to ensure the sanity checks fail
@@ -2242,8 +2249,12 @@ class BlackTestCase(BlackBaseTestCase):
             ), "Incorrect config loaded."
 
 
-with open(black.__file__, "r", encoding="utf-8") as _bf:
-    black_source_lines = _bf.readlines()
+try:
+    with open(black.__file__, "r", encoding="utf-8") as _bf:
+        black_source_lines = _bf.readlines()
+except UnicodeDecodeError:
+    # Probably due to Black being compiled; just ignore.
+    pass
 
 
 def tracefunc(frame: types.FrameType, event: str, arg: Any) -> Callable:

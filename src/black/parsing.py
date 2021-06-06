@@ -3,7 +3,7 @@ Parse Python code and perform AST validation.
 """
 import ast
 import sys
-from typing import Iterable, Iterator, List, Set, Tuple, Type, Union
+from typing import Any, Iterable, Iterator, List, Set, Tuple, Type, Union
 
 # lib2to3 fork
 from blib2to3.pytree import Node, Leaf
@@ -15,9 +15,9 @@ from blib2to3.pgen2.parse import ParseError
 from black.mode import TargetVersion, Feature, supports_feature
 from black.nodes import syms
 
+ast3: Any
+ast27: Any
 try:
-    # TODO: currently the code assumes ast3 and ast27 will be availabe all the time,
-    # unfortunately this isn't the case these days
     from typed_ast import ast3, ast27
 except ImportError:
     if sys.version_info < (3, 8):
@@ -29,7 +29,7 @@ except ImportError:
         )
         sys.exit(1)
     else:
-        pass
+        ast3 = ast27 = ast
 
 
 class InvalidInput(ValueError):
@@ -124,6 +124,13 @@ def parse_ast(src: str) -> Union[ast.AST, ast3.AST, ast27.AST]:
             except SyntaxError:
                 continue
 
+    if ast27.__name__ == "ast":
+        raise SyntaxError(
+            "The requested source code has invalid Python 3 syntax.\n"
+            "If you are trying to format Python 2 files please reinstall Black"
+            " with the 'python2' extra: `python3 -m pip install black[python2]`."
+        )
+
     return ast27.parse(src)
 
 
@@ -185,7 +192,7 @@ def stringify_ast(
                 # To normalize, we strip any leading and trailing space from
                 # each line...
                 stripped = [line.strip() for line in value.splitlines()]
-                normalized = lineend.join(stripped)  # type: ignore[attr-defined]
+                normalized = lineend.join(stripped)
                 # ...and remove any blank lines at the beginning and end of
                 # the whole string
                 normalized = normalized.strip()

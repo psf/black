@@ -17,6 +17,7 @@ from typing import (
     TYPE_CHECKING,
 )
 
+from mypy_extensions import mypyc_attr
 from pathspec import PathSpec
 import toml
 
@@ -86,6 +87,7 @@ def find_pyproject_toml(path_search_start: Tuple[str, ...]) -> Optional[str]:
         return None
 
 
+@mypyc_attr(patchable=True)
 def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
     """Parse a pyproject toml file, pulling out relevant parts for Black
 

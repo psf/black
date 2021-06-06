@@ -167,7 +167,10 @@ def validate_regex(
         raise click.BadParameter("Not a valid regular expression")
 
 
-@click.command(context_settings=dict(help_option_names=["-h", "--help"]))
+@click.command(
+    context_settings=dict(help_option_names=["-h", "--help"]),
+    help="The uncompromising code formatter.",
+)
 @click.option("-c", "--code", type=str, help="Format the code passed in as a string.")
 @click.option(
     "-l",
