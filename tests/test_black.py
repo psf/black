@@ -34,6 +34,7 @@ import black
 from black import Feature, TargetVersion
 from black.cache import get_cache_file
 from black.debug import DebugVisitor
+from black.output import diff, color_diff
 from black.report import Report
 import black.files
 
@@ -62,6 +63,9 @@ PY36_VERSIONS = {
 PY36_ARGS = [f"--target-version={version.name.lower()}" for version in PY36_VERSIONS]
 T = TypeVar("T")
 R = TypeVar("R")
+
+# Match the time output in a diff, but nothing else
+DIFF_TIME = re.compile(r"\t[\d-:+\. ]+")
 
 
 @contextmanager
@@ -1792,6 +1796,16 @@ class BlackTestCase(BlackBaseTestCase):
         for option in ["--include", "--exclude", "--extend-exclude", "--force-exclude"]:
             self.invokeBlack(["-", option, "**()(!!*)"], exit_code=2)
 
+    def test_required_version_matches_version(self) -> None:
+        self.invokeBlack(
+            ["--required-version", black.__version__], exit_code=0, ignore_config=True
+        )
+
+    def test_required_version_does_not_match_version(self) -> None:
+        self.invokeBlack(
+            ["--required-version", "20.99b"], exit_code=1, ignore_config=True
+        )
+
     def test_preserves_line_endings(self) -> None:
         with TemporaryDirectory() as workspace:
             test_file = Path(workspace) / "test.py"
@@ -2068,6 +2082,146 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(result.exit_code, 0)
         actual = result.output
         self.assertFormatEqual(actual, expected)
+
+    @staticmethod
+    def compare_results(
+        result: click.testing.Result, expected_value: str, expected_exit_code: int
+    ) -> None:
+        """Helper method to test the value and exit code of a click Result."""
+        assert (
+            result.output == expected_value
+        ), "The output did not match the expected value."
+        assert result.exit_code == expected_exit_code, "The exit code is incorrect."
+
+    def test_code_option(self) -> None:
+        """Test the code option with no changes."""
+        code = 'print("Hello world")\n'
+        args = ["--code", code]
+        result = CliRunner().invoke(black.main, args)
+
+        self.compare_results(result, code, 0)
+
+    def test_code_option_changed(self) -> None:
+        """Test the code option when changes are required."""
+        code = "print('hello world')"
+        formatted = black.format_str(code, mode=DEFAULT_MODE)
+
+        args = ["--code", code]
+        result = CliRunner().invoke(black.main, args)
+
+        self.compare_results(result, formatted, 0)
+
+    def test_code_option_check(self) -> None:
+        """Test the code option when check is passed."""
+        args = ["--check", "--code", 'print("Hello world")\n']
+        result = CliRunner().invoke(black.main, args)
+        self.compare_results(result, "", 0)
+
+    def test_code_option_check_changed(self) -> None:
+        """Test the code option when changes are required, and check is passed."""
+        args = ["--check", "--code", "print('hello world')"]
+        result = CliRunner().invoke(black.main, args)
+        self.compare_results(result, "", 1)
+
+    def test_code_option_diff(self) -> None:
+        """Test the code option when diff is passed."""
+        code = "print('hello world')"
+        formatted = black.format_str(code, mode=DEFAULT_MODE)
+        result_diff = diff(code, formatted, "STDIN", "STDOUT")
+
+        args = ["--diff", "--code", code]
+        result = CliRunner().invoke(black.main, args)
+
+        # Remove time from diff
+        output = DIFF_TIME.sub("", result.output)
+
+        assert output == result_diff, "The output did not match the expected value."
+        assert result.exit_code == 0, "The exit code is incorrect."
+
+    def test_code_option_color_diff(self) -> None:
+        """Test the code option when color and diff are passed."""
+        code = "print('hello world')"
+        formatted = black.format_str(code, mode=DEFAULT_MODE)
+
+        result_diff = diff(code, formatted, "STDIN", "STDOUT")
+        result_diff = color_diff(result_diff)
+
+        args = ["--diff", "--color", "--code", code]
+        result = CliRunner().invoke(black.main, args)
+
+        # Remove time from diff
+        output = DIFF_TIME.sub("", result.output)
+
+        assert output == result_diff, "The output did not match the expected value."
+        assert result.exit_code == 0, "The exit code is incorrect."
+
+    def test_code_option_safe(self) -> None:
+        """Test that the code option throws an error when the sanity checks fail."""
+        # Patch black.assert_equivalent to ensure the sanity checks fail
+        with patch.object(black, "assert_equivalent", side_effect=AssertionError):
+            code = 'print("Hello world")'
+            error_msg = f"{code}\nerror: cannot format <string>: \n"
+
+            args = ["--safe", "--code", code]
+            result = CliRunner().invoke(black.main, args)
+
+            self.compare_results(result, error_msg, 123)
+
+    def test_code_option_fast(self) -> None:
+        """Test that the code option ignores errors when the sanity checks fail."""
+        # Patch black.assert_equivalent to ensure the sanity checks fail
+        with patch.object(black, "assert_equivalent", side_effect=AssertionError):
+            code = 'print("Hello world")'
+            formatted = black.format_str(code, mode=DEFAULT_MODE)
+
+            args = ["--fast", "--code", code]
+            result = CliRunner().invoke(black.main, args)
+
+            self.compare_results(result, formatted, 0)
+
+    def test_code_option_config(self) -> None:
+        """
+        Test that the code option finds the pyproject.toml in the current directory.
+        """
+        with patch.object(black, "parse_pyproject_toml", return_value={}) as parse:
+            # Make sure we are in the project root with the pyproject file
+            if not Path("tests").exists():
+                os.chdir("..")
+
+            args = ["--code", "print"]
+            CliRunner().invoke(black.main, args)
+
+            pyproject_path = Path(Path().cwd(), "pyproject.toml").resolve()
+            assert (
+                len(parse.mock_calls) >= 1
+            ), "Expected config parse to be called with the current directory."
+
+            _, call_args, _ = parse.mock_calls[0]
+            assert (
+                call_args[0].lower() == str(pyproject_path).lower()
+            ), "Incorrect config loaded."
+
+    def test_code_option_parent_config(self) -> None:
+        """
+        Test that the code option finds the pyproject.toml in the parent directory.
+        """
+        with patch.object(black, "parse_pyproject_toml", return_value={}) as parse:
+            # Make sure we are in the tests directory
+            if Path("tests").exists():
+                os.chdir("tests")
+
+            args = ["--code", "print"]
+            CliRunner().invoke(black.main, args)
+
+            pyproject_path = Path(Path().cwd().parent, "pyproject.toml").resolve()
+            assert (
+                len(parse.mock_calls) >= 1
+            ), "Expected config parse to be called with the current directory."
+
+            _, call_args, _ = parse.mock_calls[0]
+            assert (
+                call_args[0].lower() == str(pyproject_path).lower()
+            ), "Incorrect config loaded."
 
 
 with open(black.__file__, "r", encoding="utf-8") as _bf:

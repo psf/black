@@ -68,13 +68,6 @@ $ black --code "print ( 'hello, world' )"
 print("hello, world")
 ```
 
-```{warning}
---check, --diff, and --safe / --fast have no effect when using -c / --code. Safety
-checks normally turned on by default that verify _Black_'s output are disabled as well.
-This is a bug which we intend to fix eventually. More details can be found in this [bug
-report](https://github.com/psf/black/issues/2104).
-```
-
 ### Writeback and reporting
 
 By default _Black_ reformats the files given and/or found in place. Sometimes you need
@@ -174,7 +167,7 @@ $ black src/ -q
 error: cannot format src/black_primer/cli.py: Cannot parse: 5:6: mport asyncio
 ```
 
-### Getting the version
+### Versions
 
 You can check the version of _Black_ you have installed using the `--version` flag.
 
@@ -182,6 +175,19 @@ You can check the version of _Black_ you have installed using the `--version` fl
 $ black --version
 black, version 21.5b0
 ```
+
+An option to require a specific version to be running is also provided.
+
+```console
+$ black --required-version 21.5b2 -c "format = 'this'"
+format = "this"
+$ black --required-version 31.5b2 -c "still = 'beta?!'"
+Oh no! 💥 💔 💥 The required version does not match the running version!
+```
+
+This is useful for example when running _Black_ in multiple environments that haven't
+necessarily installed the correct version. This option can be set in a configuration
+file for consistent results across environments.
 
 ## Configuration via a file
 
