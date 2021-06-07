@@ -407,6 +407,16 @@ def _legacy_listen_examples():
     )
 
 
+class X:
+    async def foo(self):
+        msg = ""
+        for candidate in CANDIDATES:
+            msg += (
+                "**{candidate.object_type} {candidate.rev}**"
+                " - {candidate.description}\n"
+            )
+
+
 temp_msg = (
     f"{f'{humanize_number(pos)}.': <{pound_len+2}} "
     f"{balance: <{bal_len + 5}} "
@@ -946,6 +956,16 @@ def _legacy_listen_examples():
             "since": since,
         }
     )
+
+
+class X:
+    async def foo(self):
+        msg = ""
+        for candidate in CANDIDATES:
+            msg += (
+                "**{candidate.object_type} {candidate.rev}**"
+                " - {candidate.description}\n"
+            )
 
 
 temp_msg = (
