@@ -867,7 +867,7 @@ class BaseStringSplitter(StringTransformer):
                 # WMA4 a space, a comma, and a closing bracket [e.g. `), STRING`].
                 offset += 3
 
-            if P.type in [token.COLON, token.EQUAL, token.NAME]:
+            if P.type in [token.COLON, token.EQUAL, token.PLUSEQUAL, token.NAME]:
                 # This conditional branch is meant to handle dictionary keys,
                 # variable assignments, 'return STRING' statement lines, and
                 # 'else STRING' ternary expression lines.
@@ -1151,21 +1151,32 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
 
             # --- Construct `next_value`
             next_value = rest_value[:break_idx] + QUOTE
+
+            # HACK: The following 'if' statement is a hack to fix the custom
+            # breakpoint index in the case of either: (a) substrings that were
+            # f-strings but will have the 'f' prefix removed OR (b) substrings
+            # that were not f-strings but will now become f-strings because of
+            # redundant use of the 'f' prefix (i.e. none of the substrings
+            # contain f-expressions but one or more of them had the 'f' prefix
+            # anyway; in which case, we will prepend 'f' to _all_ substrings).
+            #
+            # There is probably a better way to accomplish what is being done
+            # here...
+            #
+            # If this substring is an f-string, we _could_ remove the 'f'
+            # prefix, and the current custom split did NOT originally use a
+            # prefix...
             if (
-                # Are we allowed to try to drop a pointless 'f' prefix?
-                drop_pointless_f_prefix
-                # If we are, will we be successful?
-                and next_value != self._normalize_f_string(next_value, prefix)
+                next_value != self._normalize_f_string(next_value, prefix)
+                and use_custom_breakpoints
+                and not csplit.has_prefix
             ):
-                # If the current custom split did NOT originally use a prefix,
-                # then `csplit.break_idx` will be off by one after removing
+                # Then `csplit.break_idx` will be off by one after removing
                 # the 'f' prefix.
-                break_idx = (
-                    break_idx + 1
-                    if use_custom_breakpoints and not csplit.has_prefix
-                    else break_idx
-                )
+                break_idx += 1
                 next_value = rest_value[:break_idx] + QUOTE
+
+            if drop_pointless_f_prefix:
                 next_value = self._normalize_f_string(next_value, prefix)
 
             # --- Construct `next_leaf`
