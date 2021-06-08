@@ -4,6 +4,7 @@
 
 ### _Black_
 
+- Fix failure caused by `fmt: skip` and indentation (#2281)
 - Account for += assignment when deciding whether to split string (#2312)
 - Correct max string length calculation when there are string operators (#2292)
 - Fixed option usage when using the `--code` flag (#2259)

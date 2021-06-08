@@ -159,7 +159,10 @@ def convert_one_fmt_off_pair(node: Node) -> bool:
             first = ignored_nodes[0]  # Can be a container node with the `leaf`.
             parent = first.parent
             prefix = first.prefix
-            first.prefix = prefix[comment.consumed :]
+            if comment.value in FMT_OFF:
+                first.prefix = prefix[comment.consumed :]
+            if comment.value in FMT_SKIP:
+                first.prefix = ""
             hidden_value = "".join(str(n) for n in ignored_nodes)
             if comment.value in FMT_OFF:
                 hidden_value = comment.value + "\n" + hidden_value
