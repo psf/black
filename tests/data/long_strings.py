@@ -207,6 +207,18 @@ long_unmergable_string_with_pragma = (
     " of it."
 )
 
+x = (
+    "........................................................................ \N{LAO KO LA}"
+)
+
+x = (
+    "........................................................................... \N{LAO KO LA}"
+)
+
+x = (
+    "............................................................................ \N{LAO KO LA}"
+)
+
 
 # output
 
@@ -586,4 +598,19 @@ long_unmergable_string_with_pragma = (
 long_unmergable_string_with_pragma = (
     "This is a really long string that can't be merged because it has a likely pragma at the end"  # pylint: disable=some-pylint-check
     " of it."
+)
+
+x = (
+    "........................................................................"
+    " \N{LAO KO LA}"
+)
+
+x = (
+    "..........................................................................."
+    " \N{LAO KO LA}"
+)
+
+x = (
+    "............................................................................"
+    " \N{LAO KO LA}"
 )
