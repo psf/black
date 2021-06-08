@@ -11,6 +11,7 @@
 - Added `--required-version` option to require a specific version to be running (#2300)
 - Fix incorrect custom breakpoint indices when string group contains fake f-strings
   (#2311)
+- Add a test for code piped into black via STDIN (#2315)
 
 ## 21.5b2
 
