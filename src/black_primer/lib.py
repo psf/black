@@ -124,7 +124,7 @@ async def black_run(
     if not repo_path:
         results.stats["failed"] += 1
         results.failed_projects[project_name] = CalledProcessError(
-            99, [], f"{project_name} has no repo_path: {repo_path}".encode(), b""
+            69, [], f"{project_name} has no repo_path: {repo_path}".encode(), b""
         )
         return
 
