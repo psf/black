@@ -13,6 +13,8 @@
 - Fix incorrect custom breakpoint indices when string group contains fake f-strings
   (#2311)
 - Fix regression where `R` prefixes would be lowercased for docstrings (#2285)
+- Fix handling of named escapes (`\N{...}`) when `--experimental-string-processing` is
+  used (#2319)
 
 ## 21.5b2
 
