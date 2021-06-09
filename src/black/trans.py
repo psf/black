@@ -1273,7 +1273,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
             else:
                 # malformed nameescape expression?
                 # should have been detected by AST parsing earlier...
-                continue
+                raise RuntimeError(f"{self.__class__.__name__} LOGIC ERROR!")
             slices.append((start, end))
 
         return slices
