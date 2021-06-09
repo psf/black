@@ -514,6 +514,10 @@ fstring = F"f-strings definitely make things more {difficult} than they need to 
 
 x = F"This is a long string which contains an f-expr that should not split {{{[i for i in range(5)]}}}."
 
+x = (
+    "\N{BLACK RIGHT-POINTING TRIANGLE WITH DOUBLE VERTICAL BAR}\N{VARIATION SELECTOR-16}"
+)
+
 
 # output
 
@@ -1141,4 +1145,8 @@ fstring = (
 x = (
     "This is a long string which contains an f-expr that should not split"
     f" {{{[i for i in range(5)]}}}."
+)
+
+x = (
+    "\N{BLACK RIGHT-POINTING TRIANGLE WITH DOUBLE VERTICAL BAR}\N{VARIATION SELECTOR-16}"
 )
