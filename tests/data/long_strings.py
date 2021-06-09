@@ -207,35 +207,35 @@ long_unmergable_string_with_pragma = (
     " of it."
 )
 
-x = (
+string_with_nameescape = (
     "........................................................................ \N{LAO KO LA}"
 )
 
-x = (
+string_with_nameescape = (
     "........................................................................... \N{LAO KO LA}"
 )
 
-x = (
+string_with_nameescape = (
     "............................................................................ \N{LAO KO LA}"
 )
 
-x = (
+string_with_nameescape_and_escaped_backslash = (
     "...................................................................... \\\N{LAO KO LA}"
 )
 
-x = (
+string_with_nameescape_and_escaped_backslash = (
     "......................................................................... \\\N{LAO KO LA}"
 )
 
-x = (
+string_with_nameescape_and_escaped_backslash = (
     ".......................................................................... \\\N{LAO KO LA}"
 )
 
-x = (
+string_with_escaped_nameescape = (
     "........................................................................ \\N{LAO KO LA}"
 )
 
-x = (
+string_with_escaped_nameescape = (
     "........................................................................... \\N{LAO KO LA}"
 )
 
@@ -620,42 +620,42 @@ long_unmergable_string_with_pragma = (
     " of it."
 )
 
-x = (
+string_with_nameescape = (
     "........................................................................"
     " \N{LAO KO LA}"
 )
 
-x = (
+string_with_nameescape = (
     "..........................................................................."
     " \N{LAO KO LA}"
 )
 
-x = (
+string_with_nameescape = (
     "............................................................................"
     " \N{LAO KO LA}"
 )
 
-x = (
+string_with_nameescape_and_escaped_backslash = (
     "......................................................................"
     " \\\N{LAO KO LA}"
 )
 
-x = (
+string_with_nameescape_and_escaped_backslash = (
     "........................................................................."
     " \\\N{LAO KO LA}"
 )
 
-x = (
+string_with_nameescape_and_escaped_backslash = (
     ".........................................................................."
     " \\\N{LAO KO LA}"
 )
 
-x = (
+string_with_escaped_nameescape = (
     "........................................................................ \\N{LAO"
     " KO LA}"
 )
 
-x = (
+string_with_escaped_nameescape = (
     "..........................................................................."
     " \\N{LAO KO LA}"
 )
