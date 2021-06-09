@@ -15,6 +15,7 @@ from typing import (
     List,
     Optional,
     Sequence,
+    Set,
     Tuple,
     TypeVar,
     Union,
@@ -1243,14 +1244,13 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
             last_line.comments = line.comments.copy()
             yield Ok(last_line)
 
-    def _get_nameescape_slices(self, string: str) -> List[Tuple[int, int]]:
+    def _iter_nameescape_slices(self, string: str) -> Iterator[Tuple[Index, Index]]:
         """
-        Returns:
-            List of all ranges of @string which, if @string were to be split there,
+        Yields:
+            All ranges of @string which, if @string were to be split there,
             would result in the splitting of an \\N{...} expression (which is NOT
             allowed).
         """
-        slices = []
         # True - the previous backslash was unescaped
         # False - the previous backslash was escaped *or* there was no backslash
         previous_was_unescaped_backslash = False
@@ -1264,7 +1264,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
                 continue
             previous_was_unescaped_backslash = False
 
-            start = idx - 1  # the position of backslash before \N{...}
+            begin = idx - 1  # the position of backslash before \N{...}
             for idx, c in it:
                 if c == "}":
                     end = idx
@@ -1273,9 +1273,32 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
                 # malformed nameescape expression?
                 # should have been detected by AST parsing earlier...
                 raise RuntimeError(f"{self.__class__.__name__} LOGIC ERROR!")
-            slices.append((start, end))
+            yield begin, end
 
-        return slices
+    def _iter_fexpr_slices(self, string: str) -> Iterator[Tuple[Index, Index]]:
+        """
+        Yields:
+            All ranges of @string which, if @string were to be split there,
+            would result in the splitting of an f-expression (which is NOT
+            allowed).
+        """
+        if "f" not in get_string_prefix(string).lower():
+            return
+
+        for match in re.finditer(self.RE_FEXPR, string, re.VERBOSE):
+            yield match.span()
+
+    def _get_illegal_split_indices(self, string: str) -> Set[Index]:
+        illegal_indices: Set[Index] = set()
+        iterators = [
+            self._iter_fexpr_slices(string),
+            self._iter_nameescape_slices(string),
+        ]
+        for it in iterators:
+            for begin, end in it:
+                for idx in range(begin, end + 1):
+                    illegal_indices.add(idx)
+        return illegal_indices
 
     def _get_break_idx(self, string: str, max_break_idx: int) -> Optional[int]:
         """
@@ -1306,50 +1329,15 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         assert is_valid_index(max_break_idx)
         assert_is_leaf_string(string)
 
-        _fexpr_slices: Optional[List[Tuple[Index, Index]]] = None
+        _illegal_split_indices = self._get_illegal_split_indices(string)
 
-        def fexpr_slices() -> Iterator[Tuple[Index, Index]]:
-            """
-            Yields:
-                All ranges of @string which, if @string were to be split there,
-                would result in the splitting of an f-expression (which is NOT
-                allowed).
-            """
-            nonlocal _fexpr_slices
-
-            if _fexpr_slices is None:
-                _fexpr_slices = []
-                for match in re.finditer(self.RE_FEXPR, string, re.VERBOSE):
-                    _fexpr_slices.append(match.span())
-
-            yield from _fexpr_slices
-
-        is_fstring = "f" in get_string_prefix(string).lower()
-
-        def breaks_fstring_expression(i: Index) -> bool:
+        def breaks_unsplittable_expression(i: Index) -> bool:
             """
             Returns:
                 True iff returning @i would result in the splitting of an
-                f-expression (which is NOT allowed).
+                unsplittable expression (which is NOT allowed).
             """
-            if not is_fstring:
-                return False
-
-            for (start, end) in fexpr_slices():
-                if start <= i < end:
-                    return True
-
-            return False
-
-        nameescape_slices = self._get_nameescape_slices(string)
-
-        def breaks_nameescape_expression(i: Index) -> bool:
-            """
-            Returns:
-                True iff returning @i would result in the splitting of an
-                \\N{...} expression (which is NOT allowed).
-            """
-            return any(start <= i < end for start, end in nameescape_slices)
+            return i in _illegal_split_indices
 
         def passes_all_checks(i: Index) -> bool:
             """
@@ -1373,8 +1361,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
                 is_space
                 and is_not_escaped
                 and is_big_enough
-                and not breaks_fstring_expression(i)
-                and not breaks_nameescape_expression(i)
+                and not breaks_unsplittable_expression(i)
             )
 
         # First, we check all indices BELOW @max_break_idx.
