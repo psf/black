@@ -39,7 +39,7 @@ class Results(NamedTuple):
 
 async def _gen_check_output(
     cmd: Sequence[str],
-    timeout: float = 300,
+    timeout: float = 600,
     env: Optional[Dict[str, str]] = None,
     cwd: Optional[Path] = None,
 ) -> Tuple[bytes, bytes]:

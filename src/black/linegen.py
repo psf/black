@@ -226,8 +226,9 @@ class LineGenerator(Visitor[Line]):
         if is_docstring(leaf) and "\\\n" not in leaf.value:
             # We're ignoring docstrings with backslash newline escapes because changing
             # indentation of those changes the AST representation of the code.
-            prefix = get_string_prefix(leaf.value)
-            docstring = leaf.value[len(prefix) :]  # Remove the prefix
+            docstring = normalize_string_prefix(leaf.value, self.remove_u_prefix)
+            prefix = get_string_prefix(docstring)
+            docstring = docstring[len(prefix) :]  # Remove the prefix
             quote_char = docstring[0]
             # A natural way to remove the outer quotes is to do:
             #   docstring = docstring.strip(quote_char)
