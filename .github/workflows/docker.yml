@@ -9,6 +9,7 @@ on:
 
 jobs:
   docker:
+    if: github.repository == 'psf/black'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
