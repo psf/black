@@ -411,7 +411,7 @@ class StringMerger(CustomSplitMapMixin, StringTransformer):
             and is_valid_index(next_str_idx)
             and LL[next_str_idx].type == token.STRING
         ):
-            prefix = get_string_prefix(LL[next_str_idx].value)
+            prefix = get_string_prefix(LL[next_str_idx].value).lower()
             next_str_idx += 1
 
         # The next loop merges the string group. The final string will be
@@ -431,7 +431,7 @@ class StringMerger(CustomSplitMapMixin, StringTransformer):
             num_of_strings += 1
 
             SS = LL[next_str_idx].value
-            next_prefix = get_string_prefix(SS)
+            next_prefix = get_string_prefix(SS).lower()
 
             # If this is an f-string group but this substring is not prefixed
             # with 'f'...
@@ -541,7 +541,7 @@ class StringMerger(CustomSplitMapMixin, StringTransformer):
                 return TErr("StringMerger does NOT merge multiline strings.")
 
             num_of_strings += 1
-            prefix = get_string_prefix(leaf.value)
+            prefix = get_string_prefix(leaf.value).lower()
             if "r" in prefix:
                 return TErr("StringMerger does NOT merge raw strings.")
 
@@ -1036,7 +1036,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         is_valid_index = is_valid_index_factory(LL)
         insert_str_child = insert_str_child_factory(LL[string_idx])
 
-        prefix = get_string_prefix(LL[string_idx].value)
+        prefix = get_string_prefix(LL[string_idx].value).lower()
 
         # We MAY choose to drop the 'f' prefix from substrings that don't
         # contain any f-expressions, but ONLY if the original f-string
@@ -1290,7 +1290,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
 
             yield from _fexpr_slices
 
-        is_fstring = "f" in get_string_prefix(string)
+        is_fstring = "f" in get_string_prefix(string).lower()
 
         def breaks_fstring_expression(i: Index) -> bool:
             """
