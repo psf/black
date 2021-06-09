@@ -1350,11 +1350,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
                 True iff returning @i would result in the splitting of an
                 \\N{...} expression (which is NOT allowed).
             """
-            for (start, end) in nameescape_slices:
-                if start <= i < end:
-                    return True
-
-            return False
+            return any(start <= i < end for start, end in nameescape_slices)
 
         def passes_all_checks(i: Index) -> bool:
             """
