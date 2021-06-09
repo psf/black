@@ -1251,19 +1251,23 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
             allowed).
         """
         slices = []
-        backslash_count = 0
+        # None - looking for first backslash
+        # True - the previous backslash was unescaped
+        # False - the previous backslash was escaped
+        backslash_tracking_state: Optional[bool] = None
         it = iter(enumerate(string))
         for idx, c in it:
-            if not backslash_count:
+            if backslash_tracking_state is None:
                 if c == "\\":
-                    backslash_count += 1
+                    backslash_tracking_state = True
                 continue
             if c == "\\":
-                backslash_count += 1
+                backslash_tracking_state = not backslash_tracking_state
                 continue
-            backslash_count = 0
-            if c != "N":
+            if backslash_tracking_state is False or c != "N":
+                backslash_tracking_state = None
                 continue
+            backslash_tracking_state = None
 
             start = idx - 1  # the position of backslash before \N{...}
             for idx, c in it:
