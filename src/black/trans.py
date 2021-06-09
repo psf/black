@@ -1296,8 +1296,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         ]
         for it in iterators:
             for begin, end in it:
-                for idx in range(begin, end + 1):
-                    illegal_indices.add(idx)
+                illegal_indices.update(range(begin, end + 1))
         return illegal_indices
 
     def _get_break_idx(self, string: str, max_break_idx: int) -> Optional[int]:
