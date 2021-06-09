@@ -1243,6 +1243,41 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
             last_line.comments = line.comments.copy()
             yield Ok(last_line)
 
+    def _get_nameescape_slices(self, string: str) -> List[Tuple[int, int]]:
+        """
+        Returns:
+            List of all ranges of @string which, if @string were to be split there,
+            would result in the splitting of an \\N{...} expression (which is NOT
+            allowed).
+        """
+        slices = []
+        backslash_count = 0
+        it = iter(enumerate(string))
+        for idx, c in it:
+            if not backslash_count:
+                if c == "\\":
+                    backslash_count += 1
+                continue
+            if c == "\\":
+                backslash_count += 1
+                continue
+            backslash_count = 0
+            if c != "N":
+                continue
+
+            start = idx - 1  # the position of backslash before \N{...}
+            for idx, c in it:
+                if c == "}":
+                    end = idx
+                    break
+            else:
+                # malformed nameescape expression?
+                # should have been detected by AST parsing earlier...
+                continue
+            slices.append((start, end))
+
+        return slices
+
     def _get_break_idx(self, string: str, max_break_idx: int) -> Optional[int]:
         """
         This method contains the algorithm that StringSplitter uses to
@@ -1307,6 +1342,20 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
 
             return False
 
+        nameescape_slices = self._get_nameescape_slices(string)
+
+        def breaks_nameescape_expression(i: Index) -> bool:
+            """
+            Returns:
+                True iff returning @i would result in the splitting of an
+                \\N{...} expression (which is NOT allowed).
+            """
+            for (start, end) in nameescape_slices:
+                if start <= i < end:
+                    return True
+
+            return False
+
         def passes_all_checks(i: Index) -> bool:
             """
             Returns:
@@ -1330,6 +1379,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
                 and is_not_escaped
                 and is_big_enough
                 and not breaks_fstring_expression(i)
+                and not breaks_nameescape_expression(i)
             )
 
         # First, we check all indices BELOW @max_break_idx.
