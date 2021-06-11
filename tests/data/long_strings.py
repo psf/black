@@ -207,6 +207,38 @@ long_unmergable_string_with_pragma = (
     " of it."
 )
 
+string_with_nameescape = (
+    "........................................................................ \N{LAO KO LA}"
+)
+
+string_with_nameescape = (
+    "........................................................................... \N{LAO KO LA}"
+)
+
+string_with_nameescape = (
+    "............................................................................ \N{LAO KO LA}"
+)
+
+string_with_nameescape_and_escaped_backslash = (
+    "...................................................................... \\\N{LAO KO LA}"
+)
+
+string_with_nameescape_and_escaped_backslash = (
+    "......................................................................... \\\N{LAO KO LA}"
+)
+
+string_with_nameescape_and_escaped_backslash = (
+    ".......................................................................... \\\N{LAO KO LA}"
+)
+
+string_with_escaped_nameescape = (
+    "........................................................................ \\N{LAO KO LA}"
+)
+
+string_with_escaped_nameescape = (
+    "........................................................................... \\N{LAO KO LA}"
+)
+
 
 # output
 
@@ -586,4 +618,44 @@ long_unmergable_string_with_pragma = (
 long_unmergable_string_with_pragma = (
     "This is a really long string that can't be merged because it has a likely pragma at the end"  # pylint: disable=some-pylint-check
     " of it."
+)
+
+string_with_nameescape = (
+    "........................................................................"
+    " \N{LAO KO LA}"
+)
+
+string_with_nameescape = (
+    "..........................................................................."
+    " \N{LAO KO LA}"
+)
+
+string_with_nameescape = (
+    "............................................................................"
+    " \N{LAO KO LA}"
+)
+
+string_with_nameescape_and_escaped_backslash = (
+    "......................................................................"
+    " \\\N{LAO KO LA}"
+)
+
+string_with_nameescape_and_escaped_backslash = (
+    "........................................................................."
+    " \\\N{LAO KO LA}"
+)
+
+string_with_nameescape_and_escaped_backslash = (
+    ".........................................................................."
+    " \\\N{LAO KO LA}"
+)
+
+string_with_escaped_nameescape = (
+    "........................................................................ \\N{LAO"
+    " KO LA}"
+)
+
+string_with_escaped_nameescape = (
+    "..........................................................................."
+    " \\N{LAO KO LA}"
 )

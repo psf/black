@@ -4,6 +4,13 @@
 
 ### _Black_
 
+- Add primer support and test for code piped into black via STDIN (#2315)
+
+## 21.6b0
+
+### _Black_
+
+- Fix failure caused by `fmt: skip` and indentation (#2281)
 - Account for += assignment when deciding whether to split string (#2312)
 - Correct max string length calculation when there are string operators (#2292)
 - Fixed option usage when using the `--code` flag (#2259)
@@ -11,7 +18,9 @@
 - Added `--required-version` option to require a specific version to be running (#2300)
 - Fix incorrect custom breakpoint indices when string group contains fake f-strings
   (#2311)
-- Add a test for code piped into black via STDIN (#2315)
+- Fix regression where `R` prefixes would be lowercased for docstrings (#2285)
+- Fix handling of named escapes (`\N{...}`) when `--experimental-string-processing` is
+  used (#2319)
 
 ## 21.5b2
 

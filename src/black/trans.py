@@ -15,6 +15,7 @@ from typing import (
     List,
     Optional,
     Sequence,
+    Set,
     Tuple,
     TypeVar,
     Union,
@@ -411,7 +412,7 @@ class StringMerger(CustomSplitMapMixin, StringTransformer):
             and is_valid_index(next_str_idx)
             and LL[next_str_idx].type == token.STRING
         ):
-            prefix = get_string_prefix(LL[next_str_idx].value)
+            prefix = get_string_prefix(LL[next_str_idx].value).lower()
             next_str_idx += 1
 
         # The next loop merges the string group. The final string will be
@@ -431,7 +432,7 @@ class StringMerger(CustomSplitMapMixin, StringTransformer):
             num_of_strings += 1
 
             SS = LL[next_str_idx].value
-            next_prefix = get_string_prefix(SS)
+            next_prefix = get_string_prefix(SS).lower()
 
             # If this is an f-string group but this substring is not prefixed
             # with 'f'...
@@ -541,7 +542,7 @@ class StringMerger(CustomSplitMapMixin, StringTransformer):
                 return TErr("StringMerger does NOT merge multiline strings.")
 
             num_of_strings += 1
-            prefix = get_string_prefix(leaf.value)
+            prefix = get_string_prefix(leaf.value).lower()
             if "r" in prefix:
                 return TErr("StringMerger does NOT merge raw strings.")
 
@@ -1036,7 +1037,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         is_valid_index = is_valid_index_factory(LL)
         insert_str_child = insert_str_child_factory(LL[string_idx])
 
-        prefix = get_string_prefix(LL[string_idx].value)
+        prefix = get_string_prefix(LL[string_idx].value).lower()
 
         # We MAY choose to drop the 'f' prefix from substrings that don't
         # contain any f-expressions, but ONLY if the original f-string
@@ -1243,6 +1244,61 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
             last_line.comments = line.comments.copy()
             yield Ok(last_line)
 
+    def _iter_nameescape_slices(self, string: str) -> Iterator[Tuple[Index, Index]]:
+        """
+        Yields:
+            All ranges of @string which, if @string were to be split there,
+            would result in the splitting of an \\N{...} expression (which is NOT
+            allowed).
+        """
+        # True - the previous backslash was unescaped
+        # False - the previous backslash was escaped *or* there was no backslash
+        previous_was_unescaped_backslash = False
+        it = iter(enumerate(string))
+        for idx, c in it:
+            if c == "\\":
+                previous_was_unescaped_backslash = not previous_was_unescaped_backslash
+                continue
+            if not previous_was_unescaped_backslash or c != "N":
+                previous_was_unescaped_backslash = False
+                continue
+            previous_was_unescaped_backslash = False
+
+            begin = idx - 1  # the position of backslash before \N{...}
+            for idx, c in it:
+                if c == "}":
+                    end = idx
+                    break
+            else:
+                # malformed nameescape expression?
+                # should have been detected by AST parsing earlier...
+                raise RuntimeError(f"{self.__class__.__name__} LOGIC ERROR!")
+            yield begin, end
+
+    def _iter_fexpr_slices(self, string: str) -> Iterator[Tuple[Index, Index]]:
+        """
+        Yields:
+            All ranges of @string which, if @string were to be split there,
+            would result in the splitting of an f-expression (which is NOT
+            allowed).
+        """
+        if "f" not in get_string_prefix(string).lower():
+            return
+
+        for match in re.finditer(self.RE_FEXPR, string, re.VERBOSE):
+            yield match.span()
+
+    def _get_illegal_split_indices(self, string: str) -> Set[Index]:
+        illegal_indices: Set[Index] = set()
+        iterators = [
+            self._iter_fexpr_slices(string),
+            self._iter_nameescape_slices(string),
+        ]
+        for it in iterators:
+            for begin, end in it:
+                illegal_indices.update(range(begin, end + 1))
+        return illegal_indices
+
     def _get_break_idx(self, string: str, max_break_idx: int) -> Optional[int]:
         """
         This method contains the algorithm that StringSplitter uses to
@@ -1272,40 +1328,15 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         assert is_valid_index(max_break_idx)
         assert_is_leaf_string(string)
 
-        _fexpr_slices: Optional[List[Tuple[Index, Index]]] = None
+        _illegal_split_indices = self._get_illegal_split_indices(string)
 
-        def fexpr_slices() -> Iterator[Tuple[Index, Index]]:
-            """
-            Yields:
-                All ranges of @string which, if @string were to be split there,
-                would result in the splitting of an f-expression (which is NOT
-                allowed).
-            """
-            nonlocal _fexpr_slices
-
-            if _fexpr_slices is None:
-                _fexpr_slices = []
-                for match in re.finditer(self.RE_FEXPR, string, re.VERBOSE):
-                    _fexpr_slices.append(match.span())
-
-            yield from _fexpr_slices
-
-        is_fstring = "f" in get_string_prefix(string)
-
-        def breaks_fstring_expression(i: Index) -> bool:
+        def breaks_unsplittable_expression(i: Index) -> bool:
             """
             Returns:
                 True iff returning @i would result in the splitting of an
-                f-expression (which is NOT allowed).
+                unsplittable expression (which is NOT allowed).
             """
-            if not is_fstring:
-                return False
-
-            for (start, end) in fexpr_slices():
-                if start <= i < end:
-                    return True
-
-            return False
+            return i in _illegal_split_indices
 
         def passes_all_checks(i: Index) -> bool:
             """
@@ -1329,7 +1360,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
                 is_space
                 and is_not_escaped
                 and is_big_enough
-                and not breaks_fstring_expression(i)
+                and not breaks_unsplittable_expression(i)
             )
 
         # First, we check all indices BELOW @max_break_idx.

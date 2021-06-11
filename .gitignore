@@ -1,5 +1,6 @@
 .venv
 .coverage
+.coverage.*
 _build
 .DS_Store
 .vscode

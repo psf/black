@@ -6,6 +6,17 @@ B"hello"
 r"hello"
 fR"hello"
 
+
+def docstring_singleline():
+    R"""2020 was one hell of a year. The good news is that we were able to"""
+
+
+def docstring_multiline():
+    R"""
+    clear out all of the issues opened in that time :p
+    """
+
+
 # output
 
 
@@ -16,3 +27,13 @@ f"hello {name}"
 b"hello"
 r"hello"
 fR"hello"
+
+
+def docstring_singleline():
+    R"""2020 was one hell of a year. The good news is that we were able to"""
+
+
+def docstring_multiline():
+    R"""
+    clear out all of the issues opened in that time :p
+    """

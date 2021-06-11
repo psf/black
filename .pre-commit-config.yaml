@@ -1,5 +1,5 @@
 # Note: don't use this config for your own repositories. Instead, see
-# "Version control integration" in README.md.
+# "Version control integration" in docs/integrations/source_version_control.md
 exclude: ^(src/blib2to3/|profiling/|tests/data/)
 repos:
   - repo: local
