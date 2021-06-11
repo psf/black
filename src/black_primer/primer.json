@@ -1,6 +1,13 @@
 {
   "configuration_format_version": 20200509,
   "projects": {
+    "STDIN": {
+      "cli_arguments": ["--experimental-string-processing"],
+      "expect_formatting_changes": false,
+      "git_clone_url": "",
+      "long_checkout": false,
+      "py_versions": ["all"]
+    },
     "aioexabgp": {
       "cli_arguments": ["--experimental-string-processing"],
       "expect_formatting_changes": false,

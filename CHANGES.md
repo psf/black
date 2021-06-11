@@ -1,5 +1,11 @@
 # Change Log
 
+## Unreleased
+
+### _Black_
+
+- Add primer support and test for code piped into black via STDIN (#2315)
+
 ## 21.6b0
 
 ### _Black_
