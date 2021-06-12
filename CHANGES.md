@@ -27,6 +27,13 @@
 - The vim plugin now searches upwards from the directory containing the current buffer
   instead of the current working directory for pyproject.toml. (#1871)
 
+### Integrations
+
+- The vim plugin now reads the correct string normalization option in pyproject.toml
+  (#1869)
+- The vim plugin no longer crashes Black when there's boolean values in pyproject.toml
+  (#1869)
+
 ## 21.5b2
 
 ### _Black_
