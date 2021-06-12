@@ -1,0 +1,21 @@
+name: changelog
+
+on:
+  pull_request:
+    types: [opened, synchronize, labeled, unlabeled, reopened]
+
+jobs:
+  build:
+    name: Changelog Entry Check
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Grep CHANGES.md for PR number
+        if: contains(github.event.pull_request.labels.*.name, 'skip news') != true
+        run: |
+          grep -Pz "\((\n\s*)?#${{ github.event.pull_request.number }}(\n\s*)?\)" CHANGES.md || \
+          (echo "Please add '(#${{ github.event.pull_request.number }})' change line to CHANGES.md" && \
+          exit 1)

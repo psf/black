@@ -12,61 +12,14 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-from pathlib import Path
-import re
+
+import os
 import string
-from typing import Callable, Dict, List, Optional, Pattern, Tuple, Set
-from dataclasses import dataclass
-import logging
+from pathlib import Path
 
 from pkg_resources import get_distribution
 
-logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
-
-LOG = logging.getLogger(__name__)
-
 CURRENT_DIR = Path(__file__).parent
-README = CURRENT_DIR / ".." / "README.md"
-REFERENCE_DIR = CURRENT_DIR / "reference"
-STATIC_DIR = CURRENT_DIR / "_static"
-
-
-@dataclass
-class SrcRange:
-    """Tracks which part of a file to get a section's content.
-
-    Data:
-        start_line: The line where the section starts (i.e. its sub-header) (inclusive).
-        end_line: The line where the section ends (usually next sub-header) (exclusive).
-    """
-
-    start_line: int
-    end_line: int
-
-
-@dataclass
-class DocSection:
-    """Tracks information about a section of documentation.
-
-    Data:
-        name: The section's name. This will used to detect duplicate sections.
-        src: The filepath to get its contents.
-        processors: The processors to run before writing the section to CURRENT_DIR.
-        out_filename: The filename to use when writing the section to CURRENT_DIR.
-        src_range: The line range of SRC to gets its contents.
-    """
-
-    name: str
-    src: Path
-    src_range: SrcRange = SrcRange(0, 1_000_000)
-    out_filename: str = ""
-    processors: Tuple[Callable, ...] = ()
-
-    def get_out_filename(self) -> str:
-        if not self.out_filename:
-            return self.name + ".md"
-        else:
-            return self.out_filename
 
 
 def make_pypi_svg(version: str) -> None:
@@ -78,131 +31,14 @@ def make_pypi_svg(version: str) -> None:
         f.write(svg)
 
 
-def make_filename(line: str) -> str:
-    non_letters: Pattern = re.compile(r"[^a-z]+")
-    filename: str = line[3:].rstrip().lower()
-    filename = non_letters.sub("_", filename)
-    if filename.startswith("_"):
-        filename = filename[1:]
-    if filename.endswith("_"):
-        filename = filename[:-1]
-    return filename + ".md"
-
-
-def get_contents(section: DocSection) -> str:
-    """Gets the contents for the DocSection."""
-    contents: List[str] = []
-    src: Path = section.src
-    start_line: int = section.src_range.start_line
-    end_line: int = section.src_range.end_line
-    with open(src, "r", encoding="utf-8") as f:
-        for lineno, line in enumerate(f, start=1):
-            if lineno >= start_line and lineno < end_line:
-                contents.append(line)
-    result = "".join(contents)
-    # Let's make Prettier happy with the amount of trailing newlines in the sections.
-    if result.endswith("\n\n"):
-        result = result[:-1]
-    if not result.endswith("\n"):
-        result = result + "\n"
-    return result
-
-
-def get_sections_from_readme() -> List[DocSection]:
-    """Gets the sections from README so they can be processed by process_sections.
-
-    It opens README and goes down line by line looking for sub-header lines which
-    denotes a section. Once it finds a sub-header line, it will create a DocSection
-    object with all of the information currently available. Then on every line, it will
-    track the ending line index of the section. And it repeats this for every sub-header
-    line it finds.
-    """
-    sections: List[DocSection] = []
-    section: Optional[DocSection] = None
-    with open(README, "r", encoding="utf-8") as f:
-        for lineno, line in enumerate(f, start=1):
-            if line.startswith("## "):
-                filename = make_filename(line)
-                section_name = filename[:-3]
-                section = DocSection(
-                    name=str(section_name),
-                    src=README,
-                    src_range=SrcRange(lineno, lineno),
-                    out_filename=filename,
-                    processors=(fix_headers,),
-                )
-                sections.append(section)
-            if section is not None:
-                section.src_range.end_line += 1
-    return sections
-
-
-def fix_headers(contents: str) -> str:
-    """Fixes the headers of sections copied from README.
-
-    Removes one octothorpe (#) from all headers since the contents are no longer nested
-    in a root document (i.e. the README).
-    """
-    lines: List[str] = contents.splitlines()
-    fixed_contents: List[str] = []
-    for line in lines:
-        if line.startswith("##"):
-            line = line[1:]
-        fixed_contents.append(line + "\n")  # splitlines strips the leading newlines
-    return "".join(fixed_contents)
-
-
-def process_sections(
-    custom_sections: List[DocSection], readme_sections: List[DocSection]
-) -> None:
-    """Reads, processes, and writes sections to CURRENT_DIR.
-
-    For each section, the contents will be fetched, processed by processors
-    required by the section, and written to CURRENT_DIR. If it encounters duplicate
-    sections (i.e. shares the same name attribute), it will skip processing the
-    duplicates.
-
-    It processes custom sections before the README generated sections so sections in the
-    README can be overwritten with custom options.
-    """
-    processed_sections: Dict[str, DocSection] = {}
-    modified_files: Set[Path] = set()
-    sections: List[DocSection] = custom_sections
-    sections.extend(readme_sections)
-    for section in sections:
-        if section.name in processed_sections:
-            LOG.warning(
-                f"Skipping '{section.name}' from '{section.src}' as it is a duplicate"
-                f" of a custom section from '{processed_sections[section.name].src}'"
-            )
-            continue
-
-        LOG.info(f"Processing '{section.name}' from '{section.src}'")
-        target_path: Path = CURRENT_DIR / section.get_out_filename()
-        if target_path in modified_files:
-            LOG.warning(
-                f"{target_path} has been already written to, its contents will be"
-                " OVERWRITTEN and notices will be duplicated"
-            )
-        contents: str = get_contents(section)
-
-        # processors goes here
-        if fix_headers in section.processors:
-            contents = fix_headers(contents)
-
-        with open(target_path, "w", encoding="utf-8") as f:
-            if section.src.suffix == ".md" and section.src != target_path:
-                rel = section.src.resolve().relative_to(CURRENT_DIR.parent)
-                f.write(f'[//]: # "NOTE: THIS FILE WAS AUTOGENERATED FROM {rel}"\n\n')
-            f.write(contents)
-        processed_sections[section.name] = section
-        modified_files.add(target_path)
-
+# Necessary so Click doesn't hit an encode error when called by
+# sphinxcontrib-programoutput on Windows.
+os.putenv("pythonioencoding", "utf-8")
 
 # -- Project information -----------------------------------------------------
 
 project = "Black"
-copyright = "2020, Łukasz Langa and contributors to Black"
+copyright = "2018-Present, Łukasz Langa and contributors to Black"
 author = "Łukasz Langa and contributors to Black"
 
 # Autopopulate version
@@ -213,33 +49,7 @@ version = release
 for sp in "abcfr":
     version = version.split(sp)[0]
 
-custom_sections = [
-    DocSection("the_black_code_style", CURRENT_DIR / "the_black_code_style.md"),
-    DocSection("editor_integration", CURRENT_DIR / "editor_integration.md"),
-    DocSection("blackd", CURRENT_DIR / "blackd.md"),
-    DocSection("black_primer", CURRENT_DIR / "black_primer.md"),
-    DocSection("contributing_to_black", CURRENT_DIR / ".." / "CONTRIBUTING.md"),
-    DocSection("change_log", CURRENT_DIR / ".." / "CHANGES.md"),
-]
-
-# Sphinx complains when there is a source file that isn't referenced in any of the docs.
-# Since some sections autogenerated from the README are unused warnings will appear.
-#
-# Sections must be listed to what their name is when passed through make_filename().
-blocklisted_sections_from_readme = {
-    "license",
-    "pragmatism",
-    "testimonials",
-    "used_by",
-}
-
 make_pypi_svg(release)
-readme_sections = get_sections_from_readme()
-readme_sections = [
-    x for x in readme_sections if x.name not in blocklisted_sections_from_readme
-]
-
-process_sections(custom_sections, readme_sections)
 
 
 # -- General configuration ---------------------------------------------------
@@ -254,11 +64,13 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
-    "recommonmark",
+    "myst_parser",
+    "sphinxcontrib.programoutput",
+    "sphinx_copybutton",
 ]
 
 # If you need extensions of a certain version or higher, list them here.
-needs_extensions = {"recommonmark": "0.5"}
+needs_extensions = {"myst_parser": "0.13.7"}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -286,6 +98,17 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
 
+# We need headers to be linkable to so ask MyST-Parser to autogenerate anchor IDs for
+# headers up to and including level 3.
+myst_heading_anchors = 3
+
+# Prettier support formatting some MyST syntax but not all, so let's disable the
+# unsupported yet still enabled by default ones.
+myst_disable_syntax = [
+    "myst_block_break",
+    "myst_line_comment",
+    "math_block",
+]
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -299,7 +122,6 @@ html_sidebars = {
         "about.html",
         "navigation.html",
         "relations.html",
-        "sourcelink.html",
         "searchbox.html",
     ]
 }
@@ -314,7 +136,6 @@ html_theme_options = {
     "show_powered_by": True,
     "fixed_sidebar": True,
     "logo": "logo2.png",
-    "travis_button": True,
 }
 
 
@@ -341,21 +162,6 @@ htmlhelp_basename = "blackdoc"
 
 
 # -- Options for LaTeX output ------------------------------------------------
-
-latex_elements = {
-    # The paper size ('letterpaper' or 'a4paper').
-    #
-    # 'papersize': 'letterpaper',
-    # The font size ('10pt', '11pt' or '12pt').
-    #
-    # 'pointsize': '10pt',
-    # Additional stuff for the LaTeX preamble.
-    #
-    # 'preamble': '',
-    # Latex figure (float) alignment
-    #
-    # 'figure_align': 'htbp',
-}
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
