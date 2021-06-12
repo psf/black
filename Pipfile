@@ -9,10 +9,12 @@ coverage = "*"
 docutils = "==0.15"  # not a direct dependency, see https://github.com/pypa/pipenv/issues/3865
 flake8 = "*"
 flake8-bugbear = "*"
-mypy = ">=0.782"
+mypy = ">=0.812"
 pre-commit = "*"
 readme_renderer = "*"
-recommonmark = "*"
+MyST-Parser = ">=0.13.7"
+sphinxcontrib-programoutput = ">=0.17"
+sphinx-copybutton = ">=0.3.0"
 setuptools = ">=39.2.0"
 setuptools-scm = "*"
 twine = ">=1.11.0"
@@ -20,15 +22,15 @@ wheel = ">=0.31.1"
 black = {editable = true, extras = ["d"], path = "."}
 
 [packages]
-aiohttp = ">=3.3.2"
-aiohttp-cors = "*"
+aiohttp = ">=3.6.0"
+aiohttp-cors = ">=0.4.0"
 appdirs = "*"
-click = ">=7.0"
+click = ">=7.1.2"
 mypy_extensions = ">=0.4.3"
-pathspec = ">=0.6"
+pathspec = ">=0.8.1"
 regex = ">=2020.1.8"
 toml = ">=0.10.1"
-typed-ast = "==1.4.1"
-typing_extensions = ">=3.7.4"
+typed-ast = "==1.4.2"
+typing_extensions = {"python_version <" = "3.8","version >=" = "3.7.4"}
 black = {editable = true,extras = ["d"],path = "."}
 dataclasses = {"python_version <" = "3.7","version >" = "0.6"}

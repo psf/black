@@ -1,7 +1,12 @@
 """Token constants (from "token.h")."""
 
+import sys
 from typing import Dict
-from typing_extensions import Final
+
+if sys.version_info < (3, 8):
+    from typing_extensions import Final
+else:
+    from typing import Final
 
 #  Taken from Python (r53757) and modified to include some tokens
 #   originally monkeypatched in by pgen2.tokenize

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import asyncio
 import errno
 import json
@@ -13,6 +11,7 @@ from platform import system
 from shutil import rmtree, which
 from subprocess import CalledProcessError
 from sys import version_info
+from tempfile import TemporaryDirectory
 from typing import Any, Callable, Dict, NamedTuple, Optional, Sequence, Tuple
 from urllib.parse import urlparse
 
@@ -21,7 +20,7 @@ import click
 
 WINDOWS = system() == "Windows"
 BLACK_BINARY = "black.exe" if WINDOWS else "black"
-GIT_BIANRY = "git.exe" if WINDOWS else "git"
+GIT_BINARY = "git.exe" if WINDOWS else "git"
 LOG = logging.getLogger(__name__)
 
 
@@ -40,7 +39,7 @@ class Results(NamedTuple):
 
 async def _gen_check_output(
     cmd: Sequence[str],
-    timeout: float = 300,
+    timeout: float = 600,
     env: Optional[Dict[str, str]] = None,
     cwd: Optional[Path] = None,
 ) -> Tuple[bytes, bytes]:
@@ -57,6 +56,11 @@ async def _gen_check_output(
         process.kill()
         await process.wait()
         raise
+
+    # A non-optional timeout was supplied to asyncio.wait_for, guaranteeing
+    # a timeout or completed process.  A terminated Python process will have a
+    # non-empty returncode value.
+    assert process.returncode is not None
 
     if process.returncode != 0:
         cmd_str = " ".join(cmd)
@@ -108,36 +112,51 @@ def analyze_results(project_count: int, results: Results) -> int:
 
 
 async def black_run(
-    repo_path: Path, project_config: Dict[str, Any], results: Results
+    repo_path: Path,
+    project_config: Dict[str, Any],
+    results: Results,
+    no_diff: bool = False,
 ) -> None:
     """Run Black and record failures"""
     cmd = [str(which(BLACK_BINARY))]
     if "cli_arguments" in project_config and project_config["cli_arguments"]:
-        cmd.extend(*project_config["cli_arguments"])
-    cmd.extend(["--check", "--diff", "."])
+        cmd.extend(project_config["cli_arguments"])
+    cmd.append("--check")
+    if no_diff:
+        cmd.append(".")
+    else:
+        cmd.extend(["--diff", "."])
 
-    try:
-        _stdout, _stderr = await _gen_check_output(cmd, cwd=repo_path)
-    except asyncio.TimeoutError:
-        results.stats["failed"] += 1
-        LOG.error(f"Running black for {repo_path} timed out ({cmd})")
-    except CalledProcessError as cpe:
-        # TODO: Tune for smarter for higher signal
-        # If any other return value than 1 we raise - can disable project in config
-        if cpe.returncode == 1:
-            if not project_config["expect_formatting_changes"]:
+    with TemporaryDirectory() as tmp_path:
+        # Prevent reading top-level user configs by manipulating environment variables
+        env = {
+            **os.environ,
+            "XDG_CONFIG_HOME": tmp_path,  # Unix-like
+            "USERPROFILE": tmp_path,  # Windows (changes `Path.home()` output)
+        }
+
+        try:
+            _stdout, _stderr = await _gen_check_output(cmd, cwd=repo_path, env=env)
+        except asyncio.TimeoutError:
+            results.stats["failed"] += 1
+            LOG.error(f"Running black for {repo_path} timed out ({cmd})")
+        except CalledProcessError as cpe:
+            # TODO: Tune for smarter for higher signal
+            # If any other return value than 1 we raise - can disable project in config
+            if cpe.returncode == 1:
+                if not project_config["expect_formatting_changes"]:
+                    results.stats["failed"] += 1
+                    results.failed_projects[repo_path.name] = cpe
+                else:
+                    results.stats["success"] += 1
+                return
+            elif cpe.returncode > 1:
                 results.stats["failed"] += 1
                 results.failed_projects[repo_path.name] = cpe
-            else:
-                results.stats["success"] += 1
-            return
-        elif cpe.returncode > 1:
-            results.stats["failed"] += 1
-            results.failed_projects[repo_path.name] = cpe
-            return
+                return
 
-        LOG.error(f"Unknown error with {repo_path}")
-        raise
+            LOG.error(f"Unknown error with {repo_path}")
+            raise
 
     # If we get here and expect formatting changes something is up
     if project_config["expect_formatting_changes"]:
@@ -158,7 +177,7 @@ async def git_checkout_or_rebase(
     depth: int = 1,
 ) -> Optional[Path]:
     """git Clone project or rebase"""
-    git_bin = str(which(GIT_BIANRY))
+    git_bin = str(which(GIT_BINARY))
     if not git_bin:
         LOG.error("No git binary found")
         return None
@@ -234,6 +253,7 @@ async def project_runner(
     long_checkouts: bool = False,
     rebase: bool = False,
     keep: bool = False,
+    no_diff: bool = False,
 ) -> None:
     """Check out project and run Black on it + record result"""
     loop = asyncio.get_event_loop()
@@ -272,7 +292,7 @@ async def project_runner(
         repo_path = await git_checkout_or_rebase(work_path, project_config, rebase)
         if not repo_path:
             continue
-        await black_run(repo_path, project_config, results)
+        await black_run(repo_path, project_config, results, no_diff)
 
         if not keep:
             LOG.debug(f"Removing {repo_path}")
@@ -291,6 +311,7 @@ async def process_queue(
     keep: bool = False,
     long_checkouts: bool = False,
     rebase: bool = False,
+    no_diff: bool = False,
 ) -> int:
     """
     Process the queue with X workers and evaluate results
@@ -318,7 +339,15 @@ async def process_queue(
     await asyncio.gather(
         *[
             project_runner(
-                i, config, queue, work_path, results, long_checkouts, rebase, keep
+                i,
+                config,
+                queue,
+                work_path,
+                results,
+                long_checkouts,
+                rebase,
+                keep,
+                no_diff,
             )
             for i in range(workers)
         ]

@@ -74,7 +74,7 @@ def get_top_packages(days: Days) -> List[str]:
 def get_package_source(package: str, version: Optional[str]) -> str:
     if package == "cpython":
         if version is None:
-            version = "master"
+            version = "main"
         return f"https://github.com/python/cpython/archive/{version}.zip"
     elif package == "pypy":
         if version is None:
@@ -248,9 +248,9 @@ def format_repos(repos: Tuple[Path, ...], options: Namespace) -> None:
                 black_version=black_version,
                 input_directory=options.input,
             )
-        git_switch_branch("master", repo=repo)
+        git_switch_branch("main", repo=repo)
 
-    git_switch_branch("master", repo=options.black_repo)
+    git_switch_branch("main", repo=options.black_repo)
 
 
 def main() -> None:
@@ -296,7 +296,7 @@ def main() -> None:
         type=Path,
         help="Output directory to download and put result artifacts.",
     )
-    parser.add_argument("versions", nargs="*", default=("master",), help="")
+    parser.add_argument("versions", nargs="*", default=("main",), help="")
 
     options = parser.parse_args()
     repos = init_repos(options)

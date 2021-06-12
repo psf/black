@@ -2,7 +2,7 @@
 " Author: Łukasz Langa
 " Created: Mon Mar 26 23:27:53 2018 -0700
 " Requires: Vim Ver7.0+
-" Version:  1.1
+" Version:  1.2
 "
 " Documentation:
 "   This plugin formats Python files.
@@ -12,6 +12,8 @@
 "    - initial version
 "  1.1:
 "    - restore cursor/window position after formatting
+"  1.2:
+"    - use autoload script
 
 if v:version < 700 || !has('python3')
     func! __BLACK_MISSING()
@@ -24,7 +26,7 @@ if v:version < 700 || !has('python3')
 endif
 
 if exists("g:load_black")
-   finish
+  finish
 endif
 
 let g:load_black = "py1.0"
@@ -51,13 +53,6 @@ endif
 if !exists("g:black_quiet")
   let g:black_quiet = 0
 endif
-
-python3 << EndPython3
-import collections
-import os
-import sys
-import vim
-from distutils.util import strtobool
 
 
 class Flag(collections.namedtuple("FlagBase", "name, cast")):
@@ -193,7 +188,7 @@ def Black():
       print(f'Reformatted in {time.time() - start:.4f}s.')
 
 def get_configs():
-  path_pyproject_toml = black.find_pyproject_toml(vim.eval("@%"))
+  path_pyproject_toml = black.find_pyproject_toml(vim.eval("fnamemodify(getcwd(), ':t')"))
   if path_pyproject_toml:
     toml_config = black.parse_pyproject_toml(path_pyproject_toml)
   else:
@@ -216,3 +211,7 @@ EndPython3
 command! Black :py3 Black()
 command! BlackUpgrade :py3 BlackUpgrade()
 command! BlackVersion :py3 BlackVersion()
+=======
+command! Black :call black#Black()
+command! BlackUpgrade :call black#BlackUpgrade()
+command! BlackVersion :call black#BlackVersion()
