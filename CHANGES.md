@@ -12,6 +12,13 @@
 - Fix incorrect custom breakpoint indices when string group contains fake f-strings
   (#2311)
 
+### Integrations
+
+- The vim plugin now reads the correct string normalization option in pyproject.toml
+  (#1869)
+- The vim plugin no longer crashes Black when there's boolean values in pyproject.toml
+  (#1869)
+
 ## 21.5b2
 
 ### _Black_
