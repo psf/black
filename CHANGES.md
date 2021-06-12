@@ -14,8 +14,8 @@
 
 ### Integrations
 
-- The vim plugin now searches the directory containing the current buffer instead of the
-  current working directory for pyproject.toml. (#1871)
+- The vim plugin now searches upwards from the directory containing the current buffer
+  instead of the current working directory for pyproject.toml. (#1871)
 
 ## 21.5b2
 
