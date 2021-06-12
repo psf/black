@@ -12,6 +12,11 @@
 - Fix incorrect custom breakpoint indices when string group contains fake f-strings
   (#2311)
 
+### Integrations
+
+- The vim plugin now searches the directory containing the current buffer instead of the
+  current working directory for pyproject.toml. (#1871)
+
 ## 21.5b2
 
 ### _Black_
