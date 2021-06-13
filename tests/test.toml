@@ -7,4 +7,3 @@ line-length = 79
 target-version = ["py36", "py37", "py38"]
 exclude='\.pyi?$'
 include='\.py?$'
-
