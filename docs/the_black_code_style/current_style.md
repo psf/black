@@ -275,7 +275,7 @@ for both quotations and the text within, although relative indentation in the te
 preserved. Superfluous trailing whitespace on each line and unnecessary new lines at the
 end of the docstring are removed. All leading tabs are converted to spaces, but tabs
 inside text are preserved. Whitespace leading and trailing one-line docstrings is
-removed. The quotations of an empty docstring are separated with one space.
+removed.
 
 ### Numeric literals
 
