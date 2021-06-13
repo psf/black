@@ -13,18 +13,18 @@ repos:
         types_or: [python, pyi]
 
   - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.9.0
+    rev: 3.9.2
     hooks:
       - id: flake8
         additional_dependencies: [flake8-bugbear]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.812
+    rev: v0.902
     hooks:
       - id: mypy
         exclude: ^docs/conf.py
 
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v2.2.1
+    rev: v2.3.1
     hooks:
       - id: prettier
