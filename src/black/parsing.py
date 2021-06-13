@@ -111,7 +111,7 @@ def parse_single_version(
 ) -> Union[ast.AST, ast3.AST, ast27.AST]:
     filename = "<unknown>"
     # typed_ast is needed because of feature version limitations in the builtin ast
-    if version >= (3,) and sys.version_info >= (3, 8):
+    if sys.version_info >= (3, 8) and version >= (3,):
         return ast.parse(src, filename, feature_version=version)
     elif version >= (3,):
         return ast3.parse(src, filename, feature_version=version[1])
