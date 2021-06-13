@@ -518,6 +518,12 @@ x = (
     "\N{BLACK RIGHT-POINTING TRIANGLE WITH DOUBLE VERTICAL BAR}\N{VARIATION SELECTOR-16}"
 )
 
+xxxxxx_xxx_xxxx_xx_xxxxx_xxxxxxxx_xxxxxxxx_xxxxxxxxxx_xxxx_xxxx_xxxxx = xxxx.xxxxxx.xxxxxxxxx.xxxxxxxxxxxxxxxxxxxx(
+    xx_xxxxxx={
+        "x3_xxxxxxxx": "xxx3_xxxxx_xxxxxxxx_xxxxxxxx_xxxxxxxxxx_xxxxxxxx_xxxxxx_xxxxxxx",
+    },
+)
+
 
 # output
 
@@ -1149,4 +1155,12 @@ x = (
 
 x = (
     "\N{BLACK RIGHT-POINTING TRIANGLE WITH DOUBLE VERTICAL BAR}\N{VARIATION SELECTOR-16}"
+)
+
+xxxxxx_xxx_xxxx_xx_xxxxx_xxxxxxxx_xxxxxxxx_xxxxxxxxxx_xxxx_xxxx_xxxxx = xxxx.xxxxxx.xxxxxxxxx.xxxxxxxxxxxxxxxxxxxx(
+    xx_xxxxxx={
+        "x3_xxxxxxxx": (
+            "xxx3_xxxxx_xxxxxxxx_xxxxxxxx_xxxxxxxxxx_xxxxxxxx_xxxxxx_xxxxxxx"
+        ),
+    },
 )
