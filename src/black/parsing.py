@@ -110,9 +110,10 @@ def parse_single_version(
     src: str, version: Tuple[int, int]
 ) -> Union[ast.AST, ast3.AST, ast27.AST]:
     filename = "<unknown>"
-    if sys.version_info >= (3, 8) and (3, 8) <= version < (4, 0):
+    # typed_ast is needed because of feature version limitations in the builtin ast
+    if version >= (3,) and sys.version_info >= (3, 8):
         return ast.parse(src, filename, feature_version=version)
-    elif version >= (3, 6):
+    elif version >= (3,):
         return ast3.parse(src, filename, feature_version=version[1])
     elif version == (2, 7):
         return ast27.parse(src)
@@ -120,10 +121,8 @@ def parse_single_version(
 
 
 def parse_ast(src: str) -> Union[ast.AST, ast3.AST, ast27.AST]:
-    versions = [(3, 6), (3, 7)]
-    if sys.version_info >= (3, 8):
-        # TODO: support Python 4+ ;)
-        versions.extend([(3, minor) for minor in range(8, sys.version_info[1] + 1)])
+    # TODO: support Python 4+ ;)
+    versions = [(3, minor) for minor in range(3, sys.version_info[1] + 1)]
 
     if ast27.__name__ != "ast":
         versions.append((2, 7))
