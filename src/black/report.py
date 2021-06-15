@@ -1,9 +1,11 @@
 """
 Summarize Black runs to users.
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
+from typing import Dict
+import time
 
 from click import style
 
@@ -27,20 +29,23 @@ class Report:
     change_count: int = 0
     same_count: int = 0
     failure_count: int = 0
+    times: Dict[Path, float] = field(default_factory=dict)
 
-    def done(self, src: Path, changed: Changed) -> None:
+    def done(self, src: Path, changed: Changed, time_taken: float) -> None:
         """Increment the counter for successful reformatting. Write out a message."""
+        time_str = f"({time_taken:.2f} s)"
+        self.times[src] = time_taken
         if changed is Changed.YES:
             reformatted = "would reformat" if self.check or self.diff else "reformatted"
             if self.verbose or not self.quiet:
-                out(f"{reformatted} {src}")
+                out(f"{reformatted} {src} {time_str}")
             self.change_count += 1
         else:
             if self.verbose:
                 if changed is Changed.NO:
-                    msg = f"{src} already well formatted, good job."
+                    msg = f"{src} already well formatted, good job {time_str}."
                 else:
-                    msg = f"{src} wasn't modified on disk since last run."
+                    msg = f"{src} wasn't modified on disk since last run {time_str}."
                 out(msg, bold=False)
             self.same_count += 1
 

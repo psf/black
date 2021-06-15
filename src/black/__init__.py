@@ -4,12 +4,14 @@ from contextlib import contextmanager
 from datetime import datetime
 from enum import Enum
 import io
+import json
 from multiprocessing import Manager, freeze_support
 import os
 from pathlib import Path
 import regex as re
 import signal
 import sys
+import time
 import tokenize
 import traceback
 from typing import (
@@ -449,6 +451,8 @@ def main(
         out(error_msg if report.return_code else "All done! ✨ 🍰 ✨")
         if code is None:
             click.echo(str(report), err=True)
+    with open("timing.json", "w") as f:
+        json.dump({str(p): v for p, v in report.times.items()}, f)
     ctx.exit(report.return_code)
 
 
@@ -547,13 +551,14 @@ def reformat_code(
     :func:`format_file_in_place` or :func:`format_stdin_to_stdout`.
     """
     path = Path("<string>")
+    start_time = time.time()
     try:
         changed = Changed.NO
         if format_stdin_to_stdout(
             content=content, fast=fast, write_back=write_back, mode=mode
         ):
             changed = Changed.YES
-        report.done(path, changed)
+        report.done(path, changed, time.time() - start_time)
     except Exception as exc:
         if report.verbose:
             traceback.print_exc()
@@ -569,6 +574,7 @@ def reformat_one(
     :func:`format_file_in_place` or :func:`format_stdin_to_stdout`.
     """
     try:
+        start_time = time.time()
         changed = Changed.NO
 
         if str(src) == "-":
@@ -594,15 +600,17 @@ def reformat_one(
                 res_src_s = str(res_src)
                 if res_src_s in cache and cache[res_src_s] == get_cache_info(res_src):
                     changed = Changed.CACHED
-            if changed is not Changed.CACHED and format_file_in_place(
-                src, fast=fast, write_back=write_back, mode=mode
-            ):
-                changed = Changed.YES
+            if changed is not Changed.CACHED:
+                result, _ = format_file_in_place(
+                    src, fast=fast, write_back=write_back, mode=mode
+                )
+                if result:
+                    changed = Changed.YES
             if (write_back is WriteBack.YES and changed is not Changed.CACHED) or (
                 write_back is WriteBack.CHECK and changed is Changed.NO
             ):
                 write_cache(cache, [src], mode)
-        report.done(src, changed)
+        report.done(src, changed, time.time() - start_time)
     except Exception as exc:
         if report.verbose:
             traceback.print_exc()
@@ -667,7 +675,7 @@ async def schedule_formatting(
         cache = read_cache(mode)
         sources, cached = filter_cached(cache, sources)
         for src in sorted(cached):
-            report.done(src, Changed.CACHED)
+            report.done(src, Changed.CACHED, 0.0)
     if not sources:
         return
 
@@ -703,14 +711,15 @@ async def schedule_formatting(
             elif task.exception():
                 report.failed(src, str(task.exception()))
             else:
-                changed = Changed.YES if task.result() else Changed.NO
+                result, time_taken = task.result()
+                changed = Changed.YES if result else Changed.NO
                 # If the file was written back or was successfully checked as
                 # well-formatted, store this information in the cache.
                 if write_back is WriteBack.YES or (
                     write_back is WriteBack.CHECK and changed is Changed.NO
                 ):
                     sources_to_cache.append(src)
-                report.done(src, changed)
+                report.done(src, changed, time_taken)
     if cancelled:
         await asyncio.gather(*cancelled, loop=loop, return_exceptions=True)
     if sources_to_cache:
@@ -723,13 +732,14 @@ def format_file_in_place(
     mode: Mode,
     write_back: WriteBack = WriteBack.NO,
     lock: Any = None,  # multiprocessing.Manager().Lock() is some crazy proxy
-) -> bool:
+) -> Tuple[bool, float]:
     """Format file under `src` path. Return True if changed.
 
     If `write_back` is DIFF, write a diff to stdout. If it is YES, write reformatted
     code to the file.
     `mode` and `fast` options are passed to :func:`format_file_contents`.
     """
+    start_time = time.time()
     if src.suffix == ".pyi":
         mode = replace(mode, is_pyi=True)
 
@@ -739,7 +749,7 @@ def format_file_in_place(
     try:
         dst_contents = format_file_contents(src_contents, fast=fast, mode=mode)
     except NothingChanged:
-        return False
+        return False, time.time() - start_time
 
     if write_back == WriteBack.YES:
         with open(src, "w", encoding=encoding, newline=newline) as f:
@@ -764,7 +774,7 @@ def format_file_in_place(
             f.write(diff_contents)
             f.detach()
 
-    return True
+    return True, time.time() - start_time
 
 
 def format_stdin_to_stdout(
