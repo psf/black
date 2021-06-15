@@ -200,7 +200,7 @@ You can also take a look at the rest of the contributing docs or talk with the
 developers:
 
 - [Contributing documentation](https://black.readthedocs.io/en/latest/contributing/index.html)
-- [IRC channel on Freenode](https://webchat.freenode.net/?channels=%23blackformatter)
+- [Chat on Discord](https://discord.gg/RtVdv86PrH)
 
 ## Change log
 
