@@ -1680,7 +1680,6 @@ class BlackTestCase(BlackBaseTestCase):
             report.done.assert_called_with(expected, black.Changed.YES)
 
     def test_reformat_one_with_stdin_empty(self) -> None:
-        """Check that black doesn't fail for empty stdin (issue/#2337)"""
         with patch("sys.stdout", open(os.devnull, "w")):
             # Patch `sys.stdout` to null device lest
             # `format_stdin_to_stdout` detaches stdout at the end and causes
