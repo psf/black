@@ -119,6 +119,8 @@ class BlackTestCase(BlackBaseTestCase):
         if ignore_config:
             args = ["--verbose", "--config", str(THIS_DIR / "empty.toml"), *args]
         result = runner.invoke(black.main, args)
+        assert result.stdout_bytes is not None
+        assert result.stderr_bytes is not None
         self.assertEqual(
             result.exit_code,
             exit_code,
@@ -465,6 +467,7 @@ class BlackTestCase(BlackBaseTestCase):
             self.assertEqual(result.exit_code, 123)
         finally:
             os.unlink(tmp_file)
+        assert result.stderr_bytes is not None
         actual = (
             result.stderr_bytes.decode()
             .replace("\n", "")
@@ -1892,7 +1895,7 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_shhh_click(self) -> None:
         try:
-            from click import _unicodefun  # type: ignore
+            from click import _unicodefun
         except ModuleNotFoundError:
             self.skipTest("Incompatible Click version")
         if not hasattr(_unicodefun, "_verify_python3_env"):
@@ -1901,14 +1904,14 @@ class BlackTestCase(BlackBaseTestCase):
         with patch("locale.getpreferredencoding") as gpe:
             gpe.return_value = "ASCII"
             with self.assertRaises(RuntimeError):
-                _unicodefun._verify_python3_env()
+                _unicodefun._verify_python3_env()  # type: ignore
         # Now, let's silence Click...
         black.patch_click()
         # ...and confirm it's silent.
         with patch("locale.getpreferredencoding") as gpe:
             gpe.return_value = "ASCII"
             try:
-                _unicodefun._verify_python3_env()
+                _unicodefun._verify_python3_env()  # type: ignore
             except RuntimeError as re:
                 self.fail(f"`patch_click()` failed, exception still raised: {re}")
 
