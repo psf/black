@@ -119,7 +119,7 @@ Contents
 
    GitHub ↪ <https://github.com/psf/black>
    PyPI ↪ <https://pypi.org/project/black>
-   IRC ↪ <https://webchat.freenode.net/?channels=%23blackformatter>
+   Chat ↪ <https://discord.gg/RtVdv86PrH>
 
 Indices and tables
 ==================

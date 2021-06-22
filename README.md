@@ -135,7 +135,7 @@ code style: pytest, tox, Pyramid, Django Channels, Hypothesis, attrs, SQLAlchemy
 Poetry, PyPA applications (Warehouse, Bandersnatch, Pipenv, virtualenv), pandas, Pillow,
 every Datadog Agent Integration, Home Assistant, Zulip.
 
-The following organizations use _Black_: Facebook, Dropbox, Mozilla, Quora.
+The following organizations use _Black_: Facebook, Dropbox, Mozilla, Quora, Duolingo.
 
 Are we missing anyone? Let us know.
 
@@ -200,7 +200,7 @@ You can also take a look at the rest of the contributing docs or talk with the
 developers:
 
 - [Contributing documentation](https://black.readthedocs.io/en/latest/contributing/index.html)
-- [IRC channel on Freenode](https://webchat.freenode.net/?channels=%23blackformatter)
+- [Chat on Discord](https://discord.gg/RtVdv86PrH)
 
 ## Change log
 
