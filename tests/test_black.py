@@ -1690,9 +1690,9 @@ class BlackTestCase(BlackBaseTestCase):
                     write_back=black.WriteBack.YES,
                     mode=DEFAULT_MODE,
                 )
-                assert output.getvalue() == ""
             except io.UnsupportedOperation:
                 pass  # StringIO does not support detach
+            assert output.getvalue() == ""
 
     def test_gitignore_exclude(self) -> None:
         path = THIS_DIR / "data" / "include_exclude_tests"
