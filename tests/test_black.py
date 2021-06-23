@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from dataclasses import replace
 import inspect
+import io
 from io import BytesIO
 import os
 from pathlib import Path
@@ -1680,16 +1681,18 @@ class BlackTestCase(BlackBaseTestCase):
             report.done.assert_called_with(expected, black.Changed.YES)
 
     def test_reformat_one_with_stdin_empty(self) -> None:
-        with patch("sys.stdout", open(os.devnull, "w")):
-            # Patch `sys.stdout` to null device lest
-            # `format_stdin_to_stdout` detaches stdout at the end and causes
-            # "ValueError: I/O operation on closed file" in subsequent tests
-            black.format_stdin_to_stdout(
-                fast=True,
-                content="",
-                write_back=black.WriteBack.YES,
-                mode=DEFAULT_MODE,
-            )
+        output = io.StringIO()
+        with patch("io.TextIOWrapper", lambda *args, **kwargs: output):
+            try:
+                black.format_stdin_to_stdout(
+                    fast=True,
+                    content="",
+                    write_back=black.WriteBack.YES,
+                    mode=DEFAULT_MODE,
+                )
+                assert output.getvalue() == ""
+            except io.UnsupportedOperation:
+                pass  # StringIO does not support detach
 
     def test_gitignore_exclude(self) -> None:
         path = THIS_DIR / "data" / "include_exclude_tests"
