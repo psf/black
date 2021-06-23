@@ -6,6 +6,7 @@
 
 - Add primer support and test for code piped into black via STDIN (#2315)
 - Fix internal error when `FORCE_OPTIONAL_PARENTHESES` feature is enabled (#2332)
+- Accept empty stdin (#2346)
 
 ## 21.6b0
 
