@@ -42,16 +42,18 @@ async def _gen_check_output(
     timeout: float = 600,
     env: Optional[Dict[str, str]] = None,
     cwd: Optional[Path] = None,
+    stdin: Optional[bytes] = None,
 ) -> Tuple[bytes, bytes]:
     process = await asyncio.create_subprocess_exec(
         *cmd,
+        stdin=asyncio.subprocess.PIPE,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.STDOUT,
         env=env,
         cwd=cwd,
     )
     try:
-        (stdout, stderr) = await asyncio.wait_for(process.communicate(), timeout)
+        (stdout, stderr) = await asyncio.wait_for(process.communicate(stdin), timeout)
     except asyncio.TimeoutError:
         process.kill()
         await process.wait()
@@ -112,20 +114,35 @@ def analyze_results(project_count: int, results: Results) -> int:
 
 
 async def black_run(
-    repo_path: Path,
+    project_name: str,
+    repo_path: Optional[Path],
     project_config: Dict[str, Any],
     results: Results,
     no_diff: bool = False,
 ) -> None:
     """Run Black and record failures"""
+    if not repo_path:
+        results.stats["failed"] += 1
+        results.failed_projects[project_name] = CalledProcessError(
+            69, [], f"{project_name} has no repo_path: {repo_path}".encode(), b""
+        )
+        return
+
+    stdin_test = project_name.upper() == "STDIN"
     cmd = [str(which(BLACK_BINARY))]
     if "cli_arguments" in project_config and project_config["cli_arguments"]:
         cmd.extend(project_config["cli_arguments"])
     cmd.append("--check")
-    if no_diff:
-        cmd.append(".")
+    if not no_diff:
+        cmd.append("--diff")
+
+    # Workout if we should read in a python file or search from cwd
+    stdin = None
+    if stdin_test:
+        cmd.append("-")
+        stdin = repo_path.read_bytes()
     else:
-        cmd.extend(["--diff", "."])
+        cmd.append(".")
 
     with TemporaryDirectory() as tmp_path:
         # Prevent reading top-level user configs by manipulating environment variables
@@ -135,8 +152,11 @@ async def black_run(
             "USERPROFILE": tmp_path,  # Windows (changes `Path.home()` output)
         }
 
+        cwd_path = repo_path.parent if stdin_test else repo_path
         try:
-            _stdout, _stderr = await _gen_check_output(cmd, cwd=repo_path, env=env)
+            _stdout, _stderr = await _gen_check_output(
+                cmd, cwd=cwd_path, env=env, stdin=stdin
+            )
         except asyncio.TimeoutError:
             results.stats["failed"] += 1
             LOG.error(f"Running black for {repo_path} timed out ({cmd})")
@@ -289,12 +309,15 @@ async def project_runner(
             LOG.debug(f"Skipping {project_name} as it's configured as a long checkout")
             continue
 
-        repo_path = await git_checkout_or_rebase(work_path, project_config, rebase)
-        if not repo_path:
-            continue
-        await black_run(repo_path, project_config, results, no_diff)
+        repo_path: Optional[Path] = Path(__file__)
+        stdin_project = project_name.upper() == "STDIN"
+        if not stdin_project:
+            repo_path = await git_checkout_or_rebase(work_path, project_config, rebase)
+            if not repo_path:
+                continue
+        await black_run(project_name, repo_path, project_config, results, no_diff)
 
-        if not keep:
+        if not keep and not stdin_project:
             LOG.debug(f"Removing {repo_path}")
             rmtree_partial = partial(
                 rmtree, path=repo_path, onerror=handle_PermissionError

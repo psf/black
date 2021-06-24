@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from dataclasses import replace
 import inspect
+import io
 from io import BytesIO
 import os
 from pathlib import Path
@@ -119,6 +120,8 @@ class BlackTestCase(BlackBaseTestCase):
         if ignore_config:
             args = ["--verbose", "--config", str(THIS_DIR / "empty.toml"), *args]
         result = runner.invoke(black.main, args)
+        assert result.stdout_bytes is not None
+        assert result.stderr_bytes is not None
         self.assertEqual(
             result.exit_code,
             exit_code,
@@ -1648,6 +1651,20 @@ class BlackTestCase(BlackBaseTestCase):
             # __BLACK_STDIN_FILENAME__ should have been stripped
             report.done.assert_called_with(expected, black.Changed.YES)
 
+    def test_reformat_one_with_stdin_empty(self) -> None:
+        output = io.StringIO()
+        with patch("io.TextIOWrapper", lambda *args, **kwargs: output):
+            try:
+                black.format_stdin_to_stdout(
+                    fast=True,
+                    content="",
+                    write_back=black.WriteBack.YES,
+                    mode=DEFAULT_MODE,
+                )
+            except io.UnsupportedOperation:
+                pass  # StringIO does not support detach
+            assert output.getvalue() == ""
+
     def test_gitignore_exclude(self) -> None:
         path = THIS_DIR / "data" / "include_exclude_tests"
         include = re.compile(r"\.pyi?$")
@@ -1861,7 +1878,7 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_shhh_click(self) -> None:
         try:
-            from click import _unicodefun  # type: ignore
+            from click import _unicodefun
         except ModuleNotFoundError:
             self.skipTest("Incompatible Click version")
         if not hasattr(_unicodefun, "_verify_python3_env"):
@@ -1870,14 +1887,14 @@ class BlackTestCase(BlackBaseTestCase):
         with patch("locale.getpreferredencoding") as gpe:
             gpe.return_value = "ASCII"
             with self.assertRaises(RuntimeError):
-                _unicodefun._verify_python3_env()
+                _unicodefun._verify_python3_env()  # type: ignore
         # Now, let's silence Click...
         black.patch_click()
         # ...and confirm it's silent.
         with patch("locale.getpreferredencoding") as gpe:
             gpe.return_value = "ASCII"
             try:
-                _unicodefun._verify_python3_env()
+                _unicodefun._verify_python3_env()  # type: ignore
             except RuntimeError as re:
                 self.fail(f"`patch_click()` failed, exception still raised: {re}")
 

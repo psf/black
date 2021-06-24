@@ -961,14 +961,19 @@ def run_transformer(
 
         result.extend(transform_line(transformed_line, mode=mode, features=features))
 
-    if not (
-        transform.__name__ == "rhs"
-        and line.bracket_tracker.invisible
-        and not any(bracket.value for bracket in line.bracket_tracker.invisible)
-        and not line.contains_multiline_strings()
-        and not result[0].contains_uncollapsable_type_comments()
-        and not result[0].contains_unsplittable_type_ignore()
-        and not is_line_short_enough(result[0], line_length=mode.line_length)
+    if (
+        transform.__name__ != "rhs"
+        or not line.bracket_tracker.invisible
+        or any(bracket.value for bracket in line.bracket_tracker.invisible)
+        or line.contains_multiline_strings()
+        or result[0].contains_uncollapsable_type_comments()
+        or result[0].contains_unsplittable_type_ignore()
+        or is_line_short_enough(result[0], line_length=mode.line_length)
+        # If any leaves have no parents (which _can_ occur since
+        # `transform(line)` potentially destroys the line's underlying node
+        # structure), then we can't proceed. Doing so would cause the below
+        # call to `append_leaves()` to fail.
+        or any(leaf.parent is None for leaf in line.leaves)
     ):
         return result
 
