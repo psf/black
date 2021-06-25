@@ -23,6 +23,7 @@
 - Fix regression where `R` prefixes would be lowercased for docstrings (#2285)
 - Fix handling of named escapes (`\N{...}`) when `--experimental-string-processing` is
   used (#2319)
+- Fix bad formatting of error messages about EOF in multi-line statements (#2343)
 
 ### Integrations
 
