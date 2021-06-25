@@ -803,7 +803,8 @@ def format_stdin_to_stdout(
         )
         if write_back == WriteBack.YES:
             # Make sure there's a newline after the content
-            dst += "" if dst[-1] == "\n" else "\n"
+            if dst and dst[-1] != "\n":
+                dst += "\n"
             f.write(dst)
         elif write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
             now = datetime.utcnow()
