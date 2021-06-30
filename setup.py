@@ -31,8 +31,9 @@ if USE_MYPYC:
         "src/black/__init__.py",
         "src/black/nodes.py",
         "src/black/mode.py",
-        "src/black/files.py",
-        "src/black/concurrency.py",
+        # Ditto bytes savings.
+        # "src/black/files.py",
+        # "src/black/concurrency.py",
         "src/black/const.py",
         "src/black/linegen.py",
         "src/black/rusty.py",
@@ -46,7 +47,8 @@ if USE_MYPYC:
         # "src/black/debug.py",
         "src/black/strings.py",
         "src/black/parsing.py",
-        "src/black/output.py",
+        # Ditto again about saving btes.
+        # "src/black/output.py",
         "src/black/brackets.py",
         "src/black/trans.py",
         "src/blib2to3/pytree.py",
