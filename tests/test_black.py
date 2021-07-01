@@ -985,6 +985,7 @@ class BlackTestCase(BlackBaseTestCase):
         )
         self.assertEqual({"unicode_literals", "print"}, black.get_future_imports(node))
 
+    @pytest.mark.incompatible_with_mypyc
     def test_debug_visitor(self) -> None:
         source, _ = read_data("debug_visitor.py")
         expected, _ = read_data("debug_visitor.out")
@@ -1035,6 +1036,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(len(n.children), 1)
         self.assertEqual(n.children[0].type, black.token.ENDMARKER)
 
+    @pytest.mark.incompatible_with_mypyc
     @unittest.skipIf(os.environ.get("SKIP_AST_PRINT"), "user set SKIP_AST_PRINT")
     def test_assertFormatEqual(self) -> None:
         out_lines = []
@@ -2204,6 +2206,7 @@ class BlackTestCase(BlackBaseTestCase):
 
             self.compare_results(result, formatted, 0)
 
+    @pytest.mark.incompatible_with_mypyc
     def test_code_option_config(self) -> None:
         """
         Test that the code option finds the pyproject.toml in the current directory.
@@ -2226,6 +2229,7 @@ class BlackTestCase(BlackBaseTestCase):
                 call_args[0].lower() == str(pyproject_path).lower()
             ), "Incorrect config loaded."
 
+    @pytest.mark.incompatible_with_mypyc
     def test_code_option_parent_config(self) -> None:
         """
         Test that the code option finds the pyproject.toml in the parent directory.
