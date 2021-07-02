@@ -101,6 +101,7 @@ class Mode:
     line_length: int = DEFAULT_LINE_LENGTH
     string_normalization: bool = True
     is_pyi: bool = False
+    is_ipynb: bool = False
     magic_trailing_comma: bool = True
     experimental_string_processing: bool = False
 
@@ -117,6 +118,7 @@ class Mode:
             str(self.line_length),
             str(int(self.string_normalization)),
             str(int(self.is_pyi)),
+            str(int(self.is_ipynb)),
             str(int(self.magic_trailing_comma)),
             str(int(self.experimental_string_processing)),
         ]

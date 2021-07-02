@@ -1,4 +1,5 @@
 import asyncio
+import json
 from concurrent.futures import Executor, ThreadPoolExecutor, ProcessPoolExecutor
 from contextlib import contextmanager
 from datetime import datetime
@@ -46,6 +47,12 @@ from black.files import gen_python_files, get_gitignore, normalize_path_maybe_ig
 from black.files import wrap_stream_for_windows
 from black.parsing import InvalidInput  # noqa F401
 from black.parsing import lib2to3_parse, parse_ast, stringify_ast
+from black.handle_ipynb_magics import (
+    mask_cell,
+    unmask_cell,
+    remove_trailing_semicolon,
+    put_trailing_semicolon_back,
+)
 
 
 # lib2to3 fork
@@ -194,6 +201,14 @@ def validate_regex(
     help=(
         "Format all input files like typing stubs regardless of file extension (useful"
         " when piping source on standard input)."
+    ),
+)
+@click.option(
+    "--ipynb",
+    is_flag=True,
+    help=(
+        "Format all input files like ipynb notebooks regardless of file extension "
+        "(useful when piping source on standard input)."
     ),
 )
 @click.option(
@@ -354,6 +369,7 @@ def main(
     color: bool,
     fast: bool,
     pyi: bool,
+    ipynb: bool,
     skip_string_normalization: bool,
     skip_magic_trailing_comma: bool,
     experimental_string_processing: bool,
@@ -390,6 +406,7 @@ def main(
         target_versions=versions,
         line_length=line_length,
         is_pyi=pyi,
+        is_ipynb=ipynb,
         string_normalization=not skip_string_normalization,
         magic_trailing_comma=not skip_magic_trailing_comma,
         experimental_string_processing=experimental_string_processing,
@@ -584,6 +601,8 @@ def reformat_one(
         if is_stdin:
             if src.suffix == ".pyi":
                 mode = replace(mode, is_pyi=True)
+            elif src.suffix == ".ipynb":
+                mode = replace(mode, is_ipynb=True)
             if format_stdin_to_stdout(fast=fast, write_back=write_back, mode=mode):
                 changed = Changed.YES
         else:
@@ -731,7 +750,15 @@ def format_file_in_place(
     `mode` and `fast` options are passed to :func:`format_file_contents`.
     """
     if src.suffix == ".pyi":
-        mode = replace(mode, is_pyi=True)
+        mode = replace(mode, is_pyi=True, is_ipynb=False)
+    elif src.suffix == ".ipynb":
+        mode = replace(
+            mode,
+            is_pyi=False,
+            is_ipynb=True,
+        )
+    elif src.suffix == ".py":
+        mode = replace(mode, is_pyi=False, is_ipynb=False)
 
     then = datetime.utcfromtimestamp(src.stat().st_mtime)
     with open(src, "rb") as buf:
@@ -825,6 +852,9 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
     valid by calling :func:`assert_equivalent` and :func:`assert_stable` on it.
     `mode` is passed to :func:`format_str`.
     """
+    if mode.is_ipynb:
+        return format_ipynb_string(src_contents, mode=mode, fast=fast)
+
     if not src_contents.strip():
         raise NothingChanged
 
@@ -846,6 +876,52 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
         # Note: no need to explicitly call `assert_stable` if `dst_contents` was
         # the same as `dst_contents_pass2`.
     return dst_contents
+
+
+def format_cell(src: str, *, mode: Mode) -> str:
+    src_without_trailing_semicolon, has_trailing_semicolon = remove_trailing_semicolon(
+        src
+    )
+    try:
+        masked_cell, replacements = mask_cell(src_without_trailing_semicolon)
+    except SyntaxError:
+        # Don't format, might be automagic or multi-line magic.
+        raise NothingChanged
+    formatted_masked_cell = format_str(masked_cell, mode=mode)
+    formatted_cell = unmask_cell(formatted_masked_cell, replacements)
+    new_src = put_trailing_semicolon_back(formatted_cell, has_trailing_semicolon)
+    new_src = new_src.rstrip("\n")
+    if new_src == src:
+        raise NothingChanged
+    return new_src
+
+
+def format_ipynb_string(
+    src_contents: str, *, mode: Mode, fast: bool = False
+) -> FileContent:
+    nb = json.loads(src_contents)
+    trailing_newline = src_contents[-1] == "\n"
+    modified = False
+    for _, cell in enumerate(nb["cells"]):
+        if cell.get("cell_type", None) == "code":
+            try:
+                src = "".join(cell["source"])
+                new_src = format_cell(src, mode=mode)
+            except NothingChanged:
+                pass
+            else:
+                cell["source"] = new_src.splitlines(keepends=True)
+                modified = True
+
+    if modified:
+        res = json.dumps(nb, indent=1, ensure_ascii=False)
+        if trailing_newline:
+            res = res + "\n"
+        if res == src_contents:
+            raise NothingChanged
+        return res
+    else:
+        raise NothingChanged
 
 
 def format_str(src_contents: str, *, mode: Mode) -> FileContent:
