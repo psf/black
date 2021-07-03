@@ -2,12 +2,6 @@ import ast
 from typing import Dict
 
 import secrets
-from tokenize_rt import (
-    src_to_tokens,
-    tokens_to_src,
-    NON_CODING_TOKENS,
-    reversed_enumerate,
-)
 from typing import NamedTuple, List, Tuple
 import collections
 
@@ -24,6 +18,13 @@ class UnsupportedMagic(UserWarning):
 
 
 def remove_trailing_semicolon(src: str) -> Tuple[str, bool]:
+    from tokenize_rt import (
+        src_to_tokens,
+        tokens_to_src,
+        NON_CODING_TOKENS,
+        reversed_enumerate,
+    )
+
     tokens = src_to_tokens(src)
     trailing_semicolon = False
     for idx, token in reversed_enumerate(tokens):
@@ -39,6 +40,13 @@ def remove_trailing_semicolon(src: str) -> Tuple[str, bool]:
 
 
 def put_trailing_semicolon_back(src: str, has_trailing_semicolon: bool) -> str:
+    from tokenize_rt import (
+        src_to_tokens,
+        tokens_to_src,
+        NON_CODING_TOKENS,
+        reversed_enumerate,
+    )
+
     if not has_trailing_semicolon:
         return src
     tokens = src_to_tokens(src)

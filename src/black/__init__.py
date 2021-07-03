@@ -758,7 +758,7 @@ def format_file_in_place(
             is_ipynb=True,
         )
     elif src.suffix == ".py":
-        mode = replace(mode, is_pyi=False, is_ipynb=False)
+        mode = replace(mode, is_ipynb=False)
 
     then = datetime.utcfromtimestamp(src.stat().st_mtime)
     with open(src, "rb") as buf:
