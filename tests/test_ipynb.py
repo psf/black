@@ -2,6 +2,8 @@ from black import NothingChanged, format_cell
 from tests.util import DEFAULT_MODE
 import pytest
 
+pytest.importorskip("IPython")
+
 
 def test_noop() -> None:
     src = 'foo = "a"'
