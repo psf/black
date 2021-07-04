@@ -99,3 +99,7 @@ def test_empty_cell() -> None:
     src = ""
     with pytest.raises(NothingChanged):
         format_cell(src, mode=DEFAULT_MODE)
+
+
+def test_entire_notebook() -> None:
+    pass
