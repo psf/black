@@ -72,7 +72,7 @@ def mask_cell(src: str) -> Tuple[str, List[Replacement]]:
 
     becomes
 
-        str("dfa9bb")
+        "25716f358c32750e"
         'foo'
 
     The replacements are returned, along with the transformed code.
@@ -109,14 +109,16 @@ def mask_cell(src: str) -> Tuple[str, List[Replacement]]:
     return transformed, replacements
 
 
-def get_token(src: str, *, is_cell_magic: bool = False) -> str:
+def get_token(src: str, magic: str) -> str:
     """Return randomly generated token to mask IPython magic with."""
-    token = secrets.token_hex(3)
+    assert magic
+    nbytes = max(len(magic) // 2 - 1, 1)
+    token = secrets.token_hex(nbytes)
     while token in src:  # pragma: nocover
-        token = secrets.token_hex(3)
-    if is_cell_magic:
-        return f"# {token}"
-    return f'str("{token}")'
+        token = secrets.token_hex(nbytes)
+    if len(token) + 2 < len(magic):
+        token = f"{token}."
+    return f'"{token}"'
 
 
 def replace_cell_magics(src: str) -> Tuple[str, List[Replacement]]:
@@ -127,12 +129,12 @@ def replace_cell_magics(src: str) -> Tuple[str, List[Replacement]]:
 
     Example,
 
-        get_ipython().run_cell_magic('time', '', 'foo =bar\\n')
+        get_ipython().run_cell_magic('t', '-n1', 'ls =!ls\\n')
 
     becomes
 
-        # f3b6e1
-        foo =bar
+        "a794."
+        ls =!ls
 
     The replacement, along with the transformed code, is returned.
     """
@@ -144,7 +146,7 @@ def replace_cell_magics(src: str) -> Tuple[str, List[Replacement]]:
     cell_magic_finder.visit(tree)
     if not cell_magic_finder.header:
         return src, replacements
-    mask = get_token(src, is_cell_magic=True)
+    mask = get_token(src, cell_magic_finder.header)
     replacements.append(Replacement(mask=mask, src=cell_magic_finder.header))
     return f"{mask}\n{cell_magic_finder.body}", replacements
 
@@ -157,11 +159,13 @@ def replace_magics(src: str) -> Tuple[str, List[Replacement]]:
 
     Example, this
 
-        ls =get_ipython().getoutput('ls')
+        get_ipython().run_line_magic('matplotlib', 'inline')
+        'foo'
 
     becomes
 
-        ls =str("a64c67")
+        "5e67db56d490fd39"
+        'foo'
 
     The replacement, along with the transformed code, are returned.
     """
@@ -179,7 +183,7 @@ def replace_magics(src: str) -> Tuple[str, List[Replacement]]:
                 # defensive check
                 raise UnsupportedMagic
             col_offset, magic = magic_finder.magics[i][0]
-            mask = get_token(src)
+            mask = get_token(src, magic)
             replacements.append(Replacement(mask=mask, src=magic))
             line = line[:col_offset] + mask
         new_srcs.append(line)
@@ -191,7 +195,7 @@ def unmask_cell(src: str, replacements: List[Replacement]) -> str:
 
     For example
 
-        # 4fe98a
+        "9b20"
         foo = bar
 
     becomes
