@@ -18,6 +18,7 @@ class UnsupportedMagic(UserWarning):
 
 
 def remove_trailing_semicolon(src: str) -> Tuple[str, bool]:
+    """Removing trailing semicolon from Jupyter notebook cell."""
     from tokenize_rt import (
         src_to_tokens,
         tokens_to_src,
@@ -40,6 +41,7 @@ def remove_trailing_semicolon(src: str) -> Tuple[str, bool]:
 
 
 def put_trailing_semicolon_back(src: str, has_trailing_semicolon: bool) -> str:
+    """Put trailing semicolon back if cell originally had it."""
     from tokenize_rt import (
         src_to_tokens,
         tokens_to_src,
@@ -61,14 +63,28 @@ def put_trailing_semicolon_back(src: str, has_trailing_semicolon: bool) -> str:
 
 
 def mask_cell(src: str) -> Tuple[str, List[Replacement]]:
+    """Mask IPython magics so content becomes parseable Python code.
+
+    For example,
+
+        %matplotlib inline
+        'foo'
+
+    becomes
+
+        str("dfa9bb")
+        'foo'
+
+    The replacements are returned, along with the transformed code.
+    """
     replacements: List[Replacement] = []
     try:
         ast.parse(src)
     except SyntaxError:
-        # Might be able to parse it with IPython
+        # Might have IPython magics, will process below.
         pass
     else:
-        # Syntax is fine, nothing to mask
+        # Syntax is fine, nothing to mask, early return.
         return src, replacements
 
     from IPython.core.inputtransformer2 import TransformerManager
@@ -87,11 +103,11 @@ def mask_cell(src: str) -> Tuple[str, List[Replacement]]:
         raise SyntaxError
 
     replacements += magic_replacements
-
     return transformed, replacements
 
 
 def get_token(src: str, *, is_cell_magic: bool = False) -> str:
+    """Return randomly generated token to mask IPython magic with."""
     token = secrets.token_hex(3)
     while token in src:  # pragma: nocover
         token = secrets.token_hex(3)
@@ -101,6 +117,22 @@ def get_token(src: str, *, is_cell_magic: bool = False) -> str:
 
 
 def replace_cell_magics(src: str) -> Tuple[str, List[Replacement]]:
+    """Replace cell magic with token.
+
+    Note that 'src' will already have been processed by IPython's
+    TransformerManager().transform_cell.
+
+    Example,
+
+        get_ipython().run_cell_magic('time', '', 'foo =bar\\n')
+
+    becomes
+
+        # f3b6e1
+        foo =bar
+
+    The replacement, along with the transformed code, is returned.
+    """
     replacements: List[Replacement] = []
 
     tree = ast.parse(src)
@@ -115,6 +147,21 @@ def replace_cell_magics(src: str) -> Tuple[str, List[Replacement]]:
 
 
 def replace_magics(src: str) -> Tuple[str, List[Replacement]]:
+    """Replace magics within body of cell.
+
+    Note that 'src' will already have been processed by IPython's
+    TransformerManager().transform_cell.
+
+    Example, this
+
+        ls =get_ipython().getoutput('ls')
+
+    becomes
+
+        ls =str("a64c67")
+
+    The replacement, along with the transformed code, are returned.
+    """
     replacements = []
 
     tree = ast.parse(src)
@@ -137,13 +184,30 @@ def replace_magics(src: str) -> Tuple[str, List[Replacement]]:
 
 
 def unmask_cell(src: str, replacements: List[Replacement]) -> str:
+    """Remove replacements from cell.
+
+    For example
+
+        # 4fe98a
+        foo = bar
+
+    becomes
+
+        %%time
+        foo = bar
+    """
     for replacement in replacements:
         src = src.replace(replacement.mask, replacement.src)
     return src
 
 
 def _is_ipython_magic(node: ast.expr) -> bool:
-    """Check if attribute is IPython magic."""
+    """Check if attribute is IPython magic.
+
+    Note that the source of the abstract syntax tree
+    will already have been processed by IPython's
+    TransformerManager().transform_cell.
+    """
     return (
         isinstance(node, ast.Attribute)
         and isinstance(node.value, ast.Call)
@@ -153,21 +217,19 @@ def _is_ipython_magic(node: ast.expr) -> bool:
 
 
 class CellMagicFinder(ast.NodeVisitor):
-    """Find cell magics."""
+    """Find cell magics.
+
+    Note that the source of the abstract syntax tree
+    will already have been processed by IPython's
+    TransformerManager().transform_cell.
+    """
 
     def __init__(self) -> None:
-        """Record where cell magics occur."""
         self.header: Optional[str] = None
         self.body: Optional[str] = None
 
     def visit_Expr(self, node: ast.Expr) -> None:  # pylint: disable=C0103
-        """
-        Find cell magic, extract header and body.
-        Raises
-        ------
-        AssertionError
-            Defensive check.
-        """
+        """Find cell magic, extract header and body."""
         if (
             isinstance(node.value, ast.Call)
             and _is_ipython_magic(node.value.func)
@@ -188,23 +250,21 @@ class CellMagicFinder(ast.NodeVisitor):
 
 
 class MagicFinder(ast.NodeVisitor):
-    """Visit cell to look for get_ipython calls."""
+    """Visit cell to look for get_ipython calls.
+
+    Note that the source of the abstract syntax tree
+    will already have been processed by IPython's
+    TransformerManager().transform_cell.
+    """
 
     def __init__(self) -> None:
-        """Magics will record where magics occur."""
+        """Record where magics occur."""
         self.magics: Dict[int, List[Tuple[int, str]]] = collections.defaultdict(list)
 
     def visit_Assign(self, node: ast.Assign) -> None:  # pylint: disable=C0103,R0912
-        """
-        Get source to replace ipython magic with.
-        Parameters
-        ----------
-        node
-            Function call.
-        Raises
-        ------
-        AssertionError
-            Defensive check.
+        """Look for system assign magics. Example:
+
+        foo = get_ipython().getoutput('ls')
         """
         if (
             isinstance(node.value, ast.Call)
@@ -227,16 +287,12 @@ class MagicFinder(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_Expr(self, node: ast.Expr) -> None:  # pylint: disable=C0103,R0912
-        """
-        Get source to replace ipython magic with.
-        Parameters
-        ----------
-        node
-            Function call.
-        Raises
-        ------
-        AssertionError
-            Defensive check.
+        """Look for magics in body of cell. Examples:
+
+        get_ipython().system('ls')
+        get_ipython().getoutput('ls')
+        get_ipython().run_line_magic('pinfo', 'ls')
+        get_ipython().run_line_magic('pinfo2', 'ls')
         """
         if isinstance(node.value, ast.Call) and _is_ipython_magic(node.value.func):
             assert isinstance(node.value.func, ast.Attribute)  # help mypy

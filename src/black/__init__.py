@@ -847,7 +847,7 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
     `mode` is passed to :func:`format_str`.
     """
     if mode.is_ipynb:
-        return format_ipynb_string(src_contents, mode=mode, fast=fast)
+        return format_ipynb_string(src_contents, mode=mode)
 
     if not src_contents.strip():
         raise NothingChanged
@@ -873,6 +873,7 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
 
 
 def format_cell(src: str, *, mode: Mode) -> str:
+    """Format code is given cell of Jupyter notebook."""
     src_without_trailing_semicolon, has_trailing_semicolon = remove_trailing_semicolon(
         src
     )
@@ -890,9 +891,8 @@ def format_cell(src: str, *, mode: Mode) -> str:
     return new_src
 
 
-def format_ipynb_string(
-    src_contents: str, *, mode: Mode, fast: bool = False
-) -> FileContent:
+def format_ipynb_string(src_contents: str, *, mode: Mode) -> FileContent:
+    """Format Jupyter notebook."""
     if not src_contents:
         raise NothingChanged
     nb = json.loads(src_contents)
