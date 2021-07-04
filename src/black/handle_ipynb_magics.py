@@ -125,7 +125,8 @@ def replace_magics(src: str) -> Tuple[str, List[Replacement]]:
     for i, line in enumerate(src.splitlines(), start=1):
         if i in magic_finder.magics:
             magics = magic_finder.magics[i]
-            if len(magics) != 1:
+            if len(magics) != 1:  # pragma: nocover
+                # defensive check
                 raise UnsupportedMagic
             col_offset, magic = magic_finder.magics[i][0]
             mask = get_token(src)

@@ -39,7 +39,8 @@ jobs:
       - name: Test Jupyter Extra Install
         run: |
           python -m pip install -e ".[jupyter]"
+          python -m pip install -r test_requirements.txt
 
-      - name: Primer uvloop run
+      - name: Run Jupyter tests
         run: |
-          pytest tests/test_ipynb.py
+          pytest tests/test_ipynb.py --cov=black.handle_ipynb_magics --cov-report=term-missing --cov-branch
