@@ -3,7 +3,7 @@ import os
 from tests.util import DEFAULT_MODE
 import pytest
 
-pytest.importorskip("IPython")
+pytest.importorskip("IPython", reason="IPython is an optional dependency")
 
 
 def test_noop() -> None:
