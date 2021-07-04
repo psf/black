@@ -893,9 +893,9 @@ def format_cell(src: str, *, mode: Mode) -> str:
 def format_ipynb_string(
     src_contents: str, *, mode: Mode, fast: bool = False
 ) -> FileContent:
-    nb = json.loads(src_contents)
     if not src_contents:
         raise NothingChanged
+    nb = json.loads(src_contents)
     trailing_newline = src_contents[-1] == "\n"
     modified = False
     for _, cell in enumerate(nb["cells"]):
@@ -913,7 +913,8 @@ def format_ipynb_string(
         res = json.dumps(nb, indent=1, ensure_ascii=False)
         if trailing_newline:
             res = res + "\n"
-        if res == src_contents:
+        if res == src_contents:  # pragma: nocover
+            # Defensive check
             raise NothingChanged
         return res
     else:

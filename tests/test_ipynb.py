@@ -1,4 +1,5 @@
-from black import NothingChanged, format_cell
+from black import NothingChanged, format_cell, format_ipynb_string
+import os
 from tests.util import DEFAULT_MODE
 import pytest
 
@@ -101,5 +102,118 @@ def test_empty_cell() -> None:
         format_cell(src, mode=DEFAULT_MODE)
 
 
-def test_entire_notebook() -> None:
-    pass
+def test_entire_notebook_trailing_newline() -> None:
+    with open(
+        os.path.join("tests", "data", "notebook_trailing_newline.ipynb"), "rb"
+    ) as fd:
+        content_bytes = fd.read()
+    content = content_bytes.decode()
+    result = format_ipynb_string(content, mode=DEFAULT_MODE)
+    expected = (
+        "{\n"
+        ' "cells": [\n'
+        "  {\n"
+        '   "cell_type": "code",\n'
+        '   "execution_count": null,\n'
+        '   "metadata": {\n'
+        '    "tags": []\n'
+        "   },\n"
+        '   "outputs": [],\n'
+        '   "source": [\n'
+        '    "%%time\\n",\n'
+        '    "\\n",\n'
+        '    "print(\\"foo\\")"\n'
+        "   ]\n"
+        "  },\n"
+        "  {\n"
+        '   "cell_type": "code",\n'
+        '   "execution_count": null,\n'
+        '   "metadata": {},\n'
+        '   "outputs": [],\n'
+        '   "source": []\n'
+        "  }\n"
+        " ],\n"
+        ' "metadata": {\n'
+        '  "interpreter": {\n'
+        '   "hash": "e758f3098b5b55f4d87fe30bbdc1367f20f246b483f96267ee70e6c40cb185d8"\n'  # noqa:B950
+        "  },\n"
+        '  "kernelspec": {\n'
+        '   "display_name": "Python 3.8.10 64-bit (\'black\': venv)",\n'
+        '   "name": "python3"\n'
+        "  },\n"
+        '  "language_info": {\n'
+        '   "name": "python",\n'
+        '   "version": ""\n'
+        "  }\n"
+        " },\n"
+        ' "nbformat": 4,\n'
+        ' "nbformat_minor": 4\n'
+        "}\n"
+    )
+    assert result == expected
+
+
+def test_entire_notebook_no_trailing_newline() -> None:
+    with open(
+        os.path.join("tests", "data", "notebook_no_trailing_newline.ipynb"), "rb"
+    ) as fd:
+        content_bytes = fd.read()
+    content = content_bytes.decode()
+    result = format_ipynb_string(content, mode=DEFAULT_MODE)
+    expected = (
+        "{\n"
+        ' "cells": [\n'
+        "  {\n"
+        '   "cell_type": "code",\n'
+        '   "execution_count": null,\n'
+        '   "metadata": {\n'
+        '    "tags": []\n'
+        "   },\n"
+        '   "outputs": [],\n'
+        '   "source": [\n'
+        '    "%%time\\n",\n'
+        '    "\\n",\n'
+        '    "print(\\"foo\\")"\n'
+        "   ]\n"
+        "  },\n"
+        "  {\n"
+        '   "cell_type": "code",\n'
+        '   "execution_count": null,\n'
+        '   "metadata": {},\n'
+        '   "outputs": [],\n'
+        '   "source": []\n'
+        "  }\n"
+        " ],\n"
+        ' "metadata": {\n'
+        '  "interpreter": {\n'
+        '   "hash": "e758f3098b5b55f4d87fe30bbdc1367f20f246b483f96267ee70e6c40cb185d8"\n'  # noqa: B950
+        "  },\n"
+        '  "kernelspec": {\n'
+        '   "display_name": "Python 3.8.10 64-bit (\'black\': venv)",\n'
+        '   "name": "python3"\n'
+        "  },\n"
+        '  "language_info": {\n'
+        '   "name": "python",\n'
+        '   "version": ""\n'
+        "  }\n"
+        " },\n"
+        ' "nbformat": 4,\n'
+        ' "nbformat_minor": 4\n'
+        "}"
+    )
+    assert result == expected
+
+
+def test_entire_notebook_without_changes() -> None:
+    with open(
+        os.path.join("tests", "data", "notebook_without_changes.ipynb"), "rb"
+    ) as fd:
+        content_bytes = fd.read()
+    content = content_bytes.decode()
+    with pytest.raises(NothingChanged):
+        format_ipynb_string(content, mode=DEFAULT_MODE)
+
+
+def test_empty_string() -> None:
+    with pytest.raises(NothingChanged):
+        format_ipynb_string("", mode=DEFAULT_MODE)
