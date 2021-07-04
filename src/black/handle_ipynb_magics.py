@@ -101,6 +101,9 @@ def mask_cell(src: str) -> Tuple[str, List[Replacement]]:
     except UnsupportedMagic:
         # will be ignored upstream
         raise SyntaxError
+    if len(transformed.splitlines()) != len(src.splitlines()):
+        # multiline magic, won't format
+        raise SyntaxError
 
     replacements += magic_replacements
     return transformed, replacements

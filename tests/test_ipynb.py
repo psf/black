@@ -90,6 +90,19 @@ def test_automagic() -> None:
         format_cell(src, mode=DEFAULT_MODE)
 
 
+def test_multiline_magic() -> None:
+    src = "%time 1 + \\\n2"
+    with pytest.raises(NothingChanged):
+        format_cell(src, mode=DEFAULT_MODE)
+
+
+def test_multiline_no_magic() -> None:
+    src = "1 + \\\n2"
+    result = format_cell(src, mode=DEFAULT_MODE)
+    expected = "1 + 2"
+    assert result == expected
+
+
 def test_cell_magic_with_invalid_body() -> None:
     src = "%%time\nif True"
     with pytest.raises(NothingChanged):
