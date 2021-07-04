@@ -873,7 +873,7 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
 
 
 def format_cell(src: str, *, mode: Mode) -> str:
-    """Format code is given cell of Jupyter notebook."""
+    """Format code in given cell of Jupyter notebook."""
     src_without_trailing_semicolon, has_trailing_semicolon = remove_trailing_semicolon(
         src
     )
