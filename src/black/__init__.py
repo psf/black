@@ -750,15 +750,9 @@ def format_file_in_place(
     `mode` and `fast` options are passed to :func:`format_file_contents`.
     """
     if src.suffix == ".pyi":
-        mode = replace(mode, is_pyi=True, is_ipynb=False)
+        mode = replace(mode, is_pyi=True)
     elif src.suffix == ".ipynb":
-        mode = replace(
-            mode,
-            is_pyi=False,
-            is_ipynb=True,
-        )
-    elif src.suffix == ".py":
-        mode = replace(mode, is_ipynb=False)
+        mode = replace(mode, is_ipynb=True)
 
     then = datetime.utcfromtimestamp(src.stat().st_mtime)
     with open(src, "rb") as buf:
