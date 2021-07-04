@@ -78,6 +78,13 @@ def test_cell_magic_with_magic() -> None:
     assert result == expected
 
 
+def test_cell_magic_nested() -> None:
+    src = "%%time\n%%time\n2+2"
+    result = format_cell(src, mode=DEFAULT_MODE)
+    expected = "%%time\n%%time\n2 + 2"
+    assert result == expected
+
+
 def test_cell_magic_with_magic_noop() -> None:
     src = "%%t -n1\nls = !ls"
     with pytest.raises(NothingChanged):
