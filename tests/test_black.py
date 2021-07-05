@@ -1800,7 +1800,7 @@ class BlackTestCase(BlackBaseTestCase):
             black.gen_python_files(
                 path.iterdir(),
                 this_abs,
-                re.compile(black.DEFAULT_INCLUDES),
+                re.compile(black.DEFAULT_INCLUDES_NO_IPYNB),
                 re.compile(r"\.pyi$"),
                 re.compile(r"\.definitely_exclude"),
                 None,
@@ -1857,7 +1857,7 @@ class BlackTestCase(BlackBaseTestCase):
         path = MagicMock()
         root = THIS_DIR.resolve()
         child = MagicMock()
-        include = re.compile(black.DEFAULT_INCLUDES)
+        include = re.compile(black.DEFAULT_INCLUDES_NO_IPYNB)
         exclude = re.compile(black.DEFAULT_EXCLUDES)
         report = black.Report()
         gitignore = PathSpec.from_lines("gitwildmatch", [])
