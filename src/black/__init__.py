@@ -886,7 +886,17 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
 
 
 def format_cell(src: str, *, mode: Mode) -> str:
-    """Format code in given cell of Jupyter notebook."""
+    """Format code in given cell of Jupyter notebook.
+
+    General idea is:
+
+      - if cell has trailing semicolon, remove it;
+      - if cell has IPython magics, mask them;
+      - format cell;
+      - reinstate IPython magics;
+      - reinstate trailing semicolon (if originally present);
+      - strip trailing newlines.
+    """
     src_without_trailing_semicolon, has_trailing_semicolon = remove_trailing_semicolon(
         src
     )
@@ -908,28 +918,28 @@ def format_ipynb_string(src_contents: str, *, mode: Mode) -> FileContent:
     """Format Jupyter notebook."""
     if not src_contents:
         raise NothingChanged
-    nb = json.loads(src_contents)
     trailing_newline = src_contents[-1] == "\n"
     modified = False
-    for _, cell in enumerate(nb["cells"]):
+    nb = json.loads(src_contents)
+    for cell in nb["cells"]:
         if cell.get("cell_type", None) == "code":
             try:
                 src = "".join(cell["source"])
-                new_src = format_cell(src, mode=mode)
+                dst = format_cell(src, mode=mode)
             except NothingChanged:
                 pass
             else:
-                cell["source"] = new_src.splitlines(keepends=True)
+                cell["source"] = dst.splitlines(keepends=True)
                 modified = True
 
     if modified:
-        res = json.dumps(nb, indent=1, ensure_ascii=False)
+        dst_contents = json.dumps(nb, indent=1, ensure_ascii=False)
         if trailing_newline:
-            res = res + "\n"
-        if res == src_contents:  # pragma: nocover
+            dst_contents = dst_contents + "\n"
+        if dst_contents == src_contents:  # pragma: nocover
             # Defensive check
             raise NothingChanged
-        return res
+        return dst_contents
     else:
         raise NothingChanged
 
