@@ -397,9 +397,9 @@ def main(
             import IPython  # noqa: F401
             import tokenize_rt  # noqa: F401
         except ModuleNotFoundError:
-            include = validate_regex(DEFAULT_INCLUDES_NO_IPYNB)
+            include = re.compile(DEFAULT_INCLUDES_NO_IPYNB)
         else:
-            include = validate_regex(DEFAULT_INCLUDES_IPYNB)
+            include = re.compile(DEFAULT_INCLUDES_IPYNB)
 
     error_msg = "Oh no! 💥 💔 💥"
     if required_version and required_version != __version__:
