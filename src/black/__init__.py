@@ -30,7 +30,12 @@ from typing import (
 from dataclasses import replace
 import click
 
-from black.const import DEFAULT_LINE_LENGTH, DEFAULT_INCLUDES, DEFAULT_EXCLUDES
+from black.const import (
+    DEFAULT_LINE_LENGTH,
+    DEFAULT_INCLUDES_NO_IPYNB,
+    DEFAULT_INCLUDES_IPYNB,
+    DEFAULT_EXCLUDES,
+)
 from black.const import STDIN_PLACEHOLDER
 from black.nodes import STARS, syms, is_simple_decorator_expression
 from black.lines import Line, EmptyLineTracker
@@ -267,7 +272,6 @@ def validate_regex(
 @click.option(
     "--include",
     type=str,
-    default=DEFAULT_INCLUDES,
     callback=validate_regex,
     help=(
         "A regular expression that matches files and directories that should be"
@@ -387,6 +391,15 @@ def main(
     """The uncompromising code formatter."""
     if config and verbose:
         out(f"Using configuration from {config}.", bold=False, fg="blue")
+
+    if include is None:
+        try:
+            import IPython  # noqa: F401
+            import tokenize_rt  # noqa: F401
+        except ModuleNotFoundError:
+            include = DEFAULT_INCLUDES_NO_IPYNB
+        else:
+            include = DEFAULT_INCLUDES_IPYNB
 
     error_msg = "Oh no! 💥 💔 💥"
     if required_version and required_version != __version__:

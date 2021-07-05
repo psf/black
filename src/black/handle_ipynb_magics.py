@@ -110,7 +110,13 @@ def mask_cell(src: str) -> Tuple[str, List[Replacement]]:
 
 
 def get_token(src: str, magic: str) -> str:
-    """Return randomly generated token to mask IPython magic with."""
+    """Return randomly generated token to mask IPython magic with.
+
+    For example, if 'magic' was `%matplotlib inline`, then a possible
+    token to mask it with would be `"43fdd17f7e5ddc83"`. The token
+    will be the same length as the magic, and it may not already be
+    present in the rest of the cell.
+    """
     assert magic
     nbytes = max(len(magic) // 2 - 1, 1)
     token = secrets.token_hex(nbytes)
