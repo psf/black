@@ -907,11 +907,11 @@ def format_cell(src: str, *, mode: Mode) -> str:
         raise NothingChanged
     formatted_masked_cell = format_str(masked_cell, mode=mode)
     formatted_cell = unmask_cell(formatted_masked_cell, replacements)
-    new_src = put_trailing_semicolon_back(formatted_cell, has_trailing_semicolon)
-    new_src = new_src.rstrip("\n")
-    if new_src == src:
+    dst = put_trailing_semicolon_back(formatted_cell, has_trailing_semicolon)
+    dst = dst.rstrip("\n")
+    if dst == src:
         raise NothingChanged
-    return new_src
+    return dst
 
 
 def format_ipynb_string(src_contents: str, *, mode: Mode) -> FileContent:
