@@ -234,6 +234,14 @@ def test_entire_notebook_without_changes() -> None:
         format_ipynb_string(content, mode=DEFAULT_MODE)
 
 
+def test_non_python_notebook() -> None:
+    with open(os.path.join("tests", "data", "non_python_notebook.ipynb"), "rb") as fd:
+        content_bytes = fd.read()
+    content = content_bytes.decode()
+    with pytest.raises(NothingChanged):
+        format_ipynb_string(content, mode=DEFAULT_MODE)
+
+
 def test_empty_string() -> None:
     with pytest.raises(NothingChanged):
         format_ipynb_string("", mode=DEFAULT_MODE)

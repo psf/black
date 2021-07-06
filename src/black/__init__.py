@@ -921,6 +921,8 @@ def format_ipynb_string(src_contents: str, *, mode: Mode) -> FileContent:
     trailing_newline = src_contents[-1] == "\n"
     modified = False
     nb = json.loads(src_contents)
+    if nb.get("metadata", {}).get("language_info", {}).get("name", None) != "python":
+        raise NothingChanged
     for cell in nb["cells"]:
         if cell.get("cell_type", None) == "code":
             try:
