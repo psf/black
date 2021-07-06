@@ -38,7 +38,7 @@ from black.comments import normalize_fmt_off
 from black.mode import Mode, TargetVersion
 from black.mode import Feature, supports_feature, VERSION_TO_FEATURES
 from black.cache import read_cache, write_cache, get_cache_info, filter_cached, Cache
-from black.concurrency import cancel, shutdown
+from black.concurrency import cancel, shutdown, maybe_install_uvloop
 from black.output import dump_to_file, diff, color_diff, out, err
 from black.report import Report, Changed
 from black.files import find_project_root, find_pyproject_toml, parse_pyproject_toml
@@ -53,14 +53,6 @@ from blib2to3.pytree import Node, Leaf
 from blib2to3.pgen2 import token
 
 from _black_version import version as __version__
-
-# If our environment has uvloop installed lets use it
-try:
-    import uvloop
-
-    uvloop.install()
-except ImportError:
-    pass
 
 # types
 FileContent = str
@@ -250,6 +242,14 @@ def validate_regex(
     help="If --fast given, skip temporary sanity checks. [default: --safe]",
 )
 @click.option(
+    "--required-version",
+    type=str,
+    help=(
+        "Require a specific version of Black to be running (useful for unifying results"
+        " across many environments e.g. with a pyproject.toml file)."
+    ),
+)
+@click.option(
     "--include",
     type=str,
     default=DEFAULT_INCLUDES,
@@ -359,6 +359,7 @@ def main(
     experimental_string_processing: bool,
     quiet: bool,
     verbose: bool,
+    required_version: str,
     include: Pattern,
     exclude: Optional[Pattern],
     extend_exclude: Optional[Pattern],
@@ -368,6 +369,17 @@ def main(
     config: Optional[str],
 ) -> None:
     """The uncompromising code formatter."""
+    if config and verbose:
+        out(f"Using configuration from {config}.", bold=False, fg="blue")
+
+    error_msg = "Oh no! 💥 💔 💥"
+    if required_version and required_version != __version__:
+        err(
+            f"{error_msg} The required version `{required_version}` does not match"
+            f" the running version `{__version__}`!"
+        )
+        ctx.exit(1)
+
     write_back = WriteBack.from_configuration(check=check, diff=diff, color=color)
     if target_version:
         versions = set(target_version)
@@ -382,49 +394,61 @@ def main(
         magic_trailing_comma=not skip_magic_trailing_comma,
         experimental_string_processing=experimental_string_processing,
     )
-    if config and verbose:
-        out(f"Using configuration from {config}.", bold=False, fg="blue")
+
     if code is not None:
-        print(format_str(code, mode=mode))
-        ctx.exit(0)
+        # Run in quiet mode by default with -c; the extra output isn't useful.
+        # You can still pass -v to get verbose output.
+        quiet = True
+
     report = Report(check=check, diff=diff, quiet=quiet, verbose=verbose)
-    sources = get_sources(
-        ctx=ctx,
-        src=src,
-        quiet=quiet,
-        verbose=verbose,
-        include=include,
-        exclude=exclude,
-        extend_exclude=extend_exclude,
-        force_exclude=force_exclude,
-        report=report,
-        stdin_filename=stdin_filename,
-    )
 
-    path_empty(
-        sources,
-        "No Python files are present to be formatted. Nothing to do 😴",
-        quiet,
-        verbose,
-        ctx,
-    )
-
-    if len(sources) == 1:
-        reformat_one(
-            src=sources.pop(),
-            fast=fast,
-            write_back=write_back,
-            mode=mode,
-            report=report,
+    if code is not None:
+        reformat_code(
+            content=code, fast=fast, write_back=write_back, mode=mode, report=report
         )
     else:
-        reformat_many(
-            sources=sources, fast=fast, write_back=write_back, mode=mode, report=report
+        sources = get_sources(
+            ctx=ctx,
+            src=src,
+            quiet=quiet,
+            verbose=verbose,
+            include=include,
+            exclude=exclude,
+            extend_exclude=extend_exclude,
+            force_exclude=force_exclude,
+            report=report,
+            stdin_filename=stdin_filename,
         )
 
+        path_empty(
+            sources,
+            "No Python files are present to be formatted. Nothing to do 😴",
+            quiet,
+            verbose,
+            ctx,
+        )
+
+        if len(sources) == 1:
+            reformat_one(
+                src=sources.pop(),
+                fast=fast,
+                write_back=write_back,
+                mode=mode,
+                report=report,
+            )
+        else:
+            reformat_many(
+                sources=sources,
+                fast=fast,
+                write_back=write_back,
+                mode=mode,
+                report=report,
+            )
+
     if verbose or not quiet:
-        out("Oh no! 💥 💔 💥" if report.return_code else "All done! ✨ 🍰 ✨")
-        click.secho(str(report), err=True)
+        out(error_msg if report.return_code else "All done! ✨ 🍰 ✨")
+        if code is None:
+            click.echo(str(report), err=True)
     ctx.exit(report.return_code)
 
 
@@ -510,6 +534,30 @@ def path_empty(
         if verbose or not quiet:
             out(msg)
         ctx.exit(0)
+
+
+def reformat_code(
+    content: str, fast: bool, write_back: WriteBack, mode: Mode, report: Report
+) -> None:
+    """
+    Reformat and print out `content` without spawning child processes.
+    Similar to `reformat_one`, but for string content.
+
+    `fast`, `write_back`, and `mode` options are passed to
+    :func:`format_file_in_place` or :func:`format_stdin_to_stdout`.
+    """
+    path = Path("<string>")
+    try:
+        changed = Changed.NO
+        if format_stdin_to_stdout(
+            content=content, fast=fast, write_back=write_back, mode=mode
+        ):
+            changed = Changed.YES
+        report.done(path, changed)
+    except Exception as exc:
+        if report.verbose:
+            traceback.print_exc()
+        report.failed(path, str(exc))
 
 
 def reformat_one(
@@ -720,16 +768,27 @@ def format_file_in_place(
 
 
 def format_stdin_to_stdout(
-    fast: bool, *, write_back: WriteBack = WriteBack.NO, mode: Mode
+    fast: bool,
+    *,
+    content: Optional[str] = None,
+    write_back: WriteBack = WriteBack.NO,
+    mode: Mode,
 ) -> bool:
     """Format file on stdin. Return True if changed.
+
+    If content is None, it's read from sys.stdin.
 
     If `write_back` is YES, write reformatted code back to stdout. If it is DIFF,
     write a diff to stdout. The `mode` argument is passed to
     :func:`format_file_contents`.
     """
     then = datetime.utcnow()
-    src, encoding, newline = decode_bytes(sys.stdin.buffer.read())
+
+    if content is None:
+        src, encoding, newline = decode_bytes(sys.stdin.buffer.read())
+    else:
+        src, encoding, newline = content, "utf-8", ""
+
     dst = src
     try:
         dst = format_file_contents(src, fast=fast, mode=mode)
@@ -743,6 +802,9 @@ def format_stdin_to_stdout(
             sys.stdout.buffer, encoding=encoding, newline=newline, write_through=True
         )
         if write_back == WriteBack.YES:
+            # Make sure there's a newline after the content
+            if dst and dst[-1] != "\n":
+                dst += "\n"
             f.write(dst)
         elif write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
             now = datetime.utcnow()
@@ -1061,6 +1123,7 @@ def patch_click() -> None:
 
 
 def patched_main() -> None:
+    maybe_install_uvloop()
     freeze_support()
     patch_click()
     main()

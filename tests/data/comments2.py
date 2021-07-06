@@ -159,7 +159,7 @@ class Test:
 #######################
 
 
-instruction()
+instruction()#comment with bad spacing
 
 # END COMMENTS
 # MORE END COMMENTS
@@ -336,7 +336,7 @@ class Test:
 #######################
 
 
-instruction()
+instruction()  # comment with bad spacing
 
 # END COMMENTS
 # MORE END COMMENTS

@@ -22,7 +22,7 @@ class Flag(collections.namedtuple("FlagBase", "name, cast")):
 FLAGS = [
   Flag(name="line_length", cast=int),
   Flag(name="fast", cast=strtobool),
-  Flag(name="string_normalization", cast=strtobool),
+  Flag(name="skip_string_normalization", cast=strtobool),
   Flag(name="quiet", cast=strtobool),
 ]
 
@@ -103,7 +103,7 @@ def Black():
   configs = get_configs()
   mode = black.FileMode(
     line_length=configs["line_length"],
-    string_normalization=configs["string_normalization"],
+    string_normalization=not configs["skip_string_normalization"],
     is_pyi=vim.current.buffer.name.endswith('.pyi'),
   )
   quiet = configs["quiet"]
@@ -139,14 +139,15 @@ def Black():
       print(f'Reformatted in {time.time() - start:.4f}s.')
 
 def get_configs():
-  path_pyproject_toml = black.find_pyproject_toml(vim.eval("fnamemodify(getcwd(), ':t')"))
+  filename = vim.eval("@%")
+  path_pyproject_toml = black.find_pyproject_toml((filename,))
   if path_pyproject_toml:
     toml_config = black.parse_pyproject_toml(path_pyproject_toml)
   else:
     toml_config = {}
 
   return {
-    flag.var_name: flag.cast(toml_config.get(flag.name, vim.eval(flag.vim_rc_name)))
+    flag.var_name: toml_config.get(flag.name, flag.cast(vim.eval(flag.vim_rc_name)))
     for flag in FLAGS
   }
 

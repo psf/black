@@ -200,6 +200,16 @@ following field or method. This conforms to
 _Black_ won't insert empty lines after function docstrings unless that empty line is
 required due to an inner function starting immediately after.
 
+### Comments
+
+_Black_ does not format comment contents, but it enforces two spaces between code and a
+comment on the same line, and a space before the comment text begins. Some types of
+comments that require specific spacing rules are respected: doc comments (`#: comment`),
+section comments with long runs of hashes, and Spyder cells. Non-breaking spaces after
+hashes are also preserved. Comments may sometimes be moved because of formatting
+changes, which can break tools that assign special meaning to them. See
+[AST before and after formatting](#ast-before-and-after-formatting) for more discussion.
+
 ### Trailing commas
 
 _Black_ will add trailing commas to expressions that are split by comma where each
@@ -265,7 +275,7 @@ for both quotations and the text within, although relative indentation in the te
 preserved. Superfluous trailing whitespace on each line and unnecessary new lines at the
 end of the docstring are removed. All leading tabs are converted to spaces, but tabs
 inside text are preserved. Whitespace leading and trailing one-line docstrings is
-removed. The quotations of an empty docstring are separated with one space.
+removed.
 
 ### Numeric literals
 

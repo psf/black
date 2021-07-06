@@ -15,6 +15,7 @@ from typing import (
     List,
     Optional,
     Sequence,
+    Set,
     Tuple,
     TypeVar,
     Union,
@@ -25,7 +26,7 @@ from black.rusty import Result, Ok, Err
 from black.mode import Feature
 from black.nodes import syms, replace_child, parent_type
 from black.nodes import is_empty_par, is_empty_lpar, is_empty_rpar
-from black.nodes import CLOSING_BRACKETS, STANDALONE_COMMENT
+from black.nodes import OPENING_BRACKETS, CLOSING_BRACKETS, STANDALONE_COMMENT
 from black.lines import Line, append_leaves
 from black.brackets import BracketMatchError
 from black.comments import contains_pragma_comment
@@ -411,7 +412,7 @@ class StringMerger(CustomSplitMapMixin, StringTransformer):
             and is_valid_index(next_str_idx)
             and LL[next_str_idx].type == token.STRING
         ):
-            prefix = get_string_prefix(LL[next_str_idx].value)
+            prefix = get_string_prefix(LL[next_str_idx].value).lower()
             next_str_idx += 1
 
         # The next loop merges the string group. The final string will be
@@ -431,7 +432,7 @@ class StringMerger(CustomSplitMapMixin, StringTransformer):
             num_of_strings += 1
 
             SS = LL[next_str_idx].value
-            next_prefix = get_string_prefix(SS)
+            next_prefix = get_string_prefix(SS).lower()
 
             # If this is an f-string group but this substring is not prefixed
             # with 'f'...
@@ -541,7 +542,7 @@ class StringMerger(CustomSplitMapMixin, StringTransformer):
                 return TErr("StringMerger does NOT merge multiline strings.")
 
             num_of_strings += 1
-            prefix = get_string_prefix(leaf.value)
+            prefix = get_string_prefix(leaf.value).lower()
             if "r" in prefix:
                 return TErr("StringMerger does NOT merge raw strings.")
 
@@ -738,6 +739,18 @@ class BaseStringSplitter(StringTransformer):
         * The target string is not a multiline (i.e. triple-quote) string.
     """
 
+    STRING_OPERATORS = [
+        token.EQEQUAL,
+        token.GREATER,
+        token.GREATEREQUAL,
+        token.LESS,
+        token.LESSEQUAL,
+        token.NOTEQUAL,
+        token.PERCENT,
+        token.PLUS,
+        token.STAR,
+    ]
+
     @abstractmethod
     def do_splitter_match(self, line: Line) -> TMatchResult:
         """
@@ -847,15 +860,15 @@ class BaseStringSplitter(StringTransformer):
                 p_idx -= 1
 
             P = LL[p_idx]
-            if P.type == token.PLUS:
-                # WMA4 a space and a '+' character (e.g. `+ STRING`).
-                offset += 2
+            if P.type in self.STRING_OPERATORS:
+                # WMA4 a space and a string operator (e.g. `+ STRING` or `== STRING`).
+                offset += len(str(P)) + 1
 
             if P.type == token.COMMA:
                 # WMA4 a space, a comma, and a closing bracket [e.g. `), STRING`].
                 offset += 3
 
-            if P.type in [token.COLON, token.EQUAL, token.NAME]:
+            if P.type in [token.COLON, token.EQUAL, token.PLUSEQUAL, token.NAME]:
                 # This conditional branch is meant to handle dictionary keys,
                 # variable assignments, 'return STRING' statement lines, and
                 # 'else STRING' ternary expression lines.
@@ -920,9 +933,9 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
     lines by themselves).
 
     Requirements:
-        * The line consists ONLY of a single string (with the exception of a
-        '+' symbol which MAY exist at the start of the line), MAYBE a string
-        trailer, and MAYBE a trailing comma.
+        * The line consists ONLY of a single string (possibly prefixed by a
+        string operator [e.g. '+' or '==']), MAYBE a string trailer, and MAYBE
+        a trailing comma.
             AND
         * All of the requirements listed in BaseStringSplitter's docstring.
 
@@ -961,8 +974,8 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
             | \{\{
             | \}\}
             | (?R)
-        )+?
-    (?<!\}) \} (?:\}\})* (?!\})
+        )+
+    \}
     """
 
     def do_splitter_match(self, line: Line) -> TMatchResult:
@@ -972,8 +985,20 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
 
         idx = 0
 
-        # The first leaf MAY be a '+' symbol...
-        if is_valid_index(idx) and LL[idx].type == token.PLUS:
+        # The first two leaves MAY be the 'not in' keywords...
+        if (
+            is_valid_index(idx)
+            and is_valid_index(idx + 1)
+            and [LL[idx].type, LL[idx + 1].type] == [token.NAME, token.NAME]
+            and str(LL[idx]) + str(LL[idx + 1]) == "not in"
+        ):
+            idx += 2
+        # Else the first leaf MAY be a string operator symbol or the 'in' keyword...
+        elif is_valid_index(idx) and (
+            LL[idx].type in self.STRING_OPERATORS
+            or LL[idx].type == token.NAME
+            and str(LL[idx]) == "in"
+        ):
             idx += 1
 
         # The next/first leaf MAY be an empty LPAR...
@@ -1012,7 +1037,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         is_valid_index = is_valid_index_factory(LL)
         insert_str_child = insert_str_child_factory(LL[string_idx])
 
-        prefix = get_string_prefix(LL[string_idx].value)
+        prefix = get_string_prefix(LL[string_idx].value).lower()
 
         # We MAY choose to drop the 'f' prefix from substrings that don't
         # contain any f-expressions, but ONLY if the original f-string
@@ -1023,23 +1048,26 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         )
 
         first_string_line = True
-        starts_with_plus = LL[0].type == token.PLUS
 
-        def line_needs_plus() -> bool:
-            return first_string_line and starts_with_plus
+        string_op_leaves = self._get_string_operator_leaves(LL)
+        string_op_leaves_length = (
+            sum([len(str(prefix_leaf)) for prefix_leaf in string_op_leaves]) + 1
+            if string_op_leaves
+            else 0
+        )
 
-        def maybe_append_plus(new_line: Line) -> None:
+        def maybe_append_string_operators(new_line: Line) -> None:
             """
             Side Effects:
-                If @line starts with a plus and this is the first line we are
-                constructing, this function appends a PLUS leaf to @new_line
-                and replaces the old PLUS leaf in the node structure. Otherwise
-                this function does nothing.
+                If @line starts with a string operator and this is the first
+                line we are constructing, this function appends the string
+                operator to @new_line and replaces the old string operator leaf
+                in the node structure. Otherwise this function does nothing.
             """
-            if line_needs_plus():
-                plus_leaf = Leaf(token.PLUS, "+")
-                replace_child(LL[0], plus_leaf)
-                new_line.append(plus_leaf)
+            maybe_prefix_leaves = string_op_leaves if first_string_line else []
+            for i, prefix_leaf in enumerate(maybe_prefix_leaves):
+                replace_child(LL[i], prefix_leaf)
+                new_line.append(prefix_leaf)
 
         ends_with_comma = (
             is_valid_index(string_idx + 1) and LL[string_idx + 1].type == token.COMMA
@@ -1054,7 +1082,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
             result = self.line_length
             result -= line.depth * 4
             result -= 1 if ends_with_comma else 0
-            result -= 2 if line_needs_plus() else 0
+            result -= string_op_leaves_length
             return result
 
         # --- Calculate Max Break Index (for string value)
@@ -1103,7 +1131,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
                 break_idx = csplit.break_idx
             else:
                 # Algorithmic Split (automatic)
-                max_bidx = max_break_idx - 2 if line_needs_plus() else max_break_idx
+                max_bidx = max_break_idx - string_op_leaves_length
                 maybe_break_idx = self._get_break_idx(rest_value, max_bidx)
                 if maybe_break_idx is None:
                     # If we are unable to algorithmically determine a good split
@@ -1124,21 +1152,32 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
 
             # --- Construct `next_value`
             next_value = rest_value[:break_idx] + QUOTE
+
+            # HACK: The following 'if' statement is a hack to fix the custom
+            # breakpoint index in the case of either: (a) substrings that were
+            # f-strings but will have the 'f' prefix removed OR (b) substrings
+            # that were not f-strings but will now become f-strings because of
+            # redundant use of the 'f' prefix (i.e. none of the substrings
+            # contain f-expressions but one or more of them had the 'f' prefix
+            # anyway; in which case, we will prepend 'f' to _all_ substrings).
+            #
+            # There is probably a better way to accomplish what is being done
+            # here...
+            #
+            # If this substring is an f-string, we _could_ remove the 'f'
+            # prefix, and the current custom split did NOT originally use a
+            # prefix...
             if (
-                # Are we allowed to try to drop a pointless 'f' prefix?
-                drop_pointless_f_prefix
-                # If we are, will we be successful?
-                and next_value != self._normalize_f_string(next_value, prefix)
+                next_value != self._normalize_f_string(next_value, prefix)
+                and use_custom_breakpoints
+                and not csplit.has_prefix
             ):
-                # If the current custom split did NOT originally use a prefix,
-                # then `csplit.break_idx` will be off by one after removing
+                # Then `csplit.break_idx` will be off by one after removing
                 # the 'f' prefix.
-                break_idx = (
-                    break_idx + 1
-                    if use_custom_breakpoints and not csplit.has_prefix
-                    else break_idx
-                )
+                break_idx += 1
                 next_value = rest_value[:break_idx] + QUOTE
+
+            if drop_pointless_f_prefix:
                 next_value = self._normalize_f_string(next_value, prefix)
 
             # --- Construct `next_leaf`
@@ -1148,7 +1187,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
 
             # --- Construct `next_line`
             next_line = line.clone()
-            maybe_append_plus(next_line)
+            maybe_append_string_operators(next_line)
             next_line.append(next_leaf)
             string_line_results.append(Ok(next_line))
 
@@ -1169,7 +1208,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         self._maybe_normalize_string_quotes(rest_leaf)
 
         last_line = line.clone()
-        maybe_append_plus(last_line)
+        maybe_append_string_operators(last_line)
 
         # If there are any leaves to the right of the target string...
         if is_valid_index(string_idx + 1):
@@ -1205,6 +1244,61 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
             last_line.comments = line.comments.copy()
             yield Ok(last_line)
 
+    def _iter_nameescape_slices(self, string: str) -> Iterator[Tuple[Index, Index]]:
+        """
+        Yields:
+            All ranges of @string which, if @string were to be split there,
+            would result in the splitting of an \\N{...} expression (which is NOT
+            allowed).
+        """
+        # True - the previous backslash was unescaped
+        # False - the previous backslash was escaped *or* there was no backslash
+        previous_was_unescaped_backslash = False
+        it = iter(enumerate(string))
+        for idx, c in it:
+            if c == "\\":
+                previous_was_unescaped_backslash = not previous_was_unescaped_backslash
+                continue
+            if not previous_was_unescaped_backslash or c != "N":
+                previous_was_unescaped_backslash = False
+                continue
+            previous_was_unescaped_backslash = False
+
+            begin = idx - 1  # the position of backslash before \N{...}
+            for idx, c in it:
+                if c == "}":
+                    end = idx
+                    break
+            else:
+                # malformed nameescape expression?
+                # should have been detected by AST parsing earlier...
+                raise RuntimeError(f"{self.__class__.__name__} LOGIC ERROR!")
+            yield begin, end
+
+    def _iter_fexpr_slices(self, string: str) -> Iterator[Tuple[Index, Index]]:
+        """
+        Yields:
+            All ranges of @string which, if @string were to be split there,
+            would result in the splitting of an f-expression (which is NOT
+            allowed).
+        """
+        if "f" not in get_string_prefix(string).lower():
+            return
+
+        for match in re.finditer(self.RE_FEXPR, string, re.VERBOSE):
+            yield match.span()
+
+    def _get_illegal_split_indices(self, string: str) -> Set[Index]:
+        illegal_indices: Set[Index] = set()
+        iterators = [
+            self._iter_fexpr_slices(string),
+            self._iter_nameescape_slices(string),
+        ]
+        for it in iterators:
+            for begin, end in it:
+                illegal_indices.update(range(begin, end + 1))
+        return illegal_indices
+
     def _get_break_idx(self, string: str, max_break_idx: int) -> Optional[int]:
         """
         This method contains the algorithm that StringSplitter uses to
@@ -1234,40 +1328,15 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         assert is_valid_index(max_break_idx)
         assert_is_leaf_string(string)
 
-        _fexpr_slices: Optional[List[Tuple[Index, Index]]] = None
+        _illegal_split_indices = self._get_illegal_split_indices(string)
 
-        def fexpr_slices() -> Iterator[Tuple[Index, Index]]:
-            """
-            Yields:
-                All ranges of @string which, if @string were to be split there,
-                would result in the splitting of an f-expression (which is NOT
-                allowed).
-            """
-            nonlocal _fexpr_slices
-
-            if _fexpr_slices is None:
-                _fexpr_slices = []
-                for match in re.finditer(self.RE_FEXPR, string, re.VERBOSE):
-                    _fexpr_slices.append(match.span())
-
-            yield from _fexpr_slices
-
-        is_fstring = "f" in get_string_prefix(string)
-
-        def breaks_fstring_expression(i: Index) -> bool:
+        def breaks_unsplittable_expression(i: Index) -> bool:
             """
             Returns:
                 True iff returning @i would result in the splitting of an
-                f-expression (which is NOT allowed).
+                unsplittable expression (which is NOT allowed).
             """
-            if not is_fstring:
-                return False
-
-            for (start, end) in fexpr_slices():
-                if start <= i < end:
-                    return True
-
-            return False
+            return i in _illegal_split_indices
 
         def passes_all_checks(i: Index) -> bool:
             """
@@ -1291,7 +1360,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
                 is_space
                 and is_not_escaped
                 and is_big_enough
-                and not breaks_fstring_expression(i)
+                and not breaks_unsplittable_expression(i)
             )
 
         # First, we check all indices BELOW @max_break_idx.
@@ -1345,6 +1414,17 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         else:
             return string
 
+    def _get_string_operator_leaves(self, leaves: Iterable[Leaf]) -> List[Leaf]:
+        LL = list(leaves)
+
+        string_op_leaves = []
+        i = 0
+        while LL[i].type in self.STRING_OPERATORS + [token.NAME]:
+            prefix_leaf = Leaf(LL[i].type, str(LL[i]).strip())
+            string_op_leaves.append(prefix_leaf)
+            i += 1
+        return string_op_leaves
+
 
 class StringParenWrapper(CustomSplitMapMixin, BaseStringSplitter):
     """
@@ -1397,6 +1477,11 @@ class StringParenWrapper(CustomSplitMapMixin, BaseStringSplitter):
 
     def do_splitter_match(self, line: Line) -> TMatchResult:
         LL = line.leaves
+
+        if line.leaves[-1].type in OPENING_BRACKETS:
+            return TErr(
+                "Cannot wrap parens around a line that ends in an opening bracket."
+            )
 
         string_idx = (
             self._return_match(LL)
@@ -1665,9 +1750,10 @@ class StringParenWrapper(CustomSplitMapMixin, BaseStringSplitter):
                 right_leaves.pop()
 
             if old_parens_exist:
-                assert (
-                    right_leaves and right_leaves[-1].type == token.RPAR
-                ), "Apparently, old parentheses do NOT exist?!"
+                assert right_leaves and right_leaves[-1].type == token.RPAR, (
+                    "Apparently, old parentheses do NOT exist?!"
+                    f" (left_leaves={left_leaves}, right_leaves={right_leaves})"
+                )
                 old_rpar_leaf = right_leaves.pop()
 
             append_leaves(string_line, line, right_leaves)

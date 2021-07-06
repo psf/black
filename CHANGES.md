@@ -4,22 +4,67 @@
 
 ### _Black_
 
+- Multiline conditional expressions are now always parenthesized (#2278)
+- Add primer support and test for code piped into black via STDIN (#2315)
+- Fix internal error when `FORCE_OPTIONAL_PARENTHESES` feature is enabled (#2332)
+- Accept empty stdin (#2346)
+
+## 21.6b0
+
+### _Black_
+
+- Fix failure caused by `fmt: skip` and indentation (#2281)
+- Account for += assignment when deciding whether to split string (#2312)
+- Correct max string length calculation when there are string operators (#2292)
+- Fixed option usage when using the `--code` flag (#2259)
+- Do not call `uvloop.install()` when _Black_ is used as a library (#2303)
+- Added `--required-version` option to require a specific version to be running (#2300)
+- Fix incorrect custom breakpoint indices when string group contains fake f-strings
+  (#2311)
+- Fix regression where `R` prefixes would be lowercased for docstrings (#2285)
+- Fix handling of named escapes (`\N{...}`) when `--experimental-string-processing` is
+  used (#2319)
+
+### Integrations
+
+- The vim plugin now searches upwards from the directory containing the current buffer
+  instead of the current working directory for pyproject.toml. (#1871)
+
+### Integrations
+
+- The vim plugin now reads the correct string normalization option in pyproject.toml
+  (#1869)
+- The vim plugin no longer crashes Black when there's boolean values in pyproject.toml
+  (#1869)
+
+## 21.5b2
+
+### _Black_
+
 - A space is no longer inserted into empty docstrings (#2249)
 - Fix handling of .gitignore files containing non-ASCII characters on Windows (#2229)
 - Respect `.gitignore` files in all levels, not only `root/.gitignore` file (apply
   `.gitignore` rules like `git` does) (#2225)
 - Restored compatibility with Click 8.0 on Python 3.6 when LANG=C used (#2227)
 - Add extra uvloop install + import support if in python env (#2258)
-- Multiline conditional expressions are now always parenthesized (#2278)
+- Fix --experimental-string-processing crash when matching parens are not found (#2283)
+- Make sure to split lines that start with a string operator (#2286)
+- Fix regular expression that black uses to identify f-expressions (#2287)
 
 ### _Blackd_
 
 - Add a lower bound for the `aiohttp-cors` dependency. Only 0.4.0 or higher is
   supported. (#2231)
 
-### _Packaging_
+### Integrations
 
-- Release self-contained macOS binaries as part of the GitHub release pipeline (#2198)
+- The official Black action now supports choosing what version to use, and supports the
+  major 3 OSes. (#1940)
+
+### Packaging
+
+- Release self-contained x86_64 MacOS binaries as part of the GitHub release pipeline
+  (#2198)
 - Always build binaries with the latest available Python (#2260)
 
 ### Documentation

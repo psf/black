@@ -38,7 +38,7 @@ def find_project_root(srcs: Sequence[str]) -> Path:
     project root, the root of the file system is returned.
     """
     if not srcs:
-        return Path("/").resolve()
+        srcs = [str(Path.cwd().resolve())]
 
     path_srcs = [Path(Path.cwd(), src).resolve() for src in srcs]
 

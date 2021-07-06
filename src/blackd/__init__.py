@@ -20,15 +20,8 @@ except ImportError as ie:
     sys.exit(-1)
 
 import black
+from black.concurrency import maybe_install_uvloop
 import click
-
-# If our environment has uvloop installed lets use it
-try:
-    import uvloop
-
-    uvloop.install()
-except ImportError:
-    pass
 
 from _black_version import version as __version__
 
@@ -210,6 +203,7 @@ def parse_python_variant_header(value: str) -> Tuple[bool, Set[black.TargetVersi
 
 
 def patched_main() -> None:
+    maybe_install_uvloop()
     freeze_support()
     black.patch_click()
     main()

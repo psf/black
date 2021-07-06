@@ -1,6 +1,13 @@
 {
   "configuration_format_version": 20200509,
   "projects": {
+    "STDIN": {
+      "cli_arguments": ["--experimental-string-processing"],
+      "expect_formatting_changes": false,
+      "git_clone_url": "",
+      "long_checkout": false,
+      "py_versions": ["all"]
+    },
     "aioexabgp": {
       "cli_arguments": ["--experimental-string-processing"],
       "expect_formatting_changes": false,
@@ -30,13 +37,16 @@
       "py_versions": ["all"]
     },
     "django": {
-      "disabled_reason": "black --check --diff returned 123 on tests_syntax_error.py",
-      "disabled": true,
-      "cli_arguments": ["--experimental-string-processing"],
+      "cli_arguments": [
+        "--experimental-string-processing",
+        "--skip-string-normalization",
+        "--extend-exclude",
+        "/((docs|scripts)/|django/forms/models.py|tests/gis_tests/test_spatialrefsys.py|tests/test_runner_apps/tagged/tests_syntax_error.py)"
+      ],
       "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/django/django.git",
       "long_checkout": false,
-      "py_versions": ["all"]
+      "py_versions": ["3.8", "3.9"]
     },
     "flake8-bugbear": {
       "cli_arguments": ["--experimental-string-processing"],
@@ -53,8 +63,6 @@
       "py_versions": ["all"]
     },
     "pandas": {
-      "disabled_reason": "black-primer runs failing on Pandas - #2193",
-      "disabled": true,
       "cli_arguments": ["--experimental-string-processing"],
       "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/pandas-dev/pandas.git",

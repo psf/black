@@ -42,6 +42,7 @@ SIMPLE_CASES = [
     "fmtskip3",
     "fmtskip4",
     "fmtskip5",
+    "fmtskip6",
     "fstring",
     "function",
     "function2",

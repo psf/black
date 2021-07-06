@@ -396,6 +396,135 @@ x = f"This is a long string which contains an f-expr that should not split {{{[i
     " it has now"
 )
 
+
+def _legacy_listen_examples():
+    text += (
+        "    \"listen for the '%(event_name)s' event\"\n"
+        "\n    # ... (event logic logic logic) ...\n"
+        % {
+            "since": since,
+        }
+    )
+
+
+class X:
+    async def foo(self):
+        msg = ""
+        for candidate in CANDIDATES:
+            msg += (
+                "**{candidate.object_type} {candidate.rev}**"
+                " - {candidate.description}\n"
+            )
+
+
+temp_msg = (
+    f"{f'{humanize_number(pos)}.': <{pound_len+2}} "
+    f"{balance: <{bal_len + 5}} "
+    f"<<{author.display_name}>>\n"
+)
+
+assert str(suffix_arr) == (
+    "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
+)
+assert str(suffix_arr) != (
+    "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
+)
+assert str(suffix_arr) <= (
+    "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
+)
+assert str(suffix_arr) >= (
+    "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
+)
+assert str(suffix_arr) < (
+    "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
+)
+assert str(suffix_arr) > (
+    "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
+)
+assert str(suffix_arr) in "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', 'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', 'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
+assert str(suffix_arr) not in "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', 'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', 'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
+message = (
+    f"1. Go to Google Developers Console and log in with your Google account."
+    "(https://console.developers.google.com/)"
+    "2. You should be prompted to create a new project (name does not matter)."
+    "3. Click on Enable APIs and Services at the top."
+    "4. In the list of APIs choose or search for YouTube Data API v3 and "
+    "click on it. Choose Enable."
+    "5. Click on Credentials on the left navigation bar."
+    "6. Click on Create Credential at the top."
+    '7. At the top click the link for "API key".'
+    "8. No application restrictions are needed. Click Create at the bottom."
+    "9. You now have a key to add to `{prefix}set api youtube api_key`"
+)
+message = (
+    f"1. Go to Google Developers Console and log in with your Google account."
+    "(https://console.developers.google.com/)"
+    "2. You should be prompted to create a new project (name does not matter)."
+    f"3. Click on Enable APIs and Services at the top."
+    "4. In the list of APIs choose or search for YouTube Data API v3 and "
+    "click on it. Choose Enable."
+    f"5. Click on Credentials on the left navigation bar."
+    "6. Click on Create Credential at the top."
+    '7. At the top click the link for "API key".'
+    "8. No application restrictions are needed. Click Create at the bottom."
+    "9. You now have a key to add to `{prefix}set api youtube api_key`"
+)
+message = (
+    f"1. Go to Google Developers Console and log in with your Google account."
+    "(https://console.developers.google.com/)"
+    "2. You should be prompted to create a new project (name does not matter)."
+    f"3. Click on Enable APIs and Services at the top."
+    "4. In the list of APIs choose or search for YouTube Data API v3 and "
+    "click on it. Choose Enable."
+    f"5. Click on Credentials on the left navigation bar."
+    "6. Click on Create Credential at the top."
+    '7. At the top click the link for "API key".'
+    "8. No application restrictions are needed. Click Create at the bottom."
+    f"9. You now have a key to add to `{prefix}set api youtube api_key`"
+)
+
+# It shouldn't matter if the string prefixes are capitalized.
+temp_msg = (
+    F"{F'{humanize_number(pos)}.': <{pound_len+2}} "
+    F"{balance: <{bal_len + 5}} "
+    F"<<{author.display_name}>>\n"
+)
+
+fstring = (
+    F"We have to remember to escape {braces}."
+    " Like {these}."
+    F" But not {this}."
+)
+
+welcome_to_programming = R"hello," R" world!"
+
+fstring = F"f-strings definitely make things more {difficult} than they need to be for {{black}}. But boy they sure are handy. The problem is that some lines will need to have the 'f' whereas others do not. This {line}, for example, needs one."
+
+x = F"This is a long string which contains an f-expr that should not split {{{[i for i in range(5)]}}}."
+
+x = (
+    "\N{BLACK RIGHT-POINTING TRIANGLE WITH DOUBLE VERTICAL BAR}\N{VARIATION SELECTOR-16}"
+)
+
+xxxxxx_xxx_xxxx_xx_xxxxx_xxxxxxxx_xxxxxxxx_xxxxxxxxxx_xxxx_xxxx_xxxxx = xxxx.xxxxxx.xxxxxxxxx.xxxxxxxxxxxxxxxxxxxx(
+    xx_xxxxxx={
+        "x3_xxxxxxxx": "xxx3_xxxxx_xxxxxxxx_xxxxxxxx_xxxxxxxxxx_xxxxxxxx_xxxxxx_xxxxxxx",
+    },
+)
+
+
 # output
 
 
@@ -885,4 +1014,153 @@ x = (
     " if I'm careful to make sure"
     " it goes over 88 characters which"
     " it has now"
+)
+
+
+def _legacy_listen_examples():
+    text += (
+        "    \"listen for the '%(event_name)s' event\"\n"
+        "\n    # ... (event logic logic logic) ...\n"
+        % {
+            "since": since,
+        }
+    )
+
+
+class X:
+    async def foo(self):
+        msg = ""
+        for candidate in CANDIDATES:
+            msg += (
+                "**{candidate.object_type} {candidate.rev}**"
+                " - {candidate.description}\n"
+            )
+
+
+temp_msg = (
+    f"{f'{humanize_number(pos)}.': <{pound_len+2}} "
+    f"{balance: <{bal_len + 5}} "
+    f"<<{author.display_name}>>\n"
+)
+
+assert (
+    str(suffix_arr)
+    == "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
+)
+assert (
+    str(suffix_arr)
+    != "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
+)
+assert (
+    str(suffix_arr)
+    <= "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
+)
+assert (
+    str(suffix_arr)
+    >= "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
+)
+assert (
+    str(suffix_arr)
+    < "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
+)
+assert (
+    str(suffix_arr)
+    > "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
+)
+assert (
+    str(suffix_arr)
+    in "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', 'grykangaroo$',"
+    " 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', 'o$', 'oo$', 'roo$', 'rykangaroo$',"
+    " 'ykangaroo$']"
+)
+assert (
+    str(suffix_arr)
+    not in "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', 'grykangaroo$',"
+    " 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', 'o$', 'oo$', 'roo$',"
+    " 'rykangaroo$', 'ykangaroo$']"
+)
+message = (
+    f"1. Go to Google Developers Console and log in with your Google account."
+    f"(https://console.developers.google.com/)"
+    f"2. You should be prompted to create a new project (name does not matter)."
+    f"3. Click on Enable APIs and Services at the top."
+    f"4. In the list of APIs choose or search for YouTube Data API v3 and "
+    f"click on it. Choose Enable."
+    f"5. Click on Credentials on the left navigation bar."
+    f"6. Click on Create Credential at the top."
+    f'7. At the top click the link for "API key".'
+    f"8. No application restrictions are needed. Click Create at the bottom."
+    f"9. You now have a key to add to `{{prefix}}set api youtube api_key`"
+)
+message = (
+    f"1. Go to Google Developers Console and log in with your Google account."
+    f"(https://console.developers.google.com/)"
+    f"2. You should be prompted to create a new project (name does not matter)."
+    f"3. Click on Enable APIs and Services at the top."
+    f"4. In the list of APIs choose or search for YouTube Data API v3 and "
+    f"click on it. Choose Enable."
+    f"5. Click on Credentials on the left navigation bar."
+    f"6. Click on Create Credential at the top."
+    f'7. At the top click the link for "API key".'
+    f"8. No application restrictions are needed. Click Create at the bottom."
+    f"9. You now have a key to add to `{{prefix}}set api youtube api_key`"
+)
+message = (
+    "1. Go to Google Developers Console and log in with your Google account."
+    "(https://console.developers.google.com/)"
+    "2. You should be prompted to create a new project (name does not matter)."
+    "3. Click on Enable APIs and Services at the top."
+    "4. In the list of APIs choose or search for YouTube Data API v3 and "
+    "click on it. Choose Enable."
+    "5. Click on Credentials on the left navigation bar."
+    "6. Click on Create Credential at the top."
+    '7. At the top click the link for "API key".'
+    "8. No application restrictions are needed. Click Create at the bottom."
+    f"9. You now have a key to add to `{prefix}set api youtube api_key`"
+)
+
+# It shouldn't matter if the string prefixes are capitalized.
+temp_msg = (
+    f"{F'{humanize_number(pos)}.': <{pound_len+2}} "
+    f"{balance: <{bal_len + 5}} "
+    f"<<{author.display_name}>>\n"
+)
+
+fstring = f"We have to remember to escape {braces}. Like {{these}}. But not {this}."
+
+welcome_to_programming = R"hello," R" world!"
+
+fstring = (
+    f"f-strings definitely make things more {difficult} than they need to be for"
+    " {black}. But boy they sure are handy. The problem is that some lines will need"
+    f" to have the 'f' whereas others do not. This {line}, for example, needs one."
+)
+
+x = (
+    "This is a long string which contains an f-expr that should not split"
+    f" {{{[i for i in range(5)]}}}."
+)
+
+x = (
+    "\N{BLACK RIGHT-POINTING TRIANGLE WITH DOUBLE VERTICAL BAR}\N{VARIATION SELECTOR-16}"
+)
+
+xxxxxx_xxx_xxxx_xx_xxxxx_xxxxxxxx_xxxxxxxx_xxxxxxxxxx_xxxx_xxxx_xxxxx = xxxx.xxxxxx.xxxxxxxxx.xxxxxxxxxxxxxxxxxxxx(
+    xx_xxxxxx={
+        "x3_xxxxxxxx": (
+            "xxx3_xxxxx_xxxxxxxx_xxxxxxxx_xxxxxxxxxx_xxxxxxxx_xxxxxx_xxxxxxx"
+        ),
+    },
 )
