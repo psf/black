@@ -119,7 +119,7 @@
       "py_versions": ["all"]
     },
     "scikit-lego": {
-      "cli_arguments": ["--experimental-string-processing", "--include", "\\.ipynb$"],
+      "cli_arguments": ["--experimental-string-processing"],
       "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/koaning/scikit-lego",
       "long_checkout": false,
