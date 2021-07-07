@@ -2,6 +2,7 @@ from black import NothingChanged, format_cell, format_ipynb_string
 import os
 from tests.util import DEFAULT_MODE
 import pytest
+import subprocess
 
 pytest.importorskip("IPython", reason="IPython is an optional dependency")
 
@@ -245,3 +246,34 @@ def test_non_python_notebook() -> None:
 def test_empty_string() -> None:
     with pytest.raises(NothingChanged):
         format_ipynb_string("", mode=DEFAULT_MODE)
+
+
+def test_ipynb_diff_with_change() -> None:
+    output = subprocess.run(
+        [
+            "black",
+            os.path.join("tests", "data", "notebook_trailing_newline.ipynb"),
+            "--diff",
+        ],
+        stdout=subprocess.PIPE,
+        universal_newlines=True,
+    )
+    # Ignore the first two lines of output as they contain the current UTC time
+    result = "".join(output.stdout.splitlines(keepends=True)[2:])
+    expected = "@@ -1,3 +1,3 @@\n" " %%time\n" " \n" "-print('foo')\n" '+print("foo")\n'
+    assert result == expected
+
+
+def test_ipynb_diff_with_no_change() -> None:
+    output = subprocess.run(
+        [
+            "black",
+            os.path.join("tests", "data", "notebook_without_changes.ipynb"),
+            "--diff",
+        ],
+        stdout=subprocess.PIPE,
+        universal_newlines=True,
+    )
+    result = output.stdout
+    expected = ""
+    assert result == expected

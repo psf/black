@@ -3,6 +3,7 @@
 The double calls are for patching purposes in tests.
 """
 
+import json
 from typing import Any, Optional
 from mypy_extensions import mypyc_attr
 import tempfile
@@ -32,6 +33,23 @@ def out(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
 
 def err(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
     _err(message, nl=nl, **styles)
+
+
+def ipynb_diff(a: str, b: str, a_name: str, b_name: str) -> str:
+    """Return a unified diff string between each cell in notebooks `a` and `b`."""
+    a_nb = json.loads(a)
+    b_nb = json.loads(b)
+    diff_lines = []
+    cells = (cell for cell in a_nb["cells"] if cell["cell_type"] == "code")
+    for cell_number, _ in enumerate(cells):
+        cell_diff = diff(
+            "".join(a_nb["cells"][cell_number]["source"]) + "\n",
+            "".join(b_nb["cells"][cell_number]["source"]) + "\n",
+            f"{a_name}:cell_{cell_number}",
+            f"{b_name}:cell_{cell_number}",
+        )
+        diff_lines.append(cell_diff)
+    return "".join(diff_lines)
 
 
 def diff(a: str, b: str, a_name: str, b_name: str) -> str:

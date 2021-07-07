@@ -44,7 +44,7 @@ from black.mode import Mode, TargetVersion
 from black.mode import Feature, supports_feature, VERSION_TO_FEATURES
 from black.cache import read_cache, write_cache, get_cache_info, filter_cached, Cache
 from black.concurrency import cancel, shutdown, maybe_install_uvloop
-from black.output import dump_to_file, diff, color_diff, out, err
+from black.output import dump_to_file, ipynb_diff, diff, color_diff, out, err
 from black.report import Report, Changed
 from black.files import find_project_root, find_pyproject_toml, parse_pyproject_toml
 from black.files import gen_python_files, get_gitignore, normalize_path_maybe_ignore
@@ -773,7 +773,10 @@ def format_file_in_place(
         now = datetime.utcnow()
         src_name = f"{src}\t{then} +0000"
         dst_name = f"{src}\t{now} +0000"
-        diff_contents = diff(src_contents, dst_contents, src_name, dst_name)
+        if src.suffix == ".ipynb":
+            diff_contents = ipynb_diff(src_contents, dst_contents, src_name, dst_name)
+        else:
+            diff_contents = diff(src_contents, dst_contents, src_name, dst_name)
 
         if write_back == WriteBack.COLOR_DIFF:
             diff_contents = color_diff(diff_contents)
