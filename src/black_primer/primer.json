@@ -76,6 +76,13 @@
       "long_checkout": false,
       "py_versions": ["all"]
     },
+    "planetary computer examples": {
+      "cli_arguments": ["--experimental-string-processing"],
+      "expect_formatting_changes": false,
+      "git_clone_url": "git@github.com:microsoft/PlanetaryComputerExamples.git",
+      "long_checkout": false,
+      "py_versions": ["all"]
+    },
     "poetry": {
       "cli_arguments": ["--experimental-string-processing"],
       "expect_formatting_changes": true,
