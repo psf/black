@@ -118,6 +118,13 @@
       "long_checkout": false,
       "py_versions": ["all"]
     },
+    "scikit-lego": {
+      "cli_arguments": ["--experimental-string-processing", "--include", "\\.ipynb$"],
+      "expect_formatting_changes": true,
+      "git_clone_url": "https://github.com/koaning/scikit-lego",
+      "long_checkout": false,
+      "py_versions": ["all"]
+    },
     "sqlalchemy": {
       "no_cli_args_reason": "breaks black with new string parsing - #2188",
       "cli_arguments": [],
