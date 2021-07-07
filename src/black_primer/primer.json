@@ -79,7 +79,7 @@
     "planetary computer examples": {
       "cli_arguments": ["--experimental-string-processing"],
       "expect_formatting_changes": false,
-      "git_clone_url": "git@github.com:microsoft/PlanetaryComputerExamples.git",
+      "git_clone_url": "https://github.com/microsoft/PlanetaryComputerExamples",
       "long_checkout": false,
       "py_versions": ["all"]
     },
