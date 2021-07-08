@@ -31,11 +31,7 @@ from typing import (
 from dataclasses import replace
 import click
 
-from black.const import (
-    DEFAULT_LINE_LENGTH,
-    DEFAULT_INCLUDES,
-    DEFAULT_EXCLUDES,
-)
+from black.const import DEFAULT_LINE_LENGTH, DEFAULT_INCLUDES, DEFAULT_EXCLUDES
 from black.const import STDIN_PLACEHOLDER
 from black.nodes import STARS, syms, is_simple_decorator_expression
 from black.lines import Line, EmptyLineTracker
