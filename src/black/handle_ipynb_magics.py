@@ -34,9 +34,9 @@ def remove_trailing_semicolon(src: str) -> Tuple[str, bool]:
 
     Mirrors the logic in `quiet` from `IPython.core.dispalyhook`.
     """
-    tokens = list(tokenize.generate_tokens(io.StringIO(src).readline))[::-1]
+    tokens = list(tokenize.generate_tokens(io.StringIO(src).readline))
     trailing_semicolon = False
-    for idx, token in enumerate(tokens):
+    for idx, token in enumerate(reversed(tokens), start=1):
         if token[0] in (
             tokenize.ENDMARKER,
             tokenize.NL,
@@ -45,12 +45,13 @@ def remove_trailing_semicolon(src: str) -> Tuple[str, bool]:
         ):
             continue
         if token[0] == tokenize.OP and token[1] == ";":
-            del tokens[idx]
+            # We're iterating backwards, so `-idx`.
+            del tokens[-idx]
             trailing_semicolon = True
         break
     if not trailing_semicolon:
         return src, False
-    return tokenize.untokenize(tokens[::-1]), True
+    return tokenize.untokenize(tokens), True
 
 
 def put_trailing_semicolon_back(src: str, has_trailing_semicolon: bool) -> str:
@@ -60,8 +61,8 @@ def put_trailing_semicolon_back(src: str, has_trailing_semicolon: bool) -> str:
     """
     if not has_trailing_semicolon:
         return src
-    tokens = list(tokenize.generate_tokens(io.StringIO(src).readline))[::-1]
-    for idx, token in enumerate(tokens):
+    tokens = list(tokenize.generate_tokens(io.StringIO(src).readline))
+    for idx, token in enumerate(reversed(tokens), start=1):
         if token[0] in (
             tokenize.ENDMARKER,
             tokenize.NL,
@@ -69,11 +70,12 @@ def put_trailing_semicolon_back(src: str, has_trailing_semicolon: bool) -> str:
             tokenize.COMMENT,
         ):
             continue
-        tokens[idx] = token._replace(string=token.string + ";")
+        # We're iterating backwards, so `-idx`.
+        tokens[-idx] = token._replace(string=token.string + ";")
         break
     else:  # pragma: nocover
         raise AssertionError("Unreachable code")
-    return str(tokenize.untokenize(tokens[::-1]))
+    return str(tokenize.untokenize(tokens))
 
 
 def mask_cell(src: str) -> Tuple[str, List[Replacement]]:
