@@ -1,4 +1,6 @@
 import ast
+import tokenize
+import io
 from typing import Dict
 
 import secrets
@@ -18,48 +20,50 @@ class UnsupportedMagic(UserWarning):
 
 
 def remove_trailing_semicolon(src: str) -> Tuple[str, bool]:
-    """Removing trailing semicolon from Jupyter notebook cell."""
-    from tokenize_rt import (
-        src_to_tokens,
-        tokens_to_src,
-        NON_CODING_TOKENS,
-        reversed_enumerate,
-    )
+    """Remove trailing semicolon from Jupyter notebook cell.
 
-    tokens = src_to_tokens(src)
+    Mirrors the logic in `quiet` from `IPython.core.dispalyhook`.
+    """
+    tokens = list(tokenize.generate_tokens(io.StringIO(src).readline))[::-1]
     trailing_semicolon = False
-    for idx, token in reversed_enumerate(tokens):
-        if token.name in NON_CODING_TOKENS or token.name == "NEWLINE" or not token.src:
+    for token in tokens:
+        if token[0] in (
+            tokenize.ENDMARKER,
+            tokenize.NL,
+            tokenize.NEWLINE,
+            tokenize.COMMENT,
+        ):
             continue
-        if token.name == "OP" and token.src == ";":
-            del tokens[idx]
+        if token[0] == tokenize.OP and token[1] == ";":
+            del token
             trailing_semicolon = True
         break
     if not trailing_semicolon:
         return src, False
-    return tokens_to_src(tokens), True
+    return tokenize.untokenize(tokens[::-1]), True
 
 
 def put_trailing_semicolon_back(src: str, has_trailing_semicolon: bool) -> str:
-    """Put trailing semicolon back if cell originally had it."""
-    from tokenize_rt import (
-        src_to_tokens,
-        tokens_to_src,
-        NON_CODING_TOKENS,
-        reversed_enumerate,
-    )
+    """Put trailing semicolon back if cell originally had it.
 
+    Mirrors the logic in `quiet` from `IPython.core.dispalyhook`.
+    """
     if not has_trailing_semicolon:
         return src
-    tokens = src_to_tokens(src)
-    for idx, token in reversed_enumerate(tokens):
-        if token.name in NON_CODING_TOKENS or token.name == "NEWLINE" or not token.src:
+    tokens = list(tokenize.generate_tokens(io.StringIO(src).readline))[::-1]
+    for idx, token in enumerate(tokens):
+        if token[0] in (
+            tokenize.ENDMARKER,
+            tokenize.NL,
+            tokenize.NEWLINE,
+            tokenize.COMMENT,
+        ):
             continue
-        tokens[idx] = token._replace(src=token.src + ";")
+        tokens[idx] = token._replace(string=token.string + ";")
         break
     else:  # pragma: nocover
         raise AssertionError("Unreachable code")
-    return str(tokens_to_src(tokens))
+    return str(tokenize.untokenize(tokens[::-1]))
 
 
 def mask_cell(src: str) -> Tuple[str, List[Replacement]]:

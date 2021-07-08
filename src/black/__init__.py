@@ -1,4 +1,5 @@
 import asyncio
+import warnings
 import json
 from concurrent.futures import Executor, ThreadPoolExecutor, ProcessPoolExecutor
 from contextlib import contextmanager
@@ -32,8 +33,7 @@ import click
 
 from black.const import (
     DEFAULT_LINE_LENGTH,
-    DEFAULT_INCLUDES_NO_IPYNB,
-    DEFAULT_INCLUDES_IPYNB,
+    DEFAULT_INCLUDES,
     DEFAULT_EXCLUDES,
 )
 from black.const import STDIN_PLACEHOLDER
@@ -272,6 +272,7 @@ def validate_regex(
 @click.option(
     "--include",
     type=str,
+    default=DEFAULT_INCLUDES,
     callback=validate_regex,
     help=(
         "A regular expression that matches files and directories that should be"
@@ -391,15 +392,6 @@ def main(
     """The uncompromising code formatter."""
     if config and verbose:
         out(f"Using configuration from {config}.", bold=False, fg="blue")
-
-    if include is None:
-        try:
-            import IPython  # noqa: F401
-            import tokenize_rt  # noqa: F401
-        except ModuleNotFoundError:
-            include = re.compile(DEFAULT_INCLUDES_NO_IPYNB)
-        else:
-            include = re.compile(DEFAULT_INCLUDES_IPYNB)
 
     error_msg = "Oh no! 💥 💔 💥"
     if required_version and required_version != __version__:
@@ -773,6 +765,12 @@ def format_file_in_place(
     try:
         dst_contents = format_file_contents(src_contents, fast=fast, mode=mode)
     except NothingChanged:
+        return False
+    except ModuleNotFoundError:
+        warnings.warn(
+            f"Skipping '{src}' as extra dependencies are not installed.\n"
+            "You can fix this with ``pip install black[jupyter]``"
+        )
         return False
 
     if write_back == WriteBack.YES:
