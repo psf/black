@@ -893,18 +893,19 @@ def format_cell(src: str, *, mode: Mode) -> str:
       - reinstate IPython magics;
       - reinstate trailing semicolon (if originally present);
       - strip trailing newlines.
+
+    Cells with syntax errors will not be processed, as they
+    could potentially be automagics or multi-line magics, which
+    are currently not supported.
     """
-    src_without_trailing_semicolon, has_trailing_semicolon = remove_trailing_semicolon(
-        src
-    )
+    dst, has_trailing_semicolon = remove_trailing_semicolon(src)
     try:
-        masked_cell, replacements = mask_cell(src_without_trailing_semicolon)
+        dst, replacements = mask_cell(dst)
     except SyntaxError:
-        # Don't format, might be automagic or multi-line magic.
         raise NothingChanged
-    formatted_masked_cell = format_str(masked_cell, mode=mode)
-    formatted_cell = unmask_cell(formatted_masked_cell, replacements)
-    dst = put_trailing_semicolon_back(formatted_cell, has_trailing_semicolon)
+    dst = format_str(dst, mode=mode)
+    dst = unmask_cell(dst, replacements)
+    dst = put_trailing_semicolon_back(dst, has_trailing_semicolon)
     dst = dst.rstrip("\n")
     if dst == src:
         raise NothingChanged
@@ -912,7 +913,11 @@ def format_cell(src: str, *, mode: Mode) -> str:
 
 
 def format_ipynb_string(src_contents: str, *, mode: Mode) -> FileContent:
-    """Format Jupyter notebook."""
+    """Format Jupyter notebook.
+
+    Operate cell-by-cell, only on code cells, only for Python notebooks.
+    If the ``.ipynb`` originally had a trailing newline, it'll be preseved.
+    """
     if not src_contents:
         raise NothingChanged
     trailing_newline = src_contents[-1] == "\n"
@@ -930,7 +935,6 @@ def format_ipynb_string(src_contents: str, *, mode: Mode) -> FileContent:
             else:
                 cell["source"] = dst.splitlines(keepends=True)
                 modified = True
-
     if modified:
         dst_contents = json.dumps(nb, indent=1, ensure_ascii=False)
         if trailing_newline:

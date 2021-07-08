@@ -1,3 +1,4 @@
+"""Functions to process IPython magics with."""
 import ast
 import tokenize
 import io
@@ -16,7 +17,7 @@ class Replacement(NamedTuple):
 
 
 class UnsupportedMagic(UserWarning):
-    """Raise when Magic (e.g. `a = b??`) is not supported."""
+    """Raise when Magic is not supported (e.g. `a = b??`)"""
 
 
 def remove_trailing_semicolon(src: str) -> Tuple[str, bool]:
@@ -32,7 +33,7 @@ def remove_trailing_semicolon(src: str) -> Tuple[str, bool]:
         fig, ax = plt.subplots()
         ax.plot(x_data, y_data)  # plot data
 
-    Mirrors the logic in `quiet` from `IPython.core.dispalyhook`.
+    Mirrors the logic in `quiet` from `IPython.core.displayhook`.
     """
     tokens = list(tokenize.generate_tokens(io.StringIO(src).readline))
     trailing_semicolon = False
@@ -57,7 +58,7 @@ def remove_trailing_semicolon(src: str) -> Tuple[str, bool]:
 def put_trailing_semicolon_back(src: str, has_trailing_semicolon: bool) -> str:
     """Put trailing semicolon back if cell originally had it.
 
-    Mirrors the logic in `quiet` from `IPython.core.dispalyhook`.
+    Mirrors the logic in `quiet` from `IPython.core.displayhook`.
     """
     if not has_trailing_semicolon:
         return src
@@ -107,20 +108,15 @@ def mask_cell(src: str) -> Tuple[str, List[Replacement]]:
 
     transformer_manager = TransformerManager()
     transformed = transformer_manager.transform_cell(src)
-
     transformed, cell_magic_replacements = replace_cell_magics(transformed)
     replacements += cell_magic_replacements
-
     transformed = transformer_manager.transform_cell(transformed)
     try:
         transformed, magic_replacements = replace_magics(transformed)
     except UnsupportedMagic:
-        # will be ignored upstream
         raise SyntaxError
-    if len(transformed.splitlines()) != len(src.splitlines()):
-        # multiline magic, won't format
+    if len(transformed.splitlines()) != len(src.splitlines()):  # multi-line magic
         raise SyntaxError
-
     replacements += magic_replacements
     return transformed, replacements
 
@@ -192,11 +188,8 @@ def replace_magics(src: str) -> Tuple[str, List[Replacement]]:
     The replacement, along with the transformed code, are returned.
     """
     replacements = []
-
-    tree = ast.parse(src)
-
     magic_finder = MagicFinder()
-    magic_finder.visit(tree)
+    magic_finder.visit(ast.parse(src))
     new_srcs = []
     for i, line in enumerate(src.splitlines(), start=1):
         if i in magic_finder.magics:
@@ -204,7 +197,7 @@ def replace_magics(src: str) -> Tuple[str, List[Replacement]]:
             if len(magics) != 1:  # pragma: nocover
                 # defensive check
                 raise UnsupportedMagic
-            col_offset, magic = magic_finder.magics[i][0]
+            col_offset, magic = magics[0]
             mask = get_token(src, magic)
             replacements.append(Replacement(mask=mask, src=magic))
             line = line[:col_offset] + mask
@@ -251,13 +244,23 @@ class CellMagicFinder(ast.NodeVisitor):
     Note that the source of the abstract syntax tree
     will already have been processed by IPython's
     TransformerManager().transform_cell.
+
+    For example,
+
+        %%time\nfoo()
+
+    would have been transformed to
+
+        get_ipython().run_cell_magic('time', '', 'foo()\\n')
+
+    and we look for instances of the latter.
     """
 
     def __init__(self) -> None:
         self.header: Optional[str] = None
         self.body: Optional[str] = None
 
-    def visit_Expr(self, node: ast.Expr) -> None:  # pylint: disable=C0103
+    def visit_Expr(self, node: ast.Expr) -> None:
         """Find cell magic, extract header and body."""
         if (
             isinstance(node.value, ast.Call)
@@ -284,16 +287,35 @@ class MagicFinder(ast.NodeVisitor):
     Note that the source of the abstract syntax tree
     will already have been processed by IPython's
     TransformerManager().transform_cell.
+
+    For example,
+
+        %matplotlib inline
+
+    would have been transformed to
+
+        get_ipython().run_line_magic('matplotlib', 'inline')
+
+    and we look for instances of the latter (and likewise for other
+    types of magics).
     """
 
     def __init__(self) -> None:
         """Record where magics occur."""
         self.magics: Dict[int, List[Tuple[int, str]]] = collections.defaultdict(list)
 
-    def visit_Assign(self, node: ast.Assign) -> None:  # pylint: disable=C0103,R0912
-        """Look for system assign magics. Example:
+    def visit_Assign(self, node: ast.Assign) -> None:
+        """Look for system assign magics.
 
-        foo = get_ipython().getoutput('ls')
+        For example,
+
+            black_version = !black --version
+
+        would have been transformed to
+
+            black_version = get_ipython().getoutput('black --version')
+
+        and we look for instances of the latter.
         """
         if (
             isinstance(node.value, ast.Call)
@@ -315,13 +337,24 @@ class MagicFinder(ast.NodeVisitor):
             )
         self.generic_visit(node)
 
-    def visit_Expr(self, node: ast.Expr) -> None:  # pylint: disable=C0103,R0912
-        """Look for magics in body of cell. Examples:
+    def visit_Expr(self, node: ast.Expr) -> None:
+        """Look for magics in body of cell.
 
-        get_ipython().system('ls')
-        get_ipython().getoutput('ls')
-        get_ipython().run_line_magic('pinfo', 'ls')
-        get_ipython().run_line_magic('pinfo2', 'ls')
+        For examples,
+
+            !ls
+            !!ls
+            ?ls
+            ??ls
+
+        would (respectively) get transformed to
+
+            get_ipython().system('ls')
+            get_ipython().getoutput('ls')
+            get_ipython().run_line_magic('pinfo', 'ls')
+            get_ipython().run_line_magic('pinfo2', 'ls')
+
+        and we look for instances of any of the latter.
         """
         if isinstance(node.value, ast.Call) and _is_ipython_magic(node.value.func):
             assert isinstance(node.value.func, ast.Attribute)  # help mypy
