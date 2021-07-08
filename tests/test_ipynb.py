@@ -20,6 +20,13 @@ def test_trailing_semicolon() -> None:
     assert result == expected
 
 
+def test_trailing_semicolon_with_comment() -> None:
+    src = 'foo = "a" ;  # bar'
+    result = format_cell(src, mode=DEFAULT_MODE)
+    expected = 'foo = "a";  # bar'
+    assert result == expected
+
+
 def test_trailing_semicolon_noop() -> None:
     src = 'foo = "a";'
     with pytest.raises(NothingChanged):

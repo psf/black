@@ -22,11 +22,21 @@ class UnsupportedMagic(UserWarning):
 def remove_trailing_semicolon(src: str) -> Tuple[str, bool]:
     """Remove trailing semicolon from Jupyter notebook cell.
 
+    For example,
+
+        fig, ax = plt.subplots()
+        ax.plot(x_data, y_data);  # plot data
+
+    would become
+
+        fig, ax = plt.subplots()
+        ax.plot(x_data, y_data)  # plot data
+
     Mirrors the logic in `quiet` from `IPython.core.dispalyhook`.
     """
     tokens = list(tokenize.generate_tokens(io.StringIO(src).readline))[::-1]
     trailing_semicolon = False
-    for token in tokens:
+    for idx, token in enumerate(tokens):
         if token[0] in (
             tokenize.ENDMARKER,
             tokenize.NL,
@@ -35,7 +45,7 @@ def remove_trailing_semicolon(src: str) -> Tuple[str, bool]:
         ):
             continue
         if token[0] == tokenize.OP and token[1] == ";":
-            del token
+            del tokens[idx]
             trailing_semicolon = True
         break
     if not trailing_semicolon:
