@@ -4,7 +4,6 @@ from tests.util import DEFAULT_MODE
 import pytest
 import subprocess
 
-pytest.importorskip("IPython", reason="IPython is an optional dependency")
 pytestmark = pytest.mark.jupyter
 
 
