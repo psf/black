@@ -763,10 +763,7 @@ def format_file_in_place(
     except NothingChanged:
         return False
     except ModuleNotFoundError:
-        warnings.warn(
-            f"Skipping '{src}' as extra dependencies are not installed.\n"
-            "You can fix this with ``pip install black[jupyter]``"
-        )
+        warnings.warn(f"Skipping '{src}' as IPython is not installed.\n")
         return False
 
     if write_back == WriteBack.YES:

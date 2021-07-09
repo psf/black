@@ -5,6 +5,7 @@ import pytest
 import subprocess
 
 pytest.importorskip("IPython", reason="IPython is an optional dependency")
+pytestmark = pytest.mark.jupyter
 
 
 def test_noop() -> None:
