@@ -5,6 +5,7 @@ import os
 
 assert sys.version_info >= (3, 6, 2), "black requires Python 3.6.2+"
 from pathlib import Path  # noqa E402
+from typing import List  # noqa: E402
 
 CURRENT_DIR = Path(__file__).parent
 sys.path.insert(0, str(CURRENT_DIR))  # for setuptools.build_meta
@@ -18,6 +19,17 @@ def get_long_description() -> str:
     )
 
 
+def find_python_files(base: Path) -> List[Path]:
+    files = []
+    for entry in base.iterdir():
+        if entry.is_file() and entry.suffix == ".py":
+            files.append(entry)
+        elif entry.is_dir():
+            files.extend(find_python_files(entry))
+
+    return files
+
+
 USE_MYPYC = False
 # To compile with mypyc, a mypyc checkout must be present on the PYTHONPATH
 if len(sys.argv) > 1 and sys.argv[1] == "--use-mypyc":
@@ -27,43 +39,33 @@ if os.getenv("BLACK_USE_MYPYC", None) == "1":
     USE_MYPYC = True
 
 if USE_MYPYC:
-    mypyc_targets = [
-        "src/black/__init__.py",
-        "src/black/nodes.py",
-        "src/black/mode.py",
-        # Ditto bytes savings.
-        # "src/black/files.py",
-        # "src/black/concurrency.py",
-        "src/black/const.py",
-        "src/black/linegen.py",
-        "src/black/rusty.py",
-        "src/black/numerics.py",
-        "src/black/comments.py",
-        # Leave uncompiled to save bytes since this isn't performance sensitive at all.
-        # "src/black/report.py",
-        "src/black/cache.py",
-        "src/black/lines.py",
-        # Kept uncompiled due being useless (and breaks tests) when compiled.
-        # "src/black/debug.py",
-        "src/black/strings.py",
-        "src/black/parsing.py",
-        # Ditto again about saving btes.
-        # "src/black/output.py",
-        "src/black/brackets.py",
-        "src/black/trans.py",
-        "src/blib2to3/pytree.py",
-        "src/blib2to3/pygram.py",
-        "src/blib2to3/pgen2/conv.py",
-        "src/blib2to3/pgen2/literals.py",
-        "src/blib2to3/pgen2/parse.py",
-        "src/blib2to3/pgen2/grammar.py",
-        "src/blib2to3/pgen2/token.py",
-        "src/blib2to3/pgen2/tokenize.py",
-        "src/blib2to3/pgen2/driver.py",
-        "src/blib2to3/pgen2/pgen.py",
-    ]
-
     from mypyc.build import mypycify
+
+    source_base = CURRENT_DIR / "src"
+    # TIP: filepaths are normalized to use forward slashes and are relative to ./src/
+    # before being checked against.
+    blocklist = [
+        # Not performance sensitive, so save bytes + compilation time:
+        "blib2to3/__init__.py",
+        "blib2to3/pgen2/__init__.py",
+        "black/output.py",
+        "black/concurrency.py",
+        "black/files.py",
+        "black/report.py",
+        # Breaks the test suite when compiled (and is also useless):
+        "black/debug.py",
+        # Compiled modules can't be run directly and that's a problem here:
+        "black/__main__.py",
+    ]
+    discovered = []
+    # black-primer and blackd have no good reason to be compiled.
+    discovered.extend(find_python_files(source_base / "black"))
+    discovered.extend(find_python_files(source_base / "blib2to3"))
+    mypyc_targets = [
+        str(p)
+        for p in discovered
+        if p.relative_to(source_base).as_posix() not in blocklist
+    ]
 
     opt_level = os.getenv("MYPYC_OPT_LEVEL", "3")
     ext_modules = mypycify(mypyc_targets, opt_level=opt_level, verbose=True)
