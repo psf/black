@@ -332,12 +332,7 @@ class MagicFinder(ast.NodeVisitor):
                 args.append(arg.s)
             assert args
             src = f"!{args[0]}"
-            self.magics[node.value.lineno].append(
-                (
-                    node.value.col_offset,
-                    src,
-                )
-            )
+            self.magics[node.value.lineno].append((node.value.col_offset, src))
         self.generic_visit(node)
 
     def visit_Expr(self, node: ast.Expr) -> None:
