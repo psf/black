@@ -1,28 +1,30 @@
-from black import NothingChanged, format_cell, format_ipynb_string
+from black import NothingChanged, format_cell, format_file_contents
 import os
-from tests.util import DEFAULT_MODE
 import pytest
 import subprocess
+from black import Mode
 
 pytestmark = pytest.mark.jupyter
+
+JUPYTER_MODE = Mode(is_ipynb=True)
 
 
 def test_noop() -> None:
     src = 'foo = "a"'
     with pytest.raises(NothingChanged):
-        format_cell(src, mode=DEFAULT_MODE)
+        format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
 def test_trailing_semicolon() -> None:
     src = 'foo = "a" ;'
-    result = format_cell(src, mode=DEFAULT_MODE)
+    result = format_cell(src, fast=True, mode=JUPYTER_MODE)
     expected = 'foo = "a";'
     assert result == expected
 
 
 def test_trailing_semicolon_with_comment() -> None:
     src = 'foo = "a" ;  # bar'
-    result = format_cell(src, mode=DEFAULT_MODE)
+    result = format_cell(src, fast=True, mode=JUPYTER_MODE)
     expected = 'foo = "a";  # bar'
     assert result == expected
 
@@ -30,12 +32,12 @@ def test_trailing_semicolon_with_comment() -> None:
 def test_trailing_semicolon_noop() -> None:
     src = 'foo = "a";'
     with pytest.raises(NothingChanged):
-        format_cell(src, mode=DEFAULT_MODE)
+        format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
 def test_cell_magic() -> None:
     src = "%%time\nfoo =bar"
-    result = format_cell(src, mode=DEFAULT_MODE)
+    result = format_cell(src, fast=True, mode=JUPYTER_MODE)
     expected = "%%time\nfoo = bar"
     assert result == expected
 
@@ -43,7 +45,7 @@ def test_cell_magic() -> None:
 def test_cell_magic_noop() -> None:
     src = "%%time\n2 + 2"
     with pytest.raises(NothingChanged):
-        format_cell(src, mode=DEFAULT_MODE)
+        format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
 @pytest.mark.parametrize(
@@ -63,32 +65,32 @@ def test_cell_magic_noop() -> None:
     ),
 )
 def test_magic(src: str, expected: str) -> None:
-    result = format_cell(src, mode=DEFAULT_MODE)
+    result = format_cell(src, fast=True, mode=JUPYTER_MODE)
     assert result == expected
 
 
 def test_set_input() -> None:
     src = "a = b??"
     with pytest.raises(NothingChanged):
-        format_cell(src, mode=DEFAULT_MODE)
+        format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
 def test_magic_noop() -> None:
     src = "ls = !ls"
     with pytest.raises(NothingChanged):
-        format_cell(src, mode=DEFAULT_MODE)
+        format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
 def test_cell_magic_with_magic() -> None:
     src = "%%t -n1\nls =!ls"
-    result = format_cell(src, mode=DEFAULT_MODE)
+    result = format_cell(src, fast=True, mode=JUPYTER_MODE)
     expected = "%%t -n1\nls = !ls"
     assert result == expected
 
 
 def test_cell_magic_nested() -> None:
     src = "%%time\n%%time\n2+2"
-    result = format_cell(src, mode=DEFAULT_MODE)
+    result = format_cell(src, fast=True, mode=JUPYTER_MODE)
     expected = "%%time\n%%time\n2 + 2"
     assert result == expected
 
@@ -96,24 +98,24 @@ def test_cell_magic_nested() -> None:
 def test_cell_magic_with_magic_noop() -> None:
     src = "%%t -n1\nls = !ls"
     with pytest.raises(NothingChanged):
-        format_cell(src, mode=DEFAULT_MODE)
+        format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
 def test_automagic() -> None:
     src = "pip install black"
     with pytest.raises(NothingChanged):
-        format_cell(src, mode=DEFAULT_MODE)
+        format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
 def test_multiline_magic() -> None:
     src = "%time 1 + \\\n2"
     with pytest.raises(NothingChanged):
-        format_cell(src, mode=DEFAULT_MODE)
+        format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
 def test_multiline_no_magic() -> None:
     src = "1 + \\\n2"
-    result = format_cell(src, mode=DEFAULT_MODE)
+    result = format_cell(src, fast=True, mode=JUPYTER_MODE)
     expected = "1 + 2"
     assert result == expected
 
@@ -121,13 +123,13 @@ def test_multiline_no_magic() -> None:
 def test_cell_magic_with_invalid_body() -> None:
     src = "%%time\nif True"
     with pytest.raises(NothingChanged):
-        format_cell(src, mode=DEFAULT_MODE)
+        format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
 def test_empty_cell() -> None:
     src = ""
     with pytest.raises(NothingChanged):
-        format_cell(src, mode=DEFAULT_MODE)
+        format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
 def test_entire_notebook_trailing_newline() -> None:
@@ -136,7 +138,7 @@ def test_entire_notebook_trailing_newline() -> None:
     ) as fd:
         content_bytes = fd.read()
     content = content_bytes.decode()
-    result = format_ipynb_string(content, mode=DEFAULT_MODE)
+    result = format_file_contents(content, fast=True, mode=JUPYTER_MODE)
     expected = (
         "{\n"
         ' "cells": [\n'
@@ -187,7 +189,7 @@ def test_entire_notebook_no_trailing_newline() -> None:
     ) as fd:
         content_bytes = fd.read()
     content = content_bytes.decode()
-    result = format_ipynb_string(content, mode=DEFAULT_MODE)
+    result = format_file_contents(content, fast=True, mode=JUPYTER_MODE)
     expected = (
         "{\n"
         ' "cells": [\n'
@@ -239,7 +241,7 @@ def test_entire_notebook_without_changes() -> None:
         content_bytes = fd.read()
     content = content_bytes.decode()
     with pytest.raises(NothingChanged):
-        format_ipynb_string(content, mode=DEFAULT_MODE)
+        format_file_contents(content, fast=True, mode=JUPYTER_MODE)
 
 
 def test_non_python_notebook() -> None:
@@ -247,12 +249,12 @@ def test_non_python_notebook() -> None:
         content_bytes = fd.read()
     content = content_bytes.decode()
     with pytest.raises(NothingChanged):
-        format_ipynb_string(content, mode=DEFAULT_MODE)
+        format_file_contents(content, fast=True, mode=JUPYTER_MODE)
 
 
 def test_empty_string() -> None:
     with pytest.raises(NothingChanged):
-        format_ipynb_string("", mode=DEFAULT_MODE)
+        format_file_contents("", fast=True, mode=JUPYTER_MODE)
 
 
 def test_ipynb_diff_with_change() -> None:

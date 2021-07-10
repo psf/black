@@ -846,6 +846,23 @@ def format_stdin_to_stdout(
         f.detach()
 
 
+def check_src_and_dst_equivalent(
+    src_contents: str, dst_contents: str, *, mode: Mode
+) -> None:
+    assert_equivalent(src_contents, dst_contents)
+
+    # Forced second pass to work around optional trailing commas (becoming
+    # forced trailing commas on pass 2) interacting differently with optional
+    # parentheses.  Admittedly ugly.
+    dst_contents_pass2 = format_str(dst_contents, mode=mode)
+    if dst_contents != dst_contents_pass2:
+        dst_contents = dst_contents_pass2
+        assert_equivalent(src_contents, dst_contents, pass_num=2)
+        assert_stable(src_contents, dst_contents, mode=mode)
+    # Note: no need to explicitly call `assert_stable` if `dst_contents` was
+    # the same as `dst_contents_pass2`.
+
+
 def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileContent:
     """Reformat contents of a file and return new contents.
 
@@ -853,33 +870,23 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
     valid by calling :func:`assert_equivalent` and :func:`assert_stable` on it.
     `mode` is passed to :func:`format_str`.
     """
-    if mode.is_ipynb:
-        return format_ipynb_string(src_contents, mode=mode)
-
     if not src_contents.strip():
         raise NothingChanged
 
-    dst_contents = format_str(src_contents, mode=mode)
+    if mode.is_ipynb:
+        dst_contents = format_ipynb_string(src_contents, fast=fast, mode=mode)
+    else:
+        dst_contents = format_str(src_contents, mode=mode)
     if src_contents == dst_contents:
         raise NothingChanged
 
-    if not fast:
-        assert_equivalent(src_contents, dst_contents)
-
-        # Forced second pass to work around optional trailing commas (becoming
-        # forced trailing commas on pass 2) interacting differently with optional
-        # parentheses.  Admittedly ugly.
-        dst_contents_pass2 = format_str(dst_contents, mode=mode)
-        if dst_contents != dst_contents_pass2:
-            dst_contents = dst_contents_pass2
-            assert_equivalent(src_contents, dst_contents, pass_num=2)
-            assert_stable(src_contents, dst_contents, mode=mode)
-        # Note: no need to explicitly call `assert_stable` if `dst_contents` was
-        # the same as `dst_contents_pass2`.
+    if not fast and not mode.is_ipynb:
+        # ipynb files are checked cell-by-cell
+        check_src_and_dst_equivalent(src_contents, dst_contents, mode=mode)
     return dst_contents
 
 
-def format_cell(src: str, *, mode: Mode) -> str:
+def format_cell(src: str, *, fast: bool, mode: Mode) -> str:
     """Format code in given cell of Jupyter notebook.
 
     General idea is:
@@ -895,28 +902,31 @@ def format_cell(src: str, *, mode: Mode) -> str:
     could potentially be automagics or multi-line magics, which
     are currently not supported.
     """
-    dst, has_trailing_semicolon = remove_trailing_semicolon(src)
+    src_without_trailing_semicolon, has_trailing_semicolon = remove_trailing_semicolon(
+        src
+    )
     try:
-        dst, replacements = mask_cell(dst)
+        masked_src, replacements = mask_cell(src_without_trailing_semicolon)
     except SyntaxError:
         raise NothingChanged
-    dst = format_str(dst, mode=mode)
-    dst = unmask_cell(dst, replacements)
-    dst = put_trailing_semicolon_back(dst, has_trailing_semicolon)
+    masked_dst = format_str(masked_src, mode=mode)
+    check_src_and_dst_equivalent(masked_src, masked_dst, mode=mode)
+    dst_without_trailing_semicolon = unmask_cell(masked_dst, replacements)
+    dst = put_trailing_semicolon_back(
+        dst_without_trailing_semicolon, has_trailing_semicolon
+    )
     dst = dst.rstrip("\n")
     if dst == src:
         raise NothingChanged
     return dst
 
 
-def format_ipynb_string(src_contents: str, *, mode: Mode) -> FileContent:
+def format_ipynb_string(src_contents: str, *, fast: bool, mode: Mode) -> FileContent:
     """Format Jupyter notebook.
 
     Operate cell-by-cell, only on code cells, only for Python notebooks.
     If the ``.ipynb`` originally had a trailing newline, it'll be preseved.
     """
-    if not src_contents:
-        raise NothingChanged
     trailing_newline = src_contents[-1] == "\n"
     modified = False
     nb = json.loads(src_contents)
@@ -926,7 +936,7 @@ def format_ipynb_string(src_contents: str, *, mode: Mode) -> FileContent:
         if cell.get("cell_type", None) == "code":
             try:
                 src = "".join(cell["source"])
-                dst = format_cell(src, mode=mode)
+                dst = format_cell(src, fast=fast, mode=mode)
             except NothingChanged:
                 pass
             else:
@@ -936,9 +946,6 @@ def format_ipynb_string(src_contents: str, *, mode: Mode) -> FileContent:
         dst_contents = json.dumps(nb, indent=1, ensure_ascii=False)
         if trailing_newline:
             dst_contents = dst_contents + "\n"
-        if dst_contents == src_contents:  # pragma: nocover
-            # Defensive check
-            raise NothingChanged
         return dst_contents
     else:
         raise NothingChanged
