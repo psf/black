@@ -15,9 +15,10 @@ def test_noop() -> None:
         format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
-def test_trailing_semicolon() -> None:
+@pytest.mark.parametrize("fast", [True, False])
+def test_trailing_semicolon(fast: bool) -> None:
     src = 'foo = "a" ;'
-    result = format_cell(src, fast=True, mode=JUPYTER_MODE)
+    result = format_cell(src, fast=fast, mode=JUPYTER_MODE)
     expected = 'foo = "a";'
     assert result == expected
 

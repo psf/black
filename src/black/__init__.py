@@ -910,7 +910,8 @@ def format_cell(src: str, *, fast: bool, mode: Mode) -> str:
     except SyntaxError:
         raise NothingChanged
     masked_dst = format_str(masked_src, mode=mode)
-    check_src_and_dst_equivalent(masked_src, masked_dst, mode=mode)
+    if not fast:
+        check_src_and_dst_equivalent(masked_src, masked_dst, mode=mode)
     dst_without_trailing_semicolon = unmask_cell(masked_dst, replacements)
     dst = put_trailing_semicolon_back(
         dst_without_trailing_semicolon, has_trailing_semicolon
