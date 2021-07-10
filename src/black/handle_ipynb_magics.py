@@ -9,6 +9,7 @@ from typing import NamedTuple, List, Tuple
 import collections
 
 from typing import Optional
+from typing_extensions import TypeGuard
 
 
 class Replacement(NamedTuple):
@@ -227,7 +228,7 @@ def unmask_cell(src: str, replacements: List[Replacement]) -> str:
     return src
 
 
-def _is_ipython_magic(node: ast.expr) -> bool:
+def _is_ipython_magic(node: ast.expr) -> TypeGuard[ast.Attribute]:
     """Check if attribute is IPython magic.
 
     Note that the source of the abstract syntax tree
@@ -269,7 +270,6 @@ class CellMagicFinder(ast.NodeVisitor):
         if (
             isinstance(node.value, ast.Call)
             and _is_ipython_magic(node.value.func)
-            and isinstance(node.value.func, ast.Attribute)
             and node.value.func.attr == "run_cell_magic"
         ):
             args = []
@@ -323,7 +323,6 @@ class MagicFinder(ast.NodeVisitor):
         if (
             isinstance(node.value, ast.Call)
             and _is_ipython_magic(node.value.func)
-            and isinstance(node.value.func, ast.Attribute)
             and node.value.func.attr == "getoutput"
         ):
             args = []
@@ -355,7 +354,6 @@ class MagicFinder(ast.NodeVisitor):
         and we look for instances of any of the latter.
         """
         if isinstance(node.value, ast.Call) and _is_ipython_magic(node.value.func):
-            assert isinstance(node.value.func, ast.Attribute)  # help mypy
             args = []
             for arg in node.value.args:
                 assert isinstance(arg, ast.Str)
