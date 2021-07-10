@@ -29,7 +29,7 @@ SIMPLE_CASES = [
     "comment_after_escaped_newline",
     "composition",
     "composition_no_trailing_comma",
-    "conditional_expression_kwargs",
+    "conditional_expression",
     "docstring",
     "empty_lines",
     "expression",
