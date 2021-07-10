@@ -37,6 +37,29 @@ Most likely because it is ignored in `.gitignore` or excluded with configuration
 [file collection and discovery](usage_and_configuration/file_collection_and_discovery.md)
 for details.
 
+## Why is my Jupyter Notebook cell not formatted?
+
+_Black_ is timid about formatting Jupyter Notebooks. Cells containing any of the
+following will not be formatted:
+
+- automagics (e.g. `pip install black`)
+- multiline magics, e.g.:
+
+  ```python
+  %timeit f(1, \
+          2, \
+          3)
+  ```
+
+- code which `IPython`'s `TransformerManager` would transform magics into, e.g.:
+
+  ```python
+  get_ipython().system('ls')
+  ```
+
+- invalid syntax, as it can't be safely distinguished from automagics in the absense of
+  a running `IPython` kernel.
+
 ## Why are Flake8's E203 and W503 violated?
 
 Because they go against PEP 8. E203 falsely triggers on list
