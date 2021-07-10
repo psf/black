@@ -119,7 +119,7 @@ class BlackTestCase(BlackBaseTestCase):
         runner = BlackRunner()
         if ignore_config:
             args = ["--verbose", "--config", str(THIS_DIR / "empty.toml"), *args]
-        result = runner.invoke(black.main, args)
+        result = runner.invoke(black.main, args, catch_exceptions=False)
         assert result.stdout_bytes is not None
         assert result.stderr_bytes is not None
         self.assertEqual(
