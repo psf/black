@@ -328,6 +328,7 @@ def validate_regex(
         exists=True, file_okay=True, dir_okay=True, readable=True, allow_dash=True
     ),
     is_eager=True,
+    metavar="SRC ...",
 )
 @click.option(
     "--config",
