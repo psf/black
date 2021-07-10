@@ -53,6 +53,7 @@ from black.handle_ipynb_magics import (
     unmask_cell,
     remove_trailing_semicolon,
     put_trailing_semicolon_back,
+    TRANSFORMED_MAGICS,
 )
 
 
@@ -886,6 +887,25 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
     return dst_contents
 
 
+def validate_cell(src: str) -> None:
+    """Check that cell does not already contain TransformerManager transformations.
+
+    If a cell contains ``!ls``, then it'll be transformed to
+    ``get_ipython().system('ls')``. However, if the cell originally contained
+    ``get_ipython().system('ls')``, then it would get transformed in the same way:
+
+        >>> TransformerManager().transform_cell("get_ipython().system('ls')")
+        "get_ipython().system('ls')\n"
+        >>> TransformerManager().transform_cell("!ls")
+        "get_ipython().system('ls')\n"
+
+    Due to the impossibility of safely roundtripping in such situations, cells
+    containing transformed magics will be ignored.
+    """
+    if any(transformed_magic in src for transformed_magic in TRANSFORMED_MAGICS):
+        raise NothingChanged
+
+
 def format_cell(src: str, *, fast: bool, mode: Mode) -> str:
     """Format code in given cell of Jupyter notebook.
 
@@ -902,6 +922,7 @@ def format_cell(src: str, *, fast: bool, mode: Mode) -> str:
     could potentially be automagics or multi-line magics, which
     are currently not supported.
     """
+    validate_cell(src)
     src_without_trailing_semicolon, has_trailing_semicolon = remove_trailing_semicolon(
         src
     )

@@ -76,6 +76,12 @@ def test_set_input() -> None:
         format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
+def test_input_already_contains_transformed_magic() -> None:
+    src = '%time foo()\nget_ipython().run_cell_magic("time", "", "foo()\\n")'
+    with pytest.raises(NothingChanged):
+        format_cell(src, fast=True, mode=JUPYTER_MODE)
+
+
 def test_magic_noop() -> None:
     src = "ls = !ls"
     with pytest.raises(NothingChanged):

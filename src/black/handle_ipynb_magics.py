@@ -11,6 +11,15 @@ import collections
 from typing import Optional
 from typing_extensions import TypeGuard
 
+TRANSFORMED_MAGICS = frozenset(
+    (
+        "get_ipython().run_cell_magic",
+        "get_ipython().system",
+        "get_ipython().getoutput",
+        "get_ipython().run_line_magic",
+    )
+)
+
 
 class Replacement(NamedTuple):
     mask: str
