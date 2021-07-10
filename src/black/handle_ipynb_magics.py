@@ -1,11 +1,12 @@
 """Functions to process IPython magics with."""
+import dataclasses
 import ast
 import tokenize
 import io
 from typing import Dict
 
 import secrets
-from typing import NamedTuple, List, Tuple
+from typing import List, Tuple
 import collections
 
 from typing import Optional
@@ -21,7 +22,8 @@ TRANSFORMED_MAGICS = frozenset(
 )
 
 
-class Replacement(NamedTuple):
+@dataclasses.dataclass(frozen=True)
+class Replacement:
     mask: str
     src: str
 
@@ -176,11 +178,11 @@ def replace_cell_magics(src: str) -> Tuple[str, List[Replacement]]:
 
     cell_magic_finder = CellMagicFinder()
     cell_magic_finder.visit(tree)
-    if not cell_magic_finder.header:
+    if cell_magic_finder.cell_magic is None:
         return src, replacements
-    mask = get_token(src, cell_magic_finder.header)
-    replacements.append(Replacement(mask=mask, src=cell_magic_finder.header))
-    return f"{mask}\n{cell_magic_finder.body}", replacements
+    mask = get_token(src, cell_magic_finder.cell_magic.header)
+    replacements.append(Replacement(mask=mask, src=cell_magic_finder.cell_magic.header))
+    return f"{mask}\n{cell_magic_finder.cell_magic.body}", replacements
 
 
 def replace_magics(src: str) -> Tuple[str, List[Replacement]]:
@@ -207,11 +209,14 @@ def replace_magics(src: str) -> Tuple[str, List[Replacement]]:
     new_srcs = []
     for i, line in enumerate(src.splitlines(), start=1):
         if i in magic_finder.magics:
-            magics = magic_finder.magics[i]
-            if len(magics) != 1:  # pragma: nocover
+            offsets_and_magics = magic_finder.magics[i]
+            if len(offsets_and_magics) != 1:  # pragma: nocover
                 # defensive check
                 raise UnsupportedMagic
-            col_offset, magic = magics[0]
+            col_offset, magic = (
+                offsets_and_magics[0].col_offset,
+                offsets_and_magics[0].magic,
+            )
             mask = get_token(src, magic)
             replacements.append(Replacement(mask=mask, src=magic))
             line = line[:col_offset] + mask
@@ -252,6 +257,12 @@ def _is_ipython_magic(node: ast.expr) -> TypeGuard[ast.Attribute]:
     )
 
 
+@dataclasses.dataclass(frozen=True)
+class CellMagic:
+    header: str
+    body: str
+
+
 class CellMagicFinder(ast.NodeVisitor):
     """Find cell magics.
 
@@ -271,8 +282,7 @@ class CellMagicFinder(ast.NodeVisitor):
     """
 
     def __init__(self) -> None:
-        self.header: Optional[str] = None
-        self.body: Optional[str] = None
+        self.cell_magic: Optional[CellMagic] = None
 
     def visit_Expr(self, node: ast.Expr) -> None:
         """Find cell magic, extract header and body."""
@@ -288,9 +298,14 @@ class CellMagicFinder(ast.NodeVisitor):
             header = f"%%{args[0]}"
             if args[1]:
                 header += f" {args[1]}"
-            self.header = header
-            self.body = args[2]
+            self.cell_magic = CellMagic(header=header, body=args[2])
         self.generic_visit(node)
+
+
+@dataclasses.dataclass(frozen=True)
+class OffsetAndMagic:
+    col_offset: int
+    magic: str
 
 
 class MagicFinder(ast.NodeVisitor):
@@ -314,7 +329,7 @@ class MagicFinder(ast.NodeVisitor):
 
     def __init__(self) -> None:
         """Record where magics occur."""
-        self.magics: Dict[int, List[Tuple[int, str]]] = collections.defaultdict(list)
+        self.magics: Dict[int, List[OffsetAndMagic]] = collections.defaultdict(list)
 
     def visit_Assign(self, node: ast.Assign) -> None:
         """Look for system assign magics.
@@ -340,7 +355,9 @@ class MagicFinder(ast.NodeVisitor):
                 args.append(arg.s)
             assert args
             src = f"!{args[0]}"
-            self.magics[node.value.lineno].append((node.value.col_offset, src))
+            self.magics[node.value.lineno].append(
+                OffsetAndMagic(node.value.col_offset, src)
+            )
         self.generic_visit(node)
 
     def visit_Expr(self, node: ast.Expr) -> None:
@@ -385,7 +402,7 @@ class MagicFinder(ast.NodeVisitor):
             else:
                 raise UnsupportedMagic
             self.magics[node.value.lineno].append(
-                (
+                OffsetAndMagic(
                     node.value.col_offset,
                     src,
                 )
