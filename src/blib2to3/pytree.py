@@ -669,8 +669,11 @@ class NodePattern(BasePattern):
             newcontent = list(content)
             for i, item in enumerate(newcontent):
                 assert isinstance(item, BasePattern), (i, item)
-                if isinstance(item, WildcardPattern):
-                    self.wildcards = True
+                # I don't even think this code is used anywhere, but it does cause
+                # unreachable errors from mypy. This function's signature does look
+                # odd though *shrug*.
+                if isinstance(item, WildcardPattern):  # type: ignore[unreachable]
+                    self.wildcards = True  # type: ignore[unreachable]
         self.type = type
         self.content = newcontent
         self.name = name
