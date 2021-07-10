@@ -189,7 +189,7 @@ class PrimerLibTests(unittest.TestCase):
         with patch("black_primer.lib.git_checkout_or_rebase", return_false):
             with TemporaryDirectory() as td:
                 return_val = loop.run_until_complete(
-                    lib.process_queue(str(config_path), td, 2)
+                    lib.process_queue(str(config_path), Path(td), 2)
                 )
                 self.assertEqual(0, return_val)
 
@@ -210,7 +210,7 @@ class PrimerCLITests(unittest.TestCase):
             "no_diff": False,
         }
         with patch("black_primer.cli.lib.process_queue", return_zero):
-            return_val = loop.run_until_complete(cli.async_main(**args))
+            return_val = loop.run_until_complete(cli.async_main(**args))  # type: ignore
             self.assertEqual(0, return_val)
 
     def test_handle_debug(self) -> None:
