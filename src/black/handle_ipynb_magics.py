@@ -132,8 +132,12 @@ def get_token(src: str, magic: str) -> str:
     assert magic
     nbytes = max(len(magic) // 2 - 1, 1)
     token = secrets.token_hex(nbytes)
+    counter = 0
     while token in src:  # pragma: nocover
         token = secrets.token_hex(nbytes)
+        counter += 1
+        if counter > 100:
+            raise AssertionError()
     if len(token) + 2 < len(magic):
         token = f"{token}."
     return f'"{token}"'
@@ -272,9 +276,8 @@ class CellMagicFinder(ast.NodeVisitor):
             for arg in node.value.args:
                 assert isinstance(arg, ast.Str)
                 args.append(arg.s)
-            header: Optional[str] = f"%%{args[0]}"
+            header = f"%%{args[0]}"
             if args[1]:
-                assert header is not None
                 header += f" {args[1]}"
             self.header = header
             self.body = args[2]
