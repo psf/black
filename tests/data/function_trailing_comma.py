@@ -44,6 +44,14 @@ def with_trailing_comma_multiple_arguments_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 def trailing_comma_too_many_arguments_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(
     first_argument, second_argument, third_argument, fourth_argument, fifth_argument, sixth_argument
 ): pass
+def no_trailing_comma_with_annotation(
+    some_argument
+) -> "some really lonnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnng annotation":
+    pass
+def trailing_comma_with_annotation(
+    some_argument,
+) -> "some really lonnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnng annotation":
+    pass
 
 # output
 
@@ -178,4 +186,16 @@ def trailing_comma_too_many_arguments_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     fifth_argument,
     sixth_argument,
 ):
+    pass
+
+
+def no_trailing_comma_with_annotation(
+    some_argument
+) -> "some really lonnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnng annotation":
+    pass
+
+
+def trailing_comma_with_annotation(
+    some_argument,
+) -> "some really lonnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnng annotation":
     pass
