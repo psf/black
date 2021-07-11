@@ -26,8 +26,23 @@ def no_trailing_comma_multiple_arguments_short(a, b, c): pass
 def no_trailing_comma_one_argument_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(
     some_argument
 ): pass
-def no_trailing_comma_multiple_arguments_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(
+def no_trailing_comma_multiple_arguments_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(
     first_arg, second_arg
+): pass
+def no_trailing_comma_one_argument_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(some_argument): pass
+def no_trailing_comma_multiple_arguments_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(first_arg, second_arg): pass
+
+def with_trailing_comma_one_argument_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(
+    some_argument,
+): pass
+def with_trailing_comma_multiple_arguments_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(
+    first_arg, second_arg,
+): pass
+def with_trailing_comma_one_argument_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(some_argument,): pass
+def with_trailing_comma_multiple_arguments_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(first_arg, second_arg, ): pass
+
+def trailing_comma_too_many_arguments_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(
+    first_argument, second_argument, third_argument, fourth_argument, fifth_argument, sixth_argument
 ): pass
 
 # output
@@ -111,7 +126,56 @@ def no_trailing_comma_one_argument_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     pass
 
 
-def no_trailing_comma_multiple_arguments_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(
+def no_trailing_comma_multiple_arguments_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(
     first_arg, second_arg
+):
+    pass
+
+
+def no_trailing_comma_one_argument_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(
+    some_argument
+):
+    pass
+
+
+def no_trailing_comma_multiple_arguments_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(
+    first_arg, second_arg
+):
+    pass
+
+
+def with_trailing_comma_one_argument_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(
+    some_argument,
+):
+    pass
+
+
+def with_trailing_comma_multiple_arguments_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(
+    first_arg,
+    second_arg,
+):
+    pass
+
+
+def with_trailing_comma_one_argument_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(
+    some_argument,
+):
+    pass
+
+
+def with_trailing_comma_multiple_arguments_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(
+    first_arg,
+    second_arg,
+):
+    pass
+
+
+def trailing_comma_too_many_arguments_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(
+    first_argument,
+    second_argument,
+    third_argument,
+    fourth_argument,
+    fifth_argument,
+    sixth_argument,
 ):
     pass
