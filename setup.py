@@ -87,7 +87,7 @@ setup(
         "colorama": ["colorama>=0.4.3"],
         "python2": ["typed-ast>=1.4.2"],
         "uvloop": ["uvloop>=0.15.2"],
-        "jupyter": ["ipython>=7.8.0"],
+        "jupyter": ["ipython>=7.8.0", "tokenize-rt>=3.2.0"],
     },
     test_suite="tests.test_black",
     classifiers=[

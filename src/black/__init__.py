@@ -764,7 +764,10 @@ def format_file_in_place(
     except NothingChanged:
         return False
     except ModuleNotFoundError:
-        warnings.warn(f"Skipping '{src}' as IPython is not installed.\n")
+        warnings.warn(
+            f"Skipping '{src}' as Jupyter dependencies are not installed.\n"
+            "You can fix this by running ``pip install black[jupyter]``"
+        )
         return False
 
     if write_back == WriteBack.YES:
@@ -882,7 +885,7 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
         raise NothingChanged
 
     if not fast and not mode.is_ipynb:
-        # ipynb files are checked cell-by-cell
+        # Jupyter notebooks will already have been checked above.
         check_src_and_dst_equivalent(src_contents, dst_contents, mode=mode)
     return dst_contents
 

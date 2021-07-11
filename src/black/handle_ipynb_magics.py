@@ -1,8 +1,6 @@
 """Functions to process IPython magics with."""
 import dataclasses
 import ast
-import tokenize
-import io
 from typing import Dict
 
 import secrets
@@ -45,52 +43,61 @@ def remove_trailing_semicolon(src: str) -> Tuple[str, bool]:
         fig, ax = plt.subplots()
         ax.plot(x_data, y_data)  # plot data
 
-    Mirrors the logic in `quiet` from `IPython.core.displayhook`.
+    Mirrors the logic in `quiet` from `IPython.core.displayhook`, but uses
+    ``tokenize_rt`` so that round-tripping works fine.
     """
-    tokens = list(tokenize.generate_tokens(io.StringIO(src).readline))
+    from tokenize_rt import src_to_tokens, tokens_to_src, reversed_enumerate
+
+    tokens = src_to_tokens(src)
     trailing_semicolon = False
-    for idx, token in enumerate(reversed(tokens), start=1):
-        if token[0] in (
-            tokenize.ENDMARKER,
-            tokenize.NL,
-            tokenize.NEWLINE,
-            tokenize.COMMENT,
-            tokenize.DEDENT,
-        ):
+    for idx, token in reversed_enumerate(tokens):
+        if token.name in {
+            "ENDMARKER",
+            "NL",
+            "NEWLINE",
+            "COMMENT",
+            "DEDENT",
+            "UNIMPORTANT_WS",
+            "ESCAPED_NL",
+        }:
             continue
-        if token[0] == tokenize.OP and token[1] == ";":
-            # We're iterating backwards, so `-idx`.
-            del tokens[-idx]
+        if token.name == "OP" and token.src == ";":
+            del tokens[idx]
             trailing_semicolon = True
         break
     if not trailing_semicolon:
         return src, False
-    return tokenize.untokenize(tokens), True
+    return tokens_to_src(tokens), True
 
 
 def put_trailing_semicolon_back(src: str, has_trailing_semicolon: bool) -> str:
     """Put trailing semicolon back if cell originally had it.
 
-    Mirrors the logic in `quiet` from `IPython.core.displayhook`.
+    Mirrors the logic in `quiet` from `IPython.core.displayhook`, but uses
+    ``tokenize_rt`` so that round-tripping works fine.
     """
     if not has_trailing_semicolon:
         return src
-    tokens = list(tokenize.generate_tokens(io.StringIO(src).readline))
-    for idx, token in enumerate(reversed(tokens), start=1):
-        if token[0] in (
-            tokenize.ENDMARKER,
-            tokenize.NL,
-            tokenize.NEWLINE,
-            tokenize.COMMENT,
-            tokenize.DEDENT,
-        ):
+    from tokenize_rt import src_to_tokens, tokens_to_src, reversed_enumerate
+
+    tokens = src_to_tokens(src)
+    for idx, token in reversed_enumerate(tokens):
+        if token.name in {
+            "ENDMARKER",
+            "NL",
+            "NEWLINE",
+            "COMMENT",
+            "DEDENT",
+            "UNIMPORTANT_WS",
+            "ESCAPED_NL",
+        }:
             continue
         # We're iterating backwards, so `-idx`.
-        tokens[-idx] = token._replace(string=token.string + ";")
+        tokens[idx] = token._replace(src=token.src + ";")
         break
     else:  # pragma: nocover
         raise AssertionError("Unreachable code")
-    return str(tokenize.untokenize(tokens))
+    return str(tokens_to_src(tokens))
 
 
 def mask_cell(src: str) -> Tuple[str, List[Replacement]]:
@@ -154,7 +161,7 @@ def get_token(src: str, magic: str) -> str:
             raise AssertionError(
                 "INTERNAL ERROR: Black was not able to replace IPython magic. "
                 "Please report a bug on https://github.com/psf/black/issues.  "
-                f"This invalid magic might be helpful: {magic}"
+                f"The magic might be helpful: {magic}"
             ) from None
     if len(token) + 2 < len(magic):
         token = f"{token}."
@@ -408,9 +415,6 @@ class MagicFinder(ast.NodeVisitor):
             else:
                 raise UnsupportedMagic
             self.magics[node.value.lineno].append(
-                OffsetAndMagic(
-                    node.value.col_offset,
-                    src,
-                )
+                OffsetAndMagic(node.value.col_offset, src)
             )
         self.generic_visit(node)

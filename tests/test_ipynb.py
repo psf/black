@@ -30,6 +30,12 @@ def test_trailing_semicolon_with_comment() -> None:
     assert result == expected
 
 
+def test_trailing_semicolon_with_comment_on_next_line() -> None:
+    src = "import black;\n\n# this is a comment"
+    with pytest.raises(NothingChanged):
+        format_cell(src, fast=True, mode=JUPYTER_MODE)
+
+
 def test_trailing_semicolon_indented() -> None:
     src = "with foo:\n    plot_bar();"
     with pytest.raises(NothingChanged):
