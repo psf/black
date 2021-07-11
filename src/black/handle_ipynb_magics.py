@@ -55,6 +55,7 @@ def remove_trailing_semicolon(src: str) -> Tuple[str, bool]:
             tokenize.NL,
             tokenize.NEWLINE,
             tokenize.COMMENT,
+            tokenize.DEDENT,
         ):
             continue
         if token[0] == tokenize.OP and token[1] == ";":
@@ -81,6 +82,7 @@ def put_trailing_semicolon_back(src: str, has_trailing_semicolon: bool) -> str:
             tokenize.NL,
             tokenize.NEWLINE,
             tokenize.COMMENT,
+            tokenize.DEDENT,
         ):
             continue
         # We're iterating backwards, so `-idx`.
