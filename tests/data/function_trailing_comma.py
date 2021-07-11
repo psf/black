@@ -53,6 +53,13 @@ def trailing_comma_with_annotation(
 ) -> "some really lonnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnng annotation":
     pass
 
+def insert_trailing_comma_with_one_argument_and_comment_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(
+    some_argument  # This is a comment
+): pass
+def insert_no_trailing_comma_with_multiple_arguments_and_comment_xxxxxxxxxxxxxxxxxxxxxxxxxxxx(
+    first_argument, second_argument  # This is a comment
+): pass
+
 # output
 
 def f(
@@ -198,4 +205,16 @@ def no_trailing_comma_with_annotation(
 def trailing_comma_with_annotation(
     some_argument,
 ) -> "some really lonnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnng annotation":
+    pass
+
+
+def insert_trailing_comma_with_one_argument_and_comment_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(
+    some_argument,  # This is a comment
+):
+    pass
+
+
+def insert_no_trailing_comma_with_multiple_arguments_and_comment_xxxxxxxxxxxxxxxxxxxxxxxxxxxx(
+    first_argument, second_argument  # This is a comment
+):
     pass

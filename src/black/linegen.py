@@ -569,9 +569,17 @@ def bracket_split_build_line(
             # Since body is a new indent level, remove spurious leading whitespace.
             normalize_prefix(leaves[0], inside_brackets=True)
 
-            # Ensure a trailing comma for imports, but
+            # Ensure a trailing comma for imports AND
+            # standalone function arguments if followed by a comment, but
             # be careful not to add one after any comments or within type annotations.
-            if original.is_import:
+            insert_comma_after_single_func_arg = (
+                original.is_def
+                and opening_bracket.value == "("
+                and not any(leaf.type == token.COMMA for leaf in leaves)
+                and original.comments_after(leaves[-1])
+            )
+
+            if original.is_import or insert_comma_after_single_func_arg:
                 for i in range(len(leaves) - 1, -1, -1):
                     if leaves[i].type == STANDALONE_COMMENT:
                         continue

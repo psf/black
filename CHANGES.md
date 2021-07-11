@@ -7,7 +7,8 @@
 - Add primer support and test for code piped into black via STDIN (#2315)
 - Fix internal error when `FORCE_OPTIONAL_PARENTHESES` feature is enabled (#2332)
 - Accept empty stdin (#2346)
-- Do not add trailing comma in one argument functions definitions (#2368)
+- Do not add trailing comma in one argument functions definitions, unless argument is
+  followed by a comment (#2368)
 
 ## 21.6b0
 
