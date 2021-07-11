@@ -21,6 +21,15 @@ def xxxxxxxxxxxxxxxxxxxxxxxxxxxx() -> Set[
 ]:
     json = {"k": {"k2": {"k3": [1,]}}}
 
+def no_trailing_comma_one_argument_short(arg): pass
+def no_trailing_comma_multiple_arguments_short(a, b, c): pass
+def no_trailing_comma_one_argument_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(
+    some_argument
+): pass
+def no_trailing_comma_multiple_arguments_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(
+    first_arg, second_arg
+): pass
+
 # output
 
 def f(
@@ -86,3 +95,23 @@ def xxxxxxxxxxxxxxxxxxxxxxxxxxxx() -> Set[
             }
         }
     }
+
+
+def no_trailing_comma_one_argument_short(arg):
+    pass
+
+
+def no_trailing_comma_multiple_arguments_short(a, b, c):
+    pass
+
+
+def no_trailing_comma_one_argument_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(
+    some_argument
+):
+    pass
+
+
+def no_trailing_comma_multiple_arguments_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx(
+    first_arg, second_arg
+):
+    pass
