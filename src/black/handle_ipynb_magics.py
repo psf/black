@@ -149,7 +149,11 @@ def get_token(src: str, magic: str) -> str:
         token = secrets.token_hex(nbytes)
         counter += 1
         if counter > 100:
-            raise AssertionError()
+            raise AssertionError(
+                "INTERNAL ERROR: Black was not able to replace IPython magic. "
+                "Please report a bug on https://github.com/psf/black/issues.  "
+                f"This invalid magic might be helpful: {magic}"
+            ) from None
     if len(token) + 2 < len(magic):
         token = f"{token}."
     return f'"{token}"'
