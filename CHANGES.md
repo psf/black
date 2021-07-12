@@ -4,6 +4,8 @@
 
 ### _Black_
 
+- Configuration files using TOML features higher than spec v0.5.0 are now supported
+  (#2301)
 - Add primer support and test for code piped into black via STDIN (#2315)
 - Fix internal error when `FORCE_OPTIONAL_PARENTHESES` feature is enabled (#2332)
 - Accept empty stdin (#2346)

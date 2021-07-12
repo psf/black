@@ -3,7 +3,7 @@
 You can use _Black_ within a GitHub Actions workflow without setting your own Python
 environment. Great for enforcing that your code matches the _Black_ code style.
 
-## Compatiblity
+## Compatibility
 
 This action is known to support all GitHub-hosted runner OSes. In addition, only
 published versions of _Black_ are supported (i.e. whatever is available on PyPI).
