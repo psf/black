@@ -18,6 +18,17 @@ TRANSFORMED_MAGICS = frozenset(
         "get_ipython().run_line_magic",
     )
 )
+TOKENS_TO_IGNORE = frozenset(
+    (
+        "ENDMARKER",
+        "NL",
+        "NEWLINE",
+        "COMMENT",
+        "DEDENT",
+        "UNIMPORTANT_WS",
+        "ESCAPED_NL",
+    )
+)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -46,20 +57,16 @@ def remove_trailing_semicolon(src: str) -> Tuple[str, bool]:
     Mirrors the logic in `quiet` from `IPython.core.displayhook`, but uses
     ``tokenize_rt`` so that round-tripping works fine.
     """
-    from tokenize_rt import src_to_tokens, tokens_to_src, reversed_enumerate
+    from tokenize_rt import (
+        src_to_tokens,
+        tokens_to_src,
+        reversed_enumerate,
+    )
 
     tokens = src_to_tokens(src)
     trailing_semicolon = False
     for idx, token in reversed_enumerate(tokens):
-        if token.name in {
-            "ENDMARKER",
-            "NL",
-            "NEWLINE",
-            "COMMENT",
-            "DEDENT",
-            "UNIMPORTANT_WS",
-            "ESCAPED_NL",
-        }:
+        if token.name in TOKENS_TO_IGNORE:
             continue
         if token.name == "OP" and token.src == ";":
             del tokens[idx]
@@ -82,21 +89,15 @@ def put_trailing_semicolon_back(src: str, has_trailing_semicolon: bool) -> str:
 
     tokens = src_to_tokens(src)
     for idx, token in reversed_enumerate(tokens):
-        if token.name in {
-            "ENDMARKER",
-            "NL",
-            "NEWLINE",
-            "COMMENT",
-            "DEDENT",
-            "UNIMPORTANT_WS",
-            "ESCAPED_NL",
-        }:
+        if token.name in TOKENS_TO_IGNORE:
             continue
-        # We're iterating backwards, so `-idx`.
         tokens[idx] = token._replace(src=token.src + ";")
         break
     else:  # pragma: nocover
-        raise AssertionError("Unreachable code")
+        raise AssertionError(
+            "INTERNAL ERROR: Was not able to reinstate trailing semicolon. "
+            "Please report a bug on https://github.com/psf/black/issues.  "
+        ) from None
     return str(tokens_to_src(tokens))
 
 
