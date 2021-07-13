@@ -3,7 +3,7 @@ Parse Python code and perform AST validation.
 """
 import ast
 import sys
-from typing import Iterable, Iterator, List, Set, Union
+from typing import Iterable, Iterator, List, Set, Union, Tuple
 
 # lib2to3 fork
 from blib2to3.pytree import Node, Leaf
@@ -106,28 +106,36 @@ def lib2to3_unparse(node: Node) -> str:
     return code
 
 
-def parse_ast(src: str) -> Union[ast.AST, ast3.AST, ast27.AST]:
+def parse_single_version(
+    src: str, version: Tuple[int, int]
+) -> Union[ast.AST, ast3.AST, ast27.AST]:
     filename = "<unknown>"
-    if sys.version_info >= (3, 8):
-        # TODO: support Python 4+ ;)
-        for minor_version in range(sys.version_info[1], 4, -1):
-            try:
-                return ast.parse(src, filename, feature_version=(3, minor_version))
-            except SyntaxError:
-                continue
-    else:
-        for feature_version in (7, 6):
-            try:
-                return ast3.parse(src, filename, feature_version=feature_version)
-            except SyntaxError:
-                continue
-    if ast27.__name__ == "ast":
-        raise SyntaxError(
-            "The requested source code has invalid Python 3 syntax.\n"
-            "If you are trying to format Python 2 files please reinstall Black"
-            " with the 'python2' extra: `python3 -m pip install black[python2]`."
-        )
-    return ast27.parse(src)
+    # typed_ast is needed because of feature version limitations in the builtin ast
+    if sys.version_info >= (3, 8) and version >= (3,):
+        return ast.parse(src, filename, feature_version=version)
+    elif version >= (3,):
+        return ast3.parse(src, filename, feature_version=version[1])
+    elif version == (2, 7):
+        return ast27.parse(src)
+    raise AssertionError("INTERNAL ERROR: Tried parsing unsupported Python version!")
+
+
+def parse_ast(src: str) -> Union[ast.AST, ast3.AST, ast27.AST]:
+    # TODO: support Python 4+ ;)
+    versions = [(3, minor) for minor in range(3, sys.version_info[1] + 1)]
+
+    if ast27.__name__ != "ast":
+        versions.append((2, 7))
+
+    first_error = ""
+    for version in sorted(versions, reverse=True):
+        try:
+            return parse_single_version(src, version)
+        except SyntaxError as e:
+            if not first_error:
+                first_error = str(e)
+
+    raise SyntaxError(first_error)
 
 
 def stringify_ast(

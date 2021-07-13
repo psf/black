@@ -20,6 +20,7 @@
 - Fixed option usage when using the `--code` flag (#2259)
 - Do not call `uvloop.install()` when _Black_ is used as a library (#2303)
 - Added `--required-version` option to require a specific version to be running (#2300)
+- Provide a more useful error when parsing fails during AST safety checks (#2304)
 - Fix incorrect custom breakpoint indices when string group contains fake f-strings
   (#2311)
 - Fix regression where `R` prefixes would be lowercased for docstrings (#2285)

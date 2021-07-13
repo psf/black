@@ -451,38 +451,6 @@ class BlackTestCase(BlackBaseTestCase):
             )
             self.assertEqual(expected, actual, msg)
 
-    @pytest.mark.no_python2
-    def test_python2_should_fail_without_optional_install(self) -> None:
-        if sys.version_info < (3, 8):
-            self.skipTest(
-                "Python 3.6 and 3.7 will install typed-ast to work and as such will be"
-                " able to parse Python 2 syntax without explicitly specifying the"
-                " python2 extra"
-            )
-
-        source = "x = 1234l"
-        tmp_file = Path(black.dump_to_file(source))
-        try:
-            runner = BlackRunner()
-            result = runner.invoke(black.main, [str(tmp_file)])
-            self.assertEqual(result.exit_code, 123)
-        finally:
-            os.unlink(tmp_file)
-        assert result.stderr_bytes is not None
-        actual = (
-            result.stderr_bytes.decode()
-            .replace("\n", "")
-            .replace("\\n", "")
-            .replace("\\r", "")
-            .replace("\r", "")
-        )
-        msg = (
-            "The requested source code has invalid Python 3 syntax."
-            "If you are trying to format Python 2 files please reinstall Black"
-            " with the 'python2' extra: `python3 -m pip install black[python2]`."
-        )
-        self.assertIn(msg, actual)
-
     @pytest.mark.python2
     @patch("black.dump_to_file", dump_to_stderr)
     def test_python2_print_function(self) -> None:
