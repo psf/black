@@ -277,6 +277,7 @@ class CellMagic:
     body: str
 
 
+@dataclasses.dataclass
 class CellMagicFinder(ast.NodeVisitor):
     """Find cell magics.
 
@@ -295,8 +296,7 @@ class CellMagicFinder(ast.NodeVisitor):
     and we look for instances of the latter.
     """
 
-    def __init__(self) -> None:
-        self.cell_magic: Optional[CellMagic] = None
+    cell_magic: Optional[CellMagic] = None
 
     def visit_Expr(self, node: ast.Expr) -> None:
         """Find cell magic, extract header and body."""
@@ -322,6 +322,7 @@ class OffsetAndMagic:
     magic: str
 
 
+@dataclasses.dataclass
 class MagicFinder(ast.NodeVisitor):
     """Visit cell to look for get_ipython calls.
 
@@ -341,9 +342,9 @@ class MagicFinder(ast.NodeVisitor):
     types of magics).
     """
 
-    def __init__(self) -> None:
-        """Record where magics occur."""
-        self.magics: Dict[int, List[OffsetAndMagic]] = collections.defaultdict(list)
+    magics: Dict[int, List[OffsetAndMagic]] = dataclasses.field(
+        default_factory=lambda: collections.defaultdict(list)
+    )
 
     def visit_Assign(self, node: ast.Assign) -> None:
         """Look for system assign magics.
