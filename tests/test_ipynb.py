@@ -151,6 +151,45 @@ def test_empty_cell() -> None:
         format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
+def test_entire_notebook_empty_metadata() -> None:
+    with open(
+        os.path.join("tests", "data", "notebook_empty_metadata.ipynb"), "rb"
+    ) as fd:
+        content_bytes = fd.read()
+    content = content_bytes.decode()
+    result = format_file_contents(content, fast=True, mode=JUPYTER_MODE)
+    expected = (
+        "{\n"
+        ' "cells": [\n'
+        "  {\n"
+        '   "cell_type": "code",\n'
+        '   "execution_count": null,\n'
+        '   "metadata": {\n'
+        '    "tags": []\n'
+        "   },\n"
+        '   "outputs": [],\n'
+        '   "source": [\n'
+        '    "%%time\\n",\n'
+        '    "\\n",\n'
+        '    "print(\\"foo\\")"\n'
+        "   ]\n"
+        "  },\n"
+        "  {\n"
+        '   "cell_type": "code",\n'
+        '   "execution_count": null,\n'
+        '   "metadata": {},\n'
+        '   "outputs": [],\n'
+        '   "source": []\n'
+        "  }\n"
+        " ],\n"
+        ' "metadata": {},\n'
+        ' "nbformat": 4,\n'
+        ' "nbformat_minor": 4\n'
+        "}\n"
+    )
+    assert result == expected
+
+
 def test_entire_notebook_trailing_newline() -> None:
     with open(
         os.path.join("tests", "data", "notebook_trailing_newline.ipynb"), "rb"

@@ -20,6 +20,7 @@ from typing import (
     Generator,
     Iterator,
     List,
+    MutableMapping,
     Optional,
     Pattern,
     Set,
@@ -891,7 +892,7 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
     return dst_contents
 
 
-def validate_cell(src: str) -> None:
+def _validate_cell(src: str) -> None:
     """Check that cell does not already contain TransformerManager transformations.
 
     If a cell contains ``!ls``, then it'll be transformed to
@@ -926,7 +927,7 @@ def format_cell(src: str, *, fast: bool, mode: Mode) -> str:
     could potentially be automagics or multi-line magics, which
     are currently not supported.
     """
-    validate_cell(src)
+    _validate_cell(src)
     src_without_trailing_semicolon, has_trailing_semicolon = remove_trailing_semicolon(
         src
     )
@@ -947,6 +948,18 @@ def format_cell(src: str, *, fast: bool, mode: Mode) -> str:
     return dst
 
 
+def validate_metadata(nb: MutableMapping[str, Any]) -> None:
+    """If notebook is marked as non-Python, don't format it.
+
+    All notebook metadata fields are optional, see
+    https://nbformat.readthedocs.io/en/latest/format_description.html. So
+    if a notebook has empty metadata, we will try to parse it anyway.
+    """
+    language = nb.get("metadata", {}).get("language_info", {}).get("name", None)
+    if language is not None and language != "python":
+        raise NothingChanged
+
+
 def format_ipynb_string(src_contents: str, *, fast: bool, mode: Mode) -> FileContent:
     """Format Jupyter notebook.
 
@@ -956,8 +969,7 @@ def format_ipynb_string(src_contents: str, *, fast: bool, mode: Mode) -> FileCon
     trailing_newline = src_contents[-1] == "\n"
     modified = False
     nb = json.loads(src_contents)
-    if nb.get("metadata", {}).get("language_info", {}).get("name", None) != "python":
-        raise NothingChanged
+    validate_metadata(nb)
     for cell in nb["cells"]:
         if cell.get("cell_type", None) == "code":
             try:
