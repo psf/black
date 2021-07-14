@@ -892,7 +892,7 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
     return dst_contents
 
 
-def _validate_cell(src: str) -> None:
+def validate_cell(src: str) -> None:
     """Check that cell does not already contain TransformerManager transformations.
 
     If a cell contains ``!ls``, then it'll be transformed to
@@ -927,7 +927,7 @@ def format_cell(src: str, *, fast: bool, mode: Mode) -> str:
     could potentially be automagics or multi-line magics, which
     are currently not supported.
     """
-    _validate_cell(src)
+    validate_cell(src)
     src_without_trailing_semicolon, has_trailing_semicolon = remove_trailing_semicolon(
         src
     )
