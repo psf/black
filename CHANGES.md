@@ -1,5 +1,9 @@
 # Change Log
 
+## Unreleased
+
+- Moved from `appdirs` dependency to `platformdirs` (#2375)
+
 ## 21.7b0
 
 ### _Black_
