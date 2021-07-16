@@ -27,7 +27,7 @@ black = {editable = true, extras = ["d"], path = "."}
 [packages]
 aiohttp = ">=3.6.0"
 aiohttp-cors = ">=0.4.0"
-appdirs = "*"
+platformdirs= ">=2"
 click = ">=8.0.0"
 mypy_extensions = ">=0.4.3"
 pathspec = ">=0.8.1"
