@@ -41,6 +41,11 @@
 - Fix handling of named escapes (`\N{...}`) when `--experimental-string-processing` is
   used (#2319)
 
+### Integrations
+
+- The official Black action now supports choosing what version to use, and supports the
+  major 3 OSes. (#1940)
+
 ## 21.5b2
 
 ### _Black_
@@ -59,11 +64,6 @@
 
 - Add a lower bound for the `aiohttp-cors` dependency. Only 0.4.0 or higher is
   supported. (#2231)
-
-### Integrations
-
-- The official Black action now supports choosing what version to use, and supports the
-  major 3 OSes. (#1940)
 
 ### Packaging
 
