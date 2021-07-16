@@ -40,5 +40,14 @@ jobs:
           push: true
           tags: pyfound/black:latest,pyfound/black:${{ env.GIT_TAG }}
 
+      - name: Build and push latest_release tag
+        if: ${{ github.event_name == 'release' && github.event.action == 'created' }}
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: pyfound/black:latest_release
+
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
