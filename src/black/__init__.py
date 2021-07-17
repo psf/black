@@ -1,4 +1,5 @@
 import asyncio
+from functools import lru_cache
 import warnings
 import json
 from concurrent.futures import Executor, ThreadPoolExecutor, ProcessPoolExecutor
@@ -524,6 +525,9 @@ def get_sources(
             if is_stdin:
                 p = Path(f"{STDIN_PLACEHOLDER}{str(p)}")
 
+            if p.suffix == ".ipynb" and not jupyter_dependencies_are_installed():
+                continue
+
             sources.add(p)
         elif p.is_dir():
             sources.update(
@@ -740,6 +744,21 @@ async def schedule_formatting(
         write_cache(cache, sources_to_cache, mode)
 
 
+@lru_cache()
+def jupyter_dependencies_are_installed() -> bool:
+    try:
+        import IPython  # noqa:F401
+        import tokenize_rt  # noqa:F401
+    except ModuleNotFoundError:
+        warnings.warn(
+            "Skipping .ipynb files as Jupyter dependencies are not installed.\n"
+            "You can fix this by running ``pip install black[jupyter]``"
+        )
+        return False
+    else:
+        return True
+
+
 def format_file_in_place(
     src: Path,
     fast: bool,
@@ -764,12 +783,6 @@ def format_file_in_place(
     try:
         dst_contents = format_file_contents(src_contents, fast=fast, mode=mode)
     except NothingChanged:
-        return False
-    except ModuleNotFoundError:
-        warnings.warn(
-            f"Skipping '{src}' as Jupyter dependencies are not installed.\n"
-            "You can fix this by running ``pip install black[jupyter]``"
-        )
         return False
 
     if write_back == WriteBack.YES:
