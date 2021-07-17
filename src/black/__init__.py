@@ -863,9 +863,15 @@ def format_stdin_to_stdout(
         f.detach()
 
 
-def check_src_and_dst_equivalent(
+def check_stability_and_equivalence(
     src_contents: str, dst_contents: str, *, mode: Mode
 ) -> None:
+    """Perform stability and equivalence checks.
+
+    Raise AssertionError if source and destination contents are not
+    equivalent, or if a second pass of the formatter would format the
+    content differently.
+    """
     assert_equivalent(src_contents, dst_contents)
 
     # Forced second pass to work around optional trailing commas (becoming
@@ -899,7 +905,7 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
 
     if not fast and not mode.is_ipynb:
         # Jupyter notebooks will already have been checked above.
-        check_src_and_dst_equivalent(src_contents, dst_contents, mode=mode)
+        check_stability_and_equivalence(src_contents, dst_contents, mode=mode)
     return dst_contents
 
 
@@ -948,7 +954,7 @@ def format_cell(src: str, *, fast: bool, mode: Mode) -> str:
         raise NothingChanged
     masked_dst = format_str(masked_src, mode=mode)
     if not fast:
-        check_src_and_dst_equivalent(masked_src, masked_dst, mode=mode)
+        check_stability_and_equivalence(masked_src, masked_dst, mode=mode)
     dst_without_trailing_semicolon = unmask_cell(masked_dst, replacements)
     dst = put_trailing_semicolon_back(
         dst_without_trailing_semicolon, has_trailing_semicolon
