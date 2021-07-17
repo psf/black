@@ -1,7 +1,7 @@
 import os
 import unittest
 from pathlib import Path
-from typing import Iterable, List, Tuple, Any
+from typing import Iterator, List, Tuple, Any
 from contextlib import contextmanager
 from functools import partial
 
@@ -76,7 +76,7 @@ def read_data_from_file(file_name: Path) -> Tuple[str, str]:
 
 
 @contextmanager
-def change_directory(path: Path) -> Iterable[None]:
+def change_directory(path: Path) -> Iterator[None]:
     """Context manager to temporarily chdir to a different directory."""
     previous_dir = os.getcwd()
     try:
