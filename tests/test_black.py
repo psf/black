@@ -44,6 +44,7 @@ from pathspec import PathSpec
 # Import other test classes
 from tests.util import (
     THIS_DIR,
+    change_directory,
     read_data,
     DETERMINISTIC_HEADER,
     BlackBaseTestCase,
@@ -2009,17 +2010,12 @@ class BlackTestCase(BlackBaseTestCase):
             return
 
         # https://bugs.python.org/issue33660
-
-        old_cwd = Path.cwd()
-        try:
-            root = Path("/")
-            os.chdir(str(root))
+        root = Path("/")
+        with change_directory(root):
             path = Path("workspace") / "project"
             report = black.Report(verbose=True)
             normalized_path = black.normalize_path_maybe_ignore(path, root, report)
             self.assertEqual(normalized_path, "workspace/project")
-        finally:
-            os.chdir(str(old_cwd))
 
     def test_newline_comment_interaction(self) -> None:
         source = "class A:\\\r\n# type: ignore\n pass\n"
@@ -2170,10 +2166,6 @@ class BlackTestCase(BlackBaseTestCase):
         Test that the code option finds the pyproject.toml in the current directory.
         """
         with patch.object(black, "parse_pyproject_toml", return_value={}) as parse:
-            # Make sure we are in the project root with the pyproject file
-            if not Path("tests").exists():
-                os.chdir("..")
-
             args = ["--code", "print"]
             CliRunner().invoke(black.main, args)
 
@@ -2192,22 +2184,19 @@ class BlackTestCase(BlackBaseTestCase):
         Test that the code option finds the pyproject.toml in the parent directory.
         """
         with patch.object(black, "parse_pyproject_toml", return_value={}) as parse:
-            # Make sure we are in the tests directory
-            if Path("tests").exists():
-                os.chdir("tests")
+            with change_directory(Path("tests")):
+                args = ["--code", "print"]
+                CliRunner().invoke(black.main, args)
 
-            args = ["--code", "print"]
-            CliRunner().invoke(black.main, args)
+                pyproject_path = Path(Path().cwd().parent, "pyproject.toml").resolve()
+                assert (
+                    len(parse.mock_calls) >= 1
+                ), "Expected config parse to be called with the current directory."
 
-            pyproject_path = Path(Path().cwd().parent, "pyproject.toml").resolve()
-            assert (
-                len(parse.mock_calls) >= 1
-            ), "Expected config parse to be called with the current directory."
-
-            _, call_args, _ = parse.mock_calls[0]
-            assert (
-                call_args[0].lower() == str(pyproject_path).lower()
-            ), "Incorrect config loaded."
+                _, call_args, _ = parse.mock_calls[0]
+                assert (
+                    call_args[0].lower() == str(pyproject_path).lower()
+                ), "Incorrect config loaded."
 
 
 with open(black.__file__, "r", encoding="utf-8") as _bf:
