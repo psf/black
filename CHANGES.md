@@ -4,12 +4,33 @@
 
 ### _Black_
 
+- Add support for formatting Jupyter Notebook files (#2357)
+- Move from `appdirs` dependency to `platformdirs` (#2375)
+
+## 21.7b0
+
+### _Black_
+
 - Configuration files using TOML features higher than spec v0.5.0 are now supported
   (#2301)
 - Add primer support and test for code piped into black via STDIN (#2315)
 - Fix internal error when `FORCE_OPTIONAL_PARENTHESES` feature is enabled (#2332)
 - Accept empty stdin (#2346)
-- Add support for Jupyter Notebook (#2357)
+- Provide a more useful error when parsing fails during AST safety checks (#2304)
+
+### Docker
+
+- Add new `latest_release` tag automation to follow latest black release on docker
+  images (#2374)
+
+### Integrations
+
+- The vim plugin now searches upwards from the directory containing the current buffer
+  instead of the current working directory for pyproject.toml. (#1871)
+- The vim plugin now reads the correct string normalization option in pyproject.toml
+  (#1869)
+- The vim plugin no longer crashes Black when there's boolean values in pyproject.toml
+  (#1869)
 
 ## 21.6b0
 
@@ -21,7 +42,6 @@
 - Fixed option usage when using the `--code` flag (#2259)
 - Do not call `uvloop.install()` when _Black_ is used as a library (#2303)
 - Added `--required-version` option to require a specific version to be running (#2300)
-- Provide a more useful error when parsing fails during AST safety checks (#2304)
 - Fix incorrect custom breakpoint indices when string group contains fake f-strings
   (#2311)
 - Fix regression where `R` prefixes would be lowercased for docstrings (#2285)
@@ -30,15 +50,8 @@
 
 ### Integrations
 
-- The vim plugin now searches upwards from the directory containing the current buffer
-  instead of the current working directory for pyproject.toml. (#1871)
-
-### Integrations
-
-- The vim plugin now reads the correct string normalization option in pyproject.toml
-  (#1869)
-- The vim plugin no longer crashes Black when there's boolean values in pyproject.toml
-  (#1869)
+- The official Black action now supports choosing what version to use, and supports the
+  major 3 OSes. (#1940)
 
 ## 21.5b2
 
@@ -58,11 +71,6 @@
 
 - Add a lower bound for the `aiohttp-cors` dependency. Only 0.4.0 or higher is
   supported. (#2231)
-
-### Integrations
-
-- The official Black action now supports choosing what version to use, and supports the
-  major 3 OSes. (#1940)
 
 ### Packaging
 
