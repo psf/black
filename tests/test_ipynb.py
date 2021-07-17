@@ -1,6 +1,6 @@
 import pathlib
 from click.testing import CliRunner
-from black import main
+from black import main, jupyter_dependencies_are_installed
 from black import (
     NothingChanged,
     format_cell,
@@ -369,6 +369,7 @@ def test_cache_isnt_written_if_no_jupyter_deps_single(
     monkeypatch: MonkeyPatch, tmpdir: tmpdir
 ) -> None:
     # Check that the cache isn't written to if Jupyter dependencies aren't installed.
+    jupyter_dependencies_are_installed.cache_clear()
     nb = os.path.join("tests", "data", "notebook_trailing_newline.ipynb")
     tmp_nb = tmpdir / "notebook.ipynb"
     with open(nb) as src, open(tmp_nb, "w") as dst:
@@ -378,6 +379,7 @@ def test_cache_isnt_written_if_no_jupyter_deps_single(
     )
     result = runner.invoke(main, [str(tmpdir / "notebook.ipynb")])
     assert "No Python files are present to be formatted. Nothing to do" in result.output
+    jupyter_dependencies_are_installed.cache_clear()
     monkeypatch.setattr(
         "black.jupyter_dependencies_are_installed", lambda verbose, quiet: True
     )
@@ -389,6 +391,7 @@ def test_cache_isnt_written_if_no_jupyter_deps_many(
     monkeypatch: MonkeyPatch, tmpdir: tmpdir
 ) -> None:
     # Check that the cache isn't written to if Jupyter dependencies aren't installed.
+    jupyter_dependencies_are_installed.cache_clear()
     nb = os.path.join("tests", "data", "notebook_trailing_newline.ipynb")
     tmp_nb = tmpdir / "notebook.ipynb"
     with open(nb) as src, open(tmp_nb, "w") as dst:
@@ -398,6 +401,7 @@ def test_cache_isnt_written_if_no_jupyter_deps_many(
     )
     result = runner.invoke(main, [str(tmpdir)])
     assert "No Python files are present to be formatted. Nothing to do" in result.output
+    jupyter_dependencies_are_installed.cache_clear()
     monkeypatch.setattr(
         "black.jupyter_dependencies_are_installed", lambda verbose, quiet: True
     )
