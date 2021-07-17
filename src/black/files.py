@@ -165,6 +165,9 @@ def gen_python_files(
     force_exclude: Optional[Pattern[str]],
     report: Report,
     gitignore: Optional[PathSpec],
+    *,
+    verbose: bool,
+    quiet: bool,
 ) -> Iterator[Path]:
     """Generate all files under `path` whose paths are not excluded by the
     `exclude_regex`, `extend_exclude`, or `force_exclude` regexes,
@@ -216,6 +219,8 @@ def gen_python_files(
                 force_exclude,
                 report,
                 gitignore + get_gitignore(child) if gitignore is not None else None,
+                verbose=verbose,
+                quiet=quiet,
             )
 
         elif child.is_file():

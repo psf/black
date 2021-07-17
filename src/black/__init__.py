@@ -1,6 +1,6 @@
 import asyncio
 from functools import lru_cache
-import warnings
+from json.decoder import JSONDecodeError
 import json
 from concurrent.futures import Executor, ThreadPoolExecutor, ProcessPoolExecutor
 from contextlib import contextmanager
@@ -208,14 +208,6 @@ def validate_regex(
     ),
 )
 @click.option(
-    "--ipynb",
-    is_flag=True,
-    help=(
-        "Format all input files like ipynb notebooks regardless of file extension "
-        "(useful when piping source on standard input)."
-    ),
-)
-@click.option(
     "-S",
     "--skip-string-normalization",
     is_flag=True,
@@ -374,7 +366,6 @@ def main(
     color: bool,
     fast: bool,
     pyi: bool,
-    ipynb: bool,
     skip_string_normalization: bool,
     skip_magic_trailing_comma: bool,
     experimental_string_processing: bool,
@@ -411,7 +402,6 @@ def main(
         target_versions=versions,
         line_length=line_length,
         is_pyi=pyi,
-        is_ipynb=ipynb,
         string_normalization=not skip_string_normalization,
         magic_trailing_comma=not skip_magic_trailing_comma,
         experimental_string_processing=experimental_string_processing,
@@ -525,7 +515,9 @@ def get_sources(
             if is_stdin:
                 p = Path(f"{STDIN_PLACEHOLDER}{str(p)}")
 
-            if p.suffix == ".ipynb" and not jupyter_dependencies_are_installed():
+            if p.suffix == ".ipynb" and not jupyter_dependencies_are_installed(
+                verbose, quiet
+            ):
                 continue
 
             sources.add(p)
@@ -540,6 +532,8 @@ def get_sources(
                     force_exclude,
                     report,
                     gitignore,
+                    verbose=verbose,
+                    quiet=quiet,
                 )
             )
         elif s == "-":
@@ -745,15 +739,17 @@ async def schedule_formatting(
 
 
 @lru_cache()
-def jupyter_dependencies_are_installed() -> bool:
+def jupyter_dependencies_are_installed(verbose: bool, quiet: bool) -> bool:
     try:
         import IPython  # noqa:F401
         import tokenize_rt  # noqa:F401
     except ModuleNotFoundError:
-        warnings.warn(
-            "Skipping .ipynb files as Jupyter dependencies are not installed.\n"
-            "You can fix this by running ``pip install black[jupyter]``"
-        )
+        if verbose or not quiet:
+            msg = (
+                "Skipping .ipynb files as Jupyter dependencies are not installed.\n"
+                "You can fix this by running ``pip install black[jupyter]``"
+            )
+            out(msg)
         return False
     else:
         return True
@@ -784,6 +780,8 @@ def format_file_in_place(
         dst_contents = format_file_contents(src_contents, fast=fast, mode=mode)
     except NothingChanged:
         return False
+    except JSONDecodeError:
+        raise ValueError(f"File '{src}' cannot be parsed as valid Jupyter notebook.")
 
     if write_back == WriteBack.YES:
         with open(src, "w", encoding=encoding, newline=newline) as f:

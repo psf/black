@@ -1,10 +1,18 @@
-from black import NothingChanged, format_cell, format_file_contents
+import pathlib
+from black import (
+    NothingChanged,
+    format_cell,
+    format_file_contents,
+    format_file_in_place,
+)
 import os
 import pytest
 import subprocess
 from black import Mode
 
 pytestmark = pytest.mark.jupyter
+pytest.importorskip("IPython", reason="IPython is an optional dependency")
+pytest.importorskip("tokenize_rt", reason="tokenize-rt is an optional dependency")
 
 JUPYTER_MODE = Mode(is_ipynb=True)
 
@@ -313,6 +321,19 @@ def test_non_python_notebook() -> None:
 def test_empty_string() -> None:
     with pytest.raises(NothingChanged):
         format_file_contents("", fast=True, mode=JUPYTER_MODE)
+
+
+def test_unparseable_notebook() -> None:
+    msg = (
+        r"File 'tests[/\\]data[/\\]notebook_which_cant_be_parsed\.ipynb' "
+        r"cannot be parsed as valid Jupyter notebook\."
+    )
+    with pytest.raises(ValueError, match=msg):
+        format_file_in_place(
+            pathlib.Path("tests") / "data/notebook_which_cant_be_parsed.ipynb",
+            fast=True,
+            mode=JUPYTER_MODE,
+        )
 
 
 def test_ipynb_diff_with_change() -> None:
