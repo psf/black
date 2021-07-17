@@ -9,7 +9,6 @@ from black import (
 )
 import os
 import pytest
-import subprocess
 from black import Mode
 from _pytest.monkeypatch import MonkeyPatch
 from _pytest.tmpdir import tmpdir
@@ -19,6 +18,8 @@ pytest.importorskip("IPython", reason="IPython is an optional dependency")
 pytest.importorskip("tokenize_rt", reason="tokenize-rt is an optional dependency")
 
 JUPYTER_MODE = Mode(is_ipynb=True)
+
+runner = CliRunner()
 
 
 def test_noop() -> None:
@@ -341,34 +342,27 @@ def test_unparseable_notebook() -> None:
 
 
 def test_ipynb_diff_with_change() -> None:
-    output = subprocess.run(
+    result = runner.invoke(
+        main,
         [
-            "black",
             os.path.join("tests", "data", "notebook_trailing_newline.ipynb"),
             "--diff",
         ],
-        stdout=subprocess.PIPE,
-        universal_newlines=True,
     )
-    # Ignore the first two lines of output as they contain the current UTC time
-    result = "".join(output.stdout.splitlines(keepends=True)[2:])
-    expected = "@@ -1,3 +1,3 @@\n" " %%time\n" " \n" "-print('foo')\n" '+print("foo")\n'
-    assert result == expected
+    expected = "@@ -1,3 +1,3 @@\n %%time\n \n-print('foo')\n" '+print("foo")\n'
+    assert expected in result.output
 
 
 def test_ipynb_diff_with_no_change() -> None:
-    output = subprocess.run(
+    result = runner.invoke(
+        main,
         [
-            "black",
             os.path.join("tests", "data", "notebook_without_changes.ipynb"),
             "--diff",
         ],
-        stdout=subprocess.PIPE,
-        universal_newlines=True,
     )
-    result = output.stdout
-    expected = ""
-    assert result == expected
+    expected = "1 file would be left unchanged."
+    assert expected in result.output
 
 
 def test_cache_isnt_written_if_no_jupyter_deps(
@@ -382,12 +376,10 @@ def test_cache_isnt_written_if_no_jupyter_deps(
     monkeypatch.setattr(
         "black.jupyter_dependencies_are_installed", lambda verbose, quiet: False
     )
-    runner = CliRunner()
     result = runner.invoke(main, [str(tmpdir / "notebook.ipynb")])
     assert "No Python files are present to be formatted. Nothing to do" in result.output
     monkeypatch.setattr(
         "black.jupyter_dependencies_are_installed", lambda verbose, quiet: True
     )
-    runner = CliRunner()
     result = runner.invoke(main, [str(tmpdir / "notebook.ipynb")])
     assert "reformatted" in result.output
