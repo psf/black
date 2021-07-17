@@ -1,4 +1,6 @@
 import pathlib
+from click.testing import CliRunner
+from black import main
 from black import (
     NothingChanged,
     format_cell,
@@ -9,6 +11,8 @@ import os
 import pytest
 import subprocess
 from black import Mode
+from _pytest.monkeypatch import MonkeyPatch
+from _pytest.tmpdir import tmpdir
 
 pytestmark = pytest.mark.jupyter
 pytest.importorskip("IPython", reason="IPython is an optional dependency")
@@ -365,3 +369,25 @@ def test_ipynb_diff_with_no_change() -> None:
     result = output.stdout
     expected = ""
     assert result == expected
+
+
+def test_cache_isnt_written_if_no_jupyter_deps(
+    monkeypatch: MonkeyPatch, tmpdir: tmpdir
+) -> None:
+    # Check that the cache isn't written to if Jupyter dependencies aren't installed.
+    with open(
+        os.path.join("tests", "data", "notebook_trailing_newline.ipynb")
+    ) as src, open(tmpdir / "notebook.ipynb", "w") as dst:
+        dst.write(src.read())
+    monkeypatch.setattr(
+        "black.jupyter_dependencies_are_installed", lambda verbose, quiet: False
+    )
+    runner = CliRunner()
+    result = runner.invoke(main, [str(tmpdir / "notebook.ipynb")])
+    assert "No Python files are present to be formatted. Nothing to do" in result.output
+    monkeypatch.setattr(
+        "black.jupyter_dependencies_are_installed", lambda verbose, quiet: True
+    )
+    runner = CliRunner()
+    result = runner.invoke(main, [str(tmpdir / "notebook.ipynb")])
+    assert "reformatted" in result.output
