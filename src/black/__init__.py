@@ -516,7 +516,7 @@ def get_sources(
                 p = Path(f"{STDIN_PLACEHOLDER}{str(p)}")
 
             if p.suffix == ".ipynb" and not jupyter_dependencies_are_installed(
-                verbose, quiet
+                verbose=verbose, quiet=quiet
             ):
                 continue
 
@@ -739,7 +739,7 @@ async def schedule_formatting(
 
 
 @lru_cache()
-def jupyter_dependencies_are_installed(verbose: bool, quiet: bool) -> bool:
+def jupyter_dependencies_are_installed(*, verbose: bool, quiet: bool) -> bool:
     try:
         import IPython  # noqa:F401
         import tokenize_rt  # noqa:F401

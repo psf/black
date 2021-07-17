@@ -365,7 +365,7 @@ def test_ipynb_diff_with_no_change() -> None:
     assert expected in result.output
 
 
-def test_cache_isnt_written_if_no_jupyter_deps(
+def test_cache_isnt_written_if_no_jupyter_deps_single(
     monkeypatch: MonkeyPatch, tmpdir: tmpdir
 ) -> None:
     # Check that the cache isn't written to if Jupyter dependencies aren't installed.
@@ -377,6 +377,26 @@ def test_cache_isnt_written_if_no_jupyter_deps(
         "black.jupyter_dependencies_are_installed", lambda verbose, quiet: False
     )
     result = runner.invoke(main, [str(tmpdir / "notebook.ipynb")])
+    assert "No Python files are present to be formatted. Nothing to do" in result.output
+    monkeypatch.setattr(
+        "black.jupyter_dependencies_are_installed", lambda verbose, quiet: True
+    )
+    result = runner.invoke(main, [str(tmpdir / "notebook.ipynb")])
+    assert "reformatted" in result.output
+
+
+def test_cache_isnt_written_if_no_jupyter_deps_many(
+    monkeypatch: MonkeyPatch, tmpdir: tmpdir
+) -> None:
+    # Check that the cache isn't written to if Jupyter dependencies aren't installed.
+    with open(
+        os.path.join("tests", "data", "notebook_trailing_newline.ipynb")
+    ) as src, open(tmpdir / "notebook.ipynb", "w") as dst:
+        dst.write(src.read())
+    monkeypatch.setattr(
+        "black.jupyter_dependencies_are_installed", lambda verbose, quiet: False
+    )
+    result = runner.invoke(main, [str(tmpdir)])
     assert "No Python files are present to be formatted. Nothing to do" in result.output
     monkeypatch.setattr(
         "black.jupyter_dependencies_are_installed", lambda verbose, quiet: True
