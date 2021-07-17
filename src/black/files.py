@@ -19,7 +19,7 @@ from typing import (
 
 from mypy_extensions import mypyc_attr
 from pathspec import PathSpec
-import toml
+import tomli
 
 from black.output import err
 from black.report import Report
@@ -91,9 +91,10 @@ def find_pyproject_toml(path_search_start: Tuple[str, ...]) -> Optional[str]:
 def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
     """Parse a pyproject toml file, pulling out relevant parts for Black
 
-    If parsing fails, will raise a toml.TomlDecodeError
+    If parsing fails, will raise a tomli.TOMLDecodeError
     """
-    pyproject_toml = toml.load(path_config)
+    with open(path_config, encoding="utf8") as f:
+        pyproject_toml = tomli.load(f)
     config = pyproject_toml.get("tool", {}).get("black", {})
     return {k.replace("--", "").replace("-", "_"): v for k, v in config.items()}
 

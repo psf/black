@@ -27,12 +27,12 @@ black = {editable = true, extras = ["d"], path = "."}
 [packages]
 aiohttp = ">=3.6.0"
 aiohttp-cors = ">=0.4.0"
-appdirs = "*"
+platformdirs= ">=2"
 click = ">=8.0.0"
 mypy_extensions = ">=0.4.3"
 pathspec = ">=0.8.1"
 regex = ">=2020.1.8"
-toml = ">=0.10.1"
+tomli = ">=0.2.6, <2.0.0"
 typed-ast = "==1.4.2"
 typing_extensions = {"python_version <" = "3.8","version >=" = "3.7.4"}
 black = {editable = true,extras = ["d"],path = "."}
