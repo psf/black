@@ -401,5 +401,5 @@ def test_cache_isnt_written_if_no_jupyter_deps_many(
     monkeypatch.setattr(
         "black.jupyter_dependencies_are_installed", lambda verbose, quiet: True
     )
-    result = runner.invoke(main, [str(tmpdir / "notebook.ipynb")])
+    result = runner.invoke(main, [str(tmpdir)])
     assert "reformatted" in result.output
