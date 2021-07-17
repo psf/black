@@ -369,9 +369,9 @@ def test_cache_isnt_written_if_no_jupyter_deps_single(
     monkeypatch: MonkeyPatch, tmpdir: tmpdir
 ) -> None:
     # Check that the cache isn't written to if Jupyter dependencies aren't installed.
-    with open(
-        os.path.join("tests", "data", "notebook_trailing_newline.ipynb")
-    ) as src, open(tmpdir / "notebook.ipynb", "w") as dst:
+    nb = os.path.join("tests", "data", "notebook_trailing_newline.ipynb")
+    tmp_nb = tmpdir / "notebook.ipynb"
+    with open(nb) as src, open(tmp_nb, "w") as dst:
         dst.write(src.read())
     monkeypatch.setattr(
         "black.jupyter_dependencies_are_installed", lambda verbose, quiet: False
@@ -389,9 +389,9 @@ def test_cache_isnt_written_if_no_jupyter_deps_many(
     monkeypatch: MonkeyPatch, tmpdir: tmpdir
 ) -> None:
     # Check that the cache isn't written to if Jupyter dependencies aren't installed.
-    with open(
-        os.path.join("tests", "data", "notebook_trailing_newline.ipynb")
-    ) as src, open(tmpdir / "notebook.ipynb", "w") as dst:
+    nb = os.path.join("tests", "data", "notebook_trailing_newline.ipynb")
+    tmp_nb = tmpdir / "notebook.ipynb"
+    with open(nb) as src, open(tmp_nb, "w") as dst:
         dst.write(src.read())
     monkeypatch.setattr(
         "black.jupyter_dependencies_are_installed", lambda verbose, quiet: False
