@@ -67,12 +67,10 @@ class Converter(grammar.Grammar):
             return False
         self.symbol2number = {}
         self.number2symbol = {}
-        lineno = 0
-        for line in f:
-            lineno += 1
+        for lineno, line in enumerate(f, start=1):
             mo = re.match(r"^#define\s+(\w+)\s+(\d+)$", line)
             if not mo and line.strip():
-                print("%s(%s): can't parse %s" % (filename, lineno, line.strip()))
+                print("%s(%s): can't parse %s" % (filename, lineno+1, line.strip()))
             else:
                 symbol, number = mo.groups()
                 number = int(number)
@@ -200,16 +198,13 @@ class Converter(grammar.Grammar):
         mo = re.match(r"static label labels\[(\d+)\] = {$", line)
         assert mo, (lineno, line)
         nlabels = int(mo.group(1))
-        for i in range(nlabels):
+        for _ in range(nlabels):
             lineno, line = lineno + 1, next(f)
             mo = re.match(r'\s+{(\d+), (0|"\w+")},$', line)
             assert mo, (lineno, line)
             x, y = mo.groups()
             x = int(x)
-            if y == "0":
-                y = None
-            else:
-                y = eval(y)
+            y = None if y == "0" else eval(y)
             labels.append((x, y))
         lineno, line = lineno + 1, next(f)
         assert line == "};\n", (lineno, line)
