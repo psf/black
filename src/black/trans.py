@@ -134,7 +134,7 @@ class StringTransformer(ABC):
         """
         # Optimization to avoid calling `self.do_match(...)` when the line does
         # not contain any string.
-        if not any(leaf.type == token.STRING for leaf in line.leaves):
+        if all(leaf.type != token.STRING for leaf in line.leaves):
             raise CannotTransform("There are no strings in this line.")
 
         match_result = self.do_match(line)
