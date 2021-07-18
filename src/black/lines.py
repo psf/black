@@ -171,11 +171,10 @@ class Line:
 
     def contains_standalone_comments(self, depth_limit: int = sys.maxsize) -> bool:
         """If so, needs to be split before emitting."""
-        for leaf in self.leaves:
-            if leaf.type == STANDALONE_COMMENT and leaf.bracket_depth <= depth_limit:
-                return True
-
-        return False
+        return any(
+            leaf.type == STANDALONE_COMMENT and leaf.bracket_depth <= depth_limit
+            for leaf in self.leaves
+        )
 
     def contains_uncollapsable_type_comments(self) -> bool:
         ignored_ids = set()
