@@ -10,6 +10,7 @@ import collections
 from typing import Optional
 from typing_extensions import TypeGuard
 
+
 TRANSFORMED_MAGICS = frozenset(
     (
         "get_ipython().run_cell_magic",
@@ -27,6 +28,22 @@ TOKENS_TO_IGNORE = frozenset(
         "DEDENT",
         "UNIMPORTANT_WS",
         "ESCAPED_NL",
+    )
+)
+NON_PYTHON_CELL_MAGICS = frozenset(
+    (
+        "%%bash",
+        "%%html",
+        "%%javascript",
+        "%%js",
+        "%%latex",
+        "%%markdown",
+        "%%perl",
+        "%%ruby",
+        "%%script",
+        "%%sh",
+        "%%svg",
+        "%%writefile",
     )
 )
 
@@ -194,6 +211,8 @@ def replace_cell_magics(src: str) -> Tuple[str, List[Replacement]]:
     cell_magic_finder.visit(tree)
     if cell_magic_finder.cell_magic is None:
         return src, replacements
+    if cell_magic_finder.cell_magic.header.split()[0] in NON_PYTHON_CELL_MAGICS:
+        raise SyntaxError
     mask = get_token(src, cell_magic_finder.cell_magic.header)
     replacements.append(Replacement(mask=mask, src=cell_magic_finder.cell_magic.header))
     return f"{mask}\n{cell_magic_finder.cell_magic.body}", replacements

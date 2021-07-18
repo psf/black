@@ -95,6 +95,18 @@ def test_magic(src: str, expected: str) -> None:
     assert result == expected
 
 
+@pytest.mark.parametrize(
+    "src",
+    (
+        "%%bash\n2+2",
+        "%%html --isolated\n2+2",
+    ),
+)
+def test_non_python_magics(src: str) -> None:
+    with pytest.raises(NothingChanged):
+        format_cell(src, fast=True, mode=JUPYTER_MODE)
+
+
 def test_set_input() -> None:
     src = "a = b??"
     with pytest.raises(NothingChanged):
