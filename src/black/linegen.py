@@ -573,7 +573,7 @@ def bracket_split_build_line(
             no_commas = (
                 original.is_def
                 and opening_bracket.value == "("
-                and not any(leaf.type == token.COMMA for leaf in leaves)
+                and all(leaf.type != token.COMMA for leaf in leaves)
             )
 
             if original.is_import or no_commas:

@@ -697,10 +697,10 @@ class NodePattern(BasePattern):
             return False
         if len(self.content) != len(node.children):
             return False
-        for subpattern, child in zip(self.content, node.children):
-            if not subpattern.match(child, results):
-                return False
-        return True
+        return all(
+            subpattern.match(child, results)
+            for subpattern, child in zip(self.content, node.children)
+        )
 
 
 class WildcardPattern(BasePattern):

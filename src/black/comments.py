@@ -244,17 +244,18 @@ def is_fmt_on(container: LN) -> bool:
 
 def contains_fmt_on_at_column(container: LN, column: int) -> bool:
     """Determine if children at a given column have formatting switched on."""
-    for child in container.children:
-        if (
-            isinstance(child, Node)
-            and first_leaf_column(child) == column
-            or isinstance(child, Leaf)
-            and child.column == column
-        ):
-            if is_fmt_on(child):
-                return True
-
-    return False
+    return any(
+        (
+            (
+                isinstance(child, Node)
+                and first_leaf_column(child) == column
+                or isinstance(child, Leaf)
+                and child.column == column
+            )
+        )
+        and is_fmt_on(child)
+        for child in container.children
+    )
 
 
 def contains_pragma_comment(comment_list: List[Leaf]) -> bool:
