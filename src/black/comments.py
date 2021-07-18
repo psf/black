@@ -210,8 +210,7 @@ def generate_ignored_nodes(leaf: Leaf, comment: ProtoComment) -> Iterator[LN]:
             ):
                 prev_sibling = prev_sibling.prev_sibling
                 siblings.insert(0, prev_sibling)
-            for sibling in siblings:
-                yield sibling
+            yield from siblings
         elif leaf.parent is not None:
             yield leaf.parent
         return
@@ -265,8 +264,7 @@ def contains_pragma_comment(comment_list: List[Leaf]) -> bool:
         of the more common static analysis tools for python (e.g. mypy, flake8,
         pylint).
     """
-    for comment in comment_list:
-        if comment.value.startswith(("# type:", "# noqa", "# pylint:")):
-            return True
-
-    return False
+    return any(
+        comment.value.startswith(("# type:", "# noqa", "# pylint:"))
+        for comment in comment_list
+    )
