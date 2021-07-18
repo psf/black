@@ -833,6 +833,7 @@ def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
 
     return True
 
+
 def _extracted_from_maybe_make_parens_invisible_in_atom_28(node, first, last, parent):
     middle = node.children[1]
     # make parentheses invisible

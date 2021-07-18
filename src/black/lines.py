@@ -595,10 +595,7 @@ def can_be_split(line: Line) -> bool:
             elif leaf.type == token.DOT:
                 dot_count += 1
             elif leaf.type == token.NAME:
-                if (
-                    next.type != token.DOT
-                    and next.type not in OPENING_BRACKETS
-                ):
+                if next.type != token.DOT and next.type not in OPENING_BRACKETS:
                     return False
 
             elif leaf.type not in CLOSING_BRACKETS:
