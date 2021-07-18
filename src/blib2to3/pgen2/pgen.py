@@ -95,10 +95,9 @@ class ParserGenerator(object):
                 # A symbol name (a non-terminal)
                 if label in c.symbol2label:
                     return c.symbol2label[label]
-                else:
-                    c.labels.append((c.symbol2number[label], None))
-                    c.symbol2label[label] = ilabel
-                    return ilabel
+                c.labels.append((c.symbol2number[label], None))
+                c.symbol2label[label] = ilabel
+                return ilabel
             else:
                 # A named token (NAME, NUMBER, STRING)
                 itoken = getattr(token, label, None)
@@ -107,9 +106,7 @@ class ParserGenerator(object):
                 if itoken in c.tokens:
                     return c.tokens[itoken]
                 else:
-                    c.labels.append((itoken, None))
-                    c.tokens[itoken] = ilabel
-                    return ilabel
+                    return self._extracted_from_make_label_22(c, itoken, ilabel)
         else:
             # Either a keyword or an operator
             assert label[0] in ('"', "'"), label
@@ -118,19 +115,21 @@ class ParserGenerator(object):
                 # A keyword
                 if value in c.keywords:
                     return c.keywords[value]
-                else:
-                    c.labels.append((token.NAME, value))
-                    c.keywords[value] = ilabel
-                    return ilabel
+                c.labels.append((token.NAME, value))
+                c.keywords[value] = ilabel
+                return ilabel
             else:
                 # An operator (any non-numeric token)
                 itoken = grammar.opmap[value]  # Fails if unknown token
                 if itoken in c.tokens:
                     return c.tokens[itoken]
                 else:
-                    c.labels.append((itoken, None))
-                    c.tokens[itoken] = ilabel
-                    return ilabel
+                    return self._extracted_from_make_label_22(c, itoken, ilabel)
+
+    def _extracted_from_make_label_22(self, c, itoken, ilabel):
+        c.labels.append((itoken, None))
+        c.tokens[itoken] = ilabel
+        return ilabel
 
     def addfirstsets(self) -> None:
         names = list(self.dfas.keys())
@@ -285,17 +284,16 @@ class ParserGenerator(object):
         a, z = self.parse_alt()
         if self.value != "|":
             return a, z
-        else:
-            aa = NFAState()
-            zz = NFAState()
+        aa = NFAState()
+        zz = NFAState()
+        aa.addarc(a)
+        z.addarc(zz)
+        while self.value == "|":
+            self.gettoken()
+            a, z = self.parse_alt()
             aa.addarc(a)
             z.addarc(zz)
-            while self.value == "|":
-                self.gettoken()
-                a, z = self.parse_alt()
-                aa.addarc(a)
-                z.addarc(zz)
-            return aa, zz
+        return aa, zz
 
     def parse_alt(self) -> Tuple["NFAState", "NFAState"]:
         # ALT: ITEM+
@@ -415,10 +413,7 @@ class DFAState(object):
         # would invoke this method recursively, with cycles...
         if len(self.arcs) != len(other.arcs):
             return False
-        for label, next in self.arcs.items():
-            if next is not other.arcs.get(label):
-                return False
-        return True
+        return all(next is other.arcs.get(label) for label, next in self.arcs.items())
 
     __hash__: Any = None  # For Py3 compatibility.
 

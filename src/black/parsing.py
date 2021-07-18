@@ -102,8 +102,7 @@ def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -
 
 def lib2to3_unparse(node: Node) -> str:
     """Given a lib2to3 node, return its string representation."""
-    code = str(node)
-    return code
+    return str(node)
 
 
 def parse_single_version(

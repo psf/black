@@ -233,8 +233,7 @@ class Base(object):
         next_sib = self.next_sibling
         if next_sib is None:
             return ""
-        prefix = next_sib.prefix
-        return prefix
+        return next_sib.prefix
 
 
 class Node(Base):
@@ -483,15 +482,15 @@ def convert(gr: Grammar, raw_node: RawNode) -> NL:
     strictly bottom-up.
     """
     type, value, context, children = raw_node
-    if children or type in gr.number2symbol:
-        # If there's exactly one child, return that child instead of
-        # creating a new node.
-        assert children is not None
-        if len(children) == 1:
-            return children[0]
-        return Node(type, children, context=context)
-    else:
+    if not children and type not in gr.number2symbol:
         return Leaf(type, value or "", context=context)
+
+    # If there's exactly one child, return that child instead of
+    # creating a new node.
+    assert children is not None
+    if len(children) == 1:
+        return children[0]
+    return Node(type, children, context=context)
 
 
 _Results = Dict[Text, NL]

@@ -136,7 +136,7 @@ class BracketTracker:
             return 0
 
         priority = priority or self.max_delimiter_priority()
-        return sum(1 for p in self.delimiters.values() if p == priority)
+        return self.delimiters.values().count(priority)
 
     def maybe_increment_for_loop_variable(self, leaf: Leaf) -> bool:
         """In a for loop, or comprehension, the variables are often unpacks.
@@ -317,7 +317,7 @@ def max_delimiter_priority_in_atom(node: LN) -> Priority:
 
     first = node.children[0]
     last = node.children[-1]
-    if not (first.type == token.LPAR and last.type == token.RPAR):
+    if first.type != token.LPAR or last.type != token.RPAR:
         return 0
 
     bt = BracketTracker()
