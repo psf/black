@@ -50,7 +50,7 @@ Options include the following:
    - Name: Black
    - Description: Black is the uncompromising Python code formatter.
    - Program: \<install_location_from_step_2>
-   - Arguments: `"$FilePath$"`
+   - Arguments: `$FilePath$`
 
 1. Format the currently opened file by selecting `Tools -> External Tools -> black`.
 
