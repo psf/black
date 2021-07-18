@@ -423,10 +423,9 @@ def left_hand_split(line: Line, _features: Collection[Feature] = ()) -> Iterator
         ):
             current_leaves = tail_leaves if body_leaves else head_leaves
         current_leaves.append(leaf)
-        if current_leaves is head_leaves:
-            if leaf.type in OPENING_BRACKETS:
-                matching_bracket = leaf
-                current_leaves = body_leaves
+        if current_leaves is head_leaves and leaf.type in OPENING_BRACKETS:
+            matching_bracket = leaf
+            current_leaves = body_leaves
     if not matching_bracket:
         raise CannotSplit("No brackets found")
 
@@ -460,15 +459,17 @@ def right_hand_split(
     opening_bracket: Optional[Leaf] = None
     closing_bracket: Optional[Leaf] = None
     for leaf in reversed(line.leaves):
-        if current_leaves is body_leaves:
-            if leaf is opening_bracket:
-                current_leaves = head_leaves if body_leaves else tail_leaves
+        if current_leaves is body_leaves and leaf is opening_bracket:
+            current_leaves = head_leaves if body_leaves else tail_leaves
         current_leaves.append(leaf)
-        if current_leaves is tail_leaves:
-            if leaf.type in CLOSING_BRACKETS and id(leaf) not in omit:
-                opening_bracket = leaf.opening_bracket
-                closing_bracket = leaf
-                current_leaves = body_leaves
+        if (
+            current_leaves is tail_leaves
+            and leaf.type in CLOSING_BRACKETS
+            and id(leaf) not in omit
+        ):
+            opening_bracket = leaf.opening_bracket
+            closing_bracket = leaf
+            current_leaves = body_leaves
     if not (opening_bracket and closing_bracket and head_leaves):
         # If there is no opening or closing_bracket that means the split failed and
         # all content is in the tail.  Otherwise, if `head_leaves` are empty, it means
@@ -812,35 +813,39 @@ def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
     ):
         return False
 
-    if is_walrus_assignment(node):
-        if parent.type in [
-            syms.annassign,
-            syms.expr_stmt,
-            syms.assert_stmt,
-            syms.return_stmt,
-            # these ones aren't useful to end users, but they do please fuzzers
-            syms.for_stmt,
-            syms.del_stmt,
-        ]:
-            return False
+    if is_walrus_assignment(node) and parent.type in [
+        syms.annassign,
+        syms.expr_stmt,
+        syms.assert_stmt,
+        syms.return_stmt,
+        # these ones aren't useful to end users, but they do please fuzzers
+        syms.for_stmt,
+        syms.del_stmt,
+    ]:
+        return False
 
     first = node.children[0]
     last = node.children[-1]
     if first.type == token.LPAR and last.type == token.RPAR:
-        middle = node.children[1]
-        # make parentheses invisible
-        first.value = ""  # type: ignore
-        last.value = ""  # type: ignore
-        maybe_make_parens_invisible_in_atom(middle, parent=parent)
-
-        if is_atom_with_invisible_parens(middle):
-            # Strip the invisible parens from `middle` by replacing
-            # it with the child in-between the invisible parens
-            middle.replace(middle.children[1])
-
-        return False
+        return _extracted_from_maybe_make_parens_invisible_in_atom_28(
+            node, first, last, parent
+        )
 
     return True
+
+def _extracted_from_maybe_make_parens_invisible_in_atom_28(node, first, last, parent):
+    middle = node.children[1]
+    # make parentheses invisible
+    first.value = ""  # type: ignore
+    last.value = ""  # type: ignore
+    maybe_make_parens_invisible_in_atom(middle, parent=parent)
+
+    if is_atom_with_invisible_parens(middle):
+        # Strip the invisible parens from `middle` by replacing
+        # it with the child in-between the invisible parens
+        middle.replace(middle.children[1])
+
+    return False
 
 
 def should_split_line(line: Line, opening_bracket: Leaf) -> bool:

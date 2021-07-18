@@ -201,12 +201,14 @@ class Line:
         comment_seen = False
         for leaf_id, comments in self.comments.items():
             for comment in comments:
-                if is_type_comment(comment):
-                    if comment_seen or (
+                if is_type_comment(comment) and (
+                    comment_seen
+                    or (
                         not is_type_comment(comment, " ignore")
                         and leaf_id not in ignored_ids
-                    ):
-                        return True
+                    )
+                ):
+                    return True
 
                 comment_seen = True
 
@@ -593,7 +595,10 @@ def can_be_split(line: Line) -> bool:
             elif leaf.type == token.DOT:
                 dot_count += 1
             elif leaf.type == token.NAME:
-                if not (next.type == token.DOT or next.type in OPENING_BRACKETS):
+                if (
+                    next.type != token.DOT
+                    and next.type not in OPENING_BRACKETS
+                ):
                     return False
 
             elif leaf.type not in CLOSING_BRACKETS:
@@ -636,13 +641,12 @@ def can_omit_invisible_parens(
     # a bracket.
     first = line.leaves[0]
     second = line.leaves[1]
-    if first.type in OPENING_BRACKETS and second.type not in CLOSING_BRACKETS:
-        if _can_omit_opening_paren(line, first=first, line_length=line_length):
-            return True
-
-        # Note: we are not returning False here because a line might have *both*
-        # a leading opening bracket and a trailing closing bracket.  If the
-        # opening bracket doesn't match our rule, maybe the closing will.
+    if (
+        first.type in OPENING_BRACKETS
+        and second.type not in CLOSING_BRACKETS
+        and _can_omit_opening_paren(line, first=first, line_length=line_length)
+    ):
+        return True
 
     penultimate = line.leaves[-2]
     last = line.leaves[-1]
