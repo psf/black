@@ -175,15 +175,15 @@ class Parser(object):
                         self.push(t, self.grammar.dfas[t], newstate, context)
                         break  # To continue the outer while loop
             else:
-                if (0, state) in arcs:
-                    # An accepting state, pop it and try something else
-                    self.pop()
-                    if not self.stack:
-                        # Done parsing, but another token is input
-                        raise ParseError("too much input", type, value, context)
-                else:
+                if (0, state) not in arcs:
                     # No success finding a transition
                     raise ParseError("bad input", type, value, context)
+
+                # An accepting state, pop it and try something else
+                self.pop()
+                if not self.stack:
+                    # Done parsing, but another token is input
+                    raise ParseError("too much input", type, value, context)
 
     def classify(self, type: int, value: Optional[Text], context: Context) -> int:
         """Turn a token into a label.  (Internal)"""
