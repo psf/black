@@ -1,5 +1,4 @@
 import asyncio
-from functools import lru_cache
 from json.decoder import JSONDecodeError
 import json
 from concurrent.futures import Executor, ThreadPoolExecutor, ProcessPoolExecutor
@@ -56,6 +55,7 @@ from black.handle_ipynb_magics import (
     remove_trailing_semicolon,
     put_trailing_semicolon_back,
     TRANSFORMED_MAGICS,
+    jupyter_dependencies_are_installed,
 )
 
 
@@ -732,23 +732,6 @@ async def schedule_formatting(
         await asyncio.gather(*cancelled, loop=loop, return_exceptions=True)
     if sources_to_cache:
         write_cache(cache, sources_to_cache, mode)
-
-
-@lru_cache()
-def jupyter_dependencies_are_installed(*, verbose: bool, quiet: bool) -> bool:
-    try:
-        import IPython  # noqa:F401
-        import tokenize_rt  # noqa:F401
-    except ModuleNotFoundError:
-        if verbose or not quiet:
-            msg = (
-                "Skipping .ipynb files as Jupyter dependencies are not installed.\n"
-                "You can fix this by running ``pip install black[jupyter]``"
-            )
-            out(msg)
-        return False
-    else:
-        return True
 
 
 def format_file_in_place(

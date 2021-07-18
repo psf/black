@@ -1,4 +1,5 @@
 """Functions to process IPython magics with."""
+from functools import lru_cache
 import dataclasses
 import ast
 from typing import Dict
@@ -10,6 +11,7 @@ import collections
 from typing import Optional
 from typing_extensions import TypeGuard
 from black.report import NothingChanged
+from black.output import out
 
 
 TRANSFORMED_MAGICS = frozenset(
@@ -53,6 +55,23 @@ NON_PYTHON_CELL_MAGICS = frozenset(
 class Replacement:
     mask: str
     src: str
+
+
+@lru_cache()
+def jupyter_dependencies_are_installed(*, verbose: bool, quiet: bool) -> bool:
+    try:
+        import IPython  # noqa:F401
+        import tokenize_rt  # noqa:F401
+    except ModuleNotFoundError:
+        if verbose or not quiet:
+            msg = (
+                "Skipping .ipynb files as Jupyter dependencies are not installed.\n"
+                "You can fix this by running ``pip install black[jupyter]``"
+            )
+            out(msg)
+        return False
+    else:
+        return True
 
 
 def remove_trailing_semicolon(src: str) -> Tuple[str, bool]:

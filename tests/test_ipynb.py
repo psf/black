@@ -1,7 +1,8 @@
 import pathlib
 from click.testing import CliRunner
-from black import main, jupyter_dependencies_are_installed
+from black.handle_ipynb_magics import jupyter_dependencies_are_installed
 from black import (
+    main,
     NothingChanged,
     format_cell,
     format_file_contents,
@@ -409,13 +410,13 @@ def test_cache_isnt_written_if_no_jupyter_deps_many(
     with open(nb) as src, open(tmp_nb, "w") as dst:
         dst.write(src.read())
     monkeypatch.setattr(
-        "black.jupyter_dependencies_are_installed", lambda verbose, quiet: False
+        "black.files.jupyter_dependencies_are_installed", lambda verbose, quiet: False
     )
     result = runner.invoke(main, [str(tmpdir)])
     assert "No Python files are present to be formatted. Nothing to do" in result.output
     jupyter_dependencies_are_installed.cache_clear()
     monkeypatch.setattr(
-        "black.jupyter_dependencies_are_installed", lambda verbose, quiet: True
+        "black.files.jupyter_dependencies_are_installed", lambda verbose, quiet: True
     )
     result = runner.invoke(main, [str(tmpdir)])
     assert "reformatted" in result.output
