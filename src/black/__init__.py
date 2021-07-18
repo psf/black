@@ -44,7 +44,7 @@ from black.mode import Feature, supports_feature, VERSION_TO_FEATURES
 from black.cache import read_cache, write_cache, get_cache_info, filter_cached, Cache
 from black.concurrency import cancel, shutdown, maybe_install_uvloop
 from black.output import dump_to_file, ipynb_diff, diff, color_diff, out, err
-from black.report import Report, Changed
+from black.report import Report, Changed, NothingChanged
 from black.files import find_project_root, find_pyproject_toml, parse_pyproject_toml
 from black.files import gen_python_files, get_gitignore, normalize_path_maybe_ignore
 from black.files import wrap_stream_for_windows
@@ -69,10 +69,6 @@ from _black_version import version as __version__
 FileContent = str
 Encoding = str
 NewLine = str
-
-
-class NothingChanged(UserWarning):
-    """Raised when reformatted code is the same as source."""
 
 
 class WriteBack(Enum):

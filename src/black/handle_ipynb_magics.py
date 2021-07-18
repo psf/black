@@ -9,6 +9,7 @@ import collections
 
 from typing import Optional
 from typing_extensions import TypeGuard
+from black.report import NothingChanged
 
 
 TRANSFORMED_MAGICS = frozenset(
@@ -52,10 +53,6 @@ NON_PYTHON_CELL_MAGICS = frozenset(
 class Replacement:
     mask: str
     src: str
-
-
-class UnsupportedMagic(UserWarning):
-    """Raise when Magic is not supported (e.g. `a = b??`)"""
 
 
 def remove_trailing_semicolon(src: str) -> Tuple[str, bool]:
@@ -150,12 +147,10 @@ def mask_cell(src: str) -> Tuple[str, List[Replacement]]:
     transformed, cell_magic_replacements = replace_cell_magics(transformed)
     replacements += cell_magic_replacements
     transformed = transformer_manager.transform_cell(transformed)
-    try:
-        transformed, magic_replacements = replace_magics(transformed)
-    except UnsupportedMagic:
-        raise SyntaxError
-    if len(transformed.splitlines()) != len(src.splitlines()):  # multi-line magic
-        raise SyntaxError
+    transformed, magic_replacements = replace_magics(transformed)
+    if len(transformed.splitlines()) != len(src.splitlines()):
+        # Multi-line magic, not supported.
+        raise NothingChanged
     replacements += magic_replacements
     return transformed, replacements
 
@@ -212,7 +207,7 @@ def replace_cell_magics(src: str) -> Tuple[str, List[Replacement]]:
     if cell_magic_finder.cell_magic is None:
         return src, replacements
     if cell_magic_finder.cell_magic.header.split()[0] in NON_PYTHON_CELL_MAGICS:
-        raise SyntaxError
+        raise NothingChanged
     mask = get_token(src, cell_magic_finder.cell_magic.header)
     replacements.append(Replacement(mask=mask, src=cell_magic_finder.cell_magic.header))
     return f"{mask}\n{cell_magic_finder.cell_magic.body}", replacements
@@ -244,8 +239,10 @@ def replace_magics(src: str) -> Tuple[str, List[Replacement]]:
         if i in magic_finder.magics:
             offsets_and_magics = magic_finder.magics[i]
             if len(offsets_and_magics) != 1:  # pragma: nocover
-                # defensive check
-                raise UnsupportedMagic
+                raise AssertionError(
+                    f"Expecting one magic per line, got: {offsets_and_magics}\n"
+                    "Please report a bug on https://github.com/psf/black/issues."
+                )
             col_offset, magic = (
                 offsets_and_magics[0].col_offset,
                 offsets_and_magics[0].magic,
@@ -434,7 +431,7 @@ class MagicFinder(ast.NodeVisitor):
             elif node.value.func.attr == "getoutput":
                 src = f"!!{args[0]}"
             else:
-                raise UnsupportedMagic
+                raise NothingChanged  # unsupported magic.
             self.magics[node.value.lineno].append(
                 OffsetAndMagic(node.value.col_offset, src)
             )
