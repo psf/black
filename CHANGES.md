@@ -2,7 +2,11 @@
 
 ## Unreleased
 
+### _Black_
+
 - Moved from `appdirs` dependency to `platformdirs` (#2375)
+- Avoid changing a function return type annotation's type to a tuple by adding a
+  trailing comma (#2384)
 
 ## 21.7b0
 

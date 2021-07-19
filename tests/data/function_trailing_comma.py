@@ -21,6 +21,22 @@ def xxxxxxxxxxxxxxxxxxxxxxxxxxxx() -> Set[
 ]:
     json = {"k": {"k2": {"k3": [1,]}}}
 
+
+
+# The type annotation shouldn't get a trailing comma since that would change its type.
+# Relevant bug report: https://github.com/psf/black/issues/2381.
+def some_function_with_a_really_long_name() -> (
+    returning_a_deeply_nested_import_of_a_type_i_suppose
+):
+    pass
+
+
+def some_method_with_a_really_long_name(very_long_parameter_so_yeah: str, another_long_parameter: int) -> (
+    another_case_of_returning_a_deeply_nested_import_of_a_type_i_suppose_cause_why_not
+):
+    pass
+
+
 # output
 
 def f(
@@ -86,3 +102,19 @@ def xxxxxxxxxxxxxxxxxxxxxxxxxxxx() -> Set[
             }
         }
     }
+
+
+# The type annotation shouldn't get a trailing comma since that would change its type.
+# Relevant bug report: https://github.com/psf/black/issues/2381.
+def some_function_with_a_really_long_name() -> (
+    returning_a_deeply_nested_import_of_a_type_i_suppose
+):
+    pass
+
+
+def some_method_with_a_really_long_name(
+    very_long_parameter_so_yeah: str, another_long_parameter: int
+) -> (
+    another_case_of_returning_a_deeply_nested_import_of_a_type_i_suppose_cause_why_not
+):
+    pass

@@ -7,7 +7,7 @@ from typing import Collection, Iterator, List, Optional, Set, Union
 
 from dataclasses import dataclass, field
 
-from black.nodes import WHITESPACE, STATEMENT, STANDALONE_COMMENT
+from black.nodes import WHITESPACE, RARROW, STATEMENT, STANDALONE_COMMENT
 from black.nodes import ASSIGNMENTS, OPENING_BRACKETS, CLOSING_BRACKETS
 from black.nodes import Visitor, syms, first_child_is_arith, ensure_visible
 from black.nodes import is_docstring, is_empty_tuple, is_one_tuple, is_one_tuple_between
@@ -574,6 +574,12 @@ def bracket_split_build_line(
                 original.is_def
                 and opening_bracket.value == "("
                 and not any(leaf.type == token.COMMA for leaf in leaves)
+                # In particular, don't add one within a parenthesized return annotation.
+                and not (
+                    leaves[0].parent
+                    and leaves[0].parent.prev_sibling
+                    and leaves[0].parent.prev_sibling.type == RARROW
+                )
             )
 
             if original.is_import or no_commas:
