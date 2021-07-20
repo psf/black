@@ -65,9 +65,10 @@ class ParserGenerator(object):
             dfa = self.dfas[name]
             states = []
             for state in dfa:
-                arcs = []
-                for label, next in sorted(state.arcs.items()):
-                    arcs.append((self.make_label(c, label), dfa.index(next)))
+                arcs = [
+                    (self.make_label(c, label), dfa.index(next))
+                    for label, next in sorted(state.arcs.items())
+                ]
                 if state.isfinal:
                     arcs.append((0, dfa.index(state)))
                 states.append(arcs)

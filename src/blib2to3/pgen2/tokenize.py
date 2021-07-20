@@ -72,7 +72,7 @@ def maybe(*choices):
 
 
 def _combinations(*l):
-    return set(x + y for x in l for y in l + ("",) if x.casefold() != y.casefold())
+    return {x + y for x in l for y in l + ("",) if x.casefold() != y.casefold()}
 
 
 Whitespace = r"[ \f\t]*"
