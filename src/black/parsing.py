@@ -85,17 +85,19 @@ def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -
             result = drv.parse_string(src_txt, True)
             break
 
-        except (TokenError, ParseError) as err:
-            if isinstance(err, ParseError):
-                lineno, column = err.context[1]
-            else:
-                lineno, column = err.args[1]
+        except ParseError as pe:
+            lineno, column = pe.context[1]
             lines = src_txt.splitlines()
             try:
                 faulty_line = lines[lineno - 1]
             except IndexError:
                 faulty_line = "<line number missing in source>"
             exc = InvalidInput(f"Cannot parse: {lineno}:{column}: {faulty_line}")
+
+        except TokenError as te:
+            lineno, column = te.args[1]
+            lines = src_txt.splitlines()
+            exc = InvalidInput(f"Cannot parse: {lineno}:{column}: Unexpected EOF")
 
     else:
         raise exc from None
