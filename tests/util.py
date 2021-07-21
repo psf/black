@@ -1,7 +1,8 @@
 import os
 import unittest
 from pathlib import Path
-from typing import List, Tuple, Any
+from typing import Iterator, List, Tuple, Any
+from contextlib import contextmanager
 from functools import partial
 
 import black
@@ -72,3 +73,14 @@ def read_data_from_file(file_name: Path) -> Tuple[str, str]:
         # If there's no output marker, treat the entire file as already pre-formatted.
         _output = _input[:]
     return "".join(_input).strip() + "\n", "".join(_output).strip() + "\n"
+
+
+@contextmanager
+def change_directory(path: Path) -> Iterator[None]:
+    """Context manager to temporarily chdir to a different directory."""
+    previous_dir = os.getcwd()
+    try:
+        os.chdir(path)
+        yield
+    finally:
+        os.chdir(previous_dir)

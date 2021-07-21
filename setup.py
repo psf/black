@@ -1,5 +1,5 @@
 # Copyright (C) 2020 Łukasz Langa
-from setuptools import setup
+from setuptools import setup, find_packages
 import sys
 import os
 
@@ -62,7 +62,7 @@ setup(
     license="MIT",
     py_modules=["_black_version"],
     ext_modules=ext_modules,
-    packages=["blackd", "black", "blib2to3", "blib2to3.pgen2", "black_primer"],
+    packages=find_packages(where="src"),
     package_dir={"": "src"},
     package_data={
         "blib2to3": ["*.txt"],
@@ -73,8 +73,8 @@ setup(
     zip_safe=False,
     install_requires=[
         "click>=7.1.2",
-        "appdirs",
-        "toml>=0.10.1",
+        "platformdirs>=2",
+        "tomli>=0.2.6,<2.0.0",
         "typed-ast>=1.4.2; python_version < '3.8'",
         "regex>=2020.1.8",
         "pathspec>=0.8.1, <1",
