@@ -4,6 +4,8 @@
 The uncompromising code formatter
 =================================
 
+    “Any color you like.”
+
 By using *Black*, you agree to cede control over minutiae of
 hand-formatting. In return, *Black* gives you speed, determinism, and
 freedom from `pycodestyle` nagging about formatting. You will save time
@@ -99,6 +101,7 @@ Contents
 .. toctree::
    :maxdepth: 3
    :includehidden:
+   :caption: User Guide
 
    getting_started
    usage_and_configuration/index
@@ -107,8 +110,9 @@ Contents
    faq
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :includehidden:
+   :caption: Development
 
    contributing/index
    change_log
@@ -116,10 +120,11 @@ Contents
 
 .. toctree::
    :hidden:
+   :caption: Project Links
 
-   GitHub ↪ <https://github.com/psf/black>
-   PyPI ↪ <https://pypi.org/project/black>
-   Chat ↪ <https://discord.gg/RtVdv86PrH>
+   GitHub <https://github.com/psf/black>
+   PyPI <https://pypi.org/project/black>
+   Chat <https://discord.gg/RtVdv86PrH>
 
 Indices and tables
 ==================

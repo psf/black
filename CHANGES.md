@@ -53,6 +53,8 @@
 ### Documentation
 
 - Change protocol in pip installation instructions to `https://` (#2761)
+- Change HTML theme to Furo primarily for its responsive design and mobile support
+  (#2793)
 
 ## 21.12b0
 
