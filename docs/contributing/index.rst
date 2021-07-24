@@ -15,8 +15,9 @@ Welcome! Happy to see you willing to make the project better. Have you read the 
 
 .. rubric:: Bird's eye view
 
-In terms of inspiration, *Black* is about as configurable as *gofmt*. This is
-deliberate.
+In terms of inspiration, *Black* is about as configurable as *gofmt* (which is to say,
+not very). This is deliberate. *Black* aims to provide a consistent style and take away
+opportunities for arguing about style.
 
 Bug reports and fixes are always welcome! Please follow the
 `issue template on GitHub <https://github.com/psf/black/issues/new>`_ for best results.
