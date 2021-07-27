@@ -138,7 +138,7 @@ class Parser(object):
         self.rootnode: Optional[NL] = None
         self.used_names: Set[str] = set()
 
-    def addtoken(self, type: int, value: Optional[Text], context: Context) -> bool:
+    def addtoken(self, type: int, value: Text, context: Context) -> bool:
         """Add a token; return True iff this is the end of the program."""
         # Map from token to label
         ilabel = self.classify(type, value, context)
@@ -185,11 +185,10 @@ class Parser(object):
                     # No success finding a transition
                     raise ParseError("bad input", type, value, context)
 
-    def classify(self, type: int, value: Optional[Text], context: Context) -> int:
+    def classify(self, type: int, value: Text, context: Context) -> int:
         """Turn a token into a label.  (Internal)"""
         if type == token.NAME:
             # Keep a listing of all used names
-            assert value is not None
             self.used_names.add(value)
             # Check for reserved words
             ilabel = self.grammar.keywords.get(value)
@@ -201,12 +200,10 @@ class Parser(object):
         return ilabel
 
     def shift(
-        self, type: int, value: Optional[Text], newstate: int, context: Context
+        self, type: int, value: Text, newstate: int, context: Context
     ) -> None:
         """Shift a token.  (Internal)"""
         dfa, state, node = self.stack[-1]
-        assert value is not None
-        assert context is not None
         rawnode: RawNode = (type, value, context, None)
         newnode = self.convert(self.grammar, rawnode)
         if newnode is not None:
