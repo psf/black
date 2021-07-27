@@ -23,7 +23,7 @@ from typing import (
     Set,
 )
 from blib2to3.pgen2.grammar import Grammar
-from blib2to3.pytree import NL, Context, RawNode, Leaf, Node
+from blib2to3.pytree import convert, NL, Context, RawNode, Leaf, Node
 
 
 Results = Dict[Text, NL]
@@ -100,6 +100,11 @@ class Parser(object):
         to be converted.  The syntax tree is converted from the bottom
         up.
 
+        **post-note: the convert argument is ignored since for Black's
+        usage, convert will always be blib2to3.pytree.convert. Allowing
+        this to be dynamic hurts mypyc's ability to use early binding.
+        These docs are left for historical and informational value.
+
         A concrete syntax tree node is a (type, value, context, nodes)
         tuple, where type is the node type (a token or symbol number),
         value is None for symbols and a string for tokens, context is
@@ -112,6 +117,7 @@ class Parser(object):
 
         """
         self.grammar = grammar
+        # See note in docstring above. TL;DR this is ignored.
         self.convert = convert or lam_sub
 
     def setup(self, start: Optional[int] = None) -> None:
@@ -149,10 +155,18 @@ class Parser(object):
             arcs = states[state]
             # Look for a state with this label
             for i, newstate in arcs:
-                t, v = self.grammar.labels[i]
-                if ilabel == i:
+                t = self.grammar.labels[i][0]
+                if t >= 256:
+                    # See if it's a symbol and if we're in its first set
+                    itsdfa = self.grammar.dfas[t]
+                    itsstates, itsfirst = itsdfa
+                    if ilabel in itsfirst:
+                        # Push a symbol
+                        self.push(t, itsdfa, newstate, context)
+                        break  # To continue the outer while loop
+
+                elif ilabel == i:
                     # Look it up in the list of labels
-                    assert t < 256
                     # Shift a token; we're done with it
                     self.shift(type, value, newstate, context)
                     # Pop while we are in an accept-only state
@@ -166,14 +180,7 @@ class Parser(object):
                         states, first = dfa
                     # Done with this token
                     return False
-                elif t >= 256:
-                    # See if it's a symbol and if we're in its first set
-                    itsdfa = self.grammar.dfas[t]
-                    itsstates, itsfirst = itsdfa
-                    if ilabel in itsfirst:
-                        # Push a symbol
-                        self.push(t, self.grammar.dfas[t], newstate, context)
-                        break  # To continue the outer while loop
+
             else:
                 if (0, state) in arcs:
                     # An accepting state, pop it and try something else
@@ -199,16 +206,13 @@ class Parser(object):
             raise ParseError("bad token", type, value, context)
         return ilabel
 
-    def shift(
-        self, type: int, value: Text, newstate: int, context: Context
-    ) -> None:
+    def shift(self, type: int, value: Text, newstate: int, context: Context) -> None:
         """Shift a token.  (Internal)"""
         dfa, state, node = self.stack[-1]
         rawnode: RawNode = (type, value, context, None)
-        newnode = self.convert(self.grammar, rawnode)
-        if newnode is not None:
-            assert node[-1] is not None
-            node[-1].append(newnode)
+        newnode = convert(self.grammar, rawnode)
+        assert node[-1] is not None
+        node[-1].append(newnode)
         self.stack[-1] = (dfa, newstate, node)
 
     def push(self, type: int, newdfa: DFAS, newstate: int, context: Context) -> None:
@@ -221,12 +225,11 @@ class Parser(object):
     def pop(self) -> None:
         """Pop a nonterminal.  (Internal)"""
         popdfa, popstate, popnode = self.stack.pop()
-        newnode = self.convert(self.grammar, popnode)
-        if newnode is not None:
-            if self.stack:
-                dfa, state, node = self.stack[-1]
-                assert node[-1] is not None
-                node[-1].append(newnode)
-            else:
-                self.rootnode = newnode
-                self.rootnode.used_names = self.used_names
+        newnode = convert(self.grammar, popnode)
+        if self.stack:
+            dfa, state, node = self.stack[-1]
+            assert node[-1] is not None
+            node[-1].append(newnode)
+        else:
+            self.rootnode = newnode
+            self.rootnode.used_names = self.used_names
