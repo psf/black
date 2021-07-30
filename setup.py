@@ -74,7 +74,7 @@ setup(
     install_requires=[
         "click>=7.1.2",
         "platformdirs>=2",
-        "tomli>=0.2.6,<2.0.0",
+        "tomli>=1.1.0,<2.0.0",
         "typed-ast>=1.4.2; python_version < '3.8'",
         "regex>=2020.1.8",
         "pathspec>=0.8.1, <1",
