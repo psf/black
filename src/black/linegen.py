@@ -575,10 +575,19 @@ def bracket_split_build_line(
                 and opening_bracket.value == "("
                 and not any(leaf.type == token.COMMA for leaf in leaves)
                 # In particular, don't add one within a parenthesized return annotation.
-                and not (
-                    leaves[0].parent
-                    and leaves[0].parent.prev_sibling
-                    and leaves[0].parent.prev_sibling.type == RARROW
+                # Unfortunately the indicator we're in a return annotation (RARROW) may
+                # be defined directly in the parent node OR the *parent of the parent*
+                # depending on how complex the return annotation is. Oh yeah and we
+                # have to be careful to not trigger AttributeError making this unpretty.
+                # This isn't perfect and there's some false negatives but they are in
+                # contexts were a comma is actually fine.
+                and not any(
+                    node.prev_sibling.type == RARROW
+                    for node in (
+                        leaves[0].parent,
+                        getattr(leaves[0].parent, "parent", None),
+                    )
+                    if isinstance(node, Node) and isinstance(node.prev_sibling, Leaf)
                 )
             )
 
