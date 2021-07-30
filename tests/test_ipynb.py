@@ -12,7 +12,7 @@ import os
 import pytest
 from black import Mode
 from _pytest.monkeypatch import MonkeyPatch
-from _pytest.tmpdir import tmpdir
+from py.path import local
 
 pytestmark = pytest.mark.jupyter
 pytest.importorskip("IPython", reason="IPython is an optional dependency")
@@ -379,7 +379,7 @@ def test_ipynb_diff_with_no_change() -> None:
 
 
 def test_cache_isnt_written_if_no_jupyter_deps_single(
-    monkeypatch: MonkeyPatch, tmpdir: tmpdir
+    monkeypatch: MonkeyPatch, tmpdir: local
 ) -> None:
     # Check that the cache isn't written to if Jupyter dependencies aren't installed.
     jupyter_dependencies_are_installed.cache_clear()
@@ -400,8 +400,8 @@ def test_cache_isnt_written_if_no_jupyter_deps_single(
     assert "reformatted" in result.output
 
 
-def test_cache_isnt_written_if_no_jupyter_deps_many(
-    monkeypatch: MonkeyPatch, tmpdir: tmpdir
+def test_cache_isnt_written_if_no_jupyter_deps_dir(
+    monkeypatch: MonkeyPatch, tmpdir: local
 ) -> None:
     # Check that the cache isn't written to if Jupyter dependencies aren't installed.
     jupyter_dependencies_are_installed.cache_clear()
@@ -420,3 +420,36 @@ def test_cache_isnt_written_if_no_jupyter_deps_many(
     )
     result = runner.invoke(main, [str(tmpdir)])
     assert "reformatted" in result.output
+
+
+def test_ipynb_flag(tmpdir: local) -> None:
+    nb = os.path.join("tests", "data", "notebook_trailing_newline.ipynb")
+    tmp_nb = tmpdir / "notebook.a_file_extension_which_is_definitely_not_ipynb"
+    with open(nb) as src, open(tmp_nb, "w") as dst:
+        dst.write(src.read())
+    result = runner.invoke(
+        main,
+        [
+            str(tmp_nb),
+            "--diff",
+            "--ipynb",
+        ],
+    )
+    expected = "@@ -1,3 +1,3 @@\n %%time\n \n-print('foo')\n" '+print("foo")\n'
+    assert expected in result.output
+
+
+def test_ipynb_and_pyi_flags() -> None:
+    nb = os.path.join("tests", "data", "notebook_trailing_newline.ipynb")
+    result = runner.invoke(
+        main,
+        [
+            nb,
+            "--pyi",
+            "--ipynb",
+            "--diff",
+        ],
+    )
+    assert isinstance(result.exception, SystemExit)
+    expected = "Cannot pass both `pyi` and `ipynb` flags!\n"
+    assert result.output == expected

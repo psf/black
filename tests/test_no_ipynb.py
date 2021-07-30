@@ -22,7 +22,7 @@ def test_ipynb_diff_with_no_change_single() -> None:
     assert expected_output in result.output
 
 
-def test_ipynb_diff_with_no_change_many(tmpdir: tmpdir) -> None:
+def test_ipynb_diff_with_no_change_dir(tmpdir: tmpdir) -> None:
     jupyter_dependencies_are_installed.cache_clear()
     runner = CliRunner()
     nb = os.path.join("tests", "data", "notebook_trailing_newline.ipynb")

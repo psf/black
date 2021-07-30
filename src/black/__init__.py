@@ -204,6 +204,14 @@ def validate_regex(
     ),
 )
 @click.option(
+    "--ipynb",
+    is_flag=True,
+    help=(
+        "Format all input files like Jupyter Notebooks regardless of file extension "
+        "(useful when piping source on standard input)."
+    ),
+)
+@click.option(
     "-S",
     "--skip-string-normalization",
     is_flag=True,
@@ -362,6 +370,7 @@ def main(
     color: bool,
     fast: bool,
     pyi: bool,
+    ipynb: bool,
     skip_string_normalization: bool,
     skip_magic_trailing_comma: bool,
     experimental_string_processing: bool,
@@ -387,6 +396,9 @@ def main(
             f" the running version `{__version__}`!"
         )
         ctx.exit(1)
+    if ipynb and pyi:
+        err("Cannot pass both `pyi` and `ipynb` flags!")
+        ctx.exit(1)
 
     write_back = WriteBack.from_configuration(check=check, diff=diff, color=color)
     if target_version:
@@ -398,6 +410,7 @@ def main(
         target_versions=versions,
         line_length=line_length,
         is_pyi=pyi,
+        is_ipynb=ipynb,
         string_normalization=not skip_string_normalization,
         magic_trailing_comma=not skip_magic_trailing_comma,
         experimental_string_processing=experimental_string_processing,
@@ -769,7 +782,7 @@ def format_file_in_place(
         now = datetime.utcnow()
         src_name = f"{src}\t{then} +0000"
         dst_name = f"{src}\t{now} +0000"
-        if src.suffix == ".ipynb":
+        if mode.is_ipynb:
             diff_contents = ipynb_diff(src_contents, dst_contents, src_name, dst_name)
         else:
             diff_contents = diff(src_contents, dst_contents, src_name, dst_name)
