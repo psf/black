@@ -5,6 +5,7 @@
 ### _Black_
 
 - Add support for formatting Jupyter Notebook files (#2357)
+- Do not accept bare carriage return line endings in pyproject.toml (#2408)
 - Move from `appdirs` dependency to `platformdirs` (#2375)
 
 ## 21.7b0
