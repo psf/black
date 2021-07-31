@@ -576,9 +576,8 @@ def bracket_split_build_line(
                 and not any(leaf.type == token.COMMA for leaf in leaves)
                 # In particular, don't add one within a parenthesized return annotation.
                 # Unfortunately the indicator we're in a return annotation (RARROW) may
-                # be defined directly in the parent node OR the *parent of the parent*
-                # depending on how complex the return annotation is. Oh yeah and we
-                # have to be careful to not trigger AttributeError making this unpretty.
+                # be defined directly in the parent node, the parent of the parent ...
+                # and so on depending on how complex the return annotation is.
                 # This isn't perfect and there's some false negatives but they are in
                 # contexts were a comma is actually fine.
                 and not any(

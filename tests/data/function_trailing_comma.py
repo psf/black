@@ -49,12 +49,6 @@ def func() -> ((also_super_long_type_annotation_that_may_cause_an_AST_related_cr
 ):
     pass
 
-
-def func() -> ( a:= also_super_long_type_annotation_that_may_cause_an_AST_related_crash_in_black(
-        this_shouldn_t_get_a_trailing_comma_too
-    )):
-    pass
-
 # output
 
 def f(
@@ -151,14 +145,6 @@ def func() -> (
         also_super_long_type_annotation_that_may_cause_an_AST_related_crash_in_black(
             this_shouldn_t_get_a_trailing_comma_too
         )
-    )
-):
-    pass
-
-
-def func() -> (
-    a := also_super_long_type_annotation_that_may_cause_an_AST_related_crash_in_black(
-        this_shouldn_t_get_a_trailing_comma_too
     )
 ):
     pass
