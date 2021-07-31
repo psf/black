@@ -151,7 +151,7 @@ def normalize_string_prefix(s: str, remove_u_prefix: bool = False) -> str:
     return f"{new_prefix}{match.group(2)}"
 
 
-@lru_cache(maxsize=None)
+@lru_cache(maxsize=256)
 def _cached_compile(pattern: str) -> re.Pattern:
     return re.compile(pattern)
 

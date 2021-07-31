@@ -41,7 +41,7 @@ if os.getenv("BLACK_USE_MYPYC", None) == "1":
 if USE_MYPYC:
     from mypyc.build import mypycify
 
-    source_base = CURRENT_DIR / "src"
+    src = CURRENT_DIR / "src"
     # TIP: filepaths are normalized to use forward slashes and are relative to ./src/
     # before being checked against.
     blocklist = [
@@ -59,12 +59,10 @@ if USE_MYPYC:
     ]
     discovered = []
     # black-primer and blackd have no good reason to be compiled.
-    discovered.extend(find_python_files(source_base / "black"))
-    discovered.extend(find_python_files(source_base / "blib2to3"))
+    discovered.extend(find_python_files(src / "black"))
+    discovered.extend(find_python_files(src / "blib2to3"))
     mypyc_targets = [
-        str(p)
-        for p in discovered
-        if p.relative_to(source_base).as_posix() not in blocklist
+        str(p) for p in discovered if p.relative_to(src).as_posix() not in blocklist
     ]
 
     opt_level = os.getenv("MYPYC_OPT_LEVEL", "3")
