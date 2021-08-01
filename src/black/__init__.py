@@ -54,6 +54,8 @@ from blib2to3.pgen2 import token
 
 from _black_version import version as __version__
 
+COMPILED = Path(__file__).suffix in (".pyd", ".so")
+
 # types
 FileContent = str
 Encoding = str
@@ -323,7 +325,10 @@ def validate_regex(
         " due to exclusion patterns."
     ),
 )
-@click.version_option(version=__version__)
+@click.version_option(
+    version=__version__,
+    message=f"%(prog)s, %(version)s (compiled: {'yes' if COMPILED else 'no'})",
+)
 @click.argument(
     "src",
     nargs=-1,
