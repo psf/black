@@ -514,7 +514,7 @@ def generate_tokens(
                     COMMENT,
                     comment_token,
                     (lnum, pos),
-                    (lnum, pos + len(comment_token)),
+                    (lnum, nl_pos),
                     line,
                 )
                 yield (NL, line[nl_pos:], (lnum, nl_pos), (lnum, len(line)), line)

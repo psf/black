@@ -15,10 +15,10 @@ from typing import (
     Union,
 )
 
-if sys.version_info < (3, 8):
-    from typing_extensions import Final
-else:
+if sys.version_info >= (3, 8):
     from typing import Final
+else:
+    from typing_extensions import Final
 
 # lib2to3 fork
 from blib2to3.pytree import Node, Leaf, type_repr
@@ -30,7 +30,7 @@ from black.strings import has_triple_quotes
 
 
 pygram.initialize(CACHE_DIR)
-syms = pygram.python_symbols
+syms: Final = pygram.python_symbols
 
 
 # types
@@ -128,12 +128,16 @@ ASSIGNMENTS: Final = {
     "//=",
 }
 
-IMPLICIT_TUPLE = {syms.testlist, syms.testlist_star_expr, syms.exprlist}
-BRACKET = {token.LPAR: token.RPAR, token.LSQB: token.RSQB, token.LBRACE: token.RBRACE}
-OPENING_BRACKETS = set(BRACKET.keys())
-CLOSING_BRACKETS = set(BRACKET.values())
-BRACKETS = OPENING_BRACKETS | CLOSING_BRACKETS
-ALWAYS_NO_SPACE = CLOSING_BRACKETS | {token.COMMA, STANDALONE_COMMENT}
+IMPLICIT_TUPLE: Final = {syms.testlist, syms.testlist_star_expr, syms.exprlist}
+BRACKET: Final = {
+    token.LPAR: token.RPAR,
+    token.LSQB: token.RSQB,
+    token.LBRACE: token.RBRACE,
+}
+OPENING_BRACKETS: Final = set(BRACKET.keys())
+CLOSING_BRACKETS: Final = set(BRACKET.values())
+BRACKETS: Final = OPENING_BRACKETS | CLOSING_BRACKETS
+ALWAYS_NO_SPACE: Final = CLOSING_BRACKETS | {token.COMMA, STANDALONE_COMMENT}
 
 
 class Visitor(Generic[T]):
@@ -176,9 +180,9 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
     `complex_subscript` signals whether the given leaf is part of a subscription
     which has non-trivial arguments, like arithmetic expressions or function calls.
     """
-    NO = ""
-    SPACE = " "
-    DOUBLESPACE = "  "
+    NO: Final = ""
+    SPACE: Final = " "
+    DOUBLESPACE: Final = "  "
     t = leaf.type
     p = leaf.parent
     v = leaf.value

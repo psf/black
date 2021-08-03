@@ -17,6 +17,7 @@ STRING_PREFIX_CHARS: Final = "furbFURB"  # All possible string prefix characters
 STRING_PREFIX_RE: Final = re.compile(
     r"^([" + STRING_PREFIX_CHARS + r"]*)(.*)$", re.DOTALL
 )
+FIRST_NON_WHITESPACE_RE: Final = re.compile(r"\s*\t+\s*(\S)")
 
 
 def sub_twice(regex: Pattern[str], replacement: str, original: str) -> str:
@@ -46,7 +47,7 @@ def lines_with_leading_tabs_expanded(s: str) -> List[str]:
     for line in s.splitlines():
         # Find the index of the first non-whitespace character after a string of
         # whitespace that includes at least one tab
-        match = re.match(r"\s*\t+\s*(\S)", line)
+        match = FIRST_NON_WHITESPACE_RE.match(line)
         if match:
             first_non_whitespace_idx = match.start(1)
 

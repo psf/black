@@ -36,6 +36,11 @@ except ImportError:
     else:
         ast3 = ast27 = ast
 
+if sys.version_info >= (3, 8):
+    TYPE_IGNORE_CLASSES: Final = (ast3.TypeIgnore, ast27.TypeIgnore, ast.TypeIgnore)
+else:
+    TYPE_IGNORE_CLASSES: Final = (ast3.TypeIgnore, ast27.TypeIgnore)
+
 
 class InvalidInput(ValueError):
     """Raised when input source code fails all parse attempts."""
@@ -160,10 +165,7 @@ def stringify_ast(
 
     for field in sorted(node._fields):  # noqa: F402
         # TypeIgnore has only one field 'lineno' which breaks this comparison
-        type_ignore_classes: Tuple[Type, ...] = (ast3.TypeIgnore, ast27.TypeIgnore)
-        if sys.version_info >= (3, 8):
-            type_ignore_classes += (ast.TypeIgnore,)
-        if isinstance(node, type_ignore_classes):
+        if isinstance(node, TYPE_IGNORE_CLASSES):
             break
 
         try:
