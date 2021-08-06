@@ -2,7 +2,10 @@
 
 ## Unreleased
 
-- Moved from `appdirs` dependency to `platformdirs` (#2375)
+### _Black_
+
+- Add support for formatting Jupyter Notebook files (#2357)
+- Move from `appdirs` dependency to `platformdirs` (#2375)
 
 ## 21.7b0
 
