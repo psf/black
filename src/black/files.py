@@ -92,7 +92,7 @@ def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
     If parsing fails, will raise a tomli.TOMLDecodeError
     """
     with open(path_config, encoding="utf8") as f:
-        pyproject_toml = tomli.load(f)
+        pyproject_toml = tomli.load(f)  # type: ignore  # due to deprecated API usage
     config = pyproject_toml.get("tool", {}).get("black", {})
     return {k.replace("--", "").replace("-", "_"): v for k, v in config.items()}
 
