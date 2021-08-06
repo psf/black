@@ -25,6 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      # you can change the tag @stable with any of the available here: https://github.com/psf/black/tags
       - uses: psf/black@stable
 ```
 
