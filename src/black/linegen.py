@@ -103,17 +103,13 @@ class LineGenerator(Visitor[Line]):
     def visit_test(self, node: Node) -> Iterator[Line]:
         """Visit an `x if y else z` test"""
 
-        # parenthesize conditional expressions which span multiple lines
         already_parenthesized = (
             node.prev_sibling and node.prev_sibling.type == token.LPAR
         )
-        as_str = str(node)
-        multiline = "\n" in as_str and not (
-            as_str.startswith("\n") or as_str.endswith("\n")
-        )
-        if not already_parenthesized and multiline:
-            lpar = Leaf(token.LPAR, "(")
-            rpar = Leaf(token.RPAR, ")")
+
+        if not already_parenthesized:
+            lpar = Leaf(token.LPAR, "")
+            rpar = Leaf(token.RPAR, "")
             node.insert_child(0, lpar)
             node.append_child(rpar)
 

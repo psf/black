@@ -1,3 +1,9 @@
+long_kwargs_single_line = my_function(
+    foo="test, this is a sample value",
+    bar=some_long_value_name_foo_bar_baz if some_boolean_variable else some_fallback_value_foo_bar_baz,
+    baz="hello, this is a another value",
+)
+
 multiline_kwargs_indented = my_function(
     foo="test, this is a sample value",
     bar=some_long_value_name_foo_bar_baz
@@ -38,6 +44,16 @@ generator_expression = (
 )
 
 # output
+
+long_kwargs_single_line = my_function(
+    foo="test, this is a sample value",
+    bar=(
+        some_long_value_name_foo_bar_baz
+        if some_boolean_variable
+        else some_fallback_value_foo_bar_baz
+    ),
+    baz="hello, this is a another value",
+)
 
 multiline_kwargs_indented = my_function(
     foo="test, this is a sample value",
@@ -91,8 +107,10 @@ nested = (
 )
 
 generator_expression = (
-    some_long_value_name_foo_bar_baz
-    if some_boolean_variable
-    else some_fallback_value_foo_bar_baz
+    (
+        some_long_value_name_foo_bar_baz
+        if some_boolean_variable
+        else some_fallback_value_foo_bar_baz
+    )
     for some_boolean_variable in some_iterable
 )
