@@ -3,7 +3,7 @@
 Official _Black_ Docker images are available on Docker Hub:
 https://hub.docker.com/r/pyfound/black
 
-Following tags are used for _Black_ images:
+The following tags are used for _Black_ images:
 
 - `latest` - tag used for either
   [the latest commit of `main` branch](https://github.com/psf/black/commits/main) or
@@ -37,4 +37,4 @@ $ docker run --rm --volume $(pwd):/src --workdir /src pyfound/black:latest_relea
 
 _Remark_: besides [regular _Black_ exit codes](./the_basics.md) returned by `--check`
 option, [Docker exit codes](https://docs.docker.com/engine/reference/run/#exit-status)
-should be also considered.
+should also be considered.
