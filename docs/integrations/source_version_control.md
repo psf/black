@@ -14,4 +14,5 @@ repos:
 ```
 
 If you want support for Jupyter Notebooks as well, then replace `id: black` with
-`id: black-jupyter`.
+`id: black-jupyter` (though note that it's only available from version `21.8b0`
+onwards).
