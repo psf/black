@@ -1727,6 +1727,30 @@ class BlackTestCase(BlackBaseTestCase):
         )
         self.assertEqual(sorted(expected), sorted(sources))
 
+    def test_invalid_gitignore(self) -> None:
+        path = THIS_DIR / "data" / "invalid_gitignore_tests"
+        empty_config = path / "pyproject.toml"
+        result = BlackRunner().invoke(
+            black.main, ["--verbose", "--config", str(empty_config), str(path)]
+        )
+        assert result.exit_code == 1
+        assert result.stderr_bytes is not None
+
+        gitignore = path / ".gitignore"
+        assert f"Could not parse {gitignore}" in result.stderr_bytes.decode()
+
+    def test_invalid_nested_gitignore(self) -> None:
+        path = THIS_DIR / "data" / "invalid_nested_gitignore_tests"
+        empty_config = path / "pyproject.toml"
+        result = BlackRunner().invoke(
+            black.main, ["--verbose", "--config", str(empty_config), str(path)]
+        )
+        assert result.exit_code == 1
+        assert result.stderr_bytes is not None
+
+        gitignore = path / "a" / ".gitignore"
+        assert f"Could not parse {gitignore}" in result.stderr_bytes.decode()
+
     def test_empty_include(self) -> None:
         path = THIS_DIR / "data" / "include_exclude_tests"
         report = black.Report()

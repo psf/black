@@ -9,6 +9,7 @@ import io
 from multiprocessing import Manager, freeze_support
 import os
 from pathlib import Path
+from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
 import regex as re
 import signal
 import sys
@@ -428,18 +429,21 @@ def main(
             content=code, fast=fast, write_back=write_back, mode=mode, report=report
         )
     else:
-        sources = get_sources(
-            ctx=ctx,
-            src=src,
-            quiet=quiet,
-            verbose=verbose,
-            include=include,
-            exclude=exclude,
-            extend_exclude=extend_exclude,
-            force_exclude=force_exclude,
-            report=report,
-            stdin_filename=stdin_filename,
-        )
+        try:
+            sources = get_sources(
+                ctx=ctx,
+                src=src,
+                quiet=quiet,
+                verbose=verbose,
+                include=include,
+                exclude=exclude,
+                extend_exclude=extend_exclude,
+                force_exclude=force_exclude,
+                report=report,
+                stdin_filename=stdin_filename,
+            )
+        except GitWildMatchPatternError:
+            ctx.exit(1)
 
         path_empty(
             sources,
