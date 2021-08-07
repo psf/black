@@ -7,8 +7,11 @@ Use [pre-commit](https://pre-commit.com/). Once you
 ```yaml
 repos:
   - repo: https://github.com/psf/black
-    rev: stable # Replace by any tag/version: https://github.com/psf/black/tags
+    rev: 21.7b0 # Replace by any tag/version: https://github.com/psf/black/tags
     hooks:
       - id: black
         language_version: python3 # Should be a command that runs python3.6+
 ```
+
+If you want support for Jupyter Notebooks as well, then replace `id: black` with
+`id: black-jupyter`.
