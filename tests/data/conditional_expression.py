@@ -67,7 +67,7 @@ multiline_kwargs_indented = my_function(
 
 imploding_kwargs = my_function(
     foo="test, this is a sample value",
-    bar=(a if foo else b),
+    bar=a if foo else b,
     baz="hello, this is a another value",
 )
 
