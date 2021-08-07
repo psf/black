@@ -5,13 +5,13 @@ https://hub.docker.com/r/pyfound/black
 
 The following tags are used for _Black_ images:
 
-- `latest` - tag used for either
-  [the latest commit of `main` branch](https://github.com/psf/black/commits/main) or
-  [the latest release](https://github.com/psf/black/releases/latest)
-- `latest_release` - tag used for
-  [the latest release](https://github.com/psf/black/releases/latest)
-- `latest_non_release` - tag used for
-  [the latest commit of `main` branch](https://github.com/psf/black/commits/main)
+- `latest` - tag used for the newest image of _Black_. It can point to same image as tag
+  `latest_release` or `latest_non_release`
+- `latest_release` - tag used for image created when new version of _Black_ is released.
+  It maps to [the latest release](https://github.com/psf/black/releases/latest) of
+  _Black_
+- `latest_non_release` - tag used for image created for every single
+  [commit of `main` branch](https://github.com/psf/black/commits/main)
 - release numbers, e.g. `21.5b2`, `21.6b0`, `21.7b0` etc.
 
 ## Usage
