@@ -41,7 +41,8 @@ Try it out now using the [Black Playground](https://black.vercel.app). Watch the
 
 _Black_ can be installed by running `pip install black`. It requires Python 3.6.2+ to
 run. If you want to format Python 2 code as well, install with
-`pip install black[python2]`.
+`pip install black[python2]`. If you want to format Jupyter Notebooks, install with
+`pip install black[jupyter]`.
 
 If you can't wait for the latest _hotness_ and want to install from GitHub, use:
 
@@ -133,7 +134,8 @@ code in compliance with many other _Black_ formatted projects.
 The following notable open-source projects trust _Black_ with enforcing a consistent
 code style: pytest, tox, Pyramid, Django Channels, Hypothesis, attrs, SQLAlchemy,
 Poetry, PyPA applications (Warehouse, Bandersnatch, Pipenv, virtualenv), pandas, Pillow,
-every Datadog Agent Integration, Home Assistant, Zulip.
+Twisted, LocalStack, every Datadog Agent Integration, Home Assistant, Zulip, and many
+more.
 
 The following organizations use _Black_: Facebook, Dropbox, Mozilla, Quora, Duolingo.
 

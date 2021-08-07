@@ -6,7 +6,7 @@ from pathlib import Path
 import tempfile
 from typing import Dict, Iterable, Set, Tuple
 
-from appdirs import user_cache_dir
+from platformdirs import user_cache_dir
 
 from black.mode import Mode
 

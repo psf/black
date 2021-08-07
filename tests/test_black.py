@@ -44,6 +44,7 @@ from pathspec import PathSpec
 # Import other test classes
 from tests.util import (
     THIS_DIR,
+    change_directory,
     read_data,
     DETERMINISTIC_HEADER,
     BlackBaseTestCase,
@@ -450,38 +451,6 @@ class BlackTestCase(BlackBaseTestCase):
                 f" tests/data/expression_skip_magic_trailing_comma.diff with {dump}"
             )
             self.assertEqual(expected, actual, msg)
-
-    @pytest.mark.no_python2
-    def test_python2_should_fail_without_optional_install(self) -> None:
-        if sys.version_info < (3, 8):
-            self.skipTest(
-                "Python 3.6 and 3.7 will install typed-ast to work and as such will be"
-                " able to parse Python 2 syntax without explicitly specifying the"
-                " python2 extra"
-            )
-
-        source = "x = 1234l"
-        tmp_file = Path(black.dump_to_file(source))
-        try:
-            runner = BlackRunner()
-            result = runner.invoke(black.main, [str(tmp_file)])
-            self.assertEqual(result.exit_code, 123)
-        finally:
-            os.unlink(tmp_file)
-        assert result.stderr_bytes is not None
-        actual = (
-            result.stderr_bytes.decode()
-            .replace("\n", "")
-            .replace("\\n", "")
-            .replace("\\r", "")
-            .replace("\r", "")
-        )
-        msg = (
-            "The requested source code has invalid Python 3 syntax."
-            "If you are trying to format Python 2 files please reinstall Black"
-            " with the 'python2' extra: `python3 -m pip install black[python2]`."
-        )
-        self.assertIn(msg, actual)
 
     @pytest.mark.python2
     @patch("black.dump_to_file", dump_to_stderr)
@@ -1410,6 +1379,8 @@ class BlackTestCase(BlackBaseTestCase):
                 None,
                 report,
                 gitignore,
+                verbose=False,
+                quiet=False,
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))
@@ -1721,6 +1692,8 @@ class BlackTestCase(BlackBaseTestCase):
                 None,
                 report,
                 gitignore,
+                verbose=False,
+                quiet=False,
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))
@@ -1748,6 +1721,8 @@ class BlackTestCase(BlackBaseTestCase):
                 None,
                 report,
                 root_gitignore,
+                verbose=False,
+                quiet=False,
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))
@@ -1782,6 +1757,8 @@ class BlackTestCase(BlackBaseTestCase):
                 None,
                 report,
                 gitignore,
+                verbose=False,
+                quiet=False,
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))
@@ -1806,6 +1783,8 @@ class BlackTestCase(BlackBaseTestCase):
                 None,
                 report,
                 gitignore,
+                verbose=False,
+                quiet=False,
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))
@@ -1878,6 +1857,8 @@ class BlackTestCase(BlackBaseTestCase):
                     None,
                     report,
                     gitignore,
+                    verbose=False,
+                    quiet=False,
                 )
             )
         except ValueError as ve:
@@ -1899,6 +1880,8 @@ class BlackTestCase(BlackBaseTestCase):
                     None,
                     report,
                     gitignore,
+                    verbose=False,
+                    quiet=False,
                 )
             )
         path.iterdir.assert_called()
@@ -2041,17 +2024,12 @@ class BlackTestCase(BlackBaseTestCase):
             return
 
         # https://bugs.python.org/issue33660
-
-        old_cwd = Path.cwd()
-        try:
-            root = Path("/")
-            os.chdir(str(root))
+        root = Path("/")
+        with change_directory(root):
             path = Path("workspace") / "project"
             report = black.Report(verbose=True)
             normalized_path = black.normalize_path_maybe_ignore(path, root, report)
             self.assertEqual(normalized_path, "workspace/project")
-        finally:
-            os.chdir(str(old_cwd))
 
     def test_newline_comment_interaction(self) -> None:
         source = "class A:\\\r\n# type: ignore\n pass\n"
@@ -2202,10 +2180,6 @@ class BlackTestCase(BlackBaseTestCase):
         Test that the code option finds the pyproject.toml in the current directory.
         """
         with patch.object(black, "parse_pyproject_toml", return_value={}) as parse:
-            # Make sure we are in the project root with the pyproject file
-            if not Path("tests").exists():
-                os.chdir("..")
-
             args = ["--code", "print"]
             CliRunner().invoke(black.main, args)
 
@@ -2224,22 +2198,19 @@ class BlackTestCase(BlackBaseTestCase):
         Test that the code option finds the pyproject.toml in the parent directory.
         """
         with patch.object(black, "parse_pyproject_toml", return_value={}) as parse:
-            # Make sure we are in the tests directory
-            if Path("tests").exists():
-                os.chdir("tests")
+            with change_directory(Path("tests")):
+                args = ["--code", "print"]
+                CliRunner().invoke(black.main, args)
 
-            args = ["--code", "print"]
-            CliRunner().invoke(black.main, args)
+                pyproject_path = Path(Path().cwd().parent, "pyproject.toml").resolve()
+                assert (
+                    len(parse.mock_calls) >= 1
+                ), "Expected config parse to be called with the current directory."
 
-            pyproject_path = Path(Path().cwd().parent, "pyproject.toml").resolve()
-            assert (
-                len(parse.mock_calls) >= 1
-            ), "Expected config parse to be called with the current directory."
-
-            _, call_args, _ = parse.mock_calls[0]
-            assert (
-                call_args[0].lower() == str(pyproject_path).lower()
-            ), "Incorrect config loaded."
+                _, call_args, _ = parse.mock_calls[0]
+                assert (
+                    call_args[0].lower() == str(pyproject_path).lower()
+                ), "Incorrect config loaded."
 
 
 with open(black.__file__, "r", encoding="utf-8") as _bf:
