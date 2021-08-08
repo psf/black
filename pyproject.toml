@@ -31,6 +31,7 @@ build-backend = "setuptools.build_meta"
 optional-tests = [
   "no_python2: run when `python2` extra NOT installed",
   "no_blackd: run when `d` extra NOT installed",
+  "no_jupyter: run when `jupyter` extra NOT installed",
 ]
 markers = [
   "incompatible_with_mypyc: run when testing mypyc compiled black"

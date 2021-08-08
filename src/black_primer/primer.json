@@ -111,10 +111,16 @@
       "long_checkout": false,
       "py_versions": ["all"]
     },
+    "scikit-lego": {
+      "cli_arguments": ["--experimental-string-processing"],
+      "expect_formatting_changes": true,
+      "git_clone_url": "https://github.com/koaning/scikit-lego",
+      "long_checkout": false,
+      "py_versions": ["all"]
+    },
     "sqlalchemy": {
-      "no_cli_args_reason": "breaks black with new string parsing - #2188",
-      "cli_arguments": [],
-      "expect_formatting_changes": false,
+      "cli_arguments": ["--experimental-string-processing"],
+      "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/sqlalchemy/sqlalchemy.git",
       "long_checkout": false,
       "py_versions": ["all"]

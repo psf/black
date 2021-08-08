@@ -16,6 +16,10 @@ class Changed(Enum):
     YES = 2
 
 
+class NothingChanged(UserWarning):
+    """Raised when reformatted code is the same as source."""
+
+
 @dataclass
 class Report:
     """Provides a reformatting counter. Can be rendered with `str(report)`."""
