@@ -3,16 +3,21 @@
 Official _Black_ Docker images are available on Docker Hub:
 https://hub.docker.com/r/pyfound/black
 
-The following tags are used for _Black_ images:
+From end-user perspective the following tags are used for _Black_ images:
 
-- `latest` - tag used for the newest image of _Black_. It can point to same image as tag
-  `latest_release` or `latest_non_release`
-- `latest_release` - tag used for image created when new version of _Black_ is released.
-  It maps to [the latest release](https://github.com/psf/black/releases/latest) of
-  _Black_
-- `latest_non_release` - tag used for image created for every single
-  [commit of `main` branch](https://github.com/psf/black/commits/main)
-- release numbers, e.g. `21.5b2`, `21.6b0`, `21.7b0` etc.
+- `latest` - tag used for the newest image of _Black_.\
+  ℹ Recommended for users who always want to use the latest version of _Black_.
+- `latest_release` - tag used for image created when new version of _Black_ is
+  released.\
+  ℹ Recommended for users who want to use released versions of _Black_. It maps to [the latest release](https://github.com/psf/black/releases/latest)
+  of _Black_.
+- release numbers, e.g. `21.5b2`, `21.6b0`, `21.7b0` etc.\
+  ℹ Recommended for users who want to use particular version of _Black_.
+
+There is one more tag used for _Black_ Docker images - `latest_non_release`. It is
+created for all, still not released
+[commits of `main` branch](https://github.com/psf/black/commits/main). It's more related
+to software life-cycle, that targeted for end-users.
 
 ## Usage
 
