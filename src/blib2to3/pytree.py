@@ -14,7 +14,6 @@ There's also a pattern matching implementation here.
 
 from typing import (
     Any,
-    Callable,
     Dict,
     Iterator,
     List,
@@ -978,6 +977,3 @@ def generate_matches(
                     r.update(r0)
                     r.update(r1)
                     yield c0 + c1, r
-
-
-_Convert = Callable[[Grammar, RawNode], Any]

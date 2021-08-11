@@ -29,8 +29,9 @@ from typing import (
     Union,
 )
 
-from dataclasses import replace
 import click
+from dataclasses import replace
+from mypy_extensions import mypyc_attr
 
 from black.const import DEFAULT_LINE_LENGTH, DEFAULT_INCLUDES, DEFAULT_EXCLUDES
 from black.const import STDIN_PLACEHOLDER
@@ -647,6 +648,7 @@ def reformat_one(
         report.failed(src, str(exc))
 
 
+@mypyc_attr(patchable=True)
 def reformat_many(
     sources: Set[Path], fast: bool, write_back: WriteBack, mode: Mode, report: "Report"
 ) -> None:
