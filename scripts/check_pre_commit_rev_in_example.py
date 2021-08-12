@@ -1,28 +1,17 @@
 import os
-import shlex
-import subprocess
 
 import commonmark
 import yaml
 from bs4 import BeautifulSoup
 
 
-def main(source_version_control: str) -> None:
-    latest_tag = subprocess.run(
-        ["git", "describe", "--abbrev=0", "--tags"],
-        universal_newlines=True,
-        stdout=subprocess.PIPE,
-    ).stdout.rstrip()
-    if not latest_tag:
-        # Running in CI
-        latest_tag = subprocess.run(
-            shlex.split(
-                "curl -sSL api.github.com/repos/psf/black/releases/latest "
-                '| grep \'"tag_name":\' | sed -E \'s/.*"([^"]+)".*/\1/\''
-            ),
-            universal_newlines=True,
-            stdout=subprocess.PIPE,
-        ).stdout.rstrip()
+def main(changes: str, source_version_control: str) -> None:
+    html = commonmark.commonmark(changes)
+    soup = BeautifulSoup(html, "html.parser")
+    headers = soup.find_all("h2")
+    latest_tag, _ = [
+        header.string for header in headers if header.string != "Unreleased"
+    ]
 
     html = commonmark.commonmark(source_version_control)
     soup = BeautifulSoup(html, "html.parser")
@@ -38,9 +27,11 @@ def main(source_version_control: str) -> None:
 
 
 if __name__ == "__main__":
+    with open("CHANGES.md", encoding="utf-8") as fd:
+        changes = fd.read()
     with open(
         os.path.join("docs", "integrations", "source_version_control.md"),
         encoding="utf-8",
     ) as fd:
         source_version_control = fd.read()
-    main(source_version_control)
+    main(changes, source_version_control)
