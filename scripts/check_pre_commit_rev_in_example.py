@@ -6,16 +6,20 @@ from bs4 import BeautifulSoup
 
 
 def main(changes: str, source_version_control: str) -> None:
-    html = commonmark.commonmark(changes)
-    soup = BeautifulSoup(html, "html.parser")
-    headers = soup.find_all("h2")
+    changes_html = commonmark.commonmark(changes)
+    changes_soup = BeautifulSoup(changes_html, "html.parser")
+    headers = changes_soup.find_all("h2")
     latest_tag, *_ = [
         header.string for header in headers if header.string != "Unreleased"
     ]
 
-    html = commonmark.commonmark(source_version_control)
-    soup = BeautifulSoup(html, "html.parser")
-    pre_commit_repos = yaml.safe_load(soup.find(class_="language-yaml").string)["repos"]
+    source_version_control_html = commonmark.commonmark(source_version_control)
+    source_version_control_soup = BeautifulSoup(
+        source_version_control_html, "html.parser"
+    )
+    pre_commit_repos = yaml.safe_load(
+        source_version_control_soup.find(class_="language-yaml").string
+    )["repos"]
 
     for repo in pre_commit_repos:
         pre_commit_rev = repo["rev"]
