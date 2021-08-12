@@ -1379,6 +1379,8 @@ class BlackTestCase(BlackBaseTestCase):
                 None,
                 report,
                 gitignore,
+                verbose=False,
+                quiet=False,
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))
@@ -1690,6 +1692,8 @@ class BlackTestCase(BlackBaseTestCase):
                 None,
                 report,
                 gitignore,
+                verbose=False,
+                quiet=False,
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))
@@ -1717,6 +1721,8 @@ class BlackTestCase(BlackBaseTestCase):
                 None,
                 report,
                 root_gitignore,
+                verbose=False,
+                quiet=False,
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))
@@ -1751,6 +1757,8 @@ class BlackTestCase(BlackBaseTestCase):
                 None,
                 report,
                 gitignore,
+                verbose=False,
+                quiet=False,
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))
@@ -1775,6 +1783,8 @@ class BlackTestCase(BlackBaseTestCase):
                 None,
                 report,
                 gitignore,
+                verbose=False,
+                quiet=False,
             )
         )
         self.assertEqual(sorted(expected), sorted(sources))
@@ -1847,6 +1857,8 @@ class BlackTestCase(BlackBaseTestCase):
                     None,
                     report,
                     gitignore,
+                    verbose=False,
+                    quiet=False,
                 )
             )
         except ValueError as ve:
@@ -1868,6 +1880,8 @@ class BlackTestCase(BlackBaseTestCase):
                     None,
                     report,
                     gitignore,
+                    verbose=False,
+                    quiet=False,
                 )
             )
         path.iterdir.assert_called()

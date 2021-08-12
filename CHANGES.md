@@ -5,6 +5,7 @@
 ### _Black_
 
 - Moved from `appdirs` dependency to `platformdirs` (#2375)
+- Add support for formatting Jupyter Notebook files (#2357)
 - Avoid changing a function return type annotation's type to a tuple by adding a
   trailing comma (#2384)
 
