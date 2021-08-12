@@ -1,4 +1,5 @@
 import os
+import shlex
 import subprocess
 
 import commonmark
@@ -12,6 +13,16 @@ def main(source_version_control: str) -> None:
         universal_newlines=True,
         stdout=subprocess.PIPE,
     ).stdout.rstrip()
+    if not latest_tag:
+        # Running in CI
+        latest_tag = subprocess.run(
+            shlex.split(
+                "curl -sSL api.github.com/repos/psf/black/releases/latest "
+                '| grep \'"tag_name":\' | sed -E \'s/.*"([^"]+)".*/\1/\''
+            ),
+            universal_newlines=True,
+            stdout=subprocess.PIPE,
+        ).stdout.rstrip()
 
     html = commonmark.commonmark(source_version_control)
     soup = BeautifulSoup(html, "html.parser")
