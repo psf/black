@@ -12,7 +12,17 @@ from shutil import rmtree, which
 from subprocess import CalledProcessError
 from sys import version_info
 from tempfile import TemporaryDirectory
-from typing import Any, Callable, Dict, NamedTuple, Optional, Sequence, Tuple
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    NamedTuple,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
 from urllib.parse import urlparse
 
 import click
@@ -113,6 +123,23 @@ def analyze_results(project_count: int, results: Results) -> int:
     return results.stats["failed"]
 
 
+def _flatten_cli_args(cli_args: List[Union[Sequence[str], str]]) -> List[str]:
+    """Allow a user to put long arguments into a list of strs
+    to make the JSON human readable"""
+    flat_args = []
+    for arg in cli_args:
+        if isinstance(arg, str):
+            flat_args.append(arg)
+            continue
+
+        new_args_str = ""
+        for arg_str in arg:
+            new_args_str += arg_str
+        flat_args.append(new_args_str)
+
+    return flat_args
+
+
 async def black_run(
     project_name: str,
     repo_path: Optional[Path],
@@ -131,7 +158,7 @@ async def black_run(
     stdin_test = project_name.upper() == "STDIN"
     cmd = [str(which(BLACK_BINARY))]
     if "cli_arguments" in project_config and project_config["cli_arguments"]:
-        cmd.extend(project_config["cli_arguments"])
+        cmd.extend(_flatten_cli_args(project_config["cli_arguments"]))
     cmd.append("--check")
     if not no_diff:
         cmd.append("--diff")
@@ -154,6 +181,7 @@ async def black_run(
 
         cwd_path = repo_path.parent if stdin_test else repo_path
         try:
+            LOG.debug(f"Running black for {project_name}: {' '.join(cmd)}")
             _stdout, _stderr = await _gen_check_output(
                 cmd, cwd=cwd_path, env=env, stdin=stdin
             )

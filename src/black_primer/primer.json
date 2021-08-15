@@ -36,6 +36,34 @@
       "long_checkout": false,
       "py_versions": ["all"]
     },
+    "cpython": {
+      "cli_arguments": [
+        "--experimental-string-processing",
+        "--extend-exclude",
+        [
+          "Lib/lib2to3/tests/data/different_encoding.py",
+          "|Lib/lib2to3/tests/data/false_encoding.py",
+          "|Lib/lib2to3/tests/data/py2_test_grammar.py",
+          "|Lib/test/bad_coding.py",
+          "|Lib/test/bad_coding2.py",
+          "|Lib/test/badsyntax_3131.py",
+          "|Lib/test/badsyntax_pep3120.py",
+          "|Lib/test/test_base64.py",
+          "|Lib/test/test_exceptions.py",
+          "|Lib/test/test_grammar.py",
+          "|Lib/test/test_named_expressions.py",
+          "|Lib/test/test_patma.py",
+          "|Lib/test/test_tokenize.py",
+          "|Lib/test/test_xml_etree.py",
+          "|Lib/traceback.py",
+          "|Tools/c-analyzer/c_parser/parser/_delim.py"
+        ]
+      ],
+      "expect_formatting_changes": true,
+      "git_clone_url": "https://github.com/python/cpython.git",
+      "long_checkout": false,
+      "py_versions": ["3.9", "3.10"]
+    },
     "django": {
       "cli_arguments": [
         "--experimental-string-processing",
