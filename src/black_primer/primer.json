@@ -37,6 +37,8 @@
       "py_versions": ["all"]
     },
     "cpython": {
+      "disabled": true,
+      "disabled_reason": "To big / slow for GitHub Actions but handy to keep config to use manually or in some other CI in the future",
       "base_path": "Lib",
       "cli_arguments": [
         "--experimental-string-processing",
