@@ -37,6 +37,7 @@
       "py_versions": ["all"]
     },
     "cpython": {
+      "base_path": "Lib",
       "cli_arguments": [
         "--experimental-string-processing",
         "--extend-exclude",
@@ -55,8 +56,7 @@
           "|Lib/test/test_patma.py",
           "|Lib/test/test_tokenize.py",
           "|Lib/test/test_xml_etree.py",
-          "|Lib/traceback.py",
-          "|Tools/c-analyzer/c_parser/parser/_delim.py"
+          "|Lib/traceback.py"
         ]
       ],
       "expect_formatting_changes": true,

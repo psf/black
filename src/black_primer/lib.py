@@ -169,6 +169,8 @@ async def black_run(
     if stdin_test:
         cmd.append("-")
         stdin = repo_path.read_bytes()
+    elif "base_path" in project_config:
+        cmd.append(project_config["base_path"])
     else:
         cmd.append(".")
 
