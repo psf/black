@@ -1,5 +1,5 @@
 {
-  "configuration_format_version": 20200509,
+  "configuration_format_version": 20210815,
   "projects": {
     "STDIN": {
       "cli_arguments": ["--experimental-string-processing"],
@@ -62,7 +62,8 @@
       "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/python/cpython.git",
       "long_checkout": false,
-      "py_versions": ["3.9", "3.10"]
+      "py_versions": ["3.9", "3.10"],
+      "timeout_seconds": 900
     },
     "django": {
       "cli_arguments": [

@@ -28,6 +28,7 @@ from urllib.parse import urlparse
 import click
 
 
+TEN_MINUTES_SECONDS = 600
 WINDOWS = system() == "Windows"
 BLACK_BINARY = "black.exe" if WINDOWS else "black"
 GIT_BINARY = "git.exe" if WINDOWS else "git"
@@ -49,7 +50,7 @@ class Results(NamedTuple):
 
 async def _gen_check_output(
     cmd: Sequence[str],
-    timeout: float = 600,
+    timeout: float = TEN_MINUTES_SECONDS,
     env: Optional[Dict[str, str]] = None,
     cwd: Optional[Path] = None,
     stdin: Optional[bytes] = None,
@@ -171,6 +172,11 @@ async def black_run(
     else:
         cmd.append(".")
 
+    timeout = (
+        project_config["timeout_seconds"]
+        if "timeout_seconds" in project_config
+        else TEN_MINUTES_SECONDS
+    )
     with TemporaryDirectory() as tmp_path:
         # Prevent reading top-level user configs by manipulating environment variables
         env = {
@@ -183,7 +189,7 @@ async def black_run(
         try:
             LOG.debug(f"Running black for {project_name}: {' '.join(cmd)}")
             _stdout, _stderr = await _gen_check_output(
-                cmd, cwd=cwd_path, env=env, stdin=stdin
+                cmd, cwd=cwd_path, env=env, stdin=stdin, timeout=timeout
             )
         except asyncio.TimeoutError:
             results.stats["failed"] += 1
