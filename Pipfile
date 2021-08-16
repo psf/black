@@ -21,7 +21,7 @@ setuptools = ">=39.2.0"
 setuptools-scm = "*"
 twine = ">=1.11.0"
 wheel = ">=0.31.1"
-black = {editable = true, extras = ["d"], path = "."}
+black = {editable = true, extras = ["d", "jupyter"], path = "."}
 
 [packages]
 aiohttp = ">=3.6.0"
