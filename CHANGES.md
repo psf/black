@@ -7,6 +7,11 @@
 - Add support for formatting Jupyter Notebook files (#2357)
 - Move from `appdirs` dependency to `platformdirs` (#2375)
 
+### Integrations
+
+- The provided pre-commit hooks no longer specify `language_version` to avoid overriding
+  `default_language_version` (#2430)
+
 ## 21.7b0
 
 ### _Black_
