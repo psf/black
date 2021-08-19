@@ -1,0 +1,12 @@
+# No non-source python resources.
+*.pyc
+*.pyo
+*.pyd
+*.pyx
+
+# This should break things
+!
+
+# No build artifacts
+build
+wheelhouse

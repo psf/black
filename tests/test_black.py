@@ -1727,6 +1727,11 @@ class BlackTestCase(BlackBaseTestCase):
         )
         self.assertEqual(sorted(expected), sorted(sources))
 
+    def test_broken_gitignore(self) -> None:
+        path = Path(THIS_DIR / "data" / "broken_gitignore_test")
+        with self.assertRaises(SyntaxError):
+            _ = black.files.get_gitignore(path)
+
     def test_empty_include(self) -> None:
         path = THIS_DIR / "data" / "include_exclude_tests"
         report = black.Report()

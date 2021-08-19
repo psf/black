@@ -122,7 +122,11 @@ def get_gitignore(root: Path) -> PathSpec:
     if gitignore.is_file():
         with gitignore.open(encoding="utf-8") as gf:
             lines = gf.readlines()
-    return PathSpec.from_lines("gitwildmatch", lines)
+
+    try:
+        return PathSpec.from_lines("gitwildmatch", lines)
+    except (IndexError, ValueError, TypeError) as e:
+        raise SyntaxError("Problem parsing .gitignore file: {0}".format(e))
 
 
 def normalize_path_maybe_ignore(
