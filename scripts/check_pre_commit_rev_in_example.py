@@ -1,4 +1,16 @@
+"""
+Check that the rev value in the example pre-commit configuration matches
+the latest version of Black. This saves us from forgetting to update that
+during the release process.
+
+Why can't we just use `rev: stable` and call it a day? Well pre-commit
+won't auto update the hook as you may expect (and for good reasons, some
+technical and some pragmatic). Encouraging bad practice is also just
+not ideal. xref: https://github.com/psf/black/issues/420
+"""
+
 import os
+import sys
 
 import commonmark
 import yaml
@@ -24,10 +36,11 @@ def main(changes: str, source_version_control: str) -> None:
     for repo in pre_commit_repos:
         pre_commit_rev = repo["rev"]
         if not pre_commit_rev == latest_tag:
-            raise ValueError(
+            print(
                 "Please set the rev in ``source_version_control.md`` to be the latest "
-                f"one.\nExpected {latest_tag}, got {pre_commit_rev}\n"
+                f"one.\nExpected {latest_tag}, got {pre_commit_rev}.\n"
             )
+            sys.exit(1)
 
 
 if __name__ == "__main__":

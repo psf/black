@@ -11,8 +11,9 @@ repos:
         minimum_pre_commit_version: 2.9.2
         require_serial: true
         types_or: [python, pyi]
+
       - id: check-pre-commit-rev-in-example
-        name: Check pre-commit rev in example is correct
+        name: Check pre-commit rev in example
         language: python
         entry: python -m scripts.check_pre_commit_rev_in_example
         files: '(CHANGES\.md|source_version_control\.md)$'
