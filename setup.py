@@ -77,7 +77,7 @@ setup(
         "tomli>=0.2.6,<2.0.0",
         "typed-ast>=1.4.2; python_version < '3.8'",
         "regex>=2020.1.8",
-        "pathspec>=0.8.1, <1",
+        "pathspec>=0.9.0, <1",
         "dataclasses>=0.6; python_version < '3.7'",
         "typing_extensions>=3.10.0.0; python_version < '3.10'",
         "mypy_extensions>=0.4.3",

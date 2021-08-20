@@ -6,6 +6,7 @@
 
 - Add support for formatting Jupyter Notebook files (#2357)
 - Move from `appdirs` dependency to `platformdirs` (#2375)
+- Present a more user-friendly error if .gitignore is invalid (#2414)
 
 ### Integrations
 
