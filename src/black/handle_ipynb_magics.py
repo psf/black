@@ -358,8 +358,8 @@ class OffsetAndMagic:
     magic: str
 
 
-# Unsurprisingly, dataclasses are Not. An. Option. Here. Due. To. Mypyc. As. Usual.
-# > fyi it's due the ast.NodeVisitor parent type
+# Unsurprisingly, subclassing ast.NodeVisitor means we can't use dataclasses here
+# as mypyc will generate broken code.
 class MagicFinder(ast.NodeVisitor):
     """Visit cell to look for get_ipython calls.
 

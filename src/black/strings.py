@@ -152,7 +152,10 @@ def normalize_string_prefix(s: str, remove_u_prefix: bool = False) -> str:
     return f"{new_prefix}{match.group(2)}"
 
 
-@lru_cache(maxsize=256)
+# Re(gex) does actually cache patterns internally but this still improves
+# performance on a long list literal of strings by 5-9% since lru_cache's
+# caching overhead is much lower.
+@lru_cache(maxsize=64)
 def _cached_compile(pattern: str) -> re.Pattern:
     return re.compile(pattern)
 

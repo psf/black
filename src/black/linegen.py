@@ -365,9 +365,10 @@ def transform_line(
                 line, line_length=mode.line_length, features=features
             )
 
-        # HACK: functions (like rhs) compiled by mypyc don't retain their __name__
-        # attribute which is needed in `run_transformer` further down. Unfortunately
-        # a nested class breaks mypyc too. So a class must be created via type ...
+        # HACK: nested functions (like _rhs) compiled by mypyc don't retain their
+        # __name__ attribute which is needed in `run_transformer` further down.
+        # Unfortunately a nested class breaks mypyc too. So a class must be created
+        # via type ... https://github.com/mypyc/mypyc/issues/884
         rhs = type("rhs", (), {"__call__": _rhs})()
 
         if mode.experimental_string_processing:
