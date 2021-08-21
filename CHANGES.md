@@ -6,8 +6,15 @@
 
 - Moved from `appdirs` dependency to `platformdirs` (#2375)
 - Add support for formatting Jupyter Notebook files (#2357)
+- Move from `appdirs` dependency to `platformdirs` (#2375)
+- Present a more user-friendly error if .gitignore is invalid (#2414)
 - Avoid changing a function return type annotation's type to a tuple by adding a
   trailing comma (#2384)
+
+### Integrations
+
+- The provided pre-commit hooks no longer specify `language_version` to avoid overriding
+  `default_language_version` (#2430)
 
 ## 21.7b0
 
