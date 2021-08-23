@@ -11,6 +11,7 @@
   hardened to handle more edge cases during quote normalization (#2437)
 
 ### _Blackd_
+
 - Replace sys.exit(-1) with raise ImportError (#2440)
 
 ### Integrations
