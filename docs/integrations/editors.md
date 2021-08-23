@@ -295,12 +295,12 @@ Use [sublack plugin](https://github.com/jgirardet/sublack).
 
 Use [blackcellmagic](https://github.com/csurfer/blackcellmagic).
 
-## Python Language Server
+## Python LSP Server
 
 If your editor supports the [Language Server Protocol](https://langserver.org/) (Atom,
 Sublime Text, Visual Studio Code and many more), you can use the
-[Python Language Server](https://github.com/palantir/python-language-server) with the
-[pyls-black](https://github.com/rupert/pyls-black) plugin.
+[Python LSP Server](https://github.com/python-lsp/python-lsp-server) with the
+[python-lsp-black](https://github.com/python-lsp/python-lsp-black) plugin.
 
 ## Atom/Nuclide
 

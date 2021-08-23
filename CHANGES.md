@@ -6,6 +6,14 @@
 
 - Add support for formatting Jupyter Notebook files (#2357)
 - Move from `appdirs` dependency to `platformdirs` (#2375)
+- Present a more user-friendly error if .gitignore is invalid (#2414)
+- The failsafe for accidentally added backslashes in f-string expressions has been
+  hardened to handle more edge cases during quote normalization (#2437)
+
+### Integrations
+
+- The provided pre-commit hooks no longer specify `language_version` to avoid overriding
+  `default_language_version` (#2430)
 
 ## 21.7b0
 

@@ -18,6 +18,7 @@ from typing import (
 )
 
 from pathspec import PathSpec
+from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
 import tomli
 
 from black.output import err
@@ -122,7 +123,11 @@ def get_gitignore(root: Path) -> PathSpec:
     if gitignore.is_file():
         with gitignore.open(encoding="utf-8") as gf:
             lines = gf.readlines()
-    return PathSpec.from_lines("gitwildmatch", lines)
+    try:
+        return PathSpec.from_lines("gitwildmatch", lines)
+    except GitWildMatchPatternError as e:
+        err(f"Could not parse {gitignore}: {e}")
+        raise
 
 
 def normalize_path_maybe_ignore(

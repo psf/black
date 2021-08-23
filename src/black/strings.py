@@ -190,9 +190,9 @@ def normalize_string_quotes(s: str) -> str:
     if "f" in prefix.casefold():
         matches = re.findall(
             r"""
-            (?:[^{]|^)\{  # start of the string or a non-{ followed by a single {
+            (?:(?<!\{)|^)\{  # start of the string or a non-{ followed by a single {
                 ([^{].*?)  # contents of the brackets except if begins with {{
-            \}(?:[^}]|$)  # A } followed by end of the string or a non-}
+            \}(?:(?!\})|$)  # A } followed by end of the string or a non-}
             """,
             new_body,
             re.VERBOSE,
