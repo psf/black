@@ -10,6 +10,10 @@
 - The failsafe for accidentally added backslashes in f-string expressions has been
   hardened to handle more edge cases during quote normalization (#2437)
 
+### _Blackd_
+
+- Replace sys.exit(-1) with raise ImportError (#2440)
+
 ### Integrations
 
 - The provided pre-commit hooks no longer specify `language_version` to avoid overriding
