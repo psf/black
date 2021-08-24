@@ -133,10 +133,8 @@ def _flatten_cli_args(cli_args: List[Union[Sequence[str], str]]) -> List[str]:
             flat_args.append(arg)
             continue
 
-        new_args_str = ""
-        for arg_str in arg:
-            new_args_str += arg_str
-        flat_args.append(new_args_str)
+        args_as_str = "".join(arg)
+        flat_args.append(args_as_str)
 
     return flat_args
 
