@@ -146,6 +146,11 @@ class PrimerLibTests(unittest.TestCase):
             )
         self.assertEqual(2, results.stats["failed"])
 
+    def test_flatten_cli_args(self) -> None:
+        fake_long_args = ["--arg", ["really/", "|long", "|regex", "|splitup"], "--done"]
+        expected = ["--arg", "really/|long|regex|splitup", "--done"]
+        self.assertEqual(expected, lib._flatten_cli_args(fake_long_args))
+
     @event_loop()
     def test_gen_check_output(self) -> None:
         loop = asyncio.get_event_loop()
@@ -184,6 +189,8 @@ class PrimerLibTests(unittest.TestCase):
     @patch("sys.stdout", new_callable=StringIO)
     @event_loop()
     def test_process_queue(self, mock_stdout: Mock) -> None:
+        """Test the process queue on primer itself
+        - If you have non black conforming formatting in primer itself this can fail"""
         loop = asyncio.get_event_loop()
         config_path = Path(lib.__file__).parent / "primer.json"
         with patch("black_primer.lib.git_checkout_or_rebase", return_false):
