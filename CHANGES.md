@@ -7,8 +7,14 @@
 - Add support for formatting Jupyter Notebook files (#2357)
 - Move from `appdirs` dependency to `platformdirs` (#2375)
 - Present a more user-friendly error if .gitignore is invalid (#2414)
+- The failsafe for accidentally added backslashes in f-string expressions has been
+  hardened to handle more edge cases during quote normalization (#2437)
 - Avoid changing a function return type annotation's type to a tuple by adding a
   trailing comma (#2384)
+
+### _Blackd_
+
+- Replace sys.exit(-1) with raise ImportError (#2440)
 
 ### Integrations
 
