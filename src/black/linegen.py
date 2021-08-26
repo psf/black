@@ -7,7 +7,7 @@ from typing import Collection, Iterator, List, Optional, Set, Union
 
 from dataclasses import dataclass, field
 
-from black.nodes import WHITESPACE, STATEMENT, STANDALONE_COMMENT
+from black.nodes import WHITESPACE, RARROW, STATEMENT, STANDALONE_COMMENT
 from black.nodes import ASSIGNMENTS, OPENING_BRACKETS, CLOSING_BRACKETS
 from black.nodes import Visitor, syms, first_child_is_arith, ensure_visible
 from black.nodes import is_docstring, is_empty_tuple, is_one_tuple, is_one_tuple_between
@@ -574,6 +574,20 @@ def bracket_split_build_line(
                 original.is_def
                 and opening_bracket.value == "("
                 and not any(leaf.type == token.COMMA for leaf in leaves)
+                # In particular, don't add one within a parenthesized return annotation.
+                # Unfortunately the indicator we're in a return annotation (RARROW) may
+                # be defined directly in the parent node, the parent of the parent ...
+                # and so on depending on how complex the return annotation is.
+                # This isn't perfect and there's some false negatives but they are in
+                # contexts were a comma is actually fine.
+                and not any(
+                    node.prev_sibling.type == RARROW
+                    for node in (
+                        leaves[0].parent,
+                        getattr(leaves[0].parent, "parent", None),
+                    )
+                    if isinstance(node, Node) and isinstance(node.prev_sibling, Leaf)
+                )
             )
 
             if original.is_import or no_commas:
