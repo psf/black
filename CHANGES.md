@@ -11,6 +11,8 @@
   hardened to handle more edge cases during quote normalization (#2437)
 - Avoid changing a function return type annotation's type to a tuple by adding a
   trailing comma (#2384)
+- Parsing support has been added for unparenthesized walruses in set literals, set
+  comprehensions, and indices (#2447).
 
 ### _Blackd_
 
