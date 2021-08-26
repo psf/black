@@ -26,6 +26,7 @@ from typing import (
 import pytest
 import unittest
 from unittest.mock import patch, MagicMock
+from parameterized import parameterized
 
 import click
 from click import unstyle
@@ -298,6 +299,14 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertIn(black.Feature.ASSIGNMENT_EXPRESSIONS, features)
         versions = black.detect_target_versions(root)
         self.assertIn(black.TargetVersion.PY38, versions)
+
+    @parameterized.expand([(3, 9), (3, 10)])
+    def test_pep_572_newer_syntax(self, major: int, minor: int) -> None:
+        source, expected = read_data(f"pep_572_py{major}{minor}")
+        actual = fs(source, mode=DEFAULT_MODE)
+        self.assertFormatEqual(expected, actual)
+        if sys.version_info >= (major, minor):
+            black.assert_equivalent(source, actual)
 
     def test_expression_ff(self) -> None:
         source, expected = read_data("expression")

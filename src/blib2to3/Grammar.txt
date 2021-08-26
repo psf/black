@@ -157,14 +157,14 @@ testlist_gexp: (namedexpr_test|star_expr) ( old_comp_for | (',' (namedexpr_test|
 lambdef: 'lambda' [varargslist] ':' test
 trailer: '(' [arglist] ')' | '[' subscriptlist ']' | '.' NAME
 subscriptlist: subscript (',' subscript)* [',']
-subscript: test | [test] ':' [test] [sliceop]
+subscript: test [':=' test] | [test] ':' [test] [sliceop]
 sliceop: ':' [test]
 exprlist: (expr|star_expr) (',' (expr|star_expr))* [',']
 testlist: test (',' test)* [',']
 dictsetmaker: ( ((test ':' test | '**' expr)
                  (comp_for | (',' (test ':' test | '**' expr))* [','])) |
-                ((test | star_expr)
-		 (comp_for | (',' (test | star_expr))* [','])) )
+                ((test [':=' test] | star_expr)
+		 (comp_for | (',' (test [':=' test] | star_expr))* [','])) )
 
 classdef: 'class' NAME ['(' [arglist] ')'] ':' suite
 
