@@ -13,6 +13,7 @@
   trailing comma (#2384)
 - Parsing support has been added for unparenthesized walruses in set literals, set
   comprehensions, and indices (#2447).
+- Pin `setuptools-scm` build-time dependency version (#2457)
 
 ### _Blackd_
 
