@@ -1,6 +1,6 @@
 # Change Log
 
-## Unreleased
+## 21.8b0
 
 ### _Black_
 
@@ -17,7 +17,8 @@
 
 ### _Blackd_
 
-- Replace sys.exit(-1) with raise ImportError (#2440)
+- Replace sys.exit(-1) with raise ImportError as it plays more nicely with tools that
+  scan installed packages (#2440)
 
 ### Integrations
 
