@@ -14,6 +14,8 @@
 - Parsing support has been added for unparenthesized walruses in set literals, set
   comprehensions, and indices (#2447).
 - Pin `setuptools-scm` build-time dependency version (#2457)
+- Exclude typing-extensions version 3.10.0.1 due to it being broken on Python 3.10
+  (#2460)
 
 ### _Blackd_
 

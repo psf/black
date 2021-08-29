@@ -79,7 +79,10 @@ setup(
         "regex>=2020.1.8",
         "pathspec>=0.9.0, <1",
         "dataclasses>=0.6; python_version < '3.7'",
-        "typing_extensions>=3.10.0.0; python_version < '3.10'",
+        "typing_extensions>=3.10.0.0",
+        # 3.10.0.1 is broken on at least Python 3.10,
+        # https://github.com/python/typing/issues/865
+        "typing_extensions!=3.10.0.1; python_version >= '3.10'",
         "mypy_extensions>=0.4.3",
     ],
     extras_require={

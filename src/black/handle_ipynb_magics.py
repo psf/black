@@ -1,15 +1,19 @@
 """Functions to process IPython magics with."""
+
 from functools import lru_cache
 import dataclasses
 import ast
-from typing import Dict
+from typing import Dict, List, Tuple, Optional
 
 import secrets
-from typing import List, Tuple
+import sys
 import collections
 
-from typing import Optional
-from typing_extensions import TypeGuard
+if sys.version_info >= (3, 10):
+    from typing import TypeGuard
+else:
+    from typing_extensions import TypeGuard
+
 from black.report import NothingChanged
 from black.output import out
 
