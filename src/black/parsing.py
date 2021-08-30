@@ -96,7 +96,6 @@ def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -
 
         except TokenError as te:
             lineno, column = te.args[1]
-            lines = src_txt.splitlines()
             exc = InvalidInput(f"Cannot parse: {lineno}:{column}: Unexpected EOF")
 
     else:
