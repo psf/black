@@ -18,9 +18,9 @@
     Tests are required for bugfixes and new features. Documentation changes
     are necessary for formatting and most enhancement changes. -->
 
-- [] Add a CHANGELOG entry if necessary?
-- [] Add / update tests if necessary?
-- [] Add new / update outdated documentation?
+- [ ] Add a CHANGELOG entry if necessary?
+- [ ] Add / update tests if necessary?
+- [ ] Add new / update outdated documentation?
 
 <!-- Just as a reminder, everyone in all psf/black spaces including PRs
      must follow the PSF Code of Conduct (link below).
