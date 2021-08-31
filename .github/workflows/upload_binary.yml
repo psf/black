@@ -40,8 +40,11 @@ jobs:
           python -m pip install pyinstaller
 
       - name: Build binary
-        run: |
-          python -m PyInstaller -F --name ${{ matrix.asset_name }} --add-data 'src/blib2to3${{ matrix.pathsep }}blib2to3' src/black/__main__.py
+        run: >
+          python -m PyInstaller -F --name ${{ matrix.asset_name }} --add-data
+          'src/blib2to3${{ matrix.pathsep }}blib2to3' --hidden-import platformdirs.unix
+          --hidden-import platformdirs.macos --hidden-import platformdirs.windows
+          src/black/__main__.py
 
       - name: Upload binary as release asset
         uses: actions/upload-release-asset@v1
