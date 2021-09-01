@@ -1,5 +1,11 @@
 # Change Log
 
+## Unreleased
+
+### Packaging
+
+- Fix missing modules in self-contained binaries (#2466)
+
 ## 21.8b0
 
 ### _Black_
