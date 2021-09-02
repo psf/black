@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### _Black_
+
+- Functions and classes in blocks now have more consistent surrounding spacing (#2472)
+
 ### Packaging
 
 - Fix missing modules in self-contained binaries (#2466)
