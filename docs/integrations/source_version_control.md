@@ -10,7 +10,6 @@ repos:
     rev: 21.8b0
     hooks:
       - id: black
-        language_version: python3 # Should be a command that runs python3.6+
 ```
 
 Feel free to switch out the `rev` value to something else, like another
