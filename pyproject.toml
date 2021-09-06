@@ -23,10 +23,7 @@ extend-exclude = '''
 # NOTE: You don't need this in your own Black configuration.
 
 [build-system]
-# We're pinning setuptools-scm to bugfix versions only because for build-time
-# deps having them work on install by default is really important. Especially
-# since it's hard for users to work-around the specified build requirements.
-requires = ["setuptools>=41.0", "setuptools_scm~=6.0.1", "wheel"]
+requires = ["setuptools>=45.0", "setuptools_scm[toml]>=6.3.1", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]

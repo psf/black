@@ -5,6 +5,7 @@
 ### Packaging
 
 - Fix missing modules in self-contained binaries (#2466)
+- Fix missing toml extra used during installation (#2475)
 
 ## 21.8b0
 
