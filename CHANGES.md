@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### _Black_
+
+- Reformat zero-length and all-whitespace files as a single empty line, i.e. just a
+  line terminator (#2484)
+
 ### Packaging
 
 - Fix missing modules in self-contained binaries (#2466)
