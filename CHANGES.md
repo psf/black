@@ -7,6 +7,10 @@
 - Fix missing modules in self-contained binaries (#2466)
 - Fix missing toml extra used during installation (#2475)
 
+### Tests
+
+- Fix patching of `io.TextWrapper` (#2489)
+
 ## 21.8b0
 
 ### _Black_
