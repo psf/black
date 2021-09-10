@@ -25,7 +25,7 @@ from typing import (
 )
 import pytest
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, Mock
 from parameterized import parameterized
 
 import click
@@ -1689,7 +1689,9 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_reformat_one_with_stdin_empty(self) -> None:
         output = io.StringIO()
-        with patch("io.TextIOWrapper", lambda *args, **kwargs: output):
+        mock_io = Mock()
+        mock_io.TextIOWrapper.return_value = output
+        with patch.object(black, "io", mock_io):
             try:
                 black.format_stdin_to_stdout(
                     fast=True,
