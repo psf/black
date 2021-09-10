@@ -137,19 +137,39 @@ class BlackTestCase(BlackBaseTestCase):
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_empty(self) -> None:
-        source = expected = ""
+        source = ""
+        expected = "\n"
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, DEFAULT_MODE)
 
     def test_empty_ff(self) -> None:
-        expected = ""
+        expected = "\n"
         tmp_file = Path(black.dump_to_file())
         try:
+            self.assertTrue(ff(tmp_file, write_back=black.WriteBack.YES))
+            with open(tmp_file, "rb") as f:
+                actual = f.read().decode("utf8")
+        finally:
+            os.unlink(tmp_file)
+        self.assertFormatEqual(expected, actual)
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_one_empty_line(self) -> None:
+        source = expected = os.linesep
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, DEFAULT_MODE)
+
+    def test_one_empty_line_ff(self) -> None:
+        expected = os.linesep
+        tmp_file = Path(black.dump_to_file("\n"))
+        try:
             self.assertFalse(ff(tmp_file, write_back=black.WriteBack.YES))
-            with open(tmp_file, encoding="utf8") as f:
-                actual = f.read()
+            with open(tmp_file, "rb") as f:
+                actual = f.read().decode("utf8")
         finally:
             os.unlink(tmp_file)
         self.assertFormatEqual(expected, actual)
@@ -990,11 +1010,17 @@ class BlackTestCase(BlackBaseTestCase):
     def test_format_file_contents(self) -> None:
         empty = ""
         mode = DEFAULT_MODE
-        with self.assertRaises(black.NothingChanged):
-            black.format_file_contents(empty, mode=mode, fast=False)
+        actual = black.format_file_contents(empty, mode=mode, fast=False)
+        self.assertEqual("\n", actual)
         just_nl = "\n"
         with self.assertRaises(black.NothingChanged):
             black.format_file_contents(just_nl, mode=mode, fast=False)
+        just_whitespace_unix = "\n\t\n    \n\t    \n    \t\n\n"
+        actual = black.format_file_contents(just_whitespace_unix, mode=mode, fast=False)
+        self.assertEqual("\n", actual)
+        just_whitespace_win = "\r\n\t\r\n    \r\n\t    \r\n    \t\r\n\r\n"
+        actual = black.format_file_contents(just_whitespace_win, mode=mode, fast=False)
+        self.assertEqual("\r\n", actual)
         same = "j = [1, 2, 3]\n"
         with self.assertRaises(black.NothingChanged):
             black.format_file_contents(same, mode=mode, fast=False)
@@ -1687,19 +1713,20 @@ class BlackTestCase(BlackBaseTestCase):
             # __BLACK_STDIN_FILENAME__ should have been stripped
             report.done.assert_called_with(expected, black.Changed.YES)
 
-    def test_reformat_one_with_stdin_empty(self) -> None:
+    @parameterized.expand([("", "\n"), (os.linesep, os.linesep)])
+    def test_reformat_one_with_stdin_empty(self, content, expected) -> None:
         output = io.StringIO()
         with patch("io.TextIOWrapper", lambda *args, **kwargs: output):
             try:
                 black.format_stdin_to_stdout(
                     fast=True,
-                    content="",
+                    content=content,
                     write_back=black.WriteBack.YES,
                     mode=DEFAULT_MODE,
                 )
             except io.UnsupportedOperation:
                 pass  # StringIO does not support detach
-            assert output.getvalue() == ""
+            assert output.getvalue() == expected
 
     def test_gitignore_exclude(self) -> None:
         path = THIS_DIR / "data" / "include_exclude_tests"

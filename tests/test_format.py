@@ -52,6 +52,7 @@ SIMPLE_CASES = [
     "string_prefixes",
     "tricky_unicode_symbols",
     "tupleassign",
+    "whitespace",
 ]
 
 SIMPLE_CASES_PY2 = [
