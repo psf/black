@@ -9,7 +9,7 @@
 
 ### Tests
 
-- Fix patching of `io.TextWrapper` (#2489)
+- Fix patching of `io.TextIOWrapper` (#2489)
 
 ## 21.8b0
 
