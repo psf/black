@@ -1715,8 +1715,20 @@ class BlackTestCase(BlackBaseTestCase):
 
     @parameterized.expand([("", "\n"), (os.linesep, os.linesep)])
     def test_reformat_one_with_stdin_empty(self, content, expected) -> None:
+        TextIOWrapper = io.TextIOWrapper
         output = io.StringIO()
-        with patch("io.TextIOWrapper", lambda *args, **kwargs: output):
+
+        def get_output(*args, **kwargs):
+            if args == (sys.stdout.buffer,):
+                # It's `format_stdin_to_stdout()` calling `io.TextIOWrapper()`, return
+                # our mock object.
+                return output
+            # It's something else (i.e. `decode_bytes()`) calling `io.TextIOWrapper()`,
+            # pass through to the original implementation.
+            # See discussion in https://github.com/psf/black/pull/2489
+            return TextIOWrapper(*args, **kwargs)
+
+        with patch("io.TextIOWrapper", get_output):
             try:
                 black.format_stdin_to_stdout(
                     fast=True,
