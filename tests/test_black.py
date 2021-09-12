@@ -1714,11 +1714,11 @@ class BlackTestCase(BlackBaseTestCase):
             report.done.assert_called_with(expected, black.Changed.YES)
 
     @parameterized.expand([("", "\n"), (os.linesep, os.linesep)])
-    def test_reformat_one_with_stdin_empty(self, content, expected) -> None:
-        TextIOWrapper = io.TextIOWrapper
+    def test_reformat_one_with_stdin_empty(self, content: str, expected: str) -> None:
+        io_TextIOWrapper = io.TextIOWrapper
         output = io.StringIO()
 
-        def get_output(*args, **kwargs):
+        def get_output(*args: Any, **kwargs: Any) -> io.TextIOWrapper:
             if args == (sys.stdout.buffer,):
                 # It's `format_stdin_to_stdout()` calling `io.TextIOWrapper()`, return
                 # our mock object.
@@ -1726,7 +1726,7 @@ class BlackTestCase(BlackBaseTestCase):
             # It's something else (i.e. `decode_bytes()`) calling `io.TextIOWrapper()`,
             # pass through to the original implementation.
             # See discussion in https://github.com/psf/black/pull/2489
-            return TextIOWrapper(*args, **kwargs)
+            return io_TextIOWrapper(*args, **kwargs)
 
         with patch("io.TextIOWrapper", get_output):
             try:
