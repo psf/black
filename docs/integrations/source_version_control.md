@@ -7,7 +7,7 @@ Use [pre-commit](https://pre-commit.com/). Once you
 ```yaml
 repos:
   - repo: https://github.com/psf/black
-    rev: 21.8b0
+    rev: 21.9b0
     hooks:
       - id: black
         language_version: python3 # Should be a command that runs python3.6+
