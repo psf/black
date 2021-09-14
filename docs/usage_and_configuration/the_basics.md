@@ -173,13 +173,13 @@ You can check the version of _Black_ you have installed using the `--version` fl
 
 ```console
 $ black --version
-black, version 21.8b0
+black, version 21.9b0
 ```
 
 An option to require a specific version to be running is also provided.
 
 ```console
-$ black --required-version 21.8b0 -c "format = 'this'"
+$ black --required-version 21.9b0 -c "format = 'this'"
 format = "this"
 $ black --required-version 31.5b2 -c "still = 'beta?!'"
 Oh no! 💥 💔 💥 The required version does not match the running version!
