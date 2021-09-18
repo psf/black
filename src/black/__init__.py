@@ -114,7 +114,7 @@ def read_pyproject_toml(
     except (OSError, ValueError) as e:
         raise click.FileError(
             filename=value, hint=f"Error reading configuration file: {e}"
-        )
+        ) from None
 
     if not config:
         return None
@@ -172,7 +172,7 @@ def validate_regex(
     try:
         return re_compile_maybe_verbose(value) if value is not None else None
     except re.error:
-        raise click.BadParameter("Not a valid regular expression")
+        raise click.BadParameter("Not a valid regular expression") from None
 
 
 @click.command(context_settings=dict(help_option_names=["-h", "--help"]))
@@ -777,7 +777,9 @@ def format_file_in_place(
     except NothingChanged:
         return False
     except JSONDecodeError:
-        raise ValueError(f"File '{src}' cannot be parsed as valid Jupyter notebook.")
+        raise ValueError(
+            f"File '{src}' cannot be parsed as valid Jupyter notebook."
+        ) from None
 
     if write_back == WriteBack.YES:
         with open(src, "w", encoding=encoding, newline=newline) as f:
@@ -947,7 +949,7 @@ def format_cell(src: str, *, fast: bool, mode: Mode) -> str:
     try:
         masked_src, replacements = mask_cell(src_without_trailing_semicolon)
     except SyntaxError:
-        raise NothingChanged
+        raise NothingChanged from None
     masked_dst = format_str(masked_src, mode=mode)
     if not fast:
         check_stability_and_equivalence(masked_src, masked_dst, mode=mode)
@@ -957,7 +959,7 @@ def format_cell(src: str, *, fast: bool, mode: Mode) -> str:
     )
     dst = dst.rstrip("\n")
     if dst == src:
-        raise NothingChanged
+        raise NothingChanged from None
     return dst
 
 
@@ -970,7 +972,7 @@ def validate_metadata(nb: MutableMapping[str, Any]) -> None:
     """
     language = nb.get("metadata", {}).get("language_info", {}).get("name", None)
     if language is not None and language != "python":
-        raise NothingChanged
+        raise NothingChanged from None
 
 
 def format_ipynb_string(src_contents: str, *, fast: bool, mode: Mode) -> FileContent:
@@ -1202,9 +1204,8 @@ def assert_equivalent(src: str, dst: str, *, pass_num: int = 1) -> None:
         src_ast = parse_ast(src)
     except Exception as exc:
         raise AssertionError(
-            "cannot use --safe with this file; failed to parse source file.  AST"
-            f" error message: {exc}"
-        )
+            "cannot use --safe with this file; failed to parse source file."
+        ) from exc
 
     try:
         dst_ast = parse_ast(dst)
