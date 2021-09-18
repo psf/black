@@ -26,7 +26,6 @@ from typing import (
 import pytest
 import unittest
 from unittest.mock import patch, MagicMock
-from parameterized import parameterized
 
 import click
 from click import unstyle
@@ -44,7 +43,9 @@ from pathspec import PathSpec
 
 # Import other test classes
 from tests.util import (
+    PY36_VERSIONS,
     THIS_DIR,
+    assert_format,
     change_directory,
     read_data,
     DETERMINISTIC_HEADER,
@@ -57,12 +58,6 @@ from tests.util import (
 
 
 THIS_FILE = Path(__file__)
-PY36_VERSIONS = {
-    TargetVersion.PY36,
-    TargetVersion.PY37,
-    TargetVersion.PY38,
-    TargetVersion.PY39,
-}
 PY36_ARGS = [f"--target-version={version.name.lower()}" for version in PY36_VERSIONS]
 T = TypeVar("T")
 R = TypeVar("R")
@@ -134,14 +129,6 @@ class BlackTestCase(BlackBaseTestCase):
                 f"exception: {result.exception}"
             ),
         )
-
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_empty(self) -> None:
-        source = expected = ""
-        actual = fs(source)
-        self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, DEFAULT_MODE)
 
     def test_empty_ff(self) -> None:
         expected = ""
@@ -266,32 +253,6 @@ class BlackTestCase(BlackBaseTestCase):
         actual = fs(fs(source))  # this is what `format_file_contents` does with --safe
         black.assert_stable(source, actual, DEFAULT_MODE)
 
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_pep_572(self) -> None:
-        source, expected = read_data("pep_572")
-        actual = fs(source)
-        self.assertFormatEqual(expected, actual)
-        black.assert_stable(source, actual, DEFAULT_MODE)
-        if sys.version_info >= (3, 8):
-            black.assert_equivalent(source, actual)
-
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_pep_572_remove_parens(self) -> None:
-        source, expected = read_data("pep_572_remove_parens")
-        actual = fs(source)
-        self.assertFormatEqual(expected, actual)
-        black.assert_stable(source, actual, DEFAULT_MODE)
-        if sys.version_info >= (3, 8):
-            black.assert_equivalent(source, actual)
-
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_pep_572_do_not_remove_parens(self) -> None:
-        source, expected = read_data("pep_572_do_not_remove_parens")
-        # the AST safety checks will fail, but that's expected, just make sure no
-        # parentheses are touched
-        actual = black.format_str(source, mode=DEFAULT_MODE)
-        self.assertFormatEqual(expected, actual)
-
     def test_pep_572_version_detection(self) -> None:
         source, _ = read_data("pep_572")
         root = black.lib2to3_parse(source)
@@ -299,14 +260,6 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertIn(black.Feature.ASSIGNMENT_EXPRESSIONS, features)
         versions = black.detect_target_versions(root)
         self.assertIn(black.TargetVersion.PY38, versions)
-
-    @parameterized.expand([(3, 9), (3, 10)])
-    def test_pep_572_newer_syntax(self, major: int, minor: int) -> None:
-        source, expected = read_data(f"pep_572_py{major}{minor}")
-        actual = fs(source, mode=DEFAULT_MODE)
-        self.assertFormatEqual(expected, actual)
-        if sys.version_info >= (major, minor):
-            black.assert_equivalent(source, actual)
 
     def test_expression_ff(self) -> None:
         source, expected = read_data("expression")
@@ -369,15 +322,6 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertIn("\033[31m", actual)
         self.assertIn("\033[0m", actual)
 
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_pep_570(self) -> None:
-        source, expected = read_data("pep_570")
-        actual = fs(source)
-        self.assertFormatEqual(expected, actual)
-        black.assert_stable(source, actual, DEFAULT_MODE)
-        if sys.version_info >= (3, 8):
-            black.assert_equivalent(source, actual)
-
     def test_detect_pos_only_arguments(self) -> None:
         source, _ = read_data("pep_570")
         root = black.lib2to3_parse(source)
@@ -390,51 +334,12 @@ class BlackTestCase(BlackBaseTestCase):
     def test_string_quotes(self) -> None:
         source, expected = read_data("string_quotes")
         mode = black.Mode(experimental_string_processing=True)
-        actual = fs(source, mode=mode)
-        self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, mode)
+        assert_format(source, expected, mode)
         mode = replace(mode, string_normalization=False)
         not_normalized = fs(source, mode=mode)
         self.assertFormatEqual(source.replace("\\\n", ""), not_normalized)
         black.assert_equivalent(source, not_normalized)
         black.assert_stable(source, not_normalized, mode=mode)
-
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_docstring_no_string_normalization(self) -> None:
-        """Like test_docstring but with string normalization off."""
-        source, expected = read_data("docstring_no_string_normalization")
-        mode = replace(DEFAULT_MODE, string_normalization=False)
-        actual = fs(source, mode=mode)
-        self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, mode)
-
-    def test_long_strings_flag_disabled(self) -> None:
-        """Tests for turning off the string processing logic."""
-        source, expected = read_data("long_strings_flag_disabled")
-        mode = replace(DEFAULT_MODE, experimental_string_processing=False)
-        actual = fs(source, mode=mode)
-        self.assertFormatEqual(expected, actual)
-        black.assert_stable(expected, actual, mode)
-
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_numeric_literals(self) -> None:
-        source, expected = read_data("numeric_literals")
-        mode = replace(DEFAULT_MODE, target_versions=PY36_VERSIONS)
-        actual = fs(source, mode=mode)
-        self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, mode)
-
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_numeric_literals_ignoring_underscores(self) -> None:
-        source, expected = read_data("numeric_literals_skip_underscores")
-        mode = replace(DEFAULT_MODE, target_versions=PY36_VERSIONS)
-        actual = fs(source, mode=mode)
-        self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, mode)
 
     def test_skip_magic_trailing_comma(self) -> None:
         source, _ = read_data("expression.py")
@@ -460,24 +365,6 @@ class BlackTestCase(BlackBaseTestCase):
                 f" tests/data/expression_skip_magic_trailing_comma.diff with {dump}"
             )
             self.assertEqual(expected, actual, msg)
-
-    @pytest.mark.python2
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_python2_print_function(self) -> None:
-        source, expected = read_data("python2_print_function")
-        mode = replace(DEFAULT_MODE, target_versions={TargetVersion.PY27})
-        actual = fs(source, mode=mode)
-        self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, mode)
-
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_stub(self) -> None:
-        mode = replace(DEFAULT_MODE, is_pyi=True)
-        source, expected = read_data("stub.pyi")
-        actual = fs(source, mode=mode)
-        self.assertFormatEqual(expected, actual)
-        black.assert_stable(source, actual, mode)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_async_as_identifier(self) -> None:
@@ -508,26 +395,6 @@ class BlackTestCase(BlackBaseTestCase):
         self.invokeBlack([str(source_path), "--target-version", "py37"])
         # but not on 3.6, because we use async as a reserved keyword
         self.invokeBlack([str(source_path), "--target-version", "py36"], exit_code=123)
-
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_python38(self) -> None:
-        source, expected = read_data("python38")
-        actual = fs(source)
-        self.assertFormatEqual(expected, actual)
-        major, minor = sys.version_info[:2]
-        if major > 3 or (major == 3 and minor >= 8):
-            black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, DEFAULT_MODE)
-
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_python39(self) -> None:
-        source, expected = read_data("python39")
-        actual = fs(source)
-        self.assertFormatEqual(expected, actual)
-        major, minor = sys.version_info[:2]
-        if major > 3 or (major == 3 and minor >= 9):
-            black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, DEFAULT_MODE)
 
     def test_tab_comment_indentation(self) -> None:
         contents_tab = "if 1:\n\tif 2:\n\t\tpass\n\t# comment\n\tpass\n"
