@@ -195,7 +195,7 @@ def parse_python_variant_header(value: str) -> Tuple[bool, Set[black.TargetVersi
                     raise InvalidVariantHeader(f"3.{minor} is not supported")
                 versions.add(black.TargetVersion[version_str])
             except (KeyError, ValueError):
-                raise InvalidVariantHeader("expected e.g. '3.7', 'py3.5'")
+                raise InvalidVariantHeader("expected e.g. '3.7', 'py3.5'") from None
         return False, versions
 
 
