@@ -4,8 +4,9 @@
 
 ### _Black_
 
-- Reformat zero-length and all-whitespace files as a single empty line, i.e. just a line
-  terminator (#2484)
+- Reformat zero-length and all-whitespace files as either a single line terminator (in
+  case the file had any line terminators) or a zero-length file (if it had no line
+  terminators) (#2484)
 
 ### Packaging
 

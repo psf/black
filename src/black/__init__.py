@@ -844,7 +844,7 @@ def format_stdin_to_stdout(
         )
         if write_back == WriteBack.YES:
             # Make sure there's a newline after the content
-            if not dst or dst[-1] != "\n":
+            if dst and dst[-1] != "\n":
                 dst += "\n"
             f.write(dst)
         elif write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
@@ -1061,8 +1061,10 @@ def format_str(src_contents: str, *, mode: Mode) -> FileContent:
         ):
             dst_contents.append(str(line))
     if not dst_contents:
-        _, _, newline = decode_bytes(src_contents.encode("utf-8"))
-        return newline
+        normalized_content, _, newline = decode_bytes(src_contents.encode("utf-8"))
+        if "\n" in normalized_content:
+            return newline
+        return ""
     return "".join(dst_contents)
 
 

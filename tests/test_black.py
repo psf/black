@@ -137,35 +137,36 @@ class BlackTestCase(BlackBaseTestCase):
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_empty(self) -> None:
-        source = ""
-        expected = "\n"
+        source = expected = ""
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, DEFAULT_MODE)
 
     def test_empty_ff(self) -> None:
-        expected = "\n"
+        expected = ""
         tmp_file = Path(black.dump_to_file())
         try:
-            self.assertTrue(ff(tmp_file, write_back=black.WriteBack.YES))
+            self.assertFalse(ff(tmp_file, write_back=black.WriteBack.YES))
             with open(tmp_file, "rb") as f:
                 actual = f.read().decode("utf8")
         finally:
             os.unlink(tmp_file)
         self.assertFormatEqual(expected, actual)
 
+    @parameterized.expand(["\n", "\r\n"])
     @patch("black.dump_to_file", dump_to_stderr)
-    def test_one_empty_line(self) -> None:
-        source = expected = os.linesep
+    def test_one_empty_line(self, newline: str) -> None:
+        source = expected = newline
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, DEFAULT_MODE)
 
-    def test_one_empty_line_ff(self) -> None:
-        expected = os.linesep
-        tmp_file = Path(black.dump_to_file("\n"))
+    @parameterized.expand(["\n", "\r\n"])
+    def test_one_empty_line_ff(self, newline: str) -> None:
+        expected = newline
+        tmp_file = Path(black.dump_to_file(newline))
         try:
             self.assertFalse(ff(tmp_file, write_back=black.WriteBack.YES))
             with open(tmp_file, "rb") as f:
@@ -1010,11 +1011,14 @@ class BlackTestCase(BlackBaseTestCase):
     def test_format_file_contents(self) -> None:
         empty = ""
         mode = DEFAULT_MODE
-        actual = black.format_file_contents(empty, mode=mode, fast=False)
-        self.assertEqual("\n", actual)
+        with self.assertRaises(black.NothingChanged):
+            black.format_file_contents(empty, mode=mode, fast=False)
         just_nl = "\n"
         with self.assertRaises(black.NothingChanged):
             black.format_file_contents(just_nl, mode=mode, fast=False)
+        just_crlf = "\r\n"
+        with self.assertRaises(black.NothingChanged):
+            actual = black.format_file_contents(just_crlf, mode=mode, fast=False)
         just_whitespace_unix = "\n\t\n    \n\t    \n    \t\n\n"
         actual = black.format_file_contents(just_whitespace_unix, mode=mode, fast=False)
         self.assertEqual("\n", actual)
@@ -1713,7 +1717,16 @@ class BlackTestCase(BlackBaseTestCase):
             # __BLACK_STDIN_FILENAME__ should have been stripped
             report.done.assert_called_with(expected, black.Changed.YES)
 
-    @parameterized.expand([("", "\n"), (os.linesep, os.linesep)])
+    @parameterized.expand(
+        [
+            ("", ""),
+            ("\n", "\n"),
+            ("\r\n", "\r\n"),
+            (" \t", ""),
+            (" \t\n\t ", "\n"),
+            (" \t\r\n\t ", "\r\n"),
+        ]
+    )
     def test_reformat_one_with_stdin_empty(self, content: str, expected: str) -> None:
         io_TextIOWrapper = io.TextIOWrapper
         output = io.StringIO()
