@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "ebf216584cfb2c962a1792d0682f3c08b44c7ae27305a03a54eacd6f42df27db"
+            "sha256": "8b28e41c5a63f0c30361d2a0ed29dc1e3f0468223ef150ae68586839e2ccf1c9"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -56,14 +56,6 @@
             ],
             "index": "pypi",
             "version": "==3.7.4.post0"
-        },
-        "aiohttp-cors": {
-            "hashes": [
-                "sha256:0451ba59fdf6909d0e2cd21e4c0a43752bc0703d33fc78ae94d9d9321710193e",
-                "sha256:4d39c6d7100fd9764ed1caf8cebf0eb01bf5e3f24e2e073fda6234bc48b19f5d"
-            ],
-            "index": "pypi",
-            "version": "==0.7.0"
         },
         "async-timeout": {
             "hashes": [
@@ -188,6 +180,14 @@
             "index": "pypi",
             "version": "==0.4.3"
         },
+        "packaging": {
+            "hashes": [
+                "sha256:7dc96269f53a4ccec5c0670940a4281106dd0bb343f47b7471f779df49c2fbe7",
+                "sha256:c86254f9220d55e31cc94d69bade760f0847da8000def4dfe1c6b872fd14ff14"
+            ],
+            "markers": "python_version >= '3.6'",
+            "version": "==21.0"
+        },
         "pathspec": {
             "hashes": [
                 "sha256:7d15c4ddb0b5c802d161efc417ec1a2558ea2653c2e8ad9c19098201dc1c993a",
@@ -203,6 +203,14 @@
             ],
             "index": "pypi",
             "version": "==2.2.0"
+        },
+        "pyparsing": {
+            "hashes": [
+                "sha256:c203ec8783bf771a155b207279b9bccb8dea02d8f0c9e5f8ead507bc3246ecc1",
+                "sha256:ef9d7589ef3c200abe66653d3f1ab1033c3c419ae9b9bdb1240a85b024efc88b"
+            ],
+            "markers": "python_version >= '2.6' and python_version not in '3.0, 3.1, 3.2, 3.3'",
+            "version": "==2.4.7"
         },
         "regex": {
             "hashes": [
@@ -252,6 +260,9 @@
             "version": "==2021.8.21"
         },
         "setuptools-scm": {
+            "extras": [
+                "toml"
+            ],
             "hashes": [
                 "sha256:c3bd5f701c8def44a5c0bfe8d407bef3f80342217ef3492b951f3777bd2d915c",
                 "sha256:d1925a69cb07e9b29416a275b9fadb009a23c148ace905b2fb220649a6c18e92"
@@ -409,14 +420,6 @@
             ],
             "index": "pypi",
             "version": "==3.7.4.post0"
-        },
-        "aiohttp-cors": {
-            "hashes": [
-                "sha256:0451ba59fdf6909d0e2cd21e4c0a43752bc0703d33fc78ae94d9d9321710193e",
-                "sha256:4d39c6d7100fd9764ed1caf8cebf0eb01bf5e3f24e2e073fda6234bc48b19f5d"
-            ],
-            "index": "pypi",
-            "version": "==0.7.0"
         },
         "alabaster": {
             "hashes": [
@@ -769,7 +772,7 @@
                 "sha256:2480d8e07d1890056cb53c96e3de44fead9c62f2ba949b0f2e4c4345f4afa977",
                 "sha256:a65882a4d0fe5fbf702273456ba2ce74fe44892c25e42e057aca526b702a6d4b"
             ],
-            "markers": "python_version < '3.7' and python_version < '3.7'",
+            "markers": "python_version < '3.7'",
             "version": "==5.2.2"
         },
         "iniconfig": {
@@ -1336,6 +1339,9 @@
             "version": "==3.3.1"
         },
         "setuptools-scm": {
+            "extras": [
+                "toml"
+            ],
             "hashes": [
                 "sha256:c3bd5f701c8def44a5c0bfe8d407bef3f80342217ef3492b951f3777bd2d915c",
                 "sha256:d1925a69cb07e9b29416a275b9fadb009a23c148ace905b2fb220649a6c18e92"
