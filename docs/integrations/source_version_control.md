@@ -10,6 +10,11 @@ repos:
     rev: 21.8b0
     hooks:
       - id: black
+        # It is recommended to specify the latest version of Python
+        # supported by your project here, or alternatively use
+        # pre-commit's default_language_version, see
+        # https://pre-commit.com/#top_level-default_language_version
+        language_version: python3.9
 ```
 
 Feel free to switch out the `rev` value to something else, like another
