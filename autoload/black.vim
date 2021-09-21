@@ -24,6 +24,7 @@ FLAGS = [
   Flag(name="fast", cast=strtobool),
   Flag(name="skip_string_normalization", cast=strtobool),
   Flag(name="quiet", cast=strtobool),
+  Flag(name="skip_magic_trailing_comma", cast=strtobool),
 ]
 
 
@@ -105,6 +106,7 @@ def Black():
     line_length=configs["line_length"],
     string_normalization=not configs["skip_string_normalization"],
     is_pyi=vim.current.buffer.name.endswith('.pyi'),
+    magic_trailing_comma=not configs["skip_magic_trailing_comma"],
   )
   quiet = configs["quiet"]
 
