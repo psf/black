@@ -116,8 +116,8 @@ Wing supports black via the OS Commands tool, as explained in the Wing documenta
 Commands and shortcuts:
 
 - `:Black` to format the entire file (ranges not supported);
-  - you can optionally pass `target_version=<version>` where `<version>` is
-    one of `[py27, py36, py37, py38, py39]` to set the target version.
+  - you can optionally pass `target_version=<version>` where `<version>` is one of
+    `[py27, py36, py37, py38, py39]` to set the target version.
 - `:BlackUpgrade` to upgrade _Black_ inside the virtualenv;
 - `:BlackVersion` to get the current version of _Black_ inside the virtualenv.
 
