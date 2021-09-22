@@ -1,1 +1,3 @@
-_build/generated/authors.md
+```{include} ../AUTHORS.md
+
+```

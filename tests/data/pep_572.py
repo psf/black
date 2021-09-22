@@ -2,6 +2,8 @@
 (a := a)
 if (match := pattern.search(data)) is None:
     pass
+if match := pattern.search(data):
+    pass
 [y := f(x), y ** 2, y ** 3]
 filtered_data = [y for x in data if (y := f(x)) is None]
 (y := f(x))
@@ -39,5 +41,7 @@ foo(b := 2, a=1)
 foo((b := 2), a=1)
 foo(c=(b := 2), a=1)
 
+while x := f(x):
+    pass
 while x := f(x):
     pass

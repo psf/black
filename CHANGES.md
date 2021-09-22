@@ -1,6 +1,304 @@
-## Change Log
+# Change Log
 
-### 19.10b0
+## 21.9b0
+
+### Packaging
+
+- Fix missing modules in self-contained binaries (#2466)
+- Fix missing toml extra used during installation (#2475)
+
+## 21.8b0
+
+### _Black_
+
+- Add support for formatting Jupyter Notebook files (#2357)
+- Move from `appdirs` dependency to `platformdirs` (#2375)
+- Present a more user-friendly error if .gitignore is invalid (#2414)
+- The failsafe for accidentally added backslashes in f-string expressions has been
+  hardened to handle more edge cases during quote normalization (#2437)
+- Avoid changing a function return type annotation's type to a tuple by adding a
+  trailing comma (#2384)
+- Parsing support has been added for unparenthesized walruses in set literals, set
+  comprehensions, and indices (#2447).
+- Pin `setuptools-scm` build-time dependency version (#2457)
+- Exclude typing-extensions version 3.10.0.1 due to it being broken on Python 3.10
+  (#2460)
+
+### _Blackd_
+
+- Replace sys.exit(-1) with raise ImportError as it plays more nicely with tools that
+  scan installed packages (#2440)
+
+### Integrations
+
+- The provided pre-commit hooks no longer specify `language_version` to avoid overriding
+  `default_language_version` (#2430)
+
+## 21.7b0
+
+### _Black_
+
+- Configuration files using TOML features higher than spec v0.5.0 are now supported
+  (#2301)
+- Add primer support and test for code piped into black via STDIN (#2315)
+- Fix internal error when `FORCE_OPTIONAL_PARENTHESES` feature is enabled (#2332)
+- Accept empty stdin (#2346)
+- Provide a more useful error when parsing fails during AST safety checks (#2304)
+
+### Docker
+
+- Add new `latest_release` tag automation to follow latest black release on docker
+  images (#2374)
+
+### Integrations
+
+- The vim plugin now searches upwards from the directory containing the current buffer
+  instead of the current working directory for pyproject.toml. (#1871)
+- The vim plugin now reads the correct string normalization option in pyproject.toml
+  (#1869)
+- The vim plugin no longer crashes Black when there's boolean values in pyproject.toml
+  (#1869)
+
+## 21.6b0
+
+### _Black_
+
+- Fix failure caused by `fmt: skip` and indentation (#2281)
+- Account for += assignment when deciding whether to split string (#2312)
+- Correct max string length calculation when there are string operators (#2292)
+- Fixed option usage when using the `--code` flag (#2259)
+- Do not call `uvloop.install()` when _Black_ is used as a library (#2303)
+- Added `--required-version` option to require a specific version to be running (#2300)
+- Fix incorrect custom breakpoint indices when string group contains fake f-strings
+  (#2311)
+- Fix regression where `R` prefixes would be lowercased for docstrings (#2285)
+- Fix handling of named escapes (`\N{...}`) when `--experimental-string-processing` is
+  used (#2319)
+
+### Integrations
+
+- The official Black action now supports choosing what version to use, and supports the
+  major 3 OSes. (#1940)
+
+## 21.5b2
+
+### _Black_
+
+- A space is no longer inserted into empty docstrings (#2249)
+- Fix handling of .gitignore files containing non-ASCII characters on Windows (#2229)
+- Respect `.gitignore` files in all levels, not only `root/.gitignore` file (apply
+  `.gitignore` rules like `git` does) (#2225)
+- Restored compatibility with Click 8.0 on Python 3.6 when LANG=C used (#2227)
+- Add extra uvloop install + import support if in python env (#2258)
+- Fix --experimental-string-processing crash when matching parens are not found (#2283)
+- Make sure to split lines that start with a string operator (#2286)
+- Fix regular expression that black uses to identify f-expressions (#2287)
+
+### _Blackd_
+
+- Add a lower bound for the `aiohttp-cors` dependency. Only 0.4.0 or higher is
+  supported. (#2231)
+
+### Packaging
+
+- Release self-contained x86_64 MacOS binaries as part of the GitHub release pipeline
+  (#2198)
+- Always build binaries with the latest available Python (#2260)
+
+### Documentation
+
+- Add discussion of magic comments to FAQ page (#2272)
+- `--experimental-string-processing` will be enabled by default in the future (#2273)
+- Fix typos discovered by codespell (#2228)
+- Fix Vim plugin installation instructions. (#2235)
+- Add new Frequently Asked Questions page (#2247)
+- Fix encoding + symlink issues preventing proper build on Windows (#2262)
+
+## 21.5b1
+
+### _Black_
+
+- Refactor `src/black/__init__.py` into many files (#2206)
+
+### Documentation
+
+- Replaced all remaining references to the
+  [`master`](https://github.com/psf/black/tree/main) branch with the
+  [`main`](https://github.com/psf/black/tree/main) branch. Some additional changes in
+  the source code were also made. (#2210)
+- Sigificantly reorganized the documentation to make much more sense. Check them out by
+  heading over to [the stable docs on RTD](https://black.readthedocs.io/en/stable/).
+  (#2174)
+
+## 21.5b0
+
+### _Black_
+
+- Set `--pyi` mode if `--stdin-filename` ends in `.pyi` (#2169)
+- Stop detecting target version as Python 3.9+ with pre-PEP-614 decorators that are
+  being called but with no arguments (#2182)
+
+### _Black-Primer_
+
+- Add `--no-diff` to black-primer to suppress formatting changes (#2187)
+
+## 21.4b2
+
+### _Black_
+
+- Fix crash if the user configuration directory is inaccessible. (#2158)
+
+- Clarify
+  [circumstances](https://github.com/psf/black/blob/master/docs/the_black_code_style.md#pragmatism)
+  in which _Black_ may change the AST (#2159)
+
+- Allow `.gitignore` rules to be overridden by specifying `exclude` in `pyproject.toml`
+  or on the command line. (#2170)
+
+### _Packaging_
+
+- Install `primer.json` (used by `black-primer` by default) with black. (#2154)
+
+## 21.4b1
+
+### _Black_
+
+- Fix crash on docstrings ending with "\\ ". (#2142)
+
+- Fix crash when atypical whitespace is cleaned out of dostrings (#2120)
+
+- Reflect the `--skip-magic-trailing-comma` and `--experimental-string-processing` flags
+  in the name of the cache file. Without this fix, changes in these flags would not take
+  effect if the cache had already been populated. (#2131)
+
+- Don't remove necessary parentheses from assignment expression containing assert /
+  return statements. (#2143)
+
+### _Packaging_
+
+- Bump pathspec to >= 0.8.1 to solve invalid .gitignore exclusion handling
+
+## 21.4b0
+
+### _Black_
+
+- Fixed a rare but annoying formatting instability created by the combination of
+  optional trailing commas inserted by `Black` and optional parentheses looking at
+  pre-existing "magic" trailing commas. This fixes issue #1629 and all of its many many
+  duplicates. (#2126)
+
+- `Black` now processes one-line docstrings by stripping leading and trailing spaces,
+  and adding a padding space when needed to break up """". (#1740)
+
+- `Black` now cleans up leading non-breaking spaces in comments (#2092)
+
+- `Black` now respects `--skip-string-normalization` when normalizing multiline
+  docstring quotes (#1637)
+
+- `Black` no longer removes all empty lines between non-function code and decorators
+  when formatting typing stubs. Now `Black` enforces a single empty line. (#1646)
+
+- `Black` no longer adds an incorrect space after a parenthesized assignment expression
+  in if/while statements (#1655)
+
+- Added `--skip-magic-trailing-comma` / `-C` to avoid using trailing commas as a reason
+  to split lines (#1824)
+
+- fixed a crash when PWD=/ on POSIX (#1631)
+
+- fixed "I/O operation on closed file" when using --diff (#1664)
+
+- Prevent coloured diff output being interleaved with multiple files (#1673)
+
+- Added support for PEP 614 relaxed decorator syntax on python 3.9 (#1711)
+
+- Added parsing support for unparenthesized tuples and yield expressions in annotated
+  assignments (#1835)
+
+- added `--extend-exclude` argument (PR #2005)
+
+- speed up caching by avoiding pathlib (#1950)
+
+- `--diff` correctly indicates when a file doesn't end in a newline (#1662)
+
+- Added `--stdin-filename` argument to allow stdin to respect `--force-exclude` rules
+  (#1780)
+
+- Lines ending with `fmt: skip` will now be not formatted (#1800)
+
+- PR #2053: Black no longer relies on typed-ast for Python 3.8 and higher
+
+- PR #2053: Python 2 support is now optional, install with
+  `python3 -m pip install black[python2]` to maintain support.
+
+- Exclude `venv` directory by default (#1683)
+
+- Fixed "Black produced code that is not equivalent to the source" when formatting
+  Python 2 docstrings (#2037)
+
+### _Packaging_
+
+- Self-contained native _Black_ binaries are now provided for releases via GitHub
+  Releases (#1743)
+
+## 20.8b1
+
+### _Packaging_
+
+- explicitly depend on Click 7.1.2 or newer as `Black` no longer works with versions
+  older than 7.0
+
+## 20.8b0
+
+### _Black_
+
+- re-implemented support for explicit trailing commas: now it works consistently within
+  any bracket pair, including nested structures (#1288 and duplicates)
+
+- `Black` now reindents docstrings when reindenting code around it (#1053)
+
+- `Black` now shows colored diffs (#1266)
+
+- `Black` is now packaged using 'py3' tagged wheels (#1388)
+
+- `Black` now supports Python 3.8 code, e.g. star expressions in return statements
+  (#1121)
+
+- `Black` no longer normalizes capital R-string prefixes as those have a
+  community-accepted meaning (#1244)
+
+- `Black` now uses exit code 2 when specified configuration file doesn't exit (#1361)
+
+- `Black` now works on AWS Lambda (#1141)
+
+- added `--force-exclude` argument (#1032)
+
+- removed deprecated `--py36` option (#1236)
+
+- fixed `--diff` output when EOF is encountered (#526)
+
+- fixed `# fmt: off` handling around decorators (#560)
+
+- fixed unstable formatting with some `# type: ignore` comments (#1113)
+
+- fixed invalid removal on organizing brackets followed by indexing (#1575)
+
+- introduced `black-primer`, a CI tool that allows us to run regression tests against
+  existing open source users of Black (#1402)
+
+- introduced property-based fuzzing to our test suite based on Hypothesis and
+  Hypothersmith (#1566)
+
+- implemented experimental and disabled by default long string rewrapping (#1132),
+  hidden under a `--experimental-string-processing` flag while it's being worked on;
+  this is an undocumented and unsupported feature, you lose Internet points for
+  depending on it (#1609)
+
+### Vim plugin
+
+- prefer virtualenv packages over global packages (#1383)
+
+## 19.10b0
 
 - added support for PEP 572 assignment expressions (#711)
 
@@ -59,7 +357,7 @@
 - `blackd` can now output the diff of formats on source code when the `X-Diff` header is
   provided (#969)
 
-### 19.3b0
+## 19.3b0
 
 - new option `--target-version` to control which Python versions _Black_-formatted code
   should target (#618)
@@ -84,7 +382,7 @@
 
 - `blackd` now supports CORS (#622)
 
-### 18.9b0
+## 18.9b0
 
 - numeric literals are now formatted by _Black_ (#452, #461, #464, #469):
 
@@ -99,7 +397,9 @@
 
   - hexadecimal digits are always uppercased (e.g. `0xBADC0DE`)
 
-- added `blackd`, see [its documentation](#blackd) for more info (#349)
+- added `blackd`, see
+  [its documentation](https://github.com/psf/black/blob/18.9b0/README.md#blackd) for
+  more info (#349)
 
 - adjacent string literals are now correctly split into multiple lines (#463)
 
@@ -111,7 +411,7 @@
 - whitespace at the beginning of the file is now removed (#399)
 
 - fixed mangling [pweave](http://mpastell.com/pweave/) and
-  [Spyder IDE](https://pythonhosted.org/spyder/) special comments (#532)
+  [Spyder IDE](https://www.spyder-ide.org/) special comments (#532)
 
 - fixed unstable formatting when unpacking big tuples (#267)
 
@@ -126,11 +426,11 @@
 - note: the Vim plugin stopped registering `,=` as a default chord as it turned out to
   be a bad idea (#415)
 
-### 18.6b4
+## 18.6b4
 
 - hotfix: don't freeze when multiple comments directly precede `# fmt: off` (#371)
 
-### 18.6b3
+## 18.6b3
 
 - typing stub files (`.pyi`) now have blank lines added after constants (#340)
 
@@ -158,7 +458,7 @@
 
 - fixed a crash due to symbolic links pointing outside of the project directory (#338)
 
-### 18.6b2
+## 18.6b2
 
 - added `--config` (#65)
 
@@ -172,13 +472,13 @@
 
 - fixed unnecessary slowdown in comment placement calculation on lines without comments
 
-### 18.6b1
+## 18.6b1
 
 - hotfix: don't output human-facing information on stdout (#299)
 
 - hotfix: don't output cake emoji on non-zero return code (#300)
 
-### 18.6b0
+## 18.6b0
 
 - added `--include` and `--exclude` (#270)
 
@@ -196,7 +496,7 @@
 
 - _Black_ now preserves line endings when formatting a file in place (#258)
 
-### 18.5b1
+## 18.5b1
 
 - added `--pyi` (#249)
 
@@ -225,7 +525,7 @@
 - fixed extra empty line between a function signature and an inner function or inner
   class (#196)
 
-### 18.5b0
+## 18.5b0
 
 - call chains are now formatted according to the
   [fluent interfaces](https://en.wikipedia.org/wiki/Fluent_interface) style (#67)
@@ -280,11 +580,11 @@
 
 - fixed crash when dead symlinks where encountered
 
-### 18.4a4
+## 18.4a4
 
 - don't populate the cache on `--check` (#175)
 
-### 18.4a3
+## 18.4a3
 
 - added a "cache"; files already reformatted that haven't changed on disk won't be
   reformatted again (#109)
@@ -312,7 +612,7 @@
 
 - fixed missing splits of ternary expressions (#141)
 
-### 18.4a2
+## 18.4a2
 
 - fixed parsing of unaligned standalone comments (#99, #112)
 
@@ -323,7 +623,7 @@
 - fixed unstable formatting when encountering unnecessarily escaped quotes in a string
   (#120)
 
-### 18.4a1
+## 18.4a1
 
 - added `--quiet` (#78)
 
@@ -335,7 +635,7 @@
 
 - fixed removing backslash escapes from raw strings (#100, #105)
 
-### 18.4a0
+## 18.4a0
 
 - added `--diff` (#87)
 
@@ -360,7 +660,7 @@
 - only allow up to two empty lines on module level and only single empty lines within
   functions (#74)
 
-### 18.3a4
+## 18.3a4
 
 - `# fmt: off` and `# fmt: on` are implemented (#5)
 
@@ -382,7 +682,7 @@
   [Sphinx auto-attribute comments](http://www.sphinx-doc.org/en/stable/ext/autodoc.html#directive-autoattribute)
   (#68)
 
-### 18.3a3
+## 18.3a3
 
 - don't remove single empty lines outside of bracketed expressions (#19)
 
@@ -392,7 +692,7 @@
 
 - even better handling of numpy-style array indexing (#33, again)
 
-### 18.3a2
+## 18.3a2
 
 - changed positioning of binary operators to occur at beginning of lines instead of at
   the end, following
@@ -416,7 +716,7 @@
 
 - fixed spurious space after star-based unary expressions (#31)
 
-### 18.3a1
+## 18.3a1
 
 - added `--check`
 
@@ -435,10 +735,10 @@
 - fixed spurious space after unary operators when the operand was a complex expression
   (#15)
 
-### 18.3a0
+## 18.3a0
 
 - first published version, Happy 🍰 Day 2018!
 
 - alpha quality
 
-- date-versioned (see: https://calver.org/)
+- date-versioned (see: <https://calver.org/>)

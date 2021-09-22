@@ -1,0 +1,76 @@
+*Black* classes
+===============
+
+*Contents are subject to change.*
+
+.. currentmodule:: black
+
+:class:`BracketTracker`
+-----------------------
+
+.. autoclass:: black.brackets.BracketTracker
+    :members:
+
+:class:`EmptyLineTracker`
+-------------------------
+
+.. autoclass:: black.EmptyLineTracker
+    :members:
+
+:class:`Line`
+-------------
+
+.. autoclass:: black.Line
+    :members:
+    :special-members: __str__, __bool__
+
+:class:`LineGenerator`
+----------------------
+
+.. autoclass:: black.LineGenerator
+    :show-inheritance:
+    :members:
+
+:class:`ProtoComment`
+---------------------
+
+.. autoclass:: black.comments.ProtoComment
+    :members:
+
+:class:`Report`
+---------------
+
+.. autoclass:: black.Report
+    :members:
+    :special-members: __str__
+
+:class:`Visitor`
+----------------
+
+.. autoclass:: black.nodes.Visitor
+    :show-inheritance:
+    :members:
+
+Enums
+=====
+
+:class:`Changed`
+----------------
+
+.. autoclass:: black.Changed
+    :show-inheritance:
+    :members:
+
+:class:`Mode`
+-----------------
+
+.. autoclass:: black.Mode
+    :show-inheritance:
+    :members:
+
+:class:`WriteBack`
+------------------
+
+.. autoclass:: black.WriteBack
+    :show-inheritance:
+    :members:

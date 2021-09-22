@@ -1,2 +1,6 @@
-recommonmark==0.4.0
-Sphinx==1.7.2
+# Used by ReadTheDocs; pinned requirements for stability.
+
+myst-parser==0.15.1
+Sphinx==4.1.2
+sphinxcontrib-programoutput==0.17
+sphinx_copybutton==0.4.0

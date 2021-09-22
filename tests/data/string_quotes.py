@@ -51,6 +51,11 @@ f'{y * x} \'{z}\''
 '\'{z}\' {y * " "}'
 '{y * x} \'{z}\''
 
+# We must bail out if changing the quotes would introduce backslashes in f-string
+# expressions. xref: https://github.com/psf/black/issues/2348
+f"\"{b}\"{' ' * (long-len(b)+1)}: \"{sts}\",\n"
+f"\"{a}\"{'hello' * b}\"{c}\""
+
 # output
 
 """"""
@@ -79,12 +84,7 @@ r"Date d\'expiration:(.*)"
 r'Tricky "quote'
 r"Not-so-tricky \"quote"
 rf"{yay}"
-"\n\
-The \"quick\"\n\
-brown fox\n\
-jumps over\n\
-the 'lazy' dog.\n\
-"
+"\nThe \"quick\"\nbrown fox\njumps over\nthe 'lazy' dog.\n"
 re.compile(r'[\\"]')
 "x = ''; y = \"\""
 "x = '''; y = \"\""
@@ -105,3 +105,8 @@ f'\'{z}\' {y * " "}'
 f"{y * x} '{z}'"
 "'{z}' {y * \" \"}"
 "{y * x} '{z}'"
+
+# We must bail out if changing the quotes would introduce backslashes in f-string
+# expressions. xref: https://github.com/psf/black/issues/2348
+f"\"{b}\"{' ' * (long-len(b)+1)}: \"{sts}\",\n"
+f"\"{a}\"{'hello' * b}\"{c}\""

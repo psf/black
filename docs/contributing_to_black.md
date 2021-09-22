@@ -1,1 +1,0 @@
-_build/generated/contributing_to_black.md

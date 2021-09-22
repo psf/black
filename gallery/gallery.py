@@ -74,7 +74,7 @@ def get_top_packages(days: Days) -> List[str]:
 def get_package_source(package: str, version: Optional[str]) -> str:
     if package == "cpython":
         if version is None:
-            version = "master"
+            version = "main"
         return f"https://github.com/python/cpython/archive/{version}.zip"
     elif package == "pypy":
         if version is None:
@@ -127,7 +127,10 @@ DEFAULT_SLICE = slice(None)  # for flake8
 
 
 def download_and_extract_top_packages(
-    directory: Path, days: Days = 365, workers: int = 8, limit: slice = DEFAULT_SLICE,
+    directory: Path,
+    days: Days = 365,
+    workers: int = 8,
+    limit: slice = DEFAULT_SLICE,
 ) -> Generator[Path, None, None]:
     with ThreadPoolExecutor(max_workers=workers) as executor:
         bound_downloader = partial(get_package, version=None, directory=directory)
@@ -138,7 +141,7 @@ def download_and_extract_top_packages(
 
 def git_create_repository(repo: Path) -> None:
     subprocess.run(["git", "init"], cwd=repo)
-    git_add_and_commit(msg="Inital commit", repo=repo)
+    git_add_and_commit(msg="Initial commit", repo=repo)
 
 
 def git_add_and_commit(msg: str, repo: Path) -> None:
@@ -245,9 +248,9 @@ def format_repos(repos: Tuple[Path, ...], options: Namespace) -> None:
                 black_version=black_version,
                 input_directory=options.input,
             )
-        git_switch_branch("master", repo=repo)
+        git_switch_branch("main", repo=repo)
 
-    git_switch_branch("master", repo=options.black_repo)
+    git_switch_branch("main", repo=options.black_repo)
 
 
 def main() -> None:
@@ -268,8 +271,7 @@ def main() -> None:
         "-v",
         "--version",
         help=(
-            "Version for given PyPI package. "
-            "Will be discarded if used with -t option."
+            "Version for given PyPI package. Will be discarded if used with -t option."
         ),
     )
     parser.add_argument(
@@ -294,7 +296,7 @@ def main() -> None:
         type=Path,
         help="Output directory to download and put result artifacts.",
     )
-    parser.add_argument("versions", nargs="*", default=("master",), help="")
+    parser.add_argument("versions", nargs="*", default=("main",), help="")
 
     options = parser.parse_args()
     repos = init_repos(options)

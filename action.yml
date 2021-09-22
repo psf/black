@@ -1,0 +1,59 @@
+name: "Black"
+description: "The uncompromising Python code formatter."
+author: "Łukasz Langa and contributors to Black"
+inputs:
+  options:
+    description:
+      "Options passed to Black. Use `black --help` to see available options. Default:
+      '--check'"
+    required: false
+    default: "--check --diff"
+  src:
+    description: "Source to run Black. Default: '.'"
+    required: false
+    default: "."
+  black_args:
+    description: "[DEPRECATED] Black input arguments."
+    required: false
+    default: ""
+    deprecationMessage:
+      "Input `with.black_args` is deprecated. Use `with.options` and `with.src` instead."
+  version:
+    description: 'Python Version specifier (PEP440) - e.g. "21.5b1"'
+    required: false
+    default: ""
+branding:
+  color: "black"
+  icon: "check-circle"
+runs:
+  using: composite
+  steps:
+    - run: |
+        # Exists since using github.action_path + path to main script doesn't work because bash
+        # interprets the backslashes in github.action_path (which are used when the runner OS
+        # is Windows) destroying the path to the target file.
+        #
+        # Also semicolons are necessary because I can't get the newlines to work
+        entrypoint="import sys;
+        import subprocess;
+        from pathlib import Path;
+
+        MAIN_SCRIPT = Path(r'${{ github.action_path }}') / 'action' / 'main.py';
+
+        proc = subprocess.run([sys.executable, str(MAIN_SCRIPT)]);
+        sys.exit(proc.returncode)
+        "
+
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          echo $entrypoint | python
+        else
+          echo $entrypoint | python3
+        fi
+      env:
+        # TODO: Remove once https://github.com/actions/runner/issues/665 is fixed.
+        INPUT_OPTIONS: ${{ inputs.options }}
+        INPUT_SRC: ${{ inputs.src }}
+        INPUT_BLACK_ARGS: ${{ inputs.black_args }}
+        INPUT_VERSION: ${{ inputs.version }}
+        pythonioencoding: utf-8
+      shell: bash

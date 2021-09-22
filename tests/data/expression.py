@@ -96,6 +96,9 @@ call.me(maybe)
 list[str]
 dict[str, int]
 tuple[str, ...]
+tuple[
+    str, int, float, dict[str, int]
+]
 tuple[str, int, float, dict[str, int],]
 very_long_variable_name_filters: t.List[
     t.Tuple[str, t.Union[str, t.List[t.Optional[str]]]],
@@ -146,7 +149,7 @@ SomeName
 ((i ** 2) for i in (1, 2, 3))
 ((i ** 2) for i, _ in ((1, 'a'), (2, 'b'), (3, 'c')))
 (((i ** 2) + j) for i in (1, 2, 3) for j in (1, 2, 3))
-(*starred)
+(*starred,)
 {"id": "1","type": "type","started_at": now(),"ended_at": now() + timedelta(days=10),"priority": 1,"import_session_id": 1,**kwargs}
 a = (1,)
 b = 1,
@@ -157,6 +160,7 @@ f = 1, *range(10)
 g = 1, *"ten"
 what_is_up_with_those_new_coord_names = (coord_names + set(vars_to_create)) + set(vars_to_remove)
 what_is_up_with_those_new_coord_names = (coord_names | set(vars_to_create)) - set(vars_to_remove)
+result = session.query(models.Customer.id).filter(models.Customer.account_id == account_id, models.Customer.email == email_address).order_by(models.Customer.id.asc()).all()
 result = session.query(models.Customer.id).filter(models.Customer.account_id == account_id, models.Customer.email == email_address).order_by(models.Customer.id.asc(),).all()
 Ø = set()
 authors.łukasz.say_thanks()
@@ -241,6 +245,11 @@ if (
     ~ aaaaaaaaaaaaaaaa.a + aaaaaaaaaaaaaaaa.b - aaaaaaaaaaaaaaaa.c * aaaaaaaaaaaaaaaa.d @ aaaaaaaaaaaaaaaa.e | aaaaaaaaaaaaaaaa.f & aaaaaaaaaaaaaaaa.g % aaaaaaaaaaaaaaaa.h ^ aaaaaaaaaaaaaaaa.i << aaaaaaaaaaaaaaaa.k >> aaaaaaaaaaaaaaaa.l ** aaaaaaaaaaaaaaaa.m // aaaaaaaaaaaaaaaa.n
 ):
     return True
+aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa - aaaaaaaaaaaaaaaa * (aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa) / (aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa)
+aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa >> aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa << aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+bbbb >> bbbb * bbbb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ^bbbb.a & aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa^aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 last_call()
 # standalone comment at ENDMARKER
 
@@ -379,8 +388,12 @@ call.me(maybe)
 list[str]
 dict[str, int]
 tuple[str, ...]
+tuple[str, int, float, dict[str, int]]
 tuple[
-    str, int, float, dict[str, int],
+    str,
+    int,
+    float,
+    dict[str, int],
 ]
 very_long_variable_name_filters: t.List[
     t.Tuple[str, t.Union[str, t.List[t.Optional[str]]]],
@@ -431,7 +444,7 @@ SomeName
 ((i ** 2) for i in (1, 2, 3))
 ((i ** 2) for i, _ in ((1, "a"), (2, "b"), (3, "c")))
 (((i ** 2) + j) for i in (1, 2, 3) for j in (1, 2, 3))
-(*starred)
+(*starred,)
 {
     "id": "1",
     "type": "type",
@@ -459,7 +472,17 @@ result = (
     .filter(
         models.Customer.account_id == account_id, models.Customer.email == email_address
     )
-    .order_by(models.Customer.id.asc(),)
+    .order_by(models.Customer.id.asc())
+    .all()
+)
+result = (
+    session.query(models.Customer.id)
+    .filter(
+        models.Customer.account_id == account_id, models.Customer.email == email_address
+    )
+    .order_by(
+        models.Customer.id.asc(),
+    )
     .all()
 )
 Ø = set()
@@ -584,5 +607,24 @@ if (
     >> aaaaaaaaaaaaaaaa.l ** aaaaaaaaaaaaaaaa.m // aaaaaaaaaaaaaaaa.n
 ):
     return True
+(
+    aaaaaaaaaaaaaaaa
+    + aaaaaaaaaaaaaaaa
+    - aaaaaaaaaaaaaaaa
+    * (aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa)
+    / (aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa)
+)
+aaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaa
+(
+    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    >> aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    << aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+)
+bbbb >> bbbb * bbbb
+(
+    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    ^ bbbb.a & aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    ^ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+)
 last_call()
 # standalone comment at ENDMARKER

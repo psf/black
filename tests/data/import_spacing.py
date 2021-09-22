@@ -3,6 +3,9 @@
 # flake8: noqa
 
 from logging import (
+    WARNING
+)
+from logging import (
     ERROR,
 )
 import sys
@@ -53,7 +56,10 @@ __all__ = (
 
 # flake8: noqa
 
-from logging import ERROR
+from logging import WARNING
+from logging import (
+    ERROR,
+)
 import sys
 
 # This relies on each of the submodules having an __all__ variable.

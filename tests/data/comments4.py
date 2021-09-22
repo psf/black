@@ -13,49 +13,39 @@ class C:
             # metadata_version errors.
             (
                 {},
-                "None is an invalid value for Metadata-Version. "
-                "Error: This field is required. "
-                "see "
-                "https://packaging.python.org/specifications/core-metadata",
+                "None is an invalid value for Metadata-Version. Error: This field is"
+                " required. see"
+                " https://packaging.python.org/specifications/core-metadata",
             ),
             (
                 {"metadata_version": "-1"},
-                "'-1' is an invalid value for Metadata-Version. "
-                "Error: Unknown Metadata Version "
-                "see "
-                "https://packaging.python.org/specifications/core-metadata",
+                "'-1' is an invalid value for Metadata-Version. Error: Unknown Metadata"
+                " Version see"
+                " https://packaging.python.org/specifications/core-metadata",
             ),
             # name errors.
             (
                 {"metadata_version": "1.2"},
-                "'' is an invalid value for Name. "
-                "Error: This field is required. "
-                "see "
-                "https://packaging.python.org/specifications/core-metadata",
+                "'' is an invalid value for Name. Error: This field is required. see"
+                " https://packaging.python.org/specifications/core-metadata",
             ),
             (
                 {"metadata_version": "1.2", "name": "foo-"},
-                "'foo-' is an invalid value for Name. "
-                "Error: Must start and end with a letter or numeral and "
-                "contain only ascii numeric and '.', '_' and '-'. "
-                "see "
-                "https://packaging.python.org/specifications/core-metadata",
+                "'foo-' is an invalid value for Name. Error: Must start and end with a"
+                " letter or numeral and contain only ascii numeric and '.', '_' and"
+                " '-'. see https://packaging.python.org/specifications/core-metadata",
             ),
             # version errors.
             (
                 {"metadata_version": "1.2", "name": "example"},
-                "'' is an invalid value for Version. "
-                "Error: This field is required. "
-                "see "
-                "https://packaging.python.org/specifications/core-metadata",
+                "'' is an invalid value for Version. Error: This field is required. see"
+                " https://packaging.python.org/specifications/core-metadata",
             ),
             (
                 {"metadata_version": "1.2", "name": "example", "version": "dog"},
-                "'dog' is an invalid value for Version. "
-                "Error: Must start and end with a letter or numeral and "
-                "contain only ascii numeric and '.', '_' and '-'. "
-                "see "
-                "https://packaging.python.org/specifications/core-metadata",
+                "'dog' is an invalid value for Version. Error: Must start and end with"
+                " a letter or numeral and contain only ascii numeric and '.', '_' and"
+                " '-'. see https://packaging.python.org/specifications/core-metadata",
             ),
         ],
     )

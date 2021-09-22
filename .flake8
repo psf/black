@@ -1,11 +1,7 @@
 [flake8]
 ignore = E203, E266, E501, W503
 # line length is intentionally set to 80 here because black uses Bugbear
-# See https://github.com/psf/black/blob/master/README.md#line-length for more details
+# See https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html#line-length for more details
 max-line-length = 80
 max-complexity = 18
 select = B,C,E,F,W,T4,B9
-# We need to configure the mypy.ini because the flake8-mypy's default
-# options don't properly override it, so if we don't specify it we get
-# half of the config from mypy.ini and half from flake8-mypy.
-mypy_config = mypy.ini

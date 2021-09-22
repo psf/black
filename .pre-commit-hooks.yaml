@@ -3,6 +3,16 @@
   description: "Black: The uncompromising Python code formatter"
   entry: black
   language: python
-  language_version: python3
+  minimum_pre_commit_version: 2.9.2
   require_serial: true
-  types: [python]
+  types_or: [python, pyi]
+- id: black-jupyter
+  name: black-jupyter
+  description:
+    "Black: The uncompromising Python code formatter (with Jupyter Notebook support)"
+  entry: black
+  language: python
+  minimum_pre_commit_version: 2.9.2
+  require_serial: true
+  types_or: [python, pyi, jupyter]
+  additional_dependencies: [".[jupyter]"]

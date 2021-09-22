@@ -1,1 +1,3 @@
-_build/generated/change_log.md
+```{include} ../CHANGES.md
+
+```

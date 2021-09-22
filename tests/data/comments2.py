@@ -159,7 +159,7 @@ class Test:
 #######################
 
 
-instruction()
+instruction()#comment with bad spacing
 
 # END COMMENTS
 # MORE END COMMENTS
@@ -316,7 +316,13 @@ short
     )
 
 
-CONFIG_FILES = [CONFIG_FILE,] + SHARED_CONFIG_FILES + USER_CONFIG_FILES  # type: Final
+CONFIG_FILES = (
+    [
+        CONFIG_FILE,
+    ]
+    + SHARED_CONFIG_FILES
+    + USER_CONFIG_FILES
+)  # type: Final
 
 
 class Test:
@@ -330,7 +336,7 @@ class Test:
 #######################
 
 
-instruction()
+instruction()  # comment with bad spacing
 
 # END COMMENTS
 # MORE END COMMENTS

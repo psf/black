@@ -1,0 +1,6 @@
+:orphan:
+
+License
+=======
+
+.. include:: ../LICENSE
