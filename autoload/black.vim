@@ -104,8 +104,8 @@ def get_target_version(tv):
   ret = None
   try:
     ret = black.TargetVersion[tv.upper()]
-  except:
-    pass
+  except KeyError:
+    print(f"WARNING: Target version {tv!r} not recognized by Black, using default target")
   return ret
 
 def Black(**kwargs):
