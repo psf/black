@@ -1,5 +1,11 @@
 # Change Log
 
+## Unreleased
+
+### Integrations
+
+- Allow to pass `target_version` in the vim plugin (#1319)
+
 ## 21.9b0
 
 ### Packaging
