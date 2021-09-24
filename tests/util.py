@@ -12,6 +12,7 @@ from black.output import out, err
 from black.debug import DebugVisitor
 
 THIS_DIR = Path(__file__).parent
+DATA_DIR = THIS_DIR / "data"
 PROJECT_ROOT = THIS_DIR.parent
 EMPTY_LINE = "# EMPTY LINE WITH WHITESPACE" + " (this comment will be removed)"
 DETERMINISTIC_HEADER = "[Deterministic header]"
@@ -90,7 +91,7 @@ def read_data(name: str, data: bool = True) -> Tuple[str, str]:
     """read_data('test_name') -> 'input', 'output'"""
     if not name.endswith((".py", ".pyi", ".out", ".diff")):
         name += ".py"
-    base_dir = THIS_DIR / "data" if data else PROJECT_ROOT
+    base_dir = DATA_DIR if data else PROJECT_ROOT
     return read_data_from_file(base_dir / name)
 
 

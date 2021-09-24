@@ -22,7 +22,10 @@ from typing import (
     Dict,
     List,
     Iterator,
+    Optional,
+    Sequence,
     TypeVar,
+    Union,
 )
 import pytest
 import unittest
@@ -33,7 +36,7 @@ from click import unstyle
 from click.testing import CliRunner
 
 import black
-from black import Feature, TargetVersion
+from black import Feature, TargetVersion, re_compile_maybe_verbose as compile_pattern
 from black.cache import get_cache_file
 from black.debug import DebugVisitor
 from black.output import diff, color_diff
@@ -45,6 +48,7 @@ from pathspec import PathSpec
 # Import other test classes
 from tests.util import (
     PY36_VERSIONS,
+    DATA_DIR,
     THIS_DIR,
     assert_format,
     change_directory,
@@ -60,6 +64,8 @@ from tests.util import (
 
 THIS_FILE = Path(__file__)
 PY36_ARGS = [f"--target-version={version.name.lower()}" for version in PY36_VERSIONS]
+DEFAULT_EXCLUDE = black.re_compile_maybe_verbose(black.const.DEFAULT_EXCLUDES)
+DEFAULT_INCLUDE = black.re_compile_maybe_verbose(black.const.DEFAULT_INCLUDES)
 T = TypeVar("T")
 R = TypeVar("R")
 
@@ -1724,87 +1730,72 @@ class BlackTestCase(BlackBaseTestCase):
                 ), "Incorrect config loaded."
 
 
+def assert_collected_sources(
+    src: Sequence[Union[str, Path]],
+    expected: Sequence[Union[str, Path]],
+    *,
+    exclude: Optional[str] = None,
+    include: Optional[str] = None,
+    extend_exclude: Optional[str] = None,
+    force_exclude: Optional[str] = None,
+    stdin_filename: Optional[str] = None,
+) -> None:
+    gs_src = tuple(str(Path(s)) for s in src)
+    gs_expected = [Path(s) for s in expected]
+    gs_exclude = None if exclude is None else compile_pattern(exclude)
+    gs_include = DEFAULT_INCLUDE if include is None else compile_pattern(include)
+    gs_extend_exclude = (
+        None if extend_exclude is None else compile_pattern(extend_exclude)
+    )
+    gs_force_exclude = None if force_exclude is None else compile_pattern(force_exclude)
+    collected = black.get_sources(
+        ctx=FakeContext(),
+        src=gs_src,
+        quiet=False,
+        verbose=False,
+        include=gs_include,
+        exclude=gs_exclude,
+        extend_exclude=gs_extend_exclude,
+        force_exclude=gs_force_exclude,
+        report=black.Report(),
+        stdin_filename=stdin_filename,
+    )
+    assert sorted(list(collected)) == sorted(gs_expected)
+
+
 class TestFileCollection:
     def test_include_exclude(self) -> None:
         path = THIS_DIR / "data" / "include_exclude_tests"
-        include = re.compile(r"\.pyi?$")
-        exclude = re.compile(r"/exclude/|/\.definitely_exclude/")
-        report = black.Report()
-        gitignore = PathSpec.from_lines("gitwildmatch", [])
-        sources: List[Path] = []
+        src = [path]
         expected = [
             Path(path / "b/dont_exclude/a.py"),
             Path(path / "b/dont_exclude/a.pyi"),
         ]
-        this_abs = THIS_DIR.resolve()
-        sources.extend(
-            black.gen_python_files(
-                path.iterdir(),
-                this_abs,
-                include,
-                exclude,
-                None,
-                None,
-                report,
-                gitignore,
-                verbose=False,
-                quiet=False,
-            )
+        assert_collected_sources(
+            src,
+            expected,
+            include=r"\.pyi?$",
+            exclude=r"/exclude/|/\.definitely_exclude/",
         )
-        self.assertEqual(sorted(expected), sorted(sources))
 
     def test_gitignore_used_as_default(self) -> None:
-        path = Path(THIS_DIR / "data" / "include_exclude_tests")
-        include = re.compile(r"\.pyi?$")
-        extend_exclude = re.compile(r"/exclude/")
-        src = str(path / "b/")
-        report = black.Report()
-        expected: List[Path] = [
-            path / "b/.definitely_exclude/a.py",
-            path / "b/.definitely_exclude/a.pyi",
+        base = Path(DATA_DIR / "include_exclude_tests")
+        expected = [
+            base / "b/.definitely_exclude/a.py",
+            base / "b/.definitely_exclude/a.pyi",
         ]
-        sources = list(
-            black.get_sources(
-                ctx=FakeContext(),
-                src=(src,),
-                quiet=True,
-                verbose=False,
-                include=include,
-                exclude=None,
-                extend_exclude=extend_exclude,
-                force_exclude=None,
-                report=report,
-                stdin_filename=None,
-            )
-        )
-        self.assertEqual(sorted(expected), sorted(sources))
+        src = [base / "b/"]
+        assert_collected_sources(src, expected, extend_exclude=r"/exclude/")
 
     @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
     def test_exclude_for_issue_1572(self) -> None:
         # Exclude shouldn't touch files that were explicitly given to Black through the
         # CLI. Exclude is supposed to only apply to the recursive discovery of files.
         # https://github.com/psf/black/issues/1572
-        path = THIS_DIR / "data" / "include_exclude_tests"
-        include = ""
-        exclude = r"/exclude/|a\.py"
-        src = str(path / "b/exclude/a.py")
-        report = black.Report()
-        expected = [Path(path / "b/exclude/a.py")]
-        sources = list(
-            black.get_sources(
-                ctx=FakeContext(),
-                src=(src,),
-                quiet=True,
-                verbose=False,
-                include=re.compile(include),
-                exclude=re.compile(exclude),
-                extend_exclude=None,
-                force_exclude=None,
-                report=report,
-                stdin_filename=None,
-            )
-        )
-        self.assertEqual(sorted(expected), sorted(sources))
+        path = DATA_DIR / "include_exclude_tests"
+        src = [path / "b/exclude/a.py"]
+        expected = [path / "b/exclude/a.py"]
+        assert_collected_sources(src, expected, include="", exclude=r"/exclude/|a\.py")
 
     def test_gitignore_exclude(self) -> None:
         path = THIS_DIR / "data" / "include_exclude_tests"
@@ -1834,7 +1825,7 @@ class TestFileCollection:
                 quiet=False,
             )
         )
-        self.assertEqual(sorted(expected), sorted(sources))
+        assert sorted(expected) == sorted(sources)
 
     def test_nested_gitignore(self) -> None:
         path = Path(THIS_DIR / "data" / "nested_gitignore_tests")
@@ -1863,7 +1854,7 @@ class TestFileCollection:
                 quiet=False,
             )
         )
-        self.assertEqual(sorted(expected), sorted(sources))
+        assert sorted(expected) == sorted(sources)
 
     def test_invalid_gitignore(self) -> None:
         path = THIS_DIR / "data" / "invalid_gitignore_tests"
@@ -1890,11 +1881,8 @@ class TestFileCollection:
         assert f"Could not parse {gitignore}" in result.stderr_bytes.decode()
 
     def test_empty_include(self) -> None:
-        path = THIS_DIR / "data" / "include_exclude_tests"
-        report = black.Report()
-        gitignore = PathSpec.from_lines("gitwildmatch", [])
-        empty = re.compile(r"")
-        sources: List[Path] = []
+        path = DATA_DIR / "include_exclude_tests"
+        src = [path]
         expected = [
             Path(path / "b/exclude/a.pie"),
             Path(path / "b/exclude/a.py"),
@@ -1908,48 +1896,19 @@ class TestFileCollection:
             Path(path / ".gitignore"),
             Path(path / "pyproject.toml"),
         ]
-        this_abs = THIS_DIR.resolve()
-        sources.extend(
-            black.gen_python_files(
-                path.iterdir(),
-                this_abs,
-                empty,
-                re.compile(black.DEFAULT_EXCLUDES),
-                None,
-                None,
-                report,
-                gitignore,
-                verbose=False,
-                quiet=False,
-            )
-        )
-        self.assertEqual(sorted(expected), sorted(sources))
+        # Setting exclude explicitly to an empty string to block .gitignore usage.
+        assert_collected_sources(src, expected, include="", exclude="")
 
     def test_extend_exclude(self) -> None:
-        path = THIS_DIR / "data" / "include_exclude_tests"
-        report = black.Report()
-        gitignore = PathSpec.from_lines("gitwildmatch", [])
-        sources: List[Path] = []
+        path = DATA_DIR / "include_exclude_tests"
+        src = [path]
         expected = [
             Path(path / "b/exclude/a.py"),
             Path(path / "b/dont_exclude/a.py"),
         ]
-        this_abs = THIS_DIR.resolve()
-        sources.extend(
-            black.gen_python_files(
-                path.iterdir(),
-                this_abs,
-                re.compile(black.DEFAULT_INCLUDES),
-                re.compile(r"\.pyi$"),
-                re.compile(r"\.definitely_exclude"),
-                None,
-                report,
-                gitignore,
-                verbose=False,
-                quiet=False,
-            )
+        assert_collected_sources(
+            src, expected, exclude=r"\.pyi$", extend_exclude=r"\.definitely_exclude"
         )
-        self.assertEqual(sorted(expected), sorted(sources))
 
     def test_symlink_out_of_root_directory(self) -> None:
         path = MagicMock()
@@ -1981,14 +1940,14 @@ class TestFileCollection:
                 )
             )
         except ValueError as ve:
-            self.fail(f"`get_python_files_in_dir()` failed: {ve}")
+            pytest.fail(f"`get_python_files_in_dir()` failed: {ve}")
         path.iterdir.assert_called_once()
         child.resolve.assert_called_once()
         child.is_symlink.assert_called_once()
         # `child` should behave like a strange file which resolved path is clearly
         # outside of the `root` directory.
         child.is_symlink.return_value = False
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             list(
                 black.gen_python_files(
                     path.iterdir(),
@@ -2004,140 +1963,74 @@ class TestFileCollection:
                 )
             )
         path.iterdir.assert_called()
-        self.assertEqual(path.iterdir.call_count, 2)
+        assert path.iterdir.call_count == 2
         child.resolve.assert_called()
-        self.assertEqual(child.resolve.call_count, 2)
+        assert child.resolve.call_count == 2
         child.is_symlink.assert_called()
-        self.assertEqual(child.is_symlink.call_count, 2)
+        assert child.is_symlink.call_count == 2
 
     @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
     def test_get_sources_with_stdin(self) -> None:
-        include = ""
-        exclude = r"/exclude/|a\.py"
-        src = "-"
-        report = black.Report()
-        expected = [Path("-")]
-        sources = list(
-            black.get_sources(
-                ctx=FakeContext(),
-                src=(src,),
-                quiet=True,
-                verbose=False,
-                include=re.compile(include),
-                exclude=re.compile(exclude),
-                extend_exclude=None,
-                force_exclude=None,
-                report=report,
-                stdin_filename=None,
-            )
-        )
-        self.assertEqual(sorted(expected), sorted(sources))
+        src = ["-"]
+        expected = ["-"]
+        assert_collected_sources(src, expected, include="", exclude=r"/exclude/|a\.py")
 
     @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
     def test_get_sources_with_stdin_filename(self) -> None:
-        include = ""
-        exclude = r"/exclude/|a\.py"
-        src = "-"
-        report = black.Report()
+        src = ["-"]
         stdin_filename = str(THIS_DIR / "data/collections.py")
-        expected = [Path(f"__BLACK_STDIN_FILENAME__{stdin_filename}")]
-        sources = list(
-            black.get_sources(
-                ctx=FakeContext(),
-                src=(src,),
-                quiet=True,
-                verbose=False,
-                include=re.compile(include),
-                exclude=re.compile(exclude),
-                extend_exclude=None,
-                force_exclude=None,
-                report=report,
-                stdin_filename=stdin_filename,
-            )
+        expected = [f"__BLACK_STDIN_FILENAME__{stdin_filename}"]
+        assert_collected_sources(
+            src,
+            expected,
+            exclude=r"/exclude/a\.py",
+            stdin_filename=stdin_filename,
         )
-        self.assertEqual(sorted(expected), sorted(sources))
 
     @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
     def test_get_sources_with_stdin_filename_and_exclude(self) -> None:
         # Exclude shouldn't exclude stdin_filename since it is mimicking the
         # file being passed directly. This is the same as
         # test_exclude_for_issue_1572
-        path = THIS_DIR / "data" / "include_exclude_tests"
-        include = ""
-        exclude = r"/exclude/|a\.py"
-        src = "-"
-        report = black.Report()
+        path = DATA_DIR / "include_exclude_tests"
+        src = ["-"]
         stdin_filename = str(path / "b/exclude/a.py")
-        expected = [Path(f"__BLACK_STDIN_FILENAME__{stdin_filename}")]
-        sources = list(
-            black.get_sources(
-                ctx=FakeContext(),
-                src=(src,),
-                quiet=True,
-                verbose=False,
-                include=re.compile(include),
-                exclude=re.compile(exclude),
-                extend_exclude=None,
-                force_exclude=None,
-                report=report,
-                stdin_filename=stdin_filename,
-            )
+        expected = [f"__BLACK_STDIN_FILENAME__{stdin_filename}"]
+        assert_collected_sources(
+            src,
+            expected,
+            exclude=r"/exclude/|a\.py",
+            stdin_filename=stdin_filename,
         )
-        self.assertEqual(sorted(expected), sorted(sources))
 
     @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
     def test_get_sources_with_stdin_filename_and_extend_exclude(self) -> None:
         # Extend exclude shouldn't exclude stdin_filename since it is mimicking the
         # file being passed directly. This is the same as
         # test_exclude_for_issue_1572
+        src = ["-"]
         path = THIS_DIR / "data" / "include_exclude_tests"
-        include = ""
-        extend_exclude = r"/exclude/|a\.py"
-        src = "-"
-        report = black.Report()
         stdin_filename = str(path / "b/exclude/a.py")
-        expected = [Path(f"__BLACK_STDIN_FILENAME__{stdin_filename}")]
-        sources = list(
-            black.get_sources(
-                ctx=FakeContext(),
-                src=(src,),
-                quiet=True,
-                verbose=False,
-                include=re.compile(include),
-                exclude=re.compile(""),
-                extend_exclude=re.compile(extend_exclude),
-                force_exclude=None,
-                report=report,
-                stdin_filename=stdin_filename,
-            )
+        expected = [f"__BLACK_STDIN_FILENAME__{stdin_filename}"]
+        assert_collected_sources(
+            src,
+            expected,
+            extend_exclude=r"/exclude/|a\.py",
+            stdin_filename=stdin_filename,
         )
-        self.assertEqual(sorted(expected), sorted(sources))
 
     @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
     def test_get_sources_with_stdin_filename_and_force_exclude(self) -> None:
         # Force exclude should exclude the file when passing it through
         # stdin_filename
         path = THIS_DIR / "data" / "include_exclude_tests"
-        include = ""
-        force_exclude = r"/exclude/|a\.py"
-        src = "-"
-        report = black.Report()
         stdin_filename = str(path / "b/exclude/a.py")
-        sources = list(
-            black.get_sources(
-                ctx=FakeContext(),
-                src=(src,),
-                quiet=True,
-                verbose=False,
-                include=re.compile(include),
-                exclude=re.compile(""),
-                extend_exclude=None,
-                force_exclude=re.compile(force_exclude),
-                report=report,
-                stdin_filename=stdin_filename,
-            )
+        assert_collected_sources(
+            src=["-"],
+            expected=[],
+            force_exclude=r"/exclude/|a\.py",
+            stdin_filename=stdin_filename,
         )
-        self.assertEqual([], sorted(sources))
 
 
 with open(black.__file__, "r", encoding="utf-8") as _bf:
