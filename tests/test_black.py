@@ -1,66 +1,65 @@
 #!/usr/bin/env python3
 
-import multiprocessing
 import asyncio
+import inspect
+import io
 import logging
+import multiprocessing
+import os
+import sys
+import types
+import unittest
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from dataclasses import replace
-import inspect
-import io
 from io import BytesIO
-import os
 from pathlib import Path
 from platform import system
-import regex as re
-import sys
 from tempfile import TemporaryDirectory
-import types
 from typing import (
     Any,
     Callable,
     Dict,
-    List,
     Iterator,
+    List,
     Optional,
     Sequence,
     TypeVar,
     Union,
 )
-import pytest
-import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import click
+import pytest
+import regex as re
 from click import unstyle
 from click.testing import CliRunner
+from pathspec import PathSpec
 
 import black
-from black import Feature, TargetVersion, re_compile_maybe_verbose as compile_pattern
+import black.files
+from black import Feature, TargetVersion
+from black import re_compile_maybe_verbose as compile_pattern
 from black.cache import get_cache_file
 from black.debug import DebugVisitor
-from black.output import diff, color_diff
+from black.output import color_diff, diff
 from black.report import Report
-import black.files
-
-from pathspec import PathSpec
 
 # Import other test classes
 from tests.util import (
-    PY36_VERSIONS,
     DATA_DIR,
+    DEFAULT_MODE,
+    DETERMINISTIC_HEADER,
+    PY36_VERSIONS,
     THIS_DIR,
+    BlackBaseTestCase,
     assert_format,
     change_directory,
-    read_data,
-    DETERMINISTIC_HEADER,
-    BlackBaseTestCase,
-    DEFAULT_MODE,
-    fs,
-    ff,
     dump_to_stderr,
+    ff,
+    fs,
+    read_data,
 )
-
 
 THIS_FILE = Path(__file__)
 PY36_ARGS = [f"--target-version={version.name.lower()}" for version in PY36_VERSIONS]

@@ -1,15 +1,15 @@
 import os
-import unittest
 import sys
-from pathlib import Path
-from typing import Any, Iterator, List, Tuple, Optional
+import unittest
 from contextlib import contextmanager
 from functools import partial
+from pathlib import Path
+from typing import Any, Iterator, List, Optional, Tuple
 
 import black
-from black.mode import TargetVersion
-from black.output import out, err
 from black.debug import DebugVisitor
+from black.mode import TargetVersion
+from black.output import err, out
 
 THIS_DIR = Path(__file__).parent
 DATA_DIR = THIS_DIR / "data"

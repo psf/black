@@ -1,17 +1,17 @@
 from dataclasses import replace
-from unittest.mock import patch
 from typing import Any, Iterator
+from unittest.mock import patch
 
-import black
 import pytest
 
+import black
 from tests.util import (
-    assert_format,
     DEFAULT_MODE,
     PY36_VERSIONS,
+    THIS_DIR,
+    assert_format,
     dump_to_stderr,
     read_data,
-    THIS_DIR,
 )
 
 SIMPLE_CASES = [
