@@ -6,9 +6,17 @@
 
 - Functions and classes in blocks now have more consistent surrounding spacing (#2472)
 
+### _Blackd_
+
+- Remove dependency on aiohttp-cors (#2500)
+- Bump required aiohttp version to 3.7.4 (#2509)
+
+## 21.9b0
+
 ### Packaging
 
 - Fix missing modules in self-contained binaries (#2466)
+- Fix missing toml extra used during installation (#2475)
 
 ## 21.8b0
 

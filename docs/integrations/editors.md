@@ -291,10 +291,6 @@ Use the
 
 Use [sublack plugin](https://github.com/jgirardet/sublack).
 
-## Jupyter Notebook Magic
-
-Use [blackcellmagic](https://github.com/csurfer/blackcellmagic).
-
 ## Python LSP Server
 
 If your editor supports the [Language Server Protocol](https://langserver.org/) (Atom,
