@@ -115,26 +115,26 @@ class BlackRunner(CliRunner):
         super().__init__(mix_stderr=False)
 
 
+def invokeBlack(
+    args: List[str], exit_code: int = 0, ignore_config: bool = True
+) -> None:
+    runner = BlackRunner()
+    if ignore_config:
+        args = ["--verbose", "--config", str(THIS_DIR / "empty.toml"), *args]
+    result = runner.invoke(black.main, args)
+    assert result.stdout_bytes is not None
+    assert result.stderr_bytes is not None
+    msg = (
+        f"Failed with args: {args}\n"
+        f"stdout: {result.stdout_bytes.decode()!r}\n"
+        f"stderr: {result.stderr_bytes.decode()!r}\n"
+        f"exception: {result.exception}"
+    )
+    assert result.exit_code == exit_code, msg
+
+
 class BlackTestCase(BlackBaseTestCase):
-    def invokeBlack(
-        self, args: List[str], exit_code: int = 0, ignore_config: bool = True
-    ) -> None:
-        runner = BlackRunner()
-        if ignore_config:
-            args = ["--verbose", "--config", str(THIS_DIR / "empty.toml"), *args]
-        result = runner.invoke(black.main, args)
-        assert result.stdout_bytes is not None
-        assert result.stderr_bytes is not None
-        self.assertEqual(
-            result.exit_code,
-            exit_code,
-            msg=(
-                f"Failed with args: {args}\n"
-                f"stdout: {result.stdout_bytes.decode()!r}\n"
-                f"stderr: {result.stderr_bytes.decode()!r}\n"
-                f"exception: {result.exception}"
-            ),
-        )
+    invokeBlack = staticmethod(invokeBlack)
 
     def test_empty_ff(self) -> None:
         expected = ""
@@ -1545,26 +1545,22 @@ class TestCaching:
         mode = DEFAULT_MODE
         with cache_dir() as workspace:
             cache_file = get_cache_file(mode)
-            with cache_file.open("w") as fobj:
-                fobj.write("this is not a pickle")
-            self.assertEqual(black.read_cache(mode), {})
+            cache_file.write_text("this is not a pickle")
+            assert black.read_cache(mode) == {}
             src = (workspace / "test.py").resolve()
-            with src.open("w") as fobj:
-                fobj.write("print('hello')")
-            self.invokeBlack([str(src)])
+            src.write_text("print('hello')")
+            invokeBlack([str(src)])
             cache = black.read_cache(mode)
-            self.assertIn(str(src), cache)
+            assert str(src) in cache
 
     def test_cache_single_file_already_cached(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
-            with src.open("w") as fobj:
-                fobj.write("print('hello')")
+            src.write_text("print('hello')")
             black.write_cache({}, [src], mode)
-            self.invokeBlack([str(src)])
-            with src.open("r") as fobj:
-                self.assertEqual(fobj.read(), "print('hello')")
+            invokeBlack([str(src)])
+            assert src.read_text() == "print('hello')"
 
     @event_loop()
     def test_cache_multiple_files(self) -> None:
@@ -1579,16 +1575,17 @@ class TestCaching:
             with two.open("w") as fobj:
                 fobj.write("print('hello')")
             black.write_cache({}, [one], mode)
-            self.invokeBlack([str(workspace)])
+            invokeBlack([str(workspace)])
             with one.open("r") as fobj:
-                self.assertEqual(fobj.read(), "print('hello')")
+                assert fobj.read() == "print('hello')"
             with two.open("r") as fobj:
-                self.assertEqual(fobj.read(), 'print("hello")\n')
+                assert fobj.read() == 'print("hello")\n'
             cache = black.read_cache(mode)
-            self.assertIn(str(one), cache)
-            self.assertIn(str(two), cache)
+            assert str(one) in cache
+            assert str(two) in cache
 
-    def test_no_cache_when_writeback_diff(self) -> None:
+    @pytest.mark.parametrize("color", [False, True], ids=["no-color", "with-color"])
+    def test_no_cache_when_writeback_diff(self, color: bool) -> None:
         mode = DEFAULT_MODE
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
@@ -1597,49 +1594,28 @@ class TestCaching:
             with patch("black.read_cache") as read_cache, patch(
                 "black.write_cache"
             ) as write_cache:
-                self.invokeBlack([str(src), "--diff"])
+                cmd = [str(src), "--diff"]
+                if color:
+                    cmd.append("--color")
+                invokeBlack(cmd)
                 cache_file = get_cache_file(mode)
-                self.assertFalse(cache_file.exists())
+                assert cache_file.exists() is False
                 write_cache.assert_not_called()
                 read_cache.assert_not_called()
 
-    def test_no_cache_when_writeback_color_diff(self) -> None:
-        mode = DEFAULT_MODE
-        with cache_dir() as workspace:
-            src = (workspace / "test.py").resolve()
-            with src.open("w") as fobj:
-                fobj.write("print('hello')")
-            with patch("black.read_cache") as read_cache, patch(
-                "black.write_cache"
-            ) as write_cache:
-                self.invokeBlack([str(src), "--diff", "--color"])
-                cache_file = get_cache_file(mode)
-                self.assertFalse(cache_file.exists())
-                write_cache.assert_not_called()
-                read_cache.assert_not_called()
-
+    @pytest.mark.parametrize("color", [False, True], ids=["no-color", "with-color"])
     @event_loop()
-    def test_output_locking_when_writeback_diff(self) -> None:
+    def test_output_locking_when_writeback_diff(self, color: bool) -> None:
         with cache_dir() as workspace:
             for tag in range(0, 4):
                 src = (workspace / f"test{tag}.py").resolve()
                 with src.open("w") as fobj:
                     fobj.write("print('hello')")
             with patch("black.Manager", wraps=multiprocessing.Manager) as mgr:
-                self.invokeBlack(["--diff", str(workspace)], exit_code=0)
-                # this isn't quite doing what we want, but if it _isn't_
-                # called then we cannot be using the lock it provides
-                mgr.assert_called()
-
-    @event_loop()
-    def test_output_locking_when_writeback_color_diff(self) -> None:
-        with cache_dir() as workspace:
-            for tag in range(0, 4):
-                src = (workspace / f"test{tag}.py").resolve()
-                with src.open("w") as fobj:
-                    fobj.write("print('hello')")
-            with patch("black.Manager", wraps=multiprocessing.Manager) as mgr:
-                self.invokeBlack(["--diff", "--color", str(workspace)], exit_code=0)
+                cmd = ["--diff", str(workspace)]
+                if color:
+                    cmd.append("--color")
+                invokeBlack(cmd, exit_code=0)
                 # this isn't quite doing what we want, but if it _isn't_
                 # called then we cannot be using the lock it provides
                 mgr.assert_called()
@@ -1650,14 +1626,14 @@ class TestCaching:
             result = CliRunner().invoke(
                 black.main, ["-"], input=BytesIO(b"print('hello')")
             )
-            self.assertEqual(result.exit_code, 0)
+            assert not result.exit_code
             cache_file = get_cache_file(mode)
-            self.assertFalse(cache_file.exists())
+            assert not cache_file.exists()
 
     def test_read_cache_no_cachefile(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir():
-            self.assertEqual(black.read_cache(mode), {})
+            assert black.read_cache(mode) == {}
 
     def test_write_cache_read_cache(self) -> None:
         mode = DEFAULT_MODE
@@ -1666,8 +1642,8 @@ class TestCaching:
             src.touch()
             black.write_cache({}, [src], mode)
             cache = black.read_cache(mode)
-            self.assertIn(str(src), cache)
-            self.assertEqual(cache[str(src)], black.get_cache_info(src))
+            assert str(src) in cache
+            assert cache[str(src)] == black.get_cache_info(src)
 
     def test_filter_cached(self) -> None:
         with TemporaryDirectory() as workspace:
@@ -1685,15 +1661,15 @@ class TestCaching:
             todo, done = black.filter_cached(
                 cache, {uncached, cached, cached_but_changed}
             )
-            self.assertEqual(todo, {uncached, cached_but_changed})
-            self.assertEqual(done, {cached})
+            assert todo == {uncached, cached_but_changed}
+            assert done == {cached}
 
     def test_write_cache_creates_directory_if_needed(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir(exists=False) as workspace:
-            self.assertFalse(workspace.exists())
+            assert not workspace.exists()
             black.write_cache({}, [], mode)
-            self.assertTrue(workspace.exists())
+            assert workspace.exists()
 
     @event_loop()
     def test_failed_formatting_does_not_get_cached(self) -> None:
@@ -1707,10 +1683,10 @@ class TestCaching:
             clean = (workspace / "clean.py").resolve()
             with clean.open("w") as fobj:
                 fobj.write('print("hello")\n')
-            self.invokeBlack([str(workspace)], exit_code=123)
+            invokeBlack([str(workspace)], exit_code=123)
             cache = black.read_cache(mode)
-            self.assertNotIn(str(failing), cache)
-            self.assertIn(str(clean), cache)
+            assert str(failing) not in cache
+            assert str(clean) in cache
 
     def test_write_cache_write_fail(self) -> None:
         mode = DEFAULT_MODE
@@ -1726,9 +1702,9 @@ class TestCaching:
             path.touch()
             black.write_cache({}, [path], mode)
             one = black.read_cache(mode)
-            self.assertIn(str(path), one)
+            assert str(path) in one
             two = black.read_cache(short_mode)
-            self.assertNotIn(str(path), two)
+            assert str(path) not in two
 
 
 def assert_collected_sources(
