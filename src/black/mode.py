@@ -20,7 +20,6 @@ from black.const import DEFAULT_LINE_LENGTH
 
 
 class TargetVersion(Enum):
-    PY27 = 2
     PY33 = 3
     PY34 = 4
     PY35 = 5
@@ -30,41 +29,26 @@ class TargetVersion(Enum):
     PY39 = 9
     PY310 = 10
 
-    def is_python2(self) -> bool:
-        return self is TargetVersion.PY27
-
 
 class Feature(Enum):
-    # All string literals are unicode
-    UNICODE_LITERALS = 1
-    F_STRINGS = 2
-    NUMERIC_UNDERSCORES = 3
-    TRAILING_COMMA_IN_CALL = 4
-    TRAILING_COMMA_IN_DEF = 5
+    F_STRINGS = 1
+    NUMERIC_UNDERSCORES = 2
+    TRAILING_COMMA_IN_CALL = 3
+    TRAILING_COMMA_IN_DEF = 4
     # The following two feature-flags are mutually exclusive, and exactly one should be
     # set for every version of python.
-    ASYNC_IDENTIFIERS = 6
-    ASYNC_KEYWORDS = 7
-    ASSIGNMENT_EXPRESSIONS = 8
-    POS_ONLY_ARGUMENTS = 9
-    RELAXED_DECORATORS = 10
-    PATTERN_MATCHING = 11
-    UNPACKING_ON_FLOW = 12
-    ANN_ASSIGN_EXTENDED_RHS = 13
+    ASYNC_IDENTIFIERS = 5
+    ASYNC_KEYWORDS = 6
+    ASSIGNMENT_EXPRESSIONS = 7
+    POS_ONLY_ARGUMENTS = 8
+    RELAXED_DECORATORS = 9
+    PATTERN_MATCHING = 10
+    UNPACKING_ON_FLOW = 11
+    ANN_ASSIGN_EXTENDED_RHS = 12
     FORCE_OPTIONAL_PARENTHESES = 50
 
     # __future__ flags
     FUTURE_ANNOTATIONS = 51
-
-    # temporary for Python 2 deprecation
-    PRINT_STMT = 200
-    EXEC_STMT = 201
-    AUTOMATIC_PARAMETER_UNPACKING = 202
-    COMMA_STYLE_EXCEPT = 203
-    COMMA_STYLE_RAISE = 204
-    LONG_INT_LITERAL = 205
-    OCTAL_INT_LITERAL = 206
-    BACKQUOTE_REPR = 207
 
 
 FUTURE_FLAG_TO_FEATURE: Final = {
@@ -73,26 +57,10 @@ FUTURE_FLAG_TO_FEATURE: Final = {
 
 
 VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
-    TargetVersion.PY27: {
-        Feature.ASYNC_IDENTIFIERS,
-        Feature.PRINT_STMT,
-        Feature.EXEC_STMT,
-        Feature.AUTOMATIC_PARAMETER_UNPACKING,
-        Feature.COMMA_STYLE_EXCEPT,
-        Feature.COMMA_STYLE_RAISE,
-        Feature.LONG_INT_LITERAL,
-        Feature.OCTAL_INT_LITERAL,
-        Feature.BACKQUOTE_REPR,
-    },
-    TargetVersion.PY33: {Feature.UNICODE_LITERALS, Feature.ASYNC_IDENTIFIERS},
-    TargetVersion.PY34: {Feature.UNICODE_LITERALS, Feature.ASYNC_IDENTIFIERS},
-    TargetVersion.PY35: {
-        Feature.UNICODE_LITERALS,
-        Feature.TRAILING_COMMA_IN_CALL,
-        Feature.ASYNC_IDENTIFIERS,
-    },
+    TargetVersion.PY33: {Feature.ASYNC_IDENTIFIERS},
+    TargetVersion.PY34: {Feature.ASYNC_IDENTIFIERS},
+    TargetVersion.PY35: {Feature.TRAILING_COMMA_IN_CALL, Feature.ASYNC_IDENTIFIERS},
     TargetVersion.PY36: {
-        Feature.UNICODE_LITERALS,
         Feature.F_STRINGS,
         Feature.NUMERIC_UNDERSCORES,
         Feature.TRAILING_COMMA_IN_CALL,
@@ -100,7 +68,6 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.ASYNC_IDENTIFIERS,
     },
     TargetVersion.PY37: {
-        Feature.UNICODE_LITERALS,
         Feature.F_STRINGS,
         Feature.NUMERIC_UNDERSCORES,
         Feature.TRAILING_COMMA_IN_CALL,
@@ -109,7 +76,6 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.FUTURE_ANNOTATIONS,
     },
     TargetVersion.PY38: {
-        Feature.UNICODE_LITERALS,
         Feature.F_STRINGS,
         Feature.NUMERIC_UNDERSCORES,
         Feature.TRAILING_COMMA_IN_CALL,
@@ -122,7 +88,6 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.ANN_ASSIGN_EXTENDED_RHS,
     },
     TargetVersion.PY39: {
-        Feature.UNICODE_LITERALS,
         Feature.F_STRINGS,
         Feature.NUMERIC_UNDERSCORES,
         Feature.TRAILING_COMMA_IN_CALL,
@@ -136,7 +101,6 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.ANN_ASSIGN_EXTENDED_RHS,
     },
     TargetVersion.PY310: {
-        Feature.UNICODE_LITERALS,
         Feature.F_STRINGS,
         Feature.NUMERIC_UNDERSCORES,
         Feature.TRAILING_COMMA_IN_CALL,

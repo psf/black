@@ -112,7 +112,6 @@ setup(
     extras_require={
         "d": ["aiohttp>=3.7.4"],
         "colorama": ["colorama>=0.4.3"],
-        "python2": ["typed-ast>=1.4.3"],
         "uvloop": ["uvloop>=0.15.2"],
         "jupyter": ["ipython>=7.8.0", "tokenize-rt>=3.2.0"],
     },
