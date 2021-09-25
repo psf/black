@@ -462,11 +462,12 @@ class EmptyLineTracker:
                     )
                 ):
                     # We shouldn't add two newlines between an indented function and
-                    # and a dependent non-indented clause. This is to avoid issues with
+                    # a dependent non-indented clause. This is to avoid issues with
                     # conditional function definitions that are technically top-level
                     # and therefore get two trailing newlines, but look weird and
                     # inconsistent when they're followed by elif, else, etc. This is
-                    # worsen by that these functions only get *one* preceding already.
+                    # worse because these functions only get *one* preceding newline
+                    # already.
                     before = 1
                 else:
                     before = 2
