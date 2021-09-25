@@ -41,7 +41,6 @@ black = {editable = true, extras = ["d", "jupyter"], path = "."}
 
 [packages]
 aiohttp = ">=3.6.0"
-aiohttp-cors = ">=0.4.0"
 platformdirs= ">=2"
 click = ">=8.0.0"
 mypy_extensions = ">=0.4.3"
