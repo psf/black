@@ -5,6 +5,7 @@
 ### _Blackd_
 
 - Remove dependency on aiohttp-cors (#2500)
+- Bump required aiohttp version to 3.7.4 (#2509)
 
 ## 21.9b0
 
