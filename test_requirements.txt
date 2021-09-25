@@ -1,9 +1,6 @@
 coverage >= 5.3
 pre-commit
 pytest >= 6.1.1
-pytest-mock >= 3.3.1
-pytest-cases >= 2.3.0
 pytest-xdist >= 2.2.1
 pytest-cov >= 2.11.1
-parameterized >= 0.7.4
 tox
