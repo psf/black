@@ -1,5 +1,11 @@
 # Change Log
 
+## Unreleased
+
+### _Blackd_
+
+- Remove dependency on aiohttp-cors (#2500)
+
 ## 21.9b0
 
 ### Packaging

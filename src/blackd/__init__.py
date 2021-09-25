@@ -8,7 +8,7 @@ from typing import Set, Tuple
 
 try:
     from aiohttp import web
-    import aiohttp_cors
+    from .middlewares import cors
 except ImportError as ie:
     raise ImportError(
         f"aiohttp dependency is not installed: {ie}. "
@@ -67,20 +67,11 @@ def main(bind_host: str, bind_port: int) -> None:
 
 
 def make_app() -> web.Application:
-    app = web.Application()
-    executor = ProcessPoolExecutor()
-
-    cors = aiohttp_cors.setup(app)
-    resource = cors.add(app.router.add_resource("/"))
-    cors.add(
-        resource.add_route("POST", partial(handle, executor=executor)),
-        {
-            "*": aiohttp_cors.ResourceOptions(
-                allow_headers=(*BLACK_HEADERS, "Content-Type"), expose_headers="*"
-            )
-        },
+    app = web.Application(
+        middlewares=[cors(allow_headers=(*BLACK_HEADERS, "Content-Type"))]
     )
-
+    executor = ProcessPoolExecutor()
+    app.add_routes([web.post("/", partial(handle, executor=executor))])
     return app
 
 
