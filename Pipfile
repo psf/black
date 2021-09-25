@@ -40,7 +40,7 @@ readme_renderer = "*"
 black = {editable = true, extras = ["d", "jupyter"], path = "."}
 
 [packages]
-aiohttp = ">=3.6.0"
+aiohttp = ">=3.7.4"
 platformdirs= ">=2"
 click = ">=8.0.0"
 mypy_extensions = ">=0.4.3"
