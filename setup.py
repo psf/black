@@ -86,7 +86,7 @@ setup(
         "mypy_extensions>=0.4.3",
     ],
     extras_require={
-        "d": ["aiohttp>=3.6.0"],
+        "d": ["aiohttp>=3.7.4"],
         "colorama": ["colorama>=0.4.3"],
         "python2": ["typed-ast>=1.4.2"],
         "uvloop": ["uvloop>=0.15.2"],
