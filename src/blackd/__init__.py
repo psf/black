@@ -6,14 +6,16 @@ from functools import partial
 from multiprocessing import freeze_support
 from typing import Set, Tuple
 
+
 try:
     from aiohttp import web
     from .middlewares import cors
+    from .lsp import make_lsp_handler
 except ImportError as ie:
     raise ImportError(
-        f"aiohttp dependency is not installed: {ie}. "
+        f"A blackd dependency is not installed: {ie}. "
         + "Please re-install black with the '[d]' extra install "
-        + "to obtain aiohttp_cors: `pip install black[d]`"
+        + "to obtain it: `pip install black[d]`"
     ) from None
 
 import black
@@ -71,7 +73,12 @@ def make_app() -> web.Application:
         middlewares=[cors(allow_headers=(*BLACK_HEADERS, "Content-Type"))]
     )
     executor = ProcessPoolExecutor()
-    app.add_routes([web.post("/", partial(handle, executor=executor))])
+    app.add_routes(
+        [
+            web.post("/", partial(handle, executor=executor)),
+            web.view("/lsp", make_lsp_handler(executor)),
+        ]
+    )
     return app
 
 
