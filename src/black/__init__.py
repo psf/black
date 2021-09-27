@@ -319,6 +319,12 @@ def validate_regex(
     ),
 )
 @click.option(
+    "-W",
+    "--workers",
+    type=int,
+    help="Number of parallel workers [default: os.cpu_count()]",
+)
+@click.option(
     "-q",
     "--quiet",
     is_flag=True,
@@ -383,6 +389,7 @@ def main(
     extend_exclude: Optional[Pattern],
     force_exclude: Optional[Pattern],
     stdin_filename: Optional[str],
+    workers: Optional[int],
     src: Tuple[str, ...],
     config: Optional[str],
 ) -> None:
@@ -468,6 +475,7 @@ def main(
                 write_back=write_back,
                 mode=mode,
                 report=report,
+                workers=workers,
             )
 
     if verbose or not quiet:
@@ -644,12 +652,17 @@ def reformat_one(
 
 
 def reformat_many(
-    sources: Set[Path], fast: bool, write_back: WriteBack, mode: Mode, report: "Report"
+    sources: Set[Path],
+    fast: bool,
+    write_back: WriteBack,
+    mode: Mode,
+    report: "Report",
+    workers: Optional[int],
 ) -> None:
     """Reformat multiple files using a ProcessPoolExecutor."""
     executor: Executor
     loop = asyncio.get_event_loop()
-    worker_count = os.cpu_count()
+    worker_count = workers if workers is not None else os.cpu_count()
     if sys.platform == "win32":
         # Work around https://bugs.python.org/issue26903
         worker_count = min(worker_count, 60)
