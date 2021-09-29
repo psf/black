@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### _Black_
+
+- Add new `--workers` parameter (#2514)
+
 ### _Blackd_
 
 - Remove dependency on aiohttp-cors (#2500)

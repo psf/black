@@ -95,6 +95,8 @@ class WriteBack(Enum):
 # Legacy name, left for integrations.
 FileMode = Mode
 
+DEFAULT_WORKERS = os.cpu_count()
+
 
 def read_pyproject_toml(
     ctx: click.Context, param: click.Parameter, value: Optional[str]
@@ -319,6 +321,14 @@ def validate_regex(
     ),
 )
 @click.option(
+    "-W",
+    "--workers",
+    type=click.IntRange(min=1),
+    default=DEFAULT_WORKERS,
+    show_default=True,
+    help="Number of parallel workers",
+)
+@click.option(
     "-q",
     "--quiet",
     is_flag=True,
@@ -383,6 +393,7 @@ def main(
     extend_exclude: Optional[Pattern],
     force_exclude: Optional[Pattern],
     stdin_filename: Optional[str],
+    workers: int,
     src: Tuple[str, ...],
     config: Optional[str],
 ) -> None:
@@ -468,6 +479,7 @@ def main(
                 write_back=write_back,
                 mode=mode,
                 report=report,
+                workers=workers,
             )
 
     if verbose or not quiet:
@@ -644,12 +656,17 @@ def reformat_one(
 
 
 def reformat_many(
-    sources: Set[Path], fast: bool, write_back: WriteBack, mode: Mode, report: "Report"
+    sources: Set[Path],
+    fast: bool,
+    write_back: WriteBack,
+    mode: Mode,
+    report: "Report",
+    workers: Optional[int],
 ) -> None:
     """Reformat multiple files using a ProcessPoolExecutor."""
     executor: Executor
     loop = asyncio.get_event_loop()
-    worker_count = os.cpu_count()
+    worker_count = workers if workers is not None else DEFAULT_WORKERS
     if sys.platform == "win32":
         # Work around https://bugs.python.org/issue26903
         worker_count = min(worker_count, 60)
