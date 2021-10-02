@@ -1,5 +1,5 @@
 [tool.black]
-config = "tests/test_black.toml"
+config = "tests/bazqux.toml"
 verbose = 1
 --check = "no"
 diff = "y"

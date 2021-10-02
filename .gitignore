@@ -1,11 +1,8 @@
 .venv
-.coverage
-.coverage.*
 _build
 .DS_Store
 .vscode
 docs/_static/pypi.svg
-.tox
 __pycache__
 
 # Packaging artifacts
@@ -21,6 +18,13 @@ src/_black_version.py
 
 .dmypy.json
 *.swp
-.hypothesis/
 venv/
 .ipynb_checkpoints/
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.hypothesis/
+.pytest_cache/

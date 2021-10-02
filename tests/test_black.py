@@ -1320,19 +1320,33 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(config["exclude"], r"\.pyi?$")
         self.assertEqual(config["include"], r"\.py?$")
 
+    def test_parse_black_config(self) -> None:
+        test_black_toml_file = THIS_DIR / "test_black.toml"
+        config = black.parse_black_config_toml(str(test_black_toml_file))
+        self.assertEqual(config["line_length"], 88)
+
     def test_read_pyproject_toml(self) -> None:
         test_toml_file = THIS_DIR / "test.toml"
         fake_ctx = FakeContext()
         black.read_pyproject_toml(fake_ctx, FakeParameter(), str(test_toml_file))
         config = fake_ctx.default_map
+        self.assertEqual(config["config"], "tests/test_black.toml")
         self.assertEqual(config["verbose"], "1")
         self.assertEqual(config["check"], "no")
         self.assertEqual(config["diff"], "y")
         self.assertEqual(config["color"], "True")
+        # Test that pyproject.toml specified config won't overwrite the config
+        # passed through `--config`.
         self.assertEqual(config["line_length"], "79")
         self.assertEqual(config["target_version"], ["py36", "py37", "py38"])
         self.assertEqual(config["exclude"], r"\.pyi?$")
         self.assertEqual(config["include"], r"\.py?$")
+
+    def test_invalid_black_config(self) -> None:
+        test_toml_file = THIS_DIR / "invalid_test.toml"
+        fake_ctx = FakeContext()
+        with self.assertRaises(click.exceptions.FileError):
+            black.read_pyproject_toml(fake_ctx, FakeParameter(), str(test_toml_file))
 
     @pytest.mark.incompatible_with_mypyc
     def test_find_project_root(self) -> None:

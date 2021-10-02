@@ -48,7 +48,12 @@ from black.cache import read_cache, write_cache, get_cache_info, filter_cached, 
 from black.concurrency import cancel, shutdown, maybe_install_uvloop
 from black.output import dump_to_file, ipynb_diff, diff, color_diff, out, err
 from black.report import Report, Changed, NothingChanged
-from black.files import find_project_root, find_pyproject_toml, parse_pyproject_toml
+from black.files import (
+    find_project_root,
+    find_pyproject_toml,
+    parse_pyproject_toml,
+    parse_black_config_toml,
+)
 from black.files import gen_python_files, get_gitignore, normalize_path_maybe_ignore
 from black.files import wrap_stream_for_windows
 from black.parsing import InvalidInput  # noqa F401
@@ -112,7 +117,10 @@ def read_pyproject_toml(
     Returns the path to a successfully found and read configuration file, None
     otherwise.
     """
+    value_is_pyproject_config = False
+
     if not value:
+        value_is_pyproject_config = True
         value = find_pyproject_toml(ctx.params.get("src", ()))
         if value is None:
             return None
@@ -126,25 +134,43 @@ def read_pyproject_toml(
 
     if not config:
         return None
-    else:
-        # Sanitize the values to be Click friendly. For more information please see:
-        # https://github.com/psf/black/issues/1458
-        # https://github.com/pallets/click/issues/1567
-        config = {
-            k: str(v) if not isinstance(v, (list, dict)) else v
-            for k, v in config.items()
-        }
 
-    target_version = config.get("target_version")
+    if ctx.default_map:
+        config.update(ctx.default_map)
+
+    black_config = config.get("config")
+
+    if black_config:
+        black_config_path = Path(black_config).resolve()
+
+        try:
+            custom_black_config = parse_black_config_toml(str(black_config_path))
+        except (OSError, ValueError) as e:
+            raise click.FileError(
+                filename=str(black_config_path),
+                hint=f"Error reading configuration file: {e}",
+            ) from None
+        else:
+            # Do overwrite the clashing keys of pyproject.toml but don't
+            # overwrite them for `--config` passed through the CLI.
+            if value_is_pyproject_config:
+                config.update(custom_black_config)
+            else:
+                custom_black_config.update(config)
+                config = custom_black_config.copy()
+
+    # Sanitize the values to be Click friendly. For more information please see:
+    # https://github.com/psf/black/issues/1458
+    # https://github.com/pallets/click/issues/1567
+    default_map: Dict[str, Any] = {
+        k: str(v) if not isinstance(v, (list, dict)) else v for k, v in config.items()
+    }
+
+    target_version = default_map.get("target_version")
     if target_version is not None and not isinstance(target_version, list):
         raise click.BadOptionUsage(
             "target-version", "Config key target-version must be a list"
         )
-
-    default_map: Dict[str, Any] = {}
-    if ctx.default_map:
-        default_map.update(ctx.default_map)
-    default_map.update(config)
 
     ctx.default_map = default_map
     return value
