@@ -505,6 +505,9 @@ def get_sources(
     """Compute the set of files to be formatted."""
 
     root = find_project_root(src)
+    if verbose:
+        out(f"Checking for `{'`, `'.join(src)}` in {root}", fg="blue", bold=False)
+
     sources: Set[Path] = set()
     path_empty(src, "No Path provided. Nothing to do 😴", quiet, verbose, ctx)
 
