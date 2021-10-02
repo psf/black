@@ -116,6 +116,8 @@ Wing supports black via the OS Commands tool, as explained in the Wing documenta
 Commands and shortcuts:
 
 - `:Black` to format the entire file (ranges not supported);
+  - you can optionally pass `target_version=<version>` with the same values as in the
+    command line.
 - `:BlackUpgrade` to upgrade _Black_ inside the virtualenv;
 - `:BlackVersion` to get the current version of _Black_ inside the virtualenv.
 

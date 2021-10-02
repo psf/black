@@ -2,9 +2,18 @@
 
 ## Unreleased
 
+### _Black_
+
+- Add new `--workers` parameter (#2514)
+
 ### _Blackd_
 
 - Remove dependency on aiohttp-cors (#2500)
+- Bump required aiohttp version to 3.7.4 (#2509)
+
+### Integrations
+
+- Allow to pass `target_version` in the vim plugin (#1319)
 
 ## 21.9b0
 
