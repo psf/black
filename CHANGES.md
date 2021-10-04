@@ -1,6 +1,22 @@
 # Change Log
 
+## Unreleased
+
 - The vim plugin now parses `skip_magic_trailing_comma` from pyproject.toml (#2504)
+
+### _Black_
+
+- Add new `--workers` parameter (#2514)
+
+### _Blackd_
+
+- Remove dependency on aiohttp-cors (#2500)
+- Bump required aiohttp version to 3.7.4 (#2509)
+
+### Integrations
+
+- Allow to pass `target_version` in the vim plugin (#1319)
+>>>>>>> origin/main
 
 ## 21.9b0
 

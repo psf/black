@@ -53,8 +53,20 @@ endif
 if !exists("g:black_quiet")
   let g:black_quiet = 0
 endif
+if !exists("g:black_target_version")
+  let g:black_target_version = ""
+endif
 
+function BlackComplete(ArgLead, CmdLine, CursorPos)
+  return [
+\    'target_version=py27',
+\    'target_version=py36',
+\    'target_version=py37',
+\    'target_version=py38',
+\    'target_version=py39',
+\  ]
+endfunction
 
-command! Black :call black#Black()
+command! -nargs=* -complete=customlist,BlackComplete Black :call black#Black(<f-args>)
 command! BlackUpgrade :call black#BlackUpgrade()
 command! BlackVersion :call black#BlackVersion()
