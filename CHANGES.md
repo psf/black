@@ -16,7 +16,6 @@
 ### Integrations
 
 - Allow to pass `target_version` in the vim plugin (#1319)
->>>>>>> origin/main
 
 ## 21.9b0
 
