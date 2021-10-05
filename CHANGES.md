@@ -5,6 +5,7 @@
 ### _Black_
 
 - Add new `--workers` parameter (#2514)
+- Bumped typed-ast version minimum to 1.4.3 for 3.10 compatiblity (#2519)
 
 ### _Blackd_
 
