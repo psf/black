@@ -2017,6 +2017,21 @@ class TestFileCollection:
         )
 
 
+@pytest.mark.parametrize("explicit", [True, False], ids=["explicit", "autodetection"])
+def test_python_2_deprecation_with_target_version(explicit: bool) -> None:
+    args = [
+        "--config",
+        str(THIS_DIR / "empty.toml"),
+        str(DATA_DIR / "python2.py"),
+        "--check",
+    ]
+    if explicit:
+        args.append("--target-version=py27")
+    with cache_dir():
+        result = BlackRunner().invoke(black.main, args)
+    assert "DEPRECATION: Python 2 support will be removed" in result.stderr
+
+
 with open(black.__file__, "r", encoding="utf-8") as _bf:
     black_source_lines = _bf.readlines()
 
