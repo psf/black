@@ -12,12 +12,23 @@ from shutil import rmtree, which
 from subprocess import CalledProcessError
 from sys import version_info
 from tempfile import TemporaryDirectory
-from typing import Any, Callable, Dict, NamedTuple, Optional, Sequence, Tuple
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    NamedTuple,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
 from urllib.parse import urlparse
 
 import click
 
 
+TEN_MINUTES_SECONDS = 600
 WINDOWS = system() == "Windows"
 BLACK_BINARY = "black.exe" if WINDOWS else "black"
 GIT_BINARY = "git.exe" if WINDOWS else "git"
@@ -39,7 +50,7 @@ class Results(NamedTuple):
 
 async def _gen_check_output(
     cmd: Sequence[str],
-    timeout: float = 600,
+    timeout: float = TEN_MINUTES_SECONDS,
     env: Optional[Dict[str, str]] = None,
     cwd: Optional[Path] = None,
     stdin: Optional[bytes] = None,
@@ -113,6 +124,21 @@ def analyze_results(project_count: int, results: Results) -> int:
     return results.stats["failed"]
 
 
+def _flatten_cli_args(cli_args: List[Union[Sequence[str], str]]) -> List[str]:
+    """Allow a user to put long arguments into a list of strs
+    to make the JSON human readable"""
+    flat_args = []
+    for arg in cli_args:
+        if isinstance(arg, str):
+            flat_args.append(arg)
+            continue
+
+        args_as_str = "".join(arg)
+        flat_args.append(args_as_str)
+
+    return flat_args
+
+
 async def black_run(
     project_name: str,
     repo_path: Optional[Path],
@@ -131,7 +157,7 @@ async def black_run(
     stdin_test = project_name.upper() == "STDIN"
     cmd = [str(which(BLACK_BINARY))]
     if "cli_arguments" in project_config and project_config["cli_arguments"]:
-        cmd.extend(project_config["cli_arguments"])
+        cmd.extend(_flatten_cli_args(project_config["cli_arguments"]))
     cmd.append("--check")
     if not no_diff:
         cmd.append("--diff")
@@ -141,9 +167,16 @@ async def black_run(
     if stdin_test:
         cmd.append("-")
         stdin = repo_path.read_bytes()
+    elif "base_path" in project_config:
+        cmd.append(project_config["base_path"])
     else:
         cmd.append(".")
 
+    timeout = (
+        project_config["timeout_seconds"]
+        if "timeout_seconds" in project_config
+        else TEN_MINUTES_SECONDS
+    )
     with TemporaryDirectory() as tmp_path:
         # Prevent reading top-level user configs by manipulating environment variables
         env = {
@@ -154,8 +187,9 @@ async def black_run(
 
         cwd_path = repo_path.parent if stdin_test else repo_path
         try:
+            LOG.debug(f"Running black for {project_name}: {' '.join(cmd)}")
             _stdout, _stderr = await _gen_check_output(
-                cmd, cwd=cwd_path, env=env, stdin=stdin
+                cmd, cwd=cwd_path, env=env, stdin=stdin, timeout=timeout
             )
         except asyncio.TimeoutError:
             results.stats["failed"] += 1

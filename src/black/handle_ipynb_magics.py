@@ -1,15 +1,19 @@
 """Functions to process IPython magics with."""
+
 from functools import lru_cache
 import dataclasses
 import ast
-from typing import Dict
+from typing import Dict, List, Tuple, Optional
 
 import secrets
-from typing import List, Tuple
+import sys
 import collections
 
-from typing import Optional
-from typing_extensions import TypeGuard
+if sys.version_info >= (3, 10):
+    from typing import TypeGuard
+else:
+    from typing_extensions import TypeGuard
+
 from black.report import NothingChanged
 from black.output import out
 
@@ -49,6 +53,7 @@ NON_PYTHON_CELL_MAGICS = frozenset(
         "%%writefile",
     )
 )
+TOKEN_HEX = secrets.token_hex
 
 
 @dataclasses.dataclass(frozen=True)
@@ -184,10 +189,10 @@ def get_token(src: str, magic: str) -> str:
     """
     assert magic
     nbytes = max(len(magic) // 2 - 1, 1)
-    token = secrets.token_hex(nbytes)
+    token = TOKEN_HEX(nbytes)
     counter = 0
-    while token in src:  # pragma: nocover
-        token = secrets.token_hex(nbytes)
+    while token in src:
+        token = TOKEN_HEX(nbytes)
         counter += 1
         if counter > 100:
             raise AssertionError(

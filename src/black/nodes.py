@@ -135,6 +135,8 @@ CLOSING_BRACKETS = set(BRACKET.values())
 BRACKETS = OPENING_BRACKETS | CLOSING_BRACKETS
 ALWAYS_NO_SPACE = CLOSING_BRACKETS | {token.COMMA, STANDALONE_COMMENT}
 
+RARROW = 55
+
 
 class Visitor(Generic[T]):
     """Basic lib2to3 visitor that yields things of type `T` on `visit()`."""

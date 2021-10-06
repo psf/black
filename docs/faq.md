@@ -57,7 +57,7 @@ following will not be formatted:
   get_ipython().system('ls')
   ```
 
-- invalid syntax, as it can't be safely distinguished from automagics in the absense of
+- invalid syntax, as it can't be safely distinguished from automagics in the absence of
   a running `IPython` kernel.
 
 ## Why are Flake8's E203 and W503 violated?

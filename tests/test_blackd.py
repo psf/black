@@ -164,3 +164,24 @@ class BlackDTestCase(AioHTTPTestCase):
     async def test_blackd_response_black_version_header(self) -> None:
         response = await self.client.post("/")
         self.assertIsNotNone(response.headers.get(blackd.BLACK_VERSION_HEADER))
+
+    @unittest_run_loop
+    async def test_cors_preflight(self) -> None:
+        response = await self.client.options(
+            "/",
+            headers={
+                "Access-Control-Request-Method": "POST",
+                "Origin": "*",
+                "Access-Control-Request-Headers": "Content-Type",
+            },
+        )
+        self.assertEqual(response.status, 200)
+        self.assertIsNotNone(response.headers.get("Access-Control-Allow-Origin"))
+        self.assertIsNotNone(response.headers.get("Access-Control-Allow-Headers"))
+        self.assertIsNotNone(response.headers.get("Access-Control-Allow-Methods"))
+
+    @unittest_run_loop
+    async def test_cors_headers_present(self) -> None:
+        response = await self.client.post("/", headers={"Origin": "*"})
+        self.assertIsNotNone(response.headers.get("Access-Control-Allow-Origin"))
+        self.assertIsNotNone(response.headers.get("Access-Control-Expose-Headers"))

@@ -453,3 +453,12 @@ def test_ipynb_and_pyi_flags() -> None:
     assert isinstance(result.exception, SystemExit)
     expected = "Cannot pass both `pyi` and `ipynb` flags!\n"
     assert result.output == expected
+
+
+def test_unable_to_replace_magics(monkeypatch: MonkeyPatch) -> None:
+    src = "%%time\na = 'foo'"
+    monkeypatch.setattr("black.handle_ipynb_magics.TOKEN_HEX", lambda _: "foo")
+    with pytest.raises(
+        AssertionError, match="Black was not able to replace IPython magic"
+    ):
+        format_cell(src, fast=True, mode=JUPYTER_MODE)
