@@ -88,7 +88,7 @@ def find_pyproject_toml(path_search_start: Tuple[str, ...]) -> Optional[str]:
         return None
 
 
-def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
+def parse_pyproject_toml(path_config: str) -> Tuple[Dict[str, Any], Dict]:
     """Parse a pyproject toml file, pulling out relevant parts for Black
 
     If parsing fails, will raise a tomli.TOMLDecodeError
@@ -96,7 +96,9 @@ def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
     with open(path_config, encoding="utf8") as f:
         pyproject_toml = tomli.load(f)  # type: ignore  # due to deprecated API usage
     config = pyproject_toml.get("tool", {}).get("black", {})
-    return {k.replace("--", "").replace("-", "_"): v for k, v in config.items()}
+    return pyproject_toml, {
+        k.replace("--", "").replace("-", "_"): v for k, v in config.items()
+    }
 
 
 @lru_cache()

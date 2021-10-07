@@ -1267,10 +1267,8 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_parse_pyproject_toml(self) -> None:
         test_toml_file = THIS_DIR / "test.toml"
-        config = black.parse_pyproject_toml(str(test_toml_file))
+        _, config = black.config.parse_pyproject_toml(str(test_toml_file))
         self.assertEqual(config["verbose"], 1)
-        self.assertEqual(config["check"], "no")
-        self.assertEqual(config["diff"], "y")
         self.assertEqual(config["color"], True)
         self.assertEqual(config["line_length"], 79)
         self.assertEqual(config["target_version"], ["py36", "py37", "py38"])
@@ -1278,18 +1276,68 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(config["include"], r"\.py?$")
 
     def test_read_pyproject_toml(self) -> None:
-        test_toml_file = THIS_DIR / "test.toml"
+        test_toml_file = THIS_DIR / "test_module_specifics.toml"
         fake_ctx = FakeContext()
-        black.read_pyproject_toml(fake_ctx, FakeParameter(), str(test_toml_file))
-        config = fake_ctx.default_map
-        self.assertEqual(config["verbose"], "1")
-        self.assertEqual(config["check"], "no")
-        self.assertEqual(config["diff"], "y")
-        self.assertEqual(config["color"], "True")
-        self.assertEqual(config["line_length"], "79")
-        self.assertEqual(config["target_version"], ["py36", "py37", "py38"])
-        self.assertEqual(config["exclude"], r"\.pyi?$")
-        self.assertEqual(config["include"], r"\.py?$")
+        fake_ctx._parameter_source = {}
+        fake_ctx.obj = {}
+        fake_ctx.parent = None
+
+        black.read_pyproject_toml(
+            fake_ctx, {"line_length": 88, "check": True}, str(test_toml_file)
+        )
+        config_options = fake_ctx.obj["options"]["conf_options"].__dict__
+
+        per_module_options = fake_ctx.obj["options"]["conf_options"].per_module_options
+        _src_black = per_module_options["src/black"].__dict__
+        self.assertEqual(_src_black["line_length"], 100)
+        self.assertEqual(
+            _src_black["target_version"],
+            {TargetVersion.PY38, TargetVersion.PY37},
+        )
+
+        self.assertEqual(config_options["verbose"], True)
+        self.assertEqual(config_options["check"], True)
+        self.assertEqual(config_options["color"], True)
+        self.assertEqual(config_options["line_length"], 88)
+        self.assertEqual(
+            config_options["target_version"],
+            {TargetVersion.PY38, TargetVersion.PY36, TargetVersion.PY37},
+        )
+        # TODO
+        # self.assertEqual(config_options["exclude"], re.compile(r"\.pyi?$"))
+        # self.assertEqual(config_options["include"], re.compile(r"\.pyi?$"))
+
+    def test_flatten_pyproject_config(self) -> None:
+        module_specifics = {
+            "src": {
+                "black": {
+                    "line_length": 100,
+                    "target-version": ["py37", "py38"],
+                    "include": "\\.pyi?$",
+                },
+                "tests": {
+                    "line_length": 88,
+                    "target-version": ["py37", "py38"],
+                    "extend-exclude": "tests/data",
+                },
+            }
+        }
+        flattened_module_specifics = {
+            "src.black": {
+                "line_length": 100,
+                "target-version": ["py37", "py38"],
+                "include": "\\.pyi?$",
+            },
+            "src.tests": {
+                "line_length": 88,
+                "target-version": ["py37", "py38"],
+                "extend-exclude": "tests/data",
+            },
+        }
+
+        self.assertEqual(
+            flattened_module_specifics, black.config.flatten(module_specifics, sep=".")
+        )
 
     def test_find_project_root(self) -> None:
         with TemporaryDirectory() as workspace:
@@ -1506,7 +1554,9 @@ class BlackTestCase(BlackBaseTestCase):
         """
         Test that the code option finds the pyproject.toml in the current directory.
         """
-        with patch.object(black, "parse_pyproject_toml", return_value={}) as parse:
+        with patch.object(
+            black.config, "parse_pyproject_toml", return_value={}
+        ) as parse:
             args = ["--code", "print"]
             CliRunner().invoke(black.main, args)
 
@@ -1524,7 +1574,9 @@ class BlackTestCase(BlackBaseTestCase):
         """
         Test that the code option finds the pyproject.toml in the parent directory.
         """
-        with patch.object(black, "parse_pyproject_toml", return_value={}) as parse:
+        with patch.object(
+            black.config, "parse_pyproject_toml", return_value={}
+        ) as parse:
             with change_directory(Path("tests")):
                 args = ["--code", "print"]
                 CliRunner().invoke(black.main, args)

@@ -372,6 +372,7 @@ def test_ipynb_diff_with_no_change() -> None:
         [
             os.path.join("tests", "data", "notebook_without_changes.ipynb"),
             "--diff",
+            "--verbose",
         ],
     )
     expected = "1 file would be left unchanged."

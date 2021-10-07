@@ -33,6 +33,7 @@ from typing import (
 from dataclasses import replace
 import click
 
+from black.config import Options, read_pyproject_toml
 from black.const import DEFAULT_LINE_LENGTH, DEFAULT_INCLUDES, DEFAULT_EXCLUDES
 from black.const import STDIN_PLACEHOLDER
 from black.nodes import STARS, syms, is_simple_decorator_expression
@@ -45,9 +46,8 @@ from black.cache import read_cache, write_cache, get_cache_info, filter_cached, 
 from black.concurrency import cancel, shutdown, maybe_install_uvloop
 from black.output import dump_to_file, ipynb_diff, diff, color_diff, out, err
 from black.report import Report, Changed, NothingChanged
-from black.files import find_project_root, find_pyproject_toml, parse_pyproject_toml
-from black.files import gen_python_files, get_gitignore, normalize_path_maybe_ignore
-from black.files import wrap_stream_for_windows
+from black.files import find_project_root, gen_python_files, get_gitignore
+from black.files import normalize_path_maybe_ignore, wrap_stream_for_windows
 from black.parsing import InvalidInput  # noqa F401
 from black.parsing import lib2to3_parse, parse_ast, stringify_ast
 from black.handle_ipynb_magics import (
@@ -98,63 +98,6 @@ FileMode = Mode
 DEFAULT_WORKERS = os.cpu_count()
 
 
-def read_pyproject_toml(
-    ctx: click.Context, param: click.Parameter, value: Optional[str]
-) -> Optional[str]:
-    """Inject Black configuration from "pyproject.toml" into defaults in `ctx`.
-
-    Returns the path to a successfully found and read configuration file, None
-    otherwise.
-    """
-    if not value:
-        value = find_pyproject_toml(ctx.params.get("src", ()))
-        if value is None:
-            return None
-
-    try:
-        config = parse_pyproject_toml(value)
-    except (OSError, ValueError) as e:
-        raise click.FileError(
-            filename=value, hint=f"Error reading configuration file: {e}"
-        ) from None
-
-    if not config:
-        return None
-    else:
-        # Sanitize the values to be Click friendly. For more information please see:
-        # https://github.com/psf/black/issues/1458
-        # https://github.com/pallets/click/issues/1567
-        config = {
-            k: str(v) if not isinstance(v, (list, dict)) else v
-            for k, v in config.items()
-        }
-
-    target_version = config.get("target_version")
-    if target_version is not None and not isinstance(target_version, list):
-        raise click.BadOptionUsage(
-            "target-version", "Config key target-version must be a list"
-        )
-
-    default_map: Dict[str, Any] = {}
-    if ctx.default_map:
-        default_map.update(ctx.default_map)
-    default_map.update(config)
-
-    ctx.default_map = default_map
-    return value
-
-
-def target_version_option_callback(
-    c: click.Context, p: Union[click.Option, click.Parameter], v: Tuple[str, ...]
-) -> List[TargetVersion]:
-    """Compute the target versions from a --target-version flag.
-
-    This is its own function because mypy couldn't infer the type correctly
-    when it was a lambda, causing mypyc trouble.
-    """
-    return [TargetVersion[val.upper()] for val in v]
-
-
 def re_compile_maybe_verbose(regex: str) -> Pattern[str]:
     """Compile a regular expression string in `regex`.
 
@@ -164,17 +107,6 @@ def re_compile_maybe_verbose(regex: str) -> Pattern[str]:
         regex = "(?x)" + regex
     compiled: Pattern[str] = re.compile(regex)
     return compiled
-
-
-def validate_regex(
-    ctx: click.Context,
-    param: click.Parameter,
-    value: Optional[str],
-) -> Optional[Pattern]:
-    try:
-        return re_compile_maybe_verbose(value) if value is not None else None
-    except re.error:
-        raise click.BadParameter("Not a valid regular expression") from None
 
 
 @click.command(context_settings=dict(help_option_names=["-h", "--help"]))
@@ -191,7 +123,6 @@ def validate_regex(
     "-t",
     "--target-version",
     type=click.Choice([v.name.lower() for v in TargetVersion]),
-    callback=target_version_option_callback,
     multiple=True,
     help=(
         "Python versions that should be supported by Black's output. [default: per-file"
@@ -271,7 +202,6 @@ def validate_regex(
     "--include",
     type=str,
     default=DEFAULT_INCLUDES,
-    callback=validate_regex,
     help=(
         "A regular expression that matches files and directories that should be"
         " included on recursive searches. An empty value means all files are included"
@@ -283,7 +213,6 @@ def validate_regex(
 @click.option(
     "--exclude",
     type=str,
-    callback=validate_regex,
     help=(
         "A regular expression that matches files and directories that should be"
         " excluded on recursive searches. An empty value means no paths are excluded."
@@ -296,7 +225,6 @@ def validate_regex(
 @click.option(
     "--extend-exclude",
     type=str,
-    callback=validate_regex,
     help=(
         "Like --exclude, but adds additional files and directories on top of the"
         " excluded ones. (Useful if you simply want to add to the default)"
@@ -305,7 +233,6 @@ def validate_regex(
 @click.option(
     "--force-exclude",
     type=str,
-    callback=validate_regex,
     help=(
         "Like --exclude, but files and directories matching this regex will be "
         "excluded even when they are passed explicitly as arguments."
@@ -367,91 +294,109 @@ def validate_regex(
         path_type=str,
     ),
     is_eager=True,
-    callback=read_pyproject_toml,
     help="Read configuration from FILE path.",
 )
 @click.pass_context
 def main(
     ctx: click.Context,
-    code: Optional[str],
-    line_length: int,
-    target_version: List[TargetVersion],
-    check: bool,
-    diff: bool,
-    color: bool,
-    fast: bool,
-    pyi: bool,
-    ipynb: bool,
-    skip_string_normalization: bool,
-    skip_magic_trailing_comma: bool,
-    experimental_string_processing: bool,
-    quiet: bool,
-    verbose: bool,
-    required_version: str,
-    include: Pattern,
-    exclude: Optional[Pattern],
-    extend_exclude: Optional[Pattern],
-    force_exclude: Optional[Pattern],
-    stdin_filename: Optional[str],
-    workers: int,
-    src: Tuple[str, ...],
     config: Optional[str],
+    *_args: List[Any],
+    **_kwargs: Dict[str, Any],
 ) -> None:
     """The uncompromising code formatter."""
-    if config and verbose:
+    config = read_pyproject_toml(ctx, ctx.params, config)
+    conf_options: Options = ctx.obj["options"]["conf_options"]
+
+    if config and conf_options.verbose:
         out(f"Using configuration from {config}.", bold=False, fg="blue")
 
     error_msg = "Oh no! 💥 💔 💥"
+    required_version = conf_options.required_version
+
     if required_version and required_version != __version__:
         err(
             f"{error_msg} The required version `{required_version}` does not match"
             f" the running version `{__version__}`!"
         )
         ctx.exit(1)
-    if ipynb and pyi:
+    if conf_options.ipynb and conf_options.pyi:
         err("Cannot pass both `pyi` and `ipynb` flags!")
         ctx.exit(1)
 
-    write_back = WriteBack.from_configuration(check=check, diff=diff, color=color)
-    if target_version:
-        versions = set(target_version)
-    else:
-        # We'll autodetect later.
-        versions = set()
-    mode = Mode(
-        target_versions=versions,
-        line_length=line_length,
-        is_pyi=pyi,
-        is_ipynb=ipynb,
-        string_normalization=not skip_string_normalization,
-        magic_trailing_comma=not skip_magic_trailing_comma,
-        experimental_string_processing=experimental_string_processing,
-    )
-
-    if code is not None:
+    if conf_options.code is not None:
+        _write_back = WriteBack.from_configuration(
+            check=conf_options.check,
+            diff=conf_options.diff,
+            color=conf_options.color,
+        )
+        _mode = Mode(
+            target_versions=conf_options.target_version,
+            line_length=conf_options.line_length,
+            is_pyi=conf_options.pyi,
+            is_ipynb=conf_options.ipynb,
+            string_normalization=not conf_options.skip_string_normalization,
+            magic_trailing_comma=not conf_options.skip_magic_trailing_comma,
+            experimental_string_processing=(
+                conf_options.experimental_string_processing
+            ),
+        )
         # Run in quiet mode by default with -c; the extra output isn't useful.
         # You can still pass -v to get verbose output.
-        quiet = True
-
-    report = Report(check=check, diff=diff, quiet=quiet, verbose=verbose)
-
-    if code is not None:
-        reformat_code(
-            content=code, fast=fast, write_back=write_back, mode=mode, report=report
+        _report = Report(
+            check=conf_options.check,
+            diff=conf_options.diff,
+            quiet=True,
+            verbose=conf_options.verbose,
         )
-    else:
+        reformat_code(
+            content=conf_options.code,
+            fast=conf_options.fast,
+            write_back=_write_back,
+            mode=_mode,
+            report=_report,
+        )
+
+        if conf_options.verbose:
+            out(error_msg if _report.return_code else "All done! ✨ 🍰 ✨")
+        ctx.exit(_report.return_code)
+
+    reformat(ctx, conf_options.src, conf_options)
+
+
+def reformat(ctx: click.Context, src: Tuple[str, ...], config_options: Options) -> None:
+    registered_module_paths = list(config_options.per_module_options.keys()) + list(src)
+    report_codes = []
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    quiet = config_options.quiet
+    verbose = config_options.verbose
+
+    for path in registered_module_paths:
+        config: Options = (
+            config_options if path in src else config_options.per_module_options[path]
+        )
+
+        report = Report(
+            check=config_options.check,
+            diff=config_options.diff,
+            quiet=quiet,
+            verbose=verbose,
+        )
+
         try:
             sources = get_sources(
                 ctx=ctx,
-                src=src,
+                src=config.src,
                 quiet=quiet,
                 verbose=verbose,
-                include=include,
-                exclude=exclude,
-                extend_exclude=extend_exclude,
-                force_exclude=force_exclude,
+                include=config.include,
+                exclude=config.exclude,
+                extend_exclude=config.extend_exclude,
+                force_exclude=config.force_exclude,
                 report=report,
-                stdin_filename=stdin_filename,
+                stdin_filename=config_options.stdin_filename,
             )
         except GitWildMatchPatternError:
             ctx.exit(1)
@@ -464,29 +409,70 @@ def main(
             ctx,
         )
 
+        executor: Union[ProcessPoolExecutor, ThreadPoolExecutor]
+
+        try:
+            executor = ProcessPoolExecutor(max_workers=config.workers)
+        except (ImportError, OSError):
+            # we arrive here if the underlying system does not support multi-processing
+            # like in AWS Lambda or Termux, in which case we gracefully fallback to
+            # a ThreadPoolExecutor with just a single worker (more workers would
+            # not do us any good due to the Global Interpreter Lock)
+            executor = ThreadPoolExecutor(max_workers=1)
+
+        write_back = WriteBack.from_configuration(
+            check=config_options.check,
+            diff=config_options.diff,
+            color=config_options.color,
+        )
+        mode = Mode(
+            target_versions=config.target_version,
+            line_length=config.line_length,
+            is_pyi=config.pyi,
+            is_ipynb=config.ipynb,
+            string_normalization=not config.skip_string_normalization,
+            magic_trailing_comma=not config.skip_magic_trailing_comma,
+            experimental_string_processing=config.experimental_string_processing,
+        )
+
         if len(sources) == 1:
             reformat_one(
                 src=sources.pop(),
-                fast=fast,
+                fast=config_options.fast,
                 write_back=write_back,
                 mode=mode,
                 report=report,
             )
         else:
-            reformat_many(
-                sources=sources,
-                fast=fast,
-                write_back=write_back,
-                mode=mode,
-                report=report,
-                workers=workers,
+            loop.run_until_complete(
+                schedule_formatting(
+                    sources=sources,
+                    fast=config_options.fast,
+                    write_back=write_back,
+                    mode=mode,
+                    report=report,
+                    loop=loop,
+                    executor=executor,
+                )
             )
 
-    if verbose or not quiet:
-        out(error_msg if report.return_code else "All done! ✨ 🍰 ✨")
-        if code is None:
+        if executor is not None:
+            executor.shutdown()
+
+        if verbose or not quiet:
+            out(
+                "Oh no! 💥 💔 💥"
+                if report.return_code
+                else f"All done! ✨ 🍰 ✨ for module {path}"
+            )
             click.echo(str(report), err=True)
-    ctx.exit(report.return_code)
+        report_codes.append(report.return_code)
+
+    shutdown(loop)
+
+    if not report_codes:
+        ctx.exit(0)
+    ctx.exit(max(report_codes))
 
 
 def get_sources(
@@ -653,48 +639,6 @@ def reformat_one(
         if report.verbose:
             traceback.print_exc()
         report.failed(src, str(exc))
-
-
-def reformat_many(
-    sources: Set[Path],
-    fast: bool,
-    write_back: WriteBack,
-    mode: Mode,
-    report: "Report",
-    workers: Optional[int],
-) -> None:
-    """Reformat multiple files using a ProcessPoolExecutor."""
-    executor: Executor
-    loop = asyncio.get_event_loop()
-    worker_count = workers if workers is not None else DEFAULT_WORKERS
-    if sys.platform == "win32":
-        # Work around https://bugs.python.org/issue26903
-        worker_count = min(worker_count, 60)
-    try:
-        executor = ProcessPoolExecutor(max_workers=worker_count)
-    except (ImportError, OSError):
-        # we arrive here if the underlying system does not support multi-processing
-        # like in AWS Lambda or Termux, in which case we gracefully fallback to
-        # a ThreadPoolExecutor with just a single worker (more workers would not do us
-        # any good due to the Global Interpreter Lock)
-        executor = ThreadPoolExecutor(max_workers=1)
-
-    try:
-        loop.run_until_complete(
-            schedule_formatting(
-                sources=sources,
-                fast=fast,
-                write_back=write_back,
-                mode=mode,
-                report=report,
-                loop=loop,
-                executor=executor,
-            )
-        )
-    finally:
-        shutdown(loop)
-        if executor is not None:
-            executor.shutdown()
 
 
 async def schedule_formatting(

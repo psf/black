@@ -1,0 +1,17 @@
+[tool.black]
+verbose = 1
+color = true
+line-length = 79
+target-version = ["py36", "py37", "py38"]
+exclude='\.pyi?$'
+include='\.py?$'
+
+[tool.black-module.src.black]
+line_length = 100
+target-version = ['py37', 'py38']
+include = '\.pyi?$'
+
+[tool.black-module.src.tests]
+line_length = 88
+target-version = ['py37', 'py38']
+extend-exclude = 'tests/data'
