@@ -30,6 +30,7 @@
 - Fix handling of standalone `match()` or `case()` when there is a trailing newline or a
   comment inside of the parentheses. (#2760)
 - Black now normalizes string prefix order (#2297)
+- Allow specifying `config` in config files (#2525)
 
 ### Packaging
 
