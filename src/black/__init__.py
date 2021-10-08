@@ -139,8 +139,8 @@ def read_pyproject_toml(
         config.update(ctx.default_map)
 
     black_config = config.get("config")
-
-    if black_config:
+    # Don't overwrite the config, if it is passed through the CLI option
+    if black_config and value_is_pyproject_config:
         black_config_path = Path(black_config).resolve()
 
         try:
@@ -151,13 +151,7 @@ def read_pyproject_toml(
                 hint=f"Error reading configuration file: {e}",
             ) from None
         else:
-            # Do overwrite the clashing keys of pyproject.toml but don't
-            # overwrite them for `--config` passed through the CLI.
-            if value_is_pyproject_config:
-                config.update(custom_black_config)
-            else:
-                custom_black_config.update(config)
-                config = custom_black_config.copy()
+            config = custom_black_config.copy()
 
     # Sanitize the values to be Click friendly. For more information please see:
     # https://github.com/psf/black/issues/1458

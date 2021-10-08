@@ -1,13 +1,5 @@
 [tool.black]
 config = "tests/bazqux.toml"
-verbose = 1
---check = "no"
-diff = "y"
-color = true
-line-length = 79
-target-version = ["py36", "py37", "py38"]
-exclude='\.pyi?$'
-include='\.py?$'
 
 [v1.0.0-syntax]
 # This shouldn't break Black.

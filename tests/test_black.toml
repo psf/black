@@ -1,2 +1,9 @@
 [black]
+verbose = 1
+--check = "no"
+diff = "y"
+color = true
 line-length = 88
+target-version = ["py36", "py37", "py38"]
+exclude='\.pyi?$'
+include='\.py?$'
