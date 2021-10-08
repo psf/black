@@ -117,10 +117,7 @@ def read_pyproject_toml(
     Returns the path to a successfully found and read configuration file, None
     otherwise.
     """
-    value_is_pyproject_config = False
-
     if not value:
-        value_is_pyproject_config = True
         value = find_pyproject_toml(ctx.params.get("src", ()))
         if value is None:
             return None
@@ -139,8 +136,7 @@ def read_pyproject_toml(
         config.update(ctx.default_map)
 
     black_config = config.get("config")
-    # Don't overwrite the config, if it is passed through the CLI option
-    if black_config and value_is_pyproject_config:
+    if black_config:
         black_config_path = Path(black_config).resolve()
 
         try:
