@@ -1,5 +1,5 @@
 [tool.black]
-config = "tests/test_black.toml"
+config = "test_black.toml"
 verbose = 0
 color = false
 line-length = 79

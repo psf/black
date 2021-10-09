@@ -1312,7 +1312,7 @@ class BlackTestCase(BlackBaseTestCase):
         test_toml_file = THIS_DIR / "test.toml"
         config = black.parse_pyproject_toml(str(test_toml_file))
         self.assertEqual(config["verbose"], 0)
-        self.assertEqual(config["config"], "tests/test_black.toml")
+        self.assertEqual(config["config"], "test_black.toml")
         self.assertEqual(config["color"], False)
         self.assertEqual(config["line_length"], 79)
 

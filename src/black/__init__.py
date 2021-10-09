@@ -48,12 +48,7 @@ from black.cache import read_cache, write_cache, get_cache_info, filter_cached, 
 from black.concurrency import cancel, shutdown, maybe_install_uvloop
 from black.output import dump_to_file, ipynb_diff, diff, color_diff, out, err
 from black.report import Report, Changed, NothingChanged
-from black.files import (
-    find_project_root,
-    find_pyproject_toml,
-    parse_pyproject_toml,
-    parse_black_config_toml,
-)
+from black.files import find_project_root, find_pyproject_toml, parse_pyproject_toml
 from black.files import gen_python_files, get_gitignore, normalize_path_maybe_ignore
 from black.files import wrap_stream_for_windows
 from black.parsing import InvalidInput  # noqa F401
@@ -137,10 +132,10 @@ def read_pyproject_toml(
 
     black_config = config.get("config")
     if black_config:
-        black_config_path = Path(black_config).resolve()
+        black_config_path = Path(Path(value).parent, black_config).resolve()
 
         try:
-            custom_black_config = parse_black_config_toml(str(black_config_path))
+            custom_black_config = parse_pyproject_toml(str(black_config_path))
         except (OSError, ValueError) as e:
             raise click.FileError(
                 filename=str(black_config_path),
@@ -163,7 +158,7 @@ def read_pyproject_toml(
         )
 
     ctx.default_map = default_map
-    return value
+    return str(value)
 
 
 def target_version_option_callback(
