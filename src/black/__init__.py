@@ -1123,7 +1123,11 @@ def get_features_used(node: Node) -> Set[Feature]:
                 features.add(Feature.NUMERIC_UNDERSCORES)
 
         elif n.type == token.SLASH:
-            if n.parent and n.parent.type in {syms.typedargslist, syms.arglist}:
+            if n.parent and n.parent.type in {
+                syms.typedargslist,
+                syms.arglist,
+                syms.varargslist,
+            }:
                 features.add(Feature.POS_ONLY_ARGUMENTS)
 
         elif n.type == token.COLONEQUAL:
