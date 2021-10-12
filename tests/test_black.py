@@ -805,6 +805,10 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(black.get_features_used(node), set())
         node = black.lib2to3_parse(expected)
         self.assertEqual(black.get_features_used(node), set())
+        node = black.lib2to3_parse("lambda a, /, b: ...")
+        self.assertEqual(black.get_features_used(node), {Feature.POS_ONLY_ARGUMENTS})
+        node = black.lib2to3_parse("def fn(a, /, b): ...")
+        self.assertEqual(black.get_features_used(node), {Feature.POS_ONLY_ARGUMENTS})
 
     def test_get_future_imports(self) -> None:
         node = black.lib2to3_parse("\n")
