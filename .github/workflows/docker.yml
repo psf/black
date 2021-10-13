@@ -5,7 +5,7 @@ on:
     branches:
       - "main"
   release:
-    types: created
+    types: [published]
 
 jobs:
   docker:
@@ -41,7 +41,7 @@ jobs:
           tags: pyfound/black:latest,pyfound/black:${{ env.GIT_TAG }}
 
       - name: Build and push latest_release tag
-        if: ${{ github.event_name == 'release' && github.event.action == 'created' }}
+        if: ${{ github.event_name == 'release' && github.event.action == 'published' }}
         uses: docker/build-push-action@v2
         with:
           context: .

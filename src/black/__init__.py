@@ -9,6 +9,7 @@ import io
 from multiprocessing import Manager, freeze_support
 import os
 from pathlib import Path
+from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
 import regex as re
 import signal
 import sys
@@ -94,6 +95,8 @@ class WriteBack(Enum):
 # Legacy name, left for integrations.
 FileMode = Mode
 
+DEFAULT_WORKERS = os.cpu_count()
+
 
 def read_pyproject_toml(
     ctx: click.Context, param: click.Parameter, value: Optional[str]
@@ -113,7 +116,7 @@ def read_pyproject_toml(
     except (OSError, ValueError) as e:
         raise click.FileError(
             filename=value, hint=f"Error reading configuration file: {e}"
-        )
+        ) from None
 
     if not config:
         return None
@@ -171,7 +174,7 @@ def validate_regex(
     try:
         return re_compile_maybe_verbose(value) if value is not None else None
     except re.error:
-        raise click.BadParameter("Not a valid regular expression")
+        raise click.BadParameter("Not a valid regular expression") from None
 
 
 @click.command(context_settings=dict(help_option_names=["-h", "--help"]))
@@ -318,6 +321,14 @@ def validate_regex(
     ),
 )
 @click.option(
+    "-W",
+    "--workers",
+    type=click.IntRange(min=1),
+    default=DEFAULT_WORKERS,
+    show_default=True,
+    help="Number of parallel workers",
+)
+@click.option(
     "-q",
     "--quiet",
     is_flag=True,
@@ -382,6 +393,7 @@ def main(
     extend_exclude: Optional[Pattern],
     force_exclude: Optional[Pattern],
     stdin_filename: Optional[str],
+    workers: int,
     src: Tuple[str, ...],
     config: Optional[str],
 ) -> None:
@@ -428,18 +440,21 @@ def main(
             content=code, fast=fast, write_back=write_back, mode=mode, report=report
         )
     else:
-        sources = get_sources(
-            ctx=ctx,
-            src=src,
-            quiet=quiet,
-            verbose=verbose,
-            include=include,
-            exclude=exclude,
-            extend_exclude=extend_exclude,
-            force_exclude=force_exclude,
-            report=report,
-            stdin_filename=stdin_filename,
-        )
+        try:
+            sources = get_sources(
+                ctx=ctx,
+                src=src,
+                quiet=quiet,
+                verbose=verbose,
+                include=include,
+                exclude=exclude,
+                extend_exclude=extend_exclude,
+                force_exclude=force_exclude,
+                report=report,
+                stdin_filename=stdin_filename,
+            )
+        except GitWildMatchPatternError:
+            ctx.exit(1)
 
         path_empty(
             sources,
@@ -464,6 +479,7 @@ def main(
                 write_back=write_back,
                 mode=mode,
                 report=report,
+                workers=workers,
             )
 
     if verbose or not quiet:
@@ -640,12 +656,17 @@ def reformat_one(
 
 
 def reformat_many(
-    sources: Set[Path], fast: bool, write_back: WriteBack, mode: Mode, report: "Report"
+    sources: Set[Path],
+    fast: bool,
+    write_back: WriteBack,
+    mode: Mode,
+    report: "Report",
+    workers: Optional[int],
 ) -> None:
     """Reformat multiple files using a ProcessPoolExecutor."""
     executor: Executor
     loop = asyncio.get_event_loop()
-    worker_count = os.cpu_count()
+    worker_count = workers if workers is not None else DEFAULT_WORKERS
     if sys.platform == "win32":
         # Work around https://bugs.python.org/issue26903
         worker_count = min(worker_count, 60)
@@ -773,7 +794,9 @@ def format_file_in_place(
     except NothingChanged:
         return False
     except JSONDecodeError:
-        raise ValueError(f"File '{src}' cannot be parsed as valid Jupyter notebook.")
+        raise ValueError(
+            f"File '{src}' cannot be parsed as valid Jupyter notebook."
+        ) from None
 
     if write_back == WriteBack.YES:
         with open(src, "w", encoding=encoding, newline=newline) as f:
@@ -943,7 +966,7 @@ def format_cell(src: str, *, fast: bool, mode: Mode) -> str:
     try:
         masked_src, replacements = mask_cell(src_without_trailing_semicolon)
     except SyntaxError:
-        raise NothingChanged
+        raise NothingChanged from None
     masked_dst = format_str(masked_src, mode=mode)
     if not fast:
         check_stability_and_equivalence(masked_src, masked_dst, mode=mode)
@@ -953,7 +976,7 @@ def format_cell(src: str, *, fast: bool, mode: Mode) -> str:
     )
     dst = dst.rstrip("\n")
     if dst == src:
-        raise NothingChanged
+        raise NothingChanged from None
     return dst
 
 
@@ -966,14 +989,14 @@ def validate_metadata(nb: MutableMapping[str, Any]) -> None:
     """
     language = nb.get("metadata", {}).get("language_info", {}).get("name", None)
     if language is not None and language != "python":
-        raise NothingChanged
+        raise NothingChanged from None
 
 
 def format_ipynb_string(src_contents: str, *, fast: bool, mode: Mode) -> FileContent:
     """Format Jupyter notebook.
 
     Operate cell-by-cell, only on code cells, only for Python notebooks.
-    If the ``.ipynb`` originally had a trailing newline, it'll be preseved.
+    If the ``.ipynb`` originally had a trailing newline, it'll be preserved.
     """
     trailing_newline = src_contents[-1] == "\n"
     modified = False
@@ -1100,7 +1123,11 @@ def get_features_used(node: Node) -> Set[Feature]:
                 features.add(Feature.NUMERIC_UNDERSCORES)
 
         elif n.type == token.SLASH:
-            if n.parent and n.parent.type in {syms.typedargslist, syms.arglist}:
+            if n.parent and n.parent.type in {
+                syms.typedargslist,
+                syms.arglist,
+                syms.varargslist,
+            }:
                 features.add(Feature.POS_ONLY_ARGUMENTS)
 
         elif n.type == token.COLONEQUAL:
@@ -1198,9 +1225,8 @@ def assert_equivalent(src: str, dst: str, *, pass_num: int = 1) -> None:
         src_ast = parse_ast(src)
     except Exception as exc:
         raise AssertionError(
-            "cannot use --safe with this file; failed to parse source file.  AST"
-            f" error message: {exc}"
-        )
+            "cannot use --safe with this file; failed to parse source file."
+        ) from exc
 
     try:
         dst_ast = parse_ast(dst)

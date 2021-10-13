@@ -1,5 +1,5 @@
 {
-  "configuration_format_version": 20200509,
+  "configuration_format_version": 20210815,
   "projects": {
     "STDIN": {
       "cli_arguments": ["--experimental-string-processing"],
@@ -35,6 +35,37 @@
       "git_clone_url": "https://github.com/django/channels.git",
       "long_checkout": false,
       "py_versions": ["all"]
+    },
+    "cpython": {
+      "disabled": true,
+      "disabled_reason": "To big / slow for GitHub Actions but handy to keep config to use manually or in some other CI in the future",
+      "base_path": "Lib",
+      "cli_arguments": [
+        "--experimental-string-processing",
+        "--extend-exclude",
+        [
+          "Lib/lib2to3/tests/data/different_encoding.py",
+          "|Lib/lib2to3/tests/data/false_encoding.py",
+          "|Lib/lib2to3/tests/data/py2_test_grammar.py",
+          "|Lib/test/bad_coding.py",
+          "|Lib/test/bad_coding2.py",
+          "|Lib/test/badsyntax_3131.py",
+          "|Lib/test/badsyntax_pep3120.py",
+          "|Lib/test/test_base64.py",
+          "|Lib/test/test_exceptions.py",
+          "|Lib/test/test_grammar.py",
+          "|Lib/test/test_named_expressions.py",
+          "|Lib/test/test_patma.py",
+          "|Lib/test/test_tokenize.py",
+          "|Lib/test/test_xml_etree.py",
+          "|Lib/traceback.py"
+        ]
+      ],
+      "expect_formatting_changes": true,
+      "git_clone_url": "https://github.com/python/cpython.git",
+      "long_checkout": false,
+      "py_versions": ["3.9", "3.10"],
+      "timeout_seconds": 900
     },
     "django": {
       "cli_arguments": [

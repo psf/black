@@ -7,7 +7,7 @@ from typing import Collection, Iterator, List, Optional, Set, Union
 
 from dataclasses import dataclass, field
 
-from black.nodes import WHITESPACE, STATEMENT, STANDALONE_COMMENT
+from black.nodes import WHITESPACE, RARROW, STATEMENT, STANDALONE_COMMENT
 from black.nodes import ASSIGNMENTS, OPENING_BRACKETS, CLOSING_BRACKETS
 from black.nodes import Visitor, syms, first_child_is_arith, ensure_visible
 from black.nodes import is_docstring, is_empty_tuple, is_one_tuple, is_one_tuple_between
@@ -503,14 +503,14 @@ def right_hand_split(
             yield from right_hand_split(line, line_length, features=features, omit=omit)
             return
 
-        except CannotSplit:
+        except CannotSplit as e:
             if not (
                 can_be_split(body)
                 or is_line_short_enough(body, line_length=line_length)
             ):
                 raise CannotSplit(
                     "Splitting failed, body is still too long and can't be split."
-                )
+                ) from e
 
             elif head.contains_multiline_strings() or tail.contains_multiline_strings():
                 raise CannotSplit(
@@ -518,7 +518,7 @@ def right_hand_split(
                     " satisfy the splitting algorithm because the head or the tail"
                     " contains multiline strings which by definition never fit one"
                     " line."
-                )
+                ) from e
 
     ensure_visible(opening_bracket)
     ensure_visible(closing_bracket)
@@ -574,6 +574,20 @@ def bracket_split_build_line(
                 original.is_def
                 and opening_bracket.value == "("
                 and not any(leaf.type == token.COMMA for leaf in leaves)
+                # In particular, don't add one within a parenthesized return annotation.
+                # Unfortunately the indicator we're in a return annotation (RARROW) may
+                # be defined directly in the parent node, the parent of the parent ...
+                # and so on depending on how complex the return annotation is.
+                # This isn't perfect and there's some false negatives but they are in
+                # contexts were a comma is actually fine.
+                and not any(
+                    node.prev_sibling.type == RARROW
+                    for node in (
+                        leaves[0].parent,
+                        getattr(leaves[0].parent, "parent", None),
+                    )
+                    if isinstance(node, Node) and isinstance(node.prev_sibling, Leaf)
+                )
             )
 
             if original.is_import or no_commas:
@@ -621,13 +635,13 @@ def delimiter_split(line: Line, features: Collection[Feature] = ()) -> Iterator[
     try:
         last_leaf = line.leaves[-1]
     except IndexError:
-        raise CannotSplit("Line empty")
+        raise CannotSplit("Line empty") from None
 
     bt = line.bracket_tracker
     try:
         delimiter_priority = bt.max_delimiter_priority(exclude={id(last_leaf)})
     except ValueError:
-        raise CannotSplit("No delimiters found")
+        raise CannotSplit("No delimiters found") from None
 
     if delimiter_priority == DOT_PRIORITY:
         if bt.delimiter_count_with_priority(delimiter_priority) == 1:
