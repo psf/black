@@ -6,7 +6,8 @@
 
 - Add new `--workers` parameter (#2514)
 - Bumped typed-ast version minimum to 1.4.3 for 3.10 compatiblity (#2519)
-- `--verbose` mode now prints the location of the project root it detected (#2526)
+- `--verbose` enhancements (project root, how was config found, root relative paths)
+  (#2526)
 
 ### _Blackd_
 
