@@ -133,16 +133,7 @@ def read_pyproject_toml(
     black_config = config.get("config")
     if black_config:
         black_config_path = Path(Path(value).parent, black_config).resolve()
-
-        try:
-            custom_black_config = parse_pyproject_toml(str(black_config_path))
-        except (OSError, ValueError) as e:
-            raise click.FileError(
-                filename=str(black_config_path),
-                hint=f"Error reading configuration file: {e}",
-            ) from None
-        else:
-            config = custom_black_config.copy()
+        return read_pyproject_toml(ctx, param, str(black_config_path))
 
     # Sanitize the values to be Click friendly. For more information please see:
     # https://github.com/psf/black/issues/1458
