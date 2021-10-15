@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 
 
 @lru_cache()
-def find_project_root(srcs: Sequence[str]) -> Path:
+def find_project_root(srcs: Sequence[str]) -> Tuple[Path, Optional[str]]:
     """Return a directory containing .git, .hg, or pyproject.toml.
 
     That directory will be a common parent of all files and directories
@@ -57,20 +57,20 @@ def find_project_root(srcs: Sequence[str]) -> Path:
 
     for directory in (common_base, *common_base.parents):
         if (directory / ".git").exists():
-            return directory
+            return directory, ".git directory"
 
         if (directory / ".hg").is_dir():
-            return directory
+            return directory, ".hg directory"
 
         if (directory / "pyproject.toml").is_file():
-            return directory
+            return directory, "pyproject.toml"
 
-    return directory
+    return directory, None
 
 
 def find_pyproject_toml(path_search_start: Tuple[str, ...]) -> Optional[str]:
     """Find the absolute filepath to a pyproject.toml if it exists"""
-    path_project_root = find_project_root(path_search_start)
+    path_project_root, _ = find_project_root(path_search_start)
     path_pyproject_toml = path_project_root / "pyproject.toml"
     if path_pyproject_toml.is_file():
         return str(path_pyproject_toml)
@@ -191,7 +191,7 @@ def gen_python_files(
 
         # First ignore files matching .gitignore, if passed
         if gitignore is not None and gitignore.match_file(normalized_path):
-            report.path_ignored(child, "matches the .gitignore file content")
+            report.path_ignored(child, "matches the .gitignore file content", root)
             continue
 
         # Then ignore with `--exclude` `--extend-exclude` and `--force-exclude` options.
@@ -200,17 +200,19 @@ def gen_python_files(
             normalized_path += "/"
 
         if path_is_excluded(normalized_path, exclude):
-            report.path_ignored(child, "matches the --exclude regular expression")
+            report.path_ignored(child, "matches the --exclude regular expression", root)
             continue
 
         if path_is_excluded(normalized_path, extend_exclude):
             report.path_ignored(
-                child, "matches the --extend-exclude regular expression"
+                child, "matches the --extend-exclude regular expression", root
             )
             continue
 
         if path_is_excluded(normalized_path, force_exclude):
-            report.path_ignored(child, "matches the --force-exclude regular expression")
+            report.path_ignored(
+                child, "matches the --force-exclude regular expression", root
+            )
             continue
 
         if child.is_dir():

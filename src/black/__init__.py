@@ -9,6 +9,7 @@ import io
 from multiprocessing import Manager, freeze_support
 import os
 from pathlib import Path
+from click.core import ParameterSource
 from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
 import regex as re
 import signal
@@ -44,7 +45,7 @@ from black.mode import Feature, supports_feature, VERSION_TO_FEATURES
 from black.cache import read_cache, write_cache, get_cache_info, filter_cached, Cache
 from black.concurrency import cancel, shutdown, maybe_install_uvloop
 from black.output import dump_to_file, ipynb_diff, diff, color_diff, out, err
-from black.report import Report, Changed, NothingChanged
+from black.report import Report, Changed, NothingChanged, root_relative
 from black.files import find_project_root, find_pyproject_toml, parse_pyproject_toml
 from black.files import gen_python_files, get_gitignore, normalize_path_maybe_ignore
 from black.files import wrap_stream_for_windows
@@ -399,7 +400,11 @@ def main(
 ) -> None:
     """The uncompromising code formatter."""
     if config and verbose:
-        out(f"Using configuration from {config}.", bold=False, fg="blue")
+        config_source = ctx.get_parameter_source("config")
+        if config_source in (ParameterSource.DEFAULT, ParameterSource.DEFAULT_MAP):
+            out("Using configuration from project root.", fg="blue")
+        else:
+            out(f"Using configuration in '{config}'.", fg="blue")
 
     error_msg = "Oh no! 💥 💔 💥"
     if required_version and required_version != __version__:
@@ -441,7 +446,7 @@ def main(
         )
     else:
         try:
-            sources = get_sources(
+            sources, root = get_sources(
                 ctx=ctx,
                 src=src,
                 quiet=quiet,
@@ -475,6 +480,7 @@ def main(
         else:
             reformat_many(
                 sources=sources,
+                root=root,
                 fast=fast,
                 write_back=write_back,
                 mode=mode,
@@ -501,12 +507,22 @@ def get_sources(
     force_exclude: Optional[Pattern[str]],
     report: "Report",
     stdin_filename: Optional[str],
-) -> Set[Path]:
+) -> Tuple[Set[Path], Path]:
     """Compute the set of files to be formatted."""
+    root, method = find_project_root(src)
 
-    root = find_project_root(src)
     if verbose:
-        out(f"Checking for `{'`, `'.join(src)}` in {root}", fg="blue", bold=False)
+        if method:
+            out(
+                f"Identified `{root}` as project root containing a '{method}'.",
+                fg="blue",
+            )
+        else:
+            out(f"Identified `{root}` as project root.", fg="blue")
+        paths = '", "'.join(
+            str(root_relative(Path(source).absolute(), root)) for source in src
+        )
+        out(f'Sources to be formatted: "{paths}"', fg="blue")
 
     sources: Set[Path] = set()
     path_empty(src, "No Path provided. Nothing to do 😴", quiet, verbose, ctx)
@@ -537,7 +553,9 @@ def get_sources(
             else:
                 force_exclude_match = None
             if force_exclude_match and force_exclude_match.group(0):
-                report.path_ignored(p, "matches the --force-exclude regular expression")
+                report.path_ignored(
+                    p, "matches the --force-exclude regular expression", root
+                )
                 continue
 
             if is_stdin:
@@ -567,8 +585,8 @@ def get_sources(
         elif s == "-":
             sources.add(p)
         else:
-            err(f"invalid path: {s}")
-    return sources
+            out(f"Invalid path: {root_relative(p, root)}", fg="red")
+    return sources, root
 
 
 def path_empty(
@@ -615,6 +633,8 @@ def reformat_one(
     `fast`, `write_back`, and `mode` options are passed to
     :func:`format_file_in_place` or :func:`format_stdin_to_stdout`.
     """
+    root, _ = find_project_root(str(src))
+
     try:
         changed = Changed.NO
 
@@ -651,15 +671,16 @@ def reformat_one(
                 write_back is WriteBack.CHECK and changed is Changed.NO
             ):
                 write_cache(cache, [src], mode)
-        report.done(src, changed)
+        report.done(src, changed, root)
     except Exception as exc:
         if report.verbose:
             traceback.print_exc()
-        report.failed(src, str(exc))
+        report.failed(src, str(exc), root)
 
 
 def reformat_many(
     sources: Set[Path],
+    root: Path,
     fast: bool,
     write_back: WriteBack,
     mode: Mode,
@@ -686,6 +707,7 @@ def reformat_many(
         loop.run_until_complete(
             schedule_formatting(
                 sources=sources,
+                root=root,
                 fast=fast,
                 write_back=write_back,
                 mode=mode,
@@ -702,6 +724,7 @@ def reformat_many(
 
 async def schedule_formatting(
     sources: Set[Path],
+    root: Path,
     fast: bool,
     write_back: WriteBack,
     mode: Mode,
@@ -721,7 +744,7 @@ async def schedule_formatting(
         cache = read_cache(mode)
         sources, cached = filter_cached(cache, sources)
         for src in sorted(cached):
-            report.done(src, Changed.CACHED)
+            report.done(src, Changed.CACHED, root)
     if not sources:
         return
 
@@ -764,7 +787,7 @@ async def schedule_formatting(
                     write_back is WriteBack.CHECK and changed is Changed.NO
                 ):
                     sources_to_cache.append(src)
-                report.done(src, changed)
+                report.done(src, changed, root)
     if cancelled:
         await asyncio.gather(*cancelled, loop=loop, return_exceptions=True)
     if sources_to_cache:

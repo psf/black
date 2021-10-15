@@ -1065,7 +1065,8 @@ class BlackTestCase(BlackBaseTestCase):
                 report=report,
             )
             fsts.assert_called_once()
-            report.done.assert_called_with(path, black.Changed.YES)
+            root, _ = black.find_project_root(str(path))
+            report.done.assert_called_with(path, black.Changed.YES, root)
 
     def test_reformat_one_with_stdin_filename(self) -> None:
         with patch(
@@ -1087,7 +1088,8 @@ class BlackTestCase(BlackBaseTestCase):
                 fast=True, write_back=black.WriteBack.YES, mode=DEFAULT_MODE
             )
             # __BLACK_STDIN_FILENAME__ should have been stripped
-            report.done.assert_called_with(expected, black.Changed.YES)
+            root, _ = black.find_project_root(str(expected))
+            report.done.assert_called_with(expected, black.Changed.YES, root)
 
     def test_reformat_one_with_stdin_filename_pyi(self) -> None:
         with patch(
@@ -1111,7 +1113,8 @@ class BlackTestCase(BlackBaseTestCase):
                 mode=replace(DEFAULT_MODE, is_pyi=True),
             )
             # __BLACK_STDIN_FILENAME__ should have been stripped
-            report.done.assert_called_with(expected, black.Changed.YES)
+            root, _ = black.find_project_root(str(expected))
+            report.done.assert_called_with(expected, black.Changed.YES, root)
 
     def test_reformat_one_with_stdin_filename_ipynb(self) -> None:
         with patch(
@@ -1135,7 +1138,8 @@ class BlackTestCase(BlackBaseTestCase):
                 mode=replace(DEFAULT_MODE, is_ipynb=True),
             )
             # __BLACK_STDIN_FILENAME__ should have been stripped
-            report.done.assert_called_with(expected, black.Changed.YES)
+            root, _ = black.find_project_root(str(expected))
+            report.done.assert_called_with(expected, black.Changed.YES, root)
 
     def test_reformat_one_with_stdin_and_existing_path(self) -> None:
         with patch(
@@ -1159,7 +1163,8 @@ class BlackTestCase(BlackBaseTestCase):
             )
             fsts.assert_called_once()
             # __BLACK_STDIN_FILENAME__ should have been stripped
-            report.done.assert_called_with(expected, black.Changed.YES)
+            root, _ = black.find_project_root(str(expected))
+            report.done.assert_called_with(expected, black.Changed.YES, root)
 
     def test_reformat_one_with_stdin_empty(self) -> None:
         output = io.StringIO()
@@ -1308,10 +1313,17 @@ class BlackTestCase(BlackBaseTestCase):
             src_python.touch()
 
             self.assertEqual(
-                black.find_project_root((src_dir, test_dir)), root.resolve()
+                black.find_project_root((src_dir, test_dir)),
+                (root.resolve(), "pyproject.toml"),
             )
-            self.assertEqual(black.find_project_root((src_dir,)), src_dir.resolve())
-            self.assertEqual(black.find_project_root((src_python,)), src_dir.resolve())
+            self.assertEqual(
+                black.find_project_root((src_dir,)),
+                (src_dir.resolve(), "pyproject.toml"),
+            )
+            self.assertEqual(
+                black.find_project_root((src_python,)),
+                (src_dir.resolve(), "pyproject.toml"),
+            )
 
     @patch(
         "black.files.find_user_pyproject_toml",
@@ -1737,7 +1749,7 @@ def assert_collected_sources(
         report=black.Report(),
         stdin_filename=stdin_filename,
     )
-    assert sorted(list(collected)) == sorted(gs_expected)
+    assert sorted(list(collected[0])) == sorted(gs_expected)
 
 
 class TestFileCollection:
@@ -1764,7 +1776,7 @@ class TestFileCollection:
         src = [base / "b/"]
         assert_collected_sources(src, expected, extend_exclude=r"/exclude/")
 
-    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
+    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), "None"))
     def test_exclude_for_issue_1572(self) -> None:
         # Exclude shouldn't touch files that were explicitly given to Black through the
         # CLI. Exclude is supposed to only apply to the recursive discovery of files.
@@ -1946,13 +1958,13 @@ class TestFileCollection:
         child.is_symlink.assert_called()
         assert child.is_symlink.call_count == 2
 
-    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
+    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), "None"))
     def test_get_sources_with_stdin(self) -> None:
         src = ["-"]
         expected = ["-"]
         assert_collected_sources(src, expected, include="", exclude=r"/exclude/|a\.py")
 
-    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
+    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), "None"))
     def test_get_sources_with_stdin_filename(self) -> None:
         src = ["-"]
         stdin_filename = str(THIS_DIR / "data/collections.py")
@@ -1964,7 +1976,7 @@ class TestFileCollection:
             stdin_filename=stdin_filename,
         )
 
-    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
+    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), "None"))
     def test_get_sources_with_stdin_filename_and_exclude(self) -> None:
         # Exclude shouldn't exclude stdin_filename since it is mimicking the
         # file being passed directly. This is the same as
@@ -1980,7 +1992,7 @@ class TestFileCollection:
             stdin_filename=stdin_filename,
         )
 
-    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
+    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), "None"))
     def test_get_sources_with_stdin_filename_and_extend_exclude(self) -> None:
         # Extend exclude shouldn't exclude stdin_filename since it is mimicking the
         # file being passed directly. This is the same as
@@ -1996,7 +2008,7 @@ class TestFileCollection:
             stdin_filename=stdin_filename,
         )
 
-    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
+    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), "None"))
     def test_get_sources_with_stdin_filename_and_force_exclude(self) -> None:
         # Force exclude should exclude the file when passing it through
         # stdin_filename
