@@ -15,6 +15,10 @@ def f(a:int=1,):
     }["a"]
     if a == {"a": 1,"b": 2,"c": 3,"d": 4,"e": 5,"f": 6,"g": 7,"h": 8,}["a"]:
         pass
+    if {"a": 1,"b": 2,"c": 3,"d": 4,"e": 5,"f": 6,"g": 7,"h": 8,}["a"] == a:
+        pass
+    assert a == call({"a": 1,"b": 2,"c": 3,"d": 4,"e": 5,"f": 6,"g": 7,"h": 8,}["a"])
+    assert call({"a": 1,"b": 2,"c": 3,"d": 4,"e": 5,"f": 6,"g": 7,"h": 8,}["a"]) == a
 
 def xxxxxxxxxxxxxxxxxxxxxxxxxxxx() -> Set[
     "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
@@ -100,6 +104,44 @@ def f(
         "h": 8,
     }["a"]:
         pass
+    if {
+        "a": 1,
+        "b": 2,
+        "c": 3,
+        "d": 4,
+        "e": 5,
+        "f": 6,
+        "g": 7,
+        "h": 8,
+    }["a"] == a:
+        pass
+    assert a == call(
+        {
+            "a": 1,
+            "b": 2,
+            "c": 3,
+            "d": 4,
+            "e": 5,
+            "f": 6,
+            "g": 7,
+            "h": 8,
+        }["a"]
+    )
+    assert (
+        call(
+            {
+                "a": 1,
+                "b": 2,
+                "c": 3,
+                "d": 4,
+                "e": 5,
+                "f": 6,
+                "g": 7,
+                "h": 8,
+            }["a"]
+        )
+        == a
+    )
 
 
 def xxxxxxxxxxxxxxxxxxxxxxxxxxxx() -> Set[

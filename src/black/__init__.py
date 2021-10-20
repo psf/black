@@ -879,7 +879,7 @@ def format_stdin_to_stdout(
 
 
 def check_stability_and_equivalence(
-    src_contents: str, dst_contents: str, *, mode: Mode
+    src_contents: str, dst_contents_pass1: str, dst_contents_pass2: str, *, mode: Mode
 ) -> None:
     """Perform stability and equivalence checks.
 
@@ -887,16 +887,14 @@ def check_stability_and_equivalence(
     equivalent, or if a second pass of the formatter would format the
     content differently.
     """
-    assert_equivalent(src_contents, dst_contents)
+    assert_equivalent(src_contents, dst_contents_pass1)
 
-    # Forced second pass to work around optional trailing commas (becoming
+    # Require second pass to work around optional trailing commas (becoming
     # forced trailing commas on pass 2) interacting differently with optional
     # parentheses.  Admittedly ugly.
-    dst_contents_pass2 = format_str(dst_contents, mode=mode)
-    if dst_contents != dst_contents_pass2:
-        dst_contents = dst_contents_pass2
-        assert_equivalent(src_contents, dst_contents, pass_num=2)
-        assert_stable(src_contents, dst_contents, mode=mode)
+    if dst_contents_pass1 != dst_contents_pass2:
+        assert_equivalent(src_contents, dst_contents_pass2, pass_num=2)
+        assert_stable(src_contents, dst_contents_pass2, mode=mode)
     # Note: no need to explicitly call `assert_stable` if `dst_contents` was
     # the same as `dst_contents_pass2`.
 
@@ -914,13 +912,18 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
     if mode.is_ipynb:
         dst_contents = format_ipynb_string(src_contents, fast=fast, mode=mode)
     else:
-        dst_contents = format_str(src_contents, mode=mode)
+        dst_contents_pass1 = format_str(src_contents, mode=mode)
+        dst_contents = format_str(dst_contents_pass1, mode=mode)
+
     if src_contents == dst_contents:
         raise NothingChanged
 
     if not fast and not mode.is_ipynb:
         # Jupyter notebooks will already have been checked above.
-        check_stability_and_equivalence(src_contents, dst_contents, mode=mode)
+        check_stability_and_equivalence(
+            src_contents, dst_contents_pass1, dst_contents, mode=mode
+        )
+
     return dst_contents
 
 
@@ -967,9 +970,12 @@ def format_cell(src: str, *, fast: bool, mode: Mode) -> str:
         masked_src, replacements = mask_cell(src_without_trailing_semicolon)
     except SyntaxError:
         raise NothingChanged from None
-    masked_dst = format_str(masked_src, mode=mode)
+    masked_dst_pass1 = format_str(masked_src, mode=mode)
+    masked_dst = format_str(masked_dst_pass1, mode=mode)
     if not fast:
-        check_stability_and_equivalence(masked_src, masked_dst, mode=mode)
+        check_stability_and_equivalence(
+            masked_src, masked_dst_pass1, masked_dst, mode=mode
+        )
     dst_without_trailing_semicolon = unmask_cell(masked_dst, replacements)
     dst = put_trailing_semicolon_back(
         dst_without_trailing_semicolon, has_trailing_semicolon

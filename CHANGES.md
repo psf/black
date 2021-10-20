@@ -7,6 +7,7 @@
 - Add new `--workers` parameter (#2514)
 - Fixed feature detection for positional-only arguments in lambdas (#2532)
 - Bumped typed-ast version minimum to 1.4.3 for 3.10 compatiblity (#2519)
+- Run formatter twice internally to ensure stability (#2549)
 
 ### _Blackd_
 
