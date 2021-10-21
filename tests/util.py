@@ -9,7 +9,7 @@ from typing import Any, Iterator, List, Optional, Tuple
 import black
 from black.debug import DebugVisitor
 from black.mode import TargetVersion
-from black.output import err, out
+from black.output import diff, err, out
 
 THIS_DIR = Path(__file__).parent
 DATA_DIR = THIS_DIR / "data"
@@ -46,6 +46,9 @@ def _assert_format_equal(expected: str, actual: str) -> None:
             list(bdv.visit(exp_node))
         except Exception as ve:
             err(str(ve))
+
+    if actual != expected:
+        out(diff(expected, actual, "expected", "actual"))
 
     assert actual == expected
 
