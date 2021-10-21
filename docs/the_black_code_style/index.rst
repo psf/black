@@ -9,27 +9,33 @@ The Black Code Style
 
 *Black* is a PEP 8 compliant opinionated formatter with its own style.
 
-While keeping the style unchanged throughout releases has always been a
-goal, the *Black* code style has never been set in stone. Sometimes it's modified in response to
-user feedback or even changes to the Python language!
+While keeping the style unchanged throughout releases has always been a goal,
+the *Black* code style isn't set in stone. It evolves to accomodate for new features
+in the Python language and, ocassionally, in response to user feedback.
 
-Starting from January 2022, we will follow a more formal stability policy:
+Stability Policy
+----------------
 
-- *Black* guarantees that the same code, formatted with the same options,
-  will produce the same output for all releases in a given calendar year.
-  This means projects can safely use black ~= 22.0 without worrying about
+The following policy applies for the *Black* code style, in non pre-release
+versions of *Black*:
+
+- The same code, formatted with the same options, will produce the same
+  output for all releases in a given calendar year.
+
+  This means projects can safely use `black ~= 22.0` without worrying about
   major formatting changes disrupting their project in 2022. We may still
   fix bugs where *Black* crashes on some code, and make other improvements
   that do not affect formatting.
-- We will have an ``--future`` flag that may produce different
-  formatting output. We make no guarantee about the stability of this flag
-  between releases. At the end of the year, we will evaluate anything we
-  put under the ``--future`` flag and if we are happy with it, the
-  style change will be promoted to the stable style for the next year.
 
-At the same time, we will finally drop the beta marker from our releases,
-and we will drop support for Python 2.
-The first release to follow the new policy will be 22.0.0.
+- The first release in a new calendar year *may* contain formatting changes,
+  although these will be minimised as much as possible. This is to allow for
+  improved formatting enabled by newer Python language syntax as well as due
+  to improvements in the formatting logic.
+
+- The ``--future`` flag is exempt from this policy. There are no guarentees
+  around the stability of the output with that flag passed into *Black*. This
+  flag is intended for allowing experimentation with the proposed changes to
+  the *Black* code style.
 
 Documentation for both the current and future styles can be found:
 

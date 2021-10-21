@@ -31,9 +31,9 @@ pragmatism. However, _Black_ is still in beta so style changes are both planned 
 still proposed on the issue tracker. See
 [The Black Code Style](the_black_code_style/index.rst) for more details.
 
-Starting from 2022, we will provide a formal stability guarantee: for all releases in
-the same year, we will produce the same formatting output. Users can opt in to breaking
-changes with the `--future` flag.
+Starting in 2022, the formatting output will be stable for the releases made in the same year
+(other than unintentional bugs). It is possible to opt-in to the latest formatting styles,
+using the `--future` flag.
 
 ## Why is my file not formatted?
 
@@ -78,7 +78,7 @@ For formatting, yes! [Install](getting_started.md#installation) with the `python
 to format Python 2 files too! In terms of running _Black_ though, Python 3.6 or newer is
 required.
 
-We will drop support for Python 2 in the first stable release, expected for
+Note that this support will be dropped in the first stable release, expected for
 January 2022. See [The Black Code Style](the_black_code_style/index.rst) for details.
 
 ## Why does my linter or typechecker complain after I format my code?

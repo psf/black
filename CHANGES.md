@@ -4,8 +4,7 @@
 
 ### _Black_
 
-- Announce upcoming new stability policy and intent drop the beta marker and Python 2
-  support (#2529)
+- Document stability policy, that will apply for non-beta releases (#2529)
 - Add new `--workers` parameter (#2514)
 - Fixed feature detection for positional-only arguments in lambdas (#2532)
 - Bumped typed-ast version minimum to 1.4.3 for 3.10 compatiblity (#2519)
