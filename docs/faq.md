@@ -31,9 +31,9 @@ pragmatism. However, _Black_ is still in beta so style changes are both planned 
 still proposed on the issue tracker. See
 [The Black Code Style](the_black_code_style/index.rst) for more details.
 
-Starting in 2022, the formatting output will be stable for the releases made in the same year
-(other than unintentional bugs). It is possible to opt-in to the latest formatting styles,
-using the `--future` flag.
+Starting in 2022, the formatting output will be stable for the releases made in the same
+year (other than unintentional bugs). It is possible to opt-in to the latest formatting
+styles, using the `--future` flag.
 
 ## Why is my file not formatted?
 
