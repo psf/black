@@ -1401,14 +1401,14 @@ class BlackTestCase(BlackBaseTestCase):
         )
         expected = 'def foo():\n    """Testing\n    Testing"""\n    print "Foo"\n'
 
-        result = CliRunner().invoke(
+        result = BlackRunner().invoke(
             black.main,
             ["-", "-q", "--target-version=py27"],
             input=BytesIO(source),
         )
 
         self.assertEqual(result.exit_code, 0)
-        actual = result.output
+        actual = result.stdout
         self.assertFormatEqual(actual, expected)
 
     @staticmethod

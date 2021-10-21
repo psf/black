@@ -10,6 +10,7 @@
 - Bumped typed-ast version minimum to 1.4.3 for 3.10 compatiblity (#2519)
 - Fixed a Python 3.10 compatibility issue where the loop argument was still being passed
   even though it has been removed (#2580)
+- Deprecate Python 2 formatting support (#2523)
 
 ### _Blackd_
 
