@@ -3,7 +3,6 @@ import itertools
 import sys
 from typing import (
     Callable,
-    Collection,
     Dict,
     Iterator,
     List,
@@ -22,7 +21,7 @@ from black.mode import Mode
 from black.nodes import STANDALONE_COMMENT, TEST_DESCENDANTS
 from black.nodes import BRACKETS, OPENING_BRACKETS, CLOSING_BRACKETS
 from black.nodes import syms, whitespace, replace_child, child_towards
-from black.nodes import is_multiline_string, is_import, is_type_comment, last_two_except
+from black.nodes import is_multiline_string, is_import, is_type_comment
 from black.nodes import is_one_tuple_between
 
 # types
@@ -609,7 +608,6 @@ def can_be_split(line: Line) -> bool:
 def can_omit_invisible_parens(
     line: Line,
     line_length: int,
-    omit_on_explode: Collection[LeafID] = (),
 ) -> bool:
     """Does `line` have a shape safe to reformat without optional parens around it?
 
@@ -647,12 +645,6 @@ def can_omit_invisible_parens(
 
     penultimate = line.leaves[-2]
     last = line.leaves[-1]
-    if line.magic_trailing_comma:
-        try:
-            penultimate, last = last_two_except(line.leaves, omit=omit_on_explode)
-        except LookupError:
-            # Turns out we'd omit everything.  We cannot skip the optional parentheses.
-            return False
 
     if (
         last.type == token.RPAR
@@ -672,10 +664,6 @@ def can_omit_invisible_parens(
         if is_multiline_string(first):
             # Additional wrapping of a multiline string in this situation is
             # unnecessary.
-            return True
-
-        if line.magic_trailing_comma and penultimate.type == token.COMMA:
-            # The rightmost non-omitted bracket pair is the one we want to explode on.
             return True
 
         if _can_omit_closing_paren(line, last=last, line_length=line_length):

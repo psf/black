@@ -4,13 +4,11 @@ blib2to3 Node/Leaf transformation-related utility functions.
 
 import sys
 from typing import (
-    Collection,
     Generic,
     Iterator,
     List,
     Optional,
     Set,
-    Tuple,
     TypeVar,
     Union,
 )
@@ -444,27 +442,6 @@ def prev_siblings_are(node: Optional[LN], tokens: List[Optional[NodeType]]) -> b
     if node.type != tokens[-1]:
         return False
     return prev_siblings_are(node.prev_sibling, tokens[:-1])
-
-
-def last_two_except(leaves: List[Leaf], omit: Collection[LeafID]) -> Tuple[Leaf, Leaf]:
-    """Return (penultimate, last) leaves skipping brackets in `omit` and contents."""
-    stop_after: Optional[Leaf] = None
-    last: Optional[Leaf] = None
-    for leaf in reversed(leaves):
-        if stop_after:
-            if leaf is stop_after:
-                stop_after = None
-            continue
-
-        if last:
-            return leaf, last
-
-        if id(leaf) in omit:
-            stop_after = leaf.opening_bracket
-        else:
-            last = leaf
-    else:
-        raise LookupError("Last two leaves were also skipped")
 
 
 def parent_type(node: Optional[LN]) -> Optional[NodeType]:
