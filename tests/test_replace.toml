@@ -1,0 +1,4 @@
+[tool.black]
+config = "_black_config.toml"
+verbose = 0
+color = false
