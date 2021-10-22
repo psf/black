@@ -41,9 +41,15 @@ jobs:
           python -m pip install --upgrade tox
 
       - name: Unit tests
+        if: "!startsWith(matrix.python-version, 'pypy')"
         run: |
           tox -e ci-py -- -v --color=yes
 
+      - name: Unit tests pypy
+        if: "startsWith(matrix.python-version, 'pypy')"
+        run: |
+          tox -e ci-pypy3 -- -v --color=yes
+ 
       - name: Publish coverage to Coveralls
         # If pushed / is a pull request against main repo AND
         # we're running on Linux (this action only supports Linux)
