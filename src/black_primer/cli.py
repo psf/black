@@ -48,11 +48,13 @@ async def async_main(
     keep: bool,
     long_checkouts: bool,
     no_diff: bool,
+    projects: str,
     rebase: bool,
     workdir: str,
     workers: int,
 ) -> int:
     work_path = Path(workdir)
+    projects_to_run = set(p for p in projects.split(",")) if projects else None
     if not work_path.exists():
         LOG.debug(f"Creating {work_path}")
         work_path.mkdir()
@@ -70,6 +72,7 @@ async def async_main(
             long_checkouts,
             rebase,
             no_diff,
+            projects_to_run,
         )
         return int(ret_val)
     finally:
@@ -115,6 +118,10 @@ async def async_main(
     is_flag=True,
     show_default=True,
     help="Disable showing source file changes in black output",
+)
+@click.option(
+    "--projects",
+    help="Comma separated list of projects to run (Default: run all)",
 )
 @click.option(
     "-R",

@@ -93,6 +93,8 @@ SOURCES = [
     "src/black/strings.py",
     "src/black/trans.py",
     "src/blackd/__init__.py",
+    "src/black_primer/cli.py",
+    "src/black_primer/lib.py",
     "src/blib2to3/pygram.py",
     "src/blib2to3/pytree.py",
     "src/blib2to3/pgen2/conv.py",
