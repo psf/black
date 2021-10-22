@@ -216,7 +216,9 @@ class PrimerLibTests(unittest.TestCase):
         with patch("black_primer.lib.git_checkout_or_rebase", return_false):
             with TemporaryDirectory() as td:
                 return_val = loop.run_until_complete(
-                    lib.process_queue(str(config_path), Path(td), 2)
+                    lib.process_queue(
+                        str(config_path), Path(td), 2, ["django", "pyramid"]
+                    )
                 )
                 self.assertEqual(0, return_val)
 
@@ -228,14 +230,7 @@ class PrimerLibTests(unittest.TestCase):
         config_path = Path(lib.__file__).parent / "primer.json"
 
         config, projects_queue = loop.run_until_complete(
-            lib.load_projects_queue(config_path, None)
-        )
-        projects = collect(projects_queue)
-        self.assertEqual(len(config["projects"].keys()), 22)
-        self.assertEqual(set(projects), set(config["projects"].keys()))
-
-        config, projects_queue = loop.run_until_complete(
-            lib.load_projects_queue(config_path, set(["django", "pyramid", "nonsense"]))
+            lib.load_projects_queue(config_path, ["django", "pyramid"])
         )
         projects = collect(projects_queue)
         self.assertEqual(projects, ["django", "pyramid"])
@@ -268,6 +263,19 @@ class PrimerCLITests(unittest.TestCase):
         runner = CliRunner()
         result = runner.invoke(cli.main, ["--help"])
         self.assertEqual(result.exit_code, 0)
+
+    def test_projects(self) -> None:
+        runner = CliRunner()
+        with event_loop():
+            result = runner.invoke(cli.main, ["--projects=tox,asdf"])
+            self.assertEqual(result.exit_code, 0)
+            assert "1 / 1 succeeded" in result.output
+
+        with event_loop():
+            runner = CliRunner()
+            result = runner.invoke(cli.main, ["--projects=tox,attrs"])
+            self.assertEqual(result.exit_code, 0)
+            assert "2 / 2 succeeded" in result.output
 
 
 if __name__ == "__main__":

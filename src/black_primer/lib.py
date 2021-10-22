@@ -20,7 +20,6 @@ from typing import (
     NamedTuple,
     Optional,
     Sequence,
-    Set,
     Tuple,
     Union,
 )
@@ -284,7 +283,7 @@ def handle_PermissionError(
 
 async def load_projects_queue(
     config_path: Path,
-    projects_to_run: Optional[Set[str]],
+    projects_to_run: List[str],
 ) -> Tuple[Dict[str, Any], asyncio.Queue]:
     """Load project config and fill queue with all the project names"""
     with config_path.open("r") as cfp:
@@ -292,18 +291,9 @@ async def load_projects_queue(
 
     # TODO: Offer more options here
     # e.g. Run on X random packages etc.
-    project_names = sorted(config["projects"].keys())
-    projects_to_run = projects_to_run or set(project_names)
-    queue: asyncio.Queue = asyncio.Queue(maxsize=len(project_names))
-    for project in project_names:
-        if project in projects_to_run:
-            await queue.put(project)
-            projects_to_run.remove(project)
-
-    if projects_to_run:
-        LOG.error(
-            f"Project not found: {projects_to_run}. Available projects: {project_names}"
-        )
+    queue: asyncio.Queue = asyncio.Queue(maxsize=len(projects_to_run))
+    for project in projects_to_run:
+        await queue.put(project)
 
     return config, queue
 
@@ -375,11 +365,11 @@ async def process_queue(
     config_file: str,
     work_path: Path,
     workers: int,
+    projects_to_run: List[str],
     keep: bool = False,
     long_checkouts: bool = False,
     rebase: bool = False,
     no_diff: bool = False,
-    projects_to_run: Optional[Set[str]] = None,
 ) -> int:
     """
     Process the queue with X workers and evaluate results

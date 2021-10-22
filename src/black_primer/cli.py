@@ -1,13 +1,14 @@
 # coding=utf8
 
 import asyncio
+import json
 import logging
 import sys
 from datetime import datetime
 from pathlib import Path
 from shutil import rmtree, which
 from tempfile import gettempdir
-from typing import Any, Union, Optional
+from typing import Any, List, Optional, Union
 
 import click
 
@@ -26,6 +27,8 @@ DEFAULT_CONFIG = Path(__file__).parent / "primer.json"
 _timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
 DEFAULT_WORKDIR = Path(gettempdir()) / f"primer.{_timestamp}"
 LOG = logging.getLogger(__name__)
+DEFAULT_CONFIG_CONTENTS = json.load(open(DEFAULT_CONFIG))
+DEFAULT_PROJECTS = sorted(DEFAULT_CONFIG_CONTENTS["projects"].keys())
 
 
 def _handle_debug(
@@ -42,19 +45,39 @@ def _handle_debug(
     return debug
 
 
+def _projects_callback(
+    ctx: click.core.Context,
+    param: Optional[Union[click.core.Option, click.core.Parameter]],
+    projects: str,
+) -> List[str]:
+    requested_projects = set(projects.split(","))
+
+    if str(DEFAULT_CONFIG) == ctx.params["config"]:
+        available_projects = set(DEFAULT_PROJECTS)
+    else:
+        available_projects = set(
+            json.load(open(ctx.params["config"]))["projects"].keys()
+        )
+
+    unavailable = requested_projects - available_projects
+    if unavailable:
+        LOG.error(f"Projects not found: {unavailable}. Available: {available_projects}")
+
+    return sorted(requested_projects & available_projects)
+
+
 async def async_main(
     config: str,
     debug: bool,
     keep: bool,
     long_checkouts: bool,
     no_diff: bool,
-    projects: str,
+    projects: List[str],
     rebase: bool,
     workdir: str,
     workers: int,
 ) -> int:
     work_path = Path(workdir)
-    projects_to_run = set(p for p in projects.split(",")) if projects else None
     if not work_path.exists():
         LOG.debug(f"Creating {work_path}")
         work_path.mkdir()
@@ -68,11 +91,11 @@ async def async_main(
             config,
             work_path,
             workers,
+            projects,
             keep,
             long_checkouts,
             rebase,
             no_diff,
-            projects_to_run,
         )
         return int(ret_val)
     finally:
@@ -91,6 +114,8 @@ async def async_main(
     type=click.Path(exists=True),
     show_default=True,
     help="JSON config file path",
+    # Eager - because config path is used by other callback options
+    is_eager=True,
 )
 @click.option(
     "--debug",
@@ -121,7 +146,10 @@ async def async_main(
 )
 @click.option(
     "--projects",
-    help="Comma separated list of projects to run (Default: run all)",
+    default=",".join(DEFAULT_PROJECTS),
+    callback=_projects_callback,
+    show_default=True,
+    help="Comma separated list of projects to run",
 )
 @click.option(
     "-R",
