@@ -11,7 +11,7 @@ from pathlib import Path
 from platform import system
 from subprocess import CalledProcessError
 from tempfile import TemporaryDirectory, gettempdir
-from typing import Any, Callable, Generator, Iterator, Tuple
+from typing import Any, Callable, Iterator, Tuple
 from unittest.mock import Mock, patch
 
 from click.testing import CliRunner
@@ -44,7 +44,9 @@ FAKE_PROJECT_CONFIG = {
 
 
 @contextmanager
-def capture_stdout(command: Callable, *args: Any, **kwargs: Any) -> Generator:
+def capture_stdout(
+    command: Callable[..., Any], *args: Any, **kwargs: Any
+) -> Iterator[str]:
     old_stdout, sys.stdout = sys.stdout, StringIO()
     try:
         command(*args, **kwargs)
