@@ -258,7 +258,7 @@ async def git_checkout_or_rebase(
 
 
 def handle_PermissionError(
-    func: Callable, path: Path, exc: Tuple[Any, Any, Any]
+    func: Callable[..., None], path: Path, exc: Tuple[Any, Any, Any]
 ) -> None:
     """
     Handle PermissionError during shutil.rmtree.
