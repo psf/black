@@ -27,8 +27,6 @@ DEFAULT_CONFIG = Path(__file__).parent / "primer.json"
 _timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
 DEFAULT_WORKDIR = Path(gettempdir()) / f"primer.{_timestamp}"
 LOG = logging.getLogger(__name__)
-DEFAULT_CONFIG_CONTENTS = json.load(open(DEFAULT_CONFIG))
-DEFAULT_PROJECTS = sorted(DEFAULT_CONFIG_CONTENTS["projects"].keys())
 
 
 def _handle_debug(
@@ -45,19 +43,27 @@ def _handle_debug(
     return debug
 
 
-def _projects_callback(
+def load_projects(config_path: Path) -> List[str]:
+    with open(config_path) as config:
+        return sorted(json.load(config)["projects"].keys())
+
+
+# Unfortunately does import time file IO - but appears to be the only
+# way to get `black-primer --help` to show projects list
+DEFAULT_PROJECTS = load_projects(DEFAULT_CONFIG)
+
+
+def _include_callback(
     ctx: click.core.Context,
     param: Optional[Union[click.core.Option, click.core.Parameter]],
-    projects: str,
+    include: str,
 ) -> List[str]:
-    requested_projects = set(projects.split(","))
-
-    if str(DEFAULT_CONFIG) == ctx.params["config"]:
-        available_projects = set(DEFAULT_PROJECTS)
-    else:
-        available_projects = set(
-            json.load(open(ctx.params["config"]))["projects"].keys()
-        )
+    requested_projects = set(include.split(","))
+    available_projects = set(
+        DEFAULT_PROJECTS
+        if str(DEFAULT_CONFIG) == ctx.params["config"]
+        else load_projects(ctx.params["config"])
+    )
 
     unavailable = requested_projects - available_projects
     if unavailable:
@@ -72,7 +78,7 @@ async def async_main(
     keep: bool,
     long_checkouts: bool,
     no_diff: bool,
-    projects: List[str],
+    include: List[str],
     rebase: bool,
     workdir: str,
     workers: int,
@@ -91,7 +97,7 @@ async def async_main(
             config,
             work_path,
             workers,
-            projects,
+            include,
             keep,
             long_checkouts,
             rebase,
@@ -145,9 +151,9 @@ async def async_main(
     help="Disable showing source file changes in black output",
 )
 @click.option(
-    "--projects",
+    "--include",
     default=",".join(DEFAULT_PROJECTS),
-    callback=_projects_callback,
+    callback=_include_callback,
     show_default=True,
     help="Comma separated list of projects to run",
 )

@@ -250,7 +250,7 @@ class PrimerCLITests(unittest.TestCase):
             "workdir": str(work_dir),
             "workers": 69,
             "no_diff": False,
-            "projects": "",
+            "include": "",
         }
         with patch("black_primer.cli.lib.process_queue", return_zero):
             return_val = loop.run_until_complete(cli.async_main(**args))  # type: ignore
@@ -264,16 +264,16 @@ class PrimerCLITests(unittest.TestCase):
         result = runner.invoke(cli.main, ["--help"])
         self.assertEqual(result.exit_code, 0)
 
-    def test_projects(self) -> None:
+    def test_include(self) -> None:
         runner = CliRunner()
         with event_loop():
-            result = runner.invoke(cli.main, ["--projects=tox,asdf"])
+            result = runner.invoke(cli.main, ["--include=tox,asdf"])
             self.assertEqual(result.exit_code, 0)
             assert "1 / 1 succeeded" in result.output
 
         with event_loop():
             runner = CliRunner()
-            result = runner.invoke(cli.main, ["--projects=tox,attrs"])
+            result = runner.invoke(cli.main, ["--include=tox,attrs"])
             self.assertEqual(result.exit_code, 0)
             assert "2 / 2 succeeded" in result.output
 
