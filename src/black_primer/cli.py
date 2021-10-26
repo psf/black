@@ -53,12 +53,12 @@ def load_projects(config_path: Path) -> List[str]:
 DEFAULT_PROJECTS = load_projects(DEFAULT_CONFIG)
 
 
-def _include_callback(
+def _projects_callback(
     ctx: click.core.Context,
     param: Optional[Union[click.core.Option, click.core.Parameter]],
-    include: str,
+    projects: str,
 ) -> List[str]:
-    requested_projects = set(include.split(","))
+    requested_projects = set(projects.split(","))
     available_projects = set(
         DEFAULT_PROJECTS
         if str(DEFAULT_CONFIG) == ctx.params["config"]
@@ -78,7 +78,7 @@ async def async_main(
     keep: bool,
     long_checkouts: bool,
     no_diff: bool,
-    include: List[str],
+    projects: List[str],
     rebase: bool,
     workdir: str,
     workers: int,
@@ -97,7 +97,7 @@ async def async_main(
             config,
             work_path,
             workers,
-            include,
+            projects,
             keep,
             long_checkouts,
             rebase,
@@ -151,9 +151,9 @@ async def async_main(
     help="Disable showing source file changes in black output",
 )
 @click.option(
-    "--include",
+    "--projects",
     default=",".join(DEFAULT_PROJECTS),
-    callback=_include_callback,
+    callback=_projects_callback,
     show_default=True,
     help="Comma separated list of projects to run",
 )
