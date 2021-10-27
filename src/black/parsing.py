@@ -2,6 +2,7 @@
 Parse Python code and perform AST validation.
 """
 import ast
+import platform
 import sys
 from typing import Iterable, Iterator, List, Set, Union, Tuple
 
@@ -15,7 +16,7 @@ from blib2to3.pgen2.parse import ParseError
 from black.mode import TargetVersion, Feature, supports_feature
 from black.nodes import syms
 
-_IS_PYPY = "__pypy__" in sys.modules
+_IS_PYPY = platform.python_implementation() == "PyPy"
 
 try:
     from typed_ast import ast3, ast27
