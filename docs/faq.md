@@ -82,3 +82,9 @@ influence their behavior. While Black does its best to recognize such comments a
 them in the right place, this detection is not and cannot be perfect. Therefore, you'll
 sometimes have to manually move these comments to the right place after you format your
 codebase with _Black_.
+
+## Can I run black with PyPy?
+
+Yes, there is _experimental_ support for PyPy 3.7 and higher. You cannot format Python 2
+files under PyPy, because PyPy's inbuilt ast module does not support this. For the most
+stable user-experience, we recommend using CPython if possible.
