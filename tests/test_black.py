@@ -943,7 +943,7 @@ class BlackTestCase(BlackBaseTestCase):
             symlink = workspace / "broken_link.py"
             try:
                 symlink.symlink_to("nonexistent.py")
-            except OSError as e:
+            except (OSError, NotImplementedError) as e:
                 self.skipTest(f"Can't create symlinks: {e}")
             self.invokeBlack([str(workspace.resolve())])
 
