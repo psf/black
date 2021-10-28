@@ -20,6 +20,14 @@ from black_primer import cli, lib
 
 
 EXPECTED_ANALYSIS_OUTPUT = """\
+
+Failed projects:
+
+## black:
+ - Returned 69
+ - stdout:
+Black didn't work
+
 -- primer results 📊 --
 
 68 / 69 succeeded (98.55%) ✅
@@ -28,12 +36,7 @@ EXPECTED_ANALYSIS_OUTPUT = """\
  - 0 projects skipped due to Python version
  - 0 skipped due to long checkout
 
-Failed projects:
-
-## black:
- - Returned 69
- - stdout:
-Black didn't work
+Failed projects: black
 
 """
 FAKE_PROJECT_CONFIG = {
