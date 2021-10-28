@@ -170,7 +170,7 @@ def validate_regex(
     ctx: click.Context,
     param: click.Parameter,
     value: Optional[str],
-) -> Optional[Pattern]:
+) -> Optional[Pattern[str]]:
     try:
         return re_compile_maybe_verbose(value) if value is not None else None
     except re.error:
@@ -388,10 +388,10 @@ def main(
     quiet: bool,
     verbose: bool,
     required_version: str,
-    include: Pattern,
-    exclude: Optional[Pattern],
-    extend_exclude: Optional[Pattern],
-    force_exclude: Optional[Pattern],
+    include: Pattern[str],
+    exclude: Optional[Pattern[str]],
+    extend_exclude: Optional[Pattern[str]],
+    force_exclude: Optional[Pattern[str]],
     stdin_filename: Optional[str],
     workers: int,
     src: Tuple[str, ...],
@@ -1287,7 +1287,7 @@ def patch_click() -> None:
     """
     try:
         from click import core
-        from click import _unicodefun  # type: ignore
+        from click import _unicodefun
     except ModuleNotFoundError:
         return
 

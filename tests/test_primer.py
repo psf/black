@@ -11,7 +11,7 @@ from pathlib import Path
 from platform import system
 from subprocess import CalledProcessError
 from tempfile import TemporaryDirectory, gettempdir
-from typing import Any, Callable, Generator, Iterator, Tuple
+from typing import Any, Callable, Iterator, List, Tuple, TypeVar
 from unittest.mock import Mock, patch
 
 from click.testing import CliRunner
@@ -44,7 +44,9 @@ FAKE_PROJECT_CONFIG = {
 
 
 @contextmanager
-def capture_stdout(command: Callable, *args: Any, **kwargs: Any) -> Generator:
+def capture_stdout(
+    command: Callable[..., Any], *args: Any, **kwargs: Any
+) -> Iterator[str]:
     old_stdout, sys.stdout = sys.stdout, StringIO()
     try:
         command(*args, **kwargs)
@@ -85,6 +87,24 @@ async def return_subproccess_output(*args: Any, **kwargs: Any) -> Tuple[bytes, b
 
 async def return_zero(*args: Any, **kwargs: Any) -> int:
     return 0
+
+
+if sys.version_info >= (3, 9):
+    T = TypeVar("T")
+    Q = asyncio.Queue[T]
+else:
+    T = Any
+    Q = asyncio.Queue
+
+
+def collect(queue: Q) -> List[T]:
+    ret = []
+    while True:
+        try:
+            item = queue.get_nowait()
+            ret.append(item)
+        except asyncio.QueueEmpty:
+            return ret
 
 
 class PrimerLibTests(unittest.TestCase):
@@ -196,9 +216,24 @@ class PrimerLibTests(unittest.TestCase):
         with patch("black_primer.lib.git_checkout_or_rebase", return_false):
             with TemporaryDirectory() as td:
                 return_val = loop.run_until_complete(
-                    lib.process_queue(str(config_path), Path(td), 2)
+                    lib.process_queue(
+                        str(config_path), Path(td), 2, ["django", "pyramid"]
+                    )
                 )
                 self.assertEqual(0, return_val)
+
+    @event_loop()
+    def test_load_projects_queue(self) -> None:
+        """Test the process queue on primer itself
+        - If you have non black conforming formatting in primer itself this can fail"""
+        loop = asyncio.get_event_loop()
+        config_path = Path(lib.__file__).parent / "primer.json"
+
+        config, projects_queue = loop.run_until_complete(
+            lib.load_projects_queue(config_path, ["django", "pyramid"])
+        )
+        projects = collect(projects_queue)
+        self.assertEqual(projects, ["django", "pyramid"])
 
 
 class PrimerCLITests(unittest.TestCase):
@@ -215,6 +250,7 @@ class PrimerCLITests(unittest.TestCase):
             "workdir": str(work_dir),
             "workers": 69,
             "no_diff": False,
+            "projects": "",
         }
         with patch("black_primer.cli.lib.process_queue", return_zero):
             return_val = loop.run_until_complete(cli.async_main(**args))  # type: ignore
@@ -227,6 +263,19 @@ class PrimerCLITests(unittest.TestCase):
         runner = CliRunner()
         result = runner.invoke(cli.main, ["--help"])
         self.assertEqual(result.exit_code, 0)
+
+    def test_projects(self) -> None:
+        runner = CliRunner()
+        with event_loop():
+            result = runner.invoke(cli.main, ["--projects=tox,asdf"])
+            self.assertEqual(result.exit_code, 0)
+            assert "1 / 1 succeeded" in result.output
+
+        with event_loop():
+            runner = CliRunner()
+            result = runner.invoke(cli.main, ["--projects=tox,attrs"])
+            self.assertEqual(result.exit_code, 0)
+            assert "2 / 2 succeeded" in result.output
 
 
 if __name__ == "__main__":

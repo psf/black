@@ -4,9 +4,11 @@
 
 ### _Black_
 
+- Document stability policy, that will apply for non-beta releases (#2529)
 - Add new `--workers` parameter (#2514)
 - Fixed feature detection for positional-only arguments in lambdas (#2532)
 - Bumped typed-ast version minimum to 1.4.3 for 3.10 compatiblity (#2519)
+- Add primer support for --projects (#2555)
 - Add experimental pypy support (#2559)
 
 ### _Blackd_

@@ -2018,7 +2018,9 @@ with open(black.__file__, "r", encoding="utf-8") as _bf:
     black_source_lines = _bf.readlines()
 
 
-def tracefunc(frame: types.FrameType, event: str, arg: Any) -> Callable:
+def tracefunc(
+    frame: types.FrameType, event: str, arg: Any
+) -> Callable[[types.FrameType, str, Any], Any]:
     """Show function calls `from black/__init__.py` as they happen.
 
     Register this with `sys.settrace()` in a test you're debugging.
