@@ -1,68 +1,70 @@
 #!/usr/bin/env python3
-import multiprocessing
+
 import asyncio
+import inspect
+import io
 import logging
+import multiprocessing
+import os
+import sys
+import types
+import unittest
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from dataclasses import replace
-import inspect
-import io
 from io import BytesIO
-import os
 from pathlib import Path
 from platform import system
-import regex as re
-import sys
 from tempfile import TemporaryDirectory
-import types
 from typing import (
     Any,
     Callable,
     Dict,
-    List,
     Iterator,
+    List,
+    Optional,
+    Sequence,
     TypeVar,
+    Union,
 )
-import pytest
-import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import click
+import pytest
+import regex as re
 from click import unstyle
 from click.testing import CliRunner
+from pathspec import PathSpec
 
 import black
+import black.files
 from black import Feature, TargetVersion
+from black import re_compile_maybe_verbose as compile_pattern
 from black.cache import get_cache_file
 from black.debug import DebugVisitor
-from black.output import diff, color_diff
+from black.output import color_diff, diff
 from black.report import Report
-import black.files
-
-from pathspec import PathSpec
 
 # Import other test classes
 from tests.util import (
-    THIS_DIR,
-    change_directory,
-    read_data,
-    DETERMINISTIC_HEADER,
-    BlackBaseTestCase,
+    DATA_DIR,
     DEFAULT_MODE,
-    fs,
-    ff,
+    DETERMINISTIC_HEADER,
+    PY36_VERSIONS,
+    THIS_DIR,
+    BlackBaseTestCase,
+    assert_format,
+    change_directory,
     dump_to_stderr,
+    ff,
+    fs,
+    read_data,
 )
 
-
 THIS_FILE = Path(__file__)
-PY36_VERSIONS = {
-    TargetVersion.PY36,
-    TargetVersion.PY37,
-    TargetVersion.PY38,
-    TargetVersion.PY39,
-}
 PY36_ARGS = [f"--target-version={version.name.lower()}" for version in PY36_VERSIONS]
+DEFAULT_EXCLUDE = black.re_compile_maybe_verbose(black.const.DEFAULT_EXCLUDES)
+DEFAULT_INCLUDE = black.re_compile_maybe_verbose(black.const.DEFAULT_INCLUDES)
 T = TypeVar("T")
 R = TypeVar("R")
 
@@ -113,34 +115,26 @@ class BlackRunner(CliRunner):
         super().__init__(mix_stderr=False)
 
 
-class BlackTestCase(BlackBaseTestCase):
-    def invokeBlack(
-        self, args: List[str], exit_code: int = 0, ignore_config: bool = True
-    ) -> None:
-        runner = BlackRunner()
-        if ignore_config:
-            args = ["--verbose", "--config", str(THIS_DIR / "empty.toml"), *args]
-        result = runner.invoke(black.main, args, catch_exceptions=False)
-        assert result.stdout_bytes is not None
-        assert result.stderr_bytes is not None
-        self.assertEqual(
-            result.exit_code,
-            exit_code,
-            msg=(
-                f"Failed with args: {args}\n"
-                f"stdout: {result.stdout_bytes.decode()!r}\n"
-                f"stderr: {result.stderr_bytes.decode()!r}\n"
-                f"exception: {result.exception}"
-            ),
-        )
+def invokeBlack(
+    args: List[str], exit_code: int = 0, ignore_config: bool = True
+) -> None:
+    runner = BlackRunner()
+    if ignore_config:
+        args = ["--verbose", "--config", str(THIS_DIR / "empty.toml"), *args]
+    result = runner.invoke(black.main, args, catch_exceptions=False)
+    assert result.stdout_bytes is not None
+    assert result.stderr_bytes is not None
+    msg = (
+        f"Failed with args: {args}\n"
+        f"stdout: {result.stdout_bytes.decode()!r}\n"
+        f"stderr: {result.stderr_bytes.decode()!r}\n"
+        f"exception: {result.exception}"
+    )
+    assert result.exit_code == exit_code, msg
 
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_empty(self) -> None:
-        source = expected = ""
-        actual = fs(source)
-        self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, DEFAULT_MODE)
+
+class BlackTestCase(BlackBaseTestCase):
+    invokeBlack = staticmethod(invokeBlack)
 
     def test_empty_ff(self) -> None:
         expected = ""
@@ -265,32 +259,6 @@ class BlackTestCase(BlackBaseTestCase):
         actual = fs(fs(source))  # this is what `format_file_contents` does with --safe
         black.assert_stable(source, actual, DEFAULT_MODE)
 
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_pep_572(self) -> None:
-        source, expected = read_data("pep_572")
-        actual = fs(source)
-        self.assertFormatEqual(expected, actual)
-        black.assert_stable(source, actual, DEFAULT_MODE)
-        if sys.version_info >= (3, 8):
-            black.assert_equivalent(source, actual)
-
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_pep_572_remove_parens(self) -> None:
-        source, expected = read_data("pep_572_remove_parens")
-        actual = fs(source)
-        self.assertFormatEqual(expected, actual)
-        black.assert_stable(source, actual, DEFAULT_MODE)
-        if sys.version_info >= (3, 8):
-            black.assert_equivalent(source, actual)
-
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_pep_572_do_not_remove_parens(self) -> None:
-        source, expected = read_data("pep_572_do_not_remove_parens")
-        # the AST safety checks will fail, but that's expected, just make sure no
-        # parentheses are touched
-        actual = black.format_str(source, mode=DEFAULT_MODE)
-        self.assertFormatEqual(expected, actual)
-
     def test_pep_572_version_detection(self) -> None:
         source, _ = read_data("pep_572")
         root = black.lib2to3_parse(source)
@@ -360,15 +328,6 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertIn("\033[31m", actual)
         self.assertIn("\033[0m", actual)
 
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_pep_570(self) -> None:
-        source, expected = read_data("pep_570")
-        actual = fs(source)
-        self.assertFormatEqual(expected, actual)
-        black.assert_stable(source, actual, DEFAULT_MODE)
-        if sys.version_info >= (3, 8):
-            black.assert_equivalent(source, actual)
-
     def test_detect_pos_only_arguments(self) -> None:
         source, _ = read_data("pep_570")
         root = black.lib2to3_parse(source)
@@ -381,51 +340,12 @@ class BlackTestCase(BlackBaseTestCase):
     def test_string_quotes(self) -> None:
         source, expected = read_data("string_quotes")
         mode = black.Mode(experimental_string_processing=True)
-        actual = fs(source, mode=mode)
-        self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, mode)
+        assert_format(source, expected, mode)
         mode = replace(mode, string_normalization=False)
         not_normalized = fs(source, mode=mode)
         self.assertFormatEqual(source.replace("\\\n", ""), not_normalized)
         black.assert_equivalent(source, not_normalized)
         black.assert_stable(source, not_normalized, mode=mode)
-
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_docstring_no_string_normalization(self) -> None:
-        """Like test_docstring but with string normalization off."""
-        source, expected = read_data("docstring_no_string_normalization")
-        mode = replace(DEFAULT_MODE, string_normalization=False)
-        actual = fs(source, mode=mode)
-        self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, mode)
-
-    def test_long_strings_flag_disabled(self) -> None:
-        """Tests for turning off the string processing logic."""
-        source, expected = read_data("long_strings_flag_disabled")
-        mode = replace(DEFAULT_MODE, experimental_string_processing=False)
-        actual = fs(source, mode=mode)
-        self.assertFormatEqual(expected, actual)
-        black.assert_stable(expected, actual, mode)
-
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_numeric_literals(self) -> None:
-        source, expected = read_data("numeric_literals")
-        mode = replace(DEFAULT_MODE, target_versions=PY36_VERSIONS)
-        actual = fs(source, mode=mode)
-        self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, mode)
-
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_numeric_literals_ignoring_underscores(self) -> None:
-        source, expected = read_data("numeric_literals_skip_underscores")
-        mode = replace(DEFAULT_MODE, target_versions=PY36_VERSIONS)
-        actual = fs(source, mode=mode)
-        self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, mode)
 
     def test_skip_magic_trailing_comma(self) -> None:
         source, _ = read_data("expression.py")
@@ -451,24 +371,6 @@ class BlackTestCase(BlackBaseTestCase):
                 f" tests/data/expression_skip_magic_trailing_comma.diff with {dump}"
             )
             self.assertEqual(expected, actual, msg)
-
-    @pytest.mark.python2
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_python2_print_function(self) -> None:
-        source, expected = read_data("python2_print_function")
-        mode = replace(DEFAULT_MODE, target_versions={TargetVersion.PY27})
-        actual = fs(source, mode=mode)
-        self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, mode)
-
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_stub(self) -> None:
-        mode = replace(DEFAULT_MODE, is_pyi=True)
-        source, expected = read_data("stub.pyi")
-        actual = fs(source, mode=mode)
-        self.assertFormatEqual(expected, actual)
-        black.assert_stable(source, actual, mode)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_async_as_identifier(self) -> None:
@@ -499,26 +401,6 @@ class BlackTestCase(BlackBaseTestCase):
         self.invokeBlack([str(source_path), "--target-version", "py37"])
         # but not on 3.6, because we use async as a reserved keyword
         self.invokeBlack([str(source_path), "--target-version", "py36"], exit_code=123)
-
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_python38(self) -> None:
-        source, expected = read_data("python38")
-        actual = fs(source)
-        self.assertFormatEqual(expected, actual)
-        major, minor = sys.version_info[:2]
-        if major > 3 or (major == 3 and minor >= 8):
-            black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, DEFAULT_MODE)
-
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_python39(self) -> None:
-        source, expected = read_data("python39")
-        actual = fs(source)
-        self.assertFormatEqual(expected, actual)
-        major, minor = sys.version_info[:2]
-        if major > 3 or (major == 3 and minor >= 9):
-            black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, DEFAULT_MODE)
 
     def test_tab_comment_indentation(self) -> None:
         contents_tab = "if 1:\n\tif 2:\n\t\tpass\n\t# comment\n\tpass\n"
@@ -923,6 +805,10 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(black.get_features_used(node), set())
         node = black.lib2to3_parse(expected)
         self.assertEqual(black.get_features_used(node), set())
+        node = black.lib2to3_parse("lambda a, /, b: ...")
+        self.assertEqual(black.get_features_used(node), {Feature.POS_ONLY_ARGUMENTS})
+        node = black.lib2to3_parse("def fn(a, /, b): ...")
+        self.assertEqual(black.get_features_used(node), {Feature.POS_ONLY_ARGUMENTS})
 
     def test_get_future_imports(self) -> None:
         node = black.lib2to3_parse("\n")
@@ -1026,183 +912,6 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertTrue("Actual tree:" in out_str)
         self.assertEqual("".join(err_lines), "")
 
-    def test_cache_broken_file(self) -> None:
-        mode = DEFAULT_MODE
-        with cache_dir() as workspace:
-            cache_file = get_cache_file(mode)
-            with cache_file.open("w") as fobj:
-                fobj.write("this is not a pickle")
-            self.assertEqual(black.read_cache(mode), {})
-            src = (workspace / "test.py").resolve()
-            with src.open("w") as fobj:
-                fobj.write("print('hello')")
-            self.invokeBlack([str(src)])
-            cache = black.read_cache(mode)
-            self.assertIn(str(src), cache)
-
-    def test_cache_single_file_already_cached(self) -> None:
-        mode = DEFAULT_MODE
-        with cache_dir() as workspace:
-            src = (workspace / "test.py").resolve()
-            with src.open("w") as fobj:
-                fobj.write("print('hello')")
-            black.write_cache({}, [src], mode)
-            self.invokeBlack([str(src)])
-            with src.open("r") as fobj:
-                self.assertEqual(fobj.read(), "print('hello')")
-
-    @event_loop()
-    def test_cache_multiple_files(self) -> None:
-        mode = DEFAULT_MODE
-        with cache_dir() as workspace, patch(
-            "black.ProcessPoolExecutor", new=ThreadPoolExecutor
-        ):
-            one = (workspace / "one.py").resolve()
-            with one.open("w") as fobj:
-                fobj.write("print('hello')")
-            two = (workspace / "two.py").resolve()
-            with two.open("w") as fobj:
-                fobj.write("print('hello')")
-            black.write_cache({}, [one], mode)
-            self.invokeBlack([str(workspace)])
-            with one.open("r") as fobj:
-                self.assertEqual(fobj.read(), "print('hello')")
-            with two.open("r") as fobj:
-                self.assertEqual(fobj.read(), 'print("hello")\n')
-            cache = black.read_cache(mode)
-            self.assertIn(str(one), cache)
-            self.assertIn(str(two), cache)
-
-    def test_no_cache_when_writeback_diff(self) -> None:
-        mode = DEFAULT_MODE
-        with cache_dir() as workspace:
-            src = (workspace / "test.py").resolve()
-            with src.open("w") as fobj:
-                fobj.write("print('hello')")
-            with patch("black.read_cache") as read_cache, patch(
-                "black.write_cache"
-            ) as write_cache:
-                self.invokeBlack([str(src), "--diff"])
-                cache_file = get_cache_file(mode)
-                self.assertFalse(cache_file.exists())
-                write_cache.assert_not_called()
-                read_cache.assert_not_called()
-
-    def test_no_cache_when_writeback_color_diff(self) -> None:
-        mode = DEFAULT_MODE
-        with cache_dir() as workspace:
-            src = (workspace / "test.py").resolve()
-            with src.open("w") as fobj:
-                fobj.write("print('hello')")
-            with patch("black.read_cache") as read_cache, patch(
-                "black.write_cache"
-            ) as write_cache:
-                self.invokeBlack([str(src), "--diff", "--color"])
-                cache_file = get_cache_file(mode)
-                self.assertFalse(cache_file.exists())
-                write_cache.assert_not_called()
-                read_cache.assert_not_called()
-
-    @event_loop()
-    def test_output_locking_when_writeback_diff(self) -> None:
-        with cache_dir() as workspace:
-            for tag in range(0, 4):
-                src = (workspace / f"test{tag}.py").resolve()
-                with src.open("w") as fobj:
-                    fobj.write("print('hello')")
-            with patch("black.Manager", wraps=multiprocessing.Manager) as mgr:
-                self.invokeBlack(["--diff", str(workspace)], exit_code=0)
-                # this isn't quite doing what we want, but if it _isn't_
-                # called then we cannot be using the lock it provides
-                mgr.assert_called()
-
-    @event_loop()
-    def test_output_locking_when_writeback_color_diff(self) -> None:
-        with cache_dir() as workspace:
-            for tag in range(0, 4):
-                src = (workspace / f"test{tag}.py").resolve()
-                with src.open("w") as fobj:
-                    fobj.write("print('hello')")
-            with patch("black.Manager", wraps=multiprocessing.Manager) as mgr:
-                self.invokeBlack(["--diff", "--color", str(workspace)], exit_code=0)
-                # this isn't quite doing what we want, but if it _isn't_
-                # called then we cannot be using the lock it provides
-                mgr.assert_called()
-
-    def test_no_cache_when_stdin(self) -> None:
-        mode = DEFAULT_MODE
-        with cache_dir():
-            result = CliRunner().invoke(
-                black.main, ["-"], input=BytesIO(b"print('hello')")
-            )
-            self.assertEqual(result.exit_code, 0)
-            cache_file = get_cache_file(mode)
-            self.assertFalse(cache_file.exists())
-
-    def test_read_cache_no_cachefile(self) -> None:
-        mode = DEFAULT_MODE
-        with cache_dir():
-            self.assertEqual(black.read_cache(mode), {})
-
-    def test_write_cache_read_cache(self) -> None:
-        mode = DEFAULT_MODE
-        with cache_dir() as workspace:
-            src = (workspace / "test.py").resolve()
-            src.touch()
-            black.write_cache({}, [src], mode)
-            cache = black.read_cache(mode)
-            self.assertIn(str(src), cache)
-            self.assertEqual(cache[str(src)], black.get_cache_info(src))
-
-    def test_filter_cached(self) -> None:
-        with TemporaryDirectory() as workspace:
-            path = Path(workspace)
-            uncached = (path / "uncached").resolve()
-            cached = (path / "cached").resolve()
-            cached_but_changed = (path / "changed").resolve()
-            uncached.touch()
-            cached.touch()
-            cached_but_changed.touch()
-            cache = {
-                str(cached): black.get_cache_info(cached),
-                str(cached_but_changed): (0.0, 0),
-            }
-            todo, done = black.filter_cached(
-                cache, {uncached, cached, cached_but_changed}
-            )
-            self.assertEqual(todo, {uncached, cached_but_changed})
-            self.assertEqual(done, {cached})
-
-    def test_write_cache_creates_directory_if_needed(self) -> None:
-        mode = DEFAULT_MODE
-        with cache_dir(exists=False) as workspace:
-            self.assertFalse(workspace.exists())
-            black.write_cache({}, [], mode)
-            self.assertTrue(workspace.exists())
-
-    @event_loop()
-    def test_failed_formatting_does_not_get_cached(self) -> None:
-        mode = DEFAULT_MODE
-        with cache_dir() as workspace, patch(
-            "black.ProcessPoolExecutor", new=ThreadPoolExecutor
-        ):
-            failing = (workspace / "failing.py").resolve()
-            with failing.open("w") as fobj:
-                fobj.write("not actually python")
-            clean = (workspace / "clean.py").resolve()
-            with clean.open("w") as fobj:
-                fobj.write('print("hello")\n')
-            self.invokeBlack([str(workspace)], exit_code=123)
-            cache = black.read_cache(mode)
-            self.assertNotIn(str(failing), cache)
-            self.assertIn(str(clean), cache)
-
-    def test_write_cache_write_fail(self) -> None:
-        mode = DEFAULT_MODE
-        with cache_dir(), patch.object(Path, "open") as mock:
-            mock.side_effect = OSError
-            black.write_cache({}, [], mode)
-
     @event_loop()
     @patch("black.ProcessPoolExecutor", MagicMock(side_effect=OSError))
     def test_works_in_mono_process_only_environment(self) -> None:
@@ -1239,18 +948,6 @@ class BlackTestCase(BlackBaseTestCase):
             except OSError as e:
                 self.skipTest(f"Can't create symlinks: {e}")
             self.invokeBlack([str(workspace.resolve())])
-
-    def test_read_cache_line_lengths(self) -> None:
-        mode = DEFAULT_MODE
-        short_mode = replace(DEFAULT_MODE, line_length=1)
-        with cache_dir() as workspace:
-            path = (workspace / "file.py").resolve()
-            path.touch()
-            black.write_cache({}, [path], mode)
-            one = black.read_cache(mode)
-            self.assertIn(str(path), one)
-            two = black.read_cache(short_mode)
-            self.assertNotIn(str(path), two)
 
     def test_single_file_force_pyi(self) -> None:
         pyi_mode = replace(DEFAULT_MODE, is_pyi=True)
@@ -1359,217 +1056,6 @@ class BlackTestCase(BlackBaseTestCase):
         actual = result.output
         self.assertFormatEqual(actual, expected)
 
-    def test_include_exclude(self) -> None:
-        path = THIS_DIR / "data" / "include_exclude_tests"
-        include = re.compile(r"\.pyi?$")
-        exclude = re.compile(r"/exclude/|/\.definitely_exclude/")
-        report = black.Report()
-        gitignore = PathSpec.from_lines("gitwildmatch", [])
-        sources: List[Path] = []
-        expected = [
-            Path(path / "b/dont_exclude/a.py"),
-            Path(path / "b/dont_exclude/a.pyi"),
-        ]
-        this_abs = THIS_DIR.resolve()
-        sources.extend(
-            black.gen_python_files(
-                path.iterdir(),
-                this_abs,
-                include,
-                exclude,
-                None,
-                None,
-                report,
-                gitignore,
-                verbose=False,
-                quiet=False,
-            )
-        )
-        self.assertEqual(sorted(expected), sorted(sources))
-
-    def test_gitignore_used_as_default(self) -> None:
-        path = Path(THIS_DIR / "data" / "include_exclude_tests")
-        include = re.compile(r"\.pyi?$")
-        extend_exclude = re.compile(r"/exclude/")
-        src = str(path / "b/")
-        report = black.Report()
-        expected: List[Path] = [
-            path / "b/.definitely_exclude/a.py",
-            path / "b/.definitely_exclude/a.pyi",
-        ]
-        sources = list(
-            black.get_sources(
-                ctx=FakeContext(),
-                src=(src,),
-                quiet=True,
-                verbose=False,
-                include=include,
-                exclude=None,
-                extend_exclude=extend_exclude,
-                force_exclude=None,
-                report=report,
-                stdin_filename=None,
-            )
-        )
-        self.assertEqual(sorted(expected), sorted(sources))
-
-    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
-    def test_exclude_for_issue_1572(self) -> None:
-        # Exclude shouldn't touch files that were explicitly given to Black through the
-        # CLI. Exclude is supposed to only apply to the recursive discovery of files.
-        # https://github.com/psf/black/issues/1572
-        path = THIS_DIR / "data" / "include_exclude_tests"
-        include = ""
-        exclude = r"/exclude/|a\.py"
-        src = str(path / "b/exclude/a.py")
-        report = black.Report()
-        expected = [Path(path / "b/exclude/a.py")]
-        sources = list(
-            black.get_sources(
-                ctx=FakeContext(),
-                src=(src,),
-                quiet=True,
-                verbose=False,
-                include=re.compile(include),
-                exclude=re.compile(exclude),
-                extend_exclude=None,
-                force_exclude=None,
-                report=report,
-                stdin_filename=None,
-            )
-        )
-        self.assertEqual(sorted(expected), sorted(sources))
-
-    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
-    def test_get_sources_with_stdin(self) -> None:
-        include = ""
-        exclude = r"/exclude/|a\.py"
-        src = "-"
-        report = black.Report()
-        expected = [Path("-")]
-        sources = list(
-            black.get_sources(
-                ctx=FakeContext(),
-                src=(src,),
-                quiet=True,
-                verbose=False,
-                include=re.compile(include),
-                exclude=re.compile(exclude),
-                extend_exclude=None,
-                force_exclude=None,
-                report=report,
-                stdin_filename=None,
-            )
-        )
-        self.assertEqual(sorted(expected), sorted(sources))
-
-    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
-    def test_get_sources_with_stdin_filename(self) -> None:
-        include = ""
-        exclude = r"/exclude/|a\.py"
-        src = "-"
-        report = black.Report()
-        stdin_filename = str(THIS_DIR / "data/collections.py")
-        expected = [Path(f"__BLACK_STDIN_FILENAME__{stdin_filename}")]
-        sources = list(
-            black.get_sources(
-                ctx=FakeContext(),
-                src=(src,),
-                quiet=True,
-                verbose=False,
-                include=re.compile(include),
-                exclude=re.compile(exclude),
-                extend_exclude=None,
-                force_exclude=None,
-                report=report,
-                stdin_filename=stdin_filename,
-            )
-        )
-        self.assertEqual(sorted(expected), sorted(sources))
-
-    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
-    def test_get_sources_with_stdin_filename_and_exclude(self) -> None:
-        # Exclude shouldn't exclude stdin_filename since it is mimicking the
-        # file being passed directly. This is the same as
-        # test_exclude_for_issue_1572
-        path = THIS_DIR / "data" / "include_exclude_tests"
-        include = ""
-        exclude = r"/exclude/|a\.py"
-        src = "-"
-        report = black.Report()
-        stdin_filename = str(path / "b/exclude/a.py")
-        expected = [Path(f"__BLACK_STDIN_FILENAME__{stdin_filename}")]
-        sources = list(
-            black.get_sources(
-                ctx=FakeContext(),
-                src=(src,),
-                quiet=True,
-                verbose=False,
-                include=re.compile(include),
-                exclude=re.compile(exclude),
-                extend_exclude=None,
-                force_exclude=None,
-                report=report,
-                stdin_filename=stdin_filename,
-            )
-        )
-        self.assertEqual(sorted(expected), sorted(sources))
-
-    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
-    def test_get_sources_with_stdin_filename_and_extend_exclude(self) -> None:
-        # Extend exclude shouldn't exclude stdin_filename since it is mimicking the
-        # file being passed directly. This is the same as
-        # test_exclude_for_issue_1572
-        path = THIS_DIR / "data" / "include_exclude_tests"
-        include = ""
-        extend_exclude = r"/exclude/|a\.py"
-        src = "-"
-        report = black.Report()
-        stdin_filename = str(path / "b/exclude/a.py")
-        expected = [Path(f"__BLACK_STDIN_FILENAME__{stdin_filename}")]
-        sources = list(
-            black.get_sources(
-                ctx=FakeContext(),
-                src=(src,),
-                quiet=True,
-                verbose=False,
-                include=re.compile(include),
-                exclude=re.compile(""),
-                extend_exclude=re.compile(extend_exclude),
-                force_exclude=None,
-                report=report,
-                stdin_filename=stdin_filename,
-            )
-        )
-        self.assertEqual(sorted(expected), sorted(sources))
-
-    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
-    def test_get_sources_with_stdin_filename_and_force_exclude(self) -> None:
-        # Force exclude should exclude the file when passing it through
-        # stdin_filename
-        path = THIS_DIR / "data" / "include_exclude_tests"
-        include = ""
-        force_exclude = r"/exclude/|a\.py"
-        src = "-"
-        report = black.Report()
-        stdin_filename = str(path / "b/exclude/a.py")
-        sources = list(
-            black.get_sources(
-                ctx=FakeContext(),
-                src=(src,),
-                quiet=True,
-                verbose=False,
-                include=re.compile(include),
-                exclude=re.compile(""),
-                extend_exclude=None,
-                force_exclude=re.compile(force_exclude),
-                report=report,
-                stdin_filename=stdin_filename,
-            )
-        )
-        self.assertEqual([], sorted(sources))
-
-    @pytest.mark.incompatible_with_mypyc
     def test_reformat_one_with_stdin(self) -> None:
         with patch(
             "black.format_stdin_to_stdout",
@@ -1587,7 +1073,6 @@ class BlackTestCase(BlackBaseTestCase):
             fsts.assert_called_once()
             report.done.assert_called_with(path, black.Changed.YES)
 
-    @pytest.mark.incompatible_with_mypyc
     def test_reformat_one_with_stdin_filename(self) -> None:
         with patch(
             "black.format_stdin_to_stdout",
@@ -1635,6 +1120,30 @@ class BlackTestCase(BlackBaseTestCase):
             # __BLACK_STDIN_FILENAME__ should have been stripped
             report.done.assert_called_with(expected, black.Changed.YES)
 
+    def test_reformat_one_with_stdin_filename_ipynb(self) -> None:
+        with patch(
+            "black.format_stdin_to_stdout",
+            return_value=lambda *args, **kwargs: black.Changed.YES,
+        ) as fsts:
+            report = MagicMock()
+            p = "foo.ipynb"
+            path = Path(f"__BLACK_STDIN_FILENAME__{p}")
+            expected = Path(p)
+            black.reformat_one(
+                path,
+                fast=True,
+                write_back=black.WriteBack.YES,
+                mode=DEFAULT_MODE,
+                report=report,
+            )
+            fsts.assert_called_once_with(
+                fast=True,
+                write_back=black.WriteBack.YES,
+                mode=replace(DEFAULT_MODE, is_ipynb=True),
+            )
+            # __BLACK_STDIN_FILENAME__ should have been stripped
+            report.done.assert_called_with(expected, black.Changed.YES)
+
     @pytest.mark.incompatible_with_mypyc
     def test_reformat_one_with_stdin_and_existing_path(self) -> None:
         with patch(
@@ -1673,127 +1182,6 @@ class BlackTestCase(BlackBaseTestCase):
             except io.UnsupportedOperation:
                 pass  # StringIO does not support detach
             assert output.getvalue() == ""
-
-    def test_gitignore_exclude(self) -> None:
-        path = THIS_DIR / "data" / "include_exclude_tests"
-        include = re.compile(r"\.pyi?$")
-        exclude = re.compile(r"")
-        report = black.Report()
-        gitignore = PathSpec.from_lines(
-            "gitwildmatch", ["exclude/", ".definitely_exclude"]
-        )
-        sources: List[Path] = []
-        expected = [
-            Path(path / "b/dont_exclude/a.py"),
-            Path(path / "b/dont_exclude/a.pyi"),
-        ]
-        this_abs = THIS_DIR.resolve()
-        sources.extend(
-            black.gen_python_files(
-                path.iterdir(),
-                this_abs,
-                include,
-                exclude,
-                None,
-                None,
-                report,
-                gitignore,
-                verbose=False,
-                quiet=False,
-            )
-        )
-        self.assertEqual(sorted(expected), sorted(sources))
-
-    def test_nested_gitignore(self) -> None:
-        path = Path(THIS_DIR / "data" / "nested_gitignore_tests")
-        include = re.compile(r"\.pyi?$")
-        exclude = re.compile(r"")
-        root_gitignore = black.files.get_gitignore(path)
-        report = black.Report()
-        expected: List[Path] = [
-            Path(path / "x.py"),
-            Path(path / "root/b.py"),
-            Path(path / "root/c.py"),
-            Path(path / "root/child/c.py"),
-        ]
-        this_abs = THIS_DIR.resolve()
-        sources = list(
-            black.gen_python_files(
-                path.iterdir(),
-                this_abs,
-                include,
-                exclude,
-                None,
-                None,
-                report,
-                root_gitignore,
-                verbose=False,
-                quiet=False,
-            )
-        )
-        self.assertEqual(sorted(expected), sorted(sources))
-
-    def test_empty_include(self) -> None:
-        path = THIS_DIR / "data" / "include_exclude_tests"
-        report = black.Report()
-        gitignore = PathSpec.from_lines("gitwildmatch", [])
-        empty = re.compile(r"")
-        sources: List[Path] = []
-        expected = [
-            Path(path / "b/exclude/a.pie"),
-            Path(path / "b/exclude/a.py"),
-            Path(path / "b/exclude/a.pyi"),
-            Path(path / "b/dont_exclude/a.pie"),
-            Path(path / "b/dont_exclude/a.py"),
-            Path(path / "b/dont_exclude/a.pyi"),
-            Path(path / "b/.definitely_exclude/a.pie"),
-            Path(path / "b/.definitely_exclude/a.py"),
-            Path(path / "b/.definitely_exclude/a.pyi"),
-            Path(path / ".gitignore"),
-            Path(path / "pyproject.toml"),
-        ]
-        this_abs = THIS_DIR.resolve()
-        sources.extend(
-            black.gen_python_files(
-                path.iterdir(),
-                this_abs,
-                empty,
-                re.compile(black.DEFAULT_EXCLUDES),
-                None,
-                None,
-                report,
-                gitignore,
-                verbose=False,
-                quiet=False,
-            )
-        )
-        self.assertEqual(sorted(expected), sorted(sources))
-
-    def test_extend_exclude(self) -> None:
-        path = THIS_DIR / "data" / "include_exclude_tests"
-        report = black.Report()
-        gitignore = PathSpec.from_lines("gitwildmatch", [])
-        sources: List[Path] = []
-        expected = [
-            Path(path / "b/exclude/a.py"),
-            Path(path / "b/dont_exclude/a.py"),
-        ]
-        this_abs = THIS_DIR.resolve()
-        sources.extend(
-            black.gen_python_files(
-                path.iterdir(),
-                this_abs,
-                re.compile(black.DEFAULT_INCLUDES),
-                re.compile(r"\.pyi$"),
-                re.compile(r"\.definitely_exclude"),
-                None,
-                report,
-                gitignore,
-                verbose=False,
-                quiet=False,
-            )
-        )
-        self.assertEqual(sorted(expected), sorted(sources))
 
     def test_invalid_cli_regex(self) -> None:
         for option in ["--include", "--exclude", "--extend-exclude", "--force-exclude"]:
@@ -1837,66 +1225,6 @@ class BlackTestCase(BlackBaseTestCase):
     def test_assert_equivalent_different_asts(self) -> None:
         with self.assertRaises(AssertionError):
             black.assert_equivalent("{}", "None")
-
-    @pytest.mark.incompatible_with_mypyc
-    def test_symlink_out_of_root_directory(self) -> None:
-        path = MagicMock()
-        root = THIS_DIR.resolve()
-        child = MagicMock()
-        include = re.compile(black.DEFAULT_INCLUDES)
-        exclude = re.compile(black.DEFAULT_EXCLUDES)
-        report = black.Report()
-        gitignore = PathSpec.from_lines("gitwildmatch", [])
-        # `child` should behave like a symlink which resolved path is clearly
-        # outside of the `root` directory.
-        path.iterdir.return_value = [child]
-        child.resolve.return_value = Path("/a/b/c")
-        child.as_posix.return_value = "/a/b/c"
-        child.is_symlink.return_value = True
-        try:
-            list(
-                black.gen_python_files(
-                    path.iterdir(),
-                    root,
-                    include,
-                    exclude,
-                    None,
-                    None,
-                    report,
-                    gitignore,
-                    verbose=False,
-                    quiet=False,
-                )
-            )
-        except ValueError as ve:
-            self.fail(f"`get_python_files_in_dir()` failed: {ve}")
-        path.iterdir.assert_called_once()
-        child.resolve.assert_called_once()
-        child.is_symlink.assert_called_once()
-        # `child` should behave like a strange file which resolved path is clearly
-        # outside of the `root` directory.
-        child.is_symlink.return_value = False
-        with self.assertRaises(ValueError):
-            list(
-                black.gen_python_files(
-                    path.iterdir(),
-                    root,
-                    include,
-                    exclude,
-                    None,
-                    None,
-                    report,
-                    gitignore,
-                    verbose=False,
-                    quiet=False,
-                )
-            )
-        path.iterdir.assert_called()
-        self.assertEqual(path.iterdir.call_count, 2)
-        child.resolve.assert_called()
-        self.assertEqual(child.resolve.call_count, 2)
-        child.is_symlink.assert_called()
-        self.assertEqual(child.is_symlink.call_count, 2)
 
     def test_shhh_click(self) -> None:
         try:
@@ -2224,15 +1552,488 @@ class BlackTestCase(BlackBaseTestCase):
                 ), "Incorrect config loaded."
 
 
+class TestCaching:
+    def test_cache_broken_file(self) -> None:
+        mode = DEFAULT_MODE
+        with cache_dir() as workspace:
+            cache_file = get_cache_file(mode)
+            cache_file.write_text("this is not a pickle")
+            assert black.read_cache(mode) == {}
+            src = (workspace / "test.py").resolve()
+            src.write_text("print('hello')")
+            invokeBlack([str(src)])
+            cache = black.read_cache(mode)
+            assert str(src) in cache
+
+    def test_cache_single_file_already_cached(self) -> None:
+        mode = DEFAULT_MODE
+        with cache_dir() as workspace:
+            src = (workspace / "test.py").resolve()
+            src.write_text("print('hello')")
+            black.write_cache({}, [src], mode)
+            invokeBlack([str(src)])
+            assert src.read_text() == "print('hello')"
+
+    @event_loop()
+    def test_cache_multiple_files(self) -> None:
+        mode = DEFAULT_MODE
+        with cache_dir() as workspace, patch(
+            "black.ProcessPoolExecutor", new=ThreadPoolExecutor
+        ):
+            one = (workspace / "one.py").resolve()
+            with one.open("w") as fobj:
+                fobj.write("print('hello')")
+            two = (workspace / "two.py").resolve()
+            with two.open("w") as fobj:
+                fobj.write("print('hello')")
+            black.write_cache({}, [one], mode)
+            invokeBlack([str(workspace)])
+            with one.open("r") as fobj:
+                assert fobj.read() == "print('hello')"
+            with two.open("r") as fobj:
+                assert fobj.read() == 'print("hello")\n'
+            cache = black.read_cache(mode)
+            assert str(one) in cache
+            assert str(two) in cache
+
+    @pytest.mark.parametrize("color", [False, True], ids=["no-color", "with-color"])
+    def test_no_cache_when_writeback_diff(self, color: bool) -> None:
+        mode = DEFAULT_MODE
+        with cache_dir() as workspace:
+            src = (workspace / "test.py").resolve()
+            with src.open("w") as fobj:
+                fobj.write("print('hello')")
+            with patch("black.read_cache") as read_cache, patch(
+                "black.write_cache"
+            ) as write_cache:
+                cmd = [str(src), "--diff"]
+                if color:
+                    cmd.append("--color")
+                invokeBlack(cmd)
+                cache_file = get_cache_file(mode)
+                assert cache_file.exists() is False
+                write_cache.assert_not_called()
+                read_cache.assert_not_called()
+
+    @pytest.mark.parametrize("color", [False, True], ids=["no-color", "with-color"])
+    @event_loop()
+    def test_output_locking_when_writeback_diff(self, color: bool) -> None:
+        with cache_dir() as workspace:
+            for tag in range(0, 4):
+                src = (workspace / f"test{tag}.py").resolve()
+                with src.open("w") as fobj:
+                    fobj.write("print('hello')")
+            with patch("black.Manager", wraps=multiprocessing.Manager) as mgr:
+                cmd = ["--diff", str(workspace)]
+                if color:
+                    cmd.append("--color")
+                invokeBlack(cmd, exit_code=0)
+                # this isn't quite doing what we want, but if it _isn't_
+                # called then we cannot be using the lock it provides
+                mgr.assert_called()
+
+    def test_no_cache_when_stdin(self) -> None:
+        mode = DEFAULT_MODE
+        with cache_dir():
+            result = CliRunner().invoke(
+                black.main, ["-"], input=BytesIO(b"print('hello')")
+            )
+            assert not result.exit_code
+            cache_file = get_cache_file(mode)
+            assert not cache_file.exists()
+
+    def test_read_cache_no_cachefile(self) -> None:
+        mode = DEFAULT_MODE
+        with cache_dir():
+            assert black.read_cache(mode) == {}
+
+    def test_write_cache_read_cache(self) -> None:
+        mode = DEFAULT_MODE
+        with cache_dir() as workspace:
+            src = (workspace / "test.py").resolve()
+            src.touch()
+            black.write_cache({}, [src], mode)
+            cache = black.read_cache(mode)
+            assert str(src) in cache
+            assert cache[str(src)] == black.get_cache_info(src)
+
+    def test_filter_cached(self) -> None:
+        with TemporaryDirectory() as workspace:
+            path = Path(workspace)
+            uncached = (path / "uncached").resolve()
+            cached = (path / "cached").resolve()
+            cached_but_changed = (path / "changed").resolve()
+            uncached.touch()
+            cached.touch()
+            cached_but_changed.touch()
+            cache = {
+                str(cached): black.get_cache_info(cached),
+                str(cached_but_changed): (0.0, 0),
+            }
+            todo, done = black.filter_cached(
+                cache, {uncached, cached, cached_but_changed}
+            )
+            assert todo == {uncached, cached_but_changed}
+            assert done == {cached}
+
+    def test_write_cache_creates_directory_if_needed(self) -> None:
+        mode = DEFAULT_MODE
+        with cache_dir(exists=False) as workspace:
+            assert not workspace.exists()
+            black.write_cache({}, [], mode)
+            assert workspace.exists()
+
+    @event_loop()
+    def test_failed_formatting_does_not_get_cached(self) -> None:
+        mode = DEFAULT_MODE
+        with cache_dir() as workspace, patch(
+            "black.ProcessPoolExecutor", new=ThreadPoolExecutor
+        ):
+            failing = (workspace / "failing.py").resolve()
+            with failing.open("w") as fobj:
+                fobj.write("not actually python")
+            clean = (workspace / "clean.py").resolve()
+            with clean.open("w") as fobj:
+                fobj.write('print("hello")\n')
+            invokeBlack([str(workspace)], exit_code=123)
+            cache = black.read_cache(mode)
+            assert str(failing) not in cache
+            assert str(clean) in cache
+
+    def test_write_cache_write_fail(self) -> None:
+        mode = DEFAULT_MODE
+        with cache_dir(), patch.object(Path, "open") as mock:
+            mock.side_effect = OSError
+            black.write_cache({}, [], mode)
+
+    def test_read_cache_line_lengths(self) -> None:
+        mode = DEFAULT_MODE
+        short_mode = replace(DEFAULT_MODE, line_length=1)
+        with cache_dir() as workspace:
+            path = (workspace / "file.py").resolve()
+            path.touch()
+            black.write_cache({}, [path], mode)
+            one = black.read_cache(mode)
+            assert str(path) in one
+            two = black.read_cache(short_mode)
+            assert str(path) not in two
+
+
+def assert_collected_sources(
+    src: Sequence[Union[str, Path]],
+    expected: Sequence[Union[str, Path]],
+    *,
+    exclude: Optional[str] = None,
+    include: Optional[str] = None,
+    extend_exclude: Optional[str] = None,
+    force_exclude: Optional[str] = None,
+    stdin_filename: Optional[str] = None,
+) -> None:
+    gs_src = tuple(str(Path(s)) for s in src)
+    gs_expected = [Path(s) for s in expected]
+    gs_exclude = None if exclude is None else compile_pattern(exclude)
+    gs_include = DEFAULT_INCLUDE if include is None else compile_pattern(include)
+    gs_extend_exclude = (
+        None if extend_exclude is None else compile_pattern(extend_exclude)
+    )
+    gs_force_exclude = None if force_exclude is None else compile_pattern(force_exclude)
+    collected = black.get_sources(
+        ctx=FakeContext(),
+        src=gs_src,
+        quiet=False,
+        verbose=False,
+        include=gs_include,
+        exclude=gs_exclude,
+        extend_exclude=gs_extend_exclude,
+        force_exclude=gs_force_exclude,
+        report=black.Report(),
+        stdin_filename=stdin_filename,
+    )
+    assert sorted(list(collected)) == sorted(gs_expected)
+
+
+class TestFileCollection:
+    def test_include_exclude(self) -> None:
+        path = THIS_DIR / "data" / "include_exclude_tests"
+        src = [path]
+        expected = [
+            Path(path / "b/dont_exclude/a.py"),
+            Path(path / "b/dont_exclude/a.pyi"),
+        ]
+        assert_collected_sources(
+            src,
+            expected,
+            include=r"\.pyi?$",
+            exclude=r"/exclude/|/\.definitely_exclude/",
+        )
+
+    def test_gitignore_used_as_default(self) -> None:
+        base = Path(DATA_DIR / "include_exclude_tests")
+        expected = [
+            base / "b/.definitely_exclude/a.py",
+            base / "b/.definitely_exclude/a.pyi",
+        ]
+        src = [base / "b/"]
+        assert_collected_sources(src, expected, extend_exclude=r"/exclude/")
+
+    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
+    def test_exclude_for_issue_1572(self) -> None:
+        # Exclude shouldn't touch files that were explicitly given to Black through the
+        # CLI. Exclude is supposed to only apply to the recursive discovery of files.
+        # https://github.com/psf/black/issues/1572
+        path = DATA_DIR / "include_exclude_tests"
+        src = [path / "b/exclude/a.py"]
+        expected = [path / "b/exclude/a.py"]
+        assert_collected_sources(src, expected, include="", exclude=r"/exclude/|a\.py")
+
+    def test_gitignore_exclude(self) -> None:
+        path = THIS_DIR / "data" / "include_exclude_tests"
+        include = re.compile(r"\.pyi?$")
+        exclude = re.compile(r"")
+        report = black.Report()
+        gitignore = PathSpec.from_lines(
+            "gitwildmatch", ["exclude/", ".definitely_exclude"]
+        )
+        sources: List[Path] = []
+        expected = [
+            Path(path / "b/dont_exclude/a.py"),
+            Path(path / "b/dont_exclude/a.pyi"),
+        ]
+        this_abs = THIS_DIR.resolve()
+        sources.extend(
+            black.gen_python_files(
+                path.iterdir(),
+                this_abs,
+                include,
+                exclude,
+                None,
+                None,
+                report,
+                gitignore,
+                verbose=False,
+                quiet=False,
+            )
+        )
+        assert sorted(expected) == sorted(sources)
+
+    def test_nested_gitignore(self) -> None:
+        path = Path(THIS_DIR / "data" / "nested_gitignore_tests")
+        include = re.compile(r"\.pyi?$")
+        exclude = re.compile(r"")
+        root_gitignore = black.files.get_gitignore(path)
+        report = black.Report()
+        expected: List[Path] = [
+            Path(path / "x.py"),
+            Path(path / "root/b.py"),
+            Path(path / "root/c.py"),
+            Path(path / "root/child/c.py"),
+        ]
+        this_abs = THIS_DIR.resolve()
+        sources = list(
+            black.gen_python_files(
+                path.iterdir(),
+                this_abs,
+                include,
+                exclude,
+                None,
+                None,
+                report,
+                root_gitignore,
+                verbose=False,
+                quiet=False,
+            )
+        )
+        assert sorted(expected) == sorted(sources)
+
+    def test_invalid_gitignore(self) -> None:
+        path = THIS_DIR / "data" / "invalid_gitignore_tests"
+        empty_config = path / "pyproject.toml"
+        result = BlackRunner().invoke(
+            black.main, ["--verbose", "--config", str(empty_config), str(path)]
+        )
+        assert result.exit_code == 1
+        assert result.stderr_bytes is not None
+
+        gitignore = path / ".gitignore"
+        assert f"Could not parse {gitignore}" in result.stderr_bytes.decode()
+
+    def test_invalid_nested_gitignore(self) -> None:
+        path = THIS_DIR / "data" / "invalid_nested_gitignore_tests"
+        empty_config = path / "pyproject.toml"
+        result = BlackRunner().invoke(
+            black.main, ["--verbose", "--config", str(empty_config), str(path)]
+        )
+        assert result.exit_code == 1
+        assert result.stderr_bytes is not None
+
+        gitignore = path / "a" / ".gitignore"
+        assert f"Could not parse {gitignore}" in result.stderr_bytes.decode()
+
+    def test_empty_include(self) -> None:
+        path = DATA_DIR / "include_exclude_tests"
+        src = [path]
+        expected = [
+            Path(path / "b/exclude/a.pie"),
+            Path(path / "b/exclude/a.py"),
+            Path(path / "b/exclude/a.pyi"),
+            Path(path / "b/dont_exclude/a.pie"),
+            Path(path / "b/dont_exclude/a.py"),
+            Path(path / "b/dont_exclude/a.pyi"),
+            Path(path / "b/.definitely_exclude/a.pie"),
+            Path(path / "b/.definitely_exclude/a.py"),
+            Path(path / "b/.definitely_exclude/a.pyi"),
+            Path(path / ".gitignore"),
+            Path(path / "pyproject.toml"),
+        ]
+        # Setting exclude explicitly to an empty string to block .gitignore usage.
+        assert_collected_sources(src, expected, include="", exclude="")
+
+    def test_extend_exclude(self) -> None:
+        path = DATA_DIR / "include_exclude_tests"
+        src = [path]
+        expected = [
+            Path(path / "b/exclude/a.py"),
+            Path(path / "b/dont_exclude/a.py"),
+        ]
+        assert_collected_sources(
+            src, expected, exclude=r"\.pyi$", extend_exclude=r"\.definitely_exclude"
+        )
+
+    @pytest.mark.incompatible_with_mypyc
+    def test_symlink_out_of_root_directory(self) -> None:
+        path = MagicMock()
+        root = THIS_DIR.resolve()
+        child = MagicMock()
+        include = re.compile(black.DEFAULT_INCLUDES)
+        exclude = re.compile(black.DEFAULT_EXCLUDES)
+        report = black.Report()
+        gitignore = PathSpec.from_lines("gitwildmatch", [])
+        # `child` should behave like a symlink which resolved path is clearly
+        # outside of the `root` directory.
+        path.iterdir.return_value = [child]
+        child.resolve.return_value = Path("/a/b/c")
+        child.as_posix.return_value = "/a/b/c"
+        child.is_symlink.return_value = True
+        try:
+            list(
+                black.gen_python_files(
+                    path.iterdir(),
+                    root,
+                    include,
+                    exclude,
+                    None,
+                    None,
+                    report,
+                    gitignore,
+                    verbose=False,
+                    quiet=False,
+                )
+            )
+        except ValueError as ve:
+            pytest.fail(f"`get_python_files_in_dir()` failed: {ve}")
+        path.iterdir.assert_called_once()
+        child.resolve.assert_called_once()
+        child.is_symlink.assert_called_once()
+        # `child` should behave like a strange file which resolved path is clearly
+        # outside of the `root` directory.
+        child.is_symlink.return_value = False
+        with pytest.raises(ValueError):
+            list(
+                black.gen_python_files(
+                    path.iterdir(),
+                    root,
+                    include,
+                    exclude,
+                    None,
+                    None,
+                    report,
+                    gitignore,
+                    verbose=False,
+                    quiet=False,
+                )
+            )
+        path.iterdir.assert_called()
+        assert path.iterdir.call_count == 2
+        child.resolve.assert_called()
+        assert child.resolve.call_count == 2
+        child.is_symlink.assert_called()
+        assert child.is_symlink.call_count == 2
+
+    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
+    def test_get_sources_with_stdin(self) -> None:
+        src = ["-"]
+        expected = ["-"]
+        assert_collected_sources(src, expected, include="", exclude=r"/exclude/|a\.py")
+
+    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
+    def test_get_sources_with_stdin_filename(self) -> None:
+        src = ["-"]
+        stdin_filename = str(THIS_DIR / "data/collections.py")
+        expected = [f"__BLACK_STDIN_FILENAME__{stdin_filename}"]
+        assert_collected_sources(
+            src,
+            expected,
+            exclude=r"/exclude/a\.py",
+            stdin_filename=stdin_filename,
+        )
+
+    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
+    def test_get_sources_with_stdin_filename_and_exclude(self) -> None:
+        # Exclude shouldn't exclude stdin_filename since it is mimicking the
+        # file being passed directly. This is the same as
+        # test_exclude_for_issue_1572
+        path = DATA_DIR / "include_exclude_tests"
+        src = ["-"]
+        stdin_filename = str(path / "b/exclude/a.py")
+        expected = [f"__BLACK_STDIN_FILENAME__{stdin_filename}"]
+        assert_collected_sources(
+            src,
+            expected,
+            exclude=r"/exclude/|a\.py",
+            stdin_filename=stdin_filename,
+        )
+
+    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
+    def test_get_sources_with_stdin_filename_and_extend_exclude(self) -> None:
+        # Extend exclude shouldn't exclude stdin_filename since it is mimicking the
+        # file being passed directly. This is the same as
+        # test_exclude_for_issue_1572
+        src = ["-"]
+        path = THIS_DIR / "data" / "include_exclude_tests"
+        stdin_filename = str(path / "b/exclude/a.py")
+        expected = [f"__BLACK_STDIN_FILENAME__{stdin_filename}"]
+        assert_collected_sources(
+            src,
+            expected,
+            extend_exclude=r"/exclude/|a\.py",
+            stdin_filename=stdin_filename,
+        )
+
+    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
+    def test_get_sources_with_stdin_filename_and_force_exclude(self) -> None:
+        # Force exclude should exclude the file when passing it through
+        # stdin_filename
+        path = THIS_DIR / "data" / "include_exclude_tests"
+        stdin_filename = str(path / "b/exclude/a.py")
+        assert_collected_sources(
+            src=["-"],
+            expected=[],
+            force_exclude=r"/exclude/|a\.py",
+            stdin_filename=stdin_filename,
+        )
+
+
 try:
     with open(black.__file__, "r", encoding="utf-8") as _bf:
         black_source_lines = _bf.readlines()
 except UnicodeDecodeError:
-    # Probably due to Black being compiled; just ignore.
-    pass
+    if not black.COMPILED:
+        raise
 
 
-def tracefunc(frame: types.FrameType, event: str, arg: Any) -> Callable:
+def tracefunc(
+    frame: types.FrameType, event: str, arg: Any
+) -> Callable[[types.FrameType, str, Any], Any]:
     """Show function calls `from black/__init__.py` as they happen.
 
     Register this with `sys.settrace()` in a test you're debugging.
@@ -2252,7 +2053,3 @@ def tracefunc(frame: types.FrameType, event: str, arg: Any) -> Callable:
     if "black/__init__.py" in filename:
         print(f"{' ' * stack}{lineno}:{funcname}")
     return tracefunc
-
-
-if __name__ == "__main__":
-    unittest.main(module="test_black")

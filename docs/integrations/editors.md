@@ -116,6 +116,8 @@ Wing supports black via the OS Commands tool, as explained in the Wing documenta
 Commands and shortcuts:
 
 - `:Black` to format the entire file (ranges not supported);
+  - you can optionally pass `target_version=<version>` with the same values as in the
+    command line.
 - `:BlackUpgrade` to upgrade _Black_ inside the virtualenv;
 - `:BlackVersion` to get the current version of _Black_ inside the virtualenv.
 
@@ -291,16 +293,12 @@ Use the
 
 Use [sublack plugin](https://github.com/jgirardet/sublack).
 
-## Jupyter Notebook Magic
-
-Use [blackcellmagic](https://github.com/csurfer/blackcellmagic).
-
-## Python Language Server
+## Python LSP Server
 
 If your editor supports the [Language Server Protocol](https://langserver.org/) (Atom,
 Sublime Text, Visual Studio Code and many more), you can use the
-[Python Language Server](https://github.com/palantir/python-language-server) with the
-[pyls-black](https://github.com/rupert/pyls-black) plugin.
+[Python LSP Server](https://github.com/python-lsp/python-lsp-server) with the
+[python-lsp-black](https://github.com/python-lsp/python-lsp-black) plugin.
 
 ## Atom/Nuclide
 

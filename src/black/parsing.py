@@ -150,8 +150,8 @@ def parse_ast(src: str) -> Union[ast.AST, ast3.AST, ast27.AST]:
     raise SyntaxError(first_error)
 
 
-ast3_AST: Final[Type] = ast3.AST
-ast27_AST: Final[Type] = ast27.AST
+ast3_AST: Final[Type[ast3.AST]] = ast3.AST
+ast27_AST: Final[Type[ast27.AST]] = ast27.AST
 
 
 def stringify_ast(

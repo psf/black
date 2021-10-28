@@ -4,8 +4,58 @@
 
 ### _Black_
 
+- Document stability policy, that will apply for non-beta releases (#2529)
+- Add new `--workers` parameter (#2514)
+- Fixed feature detection for positional-only arguments in lambdas (#2532)
+- Bumped typed-ast version minimum to 1.4.3 for 3.10 compatiblity (#2519)
+
+### _Blackd_
+
+- Remove dependency on aiohttp-cors (#2500)
+- Bump required aiohttp version to 3.7.4 (#2509)
+
+### _Black-Primer_
+
+- Add primer support for --projects (#2555)
+- Print primer summary after individual failures (#2570)
+
+### Integrations
+
+- Allow to pass `target_version` in the vim plugin (#1319)
+
+## 21.9b0
+
+### Packaging
+
+- Fix missing modules in self-contained binaries (#2466)
+- Fix missing toml extra used during installation (#2475)
+
+## 21.8b0
+
+### _Black_
+
 - Add support for formatting Jupyter Notebook files (#2357)
 - Move from `appdirs` dependency to `platformdirs` (#2375)
+- Present a more user-friendly error if .gitignore is invalid (#2414)
+- The failsafe for accidentally added backslashes in f-string expressions has been
+  hardened to handle more edge cases during quote normalization (#2437)
+- Avoid changing a function return type annotation's type to a tuple by adding a
+  trailing comma (#2384)
+- Parsing support has been added for unparenthesized walruses in set literals, set
+  comprehensions, and indices (#2447).
+- Pin `setuptools-scm` build-time dependency version (#2457)
+- Exclude typing-extensions version 3.10.0.1 due to it being broken on Python 3.10
+  (#2460)
+
+### _Blackd_
+
+- Replace sys.exit(-1) with raise ImportError as it plays more nicely with tools that
+  scan installed packages (#2440)
+
+### Integrations
+
+- The provided pre-commit hooks no longer specify `language_version` to avoid overriding
+  `default_language_version` (#2430)
 
 ## 21.7b0
 
