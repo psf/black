@@ -28,6 +28,7 @@ from typing import (
     Sized,
     Tuple,
     Union,
+    cast,
 )
 
 from dataclasses import replace
@@ -1291,11 +1292,11 @@ def patch_click() -> None:
     except ModuleNotFoundError:
         return
 
-    for module in (core, _unicodefun):
+    for module in cast(Any, (core, _unicodefun)):
         if hasattr(module, "_verify_python3_env"):
-            module._verify_python3_env = lambda: None  # type: ignore
+            module._verify_python3_env = lambda: None
         if hasattr(module, "_verify_python_env"):
-            module._verify_python_env = lambda: None  # type: ignore
+            module._verify_python_env = lambda: None
 
 
 def patched_main() -> None:
