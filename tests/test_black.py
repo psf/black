@@ -50,6 +50,7 @@ from tests.util import (
     DATA_DIR,
     DEFAULT_MODE,
     DETERMINISTIC_HEADER,
+    PROJECT_ROOT,
     PY36_VERSIONS,
     THIS_DIR,
     BlackBaseTestCase,
@@ -1514,7 +1515,7 @@ class BlackTestCase(BlackBaseTestCase):
             args = ["--code", "print"]
             CliRunner().invoke(black.main, args)
 
-            pyproject_path = Path(Path().cwd(), "pyproject.toml").resolve()
+            pyproject_path = PROJECT_ROOT / "pyproject.toml"
             assert (
                 len(parse.mock_calls) >= 1
             ), "Expected config parse to be called with the current directory."
@@ -1529,7 +1530,7 @@ class BlackTestCase(BlackBaseTestCase):
         Test that the code option finds the pyproject.toml in the parent directory.
         """
         with patch.object(black, "parse_pyproject_toml", return_value={}) as parse:
-            with change_directory(Path("tests")):
+            with change_directory(THIS_DIR):
                 args = ["--code", "print"]
                 CliRunner().invoke(black.main, args)
 
