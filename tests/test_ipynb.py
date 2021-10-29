@@ -333,16 +333,10 @@ def test_empty_string() -> None:
 
 
 def test_unparseable_notebook() -> None:
-    msg = (
-        rf"File '{DATA_DIR}[/\\]notebook_which_cant_be_parsed.ipynb' "
-        r"cannot be parsed as valid Jupyter notebook\."
-    )
+    path = DATA_DIR / "notebook_which_cant_be_parsed.ipynb"
+    msg = rf"File '{path}' cannot be parsed as valid Jupyter notebook\."
     with pytest.raises(ValueError, match=msg):
-        format_file_in_place(
-            DATA_DIR / "notebook_which_cant_be_parsed.ipynb",
-            fast=True,
-            mode=JUPYTER_MODE,
-        )
+        format_file_in_place(path, fast=True, mode=JUPYTER_MODE)
 
 
 def test_ipynb_diff_with_change() -> None:
