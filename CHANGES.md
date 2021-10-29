@@ -16,6 +16,11 @@
 - Remove dependency on aiohttp-cors (#2500)
 - Bump required aiohttp version to 3.7.4 (#2509)
 
+### _Black-Primer_
+
+- Add primer support for --projects (#2555)
+- Print primer summary after individual failures (#2570)
+
 ### Integrations
 
 - Allow to pass `target_version` in the vim plugin (#1319)

@@ -88,6 +88,18 @@ def analyze_results(project_count: int, results: Results) -> int:
     failed_pct = round(((results.stats["failed"] / project_count) * 100), 2)
     success_pct = round(((results.stats["success"] / project_count) * 100), 2)
 
+    if results.failed_projects:
+        click.secho("\nFailed projects:\n", bold=True)
+
+    for project_name, project_cpe in results.failed_projects.items():
+        print(f"## {project_name}:")
+        print(f" - Returned {project_cpe.returncode}")
+        if project_cpe.stderr:
+            print(f" - stderr:\n{project_cpe.stderr.decode('utf8')}")
+        if project_cpe.stdout:
+            print(f" - stdout:\n{project_cpe.stdout.decode('utf8')}")
+        print("")
+
     click.secho("-- primer results 📊 --\n", bold=True)
     click.secho(
         f"{results.stats['success']} / {project_count} succeeded ({success_pct}%) ✅",
@@ -110,16 +122,8 @@ def analyze_results(project_count: int, results: Results) -> int:
     )
 
     if results.failed_projects:
-        click.secho("\nFailed projects:\n", bold=True)
-
-    for project_name, project_cpe in results.failed_projects.items():
-        print(f"## {project_name}:")
-        print(f" - Returned {project_cpe.returncode}")
-        if project_cpe.stderr:
-            print(f" - stderr:\n{project_cpe.stderr.decode('utf8')}")
-        if project_cpe.stdout:
-            print(f" - stdout:\n{project_cpe.stdout.decode('utf8')}")
-        print("")
+        failed = ", ".join(results.failed_projects.keys())
+        click.secho(f"\nFailed projects: {failed}\n", bold=True)
 
     return results.stats["failed"]
 
