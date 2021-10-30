@@ -8,6 +8,8 @@
 - Add new `--workers` parameter (#2514)
 - Fixed feature detection for positional-only arguments in lambdas (#2532)
 - Bumped typed-ast version minimum to 1.4.3 for 3.10 compatiblity (#2519)
+- Fixed a Python 3.10 compatibility issue where the loop argument was still being passed
+  even though it has been removed (#2580)
 
 ### _Blackd_
 
