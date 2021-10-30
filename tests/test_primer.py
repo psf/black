@@ -9,6 +9,7 @@ from io import StringIO
 from os import getpid
 from pathlib import Path
 from platform import system
+from pytest import LogCaptureFixture
 from subprocess import CalledProcessError
 from tempfile import TemporaryDirectory, gettempdir
 from typing import Any, Callable, Iterator, List, Tuple, TypeVar
@@ -267,18 +268,23 @@ class PrimerCLITests(unittest.TestCase):
         result = runner.invoke(cli.main, ["--help"])
         self.assertEqual(result.exit_code, 0)
 
-    def test_projects(self) -> None:
-        runner = CliRunner()
-        with event_loop():
-            result = runner.invoke(cli.main, ["--projects=tox,asdf"])
-            self.assertEqual(result.exit_code, 0)
-            assert "1 / 1 succeeded" in result.output
 
-        with event_loop():
-            runner = CliRunner()
-            result = runner.invoke(cli.main, ["--projects=tox,attrs"])
-            self.assertEqual(result.exit_code, 0)
-            assert "2 / 2 succeeded" in result.output
+def test_projects(caplog: LogCaptureFixture) -> None:
+    with event_loop():
+        runner = CliRunner()
+        result = runner.invoke(cli.main, ["--projects=STDIN,asdf"])
+        assert result.exit_code == 0
+        assert "1 / 1 succeeded" in result.output
+        assert "Projects not found: {'asdf'}" in caplog.text
+
+    caplog.clear()
+
+    with event_loop():
+        runner = CliRunner()
+        result = runner.invoke(cli.main, ["--projects=fdsa,STDIN"])
+        assert result.exit_code == 0
+        assert "1 / 1 succeeded" in result.output
+        assert "Projects not found: {'fdsa'}" in caplog.text
 
 
 if __name__ == "__main__":
