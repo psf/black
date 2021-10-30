@@ -1,4 +1,5 @@
-import pathlib
+import re
+
 from click.testing import CliRunner
 from black.handle_ipynb_magics import jupyter_dependencies_are_installed
 from black import (
@@ -8,11 +9,11 @@ from black import (
     format_file_contents,
     format_file_in_place,
 )
-import os
 import pytest
 from black import Mode
 from _pytest.monkeypatch import MonkeyPatch
 from py.path import local
+from tests.util import DATA_DIR
 
 pytestmark = pytest.mark.jupyter
 pytest.importorskip("IPython", reason="IPython is an optional dependency")
@@ -178,9 +179,7 @@ def test_empty_cell() -> None:
 
 
 def test_entire_notebook_empty_metadata() -> None:
-    with open(
-        os.path.join("tests", "data", "notebook_empty_metadata.ipynb"), "rb"
-    ) as fd:
+    with open(DATA_DIR / "notebook_empty_metadata.ipynb", "rb") as fd:
         content_bytes = fd.read()
     content = content_bytes.decode()
     result = format_file_contents(content, fast=True, mode=JUPYTER_MODE)
@@ -217,9 +216,7 @@ def test_entire_notebook_empty_metadata() -> None:
 
 
 def test_entire_notebook_trailing_newline() -> None:
-    with open(
-        os.path.join("tests", "data", "notebook_trailing_newline.ipynb"), "rb"
-    ) as fd:
+    with open(DATA_DIR / "notebook_trailing_newline.ipynb", "rb") as fd:
         content_bytes = fd.read()
     content = content_bytes.decode()
     result = format_file_contents(content, fast=True, mode=JUPYTER_MODE)
@@ -268,9 +265,7 @@ def test_entire_notebook_trailing_newline() -> None:
 
 
 def test_entire_notebook_no_trailing_newline() -> None:
-    with open(
-        os.path.join("tests", "data", "notebook_no_trailing_newline.ipynb"), "rb"
-    ) as fd:
+    with open(DATA_DIR / "notebook_no_trailing_newline.ipynb", "rb") as fd:
         content_bytes = fd.read()
     content = content_bytes.decode()
     result = format_file_contents(content, fast=True, mode=JUPYTER_MODE)
@@ -319,9 +314,7 @@ def test_entire_notebook_no_trailing_newline() -> None:
 
 
 def test_entire_notebook_without_changes() -> None:
-    with open(
-        os.path.join("tests", "data", "notebook_without_changes.ipynb"), "rb"
-    ) as fd:
+    with open(DATA_DIR / "notebook_without_changes.ipynb", "rb") as fd:
         content_bytes = fd.read()
     content = content_bytes.decode()
     with pytest.raises(NothingChanged):
@@ -329,7 +322,7 @@ def test_entire_notebook_without_changes() -> None:
 
 
 def test_non_python_notebook() -> None:
-    with open(os.path.join("tests", "data", "non_python_notebook.ipynb"), "rb") as fd:
+    with open(DATA_DIR / "non_python_notebook.ipynb", "rb") as fd:
         content_bytes = fd.read()
     content = content_bytes.decode()
     with pytest.raises(NothingChanged):
@@ -342,23 +335,17 @@ def test_empty_string() -> None:
 
 
 def test_unparseable_notebook() -> None:
-    msg = (
-        r"File 'tests[/\\]data[/\\]notebook_which_cant_be_parsed\.ipynb' "
-        r"cannot be parsed as valid Jupyter notebook\."
-    )
+    path = DATA_DIR / "notebook_which_cant_be_parsed.ipynb"
+    msg = rf"File '{re.escape(str(path))}' cannot be parsed as valid Jupyter notebook\."
     with pytest.raises(ValueError, match=msg):
-        format_file_in_place(
-            pathlib.Path("tests") / "data/notebook_which_cant_be_parsed.ipynb",
-            fast=True,
-            mode=JUPYTER_MODE,
-        )
+        format_file_in_place(path, fast=True, mode=JUPYTER_MODE)
 
 
 def test_ipynb_diff_with_change() -> None:
     result = runner.invoke(
         main,
         [
-            os.path.join("tests", "data", "notebook_trailing_newline.ipynb"),
+            str(DATA_DIR / "notebook_trailing_newline.ipynb"),
             "--diff",
         ],
     )
@@ -370,7 +357,7 @@ def test_ipynb_diff_with_no_change() -> None:
     result = runner.invoke(
         main,
         [
-            os.path.join("tests", "data", "notebook_without_changes.ipynb"),
+            str(DATA_DIR / "notebook_without_changes.ipynb"),
             "--diff",
         ],
     )
@@ -383,7 +370,7 @@ def test_cache_isnt_written_if_no_jupyter_deps_single(
 ) -> None:
     # Check that the cache isn't written to if Jupyter dependencies aren't installed.
     jupyter_dependencies_are_installed.cache_clear()
-    nb = os.path.join("tests", "data", "notebook_trailing_newline.ipynb")
+    nb = DATA_DIR / "notebook_trailing_newline.ipynb"
     tmp_nb = tmpdir / "notebook.ipynb"
     with open(nb) as src, open(tmp_nb, "w") as dst:
         dst.write(src.read())
@@ -405,7 +392,7 @@ def test_cache_isnt_written_if_no_jupyter_deps_dir(
 ) -> None:
     # Check that the cache isn't written to if Jupyter dependencies aren't installed.
     jupyter_dependencies_are_installed.cache_clear()
-    nb = os.path.join("tests", "data", "notebook_trailing_newline.ipynb")
+    nb = DATA_DIR / "notebook_trailing_newline.ipynb"
     tmp_nb = tmpdir / "notebook.ipynb"
     with open(nb) as src, open(tmp_nb, "w") as dst:
         dst.write(src.read())
@@ -423,7 +410,7 @@ def test_cache_isnt_written_if_no_jupyter_deps_dir(
 
 
 def test_ipynb_flag(tmpdir: local) -> None:
-    nb = os.path.join("tests", "data", "notebook_trailing_newline.ipynb")
+    nb = DATA_DIR / "notebook_trailing_newline.ipynb"
     tmp_nb = tmpdir / "notebook.a_file_extension_which_is_definitely_not_ipynb"
     with open(nb) as src, open(tmp_nb, "w") as dst:
         dst.write(src.read())
@@ -440,11 +427,11 @@ def test_ipynb_flag(tmpdir: local) -> None:
 
 
 def test_ipynb_and_pyi_flags() -> None:
-    nb = os.path.join("tests", "data", "notebook_trailing_newline.ipynb")
+    nb = DATA_DIR / "notebook_trailing_newline.ipynb"
     result = runner.invoke(
         main,
         [
-            nb,
+            str(nb),
             "--pyi",
             "--ipynb",
             "--diff",
