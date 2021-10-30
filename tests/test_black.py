@@ -1513,9 +1513,11 @@ class BlackTestCase(BlackBaseTestCase):
         """
         with patch.object(black, "parse_pyproject_toml", return_value={}) as parse:
             args = ["--code", "print"]
-            CliRunner().invoke(black.main, args)
+            # This is the only directory known to contain a pyproject.toml
+            with change_directory(PROJECT_ROOT):
+                CliRunner().invoke(black.main, args)
+                pyproject_path = Path(Path.cwd(), "pyproject.toml").resolve()
 
-            pyproject_path = PROJECT_ROOT / "pyproject.toml"
             assert (
                 len(parse.mock_calls) >= 1
             ), "Expected config parse to be called with the current directory."
