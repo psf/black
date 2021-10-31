@@ -91,6 +91,5 @@ codebase with _Black_.
 
 ## Can I run black with PyPy?
 
-Yes, there is _experimental_ support for PyPy 3.7 and higher. You cannot format Python 2
-files under PyPy, because PyPy's inbuilt ast module does not support this. For the most
-stable user-experience, we recommend using CPython if possible.
+Yes, there is support for PyPy 3.7 and higher. You cannot format Python 2
+files under PyPy, because PyPy's inbuilt ast module does not support this.
