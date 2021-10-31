@@ -24,8 +24,6 @@
 ### Integrations
 
 - Allow to pass `target_version` in the vim plugin (#1319)
-- Pin regex module to 2021.10.8 in our docker file as it has arm wheels available
-  (#2579)
 
 ## 21.9b0
 
