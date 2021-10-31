@@ -778,7 +778,10 @@ async def schedule_formatting(
                     sources_to_cache.append(src)
                 report.done(src, changed)
     if cancelled:
-        await asyncio.gather(*cancelled, loop=loop, return_exceptions=True)
+        if sys.version_info >= (3, 7):
+            await asyncio.gather(*cancelled, return_exceptions=True)
+        else:
+            await asyncio.gather(*cancelled, loop=loop, return_exceptions=True)
     if sources_to_cache:
         write_cache(cache, sources_to_cache, mode)
 
