@@ -1,6 +1,6 @@
 # Change Log
 
-## Unreleased
+## 21.10b0
 
 - The vim plugin now parses `skip_magic_trailing_comma` from pyproject.toml (#2504)
 
