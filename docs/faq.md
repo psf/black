@@ -74,12 +74,16 @@ disabled-by-default counterpart W504. E203 should be disabled while changes are 
 
 ## Does Black support Python 2?
 
+```{warning}
+Python 2 support has been deprecated since 21.10b0.
+
+This support will be dropped in the first stable release, expected for January 2022.
+See [The Black Code Style](the_black_code_style/index.rst) for details.
+```
+
 For formatting, yes! [Install](getting_started.md#installation) with the `python2` extra
 to format Python 2 files too! In terms of running _Black_ though, Python 3.6 or newer is
 required.
-
-Note that this support will be dropped in the first stable release, expected for
-January 2022. See [The Black Code Style](the_black_code_style/index.rst) for details.
 
 ## Why does my linter or typechecker complain after I format my code?
 

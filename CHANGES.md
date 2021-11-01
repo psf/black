@@ -1,6 +1,6 @@
 # Change Log
 
-## Unreleased
+## 21.10b0
 
 ### _Black_
 
@@ -8,6 +8,9 @@
 - Add new `--workers` parameter (#2514)
 - Fixed feature detection for positional-only arguments in lambdas (#2532)
 - Bumped typed-ast version minimum to 1.4.3 for 3.10 compatiblity (#2519)
+- Fixed a Python 3.10 compatibility issue where the loop argument was still being passed
+  even though it has been removed (#2580)
+- Deprecate Python 2 formatting support (#2523)
 - Add experimental pypy support (#2559)
 
 ### _Blackd_
@@ -23,6 +26,8 @@
 ### Integrations
 
 - Allow to pass `target_version` in the vim plugin (#1319)
+- Install build tools in docker file and use multi-stage build to keep the image size
+  down (#2582)
 
 ## 21.9b0
 

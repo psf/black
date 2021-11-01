@@ -763,7 +763,10 @@ async def schedule_formatting(
                     sources_to_cache.append(src)
                 report.done(src, changed)
     if cancelled:
-        await asyncio.gather(*cancelled, loop=loop, return_exceptions=True)
+        if sys.version_info >= (3, 7):
+            await asyncio.gather(*cancelled, return_exceptions=True)
+        else:
+            await asyncio.gather(*cancelled, loop=loop, return_exceptions=True)
     if sources_to_cache:
         write_cache(cache, sources_to_cache, mode)
 
@@ -1058,6 +1061,15 @@ def format_str(src_contents: str, *, mode: Mode) -> FileContent:
         versions = mode.target_versions
     else:
         versions = detect_target_versions(src_node)
+
+    # TODO: fully drop support and this code hopefully in January 2022 :D
+    if TargetVersion.PY27 in mode.target_versions or versions == {TargetVersion.PY27}:
+        msg = (
+            "DEPRECATION: Python 2 support will be removed in the first stable release"
+            "expected in January 2022."
+        )
+        err(msg, fg="yellow", bold=True)
+
     normalize_fmt_off(src_node)
     lines = LineGenerator(
         mode=mode,
@@ -1100,7 +1112,7 @@ def decode_bytes(src: bytes) -> Tuple[FileContent, Encoding, NewLine]:
         return tiow.read(), encoding, newline
 
 
-def get_features_used(node: Node) -> Set[Feature]:
+def get_features_used(node: Node) -> Set[Feature]:  # noqa: C901
     """Return a set of (relatively) new Python features used in this file.
 
     Currently looking for:
@@ -1110,6 +1122,7 @@ def get_features_used(node: Node) -> Set[Feature]:
     - positional only arguments in function signatures and lambdas;
     - assignment expression;
     - relaxed decorator syntax;
+    - print / exec statements;
     """
     features: Set[Feature] = set()
     for n in node.pre_order():
@@ -1157,6 +1170,11 @@ def get_features_used(node: Node) -> Set[Feature]:
                     for argch in ch.children:
                         if argch.type in STARS:
                             features.add(feature)
+
+        elif n.type == token.PRINT_STMT:
+            features.add(Feature.PRINT_STMT)
+        elif n.type == token.EXEC_STMT:
+            features.add(Feature.EXEC_STMT)
 
     return features
 
