@@ -173,7 +173,7 @@ You can check the version of _Black_ you have installed using the `--version` fl
 
 ```console
 $ black --version
-black, version 21.9b0
+black, version 21.10b0
 ```
 
 An option to require a specific version to be running is also provided.
