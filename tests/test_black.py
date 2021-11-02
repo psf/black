@@ -1783,7 +1783,7 @@ class TestFileCollection:
         src = [base / "b/"]
         assert_collected_sources(src, expected, extend_exclude=r"/exclude/")
 
-    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), "None"))
+    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_exclude_for_issue_1572(self) -> None:
         # Exclude shouldn't touch files that were explicitly given to Black through the
         # CLI. Exclude is supposed to only apply to the recursive discovery of files.
@@ -1965,13 +1965,13 @@ class TestFileCollection:
         child.is_symlink.assert_called()
         assert child.is_symlink.call_count == 2
 
-    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), "None"))
+    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_get_sources_with_stdin(self) -> None:
         src = ["-"]
         expected = ["-"]
         assert_collected_sources(src, expected, include="", exclude=r"/exclude/|a\.py")
 
-    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), "None"))
+    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_get_sources_with_stdin_filename(self) -> None:
         src = ["-"]
         stdin_filename = str(THIS_DIR / "data/collections.py")
@@ -1983,7 +1983,7 @@ class TestFileCollection:
             stdin_filename=stdin_filename,
         )
 
-    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), "None"))
+    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_get_sources_with_stdin_filename_and_exclude(self) -> None:
         # Exclude shouldn't exclude stdin_filename since it is mimicking the
         # file being passed directly. This is the same as
@@ -1999,7 +1999,7 @@ class TestFileCollection:
             stdin_filename=stdin_filename,
         )
 
-    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), "None"))
+    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_get_sources_with_stdin_filename_and_extend_exclude(self) -> None:
         # Extend exclude shouldn't exclude stdin_filename since it is mimicking the
         # file being passed directly. This is the same as
@@ -2015,7 +2015,7 @@ class TestFileCollection:
             stdin_filename=stdin_filename,
         )
 
-    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), "None"))
+    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_get_sources_with_stdin_filename_and_force_exclude(self) -> None:
         # Force exclude should exclude the file when passing it through
         # stdin_filename
