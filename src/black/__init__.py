@@ -520,7 +520,7 @@ def get_sources(
     if verbose:
         if method:
             out(
-                f"Identified `{root}` as project root containing a '{method}'.",
+                f"Identified `{root}` as project root containing a {method}.",
                 fg="blue",
             )
         else:
