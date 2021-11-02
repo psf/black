@@ -38,6 +38,11 @@ def find_project_root(srcs: Sequence[str]) -> Tuple[Path, Optional[str]]:
 
     If no directory in the tree contains a marker that would specify it's the
     project root, the root of the file system is returned.
+
+    Returns a tuple with the first element as the project root path and the
+    second element as a string which describes the method by which black
+    found out the project root (None, if `None` of the registered method
+    was used).
     """
     if not srcs:
         srcs = [str(Path.cwd().resolve())]

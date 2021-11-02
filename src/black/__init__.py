@@ -508,7 +508,13 @@ def get_sources(
     report: "Report",
     stdin_filename: Optional[str],
 ) -> Tuple[Set[Path], Path]:
-    """Compute the set of files to be formatted."""
+    """
+    Compute the set of files to be formatted.
+
+    Returns a tuple, with the first element as a set of paths which are to be
+    checked/formatted by black, and the second element as the project root
+    found out by black.
+    """
     root, method = find_project_root(src)
 
     if verbose:
