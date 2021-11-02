@@ -41,9 +41,17 @@ class Feature(Enum):
     RELAXED_DECORATORS = 10
     FORCE_OPTIONAL_PARENTHESES = 50
 
+    # temporary for Python 2 deprecation
+    PRINT_STMT = 200
+    EXEC_STMT = 201
+
 
 VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
-    TargetVersion.PY27: {Feature.ASYNC_IDENTIFIERS},
+    TargetVersion.PY27: {
+        Feature.ASYNC_IDENTIFIERS,
+        Feature.PRINT_STMT,
+        Feature.EXEC_STMT,
+    },
     TargetVersion.PY33: {Feature.UNICODE_LITERALS, Feature.ASYNC_IDENTIFIERS},
     TargetVersion.PY34: {Feature.UNICODE_LITERALS, Feature.ASYNC_IDENTIFIERS},
     TargetVersion.PY35: {

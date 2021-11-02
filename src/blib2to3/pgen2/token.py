@@ -74,6 +74,9 @@ ERRORTOKEN: Final = 58
 COLONEQUAL: Final = 59
 N_TOKENS: Final = 60
 NT_OFFSET: Final = 256
+# temporary for Python 2 deprecation
+PRINT_STMT: Final = 316
+EXEC_STMT: Final = 288
 # --end constants--
 
 tok_name: Final[Dict[int, str]] = {}

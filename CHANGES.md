@@ -4,19 +4,36 @@
 
 ### _Black_
 
-- Add new `--workers` parameter (#2514)
-- Bumped typed-ast version minimum to 1.4.3 for 3.10 compatiblity (#2519)
-- `--verbose` enhancements (project root, how was config found, root relative paths)
+- `--verbose` enhancements (project root, how is config found, root relative paths)
   (#2526)
+
+## 21.10b0
+
+### _Black_
+
+- Document stability policy, that will apply for non-beta releases (#2529)
+- Add new `--workers` parameter (#2514)
+- Fixed feature detection for positional-only arguments in lambdas (#2532)
+- Bumped typed-ast version minimum to 1.4.3 for 3.10 compatiblity (#2519)
+- Fixed a Python 3.10 compatibility issue where the loop argument was still being passed
+  even though it has been removed (#2580)
+- Deprecate Python 2 formatting support (#2523)
 
 ### _Blackd_
 
 - Remove dependency on aiohttp-cors (#2500)
 - Bump required aiohttp version to 3.7.4 (#2509)
 
+### _Black-Primer_
+
+- Add primer support for --projects (#2555)
+- Print primer summary after individual failures (#2570)
+
 ### Integrations
 
 - Allow to pass `target_version` in the vim plugin (#1319)
+- Install build tools in docker file and use multi-stage build to keep the image size
+  down (#2582)
 
 ## 21.9b0
 

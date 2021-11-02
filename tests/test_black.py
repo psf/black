@@ -50,6 +50,7 @@ from tests.util import (
     DATA_DIR,
     DEFAULT_MODE,
     DETERMINISTIC_HEADER,
+    PROJECT_ROOT,
     PY36_VERSIONS,
     THIS_DIR,
     BlackBaseTestCase,
@@ -805,6 +806,10 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(black.get_features_used(node), set())
         node = black.lib2to3_parse(expected)
         self.assertEqual(black.get_features_used(node), set())
+        node = black.lib2to3_parse("lambda a, /, b: ...")
+        self.assertEqual(black.get_features_used(node), {Feature.POS_ONLY_ARGUMENTS})
+        node = black.lib2to3_parse("def fn(a, /, b): ...")
+        self.assertEqual(black.get_features_used(node), {Feature.POS_ONLY_ARGUMENTS})
 
     def test_get_future_imports(self) -> None:
         node = black.lib2to3_parse("\n")
@@ -1408,14 +1413,14 @@ class BlackTestCase(BlackBaseTestCase):
         )
         expected = 'def foo():\n    """Testing\n    Testing"""\n    print "Foo"\n'
 
-        result = CliRunner().invoke(
+        result = BlackRunner().invoke(
             black.main,
             ["-", "-q", "--target-version=py27"],
             input=BytesIO(source),
         )
 
         self.assertEqual(result.exit_code, 0)
-        actual = result.output
+        actual = result.stdout
         self.assertFormatEqual(actual, expected)
 
     @staticmethod
@@ -1520,9 +1525,11 @@ class BlackTestCase(BlackBaseTestCase):
         """
         with patch.object(black, "parse_pyproject_toml", return_value={}) as parse:
             args = ["--code", "print"]
-            CliRunner().invoke(black.main, args)
+            # This is the only directory known to contain a pyproject.toml
+            with change_directory(PROJECT_ROOT):
+                CliRunner().invoke(black.main, args)
+                pyproject_path = Path(Path.cwd(), "pyproject.toml").resolve()
 
-            pyproject_path = Path(Path().cwd(), "pyproject.toml").resolve()
             assert (
                 len(parse.mock_calls) >= 1
             ), "Expected config parse to be called with the current directory."
@@ -1537,7 +1544,7 @@ class BlackTestCase(BlackBaseTestCase):
         Test that the code option finds the pyproject.toml in the parent directory.
         """
         with patch.object(black, "parse_pyproject_toml", return_value={}) as parse:
-            with change_directory(Path("tests")):
+            with change_directory(THIS_DIR):
                 args = ["--code", "print"]
                 CliRunner().invoke(black.main, args)
 
@@ -2022,11 +2029,28 @@ class TestFileCollection:
         )
 
 
+@pytest.mark.parametrize("explicit", [True, False], ids=["explicit", "autodetection"])
+def test_python_2_deprecation_with_target_version(explicit: bool) -> None:
+    args = [
+        "--config",
+        str(THIS_DIR / "empty.toml"),
+        str(DATA_DIR / "python2.py"),
+        "--check",
+    ]
+    if explicit:
+        args.append("--target-version=py27")
+    with cache_dir():
+        result = BlackRunner().invoke(black.main, args)
+    assert "DEPRECATION: Python 2 support will be removed" in result.stderr
+
+
 with open(black.__file__, "r", encoding="utf-8") as _bf:
     black_source_lines = _bf.readlines()
 
 
-def tracefunc(frame: types.FrameType, event: str, arg: Any) -> Callable:
+def tracefunc(
+    frame: types.FrameType, event: str, arg: Any
+) -> Callable[[types.FrameType, str, Any], Any]:
     """Show function calls `from black/__init__.py` as they happen.
 
     Register this with `sys.settrace()` in a test you're debugging.

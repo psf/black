@@ -31,6 +31,10 @@ pragmatism. However, _Black_ is still in beta so style changes are both planned 
 still proposed on the issue tracker. See
 [The Black Code Style](the_black_code_style/index.rst) for more details.
 
+Starting in 2022, the formatting output will be stable for the releases made in the same
+year (other than unintentional bugs). It is possible to opt-in to the latest formatting
+styles, using the `--future` flag.
+
 ## Why is my file not formatted?
 
 Most likely because it is ignored in `.gitignore` or excluded with configuration. See
@@ -70,10 +74,16 @@ disabled-by-default counterpart W504. E203 should be disabled while changes are 
 
 ## Does Black support Python 2?
 
+```{warning}
+Python 2 support has been deprecated since 21.10b0.
+
+This support will be dropped in the first stable release, expected for January 2022.
+See [The Black Code Style](the_black_code_style/index.rst) for details.
+```
+
 For formatting, yes! [Install](getting_started.md#installation) with the `python2` extra
-to format Python 2 files too! There are no current plans to drop support, but most
-likely it is bound to happen. Sometime. Eventually. In terms of running _Black_ though,
-Python 3.6 or newer is required.
+to format Python 2 files too! In terms of running _Black_ though, Python 3.6 or newer is
+required.
 
 ## Why does my linter or typechecker complain after I format my code?
 
