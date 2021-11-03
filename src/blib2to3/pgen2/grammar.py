@@ -89,6 +89,7 @@ class Grammar(object):
         self.dfas: Dict[int, DFAS] = {}
         self.labels: List[Label] = [(0, "EMPTY")]
         self.keywords: Dict[str, int] = {}
+        self.soft_keywords: Dict[str, int] = {}
         self.tokens: Dict[int, int] = {}
         self.symbol2label: Dict[str, int] = {}
         self.start = 256
