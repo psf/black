@@ -39,12 +39,14 @@ class _python_symbols(Symbols):
     arglist: int
     argument: int
     arith_expr: int
+    asexpr_test: int
     assert_stmt: int
     async_funcdef: int
     async_stmt: int
     atom: int
     augassign: int
     break_stmt: int
+    case_block: int
     classdef: int
     comp_for: int
     comp_if: int
@@ -74,6 +76,7 @@ class _python_symbols(Symbols):
     for_stmt: int
     funcdef: int
     global_stmt: int
+    guard: int
     if_stmt: int
     import_as_name: int
     import_as_names: int
@@ -82,6 +85,7 @@ class _python_symbols(Symbols):
     import_stmt: int
     lambdef: int
     listmaker: int
+    match_stmt: int
     namedexpr_test: int
     not_test: int
     old_comp_for: int
@@ -92,6 +96,7 @@ class _python_symbols(Symbols):
     or_test: int
     parameters: int
     pass_stmt: int
+    patterns: int
     power: int
     print_stmt: int
     raise_stmt: int
@@ -101,6 +106,7 @@ class _python_symbols(Symbols):
     single_input: int
     sliceop: int
     small_stmt: int
+    subject_expr: int
     star_expr: int
     stmt: int
     subscript: int
@@ -124,9 +130,7 @@ class _python_symbols(Symbols):
     vfplist: int
     vname: int
     while_stmt: int
-    with_item: int
     with_stmt: int
-    with_var: int
     xor_expr: int
     yield_arg: int
     yield_expr: int

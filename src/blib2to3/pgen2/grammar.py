@@ -137,6 +137,7 @@ class Grammar(object):
             "number2symbol",
             "dfas",
             "keywords",
+            "soft_keywords",
             "tokens",
             "symbol2label",
         ):
