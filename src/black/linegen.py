@@ -126,7 +126,7 @@ class LineGenerator(Visitor[Line]):
         """Visit a statement.
 
         This implementation is shared for `if`, `while`, `for`, `try`, `except`,
-        `def`, `with`, `class`, `assert` and assignments.
+        `def`, `with`, `class`, `assert`, `match`, `case` and assignments.
 
         The relevant Python language `keywords` for a given statement will be
         NAME leaves within it. This methods puts those on a separate line.
@@ -291,6 +291,10 @@ class LineGenerator(Visitor[Line]):
         self.visit_del_stmt = partial(v, keywords=Ø, parens={"del"})
         self.visit_async_funcdef = self.visit_async_stmt
         self.visit_decorated = self.visit_decorators
+
+        # PEP 634
+        self.visit_match_stmt = partial(v, keywords={"match"}, parens=Ø)
+        self.visit_case_stmt = partial(v, keywords={"case"}, parens={"case"})
 
 
 def transform_line(

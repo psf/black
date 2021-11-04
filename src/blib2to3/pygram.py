@@ -191,6 +191,10 @@ def initialize(cache_dir: Union[str, "os.PathLike[str]", None] = None) -> None:
         True
     )
 
+    # TODO:
+    # We might need a new grammar that makes match/case soft keywords, so we won't affect
+    # older versions which doesn't have these.
+
     pattern_grammar = driver.load_packaged_grammar(
         "blib2to3", _PATTERN_GRAMMAR_FILE, cache_dir
     )
