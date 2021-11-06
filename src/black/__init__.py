@@ -1065,7 +1065,7 @@ def format_str(src_contents: str, *, mode: Mode) -> FileContent:
     # TODO: fully drop support and this code hopefully in January 2022 :D
     if TargetVersion.PY27 in mode.target_versions or versions == {TargetVersion.PY27}:
         msg = (
-            "DEPRECATION: Python 2 support will be removed in the first stable release"
+            "DEPRECATION: Python 2 support will be removed in the first stable release "
             "expected in January 2022."
         )
         err(msg, fg="yellow", bold=True)
