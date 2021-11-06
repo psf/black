@@ -2017,6 +2017,7 @@ class TestFileCollection:
         )
 
 
+@pytest.mark.python2
 @pytest.mark.parametrize("explicit", [True, False], ids=["explicit", "autodetection"])
 def test_python_2_deprecation_with_target_version(explicit: bool) -> None:
     args = [
@@ -2030,6 +2031,18 @@ def test_python_2_deprecation_with_target_version(explicit: bool) -> None:
     with cache_dir():
         result = BlackRunner().invoke(black.main, args)
     assert "DEPRECATION: Python 2 support will be removed" in result.stderr
+
+
+@pytest.mark.python2
+def test_python_2_deprecation_autodetection_extended() -> None:
+    # this test has a similar construction to test_get_features_used_decorator
+    python2, non_python2 = read_data("python2_detection")
+    for python2_case in python2.split("###"):
+        node = black.lib2to3_parse(python2_case)
+        assert black.detect_target_versions(node) == {TargetVersion.PY27}
+    for non_python2_case in non_python2.split("###"):
+        node = black.lib2to3_parse(non_python2_case)
+        assert black.detect_target_versions(node) != {TargetVersion.PY27}
 
 
 with open(black.__file__, "r", encoding="utf-8") as _bf:

@@ -44,6 +44,11 @@ class Feature(Enum):
     # temporary for Python 2 deprecation
     PRINT_STMT = 200
     EXEC_STMT = 201
+    AUTOMATIC_PARAMETER_UNPACKING = 202
+    COMMA_STYLE_EXCEPT = 203
+    COMMA_STYLE_RAISE = 204
+    LONG_INT_LITERAL = 205
+    BACKQUOTE_REPR = 206
 
 
 VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
@@ -51,6 +56,11 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.ASYNC_IDENTIFIERS,
         Feature.PRINT_STMT,
         Feature.EXEC_STMT,
+        Feature.AUTOMATIC_PARAMETER_UNPACKING,
+        Feature.COMMA_STYLE_EXCEPT,
+        Feature.COMMA_STYLE_RAISE,
+        Feature.LONG_INT_LITERAL,
+        Feature.BACKQUOTE_REPR,
     },
     TargetVersion.PY33: {Feature.UNICODE_LITERALS, Feature.ASYNC_IDENTIFIERS},
     TargetVersion.PY34: {Feature.UNICODE_LITERALS, Feature.ASYNC_IDENTIFIERS},
