@@ -48,7 +48,8 @@ class Feature(Enum):
     COMMA_STYLE_EXCEPT = 203
     COMMA_STYLE_RAISE = 204
     LONG_INT_LITERAL = 205
-    BACKQUOTE_REPR = 206
+    OCTAL_INT_LITERAL = 206
+    BACKQUOTE_REPR = 207
 
 
 VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
@@ -60,6 +61,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.COMMA_STYLE_EXCEPT,
         Feature.COMMA_STYLE_RAISE,
         Feature.LONG_INT_LITERAL,
+        Feature.OCTAL_INT_LITERAL,
         Feature.BACKQUOTE_REPR,
     },
     TargetVersion.PY33: {Feature.UNICODE_LITERALS, Feature.ASYNC_IDENTIFIERS},

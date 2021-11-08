@@ -2039,10 +2039,12 @@ def test_python_2_deprecation_autodetection_extended() -> None:
     python2, non_python2 = read_data("python2_detection")
     for python2_case in python2.split("###"):
         node = black.lib2to3_parse(python2_case)
-        assert black.detect_target_versions(node) == {TargetVersion.PY27}
+        assert black.detect_target_versions(node) == {TargetVersion.PY27}, python2_case
     for non_python2_case in non_python2.split("###"):
         node = black.lib2to3_parse(non_python2_case)
-        assert black.detect_target_versions(node) != {TargetVersion.PY27}
+        assert black.detect_target_versions(node) != {
+            TargetVersion.PY27
+        }, non_python2_case
 
 
 with open(black.__file__, "r", encoding="utf-8") as _bf:

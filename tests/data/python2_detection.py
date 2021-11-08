@@ -30,6 +30,14 @@ raise RuntimeError, "I feel like crashing today :p"
 
 10L
 
+###
+
+10l
+
+###
+
+0123
+
 # output
 
 print("hello python three!")
@@ -58,9 +66,25 @@ raise RuntimeError(make_msg(1, 2))
 
 ###
 
+raise RuntimeError("boom!",)
+
+###
+
 def set_position(x, y, value):
     pass
 
 ###
 
 10
+
+###
+
+0
+
+###
+
+000
+
+###
+
+0o12

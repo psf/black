@@ -1135,9 +1135,14 @@ def get_features_used(node: Node) -> Set[Feature]:  # noqa: C901
             assert isinstance(n, Leaf)
             if "_" in n.value:
                 features.add(Feature.NUMERIC_UNDERSCORES)
-            elif n.value.endswith("L"):
+            elif n.value.endswith(("L", "l")):
                 # Python 2: 10L
                 features.add(Feature.LONG_INT_LITERAL)
+            elif len(n.value) >= 2 and n.value[0] == "0" and n.value[1].isdigit():
+                # Python 2: 0123; 00123; ...
+                if not all(char == "0" for char in n.value):
+                    # although we don't want to match 0000 or similar
+                    features.add(Feature.OCTAL_INT_LITERAL)
 
         elif n.type == token.SLASH:
             if n.parent and n.parent.type in {
@@ -1175,7 +1180,7 @@ def get_features_used(node: Node) -> Set[Feature]:  # noqa: C901
                         if argch.type in STARS:
                             features.add(feature)
 
-        # Python 2 only features (for its deprecation) except for 10L, see above
+        # Python 2 only features (for its deprecation) except for integers, see above
         elif n.type == syms.print_stmt:
             features.add(Feature.PRINT_STMT)
         elif n.type == syms.exec_stmt:
