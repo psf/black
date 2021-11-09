@@ -209,9 +209,20 @@ class Parser(object):
         ilabels = self.classify(type, value, context)
         assert len(ilabels) >= 1
 
+        # If we have only one state to advance, we'll directly
+        # take it as is.
         if len(ilabels) == 1:
             [ilabel] = ilabels
             return self._addtoken(ilabel, type, value, context)
+
+        # If there are multiple states which we can advance (only
+        # happen under soft-keywords), then we will try all of them
+        # in parallel and as soon as one state can reach further than
+        # the rest, we'll choose that one. This is a pretty hacky
+        # and hopefully temporary algorithm.
+        #
+        # For a more detailed explanation, check out this post:
+        # https://tree.science/what-the-backtracking.html
 
         with self.proxy.release() as proxy:
             counter, force = 0, False
@@ -283,7 +294,10 @@ class Parser(object):
                     raise ParseError("bad input", type, value, context)
 
     def classify(self, type: int, value: Optional[Text], context: Context) -> List[int]:
-        """Turn a token into a label.  (Internal)"""
+        """Turn a token into a label.  (Internal)
+
+        Depending on whether the value is a soft-keyword or not,
+        this function may return multiple labels to choose from."""
         if type == token.NAME:
             # Keep a listing of all used names
             assert value is not None
