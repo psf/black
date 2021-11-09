@@ -163,6 +163,7 @@ def initialize(cache_dir: Union[str, "os.PathLike[str]", None] = None) -> None:
     global python_grammar_no_print_statement
     global python_grammar_no_print_statement_no_exec_statement
     global python_grammar_no_print_statement_no_exec_statement_async_keywords
+    global python_grammar_soft_keywords
     global python_symbols
     global pattern_grammar
     global pattern_symbols
@@ -175,6 +176,8 @@ def initialize(cache_dir: Union[str, "os.PathLike[str]", None] = None) -> None:
 
     # Python 2
     python_grammar = driver.load_packaged_grammar("blib2to3", _GRAMMAR_FILE, cache_dir)
+    soft_keywords = python_grammar.soft_keywords.copy()
+    python_grammar.soft_keywords.clear()
 
     python_symbols = _python_symbols(python_grammar)
 
@@ -195,9 +198,11 @@ def initialize(cache_dir: Union[str, "os.PathLike[str]", None] = None) -> None:
         True
     )
 
-    # TODO:
-    # We might need a new grammar that makes match/case soft keywords, so we won't affect
-    # older versions which doesn't have these.
+    # Python 3.10+
+    python_grammar_soft_keywords = (
+        python_grammar_no_print_statement_no_exec_statement_async_keywords.copy()
+    )
+    python_grammar_soft_keywords.soft_keywords = soft_keywords
 
     pattern_grammar = driver.load_packaged_grammar(
         "blib2to3", _PATTERN_GRAMMAR_FILE, cache_dir
