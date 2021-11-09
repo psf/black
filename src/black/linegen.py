@@ -294,7 +294,7 @@ class LineGenerator(Visitor[Line]):
 
         # PEP 634
         self.visit_match_stmt = partial(v, keywords={"match"}, parens=Ø)
-        self.visit_case_stmt = partial(v, keywords={"case"}, parens={"case"})
+        self.visit_case_block = partial(v, keywords={"case"}, parens=Ø)
 
 
 def transform_line(
