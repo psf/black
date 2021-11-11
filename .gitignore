@@ -7,13 +7,18 @@ _build
 docs/_static/pypi.svg
 .tox
 __pycache__
+
+# Packaging artifacts
 black.egg-info
+black.dist-info
 build/
 dist/
 pip-wheel-metadata/
+.eggs
+
 src/_black_version.py
 .idea
-.eggs
+
 .dmypy.json
 *.swp
 .hypothesis/
