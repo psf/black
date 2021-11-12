@@ -6,6 +6,7 @@
 
 - Warn about Python 2 deprecation in more cases by improving Python 2 only syntax
   detection (#2592)
+- Add experimental pypy support (#2559)
 
 ## 21.10b0
 
@@ -18,7 +19,6 @@
 - Fixed a Python 3.10 compatibility issue where the loop argument was still being passed
   even though it has been removed (#2580)
 - Deprecate Python 2 formatting support (#2523)
-- Add experimental pypy support (#2559)
 
 ### _Blackd_
 
