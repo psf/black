@@ -1,5 +1,12 @@
 # Change Log
 
+## _Unreleased_
+
+### _Black_
+
+- Warn about Python 2 deprecation in more cases by improving Python 2 only syntax
+  detection (#2592)
+
 ## 21.10b0
 
 ### _Black_
@@ -7,7 +14,7 @@
 - Document stability policy, that will apply for non-beta releases (#2529)
 - Add new `--workers` parameter (#2514)
 - Fixed feature detection for positional-only arguments in lambdas (#2532)
-- Bumped typed-ast version minimum to 1.4.3 for 3.10 compatiblity (#2519)
+- Bumped typed-ast version minimum to 1.4.3 for 3.10 compatibility (#2519)
 - Fixed a Python 3.10 compatibility issue where the loop argument was still being passed
   even though it has been removed (#2580)
 - Deprecate Python 2 formatting support (#2523)
