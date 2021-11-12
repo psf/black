@@ -1,5 +1,12 @@
 # Change Log
 
+## _Unreleased_
+
+### _Black_
+
+- Warn about Python 2 deprecation in more cases by improving Python 2 only syntax
+  detection (#2592)
+
 ## 21.10b0
 
 - The vim plugin now parses `skip_magic_trailing_comma` from pyproject.toml (#2504)
