@@ -70,7 +70,11 @@ EXPERIMENTAL_STRING_PROCESSING_CASES = [
     "percent_precedence",
 ]
 
-PY310_CASES = ["pattern_matching_simple", "pattern_matching_complex"]
+PY310_CASES = [
+    "pattern_matching_simple",
+    "pattern_matching_complex",
+    "parenthesized_context_managers",
+]
 
 SOURCES = [
     "src/black/__init__.py",
