@@ -115,12 +115,17 @@ class ParserGenerator(object):
             assert label[0] in ('"', "'"), label
             value = eval(label)
             if value[0].isalpha():
+                if label[0] == '"':
+                    keywords = c.soft_keywords
+                else:
+                    keywords = c.keywords
+
                 # A keyword
-                if value in c.keywords:
-                    return c.keywords[value]
+                if value in keywords:
+                    return keywords[value]
                 else:
                     c.labels.append((token.NAME, value))
-                    c.keywords[value] = ilabel
+                    keywords[value] = ilabel
                     return ilabel
             else:
                 # An operator (any non-numeric token)
