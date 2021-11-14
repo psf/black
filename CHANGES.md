@@ -11,6 +11,7 @@
   when `--target-version py310` is explicitly specified (#2586)
 - Add support for parenthesized with (#2586)
 - Fixed Vim with Python 3.10 by removing deprecated distutils (#2610)
+- Declare support for Python 3.10 for running Black (#2562)
 
 ## 21.10b0
 
