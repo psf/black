@@ -70,9 +70,7 @@ class Recorder:
         finally:
             self.parser.stack = self._start_point
 
-    def add_token(
-        self, tok_type: int, tok_val: Text, raw: bool = False
-    ) -> None:
+    def add_token(self, tok_type: int, tok_val: Text, raw: bool = False) -> None:
         func: Callable[..., Any]
         if raw:
             func = self.parser._addtoken
@@ -251,9 +249,7 @@ class Parser(object):
 
         return self._addtoken(ilabel, type, value, context)
 
-    def _addtoken(
-        self, ilabel: int, type: int, value: Text, context: Context
-    ) -> bool:
+    def _addtoken(self, ilabel: int, type: int, value: Text, context: Context) -> bool:
         # Loop until the token is shifted; may raise exceptions
         while True:
             dfa, state, node = self.stack[-1]

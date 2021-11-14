@@ -20,6 +20,8 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Final
 
+from mypy_extensions import mypyc_attr
+
 # lib2to3 fork
 from blib2to3.pytree import Node, Leaf, type_repr
 from blib2to3 import pygram
@@ -142,6 +144,7 @@ ALWAYS_NO_SPACE: Final = CLOSING_BRACKETS | {token.COMMA, STANDALONE_COMMENT}
 RARROW = 55
 
 
+@mypyc_attr(allow_interpreted_subclasses=True)
 class Visitor(Generic[T]):
     """Basic lib2to3 visitor that yields things of type `T` on `visit()`."""
 

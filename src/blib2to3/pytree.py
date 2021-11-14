@@ -91,8 +91,6 @@ class Base(object):
             return NotImplemented
         return self._eq(other)
 
-    __hash__ = None  # type: Any  # For Py3 compatibility.
-
     @property
     def prefix(self) -> Text:
         raise NotImplementedError
