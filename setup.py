@@ -75,7 +75,7 @@ setup(
         "click>=7.1.2",
         "platformdirs>=2",
         "tomli>=0.2.6,<2.0.0",
-        "typed-ast>=1.4.2; python_version < '3.8'",
+        "typed-ast>=1.4.2; python_version < '3.8' and implementation_name == 'cpython'",
         "regex>=2020.1.8",
         "pathspec>=0.9.0, <1",
         "dataclasses>=0.6; python_version < '3.7'",
