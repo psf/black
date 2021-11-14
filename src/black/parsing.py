@@ -2,6 +2,7 @@
 Parse Python code and perform AST validation.
 """
 import ast
+import platform
 import sys
 from typing import Iterable, Iterator, List, Set, Union, Tuple
 
@@ -15,10 +16,13 @@ from blib2to3.pgen2.parse import ParseError
 from black.mode import TargetVersion, Feature, supports_feature
 from black.nodes import syms
 
+_IS_PYPY = platform.python_implementation() == "PyPy"
+
 try:
     from typed_ast import ast3, ast27
 except ImportError:
-    if sys.version_info < (3, 8):
+    # Either our python version is too low, or we're on pypy
+    if sys.version_info < (3, 7) or (sys.version_info < (3, 8) and not _IS_PYPY):
         print(
             "The typed_ast package is required but not installed.\n"
             "You can upgrade to Python 3.8+ or install typed_ast with\n"
@@ -117,7 +121,10 @@ def parse_single_version(
     if sys.version_info >= (3, 8) and version >= (3,):
         return ast.parse(src, filename, feature_version=version)
     elif version >= (3,):
-        return ast3.parse(src, filename, feature_version=version[1])
+        if _IS_PYPY:
+            return ast3.parse(src, filename)
+        else:
+            return ast3.parse(src, filename, feature_version=version[1])
     elif version == (2, 7):
         return ast27.parse(src)
     raise AssertionError("INTERNAL ERROR: Tried parsing unsupported Python version!")
@@ -151,12 +158,14 @@ def stringify_ast(
     yield f"{'  ' * depth}{node.__class__.__name__}("
 
     for field in sorted(node._fields):  # noqa: F402
-        # TypeIgnore has only one field 'lineno' which breaks this comparison
-        type_ignore_classes = (ast3.TypeIgnore, ast27.TypeIgnore)
-        if sys.version_info >= (3, 8):
-            type_ignore_classes += (ast.TypeIgnore,)
-        if isinstance(node, type_ignore_classes):
-            break
+        # TypeIgnore will not be present using pypy < 3.8, so need for this
+        if not (_IS_PYPY and sys.version_info < (3, 8)):
+            # TypeIgnore has only one field 'lineno' which breaks this comparison
+            type_ignore_classes = (ast3.TypeIgnore, ast27.TypeIgnore)
+            if sys.version_info >= (3, 8):
+                type_ignore_classes += (ast.TypeIgnore,)
+            if isinstance(node, type_ignore_classes):
+                break
 
         try:
             value = getattr(node, field)
