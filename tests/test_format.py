@@ -73,6 +73,7 @@ EXPERIMENTAL_STRING_PROCESSING_CASES = [
 PY310_CASES = [
     "pattern_matching_simple",
     "pattern_matching_complex",
+    "pattern_matching_extras",
     "parenthesized_context_managers",
 ]
 
