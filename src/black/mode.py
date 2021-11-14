@@ -20,6 +20,7 @@ class TargetVersion(Enum):
     PY37 = 7
     PY38 = 8
     PY39 = 9
+    PY310 = 10
 
     def is_python2(self) -> bool:
         return self is TargetVersion.PY27
@@ -39,6 +40,7 @@ class Feature(Enum):
     ASSIGNMENT_EXPRESSIONS = 8
     POS_ONLY_ARGUMENTS = 9
     RELAXED_DECORATORS = 10
+    PATTERN_MATCHING = 11
     FORCE_OPTIONAL_PARENTHESES = 50
 
     # temporary for Python 2 deprecation
@@ -107,6 +109,9 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.ASSIGNMENT_EXPRESSIONS,
         Feature.RELAXED_DECORATORS,
         Feature.POS_ONLY_ARGUMENTS,
+    },
+    TargetVersion.PY310: {
+        Feature.PATTERN_MATCHING,
     },
 }
 
