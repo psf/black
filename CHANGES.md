@@ -7,6 +7,9 @@
 - Warn about Python 2 deprecation in more cases by improving Python 2 only syntax
   detection (#2592)
 - Add experimental pypy support (#2559)
+- Add partial support for the match statement. As it's experimental, it's only enabled
+  when `--target-version py310` is explicitly specified (#2586)
+- Add support for parenthesized with (#2586)
 
 ## 21.10b0
 
