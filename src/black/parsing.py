@@ -71,6 +71,9 @@ def get_grammars(target_versions: Set[TargetVersion]) -> List[Grammar]:
 
     # Python 3-compatible code, so only try Python 3 grammar.
     grammars = []
+    if supports_feature(target_versions, Feature.PATTERN_MATCHING):
+        # Python 3.10+
+        grammars.append(pygram.python_grammar_soft_keywords)
     # If we have to parse both, try to parse async as a keyword first
     if not supports_feature(target_versions, Feature.ASYNC_IDENTIFIERS):
         # Python 3.7+
