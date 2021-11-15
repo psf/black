@@ -12,6 +12,10 @@
 - Add support for parenthesized with (#2586)
 - Declare support for Python 3.10 for running Black (#2562)
 
+### Integrations
+
+- Fixed vim plugin with Python 3.10 by removing deprecated distutils import (#2610)
+
 ## 21.10b0
 
 ### _Black_
