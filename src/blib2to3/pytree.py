@@ -52,7 +52,7 @@ def type_repr(type_num: int) -> Union[Text, int]:
     return _type_reprs.setdefault(type_num, type_num)
 
 
-_P = TypeVar("_P")
+_P = TypeVar("_P", bound="Base")
 
 NL = Union["Node", "Leaf"]
 Context = Tuple[Text, Tuple[int, int]]
