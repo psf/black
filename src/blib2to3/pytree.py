@@ -109,6 +109,9 @@ class Base(object):
         """
         raise NotImplementedError
 
+    def __deepcopy__(self: _P, memo: Any) -> _P:
+        return self.clone()
+
     def clone(self: _P) -> _P:
         """
         Return a cloned (deep) copy of self.
