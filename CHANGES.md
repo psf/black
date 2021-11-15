@@ -10,11 +10,11 @@
 - Add partial support for the match statement. As it's experimental, it's only enabled
   when `--target-version py310` is explicitly specified (#2586)
 - Add support for parenthesized with (#2586)
+- Declare support for Python 3.10 for running Black (#2562)
 
 ### Integrations
 
 - Fixed vim plugin with Python 3.10 by removing deprecated distutils import (#2610)
-- Declare support for Python 3.10 for running Black (#2562)
 
 ## 21.10b0
 
