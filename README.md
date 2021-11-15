@@ -138,7 +138,7 @@ Twisted, LocalStack, every Datadog Agent Integration, Home Assistant, Zulip, Ked
 many more.
 
 The following organizations use _Black_: Facebook, Dropbox, Mozilla, Quora, Duolingo,
-QuantumBlack.
+QuantumBlack, Tesla.
 
 Are we missing anyone? Let us know.
 
