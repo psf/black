@@ -127,13 +127,20 @@ def read_pyproject_toml(
     if not config:
         return None
 
-    if ctx.default_map:
-        config.update(ctx.default_map)
-
-    black_config = config.get("config")
+    black_config = config.get("config") or (
+        ctx.default_map.get("config") if ctx.default_map else None
+    )
     if black_config:
         black_config_path = Path(Path(value).parent, black_config).resolve()
-        return read_pyproject_toml(ctx, param, str(black_config_path))
+        read_pyproject_toml(ctx, param, str(black_config_path))
+        del config["config"]
+
+        if ctx.default_map:
+            ctx.default_map.update(config)
+            config = ctx.default_map.copy()
+    else:
+        if ctx.default_map:
+            config.update(ctx.default_map)
 
     # Sanitize the values to be Click friendly. For more information please see:
     # https://github.com/psf/black/issues/1458

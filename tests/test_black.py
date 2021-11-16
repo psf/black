@@ -1339,12 +1339,12 @@ class BlackTestCase(BlackBaseTestCase):
         fake_ctx = FakeContext()
         black.read_pyproject_toml(fake_ctx, FakeParameter(), str(test_toml_file))
         config = fake_ctx.default_map
-        # `0` in `test_replace.toml` and `1` in `_black_config.toml`. Should be `1` as
-        # the one linked should overwrite the config
-        self.assertEqual(config["verbose"], "1")
+        # `0` in `test_replace.toml` and `1` in `_black_config.toml`.
+        # Should be `0` as the root config is on a higher level than linked configs
+        self.assertEqual(config["verbose"], "0")
         self.assertEqual(config["check"], "no")
         self.assertEqual(config["diff"], "y")
-        self.assertEqual(config["color"], "True")
+        self.assertEqual(config["color"], "False")
         self.assertEqual(config["line_length"], "88")
         self.assertEqual(config["target_version"], ["py36", "py37", "py38"])
         self.assertEqual(config["exclude"], r"\.pyi?$")
