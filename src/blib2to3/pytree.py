@@ -52,7 +52,7 @@ def type_repr(type_num: int) -> Union[Text, int]:
     return _type_reprs.setdefault(type_num, type_num)
 
 
-_P = TypeVar("_P")
+_P = TypeVar("_P", bound="Base")
 
 NL = Union["Node", "Leaf"]
 Context = Tuple[Text, Tuple[int, int]]
@@ -108,6 +108,9 @@ class Base(object):
         ignoring the prefix string and other context information.
         """
         raise NotImplementedError
+
+    def __deepcopy__(self: _P, memo: Any) -> _P:
+        return self.clone()
 
     def clone(self: _P) -> _P:
         """
