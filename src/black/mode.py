@@ -6,6 +6,7 @@ chosen by the user.
 
 from dataclasses import dataclass, field
 from enum import Enum
+from operator import attrgetter
 from typing import Dict, Set
 
 from black.const import DEFAULT_LINE_LENGTH
@@ -134,7 +135,7 @@ class Mode:
         if self.target_versions:
             version_str = ",".join(
                 str(version.value)
-                for version in sorted(self.target_versions, key=lambda v: v.value)
+                for version in sorted(self.target_versions, key=attrgetter("value"))
             )
         else:
             version_str = "-"

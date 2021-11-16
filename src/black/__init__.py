@@ -30,8 +30,9 @@ from typing import (
     Union,
 )
 
-from dataclasses import replace
 import click
+from dataclasses import replace
+from mypy_extensions import mypyc_attr
 
 from black.const import DEFAULT_LINE_LENGTH, DEFAULT_INCLUDES, DEFAULT_EXCLUDES
 from black.const import STDIN_PLACEHOLDER
@@ -65,6 +66,8 @@ from blib2to3.pytree import Node, Leaf
 from blib2to3.pgen2 import token
 
 from _black_version import version as __version__
+
+COMPILED = Path(__file__).suffix in (".pyd", ".so")
 
 # types
 FileContent = str
@@ -177,7 +180,12 @@ def validate_regex(
         raise click.BadParameter("Not a valid regular expression") from None
 
 
-@click.command(context_settings=dict(help_option_names=["-h", "--help"]))
+@click.command(
+    context_settings=dict(help_option_names=["-h", "--help"]),
+    # While Click does set this field automatically using the docstring, mypyc
+    # (annoyingly) strips 'em so we need to set it here too.
+    help="The uncompromising code formatter.",
+)
 @click.option("-c", "--code", type=str, help="Format the code passed in as a string.")
 @click.option(
     "-l",
@@ -346,7 +354,10 @@ def validate_regex(
         " due to exclusion patterns."
     ),
 )
-@click.version_option(version=__version__)
+@click.version_option(
+    version=__version__,
+    message=f"%(prog)s, %(version)s (compiled: {'yes' if COMPILED else 'no'})",
+)
 @click.argument(
     "src",
     nargs=-1,
@@ -387,7 +398,7 @@ def main(
     experimental_string_processing: bool,
     quiet: bool,
     verbose: bool,
-    required_version: str,
+    required_version: Optional[str],
     include: Pattern[str],
     exclude: Optional[Pattern[str]],
     extend_exclude: Optional[Pattern[str]],
@@ -655,6 +666,9 @@ def reformat_one(
         report.failed(src, str(exc))
 
 
+# diff-shades depends on being to monkeypatch this function to operate. I know it's
+# not ideal, but this shouldn't cause any issues ... hopefully. ~ichard26
+@mypyc_attr(patchable=True)
 def reformat_many(
     sources: Set[Path],
     fast: bool,
@@ -669,6 +683,7 @@ def reformat_many(
     worker_count = workers if workers is not None else DEFAULT_WORKERS
     if sys.platform == "win32":
         # Work around https://bugs.python.org/issue26903
+        assert worker_count is not None
         worker_count = min(worker_count, 60)
     try:
         executor = ProcessPoolExecutor(max_workers=worker_count)

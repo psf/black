@@ -4,10 +4,20 @@ Simple formatting on strings. Further string formatting code is in trans.py.
 
 import regex as re
 import sys
+from functools import lru_cache
 from typing import List, Pattern
 
+if sys.version_info < (3, 8):
+    from typing_extensions import Final
+else:
+    from typing import Final
 
-STRING_PREFIX_CHARS = "furbFURB"  # All possible string prefix characters.
+
+STRING_PREFIX_CHARS: Final = "furbFURB"  # All possible string prefix characters.
+STRING_PREFIX_RE: Final = re.compile(
+    r"^([" + STRING_PREFIX_CHARS + r"]*)(.*)$", re.DOTALL
+)
+FIRST_NON_WHITESPACE_RE: Final = re.compile(r"\s*\t+\s*(\S)")
 
 
 def sub_twice(regex: Pattern[str], replacement: str, original: str) -> str:
@@ -37,7 +47,7 @@ def lines_with_leading_tabs_expanded(s: str) -> List[str]:
     for line in s.splitlines():
         # Find the index of the first non-whitespace character after a string of
         # whitespace that includes at least one tab
-        match = re.match(r"\s*\t+\s*(\S)", line)
+        match = FIRST_NON_WHITESPACE_RE.match(line)
         if match:
             first_non_whitespace_idx = match.start(1)
 
@@ -133,13 +143,21 @@ def normalize_string_prefix(s: str, remove_u_prefix: bool = False) -> str:
 
     If remove_u_prefix is given, also removes any u prefix from the string.
     """
-    match = re.match(r"^([" + STRING_PREFIX_CHARS + r"]*)(.*)$", s, re.DOTALL)
+    match = STRING_PREFIX_RE.match(s)
     assert match is not None, f"failed to match string {s!r}"
     orig_prefix = match.group(1)
     new_prefix = orig_prefix.replace("F", "f").replace("B", "b").replace("U", "u")
     if remove_u_prefix:
         new_prefix = new_prefix.replace("u", "")
     return f"{new_prefix}{match.group(2)}"
+
+
+# Re(gex) does actually cache patterns internally but this still improves
+# performance on a long list literal of strings by 5-9% since lru_cache's
+# caching overhead is much lower.
+@lru_cache(maxsize=64)
+def _cached_compile(pattern: str) -> re.Pattern:
+    return re.compile(pattern)
 
 
 def normalize_string_quotes(s: str) -> str:
@@ -166,9 +184,9 @@ def normalize_string_quotes(s: str) -> str:
         return s  # There's an internal error
 
     prefix = s[:first_quote_pos]
-    unescaped_new_quote = re.compile(rf"(([^\\]|^)(\\\\)*){new_quote}")
-    escaped_new_quote = re.compile(rf"([^\\]|^)\\((?:\\\\)*){new_quote}")
-    escaped_orig_quote = re.compile(rf"([^\\]|^)\\((?:\\\\)*){orig_quote}")
+    unescaped_new_quote = _cached_compile(rf"(([^\\]|^)(\\\\)*){new_quote}")
+    escaped_new_quote = _cached_compile(rf"([^\\]|^)\\((?:\\\\)*){new_quote}")
+    escaped_orig_quote = _cached_compile(rf"([^\\]|^)\\((?:\\\\)*){orig_quote}")
     body = s[first_quote_pos + len(orig_quote) : -len(orig_quote)]
     if "r" in prefix.casefold():
         if unescaped_new_quote.search(body):

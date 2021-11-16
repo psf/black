@@ -23,6 +23,7 @@ import pkgutil
 import sys
 from typing import (
     Any,
+    cast,
     IO,
     Iterable,
     List,
@@ -34,14 +35,15 @@ from typing import (
     Generic,
     Union,
 )
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 
 # Pgen imports
 from . import grammar, parse, token, tokenize, pgen
 from logging import Logger
-from blib2to3.pytree import _Convert, NL
+from blib2to3.pytree import NL
 from blib2to3.pgen2.grammar import Grammar
-from contextlib import contextmanager
+from blib2to3.pgen2.tokenize import GoodTokenInfo
 
 Path = Union[str, "os.PathLike[str]"]
 
@@ -115,29 +117,23 @@ class TokenProxy:
 
 
 class Driver(object):
-    def __init__(
-        self,
-        grammar: Grammar,
-        convert: Optional[_Convert] = None,
-        logger: Optional[Logger] = None,
-    ) -> None:
+    def __init__(self, grammar: Grammar, logger: Optional[Logger] = None) -> None:
         self.grammar = grammar
         if logger is None:
             logger = logging.getLogger(__name__)
         self.logger = logger
-        self.convert = convert
 
-    def parse_tokens(self, tokens: Iterable[Any], debug: bool = False) -> NL:
+    def parse_tokens(self, tokens: Iterable[GoodTokenInfo], debug: bool = False) -> NL:
         """Parse a series of tokens and return the syntax tree."""
         # XXX Move the prefix computation into a wrapper around tokenize.
         proxy = TokenProxy(tokens)
 
-        p = parse.Parser(self.grammar, self.convert)
+        p = parse.Parser(self.grammar)
         p.setup(proxy=proxy)
 
         lineno = 1
         column = 0
-        indent_columns = []
+        indent_columns: List[int] = []
         type = value = start = end = line_text = None
         prefix = ""
 
@@ -163,6 +159,7 @@ class Driver(object):
             if type == token.OP:
                 type = grammar.opmap[value]
             if debug:
+                assert type is not None
                 self.logger.debug(
                     "%s %r (prefix=%r)", token.tok_name[type], value, prefix
                 )
@@ -174,7 +171,7 @@ class Driver(object):
             elif type == token.DEDENT:
                 _indent_col = indent_columns.pop()
                 prefix, _prefix = self._partially_consume_prefix(prefix, _indent_col)
-            if p.addtoken(type, value, (prefix, start)):
+            if p.addtoken(cast(int, type), value, (prefix, start)):
                 if debug:
                     self.logger.debug("Stop.")
                 break

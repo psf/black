@@ -104,12 +104,11 @@ async def async_main(
             no_diff,
         )
         return int(ret_val)
+
     finally:
         if not keep and work_path.exists():
             LOG.debug(f"Removing {work_path}")
             rmtree(work_path, onerror=lib.handle_PermissionError)
-
-    return -2
 
 
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})

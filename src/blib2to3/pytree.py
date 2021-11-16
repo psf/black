@@ -14,7 +14,6 @@ There's also a pattern matching implementation here.
 
 from typing import (
     Any,
-    Callable,
     Dict,
     Iterator,
     List,
@@ -91,8 +90,6 @@ class Base(object):
         if self.__class__ is not other.__class__:
             return NotImplemented
         return self._eq(other)
-
-    __hash__ = None  # type: Any  # For Py3 compatibility.
 
     @property
     def prefix(self) -> Text:
@@ -437,7 +434,7 @@ class Leaf(Base):
 
         This reproduces the input source exactly.
         """
-        return self.prefix + str(self.value)
+        return self._prefix + str(self.value)
 
     def _eq(self, other) -> bool:
         """Compare two nodes for equality."""
@@ -672,8 +669,11 @@ class NodePattern(BasePattern):
             newcontent = list(content)
             for i, item in enumerate(newcontent):
                 assert isinstance(item, BasePattern), (i, item)
-                if isinstance(item, WildcardPattern):
-                    self.wildcards = True
+                # I don't even think this code is used anywhere, but it does cause
+                # unreachable errors from mypy. This function's signature does look
+                # odd though *shrug*.
+                if isinstance(item, WildcardPattern):  # type: ignore[unreachable]
+                    self.wildcards = True  # type: ignore[unreachable]
         self.type = type
         self.content = newcontent
         self.name = name
@@ -978,6 +978,3 @@ def generate_matches(
                     r.update(r0)
                     r.update(r1)
                     yield c0 + c1, r
-
-
-_Convert = Callable[[Grammar, RawNode], Any]
