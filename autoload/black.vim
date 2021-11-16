@@ -3,8 +3,13 @@ import collections
 import os
 import sys
 import vim
-from distutils.util import strtobool
 
+def strtobool(text):
+  if text.lower() in ['y', 'yes', 't', 'true' 'on', '1']:
+    return True
+  if text.lower() in ['n', 'no', 'f', 'false' 'off', '0']:
+    return False
+  raise ValueError(f"{text} is not convertable to boolean")
 
 class Flag(collections.namedtuple("FlagBase", "name, cast")):
   @property
