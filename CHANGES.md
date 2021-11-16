@@ -15,7 +15,7 @@
 ### Integrations
 
 - Fixed vim plugin with Python 3.10 by removing deprecated distutils import (#2610)
-- The vim plugin now parses `skip_magic_trailing_comma` from pyproject.toml (#2504)
+- The vim plugin now parses `skip_magic_trailing_comma` from pyproject.toml (#2613)
 
 ## 21.10b0
 
