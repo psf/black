@@ -19,3 +19,5 @@ Change Log:
     https://github.com/python/cpython/commit/cae60187cf7a7b26281d012e1952fafe4e2e97e9
   - "bpo-42316: Allow unparenthesized walrus operator in indexes (GH-23317)"
     https://github.com/python/cpython/commit/b0aba1fcdc3da952698d99aec2334faa79a8b68c
+- Tweaks to help mypyc compile faster code (including inlining type information,
+  "Final-ing", etc.)

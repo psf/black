@@ -333,7 +333,7 @@ class CellMagic:
         return f"%%{self.name}"
 
 
-@dataclasses.dataclass
+# ast.NodeVisitor + dataclass = breakage under mypyc.
 class CellMagicFinder(ast.NodeVisitor):
     """Find cell magics.
 
@@ -352,7 +352,8 @@ class CellMagicFinder(ast.NodeVisitor):
     and we look for instances of the latter.
     """
 
-    cell_magic: Optional[CellMagic] = None
+    def __init__(self, cell_magic: Optional[CellMagic] = None) -> None:
+        self.cell_magic = cell_magic
 
     def visit_Expr(self, node: ast.Expr) -> None:
         """Find cell magic, extract header and body."""
@@ -372,7 +373,8 @@ class OffsetAndMagic:
     magic: str
 
 
-@dataclasses.dataclass
+# Unsurprisingly, subclassing ast.NodeVisitor means we can't use dataclasses here
+# as mypyc will generate broken code.
 class MagicFinder(ast.NodeVisitor):
     """Visit cell to look for get_ipython calls.
 
@@ -392,9 +394,8 @@ class MagicFinder(ast.NodeVisitor):
     types of magics).
     """
 
-    magics: Dict[int, List[OffsetAndMagic]] = dataclasses.field(
-        default_factory=lambda: collections.defaultdict(list)
-    )
+    def __init__(self) -> None:
+        self.magics: Dict[int, List[OffsetAndMagic]] = collections.defaultdict(list)
 
     def visit_Assign(self, node: ast.Assign) -> None:
         """Look for system assign magics.

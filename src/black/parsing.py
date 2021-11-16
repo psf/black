@@ -4,17 +4,25 @@ Parse Python code and perform AST validation.
 import ast
 import platform
 import sys
-from typing import Iterable, Iterator, List, Set, Union, Tuple
+from typing import Any, Iterable, Iterator, List, Set, Tuple, Type, Union
+
+if sys.version_info < (3, 8):
+    from typing_extensions import Final
+else:
+    from typing import Final
 
 # lib2to3 fork
 from blib2to3.pytree import Node, Leaf
-from blib2to3 import pygram, pytree
+from blib2to3 import pygram
 from blib2to3.pgen2 import driver
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.parse import ParseError
 
 from black.mode import TargetVersion, Feature, supports_feature
 from black.nodes import syms
+
+ast3: Any
+ast27: Any
 
 _IS_PYPY = platform.python_implementation() == "PyPy"
 
@@ -86,7 +94,7 @@ def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -
         src_txt += "\n"
 
     for grammar in get_grammars(set(target_versions)):
-        drv = driver.Driver(grammar, pytree.convert)
+        drv = driver.Driver(grammar)
         try:
             result = drv.parse_string(src_txt, True)
             break
@@ -148,6 +156,10 @@ def parse_ast(src: str) -> Union[ast.AST, ast3.AST, ast27.AST]:
     raise SyntaxError(first_error)
 
 
+ast3_AST: Final[Type[ast3.AST]] = ast3.AST
+ast27_AST: Final[Type[ast27.AST]] = ast27.AST
+
+
 def stringify_ast(
     node: Union[ast.AST, ast3.AST, ast27.AST], depth: int = 0
 ) -> Iterator[str]:
@@ -189,7 +201,13 @@ def stringify_ast(
                 elif isinstance(item, (ast.AST, ast3.AST, ast27.AST)):
                     yield from stringify_ast(item, depth + 2)
 
-        elif isinstance(value, (ast.AST, ast3.AST, ast27.AST)):
+        # Note that we are referencing the typed-ast ASTs via global variables and not
+        # direct module attribute accesses because that breaks mypyc. It's probably
+        # something to do with the ast3 / ast27 variables being marked as Any leading
+        # mypy to think this branch is always taken, leaving the rest of the code
+        # unanalyzed. Tighting up the types for the typed-ast AST types avoids the
+        # mypyc crash.
+        elif isinstance(value, (ast.AST, ast3_AST, ast27_AST)):
             yield from stringify_ast(value, depth + 2)
 
         else:

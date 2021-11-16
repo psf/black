@@ -29,7 +29,7 @@ from typing import (
     TYPE_CHECKING,
 )
 from blib2to3.pgen2.grammar import Grammar
-from blib2to3.pytree import NL, Context, RawNode, Leaf, Node
+from blib2to3.pytree import convert, NL, Context, RawNode, Leaf, Node
 
 if TYPE_CHECKING:
     from blib2to3.driver import TokenProxy
@@ -70,9 +70,7 @@ class Recorder:
         finally:
             self.parser.stack = self._start_point
 
-    def add_token(
-        self, tok_type: int, tok_val: Optional[Text], raw: bool = False
-    ) -> None:
+    def add_token(self, tok_type: int, tok_val: Text, raw: bool = False) -> None:
         func: Callable[..., Any]
         if raw:
             func = self.parser._addtoken
@@ -86,9 +84,7 @@ class Recorder:
                     args.insert(0, ilabel)
                 func(*args)
 
-    def determine_route(
-        self, value: Optional[Text] = None, force: bool = False
-    ) -> Optional[int]:
+    def determine_route(self, value: Text = None, force: bool = False) -> Optional[int]:
         alive_ilabels = self.ilabels
         if len(alive_ilabels) == 0:
             *_, most_successful_ilabel = self._dead_ilabels
@@ -164,6 +160,11 @@ class Parser(object):
         to be converted.  The syntax tree is converted from the bottom
         up.
 
+        **post-note: the convert argument is ignored since for Black's
+        usage, convert will always be blib2to3.pytree.convert. Allowing
+        this to be dynamic hurts mypyc's ability to use early binding.
+        These docs are left for historical and informational value.
+
         A concrete syntax tree node is a (type, value, context, nodes)
         tuple, where type is the node type (a token or symbol number),
         value is None for symbols and a string for tokens, context is
@@ -176,6 +177,7 @@ class Parser(object):
 
         """
         self.grammar = grammar
+        # See note in docstring above. TL;DR this is ignored.
         self.convert = convert or lam_sub
 
     def setup(self, proxy: "TokenProxy", start: Optional[int] = None) -> None:
@@ -203,7 +205,7 @@ class Parser(object):
         self.used_names: Set[str] = set()
         self.proxy = proxy
 
-    def addtoken(self, type: int, value: Optional[Text], context: Context) -> bool:
+    def addtoken(self, type: int, value: Text, context: Context) -> bool:
         """Add a token; return True iff this is the end of the program."""
         # Map from token to label
         ilabels = self.classify(type, value, context)
@@ -237,7 +239,7 @@ class Parser(object):
 
                 next_token_type, next_token_value, *_ = proxy.eat(counter)
                 if next_token_type == tokenize.OP:
-                    next_token_type = grammar.opmap[cast(str, next_token_value)]
+                    next_token_type = grammar.opmap[next_token_value]
 
                 recorder.add_token(next_token_type, next_token_value)
                 counter += 1
@@ -247,9 +249,7 @@ class Parser(object):
 
         return self._addtoken(ilabel, type, value, context)
 
-    def _addtoken(
-        self, ilabel: int, type: int, value: Optional[Text], context: Context
-    ) -> bool:
+    def _addtoken(self, ilabel: int, type: int, value: Text, context: Context) -> bool:
         # Loop until the token is shifted; may raise exceptions
         while True:
             dfa, state, node = self.stack[-1]
@@ -257,10 +257,18 @@ class Parser(object):
             arcs = states[state]
             # Look for a state with this label
             for i, newstate in arcs:
-                t, v = self.grammar.labels[i]
-                if ilabel == i:
+                t = self.grammar.labels[i][0]
+                if t >= 256:
+                    # See if it's a symbol and if we're in its first set
+                    itsdfa = self.grammar.dfas[t]
+                    itsstates, itsfirst = itsdfa
+                    if ilabel in itsfirst:
+                        # Push a symbol
+                        self.push(t, itsdfa, newstate, context)
+                        break  # To continue the outer while loop
+
+                elif ilabel == i:
                     # Look it up in the list of labels
-                    assert t < 256
                     # Shift a token; we're done with it
                     self.shift(type, value, newstate, context)
                     # Pop while we are in an accept-only state
@@ -274,14 +282,7 @@ class Parser(object):
                         states, first = dfa
                     # Done with this token
                     return False
-                elif t >= 256:
-                    # See if it's a symbol and if we're in its first set
-                    itsdfa = self.grammar.dfas[t]
-                    itsstates, itsfirst = itsdfa
-                    if ilabel in itsfirst:
-                        # Push a symbol
-                        self.push(t, self.grammar.dfas[t], newstate, context)
-                        break  # To continue the outer while loop
+
             else:
                 if (0, state) in arcs:
                     # An accepting state, pop it and try something else
@@ -293,14 +294,13 @@ class Parser(object):
                     # No success finding a transition
                     raise ParseError("bad input", type, value, context)
 
-    def classify(self, type: int, value: Optional[Text], context: Context) -> List[int]:
+    def classify(self, type: int, value: Text, context: Context) -> List[int]:
         """Turn a token into a label.  (Internal)
 
         Depending on whether the value is a soft-keyword or not,
         this function may return multiple labels to choose from."""
         if type == token.NAME:
             # Keep a listing of all used names
-            assert value is not None
             self.used_names.add(value)
             # Check for reserved words
             if value in self.grammar.keywords:
@@ -317,18 +317,13 @@ class Parser(object):
             raise ParseError("bad token", type, value, context)
         return [ilabel]
 
-    def shift(
-        self, type: int, value: Optional[Text], newstate: int, context: Context
-    ) -> None:
+    def shift(self, type: int, value: Text, newstate: int, context: Context) -> None:
         """Shift a token.  (Internal)"""
         dfa, state, node = self.stack[-1]
-        assert value is not None
-        assert context is not None
         rawnode: RawNode = (type, value, context, None)
-        newnode = self.convert(self.grammar, rawnode)
-        if newnode is not None:
-            assert node[-1] is not None
-            node[-1].append(newnode)
+        newnode = convert(self.grammar, rawnode)
+        assert node[-1] is not None
+        node[-1].append(newnode)
         self.stack[-1] = (dfa, newstate, node)
 
     def push(self, type: int, newdfa: DFAS, newstate: int, context: Context) -> None:
@@ -341,12 +336,11 @@ class Parser(object):
     def pop(self) -> None:
         """Pop a nonterminal.  (Internal)"""
         popdfa, popstate, popnode = self.stack.pop()
-        newnode = self.convert(self.grammar, popnode)
-        if newnode is not None:
-            if self.stack:
-                dfa, state, node = self.stack[-1]
-                assert node[-1] is not None
-                node[-1].append(newnode)
-            else:
-                self.rootnode = newnode
-                self.rootnode.used_names = self.used_names
+        newnode = convert(self.grammar, popnode)
+        if self.stack:
+            dfa, state, node = self.stack[-1]
+            assert node[-1] is not None
+            node[-1].append(newnode)
+        else:
+            self.rootnode = newnode
+            self.rootnode.used_names = self.used_names

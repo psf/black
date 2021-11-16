@@ -6,6 +6,7 @@ chosen by the user.
 
 from dataclasses import dataclass, field
 from enum import Enum
+from operator import attrgetter
 from typing import Dict, Set
 
 from black.const import DEFAULT_LINE_LENGTH
@@ -111,6 +112,15 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.POS_ONLY_ARGUMENTS,
     },
     TargetVersion.PY310: {
+        Feature.UNICODE_LITERALS,
+        Feature.F_STRINGS,
+        Feature.NUMERIC_UNDERSCORES,
+        Feature.TRAILING_COMMA_IN_CALL,
+        Feature.TRAILING_COMMA_IN_DEF,
+        Feature.ASYNC_KEYWORDS,
+        Feature.ASSIGNMENT_EXPRESSIONS,
+        Feature.RELAXED_DECORATORS,
+        Feature.POS_ONLY_ARGUMENTS,
         Feature.PATTERN_MATCHING,
     },
 }
@@ -134,7 +144,7 @@ class Mode:
         if self.target_versions:
             version_str = ",".join(
                 str(version.value)
-                for version in sorted(self.target_versions, key=lambda v: v.value)
+                for version in sorted(self.target_versions, key=attrgetter("value"))
             )
         else:
             version_str = "-"
