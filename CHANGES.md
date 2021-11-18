@@ -1,5 +1,11 @@
 # Change Log
 
+## Unreleased
+
+### _Black_
+
+- Bumped regex version minimum to 2021.4.4 to fix Pattern class usage (#2621)
+
 ## 21.11b0
 
 ### _Black_

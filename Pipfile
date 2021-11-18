@@ -42,7 +42,7 @@ platformdirs= ">=2"
 click = ">=8.0.0"
 mypy_extensions = ">=0.4.3"
 pathspec = ">=0.8.1"
-regex = ">=2020.1.8"
+regex = ">=2021.4.4"
 tomli = ">=0.2.6, <2.0.0"
 typed-ast = "==1.4.3"
 typing_extensions = {markers = "python_version < '3.10'", version = ">=3.10.0.0"}
