@@ -7,7 +7,7 @@ Use [pre-commit](https://pre-commit.com/). Once you
 ```yaml
 repos:
   - repo: https://github.com/psf/black
-    rev: 21.11b0
+    rev: 21.11b1
     hooks:
       - id: black
         # It is recommended to specify the latest version of Python
