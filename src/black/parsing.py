@@ -169,6 +169,7 @@ def stringify_ast(
 
     yield f"{'  ' * depth}{node.__class__.__name__}("
 
+    type_ignore_classes: Tuple[Type[Any], ...]
     for field in sorted(node._fields):  # noqa: F402
         # TypeIgnore will not be present using pypy < 3.8, so need for this
         if not (_IS_PYPY and sys.version_info < (3, 8)):
