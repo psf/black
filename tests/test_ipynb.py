@@ -129,9 +129,9 @@ def test_magic_noop() -> None:
 
 
 def test_cell_magic_with_magic() -> None:
-    src = "%%t -n1\nls =!ls"
+    src = "%%timeit -n1\nls =!ls"
     result = format_cell(src, fast=True, mode=JUPYTER_MODE)
-    expected = "%%t -n1\nls = !ls"
+    expected = "%%timeit -n1\nls = !ls"
     assert result == expected
 
 
