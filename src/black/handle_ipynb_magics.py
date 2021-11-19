@@ -42,6 +42,9 @@ PYTHON_CELL_MAGICS = frozenset(
         "capture",
         "prun",
         "pypy",
+        "python",
+        "python2",
+        "python3",
         "time",
         "timeit",
     )
