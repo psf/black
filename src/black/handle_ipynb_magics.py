@@ -37,20 +37,13 @@ TOKENS_TO_IGNORE = frozenset(
         "ESCAPED_NL",
     )
 )
-NON_PYTHON_CELL_MAGICS = frozenset(
+PYTHON_CELL_MAGICS = frozenset(
     (
-        "bash",
-        "html",
-        "javascript",
-        "js",
-        "latex",
-        "markdown",
-        "perl",
-        "ruby",
-        "script",
-        "sh",
-        "svg",
-        "writefile",
+        "capture",
+        "prun",
+        "pypy",
+        "time",
+        "timeit",
     )
 )
 TOKEN_HEX = secrets.token_hex
@@ -230,8 +223,6 @@ def replace_cell_magics(src: str) -> Tuple[str, List[Replacement]]:
     cell_magic_finder.visit(tree)
     if cell_magic_finder.cell_magic is None:
         return src, replacements
-    if cell_magic_finder.cell_magic.name in NON_PYTHON_CELL_MAGICS:
-        raise NothingChanged
     header = cell_magic_finder.cell_magic.header
     mask = get_token(src, header)
     replacements.append(Replacement(mask=mask, src=header))

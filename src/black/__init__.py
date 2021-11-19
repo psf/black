@@ -57,7 +57,7 @@ from black.handle_ipynb_magics import (
     remove_trailing_semicolon,
     put_trailing_semicolon_back,
     TRANSFORMED_MAGICS,
-    NON_PYTHON_CELL_MAGICS,
+    PYTHON_CELL_MAGICS,
     jupyter_dependencies_are_installed,
 )
 
@@ -962,7 +962,9 @@ def validate_cell(src: str) -> None:
     """
     if any(transformed_magic in src for transformed_magic in TRANSFORMED_MAGICS):
         raise NothingChanged
-    if any("%%" + cell_magic in src for cell_magic in NON_PYTHON_CELL_MAGICS):
+    if src[:2] == "%%" and src.split()[0] not in (
+        "%%" + magic for magic in PYTHON_CELL_MAGICS
+    ):
         raise NothingChanged
 
 
