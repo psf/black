@@ -57,6 +57,7 @@ from black.handle_ipynb_magics import (
     remove_trailing_semicolon,
     put_trailing_semicolon_back,
     TRANSFORMED_MAGICS,
+    NON_PYTHON_CELL_MAGICS,
     jupyter_dependencies_are_installed,
 )
 
@@ -943,7 +944,7 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
 
 
 def validate_cell(src: str) -> None:
-    """Check that cell does not already contain TransformerManager transformations.
+    """Check that cell does not already contain TransformerManager transformations, or cell magics, which might cause TransformerManager to break.
 
     If a cell contains ``!ls``, then it'll be transformed to
     ``get_ipython().system('ls')``. However, if the cell originally contained
@@ -959,6 +960,8 @@ def validate_cell(src: str) -> None:
     """
     if any(transformed_magic in src for transformed_magic in TRANSFORMED_MAGICS):
         raise NothingChanged
+    elif any('%%' + cell_magic in src for cell_magic in NON_PYTHON_CELL_MAGICS):
+        raise NothingChanged        
 
 
 def format_cell(src: str, *, fast: bool, mode: Mode) -> str:
