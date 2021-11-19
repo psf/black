@@ -4,7 +4,9 @@
 
 ### _Black_
 
-- Fixed non-Python cell magics sometimes failing due to indentation (#2630)
+- Cell magics are now only processed if they are known Python cell magics. Earlier, all
+  cell magics were tokenized, leading to possible indentation errors e.g. with
+  `%%writefile`. (#2630)
 
 ## 21.11b1
 
