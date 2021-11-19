@@ -1,5 +1,11 @@
 # Change Log
 
+## Unreleased
+
+### _Black_
+
+- Fixed non-Python cell magics sometimes failing due to indentation (#2630)
+
 ## 21.11b1
 
 ### _Black_
