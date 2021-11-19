@@ -102,6 +102,7 @@ def test_magic(src: str, expected: str) -> None:
     (
         "%%bash\n2+2",
         "%%html --isolated\n2+2",
+        "%%writefile e.txt\n  meh\n meh",
     ),
 )
 def test_non_python_magics(src: str) -> None:
