@@ -1,5 +1,11 @@
 # Change Log
 
+## Unreleased
+
+### _Black_
+
+- Fixed Python 3.10 support on platforms without ProcessPoolExecutor
+
 ## 21.11b1
 
 ### _Black_
