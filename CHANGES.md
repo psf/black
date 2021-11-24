@@ -5,7 +5,7 @@
 ### _Black_
 
 - Fixed Python 3.10 support on platforms without ProcessPoolExecutor (#2631)
-- Fixed `match` statements with open sequence subjects (#2639)
+- Fixed `match` statements with open sequence subjects, like `match a, b:` (#2639)
 
 ## 21.11b1
 
