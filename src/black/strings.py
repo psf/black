@@ -2,7 +2,7 @@
 Simple formatting on strings. Further string formatting code is in trans.py.
 """
 
-import regex as re
+import re
 import sys
 from functools import lru_cache
 from typing import List, Pattern
