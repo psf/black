@@ -27,3 +27,19 @@ def func(match: case, case: match) -> case:
             ...
         case func(match, case):
             ...
+
+
+match maybe, multiple:
+    case perhaps, 5:
+        pass
+    case perhaps, 6,:
+        pass
+
+
+match more := (than, one), indeed,:
+    case _, (5, 6):
+        pass
+    case [[5], (6)], [7],:
+        pass
+    case _:
+        pass
