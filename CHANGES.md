@@ -6,6 +6,7 @@
 
 - Fixed Python 3.10 support on platforms without ProcessPoolExecutor (#2631)
 - Fixed `match` statements with open sequence subjects, like `match a, b:` (#2639)
+- Reduce usage of the `regex` dependency (#2644)
 
 ## 21.11b1
 
