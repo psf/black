@@ -86,7 +86,7 @@ Whitespace = r"[ \f\t]*"
 Comment = r"#[^\r\n]*"
 Ignore = Whitespace + any(r"\\\r?\n" + Whitespace) + maybe(Comment)
 Name = (  # this is invalid but it's fine because Name comes after Number in all groups
-    r"[^ \f\t#\(\)\[\]\{\}+\-*/!@$%^&=|;:'\",\.<>/?`~]+"
+    r"[^\s#\(\)\[\]\{\}+\-*/!@$%^&=|;:'\",\.<>/?`~]+"
 )
 
 Binnumber = r"0[bB]_?[01]+(?:_[01]+)*"
