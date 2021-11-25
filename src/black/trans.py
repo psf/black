@@ -4,7 +4,7 @@ String transformers that can split and merge strings.
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass
-import re
+import regex as re  # We need recursive patterns here (?R)
 from typing import (
     Any,
     Callable,
