@@ -422,7 +422,7 @@ class MagicFinder(ast.NodeVisitor):
                     src += f" {args[1]}"
             else:
                 raise AssertionError(
-                    "Unexpected IPython magic found. "
+                    "Unexpected IPython magic {node.value.func.attr!r} found. "
                     "Please report a bug on https://github.com/psf/black/issues."
                 ) from None
             self.magics[node.value.lineno].append(
