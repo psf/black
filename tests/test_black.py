@@ -31,7 +31,7 @@ from unittest.mock import MagicMock, patch
 
 import click
 import pytest
-import regex as re
+import re
 from click import unstyle
 from click.testing import CliRunner
 from pathspec import PathSpec
@@ -70,7 +70,7 @@ T = TypeVar("T")
 R = TypeVar("R")
 
 # Match the time output in a diff, but nothing else
-DIFF_TIME = re.compile(r"\t[\d-:+\. ]+")
+DIFF_TIME = re.compile(r"\t[\d\-:+\. ]+")
 
 
 @contextmanager
