@@ -6,6 +6,7 @@
 
 - Fixed Python 3.10 support on platforms without ProcessPoolExecutor (#2631)
 - Fixed `match` statements with open sequence subjects, like `match a, b:` (#2639)
+- Fixed assignment to environment variables in Jupyter Notebooks (#2642)
 
 ## 21.11b1
 
