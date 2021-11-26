@@ -4,9 +4,10 @@
 
 ### _Black_
 
-- Fixed Python 3.10 support on platforms without ProcessPoolExecutor (#2631)
-- Fixed `match` statements with open sequence subjects, like `match a, b:` (#2639)
-- Fixed assignment to environment variables in Jupyter Notebooks (#2642)
+- Fix Python 3.10 support on platforms without ProcessPoolExecutor (#2631)
+- Fix `match` statements with open sequence subjects, like `match a, b:` (#2639)
+- Fix assignment to environment variables in Jupyter Notebooks (#2642)
+- Fix parser error on invalid syntax in a `match` statement (#2649)
 
 ## 21.11b1
 
