@@ -419,7 +419,6 @@ class MagicFinder(ast.NodeVisitor):
             elif node.value.func.attr == "run_line_magic":
                 src = f"%{args[0]}"
                 if args[1]:
-                    assert src is not None
                     src += f" {args[1]}"
             else:
                 raise AssertionError(
@@ -460,7 +459,6 @@ class MagicFinder(ast.NodeVisitor):
                 else:
                     src = f"%{args[0]}"
                     if args[1]:
-                        assert src is not None
                         src += f" {args[1]}"
             elif node.value.func.attr == "system":
                 src = f"!{args[0]}"
