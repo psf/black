@@ -181,7 +181,7 @@ def validate_regex(
 
 
 @click.command(
-    context_settings=dict(help_option_names=["-h", "--help"]),
+    context_settings={"help_option_names": ["-h", "--help"]},
     # While Click does set this field automatically using the docstring, mypyc
     # (annoyingly) strips 'em so we need to set it here too.
     help="The uncompromising code formatter.",
