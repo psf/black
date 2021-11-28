@@ -396,20 +396,28 @@ class MagicFinder(ast.NodeVisitor):
         For example,
 
             black_version = !black --version
+            env = %env var
 
-        would have been transformed to
+        would have been (respectively) transformed to
 
             black_version = get_ipython().getoutput('black --version')
+            env = get_ipython().run_line_magic('env', 'var')
 
-        and we look for instances of the latter.
+        and we look for instances of any of the latter.
         """
-        if (
-            isinstance(node.value, ast.Call)
-            and _is_ipython_magic(node.value.func)
-            and node.value.func.attr == "getoutput"
-        ):
-            (arg,) = _get_str_args(node.value.args)
-            src = f"!{arg}"
+        if isinstance(node.value, ast.Call) and _is_ipython_magic(node.value.func):
+            args = _get_str_args(node.value.args)
+            if node.value.func.attr == "getoutput":
+                src = f"!{args[0]}"
+            elif node.value.func.attr == "run_line_magic":
+                src = f"%{args[0]}"
+                if args[1]:
+                    src += f" {args[1]}"
+            else:
+                raise AssertionError(
+                    f"Unexpected IPython magic {node.value.func.attr!r} found. "
+                    "Please report a bug on https://github.com/psf/black/issues."
+                ) from None
             self.magics[node.value.lineno].append(
                 OffsetAndMagic(node.value.col_offset, src)
             )
@@ -444,7 +452,6 @@ class MagicFinder(ast.NodeVisitor):
                 else:
                     src = f"%{args[0]}"
                     if args[1]:
-                        assert src is not None
                         src += f" {args[1]}"
             elif node.value.func.attr == "system":
                 src = f"!{args[0]}"

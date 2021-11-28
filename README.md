@@ -137,8 +137,8 @@ Poetry, PyPA applications (Warehouse, Bandersnatch, Pipenv, virtualenv), pandas,
 Twisted, LocalStack, every Datadog Agent Integration, Home Assistant, Zulip, Kedro, and
 many more.
 
-The following organizations use _Black_: Facebook, Dropbox, Mozilla, Quora, Duolingo,
-QuantumBlack, Tesla.
+The following organizations use _Black_: Facebook, Dropbox, KeepTruckin, Mozilla, Quora,
+Duolingo, QuantumBlack, Tesla.
 
 Are we missing anyone? Let us know.
 

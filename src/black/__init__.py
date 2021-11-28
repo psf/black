@@ -688,7 +688,7 @@ def reformat_many(
         worker_count = min(worker_count, 60)
     try:
         executor = ProcessPoolExecutor(max_workers=worker_count)
-    except (ImportError, OSError):
+    except (ImportError, NotImplementedError, OSError):
         # we arrive here if the underlying system does not support multi-processing
         # like in AWS Lambda or Termux, in which case we gracefully fallback to
         # a ThreadPoolExecutor with just a single worker (more workers would not do us

@@ -90,6 +90,10 @@ def test_cell_magic_noop() -> None:
             id="Line magic with argument",
         ),
         pytest.param("%time\n'foo'", '%time\n"foo"', id="Line magic without argument"),
+        pytest.param(
+            "env =  %env var", "env = %env var", id="Assignment to environment variable"
+        ),
+        pytest.param("env =  %env", "env = %env", id="Assignment to magic"),
     ),
 )
 def test_magic(src: str, expected: str) -> None:
