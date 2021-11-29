@@ -945,6 +945,7 @@ class BaseStringSplitter(StringTransformer):
 def iter_fexpr_spans(s: str) -> Iterator[Tuple[int, int]]:
     """
     Yields spans corresponding to expressions in a given f-string.
+    Spans are half-open ranges (left inclusive, right exclusive).
     Assumes the input string is a valid f-string.
     """
     stack: List[int] = []  # our curly paren stack
