@@ -38,6 +38,7 @@ from pathspec import PathSpec
 
 import black
 import black.files
+import black.reformat_many
 from black import Feature, TargetVersion
 from black import re_compile_maybe_verbose as compile_pattern
 from black.cache import get_cache_file
@@ -914,7 +915,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual("".join(err_lines), "")
 
     @event_loop()
-    @patch("black.ProcessPoolExecutor", MagicMock(side_effect=OSError))
+    @patch("black.reformat_many.ProcessPoolExecutor", MagicMock(side_effect=OSError))
     def test_works_in_mono_process_only_environment(self) -> None:
         with cache_dir() as workspace:
             for f in [
@@ -1584,7 +1585,7 @@ class TestCaching:
     def test_cache_multiple_files(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir() as workspace, patch(
-            "black.ProcessPoolExecutor", new=ThreadPoolExecutor
+            "black.reformat_many.ProcessPoolExecutor", new=ThreadPoolExecutor
         ):
             one = (workspace / "one.py").resolve()
             with one.open("w") as fobj:
@@ -1629,7 +1630,9 @@ class TestCaching:
                 src = (workspace / f"test{tag}.py").resolve()
                 with src.open("w") as fobj:
                     fobj.write("print('hello')")
-            with patch("black.Manager", wraps=multiprocessing.Manager) as mgr:
+            with patch(
+                "black.reformat_many.Manager", wraps=multiprocessing.Manager
+            ) as mgr:
                 cmd = ["--diff", str(workspace)]
                 if color:
                     cmd.append("--color")
@@ -1676,7 +1679,7 @@ class TestCaching:
                 str(cached): black.get_cache_info(cached),
                 str(cached_but_changed): (0.0, 0),
             }
-            todo, done = black.filter_cached(
+            todo, done = black.reformat_many.filter_cached(
                 cache, {uncached, cached, cached_but_changed}
             )
             assert todo == {uncached, cached_but_changed}
@@ -1693,7 +1696,7 @@ class TestCaching:
     def test_failed_formatting_does_not_get_cached(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir() as workspace, patch(
-            "black.ProcessPoolExecutor", new=ThreadPoolExecutor
+            "black.reformat_many.ProcessPoolExecutor", new=ThreadPoolExecutor
         ):
             failing = (workspace / "failing.py").resolve()
             with failing.open("w") as fobj:

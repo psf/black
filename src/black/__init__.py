@@ -1,17 +1,13 @@
-import asyncio
+import typing
 from json.decoder import JSONDecodeError
 import json
-from concurrent.futures import Executor, ThreadPoolExecutor, ProcessPoolExecutor
 from contextlib import contextmanager
 from datetime import datetime
 from enum import Enum
 import io
-from multiprocessing import Manager, freeze_support
 import os
 from pathlib import Path
-from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
 import regex as re
-import signal
 import sys
 import tokenize
 import traceback
@@ -28,11 +24,11 @@ from typing import (
     Sized,
     Tuple,
     Union,
+    Iterable,
 )
 
 import click
 from dataclasses import replace
-from mypy_extensions import mypyc_attr
 
 from black.const import DEFAULT_LINE_LENGTH, DEFAULT_INCLUDES, DEFAULT_EXCLUDES
 from black.const import STDIN_PLACEHOLDER
@@ -42,8 +38,7 @@ from black.linegen import transform_line, LineGenerator, LN
 from black.comments import normalize_fmt_off
 from black.mode import Mode, TargetVersion
 from black.mode import Feature, supports_feature, VERSION_TO_FEATURES
-from black.cache import read_cache, write_cache, get_cache_info, filter_cached, Cache
-from black.concurrency import cancel, shutdown, maybe_install_uvloop
+from black.cache import read_cache, write_cache, get_cache_info, Cache
 from black.output import dump_to_file, ipynb_diff, diff, color_diff, out, err
 from black.report import Report, Changed, NothingChanged
 from black.files import find_project_root, find_pyproject_toml, parse_pyproject_toml
@@ -64,6 +59,14 @@ from black.handle_ipynb_magics import (
 # lib2to3 fork
 from blib2to3.pytree import Node, Leaf
 from blib2to3.pgen2 import token
+
+if typing.TYPE_CHECKING:
+    # Don't import the pathspec module unless really needed (it's only needed
+    # when listing contents to format from a directory).
+    from pathspec.pathspec import PathSpec
+    from concurrent.futures import Executor
+    import asyncio
+
 
 from _black_version import version as __version__
 
@@ -451,21 +454,18 @@ def main(
             content=code, fast=fast, write_back=write_back, mode=mode, report=report
         )
     else:
-        try:
-            sources = get_sources(
-                ctx=ctx,
-                src=src,
-                quiet=quiet,
-                verbose=verbose,
-                include=include,
-                exclude=exclude,
-                extend_exclude=extend_exclude,
-                force_exclude=force_exclude,
-                report=report,
-                stdin_filename=stdin_filename,
-            )
-        except GitWildMatchPatternError:
-            ctx.exit(1)
+        sources = get_sources(
+            ctx=ctx,
+            src=src,
+            quiet=quiet,
+            verbose=verbose,
+            include=include,
+            exclude=exclude,
+            extend_exclude=extend_exclude,
+            force_exclude=force_exclude,
+            report=report,
+            stdin_filename=stdin_filename,
+        )
 
         path_empty(
             sources,
@@ -484,6 +484,11 @@ def main(
                 report=report,
             )
         else:
+            # Load reformat_many as lazily as possible as loading it will
+            # require support for asyncio and concurrent.futures which
+            # are slow to import.
+            from black.reformat_many import reformat_many
+
             reformat_many(
                 sources=sources,
                 fast=fast,
@@ -498,6 +503,18 @@ def main(
         if code is None:
             click.echo(str(report), err=True)
     ctx.exit(report.return_code)
+
+
+def compute_exclude_and_gitignore(
+    exclude: Optional[Pattern[str]], root: Path
+) -> Tuple[Pattern[str], Optional["PathSpec"]]:
+    gitignore: Optional["PathSpec"]
+    if exclude is None:
+        exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES)
+        gitignore = get_gitignore(root)
+    else:
+        gitignore = None
+    return exclude, gitignore
 
 
 def get_sources(
@@ -518,12 +535,7 @@ def get_sources(
     root = find_project_root(src)
     sources: Set[Path] = set()
     path_empty(src, "No Path provided. Nothing to do 😴", quiet, verbose, ctx)
-
-    if exclude is None:
-        exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES)
-        gitignore = get_gitignore(root)
-    else:
-        gitignore = None
+    exclude_and_gitignore = None
 
     for s in src:
         if s == "-" and stdin_filename:
@@ -558,6 +570,17 @@ def get_sources(
 
             sources.add(p)
         elif p.is_dir():
+            if exclude_and_gitignore is None:
+                from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
+
+                try:
+                    exclude_and_gitignore = compute_exclude_and_gitignore(exclude, root)
+                except GitWildMatchPatternError:
+                    ctx.exit(1)
+
+            assert exclude_and_gitignore
+            exclude, gitignore = exclude_and_gitignore
+
             sources.update(
                 gen_python_files(
                     p.iterdir(),
@@ -664,126 +687,6 @@ def reformat_one(
         if report.verbose:
             traceback.print_exc()
         report.failed(src, str(exc))
-
-
-# diff-shades depends on being to monkeypatch this function to operate. I know it's
-# not ideal, but this shouldn't cause any issues ... hopefully. ~ichard26
-@mypyc_attr(patchable=True)
-def reformat_many(
-    sources: Set[Path],
-    fast: bool,
-    write_back: WriteBack,
-    mode: Mode,
-    report: "Report",
-    workers: Optional[int],
-) -> None:
-    """Reformat multiple files using a ProcessPoolExecutor."""
-    executor: Executor
-    loop = asyncio.get_event_loop()
-    worker_count = workers if workers is not None else DEFAULT_WORKERS
-    if sys.platform == "win32":
-        # Work around https://bugs.python.org/issue26903
-        assert worker_count is not None
-        worker_count = min(worker_count, 60)
-    try:
-        executor = ProcessPoolExecutor(max_workers=worker_count)
-    except (ImportError, NotImplementedError, OSError):
-        # we arrive here if the underlying system does not support multi-processing
-        # like in AWS Lambda or Termux, in which case we gracefully fallback to
-        # a ThreadPoolExecutor with just a single worker (more workers would not do us
-        # any good due to the Global Interpreter Lock)
-        executor = ThreadPoolExecutor(max_workers=1)
-
-    try:
-        loop.run_until_complete(
-            schedule_formatting(
-                sources=sources,
-                fast=fast,
-                write_back=write_back,
-                mode=mode,
-                report=report,
-                loop=loop,
-                executor=executor,
-            )
-        )
-    finally:
-        shutdown(loop)
-        if executor is not None:
-            executor.shutdown()
-
-
-async def schedule_formatting(
-    sources: Set[Path],
-    fast: bool,
-    write_back: WriteBack,
-    mode: Mode,
-    report: "Report",
-    loop: asyncio.AbstractEventLoop,
-    executor: Executor,
-) -> None:
-    """Run formatting of `sources` in parallel using the provided `executor`.
-
-    (Use ProcessPoolExecutors for actual parallelism.)
-
-    `write_back`, `fast`, and `mode` options are passed to
-    :func:`format_file_in_place`.
-    """
-    cache: Cache = {}
-    if write_back not in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
-        cache = read_cache(mode)
-        sources, cached = filter_cached(cache, sources)
-        for src in sorted(cached):
-            report.done(src, Changed.CACHED)
-    if not sources:
-        return
-
-    cancelled = []
-    sources_to_cache = []
-    lock = None
-    if write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
-        # For diff output, we need locks to ensure we don't interleave output
-        # from different processes.
-        manager = Manager()
-        lock = manager.Lock()
-    tasks = {
-        asyncio.ensure_future(
-            loop.run_in_executor(
-                executor, format_file_in_place, src, fast, mode, write_back, lock
-            )
-        ): src
-        for src in sorted(sources)
-    }
-    pending = tasks.keys()
-    try:
-        loop.add_signal_handler(signal.SIGINT, cancel, pending)
-        loop.add_signal_handler(signal.SIGTERM, cancel, pending)
-    except NotImplementedError:
-        # There are no good alternatives for these on Windows.
-        pass
-    while pending:
-        done, _ = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
-        for task in done:
-            src = tasks.pop(task)
-            if task.cancelled():
-                cancelled.append(task)
-            elif task.exception():
-                report.failed(src, str(task.exception()))
-            else:
-                changed = Changed.YES if task.result() else Changed.NO
-                # If the file was written back or was successfully checked as
-                # well-formatted, store this information in the cache.
-                if write_back is WriteBack.YES or (
-                    write_back is WriteBack.CHECK and changed is Changed.NO
-                ):
-                    sources_to_cache.append(src)
-                report.done(src, changed)
-    if cancelled:
-        if sys.version_info >= (3, 7):
-            await asyncio.gather(*cancelled, return_exceptions=True)
-        else:
-            await asyncio.gather(*cancelled, loop=loop, return_exceptions=True)
-    if sources_to_cache:
-        write_cache(cache, sources_to_cache, mode)
 
 
 def format_file_in_place(
@@ -1361,9 +1264,50 @@ def patch_click() -> None:
             module._verify_python_env = lambda: None  # type: ignore
 
 
+def shutdown(loop: "asyncio.AbstractEventLoop") -> None:
+    """Cancel all pending tasks on `loop`, wait for them, and close the loop."""
+    from black import concurrency
+
+    return concurrency.shutdown(loop)
+
+
+def cancel(tasks: Iterable["asyncio.Task[Any]"]) -> None:
+    """asyncio signal handler that cancels all `tasks` and reports to stderr."""
+    from black import concurrency
+
+    return concurrency.cancel(tasks)
+
+
+async def schedule_formatting(
+    sources: Set[Path],
+    fast: bool,
+    write_back: WriteBack,
+    mode: Mode,
+    report: "Report",
+    loop: "asyncio.AbstractEventLoop",
+    executor: "Executor",
+) -> None:
+    from black import reformat_many
+
+    return await reformat_many.schedule_formatting(
+        sources, fast, write_back, mode, report, loop, executor
+    )
+
+
+# Used to know whether uvloop should be installed.
+__BLACK_MAIN_CALLED__ = False
+
+
 def patched_main() -> None:
-    maybe_install_uvloop()
-    freeze_support()
+    global __BLACK_MAIN_CALLED__
+    __BLACK_MAIN_CALLED__ = True
+    for arg in sys.argv:
+        if "multiprocessing" in arg:
+            # Don't import multiprocessing unless really needed.
+            from multiprocessing import freeze_support
+
+            freeze_support()
+            break
     patch_click()
     main()
 

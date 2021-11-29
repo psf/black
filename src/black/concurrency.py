@@ -1,3 +1,7 @@
+"""
+Note: this module should only be imported if support for formatting multiple
+files is needed.
+"""
 import asyncio
 import logging
 import sys

@@ -1,3 +1,10 @@
+import typing
+
+if typing.TYPE_CHECKING:
+    # Don't import the pathspec module unless really needed (it's only needed
+    # when listing contents to format from a directory).
+    from pathspec import PathSpec
+
 from functools import lru_cache
 import io
 import os
@@ -18,8 +25,6 @@ from typing import (
 )
 
 from mypy_extensions import mypyc_attr
-from pathspec import PathSpec
-from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
 import tomli
 
 from black.output import err
@@ -118,8 +123,11 @@ def find_user_pyproject_toml() -> Path:
 
 
 @lru_cache()
-def get_gitignore(root: Path) -> PathSpec:
+def get_gitignore(root: Path) -> "PathSpec":
     """Return a PathSpec matching gitignore content if present."""
+    from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
+    from pathspec import PathSpec
+
     gitignore = root / ".gitignore"
     lines: List[str] = []
     if gitignore.is_file():
@@ -172,7 +180,7 @@ def gen_python_files(
     extend_exclude: Optional[Pattern[str]],
     force_exclude: Optional[Pattern[str]],
     report: Report,
-    gitignore: Optional[PathSpec],
+    gitignore: Optional["PathSpec"],
     *,
     verbose: bool,
     quiet: bool,

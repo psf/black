@@ -8,6 +8,7 @@
 - Fixed `match` statements with open sequence subjects, like `match a, b:` (#2639)
 - Fixed assignment to environment variables in Jupyter Notebooks (#2642)
 - Add `flake8-simplify` and `flake8-comprehensions` plugins (#2653)
+- Faster startup when formatting a single file (#2656)
 
 ## 21.11b1
 
