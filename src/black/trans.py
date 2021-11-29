@@ -971,6 +971,7 @@ def iter_fexpr_spans(s: str) -> Iterator[Tuple[int, int]]:
             continue
 
         # if we're in an expression part of the f-string, fast forward through strings
+        # note that backslashes are not legal in the expression portion of f-strings
         if stack:
             delim = None
             if s[i : i + 3] in ("'''", '"""'):
