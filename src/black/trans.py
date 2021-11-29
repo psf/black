@@ -986,7 +986,7 @@ def iter_fexpr_spans(s: str) -> Iterator[Tuple[int, int]]:
 
 
 def fstring_contains_expr(s: str) -> bool:
-    return any(True for _ in iter_fexpr_spans(s))
+    return any(iter_fexpr_spans(s))
 
 
 class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
