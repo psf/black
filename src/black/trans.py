@@ -947,7 +947,7 @@ def iter_fexpr_spans(s: str) -> Iterator[Tuple[int, int]]:
     Yields spans corresponding to expressions in a given f-string.
     Assumes the input string is a valid f-string.
     """
-    stack = []  # our curly paren stack
+    stack: List[int] = []  # our curly paren stack
     i = 0
     while i < len(s):
         if s[i] == "{":
@@ -973,15 +973,19 @@ def iter_fexpr_spans(s: str) -> Iterator[Tuple[int, int]]:
         # if we're in an expression part of the f-string, fast forward through strings
         if stack:
             delim = None
-            if s[i: i + 3] in ("'''", '"""'):
-                delim = s[i: i + 3]
+            if s[i : i + 3] in ("'''", '"""'):
+                delim = s[i : i + 3]
             elif s[i] in ("'", '"'):
                 delim = s[i]
             if delim:
                 i += len(delim)
-                while i < len(s) and s[i:i + len(delim)] != delim:
+                while i < len(s) and s[i : i + len(delim)] != delim:
                     i += 1
         i += 1
+
+
+def fstring_contains_expr(s: str) -> bool:
+    return any(True for _ in iter_fexpr_spans(s))
 
 
 class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
@@ -1089,9 +1093,8 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
         # contain any f-expressions, but ONLY if the original f-string
         # contains at least one f-expression. Otherwise, we will alter the AST
         # of the program.
-        drop_pointless_f_prefix = (
-            ("f" in prefix)
-            and any(True for _ in iter_fexpr_spans(LL[string_idx].value))
+        drop_pointless_f_prefix = ("f" in prefix) and fstring_contains_expr(
+            LL[string_idx].value
         )
 
         first_string_line = True
@@ -1447,7 +1450,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
         """
         assert_is_leaf_string(string)
 
-        if "f" in prefix and not any(True for _ in iter_fexpr_spans(string)):
+        if "f" in prefix and not fstring_contains_expr(string):
             new_prefix = prefix.replace("f", "")
 
             temp = string[len(prefix) :]
