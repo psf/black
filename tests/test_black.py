@@ -1755,7 +1755,7 @@ def assert_collected_sources(
         report=black.Report(),
         stdin_filename=stdin_filename,
     )
-    assert sorted(list(collected)) == sorted(gs_expected)
+    assert sorted(collected) == sorted(gs_expected)
 
 
 class TestFileCollection:
