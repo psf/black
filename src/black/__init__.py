@@ -962,9 +962,7 @@ def validate_cell(src: str) -> None:
     """
     if any(transformed_magic in src for transformed_magic in TRANSFORMED_MAGICS):
         raise NothingChanged
-    if src[:2] == "%%" and src.split()[0] not in (
-        "%%" + magic for magic in PYTHON_CELL_MAGICS
-    ):
+    if src[:2] == "%%" and src.split()[0][2:] not in PYTHON_CELL_MAGICS:
         raise NothingChanged
 
 
