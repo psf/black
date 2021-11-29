@@ -980,7 +980,7 @@ def iter_fexpr_spans(s: str) -> Iterator[Tuple[int, int]]:
             if delim:
                 i += len(delim)
                 while i < len(s) and s[i:i + len(delim)] != delim:
-                    i += 2 if s[i] == "\\" else 1
+                    i += 1
         i += 1
 
 
