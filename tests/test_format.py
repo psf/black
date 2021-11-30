@@ -200,6 +200,15 @@ def test_python_310(filename: str) -> None:
     assert_format(source, expected, mode, minimum_version=(3, 10))
 
 
+def test_patma_invalid() -> None:
+    source, expected = read_data("pattern_matching_invalid")
+    mode = black.Mode(target_versions={black.TargetVersion.PY310})
+    with pytest.raises(black.parsing.InvalidInput) as exc_info:
+        assert_format(source, expected, mode, minimum_version=(3, 10))
+
+    exc_info.match("Cannot parse: 10:11")
+
+
 def test_docstring_no_string_normalization() -> None:
     """Like test_docstring but with string normalization off."""
     source, expected = read_data("docstring_no_string_normalization")
