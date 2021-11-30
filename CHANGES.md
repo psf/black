@@ -4,9 +4,13 @@
 
 ### _Black_
 
+- Cell magics are now only processed if they are known Python cell magics. Earlier, all
+  cell magics were tokenized, leading to possible indentation errors e.g. with
+  `%%writefile`. (#2630)
 - Fix Python 3.10 support on platforms without ProcessPoolExecutor (#2631)
 - Fix `match` statements with open sequence subjects, like `match a, b:` (#2639)
 - Fix assignment to environment variables in Jupyter Notebooks (#2642)
+- Add `flake8-simplify` and `flake8-comprehensions` plugins (#2653)
 - Fix parser error on invalid syntax in a `match` statement (#2649)
 
 ## 21.11b1

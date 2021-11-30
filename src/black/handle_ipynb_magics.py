@@ -37,20 +37,15 @@ TOKENS_TO_IGNORE = frozenset(
         "ESCAPED_NL",
     )
 )
-NON_PYTHON_CELL_MAGICS = frozenset(
+PYTHON_CELL_MAGICS = frozenset(
     (
-        "bash",
-        "html",
-        "javascript",
-        "js",
-        "latex",
-        "markdown",
-        "perl",
-        "ruby",
-        "script",
-        "sh",
-        "svg",
-        "writefile",
+        "capture",
+        "prun",
+        "pypy",
+        "python",
+        "python3",
+        "time",
+        "timeit",
     )
 )
 TOKEN_HEX = secrets.token_hex
@@ -230,8 +225,6 @@ def replace_cell_magics(src: str) -> Tuple[str, List[Replacement]]:
     cell_magic_finder.visit(tree)
     if cell_magic_finder.cell_magic is None:
         return src, replacements
-    if cell_magic_finder.cell_magic.name in NON_PYTHON_CELL_MAGICS:
-        raise NothingChanged
     header = cell_magic_finder.cell_magic.header
     mask = get_token(src, header)
     replacements.append(Replacement(mask=mask, src=header))
@@ -422,7 +415,7 @@ class MagicFinder(ast.NodeVisitor):
                     src += f" {args[1]}"
             else:
                 raise AssertionError(
-                    "Unexpected IPython magic {node.value.func.attr!r} found. "
+                    f"Unexpected IPython magic {node.value.func.attr!r} found. "
                     "Please report a bug on https://github.com/psf/black/issues."
                 ) from None
             self.magics[node.value.lineno].append(
