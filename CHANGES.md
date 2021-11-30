@@ -12,7 +12,7 @@
   `match a, *b:` (#2639) (#2659)
 - Fix assignment to environment variables in Jupyter Notebooks (#2642)
 - Add `flake8-simplify` and `flake8-comprehensions` plugins (#2653)
-- Fix parser error on invalid syntax in a `match` statement (#2649)
+- Fix parser error location on invalid syntax in a `match` statement (#2649)
 
 ## 21.11b1
 
