@@ -127,7 +127,7 @@ class LineGenerator(Visitor[Line]):
         """Visit a statement.
 
         This implementation is shared for `if`, `while`, `for`, `try`, `except`,
-        `def`, `with`, `class`, `assert`, `match`, `case` and assignments.
+        `def`, `with`, `class`, `assert`, and assignments.
 
         The relevant Python language `keywords` for a given statement will be
         NAME leaves within it. This methods puts those on a separate line.
@@ -140,6 +140,14 @@ class LineGenerator(Visitor[Line]):
             if child.type == token.NAME and child.value in keywords:  # type: ignore
                 yield from self.line()
 
+            yield from self.visit(child)
+
+    def visit_match_case(self, node: Node) -> Iterator[Line]:
+        """Visit either a match or case statement."""
+        normalize_invisible_parens(node, parens_after=set())
+
+        yield from self.line()
+        for child in node.children:
             yield from self.visit(child)
 
     def visit_suite(self, node: Node) -> Iterator[Line]:
@@ -294,8 +302,8 @@ class LineGenerator(Visitor[Line]):
         self.visit_decorated = self.visit_decorators
 
         # PEP 634
-        self.visit_match_stmt = partial(v, keywords={"match"}, parens=Ø)
-        self.visit_case_block = partial(v, keywords={"case"}, parens=Ø)
+        self.visit_match_stmt = self.visit_match_case
+        self.visit_case_block = self.visit_match_case
 
 
 def transform_line(

@@ -23,9 +23,9 @@ match re.match(case):
 
 def func(match: case, case: match) -> case:
     match Something():
-        case another:
-            ...
         case func(match, case):
+            ...
+        case another:
             ...
 
 
@@ -47,6 +47,33 @@ match more := (than, one), indeed,:
 
 match a, *b, c:
     case [*_]:
-        return "seq"
+        assert "seq" == _
     case {}:
-        return "map"
+        assert "map" == b
+
+
+match match(
+    case,
+    match(
+        match, case, match, looooooooooooooooooooooooooooooooooooong, match, case, match
+    ),
+    case,
+):
+    case case(
+        match=case,
+        case=re.match(
+            loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong
+        ),
+    ):
+        pass
+
+    case [a as match]:
+        pass
+
+    case case:
+        pass
+
+
+match match:
+    case case:
+        pass
