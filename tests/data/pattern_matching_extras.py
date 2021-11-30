@@ -43,3 +43,10 @@ match more := (than, one), indeed,:
         pass
     case _:
         pass
+
+
+match a, *b, c:
+    case [*_]:
+        return "seq"
+    case {}:
+        return "map"
