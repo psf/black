@@ -8,8 +8,8 @@ explain what everything does and how to release _Black_ using said automation.
 To cut a release, you must be a _Black_ maintainer with `GitHub Release` creation
 access. Using this access, the release process is:
 
-1. Cut a new PR editing `CHANGES.md` to version the latest changes
-   1. Example PR: https://github.com/psf/black/pull/2192
+1. Cut a new PR editing `CHANGES.md` and the docs to version the latest changes
+   1. Example PR: [#2616](https://github.com/psf/black/pull/2616)
    2. Example title: `Update CHANGES.md for XX.X release`
 2. Once the release PR is merged ensure all CI passes
    1. If not, ensure there is an Issue open for the cause of failing CI (generally we'd

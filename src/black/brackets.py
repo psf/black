@@ -49,7 +49,7 @@ MATH_PRIORITIES: Final = {
 DOT_PRIORITY: Final = 1
 
 
-class BracketMatchError(KeyError):
+class BracketMatchError(Exception):
     """Raised when an opening bracket is unable to be matched to a closing bracket."""
 
 

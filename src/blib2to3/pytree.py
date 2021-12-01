@@ -14,7 +14,6 @@ There's also a pattern matching implementation here.
 
 from typing import (
     Any,
-    Callable,
     Dict,
     Iterator,
     List,
@@ -52,7 +51,7 @@ def type_repr(type_num: int) -> Union[Text, int]:
     return _type_reprs.setdefault(type_num, type_num)
 
 
-_P = TypeVar("_P")
+_P = TypeVar("_P", bound="Base")
 
 NL = Union["Node", "Leaf"]
 Context = Tuple[Text, Tuple[int, int]]
@@ -92,8 +91,6 @@ class Base(object):
             return NotImplemented
         return self._eq(other)
 
-    __hash__ = None  # type: Any  # For Py3 compatibility.
-
     @property
     def prefix(self) -> Text:
         raise NotImplementedError
@@ -108,6 +105,9 @@ class Base(object):
         ignoring the prefix string and other context information.
         """
         raise NotImplementedError
+
+    def __deepcopy__(self: _P, memo: Any) -> _P:
+        return self.clone()
 
     def clone(self: _P) -> _P:
         """
@@ -434,7 +434,7 @@ class Leaf(Base):
 
         This reproduces the input source exactly.
         """
-        return self.prefix + str(self.value)
+        return self._prefix + str(self.value)
 
     def _eq(self, other) -> bool:
         """Compare two nodes for equality."""
@@ -669,8 +669,11 @@ class NodePattern(BasePattern):
             newcontent = list(content)
             for i, item in enumerate(newcontent):
                 assert isinstance(item, BasePattern), (i, item)
-                if isinstance(item, WildcardPattern):
-                    self.wildcards = True
+                # I don't even think this code is used anywhere, but it does cause
+                # unreachable errors from mypy. This function's signature does look
+                # odd though *shrug*.
+                if isinstance(item, WildcardPattern):  # type: ignore[unreachable]
+                    self.wildcards = True  # type: ignore[unreachable]
         self.type = type
         self.content = newcontent
         self.name = name
@@ -975,6 +978,3 @@ def generate_matches(
                     r.update(r0)
                     r.update(r1)
                     yield c0 + c1, r
-
-
-_Convert = Callable[[Grammar, RawNode], Any]

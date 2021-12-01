@@ -2,12 +2,18 @@
 Parse Python code and perform AST validation.
 """
 import ast
+import platform
 import sys
-from typing import Iterable, Iterator, List, Set, Union, Tuple
+from typing import Any, Iterable, Iterator, List, Set, Tuple, Type, Union
+
+if sys.version_info < (3, 8):
+    from typing_extensions import Final
+else:
+    from typing import Final
 
 # lib2to3 fork
 from blib2to3.pytree import Node, Leaf
-from blib2to3 import pygram, pytree
+from blib2to3 import pygram
 from blib2to3.pgen2 import driver
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.parse import ParseError
@@ -15,10 +21,16 @@ from blib2to3.pgen2.parse import ParseError
 from black.mode import TargetVersion, Feature, supports_feature
 from black.nodes import syms
 
+ast3: Any
+ast27: Any
+
+_IS_PYPY = platform.python_implementation() == "PyPy"
+
 try:
     from typed_ast import ast3, ast27
 except ImportError:
-    if sys.version_info < (3, 8):
+    # Either our python version is too low, or we're on pypy
+    if sys.version_info < (3, 7) or (sys.version_info < (3, 8) and not _IS_PYPY):
         print(
             "The typed_ast package is required but not installed.\n"
             "You can upgrade to Python 3.8+ or install typed_ast with\n"
@@ -59,9 +71,14 @@ def get_grammars(target_versions: Set[TargetVersion]) -> List[Grammar]:
 
     # Python 3-compatible code, so only try Python 3 grammar.
     grammars = []
+    if supports_feature(target_versions, Feature.PATTERN_MATCHING):
+        # Python 3.10+
+        grammars.append(pygram.python_grammar_soft_keywords)
     # If we have to parse both, try to parse async as a keyword first
-    if not supports_feature(target_versions, Feature.ASYNC_IDENTIFIERS):
-        # Python 3.7+
+    if not supports_feature(
+        target_versions, Feature.ASYNC_IDENTIFIERS
+    ) and not supports_feature(target_versions, Feature.PATTERN_MATCHING):
+        # Python 3.7-3.9
         grammars.append(
             pygram.python_grammar_no_print_statement_no_exec_statement_async_keywords
         )
@@ -79,7 +96,7 @@ def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -
         src_txt += "\n"
 
     for grammar in get_grammars(set(target_versions)):
-        drv = driver.Driver(grammar, pytree.convert)
+        drv = driver.Driver(grammar)
         try:
             result = drv.parse_string(src_txt, True)
             break
@@ -114,7 +131,10 @@ def parse_single_version(
     if sys.version_info >= (3, 8) and version >= (3,):
         return ast.parse(src, filename, feature_version=version)
     elif version >= (3,):
-        return ast3.parse(src, filename, feature_version=version[1])
+        if _IS_PYPY:
+            return ast3.parse(src, filename)
+        else:
+            return ast3.parse(src, filename, feature_version=version[1])
     elif version == (2, 7):
         return ast27.parse(src)
     raise AssertionError("INTERNAL ERROR: Tried parsing unsupported Python version!")
@@ -138,6 +158,10 @@ def parse_ast(src: str) -> Union[ast.AST, ast3.AST, ast27.AST]:
     raise SyntaxError(first_error)
 
 
+ast3_AST: Final[Type[ast3.AST]] = ast3.AST
+ast27_AST: Final[Type[ast27.AST]] = ast27.AST
+
+
 def stringify_ast(
     node: Union[ast.AST, ast3.AST, ast27.AST], depth: int = 0
 ) -> Iterator[str]:
@@ -147,13 +171,16 @@ def stringify_ast(
 
     yield f"{'  ' * depth}{node.__class__.__name__}("
 
+    type_ignore_classes: Tuple[Type[Any], ...]
     for field in sorted(node._fields):  # noqa: F402
-        # TypeIgnore has only one field 'lineno' which breaks this comparison
-        type_ignore_classes = (ast3.TypeIgnore, ast27.TypeIgnore)
-        if sys.version_info >= (3, 8):
-            type_ignore_classes += (ast.TypeIgnore,)
-        if isinstance(node, type_ignore_classes):
-            break
+        # TypeIgnore will not be present using pypy < 3.8, so need for this
+        if not (_IS_PYPY and sys.version_info < (3, 8)):
+            # TypeIgnore has only one field 'lineno' which breaks this comparison
+            type_ignore_classes = (ast3.TypeIgnore, ast27.TypeIgnore)
+            if sys.version_info >= (3, 8):
+                type_ignore_classes += (ast.TypeIgnore,)
+            if isinstance(node, type_ignore_classes):
+                break
 
         try:
             value = getattr(node, field)
@@ -177,7 +204,13 @@ def stringify_ast(
                 elif isinstance(item, (ast.AST, ast3.AST, ast27.AST)):
                     yield from stringify_ast(item, depth + 2)
 
-        elif isinstance(value, (ast.AST, ast3.AST, ast27.AST)):
+        # Note that we are referencing the typed-ast ASTs via global variables and not
+        # direct module attribute accesses because that breaks mypyc. It's probably
+        # something to do with the ast3 / ast27 variables being marked as Any leading
+        # mypy to think this branch is always taken, leaving the rest of the code
+        # unanalyzed. Tighting up the types for the typed-ast AST types avoids the
+        # mypyc crash.
+        elif isinstance(value, (ast.AST, ast3_AST, ast27_AST)):
             yield from stringify_ast(value, depth + 2)
 
         else:

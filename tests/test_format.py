@@ -71,6 +71,12 @@ EXPERIMENTAL_STRING_PROCESSING_CASES = [
     "percent_precedence",
 ]
 
+PY310_CASES = [
+    "pattern_matching_simple",
+    "pattern_matching_complex",
+    "pattern_matching_extras",
+    "parenthesized_context_managers",
+]
 
 SOURCES = [
     "src/black/__init__.py",
@@ -94,6 +100,8 @@ SOURCES = [
     "src/black/strings.py",
     "src/black/trans.py",
     "src/blackd/__init__.py",
+    "src/black_primer/cli.py",
+    "src/black_primer/lib.py",
     "src/blib2to3/pygram.py",
     "src/blib2to3/pytree.py",
     "src/blib2to3/pgen2/conv.py",
@@ -184,6 +192,22 @@ def test_pep_572_newer_syntax(major: int, minor: int) -> None:
 def test_pep_570() -> None:
     source, expected = read_data("pep_570")
     assert_format(source, expected, minimum_version=(3, 8))
+
+
+@pytest.mark.parametrize("filename", PY310_CASES)
+def test_python_310(filename: str) -> None:
+    source, expected = read_data(filename)
+    mode = black.Mode(target_versions={black.TargetVersion.PY310})
+    assert_format(source, expected, mode, minimum_version=(3, 10))
+
+
+def test_patma_invalid() -> None:
+    source, expected = read_data("pattern_matching_invalid")
+    mode = black.Mode(target_versions={black.TargetVersion.PY310})
+    with pytest.raises(black.parsing.InvalidInput) as exc_info:
+        assert_format(source, expected, mode, minimum_version=(3, 10))
+
+    exc_info.match("Cannot parse: 10:11")
 
 
 def test_docstring_no_string_normalization() -> None:

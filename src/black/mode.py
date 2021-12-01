@@ -6,6 +6,7 @@ chosen by the user.
 
 from dataclasses import dataclass, field
 from enum import Enum
+from operator import attrgetter
 from typing import Dict, Set
 
 from black.const import DEFAULT_LINE_LENGTH
@@ -20,6 +21,7 @@ class TargetVersion(Enum):
     PY37 = 7
     PY38 = 8
     PY39 = 9
+    PY310 = 10
 
     def is_python2(self) -> bool:
         return self is TargetVersion.PY27
@@ -39,11 +41,32 @@ class Feature(Enum):
     ASSIGNMENT_EXPRESSIONS = 8
     POS_ONLY_ARGUMENTS = 9
     RELAXED_DECORATORS = 10
+    PATTERN_MATCHING = 11
     FORCE_OPTIONAL_PARENTHESES = 50
+
+    # temporary for Python 2 deprecation
+    PRINT_STMT = 200
+    EXEC_STMT = 201
+    AUTOMATIC_PARAMETER_UNPACKING = 202
+    COMMA_STYLE_EXCEPT = 203
+    COMMA_STYLE_RAISE = 204
+    LONG_INT_LITERAL = 205
+    OCTAL_INT_LITERAL = 206
+    BACKQUOTE_REPR = 207
 
 
 VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
-    TargetVersion.PY27: {Feature.ASYNC_IDENTIFIERS},
+    TargetVersion.PY27: {
+        Feature.ASYNC_IDENTIFIERS,
+        Feature.PRINT_STMT,
+        Feature.EXEC_STMT,
+        Feature.AUTOMATIC_PARAMETER_UNPACKING,
+        Feature.COMMA_STYLE_EXCEPT,
+        Feature.COMMA_STYLE_RAISE,
+        Feature.LONG_INT_LITERAL,
+        Feature.OCTAL_INT_LITERAL,
+        Feature.BACKQUOTE_REPR,
+    },
     TargetVersion.PY33: {Feature.UNICODE_LITERALS, Feature.ASYNC_IDENTIFIERS},
     TargetVersion.PY34: {Feature.UNICODE_LITERALS, Feature.ASYNC_IDENTIFIERS},
     TargetVersion.PY35: {
@@ -88,6 +111,18 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.RELAXED_DECORATORS,
         Feature.POS_ONLY_ARGUMENTS,
     },
+    TargetVersion.PY310: {
+        Feature.UNICODE_LITERALS,
+        Feature.F_STRINGS,
+        Feature.NUMERIC_UNDERSCORES,
+        Feature.TRAILING_COMMA_IN_CALL,
+        Feature.TRAILING_COMMA_IN_DEF,
+        Feature.ASYNC_KEYWORDS,
+        Feature.ASSIGNMENT_EXPRESSIONS,
+        Feature.RELAXED_DECORATORS,
+        Feature.POS_ONLY_ARGUMENTS,
+        Feature.PATTERN_MATCHING,
+    },
 }
 
 
@@ -109,7 +144,7 @@ class Mode:
         if self.target_versions:
             version_str = ",".join(
                 str(version.value)
-                for version in sorted(self.target_versions, key=lambda v: v.value)
+                for version in sorted(self.target_versions, key=attrgetter("value"))
             )
         else:
             version_str = "-"

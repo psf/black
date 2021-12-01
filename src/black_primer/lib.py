@@ -88,6 +88,18 @@ def analyze_results(project_count: int, results: Results) -> int:
     failed_pct = round(((results.stats["failed"] / project_count) * 100), 2)
     success_pct = round(((results.stats["success"] / project_count) * 100), 2)
 
+    if results.failed_projects:
+        click.secho("\nFailed projects:\n", bold=True)
+
+    for project_name, project_cpe in results.failed_projects.items():
+        print(f"## {project_name}:")
+        print(f" - Returned {project_cpe.returncode}")
+        if project_cpe.stderr:
+            print(f" - stderr:\n{project_cpe.stderr.decode('utf8')}")
+        if project_cpe.stdout:
+            print(f" - stdout:\n{project_cpe.stdout.decode('utf8')}")
+        print("")
+
     click.secho("-- primer results 📊 --\n", bold=True)
     click.secho(
         f"{results.stats['success']} / {project_count} succeeded ({success_pct}%) ✅",
@@ -110,16 +122,8 @@ def analyze_results(project_count: int, results: Results) -> int:
     )
 
     if results.failed_projects:
-        click.secho("\nFailed projects:\n", bold=True)
-
-    for project_name, project_cpe in results.failed_projects.items():
-        print(f"## {project_name}:")
-        print(f" - Returned {project_cpe.returncode}")
-        if project_cpe.stderr:
-            print(f" - stderr:\n{project_cpe.stderr.decode('utf8')}")
-        if project_cpe.stdout:
-            print(f" - stdout:\n{project_cpe.stdout.decode('utf8')}")
-        print("")
+        failed = ", ".join(results.failed_projects.keys())
+        click.secho(f"\nFailed projects: {failed}\n", bold=True)
 
     return results.stats["failed"]
 
@@ -258,7 +262,7 @@ async def git_checkout_or_rebase(
 
 
 def handle_PermissionError(
-    func: Callable, path: Path, exc: Tuple[Any, Any, Any]
+    func: Callable[..., None], path: Path, exc: Tuple[Any, Any, Any]
 ) -> None:
     """
     Handle PermissionError during shutil.rmtree.
@@ -283,16 +287,16 @@ def handle_PermissionError(
 
 async def load_projects_queue(
     config_path: Path,
+    projects_to_run: List[str],
 ) -> Tuple[Dict[str, Any], asyncio.Queue]:
     """Load project config and fill queue with all the project names"""
     with config_path.open("r") as cfp:
         config = json.load(cfp)
 
     # TODO: Offer more options here
-    # e.g. Run on X random packages or specific sub list etc.
-    project_names = sorted(config["projects"].keys())
-    queue: asyncio.Queue = asyncio.Queue(maxsize=len(project_names))
-    for project in project_names:
+    # e.g. Run on X random packages etc.
+    queue: asyncio.Queue = asyncio.Queue(maxsize=len(projects_to_run))
+    for project in projects_to_run:
         await queue.put(project)
 
     return config, queue
@@ -365,6 +369,7 @@ async def process_queue(
     config_file: str,
     work_path: Path,
     workers: int,
+    projects_to_run: List[str],
     keep: bool = False,
     long_checkouts: bool = False,
     rebase: bool = False,
@@ -383,7 +388,7 @@ async def process_queue(
     results.stats["success"] = 0
     results.stats["wrong_py_ver"] = 0
 
-    config, queue = await load_projects_queue(Path(config_file))
+    config, queue = await load_projects_queue(Path(config_file), projects_to_run)
     project_count = queue.qsize()
     s = "" if project_count == 1 else "s"
     LOG.info(f"{project_count} project{s} to run Black over")

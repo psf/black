@@ -77,7 +77,7 @@
       "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/django/django.git",
       "long_checkout": false,
-      "py_versions": ["3.8", "3.9"]
+      "py_versions": ["3.8", "3.9", "3.10"]
     },
     "flake8-bugbear": {
       "cli_arguments": ["--experimental-string-processing"],
@@ -91,7 +91,7 @@
       "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/HypothesisWorks/hypothesis.git",
       "long_checkout": false,
-      "py_versions": ["all"]
+      "py_versions": ["3.8", "3.9", "3.10"]
     },
     "pandas": {
       "cli_arguments": ["--experimental-string-processing"],
@@ -116,7 +116,7 @@
     },
     "pyanalyze": {
       "cli_arguments": ["--experimental-string-processing"],
-      "expect_formatting_changes": false,
+      "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/quora/pyanalyze.git",
       "long_checkout": false,
       "py_versions": ["all"]

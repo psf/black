@@ -6,41 +6,58 @@ labels: "T: bug"
 assignees: ""
 ---
 
+<!--
+Please make sure that the bug is not already fixed either in newer versions or the
+current development version. To confirm this, you have three options:
+
+1. Update Black's version if a newer release exists: `pip install -U black`
+2. Use the online formatter at <https://black.vercel.app/?version=main>, which will use
+   the latest main branch.
+3. Or run _Black_ on your machine:
+   - create a new virtualenv (make sure it's the same Python version);
+   - clone this repository;
+   - run `pip install -e .[d,python2]`;
+   - run `pip install -r test_requirements.txt`
+   - make sure it's sane by running `python -m pytest`; and
+   - run `black` like you did last time.
+-->
+
 **Describe the bug**
 
 <!-- A clear and concise description of what the bug is. -->
 
 **To Reproduce**
 
-<!-- Steps to reproduce the behavior:
+<!--
+Minimal steps to reproduce the behavior with source code and Black's configuration.
+-->
 
-For example:
-1. Take this file '...'
-1. Run _Black_ on it with these arguments '...'
-1. See error -->
+For example, take this code:
+
+```python
+this = "code"
+```
+
+And run it with these arguments:
+
+```sh
+$ black file.py --target-version py39
+```
+
+The resulting error is:
+
+> cannot format file.py: INTERNAL ERROR: ...
 
 **Expected behavior**
 
 <!-- A clear and concise description of what you expected to happen. -->
 
-**Environment (please complete the following information):**
+**Environment**
 
-- Version: <!-- e.g. [main] -->
+<!-- Please complete the following information: -->
+
+- Black's version: <!-- e.g. [main] -->
 - OS and Python version: <!-- e.g. [Linux/Python 3.7.4rc1] -->
-
-**Does this bug also happen on main?**
-
-<!-- To answer this, you have two options:
-
-1. Use the online formatter at <https://black.vercel.app/?version=main>, which will use
-   the latest main branch.
-1. Or run _Black_ on your machine:
-   - create a new virtualenv (make sure it's the same Python version);
-   - clone this repository;
-   - run `pip install -e .[d,python2]`;
-   - run `pip install -r test_requirements.txt`
-   - make sure it's sane by running `python -m pytest`; and
-   - run `black` like you did last time. -->
 
 **Additional context**
 

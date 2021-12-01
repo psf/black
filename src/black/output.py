@@ -11,6 +11,7 @@ import tempfile
 from click import echo, style
 
 
+@mypyc_attr(patchable=True)
 def _out(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
     if message is not None:
         if "bold" not in styles:
@@ -19,6 +20,7 @@ def _out(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
     echo(message, nl=nl, err=True)
 
 
+@mypyc_attr(patchable=True)
 def _err(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
     if message is not None:
         if "fg" not in styles:
@@ -27,6 +29,7 @@ def _err(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
     echo(message, nl=nl, err=True)
 
 
+@mypyc_attr(patchable=True)
 def out(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
     _out(message, nl=nl, **styles)
 
@@ -56,8 +59,8 @@ def diff(a: str, b: str, a_name: str, b_name: str) -> str:
     """Return a unified diff string between strings `a` and `b`."""
     import difflib
 
-    a_lines = [line for line in a.splitlines(keepends=True)]
-    b_lines = [line for line in b.splitlines(keepends=True)]
+    a_lines = a.splitlines(keepends=True)
+    b_lines = b.splitlines(keepends=True)
     diff_lines = []
     for line in difflib.unified_diff(
         a_lines, b_lines, fromfile=a_name, tofile=b_name, n=5
