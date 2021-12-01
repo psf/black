@@ -29,7 +29,7 @@ without having to invoke the Python pgen C program.
 """
 
 # Python imports
-import regex as re
+import re
 
 # Local imports
 from pgen2 import grammar, token
