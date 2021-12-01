@@ -15,6 +15,7 @@
   times, like `match re.match()` (#2661)
 - Fix assignment to environment variables in Jupyter Notebooks (#2642)
 - Add `flake8-simplify` and `flake8-comprehensions` plugins (#2653)
+- Fix determination of f-string expression spans (#2654)
 - Fix parser error location on invalid syntax in a `match` statement (#2649)
 
 ## 21.11b1
