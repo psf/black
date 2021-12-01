@@ -17,6 +17,7 @@
 - Add `flake8-simplify` and `flake8-comprehensions` plugins (#2653)
 - Fix determination of f-string expression spans (#2654)
 - Fix parser error location on invalid syntax in a `match` statement (#2649)
+- Functions and classes in blocks now have more consistent surrounding spacing (#2472)
 
 ## 21.11b1
 
