@@ -52,7 +52,7 @@ from blib2to3.pgen2.grammar import Grammar
 __author__ = "Ka-Ping Yee <ping@lfw.org>"
 __credits__ = "GvR, ESR, Tim Peters, Thomas Wouters, Fred Drake, Skip Montanaro"
 
-import regex as re
+import re
 from codecs import BOM_UTF8, lookup
 from blib2to3.pgen2.token import *
 
@@ -86,7 +86,7 @@ Whitespace = r"[ \f\t]*"
 Comment = r"#[^\r\n]*"
 Ignore = Whitespace + any(r"\\\r?\n" + Whitespace) + maybe(Comment)
 Name = (  # this is invalid but it's fine because Name comes after Number in all groups
-    r"\w+"
+    r"[^\s#\(\)\[\]\{\}+\-*/!@$%^&=|;:'\",\.<>/?`~\\]+"
 )
 
 Binnumber = r"0[bB]_?[01]+(?:_[01]+)*"

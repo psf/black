@@ -10,7 +10,7 @@ from multiprocessing import Manager, freeze_support
 import os
 from pathlib import Path
 from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
-import regex as re
+import re
 import signal
 import sys
 import tokenize
