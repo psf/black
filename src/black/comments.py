@@ -1,7 +1,13 @@
+import sys
 from dataclasses import dataclass
 from functools import lru_cache
-import regex as re
+import re
 from typing import Iterator, List, Optional, Union
+
+if sys.version_info >= (3, 8):
+    from typing import Final
+else:
+    from typing_extensions import Final
 
 from blib2to3.pytree import Node, Leaf
 from blib2to3.pgen2 import token
@@ -12,11 +18,10 @@ from black.nodes import STANDALONE_COMMENT, WHITESPACE
 # types
 LN = Union[Leaf, Node]
 
-
-FMT_OFF = {"# fmt: off", "# fmt:off", "# yapf: disable"}
-FMT_SKIP = {"# fmt: skip", "# fmt:skip"}
-FMT_PASS = {*FMT_OFF, *FMT_SKIP}
-FMT_ON = {"# fmt: on", "# fmt:on", "# yapf: enable"}
+FMT_OFF: Final = {"# fmt: off", "# fmt:off", "# yapf: disable"}
+FMT_SKIP: Final = {"# fmt: skip", "# fmt:skip"}
+FMT_PASS: Final = {*FMT_OFF, *FMT_SKIP}
+FMT_ON: Final = {"# fmt: on", "# fmt:on", "# yapf: enable"}
 
 
 @dataclass

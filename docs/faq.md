@@ -31,6 +31,10 @@ pragmatism. However, _Black_ is still in beta so style changes are both planned 
 still proposed on the issue tracker. See
 [The Black Code Style](the_black_code_style/index.rst) for more details.
 
+Starting in 2022, the formatting output will be stable for the releases made in the same
+year (other than unintentional bugs). It is possible to opt-in to the latest formatting
+styles, using the `--future` flag.
+
 ## Why is my file not formatted?
 
 Most likely because it is ignored in `.gitignore` or excluded with configuration. See
@@ -43,6 +47,7 @@ _Black_ is timid about formatting Jupyter Notebooks. Cells containing any of the
 following will not be formatted:
 
 - automagics (e.g. `pip install black`)
+- non-Python cell magics (e.g. `%%writeline`)
 - multiline magics, e.g.:
 
   ```python
@@ -70,10 +75,16 @@ disabled-by-default counterpart W504. E203 should be disabled while changes are 
 
 ## Does Black support Python 2?
 
+```{warning}
+Python 2 support has been deprecated since 21.10b0.
+
+This support will be dropped in the first stable release, expected for January 2022.
+See [The Black Code Style](the_black_code_style/index.rst) for details.
+```
+
 For formatting, yes! [Install](getting_started.md#installation) with the `python2` extra
-to format Python 2 files too! There are no current plans to drop support, but most
-likely it is bound to happen. Sometime. Eventually. In terms of running _Black_ though,
-Python 3.6 or newer is required.
+to format Python 2 files too! In terms of running _Black_ though, Python 3.6 or newer is
+required.
 
 ## Why does my linter or typechecker complain after I format my code?
 
@@ -82,3 +93,15 @@ influence their behavior. While Black does its best to recognize such comments a
 them in the right place, this detection is not and cannot be perfect. Therefore, you'll
 sometimes have to manually move these comments to the right place after you format your
 codebase with _Black_.
+
+## Can I run Black with PyPy?
+
+Yes, there is support for PyPy 3.7 and higher. You cannot format Python 2 files under
+PyPy, because PyPy's inbuilt ast module does not support this.
+
+## Why does Black not detect syntax errors in my code?
+
+_Black_ is an autoformatter, not a Python linter or interpreter. Detecting all syntax
+errors is not a goal. It can format all code accepted by CPython (if you find an example
+where that doesn't hold, please report a bug!), but it may also format some code that
+CPython doesn't accept.

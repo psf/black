@@ -5,6 +5,7 @@ import os
 
 assert sys.version_info >= (3, 6, 2), "black requires Python 3.6.2+"
 from pathlib import Path  # noqa E402
+from typing import List  # noqa: E402
 
 CURRENT_DIR = Path(__file__).parent
 sys.path.insert(0, str(CURRENT_DIR))  # for setuptools.build_meta
@@ -18,6 +19,17 @@ def get_long_description() -> str:
     )
 
 
+def find_python_files(base: Path) -> List[Path]:
+    files = []
+    for entry in base.iterdir():
+        if entry.is_file() and entry.suffix == ".py":
+            files.append(entry)
+        elif entry.is_dir():
+            files.extend(find_python_files(entry))
+
+    return files
+
+
 USE_MYPYC = False
 # To compile with mypyc, a mypyc checkout must be present on the PYTHONPATH
 if len(sys.argv) > 1 and sys.argv[1] == "--use-mypyc":
@@ -27,21 +39,34 @@ if os.getenv("BLACK_USE_MYPYC", None) == "1":
     USE_MYPYC = True
 
 if USE_MYPYC:
-    mypyc_targets = [
-        "src/black/__init__.py",
-        "src/blib2to3/pytree.py",
-        "src/blib2to3/pygram.py",
-        "src/blib2to3/pgen2/parse.py",
-        "src/blib2to3/pgen2/grammar.py",
-        "src/blib2to3/pgen2/token.py",
-        "src/blib2to3/pgen2/driver.py",
-        "src/blib2to3/pgen2/pgen.py",
-    ]
-
     from mypyc.build import mypycify
 
+    src = CURRENT_DIR / "src"
+    # TIP: filepaths are normalized to use forward slashes and are relative to ./src/
+    # before being checked against.
+    blocklist = [
+        # Not performance sensitive, so save bytes + compilation time:
+        "blib2to3/__init__.py",
+        "blib2to3/pgen2/__init__.py",
+        "black/output.py",
+        "black/concurrency.py",
+        "black/files.py",
+        "black/report.py",
+        # Breaks the test suite when compiled (and is also useless):
+        "black/debug.py",
+        # Compiled modules can't be run directly and that's a problem here:
+        "black/__main__.py",
+    ]
+    discovered = []
+    # black-primer and blackd have no good reason to be compiled.
+    discovered.extend(find_python_files(src / "black"))
+    discovered.extend(find_python_files(src / "blib2to3"))
+    mypyc_targets = [
+        str(p) for p in discovered if p.relative_to(src).as_posix() not in blocklist
+    ]
+
     opt_level = os.getenv("MYPYC_OPT_LEVEL", "3")
-    ext_modules = mypycify(mypyc_targets, opt_level=opt_level)
+    ext_modules = mypycify(mypyc_targets, opt_level=opt_level, verbose=True)
 else:
     ext_modules = []
 
@@ -75,8 +100,8 @@ setup(
         "click>=7.1.2",
         "platformdirs>=2",
         "tomli>=0.2.6,<2.0.0",
-        "typed-ast>=1.4.2; python_version < '3.8'",
-        "regex>=2020.1.8",
+        "typed-ast>=1.4.2; python_version < '3.8' and implementation_name == 'cpython'",
+        "regex>=2021.4.4",
         "pathspec>=0.9.0, <1",
         "dataclasses>=0.6; python_version < '3.7'",
         "typing_extensions>=3.10.0.0",
@@ -88,7 +113,7 @@ setup(
     extras_require={
         "d": ["aiohttp>=3.7.4"],
         "colorama": ["colorama>=0.4.3"],
-        "python2": ["typed-ast>=1.4.2"],
+        "python2": ["typed-ast>=1.4.3"],
         "uvloop": ["uvloop>=0.15.2"],
         "jupyter": ["ipython>=7.8.0", "tokenize-rt>=3.2.0"],
     },
@@ -104,6 +129,7 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3 :: Only",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Software Development :: Quality Assurance",

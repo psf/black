@@ -4,12 +4,71 @@
 
 ### _Black_
 
+- Cell magics are now only processed if they are known Python cell magics. Earlier, all
+  cell magics were tokenized, leading to possible indentation errors e.g. with
+  `%%writefile`. (#2630)
+- Fix Python 3.10 support on platforms without ProcessPoolExecutor (#2631)
+- Reduce usage of the `regex` dependency (#2644)
+- Fix `match` statements with open sequence subjects, like `match a, b:` or
+  `match a, *b:` (#2639) (#2659)
+- Fix `match`/`case` statements that contain `match`/`case` soft keywords multiple
+  times, like `match re.match()` (#2661)
+- Fix assignment to environment variables in Jupyter Notebooks (#2642)
+- Add `flake8-simplify` and `flake8-comprehensions` plugins (#2653)
+- Fix determination of f-string expression spans (#2654)
+- Fix parser error location on invalid syntax in a `match` statement (#2649)
 - Functions and classes in blocks now have more consistent surrounding spacing (#2472)
+
+## 21.11b1
+
+### _Black_
+
+- Bumped regex version minimum to 2021.4.4 to fix Pattern class usage (#2621)
+
+## 21.11b0
+
+### _Black_
+
+- Warn about Python 2 deprecation in more cases by improving Python 2 only syntax
+  detection (#2592)
+- Add experimental PyPy support (#2559)
+- Add partial support for the match statement. As it's experimental, it's only enabled
+  when `--target-version py310` is explicitly specified (#2586)
+- Add support for parenthesized with (#2586)
+- Declare support for Python 3.10 for running Black (#2562)
+
+### Integrations
+
+- Fixed vim plugin with Python 3.10 by removing deprecated distutils import (#2610)
+- The vim plugin now parses `skip_magic_trailing_comma` from pyproject.toml (#2613)
+
+## 21.10b0
+
+### _Black_
+
+- Document stability policy, that will apply for non-beta releases (#2529)
+- Add new `--workers` parameter (#2514)
+- Fixed feature detection for positional-only arguments in lambdas (#2532)
+- Bumped typed-ast version minimum to 1.4.3 for 3.10 compatibility (#2519)
+- Fixed a Python 3.10 compatibility issue where the loop argument was still being passed
+  even though it has been removed (#2580)
+- Deprecate Python 2 formatting support (#2523)
 
 ### _Blackd_
 
 - Remove dependency on aiohttp-cors (#2500)
 - Bump required aiohttp version to 3.7.4 (#2509)
+
+### _Black-Primer_
+
+- Add primer support for --projects (#2555)
+- Print primer summary after individual failures (#2570)
+
+### Integrations
+
+- Allow to pass `target_version` in the vim plugin (#1319)
+- Install build tools in docker file and use multi-stage build to keep the image size
+  down (#2582)
 
 ## 21.9b0
 

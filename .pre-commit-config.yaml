@@ -35,7 +35,10 @@ repos:
     rev: 3.9.2
     hooks:
       - id: flake8
-        additional_dependencies: [flake8-bugbear]
+        additional_dependencies:
+          - flake8-bugbear
+          - flake8-comprehensions
+          - flake8-simplify
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v0.910

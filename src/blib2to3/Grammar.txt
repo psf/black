@@ -105,7 +105,7 @@ global_stmt: ('global' | 'nonlocal') NAME (',' NAME)*
 exec_stmt: 'exec' expr ['in' test [',' test]]
 assert_stmt: 'assert' test [',' test]
 
-compound_stmt: if_stmt | while_stmt | for_stmt | try_stmt | with_stmt | funcdef | classdef | decorated | async_stmt
+compound_stmt: if_stmt | while_stmt | for_stmt | try_stmt | with_stmt | funcdef | classdef | decorated | async_stmt | match_stmt
 async_stmt: ASYNC (funcdef | with_stmt | for_stmt)
 if_stmt: 'if' namedexpr_test ':' suite ('elif' namedexpr_test ':' suite)* ['else' ':' suite]
 while_stmt: 'while' namedexpr_test ':' suite ['else' ':' suite]
@@ -115,9 +115,8 @@ try_stmt: ('try' ':' suite
 	    ['else' ':' suite]
 	    ['finally' ':' suite] |
 	   'finally' ':' suite))
-with_stmt: 'with' with_item (',' with_item)*  ':' suite
-with_item: test ['as' expr]
-with_var: 'as' expr
+with_stmt: 'with' asexpr_test (',' asexpr_test)*  ':' suite
+
 # NB compile.c makes sure that the default except clause is last
 except_clause: 'except' [test [(',' | 'as') test]]
 suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
@@ -131,7 +130,15 @@ testlist_safe: old_test [(',' old_test)+ [',']]
 old_test: or_test | old_lambdef
 old_lambdef: 'lambda' [varargslist] ':' old_test
 
-namedexpr_test: test [':=' test]
+namedexpr_test: asexpr_test [':=' asexpr_test]
+
+# This is actually not a real rule, though since the parser is very
+# limited in terms of the strategy about match/case rules, we are inserting
+# a virtual case (<expr> as <expr>) as a valid expression. Unless a better
+# approach is thought, the only side effect of this seem to be just allowing
+# more stuff to be parser (which would fail on the ast).
+asexpr_test: test ['as' test]
+
 test: or_test ['if' or_test 'else' test] | lambdef
 or_test: and_test ('or' and_test)*
 and_test: not_test ('and' not_test)*
@@ -179,6 +186,7 @@ arglist: argument (',' argument)* [',']
 # that precede iterable unpackings are blocked; etc.
 argument: ( test [comp_for] |
             test ':=' test |
+            test 'as' test |
             test '=' test |
 	    '**' test |
             '*' test )
@@ -213,3 +221,31 @@ encoding_decl: NAME
 
 yield_expr: 'yield' [yield_arg]
 yield_arg: 'from' test | testlist_star_expr
+
+
+# 3.10 match statement definition
+
+# PS: normally the grammar is much much more restricted, but
+# at this moment for not trying to bother much with encoding the
+# exact same DSL in a LL(1) parser, we will just accept an expression
+# and let the ast.parse() step of the safe mode to reject invalid
+# grammar.
+
+# The reason why it is more restricted is that, patterns are some
+# sort of a DSL (more advanced than our LHS on assignments, but
+# still in a very limited python subset). They are not really
+# expressions, but who cares. If we can parse them, that is enough
+# to reformat them.
+
+match_stmt: "match" subject_expr ':' NEWLINE INDENT case_block+ DEDENT
+
+# This is more permissive than the actual version. For example it
+# accepts `match *something:`, even though single-item starred expressions
+# are forbidden.
+subject_expr: (namedexpr_test|star_expr) (',' (namedexpr_test|star_expr))* [',']
+
+# cases
+case_block: "case" patterns [guard] ':' suite
+guard: 'if' namedexpr_test
+patterns: pattern ['as' pattern]
+pattern: (expr|star_expr) (',' (expr|star_expr))* [',']

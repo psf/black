@@ -24,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10-dev"]
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "pypy-3.7"]
         os: [ubuntu-latest, macOS-latest, windows-latest]
 
     steps:
@@ -41,8 +41,14 @@ jobs:
           python -m pip install --upgrade tox
 
       - name: Unit tests
+        if: "!startsWith(matrix.python-version, 'pypy')"
         run: |
           tox -e ci-py -- -v --color=yes
+
+      - name: Unit tests pypy
+        if: "startsWith(matrix.python-version, 'pypy')"
+        run: |
+          tox -e ci-pypy3 -- -v --color=yes
 
       - name: Publish coverage to Coveralls
         # If pushed / is a pull request against main repo AND
