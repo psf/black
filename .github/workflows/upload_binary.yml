@@ -16,17 +16,14 @@ jobs:
             pathsep: ";"
             asset_name: black_windows.exe
             executable_mime: "application/vnd.microsoft.portable-executable"
-            platform: windows
           - os: ubuntu-20.04
             pathsep: ":"
             asset_name: black_linux
             executable_mime: "application/x-executable"
-            platform: unix
           - os: macos-latest
             pathsep: ":"
             asset_name: black_macos
             executable_mime: "application/x-mach-binary"
-            platform: macos
 
     steps:
       - uses: actions/checkout@v2
@@ -43,10 +40,8 @@ jobs:
           python -m pip install pyinstaller
 
       - name: Build binary
-        run: >
-          python -m PyInstaller -F --name ${{ matrix.asset_name }} --add-data
-          'src/blib2to3${{ matrix.pathsep }}blib2to3' --hidden-import platformdirs.${{
-          matrix.platform }} src/black/__main__.py
+        run: |
+          python -m PyInstaller -F --name ${{ matrix.asset_name }} --add-data 'src/blib2to3${{ matrix.pathsep }}blib2to3' src/black/__main__.py
 
       - name: Upload binary as release asset
         uses: actions/upload-release-asset@v1

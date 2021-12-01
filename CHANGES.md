@@ -4,10 +4,17 @@
 
 ### _Black_
 
-- Fixed Python 3.10 support on platforms without ProcessPoolExecutor (#2631)
-- Fixed `match` statements with open sequence subjects, like `match a, b:` (#2639)
+- Cell magics are now only processed if they are known Python cell magics. Earlier, all
+  cell magics were tokenized, leading to possible indentation errors e.g. with
+  `%%writefile`. (#2630)
+- Fix Python 3.10 support on platforms without ProcessPoolExecutor (#2631)
 - Reduce usage of the `regex` dependency (#2644)
-- Fixed assignment to environment variables in Jupyter Notebooks (#2642)
+- Fix `match` statements with open sequence subjects, like `match a, b:` or
+  `match a, *b:` (#2639) (#2659)
+- Fix `match`/`case` statements that contain `match`/`case` soft keywords multiple
+  times, like `match re.match()` (#2661)
+- Fix assignment to environment variables in Jupyter Notebooks (#2642)
+- Add `flake8-simplify` and `flake8-comprehensions` plugins (#2653)
 
 ## 21.11b1
 
