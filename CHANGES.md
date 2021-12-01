@@ -8,6 +8,7 @@
 - Fixed `match` statements with open sequence subjects, like `match a, b:` (#2639)
 - Fixed assignment to environment variables in Jupyter Notebooks (#2642)
 - Add `flake8-simplify` and `flake8-comprehensions` plugins (#2653)
+- Fixed determination of f-string expression spans (#2654)
 
 ## 21.11b1
 
