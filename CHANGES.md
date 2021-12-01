@@ -10,6 +10,8 @@
 - Fix Python 3.10 support on platforms without ProcessPoolExecutor (#2631)
 - Fix `match` statements with open sequence subjects, like `match a, b:` or
   `match a, *b:` (#2639) (#2659)
+- Fix `match`/`case` statements that contain `match`/`case` soft keywords multiple
+  times, like `match re.match()` (#2661)
 - Fix assignment to environment variables in Jupyter Notebooks (#2642)
 - Add `flake8-simplify` and `flake8-comprehensions` plugins (#2653)
 - Fix parser error location on invalid syntax in a `match` statement (#2649)
