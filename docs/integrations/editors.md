@@ -204,14 +204,13 @@ Traceback (most recent call last):
 ImportError: /home/gui/.vim/black/lib/python3.7/site-packages/typed_ast/_ast3.cpython-37m-x86_64-linux-gnu.so: undefined symbool: PyExc_KeyboardInterrupt
 ```
 
-Then you need to install `typed_ast` directly from the source code. The
-error happens because `pip` will download [Python wheels](https://pythonwheels.com/) if
-they are available. Python wheels are a new standard of distributing Python packages and
-packages that have Cython and extensions written in C are already compiled, so the
-installation is much more faster. The problem here is that somehow the Python
-environment inside Vim does not match with those already compiled C extensions and these
-kind of errors are the result. Luckily there is an easy fix: installing the packages
-from the source code.
+Then you need to install `typed_ast` directly from the source code. The error happens
+because `pip` will download [Python wheels](https://pythonwheels.com/) if they are
+available. Python wheels are a new standard of distributing Python packages and packages
+that have Cython and extensions written in C are already compiled, so the installation
+is much more faster. The problem here is that somehow the Python environment inside Vim
+does not match with those already compiled C extensions and these kind of errors are the
+result. Luckily there is an easy fix: installing the packages from the source code.
 
 The package that causes problems is:
 
