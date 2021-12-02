@@ -4,6 +4,7 @@
 
 ### _Black_
 
+- Remove dependency on `regex` (#2663)
 - Cell magics are now only processed if they are known Python cell magics. Earlier, all
   cell magics were tokenized, leading to possible indentation errors e.g. with
   `%%writefile`. (#2630)
