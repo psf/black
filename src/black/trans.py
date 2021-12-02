@@ -4,7 +4,7 @@ String transformers that can split and merge strings.
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass
-import regex as re  # We need recursive patterns here (?R)
+import re
 from typing import (
     Any,
     Callable,
@@ -453,7 +453,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             # with 'f'...
             if "f" in prefix and "f" not in next_prefix:
                 # Then we must escape any braces contained in this substring.
-                SS = re.subf(r"(\{|\})", "{1}{1}", SS)
+                SS = re.sub(r"(\{|\})", r"\1\1", SS)
 
             NSS = make_naked(SS, next_prefix)
 
