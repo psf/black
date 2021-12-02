@@ -52,6 +52,8 @@ STATEMENT: Final = {
     syms.with_stmt,
     syms.funcdef,
     syms.classdef,
+    syms.match_stmt,
+    syms.case_block,
 }
 STANDALONE_COMMENT: Final = 153
 token.tok_name[STANDALONE_COMMENT] = "STANDALONE_COMMENT"
