@@ -4,12 +4,11 @@
 
 ### _Black_
 
-- Remove dependency on `regex` (#2663)
 - Cell magics are now only processed if they are known Python cell magics. Earlier, all
   cell magics were tokenized, leading to possible indentation errors e.g. with
   `%%writefile`. (#2630)
 - Fix Python 3.10 support on platforms without ProcessPoolExecutor (#2631)
-- Reduce usage of the `regex` dependency (#2644)
+- Remove dependency on `regex` (#2644) (#2663)
 - Fix `match` statements with open sequence subjects, like `match a, b:` or
   `match a, *b:` (#2639) (#2659)
 - Fix `match`/`case` statements that contain `match`/`case` soft keywords multiple
