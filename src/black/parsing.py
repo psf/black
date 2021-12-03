@@ -42,6 +42,11 @@ except ImportError:
         ast3 = ast27 = ast
 
 
+PY310_HINT: Final[
+    str
+] = "Consider using --target-version py310 to parse Python 3.10 code."
+
+
 class InvalidInput(ValueError):
     """Raised when input source code fails all parse attempts."""
 
@@ -111,9 +116,11 @@ def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -
                 faulty_line = "<line number missing in source>"
             exc = InvalidInput(f"Cannot parse: {lineno}:{column}: {faulty_line}")
     else:
-        if pygram.python_grammar_soft_keywords not in grammars and matches_grammar(src_txt, pygram.python_grammar_soft_keywords):
+        if pygram.python_grammar_soft_keywords not in grammars and matches_grammar(
+            src_txt, pygram.python_grammar_soft_keywords
+        ):
             original_msg = exc.args[0]
-            msg = f"{original_msg}\nConsider using --target-version py310 to parse Python 3.10 code."
+            msg = f"{original_msg}\n{PY310_HINT}"
             raise InvalidInput(msg) from None
         raise exc from None
 

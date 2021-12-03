@@ -210,6 +210,15 @@ def test_patma_invalid() -> None:
     exc_info.match("Cannot parse: 10:11")
 
 
+def test_patma_hint() -> None:
+    source, expected = read_data("pattern_matching_simple")
+    mode = black.Mode(target_versions={black.TargetVersion.PY39})
+    with pytest.raises(black.parsing.InvalidInput) as exc_info:
+        assert_format(source, expected, mode, minimum_version=(3, 10))
+
+    exc_info.match(black.parsing.PY310_HINT)
+
+
 def test_docstring_no_string_normalization() -> None:
     """Like test_docstring but with string normalization off."""
     source, expected = read_data("docstring_no_string_normalization")
