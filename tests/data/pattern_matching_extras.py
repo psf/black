@@ -77,3 +77,8 @@ match match(
 match match:
     case case:
         pass
+
+
+match a, *b(), c:
+    case d, *f, g:
+        pass

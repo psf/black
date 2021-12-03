@@ -97,6 +97,8 @@ UNPACKING_PARENTS: Final = {
     syms.listmaker,
     syms.testlist_gexp,
     syms.testlist_star_expr,
+    syms.subject_expr,
+    syms.pattern,
 }
 TEST_DESCENDANTS: Final = {
     syms.test,
