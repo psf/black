@@ -95,7 +95,8 @@ def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -
     if not src_txt.endswith("\n"):
         src_txt += "\n"
 
-    for grammar in get_grammars(set(target_versions)):
+    grammars = get_grammars(set(target_versions))
+    for grammar in grammars:
         drv = driver.Driver(grammar)
         try:
             result = drv.parse_string(src_txt, True)
@@ -110,11 +111,25 @@ def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -
                 faulty_line = "<line number missing in source>"
             exc = InvalidInput(f"Cannot parse: {lineno}:{column}: {faulty_line}")
     else:
+        if pygram.python_grammar_soft_keywords not in grammars and matches_grammar(src_txt, pygram.python_grammar_soft_keywords):
+            original_msg = exc.args[0]
+            msg = f"{original_msg}\nConsider using --target-version py310 to parse Python 3.10 code."
+            raise InvalidInput(msg) from None
         raise exc from None
 
     if isinstance(result, Leaf):
         result = Node(syms.file_input, [result])
     return result
+
+
+def matches_grammar(src_txt: str, grammar: Grammar) -> bool:
+    drv = driver.Driver(grammar)
+    try:
+        drv.parse_string(src_txt, True)
+    except ParseError:
+        return False
+    else:
+        return True
 
 
 def lib2to3_unparse(node: Node) -> str:

@@ -4,6 +4,7 @@
 
 ### _Black_
 
+- Point users to using `--target-version py310` if we detect 3.10-only syntax (#2668)
 - Cell magics are now only processed if they are known Python cell magics. Earlier, all
   cell magics were tokenized, leading to possible indentation errors e.g. with
   `%%writefile`. (#2630)
