@@ -14,6 +14,7 @@
 - Fix `match`/`case` statements that contain `match`/`case` soft keywords multiple
   times, like `match re.match()` (#2661)
 - Fix `case` statements with an inline body (#2665)
+- Fix styling of starred expressions inside `match` subject (#2667)
 - Fix assignment to environment variables in Jupyter Notebooks (#2642)
 - Add `flake8-simplify` and `flake8-comprehensions` plugins (#2653)
 - Fix determination of f-string expression spans (#2654)
