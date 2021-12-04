@@ -2,7 +2,7 @@
 name: Style issue
 about: Help us improve the Black style
 title: ""
-labels: design
+labels: "T: design"
 assignees: ""
 ---
 

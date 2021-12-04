@@ -1,0 +1,12 @@
+# See also: https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository#configuring-the-template-chooser
+
+# This is the default and blank issues are useful so let's keep 'em.
+blank_issues_enabled: true
+
+contact_links:
+  - name: Chat on Python Discord
+    url: https://discord.gg/RtVdv86PrH
+    about: |
+      User support, questions, and other lightweight requests can be
+      handled via the #black-formatter text channel we have on Python
+      Discord.

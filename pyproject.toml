@@ -23,7 +23,7 @@ extend-exclude = '''
 # NOTE: You don't need this in your own Black configuration.
 
 [build-system]
-requires = ["setuptools>=41.0", "setuptools-scm", "wheel"]
+requires = ["setuptools>=45.0", "setuptools_scm[toml]>=6.3.1", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
@@ -31,4 +31,8 @@ build-backend = "setuptools.build_meta"
 optional-tests = [
   "no_python2: run when `python2` extra NOT installed",
   "no_blackd: run when `d` extra NOT installed",
+  "no_jupyter: run when `jupyter` extra NOT installed",
+]
+markers = [
+  "incompatible_with_mypyc: run when testing mypyc compiled black"
 ]

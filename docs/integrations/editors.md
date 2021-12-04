@@ -116,6 +116,8 @@ Wing supports black via the OS Commands tool, as explained in the Wing documenta
 Commands and shortcuts:
 
 - `:Black` to format the entire file (ranges not supported);
+  - you can optionally pass `target_version=<version>` with the same values as in the
+    command line.
 - `:BlackUpgrade` to upgrade _Black_ inside the virtualenv;
 - `:BlackVersion` to get the current version of _Black_ inside the virtualenv.
 
@@ -202,30 +204,28 @@ Traceback (most recent call last):
 ImportError: /home/gui/.vim/black/lib/python3.7/site-packages/typed_ast/_ast3.cpython-37m-x86_64-linux-gnu.so: undefined symbool: PyExc_KeyboardInterrupt
 ```
 
-Then you need to install `typed_ast` and `regex` directly from the source code. The
-error happens because `pip` will download [Python wheels](https://pythonwheels.com/) if
-they are available. Python wheels are a new standard of distributing Python packages and
-packages that have Cython and extensions written in C are already compiled, so the
-installation is much more faster. The problem here is that somehow the Python
-environment inside Vim does not match with those already compiled C extensions and these
-kind of errors are the result. Luckily there is an easy fix: installing the packages
-from the source code.
+Then you need to install `typed_ast` directly from the source code. The error happens
+because `pip` will download [Python wheels](https://pythonwheels.com/) if they are
+available. Python wheels are a new standard of distributing Python packages and packages
+that have Cython and extensions written in C are already compiled, so the installation
+is much more faster. The problem here is that somehow the Python environment inside Vim
+does not match with those already compiled C extensions and these kind of errors are the
+result. Luckily there is an easy fix: installing the packages from the source code.
 
-The two packages that cause the problem are:
+The package that causes problems is:
 
-- [regex](https://pypi.org/project/regex/)
 - [typed-ast](https://pypi.org/project/typed-ast/)
 
 Now remove those two packages:
 
 ```console
-$ pip uninstall regex typed-ast -y
+$ pip uninstall typed-ast -y
 ```
 
 And now you can install them with:
 
 ```console
-$ pip install --no-binary :all: regex typed-ast
+$ pip install --no-binary :all: typed-ast
 ```
 
 The C extensions will be compiled and now Vim's Python environment will match. Note that
@@ -235,7 +235,7 @@ Ubuntu/Debian do `sudo apt-get install build-essential python3-dev`).
 If you later want to update _Black_, you should do it like this:
 
 ```console
-$ pip install -U black --no-binary regex,typed-ast
+$ pip install -U black --no-binary typed-ast
 ```
 
 ### With ALE
@@ -291,16 +291,12 @@ Use the
 
 Use [sublack plugin](https://github.com/jgirardet/sublack).
 
-## Jupyter Notebook Magic
-
-Use [blackcellmagic](https://github.com/csurfer/blackcellmagic).
-
-## Python Language Server
+## Python LSP Server
 
 If your editor supports the [Language Server Protocol](https://langserver.org/) (Atom,
 Sublime Text, Visual Studio Code and many more), you can use the
-[Python Language Server](https://github.com/palantir/python-language-server) with the
-[pyls-black](https://github.com/rupert/pyls-black) plugin.
+[Python LSP Server](https://github.com/python-lsp/python-lsp-server) with the
+[python-lsp-black](https://github.com/python-lsp/python-lsp-black) plugin.
 
 ## Atom/Nuclide
 

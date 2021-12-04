@@ -23,6 +23,35 @@ def h():
         pass
     print("Inner defs should breathe a little.")
 
+
+if os.name == "posix":
+    import termios
+    def i_should_be_followed_by_only_one_newline():
+        pass
+elif os.name == "nt":
+    try:
+        import msvcrt
+        def i_should_be_followed_by_only_one_newline():
+            pass
+
+    except ImportError:
+
+        def i_should_be_followed_by_only_one_newline():
+            pass
+
+elif False:
+
+    class IHopeYouAreHavingALovelyDay:
+        def __call__(self):
+            print("i_should_be_followed_by_only_one_newline")
+else:
+
+    def foo():
+        pass
+
+with hmm_but_this_should_get_two_preceding_newlines():
+    pass
+
 # output
 
 def f(
@@ -56,3 +85,37 @@ def h():
         pass
 
     print("Inner defs should breathe a little.")
+
+
+if os.name == "posix":
+    import termios
+
+    def i_should_be_followed_by_only_one_newline():
+        pass
+
+elif os.name == "nt":
+    try:
+        import msvcrt
+
+        def i_should_be_followed_by_only_one_newline():
+            pass
+
+    except ImportError:
+
+        def i_should_be_followed_by_only_one_newline():
+            pass
+
+elif False:
+
+    class IHopeYouAreHavingALovelyDay:
+        def __call__(self):
+            print("i_should_be_followed_by_only_one_newline")
+
+else:
+
+    def foo():
+        pass
+
+
+with hmm_but_this_should_get_two_preceding_newlines():
+    pass

@@ -17,11 +17,14 @@ from typing import (
     TYPE_CHECKING,
 )
 
+from mypy_extensions import mypyc_attr
 from pathspec import PathSpec
+from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
 import tomli
 
 from black.output import err
 from black.report import Report
+from black.handle_ipynb_magics import jupyter_dependencies_are_installed
 
 if TYPE_CHECKING:
     import colorama  # noqa: F401
@@ -86,13 +89,14 @@ def find_pyproject_toml(path_search_start: Tuple[str, ...]) -> Optional[str]:
         return None
 
 
+@mypyc_attr(patchable=True)
 def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
     """Parse a pyproject toml file, pulling out relevant parts for Black
 
     If parsing fails, will raise a tomli.TOMLDecodeError
     """
     with open(path_config, encoding="utf8") as f:
-        pyproject_toml = tomli.load(f)
+        pyproject_toml = tomli.loads(f.read())
     config = pyproject_toml.get("tool", {}).get("black", {})
     return {k.replace("--", "").replace("-", "_"): v for k, v in config.items()}
 
@@ -121,7 +125,11 @@ def get_gitignore(root: Path) -> PathSpec:
     if gitignore.is_file():
         with gitignore.open(encoding="utf-8") as gf:
             lines = gf.readlines()
-    return PathSpec.from_lines("gitwildmatch", lines)
+    try:
+        return PathSpec.from_lines("gitwildmatch", lines)
+    except GitWildMatchPatternError as e:
+        err(f"Could not parse {gitignore}: {e}")
+        raise
 
 
 def normalize_path_maybe_ignore(
@@ -165,6 +173,9 @@ def gen_python_files(
     force_exclude: Optional[Pattern[str]],
     report: Report,
     gitignore: Optional[PathSpec],
+    *,
+    verbose: bool,
+    quiet: bool,
 ) -> Iterator[Path]:
     """Generate all files under `path` whose paths are not excluded by the
     `exclude_regex`, `extend_exclude`, or `force_exclude` regexes,
@@ -216,9 +227,15 @@ def gen_python_files(
                 force_exclude,
                 report,
                 gitignore + get_gitignore(child) if gitignore is not None else None,
+                verbose=verbose,
+                quiet=quiet,
             )
 
         elif child.is_file():
+            if child.suffix == ".ipynb" and not jupyter_dependencies_are_installed(
+                verbose=verbose, quiet=quiet
+            ):
+                continue
             include_match = include.search(normalized_path) if include else True
             if include_match:
                 yield child

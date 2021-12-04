@@ -1,4 +1,6 @@
 import asyncio
+from json.decoder import JSONDecodeError
+import json
 from concurrent.futures import Executor, ThreadPoolExecutor, ProcessPoolExecutor
 from contextlib import contextmanager
 from datetime import datetime
@@ -7,7 +9,8 @@ import io
 from multiprocessing import Manager, freeze_support
 import os
 from pathlib import Path
-import regex as re
+from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
+import re
 import signal
 import sys
 import tokenize
@@ -18,6 +21,7 @@ from typing import (
     Generator,
     Iterator,
     List,
+    MutableMapping,
     Optional,
     Pattern,
     Set,
@@ -26,8 +30,9 @@ from typing import (
     Union,
 )
 
-from dataclasses import replace
 import click
+from dataclasses import replace
+from mypy_extensions import mypyc_attr
 
 from black.const import DEFAULT_LINE_LENGTH, DEFAULT_INCLUDES, DEFAULT_EXCLUDES
 from black.const import STDIN_PLACEHOLDER
@@ -39,13 +44,22 @@ from black.mode import Mode, TargetVersion
 from black.mode import Feature, supports_feature, VERSION_TO_FEATURES
 from black.cache import read_cache, write_cache, get_cache_info, filter_cached, Cache
 from black.concurrency import cancel, shutdown, maybe_install_uvloop
-from black.output import dump_to_file, diff, color_diff, out, err
-from black.report import Report, Changed
+from black.output import dump_to_file, ipynb_diff, diff, color_diff, out, err
+from black.report import Report, Changed, NothingChanged
 from black.files import find_project_root, find_pyproject_toml, parse_pyproject_toml
 from black.files import gen_python_files, get_gitignore, normalize_path_maybe_ignore
 from black.files import wrap_stream_for_windows
 from black.parsing import InvalidInput  # noqa F401
 from black.parsing import lib2to3_parse, parse_ast, stringify_ast
+from black.handle_ipynb_magics import (
+    mask_cell,
+    unmask_cell,
+    remove_trailing_semicolon,
+    put_trailing_semicolon_back,
+    TRANSFORMED_MAGICS,
+    PYTHON_CELL_MAGICS,
+    jupyter_dependencies_are_installed,
+)
 
 
 # lib2to3 fork
@@ -54,14 +68,12 @@ from blib2to3.pgen2 import token
 
 from _black_version import version as __version__
 
+COMPILED = Path(__file__).suffix in (".pyd", ".so")
+
 # types
 FileContent = str
 Encoding = str
 NewLine = str
-
-
-class NothingChanged(UserWarning):
-    """Raised when reformatted code is the same as source."""
 
 
 class WriteBack(Enum):
@@ -87,6 +99,8 @@ class WriteBack(Enum):
 # Legacy name, left for integrations.
 FileMode = Mode
 
+DEFAULT_WORKERS = os.cpu_count()
+
 
 def read_pyproject_toml(
     ctx: click.Context, param: click.Parameter, value: Optional[str]
@@ -106,7 +120,7 @@ def read_pyproject_toml(
     except (OSError, ValueError) as e:
         raise click.FileError(
             filename=value, hint=f"Error reading configuration file: {e}"
-        )
+        ) from None
 
     if not config:
         return None
@@ -160,14 +174,19 @@ def validate_regex(
     ctx: click.Context,
     param: click.Parameter,
     value: Optional[str],
-) -> Optional[Pattern]:
+) -> Optional[Pattern[str]]:
     try:
         return re_compile_maybe_verbose(value) if value is not None else None
     except re.error:
-        raise click.BadParameter("Not a valid regular expression")
+        raise click.BadParameter("Not a valid regular expression") from None
 
 
-@click.command(context_settings=dict(help_option_names=["-h", "--help"]))
+@click.command(
+    context_settings={"help_option_names": ["-h", "--help"]},
+    # While Click does set this field automatically using the docstring, mypyc
+    # (annoyingly) strips 'em so we need to set it here too.
+    help="The uncompromising code formatter.",
+)
 @click.option("-c", "--code", type=str, help="Format the code passed in as a string.")
 @click.option(
     "-l",
@@ -194,6 +213,14 @@ def validate_regex(
     help=(
         "Format all input files like typing stubs regardless of file extension (useful"
         " when piping source on standard input)."
+    ),
+)
+@click.option(
+    "--ipynb",
+    is_flag=True,
+    help=(
+        "Format all input files like Jupyter Notebooks regardless of file extension "
+        "(useful when piping source on standard input)."
     ),
 )
 @click.option(
@@ -303,6 +330,14 @@ def validate_regex(
     ),
 )
 @click.option(
+    "-W",
+    "--workers",
+    type=click.IntRange(min=1),
+    default=DEFAULT_WORKERS,
+    show_default=True,
+    help="Number of parallel workers",
+)
+@click.option(
     "-q",
     "--quiet",
     is_flag=True,
@@ -320,7 +355,10 @@ def validate_regex(
         " due to exclusion patterns."
     ),
 )
-@click.version_option(version=__version__)
+@click.version_option(
+    version=__version__,
+    message=f"%(prog)s, %(version)s (compiled: {'yes' if COMPILED else 'no'})",
+)
 @click.argument(
     "src",
     nargs=-1,
@@ -355,17 +393,19 @@ def main(
     color: bool,
     fast: bool,
     pyi: bool,
+    ipynb: bool,
     skip_string_normalization: bool,
     skip_magic_trailing_comma: bool,
     experimental_string_processing: bool,
     quiet: bool,
     verbose: bool,
-    required_version: str,
-    include: Pattern,
-    exclude: Optional[Pattern],
-    extend_exclude: Optional[Pattern],
-    force_exclude: Optional[Pattern],
+    required_version: Optional[str],
+    include: Pattern[str],
+    exclude: Optional[Pattern[str]],
+    extend_exclude: Optional[Pattern[str]],
+    force_exclude: Optional[Pattern[str]],
     stdin_filename: Optional[str],
+    workers: int,
     src: Tuple[str, ...],
     config: Optional[str],
 ) -> None:
@@ -380,6 +420,9 @@ def main(
             f" the running version `{__version__}`!"
         )
         ctx.exit(1)
+    if ipynb and pyi:
+        err("Cannot pass both `pyi` and `ipynb` flags!")
+        ctx.exit(1)
 
     write_back = WriteBack.from_configuration(check=check, diff=diff, color=color)
     if target_version:
@@ -391,6 +434,7 @@ def main(
         target_versions=versions,
         line_length=line_length,
         is_pyi=pyi,
+        is_ipynb=ipynb,
         string_normalization=not skip_string_normalization,
         magic_trailing_comma=not skip_magic_trailing_comma,
         experimental_string_processing=experimental_string_processing,
@@ -408,18 +452,21 @@ def main(
             content=code, fast=fast, write_back=write_back, mode=mode, report=report
         )
     else:
-        sources = get_sources(
-            ctx=ctx,
-            src=src,
-            quiet=quiet,
-            verbose=verbose,
-            include=include,
-            exclude=exclude,
-            extend_exclude=extend_exclude,
-            force_exclude=force_exclude,
-            report=report,
-            stdin_filename=stdin_filename,
-        )
+        try:
+            sources = get_sources(
+                ctx=ctx,
+                src=src,
+                quiet=quiet,
+                verbose=verbose,
+                include=include,
+                exclude=exclude,
+                extend_exclude=extend_exclude,
+                force_exclude=force_exclude,
+                report=report,
+                stdin_filename=stdin_filename,
+            )
+        except GitWildMatchPatternError:
+            ctx.exit(1)
 
         path_empty(
             sources,
@@ -444,6 +491,7 @@ def main(
                 write_back=write_back,
                 mode=mode,
                 report=report,
+                workers=workers,
             )
 
     if verbose or not quiet:
@@ -504,6 +552,11 @@ def get_sources(
             if is_stdin:
                 p = Path(f"{STDIN_PLACEHOLDER}{str(p)}")
 
+            if p.suffix == ".ipynb" and not jupyter_dependencies_are_installed(
+                verbose=verbose, quiet=quiet
+            ):
+                continue
+
             sources.add(p)
         elif p.is_dir():
             sources.update(
@@ -516,6 +569,8 @@ def get_sources(
                     force_exclude,
                     report,
                     gitignore,
+                    verbose=verbose,
+                    quiet=quiet,
                 )
             )
         elif s == "-":
@@ -585,6 +640,8 @@ def reformat_one(
         if is_stdin:
             if src.suffix == ".pyi":
                 mode = replace(mode, is_pyi=True)
+            elif src.suffix == ".ipynb":
+                mode = replace(mode, is_ipynb=True)
             if format_stdin_to_stdout(fast=fast, write_back=write_back, mode=mode):
                 changed = Changed.YES
         else:
@@ -610,19 +667,28 @@ def reformat_one(
         report.failed(src, str(exc))
 
 
+# diff-shades depends on being to monkeypatch this function to operate. I know it's
+# not ideal, but this shouldn't cause any issues ... hopefully. ~ichard26
+@mypyc_attr(patchable=True)
 def reformat_many(
-    sources: Set[Path], fast: bool, write_back: WriteBack, mode: Mode, report: "Report"
+    sources: Set[Path],
+    fast: bool,
+    write_back: WriteBack,
+    mode: Mode,
+    report: "Report",
+    workers: Optional[int],
 ) -> None:
     """Reformat multiple files using a ProcessPoolExecutor."""
     executor: Executor
     loop = asyncio.get_event_loop()
-    worker_count = os.cpu_count()
+    worker_count = workers if workers is not None else DEFAULT_WORKERS
     if sys.platform == "win32":
         # Work around https://bugs.python.org/issue26903
+        assert worker_count is not None
         worker_count = min(worker_count, 60)
     try:
         executor = ProcessPoolExecutor(max_workers=worker_count)
-    except (ImportError, OSError):
+    except (ImportError, NotImplementedError, OSError):
         # we arrive here if the underlying system does not support multi-processing
         # like in AWS Lambda or Termux, in which case we gracefully fallback to
         # a ThreadPoolExecutor with just a single worker (more workers would not do us
@@ -713,7 +779,10 @@ async def schedule_formatting(
                     sources_to_cache.append(src)
                 report.done(src, changed)
     if cancelled:
-        await asyncio.gather(*cancelled, loop=loop, return_exceptions=True)
+        if sys.version_info >= (3, 7):
+            await asyncio.gather(*cancelled, return_exceptions=True)
+        else:
+            await asyncio.gather(*cancelled, loop=loop, return_exceptions=True)
     if sources_to_cache:
         write_cache(cache, sources_to_cache, mode)
 
@@ -733,6 +802,8 @@ def format_file_in_place(
     """
     if src.suffix == ".pyi":
         mode = replace(mode, is_pyi=True)
+    elif src.suffix == ".ipynb":
+        mode = replace(mode, is_ipynb=True)
 
     then = datetime.utcfromtimestamp(src.stat().st_mtime)
     with open(src, "rb") as buf:
@@ -741,6 +812,10 @@ def format_file_in_place(
         dst_contents = format_file_contents(src_contents, fast=fast, mode=mode)
     except NothingChanged:
         return False
+    except JSONDecodeError:
+        raise ValueError(
+            f"File '{src}' cannot be parsed as valid Jupyter notebook."
+        ) from None
 
     if write_back == WriteBack.YES:
         with open(src, "w", encoding=encoding, newline=newline) as f:
@@ -749,7 +824,10 @@ def format_file_in_place(
         now = datetime.utcnow()
         src_name = f"{src}\t{then} +0000"
         dst_name = f"{src}\t{now} +0000"
-        diff_contents = diff(src_contents, dst_contents, src_name, dst_name)
+        if mode.is_ipynb:
+            diff_contents = ipynb_diff(src_contents, dst_contents, src_name, dst_name)
+        else:
+            diff_contents = diff(src_contents, dst_contents, src_name, dst_name)
 
         if write_back == WriteBack.COLOR_DIFF:
             diff_contents = color_diff(diff_contents)
@@ -819,6 +897,29 @@ def format_stdin_to_stdout(
         f.detach()
 
 
+def check_stability_and_equivalence(
+    src_contents: str, dst_contents: str, *, mode: Mode
+) -> None:
+    """Perform stability and equivalence checks.
+
+    Raise AssertionError if source and destination contents are not
+    equivalent, or if a second pass of the formatter would format the
+    content differently.
+    """
+    assert_equivalent(src_contents, dst_contents)
+
+    # Forced second pass to work around optional trailing commas (becoming
+    # forced trailing commas on pass 2) interacting differently with optional
+    # parentheses.  Admittedly ugly.
+    dst_contents_pass2 = format_str(dst_contents, mode=mode)
+    if dst_contents != dst_contents_pass2:
+        dst_contents = dst_contents_pass2
+        assert_equivalent(src_contents, dst_contents, pass_num=2)
+        assert_stable(src_contents, dst_contents, mode=mode)
+    # Note: no need to explicitly call `assert_stable` if `dst_contents` was
+    # the same as `dst_contents_pass2`.
+
+
 def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileContent:
     """Reformat contents of a file and return new contents.
 
@@ -829,24 +930,118 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
     if not src_contents.strip():
         raise NothingChanged
 
-    dst_contents = format_str(src_contents, mode=mode)
+    if mode.is_ipynb:
+        dst_contents = format_ipynb_string(src_contents, fast=fast, mode=mode)
+    else:
+        dst_contents = format_str(src_contents, mode=mode)
     if src_contents == dst_contents:
         raise NothingChanged
 
-    if not fast:
-        assert_equivalent(src_contents, dst_contents)
-
-        # Forced second pass to work around optional trailing commas (becoming
-        # forced trailing commas on pass 2) interacting differently with optional
-        # parentheses.  Admittedly ugly.
-        dst_contents_pass2 = format_str(dst_contents, mode=mode)
-        if dst_contents != dst_contents_pass2:
-            dst_contents = dst_contents_pass2
-            assert_equivalent(src_contents, dst_contents, pass_num=2)
-            assert_stable(src_contents, dst_contents, mode=mode)
-        # Note: no need to explicitly call `assert_stable` if `dst_contents` was
-        # the same as `dst_contents_pass2`.
+    if not fast and not mode.is_ipynb:
+        # Jupyter notebooks will already have been checked above.
+        check_stability_and_equivalence(src_contents, dst_contents, mode=mode)
     return dst_contents
+
+
+def validate_cell(src: str) -> None:
+    """Check that cell does not already contain TransformerManager transformations,
+    or non-Python cell magics, which might cause tokenizer_rt to break because of
+    indentations.
+
+    If a cell contains ``!ls``, then it'll be transformed to
+    ``get_ipython().system('ls')``. However, if the cell originally contained
+    ``get_ipython().system('ls')``, then it would get transformed in the same way:
+
+        >>> TransformerManager().transform_cell("get_ipython().system('ls')")
+        "get_ipython().system('ls')\n"
+        >>> TransformerManager().transform_cell("!ls")
+        "get_ipython().system('ls')\n"
+
+    Due to the impossibility of safely roundtripping in such situations, cells
+    containing transformed magics will be ignored.
+    """
+    if any(transformed_magic in src for transformed_magic in TRANSFORMED_MAGICS):
+        raise NothingChanged
+    if src[:2] == "%%" and src.split()[0][2:] not in PYTHON_CELL_MAGICS:
+        raise NothingChanged
+
+
+def format_cell(src: str, *, fast: bool, mode: Mode) -> str:
+    """Format code in given cell of Jupyter notebook.
+
+    General idea is:
+
+      - if cell has trailing semicolon, remove it;
+      - if cell has IPython magics, mask them;
+      - format cell;
+      - reinstate IPython magics;
+      - reinstate trailing semicolon (if originally present);
+      - strip trailing newlines.
+
+    Cells with syntax errors will not be processed, as they
+    could potentially be automagics or multi-line magics, which
+    are currently not supported.
+    """
+    validate_cell(src)
+    src_without_trailing_semicolon, has_trailing_semicolon = remove_trailing_semicolon(
+        src
+    )
+    try:
+        masked_src, replacements = mask_cell(src_without_trailing_semicolon)
+    except SyntaxError:
+        raise NothingChanged from None
+    masked_dst = format_str(masked_src, mode=mode)
+    if not fast:
+        check_stability_and_equivalence(masked_src, masked_dst, mode=mode)
+    dst_without_trailing_semicolon = unmask_cell(masked_dst, replacements)
+    dst = put_trailing_semicolon_back(
+        dst_without_trailing_semicolon, has_trailing_semicolon
+    )
+    dst = dst.rstrip("\n")
+    if dst == src:
+        raise NothingChanged from None
+    return dst
+
+
+def validate_metadata(nb: MutableMapping[str, Any]) -> None:
+    """If notebook is marked as non-Python, don't format it.
+
+    All notebook metadata fields are optional, see
+    https://nbformat.readthedocs.io/en/latest/format_description.html. So
+    if a notebook has empty metadata, we will try to parse it anyway.
+    """
+    language = nb.get("metadata", {}).get("language_info", {}).get("name", None)
+    if language is not None and language != "python":
+        raise NothingChanged from None
+
+
+def format_ipynb_string(src_contents: str, *, fast: bool, mode: Mode) -> FileContent:
+    """Format Jupyter notebook.
+
+    Operate cell-by-cell, only on code cells, only for Python notebooks.
+    If the ``.ipynb`` originally had a trailing newline, it'll be preserved.
+    """
+    trailing_newline = src_contents[-1] == "\n"
+    modified = False
+    nb = json.loads(src_contents)
+    validate_metadata(nb)
+    for cell in nb["cells"]:
+        if cell.get("cell_type", None) == "code":
+            try:
+                src = "".join(cell["source"])
+                dst = format_cell(src, fast=fast, mode=mode)
+            except NothingChanged:
+                pass
+            else:
+                cell["source"] = dst.splitlines(keepends=True)
+                modified = True
+    if modified:
+        dst_contents = json.dumps(nb, indent=1, ensure_ascii=False)
+        if trailing_newline:
+            dst_contents = dst_contents + "\n"
+        return dst_contents
+    else:
+        raise NothingChanged
 
 
 def format_str(src_contents: str, *, mode: Mode) -> FileContent:
@@ -886,6 +1081,15 @@ def format_str(src_contents: str, *, mode: Mode) -> FileContent:
         versions = mode.target_versions
     else:
         versions = detect_target_versions(src_node)
+
+    # TODO: fully drop support and this code hopefully in January 2022 :D
+    if TargetVersion.PY27 in mode.target_versions or versions == {TargetVersion.PY27}:
+        msg = (
+            "DEPRECATION: Python 2 support will be removed in the first stable release "
+            "expected in January 2022."
+        )
+        err(msg, fg="yellow", bold=True)
+
     normalize_fmt_off(src_node)
     lines = LineGenerator(
         mode=mode,
@@ -928,7 +1132,7 @@ def decode_bytes(src: bytes) -> Tuple[FileContent, Encoding, NewLine]:
         return tiow.read(), encoding, newline
 
 
-def get_features_used(node: Node) -> Set[Feature]:
+def get_features_used(node: Node) -> Set[Feature]:  # noqa: C901
     """Return a set of (relatively) new Python features used in this file.
 
     Currently looking for:
@@ -938,6 +1142,7 @@ def get_features_used(node: Node) -> Set[Feature]:
     - positional only arguments in function signatures and lambdas;
     - assignment expression;
     - relaxed decorator syntax;
+    - print / exec statements;
     """
     features: Set[Feature] = set()
     for n in node.pre_order():
@@ -947,11 +1152,24 @@ def get_features_used(node: Node) -> Set[Feature]:
                 features.add(Feature.F_STRINGS)
 
         elif n.type == token.NUMBER:
-            if "_" in n.value:  # type: ignore
+            assert isinstance(n, Leaf)
+            if "_" in n.value:
                 features.add(Feature.NUMERIC_UNDERSCORES)
+            elif n.value.endswith(("L", "l")):
+                # Python 2: 10L
+                features.add(Feature.LONG_INT_LITERAL)
+            elif len(n.value) >= 2 and n.value[0] == "0" and n.value[1].isdigit():
+                # Python 2: 0123; 00123; ...
+                if not all(char == "0" for char in n.value):
+                    # although we don't want to match 0000 or similar
+                    features.add(Feature.OCTAL_INT_LITERAL)
 
         elif n.type == token.SLASH:
-            if n.parent and n.parent.type in {syms.typedargslist, syms.arglist}:
+            if n.parent and n.parent.type in {
+                syms.typedargslist,
+                syms.arglist,
+                syms.varargslist,
+            }:
                 features.add(Feature.POS_ONLY_ARGUMENTS)
 
         elif n.type == token.COLONEQUAL:
@@ -981,6 +1199,32 @@ def get_features_used(node: Node) -> Set[Feature]:
                     for argch in ch.children:
                         if argch.type in STARS:
                             features.add(feature)
+
+        # Python 2 only features (for its deprecation) except for integers, see above
+        elif n.type == syms.print_stmt:
+            features.add(Feature.PRINT_STMT)
+        elif n.type == syms.exec_stmt:
+            features.add(Feature.EXEC_STMT)
+        elif n.type == syms.tfpdef:
+            # def set_position((x, y), value):
+            #     ...
+            features.add(Feature.AUTOMATIC_PARAMETER_UNPACKING)
+        elif n.type == syms.except_clause:
+            # try:
+            #     ...
+            # except Exception, err:
+            #     ...
+            if len(n.children) >= 4:
+                if n.children[-2].type == token.COMMA:
+                    features.add(Feature.COMMA_STYLE_EXCEPT)
+        elif n.type == syms.raise_stmt:
+            # raise Exception, "msg"
+            if len(n.children) >= 4:
+                if n.children[-2].type == token.COMMA:
+                    features.add(Feature.COMMA_STYLE_RAISE)
+        elif n.type == token.BACKQUOTE:
+            # `i'm surprised this ever existed`
+            features.add(Feature.BACKQUOTE_REPR)
 
     return features
 
@@ -1049,9 +1293,8 @@ def assert_equivalent(src: str, dst: str, *, pass_num: int = 1) -> None:
         src_ast = parse_ast(src)
     except Exception as exc:
         raise AssertionError(
-            "cannot use --safe with this file; failed to parse source file.  AST"
-            f" error message: {exc}"
-        )
+            "cannot use --safe with this file; failed to parse source file."
+        ) from exc
 
     try:
         dst_ast = parse_ast(dst)
@@ -1112,7 +1355,7 @@ def patch_click() -> None:
     """
     try:
         from click import core
-        from click import _unicodefun  # type: ignore
+        from click import _unicodefun
     except ModuleNotFoundError:
         return
 

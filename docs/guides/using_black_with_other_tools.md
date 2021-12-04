@@ -24,10 +24,10 @@ to conflicting changes.
 #### Profile
 
 Since version 5.0.0, isort supports
-[profiles](https://pycqa.github.io/isort/docs/configuration/profiles/) to allow easy
+[profiles](https://pycqa.github.io/isort/docs/configuration/profiles.html) to allow easy
 interoperability with common code styles. You can set the black profile in any of the
-[config files](https://pycqa.github.io/isort/docs/configuration/config_files/) supported
-by isort. Below, an example for `pyproject.toml`:
+[config files](https://pycqa.github.io/isort/docs/configuration/config_files.html)
+supported by isort. Below, an example for `pyproject.toml`:
 
 ```toml
 [tool.isort]
@@ -97,7 +97,7 @@ does not break older versions so you can keep it if you are running previous ver
 <details>
 <summary>.isort.cfg</summary>
 
-```cfg
+```ini
 [settings]
 profile = black
 ```
@@ -107,7 +107,7 @@ profile = black
 <details>
 <summary>setup.cfg</summary>
 
-```cfg
+```ini
 [isort]
 profile = black
 ```
@@ -181,7 +181,7 @@ extend-ignore = E203
 <details>
 <summary>setup.cfg</summary>
 
-```cfg
+```ini
 [flake8]
 max-line-length = 88
 extend-ignore = E203

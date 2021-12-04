@@ -27,6 +27,7 @@ are the same, except instead of generating tokens, tokeneater is a callback
 function to which the 5 fields described above are passed as 5 arguments,
 each time a new token is found."""
 
+import sys
 from typing import (
     Callable,
     Iterable,
@@ -39,13 +40,19 @@ from typing import (
     Union,
     cast,
 )
+
+if sys.version_info >= (3, 8):
+    from typing import Final
+else:
+    from typing_extensions import Final
+
 from blib2to3.pgen2.token import *
 from blib2to3.pgen2.grammar import Grammar
 
 __author__ = "Ka-Ping Yee <ping@lfw.org>"
 __credits__ = "GvR, ESR, Tim Peters, Thomas Wouters, Fred Drake, Skip Montanaro"
 
-import regex as re
+import re
 from codecs import BOM_UTF8, lookup
 from blib2to3.pgen2.token import *
 
@@ -79,7 +86,7 @@ Whitespace = r"[ \f\t]*"
 Comment = r"#[^\r\n]*"
 Ignore = Whitespace + any(r"\\\r?\n" + Whitespace) + maybe(Comment)
 Name = (  # this is invalid but it's fine because Name comes after Number in all groups
-    r"\w+"
+    r"[^\s#\(\)\[\]\{\}+\-*/!@$%^&=|;:'\",\.<>/?`~\\]+"
 )
 
 Binnumber = r"0[bB]_?[01]+(?:_[01]+)*"
@@ -139,7 +146,7 @@ ContStr = group(
 PseudoExtras = group(r"\\\r?\n", Comment, Triple)
 PseudoToken = Whitespace + group(PseudoExtras, Number, Funny, ContStr, Name)
 
-pseudoprog = re.compile(PseudoToken, re.UNICODE)
+pseudoprog: Final = re.compile(PseudoToken, re.UNICODE)
 single3prog = re.compile(Single3)
 double3prog = re.compile(Double3)
 
@@ -149,7 +156,7 @@ _strprefixes = (
     | {"u", "U", "ur", "uR", "Ur", "UR"}
 )
 
-endprogs = {
+endprogs: Final = {
     "'": re.compile(Single),
     '"': re.compile(Double),
     "'''": single3prog,
@@ -159,12 +166,12 @@ endprogs = {
     **{prefix: None for prefix in _strprefixes},
 }
 
-triple_quoted = (
+triple_quoted: Final = (
     {"'''", '"""'}
     | {f"{prefix}'''" for prefix in _strprefixes}
     | {f'{prefix}"""' for prefix in _strprefixes}
 )
-single_quoted = (
+single_quoted: Final = (
     {"'", '"'}
     | {f"{prefix}'" for prefix in _strprefixes}
     | {f'{prefix}"' for prefix in _strprefixes}
@@ -418,7 +425,7 @@ def generate_tokens(
     logical line; continuation lines are included.
     """
     lnum = parenlev = continued = 0
-    numchars = "0123456789"
+    numchars: Final = "0123456789"
     contstr, needcont = "", 0
     contline: Optional[str] = None
     indents = [0]
@@ -427,7 +434,7 @@ def generate_tokens(
     # `await` as keywords.
     async_keywords = False if grammar is None else grammar.async_keywords
     # 'stashed' and 'async_*' are used for async/await parsing
-    stashed = None
+    stashed: Optional[GoodTokenInfo] = None
     async_def = False
     async_def_indent = 0
     async_def_nl = False
@@ -440,7 +447,7 @@ def generate_tokens(
             line = readline()
         except StopIteration:
             line = ""
-        lnum = lnum + 1
+        lnum += 1
         pos, max = 0, len(line)
 
         if contstr:  # continued string
@@ -481,14 +488,14 @@ def generate_tokens(
             column = 0
             while pos < max:  # measure leading whitespace
                 if line[pos] == " ":
-                    column = column + 1
+                    column += 1
                 elif line[pos] == "\t":
                     column = (column // tabsize + 1) * tabsize
                 elif line[pos] == "\f":
                     column = 0
                 else:
                     break
-                pos = pos + 1
+                pos += 1
             if pos == max:
                 break
 
@@ -507,7 +514,7 @@ def generate_tokens(
                     COMMENT,
                     comment_token,
                     (lnum, pos),
-                    (lnum, pos + len(comment_token)),
+                    (lnum, nl_pos),
                     line,
                 )
                 yield (NL, line[nl_pos:], (lnum, nl_pos), (lnum, len(line)), line)
@@ -652,16 +659,16 @@ def generate_tokens(
                     continued = 1
                 else:
                     if initial in "([{":
-                        parenlev = parenlev + 1
+                        parenlev += 1
                     elif initial in ")]}":
-                        parenlev = parenlev - 1
+                        parenlev -= 1
                     if stashed:
                         yield stashed
                         stashed = None
                     yield (OP, token, spos, epos, line)
             else:
                 yield (ERRORTOKEN, line[pos], (lnum, pos), (lnum, pos + 1), line)
-                pos = pos + 1
+                pos += 1
 
     if stashed:
         yield stashed
