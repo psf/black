@@ -17,6 +17,7 @@ from blib2to3 import pygram
 from blib2to3.pgen2 import driver
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.parse import ParseError
+from blib2to3.pgen2.tokenize import TokenError
 
 from black.mode import TargetVersion, Feature, supports_feature
 from black.nodes import syms
@@ -109,6 +110,12 @@ def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -
             except IndexError:
                 faulty_line = "<line number missing in source>"
             exc = InvalidInput(f"Cannot parse: {lineno}:{column}: {faulty_line}")
+
+        except TokenError as te:
+            # In edge cases these are raised; and typically don't have a "faulty_line".
+            lineno, column = te.args[1]
+            exc = InvalidInput(f"Cannot parse: {lineno}:{column}: {te.args[0]}")
+
     else:
         raise exc from None
 

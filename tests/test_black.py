@@ -1557,6 +1557,15 @@ class BlackTestCase(BlackBaseTestCase):
                     call_args[0].lower() == str(pyproject_path).lower()
                 ), "Incorrect config loaded."
 
+    def test_for_handled_unexpected_eof_error(self) -> None:
+        """
+        Test that an unexpected EOF SyntaxError is nicely presented.
+        """
+        with pytest.raises(black.parsing.InvalidInput) as exc_info:
+            black.lib2to3_parse("print(", {})
+
+        exc_info.match("Cannot parse: 2:0: EOF in multi-line statement")
+
 
 class TestCaching:
     def test_cache_broken_file(self) -> None:
