@@ -2198,25 +2198,14 @@ class BlackTestCase(BlackBaseTestCase):
                     call_args[0].lower() == str(pyproject_path).lower()
                 ), "Incorrect config loaded."
 
-    def test_code_with_unexpected_eof_error(self) -> None:
+    def test_for_handled_unexpected_eof_error(self) -> None:
         """
-        Test that Unexpected EOF error is raised with invalid code
+        Test that an unexpected EOF SyntaxError is nicely presented.
         """
-        code = "print("
-        args = ["--check", "--code", code]
-        error_msg = "error: cannot format <string>: Cannot parse: 2:0: Unexpected EOF\n"
-        result = CliRunner().invoke(black.main, args)
-        self.compare_results(result, error_msg, 123)
+        with pytest.raises(black.parsing.InvalidInput) as exc_info:
+            black.lib2to3_parse("print(", {})
 
-    def test_invalid_input_parsing_error(self) -> None:
-        """
-        Test with invalid code which throws parsing error
-        """
-        code = "print([)"
-        args = ["--check", "--code", code]
-        error_msg = f"error: cannot format <string>: Cannot parse: 1:7: {code}\n"
-        result = CliRunner().invoke(black.main, args)
-        self.compare_results(result, error_msg, 123)
+        exc_info.match("Cannot parse: 2:0: EOF in multi-line statement")
 
 
 with open(black.__file__, "r", encoding="utf-8") as _bf:

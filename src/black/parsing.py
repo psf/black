@@ -95,8 +95,9 @@ def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -
             exc = InvalidInput(f"Cannot parse: {lineno}:{column}: {faulty_line}")
 
         except TokenError as te:
+            # In edge cases these are raised; and typically don't have a "faulty_line".
             lineno, column = te.args[1]
-            exc = InvalidInput(f"Cannot parse: {lineno}:{column}: Unexpected EOF")
+            exc = InvalidInput(f"Cannot parse: {lineno}:{column}: {te.args[0]}")
 
     else:
         raise exc from None
