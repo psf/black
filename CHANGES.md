@@ -4,6 +4,7 @@
 
 ### _Black_
 
+- Do not accept bare carriage return line endings in pyproject.toml (#2408)
 - Fix determination of f-string expression spans (#2654)
 - Fix bad formatting of error messages about EOF in multi-line statements (#2343)
 - Functions and classes in blocks now have more consistent surrounding spacing (#2472)
@@ -94,7 +95,6 @@
 ### _Black_
 
 - Add support for formatting Jupyter Notebook files (#2357)
-- Do not accept bare carriage return line endings in pyproject.toml (#2408)
 - Move from `appdirs` dependency to `platformdirs` (#2375)
 - Present a more user-friendly error if .gitignore is invalid (#2414)
 - The failsafe for accidentally added backslashes in f-string expressions has been
