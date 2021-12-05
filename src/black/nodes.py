@@ -52,6 +52,8 @@ STATEMENT: Final = {
     syms.with_stmt,
     syms.funcdef,
     syms.classdef,
+    syms.match_stmt,
+    syms.case_block,
 }
 STANDALONE_COMMENT: Final = 153
 token.tok_name[STANDALONE_COMMENT] = "STANDALONE_COMMENT"
@@ -95,6 +97,8 @@ UNPACKING_PARENTS: Final = {
     syms.listmaker,
     syms.testlist_gexp,
     syms.testlist_star_expr,
+    syms.subject_expr,
+    syms.pattern,
 }
 TEST_DESCENDANTS: Final = {
     syms.test,

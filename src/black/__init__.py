@@ -10,7 +10,7 @@ from multiprocessing import Manager, freeze_support
 import os
 from pathlib import Path
 from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
-import regex as re
+import re
 import signal
 import sys
 import tokenize
@@ -57,6 +57,7 @@ from black.handle_ipynb_magics import (
     remove_trailing_semicolon,
     put_trailing_semicolon_back,
     TRANSFORMED_MAGICS,
+    PYTHON_CELL_MAGICS,
     jupyter_dependencies_are_installed,
 )
 
@@ -181,7 +182,7 @@ def validate_regex(
 
 
 @click.command(
-    context_settings=dict(help_option_names=["-h", "--help"]),
+    context_settings={"help_option_names": ["-h", "--help"]},
     # While Click does set this field automatically using the docstring, mypyc
     # (annoyingly) strips 'em so we need to set it here too.
     help="The uncompromising code formatter.",
@@ -687,7 +688,7 @@ def reformat_many(
         worker_count = min(worker_count, 60)
     try:
         executor = ProcessPoolExecutor(max_workers=worker_count)
-    except (ImportError, OSError):
+    except (ImportError, NotImplementedError, OSError):
         # we arrive here if the underlying system does not support multi-processing
         # like in AWS Lambda or Termux, in which case we gracefully fallback to
         # a ThreadPoolExecutor with just a single worker (more workers would not do us
@@ -943,7 +944,9 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
 
 
 def validate_cell(src: str) -> None:
-    """Check that cell does not already contain TransformerManager transformations.
+    """Check that cell does not already contain TransformerManager transformations,
+    or non-Python cell magics, which might cause tokenizer_rt to break because of
+    indentations.
 
     If a cell contains ``!ls``, then it'll be transformed to
     ``get_ipython().system('ls')``. However, if the cell originally contained
@@ -958,6 +961,8 @@ def validate_cell(src: str) -> None:
     containing transformed magics will be ignored.
     """
     if any(transformed_magic in src for transformed_magic in TRANSFORMED_MAGICS):
+        raise NothingChanged
+    if src[:2] == "%%" and src.split()[0][2:] not in PYTHON_CELL_MAGICS:
         raise NothingChanged
 
 

@@ -17,6 +17,7 @@ from blib2to3 import pygram
 from blib2to3.pgen2 import driver
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.parse import ParseError
+from blib2to3.pgen2.tokenize import TokenError
 
 from black.mode import TargetVersion, Feature, supports_feature
 from black.nodes import syms
@@ -40,6 +41,11 @@ except ImportError:
         sys.exit(1)
     else:
         ast3 = ast27 = ast
+
+
+PY310_HINT: Final[
+    str
+] = "Consider using --target-version py310 to parse Python 3.10 code."
 
 
 class InvalidInput(ValueError):
@@ -75,8 +81,10 @@ def get_grammars(target_versions: Set[TargetVersion]) -> List[Grammar]:
         # Python 3.10+
         grammars.append(pygram.python_grammar_soft_keywords)
     # If we have to parse both, try to parse async as a keyword first
-    if not supports_feature(target_versions, Feature.ASYNC_IDENTIFIERS):
-        # Python 3.7+
+    if not supports_feature(
+        target_versions, Feature.ASYNC_IDENTIFIERS
+    ) and not supports_feature(target_versions, Feature.PATTERN_MATCHING):
+        # Python 3.7-3.9
         grammars.append(
             pygram.python_grammar_no_print_statement_no_exec_statement_async_keywords
         )
@@ -93,7 +101,8 @@ def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -
     if not src_txt.endswith("\n"):
         src_txt += "\n"
 
-    for grammar in get_grammars(set(target_versions)):
+    grammars = get_grammars(set(target_versions))
+    for grammar in grammars:
         drv = driver.Driver(grammar)
         try:
             result = drv.parse_string(src_txt, True)
@@ -107,12 +116,34 @@ def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -
             except IndexError:
                 faulty_line = "<line number missing in source>"
             exc = InvalidInput(f"Cannot parse: {lineno}:{column}: {faulty_line}")
+
+        except TokenError as te:
+            # In edge cases these are raised; and typically don't have a "faulty_line".
+            lineno, column = te.args[1]
+            exc = InvalidInput(f"Cannot parse: {lineno}:{column}: {te.args[0]}")
+
     else:
+        if pygram.python_grammar_soft_keywords not in grammars and matches_grammar(
+            src_txt, pygram.python_grammar_soft_keywords
+        ):
+            original_msg = exc.args[0]
+            msg = f"{original_msg}\n{PY310_HINT}"
+            raise InvalidInput(msg) from None
         raise exc from None
 
     if isinstance(result, Leaf):
         result = Node(syms.file_input, [result])
     return result
+
+
+def matches_grammar(src_txt: str, grammar: Grammar) -> bool:
+    drv = driver.Driver(grammar)
+    try:
+        drv.parse_string(src_txt, True)
+    except ParseError:
+        return False
+    else:
+        return True
 
 
 def lib2to3_unparse(node: Node) -> str:
@@ -169,6 +200,7 @@ def stringify_ast(
 
     yield f"{'  ' * depth}{node.__class__.__name__}("
 
+    type_ignore_classes: Tuple[Type[Any], ...]
     for field in sorted(node._fields):  # noqa: F402
         # TypeIgnore will not be present using pypy < 3.8, so need for this
         if not (_IS_PYPY and sys.version_info < (3, 8)):

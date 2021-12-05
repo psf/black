@@ -1,6 +1,43 @@
 # Change Log
 
-## _Unreleased_
+## Unreleased
+
+### _Black_
+
+- Fix determination of f-string expression spans (#2654)
+- Fix bad formatting of error messages about EOF in multi-line statements (#2343)
+- Functions and classes in blocks now have more consistent surrounding spacing (#2472)
+
+#### Jupyter Notebook support
+
+- Cell magics are now only processed if they are known Python cell magics. Earlier, all
+  cell magics were tokenized, leading to possible indentation errors e.g. with
+  `%%writefile`. (#2630)
+- Fix assignment to environment variables in Jupyter Notebooks (#2642)
+
+#### Python 3.10 support
+
+- Point users to using `--target-version py310` if we detect 3.10-only syntax (#2668)
+- Fix `match` statements with open sequence subjects, like `match a, b:` or
+  `match a, *b:` (#2639) (#2659)
+- Fix `match`/`case` statements that contain `match`/`case` soft keywords multiple
+  times, like `match re.match()` (#2661)
+- Fix `case` statements with an inline body (#2665)
+- Fix styling of starred expressions inside `match` subject (#2667)
+- Fix parser error location on invalid syntax in a `match` statement (#2649)
+- Fix Python 3.10 support on platforms without ProcessPoolExecutor (#2631)
+
+### Packaging
+
+- Remove dependency on `regex` (#2644) (#2663)
+
+## 21.11b1
+
+### _Black_
+
+- Bumped regex version minimum to 2021.4.4 to fix Pattern class usage (#2621)
+
+## 21.11b0
 
 ### _Black_
 

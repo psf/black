@@ -2,7 +2,7 @@
 Simple formatting on strings. Further string formatting code is in trans.py.
 """
 
-import regex as re
+import re
 import sys
 from functools import lru_cache
 from typing import List, Pattern
@@ -156,7 +156,7 @@ def normalize_string_prefix(s: str, remove_u_prefix: bool = False) -> str:
 # performance on a long list literal of strings by 5-9% since lru_cache's
 # caching overhead is much lower.
 @lru_cache(maxsize=64)
-def _cached_compile(pattern: str) -> re.Pattern:
+def _cached_compile(pattern: str) -> Pattern[str]:
     return re.compile(pattern)
 
 

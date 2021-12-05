@@ -23,7 +23,62 @@ match re.match(case):
 
 def func(match: case, case: match) -> case:
     match Something():
-        case another:
-            ...
         case func(match, case):
             ...
+        case another:
+            ...
+
+
+match maybe, multiple:
+    case perhaps, 5:
+        pass
+    case perhaps, 6,:
+        pass
+
+
+match more := (than, one), indeed,:
+    case _, (5, 6):
+        pass
+    case [[5], (6)], [7],:
+        pass
+    case _:
+        pass
+
+
+match a, *b, c:
+    case [*_]:
+        assert "seq" == _
+    case {}:
+        assert "map" == b
+
+
+match match(
+    case,
+    match(
+        match, case, match, looooooooooooooooooooooooooooooooooooong, match, case, match
+    ),
+    case,
+):
+    case case(
+        match=case,
+        case=re.match(
+            loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong
+        ),
+    ):
+        pass
+
+    case [a as match]:
+        pass
+
+    case case:
+        pass
+
+
+match match:
+    case case:
+        pass
+
+
+match a, *b(), c:
+    case d, *f, g:
+        pass

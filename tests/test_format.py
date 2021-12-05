@@ -74,6 +74,7 @@ PY310_CASES = [
     "pattern_matching_simple",
     "pattern_matching_complex",
     "pattern_matching_extras",
+    "pattern_matching_style",
     "parenthesized_context_managers",
 ]
 
@@ -198,6 +199,24 @@ def test_python_310(filename: str) -> None:
     source, expected = read_data(filename)
     mode = black.Mode(target_versions={black.TargetVersion.PY310})
     assert_format(source, expected, mode, minimum_version=(3, 10))
+
+
+def test_patma_invalid() -> None:
+    source, expected = read_data("pattern_matching_invalid")
+    mode = black.Mode(target_versions={black.TargetVersion.PY310})
+    with pytest.raises(black.parsing.InvalidInput) as exc_info:
+        assert_format(source, expected, mode, minimum_version=(3, 10))
+
+    exc_info.match("Cannot parse: 10:11")
+
+
+def test_patma_hint() -> None:
+    source, expected = read_data("pattern_matching_simple")
+    mode = black.Mode(target_versions={black.TargetVersion.PY39})
+    with pytest.raises(black.parsing.InvalidInput) as exc_info:
+        assert_format(source, expected, mode, minimum_version=(3, 10))
+
+    exc_info.match(black.parsing.PY310_HINT)
 
 
 def test_docstring_no_string_normalization() -> None:

@@ -447,11 +447,31 @@ class EmptyLineTracker:
             before = 0
         depth = current_line.depth
         while self.previous_defs and self.previous_defs[-1] >= depth:
-            self.previous_defs.pop()
             if self.is_pyi:
                 before = 0 if depth else 1
             else:
-                before = 1 if depth else 2
+                if depth:
+                    before = 1
+                elif (
+                    not depth
+                    and self.previous_defs[-1]
+                    and current_line.leaves[-1].type == token.COLON
+                    and (
+                        current_line.leaves[0].value
+                        not in ("with", "try", "for", "while", "if", "match")
+                    )
+                ):
+                    # We shouldn't add two newlines between an indented function and
+                    # a dependent non-indented clause. This is to avoid issues with
+                    # conditional function definitions that are technically top-level
+                    # and therefore get two trailing newlines, but look weird and
+                    # inconsistent when they're followed by elif, else, etc. This is
+                    # worse because these functions only get *one* preceding newline
+                    # already.
+                    before = 1
+                else:
+                    before = 2
+            self.previous_defs.pop()
         if current_line.is_decorator or current_line.is_def or current_line.is_class:
             return self._maybe_empty_lines_for_class_or_def(current_line, before)
 

@@ -31,7 +31,7 @@ from unittest.mock import MagicMock, patch
 
 import click
 import pytest
-import regex as re
+import re
 from click import unstyle
 from click.testing import CliRunner
 from pathspec import PathSpec
@@ -70,7 +70,7 @@ T = TypeVar("T")
 R = TypeVar("R")
 
 # Match the time output in a diff, but nothing else
-DIFF_TIME = re.compile(r"\t[\d-:+\. ]+")
+DIFF_TIME = re.compile(r"\t[\d\-:+\. ]+")
 
 
 @contextmanager
@@ -1557,6 +1557,15 @@ class BlackTestCase(BlackBaseTestCase):
                     call_args[0].lower() == str(pyproject_path).lower()
                 ), "Incorrect config loaded."
 
+    def test_for_handled_unexpected_eof_error(self) -> None:
+        """
+        Test that an unexpected EOF SyntaxError is nicely presented.
+        """
+        with pytest.raises(black.parsing.InvalidInput) as exc_info:
+            black.lib2to3_parse("print(", {})
+
+        exc_info.match("Cannot parse: 2:0: EOF in multi-line statement")
+
 
 class TestCaching:
     def test_cache_broken_file(self) -> None:
@@ -1755,7 +1764,7 @@ def assert_collected_sources(
         report=black.Report(),
         stdin_filename=stdin_filename,
     )
-    assert sorted(list(collected)) == sorted(gs_expected)
+    assert sorted(collected) == sorted(gs_expected)
 
 
 class TestFileCollection:

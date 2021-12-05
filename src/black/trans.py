@@ -4,7 +4,7 @@ String transformers that can split and merge strings.
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass
-import regex as re
+import re
 from typing import (
     Any,
     Callable,
@@ -453,7 +453,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             # with 'f'...
             if "f" in prefix and "f" not in next_prefix:
                 # Then we must escape any braces contained in this substring.
-                SS = re.subf(r"(\{|\})", "{1}{1}", SS)
+                SS = re.sub(r"(\{|\})", r"\1\1", SS)
 
             NSS = make_naked(SS, next_prefix)
 
@@ -942,6 +942,57 @@ class BaseStringSplitter(StringTransformer):
         return max_string_length
 
 
+def iter_fexpr_spans(s: str) -> Iterator[Tuple[int, int]]:
+    """
+    Yields spans corresponding to expressions in a given f-string.
+    Spans are half-open ranges (left inclusive, right exclusive).
+    Assumes the input string is a valid f-string, but will not crash if the input
+    string is invalid.
+    """
+    stack: List[int] = []  # our curly paren stack
+    i = 0
+    while i < len(s):
+        if s[i] == "{":
+            # if we're in a string part of the f-string, ignore escaped curly braces
+            if not stack and i + 1 < len(s) and s[i + 1] == "{":
+                i += 2
+                continue
+            stack.append(i)
+            i += 1
+            continue
+
+        if s[i] == "}":
+            if not stack:
+                i += 1
+                continue
+            j = stack.pop()
+            # we've made it back out of the expression! yield the span
+            if not stack:
+                yield (j, i + 1)
+            i += 1
+            continue
+
+        # if we're in an expression part of the f-string, fast forward through strings
+        # note that backslashes are not legal in the expression portion of f-strings
+        if stack:
+            delim = None
+            if s[i : i + 3] in ("'''", '"""'):
+                delim = s[i : i + 3]
+            elif s[i] in ("'", '"'):
+                delim = s[i]
+            if delim:
+                i += len(delim)
+                while i < len(s) and s[i : i + len(delim)] != delim:
+                    i += 1
+                i += len(delim)
+                continue
+        i += 1
+
+
+def fstring_contains_expr(s: str) -> bool:
+    return any(iter_fexpr_spans(s))
+
+
 class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
     """
     StringTransformer that splits "atom" strings (i.e. strings which exist on
@@ -981,17 +1032,6 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
     """
 
     MIN_SUBSTR_SIZE: Final = 6
-    # Matches an "f-expression" (e.g. {var}) that might be found in an f-string.
-    RE_FEXPR: Final = r"""
-    (?<!\{) (?:\{\{)* \{ (?!\{)
-        (?:
-            [^\{\}]
-            | \{\{
-            | \}\}
-            | (?R)
-        )+
-    \}
-    """
 
     def do_splitter_match(self, line: Line) -> TMatchResult:
         LL = line.leaves
@@ -1058,8 +1098,8 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
         # contain any f-expressions, but ONLY if the original f-string
         # contains at least one f-expression. Otherwise, we will alter the AST
         # of the program.
-        drop_pointless_f_prefix = ("f" in prefix) and re.search(
-            self.RE_FEXPR, LL[string_idx].value, re.VERBOSE
+        drop_pointless_f_prefix = ("f" in prefix) and fstring_contains_expr(
+            LL[string_idx].value
         )
 
         first_string_line = True
@@ -1299,9 +1339,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
         """
         if "f" not in get_string_prefix(string).lower():
             return
-
-        for match in re.finditer(self.RE_FEXPR, string, re.VERBOSE):
-            yield match.span()
+        yield from iter_fexpr_spans(string)
 
     def _get_illegal_split_indices(self, string: str) -> Set[Index]:
         illegal_indices: Set[Index] = set()
@@ -1417,7 +1455,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
         """
         assert_is_leaf_string(string)
 
-        if "f" in prefix and not re.search(self.RE_FEXPR, string, re.VERBOSE):
+        if "f" in prefix and not fstring_contains_expr(string):
             new_prefix = prefix.replace("f", "")
 
             temp = string[len(prefix) :]
