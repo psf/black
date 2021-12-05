@@ -140,7 +140,7 @@ def matches_grammar(src_txt: str, grammar: Grammar) -> bool:
     drv = driver.Driver(grammar)
     try:
         drv.parse_string(src_txt, True)
-    except ParseError:
+    except (ParseError, TokenError, IndentationError):
         return False
     else:
         return True
