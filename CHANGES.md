@@ -26,6 +26,8 @@
 - Fix styling of starred expressions inside `match` subject (#2667)
 - Fix parser error location on invalid syntax in a `match` statement (#2649)
 - Fix Python 3.10 support on platforms without ProcessPoolExecutor (#2631)
+- Improve parsing performance on code that uses `match` under `--target-version py310`
+  up to ~50% (#2670)
 
 ### Packaging
 
