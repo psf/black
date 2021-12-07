@@ -177,8 +177,8 @@ def validate_regex(
 ) -> Optional[Pattern[str]]:
     try:
         return re_compile_maybe_verbose(value) if value is not None else None
-    except re.error:
-        raise click.BadParameter("Not a valid regular expression") from None
+    except re.error as e:
+        raise click.BadParameter(f"Not a valid regular expression: {e}") from None
 
 
 @click.command(

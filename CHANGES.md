@@ -1,5 +1,11 @@
 # Change Log
 
+## Unreleased
+
+### _Black_
+
+- Improve error message for invalid regular expression (#2678)
+
 ## 21.12b0
 
 ### _Black_
