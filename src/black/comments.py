@@ -114,6 +114,9 @@ def make_comment(content: str) -> str:
     if not content:
         return "#"
 
+    if content == "#fmt: skip":
+        return "# fmt: skip"
+
     if content[0] == "#":
         content = content[1:]
     NON_BREAKING_SPACE = " "

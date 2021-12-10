@@ -4,6 +4,7 @@
 
 ### _Black_
 
+- Add handling for internal error regarding #fmt: skip (#2682)
 - Fix determination of f-string expression spans (#2654)
 - Fix bad formatting of error messages about EOF in multi-line statements (#2343)
 - Functions and classes in blocks now have more consistent surrounding spacing (#2472)
