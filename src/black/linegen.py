@@ -21,7 +21,12 @@ from black.numerics import normalize_numeric_literal
 from black.strings import get_string_prefix, fix_docstring
 from black.strings import normalize_string_prefix, normalize_string_quotes
 from black.trans import Transformer, CannotTransform, StringMerger
-from black.trans import StringSplitter, StringParenWrapper, StringParenStripper
+from black.trans import (
+    StringSplitter,
+    StringParenWrapper,
+    StringParenStripper,
+    hug_power_op,
+)
 from black.mode import Mode
 from black.mode import Feature
 
@@ -341,9 +346,9 @@ def transform_line(
     ):
         # Only apply basic string preprocessing, since lines shouldn't be split here.
         if mode.experimental_string_processing:
-            transformers = [string_merge, string_paren_strip]
+            transformers = [string_merge, string_paren_strip, hug_power_op]
         else:
-            transformers = []
+            transformers = [hug_power_op]
     elif line.is_def:
         transformers = [left_hand_split]
     else:
@@ -393,6 +398,7 @@ def transform_line(
                     standalone_comment_split,
                     string_paren_wrap,
                     rhs,
+                    hug_power_op,
                 ]
             else:
                 transformers = [
@@ -401,12 +407,18 @@ def transform_line(
                     string_split,
                     string_paren_wrap,
                     rhs,
+                    hug_power_op,
                 ]
         else:
             if line.inside_brackets:
-                transformers = [delimiter_split, standalone_comment_split, rhs]
+                transformers = [
+                    delimiter_split,
+                    standalone_comment_split,
+                    rhs,
+                    hug_power_op,
+                ]
             else:
-                transformers = [rhs]
+                transformers = [rhs, hug_power_op]
 
     for transform in transformers:
         # We are accumulating lines in `result` because we might want to abort
