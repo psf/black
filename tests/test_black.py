@@ -1070,8 +1070,7 @@ class BlackTestCase(BlackBaseTestCase):
                 report=report,
             )
             fsts.assert_called_once()
-            root, _ = black.find_project_root(str(path))
-            report.done.assert_called_with(path, black.Changed.YES, root)
+            report.done.assert_called_with(path, black.Changed.YES)
 
     def test_reformat_one_with_stdin_filename(self) -> None:
         with patch(
@@ -1093,8 +1092,7 @@ class BlackTestCase(BlackBaseTestCase):
                 fast=True, write_back=black.WriteBack.YES, mode=DEFAULT_MODE
             )
             # __BLACK_STDIN_FILENAME__ should have been stripped
-            root, _ = black.find_project_root(str(expected))
-            report.done.assert_called_with(expected, black.Changed.YES, root)
+            report.done.assert_called_with(expected, black.Changed.YES)
 
     def test_reformat_one_with_stdin_filename_pyi(self) -> None:
         with patch(
@@ -1118,8 +1116,7 @@ class BlackTestCase(BlackBaseTestCase):
                 mode=replace(DEFAULT_MODE, is_pyi=True),
             )
             # __BLACK_STDIN_FILENAME__ should have been stripped
-            root, _ = black.find_project_root(str(expected))
-            report.done.assert_called_with(expected, black.Changed.YES, root)
+            report.done.assert_called_with(expected, black.Changed.YES)
 
     def test_reformat_one_with_stdin_filename_ipynb(self) -> None:
         with patch(
@@ -1143,8 +1140,7 @@ class BlackTestCase(BlackBaseTestCase):
                 mode=replace(DEFAULT_MODE, is_ipynb=True),
             )
             # __BLACK_STDIN_FILENAME__ should have been stripped
-            root, _ = black.find_project_root(str(expected))
-            report.done.assert_called_with(expected, black.Changed.YES, root)
+            report.done.assert_called_with(expected, black.Changed.YES)
 
     def test_reformat_one_with_stdin_and_existing_path(self) -> None:
         with patch(
@@ -1168,8 +1164,7 @@ class BlackTestCase(BlackBaseTestCase):
             )
             fsts.assert_called_once()
             # __BLACK_STDIN_FILENAME__ should have been stripped
-            root, _ = black.find_project_root(str(expected))
-            report.done.assert_called_with(expected, black.Changed.YES, root)
+            report.done.assert_called_with(expected, black.Changed.YES)
 
     def test_reformat_one_with_stdin_empty(self) -> None:
         output = io.StringIO()
@@ -1756,7 +1751,7 @@ def assert_collected_sources(
         report=black.Report(),
         stdin_filename=stdin_filename,
     )
-    assert sorted(list(collected[0])) == sorted(gs_expected)
+    assert sorted(list(collected)) == sorted(gs_expected)
 
 
 class TestFileCollection:

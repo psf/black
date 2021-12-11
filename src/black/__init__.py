@@ -399,6 +399,8 @@ def main(
     config: Optional[str],
 ) -> None:
     """The uncompromising code formatter."""
+    ctx.ensure_object(dict)
+
     if config and verbose:
         config_source = ctx.get_parameter_source("config")
         if config_source in (ParameterSource.DEFAULT, ParameterSource.DEFAULT_MAP):
@@ -438,15 +440,32 @@ def main(
         # You can still pass -v to get verbose output.
         quiet = True
 
-    report = Report(check=check, diff=diff, quiet=quiet, verbose=verbose)
-
     if code is not None:
+        report = Report(check=check, diff=diff, quiet=quiet, verbose=verbose)
         reformat_code(
             content=code, fast=fast, write_back=write_back, mode=mode, report=report
         )
     else:
+        root, method = find_project_root(src)
+        ctx.obj["root"] = root
+
+        if verbose:
+            if method:
+                out(
+                    f"Identified `{root}` as project root containing a {method}.",
+                    fg="blue",
+                )
+            else:
+                out(f"Identified `{root}` as project root.", fg="blue")
+            paths = '", "'.join(
+                str(root_relative(Path(source).absolute(), root)) for source in src
+            )
+            out(f'Sources to be formatted: "{paths}"', fg="blue")
+
+        report = Report(check=check, diff=diff, quiet=quiet, verbose=verbose, root=root)
+
         try:
-            sources, root = get_sources(
+            sources = get_sources(
                 ctx=ctx,
                 src=src,
                 quiet=quiet,
@@ -480,7 +499,6 @@ def main(
         else:
             reformat_many(
                 sources=sources,
-                root=root,
                 fast=fast,
                 write_back=write_back,
                 mode=mode,
@@ -507,35 +525,14 @@ def get_sources(
     force_exclude: Optional[Pattern[str]],
     report: "Report",
     stdin_filename: Optional[str],
-) -> Tuple[Set[Path], Path]:
-    """
-    Compute the set of files to be formatted.
-
-    Returns a tuple, with the first element as a set of paths which are to be
-    checked/formatted by black, and the second element as the project root
-    found out by black.
-    """
-    root, method = find_project_root(src)
-
-    if verbose:
-        if method:
-            out(
-                f"Identified `{root}` as project root containing a {method}.",
-                fg="blue",
-            )
-        else:
-            out(f"Identified `{root}` as project root.", fg="blue")
-        paths = '", "'.join(
-            str(root_relative(Path(source).absolute(), root)) for source in src
-        )
-        out(f'Sources to be formatted: "{paths}"', fg="blue")
-
+) -> Set[Path]:
+    """Compute the set of files to be formatted."""
     sources: Set[Path] = set()
     path_empty(src, "No Path provided. Nothing to do 😴", quiet, verbose, ctx)
 
     if exclude is None:
         exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES)
-        gitignore = get_gitignore(root)
+        gitignore = get_gitignore(ctx.obj["root"])
     else:
         gitignore = None
 
@@ -548,7 +545,7 @@ def get_sources(
             is_stdin = False
 
         if is_stdin or p.is_file():
-            normalized_path = normalize_path_maybe_ignore(p, root, report)
+            normalized_path = normalize_path_maybe_ignore(p, ctx.obj["root"], report)
             if normalized_path is None:
                 continue
 
@@ -559,13 +556,11 @@ def get_sources(
             else:
                 force_exclude_match = None
             if force_exclude_match and force_exclude_match.group(0):
-                report.path_ignored(
-                    p, "matches the --force-exclude regular expression", root
-                )
+                report.path_ignored(p, "matches the --force-exclude regular expression")
                 continue
 
             if is_stdin:
-                p = Path(f"{STDIN_PLACEHOLDER}{str(p)}")
+                p = Path(f"{STDIN_PLACEHOLDER}{p}")
 
             if p.suffix == ".ipynb" and not jupyter_dependencies_are_installed(
                 verbose=verbose, quiet=quiet
@@ -577,7 +572,7 @@ def get_sources(
             sources.update(
                 gen_python_files(
                     p.iterdir(),
-                    root,
+                    ctx.obj["root"],
                     include,
                     exclude,
                     extend_exclude,
@@ -591,8 +586,8 @@ def get_sources(
         elif s == "-":
             sources.add(p)
         else:
-            out(f"Invalid path: {root_relative(p, root)}", fg="red")
-    return sources, root
+            out(f"Invalid path: {root_relative(p, ctx.obj['root'])}", fg="red")
+    return sources
 
 
 def path_empty(
@@ -639,8 +634,6 @@ def reformat_one(
     `fast`, `write_back`, and `mode` options are passed to
     :func:`format_file_in_place` or :func:`format_stdin_to_stdout`.
     """
-    root, _ = find_project_root(str(src))
-
     try:
         changed = Changed.NO
 
@@ -677,16 +670,15 @@ def reformat_one(
                 write_back is WriteBack.CHECK and changed is Changed.NO
             ):
                 write_cache(cache, [src], mode)
-        report.done(src, changed, root)
+        report.done(src, changed)
     except Exception as exc:
         if report.verbose:
             traceback.print_exc()
-        report.failed(src, str(exc), root)
+        report.failed(src, str(exc))
 
 
 def reformat_many(
     sources: Set[Path],
-    root: Path,
     fast: bool,
     write_back: WriteBack,
     mode: Mode,
@@ -713,7 +705,6 @@ def reformat_many(
         loop.run_until_complete(
             schedule_formatting(
                 sources=sources,
-                root=root,
                 fast=fast,
                 write_back=write_back,
                 mode=mode,
@@ -730,7 +721,6 @@ def reformat_many(
 
 async def schedule_formatting(
     sources: Set[Path],
-    root: Path,
     fast: bool,
     write_back: WriteBack,
     mode: Mode,
@@ -750,7 +740,7 @@ async def schedule_formatting(
         cache = read_cache(mode)
         sources, cached = filter_cached(cache, sources)
         for src in sorted(cached):
-            report.done(src, Changed.CACHED, root)
+            report.done(src, Changed.CACHED)
     if not sources:
         return
 
@@ -793,7 +783,7 @@ async def schedule_formatting(
                     write_back is WriteBack.CHECK and changed is Changed.NO
                 ):
                     sources_to_cache.append(src)
-                report.done(src, changed, root)
+                report.done(src, changed)
     if cancelled:
         if sys.version_info >= (3, 7):
             await asyncio.gather(*cancelled, return_exceptions=True)

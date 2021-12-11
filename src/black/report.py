@@ -1,7 +1,6 @@
 """
 Summarize Black runs to users.
 """
-import os
 from typing import Optional
 
 from dataclasses import dataclass
@@ -14,9 +13,7 @@ from black.output import out, err
 
 
 def root_relative(path: Path, root: Optional[Path]) -> Path:
-    if not root:
-        return path
-    return Path(os.path.relpath(path, start=Path(f"{root}/../")))
+    return path.relative_to(root.parent) if root else path
 
 
 class Changed(Enum):
@@ -40,13 +37,14 @@ class Report:
     change_count: int = 0
     same_count: int = 0
     failure_count: int = 0
+    root: Optional[Path] = None
 
-    def done(self, src: Path, changed: Changed, root: Optional[Path] = None) -> None:
+    def done(self, src: Path, changed: Changed) -> None:
         """Increment the counter for successful reformatting. Write out a message."""
         if changed is Changed.YES:
             reformatted = "would reformat" if self.check or self.diff else "reformatted"
             if self.verbose or not self.quiet:
-                out(f"{reformatted} {root_relative(src, root)}")
+                out(f"{reformatted} {root_relative(src, self.root)}")
             self.change_count += 1
         else:
             if self.verbose:
@@ -54,19 +52,17 @@ class Report:
                     msg = "already well formatted, good job."
                 else:
                     msg = "wasn't modified on disk since last run."
-                out(f"{root_relative(src, root)} {msg}", bold=False)
+                out(f"{root_relative(src, self.root)} {msg}", bold=False)
             self.same_count += 1
 
-    def failed(self, src: Path, message: str, root: Optional[Path] = None) -> None:
+    def failed(self, src: Path, message: str) -> None:
         """Increment the counter for failed reformatting. Write out a message."""
-        err(f"error: cannot format {root_relative(src, root)}: {message}")
+        err(f"error: cannot format {root_relative(src, self.root)}: {message}")
         self.failure_count += 1
 
-    def path_ignored(
-        self, path: Path, message: str, root: Optional[Path] = None
-    ) -> None:
+    def path_ignored(self, path: Path, message: str) -> None:
         if self.verbose:
-            out(f"{root_relative(path, root)} ignored: {message}", bold=False)
+            out(f"{root_relative(path, self.root)} ignored: {message}", bold=False)
 
     @property
     def return_code(self) -> int:

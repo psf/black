@@ -196,7 +196,7 @@ def gen_python_files(
 
         # First ignore files matching .gitignore, if passed
         if gitignore is not None and gitignore.match_file(normalized_path):
-            report.path_ignored(child, "matches the .gitignore file content", root)
+            report.path_ignored(child, "matches the .gitignore file content")
             continue
 
         # Then ignore with `--exclude` `--extend-exclude` and `--force-exclude` options.
@@ -205,19 +205,17 @@ def gen_python_files(
             normalized_path += "/"
 
         if path_is_excluded(normalized_path, exclude):
-            report.path_ignored(child, "matches the --exclude regular expression", root)
+            report.path_ignored(child, "matches the --exclude regular expression")
             continue
 
         if path_is_excluded(normalized_path, extend_exclude):
             report.path_ignored(
-                child, "matches the --extend-exclude regular expression", root
+                child, "matches the --extend-exclude regular expression"
             )
             continue
 
         if path_is_excluded(normalized_path, force_exclude):
-            report.path_ignored(
-                child, "matches the --force-exclude regular expression", root
-            )
+            report.path_ignored(child, "matches the --force-exclude regular expression")
             continue
 
         if child.is_dir():
