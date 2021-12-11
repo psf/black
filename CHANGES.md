@@ -5,8 +5,7 @@
 ### _Black_
 
 - Improve error message for invalid regular expression (#2678)
-- `--verbose` enhancements (project root, how is config found, root relative paths)
-  (#2526)
+- `--verbose` enhancements (project root, how is config found) (#2526)
 
 ## 21.12b0
 
