@@ -9,7 +9,6 @@ import io
 from multiprocessing import Manager, freeze_support
 import os
 from pathlib import Path
-from click.core import ParameterSource
 from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
 import re
 import signal
@@ -32,6 +31,7 @@ from typing import (
 )
 
 import click
+from click.core import ParameterSource
 from dataclasses import replace
 from mypy_extensions import mypyc_attr
 
@@ -46,7 +46,7 @@ from black.mode import Feature, supports_feature, VERSION_TO_FEATURES
 from black.cache import read_cache, write_cache, get_cache_info, filter_cached, Cache
 from black.concurrency import cancel, shutdown, maybe_install_uvloop
 from black.output import dump_to_file, ipynb_diff, diff, color_diff, out, err
-from black.report import Report, Changed, NothingChanged, root_relative
+from black.report import Report, Changed, NothingChanged
 from black.files import find_project_root, find_pyproject_toml, parse_pyproject_toml
 from black.files import gen_python_files, get_gitignore, normalize_path_maybe_ignore
 from black.files import wrap_stream_for_windows
@@ -411,8 +411,6 @@ def main(
     config: Optional[str],
 ) -> None:
     """The uncompromising code formatter."""
-    ctx.ensure_object(dict)
-
     if config and verbose:
         config_source = ctx.get_parameter_source("config")
         if config_source in (ParameterSource.DEFAULT, ParameterSource.DEFAULT_MAP):
@@ -452,30 +450,13 @@ def main(
         # You can still pass -v to get verbose output.
         quiet = True
 
+    report = Report(check=check, diff=diff, quiet=quiet, verbose=verbose)
+
     if code is not None:
-        report = Report(check=check, diff=diff, quiet=quiet, verbose=verbose)
         reformat_code(
             content=code, fast=fast, write_back=write_back, mode=mode, report=report
         )
     else:
-        root, method = find_project_root(src)
-        ctx.obj["root"] = root
-
-        if verbose:
-            if method:
-                out(
-                    f"Identified `{root}` as project root containing a {method}.",
-                    fg="blue",
-                )
-            else:
-                out(f"Identified `{root}` as project root.", fg="blue")
-            paths = '", "'.join(
-                str(root_relative(Path(source).absolute(), root)) for source in src
-            )
-            out(f'Sources to be formatted: "{paths}"', fg="blue")
-
-        report = Report(check=check, diff=diff, quiet=quiet, verbose=verbose, root=root)
-
         try:
             sources = get_sources(
                 ctx=ctx,
@@ -539,12 +520,27 @@ def get_sources(
     stdin_filename: Optional[str],
 ) -> Set[Path]:
     """Compute the set of files to be formatted."""
+    root, method = find_project_root(src)
+
+    if verbose:
+        if method:
+            out(
+                f"Identified `{root}` as project root containing a {method}.",
+                fg="blue",
+            )
+        else:
+            out(f"Identified `{root}` as project root.", fg="blue")
+        paths = '", "'.join(
+            str(Path(source).absolute().relative_to(root)) for source in src
+        )
+        out(f'Sources to be formatted: "{paths}"', fg="blue")
+
     sources: Set[Path] = set()
     path_empty(src, "No Path provided. Nothing to do 😴", quiet, verbose, ctx)
 
     if exclude is None:
         exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES)
-        gitignore = get_gitignore(ctx.obj["root"])
+        gitignore = get_gitignore(root)
     else:
         gitignore = None
 
@@ -557,7 +553,7 @@ def get_sources(
             is_stdin = False
 
         if is_stdin or p.is_file():
-            normalized_path = normalize_path_maybe_ignore(p, ctx.obj["root"], report)
+            normalized_path = normalize_path_maybe_ignore(p, root, report)
             if normalized_path is None:
                 continue
 
@@ -572,7 +568,7 @@ def get_sources(
                 continue
 
             if is_stdin:
-                p = Path(f"{STDIN_PLACEHOLDER}{p}")
+                p = Path(f"{STDIN_PLACEHOLDER}{str(p)}")
 
             if p.suffix == ".ipynb" and not jupyter_dependencies_are_installed(
                 verbose=verbose, quiet=quiet
@@ -584,7 +580,7 @@ def get_sources(
             sources.update(
                 gen_python_files(
                     p.iterdir(),
-                    ctx.obj["root"],
+                    root,
                     include,
                     exclude,
                     extend_exclude,
@@ -598,7 +594,7 @@ def get_sources(
         elif s == "-":
             sources.add(p)
         else:
-            out(f"Invalid path: {root_relative(p, ctx.obj['root'])}", fg="red")
+            err(f"invalid path: {s}")
     return sources
 
 

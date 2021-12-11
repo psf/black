@@ -1,8 +1,6 @@
 """
 Summarize Black runs to users.
 """
-from typing import Optional
-
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -10,10 +8,6 @@ from pathlib import Path
 from click import style
 
 from black.output import out, err
-
-
-def root_relative(path: Path, root: Optional[Path]) -> Path:
-    return path.relative_to(root.parent) if root else path
 
 
 class Changed(Enum):
@@ -37,32 +31,31 @@ class Report:
     change_count: int = 0
     same_count: int = 0
     failure_count: int = 0
-    root: Optional[Path] = None
 
     def done(self, src: Path, changed: Changed) -> None:
         """Increment the counter for successful reformatting. Write out a message."""
         if changed is Changed.YES:
             reformatted = "would reformat" if self.check or self.diff else "reformatted"
             if self.verbose or not self.quiet:
-                out(f"{reformatted} {root_relative(src, self.root)}")
+                out(f"{reformatted} {src}")
             self.change_count += 1
         else:
             if self.verbose:
                 if changed is Changed.NO:
-                    msg = "already well formatted, good job."
+                    msg = f"{src} already well formatted, good job."
                 else:
-                    msg = "wasn't modified on disk since last run."
-                out(f"{root_relative(src, self.root)} {msg}", bold=False)
+                    msg = f"{src} wasn't modified on disk since last run."
+                out(msg, bold=False)
             self.same_count += 1
 
     def failed(self, src: Path, message: str) -> None:
         """Increment the counter for failed reformatting. Write out a message."""
-        err(f"error: cannot format {root_relative(src, self.root)}: {message}")
+        err(f"error: cannot format {src}: {message}")
         self.failure_count += 1
 
     def path_ignored(self, path: Path, message: str) -> None:
         if self.verbose:
-            out(f"{root_relative(path, self.root)} ignored: {message}", bold=False)
+            out(f"{path} ignored: {message}", bold=False)
 
     @property
     def return_code(self) -> int:
