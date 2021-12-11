@@ -10,8 +10,8 @@ The Black Code Style
 *Black* is a PEP 8 compliant opinionated formatter with its own style.
 
 While keeping the style unchanged throughout releases has always been a goal,
-the *Black* code style isn't set in stone. It evolves to accomodate for new features
-in the Python language and, ocassionally, in response to user feedback.
+the *Black* code style isn't set in stone. It evolves to accommodate for new features
+in the Python language and, occasionally, in response to user feedback.
 
 Stability Policy
 ----------------
@@ -32,7 +32,7 @@ versions of *Black*:
   improved formatting enabled by newer Python language syntax as well as due
   to improvements in the formatting logic.
 
-- The ``--future`` flag is exempt from this policy. There are no guarentees
+- The ``--future`` flag is exempt from this policy. There are no guarantees
   around the stability of the output with that flag passed into *Black*. This
   flag is intended for allowing experimentation with the proposed changes to
   the *Black* code style.

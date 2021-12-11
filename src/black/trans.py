@@ -4,10 +4,11 @@ String transformers that can split and merge strings.
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass
-import regex as re
+import re
 from typing import (
     Any,
     Callable,
+    ClassVar,
     Collection,
     Dict,
     Iterable,
@@ -20,6 +21,14 @@ from typing import (
     TypeVar,
     Union,
 )
+import sys
+
+if sys.version_info < (3, 8):
+    from typing_extensions import Final
+else:
+    from typing import Final
+
+from mypy_extensions import trait
 
 from black.rusty import Result, Ok, Err
 
@@ -62,7 +71,6 @@ def TErr(err_msg: str) -> Err[CannotTransform]:
     return Err(cant_transform)
 
 
-@dataclass  # type: ignore
 class StringTransformer(ABC):
     """
     An implementation of the Transformer protocol that relies on its
@@ -90,9 +98,13 @@ class StringTransformer(ABC):
         as much as possible.
     """
 
-    line_length: int
-    normalize_strings: bool
-    __name__ = "StringTransformer"
+    __name__: Final = "StringTransformer"
+
+    # Ideally this would be a dataclass, but unfortunately mypyc breaks when used with
+    # `abc.ABC`.
+    def __init__(self, line_length: int, normalize_strings: bool) -> None:
+        self.line_length = line_length
+        self.normalize_strings = normalize_strings
 
     @abstractmethod
     def do_match(self, line: Line) -> TMatchResult:
@@ -184,6 +196,7 @@ class CustomSplit:
     break_idx: int
 
 
+@trait
 class CustomSplitMapMixin:
     """
     This mixin class is used to map merged strings to a sequence of
@@ -191,8 +204,10 @@ class CustomSplitMapMixin:
     the resultant substrings go over the configured max line length.
     """
 
-    _Key = Tuple[StringID, str]
-    _CUSTOM_SPLIT_MAP: Dict[_Key, Tuple[CustomSplit, ...]] = defaultdict(tuple)
+    _Key: ClassVar = Tuple[StringID, str]
+    _CUSTOM_SPLIT_MAP: ClassVar[Dict[_Key, Tuple[CustomSplit, ...]]] = defaultdict(
+        tuple
+    )
 
     @staticmethod
     def _get_key(string: str) -> "CustomSplitMapMixin._Key":
@@ -243,7 +258,7 @@ class CustomSplitMapMixin:
         return key in self._CUSTOM_SPLIT_MAP
 
 
-class StringMerger(CustomSplitMapMixin, StringTransformer):
+class StringMerger(StringTransformer, CustomSplitMapMixin):
     """StringTransformer that merges strings together.
 
     Requirements:
@@ -438,7 +453,7 @@ class StringMerger(CustomSplitMapMixin, StringTransformer):
             # with 'f'...
             if "f" in prefix and "f" not in next_prefix:
                 # Then we must escape any braces contained in this substring.
-                SS = re.subf(r"(\{|\})", "{1}{1}", SS)
+                SS = re.sub(r"(\{|\})", r"\1\1", SS)
 
             NSS = make_naked(SS, next_prefix)
 
@@ -739,7 +754,7 @@ class BaseStringSplitter(StringTransformer):
         * The target string is not a multiline (i.e. triple-quote) string.
     """
 
-    STRING_OPERATORS = [
+    STRING_OPERATORS: Final = [
         token.EQEQUAL,
         token.GREATER,
         token.GREATEREQUAL,
@@ -927,7 +942,58 @@ class BaseStringSplitter(StringTransformer):
         return max_string_length
 
 
-class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
+def iter_fexpr_spans(s: str) -> Iterator[Tuple[int, int]]:
+    """
+    Yields spans corresponding to expressions in a given f-string.
+    Spans are half-open ranges (left inclusive, right exclusive).
+    Assumes the input string is a valid f-string, but will not crash if the input
+    string is invalid.
+    """
+    stack: List[int] = []  # our curly paren stack
+    i = 0
+    while i < len(s):
+        if s[i] == "{":
+            # if we're in a string part of the f-string, ignore escaped curly braces
+            if not stack and i + 1 < len(s) and s[i + 1] == "{":
+                i += 2
+                continue
+            stack.append(i)
+            i += 1
+            continue
+
+        if s[i] == "}":
+            if not stack:
+                i += 1
+                continue
+            j = stack.pop()
+            # we've made it back out of the expression! yield the span
+            if not stack:
+                yield (j, i + 1)
+            i += 1
+            continue
+
+        # if we're in an expression part of the f-string, fast forward through strings
+        # note that backslashes are not legal in the expression portion of f-strings
+        if stack:
+            delim = None
+            if s[i : i + 3] in ("'''", '"""'):
+                delim = s[i : i + 3]
+            elif s[i] in ("'", '"'):
+                delim = s[i]
+            if delim:
+                i += len(delim)
+                while i < len(s) and s[i : i + len(delim)] != delim:
+                    i += 1
+                i += len(delim)
+                continue
+        i += 1
+
+
+def fstring_contains_expr(s: str) -> bool:
+    return any(iter_fexpr_spans(s))
+
+
+class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
     """
     StringTransformer that splits "atom" strings (i.e. strings which exist on
     lines by themselves).
@@ -965,18 +1031,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         CustomSplit objects and add them to the custom split map.
     """
 
-    MIN_SUBSTR_SIZE = 6
-    # Matches an "f-expression" (e.g. {var}) that might be found in an f-string.
-    RE_FEXPR = r"""
-    (?<!\{) (?:\{\{)* \{ (?!\{)
-        (?:
-            [^\{\}]
-            | \{\{
-            | \}\}
-            | (?R)
-        )+
-    \}
-    """
+    MIN_SUBSTR_SIZE: Final = 6
 
     def do_splitter_match(self, line: Line) -> TMatchResult:
         LL = line.leaves
@@ -1043,8 +1098,8 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         # contain any f-expressions, but ONLY if the original f-string
         # contains at least one f-expression. Otherwise, we will alter the AST
         # of the program.
-        drop_pointless_f_prefix = ("f" in prefix) and re.search(
-            self.RE_FEXPR, LL[string_idx].value, re.VERBOSE
+        drop_pointless_f_prefix = ("f" in prefix) and fstring_contains_expr(
+            LL[string_idx].value
         )
 
         first_string_line = True
@@ -1284,9 +1339,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         """
         if "f" not in get_string_prefix(string).lower():
             return
-
-        for match in re.finditer(self.RE_FEXPR, string, re.VERBOSE):
-            yield match.span()
+        yield from iter_fexpr_spans(string)
 
     def _get_illegal_split_indices(self, string: str) -> Set[Index]:
         illegal_indices: Set[Index] = set()
@@ -1402,7 +1455,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         """
         assert_is_leaf_string(string)
 
-        if "f" in prefix and not re.search(self.RE_FEXPR, string, re.VERBOSE):
+        if "f" in prefix and not fstring_contains_expr(string):
             new_prefix = prefix.replace("f", "")
 
             temp = string[len(prefix) :]
@@ -1426,7 +1479,7 @@ class StringSplitter(CustomSplitMapMixin, BaseStringSplitter):
         return string_op_leaves
 
 
-class StringParenWrapper(CustomSplitMapMixin, BaseStringSplitter):
+class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
     """
     StringTransformer that splits non-"atom" strings (i.e. strings that do not
     exist on lines by themselves).
@@ -1811,20 +1864,20 @@ class StringParser:
         ```
     """
 
-    DEFAULT_TOKEN = -1
+    DEFAULT_TOKEN: Final = 20210605
 
     # String Parser States
-    START = 1
-    DOT = 2
-    NAME = 3
-    PERCENT = 4
-    SINGLE_FMT_ARG = 5
-    LPAR = 6
-    RPAR = 7
-    DONE = 8
+    START: Final = 1
+    DOT: Final = 2
+    NAME: Final = 3
+    PERCENT: Final = 4
+    SINGLE_FMT_ARG: Final = 5
+    LPAR: Final = 6
+    RPAR: Final = 7
+    DONE: Final = 8
 
     # Lookup Table for Next State
-    _goto: Dict[Tuple[ParserState, NodeType], ParserState] = {
+    _goto: Final[Dict[Tuple[ParserState, NodeType], ParserState]] = {
         # A string trailer may start with '.' OR '%'.
         (START, token.DOT): DOT,
         (START, token.PERCENT): PERCENT,

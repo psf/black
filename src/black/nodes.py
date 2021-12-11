@@ -15,10 +15,12 @@ from typing import (
     Union,
 )
 
-if sys.version_info < (3, 8):
-    from typing_extensions import Final
-else:
+if sys.version_info >= (3, 8):
     from typing import Final
+else:
+    from typing_extensions import Final
+
+from mypy_extensions import mypyc_attr
 
 # lib2to3 fork
 from blib2to3.pytree import Node, Leaf, type_repr
@@ -30,7 +32,7 @@ from black.strings import has_triple_quotes
 
 
 pygram.initialize(CACHE_DIR)
-syms = pygram.python_symbols
+syms: Final = pygram.python_symbols
 
 
 # types
@@ -50,6 +52,8 @@ STATEMENT: Final = {
     syms.with_stmt,
     syms.funcdef,
     syms.classdef,
+    syms.match_stmt,
+    syms.case_block,
 }
 STANDALONE_COMMENT: Final = 153
 token.tok_name[STANDALONE_COMMENT] = "STANDALONE_COMMENT"
@@ -93,6 +97,8 @@ UNPACKING_PARENTS: Final = {
     syms.listmaker,
     syms.testlist_gexp,
     syms.testlist_star_expr,
+    syms.subject_expr,
+    syms.pattern,
 }
 TEST_DESCENDANTS: Final = {
     syms.test,
@@ -128,16 +134,21 @@ ASSIGNMENTS: Final = {
     "//=",
 }
 
-IMPLICIT_TUPLE = {syms.testlist, syms.testlist_star_expr, syms.exprlist}
-BRACKET = {token.LPAR: token.RPAR, token.LSQB: token.RSQB, token.LBRACE: token.RBRACE}
-OPENING_BRACKETS = set(BRACKET.keys())
-CLOSING_BRACKETS = set(BRACKET.values())
-BRACKETS = OPENING_BRACKETS | CLOSING_BRACKETS
-ALWAYS_NO_SPACE = CLOSING_BRACKETS | {token.COMMA, STANDALONE_COMMENT}
+IMPLICIT_TUPLE: Final = {syms.testlist, syms.testlist_star_expr, syms.exprlist}
+BRACKET: Final = {
+    token.LPAR: token.RPAR,
+    token.LSQB: token.RSQB,
+    token.LBRACE: token.RBRACE,
+}
+OPENING_BRACKETS: Final = set(BRACKET.keys())
+CLOSING_BRACKETS: Final = set(BRACKET.values())
+BRACKETS: Final = OPENING_BRACKETS | CLOSING_BRACKETS
+ALWAYS_NO_SPACE: Final = CLOSING_BRACKETS | {token.COMMA, STANDALONE_COMMENT}
 
 RARROW = 55
 
 
+@mypyc_attr(allow_interpreted_subclasses=True)
 class Visitor(Generic[T]):
     """Basic lib2to3 visitor that yields things of type `T` on `visit()`."""
 
@@ -178,9 +189,9 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
     `complex_subscript` signals whether the given leaf is part of a subscription
     which has non-trivial arguments, like arithmetic expressions or function calls.
     """
-    NO = ""
-    SPACE = " "
-    DOUBLESPACE = "  "
+    NO: Final = ""
+    SPACE: Final = " "
+    DOUBLESPACE: Final = "  "
     t = leaf.type
     p = leaf.parent
     v = leaf.value
@@ -441,8 +452,8 @@ def prev_siblings_are(node: Optional[LN], tokens: List[Optional[NodeType]]) -> b
 
 def last_two_except(leaves: List[Leaf], omit: Collection[LeafID]) -> Tuple[Leaf, Leaf]:
     """Return (penultimate, last) leaves skipping brackets in `omit` and contents."""
-    stop_after = None
-    last = None
+    stop_after: Optional[Leaf] = None
+    last: Optional[Leaf] = None
     for leaf in reversed(leaves):
         if stop_after:
             if leaf is stop_after:

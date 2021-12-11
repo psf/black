@@ -90,6 +90,10 @@ def test_cell_magic_noop() -> None:
             id="Line magic with argument",
         ),
         pytest.param("%time\n'foo'", '%time\n"foo"', id="Line magic without argument"),
+        pytest.param(
+            "env =  %env var", "env = %env var", id="Assignment to environment variable"
+        ),
+        pytest.param("env =  %env", "env = %env", id="Assignment to magic"),
     ),
 )
 def test_magic(src: str, expected: str) -> None:
@@ -102,6 +106,7 @@ def test_magic(src: str, expected: str) -> None:
     (
         "%%bash\n2+2",
         "%%html --isolated\n2+2",
+        "%%writefile e.txt\n  meh\n meh",
     ),
 )
 def test_non_python_magics(src: str) -> None:
@@ -128,9 +133,9 @@ def test_magic_noop() -> None:
 
 
 def test_cell_magic_with_magic() -> None:
-    src = "%%t -n1\nls =!ls"
+    src = "%%timeit -n1\nls =!ls"
     result = format_cell(src, fast=True, mode=JUPYTER_MODE)
-    expected = "%%t -n1\nls = !ls"
+    expected = "%%timeit -n1\nls = !ls"
     assert result == expected
 
 

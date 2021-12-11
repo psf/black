@@ -35,7 +35,7 @@ def read_cache(mode: Mode) -> Cache:
     with cache_file.open("rb") as fobj:
         try:
             cache: Cache = pickle.load(fobj)
-        except (pickle.UnpicklingError, ValueError):
+        except (pickle.UnpicklingError, ValueError, IndexError):
             return {}
 
     return cache

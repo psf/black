@@ -33,3 +33,6 @@ optional-tests = [
   "no_blackd: run when `d` extra NOT installed",
   "no_jupyter: run when `jupyter` extra NOT installed",
 ]
+markers = [
+  "incompatible_with_mypyc: run when testing mypyc compiled black"
+]

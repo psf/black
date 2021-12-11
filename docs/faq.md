@@ -47,6 +47,7 @@ _Black_ is timid about formatting Jupyter Notebooks. Cells containing any of the
 following will not be formatted:
 
 - automagics (e.g. `pip install black`)
+- non-Python cell magics (e.g. `%%writeline`)
 - multiline magics, e.g.:
 
   ```python
@@ -92,3 +93,15 @@ influence their behavior. While Black does its best to recognize such comments a
 them in the right place, this detection is not and cannot be perfect. Therefore, you'll
 sometimes have to manually move these comments to the right place after you format your
 codebase with _Black_.
+
+## Can I run Black with PyPy?
+
+Yes, there is support for PyPy 3.7 and higher. You cannot format Python 2 files under
+PyPy, because PyPy's inbuilt ast module does not support this.
+
+## Why does Black not detect syntax errors in my code?
+
+_Black_ is an autoformatter, not a Python linter or interpreter. Detecting all syntax
+errors is not a goal. It can format all code accepted by CPython (if you find an example
+where that doesn't hold, please report a bug!), but it may also format some code that
+CPython doesn't accept.

@@ -31,7 +31,7 @@ from unittest.mock import MagicMock, patch
 
 import click
 import pytest
-import regex as re
+import re
 from click import unstyle
 from click.testing import CliRunner
 from pathspec import PathSpec
@@ -70,7 +70,7 @@ T = TypeVar("T")
 R = TypeVar("R")
 
 # Match the time output in a diff, but nothing else
-DIFF_TIME = re.compile(r"\t[\d-:+\. ]+")
+DIFF_TIME = re.compile(r"\t[\d\-:+\. ]+")
 
 
 @contextmanager
@@ -122,7 +122,7 @@ def invokeBlack(
     runner = BlackRunner()
     if ignore_config:
         args = ["--verbose", "--config", str(THIS_DIR / "empty.toml"), *args]
-    result = runner.invoke(black.main, args)
+    result = runner.invoke(black.main, args, catch_exceptions=False)
     assert result.stdout_bytes is not None
     assert result.stderr_bytes is not None
     msg = (
@@ -841,6 +841,7 @@ class BlackTestCase(BlackBaseTestCase):
         )
         self.assertEqual({"unicode_literals", "print"}, black.get_future_imports(node))
 
+    @pytest.mark.incompatible_with_mypyc
     def test_debug_visitor(self) -> None:
         source, _ = read_data("debug_visitor.py")
         expected, _ = read_data("debug_visitor.out")
@@ -891,6 +892,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(len(n.children), 1)
         self.assertEqual(n.children[0].type, black.token.ENDMARKER)
 
+    @pytest.mark.incompatible_with_mypyc
     @unittest.skipIf(os.environ.get("SKIP_AST_PRINT"), "user set SKIP_AST_PRINT")
     def test_assertFormatEqual(self) -> None:
         out_lines = []
@@ -944,7 +946,7 @@ class BlackTestCase(BlackBaseTestCase):
             symlink = workspace / "broken_link.py"
             try:
                 symlink.symlink_to("nonexistent.py")
-            except OSError as e:
+            except (OSError, NotImplementedError) as e:
                 self.skipTest(f"Can't create symlinks: {e}")
             self.invokeBlack([str(workspace.resolve())])
 
@@ -1055,6 +1057,7 @@ class BlackTestCase(BlackBaseTestCase):
         actual = result.output
         self.assertFormatEqual(actual, expected)
 
+    @pytest.mark.incompatible_with_mypyc
     def test_reformat_one_with_stdin(self) -> None:
         with patch(
             "black.format_stdin_to_stdout",
@@ -1072,6 +1075,7 @@ class BlackTestCase(BlackBaseTestCase):
             fsts.assert_called_once()
             report.done.assert_called_with(path, black.Changed.YES)
 
+    @pytest.mark.incompatible_with_mypyc
     def test_reformat_one_with_stdin_filename(self) -> None:
         with patch(
             "black.format_stdin_to_stdout",
@@ -1094,6 +1098,7 @@ class BlackTestCase(BlackBaseTestCase):
             # __BLACK_STDIN_FILENAME__ should have been stripped
             report.done.assert_called_with(expected, black.Changed.YES)
 
+    @pytest.mark.incompatible_with_mypyc
     def test_reformat_one_with_stdin_filename_pyi(self) -> None:
         with patch(
             "black.format_stdin_to_stdout",
@@ -1118,6 +1123,7 @@ class BlackTestCase(BlackBaseTestCase):
             # __BLACK_STDIN_FILENAME__ should have been stripped
             report.done.assert_called_with(expected, black.Changed.YES)
 
+    @pytest.mark.incompatible_with_mypyc
     def test_reformat_one_with_stdin_filename_ipynb(self) -> None:
         with patch(
             "black.format_stdin_to_stdout",
@@ -1142,6 +1148,7 @@ class BlackTestCase(BlackBaseTestCase):
             # __BLACK_STDIN_FILENAME__ should have been stripped
             report.done.assert_called_with(expected, black.Changed.YES)
 
+    @pytest.mark.incompatible_with_mypyc
     def test_reformat_one_with_stdin_and_existing_path(self) -> None:
         with patch(
             "black.format_stdin_to_stdout",
@@ -1296,6 +1303,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(config["exclude"], r"\.pyi?$")
         self.assertEqual(config["include"], r"\.py?$")
 
+    @pytest.mark.incompatible_with_mypyc
     def test_find_project_root(self) -> None:
         with TemporaryDirectory() as workspace:
             root = Path(workspace)
@@ -1490,6 +1498,7 @@ class BlackTestCase(BlackBaseTestCase):
         assert output == result_diff, "The output did not match the expected value."
         assert result.exit_code == 0, "The exit code is incorrect."
 
+    @pytest.mark.incompatible_with_mypyc
     def test_code_option_safe(self) -> None:
         """Test that the code option throws an error when the sanity checks fail."""
         # Patch black.assert_equivalent to ensure the sanity checks fail
@@ -1514,6 +1523,7 @@ class BlackTestCase(BlackBaseTestCase):
 
             self.compare_results(result, formatted, 0)
 
+    @pytest.mark.incompatible_with_mypyc
     def test_code_option_config(self) -> None:
         """
         Test that the code option finds the pyproject.toml in the current directory.
@@ -1534,6 +1544,7 @@ class BlackTestCase(BlackBaseTestCase):
                 call_args[0].lower() == str(pyproject_path).lower()
             ), "Incorrect config loaded."
 
+    @pytest.mark.incompatible_with_mypyc
     def test_code_option_parent_config(self) -> None:
         """
         Test that the code option finds the pyproject.toml in the parent directory.
@@ -1552,6 +1563,15 @@ class BlackTestCase(BlackBaseTestCase):
                 assert (
                     call_args[0].lower() == str(pyproject_path).lower()
                 ), "Incorrect config loaded."
+
+    def test_for_handled_unexpected_eof_error(self) -> None:
+        """
+        Test that an unexpected EOF SyntaxError is nicely presented.
+        """
+        with pytest.raises(black.parsing.InvalidInput) as exc_info:
+            black.lib2to3_parse("print(", {})
+
+        exc_info.match("Cannot parse: 2:0: EOF in multi-line statement")
 
 
 class TestCaching:
@@ -1751,7 +1771,7 @@ def assert_collected_sources(
         report=black.Report(),
         stdin_filename=stdin_filename,
     )
-    assert sorted(list(collected)) == sorted(gs_expected)
+    assert sorted(collected) == sorted(gs_expected)
 
 
 class TestFileCollection:
@@ -1901,6 +1921,7 @@ class TestFileCollection:
             src, expected, exclude=r"\.pyi$", extend_exclude=r"\.definitely_exclude"
         )
 
+    @pytest.mark.incompatible_with_mypyc
     def test_symlink_out_of_root_directory(self) -> None:
         path = MagicMock()
         root = THIS_DIR.resolve()
@@ -2024,6 +2045,7 @@ class TestFileCollection:
         )
 
 
+@pytest.mark.python2
 @pytest.mark.parametrize("explicit", [True, False], ids=["explicit", "autodetection"])
 def test_python_2_deprecation_with_target_version(explicit: bool) -> None:
     args = [
@@ -2039,8 +2061,26 @@ def test_python_2_deprecation_with_target_version(explicit: bool) -> None:
     assert "DEPRECATION: Python 2 support will be removed" in result.stderr
 
 
-with open(black.__file__, "r", encoding="utf-8") as _bf:
-    black_source_lines = _bf.readlines()
+@pytest.mark.python2
+def test_python_2_deprecation_autodetection_extended() -> None:
+    # this test has a similar construction to test_get_features_used_decorator
+    python2, non_python2 = read_data("python2_detection")
+    for python2_case in python2.split("###"):
+        node = black.lib2to3_parse(python2_case)
+        assert black.detect_target_versions(node) == {TargetVersion.PY27}, python2_case
+    for non_python2_case in non_python2.split("###"):
+        node = black.lib2to3_parse(non_python2_case)
+        assert black.detect_target_versions(node) != {
+            TargetVersion.PY27
+        }, non_python2_case
+
+
+try:
+    with open(black.__file__, "r", encoding="utf-8") as _bf:
+        black_source_lines = _bf.readlines()
+except UnicodeDecodeError:
+    if not black.COMPILED:
+        raise
 
 
 def tracefunc(
