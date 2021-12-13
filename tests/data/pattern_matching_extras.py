@@ -82,3 +82,13 @@ match match:
 match a, *b(), c:
     case d, *f, g:
         pass
+
+
+match something:
+    case {
+        "key": key as key_1,
+        "password": PASS.ONE | PASS.TWO | PASS.THREE as password,
+    }:
+        pass
+    case {"maybe": something(complicated as this) as that}:
+        pass

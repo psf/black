@@ -5,6 +5,14 @@
 ### _Black_
 
 - Do not accept bare carriage return line endings in pyproject.toml (#2408)
+- Improve error message for invalid regular expression (#2678)
+- Fix mapping cases that contain as-expressions, like `case {"key": 1 | 2 as password}`
+  (#2686)
+
+## 21.12b0
+
+### _Black_
+
 - Fix determination of f-string expression spans (#2654)
 - Fix bad formatting of error messages about EOF in multi-line statements (#2343)
 - Functions and classes in blocks now have more consistent surrounding spacing (#2472)
@@ -27,6 +35,8 @@
 - Fix styling of starred expressions inside `match` subject (#2667)
 - Fix parser error location on invalid syntax in a `match` statement (#2649)
 - Fix Python 3.10 support on platforms without ProcessPoolExecutor (#2631)
+- Improve parsing performance on code that uses `match` under `--target-version py310`
+  up to ~50% (#2670)
 
 ### Packaging
 
