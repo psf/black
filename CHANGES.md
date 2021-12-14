@@ -7,6 +7,8 @@
 - Improve error message for invalid regular expression (#2678)
 - Fix mapping cases that contain as-expressions, like `case {"key": 1 | 2 as password}`
   (#2686)
+- No longer color diff headers white as it's unreadable in light themed terminals
+  (#2691)
 
 ## 21.12b0
 
