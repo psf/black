@@ -4,10 +4,17 @@ Mostly around Python language feature support per version and Black configuratio
 chosen by the user.
 """
 
+import sys
+
 from dataclasses import dataclass, field
 from enum import Enum
 from operator import attrgetter
 from typing import Dict, Set
+
+if sys.version_info < (3, 8):
+    from typing_extensions import Final
+else:
+    from typing import Final
 
 from black.const import DEFAULT_LINE_LENGTH
 
@@ -44,6 +51,9 @@ class Feature(Enum):
     PATTERN_MATCHING = 11
     FORCE_OPTIONAL_PARENTHESES = 50
 
+    # __future__ flags
+    FUTURE_ANNOTATIONS = 51
+
     # temporary for Python 2 deprecation
     PRINT_STMT = 200
     EXEC_STMT = 201
@@ -53,6 +63,11 @@ class Feature(Enum):
     LONG_INT_LITERAL = 205
     OCTAL_INT_LITERAL = 206
     BACKQUOTE_REPR = 207
+
+
+FUTURE_FLAG_TO_FEATURE: Final = {
+    "annotations": Feature.FUTURE_ANNOTATIONS,
+}
 
 
 VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
@@ -89,6 +104,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.TRAILING_COMMA_IN_CALL,
         Feature.TRAILING_COMMA_IN_DEF,
         Feature.ASYNC_KEYWORDS,
+        Feature.FUTURE_ANNOTATIONS,
     },
     TargetVersion.PY38: {
         Feature.UNICODE_LITERALS,
@@ -97,6 +113,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.TRAILING_COMMA_IN_CALL,
         Feature.TRAILING_COMMA_IN_DEF,
         Feature.ASYNC_KEYWORDS,
+        Feature.FUTURE_ANNOTATIONS,
         Feature.ASSIGNMENT_EXPRESSIONS,
         Feature.POS_ONLY_ARGUMENTS,
     },
@@ -107,6 +124,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.TRAILING_COMMA_IN_CALL,
         Feature.TRAILING_COMMA_IN_DEF,
         Feature.ASYNC_KEYWORDS,
+        Feature.FUTURE_ANNOTATIONS,
         Feature.ASSIGNMENT_EXPRESSIONS,
         Feature.RELAXED_DECORATORS,
         Feature.POS_ONLY_ARGUMENTS,
@@ -118,6 +136,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.TRAILING_COMMA_IN_CALL,
         Feature.TRAILING_COMMA_IN_DEF,
         Feature.ASYNC_KEYWORDS,
+        Feature.FUTURE_ANNOTATIONS,
         Feature.ASSIGNMENT_EXPRESSIONS,
         Feature.RELAXED_DECORATORS,
         Feature.POS_ONLY_ARGUMENTS,

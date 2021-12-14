@@ -15,6 +15,7 @@
 - Fix determination of f-string expression spans (#2654)
 - Fix bad formatting of error messages about EOF in multi-line statements (#2343)
 - Functions and classes in blocks now have more consistent surrounding spacing (#2472)
+- `from __future__ import annotations` statement now implies Python 3.7+ (#2690)
 
 #### Jupyter Notebook support
 

@@ -811,6 +811,24 @@ class BlackTestCase(BlackBaseTestCase):
         node = black.lib2to3_parse("def fn(a, /, b): ...")
         self.assertEqual(black.get_features_used(node), {Feature.POS_ONLY_ARGUMENTS})
 
+    def test_get_features_used_for_future_flags(self) -> None:
+        for src, features in [
+            ("from __future__ import annotations", {Feature.FUTURE_ANNOTATIONS}),
+            (
+                "from __future__ import (other, annotations)",
+                {Feature.FUTURE_ANNOTATIONS},
+            ),
+            ("a = 1 + 2\nfrom something import annotations", set()),
+            ("from __future__ import x, y", set()),
+        ]:
+            with self.subTest(src=src, features=features):
+                node = black.lib2to3_parse(src)
+                future_imports = black.get_future_imports(node)
+                self.assertEqual(
+                    black.get_features_used(node, future_imports=future_imports),
+                    features,
+                )
+
     def test_get_future_imports(self) -> None:
         node = black.lib2to3_parse("\n")
         self.assertEqual(set(), black.get_future_imports(node))
