@@ -40,7 +40,7 @@ from black.nodes import STARS, syms, is_simple_decorator_expression
 from black.lines import Line, EmptyLineTracker
 from black.linegen import transform_line, LineGenerator, LN
 from black.comments import normalize_fmt_off
-from black.mode import Mode, TargetVersion
+from black.mode import FUTURE_FLAG_TO_FEATURE, Mode, TargetVersion
 from black.mode import Feature, supports_feature, VERSION_TO_FEATURES
 from black.cache import read_cache, write_cache, get_cache_info, filter_cached, Cache
 from black.concurrency import cancel, shutdown, maybe_install_uvloop
@@ -1080,7 +1080,7 @@ def format_str(src_contents: str, *, mode: Mode) -> FileContent:
     if mode.target_versions:
         versions = mode.target_versions
     else:
-        versions = detect_target_versions(src_node)
+        versions = detect_target_versions(src_node, future_imports=future_imports)
 
     # TODO: fully drop support and this code hopefully in January 2022 :D
     if TargetVersion.PY27 in mode.target_versions or versions == {TargetVersion.PY27}:
@@ -1132,7 +1132,9 @@ def decode_bytes(src: bytes) -> Tuple[FileContent, Encoding, NewLine]:
         return tiow.read(), encoding, newline
 
 
-def get_features_used(node: Node) -> Set[Feature]:  # noqa: C901
+def get_features_used(  # noqa: C901
+    node: Node, *, future_imports: Optional[Set[str]] = None
+) -> Set[Feature]:
     """Return a set of (relatively) new Python features used in this file.
 
     Currently looking for:
@@ -1142,9 +1144,17 @@ def get_features_used(node: Node) -> Set[Feature]:  # noqa: C901
     - positional only arguments in function signatures and lambdas;
     - assignment expression;
     - relaxed decorator syntax;
+    - usage of __future__ flags (annotations);
     - print / exec statements;
     """
     features: Set[Feature] = set()
+    if future_imports:
+        features |= {
+            FUTURE_FLAG_TO_FEATURE[future_import]
+            for future_import in future_imports
+            if future_import in FUTURE_FLAG_TO_FEATURE
+        }
+
     for n in node.pre_order():
         if n.type == token.STRING:
             value_head = n.value[:2]  # type: ignore
@@ -1229,9 +1239,11 @@ def get_features_used(node: Node) -> Set[Feature]:  # noqa: C901
     return features
 
 
-def detect_target_versions(node: Node) -> Set[TargetVersion]:
+def detect_target_versions(
+    node: Node, *, future_imports: Optional[Set[str]] = None
+) -> Set[TargetVersion]:
     """Detect the version to target based on the nodes used."""
-    features = get_features_used(node)
+    features = get_features_used(node, future_imports=future_imports)
     return {
         version for version in TargetVersion if features <= VERSION_TO_FEATURES[version]
     }
