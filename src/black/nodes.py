@@ -809,7 +809,13 @@ def is_type_comment(leaf: Leaf, suffix: str = "") -> bool:
     Only returns true for type comments for now."""
     t = leaf.type
     v = leaf.value
-    return t in {token.COMMENT, STANDALONE_COMMENT} and v.startswith("# type:" + suffix)
+
+    return (
+        t in {token.COMMENT, STANDALONE_COMMENT}
+        and v[0] == "#"
+        and v[1:].lstrip().startswith("type:")
+        and v[1:].lstrip()[5:].lstrip().startswith(suffix.lstrip())
+    )
 
 
 def wrap_in_parentheses(parent: Node, child: LN, *, visible: bool = True) -> None:

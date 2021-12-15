@@ -270,8 +270,12 @@ def contains_pragma_comment(comment_list: List[Leaf]) -> bool:
         of the more common static analysis tools for python (e.g. mypy, flake8,
         pylint).
     """
+    possible_pragmas = ("type:", "noqa", "pylint:")
     for comment in comment_list:
-        if comment.value.startswith(("# type:", "# noqa", "# pylint:")):
-            return True
+        for pragma in possible_pragmas:
+            if comment.value[0] == "#" and comment.value[1:].lstrip().startswith(
+                pragma
+            ):
+                return True
 
     return False
