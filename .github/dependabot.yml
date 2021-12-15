@@ -9,7 +9,7 @@ updates:
       interval: "weekly"
     labels: ["skip news", "C: dependencies"]
 
-  - package-ecosystem: "python"
+  - package-ecosystem: "pip"
     directory: "docs/"
     schedule:
       interval: "weekly"
