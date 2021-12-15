@@ -1305,7 +1305,7 @@ def assert_equivalent(src: str, dst: str, *, pass_num: int = 1) -> None:
         src_ast = parse_ast(src)
     except Exception as exc:
         raise AssertionError(
-            "cannot use --safe with this file; failed to parse source file."
+            f"cannot use --safe with this file; failed to parse source file: {exc}"
         ) from exc
 
     try:

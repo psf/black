@@ -1584,6 +1584,16 @@ class BlackTestCase(BlackBaseTestCase):
 
         exc_info.match("Cannot parse: 2:0: EOF in multi-line statement")
 
+    def test_equivalency_ast_parse_failure_includes_error(self) -> None:
+        with pytest.raises(AssertionError) as err:
+            black.assert_equivalent("a«»a  = 1", "a«»a  = 1")
+
+        err.match("--safe")
+        # Unfortunately the SyntaxError message has changed in newer versions so we
+        # can't match it directly.
+        err.match("invalid character")
+        err.match(r"\(<unknown>, line 1\)")
+
 
 class TestCaching:
     def test_cache_broken_file(self) -> None:

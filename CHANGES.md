@@ -5,6 +5,8 @@
 ### _Black_
 
 - Improve error message for invalid regular expression (#2678)
+- Improve error message when parsing fails during AST safety check by embedding the
+  underlying SyntaxError (#2693)
 - Fix mapping cases that contain as-expressions, like `case {"key": 1 | 2 as password}`
   (#2686)
 - No longer color diff headers white as it's unreadable in light themed terminals
