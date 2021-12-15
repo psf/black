@@ -200,7 +200,7 @@ class BlackTestCase(BlackBaseTestCase):
         )
         actual = result.output
         # Again, the contents are checked in a different test, so only look for colors.
-        self.assertIn("\033[1;37m", actual)
+        self.assertIn("\033[1m", actual)
         self.assertIn("\033[36m", actual)
         self.assertIn("\033[32m", actual)
         self.assertIn("\033[31m", actual)
@@ -323,7 +323,7 @@ class BlackTestCase(BlackBaseTestCase):
         actual = result.output
         # We check the contents of the diff in `test_expression_diff`. All
         # we need to check here is that color codes exist in the result.
-        self.assertIn("\033[1;37m", actual)
+        self.assertIn("\033[1m", actual)
         self.assertIn("\033[36m", actual)
         self.assertIn("\033[32m", actual)
         self.assertIn("\033[31m", actual)
