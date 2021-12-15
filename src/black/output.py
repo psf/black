@@ -81,7 +81,7 @@ def color_diff(contents: str) -> str:
     lines = contents.split("\n")
     for i, line in enumerate(lines):
         if line.startswith("+++") or line.startswith("---"):
-            line = "\033[1;37m" + line + "\033[0m"  # bold white, reset
+            line = "\033[1m" + line + "\033[0m"  # bold, reset
         elif line.startswith("@@"):
             line = "\033[36m" + line + "\033[0m"  # cyan, reset
         elif line.startswith("+"):
