@@ -531,7 +531,7 @@ def get_sources(
         else:
             out(f"Identified `{root}` as project root.", fg="blue")
         paths = '", "'.join(
-            str(Path(source).absolute().relative_to(root)) for source in src
+            str(Path(source).resolve().relative_to(root)) for source in src
         )
         out(f'Sources to be formatted: "{paths}"', fg="blue")
 
