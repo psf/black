@@ -11,6 +11,7 @@
   (#2686)
 - No longer color diff headers white as it's unreadable in light themed terminals
   (#2691)
+- Standardize type comments to always have one space (#2698)
 
 ## 21.12b0
 

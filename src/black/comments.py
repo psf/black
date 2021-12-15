@@ -123,6 +123,10 @@ def make_comment(content: str) -> str:
         and not content.lstrip().startswith("type:")
     ):
         content = " " + content[1:]  # Replace NBSP by a simple space
+    elif content.lstrip().startswith("type:") and NON_BREAKING_SPACE not in content:
+        content = content.lstrip()
+        content = content[:5] + " " + content[5:].lstrip()
+
     if content and content[0] not in " !:#'%":
         content = " " + content
     return "#" + content
