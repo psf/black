@@ -97,6 +97,8 @@ pragma_comment_string1 = "Lines which end with an inline pragma comment of the f
 
 pragma_comment_string2 = "Lines which end with an inline pragma comment of the form `# <pragma>: <...>` should be left alone."  # noqa
 
+pragma_comment_string3 = "Lines which end with an inline pragma comment of the form `# <pragma>: <...>` should be left alone."  #   noqa
+
 """This is a really really really long triple quote string and it should not be touched."""
 
 triple_quote_string = """This is a really really really long triple quote string assignment and it should not be touched."""
@@ -462,6 +464,8 @@ arg_comment_string = print(
 pragma_comment_string1 = "Lines which end with an inline pragma comment of the form `# <pragma>: <...>` should be left alone."  # noqa: E501
 
 pragma_comment_string2 = "Lines which end with an inline pragma comment of the form `# <pragma>: <...>` should be left alone."  # noqa
+
+pragma_comment_string3 = "Lines which end with an inline pragma comment of the form `# <pragma>: <...>` should be left alone."  #   noqa
 
 """This is a really really really long triple quote string and it should not be touched."""
 

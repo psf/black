@@ -3,6 +3,7 @@ blib2to3 Node/Leaf transformation-related utility functions.
 """
 
 import sys
+import re
 from typing import (
     Collection,
     Generic,
@@ -809,12 +810,10 @@ def is_type_comment(leaf: Leaf, suffix: str = "") -> bool:
     Only returns true for type comments for now."""
     t = leaf.type
     v = leaf.value
-
+    type_comment_regex = r"#\s*type\s*:\s*" + suffix
     return (
         t in {token.COMMENT, STANDALONE_COMMENT}
-        and v[0] == "#"
-        and v[1:].lstrip().startswith("type:")
-        and v[1:].lstrip()[5:].lstrip().startswith(suffix.lstrip())
+        and re.match(type_comment_regex, v) is not None
     )
 
 

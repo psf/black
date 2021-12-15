@@ -123,9 +123,10 @@ def make_comment(content: str) -> str:
         and not content.lstrip().startswith("type:")
     ):
         content = " " + content[1:]  # Replace NBSP by a simple space
-    elif content.lstrip().startswith("type:") and NON_BREAKING_SPACE not in content:
-        content = content.lstrip()
-        content = content[:5] + " " + content[5:].lstrip()
+    elif NON_BREAKING_SPACE not in content:
+        type_comment = re.match(r"\s*type\s*:\s*(.*)", content)
+        if type_comment:
+            content = "type: " + type_comment.group(1)
 
     if content and content[0] not in " !:#'%":
         content = " " + content
@@ -274,12 +275,8 @@ def contains_pragma_comment(comment_list: List[Leaf]) -> bool:
         of the more common static analysis tools for python (e.g. mypy, flake8,
         pylint).
     """
-    possible_pragmas = ("type:", "noqa", "pylint:")
     for comment in comment_list:
-        for pragma in possible_pragmas:
-            if comment.value[0] == "#" and comment.value[1:].lstrip().startswith(
-                pragma
-            ):
-                return True
+        if re.match(r"#\s*(type\s*:|pylint\s*:|noqa\s*)", comment.value):
+            return True
 
     return False
