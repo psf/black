@@ -19,11 +19,13 @@ __all__ = ["Driver", "load_grammar"]
 import io
 import os
 import logging
+import pathlib
 import pkgutil
 import sys
 from typing import (
     Any,
     cast,
+    Dict,
     IO,
     Iterable,
     List,
@@ -44,6 +46,13 @@ from logging import Logger
 from blib2to3.pytree import NL
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.tokenize import GoodTokenInfo
+
+if sys.version_info >= (3, 8):
+    from typing import Final
+else:
+    from typing_extensions import Final
+
+LOADED_GRAMMARS: Final[Dict[str, Grammar]] = {}
 
 Path = Union[str, "os.PathLike[str]"]
 
@@ -251,29 +260,15 @@ def _generate_pickle_name(gt: Path, cache_dir: Optional[Path] = None) -> Text:
         return name
 
 
-def load_grammar(
-    gt: Text = "Grammar.txt",
-    gp: Optional[Text] = None,
-    save: bool = True,
-    force: bool = False,
-    logger: Optional[Logger] = None,
-) -> Grammar:
+def load_grammar(gt: Text = "Grammar.txt", gp: Optional[Text] = None) -> Grammar:
     """Load the grammar (maybe from a pickle)."""
-    if logger is None:
-        logger = logging.getLogger(__name__)
     gp = _generate_pickle_name(gt) if gp is None else gp
-    if force or not _newer(gp, gt):
-        logger.info("Generating grammar tables from %s", gt)
+    if not _newer(gp, gt):
         g: grammar.Grammar = pgen.generate_grammar(gt)
-        if save:
-            logger.info("Writing grammar tables to %s", gp)
-            try:
-                g.dump(gp)
-            except OSError as e:
-                logger.info("Writing failed: %s", e)
     else:
         g = grammar.Grammar()
         g.load(gp)
+    LOADED_GRAMMARS[gt] = g
     return g
 
 
@@ -310,18 +305,12 @@ def load_packaged_grammar(
     return g
 
 
-def main(*args: Text) -> bool:
-    """Main program, when run as a script: produce grammar pickle files.
-
-    Calls load_grammar for each argument, a path to a grammar text file.
-    """
-    if not args:
-        args = tuple(sys.argv[1:])
-    logging.basicConfig(level=logging.INFO, stream=sys.stdout, format="%(message)s")
-    for gt in args:
-        load_grammar(gt, save=True, force=True)
-    return True
-
-
-if __name__ == "__main__":
-    sys.exit(int(not main()))
+def cache_loaded_grammars(cache_dir: pathlib.Path) -> None:
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    for name, grammar in LOADED_GRAMMARS.items():
+        pickle_path = _generate_pickle_name(name, cache_dir)
+        try:
+            if not os.path.exists(pickle_path):
+                grammar.dump(pickle_path)
+        except OSError:
+            pass

@@ -45,6 +45,8 @@ from black.debug import DebugVisitor
 from black.output import color_diff, diff
 from black.report import Report
 
+import blib2to3.pgen2.driver
+
 # Import other test classes
 from tests.util import (
     DATA_DIR,
@@ -1725,6 +1727,10 @@ class TestCaching:
             assert not workspace.exists()
             black.write_cache({}, [], mode)
             assert workspace.exists()
+        with cache_dir(exists=False) as workspace:
+            assert not workspace.exists()
+            blib2to3.pgen2.driver.cache_loaded_grammars(workspace)
+            assert workspace.exists()
 
     @event_loop()
     def test_failed_formatting_does_not_get_cached(self) -> None:
@@ -1760,6 +1766,14 @@ class TestCaching:
             assert str(path) in one
             two = black.read_cache(short_mode)
             assert str(path) not in two
+
+    def test_grammar_cache_is_written(self) -> None:
+        with cache_dir(exists=False) as workspace:
+            assert not workspace.exists()
+            blib2to3.pgen2.driver.cache_loaded_grammars(workspace)
+            cache_entries = sorted(p.name for p in workspace.iterdir())
+            assert str(cache_entries[0]).startswith("Grammar")
+            assert str(cache_entries[1]).startswith("PatternGrammar")
 
 
 def assert_collected_sources(

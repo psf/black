@@ -42,7 +42,14 @@ from black.linegen import transform_line, LineGenerator, LN
 from black.comments import normalize_fmt_off
 from black.mode import FUTURE_FLAG_TO_FEATURE, Mode, TargetVersion
 from black.mode import Feature, supports_feature, VERSION_TO_FEATURES
-from black.cache import read_cache, write_cache, get_cache_info, filter_cached, Cache
+from black.cache import (
+    CACHE_DIR,
+    read_cache,
+    write_cache,
+    get_cache_info,
+    filter_cached,
+    Cache,
+)
 from black.concurrency import cancel, shutdown, maybe_install_uvloop
 from black.output import dump_to_file, ipynb_diff, diff, color_diff, out, err
 from black.report import Report, Changed, NothingChanged
@@ -63,6 +70,7 @@ from black.handle_ipynb_magics import (
 
 
 # lib2to3 fork
+import blib2to3.pgen2.driver
 from blib2to3.pytree import Node, Leaf
 from blib2to3.pgen2 import token
 
@@ -494,6 +502,7 @@ def main(
                 workers=workers,
             )
 
+    blib2to3.pgen2.driver.cache_loaded_grammars(CACHE_DIR)
     if verbose or not quiet:
         out(error_msg if report.return_code else "All done! ✨ 🍰 ✨")
         if code is None:
