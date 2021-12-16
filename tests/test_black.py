@@ -812,6 +812,14 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(black.get_features_used(node), {Feature.POS_ONLY_ARGUMENTS})
         node = black.lib2to3_parse("def fn(a, /, b): ...")
         self.assertEqual(black.get_features_used(node), {Feature.POS_ONLY_ARGUMENTS})
+        node = black.lib2to3_parse("def fn(): yield a, b")
+        self.assertEqual(black.get_features_used(node), set())
+        node = black.lib2to3_parse("def fn(): return a, b")
+        self.assertEqual(black.get_features_used(node), set())
+        node = black.lib2to3_parse("def fn(): yield *b, c")
+        self.assertEqual(black.get_features_used(node), {Feature.UNPACKING_ON_FLOW})
+        node = black.lib2to3_parse("def fn(): return a, *b, c")
+        self.assertEqual(black.get_features_used(node), {Feature.UNPACKING_ON_FLOW})
 
     def test_get_features_used_for_future_flags(self) -> None:
         for src, features in [

@@ -1219,6 +1219,14 @@ def get_features_used(  # noqa: C901
                         if argch.type in STARS:
                             features.add(feature)
 
+        elif (
+            n.type in {syms.return_stmt, syms.yield_expr}
+            and len(n.children) >= 2
+            and n.children[1].type == syms.testlist_star_expr
+            and any(child.type == syms.star_expr for child in n.children[1].children)
+        ):
+            features.add(Feature.UNPACKING_ON_FLOW)
+
         # Python 2 only features (for its deprecation) except for integers, see above
         elif n.type == syms.print_stmt:
             features.add(Feature.PRINT_STMT)
