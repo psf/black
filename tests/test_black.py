@@ -1776,8 +1776,8 @@ class TestCaching:
             assert str(path) not in two
 
     def test_grammar_cache_is_written(self) -> None:
-        with cache_dir(exists=False) as workspace:
-            assert not workspace.exists()
+        with cache_dir() as workspace:
+            assert not list(workspace.iterdir())
             blib2to3.pgen2.driver.cache_loaded_grammars(workspace)
             cache_entries = sorted(p.name for p in workspace.iterdir())
             assert str(cache_entries[0]).startswith("Grammar")
