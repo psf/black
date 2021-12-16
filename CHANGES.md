@@ -12,7 +12,7 @@
 - No longer color diff headers white as it's unreadable in light themed terminals
   (#2691)
 - No longer attempt to write grammar table cache on import emitting confusing log
-  messages (#2701)
+  messages (#2702)
 - Tuple unpacking on `return` and `yield` constructs now implies 3.8+ (#2700)
 
 ## 21.12b0
