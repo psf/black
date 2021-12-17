@@ -7,7 +7,8 @@
 - Improve error message for invalid regular expression (#2678)
 - Fix mapping cases that contain as-expressions, like `case {"key": 1 | 2 as password}`
   (#2686)
-- `--verbose` enhancements (project root, how is config found) (#2526)
+- Verbose mode also now describes how a project root was discovered and which paths will
+  be formatted. (#2526)
 
 ## 21.12b0
 
