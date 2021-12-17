@@ -818,6 +818,18 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(black.get_features_used(node), {Feature.UNPACKING_ON_FLOW})
         node = black.lib2to3_parse("def fn(): return a, *b, c")
         self.assertEqual(black.get_features_used(node), {Feature.UNPACKING_ON_FLOW})
+        node = black.lib2to3_parse("x = a, *b, c")
+        self.assertEqual(black.get_features_used(node), set())
+        node = black.lib2to3_parse("x: Any = regular")
+        self.assertEqual(black.get_features_used(node), set())
+        node = black.lib2to3_parse("x: Any = (regular, regular)")
+        self.assertEqual(black.get_features_used(node), set())
+        node = black.lib2to3_parse("x: Any = Complex(Type(1))[something]")
+        self.assertEqual(black.get_features_used(node), set())
+        node = black.lib2to3_parse("x: Tuple[int, ...] = a, b, c")
+        self.assertEqual(
+            black.get_features_used(node), {Feature.ANN_ASSIGN_EXTENDED_RHS}
+        )
 
     def test_get_features_used_for_future_flags(self) -> None:
         for src, features in [
