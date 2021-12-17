@@ -1218,6 +1218,13 @@ def get_features_used(  # noqa: C901
         ):
             features.add(Feature.UNPACKING_ON_FLOW)
 
+        elif (
+            n.type == syms.annassign
+            and len(n.children) >= 4
+            and n.children[3].type == syms.testlist_star_expr
+        ):
+            features.add(Feature.ANN_ASSIGN_EXTENDED_RHS)
+
         # Python 2 only features (for its deprecation) except for integers, see above
         elif n.type == syms.print_stmt:
             features.add(Feature.PRINT_STMT)

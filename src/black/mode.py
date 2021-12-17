@@ -50,6 +50,7 @@ class Feature(Enum):
     RELAXED_DECORATORS = 10
     PATTERN_MATCHING = 11
     UNPACKING_ON_FLOW = 12
+    ANN_ASSIGN_EXTENDED_RHS = 13
     FORCE_OPTIONAL_PARENTHESES = 50
 
     # __future__ flags
@@ -118,6 +119,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.ASSIGNMENT_EXPRESSIONS,
         Feature.POS_ONLY_ARGUMENTS,
         Feature.UNPACKING_ON_FLOW,
+        Feature.ANN_ASSIGN_EXTENDED_RHS,
     },
     TargetVersion.PY39: {
         Feature.UNICODE_LITERALS,
@@ -131,6 +133,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.RELAXED_DECORATORS,
         Feature.POS_ONLY_ARGUMENTS,
         Feature.UNPACKING_ON_FLOW,
+        Feature.ANN_ASSIGN_EXTENDED_RHS,
     },
     TargetVersion.PY310: {
         Feature.UNICODE_LITERALS,
@@ -144,6 +147,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.RELAXED_DECORATORS,
         Feature.POS_ONLY_ARGUMENTS,
         Feature.UNPACKING_ON_FLOW,
+        Feature.ANN_ASSIGN_EXTENDED_RHS,
         Feature.PATTERN_MATCHING,
     },
 }
