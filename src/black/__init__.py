@@ -411,12 +411,32 @@ def main(
     config: Optional[str],
 ) -> None:
     """The uncompromising code formatter."""
-    if config and verbose:
-        config_source = ctx.get_parameter_source("config")
-        if config_source in (ParameterSource.DEFAULT, ParameterSource.DEFAULT_MAP):
-            out("Using configuration from project root.", fg="blue")
-        else:
-            out(f"Using configuration in '{config}'.", fg="blue")
+    ctx.ensure_object(dict)
+    root, method = (None, None) if code is not None else find_project_root(src)
+    ctx.obj["root"] = root
+
+    if verbose:
+        if root:
+            if method:
+                out(
+                    f"Identified `{root}` as project root containing a {method}.",
+                    fg="blue",
+                )
+            else:
+                out(f"Identified `{root}` as project root.", fg="blue")
+
+            normalized_paths = [
+                str(Path(source).resolve().relative_to(root)) for source in src
+            ]
+            srcs_string = '", "'.join(normalized_paths)
+            out(f'Sources to be formatted: "{srcs_string}"', fg="blue")
+
+        if config:
+            config_source = ctx.get_parameter_source("config")
+            if config_source in (ParameterSource.DEFAULT, ParameterSource.DEFAULT_MAP):
+                out("Using configuration from project root.", fg="blue")
+            else:
+                out(f"Using configuration in '{config}'.", fg="blue")
 
     error_msg = "Oh no! 💥 💔 💥"
     if required_version and required_version != __version__:
@@ -520,27 +540,12 @@ def get_sources(
     stdin_filename: Optional[str],
 ) -> Set[Path]:
     """Compute the set of files to be formatted."""
-    root, method = find_project_root(src)
-
-    if verbose:
-        if method:
-            out(
-                f"Identified `{root}` as project root containing a {method}.",
-                fg="blue",
-            )
-        else:
-            out(f"Identified `{root}` as project root.", fg="blue")
-        paths = '", "'.join(
-            str(Path(source).resolve().relative_to(root)) for source in src
-        )
-        out(f'Sources to be formatted: "{paths}"', fg="blue")
-
     sources: Set[Path] = set()
     path_empty(src, "No Path provided. Nothing to do 😴", quiet, verbose, ctx)
 
     if exclude is None:
         exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES)
-        gitignore = get_gitignore(root)
+        gitignore = get_gitignore(ctx.obj["root"])
     else:
         gitignore = None
 
@@ -553,7 +558,7 @@ def get_sources(
             is_stdin = False
 
         if is_stdin or p.is_file():
-            normalized_path = normalize_path_maybe_ignore(p, root, report)
+            normalized_path = normalize_path_maybe_ignore(p, ctx.obj["root"], report)
             if normalized_path is None:
                 continue
 
@@ -580,7 +585,7 @@ def get_sources(
             sources.update(
                 gen_python_files(
                     p.iterdir(),
-                    root,
+                    ctx.obj["root"],
                     include,
                     exclude,
                     extend_exclude,
