@@ -4,9 +4,25 @@
 
 ### _Black_
 
+- Improve error message for invalid regular expression (#2678)
+- Improve error message when parsing fails during AST safety check by embedding the
+  underlying SyntaxError (#2693)
+- Fix mapping cases that contain as-expressions, like `case {"key": 1 | 2 as password}`
+  (#2686)
+- No longer color diff headers white as it's unreadable in light themed terminals
+  (#2691)
+- Tuple unpacking on `return` and `yield` constructs now implies 3.8+ (#2700)
+- Unparenthesized tuples on annotated assignments (e.g
+  `values: Tuple[int, ...] = 1, 2, 3`) now implies 3.8+ (#2708)
+
+## 21.12b0
+
+### _Black_
+
 - Fix determination of f-string expression spans (#2654)
 - Fix bad formatting of error messages about EOF in multi-line statements (#2343)
 - Functions and classes in blocks now have more consistent surrounding spacing (#2472)
+- `from __future__ import annotations` statement now implies Python 3.7+ (#2690)
 
 #### Jupyter Notebook support
 

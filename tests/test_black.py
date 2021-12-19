@@ -200,7 +200,7 @@ class BlackTestCase(BlackBaseTestCase):
         )
         actual = result.output
         # Again, the contents are checked in a different test, so only look for colors.
-        self.assertIn("\033[1;37m", actual)
+        self.assertIn("\033[1m", actual)
         self.assertIn("\033[36m", actual)
         self.assertIn("\033[32m", actual)
         self.assertIn("\033[31m", actual)
@@ -323,7 +323,7 @@ class BlackTestCase(BlackBaseTestCase):
         actual = result.output
         # We check the contents of the diff in `test_expression_diff`. All
         # we need to check here is that color codes exist in the result.
-        self.assertIn("\033[1;37m", actual)
+        self.assertIn("\033[1m", actual)
         self.assertIn("\033[36m", actual)
         self.assertIn("\033[32m", actual)
         self.assertIn("\033[31m", actual)
@@ -810,6 +810,44 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(black.get_features_used(node), {Feature.POS_ONLY_ARGUMENTS})
         node = black.lib2to3_parse("def fn(a, /, b): ...")
         self.assertEqual(black.get_features_used(node), {Feature.POS_ONLY_ARGUMENTS})
+        node = black.lib2to3_parse("def fn(): yield a, b")
+        self.assertEqual(black.get_features_used(node), set())
+        node = black.lib2to3_parse("def fn(): return a, b")
+        self.assertEqual(black.get_features_used(node), set())
+        node = black.lib2to3_parse("def fn(): yield *b, c")
+        self.assertEqual(black.get_features_used(node), {Feature.UNPACKING_ON_FLOW})
+        node = black.lib2to3_parse("def fn(): return a, *b, c")
+        self.assertEqual(black.get_features_used(node), {Feature.UNPACKING_ON_FLOW})
+        node = black.lib2to3_parse("x = a, *b, c")
+        self.assertEqual(black.get_features_used(node), set())
+        node = black.lib2to3_parse("x: Any = regular")
+        self.assertEqual(black.get_features_used(node), set())
+        node = black.lib2to3_parse("x: Any = (regular, regular)")
+        self.assertEqual(black.get_features_used(node), set())
+        node = black.lib2to3_parse("x: Any = Complex(Type(1))[something]")
+        self.assertEqual(black.get_features_used(node), set())
+        node = black.lib2to3_parse("x: Tuple[int, ...] = a, b, c")
+        self.assertEqual(
+            black.get_features_used(node), {Feature.ANN_ASSIGN_EXTENDED_RHS}
+        )
+
+    def test_get_features_used_for_future_flags(self) -> None:
+        for src, features in [
+            ("from __future__ import annotations", {Feature.FUTURE_ANNOTATIONS}),
+            (
+                "from __future__ import (other, annotations)",
+                {Feature.FUTURE_ANNOTATIONS},
+            ),
+            ("a = 1 + 2\nfrom something import annotations", set()),
+            ("from __future__ import x, y", set()),
+        ]:
+            with self.subTest(src=src, features=features):
+                node = black.lib2to3_parse(src)
+                future_imports = black.get_future_imports(node)
+                self.assertEqual(
+                    black.get_features_used(node, future_imports=future_imports),
+                    features,
+                )
 
     def test_get_future_imports(self) -> None:
         node = black.lib2to3_parse("\n")
@@ -1565,6 +1603,16 @@ class BlackTestCase(BlackBaseTestCase):
             black.lib2to3_parse("print(", {})
 
         exc_info.match("Cannot parse: 2:0: EOF in multi-line statement")
+
+    def test_equivalency_ast_parse_failure_includes_error(self) -> None:
+        with pytest.raises(AssertionError) as err:
+            black.assert_equivalent("a«»a  = 1", "a«»a  = 1")
+
+        err.match("--safe")
+        # Unfortunately the SyntaxError message has changed in newer versions so we
+        # can't match it directly.
+        err.match("invalid character")
+        err.match(r"\(<unknown>, line 1\)")
 
 
 class TestCaching:

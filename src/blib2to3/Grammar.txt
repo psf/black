@@ -168,8 +168,8 @@ subscript: test [':=' test] | [test] ':' [test] [sliceop]
 sliceop: ':' [test]
 exprlist: (expr|star_expr) (',' (expr|star_expr))* [',']
 testlist: test (',' test)* [',']
-dictsetmaker: ( ((test ':' test | '**' expr)
-                 (comp_for | (',' (test ':' test | '**' expr))* [','])) |
+dictsetmaker: ( ((test ':' asexpr_test | '**' expr)
+                 (comp_for | (',' (test ':' asexpr_test | '**' expr))* [','])) |
                 ((test [':=' test] | star_expr)
 		 (comp_for | (',' (test [':=' test] | star_expr))* [','])) )
 
