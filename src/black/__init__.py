@@ -425,11 +425,19 @@ def main(
             else:
                 out(f"Identified `{root}` as project root.", fg="blue")
 
-            normalized_paths = [
-                str(Path(source).resolve().relative_to(root)) for source in src
+            normalized = [
+                (normalize_path_maybe_ignore(Path(source), root), source)
+                for source in src
             ]
-            srcs_string = '", "'.join(normalized_paths)
-            out(f'Sources to be formatted: "{srcs_string}"', fg="blue")
+            srcs_string = ", ".join(
+                [
+                    f'"{_norm}"'
+                    if _norm
+                    else f'\033[31m"{source} (skipping - invalid)"\033[34m'
+                    for _norm, source in normalized
+                ]
+            )
+            out(f"Sources to be formatted: {srcs_string}", fg="blue")
 
         if config:
             config_source = ctx.get_parameter_source("config")
