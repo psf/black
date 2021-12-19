@@ -100,6 +100,8 @@ class FakeContext(click.Context):
 
     def __init__(self) -> None:
         self.default_map: Dict[str, Any] = {}
+        # Dummy root, since most of the tests don't care about it
+        self.obj: Dict[str, Any] = {"root": PROJECT_ROOT}
 
 
 class FakeParameter(click.Parameter):
@@ -1793,6 +1795,7 @@ def assert_collected_sources(
     src: Sequence[Union[str, Path]],
     expected: Sequence[Union[str, Path]],
     *,
+    ctx: Optional[FakeContext] = None,
     exclude: Optional[str] = None,
     include: Optional[str] = None,
     extend_exclude: Optional[str] = None,
@@ -1808,7 +1811,7 @@ def assert_collected_sources(
     )
     gs_force_exclude = None if force_exclude is None else compile_pattern(force_exclude)
     collected = black.get_sources(
-        ctx=FakeContext(),
+        ctx=ctx or FakeContext(),
         src=gs_src,
         quiet=False,
         verbose=False,
@@ -1844,7 +1847,9 @@ class TestFileCollection:
             base / "b/.definitely_exclude/a.pyi",
         ]
         src = [base / "b/"]
-        assert_collected_sources(src, expected, extend_exclude=r"/exclude/")
+        ctx = FakeContext()
+        ctx.obj["root"] = base
+        assert_collected_sources(src, expected, ctx=ctx, extend_exclude=r"/exclude/")
 
     @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_exclude_for_issue_1572(self) -> None:
