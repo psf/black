@@ -25,4 +25,4 @@ jobs:
           python -m pip install -e '.[d]'
 
       - name: Lint
-        uses: pre-commit/action@v2.0.2
+        uses: pre-commit/action@v2.0.3

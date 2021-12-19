@@ -1,0 +1,17 @@
+# https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates
+
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    # Workflow files in .github/workflows will be checked
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels: ["skip news", "C: dependencies"]
+
+  - package-ecosystem: "pip"
+    directory: "docs/"
+    schedule:
+      interval: "weekly"
+    labels: ["skip news", "C: dependencies", "T: documentation"]
+    reviewers: ["ichard26"]
