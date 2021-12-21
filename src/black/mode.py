@@ -164,6 +164,7 @@ class Mode:
     string_normalization: bool = True
     is_pyi: bool = False
     allow_markdown: bool = False
+    is_markdown: bool = False
     is_ipynb: bool = False
     magic_trailing_comma: bool = True
     experimental_string_processing: bool = False
