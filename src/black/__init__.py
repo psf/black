@@ -811,7 +811,7 @@ def format_file_in_place(
         mode = replace(mode, is_pyi=True)
     elif src.suffix == ".ipynb":
         mode = replace(mode, is_ipynb=True)
-    if mode.allow_markdown:
+    if not mode.is_markdown and mode.allow_markdown:
         mode = replace(mode, is_markdown=src.suffix == ".md")
     then = datetime.utcfromtimestamp(src.stat().st_mtime)
     with open(src, "rb") as buf:
