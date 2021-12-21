@@ -650,6 +650,8 @@ def reformat_one(
                 mode = replace(mode, is_pyi=True)
             elif src.suffix == ".ipynb":
                 mode = replace(mode, is_ipynb=True)
+            if mode.allow_markdown:
+                mode = replace(mode, is_markdown=src.suffix == ".md")
             if format_stdin_to_stdout(fast=fast, write_back=write_back, mode=mode):
                 changed = Changed.YES
         else:
