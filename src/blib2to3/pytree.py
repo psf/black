@@ -12,6 +12,8 @@ There's also a pattern matching implementation here.
 
 # mypy: allow-untyped-defs
 
+import sys
+
 from typing import (
     Any,
     Dict,
@@ -25,7 +27,13 @@ from typing import (
     Set,
     Iterable,
 )
+
+if sys.version_info >= (3, 10):
+    from typing import TypeGuard
+else:
+    from typing_extensions import TypeGuard
 from blib2to3.pgen2.grammar import Grammar
+from blib2to3.pgen2 import token
 
 __author__ = "Guido van Rossum <guido@python.org>"
 
@@ -978,3 +986,19 @@ def generate_matches(
                     r.update(r0)
                     r.update(r1)
                     yield c0 + c1, r
+
+
+def is_name_token(nl: NL) -> TypeGuard[Leaf]:
+    return nl.type == token.NAME
+
+
+def is_lpar_token(nl: NL) -> TypeGuard[Leaf]:
+    return nl.type == token.LPAR
+
+
+def is_rpar_token(nl: NL) -> TypeGuard[Leaf]:
+    return nl.type == token.RPAR
+
+
+def is_string_token(nl: NL) -> TypeGuard[Leaf]:
+    return nl.type == token.STRING

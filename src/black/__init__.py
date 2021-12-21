@@ -62,7 +62,7 @@ from black.handle_ipynb_magics import (
 
 
 # lib2to3 fork
-from blib2to3.pytree import Node, Leaf
+from blib2to3.pytree import Node, Leaf, is_string_token
 from blib2to3.pgen2 import token
 
 from _black_version import version as __version__
@@ -1141,8 +1141,8 @@ def get_features_used(node: Node) -> Set[Feature]:  # noqa: C901
     """
     features: Set[Feature] = set()
     for n in node.pre_order():
-        if n.type == token.STRING:
-            value_head = n.value[:2]  # type: ignore
+        if is_string_token(n):
+            value_head = n.value[:2]
             if value_head in {'f"', 'F"', "f'", "F'", "rf", "fr", "RF", "FR"}:
                 features.add(Feature.F_STRINGS)
 

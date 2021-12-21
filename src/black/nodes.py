@@ -23,7 +23,7 @@ else:
 from mypy_extensions import mypyc_attr
 
 # lib2to3 fork
-from blib2to3.pytree import Node, Leaf, type_repr
+from blib2to3.pytree import Node, Leaf, is_name_token, type_repr
 from blib2to3 import pygram
 from blib2to3.pgen2 import token
 
@@ -256,8 +256,8 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
             and prevp.parent
             and prevp.parent.type == syms.shift_expr
             and prevp.prev_sibling
-            and prevp.prev_sibling.type == token.NAME
-            and prevp.prev_sibling.value == "print"  # type: ignore
+            and is_name_token(prevp.prev_sibling)
+            and prevp.prev_sibling.value == "print"
         ):
             # Python 2 print chevron
             return NO
@@ -683,7 +683,7 @@ def is_yield(node: LN) -> bool:
     if node.type == syms.yield_expr:
         return True
 
-    if node.type == token.NAME and node.value == "yield":  # type: ignore
+    if is_name_token(node) and node.value == "yield":
         return True
 
     if node.type != syms.atom:
