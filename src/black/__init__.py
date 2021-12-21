@@ -494,6 +494,7 @@ def main(
                 workers=workers,
             )
 
+    out()
     if verbose or not quiet:
         out(error_msg if report.return_code else "All done! ✨ 🍰 ✨")
         if code is None:
