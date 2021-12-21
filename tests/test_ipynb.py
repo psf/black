@@ -46,13 +46,13 @@ def test_trailing_semicolon_with_comment() -> None:
 
 
 def test_trailing_semicolon_with_comment_on_next_line() -> None:
-    src = "import black;\r\n\r\n# this is a comment"
+    src = "import black;\n\n# this is a comment"
     with pytest.raises(NothingChanged):
         format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
 def test_trailing_semicolon_indented() -> None:
-    src = "with foo:\r\n    plot_bar();"
+    src = "with foo:\n    plot_bar();"
     with pytest.raises(NothingChanged):
         format_cell(src, fast=True, mode=JUPYTER_MODE)
 
@@ -64,14 +64,14 @@ def test_trailing_semicolon_noop() -> None:
 
 
 def test_cell_magic() -> None:
-    src = "%%time\r\nfoo =bar"
+    src = "%%time\nfoo =bar"
     result = format_cell(src, fast=True, mode=JUPYTER_MODE)
-    expected = "%%time\r\nfoo = bar"
+    expected = "%%time\nfoo = bar"
     assert result == expected
 
 
 def test_cell_magic_noop() -> None:
-    src = "%%time\r\n2 + 2"
+    src = "%%time\n2 + 2"
     with pytest.raises(NothingChanged):
         format_cell(src, fast=True, mode=JUPYTER_MODE)
 
@@ -80,18 +80,16 @@ def test_cell_magic_noop() -> None:
     "src, expected",
     (
         pytest.param("ls =!ls", "ls = !ls", id="System assignment"),
-        pytest.param("!ls\r\n'foo'", '!ls\r\n"foo"', id="System call"),
-        pytest.param("!!ls\r\n'foo'", '!!ls\r\n"foo"', id="Other system call"),
-        pytest.param("?str\r\n'foo'", '?str\r\n"foo"', id="Help"),
-        pytest.param("??str\r\n'foo'", '??str\r\n"foo"', id="Other help"),
+        pytest.param("!ls\n'foo'", '!ls\n"foo"', id="System call"),
+        pytest.param("!!ls\n'foo'", '!!ls\n"foo"', id="Other system call"),
+        pytest.param("?str\n'foo'", '?str\n"foo"', id="Help"),
+        pytest.param("??str\n'foo'", '??str\n"foo"', id="Other help"),
         pytest.param(
-            "%matplotlib inline\r\n'foo'",
-            '%matplotlib inline\r\n"foo"',
+            "%matplotlib inline\n'foo'",
+            '%matplotlib inline\n"foo"',
             id="Line magic with argument",
         ),
-        pytest.param(
-            "%time\r\n'foo'", '%time\r\n"foo"', id="Line magic without argument"
-        ),
+        pytest.param("%time\n'foo'", '%time\n"foo"', id="Line magic without argument"),
         pytest.param(
             "env =  %env var", "env = %env var", id="Assignment to environment variable"
         ),
@@ -106,9 +104,9 @@ def test_magic(src: str, expected: str) -> None:
 @pytest.mark.parametrize(
     "src",
     (
-        "%%bash\r\n2+2",
-        "%%html --isolated\r\n2+2",
-        "%%writefile e.txt\r\n  meh\r\n meh",
+        "%%bash\n2+2",
+        "%%html --isolated\n2+2",
+        "%%writefile e.txt\n  meh\n meh",
     ),
 )
 def test_non_python_magics(src: str) -> None:
@@ -123,7 +121,7 @@ def test_set_input() -> None:
 
 
 def test_input_already_contains_transformed_magic() -> None:
-    src = '%time foo()\r\nget_ipython().run_cell_magic("time", "", "foo()\\r\n")'
+    src = '%time foo()\nget_ipython().run_cell_magic("time", "", "foo()\\n")'
     with pytest.raises(NothingChanged):
         format_cell(src, fast=True, mode=JUPYTER_MODE)
 
@@ -135,21 +133,21 @@ def test_magic_noop() -> None:
 
 
 def test_cell_magic_with_magic() -> None:
-    src = "%%timeit -n1\r\nls =!ls"
+    src = "%%timeit -n1\nls =!ls"
     result = format_cell(src, fast=True, mode=JUPYTER_MODE)
-    expected = "%%timeit -n1\r\nls = !ls"
+    expected = "%%timeit -n1\nls = !ls"
     assert result == expected
 
 
 def test_cell_magic_nested() -> None:
-    src = "%%time\r\n%%time\r\n2+2"
+    src = "%%time\n%%time\n2+2"
     result = format_cell(src, fast=True, mode=JUPYTER_MODE)
-    expected = "%%time\r\n%%time\r\n2 + 2"
+    expected = "%%time\n%%time\n2 + 2"
     assert result == expected
 
 
 def test_cell_magic_with_magic_noop() -> None:
-    src = "%%t -n1\r\nls = !ls"
+    src = "%%t -n1\nls = !ls"
     with pytest.raises(NothingChanged):
         format_cell(src, fast=True, mode=JUPYTER_MODE)
 
@@ -161,20 +159,20 @@ def test_automagic() -> None:
 
 
 def test_multiline_magic() -> None:
-    src = "%time 1 + \\\r\n2"
+    src = "%time 1 + \\\n2"
     with pytest.raises(NothingChanged):
         format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
 def test_multiline_no_magic() -> None:
-    src = "1 + \\\r\n2"
+    src = "1 + \\\n2"
     result = format_cell(src, fast=True, mode=JUPYTER_MODE)
     expected = "1 + 2"
     assert result == expected
 
 
 def test_cell_magic_with_invalid_body() -> None:
-    src = "%%time\r\nif True"
+    src = "%%time\nif True"
     with pytest.raises(NothingChanged):
         format_cell(src, fast=True, mode=JUPYTER_MODE)
 
@@ -191,33 +189,33 @@ def test_entire_notebook_empty_metadata() -> None:
     content = content_bytes.decode()
     result = format_file_contents(content, fast=True, mode=JUPYTER_MODE)
     expected = (
-        "{\r\n"
-        ' "cells": [\r\n'
-        "  {\r\n"
-        '   "cell_type": "code",\r\n'
-        '   "execution_count": null,\r\n'
-        '   "metadata": {\r\n'
-        '    "tags": []\r\n'
-        "   },\r\n"
-        '   "outputs": [],\r\n'
-        '   "source": [\r\n'
-        '    "%%time\\r\n",\r\n'
-        '    "\\r\n",\r\n'
-        '    "print(\\"foo\\")"\r\n'
-        "   ]\r\n"
-        "  },\r\n"
-        "  {\r\n"
-        '   "cell_type": "code",\r\n'
-        '   "execution_count": null,\r\n'
-        '   "metadata": {},\r\n'
-        '   "outputs": [],\r\n'
-        '   "source": []\r\n'
-        "  }\r\n"
-        " ],\r\n"
-        ' "metadata": {},\r\n'
-        ' "nbformat": 4,\r\n'
-        ' "nbformat_minor": 4\r\n'
-        "}\r\n"
+        "{\n"
+        ' "cells": [\n'
+        "  {\n"
+        '   "cell_type": "code",\n'
+        '   "execution_count": null,\n'
+        '   "metadata": {\n'
+        '    "tags": []\n'
+        "   },\n"
+        '   "outputs": [],\n'
+        '   "source": [\n'
+        '    "%%time\\n",\n'
+        '    "\\n",\n'
+        '    "print(\\"foo\\")"\n'
+        "   ]\n"
+        "  },\n"
+        "  {\n"
+        '   "cell_type": "code",\n'
+        '   "execution_count": null,\n'
+        '   "metadata": {},\n'
+        '   "outputs": [],\n'
+        '   "source": []\n'
+        "  }\n"
+        " ],\n"
+        ' "metadata": {},\n'
+        ' "nbformat": 4,\n'
+        ' "nbformat_minor": 4\n'
+        "}\n"
     )
     assert result == expected
 
@@ -228,45 +226,45 @@ def test_entire_notebook_trailing_newline() -> None:
     content = content_bytes.decode()
     result = format_file_contents(content, fast=True, mode=JUPYTER_MODE)
     expected = (
-        "{\r\n"
-        ' "cells": [\r\n'
-        "  {\r\n"
-        '   "cell_type": "code",\r\n'
-        '   "execution_count": null,\r\n'
-        '   "metadata": {\r\n'
-        '    "tags": []\r\n'
-        "   },\r\n"
-        '   "outputs": [],\r\n'
-        '   "source": [\r\n'
-        '    "%%time\\r\n",\r\n'
-        '    "\\r\n",\r\n'
-        '    "print(\\"foo\\")"\r\n'
-        "   ]\r\n"
-        "  },\r\n"
-        "  {\r\n"
-        '   "cell_type": "code",\r\n'
-        '   "execution_count": null,\r\n'
-        '   "metadata": {},\r\n'
-        '   "outputs": [],\r\n'
-        '   "source": []\r\n'
-        "  }\r\n"
-        " ],\r\n"
-        ' "metadata": {\r\n'
-        '  "interpreter": {\r\n'
-        '   "hash": "e758f3098b5b55f4d87fe30bbdc1367f20f246b483f96267ee70e6c40cb185d8"\r\n'  # noqa:B950
-        "  },\r\n"
-        '  "kernelspec": {\r\n'
-        '   "display_name": "Python 3.8.10 64-bit (\'black\': venv)",\r\n'
-        '   "name": "python3"\r\n'
-        "  },\r\n"
-        '  "language_info": {\r\n'
-        '   "name": "python",\r\n'
-        '   "version": ""\r\n'
-        "  }\r\n"
-        " },\r\n"
-        ' "nbformat": 4,\r\n'
-        ' "nbformat_minor": 4\r\n'
-        "}\r\n"
+        "{\n"
+        ' "cells": [\n'
+        "  {\n"
+        '   "cell_type": "code",\n'
+        '   "execution_count": null,\n'
+        '   "metadata": {\n'
+        '    "tags": []\n'
+        "   },\n"
+        '   "outputs": [],\n'
+        '   "source": [\n'
+        '    "%%time\\n",\n'
+        '    "\\n",\n'
+        '    "print(\\"foo\\")"\n'
+        "   ]\n"
+        "  },\n"
+        "  {\n"
+        '   "cell_type": "code",\n'
+        '   "execution_count": null,\n'
+        '   "metadata": {},\n'
+        '   "outputs": [],\n'
+        '   "source": []\n'
+        "  }\n"
+        " ],\n"
+        ' "metadata": {\n'
+        '  "interpreter": {\n'
+        '   "hash": "e758f3098b5b55f4d87fe30bbdc1367f20f246b483f96267ee70e6c40cb185d8"\n'  # noqa:B950
+        "  },\n"
+        '  "kernelspec": {\n'
+        '   "display_name": "Python 3.8.10 64-bit (\'black\': venv)",\n'
+        '   "name": "python3"\n'
+        "  },\n"
+        '  "language_info": {\n'
+        '   "name": "python",\n'
+        '   "version": ""\n'
+        "  }\n"
+        " },\n"
+        ' "nbformat": 4,\n'
+        ' "nbformat_minor": 4\n'
+        "}\n"
     )
     assert result == expected
 
@@ -277,44 +275,44 @@ def test_entire_notebook_no_trailing_newline() -> None:
     content = content_bytes.decode()
     result = format_file_contents(content, fast=True, mode=JUPYTER_MODE)
     expected = (
-        "{\r\n"
-        ' "cells": [\r\n'
-        "  {\r\n"
-        '   "cell_type": "code",\r\n'
-        '   "execution_count": null,\r\n'
-        '   "metadata": {\r\n'
-        '    "tags": []\r\n'
-        "   },\r\n"
-        '   "outputs": [],\r\n'
-        '   "source": [\r\n'
-        '    "%%time\\r\n",\r\n'
-        '    "\\r\n",\r\n'
-        '    "print(\\"foo\\")"\r\n'
-        "   ]\r\n"
-        "  },\r\n"
-        "  {\r\n"
-        '   "cell_type": "code",\r\n'
-        '   "execution_count": null,\r\n'
-        '   "metadata": {},\r\n'
-        '   "outputs": [],\r\n'
-        '   "source": []\r\n'
-        "  }\r\n"
-        " ],\r\n"
-        ' "metadata": {\r\n'
-        '  "interpreter": {\r\n'
-        '   "hash": "e758f3098b5b55f4d87fe30bbdc1367f20f246b483f96267ee70e6c40cb185d8"\r\n'  # noqa: B950
-        "  },\r\n"
-        '  "kernelspec": {\r\n'
-        '   "display_name": "Python 3.8.10 64-bit (\'black\': venv)",\r\n'
-        '   "name": "python3"\r\n'
-        "  },\r\n"
-        '  "language_info": {\r\n'
-        '   "name": "python",\r\n'
-        '   "version": ""\r\n'
-        "  }\r\n"
-        " },\r\n"
-        ' "nbformat": 4,\r\n'
-        ' "nbformat_minor": 4\r\n'
+        "{\n"
+        ' "cells": [\n'
+        "  {\n"
+        '   "cell_type": "code",\n'
+        '   "execution_count": null,\n'
+        '   "metadata": {\n'
+        '    "tags": []\n'
+        "   },\n"
+        '   "outputs": [],\n'
+        '   "source": [\n'
+        '    "%%time\\n",\n'
+        '    "\\n",\n'
+        '    "print(\\"foo\\")"\n'
+        "   ]\n"
+        "  },\n"
+        "  {\n"
+        '   "cell_type": "code",\n'
+        '   "execution_count": null,\n'
+        '   "metadata": {},\n'
+        '   "outputs": [],\n'
+        '   "source": []\n'
+        "  }\n"
+        " ],\n"
+        ' "metadata": {\n'
+        '  "interpreter": {\n'
+        '   "hash": "e758f3098b5b55f4d87fe30bbdc1367f20f246b483f96267ee70e6c40cb185d8"\n'  # noqa: B950
+        "  },\n"
+        '  "kernelspec": {\n'
+        '   "display_name": "Python 3.8.10 64-bit (\'black\': venv)",\n'
+        '   "name": "python3"\n'
+        "  },\n"
+        '  "language_info": {\n'
+        '   "name": "python",\n'
+        '   "version": ""\n'
+        "  }\n"
+        " },\n"
+        ' "nbformat": 4,\n'
+        ' "nbformat_minor": 4\n'
         "}"
     )
     assert result == expected
@@ -356,9 +354,7 @@ def test_ipynb_diff_with_change() -> None:
             "--diff",
         ],
     )
-    expected = (
-        "@@ -1,3 +1,3 @@\r\n %%time\r\n \r\n-print('foo')\r\n" '+print("foo")\r\n'
-    )
+    expected = "@@ -1,3 +1,3 @@\n %%time\n \n-print('foo')\n" '+print("foo")\n'
     assert expected in result.output
 
 
@@ -431,9 +427,7 @@ def test_ipynb_flag(tmpdir: local) -> None:
             "--ipynb",
         ],
     )
-    expected = (
-        "@@ -1,3 +1,3 @@\r\n %%time\r\n \r\n-print('foo')\r\n" '+print("foo")\r\n'
-    )
+    expected = "@@ -1,3 +1,3 @@\n %%time\n \n-print('foo')\n" '+print("foo")\n'
     assert expected in result.output
 
 
@@ -449,12 +443,12 @@ def test_ipynb_and_pyi_flags() -> None:
         ],
     )
     assert isinstance(result.exception, SystemExit)
-    expected = "Cannot pass both `pyi` and `ipynb` flags!\r\n"
+    expected = "Cannot pass both `pyi` and `ipynb` flags!\n"
     assert result.output == expected
 
 
 def test_unable_to_replace_magics(monkeypatch: MonkeyPatch) -> None:
-    src = "%%time\r\na = 'foo'"
+    src = "%%time\na = 'foo'"
     monkeypatch.setattr("black.handle_ipynb_magics.TOKEN_HEX", lambda _: "foo")
     with pytest.raises(
         AssertionError, match="Black was not able to replace IPython magic"
