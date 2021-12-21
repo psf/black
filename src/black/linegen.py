@@ -9,6 +9,7 @@ from black.nodes import WHITESPACE, RARROW, STATEMENT, STANDALONE_COMMENT
 from black.nodes import ASSIGNMENTS, OPENING_BRACKETS, CLOSING_BRACKETS
 from black.nodes import Visitor, syms, first_child_is_arith, ensure_visible
 from black.nodes import is_docstring, is_empty_tuple, is_one_tuple, is_one_tuple_between
+from black.nodes import is_name_token, is_lpar_token, is_rpar_token
 from black.nodes import is_walrus_assignment, is_yield, is_vararg, is_multiline_string
 from black.nodes import is_stub_suite, is_stub_body, is_atom_with_invisible_parens
 from black.nodes import wrap_in_parentheses
@@ -137,7 +138,7 @@ class LineGenerator(Visitor[Line]):
         """
         normalize_invisible_parens(node, parens_after=parens)
         for child in node.children:
-            if child.type == token.NAME and child.value in keywords:  # type: ignore
+            if is_name_token(child) and child.value in keywords:
                 yield from self.line()
 
             yield from self.visit(child)
@@ -813,9 +814,9 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
             elif node.type == syms.import_from:
                 # "import from" nodes store parentheses directly as part of
                 # the statement
-                if child.type == token.LPAR:
+                if is_lpar_token(child):
                     # make parentheses invisible
-                    child.value = ""  # type: ignore
+                    child.value = ""
                     node.children[-1].value = ""  # type: ignore
                 elif child.type != token.STAR:
                     # insert invisible parentheses
@@ -861,11 +862,11 @@ def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
 
     first = node.children[0]
     last = node.children[-1]
-    if first.type == token.LPAR and last.type == token.RPAR:
+    if is_lpar_token(first) and is_rpar_token(last):
         middle = node.children[1]
         # make parentheses invisible
-        first.value = ""  # type: ignore
-        last.value = ""  # type: ignore
+        first.value = ""
+        last.value = ""
         maybe_make_parens_invisible_in_atom(middle, parent=parent)
 
         if is_atom_with_invisible_parens(middle):

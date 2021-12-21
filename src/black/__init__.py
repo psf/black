@@ -37,6 +37,7 @@ from mypy_extensions import mypyc_attr
 from black.const import DEFAULT_LINE_LENGTH, DEFAULT_INCLUDES, DEFAULT_EXCLUDES
 from black.const import STDIN_PLACEHOLDER
 from black.nodes import STARS, syms, is_simple_decorator_expression
+from black.nodes import is_string_token
 from black.lines import Line, EmptyLineTracker
 from black.linegen import transform_line, LineGenerator, LN
 from black.comments import normalize_fmt_off
@@ -1156,8 +1157,8 @@ def get_features_used(  # noqa: C901
         }
 
     for n in node.pre_order():
-        if n.type == token.STRING:
-            value_head = n.value[:2]  # type: ignore
+        if is_string_token(n):
+            value_head = n.value[:2]
             if value_head in {'f"', 'F"', "f'", "F'", "rf", "fr", "RF", "FR"}:
                 features.add(Feature.F_STRINGS)
 
