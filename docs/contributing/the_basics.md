@@ -7,7 +7,8 @@ An overview on contributing to the _Black_ project.
 Development on the latest version of Python is preferred. As of this writing it's 3.9.
 You can use any operating system.
 
-Install all development dependencies using:
+Install development dependencies inside a virtual environment of your choice, for
+example:
 
 ```console
 $ python3 -m venv .venv
