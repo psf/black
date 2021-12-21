@@ -1,6 +1,6 @@
 import pytest
 
-from black import Mode, format_file_contents, format_markdown_string, NothingChanged
+from black import Mode, format_file_contents, NothingChanged
 from tests.util import DATA_DIR
 
 MARKDOWN_MODE = Mode(is_markdown=True)
