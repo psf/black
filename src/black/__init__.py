@@ -224,6 +224,7 @@ def validate_regex(
     ),
 )
 @click.option(
+    "-md",
     "--markdown",
     is_flag=True,
     help="Format Python code blocks found in markdown.",
