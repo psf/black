@@ -215,6 +215,7 @@ def validate_regex(
         " when piping source on standard input)."
     ),
 )
+
 @click.option(
     "--ipynb",
     is_flag=True,
@@ -223,6 +224,15 @@ def validate_regex(
         "(useful when piping source on standard input)."
     ),
 )
+
+@click.option(
+    "--markdown",
+    is_flag=True,
+    help=(
+        "Format Python code blocks found in markdown files."
+    ),
+)
+
 @click.option(
     "-S",
     "--skip-string-normalization",
@@ -394,6 +404,7 @@ def main(
     fast: bool,
     pyi: bool,
     ipynb: bool,
+    markdown: bool,
     skip_string_normalization: bool,
     skip_magic_trailing_comma: bool,
     experimental_string_processing: bool,
