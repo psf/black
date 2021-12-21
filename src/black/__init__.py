@@ -1060,17 +1060,14 @@ def format_markdown_string(str_contents: str, *, mode: Mode):
 
     Operate block-by-block, only on code blocks, only for markdown.
     """
-    md = [
-        block[1]
-        for block in re.findall("```(python|py)\n([\s\S]*?)\n```", str_contents)
-    ]
+    md = re.findall("```(python|py)\n([\s\S]*?)\n```", str_contents)
     if md:
-        formatted_md = [format_str(block, mode=mode).strip() for block in md]
+        formatted_md = [format_str(block[1], mode=mode).strip() for block in md]
         dst = str_contents
         modified = False
         for block, formatted_block in zip(md, formatted_md):
-            if block != formatted_block:
-                dst = dst.replace(block, formatted_block)
+            if block[1] != formatted_block:
+                dst = dst.replace(block[1], formatted_block)
                 modified = True
         if not modified:
             raise NothingChanged
