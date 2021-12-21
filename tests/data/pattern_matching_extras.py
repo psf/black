@@ -92,3 +92,14 @@ match something:
         pass
     case {"maybe": something(complicated as this) as that}:
         pass
+
+
+match something:
+    case 1 as a:
+        pass
+
+    case 2 as b, 3 as c:
+        pass
+
+    case 4 as d, (5 as e), (6 | 7 as g), *h:
+        pass
