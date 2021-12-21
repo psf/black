@@ -225,7 +225,7 @@ def validate_regex(
 @click.option(
     "--markdown",
     is_flag=True,
-    help=("Format code blocks found in markdown files."),
+    help="Format Python code blocks found in markdown.",
 )
 @click.option(
     "-S",
@@ -810,8 +810,8 @@ def format_file_in_place(
         mode = replace(mode, is_pyi=True)
     elif src.suffix == ".ipynb":
         mode = replace(mode, is_ipynb=True)
-    mode = replace(mode, is_markdown=src.suffix == ".md")
-
+    if mode.allow_markdown:
+        mode = replace(mode, is_markdown=src.suffix == ".md")
     then = datetime.utcfromtimestamp(src.stat().st_mtime)
     with open(src, "rb") as buf:
         src_contents, encoding, newline = decode_bytes(buf.read())
