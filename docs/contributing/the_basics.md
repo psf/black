@@ -10,20 +10,11 @@ You can use any operating system.
 Install all development dependencies using:
 
 ```console
-$ pipenv install --dev
-$ pipenv shell
-$ pre-commit install
-```
-
-If you haven't used `pipenv` before but are comfortable with virtualenvs, just run
-`pip install pipenv` in the virtualenv you're already using and invoke the command above
-from the cloned _Black_ repo. It will do the correct thing.
-
-Non pipenv install works too:
-
-```console
-$ pip install -r test_requirements.txt
-$ pip install -e .[d]
+$ python3 -m venv .venv
+$ source .venv/bin/activate
+(.venv)$ pip install -r test_requirements.txt
+(.venv)$ pip install -e .[d]
+(.venv)$ pre-commit install
 ```
 
 Before submitting pull requests, run lints and tests with the following commands from
@@ -31,16 +22,16 @@ the root of the black repo:
 
 ```console
 # Linting
-$ pre-commit run -a
+(.venv)$ pre-commit run -a
 
 # Unit tests
-$ tox -e py
+(.venv)$ tox -e py
 
 # Optional Fuzz testing
-$ tox -e fuzz
+(.venv)$ tox -e fuzz
 
 # Optional CI run to test your changes on many popular python projects
-$ black-primer [-k -w /tmp/black_test_repos]
+(.venv)$ black-primer [-k -w /tmp/black_test_repos]
 ```
 
 ### News / Changelog Requirement
@@ -70,9 +61,9 @@ formatting don't need to be mentioned separately though.
 If you make changes to docs, you can test they still build locally too.
 
 ```console
-$ pip install -r docs/requirements.txt
-$ pip install [-e] .[d]
-$ sphinx-build -a -b html -W docs/ docs/_build/
+(.venv)$ pip install -r docs/requirements.txt
+(.venv)$ pip install [-e] .[d]
+(.venv)$ sphinx-build -a -b html -W docs/ docs/_build/
 ```
 
 ## black-primer
