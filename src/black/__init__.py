@@ -940,11 +940,10 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
 
     if mode.is_ipynb:
         dst_contents = format_ipynb_string(src_contents, fast=fast, mode=mode)
+    elif mode.allow_markdown and mode.is_markdown:
+        dst_contents = format_markdown_string(src_contents, mode=mode)
     else:
-        if mode.allow_markdown and mode.is_markdown:
-            dst_contents = format_markdown_string(src_contents, mode=mode)
-        else:
-            dst_contents = format_str(src_contents, mode=mode)
+        dst_contents = format_str(src_contents, mode=mode)
 
     if src_contents == dst_contents:
         raise NothingChanged
