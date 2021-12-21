@@ -11,6 +11,7 @@ Install all development dependencies using:
 
 ```console
 $ python3 -m venv .venv
+$ source .venv/bin/activate
 (.venv)$ pip install -r test_requirements.txt
 (.venv)$ pip install -e .[d]
 (.venv)$ pre-commit install
