@@ -811,7 +811,7 @@ def format_file_in_place(
         mode = replace(mode, is_pyi=True)
     elif src.suffix == ".ipynb":
         mode = replace(mode, is_ipynb=True)
-    if not mode.is_markdown and mode.allow_markdown:
+    if mode.allow_markdown:
         mode = replace(mode, is_markdown=src.suffix == ".md")
     then = datetime.utcfromtimestamp(src.stat().st_mtime)
     with open(src, "rb") as buf:
@@ -940,7 +940,7 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
 
     if mode.is_ipynb:
         dst_contents = format_ipynb_string(src_contents, fast=fast, mode=mode)
-    elif mode.allow_markdown and mode.is_markdown:
+    elif mode.is_markdown:
         dst_contents = format_markdown_string(src_contents, mode=mode)
     else:
         dst_contents = format_str(src_contents, mode=mode)
@@ -1060,17 +1060,17 @@ def format_markdown_string(str_contents: str, *, mode: Mode):
 
     Operate block-by-block, only on code blocks, only for markdown.
     """
-    md = re.findall(r"(```(python|py)\n[\s\S]*?\n```)", str_contents)
-    if not md:
-        formatted_md = [format_str(block, mode=mode) for block in md]
-        modified = False
+    md = [
+        block[1]
+        for block in re.findall("```(python|py)\n([\s\S]*?)\n```", str_contents)
+    ]
+    if md:
+        formatted_md = [format_str(block, mode=mode).strip() for block in md]
         dst = str_contents
+        modified = False
         for block, formatted_block in zip(md, formatted_md):
-            try:
+            if block != formatted_block:
                 dst = dst.replace(block, formatted_block)
-            except NothingChanged:
-                pass
-            else:
                 modified = True
         if not modified:
             raise NothingChanged
