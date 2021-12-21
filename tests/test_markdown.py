@@ -1,9 +1,13 @@
 import pytest
+from click.testing import CliRunner
+from py.path import local
 
-from black import Mode, format_file_contents, NothingChanged
+from black import Mode, format_file_contents, NothingChanged, main
 from tests.util import DATA_DIR
 
 MARKDOWN_MODE = Mode(is_markdown=True)
+
+runner = CliRunner()
 
 
 def get_markdown_data(formatted=False):
@@ -34,3 +38,19 @@ def test_markdown_code_blocks():
     result = format_file_contents(content, fast=True, mode=MARKDOWN_MODE)
     expected = get_markdown_data(True)
     assert result == expected
+
+
+def test_markdown_flag(tmpdir: local) -> None:
+    tmp_markdown = tmpdir / "markdown.md"
+    with open(tmp_markdown, "w") as dst:
+        dst.write(get_markdown_data())
+    result = runner.invoke(
+        main,
+        [
+            str(tmp_markdown),
+            "--diff",
+            "--markdown"
+        ],
+    )
+    expected = "j = [1, 2, 3]"
+    assert expected in result.output

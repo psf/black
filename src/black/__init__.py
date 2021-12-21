@@ -951,7 +951,7 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
     if src_contents == dst_contents:
         raise NothingChanged
 
-    if not fast and not mode.is_ipynb:
+    if not fast and not mode.is_ipynb and not mode.is_markdown:
         # Jupyter notebooks will already have been checked above.
         check_stability_and_equivalence(src_contents, dst_contents, mode=mode)
     return dst_contents
