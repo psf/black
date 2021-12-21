@@ -61,7 +61,6 @@ from black.handle_ipynb_magics import (
     jupyter_dependencies_are_installed,
 )
 
-
 # lib2to3 fork
 from blib2to3.pytree import Node, Leaf
 from blib2to3.pgen2 import token
@@ -215,7 +214,6 @@ def validate_regex(
         " when piping source on standard input)."
     ),
 )
-
 @click.option(
     "--ipynb",
     is_flag=True,
@@ -224,15 +222,11 @@ def validate_regex(
         "(useful when piping source on standard input)."
     ),
 )
-
 @click.option(
     "--markdown",
     is_flag=True,
-    help=(
-        "Format Python code blocks found in markdown files."
-    ),
+    help=("Format code blocks found in markdown files."),
 )
-
 @click.option(
     "-S",
     "--skip-string-normalization",
@@ -446,6 +440,7 @@ def main(
         line_length=line_length,
         is_pyi=pyi,
         is_ipynb=ipynb,
+        allow_markdown=markdown,
         string_normalization=not skip_string_normalization,
         magic_trailing_comma=not skip_magic_trailing_comma,
         experimental_string_processing=experimental_string_processing,
@@ -944,7 +939,14 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
     if mode.is_ipynb:
         dst_contents = format_ipynb_string(src_contents, fast=fast, mode=mode)
     else:
-        dst_contents = format_str(src_contents, mode=mode)
+        if mode.allow_markdown:
+            try:
+                dst_contents = format_markdown_string(src_contents, mode=mode)
+            except NothingChanged:
+                dst_contents = format_str(src_contents, mode=mode)
+        else:
+            dst_contents = format_str(src_contents, mode=mode)
+
     if src_contents == dst_contents:
         raise NothingChanged
 
@@ -1051,6 +1053,30 @@ def format_ipynb_string(src_contents: str, *, fast: bool, mode: Mode) -> FileCon
         if trailing_newline:
             dst_contents = dst_contents + "\n"
         return dst_contents
+    else:
+        raise NothingChanged
+
+
+def format_markdown_string(str_contents: str, *, mode: Mode):
+    """Format markdown.
+
+    Operate block-by-block, only on code blocks, only for markdown.
+    """
+    md = re.findall(r"(```(python|py)\n[\s\S]*?\n```)", str_contents)
+    if md:
+        formatted_md = [format_str(block, mode=mode) for block in md]
+        modified = False
+        dst = str_contents
+        for block, formatted_block in zip(md, formatted_md):
+            try:
+                dst = dst.replace(block, formatted_block)
+            except NothingChanged:
+                pass
+            else:
+                modified = True
+        if not modified:
+            raise NothingChanged
+        return dst
     else:
         raise NothingChanged
 
