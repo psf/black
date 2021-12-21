@@ -12,8 +12,6 @@ There's also a pattern matching implementation here.
 
 # mypy: allow-untyped-defs
 
-import sys
-
 from typing import (
     Any,
     Dict,
@@ -27,7 +25,6 @@ from typing import (
     Set,
     Iterable,
 )
-
 from blib2to3.pgen2.grammar import Grammar
 
 __author__ = "Guido van Rossum <guido@python.org>"
