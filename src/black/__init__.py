@@ -37,6 +37,7 @@ from mypy_extensions import mypyc_attr
 from black.const import DEFAULT_LINE_LENGTH, DEFAULT_INCLUDES, DEFAULT_EXCLUDES
 from black.const import STDIN_PLACEHOLDER
 from black.nodes import STARS, syms, is_simple_decorator_expression
+from black.nodes import is_string_token
 from black.lines import Line, EmptyLineTracker
 from black.linegen import transform_line, LineGenerator, LN
 from black.comments import normalize_fmt_off
@@ -62,7 +63,7 @@ from black.handle_ipynb_magics import (
 
 
 # lib2to3 fork
-from blib2to3.pytree import Node, Leaf, is_string_token
+from blib2to3.pytree import Node, Leaf
 from blib2to3.pgen2 import token
 
 from _black_version import version as __version__

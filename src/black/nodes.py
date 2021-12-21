@@ -19,11 +19,15 @@ if sys.version_info >= (3, 8):
     from typing import Final
 else:
     from typing_extensions import Final
+if sys.version_info >= (3, 10):
+    from typing import TypeGuard
+else:
+    from typing_extensions import TypeGuard
 
 from mypy_extensions import mypyc_attr
 
 # lib2to3 fork
-from blib2to3.pytree import Node, Leaf, is_name_token, type_repr
+from blib2to3.pytree import Node, Leaf, type_repr, NL
 from blib2to3 import pygram
 from blib2to3.pgen2 import token
 
@@ -850,3 +854,19 @@ def ensure_visible(leaf: Leaf) -> None:
         leaf.value = "("
     elif leaf.type == token.RPAR:
         leaf.value = ")"
+
+
+def is_name_token(nl: NL) -> TypeGuard[Leaf]:
+    return nl.type == token.NAME
+
+
+def is_lpar_token(nl: NL) -> TypeGuard[Leaf]:
+    return nl.type == token.LPAR
+
+
+def is_rpar_token(nl: NL) -> TypeGuard[Leaf]:
+    return nl.type == token.RPAR
+
+
+def is_string_token(nl: NL) -> TypeGuard[Leaf]:
+    return nl.type == token.STRING

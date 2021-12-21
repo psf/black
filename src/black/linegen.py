@@ -9,6 +9,7 @@ from black.nodes import WHITESPACE, RARROW, STATEMENT, STANDALONE_COMMENT
 from black.nodes import ASSIGNMENTS, OPENING_BRACKETS, CLOSING_BRACKETS
 from black.nodes import Visitor, syms, first_child_is_arith, ensure_visible
 from black.nodes import is_docstring, is_empty_tuple, is_one_tuple, is_one_tuple_between
+from black.nodes import is_name_token, is_lpar_token, is_rpar_token
 from black.nodes import is_walrus_assignment, is_yield, is_vararg, is_multiline_string
 from black.nodes import is_stub_suite, is_stub_body, is_atom_with_invisible_parens
 from black.nodes import wrap_in_parentheses
@@ -25,7 +26,7 @@ from black.trans import StringSplitter, StringParenWrapper, StringParenStripper
 from black.mode import Mode
 from black.mode import Feature
 
-from blib2to3.pytree import Node, Leaf, is_name_token, is_lpar_token, is_rpar_token
+from blib2to3.pytree import Node, Leaf
 from blib2to3.pgen2 import token
 
 
