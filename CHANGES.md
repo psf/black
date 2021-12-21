@@ -14,7 +14,7 @@
 - Tuple unpacking on `return` and `yield` constructs now implies 3.8+ (#2700)
 - Unparenthesized tuples on annotated assignments (e.g
   `values: Tuple[int, ...] = 1, 2, 3`) now implies 3.8+ (#2708)
-- Text coloring added in the final statistics of files modifications (#2711)
+- Text coloring added in the final statistics (#2712)
 
 ## 21.12b0
 
