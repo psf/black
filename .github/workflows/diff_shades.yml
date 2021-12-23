@@ -3,10 +3,10 @@ name: diff-shades
 on:
   push:
     branches: [main]
-    paths-ignore: ["docs/**", "*.md"]
+    paths-ignore: ["docs/**", "tests/**", "*.md"]
 
   pull_request:
-    path-ignore: ["docs/**", "*.md"]
+    path-ignore: ["docs/**", "tests/**", "*.md"]
 
   workflow_dispatch:
     inputs:
