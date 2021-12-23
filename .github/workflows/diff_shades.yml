@@ -80,7 +80,7 @@ jobs:
       - name: Analyze baseline revision
         if: steps.baseline-cache.outputs.cache-hit != 'true'
         run: >
-          diff-shades analyze --verbose --work-dir projects-cache/
+          diff-shades analyze --show-project-revision --work-dir projects-cache/
           ${{ steps.config.outputs.baseline-analysis }} -- ${{ github.event.inputs.baseline-args }}
 
       - name: Install target revision
@@ -90,7 +90,7 @@ jobs:
 
       - name: Analyze target revision
         run: >
-          diff-shades analyze --verbose --work-dir projects-cache/
+          diff-shades analyze --show-project-revision --work-dir projects-cache/
           ${{ steps.config.outputs.target-analysis }} --repeat-projects-from
           ${{ steps.config.outputs.baseline-analysis }} -- ${{ github.event.inputs.target-args }}
 
