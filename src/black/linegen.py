@@ -815,9 +815,10 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
                 # "import from" nodes store parentheses directly as part of
                 # the statement
                 if is_lpar_token(child):
+                    assert is_rpar_token(node.children[-1])
                     # make parentheses invisible
                     child.value = ""
-                    node.children[-1].value = ""  # type: ignore
+                    node.children[-1].value = ""
                 elif child.type != token.STAR:
                     # insert invisible parentheses
                     node.insert_child(index, Leaf(token.LPAR, ""))

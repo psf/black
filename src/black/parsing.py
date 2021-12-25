@@ -4,7 +4,7 @@ Parse Python code and perform AST validation.
 import ast
 import platform
 import sys
-from typing import Any, Iterable, Iterator, List, Set, Tuple, Type, Union
+from typing import Any, AnyStr, Iterable, Iterator, List, Set, Tuple, Type, Union
 
 if sys.version_info < (3, 8):
     from typing_extensions import Final
@@ -191,6 +191,16 @@ ast3_AST: Final[Type[ast3.AST]] = ast3.AST
 ast27_AST: Final[Type[ast27.AST]] = ast27.AST
 
 
+def _normalize(lineend: AnyStr, value: AnyStr) -> AnyStr:
+    # To normalize, we strip any leading and trailing space from
+    # each line...
+    stripped: List[AnyStr] = [i.strip() for i in value.splitlines()]
+    normalized = lineend.join(stripped)
+    # ...and remove any blank lines at the beginning and end of
+    # the whole string
+    return normalized.strip()
+
+
 def stringify_ast(
     node: Union[ast.AST, ast3.AST, ast27.AST], depth: int = 0
 ) -> Iterator[str]:
@@ -254,14 +264,10 @@ def stringify_ast(
                 and field == "value"
                 and isinstance(value, (str, bytes))
             ):
-                lineend = "\n" if isinstance(value, str) else b"\n"
-                # To normalize, we strip any leading and trailing space from
-                # each line...
-                stripped = [line.strip() for line in value.splitlines()]
-                normalized = lineend.join(stripped)  # type: ignore[attr-defined]
-                # ...and remove any blank lines at the beginning and end of
-                # the whole string
-                normalized = normalized.strip()
+                if isinstance(value, str):
+                    normalized: Union[str, bytes] = _normalize("\n", value)
+                else:
+                    normalized = _normalize(b"\n", value)
             else:
                 normalized = value
             yield f"{'  ' * (depth+2)}{normalized!r},  # {value.__class__.__name__}"
