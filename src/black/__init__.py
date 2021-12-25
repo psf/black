@@ -495,7 +495,8 @@ def main(
             )
 
     if verbose or not quiet:
-        out()
+        if code is None:
+            out()
         out(error_msg if report.return_code else "All done! ✨ 🍰 ✨")
         if code is None:
             click.echo(str(report), err=True)

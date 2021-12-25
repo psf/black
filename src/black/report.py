@@ -99,9 +99,7 @@ class Report:
 
         if self.same_count:
             s = "s" if self.same_count > 1 else ""
-            report.append(
-                style(f"{self.same_count} file{s} ", fg="blue") + f"{unchanged}"
-            )
+            report.append(style(f"{self.same_count} file{s} ", fg="blue") + unchanged)
         if self.failure_count:
             s = "s" if self.failure_count > 1 else ""
             report.append(style(f"{self.failure_count} file{s} {failed}", fg="red"))
