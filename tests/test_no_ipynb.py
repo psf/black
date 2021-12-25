@@ -1,10 +1,10 @@
 import pytest
 import os
+import pathlib
 
 from tests.util import THIS_DIR
 from black import main, jupyter_dependencies_are_installed
 from click.testing import CliRunner
-from _pytest.tmpdir import tmpdir
 
 pytestmark = pytest.mark.no_jupyter
 
@@ -22,14 +22,14 @@ def test_ipynb_diff_with_no_change_single() -> None:
     assert expected_output in result.output
 
 
-def test_ipynb_diff_with_no_change_dir(tmpdir: tmpdir) -> None:
+def test_ipynb_diff_with_no_change_dir(tmp_path: pathlib.Path) -> None:
     jupyter_dependencies_are_installed.cache_clear()
     runner = CliRunner()
     nb = os.path.join("tests", "data", "notebook_trailing_newline.ipynb")
-    tmp_nb = tmpdir / "notebook.ipynb"
+    tmp_nb = tmp_path / "notebook.ipynb"
     with open(nb) as src, open(tmp_nb, "w") as dst:
         dst.write(src.read())
-    result = runner.invoke(main, [str(tmpdir)])
+    result = runner.invoke(main, [str(tmp_path)])
     expected_output = (
         "Skipping .ipynb files as Jupyter dependencies are not installed.\n"
         "You can fix this by running ``pip install black[jupyter]``\n"
