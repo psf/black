@@ -18,7 +18,7 @@
 
 ### Packaging
 
-- All dependencies upper version bounds have been removed (#2718)
+- All upper version bounds on dependencies have been removed (#2718)
 
 ## 21.12b0
 
