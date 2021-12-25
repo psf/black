@@ -28,8 +28,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install --upgrade tox
+          python -m pip install --upgrade nox
 
       - name: Run fuzz tests
-        run: |
-          tox -e fuzz
+        run: nox --force-color -s fuzz

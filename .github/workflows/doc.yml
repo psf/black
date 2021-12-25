@@ -25,9 +25,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip setuptools wheel
-          python -m pip install -e ".[d]"
-          python -m pip install -r "docs/requirements.txt"
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade nox
 
       - name: Build documentation
-        run: sphinx-build -a -b html -W --keep-going docs/ docs/_build
+        run: nox --force-color -s docs

@@ -26,6 +26,8 @@ jobs:
       matrix:
         python-version: ["3.6", "3.7", "3.8", "3.9", "3.10", "pypy-3.7"]
         os: [ubuntu-latest, macOS-latest, windows-latest]
+    env:
+      FORCE_COLOR: 1
 
     steps:
       - uses: actions/checkout@v2
@@ -38,17 +40,15 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install --upgrade tox
+          python -m pip install --upgrade nox
 
       - name: Unit tests
         if: "!startsWith(matrix.python-version, 'pypy')"
-        run: |
-          tox -e ci-py -- -v --color=yes
+        run: nox -s tests-${{ matrix.python-version }} -- --no-xdist --verbose
 
-      - name: Unit tests pypy
+      - name: Unit tests (pypy)
         if: "startsWith(matrix.python-version, 'pypy')"
-        run: |
-          tox -e ci-pypy3 -- -v --color=yes
+        run: nox -s tests-pypy3 -- --no-xdist --verbose
 
       - name: Publish coverage to Coveralls
         # If pushed / is a pull request against main repo AND
