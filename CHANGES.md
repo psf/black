@@ -16,6 +16,10 @@
 - Unparenthesized tuples on annotated assignments (e.g
   `values: Tuple[int, ...] = 1, 2, 3`) now implies 3.8+ (#2708)
 
+### Packaging
+
+- All dependencies upper version bounds have been removed (#2718)
+
 ## 21.12b0
 
 ### _Black_
