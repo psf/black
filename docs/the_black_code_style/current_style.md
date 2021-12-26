@@ -291,6 +291,12 @@ multiple lines. This is so that _Black_ is compliant with the recent changes in 
 [PEP 8](https://www.python.org/dev/peps/pep-0008/#should-a-line-break-before-or-after-a-binary-operator)
 style guide, which emphasizes that this approach improves readability.
 
+Almost all operators will be surrounded by single spaces, the only exceptions are unary
+operators (`+`, `-`, and `~`), and power operators when both its operands are considered
+"simple". For power ops, an operand is considered "simple" if it's only a NAME, numeric
+CONSTANT, or attribute access (chained attribute access is allowed), with or without a
+preceding unary operator.
+
 ### Slices
 
 PEP 8
