@@ -69,6 +69,7 @@ PY310_CASES = [
     "pattern_matching_complex",
     "pattern_matching_extras",
     "pattern_matching_style",
+    "pattern_matching_generic",
     "parenthesized_context_managers",
 ]
 

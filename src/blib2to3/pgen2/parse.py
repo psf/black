@@ -46,6 +46,17 @@ def lam_sub(grammar: Grammar, node: RawNode) -> NL:
     return Node(type=node[0], children=node[3], context=node[2])
 
 
+# A placeholder node, used when parser is backtracking.
+FAKE_NODE = (-1, None, None, None)
+
+
+def stack_copy(
+    stack: List[Tuple[DFAS, int, RawNode]]
+) -> List[Tuple[DFAS, int, RawNode]]:
+    """Nodeless stack copy."""
+    return [(copy.deepcopy(dfa), label, FAKE_NODE) for dfa, label, _ in stack]
+
+
 class Recorder:
     def __init__(self, parser: "Parser", ilabels: List[int], context: Context) -> None:
         self.parser = parser
@@ -54,7 +65,7 @@ class Recorder:
 
         self._dead_ilabels: Set[int] = set()
         self._start_point = self.parser.stack
-        self._points = {ilabel: copy.deepcopy(self._start_point) for ilabel in ilabels}
+        self._points = {ilabel: stack_copy(self._start_point) for ilabel in ilabels}
 
     @property
     def ilabels(self) -> Set[int]:
@@ -62,13 +73,37 @@ class Recorder:
 
     @contextmanager
     def switch_to(self, ilabel: int) -> Iterator[None]:
-        self.parser.stack = self._points[ilabel]
+        with self.patch():
+            self.parser.stack = self._points[ilabel]
+            try:
+                yield
+            except ParseError:
+                self._dead_ilabels.add(ilabel)
+            finally:
+                self.parser.stack = self._start_point
+
+    @contextmanager
+    def patch(self) -> Iterator[None]:
+        """
+        Patch basic state operations (push/pop/shift) with node-level
+        immutable variants. These still will operate on the stack; but
+        they won't create any new nodes, or modify the contents of any
+        other existing nodes.
+
+        This saves us a ton of time when we are backtracking, since we
+        want to restore to the initial state as quick as possible, which
+        can only be done by having as little mutatations as possible.
+        """
+        original_functions = {}
+        for name in self.parser.STATE_OPERATIONS:
+            original_functions[name] = getattr(self.parser, name)
+            safe_variant = getattr(self.parser, name + "_safe")
+            setattr(self.parser, name, safe_variant)
         try:
             yield
-        except ParseError:
-            self._dead_ilabels.add(ilabel)
         finally:
-            self.parser.stack = self._start_point
+            for name, func in original_functions.items():
+                setattr(self.parser, name, func)
 
     def add_token(self, tok_type: int, tok_val: Text, raw: bool = False) -> None:
         func: Callable[..., Any]
@@ -317,6 +352,8 @@ class Parser(object):
             raise ParseError("bad token", type, value, context)
         return [ilabel]
 
+    STATE_OPERATIONS = ["shift", "push", "pop"]
+
     def shift(self, type: int, value: Text, newstate: int, context: Context) -> None:
         """Shift a token.  (Internal)"""
         dfa, state, node = self.stack[-1]
@@ -344,3 +381,22 @@ class Parser(object):
         else:
             self.rootnode = newnode
             self.rootnode.used_names = self.used_names
+
+    def shift_safe(
+        self, type: int, value: Text, newstate: int, context: Context
+    ) -> None:
+        """Immutable (node-level) version of shift()"""
+        dfa, state, _ = self.stack[-1]
+        self.stack[-1] = (dfa, newstate, FAKE_NODE)
+
+    def push_safe(
+        self, type: int, newdfa: DFAS, newstate: int, context: Context
+    ) -> None:
+        """Immutable (node-level) version of push()"""
+        dfa, state, _ = self.stack[-1]
+        self.stack[-1] = (dfa, newstate, FAKE_NODE)
+        self.stack.append((newdfa, 0, FAKE_NODE))
+
+    def pop_safe(self) -> None:
+        """Immutable (node-level) version of pop()"""
+        self.stack.pop()
