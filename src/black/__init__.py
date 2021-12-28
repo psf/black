@@ -224,10 +224,9 @@ def validate_regex(
     ),
 )
 @click.option(
-    "-md",
-    "--markdown",
+    "--docs",
     is_flag=True,
-    help="Format Python code blocks found in markdown.",
+    help="Format Python code blocks found in documentation files.",
 )
 @click.option(
     "-S",
@@ -400,7 +399,7 @@ def main(
     fast: bool,
     pyi: bool,
     ipynb: bool,
-    markdown: bool,
+    docs: bool,
     skip_string_normalization: bool,
     skip_magic_trailing_comma: bool,
     experimental_string_processing: bool,
@@ -442,7 +441,7 @@ def main(
         line_length=line_length,
         is_pyi=pyi,
         is_ipynb=ipynb,
-        allow_markdown=markdown,
+        allow_docs=docs,
         string_normalization=not skip_string_normalization,
         magic_trailing_comma=not skip_magic_trailing_comma,
         experimental_string_processing=experimental_string_processing,
@@ -650,7 +649,7 @@ def reformat_one(
                 mode = replace(mode, is_pyi=True)
             elif src.suffix == ".ipynb":
                 mode = replace(mode, is_ipynb=True)
-            if mode.allow_markdown:
+            if mode.allow_docs:
                 mode = replace(mode, is_markdown=src.suffix == ".md")
             if format_stdin_to_stdout(fast=fast, write_back=write_back, mode=mode):
                 changed = Changed.YES
@@ -814,7 +813,7 @@ def format_file_in_place(
         mode = replace(mode, is_pyi=True)
     elif src.suffix == ".ipynb":
         mode = replace(mode, is_ipynb=True)
-    if mode.allow_markdown:
+    if mode.allow_docs:
         mode = replace(mode, is_markdown=src.suffix == ".md")
     then = datetime.utcfromtimestamp(src.stat().st_mtime)
     with open(src, "rb") as buf:

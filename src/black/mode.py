@@ -161,7 +161,7 @@ def supports_feature(target_versions: Set[TargetVersion], feature: Feature) -> b
 class Mode:
     target_versions: Set[TargetVersion] = field(default_factory=set)
     line_length: int = DEFAULT_LINE_LENGTH
-    allow_markdown: bool = False
+    allow_docs: bool = False
     string_normalization: bool = True
     is_pyi: bool = False
     is_ipynb: bool = False
@@ -181,7 +181,7 @@ class Mode:
             version_str,
             str(self.line_length),
             str(int(self.string_normalization)),
-            str(int(self.allow_markdown)),
+            str(int(self.allow_docs)),
             str(int(self.is_pyi)),
             str(int(self.is_ipynb)),
             str(int(self.is_markdown)),

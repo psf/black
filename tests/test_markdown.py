@@ -49,7 +49,7 @@ def test_markdown_flag(tmpdir: local) -> None:
         [
             str(tmp_markdown),
             "--diff",
-            "--markdown"
+            "--docs"
         ],
     )
     expected = "j = [1, 2, 3]"
