@@ -78,20 +78,46 @@ Options include the following:
 
 ## Wing IDE
 
-Wing supports black via the OS Commands tool, as explained in the Wing documentation on
-[pep8 formatting](https://wingware.com/doc/edit/pep8). The detailed procedure is:
+Wing supports `black` via the **Preference Setting**, **Project Properties**, and **OS
+Commands tool**, as explained in the Wing documentation on
+[Auto-Reformatting](https://wingware.com/doc/edit/auto-reformatting). The detailed
+procedure is:
 
-1. Install `black`.
+### Prequistes
 
-   ```console
-   $ pip install black
-   ```
+- Wing IDE version 8.0+
 
-1. Make sure it runs from the command line, e.g.
+- Install `black` in virtual environment or project.
 
-   ```console
-   $ black --help
-   ```
+  ```console
+  $ pip install black
+  ```
+
+- Make sure it runs from the command line, e.g.
+
+  ```console
+  $ black --help
+  ```
+
+### Preference Settings
+
+1. In menubar navigate to `Edit -> Preferences -> Editor -> Reformmating`.
+
+1. Set **Auto-Reformat** from `disable` (default) to `Line after edit` or
+   `Whole files before save`.
+
+1. Set **Reformatter** to from PEP8 (default) to `Black`.
+
+### Project Properties
+
+1. In menubar navigate to `Project -> Project Properties -> Options`.
+
+1. Set **Auto-Reformat** from `Use Preferences setting` (default) to `Line after edit`
+   or `Whole files before save`.
+
+1. Set **Reformatter** from `Use Preferences setting` (default) to `Black`.
+
+### OS Commands
 
 1. In Wing IDE, activate the **OS Commands** panel and define the command **black** to
    execute black on the currently selected file:
