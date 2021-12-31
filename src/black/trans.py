@@ -74,6 +74,7 @@ def TErr(err_msg: str) -> Err[CannotTransform]:
 def hug_power_op(line: Line, features: Collection[Feature]) -> Iterator[Line]:
     """A transformer which normalizes spacing around power operators."""
 
+    # Performance optimization to avoid unnecessary Leaf clones and other ops.
     for leaf in line.leaves:
         if leaf.type == token.DOUBLESTAR:
             break
@@ -81,6 +82,9 @@ def hug_power_op(line: Line, features: Collection[Feature]) -> Iterator[Line]:
         raise CannotTransform("No doublestar token was found in the line.")
 
     def is_simple_lookup(index: int, step: Literal[1, -1]) -> bool:
+        # Brackets and parenthesises indicate calls, subscripts, etc. ...
+        # basically stuff that doesn't count as "simple". Only a NAME lookup
+        # or dotted lookup (eg. NAME.NAME) is OK.
         if step == -1:
             disallowed = {token.RPAR, token.RSQB}
         else:
@@ -91,6 +95,10 @@ def hug_power_op(line: Line, features: Collection[Feature]) -> Iterator[Line]:
             if current.type in disallowed:
                 return False
             if current.type not in {token.NAME, token.DOT} or current.value == "for":
+                # If the current token isn't disallowed, we'll assume this is simple as
+                # only the disallowed tokens are semantically attached to this lookup
+                # expression we're checking. Also, stop early if we hit the 'for' bit
+                # of a comprehension.
                 return True
 
             index += step
@@ -98,12 +106,17 @@ def hug_power_op(line: Line, features: Collection[Feature]) -> Iterator[Line]:
         return True
 
     def is_simple_operand(index: int, kind: Literal["base", "exponent"]) -> bool:
+        # An operand is considered "simple" if's a NAME, a numeric CONSTANT, a simple
+        # lookup (see above), with or without a preceding unary operator.
         start = line.leaves[index]
         if start.type in {token.NAME, token.NUMBER}:
             return is_simple_lookup(index, step=(1 if kind == "exponent" else -1))
 
         if start.type in {token.PLUS, token.MINUS, token.TILDE}:
             if line.leaves[index + 1].type in {token.NAME, token.NUMBER}:
+                # step is always one as bases with a preceding unary op will be checked
+                # for simplicity starting from the next token (so it'll hit the check
+                # above).
                 return is_simple_lookup(index + 1, step=1)
 
         return False
