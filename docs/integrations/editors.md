@@ -78,12 +78,13 @@ Options include the following:
 
 ## Wing IDE
 
-Wing supports `black` via the **Preference Setting**, **Project Properties**, and **OS
-Commands tool**, as explained in the Wing documentation on
+Wing IDE supports `black` via the **Preference Setting** for system wide settings and
+**Project Properties** for per-project or workspaces spesific setting, as explained in
+the Wing documentation on
 [Auto-Reformatting](https://wingware.com/doc/edit/auto-reformatting). The detailed
 procedure is:
 
-### Prequistes
+### Prerequistes
 
 - Wing IDE version 8.0+
 
@@ -101,14 +102,20 @@ procedure is:
 
 ### Preference Settings
 
+If you want Wing IDE to always reformat with `black` for every project, follow these
+steps:
+
 1. In menubar navigate to `Edit -> Preferences -> Editor -> Reformmating`.
 
 1. Set **Auto-Reformat** from `disable` (default) to `Line after edit` or
    `Whole files before save`.
 
-1. Set **Reformatter** to from PEP8 (default) to `Black`.
+1. Set **Reformatter** from `PEP8` (default) to `Black`.
 
 ### Project Properties
+
+If you want to just reformat for a specific project and not intervene with Wing IDE
+global setting, follow these steps:
 
 1. In menubar navigate to `Project -> Project Properties -> Options`.
 
@@ -116,24 +123,6 @@ procedure is:
    or `Whole files before save`.
 
 1. Set **Reformatter** from `Use Preferences setting` (default) to `Black`.
-
-### OS Commands
-
-1. In Wing IDE, activate the **OS Commands** panel and define the command **black** to
-   execute black on the currently selected file:
-
-   - Use the Tools -> OS Commands menu selection
-   - click on **+** in **OS Commands** -> New: Command line..
-     - Title: black
-     - Command Line: black %s
-     - I/O Encoding: Use Default
-     - Key Binding: F1
-     - [x] Raise OS Commands when executed
-     - [x] Auto-save files before execution
-     - [x] Line mode
-
-1. Select a file in the editor and press **F1** , or whatever key binding you selected
-   in step 3, to reformat the file.
 
 ## Vim
 
