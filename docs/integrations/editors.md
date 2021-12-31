@@ -79,7 +79,7 @@ Options include the following:
 ## Wing IDE
 
 Wing IDE supports `black` via the **Preference Setting** for system wide settings and
-**Project Properties** for per-project or workspaces spesific setting, as explained in
+**Project Properties** for per-project or workspaces specific setting, as explained in
 the Wing documentation on
 [Auto-Reformatting](https://wingware.com/doc/edit/auto-reformatting). The detailed
 procedure is:
