@@ -19,6 +19,10 @@
   `values: Tuple[int, ...] = 1, 2, 3`) now implies 3.8+ (#2708)
 - Markdown support
 
+### Packaging
+
+- All upper version bounds on dependencies have been removed (#2718)
+
 ## 21.12b0
 
 ### _Black_
