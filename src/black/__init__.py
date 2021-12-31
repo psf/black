@@ -495,7 +495,7 @@ def main(
             )
 
     if verbose or not quiet:
-        if code is None:
+        if code is None and (verbose or report.change_count or report.failure_count):
             out()
         out(error_msg if report.return_code else "All done! ✨ 🍰 ✨")
         if code is None:
