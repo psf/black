@@ -4,17 +4,24 @@
 
 ### _Black_
 
+- Do not accept bare carriage return line endings in pyproject.toml (#2408)
 - Improve error message for invalid regular expression (#2678)
 - Improve error message when parsing fails during AST safety check by embedding the
   underlying SyntaxError (#2693)
 - Fix mapping cases that contain as-expressions, like `case {"key": 1 | 2 as password}`
   (#2686)
+- Fix cases that contain multiple top-level as-expressions, like `case 1 as a, 2 as b`
+  (#2716)
 - No longer color diff headers white as it's unreadable in light themed terminals
   (#2691)
 - Tuple unpacking on `return` and `yield` constructs now implies 3.8+ (#2700)
 - Unparenthesized tuples on annotated assignments (e.g
   `values: Tuple[int, ...] = 1, 2, 3`) now implies 3.8+ (#2708)
 - Power operators now "hug" their operands if they're both "simple" (#2726)
+
+### Packaging
+
+- All upper version bounds on dependencies have been removed (#2718)
 
 ## 21.12b0
 
