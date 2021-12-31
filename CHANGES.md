@@ -17,6 +17,8 @@
 - Tuple unpacking on `return` and `yield` constructs now implies 3.8+ (#2700)
 - Unparenthesized tuples on annotated assignments (e.g
   `values: Tuple[int, ...] = 1, 2, 3`) now implies 3.8+ (#2708)
+- For stubs, one blank line between class attributes and methods is now kept if there's
+  at least one pre-existing blank line (#2736)
 
 ### Packaging
 
