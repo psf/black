@@ -78,7 +78,7 @@ Options include the following:
 
 ## Wing IDE
 
-Wing IDE supports `black` via the **Preference Setting** for system wide settings and
+Wing IDE supports `black` via **Preference Settings** for system wide settings and
 **Project Properties** for per-project or workspace specific settings, as explained in
 the Wing documentation on
 [Auto-Reformatting](https://wingware.com/doc/edit/auto-reformatting). The detailed
@@ -105,7 +105,7 @@ procedure is:
 If you want Wing IDE to always reformat with `black` for every project, follow these
 steps:
 
-1. In menubar navigate to `Edit -> Preferences -> Editor -> Reformmating`.
+1. In menubar navigate to `Edit -> Preferences -> Editor -> Reformatting`.
 
 1. Set **Auto-Reformat** from `disable` (default) to `Line after edit` or
    `Whole files before save`.
