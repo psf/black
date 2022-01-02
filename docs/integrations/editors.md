@@ -88,7 +88,7 @@ procedure is:
 
 - Wing IDE version 8.0+
 
-- Install `black` in virtual environment or project.
+- Install `black`.
 
   ```console
   $ pip install black
