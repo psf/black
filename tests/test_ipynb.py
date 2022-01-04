@@ -64,9 +64,19 @@ def test_trailing_semicolon_noop() -> None:
         format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
-def test_cell_magic() -> None:
+@pytest.mark.parametrize(
+    "mode",
+    [
+        pytest.param(JUPYTER_MODE, id="default mode"),
+        pytest.param(
+            replace(JUPYTER_MODE, python_cell_magics={"cust1", "cust1"}),
+            id="custom cell magics mode",
+        ),
+    ],
+)
+def test_cell_magic(mode: Mode) -> None:
     src = "%%time\nfoo =bar"
-    result = format_cell(src, fast=True, mode=JUPYTER_MODE)
+    result = format_cell(src, fast=True, mode=mode)
     expected = "%%time\nfoo = bar"
     assert result == expected
 
@@ -77,6 +87,16 @@ def test_cell_magic_noop() -> None:
         format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
+@pytest.mark.parametrize(
+    "mode",
+    [
+        pytest.param(JUPYTER_MODE, id="default mode"),
+        pytest.param(
+            replace(JUPYTER_MODE, python_cell_magics={"cust1", "cust1"}),
+            id="custom cell magics mode",
+        ),
+    ],
+)
 @pytest.mark.parametrize(
     "src, expected",
     (
@@ -97,8 +117,8 @@ def test_cell_magic_noop() -> None:
         pytest.param("env =  %env", "env = %env", id="Assignment to magic"),
     ),
 )
-def test_magic(src: str, expected: str) -> None:
-    result = format_cell(src, fast=True, mode=JUPYTER_MODE)
+def test_magic(src: str, expected: str, mode: Mode) -> None:
+    result = format_cell(src, fast=True, mode=mode)
     assert result == expected
 
 
