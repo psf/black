@@ -225,6 +225,16 @@ def validate_regex(
     ),
 )
 @click.option(
+    "--python-cell-magics",
+    multiple=True,
+    help=(
+        "When processing Jupyter Notebooks, add the given magic to the list"
+        f" of known python-magics ({', '.join(PYTHON_CELL_MAGICS)})."
+        " Useful for formatting cells with custom python magics."
+    ),
+    default=[],
+)
+@click.option(
     "-S",
     "--skip-string-normalization",
     is_flag=True,
@@ -395,6 +405,7 @@ def main(
     fast: bool,
     pyi: bool,
     ipynb: bool,
+    python_cell_magics: List[str],
     skip_string_normalization: bool,
     skip_magic_trailing_comma: bool,
     experimental_string_processing: bool,
@@ -439,6 +450,7 @@ def main(
         string_normalization=not skip_string_normalization,
         magic_trailing_comma=not skip_magic_trailing_comma,
         experimental_string_processing=experimental_string_processing,
+        python_cell_magics=set(python_cell_magics),
     )
 
     if code is not None:

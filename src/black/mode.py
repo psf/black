@@ -166,6 +166,7 @@ class Mode:
     is_ipynb: bool = False
     magic_trailing_comma: bool = True
     experimental_string_processing: bool = False
+    python_cell_magics: Set[str] = field(default_factory=set)
 
     def get_cache_key(self) -> str:
         if self.target_versions:
@@ -183,5 +184,6 @@ class Mode:
             str(int(self.is_ipynb)),
             str(int(self.magic_trailing_comma)),
             str(int(self.experimental_string_processing)),
+            ",".join(self.python_cell_magics),
         ]
         return ".".join(parts)
