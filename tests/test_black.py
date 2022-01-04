@@ -1324,6 +1324,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(config["color"], True)
         self.assertEqual(config["line_length"], 79)
         self.assertEqual(config["target_version"], ["py36", "py37", "py38"])
+        self.assertEqual(config["python_cell_magics"], ["custom1", "custom2"])
         self.assertEqual(config["exclude"], r"\.pyi?$")
         self.assertEqual(config["include"], r"\.py?$")
 
