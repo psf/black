@@ -1,3 +1,4 @@
+from dataclasses import replace
 import pathlib
 import re
 
@@ -136,6 +137,17 @@ def test_cell_magic_with_magic() -> None:
     src = "%%timeit -n1\nls =!ls"
     result = format_cell(src, fast=True, mode=JUPYTER_MODE)
     expected = "%%timeit -n1\nls = !ls"
+    assert result == expected
+
+
+def test_cell_magic_with_custom_python_magic() -> None:
+    src = "%%custom_python_magic -n1 -n2\nx=2"
+    result = format_cell(
+        src,
+        fast=True,
+        mode=replace(JUPYTER_MODE, python_cell_magics={"custom_python_magic"}),
+    )
+    expected = "%%custom_python_magic -n1 -n2\nx = 2"
     assert result == expected
 
 
