@@ -1,6 +1,8 @@
 from dataclasses import replace
 import pathlib
 import re
+from contextlib import ExitStack as does_not_raise
+from typing import Any, ContextManager
 
 from click.testing import CliRunner
 from black.handle_ipynb_magics import jupyter_dependencies_are_installed
@@ -160,15 +162,39 @@ def test_cell_magic_with_magic() -> None:
     assert result == expected
 
 
-def test_cell_magic_with_custom_python_magic() -> None:
-    src = "%%custom_python_magic -n1 -n2\nx=2"
-    result = format_cell(
-        src,
-        fast=True,
-        mode=replace(JUPYTER_MODE, python_cell_magics={"custom_python_magic"}),
-    )
-    expected = "%%custom_python_magic -n1 -n2\nx = 2"
-    assert result == expected
+@pytest.mark.parametrize(
+    "mode, expected_output, expectation",
+    [
+        pytest.param(
+            JUPYTER_MODE,
+            "%%custom_python_magic -n1 -n2\nx=2",
+            pytest.raises(NothingChanged),
+            id="No change when cell magic not registered",
+        ),
+        pytest.param(
+            replace(JUPYTER_MODE, python_cell_magics={"cust1", "cust1"}),
+            "%%custom_python_magic -n1 -n2\nx=2",
+            pytest.raises(NothingChanged),
+            id="No change when other cell magics registered",
+        ),
+        pytest.param(
+            replace(JUPYTER_MODE, python_cell_magics={"custom_python_magic", "cust1"}),
+            "%%custom_python_magic -n1 -n2\nx = 2",
+            does_not_raise(),
+            id="Correctly change when cell magic registered",
+        ),
+    ],
+)
+def test_cell_magic_with_custom_python_magic(
+    mode: Mode, expected_output: str, expectation: ContextManager[Any]
+) -> None:
+    with expectation:
+        result = format_cell(
+            "%%custom_python_magic -n1 -n2\nx=2",
+            fast=True,
+            mode=mode,
+        )
+        assert result == expected_output
 
 
 def test_cell_magic_nested() -> None:
