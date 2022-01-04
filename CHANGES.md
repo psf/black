@@ -17,6 +17,8 @@
 - Tuple unpacking on `return` and `yield` constructs now implies 3.8+ (#2700)
 - Unparenthesized tuples on annotated assignments (e.g
   `values: Tuple[int, ...] = 1, 2, 3`) now implies 3.8+ (#2708)
+- Add configuration option (`python-cell-magics`) to format cells with custom magics in
+  Jupyter Notebooks (#2744)
 
 ### Packaging
 
