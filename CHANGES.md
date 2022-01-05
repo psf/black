@@ -12,6 +12,8 @@
   (#2686)
 - Fix cases that contain multiple top-level as-expressions, like `case 1 as a, 2 as b`
   (#2716)
+- Fix call patterns that contain as-expressions with keyword arguments, like
+  `case Foo(bar=baz as quux)` (#2749)
 - No longer color diff headers white as it's unreadable in light themed terminals
   (#2691)
 - Tuple unpacking on `return` and `yield` constructs now implies 3.8+ (#2700)
