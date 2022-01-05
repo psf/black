@@ -22,6 +22,10 @@
 
 - All upper version bounds on dependencies have been removed (#2718)
 
+### Integrations
+
+- Update GitHub action to support containerized runs (#2748)
+
 ## 21.12b0
 
 ### _Black_
