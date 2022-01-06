@@ -17,7 +17,7 @@
 - Tuple unpacking on `return` and `yield` constructs now implies 3.8+ (#2700)
 - Unparenthesized tuples on annotated assignments (e.g
   `values: Tuple[int, ...] = 1, 2, 3`) now implies 3.8+ (#2708)
-- Power operators now "hug" their operands if they're both "simple" (#2726)
+- Remove spaces around power operators if both operands are simple (#2726)
 
 ### Packaging
 
