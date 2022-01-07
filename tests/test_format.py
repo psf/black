@@ -1,5 +1,5 @@
 from dataclasses import replace
-from typing import Any, Iterator
+from typing import Any, Iterator, List
 from unittest.mock import patch
 
 import pytest
@@ -14,7 +14,7 @@ from tests.util import (
     read_data,
 )
 
-SIMPLE_CASES = [
+SIMPLE_CASES: List[str] = [
     "beginning_backslash",
     "bracketmatch",
     "class_blank_parentheses",
@@ -55,13 +55,13 @@ SIMPLE_CASES = [
     "tupleassign",
 ]
 
-SIMPLE_CASES_PY2 = [
+SIMPLE_CASES_PY2: List[str] = [
     "numeric_literals_py2",
     "python2",
     "python2_unicode_literals",
 ]
 
-EXPERIMENTAL_STRING_PROCESSING_CASES = [
+EXPERIMENTAL_STRING_PROCESSING_CASES: List[str] = [
     "cantfit",
     "comments7",
     "long_strings",
@@ -70,7 +70,7 @@ EXPERIMENTAL_STRING_PROCESSING_CASES = [
     "percent_precedence",
 ]
 
-PY310_CASES = [
+PY310_CASES: List[str] = [
     "pattern_matching_simple",
     "pattern_matching_complex",
     "pattern_matching_extras",
@@ -78,9 +78,9 @@ PY310_CASES = [
     "parenthesized_context_managers",
 ]
 
-PREVIEW_CASES = []
+PREVIEW_CASES: List[str] = []
 
-SOURCES = [
+SOURCES: List[str] = [
     "src/black/__init__.py",
     "src/black/__main__.py",
     "src/black/brackets.py",
