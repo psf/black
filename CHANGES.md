@@ -12,11 +12,15 @@
   (#2686)
 - Fix cases that contain multiple top-level as-expressions, like `case 1 as a, 2 as b`
   (#2716)
+- Fix call patterns that contain as-expressions with keyword arguments, like
+  `case Foo(bar=baz as quux)` (#2749)
 - No longer color diff headers white as it's unreadable in light themed terminals
   (#2691)
 - Tuple unpacking on `return` and `yield` constructs now implies 3.8+ (#2700)
 - Unparenthesized tuples on annotated assignments (e.g
   `values: Tuple[int, ...] = 1, 2, 3`) now implies 3.8+ (#2708)
+- For stubs, one blank line between class attributes and methods is now kept if there's
+  at least one pre-existing blank line (#2736)
 
 ### Packaging
 
@@ -25,6 +29,10 @@
 ### Preview style
 
 - Introduce the `--preview` flag with no style changes (#2752)
+
+### Integrations
+
+- Update GitHub action to support containerized runs (#2748)
 
 ## 21.12b0
 
