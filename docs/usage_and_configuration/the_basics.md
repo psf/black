@@ -28,11 +28,11 @@ python -m black {source_file_or_directory}
 
 _Black_ has quite a few knobs these days, although _Black_ is opinionated so style
 configuration options are deliberately limited and rarely added. You can list them by
-running `black --help` or expanding the view below.
+running `black --help`.
 
 <details>
 
-<summary>CLI option reference</summary>
+<summary>Help output</summary>
 
 ```{program-output} black --help
 
