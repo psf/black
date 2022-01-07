@@ -78,6 +78,8 @@ PY310_CASES = [
     "parenthesized_context_managers",
 ]
 
+PREVIEW_CASES = []
+
 SOURCES = [
     "src/black/__init__.py",
     "src/black/__main__.py",
@@ -148,6 +150,11 @@ def test_simple_format(filename: str) -> None:
 @pytest.mark.parametrize("filename", EXPERIMENTAL_STRING_PROCESSING_CASES)
 def test_experimental_format(filename: str) -> None:
     check_file(filename, black.Mode(experimental_string_processing=True))
+
+
+@pytest.mark.parametrize("filename", PREVIEW_CASES)
+def test_preview_format(filename: str) -> None:
+    check_file(filename, black.Mode(preview=True))
 
 
 @pytest.mark.parametrize("filename", SOURCES)

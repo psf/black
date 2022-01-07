@@ -246,6 +246,14 @@ def validate_regex(
     ),
 )
 @click.option(
+    "--preview",
+    is_flag=True,
+    help=(
+        "Enable potentially disruptive style changes that will be added to Black's main"
+        " functionality in the next major release."
+    ),
+)
+@click.option(
     "--check",
     is_flag=True,
     help=(
@@ -398,6 +406,7 @@ def main(
     skip_string_normalization: bool,
     skip_magic_trailing_comma: bool,
     experimental_string_processing: bool,
+    preview: bool,
     quiet: bool,
     verbose: bool,
     required_version: Optional[str],
@@ -439,6 +448,7 @@ def main(
         string_normalization=not skip_string_normalization,
         magic_trailing_comma=not skip_magic_trailing_comma,
         experimental_string_processing=experimental_string_processing,
+        preview=preview,
     )
 
     if code is not None:
