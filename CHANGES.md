@@ -22,6 +22,10 @@
 
 - All upper version bounds on dependencies have been removed (#2718)
 
+### Preview style
+
+- Introduce the `--preview` flag with no style changes (#2752)
+
 ## 21.12b0
 
 ### _Black_
