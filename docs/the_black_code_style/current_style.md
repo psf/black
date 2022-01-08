@@ -285,10 +285,24 @@ multiple lines. This is so that _Black_ is compliant with the recent changes in 
 style guide, which emphasizes that this approach improves readability.
 
 Almost all operators will be surrounded by single spaces, the only exceptions are unary
-operators (`+`, `-`, and `~`), and power operators when both operands are simple.
-For power ops, an operand is considered simple if it's only a NAME, numeric
-CONSTANT, or attribute access (chained attribute access is allowed), with or without a
-preceding unary operator.
+operators (`+`, `-`, and `~`), and power operators when both operands are simple. For
+powers, an operand is considered simple if it's only a NAME, numeric CONSTANT, or
+attribute access (chained attribute access is allowed), with or without a preceding
+unary operator.
+
+```python
+# For example, these won't be surrounded by whitespace
+a = x**y
+b = config.base**5.2
+c = config.base**runtime.config.exponent
+d = 2**5
+e = 2**~5
+
+# ... but these will be surrounded by whitespace
+f = 2 ** get_exponent()
+g = get_x() ** get_y()
+h = config['base'] ** 2
+```
 
 ### Slices
 

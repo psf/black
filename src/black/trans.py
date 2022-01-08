@@ -82,7 +82,7 @@ def hug_power_op(line: Line, features: Collection[Feature]) -> Iterator[Line]:
         raise CannotTransform("No doublestar token was found in the line.")
 
     def is_simple_lookup(index: int, step: Literal[1, -1]) -> bool:
-        # Brackets and parenthesises indicate calls, subscripts, etc. ...
+        # Brackets and parentheses indicate calls, subscripts, etc. ...
         # basically stuff that doesn't count as "simple". Only a NAME lookup
         # or dotted lookup (eg. NAME.NAME) is OK.
         if step == -1:

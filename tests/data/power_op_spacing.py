@@ -28,6 +28,25 @@ n = count <= 10**5
 o = settings(max_examples=10**6)
 p = {(k, k**2): v**2 for k, v in pairs}
 q = [10**i for i in range(6)]
+r = x**y
+
+a = 5.0**~4.0
+b = 5.0 ** f()
+c = -(5.0**2.0)
+d = 5.0 ** f["hi"]
+e = lazy(lambda **kwargs: 5)
+f = f() ** 5.0
+g = a.b**c.d
+h = 5.0 ** funcs.f()
+i = funcs.f() ** 5.0
+j = super().name ** 5.0
+k = [(2.0**idx, value) for idx, value in pairs]
+l = mod.weights_[0] == pytest.approx(0.95**100, abs=0.001)
+m = [([2.0**63.0], [1.0, 2**63.0])]
+n = count <= 10**5.0
+o = settings(max_examples=10**6.0)
+p = {(k, k**2): v**2.0 for k, v in pairs}
+q = [10.5**i for i in range(6)]
 
 
 # output
@@ -63,3 +82,22 @@ n = count <= 10**5
 o = settings(max_examples=10**6)
 p = {(k, k**2): v**2 for k, v in pairs}
 q = [10**i for i in range(6)]
+r = x**y
+
+a = 5.0**~4.0
+b = 5.0 ** f()
+c = -(5.0**2.0)
+d = 5.0 ** f["hi"]
+e = lazy(lambda **kwargs: 5)
+f = f() ** 5.0
+g = a.b**c.d
+h = 5.0 ** funcs.f()
+i = funcs.f() ** 5.0
+j = super().name ** 5.0
+k = [(2.0**idx, value) for idx, value in pairs]
+l = mod.weights_[0] == pytest.approx(0.95**100, abs=0.001)
+m = [([2.0**63.0], [1.0, 2**63.0])]
+n = count <= 10**5.0
+o = settings(max_examples=10**6.0)
+p = {(k, k**2): v**2.0 for k, v in pairs}
+q = [10.5**i for i in range(6)]
