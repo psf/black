@@ -23,6 +23,7 @@ DOCS_URL: Final = (
     "https://black.readthedocs.io/en/latest/"
     "contributing/gauging_changes.html#diff-shades"
 )
+USER_AGENT: Final = f"psf/black diff-shades workflow via urllib3/{urllib3.__version__}"
 SHA_LENGTH: Final = 10
 GH_API_TOKEN: Final = os.getenv("GITHUB_TOKEN")
 REPO: Final = os.getenv("GITHUB_REPOSITORY", default="psf/black")
@@ -44,11 +45,11 @@ def http_get(
     **kwargs: Any,
 ) -> Any:
     headers = headers or {}
-    if GH_API_TOKEN:
-        headers["Authorization"] = f"token {GH_API_TOKEN}"
+    headers["User-Agent"] = USER_AGENT
     if "github" in url:
+        if GH_API_TOKEN:
+            headers["Authorization"] = f"token {GH_API_TOKEN}"
         headers["Accept"] = "application/vnd.github.v3+json"
-    headers["User-Agent"] = "psf/black diff-shades workflow via urllib3"
     r = http.request("GET", url, headers=headers, **kwargs)
     if is_json:
         data = json.loads(r.data.decode("utf-8"))
@@ -119,11 +120,15 @@ def main() -> None:
 )
 @click.argument("custom_baseline", required=False)
 @click.argument("custom_target", required=False)
+@click.option("--baseline-args", default="")
 def config(
     event: Literal["push", "pull_request", "workflow_dispatch"],
     custom_baseline: Optional[str],
     custom_target: Optional[str],
+    baseline_args: str,
 ) -> None:
+    import diff_shades
+
     if event == "push":
         # Push on main, let's use PyPI Black as the baseline.
         baseline_name = str(get_pypi_version())
@@ -165,20 +170,9 @@ def config(
     set_output("target-analysis", target_name + ".json")
     set_output("target-setup-cmd", target_cmd)
 
-
-@main.command("cache-key", help="Generate a cache-key for an analysis.")
-@click.argument("type", type=click.Choice(["baseline", "target"]))
-@click.argument("name")
-@click.argument("black-args", nargs=-1, type=click.UNPROCESSED)
-def cache_key(
-    type: Literal["baseline", "target"], name: str, black_args: Tuple[str, ...]
-) -> None:
-    import diff_shades
-
-    args_digest = "".join(black_args).encode("utf-8").hex()
     key = f"{platform.system()}-{platform.python_version()}-{diff_shades.__version__}"
-    key += f"-{name}-{args_digest}"
-    set_output(f"{type}-cache-key", key)
+    key += f"-{baseline_name}-{baseline_args.encode('utf-8').hex()}"
+    set_output("baseline-cache-key", key)
 
 
 @main.command("comment-body", help="Generate the body for a summary PR comment.")
@@ -219,9 +213,7 @@ def comment_body(
         f.write(body)
 
 
-@main.command(
-    "comment-details", help="Get comment details from an analysis workflow run."
-)
+@main.command("comment-details", help="Get PR comment resources from a workflow run.")
 @click.argument("run-id")
 def comment_details(run_id: str) -> None:
     data = http_get(f"https://api.github.com/repos/{REPO}/actions/runs/{run_id}")
@@ -252,10 +244,9 @@ def comment_details(run_id: str) -> None:
     # since this command can access the workflows API.
     body = body.replace("$workflow-run-url", data["html_url"])
     body = body.replace("$job-diff-url", diff_url)
-
-    print(f"[INFO]: writing comment body to {COMMENT_BODY_FILE}")
-    with open(COMMENT_BODY_FILE, "w", encoding="utf-8") as wf:
-        wf.write(body)
+    # # https://github.community/t/set-output-truncates-multiline-strings/16852/3
+    escaped = body.replace("%", "%25").replace("\n", "%0A").replace("\r", "%0D")
+    set_output("comment-body", escaped)
 
 
 if __name__ == "__main__":

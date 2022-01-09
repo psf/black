@@ -45,31 +45,24 @@ jobs:
           python -m pip install pip --upgrade
           python -m pip install https://github.com/ichard26/diff-shades/archive/stable.zip
           python -m pip install click packaging urllib3
-          python -m diff_shades --version
+          # After checking out old revisions, this might not exist so we'll use a copy.
+          cat scripts/diff_shades_gha_helper.py > helper.py
 
       - name: Calculate run configuration & metadata
         id: config
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          python scripts/diff_shades_gha_helper.py config ${{ github.event_name }} \
-            ${{ github.event.inputs.baseline }} ${{ github.event.inputs.target }}
-          # After analyzing old revisions of Black, this might not exist so we'll
-          # use a copy.
-          cat scripts/diff_shades_gha_helper.py > helper.py
-
-      - name: Calculate baseline analysis cache key
-        id: cache-keys
         run: >
-          python scripts/diff_shades_gha_helper.py cache-key baseline
-          ${{ steps.config.outputs.baseline-analysis }} -- ${{ github.event.inputs.baseline-args }}
+          python helper.py config ${{ github.event_name }}
+          ${{ github.event.inputs.baseline }} ${{ github.event.inputs.target }}
+          --baseline-args "${{ github.event.inputs.baseline-args }}"
 
       - name: Attempt to use cached baseline analysis
         id: baseline-cache
         uses: actions/cache@v2.1.7
         with:
           path: ${{ steps.config.outputs.baseline-analysis }}
-          key: ${{ steps.cache-keys.outputs.baseline-cache-key }}
+          key: ${{ steps.config.outputs.baseline-cache-key }}
 
       - name: Install baseline revision
         if: steps.baseline-cache.outputs.cache-hit != 'true'
@@ -80,7 +73,7 @@ jobs:
       - name: Analyze baseline revision
         if: steps.baseline-cache.outputs.cache-hit != 'true'
         run: >
-          diff-shades analyze --show-project-revision --work-dir projects-cache/
+          diff-shades analyze -v --work-dir projects-cache/
           ${{ steps.config.outputs.baseline-analysis }} -- ${{ github.event.inputs.baseline-args }}
 
       - name: Install target revision
@@ -90,7 +83,7 @@ jobs:
 
       - name: Analyze target revision
         run: >
-          diff-shades analyze --show-project-revision --work-dir projects-cache/
+          diff-shades analyze -v --work-dir projects-cache/
           ${{ steps.config.outputs.target-analysis }} --repeat-projects-from
           ${{ steps.config.outputs.baseline-analysis }} -- ${{ github.event.inputs.target-args }}
 
@@ -135,5 +128,5 @@ jobs:
         # end up detecting failed files and failing the run.
       - name: Check for failed files in both analyses
         run: >
-          diff-shades show-failed --check ${{ steps.config.outputs.baseline-analysis }};
-          diff-shades show-failed --check ${{ steps.config.outputs.target-analysis }}
+          diff-shades show-failed --check --show-log ${{ steps.config.outputs.baseline-analysis }};
+          diff-shades show-failed --check --show-log ${{ steps.config.outputs.target-analysis }}

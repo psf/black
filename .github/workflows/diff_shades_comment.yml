@@ -24,9 +24,9 @@ jobs:
         id: metadata
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run:
-          python scripts/diff_shades_gha_helper.py comment-details ${{
-          github.event.workflow_run.id }}
+        run: >
+          python scripts/diff_shades_gha_helper.py comment-details
+          ${{github.event.workflow_run.id }}
 
       - name: Try to find pre-existing PR comment
         if: steps.metadata.outputs.needs-comment == 'true'
@@ -37,23 +37,11 @@ jobs:
           comment-author: "github-actions[bot]"
           body-includes: "diff-shades-comment"
 
-      - name: Read comment body from helper script
-        id: body
-        if: steps.metadata.outputs.needs-comment == 'true'
-        run: |
-          # The contents have to be escaped to preserve newlines ...
-          # https://github.community/t/set-output-truncates-multiline-strings/16852/3
-          body="$(cat .pr-comment-body.md)"
-          body="${body//'%'/'%25'}"
-          body="${body//$'\n'/'%0A'}"
-          body="${body//$'\r'/'%0D'}"
-          echo "::set-output name=body::$body"
-
       - name: Create or update PR comment
         if: steps.metadata.outputs.needs-comment == 'true'
         uses: peter-evans/create-or-update-comment@v1
         with:
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           issue-number: ${{ steps.metadata.outputs.pr-number }}
-          body: ${{ steps.body.outputs.body }}
+          body: ${{ steps.metadata.outputs.comment-body }}
           edit-mode: replace

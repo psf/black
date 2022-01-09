@@ -69,8 +69,8 @@ these rules:
 | On PRs                | latest commit on `main` | PR commit with `main` merged |
 | On pushes (main only) | latest PyPI version     | the pushed commit            |
 
-Once finished, a PR comment will posted embedding a summary of the changes and links to
-further information. If there's a pre-existing diff-shades comment, it'll be updated
+Once finished, a PR comment will be posted embedding a summary of the changes and links
+to further information. If there's a pre-existing diff-shades comment, it'll be updated
 instead the next time the workflow is triggered on the same PR.
 
 The workflow uploads 3-4 artifacts upon completion: the two generated analyses (they
