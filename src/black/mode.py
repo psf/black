@@ -31,20 +31,20 @@ class TargetVersion(Enum):
 
 
 class Feature(Enum):
-    F_STRINGS = 1
-    NUMERIC_UNDERSCORES = 2
-    TRAILING_COMMA_IN_CALL = 3
-    TRAILING_COMMA_IN_DEF = 4
+    F_STRINGS = 2
+    NUMERIC_UNDERSCORES = 3
+    TRAILING_COMMA_IN_CALL = 4
+    TRAILING_COMMA_IN_DEF = 5
     # The following two feature-flags are mutually exclusive, and exactly one should be
     # set for every version of python.
-    ASYNC_IDENTIFIERS = 5
-    ASYNC_KEYWORDS = 6
-    ASSIGNMENT_EXPRESSIONS = 7
-    POS_ONLY_ARGUMENTS = 8
-    RELAXED_DECORATORS = 9
-    PATTERN_MATCHING = 10
-    UNPACKING_ON_FLOW = 11
-    ANN_ASSIGN_EXTENDED_RHS = 12
+    ASYNC_IDENTIFIERS = 6
+    ASYNC_KEYWORDS = 7
+    ASSIGNMENT_EXPRESSIONS = 8
+    POS_ONLY_ARGUMENTS = 9
+    RELAXED_DECORATORS = 10
+    PATTERN_MATCHING = 11
+    UNPACKING_ON_FLOW = 12
+    ANN_ASSIGN_EXTENDED_RHS = 13
     FORCE_OPTIONAL_PARENTHESES = 50
 
     # __future__ flags

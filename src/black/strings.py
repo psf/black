@@ -146,7 +146,7 @@ def normalize_string_prefix(s: str) -> str:
     new_prefix = (
         orig_prefix.replace("F", "f")
         .replace("B", "b")
-        .replace("U", "u")
+        .replace("U", "")
         .replace("u", "")
     )
     return f"{new_prefix}{match.group(2)}"

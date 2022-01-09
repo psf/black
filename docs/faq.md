@@ -75,8 +75,7 @@ disabled-by-default counterpart W504. E203 should be disabled while changes are 
 
 ## Does Black support Python 2?
 
-Formatting Python 2 code support was removed in version 22.0. In terms of running
-_Black_, Python 3.6 or newer is required.
+Formatting Python 2 code support was removed in version 22.0.
 
 ## Why does my linter or typechecker complain after I format my code?
 
