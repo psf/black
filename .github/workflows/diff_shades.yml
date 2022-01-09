@@ -47,6 +47,8 @@ jobs:
           python -m pip install click packaging urllib3
           # After checking out old revisions, this might not exist so we'll use a copy.
           cat scripts/diff_shades_gha_helper.py > helper.py
+          git config user.name "diff-shades-gha"
+          git config user.email "diff-shades-gha@example.com"
 
       - name: Calculate run configuration & metadata
         id: config
