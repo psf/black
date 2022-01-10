@@ -47,14 +47,14 @@ def lam_sub(grammar: Grammar, node: RawNode) -> NL:
 
 
 # A placeholder node, used when parser is backtracking.
-FAKE_NODE = (-1, None, None, None)
+DUMMY_NODE = (-1, None, None, None)
 
 
 def stack_copy(
     stack: List[Tuple[DFAS, int, RawNode]]
 ) -> List[Tuple[DFAS, int, RawNode]]:
     """Nodeless stack copy."""
-    return [(copy.deepcopy(dfa), label, FAKE_NODE) for dfa, label, _ in stack]
+    return [(copy.deepcopy(dfa), label, DUMMY_NODE) for dfa, label, _ in stack]
 
 
 class Recorder:
@@ -94,16 +94,12 @@ class Recorder:
         want to restore to the initial state as quick as possible, which
         can only be done by having as little mutatations as possible.
         """
-        original_functions = {}
-        for name in self.parser.STATE_OPERATIONS:
-            original_functions[name] = getattr(self.parser, name)
-            safe_variant = getattr(self.parser, name + "_safe")
-            setattr(self.parser, name, safe_variant)
+        is_backtracking = self.parser.is_backtracking
         try:
+            self.parser.is_backtracking = True
             yield
         finally:
-            for name, func in original_functions.items():
-                setattr(self.parser, name, func)
+            self.parser.is_backtracking = is_backtracking
 
     def add_token(self, tok_type: int, tok_val: Text, raw: bool = False) -> None:
         func: Callable[..., Any]
@@ -214,6 +210,7 @@ class Parser(object):
         self.grammar = grammar
         # See note in docstring above. TL;DR this is ignored.
         self.convert = convert or lam_sub
+        self.is_backtracking = False
 
     def setup(self, proxy: "TokenProxy", start: Optional[int] = None) -> None:
         """Prepare for parsing.
@@ -356,47 +353,40 @@ class Parser(object):
 
     def shift(self, type: int, value: Text, newstate: int, context: Context) -> None:
         """Shift a token.  (Internal)"""
-        dfa, state, node = self.stack[-1]
-        rawnode: RawNode = (type, value, context, None)
-        newnode = convert(self.grammar, rawnode)
-        assert node[-1] is not None
-        node[-1].append(newnode)
-        self.stack[-1] = (dfa, newstate, node)
+        if self.is_backtracking:
+            dfa, state, _ = self.stack[-1]
+            self.stack[-1] = (dfa, newstate, DUMMY_NODE)
+        else:
+            dfa, state, node = self.stack[-1]
+            rawnode: RawNode = (type, value, context, None)
+            newnode = convert(self.grammar, rawnode)
+            assert node[-1] is not None
+            node[-1].append(newnode)
+            self.stack[-1] = (dfa, newstate, node)
 
     def push(self, type: int, newdfa: DFAS, newstate: int, context: Context) -> None:
         """Push a nonterminal.  (Internal)"""
-        dfa, state, node = self.stack[-1]
-        newnode: RawNode = (type, None, context, [])
-        self.stack[-1] = (dfa, newstate, node)
-        self.stack.append((newdfa, 0, newnode))
+        if self.is_backtracking:
+            dfa, state, _ = self.stack[-1]
+            self.stack[-1] = (dfa, newstate, DUMMY_NODE)
+            self.stack.append((newdfa, 0, DUMMY_NODE))
+        else:
+            dfa, state, node = self.stack[-1]
+            newnode: RawNode = (type, None, context, [])
+            self.stack[-1] = (dfa, newstate, node)
+            self.stack.append((newdfa, 0, newnode))
 
     def pop(self) -> None:
         """Pop a nonterminal.  (Internal)"""
-        popdfa, popstate, popnode = self.stack.pop()
-        newnode = convert(self.grammar, popnode)
-        if self.stack:
-            dfa, state, node = self.stack[-1]
-            assert node[-1] is not None
-            node[-1].append(newnode)
+        if self.is_backtracking:
+            self.stack.pop()
         else:
-            self.rootnode = newnode
-            self.rootnode.used_names = self.used_names
-
-    def shift_safe(
-        self, type: int, value: Text, newstate: int, context: Context
-    ) -> None:
-        """Immutable (node-level) version of shift()"""
-        dfa, state, _ = self.stack[-1]
-        self.stack[-1] = (dfa, newstate, FAKE_NODE)
-
-    def push_safe(
-        self, type: int, newdfa: DFAS, newstate: int, context: Context
-    ) -> None:
-        """Immutable (node-level) version of push()"""
-        dfa, state, _ = self.stack[-1]
-        self.stack[-1] = (dfa, newstate, FAKE_NODE)
-        self.stack.append((newdfa, 0, FAKE_NODE))
-
-    def pop_safe(self) -> None:
-        """Immutable (node-level) version of pop()"""
-        self.stack.pop()
+            popdfa, popstate, popnode = self.stack.pop()
+            newnode = convert(self.grammar, popnode)
+            if self.stack:
+                dfa, state, node = self.stack[-1]
+                assert node[-1] is not None
+                node[-1].append(newnode)
+            else:
+                self.rootnode = newnode
+                self.rootnode.used_names = self.used_names
