@@ -73,7 +73,7 @@ class Recorder:
 
     @contextmanager
     def switch_to(self, ilabel: int) -> Iterator[None]:
-        with self.patch():
+        with self.backtrack():
             self.parser.stack = self._points[ilabel]
             try:
                 yield
@@ -83,12 +83,11 @@ class Recorder:
                 self.parser.stack = self._start_point
 
     @contextmanager
-    def patch(self) -> Iterator[None]:
+    def backtrack(self) -> Iterator[None]:
         """
-        Patch basic state operations (push/pop/shift) with node-level
-        immutable variants. These still will operate on the stack; but
-        they won't create any new nodes, or modify the contents of any
-        other existing nodes.
+        Use the node-level invariant ones for basic parsing operations (push/pop/shift).
+        These still will operate on the stack; but they won't create any new nodes, or
+        modify the contents of any other existing nodes.
 
         This saves us a ton of time when we are backtracking, since we
         want to restore to the initial state as quick as possible, which
@@ -348,8 +347,6 @@ class Parser(object):
         if ilabel is None:
             raise ParseError("bad token", type, value, context)
         return [ilabel]
-
-    STATE_OPERATIONS = ["shift", "push", "pop"]
 
     def shift(self, type: int, value: Text, newstate: int, context: Context) -> None:
         """Shift a token.  (Internal)"""
