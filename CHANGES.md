@@ -4,6 +4,7 @@
 
 ### _Black_
 
+- **Remove Python 2 support** (#2740)
 - Do not accept bare carriage return line endings in pyproject.toml (#2408)
 - Improve error message for invalid regular expression (#2678)
 - Improve error message when parsing fails during AST safety check by embedding the

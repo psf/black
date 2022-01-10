@@ -1083,20 +1083,8 @@ def format_str(src_contents: str, *, mode: Mode) -> FileContent:
     else:
         versions = detect_target_versions(src_node, future_imports=future_imports)
 
-    # TODO: fully drop support and this code hopefully in January 2022 :D
-    if TargetVersion.PY27 in mode.target_versions or versions == {TargetVersion.PY27}:
-        msg = (
-            "DEPRECATION: Python 2 support will be removed in the first stable release "
-            "expected in January 2022."
-        )
-        err(msg, fg="yellow", bold=True)
-
     normalize_fmt_off(src_node)
-    lines = LineGenerator(
-        mode=mode,
-        remove_u_prefix="unicode_literals" in future_imports
-        or supports_feature(versions, Feature.UNICODE_LITERALS),
-    )
+    lines = LineGenerator(mode=mode)
     elt = EmptyLineTracker(is_pyi=mode.is_pyi)
     empty_line = Line(mode=mode)
     after = 0
@@ -1166,14 +1154,6 @@ def get_features_used(  # noqa: C901
             assert isinstance(n, Leaf)
             if "_" in n.value:
                 features.add(Feature.NUMERIC_UNDERSCORES)
-            elif n.value.endswith(("L", "l")):
-                # Python 2: 10L
-                features.add(Feature.LONG_INT_LITERAL)
-            elif len(n.value) >= 2 and n.value[0] == "0" and n.value[1].isdigit():
-                # Python 2: 0123; 00123; ...
-                if not all(char == "0" for char in n.value):
-                    # although we don't want to match 0000 or similar
-                    features.add(Feature.OCTAL_INT_LITERAL)
 
         elif n.type == token.SLASH:
             if n.parent and n.parent.type in {
@@ -1225,32 +1205,6 @@ def get_features_used(  # noqa: C901
             and n.children[3].type == syms.testlist_star_expr
         ):
             features.add(Feature.ANN_ASSIGN_EXTENDED_RHS)
-
-        # Python 2 only features (for its deprecation) except for integers, see above
-        elif n.type == syms.print_stmt:
-            features.add(Feature.PRINT_STMT)
-        elif n.type == syms.exec_stmt:
-            features.add(Feature.EXEC_STMT)
-        elif n.type == syms.tfpdef:
-            # def set_position((x, y), value):
-            #     ...
-            features.add(Feature.AUTOMATIC_PARAMETER_UNPACKING)
-        elif n.type == syms.except_clause:
-            # try:
-            #     ...
-            # except Exception, err:
-            #     ...
-            if len(n.children) >= 4:
-                if n.children[-2].type == token.COMMA:
-                    features.add(Feature.COMMA_STYLE_EXCEPT)
-        elif n.type == syms.raise_stmt:
-            # raise Exception, "msg"
-            if len(n.children) >= 4:
-                if n.children[-2].type == token.COMMA:
-                    features.add(Feature.COMMA_STYLE_RAISE)
-        elif n.type == token.BACKQUOTE:
-            # `i'm surprised this ever existed`
-            features.add(Feature.BACKQUOTE_REPR)
 
     return features
 

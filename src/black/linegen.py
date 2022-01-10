@@ -48,9 +48,8 @@ class LineGenerator(Visitor[Line]):
     in ways that will no longer stringify to valid Python code on the tree.
     """
 
-    def __init__(self, mode: Mode, remove_u_prefix: bool = False) -> None:
+    def __init__(self, mode: Mode) -> None:
         self.mode = mode
-        self.remove_u_prefix = remove_u_prefix
         self.current_line: Line
         self.__post_init__()
 
@@ -92,9 +91,7 @@ class LineGenerator(Visitor[Line]):
 
             normalize_prefix(node, inside_brackets=any_open_brackets)
             if self.mode.string_normalization and node.type == token.STRING:
-                node.value = normalize_string_prefix(
-                    node.value, remove_u_prefix=self.remove_u_prefix
-                )
+                node.value = normalize_string_prefix(node.value)
                 node.value = normalize_string_quotes(node.value)
             if node.type == token.NUMBER:
                 normalize_numeric_literal(node)
@@ -236,7 +233,7 @@ class LineGenerator(Visitor[Line]):
         if is_docstring(leaf) and "\\\n" not in leaf.value:
             # We're ignoring docstrings with backslash newline escapes because changing
             # indentation of those changes the AST representation of the code.
-            docstring = normalize_string_prefix(leaf.value, self.remove_u_prefix)
+            docstring = normalize_string_prefix(leaf.value)
             prefix = get_string_prefix(docstring)
             docstring = docstring[len(prefix) :]  # Remove the prefix
             quote_char = docstring[0]
