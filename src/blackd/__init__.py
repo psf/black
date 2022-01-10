@@ -175,7 +175,7 @@ def parse_python_variant_header(value: str) -> Tuple[bool, Set[black.TargetVersi
                 if len(rest) > 0:
                     minor = int(rest[0])
                     if major == 2:
-                        raise InvalidVariantHeader("Python 2 is unsupported")
+                        raise InvalidVariantHeader("Python 2 is not supported")
                 else:
                     # Default to lowest supported minor version.
                     minor = 7 if major == 2 else 3
