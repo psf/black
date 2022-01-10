@@ -412,18 +412,15 @@ def main(
 ) -> None:
     """The uncompromising code formatter."""
     ctx.ensure_object(dict)
-    root, method = (None, None) if code is not None else find_project_root(src)
+    root, method = find_project_root(src) if code is None else (None, None)
     ctx.obj["root"] = root
 
     if verbose:
         if root:
-            if method:
-                out(
-                    f"Identified `{root}` as project root containing a {method}.",
-                    fg="blue",
-                )
-            else:
-                out(f"Identified `{root}` as project root.", fg="blue")
+            out(
+                f"Identified `{root}` as project root containing a {method}.",
+                fg="blue",
+            )
 
             normalized = [
                 (normalize_path_maybe_ignore(Path(source), root), source)
