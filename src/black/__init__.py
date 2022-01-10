@@ -31,16 +31,18 @@ from typing import (
 )
 
 import click
+from click.core import ParameterSource
 from dataclasses import replace
 from mypy_extensions import mypyc_attr
 
 from black.const import DEFAULT_LINE_LENGTH, DEFAULT_INCLUDES, DEFAULT_EXCLUDES
 from black.const import STDIN_PLACEHOLDER
 from black.nodes import STARS, syms, is_simple_decorator_expression
+from black.nodes import is_string_token
 from black.lines import Line, EmptyLineTracker
 from black.linegen import transform_line, LineGenerator, LN
 from black.comments import normalize_fmt_off
-from black.mode import Mode, TargetVersion
+from black.mode import FUTURE_FLAG_TO_FEATURE, Mode, TargetVersion
 from black.mode import Feature, supports_feature, VERSION_TO_FEATURES
 from black.cache import read_cache, write_cache, get_cache_info, filter_cached, Cache
 from black.concurrency import cancel, shutdown, maybe_install_uvloop
@@ -177,8 +179,8 @@ def validate_regex(
 ) -> Optional[Pattern[str]]:
     try:
         return re_compile_maybe_verbose(value) if value is not None else None
-    except re.error:
-        raise click.BadParameter("Not a valid regular expression") from None
+    except re.error as e:
+        raise click.BadParameter(f"Not a valid regular expression: {e}") from None
 
 
 @click.command(
@@ -410,8 +412,37 @@ def main(
     config: Optional[str],
 ) -> None:
     """The uncompromising code formatter."""
-    if config and verbose:
-        out(f"Using configuration from {config}.", bold=False, fg="blue")
+    ctx.ensure_object(dict)
+    root, method = find_project_root(src) if code is None else (None, None)
+    ctx.obj["root"] = root
+
+    if verbose:
+        if root:
+            out(
+                f"Identified `{root}` as project root containing a {method}.",
+                fg="blue",
+            )
+
+            normalized = [
+                (normalize_path_maybe_ignore(Path(source), root), source)
+                for source in src
+            ]
+            srcs_string = ", ".join(
+                [
+                    f'"{_norm}"'
+                    if _norm
+                    else f'\033[31m"{source} (skipping - invalid)"\033[34m'
+                    for _norm, source in normalized
+                ]
+            )
+            out(f"Sources to be formatted: {srcs_string}", fg="blue")
+
+        if config:
+            config_source = ctx.get_parameter_source("config")
+            if config_source in (ParameterSource.DEFAULT, ParameterSource.DEFAULT_MAP):
+                out("Using configuration from project root.", fg="blue")
+            else:
+                out(f"Using configuration in '{config}'.", fg="blue")
 
     error_msg = "Oh no! 💥 💔 💥"
     if required_version and required_version != __version__:
@@ -515,14 +546,12 @@ def get_sources(
     stdin_filename: Optional[str],
 ) -> Set[Path]:
     """Compute the set of files to be formatted."""
-
-    root = find_project_root(src)
     sources: Set[Path] = set()
     path_empty(src, "No Path provided. Nothing to do 😴", quiet, verbose, ctx)
 
     if exclude is None:
         exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES)
-        gitignore = get_gitignore(root)
+        gitignore = get_gitignore(ctx.obj["root"])
     else:
         gitignore = None
 
@@ -535,7 +564,7 @@ def get_sources(
             is_stdin = False
 
         if is_stdin or p.is_file():
-            normalized_path = normalize_path_maybe_ignore(p, root, report)
+            normalized_path = normalize_path_maybe_ignore(p, ctx.obj["root"], report)
             if normalized_path is None:
                 continue
 
@@ -562,7 +591,7 @@ def get_sources(
             sources.update(
                 gen_python_files(
                     p.iterdir(),
-                    root,
+                    ctx.obj["root"],
                     include,
                     exclude,
                     extend_exclude,
@@ -1080,22 +1109,10 @@ def format_str(src_contents: str, *, mode: Mode) -> FileContent:
     if mode.target_versions:
         versions = mode.target_versions
     else:
-        versions = detect_target_versions(src_node)
-
-    # TODO: fully drop support and this code hopefully in January 2022 :D
-    if TargetVersion.PY27 in mode.target_versions or versions == {TargetVersion.PY27}:
-        msg = (
-            "DEPRECATION: Python 2 support will be removed in the first stable release "
-            "expected in January 2022."
-        )
-        err(msg, fg="yellow", bold=True)
+        versions = detect_target_versions(src_node, future_imports=future_imports)
 
     normalize_fmt_off(src_node)
-    lines = LineGenerator(
-        mode=mode,
-        remove_u_prefix="unicode_literals" in future_imports
-        or supports_feature(versions, Feature.UNICODE_LITERALS),
-    )
+    lines = LineGenerator(mode=mode)
     elt = EmptyLineTracker(is_pyi=mode.is_pyi)
     empty_line = Line(mode=mode)
     after = 0
@@ -1132,7 +1149,9 @@ def decode_bytes(src: bytes) -> Tuple[FileContent, Encoding, NewLine]:
         return tiow.read(), encoding, newline
 
 
-def get_features_used(node: Node) -> Set[Feature]:  # noqa: C901
+def get_features_used(  # noqa: C901
+    node: Node, *, future_imports: Optional[Set[str]] = None
+) -> Set[Feature]:
     """Return a set of (relatively) new Python features used in this file.
 
     Currently looking for:
@@ -1142,12 +1161,20 @@ def get_features_used(node: Node) -> Set[Feature]:  # noqa: C901
     - positional only arguments in function signatures and lambdas;
     - assignment expression;
     - relaxed decorator syntax;
+    - usage of __future__ flags (annotations);
     - print / exec statements;
     """
     features: Set[Feature] = set()
+    if future_imports:
+        features |= {
+            FUTURE_FLAG_TO_FEATURE[future_import]
+            for future_import in future_imports
+            if future_import in FUTURE_FLAG_TO_FEATURE
+        }
+
     for n in node.pre_order():
-        if n.type == token.STRING:
-            value_head = n.value[:2]  # type: ignore
+        if is_string_token(n):
+            value_head = n.value[:2]
             if value_head in {'f"', 'F"', "f'", "F'", "rf", "fr", "RF", "FR"}:
                 features.add(Feature.F_STRINGS)
 
@@ -1155,14 +1182,6 @@ def get_features_used(node: Node) -> Set[Feature]:  # noqa: C901
             assert isinstance(n, Leaf)
             if "_" in n.value:
                 features.add(Feature.NUMERIC_UNDERSCORES)
-            elif n.value.endswith(("L", "l")):
-                # Python 2: 10L
-                features.add(Feature.LONG_INT_LITERAL)
-            elif len(n.value) >= 2 and n.value[0] == "0" and n.value[1].isdigit():
-                # Python 2: 0123; 00123; ...
-                if not all(char == "0" for char in n.value):
-                    # although we don't want to match 0000 or similar
-                    features.add(Feature.OCTAL_INT_LITERAL)
 
         elif n.type == token.SLASH:
             if n.parent and n.parent.type in {
@@ -1200,38 +1219,29 @@ def get_features_used(node: Node) -> Set[Feature]:  # noqa: C901
                         if argch.type in STARS:
                             features.add(feature)
 
-        # Python 2 only features (for its deprecation) except for integers, see above
-        elif n.type == syms.print_stmt:
-            features.add(Feature.PRINT_STMT)
-        elif n.type == syms.exec_stmt:
-            features.add(Feature.EXEC_STMT)
-        elif n.type == syms.tfpdef:
-            # def set_position((x, y), value):
-            #     ...
-            features.add(Feature.AUTOMATIC_PARAMETER_UNPACKING)
-        elif n.type == syms.except_clause:
-            # try:
-            #     ...
-            # except Exception, err:
-            #     ...
-            if len(n.children) >= 4:
-                if n.children[-2].type == token.COMMA:
-                    features.add(Feature.COMMA_STYLE_EXCEPT)
-        elif n.type == syms.raise_stmt:
-            # raise Exception, "msg"
-            if len(n.children) >= 4:
-                if n.children[-2].type == token.COMMA:
-                    features.add(Feature.COMMA_STYLE_RAISE)
-        elif n.type == token.BACKQUOTE:
-            # `i'm surprised this ever existed`
-            features.add(Feature.BACKQUOTE_REPR)
+        elif (
+            n.type in {syms.return_stmt, syms.yield_expr}
+            and len(n.children) >= 2
+            and n.children[1].type == syms.testlist_star_expr
+            and any(child.type == syms.star_expr for child in n.children[1].children)
+        ):
+            features.add(Feature.UNPACKING_ON_FLOW)
+
+        elif (
+            n.type == syms.annassign
+            and len(n.children) >= 4
+            and n.children[3].type == syms.testlist_star_expr
+        ):
+            features.add(Feature.ANN_ASSIGN_EXTENDED_RHS)
 
     return features
 
 
-def detect_target_versions(node: Node) -> Set[TargetVersion]:
+def detect_target_versions(
+    node: Node, *, future_imports: Optional[Set[str]] = None
+) -> Set[TargetVersion]:
     """Detect the version to target based on the nodes used."""
-    features = get_features_used(node)
+    features = get_features_used(node, future_imports=future_imports)
     return {
         version for version in TargetVersion if features <= VERSION_TO_FEATURES[version]
     }
@@ -1293,7 +1303,7 @@ def assert_equivalent(src: str, dst: str, *, pass_num: int = 1) -> None:
         src_ast = parse_ast(src)
     except Exception as exc:
         raise AssertionError(
-            "cannot use --safe with this file; failed to parse source file."
+            f"cannot use --safe with this file; failed to parse source file: {exc}"
         ) from exc
 
     try:

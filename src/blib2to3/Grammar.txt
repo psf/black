@@ -168,8 +168,8 @@ subscript: test [':=' test] | [test] ':' [test] [sliceop]
 sliceop: ':' [test]
 exprlist: (expr|star_expr) (',' (expr|star_expr))* [',']
 testlist: test (',' test)* [',']
-dictsetmaker: ( ((test ':' test | '**' expr)
-                 (comp_for | (',' (test ':' test | '**' expr))* [','])) |
+dictsetmaker: ( ((test ':' asexpr_test | '**' expr)
+                 (comp_for | (',' (test ':' asexpr_test | '**' expr))* [','])) |
                 ((test [':=' test] | star_expr)
 		 (comp_for | (',' (test [':=' test] | star_expr))* [','])) )
 
@@ -187,7 +187,7 @@ arglist: argument (',' argument)* [',']
 argument: ( test [comp_for] |
             test ':=' test |
             test 'as' test |
-            test '=' test |
+            test '=' asexpr_test |
 	    '**' test |
             '*' test )
 
@@ -247,5 +247,5 @@ subject_expr: (namedexpr_test|star_expr) (',' (namedexpr_test|star_expr))* [',']
 # cases
 case_block: "case" patterns [guard] ':' suite
 guard: 'if' namedexpr_test
-patterns: pattern ['as' pattern]
-pattern: (expr|star_expr) (',' (expr|star_expr))* [',']
+patterns: pattern (',' pattern)* [',']
+pattern: (expr|star_expr) ['as' expr]

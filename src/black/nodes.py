@@ -19,11 +19,15 @@ if sys.version_info >= (3, 8):
     from typing import Final
 else:
     from typing_extensions import Final
+if sys.version_info >= (3, 10):
+    from typing import TypeGuard
+else:
+    from typing_extensions import TypeGuard
 
 from mypy_extensions import mypyc_attr
 
 # lib2to3 fork
-from blib2to3.pytree import Node, Leaf, type_repr
+from blib2to3.pytree import Node, Leaf, type_repr, NL
 from blib2to3 import pygram
 from blib2to3.pgen2 import token
 
@@ -52,6 +56,8 @@ STATEMENT: Final = {
     syms.with_stmt,
     syms.funcdef,
     syms.classdef,
+    syms.match_stmt,
+    syms.case_block,
 }
 STANDALONE_COMMENT: Final = 153
 token.tok_name[STANDALONE_COMMENT] = "STANDALONE_COMMENT"
@@ -95,6 +101,8 @@ UNPACKING_PARENTS: Final = {
     syms.listmaker,
     syms.testlist_gexp,
     syms.testlist_star_expr,
+    syms.subject_expr,
+    syms.pattern,
 }
 TEST_DESCENDANTS: Final = {
     syms.test,
@@ -251,16 +259,6 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
         ):
             return NO
 
-        elif (
-            prevp.type == token.RIGHTSHIFT
-            and prevp.parent
-            and prevp.parent.type == syms.shift_expr
-            and prevp.prev_sibling
-            and prevp.prev_sibling.type == token.NAME
-            and prevp.prev_sibling.value == "print"  # type: ignore
-        ):
-            # Python 2 print chevron
-            return NO
         elif prevp.type == token.AT and p.parent and p.parent.type == syms.decorator:
             # no space in decorators
             return NO
@@ -683,7 +681,7 @@ def is_yield(node: LN) -> bool:
     if node.type == syms.yield_expr:
         return True
 
-    if node.type == token.NAME and node.value == "yield":  # type: ignore
+    if is_name_token(node) and node.value == "yield":
         return True
 
     if node.type != syms.atom:
@@ -850,3 +848,19 @@ def ensure_visible(leaf: Leaf) -> None:
         leaf.value = "("
     elif leaf.type == token.RPAR:
         leaf.value = ")"
+
+
+def is_name_token(nl: NL) -> TypeGuard[Leaf]:
+    return nl.type == token.NAME
+
+
+def is_lpar_token(nl: NL) -> TypeGuard[Leaf]:
+    return nl.type == token.LPAR
+
+
+def is_rpar_token(nl: NL) -> TypeGuard[Leaf]:
+    return nl.type == token.RPAR
+
+
+def is_string_token(nl: NL) -> TypeGuard[Leaf]:
+    return nl.type == token.STRING

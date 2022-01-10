@@ -53,7 +53,7 @@ class Recorder:
         self.context = context  # not really matter
 
         self._dead_ilabels: Set[int] = set()
-        self._start_point = copy.deepcopy(self.parser.stack)
+        self._start_point = self.parser.stack
         self._points = {ilabel: copy.deepcopy(self._start_point) for ilabel in ilabels}
 
     @property

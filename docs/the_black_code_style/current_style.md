@@ -281,8 +281,7 @@ removed.
 
 _Black_ standardizes most numeric literals to use lowercase letters for the syntactic
 parts and uppercase letters for the digits themselves: `0xAB` instead of `0XAB` and
-`1e10` instead of `1E10`. Python 2 long literals are styled as `2L` instead of `2l` to
-avoid confusion between `l` and `1`.
+`1e10` instead of `1E10`.
 
 ### Line breaks & binary operators
 
