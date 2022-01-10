@@ -26,8 +26,8 @@
   be formatted. (#2526)
 - Speed-up the new backtracking parser about 4X in general (enabled when
   `--target-version` is set to 3.10 and higher). (#2728)
-- Fix handling of standalone `match()` or `case()` when used there is a trailing newline
-  or a comment inside of the parentheses. (#2760)
+- Fix handling of standalone `match()` or `case()` when there is a trailing newline or a
+  comment inside of the parentheses. (#2760)
 
 ### Packaging
 
