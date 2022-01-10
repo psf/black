@@ -24,6 +24,8 @@
   at least one pre-existing blank line (#2736)
 - Verbose mode also now describes how a project root was discovered and which paths will
   be formatted. (#2526)
+- Speed-up the new backtracking parser about 4X in general (enabled when
+  `--target-version` is set to 3.10 and higher). (#2728)
 
 ### Packaging
 
