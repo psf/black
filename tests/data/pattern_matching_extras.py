@@ -92,3 +92,28 @@ match something:
         pass
     case {"maybe": something(complicated as this) as that}:
         pass
+
+
+match something:
+    case 1 as a:
+        pass
+
+    case 2 as b, 3 as c:
+        pass
+
+    case 4 as d, (5 as e), (6 | 7 as g), *h:
+        pass
+
+
+match bar1:
+    case Foo(aa=Callable() as aa, bb=int()):
+        print(bar1.aa, bar1.bb)
+    case _:
+        print("no match", "\n")
+
+
+match bar1:
+    case Foo(
+        normal=x, perhaps=[list, {an: d, dict: 1.0}] as y, otherwise=something, q=t as u
+    ):
+        pass

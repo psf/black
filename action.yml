@@ -38,7 +38,7 @@ runs:
         import subprocess;
         from pathlib import Path;
 
-        MAIN_SCRIPT = Path(r'${{ github.action_path }}') / 'action' / 'main.py';
+        MAIN_SCRIPT = Path(r'${GITHUB_ACTION_PATH}') / 'action' / 'main.py';
 
         proc = subprocess.run([sys.executable, str(MAIN_SCRIPT)]);
         sys.exit(proc.returncode)

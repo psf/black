@@ -149,13 +149,6 @@
       "long_checkout": false,
       "py_versions": ["all"]
     },
-    "sqlalchemy": {
-      "cli_arguments": ["--experimental-string-processing"],
-      "expect_formatting_changes": true,
-      "git_clone_url": "https://github.com/sqlalchemy/sqlalchemy.git",
-      "long_checkout": false,
-      "py_versions": ["all"]
-    },
     "tox": {
       "cli_arguments": ["--experimental-string-processing"],
       "expect_formatting_changes": true,

@@ -99,9 +99,9 @@ setup(
     install_requires=[
         "click>=7.1.2",
         "platformdirs>=2",
-        "tomli>=0.2.6,<2.0.0",
+        "tomli>=1.1.0",
         "typed-ast>=1.4.2; python_version < '3.8' and implementation_name == 'cpython'",
-        "pathspec>=0.9.0, <1",
+        "pathspec>=0.9.0",
         "dataclasses>=0.6; python_version < '3.7'",
         "typing_extensions>=3.10.0.0",
         # 3.10.0.1 is broken on at least Python 3.10,
@@ -112,7 +112,6 @@ setup(
     extras_require={
         "d": ["aiohttp>=3.7.4"],
         "colorama": ["colorama>=0.4.3"],
-        "python2": ["typed-ast>=1.4.3"],
         "uvloop": ["uvloop>=0.15.2"],
         "jupyter": ["ipython>=7.8.0", "tokenize-rt>=3.2.0"],
     },
