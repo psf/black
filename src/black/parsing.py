@@ -58,12 +58,11 @@ def get_grammars(target_versions: Set[TargetVersion]) -> List[Grammar]:
             pygram.python_grammar_no_print_statement_no_exec_statement_async_keywords,
             # Python 3.0-3.6
             pygram.python_grammar_no_print_statement_no_exec_statement,
+            # Python 3.10+
+            pygram.python_grammar_soft_keywords,
         ]
 
     grammars = []
-    if supports_feature(target_versions, Feature.PATTERN_MATCHING):
-        # Python 3.10+
-        grammars.append(pygram.python_grammar_soft_keywords)
     # If we have to parse both, try to parse async as a keyword first
     if not supports_feature(
         target_versions, Feature.ASYNC_IDENTIFIERS
@@ -75,6 +74,10 @@ def get_grammars(target_versions: Set[TargetVersion]) -> List[Grammar]:
     if not supports_feature(target_versions, Feature.ASYNC_KEYWORDS):
         # Python 3.0-3.6
         grammars.append(pygram.python_grammar_no_print_statement_no_exec_statement)
+    if supports_feature(target_versions, Feature.PATTERN_MATCHING):
+        # Python 3.10+
+        grammars.append(pygram.python_grammar_soft_keywords)
+
     # At least one of the above branches must have been taken, because every Python
     # version has exactly one of the two 'ASYNC_*' flags
     return grammars
@@ -86,6 +89,7 @@ def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -
         src_txt += "\n"
 
     grammars = get_grammars(set(target_versions))
+    errors = {}
     for grammar in grammars:
         drv = driver.Driver(grammar)
         try:
@@ -99,20 +103,21 @@ def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -
                 faulty_line = lines[lineno - 1]
             except IndexError:
                 faulty_line = "<line number missing in source>"
-            exc = InvalidInput(f"Cannot parse: {lineno}:{column}: {faulty_line}")
+            errors[grammar.version] = InvalidInput(
+                f"Cannot parse: {lineno}:{column}: {faulty_line}"
+            )
 
         except TokenError as te:
             # In edge cases these are raised; and typically don't have a "faulty_line".
             lineno, column = te.args[1]
-            exc = InvalidInput(f"Cannot parse: {lineno}:{column}: {te.args[0]}")
+            errors[grammar.version] = InvalidInput(
+                f"Cannot parse: {lineno}:{column}: {te.args[0]}"
+            )
 
     else:
-        if pygram.python_grammar_soft_keywords not in grammars and matches_grammar(
-            src_txt, pygram.python_grammar_soft_keywords
-        ):
-            original_msg = exc.args[0]
-            msg = f"{original_msg}\n{PY310_HINT}"
-            raise InvalidInput(msg) from None
+        # Choose the latest version when raising the actual parsing error.
+        assert len(errors) >= 1
+        exc = errors[max(errors)]
 
         if matches_grammar(src_txt, pygram.python_grammar) or matches_grammar(
             src_txt, pygram.python_grammar_no_print_statement

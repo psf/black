@@ -26,6 +26,8 @@
   be formatted. (#2526)
 - Speed-up the new backtracking parser about 4X in general (enabled when
   `--target-version` is set to 3.10 and higher). (#2728)
+- Enable Python 3.10+ by default, without any extra need to specify
+  `--target-version=py310`. (#2758)
 
 ### Packaging
 
