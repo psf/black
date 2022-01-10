@@ -22,6 +22,8 @@
   `values: Tuple[int, ...] = 1, 2, 3`) now implies 3.8+ (#2708)
 - For stubs, one blank line between class attributes and methods is now kept if there's
   at least one pre-existing blank line (#2736)
+- Verbose mode also now describes how a project root was discovered and which paths will
+  be formatted. (#2526)
 
 ### Packaging
 
