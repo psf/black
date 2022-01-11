@@ -37,6 +37,10 @@
 
 - Update GitHub action to support containerized runs (#2748)
 
+### Documentation
+
+- Change protocol in pip installation instructions to `https://` (#2761)
+
 ## 21.12b0
 
 ### _Black_
