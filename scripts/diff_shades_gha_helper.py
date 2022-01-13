@@ -1,3 +1,19 @@
+"""Helper script for psf/black's diff-shades Github Actions integration.
+
+diff-shades is a tool for analyzing what happens when you run Black on
+OSS code capturing it for comparisons or other usage. It's used here to
+help measure the impact of a change *before* landing it (in particular
+posting a comment on completion for PRs).
+
+This script exists as a more maintainable alternative to using inline
+Javascript in the workflow YAML files. The revision configuration and
+resolving, caching, and PR comment logic is contained here.
+
+For more information, please see the developer docs:
+
+https://black.readthedocs.io/en/latest/contributing/gauging_changes.html#diff-shades
+"""
+
 import json
 import os
 import platform
@@ -19,6 +35,7 @@ else:
     from typing_extensions import Final, Literal
 
 COMMENT_BODY_FILE: Final = ".pr-comment-body.md"
+DIFF_STEP_NAME: Final = "Generate HTML diff report"
 DOCS_URL: Final = (
     "https://black.readthedocs.io/en/latest/"
     "contributing/gauging_changes.html#diff-shades"
@@ -96,7 +113,10 @@ def resolve_custom_ref(ref: str) -> Tuple[str, str]:
         # Special format to get a PR.
         number = int(ref[1:])
         revision = get_pr_revision(number)
-        return f"pr-{number}-{revision[:SHA_LENGTH]}", f"gh pr checkout {number}"
+        return (
+            f"pr-{number}-{revision[:SHA_LENGTH]}",
+            f"gh pr checkout {number} && git merge origin/main",
+        )
 
     # Alright, it's probably a branch, tag, or a commit SHA, let's find out!
     revision = get_branch_or_tag_revision(ref)
@@ -141,7 +161,6 @@ def config(
     elif event == "pull_request":
         # PR, let's use main as the baseline.
         baseline_rev = get_branch_or_tag_revision()
-        assert baseline_rev is not None, "main should exist ..."
         baseline_name = "main-" + baseline_rev[:SHA_LENGTH]
         baseline_cmd = f"git checkout {baseline_rev}"
 
@@ -199,14 +218,12 @@ def comment_body(
         body = (
             f"**diff-shades** results comparing this PR ({target_sha}) to main"
             f" ({baseline_sha}). The full diff is [available in the logs]"
-            '($job-diff-url) under the "Generate HTML diff report" step.'
+            f'($job-diff-url) under the "{DIFF_STEP_NAME}" step.'
         )
         body += "\n```text\n" + proc.stdout.strip() + "\n```\n"
     body += (
         f"[**What is this?**]({DOCS_URL}) | [Workflow run]($workflow-run-url) |"
-        " [diff-shades documentation](https://github.com/ichard26/diff-shades#readme) |"
-        # This is used by the comment workflow to discover a pre-existing comment.
-        " id: diff-shades-comment"
+        " [diff-shades documentation](https://github.com/ichard26/diff-shades#readme)"
     )
     print(f"[INFO]: writing half-completed comment body to {COMMENT_BODY_FILE}")
     with open(COMMENT_BODY_FILE, "w", encoding="utf-8") as f:
@@ -228,9 +245,10 @@ def comment_details(run_id: str) -> None:
     set_output("pr-number", str(pr_number))
 
     jobs_data = http_get(data["jobs_url"])
+    assert len(jobs_data["jobs"]) == 1, "multiple jobs not supported nor tested"
     job = jobs_data["jobs"][0]
     steps = {s["name"]: s["number"] for s in job["steps"]}
-    diff_step = steps["Generate HTML diff report"]
+    diff_step = steps[DIFF_STEP_NAME]
     diff_url = job["html_url"] + f"#step:{diff_step}:1"
 
     artifacts_data = http_get(data["artifacts_url"])["artifacts"]
@@ -240,8 +258,9 @@ def comment_details(run_id: str) -> None:
     with zipfile.ZipFile(body_zip) as zfile:
         with zfile.open(COMMENT_BODY_FILE) as rf:
             body = rf.read().decode("utf-8")
-    # It's more convenient to fill these fields after the first workflow is done
-    # since this command can access the workflows API.
+    # It's more convenient to fill in these fields after the first workflow is done
+    # since this command can access the workflows API (doing it in the main workflow
+    # while it's still in progress seems impossible).
     body = body.replace("$workflow-run-url", data["html_url"])
     body = body.replace("$job-diff-url", diff_url)
     # # https://github.community/t/set-output-truncates-multiline-strings/16852/3

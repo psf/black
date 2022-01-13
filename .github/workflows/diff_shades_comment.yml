@@ -35,7 +35,7 @@ jobs:
         with:
           issue-number: ${{ steps.metadata.outputs.pr-number }}
           comment-author: "github-actions[bot]"
-          body-includes: "diff-shades-comment"
+          body-includes: "diff-shades"
 
       - name: Create or update PR comment
         if: steps.metadata.outputs.needs-comment == 'true'
