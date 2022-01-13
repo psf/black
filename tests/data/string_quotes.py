@@ -23,7 +23,7 @@ r"raw string ftw"
 r'Date d\'expiration:(.*)'
 r'Tricky "quote'
 r'Not-so-tricky \"quote'
-fr'{yay}'
+rf'{yay}'
 '\n\
 The \"quick\"\n\
 brown fox\n\
@@ -83,7 +83,7 @@ r"raw string ftw"
 r"Date d\'expiration:(.*)"
 r'Tricky "quote'
 r"Not-so-tricky \"quote"
-fr"{yay}"
+rf"{yay}"
 "\nThe \"quick\"\nbrown fox\njumps over\nthe 'lazy' dog.\n"
 re.compile(r'[\\"]')
 "x = ''; y = \"\""

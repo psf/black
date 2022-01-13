@@ -31,8 +31,8 @@ name = "Łukasz"
 ("", "")
 (r"", R"")
 
-(fr"", fr"", fR"", fR"", fr"", fr"", fR"", fR"")
-(br"", br"", bR"", bR"", br"", br"", bR"", bR"")
+(rf"", rf"", Rf"", Rf"", rf"", rf"", Rf"", Rf"")
+(rb"", rb"", Rb"", Rb"", rb"", rb"", Rb"", Rb"")
 
 
 def docstring_singleline():

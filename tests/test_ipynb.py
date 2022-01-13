@@ -341,7 +341,7 @@ def test_empty_string() -> None:
 
 def test_unparseable_notebook() -> None:
     path = DATA_DIR / "notebook_which_cant_be_parsed.ipynb"
-    msg = fr"File '{re.escape(str(path))}' cannot be parsed as valid Jupyter notebook\."
+    msg = rf"File '{re.escape(str(path))}' cannot be parsed as valid Jupyter notebook\."
     with pytest.raises(ValueError, match=msg):
         format_file_in_place(path, fast=True, mode=JUPYTER_MODE)
 
