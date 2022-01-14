@@ -43,7 +43,6 @@ tracked in [this issue](https://github.com/psf/black/issues/2188).
 
 ## Preview style
 
-Experimental, potentially disruptive style changes are gathered under the
-`--preview` CLI flag. At the end of each year, these changes may be
-adopted into the default style, as described in
-[The Black Code Style](./index.rst).
+Experimental, potentially disruptive style changes are gathered under the `--preview`
+CLI flag. At the end of each year, these changes may be adopted into the default style,
+as described in [The Black Code Style](./index.rst).
