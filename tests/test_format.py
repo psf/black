@@ -48,6 +48,7 @@ SIMPLE_CASES: List[str] = [
     "function2",
     "function_trailing_comma",
     "import_spacing",
+    "parenthesized_context_managers",
     "remove_parens",
     "slices",
     "string_prefixes",

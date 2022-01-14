@@ -1062,7 +1062,7 @@ def format_ipynb_string(src_contents: str, *, fast: bool, mode: Mode) -> FileCon
     Operate cell-by-cell, only on code cells, only for Python notebooks.
     If the ``.ipynb`` originally had a trailing newline, it'll be preserved.
     """
-    trailing_newline = src_contents[-1] == "\n"
+    trailing_newline = (src_contents[-1] == "\n")
     modified = False
     nb = json.loads(src_contents)
     validate_metadata(nb)

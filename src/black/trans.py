@@ -1397,7 +1397,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
                 True iff ALL of the conditions listed in the 'Transformations'
                 section of this classes' docstring would be be met by returning @i.
             """
-            is_space = string[i] == " "
+            is_space = (string[i] == " ")
 
             is_not_escaped = True
             j = i - 1

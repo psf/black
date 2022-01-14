@@ -29,7 +29,7 @@ import click
 
 
 TEN_MINUTES_SECONDS = 600
-WINDOWS = system() == "Windows"
+WINDOWS = (system() == "Windows")
 BLACK_BINARY = "black.exe" if WINDOWS else "black"
 GIT_BINARY = "git.exe" if WINDOWS else "git"
 LOG = logging.getLogger(__name__)
@@ -158,7 +158,7 @@ async def black_run(
         )
         return
 
-    stdin_test = project_name.upper() == "STDIN"
+    stdin_test = (project_name.upper() == "STDIN")
     cmd = [str(which(BLACK_BINARY))]
     if "cli_arguments" in project_config and project_config["cli_arguments"]:
         cmd.extend(_flatten_cli_args(project_config["cli_arguments"]))
@@ -348,7 +348,7 @@ async def project_runner(
             continue
 
         repo_path: Optional[Path] = Path(__file__)
-        stdin_project = project_name.upper() == "STDIN"
+        stdin_project = (project_name.upper() == "STDIN")
         if not stdin_project:
             repo_path = await git_checkout_or_rebase(work_path, project_config, rebase)
             if not repo_path:

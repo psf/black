@@ -10,7 +10,7 @@ Middleware = Callable[[Request, Handler], Awaitable[StreamResponse]]
 def cors(allow_headers: Iterable[str]) -> Middleware:
     @middleware
     async def impl(request: Request, handler: Handler) -> StreamResponse:
-        is_options = request.method == "OPTIONS"
+        is_options = (request.method == "OPTIONS")
         is_preflight = is_options and "Access-Control-Request-Method" in request.headers
         if is_preflight:
             resp = StreamResponse()

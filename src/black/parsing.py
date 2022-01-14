@@ -24,7 +24,7 @@ from black.nodes import syms
 
 ast3: Any
 
-_IS_PYPY = platform.python_implementation() == "PyPy"
+_IS_PYPY = (platform.python_implementation() == "PyPy")
 
 try:
     from typed_ast import ast3
