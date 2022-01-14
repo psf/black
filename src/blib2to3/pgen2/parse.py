@@ -54,7 +54,7 @@ def stack_copy(
     stack: List[Tuple[DFAS, int, RawNode]]
 ) -> List[Tuple[DFAS, int, RawNode]]:
     """Nodeless stack copy."""
-    return [(copy.deepcopy(dfa), label, DUMMY_NODE) for dfa, label, _ in stack]
+    return [(dfa, label, DUMMY_NODE) for dfa, label, _ in stack]
 
 
 class Recorder:
