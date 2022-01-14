@@ -184,6 +184,6 @@ class Mode:
             str(int(self.is_ipynb)),
             str(int(self.magic_trailing_comma)),
             str(int(self.experimental_string_processing)),
-            ",".join(self.python_cell_magics),
+            ",".join(sorted(self.python_cell_magics)),
         ]
         return ".".join(parts)
