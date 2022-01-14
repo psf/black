@@ -3,10 +3,10 @@ name: diff-shades
 on:
   push:
     branches: [main]
-    paths-ignore: ["docs/**", "tests/**", "*.md"]
+    paths-ignore: ["docs/**", "tests/**", "**.md", "**.rst"]
 
   pull_request:
-    path-ignore: ["docs/**", "tests/**", "*.md"]
+    path-ignore: ["docs/**", "tests/**", "**.md", "**.rst"]
 
   workflow_dispatch:
     inputs:
@@ -26,6 +26,10 @@ on:
       target-args:
         description: "Custom Black arguments (eg. -S)"
         required: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   analysis:

@@ -23,7 +23,7 @@ import sys
 import zipfile
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Optional, Tuple
 
 import click
 import urllib3
@@ -55,19 +55,16 @@ def set_output(name: str, value: str) -> None:
     print(f"::set-output name={name}::{value}")
 
 
-def http_get(
-    url: str,
-    is_json: bool = True,
-    headers: Optional[Dict[str, str]] = None,
-    **kwargs: Any,
-) -> Any:
-    headers = headers or {}
+def http_get(url: str, is_json: bool = True, **kwargs: Any) -> Any:
+    headers = kwargs.get("headers") or {}
     headers["User-Agent"] = USER_AGENT
     if "github" in url:
         if GH_API_TOKEN:
             headers["Authorization"] = f"token {GH_API_TOKEN}"
         headers["Accept"] = "application/vnd.github.v3+json"
-    r = http.request("GET", url, headers=headers, **kwargs)
+    kwargs["headers"] = headers
+
+    r = http.request("GET", url, **kwargs)
     if is_json:
         data = json.loads(r.data.decode("utf-8"))
     else:
@@ -244,9 +241,9 @@ def comment_details(run_id: str) -> None:
     pr_number = pulls[0]["number"]
     set_output("pr-number", str(pr_number))
 
-    jobs_data = http_get(data["jobs_url"])
-    assert len(jobs_data["jobs"]) == 1, "multiple jobs not supported nor tested"
-    job = jobs_data["jobs"][0]
+    jobs = http_get(data["jobs_url"])["jobs"]
+    assert len(jobs) == 1, "multiple jobs not supported nor tested"
+    job = jobs[0]
     steps = {s["name"]: s["number"] for s in job["steps"]}
     diff_step = steps[DIFF_STEP_NAME]
     diff_url = job["html_url"] + f"#step:{diff_step}:1"
