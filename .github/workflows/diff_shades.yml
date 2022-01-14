@@ -122,13 +122,14 @@ jobs:
           python helper.py comment-body
           ${{ steps.config.outputs.baseline-analysis }} ${{ steps.config.outputs.target-analysis }}
           ${{ steps.config.outputs.baseline-sha }} ${{ steps.config.outputs.target-sha }}
+          ${{ github.event.pull_request.number }}
 
       - name: Upload summary file (PR only)
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v2
         with:
-          name: .pr-comment-body.md
-          path: .pr-comment-body.md
+          name: .pr-comment.json
+          path: .pr-comment.json
 
         # This is last so the diff-shades-comment workflow can still work even if we
         # end up detecting failed files and failing the run.

@@ -34,7 +34,7 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Final, Literal
 
-COMMENT_BODY_FILE: Final = ".pr-comment-body.md"
+COMMENT_FILE: Final = ".pr-comment.json"
 DIFF_STEP_NAME: Final = "Generate HTML diff report"
 DOCS_URL: Final = (
     "https://black.readthedocs.io/en/latest/"
@@ -196,8 +196,9 @@ def config(
 @click.argument("target", type=click.Path(exists=True, path_type=Path))
 @click.argument("baseline-sha")
 @click.argument("target-sha")
+@click.argument("pr-num", type=int)
 def comment_body(
-    baseline: Path, target: Path, baseline_sha: str, target_sha: str
+    baseline: Path, target: Path, baseline_sha: str, target_sha: str, pr_num: int
 ) -> None:
     # fmt: off
     cmd = [
@@ -222,25 +223,20 @@ def comment_body(
         f"[**What is this?**]({DOCS_URL}) | [Workflow run]($workflow-run-url) |"
         " [diff-shades documentation](https://github.com/ichard26/diff-shades#readme)"
     )
-    print(f"[INFO]: writing half-completed comment body to {COMMENT_BODY_FILE}")
-    with open(COMMENT_BODY_FILE, "w", encoding="utf-8") as f:
-        f.write(body)
+    print(f"[INFO]: writing comment details to {COMMENT_FILE}")
+    with open(COMMENT_FILE, "w", encoding="utf-8") as f:
+        json.dump({"body": body, "pr-number": pr_num}, f)
 
 
 @main.command("comment-details", help="Get PR comment resources from a workflow run.")
 @click.argument("run-id")
 def comment_details(run_id: str) -> None:
     data = http_get(f"https://api.github.com/repos/{REPO}/actions/runs/{run_id}")
-    if data["event"] != "pull_request":
+    if data["event"] != "pull_request" or data["conclusion"] == "cancelled":
         set_output("needs-comment", "false")
         return
 
     set_output("needs-comment", "true")
-    pulls = data["pull_requests"]
-    assert len(pulls) == 1
-    pr_number = pulls[0]["number"]
-    set_output("pr-number", str(pr_number))
-
     jobs = http_get(data["jobs_url"])["jobs"]
     assert len(jobs) == 1, "multiple jobs not supported nor tested"
     job = jobs[0]
@@ -250,17 +246,20 @@ def comment_details(run_id: str) -> None:
 
     artifacts_data = http_get(data["artifacts_url"])["artifacts"]
     artifacts = {a["name"]: a["archive_download_url"] for a in artifacts_data}
-    body_url = artifacts[COMMENT_BODY_FILE]
-    body_zip = BytesIO(http_get(body_url, is_json=False))
-    with zipfile.ZipFile(body_zip) as zfile:
-        with zfile.open(COMMENT_BODY_FILE) as rf:
-            body = rf.read().decode("utf-8")
+    comment_url = artifacts[COMMENT_FILE]
+    comment_zip = BytesIO(http_get(comment_url, is_json=False))
+    with zipfile.ZipFile(comment_zip) as zfile:
+        with zfile.open(COMMENT_FILE) as rf:
+            comment_data = json.loads(rf.read().decode("utf-8"))
+
+    set_output("pr-number", str(comment_data["pr-number"]))
+    body = comment_data["body"]
     # It's more convenient to fill in these fields after the first workflow is done
     # since this command can access the workflows API (doing it in the main workflow
     # while it's still in progress seems impossible).
     body = body.replace("$workflow-run-url", data["html_url"])
     body = body.replace("$job-diff-url", diff_url)
-    # # https://github.community/t/set-output-truncates-multiline-strings/16852/3
+    # https://github.community/t/set-output-truncates-multiline-strings/16852/3
     escaped = body.replace("%", "%25").replace("\n", "%0A").replace("\r", "%0D")
     set_output("comment-body", escaped)
 
