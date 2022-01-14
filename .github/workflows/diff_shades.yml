@@ -35,6 +35,11 @@ jobs:
   analysis:
     name: analysis / linux
     runs-on: ubuntu-latest
+    env:
+      # Clang is less picky with the C code it's given than gcc (and may
+      # generate faster binaries too).
+      CC: clang
+      MYPYC_OPT_LEVEL: 2
 
     steps:
       - name: Checkout this repository (full clone)
@@ -49,6 +54,7 @@ jobs:
           python -m pip install pip --upgrade
           python -m pip install https://github.com/ichard26/diff-shades/archive/stable.zip
           python -m pip install click packaging urllib3
+          python -m pip install -r .github/mypyc-requirements.txt
           # After checking out old revisions, this might not exist so we'll use a copy.
           cat scripts/diff_shades_gha_helper.py > helper.py
           git config user.name "diff-shades-gha"
@@ -70,11 +76,14 @@ jobs:
           path: ${{ steps.config.outputs.baseline-analysis }}
           key: ${{ steps.config.outputs.baseline-cache-key }}
 
-      - name: Install baseline revision
+      - name: Build and install baseline revision
         if: steps.baseline-cache.outputs.cache-hit != 'true'
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: ${{ steps.config.outputs.baseline-setup-cmd }} && python -m pip install .
+        run: >
+          ${{ steps.config.outputs.baseline-setup-cmd }}
+          && python setup.py --use-mypyc bdist_wheel
+          && python -m pip install dist/*.whl && rm build dist -r
 
       - name: Analyze baseline revision
         if: steps.baseline-cache.outputs.cache-hit != 'true'
@@ -82,10 +91,13 @@ jobs:
           diff-shades analyze -v --work-dir projects-cache/
           ${{ steps.config.outputs.baseline-analysis }} -- ${{ github.event.inputs.baseline-args }}
 
-      - name: Install target revision
+      - name: Build and install target revision
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: ${{ steps.config.outputs.target-setup-cmd }} && python -m pip install .
+        run: >
+          ${{ steps.config.outputs.target-setup-cmd }}
+          && python setup.py --use-mypyc bdist_wheel
+          && python -m pip install dist/*.whl
 
       - name: Analyze target revision
         run: >
