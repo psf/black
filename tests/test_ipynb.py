@@ -2,7 +2,7 @@ from dataclasses import replace
 import pathlib
 import re
 from contextlib import ExitStack as does_not_raise
-from typing import Any, ContextManager
+from typing import ContextManager
 
 from click.testing import CliRunner
 from black.handle_ipynb_magics import jupyter_dependencies_are_installed
