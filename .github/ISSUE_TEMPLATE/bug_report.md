@@ -16,7 +16,7 @@ current development version. To confirm this, you have three options:
 3. Or run _Black_ on your machine:
    - create a new virtualenv (make sure it's the same Python version);
    - clone this repository;
-   - run `pip install -e .[d,python2]`;
+   - run `pip install -e .[d]`;
    - run `pip install -r test_requirements.txt`
    - make sure it's sane by running `python -m pytest`; and
    - run `black` like you did last time.

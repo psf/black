@@ -57,7 +57,7 @@ repos:
     rev: v2.5.1
     hooks:
       - id: prettier
-        exclude: ^Pipfile\.lock
+        exclude: \.github/workflows/diff_shades\.yml
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.0.1

@@ -46,6 +46,17 @@ def lam_sub(grammar: Grammar, node: RawNode) -> NL:
     return Node(type=node[0], children=node[3], context=node[2])
 
 
+# A placeholder node, used when parser is backtracking.
+DUMMY_NODE = (-1, None, None, None)
+
+
+def stack_copy(
+    stack: List[Tuple[DFAS, int, RawNode]]
+) -> List[Tuple[DFAS, int, RawNode]]:
+    """Nodeless stack copy."""
+    return [(dfa, label, DUMMY_NODE) for dfa, label, _ in stack]
+
+
 class Recorder:
     def __init__(self, parser: "Parser", ilabels: List[int], context: Context) -> None:
         self.parser = parser
@@ -54,7 +65,7 @@ class Recorder:
 
         self._dead_ilabels: Set[int] = set()
         self._start_point = self.parser.stack
-        self._points = {ilabel: copy.deepcopy(self._start_point) for ilabel in ilabels}
+        self._points = {ilabel: stack_copy(self._start_point) for ilabel in ilabels}
 
     @property
     def ilabels(self) -> Set[int]:
@@ -62,13 +73,32 @@ class Recorder:
 
     @contextmanager
     def switch_to(self, ilabel: int) -> Iterator[None]:
-        self.parser.stack = self._points[ilabel]
+        with self.backtrack():
+            self.parser.stack = self._points[ilabel]
+            try:
+                yield
+            except ParseError:
+                self._dead_ilabels.add(ilabel)
+            finally:
+                self.parser.stack = self._start_point
+
+    @contextmanager
+    def backtrack(self) -> Iterator[None]:
+        """
+        Use the node-level invariant ones for basic parsing operations (push/pop/shift).
+        These still will operate on the stack; but they won't create any new nodes, or
+        modify the contents of any other existing nodes.
+
+        This saves us a ton of time when we are backtracking, since we
+        want to restore to the initial state as quick as possible, which
+        can only be done by having as little mutatations as possible.
+        """
+        is_backtracking = self.parser.is_backtracking
         try:
+            self.parser.is_backtracking = True
             yield
-        except ParseError:
-            self._dead_ilabels.add(ilabel)
         finally:
-            self.parser.stack = self._start_point
+            self.parser.is_backtracking = is_backtracking
 
     def add_token(self, tok_type: int, tok_val: Text, raw: bool = False) -> None:
         func: Callable[..., Any]
@@ -179,6 +209,7 @@ class Parser(object):
         self.grammar = grammar
         # See note in docstring above. TL;DR this is ignored.
         self.convert = convert or lam_sub
+        self.is_backtracking = False
 
     def setup(self, proxy: "TokenProxy", start: Optional[int] = None) -> None:
         """Prepare for parsing.
@@ -238,6 +269,10 @@ class Parser(object):
                     break
 
                 next_token_type, next_token_value, *_ = proxy.eat(counter)
+                if next_token_type in (tokenize.COMMENT, tokenize.NL):
+                    counter += 1
+                    continue
+
                 if next_token_type == tokenize.OP:
                     next_token_type = grammar.opmap[next_token_value]
 
@@ -319,28 +354,40 @@ class Parser(object):
 
     def shift(self, type: int, value: Text, newstate: int, context: Context) -> None:
         """Shift a token.  (Internal)"""
-        dfa, state, node = self.stack[-1]
-        rawnode: RawNode = (type, value, context, None)
-        newnode = convert(self.grammar, rawnode)
-        assert node[-1] is not None
-        node[-1].append(newnode)
-        self.stack[-1] = (dfa, newstate, node)
+        if self.is_backtracking:
+            dfa, state, _ = self.stack[-1]
+            self.stack[-1] = (dfa, newstate, DUMMY_NODE)
+        else:
+            dfa, state, node = self.stack[-1]
+            rawnode: RawNode = (type, value, context, None)
+            newnode = convert(self.grammar, rawnode)
+            assert node[-1] is not None
+            node[-1].append(newnode)
+            self.stack[-1] = (dfa, newstate, node)
 
     def push(self, type: int, newdfa: DFAS, newstate: int, context: Context) -> None:
         """Push a nonterminal.  (Internal)"""
-        dfa, state, node = self.stack[-1]
-        newnode: RawNode = (type, None, context, [])
-        self.stack[-1] = (dfa, newstate, node)
-        self.stack.append((newdfa, 0, newnode))
+        if self.is_backtracking:
+            dfa, state, _ = self.stack[-1]
+            self.stack[-1] = (dfa, newstate, DUMMY_NODE)
+            self.stack.append((newdfa, 0, DUMMY_NODE))
+        else:
+            dfa, state, node = self.stack[-1]
+            newnode: RawNode = (type, None, context, [])
+            self.stack[-1] = (dfa, newstate, node)
+            self.stack.append((newdfa, 0, newnode))
 
     def pop(self) -> None:
         """Pop a nonterminal.  (Internal)"""
-        popdfa, popstate, popnode = self.stack.pop()
-        newnode = convert(self.grammar, popnode)
-        if self.stack:
-            dfa, state, node = self.stack[-1]
-            assert node[-1] is not None
-            node[-1].append(newnode)
+        if self.is_backtracking:
+            self.stack.pop()
         else:
-            self.rootnode = newnode
-            self.rootnode.used_names = self.used_names
+            popdfa, popstate, popnode = self.stack.pop()
+            newnode = convert(self.grammar, popnode)
+            if self.stack:
+                dfa, state, node = self.stack[-1]
+                assert node[-1] is not None
+                node[-1].append(newnode)
+            else:
+                self.rootnode = newnode
+                self.rootnode.used_names = self.used_names
