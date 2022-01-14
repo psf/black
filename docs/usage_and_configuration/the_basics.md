@@ -200,12 +200,14 @@ project.
 "No". _Black_ is all about sensible defaults. Applying those defaults will have your
 code in compliance with many other _Black_ formatted projects.
 
-````{note}
-If you are using the linked configuration feature i.e. specifying `config` in the black config,
-it would be overwritten by the parent config i.e. the config which contains the `config` specifying
-the linked configuration.
+### Linked Configuration feature
 
-Say `black.config` is the parent config containing
+You can use the `config = ` field to include configuration options from another
+configuration file. Values set in the original configuration file have precedence over
+those in the included file.
+
+Suppose `pyproject.toml` contains:
+
 ```{code-block} toml
 ---
 lineno-start: 1
@@ -216,7 +218,8 @@ config = "linked_config.toml"
 color = true
 ```
 
-and the linked configuration containing
+And `linked_config.toml` contains:
+
 ```{code-block} toml
 ---
 lineno-start: 1
@@ -228,8 +231,8 @@ line-length = 88
 target-version = ['py36', 'py37', 'py38']
 ```
 
-The resulting value for `color` would be `true` as specified in the parent config.
-````
+The resulting value for `color` would be `true` as specified in the first config
+(`pyproject.toml`).
 
 ### What on Earth is a `pyproject.toml` file?
 
