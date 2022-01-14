@@ -14,7 +14,7 @@ VERSION = os.getenv("INPUT_VERSION", default="")
 
 run([sys.executable, "-m", "venv", str(ENV_PATH)], check=True)
 
-req = "black[colorama,python2]"
+req = "black[colorama]"
 if VERSION:
     req += f"=={VERSION}"
 pip_proc = run(
