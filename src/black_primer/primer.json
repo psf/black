@@ -109,7 +109,7 @@
     },
     "poetry": {
       "cli_arguments": ["--experimental-string-processing"],
-      "expect_formatting_changes": true,
+      "expect_formatting_changes": false,
       "git_clone_url": "https://github.com/python-poetry/poetry.git",
       "long_checkout": false,
       "py_versions": ["all"]
@@ -146,17 +146,6 @@
       "cli_arguments": ["--experimental-string-processing"],
       "expect_formatting_changes": true,
       "git_clone_url": "https://github.com/koaning/scikit-lego",
-      "long_checkout": false,
-      "py_versions": ["all"]
-    },
-    "sqlalchemy": {
-      "cli_arguments": [
-        "--experimental-string-processing",
-        "--extend-exclude",
-        "/test/orm/test_relationship_criteria.py"
-      ],
-      "expect_formatting_changes": true,
-      "git_clone_url": "https://github.com/sqlalchemy/sqlalchemy.git",
       "long_checkout": false,
       "py_versions": ["all"]
     },

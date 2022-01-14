@@ -56,12 +56,6 @@ SIMPLE_CASES = [
     "tupleassign",
 ]
 
-SIMPLE_CASES_PY2 = [
-    "numeric_literals_py2",
-    "python2",
-    "python2_unicode_literals",
-]
-
 EXPERIMENTAL_STRING_PROCESSING_CASES = [
     "cantfit",
     "comments7",
@@ -76,6 +70,7 @@ PY310_CASES = [
     "pattern_matching_complex",
     "pattern_matching_extras",
     "pattern_matching_style",
+    "pattern_matching_generic",
     "parenthesized_context_managers",
 ]
 
@@ -133,12 +128,6 @@ def patch_dump_to_file(request: Any) -> Iterator[None]:
 def check_file(filename: str, mode: black.Mode, *, data: bool = True) -> None:
     source, expected = read_data(filename, data=data)
     assert_format(source, expected, mode, fast=False)
-
-
-@pytest.mark.parametrize("filename", SIMPLE_CASES_PY2)
-@pytest.mark.python2
-def test_simple_format_py2(filename: str) -> None:
-    check_file(filename, DEFAULT_MODE)
 
 
 @pytest.mark.parametrize("filename", SIMPLE_CASES)
@@ -220,6 +209,12 @@ def test_patma_hint() -> None:
     exc_info.match(black.parsing.PY310_HINT)
 
 
+def test_python_2_hint() -> None:
+    with pytest.raises(black.parsing.InvalidInput) as exc_info:
+        assert_format("print 'daylily'", "print 'daylily'")
+    exc_info.match(black.parsing.PY2_HINT)
+
+
 def test_docstring_no_string_normalization() -> None:
     """Like test_docstring but with string normalization off."""
     source, expected = read_data("docstring_no_string_normalization")
@@ -243,13 +238,6 @@ def test_numeric_literals() -> None:
 def test_numeric_literals_ignoring_underscores() -> None:
     source, expected = read_data("numeric_literals_skip_underscores")
     mode = replace(DEFAULT_MODE, target_versions=PY36_VERSIONS)
-    assert_format(source, expected, mode)
-
-
-@pytest.mark.python2
-def test_python2_print_function() -> None:
-    source, expected = read_data("python2_print_function")
-    mode = replace(DEFAULT_MODE, target_versions={black.TargetVersion.PY27})
     assert_format(source, expected, mode)
 
 

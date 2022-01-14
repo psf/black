@@ -4,6 +4,7 @@
 
 ### _Black_
 
+- **Remove Python 2 support** (#2740)
 - Do not accept bare carriage return line endings in pyproject.toml (#2408)
 - Improve error message for invalid regular expression (#2678)
 - Improve error message when parsing fails during AST safety check by embedding the
@@ -12,16 +13,35 @@
   (#2686)
 - Fix cases that contain multiple top-level as-expressions, like `case 1 as a, 2 as b`
   (#2716)
+- Fix call patterns that contain as-expressions with keyword arguments, like
+  `case Foo(bar=baz as quux)` (#2749)
 - No longer color diff headers white as it's unreadable in light themed terminals
   (#2691)
 - Tuple unpacking on `return` and `yield` constructs now implies 3.8+ (#2700)
 - Unparenthesized tuples on annotated assignments (e.g
   `values: Tuple[int, ...] = 1, 2, 3`) now implies 3.8+ (#2708)
 - Remove spaces around power operators if both operands are simple (#2726)
+- For stubs, one blank line between class attributes and methods is now kept if there's
+  at least one pre-existing blank line (#2736)
+- Verbose mode also now describes how a project root was discovered and which paths will
+  be formatted. (#2526)
+- Speed-up the new backtracking parser about 4X in general (enabled when
+  `--target-version` is set to 3.10 and higher). (#2728)
+- Fix handling of standalone `match()` or `case()` when there is a trailing newline or a
+  comment inside of the parentheses. (#2760)
+- Black now normalizes string prefix order (#2297)
 
 ### Packaging
 
 - All upper version bounds on dependencies have been removed (#2718)
+
+### Integrations
+
+- Update GitHub action to support containerized runs (#2748)
+
+### Documentation
+
+- Change protocol in pip installation instructions to `https://` (#2761)
 
 ## 21.12b0
 

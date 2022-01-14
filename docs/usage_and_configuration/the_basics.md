@@ -26,13 +26,13 @@ python -m black {source_file_or_directory}
 
 ### Command line options
 
-_Black_ has quite a few knobs these days, although _Black_ is opinionated so style
-configuration options are deliberately limited and rarely added. You can list them by
-running `black --help`.
+The CLI options of _Black_ can be displayed by expanding the view below or by running
+`black --help`. While _Black_ has quite a few knobs these days, it is still opinionated
+so style options are deliberately limited and rarely added.
 
 <details>
 
-<summary>Help output</summary>
+<summary>CLI reference</summary>
 
 ```{program-output} black --help
 
