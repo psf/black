@@ -132,7 +132,14 @@ def read_pyproject_toml(
     )
     if black_config:
         black_config_path = Path(Path(value).parent, black_config).resolve()
-        read_pyproject_toml(ctx, param, str(black_config_path))
+
+        try:
+            read_pyproject_toml(ctx, param, str(black_config_path))
+        except RecursionError as e:
+            raise click.FileError(
+                filename=value, hint=f"Error reading configuration file: {e}"
+            ) from None
+
         del config["config"]
 
         if ctx.default_map:

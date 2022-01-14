@@ -1357,6 +1357,12 @@ class BlackTestCase(BlackBaseTestCase):
         with self.assertRaises(click.exceptions.FileError):
             black.read_pyproject_toml(fake_ctx, FakeParameter(), str(test_toml_file))
 
+    def test_recursion_black_config(self) -> None:
+        test_toml_file = TOML_CONFIG_DIR / "recursion_1.toml"
+        fake_ctx = FakeContext()
+        with self.assertRaises(click.exceptions.FileError):
+            black.read_pyproject_toml(fake_ctx, FakeParameter(), str(test_toml_file))
+
     @pytest.mark.incompatible_with_mypyc
     def test_find_project_root(self) -> None:
         with TemporaryDirectory() as workspace:
