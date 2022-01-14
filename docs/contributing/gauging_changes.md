@@ -81,7 +81,7 @@ runs. And the analyses exist just in case you want to do further analysis using 
 collected data locally.
 
 Note that the workflow will only fail intentionally if while analyzing a file failed to
-format. Otherwise it's mostly likely a bug of the workflow.
+format. Otherwise a failure indicates a bug in the workflow.
 
 ```{tip}
 Maintainers with write access or higher can trigger the workflow manually from the
