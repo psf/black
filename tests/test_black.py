@@ -53,6 +53,7 @@ from tests.util import (
     PROJECT_ROOT,
     PY36_VERSIONS,
     THIS_DIR,
+    TOML_CONFIG_DIR,
     BlackBaseTestCase,
     assert_format,
     change_directory,
@@ -123,7 +124,7 @@ def invokeBlack(
 ) -> None:
     runner = BlackRunner()
     if ignore_config:
-        args = ["--verbose", "--config", str(THIS_DIR / "empty.toml"), *args]
+        args = ["--verbose", "--config", str(TOML_CONFIG_DIR / "empty.toml"), *args]
     result = runner.invoke(black.main, args, catch_exceptions=False)
     assert result.stdout_bytes is not None
     assert result.stderr_bytes is not None
@@ -170,7 +171,7 @@ class BlackTestCase(BlackBaseTestCase):
         )
         source, _ = read_data("expression.py")
         expected, _ = read_data("expression.diff")
-        config = THIS_DIR / "data" / "empty_pyproject.toml"
+        config = TOML_CONFIG_DIR / "empty_pyproject.toml"
         args = [
             "-",
             "--fast",
@@ -188,7 +189,7 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_piping_diff_with_color(self) -> None:
         source, _ = read_data("expression.py")
-        config = THIS_DIR / "data" / "empty_pyproject.toml"
+        config = TOML_CONFIG_DIR / "empty_pyproject.toml"
         args = [
             "-",
             "--fast",
@@ -286,7 +287,7 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_expression_diff(self) -> None:
         source, _ = read_data("expression.py")
-        config = THIS_DIR / "data" / "empty_pyproject.toml"
+        config = TOML_CONFIG_DIR / "empty_pyproject.toml"
         expected, _ = read_data("expression.diff")
         tmp_file = Path(black.dump_to_file(source))
         diff_header = re.compile(
@@ -313,7 +314,7 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_expression_diff_with_color(self) -> None:
         source, _ = read_data("expression.py")
-        config = THIS_DIR / "data" / "empty_pyproject.toml"
+        config = TOML_CONFIG_DIR / "empty_pyproject.toml"
         expected, _ = read_data("expression.diff")
         tmp_file = Path(black.dump_to_file(source))
         try:
@@ -1309,7 +1310,7 @@ class BlackTestCase(BlackBaseTestCase):
             tmp_file.unlink()
 
     def test_parse_pyproject_toml(self) -> None:
-        test_toml_file = THIS_DIR / "test.toml"
+        test_toml_file = TOML_CONFIG_DIR / "test.toml"
         config = black.parse_pyproject_toml(str(test_toml_file))
         self.assertEqual(config["verbose"], 1)
         self.assertEqual(config["check"], "no")
@@ -1321,7 +1322,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(config["include"], r"\.py?$")
 
     def test_read_pyproject_toml(self) -> None:
-        test_toml_file = THIS_DIR / "test.toml"
+        test_toml_file = TOML_CONFIG_DIR / "test.toml"
         fake_ctx = FakeContext()
         black.read_pyproject_toml(fake_ctx, FakeParameter(), str(test_toml_file))
         config = fake_ctx.default_map
@@ -1335,7 +1336,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(config["include"], r"\.py?$")
 
     def test_black_replace_config(self) -> None:
-        test_toml_file = THIS_DIR / "test_replace.toml"
+        test_toml_file = TOML_CONFIG_DIR / "test_replace.toml"
         fake_ctx = FakeContext()
         black.read_pyproject_toml(fake_ctx, FakeParameter(), str(test_toml_file))
         config = fake_ctx.default_map
@@ -1351,7 +1352,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(config["include"], r"\.py?$")
 
     def test_invalid_black_config(self) -> None:
-        test_toml_file = THIS_DIR / "invalid_test.toml"
+        test_toml_file = TOML_CONFIG_DIR / "invalid_test.toml"
         fake_ctx = FakeContext()
         with self.assertRaises(click.exceptions.FileError):
             black.read_pyproject_toml(fake_ctx, FakeParameter(), str(test_toml_file))
