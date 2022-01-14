@@ -25,6 +25,11 @@
 - Verbose mode also now describes how a project root was discovered and which paths will
   be formatted. (#2526)
 - Functions and classes in blocks now have more consistent surrounding spacing (#2472)
+- Speed-up the new backtracking parser about 4X in general (enabled when
+  `--target-version` is set to 3.10 and higher). (#2728)
+- Fix handling of standalone `match()` or `case()` when there is a trailing newline or a
+  comment inside of the parentheses. (#2760)
+- Black now normalizes string prefix order (#2297)
 
 ### Packaging
 
@@ -33,6 +38,10 @@
 ### Integrations
 
 - Update GitHub action to support containerized runs (#2748)
+
+### Documentation
+
+- Change protocol in pip installation instructions to `https://` (#2761)
 
 ## 21.12b0
 
