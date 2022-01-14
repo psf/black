@@ -186,7 +186,7 @@ def test_cell_magic_with_magic() -> None:
     ],
 )
 def test_cell_magic_with_custom_python_magic(
-    mode: Mode, expected_output: str, expectation: ContextManager[Any]
+    mode: Mode, expected_output: str, expectation: ContextManager[object]
 ) -> None:
     with expectation:
         result = format_cell(
