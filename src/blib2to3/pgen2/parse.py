@@ -54,7 +54,7 @@ def stack_copy(
     stack: List[Tuple[DFAS, int, RawNode]]
 ) -> List[Tuple[DFAS, int, RawNode]]:
     """Nodeless stack copy."""
-    return [(copy.deepcopy(dfa), label, DUMMY_NODE) for dfa, label, _ in stack]
+    return [(dfa, label, DUMMY_NODE) for dfa, label, _ in stack]
 
 
 class Recorder:
@@ -269,6 +269,10 @@ class Parser(object):
                     break
 
                 next_token_type, next_token_value, *_ = proxy.eat(counter)
+                if next_token_type in (tokenize.COMMENT, tokenize.NL):
+                    counter += 1
+                    continue
+
                 if next_token_type == tokenize.OP:
                     next_token_type = grammar.opmap[next_token_value]
 

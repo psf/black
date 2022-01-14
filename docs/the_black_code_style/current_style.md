@@ -233,10 +233,10 @@ _Black_ prefers double quotes (`"` and `"""`) over single quotes (`'` and `'''`)
 will replace the latter with the former as long as it does not result in more backslash
 escapes than before.
 
-_Black_ also standardizes string prefixes, making them always lowercase. On top of that,
-if your code is already Python 3.6+ only or it's using the `unicode_literals` future
-import, _Black_ will remove `u` from the string prefix as it is meaningless in those
-scenarios.
+_Black_ also standardizes string prefixes. Prefix characters are made lowercase with the
+exception of [capital "R" prefixes](#rstrings-and-rstrings), unicode literal markers
+(`u`) are removed because they are meaningless in Python 3, and in the case of multiple
+characters "r" is put first as in spoken language: "raw f-string".
 
 The main reason to standardize on a single form of quotes is aesthetics. Having one kind
 of quotes everywhere reduces reader distraction. It will also enable a future version of
