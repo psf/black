@@ -99,6 +99,27 @@ class LineGenerator(Visitor[Line]):
                 self.current_line.append(node)
         yield from super().visit_default(node)
 
+    def visit_comparison(self, node: Node) -> Iterator[Line]:
+        parent: Optional[Node] = node.parent
+        grandparent: Optional[Node] = parent.parent if parent else None
+        if (
+            parent is not None
+            and Leaf(token.EQEQUAL, "==") in node.children
+            and (
+                parent.type == syms.namedexpr_test
+                or (
+                    grandparent is not None
+                    and grandparent.type in (syms.expr_stmt, syms.annassign)
+                )
+            )
+        ):
+            lpar = Leaf(token.LPAR, "(")
+            rpar = Leaf(token.RPAR, ")")
+            node.insert_child(0, lpar)
+            node.insert_child(len(node.children), rpar)
+
+        yield from self.visit_default(node)
+
     def visit_INDENT(self, node: Leaf) -> Iterator[Line]:
         """Increase indentation level, maybe yield a line."""
         # In blib2to3 INDENT never holds comments.
