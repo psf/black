@@ -38,8 +38,7 @@ jobs:
     env:
       # Clang is less picky with the C code it's given than gcc (and may
       # generate faster binaries too).
-      CC: clang
-      MYPYC_OPT_LEVEL: 2
+      CC: clang-12
 
     steps:
       - name: Checkout this repository (full clone)
