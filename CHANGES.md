@@ -34,6 +34,7 @@
 ### Packaging
 
 - All upper version bounds on dependencies have been removed (#2718)
+- `typing-extensions` is no longer a required dependency in Python 3.10+ (#2772)
 
 ### Integrations
 

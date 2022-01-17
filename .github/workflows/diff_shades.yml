@@ -6,7 +6,7 @@ on:
     paths-ignore: ["docs/**", "tests/**", "**.md", "**.rst"]
 
   pull_request:
-    path-ignore: ["docs/**", "tests/**", "**.md", "**.rst"]
+    paths-ignore: ["docs/**", "tests/**", "**.md", "**.rst"]
 
   workflow_dispatch:
     inputs:
