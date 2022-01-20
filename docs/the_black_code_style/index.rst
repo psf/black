@@ -32,7 +32,7 @@ versions of *Black*:
   improved formatting enabled by newer Python language syntax as well as due
   to improvements in the formatting logic.
 
-- The ``--future`` flag is exempt from this policy. There are no guarantees
+- The ``--preview`` flag is exempt from this policy. There are no guarantees
   around the stability of the output with that flag passed into *Black*. This
   flag is intended for allowing experimentation with the proposed changes to
   the *Black* code style.

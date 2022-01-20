@@ -38,6 +38,10 @@
 - All upper version bounds on dependencies have been removed (#2718)
 - `typing-extensions` is no longer a required dependency in Python 3.10+ (#2772)
 
+### Preview style
+
+- Introduce the `--preview` flag with no style changes (#2752)
+
 ### Integrations
 
 - Update GitHub action to support containerized runs (#2748)
