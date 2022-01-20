@@ -40,3 +40,9 @@ Currently, _Black_ does not split long strings to fit the line length limit. Cur
 there is [an experimental option](labels/experimental-string) to enable splitting
 strings. We plan to enable this option by default once it is fully stable. This is
 tracked in [this issue](https://github.com/psf/black/issues/2188).
+
+## Preview style
+
+Experimental, potentially disruptive style changes are gathered under the `--preview`
+CLI flag. At the end of each year, these changes may be adopted into the default style,
+as described in [The Black Code Style](./index.rst).

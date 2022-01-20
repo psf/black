@@ -121,6 +121,10 @@ def supports_feature(target_versions: Set[TargetVersion], feature: Feature) -> b
     return all(feature in VERSION_TO_FEATURES[version] for version in target_versions)
 
 
+class Preview(Enum):
+    """Individual preview style features."""
+
+
 @dataclass
 class Mode:
     target_versions: Set[TargetVersion] = field(default_factory=set)
@@ -130,6 +134,16 @@ class Mode:
     is_ipynb: bool = False
     magic_trailing_comma: bool = True
     experimental_string_processing: bool = False
+    preview: bool = False
+
+    def __contains__(self, feature: Preview) -> bool:
+        """
+        Provide `Preview.FEATURE in Mode` syntax that mirrors the ``preview`` flag.
+
+        The argument is not checked and features are not differentiated.
+        They only exist to make development easier by clarifying intent.
+        """
+        return self.preview
 
     def get_cache_key(self) -> str:
         if self.target_versions:
@@ -147,5 +161,6 @@ class Mode:
             str(int(self.is_ipynb)),
             str(int(self.magic_trailing_comma)),
             str(int(self.experimental_string_processing)),
+            str(int(self.preview)),
         ]
         return ".".join(parts)
