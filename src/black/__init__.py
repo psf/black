@@ -241,10 +241,7 @@ def validate_regex(
     "--experimental-string-processing",
     is_flag=True,
     hidden=True,
-    help=(
-        "Experimental option that performs more normalization on string literals."
-        " Currently disabled because it leads to some crashes."
-    ),
+    help="(DEPRECATED and now included in --preview) Normalize string literals.",
 )
 @click.option(
     "--preview",

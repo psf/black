@@ -30,6 +30,8 @@
 - Fix handling of standalone `match()` or `case()` when there is a trailing newline or a
   comment inside of the parentheses. (#2760)
 - Black now normalizes string prefix order (#2297)
+- Deprecate `--experimental-string-processing` and move the functionality under
+  `--preview` (#2789)
 
 ### Packaging
 
@@ -38,7 +40,8 @@
 
 ### Preview style
 
-- Introduce the `--preview` flag with no style changes (#2752)
+- Introduce the `--preview` flag (#2752)
+- Add `--experimental-string-processing` to the preview style (#2789)
 
 ### Integrations
 
