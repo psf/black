@@ -125,7 +125,7 @@ def supports_feature(target_versions: Set[TargetVersion], feature: Feature) -> b
 class Preview(Enum):
     """Individual preview style features."""
 
-    string_processing = auto
+    string_processing = auto()
 
 
 class Deprecated(UserWarning):
