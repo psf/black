@@ -7,6 +7,7 @@ from pathlib import Path
 
 from click import style
 
+from black import OutputLevels
 from black.output import out, err
 
 
@@ -37,15 +38,21 @@ class Report:
         if changed is Changed.YES:
             reformatted = "would reformat" if self.check or self.diff else "reformatted"
             if self.verbose or not self.quiet:
-                out(f"{reformatted} {src}")
+                out(f"{reformatted} {src}", style=OutputLevels.trace)
             self.change_count += 1
         else:
             if self.verbose:
                 if changed is Changed.NO:
-                    msg = f"{src} already well formatted, good job."
+                    msg, style = (
+                        f"{src} already well formatted, good job.",
+                        OutputLevels.success,
+                    )
                 else:
-                    msg = f"{src} wasn't modified on disk since last run."
-                out(msg, bold=False)
+                    msg, style = (
+                        f"{src} wasn't modified on disk since last run.",
+                        OutputLevels.trace,
+                    )
+                out(msg, style=style, bold=False)
             self.same_count += 1
 
     def failed(self, src: Path, message: str) -> None:
@@ -55,7 +62,7 @@ class Report:
 
     def path_ignored(self, path: Path, message: str) -> None:
         if self.verbose:
-            out(f"{path} ignored: {message}", bold=False)
+            out(f"{path} ignored: {message}", style=OutputLevels.warning)
 
     @property
     def return_code(self) -> int:

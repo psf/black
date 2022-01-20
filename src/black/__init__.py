@@ -35,8 +35,13 @@ from click.core import ParameterSource
 from dataclasses import replace
 from mypy_extensions import mypyc_attr
 
-from black.const import DEFAULT_LINE_LENGTH, DEFAULT_INCLUDES, DEFAULT_EXCLUDES
-from black.const import STDIN_PLACEHOLDER
+from black.const import (
+    DEFAULT_LINE_LENGTH,
+    DEFAULT_INCLUDES,
+    DEFAULT_EXCLUDES,
+    STDIN_PLACEHOLDER,
+    OutputLevels,
+)
 from black.nodes import STARS, syms, is_simple_decorator_expression
 from black.nodes import is_string_token
 from black.lines import Line, EmptyLineTracker
@@ -429,7 +434,7 @@ def main(
         if root:
             out(
                 f"Identified `{root}` as project root containing a {method}.",
-                fg="blue",
+                style=OutputLevels.info,
             )
 
             normalized = [
@@ -444,14 +449,14 @@ def main(
                     for _norm, source in normalized
                 ]
             )
-            out(f"Sources to be formatted: {srcs_string}", fg="blue")
+            out(f"Sources to be formatted: {srcs_string}", style=OutputLevels.info)
 
         if config:
             config_source = ctx.get_parameter_source("config")
             if config_source in (ParameterSource.DEFAULT, ParameterSource.DEFAULT_MAP):
-                out("Using configuration from project root.", fg="blue")
+                out("Using configuration from project root.", style=OutputLevels.info)
             else:
-                out(f"Using configuration in '{config}'.", fg="blue")
+                out(f"Using configuration in '{config}'.", style=OutputLevels.info)
 
     error_msg = "Oh no! 💥 💔 💥"
     if required_version and required_version != __version__:
@@ -538,7 +543,10 @@ def main(
     if verbose or not quiet:
         if code is None and (verbose or report.change_count or report.failure_count):
             out()
-        out(error_msg if report.return_code else "All done! ✨ 🍰 ✨")
+        out(
+            error_msg if report.return_code else "All done! ✨ 🍰 ✨",
+            style=OutputLevels.success,
+        )
         if code is None:
             click.echo(str(report), err=True)
     ctx.exit(report.return_code)

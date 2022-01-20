@@ -6,4 +6,3 @@ max-line-length = 80
 max-complexity = 18
 select = B,C,E,F,W,T4,B9
 per-file-ignores=src/black/const.py:C408
-
