@@ -10,6 +10,10 @@ with `# fmt: off` and end with `# fmt: on`, or lines that ends with `# fmt: skip
 [YAPF](https://github.com/google/yapf)'s block comments to the same effect, as a
 courtesy for straddling code.
 
+The rest of this document describes the current formatting style. If you're interested
+in trying out where the style is heading, see [future style](./future_style.md) and try
+running `black --preview`.
+
 ### How _Black_ wraps lines
 
 _Black_ ignores previous formatting and applies uniform horizontal and vertical
