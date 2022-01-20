@@ -158,7 +158,7 @@ class Mode:
         The argument is not checked and features are not differentiated.
         They only exist to make development easier by clarifying intent.
         """
-        if feature == Preview.string_processing:
+        if feature is Preview.string_processing:
             return self.preview or self.experimental_string_processing
         return self.preview
 
