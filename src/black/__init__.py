@@ -1315,7 +1315,8 @@ def assert_equivalent(src: str, dst: str, *, pass_num: int = 1) -> None:
         src_ast = parse_ast(src)
     except Exception as exc:
         raise AssertionError(
-            f"cannot use --safe with this file; failed to parse source file AST: {exc}\n"
+            f"cannot use --safe with this file; failed to parse source file AST: "
+            f"{exc}\n"
             f"This could be caused by running black with an older python version "
             f"that does not support new syntax used in your source file."
         ) from exc
