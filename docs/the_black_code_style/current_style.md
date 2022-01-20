@@ -260,16 +260,6 @@ If you are adopting _Black_ in a large project with pre-existing string conventi
 you can pass `--skip-string-normalization` on the command line. This is meant as an
 adoption helper, avoid using this for new projects.
 
-(labels/experimental-string)=
-
-As an experimental option (can be enabled by `--experimental-string-processing`),
-_Black_ splits long strings (using parentheses where appropriate) and merges short ones.
-When split, parts of f-strings that don't need formatting are converted to plain
-strings. User-made splits are respected when they do not exceed the line length limit.
-Line continuation backslashes are converted into parenthesized strings. Unnecessary
-parentheses are stripped. Because the functionality is experimental, feedback and issue
-reports are highly encouraged!
-
 _Black_ also processes docstrings. Firstly the indentation of docstrings is corrected
 for both quotations and the text within, although relative indentation in the text is
 preserved. Superfluous trailing whitespace on each line and unnecessary new lines at the

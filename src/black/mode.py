@@ -7,9 +7,10 @@ chosen by the user.
 import sys
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, auto
 from operator import attrgetter
 from typing import Dict, Set
+from warnings import warn
 
 if sys.version_info < (3, 8):
     from typing_extensions import Final
@@ -124,6 +125,12 @@ def supports_feature(target_versions: Set[TargetVersion], feature: Feature) -> b
 class Preview(Enum):
     """Individual preview style features."""
 
+    string_processing = auto
+
+
+class Deprecated(UserWarning):
+    """Visible deprecation warning."""
+
 
 @dataclass
 class Mode:
@@ -136,6 +143,14 @@ class Mode:
     experimental_string_processing: bool = False
     preview: bool = False
 
+    def __post_init__(self) -> None:
+        if self.experimental_string_processing:
+            warn(
+                "`experimental string processing` has been included in `preview`"
+                " and deprecated. Use `preview` instead.",
+                Deprecated,
+            )
+
     def __contains__(self, feature: Preview) -> bool:
         """
         Provide `Preview.FEATURE in Mode` syntax that mirrors the ``preview`` flag.
@@ -143,6 +158,8 @@ class Mode:
         The argument is not checked and features are not differentiated.
         They only exist to make development easier by clarifying intent.
         """
+        if feature == Preview.string_processing:
+            return self.preview or self.experimental_string_processing
         return self.preview
 
     def get_cache_key(self) -> str:
