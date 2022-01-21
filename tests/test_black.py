@@ -936,7 +936,6 @@ class BlackTestCase(BlackBaseTestCase):
             err_lines.append(msg)
 
         with patch("tests.util.out", out), patch("tests.util.err", err):
-            black.output.out("test test")
             with self.assertRaises(AssertionError):
                 self.assertFormatEqual("j = [1, 2, 3]", "j = [1, 2, 3,]")
 
