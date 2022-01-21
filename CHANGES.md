@@ -2,46 +2,57 @@
 
 ## Unreleased
 
-### _Black_
+### Highlights
 
+- At long last, *Black* is no longer a beta product! This
+  is the first non-beta release and the first release covered
+  by our new stability policy.
 - **Remove Python 2 support** (#2740)
-- Do not accept bare carriage return line endings in pyproject.toml (#2408)
-- Improve error message for invalid regular expression (#2678)
-- Improve error message when parsing fails during AST safety check by embedding the
-  underlying SyntaxError (#2693)
+- Introduce the `--preview` flag (#2752)
+
+### Style
+
+- Deprecate `--experimental-string-processing` and move the functionality under
+  `--preview` (#2789)
+- For stubs, one blank line between class attributes and methods is now kept if there's
+  at least one pre-existing blank line (#2736)
+- Black now normalizes string prefix order (#2297)
+
+### Parser
+
 - Fix mapping cases that contain as-expressions, like `case {"key": 1 | 2 as password}`
   (#2686)
 - Fix cases that contain multiple top-level as-expressions, like `case 1 as a, 2 as b`
   (#2716)
 - Fix call patterns that contain as-expressions with keyword arguments, like
   `case Foo(bar=baz as quux)` (#2749)
-- No longer color diff headers white as it's unreadable in light themed terminals
-  (#2691)
 - Tuple unpacking on `return` and `yield` constructs now implies 3.8+ (#2700)
 - Unparenthesized tuples on annotated assignments (e.g
   `values: Tuple[int, ...] = 1, 2, 3`) now implies 3.8+ (#2708)
-- Text coloring added in the final statistics (#2712)
-- For stubs, one blank line between class attributes and methods is now kept if there's
-  at least one pre-existing blank line (#2736)
-- Verbose mode also now describes how a project root was discovered and which paths will
-  be formatted. (#2526)
 - Speed-up the new backtracking parser about 4X in general (enabled when
   `--target-version` is set to 3.10 and higher). (#2728)
 - Fix handling of standalone `match()` or `case()` when there is a trailing newline or a
   comment inside of the parentheses. (#2760)
-- Black now normalizes string prefix order (#2297)
-- Deprecate `--experimental-string-processing` and move the functionality under
-  `--preview` (#2789)
+
+### Configuration
+
+- Do not accept bare carriage return line endings in pyproject.toml (#2408)
+
+### Output
+
+- Improve error message for invalid regular expression (#2678)
+- Improve error message when parsing fails during AST safety check by embedding the
+  underlying SyntaxError (#2693)
+- No longer color diff headers white as it's unreadable in light themed terminals
+  (#2691)
+- Text coloring added in the final statistics (#2712)
+- Verbose mode also now describes how a project root was discovered and which paths will
+  be formatted. (#2526)
 
 ### Packaging
 
 - All upper version bounds on dependencies have been removed (#2718)
 - `typing-extensions` is no longer a required dependency in Python 3.10+ (#2772)
-
-### Preview style
-
-- Introduce the `--preview` flag (#2752)
-- Add `--experimental-string-processing` to the preview style (#2789)
 
 ### Integrations
 
