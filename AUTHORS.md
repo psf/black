@@ -2,12 +2,17 @@
 
 Glued together by [Łukasz Langa](mailto:lukasz@langa.pl).
 
-Maintained with [Carol Willing](mailto:carolcode@willingconsulting.com),
-[Carl Meyer](mailto:carl@oddbird.net),
-[Jelle Zijlstra](mailto:jelle.zijlstra@gmail.com),
-[Mika Naylor](mailto:mail@autophagy.io),
-[Zsolt Dollenstein](mailto:zsol.zsol@gmail.com),
-[Cooper Lees](mailto:me@cooperlees.com), and Richard Si.
+Maintained with:
+
+- [Carol Willing](mailto:carolcode@willingconsulting.com)
+- [Carl Meyer](mailto:carl@oddbird.net)
+- [Jelle Zijlstra](mailto:jelle.zijlstra@gmail.com)
+- [Mika Naylor](mailto:mail@autophagy.io)
+- [Zsolt Dollenstein](mailto:zsol.zsol@gmail.com)
+- [Cooper Lees](mailto:me@cooperlees.com)
+- Richard Si
+- [Felix Hildén](mailto:felix.hilden@gmail.com)
+- [Batuhan Taskaya](mailto:batuhan@python.org)
 
 Multiple contributions by:
 
