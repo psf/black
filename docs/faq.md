@@ -33,7 +33,7 @@ still proposed on the issue tracker. See
 
 Starting in 2022, the formatting output will be stable for the releases made in the same
 year (other than unintentional bugs). It is possible to opt-in to the latest formatting
-styles, using the `--future` flag.
+styles, using the `--preview` flag.
 
 ## Why is my file not formatted?
 

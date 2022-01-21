@@ -4,12 +4,14 @@ Mostly around Python language feature support per version and Black configuratio
 chosen by the user.
 """
 
+from hashlib import md5
 import sys
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, auto
 from operator import attrgetter
 from typing import Dict, Set
+from warnings import warn
 
 if sys.version_info < (3, 8):
     from typing_extensions import Final
@@ -124,6 +126,13 @@ def supports_feature(target_versions: Set[TargetVersion], feature: Feature) -> b
 class Preview(Enum):
     """Individual preview style features."""
 
+    string_processing = auto()
+    hug_simple_powers = auto()
+
+
+class Deprecated(UserWarning):
+    """Visible deprecation warning."""
+
 
 @dataclass
 class Mode:
@@ -134,7 +143,16 @@ class Mode:
     is_ipynb: bool = False
     magic_trailing_comma: bool = True
     experimental_string_processing: bool = False
+    python_cell_magics: Set[str] = field(default_factory=set)
     preview: bool = False
+
+    def __post_init__(self) -> None:
+        if self.experimental_string_processing:
+            warn(
+                "`experimental string processing` has been included in `preview`"
+                " and deprecated. Use `preview` instead.",
+                Deprecated,
+            )
 
     def __contains__(self, feature: Preview) -> bool:
         """
@@ -143,6 +161,8 @@ class Mode:
         The argument is not checked and features are not differentiated.
         They only exist to make development easier by clarifying intent.
         """
+        if feature is Preview.string_processing:
+            return self.preview or self.experimental_string_processing
         return self.preview
 
     def get_cache_key(self) -> str:
@@ -162,5 +182,6 @@ class Mode:
             str(int(self.magic_trailing_comma)),
             str(int(self.experimental_string_processing)),
             str(int(self.preview)),
+            md5((",".join(sorted(self.python_cell_magics))).encode()).hexdigest(),
         ]
         return ".".join(parts)
