@@ -55,15 +55,6 @@ SIMPLE_CASES: List[str] = [
     "tupleassign",
 ]
 
-EXPERIMENTAL_STRING_PROCESSING_CASES: List[str] = [
-    "cantfit",
-    "comments7",
-    "long_strings",
-    "long_strings__edge_case",
-    "long_strings__regression",
-    "percent_precedence",
-]
-
 PY310_CASES: List[str] = [
     "pattern_matching_simple",
     "pattern_matching_complex",
@@ -73,7 +64,15 @@ PY310_CASES: List[str] = [
     "parenthesized_context_managers",
 ]
 
-PREVIEW_CASES: List[str] = []
+PREVIEW_CASES: List[str] = [
+    # string processing
+    "cantfit",
+    "comments7",
+    "long_strings",
+    "long_strings__edge_case",
+    "long_strings__regression",
+    "percent_precedence",
+]
 
 SOURCES: List[str] = [
     "src/black/__init__.py",
@@ -134,11 +133,6 @@ def check_file(filename: str, mode: black.Mode, *, data: bool = True) -> None:
 @pytest.mark.parametrize("filename", SIMPLE_CASES)
 def test_simple_format(filename: str) -> None:
     check_file(filename, DEFAULT_MODE)
-
-
-@pytest.mark.parametrize("filename", EXPERIMENTAL_STRING_PROCESSING_CASES)
-def test_experimental_format(filename: str) -> None:
-    check_file(filename, black.Mode(experimental_string_processing=True))
 
 
 @pytest.mark.parametrize("filename", PREVIEW_CASES)
