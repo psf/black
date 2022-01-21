@@ -1,5 +1,10 @@
+import sys
 from enum import Enum
-from typing_extensions import TypedDict
+
+if sys.version_info < (3, 8):
+    from typing_extensions import TypedDict
+else:
+    from typing import TypedDict
 
 DEFAULT_LINE_LENGTH = 88
 DEFAULT_EXCLUDES = r"/(\.direnv|\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|venv|\.svn|_build|buck-out|build|dist)/"  # noqa: B950
