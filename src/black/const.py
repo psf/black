@@ -7,8 +7,8 @@ DEFAULT_INCLUDES = r"(\.pyi?|\.ipynb)$"
 STDIN_PLACEHOLDER = "__BLACK_STDIN_FILENAME__"
 
 
-class OutputLevels(Enum):
-    null: Any = dict()
+class LogLevel(Enum):
+    none: Any = dict()
     trace = dict(fg="cyan", dim=True)
     debug = dict(fg="green", dim=True)
     info = dict(fg="blue")

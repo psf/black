@@ -10,7 +10,7 @@ import tempfile
 
 from click import echo, style as _style
 
-from black.const import OutputLevels
+from black.const import LogLevel
 
 
 @mypyc_attr(patchable=True)
@@ -24,7 +24,7 @@ def _out(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
 def out(
     message: Optional[str] = None,
     nl: bool = True,
-    style: OutputLevels = OutputLevels.null,
+    style: LogLevel = LogLevel.none,
     **_styles: Any,
 ) -> None:
     styles = style.value.copy()
@@ -39,7 +39,7 @@ def err(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
         if not styles.get("fg"):
             styles["fg"] = "red"
     elif len(styles) == 0:
-        styles = OutputLevels.error.value
+        styles = LogLevel.error.value
 
     _out(message, nl, **styles)
 

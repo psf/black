@@ -40,7 +40,7 @@ from black.const import (
     DEFAULT_INCLUDES,
     DEFAULT_EXCLUDES,
     STDIN_PLACEHOLDER,
-    OutputLevels,
+    LogLevel,
 )
 from black.nodes import STARS, syms, is_simple_decorator_expression
 from black.nodes import is_string_token
@@ -434,7 +434,7 @@ def main(
         if root:
             out(
                 f"Identified `{root}` as project root containing a {method}.",
-                style=OutputLevels.info,
+                style=LogLevel.info,
             )
 
             normalized = [
@@ -449,14 +449,14 @@ def main(
                     for _norm, source in normalized
                 ]
             )
-            out(f"Sources to be formatted: {srcs_string}", style=OutputLevels.info)
+            out(f"Sources to be formatted: {srcs_string}", style=LogLevel.info)
 
         if config:
             config_source = ctx.get_parameter_source("config")
             if config_source in (ParameterSource.DEFAULT, ParameterSource.DEFAULT_MAP):
-                out("Using configuration from project root.", style=OutputLevels.info)
+                out("Using configuration from project root.", style=LogLevel.info)
             else:
-                out(f"Using configuration in '{config}'.", style=OutputLevels.info)
+                out(f"Using configuration in '{config}'.", style=LogLevel.info)
 
     error_msg = "Oh no! 💥 💔 💥"
     if required_version and required_version != __version__:
@@ -545,7 +545,7 @@ def main(
             out()
         out(
             error_msg if report.return_code else "All done! ✨ 🍰 ✨",
-            style=OutputLevels.success,
+            style=LogLevel.success,
         )
         if code is None:
             click.echo(str(report), err=True)
