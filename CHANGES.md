@@ -2,10 +2,11 @@
 
 ## Unreleased
 
+At long last, _Black_ is no longer a beta product! This is the first non-beta release
+and the first release covered by our new stability policy.
+
 ### Highlights
 
-- At long last, _Black_ is no longer a beta product! This is the first non-beta release
-  and the first release covered by our new stability policy.
 - **Remove Python 2 support** (#2740)
 - Introduce the `--preview` flag (#2752)
 
