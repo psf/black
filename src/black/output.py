@@ -35,13 +35,7 @@ def out(
 
 
 def err(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
-    if isinstance(styles, dict):
-        if not styles.get("fg"):
-            styles["fg"] = "red"
-    elif len(styles) == 0:
-        styles = LogLevel.error.value
-
-    _out(message, nl, **styles)
+    return out(message, nl, LogLevel.error, **styles)
 
 
 def ipynb_diff(a: str, b: str, a_name: str, b_name: str) -> str:
