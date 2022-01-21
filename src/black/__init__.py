@@ -251,10 +251,7 @@ def validate_regex(
     "--experimental-string-processing",
     is_flag=True,
     hidden=True,
-    help=(
-        "Experimental option that performs more normalization on string literals."
-        " Currently disabled because it leads to some crashes."
-    ),
+    help="(DEPRECATED and now included in --preview) Normalize string literals.",
 )
 @click.option(
     "--preview",
@@ -1330,7 +1327,10 @@ def assert_equivalent(src: str, dst: str, *, pass_num: int = 1) -> None:
         src_ast = parse_ast(src)
     except Exception as exc:
         raise AssertionError(
-            f"cannot use --safe with this file; failed to parse source file: {exc}"
+            f"cannot use --safe with this file; failed to parse source file AST: "
+            f"{exc}\n"
+            f"This could be caused by running Black with an older Python version "
+            f"that does not support new syntax used in your source file."
         ) from exc
 
     try:
