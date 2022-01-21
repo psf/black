@@ -30,6 +30,8 @@
 - Fix handling of standalone `match()` or `case()` when there is a trailing newline or a
   comment inside of the parentheses. (#2760)
 - Black now normalizes string prefix order (#2297)
+- Add configuration option (`python-cell-magics`) to format cells with custom magics in
+  Jupyter Notebooks (#2744)
 - Deprecate `--experimental-string-processing` and move the functionality under
   `--preview` (#2789)
 

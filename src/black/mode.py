@@ -4,6 +4,7 @@ Mostly around Python language feature support per version and Black configuratio
 chosen by the user.
 """
 
+from hashlib import md5
 import sys
 
 from dataclasses import dataclass, field
@@ -142,6 +143,7 @@ class Mode:
     is_ipynb: bool = False
     magic_trailing_comma: bool = True
     experimental_string_processing: bool = False
+    python_cell_magics: Set[str] = field(default_factory=set)
     preview: bool = False
 
     def __post_init__(self) -> None:
@@ -180,5 +182,6 @@ class Mode:
             str(int(self.magic_trailing_comma)),
             str(int(self.experimental_string_processing)),
             str(int(self.preview)),
+            md5((",".join(sorted(self.python_cell_magics))).encode()).hexdigest(),
         ]
         return ".".join(parts)
