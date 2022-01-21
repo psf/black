@@ -29,10 +29,13 @@ and the first release covered by our new stability policy.
 - Tuple unpacking on `return` and `yield` constructs now implies 3.8+ (#2700)
 - Unparenthesized tuples on annotated assignments (e.g
   `values: Tuple[int, ...] = 1, 2, 3`) now implies 3.8+ (#2708)
-- Speed-up the new backtracking parser about 4X in general (enabled when
-  `--target-version` is set to 3.10 and higher). (#2728)
 - Fix handling of standalone `match()` or `case()` when there is a trailing newline or a
   comment inside of the parentheses. (#2760)
+
+### Performance
+
+- Speed-up the new backtracking parser about 4X in general (enabled when
+  `--target-version` is set to 3.10 and higher). (#2728)
 
 ### Configuration
 
