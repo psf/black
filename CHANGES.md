@@ -30,6 +30,7 @@
 - Fix handling of standalone `match()` or `case()` when there is a trailing newline or a
   comment inside of the parentheses. (#2760)
 - Black now normalizes string prefix order (#2297)
+- Black now styles your output logs in the CLI using pretty colours ✨ (#2787)
 
 ### Packaging
 
