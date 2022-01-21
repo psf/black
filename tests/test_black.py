@@ -438,7 +438,7 @@ class BlackTestCase(BlackBaseTestCase):
         def err(msg: str, **kwargs: Any) -> None:
             err_lines.append(msg)
 
-        with patch("black.output._out", out), patch("black.output._err", err):
+        with patch("black.report.out", out), patch("black.report.err", err):
             report.done(Path("f1"), black.Changed.NO)
             self.assertEqual(len(out_lines), 1)
             self.assertEqual(len(err_lines), 0)
@@ -540,7 +540,7 @@ class BlackTestCase(BlackBaseTestCase):
         def err(msg: str, **kwargs: Any) -> None:
             err_lines.append(msg)
 
-        with patch("black.output._out", out), patch("black.output._err", err):
+        with patch("black.report.out", out), patch("black.report.err", err):
             report.done(Path("f1"), black.Changed.NO)
             self.assertEqual(len(out_lines), 0)
             self.assertEqual(len(err_lines), 0)
@@ -634,7 +634,7 @@ class BlackTestCase(BlackBaseTestCase):
         def err(msg: str, **kwargs: Any) -> None:
             err_lines.append(msg)
 
-        with patch("black.output._out", out), patch("black.output._err", err):
+        with patch("black.report.out", out), patch("black.report.err", err):
             report.done(Path("f1"), black.Changed.NO)
             self.assertEqual(len(out_lines), 0)
             self.assertEqual(len(err_lines), 0)
@@ -935,7 +935,8 @@ class BlackTestCase(BlackBaseTestCase):
         def err(msg: str, **kwargs: Any) -> None:
             err_lines.append(msg)
 
-        with patch("black.output._out", out), patch("black.output._err", err):
+        with patch("tests.util.out", out), patch("tests.util.err", err):
+            black.output.out("test test")
             with self.assertRaises(AssertionError):
                 self.assertFormatEqual("j = [1, 2, 3]", "j = [1, 2, 3,]")
 
