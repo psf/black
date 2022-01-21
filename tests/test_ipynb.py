@@ -1,5 +1,8 @@
+from dataclasses import replace
 import pathlib
 import re
+from contextlib import ExitStack as does_not_raise
+from typing import ContextManager
 
 from click.testing import CliRunner
 from black.handle_ipynb_magics import jupyter_dependencies_are_installed
@@ -63,9 +66,19 @@ def test_trailing_semicolon_noop() -> None:
         format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
-def test_cell_magic() -> None:
+@pytest.mark.parametrize(
+    "mode",
+    [
+        pytest.param(JUPYTER_MODE, id="default mode"),
+        pytest.param(
+            replace(JUPYTER_MODE, python_cell_magics={"cust1", "cust1"}),
+            id="custom cell magics mode",
+        ),
+    ],
+)
+def test_cell_magic(mode: Mode) -> None:
     src = "%%time\nfoo =bar"
-    result = format_cell(src, fast=True, mode=JUPYTER_MODE)
+    result = format_cell(src, fast=True, mode=mode)
     expected = "%%time\nfoo = bar"
     assert result == expected
 
@@ -76,6 +89,16 @@ def test_cell_magic_noop() -> None:
         format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
+@pytest.mark.parametrize(
+    "mode",
+    [
+        pytest.param(JUPYTER_MODE, id="default mode"),
+        pytest.param(
+            replace(JUPYTER_MODE, python_cell_magics={"cust1", "cust1"}),
+            id="custom cell magics mode",
+        ),
+    ],
+)
 @pytest.mark.parametrize(
     "src, expected",
     (
@@ -96,8 +119,8 @@ def test_cell_magic_noop() -> None:
         pytest.param("env =  %env", "env = %env", id="Assignment to magic"),
     ),
 )
-def test_magic(src: str, expected: str) -> None:
-    result = format_cell(src, fast=True, mode=JUPYTER_MODE)
+def test_magic(src: str, expected: str, mode: Mode) -> None:
+    result = format_cell(src, fast=True, mode=mode)
     assert result == expected
 
 
@@ -137,6 +160,41 @@ def test_cell_magic_with_magic() -> None:
     result = format_cell(src, fast=True, mode=JUPYTER_MODE)
     expected = "%%timeit -n1\nls = !ls"
     assert result == expected
+
+
+@pytest.mark.parametrize(
+    "mode, expected_output, expectation",
+    [
+        pytest.param(
+            JUPYTER_MODE,
+            "%%custom_python_magic -n1 -n2\nx=2",
+            pytest.raises(NothingChanged),
+            id="No change when cell magic not registered",
+        ),
+        pytest.param(
+            replace(JUPYTER_MODE, python_cell_magics={"cust1", "cust1"}),
+            "%%custom_python_magic -n1 -n2\nx=2",
+            pytest.raises(NothingChanged),
+            id="No change when other cell magics registered",
+        ),
+        pytest.param(
+            replace(JUPYTER_MODE, python_cell_magics={"custom_python_magic", "cust1"}),
+            "%%custom_python_magic -n1 -n2\nx = 2",
+            does_not_raise(),
+            id="Correctly change when cell magic registered",
+        ),
+    ],
+)
+def test_cell_magic_with_custom_python_magic(
+    mode: Mode, expected_output: str, expectation: ContextManager[object]
+) -> None:
+    with expectation:
+        result = format_cell(
+            "%%custom_python_magic -n1 -n2\nx=2",
+            fast=True,
+            mode=mode,
+        )
+        assert result == expected_output
 
 
 def test_cell_magic_nested() -> None:

@@ -36,6 +36,8 @@
 ### Configuration
 
 - Do not accept bare carriage return line endings in pyproject.toml (#2408)
+- Add configuration option (`python-cell-magics`) to format cells with custom magics in
+  Jupyter Notebooks (#2744)
 
 ### Output
 

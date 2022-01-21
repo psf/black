@@ -24,6 +24,7 @@ from typing import (
     MutableMapping,
     Optional,
     Pattern,
+    Sequence,
     Set,
     Sized,
     Tuple,
@@ -226,6 +227,16 @@ def validate_regex(
     ),
 )
 @click.option(
+    "--python-cell-magics",
+    multiple=True,
+    help=(
+        "When processing Jupyter Notebooks, add the given magic to the list"
+        f" of known python-magics ({', '.join(PYTHON_CELL_MAGICS)})."
+        " Useful for formatting cells with custom python magics."
+    ),
+    default=[],
+)
+@click.option(
     "-S",
     "--skip-string-normalization",
     is_flag=True,
@@ -401,6 +412,7 @@ def main(
     fast: bool,
     pyi: bool,
     ipynb: bool,
+    python_cell_magics: Sequence[str],
     skip_string_normalization: bool,
     skip_magic_trailing_comma: bool,
     experimental_string_processing: bool,
@@ -476,6 +488,7 @@ def main(
         magic_trailing_comma=not skip_magic_trailing_comma,
         experimental_string_processing=experimental_string_processing,
         preview=preview,
+        python_cell_magics=set(python_cell_magics),
     )
 
     if code is not None:
@@ -981,7 +994,7 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
     return dst_contents
 
 
-def validate_cell(src: str) -> None:
+def validate_cell(src: str, mode: Mode) -> None:
     """Check that cell does not already contain TransformerManager transformations,
     or non-Python cell magics, which might cause tokenizer_rt to break because of
     indentations.
@@ -1000,7 +1013,10 @@ def validate_cell(src: str) -> None:
     """
     if any(transformed_magic in src for transformed_magic in TRANSFORMED_MAGICS):
         raise NothingChanged
-    if src[:2] == "%%" and src.split()[0][2:] not in PYTHON_CELL_MAGICS:
+    if (
+        src[:2] == "%%"
+        and src.split()[0][2:] not in PYTHON_CELL_MAGICS | mode.python_cell_magics
+    ):
         raise NothingChanged
 
 
@@ -1020,7 +1036,7 @@ def format_cell(src: str, *, fast: bool, mode: Mode) -> str:
     could potentially be automagics or multi-line magics, which
     are currently not supported.
     """
-    validate_cell(src)
+    validate_cell(src, mode)
     src_without_trailing_semicolon, has_trailing_semicolon = remove_trailing_semicolon(
         src
     )
