@@ -5,6 +5,7 @@ The most common questions and issues users face are aggregated to this FAQ.
 ```{contents}
 :local:
 :backlinks: none
+:class: this-will-duplicate-information-and-it-is-still-useful-here
 ```
 
 ## Does Black have an API?
