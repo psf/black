@@ -28,8 +28,7 @@ from black.trans import (
     StringParenStripper,
     hug_power_op,
 )
-from black.mode import Mode
-from black.mode import Feature
+from black.mode import Mode, Feature, Preview
 
 from blib2to3.pytree import Node, Leaf
 from blib2to3.pgen2 import token
@@ -343,7 +342,7 @@ def transform_line(
         and not (line.inside_brackets and line.contains_standalone_comments())
     ):
         # Only apply basic string preprocessing, since lines shouldn't be split here.
-        if mode.experimental_string_processing:
+        if Preview.string_processing in mode:
             transformers = [string_merge, string_paren_strip, hug_power_op]
         else:
             transformers = [hug_power_op]
@@ -386,7 +385,7 @@ def transform_line(
         # via type ... https://github.com/mypyc/mypyc/issues/884
         rhs = type("rhs", (), {"__call__": _rhs})()
 
-        if mode.experimental_string_processing:
+        if Preview.string_processing in mode:
             if line.inside_brackets:
                 transformers = [
                     string_merge,

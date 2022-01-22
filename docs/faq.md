@@ -5,6 +5,7 @@ The most common questions and issues users face are aggregated to this FAQ.
 ```{contents}
 :local:
 :backlinks: none
+:class: this-will-duplicate-information-and-it-is-still-useful-here
 ```
 
 ## Does Black have an API?
@@ -33,7 +34,7 @@ still proposed on the issue tracker. See
 
 Starting in 2022, the formatting output will be stable for the releases made in the same
 year (other than unintentional bugs). It is possible to opt-in to the latest formatting
-styles, using the `--future` flag.
+styles, using the `--preview` flag.
 
 ## Why is my file not formatted?
 

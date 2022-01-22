@@ -1,5 +1,5 @@
 from dataclasses import replace
-from typing import Any, Iterator
+from typing import Any, Iterator, List
 from unittest.mock import patch
 
 import pytest
@@ -14,7 +14,7 @@ from tests.util import (
     read_data,
 )
 
-SIMPLE_CASES = [
+SIMPLE_CASES: List[str] = [
     "beginning_backslash",
     "bracketmatch",
     "class_blank_parentheses",
@@ -56,16 +56,7 @@ SIMPLE_CASES = [
     "tupleassign",
 ]
 
-EXPERIMENTAL_STRING_PROCESSING_CASES = [
-    "cantfit",
-    "comments7",
-    "long_strings",
-    "long_strings__edge_case",
-    "long_strings__regression",
-    "percent_precedence",
-]
-
-PY310_CASES = [
+PY310_CASES: List[str] = [
     "pattern_matching_simple",
     "pattern_matching_complex",
     "pattern_matching_extras",
@@ -74,7 +65,17 @@ PY310_CASES = [
     "parenthesized_context_managers",
 ]
 
-SOURCES = [
+PREVIEW_CASES: List[str] = [
+    # string processing
+    "cantfit",
+    "comments7",
+    "long_strings",
+    "long_strings__edge_case",
+    "long_strings__regression",
+    "percent_precedence",
+]
+
+SOURCES: List[str] = [
     "src/black/__init__.py",
     "src/black/__main__.py",
     "src/black/brackets.py",
@@ -135,9 +136,9 @@ def test_simple_format(filename: str) -> None:
     check_file(filename, DEFAULT_MODE)
 
 
-@pytest.mark.parametrize("filename", EXPERIMENTAL_STRING_PROCESSING_CASES)
-def test_experimental_format(filename: str) -> None:
-    check_file(filename, black.Mode(experimental_string_processing=True))
+@pytest.mark.parametrize("filename", PREVIEW_CASES)
+def test_preview_format(filename: str) -> None:
+    check_file(filename, black.Mode(preview=True))
 
 
 @pytest.mark.parametrize("filename", SOURCES)

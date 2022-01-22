@@ -21,6 +21,7 @@
 - Unparenthesized tuples on annotated assignments (e.g
   `values: Tuple[int, ...] = 1, 2, 3`) now implies 3.8+ (#2708)
 - Remove spaces around power operators if both operands are simple (#2726)
+- Text coloring added in the final statistics (#2712)
 - For stubs, one blank line between class attributes and methods is now kept if there's
   at least one pre-existing blank line (#2736)
 - Verbose mode also now describes how a project root was discovered and which paths will
@@ -30,10 +31,21 @@
 - Fix handling of standalone `match()` or `case()` when there is a trailing newline or a
   comment inside of the parentheses. (#2760)
 - Black now normalizes string prefix order (#2297)
+- Add configuration option (`python-cell-magics`) to format cells with custom magics in
+  Jupyter Notebooks (#2744)
+- Deprecate `--experimental-string-processing` and move the functionality under
+  `--preview` (#2789)
 
 ### Packaging
 
 - All upper version bounds on dependencies have been removed (#2718)
+- `typing-extensions` is no longer a required dependency in Python 3.10+ (#2772)
+- Set `click` lower bound to `8.0.0` (#2791)
+
+### Preview style
+
+- Introduce the `--preview` flag (#2752)
+- Add `--experimental-string-processing` to the preview style (#2789)
 
 ### Integrations
 
@@ -42,6 +54,8 @@
 ### Documentation
 
 - Change protocol in pip installation instructions to `https://` (#2761)
+- Change HTML theme to Furo primarily for its responsive design and mobile support
+  (#2793)
 
 ## 21.12b0
 
