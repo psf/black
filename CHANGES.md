@@ -21,6 +21,8 @@
 - Unparenthesized tuples on annotated assignments (e.g
   `values: Tuple[int, ...] = 1, 2, 3`) now implies 3.8+ (#2708)
 - Remove spaces around power operators if both operands are simple (#2726)
+- Allow setting custom cache directory on all platforms with environment variable
+  `BLACK_CACHE_DIR` (#2739).
 - Text coloring added in the final statistics (#2712)
 - For stubs, one blank line between class attributes and methods is now kept if there's
   at least one pre-existing blank line (#2736)

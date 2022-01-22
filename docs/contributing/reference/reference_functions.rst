@@ -96,6 +96,8 @@ Caching
 
 .. autofunction:: black.cache.filter_cached
 
+.. autofunction:: black.cache.get_cache_dir
+
 .. autofunction:: black.cache.get_cache_file
 
 .. autofunction:: black.cache.get_cache_info
