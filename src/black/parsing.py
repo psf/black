@@ -42,7 +42,6 @@ except ImportError:
         ast3 = ast
 
 
-PY310_HINT: Final = "Consider using --target-version py310 to parse Python 3.10 code."
 PY2_HINT: Final = "Python 2 support was removed in version 22.0."
 
 
