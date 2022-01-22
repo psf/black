@@ -533,7 +533,7 @@ class EmptyLineTracker:
             elif current_line.is_class or self.previous_line.is_class:
                 if current_line.depth:
                     newlines = 0
-                if current_line.is_stub_class and self.previous_line.is_stub_class:
+                elif current_line.is_stub_class and self.previous_line.is_stub_class:
                     # No blank line between classes with an empty body
                     newlines = 0
                 else:
