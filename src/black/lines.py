@@ -529,8 +529,10 @@ class EmptyLineTracker:
 
         if self.is_pyi:
             if self.previous_line.depth > current_line.depth:
-                newlines = 1
+                newlines = 0 if current_line.depth else 1
             elif current_line.is_class or self.previous_line.is_class:
+                if current_line.depth:
+                    newlines = 0
                 if current_line.is_stub_class and self.previous_line.is_stub_class:
                     # No blank line between classes with an empty body
                     newlines = 0
@@ -539,21 +541,18 @@ class EmptyLineTracker:
             elif (
                 current_line.is_def or current_line.is_decorator
             ) and not self.previous_line.is_def:
-                if not current_line.depth:
+                if current_line.depth:
+                    # In classes empty lines between attributes and methods should
+                    # be preserved.
+                    newlines = min(1, before)
+                else:
                     # Blank line between a block of functions (maybe with preceding
                     # decorators) and a block of non-functions
                     newlines = 1
-                else:
-                    # In classes empty lines between attributes and methods should
-                    # be preserved. The +1 offset is to negate the -1 done later as
-                    # this function is indented.
-                    newlines = min(2, before + 1)
             else:
                 newlines = 0
         else:
-            newlines = 2
-        if current_line.depth and newlines:
-            newlines -= 1
+            newlines = 1 if current_line.depth else 2
         return newlines, 0
 
 
