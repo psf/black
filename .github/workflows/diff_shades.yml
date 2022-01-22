@@ -1,0 +1,150 @@
+name: diff-shades
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["docs/**", "tests/**", "**.md", "**.rst"]
+
+  pull_request:
+    paths-ignore: ["docs/**", "tests/**", "**.md", "**.rst"]
+
+  workflow_dispatch:
+    inputs:
+      baseline:
+        description: >
+          The baseline revision. Pro-tip, use `.pypi` to use the latest version
+          on PyPI or `.XXX` to use a PR.
+        required: true
+        default: main
+      baseline-args:
+        description: "Custom Black arguments (eg. -l 79)"
+        required: false
+      target:
+        description: >
+          The target revision to compare against the baseline. Same tip applies here.
+        required: true
+      target-args:
+        description: "Custom Black arguments (eg. -S)"
+        required: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  analysis:
+    name: analysis / linux
+    runs-on: ubuntu-latest
+    env:
+      # Clang is less picky with the C code it's given than gcc (and may
+      # generate faster binaries too).
+      CC: clang-12
+
+    steps:
+      - name: Checkout this repository (full clone)
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v2
+
+      - name: Install diff-shades and support dependencies
+        run: |
+          python -m pip install pip --upgrade
+          python -m pip install https://github.com/ichard26/diff-shades/archive/stable.zip
+          python -m pip install click packaging urllib3
+          python -m pip install -r .github/mypyc-requirements.txt
+          # After checking out old revisions, this might not exist so we'll use a copy.
+          cat scripts/diff_shades_gha_helper.py > helper.py
+          git config user.name "diff-shades-gha"
+          git config user.email "diff-shades-gha@example.com"
+
+      - name: Calculate run configuration & metadata
+        id: config
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: >
+          python helper.py config ${{ github.event_name }}
+          ${{ github.event.inputs.baseline }} ${{ github.event.inputs.target }}
+          --baseline-args "${{ github.event.inputs.baseline-args }}"
+
+      - name: Attempt to use cached baseline analysis
+        id: baseline-cache
+        uses: actions/cache@v2.1.7
+        with:
+          path: ${{ steps.config.outputs.baseline-analysis }}
+          key: ${{ steps.config.outputs.baseline-cache-key }}
+
+      - name: Build and install baseline revision
+        if: steps.baseline-cache.outputs.cache-hit != 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: >
+          ${{ steps.config.outputs.baseline-setup-cmd }}
+          && python setup.py --use-mypyc bdist_wheel
+          && python -m pip install dist/*.whl && rm build dist -r
+
+      - name: Analyze baseline revision
+        if: steps.baseline-cache.outputs.cache-hit != 'true'
+        run: >
+          diff-shades analyze -v --work-dir projects-cache/
+          ${{ steps.config.outputs.baseline-analysis }} -- ${{ github.event.inputs.baseline-args }}
+
+      - name: Build and install target revision
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: >
+          ${{ steps.config.outputs.target-setup-cmd }}
+          && python setup.py --use-mypyc bdist_wheel
+          && python -m pip install dist/*.whl
+
+      - name: Analyze target revision
+        run: >
+          diff-shades analyze -v --work-dir projects-cache/
+          ${{ steps.config.outputs.target-analysis }} --repeat-projects-from
+          ${{ steps.config.outputs.baseline-analysis }} -- ${{ github.event.inputs.target-args }}
+
+      - name: Generate HTML diff report
+        run: >
+          diff-shades --dump-html diff.html compare --diff --quiet
+          ${{ steps.config.outputs.baseline-analysis }} ${{ steps.config.outputs.target-analysis }}
+
+      - name: Upload diff report
+        uses: actions/upload-artifact@v2
+        with:
+          name: diff.html
+          path: diff.html
+
+      - name: Upload baseline analysis
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ steps.config.outputs.baseline-analysis }}
+          path: ${{ steps.config.outputs.baseline-analysis }}
+
+      - name: Upload target analysis
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ steps.config.outputs.target-analysis }}
+          path: ${{ steps.config.outputs.target-analysis }}
+
+      - name: Generate summary file (PR only)
+        if: github.event_name == 'pull_request'
+        run: >
+          python helper.py comment-body
+          ${{ steps.config.outputs.baseline-analysis }} ${{ steps.config.outputs.target-analysis }}
+          ${{ steps.config.outputs.baseline-sha }} ${{ steps.config.outputs.target-sha }}
+          ${{ github.event.pull_request.number }}
+
+      - name: Upload summary file (PR only)
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v2
+        with:
+          name: .pr-comment.json
+          path: .pr-comment.json
+
+        # This is last so the diff-shades-comment workflow can still work even if we
+        # end up detecting failed files and failing the run.
+      - name: Check for failed files in both analyses
+        run: >
+          diff-shades show-failed --check --show-log ${{ steps.config.outputs.baseline-analysis }};
+          diff-shades show-failed --check --show-log ${{ steps.config.outputs.target-analysis }}

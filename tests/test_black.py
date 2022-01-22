@@ -100,6 +100,8 @@ class FakeContext(click.Context):
 
     def __init__(self) -> None:
         self.default_map: Dict[str, Any] = {}
+        # Dummy root, since most of the tests don't care about it
+        self.obj: Dict[str, Any] = {"root": PROJECT_ROOT}
 
 
 class FakeParameter(click.Parameter):
@@ -147,6 +149,11 @@ class BlackTestCase(BlackBaseTestCase):
         finally:
             os.unlink(tmp_file)
         self.assertFormatEqual(expected, actual)
+
+    def test_experimental_string_processing_warns(self) -> None:
+        self.assertWarns(
+            black.mode.Deprecated, black.Mode, experimental_string_processing=True
+        )
 
     def test_piping(self) -> None:
         source, expected = read_data("src/black/__init__", data=False)
@@ -340,7 +347,7 @@ class BlackTestCase(BlackBaseTestCase):
     @patch("black.dump_to_file", dump_to_stderr)
     def test_string_quotes(self) -> None:
         source, expected = read_data("string_quotes")
-        mode = black.Mode(experimental_string_processing=True)
+        mode = black.Mode(preview=True)
         assert_format(source, expected, mode)
         mode = replace(mode, string_normalization=False)
         not_normalized = fs(source, mode=mode)
@@ -724,24 +731,15 @@ class BlackTestCase(BlackBaseTestCase):
 
         straddling = "x + y"
         black.lib2to3_parse(straddling)
-        black.lib2to3_parse(straddling, {TargetVersion.PY27})
         black.lib2to3_parse(straddling, {TargetVersion.PY36})
-        black.lib2to3_parse(straddling, {TargetVersion.PY27, TargetVersion.PY36})
 
         py2_only = "print x"
-        black.lib2to3_parse(py2_only)
-        black.lib2to3_parse(py2_only, {TargetVersion.PY27})
         with self.assertRaises(black.InvalidInput):
             black.lib2to3_parse(py2_only, {TargetVersion.PY36})
-        with self.assertRaises(black.InvalidInput):
-            black.lib2to3_parse(py2_only, {TargetVersion.PY27, TargetVersion.PY36})
 
         py3_only = "exec(x, end=y)"
         black.lib2to3_parse(py3_only)
-        with self.assertRaises(black.InvalidInput):
-            black.lib2to3_parse(py3_only, {TargetVersion.PY27})
         black.lib2to3_parse(py3_only, {TargetVersion.PY36})
-        black.lib2to3_parse(py3_only, {TargetVersion.PY27, TargetVersion.PY36})
 
     def test_get_features_used_decorator(self) -> None:
         # Test the feature detection of new decorator syntax
@@ -947,8 +945,8 @@ class BlackTestCase(BlackBaseTestCase):
                 self.assertFormatEqual("j = [1, 2, 3]", "j = [1, 2, 3,]")
 
         out_str = "".join(out_lines)
-        self.assertTrue("Expected tree:" in out_str)
-        self.assertTrue("Actual tree:" in out_str)
+        self.assertIn("Expected tree:", out_str)
+        self.assertIn("Actual tree:", out_str)
         self.assertEqual("".join(err_lines), "")
 
     @event_loop()
@@ -1324,6 +1322,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(config["color"], True)
         self.assertEqual(config["line_length"], 79)
         self.assertEqual(config["target_version"], ["py36", "py37", "py38"])
+        self.assertEqual(config["python_cell_magics"], ["custom1", "custom2"])
         self.assertEqual(config["exclude"], r"\.pyi?$")
         self.assertEqual(config["include"], r"\.py?$")
 
@@ -1359,10 +1358,17 @@ class BlackTestCase(BlackBaseTestCase):
             src_python.touch()
 
             self.assertEqual(
-                black.find_project_root((src_dir, test_dir)), root.resolve()
+                black.find_project_root((src_dir, test_dir)),
+                (root.resolve(), "pyproject.toml"),
             )
-            self.assertEqual(black.find_project_root((src_dir,)), src_dir.resolve())
-            self.assertEqual(black.find_project_root((src_python,)), src_dir.resolve())
+            self.assertEqual(
+                black.find_project_root((src_dir,)),
+                (src_dir.resolve(), "pyproject.toml"),
+            )
+            self.assertEqual(
+                black.find_project_root((src_python,)),
+                (src_dir.resolve(), "pyproject.toml"),
+            )
 
     @patch(
         "black.files.find_user_pyproject_toml",
@@ -1435,27 +1441,6 @@ class BlackTestCase(BlackBaseTestCase):
         actual = result.output
         actual = diff_header.sub(DETERMINISTIC_HEADER, actual)
         self.assertEqual(actual, expected)
-
-    @pytest.mark.python2
-    def test_docstring_reformat_for_py27(self) -> None:
-        """
-        Check that stripping trailing whitespace from Python 2 docstrings
-        doesn't trigger a "not equivalent to source" error
-        """
-        source = (
-            b'def foo():\r\n    """Testing\r\n    Testing """\r\n    print "Foo"\r\n'
-        )
-        expected = 'def foo():\n    """Testing\n    Testing"""\n    print "Foo"\n'
-
-        result = BlackRunner().invoke(
-            black.main,
-            ["-", "-q", "--target-version=py27"],
-            input=BytesIO(source),
-        )
-
-        self.assertEqual(result.exit_code, 0)
-        actual = result.stdout
-        self.assertFormatEqual(actual, expected)
 
     @staticmethod
     def compare_results(
@@ -1813,6 +1798,7 @@ def assert_collected_sources(
     src: Sequence[Union[str, Path]],
     expected: Sequence[Union[str, Path]],
     *,
+    ctx: Optional[FakeContext] = None,
     exclude: Optional[str] = None,
     include: Optional[str] = None,
     extend_exclude: Optional[str] = None,
@@ -1828,7 +1814,7 @@ def assert_collected_sources(
     )
     gs_force_exclude = None if force_exclude is None else compile_pattern(force_exclude)
     collected = black.get_sources(
-        ctx=FakeContext(),
+        ctx=ctx or FakeContext(),
         src=gs_src,
         quiet=False,
         verbose=False,
@@ -1864,9 +1850,11 @@ class TestFileCollection:
             base / "b/.definitely_exclude/a.pyi",
         ]
         src = [base / "b/"]
-        assert_collected_sources(src, expected, extend_exclude=r"/exclude/")
+        ctx = FakeContext()
+        ctx.obj["root"] = base
+        assert_collected_sources(src, expected, ctx=ctx, extend_exclude=r"/exclude/")
 
-    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
+    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_exclude_for_issue_1572(self) -> None:
         # Exclude shouldn't touch files that were explicitly given to Black through the
         # CLI. Exclude is supposed to only apply to the recursive discovery of files.
@@ -2049,13 +2037,13 @@ class TestFileCollection:
         child.is_symlink.assert_called()
         assert child.is_symlink.call_count == 2
 
-    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
+    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_get_sources_with_stdin(self) -> None:
         src = ["-"]
         expected = ["-"]
         assert_collected_sources(src, expected, include="", exclude=r"/exclude/|a\.py")
 
-    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
+    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_get_sources_with_stdin_filename(self) -> None:
         src = ["-"]
         stdin_filename = str(THIS_DIR / "data/collections.py")
@@ -2067,7 +2055,7 @@ class TestFileCollection:
             stdin_filename=stdin_filename,
         )
 
-    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
+    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_get_sources_with_stdin_filename_and_exclude(self) -> None:
         # Exclude shouldn't exclude stdin_filename since it is mimicking the
         # file being passed directly. This is the same as
@@ -2083,7 +2071,7 @@ class TestFileCollection:
             stdin_filename=stdin_filename,
         )
 
-    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
+    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_get_sources_with_stdin_filename_and_extend_exclude(self) -> None:
         # Extend exclude shouldn't exclude stdin_filename since it is mimicking the
         # file being passed directly. This is the same as
@@ -2099,7 +2087,7 @@ class TestFileCollection:
             stdin_filename=stdin_filename,
         )
 
-    @patch("black.find_project_root", lambda *args: THIS_DIR.resolve())
+    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_get_sources_with_stdin_filename_and_force_exclude(self) -> None:
         # Force exclude should exclude the file when passing it through
         # stdin_filename
@@ -2111,36 +2099,6 @@ class TestFileCollection:
             force_exclude=r"/exclude/|a\.py",
             stdin_filename=stdin_filename,
         )
-
-
-@pytest.mark.python2
-@pytest.mark.parametrize("explicit", [True, False], ids=["explicit", "autodetection"])
-def test_python_2_deprecation_with_target_version(explicit: bool) -> None:
-    args = [
-        "--config",
-        str(THIS_DIR / "empty.toml"),
-        str(DATA_DIR / "python2.py"),
-        "--check",
-    ]
-    if explicit:
-        args.append("--target-version=py27")
-    with cache_dir():
-        result = BlackRunner().invoke(black.main, args)
-    assert "DEPRECATION: Python 2 support will be removed" in result.stderr
-
-
-@pytest.mark.python2
-def test_python_2_deprecation_autodetection_extended() -> None:
-    # this test has a similar construction to test_get_features_used_decorator
-    python2, non_python2 = read_data("python2_detection")
-    for python2_case in python2.split("###"):
-        node = black.lib2to3_parse(python2_case)
-        assert black.detect_target_versions(node) == {TargetVersion.PY27}, python2_case
-    for non_python2_case in non_python2.split("###"):
-        node = black.lib2to3_parse(non_python2_case)
-        assert black.detect_target_versions(node) != {
-            TargetVersion.PY27
-        }, non_python2_case
 
 
 try:

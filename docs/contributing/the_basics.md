@@ -55,7 +55,9 @@ go back and workout what to add to the `CHANGES.md` for each release.
 
 If a change would affect the advertised code style, please modify the documentation (The
 _Black_ code style) to reflect that change. Patches that fix unintended bugs in
-formatting don't need to be mentioned separately though.
+formatting don't need to be mentioned separately though. If the change is implemented
+with the `--preview` flag, please include the change in the future style document
+instead and write the changelog entry under a dedicated "Preview changes" heading.
 
 ### Docs Testing
 

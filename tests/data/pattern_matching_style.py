@@ -6,9 +6,51 @@ match something:
     ): print(1)
     case c(
         very_complex=True,
-        perhaps_even_loooooooooooooooooooooooooooooooooooooong=-1
+        perhaps_even_loooooooooooooooooooooooooooooooooooooong=-1,
     ): print(2)
     case a: pass
+
+match(
+    arg # comment
+)
+
+match(
+)
+
+match(
+
+
+)
+
+case(
+    arg # comment
+)
+
+case(
+)
+
+case(
+
+
+)
+
+
+re.match(
+    something # fast
+)
+re.match(
+
+
+
+)
+match match(
+
+
+):
+    case case(
+        arg, # comment
+    ):
+        pass
 
 # output
 
@@ -20,8 +62,30 @@ match something:
     ):
         print(1)
     case c(
-        very_complex=True, perhaps_even_loooooooooooooooooooooooooooooooooooooong=-1
+        very_complex=True,
+        perhaps_even_loooooooooooooooooooooooooooooooooooooong=-1,
     ):
         print(2)
     case a:
+        pass
+
+match(arg)  # comment
+
+match()
+
+match()
+
+case(arg)  # comment
+
+case()
+
+case()
+
+
+re.match(something)  # fast
+re.match()
+match match():
+    case case(
+        arg,  # comment
+    ):
         pass

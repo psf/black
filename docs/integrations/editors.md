@@ -78,36 +78,51 @@ Options include the following:
 
 ## Wing IDE
 
-Wing supports black via the OS Commands tool, as explained in the Wing documentation on
-[pep8 formatting](https://wingware.com/doc/edit/pep8). The detailed procedure is:
+Wing IDE supports `black` via **Preference Settings** for system wide settings and
+**Project Properties** for per-project or workspace specific settings, as explained in
+the Wing documentation on
+[Auto-Reformatting](https://wingware.com/doc/edit/auto-reformatting). The detailed
+procedure is:
 
-1. Install `black`.
+### Prerequistes
 
-   ```console
-   $ pip install black
-   ```
+- Wing IDE version 8.0+
 
-1. Make sure it runs from the command line, e.g.
+- Install `black`.
 
-   ```console
-   $ black --help
-   ```
+  ```console
+  $ pip install black
+  ```
 
-1. In Wing IDE, activate the **OS Commands** panel and define the command **black** to
-   execute black on the currently selected file:
+- Make sure it runs from the command line, e.g.
 
-   - Use the Tools -> OS Commands menu selection
-   - click on **+** in **OS Commands** -> New: Command line..
-     - Title: black
-     - Command Line: black %s
-     - I/O Encoding: Use Default
-     - Key Binding: F1
-     - [x] Raise OS Commands when executed
-     - [x] Auto-save files before execution
-     - [x] Line mode
+  ```console
+  $ black --help
+  ```
 
-1. Select a file in the editor and press **F1** , or whatever key binding you selected
-   in step 3, to reformat the file.
+### Preference Settings
+
+If you want Wing IDE to always reformat with `black` for every project, follow these
+steps:
+
+1. In menubar navigate to `Edit -> Preferences -> Editor -> Reformatting`.
+
+1. Set **Auto-Reformat** from `disable` (default) to `Line after edit` or
+   `Whole files before save`.
+
+1. Set **Reformatter** from `PEP8` (default) to `Black`.
+
+### Project Properties
+
+If you want to just reformat for a specific project and not intervene with Wing IDE
+global setting, follow these steps:
+
+1. In menubar navigate to `Project -> Project Properties -> Options`.
+
+1. Set **Auto-Reformat** from `Use Preferences setting` (default) to `Line after edit`
+   or `Whole files before save`.
+
+1. Set **Reformatter** from `Use Preferences setting` (default) to `Black`.
 
 ## Vim
 

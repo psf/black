@@ -23,8 +23,7 @@ from black.strings import get_string_prefix, fix_docstring
 from black.strings import normalize_string_prefix, normalize_string_quotes
 from black.trans import Transformer, CannotTransform, StringMerger
 from black.trans import StringSplitter, StringParenWrapper, StringParenStripper
-from black.mode import Mode
-from black.mode import Feature
+from black.mode import Mode, Feature, Preview
 
 from blib2to3.pytree import Node, Leaf
 from blib2to3.pgen2 import token
@@ -48,9 +47,8 @@ class LineGenerator(Visitor[Line]):
     in ways that will no longer stringify to valid Python code on the tree.
     """
 
-    def __init__(self, mode: Mode, remove_u_prefix: bool = False) -> None:
+    def __init__(self, mode: Mode) -> None:
         self.mode = mode
-        self.remove_u_prefix = remove_u_prefix
         self.current_line: Line
         self.__post_init__()
 
@@ -92,9 +90,7 @@ class LineGenerator(Visitor[Line]):
 
             normalize_prefix(node, inside_brackets=any_open_brackets)
             if self.mode.string_normalization and node.type == token.STRING:
-                node.value = normalize_string_prefix(
-                    node.value, remove_u_prefix=self.remove_u_prefix
-                )
+                node.value = normalize_string_prefix(node.value)
                 node.value = normalize_string_quotes(node.value)
             if node.type == token.NUMBER:
                 normalize_numeric_literal(node)
@@ -236,7 +232,7 @@ class LineGenerator(Visitor[Line]):
         if is_docstring(leaf) and "\\\n" not in leaf.value:
             # We're ignoring docstrings with backslash newline escapes because changing
             # indentation of those changes the AST representation of the code.
-            docstring = normalize_string_prefix(leaf.value, self.remove_u_prefix)
+            docstring = normalize_string_prefix(leaf.value)
             prefix = get_string_prefix(docstring)
             docstring = docstring[len(prefix) :]  # Remove the prefix
             quote_char = docstring[0]
@@ -341,7 +337,7 @@ def transform_line(
         and not (line.inside_brackets and line.contains_standalone_comments())
     ):
         # Only apply basic string preprocessing, since lines shouldn't be split here.
-        if mode.experimental_string_processing:
+        if Preview.string_processing in mode:
             transformers = [string_merge, string_paren_strip]
         else:
             transformers = []
@@ -384,7 +380,7 @@ def transform_line(
         # via type ... https://github.com/mypyc/mypyc/issues/884
         rhs = type("rhs", (), {"__call__": _rhs})()
 
-        if mode.experimental_string_processing:
+        if Preview.string_processing in mode:
             if line.inside_brackets:
                 transformers = [
                     string_merge,
