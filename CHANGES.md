@@ -20,6 +20,8 @@
 - Tuple unpacking on `return` and `yield` constructs now implies 3.8+ (#2700)
 - Unparenthesized tuples on annotated assignments (e.g
   `values: Tuple[int, ...] = 1, 2, 3`) now implies 3.8+ (#2708)
+- Allow setting custom cache directory on all platforms with environment variable
+  `BLACK_CACHE_DIR` (#2739).
 - Text coloring added in the final statistics (#2712)
 - For stubs, one blank line between class attributes and methods is now kept if there's
   at least one pre-existing blank line (#2736)
@@ -30,12 +32,23 @@
 - Fix handling of standalone `match()` or `case()` when there is a trailing newline or a
   comment inside of the parentheses. (#2760)
 - Black now normalizes string prefix order (#2297)
+- Add configuration option (`python-cell-magics`) to format cells with custom magics in
+  Jupyter Notebooks (#2744)
+- Deprecate `--experimental-string-processing` and move the functionality under
+  `--preview` (#2789)
 - Enable Python 3.10+ by default, without any extra need to specify
   `--target-version=py310`. (#2758)
 
 ### Packaging
 
 - All upper version bounds on dependencies have been removed (#2718)
+- `typing-extensions` is no longer a required dependency in Python 3.10+ (#2772)
+- Set `click` lower bound to `8.0.0` (#2791)
+
+### Preview style
+
+- Introduce the `--preview` flag (#2752)
+- Add `--experimental-string-processing` to the preview style (#2789)
 
 ### Integrations
 
@@ -44,6 +57,8 @@
 ### Documentation
 
 - Change protocol in pip installation instructions to `https://` (#2761)
+- Change HTML theme to Furo primarily for its responsive design and mobile support
+  (#2793)
 
 ## 21.12b0
 

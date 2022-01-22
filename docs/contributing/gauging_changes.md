@@ -74,7 +74,7 @@ to further information. If there's a pre-existing diff-shades comment, it'll be 
 instead the next time the workflow is triggered on the same PR.
 
 The workflow uploads 3-4 artifacts upon completion: the two generated analyses (they
-have the .json file extension), `diff.html`, and `.pr-comment-body.md` if triggered by a
+have the .json file extension), `diff.html`, and `.pr-comment.json` if triggered by a
 PR. The last one is downloaded by the `diff-shades-comment` workflow and shouldn't be
 downloaded locally. `diff.html` comes in handy for push-based or manually triggered
 runs. And the analyses exist just in case you want to do further analysis using the

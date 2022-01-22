@@ -210,7 +210,7 @@ def stringify_ast(node: Union[ast.AST, ast3.AST], depth: int = 0) -> Iterator[st
                 break
 
         try:
-            value = getattr(node, field)
+            value: object = getattr(node, field)
         except AttributeError:
             continue
 
@@ -241,6 +241,7 @@ def stringify_ast(node: Union[ast.AST, ast3.AST], depth: int = 0) -> Iterator[st
             yield from stringify_ast(value, depth + 2)
 
         else:
+            normalized: object
             # Constant strings may be indented across newlines, if they are
             # docstrings; fold spaces after newlines when comparing. Similarly,
             # trailing and leading space may be removed.
