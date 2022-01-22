@@ -36,6 +36,8 @@
   Jupyter Notebooks (#2744)
 - Deprecate `--experimental-string-processing` and move the functionality under
   `--preview` (#2789)
+- Enable Python 3.10+ by default, without any extra need to specify
+  `--target-version=py310`. (#2758)
 
 ### Packaging
 
