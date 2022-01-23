@@ -11,7 +11,7 @@
  True
  False
  1
-@@ -29,63 +29,84 @@
+@@ -29,91 +29,110 @@
  ~great
  +value
  -1
@@ -118,8 +118,11 @@
  call(**self.screen_kwargs)
  call(b, **self.screen_kwargs)
  lukasz.langa.pl
-@@ -94,26 +115,24 @@
- 1.0 .real
+ call.me(maybe)
+-1 .real
+-1.0 .real
++(1).real
++(1.0).real
  ....__class__
  list[str]
  dict[str, int]

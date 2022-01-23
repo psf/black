@@ -382,8 +382,8 @@ call(**self.screen_kwargs)
 call(b, **self.screen_kwargs)
 lukasz.langa.pl
 call.me(maybe)
-1 .real
-1.0 .real
+(1).real
+(1.0).real
 ....__class__
 list[str]
 dict[str, int]
