@@ -197,6 +197,14 @@ class LineGenerator(Visitor[Line]):
             yield from self.line()
             yield from self.visit(child)
 
+    def visit_power(self, node: Node) -> Iterator[Line]:
+        for idx, leaf in enumerate(node.children[:-1]):
+            next_leaf = node.children[idx + 1]
+            if leaf.type == token.NUMBER and next_leaf.type == syms.trailer:
+                wrap_in_parentheses(node, leaf)
+
+        yield from self.visit_default(node)
+
     def visit_SEMI(self, leaf: Leaf) -> Iterator[Line]:
         """Remove a semicolon and put the other statement on a separate line."""
         yield from self.line()
