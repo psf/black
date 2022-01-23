@@ -64,16 +64,13 @@ Further information can be found in our docs:
 
 - [Usage and Configuration](https://black.readthedocs.io/en/stable/usage_and_configuration/index.html)
 
-### NOTE: This is a beta product
-
 _Black_ is already [successfully used](https://github.com/psf/black#used-by) by many
-projects, small and big. Black has a comprehensive test suite, with efficient parallel
-tests, and our own auto formatting and parallel Continuous Integration runner. However,
-_Black_ is still beta. Things will probably be wonky for a while. This is made explicit
-by the "Beta" trove classifier, as well as by the "b" in the version number. What this
-means for you is that **until the formatter becomes stable, you should expect some
-formatting to change in the future**. That being said, no drastic stylistic changes are
-planned, mostly responses to bug reports.
+projects, small and big. _Black_ has a comprehensive test suite, with efficient parallel
+tests, and our own auto formatting and parallel Continuous Integration runner. Now that
+we have become stable, you should not expect large formatting to changes in the future.
+Stylistic changes will mostly be mostly responses to bug reports and new syntax in the
+cpython runtime. For more infomation please refer to the
+[The Black Code Style](docs/the_black_code_style/index.rst).
 
 Also, as a safety measure which slows down processing, _Black_ will check that the
 reformatted code still produces a valid AST that is effectively equivalent to the

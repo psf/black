@@ -18,16 +18,14 @@ can focus on the content instead.
 
 Try it out now using the `Black Playground <https://black.vercel.app>`_.
 
-.. admonition:: Note - this is a beta product
+.. admonition:: Note - Black is now stable!
 
-   *Black* is already `successfully used <https://github.com/psf/black#used-by>`_ by
+   *Black* is `successfully used <https://github.com/psf/black#used-by>`_ by
    many projects, small and big. *Black* has a comprehensive test suite, with efficient
-   parallel tests, our own auto  formatting and parallel Continuous Integration runner.
-   However, *Black* is still beta. Things will probably be wonky for a while. This is
-   made explicit by the "Beta" trove classifier, as well as by the "b" in the version
-   number. What this means for you is that **until the formatter becomes stable, you
-   should expect some formatting to change in the future**. That being said, no drastic
-   stylistic changes are planned, mostly responses to bug reports.
+   parallel tests, our own auto formatting and parallel Continuous Integration runner.
+   Now that we have become stable, you should not expect large formatting to changes in
+   the future. Stylistic changes will mostly be mostly responses to bug reports and new
+   syntax in the cpython runtime.
 
    Also, as a safety measure which slows down processing, *Black* will check that the
    reformatted code still produces a valid AST that is effectively equivalent to the
