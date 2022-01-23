@@ -53,6 +53,7 @@ SIMPLE_CASES: List[str] = [
     "string_prefixes",
     "tricky_unicode_symbols",
     "tupleassign",
+    "use_braces_in_int_method_calls",
 ]
 
 PY310_CASES: List[str] = [
