@@ -42,6 +42,8 @@ and the first release covered by our new stability policy.
 - Do not accept bare carriage return line endings in pyproject.toml (#2408)
 - Add configuration option (`python-cell-magics`) to format cells with custom magics in
   Jupyter Notebooks (#2744)
+- Allow setting custom cache directory on all platforms with environment variable
+  `BLACK_CACHE_DIR` (#2739).
 
 ### Output
 
@@ -58,6 +60,7 @@ and the first release covered by our new stability policy.
 
 - All upper version bounds on dependencies have been removed (#2718)
 - `typing-extensions` is no longer a required dependency in Python 3.10+ (#2772)
+- Set `click` lower bound to `8.0.0` (#2791)
 
 ### Integrations
 
@@ -66,6 +69,8 @@ and the first release covered by our new stability policy.
 ### Documentation
 
 - Change protocol in pip installation instructions to `https://` (#2761)
+- Change HTML theme to Furo primarily for its responsive design and mobile support
+  (#2793)
 
 ## 21.12b0
 

@@ -40,7 +40,7 @@ import black
 import black.files
 from black import Feature, TargetVersion
 from black import re_compile_maybe_verbose as compile_pattern
-from black.cache import get_cache_file
+from black.cache import get_cache_dir, get_cache_file
 from black.debug import DebugVisitor
 from black.output import color_diff, diff
 from black.report import Report
@@ -1601,6 +1601,33 @@ class BlackTestCase(BlackBaseTestCase):
 
 
 class TestCaching:
+    def test_get_cache_dir(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        # Create multiple cache directories
+        workspace1 = tmp_path / "ws1"
+        workspace1.mkdir()
+        workspace2 = tmp_path / "ws2"
+        workspace2.mkdir()
+
+        # Force user_cache_dir to use the temporary directory for easier assertions
+        patch_user_cache_dir = patch(
+            target="black.cache.user_cache_dir",
+            autospec=True,
+            return_value=str(workspace1),
+        )
+
+        # If BLACK_CACHE_DIR is not set, use user_cache_dir
+        monkeypatch.delenv("BLACK_CACHE_DIR", raising=False)
+        with patch_user_cache_dir:
+            assert get_cache_dir() == workspace1
+
+        # If it is set, use the path provided in the env var.
+        monkeypatch.setenv("BLACK_CACHE_DIR", str(workspace2))
+        assert get_cache_dir() == workspace2
+
     def test_cache_broken_file(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir() as workspace:
