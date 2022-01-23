@@ -68,8 +68,8 @@ _Black_ is already [successfully used](https://github.com/psf/black#used-by) by 
 projects, small and big. _Black_ has a comprehensive test suite, with efficient parallel
 tests, and our own auto formatting and parallel Continuous Integration runner. Now that
 we have become stable, you should not expect large formatting to changes in the future.
-Stylistic changes will mostly be mostly responses to bug reports and new syntax in the
-cpython runtime. For more infomation please refer to the
+Stylistic changes will mostly be responses to bug reports and support for new Python
+syntax. For more information please refer to the
 [The Black Code Style](docs/the_black_code_style/index.rst).
 
 Also, as a safety measure which slows down processing, _Black_ will check that the

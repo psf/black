@@ -24,8 +24,8 @@ Try it out now using the `Black Playground <https://black.vercel.app>`_.
    many projects, small and big. *Black* has a comprehensive test suite, with efficient
    parallel tests, our own auto formatting and parallel Continuous Integration runner.
    Now that we have become stable, you should not expect large formatting to changes in
-   the future. Stylistic changes will mostly be mostly responses to bug reports and new
-   syntax in the cpython runtime.
+   the future. Stylistic changes will mostly be responses to bug reports and support for new Python
+   syntax.
 
    Also, as a safety measure which slows down processing, *Black* will check that the
    reformatted code still produces a valid AST that is effectively equivalent to the
