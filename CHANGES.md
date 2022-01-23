@@ -36,6 +36,9 @@ and the first release covered by our new stability policy.
 
 - Speed-up the new backtracking parser about 4X in general (enabled when
   `--target-version` is set to 3.10 and higher). (#2728)
+- _Black_ is now compiled with [mypyc](https://github.com/mypyc/mypyc) for an overall 2x
+  speed-up. 64-bit Windows, MacOS, and Linux (not including musl) are supported. (#1009,
+  #2431)
 
 ### Configuration
 
