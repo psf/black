@@ -7,6 +7,9 @@ if 10 .real: ...
 for number in range(1, 10):
     if number.imag: ...
 
+exclusive_complex = 10j.imag
+
+hex_decimal = 0x10.real
 
 # output
 count = (5).bit_count()
@@ -20,5 +23,8 @@ for number in range(1, 10):
     if number.imag:
         ...
 
+exclusive_complex = 10j .imag
+
+hex_decimal = 0x10 .real
 
 
