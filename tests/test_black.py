@@ -972,10 +972,15 @@ class BlackTestCase(BlackBaseTestCase):
             # Multi file command.
             self.invokeBlack([str(src1), str(src2), "--diff", "--check"], exit_code=1)
 
-    def test_no_files(self) -> None:
+    def test_no_src_fails(self) -> None:
         with cache_dir():
             # Without an argument, black exits with an error.
             self.invokeBlack([], exit_code=1)
+
+    def test_src_and_code_fails(self) -> None:
+        with cache_dir():
+            # Without an argument, black exits with an error.
+            self.invokeBlack([".", "-c", "0"], exit_code=1)
 
     def test_broken_symlink(self) -> None:
         with cache_dir() as workspace:
