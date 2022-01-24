@@ -38,6 +38,7 @@
   `--preview` (#2789)
 - Enable Python 3.10+ by default, without any extra need to specify
   `--target-version=py310`. (#2758)
+- Add `--colour/--no-colour` alias to `--color/--no-color` (#2803)
 
 ### Packaging
 

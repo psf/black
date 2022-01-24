@@ -278,6 +278,7 @@ def validate_regex(
 )
 @click.option(
     "--color/--no-color",
+    "--colour/--no-colour",
     is_flag=True,
     help="Show colored diff. Only applies when `--diff` is given.",
 )
