@@ -974,8 +974,8 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_no_files(self) -> None:
         with cache_dir():
-            # Without an argument, black exits with error code 0.
-            self.invokeBlack([])
+            # Without an argument, black exits with an error.
+            self.invokeBlack([], exit_code=1)
 
     def test_broken_symlink(self) -> None:
         with cache_dir() as workspace:
@@ -1229,12 +1229,14 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_required_version_matches_version(self) -> None:
         self.invokeBlack(
-            ["--required-version", black.__version__], exit_code=0, ignore_config=True
+            ["--required-version", black.__version__, "-c", "0"],
+            exit_code=0,
+            ignore_config=True,
         )
 
     def test_required_version_does_not_match_version(self) -> None:
         self.invokeBlack(
-            ["--required-version", "20.99b"], exit_code=1, ignore_config=True
+            ["--required-version", "20.99b", "-c", "0"], exit_code=1, ignore_config=True
         )
 
     def test_preserves_line_endings(self) -> None:
