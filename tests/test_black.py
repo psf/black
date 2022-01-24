@@ -974,12 +974,10 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_no_src_fails(self) -> None:
         with cache_dir():
-            # Without an argument, black exits with an error.
             self.invokeBlack([], exit_code=1)
 
     def test_src_and_code_fails(self) -> None:
         with cache_dir():
-            # Without an argument, black exits with an error.
             self.invokeBlack([".", "-c", "0"], exit_code=1)
 
     def test_broken_symlink(self) -> None:
@@ -1240,9 +1238,12 @@ class BlackTestCase(BlackBaseTestCase):
         )
 
     def test_required_version_does_not_match_version(self) -> None:
-        self.invokeBlack(
-            ["--required-version", "20.99b", "-c", "0"], exit_code=1, ignore_config=True
+        result = BlackRunner().invoke(
+            black.main,
+            ["--required-version", "20.99b", "-c", "0"],
         )
+        self.assertEqual(result.exit_code, 1)
+        self.assertIn("required version", result.stderr)
 
     def test_preserves_line_endings(self) -> None:
         with TemporaryDirectory() as workspace:
