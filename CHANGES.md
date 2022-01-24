@@ -38,6 +38,7 @@
   `--preview` (#2789)
 - Enable Python 3.10+ by default, without any extra need to specify
   `--target-version=py310`. (#2758)
+- Make passing `SRC` or `--code` mandatory and mutually exclusive (#2804)
 
 ### Packaging
 
