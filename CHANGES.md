@@ -38,6 +38,7 @@
   `--preview` (#2789)
 - Enable Python 3.10+ by default, without any extra need to specify
   `--target-version=py310`. (#2758)
+- Use parenthesis on method access on number integerals (float and int) (#2799)
 
 ### Packaging
 
