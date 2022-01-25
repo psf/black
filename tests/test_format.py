@@ -262,4 +262,4 @@ def test_power_op_newline() -> None:
     # requires line_length=0
     source, expected = read_data("power_op_newline")
     # fast=True because this exposes a different stability bug
-    assert_format(source, expected, mode=black.Mode(line_length=0), fast=True)
+    assert_format(source, expected, mode=black.Mode(line_length=0))
