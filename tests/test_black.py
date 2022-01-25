@@ -228,45 +228,6 @@ class BlackTestCase(BlackBaseTestCase):
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, black.FileMode())
 
-    @unittest.expectedFailure
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_trailing_comma_optional_parens_stability1(self) -> None:
-        source, _expected = read_data("trailing_comma_optional_parens1")
-        actual = fs(source)
-        black.assert_stable(source, actual, DEFAULT_MODE)
-
-    @unittest.expectedFailure
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_trailing_comma_optional_parens_stability2(self) -> None:
-        source, _expected = read_data("trailing_comma_optional_parens2")
-        actual = fs(source)
-        black.assert_stable(source, actual, DEFAULT_MODE)
-
-    @unittest.expectedFailure
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_trailing_comma_optional_parens_stability3(self) -> None:
-        source, _expected = read_data("trailing_comma_optional_parens3")
-        actual = fs(source)
-        black.assert_stable(source, actual, DEFAULT_MODE)
-
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_trailing_comma_optional_parens_stability1_pass2(self) -> None:
-        source, _expected = read_data("trailing_comma_optional_parens1")
-        actual = fs(fs(source))  # this is what `format_file_contents` does with --safe
-        black.assert_stable(source, actual, DEFAULT_MODE)
-
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_trailing_comma_optional_parens_stability2_pass2(self) -> None:
-        source, _expected = read_data("trailing_comma_optional_parens2")
-        actual = fs(fs(source))  # this is what `format_file_contents` does with --safe
-        black.assert_stable(source, actual, DEFAULT_MODE)
-
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_trailing_comma_optional_parens_stability3_pass2(self) -> None:
-        source, _expected = read_data("trailing_comma_optional_parens3")
-        actual = fs(fs(source))  # this is what `format_file_contents` does with --safe
-        black.assert_stable(source, actual, DEFAULT_MODE)
-
     def test_pep_572_version_detection(self) -> None:
         source, _ = read_data("pep_572")
         root = black.lib2to3_parse(source)
