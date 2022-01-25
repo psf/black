@@ -31,7 +31,7 @@
     },
     "channels": {
       "cli_arguments": ["--experimental-string-processing"],
-      "expect_formatting_changes": true,
+      "expect_formatting_changes": false,
       "git_clone_url": "https://github.com/django/channels.git",
       "long_checkout": false,
       "py_versions": ["all"]
