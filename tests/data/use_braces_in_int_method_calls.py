@@ -23,8 +23,8 @@ for number in range(1, 10):
     if number.imag:
         ...
 
-exclusive_complex = 10j .imag
+exclusive_complex = 10j.imag
 
-hex_decimal = 0x10 .real
+hex_decimal = 0x10.real
 
 

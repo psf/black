@@ -62,11 +62,21 @@ class Line:
         if token.COLON == leaf.type and self.is_class_paren_empty:
             del self.leaves[-2:]
         if self.leaves and not preformatted:
-            # Note: at this point leaf.prefix should be empty except for
-            # imports, for which we only preserve newlines.
-            leaf.prefix += whitespace(
-                leaf, complex_subscript=self.is_complex_subscript(leaf)
-            )
+            grandparent_leaf = leaf.parent.parent if leaf.parent else None
+
+            # It shouldn't add whitespaces after dot operators in expressions
+            # accessing method/attributes from integer and float literals
+            if not (
+                grandparent_leaf
+                and grandparent_leaf.type == syms.power
+                and grandparent_leaf.children[0].type == token.NUMBER
+                and leaf.type == token.DOT
+            ):
+                # Note: at this point leaf.prefix should be empty except for
+                # imports, for which we only preserve newlines.
+                leaf.prefix += whitespace(
+                    leaf, complex_subscript=self.is_complex_subscript(leaf)
+                )
         if self.inside_brackets or not preformatted:
             self.bracket_tracker.mark(leaf)
             if self.mode.magic_trailing_comma:
