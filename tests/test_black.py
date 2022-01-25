@@ -137,6 +137,8 @@ def invokeBlack(
 
 
 class BlackTestCase(BlackBaseTestCase):
+
+    maxDiff = None
     invokeBlack = staticmethod(invokeBlack)
 
     def test_empty_ff(self) -> None:
@@ -972,10 +974,13 @@ class BlackTestCase(BlackBaseTestCase):
             # Multi file command.
             self.invokeBlack([str(src1), str(src2), "--diff", "--check"], exit_code=1)
 
-    def test_no_files(self) -> None:
+    def test_no_src_fails(self) -> None:
         with cache_dir():
-            # Without an argument, black exits with error code 0.
-            self.invokeBlack([])
+            self.invokeBlack([], exit_code=1)
+
+    def test_src_and_code_fails(self) -> None:
+        with cache_dir():
+            self.invokeBlack([".", "-c", "0"], exit_code=1)
 
     def test_broken_symlink(self) -> None:
         with cache_dir() as workspace:
@@ -1229,13 +1234,18 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_required_version_matches_version(self) -> None:
         self.invokeBlack(
-            ["--required-version", black.__version__], exit_code=0, ignore_config=True
+            ["--required-version", black.__version__, "-c", "0"],
+            exit_code=0,
+            ignore_config=True,
         )
 
     def test_required_version_does_not_match_version(self) -> None:
-        self.invokeBlack(
-            ["--required-version", "20.99b"], exit_code=1, ignore_config=True
+        result = BlackRunner().invoke(
+            black.main,
+            ["--required-version", "20.99b", "-c", "0"],
         )
+        self.assertEqual(result.exit_code, 1)
+        self.assertIn("required version", result.stderr)
 
     def test_preserves_line_endings(self) -> None:
         with TemporaryDirectory() as workspace:

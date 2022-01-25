@@ -20,6 +20,7 @@
 - Tuple unpacking on `return` and `yield` constructs now implies 3.8+ (#2700)
 - Unparenthesized tuples on annotated assignments (e.g
   `values: Tuple[int, ...] = 1, 2, 3`) now implies 3.8+ (#2708)
+- Remove spaces around power operators if both operands are simple (#2726)
 - Allow setting custom cache directory on all platforms with environment variable
   `BLACK_CACHE_DIR` (#2739).
 - Text coloring added in the final statistics (#2712)
@@ -38,7 +39,10 @@
   `--preview` (#2789)
 - Enable Python 3.10+ by default, without any extra need to specify
   `--target-version=py310`. (#2758)
+- Make passing `SRC` or `--code` mandatory and mutually exclusive (#2804)
 - Use parentheses on method access on float and int literals (#2799)
+- Don't add whitespaces after hex-decimals and exclusive complex numbers (ending "j") on
+  method access (#2799)
 
 ### Packaging
 
