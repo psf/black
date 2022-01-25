@@ -21,8 +21,8 @@ from black.comments import generate_comments, list_comments, FMT_OFF
 from black.numerics import normalize_numeric_literal
 from black.strings import get_string_prefix, fix_docstring
 from black.strings import normalize_string_prefix, normalize_string_quotes
-from black.trans import Transformer, CannotTransform, StringMerger
-from black.trans import StringSplitter, StringParenWrapper, StringParenStripper
+from black.trans import Transformer, CannotTransform, StringMerger, StringSplitter
+from black.trans import StringParenWrapper, StringParenStripper, hug_power_op
 from black.mode import Mode, Feature, Preview
 
 from blib2to3.pytree import Node, Leaf
@@ -404,6 +404,9 @@ def transform_line(
                 transformers = [delimiter_split, standalone_comment_split, rhs]
             else:
                 transformers = [rhs]
+    # It's always safe to attempt hugging of power operations and pretty much every line
+    # could match.
+    transformers.append(hug_power_op)
 
     for transform in transformers:
         # We are accumulating lines in `result` because we might want to abort
