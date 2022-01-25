@@ -942,6 +942,7 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
                 if (
                     prev
                     and prev.type == token.COMMA
+                    and leaf.opening_bracket is not None
                     and not is_one_tuple_between(
                         leaf.opening_bracket, leaf, line.leaves
                     )
@@ -969,6 +970,7 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
             if (
                 prev
                 and prev.type == token.COMMA
+                and leaf.opening_bracket is not None
                 and not is_one_tuple_between(leaf.opening_bracket, leaf, line.leaves)
             ):
                 # Never omit bracket pairs with trailing commas.

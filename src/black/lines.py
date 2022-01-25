@@ -277,7 +277,9 @@ class Line:
         if self.is_import:
             return True
 
-        if not is_one_tuple_between(closing.opening_bracket, closing, self.leaves):
+        if closing.opening_bracket is not None and not is_one_tuple_between(
+            closing.opening_bracket, closing, self.leaves
+        ):
             return True
 
         return False
