@@ -38,7 +38,7 @@ jobs:
 
       - name: Test uvloop Extra Install
         run: |
-          python -m pip install -e ".[uvloop]"
+          python -m pip install -e ".[uvloop,d]"
 
       - name: Install test requirements
         run: |
