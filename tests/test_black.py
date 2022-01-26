@@ -137,7 +137,6 @@ def invokeBlack(
 
 
 class BlackTestCase(BlackBaseTestCase):
-
     invokeBlack = staticmethod(invokeBlack)
 
     def test_empty_ff(self) -> None:
