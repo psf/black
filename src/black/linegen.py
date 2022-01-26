@@ -208,6 +208,8 @@ class LineGenerator(Visitor[Line]):
             if (
                 leaf.type == token.NUMBER
                 and next_leaf.type == syms.trailer
+                # Ensure that we are in an attribute trailer
+                and next_leaf.children[0].type == token.DOT
                 # It shouldn't wrap hexadecimal, binary and octal literals
                 and (not value.startswith(("0x", "0b", "0o")))
                 # It shouldn't wrap complex literals
