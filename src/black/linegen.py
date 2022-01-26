@@ -200,16 +200,22 @@ class LineGenerator(Visitor[Line]):
     def visit_power(self, node: Node) -> Iterator[Line]:
         for idx, leaf in enumerate(node.children[:-1]):
             next_leaf = node.children[idx + 1]
+
+            if not isinstance(leaf, Leaf):
+                continue
+
+            value = leaf.value.lower()
             if (
-                isinstance(leaf, Leaf)
-                and leaf.type == token.NUMBER
+                leaf.type == token.NUMBER
                 and next_leaf.type == syms.trailer
-                # Integers prefixed by 0x are represented under the hood in just
-                # the same way as integers that aren't. This means that to Python,
-                # 0xFF is the same as 255, and there's no way to tell them apart
-                and (not leaf.value.startswith("0x"))
-                # It shouldn't wrap complex numbers
-                and "j" not in leaf.value
+                # Shouldn't wrap octal literals
+                and (not value.startswith("0o"))
+                # Shouldn't wrap binary literals
+                and (not value.startswith("0b"))
+                # Shouldn't wrap hexadecimal literals
+                and (not value.startswith("0x"))
+                # It shouldn't wrap complex literals
+                and "j" not in value
             ):
                 wrap_in_parentheses(node, leaf)
 

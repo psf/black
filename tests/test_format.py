@@ -15,6 +15,7 @@ from tests.util import (
 )
 
 SIMPLE_CASES: List[str] = [
+    "attribute_access_on_number_literals",
     "beginning_backslash",
     "bracketmatch",
     "class_blank_parentheses",
@@ -54,7 +55,6 @@ SIMPLE_CASES: List[str] = [
     "string_prefixes",
     "tricky_unicode_symbols",
     "tupleassign",
-    "use_braces_in_int_method_calls",
 ]
 
 PY310_CASES: List[str] = [
