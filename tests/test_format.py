@@ -48,9 +48,13 @@ SIMPLE_CASES: List[str] = [
     "function2",
     "function_trailing_comma",
     "import_spacing",
+    "power_op_spacing",
     "remove_parens",
     "slices",
     "string_prefixes",
+    "trailing_comma_optional_parens1",
+    "trailing_comma_optional_parens2",
+    "trailing_comma_optional_parens3",
     "tricky_unicode_symbols",
     "tupleassign",
 ]

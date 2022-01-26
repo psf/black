@@ -17,6 +17,9 @@ and the first release covered by our new stability policy.
 - For stubs, one blank line between class attributes and methods is now kept if there's
   at least one pre-existing blank line (#2736)
 - Black now normalizes string prefix order (#2297)
+- Remove spaces around power operators if both operands are simple (#2726)
+- Work around bug that causes unstable formatting in some cases in the presence of the
+  magic trailing comma (#2807)
 
 ### Parser
 
@@ -47,6 +50,9 @@ and the first release covered by our new stability policy.
   Jupyter Notebooks (#2744)
 - Allow setting custom cache directory on all platforms with environment variable
   `BLACK_CACHE_DIR` (#2739).
+- Enable Python 3.10+ by default, without any extra need to specify
+  `--target-version=py310`. (#2758)
+- Make passing `SRC` or `--code` mandatory and mutually exclusive (#2804)
 
 ### Output
 
