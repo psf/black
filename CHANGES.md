@@ -42,6 +42,7 @@
 - Make passing `SRC` or `--code` mandatory and mutually exclusive (#2804)
 - Work around bug that causes unstable formatting in some cases in the presence of the
   magic trailing comma (#2807)
+- Deprecate the `black-primer` tool (#2809)
 
 ### Packaging
 
