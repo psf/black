@@ -40,9 +40,11 @@
 - Enable Python 3.10+ by default, without any extra need to specify
   `--target-version=py310`. (#2758)
 - Make passing `SRC` or `--code` mandatory and mutually exclusive (#2804)
-- Use parentheses on method access on float and int literals (#2799)
 - Don't add whitespaces after hex-decimals and exclusive complex numbers (ending "j") on
   method access (#2799)
+- Work around bug that causes unstable formatting in some cases in the presence of the
+  magic trailing comma (#2807)
+- Use parentheses on method access on float and int literals (#2799)
 
 ### Packaging
 
