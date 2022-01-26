@@ -40,6 +40,10 @@ jobs:
         run: |
           python -m pip install -e ".[uvloop]"
 
+      - name: Install test requirements
+        run: |
+          python -m pip install -r test_requirements.txt
+
       - name: Run unit tests
         run: |
           pytest tests
