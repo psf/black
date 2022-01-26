@@ -208,12 +208,8 @@ class LineGenerator(Visitor[Line]):
             if (
                 leaf.type == token.NUMBER
                 and next_leaf.type == syms.trailer
-                # Shouldn't wrap octal literals
-                and (not value.startswith("0o"))
-                # Shouldn't wrap binary literals
-                and (not value.startswith("0b"))
-                # Shouldn't wrap hexadecimal literals
-                and (not value.startswith("0x"))
+                # It shouldn't wrap hexadecimal, binary and octal literals
+                and (not value.startswith(("0x", "0b", "0o")))
                 # It shouldn't wrap complex literals
                 and "j" not in value
             ):
