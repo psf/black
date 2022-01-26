@@ -138,7 +138,6 @@ def invokeBlack(
 
 class BlackTestCase(BlackBaseTestCase):
 
-    maxDiff = None
     invokeBlack = staticmethod(invokeBlack)
 
     def test_empty_ff(self) -> None:
