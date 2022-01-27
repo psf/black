@@ -38,12 +38,8 @@ jobs:
 
       - name: Test uvloop Extra Install
         run: |
-          python -m pip install -e ".[uvloop,d]"
+          python -m pip install -e ".[uvloop]"
 
-      - name: Install test requirements
+      - name: Format ourselves
         run: |
-          python -m pip install -r test_requirements.txt
-
-      - name: Run unit tests
-        run: |
-          pytest tests
+          python -m black --check src/
