@@ -32,7 +32,9 @@ from blib2to3.pgen2.tokenize import TokenError
         black.FileMode,
         line_length=st.just(88) | st.integers(0, 200),
         string_normalization=st.booleans(),
+        preview=st.booleans(),
         is_pyi=st.booleans(),
+        magic_trailing_comma=st.booleans(),
     ),
 )
 def test_idempotent_any_syntatically_valid_python(

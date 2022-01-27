@@ -92,6 +92,7 @@ class Grammar(object):
         self.soft_keywords: Dict[str, int] = {}
         self.tokens: Dict[int, int] = {}
         self.symbol2label: Dict[str, int] = {}
+        self.version: Tuple[int, int] = (0, 0)
         self.start = 256
         # Python 3.7+ parses async as a keyword, not an identifier
         self.async_keywords = False
@@ -145,6 +146,7 @@ class Grammar(object):
         new.labels = self.labels[:]
         new.states = self.states[:]
         new.start = self.start
+        new.version = self.version
         new.async_keywords = self.async_keywords
         return new
 

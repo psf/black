@@ -40,7 +40,7 @@ import black
 import black.files
 from black import Feature, TargetVersion
 from black import re_compile_maybe_verbose as compile_pattern
-from black.cache import get_cache_file
+from black.cache import get_cache_dir, get_cache_file
 from black.debug import DebugVisitor
 from black.output import color_diff, diff
 from black.report import Report
@@ -151,6 +151,11 @@ class BlackTestCase(BlackBaseTestCase):
             os.unlink(tmp_file)
         self.assertFormatEqual(expected, actual)
 
+    def test_experimental_string_processing_warns(self) -> None:
+        self.assertWarns(
+            black.mode.Deprecated, black.Mode, experimental_string_processing=True
+        )
+
     def test_piping(self) -> None:
         source, expected = read_data("src/black/__init__", data=False)
         result = BlackRunner().invoke(
@@ -223,45 +228,6 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, black.FileMode())
-
-    @unittest.expectedFailure
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_trailing_comma_optional_parens_stability1(self) -> None:
-        source, _expected = read_data("trailing_comma_optional_parens1")
-        actual = fs(source)
-        black.assert_stable(source, actual, DEFAULT_MODE)
-
-    @unittest.expectedFailure
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_trailing_comma_optional_parens_stability2(self) -> None:
-        source, _expected = read_data("trailing_comma_optional_parens2")
-        actual = fs(source)
-        black.assert_stable(source, actual, DEFAULT_MODE)
-
-    @unittest.expectedFailure
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_trailing_comma_optional_parens_stability3(self) -> None:
-        source, _expected = read_data("trailing_comma_optional_parens3")
-        actual = fs(source)
-        black.assert_stable(source, actual, DEFAULT_MODE)
-
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_trailing_comma_optional_parens_stability1_pass2(self) -> None:
-        source, _expected = read_data("trailing_comma_optional_parens1")
-        actual = fs(fs(source))  # this is what `format_file_contents` does with --safe
-        black.assert_stable(source, actual, DEFAULT_MODE)
-
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_trailing_comma_optional_parens_stability2_pass2(self) -> None:
-        source, _expected = read_data("trailing_comma_optional_parens2")
-        actual = fs(fs(source))  # this is what `format_file_contents` does with --safe
-        black.assert_stable(source, actual, DEFAULT_MODE)
-
-    @patch("black.dump_to_file", dump_to_stderr)
-    def test_trailing_comma_optional_parens_stability3_pass2(self) -> None:
-        source, _expected = read_data("trailing_comma_optional_parens3")
-        actual = fs(fs(source))  # this is what `format_file_contents` does with --safe
-        black.assert_stable(source, actual, DEFAULT_MODE)
 
     def test_pep_572_version_detection(self) -> None:
         source, _ = read_data("pep_572")
@@ -343,7 +309,7 @@ class BlackTestCase(BlackBaseTestCase):
     @patch("black.dump_to_file", dump_to_stderr)
     def test_string_quotes(self) -> None:
         source, expected = read_data("string_quotes")
-        mode = black.Mode(experimental_string_processing=True)
+        mode = black.Mode(preview=True)
         assert_format(source, expected, mode)
         mode = replace(mode, string_normalization=False)
         not_normalized = fs(source, mode=mode)
@@ -941,8 +907,8 @@ class BlackTestCase(BlackBaseTestCase):
                 self.assertFormatEqual("j = [1, 2, 3]", "j = [1, 2, 3,]")
 
         out_str = "".join(out_lines)
-        self.assertTrue("Expected tree:" in out_str)
-        self.assertTrue("Actual tree:" in out_str)
+        self.assertIn("Expected tree:", out_str)
+        self.assertIn("Actual tree:", out_str)
         self.assertEqual("".join(err_lines), "")
 
     @event_loop()
@@ -968,10 +934,13 @@ class BlackTestCase(BlackBaseTestCase):
             # Multi file command.
             self.invokeBlack([str(src1), str(src2), "--diff", "--check"], exit_code=1)
 
-    def test_no_files(self) -> None:
+    def test_no_src_fails(self) -> None:
         with cache_dir():
-            # Without an argument, black exits with error code 0.
-            self.invokeBlack([])
+            self.invokeBlack([], exit_code=1)
+
+    def test_src_and_code_fails(self) -> None:
+        with cache_dir():
+            self.invokeBlack([".", "-c", "0"], exit_code=1)
 
     def test_broken_symlink(self) -> None:
         with cache_dir() as workspace:
@@ -1225,13 +1194,18 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_required_version_matches_version(self) -> None:
         self.invokeBlack(
-            ["--required-version", black.__version__], exit_code=0, ignore_config=True
+            ["--required-version", black.__version__, "-c", "0"],
+            exit_code=0,
+            ignore_config=True,
         )
 
     def test_required_version_does_not_match_version(self) -> None:
-        self.invokeBlack(
-            ["--required-version", "20.99b"], exit_code=1, ignore_config=True
+        result = BlackRunner().invoke(
+            black.main,
+            ["--required-version", "20.99b", "-c", "0"],
         )
+        self.assertEqual(result.exit_code, 1)
+        self.assertIn("required version", result.stderr)
 
     def test_preserves_line_endings(self) -> None:
         with TemporaryDirectory() as workspace:
@@ -1318,6 +1292,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(config["color"], True)
         self.assertEqual(config["line_length"], 79)
         self.assertEqual(config["target_version"], ["py36", "py37", "py38"])
+        self.assertEqual(config["python_cell_magics"], ["custom1", "custom2"])
         self.assertEqual(config["exclude"], r"\.pyi?$")
         self.assertEqual(config["include"], r"\.py?$")
 
@@ -1624,6 +1599,33 @@ class BlackTestCase(BlackBaseTestCase):
 
 
 class TestCaching:
+    def test_get_cache_dir(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        # Create multiple cache directories
+        workspace1 = tmp_path / "ws1"
+        workspace1.mkdir()
+        workspace2 = tmp_path / "ws2"
+        workspace2.mkdir()
+
+        # Force user_cache_dir to use the temporary directory for easier assertions
+        patch_user_cache_dir = patch(
+            target="black.cache.user_cache_dir",
+            autospec=True,
+            return_value=str(workspace1),
+        )
+
+        # If BLACK_CACHE_DIR is not set, use user_cache_dir
+        monkeypatch.delenv("BLACK_CACHE_DIR", raising=False)
+        with patch_user_cache_dir:
+            assert get_cache_dir() == workspace1
+
+        # If it is set, use the path provided in the env var.
+        monkeypatch.setenv("BLACK_CACHE_DIR", str(workspace2))
+        assert get_cache_dir() == workspace2
+
     def test_cache_broken_file(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir() as workspace:
