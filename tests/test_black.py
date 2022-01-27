@@ -10,7 +10,7 @@ import sys
 import types
 import unittest
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import contextmanager
+from contextlib import contextmanager, redirect_stderr
 from dataclasses import replace
 from io import BytesIO
 from pathlib import Path
@@ -1357,6 +1357,21 @@ class BlackTestCase(BlackBaseTestCase):
                 black.find_project_root((src_python,)),
                 (src_dir.resolve(), "pyproject.toml"),
             )
+
+    @patch(
+        "black.files.find_user_pyproject_toml",
+    )
+    def test_find_pyproject_toml(self, find_user_pyproject_toml: MagicMock) -> None:
+        find_user_pyproject_toml.side_effect = RuntimeError()
+
+        with redirect_stderr(io.StringIO()) as stderr:
+            result = black.files.find_pyproject_toml(
+                path_search_start=(str(Path.cwd().root),)
+            )
+
+        assert result is None
+        err = stderr.getvalue()
+        assert "Ignoring user configuration" in err
 
     @patch(
         "black.files.find_user_pyproject_toml",
