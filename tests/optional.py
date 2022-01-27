@@ -21,7 +21,12 @@ import re
 from typing import FrozenSet, List, Set, TYPE_CHECKING
 
 import pytest
-from _pytest.store import StoreKey
+
+try:
+    from pytest import StashKey
+except ImportError:
+    # pytest < 7
+    from _pytest.store import StoreKey as StashKey
 
 log = logging.getLogger(__name__)
 
@@ -33,8 +38,8 @@ if TYPE_CHECKING:
     from _pytest.nodes import Node
 
 
-ALL_POSSIBLE_OPTIONAL_MARKERS = StoreKey[FrozenSet[str]]()
-ENABLED_OPTIONAL_MARKERS = StoreKey[FrozenSet[str]]()
+ALL_POSSIBLE_OPTIONAL_MARKERS = StashKey[FrozenSet[str]]()
+ENABLED_OPTIONAL_MARKERS = StashKey[FrozenSet[str]]()
 
 
 def pytest_addoption(parser: "Parser") -> None:

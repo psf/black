@@ -277,7 +277,9 @@ class Line:
         if self.is_import:
             return True
 
-        if not is_one_tuple_between(closing.opening_bracket, closing, self.leaves):
+        if closing.opening_bracket is not None and not is_one_tuple_between(
+            closing.opening_bracket, closing, self.leaves
+        ):
             return True
 
         return False
@@ -448,7 +450,14 @@ class EmptyLineTracker:
         depth = current_line.depth
         while self.previous_defs and self.previous_defs[-1] >= depth:
             if self.is_pyi:
-                before = 0 if depth else 1
+                assert self.previous_line is not None
+                if depth and not current_line.is_def and self.previous_line.is_def:
+                    # Empty lines between attributes and methods should be preserved.
+                    before = min(1, before)
+                elif depth:
+                    before = 0
+                else:
+                    before = 1
             else:
                 if depth:
                     before = 1
@@ -522,9 +531,11 @@ class EmptyLineTracker:
 
         if self.is_pyi:
             if self.previous_line.depth > current_line.depth:
-                newlines = 1
+                newlines = 0 if current_line.depth else 1
             elif current_line.is_class or self.previous_line.is_class:
-                if current_line.is_stub_class and self.previous_line.is_stub_class:
+                if current_line.depth:
+                    newlines = 0
+                elif current_line.is_stub_class and self.previous_line.is_stub_class:
                     # No blank line between classes with an empty body
                     newlines = 0
                 else:
@@ -532,15 +543,18 @@ class EmptyLineTracker:
             elif (
                 current_line.is_def or current_line.is_decorator
             ) and not self.previous_line.is_def:
-                # Blank line between a block of functions (maybe with preceding
-                # decorators) and a block of non-functions
-                newlines = 1
+                if current_line.depth:
+                    # In classes empty lines between attributes and methods should
+                    # be preserved.
+                    newlines = min(1, before)
+                else:
+                    # Blank line between a block of functions (maybe with preceding
+                    # decorators) and a block of non-functions
+                    newlines = 1
             else:
                 newlines = 0
         else:
-            newlines = 2
-        if current_line.depth and newlines:
-            newlines -= 1
+            newlines = 1 if current_line.depth else 2
         return newlines, 0
 
 

@@ -34,9 +34,18 @@ with \
 Although when the target version is Python 3.9 or higher, _Black_ will use parentheses
 instead since they're allowed in Python 3.9 and higher.
 
-## Improved string processing
+## Preview style
 
-Currently, _Black_ does not split long strings to fit the line length limit. Currently,
-there is [an experimental option](labels/experimental-string) to enable splitting
-strings. We plan to enable this option by default once it is fully stable. This is
+Experimental, potentially disruptive style changes are gathered under the `--preview`
+CLI flag. At the end of each year, these changes may be adopted into the default style,
+as described in [The Black Code Style](./index.rst). Because the functionality is
+experimental, feedback and issue reports are highly encouraged!
+
+### Improved string processing
+
+_Black_ will split long string literals and merge short ones. Parentheses are used where
+appropriate. When split, parts of f-strings that don't need formatting are converted to
+plain strings. User-made splits are respected when they do not exceed the line length
+limit. Line continuation backslashes are converted into parenthesized strings.
+Unnecessary parentheses are stripped. The stability and status of this feature is
 tracked in [this issue](https://github.com/psf/black/issues/2188).

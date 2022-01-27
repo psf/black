@@ -4,7 +4,6 @@
 
 <p align="center">
 <a href="https://github.com/psf/black/actions"><img alt="Actions Status" src="https://github.com/psf/black/workflows/Test/badge.svg"></a>
-<a href="https://github.com/psf/black/actions"><img alt="Actions Status" src="https://github.com/psf/black/workflows/Primer/badge.svg"></a>
 <a href="https://black.readthedocs.io/en/stable/?badge=stable"><img alt="Documentation Status" src="https://readthedocs.org/projects/black/badge/?version=stable"></a>
 <a href="https://coveralls.io/github/psf/black?branch=main"><img alt="Coverage Status" src="https://coveralls.io/repos/github/psf/black/badge.svg?branch=main"></a>
 <a href="https://github.com/psf/black/blob/main/LICENSE"><img alt="License: MIT" src="https://black.readthedocs.io/en/stable/_static/license.svg"></a>
@@ -40,13 +39,11 @@ Try it out now using the [Black Playground](https://black.vercel.app). Watch the
 ### Installation
 
 _Black_ can be installed by running `pip install black`. It requires Python 3.6.2+ to
-run. If you want to format Python 2 code as well, install with
-`pip install black[python2]`. If you want to format Jupyter Notebooks, install with
-`pip install black[jupyter]`.
+run. If you want to format Jupyter Notebooks, install with `pip install black[jupyter]`.
 
 If you can't wait for the latest _hotness_ and want to install from GitHub, use:
 
-`pip install git+git://github.com/psf/black`
+`pip install git+https://github.com/psf/black`
 
 ### Usage
 
@@ -66,16 +63,13 @@ Further information can be found in our docs:
 
 - [Usage and Configuration](https://black.readthedocs.io/en/stable/usage_and_configuration/index.html)
 
-### NOTE: This is a beta product
-
 _Black_ is already [successfully used](https://github.com/psf/black#used-by) by many
-projects, small and big. Black has a comprehensive test suite, with efficient parallel
-tests, and our own auto formatting and parallel Continuous Integration runner. However,
-_Black_ is still beta. Things will probably be wonky for a while. This is made explicit
-by the "Beta" trove classifier, as well as by the "b" in the version number. What this
-means for you is that **until the formatter becomes stable, you should expect some
-formatting to change in the future**. That being said, no drastic stylistic changes are
-planned, mostly responses to bug reports.
+projects, small and big. _Black_ has a comprehensive test suite, with efficient parallel
+tests, and our own auto formatting and parallel Continuous Integration runner. Now that
+we have become stable, you should not expect large formatting to changes in the future.
+Stylistic changes will mostly be responses to bug reports and support for new Python
+syntax. For more information please refer to the
+[The Black Code Style](docs/the_black_code_style/index.rst).
 
 Also, as a safety measure which slows down processing, _Black_ will check that the
 reformatted code still produces a valid AST that is effectively equivalent to the
@@ -134,8 +128,8 @@ code in compliance with many other _Black_ formatted projects.
 The following notable open-source projects trust _Black_ with enforcing a consistent
 code style: pytest, tox, Pyramid, Django Channels, Hypothesis, attrs, SQLAlchemy,
 Poetry, PyPA applications (Warehouse, Bandersnatch, Pipenv, virtualenv), pandas, Pillow,
-Twisted, LocalStack, every Datadog Agent Integration, Home Assistant, Zulip, Kedro, and
-many more.
+Twisted, LocalStack, every Datadog Agent Integration, Home Assistant, Zulip, Kedro,
+OpenOA, FLORIS, ORBIT, WOMBAT, and many more.
 
 The following organizations use _Black_: Facebook, Dropbox, KeepTruckin, Mozilla, Quora,
 Duolingo, QuantumBlack, Tesla.

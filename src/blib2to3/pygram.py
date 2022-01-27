@@ -178,6 +178,8 @@ def initialize(cache_dir: Union[str, "os.PathLike[str]", None] = None) -> None:
 
     # Python 2
     python_grammar = driver.load_packaged_grammar("blib2to3", _GRAMMAR_FILE, cache_dir)
+    python_grammar.version = (2, 0)
+
     soft_keywords = python_grammar.soft_keywords.copy()
     python_grammar.soft_keywords.clear()
 
@@ -191,6 +193,7 @@ def initialize(cache_dir: Union[str, "os.PathLike[str]", None] = None) -> None:
     python_grammar_no_print_statement_no_exec_statement = python_grammar.copy()
     del python_grammar_no_print_statement_no_exec_statement.keywords["print"]
     del python_grammar_no_print_statement_no_exec_statement.keywords["exec"]
+    python_grammar_no_print_statement_no_exec_statement.version = (3, 0)
 
     # Python 3.7+
     python_grammar_no_print_statement_no_exec_statement_async_keywords = (
@@ -199,12 +202,14 @@ def initialize(cache_dir: Union[str, "os.PathLike[str]", None] = None) -> None:
     python_grammar_no_print_statement_no_exec_statement_async_keywords.async_keywords = (
         True
     )
+    python_grammar_no_print_statement_no_exec_statement_async_keywords.version = (3, 7)
 
     # Python 3.10+
     python_grammar_soft_keywords = (
         python_grammar_no_print_statement_no_exec_statement_async_keywords.copy()
     )
     python_grammar_soft_keywords.soft_keywords = soft_keywords
+    python_grammar_soft_keywords.version = (3, 10)
 
     pattern_grammar = driver.load_packaged_grammar(
         "blib2to3", _PATTERN_GRAMMAR_FILE, cache_dir

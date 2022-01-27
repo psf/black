@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 
 
 @lru_cache()
-def find_project_root(srcs: Sequence[str]) -> Path:
+def find_project_root(srcs: Sequence[str]) -> Tuple[Path, str]:
     """Return a directory containing .git, .hg, or pyproject.toml.
 
     That directory will be a common parent of all files and directories
@@ -39,6 +39,10 @@ def find_project_root(srcs: Sequence[str]) -> Path:
 
     If no directory in the tree contains a marker that would specify it's the
     project root, the root of the file system is returned.
+
+    Returns a two-tuple with the first element as the project root path and
+    the second element as a string describing the method by which the
+    project root was discovered.
     """
     if not srcs:
         srcs = [str(Path.cwd().resolve())]
@@ -58,20 +62,20 @@ def find_project_root(srcs: Sequence[str]) -> Path:
 
     for directory in (common_base, *common_base.parents):
         if (directory / ".git").exists():
-            return directory
+            return directory, ".git directory"
 
         if (directory / ".hg").is_dir():
-            return directory
+            return directory, ".hg directory"
 
         if (directory / "pyproject.toml").is_file():
-            return directory
+            return directory, "pyproject.toml"
 
-    return directory
+    return directory, "file system root"
 
 
 def find_pyproject_toml(path_search_start: Tuple[str, ...]) -> Optional[str]:
     """Find the absolute filepath to a pyproject.toml if it exists"""
-    path_project_root = find_project_root(path_search_start)
+    path_project_root, _ = find_project_root(path_search_start)
     path_pyproject_toml = path_project_root / "pyproject.toml"
     if path_pyproject_toml.is_file():
         return str(path_pyproject_toml)
@@ -95,8 +99,8 @@ def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
 
     If parsing fails, will raise a tomli.TOMLDecodeError
     """
-    with open(path_config, encoding="utf8") as f:
-        pyproject_toml = tomli.loads(f.read())
+    with open(path_config, "rb") as f:
+        pyproject_toml = tomli.load(f)
     config = pyproject_toml.get("tool", {}).get("black", {})
     return {k.replace("--", "").replace("-", "_"): v for k, v in config.items()}
 
@@ -133,7 +137,9 @@ def get_gitignore(root: Path) -> PathSpec:
 
 
 def normalize_path_maybe_ignore(
-    path: Path, root: Path, report: Report
+    path: Path,
+    root: Path,
+    report: Optional[Report] = None,
 ) -> Optional[str]:
     """Normalize `path`. May return `None` if `path` was ignored.
 
@@ -143,12 +149,16 @@ def normalize_path_maybe_ignore(
         abspath = path if path.is_absolute() else Path.cwd() / path
         normalized_path = abspath.resolve().relative_to(root).as_posix()
     except OSError as e:
-        report.path_ignored(path, f"cannot be read because {e}")
+        if report:
+            report.path_ignored(path, f"cannot be read because {e}")
         return None
 
     except ValueError:
         if path.is_symlink():
-            report.path_ignored(path, f"is a symbolic link that points outside {root}")
+            if report:
+                report.path_ignored(
+                    path, f"is a symbolic link that points outside {root}"
+                )
             return None
 
         raise

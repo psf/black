@@ -17,13 +17,11 @@ Also, you can try out _Black_ online for minimal fuss on the
 ## Installation
 
 _Black_ can be installed by running `pip install black`. It requires Python 3.6.2+ to
-run, but can format Python 2 code too. Python 2 support needs the `typed_ast`
-dependency, which be installed with `pip install black[python2]`. If you want to format
-Jupyter Notebooks, install with `pip install black[jupyter]`.
+run. If you want to format Jupyter Notebooks, install with `pip install black[jupyter]`.
 
 If you can't wait for the latest _hotness_ and want to install from GitHub, use:
 
-`pip install git+git://github.com/psf/black`
+`pip install git+https://github.com/psf/black`
 
 ## Basic usage
 

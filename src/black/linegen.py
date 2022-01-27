@@ -9,6 +9,7 @@ from black.nodes import WHITESPACE, RARROW, STATEMENT, STANDALONE_COMMENT
 from black.nodes import ASSIGNMENTS, OPENING_BRACKETS, CLOSING_BRACKETS
 from black.nodes import Visitor, syms, first_child_is_arith, ensure_visible
 from black.nodes import is_docstring, is_empty_tuple, is_one_tuple, is_one_tuple_between
+from black.nodes import is_name_token, is_lpar_token, is_rpar_token
 from black.nodes import is_walrus_assignment, is_yield, is_vararg, is_multiline_string
 from black.nodes import is_stub_suite, is_stub_body, is_atom_with_invisible_parens
 from black.nodes import wrap_in_parentheses
@@ -20,10 +21,9 @@ from black.comments import generate_comments, list_comments, FMT_OFF
 from black.numerics import normalize_numeric_literal
 from black.strings import get_string_prefix, fix_docstring
 from black.strings import normalize_string_prefix, normalize_string_quotes
-from black.trans import Transformer, CannotTransform, StringMerger
-from black.trans import StringSplitter, StringParenWrapper, StringParenStripper
-from black.mode import Mode
-from black.mode import Feature
+from black.trans import Transformer, CannotTransform, StringMerger, StringSplitter
+from black.trans import StringParenWrapper, StringParenStripper, hug_power_op
+from black.mode import Mode, Feature, Preview
 
 from blib2to3.pytree import Node, Leaf
 from blib2to3.pgen2 import token
@@ -47,9 +47,8 @@ class LineGenerator(Visitor[Line]):
     in ways that will no longer stringify to valid Python code on the tree.
     """
 
-    def __init__(self, mode: Mode, remove_u_prefix: bool = False) -> None:
+    def __init__(self, mode: Mode) -> None:
         self.mode = mode
-        self.remove_u_prefix = remove_u_prefix
         self.current_line: Line
         self.__post_init__()
 
@@ -91,9 +90,7 @@ class LineGenerator(Visitor[Line]):
 
             normalize_prefix(node, inside_brackets=any_open_brackets)
             if self.mode.string_normalization and node.type == token.STRING:
-                node.value = normalize_string_prefix(
-                    node.value, remove_u_prefix=self.remove_u_prefix
-                )
+                node.value = normalize_string_prefix(node.value)
                 node.value = normalize_string_quotes(node.value)
             if node.type == token.NUMBER:
                 normalize_numeric_literal(node)
@@ -137,7 +134,7 @@ class LineGenerator(Visitor[Line]):
         """
         normalize_invisible_parens(node, parens_after=parens)
         for child in node.children:
-            if child.type == token.NAME and child.value in keywords:  # type: ignore
+            if is_name_token(child) and child.value in keywords:
                 yield from self.line()
 
             yield from self.visit(child)
@@ -235,7 +232,7 @@ class LineGenerator(Visitor[Line]):
         if is_docstring(leaf) and "\\\n" not in leaf.value:
             # We're ignoring docstrings with backslash newline escapes because changing
             # indentation of those changes the AST representation of the code.
-            docstring = normalize_string_prefix(leaf.value, self.remove_u_prefix)
+            docstring = normalize_string_prefix(leaf.value)
             prefix = get_string_prefix(docstring)
             docstring = docstring[len(prefix) :]  # Remove the prefix
             quote_char = docstring[0]
@@ -340,7 +337,7 @@ def transform_line(
         and not (line.inside_brackets and line.contains_standalone_comments())
     ):
         # Only apply basic string preprocessing, since lines shouldn't be split here.
-        if mode.experimental_string_processing:
+        if Preview.string_processing in mode:
             transformers = [string_merge, string_paren_strip]
         else:
             transformers = []
@@ -383,7 +380,7 @@ def transform_line(
         # via type ... https://github.com/mypyc/mypyc/issues/884
         rhs = type("rhs", (), {"__call__": _rhs})()
 
-        if mode.experimental_string_processing:
+        if Preview.string_processing in mode:
             if line.inside_brackets:
                 transformers = [
                     string_merge,
@@ -407,6 +404,9 @@ def transform_line(
                 transformers = [delimiter_split, standalone_comment_split, rhs]
             else:
                 transformers = [rhs]
+    # It's always safe to attempt hugging of power operations and pretty much every line
+    # could match.
+    transformers.append(hug_power_op)
 
     for transform in transformers:
         # We are accumulating lines in `result` because we might want to abort
@@ -813,10 +813,11 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
             elif node.type == syms.import_from:
                 # "import from" nodes store parentheses directly as part of
                 # the statement
-                if child.type == token.LPAR:
+                if is_lpar_token(child):
+                    assert is_rpar_token(node.children[-1])
                     # make parentheses invisible
-                    child.value = ""  # type: ignore
-                    node.children[-1].value = ""  # type: ignore
+                    child.value = ""
+                    node.children[-1].value = ""
                 elif child.type != token.STAR:
                     # insert invisible parentheses
                     node.insert_child(index, Leaf(token.LPAR, ""))
@@ -861,11 +862,11 @@ def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
 
     first = node.children[0]
     last = node.children[-1]
-    if first.type == token.LPAR and last.type == token.RPAR:
+    if is_lpar_token(first) and is_rpar_token(last):
         middle = node.children[1]
         # make parentheses invisible
-        first.value = ""  # type: ignore
-        last.value = ""  # type: ignore
+        first.value = ""
+        last.value = ""
         maybe_make_parens_invisible_in_atom(middle, parent=parent)
 
         if is_atom_with_invisible_parens(middle):
@@ -941,6 +942,7 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
                 if (
                     prev
                     and prev.type == token.COMMA
+                    and leaf.opening_bracket is not None
                     and not is_one_tuple_between(
                         leaf.opening_bracket, leaf, line.leaves
                     )
@@ -968,6 +970,7 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
             if (
                 prev
                 and prev.type == token.COMMA
+                and leaf.opening_bracket is not None
                 and not is_one_tuple_between(leaf.opening_bracket, leaf, line.leaves)
             ):
                 # Never omit bracket pairs with trailing commas.

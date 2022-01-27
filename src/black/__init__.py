@@ -24,6 +24,7 @@ from typing import (
     MutableMapping,
     Optional,
     Pattern,
+    Sequence,
     Set,
     Sized,
     Tuple,
@@ -31,12 +32,14 @@ from typing import (
 )
 
 import click
+from click.core import ParameterSource
 from dataclasses import replace
 from mypy_extensions import mypyc_attr
 
 from black.const import DEFAULT_LINE_LENGTH, DEFAULT_INCLUDES, DEFAULT_EXCLUDES
 from black.const import STDIN_PLACEHOLDER
 from black.nodes import STARS, syms, is_simple_decorator_expression
+from black.nodes import is_string_token
 from black.lines import Line, EmptyLineTracker
 from black.linegen import transform_line, LineGenerator, LN
 from black.comments import normalize_fmt_off
@@ -224,6 +227,16 @@ def validate_regex(
     ),
 )
 @click.option(
+    "--python-cell-magics",
+    multiple=True,
+    help=(
+        "When processing Jupyter Notebooks, add the given magic to the list"
+        f" of known python-magics ({', '.join(PYTHON_CELL_MAGICS)})."
+        " Useful for formatting cells with custom python magics."
+    ),
+    default=[],
+)
+@click.option(
     "-S",
     "--skip-string-normalization",
     is_flag=True,
@@ -239,9 +252,14 @@ def validate_regex(
     "--experimental-string-processing",
     is_flag=True,
     hidden=True,
+    help="(DEPRECATED and now included in --preview) Normalize string literals.",
+)
+@click.option(
+    "--preview",
+    is_flag=True,
     help=(
-        "Experimental option that performs more normalization on string literals."
-        " Currently disabled because it leads to some crashes."
+        "Enable potentially disruptive style changes that will be added to Black's main"
+        " functionality in the next major release."
     ),
 )
 @click.option(
@@ -394,9 +412,11 @@ def main(
     fast: bool,
     pyi: bool,
     ipynb: bool,
+    python_cell_magics: Sequence[str],
     skip_string_normalization: bool,
     skip_magic_trailing_comma: bool,
     experimental_string_processing: bool,
+    preview: bool,
     quiet: bool,
     verbose: bool,
     required_version: Optional[str],
@@ -410,8 +430,48 @@ def main(
     config: Optional[str],
 ) -> None:
     """The uncompromising code formatter."""
-    if config and verbose:
-        out(f"Using configuration from {config}.", bold=False, fg="blue")
+    ctx.ensure_object(dict)
+
+    if src and code is not None:
+        out(
+            main.get_usage(ctx)
+            + "\n\n'SRC' and 'code' cannot be passed simultaneously."
+        )
+        ctx.exit(1)
+    if not src and code is None:
+        out(main.get_usage(ctx) + "\n\nOne of 'SRC' or 'code' is required.")
+        ctx.exit(1)
+
+    root, method = find_project_root(src) if code is None else (None, None)
+    ctx.obj["root"] = root
+
+    if verbose:
+        if root:
+            out(
+                f"Identified `{root}` as project root containing a {method}.",
+                fg="blue",
+            )
+
+            normalized = [
+                (normalize_path_maybe_ignore(Path(source), root), source)
+                for source in src
+            ]
+            srcs_string = ", ".join(
+                [
+                    f'"{_norm}"'
+                    if _norm
+                    else f'\033[31m"{source} (skipping - invalid)"\033[34m'
+                    for _norm, source in normalized
+                ]
+            )
+            out(f"Sources to be formatted: {srcs_string}", fg="blue")
+
+        if config:
+            config_source = ctx.get_parameter_source("config")
+            if config_source in (ParameterSource.DEFAULT, ParameterSource.DEFAULT_MAP):
+                out("Using configuration from project root.", fg="blue")
+            else:
+                out(f"Using configuration in '{config}'.", fg="blue")
 
     error_msg = "Oh no! 💥 💔 💥"
     if required_version and required_version != __version__:
@@ -438,6 +498,8 @@ def main(
         string_normalization=not skip_string_normalization,
         magic_trailing_comma=not skip_magic_trailing_comma,
         experimental_string_processing=experimental_string_processing,
+        preview=preview,
+        python_cell_magics=set(python_cell_magics),
     )
 
     if code is not None:
@@ -495,6 +557,8 @@ def main(
             )
 
     if verbose or not quiet:
+        if code is None and (verbose or report.change_count or report.failure_count):
+            out()
         out(error_msg if report.return_code else "All done! ✨ 🍰 ✨")
         if code is None:
             click.echo(str(report), err=True)
@@ -515,14 +579,11 @@ def get_sources(
     stdin_filename: Optional[str],
 ) -> Set[Path]:
     """Compute the set of files to be formatted."""
-
-    root = find_project_root(src)
     sources: Set[Path] = set()
-    path_empty(src, "No Path provided. Nothing to do 😴", quiet, verbose, ctx)
 
     if exclude is None:
         exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES)
-        gitignore = get_gitignore(root)
+        gitignore = get_gitignore(ctx.obj["root"])
     else:
         gitignore = None
 
@@ -535,7 +596,7 @@ def get_sources(
             is_stdin = False
 
         if is_stdin or p.is_file():
-            normalized_path = normalize_path_maybe_ignore(p, root, report)
+            normalized_path = normalize_path_maybe_ignore(p, ctx.obj["root"], report)
             if normalized_path is None:
                 continue
 
@@ -562,7 +623,7 @@ def get_sources(
             sources.update(
                 gen_python_files(
                     p.iterdir(),
-                    root,
+                    ctx.obj["root"],
                     include,
                     exclude,
                     extend_exclude,
@@ -907,17 +968,7 @@ def check_stability_and_equivalence(
     content differently.
     """
     assert_equivalent(src_contents, dst_contents)
-
-    # Forced second pass to work around optional trailing commas (becoming
-    # forced trailing commas on pass 2) interacting differently with optional
-    # parentheses.  Admittedly ugly.
-    dst_contents_pass2 = format_str(dst_contents, mode=mode)
-    if dst_contents != dst_contents_pass2:
-        dst_contents = dst_contents_pass2
-        assert_equivalent(src_contents, dst_contents, pass_num=2)
-        assert_stable(src_contents, dst_contents, mode=mode)
-    # Note: no need to explicitly call `assert_stable` if `dst_contents` was
-    # the same as `dst_contents_pass2`.
+    assert_stable(src_contents, dst_contents, mode=mode)
 
 
 def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileContent:
@@ -943,7 +994,7 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
     return dst_contents
 
 
-def validate_cell(src: str) -> None:
+def validate_cell(src: str, mode: Mode) -> None:
     """Check that cell does not already contain TransformerManager transformations,
     or non-Python cell magics, which might cause tokenizer_rt to break because of
     indentations.
@@ -962,7 +1013,10 @@ def validate_cell(src: str) -> None:
     """
     if any(transformed_magic in src for transformed_magic in TRANSFORMED_MAGICS):
         raise NothingChanged
-    if src[:2] == "%%" and src.split()[0][2:] not in PYTHON_CELL_MAGICS:
+    if (
+        src[:2] == "%%"
+        and src.split()[0][2:] not in PYTHON_CELL_MAGICS | mode.python_cell_magics
+    ):
         raise NothingChanged
 
 
@@ -982,7 +1036,7 @@ def format_cell(src: str, *, fast: bool, mode: Mode) -> str:
     could potentially be automagics or multi-line magics, which
     are currently not supported.
     """
-    validate_cell(src)
+    validate_cell(src, mode)
     src_without_trailing_semicolon, has_trailing_semicolon = remove_trailing_semicolon(
         src
     )
@@ -1044,7 +1098,7 @@ def format_ipynb_string(src_contents: str, *, fast: bool, mode: Mode) -> FileCon
         raise NothingChanged
 
 
-def format_str(src_contents: str, *, mode: Mode) -> FileContent:
+def format_str(src_contents: str, *, mode: Mode) -> str:
     """Reformat a string and return new contents.
 
     `mode` determines formatting options, such as how many characters per line are
@@ -1074,6 +1128,16 @@ def format_str(src_contents: str, *, mode: Mode) -> FileContent:
         hey
 
     """
+    dst_contents = _format_str_once(src_contents, mode=mode)
+    # Forced second pass to work around optional trailing commas (becoming
+    # forced trailing commas on pass 2) interacting differently with optional
+    # parentheses.  Admittedly ugly.
+    if src_contents != dst_contents:
+        return _format_str_once(dst_contents, mode=mode)
+    return dst_contents
+
+
+def _format_str_once(src_contents: str, *, mode: Mode) -> str:
     src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)
     dst_contents = []
     future_imports = get_future_imports(src_node)
@@ -1082,20 +1146,8 @@ def format_str(src_contents: str, *, mode: Mode) -> FileContent:
     else:
         versions = detect_target_versions(src_node, future_imports=future_imports)
 
-    # TODO: fully drop support and this code hopefully in January 2022 :D
-    if TargetVersion.PY27 in mode.target_versions or versions == {TargetVersion.PY27}:
-        msg = (
-            "DEPRECATION: Python 2 support will be removed in the first stable release "
-            "expected in January 2022."
-        )
-        err(msg, fg="yellow", bold=True)
-
     normalize_fmt_off(src_node)
-    lines = LineGenerator(
-        mode=mode,
-        remove_u_prefix="unicode_literals" in future_imports
-        or supports_feature(versions, Feature.UNICODE_LITERALS),
-    )
+    lines = LineGenerator(mode=mode)
     elt = EmptyLineTracker(is_pyi=mode.is_pyi)
     empty_line = Line(mode=mode)
     after = 0
@@ -1156,8 +1208,8 @@ def get_features_used(  # noqa: C901
         }
 
     for n in node.pre_order():
-        if n.type == token.STRING:
-            value_head = n.value[:2]  # type: ignore
+        if is_string_token(n):
+            value_head = n.value[:2]
             if value_head in {'f"', 'F"', "f'", "F'", "rf", "fr", "RF", "FR"}:
                 features.add(Feature.F_STRINGS)
 
@@ -1165,14 +1217,6 @@ def get_features_used(  # noqa: C901
             assert isinstance(n, Leaf)
             if "_" in n.value:
                 features.add(Feature.NUMERIC_UNDERSCORES)
-            elif n.value.endswith(("L", "l")):
-                # Python 2: 10L
-                features.add(Feature.LONG_INT_LITERAL)
-            elif len(n.value) >= 2 and n.value[0] == "0" and n.value[1].isdigit():
-                # Python 2: 0123; 00123; ...
-                if not all(char == "0" for char in n.value):
-                    # although we don't want to match 0000 or similar
-                    features.add(Feature.OCTAL_INT_LITERAL)
 
         elif n.type == token.SLASH:
             if n.parent and n.parent.type in {
@@ -1210,31 +1254,20 @@ def get_features_used(  # noqa: C901
                         if argch.type in STARS:
                             features.add(feature)
 
-        # Python 2 only features (for its deprecation) except for integers, see above
-        elif n.type == syms.print_stmt:
-            features.add(Feature.PRINT_STMT)
-        elif n.type == syms.exec_stmt:
-            features.add(Feature.EXEC_STMT)
-        elif n.type == syms.tfpdef:
-            # def set_position((x, y), value):
-            #     ...
-            features.add(Feature.AUTOMATIC_PARAMETER_UNPACKING)
-        elif n.type == syms.except_clause:
-            # try:
-            #     ...
-            # except Exception, err:
-            #     ...
-            if len(n.children) >= 4:
-                if n.children[-2].type == token.COMMA:
-                    features.add(Feature.COMMA_STYLE_EXCEPT)
-        elif n.type == syms.raise_stmt:
-            # raise Exception, "msg"
-            if len(n.children) >= 4:
-                if n.children[-2].type == token.COMMA:
-                    features.add(Feature.COMMA_STYLE_RAISE)
-        elif n.type == token.BACKQUOTE:
-            # `i'm surprised this ever existed`
-            features.add(Feature.BACKQUOTE_REPR)
+        elif (
+            n.type in {syms.return_stmt, syms.yield_expr}
+            and len(n.children) >= 2
+            and n.children[1].type == syms.testlist_star_expr
+            and any(child.type == syms.star_expr for child in n.children[1].children)
+        ):
+            features.add(Feature.UNPACKING_ON_FLOW)
+
+        elif (
+            n.type == syms.annassign
+            and len(n.children) >= 4
+            and n.children[3].type == syms.testlist_star_expr
+        ):
+            features.add(Feature.ANN_ASSIGN_EXTENDED_RHS)
 
     return features
 
@@ -1305,7 +1338,10 @@ def assert_equivalent(src: str, dst: str, *, pass_num: int = 1) -> None:
         src_ast = parse_ast(src)
     except Exception as exc:
         raise AssertionError(
-            f"cannot use --safe with this file; failed to parse source file: {exc}"
+            f"cannot use --safe with this file; failed to parse source file AST: "
+            f"{exc}\n"
+            f"This could be caused by running Black with an older Python version "
+            f"that does not support new syntax used in your source file."
         ) from exc
 
     try:
@@ -1331,7 +1367,10 @@ def assert_equivalent(src: str, dst: str, *, pass_num: int = 1) -> None:
 
 def assert_stable(src: str, dst: str, mode: Mode) -> None:
     """Raise AssertionError if `dst` reformats differently the second time."""
-    newdst = format_str(dst, mode=mode)
+    # We shouldn't call format_str() here, because that formats the string
+    # twice and may hide a bug where we bounce back and forth between two
+    # versions.
+    newdst = _format_str_once(dst, mode=mode)
     if dst != newdst:
         log = dump_to_file(
             str(mode),

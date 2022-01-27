@@ -10,6 +10,10 @@ with `# fmt: off` and end with `# fmt: on`, or lines that ends with `# fmt: skip
 [YAPF](https://github.com/google/yapf)'s block comments to the same effect, as a
 courtesy for straddling code.
 
+The rest of this document describes the current formatting style. If you're interested
+in trying out where the style is heading, see [future style](./future_style.md) and try
+running `black --preview`.
+
 ### How _Black_ wraps lines
 
 _Black_ ignores previous formatting and applies uniform horizontal and vertical
@@ -233,10 +237,10 @@ _Black_ prefers double quotes (`"` and `"""`) over single quotes (`'` and `'''`)
 will replace the latter with the former as long as it does not result in more backslash
 escapes than before.
 
-_Black_ also standardizes string prefixes, making them always lowercase. On top of that,
-if your code is already Python 3.6+ only or it's using the `unicode_literals` future
-import, _Black_ will remove `u` from the string prefix as it is meaningless in those
-scenarios.
+_Black_ also standardizes string prefixes. Prefix characters are made lowercase with the
+exception of [capital "R" prefixes](#rstrings-and-rstrings), unicode literal markers
+(`u`) are removed because they are meaningless in Python 3, and in the case of multiple
+characters "r" is put first as in spoken language: "raw f-string".
 
 The main reason to standardize on a single form of quotes is aesthetics. Having one kind
 of quotes everywhere reduces reader distraction. It will also enable a future version of
@@ -260,16 +264,6 @@ If you are adopting _Black_ in a large project with pre-existing string conventi
 you can pass `--skip-string-normalization` on the command line. This is meant as an
 adoption helper, avoid using this for new projects.
 
-(labels/experimental-string)=
-
-As an experimental option (can be enabled by `--experimental-string-processing`),
-_Black_ splits long strings (using parentheses where appropriate) and merges short ones.
-When split, parts of f-strings that don't need formatting are converted to plain
-strings. User-made splits are respected when they do not exceed the line length limit.
-Line continuation backslashes are converted into parenthesized strings. Unnecessary
-parentheses are stripped. Because the functionality is experimental, feedback and issue
-reports are highly encouraged!
-
 _Black_ also processes docstrings. Firstly the indentation of docstrings is corrected
 for both quotations and the text within, although relative indentation in the text is
 preserved. Superfluous trailing whitespace on each line and unnecessary new lines at the
@@ -281,8 +275,7 @@ removed.
 
 _Black_ standardizes most numeric literals to use lowercase letters for the syntactic
 parts and uppercase letters for the digits themselves: `0xAB` instead of `0XAB` and
-`1e10` instead of `1E10`. Python 2 long literals are styled as `2L` instead of `2l` to
-avoid confusion between `l` and `1`.
+`1e10` instead of `1E10`.
 
 ### Line breaks & binary operators
 
@@ -290,6 +283,26 @@ _Black_ will break a line before a binary operator when splitting a block of cod
 multiple lines. This is so that _Black_ is compliant with the recent changes in the
 [PEP 8](https://www.python.org/dev/peps/pep-0008/#should-a-line-break-before-or-after-a-binary-operator)
 style guide, which emphasizes that this approach improves readability.
+
+Almost all operators will be surrounded by single spaces, the only exceptions are unary
+operators (`+`, `-`, and `~`), and power operators when both operands are simple. For
+powers, an operand is considered simple if it's only a NAME, numeric CONSTANT, or
+attribute access (chained attribute access is allowed), with or without a preceding
+unary operator.
+
+```python
+# For example, these won't be surrounded by whitespace
+a = x**y
+b = config.base**5.2
+c = config.base**runtime.config.exponent
+d = 2**5
+e = 2**~5
+
+# ... but these will be surrounded by whitespace
+f = 2 ** get_exponent()
+g = get_x() ** get_y()
+h = config['base'] ** 2
+```
 
 ### Slices
 

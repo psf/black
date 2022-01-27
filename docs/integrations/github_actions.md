@@ -8,8 +8,8 @@ environment. Great for enforcing that your code matches the _Black_ code style.
 This action is known to support all GitHub-hosted runner OSes. In addition, only
 published versions of _Black_ are supported (i.e. whatever is available on PyPI).
 
-Finally, this action installs _Black_ with both the `colorama` and `python2` extras so
-the `--color` flag and formatting Python 2 code are supported.
+Finally, this action installs _Black_ with the `colorama` extra so the `--color` flag
+should work fine.
 
 ## Usage
 
