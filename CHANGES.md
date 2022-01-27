@@ -45,6 +45,7 @@
 - Use parentheses for attribute access on decimal float and int literals (#2799)
 - Don't add whitespace for attribute access on hexadecimal, binary, octal, and complex
   literals (#2799)
+- Deprecate the `black-primer` tool (#2809)
 
 ### Packaging
 
