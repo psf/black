@@ -71,9 +71,13 @@ readability because operators are misaligned. Disable W503 and enable the
 disabled-by-default counterpart W504. E203 should be disabled while changes are still
 [discussed](https://github.com/PyCQA/pycodestyle/issues/373).
 
-## Does Black support Python 2?
+## Which Python versions does Black support?
 
-Support for formatting Python 2 code was removed in version 22.0.
+_Black_ supports at least all Python versions that have not reached their end of life.
+This is the case for both running _Black_ and formatting code. Support for formatting
+Python 2 code was removed in version 22.0. While we've made no plans to stop supporting
+older Python 3 minor versions immediately, their support might also be removed some time
+in the future without a deprecation period.
 
 ## Why does my linter or typechecker complain after I format my code?
 
