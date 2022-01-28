@@ -1128,16 +1128,6 @@ def format_str(src_contents: str, *, mode: Mode) -> str:
         hey
 
     """
-    dst_contents = _format_str_once(src_contents, mode=mode)
-    # Forced second pass to work around optional trailing commas (becoming
-    # forced trailing commas on pass 2) interacting differently with optional
-    # parentheses.  Admittedly ugly.
-    if src_contents != dst_contents:
-        return _format_str_once(dst_contents, mode=mode)
-    return dst_contents
-
-
-def _format_str_once(src_contents: str, *, mode: Mode) -> str:
     src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)
     dst_contents = []
     future_imports = get_future_imports(src_node)
@@ -1370,7 +1360,7 @@ def assert_stable(src: str, dst: str, mode: Mode) -> None:
     # We shouldn't call format_str() here, because that formats the string
     # twice and may hide a bug where we bounce back and forth between two
     # versions.
-    newdst = _format_str_once(dst, mode=mode)
+    newdst = format_str(dst, mode=mode)
     if dst != newdst:
         log = dump_to_file(
             str(mode),
