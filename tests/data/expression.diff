@@ -11,7 +11,7 @@
  True
  False
  1
-@@ -21,71 +21,104 @@
+@@ -21,99 +21,135 @@
  Name1 or (Name2 and Name3) or Name4
  Name1 or Name2 and Name3 or Name4
  v1 << 2
@@ -144,8 +144,11 @@
  call(**self.screen_kwargs)
  call(b, **self.screen_kwargs)
  lukasz.langa.pl
-@@ -94,26 +127,29 @@
- 1.0 .real
+ call.me(maybe)
+-1 .real
+-1.0 .real
++(1).real
++(1.0).real
  ....__class__
  list[str]
  dict[str, int]

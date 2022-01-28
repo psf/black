@@ -15,6 +15,7 @@ from tests.util import (
 )
 
 SIMPLE_CASES: List[str] = [
+    "attribute_access_on_number_literals",
     "beginning_backslash",
     "bracketmatch",
     "class_blank_parentheses",
