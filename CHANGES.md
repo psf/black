@@ -42,6 +42,9 @@
 - Make passing `SRC` or `--code` mandatory and mutually exclusive (#2804)
 - Work around bug that causes unstable formatting in some cases in the presence of the
   magic trailing comma (#2807)
+- Use parentheses for attribute access on decimal float and int literals (#2799)
+- Don't add whitespace for attribute access on hexadecimal, binary, octal, and complex
+  literals (#2799)
 - Deprecate the `black-primer` tool (#2809)
 
 ### Packaging
