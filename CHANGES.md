@@ -43,6 +43,7 @@
 - Work around bug that causes unstable formatting in some cases in the presence of the
   magic trailing comma (#2807)
 - Deprecate the `black-primer` tool (#2809)
+- Fix unstable formatting with semicolons and arithmetic expressions (#2817)
 
 ### Packaging
 
