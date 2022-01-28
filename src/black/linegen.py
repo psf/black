@@ -156,7 +156,7 @@ class LineGenerator(Visitor[Line]):
 
     def visit_simple_stmt(self, node: Node) -> Iterator[Line]:
         """Visit a statement without nested statements."""
-        prev_type = None
+        prev_type: Optional[int] = None
         for child in node.children:
             if (prev_type is None or prev_type == token.SEMI) and is_arith_like(child):
                 wrap_in_parentheses(node, child, visible=False)

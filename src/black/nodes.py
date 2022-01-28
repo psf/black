@@ -536,7 +536,7 @@ def first_leaf_column(node: Node) -> Optional[int]:
     return None
 
 
-def is_arith_like(node: Node) -> bool:
+def is_arith_like(node: LN) -> bool:
     """Whether node is an arithmetic or a binary arithmetic expression"""
     return node.type in {
         syms.arith_expr,
