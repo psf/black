@@ -181,7 +181,7 @@ class PrimerLibTests(unittest.TestCase):
         stdout, stderr = loop.run_until_complete(
             lib._gen_check_output([lib.BLACK_BINARY, "--help"])
         )
-        self.assertTrue("The uncompromising code formatter" in stdout.decode("utf8"))
+        self.assertIn("The uncompromising code formatter", stdout.decode("utf8"))
         self.assertEqual(None, stderr)
 
         # TODO: Add a test to see failure works on Windows

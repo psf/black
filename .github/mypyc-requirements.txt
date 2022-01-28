@@ -1,0 +1,14 @@
+mypy == 0.920
+
+# A bunch of packages for type information
+mypy-extensions >= 0.4.3
+tomli >= 0.10.2
+types-typed-ast >= 1.4.2
+types-dataclasses >= 0.1.3
+typing-extensions > 3.10.0.1
+click >= 8.0.0
+platformdirs >= 2.1.0
+
+# And because build isolation is disabled, we'll need to pull this too
+setuptools-scm[toml] >= 6.3.1
+wheel

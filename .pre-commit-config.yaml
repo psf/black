@@ -35,10 +35,13 @@ repos:
     rev: 3.9.2
     hooks:
       - id: flake8
-        additional_dependencies: [flake8-bugbear]
+        additional_dependencies:
+          - flake8-bugbear
+          - flake8-comprehensions
+          - flake8-simplify
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.910
+    rev: v0.910-1
     hooks:
       - id: mypy
         exclude: ^docs/conf.py
@@ -51,10 +54,10 @@ repos:
           - platformdirs >= 2.1.0
 
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v2.3.2
+    rev: v2.5.1
     hooks:
       - id: prettier
-        exclude: ^Pipfile\.lock
+        exclude: \.github/workflows/diff_shades\.yml
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.0.1

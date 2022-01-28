@@ -50,6 +50,13 @@ if !exists("g:black_skip_string_normalization")
     let g:black_skip_string_normalization = 0
   endif
 endif
+if !exists("g:black_skip_magic_trailing_comma")
+  if exists("g:black_magic_trailing_comma")
+    let g:black_skip_magic_trailing_comma = !g:black_magic_trailing_comma
+  else
+    let g:black_skip_magic_trailing_comma = 0
+  endif
+endif
 if !exists("g:black_quiet")
   let g:black_quiet = 0
 endif
@@ -64,6 +71,7 @@ function BlackComplete(ArgLead, CmdLine, CursorPos)
 \    'target_version=py37',
 \    'target_version=py38',
 \    'target_version=py39',
+\    'target_version=py310',
 \  ]
 endfunction
 

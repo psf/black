@@ -1,6 +1,7 @@
 # Used by ReadTheDocs; pinned requirements for stability.
 
-myst-parser==0.15.1
-Sphinx==4.2.0
+myst-parser==0.16.1
+Sphinx==4.4.0
 sphinxcontrib-programoutput==0.17
 sphinx_copybutton==0.4.0
+furo==2022.1.2

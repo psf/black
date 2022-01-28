@@ -78,36 +78,51 @@ Options include the following:
 
 ## Wing IDE
 
-Wing supports black via the OS Commands tool, as explained in the Wing documentation on
-[pep8 formatting](https://wingware.com/doc/edit/pep8). The detailed procedure is:
+Wing IDE supports `black` via **Preference Settings** for system wide settings and
+**Project Properties** for per-project or workspace specific settings, as explained in
+the Wing documentation on
+[Auto-Reformatting](https://wingware.com/doc/edit/auto-reformatting). The detailed
+procedure is:
 
-1. Install `black`.
+### Prerequistes
 
-   ```console
-   $ pip install black
-   ```
+- Wing IDE version 8.0+
 
-1. Make sure it runs from the command line, e.g.
+- Install `black`.
 
-   ```console
-   $ black --help
-   ```
+  ```console
+  $ pip install black
+  ```
 
-1. In Wing IDE, activate the **OS Commands** panel and define the command **black** to
-   execute black on the currently selected file:
+- Make sure it runs from the command line, e.g.
 
-   - Use the Tools -> OS Commands menu selection
-   - click on **+** in **OS Commands** -> New: Command line..
-     - Title: black
-     - Command Line: black %s
-     - I/O Encoding: Use Default
-     - Key Binding: F1
-     - [x] Raise OS Commands when executed
-     - [x] Auto-save files before execution
-     - [x] Line mode
+  ```console
+  $ black --help
+  ```
 
-1. Select a file in the editor and press **F1** , or whatever key binding you selected
-   in step 3, to reformat the file.
+### Preference Settings
+
+If you want Wing IDE to always reformat with `black` for every project, follow these
+steps:
+
+1. In menubar navigate to `Edit -> Preferences -> Editor -> Reformatting`.
+
+1. Set **Auto-Reformat** from `disable` (default) to `Line after edit` or
+   `Whole files before save`.
+
+1. Set **Reformatter** from `PEP8` (default) to `Black`.
+
+### Project Properties
+
+If you want to just reformat for a specific project and not intervene with Wing IDE
+global setting, follow these steps:
+
+1. In menubar navigate to `Project -> Project Properties -> Options`.
+
+1. Set **Auto-Reformat** from `Use Preferences setting` (default) to `Line after edit`
+   or `Whole files before save`.
+
+1. Set **Reformatter** from `Use Preferences setting` (default) to `Black`.
 
 ## Vim
 
@@ -204,30 +219,28 @@ Traceback (most recent call last):
 ImportError: /home/gui/.vim/black/lib/python3.7/site-packages/typed_ast/_ast3.cpython-37m-x86_64-linux-gnu.so: undefined symbool: PyExc_KeyboardInterrupt
 ```
 
-Then you need to install `typed_ast` and `regex` directly from the source code. The
-error happens because `pip` will download [Python wheels](https://pythonwheels.com/) if
-they are available. Python wheels are a new standard of distributing Python packages and
-packages that have Cython and extensions written in C are already compiled, so the
-installation is much more faster. The problem here is that somehow the Python
-environment inside Vim does not match with those already compiled C extensions and these
-kind of errors are the result. Luckily there is an easy fix: installing the packages
-from the source code.
+Then you need to install `typed_ast` directly from the source code. The error happens
+because `pip` will download [Python wheels](https://pythonwheels.com/) if they are
+available. Python wheels are a new standard of distributing Python packages and packages
+that have Cython and extensions written in C are already compiled, so the installation
+is much more faster. The problem here is that somehow the Python environment inside Vim
+does not match with those already compiled C extensions and these kind of errors are the
+result. Luckily there is an easy fix: installing the packages from the source code.
 
-The two packages that cause the problem are:
+The package that causes problems is:
 
-- [regex](https://pypi.org/project/regex/)
 - [typed-ast](https://pypi.org/project/typed-ast/)
 
 Now remove those two packages:
 
 ```console
-$ pip uninstall regex typed-ast -y
+$ pip uninstall typed-ast -y
 ```
 
 And now you can install them with:
 
 ```console
-$ pip install --no-binary :all: regex typed-ast
+$ pip install --no-binary :all: typed-ast
 ```
 
 The C extensions will be compiled and now Vim's Python environment will match. Note that
@@ -237,7 +250,7 @@ Ubuntu/Debian do `sudo apt-get install build-essential python3-dev`).
 If you later want to update _Black_, you should do it like this:
 
 ```console
-$ pip install -U black --no-binary regex,typed-ast
+$ pip install -U black --no-binary typed-ast
 ```
 
 ### With ALE

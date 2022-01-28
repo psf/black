@@ -1,5 +1,5 @@
 from dataclasses import replace
-from typing import Any, Iterator
+from typing import Any, Iterator, List
 from unittest.mock import patch
 
 import pytest
@@ -14,7 +14,7 @@ from tests.util import (
     read_data,
 )
 
-SIMPLE_CASES = [
+SIMPLE_CASES: List[str] = [
     "beginning_backslash",
     "bracketmatch",
     "class_blank_parentheses",
@@ -48,20 +48,28 @@ SIMPLE_CASES = [
     "function2",
     "function_trailing_comma",
     "import_spacing",
+    "power_op_spacing",
     "remove_parens",
     "slices",
     "string_prefixes",
+    "trailing_comma_optional_parens1",
+    "trailing_comma_optional_parens2",
+    "trailing_comma_optional_parens3",
     "tricky_unicode_symbols",
     "tupleassign",
 ]
 
-SIMPLE_CASES_PY2 = [
-    "numeric_literals_py2",
-    "python2",
-    "python2_unicode_literals",
+PY310_CASES: List[str] = [
+    "pattern_matching_simple",
+    "pattern_matching_complex",
+    "pattern_matching_extras",
+    "pattern_matching_style",
+    "pattern_matching_generic",
+    "parenthesized_context_managers",
 ]
 
-EXPERIMENTAL_STRING_PROCESSING_CASES = [
+PREVIEW_CASES: List[str] = [
+    # string processing
     "cantfit",
     "comments7",
     "long_strings",
@@ -70,14 +78,7 @@ EXPERIMENTAL_STRING_PROCESSING_CASES = [
     "percent_precedence",
 ]
 
-PY310_CASES = [
-    "pattern_matching_simple",
-    "pattern_matching_complex",
-    "pattern_matching_extras",
-    "parenthesized_context_managers",
-]
-
-SOURCES = [
+SOURCES: List[str] = [
     "src/black/__init__.py",
     "src/black/__main__.py",
     "src/black/brackets.py",
@@ -133,20 +134,14 @@ def check_file(filename: str, mode: black.Mode, *, data: bool = True) -> None:
     assert_format(source, expected, mode, fast=False)
 
 
-@pytest.mark.parametrize("filename", SIMPLE_CASES_PY2)
-@pytest.mark.python2
-def test_simple_format_py2(filename: str) -> None:
-    check_file(filename, DEFAULT_MODE)
-
-
 @pytest.mark.parametrize("filename", SIMPLE_CASES)
 def test_simple_format(filename: str) -> None:
     check_file(filename, DEFAULT_MODE)
 
 
-@pytest.mark.parametrize("filename", EXPERIMENTAL_STRING_PROCESSING_CASES)
-def test_experimental_format(filename: str) -> None:
-    check_file(filename, black.Mode(experimental_string_processing=True))
+@pytest.mark.parametrize("filename", PREVIEW_CASES)
+def test_preview_format(filename: str) -> None:
+    check_file(filename, black.Mode(preview=True))
 
 
 @pytest.mark.parametrize("filename", SOURCES)
@@ -200,6 +195,27 @@ def test_python_310(filename: str) -> None:
     assert_format(source, expected, mode, minimum_version=(3, 10))
 
 
+def test_python_310_without_target_version() -> None:
+    source, expected = read_data("pattern_matching_simple")
+    mode = black.Mode()
+    assert_format(source, expected, mode, minimum_version=(3, 10))
+
+
+def test_patma_invalid() -> None:
+    source, expected = read_data("pattern_matching_invalid")
+    mode = black.Mode(target_versions={black.TargetVersion.PY310})
+    with pytest.raises(black.parsing.InvalidInput) as exc_info:
+        assert_format(source, expected, mode, minimum_version=(3, 10))
+
+    exc_info.match("Cannot parse: 10:11")
+
+
+def test_python_2_hint() -> None:
+    with pytest.raises(black.parsing.InvalidInput) as exc_info:
+        assert_format("print 'daylily'", "print 'daylily'")
+    exc_info.match(black.parsing.PY2_HINT)
+
+
 def test_docstring_no_string_normalization() -> None:
     """Like test_docstring but with string normalization off."""
     source, expected = read_data("docstring_no_string_normalization")
@@ -226,13 +242,6 @@ def test_numeric_literals_ignoring_underscores() -> None:
     assert_format(source, expected, mode)
 
 
-@pytest.mark.python2
-def test_python2_print_function() -> None:
-    source, expected = read_data("python2_print_function")
-    mode = replace(DEFAULT_MODE, target_versions={black.TargetVersion.PY27})
-    assert_format(source, expected, mode)
-
-
 def test_stub() -> None:
     mode = replace(DEFAULT_MODE, is_pyi=True)
     source, expected = read_data("stub.pyi")
@@ -247,3 +256,9 @@ def test_python38() -> None:
 def test_python39() -> None:
     source, expected = read_data("python39")
     assert_format(source, expected, minimum_version=(3, 9))
+
+
+def test_power_op_newline() -> None:
+    # requires line_length=0
+    source, expected = read_data("power_op_newline")
+    assert_format(source, expected, mode=black.Mode(line_length=0))

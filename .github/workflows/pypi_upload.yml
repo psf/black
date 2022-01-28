@@ -15,14 +15,14 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
 
-      - name: Install latest pip, setuptools, twine + wheel
+      - name: Install latest pip, build, twine
         run: |
-          python -m pip install --upgrade pip setuptools twine wheel
+          python -m pip install --upgrade --disable-pip-version-check pip
+          python -m pip install --upgrade build twine
 
-      - name: Build wheels
+      - name: Build wheel and source distributions
         run: |
-          python setup.py bdist_wheel
-          python setup.py sdist
+          python -m build
 
       - name: Upload to PyPI via Twine
         env:

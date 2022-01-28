@@ -1,6 +1,111 @@
 # Change Log
 
-## _Unreleased_
+## Unreleased
+
+### _Black_
+
+- **Remove Python 2 support** (#2740)
+- Do not accept bare carriage return line endings in pyproject.toml (#2408)
+- Improve error message for invalid regular expression (#2678)
+- Improve error message when parsing fails during AST safety check by embedding the
+  underlying SyntaxError (#2693)
+- Fix mapping cases that contain as-expressions, like `case {"key": 1 | 2 as password}`
+  (#2686)
+- Fix cases that contain multiple top-level as-expressions, like `case 1 as a, 2 as b`
+  (#2716)
+- Fix call patterns that contain as-expressions with keyword arguments, like
+  `case Foo(bar=baz as quux)` (#2749)
+- No longer color diff headers white as it's unreadable in light themed terminals
+  (#2691)
+- Tuple unpacking on `return` and `yield` constructs now implies 3.8+ (#2700)
+- Unparenthesized tuples on annotated assignments (e.g
+  `values: Tuple[int, ...] = 1, 2, 3`) now implies 3.8+ (#2708)
+- Remove spaces around power operators if both operands are simple (#2726)
+- Allow setting custom cache directory on all platforms with environment variable
+  `BLACK_CACHE_DIR` (#2739).
+- Text coloring added in the final statistics (#2712)
+- For stubs, one blank line between class attributes and methods is now kept if there's
+  at least one pre-existing blank line (#2736)
+- Verbose mode also now describes how a project root was discovered and which paths will
+  be formatted. (#2526)
+- Speed-up the new backtracking parser about 4X in general (enabled when
+  `--target-version` is set to 3.10 and higher). (#2728)
+- Fix handling of standalone `match()` or `case()` when there is a trailing newline or a
+  comment inside of the parentheses. (#2760)
+- Black now normalizes string prefix order (#2297)
+- Add configuration option (`python-cell-magics`) to format cells with custom magics in
+  Jupyter Notebooks (#2744)
+- Deprecate `--experimental-string-processing` and move the functionality under
+  `--preview` (#2789)
+- Enable Python 3.10+ by default, without any extra need to specify
+  `--target-version=py310`. (#2758)
+- Make passing `SRC` or `--code` mandatory and mutually exclusive (#2804)
+- Work around bug that causes unstable formatting in some cases in the presence of the
+  magic trailing comma (#2807)
+- Deprecate the `black-primer` tool (#2809)
+
+### Packaging
+
+- All upper version bounds on dependencies have been removed (#2718)
+- `typing-extensions` is no longer a required dependency in Python 3.10+ (#2772)
+- Set `click` lower bound to `8.0.0` (#2791)
+
+### Preview style
+
+- Introduce the `--preview` flag (#2752)
+- Add `--experimental-string-processing` to the preview style (#2789)
+
+### Integrations
+
+- Update GitHub action to support containerized runs (#2748)
+
+### Documentation
+
+- Change protocol in pip installation instructions to `https://` (#2761)
+- Change HTML theme to Furo primarily for its responsive design and mobile support
+  (#2793)
+
+## 21.12b0
+
+### _Black_
+
+- Fix determination of f-string expression spans (#2654)
+- Fix bad formatting of error messages about EOF in multi-line statements (#2343)
+- Functions and classes in blocks now have more consistent surrounding spacing (#2472)
+- `from __future__ import annotations` statement now implies Python 3.7+ (#2690)
+
+#### Jupyter Notebook support
+
+- Cell magics are now only processed if they are known Python cell magics. Earlier, all
+  cell magics were tokenized, leading to possible indentation errors e.g. with
+  `%%writefile`. (#2630)
+- Fix assignment to environment variables in Jupyter Notebooks (#2642)
+
+#### Python 3.10 support
+
+- Point users to using `--target-version py310` if we detect 3.10-only syntax (#2668)
+- Fix `match` statements with open sequence subjects, like `match a, b:` or
+  `match a, *b:` (#2639) (#2659)
+- Fix `match`/`case` statements that contain `match`/`case` soft keywords multiple
+  times, like `match re.match()` (#2661)
+- Fix `case` statements with an inline body (#2665)
+- Fix styling of starred expressions inside `match` subject (#2667)
+- Fix parser error location on invalid syntax in a `match` statement (#2649)
+- Fix Python 3.10 support on platforms without ProcessPoolExecutor (#2631)
+- Improve parsing performance on code that uses `match` under `--target-version py310`
+  up to ~50% (#2670)
+
+### Packaging
+
+- Remove dependency on `regex` (#2644) (#2663)
+
+## 21.11b1
+
+### _Black_
+
+- Bumped regex version minimum to 2021.4.4 to fix Pattern class usage (#2621)
+
+## 21.11b0
 
 ### _Black_
 

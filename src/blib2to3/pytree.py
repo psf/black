@@ -386,7 +386,8 @@ class Leaf(Base):
     value: Text
     fixers_applied: List[Any]
     bracket_depth: int
-    opening_bracket: "Leaf"
+    # Changed later in brackets.py
+    opening_bracket: Optional["Leaf"] = None
     used_names: Optional[Set[Text]]
     _prefix = ""  # Whitespace and comments preceding this token in the input
     lineno: int = 0  # Line where this token starts in the input
@@ -399,6 +400,7 @@ class Leaf(Base):
         context: Optional[Context] = None,
         prefix: Optional[Text] = None,
         fixers_applied: List[Any] = [],
+        opening_bracket: Optional["Leaf"] = None,
     ) -> None:
         """
         Initializer.
@@ -416,6 +418,7 @@ class Leaf(Base):
             self._prefix = prefix
         self.fixers_applied: Optional[List[Any]] = fixers_applied[:]
         self.children = []
+        self.opening_bracket = opening_bracket
 
     def __repr__(self) -> str:
         """Return a canonical string representation."""
@@ -448,6 +451,7 @@ class Leaf(Base):
             self.value,
             (self.prefix, (self.lineno, self.column)),
             fixers_applied=self.fixers_applied,
+            opening_bracket=self.opening_bracket,
         )
 
     def leaves(self) -> Iterator["Leaf"]:

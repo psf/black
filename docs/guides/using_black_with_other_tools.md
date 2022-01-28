@@ -97,7 +97,7 @@ does not break older versions so you can keep it if you are running previous ver
 <details>
 <summary>.isort.cfg</summary>
 
-```cfg
+```ini
 [settings]
 profile = black
 ```
@@ -107,7 +107,7 @@ profile = black
 <details>
 <summary>setup.cfg</summary>
 
-```cfg
+```ini
 [isort]
 profile = black
 ```
@@ -181,7 +181,7 @@ extend-ignore = E203
 <details>
 <summary>setup.cfg</summary>
 
-```cfg
+```ini
 [flake8]
 max-line-length = 88
 extend-ignore = E203

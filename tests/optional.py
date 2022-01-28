@@ -21,7 +21,12 @@ import re
 from typing import FrozenSet, List, Set, TYPE_CHECKING
 
 import pytest
-from _pytest.store import StoreKey
+
+try:
+    from pytest import StashKey
+except ImportError:
+    # pytest < 7
+    from _pytest.store import StoreKey as StashKey
 
 log = logging.getLogger(__name__)
 
@@ -33,8 +38,8 @@ if TYPE_CHECKING:
     from _pytest.nodes import Node
 
 
-ALL_POSSIBLE_OPTIONAL_MARKERS = StoreKey[FrozenSet[str]]()
-ENABLED_OPTIONAL_MARKERS = StoreKey[FrozenSet[str]]()
+ALL_POSSIBLE_OPTIONAL_MARKERS = StashKey[FrozenSet[str]]()
+ENABLED_OPTIONAL_MARKERS = StashKey[FrozenSet[str]]()
 
 
 def pytest_addoption(parser: "Parser") -> None:
@@ -96,7 +101,7 @@ def pytest_collection_modifyitems(config: "Config", items: "List[Node]") -> None
     enabled_optional_markers = store[ENABLED_OPTIONAL_MARKERS]
 
     for item in items:
-        all_markers_on_test = set(m.name for m in item.iter_markers())
+        all_markers_on_test = {m.name for m in item.iter_markers()}
         optional_markers_on_test = all_markers_on_test & all_possible_optional_markers
         if not optional_markers_on_test or (
             optional_markers_on_test & enabled_optional_markers
