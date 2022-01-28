@@ -2,61 +2,77 @@
 
 ## Unreleased
 
-### _Black_
+At long last, _Black_ is no longer a beta product! This is the first non-beta release
+and the first release covered by our new stability policy.
+
+### Highlights
 
 - **Remove Python 2 support** (#2740)
-- Do not accept bare carriage return line endings in pyproject.toml (#2408)
-- Improve error message for invalid regular expression (#2678)
-- Improve error message when parsing fails during AST safety check by embedding the
-  underlying SyntaxError (#2693)
+- Introduce the `--preview` flag (#2752)
+
+### Style
+
+- Deprecate `--experimental-string-processing` and move the functionality under
+  `--preview` (#2789)
+- For stubs, one blank line between class attributes and methods is now kept if there's
+  at least one pre-existing blank line (#2736)
+- Black now normalizes string prefix order (#2297)
+- Remove spaces around power operators if both operands are simple (#2726)
+- Work around bug that causes unstable formatting in some cases in the presence of the
+  magic trailing comma (#2807)
+- Use parentheses for attribute access on decimal float and int literals (#2799)
+- Don't add whitespace for attribute access on hexadecimal, binary, octal, and complex
+  literals (#2799)
+
+### Parser
+
 - Fix mapping cases that contain as-expressions, like `case {"key": 1 | 2 as password}`
   (#2686)
 - Fix cases that contain multiple top-level as-expressions, like `case 1 as a, 2 as b`
   (#2716)
 - Fix call patterns that contain as-expressions with keyword arguments, like
   `case Foo(bar=baz as quux)` (#2749)
-- No longer color diff headers white as it's unreadable in light themed terminals
-  (#2691)
 - Tuple unpacking on `return` and `yield` constructs now implies 3.8+ (#2700)
 - Unparenthesized tuples on annotated assignments (e.g
   `values: Tuple[int, ...] = 1, 2, 3`) now implies 3.8+ (#2708)
-- Remove spaces around power operators if both operands are simple (#2726)
-- Allow setting custom cache directory on all platforms with environment variable
-  `BLACK_CACHE_DIR` (#2739).
-- Text coloring added in the final statistics (#2712)
-- For stubs, one blank line between class attributes and methods is now kept if there's
-  at least one pre-existing blank line (#2736)
-- Verbose mode also now describes how a project root was discovered and which paths will
-  be formatted. (#2526)
-- Speed-up the new backtracking parser about 4X in general (enabled when
-  `--target-version` is set to 3.10 and higher). (#2728)
 - Fix handling of standalone `match()` or `case()` when there is a trailing newline or a
   comment inside of the parentheses. (#2760)
-- Black now normalizes string prefix order (#2297)
+
+### Performance
+
+- Speed-up the new backtracking parser about 4X in general (enabled when
+  `--target-version` is set to 3.10 and higher). (#2728)
+- _Black_ is now compiled with [mypyc](https://github.com/mypyc/mypyc) for an overall 2x
+  speed-up. 64-bit Windows, MacOS, and Linux (not including musl) are supported. (#1009,
+  #2431)
+
+### Configuration
+
+- Do not accept bare carriage return line endings in pyproject.toml (#2408)
 - Add configuration option (`python-cell-magics`) to format cells with custom magics in
   Jupyter Notebooks (#2744)
-- Deprecate `--experimental-string-processing` and move the functionality under
-  `--preview` (#2789)
+- Allow setting custom cache directory on all platforms with environment variable
+  `BLACK_CACHE_DIR` (#2739).
 - Enable Python 3.10+ by default, without any extra need to specify
   `--target-version=py310`. (#2758)
 - Make passing `SRC` or `--code` mandatory and mutually exclusive (#2804)
-- Work around bug that causes unstable formatting in some cases in the presence of the
-  magic trailing comma (#2807)
-- Use parentheses for attribute access on decimal float and int literals (#2799)
-- Don't add whitespace for attribute access on hexadecimal, binary, octal, and complex
-  literals (#2799)
-- Deprecate the `black-primer` tool (#2809)
+
+### Output
+
+- Improve error message for invalid regular expression (#2678)
+- Improve error message when parsing fails during AST safety check by embedding the
+  underlying SyntaxError (#2693)
+- No longer color diff headers white as it's unreadable in light themed terminals
+  (#2691)
+- Text coloring added in the final statistics (#2712)
+- Verbose mode also now describes how a project root was discovered and which paths will
+  be formatted. (#2526)
 
 ### Packaging
 
 - All upper version bounds on dependencies have been removed (#2718)
 - `typing-extensions` is no longer a required dependency in Python 3.10+ (#2772)
 - Set `click` lower bound to `8.0.0` (#2791)
-
-### Preview style
-
-- Introduce the `--preview` flag (#2752)
-- Add `--experimental-string-processing` to the preview style (#2789)
 
 ### Integrations
 
@@ -67,6 +83,7 @@
 - Change protocol in pip installation instructions to `https://` (#2761)
 - Change HTML theme to Furo primarily for its responsive design and mobile support
   (#2793)
+- Deprecate the `black-primer` tool (#2809)
 
 ## 21.12b0
 
