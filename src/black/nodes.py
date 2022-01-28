@@ -536,15 +536,14 @@ def first_leaf_column(node: Node) -> Optional[int]:
     return None
 
 
-def first_child_is_arith(node: Node) -> bool:
-    """Whether first child is an arithmetic or a binary arithmetic expression"""
-    expr_types = {
+def is_arith_like(node: Node) -> bool:
+    """Whether node is an arithmetic or a binary arithmetic expression"""
+    return node.type in {
         syms.arith_expr,
         syms.shift_expr,
         syms.xor_expr,
         syms.and_expr,
     }
-    return bool(node.children and node.children[0].type in expr_types)
 
 
 def is_docstring(leaf: Leaf) -> bool:
