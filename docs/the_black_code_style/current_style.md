@@ -4,9 +4,9 @@
 
 _Black_ aims for consistency, generality, readability and reducing git diffs. Similar
 language constructs are formatted with similar rules. Style configuration options are
-deliberately limited and rarely added. Previous formatting isn't taken into account,
-except for the magic trailing comma and preserving newlines. The coding style used by
-_Black_ can be viewed as a strict subset of PEP 8.
+deliberately limited and rarely added. Previous formatting is taken into account as
+little as possible, with rare exceptions like the magic trailing comma. The coding style
+used by _Black_ can be viewed as a strict subset of PEP 8.
 
 _Black_ reformats entire files in place. It doesn't reformat blocks that start with
 `# fmt: off` and end with `# fmt: on`, or lines that ends with `# fmt: skip`.
