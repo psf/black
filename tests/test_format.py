@@ -15,6 +15,7 @@ from tests.util import (
 )
 
 SIMPLE_CASES: List[str] = [
+    "attribute_access_on_number_literals",
     "beginning_backslash",
     "bracketmatch",
     "class_blank_parentheses",
@@ -256,3 +257,9 @@ def test_python38() -> None:
 def test_python39() -> None:
     source, expected = read_data("python39")
     assert_format(source, expected, minimum_version=(3, 9))
+
+
+def test_power_op_newline() -> None:
+    # requires line_length=0
+    source, expected = read_data("power_op_newline")
+    assert_format(source, expected, mode=black.Mode(line_length=0))

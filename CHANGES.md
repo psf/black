@@ -20,6 +20,9 @@ and the first release covered by our new stability policy.
 - Remove spaces around power operators if both operands are simple (#2726)
 - Work around bug that causes unstable formatting in some cases in the presence of the
   magic trailing comma (#2807)
+- Use parentheses for attribute access on decimal float and int literals (#2799)
+- Don't add whitespace for attribute access on hexadecimal, binary, octal, and complex
+  literals (#2799)
 
 ### Parser
 
@@ -80,6 +83,7 @@ and the first release covered by our new stability policy.
 - Change protocol in pip installation instructions to `https://` (#2761)
 - Change HTML theme to Furo primarily for its responsive design and mobile support
   (#2793)
+- Deprecate the `black-primer` tool (#2809)
 
 ## 21.12b0
 
