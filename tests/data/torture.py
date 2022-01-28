@@ -17,11 +17,6 @@ class A:
                 xxxxxxxxxxxx
             )
 
-assert (
-    a_function(very_long_arguments_that_surpass_the_limit, which_is_eighty_eight_in_this_case_plus_a_bit_more)
-    == {"x": "this need to pass the line limit as well", "b": "but only by a little bit"}
-)
-
 # output
 
 importA
@@ -57,8 +52,3 @@ class A:
             aaaaaaaaaaaaaaaaaaa = bbbbbbbbbbbbbbb.cccccccccc(
                 xxxxxxxxxxxx
             )  # pylint: disable=no-member
-
-assert (
-    a_function(very_long_arguments_that_surpass_the_limit, which_is_eighty_eight_in_this_case_plus_a_bit_more)
-    == {"x": "this need to pass the line limit as well", "b": "but only by a little bit"}
-)
