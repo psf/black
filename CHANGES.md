@@ -84,6 +84,7 @@ and the first release covered by our new stability policy.
 - Change HTML theme to Furo primarily for its responsive design and mobile support
   (#2793)
 - Deprecate the `black-primer` tool (#2809)
+- Document Python support policy (#2819)
 
 ## 21.12b0
 
