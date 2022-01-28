@@ -128,14 +128,14 @@ def read_pyproject_toml(
     if not config:
         return None
 
-    black_config = config.get("config") or (
+    inner_config = config.get("config") or (
         ctx.default_map.get("config") if ctx.default_map else None
     )
-    if black_config:
-        black_config_path = Path(Path(value).parent, black_config).resolve()
+    if inner_config:
+        inner_config_path = (Path(value).parent / inner_config).resolve()
 
         try:
-            read_pyproject_toml(ctx, param, str(black_config_path))
+            read_pyproject_toml(ctx, param, str(inner_config_path))
         except RecursionError as e:
             raise click.FileError(
                 filename=value, hint=f"Error reading configuration file: {e}"
