@@ -306,12 +306,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
             return NO
 
         if not prev:
-            if t == token.DOT:
-                prevp = preceding_leaf(p)
-                if not prevp or prevp.type != token.NUMBER:
-                    return NO
-
-            elif t == token.LSQB:
+            if t == token.DOT or t == token.LSQB:
                 return NO
 
         elif prev.type != token.COMMA:

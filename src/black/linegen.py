@@ -201,6 +201,28 @@ class LineGenerator(Visitor[Line]):
             yield from self.line()
             yield from self.visit(child)
 
+    def visit_power(self, node: Node) -> Iterator[Line]:
+        for idx, leaf in enumerate(node.children[:-1]):
+            next_leaf = node.children[idx + 1]
+
+            if not isinstance(leaf, Leaf):
+                continue
+
+            value = leaf.value.lower()
+            if (
+                leaf.type == token.NUMBER
+                and next_leaf.type == syms.trailer
+                # Ensure that we are in an attribute trailer
+                and next_leaf.children[0].type == token.DOT
+                # It shouldn't wrap hexadecimal, binary and octal literals
+                and not value.startswith(("0x", "0b", "0o"))
+                # It shouldn't wrap complex literals
+                and "j" not in value
+            ):
+                wrap_in_parentheses(node, leaf)
+
+        yield from self.visit_default(node)
+
     def visit_SEMI(self, leaf: Leaf) -> Iterator[Line]:
         """Remove a semicolon and put the other statement on a separate line."""
         yield from self.line()
