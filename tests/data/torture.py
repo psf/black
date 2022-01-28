@@ -17,6 +17,11 @@ class A:
                 xxxxxxxxxxxx
             )
 
+def test(self, othr):
+    return (1 == 2 and
+            (name, description, self.default, self.selected, self.auto_generated, self.parameters, self.meta_data, self.schedule) ==
+            (name, description, othr.default, othr.selected, othr.auto_generated, othr.parameters, othr.meta_data, othr.schedule))
+
 # output
 
 importA
@@ -52,3 +57,25 @@ class A:
             aaaaaaaaaaaaaaaaaaa = bbbbbbbbbbbbbbb.cccccccccc(
                 xxxxxxxxxxxx
             )  # pylint: disable=no-member
+
+
+def test(self, othr):
+    return 1 == 2 and (
+        name,
+        description,
+        self.default,
+        self.selected,
+        self.auto_generated,
+        self.parameters,
+        self.meta_data,
+        self.schedule,
+    ) == (
+        name,
+        description,
+        othr.default,
+        othr.selected,
+        othr.auto_generated,
+        othr.parameters,
+        othr.meta_data,
+        othr.schedule,
+    )
