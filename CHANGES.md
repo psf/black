@@ -17,6 +17,7 @@
   `case Foo(bar=baz as quux)` (#2749)
 - No longer color diff headers white as it's unreadable in light themed terminals
   (#2691)
+- Standardize type comments to always have one space (#2698)
 - Tuple unpacking on `return` and `yield` constructs now implies 3.8+ (#2700)
 - Unparenthesized tuples on annotated assignments (e.g
   `values: Tuple[int, ...] = 1, 2, 3`) now implies 3.8+ (#2708)

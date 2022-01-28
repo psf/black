@@ -123,6 +123,11 @@ def make_comment(content: str) -> str:
         and not content.lstrip().startswith("type:")
     ):
         content = " " + content[1:]  # Replace NBSP by a simple space
+    elif NON_BREAKING_SPACE not in content:
+        type_comment = re.match(r"\s*type\s*:\s*(.*)", content)
+        if type_comment:
+            content = "type: " + type_comment.group(1)
+
     if content and content[0] not in " !:#'%":
         content = " " + content
     return "#" + content
@@ -271,7 +276,7 @@ def contains_pragma_comment(comment_list: List[Leaf]) -> bool:
         pylint).
     """
     for comment in comment_list:
-        if comment.value.startswith(("# type:", "# noqa", "# pylint:")):
+        if re.match(r"#\s*(type\s*:|pylint\s*:|noqa\s*)", comment.value):
             return True
 
     return False
