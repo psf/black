@@ -112,7 +112,6 @@ setup(
         "uvloop": ["uvloop>=0.15.2"],
         "jupyter": ["ipython>=7.8.0", "tokenize-rt>=3.2.0"],
     },
-    test_suite="tests.test_black",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
