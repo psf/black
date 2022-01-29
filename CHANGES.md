@@ -25,6 +25,7 @@ and the first release covered by our new stability policy.
   literals (#2799)
 - Treat blank lines in stubs the same inside top-level `if` statements (#2820)
 - Fix unstable formatting with semicolons and arithmetic expressions (#2817)
+- Fix unstable formatting around magic trailing comma (#2572)
 
 ### Parser
 
@@ -39,6 +40,7 @@ and the first release covered by our new stability policy.
   `values: Tuple[int, ...] = 1, 2, 3`) now implies 3.8+ (#2708)
 - Fix handling of standalone `match()` or `case()` when there is a trailing newline or a
   comment inside of the parentheses. (#2760)
+- `from __future__ import annotations` statement now implies Python 3.7+ (#2690)
 
 ### Performance
 
@@ -95,7 +97,6 @@ and the first release covered by our new stability policy.
 - Fix determination of f-string expression spans (#2654)
 - Fix bad formatting of error messages about EOF in multi-line statements (#2343)
 - Functions and classes in blocks now have more consistent surrounding spacing (#2472)
-- `from __future__ import annotations` statement now implies Python 3.7+ (#2690)
 
 #### Jupyter Notebook support
 
@@ -139,7 +140,6 @@ and the first release covered by our new stability policy.
   when `--target-version py310` is explicitly specified (#2586)
 - Add support for parenthesized with (#2586)
 - Declare support for Python 3.10 for running Black (#2562)
-- Fix unstable black runs around magic trailing comma (#2572)
 
 ### Integrations
 
