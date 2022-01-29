@@ -23,6 +23,7 @@ and the first release covered by our new stability policy.
 - Use parentheses for attribute access on decimal float and int literals (#2799)
 - Don't add whitespace for attribute access on hexadecimal, binary, octal, and complex
   literals (#2799)
+- Treat blank lines in stubs the same inside top-level `if` statements (#2820)
 
 ### Parser
 
