@@ -133,11 +133,14 @@ old_fmt_string2 = "This is a %s %s %s %s" % (
     "Use f-strings instead!",
 )
 
-old_fmt_string3 = "Whereas only the strings after the percent sign were long in the last example, this example uses a long initial string as well. This is another %s %s %s %s" % (
-    "really really really really really",
-    "old",
-    "way to format strings!",
-    "Use f-strings instead!",
+old_fmt_string3 = (
+    "Whereas only the strings after the percent sign were long in the last example, this example uses a long initial string as well. This is another %s %s %s %s"
+    % (
+        "really really really really really",
+        "old",
+        "way to format strings!",
+        "Use f-strings instead!",
+    )
 )
 
 fstring = f"f-strings definitely make things more {difficult} than they need to be for {{black}}. But boy they sure are handy. The problem is that some lines will need to have the 'f' whereas others do not. This {line}, for example, needs one."
