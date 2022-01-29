@@ -530,11 +530,11 @@ class EmptyLineTracker:
             return 0, 0
 
         if self.is_pyi:
-            if self.previous_line.depth > current_line.depth:
-                newlines = 0 if current_line.depth else 1
-            elif current_line.is_class or self.previous_line.is_class:
-                if current_line.depth:
+            if current_line.is_class or self.previous_line.is_class:
+                if self.previous_line.depth < current_line.depth:
                     newlines = 0
+                elif self.previous_line.depth > current_line.depth:
+                    newlines = 1
                 elif current_line.is_stub_class and self.previous_line.is_stub_class:
                     # No blank line between classes with an empty body
                     newlines = 0
@@ -551,6 +551,8 @@ class EmptyLineTracker:
                     # Blank line between a block of functions (maybe with preceding
                     # decorators) and a block of non-functions
                     newlines = 1
+            elif self.previous_line.depth > current_line.depth:
+                newlines = 1
             else:
                 newlines = 0
         else:

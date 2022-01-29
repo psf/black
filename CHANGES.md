@@ -23,6 +23,7 @@ and the first release covered by our new stability policy.
 - Use parentheses for attribute access on decimal float and int literals (#2799)
 - Don't add whitespace for attribute access on hexadecimal, binary, octal, and complex
   literals (#2799)
+- Treat blank lines in stubs the same inside top-level `if` statements (#2820)
 - Fix unstable formatting with semicolons and arithmetic expressions (#2817)
 
 ### Parser
@@ -85,6 +86,7 @@ and the first release covered by our new stability policy.
 - Change HTML theme to Furo primarily for its responsive design and mobile support
   (#2793)
 - Deprecate the `black-primer` tool (#2809)
+- Document Python support policy (#2819)
 
 ## 21.12b0
 
