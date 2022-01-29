@@ -53,6 +53,7 @@ SIMPLE_CASES: List[str] = [
     "remove_parens",
     "slices",
     "string_prefixes",
+    "torture",
     "trailing_comma_optional_parens1",
     "trailing_comma_optional_parens2",
     "trailing_comma_optional_parens3",
