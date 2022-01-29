@@ -139,6 +139,7 @@ and the first release covered by our new stability policy.
   when `--target-version py310` is explicitly specified (#2586)
 - Add support for parenthesized with (#2586)
 - Declare support for Python 3.10 for running Black (#2562)
+- Fix unstable black runs around magic trailing comma (#2572)
 
 ### Integrations
 
