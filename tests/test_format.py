@@ -15,6 +15,7 @@ from tests.util import (
 )
 
 SIMPLE_CASES: List[str] = [
+    "attribute_access_on_number_literals",
     "beginning_backslash",
     "bracketmatch",
     "class_blank_parentheses",
@@ -52,6 +53,7 @@ SIMPLE_CASES: List[str] = [
     "remove_parens",
     "slices",
     "string_prefixes",
+    "torture",
     "trailing_comma_optional_parens1",
     "trailing_comma_optional_parens2",
     "trailing_comma_optional_parens3",

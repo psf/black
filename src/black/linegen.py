@@ -7,7 +7,7 @@ from typing import Collection, Iterator, List, Optional, Set, Union
 
 from black.nodes import WHITESPACE, RARROW, STATEMENT, STANDALONE_COMMENT
 from black.nodes import ASSIGNMENTS, OPENING_BRACKETS, CLOSING_BRACKETS
-from black.nodes import Visitor, syms, first_child_is_arith, ensure_visible
+from black.nodes import Visitor, syms, is_arith_like, ensure_visible
 from black.nodes import is_docstring, is_empty_tuple, is_one_tuple, is_one_tuple_between
 from black.nodes import is_name_token, is_lpar_token, is_rpar_token
 from black.nodes import is_walrus_assignment, is_yield, is_vararg, is_multiline_string
@@ -156,8 +156,12 @@ class LineGenerator(Visitor[Line]):
 
     def visit_simple_stmt(self, node: Node) -> Iterator[Line]:
         """Visit a statement without nested statements."""
-        if first_child_is_arith(node):
-            wrap_in_parentheses(node, node.children[0], visible=False)
+        prev_type: Optional[int] = None
+        for child in node.children:
+            if (prev_type is None or prev_type == token.SEMI) and is_arith_like(child):
+                wrap_in_parentheses(node, child, visible=False)
+            prev_type = child.type
+
         is_suite_like = node.parent and node.parent.type in STATEMENT
         if is_suite_like:
             if self.mode.is_pyi and is_stub_body(node):
@@ -196,6 +200,28 @@ class LineGenerator(Visitor[Line]):
         for child in node.children:
             yield from self.line()
             yield from self.visit(child)
+
+    def visit_power(self, node: Node) -> Iterator[Line]:
+        for idx, leaf in enumerate(node.children[:-1]):
+            next_leaf = node.children[idx + 1]
+
+            if not isinstance(leaf, Leaf):
+                continue
+
+            value = leaf.value.lower()
+            if (
+                leaf.type == token.NUMBER
+                and next_leaf.type == syms.trailer
+                # Ensure that we are in an attribute trailer
+                and next_leaf.children[0].type == token.DOT
+                # It shouldn't wrap hexadecimal, binary and octal literals
+                and not value.startswith(("0x", "0b", "0o"))
+                # It shouldn't wrap complex literals
+                and "j" not in value
+            ):
+                wrap_in_parentheses(node, leaf)
+
+        yield from self.visit_default(node)
 
     def visit_SEMI(self, leaf: Leaf) -> Iterator[Line]:
         """Remove a semicolon and put the other statement on a separate line."""

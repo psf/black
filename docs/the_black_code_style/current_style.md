@@ -2,10 +2,14 @@
 
 ## Code style
 
-_Black_ reformats entire files in place. Style configuration options are deliberately
-limited and rarely added. It doesn't take previous formatting into account, except for
-the magic trailing comma and preserving newlines. It doesn't reformat blocks that start
-with `# fmt: off` and end with `# fmt: on`, or lines that ends with `# fmt: skip`.
+_Black_ aims for consistency, generality, readability and reducing git diffs. Similar
+language constructs are formatted with similar rules. Style configuration options are
+deliberately limited and rarely added. Previous formatting is taken into account as
+little as possible, with rare exceptions like the magic trailing comma. The coding style
+used by _Black_ can be viewed as a strict subset of PEP 8.
+
+_Black_ reformats entire files in place. It doesn't reformat blocks that start with
+`# fmt: off` and end with `# fmt: on`, or lines that ends with `# fmt: skip`.
 `# fmt: on/off` have to be on the same level of indentation. It also recognizes
 [YAPF](https://github.com/google/yapf)'s block comments to the same effect, as a
 courtesy for straddling code.
@@ -18,8 +22,7 @@ running `black --preview`.
 
 _Black_ ignores previous formatting and applies uniform horizontal and vertical
 whitespace to your code. The rules for horizontal whitespace can be summarized as: do
-whatever makes `pycodestyle` happy. The coding style used by _Black_ can be viewed as a
-strict subset of PEP 8.
+whatever makes `pycodestyle` happy.
 
 As for vertical whitespace, _Black_ tries to render one full expression or simple
 statement per line. If this fits the allotted line length, great.
