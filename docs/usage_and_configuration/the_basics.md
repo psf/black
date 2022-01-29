@@ -200,11 +200,11 @@ project.
 "No". _Black_ is all about sensible defaults. Applying those defaults will have your
 code in compliance with many other _Black_ formatted projects.
 
-### Linked Configuration feature
+### Linked Configuration
 
 You can use the `config = ` field to include configuration options from another
-configuration file. Values set in the original configuration file have precedence over
-those in the included file.
+configuration file, whose path needs to be relative to `pyproject.toml`. Values set in
+the original configuration file have precedence over those in the included file.
 
 Suppose `pyproject.toml` contains:
 
@@ -213,7 +213,7 @@ Suppose `pyproject.toml` contains:
 lineno-start: 1
 emphasize-lines: 2,3
 ---
-[tools.black]
+[tool.black]
 config = "linked_config.toml"
 color = true
 ```
@@ -225,7 +225,7 @@ And `linked_config.toml` contains:
 lineno-start: 1
 emphasize-lines: 2
 ---
-[tools.black]
+[tool.black]
 color = false
 line-length = 88
 target-version = ['py36', 'py37', 'py38']

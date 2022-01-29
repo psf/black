@@ -46,7 +46,7 @@
 - Don't add whitespace for attribute access on hexadecimal, binary, octal, and complex
   literals (#2799)
 - Deprecate the `black-primer` tool (#2809)
-- Allow specifying `config` in config files (#2525)
+- Allow specifying `config` in config files to include configuration options (#2525)
 
 ### Packaging
 
