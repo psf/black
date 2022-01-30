@@ -10,7 +10,7 @@
 
 <!-- Changes that affect Black's style -->
 
-### *Blackd*
+### _Blackd_
 
 <!-- Changes to blackd -->
 

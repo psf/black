@@ -49,7 +49,7 @@ Use the following template for a clean changelog after the release:
 
 <!-- Changes that affect Black's style -->
 
-### *Blackd*
+### _Blackd_
 
 <!-- Changes to blackd -->
 
