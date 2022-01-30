@@ -4,6 +4,7 @@
 
 ### Configuration
 
+- Do not format `__pypackages__` directories by default (#2836)
 - Add support for specifying stable version with `--required-version` (#2832).
 
 ## 22.1.0
