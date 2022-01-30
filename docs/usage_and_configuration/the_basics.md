@@ -29,8 +29,8 @@ python -m black {source_file_or_directory}
 The CLI options of _Black_ can be displayed by expanding the view below or by running
 `black --help`. All options are also covered in more detail below.
 
-While _Black_ has quite a few knobs these days, it is still opinionated
-so style options are deliberately limited and rarely added.
+While _Black_ has quite a few knobs these days, it is still opinionated so style options
+are deliberately limited and rarely added.
 
 #### `-c`, `--code`
 
@@ -63,11 +63,10 @@ In a [configuration file](#configuration-via-a-file), you can write:
 target-versions = ["py37", "py38", "py39", "py310"]
 ```
 
-*Black* uses this option to decide what grammar to use to parse your code.
-In addition, it may use it to decide what style to use.
-For example, support for a trailing comma after `*args` in a function call was
-added in Python 3.5, so *Black* will add this comma only if the target versions are
-all Python 3.5 or higher:
+_Black_ uses this option to decide what grammar to use to parse your code. In addition,
+it may use it to decide what style to use. For example, support for a trailing comma
+after `*args` in a function call was added in Python 3.5, so _Black_ will add this comma
+only if the target versions are all Python 3.5 or higher:
 
 ```console
 $ black --line-length=10 --target-version=py35 -c 'f(a, *args)'
@@ -89,41 +88,38 @@ f(
 
 #### `--pyi`
 
-Format all input files like typing stubs
-regardless of file extension. This is useful when
-piping source on standard input.
+Format all input files like typing stubs regardless of file extension. This is useful
+when piping source on standard input.
 
 #### `--ipynb`
 
-Format all input files like Jupyter
-Notebooks regardless of file extension. This is useful when
-piping source on standard input.
+Format all input files like Jupyter Notebooks regardless of file extension. This is
+useful when piping source on standard input.
 
 #### `--python-cell-magics`
 
-When processing Jupyter Notebooks, add the
-given magic to the list of known python-
-magics. Useful for formatting
-cells with custom python magics.
+When processing Jupyter Notebooks, add the given magic to the list of known python-
+magics. Useful for formatting cells with custom python magics.
 
 #### `-S, --skip-string-normalization`
 
-By default, _Black_ uses double quotes for all strings and normalizes
-string prefixes, as described in [the style documentation](the_black_code_style/current_style.md#strings).
-If this option is given, strings are left unchanged instead.
+By default, _Black_ uses double quotes for all strings and normalizes string prefixes,
+as described in
+[the style documentation](the_black_code_style/current_style.md#strings). If this option
+is given, strings are left unchanged instead.
 
 #### `-C, --skip-magic-trailing-comma`
 
-By default, _Black_ uses existing trailing commas as an indication that short lines should
-be left separate, as described in [the style documentation](the_black_code_style/current_style.md#the-magic-trailing-comma).
+By default, _Black_ uses existing trailing commas as an indication that short lines
+should be left separate, as described in
+[the style documentation](the_black_code_style/current_style.md#the-magic-trailing-comma).
 If this option is given, the magic trailing comma is ignored.
 
 #### `--preview`
 
-Enable potentially disruptive style changes
-that may be added to Black's main
-functionality in the next major release.
-Read more about [our preview style](the_black_code_style/future_style.md#preview-style).
+Enable potentially disruptive style changes that may be added to Black's main
+functionality in the next major release. Read more about
+[our preview style](the_black_code_style/future_style.md#preview-style).
 
 #### `--check`
 
@@ -180,16 +176,17 @@ Show (or do not show) colored diiff. Only applies when `--diff` is given.
 
 #### `--fast` / `--safe`
 
-By default, _Black_ performs [an AST safety check](the_black_code_style/current_style.md#ast-before-and-after-formatting)
-after formatting your code. The `--fast` flag turns off this check and the `--safe` flag explicitly enables it.
+By default, _Black_ performs
+[an AST safety check](the_black_code_style/current_style.md#ast-before-and-after-formatting)
+after formatting your code. The `--fast` flag turns off this check and the `--safe` flag
+explicitly enables it.
 
 #### `--required-version`
 
-Require a specific version of _Black_ to be
-running. This is useful for ensuring that all contributors to your project
-are using the same version, because different versions of _Black_ may format code
-a little differently. This option can be set in a configuration
-file for consistent results across environments.
+Require a specific version of _Black_ to be running. This is useful for ensuring that
+all contributors to your project are using the same version, because different versions
+of _Black_ may format code a little differently. This option can be set in a
+configuration file for consistent results across environments.
 
 ```console
 $ black --version
@@ -215,49 +212,38 @@ that do not affect formatting.
 
 #### `--include`
 
-A regular expression that matches files and
-directories that should be included on
-recursive searches. An empty value means all
-files are included regardless of the name.
-Use forward slashes for directories on all
-platforms (Windows, too). Exclusions are
+A regular expression that matches files and directories that should be included on
+recursive searches. An empty value means all files are included regardless of the name.
+Use forward slashes for directories on all platforms (Windows, too). Exclusions are
 calculated first, inclusions later.
 
 #### `--exclude`
 
-A regular expression that matches files and
-directories that should be excluded on
-recursive searches. An empty value means no
-paths are excluded. Use forward slashes for
-directories on all platforms (Windows, too).
-Exclusions are calculated first, inclusions
+A regular expression that matches files and directories that should be excluded on
+recursive searches. An empty value means no paths are excluded. Use forward slashes for
+directories on all platforms (Windows, too). Exclusions are calculated first, inclusions
 later.
 
 #### `--extend-exclude`
 
-Like `--exclude`, but adds additional files
-and directories on top of the excluded ones. Useful if you simply want to add to the
-default.
+Like `--exclude`, but adds additional files and directories on top of the excluded ones.
+Useful if you simply want to add to the default.
 
 #### `--force-exclude`
 
-Like `--exclude`, but files and directories
-matching this regex will be excluded even
-when they are passed explicitly as
-arguments. This is useful when invoking _Black_ programmatically
-on changed files, such as in a pre-commit hook or editor plugin.
+Like `--exclude`, but files and directories matching this regex will be excluded even
+when they are passed explicitly as arguments. This is useful when invoking _Black_
+programmatically on changed files, such as in a pre-commit hook or editor plugin.
 
 #### `--stdin-filename`
 
-The name of the file when passing it through
-stdin. Useful to make sure Black will
-respect the `--force-exclude` option on some
-editors that rely on using stdin.
+The name of the file when passing it through stdin. Useful to make sure Black will
+respect the `--force-exclude` option on some editors that rely on using stdin.
 
 #### `-W`, `--workers`
 
-When _Black_ formats multiple files, it may use a process pool to
-speed up formatting. This option controls the number of parallel workers.
+When _Black_ formats multiple files, it may use a process pool to speed up formatting.
+This option controls the number of parallel workers.
 
 #### `-q`, `--quiet`
 
@@ -300,8 +286,8 @@ black, version 22.1.0
 
 #### `--config`
 
-Read configuration options from a configuration file. See [below](#configuration-via-a-file) for more
-details on the configuration file.
+Read configuration options from a configuration file. See
+[below](#configuration-via-a-file) for more details on the configuration file.
 
 #### `-h`, `--help`
 
@@ -355,8 +341,7 @@ Oh no! 💥 💔 💥
 3 files reformatted, 2 files left unchanged, 1 file failed to reformat.
 ```
 
-The [`--quiet`](#quiet) and [`--verbose`](#verbose) flags control output
-verbosity.
+The [`--quiet`](#quiet) and [`--verbose`](#verbose) flags control output verbosity.
 
 ## Configuration via a file
 
