@@ -281,7 +281,7 @@ You can check the version of _Black_ you have installed using the `--version` fl
 
 ```console
 $ black --version
-black, version 22.1.0
+black, 22.1.0
 ```
 
 #### `--config`
