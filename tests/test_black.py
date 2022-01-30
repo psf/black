@@ -1205,7 +1205,7 @@ class BlackTestCase(BlackBaseTestCase):
             ignore_config=True,
         )
 
-    def test_required_version_does_not_matches_on_minor_version(self) -> None:
+    def test_required_version_does_not_match_on_minor_version(self) -> None:
         self.invokeBlack(
             ["--required-version", black.__version__.split(".")[0] + ".999", "-c", "0"],
             exit_code=1,
