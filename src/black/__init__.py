@@ -474,8 +474,10 @@ def main(
                 out(f"Using configuration in '{config}'.", fg="blue")
 
     error_msg = "Oh no! 💥 💔 💥"
-    if required_version and (
-        required_version != __version__ or required_version != __version__.split(".")[0]
+    if (
+        required_version
+        and required_version != __version__
+        and required_version != __version__.split(".")[0]
     ):
         err(
             f"{error_msg} The required version `{required_version}` does not match"
