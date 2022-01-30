@@ -291,8 +291,8 @@ def validate_regex(
     type=str,
     help=(
         "Require a specific version of Black to be running (useful for unifying results"
-        " across many environments e.g. with a pyproject.toml file). It can be only an"
-        " integer representing a major version or an exact version."
+        " across many environments e.g. with a pyproject.toml file). It can be"
+        " either a major version number or an exact version."
     ),
 )
 @click.option(
