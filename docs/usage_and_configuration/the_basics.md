@@ -206,9 +206,9 @@ $ black --required-version 31 -c "still = 'beta?!'"
 Oh no! 💥 💔 💥 The required version does not match the running version!
 ```
 
-Because of our [stability policy](the_black_code_style/index.rst#stability-policy), this
-will guarantee stable formatting, but still allow you to take advantage of improvements
-that do not affect formatting.
+Because of our [stability policy](../the_black_code_style/index.rst), this will
+guarantee stable formatting, but still allow you to take advantage of improvements that
+do not affect formatting.
 
 #### `--include`
 
@@ -320,8 +320,8 @@ _Black_ to just tell you what it _would_ do without actually rewriting the Pytho
 There's two variations to this mode that are independently enabled by their respective
 flags:
 
-- [`--check`](#--check) (exit with code 1 if any file would be reformatted)
-- [`--diff`](#--diff) (print a diff instead of reformatting files)
+- `--check` (exit with code 1 if any file would be reformatted)
+- `--diff` (print a diff instead of reformatting files)
 
 Both variations can be enabled at once.
 
@@ -341,8 +341,7 @@ Oh no! 💥 💔 💥
 3 files reformatted, 2 files left unchanged, 1 file failed to reformat.
 ```
 
-The [`--quiet`](#-q---quiet) and [`--verbose`](#-v---verbose) flags control output
-verbosity.
+The `--quiet` and `--verbose` flags control output verbosity.
 
 ## Configuration via a file
 
