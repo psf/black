@@ -4,7 +4,7 @@
 
 ### Configuration
 
-- Add support for specifying stable version with `--required-version`.
+- Add support for specifying stable version with `--required-version` (#2832).
 
 ## 22.1.0
 
