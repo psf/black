@@ -19,8 +19,13 @@ from black.lines import Line, line_to_string, is_line_short_enough
 from black.lines import can_omit_invisible_parens, can_be_split, append_leaves
 from black.comments import generate_comments, list_comments, FMT_OFF
 from black.numerics import normalize_numeric_literal
-from black.strings import get_string_prefix, fix_docstring
-from black.strings import normalize_string_prefix, normalize_string_quotes
+from black.strings import (
+    get_string_prefix,
+    fix_docstring,
+    normalize_string_prefix,
+    normalize_string_quotes,
+    normalize_unicode_escape_sequences,
+)
 from black.trans import Transformer, CannotTransform, StringMerger, StringSplitter
 from black.trans import StringParenWrapper, StringParenStripper, hug_power_op
 from black.mode import Mode, Feature, Preview
@@ -255,6 +260,8 @@ class LineGenerator(Visitor[Line]):
         yield from self.visit_default(node)
 
     def visit_STRING(self, leaf: Leaf) -> Iterator[Line]:
+        normalize_unicode_escape_sequences(leaf)
+
         if is_docstring(leaf) and "\\\n" not in leaf.value:
             # We're ignoring docstrings with backslash newline escapes because changing
             # indentation of those changes the AST representation of the code.

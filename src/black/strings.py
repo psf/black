@@ -5,7 +5,9 @@ Simple formatting on strings. Further string formatting code is in trans.py.
 import re
 import sys
 from functools import lru_cache
-from typing import List, Pattern
+from typing import List, Pattern, AnyStr, Match
+
+from blib2to3.pytree import Leaf
 
 if sys.version_info < (3, 8):
     from typing_extensions import Final
@@ -18,6 +20,7 @@ STRING_PREFIX_RE: Final = re.compile(
     r"^([" + STRING_PREFIX_CHARS + r"]*)(.*)$", re.DOTALL
 )
 FIRST_NON_WHITESPACE_RE: Final = re.compile(r"\s*\t+\s*(\S)")
+UNICODE_RE = re.compile(r"(\\+)(u|U|x)([a-zA-Z0-9]+)")
 
 
 def sub_twice(regex: Pattern[str], replacement: str, original: str) -> str:
@@ -236,3 +239,14 @@ def normalize_string_quotes(s: str) -> str:
         return s  # Prefer double quotes
 
     return f"{prefix}{new_quote}{new_body}{new_quote}"
+
+
+def normalize_unicode_escape_sequences(leaf: Leaf) -> None:
+    """Replace hex codes in Unicode escape sequences with lowercase representation."""
+    text = leaf.value
+
+    def replace(m: Match[AnyStr]) -> AnyStr:
+        groups = m.groups()
+        return groups[0] + groups[1] + groups[2].lower()
+
+    leaf.value = re.sub(UNICODE_RE, replace, text)
