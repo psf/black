@@ -2,9 +2,48 @@
 
 ## Unreleased
 
+### Highlights
+
+<!-- Include any especially major or disruptive changes here -->
+
+### Style
+
+<!-- Changes that affect Black's style -->
+
+### *Blackd*
+
+<!-- Changes to blackd -->
+
 ### Configuration
 
+<!-- Changes to how Black can be configured -->
+
 - Do not format `__pypackages__` directories by default (#2836)
+
+### Documentation
+
+<!-- Major changes to documentation and policies. Small docs changes
+     don't need a changelog entry. -->
+
+### Integrations
+
+<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+### Output
+
+<!-- Changes to Black's terminal output and error messages -->
+
+### Packaging
+
+<!-- Changes to how Black is packaged, such as dependency requirements -->
+
+### Parser
+
+<!-- Changes to the parser or to version autodetection -->
+
+### Performance
+
+<!-- Changes that improve Black's performance. -->
 
 ## 22.1.0
 
