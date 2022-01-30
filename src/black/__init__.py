@@ -258,7 +258,7 @@ def validate_regex(
     "--preview",
     is_flag=True,
     help=(
-        "Enable potentially disruptive style changes that will be added to Black's main"
+        "Enable potentially disruptive style changes that may be added to Black's main"
         " functionality in the next major release."
     ),
 )
