@@ -1,5 +1,11 @@
 # Change Log
 
+## Unreleased
+
+### Configuration
+
+- Do not format `__pypackages__` directories by default (#2836)
+
 ## 22.1.0
 
 At long last, _Black_ is no longer a beta product! This is the first non-beta release
