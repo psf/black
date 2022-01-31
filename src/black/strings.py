@@ -20,7 +20,7 @@ STRING_PREFIX_RE: Final = re.compile(
     r"^([" + STRING_PREFIX_CHARS + r"]*)(.*)$", re.DOTALL
 )
 FIRST_NON_WHITESPACE_RE: Final = re.compile(r"\s*\t+\s*(\S)")
-UNICODE_RE = re.compile(r"(\\+)(u|U|x)([a-zA-Z0-9]+)")
+UNICODE_RE = re.compile(r"(\\+)(u|U|x|N)(([a-zA-Z0-9]+)|\{([a-zA-Z0-9]+)\})")
 
 
 def sub_twice(regex: Pattern[str], replacement: str, original: str) -> str:
@@ -247,6 +247,11 @@ def normalize_unicode_escape_sequences(leaf: Leaf) -> None:
 
     def replace(m: Match[AnyStr]) -> AnyStr:
         groups = m.groups()
-        return groups[0] + groups[1] + groups[2].lower()
+        if m.group(4):
+            # \\U or \\u or \\x
+            return groups[0] + groups[1] + groups[2].lower()
+        else:
+            # \\N{}
+            return groups[0] + groups[1] + groups[2].upper()
 
     leaf.value = re.sub(UNICODE_RE, replace, text)

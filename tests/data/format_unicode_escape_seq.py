@@ -5,7 +5,7 @@ x = r"\u0001F60E"
 x = "don't format me"
 x = "\xhhhhh"
 x = "\uhhhhh"
-
+x = "\N{ox}\N{OX}"
 
 # Output
 
@@ -16,3 +16,4 @@ x = r"\u0001f60e"
 x = "don't format me"
 x = "\xhhhhh"
 x = "\uhhhhh"
+x = "\N{OX}\N{OX}"
