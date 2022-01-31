@@ -89,6 +89,10 @@ also documented. They're both worth taking a look:
 - [The _Black_ Code Style: Current style](https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html)
 - [The _Black_ Code Style: Future style](https://black.readthedocs.io/en/stable/the_black_code_style/future_style.html)
 
+Changes to the _Black_ code style are bound by the Stability Policy:
+
+- [The _Black_ Code Style: Stability Policy](https://black.readthedocs.io/en/stable/the_black_code_style/index.html#stability-policy)
+
 Please refer to this document before submitting an issue. What seems like a bug might be
 intended behaviour.
 
