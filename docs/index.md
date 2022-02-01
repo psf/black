@@ -1,10 +1,9 @@
-.. black documentation master file, created by
-   sphinx-quickstart on Fri Mar 23 10:53:30 2018.
+% black documentation master file, created by
+% sphinx-quickstart on Fri Mar 23 10:53:30 2018.
 
-The uncompromising code formatter
-=================================
+# The uncompromising code formatter
 
-    “Any color you like.”
+> “Any color you like.”
 
 By using *Black*, you agree to cede control over minutiae of
 hand-formatting. In return, *Black* gives you speed, determinism, and
@@ -16,86 +15,86 @@ possible. Blackened code looks the same regardless of the project
 you're reading. Formatting becomes transparent after a while and you
 can focus on the content instead.
 
-Try it out now using the `Black Playground <https://black.vercel.app>`_.
+Try it out now using the [Black Playground](https://black.vercel.app).
 
-.. admonition:: Note - Black is now stable!
+:::{admonition} Note - Black is now stable!
+*Black* is [successfully used](https://github.com/psf/black#used-by) by
+many projects, small and big. *Black* has a comprehensive test suite, with efficient
+parallel tests, our own auto formatting and parallel Continuous Integration runner.
+Now that we have become stable, you should not expect large formatting to changes in
+the future. Stylistic changes will mostly be responses to bug reports and support for new Python
+syntax.
 
-   *Black* is `successfully used <https://github.com/psf/black#used-by>`_ by
-   many projects, small and big. *Black* has a comprehensive test suite, with efficient
-   parallel tests, our own auto formatting and parallel Continuous Integration runner.
-   Now that we have become stable, you should not expect large formatting to changes in
-   the future. Stylistic changes will mostly be responses to bug reports and support for new Python
-   syntax.
+Also, as a safety measure which slows down processing, *Black* will check that the
+reformatted code still produces a valid AST that is effectively equivalent to the
+original (see the
+[Pragmatism](./the_black_code_style/current_style.html#pragmatism)
+section for details). If you're feeling confident, use `--fast`.
+:::
 
-   Also, as a safety measure which slows down processing, *Black* will check that the
-   reformatted code still produces a valid AST that is effectively equivalent to the
-   original (see the
-   `Pragmatism <./the_black_code_style/current_style.html#pragmatism>`_
-   section for details). If you're feeling confident, use ``--fast``.
+:::{note}
+{doc}`Black is licensed under the MIT license <license>`.
+:::
 
-.. note::
-   :doc:`Black is licensed under the MIT license <license>`.
+## Testimonials
 
-Testimonials
-------------
+**Mike Bayer**, author of [SQLAlchemy](https://www.sqlalchemy.org/):
 
-**Mike Bayer**, author of `SQLAlchemy <https://www.sqlalchemy.org/>`_:
+> *I can't think of any single tool in my entire programming career that has given me a
+> bigger productivity increase by its introduction. I can now do refactorings in about
+> 1% of the keystrokes that it would have taken me previously when we had no way for
+> code to format itself.*
 
-   *I can't think of any single tool in my entire programming career that has given me a
-   bigger productivity increase by its introduction. I can now do refactorings in about
-   1% of the keystrokes that it would have taken me previously when we had no way for
-   code to format itself.*
+**Dusty Phillips**, [writer](https://smile.amazon.com/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=dusty+phillips):
 
-**Dusty Phillips**, `writer <https://smile.amazon.com/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=dusty+phillips>`_:
+> *Black is opinionated so you don't have to be.*
 
-   *Black is opinionated so you don't have to be.*
-
-**Hynek Schlawack**, creator of `attrs <https://www.attrs.org/>`_, core
+**Hynek Schlawack**, creator of [attrs](https://www.attrs.org/), core
 developer of Twisted and CPython:
 
-   *An auto-formatter that doesn't suck is all I want for Xmas!*
+> *An auto-formatter that doesn't suck is all I want for Xmas!*
 
-**Carl Meyer**, `Django <https://www.djangoproject.com/>`_ core developer:
+**Carl Meyer**, [Django](https://www.djangoproject.com/) core developer:
 
-   *At least the name is good.*
+> *At least the name is good.*
 
-**Kenneth Reitz**, creator of `requests <http://python-requests.org/>`_
-and `pipenv <https://docs.pipenv.org/>`_:
+**Kenneth Reitz**, creator of [requests](http://python-requests.org/)
+and [pipenv](https://docs.pipenv.org/):
 
-   *This vastly improves the formatting of our code. Thanks a ton!*
+> *This vastly improves the formatting of our code. Thanks a ton!*
 
-
-Show your style
----------------
+## Show your style
 
 Use the badge in your project's README.md:
 
-.. code-block:: md
-
-   [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-
+```md
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+```
 
 Using the badge in README.rst:
 
-.. code-block:: rst
-
-   .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-      :target: https://github.com/psf/black
+```rst
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+   :target: https://github.com/psf/black
+```
 
 Looks like this:
 
-.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-   :target: https://github.com/psf/black
+```{image} https://img.shields.io/badge/code%20style-black-000000.svg
+:target: https://github.com/psf/black
+```
 
-Contents
---------
+## Contents
 
+```{eval-rst}
 .. toctree::
    :maxdepth: 3
    :includehidden:
 
    the_black_code_style/index
+```
 
+```{eval-rst}
 .. toctree::
    :maxdepth: 3
    :includehidden:
@@ -106,7 +105,9 @@ Contents
    integrations/index
    guides/index
    faq
+```
 
+```{eval-rst}
 .. toctree::
    :maxdepth: 2
    :includehidden:
@@ -115,7 +116,9 @@ Contents
    contributing/index
    change_log
    authors
+```
 
+```{eval-rst}
 .. toctree::
    :hidden:
    :caption: Project Links
@@ -123,9 +126,9 @@ Contents
    GitHub <https://github.com/psf/black>
    PyPI <https://pypi.org/project/black>
    Chat <https://discord.gg/RtVdv86PrH>
+```
 
-Indices and tables
-==================
+# Indices and tables
 
-* :ref:`genindex`
-* :ref:`search`
+- {ref}`genindex`
+- {ref}`search`

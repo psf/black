@@ -1,24 +1,24 @@
-The Black Code Style
-====================
+# The Black Code Style
 
+```{eval-rst}
 .. toctree::
     :hidden:
 
     Current style <current_style>
     Future style <future_style>
+```
 
 *Black* is a PEP 8 compliant opinionated formatter with its own style.
 
 While keeping the style unchanged throughout releases has always been a goal,
 the *Black* code style isn't set in stone. It evolves to accommodate for new features
 in the Python language and, occasionally, in response to user feedback.
-Large-scale style preferences presented in :doc:`current_style` are very unlikely to
+Large-scale style preferences presented in {doc}`current_style` are very unlikely to
 change, but minor style aspects and details might change according to the stability
 policy presented below. Ongoing style considerations are tracked on GitHub with the
-`design <https://github.com/psf/black/labels/T%3A%20design>`_ issue label.
+[design](https://github.com/psf/black/labels/T%3A%20design) issue label.
 
-Stability Policy
-----------------
+## Stability Policy
 
 The following policy applies for the *Black* code style, in non pre-release
 versions of *Black*:
@@ -36,12 +36,12 @@ versions of *Black*:
   improved formatting enabled by newer Python language syntax as well as due
   to improvements in the formatting logic.
 
-- The ``--preview`` flag is exempt from this policy. There are no guarantees
+- The `--preview` flag is exempt from this policy. There are no guarantees
   around the stability of the output with that flag passed into *Black*. This
   flag is intended for allowing experimentation with the proposed changes to
   the *Black* code style.
 
 Documentation for both the current and future styles can be found:
 
-- :doc:`current_style`
-- :doc:`future_style`
+- {doc}`current_style`
+- {doc}`future_style`

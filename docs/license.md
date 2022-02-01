@@ -1,6 +1,8 @@
-:orphan:
+---
+orphan: true
+---
 
-License
-=======
+# License
 
-.. include:: ../LICENSE
+```{include} ../LICENSE
+```
