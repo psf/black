@@ -110,6 +110,11 @@ myst_disable_syntax = [
     "math_block",
 ]
 
+# Optional MyST Syntaxes
+myst_enable_extensions = [
+    "colon_fence",
+]
+
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
