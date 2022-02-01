@@ -49,7 +49,8 @@
 ## 22.1.0
 
 At long last, _Black_ is no longer a beta product! This is the first non-beta release
-and the first release covered by our new stability policy.
+and the first release covered by our new
+[stability policy](https://black.readthedocs.io/en/stable/the_black_code_style/index.html#stability-policy).
 
 ### Highlights
 
