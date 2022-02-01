@@ -1,5 +1,7 @@
-% black documentation master file, created by
-% sphinx-quickstart on Fri Mar 23 10:53:30 2018.
+<!--
+black documentation master file, created by
+sphinx-quickstart on Fri Mar 23 10:53:30 2018.
+-->
 
 # The uncompromising code formatter
 
@@ -28,7 +30,7 @@ syntax.
 Also, as a safety measure which slows down processing, *Black* will check that the
 reformatted code still produces a valid AST that is effectively equivalent to the
 original (see the
-[Pragmatism](./the_black_code_style/current_style.html#pragmatism)
+[Pragmatism](./the_black_code_style/current_style.md#pragmatism)
 section for details). If you're feeling confident, use `--fast`.
 :::
 
