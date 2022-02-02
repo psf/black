@@ -407,7 +407,7 @@ def validate_regex(
     help="Read configuration from FILE path.",
 )
 @click.pass_context
-def main(
+def main(  # noqa: C901
     ctx: click.Context,
     code: Optional[str],
     line_length: int,
