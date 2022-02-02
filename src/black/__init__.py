@@ -49,7 +49,12 @@ from black.cache import read_cache, write_cache, get_cache_info, filter_cached, 
 from black.concurrency import cancel, shutdown, maybe_install_uvloop
 from black.output import dump_to_file, ipynb_diff, diff, color_diff, out, err
 from black.report import Report, Changed, NothingChanged
-from black.files import find_project_root, find_pyproject_toml, parse_pyproject_toml
+from black.files import (
+    find_project_root,
+    find_pyproject_toml,
+    parse_pyproject_toml,
+    find_user_pyproject_toml,
+)
 from black.files import gen_python_files, get_gitignore, normalize_path_maybe_ignore
 from black.files import wrap_stream_for_windows
 from black.parsing import InvalidInput  # noqa F401
@@ -469,7 +474,16 @@ def main(
 
         if config:
             config_source = ctx.get_parameter_source("config")
-            if config_source in (ParameterSource.DEFAULT, ParameterSource.DEFAULT_MAP):
+            if config == str(user_level_config := find_user_pyproject_toml()):
+                out(
+                    f"Using configuration from user-level config at "
+                    f"'{user_level_config}'.",
+                    fg="blue",
+                )
+            elif config_source in (
+                ParameterSource.DEFAULT,
+                ParameterSource.DEFAULT_MAP,
+            ):
                 out("Using configuration from project root.", fg="blue")
             else:
                 out(f"Using configuration in '{config}'.", fg="blue")

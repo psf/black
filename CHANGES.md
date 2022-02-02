@@ -34,6 +34,8 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Add special config verbose log case when black is using user-level config (#2861)
+
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
