@@ -11,7 +11,7 @@ The most common questions and issues users face are aggregated to this FAQ.
 ## Why spaces? I prefer tabs
 
 PEP 8 recommends spaces over tabs, and they are used by most of the Python community.
-_Black_ provides no options to configure the indentation style, and requests for any such
+_Black_ provides no options to configure the indentation style, and requests for such
 options will not be considered.
 
 However, we recognise that using tabs is an accessibility issue as well. While the
