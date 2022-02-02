@@ -474,7 +474,8 @@ def main(
 
         if config:
             config_source = ctx.get_parameter_source("config")
-            if config == str(user_level_config := find_user_pyproject_toml()):
+            user_level_config = str(find_user_pyproject_toml())
+            if config == user_level_config:
                 out(
                     f"Using configuration from user-level config at "
                     f"'{user_level_config}'.",
