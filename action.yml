@@ -5,7 +5,7 @@ inputs:
   options:
     description:
       "Options passed to Black. Use `black --help` to see available options. Default:
-      '--check'"
+      '--check --diff'"
     required: false
     default: "--check --diff"
   src:
