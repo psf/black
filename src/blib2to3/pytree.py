@@ -451,7 +451,6 @@ class Leaf(Base):
             self.value,
             (self.prefix, (self.lineno, self.column)),
             fixers_applied=self.fixers_applied,
-            opening_bracket=self.opening_bracket,
         )
 
     def leaves(self) -> Iterator["Leaf"]:
