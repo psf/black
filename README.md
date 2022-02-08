@@ -130,7 +130,7 @@ code in compliance with many other _Black_ formatted projects.
 ## Used by
 
 The following notable open-source projects trust _Black_ with enforcing a consistent
-code style: pytest, tox, Pyramid, Django Channels, Hypothesis, attrs, SQLAlchemy,
+code style: pytest, tox, Pyramid, Django, Django Channels, Hypothesis, attrs, SQLAlchemy,
 Poetry, PyPA applications (Warehouse, Bandersnatch, Pipenv, virtualenv), pandas, Pillow,
 Twisted, LocalStack, every Datadog Agent Integration, Home Assistant, Zulip, Kedro,
 OpenOA, FLORIS, ORBIT, WOMBAT, and many more.
