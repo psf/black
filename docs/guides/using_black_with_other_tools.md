@@ -210,7 +210,7 @@ mixed feelings about _Black_'s formatting style.
 #### Configuration
 
 ```
-disable = C0330, C0326
+disable = C0326, C0330
 max-line-length = 88
 ```
 
@@ -243,7 +243,7 @@ characters via `max-line-length = 88`.
 
 ```ini
 [MESSAGES CONTROL]
-disable = C0330, C0326
+disable = C0326, C0330
 
 [format]
 max-line-length = 88
@@ -259,7 +259,7 @@ max-line-length = 88
 max-line-length = 88
 
 [pylint.messages_control]
-disable = C0330, C0326
+disable = C0326, C0330
 ```
 
 </details>
@@ -269,7 +269,7 @@ disable = C0330, C0326
 
 ```toml
 [tool.pylint.messages_control]
-disable = "C0330, C0326"
+disable = "C0326, C0330"
 
 [tool.pylint.format]
 max-line-length = "88"
