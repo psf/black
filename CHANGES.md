@@ -10,6 +10,8 @@
 
 <!-- Changes that affect Black's style -->
 
+- Format docstrings to have consistent quote placement
+
 ### _Blackd_
 
 <!-- Changes to blackd -->

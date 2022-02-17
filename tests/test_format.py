@@ -78,6 +78,7 @@ PREVIEW_CASES: List[str] = [
     "long_strings__edge_case",
     "long_strings__regression",
     "percent_precedence",
+    "docstring_preview",
 ]
 
 SOURCES: List[str] = [
@@ -222,6 +223,13 @@ def test_docstring_no_string_normalization() -> None:
     """Like test_docstring but with string normalization off."""
     source, expected = read_data("docstring_no_string_normalization")
     mode = replace(DEFAULT_MODE, string_normalization=False)
+    assert_format(source, expected, mode)
+
+
+def test_docstring_no_string_normalization_preview() -> None:
+    """Like test_docstring_no_string_normailiazation but with preview on."""
+    source, expected = read_data("docstring_no_string_normalization_preview")
+    mode = replace(DEFAULT_MODE, string_normalization=False, preview=True)
     assert_format(source, expected, mode)
 
 

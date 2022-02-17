@@ -60,7 +60,7 @@ def lines_with_leading_tabs_expanded(s: str) -> List[str]:
     return lines
 
 
-def fix_docstring(docstring: str, prefix: str) -> str:
+def fix_docstring(docstring: str, prefix: str, preview: bool) -> str:
     # https://www.python.org/dev/peps/pep-0257/#handling-docstring-indentation
     if not docstring:
         return ""
@@ -81,7 +81,19 @@ def fix_docstring(docstring: str, prefix: str) -> str:
                 trimmed.append(prefix + stripped_line)
             else:
                 trimmed.append("")
-    return "\n".join(trimmed)
+    if not preview:
+        return "\n".join(trimmed)
+    # Remove extra blank lines at the ends
+    if all(not line or line.isspace() for line in trimmed):
+        return ""
+    for end in (0, -1):
+        while not trimmed[end] or trimmed[end].isspace():
+            trimmed.pop(end)
+    trimmed[0] = prefix + trimmed[0].strip()
+    # Make single-line docstring single-lined
+    if len(trimmed) == 1:
+        return trimmed[0]
+    return "\n".join(("", *trimmed, prefix))
 
 
 def get_string_prefix(string: str) -> str:

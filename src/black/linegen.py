@@ -273,7 +273,7 @@ class LineGenerator(Visitor[Line]):
 
             if is_multiline_string(leaf):
                 indent = " " * 4 * self.current_line.depth
-                docstring = fix_docstring(docstring, indent)
+                docstring = fix_docstring(docstring, indent, self.mode.preview)
             else:
                 docstring = docstring.strip()
 

@@ -49,3 +49,9 @@ plain strings. User-made splits are respected when they do not exceed the line l
 limit. Line continuation backslashes are converted into parenthesized strings.
 Unnecessary parentheses are stripped. The stability and status of this feature is
 tracked in [this issue](https://github.com/psf/black/issues/2188).
+
+### Improved docstring processing
+
+_Black_ will ensure docstrings are formatted consistently, by removing extra blank lines
+at the beginning and end of docstrings, ensuring the opening and closing quotes are on
+their own lines and collapsing docstrings with a single line of text down to one line.
