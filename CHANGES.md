@@ -10,7 +10,7 @@
 
 <!-- Changes that affect Black's style -->
 
-- Format docstrings to have consistent quote placement
+- Format docstrings to have consistent quote placement (#2885)
 
 ### _Blackd_
 
