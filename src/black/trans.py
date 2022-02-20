@@ -140,10 +140,8 @@ def hug_power_op(line: Line, features: Collection[Feature]) -> Iterator[Line]:
             new_leaf.prefix = ""
 
         # We have to be careful to make a new line properly:
-        # - the leaf's parent need to be informed their child leaf was replaced
         # - bracket related metadata must be maintained (handled by Line.append)
         # - comments need to copied over, updating the leaf IDs they're attached to
-        replace_child(leaf, new_leaf)
         new_line.append(new_leaf, preformatted=True)
         for comment_leaf in line.comments_after(leaf):
             new_line.append(comment_leaf, preformatted=True)
