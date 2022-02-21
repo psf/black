@@ -47,7 +47,11 @@ Use the following template for a clean changelog after the release:
 
 ### Style
 
-<!-- Changes that affect Black's style -->
+<!-- Changes that affect Black's stable style -->
+
+### Preview style
+
+<!-- Changes that affect Black's preview style -->
 
 ### _Blackd_
 
