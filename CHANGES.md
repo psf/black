@@ -34,7 +34,7 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
-- Add special config verbose log case when black is using user-level config (#2861)
+- In verbose, mode, log when *Black* is using user-level config (#2861)
 
 ### Packaging
 
