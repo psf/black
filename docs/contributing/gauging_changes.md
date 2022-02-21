@@ -9,51 +9,16 @@ enough to cause frustration to projects that are already "black formatted".
 
 ## black-primer
 
-`black-primer` is a tool built for CI (and humans) to have _Black_ `--check` a number of
-Git accessible projects in parallel. (configured in `primer.json`) _(A PR will be
-accepted to add Mercurial support.)_
-
-### Run flow
-
-- Ensure we have a `black` + `git` in PATH
-- Load projects from `primer.json`
-- Run projects in parallel with `--worker` workers (defaults to CPU count / 2)
-  - Checkout projects
-  - Run black and record result
-  - Clean up repository checkout _(can optionally be disabled via `--keep`)_
-- Display results summary to screen
-- Default to cleaning up `--work-dir` (which defaults to tempfile schemantics)
-- Return
-  - 0 for successful run
-  - \< 0 for environment / internal error
-  - \> 0 for each project with an error
-
-### Speed up runs 🏎
-
-If you're running locally yourself to test black on lots of code try:
-
-- Using `-k` / `--keep` + `-w` / `--work-dir` so you don't have to re-checkout the repo
-  each run
-
-### CLI arguments
-
-```{program-output} black-primer --help
-
-```
+`black-primer` is an obsolete tool (now replaced with `diff-shades`) that was used to
+gauge the impact of changes in _Black_ on open-source code. It is no longer used
+internally and will be removed from the _Black_ repository in the future.
 
 ## diff-shades
 
-diff-shades is a tool similar to black-primer, it also runs _Black_ across a list of Git
-cloneable OSS projects recording the results. The intention is to eventually fully
-replace black-primer with diff-shades as it's much more feature complete and supports
-our needs better.
-
-The main highlight feature of diff-shades is being able to compare two revisions of
-_Black_. This is incredibly useful as it allows us to see what exact changes will occur,
-say merging a certain PR. Black-primer's results would usually be filled with changes
-caused by pre-existing code in Black drowning out the (new) changes we want to see. It
-operates similarly to black-primer but crucially it saves the results as a JSON file
-which allows for the rich comparison features alluded to above.
+diff-shades is a tool that runs _Black_ across a list of Git cloneable OSS projects
+recording the results. The main highlight feature of diff-shades is being able to
+compare two revisions of _Black_. This is incredibly useful as it allows us to see what
+exact changes will occur, say merging a certain PR.
 
 For more information, please see the [diff-shades documentation][diff-shades].
 

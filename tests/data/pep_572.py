@@ -4,7 +4,7 @@ if (match := pattern.search(data)) is None:
     pass
 if match := pattern.search(data):
     pass
-[y := f(x), y ** 2, y ** 3]
+[y := f(x), y**2, y**3]
 filtered_data = [y for x in data if (y := f(x)) is None]
 (y := f(x))
 y0 = (y1 := f(x))

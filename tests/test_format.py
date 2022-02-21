@@ -15,6 +15,7 @@ from tests.util import (
 )
 
 SIMPLE_CASES: List[str] = [
+    "attribute_access_on_number_literals",
     "beginning_backslash",
     "bracketmatch",
     "class_blank_parentheses",
@@ -48,9 +49,14 @@ SIMPLE_CASES: List[str] = [
     "function2",
     "function_trailing_comma",
     "import_spacing",
+    "power_op_spacing",
     "remove_parens",
     "slices",
     "string_prefixes",
+    "torture",
+    "trailing_comma_optional_parens1",
+    "trailing_comma_optional_parens2",
+    "trailing_comma_optional_parens3",
     "tricky_unicode_symbols",
     "tupleassign",
 ]
@@ -191,6 +197,12 @@ def test_python_310(filename: str) -> None:
     assert_format(source, expected, mode, minimum_version=(3, 10))
 
 
+def test_python_310_without_target_version() -> None:
+    source, expected = read_data("pattern_matching_simple")
+    mode = black.Mode()
+    assert_format(source, expected, mode, minimum_version=(3, 10))
+
+
 def test_patma_invalid() -> None:
     source, expected = read_data("pattern_matching_invalid")
     mode = black.Mode(target_versions={black.TargetVersion.PY310})
@@ -198,15 +210,6 @@ def test_patma_invalid() -> None:
         assert_format(source, expected, mode, minimum_version=(3, 10))
 
     exc_info.match("Cannot parse: 10:11")
-
-
-def test_patma_hint() -> None:
-    source, expected = read_data("pattern_matching_simple")
-    mode = black.Mode(target_versions={black.TargetVersion.PY39})
-    with pytest.raises(black.parsing.InvalidInput) as exc_info:
-        assert_format(source, expected, mode, minimum_version=(3, 10))
-
-    exc_info.match(black.parsing.PY310_HINT)
 
 
 def test_python_2_hint() -> None:
@@ -255,3 +258,9 @@ def test_python38() -> None:
 def test_python39() -> None:
     source, expected = read_data("python39")
     assert_format(source, expected, minimum_version=(3, 9))
+
+
+def test_power_op_newline() -> None:
+    # requires line_length=0
+    source, expected = read_data("power_op_newline")
+    assert_format(source, expected, mode=black.Mode(line_length=0))

@@ -9,8 +9,10 @@ To cut a release, you must be a _Black_ maintainer with `GitHub Release` creatio
 access. Using this access, the release process is:
 
 1. Cut a new PR editing `CHANGES.md` and the docs to version the latest changes
-   1. Example PR: [#2616](https://github.com/psf/black/pull/2616)
-   2. Example title: `Update CHANGES.md for XX.X release`
+   1. Remove any empty sections for the current release
+   2. Add a new empty template for the next release (template below)
+   3. Example PR: [#2616](https://github.com/psf/black/pull/2616)
+   4. Example title: `Update CHANGES.md for XX.X release`
 2. Once the release PR is merged ensure all CI passes
    1. If not, ensure there is an Issue open for the cause of failing CI (generally we'd
       want this fixed before cutting a release)
@@ -31,6 +33,56 @@ access. Using this access, the release process is:
 
 If anything fails, please go read the respective action's log output and configuration
 file to reverse engineer your way to a fix/soluton.
+
+## Changelog template
+
+Use the following template for a clean changelog after the release:
+
+```
+## Unreleased
+
+### Highlights
+
+<!-- Include any especially major or disruptive changes here -->
+
+### Style
+
+<!-- Changes that affect Black's style -->
+
+### _Blackd_
+
+<!-- Changes to blackd -->
+
+### Configuration
+
+<!-- Changes to how Black can be configured -->
+
+### Documentation
+
+<!-- Major changes to documentation and policies. Small docs changes
+     don't need a changelog entry. -->
+
+### Integrations
+
+<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+### Output
+
+<!-- Changes to Black's terminal output and error messages -->
+
+### Packaging
+
+<!-- Changes to how Black is packaged, such as dependency requirements -->
+
+### Parser
+
+<!-- Changes to the parser or to version autodetection -->
+
+### Performance
+
+<!-- Changes that improve Black's performance. -->
+
+```
 
 ## Release workflows
 

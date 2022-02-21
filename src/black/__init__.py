@@ -263,7 +263,7 @@ def validate_regex(
     "--preview",
     is_flag=True,
     help=(
-        "Enable potentially disruptive style changes that will be added to Black's main"
+        "Enable potentially disruptive style changes that may be added to Black's main"
         " functionality in the next major release."
     ),
 )
@@ -296,7 +296,8 @@ def validate_regex(
     type=str,
     help=(
         "Require a specific version of Black to be running (useful for unifying results"
-        " across many environments e.g. with a pyproject.toml file)."
+        " across many environments e.g. with a pyproject.toml file). It can be"
+        " either a major version number or an exact version."
     ),
 )
 @click.option(
@@ -436,6 +437,17 @@ def main(
 ) -> None:
     """The uncompromising code formatter."""
     ctx.ensure_object(dict)
+
+    if src and code is not None:
+        out(
+            main.get_usage(ctx)
+            + "\n\n'SRC' and 'code' cannot be passed simultaneously."
+        )
+        ctx.exit(1)
+    if not src and code is None:
+        out(main.get_usage(ctx) + "\n\nOne of 'SRC' or 'code' is required.")
+        ctx.exit(1)
+
     root, method = find_project_root(src) if code is None else (None, None)
     ctx.obj["root"] = root
 
@@ -468,7 +480,11 @@ def main(
                 out(f"Using configuration in '{config}'.", style=LogLevel.info)
 
     error_msg = "Oh no! 💥 💔 💥"
-    if required_version and required_version != __version__:
+    if (
+        required_version
+        and required_version != __version__
+        and required_version != __version__.split(".")[0]
+    ):
         err(
             f"{error_msg} The required version `{required_version}` does not match"
             f" the running version `{__version__}`!"
@@ -577,7 +593,6 @@ def get_sources(
 ) -> Set[Path]:
     """Compute the set of files to be formatted."""
     sources: Set[Path] = set()
-    path_empty(src, "No Path provided. Nothing to do 😴", quiet, verbose, ctx)
 
     if exclude is None:
         exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES)
@@ -966,17 +981,7 @@ def check_stability_and_equivalence(
     content differently.
     """
     assert_equivalent(src_contents, dst_contents)
-
-    # Forced second pass to work around optional trailing commas (becoming
-    # forced trailing commas on pass 2) interacting differently with optional
-    # parentheses.  Admittedly ugly.
-    dst_contents_pass2 = format_str(dst_contents, mode=mode)
-    if dst_contents != dst_contents_pass2:
-        dst_contents = dst_contents_pass2
-        assert_equivalent(src_contents, dst_contents, pass_num=2)
-        assert_stable(src_contents, dst_contents, mode=mode)
-    # Note: no need to explicitly call `assert_stable` if `dst_contents` was
-    # the same as `dst_contents_pass2`.
+    assert_stable(src_contents, dst_contents, mode=mode)
 
 
 def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileContent:
@@ -1106,7 +1111,7 @@ def format_ipynb_string(src_contents: str, *, fast: bool, mode: Mode) -> FileCon
         raise NothingChanged
 
 
-def format_str(src_contents: str, *, mode: Mode) -> FileContent:
+def format_str(src_contents: str, *, mode: Mode) -> str:
     """Reformat a string and return new contents.
 
     `mode` determines formatting options, such as how many characters per line are
@@ -1136,6 +1141,16 @@ def format_str(src_contents: str, *, mode: Mode) -> FileContent:
         hey
 
     """
+    dst_contents = _format_str_once(src_contents, mode=mode)
+    # Forced second pass to work around optional trailing commas (becoming
+    # forced trailing commas on pass 2) interacting differently with optional
+    # parentheses.  Admittedly ugly.
+    if src_contents != dst_contents:
+        return _format_str_once(dst_contents, mode=mode)
+    return dst_contents
+
+
+def _format_str_once(src_contents: str, *, mode: Mode) -> str:
     src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)
     dst_contents = []
     future_imports = get_future_imports(src_node)
@@ -1330,7 +1345,7 @@ def get_future_imports(node: Node) -> Set[str]:
     return imports
 
 
-def assert_equivalent(src: str, dst: str, *, pass_num: int = 1) -> None:
+def assert_equivalent(src: str, dst: str) -> None:
     """Raise AssertionError if `src` and `dst` aren't equivalent."""
     try:
         src_ast = parse_ast(src)
@@ -1347,7 +1362,7 @@ def assert_equivalent(src: str, dst: str, *, pass_num: int = 1) -> None:
     except Exception as exc:
         log = dump_to_file("".join(traceback.format_tb(exc.__traceback__)), dst)
         raise AssertionError(
-            f"INTERNAL ERROR: Black produced invalid code on pass {pass_num}: {exc}. "
+            f"INTERNAL ERROR: Black produced invalid code: {exc}. "
             "Please report a bug on https://github.com/psf/black/issues.  "
             f"This invalid output might be helpful: {log}"
         ) from None
@@ -1358,14 +1373,17 @@ def assert_equivalent(src: str, dst: str, *, pass_num: int = 1) -> None:
         log = dump_to_file(diff(src_ast_str, dst_ast_str, "src", "dst"))
         raise AssertionError(
             "INTERNAL ERROR: Black produced code that is not equivalent to the"
-            f" source on pass {pass_num}.  Please report a bug on "
+            f" source.  Please report a bug on "
             f"https://github.com/psf/black/issues.  This diff might be helpful: {log}"
         ) from None
 
 
 def assert_stable(src: str, dst: str, mode: Mode) -> None:
     """Raise AssertionError if `dst` reformats differently the second time."""
-    newdst = format_str(dst, mode=mode)
+    # We shouldn't call format_str() here, because that formats the string
+    # twice and may hide a bug where we bounce back and forth between two
+    # versions.
+    newdst = _format_str_once(dst, mode=mode)
     if dst != newdst:
         log = dump_to_file(
             str(mode),
