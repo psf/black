@@ -1,0 +1,47 @@
+name: diff-shades-comment
+
+on:
+  workflow_run:
+    workflows: [diff-shades]
+    types: [completed]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+
+      - name: Install support dependencies
+        run: |
+          python -m pip install pip --upgrade
+          python -m pip install click packaging urllib3
+
+      - name: Get details from initial workflow run
+        id: metadata
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: >
+          python scripts/diff_shades_gha_helper.py comment-details
+          ${{github.event.workflow_run.id }}
+
+      - name: Try to find pre-existing PR comment
+        if: steps.metadata.outputs.needs-comment == 'true'
+        id: find-comment
+        uses: peter-evans/find-comment@d2dae40ed151c634e4189471272b57e76ec19ba8
+        with:
+          issue-number: ${{ steps.metadata.outputs.pr-number }}
+          comment-author: "github-actions[bot]"
+          body-includes: "diff-shades"
+
+      - name: Create or update PR comment
+        if: steps.metadata.outputs.needs-comment == 'true'
+        uses: peter-evans/create-or-update-comment@a35cf36e5301d70b76f316e867e7788a55a31dae
+        with:
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          issue-number: ${{ steps.metadata.outputs.pr-number }}
+          body: ${{ steps.metadata.outputs.comment-body }}
+          edit-mode: replace

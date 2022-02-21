@@ -7,7 +7,7 @@ from typing import Collection, Iterator, List, Optional, Set, Union
 
 from black.nodes import WHITESPACE, RARROW, STATEMENT, STANDALONE_COMMENT
 from black.nodes import ASSIGNMENTS, OPENING_BRACKETS, CLOSING_BRACKETS
-from black.nodes import Visitor, syms, first_child_is_arith, ensure_visible
+from black.nodes import Visitor, syms, is_arith_like, ensure_visible
 from black.nodes import is_docstring, is_empty_tuple, is_one_tuple, is_one_tuple_between
 from black.nodes import is_name_token, is_lpar_token, is_rpar_token
 from black.nodes import is_walrus_assignment, is_yield, is_vararg, is_multiline_string
@@ -21,10 +21,9 @@ from black.comments import generate_comments, list_comments, FMT_OFF
 from black.numerics import normalize_numeric_literal
 from black.strings import get_string_prefix, fix_docstring
 from black.strings import normalize_string_prefix, normalize_string_quotes
-from black.trans import Transformer, CannotTransform, StringMerger
-from black.trans import StringSplitter, StringParenWrapper, StringParenStripper
-from black.mode import Mode
-from black.mode import Feature
+from black.trans import Transformer, CannotTransform, StringMerger, StringSplitter
+from black.trans import StringParenWrapper, StringParenStripper, hug_power_op
+from black.mode import Mode, Feature, Preview
 
 from blib2to3.pytree import Node, Leaf
 from blib2to3.pgen2 import token
@@ -172,8 +171,12 @@ class LineGenerator(Visitor[Line]):
 
     def visit_simple_stmt(self, node: Node) -> Iterator[Line]:
         """Visit a statement without nested statements."""
-        if first_child_is_arith(node):
-            wrap_in_parentheses(node, node.children[0], visible=False)
+        prev_type: Optional[int] = None
+        for child in node.children:
+            if (prev_type is None or prev_type == token.SEMI) and is_arith_like(child):
+                wrap_in_parentheses(node, child, visible=False)
+            prev_type = child.type
+
         is_suite_like = node.parent and node.parent.type in STATEMENT
         if is_suite_like:
             if self.mode.is_pyi and is_stub_body(node):
@@ -212,6 +215,28 @@ class LineGenerator(Visitor[Line]):
         for child in node.children:
             yield from self.line()
             yield from self.visit(child)
+
+    def visit_power(self, node: Node) -> Iterator[Line]:
+        for idx, leaf in enumerate(node.children[:-1]):
+            next_leaf = node.children[idx + 1]
+
+            if not isinstance(leaf, Leaf):
+                continue
+
+            value = leaf.value.lower()
+            if (
+                leaf.type == token.NUMBER
+                and next_leaf.type == syms.trailer
+                # Ensure that we are in an attribute trailer
+                and next_leaf.children[0].type == token.DOT
+                # It shouldn't wrap hexadecimal, binary and octal literals
+                and not value.startswith(("0x", "0b", "0o"))
+                # It shouldn't wrap complex literals
+                and "j" not in value
+            ):
+                wrap_in_parentheses(node, leaf)
+
+        yield from self.visit_default(node)
 
     def visit_SEMI(self, leaf: Leaf) -> Iterator[Line]:
         """Remove a semicolon and put the other statement on a separate line."""
@@ -353,7 +378,7 @@ def transform_line(
         and not (line.inside_brackets and line.contains_standalone_comments())
     ):
         # Only apply basic string preprocessing, since lines shouldn't be split here.
-        if mode.experimental_string_processing:
+        if Preview.string_processing in mode:
             transformers = [string_merge, string_paren_strip]
         else:
             transformers = []
@@ -396,7 +421,7 @@ def transform_line(
         # via type ... https://github.com/mypyc/mypyc/issues/884
         rhs = type("rhs", (), {"__call__": _rhs})()
 
-        if mode.experimental_string_processing:
+        if Preview.string_processing in mode:
             if line.inside_brackets:
                 transformers = [
                     string_merge,
@@ -420,6 +445,9 @@ def transform_line(
                 transformers = [delimiter_split, standalone_comment_split, rhs]
             else:
                 transformers = [rhs]
+    # It's always safe to attempt hugging of power operations and pretty much every line
+    # could match.
+    transformers.append(hug_power_op)
 
     for transform in transformers:
         # We are accumulating lines in `result` because we might want to abort
@@ -530,7 +558,7 @@ def right_hand_split(
         # there are no standalone comments in the body
         and not body.contains_standalone_comments(0)
         # and we can actually remove the parens
-        and can_omit_invisible_parens(body, line_length, omit_on_explode=omit)
+        and can_omit_invisible_parens(body, line_length)
     ):
         omit = {id(closing_bracket), *omit}
         try:
@@ -955,6 +983,7 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
                 if (
                     prev
                     and prev.type == token.COMMA
+                    and leaf.opening_bracket is not None
                     and not is_one_tuple_between(
                         leaf.opening_bracket, leaf, line.leaves
                     )
@@ -982,6 +1011,7 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
             if (
                 prev
                 and prev.type == token.COMMA
+                and leaf.opening_bracket is not None
                 and not is_one_tuple_between(leaf.opening_bracket, leaf, line.leaves)
             ):
                 # Never omit bracket pairs with trailing commas.

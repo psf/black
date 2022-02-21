@@ -12,6 +12,10 @@ The Black Code Style
 While keeping the style unchanged throughout releases has always been a goal,
 the *Black* code style isn't set in stone. It evolves to accommodate for new features
 in the Python language and, occasionally, in response to user feedback.
+Large-scale style preferences presented in :doc:`current_style` are very unlikely to
+change, but minor style aspects and details might change according to the stability
+policy presented below. Ongoing style considerations are tracked on GitHub with the
+`design <https://github.com/psf/black/labels/T%3A%20design>`_ issue label.
 
 Stability Policy
 ----------------
@@ -32,7 +36,7 @@ versions of *Black*:
   improved formatting enabled by newer Python language syntax as well as due
   to improvements in the formatting logic.
 
-- The ``--future`` flag is exempt from this policy. There are no guarantees
+- The ``--preview`` flag is exempt from this policy. There are no guarantees
   around the stability of the output with that flag passed into *Black*. This
   flag is intended for allowing experimentation with the proposed changes to
   the *Black* code style.

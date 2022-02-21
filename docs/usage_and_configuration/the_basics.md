@@ -4,11 +4,11 @@ Foundational knowledge on using and configuring Black.
 
 _Black_ is a well-behaved Unix-style command-line tool:
 
-- it does nothing if no sources are passed to it;
+- it does nothing if it finds no sources to format;
 - it will read from standard input and write to standard output if `-` is used as the
   filename;
 - it only outputs messages to users on standard error;
-- exits with code 0 unless an internal error occurred (or `--check` was used).
+- exits with code 0 unless an internal error occurred or a CLI option prompted it.
 
 ## Usage
 
@@ -173,7 +173,7 @@ You can check the version of _Black_ you have installed using the `--version` fl
 
 ```console
 $ black --version
-black, version 21.12b0
+black, version 22.1.0
 ```
 
 An option to require a specific version to be running is also provided.

@@ -2,20 +2,27 @@
 
 ## Code style
 
-_Black_ reformats entire files in place. Style configuration options are deliberately
-limited and rarely added. It doesn't take previous formatting into account, except for
-the magic trailing comma and preserving newlines. It doesn't reformat blocks that start
-with `# fmt: off` and end with `# fmt: on`, or lines that ends with `# fmt: skip`.
+_Black_ aims for consistency, generality, readability and reducing git diffs. Similar
+language constructs are formatted with similar rules. Style configuration options are
+deliberately limited and rarely added. Previous formatting is taken into account as
+little as possible, with rare exceptions like the magic trailing comma. The coding style
+used by _Black_ can be viewed as a strict subset of PEP 8.
+
+_Black_ reformats entire files in place. It doesn't reformat blocks that start with
+`# fmt: off` and end with `# fmt: on`, or lines that ends with `# fmt: skip`.
 `# fmt: on/off` have to be on the same level of indentation. It also recognizes
 [YAPF](https://github.com/google/yapf)'s block comments to the same effect, as a
 courtesy for straddling code.
+
+The rest of this document describes the current formatting style. If you're interested
+in trying out where the style is heading, see [future style](./future_style.md) and try
+running `black --preview`.
 
 ### How _Black_ wraps lines
 
 _Black_ ignores previous formatting and applies uniform horizontal and vertical
 whitespace to your code. The rules for horizontal whitespace can be summarized as: do
-whatever makes `pycodestyle` happy. The coding style used by _Black_ can be viewed as a
-strict subset of PEP 8.
+whatever makes `pycodestyle` happy.
 
 As for vertical whitespace, _Black_ tries to render one full expression or simple
 statement per line. If this fits the allotted line length, great.
@@ -260,16 +267,6 @@ If you are adopting _Black_ in a large project with pre-existing string conventi
 you can pass `--skip-string-normalization` on the command line. This is meant as an
 adoption helper, avoid using this for new projects.
 
-(labels/experimental-string)=
-
-As an experimental option (can be enabled by `--experimental-string-processing`),
-_Black_ splits long strings (using parentheses where appropriate) and merges short ones.
-When split, parts of f-strings that don't need formatting are converted to plain
-strings. User-made splits are respected when they do not exceed the line length limit.
-Line continuation backslashes are converted into parenthesized strings. Unnecessary
-parentheses are stripped. Because the functionality is experimental, feedback and issue
-reports are highly encouraged!
-
 _Black_ also processes docstrings. Firstly the indentation of docstrings is corrected
 for both quotations and the text within, although relative indentation in the text is
 preserved. Superfluous trailing whitespace on each line and unnecessary new lines at the
@@ -289,6 +286,26 @@ _Black_ will break a line before a binary operator when splitting a block of cod
 multiple lines. This is so that _Black_ is compliant with the recent changes in the
 [PEP 8](https://www.python.org/dev/peps/pep-0008/#should-a-line-break-before-or-after-a-binary-operator)
 style guide, which emphasizes that this approach improves readability.
+
+Almost all operators will be surrounded by single spaces, the only exceptions are unary
+operators (`+`, `-`, and `~`), and power operators when both operands are simple. For
+powers, an operand is considered simple if it's only a NAME, numeric CONSTANT, or
+attribute access (chained attribute access is allowed), with or without a preceding
+unary operator.
+
+```python
+# For example, these won't be surrounded by whitespace
+a = x**y
+b = config.base**5.2
+c = config.base**runtime.config.exponent
+d = 2**5
+e = 2**~5
+
+# ... but these will be surrounded by whitespace
+f = 2 ** get_exponent()
+g = get_x() ** get_y()
+h = config['base'] ** 2
+```
 
 ### Slices
 

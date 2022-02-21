@@ -3,7 +3,6 @@ import itertools
 import sys
 from typing import (
     Callable,
-    Collection,
     Dict,
     Iterator,
     List,
@@ -22,7 +21,7 @@ from black.mode import Mode
 from black.nodes import STANDALONE_COMMENT, TEST_DESCENDANTS
 from black.nodes import BRACKETS, OPENING_BRACKETS, CLOSING_BRACKETS
 from black.nodes import syms, whitespace, replace_child, child_towards
-from black.nodes import is_multiline_string, is_import, is_type_comment, last_two_except
+from black.nodes import is_multiline_string, is_import, is_type_comment
 from black.nodes import is_one_tuple_between
 
 # types
@@ -277,7 +276,9 @@ class Line:
         if self.is_import:
             return True
 
-        if not is_one_tuple_between(closing.opening_bracket, closing, self.leaves):
+        if closing.opening_bracket is not None and not is_one_tuple_between(
+            closing.opening_bracket, closing, self.leaves
+        ):
             return True
 
         return False
@@ -528,10 +529,12 @@ class EmptyLineTracker:
             return 0, 0
 
         if self.is_pyi:
-            if self.previous_line.depth > current_line.depth:
-                newlines = 1
-            elif current_line.is_class or self.previous_line.is_class:
-                if current_line.is_stub_class and self.previous_line.is_stub_class:
+            if current_line.is_class or self.previous_line.is_class:
+                if self.previous_line.depth < current_line.depth:
+                    newlines = 0
+                elif self.previous_line.depth > current_line.depth:
+                    newlines = 1
+                elif current_line.is_stub_class and self.previous_line.is_stub_class:
                     # No blank line between classes with an empty body
                     newlines = 0
                 else:
@@ -539,21 +542,20 @@ class EmptyLineTracker:
             elif (
                 current_line.is_def or current_line.is_decorator
             ) and not self.previous_line.is_def:
-                if not current_line.depth:
+                if current_line.depth:
+                    # In classes empty lines between attributes and methods should
+                    # be preserved.
+                    newlines = min(1, before)
+                else:
                     # Blank line between a block of functions (maybe with preceding
                     # decorators) and a block of non-functions
                     newlines = 1
-                else:
-                    # In classes empty lines between attributes and methods should
-                    # be preserved. The +1 offset is to negate the -1 done later as
-                    # this function is indented.
-                    newlines = min(2, before + 1)
+            elif self.previous_line.depth > current_line.depth:
+                newlines = 1
             else:
                 newlines = 0
         else:
-            newlines = 2
-        if current_line.depth and newlines:
-            newlines -= 1
+            newlines = 1 if current_line.depth else 2
         return newlines, 0
 
 
@@ -642,7 +644,6 @@ def can_be_split(line: Line) -> bool:
 def can_omit_invisible_parens(
     line: Line,
     line_length: int,
-    omit_on_explode: Collection[LeafID] = (),
 ) -> bool:
     """Does `line` have a shape safe to reformat without optional parens around it?
 
@@ -680,12 +681,6 @@ def can_omit_invisible_parens(
 
     penultimate = line.leaves[-2]
     last = line.leaves[-1]
-    if line.magic_trailing_comma:
-        try:
-            penultimate, last = last_two_except(line.leaves, omit=omit_on_explode)
-        except LookupError:
-            # Turns out we'd omit everything.  We cannot skip the optional parentheses.
-            return False
 
     if (
         last.type == token.RPAR
@@ -705,10 +700,6 @@ def can_omit_invisible_parens(
         if is_multiline_string(first):
             # Additional wrapping of a multiline string in this situation is
             # unnecessary.
-            return True
-
-        if line.magic_trailing_comma and penultimate.type == token.COMMA:
-            # The rightmost non-omitted bracket pair is the one we want to explode on.
             return True
 
         if _can_omit_closing_paren(line, last=last, line_length=line_length):

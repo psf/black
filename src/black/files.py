@@ -87,7 +87,7 @@ def find_pyproject_toml(path_search_start: Tuple[str, ...]) -> Optional[str]:
             if path_user_pyproject_toml.is_file()
             else None
         )
-    except PermissionError as e:
+    except (PermissionError, RuntimeError) as e:
         # We do not have access to the user-level config directory, so ignore it.
         err(f"Ignoring user configuration directory due to {e!r}")
         return None
@@ -111,6 +111,10 @@ def find_user_pyproject_toml() -> Path:
 
     This looks for ~\.black on Windows and ~/.config/black on Linux and other
     Unix systems.
+
+    May raise:
+    - RuntimeError: if the current user has no homedir
+    - PermissionError: if the current process cannot access the user's homedir
     """
     if sys.platform == "win32":
         # Windows
