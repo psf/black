@@ -37,6 +37,8 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- In verbose, mode, log when _Black_ is using user-level config (#2861)
+
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
