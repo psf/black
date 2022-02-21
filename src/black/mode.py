@@ -128,6 +128,7 @@ class Preview(Enum):
 
     string_processing = auto()
     hug_simple_powers = auto()
+    parenthesize_conditional_expressions = auto()
 
 
 class Deprecated(UserWarning):

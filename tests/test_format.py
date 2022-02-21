@@ -31,7 +31,6 @@ SIMPLE_CASES: List[str] = [
     "comment_after_escaped_newline",
     "composition",
     "composition_no_trailing_comma",
-    "conditional_expression",
     "docstring",
     "empty_lines",
     "expression",
@@ -79,6 +78,7 @@ PREVIEW_CASES: List[str] = [
     "long_strings__edge_case",
     "long_strings__regression",
     "percent_precedence",
+    "conditional_expression",
 ]
 
 SOURCES: List[str] = [

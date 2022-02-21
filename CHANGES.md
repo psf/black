@@ -10,6 +10,8 @@
 
 <!-- Changes that affect Black's style -->
 
+#### Preview Changes
+
 - Add parentheses around `if`-`else` expressions (#2278)
 
 ### _Blackd_
