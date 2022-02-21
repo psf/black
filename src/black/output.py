@@ -8,34 +8,34 @@ from typing import Any, Optional
 from mypy_extensions import mypyc_attr
 import tempfile
 
-from click import echo, style
+from click import echo, style as _style
+
+from black.const import LogLevel
 
 
 @mypyc_attr(patchable=True)
 def _out(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
     if message is not None:
-        if "bold" not in styles:
-            styles["bold"] = True
-        message = style(message, **styles)
+        message = _style(message, **styles)
     echo(message, nl=nl, err=True)
 
 
 @mypyc_attr(patchable=True)
-def _err(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
-    if message is not None:
-        if "fg" not in styles:
-            styles["fg"] = "red"
-        message = style(message, **styles)
-    echo(message, nl=nl, err=True)
+def out(
+    message: Optional[str] = None,
+    nl: bool = True,
+    style: LogLevel = LogLevel.none,
+    **_styles: Any,
+) -> None:
+    styles = style.value.copy()
+    if style:
+        styles.update(_styles)
 
-
-@mypyc_attr(patchable=True)
-def out(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
     _out(message, nl=nl, **styles)
 
 
 def err(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
-    _err(message, nl=nl, **styles)
+    return out(message, nl, LogLevel.error, **styles)
 
 
 def ipynb_diff(a: str, b: str, a_name: str, b_name: str) -> str:

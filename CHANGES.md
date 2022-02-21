@@ -35,6 +35,8 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Black now styles your output logs in the CLI using pretty colours ✨ (#2787)
+
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
