@@ -43,6 +43,29 @@ generator_expression = (
     some_long_value_name_foo_bar_baz if some_boolean_variable else some_fallback_value_foo_bar_baz for some_boolean_variable in some_iterable
 )
 
+
+def limit_offset_sql(self, low_mark, high_mark):
+    """Return LIMIT/OFFSET SQL clause."""
+    limit, offset = self._get_limit_offset_params(low_mark, high_mark)
+    return " ".join(
+        sql
+        for sql in (
+            "LIMIT %d" % limit if limit else None,
+            ("OFFSET %d" % offset) if offset else None,
+        )
+        if sql
+    )
+
+
+def something():
+    clone._iterable_class = (
+        NamedValuesListIterable
+        if named
+        else FlatValuesListIterable
+        if flat
+        else ValuesListIterable
+    )
+
 # output
 
 long_kwargs_single_line = my_function(
@@ -114,3 +137,24 @@ generator_expression = (
     )
     for some_boolean_variable in some_iterable
 )
+
+
+def limit_offset_sql(self, low_mark, high_mark):
+    """Return LIMIT/OFFSET SQL clause."""
+    limit, offset = self._get_limit_offset_params(low_mark, high_mark)
+    return " ".join(
+        sql
+        for sql in (
+            "LIMIT %d" % limit if limit else None,
+            ("OFFSET %d" % offset) if offset else None,
+        )
+        if sql
+    )
+
+
+def something():
+    clone._iterable_class = (
+        NamedValuesListIterable
+        if named
+        else FlatValuesListIterable if flat else ValuesListIterable
+    )
