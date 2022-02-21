@@ -415,7 +415,7 @@ def test_ipynb_diff_with_change() -> None:
             f"--config={EMPTY_CONFIG}",
         ],
     )
-    expected = "@@ -1,3 +1,3 @@\n %%time\n \n-print('foo')\n" '+print("foo")\n'
+    expected = "@@ -1,3 +1,3 @@\n %%time\n \n-print('foo')\n+print(\"foo\")\n"
     assert expected in result.output
 
 
@@ -494,7 +494,7 @@ def test_ipynb_flag(tmp_path: pathlib.Path) -> None:
             f"--config={EMPTY_CONFIG}",
         ],
     )
-    expected = "@@ -1,3 +1,3 @@\n %%time\n \n-print('foo')\n" '+print("foo")\n'
+    expected = "@@ -1,3 +1,3 @@\n %%time\n \n-print('foo')\n+print(\"foo\")\n"
     assert expected in result.output
 
 
