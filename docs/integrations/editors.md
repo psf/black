@@ -189,10 +189,13 @@ If you need to do anything special to make your virtualenv work and install _Bla
 example you want to run a version from main), create a virtualenv manually and point
 `g:black_virtualenv` to it. The plugin will use it.
 
-To run _Black_ on save, add the following line to `.vimrc` or `init.vim`:
+To run _Black_ on save, add the following lines to `.vimrc` or `init.vim`:
 
 ```
-autocmd BufWritePre *.py execute ':Black'
+augroup black_on_save
+  autocmd!
+  autocmd BufWritePre *.py Black
+augroup end
 ```
 
 To run _Black_ on a key press (e.g. F9 below), add this:
