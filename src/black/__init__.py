@@ -477,7 +477,7 @@ def main(  # noqa: C901
             user_level_config = str(find_user_pyproject_toml())
             if config == user_level_config:
                 out(
-                    f"Using configuration from user-level config at "
+                    "Using configuration from user-level config at "
                     f"'{user_level_config}'.",
                     fg="blue",
                 )
