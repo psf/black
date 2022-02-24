@@ -5,9 +5,7 @@ from blib2to3.pytree import Leaf
 
 
 def format_hex(text: str) -> str:
-    """
-    Formats a hexadecimal string like "0x12B3"
-    """
+    """Formats a hexadecimal string like "0x12B3" """
     before, after = text[:2], text[2:]
     return f"{before}{after.upper()}"
 
@@ -42,9 +40,11 @@ def format_float_or_int_string(text: str) -> str:
 
 
 def normalize_numeric_literal(leaf: Leaf) -> None:
-    """Normalizes numeric (float, int, and complex) literals.
+    """
+    Normalizes numeric (float, int, and complex) literals.
 
-    All letters used in the representation are normalized to lowercase."""
+    All letters used in the representation are normalized to lowercase.
+    """
     text = leaf.value.lower()
     if text.startswith(("0o", "0b")):
         # Leave octal and binary literals alone.

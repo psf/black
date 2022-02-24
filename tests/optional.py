@@ -55,7 +55,8 @@ def pytest_addoption(parser: "Parser") -> None:
 
 
 def pytest_configure(config: "Config") -> None:
-    """Optional tests are markers.
+    """
+    Optional tests are markers.
 
     Use the syntax in https://docs.pytest.org/en/stable/mark.html#registering-marks.
     """

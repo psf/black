@@ -38,7 +38,8 @@ class DebugVisitor(Visitor[T]):
 
     @classmethod
     def show(cls, code: Union[str, Leaf, Node]) -> None:
-        """Pretty-print the lib2to3 AST of a given string of `code`.
+        """
+        Pretty-print the lib2to3 AST of a given string of `code`.
 
         Convenience method for debugging.
         """

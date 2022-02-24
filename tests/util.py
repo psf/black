@@ -61,7 +61,8 @@ def assert_format(
     fast: bool = False,
     minimum_version: Optional[Tuple[int, int]] = None,
 ) -> None:
-    """Convenience function to check that Black formats as expected.
+    """
+    Convenience function to check that Black formats as expected.
 
     You can pass @minimum_version if you're passing code with newer syntax to guard
     safety guards so they don't just crash with a SyntaxError. Please note this is

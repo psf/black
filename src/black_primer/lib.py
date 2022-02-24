@@ -129,8 +129,10 @@ def analyze_results(project_count: int, results: Results) -> int:
 
 
 def _flatten_cli_args(cli_args: List[Union[Sequence[str], str]]) -> List[str]:
-    """Allow a user to put long arguments into a list of strs
-    to make the JSON human readable"""
+    """
+    Allow a user to put long arguments into a list of strs
+    to make the JSON human readable
+    """
     flat_args = []
     for arg in cli_args:
         if isinstance(arg, str):

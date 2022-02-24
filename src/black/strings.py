@@ -21,7 +21,8 @@ FIRST_NON_WHITESPACE_RE: Final = re.compile(r"\s*\t+\s*(\S)")
 
 
 def sub_twice(regex: Pattern[str], replacement: str, original: str) -> str:
-    """Replace `regex` with `replacement` twice on `original`.
+    """
+    Replace `regex` with `replacement` twice on `original`.
 
     This is used by string normalization to perform replaces on
     overlapping matches.
@@ -177,7 +178,8 @@ def _cached_compile(pattern: str) -> Pattern[str]:
 
 
 def normalize_string_quotes(s: str) -> str:
-    """Prefer double quotes but only if it doesn't cause more escaping.
+    """
+    Prefer double quotes but only if it doesn't cause more escaping.
 
     Adds or removes backslashes as appropriate. Doesn't parse and fix
     strings nested in f-strings.

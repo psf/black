@@ -66,7 +66,8 @@ class BracketTracker:
     invisible: List[Leaf] = field(default_factory=list)
 
     def mark(self, leaf: Leaf) -> None:
-        """Mark `leaf` with bracket-related metadata. Keep track of delimiters.
+        """
+        Mark `leaf` with bracket-related metadata. Keep track of delimiters.
 
         All leaves receive an int `bracket_depth` field that stores how deep
         within brackets a given leaf is. 0 means there are no enclosing brackets
@@ -120,7 +121,8 @@ class BracketTracker:
         return bool(self.bracket_match)
 
     def max_delimiter_priority(self, exclude: Iterable[LeafID] = ()) -> Priority:
-        """Return the highest priority of a delimiter found on the line.
+        """
+        Return the highest priority of a delimiter found on the line.
 
         Values are consistent with what `is_split_*_delimiter()` return.
         Raises ValueError on no delimiters.
@@ -128,7 +130,8 @@ class BracketTracker:
         return max(v for k, v in self.delimiters.items() if k not in exclude)
 
     def delimiter_count_with_priority(self, priority: Priority = 0) -> int:
-        """Return the number of delimiters with the given `priority`.
+        """
+        Return the number of delimiters with the given `priority`.
 
         If no `priority` is passed, defaults to max priority on the line.
         """
@@ -139,7 +142,8 @@ class BracketTracker:
         return sum(1 for p in self.delimiters.values() if p == priority)
 
     def maybe_increment_for_loop_variable(self, leaf: Leaf) -> bool:
-        """In a for loop, or comprehension, the variables are often unpacks.
+        """
+        In a for loop, or comprehension, the variables are often unpacks.
 
         To avoid splitting on the comma in this situation, increase the depth of
         tokens between `for` and `in`.
@@ -166,7 +170,8 @@ class BracketTracker:
         return False
 
     def maybe_increment_lambda_arguments(self, leaf: Leaf) -> bool:
-        """In a lambda expression, there might be more than one argument.
+        """
+        In a lambda expression, there might be more than one argument.
 
         To avoid splitting on the comma in this situation, increase the depth of
         tokens between `lambda` and `:`.
@@ -197,7 +202,8 @@ class BracketTracker:
 
 
 def is_split_after_delimiter(leaf: Leaf, previous: Optional[Leaf] = None) -> Priority:
-    """Return the priority of the `leaf` delimiter, given a line break after it.
+    """
+    Return the priority of the `leaf` delimiter, given a line break after it.
 
     The delimiter priorities returned here are from those delimiters that would
     cause a line break after themselves.
@@ -211,7 +217,8 @@ def is_split_after_delimiter(leaf: Leaf, previous: Optional[Leaf] = None) -> Pri
 
 
 def is_split_before_delimiter(leaf: Leaf, previous: Optional[Leaf] = None) -> Priority:
-    """Return the priority of the `leaf` delimiter, given a line break before it.
+    """
+    Return the priority of the `leaf` delimiter, given a line break before it.
 
     The delimiter priorities returned here are from those delimiters that would
     cause a line break before themselves.
@@ -307,7 +314,8 @@ def is_split_before_delimiter(leaf: Leaf, previous: Optional[Leaf] = None) -> Pr
 
 
 def max_delimiter_priority_in_atom(node: LN) -> Priority:
-    """Return maximum delimiter priority inside `node`.
+    """
+    Return maximum delimiter priority inside `node`.
 
     This is specific to atoms with contents contained in a pair of parentheses.
     If `node` isn't an atom or there are no enclosing parentheses, returns 0.

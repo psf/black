@@ -41,7 +41,8 @@ class CannotSplit(CannotTransform):
 # This isn't a dataclass because @dataclass + Generic breaks mypyc.
 # See also https://github.com/mypyc/mypyc/issues/827.
 class LineGenerator(Visitor[Line]):
-    """Generates reformatted Line objects.  Empty lines are not emitted.
+    """
+    Generates reformatted Line objects.  Empty lines are not emitted.
 
     Note: destroys the tree it's visiting by mutating prefixes of its leaves
     in ways that will no longer stringify to valid Python code on the tree.
@@ -53,7 +54,8 @@ class LineGenerator(Visitor[Line]):
         self.__post_init__()
 
     def line(self, indent: int = 0) -> Iterator[Line]:
-        """Generate a line.
+        """
+        Generate a line.
 
         If the line is empty, only emit if it makes sense.
         If the line is too long, split it first and then generate.
@@ -121,7 +123,8 @@ class LineGenerator(Visitor[Line]):
     def visit_stmt(
         self, node: Node, keywords: Set[str], parens: Set[str]
     ) -> Iterator[Line]:
-        """Visit a statement.
+        """
+        Visit a statement.
 
         This implementation is shared for `if`, `while`, `for`, `try`, `except`,
         `def`, `with`, `class`, `assert`, and assignments.
@@ -238,7 +241,8 @@ class LineGenerator(Visitor[Line]):
         yield from self.visit_default(leaf)
 
     def visit_factor(self, node: Node) -> Iterator[Line]:
-        """Force parentheses between a unary op and a binary power:
+        """
+        Force parentheses between a unary op and a binary power:
 
         -2 ** 8 -> -(2 ** 8)
         """
@@ -332,7 +336,8 @@ class LineGenerator(Visitor[Line]):
 def transform_line(
     line: Line, mode: Mode, features: Collection[Feature] = ()
 ) -> Iterator[Line]:
-    """Transform a `line`, potentially splitting it into many lines.
+    """
+    Transform a `line`, potentially splitting it into many lines.
 
     They should fit in the allotted `line_length` but might not be able to.
 
@@ -374,7 +379,8 @@ def transform_line(
         def _rhs(
             self: object, line: Line, features: Collection[Feature]
         ) -> Iterator[Line]:
-            """Wraps calls to `right_hand_split`.
+            """
+            Wraps calls to `right_hand_split`.
 
             The calls increasingly `omit` right-hand trailers (bracket pairs with
             content), meaning the trailers get glued together to split on another
@@ -451,7 +457,8 @@ def transform_line(
 
 
 def left_hand_split(line: Line, _features: Collection[Feature] = ()) -> Iterator[Line]:
-    """Split line into many lines, starting with the first matching bracket pair.
+    """
+    Split line into many lines, starting with the first matching bracket pair.
 
     Note: this usually looks weird, only use this for function definitions.
     Prefer RHS otherwise.  This is why this function is not symmetrical with
@@ -492,7 +499,8 @@ def right_hand_split(
     features: Collection[Feature] = (),
     omit: Collection[LeafID] = (),
 ) -> Iterator[Line]:
-    """Split line into many lines, starting with the last matching bracket pair.
+    """
+    Split line into many lines, starting with the last matching bracket pair.
 
     If the split was by optional parentheses, attempt splitting without them, too.
     `omit` is a collection of closing bracket IDs that shouldn't be considered for
@@ -575,7 +583,8 @@ def right_hand_split(
 
 
 def bracket_split_succeeded_or_raise(head: Line, body: Line, tail: Line) -> None:
-    """Raise :exc:`CannotSplit` if the last left- or right-hand split failed.
+    """
+    Raise :exc:`CannotSplit` if the last left- or right-hand split failed.
 
     Do nothing otherwise.
 
@@ -603,7 +612,8 @@ def bracket_split_succeeded_or_raise(head: Line, body: Line, tail: Line) -> None
 def bracket_split_build_line(
     leaves: List[Leaf], original: Line, opening_bracket: Leaf, *, is_body: bool = False
 ) -> Line:
-    """Return a new line with given `leaves` and respective comments from `original`.
+    """
+    Return a new line with given `leaves` and respective comments from `original`.
 
     If `is_body` is True, the result line is one-indented inside brackets and as such
     has its first leaf's prefix normalized and a trailing comma added when expected.
@@ -658,7 +668,8 @@ def bracket_split_build_line(
 
 
 def dont_increase_indentation(split_func: Transformer) -> Transformer:
-    """Normalize prefix of the first leaf in every line returned by `split_func`.
+    """
+    Normalize prefix of the first leaf in every line returned by `split_func`.
 
     This is a decorator over relevant split functions.
     """
@@ -674,7 +685,8 @@ def dont_increase_indentation(split_func: Transformer) -> Transformer:
 
 @dont_increase_indentation
 def delimiter_split(line: Line, features: Collection[Feature] = ()) -> Iterator[Line]:
-    """Split according to delimiters of the highest priority.
+    """
+    Split according to delimiters of the highest priority.
 
     If the appropriate Features are given, the split will add trailing commas
     also in function signatures and calls that contain `*` and `**`.
@@ -785,7 +797,8 @@ def standalone_comment_split(
 
 
 def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
-    """Leave existing extra newlines if not `inside_brackets`. Remove everything
+    """
+    Leave existing extra newlines if not `inside_brackets`. Remove everything
     else.
 
     Note: don't use backslashes for formatting or you'll lose your voting rights.
@@ -803,7 +816,8 @@ def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
 
 
 def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
-    """Make existing optional parentheses invisible or create new ones.
+    """
+    Make existing optional parentheses invisible or create new ones.
 
     `parens_after` is a set of string leaf values immediately after which parens
     should be put.
@@ -857,12 +871,12 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
 
 
 def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
-    """If it's safe, make the parens in the atom `node` invisible, recursively.
+    """
+    If it's safe, make the parens in the atom `node` invisible, recursively.
     Additionally, remove repeated, adjacent invisible parens from the atom `node`
     as they are redundant.
 
     Returns whether the node should itself be wrapped in invisible parentheses.
-
     """
 
     if (
@@ -933,7 +947,8 @@ def should_split_line(line: Line, opening_bracket: Leaf) -> bool:
 
 
 def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[LeafID]]:
-    """Generate sets of closing bracket IDs that should be omitted in a RHS.
+    """
+    Generate sets of closing bracket IDs that should be omitted in a RHS.
 
     Brackets can be omitted if the entire trailer up to and including
     a preceding closing bracket fits in one line.

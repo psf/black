@@ -155,7 +155,8 @@ class Visitor(Generic[T]):
     """Basic lib2to3 visitor that yields things of type `T` on `visit()`."""
 
     def visit(self, node: LN) -> Iterator[T]:
-        """Main method to visit `node` and its children.
+        """
+        Main method to visit `node` and its children.
 
         It tries to find a `visit_*()` method for the given `node.type`, like
         `visit_simple_stmt` for Node objects or `visit_INDENT` for Leaf objects.
@@ -186,7 +187,8 @@ class Visitor(Generic[T]):
 
 
 def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
-    """Return whitespace prefix if needed for the given `leaf`.
+    """
+    Return whitespace prefix if needed for the given `leaf`.
 
     `complex_subscript` signals whether the given leaf is part of a subscription
     which has non-trivial arguments, like arithmetic expressions or function calls.
@@ -422,10 +424,12 @@ def preceding_leaf(node: Optional[LN]) -> Optional[Leaf]:
 
 
 def prev_siblings_are(node: Optional[LN], tokens: List[Optional[NodeType]]) -> bool:
-    """Return if the `node` and its previous siblings match types against the provided
+    """
+    Return if the `node` and its previous siblings match types against the provided
     list of tokens; the provided `node`has its type matched against the last element in
     the list.  `None` can be used as the first element to declare that the start of the
-    list is anchored at the start of its parent's children."""
+    list is anchored at the start of its parent's children.
+    """
     if not tokens:
         return True
     if tokens[-1] is None:
@@ -476,7 +480,8 @@ def replace_child(old_child: LN, new_child: LN) -> None:
 
 
 def container_of(leaf: Leaf) -> LN:
-    """Return `leaf` or one of its ancestors that is the topmost container of it.
+    """
+    Return `leaf` or one of its ancestors that is the topmost container of it.
 
     By "container" we mean a node where `leaf` is the very first child.
     """
@@ -624,7 +629,8 @@ def is_simple_decorator_trailer(node: LN, last: bool = False) -> bool:
 
 
 def is_simple_decorator_expression(node: LN) -> bool:
-    """Return True iff `node` could be a 'dotted name' decorator
+    """
+    Return True iff `node` could be a 'dotted name' decorator
 
     This function takes the node of the 'namedexpr_test' of the new decorator
     grammar and test if it would be valid under the old decorator grammar.
@@ -669,7 +675,8 @@ def is_yield(node: LN) -> bool:
 
 
 def is_vararg(leaf: Leaf, within: Set[NodeType]) -> bool:
-    """Return True if `leaf` is a star or double star in a vararg or kwarg.
+    """
+    Return True if `leaf` is a star or double star in a vararg or kwarg.
 
     If `within` includes VARARGS_PARENTS, this applies to function signatures.
     If `within` includes UNPACKING_PARENTS, it applies to right hand-side
@@ -726,7 +733,8 @@ def is_stub_body(node: LN) -> bool:
 
 
 def is_atom_with_invisible_parens(node: LN) -> bool:
-    """Given a `LN`, determines whether it's an atom `node` with invisible
+    """
+    Given a `LN`, determines whether it's an atom `node` with invisible
     parens. Useful in dedupe-ing and normalizing parens.
     """
     if isinstance(node, Leaf) or node.type != syms.atom:
@@ -770,15 +778,18 @@ def is_import(leaf: Leaf) -> bool:
 
 
 def is_type_comment(leaf: Leaf, suffix: str = "") -> bool:
-    """Return True if the given leaf is a special comment.
-    Only returns true for type comments for now."""
+    """
+    Return True if the given leaf is a special comment.
+    Only returns true for type comments for now.
+    """
     t = leaf.type
     v = leaf.value
     return t in {token.COMMENT, STANDALONE_COMMENT} and v.startswith("# type:" + suffix)
 
 
 def wrap_in_parentheses(parent: Node, child: LN, *, visible: bool = True) -> None:
-    """Wrap `child` in parentheses.
+    """
+    Wrap `child` in parentheses.
 
     This replaces `child` with an atom holding the parentheses and the old
     child.  That requires moving the prefix.
@@ -796,9 +807,11 @@ def wrap_in_parentheses(parent: Node, child: LN, *, visible: bool = True) -> Non
 
 
 def unwrap_singleton_parenthesis(node: LN) -> Optional[LN]:
-    """Returns `wrapped` if `node` is of the shape ( wrapped ).
+    """
+    Returns `wrapped` if `node` is of the shape ( wrapped ).
 
-    Parenthesis can be optional. Returns None otherwise"""
+    Parenthesis can be optional. Returns None otherwise
+    """
     if len(node.children) != 3:
         return None
 
@@ -810,7 +823,8 @@ def unwrap_singleton_parenthesis(node: LN) -> Optional[LN]:
 
 
 def ensure_visible(leaf: Leaf) -> None:
-    """Make sure parentheses are visible.
+    """
+    Make sure parentheses are visible.
 
     They could be invisible as part of some statements (see
     :func:`normalize_invisible_parens` and :func:`visit_import_from`).

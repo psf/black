@@ -32,7 +32,8 @@ if TYPE_CHECKING:
 
 @lru_cache()
 def find_project_root(srcs: Sequence[str]) -> Tuple[Path, str]:
-    """Return a directory containing .git, .hg, or pyproject.toml.
+    """
+    Return a directory containing .git, .hg, or pyproject.toml.
 
     That directory will be a common parent of all files and directories
     passed in `srcs`.
@@ -95,7 +96,8 @@ def find_pyproject_toml(path_search_start: Tuple[str, ...]) -> Optional[str]:
 
 @mypyc_attr(patchable=True)
 def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
-    """Parse a pyproject toml file, pulling out relevant parts for Black
+    """
+    Parse a pyproject toml file, pulling out relevant parts for Black
 
     If parsing fails, will raise a tomli.TOMLDecodeError
     """
@@ -107,7 +109,8 @@ def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
 
 @lru_cache()
 def find_user_pyproject_toml() -> Path:
-    r"""Return the path to the top-level user configuration for black.
+    r"""
+    Return the path to the top-level user configuration for black.
 
     This looks for ~\.black on Windows and ~/.config/black on Linux and other
     Unix systems.
@@ -145,7 +148,8 @@ def normalize_path_maybe_ignore(
     root: Path,
     report: Optional[Report] = None,
 ) -> Optional[str]:
-    """Normalize `path`. May return `None` if `path` was ignored.
+    """
+    Normalize `path`. May return `None` if `path` was ignored.
 
     `report` is where "path ignored" output goes.
     """
@@ -191,7 +195,8 @@ def gen_python_files(
     verbose: bool,
     quiet: bool,
 ) -> Iterator[Path]:
-    """Generate all files under `path` whose paths are not excluded by the
+    """
+    Generate all files under `path` whose paths are not excluded by the
     `exclude_regex`, `extend_exclude`, or `force_exclude` regexes,
     but are included by the `include` regex.
 

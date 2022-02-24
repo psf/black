@@ -213,8 +213,10 @@ class PrimerLibTests(unittest.TestCase):
     @patch("sys.stdout", new_callable=StringIO)
     @event_loop()
     def test_process_queue(self, mock_stdout: Mock) -> None:
-        """Test the process queue on primer itself
-        - If you have non black conforming formatting in primer itself this can fail"""
+        """
+        Test the process queue on primer itself
+        - If you have non black conforming formatting in primer itself this can fail
+        """
         loop = asyncio.get_event_loop()
         config_path = Path(lib.__file__).parent / "primer.json"
         with patch("black_primer.lib.git_checkout_or_rebase", return_false):
@@ -228,8 +230,10 @@ class PrimerLibTests(unittest.TestCase):
 
     @event_loop()
     def test_load_projects_queue(self) -> None:
-        """Test the process queue on primer itself
-        - If you have non black conforming formatting in primer itself this can fail"""
+        """
+        Test the process queue on primer itself
+        - If you have non black conforming formatting in primer itself this can fail
+        """
         loop = asyncio.get_event_loop()
         config_path = Path(lib.__file__).parent / "primer.json"
 

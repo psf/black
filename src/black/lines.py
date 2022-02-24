@@ -45,7 +45,8 @@ class Line:
     magic_trailing_comma: Optional[Leaf] = None
 
     def append(self, leaf: Leaf, preformatted: bool = False) -> None:
-        """Add a new `leaf` to the end of the line.
+        """
+        Add a new `leaf` to the end of the line.
 
         Unless `preformatted` is True, the `leaf` will receive a new consistent
         whitespace prefix and metadata applied by :class:`BracketTracker`.
@@ -77,7 +78,8 @@ class Line:
             self.leaves.append(leaf)
 
     def append_safe(self, leaf: Leaf, preformatted: bool = False) -> None:
-        """Like :func:`append()` but disallow invalid standalone comment structure.
+        """
+        Like :func:`append()` but disallow invalid standalone comment structure.
 
         Raises ValueError when any `leaf` is appended after a standalone comment
         or when a standalone comment is not the first leaf on the line.
@@ -145,7 +147,8 @@ class Line:
 
     @property
     def is_class_paren_empty(self) -> bool:
-        """Is this a class with no base classes but using parentheses?
+        """
+        Is this a class with no base classes but using parentheses?
 
         Those are unnecessary and should be removed.
         """
@@ -251,7 +254,8 @@ class Line:
     def has_magic_trailing_comma(
         self, closing: Leaf, ensure_removable: bool = False
     ) -> bool:
-        """Return True if we have a magic trailing comma, that is when:
+        """
+        Return True if we have a magic trailing comma, that is when:
         - there's a trailing comma here
         - it's not a one-tuple
         Additionally, if ensure_removable:
@@ -353,7 +357,8 @@ class Line:
     def enumerate_with_length(
         self, reversed: bool = False
     ) -> Iterator[Tuple[Index, Leaf, int]]:
-        """Return an enumeration of leaves with their length.
+        """
+        Return an enumeration of leaves with their length.
 
         Stops prematurely on multiline strings and standalone comments.
         """
@@ -403,7 +408,8 @@ class Line:
 
 @dataclass
 class EmptyLineTracker:
-    """Provides a stateful method that returns the number of potential extra
+    """
+    Provides a stateful method that returns the number of potential extra
     empty lines needed before and after the currently processed line.
 
     Note: this tracker works on lines that haven't been split yet.  It assumes
@@ -417,7 +423,8 @@ class EmptyLineTracker:
     previous_defs: List[int] = field(default_factory=list)
 
     def maybe_empty_lines(self, current_line: Line) -> Tuple[int, int]:
-        """Return the number of extra empty lines before and after the `current_line`.
+        """
+        Return the number of extra empty lines before and after the `current_line`.
 
         This is for separating `def`, `async def` and `class` with extra empty
         lines (two on module-level).
@@ -592,7 +599,8 @@ def append_leaves(
 
 
 def is_line_short_enough(line: Line, *, line_length: int, line_str: str = "") -> bool:
-    """Return True if `line` is no longer than `line_length`.
+    """
+    Return True if `line` is no longer than `line_length`.
 
     Uses the provided `line_str` rendering, if any, otherwise computes a new one.
     """
@@ -606,7 +614,8 @@ def is_line_short_enough(line: Line, *, line_length: int, line_str: str = "") ->
 
 
 def can_be_split(line: Line) -> bool:
-    """Return False if the line cannot be split *for sure*.
+    """
+    Return False if the line cannot be split *for sure*.
 
     This is not an exhaustive search but a cheap heuristic that we can use to
     avoid some unfortunate formattings (mostly around wrapping unsplittable code
@@ -645,7 +654,8 @@ def can_omit_invisible_parens(
     line: Line,
     line_length: int,
 ) -> bool:
-    """Does `line` have a shape safe to reformat without optional parens around it?
+    """
+    Does `line` have a shape safe to reformat without optional parens around it?
 
     Returns True for only a subset of potentially nice looking formattings but
     the point is to not return false positives that end up producing lines that
@@ -751,7 +761,8 @@ def _can_omit_closing_paren(line: Line, *, last: Leaf, line_length: int) -> bool
 
 
 def line_to_string(line: Line) -> str:
-    """Returns the string representation of @line.
+    """
+    Returns the string representation of @line.
 
     WARNING: This is known to be computationally expensive.
     """
