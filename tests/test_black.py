@@ -1544,7 +1544,7 @@ class BlackTestCase(BlackBaseTestCase):
 
     @pytest.mark.incompatible_with_mypyc
     def test_code_option_config(self) -> None:
-        """Test that the code option finds the pyproject.toml in the current directory."""
+        """Test that the code option finds pyproject.toml in the current directory."""
         with patch.object(black, "parse_pyproject_toml", return_value={}) as parse:
             args = ["--code", "print"]
             # This is the only directory known to contain a pyproject.toml
@@ -1563,7 +1563,7 @@ class BlackTestCase(BlackBaseTestCase):
 
     @pytest.mark.incompatible_with_mypyc
     def test_code_option_parent_config(self) -> None:
-        """Test that the code option finds the pyproject.toml in the parent directory."""
+        """Test that the code option finds pyproject.toml in the parent directory."""
         with patch.object(black, "parse_pyproject_toml", return_value={}) as parse:
             with change_directory(THIS_DIR):
                 args = ["--code", "print"]
