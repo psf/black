@@ -34,6 +34,7 @@
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+- Move test to disable plugin in Vim/Neovim, which speeds up loading (#2896)
 
 ### Output
 
@@ -134,7 +135,6 @@ and the first release covered by our new
 
 ### Integrations
 
-- Move test to disable plugin in vim/neovim, which speeds up loading (#2896)
 - Update GitHub action to support containerized runs (#2748)
 
 ### Documentation
