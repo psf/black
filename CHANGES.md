@@ -134,6 +134,7 @@ and the first release covered by our new
 
 ### Integrations
 
+- Move test to disable plugin in vim/neovim, which speeds up loading (#2896)
 - Update GitHub action to support containerized runs (#2748)
 
 ### Documentation
