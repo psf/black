@@ -3,7 +3,7 @@
 exclude: ^(src/blib2to3/|profiling/|tests/data/)
 repos:
   - repo: https://github.com/hadialqattan/pycln
-    rev: v1.2.3
+    rev: v1.2.4
     hooks:
       - id: pycln
         args: [--config=pyproject.toml]
