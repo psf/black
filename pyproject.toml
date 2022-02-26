@@ -5,6 +5,10 @@
 # verbose regular expressions by Black.  Use [ ] to denote a significant space
 # character.
 
+[tool.pycln]
+all = true
+extend_exclude = "(blib2to3|tests/data|profiling)/"
+
 [tool.black]
 line-length = 88
 target-version = ['py36', 'py37', 'py38']
