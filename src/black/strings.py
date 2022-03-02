@@ -94,7 +94,7 @@ def fix_docstring(docstring: str, prefix: str, *, preview: bool) -> str:
     # Make single-line docstring single-lined
     if len(trimmed) == 1:
         return trimmed[0]
-    return "\n".join(("", *trimmed, prefix))
+    return "\n".join((*trimmed, prefix))
 
 
 def get_string_prefix(string: str) -> str:
