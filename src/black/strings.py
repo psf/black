@@ -63,6 +63,7 @@ def lines_with_leading_tabs_expanded(s: str) -> List[str]:
 
 def fix_docstring(docstring: str, prefix: str, *, preview: bool) -> str:
     # https://www.python.org/dev/peps/pep-0257/#handling-docstring-indentation
+    preview = True
     if not docstring:
         return ""
     lines = lines_with_leading_tabs_expanded(docstring)
