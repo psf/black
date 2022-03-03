@@ -4,7 +4,7 @@ Mostly around Python language feature support per version and Black configuratio
 chosen by the user.
 """
 
-from hashlib import md5
+from hashlib import sha256
 import sys
 
 from dataclasses import dataclass, field
@@ -182,6 +182,6 @@ class Mode:
             str(int(self.magic_trailing_comma)),
             str(int(self.experimental_string_processing)),
             str(int(self.preview)),
-            md5((",".join(sorted(self.python_cell_magics))).encode()).hexdigest(),
+            sha256((",".join(sorted(self.python_cell_magics))).encode()).hexdigest(),
         ]
         return ".".join(parts)

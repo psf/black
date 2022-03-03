@@ -25,6 +25,7 @@
 - Do not format `__pypackages__` directories by default (#2836)
 - Add support for specifying stable version with `--required-version` (#2832).
 - Avoid crashing when the user has no homedir (#2814)
+- Avoid crashing when md5 is not available (#2905)
 
 ### Documentation
 
