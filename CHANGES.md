@@ -49,6 +49,8 @@
 
 <!-- Changes to the parser or to version autodetection -->
 
+- Fix handling of directory junctions on Windows (#2904)
+
 ### Performance
 
 <!-- Changes that improve Black's performance. -->

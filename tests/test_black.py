@@ -1418,6 +1418,22 @@ class BlackTestCase(BlackBaseTestCase):
             normalized_path = black.normalize_path_maybe_ignore(path, root, report)
             self.assertEqual(normalized_path, "workspace/project")
 
+    def test_normalize_path_ignore_windows_junctions_outside_of_root(self) -> None:
+        if system() != "Windows":
+            return
+
+        with TemporaryDirectory() as workspace:
+            root = Path(workspace)
+            junction_dir = root / "junction"
+            junction_target_outside_of_root = root / ".."
+            os.system(f"mklink /J {junction_dir} {junction_target_outside_of_root}")
+
+            report = black.Report(verbose=True)
+            normalized_path = black.normalize_path_maybe_ignore(
+                junction_dir, root, report
+            )
+            self.assertEqual(normalized_path, None)
+
     def test_newline_comment_interaction(self) -> None:
         source = "class A:\\\r\n# type: ignore\n pass\n"
         output = black.format_str(source, mode=DEFAULT_MODE)
