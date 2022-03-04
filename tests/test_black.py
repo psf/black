@@ -1432,6 +1432,9 @@ class BlackTestCase(BlackBaseTestCase):
             normalized_path = black.normalize_path_maybe_ignore(
                 junction_dir, root, report
             )
+            # Manually delete for Python < 3.8
+            os.system(f"rmdir {junction_dir}")
+
             self.assertEqual(normalized_path, None)
 
     def test_newline_comment_interaction(self) -> None:
