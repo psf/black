@@ -50,7 +50,8 @@
 
 ### Parser
 
-<!-- Changes to the parser or to version autodetection -->
+- Black can now parse starred expressions in the target of `for` and `async for`
+  statements, e.g `for item in *items_1, *items_2: pass` (#2879).
 
 ### Performance
 
