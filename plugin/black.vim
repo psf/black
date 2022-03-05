@@ -15,6 +15,10 @@
 "  1.2:
 "    - use autoload script
 
+if exists("g:load_black")
+  finish
+endif
+
 if v:version < 700 || !has('python3')
     func! __BLACK_MISSING()
         echo "The black.vim plugin requires vim7.0+ with Python 3.6 support."
@@ -23,10 +27,6 @@ if v:version < 700 || !has('python3')
     command! BlackUpgrade :call __BLACK_MISSING()
     command! BlackVersion :call __BLACK_MISSING()
     finish
-endif
-
-if exists("g:load_black")
-  finish
 endif
 
 let g:load_black = "py1.0"
