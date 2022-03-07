@@ -26,7 +26,7 @@ jobs:
             executable_mime: "application/x-mach-binary"
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up latest Python
         uses: actions/setup-python@v2
