@@ -46,7 +46,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v3
 
       - name: Install diff-shades and support dependencies
         run: |
