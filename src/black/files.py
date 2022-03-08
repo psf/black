@@ -151,23 +151,22 @@ def normalize_path_maybe_ignore(
     """
     try:
         abspath = path if path.is_absolute() else Path.cwd() / path
-        normalized_path = abspath.resolve().relative_to(root).as_posix()
-    except OSError as e:
-        if report:
-            report.path_ignored(path, f"cannot be read because {e}")
-        return None
-
-    except ValueError:
-        if path.is_symlink():
+        normalized_path = abspath.resolve()
+        try:
+            root_relative_path = normalized_path.relative_to(root).as_posix()
+        except ValueError:
             if report:
                 report.path_ignored(
                     path, f"is a symbolic link that points outside {root}"
                 )
             return None
 
-        raise
+    except OSError as e:
+        if report:
+            report.path_ignored(path, f"cannot be read because {e}")
+        return None
 
-    return normalized_path
+    return root_relative_path
 
 
 def path_is_excluded(

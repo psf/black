@@ -1418,6 +1418,25 @@ class BlackTestCase(BlackBaseTestCase):
             normalized_path = black.normalize_path_maybe_ignore(path, root, report)
             self.assertEqual(normalized_path, "workspace/project")
 
+    def test_normalize_path_ignore_windows_junctions_outside_of_root(self) -> None:
+        if system() != "Windows":
+            return
+
+        with TemporaryDirectory() as workspace:
+            root = Path(workspace)
+            junction_dir = root / "junction"
+            junction_target_outside_of_root = root / ".."
+            os.system(f"mklink /J {junction_dir} {junction_target_outside_of_root}")
+
+            report = black.Report(verbose=True)
+            normalized_path = black.normalize_path_maybe_ignore(
+                junction_dir, root, report
+            )
+            # Manually delete for Python < 3.8
+            os.system(f"rmdir {junction_dir}")
+
+            self.assertEqual(normalized_path, None)
+
     def test_newline_comment_interaction(self) -> None:
         source = "class A:\\\r\n# type: ignore\n pass\n"
         output = black.format_str(source, mode=DEFAULT_MODE)
@@ -1994,7 +2013,6 @@ class TestFileCollection:
         path.iterdir.return_value = [child]
         child.resolve.return_value = Path("/a/b/c")
         child.as_posix.return_value = "/a/b/c"
-        child.is_symlink.return_value = True
         try:
             list(
                 black.gen_python_files(
@@ -2014,31 +2032,6 @@ class TestFileCollection:
             pytest.fail(f"`get_python_files_in_dir()` failed: {ve}")
         path.iterdir.assert_called_once()
         child.resolve.assert_called_once()
-        child.is_symlink.assert_called_once()
-        # `child` should behave like a strange file which resolved path is clearly
-        # outside of the `root` directory.
-        child.is_symlink.return_value = False
-        with pytest.raises(ValueError):
-            list(
-                black.gen_python_files(
-                    path.iterdir(),
-                    root,
-                    include,
-                    exclude,
-                    None,
-                    None,
-                    report,
-                    gitignore,
-                    verbose=False,
-                    quiet=False,
-                )
-            )
-        path.iterdir.assert_called()
-        assert path.iterdir.call_count == 2
-        child.resolve.assert_called()
-        assert child.resolve.call_count == 2
-        child.is_symlink.assert_called()
-        assert child.is_symlink.call_count == 2
 
     @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_get_sources_with_stdin(self) -> None:
