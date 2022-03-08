@@ -48,6 +48,9 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
+- On Python 3.11 and newer, use the standard library's `tomllib` instead of `tomli`
+  (#2903)
+
 ### Parser
 
 - Black can now parse starred expressions in the target of `for` and `async for`
