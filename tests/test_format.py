@@ -62,6 +62,7 @@ SIMPLE_CASES: List[str] = [
 ]
 
 PY310_CASES: List[str] = [
+    "starred_for_target",
     "pattern_matching_simple",
     "pattern_matching_complex",
     "pattern_matching_extras",

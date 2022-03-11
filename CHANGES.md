@@ -27,6 +27,7 @@
 - Do not format `__pypackages__` directories by default (#2836)
 - Add support for specifying stable version with `--required-version` (#2832).
 - Avoid crashing when the user has no homedir (#2814)
+- Avoid crashing when md5 is not available (#2905)
 
 ### Documentation
 
@@ -36,6 +37,8 @@
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- Move test to disable plugin in Vim/Neovim, which speeds up loading (#2896)
 
 ### Output
 
@@ -47,9 +50,15 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
+- On Python 3.11 and newer, use the standard library's `tomllib` instead of `tomli`
+  (#2903)
+
 ### Parser
 
-<!-- Changes to the parser or to version autodetection -->
+- Black can now parse starred expressions in the target of `for` and `async for`
+  statements, e.g `for item in *items_1, *items_2: pass` (#2879).
+
+- Fix handling of directory junctions on Windows (#2904)
 
 ### Performance
 
