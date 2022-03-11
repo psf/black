@@ -24,8 +24,8 @@ as .pyi, and whether string normalization was omitted.
 
 To override the location of these files on all systems, set the environment variable
 `BLACK_CACHE_DIR` to the preferred location. Alternatively on macOS and Linux, set
-`XDG_CACHE_HOME` to you your preferred location. For example, if you want to put the
-cache in the directory you're running _Black_ from, set `BLACK_CACHE_DIR=.cache/black`.
+`XDG_CACHE_HOME` to your preferred location. For example, if you want to put the cache
+in the directory you're running _Black_ from, set `BLACK_CACHE_DIR=.cache/black`.
 _Black_ will then write the above files to `.cache/black`. Note that `BLACK_CACHE_DIR`
 will take precedence over `XDG_CACHE_HOME` if both are set.
 

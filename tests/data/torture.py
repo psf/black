@@ -22,6 +22,12 @@ def test(self, othr):
             (name, description, self.default, self.selected, self.auto_generated, self.parameters, self.meta_data, self.schedule) ==
             (name, description, othr.default, othr.selected, othr.auto_generated, othr.parameters, othr.meta_data, othr.schedule))
 
+
+assert (
+    a_function(very_long_arguments_that_surpass_the_limit, which_is_eighty_eight_in_this_case_plus_a_bit_more)
+    == {"x": "this need to pass the line limit as well", "b": "but only by a little bit"}
+)
+
 # output
 
 importA
@@ -76,3 +82,10 @@ def test(self, othr):
         othr.meta_data,
         othr.schedule,
     )
+
+
+assert a_function(
+    very_long_arguments_that_surpass_the_limit,
+    which_is_eighty_eight_in_this_case_plus_a_bit_more,
+) == {"x": "this need to pass the line limit as well", "b": "but only by a little bit"}
+

@@ -2,8 +2,71 @@
 
 ## Unreleased
 
+### Highlights
+
+<!-- Include any especially major or disruptive changes here -->
+
+### Style
+
+<!-- Changes that affect Black's stable style -->
+
+### Preview style
+
+<!-- Changes that affect Black's preview style -->
+
+### _Blackd_
+
+<!-- Changes to blackd -->
+
+### Configuration
+
+<!-- Changes to how Black can be configured -->
+
+- Do not format `__pypackages__` directories by default (#2836)
+- Add support for specifying stable version with `--required-version` (#2832).
+- Avoid crashing when the user has no homedir (#2814)
+- Avoid crashing when md5 is not available (#2905)
+
+### Documentation
+
+<!-- Major changes to documentation and policies. Small docs changes
+     don't need a changelog entry. -->
+
+### Integrations
+
+<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- Move test to disable plugin in Vim/Neovim, which speeds up loading (#2896)
+
+### Output
+
+<!-- Changes to Black's terminal output and error messages -->
+
+- In verbose, mode, log when _Black_ is using user-level config (#2861)
+
+### Packaging
+
+<!-- Changes to how Black is packaged, such as dependency requirements -->
+
+- On Python 3.11 and newer, use the standard library's `tomllib` instead of `tomli`
+  (#2903)
+
+### Parser
+
+- Black can now parse starred expressions in the target of `for` and `async for`
+  statements, e.g `for item in *items_1, *items_2: pass` (#2879).
+
+- Fix handling of directory junctions on Windows (#2904)
+
+### Performance
+
+<!-- Changes that improve Black's performance. -->
+
+## 22.1.0
+
 At long last, _Black_ is no longer a beta product! This is the first non-beta release
-and the first release covered by our new stability policy.
+and the first release covered by our new
+[stability policy](https://black.readthedocs.io/en/stable/the_black_code_style/index.html#stability-policy).
 
 ### Highlights
 
@@ -25,6 +88,7 @@ and the first release covered by our new stability policy.
   literals (#2799)
 - Treat blank lines in stubs the same inside top-level `if` statements (#2820)
 - Fix unstable formatting with semicolons and arithmetic expressions (#2817)
+- Fix unstable formatting around magic trailing comma (#2572)
 
 ### Parser
 
@@ -39,6 +103,7 @@ and the first release covered by our new stability policy.
   `values: Tuple[int, ...] = 1, 2, 3`) now implies 3.8+ (#2708)
 - Fix handling of standalone `match()` or `case()` when there is a trailing newline or a
   comment inside of the parentheses. (#2760)
+- `from __future__ import annotations` statement now implies Python 3.7+ (#2690)
 
 ### Performance
 
@@ -96,7 +161,6 @@ and the first release covered by our new stability policy.
 - Fix determination of f-string expression spans (#2654)
 - Fix bad formatting of error messages about EOF in multi-line statements (#2343)
 - Functions and classes in blocks now have more consistent surrounding spacing (#2472)
-- `from __future__ import annotations` statement now implies Python 3.7+ (#2690)
 
 #### Jupyter Notebook support
 
@@ -140,7 +204,6 @@ and the first release covered by our new stability policy.
   when `--target-version py310` is explicitly specified (#2586)
 - Add support for parenthesized with (#2586)
 - Declare support for Python 3.10 for running Black (#2562)
-- Fix unstable black runs around magic trailing comma (#2572)
 
 ### Integrations
 

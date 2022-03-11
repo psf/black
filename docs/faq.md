@@ -8,6 +8,18 @@ The most common questions and issues users face are aggregated to this FAQ.
 :class: this-will-duplicate-information-and-it-is-still-useful-here
 ```
 
+## Why spaces? I prefer tabs
+
+PEP 8 recommends spaces over tabs, and they are used by most of the Python community.
+_Black_ provides no options to configure the indentation style, and requests for such
+options will not be considered.
+
+However, we recognise that using tabs is an accessibility issue as well. While the
+option will never be added to _Black_, visually impaired developers may find conversion
+tools such as `expand/unexpand` (for Linux) useful when contributing to Python projects.
+A workflow might consist of e.g. setting up appropriate pre-commit and post-merge git
+hooks, and scripting `unexpand` to run after applying _Black_.
+
 ## Does Black have an API?
 
 Not yet. _Black_ is fundamentally a command line tool. Many
