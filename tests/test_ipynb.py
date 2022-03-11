@@ -16,7 +16,7 @@ from black import (
 import pytest
 from black import Mode
 from _pytest.monkeypatch import MonkeyPatch
-from tests.util import DATA_DIR
+from tests.util import DATA_DIR, TOML_CONFIG_DIR
 
 pytestmark = pytest.mark.jupyter
 pytest.importorskip("IPython", reason="IPython is an optional dependency")
@@ -24,7 +24,7 @@ pytest.importorskip("tokenize_rt", reason="tokenize-rt is an optional dependency
 
 JUPYTER_MODE = Mode(is_ipynb=True)
 
-EMPTY_CONFIG = DATA_DIR / "empty_pyproject.toml"
+EMPTY_CONFIG = TOML_CONFIG_DIR / "empty_pyproject.toml"
 
 runner = CliRunner()
 

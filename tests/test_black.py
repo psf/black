@@ -125,7 +125,7 @@ def invokeBlack(
 ) -> None:
     runner = BlackRunner()
     if ignore_config:
-        args = ["--verbose", "--config", str(THIS_DIR / "empty.toml"), *args]
+        args = ["--verbose", "--config", str(TOML_CONFIG_DIR / "empty.toml"), *args]
     result = runner.invoke(black.main, args, catch_exceptions=False)
     assert result.stdout_bytes is not None
     assert result.stderr_bytes is not None
@@ -2042,7 +2042,6 @@ class TestFileCollection:
         path.iterdir.return_value = [child]
         child.resolve.return_value = Path("/a/b/c")
         child.as_posix.return_value = "/a/b/c"
-        child.is_symlink.return_value = True
         try:
             list(
                 black.gen_python_files(
@@ -2062,31 +2061,6 @@ class TestFileCollection:
             pytest.fail(f"`get_python_files_in_dir()` failed: {ve}")
         path.iterdir.assert_called_once()
         child.resolve.assert_called_once()
-        child.is_symlink.assert_called_once()
-        # `child` should behave like a strange file which resolved path is clearly
-        # outside of the `root` directory.
-        child.is_symlink.return_value = False
-        with pytest.raises(ValueError):
-            list(
-                black.gen_python_files(
-                    path.iterdir(),
-                    root,
-                    include,
-                    exclude,
-                    None,
-                    None,
-                    report,
-                    gitignore,
-                    verbose=False,
-                    quiet=False,
-                )
-            )
-        path.iterdir.assert_called()
-        assert path.iterdir.call_count == 2
-        child.resolve.assert_called()
-        assert child.resolve.call_count == 2
-        child.is_symlink.assert_called()
-        assert child.is_symlink.call_count == 2
 
     @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_get_sources_with_stdin(self) -> None:
