@@ -115,29 +115,8 @@ myst_disable_syntax = [
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "alabaster"
-
-html_sidebars = {
-    "**": [
-        "about.html",
-        "navigation.html",
-        "relations.html",
-        "searchbox.html",
-    ]
-}
-
-html_theme_options = {
-    "show_related": False,
-    "description": "“Any color you like.”",
-    "github_button": True,
-    "github_user": "psf",
-    "github_repo": "black",
-    "github_type": "star",
-    "show_powered_by": True,
-    "fixed_sidebar": True,
-    "logo": "logo2.png",
-}
-
+html_theme = "furo"
+html_logo = "_static/logo2-readme.png"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

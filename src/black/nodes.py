@@ -4,13 +4,11 @@ blib2to3 Node/Leaf transformation-related utility functions.
 
 import sys
 from typing import (
-    Collection,
     Generic,
     Iterator,
     List,
     Optional,
     Set,
-    Tuple,
     TypeVar,
     Union,
 )
@@ -306,12 +304,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
             return NO
 
         if not prev:
-            if t == token.DOT:
-                prevp = preceding_leaf(p)
-                if not prevp or prevp.type != token.NUMBER:
-                    return NO
-
-            elif t == token.LSQB:
+            if t == token.DOT or t == token.LSQB:
                 return NO
 
         elif prev.type != token.COMMA:
@@ -444,27 +437,6 @@ def prev_siblings_are(node: Optional[LN], tokens: List[Optional[NodeType]]) -> b
     return prev_siblings_are(node.prev_sibling, tokens[:-1])
 
 
-def last_two_except(leaves: List[Leaf], omit: Collection[LeafID]) -> Tuple[Leaf, Leaf]:
-    """Return (penultimate, last) leaves skipping brackets in `omit` and contents."""
-    stop_after: Optional[Leaf] = None
-    last: Optional[Leaf] = None
-    for leaf in reversed(leaves):
-        if stop_after:
-            if leaf is stop_after:
-                stop_after = None
-            continue
-
-        if last:
-            return leaf, last
-
-        if id(leaf) in omit:
-            stop_after = leaf.opening_bracket
-        else:
-            last = leaf
-    else:
-        raise LookupError("Last two leaves were also skipped")
-
-
 def parent_type(node: Optional[LN]) -> Optional[NodeType]:
     """
     Returns:
@@ -536,15 +508,14 @@ def first_leaf_column(node: Node) -> Optional[int]:
     return None
 
 
-def first_child_is_arith(node: Node) -> bool:
-    """Whether first child is an arithmetic or a binary arithmetic expression"""
-    expr_types = {
+def is_arith_like(node: LN) -> bool:
+    """Whether node is an arithmetic or a binary arithmetic expression"""
+    return node.type in {
         syms.arith_expr,
         syms.shift_expr,
         syms.xor_expr,
         syms.and_expr,
     }
-    return bool(node.children and node.children[0].type in expr_types)
 
 
 def is_docstring(leaf: Leaf) -> bool:

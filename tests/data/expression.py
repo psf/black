@@ -282,15 +282,15 @@ Name1 or Name2 and Name3 or Name4
 v1 << 2
 1 >> v2
 1 % finished
-1 + v2 - v3 * 4 ^ 5 ** v6 / 7 // 8
-((1 + v2) - (v3 * 4)) ^ (((5 ** v6) / 7) // 8)
+1 + v2 - v3 * 4 ^ 5**v6 / 7 // 8
+((1 + v2) - (v3 * 4)) ^ (((5**v6) / 7) // 8)
 not great
 ~great
 +value
 -1
 ~int and not v1 ^ 123 + v2 | True
 (~int) and (not ((v1 ^ (123 + v2)) | True))
-+(really ** -(confusing ** ~(operator ** -precedence)))
++(really ** -(confusing ** ~(operator**-precedence)))
 flags & ~select.EPOLLIN and waiters.write_task is not None
 lambda arg: None
 lambda a=True: a
@@ -347,13 +347,13 @@ str or None if (1 if True else 2) else str or bytes or None
     *more,
 ]
 {i for i in (1, 2, 3)}
-{(i ** 2) for i in (1, 2, 3)}
-{(i ** 2) for i, _ in ((1, "a"), (2, "b"), (3, "c"))}
-{((i ** 2) + j) for i in (1, 2, 3) for j in (1, 2, 3)}
+{(i**2) for i in (1, 2, 3)}
+{(i**2) for i, _ in ((1, "a"), (2, "b"), (3, "c"))}
+{((i**2) + j) for i in (1, 2, 3) for j in (1, 2, 3)}
 [i for i in (1, 2, 3)]
-[(i ** 2) for i in (1, 2, 3)]
-[(i ** 2) for i, _ in ((1, "a"), (2, "b"), (3, "c"))]
-[((i ** 2) + j) for i in (1, 2, 3) for j in (1, 2, 3)]
+[(i**2) for i in (1, 2, 3)]
+[(i**2) for i, _ in ((1, "a"), (2, "b"), (3, "c"))]
+[((i**2) + j) for i in (1, 2, 3) for j in (1, 2, 3)]
 {i: 0 for i in (1, 2, 3)}
 {i: j for i, j in ((1, "a"), (2, "b"), (3, "c"))}
 {a: b * 2 for a, b in dictionary.items()}
@@ -382,8 +382,8 @@ call(**self.screen_kwargs)
 call(b, **self.screen_kwargs)
 lukasz.langa.pl
 call.me(maybe)
-1 .real
-1.0 .real
+(1).real
+(1.0).real
 ....__class__
 list[str]
 dict[str, int]
@@ -441,9 +441,9 @@ numpy[np.newaxis, :]
 SomeName
 (Good, Bad, Ugly)
 (i for i in (1, 2, 3))
-((i ** 2) for i in (1, 2, 3))
-((i ** 2) for i, _ in ((1, "a"), (2, "b"), (3, "c")))
-(((i ** 2) + j) for i in (1, 2, 3) for j in (1, 2, 3))
+((i**2) for i in (1, 2, 3))
+((i**2) for i, _ in ((1, "a"), (2, "b"), (3, "c")))
+(((i**2) + j) for i in (1, 2, 3) for j in (1, 2, 3))
 (*starred,)
 {
     "id": "1",
@@ -588,13 +588,13 @@ if (
     return True
 if (
     ~aaaa.a + aaaa.b - aaaa.c * aaaa.d / aaaa.e
-    | aaaa.f & aaaa.g % aaaa.h ^ aaaa.i << aaaa.k >> aaaa.l ** aaaa.m // aaaa.n
+    | aaaa.f & aaaa.g % aaaa.h ^ aaaa.i << aaaa.k >> aaaa.l**aaaa.m // aaaa.n
 ):
     return True
 if (
     ~aaaaaaaa.a + aaaaaaaa.b - aaaaaaaa.c @ aaaaaaaa.d / aaaaaaaa.e
     | aaaaaaaa.f & aaaaaaaa.g % aaaaaaaa.h
-    ^ aaaaaaaa.i << aaaaaaaa.k >> aaaaaaaa.l ** aaaaaaaa.m // aaaaaaaa.n
+    ^ aaaaaaaa.i << aaaaaaaa.k >> aaaaaaaa.l**aaaaaaaa.m // aaaaaaaa.n
 ):
     return True
 if (
@@ -604,7 +604,7 @@ if (
     | aaaaaaaaaaaaaaaa.f & aaaaaaaaaaaaaaaa.g % aaaaaaaaaaaaaaaa.h
     ^ aaaaaaaaaaaaaaaa.i
     << aaaaaaaaaaaaaaaa.k
-    >> aaaaaaaaaaaaaaaa.l ** aaaaaaaaaaaaaaaa.m // aaaaaaaaaaaaaaaa.n
+    >> aaaaaaaaaaaaaaaa.l**aaaaaaaaaaaaaaaa.m // aaaaaaaaaaaaaaaa.n
 ):
     return True
 (

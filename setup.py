@@ -97,9 +97,9 @@ setup(
     python_requires=">=3.6.2",
     zip_safe=False,
     install_requires=[
-        "click>=7.1.2",
+        "click>=8.0.0",
         "platformdirs>=2",
-        "tomli>=1.1.0",
+        "tomli>=1.1.0; python_version < '3.11'",
         "typed-ast>=1.4.2; python_version < '3.8' and implementation_name == 'cpython'",
         "pathspec>=0.9.0",
         "dataclasses>=0.6; python_version < '3.7'",
@@ -112,9 +112,8 @@ setup(
         "uvloop": ["uvloop>=0.15.2"],
         "jupyter": ["ipython>=7.8.0", "tokenize-rt>=3.2.0"],
     },
-    test_suite="tests.test_black",
     classifiers=[
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",

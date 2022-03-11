@@ -2,44 +2,146 @@
 
 ## Unreleased
 
-### _Black_
+### Highlights
+
+<!-- Include any especially major or disruptive changes here -->
+
+### Style
+
+<!-- Changes that affect Black's stable style -->
+
+### Preview style
+
+<!-- Changes that affect Black's preview style -->
+
+- Use parentheses with equality check in walrus/assigment statements (#2770)
+
+### _Blackd_
+
+<!-- Changes to blackd -->
+
+### Configuration
+
+<!-- Changes to how Black can be configured -->
+
+- Do not format `__pypackages__` directories by default (#2836)
+- Add support for specifying stable version with `--required-version` (#2832).
+- Avoid crashing when the user has no homedir (#2814)
+- Avoid crashing when md5 is not available (#2905)
+
+### Documentation
+
+<!-- Major changes to documentation and policies. Small docs changes
+     don't need a changelog entry. -->
+
+### Integrations
+
+<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- Move test to disable plugin in Vim/Neovim, which speeds up loading (#2896)
+
+### Output
+
+<!-- Changes to Black's terminal output and error messages -->
+
+- In verbose, mode, log when _Black_ is using user-level config (#2861)
+
+### Packaging
+
+<!-- Changes to how Black is packaged, such as dependency requirements -->
+
+- On Python 3.11 and newer, use the standard library's `tomllib` instead of `tomli`
+  (#2903)
+
+### Parser
+
+- Black can now parse starred expressions in the target of `for` and `async for`
+  statements, e.g `for item in *items_1, *items_2: pass` (#2879).
+
+- Fix handling of directory junctions on Windows (#2904)
+
+### Performance
+
+<!-- Changes that improve Black's performance. -->
+
+## 22.1.0
+
+At long last, _Black_ is no longer a beta product! This is the first non-beta release
+and the first release covered by our new
+[stability policy](https://black.readthedocs.io/en/stable/the_black_code_style/index.html#stability-policy).
+
+### Highlights
 
 - **Remove Python 2 support** (#2740)
-- Do not accept bare carriage return line endings in pyproject.toml (#2408)
-- Improve error message for invalid regular expression (#2678)
-- Improve error message when parsing fails during AST safety check by embedding the
-  underlying SyntaxError (#2693)
+- Introduce the `--preview` flag (#2752)
+
+### Style
+
+- Deprecate `--experimental-string-processing` and move the functionality under
+  `--preview` (#2789)
+- For stubs, one blank line between class attributes and methods is now kept if there's
+  at least one pre-existing blank line (#2736)
+- Black now normalizes string prefix order (#2297)
+- Remove spaces around power operators if both operands are simple (#2726)
+- Work around bug that causes unstable formatting in some cases in the presence of the
+  magic trailing comma (#2807)
+- Use parentheses for attribute access on decimal float and int literals (#2799)
+- Don't add whitespace for attribute access on hexadecimal, binary, octal, and complex
+  literals (#2799)
+- Treat blank lines in stubs the same inside top-level `if` statements (#2820)
+- Fix unstable formatting with semicolons and arithmetic expressions (#2817)
+- Fix unstable formatting around magic trailing comma (#2572)
+
+### Parser
+
 - Fix mapping cases that contain as-expressions, like `case {"key": 1 | 2 as password}`
   (#2686)
 - Fix cases that contain multiple top-level as-expressions, like `case 1 as a, 2 as b`
   (#2716)
 - Fix call patterns that contain as-expressions with keyword arguments, like
   `case Foo(bar=baz as quux)` (#2749)
-- No longer color diff headers white as it's unreadable in light themed terminals
-  (#2691)
 - Tuple unpacking on `return` and `yield` constructs now implies 3.8+ (#2700)
 - Unparenthesized tuples on annotated assignments (e.g
   `values: Tuple[int, ...] = 1, 2, 3`) now implies 3.8+ (#2708)
-- Text coloring added in the final statistics (#2712)
-- For stubs, one blank line between class attributes and methods is now kept if there's
-  at least one pre-existing blank line (#2736)
-- Verbose mode also now describes how a project root was discovered and which paths will
-  be formatted. (#2526)
-- Speed-up the new backtracking parser about 4X in general (enabled when
-  `--target-version` is set to 3.10 and higher). (#2728)
 - Fix handling of standalone `match()` or `case()` when there is a trailing newline or a
   comment inside of the parentheses. (#2760)
-- Black now normalizes string prefix order (#2297)
-- Use parentheses with equality check in walrus/assigment statements (#2770)
+- `from __future__ import annotations` statement now implies Python 3.7+ (#2690)
+
+### Performance
+
+- Speed-up the new backtracking parser about 4X in general (enabled when
+  `--target-version` is set to 3.10 and higher). (#2728)
+- _Black_ is now compiled with [mypyc](https://github.com/mypyc/mypyc) for an overall 2x
+  speed-up. 64-bit Windows, MacOS, and Linux (not including musl) are supported. (#1009,
+  #2431)
+
+### Configuration
+
+- Do not accept bare carriage return line endings in pyproject.toml (#2408)
+- Add configuration option (`python-cell-magics`) to format cells with custom magics in
+  Jupyter Notebooks (#2744)
+- Allow setting custom cache directory on all platforms with environment variable
+  `BLACK_CACHE_DIR` (#2739).
+- Enable Python 3.10+ by default, without any extra need to specify
+  `--target-version=py310`. (#2758)
+- Make passing `SRC` or `--code` mandatory and mutually exclusive (#2804)
+
+### Output
+
+- Improve error message for invalid regular expression (#2678)
+- Improve error message when parsing fails during AST safety check by embedding the
+  underlying SyntaxError (#2693)
+- No longer color diff headers white as it's unreadable in light themed terminals
+  (#2691)
+- Text coloring added in the final statistics (#2712)
+- Verbose mode also now describes how a project root was discovered and which paths will
+  be formatted. (#2526)
 
 ### Packaging
 
 - All upper version bounds on dependencies have been removed (#2718)
 - `typing-extensions` is no longer a required dependency in Python 3.10+ (#2772)
-
-### Preview style
-
-- Introduce the `--preview` flag with no style changes (#2752)
+- Set `click` lower bound to `8.0.0` (#2791)
 
 ### Integrations
 
@@ -48,6 +150,10 @@
 ### Documentation
 
 - Change protocol in pip installation instructions to `https://` (#2761)
+- Change HTML theme to Furo primarily for its responsive design and mobile support
+  (#2793)
+- Deprecate the `black-primer` tool (#2809)
+- Document Python support policy (#2819)
 
 ## 21.12b0
 
@@ -56,7 +162,6 @@
 - Fix determination of f-string expression spans (#2654)
 - Fix bad formatting of error messages about EOF in multi-line statements (#2343)
 - Functions and classes in blocks now have more consistent surrounding spacing (#2472)
-- `from __future__ import annotations` statement now implies Python 3.7+ (#2690)
 
 #### Jupyter Notebook support
 

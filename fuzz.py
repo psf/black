@@ -32,7 +32,9 @@ from blib2to3.pgen2.tokenize import TokenError
         black.FileMode,
         line_length=st.just(88) | st.integers(0, 200),
         string_normalization=st.booleans(),
+        preview=st.booleans(),
         is_pyi=st.booleans(),
+        magic_trailing_comma=st.booleans(),
     ),
 )
 def test_idempotent_any_syntatically_valid_python(
@@ -46,7 +48,7 @@ def test_idempotent_any_syntatically_valid_python(
         dst_contents = black.format_str(src_contents, mode=mode)
     except black.InvalidInput:
         # This is a bug - if it's valid Python code, as above, Black should be
-        # able to cope with it.  See issues #970, #1012, #1358, and #1557.
+        # able to cope with it.  See issues #970, #1012
         # TODO: remove this try-except block when issues are resolved.
         return
     except TokenError as e:
