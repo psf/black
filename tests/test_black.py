@@ -162,6 +162,7 @@ class BlackTestCase(BlackBaseTestCase):
             black.main,
             [
                 "-",
+                "--preview",
                 "--fast",
                 f"--line-length={black.DEFAULT_LINE_LENGTH}",
                 f"--config={EMPTY_CONFIG}",

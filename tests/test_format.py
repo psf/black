@@ -7,6 +7,7 @@ import pytest
 import black
 from tests.util import (
     DEFAULT_MODE,
+    PREVIEW_MODE,
     PY36_VERSIONS,
     THIS_DIR,
     assert_format,
@@ -145,13 +146,13 @@ def test_simple_format(filename: str) -> None:
 
 @pytest.mark.parametrize("filename", PREVIEW_CASES)
 def test_preview_format(filename: str) -> None:
-    check_file(filename, black.Mode(preview=True))
+    check_file(filename, PREVIEW_MODE)
 
 
 @pytest.mark.parametrize("filename", SOURCES)
 def test_source_is_formatted(filename: str) -> None:
     path = THIS_DIR.parent / filename
-    check_file(str(path), DEFAULT_MODE, data=False)
+    check_file(str(path), PREVIEW_MODE, data=False)
 
 
 # =============== #

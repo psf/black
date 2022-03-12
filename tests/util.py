@@ -25,6 +25,7 @@ PY36_VERSIONS = {
 }
 
 DEFAULT_MODE = black.Mode()
+PREVIEW_MODE = black.Mode(preview=True)
 ff = partial(black.format_file_in_place, mode=DEFAULT_MODE, fast=True)
 fs = partial(black.format_str, mode=DEFAULT_MODE)
 
