@@ -66,7 +66,7 @@ check_sockets(on_windows=os.name == "nt")
 if a := (b == c):
     pass
 
-a = [y := (f(x) == True), y ** 2, y ** 3]
+a = [y := (f(x) == True), y**2, y**3]
 
 a = lambda line: (m := (re.match(pattern, line) == True))
 
