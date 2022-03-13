@@ -44,7 +44,6 @@ SIMPLE_CASES: List[str] = [
     "fmtskip4",
     "fmtskip5",
     "fmtskip6",
-    "format_unicode_escape_seq",
     "fstring",
     "function",
     "function2",
@@ -76,6 +75,7 @@ PREVIEW_CASES: List[str] = [
     # string processing
     "cantfit",
     "comments7",
+    "format_unicode_escape_seq",
     "long_strings",
     "long_strings__edge_case",
     "long_strings__regression",

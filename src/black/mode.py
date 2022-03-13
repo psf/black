@@ -128,6 +128,7 @@ class Preview(Enum):
 
     string_processing = auto()
     hug_simple_powers = auto()
+    hex_codes_in_unicode_sequences = auto()
 
 
 class Deprecated(UserWarning):

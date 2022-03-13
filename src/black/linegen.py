@@ -260,7 +260,9 @@ class LineGenerator(Visitor[Line]):
         yield from self.visit_default(node)
 
     def visit_STRING(self, leaf: Leaf) -> Iterator[Line]:
-        normalize_unicode_escape_sequences(leaf)
+        if Preview.hex_codes_in_unicode_sequences in self.mode:
+            # Preview style only
+            normalize_unicode_escape_sequences(leaf)
 
         if is_docstring(leaf) and "\\\n" not in leaf.value:
             # We're ignoring docstrings with backslash newline escapes because changing
