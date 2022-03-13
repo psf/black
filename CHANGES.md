@@ -12,7 +12,7 @@
 
 ### Preview style
 
-<!-- Changes that affect Black's preview style -->
+- Format hex code in unicode escape sequences in string literals (#2916)
 
 ### _Blackd_
 
