@@ -44,6 +44,7 @@ SIMPLE_CASES: List[str] = [
     "fmtskip4",
     "fmtskip5",
     "fmtskip6",
+    "format_unicode_escape_seq",
     "fstring",
     "function",
     "function2",

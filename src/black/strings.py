@@ -20,7 +20,14 @@ STRING_PREFIX_RE: Final = re.compile(
     r"^([" + STRING_PREFIX_CHARS + r"]*)(.*)$", re.DOTALL
 )
 FIRST_NON_WHITESPACE_RE: Final = re.compile(r"\s*\t+\s*(\S)")
-UNICODE_RE = re.compile(r"(\\+)(u|U|x|N)(([a-zA-Z0-9]+)|\{([a-zA-Z0-9]+)\})")
+UNICODE_RE = re.compile(
+    r"(\\+)("
+    r"(u([a-zA-Z0-9]{4}))"
+    r"|(U([a-zA-Z0-9]{0,8}))"
+    r"|(x([a-zA-Z0-9]{2}))"
+    r"|(N\{([a-zA-Z0-9]{2})\})"
+    r")"
+)
 
 
 def sub_twice(regex: Pattern[str], replacement: str, original: str) -> str:
@@ -244,14 +251,25 @@ def normalize_string_quotes(s: str) -> str:
 def normalize_unicode_escape_sequences(leaf: Leaf) -> None:
     """Replace hex codes in Unicode escape sequences with lowercase representation."""
     text = leaf.value
+    prefix = get_string_prefix(text)
 
     def replace(m: Match[AnyStr]) -> AnyStr:
         groups = m.groups()
-        if m.group(4):
-            # \\U or \\u or \\x
-            return groups[0] + groups[1] + groups[2].lower()
+
+        if len(groups[0]) % 2 == 0 or prefix == "r":
+            return groups[0] + groups[1]
+
+        if groups[2]:
+            # \u
+            return groups[0] + "u" + groups[3].lower()
+        elif groups[4]:
+            # \U
+            return groups[0] + "U" + groups[5].lower()
+        elif groups[6]:
+            # \x
+            return groups[0] + "x" + groups[7].lower()
         else:
-            # \\N{}
-            return groups[0] + groups[1] + groups[2].upper()
+            # \N{}
+            return groups[0] + "N{" + groups[9].upper() + "}"
 
     leaf.value = re.sub(UNICODE_RE, replace, text)
