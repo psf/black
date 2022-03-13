@@ -9,7 +9,7 @@ x = "\xA3"
 x = "\u2717"
 x = "\N{ox}\N{OX}"
 
-# Output
+# output
 
 x = "\x1f"
 x = "\\x1B"
