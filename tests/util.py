@@ -87,7 +87,7 @@ def dump_to_stderr(*output: str) -> str:
 
 class BlackBaseTestCase(unittest.TestCase):
     def assertFormatEqual(self, expected: str, actual: str) -> None:
-        _assert_format_equal(expected, actual, preview=True)
+        _assert_format_equal(expected, actual, preview=False)
 
 
 def read_data(name: str, data: bool = True) -> Tuple[str, str]:
