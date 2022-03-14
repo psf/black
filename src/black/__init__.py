@@ -1166,7 +1166,7 @@ def _format_str_once(src_contents: str, *, mode: Mode) -> str:
     else:
         versions = detect_target_versions(src_node, future_imports=future_imports)
 
-    normalize_fmt_off(src_node)
+    normalize_fmt_off(src_node, preview=mode.preview)
     lines = LineGenerator(mode=mode)
     elt = EmptyLineTracker(is_pyi=mode.is_pyi)
     empty_line = Line(mode=mode)
@@ -1176,7 +1176,7 @@ def _format_str_once(src_contents: str, *, mode: Mode) -> str:
         for feature in {Feature.TRAILING_COMMA_IN_CALL, Feature.TRAILING_COMMA_IN_DEF}
         if supports_feature(versions, feature)
     }
-    for current_line in lines.visit(src_node):
+    for current_line in lines.visit(src_node, preview=mode.preview):
         dst_contents.append(str(empty_line) * after)
         before, after = elt.maybe_empty_lines(current_line)
         dst_contents.append(str(empty_line) * before)
