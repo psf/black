@@ -10,11 +10,11 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Code cell separators `#%%` are now standardised to `# %%` (#2919)
-
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
+
+- Code cell separators `#%%` are now standardised to `# %%` (#2919)
 
 ### _Blackd_
 
