@@ -12,7 +12,7 @@
 
 ### Preview style
 
-<!-- Changes that affect Black's preview style -->
+- Remove unnecessary parentheses from `with` statements (#2926)
 
 ### _Blackd_
 
@@ -89,7 +89,6 @@ and the first release covered by our new
 - Treat blank lines in stubs the same inside top-level `if` statements (#2820)
 - Fix unstable formatting with semicolons and arithmetic expressions (#2817)
 - Fix unstable formatting around magic trailing comma (#2572)
-- Remove unnecessary parentheses from `with` statements (#2926)
 
 ### Parser
 

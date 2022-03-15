@@ -132,7 +132,10 @@ class LineGenerator(Visitor[Line]):
         `parens` holds a set of string leaf values immediately after which
         invisible parens should be put.
         """
-        normalize_invisible_parens(node, parens_after=parens)
+        remove_with_parens = Preview.remove_with_parens in self.mode
+        normalize_invisible_parens(
+            node, parens_after=parens, remove_with_parens=remove_with_parens
+        )
         for child in node.children:
             if is_name_token(child) and child.value in keywords:
                 yield from self.line()
@@ -141,7 +144,12 @@ class LineGenerator(Visitor[Line]):
 
     def visit_match_case(self, node: Node) -> Iterator[Line]:
         """Visit either a match or case statement."""
-        normalize_invisible_parens(node, parens_after=set())
+        remove_with_parens = Preview.remove_with_parens in self.mode
+        normalize_invisible_parens(
+            node,
+            parens_after=set(),
+            remove_with_parens=remove_with_parens,
+        )
 
         yield from self.line()
         for child in node.children:
@@ -314,7 +322,10 @@ class LineGenerator(Visitor[Line]):
             v, keywords={"try", "except", "else", "finally"}, parens=Ø
         )
         self.visit_except_clause = partial(v, keywords={"except"}, parens=Ø)
-        self.visit_with_stmt = partial(v, keywords={"with"}, parens={"with"})
+        if Preview.remove_with_parens in self.mode:
+            self.visit_with_stmt = partial(v, keywords={"with"}, parens={"with"})
+        else:
+            self.visit_with_stmt = partial(v, keywords={"with"}, parens=Ø)
         self.visit_funcdef = partial(v, keywords={"def"}, parens=Ø)
         self.visit_classdef = partial(v, keywords={"class"}, parens=Ø)
         self.visit_expr_stmt = partial(v, keywords=Ø, parens=ASSIGNMENTS)
@@ -802,7 +813,11 @@ def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
     leaf.prefix = ""
 
 
-def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
+def normalize_invisible_parens(
+    node: Node,
+    parens_after: Set[str],
+    remove_with_parens: bool = False,
+) -> None:
     """Make existing optional parentheses invisible or create new ones.
 
     `parens_after` is a set of string leaf values immediately after which parens
@@ -810,6 +825,9 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
 
     Standardizes on visible parentheses for single-element tuples, and keeps
     existing visible parentheses for other tuples and generator expressions.
+
+    `remove_with_parens` enables the preview feature for removing redundant
+    parentheses from `with` statements.
     """
     for pc in list_comments(node.prefix, is_endmarker=False):
         if pc.value in FMT_OFF:
@@ -820,7 +838,11 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
         # Fixes a bug where invisible parens are not properly stripped from
         # assignment statements that contain type annotations.
         if isinstance(child, Node) and child.type == syms.annassign:
-            normalize_invisible_parens(child, parens_after=parens_after)
+            normalize_invisible_parens(
+                child,
+                parens_after=parens_after,
+                remove_with_parens=remove_with_parens,
+            )
 
         # Add parentheses around long tuple unpacking in assignments.
         if (
@@ -832,16 +854,25 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
 
         if check_lpar:
             if child.type == syms.atom:
-                if maybe_make_parens_invisible_in_atom(child, parent=node):
+                if maybe_make_parens_invisible_in_atom(
+                    child,
+                    parent=node,
+                    remove_with_parens=remove_with_parens,
+                ):
                     wrap_in_parentheses(node, child, visible=False)
             elif (
-                isinstance(child, Node)
+                remove_with_parens
+                and isinstance(child, Node)
                 and child.type == syms.asexpr_test
                 and not any(leaf.type == token.COLONEQUAL for leaf in child.leaves())
             ):
                 # make parentheses invisible,
                 # unless the asexpr contains an assignment expression.
-                if maybe_make_parens_invisible_in_atom(child.children[0], parent=child):
+                if maybe_make_parens_invisible_in_atom(
+                    child.children[0],
+                    parent=child,
+                    remove_with_parens=remove_with_parens,
+                ):
                     wrap_in_parentheses(child, child.children[0], visible=False)
             elif is_one_tuple(child):
                 wrap_in_parentheses(node, child, visible=True)
@@ -862,31 +893,46 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
             elif not (isinstance(child, Leaf) and is_multiline_string(child)):
                 wrap_in_parentheses(node, child, visible=False)
 
-        check_lpar = (
-            isinstance(child, Leaf)
-            and child.value in parens_after
-            or child.type == token.COMMA
-        )
+        if remove_with_parens:
+            check_lpar = (
+                isinstance(child, Leaf)
+                and child.value in parens_after
+                or child.type == token.COMMA
+            )
+        else:
+            check_lpar = isinstance(child, Leaf) and child.value in parens_after
 
 
-def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
+def maybe_make_parens_invisible_in_atom(
+    node: LN,
+    parent: LN,
+    remove_with_parens: bool = False,
+) -> bool:
     """If it's safe, make the parens in the atom `node` invisible, recursively.
     Additionally, remove repeated, adjacent invisible parens from the atom `node`
     as they are redundant.
 
     Returns whether the node should itself be wrapped in invisible parentheses.
 
+    `remove_with_parens` enables the preview feature for removing redundant
+    parentheses from `with` statements.
     """
+    if remove_with_parens:
+        max_delimiter_priority_condition = (
+            max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
+            and parent.type != syms.with_stmt
+        )
+    else:
+        max_delimiter_priority_condition = (
+            max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
+        )
 
     if (
         node.type != syms.atom
         or is_empty_tuple(node)
         or is_one_tuple(node)
         or (is_yield(node) and parent.type != syms.expr_stmt)
-        or (
-            max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
-            and parent.type != syms.with_stmt
-        )
+        or max_delimiter_priority_condition
     ):
         return False
 
@@ -909,7 +955,11 @@ def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
         # make parentheses invisible
         first.value = ""
         last.value = ""
-        maybe_make_parens_invisible_in_atom(middle, parent=parent)
+        maybe_make_parens_invisible_in_atom(
+            middle,
+            parent=parent,
+            remove_with_parens=remove_with_parens,
+        )
 
         if is_atom_with_invisible_parens(middle):
             # Strip the invisible parens from `middle` by replacing
