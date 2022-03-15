@@ -314,7 +314,7 @@ class LineGenerator(Visitor[Line]):
             v, keywords={"try", "except", "else", "finally"}, parens=Ø
         )
         self.visit_except_clause = partial(v, keywords={"except"}, parens=Ø)
-        self.visit_with_stmt = partial(v, keywords={"with"}, parens=Ø)
+        self.visit_with_stmt = partial(v, keywords={"with"}, parens={"with"})
         self.visit_funcdef = partial(v, keywords={"def"}, parens=Ø)
         self.visit_classdef = partial(v, keywords={"class"}, parens=Ø)
         self.visit_expr_stmt = partial(v, keywords=Ø, parens=ASSIGNMENTS)
@@ -834,6 +834,15 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
             if child.type == syms.atom:
                 if maybe_make_parens_invisible_in_atom(child, parent=node):
                     wrap_in_parentheses(node, child, visible=False)
+            elif (
+                isinstance(child, Node)
+                and child.type == syms.asexpr_test
+                and not any(leaf.type == token.COLONEQUAL for leaf in child.leaves())
+            ):
+                # make parentheses invisible,
+                # unless the asexpr contains an assignment expression.
+                if maybe_make_parens_invisible_in_atom(child.children[0], parent=child):
+                    wrap_in_parentheses(child, child.children[0], visible=False)
             elif is_one_tuple(child):
                 wrap_in_parentheses(node, child, visible=True)
             elif node.type == syms.import_from:
@@ -853,7 +862,11 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
             elif not (isinstance(child, Leaf) and is_multiline_string(child)):
                 wrap_in_parentheses(node, child, visible=False)
 
-        check_lpar = isinstance(child, Leaf) and child.value in parens_after
+        check_lpar = (
+            isinstance(child, Leaf)
+            and child.value in parens_after
+            or child.type == token.COMMA
+        )
 
 
 def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
@@ -870,7 +883,10 @@ def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
         or is_empty_tuple(node)
         or is_one_tuple(node)
         or (is_yield(node) and parent.type != syms.expr_stmt)
-        or max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
+        or (
+            max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
+            and parent.type != syms.with_stmt
+        )
     ):
         return False
 
