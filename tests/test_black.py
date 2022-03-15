@@ -857,7 +857,7 @@ class BlackTestCase(BlackBaseTestCase):
             err_lines.append(msg)
 
         with patch("black.debug.out", out):
-            DebugVisitor.show(source, preview=False)
+            DebugVisitor.show(source)
         actual = "\n".join(out_lines) + "\n"
         log_name = ""
         if expected != actual:

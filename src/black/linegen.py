@@ -68,11 +68,11 @@ class LineGenerator(Visitor[Line]):
         self.current_line = Line(mode=self.mode, depth=complete_line.depth + indent)
         yield complete_line
 
-    def visit_default(self, node: LN, *, preview: bool) -> Iterator[Line]:
+    def visit_default(self, node: LN) -> Iterator[Line]:
         """Default `visit_*()` implementation. Recurses to children of `node`."""
         if isinstance(node, Leaf):
             any_open_brackets = self.current_line.bracket_tracker.any_open_brackets()
-            for comment in generate_comments(node, preview=preview):
+            for comment in generate_comments(node, preview=self.mode.preview):
                 if any_open_brackets:
                     # any comment within brackets is subject to splitting
                     self.current_line.append(comment)
@@ -96,15 +96,15 @@ class LineGenerator(Visitor[Line]):
                 normalize_numeric_literal(node)
             if node.type not in WHITESPACE:
                 self.current_line.append(node)
-        yield from super().visit_default(node, preview=preview)
+        yield from super().visit_default(node)
 
-    def visit_INDENT(self, node: Leaf, *, preview: bool) -> Iterator[Line]:
+    def visit_INDENT(self, node: Leaf) -> Iterator[Line]:
         """Increase indentation level, maybe yield a line."""
         # In blib2to3 INDENT never holds comments.
         yield from self.line(+1)
-        yield from self.visit_default(node, preview=preview)
+        yield from self.visit_default(node)
 
-    def visit_DEDENT(self, node: Leaf, *, preview: bool) -> Iterator[Line]:
+    def visit_DEDENT(self, node: Leaf) -> Iterator[Line]:
         """Decrease indentation level, maybe yield a line."""
         # The current line might still wait for trailing comments.  At DEDENT time
         # there won't be any (they would be prefixes on the preceding NEWLINE).
@@ -113,13 +113,13 @@ class LineGenerator(Visitor[Line]):
 
         # While DEDENT has no value, its prefix may contain standalone comments
         # that belong to the current indentation level.  Get 'em.
-        yield from self.visit_default(node, preview=preview)
+        yield from self.visit_default(node)
 
         # Finally, emit the dedent.
         yield from self.line(-1)
 
     def visit_stmt(
-        self, node: Node, keywords: Set[str], parens: Set[str], *, preview: bool
+        self, node: Node, keywords: Set[str], parens: Set[str]
     ) -> Iterator[Line]:
         """Visit a statement.
 
@@ -132,29 +132,29 @@ class LineGenerator(Visitor[Line]):
         `parens` holds a set of string leaf values immediately after which
         invisible parens should be put.
         """
-        normalize_invisible_parens(node, parens_after=parens, preview=preview)
+        normalize_invisible_parens(node, parens_after=parens, preview=self.mode.preview)
         for child in node.children:
             if is_name_token(child) and child.value in keywords:
                 yield from self.line()
 
-            yield from self.visit(child, preview=preview)
+            yield from self.visit(child)
 
-    def visit_match_case(self, node: Node, *, preview: bool) -> Iterator[Line]:
+    def visit_match_case(self, node: Node) -> Iterator[Line]:
         """Visit either a match or case statement."""
-        normalize_invisible_parens(node, parens_after=set(), preview=preview)
+        normalize_invisible_parens(node, parens_after=set(), preview=self.mode.preview)
 
         yield from self.line()
         for child in node.children:
-            yield from self.visit(child, preview=preview)
+            yield from self.visit(child)
 
-    def visit_suite(self, node: Node, *, preview: bool) -> Iterator[Line]:
+    def visit_suite(self, node: Node) -> Iterator[Line]:
         """Visit a suite."""
         if self.mode.is_pyi and is_stub_suite(node):
-            yield from self.visit(node.children[2], preview=preview)
+            yield from self.visit(node.children[2])
         else:
-            yield from self.visit_default(node, preview=preview)
+            yield from self.visit_default(node)
 
-    def visit_simple_stmt(self, node: Node, *, preview: bool) -> Iterator[Line]:
+    def visit_simple_stmt(self, node: Node) -> Iterator[Line]:
         """Visit a statement without nested statements."""
         prev_type: Optional[int] = None
         for child in node.children:
@@ -165,10 +165,10 @@ class LineGenerator(Visitor[Line]):
         is_suite_like = node.parent and node.parent.type in STATEMENT
         if is_suite_like:
             if self.mode.is_pyi and is_stub_body(node):
-                yield from self.visit_default(node, preview=preview)
+                yield from self.visit_default(node)
             else:
                 yield from self.line(+1)
-                yield from self.visit_default(node, preview=preview)
+                yield from self.visit_default(node)
                 yield from self.line(-1)
 
         else:
@@ -178,30 +178,30 @@ class LineGenerator(Visitor[Line]):
                 or not is_stub_suite(node.parent)
             ):
                 yield from self.line()
-            yield from self.visit_default(node, preview=preview)
+            yield from self.visit_default(node)
 
-    def visit_async_stmt(self, node: Node, *, preview: bool) -> Iterator[Line]:
+    def visit_async_stmt(self, node: Node) -> Iterator[Line]:
         """Visit `async def`, `async for`, `async with`."""
         yield from self.line()
 
         children = iter(node.children)
         for child in children:
-            yield from self.visit(child, preview=preview)
+            yield from self.visit(child)
 
             if child.type == token.ASYNC:
                 break
 
         internal_stmt = next(children)
         for child in internal_stmt.children:
-            yield from self.visit(child, preview=preview)
+            yield from self.visit(child)
 
-    def visit_decorators(self, node: Node, *, preview: bool) -> Iterator[Line]:
+    def visit_decorators(self, node: Node) -> Iterator[Line]:
         """Visit decorators."""
         for child in node.children:
             yield from self.line()
-            yield from self.visit(child, preview=preview)
+            yield from self.visit(child)
 
-    def visit_power(self, node: Node, *, preview: bool) -> Iterator[Line]:
+    def visit_power(self, node: Node) -> Iterator[Line]:
         for idx, leaf in enumerate(node.children[:-1]):
             next_leaf = node.children[idx + 1]
 
@@ -221,23 +221,23 @@ class LineGenerator(Visitor[Line]):
             ):
                 wrap_in_parentheses(node, leaf)
 
-        yield from self.visit_default(node, preview=preview)
+        yield from self.visit_default(node)
 
-    def visit_SEMI(self, leaf: Leaf, *, preview: bool) -> Iterator[Line]:
+    def visit_SEMI(self, leaf: Leaf) -> Iterator[Line]:
         """Remove a semicolon and put the other statement on a separate line."""
         yield from self.line()
 
-    def visit_ENDMARKER(self, leaf: Leaf, *, preview: bool) -> Iterator[Line]:
+    def visit_ENDMARKER(self, leaf: Leaf) -> Iterator[Line]:
         """End of file. Process outstanding comments and end with a newline."""
-        yield from self.visit_default(leaf, preview=preview)
+        yield from self.visit_default(leaf)
         yield from self.line()
 
-    def visit_STANDALONE_COMMENT(self, leaf: Leaf, *, preview: bool) -> Iterator[Line]:
+    def visit_STANDALONE_COMMENT(self, leaf: Leaf) -> Iterator[Line]:
         if not self.current_line.bracket_tracker.any_open_brackets():
             yield from self.line()
-        yield from self.visit_default(leaf, preview=preview)
+        yield from self.visit_default(leaf)
 
-    def visit_factor(self, node: Node, *, preview: bool) -> Iterator[Line]:
+    def visit_factor(self, node: Node) -> Iterator[Line]:
         """Force parentheses between a unary op and a binary power:
 
         -2 ** 8 -> -(2 ** 8)
@@ -252,9 +252,9 @@ class LineGenerator(Visitor[Line]):
             rpar = Leaf(token.RPAR, ")")
             index = operand.remove() or 0
             node.insert_child(index, Node(syms.atom, [lpar, operand, rpar]))
-        yield from self.visit_default(node, preview=preview)
+        yield from self.visit_default(node)
 
-    def visit_STRING(self, leaf: Leaf, *, preview: bool) -> Iterator[Line]:
+    def visit_STRING(self, leaf: Leaf) -> Iterator[Line]:
         if is_docstring(leaf) and "\\\n" not in leaf.value:
             # We're ignoring docstrings with backslash newline escapes because changing
             # indentation of those changes the AST representation of the code.
@@ -296,7 +296,7 @@ class LineGenerator(Visitor[Line]):
             quote = quote_char * quote_len
             leaf.value = prefix + quote + docstring + quote
 
-        yield from self.visit_default(leaf, preview=preview)
+        yield from self.visit_default(leaf)
 
     def __post_init__(self) -> None:
         """You are in a twisty little maze of passages."""

@@ -29,21 +29,21 @@ ff = partial(black.format_file_in_place, mode=DEFAULT_MODE, fast=True)
 fs = partial(black.format_str, mode=DEFAULT_MODE)
 
 
-def _assert_format_equal(expected: str, actual: str, *, preview: bool) -> None:
+def _assert_format_equal(expected: str, actual: str) -> None:
     if actual != expected and not os.environ.get("SKIP_AST_PRINT"):
         bdv: DebugVisitor[Any]
         out("Expected tree:", fg="green")
         try:
             exp_node = black.lib2to3_parse(expected)
             bdv = DebugVisitor()
-            list(bdv.visit(exp_node, preview=preview))
+            list(bdv.visit(exp_node))
         except Exception as ve:
             err(str(ve))
         out("Actual tree:", fg="red")
         try:
             exp_node = black.lib2to3_parse(actual)
             bdv = DebugVisitor()
-            list(bdv.visit(exp_node, preview=preview))
+            list(bdv.visit(exp_node))
         except Exception as ve:
             err(str(ve))
 
@@ -68,7 +68,7 @@ def assert_format(
     separate from TargetVerson Mode configuration.
     """
     actual = black.format_str(source, mode=mode)
-    _assert_format_equal(expected, actual, preview=mode.preview)
+    _assert_format_equal(expected, actual)
     # It's not useful to run safety checks if we're expecting no changes anyway. The
     # assertion right above will raise if reality does actually make changes. This just
     # avoids wasted CPU cycles.
@@ -87,7 +87,7 @@ def dump_to_stderr(*output: str) -> str:
 
 class BlackBaseTestCase(unittest.TestCase):
     def assertFormatEqual(self, expected: str, actual: str) -> None:
-        _assert_format_equal(expected, actual, preview=False)
+        _assert_format_equal(expected, actual)
 
 
 def read_data(name: str, data: bool = True) -> Tuple[str, str]:

@@ -154,7 +154,7 @@ RARROW = 55
 class Visitor(Generic[T]):
     """Basic lib2to3 visitor that yields things of type `T` on `visit()`."""
 
-    def visit(self, node: LN, *, preview: bool) -> Iterator[T]:
+    def visit(self, node: LN) -> Iterator[T]:
         """Main method to visit `node` and its children.
 
         It tries to find a `visit_*()` method for the given `node.type`, like
@@ -174,15 +174,15 @@ class Visitor(Generic[T]):
         # generate a native call to visit_default.
         visitf = getattr(self, f"visit_{name}", None)
         if visitf:
-            yield from visitf(node, preview=preview)
+            yield from visitf(node)
         else:
-            yield from self.visit_default(node, preview=preview)
+            yield from self.visit_default(node)
 
-    def visit_default(self, node: LN, *, preview: bool) -> Iterator[T]:
+    def visit_default(self, node: LN) -> Iterator[T]:
         """Default `visit_*()` implementation. Recurses to children of `node`."""
         if isinstance(node, Node):
             for child in node.children:
-                yield from self.visit(child, preview=preview)
+                yield from self.visit(child)
 
 
 def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901

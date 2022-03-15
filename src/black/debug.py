@@ -16,14 +16,14 @@ T = TypeVar("T")
 class DebugVisitor(Visitor[T]):
     tree_depth: int = 0
 
-    def visit_default(self, node: LN, *, preview: bool) -> Iterator[T]:
+    def visit_default(self, node: LN) -> Iterator[T]:
         indent = " " * (2 * self.tree_depth)
         if isinstance(node, Node):
             _type = type_repr(node.type)
             out(f"{indent}{_type}", fg="yellow")
             self.tree_depth += 1
             for child in node.children:
-                yield from self.visit(child, preview=preview)
+                yield from self.visit(child)
 
             self.tree_depth -= 1
             out(f"{indent}/{_type}", fg="yellow", bold=False)
@@ -37,7 +37,7 @@ class DebugVisitor(Visitor[T]):
             out(f" {node.value!r}", fg="blue", bold=False)
 
     @classmethod
-    def show(cls, code: Union[str, Leaf, Node], *, preview: bool) -> None:
+    def show(cls, code: Union[str, Leaf, Node]) -> None:
         """Pretty-print the lib2to3 AST of a given string of `code`.
 
         Convenience method for debugging.
@@ -45,4 +45,4 @@ class DebugVisitor(Visitor[T]):
         v: DebugVisitor[None] = DebugVisitor()
         if isinstance(code, str):
             code = lib2to3_parse(code)
-        list(v.visit(code, preview=preview))
+        list(v.visit(code))
