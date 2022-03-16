@@ -261,7 +261,6 @@ class LineGenerator(Visitor[Line]):
 
     def visit_STRING(self, leaf: Leaf) -> Iterator[Line]:
         if Preview.hex_codes_in_unicode_sequences in self.mode:
-            # Preview style only
             normalize_unicode_escape_sequences(leaf)
 
         if is_docstring(leaf) and "\\\n" not in leaf.value:

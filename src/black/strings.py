@@ -5,7 +5,7 @@ Simple formatting on strings. Further string formatting code is in trans.py.
 import re
 import sys
 from functools import lru_cache
-from typing import List, Pattern, AnyStr, Match
+from typing import List, Pattern, Match
 
 from blib2to3.pytree import Leaf
 
@@ -22,10 +22,10 @@ STRING_PREFIX_RE: Final = re.compile(
 FIRST_NON_WHITESPACE_RE: Final = re.compile(r"\s*\t+\s*(\S)")
 UNICODE_RE = re.compile(
     r"(\\+)("
-    r"(u([a-zA-Z0-9]{4}))"
-    r"|(U([a-zA-Z0-9]{0,8}))"
-    r"|(x([a-zA-Z0-9]{2}))"
-    r"|(N\{([a-zA-Z0-9]{2})\})"
+    r"(u([a-zA-Z0-9]{4}))"  # Formatting 16-bit unicodes i.e. \uxxxx
+    r"|(U([a-zA-Z0-9]{0,8}))"  # Formatting 32-bit unicodes i.e. \Uxxxxxxxx
+    r"|(x([a-zA-Z0-9]{2}))"  # Formatting unicodes in format of \xhh
+    r"|(N\{([a-zA-Z0-9]{2})\})"  # Formatting named unicodes in format of \N{name}
     r")"
 )
 
@@ -253,23 +253,24 @@ def normalize_unicode_escape_sequences(leaf: Leaf) -> None:
     text = leaf.value
     prefix = get_string_prefix(text)
 
-    def replace(m: Match[AnyStr]) -> AnyStr:
+    def replace(m: Match[str]) -> str:
         groups = m.groups()
+        back_slashes = groups[0]
 
-        if len(groups[0]) % 2 == 0 or prefix == "r":
-            return groups[0] + groups[1]
+        if len(back_slashes) % 2 == 0 or prefix == "r":
+            return back_slashes + groups[1]
 
         if groups[2]:
             # \u
-            return groups[0] + "u" + groups[3].lower()
+            return back_slashes + "u" + groups[3].lower()
         elif groups[4]:
             # \U
-            return groups[0] + "U" + groups[5].lower()
+            return back_slashes + "U" + groups[5].lower()
         elif groups[6]:
             # \x
-            return groups[0] + "x" + groups[7].lower()
+            return back_slashes + "x" + groups[7].lower()
         else:
             # \N{}
-            return groups[0] + "N{" + groups[9].upper() + "}"
+            return back_slashes + "N{" + groups[9].upper() + "}"
 
     leaf.value = re.sub(UNICODE_RE, replace, text)
