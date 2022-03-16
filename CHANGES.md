@@ -34,6 +34,8 @@
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
 
+- Update pylint config documentation (#2931)
+
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
@@ -52,6 +54,8 @@
 
 - On Python 3.11 and newer, use the standard library's `tomllib` instead of `tomli`
   (#2903)
+- `black-primer`, the deprecated internal devtool, has been removed and copied to a
+  [separate repository](https://github.com/cooperlees/black-primer) (#2924)
 
 ### Parser
 
