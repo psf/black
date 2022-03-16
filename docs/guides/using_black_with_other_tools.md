@@ -219,7 +219,7 @@ Pylint should be configured to only complain about lines that surpass `88` chara
 via `max-line-length = 88`.
 
 If using `pylint<2.6.0`, also disable `C0326` and `C0330` as these are incompatible with
-_Black_ formatting and have since been deprecated.
+_Black_ formatting and have since been removed.
 
 #### Formats
 
