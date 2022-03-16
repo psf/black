@@ -893,10 +893,10 @@ def normalize_invisible_parens(
             elif not (isinstance(child, Leaf) and is_multiline_string(child)):
                 wrap_in_parentheses(node, child, visible=False)
 
-        comma_check = child.type == token.COMMA if remove_with_parens else True
+        comma_check = child.type == token.COMMA if remove_with_parens else False
 
         check_lpar = (
-            isinstance(child, Leaf) and child.value in parens_after and comma_check
+            isinstance(child, Leaf) and child.value in parens_after or comma_check
         )
 
 
