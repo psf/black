@@ -50,6 +50,8 @@
 
 - On Python 3.11 and newer, use the standard library's `tomllib` instead of `tomli`
   (#2903)
+- `black-primer`, the deprecated internal devtool, has been removed and copied to a
+  [separate repository](https://github.com/cooperlees/black-primer) (#2924)
 
 ### Parser
 

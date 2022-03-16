@@ -58,7 +58,7 @@ if USE_MYPYC:
         "black/__main__.py",
     ]
     discovered = []
-    # black-primer and blackd have no good reason to be compiled.
+    # There's no good reason for blackd to be compiled.
     discovered.extend(find_python_files(src / "black"))
     discovered.extend(find_python_files(src / "blib2to3"))
     mypyc_targets = [
@@ -92,7 +92,6 @@ setup(
     package_data={
         "blib2to3": ["*.txt"],
         "black": ["py.typed"],
-        "black_primer": ["primer.json"],
     },
     python_requires=">=3.6.2",
     zip_safe=False,
@@ -132,7 +131,6 @@ setup(
         "console_scripts": [
             "black=black:patched_main",
             "blackd=blackd:patched_main [d]",
-            "black-primer=black_primer.cli:main",
         ]
     },
 )

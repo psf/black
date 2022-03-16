@@ -127,7 +127,6 @@ class Preview(Enum):
     """Individual preview style features."""
 
     string_processing = auto()
-    hug_simple_powers = auto()
     remove_with_parens = auto()
 
 
@@ -164,7 +163,9 @@ class Mode:
         """
         if feature is Preview.string_processing:
             return self.preview or self.experimental_string_processing
-        return self.preview
+        # TODO: Remove type ignore comment once preview contains more features
+        #  than just ESP
+        return self.preview  # type: ignore
 
     def get_cache_key(self) -> str:
         if self.target_versions:
