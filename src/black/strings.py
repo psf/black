@@ -22,10 +22,10 @@ STRING_PREFIX_RE: Final = re.compile(
 FIRST_NON_WHITESPACE_RE: Final = re.compile(r"\s*\t+\s*(\S)")
 UNICODE_RE: Final = re.compile(
     r"(\\+)("
-    r"(u([a-zA-Z0-9]{4}))"  # Formatting 16-bit unicodes i.e. \uxxxx
-    r"|(U([a-zA-Z0-9]{0,8}))"  # Formatting 32-bit unicodes i.e. \Uxxxxxxxx
-    r"|(x([a-zA-Z0-9]{2}))"  # Formatting unicodes in format of \xhh
-    r"|(N\{([a-zA-Z0-9]{2})\})"  # Formatting named unicodes in format of \N{name}
+    r"(u([a-zA-Z0-9]{4}))"  # Character with 16-bit hex value xxxx
+    r"|(U([a-zA-Z0-9]{0,8}))"  # Character with 32-bit hex value xxxxxxxx
+    r"|(x([a-zA-Z0-9]{2}))"  # Character with hex value hh
+    r"|(N\{([a-zA-Z0-9]{2})\})"  # Character named name in the Unicode database
     r")",
     re.MULTILINE,
 )
