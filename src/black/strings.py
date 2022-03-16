@@ -20,13 +20,14 @@ STRING_PREFIX_RE: Final = re.compile(
     r"^([" + STRING_PREFIX_CHARS + r"]*)(.*)$", re.DOTALL
 )
 FIRST_NON_WHITESPACE_RE: Final = re.compile(r"\s*\t+\s*(\S)")
-UNICODE_RE = re.compile(
+UNICODE_RE: Final = re.compile(
     r"(\\+)("
     r"(u([a-zA-Z0-9]{4}))"  # Formatting 16-bit unicodes i.e. \uxxxx
     r"|(U([a-zA-Z0-9]{0,8}))"  # Formatting 32-bit unicodes i.e. \Uxxxxxxxx
     r"|(x([a-zA-Z0-9]{2}))"  # Formatting unicodes in format of \xhh
     r"|(N\{([a-zA-Z0-9]{2})\})"  # Formatting named unicodes in format of \N{name}
-    r")"
+    r")",
+    re.MULTILINE,
 )
 
 
