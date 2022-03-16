@@ -163,9 +163,7 @@ class Mode:
         """
         if feature is Preview.string_processing:
             return self.preview or self.experimental_string_processing
-        # TODO: Remove type ignore comment once preview contains more features
-        #  than just ESP
-        return self.preview  # type: ignore
+        return self.preview
 
     def get_cache_key(self) -> str:
         if self.target_versions:

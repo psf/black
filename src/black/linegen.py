@@ -893,14 +893,11 @@ def normalize_invisible_parens(
             elif not (isinstance(child, Leaf) and is_multiline_string(child)):
                 wrap_in_parentheses(node, child, visible=False)
 
-        if remove_with_parens:
-            check_lpar = (
-                isinstance(child, Leaf)
-                and child.value in parens_after
-                or child.type == token.COMMA
-            )
-        else:
-            check_lpar = isinstance(child, Leaf) and child.value in parens_after
+        comma_check = child.type == token.COMMA if remove_with_parens else True
+
+        check_lpar = (
+            isinstance(child, Leaf) and child.value in parens_after and comma_check
+        )
 
 
 def maybe_make_parens_invisible_in_atom(
@@ -917,22 +914,14 @@ def maybe_make_parens_invisible_in_atom(
     `remove_with_parens` enables the preview feature for removing redundant
     parentheses from `with` statements.
     """
-    if remove_with_parens:
-        max_delimiter_priority_condition = (
-            max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
-            and parent.type != syms.with_stmt
-        )
-    else:
-        max_delimiter_priority_condition = (
-            max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
-        )
+    with_stmt_check = parent.type != syms.with_stmt if remove_with_parens else True
 
     if (
         node.type != syms.atom
         or is_empty_tuple(node)
         or is_one_tuple(node)
         or (is_yield(node) and parent.type != syms.expr_stmt)
-        or max_delimiter_priority_condition
+        or (max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY and with_stmt_check)
     ):
         return False
 
