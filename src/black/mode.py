@@ -127,7 +127,6 @@ class Preview(Enum):
     """Individual preview style features."""
 
     string_processing = auto()
-    hug_simple_powers = auto()
     hex_codes_in_unicode_sequences = auto()
 
 
