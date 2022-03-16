@@ -27,7 +27,7 @@ UNICODE_RE: Final = re.compile(
     r"|(x([a-zA-Z0-9]{2}))"  # Character with hex value hh
     r"|(N\{([a-zA-Z0-9]{2})\})"  # Character named name in the Unicode database
     r")",
-    re.MULTILINE,
+    re.VERBOSE,
 )
 
 
