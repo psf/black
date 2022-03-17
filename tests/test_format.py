@@ -79,7 +79,6 @@ PREVIEW_CASES: List[str] = [
     "long_strings__edge_case",
     "long_strings__regression",
     "percent_precedence",
-    "remove_with_brackets",
 ]
 
 SOURCES: List[str] = [
@@ -187,6 +186,16 @@ def test_pep_572_newer_syntax(major: int, minor: int) -> None:
 def test_pep_570() -> None:
     source, expected = read_data("pep_570")
     assert_format(source, expected, minimum_version=(3, 8))
+
+
+def test_remove_with_brackets() -> None:
+    source, expected = read_data("remove_with_brackets")
+    assert_format(
+        source,
+        expected,
+        black.Mode(preview=True),
+        minimum_version=(3, 9),
+    )
 
 
 @pytest.mark.parametrize("filename", PY310_CASES)
