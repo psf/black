@@ -559,8 +559,8 @@ def is_one_tuple(node: LN) -> bool:
     )
 
 
-def is_one_tuple_between(opening: Leaf, closing: Leaf, leaves: List[Leaf]) -> bool:
-    """Return True if content between `opening` and `closing` looks like a one-tuple."""
+def is_one_sequence_between(opening: Leaf, closing: Leaf, leaves: List[Leaf]) -> bool:
+    """Return True if content between `opening` and `closing` is a one-sequence."""
     if not (
         (opening.type == token.LPAR and closing.type == token.RPAR)
         or (opening.type == token.LSQB and closing.type == token.RSQB)

@@ -8,7 +8,12 @@ from typing import Collection, Iterator, List, Optional, Set, Union
 from black.nodes import WHITESPACE, RARROW, STATEMENT, STANDALONE_COMMENT
 from black.nodes import ASSIGNMENTS, OPENING_BRACKETS, CLOSING_BRACKETS
 from black.nodes import Visitor, syms, is_arith_like, ensure_visible
-from black.nodes import is_docstring, is_empty_tuple, is_one_tuple, is_one_tuple_between
+from black.nodes import (
+    is_docstring,
+    is_empty_tuple,
+    is_one_tuple,
+    is_one_sequence_between,
+)
 from black.nodes import is_name_token, is_lpar_token, is_rpar_token
 from black.nodes import is_walrus_assignment, is_yield, is_vararg, is_multiline_string
 from black.nodes import is_stub_suite, is_stub_body, is_atom_with_invisible_parens
@@ -969,7 +974,7 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
                     prev
                     and prev.type == token.COMMA
                     and leaf.opening_bracket is not None
-                    and not is_one_tuple_between(
+                    and not is_one_sequence_between(
                         leaf.opening_bracket, leaf, line.leaves
                     )
                 ):
@@ -997,7 +1002,7 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
                 prev
                 and prev.type == token.COMMA
                 and leaf.opening_bracket is not None
-                and not is_one_tuple_between(leaf.opening_bracket, leaf, line.leaves)
+                and not is_one_sequence_between(leaf.opening_bracket, leaf, line.leaves)
             ):
                 # Never omit bracket pairs with trailing commas.
                 # We need to explode on those.

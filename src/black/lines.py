@@ -26,7 +26,7 @@ from black.nodes import (
     is_import,
     is_type_comment,
     is_within_annotation,
-    is_one_tuple_between,
+    is_one_sequence_between,
 )
 
 # types
@@ -277,7 +277,9 @@ class Line:
                 Preview.one_tuple_type in self.mode
                 and is_within_annotation(closing)
                 and closing.opening_bracket
-                and is_one_tuple_between(closing.opening_bracket, closing, self.leaves)
+                and is_one_sequence_between(
+                    closing.opening_bracket, closing, self.leaves
+                )
                 and closing.parent
                 and closing.parent.prev_sibling
                 and (
@@ -295,7 +297,7 @@ class Line:
         if self.is_import:
             return True
 
-        if closing.opening_bracket is not None and not is_one_tuple_between(
+        if closing.opening_bracket is not None and not is_one_sequence_between(
             closing.opening_bracket, closing, self.leaves
         ):
             return True
