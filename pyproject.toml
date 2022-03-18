@@ -23,13 +23,11 @@ extend-exclude = '''
 preview = true
 
 [tool.isort]
-profile = "black"
+profile='black'
 atomic=true
-line_length = 88
-multi_line_output = 6
-use_parentheses=true
-case_sensitive = true
-combine_as_imports = true
+line_length=88
+skip_glob= ['blib2to3', 'tests/data', 'profiling']
+known_third_party = ['black', 'blackd', 'blib2to3']
 
 # Build system information below.
 # NOTE: You don't need this in your own Black configuration.

@@ -2,7 +2,7 @@ import os
 import shlex
 import sys
 from pathlib import Path
-from subprocess import run, PIPE, STDOUT
+from subprocess import PIPE, STDOUT, run
 
 ACTION_PATH = Path(os.environ["GITHUB_ACTION_PATH"])
 ENV_PATH = ACTION_PATH / ".black-env"

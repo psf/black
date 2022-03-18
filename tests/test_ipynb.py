@@ -1,21 +1,22 @@
-from dataclasses import replace
 import pathlib
 import re
 from contextlib import ExitStack as does_not_raise
+from dataclasses import replace
 from typing import ContextManager
 
-from click.testing import CliRunner
-from black.handle_ipynb_magics import jupyter_dependencies_are_installed
+import pytest
+from _pytest.monkeypatch import MonkeyPatch
 from black import (
-    main,
+    Mode,
     NothingChanged,
     format_cell,
     format_file_contents,
     format_file_in_place,
+    main,
 )
-import pytest
-from black import Mode
-from _pytest.monkeypatch import MonkeyPatch
+from black.handle_ipynb_magics import jupyter_dependencies_are_installed
+from click.testing import CliRunner
+
 from tests.util import DATA_DIR
 
 pytestmark = pytest.mark.jupyter

@@ -4,11 +4,10 @@ Mostly around Python language feature support per version and Black configuratio
 chosen by the user.
 """
 
-from hashlib import sha256
 import sys
-
 from dataclasses import dataclass, field
 from enum import Enum, auto
+from hashlib import sha256
 from operator import attrgetter
 from typing import Dict, Set
 from warnings import warn

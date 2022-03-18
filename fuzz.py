@@ -7,11 +7,11 @@ a coverage-guided fuzzer I'm working on.
 
 import re
 
-import hypothesmith
-from hypothesis import HealthCheck, given, settings, strategies as st
-
 import black
+import hypothesmith
 from blib2to3.pgen2.tokenize import TokenError
+from hypothesis import HealthCheck, given, settings
+from hypothesis import strategies as st
 
 
 # This test uses the Hypothesis and Hypothesmith libraries to generate random
@@ -78,6 +78,7 @@ if __name__ == "__main__":
     # (if you want only bounded fuzzing, just use `pytest fuzz.py`)
     try:
         import sys
+
         import atheris
     except ImportError:
         pass

@@ -6,6 +6,7 @@ import io
 import logging
 import multiprocessing
 import os
+import re
 import sys
 import types
 import unittest
@@ -29,21 +30,19 @@ from typing import (
 )
 from unittest.mock import MagicMock, patch
 
-import click
-import pytest
-import re
-from click import unstyle
-from click.testing import CliRunner
-from pathspec import PathSpec
-
 import black
 import black.files
+import click
+import pytest
 from black import Feature, TargetVersion
 from black import re_compile_maybe_verbose as compile_pattern
 from black.cache import get_cache_dir, get_cache_file
 from black.debug import DebugVisitor
 from black.output import color_diff, diff
 from black.report import Report
+from click import unstyle
+from click.testing import CliRunner
+from pathspec import PathSpec
 
 # Import other test classes
 from tests.util import (

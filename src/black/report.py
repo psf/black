@@ -5,9 +5,8 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
+from black.output import err, out
 from click import style
-
-from black.output import out, err
 
 
 class Changed(Enum):

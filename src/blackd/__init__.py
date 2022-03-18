@@ -8,6 +8,7 @@ from typing import Set, Tuple
 
 try:
     from aiohttp import web
+
     from .middlewares import cors
 except ImportError as ie:
     raise ImportError(
@@ -17,8 +18,8 @@ except ImportError as ie:
     ) from None
 
 import black
-from black.concurrency import maybe_install_uvloop
 import click
+from black.concurrency import maybe_install_uvloop
 
 from _black_version import version as __version__
 

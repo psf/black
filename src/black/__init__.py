@@ -1,20 +1,20 @@
 import asyncio
-from json.decoder import JSONDecodeError
-import json
-from concurrent.futures import Executor, ThreadPoolExecutor, ProcessPoolExecutor
-from contextlib import contextmanager
-from datetime import datetime
-from enum import Enum
 import io
-from multiprocessing import Manager, freeze_support
+import json
 import os
-from pathlib import Path
-from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
 import re
 import signal
 import sys
 import tokenize
 import traceback
+from concurrent.futures import Executor, ProcessPoolExecutor, ThreadPoolExecutor
+from contextlib import contextmanager
+from dataclasses import replace
+from datetime import datetime
+from enum import Enum
+from json.decoder import JSONDecodeError
+from multiprocessing import Manager, freeze_support
+from pathlib import Path
 from typing import (
     Any,
     Dict,
@@ -32,47 +32,56 @@ from typing import (
 )
 
 import click
-from click.core import ParameterSource
-from dataclasses import replace
-from mypy_extensions import mypyc_attr
-
-from black.const import DEFAULT_LINE_LENGTH, DEFAULT_INCLUDES, DEFAULT_EXCLUDES
-from black.const import STDIN_PLACEHOLDER
-from black.nodes import STARS, syms, is_simple_decorator_expression
-from black.nodes import is_string_token
-from black.lines import Line, EmptyLineTracker
-from black.linegen import transform_line, LineGenerator, LN
+from black.cache import Cache, filter_cached, get_cache_info, read_cache, write_cache
 from black.comments import normalize_fmt_off
-from black.mode import FUTURE_FLAG_TO_FEATURE, Mode, TargetVersion
-from black.mode import Feature, supports_feature, VERSION_TO_FEATURES
-from black.cache import read_cache, write_cache, get_cache_info, filter_cached, Cache
-from black.concurrency import cancel, shutdown, maybe_install_uvloop
-from black.output import dump_to_file, ipynb_diff, diff, color_diff, out, err
-from black.report import Report, Changed, NothingChanged
+from black.concurrency import cancel, maybe_install_uvloop, shutdown
+from black.const import (
+    DEFAULT_EXCLUDES,
+    DEFAULT_INCLUDES,
+    DEFAULT_LINE_LENGTH,
+    STDIN_PLACEHOLDER,
+)
 from black.files import (
     find_project_root,
     find_pyproject_toml,
-    parse_pyproject_toml,
     find_user_pyproject_toml,
+    gen_python_files,
+    get_gitignore,
+    normalize_path_maybe_ignore,
+    parse_pyproject_toml,
+    wrap_stream_for_windows,
 )
-from black.files import gen_python_files, get_gitignore, normalize_path_maybe_ignore
-from black.files import wrap_stream_for_windows
+from black.handle_ipynb_magics import (
+    PYTHON_CELL_MAGICS,
+    TRANSFORMED_MAGICS,
+    jupyter_dependencies_are_installed,
+    mask_cell,
+    put_trailing_semicolon_back,
+    remove_trailing_semicolon,
+    unmask_cell,
+)
+from black.linegen import LN, LineGenerator, transform_line
+from black.lines import EmptyLineTracker, Line
+from black.mode import (
+    FUTURE_FLAG_TO_FEATURE,
+    VERSION_TO_FEATURES,
+    Feature,
+    Mode,
+    TargetVersion,
+    supports_feature,
+)
+from black.nodes import STARS, is_simple_decorator_expression, is_string_token, syms
+from black.output import color_diff, diff, dump_to_file, err, ipynb_diff, out
 from black.parsing import InvalidInput  # noqa F401
 from black.parsing import lib2to3_parse, parse_ast, stringify_ast
-from black.handle_ipynb_magics import (
-    mask_cell,
-    unmask_cell,
-    remove_trailing_semicolon,
-    put_trailing_semicolon_back,
-    TRANSFORMED_MAGICS,
-    PYTHON_CELL_MAGICS,
-    jupyter_dependencies_are_installed,
-)
-
+from black.report import Changed, NothingChanged, Report
+from blib2to3.pgen2 import token
 
 # lib2to3 fork
-from blib2to3.pytree import Node, Leaf
-from blib2to3.pgen2 import token
+from blib2to3.pytree import Leaf, Node
+from click.core import ParameterSource
+from mypy_extensions import mypyc_attr
+from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
 
 from _black_version import version as __version__
 
@@ -1425,8 +1434,7 @@ def patch_click() -> None:
     spurious on Python 3.7 thanks to PEP 538 and PEP 540.
     """
     try:
-        from click import core
-        from click import _unicodefun
+        from click import _unicodefun, core
     except ModuleNotFoundError:
         return
 
