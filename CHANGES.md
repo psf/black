@@ -14,6 +14,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Ignore magic comma in one tuple type (#2942)
+
 ### _Blackd_
 
 <!-- Changes to blackd -->

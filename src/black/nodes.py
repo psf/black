@@ -561,7 +561,10 @@ def is_one_tuple(node: LN) -> bool:
 
 def is_one_tuple_between(opening: Leaf, closing: Leaf, leaves: List[Leaf]) -> bool:
     """Return True if content between `opening` and `closing` looks like a one-tuple."""
-    if opening.type != token.LPAR and closing.type != token.RPAR:
+    if not (
+        (opening.type == token.LPAR and closing.type == token.RPAR)
+        or (opening.type == token.LSQB and closing.type == token.RSQB)
+    ):
         return False
 
     depth = closing.bracket_depth + 1
@@ -595,6 +598,18 @@ def is_walrus_assignment(node: LN) -> bool:
     """Return True iff `node` is of the shape ( test := test )"""
     inner = unwrap_singleton_parenthesis(node)
     return inner is not None and inner.type == syms.namedexpr_test
+
+
+def is_within_annotation(node: LN) -> bool:
+    """Return True iff `node` is either `annassign` or child of `annassign`"""
+    found_annassign = False
+    current_node = node
+    while current_node.parent:
+        if current_node.type == syms.annassign:
+            found_annassign = True
+            break
+        current_node = current_node.parent
+    return found_annassign
 
 
 def is_simple_decorator_trailer(node: LN, last: bool = False) -> bool:

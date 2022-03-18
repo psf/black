@@ -17,12 +17,17 @@ from blib2to3.pytree import Node, Leaf
 from blib2to3.pgen2 import token
 
 from black.brackets import BracketTracker, DOT_PRIORITY
-from black.mode import Mode
+from black.mode import Mode, Preview
 from black.nodes import STANDALONE_COMMENT, TEST_DESCENDANTS
 from black.nodes import BRACKETS, OPENING_BRACKETS, CLOSING_BRACKETS
 from black.nodes import syms, whitespace, replace_child, child_towards
-from black.nodes import is_multiline_string, is_import, is_type_comment
-from black.nodes import is_one_tuple_between
+from black.nodes import (
+    is_multiline_string,
+    is_import,
+    is_type_comment,
+    is_within_annotation,
+    is_one_tuple_between,
+)
 
 # types
 T = TypeVar("T")
@@ -253,7 +258,7 @@ class Line:
     ) -> bool:
         """Return True if we have a magic trailing comma, that is when:
         - there's a trailing comma here
-        - it's not a one-tuple
+        - it's not a one-tuple (or the equivalent type hint)
         Additionally, if ensure_removable:
         - it's not from square bracket indexing
         """
@@ -268,6 +273,20 @@ class Line:
             return True
 
         if closing.type == token.RSQB:
+            if (
+                Preview.one_tuple_type in self.mode
+                and is_within_annotation(closing)
+                and closing.opening_bracket
+                and is_one_tuple_between(closing.opening_bracket, closing, self.leaves)
+                and closing.parent
+                and closing.parent.prev_sibling
+                and (
+                    list(closing.parent.prev_sibling.leaves())[-1].value
+                    in ("tuple", "Tuple")
+                )
+            ):
+                return False
+
             if not ensure_removable:
                 return True
             comma = self.leaves[-1]
