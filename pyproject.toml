@@ -23,10 +23,10 @@ extend-exclude = '''
 preview = true
 
 [tool.isort]
-profile='black'
-atomic=true
-line_length=88
-skip_glob= ['blib2to3', 'tests/data', 'profiling']
+profile = 'black'
+atomic = true
+line_length = 88
+skip_glob = ['blib2to3', 'tests/data', 'profiling']
 known_first_party = ['black', 'blackd', 'blib2to3']
 
 # Build system information below.
