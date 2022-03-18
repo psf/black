@@ -22,6 +22,15 @@ extend-exclude = '''
 # this off.
 preview = true
 
+[tool.isort]
+profile = "black"
+atomic=true
+line_length = 88
+multi_line_output = 6
+use_parentheses=true
+case_sensitive = true
+combine_as_imports = true
+
 # Build system information below.
 # NOTE: You don't need this in your own Black configuration.
 
