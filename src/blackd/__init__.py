@@ -17,11 +17,11 @@ except ImportError as ie:
         + "to obtain aiohttp_cors: `pip install black[d]`"
     ) from None
 
-import black
 import click
-from black.concurrency import maybe_install_uvloop
 
+import black
 from _black_version import version as __version__
+from black.concurrency import maybe_install_uvloop
 
 # This is used internally by tests to shut down the server prematurely
 _stop_signal = asyncio.Event()

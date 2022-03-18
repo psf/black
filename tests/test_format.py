@@ -2,9 +2,9 @@ from dataclasses import replace
 from typing import Any, Iterator, List
 from unittest.mock import patch
 
-import black
 import pytest
 
+import black
 from tests.util import (
     DEFAULT_MODE,
     PY36_VERSIONS,

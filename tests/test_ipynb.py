@@ -6,6 +6,8 @@ from typing import ContextManager
 
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
+from click.testing import CliRunner
+
 from black import (
     Mode,
     NothingChanged,
@@ -15,8 +17,6 @@ from black import (
     main,
 )
 from black.handle_ipynb_magics import jupyter_dependencies_are_installed
-from click.testing import CliRunner
-
 from tests.util import DATA_DIR
 
 pytestmark = pytest.mark.jupyter

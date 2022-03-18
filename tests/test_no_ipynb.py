@@ -2,9 +2,9 @@ import os
 import pathlib
 
 import pytest
-from black import jupyter_dependencies_are_installed, main
 from click.testing import CliRunner
 
+from black import jupyter_dependencies_are_installed, main
 from tests.util import THIS_DIR
 
 pytestmark = pytest.mark.no_jupyter

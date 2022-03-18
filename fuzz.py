@@ -7,11 +7,12 @@ a coverage-guided fuzzer I'm working on.
 
 import re
 
-import black
 import hypothesmith
-from blib2to3.pgen2.tokenize import TokenError
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
+
+import black
+from blib2to3.pgen2.tokenize import TokenError
 
 
 # This test uses the Hypothesis and Hypothesmith libraries to generate random

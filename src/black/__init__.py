@@ -32,6 +32,11 @@ from typing import (
 )
 
 import click
+from click.core import ParameterSource
+from mypy_extensions import mypyc_attr
+from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
+
+from _black_version import version as __version__
 from black.cache import Cache, filter_cached, get_cache_info, read_cache, write_cache
 from black.comments import normalize_fmt_off
 from black.concurrency import cancel, maybe_install_uvloop, shutdown
@@ -79,11 +84,6 @@ from blib2to3.pgen2 import token
 
 # lib2to3 fork
 from blib2to3.pytree import Leaf, Node
-from click.core import ParameterSource
-from mypy_extensions import mypyc_attr
-from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
-
-from _black_version import version as __version__
 
 COMPILED = Path(__file__).suffix in (".pyd", ".so")
 

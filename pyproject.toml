@@ -27,7 +27,7 @@ profile='black'
 atomic=true
 line_length=88
 skip_glob= ['blib2to3', 'tests/data', 'profiling']
-known_third_party = ['black', 'blackd', 'blib2to3']
+known_first_party = ['black', 'blackd', 'blib2to3']
 
 # Build system information below.
 # NOTE: You don't need this in your own Black configuration.

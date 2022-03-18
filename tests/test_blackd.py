@@ -7,9 +7,10 @@ from click.testing import CliRunner
 from tests.util import DETERMINISTIC_HEADER, read_data
 
 try:
-    import blackd
     from aiohttp import web
     from aiohttp.test_utils import AioHTTPTestCase, unittest_run_loop
+
+    import blackd
 except ImportError:
     has_blackd_deps = False
 else:

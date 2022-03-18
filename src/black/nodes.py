@@ -14,6 +14,8 @@ if sys.version_info >= (3, 10):
 else:
     from typing_extensions import TypeGuard
 
+from mypy_extensions import mypyc_attr
+
 from black.cache import CACHE_DIR
 from black.strings import has_triple_quotes
 from blib2to3 import pygram
@@ -21,7 +23,6 @@ from blib2to3.pgen2 import token
 
 # lib2to3 fork
 from blib2to3.pytree import NL, Leaf, Node, type_repr
-from mypy_extensions import mypyc_attr
 
 pygram.initialize(CACHE_DIR)
 syms: Final = pygram.python_symbols

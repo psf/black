@@ -28,6 +28,8 @@ if sys.version_info < (3, 8):
 else:
     from typing import Literal, Final
 
+from mypy_extensions import trait
+
 from black.brackets import BracketMatchError
 from black.comments import contains_pragma_comment
 from black.lines import Line, append_leaves
@@ -52,7 +54,6 @@ from black.strings import (
 )
 from blib2to3.pgen2 import token
 from blib2to3.pytree import Leaf, Node
-from mypy_extensions import trait
 
 
 class CannotTransform(Exception):
