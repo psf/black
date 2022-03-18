@@ -14,7 +14,7 @@
 
 <!-- Changes that affect Black's preview style -->
 
-- Avoid magic-trailing-comma in single tuple type (#2942)
+- Avoid magic-trailing-comma in single-element subscripts (#2942)
 
 ### _Blackd_
 

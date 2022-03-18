@@ -9,6 +9,7 @@ from typing import (
     List,
     Optional,
     Set,
+    Tuple,
     TypeVar,
     Union,
 )
@@ -559,12 +560,14 @@ def is_one_tuple(node: LN) -> bool:
     )
 
 
-def is_one_sequence_between(opening: Leaf, closing: Leaf, leaves: List[Leaf]) -> bool:
+def is_one_sequence_between(
+    opening: Leaf,
+    closing: Leaf,
+    leaves: List[Leaf],
+    brackets: Tuple[int, int] = (token.LPAR, token.RPAR),
+) -> bool:
     """Return True if content between `opening` and `closing` is a one-sequence."""
-    if not (
-        (opening.type == token.LPAR and closing.type == token.RPAR)
-        or (opening.type == token.LSQB and closing.type == token.RSQB)
-    ):
+    if (opening.type, closing.type) != brackets:
         return False
 
     depth = closing.bracket_depth + 1
@@ -598,18 +601,6 @@ def is_walrus_assignment(node: LN) -> bool:
     """Return True iff `node` is of the shape ( test := test )"""
     inner = unwrap_singleton_parenthesis(node)
     return inner is not None and inner.type == syms.namedexpr_test
-
-
-def is_within_annotation(node: LN) -> bool:
-    """Return True iff `node` is either `annassign` or child of `annassign`"""
-    found_annassign = False
-    current_node = node
-    while current_node.parent:
-        if current_node.type == syms.annassign:
-            found_annassign = True
-            break
-        current_node = current_node.parent
-    return found_annassign
 
 
 def is_simple_decorator_trailer(node: LN, last: bool = False) -> bool:

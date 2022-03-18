@@ -127,7 +127,7 @@ class Preview(Enum):
     """Individual preview style features."""
 
     string_processing = auto()
-    one_tuple_type = auto()
+    one_element_subscript = auto()
 
 
 class Deprecated(UserWarning):
