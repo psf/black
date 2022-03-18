@@ -14,7 +14,7 @@
 
 <!-- Changes that affect Black's preview style -->
 
-- Ignore magic comma in one tuple type (#2942)
+- Avoid magic-trailing-comma in single tuple type (#2942)
 
 ### _Blackd_
 
