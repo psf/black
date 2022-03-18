@@ -14,6 +14,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Remove unnecessary parentheses from `except` statements (#2939)
+
 ### _Blackd_
 
 <!-- Changes to blackd -->

@@ -313,7 +313,12 @@ class LineGenerator(Visitor[Line]):
         self.visit_try_stmt = partial(
             v, keywords={"try", "except", "else", "finally"}, parens=Ø
         )
-        self.visit_except_clause = partial(v, keywords={"except"}, parens=Ø)
+        if Preview.remove_except_parens in self.mode:
+            self.visit_except_clause = partial(
+                v, keywords={"except"}, parens={"except"}
+            )
+        else:
+            self.visit_except_clause = partial(v, keywords={"except"}, parens=Ø)
         self.visit_with_stmt = partial(v, keywords={"with"}, parens=Ø)
         self.visit_funcdef = partial(v, keywords={"def"}, parens=Ø)
         self.visit_classdef = partial(v, keywords={"class"}, parens=Ø)

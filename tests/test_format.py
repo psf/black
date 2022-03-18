@@ -79,6 +79,7 @@ PREVIEW_CASES: List[str] = [
     "long_strings__edge_case",
     "long_strings__regression",
     "percent_precedence",
+    "remove_except_parens",
 ]
 
 SOURCES: List[str] = [
