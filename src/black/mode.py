@@ -127,7 +127,7 @@ class Preview(Enum):
     """Individual preview style features."""
 
     string_processing = auto()
-    remove_with_parens = auto()
+    remove_redundant_parens = auto()
 
 
 class Deprecated(UserWarning):
