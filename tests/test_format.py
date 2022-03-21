@@ -75,6 +75,7 @@ PREVIEW_CASES: List[str] = [
     # string processing
     "cantfit",
     "comments7",
+    "comments8",
     "long_strings",
     "long_strings__edge_case",
     "long_strings__regression",
