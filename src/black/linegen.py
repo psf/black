@@ -141,7 +141,6 @@ class LineGenerator(Visitor[Line]):
 
     def visit_match_case(self, node: Node) -> Iterator[Line]:
         """Visit either a match or case statement."""
-        remove_with_parens = Preview.remove_with_parens in self.mode
         normalize_invisible_parens(node, parens_after=set(), preview=self.mode.preview)
 
         yield from self.line()
@@ -315,7 +314,7 @@ class LineGenerator(Visitor[Line]):
             v, keywords={"try", "except", "else", "finally"}, parens=Ø
         )
         self.visit_except_clause = partial(v, keywords={"except"}, parens=Ø)
-        if Preview.remove_with_parens in self.mode:
+        if self.mode.preview:
             self.visit_with_stmt = partial(v, keywords={"with"}, parens={"with"})
         else:
             self.visit_with_stmt = partial(v, keywords={"with"}, parens=Ø)
@@ -816,9 +815,6 @@ def normalize_invisible_parens(
 
     Standardizes on visible parentheses for single-element tuples, and keeps
     existing visible parentheses for other tuples and generator expressions.
-
-    `remove_with_parens` enables the preview feature for removing redundant
-    parentheses from `with` statements.
     """
     for pc in list_comments(node.prefix, is_endmarker=False, preview=preview):
         if pc.value in FMT_OFF:
@@ -846,11 +842,11 @@ def normalize_invisible_parens(
                 if maybe_make_parens_invisible_in_atom(
                     child,
                     parent=node,
-                    remove_with_parens=remove_with_parens,
+                    preview=preview,
                 ):
                     wrap_in_parentheses(node, child, visible=False)
             elif (
-                remove_with_parens
+                preview
                 and isinstance(child, Node)
                 and child.type == syms.asexpr_test
                 and not any(leaf.type == token.COLONEQUAL for leaf in child.leaves())
@@ -860,7 +856,7 @@ def normalize_invisible_parens(
                 if maybe_make_parens_invisible_in_atom(
                     child.children[0],
                     parent=child,
-                    remove_with_parens=remove_with_parens,
+                    preview=preview,
                 ):
                     wrap_in_parentheses(child, child.children[0], visible=False)
             elif is_one_tuple(child):
@@ -882,7 +878,7 @@ def normalize_invisible_parens(
             elif not (isinstance(child, Leaf) and is_multiline_string(child)):
                 wrap_in_parentheses(node, child, visible=False)
 
-        comma_check = child.type == token.COMMA if remove_with_parens else False
+        comma_check = child.type == token.COMMA if preview else False
 
         check_lpar = (
             isinstance(child, Leaf) and child.value in parens_after or comma_check
@@ -892,7 +888,7 @@ def normalize_invisible_parens(
 def maybe_make_parens_invisible_in_atom(
     node: LN,
     parent: LN,
-    remove_with_parens: bool = False,
+    preview: bool = False,
 ) -> bool:
     """If it's safe, make the parens in the atom `node` invisible, recursively.
     Additionally, remove repeated, adjacent invisible parens from the atom `node`
@@ -900,10 +896,9 @@ def maybe_make_parens_invisible_in_atom(
 
     Returns whether the node should itself be wrapped in invisible parentheses.
 
-    `remove_with_parens` enables the preview feature for removing redundant
-    parentheses from `with` statements.
+    `preview` enables the preview feature for removing redundant parentheses.
     """
-    with_stmt_check = parent.type != syms.with_stmt if remove_with_parens else True
+    with_stmt_check = parent.type != syms.with_stmt if preview else True
 
     if (
         node.type != syms.atom
@@ -936,7 +931,7 @@ def maybe_make_parens_invisible_in_atom(
         maybe_make_parens_invisible_in_atom(
             middle,
             parent=parent,
-            remove_with_parens=remove_with_parens,
+            preview=preview,
         )
 
         if is_atom_with_invisible_parens(middle):
