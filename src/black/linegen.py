@@ -313,7 +313,7 @@ class LineGenerator(Visitor[Line]):
         self.visit_try_stmt = partial(
             v, keywords={"try", "except", "else", "finally"}, parens=Ø
         )
-        if Preview.remove_except_parens in self.mode:
+        if self.mode.preview:
             self.visit_except_clause = partial(
                 v, keywords={"except"}, parens={"except"}
             )
