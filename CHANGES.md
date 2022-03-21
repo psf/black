@@ -14,6 +14,7 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Code cell separators `#%%` are now standardised to `# %%` (#2919)
 - Remove unnecessary parentheses from `with` statements (#2926)
 
 ### _Blackd_
@@ -33,6 +34,8 @@
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
+
+- Update pylint config documentation (#2931)
 
 ### Integrations
 

@@ -72,7 +72,7 @@ class LineGenerator(Visitor[Line]):
         """Default `visit_*()` implementation. Recurses to children of `node`."""
         if isinstance(node, Leaf):
             any_open_brackets = self.current_line.bracket_tracker.any_open_brackets()
-            for comment in generate_comments(node):
+            for comment in generate_comments(node, preview=self.mode.preview):
                 if any_open_brackets:
                     # any comment within brackets is subject to splitting
                     self.current_line.append(comment)
@@ -132,10 +132,7 @@ class LineGenerator(Visitor[Line]):
         `parens` holds a set of string leaf values immediately after which
         invisible parens should be put.
         """
-        remove_with_parens = Preview.remove_with_parens in self.mode
-        normalize_invisible_parens(
-            node, parens_after=parens, remove_with_parens=remove_with_parens
-        )
+        normalize_invisible_parens(node, parens_after=parens, preview=self.mode.preview)
         for child in node.children:
             if is_name_token(child) and child.value in keywords:
                 yield from self.line()
@@ -145,11 +142,7 @@ class LineGenerator(Visitor[Line]):
     def visit_match_case(self, node: Node) -> Iterator[Line]:
         """Visit either a match or case statement."""
         remove_with_parens = Preview.remove_with_parens in self.mode
-        normalize_invisible_parens(
-            node,
-            parens_after=set(),
-            remove_with_parens=remove_with_parens,
-        )
+        normalize_invisible_parens(node, parens_after=set(), preview=self.mode.preview)
 
         yield from self.line()
         for child in node.children:
@@ -814,9 +807,7 @@ def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
 
 
 def normalize_invisible_parens(
-    node: Node,
-    parens_after: Set[str],
-    remove_with_parens: bool = False,
+    node: Node, parens_after: Set[str], *, preview: bool
 ) -> None:
     """Make existing optional parentheses invisible or create new ones.
 
@@ -829,7 +820,7 @@ def normalize_invisible_parens(
     `remove_with_parens` enables the preview feature for removing redundant
     parentheses from `with` statements.
     """
-    for pc in list_comments(node.prefix, is_endmarker=False):
+    for pc in list_comments(node.prefix, is_endmarker=False, preview=preview):
         if pc.value in FMT_OFF:
             # This `node` has a prefix with `# fmt: off`, don't mess with parens.
             return
@@ -839,9 +830,7 @@ def normalize_invisible_parens(
         # assignment statements that contain type annotations.
         if isinstance(child, Node) and child.type == syms.annassign:
             normalize_invisible_parens(
-                child,
-                parens_after=parens_after,
-                remove_with_parens=remove_with_parens,
+                child, parens_after=parens_after, preview=preview
             )
 
         # Add parentheses around long tuple unpacking in assignments.
