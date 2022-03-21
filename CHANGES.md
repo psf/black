@@ -14,6 +14,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Code cell separators `#%%` are now standardised to `# %%` (#2919)
+
 ### _Blackd_
 
 <!-- Changes to blackd -->
