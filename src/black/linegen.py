@@ -837,7 +837,9 @@ def normalize_invisible_parens(
         if check_lpar:
             if child.type == syms.atom:
                 if maybe_make_parens_invisible_in_atom(
-                    child, parent=node, preview=preview
+                    child,
+                    parent=node,
+                    preview=preview,
                 ):
                     wrap_in_parentheses(node, child, visible=False)
             elif is_one_tuple(child):
@@ -862,7 +864,11 @@ def normalize_invisible_parens(
         check_lpar = isinstance(child, Leaf) and child.value in parens_after
 
 
-def maybe_make_parens_invisible_in_atom(node: LN, parent: LN, preview: bool) -> bool:
+def maybe_make_parens_invisible_in_atom(
+    node: LN,
+    parent: LN,
+    preview: bool = False,
+) -> bool:
     """If it's safe, make the parens in the atom `node` invisible, recursively.
     Additionally, remove repeated, adjacent invisible parens from the atom `node`
     as they are redundant.

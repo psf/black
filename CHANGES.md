@@ -15,6 +15,7 @@
 <!-- Changes that affect Black's preview style -->
 
 - Code cell separators `#%%` are now standardised to `# %%` (#2919)
+- Remove unnecessary parentheses from tuple unpacking in `for` loops (#2945)
 
 ### _Blackd_
 
