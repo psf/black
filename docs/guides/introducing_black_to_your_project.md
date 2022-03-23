@@ -49,4 +49,5 @@ cluttered with a reformatting commit on those platforms. (If you'd like this fea
 there's an open issue for
 [GitLab](https://gitlab.com/gitlab-org/gitlab/-/issues/31423)). This is however
 supported by
-[GitHub](https://docs.github.com/en/repositories/working-with-files/using-files/viewing-a-file#ignore-commits-in-the-blame-view).
+[GitHub](https://docs.github.com/en/repositories/working-with-files/using-files/viewing-a-file#ignore-commits-in-the-blame-view),
+currently in beta.
