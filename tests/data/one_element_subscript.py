@@ -27,7 +27,7 @@ d = tuple[
     int,
 ]
 
-# This change should have no impact on one length lists.
+# Magic commas still work as expected for non-subscripts.
 small_list = [
     1,
 ]
