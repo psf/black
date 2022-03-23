@@ -7,6 +7,10 @@ b = tuple[int,]
 c: tuple[int, int,]
 d = tuple[int, int,]
 
+# Magic commas still work as expected for non-subscripts.
+small_list = [1,]
+list_of_types = [tuple[int,],]
+
 # output
 # We should not treat the trailing comma
 # in a single-element subscript.
@@ -21,4 +25,12 @@ c: tuple[
 d = tuple[
     int,
     int,
+]
+
+# This change should have no impact on one length lists.
+small_list = [
+    1,
+]
+list_of_types = [
+    tuple[int,],
 ]
