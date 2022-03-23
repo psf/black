@@ -18,6 +18,22 @@ try:
 except (AttributeError, ValueError) as err:
     raise err
 
+# Test long variants.
+try:
+    a.something
+except (some.really.really.really.looooooooooooooooooooooooooooooooong.module.over89.chars.Error) as err:
+    raise err
+
+try:
+    a.something
+except (some.really.really.really.looooooooooooooooooooooooooooooooong.module.over89.chars.Error,) as err:
+    raise err
+
+try:
+    a.something
+except (some.really.really.really.looooooooooooooooooooooooooooooooong.module.over89.chars.Error, some.really.really.really.looooooooooooooooooooooooooooooooong.module.over89.chars.Error) as err:
+    raise err
+
 # output
 # These brackets are redundant, therefore remove.
 try:
@@ -37,4 +53,27 @@ except (AttributeError,) as err:
 try:
     a.something
 except (AttributeError, ValueError) as err:
+    raise err
+
+# Test long variants.
+try:
+    a.something
+except (
+    some.really.really.really.looooooooooooooooooooooooooooooooong.module.over89.chars.Error
+) as err:
+    raise err
+
+try:
+    a.something
+except (
+    some.really.really.really.looooooooooooooooooooooooooooooooong.module.over89.chars.Error,
+) as err:
+    raise err
+
+try:
+    a.something
+except (
+    some.really.really.really.looooooooooooooooooooooooooooooooong.module.over89.chars.Error,
+    some.really.really.really.looooooooooooooooooooooooooooooooong.module.over89.chars.Error,
+) as err:
     raise err
