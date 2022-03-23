@@ -880,8 +880,8 @@ def normalize_invisible_parens(
 
         comma_check = child.type == token.COMMA if preview else False
 
-        check_lpar = (
-            isinstance(child, Leaf) and child.value in parens_after or comma_check
+        check_lpar = isinstance(child, Leaf) and (
+            child.value in parens_after or comma_check
         )
 
 
