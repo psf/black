@@ -920,8 +920,11 @@ def maybe_make_parens_invisible_in_atom(
         or is_empty_tuple(node)
         or is_one_tuple(node)
         or (is_yield(node) and parent.type != syms.expr_stmt)
-        or (max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY and with_stmt_check)
-        or (max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY and for_stmt_check)
+        or (
+            max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
+            and with_stmt_check
+            and for_stmt_check
+        )
     ):
         return False
 
