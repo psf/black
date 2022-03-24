@@ -841,7 +841,11 @@ def normalize_invisible_parens(
 
         if check_lpar:
             if child.type == syms.atom:
-                if maybe_make_parens_invisible_in_atom(child, parent=node):
+                if maybe_make_parens_invisible_in_atom(
+                    child,
+                    parent=node,
+                    preview=preview,
+                ):
                     wrap_in_parentheses(node, child, visible=False)
             elif is_one_tuple(child):
                 wrap_in_parentheses(node, child, visible=True)
@@ -865,7 +869,11 @@ def normalize_invisible_parens(
         check_lpar = isinstance(child, Leaf) and child.value in parens_after
 
 
-def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
+def maybe_make_parens_invisible_in_atom(
+    node: LN,
+    parent: LN,
+    preview: bool = False,
+) -> bool:
     """If it's safe, make the parens in the atom `node` invisible, recursively.
     Additionally, remove repeated, adjacent invisible parens from the atom `node`
     as they are redundant.
@@ -873,13 +881,23 @@ def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
     Returns whether the node should itself be wrapped in invisible parentheses.
 
     """
+    if (
+        preview
+        and parent.type == syms.for_stmt
+        and isinstance(node.prev_sibling, Leaf)
+        and node.prev_sibling.type == token.NAME
+        and node.prev_sibling.value == "for"
+    ):
+        for_stmt_check = False
+    else:
+        for_stmt_check = True
 
     if (
         node.type != syms.atom
         or is_empty_tuple(node)
         or is_one_tuple(node)
         or (is_yield(node) and parent.type != syms.expr_stmt)
-        or max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
+        or (max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY and for_stmt_check)
     ):
         return False
 
@@ -902,7 +920,7 @@ def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
         # make parentheses invisible
         first.value = ""
         last.value = ""
-        maybe_make_parens_invisible_in_atom(middle, parent=parent)
+        maybe_make_parens_invisible_in_atom(middle, parent=parent, preview=preview)
 
         if is_atom_with_invisible_parens(middle):
             # Strip the invisible parens from `middle` by replacing

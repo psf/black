@@ -127,6 +127,7 @@ class Preview(Enum):
     """Individual preview style features."""
 
     string_processing = auto()
+    remove_redundant_parens = auto()
     one_element_subscript = auto()
 
 
