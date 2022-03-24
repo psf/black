@@ -16,6 +16,7 @@
 
 - Code cell separators `#%%` are now standardised to `# %%` (#2919)
 - Remove unnecessary parentheses from `except` statements (#2939)
+- Avoid magic-trailing-comma in single-element subscripts (#2942)
 
 ### _Blackd_
 
