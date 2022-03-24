@@ -225,8 +225,8 @@ def stringify_ast(node: Union[ast.AST, ast3.AST], depth: int = 0) -> Iterator[st
                     and isinstance(node, (ast.Delete, ast3.Delete))
                     and isinstance(item, (ast.Tuple, ast3.Tuple))
                 ):
-                    for item in item.elts:
-                        yield from stringify_ast(item, depth + 2)
+                    for elt in item.elts:
+                        yield from stringify_ast(elt, depth + 2)
 
                 elif isinstance(item, (ast.AST, ast3.AST)):
                     yield from stringify_ast(item, depth + 2)
