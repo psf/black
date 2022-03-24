@@ -41,7 +41,6 @@
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
 - Move test to disable plugin in Vim/Neovim, which speeds up loading (#2896)
-- Resolve new flake8-bugbear errors (B020) (#2950)
 
 ### Output
 
