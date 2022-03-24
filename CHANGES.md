@@ -14,6 +14,9 @@
 
 - Format hex code in unicode escape sequences in string literals (#2916)
 
+- Code cell separators `#%%` are now standardised to `# %%` (#2919)
+- Avoid magic-trailing-comma in single-element subscripts (#2942)
+
 ### _Blackd_
 
 <!-- Changes to blackd -->
@@ -31,6 +34,8 @@
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
+
+- Update pylint config documentation (#2931)
 
 ### Integrations
 

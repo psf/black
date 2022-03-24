@@ -8,7 +8,12 @@ from typing import Collection, Iterator, List, Optional, Set, Union
 from black.nodes import WHITESPACE, RARROW, STATEMENT, STANDALONE_COMMENT
 from black.nodes import ASSIGNMENTS, OPENING_BRACKETS, CLOSING_BRACKETS
 from black.nodes import Visitor, syms, is_arith_like, ensure_visible
-from black.nodes import is_docstring, is_empty_tuple, is_one_tuple, is_one_tuple_between
+from black.nodes import (
+    is_docstring,
+    is_empty_tuple,
+    is_one_tuple,
+    is_one_sequence_between,
+)
 from black.nodes import is_name_token, is_lpar_token, is_rpar_token
 from black.nodes import is_walrus_assignment, is_yield, is_vararg, is_multiline_string
 from black.nodes import is_stub_suite, is_stub_body, is_atom_with_invisible_parens
@@ -77,7 +82,7 @@ class LineGenerator(Visitor[Line]):
         """Default `visit_*()` implementation. Recurses to children of `node`."""
         if isinstance(node, Leaf):
             any_open_brackets = self.current_line.bracket_tracker.any_open_brackets()
-            for comment in generate_comments(node):
+            for comment in generate_comments(node, preview=self.mode.preview):
                 if any_open_brackets:
                     # any comment within brackets is subject to splitting
                     self.current_line.append(comment)
@@ -137,7 +142,7 @@ class LineGenerator(Visitor[Line]):
         `parens` holds a set of string leaf values immediately after which
         invisible parens should be put.
         """
-        normalize_invisible_parens(node, parens_after=parens)
+        normalize_invisible_parens(node, parens_after=parens, preview=self.mode.preview)
         for child in node.children:
             if is_name_token(child) and child.value in keywords:
                 yield from self.line()
@@ -146,7 +151,7 @@ class LineGenerator(Visitor[Line]):
 
     def visit_match_case(self, node: Node) -> Iterator[Line]:
         """Visit either a match or case statement."""
-        normalize_invisible_parens(node, parens_after=set())
+        normalize_invisible_parens(node, parens_after=set(), preview=self.mode.preview)
 
         yield from self.line()
         for child in node.children:
@@ -810,7 +815,9 @@ def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
     leaf.prefix = ""
 
 
-def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
+def normalize_invisible_parens(
+    node: Node, parens_after: Set[str], *, preview: bool
+) -> None:
     """Make existing optional parentheses invisible or create new ones.
 
     `parens_after` is a set of string leaf values immediately after which parens
@@ -819,7 +826,7 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
     Standardizes on visible parentheses for single-element tuples, and keeps
     existing visible parentheses for other tuples and generator expressions.
     """
-    for pc in list_comments(node.prefix, is_endmarker=False):
+    for pc in list_comments(node.prefix, is_endmarker=False, preview=preview):
         if pc.value in FMT_OFF:
             # This `node` has a prefix with `# fmt: off`, don't mess with parens.
             return
@@ -828,7 +835,9 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
         # Fixes a bug where invisible parens are not properly stripped from
         # assignment statements that contain type annotations.
         if isinstance(child, Node) and child.type == syms.annassign:
-            normalize_invisible_parens(child, parens_after=parens_after)
+            normalize_invisible_parens(
+                child, parens_after=parens_after, preview=preview
+            )
 
         # Add parentheses around long tuple unpacking in assignments.
         if (
@@ -977,7 +986,7 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
                     prev
                     and prev.type == token.COMMA
                     and leaf.opening_bracket is not None
-                    and not is_one_tuple_between(
+                    and not is_one_sequence_between(
                         leaf.opening_bracket, leaf, line.leaves
                     )
                 ):
@@ -1005,7 +1014,7 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
                 prev
                 and prev.type == token.COMMA
                 and leaf.opening_bracket is not None
-                and not is_one_tuple_between(leaf.opening_bracket, leaf, line.leaves)
+                and not is_one_sequence_between(leaf.opening_bracket, leaf, line.leaves)
             ):
                 # Never omit bracket pairs with trailing commas.
                 # We need to explode on those.
