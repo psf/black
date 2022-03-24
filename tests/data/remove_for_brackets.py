@@ -14,7 +14,8 @@ for (why_would_anyone_choose_to_name_a_loop_variable_with_a_name_this_long, i_do
 for (k, v) in dfkasdjfldsjflkdsjflkdsjfdslkfjldsjfgkjdshgkljjdsfldgkhsdofudsfudsofajdslkfjdslkfjldisfjdffjsdlkfjdlkjjkdflskadjldkfjsalkfjdasj.items():
     print(k, v)
 
-# Multiple brackets
+# Multiple brackets (N.B. this only currently works due to the second pass.
+# We should fix this to work in one pass.
 for ((((k, v)))) in d.items():
     print(k, v)
 
@@ -43,6 +44,7 @@ for (
 ):
     print(k, v)
 
-# Multiple brackets
+# Multiple brackets (N.B. this only currently works due to the second pass.
+# We should fix this to work in one pass.
 for k, v in d.items():
     print(k, v)
