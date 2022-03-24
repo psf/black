@@ -670,9 +670,9 @@ def dont_increase_indentation(split_func: Transformer) -> Transformer:
 
     @wraps(split_func)
     def split_wrapper(line: Line, features: Collection[Feature] = ()) -> Iterator[Line]:
-        for line in split_func(line, features):
-            normalize_prefix(line.leaves[0], inside_brackets=True)
-            yield line
+        for split_line in split_func(line, features):
+            normalize_prefix(split_line.leaves[0], inside_brackets=True)
+            yield split_line
 
     return split_wrapper
 
