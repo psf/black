@@ -673,9 +673,9 @@ def dont_increase_indentation(split_func: Transformer) -> Transformer:
 
     @wraps(split_func)
     def split_wrapper(line: Line, features: Collection[Feature] = ()) -> Iterator[Line]:
-        for line in split_func(line, features):
-            normalize_prefix(line.leaves[0], inside_brackets=True)
-            yield line
+        for split_line in split_func(line, features):
+            normalize_prefix(split_line.leaves[0], inside_brackets=True)
+            yield split_line
 
     return split_wrapper
 
@@ -904,6 +904,16 @@ def maybe_make_parens_invisible_in_atom(
     `preview` enables the preview feature for removing redundant parentheses.
     """
     with_stmt_check = parent.type != syms.with_stmt if preview else True
+    if (
+        preview
+        and parent.type == syms.for_stmt
+        and isinstance(node.prev_sibling, Leaf)
+        and node.prev_sibling.type == token.NAME
+        and node.prev_sibling.value == "for"
+    ):
+        for_stmt_check = False
+    else:
+        for_stmt_check = True
 
     if (
         node.type != syms.atom
@@ -911,6 +921,7 @@ def maybe_make_parens_invisible_in_atom(
         or is_one_tuple(node)
         or (is_yield(node) and parent.type != syms.expr_stmt)
         or (max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY and with_stmt_check)
+        or (max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY and for_stmt_check)
     ):
         return False
 
@@ -933,11 +944,7 @@ def maybe_make_parens_invisible_in_atom(
         # make parentheses invisible
         first.value = ""
         last.value = ""
-        maybe_make_parens_invisible_in_atom(
-            middle,
-            parent=parent,
-            preview=preview,
-        )
+        maybe_make_parens_invisible_in_atom(middle, parent=parent, preview=preview)
 
         if is_atom_with_invisible_parens(middle):
             # Strip the invisible parens from `middle` by replacing

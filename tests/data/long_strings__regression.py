@@ -599,7 +599,7 @@ class A:
 
 
 def foo(xxxx):
-    for (xxx_xxxx, _xxx_xxx, _xxx_xxxxx, xxx_xxxx) in xxxx:
+    for xxx_xxxx, _xxx_xxx, _xxx_xxxxx, xxx_xxxx in xxxx:
         for xxx in xxx_xxxx:
             assert ("x" in xxx) or (xxx in xxx_xxx_xxxxx), (
                 "{0} xxxxxxx xx {1}, xxx {1} xx xxx xx xxxx xx xxx xxxx: xxx xxxx {2}"
