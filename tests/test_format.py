@@ -81,6 +81,7 @@ PREVIEW_CASES: List[str] = [
     "long_strings__regression",
     "percent_precedence",
     "remove_for_brackets",
+    "one_element_subscript",
 ]
 
 SOURCES: List[str] = [

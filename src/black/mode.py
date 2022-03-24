@@ -128,6 +128,7 @@ class Preview(Enum):
 
     string_processing = auto()
     remove_redundant_parens = auto()
+    one_element_subscript = auto()
 
 
 class Deprecated(UserWarning):
