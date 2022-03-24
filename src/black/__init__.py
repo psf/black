@@ -1169,7 +1169,7 @@ def _format_str_once(src_contents: str, *, mode: Mode) -> str:
     else:
         versions = detect_target_versions(src_node, future_imports=future_imports)
 
-    normalize_fmt_off(src_node)
+    normalize_fmt_off(src_node, preview=mode.preview)
     lines = LineGenerator(mode=mode)
     elt = EmptyLineTracker(is_pyi=mode.is_pyi)
     empty_line = Line(mode=mode)

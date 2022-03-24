@@ -7,12 +7,6 @@ It's recommended you evaluate the quantifiable changes your _Black_ formatting
 modification causes before submitting a PR. Think about if the change seems disruptive
 enough to cause frustration to projects that are already "black formatted".
 
-## black-primer
-
-`black-primer` is an obsolete tool (now replaced with `diff-shades`) that was used to
-gauge the impact of changes in _Black_ on open-source code. It is no longer used
-internally and will be removed from the _Black_ repository in the future.
-
 ## diff-shades
 
 diff-shades is a tool that runs _Black_ across a list of open-source projects recording
