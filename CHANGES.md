@@ -12,6 +12,8 @@
 
 ### Preview style
 
+<!-- Changes that affect Black's preview style -->
+
 - Format hex code in unicode escape sequences in string literals (#2916)
 
 - Code cell separators `#%%` are now standardised to `# %%` (#2919)
