@@ -80,6 +80,7 @@ PREVIEW_CASES: List[str] = [
     "long_strings__edge_case",
     "long_strings__regression",
     "percent_precedence",
+    "one_element_subscript",
 ]
 
 SOURCES: List[str] = [
