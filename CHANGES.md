@@ -15,6 +15,7 @@
 <!-- Changes that affect Black's preview style -->
 
 - Code cell separators `#%%` are now standardised to `# %%` (#2919)
+- Avoid magic-trailing-comma in single-element subscripts (#2942)
 
 ### _Blackd_
 
