@@ -75,11 +75,14 @@ PREVIEW_CASES: List[str] = [
     # string processing
     "cantfit",
     "comments7",
+    "comments8",
     "long_strings",
     "long_strings__edge_case",
     "long_strings__regression",
     "percent_precedence",
     "docstring_preview",
+    "remove_for_brackets",
+    "one_element_subscript",
 ]
 
 SOURCES: List[str] = [

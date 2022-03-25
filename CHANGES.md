@@ -14,6 +14,9 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Code cell separators `#%%` are now standardised to `# %%` (#2919)
+- Remove unnecessary parentheses from tuple unpacking in `for` loops (#2945)
+- Avoid magic-trailing-comma in single-element subscripts (#2942)
 - Format docstrings to have consistent quote placement (#2885)
 
 ### _Blackd_
