@@ -106,7 +106,7 @@ setup(
         "mypy_extensions>=0.4.3",
     ],
     extras_require={
-        "d": ["aiohttp>=3.7.4"],
+        "d": ["aiohttp>=3.7.4", "aiohttp-json-rpc>=0.13.3"],
         "colorama": ["colorama>=0.4.3"],
         "uvloop": ["uvloop>=0.15.2"],
         "jupyter": ["ipython>=7.8.0", "tokenize-rt>=3.2.0"],

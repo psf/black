@@ -1,19 +1,44 @@
 import re
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from typing import Any, Optional, TypeVar
 from unittest.mock import patch
 
-from click.testing import CliRunner
 import pytest
+from click.testing import CliRunner
 
-from tests.util import read_data, DETERMINISTIC_HEADER
+from tests.util import DETERMINISTIC_HEADER, read_data
 
 try:
     import blackd
-    from aiohttp.test_utils import AioHTTPTestCase, unittest_run_loop
     from aiohttp import web
+    from aiohttp.client_ws import ClientWebSocketResponse
+    from aiohttp.test_utils import AioHTTPTestCase, unittest_run_loop
+    from aiohttp_json_rpc.protocol import JsonRpcMsgTyp, decode_msg, encode_request
+    from blackd.lsp import (
+        DocumentFormattingParams,
+        TextDocumentIdentifier,
+        FormattingOptions,
+    )
 except ImportError:
     has_blackd_deps = False
 else:
     has_blackd_deps = True
+
+
+if has_blackd_deps:
+
+    def make_formatting_options() -> FormattingOptions:
+        return FormattingOptions(
+            tabSize=999,
+            insertSpaces=True,
+            trimTrailingWhitespace=None,
+            insertFinalNewline=None,
+            trimFinalNewlines=None,
+        )
+
+
+JsonRpcParams = TypeVar("JsonRpcParams")
 
 
 @pytest.mark.blackd
@@ -184,3 +209,81 @@ class BlackDTestCase(AioHTTPTestCase):
         response = await self.client.post("/", headers={"Origin": "*"})
         self.assertIsNotNone(response.headers.get("Access-Control-Allow-Origin"))
         self.assertIsNotNone(response.headers.get("Access-Control-Expose-Headers"))
+
+    async def _call_json_rpc(
+        self,
+        ws: ClientWebSocketResponse,
+        method: str,
+        params: Optional[JsonRpcParams] = None,
+        expect_success: bool = True,
+    ) -> Any:
+        await ws.send_str(encode_request(method, id=0, params=params))
+        raw_msg = await ws.receive_str(timeout=10.0)
+        msg = decode_msg(raw_msg)
+        if expect_success:
+            self.assertEqual(
+                msg.type,
+                JsonRpcMsgTyp.RESULT,
+                msg="Didn't receive RESULT response",
+            )
+            return msg.data["result"]
+        else:
+            return msg.data
+
+    @unittest_run_loop
+    async def test_lsp_formatting_method_is_available(self) -> None:
+        async with self.client.ws_connect("/lsp") as ws:
+            self.assertIn(
+                "textDocument/formatting", await self._call_json_rpc(ws, "get_methods")
+            )
+
+    @unittest_run_loop
+    async def test_lsp_formatting_changes(self) -> None:
+        with TemporaryDirectory() as dir:
+            inputfile = Path(dir) / "somefile.py"
+            inputfile.write_bytes(b"print('hello world')")
+            async with self.client.ws_connect("/lsp") as ws:
+                resp = await self._call_json_rpc(
+                    ws,
+                    "textDocument/formatting",
+                    DocumentFormattingParams(
+                        textDocument=TextDocumentIdentifier(uri=inputfile.as_uri()),
+                        options=make_formatting_options(),
+                    ),
+                )
+                self.assertIsInstance(resp, list)
+                self.assertGreaterEqual(len(resp), 1)
+
+    @unittest_run_loop
+    async def test_lsp_formatting_no_changes(self) -> None:
+        with TemporaryDirectory() as dir:
+            inputfile = Path(dir) / "somefile.py"
+            inputfile.write_bytes(b'print("hello world")\n')
+            async with self.client.ws_connect("/lsp") as ws:
+                resp = await self._call_json_rpc(
+                    ws,
+                    "textDocument/formatting",
+                    DocumentFormattingParams(
+                        textDocument=TextDocumentIdentifier(uri=inputfile.as_uri()),
+                        options=make_formatting_options(),
+                    ),
+                )
+                self.assertIsInstance(resp, list)
+                self.assertEqual(resp, [])
+
+    @unittest_run_loop
+    async def test_lsp_formatting_syntax_error(self) -> None:
+        with TemporaryDirectory() as dir:
+            inputfile = Path(dir) / "somefile.py"
+            inputfile.write_bytes(b"print(")
+            async with self.client.ws_connect("/lsp") as ws:
+                resp = await self._call_json_rpc(
+                    ws,
+                    "textDocument/formatting",
+                    DocumentFormattingParams(
+                        textDocument=TextDocumentIdentifier(uri=inputfile.as_uri()),
+                        options=make_formatting_options(),
+                    ),
+                    expect_success=False,
+                )
+                self.assertIn("error", resp)
