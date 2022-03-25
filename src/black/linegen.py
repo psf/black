@@ -843,27 +843,28 @@ def normalize_invisible_parens(
             check_lpar = True
 
         if check_lpar:
-            if child.type == syms.atom:
+            if (
+                preview
+                and child.type == syms.atom
+                and node.type == syms.for_stmt
+                and isinstance(child.prev_sibling, Leaf)
+                and child.prev_sibling.type == token.NAME
+                and child.prev_sibling.value == "for"
+            ):
                 if maybe_make_parens_invisible_in_atom(
                     child,
                     parent=node,
-                    preview=preview,
+                    remove_brackets_around_comma=True,
                 ):
                     wrap_in_parentheses(node, child, visible=False)
-            elif (
-                preview
-                and isinstance(child, Node)
-                and child.type == syms.asexpr_test
-                and not any(leaf.type == token.COLONEQUAL for leaf in child.leaves())
-            ):
-                # make parentheses invisible,
-                # unless the asexpr contains an assignment expression.
+            elif preview and isinstance(child, Node) and node.type == syms.with_stmt:
+                remove_with_parens(child, node)
+            elif child.type == syms.atom:
                 if maybe_make_parens_invisible_in_atom(
-                    child.children[0],
-                    parent=child,
-                    preview=preview,
+                    child,
+                    parent=node,
                 ):
-                    wrap_in_parentheses(child, child.children[0], visible=False)
+                    wrap_in_parentheses(node, child, visible=False)
             elif is_one_tuple(child):
                 wrap_in_parentheses(node, child, visible=True)
             elif node.type == syms.import_from:
@@ -890,40 +891,54 @@ def normalize_invisible_parens(
         )
 
 
+def remove_with_parens(node: Node, parent: Node) -> None:
+    """Recursively hide optional parens in `with` statements."""
+    if node.type == syms.atom:
+        if maybe_make_parens_invisible_in_atom(
+            node,
+            parent=parent,
+            remove_brackets_around_comma=True,
+        ):
+            wrap_in_parentheses(parent, node, visible=False)
+        if isinstance(node.children[1], Node):
+            remove_with_parens(node.children[1], node)
+    elif node.type == syms.testlist_gexp:
+        for child in node.children:
+            if isinstance(child, Node):
+                remove_with_parens(child, node)
+    elif node.type == syms.asexpr_test and not any(
+        leaf.type == token.COLONEQUAL for leaf in node.leaves()
+    ):
+        if maybe_make_parens_invisible_in_atom(
+            node.children[0],
+            parent=parent,
+            remove_brackets_around_comma=True,
+        ):
+            wrap_in_parentheses(parent, node.children[0], visible=False)
+
+
 def maybe_make_parens_invisible_in_atom(
     node: LN,
     parent: LN,
-    preview: bool = False,
+    remove_brackets_around_comma: bool = False,
 ) -> bool:
     """If it's safe, make the parens in the atom `node` invisible, recursively.
     Additionally, remove repeated, adjacent invisible parens from the atom `node`
     as they are redundant.
 
     Returns whether the node should itself be wrapped in invisible parentheses.
-
-    `preview` enables the preview feature for removing redundant parentheses.
     """
-    with_stmt_check = parent.type != syms.with_stmt if preview else True
-    if (
-        preview
-        and parent.type == syms.for_stmt
-        and isinstance(node.prev_sibling, Leaf)
-        and node.prev_sibling.type == token.NAME
-        and node.prev_sibling.value == "for"
-    ):
-        for_stmt_check = False
-    else:
-        for_stmt_check = True
-
     if (
         node.type != syms.atom
         or is_empty_tuple(node)
         or is_one_tuple(node)
         or (is_yield(node) and parent.type != syms.expr_stmt)
         or (
-            max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
-            and with_stmt_check
-            and for_stmt_check
+            # This condition tries to prevent removing non-optional brackets
+            # around a tuple, however, can be a bit overzealous so we provide
+            # and option to skip this check for `for` and `with` statements.
+            not remove_brackets_around_comma
+            and max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
         )
     ):
         return False
@@ -947,7 +962,11 @@ def maybe_make_parens_invisible_in_atom(
         # make parentheses invisible
         first.value = ""
         last.value = ""
-        maybe_make_parens_invisible_in_atom(middle, parent=parent, preview=preview)
+        maybe_make_parens_invisible_in_atom(
+            middle,
+            parent=parent,
+            remove_brackets_around_comma=remove_brackets_around_comma,
+        )
 
         if is_atom_with_invisible_parens(middle):
             # Strip the invisible parens from `middle` by replacing
