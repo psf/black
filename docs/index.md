@@ -19,7 +19,7 @@ can focus on the content instead.
 
 Try it out now using the [Black Playground](https://black.vercel.app).
 
-:::{admonition} Note - Black is now stable!
+```{admonition} Note - Black is now stable!
 *Black* is [successfully used](https://github.com/psf/black#used-by) by
 many projects, small and big. *Black* has a comprehensive test suite, with efficient
 parallel tests, our own auto formatting and parallel Continuous Integration runner.
@@ -32,11 +32,11 @@ reformatted code still produces a valid AST that is effectively equivalent to th
 original (see the
 [Pragmatism](./the_black_code_style/current_style.md#pragmatism)
 section for details). If you're feeling confident, use `--fast`.
-:::
+```
 
-:::{note}
+```{note}
 {doc}`Black is licensed under the MIT license <license>`.
-:::
+```
 
 ## Testimonials
 
