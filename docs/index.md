@@ -87,46 +87,50 @@ Looks like this:
 
 ## Contents
 
-```{eval-rst}
-.. toctree::
-   :maxdepth: 3
-   :includehidden:
+```{toctree}
+---
+maxdepth: 3
+includehidden:
+---
 
-   the_black_code_style/index
+the_black_code_style/index
 ```
 
-```{eval-rst}
-.. toctree::
-   :maxdepth: 3
-   :includehidden:
-   :caption: User Guide
+```{toctree}
+---
+maxdepth: 3
+includehidden:
+caption: User Guide
+---
 
-   getting_started
-   usage_and_configuration/index
-   integrations/index
-   guides/index
-   faq
+getting_started
+usage_and_configuration/index
+integrations/index
+guides/index
+faq
 ```
 
-```{eval-rst}
-.. toctree::
-   :maxdepth: 2
-   :includehidden:
-   :caption: Development
+```{toctree}
+---
+maxdepth: 2
+includehidden:
+caption: Development
+---
 
-   contributing/index
-   change_log
-   authors
+contributing/index
+change_log
+authors
 ```
 
-```{eval-rst}
-.. toctree::
-   :hidden:
-   :caption: Project Links
+```{toctree}
+---
+hidden:
+caption: Project Links
+---
 
-   GitHub <https://github.com/psf/black>
-   PyPI <https://pypi.org/project/black>
-   Chat <https://discord.gg/RtVdv86PrH>
+GitHub <https://github.com/psf/black>
+PyPI <https://pypi.org/project/black>
+Chat <https://discord.gg/RtVdv86PrH>
 ```
 
 # Indices and tables

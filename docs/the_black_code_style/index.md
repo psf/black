@@ -1,11 +1,12 @@
 # The Black Code Style
 
-```{eval-rst}
-.. toctree::
-    :hidden:
+```{toctree}
+---
+hidden:
+---
 
-    Current style <current_style>
-    Future style <future_style>
+Current style <current_style>
+Future style <future_style>
 ```
 
 _Black_ is a PEP 8 compliant opinionated formatter with its own style.

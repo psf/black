@@ -1,14 +1,15 @@
 # Contributing
 
-```{eval-rst}
-.. toctree::
-  :hidden:
+```{toctree}
+---
+hidden:
+---
 
-  the_basics
-  gauging_changes
-  issue_triage
-  release_process
-  reference/reference_summary
+the_basics
+gauging_changes
+issue_triage
+release_process
+reference/reference_summary
 ```
 
 Welcome! Happy to see you willing to make the project better. Have you read the entire

@@ -1,12 +1,13 @@
 # Integrations
 
-```{eval-rst}
-.. toctree::
-    :hidden:
+```{toctree}
+---
+hidden:
+---
 
-    editors
-    github_actions
-    source_version_control
+editors
+github_actions
+source_version_control
 ```
 
 _Black_ can be integrated into many environments, providing a better and smoother

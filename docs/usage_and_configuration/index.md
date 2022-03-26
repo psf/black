@@ -1,13 +1,14 @@
 # Usage and Configuration
 
-```{eval-rst}
-.. toctree::
-  :hidden:
+```{toctree}
+---
+hidden:
+---
 
-  the_basics
-  file_collection_and_discovery
-  black_as_a_server
-  black_docker_image
+the_basics
+file_collection_and_discovery
+black_as_a_server
+black_docker_image
 ```
 
 Sometimes, running _Black_ with its defaults and passing filepaths to it just won't cut

@@ -1,11 +1,12 @@
 # Guides
 
-```{eval-rst}
-.. toctree::
-  :hidden:
+```{toctree}
+---
+hidden:
+---
 
-  introducing_black_to_your_project
-  using_black_with_other_tools
+introducing_black_to_your_project
+using_black_with_other_tools
 ```
 
 Wondering how to do something specific? You've found the right place! Listed below are
