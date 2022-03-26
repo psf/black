@@ -7,15 +7,13 @@ sphinx-quickstart on Fri Mar 23 10:53:30 2018.
 
 > “Any color you like.”
 
-By using *Black*, you agree to cede control over minutiae of
-hand-formatting. In return, *Black* gives you speed, determinism, and
-freedom from `pycodestyle` nagging about formatting. You will save time
-and mental energy for more important matters.
+By using _Black_, you agree to cede control over minutiae of hand-formatting. In return,
+_Black_ gives you speed, determinism, and freedom from `pycodestyle` nagging about
+formatting. You will save time and mental energy for more important matters.
 
-*Black* makes code review faster by producing the smallest diffs
-possible. Blackened code looks the same regardless of the project
-you're reading. Formatting becomes transparent after a while and you
-can focus on the content instead.
+_Black_ makes code review faster by producing the smallest diffs possible. Blackened
+code looks the same regardless of the project you're reading. Formatting becomes
+transparent after a while and you can focus on the content instead.
 
 Try it out now using the [Black Playground](https://black.vercel.app).
 
@@ -42,28 +40,29 @@ section for details). If you're feeling confident, use `--fast`.
 
 **Mike Bayer**, author of [SQLAlchemy](https://www.sqlalchemy.org/):
 
-> *I can't think of any single tool in my entire programming career that has given me a
+> _I can't think of any single tool in my entire programming career that has given me a
 > bigger productivity increase by its introduction. I can now do refactorings in about
 > 1% of the keystrokes that it would have taken me previously when we had no way for
-> code to format itself.*
+> code to format itself._
 
-**Dusty Phillips**, [writer](https://smile.amazon.com/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=dusty+phillips):
+**Dusty Phillips**,
+[writer](https://smile.amazon.com/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=dusty+phillips):
 
-> *Black is opinionated so you don't have to be.*
+> _Black is opinionated so you don't have to be._
 
-**Hynek Schlawack**, creator of [attrs](https://www.attrs.org/), core
-developer of Twisted and CPython:
+**Hynek Schlawack**, creator of [attrs](https://www.attrs.org/), core developer of
+Twisted and CPython:
 
-> *An auto-formatter that doesn't suck is all I want for Xmas!*
+> _An auto-formatter that doesn't suck is all I want for Xmas!_
 
 **Carl Meyer**, [Django](https://www.djangoproject.com/) core developer:
 
-> *At least the name is good.*
+> _At least the name is good._
 
-**Kenneth Reitz**, creator of [requests](http://python-requests.org/)
-and [pipenv](https://docs.pipenv.org/):
+**Kenneth Reitz**, creator of [requests](http://python-requests.org/) and
+[pipenv](https://docs.pipenv.org/):
 
-> *This vastly improves the formatting of our code. Thanks a ton!*
+> _This vastly improves the formatting of our code. Thanks a ton!_
 
 ## Show your style
 
