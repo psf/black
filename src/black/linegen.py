@@ -914,10 +914,10 @@ def remove_with_parens(node: Node, parent: Node) -> None:
     ):
         if maybe_make_parens_invisible_in_atom(
             node.children[0],
-            parent=parent,
+            parent=node,
             remove_brackets_around_comma=True,
         ):
-            wrap_in_parentheses(parent, node.children[0], visible=False)
+            wrap_in_parentheses(node, node.children[0], visible=False)
 
 
 def maybe_make_parens_invisible_in_atom(
