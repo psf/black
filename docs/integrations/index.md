@@ -22,7 +22,7 @@ Editors and tools not listed will require external contributions.
 Patches welcome! ✨ 🍰 ✨
 
 Any tool can pipe code through _Black_ using its stdio mode (just
-[use \`-\` as the file name](https://www.tldp.org/LDP/abs/html/special-chars.html#DASHREF2)).
+[use `-` as the file name](https://www.tldp.org/LDP/abs/html/special-chars.html#DASHREF2)).
 The formatted code will be returned on stdout (unless `--check` was passed). _Black_
 will still emit messages on stderr but that shouldn't affect your use case.
 
