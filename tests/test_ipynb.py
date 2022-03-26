@@ -24,6 +24,8 @@ pytest.importorskip("tokenize_rt", reason="tokenize-rt is an optional dependency
 
 JUPYTER_MODE = Mode(is_ipynb=True)
 
+EMPTY_CONFIG = DATA_DIR / "empty_pyproject.toml"
+
 runner = CliRunner()
 
 
@@ -410,9 +412,10 @@ def test_ipynb_diff_with_change() -> None:
         [
             str(DATA_DIR / "notebook_trailing_newline.ipynb"),
             "--diff",
+            f"--config={EMPTY_CONFIG}",
         ],
     )
-    expected = "@@ -1,3 +1,3 @@\n %%time\n \n-print('foo')\n" '+print("foo")\n'
+    expected = "@@ -1,3 +1,3 @@\n %%time\n \n-print('foo')\n+print(\"foo\")\n"
     assert expected in result.output
 
 
@@ -422,6 +425,7 @@ def test_ipynb_diff_with_no_change() -> None:
         [
             str(DATA_DIR / "notebook_without_changes.ipynb"),
             "--diff",
+            f"--config={EMPTY_CONFIG}",
         ],
     )
     expected = "1 file would be left unchanged."
@@ -440,13 +444,17 @@ def test_cache_isnt_written_if_no_jupyter_deps_single(
     monkeypatch.setattr(
         "black.jupyter_dependencies_are_installed", lambda verbose, quiet: False
     )
-    result = runner.invoke(main, [str(tmp_path / "notebook.ipynb")])
+    result = runner.invoke(
+        main, [str(tmp_path / "notebook.ipynb"), f"--config={EMPTY_CONFIG}"]
+    )
     assert "No Python files are present to be formatted. Nothing to do" in result.output
     jupyter_dependencies_are_installed.cache_clear()
     monkeypatch.setattr(
         "black.jupyter_dependencies_are_installed", lambda verbose, quiet: True
     )
-    result = runner.invoke(main, [str(tmp_path / "notebook.ipynb")])
+    result = runner.invoke(
+        main, [str(tmp_path / "notebook.ipynb"), f"--config={EMPTY_CONFIG}"]
+    )
     assert "reformatted" in result.output
 
 
@@ -462,13 +470,13 @@ def test_cache_isnt_written_if_no_jupyter_deps_dir(
     monkeypatch.setattr(
         "black.files.jupyter_dependencies_are_installed", lambda verbose, quiet: False
     )
-    result = runner.invoke(main, [str(tmp_path)])
+    result = runner.invoke(main, [str(tmp_path), f"--config={EMPTY_CONFIG}"])
     assert "No Python files are present to be formatted. Nothing to do" in result.output
     jupyter_dependencies_are_installed.cache_clear()
     monkeypatch.setattr(
         "black.files.jupyter_dependencies_are_installed", lambda verbose, quiet: True
     )
-    result = runner.invoke(main, [str(tmp_path)])
+    result = runner.invoke(main, [str(tmp_path), f"--config={EMPTY_CONFIG}"])
     assert "reformatted" in result.output
 
 
@@ -483,9 +491,10 @@ def test_ipynb_flag(tmp_path: pathlib.Path) -> None:
             str(tmp_nb),
             "--diff",
             "--ipynb",
+            f"--config={EMPTY_CONFIG}",
         ],
     )
-    expected = "@@ -1,3 +1,3 @@\n %%time\n \n-print('foo')\n" '+print("foo")\n'
+    expected = "@@ -1,3 +1,3 @@\n %%time\n \n-print('foo')\n+print(\"foo\")\n"
     assert expected in result.output
 
 
@@ -498,6 +507,7 @@ def test_ipynb_and_pyi_flags() -> None:
             "--pyi",
             "--ipynb",
             "--diff",
+            f"--config={EMPTY_CONFIG}",
         ],
     )
     assert isinstance(result.exception, SystemExit)

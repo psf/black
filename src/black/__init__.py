@@ -49,7 +49,12 @@ from black.cache import read_cache, write_cache, get_cache_info, filter_cached, 
 from black.concurrency import cancel, shutdown, maybe_install_uvloop
 from black.output import dump_to_file, ipynb_diff, diff, color_diff, out, err
 from black.report import Report, Changed, NothingChanged
-from black.files import find_project_root, find_pyproject_toml, parse_pyproject_toml
+from black.files import (
+    find_project_root,
+    find_pyproject_toml,
+    parse_pyproject_toml,
+    find_user_pyproject_toml,
+)
 from black.files import gen_python_files, get_gitignore, normalize_path_maybe_ignore
 from black.files import wrap_stream_for_windows
 from black.parsing import InvalidInput  # noqa F401
@@ -402,7 +407,7 @@ def validate_regex(
     help="Read configuration from FILE path.",
 )
 @click.pass_context
-def main(
+def main(  # noqa: C901
     ctx: click.Context,
     code: Optional[str],
     line_length: int,
@@ -469,7 +474,17 @@ def main(
 
         if config:
             config_source = ctx.get_parameter_source("config")
-            if config_source in (ParameterSource.DEFAULT, ParameterSource.DEFAULT_MAP):
+            user_level_config = str(find_user_pyproject_toml())
+            if config == user_level_config:
+                out(
+                    "Using configuration from user-level config at "
+                    f"'{user_level_config}'.",
+                    fg="blue",
+                )
+            elif config_source in (
+                ParameterSource.DEFAULT,
+                ParameterSource.DEFAULT_MAP,
+            ):
                 out("Using configuration from project root.", fg="blue")
             else:
                 out(f"Using configuration in '{config}'.", fg="blue")
@@ -682,6 +697,9 @@ def reformat_code(
         report.failed(path, str(exc))
 
 
+# diff-shades depends on being to monkeypatch this function to operate. I know it's
+# not ideal, but this shouldn't cause any issues ... hopefully. ~ichard26
+@mypyc_attr(patchable=True)
 def reformat_one(
     src: Path, fast: bool, write_back: WriteBack, mode: Mode, report: "Report"
 ) -> None:
@@ -1151,7 +1169,7 @@ def _format_str_once(src_contents: str, *, mode: Mode) -> str:
     else:
         versions = detect_target_versions(src_node, future_imports=future_imports)
 
-    normalize_fmt_off(src_node)
+    normalize_fmt_off(src_node, preview=mode.preview)
     lines = LineGenerator(mode=mode)
     elt = EmptyLineTracker(is_pyi=mode.is_pyi)
     empty_line = Line(mode=mode)
@@ -1343,10 +1361,10 @@ def assert_equivalent(src: str, dst: str) -> None:
         src_ast = parse_ast(src)
     except Exception as exc:
         raise AssertionError(
-            f"cannot use --safe with this file; failed to parse source file AST: "
+            "cannot use --safe with this file; failed to parse source file AST: "
             f"{exc}\n"
-            f"This could be caused by running Black with an older Python version "
-            f"that does not support new syntax used in your source file."
+            "This could be caused by running Black with an older Python version "
+            "that does not support new syntax used in your source file."
         ) from exc
 
     try:
@@ -1365,7 +1383,7 @@ def assert_equivalent(src: str, dst: str) -> None:
         log = dump_to_file(diff(src_ast_str, dst_ast_str, "src", "dst"))
         raise AssertionError(
             "INTERNAL ERROR: Black produced code that is not equivalent to the"
-            f" source.  Please report a bug on "
+            " source.  Please report a bug on "
             f"https://github.com/psf/black/issues.  This diff might be helpful: {log}"
         ) from None
 
