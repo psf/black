@@ -1429,11 +1429,10 @@ def patch_click() -> None:
     """
     try:
         from click import core
-        from click import _unicodefun
     except ModuleNotFoundError:
         return
 
-    for module in (core, _unicodefun):
+    for module in core:
         if hasattr(module, "_verify_python3_env"):
             module._verify_python3_env = lambda: None  # type: ignore
         if hasattr(module, "_verify_python_env"):
