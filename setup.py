@@ -96,7 +96,7 @@ setup(
     python_requires=">=3.6.2",
     zip_safe=False,
     install_requires=[
-        "click>=8.0.0",
+        "click>=8.0.0, <=8.0.4",
         "platformdirs>=2",
         "tomli>=1.1.0; python_version < '3.11'",
         "typed-ast>=1.4.2; python_version < '3.8' and implementation_name == 'cpython'",
