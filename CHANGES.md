@@ -55,6 +55,8 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
+- Pin `Click` to versions 8.0.0 through 8.0.4 to preserve Python 3.6 compatibility
+  (#2965)
 - On Python 3.11 and newer, use the standard library's `tomllib` instead of `tomli`
   (#2903)
 - `black-primer`, the deprecated internal devtool, has been removed and copied to a
