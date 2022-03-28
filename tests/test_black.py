@@ -1257,7 +1257,7 @@ class BlackTestCase(BlackBaseTestCase):
     def test_shhh_click(self) -> None:
         try:
             from click import _unicodefun
-        except ModuleNotFoundError:
+        except ImportError:
             self.skipTest("Incompatible Click version")
         if not hasattr(_unicodefun, "_verify_python3_env"):
             self.skipTest("Incompatible Click version")
