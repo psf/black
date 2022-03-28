@@ -55,6 +55,7 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
+- Fix Black to work with Click 8.1.0 (#2966)
 - On Python 3.11 and newer, use the standard library's `tomllib` instead of `tomli`
   (#2903)
 - `black-primer`, the deprecated internal devtool, has been removed and copied to a
