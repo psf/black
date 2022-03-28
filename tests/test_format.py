@@ -44,6 +44,7 @@ SIMPLE_CASES: List[str] = [
     "fmtskip4",
     "fmtskip5",
     "fmtskip6",
+    "fmtskip7",
     "fstring",
     "function",
     "function2",

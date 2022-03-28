@@ -214,8 +214,11 @@ def generate_ignored_nodes(
     container: Optional[LN] = container_of(leaf)
     if comment.value in FMT_SKIP:
         prev_sibling = leaf.prev_sibling
-        if comment.value in leaf.prefix and prev_sibling is not None:
-            leaf.prefix = leaf.prefix.replace(comment.value, "")
+        # Need to properly format the leaf prefix to compare it to comment.value,
+        # which is also formatted
+        comments = list_comments(leaf.prefix, is_endmarker=False, preview=preview)
+        if comments and comment.value == comments[0].value and prev_sibling is not None:
+            leaf.prefix = ""
             siblings = [prev_sibling]
             while (
                 "\n" not in prev_sibling.prefix
