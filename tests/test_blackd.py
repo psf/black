@@ -1,4 +1,5 @@
 import re
+from typing import Any
 from unittest.mock import patch
 
 from click.testing import CliRunner
@@ -8,12 +9,18 @@ from tests.util import read_data, DETERMINISTIC_HEADER
 
 try:
     import blackd
-    from aiohttp.test_utils import AioHTTPTestCase, unittest_run_loop
+    from aiohttp.test_utils import AioHTTPTestCase
     from aiohttp import web
+except ImportError as e:
+    raise RuntimeError("Please install Black with the 'd' extra") from e
+
+try:
+    from aiohttp.test_utils import unittest_run_loop
 except ImportError:
-    has_blackd_deps = False
-else:
-    has_blackd_deps = True
+    # unittest_run_loop is unnecessary and a no-op since aiohttp 3.8, and aiohttp 4
+    # removed it. To maintain compatibility we can make our own no-op decorator.
+    def unittest_run_loop(func: Any, *args: Any, **kwargs: Any) -> Any:
+        return func
 
 
 @pytest.mark.blackd
