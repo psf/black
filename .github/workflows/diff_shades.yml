@@ -68,7 +68,7 @@ jobs:
 
       - name: Attempt to use cached baseline analysis
         id: baseline-cache
-        uses: actions/cache@v2.1.7
+        uses: actions/cache@v3
         with:
           path: ${{ matrix.baseline-analysis }}
           key: ${{ matrix.baseline-cache-key }}
