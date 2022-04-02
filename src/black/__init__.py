@@ -1435,7 +1435,9 @@ def patch_click() -> None:
     else:
         modules.append(core)
     try:
-        from click import _unicodefun
+        # Removed in Click 8.1.0 and newer; we keep this around for users who have
+        # older versions installed.
+        from click import _unicodefun  # type: ignore
     except ImportError:
         pass
     else:

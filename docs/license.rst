@@ -1,6 +1,0 @@
-:orphan:
-
-License
-=======
-
-.. include:: ../LICENSE
