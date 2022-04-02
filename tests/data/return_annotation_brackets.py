@@ -53,6 +53,27 @@ def foo(a: int, b: int, c: int,) -> intsdfsafafafdfdsasdfsfsdfasdfafdsafdfdsfasd
 def foo(a: int, b: int, c: int,) -> int:
     return 2
 
+# Deeply nested brackets
+# with *interesting* spacing
+def double(a: int) -> (((((int))))):
+    return 2*a
+
+def double(a: int) -> (
+    (  (
+        ((int)
+         )
+           )
+            )
+        ):
+    return 2*a
+
+def foo() -> (
+    (  (
+    intsdfsafafafdfdsasdfsfsdfasdfafdsafdfdsfasdskdsdsfdsafdsafsdfdasfffsfdsfdsafafhdskfhdsfjdslkfdlfsdkjhsdfjkdshfkljds
+)
+)):
+    return 2
+
 # output
 # Control
 def double(a: int) -> int:
@@ -131,4 +152,20 @@ def foo(
     b: int,
     c: int,
 ) -> int:
+    return 2
+
+
+# Deeply nested brackets
+# with *interesting* spacing
+def double(a: int) -> int:
+    return 2 * a
+
+
+def double(a: int) -> int:
+    return 2 * a
+
+
+def foo() -> (
+    intsdfsafafafdfdsasdfsfsdfasdfafdsafdfdsfasdskdsdsfdsafdsafsdfdasfffsfdsfdsafafhdskfhdsfjdslkfdlfsdkjhsdfjkdshfkljds
+):
     return 2
