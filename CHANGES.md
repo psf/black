@@ -14,6 +14,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Optional brackets around return anotations (#2990)
+
 ### _Blackd_
 
 <!-- Changes to blackd -->

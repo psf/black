@@ -83,6 +83,7 @@ PREVIEW_CASES: List[str] = [
     "remove_except_parens",
     "remove_for_brackets",
     "one_element_subscript",
+    "return_annotation_brackets",
 ]
 
 SOURCES: List[str] = [
