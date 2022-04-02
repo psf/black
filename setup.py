@@ -98,7 +98,7 @@ setup(
     install_requires=[
         "click>=8.0.0",
         "platformdirs>=2",
-        "tomli>=1.1.0; python_version < '3.11'",
+        "tomli>=1.1.0; python_full_version < '3.11.0a7'",
         "typed-ast>=1.4.2; python_version < '3.8' and implementation_name == 'cpython'",
         "pathspec>=0.9.0",
         "dataclasses>=0.6; python_version < '3.7'",
