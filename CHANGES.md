@@ -14,7 +14,7 @@
 
 <!-- Changes that affect Black's preview style -->
 
-- Optional brackets around return anotations (#2990)
+- Parentheses around return annotations are now managed (#2990)
 
 ### _Blackd_
 
