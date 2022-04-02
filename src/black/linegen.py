@@ -896,6 +896,22 @@ def normalize_invisible_parens(
 
 def remove_with_parens(node: Node, parent: Node) -> None:
     """Recursively hide optional parens in `with` statements."""
+    # Removing all unnecessary parentheses in with statements in one pass is a tad
+    # complex as different variations of bracketed statements result in pretty
+    # different parse trees:
+    #
+    # with (open("file")) as f:                       # this is an asexpr_test
+    #     ...
+    #
+    # with (open("file") as f):                       # this is an atom containing an
+    #     ...                                         # asexpr_test
+    #
+    # with (open("file")) as f, (open("file")) as f:  # this is asexpr_test, COMMA,
+    #     ...                                         # asexpr_test
+    #
+    # with (open("file") as f, open("file") as f):    # an atom containing a
+    #     ...                                         # testlist_gexp which then
+    #                                                 # contains multiple asexpr_test(s)
     if node.type == syms.atom:
         if maybe_make_parens_invisible_in_atom(
             node,
