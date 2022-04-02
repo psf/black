@@ -49,7 +49,12 @@ from black.cache import read_cache, write_cache, get_cache_info, filter_cached, 
 from black.concurrency import cancel, shutdown, maybe_install_uvloop
 from black.output import dump_to_file, ipynb_diff, diff, color_diff, out, err
 from black.report import Report, Changed, NothingChanged
-from black.files import find_project_root, find_pyproject_toml, parse_pyproject_toml
+from black.files import (
+    find_project_root,
+    find_pyproject_toml,
+    parse_pyproject_toml,
+    find_user_pyproject_toml,
+)
 from black.files import gen_python_files, get_gitignore, normalize_path_maybe_ignore
 from black.files import wrap_stream_for_windows
 from black.parsing import InvalidInput  # noqa F401
@@ -291,7 +296,8 @@ def validate_regex(
     type=str,
     help=(
         "Require a specific version of Black to be running (useful for unifying results"
-        " across many environments e.g. with a pyproject.toml file)."
+        " across many environments e.g. with a pyproject.toml file). It can be"
+        " either a major version number or an exact version."
     ),
 )
 @click.option(
@@ -401,7 +407,7 @@ def validate_regex(
     help="Read configuration from FILE path.",
 )
 @click.pass_context
-def main(
+def main(  # noqa: C901
     ctx: click.Context,
     code: Optional[str],
     line_length: int,
@@ -468,13 +474,27 @@ def main(
 
         if config:
             config_source = ctx.get_parameter_source("config")
-            if config_source in (ParameterSource.DEFAULT, ParameterSource.DEFAULT_MAP):
+            user_level_config = str(find_user_pyproject_toml())
+            if config == user_level_config:
+                out(
+                    "Using configuration from user-level config at "
+                    f"'{user_level_config}'.",
+                    fg="blue",
+                )
+            elif config_source in (
+                ParameterSource.DEFAULT,
+                ParameterSource.DEFAULT_MAP,
+            ):
                 out("Using configuration from project root.", fg="blue")
             else:
                 out(f"Using configuration in '{config}'.", fg="blue")
 
     error_msg = "Oh no! 💥 💔 💥"
-    if required_version and required_version != __version__:
+    if (
+        required_version
+        and required_version != __version__
+        and required_version != __version__.split(".")[0]
+    ):
         err(
             f"{error_msg} The required version `{required_version}` does not match"
             f" the running version `{__version__}`!"
@@ -677,6 +697,9 @@ def reformat_code(
         report.failed(path, str(exc))
 
 
+# diff-shades depends on being to monkeypatch this function to operate. I know it's
+# not ideal, but this shouldn't cause any issues ... hopefully. ~ichard26
+@mypyc_attr(patchable=True)
 def reformat_one(
     src: Path, fast: bool, write_back: WriteBack, mode: Mode, report: "Report"
 ) -> None:
@@ -1146,7 +1169,7 @@ def _format_str_once(src_contents: str, *, mode: Mode) -> str:
     else:
         versions = detect_target_versions(src_node, future_imports=future_imports)
 
-    normalize_fmt_off(src_node)
+    normalize_fmt_off(src_node, preview=mode.preview)
     lines = LineGenerator(mode=mode)
     elt = EmptyLineTracker(is_pyi=mode.is_pyi)
     empty_line = Line(mode=mode)
@@ -1338,10 +1361,10 @@ def assert_equivalent(src: str, dst: str) -> None:
         src_ast = parse_ast(src)
     except Exception as exc:
         raise AssertionError(
-            f"cannot use --safe with this file; failed to parse source file AST: "
+            "cannot use --safe with this file; failed to parse source file AST: "
             f"{exc}\n"
-            f"This could be caused by running Black with an older Python version "
-            f"that does not support new syntax used in your source file."
+            "This could be caused by running Black with an older Python version "
+            "that does not support new syntax used in your source file."
         ) from exc
 
     try:
@@ -1360,7 +1383,7 @@ def assert_equivalent(src: str, dst: str) -> None:
         log = dump_to_file(diff(src_ast_str, dst_ast_str, "src", "dst"))
         raise AssertionError(
             "INTERNAL ERROR: Black produced code that is not equivalent to the"
-            f" source.  Please report a bug on "
+            " source.  Please report a bug on "
             f"https://github.com/psf/black/issues.  This diff might be helpful: {log}"
         ) from None
 
@@ -1404,13 +1427,23 @@ def patch_click() -> None:
     file paths is minimal since it's Python source code.  Moreover, this crash was
     spurious on Python 3.7 thanks to PEP 538 and PEP 540.
     """
+    modules: List[Any] = []
     try:
         from click import core
-        from click import _unicodefun
-    except ModuleNotFoundError:
-        return
+    except ImportError:
+        pass
+    else:
+        modules.append(core)
+    try:
+        # Removed in Click 8.1.0 and newer; we keep this around for users who have
+        # older versions installed.
+        from click import _unicodefun  # type: ignore
+    except ImportError:
+        pass
+    else:
+        modules.append(_unicodefun)
 
-    for module in (core, _unicodefun):
+    for module in modules:
         if hasattr(module, "_verify_python3_env"):
             module._verify_python3_env = lambda: None  # type: ignore
         if hasattr(module, "_verify_python_env"):

@@ -17,7 +17,10 @@ extend-exclude = '''
   | profiling
 )/
 '''
-
+# We use preview style for formatting Black itself. If you
+# want stable formatting across releases, you should keep
+# this off.
+preview = true
 
 # Build system information below.
 # NOTE: You don't need this in your own Black configuration.

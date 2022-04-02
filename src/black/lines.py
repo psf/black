@@ -17,12 +17,12 @@ from blib2to3.pytree import Node, Leaf
 from blib2to3.pgen2 import token
 
 from black.brackets import BracketTracker, DOT_PRIORITY
-from black.mode import Mode
+from black.mode import Mode, Preview
 from black.nodes import STANDALONE_COMMENT, TEST_DESCENDANTS
 from black.nodes import BRACKETS, OPENING_BRACKETS, CLOSING_BRACKETS
 from black.nodes import syms, whitespace, replace_child, child_towards
 from black.nodes import is_multiline_string, is_import, is_type_comment
-from black.nodes import is_one_tuple_between
+from black.nodes import is_one_sequence_between
 
 # types
 T = TypeVar("T")
@@ -254,6 +254,7 @@ class Line:
         """Return True if we have a magic trailing comma, that is when:
         - there's a trailing comma here
         - it's not a one-tuple
+        - it's not a single-element subscript
         Additionally, if ensure_removable:
         - it's not from square bracket indexing
         """
@@ -268,6 +269,20 @@ class Line:
             return True
 
         if closing.type == token.RSQB:
+            if (
+                Preview.one_element_subscript in self.mode
+                and closing.parent
+                and closing.parent.type == syms.trailer
+                and closing.opening_bracket
+                and is_one_sequence_between(
+                    closing.opening_bracket,
+                    closing,
+                    self.leaves,
+                    brackets=(token.LSQB, token.RSQB),
+                )
+            ):
+                return False
+
             if not ensure_removable:
                 return True
             comma = self.leaves[-1]
@@ -276,7 +291,7 @@ class Line:
         if self.is_import:
             return True
 
-        if closing.opening_bracket is not None and not is_one_tuple_between(
+        if closing.opening_bracket is not None and not is_one_sequence_between(
             closing.opening_bracket, closing, self.leaves
         ):
             return True

@@ -399,16 +399,11 @@ recommended code style for those files is more terse than PEP 8:
 _Black_ enforces the above rules. There are additional guidelines for formatting `.pyi`
 file that are not enforced yet but might be in a future version of the formatter:
 
-- all function bodies should be empty (contain `...` instead of the body);
-- do not use docstrings;
 - prefer `...` over `pass`;
-- for arguments with a default, use `...` instead of the actual default;
 - avoid using string literals in type annotations, stub files support forward references
   natively (like Python 3.7 code with `from __future__ import annotations`);
 - use variable annotations instead of type comments, even for stubs that target older
-  versions of Python;
-- for arguments that default to `None`, use `Optional[]` explicitly;
-- use `float` instead of `Union[int, float]`.
+  versions of Python.
 
 ## Pragmatism
 
