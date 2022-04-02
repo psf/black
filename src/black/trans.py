@@ -365,7 +365,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
 
         is_valid_index = is_valid_index_factory(LL)
 
-        for (i, leaf) in enumerate(LL):
+        for i, leaf in enumerate(LL):
             if (
                 leaf.type == token.STRING
                 and is_valid_index(i + 1)
@@ -570,7 +570,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
 
         # Build the final line ('new_line') that this method will later return.
         new_line = line.clone()
-        for (i, leaf) in enumerate(LL):
+        for i, leaf in enumerate(LL):
             if i == string_idx:
                 new_line.append(string_leaf)
 
@@ -691,7 +691,7 @@ class StringParenStripper(StringTransformer):
 
         is_valid_index = is_valid_index_factory(LL)
 
-        for (idx, leaf) in enumerate(LL):
+        for idx, leaf in enumerate(LL):
             # Should be a string...
             if leaf.type != token.STRING:
                 continue
@@ -1713,7 +1713,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         if parent_type(LL[0]) == syms.assert_stmt and LL[0].value == "assert":
             is_valid_index = is_valid_index_factory(LL)
 
-            for (i, leaf) in enumerate(LL):
+            for i, leaf in enumerate(LL):
                 # We MUST find a comma...
                 if leaf.type == token.COMMA:
                     idx = i + 2 if is_empty_par(LL[i + 1]) else i + 1
@@ -1751,7 +1751,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         ):
             is_valid_index = is_valid_index_factory(LL)
 
-            for (i, leaf) in enumerate(LL):
+            for i, leaf in enumerate(LL):
                 # We MUST find either an '=' or '+=' symbol...
                 if leaf.type in [token.EQUAL, token.PLUSEQUAL]:
                     idx = i + 2 if is_empty_par(LL[i + 1]) else i + 1
@@ -1794,7 +1794,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         if syms.dictsetmaker in [parent_type(LL[0]), parent_type(LL[0].parent)]:
             is_valid_index = is_valid_index_factory(LL)
 
-            for (i, leaf) in enumerate(LL):
+            for i, leaf in enumerate(LL):
                 # We MUST find a colon...
                 if leaf.type == token.COLON:
                     idx = i + 2 if is_empty_par(LL[i + 1]) else i + 1
