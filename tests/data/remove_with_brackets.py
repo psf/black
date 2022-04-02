@@ -33,6 +33,26 @@ with (CtxManager1() as example1, CtxManager2() as example2, CtxManager2() as exa
 with (y := open("./test.py")) as f:
     pass
 
+# Deeply nested examples
+# N.B. Multiple brackets are only possible
+# around the context manager itself.
+# Only one brackets is allowed around the
+# alias expression or comma-delimited context managers.
+with (((open("bla.txt")))):
+    pass
+
+with (((open("bla.txt")))), (((open("bla.txt")))):
+    pass
+
+with (((open("bla.txt")))) as f:
+    pass
+
+with ((((open("bla.txt")))) as f):
+    pass
+
+with ((((CtxManager1()))) as example1, (((CtxManager2()))) as example2):
+    ...
+
 # output
 with open("bla.txt"):
     pass
@@ -77,3 +97,23 @@ with (
 # Don't touch assignment expressions
 with (y := open("./test.py")) as f:
     pass
+
+# Deeply nested examples
+# N.B. Multiple brackets are only possible
+# around the context manager itself.
+# Only one brackets is allowed around the
+# alias expression or comma-delimited context managers.
+with open("bla.txt"):
+    pass
+
+with open("bla.txt"), open("bla.txt"):
+    pass
+
+with open("bla.txt") as f:
+    pass
+
+with open("bla.txt") as f:
+    pass
+
+with CtxManager1() as example1, CtxManager2() as example2:
+    ...
