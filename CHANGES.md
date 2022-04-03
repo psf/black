@@ -15,6 +15,7 @@
 <!-- Changes that affect Black's preview style -->
 
 - Parentheses around return annotations are now managed (#2990)
+- Remove unnecessary parentheses from `with` statements (#2926)
 
 ### _Blackd_
 
