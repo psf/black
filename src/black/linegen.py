@@ -161,7 +161,7 @@ class LineGenerator(Visitor[Line]):
                         if maybe_make_parens_invisible_in_atom(
                             child,
                             parent=node,
-                            preview=self.mode.preview,
+                            remove_brackets_around_comma=False,
                         ):
                             wrap_in_parentheses(node, child, visible=False)
                     else:

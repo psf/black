@@ -74,6 +74,15 @@ def foo() -> (
 )):
     return 2
 
+# Return type with commas
+def foo() -> (
+    tuple[int, int, int]
+):
+    return 2
+
+def foo() -> tuple[loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong, loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong, loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong]:
+    return 2
+
 # output
 # Control
 def double(a: int) -> int:
@@ -167,5 +176,20 @@ def double(a: int) -> int:
 
 def foo() -> (
     intsdfsafafafdfdsasdfsfsdfasdfafdsafdfdsfasdskdsdsfdsafdsafsdfdasfffsfdsfdsafafhdskfhdsfjdslkfdlfsdkjhsdfjkdshfkljds
+):
+    return 2
+
+
+# Return type with commas
+def foo() -> tuple[int, int, int]:
+    return 2
+
+
+def foo() -> (
+    tuple[
+        loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong,
+        loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong,
+        loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong,
+    ]
 ):
     return 2
