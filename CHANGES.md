@@ -14,6 +14,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Remove unnecessary parentheses from `with` statements (#2926)
+
 ### _Blackd_
 
 <!-- Changes to blackd -->

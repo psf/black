@@ -192,6 +192,16 @@ def test_pep_570() -> None:
     assert_format(source, expected, minimum_version=(3, 8))
 
 
+def test_remove_with_brackets() -> None:
+    source, expected = read_data("remove_with_brackets")
+    assert_format(
+        source,
+        expected,
+        black.Mode(preview=True),
+        minimum_version=(3, 9),
+    )
+
+
 @pytest.mark.parametrize("filename", PY310_CASES)
 def test_python_310(filename: str) -> None:
     source, expected = read_data(filename)
