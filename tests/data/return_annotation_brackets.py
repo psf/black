@@ -83,6 +83,10 @@ def foo() -> (
 def foo() -> tuple[loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong, loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong, loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong]:
     return 2
 
+# Magic trailing comma example
+def foo() -> tuple[int, int, int,]:
+    return 2
+
 # output
 # Control
 def double(a: int) -> int:
@@ -190,6 +194,17 @@ def foo() -> (
         loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong,
         loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong,
         loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong,
+    ]
+):
+    return 2
+
+
+# Magic trailing comma example
+def foo() -> (
+    tuple[
+        int,
+        int,
+        int,
     ]
 ):
     return 2
