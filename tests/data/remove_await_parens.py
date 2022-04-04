@@ -57,6 +57,13 @@ async def main():
         )))))))))))))
     )
 
+# Keep brackets around non power operations and nested awaits
+async def main():
+    await (set_of_tasks | other_set)
+
+async def main():
+    await (await asyncio.sleep(1))
+
 # output
 import asyncio
 
@@ -120,3 +127,12 @@ async def main():
 # Cr@zY Br@ck3Tz
 async def main():
     await black(1)
+
+
+# Keep brackets around non power operations and nested awaits
+async def main():
+    await (set_of_tasks | other_set)
+
+
+async def main():
+    await (await asyncio.sleep(1))
