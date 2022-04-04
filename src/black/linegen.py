@@ -226,6 +226,37 @@ class LineGenerator(Visitor[Line]):
             ):
                 wrap_in_parentheses(node, leaf)
 
+        if (
+            Preview.remove_redundant_parens in self.mode
+            and node.children[0].type == token.AWAIT
+            and len(node.children) > 1
+        ):
+            if (
+                node.children[1].type == syms.atom
+                and node.children[1].children[0].type == token.LPAR
+            ):
+                if maybe_make_parens_invisible_in_atom(
+                    node.children[1],
+                    parent=node,
+                    remove_brackets_around_comma=True,
+                ):
+                    wrap_in_parentheses(node, node.children[1], visible=False)
+                if (
+                    node.children[1].children[1].type != syms.power
+                    and isinstance(node.children[1].children[0], Leaf)
+                    and isinstance(node.children[1].children[-1], Leaf)
+                ):
+                    # Since await is an expression
+                    # it is syntactically possible
+                    # that someone would write `await (1 % 2)`
+                    # (although realistically unlikely given that it's a runtime error).
+                    # If we don't encounter a power being wrapped then we
+                    # should not remove all brackets due to operator precedence.
+                    # https://peps.python.org/pep-0492/#updated-operator-precedence-table
+                    # N.B. We've still removed any redundant nested brackets though :)
+                    ensure_visible(node.children[1].children[0])
+                    ensure_visible(node.children[1].children[-1])
+
         yield from self.visit_default(node)
 
     def visit_SEMI(self, leaf: Leaf) -> Iterator[Line]:
