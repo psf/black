@@ -14,7 +14,7 @@
 
 <!-- Changes that affect Black's preview style -->
 
-- Parentheses around awaited coroutines/tasks are now managed (#2991)
+- Remove redundant parentheses around awaited objects (#2991)
 - Remove unnecessary parentheses from `with` statements (#2926)
 
 ### _Blackd_
