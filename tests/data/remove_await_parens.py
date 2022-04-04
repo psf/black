@@ -64,6 +64,13 @@ async def main():
 async def main():
     await (await asyncio.sleep(1))
 
+# It's brackets all the way down...
+async def main():
+    await (await (asyncio.sleep(1)))
+
+async def main():
+    await (await (await (await (await (asyncio.sleep(1))))))
+
 # output
 import asyncio
 
@@ -136,3 +143,12 @@ async def main():
 
 async def main():
     await (await asyncio.sleep(1))
+
+
+# It's brackets all the way down...
+async def main():
+    await (await asyncio.sleep(1))
+
+
+async def main():
+    await (await (await (await (await asyncio.sleep(1)))))
