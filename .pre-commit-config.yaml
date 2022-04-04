@@ -50,7 +50,7 @@ repos:
           - types-PyYAML
           - tomli >= 0.2.6, < 2.0.0
           - types-typed-ast >= 1.4.1
-          - click >= 8.0.0
+          - click >= 8.1.0
           - platformdirs >= 2.1.0
 
   - repo: https://github.com/pre-commit/mirrors-prettier
