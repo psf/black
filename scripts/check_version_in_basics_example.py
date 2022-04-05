@@ -3,7 +3,6 @@ Check that the rev value in the example from ``the_basics.md`` matches
 the latest version of Black. This saves us from forgetting to update that
 during the release process.
 """
-
 import os
 import sys
 

@@ -13,7 +13,6 @@ For more information, please see the developer docs:
 
 https://black.readthedocs.io/en/latest/contributing/gauging_changes.html#diff-shades
 """
-
 import json
 import os
 import platform

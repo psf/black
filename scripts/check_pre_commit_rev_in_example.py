@@ -8,7 +8,6 @@ won't auto update the hook as you may expect (and for good reasons, some
 technical and some pragmatic). Encouraging bad practice is also just
 not ideal. xref: https://github.com/psf/black/issues/420
 """
-
 import os
 import sys
 

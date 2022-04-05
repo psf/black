@@ -4,7 +4,6 @@ By Zac Hatfield-Dodds, based on my Hypothesmith tool for source code
 generation.  You can run this file with `python`, `pytest`, or (soon)
 a coverage-guided fuzzer I'm working on.
 """
-
 import re
 
 import hypothesmith
