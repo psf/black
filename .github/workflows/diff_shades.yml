@@ -24,7 +24,7 @@ jobs:
 
       - name: Install diff-shades and support dependencies
         run: |
-          python -m pip install 'click<8.1.0' packaging urllib3
+          python -m pip install click packaging urllib3
           python -m pip install https://github.com/ichard26/diff-shades/archive/stable.zip
 
       - name: Calculate run configuration & metadata
@@ -59,7 +59,7 @@ jobs:
       - name: Install diff-shades and support dependencies
         run: |
           python -m pip install https://github.com/ichard26/diff-shades/archive/stable.zip
-          python -m pip install 'click<8.1.0' packaging urllib3
+          python -m pip install click packaging urllib3
           python -m pip install -r .github/mypyc-requirements.txt
           # After checking out old revisions, this might not exist so we'll use a copy.
           cat scripts/diff_shades_gha_helper.py > helper.py
@@ -68,7 +68,7 @@ jobs:
 
       - name: Attempt to use cached baseline analysis
         id: baseline-cache
-        uses: actions/cache@v2.1.7
+        uses: actions/cache@v3
         with:
           path: ${{ matrix.baseline-analysis }}
           key: ${{ matrix.baseline-cache-key }}

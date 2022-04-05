@@ -19,6 +19,7 @@
 - Remove unnecessary parentheses from tuple unpacking in `for` loops (#2945)
 - Avoid magic-trailing-comma in single-element subscripts (#2942)
 - Format docstrings to have consistent quote placement (#2885)
+- Remove unnecessary parentheses from `with` statements (#2926)
 
 ### _Blackd_
 
@@ -44,6 +45,9 @@
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
+
+- Use `tomli` instead of `tomllib` on Python 3.11 builds where `tomllib` is not
+  available (#2987)
 
 ### Parser
 

@@ -69,7 +69,7 @@ tests, and our own auto formatting and parallel Continuous Integration runner. N
 we have become stable, you should not expect large formatting to changes in the future.
 Stylistic changes will mostly be responses to bug reports and support for new Python
 syntax. For more information please refer to the
-[The Black Code Style](docs/the_black_code_style/index.rst).
+[The Black Code Style](https://black.readthedocs.io/en/stable/the_black_code_style/index.html).
 
 Also, as a safety measure which slows down processing, _Black_ will check that the
 reformatted code still produces a valid AST that is effectively equivalent to the
