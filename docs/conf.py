@@ -105,10 +105,14 @@ myst_heading_anchors = 3
 # Prettier support formatting some MyST syntax but not all, so let's disable the
 # unsupported yet still enabled by default ones.
 myst_disable_syntax = [
+    "colon_fence",
     "myst_block_break",
     "myst_line_comment",
     "math_block",
 ]
+
+# Optional MyST Syntaxes
+myst_enable_extensions = []
 
 # -- Options for HTML output -------------------------------------------------
 

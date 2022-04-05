@@ -75,10 +75,14 @@ PREVIEW_CASES: List[str] = [
     # string processing
     "cantfit",
     "comments7",
+    "comments8",
     "long_strings",
     "long_strings__edge_case",
     "long_strings__regression",
     "percent_precedence",
+    "remove_except_parens",
+    "remove_for_brackets",
+    "one_element_subscript",
 ]
 
 SOURCES: List[str] = [
@@ -103,8 +107,6 @@ SOURCES: List[str] = [
     "src/black/strings.py",
     "src/black/trans.py",
     "src/blackd/__init__.py",
-    "src/black_primer/cli.py",
-    "src/black_primer/lib.py",
     "src/blib2to3/pygram.py",
     "src/blib2to3/pytree.py",
     "src/blib2to3/pgen2/conv.py",
@@ -119,7 +121,6 @@ SOURCES: List[str] = [
     "tests/test_black.py",
     "tests/test_blackd.py",
     "tests/test_format.py",
-    "tests/test_primer.py",
     "tests/optional.py",
     "tests/util.py",
     "tests/conftest.py",
@@ -189,6 +190,16 @@ def test_pep_572_newer_syntax(major: int, minor: int) -> None:
 def test_pep_570() -> None:
     source, expected = read_data("pep_570")
     assert_format(source, expected, minimum_version=(3, 8))
+
+
+def test_remove_with_brackets() -> None:
+    source, expected = read_data("remove_with_brackets")
+    assert_format(
+        source,
+        expected,
+        black.Mode(preview=True),
+        minimum_version=(3, 9),
+    )
 
 
 @pytest.mark.parametrize("filename", PY310_CASES)

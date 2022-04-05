@@ -713,6 +713,9 @@ def reformat_code(
         report.failed(path, str(exc))
 
 
+# diff-shades depends on being to monkeypatch this function to operate. I know it's
+# not ideal, but this shouldn't cause any issues ... hopefully. ~ichard26
+@mypyc_attr(patchable=True)
 def reformat_one(
     src: Path, fast: bool, write_back: WriteBack, mode: Mode, report: "Report"
 ) -> None:
@@ -1182,7 +1185,7 @@ def _format_str_once(src_contents: str, *, mode: Mode) -> str:
     else:
         versions = detect_target_versions(src_node, future_imports=future_imports)
 
-    normalize_fmt_off(src_node)
+    normalize_fmt_off(src_node, preview=mode.preview)
     lines = LineGenerator(mode=mode)
     elt = EmptyLineTracker(is_pyi=mode.is_pyi)
     empty_line = Line(mode=mode)
@@ -1440,13 +1443,23 @@ def patch_click() -> None:
     file paths is minimal since it's Python source code.  Moreover, this crash was
     spurious on Python 3.7 thanks to PEP 538 and PEP 540.
     """
+    modules: List[Any] = []
     try:
         from click import core
-        from click import _unicodefun
-    except ModuleNotFoundError:
-        return
+    except ImportError:
+        pass
+    else:
+        modules.append(core)
+    try:
+        # Removed in Click 8.1.0 and newer; we keep this around for users who have
+        # older versions installed.
+        from click import _unicodefun  # type: ignore
+    except ImportError:
+        pass
+    else:
+        modules.append(_unicodefun)
 
-    for module in (core, _unicodefun):
+    for module in modules:
         if hasattr(module, "_verify_python3_env"):
             module._verify_python3_env = lambda: None  # type: ignore
         if hasattr(module, "_verify_python_env"):

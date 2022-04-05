@@ -14,6 +14,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Remove unnecessary parentheses from `with` statements (#2926)
+
 ### _Blackd_
 
 <!-- Changes to blackd -->
@@ -21,11 +23,6 @@
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
-
-- Do not format `__pypackages__` directories by default (#2836)
-- Add support for specifying stable version with `--required-version` (#2832).
-- Avoid crashing when the user has no homedir (#2814)
-- Avoid crashing when md5 is not available (#2905)
 
 ### Documentation
 
@@ -36,31 +33,66 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
-- Move test to disable plugin in Vim/Neovim, which speeds up loading (#2896)
-
 ### Output
 
 <!-- Changes to Black's terminal output and error messages -->
-
-- In verbose, mode, log when _Black_ is using user-level config (#2861)
 
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
+- Use `tomli` instead of `tomllib` on Python 3.11 builds where `tomllib` is not
+  available (#2987)
+
+### Parser
+
+<!-- Changes to the parser or to version autodetection -->
+
+### Performance
+
+<!-- Changes that improve Black's performance. -->
+
+## 22.3.0
+
+### Preview style
+
+- Code cell separators `#%%` are now standardised to `# %%` (#2919)
+- Remove unnecessary parentheses from `except` statements (#2939)
+- Remove unnecessary parentheses from tuple unpacking in `for` loops (#2945)
+- Avoid magic-trailing-comma in single-element subscripts (#2942)
+
+### Configuration
+
+- Do not format `__pypackages__` directories by default (#2836)
+- Add support for specifying stable version with `--required-version` (#2832).
+- Avoid crashing when the user has no homedir (#2814)
+- Avoid crashing when md5 is not available (#2905)
+- Fix handling of directory junctions on Windows (#2904)
+
+### Documentation
+
+- Update pylint config documentation (#2931)
+
+### Integrations
+
+- Move test to disable plugin in Vim/Neovim, which speeds up loading (#2896)
+
+### Output
+
+- In verbose, mode, log when _Black_ is using user-level config (#2861)
+
+### Packaging
+
+- Fix Black to work with Click 8.1.0 (#2966)
 - On Python 3.11 and newer, use the standard library's `tomllib` instead of `tomli`
   (#2903)
+- `black-primer`, the deprecated internal devtool, has been removed and copied to a
+  [separate repository](https://github.com/cooperlees/black-primer) (#2924)
 
 ### Parser
 
 - Black can now parse starred expressions in the target of `for` and `async for`
   statements, e.g `for item in *items_1, *items_2: pass` (#2879).
-
-- Fix handling of directory junctions on Windows (#2904)
-
-### Performance
-
-<!-- Changes that improve Black's performance. -->
 
 ## 22.1.0
 

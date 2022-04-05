@@ -9,6 +9,7 @@ from typing import (
     List,
     Optional,
     Set,
+    Tuple,
     TypeVar,
     Union,
 )
@@ -559,9 +560,14 @@ def is_one_tuple(node: LN) -> bool:
     )
 
 
-def is_one_tuple_between(opening: Leaf, closing: Leaf, leaves: List[Leaf]) -> bool:
-    """Return True if content between `opening` and `closing` looks like a one-tuple."""
-    if opening.type != token.LPAR and closing.type != token.RPAR:
+def is_one_sequence_between(
+    opening: Leaf,
+    closing: Leaf,
+    leaves: List[Leaf],
+    brackets: Tuple[int, int] = (token.LPAR, token.RPAR),
+) -> bool:
+    """Return True if content between `opening` and `closing` is a one-sequence."""
+    if (opening.type, closing.type) != brackets:
         return False
 
     depth = closing.bracket_depth + 1

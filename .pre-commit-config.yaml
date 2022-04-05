@@ -31,8 +31,8 @@ repos:
         files: '(CHANGES\.md|the_basics\.md)$'
         additional_dependencies: *version_check_dependencies
 
-  - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.9.2
+  - repo: https://github.com/pycqa/flake8
+    rev: 4.0.1
     hooks:
       - id: flake8
         additional_dependencies:
@@ -41,7 +41,7 @@ repos:
           - flake8-simplify
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.910-1
+    rev: v0.940
     hooks:
       - id: mypy
         exclude: ^docs/conf.py
@@ -50,7 +50,7 @@ repos:
           - types-PyYAML
           - tomli >= 0.2.6, < 2.0.0
           - types-typed-ast >= 1.4.1
-          - click >= 8.0.0
+          - click >= 8.1.0
           - platformdirs >= 2.1.0
 
   - repo: https://github.com/pre-commit/mirrors-prettier
@@ -60,7 +60,7 @@ repos:
         exclude: \.github/workflows/diff_shades\.yml
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.0.1
+    rev: v4.1.0
     hooks:
       - id: end-of-file-fixer
       - id: trailing-whitespace
