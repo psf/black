@@ -1,7 +1,6 @@
 """
 Simple formatting on strings. Further string formatting code is in trans.py.
 """
-
 import re
 import sys
 from functools import lru_cache

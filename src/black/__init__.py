@@ -1171,7 +1171,7 @@ def _format_str_once(src_contents: str, *, mode: Mode) -> str:
 
     normalize_fmt_off(src_node, preview=mode.preview)
     lines = LineGenerator(mode=mode)
-    elt = EmptyLineTracker(is_pyi=mode.is_pyi)
+    elt = EmptyLineTracker(is_pyi=mode.is_pyi, preview=mode.preview)
     empty_line = Line(mode=mode)
     split_line_features = {
         feature

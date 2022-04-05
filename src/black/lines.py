@@ -429,6 +429,7 @@ class EmptyLineTracker:
     is_pyi: bool = False
     previous_lines: List[Line] = field(default_factory=list)
     previous_defs: List[int] = field(default_factory=list)
+    preview: bool = False
 
     def maybe_empty_lines(self, current_line: Line) -> int:
         """Return the number of extra empty lines before and after the `current_line`.
@@ -444,6 +445,17 @@ class EmptyLineTracker:
             if not self.previous_lines
             else before
         )
+        if (
+            self.preview
+            and len(self.previous_lines) == 1
+            and self.previous_lines[-1].is_triple_quoted_string
+        ):
+            # Newlines after multi-line module level docstring.
+            if str(self.previous_lines[-1].leaves[0]).count("\n") >= 1:
+                before = 0
+            else:
+                before = 1
+
         self.previous_lines.append(current_line)
         return before
 

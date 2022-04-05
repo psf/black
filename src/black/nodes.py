@@ -1,7 +1,6 @@
 """
 blib2to3 Node/Leaf transformation-related utility functions.
 """
-
 import sys
 from typing import (
     Generic,

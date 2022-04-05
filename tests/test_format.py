@@ -83,6 +83,8 @@ PREVIEW_CASES: List[str] = [
     "remove_except_parens",
     "remove_for_brackets",
     "one_element_subscript",
+    "module_docstring_1",
+    "module_docstring_2",
 ]
 
 SOURCES: List[str] = [

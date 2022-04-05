@@ -13,7 +13,6 @@ Specifying the name of the default behavior in `--run-optional=` is harmless.
 
 Adapted from https://pypi.org/project/pytest-optional-tests/, (c) 2019 Reece Hart
 """
-
 from functools import lru_cache
 import itertools
 import logging

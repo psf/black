@@ -15,6 +15,7 @@
 <!-- Changes that affect Black's preview style -->
 
 - Remove unnecessary parentheses from `with` statements (#2926)
+- Standardise newlines after module-level docstrings (#2996)
 
 ### _Blackd_
 
