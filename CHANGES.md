@@ -10,6 +10,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix unstable formatting involving `# fmt: skip` comments without internal spaces
+  (#2970)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
