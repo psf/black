@@ -57,7 +57,8 @@ _Black_ is timid about formatting Jupyter Notebooks. Cells containing any of the
 following will not be formatted:
 
 - automagics (e.g. `pip install black`)
-- non-Python cell magics (e.g. `%%writeline`)
+- non-Python cell magics (e.g. `%%writeline`). These can be added with the flag
+  `--python-cell-magics`, e.g. `black --python-cell-magics writeline hello.ipynb`.
 - multiline magics, e.g.:
 
   ```python
