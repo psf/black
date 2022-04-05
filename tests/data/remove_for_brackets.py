@@ -14,6 +14,10 @@ for (why_would_anyone_choose_to_name_a_loop_variable_with_a_name_this_long, i_do
 for (k, v) in dfkasdjfldsjflkdsjflkdsjfdslkfjldsjfgkjdshgkljjdsfldgkhsdofudsfudsofajdslkfjdslkfjldisfjdffjsdlkfjdlkjjkdflskadjldkfjsalkfjdasj.items():
     print(k, v)
 
+# Test deeply nested brackets
+for (((((k, v))))) in d.items():
+    print(k, v)
+
 # output
 # Only remove tuple brackets after `for`
 for k, v in d.items():
@@ -37,4 +41,8 @@ for (
 ) in (
     dfkasdjfldsjflkdsjflkdsjfdslkfjldsjfgkjdshgkljjdsfldgkhsdofudsfudsofajdslkfjdslkfjldisfjdffjsdlkfjdlkjjkdflskadjldkfjsalkfjdasj.items()
 ):
+    print(k, v)
+
+# Test deeply nested brackets
+for k, v in d.items():
     print(k, v)

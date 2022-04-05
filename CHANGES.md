@@ -14,6 +14,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Remove unnecessary parentheses from `with` statements (#2926)
+
 ### _Blackd_
 
 <!-- Changes to blackd -->
@@ -38,6 +40,9 @@
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
+
+- Use `tomli` instead of `tomllib` on Python 3.11 builds where `tomllib` is not
+  available (#2987)
 
 ### Parser
 
