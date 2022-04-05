@@ -419,7 +419,7 @@ class Line:
 @dataclass
 class EmptyLineTracker:
     """Provides a stateful method that returns the number of potential extra
-    empty lines needed before and after the currently processed line.
+    empty lines needed before the currently processed line.
 
     Note: this tracker works on lines that haven't been split yet.  It assumes
     the prefix of the first leaf consists of optional newlines.  Those newlines
@@ -427,29 +427,27 @@ class EmptyLineTracker:
     """
 
     is_pyi: bool = False
-    previous_line: Optional[Line] = None
-    previous_after: int = 0
+    previous_lines: List[Line] = field(default_factory=list)
     previous_defs: List[int] = field(default_factory=list)
 
-    def maybe_empty_lines(self, current_line: Line) -> Tuple[int, int]:
+    def maybe_empty_lines(self, current_line: Line) -> int:
         """Return the number of extra empty lines before and after the `current_line`.
 
         This is for separating `def`, `async def` and `class` with extra empty
         lines (two on module-level).
         """
-        before, after = self._maybe_empty_lines(current_line)
+        before = self._maybe_empty_lines(current_line)
         before = (
             # Black should not insert empty lines at the beginning
             # of the file
             0
-            if self.previous_line is None
-            else before - self.previous_after
+            if not self.previous_lines
+            else before
         )
-        self.previous_after = after
-        self.previous_line = current_line
-        return before, after
+        self.previous_lines.append(current_line)
+        return before
 
-    def _maybe_empty_lines(self, current_line: Line) -> Tuple[int, int]:
+    def _maybe_empty_lines(self, current_line: Line) -> int:
         max_allowed = 1
         if current_line.depth == 0:
             max_allowed = 1 if self.is_pyi else 2
@@ -464,8 +462,8 @@ class EmptyLineTracker:
         depth = current_line.depth
         while self.previous_defs and self.previous_defs[-1] >= depth:
             if self.is_pyi:
-                assert self.previous_line is not None
-                if depth and not current_line.is_def and self.previous_line.is_def:
+                assert self.previous_lines
+                if depth and not current_line.is_def and self.previous_lines[-1].is_def:
                     # Empty lines between attributes and methods should be preserved.
                     before = min(1, before)
                 elif depth:
@@ -499,64 +497,72 @@ class EmptyLineTracker:
             return self._maybe_empty_lines_for_class_or_def(current_line, before)
 
         if (
-            self.previous_line
-            and self.previous_line.is_import
+            self.previous_lines
+            and self.previous_lines[-1].is_import
             and not current_line.is_import
-            and depth == self.previous_line.depth
+            and depth == self.previous_lines[-1].depth
         ):
-            return (before or 1), 0
+            return before or 1
 
         if (
-            self.previous_line
-            and self.previous_line.is_class
-            and current_line.is_triple_quoted_string
+            len(self.previous_lines) > 1
+            and self.previous_lines[-2].is_class
+            and self.previous_lines[-1].is_triple_quoted_string
+            and current_line.depth == self.previous_lines[-1].depth
         ):
-            return before, 1
+            return 1
 
-        return before, 0
+        return before
 
     def _maybe_empty_lines_for_class_or_def(
         self, current_line: Line, before: int
-    ) -> Tuple[int, int]:
+    ) -> int:
         if not current_line.is_decorator:
             self.previous_defs.append(current_line.depth)
-        if self.previous_line is None:
+        if not self.previous_lines:
             # Don't insert empty lines before the first line in the file.
-            return 0, 0
+            return 0
 
-        if self.previous_line.is_decorator:
-            if self.is_pyi and current_line.is_stub_class:
-                # Insert an empty line after a decorated stub class
-                return 0, 1
-
-            return 0, 0
-
-        if self.previous_line.depth < current_line.depth and (
-            self.previous_line.is_class or self.previous_line.is_def
-        ):
-            return 0, 0
+        if self.previous_lines[-1].is_decorator:
+            return 0
 
         if (
-            self.previous_line.is_comment
-            and self.previous_line.depth == current_line.depth
+            self.is_pyi
+            and len(self.previous_lines) > 1
+            and self.previous_lines[-1].is_stub_class
+            and self.previous_lines[-2].is_decorator
+        ):
+            # Insert an empty line after a decorated stub class
+            return 1
+
+        if self.previous_lines[-1].depth < current_line.depth and (
+            self.previous_lines[-1].is_class or self.previous_lines[-1].is_def
+        ):
+            return 0
+
+        if (
+            self.previous_lines[-1].is_comment
+            and self.previous_lines[-1].depth == current_line.depth
             and before == 0
         ):
-            return 0, 0
+            return 0
 
         if self.is_pyi:
-            if current_line.is_class or self.previous_line.is_class:
-                if self.previous_line.depth < current_line.depth:
+            if current_line.is_class or self.previous_lines[-1].is_class:
+                if self.previous_lines[-1].depth < current_line.depth:
                     newlines = 0
-                elif self.previous_line.depth > current_line.depth:
+                elif self.previous_lines[-1].depth > current_line.depth:
                     newlines = 1
-                elif current_line.is_stub_class and self.previous_line.is_stub_class:
+                elif (
+                    current_line.is_stub_class and self.previous_lines[-1].is_stub_class
+                ):
                     # No blank line between classes with an empty body
                     newlines = 0
                 else:
                     newlines = 1
             elif (
                 current_line.is_def or current_line.is_decorator
-            ) and not self.previous_line.is_def:
+            ) and not self.previous_lines[-1].is_def:
                 if current_line.depth:
                     # In classes empty lines between attributes and methods should
                     # be preserved.
@@ -565,13 +571,13 @@ class EmptyLineTracker:
                     # Blank line between a block of functions (maybe with preceding
                     # decorators) and a block of non-functions
                     newlines = 1
-            elif self.previous_line.depth > current_line.depth:
+            elif self.previous_lines[-1].depth > current_line.depth:
                 newlines = 1
             else:
                 newlines = 0
         else:
             newlines = 1 if current_line.depth else 2
-        return newlines, 0
+        return newlines
 
 
 def enumerate_reversed(sequence: Sequence[T]) -> Iterator[Tuple[Index, T]]:

@@ -1173,15 +1173,13 @@ def _format_str_once(src_contents: str, *, mode: Mode) -> str:
     lines = LineGenerator(mode=mode)
     elt = EmptyLineTracker(is_pyi=mode.is_pyi)
     empty_line = Line(mode=mode)
-    after = 0
     split_line_features = {
         feature
         for feature in {Feature.TRAILING_COMMA_IN_CALL, Feature.TRAILING_COMMA_IN_DEF}
         if supports_feature(versions, feature)
     }
     for current_line in lines.visit(src_node):
-        dst_contents.append(str(empty_line) * after)
-        before, after = elt.maybe_empty_lines(current_line)
+        before = elt.maybe_empty_lines(current_line)
         dst_contents.append(str(empty_line) * before)
         for line in transform_line(
             current_line, mode=mode, features=split_line_features
