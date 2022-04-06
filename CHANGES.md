@@ -37,6 +37,8 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Output python version and implementation as part of `--version` flag (#2997)
+
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
