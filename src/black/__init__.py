@@ -384,7 +384,7 @@ def validate_regex(
     version=__version__,
     message=(
         f"%(prog)s, %(version)s (compiled: {'yes' if COMPILED else 'no'})\n"
-        f"python, {platform.python_version()} ({platform.python_implementation()})"
+        f"Python ({platform.python_implementation()}) {platform.python_version()}"
     ),
 )
 @click.argument(
