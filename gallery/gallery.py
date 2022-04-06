@@ -10,10 +10,9 @@ from argparse import ArgumentParser, Namespace
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache, partial
 from pathlib import Path
-from typing import (  # type: ignore # typing can't see Literal
+from typing import (
     Generator,
     List,
-    Literal,
     NamedTuple,
     Optional,
     Tuple,
@@ -24,12 +23,11 @@ from urllib.request import urlopen, urlretrieve
 
 PYPI_INSTANCE = "https://pypi.org/pypi"
 PYPI_TOP_PACKAGES = (
-    "https://hugovk.github.io/top-pypi-packages/top-pypi-packages-{days}-days.json"
+    "https://hugovk.github.io/top-pypi-packages/top-pypi-packages-30-days.min.json"
 )
 INTERNAL_BLACK_REPO = f"{tempfile.gettempdir()}/__black"
 
 ArchiveKind = Union[tarfile.TarFile, zipfile.ZipFile]
-Days = Union[Literal[30], Literal[365]]
 
 subprocess.run = partial(subprocess.run, check=True)  # type: ignore
 # https://github.com/python/mypy/issues/1484
@@ -64,8 +62,8 @@ def get_pypi_download_url(package: str, version: Optional[str]) -> str:
     return cast(str, source["url"])
 
 
-def get_top_packages(days: Days) -> List[str]:
-    with urlopen(PYPI_TOP_PACKAGES.format(days=days)) as page:
+def get_top_packages() -> List[str]:
+    with urlopen(PYPI_TOP_PACKAGES) as page:
         result = json.load(page)
 
     return [package["project"] for package in result["rows"]]
@@ -128,13 +126,12 @@ DEFAULT_SLICE = slice(None)  # for flake8
 
 def download_and_extract_top_packages(
     directory: Path,
-    days: Days = 365,
     workers: int = 8,
     limit: slice = DEFAULT_SLICE,
 ) -> Generator[Path, None, None]:
     with ThreadPoolExecutor(max_workers=workers) as executor:
         bound_downloader = partial(get_package, version=None, directory=directory)
-        for package in executor.map(bound_downloader, get_top_packages(days)[limit]):
+        for package in executor.map(bound_downloader, get_top_packages()[limit]):
             if package is not None:
                 yield package
 
