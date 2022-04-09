@@ -15,6 +15,7 @@
 <!-- Changes that affect Black's preview style -->
 
 - Remove redundant parentheses around awaited objects (#2991)
+- Parentheses around return annotations are now managed (#2990)
 - Remove unnecessary parentheses from `with` statements (#2926)
 
 ### _Blackd_
@@ -37,6 +38,8 @@
 ### Output
 
 <!-- Changes to Black's terminal output and error messages -->
+
+- Output python version and implementation as part of `--version` flag (#2997)
 
 ### Packaging
 
