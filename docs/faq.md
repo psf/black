@@ -113,3 +113,19 @@ _Black_ is an autoformatter, not a Python linter or interpreter. Detecting all s
 errors is not a goal. It can format all code accepted by CPython (if you find an example
 where that doesn't hold, please report a bug!), but it may also format some code that
 CPython doesn't accept.
+
+## What is `compiled: yes/no` all about in the version output?
+
+While _Black_ is indeed a pure Python project, we use [mypyc] to compile _Black_ into a
+C Python extension, usually doubling performance. These compiled wheels are available
+for 64-bit versions of Windows, Linux (via the manylinux standard), and macOS across all
+supported CPython versions.
+
+Platforms including musl-based and/or ARM linux distributions, and ARM Windows are
+currently **not** supported. These platforms will fallback to the (slower) Pure Python
+wheel available on PyPI.
+
+If you are experiencing exceptionally weird issues or even segfaults, you can try the
+Pure Python wheel by passing `--no-binary black` to your pip install invocation.
+
+[mypyc]: https://mypyc.readthedocs.io/en/latest/
