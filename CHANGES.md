@@ -14,6 +14,7 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Remove redundant parentheses around awaited objects (#2991)
 - Parentheses around return annotations are now managed (#2990)
 - Remove unnecessary parentheses from `with` statements (#2926)
 
