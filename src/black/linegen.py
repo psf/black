@@ -144,6 +144,33 @@ class LineGenerator(Visitor[Line]):
 
             yield from self.visit(child)
 
+    def visit_funcdef(self, node: Node) -> Iterator[Line]:
+        """Visit function definition."""
+        if Preview.annotation_parens not in self.mode:
+            yield from self.visit_stmt(node, keywords={"def"}, parens=set())
+        else:
+            yield from self.line()
+
+            # Remove redundant brackets around return type annotation.
+            is_return_annotation = False
+            for child in node.children:
+                if child.type == token.RARROW:
+                    is_return_annotation = True
+                elif is_return_annotation:
+                    if child.type == syms.atom and child.children[0].type == token.LPAR:
+                        if maybe_make_parens_invisible_in_atom(
+                            child,
+                            parent=node,
+                            remove_brackets_around_comma=False,
+                        ):
+                            wrap_in_parentheses(node, child, visible=False)
+                    else:
+                        wrap_in_parentheses(node, child, visible=False)
+                    is_return_annotation = False
+
+            for child in node.children:
+                yield from self.visit(child)
+
     def visit_match_case(self, node: Node) -> Iterator[Line]:
         """Visit either a match or case statement."""
         normalize_invisible_parens(node, parens_after=set(), preview=self.mode.preview)
@@ -326,7 +353,6 @@ class LineGenerator(Visitor[Line]):
         else:
             self.visit_except_clause = partial(v, keywords={"except"}, parens=Ø)
             self.visit_with_stmt = partial(v, keywords={"with"}, parens=Ø)
-        self.visit_funcdef = partial(v, keywords={"def"}, parens=Ø)
         self.visit_classdef = partial(v, keywords={"class"}, parens=Ø)
         self.visit_expr_stmt = partial(v, keywords=Ø, parens=ASSIGNMENTS)
         self.visit_return_stmt = partial(v, keywords={"return"}, parens={"return"})
@@ -478,7 +504,10 @@ def left_hand_split(line: Line, _features: Collection[Feature] = ()) -> Iterator
             current_leaves is body_leaves
             and leaf.type in CLOSING_BRACKETS
             and leaf.opening_bracket is matching_bracket
+            and isinstance(matching_bracket, Leaf)
         ):
+            ensure_visible(leaf)
+            ensure_visible(matching_bracket)
             current_leaves = tail_leaves if body_leaves else head_leaves
         current_leaves.append(leaf)
         if current_leaves is head_leaves:
