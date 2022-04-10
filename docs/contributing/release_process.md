@@ -88,39 +88,44 @@ Use the following template for a clean changelog after the release:
 
 ```
 
-## Release workflows
+## Release CI
 
 All _Blacks_'s automation workflows use GitHub Actions. All workflows are therefore
 configured using `.yml` files in the `.github/workflows` directory of the _Black_
 repository.
 
-Below are descriptions of our release workflows.
+Release automation is done in a single workflow named `publish.yml`. Below are
+descriptions of the jobs.
 
-### Docker
+### docker
 
-This workflow uses the QEMU powered `buildx` feature of docker to upload a `arm64` and
+This job uses the QEMU powered `buildx` feature of docker to upload a `arm64` and
 `amd64`/`x86_64` build of the official _Black_ docker image™.
 
 - Currently this workflow uses an API Token associated with @cooperlees account
 
-### pypi_upload
+```{note}
+This job also runs on each commit to `main` unlike the other publish jobs.
+```
 
-This workflow builds a Python
-[sdist](https://docs.python.org/3/distutils/sourcedist.html) and
-[wheel](https://pythonwheels.com) using the latest
-[setuptools](https://pypi.org/project/setuptools/) and
-[wheel](https://pypi.org/project/wheel/) modules.
+### PyPI
 
-It will then use [twine](https://pypi.org/project/twine/) to upload both release formats
-to PyPI for general downloading of the _Black_ Python package. This is where
+PyPI is where almost all users will get _Black_ from as it is where where
 [pip](https://pypi.org/project/pip/) looks by default.
 
-- Currently this workflow uses an API token associated with @ambv's PyPI account
+- Currently these jobs use an API token associated with @ambv's PyPI account
 
-### Upload self-contained binaries
+#### PyPI (sdist + pure wheel)
 
-This workflow builds self-contained binaries for multiple platforms. This allows people
-to download the executable for their platform and run _Black_ without a
+This job builds a Python [sdist](https://docs.python.org/3/distutils/sourcedist.html)
+and pure Python [wheel](https://pythonwheels.com) in a fresh environment using
+[build](https://pypa-build.readthedocs.io/en/stable/).
+
+### native-binaries
+
+These jobs build native binaries for multiple platforms using
+[PyInstaller](https://pyinstaller.org/en/stable/). This allows people to download the
+executable for their platform and run _Black_ without a
 [Python Runtime](https://wiki.python.org/moin/PythonImplementations) installed.
 
 The created binaries are attached/stored on the associated
