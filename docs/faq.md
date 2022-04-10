@@ -121,8 +121,8 @@ C Python extension, usually doubling performance. These compiled wheels are avai
 for 64-bit versions of Windows, Linux (via the manylinux standard), and macOS across all
 supported CPython versions.
 
-Platforms including musl-based and/or ARM linux distributions, and ARM Windows are
-currently **not** supported. These platforms will fallback to the slower pure Python
+Platforms including musl-based and/or ARM Linux distributions, and ARM Windows are
+currently **not** supported. These platforms will fall back to the slower pure Python
 wheel available on PyPI.
 
 If you are experiencing exceptionally weird issues or even segfaults, you can try
