@@ -122,10 +122,12 @@ for 64-bit versions of Windows, Linux (via the manylinux standard), and macOS ac
 supported CPython versions.
 
 Platforms including musl-based and/or ARM linux distributions, and ARM Windows are
-currently **not** supported. These platforms will fallback to the (slower) Pure Python
+currently **not** supported. These platforms will fallback to the slower pure Python
 wheel available on PyPI.
 
-If you are experiencing exceptionally weird issues or even segfaults, you can try the
-Pure Python wheel by passing `--no-binary black` to your pip install invocation.
+If you are experiencing exceptionally weird issues or even segfaults, you can try
+passing `--no-binary black` to your pip install invocation. Note this flag excludes all
+wheels (including the pure Python wheel) so this will involve building the sdist, this
+may be a tad more unreliable.
 
 [mypyc]: https://mypyc.readthedocs.io/en/latest/
