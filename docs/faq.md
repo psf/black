@@ -126,8 +126,9 @@ currently **not** supported. These platforms will fall back to the slower pure P
 wheel available on PyPI.
 
 If you are experiencing exceptionally weird issues or even segfaults, you can try
-passing `--no-binary black` to your pip install invocation. Note this flag excludes all
-wheels (including the pure Python wheel) so this will involve building the sdist, this
-may be a tad more unreliable.
+passing `--no-binary black` to your pip install invocation. This flag excludes all
+wheels (including the pure Python wheel), so this command will use the [sdist].
 
 [mypyc]: https://mypyc.readthedocs.io/en/latest/
+[sdist]:
+  https://packaging.python.org/en/latest/glossary/#term-Source-Distribution-or-sdist
