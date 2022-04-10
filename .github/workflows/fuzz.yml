@@ -2,6 +2,10 @@ name: Fuzz
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
 jobs:
   build:
     # We want to run on external PRs, but not on our own internal PRs as they'll be run

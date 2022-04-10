@@ -11,6 +11,10 @@ on:
       - "docs/**"
       - "*.md"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   main:
     # We want to run on external PRs, but not on our own internal PRs as they'll be run
