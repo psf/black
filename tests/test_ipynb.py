@@ -1,3 +1,4 @@
+import contextlib
 from dataclasses import replace
 import pathlib
 import re
@@ -18,6 +19,8 @@ from black import Mode
 from _pytest.monkeypatch import MonkeyPatch
 from tests.util import DATA_DIR
 
+with contextlib.suppress(ModuleNotFoundError):
+    import IPython
 pytestmark = pytest.mark.jupyter
 pytest.importorskip("IPython", reason="IPython is an optional dependency")
 pytest.importorskip("tokenize_rt", reason="tokenize-rt is an optional dependency")
@@ -139,10 +142,15 @@ def test_non_python_magics(src: str) -> None:
         format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
+@pytest.mark.skipif(
+    IPython.version_info < (8, 3),
+    reason="Change in how TransformerManager transforms this input",
+)
 def test_set_input() -> None:
     src = "a = b??"
-    with pytest.raises(NothingChanged):
-        format_cell(src, fast=True, mode=JUPYTER_MODE)
+    expected = "??b"
+    result = format_cell(src, fast=True, mode=JUPYTER_MODE)
+    assert result == expected
 
 
 def test_input_already_contains_transformed_magic() -> None:
