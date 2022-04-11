@@ -44,6 +44,7 @@ SIMPLE_CASES: List[str] = [
     "fmtskip4",
     "fmtskip5",
     "fmtskip6",
+    "fmtskip7",
     "fstring",
     "function",
     "function2",
@@ -84,6 +85,8 @@ PREVIEW_CASES: List[str] = [
     "remove_except_parens",
     "remove_for_brackets",
     "one_element_subscript",
+    "remove_await_parens",
+    "return_annotation_brackets",
 ]
 
 SOURCES: List[str] = [

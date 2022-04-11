@@ -10,15 +10,16 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix unstable formatting involving `# fmt: skip` comments without internal spaces
+  (#2970)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
-- Code cell separators `#%%` are now standardised to `# %%` (#2919)
-- Remove unnecessary parentheses from `except` statements (#2939)
-- Remove unnecessary parentheses from tuple unpacking in `for` loops (#2945)
-- Avoid magic-trailing-comma in single-element subscripts (#2942)
 - Format docstrings to have consistent quote placement (#2885)
+- Remove redundant parentheses around awaited objects (#2991)
+- Parentheses around return annotations are now managed (#2990)
 - Remove unnecessary parentheses from `with` statements (#2926)
 
 ### _Blackd_
@@ -41,6 +42,8 @@
 ### Output
 
 <!-- Changes to Black's terminal output and error messages -->
+
+- Output python version and implementation as part of `--version` flag (#2997)
 
 ### Packaging
 
