@@ -401,6 +401,10 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
     elif p.type == syms.sliceop:
         return NO
 
+    elif p.type == syms.except_clause:
+        if t == token.STAR:
+            return NO
+
     return SPACE
 
 

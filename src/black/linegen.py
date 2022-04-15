@@ -915,6 +915,15 @@ def normalize_invisible_parens(
                     node.insert_child(index, Leaf(token.LPAR, ""))
                     node.append_child(Leaf(token.RPAR, ""))
                 break
+            elif (
+                index == 1
+                and child.type == token.STAR
+                and node.type == syms.except_clause
+            ):
+                # In except* (PEP 654), the star is actually part of
+                # of the keyword. So we need to skip the insertion of
+                # invisible parentheses to work more precisely.
+                continue
 
             elif not (isinstance(child, Leaf) and is_multiline_string(child)):
                 wrap_in_parentheses(node, child, visible=False)
