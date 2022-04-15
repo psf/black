@@ -53,6 +53,9 @@
 
 ### Parser
 
+- [PEP 654](https://peps.python.org/pep-0654/#except) syntax (for example,
+  `except *ExceptionGroup:`) is now supported (#3016)
+
 <!-- Changes to the parser or to version autodetection -->
 
 ### Performance
