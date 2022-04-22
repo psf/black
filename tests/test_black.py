@@ -794,6 +794,12 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(
             black.get_features_used(node), {Feature.ANN_ASSIGN_EXTENDED_RHS}
         )
+        node = black.lib2to3_parse("try: pass\nexcept Something: pass")
+        self.assertEqual(black.get_features_used(node), set())
+        node = black.lib2to3_parse("try: pass\nexcept (*Something,): pass")
+        self.assertEqual(black.get_features_used(node), set())
+        node = black.lib2to3_parse("try: pass\nexcept *Group: pass")
+        self.assertEqual(black.get_features_used(node), {Feature.EXCEPT_STAR})
 
     def test_get_features_used_for_future_flags(self) -> None:
         for src, features in [
