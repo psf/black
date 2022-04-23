@@ -412,8 +412,8 @@ class X:
         msg = ""
         for candidate in CANDIDATES:
             msg += (
-                "**{candidate.object_type} {candidate.rev}**"
-                " - {candidate.description}\n"
+                f"**{candidate.object_type} {candidate.rev}**"
+                f" - {candidate.description}\n"
             )
 
 
@@ -1032,8 +1032,8 @@ class X:
         msg = ""
         for candidate in CANDIDATES:
             msg += (
-                "**{candidate.object_type} {candidate.rev}**"
-                " - {candidate.description}\n"
+                f"**{candidate.object_type} {candidate.rev}**"
+                f" - {candidate.description}\n"
             )
 
 
