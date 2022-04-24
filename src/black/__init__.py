@@ -37,7 +37,6 @@ from click.core import ParameterSource
 from dataclasses import replace
 from mypy_extensions import mypyc_attr
 
-from . import const as const, mode as mode
 from black.const import (
     DEFAULT_LINE_LENGTH as DEFAULT_LINE_LENGTH,
     DEFAULT_INCLUDES,
