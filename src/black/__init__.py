@@ -68,7 +68,7 @@ from black.output import (
     dump_to_file as dump_to_file,
     ipynb_diff,
     diff as diff,
-    color_diff,
+    color_diff as color_diff,
     out as out,
     err as err,
 )
@@ -90,7 +90,7 @@ from black.files import (
     wrap_stream_for_windows,
 )
 from black.parsing import (
-    InvalidInput as InvalidInput,
+    InvalidInput as InvalidInput,  # noqa F401
     lib2to3_parse as lib2to3_parse,
     parse_ast,
     stringify_ast,
