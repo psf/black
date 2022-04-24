@@ -72,7 +72,11 @@ from black.output import (
     out as out,
     err as err,
 )
-from black.report import Report as Report, Changed, NothingChanged as NothingChanged
+from black.report import (
+    Report as Report,
+    Changed as Changed,
+    NothingChanged as NothingChanged,
+)
 from black.files import (
     find_project_root as find_project_root,
     find_pyproject_toml as find_pyproject_toml,
