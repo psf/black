@@ -29,11 +29,12 @@ from typing import (
 )
 from unittest.mock import MagicMock, patch
 
-import click
 import pytest
 import re
+import click
 from click import unstyle
 from click.testing import CliRunner
+import click.testing
 from pathspec import PathSpec
 
 import black
@@ -1614,7 +1615,7 @@ class BlackTestCase(BlackBaseTestCase):
         """
         Test that an unexpected EOF SyntaxError is nicely presented.
         """
-        with pytest.raises(black.parsing.InvalidInput) as exc_info:
+        with pytest.raises(black.InvalidInput) as exc_info:
             black.lib2to3_parse("print(", {})
 
         exc_info.match("Cannot parse: 2:0: EOF in multi-line statement")

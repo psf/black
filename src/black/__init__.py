@@ -37,29 +37,60 @@ from click.core import ParameterSource
 from dataclasses import replace
 from mypy_extensions import mypyc_attr
 
-from black.const import DEFAULT_LINE_LENGTH, DEFAULT_INCLUDES, DEFAULT_EXCLUDES
-from black.const import STDIN_PLACEHOLDER
-from black.nodes import STARS, syms, is_simple_decorator_expression
-from black.nodes import is_string_token
+from . import const as const, mode as mode
+from black.const import (
+    DEFAULT_LINE_LENGTH as DEFAULT_LINE_LENGTH,
+    DEFAULT_INCLUDES,
+    DEFAULT_EXCLUDES,
+    STDIN_PLACEHOLDER,
+)
+from black.nodes import STARS, syms, is_simple_decorator_expression, is_string_token
 from black.lines import Line, EmptyLineTracker
 from black.linegen import transform_line, LineGenerator, LN
 from black.comments import normalize_fmt_off
-from black.mode import FUTURE_FLAG_TO_FEATURE, Mode, TargetVersion
-from black.mode import Feature, supports_feature, VERSION_TO_FEATURES
-from black.cache import read_cache, write_cache, get_cache_info, filter_cached, Cache
-from black.concurrency import cancel, shutdown, maybe_install_uvloop
-from black.output import dump_to_file, ipynb_diff, diff, color_diff, out, err
-from black.report import Report, Changed, NothingChanged
-from black.files import (
-    find_project_root,
-    find_pyproject_toml,
-    parse_pyproject_toml,
-    find_user_pyproject_toml,
+from black.mode import (
+    FUTURE_FLAG_TO_FEATURE,
+    Mode as Mode,
+    TargetVersion as TargetVersion,
+    Feature,
+    supports_feature,
+    VERSION_TO_FEATURES,
 )
-from black.files import gen_python_files, get_gitignore, normalize_path_maybe_ignore
-from black.files import wrap_stream_for_windows
-from black.parsing import InvalidInput  # noqa F401
-from black.parsing import lib2to3_parse, parse_ast, stringify_ast
+from black.cache import (
+    read_cache as read_cache,
+    write_cache as write_cache,
+    get_cache_info as get_cache_info,
+    filter_cached as filter_cached,
+    Cache,
+)
+from black.concurrency import cancel, shutdown, maybe_install_uvloop
+from black.output import (
+    dump_to_file as dump_to_file,
+    ipynb_diff,
+    diff as diff,
+    color_diff,
+    out as out,
+    err as err,
+)
+from black.report import Report as Report, Changed, NothingChanged as NothingChanged
+from black.files import (
+    find_project_root as find_project_root,
+    find_pyproject_toml as find_pyproject_toml,
+    parse_pyproject_toml as parse_pyproject_toml,
+    find_user_pyproject_toml as find_user_pyproject_toml,
+)
+from black.files import (
+    gen_python_files,
+    get_gitignore,
+    normalize_path_maybe_ignore,
+    wrap_stream_for_windows,
+)
+from black.parsing import (
+    InvalidInput as InvalidInput,
+    lib2to3_parse as lib2to3_parse,
+    parse_ast,
+    stringify_ast,
+)
 from black.handle_ipynb_magics import (
     mask_cell,
     unmask_cell,
