@@ -81,8 +81,6 @@ from black.files import (
     find_pyproject_toml as find_pyproject_toml,
     parse_pyproject_toml as parse_pyproject_toml,
     find_user_pyproject_toml as find_user_pyproject_toml,
-)
-from black.files import (
     gen_python_files,
     get_gitignore,
     normalize_path_maybe_ignore,
