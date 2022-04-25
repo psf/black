@@ -12,6 +12,7 @@
 
 - Fix unstable formatting involving `# fmt: skip` comments without internal spaces
   (#2970)
+- trailing newlines are removed right after `def` statement (#3035)
 
 ### Preview style
 
