@@ -147,6 +147,7 @@ class Preview(Enum):
     remove_redundant_parens = auto()
     one_element_subscript = auto()
     annotation_parens = auto()
+    remove_def_trailing_newline = auto()
 
 
 class Deprecated(UserWarning):

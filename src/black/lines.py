@@ -514,7 +514,8 @@ class EmptyLineTracker:
             return before, 1
 
         if (
-            self.previous_line
+            Preview.remove_def_trailing_newline in current_line.mode
+            and self.previous_line
             and self.previous_line.is_def
             and depth == self.previous_line.depth + 1
         ):
