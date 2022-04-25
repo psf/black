@@ -513,6 +513,12 @@ class EmptyLineTracker:
         ):
             return before, 1
 
+        if (
+            self.previous_line
+            and self.previous_line.is_def
+            and depth == self.previous_line.depth + 1
+        ):
+            return 0, 0
         return before, 0
 
     def _maybe_empty_lines_for_class_or_def(
