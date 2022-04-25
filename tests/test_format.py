@@ -50,6 +50,7 @@ SIMPLE_CASES: List[str] = [
     "function2",
     "function_trailing_comma",
     "import_spacing",
+    "newline_after_def",
     "power_op_spacing",
     "remove_parens",
     "slices",
