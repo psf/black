@@ -62,6 +62,12 @@
 
 <!-- Changes that improve Black's performance. -->
 
+### Testing
+
+<!-- Changes that improve Black's testing process. -->
+
+- Simple cases now read automatically from specified subdirectory
+
 ## 22.3.0
 
 ### Preview style
