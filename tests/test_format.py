@@ -53,6 +53,8 @@ SIMPLE_CASES: List[str] = [
     "newline_after_def1",
     "newline_after_def2",
     "newline_after_def3",
+    "newline_after_def4",
+    "newline_after_def5",
     "power_op_spacing",
     "remove_parens",
     "slices",
