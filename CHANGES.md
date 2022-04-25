@@ -66,7 +66,7 @@
 
 <!-- Changes that improve Black's testing process. -->
 
-- Simple cases now read automatically from specified subdirectory
+- Simple cases now read automatically from specified subdirectory (#3034)
 
 ## 22.3.0
 
