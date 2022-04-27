@@ -457,11 +457,7 @@ class EmptyLineTracker:
             and len(self.previous_lines_window) == 1
             and self.previous_lines_window[-1].is_triple_quoted_string
         ):
-            # Newlines after multi-line module level docstring.
-            if str(self.previous_lines_window[-1].leaves[0]).count("\n") >= 1:
-                before = 0
-            else:
-                before = 1
+            before = 1
 
         self.previous_lines_window.append(current_line)
         if len(self.previous_lines_window) > self.previous_lines_window_size:

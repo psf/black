@@ -3,6 +3,7 @@
 Mostly around Python language feature support per version and Black configuration
 chosen by the user.
 """
+
 from hashlib import sha256
 import sys
 
