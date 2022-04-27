@@ -38,6 +38,8 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- Add script migrate-black.py to ease migration to black
+
 ### Output
 
 <!-- Changes to Black's terminal output and error messages -->
