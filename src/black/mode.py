@@ -30,6 +30,7 @@ class TargetVersion(Enum):
     PY38 = 8
     PY39 = 9
     PY310 = 10
+    PY311 = 11
 
 
 class Feature(Enum):
@@ -47,6 +48,7 @@ class Feature(Enum):
     PATTERN_MATCHING = 11
     UNPACKING_ON_FLOW = 12
     ANN_ASSIGN_EXTENDED_RHS = 13
+    EXCEPT_STAR = 14
     FORCE_OPTIONAL_PARENTHESES = 50
 
     # __future__ flags
@@ -116,6 +118,21 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.ANN_ASSIGN_EXTENDED_RHS,
         Feature.PATTERN_MATCHING,
     },
+    TargetVersion.PY311: {
+        Feature.F_STRINGS,
+        Feature.NUMERIC_UNDERSCORES,
+        Feature.TRAILING_COMMA_IN_CALL,
+        Feature.TRAILING_COMMA_IN_DEF,
+        Feature.ASYNC_KEYWORDS,
+        Feature.FUTURE_ANNOTATIONS,
+        Feature.ASSIGNMENT_EXPRESSIONS,
+        Feature.RELAXED_DECORATORS,
+        Feature.POS_ONLY_ARGUMENTS,
+        Feature.UNPACKING_ON_FLOW,
+        Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PATTERN_MATCHING,
+        Feature.EXCEPT_STAR,
+    },
 }
 
 
@@ -129,6 +146,7 @@ class Preview(Enum):
     string_processing = auto()
     remove_redundant_parens = auto()
     one_element_subscript = auto()
+    annotation_parens = auto()
     module_docstring_newlines = auto()
 
 

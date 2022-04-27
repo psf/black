@@ -3,7 +3,7 @@ Generating lines of code.
 """
 from functools import partial, wraps
 import sys
-from typing import Collection, Iterator, List, Optional, Set, Union
+from typing import Collection, Iterator, List, Optional, Set, Union, cast
 
 from black.nodes import WHITESPACE, RARROW, STATEMENT, STANDALONE_COMMENT
 from black.nodes import ASSIGNMENTS, OPENING_BRACKETS, CLOSING_BRACKETS
@@ -144,6 +144,33 @@ class LineGenerator(Visitor[Line]):
 
             yield from self.visit(child)
 
+    def visit_funcdef(self, node: Node) -> Iterator[Line]:
+        """Visit function definition."""
+        if Preview.annotation_parens not in self.mode:
+            yield from self.visit_stmt(node, keywords={"def"}, parens=set())
+        else:
+            yield from self.line()
+
+            # Remove redundant brackets around return type annotation.
+            is_return_annotation = False
+            for child in node.children:
+                if child.type == token.RARROW:
+                    is_return_annotation = True
+                elif is_return_annotation:
+                    if child.type == syms.atom and child.children[0].type == token.LPAR:
+                        if maybe_make_parens_invisible_in_atom(
+                            child,
+                            parent=node,
+                            remove_brackets_around_comma=False,
+                        ):
+                            wrap_in_parentheses(node, child, visible=False)
+                    else:
+                        wrap_in_parentheses(node, child, visible=False)
+                    is_return_annotation = False
+
+            for child in node.children:
+                yield from self.visit(child)
+
     def visit_match_case(self, node: Node) -> Iterator[Line]:
         """Visit either a match or case statement."""
         normalize_invisible_parens(node, parens_after=set(), preview=self.mode.preview)
@@ -225,6 +252,9 @@ class LineGenerator(Visitor[Line]):
                 and "j" not in value
             ):
                 wrap_in_parentheses(node, leaf)
+
+        if Preview.remove_redundant_parens in self.mode:
+            remove_await_parens(node)
 
         yield from self.visit_default(node)
 
@@ -326,7 +356,6 @@ class LineGenerator(Visitor[Line]):
         else:
             self.visit_except_clause = partial(v, keywords={"except"}, parens=Ø)
             self.visit_with_stmt = partial(v, keywords={"with"}, parens=Ø)
-        self.visit_funcdef = partial(v, keywords={"def"}, parens=Ø)
         self.visit_classdef = partial(v, keywords={"class"}, parens=Ø)
         self.visit_expr_stmt = partial(v, keywords=Ø, parens=ASSIGNMENTS)
         self.visit_return_stmt = partial(v, keywords={"return"}, parens={"return"})
@@ -478,7 +507,10 @@ def left_hand_split(line: Line, _features: Collection[Feature] = ()) -> Iterator
             current_leaves is body_leaves
             and leaf.type in CLOSING_BRACKETS
             and leaf.opening_bracket is matching_bracket
+            and isinstance(matching_bracket, Leaf)
         ):
+            ensure_visible(leaf)
+            ensure_visible(matching_bracket)
             current_leaves = tail_leaves if body_leaves else head_leaves
         current_leaves.append(leaf)
         if current_leaves is head_leaves:
@@ -883,6 +915,15 @@ def normalize_invisible_parens(
                     node.insert_child(index, Leaf(token.LPAR, ""))
                     node.append_child(Leaf(token.RPAR, ""))
                 break
+            elif (
+                index == 1
+                and child.type == token.STAR
+                and node.type == syms.except_clause
+            ):
+                # In except* (PEP 654), the star is actually part of
+                # of the keyword. So we need to skip the insertion of
+                # invisible parentheses to work more precisely.
+                continue
 
             elif not (isinstance(child, Leaf) and is_multiline_string(child)):
                 wrap_in_parentheses(node, child, visible=False)
@@ -892,6 +933,42 @@ def normalize_invisible_parens(
         check_lpar = isinstance(child, Leaf) and (
             child.value in parens_after or comma_check
         )
+
+
+def remove_await_parens(node: Node) -> None:
+    if node.children[0].type == token.AWAIT and len(node.children) > 1:
+        if (
+            node.children[1].type == syms.atom
+            and node.children[1].children[0].type == token.LPAR
+        ):
+            if maybe_make_parens_invisible_in_atom(
+                node.children[1],
+                parent=node,
+                remove_brackets_around_comma=True,
+            ):
+                wrap_in_parentheses(node, node.children[1], visible=False)
+
+            # Since await is an expression we shouldn't remove
+            # brackets in cases where this would change
+            # the AST due to operator precedence.
+            # Therefore we only aim to remove brackets around
+            # power nodes that aren't also await expressions themselves.
+            # https://peps.python.org/pep-0492/#updated-operator-precedence-table
+            # N.B. We've still removed any redundant nested brackets though :)
+            opening_bracket = cast(Leaf, node.children[1].children[0])
+            closing_bracket = cast(Leaf, node.children[1].children[-1])
+            bracket_contents = cast(Node, node.children[1].children[1])
+            if bracket_contents.type != syms.power:
+                ensure_visible(opening_bracket)
+                ensure_visible(closing_bracket)
+            elif (
+                bracket_contents.type == syms.power
+                and bracket_contents.children[0].type == token.AWAIT
+            ):
+                ensure_visible(opening_bracket)
+                ensure_visible(closing_bracket)
+                # If we are in a nested await then recurse down.
+                remove_await_parens(bracket_contents)
 
 
 def remove_with_parens(node: Node, parent: Node) -> None:

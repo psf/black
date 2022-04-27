@@ -7,7 +7,7 @@ process every time you want to blacken a file.
 ## Usage
 
 `blackd` is not packaged alongside _Black_ by default because it has additional
-dependencies. You will need to execute `pip install black[d]` to install it.
+dependencies. You will need to execute `pip install 'black[d]'` to install it.
 
 You can start the server on the default port, binding only to the local interface by
 running `blackd`. You will see a single line mentioning the server's version, and the

@@ -10,6 +10,7 @@ from multiprocessing import Manager, freeze_support
 import os
 from pathlib import Path
 from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
+import platform
 import re
 import signal
 import sys
@@ -381,7 +382,10 @@ def validate_regex(
 )
 @click.version_option(
     version=__version__,
-    message=f"%(prog)s, %(version)s (compiled: {'yes' if COMPILED else 'no'})",
+    message=(
+        f"%(prog)s, %(version)s (compiled: {'yes' if COMPILED else 'no'})\n"
+        f"Python ({platform.python_implementation()}) {platform.python_version()}"
+    ),
 )
 @click.argument(
     "src",
@@ -1289,6 +1293,13 @@ def get_features_used(  # noqa: C901
             and n.children[3].type == syms.testlist_star_expr
         ):
             features.add(Feature.ANN_ASSIGN_EXTENDED_RHS)
+
+        elif (
+            n.type == syms.except_clause
+            and len(n.children) >= 2
+            and n.children[1].type == token.STAR
+        ):
+            features.add(Feature.EXCEPT_STAR)
 
     return features
 
