@@ -1,6 +1,7 @@
 """
 Summarize Black runs to users.
 """
+
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
