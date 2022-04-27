@@ -430,7 +430,6 @@ class EmptyLineTracker:
 
     is_pyi: bool = False
     previous_defs: List[int] = field(default_factory=list)
-    preview: bool = False
     # Since we shouldn't need to look back
     # more than a couple lines we limit
     # this window to the last 3 visited lines
@@ -453,7 +452,7 @@ class EmptyLineTracker:
             else before
         )
         if (
-            self.preview
+            Preview.module_docstring_newlines in current_line.mode
             and len(self.previous_lines_window) == 1
             and self.previous_lines_window[-1].is_triple_quoted_string
         ):
