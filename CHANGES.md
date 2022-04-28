@@ -64,7 +64,7 @@
 
 ### Vim Plugin
 
-- Fixed strtobool function. It didn't parse true/on/false/off.
+- Fixed strtobool function. It didn't parse true/on/false/off. (#3025)
 
 ## 22.3.0
 
