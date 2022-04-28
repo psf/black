@@ -62,6 +62,10 @@
 
 <!-- Changes that improve Black's performance. -->
 
+### Vim Plugin
+
+- Fixed strtobool function. It didn't parse true/on/false/off. (#3025)
+
 ## 22.3.0
 
 ### Preview style
