@@ -1,7 +1,6 @@
 import asyncio
 from json.decoder import JSONDecodeError
 import json
-from concurrent.futures import Executor, ThreadPoolExecutor, ProcessPoolExecutor
 from contextlib import contextmanager
 from datetime import datetime
 from enum import Enum
@@ -17,6 +16,7 @@ import sys
 import tokenize
 import traceback
 from typing import (
+    TYPE_CHECKING,
     Any,
     Dict,
     Generator,
@@ -76,6 +76,9 @@ from blib2to3.pytree import Node, Leaf
 from blib2to3.pgen2 import token
 
 from _black_version import version as __version__
+
+if TYPE_CHECKING:
+    from concurrent.futures import Executor
 
 COMPILED = Path(__file__).suffix in (".pyd", ".so")
 
@@ -767,6 +770,8 @@ def reformat_many(
     workers: Optional[int],
 ) -> None:
     """Reformat multiple files using a ProcessPoolExecutor."""
+    from concurrent.futures import Executor, ThreadPoolExecutor, ProcessPoolExecutor
+
     executor: Executor
     loop = asyncio.get_event_loop()
     worker_count = workers if workers is not None else DEFAULT_WORKERS
@@ -808,7 +813,7 @@ async def schedule_formatting(
     mode: Mode,
     report: "Report",
     loop: asyncio.AbstractEventLoop,
-    executor: Executor,
+    executor: "Executor",
 ) -> None:
     """Run formatting of `sources` in parallel using the provided `executor`.
 
