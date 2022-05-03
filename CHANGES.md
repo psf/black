@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fixed bug where docstrings with triple quotes could exceed max line length (#3044)
+
 ### Highlights
 
 <!-- Include any especially major or disruptive changes here -->
