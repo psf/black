@@ -305,9 +305,9 @@ class LineGenerator(Visitor[Line]):
             quote_len = 1 if docstring[1] != quote_char else 3
             docstring = docstring[quote_len:-quote_len]
             docstring_started_empty = not docstring
+            indent = " " * 4 * self.current_line.depth
 
             if is_multiline_string(leaf):
-                indent = " " * 4 * self.current_line.depth
                 docstring = fix_docstring(docstring, indent)
             else:
                 docstring = docstring.strip()
@@ -329,7 +329,21 @@ class LineGenerator(Visitor[Line]):
 
             # We could enforce triple quotes at this point.
             quote = quote_char * quote_len
-            leaf.value = prefix + quote + docstring + quote
+
+            # Make the docstring apart from the closing quotes, which happen below
+            docstring = prefix + quote + docstring
+
+            # Put closing quotes on new line if max line length exceeded
+            last_line_length = len(docstring.splitlines()[-1])
+            if (
+                len(indent) + len(prefix) + 2 * len(quote) + last_line_length
+                <= self.mode.line_length
+            ):
+                docstring += quote
+            else:
+                docstring += "\n" + indent + quote
+
+            leaf.value = docstring
 
         yield from self.visit_default(leaf)
 
