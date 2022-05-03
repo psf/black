@@ -20,7 +20,7 @@
 - Remove redundant parentheses around awaited objects (#2991)
 - Parentheses around return annotations are now managed (#2990)
 - Remove unnecessary parentheses from `with` statements (#2926)
-- Standardise newlines after module-level docstrings (#2996)
+- Require one empty line after module-level docstrings (#2996)
 
 ### _Blackd_
 
