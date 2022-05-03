@@ -11,6 +11,9 @@ on:
       - "docs/**"
       - "*.md"
 
+permissions:
+  contents: read
+
 jobs:
   build:
     # We want to run on external PRs, but not on our own internal PRs as they'll be run
