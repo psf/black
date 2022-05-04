@@ -188,6 +188,21 @@ def my_god_its_full_of_stars_2():
     "I'm sorry Dave "
 
 
+def docstring_almost_at_line_limit():
+    """long docstring................................................................."""
+
+
+def docstring_almost_at_line_limit2():
+    """long docstring.................................................................
+
+    ..................................................................................
+    """
+
+
+def docstring_at_line_limit():
+    """long docstring................................................................"""
+
+
 # output
 
 class MyClass:
@@ -375,3 +390,18 @@ def my_god_its_full_of_stars_1():
 # the space below is actually a \u2001, removed in output
 def my_god_its_full_of_stars_2():
     "I'm sorry Dave"
+
+
+def docstring_almost_at_line_limit():
+    """long docstring................................................................."""
+
+
+def docstring_almost_at_line_limit2():
+    """long docstring.................................................................
+
+    ..................................................................................
+    """
+
+
+def docstring_at_line_limit():
+    """long docstring................................................................"""
