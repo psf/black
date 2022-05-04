@@ -189,8 +189,7 @@ def my_god_its_full_of_stars_2():
 
 
 def docstring_almost_at_line_limit():
-    """long docstring.................................................................
-    """
+    """long docstring................................................................."""
 
 
 def docstring_almost_at_line_limit2():
@@ -394,8 +393,7 @@ def my_god_its_full_of_stars_2():
 
 
 def docstring_almost_at_line_limit():
-    """long docstring.................................................................
-    """
+    """long docstring................................................................."""
 
 
 def docstring_almost_at_line_limit2():
