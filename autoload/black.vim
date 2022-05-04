@@ -5,9 +5,9 @@ import sys
 import vim
 
 def strtobool(text):
-  if text.lower() in ['y', 'yes', 't', 'true' 'on', '1']:
+  if text.lower() in ['y', 'yes', 't', 'true', 'on', '1']:
     return True
-  if text.lower() in ['n', 'no', 'f', 'false' 'off', '0']:
+  if text.lower() in ['n', 'no', 'f', 'false', 'off', '0']:
     return False
   raise ValueError(f"{text} is not convertable to boolean")
 
