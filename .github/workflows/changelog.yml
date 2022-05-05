@@ -4,6 +4,9 @@ on:
   pull_request:
     types: [opened, synchronize, labeled, unlabeled, reopened]
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Changelog Entry Check
