@@ -333,22 +333,21 @@ class LineGenerator(Visitor[Line]):
             if Preview.long_docstring_quotes_on_newline in self.mode:
                 # Put closing quotes on new line if max line length exceeded
                 lines = docstring.splitlines()
-                last_line_length = len(lines[-1].lstrip()) if docstring else 0
+                last_line_length = len(lines[-1]) if docstring else 0
 
-                # if docstring is one line, then we need two lots of quotes
-                len_quotes = 2 * quote_len if len(lines) == 1 else quote_len
+                # if docstring is one line, then we need to add the length
+                # of the starting quotes and the prefix. Ending quote are
+                # handled later
+                if len(lines) == 1:
+                    last_line_length += len(indent) + len(prefix) + quote_len
 
-                # Make the docstring apart from the closing quotes, which happen below
-                docstring = prefix + quote + docstring
-                if (
-                    len(indent) + len(prefix) + len_quotes + last_line_length
-                    > self.mode.line_length
-                ):
-                    docstring += "\n" + indent + quote
+                # If adding closing quotes would cause the last line to exceed
+                # the maximum line length then put a line break before the
+                # closing quotes
+                if last_line_length + quote_len > self.mode.line_length:
+                    leaf.value = prefix + quote + docstring + "\n" + indent + quote
                 else:
-                    docstring += quote
-
-                leaf.value = docstring
+                    leaf.value = prefix + quote + docstring + quote
             else:
                 leaf.value = prefix + quote + docstring + quote
 
