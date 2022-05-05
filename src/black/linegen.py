@@ -331,13 +331,15 @@ class LineGenerator(Visitor[Line]):
             quote = quote_char * quote_len
 
             if Preview.long_docstring_quotes_on_newline in self.mode:
-                # Put closing quotes on new line if max line length exceeded
+                # We need to find the length of the last line of the docstring
+                # to find if we can add the closing quotes to the line without
+                # exceeding the maximum line length.
+                # If docstring is one line, then we need to add the length
+                # of the indent, prefix, and starting quotes. Ending quote are
+                # handled later
                 lines = docstring.splitlines()
                 last_line_length = len(lines[-1]) if docstring else 0
 
-                # if docstring is one line, then we need to add the length
-                # of the starting quotes and the prefix. Ending quote are
-                # handled later
                 if len(lines) == 1:
                     last_line_length += len(indent) + len(prefix) + quote_len
 
