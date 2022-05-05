@@ -1168,7 +1168,7 @@ class BlackTestCase(BlackBaseTestCase):
             report = MagicMock()
             # Even with an existing file, since we are forcing stdin, black
             # should output to stdout and not modify the file inplace
-            p = Path(str(THIS_DIR / "data" / "simple_cases" / "collections.py"))
+            p = THIS_DIR / "data" / "simple_cases" / "collections.py"
             # Make sure is_file actually returns True
             self.assertTrue(p.is_file())
             path = Path(f"__BLACK_STDIN_FILENAME__{p}")
