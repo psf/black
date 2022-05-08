@@ -63,12 +63,6 @@
 
 <!-- Changes that improve Black's performance. -->
 
-### Testing
-
-<!-- Changes that improve Black's testing process. -->
-
-- Simple cases now read automatically from specified subdirectory (#3034)
-
 ### Vim Plugin
 
 - Fixed strtobool function. It didn't parse true/on/false/off. (#3025)
