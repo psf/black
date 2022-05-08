@@ -94,18 +94,14 @@ def all_data_cases(dir_name: str, data: bool = True) -> List[str]:
     base_dir = DATA_DIR if data else PROJECT_ROOT
     cases_dir = base_dir / dir_name
     assert cases_dir.is_dir()
-    return [case_path.stem for case_path in cases_dir.iterdir()]
+    return [f"{dir_name}/{case_path.stem}" for case_path in cases_dir.iterdir()]
 
 
-def read_data(
-    name: str, data: bool = True, cases_dir: Optional[str] = None
-) -> Tuple[str, str]:
+def read_data(name: str, data: bool = True) -> Tuple[str, str]:
     """read_data('test_name') -> 'input', 'output'"""
     if not name.endswith((".py", ".pyi", ".out", ".diff")):
         name += ".py"
     base_dir = DATA_DIR if data else PROJECT_ROOT
-    if cases_dir is not None:
-        base_dir /= cases_dir
     case_path = base_dir / name
     assert case_path.is_file(), f"{case_path} is not a file."
     return read_data_from_file(case_path)

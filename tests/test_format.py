@@ -95,20 +95,14 @@ def patch_dump_to_file(request: Any) -> Iterator[None]:
         yield
 
 
-def check_file(
-    filename: str,
-    mode: black.Mode,
-    *,
-    data: bool = True,
-    cases_dir: Optional[str] = None,
-) -> None:
-    source, expected = read_data(filename, data=data, cases_dir=cases_dir)
+def check_file(filename: str, mode: black.Mode, *, data: bool = True) -> None:
+    source, expected = read_data(filename, data=data)
     assert_format(source, expected, mode, fast=False)
 
 
 @pytest.mark.parametrize("filename", all_data_cases("simple_cases"))
 def test_simple_format(filename: str) -> None:
-    check_file(filename, DEFAULT_MODE, cases_dir="simple_cases")
+    check_file(filename, DEFAULT_MODE)
 
 
 @pytest.mark.parametrize("filename", PREVIEW_CASES)
