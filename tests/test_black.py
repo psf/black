@@ -922,7 +922,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual("".join(err_lines), "")
 
     @event_loop()
-    @patch("black.ProcessPoolExecutor", MagicMock(side_effect=OSError))
+    @patch("concurrent.futures.ProcessPoolExecutor", MagicMock(side_effect=OSError))
     def test_works_in_mono_process_only_environment(self) -> None:
         with cache_dir() as workspace:
             for f in [
@@ -1683,7 +1683,7 @@ class TestCaching:
     def test_cache_multiple_files(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir() as workspace, patch(
-            "black.ProcessPoolExecutor", new=ThreadPoolExecutor
+            "concurrent.futures.ProcessPoolExecutor", new=ThreadPoolExecutor
         ):
             one = (workspace / "one.py").resolve()
             with one.open("w") as fobj:
@@ -1792,7 +1792,7 @@ class TestCaching:
     def test_failed_formatting_does_not_get_cached(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir() as workspace, patch(
-            "black.ProcessPoolExecutor", new=ThreadPoolExecutor
+            "concurrent.futures.ProcessPoolExecutor", new=ThreadPoolExecutor
         ):
             failing = (workspace / "failing.py").resolve()
             with failing.open("w") as fobj:
