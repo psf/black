@@ -1,5 +1,5 @@
 from dataclasses import replace
-from typing import Any, Iterator, List, Optional
+from typing import Any, Iterator, List
 from unittest.mock import patch
 
 import pytest
