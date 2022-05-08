@@ -12,55 +12,8 @@ from tests.util import (
     assert_format,
     dump_to_stderr,
     read_data,
+    all_data_cases,
 )
-
-SIMPLE_CASES: List[str] = [
-    "attribute_access_on_number_literals",
-    "beginning_backslash",
-    "bracketmatch",
-    "class_blank_parentheses",
-    "class_methods_new_line",
-    "collections",
-    "comments",
-    "comments2",
-    "comments3",
-    "comments4",
-    "comments5",
-    "comments6",
-    "comments_non_breaking_space",
-    "comment_after_escaped_newline",
-    "composition",
-    "composition_no_trailing_comma",
-    "docstring",
-    "empty_lines",
-    "expression",
-    "fmtonoff",
-    "fmtonoff2",
-    "fmtonoff3",
-    "fmtonoff4",
-    "fmtskip",
-    "fmtskip2",
-    "fmtskip3",
-    "fmtskip4",
-    "fmtskip5",
-    "fmtskip6",
-    "fmtskip7",
-    "fstring",
-    "function",
-    "function2",
-    "function_trailing_comma",
-    "import_spacing",
-    "power_op_spacing",
-    "remove_parens",
-    "slices",
-    "string_prefixes",
-    "torture",
-    "trailing_comma_optional_parens1",
-    "trailing_comma_optional_parens2",
-    "trailing_comma_optional_parens3",
-    "tricky_unicode_symbols",
-    "tupleassign",
-]
 
 PY310_CASES: List[str] = [
     "starred_for_target",
@@ -147,7 +100,7 @@ def check_file(filename: str, mode: black.Mode, *, data: bool = True) -> None:
     assert_format(source, expected, mode, fast=False)
 
 
-@pytest.mark.parametrize("filename", SIMPLE_CASES)
+@pytest.mark.parametrize("filename", all_data_cases("simple_cases"))
 def test_simple_format(filename: str) -> None:
     check_file(filename, DEFAULT_MODE)
 

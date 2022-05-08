@@ -90,12 +90,21 @@ class BlackBaseTestCase(unittest.TestCase):
         _assert_format_equal(expected, actual)
 
 
+def all_data_cases(dir_name: str, data: bool = True) -> List[str]:
+    base_dir = DATA_DIR if data else PROJECT_ROOT
+    cases_dir = base_dir / dir_name
+    assert cases_dir.is_dir()
+    return [f"{dir_name}/{case_path.stem}" for case_path in cases_dir.iterdir()]
+
+
 def read_data(name: str, data: bool = True) -> Tuple[str, str]:
     """read_data('test_name') -> 'input', 'output'"""
     if not name.endswith((".py", ".pyi", ".out", ".diff")):
         name += ".py"
     base_dir = DATA_DIR if data else PROJECT_ROOT
-    return read_data_from_file(base_dir / name)
+    case_path = base_dir / name
+    assert case_path.is_file(), f"{case_path} is not a file."
+    return read_data_from_file(case_path)
 
 
 def read_data_from_file(file_name: Path) -> Tuple[str, str]:
