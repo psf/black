@@ -96,6 +96,7 @@ PREVIEW_CASES: List[str] = [
     "one_element_subscript",
     "remove_await_parens",
     "return_annotation_brackets",
+    "docstring_preview",
 ]
 
 SOURCES: List[str] = [

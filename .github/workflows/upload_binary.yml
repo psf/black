@@ -4,8 +4,13 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: read
+
 jobs:
   build:
+    permissions:
+      contents: write # for actions/upload-release-asset to upload release asset
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
