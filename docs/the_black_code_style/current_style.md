@@ -8,9 +8,10 @@ deliberately limited and rarely added. Previous formatting is taken into account
 little as possible, with rare exceptions like the magic trailing comma. The coding style
 used by _Black_ can be viewed as a strict subset of PEP 8.
 
-_Black_ reformats entire files in place. It doesn't reformat blocks that start with
-`# fmt: off` and end with `# fmt: on`, or lines that ends with `# fmt: skip`.
-`# fmt: on/off` have to be on the same level of indentation. It also recognizes
+_Black_ reformats entire files in place. It doesn't reformat lines that end with
+`# fmt: skip` or blocks that start with `# fmt: off` and end with `# fmt: on`.
+`# fmt: on/off` must be on the same level of indentation and in the same block, meaning
+no unindents beyond the initial indentation level between them. It also recognizes
 [YAPF](https://github.com/google/yapf)'s block comments to the same effect, as a
 courtesy for straddling code.
 
