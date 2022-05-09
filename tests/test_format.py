@@ -137,7 +137,7 @@ def test_python_310_without_target_version(filename: str) -> None:
 
 
 def test_patma_invalid() -> None:
-    source, expected = read_data("pattern_matching_invalid")
+    source, expected = read_data("miscellaneous/pattern_matching_invalid")
     mode = black.Mode(target_versions={black.TargetVersion.PY310})
     with pytest.raises(black.parsing.InvalidInput) as exc_info:
         assert_format(source, expected, mode, minimum_version=(3, 10))
@@ -166,25 +166,25 @@ def test_python_2_hint() -> None:
 
 def test_docstring_no_string_normalization() -> None:
     """Like test_docstring but with string normalization off."""
-    source, expected = read_data("docstring_no_string_normalization")
+    source, expected = read_data("miscellaneous/docstring_no_string_normalization")
     mode = replace(DEFAULT_MODE, string_normalization=False)
     assert_format(source, expected, mode)
 
 
 def test_long_strings_flag_disabled() -> None:
     """Tests for turning off the string processing logic."""
-    source, expected = read_data("long_strings_flag_disabled")
+    source, expected = read_data("miscellaneous/long_strings_flag_disabled")
     mode = replace(DEFAULT_MODE, experimental_string_processing=False)
     assert_format(source, expected, mode)
 
 
 def test_stub() -> None:
     mode = replace(DEFAULT_MODE, is_pyi=True)
-    source, expected = read_data("stub.pyi")
+    source, expected = read_data("miscellaneous/stub.pyi")
     assert_format(source, expected, mode)
 
 
 def test_power_op_newline() -> None:
     # requires line_length=0
-    source, expected = read_data("power_op_newline")
+    source, expected = read_data("miscellaneous/power_op_newline")
     assert_format(source, expected, mode=black.Mode(line_length=0))
