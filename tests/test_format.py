@@ -94,16 +94,6 @@ def test_empty() -> None:
     assert_format(source, expected)
 
 
-def test_remove_with_brackets() -> None:
-    source, expected = read_data("remove_with_brackets")
-    assert_format(
-        source,
-        expected,
-        black.Mode(preview=True),
-        minimum_version=(3, 9),
-    )
-
-
 @pytest.mark.parametrize("filename", all_data_cases("py_36"))
 def test_python_36(filename: str) -> None:
     source, expected = read_data(filename)
