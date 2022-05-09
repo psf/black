@@ -36,7 +36,7 @@ jobs:
           latest_non_release)" >> $GITHUB_ENV
 
       - name: Build and push
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           context: .
           platforms: linux/amd64,linux/arm64
@@ -45,7 +45,7 @@ jobs:
 
       - name: Build and push latest_release tag
         if: ${{ github.event_name == 'release' && github.event.action == 'published' }}
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           context: .
           platforms: linux/amd64,linux/arm64
