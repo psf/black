@@ -233,7 +233,7 @@ class BlackTestCase(BlackBaseTestCase):
         black.assert_stable(source, actual, black.FileMode())
 
     def test_pep_572_version_detection(self) -> None:
-        source, _ = read_data("pep_572")
+        source, _ = read_data("py_38/pep_572")
         root = black.lib2to3_parse(source)
         features = black.get_features_used(root)
         self.assertIn(black.Feature.ASSIGNMENT_EXPRESSIONS, features)
@@ -301,7 +301,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertIn("\033[0m", actual)
 
     def test_detect_pos_only_arguments(self) -> None:
-        source, _ = read_data("pep_570")
+        source, _ = read_data("py_38/pep_570")
         root = black.lib2to3_parse(source)
         features = black.get_features_used(root)
         self.assertIn(black.Feature.POS_ONLY_ARGUMENTS, features)

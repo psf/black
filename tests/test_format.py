@@ -94,34 +94,6 @@ def test_empty() -> None:
     assert_format(source, expected)
 
 
-def test_pep_572() -> None:
-    source, expected = read_data("pep_572")
-    assert_format(source, expected, minimum_version=(3, 8))
-
-
-def test_pep_572_remove_parens() -> None:
-    source, expected = read_data("pep_572_remove_parens")
-    assert_format(source, expected, minimum_version=(3, 8))
-
-
-def test_pep_572_do_not_remove_parens() -> None:
-    source, expected = read_data("pep_572_do_not_remove_parens")
-    # the AST safety checks will fail, but that's expected, just make sure no
-    # parentheses are touched
-    assert_format(source, expected, fast=True)
-
-
-@pytest.mark.parametrize("major, minor", [(3, 9), (3, 10)])
-def test_pep_572_newer_syntax(major: int, minor: int) -> None:
-    source, expected = read_data(f"pep_572_py{major}{minor}")
-    assert_format(source, expected, minimum_version=(major, minor))
-
-
-def test_pep_570() -> None:
-    source, expected = read_data("pep_570")
-    assert_format(source, expected, minimum_version=(3, 8))
-
-
 def test_remove_with_brackets() -> None:
     source, expected = read_data("remove_with_brackets")
     assert_format(
@@ -137,6 +109,20 @@ def test_python_36(filename: str) -> None:
     source, expected = read_data(filename)
     mode = black.Mode(target_versions=PY36_VERSIONS)
     assert_format(source, expected, mode, minimum_version=(3, 6))
+
+
+@pytest.mark.parametrize("filename", all_data_cases("py_38"))
+def test_python_38(filename: str) -> None:
+    source, expected = read_data(filename)
+    mode = black.Mode(target_versions={black.TargetVersion.PY38})
+    assert_format(source, expected, mode, minimum_version=(3, 8))
+
+
+@pytest.mark.parametrize("filename", all_data_cases("py_39"))
+def test_python_39(filename: str) -> None:
+    source, expected = read_data(filename)
+    mode = black.Mode(target_versions={black.TargetVersion.PY39})
+    assert_format(source, expected, mode, minimum_version=(3, 9))
 
 
 @pytest.mark.parametrize("filename", all_data_cases("py_310"))
@@ -167,6 +153,12 @@ def test_python_311(filename: str) -> None:
     source, expected = read_data(filename)
     mode = black.Mode(target_versions={black.TargetVersion.PY311})
     assert_format(source, expected, mode, minimum_version=(3, 11))
+
+
+@pytest.mark.parametrize("filename", all_data_cases("fast"))
+def test_fast_cases(filename: str) -> None:
+    source, expected = read_data(filename)
+    assert_format(source, expected, fast=True)
 
 
 def test_python_2_hint() -> None:
