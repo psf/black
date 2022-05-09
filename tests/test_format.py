@@ -15,23 +15,6 @@ from tests.util import (
     all_data_cases,
 )
 
-PREVIEW_CASES: List[str] = [
-    # string processing
-    "cantfit",
-    "comments7",
-    "comments8",
-    "long_strings",
-    "long_strings__edge_case",
-    "long_strings__regression",
-    "percent_precedence",
-    "remove_except_parens",
-    "remove_for_brackets",
-    "one_element_subscript",
-    "remove_await_parens",
-    "return_annotation_brackets",
-    "docstring_preview",
-]
-
 SOURCES: List[str] = [
     "src/black/__init__.py",
     "src/black/__main__.py",
@@ -90,7 +73,7 @@ def test_simple_format(filename: str) -> None:
     check_file(filename, DEFAULT_MODE)
 
 
-@pytest.mark.parametrize("filename", PREVIEW_CASES)
+@pytest.mark.parametrize("filename", all_data_cases("preview"))
 def test_preview_format(filename: str) -> None:
     check_file(filename, black.Mode(preview=True))
 
