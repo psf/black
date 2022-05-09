@@ -97,24 +97,26 @@ def get_base_dir(data: bool) -> Path:
     return DATA_DIR if data else PROJECT_ROOT
 
 
-def all_data_cases(dir_name: str, data: bool = True) -> List[str]:
-    cases_dir = get_base_dir(data) / dir_name
+def all_data_cases(subdir_name: str, data: bool = True) -> List[str]:
+    cases_dir = get_base_dir(data) / subdir_name
     assert cases_dir.is_dir()
-    return [f"{dir_name}/{case_path.stem}" for case_path in cases_dir.iterdir()]
+    return [case_path.stem for case_path in cases_dir.iterdir()]
 
 
-def get_case_path(name: str, data: bool = True, suffix: str = PYTHON_SUFFIX) -> Path:
+def get_case_path(
+    subdir_name: str, name: str, data: bool = True, suffix: str = PYTHON_SUFFIX
+) -> Path:
     """Get case path from name"""
-    case_path = get_base_dir(data) / name
+    case_path = get_base_dir(data) / subdir_name / name
     if not name.endswith(ALLOWED_SUFFIXES):
         case_path = case_path.with_suffix(suffix)
     assert case_path.is_file(), f"{case_path} is not a file."
     return case_path
 
 
-def read_data(name: str, data: bool = True) -> Tuple[str, str]:
+def read_data(subdir_name: str, name: str, data: bool = True) -> Tuple[str, str]:
     """read_data('test_name') -> 'input', 'output'"""
-    return read_data_from_file(get_case_path(name, data))
+    return read_data_from_file(get_case_path(subdir_name, name, data))
 
 
 def read_data_from_file(file_name: Path) -> Tuple[str, str]:
@@ -136,8 +138,10 @@ def read_data_from_file(file_name: Path) -> Tuple[str, str]:
     return "".join(_input).strip() + "\n", "".join(_output).strip() + "\n"
 
 
-def read_jupyter_notebook(name: str, data: bool = True) -> str:
-    return read_jupyter_notebook_from_file(get_case_path(name, data, suffix=".ipynb"))
+def read_jupyter_notebook(subdir_name: str, name: str, data: bool = True) -> str:
+    return read_jupyter_notebook_from_file(
+        get_case_path(subdir_name, name, data, suffix=".ipynb")
+    )
 
 
 def read_jupyter_notebook_from_file(file_name: Path) -> str:

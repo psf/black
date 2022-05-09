@@ -252,7 +252,7 @@ def test_empty_cell() -> None:
 
 
 def test_entire_notebook_empty_metadata() -> None:
-    content = read_jupyter_notebook("jupyter/notebook_empty_metadata")
+    content = read_jupyter_notebook("jupyter", "notebook_empty_metadata")
     result = format_file_contents(content, fast=True, mode=JUPYTER_MODE)
     expected = (
         "{\n"
@@ -287,7 +287,7 @@ def test_entire_notebook_empty_metadata() -> None:
 
 
 def test_entire_notebook_trailing_newline() -> None:
-    content = read_jupyter_notebook("jupyter/notebook_trailing_newline")
+    content = read_jupyter_notebook("jupyter", "notebook_trailing_newline")
     result = format_file_contents(content, fast=True, mode=JUPYTER_MODE)
     expected = (
         "{\n"
@@ -334,7 +334,7 @@ def test_entire_notebook_trailing_newline() -> None:
 
 
 def test_entire_notebook_no_trailing_newline() -> None:
-    content = read_jupyter_notebook("jupyter/notebook_no_trailing_newline")
+    content = read_jupyter_notebook("jupyter", "notebook_no_trailing_newline")
     result = format_file_contents(content, fast=True, mode=JUPYTER_MODE)
     expected = (
         "{\n"
@@ -381,13 +381,13 @@ def test_entire_notebook_no_trailing_newline() -> None:
 
 
 def test_entire_notebook_without_changes() -> None:
-    content = read_jupyter_notebook("jupyter/notebook_without_changes")
+    content = read_jupyter_notebook("jupyter", "notebook_without_changes")
     with pytest.raises(NothingChanged):
         format_file_contents(content, fast=True, mode=JUPYTER_MODE)
 
 
 def test_non_python_notebook() -> None:
-    content = read_jupyter_notebook("jupyter/non_python_notebook")
+    content = read_jupyter_notebook("jupyter", "non_python_notebook")
 
     with pytest.raises(NothingChanged):
         format_file_contents(content, fast=True, mode=JUPYTER_MODE)
@@ -399,7 +399,7 @@ def test_empty_string() -> None:
 
 
 def test_unparseable_notebook() -> None:
-    path = get_case_path("jupyter/notebook_which_cant_be_parsed.ipynb")
+    path = get_case_path("jupyter", "notebook_which_cant_be_parsed.ipynb")
     msg = rf"File '{re.escape(str(path))}' cannot be parsed as valid Jupyter notebook\."
     with pytest.raises(ValueError, match=msg):
         format_file_in_place(path, fast=True, mode=JUPYTER_MODE)
@@ -409,7 +409,7 @@ def test_ipynb_diff_with_change() -> None:
     result = runner.invoke(
         main,
         [
-            str(get_case_path("jupyter/notebook_trailing_newline.ipynb")),
+            str(get_case_path("jupyter", "notebook_trailing_newline.ipynb")),
             "--diff",
             f"--config={EMPTY_CONFIG}",
         ],
@@ -422,7 +422,7 @@ def test_ipynb_diff_with_no_change() -> None:
     result = runner.invoke(
         main,
         [
-            str(get_case_path("jupyter/notebook_without_changes.ipynb")),
+            str(get_case_path("jupyter", "notebook_without_changes.ipynb")),
             "--diff",
             f"--config={EMPTY_CONFIG}",
         ],
@@ -436,7 +436,7 @@ def test_cache_isnt_written_if_no_jupyter_deps_single(
 ) -> None:
     # Check that the cache isn't written to if Jupyter dependencies aren't installed.
     jupyter_dependencies_are_installed.cache_clear()
-    nb = get_case_path("jupyter/notebook_trailing_newline.ipynb")
+    nb = get_case_path("jupyter", "notebook_trailing_newline.ipynb")
     tmp_nb = tmp_path / "notebook.ipynb"
     with open(nb) as src, open(tmp_nb, "w") as dst:
         dst.write(src.read())
@@ -462,7 +462,7 @@ def test_cache_isnt_written_if_no_jupyter_deps_dir(
 ) -> None:
     # Check that the cache isn't written to if Jupyter dependencies aren't installed.
     jupyter_dependencies_are_installed.cache_clear()
-    nb = get_case_path("jupyter/notebook_trailing_newline.ipynb")
+    nb = get_case_path("jupyter", "notebook_trailing_newline.ipynb")
     tmp_nb = tmp_path / "notebook.ipynb"
     with open(nb) as src, open(tmp_nb, "w") as dst:
         dst.write(src.read())
@@ -480,7 +480,7 @@ def test_cache_isnt_written_if_no_jupyter_deps_dir(
 
 
 def test_ipynb_flag(tmp_path: pathlib.Path) -> None:
-    nb = get_case_path("jupyter/notebook_trailing_newline.ipynb")
+    nb = get_case_path("jupyter", "notebook_trailing_newline.ipynb")
     tmp_nb = tmp_path / "notebook.a_file_extension_which_is_definitely_not_ipynb"
     with open(nb) as src, open(tmp_nb, "w") as dst:
         dst.write(src.read())
@@ -498,7 +498,7 @@ def test_ipynb_flag(tmp_path: pathlib.Path) -> None:
 
 
 def test_ipynb_and_pyi_flags() -> None:
-    nb = get_case_path("jupyter/notebook_trailing_newline.ipynb")
+    nb = get_case_path("jupyter", "notebook_trailing_newline.ipynb")
     result = runner.invoke(
         main,
         [

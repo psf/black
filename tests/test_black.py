@@ -159,7 +159,9 @@ class BlackTestCase(BlackBaseTestCase):
         )
 
     def test_piping(self) -> None:
-        source, expected = read_data("src/black/__init__", data=False)
+        source, expected = read_data_from_file(
+            Path(PROJECT_ROOT / "src/black/__init__.py")
+        )
         result = BlackRunner().invoke(
             black.main,
             [
@@ -181,8 +183,8 @@ class BlackTestCase(BlackBaseTestCase):
             r"(STDIN|STDOUT)\t\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d\d\d\d "
             r"\+\d\d\d\d"
         )
-        source, _ = read_data("simple_cases/expression.py")
-        expected, _ = read_data("simple_cases/expression.diff")
+        source, _ = read_data("simple_cases", "expression.py")
+        expected, _ = read_data("simple_cases", "expression.diff")
         args = [
             "-",
             "--fast",
@@ -199,7 +201,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(expected, actual)
 
     def test_piping_diff_with_color(self) -> None:
-        source, _ = read_data("simple_cases/expression.py")
+        source, _ = read_data("simple_cases", "expression.py")
         args = [
             "-",
             "--fast",
@@ -221,7 +223,7 @@ class BlackTestCase(BlackBaseTestCase):
 
     @patch("black.dump_to_file", dump_to_stderr)
     def _test_wip(self) -> None:
-        source, expected = read_data("miscellaneous/wip")
+        source, expected = read_data("miscellaneous", "wip")
         sys.settrace(tracefunc)
         mode = replace(
             DEFAULT_MODE,
@@ -235,7 +237,7 @@ class BlackTestCase(BlackBaseTestCase):
         black.assert_stable(source, actual, black.FileMode())
 
     def test_pep_572_version_detection(self) -> None:
-        source, _ = read_data("py_38/pep_572")
+        source, _ = read_data("py_38", "pep_572")
         root = black.lib2to3_parse(source)
         features = black.get_features_used(root)
         self.assertIn(black.Feature.ASSIGNMENT_EXPRESSIONS, features)
@@ -243,7 +245,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertIn(black.TargetVersion.PY38, versions)
 
     def test_expression_ff(self) -> None:
-        source, expected = read_data("simple_cases/expression.py")
+        source, expected = read_data("simple_cases", "expression.py")
         tmp_file = Path(black.dump_to_file(source))
         try:
             self.assertTrue(ff(tmp_file, write_back=black.WriteBack.YES))
@@ -257,8 +259,8 @@ class BlackTestCase(BlackBaseTestCase):
             black.assert_stable(source, actual, DEFAULT_MODE)
 
     def test_expression_diff(self) -> None:
-        source, _ = read_data("simple_cases/expression.py")
-        expected, _ = read_data("simple_cases/expression.diff")
+        source, _ = read_data("simple_cases", "expression.py")
+        expected, _ = read_data("simple_cases", "expression.diff")
         tmp_file = Path(black.dump_to_file(source))
         diff_header = re.compile(
             rf"{re.escape(str(tmp_file))}\t\d\d\d\d-\d\d-\d\d "
@@ -283,8 +285,8 @@ class BlackTestCase(BlackBaseTestCase):
             self.assertEqual(expected, actual, msg)
 
     def test_expression_diff_with_color(self) -> None:
-        source, _ = read_data("simple_cases/expression.py")
-        expected, _ = read_data("simple_cases/expression.diff")
+        source, _ = read_data("simple_cases", "expression.py")
+        expected, _ = read_data("simple_cases", "expression.diff")
         tmp_file = Path(black.dump_to_file(source))
         try:
             result = BlackRunner().invoke(
@@ -303,7 +305,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertIn("\033[0m", actual)
 
     def test_detect_pos_only_arguments(self) -> None:
-        source, _ = read_data("py_38/pep_570")
+        source, _ = read_data("py_38", "pep_570")
         root = black.lib2to3_parse(source)
         features = black.get_features_used(root)
         self.assertIn(black.Feature.POS_ONLY_ARGUMENTS, features)
@@ -312,7 +314,7 @@ class BlackTestCase(BlackBaseTestCase):
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_string_quotes(self) -> None:
-        source, expected = read_data("miscellaneous/string_quotes")
+        source, expected = read_data("miscellaneous", "string_quotes")
         mode = black.Mode(preview=True)
         assert_format(source, expected, mode)
         mode = replace(mode, string_normalization=False)
@@ -322,9 +324,9 @@ class BlackTestCase(BlackBaseTestCase):
         black.assert_stable(source, not_normalized, mode=mode)
 
     def test_skip_magic_trailing_comma(self) -> None:
-        source, _ = read_data("simple_cases/expression.py")
+        source, _ = read_data("simple_cases", "expression.py")
         expected, _ = read_data(
-            "miscellaneous/expression_skip_magic_trailing_comma.diff"
+            "miscellaneous", "expression_skip_magic_trailing_comma.diff"
         )
         tmp_file = Path(black.dump_to_file(source))
         diff_header = re.compile(
@@ -352,7 +354,7 @@ class BlackTestCase(BlackBaseTestCase):
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_async_as_identifier(self) -> None:
-        source_path = get_case_path("miscellaneous/async_as_identifier")
+        source_path = get_case_path("miscellaneous", "async_as_identifier")
         source, expected = read_data_from_file(source_path)
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
@@ -367,7 +369,7 @@ class BlackTestCase(BlackBaseTestCase):
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_python37(self) -> None:
-        source_path = get_case_path("py_37/python37")
+        source_path = get_case_path("py_37", "python37")
         source, expected = read_data_from_file(source_path)
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
@@ -716,7 +718,7 @@ class BlackTestCase(BlackBaseTestCase):
         # since this makes some test cases of test_get_features_used()
         # fails if it fails, this is tested first so that a useful case
         # is identified
-        simples, relaxed = read_data("miscellaneous/decorators")
+        simples, relaxed = read_data("miscellaneous", "decorators")
         # skip explanation comments at the top of the file
         for simple_test in simples.split("##")[1:]:
             node = black.lib2to3_parse(simple_test)
@@ -759,7 +761,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(black.get_features_used(node), {Feature.NUMERIC_UNDERSCORES})
         node = black.lib2to3_parse("123456\n")
         self.assertEqual(black.get_features_used(node), set())
-        source, expected = read_data("simple_cases/function.py")
+        source, expected = read_data("simple_cases", "function.py")
         node = black.lib2to3_parse(source)
         expected_features = {
             Feature.TRAILING_COMMA_IN_CALL,
@@ -769,7 +771,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(black.get_features_used(node), expected_features)
         node = black.lib2to3_parse(expected)
         self.assertEqual(black.get_features_used(node), expected_features)
-        source, expected = read_data("simple_cases/expression.py")
+        source, expected = read_data("simple_cases", "expression.py")
         node = black.lib2to3_parse(source)
         self.assertEqual(black.get_features_used(node), set())
         node = black.lib2to3_parse(expected)
@@ -855,8 +857,8 @@ class BlackTestCase(BlackBaseTestCase):
 
     @pytest.mark.incompatible_with_mypyc
     def test_debug_visitor(self) -> None:
-        source, _ = read_data("miscellaneous/debug_visitor.py")
-        expected, _ = read_data("miscellaneous/debug_visitor.out")
+        source, _ = read_data("miscellaneous", "debug_visitor.py")
+        expected, _ = read_data("miscellaneous", "debug_visitor.out")
         out_lines = []
         err_lines = []
 
@@ -940,10 +942,10 @@ class BlackTestCase(BlackBaseTestCase):
     def test_check_diff_use_together(self) -> None:
         with cache_dir():
             # Files which will be reformatted.
-            src1 = get_case_path("miscellaneous/string_quotes")
+            src1 = get_case_path("miscellaneous", "string_quotes")
             self.invokeBlack([str(src1), "--diff", "--check"], exit_code=1)
             # Files which will not be reformatted.
-            src2 = get_case_path("simple_cases/composition")
+            src2 = get_case_path("simple_cases", "composition")
             self.invokeBlack([str(src2), "--diff", "--check"])
             # Multi file command.
             self.invokeBlack([str(src1), str(src2), "--diff", "--check"], exit_code=1)
@@ -967,7 +969,7 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_single_file_force_pyi(self) -> None:
         pyi_mode = replace(DEFAULT_MODE, is_pyi=True)
-        contents, expected = read_data("miscellaneous/force_pyi")
+        contents, expected = read_data("miscellaneous", "force_pyi")
         with cache_dir() as workspace:
             path = (workspace / "file.py").resolve()
             with open(path, "w") as fh:
@@ -988,7 +990,7 @@ class BlackTestCase(BlackBaseTestCase):
     def test_multi_file_force_pyi(self) -> None:
         reg_mode = DEFAULT_MODE
         pyi_mode = replace(DEFAULT_MODE, is_pyi=True)
-        contents, expected = read_data("miscellaneous/force_pyi")
+        contents, expected = read_data("miscellaneous", "force_pyi")
         with cache_dir() as workspace:
             paths = [
                 (workspace / "file1.py").resolve(),
@@ -1010,7 +1012,7 @@ class BlackTestCase(BlackBaseTestCase):
                 self.assertNotIn(str(path), normal_cache)
 
     def test_pipe_force_pyi(self) -> None:
-        source, expected = read_data("miscellaneous/force_pyi")
+        source, expected = read_data("miscellaneous", "force_pyi")
         result = CliRunner().invoke(
             black.main, ["-", "-q", "--pyi"], input=BytesIO(source.encode("utf8"))
         )
@@ -1021,7 +1023,7 @@ class BlackTestCase(BlackBaseTestCase):
     def test_single_file_force_py36(self) -> None:
         reg_mode = DEFAULT_MODE
         py36_mode = replace(DEFAULT_MODE, target_versions=PY36_VERSIONS)
-        source, expected = read_data("miscellaneous/force_py36")
+        source, expected = read_data("miscellaneous", "force_py36")
         with cache_dir() as workspace:
             path = (workspace / "file.py").resolve()
             with open(path, "w") as fh:
@@ -1040,7 +1042,7 @@ class BlackTestCase(BlackBaseTestCase):
     def test_multi_file_force_py36(self) -> None:
         reg_mode = DEFAULT_MODE
         py36_mode = replace(DEFAULT_MODE, target_versions=PY36_VERSIONS)
-        source, expected = read_data("miscellaneous/force_py36")
+        source, expected = read_data("miscellaneous", "force_py36")
         with cache_dir() as workspace:
             paths = [
                 (workspace / "file1.py").resolve(),
@@ -1062,7 +1064,7 @@ class BlackTestCase(BlackBaseTestCase):
                 self.assertNotIn(str(path), normal_cache)
 
     def test_pipe_force_py36(self) -> None:
-        source, expected = read_data("miscellaneous/force_py36")
+        source, expected = read_data("miscellaneous", "force_py36")
         result = CliRunner().invoke(
             black.main,
             ["-", "-q", "--target-version=py36"],
@@ -1458,10 +1460,10 @@ class BlackTestCase(BlackBaseTestCase):
 
         # https://bugs.python.org/issue2142
 
-        source, _ = read_data("miscellaneous/missing_final_newline.py")
+        source, _ = read_data("miscellaneous", "missing_final_newline.py")
         # read_data adds a trailing newline
         source = source.rstrip()
-        expected, _ = read_data("miscellaneous/missing_final_newline.diff")
+        expected, _ = read_data("miscellaneous", "missing_final_newline.diff")
         tmp_file = Path(black.dump_to_file(source, ensure_final_newline=False))
         diff_header = re.compile(
             rf"{re.escape(str(tmp_file))}\t\d\d\d\d-\d\d-\d\d "
