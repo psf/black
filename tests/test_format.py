@@ -161,8 +161,9 @@ def test_python_310(filename: str) -> None:
     assert_format(source, expected, mode, minimum_version=(3, 10))
 
 
-def test_python_310_without_target_version() -> None:
-    source, expected = read_data("pattern_matching_simple")
+@pytest.mark.parametrize("filename", all_data_cases("py_310"))
+def test_python_310_without_target_version(filename: str) -> None:
+    source, expected = read_data(filename)
     mode = black.Mode()
     assert_format(source, expected, mode, minimum_version=(3, 10))
 
