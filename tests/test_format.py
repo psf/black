@@ -15,16 +15,6 @@ from tests.util import (
     all_data_cases,
 )
 
-PY310_CASES: List[str] = [
-    "starred_for_target",
-    "pattern_matching_simple",
-    "pattern_matching_complex",
-    "pattern_matching_extras",
-    "pattern_matching_style",
-    "pattern_matching_generic",
-    "parenthesized_context_managers",
-]
-
 PY311_CASES: List[str] = [
     "pep_654",
     "pep_654_style",
@@ -164,7 +154,7 @@ def test_remove_with_brackets() -> None:
     )
 
 
-@pytest.mark.parametrize("filename", PY310_CASES)
+@pytest.mark.parametrize("filename", all_data_cases("py_310"))
 def test_python_310(filename: str) -> None:
     source, expected = read_data(filename)
     mode = black.Mode(target_versions={black.TargetVersion.PY310})
