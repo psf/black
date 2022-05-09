@@ -132,6 +132,13 @@ def test_remove_with_brackets() -> None:
     )
 
 
+@pytest.mark.parametrize("filename", all_data_cases("py_36"))
+def test_python_36(filename: str) -> None:
+    source, expected = read_data(filename)
+    mode = black.Mode(target_versions=PY36_VERSIONS)
+    assert_format(source, expected, mode, minimum_version=(3, 6))
+
+
 @pytest.mark.parametrize("filename", all_data_cases("py_310"))
 def test_python_310(filename: str) -> None:
     source, expected = read_data(filename)
@@ -179,18 +186,6 @@ def test_long_strings_flag_disabled() -> None:
     """Tests for turning off the string processing logic."""
     source, expected = read_data("long_strings_flag_disabled")
     mode = replace(DEFAULT_MODE, experimental_string_processing=False)
-    assert_format(source, expected, mode)
-
-
-def test_numeric_literals() -> None:
-    source, expected = read_data("numeric_literals")
-    mode = replace(DEFAULT_MODE, target_versions=PY36_VERSIONS)
-    assert_format(source, expected, mode)
-
-
-def test_numeric_literals_ignoring_underscores() -> None:
-    source, expected = read_data("numeric_literals_skip_underscores")
-    mode = replace(DEFAULT_MODE, target_versions=PY36_VERSIONS)
     assert_format(source, expected, mode)
 
 
