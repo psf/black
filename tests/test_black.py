@@ -159,9 +159,7 @@ class BlackTestCase(BlackBaseTestCase):
         )
 
     def test_piping(self) -> None:
-        source, expected = read_data_from_file(
-            PROJECT_ROOT / "src/black/__init__.py"
-        )
+        source, expected = read_data_from_file(PROJECT_ROOT / "src/black/__init__.py")
         result = BlackRunner().invoke(
             black.main,
             [
