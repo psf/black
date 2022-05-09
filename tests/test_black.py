@@ -160,7 +160,7 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_piping(self) -> None:
         source, expected = read_data_from_file(
-            Path(PROJECT_ROOT / "src/black/__init__.py")
+            PROJECT_ROOT / "src/black/__init__.py"
         )
         result = BlackRunner().invoke(
             black.main,
@@ -324,7 +324,7 @@ class BlackTestCase(BlackBaseTestCase):
         black.assert_stable(source, not_normalized, mode=mode)
 
     def test_skip_magic_trailing_comma(self) -> None:
-        source, _ = read_data("simple_cases", "expression.py")
+        source, _ = read_data("simple_cases", "expression")
         expected, _ = read_data(
             "miscellaneous", "expression_skip_magic_trailing_comma.diff"
         )
@@ -761,7 +761,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(black.get_features_used(node), {Feature.NUMERIC_UNDERSCORES})
         node = black.lib2to3_parse("123456\n")
         self.assertEqual(black.get_features_used(node), set())
-        source, expected = read_data("simple_cases", "function.py")
+        source, expected = read_data("simple_cases", "function")
         node = black.lib2to3_parse(source)
         expected_features = {
             Feature.TRAILING_COMMA_IN_CALL,
@@ -771,7 +771,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(black.get_features_used(node), expected_features)
         node = black.lib2to3_parse(expected)
         self.assertEqual(black.get_features_used(node), expected_features)
-        source, expected = read_data("simple_cases", "expression.py")
+        source, expected = read_data("simple_cases", "expression")
         node = black.lib2to3_parse(source)
         self.assertEqual(black.get_features_used(node), set())
         node = black.lib2to3_parse(expected)
@@ -857,7 +857,7 @@ class BlackTestCase(BlackBaseTestCase):
 
     @pytest.mark.incompatible_with_mypyc
     def test_debug_visitor(self) -> None:
-        source, _ = read_data("miscellaneous", "debug_visitor.py")
+        source, _ = read_data("miscellaneous", "debug_visitor")
         expected, _ = read_data("miscellaneous", "debug_visitor.out")
         out_lines = []
         err_lines = []
@@ -1460,7 +1460,7 @@ class BlackTestCase(BlackBaseTestCase):
 
         # https://bugs.python.org/issue2142
 
-        source, _ = read_data("miscellaneous", "missing_final_newline.py")
+        source, _ = read_data("miscellaneous", "missing_final_newline")
         # read_data adds a trailing newline
         source = source.rstrip()
         expected, _ = read_data("miscellaneous", "missing_final_newline.diff")

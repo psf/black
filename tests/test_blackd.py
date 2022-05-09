@@ -108,7 +108,7 @@ class BlackDTestCase(AioHTTPTestCase):
             r"(In|Out)\t\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
         )
 
-        source, _ = read_data("miscellaneous", "blackd_diff.py")
+        source, _ = read_data("miscellaneous", "blackd_diff")
         expected, _ = read_data("miscellaneous", "blackd_diff.diff")
 
         response = await self.client.post(
