@@ -15,11 +15,6 @@ from tests.util import (
     all_data_cases,
 )
 
-PY311_CASES: List[str] = [
-    "pep_654",
-    "pep_654_style",
-]
-
 PREVIEW_CASES: List[str] = [
     # string processing
     "cantfit",
@@ -177,7 +172,7 @@ def test_patma_invalid() -> None:
     exc_info.match("Cannot parse: 10:11")
 
 
-@pytest.mark.parametrize("filename", PY311_CASES)
+@pytest.mark.parametrize("filename", all_data_cases("py_311"))
 def test_python_311(filename: str) -> None:
     source, expected = read_data(filename)
     mode = black.Mode(target_versions={black.TargetVersion.PY311})
