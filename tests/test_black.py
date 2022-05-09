@@ -60,6 +60,8 @@ from tests.util import (
     ff,
     fs,
     read_data,
+    get_case_path,
+    read_data_from_file,
 )
 
 THIS_FILE = Path(__file__)
@@ -363,8 +365,8 @@ class BlackTestCase(BlackBaseTestCase):
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_python37(self) -> None:
-        source_path = (THIS_DIR / "data" / "python37.py").resolve()
-        source, expected = read_data("python37")
+        source_path = get_case_path("py_37/python37")
+        source, expected = read_data_from_file(source_path)
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         major, minor = sys.version_info[:2]

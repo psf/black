@@ -111,6 +111,13 @@ def test_python_36(filename: str) -> None:
     assert_format(source, expected, mode, minimum_version=(3, 6))
 
 
+@pytest.mark.parametrize("filename", all_data_cases("py_36"))
+def test_python_37(filename: str) -> None:
+    source, expected = read_data(filename)
+    mode = black.Mode(target_versions={black.TargetVersion.PY37})
+    assert_format(source, expected, mode, minimum_version=(3, 7))
+
+
 @pytest.mark.parametrize("filename", all_data_cases("py_38"))
 def test_python_38(filename: str) -> None:
     source, expected = read_data(filename)
@@ -185,16 +192,6 @@ def test_stub() -> None:
     mode = replace(DEFAULT_MODE, is_pyi=True)
     source, expected = read_data("stub.pyi")
     assert_format(source, expected, mode)
-
-
-def test_python38() -> None:
-    source, expected = read_data("python38")
-    assert_format(source, expected, minimum_version=(3, 8))
-
-
-def test_python39() -> None:
-    source, expected = read_data("python39")
-    assert_format(source, expected, minimum_version=(3, 9))
 
 
 def test_power_op_newline() -> None:
