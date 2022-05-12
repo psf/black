@@ -1308,6 +1308,18 @@ def get_features_used(  # noqa: C901
         ):
             features.add(Feature.EXCEPT_STAR)
 
+        elif n.type in {syms.subscriptlist, syms.trailer} and any(
+            child.type == syms.star_expr for child in n.children
+        ):
+            features.add(Feature.VARIADIC_GENERICS)
+
+        elif (
+            n.type == syms.tname_star
+            and len(n.children) == 3
+            and n.children[2].type == syms.star_expr
+        ):
+            features.add(Feature.VARIADIC_GENERICS)
+
     return features
 
 

@@ -28,6 +28,7 @@ PY310_CASES: List[str] = [
 PY311_CASES: List[str] = [
     "pep_654",
     "pep_654_style",
+    "pep_646",
 ]
 
 PREVIEW_CASES: List[str] = [
