@@ -159,6 +159,11 @@ A[:, *b]
 A[*b, :]
 A[:, *b, :]
 A[*b, :, *b]
+A[a * b()]
+A[a * b(), *c, *d(), e * f(g * h)]
+A[a * b(), :]
+A[a * b(), *c, *d(), e * f(g * h) :]
+A[[b] * len(c), :]
 
 
 def f1(*args: *b):

@@ -245,7 +245,9 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
                     return prevp.prefix
 
         elif (
-            prevp.type == token.STAR and parent_type(prevp.parent) == syms.subscriptlist
+            prevp.type == token.STAR
+            and parent_type(prevp) == syms.star_expr
+            and parent_type(prevp.parent) == syms.subscriptlist
         ):
             # No space between typevar tuples.
             return NO
