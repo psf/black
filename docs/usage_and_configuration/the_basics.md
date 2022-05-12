@@ -265,7 +265,7 @@ extend-exclude = '''
 # in the root of the project.
 (
   ^/foo.py    # exclude a file named foo.py in the root of the project
-  | *.py.bak  # exclude a file with '.py.bak' suffix within the project
+  | *_pb2.py  # exclude an auto-generated file by Protocol Buffer within the project
 )
 '''
 ```
