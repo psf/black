@@ -49,3 +49,31 @@ plain strings. User-made splits are respected when they do not exceed the line l
 limit. Line continuation backslashes are converted into parenthesized strings.
 Unnecessary parentheses are stripped. The stability and status of this feature is
 tracked in [this issue](https://github.com/psf/black/issues/2188).
+
+### Removing trailing newlines after code block open
+
+Newlines are great. They help us organize our code and leave room for the coders and
+reviewers to breath. However, too many newlines can make simple code gigantic and
+massive. This is unnecessary in a lot of cases. In order to reduce the number of
+redundant newlines, _Black_ will remove trailing newlines after code block openings.
+That means that the following code:
+
+```python
+def my_func():
+
+    print("The line above me will be deleted!")
+
+    print("But the line above me won't!")
+```
+
+Will change to:
+
+```python
+def my_func():
+    print("The line above me will be deleted!")
+
+    print("But the line above me won't!")
+```
+
+This new feature will be applied to **all _Python_'s code blocks**: `def`, `class`,
+`if`, `for`, `while` and `with`.
