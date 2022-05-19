@@ -52,11 +52,8 @@ tracked in [this issue](https://github.com/psf/black/issues/2188).
 
 ### Removing trailing newlines after code block open
 
-Newlines are great. They help us organize our code and leave room for the coders and
-reviewers to breath. However, too many newlines can make simple code gigantic and
-massive. This is unnecessary in a lot of cases. In order to reduce the number of
-redundant newlines, _Black_ will remove trailing newlines after code block openings.
-That means that the following code:
+_Black_ will remove trailing newlines after code block openings. That means that the
+following code:
 
 ```python
 def my_func():
@@ -66,7 +63,7 @@ def my_func():
     print("But the line above me won't!")
 ```
 
-Will change to:
+Will be changed to:
 
 ```python
 def my_func():
