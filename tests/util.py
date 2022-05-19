@@ -11,6 +11,9 @@ from black.debug import DebugVisitor
 from black.mode import TargetVersion
 from black.output import diff, err, out
 
+PYTHON_SUFFIX = ".py"
+ALLOWED_SUFFIXES = (PYTHON_SUFFIX, ".pyi", ".out", ".diff", ".ipynb")
+
 THIS_DIR = Path(__file__).parent
 DATA_DIR = THIS_DIR / "data"
 PROJECT_ROOT = THIS_DIR.parent
@@ -90,21 +93,30 @@ class BlackBaseTestCase(unittest.TestCase):
         _assert_format_equal(expected, actual)
 
 
-def all_data_cases(dir_name: str, data: bool = True) -> List[str]:
-    base_dir = DATA_DIR if data else PROJECT_ROOT
-    cases_dir = base_dir / dir_name
+def get_base_dir(data: bool) -> Path:
+    return DATA_DIR if data else PROJECT_ROOT
+
+
+def all_data_cases(subdir_name: str, data: bool = True) -> List[str]:
+    cases_dir = get_base_dir(data) / subdir_name
     assert cases_dir.is_dir()
-    return [f"{dir_name}/{case_path.stem}" for case_path in cases_dir.iterdir()]
+    return [case_path.stem for case_path in cases_dir.iterdir()]
 
 
-def read_data(name: str, data: bool = True) -> Tuple[str, str]:
-    """read_data('test_name') -> 'input', 'output'"""
-    if not name.endswith((".py", ".pyi", ".out", ".diff")):
-        name += ".py"
-    base_dir = DATA_DIR if data else PROJECT_ROOT
-    case_path = base_dir / name
+def get_case_path(
+    subdir_name: str, name: str, data: bool = True, suffix: str = PYTHON_SUFFIX
+) -> Path:
+    """Get case path from name"""
+    case_path = get_base_dir(data) / subdir_name / name
+    if not name.endswith(ALLOWED_SUFFIXES):
+        case_path = case_path.with_suffix(suffix)
     assert case_path.is_file(), f"{case_path} is not a file."
-    return read_data_from_file(case_path)
+    return case_path
+
+
+def read_data(subdir_name: str, name: str, data: bool = True) -> Tuple[str, str]:
+    """read_data('test_name') -> 'input', 'output'"""
+    return read_data_from_file(get_case_path(subdir_name, name, data))
 
 
 def read_data_from_file(file_name: Path) -> Tuple[str, str]:
@@ -124,6 +136,18 @@ def read_data_from_file(file_name: Path) -> Tuple[str, str]:
         # If there's no output marker, treat the entire file as already pre-formatted.
         _output = _input[:]
     return "".join(_input).strip() + "\n", "".join(_output).strip() + "\n"
+
+
+def read_jupyter_notebook(subdir_name: str, name: str, data: bool = True) -> str:
+    return read_jupyter_notebook_from_file(
+        get_case_path(subdir_name, name, data, suffix=".ipynb")
+    )
+
+
+def read_jupyter_notebook_from_file(file_name: Path) -> str:
+    with open(file_name, mode="rb") as fd:
+        content_bytes = fd.read()
+    return content_bytes.decode()
 
 
 @contextmanager
