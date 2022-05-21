@@ -2,6 +2,7 @@
 String transformers that can split and merge strings.
 """
 from abc import ABC, abstractmethod
+from copy import deepcopy
 from collections import defaultdict
 from dataclasses import dataclass
 import re
@@ -380,6 +381,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[TResult[Line]]:
         new_line = line
+
         rblc_result = self._remove_backslash_line_continuation_chars(
             new_line, string_idx
         )
@@ -664,6 +666,25 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             return TErr(f"Too many different prefixes ({set_of_prefixes}).")
 
         return Ok(None)
+
+class PointlessFStripper(StringTransformer):
+    def do_match(self, line: Line) -> TMatchResult:
+        LL = line.leaves
+        for ix, leaf in enumerate(LL):
+            if leaf.type != token.STRING:
+                continue
+            if "f" not in get_string_prefix(leaf.value):
+                continue
+            return Ok(ix)
+
+        return TErr("This line has no f-string")
+
+    def do_transform(self, line: Line, string_idx: int) -> Iterator[TResult[Line]]:
+        new_line = deepcopy(line)
+        leaf = new_line.leaves[string_idx]
+        prefix = get_string_prefix(leaf.value)
+        leaf.value = StringSplitter._normalize_f_string(None, leaf.value, prefix)
+        yield Ok(new_line)
 
 
 class StringParenStripper(StringTransformer):

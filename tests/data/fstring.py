@@ -10,9 +10,9 @@ f'Hello \'{tricky + "example"}\''
 
 # output
 
-f"f-string without formatted values is just a string"
-f"{{NOT a formatted value}}"
-f'{{NOT \'a\' "formatted" "value"}}'
+"f-string without formatted values is just a string"
+"{NOT a formatted value}"
+'{NOT \'a\' "formatted" "value"}'
 f"some f-string with {a} {few():.2f} {formatted.values!r}"
 f'some f-string with {a} {few(""):.2f} {formatted.values!r}'
 f"{f'''{'nested'} inner'''} outer"

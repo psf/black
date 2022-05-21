@@ -26,7 +26,7 @@ from black.comments import generate_comments, list_comments, FMT_OFF
 from black.numerics import normalize_numeric_literal
 from black.strings import get_string_prefix, fix_docstring
 from black.strings import normalize_string_prefix, normalize_string_quotes
-from black.trans import Transformer, CannotTransform, StringMerger, StringSplitter
+from black.trans import Transformer, CannotTransform, StringMerger, StringSplitter, PointlessFStripper
 from black.trans import StringParenWrapper, StringParenStripper, hug_power_op
 from black.mode import Mode, Feature, Preview
 
@@ -390,6 +390,7 @@ def transform_line(
     string_paren_strip = StringParenStripper(ll, sn)
     string_split = StringSplitter(ll, sn)
     string_paren_wrap = StringParenWrapper(ll, sn)
+    string_fstrip = PointlessFStripper(ll, sn)
 
     transformers: List[Transformer]
     if (
@@ -470,6 +471,7 @@ def transform_line(
                 transformers = [delimiter_split, standalone_comment_split, rhs]
             else:
                 transformers = [rhs]
+    transformers.insert(0, string_fstrip)
     # It's always safe to attempt hugging of power operations and pretty much every line
     # could match.
     transformers.append(hug_power_op)

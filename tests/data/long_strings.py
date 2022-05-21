@@ -600,8 +600,8 @@ def foo():
 
 x = (
     "This is a {really} long string that needs to be split without a doubt (i.e."
-    f" most definitely). In short, this {string} that can't possibly be {{expected}} to"
-    f" fit all together on one line. In {fact} it may even take up three or more"
+    " most definitely). In short, this {string} that can't possibly be {{expected}} to"
+    " fit all together on one line. In {fact} it may even take up three or more"
     " lines... like four or five... but probably just four."
 )
 
