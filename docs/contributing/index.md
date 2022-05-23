@@ -9,6 +9,7 @@ the_basics
 gauging_changes
 issue_triage
 release_process
+pants
 reference/reference_summary
 ```
 

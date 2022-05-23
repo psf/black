@@ -1,4 +1,7 @@
-# Using Pants in the _Black_ repo
+# Using Pants
+
+***Pants use in this repo is currently a proof-of-concept. It is not required for
+contributing, so you can skip this page if not interested.***
 
 [Pants](https://www.pantsbuild.org) is a build system with a strong focus on Python
 support. Pants installs, configures and orchestrates many underlying standard tools,
@@ -180,13 +183,13 @@ The BUILD file metadata reference is available via `./pants help targets`, and
 For security and repeatability, Pants can generate and use lockfiles that pin versions
 of all transitive requirements, verifying them against a SHA before use.
 
-There are [lockfiles](../../lockfiles) for the repo's requirements, and for the
+There are [lockfiles](../../lockfiles/default.lock) for the repo's requirements, and for the
 requirements of the tools that Pants invokes, such as Pytest and Flake8.
 
 To generate new lockfiles, typically because you've changed a `requirements.txt` file or
 some relevant config, or you want to pick up the latest version on PyPI, run:
 
-```console
+```
 # Regenerate the repo's requirements lockfile.
 $ ./pants generate-lockfiles --resolve=default
 
@@ -212,7 +215,7 @@ You can look at `.pants.d/pants.log` for details on why.
 
 ### Generating the _Black_ version string
 
-_Black_ invokes [setuptools_scm](https://github.com/pypa/setuptools_scm) in [setup.py]()
+_Black_ invokes [setuptools_scm](https://github.com/pypa/setuptools_scm) in [setup.py](../../setup.py)
 to generate a gitignored \_black_version.py file on disk.
 
 Pants, on the other hand, invokes setuptools_scm using its code generation mechanisms. A
@@ -229,6 +232,7 @@ To see what Pants generated, run
 
 - Running fuzz testing
 - Running diff-shades
+- Generating docs
 
 ## Not yet supported
 
