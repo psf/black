@@ -24,3 +24,10 @@ src/_black_version.py
 .hypothesis/
 venv/
 .ipynb_checkpoints/
+
+# Pants workspace files
+/.pants.d/
+/dist/
+/.pids
+/.pants.workdir.file_lock*
+/.pants.rc

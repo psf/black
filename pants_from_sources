@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Copyright 2020 Pants project contributors.
+# Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+# Runs pants from sources.  Useful for debugging.
+# Assumes you have the pantsbuild/pants repo checked out in a sibling dir of this dir,
+# named 'pants' but overridable using PANTS_SOURCE.
+
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+
+PANTS_SOURCE="${PANTS_SOURCE:-../pants}"
+
+# When running pants from sources you are likely to be modifying those sources, so
+# you won't want pantsd running.  You can override this by setting ENABLE_PANTSD=true.
+ENABLE_PANTSD="${ENABLE_PANTSD:-false}"
+
+export PANTS_VERSION="$(cat "${PANTS_SOURCE}/src/python/pants/VERSION")"
+export PANTS_PANTSD="${ENABLE_PANTSD}"
+export no_proxy="*"
+
+exec "${PANTS_SOURCE}/pants" "--no-verify-config" "$@"
