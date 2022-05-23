@@ -1,0 +1,74 @@
+[GLOBAL]
+pants_version = "2.13.0.dev2"
+backend_packages = [
+    "pants.backend.python",
+    "pants.backend.python.lint.black",
+    "pants.backend.python.lint.flake8",
+    "pants.backend.python.typecheck.mypy",
+    "pants.backend.experimental.python",
+]
+
+pants_ignore.add = [
+    # Various files in the tests/data folders are gitignored, to test file discovery.
+    # Pants ignores gitignored files by default, but we don't want Pants to ignore these.
+    "!tests/data/**",
+]
+
+build_file_prelude_globs = [
+    "pants_macros.py",
+]
+
+print_stacktrace = true
+
+[source]
+root_patterns = [
+    '/',
+    '/src',
+]
+
+[anonymous-telemetry]
+enabled = true
+repo_id = "C6339CF0-26A0-43B3-8DF0-2E8E2A3DE28C"
+
+[python]
+interpreter_constraints = [">=3.6.2,<3.11","PyPy==3.7.*"]
+enable_resolves = true
+default_resolve = "default"
+lockfile_generator = "pex"
+
+[python.resolves]
+default = "lockfiles/default.lock"
+scripts = "lockfiles/scripts.lock"
+diff_shades = "lockfiles/diff_shades.lock"
+
+[pytest]
+lockfile = "lockfiles/pytest.lock"
+
+[mypy]
+lockfile = "lockfiles/mypy.lock"
+version = "mypy==0.940"
+interpreter_constraints = [">=3.6.2,<3.11"]
+extra_type_stubs = [
+    "types-dataclasses >= 0.1.3",
+    "types-PyYAML",
+    "types-typed-ast >= 1.4.1",
+]
+
+[flake8]
+lockfile = "lockfiles/flake8.lock"
+version = "flake8==4.0.1"
+extra_requirements = [
+    "flake8-bugbear",
+    "flake8-comprehensions",
+    "flake8-simplify",
+]
+
+[black]
+# Pants attempts to compute a single compatible interpreter to run Black on, but that will fail due
+# to our parametrizing tests across conflicting interpreter constraints. We bypass that logic
+# by setting an interpreter explicitly here.  We set this to the value used to generate the
+# default Black lockfile embedded in Pants, so that we don't have to generate our own lockfile.
+interpreter_constraints = [">=3.7,<4"]
+
+[python-infer]
+unowned_dependency_behavior = "warning"
