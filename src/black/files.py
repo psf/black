@@ -35,7 +35,7 @@ from black.report import Report
 from black.handle_ipynb_magics import jupyter_dependencies_are_installed
 
 if TYPE_CHECKING:
-    import colorama  # noqa: F401
+    import colorama  # noqa: F401  # pants: no-infer-dep
 
 
 @lru_cache()

@@ -1,11 +1,11 @@
 # Copyright (C) 2020 Łukasz Langa
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages  # pants: no-infer-dep
 import sys
 import os
 
 assert sys.version_info >= (3, 6, 2), "black requires Python 3.6.2+"
 from pathlib import Path  # noqa E402
-from typing import List  # noqa: E402
+from typing import Any, Dict, List  # noqa: E402
 
 CURRENT_DIR = Path(__file__).parent
 sys.path.insert(0, str(CURRENT_DIR))  # for setuptools.build_meta
@@ -39,7 +39,7 @@ if os.getenv("BLACK_USE_MYPYC", None) == "1":
     USE_MYPYC = True
 
 if USE_MYPYC:
-    from mypyc.build import mypycify
+    from mypyc.build import mypycify  # pants: no-infer-dep
 
     src = CURRENT_DIR / "src"
     # TIP: filepaths are normalized to use forward slashes and are relative to ./src/
@@ -70,12 +70,22 @@ if USE_MYPYC:
 else:
     ext_modules = []
 
+version_kwargs: Dict[str, Any]
+if os.environ.get("RUNNING_IN_PANTS") == "1":
+    from _black_version import version as __version__
+
+    version_kwargs = {"version": __version__}
+else:
+    version_kwargs = {
+        "use_scm_version": {
+            "write_to": "src/_black_version.py",
+            "write_to_template": 'version = "{version}"\n',
+        },
+    }
+
 setup(
     name="black",
-    use_scm_version={
-        "write_to": "src/_black_version.py",
-        "write_to_template": 'version = "{version}"\n',
-    },
+    **version_kwargs,
     description="The uncompromising code formatter.",
     long_description=get_long_description(),
     long_description_content_type="text/markdown",

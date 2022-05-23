@@ -14,6 +14,8 @@ from tests.util import (
     all_data_cases,
 )
 
+# Mirrors the test_format_files target sources in BUILD.pants.
+# Update that file if you modify this list.
 SOURCES: List[str] = [
     "src/black/__init__.py",
     "src/black/__main__.py",
