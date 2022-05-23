@@ -95,7 +95,7 @@ class BlackDTestCase(AioHTTPTestCase):
 
     @unittest_run_loop
     async def test_blackd_pyi(self) -> None:
-        source, expected = read_data("stub.pyi")
+        source, expected = read_data("miscellaneous", "stub.pyi")
         response = await self.client.post(
             "/", data=source, headers={blackd.PYTHON_VARIANT_HEADER: "pyi"}
         )
@@ -108,8 +108,8 @@ class BlackDTestCase(AioHTTPTestCase):
             r"(In|Out)\t\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
         )
 
-        source, _ = read_data("blackd_diff.py")
-        expected, _ = read_data("blackd_diff.diff")
+        source, _ = read_data("miscellaneous", "blackd_diff")
+        expected, _ = read_data("miscellaneous", "blackd_diff.diff")
 
         response = await self.client.post(
             "/", data=source, headers={blackd.DIFF_HEADER: "true"}

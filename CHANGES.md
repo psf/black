@@ -18,6 +18,7 @@
 <!-- Changes that affect Black's preview style -->
 
 - Format docstrings to have consistent quote placement (#2885)
+- Fixed bug where docstrings with triple quotes could exceed max line length (#3044)
 - Remove redundant parentheses around awaited objects (#2991)
 - Parentheses around return annotations are now managed (#2990)
 - Remove unnecessary parentheses from `with` statements (#2926)
