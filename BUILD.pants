@@ -1,0 +1,138 @@
+# NOTE: This file is named BUILD.pants and not just BUILD because manually running setup.py
+#  will create a directory named build, and paths on MacOS are case-insensitive.
+# Fortunately Pants looks at any of BUILD/BUILD.* as valid build files by default.
+
+# TODO: Get this working.
+# pex_binary(
+#     name="fuzz",
+#     dependencies=[":fuzz_py"],
+#     entry_point="fuzz.py",
+# )
+
+python_sources(
+    sources=["fuzz.py"],
+    name="fuzz_py",
+)
+
+python_requirements(
+    name="fuzz-requirements",
+    source="fuzz_requirements.txt",
+    resolve="default",
+)
+
+python_sources(
+    sources=["setup.py"],
+    name="setup_py",
+)
+
+python_requirements(
+    name="requirements",
+    resolve="default",
+)
+
+python_requirements(
+    name="test-requirements",
+    source="test_requirements.txt",
+)
+
+resources(
+    name="build_resources",
+    sources=["pyproject.toml", "README.md", "CHANGES.md"],
+)
+
+python_distribution(
+    name="dist-native",
+    dependencies=[
+        ":build_resources",
+        ":setup_py",
+        "src/black",
+    ],
+    interpreter_constraints=parametrize(
+        py36=[">=3.6.2,<3.7"],
+        py37=["==3.7.*"],
+        py38=["==3.8.*"],
+        py39=["==3.9.*"],
+        py310=["==3.10.*"],
+    ),
+    provides=python_artifact(
+        name="black",
+    ),
+    generate_setup=False,
+    sdist=False,
+    wheel=True,
+    uses_mypyc=True,
+    env_vars=[
+        "BLACK_USE_MYPYC=1",
+        "RUNNING_IN_PANTS=1",
+    ],
+)
+
+python_distribution(
+    name="dist-pure",
+    dependencies=[
+        ":build_resources",
+        ":setup_py",
+        "src/black",
+    ],
+    provides=python_artifact(
+        name="black",
+    ),
+    generate_setup=False,
+    sdist=True,
+    wheel=True,
+    uses_mypyc=False,
+    env_vars=[
+        "BLACK_USE_MYPYC=0",
+        "RUNNING_IN_PANTS=1",
+    ],
+)
+
+# Mirrors SOURCES in test_format.py. Update them in sync.
+# This is necessary because we have a test that operates on the repo's own source files,
+# so they have two roles: A) source files (owned by the python_sources targets in their dirs)
+# and B) test inputs (owned by this target).  This does not cause ambiguity with dependency
+# inference, since a files() target is not considered as a source for Python code imports.
+# TODO: Share this list between test_format.py and this BUILD file.
+files(
+    name="test_format_files",
+    sources=[
+        "src/black/__init__.py",
+        "src/black/__main__.py",
+        "src/black/brackets.py",
+        "src/black/cache.py",
+        "src/black/comments.py",
+        "src/black/concurrency.py",
+        "src/black/const.py",
+        "src/black/debug.py",
+        "src/black/files.py",
+        "src/black/linegen.py",
+        "src/black/lines.py",
+        "src/black/mode.py",
+        "src/black/nodes.py",
+        "src/black/numerics.py",
+        "src/black/output.py",
+        "src/black/parsing.py",
+        "src/black/report.py",
+        "src/black/rusty.py",
+        "src/black/strings.py",
+        "src/black/trans.py",
+        "src/blackd/__init__.py",
+        "src/blib2to3/pygram.py",
+        "src/blib2to3/pytree.py",
+        "src/blib2to3/pgen2/conv.py",
+        "src/blib2to3/pgen2/driver.py",
+        "src/blib2to3/pgen2/grammar.py",
+        "src/blib2to3/pgen2/literals.py",
+        "src/blib2to3/pgen2/parse.py",
+        "src/blib2to3/pgen2/pgen.py",
+        "src/blib2to3/pgen2/tokenize.py",
+        "src/blib2to3/pgen2/token.py",
+        "setup.py",
+        "tests/test_black.py",
+        "tests/test_blackd.py",
+        "tests/test_format.py",
+        "tests/optional.py",
+        "tests/util.py",
+        "tests/conftest.py",
+    ],
+)

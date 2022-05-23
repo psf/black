@@ -1,0 +1,8 @@
+click>=8.0.0
+platformdirs>=2
+tomli>=1.1.0; python_full_version < '3.11.0a7'
+typed-ast>=1.4.2; python_version < '3.8' and implementation_name == 'cpython'
+pathspec>=0.9.0
+dataclasses>=0.6; python_version < '3.7'
+typing_extensions>=3.10.0.0; python_version < '3.10'
+mypy_extensions>=0.4.3
