@@ -521,7 +521,7 @@ class EmptyLineTracker:
             return before, 1
 
         if (
-            Preview.remove_def_trailing_newline in current_line.mode
+            Preview.remove_block_trailing_newline in current_line.mode
             and self.previous_line
             and self.previous_line.opens_block
         ):
