@@ -301,9 +301,15 @@ close and reopen your File, _Black_ will be done with its job.
 
 ## Visual Studio Code
 
-Use the
-[Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
-([instructions](https://code.visualstudio.com/docs/python/editing#_formatting)).
+- Use the
+  [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
+  ([instructions](https://code.visualstudio.com/docs/python/editing#_formatting)).
+
+- Alternatively the pre-release
+  [Black Formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter)
+  extension can be used which runs a [Language Server Protocol](https://langserver.org/)
+  server for Black. Formatting is much more responsive using this extension, **but the
+  minimum supported version of Black is 22.3.0**.
 
 ## SublimeText 3
 
