@@ -72,5 +72,5 @@ def my_func():
     print("But the line above me won't!")
 ```
 
-This new feature will be applied to **all code blocks**: `def`, `class`,
-`if`, `for`, `while` and `with`.
+This new feature will be applied to **all code blocks**: `def`, `class`, `if`, `for`,
+`while` and `with`.
