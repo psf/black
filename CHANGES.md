@@ -38,7 +38,7 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
-- Add script migrate-black.py to ease migration to black
+- Add migrate-black.py script to ease migration to black formatted git project (#3038)
 
 ### Output
 
