@@ -495,7 +495,10 @@ class EmptyLineTracker:
                 else:
                     before = 2
             self.previous_defs.pop()
-        if current_line.is_decorator or current_line.is_def or current_line.is_class:
+
+        if current_line.depth == 0 and (
+            current_line.is_decorator or current_line.is_def or current_line.is_class
+        ):
             before, after = self._maybe_empty_lines_for_class_or_def(
                 current_line, before
             )
