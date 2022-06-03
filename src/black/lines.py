@@ -496,24 +496,39 @@ class EmptyLineTracker:
                     before = 2
             self.previous_defs.pop()
         if current_line.is_decorator or current_line.is_def or current_line.is_class:
-            return self._maybe_empty_lines_for_class_or_def(current_line, before)
+            before, after = self._maybe_empty_lines_for_class_or_def(
+                current_line, before
+            )
+        else:
+            after = 0
 
+        # at module scope, separate code from imports
         if (
             self.previous_line
             and self.previous_line.is_import
             and not current_line.is_import
-            and depth == self.previous_line.depth
+            and depth == 0
         ):
-            return (before or 1), 0
+            before = before or 1
+
+        # at lower scopes, imports start a new block
+        if (
+            self.previous_line
+            and current_line.is_import
+            and not self.previous_line.is_import
+            and not self.previous_line.is_comment
+            and depth <= self.previous_line.depth
+        ):
+            before = before or 1
 
         if (
             self.previous_line
             and self.previous_line.is_class
             and current_line.is_triple_quoted_string
         ):
-            return before, 1
+            after = after or 1
 
-        return before, 0
+        return before, after
 
     def _maybe_empty_lines_for_class_or_def(
         self, current_line: Line, before: int
