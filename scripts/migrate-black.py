@@ -16,7 +16,7 @@ def blackify(base_branch: str, black_command: str, logger: logging.Logger) -> in
     current_branch = git("branch", "--show-current")
 
     if not current_branch or base_branch == current_branch:
-        logger.error("You need to check out a feature brach to work on")
+        logger.error("You need to check out a feature branch to work on")
         return 1
 
     if not os.path.exists(".git"):
