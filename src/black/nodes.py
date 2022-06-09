@@ -120,6 +120,7 @@ TEST_DESCENDANTS: Final = {
     syms.term,
     syms.power,
 }
+TYPED_NAMES: Final = {syms.tname, syms.tname_star}
 ASSIGNMENTS: Final = {
     "=",
     "+=",
@@ -243,6 +244,14 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
                     # that, too.
                     return prevp.prefix
 
+        elif (
+            prevp.type == token.STAR
+            and parent_type(prevp) == syms.star_expr
+            and parent_type(prevp.parent) == syms.subscriptlist
+        ):
+            # No space between typevar tuples.
+            return NO
+
         elif prevp.type in VARARGS_SPECIALS:
             if is_vararg(prevp, within=VARARGS_PARENTS | UNPACKING_PARENTS):
                 return NO
@@ -281,7 +290,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
             return NO
 
         if t == token.EQUAL:
-            if prev.type != syms.tname:
+            if prev.type not in TYPED_NAMES:
                 return NO
 
         elif prev.type == token.EQUAL:
@@ -292,7 +301,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
         elif prev.type != token.COMMA:
             return NO
 
-    elif p.type == syms.tname:
+    elif p.type in TYPED_NAMES:
         # type names
         if not prev:
             prevp = preceding_leaf(p)

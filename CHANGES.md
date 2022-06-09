@@ -17,6 +17,7 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Fixed bug where docstrings with triple quotes could exceed max line length (#3044)
 - Remove redundant parentheses around awaited objects (#2991)
 - Parentheses around return annotations are now managed (#2990)
 - Remove unnecessary parentheses from `with` statements (#2926)
@@ -38,6 +39,8 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- Add migrate-black.py script to ease migration to black formatted git project (#3038)
+
 ### Output
 
 <!-- Changes to Black's terminal output and error messages -->
@@ -55,12 +58,18 @@
 
 - [PEP 654](https://peps.python.org/pep-0654/#except) syntax (for example,
   `except *ExceptionGroup:`) is now supported (#3016)
+- [PEP 646](https://peps.python.org/pep-0646) syntax (for example,
+  `Array[Batch, *Shape]` or `def fn(*args: *T) -> None`) is now supported (#3071)
 
 <!-- Changes to the parser or to version autodetection -->
 
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
+
+### Vim Plugin
+
+- Fixed strtobool function. It didn't parse true/on/false/off. (#3025)
 
 ## 22.3.0
 

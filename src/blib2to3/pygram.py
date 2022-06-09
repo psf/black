@@ -123,6 +123,7 @@ class _python_symbols(Symbols):
     tfpdef: int
     tfplist: int
     tname: int
+    tname_star: int
     trailer: int
     try_stmt: int
     typedargslist: int
