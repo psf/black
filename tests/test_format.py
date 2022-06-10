@@ -180,7 +180,9 @@ def test_docstring_no_string_normalization() -> None:
 
 def test_docstring_no_string_normalization_preview() -> None:
     """Like test_docstring_no_string_normailiazation but with preview on."""
-    source, expected = read_data("docstring_no_string_normalization_preview")
+    source, expected = read_data(
+        "miscellaneous", "docstring_no_string_normalization_preview"
+    )
     mode = replace(DEFAULT_MODE, string_normalization=False, preview=True)
     assert_format(source, expected, mode)
 
