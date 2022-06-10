@@ -804,6 +804,12 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(black.get_features_used(node), set())
         node = black.lib2to3_parse("try: pass\nexcept *Group: pass")
         self.assertEqual(black.get_features_used(node), {Feature.EXCEPT_STAR})
+        node = black.lib2to3_parse("a[*b]")
+        self.assertEqual(black.get_features_used(node), {Feature.VARIADIC_GENERICS})
+        node = black.lib2to3_parse("a[x, *y(), z] = t")
+        self.assertEqual(black.get_features_used(node), {Feature.VARIADIC_GENERICS})
+        node = black.lib2to3_parse("def fn(*args: *T): pass")
+        self.assertEqual(black.get_features_used(node), {Feature.VARIADIC_GENERICS})
 
     def test_get_features_used_for_future_flags(self) -> None:
         for src, features in [

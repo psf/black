@@ -24,7 +24,7 @@ parameters: '(' [typedargslist] ')'
 #     arguments = argument (',' argument)*
 #     argument = tfpdef ['=' test]
 #     kwargs = '**' tname [',']
-#     args = '*' [tname]
+#     args = '*' [tname_star]
 #     kwonly_kwargs = (',' argument)* [',' [kwargs]]
 #     args_kwonly_kwargs = args kwonly_kwargs | kwargs
 #     poskeyword_args_kwonly_kwargs = arguments [',' [args_kwonly_kwargs]]
@@ -34,14 +34,15 @@ parameters: '(' [typedargslist] ')'
 # It needs to be fully expanded to allow our LL(1) parser to work on it.
 
 typedargslist: tfpdef ['=' test] (',' tfpdef ['=' test])* ',' '/' [
-                     ',' [((tfpdef ['=' test] ',')* ('*' [tname] (',' tname ['=' test])*
+                     ',' [((tfpdef ['=' test] ',')* ('*' [tname_star] (',' tname ['=' test])*
                             [',' ['**' tname [',']]] | '**' tname [','])
                      | tfpdef ['=' test] (',' tfpdef ['=' test])* [','])]
-                ] | ((tfpdef ['=' test] ',')* ('*' [tname] (',' tname ['=' test])*
+                ] | ((tfpdef ['=' test] ',')* ('*' [tname_star] (',' tname ['=' test])*
                      [',' ['**' tname [',']]] | '**' tname [','])
                      | tfpdef ['=' test] (',' tfpdef ['=' test])* [','])
 
 tname: NAME [':' test]
+tname_star: NAME [':' (test|star_expr)]
 tfpdef: tname | '(' tfplist ')'
 tfplist: tfpdef (',' tfpdef)* [',']
 
@@ -163,7 +164,7 @@ listmaker: (namedexpr_test|star_expr) ( old_comp_for | (',' (namedexpr_test|star
 testlist_gexp: (namedexpr_test|star_expr) ( old_comp_for | (',' (namedexpr_test|star_expr))* [','] )
 lambdef: 'lambda' [varargslist] ':' test
 trailer: '(' [arglist] ')' | '[' subscriptlist ']' | '.' NAME
-subscriptlist: subscript (',' subscript)* [',']
+subscriptlist: (subscript|star_expr) (',' (subscript|star_expr))* [',']
 subscript: test [':=' test] | [test] ':' [test] [sliceop]
 sliceop: ':' [test]
 exprlist: (expr|star_expr) (',' (expr|star_expr))* [',']

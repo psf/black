@@ -49,6 +49,7 @@ class Feature(Enum):
     UNPACKING_ON_FLOW = 12
     ANN_ASSIGN_EXTENDED_RHS = 13
     EXCEPT_STAR = 14
+    VARIADIC_GENERICS = 15
     FORCE_OPTIONAL_PARENTHESES = 50
 
     # __future__ flags
@@ -132,6 +133,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.ANN_ASSIGN_EXTENDED_RHS,
         Feature.PATTERN_MATCHING,
         Feature.EXCEPT_STAR,
+        Feature.VARIADIC_GENERICS,
     },
 }
 

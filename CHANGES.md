@@ -40,6 +40,8 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- Add migrate-black.py script to ease migration to black formatted git project (#3038)
+
 ### Output
 
 <!-- Changes to Black's terminal output and error messages -->
@@ -57,6 +59,8 @@
 
 - [PEP 654](https://peps.python.org/pep-0654/#except) syntax (for example,
   `except *ExceptionGroup:`) is now supported (#3016)
+- [PEP 646](https://peps.python.org/pep-0646) syntax (for example,
+  `Array[Batch, *Shape]` or `def fn(*args: *T) -> None`) is now supported (#3071)
 
 <!-- Changes to the parser or to version autodetection -->
 
