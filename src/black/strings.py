@@ -90,10 +90,10 @@ def fix_docstring(docstring: str, prefix: str, *, preview: bool) -> str:
     for end in (0, -1):
         while not trimmed[end] or trimmed[end].isspace():
             trimmed.pop(end)
-    trimmed[0] = prefix + trimmed[0].strip()
     # Make single-line docstring single-lined
     if len(trimmed) == 1:
         return trimmed[0]
+    trimmed[0] = prefix + trimmed[0].strip()
     return "\n".join(("", *trimmed, prefix))
 
 
