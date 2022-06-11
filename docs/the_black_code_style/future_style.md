@@ -80,4 +80,3 @@ def my_func():
 
 This new feature will be applied to **all code blocks**: `def`, `class`, `if`, `for`,
 `while`, `with`, `case` and `match`.
->>>>>>> origin/main
