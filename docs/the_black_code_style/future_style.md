@@ -55,3 +55,29 @@ tracked in [this issue](https://github.com/psf/black/issues/2188).
 _Black_ will ensure docstrings are formatted consistently, by removing extra blank lines
 at the beginning and end of docstrings, ensuring the opening and closing quotes are on
 their own lines and collapsing docstrings with a single line of text down to one line.
+
+### Removing trailing newlines after code block open
+
+_Black_ will remove trailing newlines after code block openings. That means that the
+following code:
+
+```python
+def my_func():
+
+    print("The line above me will be deleted!")
+
+    print("But the line above me won't!")
+```
+
+Will be changed to:
+
+```python
+def my_func():
+    print("The line above me will be deleted!")
+
+    print("But the line above me won't!")
+```
+
+This new feature will be applied to **all code blocks**: `def`, `class`, `if`, `for`,
+`while`, `with`, `case` and `match`.
+>>>>>>> origin/main
