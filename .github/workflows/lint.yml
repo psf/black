@@ -26,7 +26,7 @@ jobs:
           python -m pip install tox
 
       - name: Lint
-        uses: pre-commit/action@v2.0.3
+        uses: pre-commit/action@v3.0.0
 
       - name: Run On Self
         run: |

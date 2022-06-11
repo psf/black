@@ -150,6 +150,7 @@ class Preview(Enum):
     one_element_subscript = auto()
     annotation_parens = auto()
     long_docstring_quotes_on_newline = auto()
+    remove_block_trailing_newline = auto()
 
 
 class Deprecated(UserWarning):
