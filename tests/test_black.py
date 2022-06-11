@@ -1461,7 +1461,6 @@ class BlackTestCase(BlackBaseTestCase):
         black.assert_stable(source, output, mode=DEFAULT_MODE)
 
     def test_bpo_2142_workaround(self) -> None:
-
         # https://bugs.python.org/issue2142
 
         source, _ = read_data("miscellaneous", "missing_final_newline")
