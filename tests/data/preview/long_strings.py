@@ -440,8 +440,8 @@ fstring = (
 )
 
 fstring_with_no_fexprs = (
-    f"Some regular string that needs to get split certainly but is NOT an fstring by"
-    f" any means whatsoever."
+    "Some regular string that needs to get split certainly but is NOT an fstring by any"
+    " means whatsoever."
 )
 
 comment_string = (  # This comment gets thrown to the top.

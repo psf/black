@@ -1092,30 +1092,24 @@ assert (
     " 'rykangaroo$', 'ykangaroo$']"
 )
 message = (
-    f"1. Go to Google Developers Console and log in with your Google account."
-    f"(https://console.developers.google.com/)"
-    f"2. You should be prompted to create a new project (name does not matter)."
-    f"3. Click on Enable APIs and Services at the top."
-    f"4. In the list of APIs choose or search for YouTube Data API v3 and "
-    f"click on it. Choose Enable."
-    f"5. Click on Credentials on the left navigation bar."
-    f"6. Click on Create Credential at the top."
-    f'7. At the top click the link for "API key".'
-    f"8. No application restrictions are needed. Click Create at the bottom."
-    f"9. You now have a key to add to `{{prefix}}set api youtube api_key`"
+    "1. Go to Google Developers Console and log in with your Google"
+    " account.(https://console.developers.google.com/)2. You should be prompted to"
+    " create a new project (name does not matter).3. Click on Enable APIs and Services"
+    " at the top.4. In the list of APIs choose or search for YouTube Data API v3 and"
+    " click on it. Choose Enable.5. Click on Credentials on the left navigation bar.6."
+    ' Click on Create Credential at the top.7. At the top click the link for "API'
+    ' key".8. No application restrictions are needed. Click Create at the bottom.9. You'
+    " now have a key to add to `{prefix}set api youtube api_key`"
 )
 message = (
-    f"1. Go to Google Developers Console and log in with your Google account."
-    f"(https://console.developers.google.com/)"
-    f"2. You should be prompted to create a new project (name does not matter)."
-    f"3. Click on Enable APIs and Services at the top."
-    f"4. In the list of APIs choose or search for YouTube Data API v3 and "
-    f"click on it. Choose Enable."
-    f"5. Click on Credentials on the left navigation bar."
-    f"6. Click on Create Credential at the top."
-    f'7. At the top click the link for "API key".'
-    f"8. No application restrictions are needed. Click Create at the bottom."
-    f"9. You now have a key to add to `{{prefix}}set api youtube api_key`"
+    "1. Go to Google Developers Console and log in with your Google"
+    " account.(https://console.developers.google.com/)2. You should be prompted to"
+    " create a new project (name does not matter).3. Click on Enable APIs and Services"
+    " at the top.4. In the list of APIs choose or search for YouTube Data API v3 and"
+    " click on it. Choose Enable.5. Click on Credentials on the left navigation bar.6."
+    ' Click on Create Credential at the top.7. At the top click the link for "API'
+    ' key".8. No application restrictions are needed. Click Create at the bottom.9. You'
+    " now have a key to add to `{prefix}set api youtube api_key`"
 )
 message = (
     "1. Go to Google Developers Console and log in with your Google account."

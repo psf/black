@@ -673,6 +673,77 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
         return Ok(None)
 
 
+class FStringNormalizer(StringTransformer):
+    """StringTransformer that normalize f-strings
+
+    Requirements:
+        The line contains an f-string which comply with one of the followings:
+            - Doesn't have an f-expressions in it ("f" prefix is not redundant)
+            - Has trailing whitespace in one of it's f-expressions
+
+    Transformations:
+        - If the "f" prefix is redundant, it is removed.
+        - If there are trailing white spaces in the f-expression, they are removed
+    """
+
+    def do_match(self, line: Line) -> TMatchResult:
+        LL = line.leaves
+
+        for idx, leaf in enumerate(LL):
+            # Should be a string...
+            if leaf.type != token.STRING:
+                continue
+
+            string_value = leaf.value
+
+            if "f" not in get_string_prefix(string_value):
+                continue
+
+            if not fstring_contains_expr(string_value):
+                return Ok(idx)
+
+            for i, j in iterate_f_string(string_value):
+                if string_value[i + 1] == " " or string_value[j - 2] == " ":
+                    return Ok(idx)
+
+        return TErr("This line has no f-strings to normalize.")
+
+    def do_transform(self, line: Line, string_idx: int) -> Iterator[TResult[Line]]:
+        LL = line.leaves
+        is_valid_index = is_valid_index_factory(LL)
+
+        string_parser = StringParser()
+        rpar_idx = string_parser.parse(LL, string_idx)
+
+        new_line = line.clone()
+        new_line.comments = line.comments.copy()
+        try:
+            append_leaves(new_line, line, LL[: string_idx - 1])
+        except BracketMatchError:
+            # HACK: I believe there is currently a bug somewhere in
+            # right_hand_split() that is causing brackets to not be tracked
+            # properly by a shared BracketTracker.
+            append_leaves(new_line, line, LL[: string_idx - 1], preformatted=True)
+
+        string_value = LL[string_idx].value
+        prefix = get_string_prefix(string_value)
+        string_value = normalize_f_string(string_value, prefix)
+        string_leaf = Leaf(token.STRING, string_value)
+        LL[string_idx - 1].remove()
+        replace_child(LL[string_idx], string_leaf)
+        new_line.append(string_leaf)
+
+        if is_valid_index(rpar_idx):
+            append_leaves(
+                new_line, line, LL[rpar_idx + 1 :] + LL[string_idx + 1 : rpar_idx]
+            )
+            LL[rpar_idx].remove()
+        else:
+            append_leaves(new_line, line, LL[rpar_idx + 1 :])
+
+        yield Ok(new_line)
+
+
 class StringParenStripper(StringTransformer):
     """StringTransformer that strips surrounding parentheses from strings.
 

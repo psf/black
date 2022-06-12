@@ -26,7 +26,13 @@ from black.comments import generate_comments, list_comments, FMT_OFF
 from black.numerics import normalize_numeric_literal
 from black.strings import get_string_prefix, fix_docstring
 from black.strings import normalize_string_prefix, normalize_string_quotes
-from black.trans import Transformer, CannotTransform, StringMerger, StringSplitter
+from black.trans import (
+    Transformer,
+    CannotTransform,
+    StringMerger,
+    StringSplitter,
+    FStringNormalizer,
+)
 from black.trans import StringParenWrapper, StringParenStripper, hug_power_op
 from black.mode import Mode, Feature, Preview
 
@@ -409,6 +415,7 @@ def transform_line(
     ll = mode.line_length
     sn = mode.string_normalization
     string_merge = StringMerger(ll, sn)
+    f_string_normalizer = FStringNormalizer(ll, sn)
     string_paren_strip = StringParenStripper(ll, sn)
     string_split = StringSplitter(ll, sn)
     string_paren_wrap = StringParenWrapper(ll, sn)
@@ -426,7 +433,7 @@ def transform_line(
     ):
         # Only apply basic string preprocessing, since lines shouldn't be split here.
         if Preview.string_processing in mode:
-            transformers = [string_merge, string_paren_strip]
+            transformers = [string_merge, f_string_normalizer, string_paren_strip]
         else:
             transformers = []
     elif line.is_def:
@@ -472,6 +479,7 @@ def transform_line(
             if line.inside_brackets:
                 transformers = [
                     string_merge,
+                    f_string_normalizer,
                     string_paren_strip,
                     string_split,
                     delimiter_split,
@@ -482,6 +490,7 @@ def transform_line(
             else:
                 transformers = [
                     string_merge,
+                    f_string_normalizer,
                     string_paren_strip,
                     string_split,
                     string_paren_wrap,
