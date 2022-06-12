@@ -44,6 +44,8 @@ from black.strings import (
     get_string_prefix,
     assert_is_leaf_string,
     iterate_f_string,
+    normalize_f_string,
+    fstring_contains_expr,
 )
 from black.strings import normalize_string_quotes
 
@@ -1029,10 +1031,6 @@ class BaseStringSplitter(StringTransformer):
         return max_string_length
 
 
-def fstring_contains_expr(s: str) -> bool:
-    return any(iterate_f_string(s))
-
-
 class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
     """
     StringTransformer that splits "atom" strings (i.e. strings which exist on
@@ -1263,7 +1261,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
             # prefix, and the current custom split did NOT originally use a
             # prefix...
             if (
-                next_value != self._normalize_f_string(next_value, prefix)
+                next_value != normalize_f_string(next_value, prefix)
                 and use_custom_breakpoints
                 and not csplit.has_prefix
             ):
@@ -1273,7 +1271,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
                 next_value = rest_value[:break_idx] + QUOTE
 
             if drop_pointless_f_prefix:
-                next_value = self._normalize_f_string(next_value, prefix)
+                next_value = normalize_f_string(next_value, prefix)
 
             # --- Construct `next_leaf`
             next_leaf = Leaf(token.STRING, next_value)
@@ -1292,7 +1290,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
         yield from string_line_results
 
         if drop_pointless_f_prefix:
-            rest_value = self._normalize_f_string(rest_value, prefix)
+            rest_value = normalize_f_string(rest_value, prefix)
 
         rest_leaf = Leaf(token.STRING, rest_value)
         insert_str_child(rest_leaf)
@@ -1479,33 +1477,6 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
     def _maybe_normalize_string_quotes(self, leaf: Leaf) -> None:
         if self.normalize_strings:
             leaf.value = normalize_string_quotes(leaf.value)
-
-    def _normalize_f_string(self, string: str, prefix: str) -> str:
-        """
-        Pre-Conditions:
-            * assert_is_leaf_string(@string)
-
-        Returns:
-            * If @string is an f-string that contains no f-expressions, we
-            return a string identical to @string except that the 'f' prefix
-            has been stripped and all double braces (i.e. '{{' or '}}') have
-            been normalized (i.e. turned into '{' or '}').
-                OR
-            * Otherwise, we return @string.
-        """
-        assert_is_leaf_string(string)
-
-        if "f" in prefix and not fstring_contains_expr(string):
-            new_prefix = prefix.replace("f", "")
-
-            temp = string[len(prefix) :]
-            temp = re.sub(r"\{\{", "{", temp)
-            temp = re.sub(r"\}\}", "}", temp)
-            new_string = temp
-
-            return f"{new_prefix}{new_string}"
-        else:
-            return string
 
     def _get_string_operator_leaves(self, leaves: Iterable[Leaf]) -> List[Leaf]:
         LL = list(leaves)

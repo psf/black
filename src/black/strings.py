@@ -283,3 +283,36 @@ def iterate_f_string(s: str) -> Iterator[Tuple[int, int]]:
                 i += len(delim)
                 continue
         i += 1
+
+
+def fstring_contains_expr(s: str) -> bool:
+    """Checks if a given f-string contains an actual f-expression."""
+    return any(iterate_f_string(s))
+
+
+def normalize_f_string(string: str, prefix: str) -> str:
+    """
+    Pre-Conditions:
+        * assert_is_leaf_string(@string)
+
+    Returns:
+        * If @string is an f-string that contains no f-expressions, we
+        return a string identical to @string except that the 'f' prefix
+        has been stripped and all double braces (i.e. '{{' or '}}') have
+        been normalized (i.e. turned into '{' or '}').
+            OR
+        * Otherwise, we return @string.
+    """
+    assert_is_leaf_string(string)
+
+    if "f" in prefix and not fstring_contains_expr(string):
+        new_prefix = prefix.replace("f", "")
+
+        temp = string[len(prefix) :]
+        temp = re.sub(r"\{\{", "{", temp)
+        temp = re.sub(r"\}\}", "}", temp)
+        new_string = temp
+
+        return f"{new_prefix}{new_string}"
+    else:
+        return string
