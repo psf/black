@@ -1,12 +1,12 @@
 from typing import List, Tuple
-from black.trans import iter_fexpr_spans
+from black.trans import iterate_f_string
 
 
 def test_fexpr_spans() -> None:
     def check(
         string: str, expected_spans: List[Tuple[int, int]], expected_slices: List[str]
     ) -> None:
-        spans = list(iter_fexpr_spans(string))
+        spans = list(iterate_f_string(string))
 
         # Checking slices isn't strictly necessary, but it's easier to verify at
         # a glance than only spans

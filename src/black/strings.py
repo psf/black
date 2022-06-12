@@ -5,7 +5,7 @@ Simple formatting on strings. Further string formatting code is in trans.py.
 import re
 import sys
 from functools import lru_cache
-from typing import List, Pattern
+from typing import List, Pattern, Iterator, Tuple
 
 if sys.version_info < (3, 8):
     from typing_extensions import Final
@@ -236,3 +236,50 @@ def normalize_string_quotes(s: str) -> str:
         return s  # Prefer double quotes
 
     return f"{prefix}{new_quote}{new_body}{new_quote}"
+
+
+def iterate_f_string(s: str) -> Iterator[Tuple[int, int]]:
+    """
+    Yields spans corresponding to expressions in a given f-string.
+    Spans are half-open ranges (left inclusive, right exclusive).
+    Assumes the input string is a valid f-string, but will not crash if the input
+    string is invalid.
+    """
+    stack: List[int] = []  # our curly paren stack
+    i = 0
+    while i < len(s):
+        if s[i] == "{":
+            # if we're in a string part of the f-string, ignore escaped curly braces
+            if not stack and i + 1 < len(s) and s[i + 1] == "{":
+                i += 2
+                continue
+            stack.append(i)
+            i += 1
+            continue
+
+        if s[i] == "}":
+            if not stack:
+                i += 1
+                continue
+            j = stack.pop()
+            # we've made it back out of the expression! yield the span
+            if not stack:
+                yield (j, i + 1)
+            i += 1
+            continue
+
+        # if we're in an expression part of the f-string, fast forward through strings
+        # note that backslashes are not legal in the expression portion of f-strings
+        if stack:
+            delim = None
+            if s[i : i + 3] in ("'''", '"""'):
+                delim = s[i : i + 3]
+            elif s[i] in ("'", '"'):
+                delim = s[i]
+            if delim:
+                i += len(delim)
+                while i < len(s) and s[i : i + len(delim)] != delim:
+                    i += 1
+                i += len(delim)
+                continue
+        i += 1
