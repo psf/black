@@ -74,3 +74,26 @@ def my_func():
 
 This new feature will be applied to **all code blocks**: `def`, `class`, `if`, `for`,
 `while`, `with`, `case` and `match`.
+
+### Removing trailing whitespaces in f-string expressions
+
+_Black_ will remove trailing whitespaces inside f-string expressions. That means that
+the following code:
+
+```python
+print(f"there are { 2 } unnecessary spaces in this f string")
+print(f"there are {   3} unnecessary spaces on the left")
+print(f"there are {3   } unnecessary spaces on the right")
+print(f"you should trim { 'me' } and {   'me!'  }")
+print(f"trimming is easy as {  1 + 1   } == {2}")
+```
+
+Will be changed to:
+
+```python
+print(f"there are {2} unnecessary spaces in this f string")
+print(f"there are {3} unnecessary spaces on the left")
+print(f"there are {3} unnecessary spaces on the right")
+print(f"you should trim {'me'} and {'me!'}")
+print(f"trimming is easy as {1 + 1} == {2}")
+```
