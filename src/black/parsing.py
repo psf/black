@@ -269,7 +269,7 @@ def fixup_ast_constants(node: Union[ast.AST, ast3.AST]) -> Union[ast.AST, ast3.A
     if isinstance(node, (ast.NameConstant, ast3.NameConstant)):
         return ast.Constant(value=node.value)
 
-    if isinstance(node, ast.JoinedStr) and len(node.values) == 1:
+    if isinstance(node, (ast.JoinedStr, ast3.JoinedStr)) and len(node.values) == 1:
         return node.values[0]
 
     return node
