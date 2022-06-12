@@ -22,6 +22,7 @@
 - Parentheses around return annotations are now managed (#2990)
 - Remove unnecessary parentheses from `with` statements (#2926)
 - Remove trailing newlines after code block open (#3035)
+- Remove trailing whitespaces inside f-string expressions (#3119)
 
 ### _Blackd_
 
