@@ -305,7 +305,9 @@ def normalize_f_string(string: str, prefix: str) -> str:
     """
     assert_is_leaf_string(string)
 
-    if "f" in prefix and not fstring_contains_expr(string):
+    if "f" not in prefix:
+        return string
+    if not fstring_contains_expr(string):
         new_prefix = prefix.replace("f", "")
 
         temp = string[len(prefix) :]
@@ -314,5 +316,9 @@ def normalize_f_string(string: str, prefix: str) -> str:
         new_string = temp
 
         return f"{new_prefix}{new_string}"
-    else:
-        return string
+    expr_indices_tuples = list(iterate_f_string(string))
+    expr_indices_tuples = expr_indices_tuples[::-1]
+    for i, j in expr_indices_tuples:
+        expr = string[i + 1 : j - 1].strip()
+        string = f"{string[:i]}{{{expr}}}{string[j:]}"
+    return string

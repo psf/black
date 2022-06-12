@@ -710,20 +710,11 @@ class FStringNormalizer(StringTransformer):
 
     def do_transform(self, line: Line, string_idx: int) -> Iterator[TResult[Line]]:
         LL = line.leaves
-        is_valid_index = is_valid_index_factory(LL)
-
-        string_parser = StringParser()
-        rpar_idx = string_parser.parse(LL, string_idx)
 
         new_line = line.clone()
         new_line.comments = line.comments.copy()
-        try:
-            append_leaves(new_line, line, LL[: string_idx - 1])
-        except BracketMatchError:
-            # HACK: I believe there is currently a bug somewhere in
-            # right_hand_split() that is causing brackets to not be tracked
-            # properly by a shared BracketTracker.
-            append_leaves(new_line, line, LL[: string_idx - 1], preformatted=True)
+
+        append_leaves(new_line, line, LL[:string_idx])
 
         string_value = LL[string_idx].value
         prefix = get_string_prefix(string_value)
@@ -733,13 +724,7 @@ class FStringNormalizer(StringTransformer):
         replace_child(LL[string_idx], string_leaf)
         new_line.append(string_leaf)
 
-        if is_valid_index(rpar_idx):
-            append_leaves(
-                new_line, line, LL[rpar_idx + 1 :] + LL[string_idx + 1 : rpar_idx]
-            )
-            LL[rpar_idx].remove()
-        else:
-            append_leaves(new_line, line, LL[rpar_idx + 1 :])
+        append_leaves(new_line, line, LL[string_idx + 1 :])
 
         yield Ok(new_line)
 
