@@ -72,6 +72,10 @@
 
 - Fixed strtobool function. It didn't parse true/on/false/off. (#3025)
 
+### Maintenance
+
+- Black does not run anymore as a pre-commit hook, but via Tox
+
 ## 22.3.0
 
 ### Preview style
