@@ -10,7 +10,6 @@ print(
     f"Just take a look {  'here' } and you'll see that the problem is solved."
 )
 print(f"{ bar : .{ baz }f }")
-print(f"This expression {   3 =      } can be stripped only to the right")
 
 # output
 
@@ -26,4 +25,3 @@ print(
     f" Just take a look {'here'} and you'll see that the problem is solved."
 )
 print(f"{bar:.{baz}f}")
-print(f"This expression {   3 =} can be stripped only to the right")
