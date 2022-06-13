@@ -5,7 +5,7 @@ Simple formatting on strings. Further string formatting code is in trans.py.
 import re
 import sys
 from functools import lru_cache
-from typing import List, Pattern, Iterator, Tuple
+from typing import List, Pattern, Iterator, Tuple, Optional
 
 if sys.version_info < (3, 8):
     from typing_extensions import Final
@@ -319,6 +319,58 @@ def normalize_f_string(string: str, prefix: str) -> str:
     expr_indices_tuples = list(iterate_f_string(string))
     expr_indices_tuples = expr_indices_tuples[::-1]
     for i, j in expr_indices_tuples:
-        expr = string[i + 1 : j - 1].strip()
+        expr = normalize_f_expr(string[i + 1 : j - 1])
         string = f"{string[:i]}{{{expr}}}{string[j:]}"
     return string
+
+
+def normalize_f_expr(string: str) -> str:
+    string = string.rstrip()
+    if search_char_index_in_f_expression(string, "=") is None:
+        string = string.lstrip()
+        string = re.sub(" +", " ", string)
+    colon_index = search_char_index_in_f_expression(string, ":")
+    if colon_index is not None:
+        string = (
+            string[:colon_index].rstrip() + ":" + string[colon_index + 1 :].lstrip()
+        )
+    expr_indices_tuples = list(iterate_f_string(string))
+    expr_indices_tuples = expr_indices_tuples[::-1]
+    for i, j in expr_indices_tuples:
+        expr = normalize_f_expr(string[i + 1 : j - 1])
+        string = f"{string[:i]}{{{expr}}}{string[j:]}"
+    return string
+
+
+def search_char_index_in_f_expression(s: str, c: str) -> Optional[int]:
+    """
+    An f-string expression may have a colon index for specifying float precision.
+
+    In this method we look for that colon if it is exists
+    """
+    i = 0
+    depth = 0
+    while i < len(s):
+        if s[i] in "{[(":
+            depth += 1
+            i += 1
+            continue
+        if depth > 0 and s[i] in "}])":
+            depth -= 1
+            i += 1
+            continue
+        if depth == 0 and s[i] == c:
+            return i
+        delim = None
+        if s[i : i + 3] in ("'''", '"""'):
+            delim = s[i : i + 3]
+        elif s[i] in ("'", '"'):
+            delim = s[i]
+        if delim:
+            i += len(delim)
+            while i < len(s) and s[i : i + len(delim)] != delim:
+                i += 1
+            i += len(delim)
+            continue
+        i += 1
+    return None

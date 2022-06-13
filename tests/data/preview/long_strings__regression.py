@@ -1038,8 +1038,8 @@ class X:
 
 
 temp_msg = (
-    f"{f'{humanize_number(pos)}.': <{pound_len+2}} "
-    f"{balance: <{bal_len + 5}} "
+    f"{f'{humanize_number(pos)}.':<{pound_len+2}} "
+    f"{balance:<{bal_len + 5}} "
     f"<<{author.display_name}>>\n"
 )
 
@@ -1127,8 +1127,8 @@ message = (
 
 # It shouldn't matter if the string prefixes are capitalized.
 temp_msg = (
-    f"{F'{humanize_number(pos)}.': <{pound_len+2}} "
-    f"{balance: <{bal_len + 5}} "
+    f"{F'{humanize_number(pos)}.':<{pound_len+2}} "
+    f"{balance:<{bal_len + 5}} "
     f"<<{author.display_name}>>\n"
 )
 
