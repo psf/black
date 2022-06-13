@@ -17,6 +17,8 @@ jobs:
 
       - name: Set up Python
         uses: actions/setup-python@v4
+        with:
+          python-version: "*"
 
       - name: Install latest pip, build, twine
         run: |

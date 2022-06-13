@@ -21,6 +21,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
+        with:
+          python-version: "*"
 
       - name: Install diff-shades and support dependencies
         run: |
@@ -55,6 +57,8 @@ jobs:
           fetch-depth: 0
 
       - uses: actions/setup-python@v4
+        with:
+          python-version: "*"
 
       - name: Install diff-shades and support dependencies
         run: |

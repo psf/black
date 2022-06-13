@@ -25,6 +25,8 @@ jobs:
 
       - name: Set up latest Python
         uses: actions/setup-python@v4
+        with:
+          python-version: "*"
 
       - name: Install dependencies
         run: |
