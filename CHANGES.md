@@ -74,7 +74,7 @@
 
 ### Maintenance
 
-- Black does not run anymore as a pre-commit hook, but via Tox
+- Black does not run anymore as a pre-commit hook, but via Tox (#3114)
 
 ## 22.3.0
 
