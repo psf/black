@@ -4,14 +4,6 @@ exclude: ^(src/blib2to3/|profiling/|tests/data/)
 repos:
   - repo: local
     hooks:
-      - id: black
-        name: black
-        language: system
-        entry: black
-        minimum_pre_commit_version: 2.9.2
-        require_serial: true
-        types_or: [python, pyi]
-
       - id: check-pre-commit-rev-in-example
         name: Check pre-commit rev in example
         language: python
