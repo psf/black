@@ -1,5 +1,5 @@
 from dataclasses import replace
-from typing import Any, Iterator, List
+from typing import Any, Iterator
 from unittest.mock import patch
 
 import pytest
@@ -13,47 +13,6 @@ from tests.util import (
     read_data,
     all_data_cases,
 )
-
-SOURCES: List[str] = [
-    "src/black/__init__.py",
-    "src/black/__main__.py",
-    "src/black/brackets.py",
-    "src/black/cache.py",
-    "src/black/comments.py",
-    "src/black/concurrency.py",
-    "src/black/const.py",
-    "src/black/debug.py",
-    "src/black/files.py",
-    "src/black/linegen.py",
-    "src/black/lines.py",
-    "src/black/mode.py",
-    "src/black/nodes.py",
-    "src/black/numerics.py",
-    "src/black/output.py",
-    "src/black/parsing.py",
-    "src/black/report.py",
-    "src/black/rusty.py",
-    "src/black/strings.py",
-    "src/black/trans.py",
-    "src/blackd/__init__.py",
-    "src/blib2to3/pygram.py",
-    "src/blib2to3/pytree.py",
-    "src/blib2to3/pgen2/conv.py",
-    "src/blib2to3/pgen2/driver.py",
-    "src/blib2to3/pgen2/grammar.py",
-    "src/blib2to3/pgen2/literals.py",
-    "src/blib2to3/pgen2/parse.py",
-    "src/blib2to3/pgen2/pgen.py",
-    "src/blib2to3/pgen2/tokenize.py",
-    "src/blib2to3/pgen2/token.py",
-    "setup.py",
-    "tests/test_black.py",
-    "tests/test_blackd.py",
-    "tests/test_format.py",
-    "tests/optional.py",
-    "tests/util.py",
-    "tests/conftest.py",
-]
 
 
 @pytest.fixture(autouse=True)
@@ -91,11 +50,6 @@ def test_preview_minimum_python_310_format(filename: str) -> None:
     source, expected = read_data("preview_310", filename)
     mode = black.Mode(preview=True)
     assert_format(source, expected, mode, minimum_version=(3, 10))
-
-
-@pytest.mark.parametrize("filename", SOURCES)
-def test_source_is_formatted(filename: str) -> None:
-    check_file("", filename, DEFAULT_MODE, data=False)
 
 
 # =============== #
