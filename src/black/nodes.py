@@ -854,3 +854,7 @@ def is_rpar_token(nl: NL) -> TypeGuard[Leaf]:
 
 def is_string_token(nl: NL) -> TypeGuard[Leaf]:
     return nl.type == token.STRING
+
+
+def is_number_token(nl: NL) -> TypeGuard[Leaf]:
+    return nl.type == token.NUMBER

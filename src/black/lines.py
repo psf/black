@@ -168,6 +168,13 @@ class Line:
             and self.leaves[0].value.startswith(('"""', "'''"))
         )
 
+    @property
+    def opens_block(self) -> bool:
+        """Does this line open a new level of indentation."""
+        if len(self.leaves) == 0:
+            return False
+        return self.leaves[-1].type == token.COLON
+
     def contains_standalone_comments(self, depth_limit: int = sys.maxsize) -> bool:
         """If so, needs to be split before emitting."""
         for leaf in self.leaves:
@@ -513,6 +520,12 @@ class EmptyLineTracker:
         ):
             return before, 1
 
+        if (
+            Preview.remove_block_trailing_newline in current_line.mode
+            and self.previous_line
+            and self.previous_line.opens_block
+        ):
+            return 0, 0
         return before, 0
 
     def _maybe_empty_lines_for_class_or_def(

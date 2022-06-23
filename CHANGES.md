@@ -21,6 +21,7 @@
 - Remove redundant parentheses around awaited objects (#2991)
 - Parentheses around return annotations are now managed (#2990)
 - Remove unnecessary parentheses from `with` statements (#2926)
+- Remove trailing newlines after code block open (#3035)
 
 ### _Blackd_
 
