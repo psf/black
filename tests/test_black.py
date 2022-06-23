@@ -2017,6 +2017,20 @@ class TestFileCollection:
             src, expected, exclude=r"\.pyi$", extend_exclude=r"\.definitely_exclude"
         )
 
+    def test_git_submodule_exclude_full_path(self) -> None:
+        path = DATA_DIR / "git_submodule_exclude_tests" / "excluded_submodule" / "a.py"
+        src = [path]
+        expected: List[str] = []
+        assert_collected_sources(src, expected, force_exclude=r"excluded_submodule")
+
+    def test_git_submodule_exclude_base_path(self) -> None:
+        path = DATA_DIR / "git_submodule_exclude_tests"
+        src = [path]
+        expected = [
+            Path(path / "a.py"),
+        ]
+        assert_collected_sources(src, expected, force_exclude=r"excluded_submodule")
+
     @pytest.mark.incompatible_with_mypyc
     def test_symlink_out_of_root_directory(self) -> None:
         path = MagicMock()
