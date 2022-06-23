@@ -1172,10 +1172,10 @@ def format_str(src_contents: str, *, mode: Mode) -> str:
 def _format_str_once(src_contents: str, *, mode: Mode) -> str:
     src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)
     dst_contents = []
-    future_imports = get_future_imports(src_node)
     if mode.target_versions:
         versions = mode.target_versions
     else:
+        future_imports = get_future_imports(src_node)
         versions = detect_target_versions(src_node, future_imports=future_imports)
 
     normalize_fmt_off(src_node, preview=mode.preview)
