@@ -469,7 +469,11 @@ def main(  # noqa: C901
 
     if project_root:
         project_root_abs = Path(project_root).resolve()
-        root, method = (project_root_abs, "manually-specified project root") if code is None else (None, None)
+        root, method = (
+            (project_root_abs, "manually-specified project root")
+            if code is None
+            else (None, None)
+        )
     else:
         root, method = find_project_root(src) if code is None else (None, None)
     ctx.obj["root"] = root
