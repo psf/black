@@ -1853,8 +1853,11 @@ def assert_collected_sources(
         None if extend_exclude is None else compile_pattern(extend_exclude)
     )
     gs_force_exclude = None if force_exclude is None else compile_pattern(force_exclude)
+    if not ctx:
+        ctx = FakeContext()
+    ctx.obj["root"], _ = black.find_project_root(gs_src)
     collected = black.get_sources(
-        ctx=ctx or FakeContext(),
+        ctx=ctx,
         src=gs_src,
         quiet=False,
         verbose=False,
