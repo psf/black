@@ -52,25 +52,37 @@ tracked in [this issue](https://github.com/psf/black/issues/2188).
 
 ### Removing trailing newlines after code block open
 
-_Black_ will remove trailing newlines after code block openings. That means that the
-following code:
+_Black_ will remove trailing newlines after code block openings. For example:
 
 ```python
 def my_func():
 
     print("The line above me will be deleted!")
-
-    print("But the line above me won't!")
 ```
 
-Will be changed to:
+will be changed to:
 
 ```python
 def my_func():
     print("The line above me will be deleted!")
-
-    print("But the line above me won't!")
 ```
 
 This new feature will be applied to **all code blocks**: `def`, `class`, `if`, `for`,
 `while`, `with`, `case` and `match`.
+
+### Improved parentheses management
+
+_Black_ will format parentheses around return annotations, await expressions and with
+statements similarly to other sets of parentheses. For example:
+
+```python
+with ((open("bla.txt")) as f, open("x")):
+    pass
+```
+
+will be changed to:
+
+```python
+with open("bla.txt") as f, open("x"):
+    pass
+```
