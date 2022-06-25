@@ -72,8 +72,8 @@ This new feature will be applied to **all code blocks**: `def`, `class`, `if`, `
 
 ### Improved parentheses management
 
-_Black_ will format parentheses around return annotations, `await` expressions and `with`
-statements similarly to other sets of parentheses. For example:
+_Black_ will format parentheses around return annotations, `await` expressions and
+`with` statements similarly to other sets of parentheses. For example:
 
 ```python
 with ((open("bla.txt")) as f, open("x")):
