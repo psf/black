@@ -50,9 +50,10 @@ limit. Line continuation backslashes are converted into parenthesized strings.
 Unnecessary parentheses are stripped. The stability and status of this feature is
 tracked in [this issue](https://github.com/psf/black/issues/2188).
 
-### Removing trailing newlines after code block open
+### Removing newlines in the beginning of code blocks
 
-_Black_ will remove trailing newlines after code block openings. For example:
+_Black_ will remove newlines in the beginning of new code blocks, i.e. when the
+indentation level is increased. For example:
 
 ```python
 def my_func():
@@ -72,17 +73,45 @@ This new feature will be applied to **all code blocks**: `def`, `class`, `if`, `
 
 ### Improved parentheses management
 
-_Black_ will format parentheses around return annotations, `await` expressions and
-`with` statements similarly to other sets of parentheses. For example:
+_Black_ will format parentheses around return annotations similarly to other sets of
+parentheses. For example:
+
+```python
+def foo() -> (int):
+    ...
+```
+
+will be changed to:
+
+```python
+def foo() -> int:
+    ...
+```
+
+```python
+def foo() -> looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong:
+    ...
+```
+
+will be changed to:
+
+```python
+def foo() -> (
+    looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong
+):
+    ...
+```
+
+Extra parentheses in `await` expressions and `with` statements are removed.
 
 ```python
 with ((open("bla.txt")) as f, open("x")):
-    pass
+    ...
 ```
 
 will be changed to:
 
 ```python
 with open("bla.txt") as f, open("x"):
-    pass
+    ...
 ```
