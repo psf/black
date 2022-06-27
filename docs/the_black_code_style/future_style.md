@@ -50,27 +50,71 @@ limit. Line continuation backslashes are converted into parenthesized strings.
 Unnecessary parentheses are stripped. The stability and status of this feature is
 tracked in [this issue](https://github.com/psf/black/issues/2188).
 
-### Removing trailing newlines after code block open
+### Removing newlines in the beginning of code blocks
 
-_Black_ will remove trailing newlines after code block openings. That means that the
-following code:
+_Black_ will remove newlines in the beginning of new code blocks, i.e. when the
+indentation level is increased. For example:
 
 ```python
 def my_func():
 
     print("The line above me will be deleted!")
-
-    print("But the line above me won't!")
 ```
 
-Will be changed to:
+will be changed to:
 
 ```python
 def my_func():
     print("The line above me will be deleted!")
-
-    print("But the line above me won't!")
 ```
 
 This new feature will be applied to **all code blocks**: `def`, `class`, `if`, `for`,
 `while`, `with`, `case` and `match`.
+
+### Improved parentheses management
+
+_Black_ will format parentheses around return annotations similarly to other sets of
+parentheses. For example:
+
+```python
+def foo() -> (int):
+    ...
+
+def foo() -> looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong:
+    ...
+```
+
+will be changed to:
+
+```python
+def foo() -> int:
+    ...
+
+
+def foo() -> (
+    looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong
+):
+    ...
+```
+
+And, extra parentheses in `await` expressions and `with` statements are removed. For
+example:
+
+```python
+with ((open("bla.txt")) as f, open("x")):
+    ...
+
+async def main():
+    await (asyncio.sleep(1))
+```
+
+will be changed to:
+
+```python
+with open("bla.txt") as f, open("x"):
+    ...
+
+
+async def main():
+    await asyncio.sleep(1)
+```
