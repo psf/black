@@ -79,16 +79,7 @@ parentheses. For example:
 ```python
 def foo() -> (int):
     ...
-```
 
-will be changed to:
-
-```python
-def foo() -> int:
-    ...
-```
-
-```python
 def foo() -> looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong:
     ...
 ```
@@ -96,17 +87,25 @@ def foo() -> loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
 will be changed to:
 
 ```python
+def foo() -> int:
+    ...
+
+
 def foo() -> (
     looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong
 ):
     ...
 ```
 
-Extra parentheses in `await` expressions and `with` statements are removed.
+And, extra parentheses in `await` expressions and `with` statements are removed. For
+example:
 
 ```python
 with ((open("bla.txt")) as f, open("x")):
     ...
+
+async def main():
+    await (asyncio.sleep(1))
 ```
 
 will be changed to:
@@ -114,4 +113,8 @@ will be changed to:
 ```python
 with open("bla.txt") as f, open("x"):
     ...
+
+
+async def main():
+    await asyncio.sleep(1)
 ```
