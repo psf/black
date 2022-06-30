@@ -9,7 +9,7 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Final
 
-from blib2to3.pytree import Node, Leaf
+from blib2to3.pytree import Node, Leaf, type_repr
 from blib2to3.pgen2 import token
 
 from black.nodes import first_leaf_column, preceding_leaf, container_of
@@ -174,6 +174,11 @@ def convert_one_fmt_off_pair(node: Node, *, preview: bool) -> bool:
                 first.prefix = prefix[comment.consumed :]
             if comment.value in FMT_SKIP:
                 first.prefix = ""
+                standalone_comment_prefix = prefix
+            else:
+                standalone_comment_prefix = (
+                    prefix[:previous_consumed] + "\n" * comment.newlines
+                )
             hidden_value = "".join(str(n) for n in ignored_nodes)
             if comment.value in FMT_OFF:
                 hidden_value = comment.value + "\n" + hidden_value
@@ -195,7 +200,7 @@ def convert_one_fmt_off_pair(node: Node, *, preview: bool) -> bool:
                 Leaf(
                     STANDALONE_COMMENT,
                     hidden_value,
-                    prefix=prefix[:previous_consumed] + "\n" * comment.newlines,
+                    prefix=standalone_comment_prefix,
                 ),
             )
             return True
@@ -214,22 +219,48 @@ def generate_ignored_nodes(
     container: Optional[LN] = container_of(leaf)
     if comment.value in FMT_SKIP:
         prev_sibling = leaf.prev_sibling
+        parent = leaf.parent
         # Need to properly format the leaf prefix to compare it to comment.value,
         # which is also formatted
         comments = list_comments(leaf.prefix, is_endmarker=False, preview=preview)
-        if comments and comment.value == comments[0].value and prev_sibling is not None:
-            leaf.prefix = ""
-            siblings = [prev_sibling]
-            while (
-                "\n" not in prev_sibling.prefix
-                and prev_sibling.prev_sibling is not None
+        if comments and comment.value == comments[0].value:
+            if prev_sibling is not None:
+                leaf.prefix = ""
+                siblings = [prev_sibling]
+                while (
+                    "\n" not in prev_sibling.prefix
+                    and prev_sibling.prev_sibling is not None
+                ):
+                    prev_sibling = prev_sibling.prev_sibling
+                    siblings.insert(0, prev_sibling)
+                for sibling in siblings:
+                    yield sibling
+            elif (
+                parent is not None
+                and type_repr(parent.type) == "suite"
+                and leaf.type == token.NEWLINE
             ):
-                prev_sibling = prev_sibling.prev_sibling
-                siblings.insert(0, prev_sibling)
-            for sibling in siblings:
-                yield sibling
-        elif leaf.parent is not None:
-            yield leaf.parent
+                # The `# fmt: skip` is on the colon line of the if/while/def/class/...
+                # statements. The ignored nodes should be previous siblings of the
+                # parent suite node.
+                leaf.prefix = ""
+                ignored_nodes = []
+                parent_sibling = parent.prev_sibling
+                while (
+                    parent_sibling is not None
+                    and type_repr(parent_sibling.type) != "suite"
+                ):
+                    ignored_nodes.insert(0, parent_sibling)
+                    parent_sibling = parent_sibling.prev_sibling
+                # Sspecial case for `async_stmt` where the ASYNC token is on the grandparent node.
+                grandparent = parent.parent
+                if (
+                    grandparent is not None
+                    and grandparent.prev_sibling is not None
+                    and grandparent.prev_sibling.type == token.ASYNC
+                ):
+                    ignored_nodes.insert(0, grandparent.prev_sibling)
+                yield from iter(ignored_nodes)
         return
     while container is not None and container.type != token.ENDMARKER:
         if is_fmt_on(container, preview=preview):

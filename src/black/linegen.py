@@ -220,7 +220,9 @@ class LineGenerator(Visitor[Line]):
         for child in children:
             yield from self.visit(child)
 
-            if child.type == token.ASYNC:
+            if child.type == token.ASYNC or child.type == STANDALONE_COMMENT:
+                # STANDALONE_COMMENT happens when `# fmt: skip` is applied on the async
+                # line.
                 break
 
         internal_stmt = next(children)
