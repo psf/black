@@ -244,7 +244,7 @@ def generate_ignored_nodes(
                 # statements. The ignored nodes should be previous siblings of the
                 # parent suite node.
                 leaf.prefix = ""
-                ignored_nodes = []
+                ignored_nodes: List[LN] = []
                 parent_sibling = parent.prev_sibling
                 while (
                     parent_sibling is not None
@@ -252,7 +252,8 @@ def generate_ignored_nodes(
                 ):
                     ignored_nodes.insert(0, parent_sibling)
                     parent_sibling = parent_sibling.prev_sibling
-                # Sspecial case for `async_stmt` where the ASYNC token is on the grandparent node.
+                # Sspecial case for `async_stmt` where the ASYNC token is on the
+                # grandparent node.
                 grandparent = parent.parent
                 if (
                     grandparent is not None

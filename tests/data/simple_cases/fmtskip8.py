@@ -2,7 +2,7 @@
 def some_func(  unformatted,  args  ):  # fmt: skip
     print("I am some_func")
     return 0
-    # Make this this comment is not removed.
+    # Make sure this comment is not removed.
 
 
 # Make sure a leading comment is not removed.
