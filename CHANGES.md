@@ -10,6 +10,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix incorrect handling of `# fmt: skip` on colon `:` lines. (#3148)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
