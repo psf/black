@@ -16,7 +16,8 @@ Options include the following:
    $ pip install 'black[d]'
    ```
 
-1. Install [BlackConnect IntelliJ IDEs plugin](https://plugins.jetbrains.com/plugin/14321-blackconnect).
+1. Install
+   [BlackConnect IntelliJ IDEs plugin](https://plugins.jetbrains.com/plugin/14321-blackconnect).
 
 1. Open plugin configuration in PyCharm/IntelliJ IDEA
 
@@ -31,9 +32,11 @@ Options include the following:
 1. In `Local Instance (shared between projects)` section:
 
    1. Check `Start local blackd instance when plugin loads`.
-   1. Near `Path` input press the `Detect` button. Plugin should detect `blackd` binary path.
+   1. Near `Path` input press the `Detect` button. Plugin should detect `blackd` binary
+      path.
 
-1. In `Trigger Settings` section check `Trigger on code reformat` to enable Black for code reformatting.
+1. In `Trigger Settings` section check `Trigger on code reformat` to enable Black for
+   code reformatting.
 
 1. Optionally, run _Black_ on every file save:
 
