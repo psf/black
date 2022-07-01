@@ -28,15 +28,16 @@ Options include the following:
 
    `File -> Settings -> Tools -> BlackConnect`
 
-1. In `Local Instance (shared between projects)` section check `Start local blackd instance when plugin loads`.
+1. In `Local Instance (shared between projects)` section:
 
-1. Near `Path` input press the `Detect` button. Plugin should detect `blackd` binary path.
+   1. Check `Start local blackd instance when plugin loads`.
+   1. Near `Path` input press the `Detect` button. Plugin should detect `blackd` binary path.
 
 1. In `Trigger Settings` section check `Trigger on code reformat` to enable Black for code reformatting.
 
 1. Optionally, run _Black_ on every file save:
 
-   * In `Trigger Settings` section check `Trigger when saving changed files`.
+   - In `Trigger Settings` section check `Trigger when saving changed files`.
 
 ## Wing IDE
 
