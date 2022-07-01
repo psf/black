@@ -65,6 +65,10 @@
 - Remove unnecessary parentheses in `with` statements (#2926)
 - Remove trailing newlines after code block open (#3035)
 
+### Documentation
+
+- Recommend using BlackConnect in IntelliJ IDEs (#3150)
+
 ### Integrations
 
 - Add `scripts/migrate-black.py` script to ease introduction of Black to a Git project
