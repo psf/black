@@ -252,7 +252,7 @@ def generate_ignored_nodes(
                 ):
                     ignored_nodes.insert(0, parent_sibling)
                     parent_sibling = parent_sibling.prev_sibling
-                # Sspecial case for `async_stmt` where the ASYNC token is on the
+                # Special case for `async_stmt` where the ASYNC token is on the
                 # grandparent node.
                 grandparent = parent.parent
                 if (
