@@ -27,6 +27,9 @@
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
 
+- Reword the stability policy to say that we may, in rare cases, make changes that
+  affect code that was not previously formatted by _Black_.
+
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
