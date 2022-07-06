@@ -39,7 +39,8 @@ Try it out now using the [Black Playground](https://black.vercel.app). Watch the
 ### Installation
 
 _Black_ can be installed by running `pip install black`. It requires Python 3.6.2+ to
-run. If you want to format Jupyter Notebooks, install with `pip install black[jupyter]`.
+run. If you want to format Jupyter Notebooks, install with
+`pip install 'black[jupyter]'`.
 
 If you can't wait for the latest _hotness_ and want to install from GitHub, use:
 
@@ -69,7 +70,7 @@ tests, and our own auto formatting and parallel Continuous Integration runner. N
 we have become stable, you should not expect large formatting to changes in the future.
 Stylistic changes will mostly be responses to bug reports and support for new Python
 syntax. For more information please refer to the
-[The Black Code Style](docs/the_black_code_style/index.rst).
+[The Black Code Style](https://black.readthedocs.io/en/stable/the_black_code_style/index.html).
 
 Also, as a safety measure which slows down processing, _Black_ will check that the
 reformatted code still produces a valid AST that is effectively equivalent to the
@@ -81,7 +82,9 @@ section for details). If you're feeling confident, use `--fast`.
 
 _Black_ is a PEP 8 compliant opinionated formatter. _Black_ reformats entire files in
 place. Style configuration options are deliberately limited and rarely added. It doesn't
-take previous formatting into account (see [Pragmatism](#pragmatism) for exceptions).
+take previous formatting into account (see
+[Pragmatism](https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html#pragmatism)
+for exceptions).
 
 Our documentation covers the current _Black_ code style, but planned changes to it are
 also documented. They're both worth taking a look:
@@ -130,10 +133,10 @@ code in compliance with many other _Black_ formatted projects.
 ## Used by
 
 The following notable open-source projects trust _Black_ with enforcing a consistent
-code style: pytest, tox, Pyramid, Django Channels, Hypothesis, attrs, SQLAlchemy,
-Poetry, PyPA applications (Warehouse, Bandersnatch, Pipenv, virtualenv), pandas, Pillow,
-Twisted, LocalStack, every Datadog Agent Integration, Home Assistant, Zulip, Kedro,
-OpenOA, FLORIS, ORBIT, WOMBAT, and many more.
+code style: pytest, tox, Pyramid, Django, Django Channels, Hypothesis, attrs,
+SQLAlchemy, Poetry, PyPA applications (Warehouse, Bandersnatch, Pipenv, virtualenv),
+pandas, Pillow, Twisted, LocalStack, every Datadog Agent Integration, Home Assistant,
+Zulip, Kedro, OpenOA, FLORIS, ORBIT, WOMBAT, and many more.
 
 The following organizations use _Black_: Facebook, Dropbox, KeepTruckin, Mozilla, Quora,
 Duolingo, QuantumBlack, Tesla.
@@ -163,8 +166,8 @@ Twisted and CPython:
 
 > At least the name is good.
 
-**Kenneth Reitz**, creator of [`requests`](http://python-requests.org/) and
-[`pipenv`](https://readthedocs.org/projects/pipenv/):
+**Kenneth Reitz**, creator of [`requests`](https://requests.readthedocs.io/en/latest/)
+and [`pipenv`](https://readthedocs.org/projects/pipenv/):
 
 > This vastly improves the formatting of our code. Thanks a ton!
 

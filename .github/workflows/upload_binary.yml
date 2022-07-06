@@ -4,8 +4,13 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: read
+
 jobs:
   build:
+    permissions:
+      contents: write # for actions/upload-release-asset to upload release asset
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -26,10 +31,10 @@ jobs:
             executable_mime: "application/x-mach-binary"
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up latest Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: "*"
 

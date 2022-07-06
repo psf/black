@@ -148,6 +148,7 @@ Multiple contributions by:
 - [Rishikesh Jha](mailto:rishijha424@gmail.com)
 - [Rupert Bedford](mailto:rupert@rupertb.com)
 - Russell Davis
+- [Sagi Shadur](mailto:saroad2@gmail.com)
 - [Rémi Verschelde](mailto:rverschelde@gmail.com)
 - [Sami Salonen](mailto:sakki@iki.fi)
 - [Samuel Cormier-Iijima](mailto:samuel@cormier-iijima.com)

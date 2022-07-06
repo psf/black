@@ -1,3 +1,4 @@
+import contextlib
 from dataclasses import replace
 import pathlib
 import re
@@ -16,13 +17,17 @@ from black import (
 import pytest
 from black import Mode
 from _pytest.monkeypatch import MonkeyPatch
-from tests.util import DATA_DIR
+from tests.util import DATA_DIR, read_jupyter_notebook, get_case_path
 
+with contextlib.suppress(ModuleNotFoundError):
+    import IPython
 pytestmark = pytest.mark.jupyter
 pytest.importorskip("IPython", reason="IPython is an optional dependency")
 pytest.importorskip("tokenize_rt", reason="tokenize-rt is an optional dependency")
 
 JUPYTER_MODE = Mode(is_ipynb=True)
+
+EMPTY_CONFIG = DATA_DIR / "empty_pyproject.toml"
 
 runner = CliRunner()
 
@@ -137,10 +142,15 @@ def test_non_python_magics(src: str) -> None:
         format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
+@pytest.mark.skipif(
+    IPython.version_info < (8, 3),
+    reason="Change in how TransformerManager transforms this input",
+)
 def test_set_input() -> None:
     src = "a = b??"
-    with pytest.raises(NothingChanged):
-        format_cell(src, fast=True, mode=JUPYTER_MODE)
+    expected = "??b"
+    result = format_cell(src, fast=True, mode=JUPYTER_MODE)
+    assert result == expected
 
 
 def test_input_already_contains_transformed_magic() -> None:
@@ -242,9 +252,7 @@ def test_empty_cell() -> None:
 
 
 def test_entire_notebook_empty_metadata() -> None:
-    with open(DATA_DIR / "notebook_empty_metadata.ipynb", "rb") as fd:
-        content_bytes = fd.read()
-    content = content_bytes.decode()
+    content = read_jupyter_notebook("jupyter", "notebook_empty_metadata")
     result = format_file_contents(content, fast=True, mode=JUPYTER_MODE)
     expected = (
         "{\n"
@@ -279,9 +287,7 @@ def test_entire_notebook_empty_metadata() -> None:
 
 
 def test_entire_notebook_trailing_newline() -> None:
-    with open(DATA_DIR / "notebook_trailing_newline.ipynb", "rb") as fd:
-        content_bytes = fd.read()
-    content = content_bytes.decode()
+    content = read_jupyter_notebook("jupyter", "notebook_trailing_newline")
     result = format_file_contents(content, fast=True, mode=JUPYTER_MODE)
     expected = (
         "{\n"
@@ -328,9 +334,7 @@ def test_entire_notebook_trailing_newline() -> None:
 
 
 def test_entire_notebook_no_trailing_newline() -> None:
-    with open(DATA_DIR / "notebook_no_trailing_newline.ipynb", "rb") as fd:
-        content_bytes = fd.read()
-    content = content_bytes.decode()
+    content = read_jupyter_notebook("jupyter", "notebook_no_trailing_newline")
     result = format_file_contents(content, fast=True, mode=JUPYTER_MODE)
     expected = (
         "{\n"
@@ -377,17 +381,14 @@ def test_entire_notebook_no_trailing_newline() -> None:
 
 
 def test_entire_notebook_without_changes() -> None:
-    with open(DATA_DIR / "notebook_without_changes.ipynb", "rb") as fd:
-        content_bytes = fd.read()
-    content = content_bytes.decode()
+    content = read_jupyter_notebook("jupyter", "notebook_without_changes")
     with pytest.raises(NothingChanged):
         format_file_contents(content, fast=True, mode=JUPYTER_MODE)
 
 
 def test_non_python_notebook() -> None:
-    with open(DATA_DIR / "non_python_notebook.ipynb", "rb") as fd:
-        content_bytes = fd.read()
-    content = content_bytes.decode()
+    content = read_jupyter_notebook("jupyter", "non_python_notebook")
+
     with pytest.raises(NothingChanged):
         format_file_contents(content, fast=True, mode=JUPYTER_MODE)
 
@@ -398,7 +399,7 @@ def test_empty_string() -> None:
 
 
 def test_unparseable_notebook() -> None:
-    path = DATA_DIR / "notebook_which_cant_be_parsed.ipynb"
+    path = get_case_path("jupyter", "notebook_which_cant_be_parsed.ipynb")
     msg = rf"File '{re.escape(str(path))}' cannot be parsed as valid Jupyter notebook\."
     with pytest.raises(ValueError, match=msg):
         format_file_in_place(path, fast=True, mode=JUPYTER_MODE)
@@ -408,11 +409,12 @@ def test_ipynb_diff_with_change() -> None:
     result = runner.invoke(
         main,
         [
-            str(DATA_DIR / "notebook_trailing_newline.ipynb"),
+            str(get_case_path("jupyter", "notebook_trailing_newline.ipynb")),
             "--diff",
+            f"--config={EMPTY_CONFIG}",
         ],
     )
-    expected = "@@ -1,3 +1,3 @@\n %%time\n \n-print('foo')\n" '+print("foo")\n'
+    expected = "@@ -1,3 +1,3 @@\n %%time\n \n-print('foo')\n+print(\"foo\")\n"
     assert expected in result.output
 
 
@@ -420,8 +422,9 @@ def test_ipynb_diff_with_no_change() -> None:
     result = runner.invoke(
         main,
         [
-            str(DATA_DIR / "notebook_without_changes.ipynb"),
+            str(get_case_path("jupyter", "notebook_without_changes.ipynb")),
             "--diff",
+            f"--config={EMPTY_CONFIG}",
         ],
     )
     expected = "1 file would be left unchanged."
@@ -433,20 +436,24 @@ def test_cache_isnt_written_if_no_jupyter_deps_single(
 ) -> None:
     # Check that the cache isn't written to if Jupyter dependencies aren't installed.
     jupyter_dependencies_are_installed.cache_clear()
-    nb = DATA_DIR / "notebook_trailing_newline.ipynb"
+    nb = get_case_path("jupyter", "notebook_trailing_newline.ipynb")
     tmp_nb = tmp_path / "notebook.ipynb"
     with open(nb) as src, open(tmp_nb, "w") as dst:
         dst.write(src.read())
     monkeypatch.setattr(
         "black.jupyter_dependencies_are_installed", lambda verbose, quiet: False
     )
-    result = runner.invoke(main, [str(tmp_path / "notebook.ipynb")])
+    result = runner.invoke(
+        main, [str(tmp_path / "notebook.ipynb"), f"--config={EMPTY_CONFIG}"]
+    )
     assert "No Python files are present to be formatted. Nothing to do" in result.output
     jupyter_dependencies_are_installed.cache_clear()
     monkeypatch.setattr(
         "black.jupyter_dependencies_are_installed", lambda verbose, quiet: True
     )
-    result = runner.invoke(main, [str(tmp_path / "notebook.ipynb")])
+    result = runner.invoke(
+        main, [str(tmp_path / "notebook.ipynb"), f"--config={EMPTY_CONFIG}"]
+    )
     assert "reformatted" in result.output
 
 
@@ -455,25 +462,25 @@ def test_cache_isnt_written_if_no_jupyter_deps_dir(
 ) -> None:
     # Check that the cache isn't written to if Jupyter dependencies aren't installed.
     jupyter_dependencies_are_installed.cache_clear()
-    nb = DATA_DIR / "notebook_trailing_newline.ipynb"
+    nb = get_case_path("jupyter", "notebook_trailing_newline.ipynb")
     tmp_nb = tmp_path / "notebook.ipynb"
     with open(nb) as src, open(tmp_nb, "w") as dst:
         dst.write(src.read())
     monkeypatch.setattr(
         "black.files.jupyter_dependencies_are_installed", lambda verbose, quiet: False
     )
-    result = runner.invoke(main, [str(tmp_path)])
+    result = runner.invoke(main, [str(tmp_path), f"--config={EMPTY_CONFIG}"])
     assert "No Python files are present to be formatted. Nothing to do" in result.output
     jupyter_dependencies_are_installed.cache_clear()
     monkeypatch.setattr(
         "black.files.jupyter_dependencies_are_installed", lambda verbose, quiet: True
     )
-    result = runner.invoke(main, [str(tmp_path)])
+    result = runner.invoke(main, [str(tmp_path), f"--config={EMPTY_CONFIG}"])
     assert "reformatted" in result.output
 
 
 def test_ipynb_flag(tmp_path: pathlib.Path) -> None:
-    nb = DATA_DIR / "notebook_trailing_newline.ipynb"
+    nb = get_case_path("jupyter", "notebook_trailing_newline.ipynb")
     tmp_nb = tmp_path / "notebook.a_file_extension_which_is_definitely_not_ipynb"
     with open(nb) as src, open(tmp_nb, "w") as dst:
         dst.write(src.read())
@@ -483,14 +490,15 @@ def test_ipynb_flag(tmp_path: pathlib.Path) -> None:
             str(tmp_nb),
             "--diff",
             "--ipynb",
+            f"--config={EMPTY_CONFIG}",
         ],
     )
-    expected = "@@ -1,3 +1,3 @@\n %%time\n \n-print('foo')\n" '+print("foo")\n'
+    expected = "@@ -1,3 +1,3 @@\n %%time\n \n-print('foo')\n+print(\"foo\")\n"
     assert expected in result.output
 
 
 def test_ipynb_and_pyi_flags() -> None:
-    nb = DATA_DIR / "notebook_trailing_newline.ipynb"
+    nb = get_case_path("jupyter", "notebook_trailing_newline.ipynb")
     result = runner.invoke(
         main,
         [
@@ -498,6 +506,7 @@ def test_ipynb_and_pyi_flags() -> None:
             "--pyi",
             "--ipynb",
             "--diff",
+            f"--config={EMPTY_CONFIG}",
         ],
     )
     assert isinstance(result.exception, SystemExit)

@@ -8,9 +8,10 @@ deliberately limited and rarely added. Previous formatting is taken into account
 little as possible, with rare exceptions like the magic trailing comma. The coding style
 used by _Black_ can be viewed as a strict subset of PEP 8.
 
-_Black_ reformats entire files in place. It doesn't reformat blocks that start with
-`# fmt: off` and end with `# fmt: on`, or lines that ends with `# fmt: skip`.
-`# fmt: on/off` have to be on the same level of indentation. It also recognizes
+_Black_ reformats entire files in place. It doesn't reformat lines that end with
+`# fmt: skip` or blocks that start with `# fmt: off` and end with `# fmt: on`.
+`# fmt: on/off` must be on the same level of indentation and in the same block, meaning
+no unindents beyond the initial indentation level between them. It also recognizes
 [YAPF](https://github.com/google/yapf)'s block comments to the same effect, as a
 courtesy for straddling code.
 
@@ -399,16 +400,11 @@ recommended code style for those files is more terse than PEP 8:
 _Black_ enforces the above rules. There are additional guidelines for formatting `.pyi`
 file that are not enforced yet but might be in a future version of the formatter:
 
-- all function bodies should be empty (contain `...` instead of the body);
-- do not use docstrings;
 - prefer `...` over `pass`;
-- for arguments with a default, use `...` instead of the actual default;
 - avoid using string literals in type annotations, stub files support forward references
   natively (like Python 3.7 code with `from __future__ import annotations`);
 - use variable annotations instead of type comments, even for stubs that target older
-  versions of Python;
-- for arguments that default to `None`, use `Optional[]` explicitly;
-- use `float` instead of `Union[int, float]`.
+  versions of Python.
 
 ## Pragmatism
 

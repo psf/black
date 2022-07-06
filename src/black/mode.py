@@ -4,7 +4,7 @@ Mostly around Python language feature support per version and Black configuratio
 chosen by the user.
 """
 
-from hashlib import md5
+from hashlib import sha256
 import sys
 
 from dataclasses import dataclass, field
@@ -30,6 +30,7 @@ class TargetVersion(Enum):
     PY38 = 8
     PY39 = 9
     PY310 = 10
+    PY311 = 11
 
 
 class Feature(Enum):
@@ -47,6 +48,8 @@ class Feature(Enum):
     PATTERN_MATCHING = 11
     UNPACKING_ON_FLOW = 12
     ANN_ASSIGN_EXTENDED_RHS = 13
+    EXCEPT_STAR = 14
+    VARIADIC_GENERICS = 15
     FORCE_OPTIONAL_PARENTHESES = 50
 
     # __future__ flags
@@ -116,6 +119,22 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.ANN_ASSIGN_EXTENDED_RHS,
         Feature.PATTERN_MATCHING,
     },
+    TargetVersion.PY311: {
+        Feature.F_STRINGS,
+        Feature.NUMERIC_UNDERSCORES,
+        Feature.TRAILING_COMMA_IN_CALL,
+        Feature.TRAILING_COMMA_IN_DEF,
+        Feature.ASYNC_KEYWORDS,
+        Feature.FUTURE_ANNOTATIONS,
+        Feature.ASSIGNMENT_EXPRESSIONS,
+        Feature.RELAXED_DECORATORS,
+        Feature.POS_ONLY_ARGUMENTS,
+        Feature.UNPACKING_ON_FLOW,
+        Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PATTERN_MATCHING,
+        Feature.EXCEPT_STAR,
+        Feature.VARIADIC_GENERICS,
+    },
 }
 
 
@@ -127,7 +146,11 @@ class Preview(Enum):
     """Individual preview style features."""
 
     string_processing = auto()
-    hug_simple_powers = auto()
+    remove_redundant_parens = auto()
+    one_element_subscript = auto()
+    annotation_parens = auto()
+    long_docstring_quotes_on_newline = auto()
+    remove_block_trailing_newline = auto()
 
 
 class Deprecated(UserWarning):
@@ -182,6 +205,6 @@ class Mode:
             str(int(self.magic_trailing_comma)),
             str(int(self.experimental_string_processing)),
             str(int(self.preview)),
-            md5((",".join(sorted(self.python_cell_magics))).encode()).hexdigest(),
+            sha256((",".join(sorted(self.python_cell_magics))).encode()).hexdigest(),
         ]
         return ".".join(parts)

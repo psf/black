@@ -8,7 +8,11 @@
 
 ### Style
 
-<!-- Changes that affect Black's style -->
+<!-- Changes that affect Black's stable style -->
+
+### Preview style
+
+<!-- Changes that affect Black's preview style -->
 
 - Type comments are no longer deleted when a line had spaces removed around power
   operators (#2874)
@@ -21,13 +25,13 @@
 
 <!-- Changes to how Black can be configured -->
 
-- Do not format `__pypackages__` directories by default (#2836)
-- Add support for specifying stable version with `--required-version` (#2832).
-
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
+
+- Reword the stability policy to say that we may, in rare cases, make changes that
+  affect code that was not previously formatted by _Black_ (#3155)
 
 ### Integrations
 
@@ -52,6 +56,88 @@
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
+
+## 22.6.0
+
+### Style
+
+- Fix unstable formatting involving `#fmt: skip` and `# fmt:skip` comments (notice the
+  lack of spaces) (#2970)
+
+### Preview style
+
+- Docstring quotes are no longer moved if it would violate the line length limit (#3044)
+- Parentheses around return annotations are now managed (#2990)
+- Remove unnecessary parentheses around awaited objects (#2991)
+- Remove unnecessary parentheses in `with` statements (#2926)
+- Remove trailing newlines after code block open (#3035)
+
+### Integrations
+
+- Add `scripts/migrate-black.py` script to ease introduction of Black to a Git project
+  (#3038)
+
+### Output
+
+- Output Python version and implementation as part of `--version` flag (#2997)
+
+### Packaging
+
+- Use `tomli` instead of `tomllib` on Python 3.11 builds where `tomllib` is not
+  available (#2987)
+
+### Parser
+
+- [PEP 654](https://peps.python.org/pep-0654/#except) syntax (for example,
+  `except *ExceptionGroup:`) is now supported (#3016)
+- [PEP 646](https://peps.python.org/pep-0646) syntax (for example,
+  `Array[Batch, *Shape]` or `def fn(*args: *T) -> None`) is now supported (#3071)
+
+### Vim Plugin
+
+- Fix `strtobool` function. It didn't parse true/on/false/off. (#3025)
+
+## 22.3.0
+
+### Preview style
+
+- Code cell separators `#%%` are now standardised to `# %%` (#2919)
+- Remove unnecessary parentheses from `except` statements (#2939)
+- Remove unnecessary parentheses from tuple unpacking in `for` loops (#2945)
+- Avoid magic-trailing-comma in single-element subscripts (#2942)
+
+### Configuration
+
+- Do not format `__pypackages__` directories by default (#2836)
+- Add support for specifying stable version with `--required-version` (#2832).
+- Avoid crashing when the user has no homedir (#2814)
+- Avoid crashing when md5 is not available (#2905)
+- Fix handling of directory junctions on Windows (#2904)
+
+### Documentation
+
+- Update pylint config documentation (#2931)
+
+### Integrations
+
+- Move test to disable plugin in Vim/Neovim, which speeds up loading (#2896)
+
+### Output
+
+- In verbose mode, log when _Black_ is using user-level config (#2861)
+
+### Packaging
+
+- Fix Black to work with Click 8.1.0 (#2966)
+- On Python 3.11 and newer, use the standard library's `tomllib` instead of `tomli`
+  (#2903)
+- `black-primer`, the deprecated internal devtool, has been removed and copied to a
+  [separate repository](https://github.com/cooperlees/black-primer) (#2924)
+
+### Parser
+
+- Black can now parse starred expressions in the target of `for` and `async for`
+  statements, e.g `for item in *items_1, *items_2: pass` (#2879).
 
 ## 22.1.0
 

@@ -2,6 +2,9 @@ name: Fuzz
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   build:
     # We want to run on external PRs, but not on our own internal PRs as they'll be run
@@ -18,10 +21,10 @@ jobs:
         python-version: ["3.6", "3.7", "3.8", "3.9", "3.10"]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 

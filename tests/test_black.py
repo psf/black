@@ -10,7 +10,7 @@ import sys
 import types
 import unittest
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import contextmanager
+from contextlib import contextmanager, redirect_stderr
 from dataclasses import replace
 from io import BytesIO
 from pathlib import Path
@@ -60,6 +60,8 @@ from tests.util import (
     ff,
     fs,
     read_data,
+    get_case_path,
+    read_data_from_file,
 )
 
 THIS_FILE = Path(__file__)
@@ -157,7 +159,7 @@ class BlackTestCase(BlackBaseTestCase):
         )
 
     def test_piping(self) -> None:
-        source, expected = read_data("src/black/__init__", data=False)
+        source, expected = read_data_from_file(PROJECT_ROOT / "src/black/__init__.py")
         result = BlackRunner().invoke(
             black.main,
             [
@@ -179,8 +181,8 @@ class BlackTestCase(BlackBaseTestCase):
             r"(STDIN|STDOUT)\t\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d\d\d\d "
             r"\+\d\d\d\d"
         )
-        source, _ = read_data("expression.py")
-        expected, _ = read_data("expression.diff")
+        source, _ = read_data("simple_cases", "expression.py")
+        expected, _ = read_data("simple_cases", "expression.diff")
         args = [
             "-",
             "--fast",
@@ -197,7 +199,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(expected, actual)
 
     def test_piping_diff_with_color(self) -> None:
-        source, _ = read_data("expression.py")
+        source, _ = read_data("simple_cases", "expression.py")
         args = [
             "-",
             "--fast",
@@ -219,7 +221,7 @@ class BlackTestCase(BlackBaseTestCase):
 
     @patch("black.dump_to_file", dump_to_stderr)
     def _test_wip(self) -> None:
-        source, expected = read_data("wip")
+        source, expected = read_data("miscellaneous", "wip")
         sys.settrace(tracefunc)
         mode = replace(
             DEFAULT_MODE,
@@ -233,7 +235,7 @@ class BlackTestCase(BlackBaseTestCase):
         black.assert_stable(source, actual, black.FileMode())
 
     def test_pep_572_version_detection(self) -> None:
-        source, _ = read_data("pep_572")
+        source, _ = read_data("py_38", "pep_572")
         root = black.lib2to3_parse(source)
         features = black.get_features_used(root)
         self.assertIn(black.Feature.ASSIGNMENT_EXPRESSIONS, features)
@@ -241,7 +243,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertIn(black.TargetVersion.PY38, versions)
 
     def test_expression_ff(self) -> None:
-        source, expected = read_data("expression")
+        source, expected = read_data("simple_cases", "expression.py")
         tmp_file = Path(black.dump_to_file(source))
         try:
             self.assertTrue(ff(tmp_file, write_back=black.WriteBack.YES))
@@ -255,8 +257,8 @@ class BlackTestCase(BlackBaseTestCase):
             black.assert_stable(source, actual, DEFAULT_MODE)
 
     def test_expression_diff(self) -> None:
-        source, _ = read_data("expression.py")
-        expected, _ = read_data("expression.diff")
+        source, _ = read_data("simple_cases", "expression.py")
+        expected, _ = read_data("simple_cases", "expression.diff")
         tmp_file = Path(black.dump_to_file(source))
         diff_header = re.compile(
             rf"{re.escape(str(tmp_file))}\t\d\d\d\d-\d\d-\d\d "
@@ -281,8 +283,8 @@ class BlackTestCase(BlackBaseTestCase):
             self.assertEqual(expected, actual, msg)
 
     def test_expression_diff_with_color(self) -> None:
-        source, _ = read_data("expression.py")
-        expected, _ = read_data("expression.diff")
+        source, _ = read_data("simple_cases", "expression.py")
+        expected, _ = read_data("simple_cases", "expression.diff")
         tmp_file = Path(black.dump_to_file(source))
         try:
             result = BlackRunner().invoke(
@@ -301,7 +303,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertIn("\033[0m", actual)
 
     def test_detect_pos_only_arguments(self) -> None:
-        source, _ = read_data("pep_570")
+        source, _ = read_data("py_38", "pep_570")
         root = black.lib2to3_parse(source)
         features = black.get_features_used(root)
         self.assertIn(black.Feature.POS_ONLY_ARGUMENTS, features)
@@ -310,7 +312,7 @@ class BlackTestCase(BlackBaseTestCase):
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_string_quotes(self) -> None:
-        source, expected = read_data("string_quotes")
+        source, expected = read_data("miscellaneous", "string_quotes")
         mode = black.Mode(preview=True)
         assert_format(source, expected, mode)
         mode = replace(mode, string_normalization=False)
@@ -320,8 +322,10 @@ class BlackTestCase(BlackBaseTestCase):
         black.assert_stable(source, not_normalized, mode=mode)
 
     def test_skip_magic_trailing_comma(self) -> None:
-        source, _ = read_data("expression.py")
-        expected, _ = read_data("expression_skip_magic_trailing_comma.diff")
+        source, _ = read_data("simple_cases", "expression")
+        expected, _ = read_data(
+            "miscellaneous", "expression_skip_magic_trailing_comma.diff"
+        )
         tmp_file = Path(black.dump_to_file(source))
         diff_header = re.compile(
             rf"{re.escape(str(tmp_file))}\t\d\d\d\d-\d\d-\d\d "
@@ -348,8 +352,8 @@ class BlackTestCase(BlackBaseTestCase):
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_async_as_identifier(self) -> None:
-        source_path = (THIS_DIR / "data" / "async_as_identifier.py").resolve()
-        source, expected = read_data("async_as_identifier")
+        source_path = get_case_path("miscellaneous", "async_as_identifier")
+        source, expected = read_data_from_file(source_path)
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         major, minor = sys.version_info[:2]
@@ -363,8 +367,8 @@ class BlackTestCase(BlackBaseTestCase):
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_python37(self) -> None:
-        source_path = (THIS_DIR / "data" / "python37.py").resolve()
-        source, expected = read_data("python37")
+        source_path = get_case_path("py_37", "python37")
+        source, expected = read_data_from_file(source_path)
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         major, minor = sys.version_info[:2]
@@ -712,7 +716,7 @@ class BlackTestCase(BlackBaseTestCase):
         # since this makes some test cases of test_get_features_used()
         # fails if it fails, this is tested first so that a useful case
         # is identified
-        simples, relaxed = read_data("decorators")
+        simples, relaxed = read_data("miscellaneous", "decorators")
         # skip explanation comments at the top of the file
         for simple_test in simples.split("##")[1:]:
             node = black.lib2to3_parse(simple_test)
@@ -755,7 +759,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(black.get_features_used(node), {Feature.NUMERIC_UNDERSCORES})
         node = black.lib2to3_parse("123456\n")
         self.assertEqual(black.get_features_used(node), set())
-        source, expected = read_data("function")
+        source, expected = read_data("simple_cases", "function")
         node = black.lib2to3_parse(source)
         expected_features = {
             Feature.TRAILING_COMMA_IN_CALL,
@@ -765,7 +769,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(black.get_features_used(node), expected_features)
         node = black.lib2to3_parse(expected)
         self.assertEqual(black.get_features_used(node), expected_features)
-        source, expected = read_data("expression")
+        source, expected = read_data("simple_cases", "expression")
         node = black.lib2to3_parse(source)
         self.assertEqual(black.get_features_used(node), set())
         node = black.lib2to3_parse(expected)
@@ -794,6 +798,18 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(
             black.get_features_used(node), {Feature.ANN_ASSIGN_EXTENDED_RHS}
         )
+        node = black.lib2to3_parse("try: pass\nexcept Something: pass")
+        self.assertEqual(black.get_features_used(node), set())
+        node = black.lib2to3_parse("try: pass\nexcept (*Something,): pass")
+        self.assertEqual(black.get_features_used(node), set())
+        node = black.lib2to3_parse("try: pass\nexcept *Group: pass")
+        self.assertEqual(black.get_features_used(node), {Feature.EXCEPT_STAR})
+        node = black.lib2to3_parse("a[*b]")
+        self.assertEqual(black.get_features_used(node), {Feature.VARIADIC_GENERICS})
+        node = black.lib2to3_parse("a[x, *y(), z] = t")
+        self.assertEqual(black.get_features_used(node), {Feature.VARIADIC_GENERICS})
+        node = black.lib2to3_parse("def fn(*args: *T): pass")
+        self.assertEqual(black.get_features_used(node), {Feature.VARIADIC_GENERICS})
 
     def test_get_features_used_for_future_flags(self) -> None:
         for src, features in [
@@ -845,8 +861,8 @@ class BlackTestCase(BlackBaseTestCase):
 
     @pytest.mark.incompatible_with_mypyc
     def test_debug_visitor(self) -> None:
-        source, _ = read_data("debug_visitor.py")
-        expected, _ = read_data("debug_visitor.out")
+        source, _ = read_data("miscellaneous", "debug_visitor")
+        expected, _ = read_data("miscellaneous", "debug_visitor.out")
         out_lines = []
         err_lines = []
 
@@ -916,7 +932,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual("".join(err_lines), "")
 
     @event_loop()
-    @patch("black.ProcessPoolExecutor", MagicMock(side_effect=OSError))
+    @patch("concurrent.futures.ProcessPoolExecutor", MagicMock(side_effect=OSError))
     def test_works_in_mono_process_only_environment(self) -> None:
         with cache_dir() as workspace:
             for f in [
@@ -930,10 +946,10 @@ class BlackTestCase(BlackBaseTestCase):
     def test_check_diff_use_together(self) -> None:
         with cache_dir():
             # Files which will be reformatted.
-            src1 = (THIS_DIR / "data" / "string_quotes.py").resolve()
+            src1 = get_case_path("miscellaneous", "string_quotes")
             self.invokeBlack([str(src1), "--diff", "--check"], exit_code=1)
             # Files which will not be reformatted.
-            src2 = (THIS_DIR / "data" / "composition.py").resolve()
+            src2 = get_case_path("simple_cases", "composition")
             self.invokeBlack([str(src2), "--diff", "--check"])
             # Multi file command.
             self.invokeBlack([str(src1), str(src2), "--diff", "--check"], exit_code=1)
@@ -957,7 +973,7 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_single_file_force_pyi(self) -> None:
         pyi_mode = replace(DEFAULT_MODE, is_pyi=True)
-        contents, expected = read_data("force_pyi")
+        contents, expected = read_data("miscellaneous", "force_pyi")
         with cache_dir() as workspace:
             path = (workspace / "file.py").resolve()
             with open(path, "w") as fh:
@@ -978,7 +994,7 @@ class BlackTestCase(BlackBaseTestCase):
     def test_multi_file_force_pyi(self) -> None:
         reg_mode = DEFAULT_MODE
         pyi_mode = replace(DEFAULT_MODE, is_pyi=True)
-        contents, expected = read_data("force_pyi")
+        contents, expected = read_data("miscellaneous", "force_pyi")
         with cache_dir() as workspace:
             paths = [
                 (workspace / "file1.py").resolve(),
@@ -1000,7 +1016,7 @@ class BlackTestCase(BlackBaseTestCase):
                 self.assertNotIn(str(path), normal_cache)
 
     def test_pipe_force_pyi(self) -> None:
-        source, expected = read_data("force_pyi")
+        source, expected = read_data("miscellaneous", "force_pyi")
         result = CliRunner().invoke(
             black.main, ["-", "-q", "--pyi"], input=BytesIO(source.encode("utf8"))
         )
@@ -1011,7 +1027,7 @@ class BlackTestCase(BlackBaseTestCase):
     def test_single_file_force_py36(self) -> None:
         reg_mode = DEFAULT_MODE
         py36_mode = replace(DEFAULT_MODE, target_versions=PY36_VERSIONS)
-        source, expected = read_data("force_py36")
+        source, expected = read_data("miscellaneous", "force_py36")
         with cache_dir() as workspace:
             path = (workspace / "file.py").resolve()
             with open(path, "w") as fh:
@@ -1030,7 +1046,7 @@ class BlackTestCase(BlackBaseTestCase):
     def test_multi_file_force_py36(self) -> None:
         reg_mode = DEFAULT_MODE
         py36_mode = replace(DEFAULT_MODE, target_versions=PY36_VERSIONS)
-        source, expected = read_data("force_py36")
+        source, expected = read_data("miscellaneous", "force_py36")
         with cache_dir() as workspace:
             paths = [
                 (workspace / "file1.py").resolve(),
@@ -1052,7 +1068,7 @@ class BlackTestCase(BlackBaseTestCase):
                 self.assertNotIn(str(path), normal_cache)
 
     def test_pipe_force_py36(self) -> None:
-        source, expected = read_data("force_py36")
+        source, expected = read_data("miscellaneous", "force_py36")
         result = CliRunner().invoke(
             black.main,
             ["-", "-q", "--target-version=py36"],
@@ -1162,7 +1178,7 @@ class BlackTestCase(BlackBaseTestCase):
             report = MagicMock()
             # Even with an existing file, since we are forcing stdin, black
             # should output to stdout and not modify the file inplace
-            p = Path(str(THIS_DIR / "data/collections.py"))
+            p = THIS_DIR / "data" / "simple_cases" / "collections.py"
             # Make sure is_file actually returns True
             self.assertTrue(p.is_file())
             path = Path(f"__BLACK_STDIN_FILENAME__{p}")
@@ -1256,23 +1272,25 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_shhh_click(self) -> None:
         try:
-            from click import _unicodefun
-        except ModuleNotFoundError:
+            from click import _unicodefun  # type: ignore
+        except ImportError:
             self.skipTest("Incompatible Click version")
-        if not hasattr(_unicodefun, "_verify_python3_env"):
+
+        if not hasattr(_unicodefun, "_verify_python_env"):
             self.skipTest("Incompatible Click version")
+
         # First, let's see if Click is crashing with a preferred ASCII charset.
         with patch("locale.getpreferredencoding") as gpe:
             gpe.return_value = "ASCII"
             with self.assertRaises(RuntimeError):
-                _unicodefun._verify_python3_env()  # type: ignore
+                _unicodefun._verify_python_env()
         # Now, let's silence Click...
         black.patch_click()
         # ...and confirm it's silent.
         with patch("locale.getpreferredencoding") as gpe:
             gpe.return_value = "ASCII"
             try:
-                _unicodefun._verify_python3_env()  # type: ignore
+                _unicodefun._verify_python_env()
             except RuntimeError as re:
                 self.fail(f"`patch_click()` failed, exception still raised: {re}")
 
@@ -1360,6 +1378,21 @@ class BlackTestCase(BlackBaseTestCase):
 
     @patch(
         "black.files.find_user_pyproject_toml",
+    )
+    def test_find_pyproject_toml(self, find_user_pyproject_toml: MagicMock) -> None:
+        find_user_pyproject_toml.side_effect = RuntimeError()
+
+        with redirect_stderr(io.StringIO()) as stderr:
+            result = black.files.find_pyproject_toml(
+                path_search_start=(str(Path.cwd().root),)
+            )
+
+        assert result is None
+        err = stderr.getvalue()
+        assert "Ignoring user configuration" in err
+
+    @patch(
+        "black.files.find_user_pyproject_toml",
         black.files.find_user_pyproject_toml.__wrapped__,
     )
     def test_find_user_pyproject_toml_linux(self) -> None:
@@ -1403,19 +1436,37 @@ class BlackTestCase(BlackBaseTestCase):
             normalized_path = black.normalize_path_maybe_ignore(path, root, report)
             self.assertEqual(normalized_path, "workspace/project")
 
+    def test_normalize_path_ignore_windows_junctions_outside_of_root(self) -> None:
+        if system() != "Windows":
+            return
+
+        with TemporaryDirectory() as workspace:
+            root = Path(workspace)
+            junction_dir = root / "junction"
+            junction_target_outside_of_root = root / ".."
+            os.system(f"mklink /J {junction_dir} {junction_target_outside_of_root}")
+
+            report = black.Report(verbose=True)
+            normalized_path = black.normalize_path_maybe_ignore(
+                junction_dir, root, report
+            )
+            # Manually delete for Python < 3.8
+            os.system(f"rmdir {junction_dir}")
+
+            self.assertEqual(normalized_path, None)
+
     def test_newline_comment_interaction(self) -> None:
         source = "class A:\\\r\n# type: ignore\n pass\n"
         output = black.format_str(source, mode=DEFAULT_MODE)
         black.assert_stable(source, output, mode=DEFAULT_MODE)
 
     def test_bpo_2142_workaround(self) -> None:
-
         # https://bugs.python.org/issue2142
 
-        source, _ = read_data("missing_final_newline.py")
+        source, _ = read_data("miscellaneous", "missing_final_newline")
         # read_data adds a trailing newline
         source = source.rstrip()
-        expected, _ = read_data("missing_final_newline.diff")
+        expected, _ = read_data("miscellaneous", "missing_final_newline.diff")
         tmp_file = Path(black.dump_to_file(source, ensure_final_newline=False))
         diff_header = re.compile(
             rf"{re.escape(str(tmp_file))}\t\d\d\d\d-\d\d-\d\d "
@@ -1641,7 +1692,7 @@ class TestCaching:
     def test_cache_multiple_files(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir() as workspace, patch(
-            "black.ProcessPoolExecutor", new=ThreadPoolExecutor
+            "concurrent.futures.ProcessPoolExecutor", new=ThreadPoolExecutor
         ):
             one = (workspace / "one.py").resolve()
             with one.open("w") as fobj:
@@ -1750,7 +1801,7 @@ class TestCaching:
     def test_failed_formatting_does_not_get_cached(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir() as workspace, patch(
-            "black.ProcessPoolExecutor", new=ThreadPoolExecutor
+            "concurrent.futures.ProcessPoolExecutor", new=ThreadPoolExecutor
         ):
             failing = (workspace / "failing.py").resolve()
             with failing.open("w") as fobj:
@@ -1979,7 +2030,6 @@ class TestFileCollection:
         path.iterdir.return_value = [child]
         child.resolve.return_value = Path("/a/b/c")
         child.as_posix.return_value = "/a/b/c"
-        child.is_symlink.return_value = True
         try:
             list(
                 black.gen_python_files(
@@ -1999,31 +2049,6 @@ class TestFileCollection:
             pytest.fail(f"`get_python_files_in_dir()` failed: {ve}")
         path.iterdir.assert_called_once()
         child.resolve.assert_called_once()
-        child.is_symlink.assert_called_once()
-        # `child` should behave like a strange file which resolved path is clearly
-        # outside of the `root` directory.
-        child.is_symlink.return_value = False
-        with pytest.raises(ValueError):
-            list(
-                black.gen_python_files(
-                    path.iterdir(),
-                    root,
-                    include,
-                    exclude,
-                    None,
-                    None,
-                    report,
-                    gitignore,
-                    verbose=False,
-                    quiet=False,
-                )
-            )
-        path.iterdir.assert_called()
-        assert path.iterdir.call_count == 2
-        child.resolve.assert_called()
-        assert child.resolve.call_count == 2
-        child.is_symlink.assert_called()
-        assert child.is_symlink.call_count == 2
 
     @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_get_sources_with_stdin(self) -> None:
