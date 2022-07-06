@@ -241,6 +241,7 @@ def generate_ignored_nodes(
                 if contains_fmt_on_at_column(child, leaf.column, preview=preview):
                     return
                 yield child
+            return
         else:
             yield container
             container = container.next_sibling
