@@ -28,7 +28,7 @@
      don't need a changelog entry. -->
 
 - Reword the stability policy to say that we may, in rare cases, make changes that
-  affect code that was not previously formatted by _Black_.
+  affect code that was not previously formatted by _Black_ (#3155)
 
 ### Integrations
 
