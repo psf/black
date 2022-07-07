@@ -10,7 +10,7 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Fix an infinite loop when using `#fmt: on/off` in the middle of an expression or code
+- Fix an infinite loop when using `# fmt: on/off` in the middle of an expression or code
   block (#3158)
 
 ### Preview style
