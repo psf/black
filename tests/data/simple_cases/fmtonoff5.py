@@ -6,7 +6,7 @@ setup(
             "foo-bar"
             "=foo.bar.:main",
         # fmt: on
-        ]
+            ]  # Includes an formatted indentation.
     },
 )
 
@@ -19,8 +19,7 @@ run(
         "-la",
     ]
     # fmt: on
-    + path
-    ,
+    + path,
     check=True,
 )
 
@@ -28,7 +27,7 @@ run(
 # Regression test for https://github.com/psf/black/issues/3026.
 def test_func():
     # yapf: disable
-    if a:
+    if  unformatted(  args  ):
         return True
     # yapf: enable
     elif b:
