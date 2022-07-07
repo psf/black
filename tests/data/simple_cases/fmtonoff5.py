@@ -11,7 +11,7 @@ setup(
 )
 
 
-# Regression test for https://github.com/psf/black/issues/3129.
+# Regression test for https://github.com/psf/black/issues/2015.
 run(
     # fmt: off
     [
