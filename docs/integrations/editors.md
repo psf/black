@@ -33,10 +33,10 @@ Options include the following:
 
    1. Check `Start local blackd instance when plugin loads`.
    1. Press the `Detect` button near `Path` input. The plugin should detect the `blackd`
-       executable.
+      executable.
 
 1. In `Trigger Settings` section check `Trigger on code reformat` to enable code
-    reformatting with _Black_.
+   reformatting with _Black_.
 
 1. Optionally, to run _Black_ on every file save:
 
