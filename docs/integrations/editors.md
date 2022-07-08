@@ -10,7 +10,7 @@ Options include the following:
 
 ## PyCharm/IntelliJ IDEA
 
-1. Install `blackd`.
+1. Install Black with the `d` extra. 
 
    ```console
    $ pip install 'black[d]'
@@ -32,13 +32,13 @@ Options include the following:
 1. In `Local Instance (shared between projects)` section:
 
    1. Check `Start local blackd instance when plugin loads`.
-   1. Near `Path` input press the `Detect` button. Plugin should detect `blackd` binary
-      path.
+   1. Press the `Detect` button near `Path` input. The plugin should detect the `blackd`
+       executable.
 
-1. In `Trigger Settings` section check `Trigger on code reformat` to enable Black for
-   code reformatting.
+1. In `Trigger Settings` section check `Trigger on code reformat` to enable code
+    reformatting with _Black_.
 
-1. Optionally, run _Black_ on every file save:
+1. Optionally, to run _Black_ on every file save:
 
    - In `Trigger Settings` section check `Trigger when saving changed files`.
 
