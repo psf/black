@@ -29,6 +29,7 @@
 
 - Reword the stability policy to say that we may, in rare cases, make changes that
   affect code that was not previously formatted by _Black_ (#3155)
+- Recommend using BlackConnect in IntelliJ IDEs (#3150)
 
 ### Integrations
 
@@ -64,10 +65,6 @@
 - Remove unnecessary parentheses around awaited objects (#2991)
 - Remove unnecessary parentheses in `with` statements (#2926)
 - Remove trailing newlines after code block open (#3035)
-
-### Documentation
-
-- Recommend using BlackConnect in IntelliJ IDEs (#3150)
 
 ### Integrations
 
