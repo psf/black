@@ -38,9 +38,13 @@ Options include the following:
 1. In `Trigger Settings` section check `Trigger on code reformat` to enable code
    reformatting with _Black_.
 
+1. Format the currently opened file by selecting `Code -> Reformat Code` or using a
+   shortcut.
+
 1. Optionally, to run _Black_ on every file save:
 
-   - In `Trigger Settings` section check `Trigger when saving changed files`.
+   - In `Trigger Settings` section of plugin configuration check `Trigger when saving
+     changed files`.
 
 ## Wing IDE
 
