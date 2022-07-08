@@ -10,7 +10,7 @@ Options include the following:
 
 ## PyCharm/IntelliJ IDEA
 
-1. Install Black with the `d` extra. 
+1. Install _Black_ with the `d` extra. 
 
    ```console
    $ pip install 'black[d]'
