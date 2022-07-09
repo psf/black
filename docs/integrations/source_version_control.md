@@ -7,7 +7,7 @@ Use [pre-commit](https://pre-commit.com/). Once you
 ```yaml
 repos:
   - repo: https://github.com/psf/black
-    rev: 22.3.0
+    rev: 22.6.0
     hooks:
       - id: black
         # It is recommended to specify the latest version of Python
@@ -23,8 +23,11 @@ branches or other mutable refs since the hook [won't auto update as you may
 expect][pre-commit-mutable-rev].
 
 If you want support for Jupyter Notebooks as well, then replace `id: black` with
-`id: black-jupyter` (though note that it's only available from version `21.8b0`
-onwards).
+`id: black-jupyter`.
+
+```{note}
+The `black-jupyter` hook is only available from version 21.8b0 and onwards.
+```
 
 [black-tags]: https://github.com/psf/black/tags
 [pre-commit-mutable-rev]:

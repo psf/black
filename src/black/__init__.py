@@ -40,7 +40,7 @@ from mypy_extensions import mypyc_attr
 from black.const import DEFAULT_LINE_LENGTH, DEFAULT_INCLUDES, DEFAULT_EXCLUDES
 from black.const import STDIN_PLACEHOLDER
 from black.nodes import STARS, syms, is_simple_decorator_expression
-from black.nodes import is_string_token
+from black.nodes import is_string_token, is_number_token
 from black.lines import Line, EmptyLineTracker
 from black.linegen import transform_line, LineGenerator, LN
 from black.comments import normalize_fmt_off
@@ -1183,10 +1183,10 @@ def format_str(src_contents: str, *, mode: Mode) -> str:
 def _format_str_once(src_contents: str, *, mode: Mode) -> str:
     src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)
     dst_contents = []
-    future_imports = get_future_imports(src_node)
     if mode.target_versions:
         versions = mode.target_versions
     else:
+        future_imports = get_future_imports(src_node)
         versions = detect_target_versions(src_node, future_imports=future_imports)
 
     normalize_fmt_off(src_node, preview=mode.preview)
@@ -1258,8 +1258,7 @@ def get_features_used(  # noqa: C901
             if value_head in {'f"', 'F"', "f'", "F'", "rf", "fr", "RF", "FR"}:
                 features.add(Feature.F_STRINGS)
 
-        elif n.type == token.NUMBER:
-            assert isinstance(n, Leaf)
+        elif is_number_token(n):
             if "_" in n.value:
                 features.add(Feature.NUMERIC_UNDERSCORES)
 

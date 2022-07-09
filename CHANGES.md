@@ -10,19 +10,11 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Fix unstable formatting involving `# fmt: skip` comments without internal spaces
-  (#2970)
-
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
 - Format docstrings to have consistent quote placement (#2885)
-- Fixed bug where docstrings with triple quotes could exceed max line length (#3044)
-- Remove redundant parentheses around awaited objects (#2991)
-- Parentheses around return annotations are now managed (#2990)
-- Remove unnecessary parentheses from `with` statements (#2926)
-- Remove trailing newlines after code block open (#3035)
 
 ### _Blackd_
 
@@ -37,21 +29,54 @@
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
 
+- Reword the stability policy to say that we may, in rare cases, make changes that
+  affect code that was not previously formatted by _Black_ (#3155)
+
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
-
-- Add migrate-black.py script to ease migration to black formatted git project (#3038)
 
 ### Output
 
 <!-- Changes to Black's terminal output and error messages -->
 
-- Output python version and implementation as part of `--version` flag (#2997)
-
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
+
+### Parser
+
+<!-- Changes to the parser or to version autodetection -->
+
+### Performance
+
+<!-- Changes that improve Black's performance. -->
+
+## 22.6.0
+
+### Style
+
+- Fix unstable formatting involving `#fmt: skip` and `# fmt:skip` comments (notice the
+  lack of spaces) (#2970)
+
+### Preview style
+
+- Docstring quotes are no longer moved if it would violate the line length limit (#3044)
+- Parentheses around return annotations are now managed (#2990)
+- Remove unnecessary parentheses around awaited objects (#2991)
+- Remove unnecessary parentheses in `with` statements (#2926)
+- Remove trailing newlines after code block open (#3035)
+
+### Integrations
+
+- Add `scripts/migrate-black.py` script to ease introduction of Black to a Git project
+  (#3038)
+
+### Output
+
+- Output Python version and implementation as part of `--version` flag (#2997)
+
+### Packaging
 
 - Use `tomli` instead of `tomllib` on Python 3.11 builds where `tomllib` is not
   available (#2987)
@@ -63,15 +88,9 @@
 - [PEP 646](https://peps.python.org/pep-0646) syntax (for example,
   `Array[Batch, *Shape]` or `def fn(*args: *T) -> None`) is now supported (#3071)
 
-<!-- Changes to the parser or to version autodetection -->
-
-### Performance
-
-<!-- Changes that improve Black's performance. -->
-
 ### Vim Plugin
 
-- Fixed strtobool function. It didn't parse true/on/false/off. (#3025)
+- Fix `strtobool` function. It didn't parse true/on/false/off. (#3025)
 
 ## 22.3.0
 
@@ -100,7 +119,7 @@
 
 ### Output
 
-- In verbose, mode, log when _Black_ is using user-level config (#2861)
+- In verbose mode, log when _Black_ is using user-level config (#2861)
 
 ### Packaging
 
