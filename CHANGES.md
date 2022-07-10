@@ -64,6 +64,7 @@
   removes DeprecationWarning (#3164)
 - Remove logging from internal `blib2to3` library since it regularily emits error logs
   about failed caching that can and should be ignored (#3193)
+- Error reporting now uses filepath:lineNumber:column format (#3160)
 
 ### Packaging
 

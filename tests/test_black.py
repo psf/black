@@ -460,10 +460,10 @@ class BlackTestCase(BlackBaseTestCase):
             report.check = True
             self.assertEqual(report.return_code, 1)
             report.check = False
-            report.failed(Path("e1"), "boom")
+            report.failed(Path("e1"), 12, 7, "boom")
             self.assertEqual(len(out_lines), 3)
             self.assertEqual(len(err_lines), 1)
-            self.assertEqual(err_lines[-1], "error: cannot format e1: boom")
+            self.assertEqual(err_lines[-1], "error: cannot format e1:12:7: boom")
             self.assertEqual(
                 unstyle(str(report)),
                 "1 file reformatted, 2 files left unchanged, 1 file failed to"
@@ -480,7 +480,7 @@ class BlackTestCase(BlackBaseTestCase):
                 " reformat.",
             )
             self.assertEqual(report.return_code, 123)
-            report.failed(Path("e2"), "boom")
+            report.failed(Path("e2"), 1, 0, "boom")
             self.assertEqual(len(out_lines), 4)
             self.assertEqual(len(err_lines), 2)
             self.assertEqual(err_lines[-1], "error: cannot format e2: boom")
@@ -557,7 +557,7 @@ class BlackTestCase(BlackBaseTestCase):
             report.check = True
             self.assertEqual(report.return_code, 1)
             report.check = False
-            report.failed(Path("e1"), "boom")
+            report.failed(Path("e1"), 0, 0, "boom")
             self.assertEqual(len(out_lines), 0)
             self.assertEqual(len(err_lines), 1)
             self.assertEqual(err_lines[-1], "error: cannot format e1: boom")
@@ -576,7 +576,7 @@ class BlackTestCase(BlackBaseTestCase):
                 " reformat.",
             )
             self.assertEqual(report.return_code, 123)
-            report.failed(Path("e2"), "boom")
+            report.failed(Path("e2"), 0, 0, "boom")
             self.assertEqual(len(out_lines), 0)
             self.assertEqual(len(err_lines), 2)
             self.assertEqual(err_lines[-1], "error: cannot format e2: boom")
@@ -653,10 +653,10 @@ class BlackTestCase(BlackBaseTestCase):
             report.check = True
             self.assertEqual(report.return_code, 1)
             report.check = False
-            report.failed(Path("e1"), "boom")
+            report.failed(Path("e1"), 1, 1, "boom")
             self.assertEqual(len(out_lines), 1)
             self.assertEqual(len(err_lines), 1)
-            self.assertEqual(err_lines[-1], "error: cannot format e1: boom")
+            self.assertEqual(err_lines[-1], "error: cannot format e1:1:1: boom")
             self.assertEqual(
                 unstyle(str(report)),
                 "1 file reformatted, 2 files left unchanged, 1 file failed to"
@@ -673,7 +673,7 @@ class BlackTestCase(BlackBaseTestCase):
                 " reformat.",
             )
             self.assertEqual(report.return_code, 123)
-            report.failed(Path("e2"), "boom")
+            report.failed(Path("e2"), 0, 0, "boom")
             self.assertEqual(len(out_lines), 2)
             self.assertEqual(len(err_lines), 2)
             self.assertEqual(err_lines[-1], "error: cannot format e2: boom")

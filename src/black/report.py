@@ -48,9 +48,13 @@ class Report:
                 out(msg, bold=False)
             self.same_count += 1
 
-    def failed(self, src: Path, message: str) -> None:
+    def failed(self, src: Path, lineno: int, column: int, message: str) -> None:
         """Increment the counter for failed reformatting. Write out a message."""
-        err(f"error: cannot format {src}: {message}")
+        if lineno and column:
+            path_line_col = f"{src}:{lineno}:{column}"
+        else:
+            path_line_col = f"{src}"
+        err(f"error: cannot format {path_line_col}: {message}")
         self.failure_count += 1
 
     def path_ignored(self, path: Path, message: str) -> None:

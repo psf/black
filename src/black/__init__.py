@@ -715,7 +715,7 @@ def reformat_code(
     except Exception as exc:
         if report.verbose:
             traceback.print_exc()
-        report.failed(path, str(exc))
+        report.failed(path, 0, 0, str(exc))
 
 
 # diff-shades depends on being to monkeypatch this function to operate. I know it's
@@ -769,7 +769,7 @@ def reformat_one(
     except Exception as exc:
         if report.verbose:
             traceback.print_exc()
-        report.failed(src, str(exc))
+        report.failed(src, 0, 0, str(exc))
 
 
 # diff-shades depends on being to monkeypatch this function to operate. I know it's
@@ -879,7 +879,7 @@ async def schedule_formatting(
             if task.cancelled():
                 cancelled.append(task)
             elif task.exception():
-                report.failed(src, str(task.exception()))
+                report.failed(src, 0, 0, str(task.exception()))
             else:
                 changed = Changed.YES if task.result() else Changed.NO
                 # If the file was written back or was successfully checked as
