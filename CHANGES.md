@@ -29,6 +29,7 @@
 
 - Reword the stability policy to say that we may, in rare cases, make changes that
   affect code that was not previously formatted by _Black_ (#3155)
+- Recommend using BlackConnect in IntelliJ IDEs (#3150)
 
 ### Integrations
 
