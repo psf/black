@@ -10,7 +10,7 @@ Options include the following:
 
 ## PyCharm/IntelliJ IDEA
 
-1. Install _Black_ with the `d` extra. 
+1. Install _Black_ with the `d` extra.
 
    ```console
    $ pip install 'black[d]'
@@ -43,8 +43,8 @@ Options include the following:
 
 1. Optionally, to run _Black_ on every file save:
 
-   - In `Trigger Settings` section of plugin configuration check `Trigger when saving
-     changed files`.
+   - In `Trigger Settings` section of plugin configuration check
+     `Trigger when saving changed files`.
 
 ## Wing IDE
 
