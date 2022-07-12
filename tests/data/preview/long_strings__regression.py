@@ -679,9 +679,11 @@ class A:
     def foo():
         some_func_call(
             "xxxxxxxxxx",
-            "xx {xxxxxxxxxxx}/xxxxxxxxxxx.xxx xxxx.xxx && xxxxxx -x "
-            '"xxxx xxxxxxx xxxxxx xxxx; xxxx xxxxxx_xxxxx xxxxxx xxxx; '
-            "xxxx.xxxx_xxxxxx(['xxxx.xxx'], xxxx.xxxxxxx().xxxxxxxxxx)\" ",
+            (
+                "xx {xxxxxxxxxxx}/xxxxxxxxxxx.xxx xxxx.xxx && xxxxxx -x "
+                '"xxxx xxxxxxx xxxxxx xxxx; xxxx xxxxxx_xxxxx xxxxxx xxxx; '
+                "xxxx.xxxx_xxxxxx(['xxxx.xxx'], xxxx.xxxxxxx().xxxxxxxxxx)\" "
+            ),
             None,
             ("xxxxxxxxxxx",),
         ),
@@ -690,9 +692,11 @@ class A:
 class A:
     def foo():
         some_func_call(
-            "xx {xxxxxxxxxxx}/xxxxxxxxxxx.xxx xxxx.xxx && xxxxxx -x "
-            "xxxx, ('xxxxxxx xxxxxx xxxx, xxxx') xxxxxx_xxxxx xxxxxx xxxx; "
-            "xxxx.xxxx_xxxxxx(['xxxx.xxx'], xxxx.xxxxxxx().xxxxxxxxxx)\" ",
+            (
+                "xx {xxxxxxxxxxx}/xxxxxxxxxxx.xxx xxxx.xxx && xxxxxx -x "
+                "xxxx, ('xxxxxxx xxxxxx xxxx, xxxx') xxxxxx_xxxxx xxxxxx xxxx; "
+                "xxxx.xxxx_xxxxxx(['xxxx.xxx'], xxxx.xxxxxxx().xxxxxxxxxx)\" "
+            ),
             None,
             ("xxxxxxxxxxx",),
         ),
@@ -763,20 +767,28 @@ class A:
 
 some_dictionary = {
     "xxxxx006": [
-        "xxx-xxx"
-        " xxxxx3xxxx1xx2xxxxxxxxxxxxxx0xx6xxxxxxxxxx2xxxxxx9xxxxxxxxxx0xxxxx1xxx2x/xx9xx6+x+xxxxxxxxxxxxxx4xxxxxxxxxxxxxxxxxxxxx43xxx2xx2x4x++xxx6xxxxxxxxx+xxxxx/xx9x+xxxxxxxxxxxxxx8x15xxxxxxxxxxxxxxxxx82xx/xxxxxxxxxxxxxx/x5xxxxxxxxxxxxxx6xxxxxx74x4/xxx4x+xxxxxxxxx2xxxxxxxx87xxxxx4xxxxxxxx3xx0xxxxx4xxx1xx9xx5xxxxxxx/xxxxx5xx6xx4xxxx1x/x2xxxxxxxxxxxx64xxxxxxx1x0xx5xxxxxxxxxxxxxx=="
-        " xxxxx000 xxxxxxxxxx\n",
-        "xxx-xxx"
-        " xxxxx3xxxx1xx2xxxxxxxxxxxxxx6xxxxxxxxxxxxxx9xxxxxxxxxxxxx3xxx9xxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxx2xxxx2xxx6xxxxx/xx54xxxxxxxxx4xxx3xxxxxx9xx3xxxxx39xxxxxxxxx5xx91xxxx7xxxxxx8xxxxxxxxxxxxxxxx9xxx93xxxxxxxxxxxxxxxxx7xxx8xx8xx4/x1xxxxx1x3xxxxxxxxxxxxx3xxxxxx9xx4xx4x7xxxxxxxxxxxxx1xxxxxxxxx7xxxxxxxxxxxxxx4xx6xxxxxxxxx9xxx7xxxx2xxxxxxxxxxxxxxxxxxxxxx8xxxxxxxxxxxxxxxxxxxx6xx=="
-        " xxxxx010 xxxxxxxxxx\n",
+        (
+            "xxx-xxx"
+            " xxxxx3xxxx1xx2xxxxxxxxxxxxxx0xx6xxxxxxxxxx2xxxxxx9xxxxxxxxxx0xxxxx1xxx2x/xx9xx6+x+xxxxxxxxxxxxxx4xxxxxxxxxxxxxxxxxxxxx43xxx2xx2x4x++xxx6xxxxxxxxx+xxxxx/xx9x+xxxxxxxxxxxxxx8x15xxxxxxxxxxxxxxxxx82xx/xxxxxxxxxxxxxx/x5xxxxxxxxxxxxxx6xxxxxx74x4/xxx4x+xxxxxxxxx2xxxxxxxx87xxxxx4xxxxxxxx3xx0xxxxx4xxx1xx9xx5xxxxxxx/xxxxx5xx6xx4xxxx1x/x2xxxxxxxxxxxx64xxxxxxx1x0xx5xxxxxxxxxxxxxx=="
+            " xxxxx000 xxxxxxxxxx\n"
+        ),
+        (
+            "xxx-xxx"
+            " xxxxx3xxxx1xx2xxxxxxxxxxxxxx6xxxxxxxxxxxxxx9xxxxxxxxxxxxx3xxx9xxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxx2xxxx2xxx6xxxxx/xx54xxxxxxxxx4xxx3xxxxxx9xx3xxxxx39xxxxxxxxx5xx91xxxx7xxxxxx8xxxxxxxxxxxxxxxx9xxx93xxxxxxxxxxxxxxxxx7xxx8xx8xx4/x1xxxxx1x3xxxxxxxxxxxxx3xxxxxx9xx4xx4x7xxxxxxxxxxxxx1xxxxxxxxx7xxxxxxxxxxxxxx4xx6xxxxxxxxx9xxx7xxxx2xxxxxxxxxxxxxxxxxxxxxx8xxxxxxxxxxxxxxxxxxxx6xx=="
+            " xxxxx010 xxxxxxxxxx\n"
+        ),
     ],
     "xxxxx016": [
-        "xxx-xxx"
-        " xxxxx3xxxx1xx2xxxxxxxxxxxxxx0xx6xxxxxxxxxx2xxxxxx9xxxxxxxxxx0xxxxx1xxx2x/xx9xx6+x+xxxxxxxxxxxxxx4xxxxxxxxxxxxxxxxxxxxx43xxx2xx2x4x++xxx6xxxxxxxxx+xxxxx/xx9x+xxxxxxxxxxxxxx8x15xxxxxxxxxxxxxxxxx82xx/xxxxxxxxxxxxxx/x5xxxxxxxxxxxxxx6xxxxxx74x4/xxx4x+xxxxxxxxx2xxxxxxxx87xxxxx4xxxxxxxx3xx0xxxxx4xxx1xx9xx5xxxxxxx/xxxxx5xx6xx4xxxx1x/x2xxxxxxxxxxxx64xxxxxxx1x0xx5xxxxxxxxxxxxxx=="
-        " xxxxx000 xxxxxxxxxx\n",
-        "xxx-xxx"
-        " xxxxx3xxxx1xx2xxxxxxxxxxxxxx6xxxxxxxxxxxxxx9xxxxxxxxxxxxx3xxx9xxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxx2xxxx2xxx6xxxxx/xx54xxxxxxxxx4xxx3xxxxxx9xx3xxxxx39xxxxxxxxx5xx91xxxx7xxxxxx8xxxxxxxxxxxxxxxx9xxx93xxxxxxxxxxxxxxxxx7xxx8xx8xx4/x1xxxxx1x3xxxxxxxxxxxxx3xxxxxx9xx4xx4x7xxxxxxxxxxxxx1xxxxxxxxx7xxxxxxxxxxxxxx4xx6xxxxxxxxx9xxx7xxxx2xxxxxxxxxxxxxxxxxxxxxx8xxxxxxxxxxxxxxxxxxxx6xx=="
-        " xxxxx010 xxxxxxxxxx\n",
+        (
+            "xxx-xxx"
+            " xxxxx3xxxx1xx2xxxxxxxxxxxxxx0xx6xxxxxxxxxx2xxxxxx9xxxxxxxxxx0xxxxx1xxx2x/xx9xx6+x+xxxxxxxxxxxxxx4xxxxxxxxxxxxxxxxxxxxx43xxx2xx2x4x++xxx6xxxxxxxxx+xxxxx/xx9x+xxxxxxxxxxxxxx8x15xxxxxxxxxxxxxxxxx82xx/xxxxxxxxxxxxxx/x5xxxxxxxxxxxxxx6xxxxxx74x4/xxx4x+xxxxxxxxx2xxxxxxxx87xxxxx4xxxxxxxx3xx0xxxxx4xxx1xx9xx5xxxxxxx/xxxxx5xx6xx4xxxx1x/x2xxxxxxxxxxxx64xxxxxxx1x0xx5xxxxxxxxxxxxxx=="
+            " xxxxx000 xxxxxxxxxx\n"
+        ),
+        (
+            "xxx-xxx"
+            " xxxxx3xxxx1xx2xxxxxxxxxxxxxx6xxxxxxxxxxxxxx9xxxxxxxxxxxxx3xxx9xxxxxxxxxxxxxxxx0xxxxxxxxxxxxxxxxx2xxxx2xxx6xxxxx/xx54xxxxxxxxx4xxx3xxxxxx9xx3xxxxx39xxxxxxxxx5xx91xxxx7xxxxxx8xxxxxxxxxxxxxxxx9xxx93xxxxxxxxxxxxxxxxx7xxx8xx8xx4/x1xxxxx1x3xxxxxxxxxxxxx3xxxxxx9xx4xx4x7xxxxxxxxxxxxx1xxxxxxxxx7xxxxxxxxxxxxxx4xx6xxxxxxxxx9xxx7xxxx2xxxxxxxxxxxxxxxxxxxxxx8xxxxxxxxxxxxxxxxxxxx6xx=="
+            " xxxxx010 xxxxxxxxxx\n"
+        ),
     ],
 }
 
@@ -802,8 +814,10 @@ some_commented_string = (
 )
 
 lpar_and_rpar_have_comments = func_call(  # LPAR Comment
-    "Long really ridiculous type of string that shouldn't really even exist at all. I"
-    " mean commmme onnn!!!",  # Comma Comment
+    (  # Comma Comment
+        "Long really ridiculous type of string that shouldn't really even exist at all."
+        " I mean commmme onnn!!!"
+    ),
 )  # RPAR Comment
 
 cmd_fstring = (
