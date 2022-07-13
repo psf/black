@@ -330,13 +330,14 @@ class LineGenerator(Visitor[Line]):
             # We could enforce triple quotes at this point.
             quote = quote_char * quote_len
 
-            if Preview.long_docstring_quotes_on_newline in self.mode:
+            # It's invalid to put closing single-character quotes on a new line.
+            if Preview.long_docstring_quotes_on_newline in self.mode and quote_len == 3:
                 # We need to find the length of the last line of the docstring
                 # to find if we can add the closing quotes to the line without
                 # exceeding the maximum line length.
                 # If docstring is one line, then we need to add the length
-                # of the indent, prefix, and starting quotes. Ending quote are
-                # handled later
+                # of the indent, prefix, and starting quotes. Ending quotes are
+                # handled later.
                 lines = docstring.splitlines()
                 last_line_length = len(lines[-1]) if docstring else 0
 
