@@ -39,6 +39,9 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Change from deprecated `asyncio.get_event_loop()` to create out event loop which
+  removes DesprecationWarning (#3164)
+
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
