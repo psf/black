@@ -788,6 +788,7 @@ def reformat_many(
         executor = ThreadPoolExecutor(max_workers=1)
 
     loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     try:
         loop.run_until_complete(
             schedule_formatting(
@@ -801,7 +802,10 @@ def reformat_many(
             )
         )
     finally:
-        shutdown(loop)
+        try:
+            shutdown(loop)
+        finally:
+            asyncio.set_event_loop(None)
         if executor is not None:
             executor.shutdown()
 
