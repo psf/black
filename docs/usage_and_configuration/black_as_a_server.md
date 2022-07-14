@@ -5,7 +5,7 @@ protocol. The main benefit of using it is to avoid the cost of starting up a new
 process every time you want to blacken a file.
 
 ```{warning}
-`blackd` should not be run as a publically accessible server as there are no security
+`blackd` should not be run as a publicly accessible server as there are no security
 precautions in place to prevent abuse. **It is intended for local use only**.
 ```
 
