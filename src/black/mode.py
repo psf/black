@@ -145,12 +145,13 @@ def supports_feature(target_versions: Set[TargetVersion], feature: Feature) -> b
 class Preview(Enum):
     """Individual preview style features."""
 
-    string_processing = auto()
-    remove_redundant_parens = auto()
-    one_element_subscript = auto()
     annotation_parens = auto()
     long_docstring_quotes_on_newline = auto()
+    normalize_docstring_quotes_and_prefixes_properly = auto()
+    one_element_subscript = auto()
     remove_block_trailing_newline = auto()
+    remove_redundant_parens = auto()
+    string_processing = auto()
 
 
 class Deprecated(UserWarning):

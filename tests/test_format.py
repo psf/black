@@ -139,6 +139,18 @@ def test_docstring_no_string_normalization() -> None:
     assert_format(source, expected, mode)
 
 
+def test_preview_docstring_no_string_normalization() -> None:
+    """
+    Like test_docstring but with string normalization off *and* the preview style
+    enabled.
+    """
+    source, expected = read_data(
+        "miscellaneous", "docstring_preview_no_string_normalization"
+    )
+    mode = replace(DEFAULT_MODE, string_normalization=False, preview=True)
+    assert_format(source, expected, mode)
+
+
 def test_long_strings_flag_disabled() -> None:
     """Tests for turning off the string processing logic."""
     source, expected = read_data("miscellaneous", "long_strings_flag_disabled")
