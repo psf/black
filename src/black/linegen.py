@@ -295,8 +295,8 @@ class LineGenerator(Visitor[Line]):
             # indentation of those changes the AST representation of the code.
             if Preview.normalize_docstring_quotes_and_prefixes_properly in self.mode:
                 # There was a bug where --skip-string-normalization wouldn't stop us
-                # from normalizing docstring prefixes. To maintain stability, we can only
-                # address this buggy behaviour while the preview style is enabled.
+                # from normalizing docstring prefixes. To maintain stability, we can
+                # only address this buggy behaviour while the preview style is enabled.
                 if self.mode.string_normalization:
                     docstring = normalize_string_prefix(leaf.value)
                     # visit_default() does handle string normalization for us, but
