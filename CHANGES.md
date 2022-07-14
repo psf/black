@@ -40,7 +40,7 @@
 <!-- Changes to Black's terminal output and error messages -->
 
 - Change from deprecated `asyncio.get_event_loop()` to create our event loop which
-  removes DesprecationWarning (#3164)
+  removes DeprecationWarning (#3164)
 
 ### Packaging
 
