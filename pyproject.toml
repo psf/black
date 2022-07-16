@@ -31,6 +31,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
 # Option below requires `tests/optional.py`
+addopts = "--strict-config --strict-markers"
 optional-tests = [
   "no_blackd: run when `d` extra NOT installed",
   "no_jupyter: run when `jupyter` extra NOT installed",
@@ -38,3 +39,5 @@ optional-tests = [
 markers = [
   "incompatible_with_mypyc: run when testing mypyc compiled black"
 ]
+xfail_strict = true
+filterwarnings = ["error"]
