@@ -48,5 +48,4 @@ filterwarnings = [
     # this is mitigated by https://github.com/python/cpython/issues/79071 in python 3.8+
     # this ignore can be removed when support for 3.7 is dropped.
     '''ignore:Bare functions are deprecated, use async ones:DeprecationWarning''',
-    '''ignore:invalid escape sequence.*:DeprecationWarning''',
 ]

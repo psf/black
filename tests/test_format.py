@@ -28,6 +28,7 @@ def check_file(
     assert_format(source, expected, mode, fast=False)
 
 
+@pytest.mark.filterwarnings("ignore:invalid escape sequence.*:DeprecationWarning")
 @pytest.mark.parametrize("filename", all_data_cases("simple_cases"))
 def test_simple_format(filename: str) -> None:
     check_file("simple_cases", filename, DEFAULT_MODE)
@@ -132,6 +133,7 @@ def test_python_2_hint() -> None:
     exc_info.match(black.parsing.PY2_HINT)
 
 
+@pytest.mark.filterwarnings("ignore:invalid escape sequence.*:DeprecationWarning")
 def test_docstring_no_string_normalization() -> None:
     """Like test_docstring but with string normalization off."""
     source, expected = read_data("miscellaneous", "docstring_no_string_normalization")
