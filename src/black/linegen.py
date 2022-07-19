@@ -293,7 +293,24 @@ class LineGenerator(Visitor[Line]):
         if is_docstring(leaf) and "\\\n" not in leaf.value:
             # We're ignoring docstrings with backslash newline escapes because changing
             # indentation of those changes the AST representation of the code.
-            docstring = normalize_string_prefix(leaf.value)
+            if Preview.normalize_docstring_quotes_and_prefixes_properly in self.mode:
+                # There was a bug where --skip-string-normalization wouldn't stop us
+                # from normalizing docstring prefixes. To maintain stability, we can
+                # only address this buggy behaviour while the preview style is enabled.
+                if self.mode.string_normalization:
+                    docstring = normalize_string_prefix(leaf.value)
+                    # visit_default() does handle string normalization for us, but
+                    # since this method acts differently depending on quote style (ex.
+                    # see padding logic below), there's a possibility for unstable
+                    # formatting as visit_default() is called *after*. To avoid a
+                    # situation where this function formats a docstring differently on
+                    # the second pass, normalize it early.
+                    docstring = normalize_string_quotes(docstring)
+                else:
+                    docstring = leaf.value
+            else:
+                # ... otherwise, we'll keep the buggy behaviour >.<
+                docstring = normalize_string_prefix(leaf.value)
             prefix = get_string_prefix(docstring)
             docstring = docstring[len(prefix) :]  # Remove the prefix
             quote_char = docstring[0]
@@ -330,13 +347,14 @@ class LineGenerator(Visitor[Line]):
             # We could enforce triple quotes at this point.
             quote = quote_char * quote_len
 
-            if Preview.long_docstring_quotes_on_newline in self.mode:
+            # It's invalid to put closing single-character quotes on a new line.
+            if Preview.long_docstring_quotes_on_newline in self.mode and quote_len == 3:
                 # We need to find the length of the last line of the docstring
                 # to find if we can add the closing quotes to the line without
                 # exceeding the maximum line length.
                 # If docstring is one line, then we need to add the length
-                # of the indent, prefix, and starting quotes. Ending quote are
-                # handled later
+                # of the indent, prefix, and starting quotes. Ending quotes are
+                # handled later.
                 lines = docstring.splitlines()
                 last_line_length = len(lines[-1]) if docstring else 0
 

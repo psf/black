@@ -31,10 +31,21 @@ build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
 # Option below requires `tests/optional.py`
+addopts = "--strict-config --strict-markers"
 optional-tests = [
   "no_blackd: run when `d` extra NOT installed",
   "no_jupyter: run when `jupyter` extra NOT installed",
 ]
 markers = [
   "incompatible_with_mypyc: run when testing mypyc compiled black"
+]
+xfail_strict = true
+filterwarnings = [
+    "error",
+    # this is mitigated by a try/catch in https://github.com/psf/black/pull/2974/
+    # this ignore can be removed when support for aiohttp 3.7 is dropped.
+    '''ignore:Decorator `@unittest_run_loop` is no longer needed in aiohttp 3\.8\+:DeprecationWarning''',
+    # this is mitigated by https://github.com/python/cpython/issues/79071 in python 3.8+
+    # this ignore can be removed when support for 3.7 is dropped.
+    '''ignore:Bare functions are deprecated, use async ones:DeprecationWarning''',
 ]

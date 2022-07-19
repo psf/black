@@ -4,6 +4,11 @@
 protocol. The main benefit of using it is to avoid the cost of starting up a new _Black_
 process every time you want to blacken a file.
 
+```{warning}
+`blackd` should not be run as a publicly accessible server as there are no security
+precautions in place to prevent abuse. **It is intended for local use only**.
+```
+
 ## Usage
 
 `blackd` is not packaged alongside _Black_ by default because it has additional

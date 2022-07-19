@@ -12,10 +12,17 @@
 
 - Fix an infinite loop when using `# fmt: on/off` in the middle of an expression or code
   block (#3158)
+- Comments are no longer deleted when a line had spaces removed around power operators
+  (#2874)
 
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
+
+- Single-character closing docstring quotes are no longer moved to their own line as
+  this is invalid. This was a bug introduced in version 22.6.0. (#3166)
+- `--skip-string-normalization` / `-S` now prevents docstring prefixes from being
+  normalized as expected (#3168)
 
 ### _Blackd_
 
@@ -32,6 +39,7 @@
 
 - Reword the stability policy to say that we may, in rare cases, make changes that
   affect code that was not previously formatted by _Black_ (#3155)
+- Recommend using BlackConnect in IntelliJ IDEs (#3150)
 
 ### Integrations
 
@@ -41,6 +49,9 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Change from deprecated `asyncio.get_event_loop()` to create our event loop which
+  removes DeprecationWarning (#3164)
+
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
@@ -48,6 +59,10 @@
 ### Parser
 
 <!-- Changes to the parser or to version autodetection -->
+
+- Type comments are now included in the AST equivalence check consistently so accidental
+  deletion raises an error. Though type comments can't be tracked when running on PyPy
+  3.7 due to standard library limitations. (#2874)
 
 ### Performance
 
