@@ -10,6 +10,7 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix incorrect handling of `# fmt: skip` on colon `:` lines. (#3148)
 - Comments are no longer deleted when a line had spaces removed around power operators
   (#2874)
 
