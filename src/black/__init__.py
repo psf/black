@@ -773,7 +773,6 @@ def reformat_many(
     from concurrent.futures import Executor, ThreadPoolExecutor, ProcessPoolExecutor
 
     executor: Executor
-    loop = asyncio.get_event_loop()
     worker_count = workers if workers is not None else DEFAULT_WORKERS
     if sys.platform == "win32":
         # Work around https://bugs.python.org/issue26903
@@ -788,6 +787,8 @@ def reformat_many(
         # any good due to the Global Interpreter Lock)
         executor = ThreadPoolExecutor(max_workers=1)
 
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     try:
         loop.run_until_complete(
             schedule_formatting(
@@ -801,7 +802,10 @@ def reformat_many(
             )
         )
     finally:
-        shutdown(loop)
+        try:
+            shutdown(loop)
+        finally:
+            asyncio.set_event_loop(None)
         if executor is not None:
             executor.shutdown()
 
