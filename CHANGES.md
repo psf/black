@@ -12,6 +12,7 @@
 
 - Fix an infinite loop when using `# fmt: on/off` in the middle of an expression or code
   block (#3158)
+- Fix incorrect handling of `# fmt: skip` on colon `:` lines. (#3148)
 - Comments are no longer deleted when a line had spaces removed around power operators
   (#2874)
 
