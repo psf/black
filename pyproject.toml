@@ -42,7 +42,10 @@ markers = [
 xfail_strict = true
 filterwarnings = [
     "error",
+    # this is mitigated by a try/catch in https://github.com/psf/black/pull/2974/
+    # this ignore can be removed when support for aiohttp 3.7 is dropped.
     '''ignore:Decorator `@unittest_run_loop` is no longer needed in aiohttp 3\.8\+:DeprecationWarning''',
+    # this is mitigated by https://github.com/python/cpython/issues/79071 in python 3.8+
+    # this ignore can be removed when support for 3.7 is dropped.
     '''ignore:Bare functions are deprecated, use async ones:DeprecationWarning''',
-    '''ignore:invalid escape sequence.*:DeprecationWarning''',
 ]
