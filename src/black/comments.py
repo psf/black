@@ -244,44 +244,40 @@ def _generate_ignored_nodes_from_fmt_skip(
     # Need to properly format the leaf prefix to compare it to comment.value,
     # which is also formatted
     comments = list_comments(leaf.prefix, is_endmarker=False, preview=preview)
-    if comments and comment.value == comments[0].value:
-        if prev_sibling is not None:
-            leaf.prefix = ""
-            siblings = [prev_sibling]
-            while (
-                "\n" not in prev_sibling.prefix
-                and prev_sibling.prev_sibling is not None
-            ):
-                prev_sibling = prev_sibling.prev_sibling
-                siblings.insert(0, prev_sibling)
-            for sibling in siblings:
-                yield sibling
-        elif (
-            parent is not None
-            and type_repr(parent.type) == "suite"
-            and leaf.type == token.NEWLINE
+    if not comments or comment.value != comments[0].value:
+        return
+    if prev_sibling is not None:
+        leaf.prefix = ""
+        siblings = [prev_sibling]
+        while "\n" not in prev_sibling.prefix and prev_sibling.prev_sibling is not None:
+            prev_sibling = prev_sibling.prev_sibling
+            siblings.insert(0, prev_sibling)
+        for sibling in siblings:
+            yield sibling
+    elif (
+        parent is not None
+        and type_repr(parent.type) == "suite"
+        and leaf.type == token.NEWLINE
+    ):
+        # The `# fmt: skip` is on the colon line of the if/while/def/class/...
+        # statements. The ignored nodes should be previous siblings of the
+        # parent suite node.
+        leaf.prefix = ""
+        ignored_nodes: List[LN] = []
+        parent_sibling = parent.prev_sibling
+        while parent_sibling is not None and type_repr(parent_sibling.type) != "suite":
+            ignored_nodes.insert(0, parent_sibling)
+            parent_sibling = parent_sibling.prev_sibling
+        # Special case for `async_stmt` where the ASYNC token is on the
+        # grandparent node.
+        grandparent = parent.parent
+        if (
+            grandparent is not None
+            and grandparent.prev_sibling is not None
+            and grandparent.prev_sibling.type == token.ASYNC
         ):
-            # The `# fmt: skip` is on the colon line of the if/while/def/class/...
-            # statements. The ignored nodes should be previous siblings of the
-            # parent suite node.
-            leaf.prefix = ""
-            ignored_nodes: List[LN] = []
-            parent_sibling = parent.prev_sibling
-            while (
-                parent_sibling is not None and type_repr(parent_sibling.type) != "suite"
-            ):
-                ignored_nodes.insert(0, parent_sibling)
-                parent_sibling = parent_sibling.prev_sibling
-            # Special case for `async_stmt` where the ASYNC token is on the
-            # grandparent node.
-            grandparent = parent.parent
-            if (
-                grandparent is not None
-                and grandparent.prev_sibling is not None
-                and grandparent.prev_sibling.type == token.ASYNC
-            ):
-                ignored_nodes.insert(0, grandparent.prev_sibling)
-            yield from iter(ignored_nodes)
+            ignored_nodes.insert(0, grandparent.prev_sibling)
+        yield from iter(ignored_nodes)
 
 
 def is_fmt_on(container: LN, preview: bool) -> bool:
