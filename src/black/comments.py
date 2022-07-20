@@ -13,7 +13,7 @@ from blib2to3.pytree import Node, Leaf, type_repr
 from blib2to3.pgen2 import token
 
 from black.nodes import first_leaf_column, preceding_leaf, container_of
-from black.nodes import STANDALONE_COMMENT, WHITESPACE
+from black.nodes import CLOSING_BRACKETS, STANDALONE_COMMENT, WHITESPACE
 
 # types
 LN = Union[Leaf, Node]
@@ -227,6 +227,14 @@ def generate_ignored_nodes(
         # fix for fmt: on in children
         if contains_fmt_on_at_column(container, leaf.column, preview=preview):
             for child in container.children:
+                if isinstance(child, Leaf) and is_fmt_on(child, preview=preview):
+                    if child.type in CLOSING_BRACKETS:
+                        # This means `# fmt: on` is placed at a different bracket level
+                        # than `# fmt: off`. This is an invalid use, but as a courtesy,
+                        # we include this closing bracket in the ignored nodes.
+                        # The alternative is to fail the formatting.
+                        yield child
+                    return
                 if contains_fmt_on_at_column(child, leaf.column, preview=preview):
                     return
                 yield child
