@@ -32,3 +32,15 @@ The `black-jupyter` hook is only available from version 21.8b0 and onwards.
 [black-tags]: https://github.com/psf/black/tags
 [pre-commit-mutable-rev]:
   https://pre-commit.com/#using-the-latest-version-for-a-repository
+
+Pre-commit collects all filepaths recursively throughout the repo to pass to Black. You
+can use the `--force-exclude` flag to ignore specific files or directories, which
+pre-commit takes as an argument. See the partial example below ignoring a `tests`
+directory:
+
+```yaml
+hooks:
+  - id: black
+    args:
+      - --force-exclude=tests/
+```
