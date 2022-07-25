@@ -117,7 +117,7 @@ Configuration:
 To install with [vim-plug](https://github.com/junegunn/vim-plug):
 
 ```
-Plug 'psf/black', { 'branch': 'stable' }
+Plug 'psf/black', { 'tag': 'stable' }
 ```
 
 or with [Vundle](https://github.com/VundleVim/Vundle.vim):
@@ -130,7 +130,7 @@ and execute the following in a terminal:
 
 ```console
 $ cd ~/.vim/bundle/black
-$ git checkout origin/stable -b stable
+$ git checkout stable
 ```
 
 or you can copy the plugin files from
