@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Python
+      - name: Set up latest Python
         uses: actions/setup-python@v4
         with:
           python-version: "*"
@@ -27,9 +27,9 @@ jobs:
           python -m pip install -e '.[d]'
           python -m pip install tox
 
-      - name: Lint
+      - name: Run pre-commit hooks
         uses: pre-commit/action@v3.0.0
 
-      - name: Run On Self
+      - name: Format ourselves
         run: |
           tox -e run_self
