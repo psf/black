@@ -22,12 +22,20 @@ extend-exclude = '''
 # this off.
 preview = true
 
-# Build system information below.
+# Build system information and other project-specific configuration below.
 # NOTE: You don't need this in your own Black configuration.
 
 [build-system]
 requires = ["setuptools>=45.0", "setuptools_scm[toml]>=6.3.1", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.isort]
+atomic = true
+profile = "black"
+line_length = 88
+skip_gitignore = true
+skip_glob = ["src/blib2to3", "tests/data", "profiling"]
+known_first_party = ["black", "blib2to3", "blackd", "_black_version"]
 
 [tool.pytest.ini_options]
 # Option below requires `tests/optional.py`

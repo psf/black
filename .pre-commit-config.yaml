@@ -23,6 +23,11 @@ repos:
         files: '(CHANGES\.md|the_basics\.md)$'
         additional_dependencies: *version_check_dependencies
 
+  - repo: https://github.com/pycqa/isort
+    rev: 5.10.1
+    hooks:
+      - id: isort
+
   - repo: https://github.com/pycqa/flake8
     rev: 4.0.1
     hooks:
