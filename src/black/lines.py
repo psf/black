@@ -1,6 +1,6 @@
-from dataclasses import dataclass, field
 import itertools
 import sys
+from dataclasses import dataclass, field
 from typing import (
     Callable,
     Dict,
@@ -13,16 +13,25 @@ from typing import (
     cast,
 )
 
-from blib2to3.pytree import Node, Leaf
-from blib2to3.pgen2 import token
-
-from black.brackets import BracketTracker, DOT_PRIORITY
+from black.brackets import DOT_PRIORITY, BracketTracker
 from black.mode import Mode, Preview
-from black.nodes import STANDALONE_COMMENT, TEST_DESCENDANTS
-from black.nodes import BRACKETS, OPENING_BRACKETS, CLOSING_BRACKETS
-from black.nodes import syms, whitespace, replace_child, child_towards
-from black.nodes import is_multiline_string, is_import, is_type_comment
-from black.nodes import is_one_sequence_between
+from black.nodes import (
+    BRACKETS,
+    CLOSING_BRACKETS,
+    OPENING_BRACKETS,
+    STANDALONE_COMMENT,
+    TEST_DESCENDANTS,
+    child_towards,
+    is_import,
+    is_multiline_string,
+    is_one_sequence_between,
+    is_type_comment,
+    replace_child,
+    syms,
+    whitespace,
+)
+from blib2to3.pgen2 import token
+from blib2to3.pytree import Leaf, Node
 
 # types
 T = TypeVar("T")

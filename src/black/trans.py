@@ -1,10 +1,11 @@
 """
 String transformers that can split and merge strings.
 """
+import re
+import sys
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass
-import re
 from typing import (
     Any,
     Callable,
@@ -21,29 +22,38 @@ from typing import (
     TypeVar,
     Union,
 )
-import sys
 
 if sys.version_info < (3, 8):
-    from typing_extensions import Literal, Final
+    from typing_extensions import Final, Literal
 else:
     from typing import Literal, Final
 
 from mypy_extensions import trait
 
-from black.rusty import Result, Ok, Err
-
-from black.mode import Feature
-from black.nodes import syms, replace_child, parent_type
-from black.nodes import is_empty_par, is_empty_lpar, is_empty_rpar
-from black.nodes import OPENING_BRACKETS, CLOSING_BRACKETS, STANDALONE_COMMENT
-from black.lines import Line, append_leaves
 from black.brackets import BracketMatchError
 from black.comments import contains_pragma_comment
-from black.strings import has_triple_quotes, get_string_prefix, assert_is_leaf_string
-from black.strings import normalize_string_quotes
-
-from blib2to3.pytree import Leaf, Node
+from black.lines import Line, append_leaves
+from black.mode import Feature
+from black.nodes import (
+    CLOSING_BRACKETS,
+    OPENING_BRACKETS,
+    STANDALONE_COMMENT,
+    is_empty_lpar,
+    is_empty_par,
+    is_empty_rpar,
+    parent_type,
+    replace_child,
+    syms,
+)
+from black.rusty import Err, Ok, Result
+from black.strings import (
+    assert_is_leaf_string,
+    get_string_prefix,
+    has_triple_quotes,
+    normalize_string_quotes,
+)
 from blib2to3.pgen2 import token
+from blib2to3.pytree import Leaf, Node
 
 
 class CannotTransform(Exception):

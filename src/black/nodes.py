@@ -3,16 +3,7 @@ blib2to3 Node/Leaf transformation-related utility functions.
 """
 
 import sys
-from typing import (
-    Generic,
-    Iterator,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    TypeVar,
-    Union,
-)
+from typing import Generic, Iterator, List, Optional, Set, Tuple, TypeVar, Union
 
 if sys.version_info >= (3, 8):
     from typing import Final
@@ -25,14 +16,11 @@ else:
 
 from mypy_extensions import mypyc_attr
 
-# lib2to3 fork
-from blib2to3.pytree import Node, Leaf, type_repr, NL
-from blib2to3 import pygram
-from blib2to3.pgen2 import token
-
 from black.cache import CACHE_DIR
 from black.strings import has_triple_quotes
-
+from blib2to3 import pygram
+from blib2to3.pgen2 import token
+from blib2to3.pytree import NL, Leaf, Node, type_repr
 
 pygram.initialize(CACHE_DIR)
 syms: Final = pygram.python_symbols

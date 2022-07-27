@@ -1,38 +1,67 @@
 """
 Generating lines of code.
 """
-from functools import partial, wraps
 import sys
+from functools import partial, wraps
 from typing import Collection, Iterator, List, Optional, Set, Union, cast
 
-from black.nodes import WHITESPACE, RARROW, STATEMENT, STANDALONE_COMMENT
-from black.nodes import ASSIGNMENTS, OPENING_BRACKETS, CLOSING_BRACKETS
-from black.nodes import Visitor, syms, is_arith_like, ensure_visible
+from black.brackets import COMMA_PRIORITY, DOT_PRIORITY, max_delimiter_priority_in_atom
+from black.comments import FMT_OFF, generate_comments, list_comments
+from black.lines import (
+    Line,
+    append_leaves,
+    can_be_split,
+    can_omit_invisible_parens,
+    is_line_short_enough,
+    line_to_string,
+)
+from black.mode import Feature, Mode, Preview
 from black.nodes import (
+    ASSIGNMENTS,
+    CLOSING_BRACKETS,
+    OPENING_BRACKETS,
+    RARROW,
+    STANDALONE_COMMENT,
+    STATEMENT,
+    WHITESPACE,
+    Visitor,
+    ensure_visible,
+    is_arith_like,
+    is_atom_with_invisible_parens,
     is_docstring,
     is_empty_tuple,
-    is_one_tuple,
+    is_lpar_token,
+    is_multiline_string,
+    is_name_token,
     is_one_sequence_between,
+    is_one_tuple,
+    is_rpar_token,
+    is_stub_body,
+    is_stub_suite,
+    is_vararg,
+    is_walrus_assignment,
+    is_yield,
+    syms,
+    wrap_in_parentheses,
 )
-from black.nodes import is_name_token, is_lpar_token, is_rpar_token
-from black.nodes import is_walrus_assignment, is_yield, is_vararg, is_multiline_string
-from black.nodes import is_stub_suite, is_stub_body, is_atom_with_invisible_parens
-from black.nodes import wrap_in_parentheses
-from black.brackets import max_delimiter_priority_in_atom
-from black.brackets import DOT_PRIORITY, COMMA_PRIORITY
-from black.lines import Line, line_to_string, is_line_short_enough
-from black.lines import can_omit_invisible_parens, can_be_split, append_leaves
-from black.comments import generate_comments, list_comments, FMT_OFF
 from black.numerics import normalize_numeric_literal
-from black.strings import get_string_prefix, fix_docstring
-from black.strings import normalize_string_prefix, normalize_string_quotes
-from black.trans import Transformer, CannotTransform, StringMerger, StringSplitter
-from black.trans import StringParenWrapper, StringParenStripper, hug_power_op
-from black.mode import Mode, Feature, Preview
-
-from blib2to3.pytree import Node, Leaf
+from black.strings import (
+    fix_docstring,
+    get_string_prefix,
+    normalize_string_prefix,
+    normalize_string_quotes,
+)
+from black.trans import (
+    CannotTransform,
+    StringMerger,
+    StringParenStripper,
+    StringParenWrapper,
+    StringSplitter,
+    Transformer,
+    hug_power_op,
+)
 from blib2to3.pgen2 import token
-
+from blib2to3.pytree import Leaf, Node
 
 # types
 LeafID = int

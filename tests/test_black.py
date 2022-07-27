@@ -6,6 +6,7 @@ import io
 import logging
 import multiprocessing
 import os
+import re
 import sys
 import types
 import unittest
@@ -31,7 +32,6 @@ from unittest.mock import MagicMock, patch
 
 import click
 import pytest
-import re
 from click import unstyle
 from click.testing import CliRunner
 from pathspec import PathSpec
@@ -59,8 +59,8 @@ from tests.util import (
     dump_to_stderr,
     ff,
     fs,
-    read_data,
     get_case_path,
+    read_data,
     read_data_from_file,
 )
 

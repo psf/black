@@ -1,9 +1,10 @@
-from functools import lru_cache
 import io
 import os
-from pathlib import Path
 import sys
+from functools import lru_cache
+from pathlib import Path
 from typing import (
+    TYPE_CHECKING,
     Any,
     Dict,
     Iterable,
@@ -14,7 +15,6 @@ from typing import (
     Sequence,
     Tuple,
     Union,
-    TYPE_CHECKING,
 )
 
 from mypy_extensions import mypyc_attr
@@ -30,9 +30,9 @@ if sys.version_info >= (3, 11):
 else:
     import tomli as tomllib
 
+from black.handle_ipynb_magics import jupyter_dependencies_are_installed
 from black.output import err
 from black.report import Report
-from black.handle_ipynb_magics import jupyter_dependencies_are_installed
 
 if TYPE_CHECKING:
     import colorama  # noqa: F401

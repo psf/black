@@ -5,7 +5,7 @@
 import logging
 import os
 import sys
-from subprocess import check_output, run, Popen, PIPE
+from subprocess import PIPE, Popen, check_output, run
 
 
 def git(*args: str) -> str:
