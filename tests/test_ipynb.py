@@ -1,23 +1,24 @@
 import contextlib
-from dataclasses import replace
 import pathlib
 import re
 from contextlib import ExitStack as does_not_raise
+from dataclasses import replace
 from typing import ContextManager
 
+import pytest
+from _pytest.monkeypatch import MonkeyPatch
 from click.testing import CliRunner
-from black.handle_ipynb_magics import jupyter_dependencies_are_installed
+
 from black import (
-    main,
+    Mode,
     NothingChanged,
     format_cell,
     format_file_contents,
     format_file_in_place,
+    main,
 )
-import pytest
-from black import Mode
-from _pytest.monkeypatch import MonkeyPatch
-from tests.util import DATA_DIR, read_jupyter_notebook, get_case_path
+from black.handle_ipynb_magics import jupyter_dependencies_are_installed
+from tests.util import DATA_DIR, get_case_path, read_jupyter_notebook
 
 with contextlib.suppress(ModuleNotFoundError):
     import IPython

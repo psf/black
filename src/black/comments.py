@@ -1,7 +1,7 @@
+import re
 import sys
 from dataclasses import dataclass
 from functools import lru_cache
-import re
 from typing import Iterator, List, Optional, Union
 
 if sys.version_info >= (3, 8):
@@ -9,11 +9,16 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Final
 
-from blib2to3.pytree import Node, Leaf, type_repr
+from black.nodes import (
+    CLOSING_BRACKETS,
+    STANDALONE_COMMENT,
+    WHITESPACE,
+    container_of,
+    first_leaf_column,
+    preceding_leaf,
+)
 from blib2to3.pgen2 import token
-
-from black.nodes import first_leaf_column, preceding_leaf, container_of
-from black.nodes import CLOSING_BRACKETS, STANDALONE_COMMENT, WHITESPACE
+from blib2to3.pytree import Leaf, Node, type_repr
 
 # types
 LN = Union[Leaf, Node]

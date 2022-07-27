@@ -11,16 +11,14 @@ if sys.version_info < (3, 8):
 else:
     from typing import Final
 
-# lib2to3 fork
-from blib2to3.pytree import Node, Leaf
+from black.mode import Feature, TargetVersion, supports_feature
+from black.nodes import syms
 from blib2to3 import pygram
 from blib2to3.pgen2 import driver
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.parse import ParseError
 from blib2to3.pgen2.tokenize import TokenError
-
-from black.mode import TargetVersion, Feature, supports_feature
-from black.nodes import syms
+from blib2to3.pytree import Leaf, Node
 
 ast3: Any
 
