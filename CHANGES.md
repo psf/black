@@ -46,13 +46,14 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- Vim plugin: prefix messages with `Black: ` so it's clear they come from Black (#3194)
+
 ### Output
 
 <!-- Changes to Black's terminal output and error messages -->
 
 - Change from deprecated `asyncio.get_event_loop()` to create our event loop which
   removes DeprecationWarning (#3164)
-- Prefix Black messages in Vim with `Black: ` (#3194)
 
 ### Packaging
 
