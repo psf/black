@@ -1,4 +1,4 @@
-name: Documentation Build
+name: Documentation
 
 on: [push, pull_request]
 
