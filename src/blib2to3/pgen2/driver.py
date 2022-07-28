@@ -263,14 +263,13 @@ def load_grammar(
         logger = logging.getLogger(__name__)
     gp = _generate_pickle_name(gt) if gp is None else gp
     if force or not _newer(gp, gt):
-        logger.info("Generating grammar tables from %s", gt)
         g: grammar.Grammar = pgen.generate_grammar(gt)
         if save:
-            logger.info("Writing grammar tables to %s", gp)
             try:
                 g.dump(gp)
-            except OSError as e:
-                logger.info("Writing failed: %s", e)
+            except OSError:
+                # Ignore error, caching is not vital.
+                pass
     else:
         g = grammar.Grammar()
         g.load(gp)

@@ -52,6 +52,8 @@
 
 - Change from deprecated `asyncio.get_event_loop()` to create our event loop which
   removes DeprecationWarning (#3164)
+- Remove logging from internal `blib2to3` library since it regularily emits error logs
+  about failed caching that can and should be ignored (#3193)
 
 ### Packaging
 
