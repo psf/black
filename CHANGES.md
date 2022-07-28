@@ -52,6 +52,7 @@
 
 - Change from deprecated `asyncio.get_event_loop()` to create our event loop which
   removes DeprecationWarning (#3164)
+- Prefix Black messages in Vim with `Black: ` (#3194)
 
 ### Packaging
 
