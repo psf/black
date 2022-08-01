@@ -47,6 +47,7 @@
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
 - Vim plugin: prefix messages with `Black: ` so it's clear they come from Black (#3194)
+- Docker: changes the installation path to be available to non-root users (#3202)
 
 ### Output
 
