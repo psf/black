@@ -4,8 +4,7 @@ RUN mkdir /src
 COPY . /src/
 ENV VIRTUAL_ENV=/opt/venv
 RUN python -m venv $VIRTUAL_ENV
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
+RUN . /opt/venv/bin/activate && pip install --no-cache-dir --upgrade pip setuptools wheel \
     # Install build tools to compile dependencies that don't have prebuilt wheels
     && apt update && apt install -y git build-essential \
     && cd /src \
@@ -17,4 +16,4 @@ FROM python:3-slim
 COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-CMD ["black"]
+CMD ["/opt/venv/bin/black"]
