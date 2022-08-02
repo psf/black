@@ -1,4 +1,4 @@
-name: pypi_upload
+name: Publish to PyPI
 
 on:
   release:
@@ -8,14 +8,14 @@ permissions:
   contents: read
 
 jobs:
-  build:
-    name: PyPI Upload
+  main:
+    name: sdist + pure wheel
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Python
+      - name: Set up latest Python
         uses: actions/setup-python@v4
         with:
           python-version: "*"
@@ -26,11 +26,51 @@ jobs:
           python -m pip install --upgrade build twine
 
       - name: Build wheel and source distributions
-        run: |
-          python -m build
+        run: python -m build
 
       - name: Upload to PyPI via Twine
         env:
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-        run: |
-          twine upload --verbose -u '__token__' dist/*
+        run: twine upload --verbose -u '__token__' dist/*
+
+  mypyc:
+    name: mypyc wheels (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: linux-x86_64
+          - os: windows-2019
+            name: windows-amd64
+          - os: macos-11
+            name: macos-x86_64
+            macos_arch: "x86_64"
+          - os: macos-11
+            name: macos-arm64
+            macos_arch: "arm64"
+          - os: macos-11
+            name: macos-universal2
+            macos_arch: "universal2"
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build wheels via cibuildwheel
+        uses: pypa/cibuildwheel@v2.8.1
+        env:
+          CIBW_ARCHS_MACOS: "${{ matrix.macos_arch }}"
+          # This isn't supported in pyproject.toml which makes sense (but is annoying).
+          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.6.2"
+
+      - name: Upload wheels as workflow artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.name }}-mypyc-wheels
+          path: ./wheelhouse/*.whl
+
+      - name: Upload wheels to PyPI via Twine
+        env:
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: pipx run twine upload --verbose -u '__token__' wheelhouse/*.whl
