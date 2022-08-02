@@ -1,7 +1,8 @@
 # Copyright (C) 2020 Łukasz Langa
-from setuptools import setup, find_packages
-import sys
 import os
+import sys
+
+from setuptools import find_packages, setup
 
 assert sys.version_info >= (3, 6, 2), "black requires Python 3.6.2+"
 from pathlib import Path  # noqa E402

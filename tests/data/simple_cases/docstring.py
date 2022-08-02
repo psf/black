@@ -209,6 +209,13 @@ def multiline_docstring_at_line_limit():
     second line----------------------------------------------------------------------"""
 
 
+def stable_quote_normalization_with_immediate_inner_single_quote(self):
+    ''''<text here>
+
+    <text here, since without another non-empty line black is stable>
+    '''
+
+
 # output
 
 class MyClass:
@@ -417,3 +424,10 @@ def multiline_docstring_at_line_limit():
     """first line-----------------------------------------------------------------------
 
     second line----------------------------------------------------------------------"""
+
+
+def stable_quote_normalization_with_immediate_inner_single_quote(self):
+    """'<text here>
+
+    <text here, since without another non-empty line black is stable>
+    """

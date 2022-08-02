@@ -2,15 +2,16 @@ import re
 from typing import Any
 from unittest.mock import patch
 
-from click.testing import CliRunner
 import pytest
+from click.testing import CliRunner
 
-from tests.util import read_data, DETERMINISTIC_HEADER
+from tests.util import DETERMINISTIC_HEADER, read_data
 
 try:
-    import blackd
-    from aiohttp.test_utils import AioHTTPTestCase
     from aiohttp import web
+    from aiohttp.test_utils import AioHTTPTestCase
+
+    import blackd
 except ImportError as e:
     raise RuntimeError("Please install Black with the 'd' extra") from e
 

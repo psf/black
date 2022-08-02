@@ -1,9 +1,10 @@
-import pytest
 import pathlib
 
-from tests.util import get_case_path
-from black import main, jupyter_dependencies_are_installed
+import pytest
 from click.testing import CliRunner
+
+from black import jupyter_dependencies_are_installed, main
+from tests.util import get_case_path
 
 pytestmark = pytest.mark.no_jupyter
 

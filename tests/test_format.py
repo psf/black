@@ -8,10 +8,10 @@ import black
 from tests.util import (
     DEFAULT_MODE,
     PY36_VERSIONS,
+    all_data_cases,
     assert_format,
     dump_to_stderr,
     read_data,
-    all_data_cases,
 )
 
 
@@ -28,6 +28,7 @@ def check_file(
     assert_format(source, expected, mode, fast=False)
 
 
+@pytest.mark.filterwarnings("ignore:invalid escape sequence.*:DeprecationWarning")
 @pytest.mark.parametrize("filename", all_data_cases("simple_cases"))
 def test_simple_format(filename: str) -> None:
     check_file("simple_cases", filename, DEFAULT_MODE)
@@ -132,6 +133,7 @@ def test_python_2_hint() -> None:
     exc_info.match(black.parsing.PY2_HINT)
 
 
+@pytest.mark.filterwarnings("ignore:invalid escape sequence.*:DeprecationWarning")
 def test_docstring_no_string_normalization() -> None:
     """Like test_docstring but with string normalization off."""
     source, expected = read_data("miscellaneous", "docstring_no_string_normalization")
@@ -139,10 +141,13 @@ def test_docstring_no_string_normalization() -> None:
     assert_format(source, expected, mode)
 
 
-def test_docstring_no_string_normalization_preview() -> None:
-    """Like test_docstring_no_string_normailiazation but with preview on."""
+def test_preview_docstring_no_string_normalization() -> None:
+    """
+    Like test_docstring but with string normalization off *and* the preview style
+    enabled.
+    """
     source, expected = read_data(
-        "miscellaneous", "docstring_no_string_normalization_preview"
+        "miscellaneous", "docstring_preview_no_string_normalization"
     )
     mode = replace(DEFAULT_MODE, string_normalization=False, preview=True)
     assert_format(source, expected, mode)

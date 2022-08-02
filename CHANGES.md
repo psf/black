@@ -10,11 +10,21 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix an infinite loop when using `# fmt: on/off` in the middle of an expression or code
+  block (#3158)
+- Fix incorrect handling of `# fmt: skip` on colon `:` lines. (#3148)
+- Comments are no longer deleted when a line had spaces removed around power operators
+  (#2874)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
 - Format docstrings to have consistent quote placement (#2885)
+- Single-character closing docstring quotes are no longer moved to their own line as
+  this is invalid. This was a bug introduced in version 22.6.0. (#3166)
+- `--skip-string-normalization` / `-S` now prevents docstring prefixes from being
+  normalized as expected (#3168)
 
 ### _Blackd_
 
@@ -31,14 +41,24 @@
 
 - Reword the stability policy to say that we may, in rare cases, make changes that
   affect code that was not previously formatted by _Black_ (#3155)
+- Recommend using BlackConnect in IntelliJ IDEs (#3150)
 
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- Vim plugin: prefix messages with `Black: ` so it's clear they come from Black (#3194)
+- Docker: changed to a /opt/venv installation + added to PATH to be available to
+  non-root users (#3202)
+
 ### Output
 
 <!-- Changes to Black's terminal output and error messages -->
+
+- Change from deprecated `asyncio.get_event_loop()` to create our event loop which
+  removes DeprecationWarning (#3164)
+- Remove logging from internal `blib2to3` library since it regularily emits error logs
+  about failed caching that can and should be ignored (#3193)
 
 ### Packaging
 
@@ -47,6 +67,10 @@
 ### Parser
 
 <!-- Changes to the parser or to version autodetection -->
+
+- Type comments are now included in the AST equivalence check consistently so accidental
+  deletion raises an error. Though type comments can't be tracked when running on PyPy
+  3.7 due to standard library limitations. (#2874)
 
 ### Performance
 

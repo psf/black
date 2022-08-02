@@ -103,24 +103,16 @@ def shockingly_the_quotes_are_normalized_v2():
     pass
 
 
-def backslash_space():
-    '\ '
+def do_not_touch_this_prefix():
+    R"""There was a bug where docstring prefixes would be normalized even with -S."""
 
 
-def multiline_backslash_1():
-  '''
-  hey\there\
-  \ '''
+def do_not_touch_this_prefix2():
+    F'There was a bug where docstring prefixes would be normalized even with -S.'
 
 
-def multiline_backslash_2():
-  '''
-  hey there \ '''
-
-
-def multiline_backslash_3():
-  '''
-  already escaped \\ '''
+def do_not_touch_this_prefix3():
+    R'''There was a bug where docstring prefixes would be normalized even with -S.'''
 
 # output
 
@@ -223,19 +215,13 @@ def shockingly_the_quotes_are_normalized_v2():
     pass
 
 
-def backslash_space():
-    '\ '
+def do_not_touch_this_prefix():
+    R"""There was a bug where docstring prefixes would be normalized even with -S."""
 
 
-def multiline_backslash_1():
-    '''
-  hey\there\
-  \ '''
+def do_not_touch_this_prefix2():
+    F'There was a bug where docstring prefixes would be normalized even with -S.'
 
 
-def multiline_backslash_2():
-    '''hey there \ '''
-
-
-def multiline_backslash_3():
-    '''already escaped \\'''
+def do_not_touch_this_prefix3():
+    R'''There was a bug where docstring prefixes would be normalized even with -S.'''

@@ -4,11 +4,10 @@ Mostly around Python language feature support per version and Black configuratio
 chosen by the user.
 """
 
-from hashlib import sha256
 import sys
-
 from dataclasses import dataclass, field
 from enum import Enum, auto
+from hashlib import sha256
 from operator import attrgetter
 from typing import Dict, Set
 from warnings import warn
@@ -145,12 +144,13 @@ def supports_feature(target_versions: Set[TargetVersion], feature: Feature) -> b
 class Preview(Enum):
     """Individual preview style features."""
 
-    string_processing = auto()
-    remove_redundant_parens = auto()
-    one_element_subscript = auto()
     annotation_parens = auto()
     long_docstring_quotes_on_newline = auto()
+    normalize_docstring_quotes_and_prefixes_properly = auto()
+    one_element_subscript = auto()
     remove_block_trailing_newline = auto()
+    remove_redundant_parens = auto()
+    string_processing = auto()
 
 
 class Deprecated(UserWarning):

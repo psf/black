@@ -1,7 +1,7 @@
 """Builds on top of nodes.py to track brackets."""
 
-from dataclasses import dataclass, field
 import sys
+from dataclasses import dataclass, field
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 if sys.version_info < (3, 8):
@@ -9,12 +9,20 @@ if sys.version_info < (3, 8):
 else:
     from typing import Final
 
-from blib2to3.pytree import Leaf, Node
+from black.nodes import (
+    BRACKET,
+    CLOSING_BRACKETS,
+    COMPARATORS,
+    LOGIC_OPERATORS,
+    MATH_OPERATORS,
+    OPENING_BRACKETS,
+    UNPACKING_PARENTS,
+    VARARGS_PARENTS,
+    is_vararg,
+    syms,
+)
 from blib2to3.pgen2 import token
-
-from black.nodes import syms, is_vararg, VARARGS_PARENTS, UNPACKING_PARENTS
-from black.nodes import BRACKET, OPENING_BRACKETS, CLOSING_BRACKETS
-from black.nodes import MATH_OPERATORS, COMPARATORS, LOGIC_OPERATORS
+from blib2to3.pytree import Leaf, Node
 
 # types
 LN = Union[Leaf, Node]

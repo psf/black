@@ -11,16 +11,14 @@ if sys.version_info < (3, 8):
 else:
     from typing import Final
 
-# lib2to3 fork
-from blib2to3.pytree import Node, Leaf
+from black.mode import Feature, TargetVersion, supports_feature
+from black.nodes import syms
 from blib2to3 import pygram
 from blib2to3.pgen2 import driver
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.parse import ParseError
 from blib2to3.pgen2.tokenize import TokenError
-
-from black.mode import TargetVersion, Feature, supports_feature
-from black.nodes import syms
+from blib2to3.pytree import Leaf, Node
 
 ast3: Any
 
@@ -152,14 +150,22 @@ def parse_single_version(
     src: str, version: Tuple[int, int]
 ) -> Union[ast.AST, ast3.AST]:
     filename = "<unknown>"
-    # typed_ast is needed because of feature version limitations in the builtin ast
+    # typed-ast is needed because of feature version limitations in the builtin ast 3.8>
     if sys.version_info >= (3, 8) and version >= (3,):
-        return ast.parse(src, filename, feature_version=version)
-    elif version >= (3,):
-        if _IS_PYPY:
-            return ast3.parse(src, filename)
+        return ast.parse(src, filename, feature_version=version, type_comments=True)
+
+    if _IS_PYPY:
+        # PyPy 3.7 doesn't support type comment tracking which is not ideal, but there's
+        # not much we can do as typed-ast won't work either.
+        if sys.version_info >= (3, 8):
+            return ast3.parse(src, filename, type_comments=True)
         else:
-            return ast3.parse(src, filename, feature_version=version[1])
+            return ast3.parse(src, filename)
+    else:
+        # Typed-ast is guaranteed to be used here and automatically tracks type
+        # comments separately.
+        return ast3.parse(src, filename, feature_version=version[1])
+
     raise AssertionError("INTERNAL ERROR: Tried parsing unsupported Python version!")
 
 

@@ -158,9 +158,9 @@ def Black(**kwargs):
     )
   except black.NothingChanged:
     if not quiet:
-      print(f'Already well formatted, good job. (took {time.time() - start:.4f}s)')
+      print(f'Black: already well formatted, good job. (took {time.time() - start:.4f}s)')
   except Exception as exc:
-    print(exc)
+    print(f'Black: {exc}')
   else:
     current_buffer = vim.current.window.buffer
     cursors = []
@@ -177,7 +177,7 @@ def Black(**kwargs):
       except vim.error:
         window.cursor = (len(window.buffer), 0)
     if not quiet:
-      print(f'Reformatted in {time.time() - start:.4f}s.')
+      print(f'Black: reformatted in {time.time() - start:.4f}s.')
 
 def get_configs():
   filename = vim.eval("@%")
