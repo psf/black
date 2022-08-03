@@ -108,11 +108,11 @@ def do_not_touch_this_prefix():
 
 
 def do_not_touch_this_prefix2():
-    F'There was a bug where docstring prefixes would be normalized even with -S.'
+    FR'There was a bug where docstring prefixes would be normalized even with -S.'
 
 
 def do_not_touch_this_prefix3():
-    R'''There was a bug where docstring prefixes would be normalized even with -S.'''
+    u'''There was a bug where docstring prefixes would be normalized even with -S.'''
 
 # output
 
@@ -220,8 +220,8 @@ def do_not_touch_this_prefix():
 
 
 def do_not_touch_this_prefix2():
-    F'There was a bug where docstring prefixes would be normalized even with -S.'
+    FR'There was a bug where docstring prefixes would be normalized even with -S.'
 
 
 def do_not_touch_this_prefix3():
-    R'''There was a bug where docstring prefixes would be normalized even with -S.'''
+    u'''There was a bug where docstring prefixes would be normalized even with -S.'''
