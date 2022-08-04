@@ -1737,7 +1737,9 @@ class TestCaching:
                 src = (workspace / f"test{tag}.py").resolve()
                 with src.open("w") as fobj:
                     fobj.write("print('hello')")
-            with patch("black.Manager", wraps=multiprocessing.Manager) as mgr:
+            with patch(
+                "black.concurrency.Manager", wraps=multiprocessing.Manager
+            ) as mgr:
                 cmd = ["--diff", str(workspace)]
                 if color:
                     cmd.append("--color")
@@ -1784,7 +1786,7 @@ class TestCaching:
                 str(cached): black.get_cache_info(cached),
                 str(cached_but_changed): (0.0, 0),
             }
-            todo, done = black.filter_cached(
+            todo, done = black.cache.filter_cached(
                 cache, {uncached, cached, cached_but_changed}
             )
             assert todo == {uncached, cached_but_changed}

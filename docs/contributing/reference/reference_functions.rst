@@ -52,7 +52,7 @@ Formatting
 
 .. autofunction:: black.reformat_one
 
-.. autofunction:: black.schedule_formatting
+.. autofunction:: black.concurrency.schedule_formatting
 
 File operations
 ---------------
@@ -173,7 +173,7 @@ Utilities
 
 .. autofunction:: black.linegen.should_split_line
 
-.. autofunction:: black.shutdown
+.. autofunction:: black.concurrency.shutdown
 
 .. autofunction:: black.strings.sub_twice
 
