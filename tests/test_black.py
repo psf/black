@@ -1455,6 +1455,18 @@ class BlackTestCase(BlackBaseTestCase):
 
             self.assertEqual(normalized_path, None)
 
+    def test_normalize_path_outside_of_root(self) -> None:
+
+        with TemporaryDirectory() as workspace:
+            root = Path(workspace)
+            target_path = root / ".."
+            report = black.Report(verbose=True)
+            normalized_path = black.normalize_path_maybe_ignore(
+                target_path, root, report
+            )
+
+            self.assertNotEqual(normalized_path, None)
+
     def test_newline_comment_interaction(self) -> None:
         source = "class A:\\\r\n# type: ignore\n pass\n"
         output = black.format_str(source, mode=DEFAULT_MODE)
