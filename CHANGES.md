@@ -87,6 +87,8 @@
 
 <!-- Changes that improve Black's performance. -->
 
+- Reduce Black's startup time when formatting a single file by 15-30% (#3211)
+
 ## 22.6.0
 
 ### Style
