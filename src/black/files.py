@@ -161,7 +161,10 @@ def normalize_path_maybe_ignore(
         abspath = path if path.is_absolute() else Path.cwd() / path
         normalized_path = abspath.resolve()
         try:
-            root_relative_path = normalized_path.relative_to(root).as_posix()
+            if not str(normalized_path).startswith(str(root)):
+                root_relative_path = os.path.join(Path.cwd(), path)
+            else:
+                root_relative_path = normalized_path.relative_to(root).as_posix()
         except ValueError:
             if report:
                 report.path_ignored(
