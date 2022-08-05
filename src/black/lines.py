@@ -273,8 +273,8 @@ class Line:
         - it's not a single-element subscript
         Additionally, if ensure_removable:
         - it's not from square bracket indexing
-            - specifically, single-element square bracket indexing with
-              Preview.skip_magic_trailing_comma_in_subscript
+          (specifically, single-element square bracket indexing with
+          Preview.skip_magic_trailing_comma_in_subscript)
         """
         if not (
             closing.type in CLOSING_BRACKETS
