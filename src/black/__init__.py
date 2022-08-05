@@ -623,12 +623,7 @@ def get_sources(
 ) -> Set[Path]:
     """Compute the set of files to be formatted."""
     sources: Set[Path] = set()
-
-    if exclude is None:
-        exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES)
-        gitignore = get_gitignore(ctx.obj["root"])
-    else:
-        gitignore = None
+    root = ctx.obj["root"]
 
     for s in src:
         if s == "-" and stdin_filename:
@@ -663,6 +658,11 @@ def get_sources(
 
             sources.add(p)
         elif p.is_dir():
+            if exclude is None:
+                exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES)
+                gitignore = get_gitignore(root)
+            else:
+                gitignore = None
             sources.update(
                 gen_python_files(
                     p.iterdir(),
