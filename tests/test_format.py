@@ -153,6 +153,11 @@ def test_preview_docstring_no_string_normalization() -> None:
     assert_format(source, expected, mode)
 
 
+def test_skip_magic_trailing_comma_in_subscript() -> None:
+    source, expected = read_data("preview", "skip_magic_trailing_comma")
+    assert_format(source, expected, mode=black.Mode(magic_trailing_comma=False, preview=True))
+
+
 def test_long_strings_flag_disabled() -> None:
     """Tests for turning off the string processing logic."""
     source, expected = read_data("miscellaneous", "long_strings_flag_disabled")

@@ -151,6 +151,7 @@ class Preview(Enum):
     remove_block_trailing_newline = auto()
     remove_redundant_parens = auto()
     string_processing = auto()
+    skip_magic_trailing_comma_in_subscript = auto()
 
 
 class Deprecated(UserWarning):
