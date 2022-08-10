@@ -87,6 +87,7 @@ from black.output import color_diff, diff, dump_to_file, err, ipynb_diff, out
 from black.parsing import InvalidInput  # noqa F401
 from black.parsing import lib2to3_parse, parse_ast, stringify_ast
 from black.report import Changed, NothingChanged, Report
+from black.trans import iter_fexpr_spans
 from blib2to3.pgen2 import token
 from blib2to3.pytree import Leaf, Node
 
@@ -1240,6 +1241,7 @@ def get_features_used(  # noqa: C901
 
     Currently looking for:
     - f-strings;
+    - self-documenting expressions in f-strings (f"{x=}");
     - underscores in numeric literals;
     - trailing commas after * or ** in function signatures and calls;
     - positional only arguments in function signatures and lambdas;
@@ -1261,6 +1263,11 @@ def get_features_used(  # noqa: C901
             value_head = n.value[:2]
             if value_head in {'f"', 'F"', "f'", "F'", "rf", "fr", "RF", "FR"}:
                 features.add(Feature.F_STRINGS)
+                if Feature.DEBUG_F_STRINGS not in features:
+                    for span_beg, span_end in iter_fexpr_spans(n.value):
+                        if n.value[span_beg : span_end - 1].rstrip().endswith("="):
+                            features.add(Feature.DEBUG_F_STRINGS)
+                            break
 
         elif is_number_token(n):
             if "_" in n.value:
