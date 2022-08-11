@@ -485,7 +485,9 @@ def main(  # noqa: C901
             )
 
             normalized = [
-                (normalize_path_maybe_ignore(Path(source), root), source)
+                (source, source)
+                if source == "-"
+                else (normalize_path_maybe_ignore(Path(source), root), source)
                 for source in src
             ]
             srcs_string = ", ".join(
