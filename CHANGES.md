@@ -29,6 +29,8 @@
 
 <!-- Changes to blackd -->
 
+- `blackd` now supports preview style via `X-PREVIEW` header (#3195)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
