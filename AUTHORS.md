@@ -20,6 +20,7 @@ Multiple contributions by:
 - [Adam Johnson](mailto:me@adamj.eu)
 - [Adam Williamson](mailto:adamw@happyassassin.net)
 - [Alexander Huynh](mailto:github@grande.coffee)
+- [Alexandr Artemyev](mailto:mogost@gmail.com)
 - [Alex Vandiver](mailto:github@chmrr.net)
 - [Allan Simon](mailto:allan.simon@supinfo.com)
 - Anders-Petter Ljungquist
