@@ -33,6 +33,8 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Black now uses the presence of debug f-strings to detect target version. (#3215)
+
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
