@@ -18,6 +18,8 @@ from typing import (
 )
 
 from mypy_extensions import mypyc_attr
+from packaging.specifiers import InvalidSpecifier, SpecifierSet
+from packaging.version import InvalidVersion, Version
 from pathspec import PathSpec
 from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
 
@@ -32,6 +34,7 @@ else:
     import tomli as tomllib
 
 from black.handle_ipynb_magics import jupyter_dependencies_are_installed
+from black.mode import TargetVersion
 from black.output import err
 from black.report import Report
 
@@ -108,14 +111,91 @@ def find_pyproject_toml(path_search_start: Tuple[str, ...]) -> Optional[str]:
 
 @mypyc_attr(patchable=True)
 def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
-    """Parse a pyproject toml file, pulling out relevant parts for Black
+    """Parse a pyproject toml file, pulling out relevant parts for Black.
 
-    If parsing fails, will raise a tomllib.TOMLDecodeError
+    If parsing fails, will raise a tomllib.TOMLDecodeError.
     """
     with open(path_config, "rb") as f:
         pyproject_toml = tomllib.load(f)
-    config = pyproject_toml.get("tool", {}).get("black", {})
-    return {k.replace("--", "").replace("-", "_"): v for k, v in config.items()}
+    config: Dict[str, Any] = pyproject_toml.get("tool", {}).get("black", {})
+    config = {k.replace("--", "").replace("-", "_"): v for k, v in config.items()}
+
+    if "target_version" not in config:
+        inferred_target_version = infer_target_version(pyproject_toml)
+        if inferred_target_version is not None:
+            config["target_version"] = [inferred_target_version.name.lower()]
+
+    return config
+
+
+def infer_target_version(pyproject_toml: Dict[str, Any]) -> Optional[TargetVersion]:
+    """Infer Black's target version from the project metadata in pyproject.toml.
+
+    If target version cannot be inferred, returns None.
+    """
+    requires_python = get_req_python(pyproject_toml)
+    if requires_python is not None:
+        return parse_req_python(requires_python)
+    return None
+
+
+def get_req_python(pyproject_toml: Dict[str, Any]) -> Optional[str]:
+    """Get the required Python version from the project metadata.
+
+    Currently only supports the PyPA standard format:
+    https://packaging.python.org/en/latest/specifications/declaring-project-metadata/#requires-python
+
+    If the field is not present or cannot be parsed, returns None.
+    """
+    project_metadata = pyproject_toml.get("project", {})
+    requires_python: Optional[str] = project_metadata.get("requires-python", None)
+    return requires_python
+
+
+def parse_req_python(requires_python: str) -> Optional[TargetVersion]:
+    """Parse the requires-python field to determine Black's target version.
+
+    If the field cannot be parsed, returns None.
+    """
+    try:
+        return parse_req_python_version(requires_python)
+    except InvalidVersion:
+        pass
+    try:
+        return parse_req_python_specifier(requires_python)
+    except InvalidSpecifier:
+        pass
+    return None
+
+
+def parse_req_python_version(requires_python: str) -> Optional[TargetVersion]:
+    """Parse a version string (i.e. ``"3.7"``) to a TargetVersion.
+
+    If parsing fails, will raise a packaging.version.InvalidVersion error.
+    """
+    version = Version(requires_python)
+    try:
+        return TargetVersion(version.release[1])
+    except (IndexError, ValueError):
+        return None
+
+
+def parse_req_python_specifier(requires_python: str) -> Optional[TargetVersion]:
+    """Parse a specifier string (i.e. ``">=3.7,<3.10"``) to a TargetVersion.
+
+    If parsing fails, will raise a packaging.specifiers.InvalidSpecifier error.
+    """
+    if not requires_python:
+        return None
+
+    specifier_set = SpecifierSet(requires_python)
+
+    target_version_map = {f"3.{v.value}": v for v in TargetVersion}
+    compatible_versions = specifier_set.filter(target_version_map)
+    target_version_str: Optional[str] = next(compatible_versions, None)
+    if target_version_str is not None:
+        return target_version_map.get(target_version_str)
+    return None
 
 
 @lru_cache()
