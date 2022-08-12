@@ -34,6 +34,8 @@
 <!-- Changes to how Black can be configured -->
 
 - Black now uses the presence of debug f-strings to detect target version. (#3215)
+- Fix misdetection of project root and verbose logging of sources in cases involving
+  `--stdin-filename` (#3216)
 
 ### Documentation
 
