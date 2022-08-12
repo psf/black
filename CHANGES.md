@@ -42,6 +42,9 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Black now tries to infer its `--target-version` from the project metadata specified in
+  pyproject.toml (#3219)
+
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
@@ -51,6 +54,8 @@
 - Drop specific support for the `tomli` requirement on 3.11 alpha releases, working
   around a bug that would cause the requirement not to be installed on any non-final
   Python releases (#3448)
+- Black now depends on `packaging` version `20.0` or later. This is required for new
+  functionality that needs to parse part of the project metadata (#3219)
 
 ### Parser
 
