@@ -56,9 +56,9 @@ The headers controlling how source code is formatted are:
 - `X-Skip-Magic-Trailing-Comma`: corresponds to the `--skip-magic-trailing-comma`
   command line flag. If present and its value is not an empty string, trailing commas
   will not be used as a reason to split lines.
-- `X-Preview`: corresponds to the `--preview` command line flag. If present and its value
-  is not an empty string, experimental and potentially disruptive style changes will be
-  used.
+- `X-Preview`: corresponds to the `--preview` command line flag. If present and its
+  value is not an empty string, experimental and potentially disruptive style changes
+  will be used.
 - `X-Fast-Or-Safe`: if set to `fast`, `blackd` will act as _Black_ does when passed the
   `--fast` command line flag.
 - `X-Python-Variant`: if set to `pyi`, `blackd` will act as _Black_ does when passed the
