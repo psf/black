@@ -1559,6 +1559,35 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(config["exclude"], r"\.pyi?$")
         self.assertEqual(config["include"], r"\.py?$")
 
+    def test_parse_pyproject_toml_project_metadata(self) -> None:
+        for test_toml, expected in [
+            ("only_black_pyproject.toml", ["py310"]),
+            ("only_metadata_pyproject.toml", ["py37"]),
+            ("neither_pyproject.toml", None),
+            ("both_pyproject.toml", ["py310"]),
+        ]:
+            test_toml_file = THIS_DIR / "data" / "project_metadata" / test_toml
+            config = black.parse_pyproject_toml(str(test_toml_file))
+            self.assertEqual(config.get("target_version"), expected)
+
+    def test_infer_target_version(self) -> None:
+        for version, expected in [
+            ("3.6", TargetVersion.PY36),
+            ("3.11.0rc1", TargetVersion.PY311),
+            (">=3.10", TargetVersion.PY310),
+            (">3.6,<3.10", TargetVersion.PY37),
+            ("==3.8.*", TargetVersion.PY38),
+            # (">=3.8.6", TargetVersion.PY38),  # Doesn't work yet
+            (None, None),
+            ("", None),
+            ("invalid", None),
+            ("3", None),
+            ("3.2", None),
+        ]:
+            test_toml = {"project": {"requires-python": version}}
+            result = black.files.infer_target_version(test_toml)
+            self.assertEqual(result, expected)
+
     def test_read_pyproject_toml(self) -> None:
         test_toml_file = THIS_DIR / "test.toml"
         fake_ctx = FakeContext()
