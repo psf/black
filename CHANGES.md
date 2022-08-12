@@ -29,7 +29,7 @@
 
 <!-- Changes to blackd -->
 
-- `blackd` now supports preview style via `X-PREVIEW` header (#3195)
+- `blackd` now supports preview style via `X-Preview` header (#3217)
 
 ### Configuration
 

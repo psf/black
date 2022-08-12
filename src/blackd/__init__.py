@@ -32,7 +32,7 @@ LINE_LENGTH_HEADER = "X-Line-Length"
 PYTHON_VARIANT_HEADER = "X-Python-Variant"
 SKIP_STRING_NORMALIZATION_HEADER = "X-Skip-String-Normalization"
 SKIP_MAGIC_TRAILING_COMMA = "X-Skip-Magic-Trailing-Comma"
-PREVIEW = "X-PREVIEW"
+PREVIEW = "X-Preview"
 FAST_OR_SAFE_HEADER = "X-Fast-Or-Safe"
 DIFF_HEADER = "X-Diff"
 
