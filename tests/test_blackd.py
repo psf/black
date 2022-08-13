@@ -168,6 +168,13 @@ class BlackDTestCase(AioHTTPTestCase):
         self.assertEqual(response.status, 400)
 
     @unittest_run_loop
+    async def test_blackd_preview(self) -> None:
+        response = await self.client.post(
+            "/", data=b'print("hello")\n', headers={blackd.PREVIEW: "true"}
+        )
+        self.assertEqual(response.status, 204)
+
+    @unittest_run_loop
     async def test_blackd_response_black_version_header(self) -> None:
         response = await self.client.post("/")
         self.assertIsNotNone(response.headers.get(blackd.BLACK_VERSION_HEADER))
