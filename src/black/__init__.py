@@ -1,6 +1,5 @@
 import io
 import json
-import os
 import platform
 import re
 import sys
@@ -27,11 +26,6 @@ from typing import (
     Tuple,
     Union,
 )
-
-if sys.version_info >= (3, 8):
-    from typing import Final
-else:
-    from typing_extensions import Final
 
 import click
 from click.core import ParameterSource
@@ -92,7 +86,6 @@ from blib2to3.pgen2 import token
 from blib2to3.pytree import Leaf, Node
 
 COMPILED = Path(__file__).suffix in (".pyd", ".so")
-DEFAULT_WORKERS: Final = os.cpu_count()
 
 # types
 FileContent = str
@@ -371,9 +364,8 @@ def validate_regex(
     "-W",
     "--workers",
     type=click.IntRange(min=1),
-    default=DEFAULT_WORKERS,
-    show_default=True,
-    help="Number of parallel workers",
+    default=None,
+    help="Number of parallel workers [default: number of CPUs in the system]",
 )
 @click.option(
     "-q",
@@ -448,7 +440,7 @@ def main(  # noqa: C901
     extend_exclude: Optional[Pattern[str]],
     force_exclude: Optional[Pattern[str]],
     stdin_filename: Optional[str],
-    workers: int,
+    workers: Optional[int],
     src: Tuple[str, ...],
     config: Optional[str],
 ) -> None:

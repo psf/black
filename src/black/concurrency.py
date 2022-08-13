@@ -6,6 +6,7 @@ NOTE: this module is only imported if we need to format several files at once.
 
 import asyncio
 import logging
+import os
 import signal
 import sys
 from concurrent.futures import Executor, ProcessPoolExecutor, ThreadPoolExecutor
@@ -15,7 +16,7 @@ from typing import Any, Iterable, Optional, Set
 
 from mypy_extensions import mypyc_attr
 
-from black import DEFAULT_WORKERS, WriteBack, format_file_in_place
+from black import WriteBack, format_file_in_place
 from black.cache import Cache, filter_cached, read_cache, write_cache
 from black.mode import Mode
 from black.output import err
@@ -87,13 +88,13 @@ def reformat_many(
     maybe_install_uvloop()
 
     executor: Executor
-    worker_count = workers if workers is not None else DEFAULT_WORKERS
+    if workers is None:
+        workers = os.cpu_count() or 1
     if sys.platform == "win32":
         # Work around https://bugs.python.org/issue26903
-        assert worker_count is not None
-        worker_count = min(worker_count, 60)
+        workers = min(workers, 60)
     try:
-        executor = ProcessPoolExecutor(max_workers=worker_count)
+        executor = ProcessPoolExecutor(max_workers=workers)
     except (ImportError, NotImplementedError, OSError):
         # we arrive here if the underlying system does not support multi-processing
         # like in AWS Lambda or Termux, in which case we gracefully fallback to
