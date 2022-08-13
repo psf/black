@@ -172,6 +172,7 @@ def parse_req_python_version(requires_python: str) -> Optional[TargetVersion]:
     """Parse a version string (i.e. ``"3.7"``) to a TargetVersion.
 
     If parsing fails, will raise a packaging.version.InvalidVersion error.
+    If the parsed version cannot be mapped to a valid TargetVersion, returns None.
     """
     version = Version(requires_python)
     try:
@@ -184,6 +185,7 @@ def parse_req_python_specifier(requires_python: str) -> Optional[TargetVersion]:
     """Parse a specifier string (i.e. ``">=3.7,<3.10"``) to a TargetVersion.
 
     If parsing fails, will raise a packaging.specifiers.InvalidSpecifier error.
+    If the parsed specifier cannot be mapped to a valid TargetVersion, returns None.
     """
     if not requires_python:
         return None
