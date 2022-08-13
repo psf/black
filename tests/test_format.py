@@ -36,7 +36,12 @@ def test_simple_format(filename: str) -> None:
 
 @pytest.mark.parametrize("filename", all_data_cases("preview"))
 def test_preview_format(filename: str) -> None:
-    check_file("preview", filename, black.Mode(preview=True))
+    magic_trailing_comma = filename != "skip_magic_trailing_comma"
+    check_file(
+        "preview",
+        filename,
+        black.Mode(preview=True, magic_trailing_comma=magic_trailing_comma),
+    )
 
 
 @pytest.mark.parametrize("filename", all_data_cases("preview_39"))

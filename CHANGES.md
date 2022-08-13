@@ -24,6 +24,8 @@
   this is invalid. This was a bug introduced in version 22.6.0. (#3166)
 - `--skip-string-normalization` / `-S` now prevents docstring prefixes from being
   normalized as expected (#3168)
+- When using `--skip-magic-trailing-comma` or `-C`, trailing commas are stripped from
+  subscript expressions with more than 1 element (#3209)
 
 ### _Blackd_
 
