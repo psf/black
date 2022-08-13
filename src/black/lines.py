@@ -308,7 +308,7 @@ class Line:
             if comma.parent is None:
                 return False
             if Preview.skip_magic_trailing_comma_in_subscript in self.mode:
-                return bool(
+                return (
                     comma.parent.type != syms.subscriptlist
                     or closing.opening_bracket is None
                     or not is_one_sequence_between(
