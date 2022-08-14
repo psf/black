@@ -757,6 +757,7 @@ def reformat_one(
                 res_src_s = str(res_src)
                 if res_src_s in cache and cache[res_src_s] == get_cache_info(res_src):
                     changed = Changed.CACHED
+            # TODO capture the exception from below
             if changed is not Changed.CACHED and format_file_in_place(
                 src, fast=fast, write_back=write_back, mode=mode
             ):
@@ -767,8 +768,13 @@ def reformat_one(
                 write_cache(cache, [src], mode)
         report.done(src, changed)
     except Exception as exc:
+        pass
+    except InvalidInput as exc:
+        import pdb
+        pdb.set_trace()
         if report.verbose:
             traceback.print_exc()
+        # TODO capture the exception from above and add here
         report.failed(src, 0, 0, str(exc))
 
 

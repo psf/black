@@ -4,6 +4,11 @@ import sys
 
 from setuptools import find_packages, setup
 
+# TODO remove;Temporary for installing in editable mode MacOSX
+import site
+import sys
+site.ENABLE_USER_SITE = "--user" in sys.argv[1:]
+
 assert sys.version_info >= (3, 6, 2), "black requires Python 3.6.2+"
 from pathlib import Path  # noqa E402
 from typing import List  # noqa: E402
