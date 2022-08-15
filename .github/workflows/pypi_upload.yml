@@ -92,4 +92,4 @@ jobs:
       - name: Update stable branch to release tag & push
         run: |
           git reset --hard ${{ github.event.release.tag_name }}
-          git push --force
+          git push
