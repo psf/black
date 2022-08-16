@@ -579,7 +579,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             # when there is a standalone comment in the middle) ...
             if non_string_idx - string_idx < len(atom_node.children):
                 # We need to replace the old STRING leaves with the new string leaf.
-                first_child_idx = None
+                first_child_idx: Optional[int] = None
                 for idx in range(string_idx, non_string_idx):
                     child_idx = LL[idx].remove()
                     if first_child_idx is None:
