@@ -1577,12 +1577,16 @@ class BlackTestCase(BlackBaseTestCase):
             (">=3.10", TargetVersion.PY310),
             (">3.6,<3.10", TargetVersion.PY37),
             ("==3.8.*", TargetVersion.PY38),
-            # (">=3.8.6", TargetVersion.PY38),  # Doesn't work yet
+            (">=3.8.6", TargetVersion.PY38),
+            ("> 3.7.4, != 3.8.8", TargetVersion.PY37),
+            (">3.7,!=3.8", TargetVersion.PY39),
             (None, None),
             ("", None),
             ("invalid", None),
             ("3", None),
             ("3.2", None),
+            ("<3.11", None),
+            (">3.10,<3.11", None),
         ]:
             test_toml = {"project": {"requires-python": version}}
             result = black.files.infer_target_version(test_toml)

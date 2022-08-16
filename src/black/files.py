@@ -18,7 +18,7 @@ from typing import (
 )
 
 from mypy_extensions import mypyc_attr
-from packaging.specifiers import InvalidSpecifier, SpecifierSet
+from packaging.specifiers import InvalidSpecifier, Specifier, SpecifierSet
 from packaging.version import InvalidVersion, Version
 from pathspec import PathSpec
 from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
@@ -187,10 +187,10 @@ def parse_req_python_specifier(requires_python: str) -> Optional[TargetVersion]:
     If parsing fails, will raise a packaging.specifiers.InvalidSpecifier error.
     If the parsed specifier cannot be mapped to a valid TargetVersion, returns None.
     """
-    if not requires_python:
-        return None
+    specifier_set = strip_specifier_set(SpecifierSet(requires_python))
 
-    specifier_set = SpecifierSet(requires_python)
+    if not specifier_set:
+        return None
 
     target_version_map = {f"3.{v.value}": v for v in TargetVersion}
     compatible_versions = specifier_set.filter(target_version_map)
@@ -198,6 +198,36 @@ def parse_req_python_specifier(requires_python: str) -> Optional[TargetVersion]:
     if target_version_str is not None:
         return target_version_map.get(target_version_str)
     return None
+
+
+def strip_specifier_set(specifier_set: SpecifierSet) -> SpecifierSet:
+    """Strip irrelevant parts of the specifier set.
+
+    Drops some specifiers, and strips minor versions for some others.
+
+    For background on version specifiers, see PEP 440:
+    https://peps.python.org/pep-0440/#version-specifiers
+    """
+    specifiers = []
+    for s in specifier_set:
+        if "*" in str(s):
+            specifiers.append(s)
+        elif s.operator in ["~=", "==", ">=", "==="]:
+            version = Version(s.version)
+            stripped = Specifier(f"{s.operator}{version.major}.{version.minor}")
+            specifiers.append(stripped)
+        elif s.operator == ">":
+            version = Version(s.version)
+            if len(version.release) > 2:
+                s = Specifier(f">={version.major}.{version.minor}")
+            specifiers.append(s)
+        else:
+            specifiers.append(s)
+
+    if all(s.operator in ["<=", "<"] for s in specifiers):
+        specifiers = []
+
+    return SpecifierSet(",".join(str(s) for s in specifiers))
 
 
 @lru_cache()
