@@ -575,7 +575,8 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
         string_leaf = Leaf(token.STRING, S_leaf.value.replace(BREAK_MARK, ""))
 
         if atom_node is not None:
-            # If not all children of the atom node are merged...
+            # If not all children of the atom node are merged (this can happen
+            # when there is a standalone comment in the middle) ...
             if non_string_idx - string_idx < len(atom_node.children):
                 # We need to replace the old STRING leaves with the new string leaf.
                 first_child_idx = None
