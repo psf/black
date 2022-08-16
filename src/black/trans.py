@@ -553,6 +553,9 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
 
             next_str_idx += 1
 
+        # Take a note on the index of the non-STRING leaf.
+        non_string_idx = next_str_idx
+
         S_leaf = Leaf(token.STRING, S)
         if self.normalize_strings:
             S_leaf.value = normalize_string_quotes(S_leaf.value)
@@ -572,7 +575,19 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
         string_leaf = Leaf(token.STRING, S_leaf.value.replace(BREAK_MARK, ""))
 
         if atom_node is not None:
-            replace_child(atom_node, string_leaf)
+            # If not all children of the atom node are merged...
+            if non_string_idx - string_idx < len(atom_node.children):
+                # We need to replace the old STRING leaves with the new string leaf.
+                first_child_idx = None
+                for idx in range(string_idx, non_string_idx):
+                    child_idx = LL[idx].remove()
+                    if first_child_idx is None:
+                        first_child_idx = child_idx
+                if first_child_idx is not None:
+                    atom_node.insert_child(first_child_idx, string_leaf)
+            else:
+                # Else replace the atom node with the new string leaf.
+                replace_child(atom_node, string_leaf)
 
         # Build the final line ('new_line') that this method will later return.
         new_line = line.clone()
