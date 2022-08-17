@@ -1,4 +1,4 @@
-mypy == 0.920
+mypy == 0.971
 
 # A bunch of packages for type information
 mypy-extensions >= 0.4.3

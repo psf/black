@@ -25,14 +25,20 @@
   this is invalid. This was a bug introduced in version 22.6.0. (#3166)
 - `--skip-string-normalization` / `-S` now prevents docstring prefixes from being
   normalized as expected (#3168)
+- When using `--skip-magic-trailing-comma` or `-C`, trailing commas are stripped from
+  subscript expressions with more than 1 element (#3209)
 
 ### _Blackd_
 
 <!-- Changes to blackd -->
 
+- `blackd` now supports preview style via `X-Preview` header (#3217)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
+
+- Black now uses the presence of debug f-strings to detect target version. (#3215)
 
 ### Documentation
 

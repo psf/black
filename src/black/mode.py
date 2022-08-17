@@ -49,6 +49,7 @@ class Feature(Enum):
     ANN_ASSIGN_EXTENDED_RHS = 13
     EXCEPT_STAR = 14
     VARIADIC_GENERICS = 15
+    DEBUG_F_STRINGS = 16
     FORCE_OPTIONAL_PARENTHESES = 50
 
     # __future__ flags
@@ -81,6 +82,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
     },
     TargetVersion.PY38: {
         Feature.F_STRINGS,
+        Feature.DEBUG_F_STRINGS,
         Feature.NUMERIC_UNDERSCORES,
         Feature.TRAILING_COMMA_IN_CALL,
         Feature.TRAILING_COMMA_IN_DEF,
@@ -93,6 +95,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
     },
     TargetVersion.PY39: {
         Feature.F_STRINGS,
+        Feature.DEBUG_F_STRINGS,
         Feature.NUMERIC_UNDERSCORES,
         Feature.TRAILING_COMMA_IN_CALL,
         Feature.TRAILING_COMMA_IN_DEF,
@@ -106,6 +109,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
     },
     TargetVersion.PY310: {
         Feature.F_STRINGS,
+        Feature.DEBUG_F_STRINGS,
         Feature.NUMERIC_UNDERSCORES,
         Feature.TRAILING_COMMA_IN_CALL,
         Feature.TRAILING_COMMA_IN_DEF,
@@ -120,6 +124,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
     },
     TargetVersion.PY311: {
         Feature.F_STRINGS,
+        Feature.DEBUG_F_STRINGS,
         Feature.NUMERIC_UNDERSCORES,
         Feature.TRAILING_COMMA_IN_CALL,
         Feature.TRAILING_COMMA_IN_DEF,
@@ -151,6 +156,7 @@ class Preview(Enum):
     remove_block_trailing_newline = auto()
     remove_redundant_parens = auto()
     string_processing = auto()
+    skip_magic_trailing_comma_in_subscript = auto()
 
 
 class Deprecated(UserWarning):

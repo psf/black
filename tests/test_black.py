@@ -310,6 +310,26 @@ class BlackTestCase(BlackBaseTestCase):
         versions = black.detect_target_versions(root)
         self.assertIn(black.TargetVersion.PY38, versions)
 
+    def test_detect_debug_f_strings(self) -> None:
+        root = black.lib2to3_parse("""f"{x=}" """)
+        features = black.get_features_used(root)
+        self.assertIn(black.Feature.DEBUG_F_STRINGS, features)
+        versions = black.detect_target_versions(root)
+        self.assertIn(black.TargetVersion.PY38, versions)
+
+        root = black.lib2to3_parse(
+            """f"{x}"\nf'{"="}'\nf'{(x:=5)}'\nf'{f(a="3=")}'\nf'{x:=10}'\n"""
+        )
+        features = black.get_features_used(root)
+        self.assertNotIn(black.Feature.DEBUG_F_STRINGS, features)
+
+        # We don't yet support feature version detection in nested f-strings
+        root = black.lib2to3_parse(
+            """f"heard a rumour that { f'{1+1=}' } ... seems like it could be true" """
+        )
+        features = black.get_features_used(root)
+        self.assertNotIn(black.Feature.DEBUG_F_STRINGS, features)
+
     @patch("black.dump_to_file", dump_to_stderr)
     def test_string_quotes(self) -> None:
         source, expected = read_data("miscellaneous", "string_quotes")
