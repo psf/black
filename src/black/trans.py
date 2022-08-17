@@ -1058,8 +1058,13 @@ class BaseStringSplitter(StringTransformer):
         if LL[0].type != token.STRING:
             return None
 
-        matching_nodes = [syms.listmaker, syms.dictsetmaker, syms.arglist]
-        # If the string is an immediate child of a list/set literal, or
+        matching_nodes = [
+            syms.listmaker,
+            syms.dictsetmaker,
+            syms.testlist_gexp,
+            syms.arglist,
+        ]
+        # If the string is an immediate child of a list/set/tuple literal, or
         # an argument of a function call...
         if (
             parent_type(LL[0]) in matching_nodes
@@ -1641,8 +1646,8 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             OR
         * The line starts with an "atom" string that prefers to be wrapped in
         parens. It's preferred to be wrapped when it's is an immediate child of
-        a list/set literal or an argument of a function call, AND the string is
-        surrounded by commas (or is the first/last child).
+        a list/set/tuple literal or an argument of a function call, AND the
+        string is surrounded by commas (or is the first/last child).
 
     Transformations:
         The chosen string is wrapped in parentheses and then split at the LPAR.

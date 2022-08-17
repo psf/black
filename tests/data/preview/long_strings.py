@@ -26,6 +26,10 @@ S1 = {"The is a short string", "This is a really long string that can't possibly
 
 S2 = {"This is a really long string that can't be expected to fit in one line and is the only child of a set literal."}
 
+T1 = ("The is a short string", "This is a really long string that can't possibly be expected to fit all together on one line. Also it is inside a tuple literal, so it's expected to be wrapped in parens when spliting to avoid implicit str concatenation.", short_call("arg", {"key": "value"}), "This is another really really (not really) long string that also can't be expected to fit on one line and is, like the other string, inside a tuple literal.", ("parens should be stripped for short string in list"))
+
+T2 = ("This is a really long string that can't be expected to fit in one line and is the only child of a tuple literal.",)
+
 func_with_keywords(my_arg, my_kwarg="Long keyword strings also need to be wrapped, but they will probably need to be handled a little bit differently.")
 
 bad_split1 = (
@@ -396,6 +400,29 @@ S2 = {
     "This is a really long string that can't be expected to fit in one line and is the"
     " only child of a set literal."
 }
+
+T1 = (
+    "The is a short string",
+    (
+        "This is a really long string that can't possibly be expected to fit all"
+        " together on one line. Also it is inside a tuple literal, so it's expected to"
+        " be wrapped in parens when spliting to avoid implicit str concatenation."
+    ),
+    short_call("arg", {"key": "value"}),
+    (
+        "This is another really really (not really) long string that also can't be"
+        " expected to fit on one line and is, like the other string, inside a tuple"
+        " literal."
+    ),
+    "parens should be stripped for short string in list",
+)
+
+T2 = (
+    (
+        "This is a really long string that can't be expected to fit in one line and is"
+        " the only child of a tuple literal."
+    ),
+)
 
 func_with_keywords(
     my_arg,
