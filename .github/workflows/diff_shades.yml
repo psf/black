@@ -3,10 +3,10 @@ name: diff-shades
 on:
   push:
     branches: [main]
-    paths: ["src/**", "setup.*", "pyproject.toml", ".github/workflows/*"]
+    paths: ["src/**", "pyproject.toml", ".github/workflows/*"]
 
   pull_request:
-    paths: ["src/**", "setup.*", "pyproject.toml", ".github/workflows/*"]
+    paths: ["src/**", "pyproject.toml", ".github/workflows/*"]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
@@ -64,7 +64,6 @@ jobs:
         run: |
           python -m pip install https://github.com/ichard26/diff-shades/archive/stable.zip
           python -m pip install click packaging urllib3
-          python -m pip install -r .github/mypyc-requirements.txt
           # After checking out old revisions, this might not exist so we'll use a copy.
           cat scripts/diff_shades_gha_helper.py > helper.py
           git config user.name "diff-shades-gha"
@@ -81,10 +80,10 @@ jobs:
         if: steps.baseline-cache.outputs.cache-hit != 'true'
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          HATCH_BUILD_HOOKS_ENABLE: "1"
         run: >
           ${{ matrix.baseline-setup-cmd }}
-          && python setup.py --use-mypyc bdist_wheel
-          && python -m pip install dist/*.whl && rm build dist -r
+          && python -m pip install . && rm dist -r
 
       - name: Analyze baseline revision
         if: steps.baseline-cache.outputs.cache-hit != 'true'
@@ -95,10 +94,10 @@ jobs:
       - name: Build and install target revision
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          HATCH_BUILD_HOOKS_ENABLE: "1"
         run: >
           ${{ matrix.target-setup-cmd }}
-          && python setup.py --use-mypyc bdist_wheel
-          && python -m pip install dist/*.whl
+          && python -m pip install .
 
       - name: Analyze target revision
         run: >

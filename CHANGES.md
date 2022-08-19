@@ -74,6 +74,7 @@
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
 - Python 3.11 is now supported, except for `blackd` (#3234)
+- Hatchling is now used as the build backend. (#3233)
 
 ### Parser
 
