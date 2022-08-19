@@ -3,7 +3,7 @@ import collections
 import os
 import sys
 import vim
-from distutils.util import strtobool
+from configparser import ConfigParser
 
 
 class Flag(collections.namedtuple("FlagBase", "name, cast")):
@@ -19,11 +19,18 @@ class Flag(collections.namedtuple("FlagBase", "name, cast")):
     return "g:black_" + name
 
 
+def to_bool(v):
+    return ConfigParser.BOOLEAN_STATES.get(
+        v.lower() if isinstance(v, str) else v,
+        False
+    )
+
+
 FLAGS = [
   Flag(name="line_length", cast=int),
-  Flag(name="fast", cast=strtobool),
-  Flag(name="string_normalization", cast=strtobool),
-  Flag(name="quiet", cast=strtobool),
+  Flag(name="fast", cast=to_bool),
+  Flag(name="string_normalization", cast=to_bool),
+  Flag(name="quiet", cast=to_bool),
 ]
 
 
