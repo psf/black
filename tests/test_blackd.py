@@ -33,8 +33,12 @@ class BlackDTestCase(AioHTTPTestCase):
                 raise result.exception
             self.assertEqual(result.exit_code, 0)
 
-    async def get_application(self) -> web.Application:
-        return blackd.make_app()
+    try:
+        async def get_application(self) -> web.Application:
+            return blackd.make_app()
+    except DeprecationWarning as e:
+        raise RuntimeError("Middleware decorator is deprecated since 4.0, \
+            you can simply remove this decorator.") from e
 
     @unittest_run_loop
     async def test_blackd_request_needs_formatting(self) -> None:
