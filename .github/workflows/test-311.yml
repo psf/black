@@ -1,0 +1,49 @@
+name: Test
+
+on:
+  push:
+    paths-ignore:
+      - "docs/**"
+      - "*.md"
+
+  pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "*.md"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11-dev"]
+    name: main
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        if: "!endsWith(matrix.python-version, '-dev')"
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: deadsnakes/action@v2.1.1
+        if: endsWith(matrix.python-version, '-dev')
+        with:
+          python-version: ${{ matrix.python-version }}
+          # debug: true  # Optional, to select a Python debug build
+
+      - name: Show python version
+        run: python --version --version && which python
+
+      - name: Install tox
+        run: |
+          python -m pip install pip --upgrade --disable-pip-version-check
+          python -m pip install . tox
+
+      - name: Run tests via tox
+        run: |
+          python -m tox -e 311
+
+      - name: Format ourselves
+        run: python -m black --check src/
