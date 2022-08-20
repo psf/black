@@ -8,7 +8,7 @@ from click.testing import CliRunner
 
 from tests.util import DETERMINISTIC_HEADER, read_data
 
-if sys.version_info < (3, 11):
+if sys.version_info < (3, 11):  # noqa: C901
     try:
         from aiohttp import web
         from aiohttp.test_utils import AioHTTPTestCase

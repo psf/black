@@ -69,6 +69,8 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
+- Add 3.11 CI + declare 3.11 supported minus blackd (#3234)
+
 ### Parser
 
 <!-- Changes to the parser or to version autodetection -->
