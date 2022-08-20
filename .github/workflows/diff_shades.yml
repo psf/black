@@ -41,6 +41,7 @@ jobs:
     needs: configure
     runs-on: ubuntu-latest
     env:
+      HATCH_BUILD_HOOKS_ENABLE: "1"
       # Clang is less picky with the C code it's given than gcc (and may
       # generate faster binaries too).
       CC: clang-12
@@ -80,10 +81,9 @@ jobs:
         if: steps.baseline-cache.outputs.cache-hit != 'true'
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          HATCH_BUILD_HOOKS_ENABLE: "1"
         run: >
           ${{ matrix.baseline-setup-cmd }}
-          && python -m pip install . && rm dist -r
+          && python -m pip install .
 
       - name: Analyze baseline revision
         if: steps.baseline-cache.outputs.cache-hit != 'true'
@@ -94,7 +94,6 @@ jobs:
       - name: Build and install target revision
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          HATCH_BUILD_HOOKS_ENABLE: "1"
         run: >
           ${{ matrix.target-setup-cmd }}
           && python -m pip install .
