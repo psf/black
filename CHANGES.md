@@ -69,7 +69,7 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
-- Add 3.11 CI + declare 3.11 supported minus blackd (#3234)
+- Python 3.11 is now supported, except for `blackd` (#3234)
 
 ### Parser
 
