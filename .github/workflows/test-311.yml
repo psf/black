@@ -52,4 +52,6 @@ jobs:
           python -m tox -e 311
 
       - name: Format ourselves
-        run: python -m black --check src/
+        run: |
+          python -m pip install .
+          python -m black --check src/
