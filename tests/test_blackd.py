@@ -10,7 +10,7 @@ from tests.util import DETERMINISTIC_HEADER, read_data
 
 LESS_THAN_311 = sys.version_info < (3, 11)
 
-if LESS_THAN_311:
+if LESS_THAN_311:  # noqa: C901
     try:
         from aiohttp import web
         from aiohttp.test_utils import AioHTTPTestCase
