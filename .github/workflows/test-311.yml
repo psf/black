@@ -49,7 +49,7 @@ jobs:
 
       - name: Run tests via tox
         run: |
-          python -m tox -e ci-py311
+          python -m tox -e 311
 
       - name: Format ourselves
         run: |
