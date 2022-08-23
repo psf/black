@@ -19,7 +19,7 @@ Multiple contributions by:
 - [Abdur-Rahmaan Janhangeer](mailto:arj.python@gmail.com)
 - [Adam Johnson](mailto:me@adamj.eu)
 - [Adam Williamson](mailto:adamw@happyassassin.net)
-- [Alexander Huynh](mailto:github@grande.coffee)
+- [Alexander Huynh](mailto:ahrex-gh-psf-black@e.sc)
 - [Alexandr Artemyev](mailto:mogost@gmail.com)
 - [Alex Vandiver](mailto:github@chmrr.net)
 - [Allan Simon](mailto:allan.simon@supinfo.com)
