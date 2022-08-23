@@ -69,6 +69,8 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
+- Python 3.11 is now supported, except for `blackd` (#3234)
+
 ### Parser
 
 <!-- Changes to the parser or to version autodetection -->
