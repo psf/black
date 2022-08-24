@@ -469,12 +469,8 @@ def main(  # noqa: C901
         out(main.get_usage(ctx) + "\n\nOne of 'SRC' or 'code' is required.")
         ctx.exit(1)
 
-    if stdin_filename is not None:
-        src_with_stdin_filename = tuple(stdin_filename if s == "-" else s for s in src)
-    else:
-        src_with_stdin_filename = src
     root, method = (
-        find_project_root(src_with_stdin_filename) if code is None else (None, None)
+        find_project_root(src, stdin_filename) if code is None else (None, None)
     )
     ctx.obj["root"] = root
 
