@@ -72,6 +72,25 @@ bad_split_func3(
     zzz,
 )
 
+inline_comments_func1(
+    "if there are inline "
+    "comments in the middle "
+    # Here is the standard alone comment.
+    "of the implicitly concatenated "
+    "string, we should handle "
+    "them correctly",
+    xxx,
+)
+
+inline_comments_func2(
+    "what if the string is very very very very very very very very very very long and this part does "
+    "not fit into a single line? "
+    # Here is the standard alone comment.
+    "then the string should still be properly handled by merging and splitting "
+    "it into parts that fit in line length.",
+    xxx,
+)
+
 raw_string = r"This is a long raw string. When re-formatting this string, black needs to make sure it prepends the 'r' onto the new string."
 
 fmt_string1 = "We also need to be sure to preserve any and all {} which may or may not be attached to the string in question.".format("method calls")
@@ -393,6 +412,22 @@ bad_split_func3(
     xxx,
     yyy,
     zzz,
+)
+
+inline_comments_func1(
+    "if there are inline comments in the middle "
+    # Here is the standard alone comment.
+    "of the implicitly concatenated string, we should handle them correctly",
+    xxx,
+)
+
+inline_comments_func2(
+    "what if the string is very very very very very very very very very very long and"
+    " this part does not fit into a single line? "
+    # Here is the standard alone comment.
+    "then the string should still be properly handled by merging and splitting "
+    "it into parts that fit in line length.",
+    xxx,
 )
 
 raw_string = (
