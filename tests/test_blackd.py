@@ -27,8 +27,9 @@ if LESS_THAN_311:  # noqa: C901
         try:
             from aiohttp.test_utils import unittest_run_loop
         except ImportError:
-            # unittest_run_loop is unnecessary and a no-op since aiohttp 3.8, and aiohttp 4
-            # removed it. To maintain compatibility we can make our own no-op decorator.
+            # unittest_run_loop is unnecessary and a no-op since aiohttp 3.8, and
+            # aiohttp 4 removed it. To maintain compatibility we can make our own
+            # no-op decorator.
             def unittest_run_loop(func, *args, **kwargs):
                 return func
 
