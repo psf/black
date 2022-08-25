@@ -1872,8 +1872,11 @@ def assert_collected_sources(
         None if extend_exclude is None else compile_pattern(extend_exclude)
     )
     gs_force_exclude = None if force_exclude is None else compile_pattern(force_exclude)
+    if not ctx:
+        ctx = FakeContext()
+    ctx.obj["root"], _ = black.find_project_root(gs_src)
     collected = black.get_sources(
-        ctx=ctx or FakeContext(),
+        ctx=ctx,
         src=gs_src,
         quiet=False,
         verbose=False,
@@ -2035,6 +2038,20 @@ class TestFileCollection:
         assert_collected_sources(
             src, expected, exclude=r"\.pyi$", extend_exclude=r"\.definitely_exclude"
         )
+
+    def test_git_submodule_exclude_full_path(self) -> None:
+        path = DATA_DIR / "git_submodule_exclude_tests" / "excluded_submodule" / "a.py"
+        src = [path]
+        expected: List[str] = []
+        assert_collected_sources(src, expected, force_exclude=r"excluded_submodule")
+
+    def test_git_submodule_exclude_base_path(self) -> None:
+        path = DATA_DIR / "git_submodule_exclude_tests"
+        src = [path]
+        expected = [
+            Path(path / "a.py"),
+        ]
+        assert_collected_sources(src, expected, force_exclude=r"excluded_submodule")
 
     @pytest.mark.incompatible_with_mypyc
     def test_symlink_out_of_root_directory(self) -> None:

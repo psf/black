@@ -372,6 +372,17 @@ def validate_regex(
     ),
 )
 @click.option(
+    "--project-root",
+    type=click.Path(
+        exists=True, file_okay=False, dir_okay=True, readable=True, allow_dash=True
+    ),
+    help=(
+        "Manually specifiy the project root. This will prevent black from searching "
+        "for the project root itself. Useful to prevent black from picking up git "
+        "submodules as the project root which can affect the exclude behaviour."
+    ),
+)
+@click.option(
     "-W",
     "--workers",
     type=click.IntRange(min=1),
@@ -452,6 +463,7 @@ def main(  # noqa: C901
     extend_exclude: Optional[Pattern[str]],
     force_exclude: Optional[Pattern[str]],
     stdin_filename: Optional[str],
+    project_root: Optional[str],
     workers: int,
     src: Tuple[str, ...],
     config: Optional[str],
@@ -469,7 +481,15 @@ def main(  # noqa: C901
         out(main.get_usage(ctx) + "\n\nOne of 'SRC' or 'code' is required.")
         ctx.exit(1)
 
-    root, method = find_project_root(src) if code is None else (None, None)
+    if project_root:
+        project_root_abs = Path(project_root).resolve()
+        root, method = (
+            (project_root_abs, "manually-specified project root")
+            if code is None
+            else (None, None)
+        )
+    else:
+        root, method = find_project_root(src) if code is None else (None, None)
     ctx.obj["root"] = root
 
     if verbose:
