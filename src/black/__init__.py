@@ -469,7 +469,9 @@ def main(  # noqa: C901
         out(main.get_usage(ctx) + "\n\nOne of 'SRC' or 'code' is required.")
         ctx.exit(1)
 
-    root, method = find_project_root(src) if code is None else (None, None)
+    root, method = (
+        find_project_root(src, stdin_filename) if code is None else (None, None)
+    )
     ctx.obj["root"] = root
 
     if verbose:
@@ -480,7 +482,9 @@ def main(  # noqa: C901
             )
 
             normalized = [
-                (normalize_path_maybe_ignore(Path(source), root), source)
+                (source, source)
+                if source == "-"
+                else (normalize_path_maybe_ignore(Path(source), root), source)
                 for source in src
             ]
             srcs_string = ", ".join(
