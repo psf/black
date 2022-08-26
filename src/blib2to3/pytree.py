@@ -931,7 +931,7 @@ class NegatedPattern(BasePattern):
         """
         if content is not None:
             assert isinstance(content, BasePattern), repr(content)
-        self.content: Optional[BasePattern] = content
+        self.content = content
 
     def match(self, node, results=None) -> bool:
         # We never match a node in its entirety
