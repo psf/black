@@ -39,7 +39,9 @@ if TYPE_CHECKING:
 
 
 @lru_cache()
-def find_project_root(srcs: Sequence[str]) -> Tuple[Path, str]:
+def find_project_root(
+    srcs: Sequence[str], stdin_filename: Optional[str] = None
+) -> Tuple[Path, str]:
     """Return a directory containing .git, .hg, or pyproject.toml.
 
     That directory will be a common parent of all files and directories
@@ -52,6 +54,8 @@ def find_project_root(srcs: Sequence[str]) -> Tuple[Path, str]:
     the second element as a string describing the method by which the
     project root was discovered.
     """
+    if stdin_filename is not None:
+        srcs = tuple(stdin_filename if s == "-" else s for s in srcs)
     if not srcs:
         srcs = [str(Path.cwd().resolve())]
 

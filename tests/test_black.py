@@ -1396,6 +1396,12 @@ class BlackTestCase(BlackBaseTestCase):
                 (src_dir.resolve(), "pyproject.toml"),
             )
 
+            with change_directory(test_dir):
+                self.assertEqual(
+                    black.find_project_root(("-",), stdin_filename="../src/a.py"),
+                    (src_dir.resolve(), "pyproject.toml"),
+                )
+
     @patch(
         "black.files.find_user_pyproject_toml",
     )

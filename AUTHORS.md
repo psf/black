@@ -79,6 +79,7 @@ Multiple contributions by:
 - [Hugo Barrera](mailto::hugo@barrera.io)
 - Hugo van Kemenade
 - [Hynek Schlawack](mailto:hs@ox.cx)
+- [Ionite](mailto:dev@ionite.io)
 - [Ivan Katanić](mailto:ivan.katanic@gmail.com)
 - [Jakub Kadlubiec](mailto:jakub.kadlubiec@skyscanner.net)
 - [Jakub Warczarek](mailto:jakub.warczarek@gmail.com)
