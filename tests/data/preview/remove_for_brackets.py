@@ -1,3 +1,6 @@
+for (((x))) in points:
+    pass
+
 # Only remove tuple brackets after `for`
 for (k, v) in d.items():
     print(k, v)
@@ -18,7 +21,47 @@ for (k, v) in dfkasdjfldsjflkdsjflkdsjfdslkfjldsjfgkjdshgkljjdsfldgkhsdofudsfuds
 for (((((k, v))))) in d.items():
     print(k, v)
 
+# One-tuple
+for (x,) in points:
+    pass
+
+# A series of atoms that each need their brackets removed
+for (x), (y) in points:
+    pass
+
+# A mix of "simple" atoms and atoms that contain more atoms
+for ((x), (y)) in points:
+    pass
+
+for ((((x)), (((y))))) in points:
+    pass
+
+# Mixed again; some of these brackets matter.
+for ((x), (y)), z in points:
+    pass
+
+for ((x, y), z) in points:
+    pass
+
+for ((x, (((y)))), (((z)))) in points:
+    pass
+
+for (((x,), (y)), ((z)),) in points:
+    pass
+
+for ((a, b)), ((c, d)) in points:
+    pass
+
+for ((((a), (b))), (((c), (d)))) in points:
+    pass
+
+for (a, (b, (c, (d)))) in points:
+    pass
+
 # output
+for x in points:
+    pass
+
 # Only remove tuple brackets after `for`
 for k, v in d.items():
     print(k, v)
@@ -46,3 +89,43 @@ for (
 # Test deeply nested brackets
 for k, v in d.items():
     print(k, v)
+
+# One-tuple
+for (x,) in points:
+    pass
+
+# A series of atoms that each need their brackets removed
+for x, y in points:
+    pass
+
+# A mix of "simple" atoms and atoms that contain more atoms
+for x, y in points:
+    pass
+
+for x, y in points:
+    pass
+
+# Mixed again; some of these brackets matter.
+for (x, y), z in points:
+    pass
+
+for (x, y), z in points:
+    pass
+
+for (x, y), z in points:
+    pass
+
+for (
+    ((x,), y),
+    z,
+) in points:
+    pass
+
+for (a, b), (c, d) in points:
+    pass
+
+for (a, b), (c, d) in points:
+    pass
+
+for a, (b, (c, d)) in points:
+    pass

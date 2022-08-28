@@ -951,18 +951,14 @@ def normalize_invisible_parens(
         if check_lpar:
             if (
                 preview
-                and child.type == syms.atom
+                and isinstance(child, Node)
+                and child.type in (syms.atom, syms.exprlist)
                 and node.type == syms.for_stmt
                 and isinstance(child.prev_sibling, Leaf)
                 and child.prev_sibling.type == token.NAME
                 and child.prev_sibling.value == "for"
             ):
-                if maybe_make_parens_invisible_in_atom(
-                    child,
-                    parent=node,
-                    remove_brackets_around_comma=True,
-                ):
-                    wrap_in_parentheses(node, child, visible=False)
+                remove_for_target_parens(child, node)
             elif preview and isinstance(child, Node) and node.type == syms.with_stmt:
                 remove_with_parens(child, node)
             elif child.type == syms.atom:
@@ -1040,6 +1036,28 @@ def remove_await_parens(node: Node) -> None:
                 ensure_visible(closing_bracket)
                 # If we are in a nested await then recurse down.
                 remove_await_parens(bracket_contents)
+
+
+def remove_for_target_parens(node: Node, parent: Node) -> None:
+    """Recursively hide optional parens in `for` statements."""
+    # The main goal is to run `maybe_make_parens_invisible_in_atom` on every atom Node
+    # between "for" and "in".
+    if node.type == syms.atom:
+        # Parenthesized group of nodes/leaves, eg. `(x, y)`
+        # First try removing the group's surrounding parentheses.
+        if maybe_make_parens_invisible_in_atom(
+            node, parent, remove_brackets_around_comma=(parent.type == syms.for_stmt)
+        ):
+            wrap_in_parentheses(parent, node, visible=False)
+        # Then check if this atom could contain more atoms.
+        middle = node.children[1]
+        if isinstance(middle, Node):
+            remove_for_target_parens(middle, node)
+    elif node.type in (syms.exprlist, syms.testlist_gexp):
+        # A series of nodes/leaves separated by commas, eg. `(x), (y)`
+        for c in node.children:
+            if isinstance(c, Node) and c.type == syms.atom:
+                remove_for_target_parens(c, node)
 
 
 def remove_with_parens(node: Node, parent: Node) -> None:
