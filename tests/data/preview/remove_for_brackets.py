@@ -11,6 +11,15 @@ for module in (core, _unicodefun):
         module._verify_python3_env = lambda: None
 
 # Brackets remain for long for loop lines
+for (one_super_long_name_as_the_for_target_list_because_why_not_you_dont_control_me) in points:
+    pass
+
+for (one_super_long_name_as_the_for_target_list_because_why_not_you_dont_control_me_i_have_total_freedom) in points:
+    pass
+
+for ((many_long_name_tuples, many_long_name_tuples), (many_long_name_tuples, many_long_name_tuples), (many_long_name_tuples, many_long_name_tuples)) in points:
+    pass
+
 for (why_would_anyone_choose_to_name_a_loop_variable_with_a_name_this_long, i_dont_know_but_we_should_still_check_the_behaviour_if_they_do) in d.items():
     print(k, v)
 
@@ -72,6 +81,21 @@ for module in (core, _unicodefun):
         module._verify_python3_env = lambda: None
 
 # Brackets remain for long for loop lines
+for (
+    one_super_long_name_as_the_for_target_list_because_why_not_you_dont_control_me
+) in points:
+    pass
+
+for one_super_long_name_as_the_for_target_list_because_why_not_you_dont_control_me_i_have_total_freedom in (points):
+    pass
+
+for (
+    (many_long_name_tuples, many_long_name_tuples),
+    (many_long_name_tuples, many_long_name_tuples),
+    (many_long_name_tuples, many_long_name_tuples),
+) in points:
+    pass
+
 for (
     why_would_anyone_choose_to_name_a_loop_variable_with_a_name_this_long,
     i_dont_know_but_we_should_still_check_the_behaviour_if_they_do,
