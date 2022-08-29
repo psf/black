@@ -1,7 +1,7 @@
 # Release process
 
 _Black_ has had a lot of work done into standardizing and automating its release
-process. This document sets out to explain what everything works and how to release
+process. This document sets out to explain how everything works and how to release
 _Black_ using said automation.
 
 ## Release cadence
@@ -12,11 +12,11 @@ fracturing the user-base with too many versions. This also keeps the workload on
 maintainers consistent and predictable.
 
 If there's not much new on `main` to justify a release, it's acceptable to skip a
-month's release. Although, ideally January releases should not be skipped because as per
-our [stability policy](labels/stability-policy), the first release in a new calendar
-year may make changes to the _stable_ style. While the policy applies to the first
-release (instead of only January releases), confining changes to the stable style to
-January will keep things predictable (and nicer) for users.
+month's release. Ideally January releases should not be skipped because as per our
+[stability policy](labels/stability-policy), the first release in a new calendar year
+may make changes to the _stable_ style. While the policy applies to the first release
+(instead of only January releases), confining changes to the stable style to January
+will keep things predictable (and nicer) for users.
 
 Unless there is a serious regression or bug that requires immediate patching, **there
 should not be more than one release per month**. While version numbers are cheap,
@@ -35,7 +35,7 @@ the various platforms we publish to.
 To cut a release:
 
 1. Determine the release's version number
-   - **_Black_ follows the [CalVar] versioning standard using the `YY.M.N` format**
+   - **_Black_ follows the [CalVer] versioning standard using the `YY.M.N` format**
      - So unless there already has been a release during this month, `N` should be `0`
    - Example: the first release in January, 2022 → `22.1.0`
    - Example 2: the third release (oh dear) in March, 2023 → `23.3.2`
@@ -137,7 +137,7 @@ Use the following template for a clean changelog after the release:
 
 ## Release workflows
 
-All of _Black_'s release automation use [GitHub Actions]. All workflows are therefore
+All of _Black_'s release automation uses [GitHub Actions]. All workflows are therefore
 configured using YAML files in the `.github/workflows` directory of the _Black_
 repository.
 
@@ -147,28 +147,27 @@ Below are descriptions of our release workflows.
 
 ### Publish to PyPI
 
-This is our main workhorse workflow. It builds a [sdist] and [wheels] to upload to PyPI
-where the vast majority of users will download Black from. It's divided into three job
-groups:
+This is our main workflow. It builds an [sdist] and [wheels] to upload to PyPI where the
+vast majority of users will download Black from. It's divided into three job groups:
 
 #### sdist + pure wheel
 
-This single job builds the sdist and pure Python wheel (ie. a wheel that only contains
+This single job builds the sdist and pure Python wheel (i.e., a wheel that only contains
 Python code) using [build]. These artifacts are general-purpose and can be used on
 basically any platform supported by Python.
 
 #### mypyc wheels (…)
 
-We use [mypyc] to compile _Black_ into a CPython C Extension for significantly improved
+We use [mypyc] to compile _Black_ into a CPython C extension for significantly improved
 performance. Wheels built with mypyc are platform and Python version specific.
 [Supported platforms are documented in the FAQ](labels/mypyc-support).
 
 These matrix jobs use [cibuildwheel] which handles the complicated task of building C
 extensions for many environments for us. Since building these wheels is slow, there are
 multiple mypyc wheels jobs (hence the term "matrix") that build for a specific platform
-(noted in the job name in parentheses).
+(as noted in the job name in parentheses).
 
-...
+…
 
 These jobs then use [twine] to upload the built distributions to PyPI.
 
@@ -182,16 +181,16 @@ saves us from remembering to update the branch sometime after cutting the releas
 
 ### Publish executables
 
-This workflow builds native executable for multiple platforms using [PyInstaller]. This
+This workflow builds native executables for multiple platforms using [PyInstaller]. This
 allows people to download the executable for their platform and run _Black_ without a
 [Python runtime](https://wiki.python.org/moin/PythonImplementations) installed.
 
-The created binaries are attached/stored on the associated GitHub Release for download
-over _IPv4 only_ (GitHub still does not have IPv6 access 😢).
+The created binaries are stored on the associated GitHub Release for download over _IPv4
+only_ (GitHub still does not have IPv6 access 😢).
 
 ### docker
 
-This workflow uses the QEMU powered `buildx` feature of Docker to upload a `arm64` and
+This workflow uses the QEMU powered `buildx` feature of Docker to upload an `arm64` and
 `amd64`/`x86_64` build of the official _Black_ Docker image™.
 
 - _Currently this workflow uses an API Token associated with @cooperlees account_
@@ -202,7 +201,7 @@ This also runs on each push to `main`.
 
 [black-actions]: https://github.com/psf/black/actions
 [build]: https://pypa-build.readthedocs.io/
-[calvar]: https://calver.org
+[calver]: https://calver.org
 [cibuildwheel]: https://cibuildwheel.readthedocs.io/
 [gh-3139]: https://github.com/psf/black/pull/3139
 [github actions]: https://github.com/features/actions
