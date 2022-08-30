@@ -27,6 +27,8 @@
   normalized as expected (#3168)
 - When using `--skip-magic-trailing-comma` or `-C`, trailing commas are stripped from
   subscript expressions with more than 1 element (#3209)
+- Fix a string merging/split issue when a comment is present in the middle of implicitly
+  concatenated strings on its own line (#3227)
 
 ### _Blackd_
 
@@ -39,6 +41,8 @@
 <!-- Changes to how Black can be configured -->
 
 - Black now uses the presence of debug f-strings to detect target version. (#3215)
+- Fix misdetection of project root and verbose logging of sources in cases involving
+  `--stdin-filename` (#3216)
 
 ### Documentation
 
@@ -70,6 +74,8 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
+- Python 3.11 is now supported, except for `blackd` (#3234)
+
 ### Parser
 
 <!-- Changes to the parser or to version autodetection -->
@@ -81,6 +87,8 @@
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
+
+- Reduce Black's startup time when formatting a single file by 15-30% (#3211)
 
 ## 22.6.0
 

@@ -155,4 +155,3 @@ jobs:
         if: always()
         run: >
           diff-shades show-failed --check --show-log ${{ matrix.target-analysis }}
-          --check-allow 'sqlalchemy:test/orm/test_relationship_criteria.py'
