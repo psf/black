@@ -135,7 +135,8 @@ async def schedule_formatting(
     loop: asyncio.AbstractEventLoop,
     executor: "Executor",
 ) -> None:
-    """Run formatting of `sources` in parallel using the provided `executor`.
+    """
+    Run formatting of `sources` in parallel using the provided `executor`.
 
     (Use ProcessPoolExecutors for actual parallelism.)
 
