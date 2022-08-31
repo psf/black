@@ -63,6 +63,9 @@ endif
 if !exists("g:black_target_version")
   let g:black_target_version = ""
 endif
+if !exists("g:black_preview")
+  let g:black_preview = 0
+endif
 
 function BlackComplete(ArgLead, CmdLine, CursorPos)
   return [
