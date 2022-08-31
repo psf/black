@@ -35,9 +35,8 @@ Although when the target version is Python 3.9 or higher, _Black_ will use paren
 instead since they're allowed in Python 3.9 and higher.
 
 An alternative to consider if the backslashes in the above formatting is undesirable is
-to use
-[`contextlib.ExitStack`](https://docs.python.org/3.9/library/contextlib.html#contextlib.ExitStack)
-to combine context managers in the following way:
+to use {external:py:obj}`contextlib.ExitStack` to combine context managers in the
+following way:
 
 ```python
 with contextlib.ExitStack() as exit_stack:
