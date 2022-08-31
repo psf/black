@@ -59,8 +59,8 @@ To cut a release:
    1. You can leave the release title blank, GitHub will default to the tag name
    1. Copy and paste the _raw changelog Markdown_ for the current release into the
       description box
-1. Publish the GitHub Release, triggering the [release automation](#release-workflows)
-   that will handle the rest
+1. Publish the GitHub Release, triggering [release automation](#release-workflows) that
+   will handle the rest
 1. At this point, you're basically done. It's good practice to go and [watch and verify
    that all the release workflows pass][black-actions], although you will receive a
    GitHub notification should something fail.
