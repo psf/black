@@ -29,8 +29,8 @@ frequently than monthly nets rapidly diminishing returns.
 **You must have `write` permissions for the _Black_ repository to cut a release.**
 
 The 10,000 foot view of the release process is that you publish a [GitHub Release] which
-then triggers release automation that builds all release artifacts and publishes them to
-the various platforms we publish to.
+then triggers [release automation](#release-workflows) that builds all release artifacts
+and publishes them to the various platforms we publish to.
 
 To cut a release:
 
@@ -38,7 +38,6 @@ To cut a release:
    - **_Black_ follows the [CalVer] versioning standard using the `YY.M.N` format**
      - So unless there already has been a release during this month, `N` should be `0`
    - Example: the first release in January, 2022 → `22.1.0`
-   - Example 2: the third release (oh dear) in March, 2023 → `23.3.2`
 1. File a PR editing `CHANGES.md` and the docs to version the latest changes
    1. Replace the `## Unreleased` header with the version number
    1. Remove any empty sections for the current release
@@ -53,20 +52,18 @@ To cut a release:
 1. Once the release PR is merged, wait until all CI passes
    - If CI does not pass, **stop** and investigate the failure(s) as generally we'd want
      to fix failing CI before cutting a release
-1. Open `CHANGES.md` and copy the _raw Markdown_ of the latest changes. You'll use it as
-   the description of the GitHub Release.
-   - Don't copy the version header as it's redundant
 1. [Draft a new GitHub Release][new-release]
    1. Click `Choose a tag` and type in the version number, then select the
       `Create new tag: YY.M.N on publish` option that appears
-   1. Verify the new tag targets the `main` branch
+   1. Verify that the new tag targets the `main` branch
    1. You can leave the release title blank, GitHub will default to the tag name
-   1. Paste the changelog Markdown you copied earlier into the description box
-1. Publish the GitHub Release you just drafted
-   - On publication, the release automation will trigger and run on the new tag
-1. At this point, you're basically done. It's good practice to go and watch to make sure
-   all the [release workflows][black-actions] pass, although you will receive a GitHub
-   notification if something does fail.
+   1. Copy and paste the _raw changelog Markdown_ for the current release into the
+      description box
+1. Publish the GitHub Release, triggering the [release automation](#release-workflows)
+   that will handle the rest
+1. At this point, you're basically done. It's good practice to go and [watch and verify
+   that all the release workflows pass][black-actions], although you will receive a
+   GitHub notification should something fail.
    - If something fails, don't panic. Please go read the respective workflow's logs and
      configuration file to reverse-engineer your way to a fix/solution.
 
