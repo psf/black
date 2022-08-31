@@ -49,6 +49,8 @@ repos:
           - types-typed-ast >= 1.4.1
           - click >= 8.1.0
           - platformdirs >= 2.1.0
+          - pytest
+          - hypothesis
 
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v2.7.1
