@@ -18,6 +18,18 @@ D3 = {x: "This is a really long string that can't possibly be expected to fit al
 
 D4 = {"A long and ridiculous {}".format(string_key): "This is a really really really long string that has to go i,side of a dictionary. It is soooo bad.", some_func("calling", "some", "stuff"): "This is a really really really long string that has to go inside of a dictionary. It is {soooo} bad (#{x}).".format(sooo="soooo", x=2), "A %s %s" % ("formatted", "string"): "This is a really really really long string that has to go inside of a dictionary. It is %s bad (#%d)." % ("soooo", 2)}
 
+L1 = ["The is a short string", "This is a really long string that can't possibly be expected to fit all together on one line. Also it is inside a list literal, so it's expected to be wrapped in parens when spliting to avoid implicit str concatenation.", short_call("arg", {"key": "value"}), "This is another really really (not really) long string that also can't be expected to fit on one line and is, like the other string, inside a list literal.", ("parens should be stripped for short string in list")]
+
+L2 = ["This is a really long string that can't be expected to fit in one line and is the only child of a list literal."]
+
+S1 = {"The is a short string", "This is a really long string that can't possibly be expected to fit all together on one line. Also it is inside a set literal, so it's expected to be wrapped in parens when spliting to avoid implicit str concatenation.", short_call("arg", {"key": "value"}), "This is another really really (not really) long string that also can't be expected to fit on one line and is, like the other string, inside a set literal.", ("parens should be stripped for short string in set")}
+
+S2 = {"This is a really long string that can't be expected to fit in one line and is the only child of a set literal."}
+
+T1 = ("The is a short string", "This is a really long string that can't possibly be expected to fit all together on one line. Also it is inside a tuple literal, so it's expected to be wrapped in parens when spliting to avoid implicit str concatenation.", short_call("arg", {"key": "value"}), "This is another really really (not really) long string that also can't be expected to fit on one line and is, like the other string, inside a tuple literal.", ("parens should be stripped for short string in list"))
+
+T2 = ("This is a really long string that can't be expected to fit in one line and is the only child of a tuple literal.",)
+
 func_with_keywords(my_arg, my_kwarg="Long keyword strings also need to be wrapped, but they will probably need to be handled a little bit differently.")
 
 bad_split1 = (
@@ -109,7 +121,7 @@ fstring_with_no_fexprs = f"Some regular string that needs to get split certainly
 
 comment_string = "Long lines with inline comments should have their comments appended to the reformatted string's enclosing right parentheses."  # This comment gets thrown to the top.
 
-arg_comment_string = print("Long lines with inline comments which are apart of (and not the only member of) an argument list should have their comments appended to the reformatted string's enclosing left parentheses.",  # This comment stays on the bottom.
+arg_comment_string = print("Long lines with inline comments which are apart of (and not the only member of) an argument list should have their comments appended to the reformatted string's enclosing left parentheses.",  # This comment gets thrown to the top.
     "Arg #2", "Arg #3", "Arg #4", "Arg #5")
 
 pragma_comment_string1 = "Lines which end with an inline pragma comment of the form `# <pragma>: <...>` should be left alone."  # noqa: E501
@@ -345,6 +357,71 @@ D4 = {
     % ("soooo", 2),
 }
 
+L1 = [
+    "The is a short string",
+    (
+        "This is a really long string that can't possibly be expected to fit all"
+        " together on one line. Also it is inside a list literal, so it's expected to"
+        " be wrapped in parens when spliting to avoid implicit str concatenation."
+    ),
+    short_call("arg", {"key": "value"}),
+    (
+        "This is another really really (not really) long string that also can't be"
+        " expected to fit on one line and is, like the other string, inside a list"
+        " literal."
+    ),
+    "parens should be stripped for short string in list",
+]
+
+L2 = [
+    "This is a really long string that can't be expected to fit in one line and is the"
+    " only child of a list literal."
+]
+
+S1 = {
+    "The is a short string",
+    (
+        "This is a really long string that can't possibly be expected to fit all"
+        " together on one line. Also it is inside a set literal, so it's expected to be"
+        " wrapped in parens when spliting to avoid implicit str concatenation."
+    ),
+    short_call("arg", {"key": "value"}),
+    (
+        "This is another really really (not really) long string that also can't be"
+        " expected to fit on one line and is, like the other string, inside a set"
+        " literal."
+    ),
+    "parens should be stripped for short string in set",
+}
+
+S2 = {
+    "This is a really long string that can't be expected to fit in one line and is the"
+    " only child of a set literal."
+}
+
+T1 = (
+    "The is a short string",
+    (
+        "This is a really long string that can't possibly be expected to fit all"
+        " together on one line. Also it is inside a tuple literal, so it's expected to"
+        " be wrapped in parens when spliting to avoid implicit str concatenation."
+    ),
+    short_call("arg", {"key": "value"}),
+    (
+        "This is another really really (not really) long string that also can't be"
+        " expected to fit on one line and is, like the other string, inside a tuple"
+        " literal."
+    ),
+    "parens should be stripped for short string in list",
+)
+
+T2 = (
+    (
+        "This is a really long string that can't be expected to fit in one line and is"
+        " the only child of a tuple literal."
+    ),
+)
+
 func_with_keywords(
     my_arg,
     my_kwarg=(
@@ -487,7 +564,7 @@ comment_string = (  # This comment gets thrown to the top.
 arg_comment_string = print(
     "Long lines with inline comments which are apart of (and not the only member of) an"
     " argument list should have their comments appended to the reformatted string's"
-    " enclosing left parentheses.",  # This comment stays on the bottom.
+    " enclosing left parentheses.",  # This comment gets thrown to the top.
     "Arg #2",
     "Arg #3",
     "Arg #4",
