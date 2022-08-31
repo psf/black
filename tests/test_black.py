@@ -1990,6 +1990,13 @@ class TestFileCollection:
         )
         assert sorted(expected) == sorted(sources)
 
+    def test_nested_gitignore_directly_in_source_directory(self) -> None:
+        # https://github.com/psf/black/issues/2598
+        path = Path(DATA_DIR / "nested_gitignore_tests")
+        src = Path(path / "root" / "child")
+        expected = [src / "a.py", src / "c.py"]
+        assert_collected_sources([src], expected)
+
     def test_invalid_gitignore(self) -> None:
         path = THIS_DIR / "data" / "invalid_gitignore_tests"
         empty_config = path / "pyproject.toml"
