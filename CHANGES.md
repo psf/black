@@ -44,6 +44,9 @@
 - Black now uses the presence of debug f-strings to detect target version. (#3215)
 - Fix misdetection of project root and verbose logging of sources in cases involving
   `--stdin-filename` (#3216)
+- Immediate `.gitignore` files in source directories given on the command line are now
+  also respected, previously only `.gitignore` files in the project root and
+  automatically discovered directories were respected (#3237)
 
 ### Documentation
 
