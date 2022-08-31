@@ -26,6 +26,8 @@
   normalized as expected (#3168)
 - When using `--skip-magic-trailing-comma` or `-C`, trailing commas are stripped from
   subscript expressions with more than 1 element (#3209)
+- Implicitly concatenated strings inside a list, set, or tuple are now wrapped inside
+  parentheses (#3162)
 - Fix a string merging/split issue when a comment is present in the middle of implicitly
   concatenated strings on its own line (#3227)
 

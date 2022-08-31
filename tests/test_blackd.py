@@ -1,6 +1,6 @@
 import re
 import sys
-from typing import Any
+from typing import TYPE_CHECKING, Any, Callable, TypeVar
 from unittest.mock import patch
 
 import pytest
@@ -19,16 +19,22 @@ if LESS_THAN_311:  # noqa: C901
     except ImportError as e:
         raise RuntimeError("Please install Black with the 'd' extra") from e
 
-    try:
-        from aiohttp.test_utils import unittest_run_loop
-    except ImportError:
-        # unittest_run_loop is unnecessary and a no-op since aiohttp 3.8, and aiohttp 4
-        # removed it. To maintain compatibility we can make our own no-op decorator.
-        def unittest_run_loop(func: Any, *args: Any, **kwargs: Any) -> Any:
-            return func
+    if TYPE_CHECKING:
+        F = TypeVar("F", bound=Callable[..., Any])
+
+        unittest_run_loop: Callable[[F], F] = lambda x: x
+    else:
+        try:
+            from aiohttp.test_utils import unittest_run_loop
+        except ImportError:
+            # unittest_run_loop is unnecessary and a no-op since aiohttp 3.8, and
+            # aiohttp 4 removed it. To maintain compatibility we can make our own
+            # no-op decorator.
+            def unittest_run_loop(func, *args, **kwargs):
+                return func
 
     @pytest.mark.blackd
-    class BlackDTestCase(AioHTTPTestCase):
+    class BlackDTestCase(AioHTTPTestCase):  # type: ignore[misc]
         def test_blackd_main(self) -> None:
             with patch("blackd.web.run_app"):
                 result = CliRunner().invoke(blackd.main, [])

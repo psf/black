@@ -26,7 +26,7 @@ try:
     from pytest import StashKey
 except ImportError:
     # pytest < 7
-    from _pytest.store import StoreKey as StashKey
+    from _pytest.store import StoreKey as StashKey  # type: ignore[no-redef]
 
 log = logging.getLogger(__name__)
 
