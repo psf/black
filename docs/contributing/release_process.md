@@ -150,8 +150,8 @@ vast majority of users will download Black from. It's divided into three job gro
 #### sdist + pure wheel
 
 This single job builds the sdist and pure Python wheel (i.e., a wheel that only contains
-Python code) using [build]. These artifacts are general-purpose and can be used on
-basically any platform supported by Python.
+Python code) using [build] and then uploads them to PyPI using [twine]. These artifacts
+are general-purpose and can be used on basically any platform supported by Python.
 
 #### mypyc wheels (…)
 
@@ -164,9 +164,7 @@ extensions for many environments for us. Since building these wheels is slow, th
 multiple mypyc wheels jobs (hence the term "matrix") that build for a specific platform
 (as noted in the job name in parentheses).
 
-…
-
-These jobs then use [twine] to upload the built distributions to PyPI.
+Like the previous job group, the built wheels are uploaded to PyPI using [twine].
 
 #### Update stable branch
 
