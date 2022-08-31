@@ -28,9 +28,9 @@ frequently than monthly nets rapidly diminishing returns.
 
 **You must have `write` permissions for the _Black_ repository to cut a release.**
 
-The 10,000 foot view of the release process is that you publish a [GitHub Release] which
-then triggers [release automation](#release-workflows) that builds all release artifacts
-and publishes them to the various platforms we publish to.
+The 10,000 foot view of the release process is that you prepare a release PR and then
+publish a [GitHub Release]. This triggers [release automation](#release-workflows) that
+builds all release artifacts and publishes them to the various platforms we publish to.
 
 To cut a release:
 
