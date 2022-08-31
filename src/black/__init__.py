@@ -652,7 +652,12 @@ def get_sources(
         elif p.is_dir():
             if exclude is None:
                 exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES)
-                gitignore = get_gitignore(root) + get_gitignore(p)
+                gitignore = get_gitignore(root)
+                p_gitignore = get_gitignore(p)
+                # No need to use p's gitignore if it is identical to root's gitignore
+                # (i.e. root and p point to the same directory).
+                if gitignore != p_gitignore:
+                    gitignore += p_gitignore
             else:
                 gitignore = None
             sources.update(
