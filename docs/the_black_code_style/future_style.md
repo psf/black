@@ -34,7 +34,7 @@ with \
 Although when the target version is Python 3.9 or higher, _Black_ will use parentheses
 instead since they're allowed in Python 3.9 and higher.
 
-An alternative to consider if the backslashes in the above formatting is undesirable is
+An alternative to consider if the backslashes in the above formatting are undesirable is
 to use {external:py:obj}`contextlib.ExitStack` to combine context managers in the
 following way:
 
