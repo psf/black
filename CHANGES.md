@@ -101,6 +101,7 @@
 - Vim plugin: prefix messages with `Black: ` so it's clear they come from Black (#3194)
 - Docker: changed to a /opt/venv installation + added to PATH to be available to
   non-root users (#3202)
+- Vim plugin: add flag (`g:black_preview`) to enable/disable the preview style (#3246)
 
 ### Output
 
