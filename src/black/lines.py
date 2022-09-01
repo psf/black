@@ -73,7 +73,7 @@ class Line:
             # Note: at this point leaf.prefix should be empty except for
             # imports, for which we only preserve newlines.
             leaf.prefix += whitespace(
-                leaf, complex_subscript=self.is_complex_subscript(leaf)
+                leaf, mode=self.mode, complex_subscript=self.is_complex_subscript(leaf)
             )
         if self.inside_brackets or not preformatted:
             self.bracket_tracker.mark(leaf)

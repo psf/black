@@ -17,6 +17,7 @@ else:
 from mypy_extensions import mypyc_attr
 
 from black.cache import CACHE_DIR
+from black.mode import Mode
 from black.strings import has_triple_quotes
 from blib2to3 import pygram
 from blib2to3.pgen2 import token
@@ -175,7 +176,7 @@ class Visitor(Generic[T]):
                 yield from self.visit(child)
 
 
-def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
+def whitespace(leaf: Leaf, *, mode: Mode, complex_subscript: bool) -> str:  # noqa: C901
     """Return whitespace prefix if needed for the given `leaf`.
 
     `complex_subscript` signals whether the given leaf is part of a subscription
@@ -183,7 +184,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
     """
     NO: Final = ""
     SPACE: Final = " "
-    DOUBLESPACE: Final = "  "
+    DOUBLESPACE: Final = " " * mode.comment_spaces
     t = leaf.type
     p = leaf.parent
     v = leaf.value

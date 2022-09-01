@@ -36,6 +36,7 @@ from _black_version import version as __version__
 from black.cache import Cache, get_cache_info, read_cache, write_cache
 from black.comments import normalize_fmt_off
 from black.const import (
+    DEFAULT_COMMENT_SPACES,
     DEFAULT_EXCLUDES,
     DEFAULT_INCLUDES,
     DEFAULT_LINE_LENGTH,
@@ -209,6 +210,14 @@ def validate_regex(
     type=int,
     default=DEFAULT_LINE_LENGTH,
     help="How many characters per line to allow.",
+    show_default=True,
+)
+@click.option(
+    "-l",
+    "--comment-spaces",
+    type=int,
+    default=DEFAULT_COMMENT_SPACES,
+    help="How many spaces to use before inline comments.",
     show_default=True,
 )
 @click.option(
@@ -420,6 +429,7 @@ def main(  # noqa: C901
     ctx: click.Context,
     code: Optional[str],
     line_length: int,
+    comment_spaces: int,
     target_version: List[TargetVersion],
     check: bool,
     diff: bool,
@@ -526,6 +536,7 @@ def main(  # noqa: C901
     mode = Mode(
         target_versions=versions,
         line_length=line_length,
+        comment_spaces=comment_spaces,
         is_pyi=pyi,
         is_ipynb=ipynb,
         string_normalization=not skip_string_normalization,
@@ -1069,7 +1080,7 @@ def _format_str_once(src_contents: str, *, mode: Mode) -> str:
         future_imports = get_future_imports(src_node)
         versions = detect_target_versions(src_node, future_imports=future_imports)
 
-    normalize_fmt_off(src_node, preview=mode.preview)
+    normalize_fmt_off(src_node, mode=mode, preview=mode.preview)
     lines = LineGenerator(mode=mode)
     elt = EmptyLineTracker(is_pyi=mode.is_pyi)
     empty_line = Line(mode=mode)
