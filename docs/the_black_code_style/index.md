@@ -19,6 +19,8 @@ style aspects and details might change according to the stability policy present
 below. Ongoing style considerations are tracked on GitHub with the
 [design](https://github.com/psf/black/labels/T%3A%20design) issue label.
 
+(labels/stability-policy)=
+
 ## Stability Policy
 
 The following policy applies for the _Black_ code style, in non pre-release versions of
