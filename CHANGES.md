@@ -69,7 +69,6 @@
 
 ### Preview style
 
->>>>>>> origin/main
 - Single-character closing docstring quotes are no longer moved to their own line as
   this is invalid. This was a bug introduced in version 22.6.0. (#3166)
 - `--skip-string-normalization` / `-S` now prevents docstring prefixes from being
