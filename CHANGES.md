@@ -13,6 +13,7 @@
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
+
 - Format docstrings to have consistent quote placement (#2885)
 
 ### Configuration
