@@ -114,6 +114,8 @@ errors is not a goal. It can format all code accepted by CPython (if you find an
 where that doesn't hold, please report a bug!), but it may also format some code that
 CPython doesn't accept.
 
+(labels/mypyc-support)=
+
 ## What is `compiled: yes/no` all about in the version output?
 
 While _Black_ is indeed a pure Python project, we use [mypyc] to compile _Black_ into a
