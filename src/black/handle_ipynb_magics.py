@@ -3,6 +3,7 @@
 import ast
 import collections
 import dataclasses
+import platform
 import secrets
 import sys
 from functools import lru_cache
@@ -62,9 +63,14 @@ def jupyter_dependencies_are_installed(*, verbose: bool, quiet: bool) -> bool:
         import tokenize_rt  # noqa:F401
     except ModuleNotFoundError:
         if verbose or not quiet:
+            # Check platform to provide the correct pip hint
+            if "linux" in platform.platform().lower():
+                pip_command_hint = "``pip install 'black[jupyter]'``"
+            else:
+                pip_command_hint = "``pip install black[jupyter]``"
             msg = (
                 "Skipping .ipynb files as Jupyter dependencies are not installed.\n"
-                "You can fix this by running ``pip install black[jupyter]``"
+                f"You can fix this by running {pip_command_hint}"
             )
             out(msg)
         return False
