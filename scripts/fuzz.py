@@ -85,5 +85,8 @@ if __name__ == "__main__":
         pass
     else:
         test = test_idempotent_any_syntatically_valid_python
-        atheris.Setup(sys.argv, test.hypothesis.fuzz_one_input)
+        atheris.Setup(
+            sys.argv,
+            test.hypothesis.fuzz_one_input,  # type: ignore[attr-defined]
+        )
         atheris.Fuzz()
