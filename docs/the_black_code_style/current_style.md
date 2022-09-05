@@ -406,6 +406,11 @@ file that are not enforced yet but might be in a future version of the formatter
 - use variable annotations instead of type comments, even for stubs that target older
   versions of Python.
 
+### Line endings
+
+_Black_ will normalize line endings (`\n` or `\r\n`) based on the first line ending of
+the file.
+
 ## Pragmatism
 
 Early versions of _Black_ used to be absolutist in some respects. They took after its

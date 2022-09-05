@@ -133,6 +133,13 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
             executor, partial(black.format_file_contents, req_str, fast=fast, mode=mode)
         )
 
+        # Preserve CRLF line endings
+        if req_str[req_str.find("\n") - 1] == "\r":
+            formatted_str = formatted_str.replace("\n", "\r\n")
+            # If, after swapping line endings, nothing changed, then say so
+            if formatted_str == req_str:
+                raise black.NothingChanged
+
         # Only output the diff in the HTTP response
         only_diff = bool(request.headers.get(DIFF_HEADER, False))
         if only_diff:
