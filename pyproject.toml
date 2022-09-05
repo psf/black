@@ -108,4 +108,7 @@ filterwarnings = [
     # this is mitigated by https://github.com/python/cpython/issues/79071 in python 3.8+
     # this ignore can be removed when support for 3.7 is dropped.
     '''ignore:Bare functions are deprecated, use async ones:DeprecationWarning''',
+    # aiohttp is using deprecated cgi modules - Safe to remove when fixed:
+    # https://github.com/aio-libs/aiohttp/issues/6905
+    '''ignore:'cgi' is deprecated and slated for removal in Python 3.13:DeprecationWarning''',
 ]
