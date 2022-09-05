@@ -1,5 +1,4 @@
 import re
-import sys
 from typing import TYPE_CHECKING, Any, Callable, TypeVar
 from unittest.mock import patch
 
@@ -7,7 +6,6 @@ import pytest
 from click.testing import CliRunner
 
 from tests.util import DETERMINISTIC_HEADER, read_data
-
 
 try:
     from aiohttp import web
@@ -30,6 +28,7 @@ else:
         # no-op decorator.
         def unittest_run_loop(func, *args, **kwargs):
             return func
+
 
 @pytest.mark.blackd
 class BlackDTestCase(AioHTTPTestCase):  # type: ignore[misc]
