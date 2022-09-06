@@ -107,6 +107,9 @@ template = '''
 version = "{version}"
 '''
 
+[tool.hatch.build.targets.sdist]
+exclude = ["/profiling"]
+
 [tool.hatch.build.targets.wheel]
 only-include = ["src"]
 sources = ["src"]
@@ -115,6 +118,7 @@ sources = ["src"]
 enable-by-default = false
 dependencies = [
   "hatch-mypyc>=0.13.0",
+  "mypy==0.971",
   # Required stubs to be removed when the packages support PEP 561 themselves
   "types-typed-ast>=1.4.2",
 ]
