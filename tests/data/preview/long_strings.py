@@ -18,6 +18,14 @@ D3 = {x: "This is a really long string that can't possibly be expected to fit al
 
 D4 = {"A long and ridiculous {}".format(string_key): "This is a really really really long string that has to go i,side of a dictionary. It is soooo bad.", some_func("calling", "some", "stuff"): "This is a really really really long string that has to go inside of a dictionary. It is {soooo} bad (#{x}).".format(sooo="soooo", x=2), "A %s %s" % ("formatted", "string"): "This is a really really really long string that has to go inside of a dictionary. It is %s bad (#%d)." % ("soooo", 2)}
 
+D5 = {  # Test for https://github.com/psf/black/issues/3261
+    ("This is a really long string that can't be expected to fit in one line and is used as a nested dict's key"): {"inner": "value"},
+}
+
+D6 = {  # Test for https://github.com/psf/black/issues/3261
+    ("This is a really long string that can't be expected to fit in one line and is used as a dict's key"): ["value1", "value2"],
+}
+
 L1 = ["The is a short string", "This is a really long string that can't possibly be expected to fit all together on one line. Also it is inside a list literal, so it's expected to be wrapped in parens when spliting to avoid implicit str concatenation.", short_call("arg", {"key": "value"}), "This is another really really (not really) long string that also can't be expected to fit on one line and is, like the other string, inside a list literal.", ("parens should be stripped for short string in list")]
 
 L2 = ["This is a really long string that can't be expected to fit in one line and is the only child of a list literal."]
@@ -355,6 +363,19 @@ D4 = {
         " dictionary. It is %s bad (#%d)."
     )
     % ("soooo", 2),
+}
+
+D5 = {  # Test for https://github.com/psf/black/issues/3261
+    "This is a really long string that can't be expected to fit in one line and is used as a nested dict's key": {
+        "inner": "value"
+    },
+}
+
+D6 = {  # Test for https://github.com/psf/black/issues/3261
+    "This is a really long string that can't be expected to fit in one line and is used as a dict's key": [
+        "value1",
+        "value2",
+    ],
 }
 
 L1 = [
