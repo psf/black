@@ -14,9 +14,10 @@ VERSION = os.getenv("INPUT_VERSION", default="")
 
 run([sys.executable, "-m", "venv", str(ENV_PATH)], check=True)
 
-req = "black[colorama]"
-if VERSION:
-    req += f"=={VERSION}"
+version_specifier = VERSION
+if VERSION and VERSION[0] in "0123456789":
+    version_specifier = f"=={VERSION}"
+req = f"black[colorama]{version_specifier}"
 pip_proc = run(
     [str(ENV_BIN / "python"), "-m", "pip", "install", req],
     stdout=PIPE,
