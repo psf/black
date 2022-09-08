@@ -42,6 +42,9 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- Update GitHub action to support use of version specifiers (i.e. `<23`) for Black
+  version (#3265)
+
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
