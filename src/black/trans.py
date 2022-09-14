@@ -1071,6 +1071,16 @@ class BaseStringSplitter(StringTransformer):
             # And the string is surrounded by commas (or is the first/last child)...
             prev_sibling = LL[0].prev_sibling
             next_sibling = LL[0].next_sibling
+            if (
+                not prev_sibling
+                and not next_sibling
+                and parent_type(LL[0]) == syms.atom
+            ):
+                # If it's an atom string, we need to check the parent atom's siblings.
+                parent = LL[0].parent
+                assert parent is not None  # For type checkers.
+                prev_sibling = parent.prev_sibling
+                next_sibling = parent.next_sibling
             if (not prev_sibling or prev_sibling.type == token.COMMA) and (
                 not next_sibling or next_sibling.type == token.COMMA
             ):
