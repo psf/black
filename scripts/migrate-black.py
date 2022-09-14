@@ -49,6 +49,7 @@ def blackify(base_branch: str, black_command: str, logger: logging.Logger) -> in
             [
                 "git",
                 "diff",
+                "--binary",
                 "--find-copies",
                 "%s-black..%s-black" % (last_commit, commit),
             ],
