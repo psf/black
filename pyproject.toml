@@ -59,10 +59,8 @@ PIP_NO_BUILD_ISOLATION = "no"
 [tool.cibuildwheel.linux]
 before-build = [
     "pip install -r .github/mypyc-requirements.txt",
-    "yum install -y clang",
+    "yum install -y clang gcc",
 ]
-# Newer images break the builds, not sure why. We'll need to investigate more later.
-manylinux-x86_64-image = "quay.io/pypa/manylinux2014_x86_64:2021-11-20-f410d11"
 
 [tool.cibuildwheel.linux.environment]
 BLACK_USE_MYPYC = "1"
