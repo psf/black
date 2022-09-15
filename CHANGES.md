@@ -15,6 +15,8 @@
 <!-- Changes that affect Black's preview style -->
 
 - Format docstrings to have consistent quote placement (#2885)
+- Fix a crash when formatting some dicts with parenthesis-wrapped long string keys
+  (#3262)
 
 ### Configuration
 

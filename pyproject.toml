@@ -105,7 +105,13 @@ filterwarnings = [
     # this is mitigated by a try/catch in https://github.com/psf/black/pull/2974/
     # this ignore can be removed when support for aiohttp 3.7 is dropped.
     '''ignore:Decorator `@unittest_run_loop` is no longer needed in aiohttp 3\.8\+:DeprecationWarning''',
+    # this is mitigated by a try/catch in https://github.com/psf/black/pull/3198/
+    # this ignore can be removed when support for aiohttp 3.x is dropped.
+    '''ignore:Middleware decorator is deprecated since 4\.0 and its behaviour is default, you can simply remove this decorator:DeprecationWarning''',
     # this is mitigated by https://github.com/python/cpython/issues/79071 in python 3.8+
     # this ignore can be removed when support for 3.7 is dropped.
     '''ignore:Bare functions are deprecated, use async ones:DeprecationWarning''',
+    # aiohttp is using deprecated cgi modules - Safe to remove when fixed:
+    # https://github.com/aio-libs/aiohttp/issues/6905
+    '''ignore:'cgi' is deprecated and slated for removal in Python 3.13:DeprecationWarning''',
 ]
