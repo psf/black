@@ -85,6 +85,19 @@ def very_important_function(
         ...
 ```
 
+If a data structure literal (tuple, list, set, dict) or a line of "from" imports cannot
+fit in the allotted length, it's always split into one element per line. This minimizes
+diffs as well as enables readers of code to find which commit introduced a particular
+entry. This also makes _Black_ compatible with
+[isort](../guides/using_black_with_other_tools.md#isort) with the ready-made `black`
+profile or manual configuration.
+
+You might have noticed that closing brackets are always dedented and that a trailing
+comma is always added. Such formatting produces smaller diffs; when you add or remove an
+element, it's always just one line. Also, having the closing bracket dedented provides a
+clear delimiter between two distinct sections of the code that otherwise share the same
+indentation level (like the arguments list and the docstring in the example above).
+
 (labels/why-no-backslashes)=
 
 _Black_ prefers parentheses over backslashes, and will remove backslashes if found.
@@ -126,19 +139,6 @@ to look at and brittle to modify. This is why _Black_ always gets rid of them.
 If you're reaching for backslashes, that's a clear signal that you can do better if you
 slightly refactor your code. I hope some of the examples above show you that there are
 many ways in which you can do it.
-
-You might have noticed that closing brackets are always dedented and that a trailing
-comma is always added. Such formatting produces smaller diffs; when you add or remove an
-element, it's always just one line. Also, having the closing bracket dedented provides a
-clear delimiter between two distinct sections of the code that otherwise share the same
-indentation level (like the arguments list and the docstring in the example above).
-
-If a data structure literal (tuple, list, set, dict) or a line of "from" imports cannot
-fit in the allotted length, it's always split into one element per line. This minimizes
-diffs as well as enables readers of code to find which commit introduced a particular
-entry. This also makes _Black_ compatible with
-[isort](../guides/using_black_with_other_tools.md#isort) with the ready-made `black`
-profile or manual configuration.
 
 ### Line length
 

@@ -1,4 +1,4 @@
-name: Partially test 3.11 dev
+name: Test 3.11 without aiohttp extensions
 
 on:
   push:

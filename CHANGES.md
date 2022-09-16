@@ -17,6 +17,9 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix a crash when formatting some dicts with parenthesis-wrapped long string keys
+  (#3262)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
