@@ -15,7 +15,7 @@ managers.
 We don't want formatting like:
 
 ```py3
-with make_context_manager1() as cm1, make_context_manager2() as cm2, make_context_manager3() as cm3, make_context_manager4() as cm4:
+with make_context_manager(1) as cm1, make_context_manager(2) as cm2, make_context_manager(3) as cm3, make_context_manager(4) as cm4:
     ...  # nothing to split on - line too long
 ```
 
