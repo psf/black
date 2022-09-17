@@ -26,7 +26,7 @@
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
 - Executables made with PyInstaller will no longer crash when formatting several files
-  at once on macOS. Native x86-64 executables for macOS will be available once again.
+  at once on macOS. Native x86-64 executables for macOS are available once again.
   (#3275)
 
 ### Parser
