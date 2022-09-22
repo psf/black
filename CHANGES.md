@@ -10,6 +10,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix a crash when `# fmt: on` is used on a different block level as `# fmt: off`
+  (#3281)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
