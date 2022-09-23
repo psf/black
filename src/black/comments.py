@@ -273,9 +273,7 @@ def _generate_ignored_nodes_from_fmt_skip(
         for sibling in siblings:
             yield sibling
     elif (
-        parent is not None
-        and parent.type == syms.suite
-        and leaf.type == token.NEWLINE
+        parent is not None and parent.type == syms.suite and leaf.type == token.NEWLINE
     ):
         # The `# fmt: skip` is on the colon line of the if/while/def/class/...
         # statements. The ignored nodes should be previous siblings of the
