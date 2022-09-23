@@ -194,7 +194,7 @@ def parse_req_python_specifier(requires_python: str) -> Optional[TargetVersion]:
 
     target_version_map = {f"3.{v.value}": v for v in TargetVersion}
     compatible_versions = specifier_set.filter(target_version_map)
-    target_version_str: Optional[str] = next(compatible_versions, None)
+    target_version_str: Optional[str] = next(iter(compatible_versions), None)
     if target_version_str is not None:
         return target_version_map.get(target_version_str)
     return None
