@@ -23,10 +23,10 @@ So _Black_ will eventually format it like this:
 
 ```py3
 with \
-     make_context_manager(1) as cm1, \
-     make_context_manager(2) as cm2, \
-     make_context_manager(3) as cm3, \
-     make_context_manager(4) as cm4 \
+     make_context_manager1() as cm1, \
+     make_context_manager2() as cm2, \
+     make_context_manager3() as cm3, \
+     make_context_manager4() as cm4 \
 :
     ...  # backslashes and an ugly stranded colon
 ```
@@ -40,10 +40,10 @@ following way:
 
 ```python
 with contextlib.ExitStack() as exit_stack:
-    cm1 = exit_stack.enter_context(make_context_manager(1))
-    cm2 = exit_stack.enter_context(make_context_manager(2))
-    cm3 = exit_stack.enter_context(make_context_manager(3))
-    cm4 = exit_stack.enter_context(make_context_manager(4))
+    cm1 = exit_stack.enter_context(make_context_manager1())
+    cm2 = exit_stack.enter_context(make_context_manager2())
+    cm3 = exit_stack.enter_context(make_context_manager3())
+    cm4 = exit_stack.enter_context(make_context_manager4())
     ...
 ```
 
