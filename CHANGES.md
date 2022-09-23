@@ -25,6 +25,8 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
+- Faster compiled wheels are now available for CPython 3.11 (#3276)
+
 ### Parser
 
 <!-- Changes to the parser or to version autodetection -->
