@@ -30,6 +30,7 @@
 
 - Hatchling is now used as the build backend. This will not have any effect for users
   who install Black with its wheels from PyPI. (#3233)
+- Faster compiled wheels are now available for CPython 3.11 (#3276)
 
 ### Parser
 
@@ -50,6 +51,9 @@
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- Update GitHub Action to support use of version specifiers (e.g. `<23`) for Black
+  version (#3265)
 
 ### Documentation
 
