@@ -28,6 +28,7 @@
 - Executables made with PyInstaller will no longer crash when formatting several files
   at once on macOS. Native x86-64 executables for macOS are available once again.
   (#3275)
+- Faster compiled wheels are now available for CPython 3.11 (#3276)
 
 ### Parser
 
