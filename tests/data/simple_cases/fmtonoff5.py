@@ -39,7 +39,7 @@ def test_func():
 # Regression test for https://github.com/psf/black/issues/2567.
 if True:
     # fmt: off
-    for _ in range(1):
+    for _ in range( 1 ):
     # fmt: on
         print ( "This won't be formatted" )
     print ( "This won't be formatted either" )
@@ -119,7 +119,7 @@ def test_func():
 # Regression test for https://github.com/psf/black/issues/2567.
 if True:
     # fmt: off
-    for _ in range(1):
+    for _ in range( 1 ):
     # fmt: on
         print ( "This won't be formatted" )
     print ( "This won't be formatted either" )
