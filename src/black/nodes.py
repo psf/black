@@ -502,12 +502,14 @@ def container_of(leaf: Leaf) -> LN:
     return container
 
 
-def first_leaf_column(node: Node) -> Optional[int]:
-    """Returns the column of the first leaf child of a node."""
-    for child in node.children:
-        if isinstance(child, Leaf):
-            return child.column
-    return None
+def first_leaf_of(node: LN) -> Optional[Leaf]:
+    """Returns the first leaf of the node tree."""
+    if isinstance(node, Leaf):
+        return node
+    if node.children:
+        return first_leaf_of(node.children[0])
+    else:
+        return None
 
 
 def is_arith_like(node: LN) -> bool:
