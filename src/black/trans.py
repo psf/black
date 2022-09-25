@@ -1256,7 +1256,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
 
         string_op_leaves = self._get_string_operator_leaves(LL)
         string_op_leaves_length = (
-            sum([len(str(prefix_leaf)) for prefix_leaf in string_op_leaves]) + 1
+            sum(len(str(prefix_leaf)) for prefix_leaf in string_op_leaves) + 1
             if string_op_leaves
             else 0
         )
