@@ -567,7 +567,7 @@ class EmptyLineTracker:
 
         if (
             Preview.remove_block_trailing_newline in current_line.mode
-            and self.previous_lines_window[-1]
+            and self.previous_lines_window
             and self.previous_lines_window[-1].opens_block
         ):
             return 0
