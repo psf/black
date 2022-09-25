@@ -6,6 +6,9 @@
 
 <!-- Include any especially major or disruptive changes here -->
 
+- Runtime support for Python 3.6 has been removed. Formatting 3.6 code will still be
+  supported until further notice.
+
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
@@ -28,6 +31,8 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
+- Hatchling is now used as the build backend. This will not have any effect for users
+  who install Black with its wheels from PyPI. (#3233)
 - Faster compiled wheels are now available for CPython 3.11 (#3276)
 
 ### Parser

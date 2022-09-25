@@ -61,8 +61,6 @@ jobs:
         uses: pypa/cibuildwheel@v2.10.0
         env:
           CIBW_ARCHS_MACOS: "${{ matrix.macos_arch }}"
-          # This isn't supported in pyproject.toml which makes sense (but is annoying).
-          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.6.2"
 
       - name: Upload wheels as workflow artifacts
         uses: actions/upload-artifact@v2
