@@ -1,9 +1,10 @@
-from functools import lru_cache
 import io
 import os
-from pathlib import Path
 import sys
+from functools import lru_cache
+from pathlib import Path
 from typing import (
+    TYPE_CHECKING,
     Any,
     Dict,
     Iterable,
@@ -14,7 +15,6 @@ from typing import (
     Sequence,
     Tuple,
     Union,
-    TYPE_CHECKING,
 )
 
 from mypy_extensions import mypyc_attr
@@ -26,20 +26,23 @@ if sys.version_info >= (3, 11):
         import tomllib
     except ImportError:
         # Help users on older alphas
-        import tomli as tomllib
+        if not TYPE_CHECKING:
+            import tomli as tomllib
 else:
     import tomli as tomllib
 
+from black.handle_ipynb_magics import jupyter_dependencies_are_installed
 from black.output import err
 from black.report import Report
-from black.handle_ipynb_magics import jupyter_dependencies_are_installed
 
 if TYPE_CHECKING:
     import colorama  # noqa: F401
 
 
 @lru_cache()
-def find_project_root(srcs: Sequence[str]) -> Tuple[Path, str]:
+def find_project_root(
+    srcs: Sequence[str], stdin_filename: Optional[str] = None
+) -> Tuple[Path, str]:
     """Return a directory containing .git, .hg, or pyproject.toml.
 
     That directory will be a common parent of all files and directories
@@ -52,6 +55,8 @@ def find_project_root(srcs: Sequence[str]) -> Tuple[Path, str]:
     the second element as a string describing the method by which the
     project root was discovered.
     """
+    if stdin_filename is not None:
+        srcs = tuple(stdin_filename if s == "-" else s for s in srcs)
     if not srcs:
         srcs = [str(Path.cwd().resolve())]
 

@@ -86,14 +86,16 @@ disabled-by-default counterpart W504. E203 should be disabled while changes are 
 
 ## Which Python versions does Black support?
 
-Currently the runtime requires Python 3.6-3.10. Formatting is supported for files
-containing syntax from Python 3.3 to 3.10. We promise to support at least all Python
+Currently the runtime requires Python 3.7-3.11. Formatting is supported for files
+containing syntax from Python 3.3 to 3.11. We promise to support at least all Python
 versions that have not reached their end of life. This is the case for both running
 _Black_ and formatting code.
 
 Support for formatting Python 2 code was removed in version 22.0. While we've made no
 plans to stop supporting older Python 3 minor versions immediately, their support might
 also be removed some time in the future without a deprecation period.
+
+Runtime support for 3.6 was removed in version 22.9.0.
 
 ## Why does my linter or typechecker complain after I format my code?
 
@@ -113,6 +115,8 @@ _Black_ is an autoformatter, not a Python linter or interpreter. Detecting all s
 errors is not a goal. It can format all code accepted by CPython (if you find an example
 where that doesn't hold, please report a bug!), but it may also format some code that
 CPython doesn't accept.
+
+(labels/mypyc-support)=
 
 ## What is `compiled: yes/no` all about in the version output?
 

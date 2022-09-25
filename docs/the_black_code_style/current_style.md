@@ -8,9 +8,10 @@ deliberately limited and rarely added. Previous formatting is taken into account
 little as possible, with rare exceptions like the magic trailing comma. The coding style
 used by _Black_ can be viewed as a strict subset of PEP 8.
 
-_Black_ reformats entire files in place. It doesn't reformat blocks that start with
-`# fmt: off` and end with `# fmt: on`, or lines that ends with `# fmt: skip`.
-`# fmt: on/off` have to be on the same level of indentation. It also recognizes
+_Black_ reformats entire files in place. It doesn't reformat lines that end with
+`# fmt: skip` or blocks that start with `# fmt: off` and end with `# fmt: on`.
+`# fmt: on/off` must be on the same level of indentation and in the same block, meaning
+no unindents beyond the initial indentation level between them. It also recognizes
 [YAPF](https://github.com/google/yapf)'s block comments to the same effect, as a
 courtesy for straddling code.
 
@@ -84,6 +85,19 @@ def very_important_function(
         ...
 ```
 
+If a data structure literal (tuple, list, set, dict) or a line of "from" imports cannot
+fit in the allotted length, it's always split into one element per line. This minimizes
+diffs as well as enables readers of code to find which commit introduced a particular
+entry. This also makes _Black_ compatible with
+[isort](../guides/using_black_with_other_tools.md#isort) with the ready-made `black`
+profile or manual configuration.
+
+You might have noticed that closing brackets are always dedented and that a trailing
+comma is always added. Such formatting produces smaller diffs; when you add or remove an
+element, it's always just one line. Also, having the closing bracket dedented provides a
+clear delimiter between two distinct sections of the code that otherwise share the same
+indentation level (like the arguments list and the docstring in the example above).
+
 (labels/why-no-backslashes)=
 
 _Black_ prefers parentheses over backslashes, and will remove backslashes if found.
@@ -125,19 +139,6 @@ to look at and brittle to modify. This is why _Black_ always gets rid of them.
 If you're reaching for backslashes, that's a clear signal that you can do better if you
 slightly refactor your code. I hope some of the examples above show you that there are
 many ways in which you can do it.
-
-You might have noticed that closing brackets are always dedented and that a trailing
-comma is always added. Such formatting produces smaller diffs; when you add or remove an
-element, it's always just one line. Also, having the closing bracket dedented provides a
-clear delimiter between two distinct sections of the code that otherwise share the same
-indentation level (like the arguments list and the docstring in the example above).
-
-If a data structure literal (tuple, list, set, dict) or a line of "from" imports cannot
-fit in the allotted length, it's always split into one element per line. This minimizes
-diffs as well as enables readers of code to find which commit introduced a particular
-entry. This also makes _Black_ compatible with
-[isort](../guides/using_black_with_other_tools.md#isort) with the ready-made `black`
-profile or manual configuration.
 
 ### Line length
 

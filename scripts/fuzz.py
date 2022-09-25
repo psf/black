@@ -8,7 +8,8 @@ a coverage-guided fuzzer I'm working on.
 import re
 
 import hypothesmith
-from hypothesis import HealthCheck, given, settings, strategies as st
+from hypothesis import HealthCheck, given, settings
+from hypothesis import strategies as st
 
 import black
 from blib2to3.pgen2.tokenize import TokenError
@@ -78,10 +79,14 @@ if __name__ == "__main__":
     # (if you want only bounded fuzzing, just use `pytest fuzz.py`)
     try:
         import sys
+
         import atheris
     except ImportError:
         pass
     else:
         test = test_idempotent_any_syntatically_valid_python
-        atheris.Setup(sys.argv, test.hypothesis.fuzz_one_input)
+        atheris.Setup(
+            sys.argv,
+            test.hypothesis.fuzz_one_input,  # type: ignore[attr-defined]
+        )
         atheris.Fuzz()

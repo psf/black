@@ -30,6 +30,7 @@ FLAGS = [
   Flag(name="skip_string_normalization", cast=strtobool),
   Flag(name="quiet", cast=strtobool),
   Flag(name="skip_magic_trailing_comma", cast=strtobool),
+  Flag(name="preview", cast=strtobool),
 ]
 
 
@@ -145,6 +146,7 @@ def Black(**kwargs):
     string_normalization=not configs["skip_string_normalization"],
     is_pyi=vim.current.buffer.name.endswith('.pyi'),
     magic_trailing_comma=not configs["skip_magic_trailing_comma"],
+    preview=configs["preview"],
     **black_kwargs,
   )
   quiet = configs["quiet"]
@@ -158,9 +160,9 @@ def Black(**kwargs):
     )
   except black.NothingChanged:
     if not quiet:
-      print(f'Already well formatted, good job. (took {time.time() - start:.4f}s)')
+      print(f'Black: already well formatted, good job. (took {time.time() - start:.4f}s)')
   except Exception as exc:
-    print(exc)
+    print(f'Black: {exc}')
   else:
     current_buffer = vim.current.window.buffer
     cursors = []
@@ -177,7 +179,7 @@ def Black(**kwargs):
       except vim.error:
         window.cursor = (len(window.buffer), 0)
     if not quiet:
-      print(f'Reformatted in {time.time() - start:.4f}s.')
+      print(f'Black: reformatted in {time.time() - start:.4f}s.')
 
 def get_configs():
   filename = vim.eval("@%")

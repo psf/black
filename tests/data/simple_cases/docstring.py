@@ -188,6 +188,34 @@ def my_god_its_full_of_stars_2():
     "I'm sorry Dave "
 
 
+def docstring_almost_at_line_limit():
+    """long docstring................................................................."""
+
+
+def docstring_almost_at_line_limit2():
+    """long docstring.................................................................
+
+    ..................................................................................
+    """
+
+
+def docstring_at_line_limit():
+    """long docstring................................................................"""
+
+
+def multiline_docstring_at_line_limit():
+    """first line-----------------------------------------------------------------------
+
+    second line----------------------------------------------------------------------"""
+
+
+def stable_quote_normalization_with_immediate_inner_single_quote(self):
+    ''''<text here>
+
+    <text here, since without another non-empty line black is stable>
+    '''
+
+
 # output
 
 class MyClass:
@@ -375,3 +403,31 @@ def my_god_its_full_of_stars_1():
 # the space below is actually a \u2001, removed in output
 def my_god_its_full_of_stars_2():
     "I'm sorry Dave"
+
+
+def docstring_almost_at_line_limit():
+    """long docstring................................................................."""
+
+
+def docstring_almost_at_line_limit2():
+    """long docstring.................................................................
+
+    ..................................................................................
+    """
+
+
+def docstring_at_line_limit():
+    """long docstring................................................................"""
+
+
+def multiline_docstring_at_line_limit():
+    """first line-----------------------------------------------------------------------
+
+    second line----------------------------------------------------------------------"""
+
+
+def stable_quote_normalization_with_immediate_inner_single_quote(self):
+    """'<text here>
+
+    <text here, since without another non-empty line black is stable>
+    """

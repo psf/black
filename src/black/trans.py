@@ -2,10 +2,11 @@
 String transformers that can split and merge strings.
 """
 
+import re
+import sys
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass
-import re
 from typing import (
     Any,
     Callable,
@@ -22,29 +23,38 @@ from typing import (
     TypeVar,
     Union,
 )
-import sys
 
 if sys.version_info < (3, 8):
-    from typing_extensions import Literal, Final
+    from typing_extensions import Final, Literal
 else:
     from typing import Literal, Final
 
 from mypy_extensions import trait
 
-from black.rusty import Result, Ok, Err
-
-from black.mode import Feature
-from black.nodes import syms, replace_child, parent_type
-from black.nodes import is_empty_par, is_empty_lpar, is_empty_rpar
-from black.nodes import OPENING_BRACKETS, CLOSING_BRACKETS, STANDALONE_COMMENT
-from black.lines import Line, append_leaves
 from black.brackets import BracketMatchError
 from black.comments import contains_pragma_comment
-from black.strings import has_triple_quotes, get_string_prefix, assert_is_leaf_string
-from black.strings import normalize_string_quotes
-
-from blib2to3.pytree import Leaf, Node
+from black.lines import Line, append_leaves
+from black.mode import Feature
+from black.nodes import (
+    CLOSING_BRACKETS,
+    OPENING_BRACKETS,
+    STANDALONE_COMMENT,
+    is_empty_lpar,
+    is_empty_par,
+    is_empty_rpar,
+    parent_type,
+    replace_child,
+    syms,
+)
+from black.rusty import Err, Ok, Result
+from black.strings import (
+    assert_is_leaf_string,
+    get_string_prefix,
+    has_triple_quotes,
+    normalize_string_quotes,
+)
 from blib2to3.pgen2 import token
+from blib2to3.pytree import Leaf, Node
 
 
 class CannotTransform(Exception):
@@ -122,7 +132,7 @@ def hug_power_op(line: Line, features: Collection[Feature]) -> Iterator[Line]:
 
         return False
 
-    leaves: List[Leaf] = []
+    new_line = line.clone()
     should_hug = False
     for idx, leaf in enumerate(line.leaves):
         new_leaf = leaf.clone()
@@ -140,18 +150,14 @@ def hug_power_op(line: Line, features: Collection[Feature]) -> Iterator[Line]:
         if should_hug:
             new_leaf.prefix = ""
 
-        leaves.append(new_leaf)
+        # We have to be careful to make a new line properly:
+        # - bracket related metadata must be maintained (handled by Line.append)
+        # - comments need to copied over, updating the leaf IDs they're attached to
+        new_line.append(new_leaf, preformatted=True)
+        for comment_leaf in line.comments_after(leaf):
+            new_line.append(comment_leaf, preformatted=True)
 
-    yield Line(
-        mode=line.mode,
-        depth=line.depth,
-        leaves=leaves,
-        comments=line.comments,
-        bracket_tracker=line.bracket_tracker,
-        inside_brackets=line.inside_brackets,
-        should_split_rhs=line.should_split_rhs,
-        magic_trailing_comma=line.magic_trailing_comma,
-    )
+    yield new_line
 
 
 class StringTransformer(ABC):
@@ -548,6 +554,9 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
 
             next_str_idx += 1
 
+        # Take a note on the index of the non-STRING leaf.
+        non_string_idx = next_str_idx
+
         S_leaf = Leaf(token.STRING, S)
         if self.normalize_strings:
             S_leaf.value = normalize_string_quotes(S_leaf.value)
@@ -567,7 +576,18 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
         string_leaf = Leaf(token.STRING, S_leaf.value.replace(BREAK_MARK, ""))
 
         if atom_node is not None:
-            replace_child(atom_node, string_leaf)
+            # If not all children of the atom node are merged (this can happen
+            # when there is a standalone comment in the middle) ...
+            if non_string_idx - string_idx < len(atom_node.children):
+                # We need to replace the old STRING leaves with the new string leaf.
+                first_child_idx = LL[string_idx].remove()
+                for idx in range(string_idx + 1, non_string_idx):
+                    LL[idx].remove()
+                if first_child_idx is not None:
+                    atom_node.insert_child(first_child_idx, string_leaf)
+            else:
+                # Else replace the atom node with the new string leaf.
+                replace_child(atom_node, string_leaf)
 
         # Build the final line ('new_line') that this method will later return.
         new_line = line.clone()
@@ -1024,6 +1044,51 @@ class BaseStringSplitter(StringTransformer):
         max_string_length = self.line_length - offset
         return max_string_length
 
+    @staticmethod
+    def _prefer_paren_wrap_match(LL: List[Leaf]) -> Optional[int]:
+        """
+        Returns:
+            string_idx such that @LL[string_idx] is equal to our target (i.e.
+            matched) string, if this line matches the "prefer paren wrap" statement
+            requirements listed in the 'Requirements' section of the StringParenWrapper
+            class's docstring.
+                OR
+            None, otherwise.
+        """
+        # The line must start with a string.
+        if LL[0].type != token.STRING:
+            return None
+
+        matching_nodes = [
+            syms.listmaker,
+            syms.dictsetmaker,
+            syms.testlist_gexp,
+        ]
+        # If the string is an immediate child of a list/set/tuple literal...
+        if (
+            parent_type(LL[0]) in matching_nodes
+            or parent_type(LL[0].parent) in matching_nodes
+        ):
+            # And the string is surrounded by commas (or is the first/last child)...
+            prev_sibling = LL[0].prev_sibling
+            next_sibling = LL[0].next_sibling
+            if (
+                not prev_sibling
+                and not next_sibling
+                and parent_type(LL[0]) == syms.atom
+            ):
+                # If it's an atom string, we need to check the parent atom's siblings.
+                parent = LL[0].parent
+                assert parent is not None  # For type checkers.
+                prev_sibling = parent.prev_sibling
+                next_sibling = parent.next_sibling
+            if (not prev_sibling or prev_sibling.type == token.COMMA) and (
+                not next_sibling or next_sibling.type == token.COMMA
+            ):
+                return 0
+
+        return None
+
 
 def iter_fexpr_spans(s: str) -> Iterator[Tuple[int, int]]:
     """
@@ -1118,6 +1183,9 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
 
     def do_splitter_match(self, line: Line) -> TMatchResult:
         LL = line.leaves
+
+        if self._prefer_paren_wrap_match(LL) is not None:
+            return TErr("Line needs to be wrapped in parens first.")
 
         is_valid_index = is_valid_index_factory(LL)
 
@@ -1564,8 +1632,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
 
 class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
     """
-    StringTransformer that splits non-"atom" strings (i.e. strings that do not
-    exist on lines by themselves).
+    StringTransformer that wraps strings in parens and then splits at the LPAR.
 
     Requirements:
         All of the requirements listed in BaseStringSplitter's docstring in
@@ -1585,6 +1652,11 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             OR
         * The line is a dictionary key assignment where some valid key is being
         assigned the value of some string.
+            OR
+        * The line starts with an "atom" string that prefers to be wrapped in
+        parens. It's preferred to be wrapped when it's is an immediate child of
+        a list/set/tuple literal, AND the string is surrounded by commas (or is
+        the first/last child).
 
     Transformations:
         The chosen string is wrapped in parentheses and then split at the LPAR.
@@ -1609,6 +1681,9 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         changed such that it no longer needs to be given its own line,
         StringParenWrapper relies on StringParenStripper to clean up the
         parentheses it created.
+
+        For "atom" strings that prefers to be wrapped in parens, it requires
+        StringSplitter to hold the split until the string is wrapped in parens.
     """
 
     def do_splitter_match(self, line: Line) -> TMatchResult:
@@ -1625,6 +1700,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             or self._assert_match(LL)
             or self._assign_match(LL)
             or self._dict_match(LL)
+            or self._prefer_paren_wrap_match(LL)
         )
 
         if string_idx is not None:

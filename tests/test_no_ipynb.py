@@ -1,10 +1,10 @@
-import pytest
-import os
 import pathlib
 
-from tests.util import THIS_DIR
-from black import main, jupyter_dependencies_are_installed
+import pytest
 from click.testing import CliRunner
+
+from black import jupyter_dependencies_are_installed, main
+from tests.util import get_case_path
 
 pytestmark = pytest.mark.no_jupyter
 
@@ -13,7 +13,7 @@ runner = CliRunner()
 
 def test_ipynb_diff_with_no_change_single() -> None:
     jupyter_dependencies_are_installed.cache_clear()
-    path = THIS_DIR / "data/notebook_trailing_newline.ipynb"
+    path = get_case_path("jupyter", "notebook_trailing_newline.ipynb")
     result = runner.invoke(main, [str(path)])
     expected_output = (
         "Skipping .ipynb files as Jupyter dependencies are not installed.\n"
@@ -25,7 +25,7 @@ def test_ipynb_diff_with_no_change_single() -> None:
 def test_ipynb_diff_with_no_change_dir(tmp_path: pathlib.Path) -> None:
     jupyter_dependencies_are_installed.cache_clear()
     runner = CliRunner()
-    nb = os.path.join("tests", "data", "notebook_trailing_newline.ipynb")
+    nb = get_case_path("jupyter", "notebook_trailing_newline.ipynb")
     tmp_nb = tmp_path / "notebook.ipynb"
     with open(nb) as src, open(tmp_nb, "w") as dst:
         dst.write(src.read())

@@ -10,15 +10,7 @@ from argparse import ArgumentParser, Namespace
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache, partial
 from pathlib import Path
-from typing import (
-    Generator,
-    List,
-    NamedTuple,
-    Optional,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import Generator, List, NamedTuple, Optional, Tuple, Union, cast
 from urllib.request import urlopen, urlretrieve
 
 PYPI_INSTANCE = "https://pypi.org/pypi"

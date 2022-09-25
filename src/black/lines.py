@@ -1,7 +1,7 @@
-from collections import deque
-from dataclasses import dataclass, field
 import itertools
 import sys
+from collections import deque
+from dataclasses import dataclass, field
 from typing import (
     Callable,
     Deque,
@@ -15,16 +15,25 @@ from typing import (
     cast,
 )
 
-from blib2to3.pytree import Node, Leaf
-from blib2to3.pgen2 import token
-
-from black.brackets import BracketTracker, DOT_PRIORITY
+from black.brackets import DOT_PRIORITY, BracketTracker
 from black.mode import Mode, Preview
-from black.nodes import STANDALONE_COMMENT, TEST_DESCENDANTS
-from black.nodes import BRACKETS, OPENING_BRACKETS, CLOSING_BRACKETS
-from black.nodes import syms, whitespace, replace_child, child_towards
-from black.nodes import is_multiline_string, is_import, is_type_comment
-from black.nodes import is_one_sequence_between
+from black.nodes import (
+    BRACKETS,
+    CLOSING_BRACKETS,
+    OPENING_BRACKETS,
+    STANDALONE_COMMENT,
+    TEST_DESCENDANTS,
+    child_towards,
+    is_import,
+    is_multiline_string,
+    is_one_sequence_between,
+    is_type_comment,
+    replace_child,
+    syms,
+    whitespace,
+)
+from blib2to3.pgen2 import token
+from blib2to3.pytree import Leaf, Node
 
 # types
 T = TypeVar("T")
@@ -170,6 +179,13 @@ class Line:
             and self.leaves[0].value.startswith(('"""', "'''"))
         )
 
+    @property
+    def opens_block(self) -> bool:
+        """Does this line open a new level of indentation."""
+        if len(self.leaves) == 0:
+            return False
+        return self.leaves[-1].type == token.COLON
+
     def contains_standalone_comments(self, depth_limit: int = sys.maxsize) -> bool:
         """If so, needs to be split before emitting."""
         for leaf in self.leaves:
@@ -259,6 +275,8 @@ class Line:
         - it's not a single-element subscript
         Additionally, if ensure_removable:
         - it's not from square bracket indexing
+        (specifically, single-element square bracket indexing with
+        Preview.skip_magic_trailing_comma_in_subscript)
         """
         if not (
             closing.type in CLOSING_BRACKETS
@@ -287,8 +305,22 @@ class Line:
 
             if not ensure_removable:
                 return True
+
             comma = self.leaves[-1]
-            return bool(comma.parent and comma.parent.type == syms.listmaker)
+            if comma.parent is None:
+                return False
+            if Preview.skip_magic_trailing_comma_in_subscript in self.mode:
+                return (
+                    comma.parent.type != syms.subscriptlist
+                    or closing.opening_bracket is None
+                    or not is_one_sequence_between(
+                        closing.opening_bracket,
+                        closing,
+                        self.leaves,
+                        brackets=(token.LSQB, token.RSQB),
+                    )
+                )
+            return comma.parent.type == syms.listmaker
 
         if self.is_import:
             return True
@@ -533,6 +565,12 @@ class EmptyLineTracker:
         ):
             return 1
 
+        if (
+            Preview.remove_block_trailing_newline in current_line.mode
+            and self.previous_lines_window[-1]
+            and self.previous_lines_window[-1].opens_block
+        ):
+            return 0
         return before
 
     def _maybe_empty_lines_for_class_or_def(

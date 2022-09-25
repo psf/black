@@ -1,4 +1,4 @@
-![Black Logo](https://raw.githubusercontent.com/psf/black/main/docs/_static/logo2-readme.png)
+[![Black Logo](https://raw.githubusercontent.com/psf/black/main/docs/_static/logo2-readme.png)](https://black.readthedocs.io/en/stable/)
 
 <h2 align="center">The Uncompromising Code Formatter</h2>
 
@@ -166,8 +166,8 @@ Twisted and CPython:
 
 > At least the name is good.
 
-**Kenneth Reitz**, creator of [`requests`](http://python-requests.org/) and
-[`pipenv`](https://readthedocs.org/projects/pipenv/):
+**Kenneth Reitz**, creator of [`requests`](https://requests.readthedocs.io/en/latest/)
+and [`pipenv`](https://readthedocs.org/projects/pipenv/):
 
 > This vastly improves the formatting of our code. Thanks a ton!
 

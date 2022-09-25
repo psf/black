@@ -6,48 +6,162 @@
 
 <!-- Include any especially major or disruptive changes here -->
 
-### Style
+- Runtime support for Python 3.6 has been removed. Formatting 3.6 code will still be
+  supported until further notice.
+
+### Stable style
 
 <!-- Changes that affect Black's stable style -->
 
-- Fix unstable formatting involving `# fmt: skip` comments without internal spaces
-  (#2970)
+- Fix a crash when `# fmt: on` is used on a different block level than `# fmt: off`
+  (#3281)
 
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
-- Remove redundant parentheses around awaited objects (#2991)
-- Parentheses around return annotations are now managed (#2990)
-- Remove unnecessary parentheses from `with` statements (#2926)
 - Require one empty line after module-level docstrings (#2996)
+- Fix a crash when formatting some dicts with parenthesis-wrapped long string keys
+  (#3262)
+
+### Configuration
+
+<!-- Changes to how Black can be configured -->
+
+### Packaging
+
+<!-- Changes to how Black is packaged, such as dependency requirements -->
+
+- Hatchling is now used as the build backend. This will not have any effect for users
+  who install Black with its wheels from PyPI. (#3233)
+- Faster compiled wheels are now available for CPython 3.11 (#3276)
+
+### Parser
+
+<!-- Changes to the parser or to version autodetection -->
+
+### Performance
+
+<!-- Changes that improve Black's performance. -->
+
+### Output
+
+<!-- Changes to Black's terminal output and error messages -->
 
 ### _Blackd_
 
 <!-- Changes to blackd -->
 
-### Configuration
+### Integrations
 
-<!-- Changes to how Black can be configured -->
+<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- Update GitHub Action to support use of version specifiers (e.g. `<23`) for Black
+  version (#3265)
 
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
 
+## 22.8.0
+
+### Highlights
+
+- Python 3.11 is now supported, except for _blackd_ as aiohttp does not support 3.11 as
+  of publishing (#3234)
+- This is the last release that supports running _Black_ on Python 3.6 (formatting 3.6
+  code will continue to be supported until further notice)
+- Reword the stability policy to say that we may, in rare cases, make changes that
+  affect code that was not previously formatted by _Black_ (#3155)
+
+### Stable style
+
+- Fix an infinite loop when using `# fmt: on/off` in the middle of an expression or code
+  block (#3158)
+- Fix incorrect handling of `# fmt: skip` on colon (`:`) lines (#3148)
+- Comments are no longer deleted when a line had spaces removed around power operators
+  (#2874)
+
+### Preview style
+
+- Single-character closing docstring quotes are no longer moved to their own line as
+  this is invalid. This was a bug introduced in version 22.6.0. (#3166)
+- `--skip-string-normalization` / `-S` now prevents docstring prefixes from being
+  normalized as expected (#3168)
+- When using `--skip-magic-trailing-comma` or `-C`, trailing commas are stripped from
+  subscript expressions with more than 1 element (#3209)
+- Implicitly concatenated strings inside a list, set, or tuple are now wrapped inside
+  parentheses (#3162)
+- Fix a string merging/split issue when a comment is present in the middle of implicitly
+  concatenated strings on its own line (#3227)
+
+### _Blackd_
+
+- `blackd` now supports enabling the preview style via the `X-Preview` header (#3217)
+
+### Configuration
+
+- Black now uses the presence of debug f-strings to detect target version (#3215)
+- Fix misdetection of project root and verbose logging of sources in cases involving
+  `--stdin-filename` (#3216)
+- Immediate `.gitignore` files in source directories given on the command line are now
+  also respected, previously only `.gitignore` files in the project root and
+  automatically discovered directories were respected (#3237)
+
+### Documentation
+
+- Recommend using BlackConnect in IntelliJ IDEs (#3150)
+
 ### Integrations
 
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+- Vim plugin: prefix messages with `Black: ` so it's clear they come from Black (#3194)
+- Docker: changed to a /opt/venv installation + added to PATH to be available to
+  non-root users (#3202)
+- Vim plugin: add flag (`g:black_preview`) to enable/disable the preview style (#3246)
 
 ### Output
 
-<!-- Changes to Black's terminal output and error messages -->
+- Change from deprecated `asyncio.get_event_loop()` to create our event loop which
+  removes DeprecationWarning (#3164)
+- Remove logging from internal `blib2to3` library since it regularly emits error logs
+  about failed caching that can and should be ignored (#3193)
 
-- Output python version and implementation as part of `--version` flag (#2997)
+### Parser
+
+- Type comments are now included in the AST equivalence check consistently so accidental
+  deletion raises an error. Though type comments can't be tracked when running on PyPy
+  3.7 due to standard library limitations. (#2874)
+
+### Performance
+
+- Reduce Black's startup time when formatting a single file by 15-30% (#3211)
+
+## 22.6.0
+
+### Style
+
+- Fix unstable formatting involving `#fmt: skip` and `# fmt:skip` comments (notice the
+  lack of spaces) (#2970)
+
+### Preview style
+
+- Docstring quotes are no longer moved if it would violate the line length limit (#3044)
+- Parentheses around return annotations are now managed (#2990)
+- Remove unnecessary parentheses around awaited objects (#2991)
+- Remove unnecessary parentheses in `with` statements (#2926)
+- Remove trailing newlines after code block open (#3035)
+
+### Integrations
+
+- Add `scripts/migrate-black.py` script to ease introduction of Black to a Git project
+  (#3038)
+
+### Output
+
+- Output Python version and implementation as part of `--version` flag (#2997)
 
 ### Packaging
-
-<!-- Changes to how Black is packaged, such as dependency requirements -->
 
 - Use `tomli` instead of `tomllib` on Python 3.11 builds where `tomllib` is not
   available (#2987)
@@ -56,16 +170,12 @@
 
 - [PEP 654](https://peps.python.org/pep-0654/#except) syntax (for example,
   `except *ExceptionGroup:`) is now supported (#3016)
-
-<!-- Changes to the parser or to version autodetection -->
-
-### Performance
-
-<!-- Changes that improve Black's performance. -->
+- [PEP 646](https://peps.python.org/pep-0646) syntax (for example,
+  `Array[Batch, *Shape]` or `def fn(*args: *T) -> None`) is now supported (#3071)
 
 ### Vim Plugin
 
-- Fixed strtobool function. It didn't parse true/on/false/off. (#3025)
+- Fix `strtobool` function. It didn't parse true/on/false/off. (#3025)
 
 ## 22.3.0
 
@@ -94,7 +204,7 @@
 
 ### Output
 
-- In verbose, mode, log when _Black_ is using user-level config (#2861)
+- In verbose mode, log when _Black_ is using user-level config (#2861)
 
 ### Packaging
 

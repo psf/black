@@ -8,6 +8,7 @@ from typing import Set, Tuple
 
 try:
     from aiohttp import web
+
     from .middlewares import cors
 except ImportError as ie:
     raise ImportError(
@@ -16,11 +17,11 @@ except ImportError as ie:
         + "to obtain aiohttp_cors: `pip install black[d]`"
     ) from None
 
-import black
-from black.concurrency import maybe_install_uvloop
 import click
 
+import black
 from _black_version import version as __version__
+from black.concurrency import maybe_install_uvloop
 
 # This is used internally by tests to shut down the server prematurely
 _stop_signal = asyncio.Event()
@@ -31,6 +32,7 @@ LINE_LENGTH_HEADER = "X-Line-Length"
 PYTHON_VARIANT_HEADER = "X-Python-Variant"
 SKIP_STRING_NORMALIZATION_HEADER = "X-Skip-String-Normalization"
 SKIP_MAGIC_TRAILING_COMMA = "X-Skip-Magic-Trailing-Comma"
+PREVIEW = "X-Preview"
 FAST_OR_SAFE_HEADER = "X-Fast-Or-Safe"
 DIFF_HEADER = "X-Diff"
 
@@ -40,6 +42,7 @@ BLACK_HEADERS = [
     PYTHON_VARIANT_HEADER,
     SKIP_STRING_NORMALIZATION_HEADER,
     SKIP_MAGIC_TRAILING_COMMA,
+    PREVIEW,
     FAST_OR_SAFE_HEADER,
     DIFF_HEADER,
 ]
@@ -108,6 +111,7 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
         skip_magic_trailing_comma = bool(
             request.headers.get(SKIP_MAGIC_TRAILING_COMMA, False)
         )
+        preview = bool(request.headers.get(PREVIEW, False))
         fast = False
         if request.headers.get(FAST_OR_SAFE_HEADER, "safe") == "fast":
             fast = True
@@ -117,6 +121,7 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
             line_length=line_length,
             string_normalization=not skip_string_normalization,
             magic_trailing_comma=not skip_magic_trailing_comma,
+            preview=preview,
         )
         req_bytes = await request.content.read()
         charset = request.charset if request.charset is not None else "utf8"
