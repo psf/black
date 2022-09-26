@@ -131,3 +131,38 @@ with open("bla.txt") as f, open("x"):
 async def main():
     await asyncio.sleep(1)
 ```
+
+### Enforced newline after module docstrings
+
+A single blank line after module docstrings will be enforced, this applies to single and
+multi-line docstrings.
+
+```python
+"""Utility functions and constants."""
+import functools
+```
+
+```python
+"""
+Utility functions and constants.
+"""
+
+
+import functools
+```
+
+will be changed to:
+
+```python
+"""Utility functions and constants."""
+
+import functools
+```
+
+```python
+"""
+Utility functions and constants.
+"""
+
+import functools
+```
