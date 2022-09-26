@@ -63,7 +63,7 @@ jobs:
           CIBW_ARCHS_MACOS: "${{ matrix.macos_arch }}"
 
       - name: Upload wheels as workflow artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.name }}-mypyc-wheels
           path: ./wheelhouse/*.whl
