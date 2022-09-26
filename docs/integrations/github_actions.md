@@ -39,6 +39,10 @@ or just the version number if you want an exact version. The action defaults to 
 latest release available on PyPI. Only versions available from PyPI are supported, so no
 commit SHAs or branch names.
 
+If you want to include Jupyter Notebooks, _Black_ must be installed with the `jupyter`
+extra. Installing the extra and including Jupyter Notebook files can be configured via
+`jupyter` (default is `false`).
+
 You can also configure the arguments passed to _Black_ via `options` (defaults to
 `'--check --diff'`) and `src` (default is `'.'`)
 
@@ -49,6 +53,7 @@ Here's an example configuration:
   with:
     options: "--check --verbose"
     src: "./src"
+    jupyter: true
     version: "21.5b1"
 ```
 

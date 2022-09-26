@@ -12,6 +12,11 @@ inputs:
     description: "Source to run Black. Default: '.'"
     required: false
     default: "."
+  jupyter:
+    description:
+      "Set this option to true to include Jupyter Notebook files. Default: false"
+    required: false
+    default: false
   black_args:
     description: "[DEPRECATED] Black input arguments."
     required: false
@@ -38,6 +43,7 @@ runs:
         # TODO: Remove once https://github.com/actions/runner/issues/665 is fixed.
         INPUT_OPTIONS: ${{ inputs.options }}
         INPUT_SRC: ${{ inputs.src }}
+        INPUT_JUPYTER: ${{ inputs.jupyter }}
         INPUT_BLACK_ARGS: ${{ inputs.black_args }}
         INPUT_VERSION: ${{ inputs.version }}
         pythonioencoding: utf-8
