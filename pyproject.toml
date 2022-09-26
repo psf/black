@@ -142,7 +142,7 @@ exclude = [
 options = { debug_level = "0" }
 
 [tool.cibuildwheel]
-build-verbosity = 1
+build-verbosity = 2
 # So these are the environments we target:
 # - Python: CPython 3.7+ only
 # - Architecture (64-bit only): amd64 / x86_64, universal2, and arm64
