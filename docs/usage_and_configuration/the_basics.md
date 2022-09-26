@@ -204,9 +204,10 @@ code in compliance with many other _Black_ formatted projects.
 
 [PEP 518](https://www.python.org/dev/peps/pep-0518/) defines `pyproject.toml` as a
 configuration file to store build system requirements for Python projects. With the help
-of tools like [Poetry](https://python-poetry.org/) or
-[Flit](https://flit.readthedocs.io/en/latest/) it can fully replace the need for
-`setup.py` and `setup.cfg` files.
+of tools like [Poetry](https://python-poetry.org/),
+[Flit](https://flit.readthedocs.io/en/latest/), or
+[Hatch](https://hatch.pypa.io/latest/) it can fully replace the need for `setup.py` and
+`setup.cfg` files.
 
 ### Where _Black_ looks for the file
 

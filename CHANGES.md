@@ -6,9 +6,15 @@
 
 <!-- Include any especially major or disruptive changes here -->
 
+- Runtime support for Python 3.6 has been removed. Formatting 3.6 code will still be
+  supported until further notice.
+
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
+
+- Fix a crash when `# fmt: on` is used on a different block level than `# fmt: off`
+  (#3281)
 
 ### Preview style
 
@@ -25,6 +31,13 @@
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
+
+- Executables made with PyInstaller will no longer crash when formatting several files
+  at once on macOS. Native x86-64 executables for macOS are available once again.
+  (#3275)
+- Hatchling is now used as the build backend. This will not have any effect for users
+  who install Black with its wheels from PyPI. (#3233)
+- Faster compiled wheels are now available for CPython 3.11 (#3276)
 
 ### Parser
 
@@ -45,6 +58,9 @@
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- Update GitHub Action to support use of version specifiers (e.g. `<23`) for Black
+  version (#3265)
 
 ### Documentation
 

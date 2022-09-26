@@ -26,7 +26,8 @@ if sys.version_info >= (3, 11):
         import tomllib
     except ImportError:
         # Help users on older alphas
-        import tomli as tomllib
+        if not TYPE_CHECKING:
+            import tomli as tomllib
 else:
     import tomli as tomllib
 
