@@ -14,7 +14,7 @@ inputs:
     default: "."
   jupyter:
     description:
-      "Set this option to true to include Jupyter Notebooks files. Default: false"
+      "Set this option to true to include Jupyter Notebook files. Default: false"
     required: false
     default: false
   black_args:
