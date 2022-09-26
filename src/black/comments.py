@@ -270,8 +270,7 @@ def _generate_ignored_nodes_from_fmt_skip(
         while "\n" not in prev_sibling.prefix and prev_sibling.prev_sibling is not None:
             prev_sibling = prev_sibling.prev_sibling
             siblings.insert(0, prev_sibling)
-        for sibling in siblings:
-            yield sibling
+        yield from siblings
     elif (
         parent is not None and parent.type == syms.suite and leaf.type == token.NEWLINE
     ):
