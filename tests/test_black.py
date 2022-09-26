@@ -1577,6 +1577,7 @@ class BlackTestCase(BlackBaseTestCase):
             (">=3.10", TargetVersion.PY310),
             (">3.6,<3.10", TargetVersion.PY37),
             ("==3.8.*", TargetVersion.PY38),
+            ("==3.*", TargetVersion.PY33),
             (">=3.8.6", TargetVersion.PY38),
             ("> 3.7.4, != 3.8.8", TargetVersion.PY37),
             (">3.7,!=3.8", TargetVersion.PY39),
