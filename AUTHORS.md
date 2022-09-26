@@ -29,6 +29,7 @@ Multiple contributions by:
 - [Andrey](mailto:dyuuus@yandex.ru)
 - [Andy Freeland](mailto:andy@andyfreeland.net)
 - [Anthony Sottile](mailto:asottile@umich.edu)
+- [Antonio Ossa Guerra](mailto:aaossa+black@uc.cl)
 - [Arjaan Buijk](mailto:arjaan.buijk@gmail.com)
 - [Arnav Borbornah](mailto:arnavborborah11@gmail.com)
 - [Artem Malyshev](mailto:proofit404@gmail.com)
