@@ -20,9 +20,9 @@
 
 <!-- Changes that affect Black's preview style -->
 
-- Require one empty line after module-level docstrings (#2996)
 - Fix a crash when formatting some dicts with parenthesis-wrapped long string keys
   (#3262)
+- Require one empty line after module-level docstrings (#3287)
 
 ### Configuration
 
