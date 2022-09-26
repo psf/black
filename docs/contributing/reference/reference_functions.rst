@@ -137,9 +137,9 @@ Utilities
 
 .. autofunction:: black.comments.is_fmt_on
 
-.. autofunction:: black.comments.contains_fmt_on_at_column
+.. autofunction:: black.comments.children_contains_fmt_on
 
-.. autofunction:: black.nodes.first_leaf_column
+.. autofunction:: black.nodes.first_leaf_of
 
 .. autofunction:: black.linegen.generate_trailers_to_omit
 

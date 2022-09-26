@@ -148,7 +148,7 @@ curl https://raw.githubusercontent.com/psf/black/stable/autoload/black.vim -o ~/
 Let me know if this requires any changes to work with Vim 8's builtin `packadd`, or
 Pathogen, and so on.
 
-This plugin **requires Vim 7.0+ built with Python 3.6+ support**. It needs Python 3.6 to
+This plugin **requires Vim 7.0+ built with Python 3.7+ support**. It needs Python 3.7 to
 be able to run _Black_ inside the Vim process which is much faster than calling an
 external command.
 

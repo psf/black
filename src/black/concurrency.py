@@ -58,12 +58,7 @@ def shutdown(loop: asyncio.AbstractEventLoop) -> None:
 
         for task in to_cancel:
             task.cancel()
-        if sys.version_info >= (3, 7):
-            loop.run_until_complete(asyncio.gather(*to_cancel, return_exceptions=True))
-        else:
-            loop.run_until_complete(
-                asyncio.gather(*to_cancel, loop=loop, return_exceptions=True)
-            )
+        loop.run_until_complete(asyncio.gather(*to_cancel, return_exceptions=True))
     finally:
         # `concurrent.futures.Future` objects cannot be cancelled once they
         # are already running. There might be some when the `shutdown()` happened.
@@ -191,9 +186,6 @@ async def schedule_formatting(
                     sources_to_cache.append(src)
                 report.done(src, changed)
     if cancelled:
-        if sys.version_info >= (3, 7):
-            await asyncio.gather(*cancelled, return_exceptions=True)
-        else:
-            await asyncio.gather(*cancelled, loop=loop, return_exceptions=True)
+        await asyncio.gather(*cancelled, return_exceptions=True)
     if sources_to_cache:
         write_cache(cache, sources_to_cache, mode)

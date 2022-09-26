@@ -3,10 +3,10 @@ name: diff-shades
 on:
   push:
     branches: [main]
-    paths: ["src/**", "setup.*", "pyproject.toml", ".github/workflows/*"]
+    paths: ["src/**", "pyproject.toml", ".github/workflows/*"]
 
   pull_request:
-    paths: ["src/**", "setup.*", "pyproject.toml", ".github/workflows/*"]
+    paths: ["src/**", "pyproject.toml", ".github/workflows/*"]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
@@ -41,6 +41,7 @@ jobs:
     needs: configure
     runs-on: ubuntu-latest
     env:
+      HATCH_BUILD_HOOKS_ENABLE: "1"
       # Clang is less picky with the C code it's given than gcc (and may
       # generate faster binaries too).
       CC: clang-12
@@ -64,7 +65,6 @@ jobs:
         run: |
           python -m pip install https://github.com/ichard26/diff-shades/archive/stable.zip
           python -m pip install click packaging urllib3
-          python -m pip install -r .github/mypyc-requirements.txt
           # After checking out old revisions, this might not exist so we'll use a copy.
           cat scripts/diff_shades_gha_helper.py > helper.py
           git config user.name "diff-shades-gha"
@@ -83,8 +83,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: >
           ${{ matrix.baseline-setup-cmd }}
-          && python setup.py --use-mypyc bdist_wheel
-          && python -m pip install dist/*.whl && rm build dist -r
+          && python -m pip install .
 
       - name: Analyze baseline revision
         if: steps.baseline-cache.outputs.cache-hit != 'true'
@@ -97,8 +96,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: >
           ${{ matrix.target-setup-cmd }}
-          && python setup.py --use-mypyc bdist_wheel
-          && python -m pip install dist/*.whl
+          && python -m pip install .
 
       - name: Analyze target revision
         run: >

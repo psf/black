@@ -14,11 +14,12 @@ from black.nodes import (
     STANDALONE_COMMENT,
     WHITESPACE,
     container_of,
-    first_leaf_column,
+    first_leaf_of,
     preceding_leaf,
+    syms,
 )
 from blib2to3.pgen2 import token
-from blib2to3.pytree import Leaf, Node, type_repr
+from blib2to3.pytree import Leaf, Node
 
 # types
 LN = Union[Leaf, Node]
@@ -230,7 +231,7 @@ def generate_ignored_nodes(
             return
 
         # fix for fmt: on in children
-        if contains_fmt_on_at_column(container, leaf.column, preview=preview):
+        if children_contains_fmt_on(container, preview=preview):
             for child in container.children:
                 if isinstance(child, Leaf) and is_fmt_on(child, preview=preview):
                     if child.type in CLOSING_BRACKETS:
@@ -240,10 +241,14 @@ def generate_ignored_nodes(
                         # The alternative is to fail the formatting.
                         yield child
                     return
-                if contains_fmt_on_at_column(child, leaf.column, preview=preview):
+                if children_contains_fmt_on(child, preview=preview):
                     return
                 yield child
         else:
+            if container.type == token.DEDENT and container.next_sibling is None:
+                # This can happen when there is no matching `# fmt: on` comment at the
+                # same level as `# fmt: on`. We need to keep this DEDENT.
+                return
             yield container
             container = container.next_sibling
 
@@ -265,12 +270,9 @@ def _generate_ignored_nodes_from_fmt_skip(
         while "\n" not in prev_sibling.prefix and prev_sibling.prev_sibling is not None:
             prev_sibling = prev_sibling.prev_sibling
             siblings.insert(0, prev_sibling)
-        for sibling in siblings:
-            yield sibling
+        yield from siblings
     elif (
-        parent is not None
-        and type_repr(parent.type) == "suite"
-        and leaf.type == token.NEWLINE
+        parent is not None and parent.type == syms.suite and leaf.type == token.NEWLINE
     ):
         # The `# fmt: skip` is on the colon line of the if/while/def/class/...
         # statements. The ignored nodes should be previous siblings of the
@@ -278,7 +280,7 @@ def _generate_ignored_nodes_from_fmt_skip(
         leaf.prefix = ""
         ignored_nodes: List[LN] = []
         parent_sibling = parent.prev_sibling
-        while parent_sibling is not None and type_repr(parent_sibling.type) != "suite":
+        while parent_sibling is not None and parent_sibling.type != syms.suite:
             ignored_nodes.insert(0, parent_sibling)
             parent_sibling = parent_sibling.prev_sibling
         # Special case for `async_stmt` where the ASYNC token is on the
@@ -306,17 +308,12 @@ def is_fmt_on(container: LN, preview: bool) -> bool:
     return fmt_on
 
 
-def contains_fmt_on_at_column(container: LN, column: int, *, preview: bool) -> bool:
-    """Determine if children at a given column have formatting switched on."""
+def children_contains_fmt_on(container: LN, *, preview: bool) -> bool:
+    """Determine if children have formatting switched on."""
     for child in container.children:
-        if (
-            isinstance(child, Node)
-            and first_leaf_column(child) == column
-            or isinstance(child, Leaf)
-            and child.column == column
-        ):
-            if is_fmt_on(child, preview=preview):
-                return True
+        leaf = first_leaf_of(child)
+        if leaf is not None and is_fmt_on(leaf, preview=preview):
+            return True
 
     return False
 

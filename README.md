@@ -1,4 +1,4 @@
-![Black Logo](https://raw.githubusercontent.com/psf/black/main/docs/_static/logo2-readme.png)
+[![Black Logo](https://raw.githubusercontent.com/psf/black/main/docs/_static/logo2-readme.png)](https://black.readthedocs.io/en/stable/)
 
 <h2 align="center">The Uncompromising Code Formatter</h2>
 
@@ -38,9 +38,8 @@ Try it out now using the [Black Playground](https://black.vercel.app). Watch the
 
 ### Installation
 
-_Black_ can be installed by running `pip install black`. It requires Python 3.6.2+ to
-run. If you want to format Jupyter Notebooks, install with
-`pip install 'black[jupyter]'`.
+_Black_ can be installed by running `pip install black`. It requires Python 3.7+ to run.
+If you want to format Jupyter Notebooks, install with `pip install 'black[jupyter]'`.
 
 If you can't wait for the latest _hotness_ and want to install from GitHub, use:
 
