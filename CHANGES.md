@@ -31,6 +31,9 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
+- Executables made with PyInstaller will no longer crash when formatting several files
+  at once on macOS. Native x86-64 executables for macOS are available once again.
+  (#3275)
 - Hatchling is now used as the build backend. This will not have any effect for users
   who install Black with its wheels from PyPI. (#3233)
 - Faster compiled wheels are now available for CPython 3.11 (#3276)
