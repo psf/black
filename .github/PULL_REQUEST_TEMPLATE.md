@@ -18,7 +18,7 @@
     Tests are required for bugfixes and new features. Documentation changes
     are necessary for formatting and most enhancement changes. -->
 
-- [ ] Add a CHANGELOG entry if necessary?
+- [ ] Add a CHANGELOG entry if necessary (CHANGES.md) ?
 - [ ] Add / update tests if necessary?
 - [ ] Add new / update outdated documentation?
 
