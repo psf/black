@@ -27,6 +27,9 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Add `--skip-source-first-line` / `-x` option to ignore the first line of source code
+  while formatting (#3299)
+
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
