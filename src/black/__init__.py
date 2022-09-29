@@ -249,6 +249,12 @@ def validate_regex(
     default=[],
 )
 @click.option(
+    "-x",
+    "--skip-source-first-line",
+    is_flag=True,
+    help="Skip the first line of the source code.",
+)
+@click.option(
     "-S",
     "--skip-string-normalization",
     is_flag=True,
@@ -428,6 +434,7 @@ def main(  # noqa: C901
     pyi: bool,
     ipynb: bool,
     python_cell_magics: Sequence[str],
+    skip_source_first_line: bool,
     skip_string_normalization: bool,
     skip_magic_trailing_comma: bool,
     experimental_string_processing: bool,
@@ -528,6 +535,7 @@ def main(  # noqa: C901
         line_length=line_length,
         is_pyi=pyi,
         is_ipynb=ipynb,
+        skip_source_first_line=skip_source_first_line,
         string_normalization=not skip_string_normalization,
         magic_trailing_comma=not skip_magic_trailing_comma,
         experimental_string_processing=experimental_string_processing,
@@ -904,6 +912,10 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
     if not src_contents.strip():
         raise NothingChanged
 
+    header = sep = ""
+    if mode.skip_source_first_line:
+        header, sep, src_contents = src_contents.partition("\n")
+
     if mode.is_ipynb:
         dst_contents = format_ipynb_string(src_contents, fast=fast, mode=mode)
     else:
@@ -914,6 +926,8 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
     if not fast and not mode.is_ipynb:
         # Jupyter notebooks will already have been checked above.
         check_stability_and_equivalence(src_contents, dst_contents, mode=mode)
+
+    dst_contents = header + sep + dst_contents
     return dst_contents
 
 
