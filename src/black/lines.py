@@ -449,6 +449,27 @@ class Line:
 
 
 @dataclass
+class LinesBlock:
+    """Class that holds information about a block of formatted lines.
+
+    This is introduced so that the EmptyLineTracker can look behind the standalone
+    comments and adjust their empty lines for class or def lines.
+    """
+
+    mode: Mode
+    previous_block: Optional["LinesBlock"]
+    before: int = 0
+    content_lines: List[str] = field(default_factory=list)
+    after: int = 0
+
+    def all_lines(self) -> List[str]:
+        empty_line = str(Line(mode=self.mode))
+        return (
+            [empty_line * self.before] + self.content_lines + [empty_line * self.after]
+        )
+
+
+@dataclass
 class EmptyLineTracker:
     """Provides a stateful method that returns the number of potential extra
     empty lines needed before and after the currently processed line.
@@ -458,33 +479,50 @@ class EmptyLineTracker:
     are consumed by `maybe_empty_lines()` and included in the computation.
     """
 
-    is_pyi: bool = False
+    mode: Mode
     previous_line: Optional[Line] = None
-    previous_after: int = 0
+    previous_block: Optional[LinesBlock] = None
     previous_defs: List[int] = field(default_factory=list)
+    semantic_leading_comment: Optional[LinesBlock] = None
 
-    def maybe_empty_lines(self, current_line: Line) -> Tuple[int, int]:
+    def maybe_empty_lines(self, current_line: Line) -> LinesBlock:
         """Return the number of extra empty lines before and after the `current_line`.
 
         This is for separating `def`, `async def` and `class` with extra empty
         lines (two on module-level).
         """
         before, after = self._maybe_empty_lines(current_line)
+        previous_after = self.previous_block.after if self.previous_block else 0
         before = (
             # Black should not insert empty lines at the beginning
             # of the file
             0
             if self.previous_line is None
-            else before - self.previous_after
+            else before - previous_after
         )
-        self.previous_after = after
+        block = LinesBlock(mode=self.mode, previous_block=self.previous_block)
+        block.before = before
+        block.after = after
+
+        # Maintain the semantic_leading_comment state.
+        if current_line.is_comment:
+            if (
+                self.semantic_leading_comment is None
+                or self.previous_line is None
+                or (before and not self.previous_line.is_decorator)
+            ):
+                self.semantic_leading_comment = block
+        elif not current_line.is_decorator:
+            self.semantic_leading_comment = None
+
         self.previous_line = current_line
-        return before, after
+        self.previous_block = block
+        return block
 
     def _maybe_empty_lines(self, current_line: Line) -> Tuple[int, int]:
         max_allowed = 1
         if current_line.depth == 0:
-            max_allowed = 1 if self.is_pyi else 2
+            max_allowed = 1 if self.mode.is_pyi else 2
         if current_line.leaves:
             # Consume the first leaf's extra newlines.
             first_leaf = current_line.leaves[0]
@@ -495,7 +533,7 @@ class EmptyLineTracker:
             before = 0
         depth = current_line.depth
         while self.previous_defs and self.previous_defs[-1] >= depth:
-            if self.is_pyi:
+            if self.mode.is_pyi:
                 assert self.previous_line is not None
                 if depth and not current_line.is_def and self.previous_line.is_def:
                     # Empty lines between attributes and methods should be preserved.
@@ -563,7 +601,7 @@ class EmptyLineTracker:
             return 0, 0
 
         if self.previous_line.is_decorator:
-            if self.is_pyi and current_line.is_stub_class:
+            if self.mode.is_pyi and current_line.is_stub_class:
                 # Insert an empty line after a decorated stub class
                 return 0, 1
 
@@ -574,14 +612,25 @@ class EmptyLineTracker:
         ):
             return 0, 0
 
+        comment_to_add_newlines: Optional[LinesBlock] = None
         if (
             self.previous_line.is_comment
             and self.previous_line.depth == current_line.depth
             and before == 0
         ):
-            return 0, 0
+            slc = self.semantic_leading_comment
+            if (
+                Preview.empty_lines_before_class_or_def_with_leading_comments
+                in current_line.mode
+                and slc is not None
+                and slc.previous_block is not None
+                and slc.before <= 1
+            ):
+                comment_to_add_newlines = slc
+            else:
+                return 0, 0
 
-        if self.is_pyi:
+        if self.mode.is_pyi:
             if current_line.is_class or self.previous_line.is_class:
                 if self.previous_line.depth < current_line.depth:
                     newlines = 0
@@ -609,6 +658,13 @@ class EmptyLineTracker:
                 newlines = 0
         else:
             newlines = 1 if current_line.depth else 2
+        if comment_to_add_newlines is not None:
+            previous_block = comment_to_add_newlines.previous_block
+            if previous_block is not None:
+                comment_to_add_newlines.before = (
+                    max(comment_to_add_newlines.before, newlines) - previous_block.after
+                )
+                newlines = 0
         return newlines, 0
 
 
