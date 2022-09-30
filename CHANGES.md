@@ -14,6 +14,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Enforce empty lines before classes and functions with sticky leading comments (#3302)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
