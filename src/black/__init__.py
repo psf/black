@@ -1098,6 +1098,8 @@ def _format_str_once(src_contents: str, *, mode: Mode) -> str:
             current_line, mode=mode, features=split_line_features
         ):
             block.content_lines.append(str(line))
+    if dst_blocks:
+        dst_blocks[-1].after = 0
     dst_contents = []
     for block in dst_blocks:
         dst_contents.extend(block.all_lines())
