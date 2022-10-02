@@ -27,7 +27,7 @@
 
 <!-- Changes to how Black can be configured -->
 
-\.ipynb_checkpoints
+- `.ipynb_checkpoints` directories are now excluded by default (#3293)
 
 ### Packaging
 
