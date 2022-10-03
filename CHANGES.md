@@ -22,6 +22,8 @@
 
 - Fix a crash when formatting some dicts with parenthesis-wrapped long string keys
   (#3262)
+- Implicitly concatenated strings used as function args are now wrapped inside
+  parentheses (#3307)
 
 ### Configuration
 
