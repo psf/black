@@ -3,7 +3,7 @@
 myst-parser==0.18.1
 Sphinx==5.2.3
 # Older versions break Sphinx even though they're declared to be supported.
-docutils==0.18.1
+docutils==0.19
 sphinxcontrib-programoutput==0.17
 sphinx_copybutton==0.5.0
 furo==2022.9.29
