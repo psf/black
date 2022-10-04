@@ -1286,6 +1286,17 @@ class BlackTestCase(BlackBaseTestCase):
             if nl == "\n":
                 self.assertNotIn(b"\r\n", output)
 
+    def test_normalize_line_endings(self) -> None:
+        with TemporaryDirectory() as workspace:
+            test_file = Path(workspace) / "test.py"
+            for data, expected in (
+                (b"c\r\nc\n ", b"c\r\nc\r\n"),
+                (b"l\nl\r\n ", b"l\nl\n"),
+            ):
+                test_file.write_bytes(data)
+                ff(test_file, write_back=black.WriteBack.YES)
+                self.assertEqual(test_file.read_bytes(), expected)
+
     def test_assert_equivalent_different_asts(self) -> None:
         with self.assertRaises(AssertionError):
             black.assert_equivalent("{}", "None")

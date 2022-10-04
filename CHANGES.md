@@ -54,7 +54,7 @@
 
 ### _Blackd_
 
-<!-- Changes to blackd -->
+- Windows style (CRLF) newlines will be preserved (#3257).
 
 ### Integrations
 
