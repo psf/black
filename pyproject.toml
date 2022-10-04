@@ -163,9 +163,6 @@ test-skip = ["*-macosx_arm64", "*-macosx_universal2:arm64"]
 HATCH_BUILD_HOOKS_ENABLE = "1"
 MYPYC_OPT_LEVEL = "3"
 MYPYC_DEBUG_LEVEL = "0"
-# The dependencies required to build wheels with mypyc aren't specified in
-# [build-system].requires so we'll have to manage the build environment ourselves.
-PIP_NO_BUILD_ISOLATION = "no"
 # CPython 3.11 wheels aren't available for aiohttp and building a Cython extension
 # from source also doesn't work.
 AIOHTTP_NO_EXTENSIONS = "1"
