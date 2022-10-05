@@ -513,6 +513,8 @@ class EmptyLineTracker:
         if current_line.is_comment:
             if self.previous_line is None or (
                 not self.previous_line.is_decorator
+                # `or before` means this comment already has an empty line before
+                and (not self.previous_line.is_comment or before)
                 and (self.semantic_leading_comment is None or before)
             ):
                 self.semantic_leading_comment = block

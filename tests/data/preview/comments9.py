@@ -37,6 +37,7 @@ some = statement
 # leading 1
 @deco1
 # leading 2
+# leading 2 extra
 @deco2(with_args=True)
 # leading 3
 @deco3
@@ -158,6 +159,7 @@ some = statement
 # leading 1
 @deco1
 # leading 2
+# leading 2 extra
 @deco2(with_args=True)
 # leading 3
 @deco3
