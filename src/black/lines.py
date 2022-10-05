@@ -458,6 +458,7 @@ class LinesBlock:
 
     mode: Mode
     previous_block: Optional["LinesBlock"]
+    is_class: bool  # Whether the original line is a class def.
     before: int = 0
     content_lines: List[str] = field(default_factory=list)
     after: int = 0
@@ -500,7 +501,11 @@ class EmptyLineTracker:
             if self.previous_line is None
             else before - previous_after
         )
-        block = LinesBlock(mode=self.mode, previous_block=self.previous_block)
+        block = LinesBlock(
+            mode=self.mode,
+            previous_block=self.previous_block,
+            is_class=current_line.is_class,
+        )
         block.before = before
         block.after = after
 
@@ -623,6 +628,7 @@ class EmptyLineTracker:
                 in current_line.mode
                 and slc is not None
                 and slc.previous_block is not None
+                and not slc.previous_block.is_class
                 and slc.before <= 1
             ):
                 comment_to_add_newlines = slc

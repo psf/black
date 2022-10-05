@@ -98,6 +98,13 @@ else:
         pass
 
 
+class MyClass:
+    # First method has no empty lines between bare class def.
+    # More comments.
+    def first_method(self):
+        pass
+
+
 # output
 
 
@@ -221,4 +228,11 @@ else:
 
     # More leading comments
     def top_level_quote_inline_after_else():
+        pass
+
+
+class MyClass:
+    # First method has no empty lines between bare class def.
+    # More comments.
+    def first_method(self):
         pass
