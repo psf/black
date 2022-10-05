@@ -506,10 +506,9 @@ class EmptyLineTracker:
 
         # Maintain the semantic_leading_comment state.
         if current_line.is_comment:
-            if (
-                self.semantic_leading_comment is None
-                or self.previous_line is None
-                or (before and not self.previous_line.is_decorator)
+            if self.previous_line is None or (
+                not self.previous_line.is_decorator
+                and (self.semantic_leading_comment is None or before)
             ):
                 self.semantic_leading_comment = block
         elif not current_line.is_decorator:

@@ -40,6 +40,7 @@ some = statement
 @deco2(with_args=True)
 # leading 3
 @deco3
+# leading 4
 def decorated():
     pass
 
@@ -52,6 +53,20 @@ some = statement
 
 # leading 3 that already has an empty line
 @deco3
+# leading 4
+def decorated_with_split_leading_comments():
+    pass
+
+
+some = statement
+# leading 1
+@deco1
+# leading 2
+@deco2(with_args=True)
+# leading 3
+@deco3
+
+# leading 4 that already has an empty line
 def decorated_with_split_leading_comments():
     pass
 
@@ -139,6 +154,7 @@ some = statement
 @deco2(with_args=True)
 # leading 3
 @deco3
+# leading 4
 def decorated():
     pass
 
@@ -153,6 +169,22 @@ some = statement
 
 # leading 3 that already has an empty line
 @deco3
+# leading 4
+def decorated_with_split_leading_comments():
+    pass
+
+
+some = statement
+
+
+# leading 1
+@deco1
+# leading 2
+@deco2(with_args=True)
+# leading 3
+@deco3
+
+# leading 4 that already has an empty line
 def decorated_with_split_leading_comments():
     pass
 
