@@ -209,3 +209,20 @@ class BlackDTestCase(AioHTTPTestCase):  # type: ignore[misc]
         response = await self.client.post("/", headers={"Origin": "*"})
         self.assertIsNotNone(response.headers.get("Access-Control-Allow-Origin"))
         self.assertIsNotNone(response.headers.get("Access-Control-Expose-Headers"))
+
+    @unittest_run_loop
+    async def test_preserves_line_endings(self) -> None:
+        for data in (b"c\r\nc\r\n", b"l\nl\n"):
+            # test preserved newlines when reformatted
+            response = await self.client.post("/", data=data + b" ")
+            self.assertEqual(await response.text(), data.decode())
+            # test 204 when no change
+            response = await self.client.post("/", data=data)
+            self.assertEqual(response.status, 204)
+
+    @unittest_run_loop
+    async def test_normalizes_line_endings(self) -> None:
+        for data, expected in ((b"c\r\nc\n", "c\r\nc\r\n"), (b"l\nl\r\n", "l\nl\n")):
+            response = await self.client.post("/", data=data)
+            self.assertEqual(await response.text(), expected)
+            self.assertEqual(response.status, 200)
