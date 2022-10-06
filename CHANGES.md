@@ -28,6 +28,8 @@
 <!-- Changes to how Black can be configured -->
 
 - `.ipynb_checkpoints` directories are now excluded by default (#3293)
+- Add `--skip-source-first-line` / `-x` option to ignore the first line of source code
+  while formatting (#3299)
 
 ### Packaging
 
