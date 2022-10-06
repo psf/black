@@ -95,7 +95,7 @@ Support for formatting Python 2 code was removed in version 22.0. While we've ma
 plans to stop supporting older Python 3 minor versions immediately, their support might
 also be removed some time in the future without a deprecation period.
 
-Runtime support for 3.6 was removed in version 22.9.0.
+Runtime support for 3.6 was removed in version 22.10.0.
 
 ## Why does my linter or typechecker complain after I format my code?
 
