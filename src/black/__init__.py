@@ -798,7 +798,10 @@ def format_file_in_place(
         mode = replace(mode, is_ipynb=True)
 
     then = datetime.utcfromtimestamp(src.stat().st_mtime)
+    header = b""
     with open(src, "rb") as buf:
+        if mode.skip_source_first_line:
+            header = buf.readline()
         src_contents, encoding, newline = decode_bytes(buf.read())
     try:
         dst_contents = format_file_contents(src_contents, fast=fast, mode=mode)
@@ -808,6 +811,8 @@ def format_file_in_place(
         raise ValueError(
             f"File '{src}' cannot be parsed as valid Jupyter notebook."
         ) from None
+    src_contents = header.decode() + src_contents
+    dst_contents = header.decode() + dst_contents
 
     if write_back == WriteBack.YES:
         with open(src, "w", encoding=encoding, newline=newline) as f:
@@ -912,10 +917,6 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
     if not src_contents.strip():
         raise NothingChanged
 
-    header = sep = ""
-    if mode.skip_source_first_line:
-        header, sep, src_contents = src_contents.partition("\n")
-
     if mode.is_ipynb:
         dst_contents = format_ipynb_string(src_contents, fast=fast, mode=mode)
     else:
@@ -926,8 +927,6 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
     if not fast and not mode.is_ipynb:
         # Jupyter notebooks will already have been checked above.
         check_stability_and_equivalence(src_contents, dst_contents, mode=mode)
-
-    dst_contents = header + sep + dst_contents
     return dst_contents
 
 

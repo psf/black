@@ -134,6 +134,12 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
         req_str = req_bytes.decode(charset)
         then = datetime.utcnow()
 
+        header = ""
+        if skip_source_first_line:
+            first_newline_position: int = req_str.find("\n") + 1
+            header = req_str[:first_newline_position]
+            req_str = req_str[first_newline_position:]
+
         loop = asyncio.get_event_loop()
         formatted_str = await loop.run_in_executor(
             executor, partial(black.format_file_contents, req_str, fast=fast, mode=mode)
@@ -145,6 +151,10 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
             # If, after swapping line endings, nothing changed, then say so
             if formatted_str == req_str:
                 raise black.NothingChanged
+
+        # Put the source first line back
+        req_str = header + req_str
+        formatted_str = header + formatted_str
 
         # Only output the diff in the HTTP response
         only_diff = bool(request.headers.get(DIFF_HEADER, False))
