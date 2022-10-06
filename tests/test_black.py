@@ -355,6 +355,16 @@ class BlackTestCase(BlackBaseTestCase):
             actual = f.read()
         self.assertFormatEqual(source, actual)
 
+    def test_skip_source_first_line_when_mixing_newlines(self) -> None:
+        code_mixing_newlines = b"Header will be skipped\r\ni = [1,2,3]\nj = [1,2,3]\n"
+        expected = b"Header will be skipped\r\ni = [1, 2, 3]\nj = [1, 2, 3]\n"
+        with TemporaryDirectory() as workspace:
+            test_file = Path(workspace) / "skip_header.py"
+            test_file.write_bytes(code_mixing_newlines)
+            mode = replace(DEFAULT_MODE, skip_source_first_line=True)
+            ff(test_file, mode=mode, write_back=black.WriteBack.YES)
+            self.assertEqual(test_file.read_bytes(), expected)
+
     def test_skip_magic_trailing_comma(self) -> None:
         source, _ = read_data("simple_cases", "expression")
         expected, _ = read_data(
