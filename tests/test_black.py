@@ -353,7 +353,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(result.exit_code, 0)
         with open(tmp_file, encoding="utf8") as f:
             actual = f.read()
-        self.assertFormatEqual(source.partition("\n")[0], actual.partition("\n")[0])
+        self.assertFormatEqual(source, actual)
 
     def test_skip_magic_trailing_comma(self) -> None:
         source, _ = read_data("simple_cases", "expression")
