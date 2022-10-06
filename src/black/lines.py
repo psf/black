@@ -505,9 +505,9 @@ class EmptyLineTracker:
             mode=self.mode,
             previous_block=self.previous_block,
             is_class=current_line.is_class,
+            before=before,
+            after=after,
         )
-        block.before = before
-        block.after = after
 
         # Maintain the semantic_leading_comment state.
         if current_line.is_comment:
