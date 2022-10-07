@@ -7,6 +7,14 @@ def function():
 
 
 some = statement
+# This multiline comments section
+# should be split from the statement
+# above by two lines.
+def function():
+    pass
+
+
+some = statement
 # This comment should be split from the statement above by two lines.
 async def async_function():
     pass
@@ -115,6 +123,16 @@ some = statement
 
 
 # This comment should be split from the statement above by two lines.
+def function():
+    pass
+
+
+some = statement
+
+
+# This multiline comments section
+# should be split from the statement
+# above by two lines.
 def function():
     pass
 
