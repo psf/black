@@ -26,6 +26,10 @@
 
 <!-- Changes to the parser or to version autodetection -->
 
+- Parsing support has been added for walruses inside generator expression that are
+  passed as function args (for example,
+  `any(match := my_re.match(text) for text in texts)`) (#3327).
+
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
