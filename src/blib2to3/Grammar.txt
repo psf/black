@@ -186,7 +186,7 @@ arglist: argument (',' argument)* [',']
 # multiple (test comp_for) arguments are blocked; keyword unpackings
 # that precede iterable unpackings are blocked; etc.
 argument: ( test [comp_for] |
-            test ':=' test |
+            test ':=' test [comp_for] |
             test 'as' test |
             test '=' asexpr_test |
 	    '**' test |
