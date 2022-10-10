@@ -946,7 +946,7 @@ class BlackTestCase(BlackBaseTestCase):
         invalid = "return if you can"
         with self.assertRaises(black.InvalidInput) as e:
             black.format_file_contents(invalid, mode=mode, fast=False)
-        self.assertEqual(str(e.exception), "Cannot parse: 1:7: return if you can")
+        self.assertIn("1:7: return if you can", str(e.exception))
 
     def test_endmarker(self) -> None:
         n = black.lib2to3_parse("\n")

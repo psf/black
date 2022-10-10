@@ -108,8 +108,10 @@ def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -
         except TokenError as te:
             # In edge cases these are raised; and typically don't have a "faulty_line".
             lineno, column = te.args[1]
+            pretty_version = ".".join(str(number) for number in grammar.version)
             errors[grammar.version] = InvalidInput(
-                f"Cannot parse: {lineno}:{column}: {te.args[0]}"
+                f"Cannot parse (python {pretty_version}): {lineno}:{column}:"
+                f" {te.args[0]}"
             )
 
     else:
