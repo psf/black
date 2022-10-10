@@ -218,7 +218,6 @@ def decorated_with_split_leading_comments():
 
 def main():
     if a:
-
         # Leading comment before inline function
         def inline():
             pass
@@ -228,14 +227,12 @@ def main():
             pass
 
     else:
-
         # More leading comments
         def inline_after_else():
             pass
 
 
 if a:
-
     # Leading comment before "top-level inline" function
     def top_level_quote_inline():
         pass
@@ -245,7 +242,6 @@ if a:
         pass
 
 else:
-
     # More leading comments
     def top_level_quote_inline_after_else():
         pass
