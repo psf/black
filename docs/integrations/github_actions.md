@@ -44,7 +44,7 @@ extra. Installing the extra and including Jupyter Notebook files can be configur
 `jupyter` (default is `false`).
 
 You can also configure the arguments passed to _Black_ via `options` (defaults to
-`'--check --diff'`) and `src` (default is `'.'`)
+`'--check --diff'`) and `src` (default is `'.'`). Please note that the [`'--check'` argument](https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html#exit-code) is required so that the workflow fails if _Black_ finds files that need to be formatted.
 
 Here's an example configuration:
 
