@@ -165,8 +165,6 @@ def parse_single_version(
         # comments separately.
         return ast3.parse(src, filename, feature_version=version[1])
 
-    raise AssertionError("INTERNAL ERROR: Tried parsing unsupported Python version!")
-
 
 def parse_ast(src: str) -> Union[ast.AST, ast3.AST]:
     # TODO: support Python 4+ ;)
