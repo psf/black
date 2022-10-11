@@ -1687,7 +1687,7 @@ class BlackTestCase(BlackBaseTestCase):
         with pytest.raises(black.parsing.InvalidInput) as exc_info:
             black.lib2to3_parse("print(", {})
 
-        exc_info.match("Cannot parse: 2:0: EOF in multi-line statement")
+        exc_info.match("Cannot parse (python .*): 2:0: EOF in multi-line statement")
 
     def test_equivalency_ast_parse_failure_includes_error(self) -> None:
         with pytest.raises(AssertionError) as err:

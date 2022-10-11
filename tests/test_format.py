@@ -116,7 +116,7 @@ def test_patma_invalid() -> None:
     with pytest.raises(black.parsing.InvalidInput) as exc_info:
         assert_format(source, expected, mode, minimum_version=(3, 10))
 
-    exc_info.match("Cannot parse (python 3.10): 10:11")
+    exc_info.match("Cannot parse (python 3.10): 10:11:     case a := b:")
 
 
 @pytest.mark.parametrize("filename", all_data_cases("py_311"))
