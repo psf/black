@@ -76,6 +76,8 @@ _Black_ to just tell you what it _would_ do without actually rewriting the Pytho
 There's two variations to this mode that are independently enabled by their respective
 flags. Both variations can be enabled at once.
 
+(labels/exit-code)=
+
 #### Exit code
 
 Passing `--check` will make _Black_ exit with:

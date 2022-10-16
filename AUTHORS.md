@@ -24,6 +24,7 @@ Multiple contributions by:
 - [Alex Vandiver](mailto:github@chmrr.net)
 - [Allan Simon](mailto:allan.simon@supinfo.com)
 - Anders-Petter Ljungquist
+- [Amethyst Reese](mailto:amy@n7.gg)
 - [Andrew Thorp](mailto:andrew.thorp.dev@gmail.com)
 - [Andrew Zhou](mailto:andrewfzhou@gmail.com)
 - [Andrey](mailto:dyuuus@yandex.ru)
