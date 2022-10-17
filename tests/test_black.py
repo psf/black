@@ -1989,7 +1989,7 @@ class TestFileCollection:
                 None,
                 None,
                 report,
-                gitignore,
+                {path: gitignore},
                 verbose=False,
                 quiet=False,
             )
@@ -2018,7 +2018,7 @@ class TestFileCollection:
                 None,
                 None,
                 report,
-                root_gitignore,
+                {path: root_gitignore},
                 verbose=False,
                 quiet=False,
             )
@@ -2110,7 +2110,7 @@ class TestFileCollection:
                     None,
                     None,
                     report,
-                    gitignore,
+                    {path: gitignore},
                     verbose=False,
                     quiet=False,
                 )
