@@ -2056,6 +2056,32 @@ class TestFileCollection:
         gitignore = path / "a" / ".gitignore"
         assert f"Could not parse {gitignore}" in result.stderr_bytes.decode()
 
+    def test_gitignore_that_ignores_subfolders(self) -> None:
+        # If gitignore with */* is in root
+        root = Path(DATA_DIR / "ignore_subfolders_gitignore_tests" / "subdir")
+        expected = [root / "b.py"]
+        ctx = FakeContext()
+        ctx.obj["root"] = root
+        assert_collected_sources([root], expected, ctx=ctx)
+
+        # If .gitignore with */* is nested
+        root = Path(DATA_DIR / "ignore_subfolders_gitignore_tests")
+        expected = [
+            root / "a.py",
+            root / "subdir" / "b.py",
+        ]
+        ctx = FakeContext()
+        ctx.obj["root"] = root
+        assert_collected_sources([root], expected, ctx=ctx)
+
+        # If command is executed from outer dir
+        root = Path(DATA_DIR / "ignore_subfolders_gitignore_tests")
+        target = root / "subdir"
+        expected = [target / "b.py"]
+        ctx = FakeContext()
+        ctx.obj["root"] = root
+        assert_collected_sources([target], expected, ctx=ctx)
+
     def test_empty_include(self) -> None:
         path = DATA_DIR / "include_exclude_tests"
         src = [path]
