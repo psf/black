@@ -154,9 +154,6 @@ class Test:
                 not parsed.hostname.strip()):
             pass
 
-
-
-
 #######################
 ### SECTION COMMENT ###
 #######################
@@ -333,13 +330,6 @@ class Test:
         if parsed.hostname is None or not parsed.hostname.strip():  # type: ignore
             pass
 
-def typed_comments_formatting(
-    a,  # type: int
-    b,  # type: int
-    c,  # type: int
-    d,  # type: int
-) -> None:
-    pass
 
 
 #######################
