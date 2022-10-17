@@ -18,6 +18,9 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Fix incorrectly applied .gitignore rules by considering the .gitignore location and
+  the relative path to the target file (#3338)
+
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
