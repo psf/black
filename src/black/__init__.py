@@ -30,6 +30,7 @@ from typing import (
 import click
 from click.core import ParameterSource
 from mypy_extensions import mypyc_attr
+from pathspec import PathSpec
 from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
 
 from _black_version import version as __version__
@@ -625,6 +626,11 @@ def get_sources(
     sources: Set[Path] = set()
     root = ctx.obj["root"]
 
+    exclude_is_None = exclude is None
+    exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES) if exclude is None else exclude
+    gitignore = None  # type: Optional[PathSpec]
+    root_gitignore = get_gitignore(root)
+
     for s in src:
         if s == "-" and stdin_filename:
             p = Path(stdin_filename)
@@ -658,16 +664,14 @@ def get_sources(
 
             sources.add(p)
         elif p.is_dir():
-            if exclude is None:
-                exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES)
-                gitignore = get_gitignore(root)
+            if exclude_is_None:
                 p_gitignore = get_gitignore(p)
                 # No need to use p's gitignore if it is identical to root's gitignore
                 # (i.e. root and p point to the same directory).
-                if gitignore != p_gitignore:
-                    gitignore += p_gitignore
-            else:
-                gitignore = None
+                if root_gitignore == p_gitignore:
+                    gitignore = root_gitignore
+                else:
+                    gitignore = root_gitignore + p_gitignore
             sources.update(
                 gen_python_files(
                     p.iterdir(),
