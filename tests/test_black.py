@@ -341,6 +341,30 @@ class BlackTestCase(BlackBaseTestCase):
         black.assert_equivalent(source, not_normalized)
         black.assert_stable(source, not_normalized, mode=mode)
 
+    def test_skip_source_first_line(self) -> None:
+        source, _ = read_data("miscellaneous", "invalid_header")
+        tmp_file = Path(black.dump_to_file(source))
+        # Full source should fail (invalid syntax at header)
+        self.invokeBlack([str(tmp_file), "--diff", "--check"], exit_code=123)
+        # So, skipping the first line should work
+        result = BlackRunner().invoke(
+            black.main, [str(tmp_file), "-x", f"--config={EMPTY_CONFIG}"]
+        )
+        self.assertEqual(result.exit_code, 0)
+        with open(tmp_file, encoding="utf8") as f:
+            actual = f.read()
+        self.assertFormatEqual(source, actual)
+
+    def test_skip_source_first_line_when_mixing_newlines(self) -> None:
+        code_mixing_newlines = b"Header will be skipped\r\ni = [1,2,3]\nj = [1,2,3]\n"
+        expected = b"Header will be skipped\r\ni = [1, 2, 3]\nj = [1, 2, 3]\n"
+        with TemporaryDirectory() as workspace:
+            test_file = Path(workspace) / "skip_header.py"
+            test_file.write_bytes(code_mixing_newlines)
+            mode = replace(DEFAULT_MODE, skip_source_first_line=True)
+            ff(test_file, mode=mode, write_back=black.WriteBack.YES)
+            self.assertEqual(test_file.read_bytes(), expected)
+
     def test_skip_magic_trailing_comma(self) -> None:
         source, _ = read_data("simple_cases", "expression")
         expected, _ = read_data(
@@ -1285,6 +1309,17 @@ class BlackTestCase(BlackBaseTestCase):
             self.assertIn(nl.encode("utf8"), output)
             if nl == "\n":
                 self.assertNotIn(b"\r\n", output)
+
+    def test_normalize_line_endings(self) -> None:
+        with TemporaryDirectory() as workspace:
+            test_file = Path(workspace) / "test.py"
+            for data, expected in (
+                (b"c\r\nc\n ", b"c\r\nc\r\n"),
+                (b"l\nl\r\n ", b"l\nl\n"),
+            ):
+                test_file.write_bytes(data)
+                ff(test_file, write_back=black.WriteBack.YES)
+                self.assertEqual(test_file.read_bytes(), expected)
 
     def test_assert_equivalent_different_asts(self) -> None:
         with self.assertRaises(AssertionError):

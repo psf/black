@@ -30,6 +30,7 @@ _stop_signal = asyncio.Event()
 PROTOCOL_VERSION_HEADER = "X-Protocol-Version"
 LINE_LENGTH_HEADER = "X-Line-Length"
 PYTHON_VARIANT_HEADER = "X-Python-Variant"
+SKIP_SOURCE_FIRST_LINE = "X-Skip-Source-First-Line"
 SKIP_STRING_NORMALIZATION_HEADER = "X-Skip-String-Normalization"
 SKIP_MAGIC_TRAILING_COMMA = "X-Skip-Magic-Trailing-Comma"
 PREVIEW = "X-Preview"
@@ -40,6 +41,7 @@ BLACK_HEADERS = [
     PROTOCOL_VERSION_HEADER,
     LINE_LENGTH_HEADER,
     PYTHON_VARIANT_HEADER,
+    SKIP_SOURCE_FIRST_LINE,
     SKIP_STRING_NORMALIZATION_HEADER,
     SKIP_MAGIC_TRAILING_COMMA,
     PREVIEW,
@@ -111,6 +113,9 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
         skip_magic_trailing_comma = bool(
             request.headers.get(SKIP_MAGIC_TRAILING_COMMA, False)
         )
+        skip_source_first_line = bool(
+            request.headers.get(SKIP_SOURCE_FIRST_LINE, False)
+        )
         preview = bool(request.headers.get(PREVIEW, False))
         fast = False
         if request.headers.get(FAST_OR_SAFE_HEADER, "safe") == "fast":
@@ -119,6 +124,7 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
             target_versions=versions,
             is_pyi=pyi,
             line_length=line_length,
+            skip_source_first_line=skip_source_first_line,
             string_normalization=not skip_string_normalization,
             magic_trailing_comma=not skip_magic_trailing_comma,
             preview=preview,
@@ -128,10 +134,27 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
         req_str = req_bytes.decode(charset)
         then = datetime.utcnow()
 
+        header = ""
+        if skip_source_first_line:
+            first_newline_position: int = req_str.find("\n") + 1
+            header = req_str[:first_newline_position]
+            req_str = req_str[first_newline_position:]
+
         loop = asyncio.get_event_loop()
         formatted_str = await loop.run_in_executor(
             executor, partial(black.format_file_contents, req_str, fast=fast, mode=mode)
         )
+
+        # Preserve CRLF line endings
+        if req_str[req_str.find("\n") - 1] == "\r":
+            formatted_str = formatted_str.replace("\n", "\r\n")
+            # If, after swapping line endings, nothing changed, then say so
+            if formatted_str == req_str:
+                raise black.NothingChanged
+
+        # Put the source first line back
+        req_str = header + req_str
+        formatted_str = header + formatted_str
 
         # Only output the diff in the HTTP response
         only_diff = bool(request.headers.get(DIFF_HEADER, False))

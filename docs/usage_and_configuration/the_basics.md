@@ -76,6 +76,8 @@ _Black_ to just tell you what it _would_ do without actually rewriting the Pytho
 There's two variations to this mode that are independently enabled by their respective
 flags. Both variations can be enabled at once.
 
+(labels/exit-code)=
+
 #### Exit code
 
 Passing `--check` will make _Black_ exit with:
@@ -173,7 +175,7 @@ You can check the version of _Black_ you have installed using the `--version` fl
 
 ```console
 $ black --version
-black, version 22.8.0
+black, version 22.10.0
 ```
 
 An option to require a specific version to be running is also provided.

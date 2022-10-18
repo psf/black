@@ -9,6 +9,7 @@ ENV_PATH = ACTION_PATH / ".black-env"
 ENV_BIN = ENV_PATH / ("Scripts" if sys.platform == "win32" else "bin")
 OPTIONS = os.getenv("INPUT_OPTIONS", default="")
 SRC = os.getenv("INPUT_SRC", default="")
+JUPYTER = os.getenv("INPUT_JUPYTER") == "true"
 BLACK_ARGS = os.getenv("INPUT_BLACK_ARGS", default="")
 VERSION = os.getenv("INPUT_VERSION", default="")
 
@@ -17,7 +18,11 @@ run([sys.executable, "-m", "venv", str(ENV_PATH)], check=True)
 version_specifier = VERSION
 if VERSION and VERSION[0] in "0123456789":
     version_specifier = f"=={VERSION}"
-req = f"black[colorama]{version_specifier}"
+if JUPYTER:
+    extra_deps = "[colorama,jupyter]"
+else:
+    extra_deps = "[colorama]"
+req = f"black{extra_deps}{version_specifier}"
 pip_proc = run(
     [str(ENV_BIN / "python"), "-m", "pip", "install", req],
     stdout=PIPE,

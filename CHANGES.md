@@ -6,15 +6,9 @@
 
 <!-- Include any especially major or disruptive changes here -->
 
-- Runtime support for Python 3.6 has been removed. Formatting 3.6 code will still be
-  supported until further notice.
-
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
-
-- Fix a crash when `# fmt: on` is used on a different block level than `# fmt: off`
-  (#3281)
 
 ### Preview style
 
@@ -32,16 +26,13 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
-- Executables made with PyInstaller will no longer crash when formatting several files
-  at once on macOS. Native x86-64 executables for macOS are available once again.
-  (#3275)
-- Hatchling is now used as the build backend. This will not have any effect for users
-  who install Black with its wheels from PyPI. (#3233)
-- Faster compiled wheels are now available for CPython 3.11 (#3276)
-
 ### Parser
 
 <!-- Changes to the parser or to version autodetection -->
+
+- Parsing support has been added for walruses inside generator expression that are
+  passed as function args (for example,
+  `any(match := my_re.match(text) for text in texts)`) (#3327).
 
 ### Performance
 
@@ -59,13 +50,54 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
-- Update GitHub Action to support use of version specifiers (e.g. `<23`) for Black
-  version (#3265)
-
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
+
+## 22.10.0
+
+### Highlights
+
+- Runtime support for Python 3.6 has been removed. Formatting 3.6 code will still be
+  supported until further notice.
+
+### Stable style
+
+- Fix a crash when `# fmt: on` is used on a different block level than `# fmt: off`
+  (#3281)
+
+### Preview style
+
+- Fix a crash when formatting some dicts with parenthesis-wrapped long string keys
+  (#3262)
+
+### Configuration
+
+- `.ipynb_checkpoints` directories are now excluded by default (#3293)
+- Add `--skip-source-first-line` / `-x` option to ignore the first line of source code
+  while formatting (#3299)
+
+### Packaging
+
+- Executables made with PyInstaller will no longer crash when formatting several files
+  at once on macOS. Native x86-64 executables for macOS are available once again.
+  (#3275)
+- Hatchling is now used as the build backend. This will not have any effect for users
+  who install Black with its wheels from PyPI. (#3233)
+- Faster compiled wheels are now available for CPython 3.11 (#3276)
+
+### _Blackd_
+
+- Windows style (CRLF) newlines will be preserved (#3257).
+
+### Integrations
+
+- Vim plugin: add flag (`g:black_preview`) to enable/disable the preview style (#3246)
+- Update GitHub Action to support formatting of Jupyter Notebook files via a `jupyter`
+  option (#3282)
+- Update GitHub Action to support use of version specifiers (e.g. `<23`) for Black
+  version (#3265)
 
 ## 22.8.0
 
@@ -121,7 +153,6 @@
 - Vim plugin: prefix messages with `Black: ` so it's clear they come from Black (#3194)
 - Docker: changed to a /opt/venv installation + added to PATH to be available to
   non-root users (#3202)
-- Vim plugin: add flag (`g:black_preview`) to enable/disable the preview style (#3246)
 
 ### Output
 

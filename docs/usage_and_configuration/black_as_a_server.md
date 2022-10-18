@@ -50,6 +50,9 @@ is rejected with `HTTP 501` (Not Implemented).
 The headers controlling how source code is formatted are:
 
 - `X-Line-Length`: corresponds to the `--line-length` command line flag.
+- `X-Skip-Source-First-Line`: corresponds to the `--skip-source-first-line` command line
+  flag. If present and its value is not an empty string, the first line of the source
+  code will be ignored.
 - `X-Skip-String-Normalization`: corresponds to the `--skip-string-normalization`
   command line flag. If present and its value is not the empty string, no string
   normalization will be performed.

@@ -24,11 +24,13 @@ Multiple contributions by:
 - [Alex Vandiver](mailto:github@chmrr.net)
 - [Allan Simon](mailto:allan.simon@supinfo.com)
 - Anders-Petter Ljungquist
+- [Amethyst Reese](mailto:amy@n7.gg)
 - [Andrew Thorp](mailto:andrew.thorp.dev@gmail.com)
 - [Andrew Zhou](mailto:andrewfzhou@gmail.com)
 - [Andrey](mailto:dyuuus@yandex.ru)
 - [Andy Freeland](mailto:andy@andyfreeland.net)
 - [Anthony Sottile](mailto:asottile@umich.edu)
+- [Antonio Ossa Guerra](mailto:aaossa+black@uc.cl)
 - [Arjaan Buijk](mailto:arjaan.buijk@gmail.com)
 - [Arnav Borbornah](mailto:arnavborborah11@gmail.com)
 - [Artem Malyshev](mailto:proofit404@gmail.com)
