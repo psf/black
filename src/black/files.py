@@ -131,40 +131,23 @@ def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
 def infer_target_version(pyproject_toml: Dict[str, Any]) -> Optional[TargetVersion]:
     """Infer Black's target version from the project metadata in pyproject.toml.
 
-    If target version cannot be inferred, returns None.
-    """
-    requires_python = get_req_python(pyproject_toml)
-    if requires_python is not None:
-        return parse_req_python(requires_python)
-    return None
-
-
-def get_req_python(pyproject_toml: Dict[str, Any]) -> Optional[str]:
-    """Get the required Python version from the project metadata.
-
-    Currently only supports the PyPA standard format:
+    Supports the PyPA standard format (PEP 621):
     https://packaging.python.org/en/latest/specifications/declaring-project-metadata/#requires-python
 
-    If the field is not present or cannot be parsed, returns None.
+    If the target version cannot be inferred, returns None.
     """
     project_metadata = pyproject_toml.get("project", {})
-    requires_python: Optional[str] = project_metadata.get("requires-python", None)
-    return requires_python
+    requires_python = project_metadata.get("requires-python", None)
+    if requires_python is not None:
+        try:
+            return parse_req_python_version(requires_python)
+        except InvalidVersion:
+            pass
+        try:
+            return parse_req_python_specifier(requires_python)
+        except InvalidSpecifier:
+            pass
 
-
-def parse_req_python(requires_python: str) -> Optional[TargetVersion]:
-    """Parse the requires-python field to determine Black's target version.
-
-    If the field cannot be parsed, returns None.
-    """
-    try:
-        return parse_req_python_version(requires_python)
-    except InvalidVersion:
-        pass
-    try:
-        return parse_req_python_specifier(requires_python)
-    except InvalidSpecifier:
-        pass
     return None
 
 
