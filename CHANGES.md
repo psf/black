@@ -43,7 +43,7 @@
 <!-- Changes to how Black can be configured -->
 
 - Black now tries to infer its `--target-version` from the project metadata specified in
-  pyproject.toml (#3219)
+  `pyproject.toml` (#3219)
 
 ### Packaging
 

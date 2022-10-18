@@ -188,7 +188,6 @@ def parse_req_python_specifier(requires_python: str) -> Optional[TargetVersion]:
     If the parsed specifier cannot be mapped to a valid TargetVersion, returns None.
     """
     specifier_set = strip_specifier_set(SpecifierSet(requires_python))
-
     if not specifier_set:
         return None
 
