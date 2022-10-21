@@ -25,6 +25,7 @@ from typing import (
     List,
     Optional,
     Sequence,
+    Type,
     TypeVar,
     Union,
 )
@@ -152,6 +153,33 @@ class BlackTestCase(BlackBaseTestCase):
         finally:
             os.unlink(tmp_file)
         self.assertFormatEqual(expected, actual)
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_one_empty_line(self) -> None:
+        for nl in ["\n", "\r\n"]:
+            source = expected = nl
+            actual = fs(source)
+            self.assertFormatEqual(expected, actual)
+            black.assert_equivalent(source, actual)
+            black.assert_stable(source, actual, DEFAULT_MODE)
+
+    def test_one_empty_line_ff(self) -> None:
+        for nl in ["\n", "\r\n"]:
+            expected = nl
+            tmp_file = Path(black.dump_to_file(nl))
+            if system() == "Windows":
+                # Writing files in text mode automatically uses the system newline,
+                # but in this case we don't want this for testing reasons. See:
+                # https://github.com/psf/black/pull/3348
+                with open(tmp_file, "wb") as f:
+                    f.write(nl.encode("utf-8"))
+            try:
+                self.assertFalse(ff(tmp_file, write_back=black.WriteBack.YES))
+                with open(tmp_file, "rb") as f:
+                    actual = f.read().decode("utf8")
+            finally:
+                os.unlink(tmp_file)
+            self.assertFormatEqual(expected, actual)
 
     def test_experimental_string_processing_warns(self) -> None:
         self.assertWarns(
@@ -936,6 +964,15 @@ class BlackTestCase(BlackBaseTestCase):
         just_nl = "\n"
         with self.assertRaises(black.NothingChanged):
             black.format_file_contents(just_nl, mode=mode, fast=False)
+        just_crlf = "\r\n"
+        with self.assertRaises(black.NothingChanged):
+            black.format_file_contents(just_crlf, mode=mode, fast=False)
+        just_whitespace_nl = "\n\t\n \n\t \n \t\n\n"
+        actual = black.format_file_contents(just_whitespace_nl, mode=mode, fast=False)
+        self.assertEqual("\n", actual)
+        just_whitespace_crlf = "\r\n\t\r\n \r\n\t \r\n \t\r\n\r\n"
+        actual = black.format_file_contents(just_whitespace_crlf, mode=mode, fast=False)
+        self.assertEqual("\r\n", actual)
         same = "j = [1, 2, 3]\n"
         with self.assertRaises(black.NothingChanged):
             black.format_file_contents(same, mode=mode, fast=False)
@@ -1239,18 +1276,45 @@ class BlackTestCase(BlackBaseTestCase):
             report.done.assert_called_with(expected, black.Changed.YES)
 
     def test_reformat_one_with_stdin_empty(self) -> None:
-        output = io.StringIO()
-        with patch("io.TextIOWrapper", lambda *args, **kwargs: output):
-            try:
-                black.format_stdin_to_stdout(
-                    fast=True,
-                    content="",
-                    write_back=black.WriteBack.YES,
-                    mode=DEFAULT_MODE,
-                )
-            except io.UnsupportedOperation:
-                pass  # StringIO does not support detach
-            assert output.getvalue() == ""
+        cases = [
+            ("", ""),
+            ("\n", "\n"),
+            ("\r\n", "\r\n"),
+            (" \t", ""),
+            (" \t\n\t ", "\n"),
+            (" \t\r\n\t ", "\r\n"),
+        ]
+
+        def _new_wrapper(
+            output: io.StringIO, io_TextIOWrapper: Type[io.TextIOWrapper]
+        ) -> Callable[[Any, Any], io.TextIOWrapper]:
+            def get_output(*args: Any, **kwargs: Any) -> io.TextIOWrapper:
+                if args == (sys.stdout.buffer,):
+                    # It's `format_stdin_to_stdout()` calling `io.TextIOWrapper()`,
+                    # return our mock object.
+                    return output
+                # It's something else (i.e. `decode_bytes()`) calling
+                # `io.TextIOWrapper()`, pass through to the original implementation.
+                # See discussion in https://github.com/psf/black/pull/2489
+                return io_TextIOWrapper(*args, **kwargs)
+
+            return get_output
+
+        for content, expected in cases:
+            output = io.StringIO()
+            io_TextIOWrapper = io.TextIOWrapper
+
+            with patch("io.TextIOWrapper", _new_wrapper(output, io_TextIOWrapper)):
+                try:
+                    black.format_stdin_to_stdout(
+                        fast=True,
+                        content=content,
+                        write_back=black.WriteBack.YES,
+                        mode=DEFAULT_MODE,
+                    )
+                except io.UnsupportedOperation:
+                    pass  # StringIO does not support detach
+                assert output.getvalue() == expected
 
     def test_invalid_cli_regex(self) -> None:
         for option in ["--include", "--exclude", "--extend-exclude", "--force-exclude"]:
