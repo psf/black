@@ -1562,7 +1562,7 @@ class BlackTestCase(BlackBaseTestCase):
     def test_parse_pyproject_toml_project_metadata(self) -> None:
         for test_toml, expected in [
             ("only_black_pyproject.toml", ["py310"]),
-            ("only_metadata_pyproject.toml", ["py37"]),
+            ("only_metadata_pyproject.toml", ["py37", "py38", "py39", "py310"]),
             ("neither_pyproject.toml", None),
             ("both_pyproject.toml", ["py310"]),
         ]:
@@ -1572,22 +1572,49 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_infer_target_version(self) -> None:
         for version, expected in [
-            ("3.6", TargetVersion.PY36),
-            ("3.11.0rc1", TargetVersion.PY311),
-            (">=3.10", TargetVersion.PY310),
-            (">3.6,<3.10", TargetVersion.PY37),
-            ("==3.8.*", TargetVersion.PY38),
-            ("==3.*", TargetVersion.PY33),
-            (">=3.8.6", TargetVersion.PY38),
-            ("> 3.7.4, != 3.8.8", TargetVersion.PY37),
-            (">3.7,!=3.8", TargetVersion.PY39),
-            ("!=3.3,!=3.4", TargetVersion.PY35),
+            ("3.6", [TargetVersion.PY36]),
+            ("3.11.0rc1", [TargetVersion.PY311]),
+            (">=3.10", [TargetVersion.PY310, TargetVersion.PY311]),
+            (">=3.10.6", [TargetVersion.PY310, TargetVersion.PY311]),
+            ("<3.6", [TargetVersion.PY33, TargetVersion.PY34, TargetVersion.PY35]),
+            (">3.7,<3.10", [TargetVersion.PY38, TargetVersion.PY39]),
+            (">3.7,!=3.8,!=3.9", [TargetVersion.PY310, TargetVersion.PY311]),
+            (
+                "> 3.9.4, != 3.10.3",
+                [TargetVersion.PY39, TargetVersion.PY310, TargetVersion.PY311],
+            ),
+            (
+                "!=3.3,!=3.4",
+                [
+                    TargetVersion.PY35,
+                    TargetVersion.PY36,
+                    TargetVersion.PY37,
+                    TargetVersion.PY38,
+                    TargetVersion.PY39,
+                    TargetVersion.PY310,
+                    TargetVersion.PY311,
+                ],
+            ),
+            (
+                "==3.*",
+                [
+                    TargetVersion.PY33,
+                    TargetVersion.PY34,
+                    TargetVersion.PY35,
+                    TargetVersion.PY36,
+                    TargetVersion.PY37,
+                    TargetVersion.PY38,
+                    TargetVersion.PY39,
+                    TargetVersion.PY310,
+                    TargetVersion.PY311,
+                ],
+            ),
+            ("==3.8.*", [TargetVersion.PY38]),
             (None, None),
             ("", None),
             ("invalid", None),
             ("3", None),
             ("3.2", None),
-            ("<3.11", None),
             (">3.10,<3.11", None),
         ]:
             test_toml = {"project": {"requires-python": version}}

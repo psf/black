@@ -123,12 +123,14 @@ def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
     if "target_version" not in config:
         inferred_target_version = infer_target_version(pyproject_toml)
         if inferred_target_version is not None:
-            config["target_version"] = [inferred_target_version.name.lower()]
+            config["target_version"] = [v.name.lower() for v in inferred_target_version]
 
     return config
 
 
-def infer_target_version(pyproject_toml: Dict[str, Any]) -> Optional[TargetVersion]:
+def infer_target_version(
+    pyproject_toml: Dict[str, Any]
+) -> Optional[List[TargetVersion]]:
     """Infer Black's target version from the project metadata in pyproject.toml.
 
     Supports the PyPA standard format (PEP 621):
@@ -151,21 +153,21 @@ def infer_target_version(pyproject_toml: Dict[str, Any]) -> Optional[TargetVersi
     return None
 
 
-def parse_req_python_version(requires_python: str) -> Optional[TargetVersion]:
-    """Parse a version string (i.e. ``"3.7"``) to a TargetVersion.
+def parse_req_python_version(requires_python: str) -> Optional[List[TargetVersion]]:
+    """Parse a version string (i.e. ``"3.7"``) to a list of TargetVersion.
 
     If parsing fails, will raise a packaging.version.InvalidVersion error.
     If the parsed version cannot be mapped to a valid TargetVersion, returns None.
     """
     version = Version(requires_python)
     try:
-        return TargetVersion(version.release[1])
+        return [TargetVersion(version.release[1])]
     except (IndexError, ValueError):
         return None
 
 
-def parse_req_python_specifier(requires_python: str) -> Optional[TargetVersion]:
-    """Parse a specifier string (i.e. ``">=3.7,<3.10"``) to a TargetVersion.
+def parse_req_python_specifier(requires_python: str) -> Optional[List[TargetVersion]]:
+    """Parse a specifier string (i.e. ``">=3.7,<3.10"``) to a list of TargetVersion.
 
     If parsing fails, will raise a packaging.specifiers.InvalidSpecifier error.
     If the parsed specifier cannot be mapped to a valid TargetVersion, returns None.
@@ -175,17 +177,14 @@ def parse_req_python_specifier(requires_python: str) -> Optional[TargetVersion]:
         return None
 
     target_version_map = {f"3.{v.value}": v for v in TargetVersion}
-    compatible_versions = specifier_set.filter(target_version_map)
-    target_version_str: Optional[str] = next(iter(compatible_versions), None)
-    if target_version_str is not None:
-        return target_version_map.get(target_version_str)
+    compatible_versions = list(specifier_set.filter(target_version_map))
+    if compatible_versions:
+        return [target_version_map[v] for v in compatible_versions]
     return None
 
 
 def strip_specifier_set(specifier_set: SpecifierSet) -> SpecifierSet:
-    """Strip irrelevant parts of the specifier set.
-
-    Drops some specifiers, and strips minor versions for some others.
+    """Strip minor versions for some specifiers in the specifier set.
 
     For background on version specifiers, see PEP 440:
     https://peps.python.org/pep-0440/#version-specifiers
@@ -205,9 +204,6 @@ def strip_specifier_set(specifier_set: SpecifierSet) -> SpecifierSet:
             specifiers.append(s)
         else:
             specifiers.append(s)
-
-    if all(s.operator in ["<=", "<"] for s in specifiers):
-        specifiers = []
 
     return SpecifierSet(",".join(str(s) for s in specifiers))
 
