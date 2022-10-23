@@ -11,3 +11,15 @@ from blib2to3.pytree import Leaf
 )
 def test_typed_comments(comment_str: str) -> None:
     assert is_type_comment(Leaf(token.COMMENT, comment_str))
+
+
+@pytest.mark.parametrize(
+    "comment_str",
+    [
+        "# Not a type comment: for sure.",
+        "# this is a comment about a :param called type",
+        "#type : the first space is mandatory",
+    ],
+)
+def test_not_typed_comments(comment_str: str) -> None:
+    assert not is_type_comment(Leaf(token.COMMENT, comment_str))
