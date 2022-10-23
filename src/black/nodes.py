@@ -787,10 +787,7 @@ def is_type_comment(leaf: Leaf, suffix: str = "") -> bool:
     Only returns true for type comments for now."""
     t = leaf.type
     v = leaf.value
-    if t not in {token.COMMENT, STANDALONE_COMMENT}:
-        return False
-
-    if not v.startswith("#"):
+    if t not in {token.COMMENT, STANDALONE_COMMENT} or not v.startswith("#"):
         return False
 
     return bool(is_type_comment_regex.match(v))
