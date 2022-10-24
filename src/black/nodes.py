@@ -779,7 +779,7 @@ def is_import(leaf: Leaf) -> bool:
     )
 
 
-is_type_comment_regex = re.compile(r'^#[\s\t]+type[\s\t]*:')
+is_type_comment_regex = re.compile(r"^#[\s\t]+type[\s\t]*:")
 
 
 def is_type_comment(leaf: Leaf, suffix: str = "") -> bool:
