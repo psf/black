@@ -15,6 +15,8 @@
 <!-- Changes that affect Black's preview style -->
 
 - Enforce empty lines before classes and functions with sticky leading comments (#3302)
+- Reformat empty and whitespace-only files as either an empty file (if no newline is
+  present) or as a single newline character (if a newline is present) (#3348)
 
 ### Configuration
 
@@ -31,8 +33,6 @@
 - Parsing support has been added for walruses inside generator expression that are
   passed as function args (for example,
   `any(match := my_re.match(text) for text in texts)`) (#3327).
-- Reformat empty and whitespace-only files as either an empty file (if no newline is
-  present) or as a single newline character (if a newline is present) (#3348)
 
 ### Performance
 

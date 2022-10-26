@@ -914,6 +914,9 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
     valid by calling :func:`assert_equivalent` and :func:`assert_stable` on it.
     `mode` is passed to :func:`format_str`.
     """
+    if not mode.preview and not src_contents.strip():
+        raise NothingChanged
+
     if mode.is_ipynb:
         dst_contents = format_ipynb_string(src_contents, fast=fast, mode=mode)
     else:
@@ -1008,7 +1011,7 @@ def format_ipynb_string(src_contents: str, *, fast: bool, mode: Mode) -> FileCon
     Operate cell-by-cell, only on code cells, only for Python notebooks.
     If the ``.ipynb`` originally had a trailing newline, it'll be preserved.
     """
-    if not src_contents:
+    if mode.preview and not src_contents:
         raise NothingChanged
 
     trailing_newline = src_contents[-1] == "\n"
@@ -1103,7 +1106,7 @@ def _format_str_once(src_contents: str, *, mode: Mode) -> str:
     dst_contents = []
     for block in dst_blocks:
         dst_contents.extend(block.all_lines())
-    if not dst_contents:
+    if mode.preview and not dst_contents:
         normalized_content, _, newline = decode_bytes(src_contents.encode("utf-8"))
         if "\n" in normalized_content:
             return newline
