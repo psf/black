@@ -14,8 +14,6 @@
 
 <!-- Changes that affect Black's preview style -->
 
-- Fix a crash when formatting some dicts with parenthesis-wrapped long string keys
-  (#3262)
 - Enforce empty lines before classes and functions with sticky leading comments (#3302)
 - Implicitly concatenated strings used as function args are now wrapped inside
   parentheses (#3307)
