@@ -2196,6 +2196,7 @@ def tracefunc(
     frame: types.FrameType, event: str, arg: Any
 ) -> Callable[[types.FrameType, str, Any], Any]:
     """Show function calls `from black/__init__.py` as they happen.
+
     Register this with `sys.settrace()` in a test you're debugging.
     """
     if event != "call":
