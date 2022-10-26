@@ -150,6 +150,7 @@ class Preview(Enum):
     """Individual preview style features."""
 
     annotation_parens = auto()
+    empty_lines_before_class_or_def_with_leading_comments = auto()
     long_docstring_quotes_on_newline = auto()
     normalize_docstring_quotes_and_prefixes_properly = auto()
     one_element_subscript = auto()
@@ -170,6 +171,7 @@ class Mode:
     string_normalization: bool = True
     is_pyi: bool = False
     is_ipynb: bool = False
+    skip_source_first_line: bool = False
     magic_trailing_comma: bool = True
     experimental_string_processing: bool = False
     python_cell_magics: Set[str] = field(default_factory=set)
@@ -210,6 +212,7 @@ class Mode:
             str(int(self.string_normalization)),
             str(int(self.is_pyi)),
             str(int(self.is_ipynb)),
+            str(int(self.skip_source_first_line)),
             str(int(self.magic_trailing_comma)),
             str(int(self.experimental_string_processing)),
             str(int(self.preview)),

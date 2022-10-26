@@ -57,8 +57,8 @@ def _get_virtualenv_site_packages(venv_path, pyver):
 
 def _initialize_black_env(upgrade=False):
   pyver = sys.version_info[:3]
-  if pyver < (3, 6, 2):
-    print("Sorry, Black requires Python 3.6.2+ to run.")
+  if pyver < (3, 7):
+    print("Sorry, Black requires Python 3.7+ to run.")
     return False
 
   from pathlib import Path

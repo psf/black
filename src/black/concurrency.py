@@ -47,12 +47,8 @@ def cancel(tasks: Iterable["asyncio.Task[Any]"]) -> None:
 def shutdown(loop: asyncio.AbstractEventLoop) -> None:
     """Cancel all pending tasks on `loop`, wait for them, and close the loop."""
     try:
-        if sys.version_info[:2] >= (3, 7):
-            all_tasks = asyncio.all_tasks
-        else:
-            all_tasks = asyncio.Task.all_tasks
         # This part is borrowed from asyncio/runners.py in Python 3.7b2.
-        to_cancel = [task for task in all_tasks(loop) if not task.done()]
+        to_cancel = [task for task in asyncio.all_tasks(loop) if not task.done()]
         if not to_cancel:
             return
 

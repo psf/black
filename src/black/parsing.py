@@ -27,8 +27,7 @@ _IS_PYPY = platform.python_implementation() == "PyPy"
 try:
     from typed_ast import ast3
 except ImportError:
-    # Either our python version is too low, or we're on pypy
-    if sys.version_info < (3, 7) or (sys.version_info < (3, 8) and not _IS_PYPY):
+    if sys.version_info < (3, 8) and not _IS_PYPY:
         print(
             (
                 "The typed_ast package is required but not installed.\n"
@@ -167,8 +166,6 @@ def parse_single_version(
         # Typed-ast is guaranteed to be used here and automatically tracks type
         # comments separately.
         return ast3.parse(src, filename, feature_version=version[1])
-
-    raise AssertionError("INTERNAL ERROR: Tried parsing unsupported Python version!")
 
 
 def parse_ast(src: str) -> Union[ast.AST, ast3.AST]:
