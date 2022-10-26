@@ -152,6 +152,7 @@ class Preview(Enum):
     annotation_parens = auto()
     empty_lines_before_class_or_def_with_leading_comments = auto()
     long_docstring_quotes_on_newline = auto()
+    multiline_string_handling = auto()
     normalize_docstring_quotes_and_prefixes_properly = auto()
     one_element_subscript = auto()
     remove_block_trailing_newline = auto()

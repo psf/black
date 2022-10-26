@@ -468,7 +468,7 @@ def transform_line(
         and not line.should_split_rhs
         and not line.magic_trailing_comma
         and (
-            is_line_short_enough(line, line_length=mode.line_length, line_str=line_str)
+            is_line_short_enough(line, mode=mode, line_str=line_str)
             or line.contains_unsplittable_type_ignore()
         )
         and not (line.inside_brackets and line.contains_standalone_comments())
@@ -493,13 +493,13 @@ def transform_line(
             """
             for omit in generate_trailers_to_omit(line, mode.line_length):
                 lines = list(
-                    right_hand_split(line, mode.line_length, features, omit=omit)
+                    right_hand_split(line, mode, features, omit=omit)
                 )
                 # Note: this check is only able to figure out if the first line of the
                 # *current* transformation fits in the line length.  This is true only
                 # for simple cases.  All others require running more transforms via
                 # `transform_line()`.  This check doesn't know if those would succeed.
-                if is_line_short_enough(lines[0], line_length=mode.line_length):
+                if is_line_short_enough(lines[0], mode=mode):
                     yield from lines
                     return
 
@@ -508,7 +508,7 @@ def transform_line(
             # reported as not fitting a single line, as well as lines that contain
             # trailing commas (those have to be exploded).
             yield from right_hand_split(
-                line, line_length=mode.line_length, features=features
+                line, mode, features=features
             )
 
         # HACK: nested functions (like _rhs) compiled by mypyc don't retain their
@@ -602,7 +602,7 @@ def left_hand_split(line: Line, _features: Collection[Feature] = ()) -> Iterator
 
 def right_hand_split(
     line: Line,
-    line_length: int,
+    mode: Mode,
     features: Collection[Feature] = (),
     omit: Collection[LeafID] = (),
 ) -> Iterator[Line]:
@@ -657,17 +657,17 @@ def right_hand_split(
         # there are no standalone comments in the body
         and not body.contains_standalone_comments(0)
         # and we can actually remove the parens
-        and can_omit_invisible_parens(body, line_length)
+        and can_omit_invisible_parens(body, mode.line_length)
     ):
         omit = {id(closing_bracket), *omit}
         try:
-            yield from right_hand_split(line, line_length, features=features, omit=omit)
+            yield from right_hand_split(line, mode, features=features, omit=omit)
             return
 
         except CannotSplit as e:
             if not (
                 can_be_split(body)
-                or is_line_short_enough(body, line_length=line_length)
+                or is_line_short_enough(body, mode=mode)
             ):
                 raise CannotSplit(
                     "Splitting failed, body is still too long and can't be split."
@@ -1272,7 +1272,7 @@ def run_transformer(
         or line.contains_multiline_strings()
         or result[0].contains_uncollapsable_type_comments()
         or result[0].contains_unsplittable_type_ignore()
-        or is_line_short_enough(result[0], line_length=mode.line_length)
+        or is_line_short_enough(result[0], mode=mode)
         # If any leaves have no parents (which _can_ occur since
         # `transform(line)` potentially destroys the line's underlying node
         # structure), then we can't proceed. Doing so would cause the below
@@ -1288,7 +1288,7 @@ def run_transformer(
         line_copy, transform, mode, features_fop, line_str=line_str
     )
     if all(
-        is_line_short_enough(ln, line_length=mode.line_length) for ln in second_opinion
+        is_line_short_enough(ln, mode=mode) for ln in second_opinion
     ):
         result = second_opinion
     return result

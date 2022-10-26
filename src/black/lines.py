@@ -35,6 +35,7 @@ from black.nodes import (
 from blib2to3.pgen2 import token
 from blib2to3.pytree import Leaf, Node
 
+# types
 T = TypeVar("T")
 Index = int
 LeafID = int
@@ -710,21 +711,28 @@ def append_leaves(
             new_line.append(comment_leaf, preformatted=True)
 
 
-def is_line_short_enough(line: Line, *, line_length: int, line_str: str = "") -> bool:
+def is_line_short_enough(line: Line, *, mode: Mode, line_str: str = "") -> bool:
     """Return True if `line` is no longer than `line_length`.
-
     Uses the provided `line_str` rendering, if any, otherwise computes a new one.
     """
     if not line_str:
         line_str = line_to_string(line)
+
+    if Preview.multiline_string_handling not in mode:
+        return (
+            len(line_str) <= mode.line_length
+            and "\n" not in line_str  # multiline strings
+            and not line.contains_standalone_comments()
+        )
+
     if line.contains_standalone_comments():
         return False
     if "\n" not in line_str:
         # No multi-line strings present
-        return len(line_str) <= line_length
+        return len(line_str) <= mode.line_length
     else:
         first, *_, last = line_str.split("\n")
-        if len(first) > line_length or len(last) > line_length:
+        if len(first) > mode.line_length or len(last) > mode.line_length:
             return False
 
         commas: List[int] = []
@@ -740,9 +748,9 @@ def is_line_short_enough(line: Line, *, line_length: int, line_str: str = "") ->
                 elif leaf.bracket_depth + 1 < len(commas):
                     had_comma = commas.pop()
                 if (
-                        had_comma is not None
-                        and multiline_string is not None
-                        and multiline_string.bracket_depth == leaf.bracket_depth + 1
+                    had_comma is not None
+                    and multiline_string is not None
+                    and multiline_string.bracket_depth == leaf.bracket_depth + 1
                 ):
                     # Have left the level with the MLS, stop tracking commas
                     max_level_to_update = leaf.bracket_depth
