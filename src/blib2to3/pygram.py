@@ -39,12 +39,14 @@ class _python_symbols(Symbols):
     arglist: int
     argument: int
     arith_expr: int
+    asexpr_test: int
     assert_stmt: int
     async_funcdef: int
     async_stmt: int
     atom: int
     augassign: int
     break_stmt: int
+    case_block: int
     classdef: int
     comp_for: int
     comp_if: int
@@ -74,6 +76,7 @@ class _python_symbols(Symbols):
     for_stmt: int
     funcdef: int
     global_stmt: int
+    guard: int
     if_stmt: int
     import_as_name: int
     import_as_names: int
@@ -82,6 +85,7 @@ class _python_symbols(Symbols):
     import_stmt: int
     lambdef: int
     listmaker: int
+    match_stmt: int
     namedexpr_test: int
     not_test: int
     old_comp_for: int
@@ -92,6 +96,8 @@ class _python_symbols(Symbols):
     or_test: int
     parameters: int
     pass_stmt: int
+    pattern: int
+    patterns: int
     power: int
     print_stmt: int
     raise_stmt: int
@@ -101,6 +107,7 @@ class _python_symbols(Symbols):
     single_input: int
     sliceop: int
     small_stmt: int
+    subject_expr: int
     star_expr: int
     stmt: int
     subscript: int
@@ -116,6 +123,7 @@ class _python_symbols(Symbols):
     tfpdef: int
     tfplist: int
     tname: int
+    tname_star: int
     trailer: int
     try_stmt: int
     typedargslist: int
@@ -124,9 +132,7 @@ class _python_symbols(Symbols):
     vfplist: int
     vname: int
     while_stmt: int
-    with_item: int
     with_stmt: int
-    with_var: int
     xor_expr: int
     yield_arg: int
     yield_expr: int
@@ -149,6 +155,7 @@ python_grammar_no_print_statement_no_exec_statement: Grammar
 python_grammar_no_print_statement_no_exec_statement_async_keywords: Grammar
 python_grammar_no_exec_statement: Grammar
 pattern_grammar: Grammar
+python_grammar_soft_keywords: Grammar
 
 python_symbols: _python_symbols
 pattern_symbols: _pattern_symbols
@@ -159,6 +166,7 @@ def initialize(cache_dir: Union[str, "os.PathLike[str]", None] = None) -> None:
     global python_grammar_no_print_statement
     global python_grammar_no_print_statement_no_exec_statement
     global python_grammar_no_print_statement_no_exec_statement_async_keywords
+    global python_grammar_soft_keywords
     global python_symbols
     global pattern_grammar
     global pattern_symbols
@@ -171,6 +179,10 @@ def initialize(cache_dir: Union[str, "os.PathLike[str]", None] = None) -> None:
 
     # Python 2
     python_grammar = driver.load_packaged_grammar("blib2to3", _GRAMMAR_FILE, cache_dir)
+    python_grammar.version = (2, 0)
+
+    soft_keywords = python_grammar.soft_keywords.copy()
+    python_grammar.soft_keywords.clear()
 
     python_symbols = _python_symbols(python_grammar)
 
@@ -182,6 +194,7 @@ def initialize(cache_dir: Union[str, "os.PathLike[str]", None] = None) -> None:
     python_grammar_no_print_statement_no_exec_statement = python_grammar.copy()
     del python_grammar_no_print_statement_no_exec_statement.keywords["print"]
     del python_grammar_no_print_statement_no_exec_statement.keywords["exec"]
+    python_grammar_no_print_statement_no_exec_statement.version = (3, 0)
 
     # Python 3.7+
     python_grammar_no_print_statement_no_exec_statement_async_keywords = (
@@ -190,6 +203,14 @@ def initialize(cache_dir: Union[str, "os.PathLike[str]", None] = None) -> None:
     python_grammar_no_print_statement_no_exec_statement_async_keywords.async_keywords = (
         True
     )
+    python_grammar_no_print_statement_no_exec_statement_async_keywords.version = (3, 7)
+
+    # Python 3.10+
+    python_grammar_soft_keywords = (
+        python_grammar_no_print_statement_no_exec_statement_async_keywords.copy()
+    )
+    python_grammar_soft_keywords.soft_keywords = soft_keywords
+    python_grammar_soft_keywords.version = (3, 10)
 
     pattern_grammar = driver.load_packaged_grammar(
         "blib2to3", _PATTERN_GRAMMAR_FILE, cache_dir

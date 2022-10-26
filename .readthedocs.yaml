@@ -1,0 +1,18 @@
+version: 2
+
+formats:
+  - htmlzip
+
+build:
+  os: ubuntu-22.04
+  tools:
+    python: "3.8"
+
+python:
+  install:
+    - requirements: docs/requirements.txt
+
+    - method: pip
+      path: .
+      extra_requirements:
+        - d

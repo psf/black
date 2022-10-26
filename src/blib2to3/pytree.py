@@ -10,11 +10,10 @@ even the comments and whitespace between tokens.
 There's also a pattern matching implementation here.
 """
 
-# mypy: allow-untyped-defs
+# mypy: allow-untyped-defs, allow-incomplete-defs
 
 from typing import (
     Any,
-    Callable,
     Dict,
     Iterator,
     List,
@@ -25,7 +24,6 @@ from typing import (
     Union,
     Set,
     Iterable,
-    Sequence,
 )
 from blib2to3.pgen2.grammar import Grammar
 
@@ -34,7 +32,7 @@ __author__ = "Guido van Rossum <guido@python.org>"
 import sys
 from io import StringIO
 
-HUGE: int = 0x7fffffff  # maximum repeat count, default max
+HUGE: int = 0x7FFFFFFF  # maximum repeat count, default max
 
 _type_reprs: Dict[int, Union[Text, int]] = {}
 
@@ -53,7 +51,7 @@ def type_repr(type_num: int) -> Union[Text, int]:
     return _type_reprs.setdefault(type_num, type_num)
 
 
-_P = TypeVar("_P")
+_P = TypeVar("_P", bound="Base")
 
 NL = Union["Node", "Leaf"]
 Context = Tuple[Text, Tuple[int, int]]
@@ -93,8 +91,6 @@ class Base(object):
             return NotImplemented
         return self._eq(other)
 
-    __hash__ = None  # type: Any  # For Py3 compatibility.
-
     @property
     def prefix(self) -> Text:
         raise NotImplementedError
@@ -109,6 +105,9 @@ class Base(object):
         ignoring the prefix string and other context information.
         """
         raise NotImplementedError
+
+    def __deepcopy__(self: _P, memo: Any) -> _P:
+        return self.clone()
 
     def clone(self: _P) -> _P:
         """
@@ -292,7 +291,7 @@ class Node(Base):
         """
         return "".join(map(str, self.children))
 
-    def _eq(self, other) -> bool:
+    def _eq(self, other: Base) -> bool:
         """Compare two nodes for equality."""
         return (self.type, self.children) == (other.type, other.children)
 
@@ -327,7 +326,7 @@ class Node(Base):
         return self.children[0].prefix
 
     @prefix.setter
-    def prefix(self, prefix) -> None:
+    def prefix(self, prefix: Text) -> None:
         if self.children:
             self.children[0].prefix = prefix
 
@@ -387,7 +386,8 @@ class Leaf(Base):
     value: Text
     fixers_applied: List[Any]
     bracket_depth: int
-    opening_bracket: "Leaf"
+    # Changed later in brackets.py
+    opening_bracket: Optional["Leaf"] = None
     used_names: Optional[Set[Text]]
     _prefix = ""  # Whitespace and comments preceding this token in the input
     lineno: int = 0  # Line where this token starts in the input
@@ -400,6 +400,7 @@ class Leaf(Base):
         context: Optional[Context] = None,
         prefix: Optional[Text] = None,
         fixers_applied: List[Any] = [],
+        opening_bracket: Optional["Leaf"] = None,
     ) -> None:
         """
         Initializer.
@@ -417,6 +418,7 @@ class Leaf(Base):
             self._prefix = prefix
         self.fixers_applied: Optional[List[Any]] = fixers_applied[:]
         self.children = []
+        self.opening_bracket = opening_bracket
 
     def __repr__(self) -> str:
         """Return a canonical string representation."""
@@ -435,9 +437,9 @@ class Leaf(Base):
 
         This reproduces the input source exactly.
         """
-        return self.prefix + str(self.value)
+        return self._prefix + str(self.value)
 
-    def _eq(self, other) -> bool:
+    def _eq(self, other: "Leaf") -> bool:
         """Compare two nodes for equality."""
         return (self.type, self.value) == (other.type, other.value)
 
@@ -470,7 +472,7 @@ class Leaf(Base):
         return self._prefix
 
     @prefix.setter
-    def prefix(self, prefix) -> None:
+    def prefix(self, prefix: Text) -> None:
         self.changed()
         self._prefix = prefix
 
@@ -616,7 +618,7 @@ class LeafPattern(BasePattern):
         self.content = content
         self.name = name
 
-    def match(self, node: NL, results=None):
+    def match(self, node: NL, results=None) -> bool:
         """Override match() to insist on a leaf node."""
         if not isinstance(node, Leaf):
             return False
@@ -670,10 +672,13 @@ class NodePattern(BasePattern):
             newcontent = list(content)
             for i, item in enumerate(newcontent):
                 assert isinstance(item, BasePattern), (i, item)
-                if isinstance(item, WildcardPattern):
-                    self.wildcards = True
+                # I don't even think this code is used anywhere, but it does cause
+                # unreachable errors from mypy. This function's signature does look
+                # odd though *shrug*.
+                if isinstance(item, WildcardPattern):  # type: ignore[unreachable]
+                    self.wildcards = True  # type: ignore[unreachable]
         self.type = type
-        self.content = newcontent
+        self.content = newcontent  # TODO: this is unbound when content is None
         self.name = name
 
     def _submatch(self, node, results=None) -> bool:
@@ -915,7 +920,7 @@ class WildcardPattern(BasePattern):
 
 
 class NegatedPattern(BasePattern):
-    def __init__(self, content: Optional[Any] = None) -> None:
+    def __init__(self, content: Optional[BasePattern] = None) -> None:
         """
         Initializer.
 
@@ -936,7 +941,7 @@ class NegatedPattern(BasePattern):
         # We only match an empty sequence of nodes in its entirety
         return len(nodes) == 0
 
-    def generate_matches(self, nodes) -> Iterator[Tuple[int, _Results]]:
+    def generate_matches(self, nodes: List[NL]) -> Iterator[Tuple[int, _Results]]:
         if self.content is None:
             # Return a match if there is an empty sequence
             if len(nodes) == 0:
@@ -976,6 +981,3 @@ def generate_matches(
                     r.update(r0)
                     r.update(r1)
                     yield c0 + c1, r
-
-
-_Convert = Callable[[Grammar, RawNode], Any]

@@ -7,4 +7,11 @@ line-length = 79
 target-version = ["py36", "py37", "py38"]
 exclude='\.pyi?$'
 include='\.py?$'
+python-cell-magics = ["custom1", "custom2"]
 
+[v1.0.0-syntax]
+# This shouldn't break Black.
+contributors = [
+  "Foo Bar <foo@example.com>",
+  { name = "Baz Qux", email = "bazqux@example.com", url = "https://example.com/bazqux" }
+]
