@@ -711,7 +711,9 @@ def append_leaves(
             new_line.append(comment_leaf, preformatted=True)
 
 
-def is_line_short_enough(line: Line, *, mode: Mode, line_str: str = "") -> bool:
+def is_line_short_enough(  # noqa: C901
+    line: Line, *, mode: Mode, line_str: str = ""
+) -> bool:
     """Return True if `line` is no longer than `line_length`.
     Uses the provided `line_str` rendering, if any, otherwise computes a new one.
     """
@@ -728,14 +730,14 @@ def is_line_short_enough(line: Line, *, mode: Mode, line_str: str = "") -> bool:
     if line.contains_standalone_comments():
         return False
     if "\n" not in line_str:
-        # No multi-line strings present
+        # No multiline strings (MLS) present
         return len(line_str) <= mode.line_length
     else:
         first, *_, last = line_str.split("\n")
         if len(first) > mode.line_length or len(last) > mode.line_length:
             return False
 
-        commas: List[int] = []
+        commas: List[int] = []  # tracks number of commas per depth level
         multiline_string: Optional[Leaf] = None
         multiline_string_contexts: List[LN] = []
 
