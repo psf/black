@@ -148,7 +148,7 @@
 
 ### Output
 
-- Add python version to parse error message (#3323)
+- Add Python version to parse error message (#3323)
 - Change from deprecated `asyncio.get_event_loop()` to create our event loop which
   removes DeprecationWarning (#3164)
 - Remove logging from internal `blib2to3` library since it regularly emits error logs
