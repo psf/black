@@ -138,7 +138,7 @@ pandas, Pillow, Twisted, LocalStack, every Datadog Agent Integration, Home Assis
 Zulip, Kedro, OpenOA, FLORIS, ORBIT, WOMBAT, and many more.
 
 The following organizations use _Black_: Facebook, Dropbox, KeepTruckin, Mozilla, Quora,
-Duolingo, QuantumBlack, Tesla.
+Duolingo, QuantumBlack, Tesla, Archer Aviation.
 
 Are we missing anyone? Let us know.
 
