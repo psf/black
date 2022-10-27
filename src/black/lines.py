@@ -492,7 +492,6 @@ class EmptyLineTracker:
     previous_defs: List[int] = field(default_factory=list)
     semantic_leading_comment: Optional[LinesBlock] = None
 
-
     def maybe_empty_lines(self, current_line: Line) -> LinesBlock:
         """
         Return the number of extra empty lines before and after the `current_line`.
