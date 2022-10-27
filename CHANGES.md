@@ -15,6 +15,8 @@
 <!-- Changes that affect Black's preview style -->
 
 - Enforce empty lines before classes and functions with sticky leading comments (#3302)
+- Implicitly concatenated strings used as function args are now wrapped inside
+  parentheses (#3307)
 
 ### Configuration
 
