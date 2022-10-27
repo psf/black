@@ -455,7 +455,8 @@ class Line:
 
 @dataclass
 class LinesBlock:
-    """Class that holds information about a block of formatted lines.
+    """
+    Class that holds information about a block of formatted lines.
 
     This is introduced so that the EmptyLineTracker can look behind the standalone
     comments and adjust their empty lines for class or def lines.
