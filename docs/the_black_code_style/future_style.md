@@ -69,26 +69,47 @@ _Black_ will ensure docstrings are formatted consistently, by removing extra bla
 at the beginning and end of docstrings, ensuring the opening and closing quotes are on
 their own lines and collapsing docstrings with a single line of text down to one line.
 
-### Removing trailing newlines after code block open
+### Improved empty line management
 
-_Black_ will remove newlines in the beginning of new code blocks, i.e. when the
-indentation level is increased. For example:
+1.  _Black_ will remove newlines in the beginning of new code blocks, i.e. when the
+    indentation level is increased. For example:
 
-```python
-def my_func():
+    ```python
+    def my_func():
 
-    print("The line above me will be deleted!")
-```
+        print("The line above me will be deleted!")
+    ```
 
-will be changed to:
+    will be changed to:
 
-```python
-def my_func():
-    print("The line above me will be deleted!")
-```
+    ```python
+    def my_func():
+        print("The line above me will be deleted!")
+    ```
 
-This new feature will be applied to **all code blocks**: `def`, `class`, `if`, `for`,
-`while`, `with`, `case` and `match`.
+    This new feature will be applied to **all code blocks**: `def`, `class`, `if`,
+    `for`, `while`, `with`, `case` and `match`.
+
+2.  _Black_ will enforce empty lines before classes and functions with leading comments.
+    For example:
+
+    ```python
+    some_var = 1
+    # Leading sticky comment
+    def my_func():
+        ...
+    ```
+
+    will be changed to:
+
+    ```python
+    some_var = 1
+
+
+    # Leading sticky comment
+    def my_func():
+        ...
+    ```
 
 ### Improved parentheses management
 
