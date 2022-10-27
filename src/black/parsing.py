@@ -79,6 +79,17 @@ def get_grammars(target_versions: Set[TargetVersion]) -> List[Grammar]:
     return grammars
 
 
+def grammar_version_to_pretty_version(version: Tuple[int, int]) -> str:
+    if version == (3, 0):
+        return "python 3.0-3.6"
+    elif version == (3, 7):
+        return "python 3.7-3.9"
+    elif version == (3, 10):
+        return "python 3.10+"
+    else:
+        raise NotImplementedError("unsupported grammar version")
+
+
 def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -> Node:
     """Given a string with source, return the lib2to3 Node."""
     if not src_txt.endswith("\n"):
@@ -99,19 +110,17 @@ def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -
                 faulty_line = lines[lineno - 1]
             except IndexError:
                 faulty_line = "<line number missing in source>"
-            pretty_version = ".".join(str(number) for number in grammar.version)
+            pretty_version = grammar_version_to_pretty_version(grammar.version)
             errors[grammar.version] = InvalidInput(
-                f"Cannot parse (python {pretty_version}): {lineno}:{column}:"
-                f" {faulty_line}"
+                f"Cannot parse ({pretty_version}): {lineno}:{column}: {faulty_line}"
             )
 
         except TokenError as te:
             # In edge cases these are raised; and typically don't have a "faulty_line".
             lineno, column = te.args[1]
-            pretty_version = ".".join(str(number) for number in grammar.version)
+            pretty_version = grammar_version_to_pretty_version(grammar.version)
             errors[grammar.version] = InvalidInput(
-                f"Cannot parse (python {pretty_version}): {lineno}:{column}:"
-                f" {te.args[0]}"
+                f"Cannot parse ({pretty_version}): {lineno}:{column}: {te.args[0]}"
             )
 
     else:

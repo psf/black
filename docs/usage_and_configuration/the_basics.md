@@ -133,7 +133,7 @@ plus a short summary.
 
 ```console
 $ black src/
-error: cannot format src/black_primer/cli.py: Cannot parse (python 3.10): 5:6: mport asyncio
+error: cannot format src/black_primer/cli.py: Cannot parse (python 3.10+): 5:6: mport asyncio
 reformatted src/black_primer/lib.py
 reformatted src/blackd/__init__.py
 reformatted src/black/__init__.py
@@ -151,7 +151,7 @@ Using configuration from /tmp/pyproject.toml.
 src/blib2to3 ignored: matches the --extend-exclude regular expression
 src/_black_version.py wasn't modified on disk since last run.
 src/black/__main__.py wasn't modified on disk since last run.
-error: cannot format src/black_primer/cli.py: Cannot parse (python 3.10): 5:6: mport asyncio
+error: cannot format src/black_primer/cli.py: Cannot parse (python 3.10+): 5:6: mport asyncio
 reformatted src/black_primer/lib.py
 reformatted src/blackd/__init__.py
 reformatted src/black/__init__.py
@@ -164,7 +164,7 @@ Error messages will still be emitted (which can silenced by `2>/dev/null`).
 
 ```console
 $ black src/ -q
-error: cannot format src/black_primer/cli.py: Cannot parse (python 3.10): 5:6: mport asyncio
+error: cannot format src/black_primer/cli.py: Cannot parse (python 3.10+): 5:6: mport asyncio
 ```
 
 ### Versions
