@@ -69,7 +69,9 @@ def maybe(*choices):
 
 
 def _combinations(*strs):
-    return set(x + y for x in strs for y in strs + ("",) if x.casefold() != y.casefold())
+    return set(
+        x + y for x in strs for y in strs + ("",) if x.casefold() != y.casefold()
+    )
 
 
 Whitespace = r"[ \f\t]*"
@@ -182,7 +184,8 @@ def printtoken(type, token, xxx_todo_changeme, xxx_todo_changeme1, line):  # for
     (srow, scol) = xxx_todo_changeme
     (erow, ecol) = xxx_todo_changeme1
     print(
-        "%d,%d-%d,%d:\t%s\t%s" % (srow, scol, erow, ecol, token_mod.tok_name[type], repr(token))
+        "%d,%d-%d,%d:\t%s\t%s"
+        % (srow, scol, erow, ecol, token_mod.tok_name[type], repr(token))
     )
 
 
@@ -220,7 +223,6 @@ TokenInfo = Union[Tuple[int, str], GoodTokenInfo]
 
 
 class Untokenizer:
-
     tokens: List[Text]
     prev_row: int
     prev_col: int
@@ -265,7 +267,12 @@ class Untokenizer:
         for tok in iterable:
             toknum, tokval = tok[:2]
 
-            if toknum in (token_mod.NAME, token_mod.NUMBER, token_mod.ASYNC, token_mod.AWAIT):
+            if toknum in (
+                token_mod.NAME,
+                token_mod.NUMBER,
+                token_mod.ASYNC,
+                token_mod.AWAIT,
+            ):
                 tokval += " "
 
             if toknum == token_mod.INDENT:
@@ -507,7 +514,13 @@ def generate_tokens(
                     (lnum, nl_pos),
                     line,
                 )
-                yield (token_mod.NL, line[nl_pos:], (lnum, nl_pos), (lnum, len(line)), line)
+                yield (
+                    token_mod.NL,
+                    line[nl_pos:],
+                    (lnum, nl_pos),
+                    (lnum, len(line)),
+                    line,
+                )
                 continue
 
             if column > indents[-1]:  # count indents
@@ -606,7 +619,9 @@ def generate_tokens(
                     if token in ("async", "await"):
                         if async_keywords or async_def:
                             yield (
-                                token_mod.ASYNC if token == "async" else token_mod.AWAIT,
+                                token_mod.ASYNC
+                                if token == "async"
+                                else token_mod.AWAIT,
                                 token,
                                 spos,
                                 epos,
@@ -620,8 +635,11 @@ def generate_tokens(
                         continue
 
                     if token in ("def", "for"):
-                        if stashed and stashed[0] == token_mod.NAME and stashed[1] == "async":
-
+                        if (
+                            stashed
+                            and stashed[0] == token_mod.NAME
+                            and stashed[1] == "async"
+                        ):
                             if token == "def":
                                 async_def = True
                                 async_def_indent = indents[-1]
@@ -657,7 +675,13 @@ def generate_tokens(
                         stashed = None
                     yield (token_mod.OP, token, spos, epos, line)
             else:
-                yield (token_mod.ERRORTOKEN, line[pos], (lnum, pos), (lnum, pos + 1), line)
+                yield (
+                    token_mod.ERRORTOKEN,
+                    line[pos],
+                    (lnum, pos),
+                    (lnum, pos + 1),
+                    line,
+                )
                 pos += 1
 
     if stashed:

@@ -103,13 +103,17 @@ class TokenProxy:
 
 
 class Driver(object):
-    def __init__(self, grammar: grammar.Grammar, logger: Optional[Logger] = None) -> None:
+    def __init__(
+        self, grammar: grammar.Grammar, logger: Optional[Logger] = None
+    ) -> None:
         self.grammar = grammar
         if logger is None:
             logger = logging.getLogger(__name__)
         self.logger = logger
 
-    def parse_tokens(self, tokens: Iterable[tokenize.GoodTokenInfo], debug: bool = False) -> NL:
+    def parse_tokens(
+        self, tokens: Iterable[tokenize.GoodTokenInfo], debug: bool = False
+    ) -> NL:
         """Parse a series of tokens and return the syntax tree."""
         # XXX Move the prefix computation into a wrapper around tokenize.
         proxy = TokenProxy(tokens)

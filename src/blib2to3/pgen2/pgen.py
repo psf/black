@@ -28,7 +28,6 @@ class PgenGrammar(grammar.Grammar):
 
 
 class ParserGenerator(object):
-
     filename: Path
     stream: IO[Text]
     generator: Iterator[tokenize.GoodTokenInfo]
@@ -301,7 +300,10 @@ class ParserGenerator(object):
     def parse_alt(self) -> Tuple["NFAState", "NFAState"]:
         # ALT: ITEM+
         a, b = self.parse_item()
-        while self.value in ("(", "[") or self.type in (token_mod.NAME, token_mod.STRING):
+        while self.value in ("(", "[") or self.type in (
+            token_mod.NAME,
+            token_mod.STRING,
+        ):
             c, d = self.parse_item()
             b.addarc(c)
             b = d
