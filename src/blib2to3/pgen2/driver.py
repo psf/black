@@ -26,12 +26,10 @@ from dataclasses import dataclass, field
 from logging import Logger
 from typing import IO, Any, Iterable, Iterator, List, Optional, Text, Tuple, Union, cast
 
-from blib2to3.pgen2.grammar import Grammar
-from blib2to3.pgen2.tokenize import GoodTokenInfo
+from blib2to3.pgen2 import grammar, parse, pgen
+from blib2to3.pgen2 import token as token_mod
+from blib2to3.pgen2 import tokenize
 from blib2to3.pytree import NL
-
-# Pgen imports
-from . import grammar, parse, pgen, token, tokenize
 
 Path = Union[str, "os.PathLike[str]"]
 
@@ -105,13 +103,13 @@ class TokenProxy:
 
 
 class Driver(object):
-    def __init__(self, grammar: Grammar, logger: Optional[Logger] = None) -> None:
+    def __init__(self, grammar: grammar.Grammar, logger: Optional[Logger] = None) -> None:
         self.grammar = grammar
         if logger is None:
             logger = logging.getLogger(__name__)
         self.logger = logger
 
-    def parse_tokens(self, tokens: Iterable[GoodTokenInfo], debug: bool = False) -> NL:
+    def parse_tokens(self, tokens: Iterable[tokenize.GoodTokenInfo], debug: bool = False) -> NL:
         """Parse a series of tokens and return the syntax tree."""
         # XXX Move the prefix computation into a wrapper around tokenize.
         proxy = TokenProxy(tokens)
@@ -137,26 +135,26 @@ class Driver(object):
                 if column < s_column:
                     prefix += line_text[column:s_column]
                     column = s_column
-            if type in (tokenize.COMMENT, tokenize.NL):
+            if type in (token_mod.COMMENT, token_mod.NL):
                 prefix += value
                 lineno, column = end
                 if value.endswith("\n"):
                     lineno += 1
                     column = 0
                 continue
-            if type == token.OP:
+            if type == token_mod.OP:
                 type = grammar.opmap[value]
             if debug:
                 assert type is not None
                 self.logger.debug(
-                    "%s %r (prefix=%r)", token.tok_name[type], value, prefix
+                    "%s %r (prefix=%r)", token_mod.tok_name[type], value, prefix
                 )
-            if type == token.INDENT:
+            if type == token_mod.INDENT:
                 indent_columns.append(len(value))
                 _prefix = prefix + value
                 prefix = ""
                 value = ""
-            elif type == token.DEDENT:
+            elif type == token_mod.DEDENT:
                 _indent_col = indent_columns.pop()
                 prefix, _prefix = self._partially_consume_prefix(prefix, _indent_col)
             if p.addtoken(cast(int, type), value, (prefix, start)):
@@ -164,7 +162,7 @@ class Driver(object):
                     self.logger.debug("Stop.")
                 break
             prefix = ""
-            if type in {token.INDENT, token.DEDENT}:
+            if type in {token_mod.INDENT, token_mod.DEDENT}:
                 prefix = _prefix
             lineno, column = end
             if value.endswith("\n"):
@@ -245,7 +243,7 @@ def load_grammar(
     save: bool = True,
     force: bool = False,
     logger: Optional[Logger] = None,
-) -> Grammar:
+) -> grammar.Grammar:
     """Load the grammar (maybe from a pickle)."""
     if logger is None:
         logger = logging.getLogger(__name__)

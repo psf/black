@@ -1,7 +1,7 @@
 # Copyright 2004-2005 Elemental Security, Inc. All Rights Reserved.
 # Licensed to PSF under a Contributor Agreement.
 
-import os
+import os  # noqa: C901
 from typing import (
     IO,
     Any,
@@ -16,7 +16,9 @@ from typing import (
     Union,
 )
 
-from . import grammar, token, tokenize
+from blib2to3.pgen2 import grammar
+from blib2to3.pgen2 import token as token_mod
+from blib2to3.pgen2 import tokenize
 
 Path = Union[str, "os.PathLike[str]"]
 
@@ -97,9 +99,9 @@ class ParserGenerator(object):
                     return ilabel
             else:
                 # A named token (NAME, NUMBER, STRING)
-                itoken = getattr(token, label, None)
+                itoken = getattr(token_mod, label, None)
                 assert isinstance(itoken, int), label
-                assert itoken in token.tok_name, label
+                assert itoken in token_mod.tok_name, label
                 if itoken in c.tokens:
                     return c.tokens[itoken]
                 else:
@@ -120,7 +122,7 @@ class ParserGenerator(object):
                 if value in keywords:
                     return keywords[value]
                 else:
-                    c.labels.append((token.NAME, value))
+                    c.labels.append((token_mod.NAME, value))
                     keywords[value] = ilabel
                     return ilabel
             else:
@@ -177,14 +179,14 @@ class ParserGenerator(object):
         dfas = {}
         startsymbol: Optional[str] = None
         # MSTART: (NEWLINE | RULE)* ENDMARKER
-        while self.type != token.ENDMARKER:
-            while self.type == token.NEWLINE:
+        while self.type != token_mod.ENDMARKER:
+            while self.type == token_mod.NEWLINE:
                 self.gettoken()
             # RULE: NAME ':' RHS NEWLINE
-            name = self.expect(token.NAME)
-            self.expect(token.OP, ":")
+            name = self.expect(token_mod.NAME)
+            self.expect(token_mod.OP, ":")
             a, z = self.parse_rhs()
-            self.expect(token.NEWLINE)
+            self.expect(token_mod.NEWLINE)
             # self.dump_nfa(name, a, z)
             dfa = self.make_dfa(a, z)
             # self.dump_dfa(name, dfa)
@@ -301,7 +303,7 @@ class ParserGenerator(object):
     def parse_alt(self) -> Tuple["NFAState", "NFAState"]:
         # ALT: ITEM+
         a, b = self.parse_item()
-        while self.value in ("(", "[") or self.type in (token.NAME, token.STRING):
+        while self.value in ("(", "[") or self.type in (token_mod.NAME, token_mod.STRING):
             c, d = self.parse_item()
             b.addarc(c)
             b = d
@@ -312,7 +314,7 @@ class ParserGenerator(object):
         if self.value == "[":
             self.gettoken()
             a, z = self.parse_rhs()
-            self.expect(token.OP, "]")
+            self.expect(token_mod.OP, "]")
             a.addarc(z)
             return a, z
         else:
@@ -332,9 +334,9 @@ class ParserGenerator(object):
         if self.value == "(":
             self.gettoken()
             a, z = self.parse_rhs()
-            self.expect(token.OP, ")")
+            self.expect(token_mod.OP, ")")
             return a, z
-        elif self.type in (token.NAME, token.STRING):
+        elif self.type in (token_mod.NAME, token_mod.STRING):
             a = NFAState()
             z = NFAState()
             a.addarc(z, self.value)
@@ -357,10 +359,10 @@ class ParserGenerator(object):
 
     def gettoken(self) -> None:
         tup = next(self.generator)
-        while tup[0] in (tokenize.COMMENT, tokenize.NL):
+        while tup[0] in (token_mod.COMMENT, token_mod.NL):
             tup = next(self.generator)
         self.type, self.value, self.begin, self.end, self.line = tup
-        # print token.tok_name[self.type], repr(self.value)
+        # print token_mod.tok_name[self.type], repr(self.value)
 
     def raise_error(self, msg: str, *args: Any) -> NoReturn:
         if args:

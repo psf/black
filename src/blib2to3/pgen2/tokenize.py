@@ -10,7 +10,7 @@ text into Python tokens.  It accepts a readline-like method which is called
 repeatedly to get the next line of input (or "" for EOF).  It generates
 5-tuples with these members:
 
-    the token type (see token.py)
+    the token type (see token_mod.py)
     the token (a string)
     the starting (row, column) indices of the token (a 2-tuple of ints)
     the ending (row, column) indices of the token (a 2-tuple of ints)
@@ -26,6 +26,9 @@ Older entry points
 are the same, except instead of generating tokens, tokeneater is a callback
 function to which the 5 fields described above are passed as 5 arguments,
 each time a new token is found."""
+
+__author__ = "Ka-Ping Yee <ping@lfw.org>"
+__credits__ = "GvR, ESR, Tim Peters, Thomas Wouters, Fred Drake, Skip Montanaro"
 
 import sys
 from typing import (
@@ -46,24 +49,11 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Final
 
-from blib2to3.pgen2.grammar import Grammar
-
-__author__ = "Ka-Ping Yee <ping@lfw.org>"
-__credits__ = "GvR, ESR, Tim Peters, Thomas Wouters, Fred Drake, Skip Montanaro"
-
 import re
 from codecs import BOM_UTF8, lookup
 
-from blib2to3.pgen2.token import *
-
-from . import token
-
-__all__ = [x for x in dir(token) if x[0] != "_"] + [
-    "tokenize",
-    "generate_tokens",
-    "untokenize",
-]
-del token
+from blib2to3.pgen2 import token as token_mod
+from blib2to3.pgen2.grammar import Grammar
 
 
 def group(*choices):
@@ -192,7 +182,7 @@ def printtoken(type, token, xxx_todo_changeme, xxx_todo_changeme1, line):  # for
     (srow, scol) = xxx_todo_changeme
     (erow, ecol) = xxx_todo_changeme1
     print(
-        "%d,%d-%d,%d:\t%s\t%s" % (srow, scol, erow, ecol, tok_name[type], repr(token))
+        "%d,%d-%d,%d:\t%s\t%s" % (srow, scol, erow, ecol, token_mod.tok_name[type], repr(token))
     )
 
 
@@ -258,7 +248,7 @@ class Untokenizer:
             self.add_whitespace(start)
             self.tokens.append(token)
             self.prev_row, self.prev_col = end
-            if tok_type in (NEWLINE, NL):
+            if tok_type in (token_mod.NEWLINE, token_mod.NL):
                 self.prev_row += 1
                 self.prev_col = 0
         return "".join(self.tokens)
@@ -268,23 +258,23 @@ class Untokenizer:
         indents = []
         toks_append = self.tokens.append
         toknum, tokval = token
-        if toknum in (NAME, NUMBER):
+        if toknum in (token_mod.NAME, token_mod.NUMBER):
             tokval += " "
-        if toknum in (NEWLINE, NL):
+        if toknum in (token_mod.NEWLINE, token_mod.NL):
             startline = True
         for tok in iterable:
             toknum, tokval = tok[:2]
 
-            if toknum in (NAME, NUMBER, ASYNC, AWAIT):
+            if toknum in (token_mod.NAME, token_mod.NUMBER, token_mod.ASYNC, token_mod.AWAIT):
                 tokval += " "
 
-            if toknum == INDENT:
+            if toknum == token_mod.INDENT:
                 indents.append(tokval)
                 continue
-            elif toknum == DEDENT:
+            elif toknum == token_mod.DEDENT:
                 indents.pop()
                 continue
-            elif toknum in (NEWLINE, NL):
+            elif toknum in (token_mod.NEWLINE, token_mod.NL):
                 startline = True
             elif startline and indents:
                 toks_append(indents[-1])
@@ -458,7 +448,7 @@ def generate_tokens(
             if endmatch:
                 pos = end = endmatch.end(0)
                 yield (
-                    STRING,
+                    token_mod.STRING,
                     contstr + line[:end],
                     strstart,
                     (lnum, end),
@@ -468,7 +458,7 @@ def generate_tokens(
                 contline = None
             elif needcont and line[-2:] != "\\\n" and line[-3:] != "\\\r\n":
                 yield (
-                    ERRORTOKEN,
+                    token_mod.ERRORTOKEN,
                     contstr + line,
                     strstart,
                     (lnum, len(line)),
@@ -504,25 +494,25 @@ def generate_tokens(
                 stashed = None
 
             if line[pos] in "\r\n":  # skip blank lines
-                yield (NL, line[pos:], (lnum, pos), (lnum, len(line)), line)
+                yield (token_mod.NL, line[pos:], (lnum, pos), (lnum, len(line)), line)
                 continue
 
             if line[pos] == "#":  # skip comments
                 comment_token = line[pos:].rstrip("\r\n")
                 nl_pos = pos + len(comment_token)
                 yield (
-                    COMMENT,
+                    token_mod.COMMENT,
                     comment_token,
                     (lnum, pos),
                     (lnum, nl_pos),
                     line,
                 )
-                yield (NL, line[nl_pos:], (lnum, nl_pos), (lnum, len(line)), line)
+                yield (token_mod.NL, line[nl_pos:], (lnum, nl_pos), (lnum, len(line)), line)
                 continue
 
             if column > indents[-1]:  # count indents
                 indents.append(column)
-                yield (INDENT, line[:pos], (lnum, 0), (lnum, pos), line)
+                yield (token_mod.INDENT, line[:pos], (lnum, 0), (lnum, pos), line)
 
             while column < indents[-1]:  # count dedents
                 if column not in indents:
@@ -537,7 +527,7 @@ def generate_tokens(
                     async_def_nl = False
                     async_def_indent = 0
 
-                yield (DEDENT, "", (lnum, pos), (lnum, pos), line)
+                yield (token_mod.DEDENT, "", (lnum, pos), (lnum, pos), line)
 
             if async_def and async_def_nl and async_def_indent >= indents[-1]:
                 async_def = False
@@ -559,11 +549,11 @@ def generate_tokens(
                 if initial in numchars or (
                     initial == "." and token != "."
                 ):  # ordinary number
-                    yield (NUMBER, token, spos, epos, line)
+                    yield (token_mod.NUMBER, token, spos, epos, line)
                 elif initial in "\r\n":
-                    newline = NEWLINE
+                    newline = token_mod.NEWLINE
                     if parenlev > 0:
-                        newline = NL
+                        newline = token_mod.NL
                     elif async_def:
                         async_def_nl = True
                     if stashed:
@@ -576,7 +566,7 @@ def generate_tokens(
                     if stashed:
                         yield stashed
                         stashed = None
-                    yield (COMMENT, token, spos, epos, line)
+                    yield (token_mod.COMMENT, token, spos, epos, line)
                 elif token in triple_quoted:
                     endprog = endprogs[token]
                     endmatch = endprog.match(line, pos)
@@ -586,7 +576,7 @@ def generate_tokens(
                         if stashed:
                             yield stashed
                             stashed = None
-                        yield (STRING, token, spos, (lnum, pos), line)
+                        yield (token_mod.STRING, token, spos, (lnum, pos), line)
                     else:
                         strstart = (lnum, start)  # multiple lines
                         contstr = line[start:]
@@ -611,12 +601,12 @@ def generate_tokens(
                         if stashed:
                             yield stashed
                             stashed = None
-                        yield (STRING, token, spos, epos, line)
+                        yield (token_mod.STRING, token, spos, epos, line)
                 elif initial.isidentifier():  # ordinary name
                     if token in ("async", "await"):
                         if async_keywords or async_def:
                             yield (
-                                ASYNC if token == "async" else AWAIT,
+                                token_mod.ASYNC if token == "async" else token_mod.AWAIT,
                                 token,
                                 spos,
                                 epos,
@@ -624,20 +614,20 @@ def generate_tokens(
                             )
                             continue
 
-                    tok = (NAME, token, spos, epos, line)
+                    tok = (token_mod.NAME, token, spos, epos, line)
                     if token == "async" and not stashed:
                         stashed = tok
                         continue
 
                     if token in ("def", "for"):
-                        if stashed and stashed[0] == NAME and stashed[1] == "async":
+                        if stashed and stashed[0] == token_mod.NAME and stashed[1] == "async":
 
                             if token == "def":
                                 async_def = True
                                 async_def_indent = indents[-1]
 
                             yield (
-                                ASYNC,
+                                token_mod.ASYNC,
                                 stashed[1],
                                 stashed[2],
                                 stashed[3],
@@ -655,7 +645,7 @@ def generate_tokens(
                     if stashed:
                         yield stashed
                         stashed = None
-                    yield (NL, token, spos, (lnum, pos), line)
+                    yield (token_mod.NL, token, spos, (lnum, pos), line)
                     continued = 1
                 else:
                     if initial in "([{":
@@ -665,9 +655,9 @@ def generate_tokens(
                     if stashed:
                         yield stashed
                         stashed = None
-                    yield (OP, token, spos, epos, line)
+                    yield (token_mod.OP, token, spos, epos, line)
             else:
-                yield (ERRORTOKEN, line[pos], (lnum, pos), (lnum, pos + 1), line)
+                yield (token_mod.ERRORTOKEN, line[pos], (lnum, pos), (lnum, pos + 1), line)
                 pos += 1
 
     if stashed:
@@ -675,8 +665,8 @@ def generate_tokens(
         stashed = None
 
     for indent in indents[1:]:  # pop remaining indent levels
-        yield (DEDENT, "", (lnum, 0), (lnum, 0), "")
-    yield (ENDMARKER, "", (lnum, 0), (lnum, 0), "")
+        yield (token_mod.DEDENT, "", (lnum, 0), (lnum, 0), "")
+    yield (token_mod.ENDMARKER, "", (lnum, 0), (lnum, 0), "")
 
 
 if __name__ == "__main__":  # testing

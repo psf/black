@@ -25,23 +25,22 @@ from typing import (
     cast,
 )
 
-from blib2to3.pgen2.grammar import Grammar
-from blib2to3.pytree import NL, Context, Leaf, Node, RawNode, convert
-
 # Local imports
-from . import grammar, token, tokenize
+from blib2to3.pgen2 import grammar
+from blib2to3.pgen2 import token as token_mod
+from blib2to3.pytree import NL, Context, Leaf, Node, RawNode, convert
 
 if TYPE_CHECKING:
     from blib2to3.driver import TokenProxy
 
 
 Results = Dict[Text, NL]
-Convert = Callable[[Grammar, RawNode], Union[Node, Leaf]]
+Convert = Callable[[grammar.Grammar, RawNode], Union[Node, Leaf]]
 DFA = List[List[Tuple[int, int]]]
 DFAS = Tuple[DFA, Dict[int, int]]
 
 
-def lam_sub(grammar: Grammar, node: RawNode) -> NL:
+def lam_sub(grammar: grammar.Grammar, node: RawNode) -> NL:
     assert node[3] is not None
     return Node(type=node[0], children=node[3], context=node[2])
 
@@ -172,7 +171,7 @@ class Parser(object):
 
     """
 
-    def __init__(self, grammar: Grammar, convert: Optional[Convert] = None) -> None:
+    def __init__(self, grammar: grammar.Grammar, convert: Optional[Convert] = None) -> None:
         """Constructor.
 
         The grammar argument is a grammar.Grammar instance; see the
@@ -269,11 +268,11 @@ class Parser(object):
                     break
 
                 next_token_type, next_token_value, *_ = proxy.eat(counter)
-                if next_token_type in (tokenize.COMMENT, tokenize.NL):
+                if next_token_type in (token_mod.COMMENT, token_mod.NL):
                     counter += 1
                     continue
 
-                if next_token_type == tokenize.OP:
+                if next_token_type == token_mod.OP:
                     next_token_type = grammar.opmap[next_token_value]
 
                 recorder.add_token(next_token_type, next_token_value)
@@ -334,7 +333,7 @@ class Parser(object):
 
         Depending on whether the value is a soft-keyword or not,
         this function may return multiple labels to choose from."""
-        if type == token.NAME:
+        if type == token_mod.NAME:
             # Keep a listing of all used names
             self.used_names.add(value)
             # Check for reserved words
