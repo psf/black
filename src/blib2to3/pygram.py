@@ -8,7 +8,7 @@ import os
 from typing import Union
 
 # Local imports
-from .pgen2 import driver, token
+from .pgen2 import driver
 from .pgen2.grammar import Grammar
 
 # Moved into initialize because mypyc can't handle __file__ (XXX bug)

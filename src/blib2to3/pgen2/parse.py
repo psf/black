@@ -9,7 +9,6 @@ See Parser/parser.c in the Python distribution for additional info on
 how this parsing engine works.
 
 """
-import copy
 from contextlib import contextmanager
 from typing import (
     TYPE_CHECKING,
