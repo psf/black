@@ -835,18 +835,15 @@ def delimiter_split(line: Line, features: Collection[Feature] = ()) -> Iterator[
     add_trailing_commas = max_delimiter_priority == COMMA_PRIORITY
 
     yield from _delimiter_split(
-        line,
-        max_delimiter_priority,
-        add_trailing_commas,
-        features
+        line, max_delimiter_priority, add_trailing_commas, features
     )
 
 
 def _delimiter_split(
-        line: Line,
-        delimiter_priority: int,
-        add_trailing_commas: bool,
-        features: Collection[Feature] = (),
+    line: Line,
+    delimiter_priority: int,
+    add_trailing_commas: bool,
+    features: Collection[Feature] = (),
 ) -> Iterator[Line]:
     """Split according to delimiters of the highest priority, or a custom priority.
 
