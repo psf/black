@@ -11,25 +11,26 @@ how this parsing engine works.
 """
 import copy
 from contextlib import contextmanager
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    Text,
+    Tuple,
+    Union,
+    cast,
+)
+
+from blib2to3.pgen2.grammar import Grammar
+from blib2to3.pytree import NL, Context, Leaf, Node, RawNode, convert
 
 # Local imports
 from . import grammar, token, tokenize
-from typing import (
-    cast,
-    Any,
-    Optional,
-    Text,
-    Union,
-    Tuple,
-    Dict,
-    List,
-    Iterator,
-    Callable,
-    Set,
-    TYPE_CHECKING,
-)
-from blib2to3.pgen2.grammar import Grammar
-from blib2to3.pytree import convert, NL, Context, RawNode, Leaf, Node
 
 if TYPE_CHECKING:
     from blib2to3.driver import TokenProxy

@@ -17,33 +17,34 @@ __all__ = ["Driver", "load_grammar"]
 
 # Python imports
 import io
-import os
 import logging
+import os
 import pkgutil
 import sys
+from contextlib import contextmanager
+from dataclasses import dataclass, field
+from logging import Logger
 from typing import (
-    Any,
-    cast,
     IO,
+    Any,
+    Generic,
     Iterable,
+    Iterator,
     List,
     Optional,
     Text,
-    Iterator,
     Tuple,
     TypeVar,
-    Generic,
     Union,
+    cast,
 )
-from contextlib import contextmanager
-from dataclasses import dataclass, field
 
-# Pgen imports
-from . import grammar, parse, token, tokenize, pgen
-from logging import Logger
-from blib2to3.pytree import NL
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.tokenize import GoodTokenInfo
+from blib2to3.pytree import NL
+
+# Pgen imports
+from . import grammar, parse, pgen, token, tokenize
 
 Path = Union[str, "os.PathLike[str]"]
 
