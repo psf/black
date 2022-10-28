@@ -79,7 +79,6 @@ class ParserGenerator(object):
         first = {}
         for label in sorted(rawfirst):
             ilabel = self.make_label(c, label)
-            ##assert ilabel not in first # XXX failed on <> ... !=
             first[ilabel] = 1
         return first
 
