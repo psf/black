@@ -795,7 +795,8 @@ def dont_increase_indentation(split_func: Transformer) -> Transformer:
 def comma_split(line: Line, features: Collection[Feature] = ()) -> Iterator[Line]:
     """Split on commas
 
-    It works the same as delimiter_split(), but it only splits on commas.
+    If the appropriate Features are given, the split will add trailing commas
+    also in function signatures and calls that contain `*` and `**`.
     """
     try:
         last_leaf = line.leaves[-1]
@@ -804,64 +805,13 @@ def comma_split(line: Line, features: Collection[Feature] = ()) -> Iterator[Line
 
     bt = line.bracket_tracker
     try:
-        max_delimiter_priority = bt.max_delimiter_priority(
-            exclude={id(last_leaf)}
-        )
-        trailing_comma_safe = max_delimiter_priority == COMMA_PRIORITY
+        max_delimiter_priority = bt.max_delimiter_priority(exclude={id(last_leaf)})
     except ValueError:
-        trailing_comma_safe = False
+        raise CannotSplit("No delimiters found") from None
 
-    current_line = Line(
-        mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
-    )
-    lowest_depth = sys.maxsize
+    add_trailing_commas = max_delimiter_priority == COMMA_PRIORITY
 
-    def append_to_line(leaf: Leaf) -> Iterator[Line]:
-        """Append `leaf` to current line or to new line if appending impossible."""
-        nonlocal current_line
-        try:
-            current_line.append_safe(leaf, preformatted=True)
-        except ValueError:
-            yield current_line
-
-            current_line = Line(
-                mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
-            )
-            current_line.append(leaf)
-
-    for leaf in line.leaves:
-        yield from append_to_line(leaf)
-
-        for comment_after in line.comments_after(leaf):
-            yield from append_to_line(comment_after)
-
-        lowest_depth = min(lowest_depth, leaf.bracket_depth)
-        if leaf.bracket_depth == lowest_depth:
-            if is_vararg(leaf, within={syms.typedargslist}):
-                trailing_comma_safe = (
-                    trailing_comma_safe and Feature.TRAILING_COMMA_IN_DEF in features
-                )
-            elif is_vararg(leaf, within={syms.arglist, syms.argument}):
-                trailing_comma_safe = (
-                    trailing_comma_safe and Feature.TRAILING_COMMA_IN_CALL in features
-                )
-
-        leaf_priority = bt.delimiters.get(id(leaf))
-        if leaf_priority == COMMA_PRIORITY:
-            yield current_line
-
-            current_line = Line(
-                mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
-            )
-    if current_line:
-        if (
-                trailing_comma_safe
-                and current_line.leaves[-1].type != token.COMMA
-                and current_line.leaves[-1].type != STANDALONE_COMMENT
-        ):
-            new_comma = Leaf(token.COMMA, ",")
-            current_line.append(new_comma)
-        yield current_line
+    yield from _delimiter_split(line, COMMA_PRIORITY, add_trailing_commas, features)
 
 
 @dont_increase_indentation
@@ -878,9 +828,32 @@ def delimiter_split(line: Line, features: Collection[Feature] = ()) -> Iterator[
 
     bt = line.bracket_tracker
     try:
-        delimiter_priority = bt.max_delimiter_priority(exclude={id(last_leaf)})
+        max_delimiter_priority = bt.max_delimiter_priority(exclude={id(last_leaf)})
     except ValueError:
         raise CannotSplit("No delimiters found") from None
+
+    add_trailing_commas = max_delimiter_priority == COMMA_PRIORITY
+
+    yield from _delimiter_split(
+        line,
+        max_delimiter_priority,
+        add_trailing_commas,
+        features
+    )
+
+
+def _delimiter_split(
+        line: Line,
+        delimiter_priority: int,
+        add_trailing_commas: bool,
+        features: Collection[Feature] = (),
+) -> Iterator[Line]:
+    """Split according to delimiters of the highest priority, or a custom priority.
+
+    If the appropriate Features are given, the split will add trailing commas
+    also in function signatures and calls that contain `*` and `**`.
+    """
+    bt = line.bracket_tracker
 
     if delimiter_priority == DOT_PRIORITY:
         if bt.delimiter_count_with_priority(delimiter_priority) == 1:
@@ -932,7 +905,7 @@ def delimiter_split(line: Line, features: Collection[Feature] = ()) -> Iterator[
     if current_line:
         if (
             trailing_comma_safe
-            and delimiter_priority == COMMA_PRIORITY
+            and add_trailing_commas
             and current_line.leaves[-1].type != token.COMMA
             and current_line.leaves[-1].type != STANDALONE_COMMENT
         ):
