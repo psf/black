@@ -83,6 +83,8 @@ Split functions
 
 .. autofunction:: black.linegen.delimiter_split
 
+.. autofunction:: black.linegen.comma_split
+
 .. autofunction:: black.linegen.left_hand_split
 
 .. autofunction:: black.linegen.right_hand_split
