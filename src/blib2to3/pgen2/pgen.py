@@ -16,10 +16,6 @@ from typing import (
     Union,
 )
 
-from blib2to3.pgen2 import grammar
-from blib2to3.pgen2.tokenize import GoodTokenInfo
-
-# Pgen imports
 from . import grammar, token, tokenize
 
 Path = Union[str, "os.PathLike[str]"]
@@ -33,7 +29,7 @@ class ParserGenerator(object):
 
     filename: Path
     stream: IO[Text]
-    generator: Iterator[GoodTokenInfo]
+    generator: Iterator[tokenize.GoodTokenInfo]
     first: Dict[Text, Optional[Dict[Text, int]]]
 
     def __init__(self, filename: Path, stream: Optional[IO[Text]] = None) -> None:

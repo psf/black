@@ -47,7 +47,6 @@ else:
     from typing_extensions import Final
 
 from blib2to3.pgen2.grammar import Grammar
-from blib2to3.pgen2.token import *
 
 __author__ = "Ka-Ping Yee <ping@lfw.org>"
 __credits__ = "GvR, ESR, Tim Peters, Thomas Wouters, Fred Drake, Skip Montanaro"
