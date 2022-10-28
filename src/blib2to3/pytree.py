@@ -642,7 +642,6 @@ class LeafPattern(BasePattern):
 
 
 class NodePattern(BasePattern):
-
     wildcards: bool = False
 
     def __init__(
@@ -758,8 +757,9 @@ class WildcardPattern(BasePattern):
         """
         assert 0 <= min <= max <= HUGE, (min, max)
         if content is not None:
-            f = lambda s: tuple(s)
-            wrapped_content = tuple(map(f, content))  # Protect against alterations
+            wrapped_content = tuple(
+                map(lambda s: tuple(s), content)
+            )  # Protect against alterations
             # Check sanity of alternatives
             assert len(wrapped_content), repr(
                 wrapped_content
