@@ -187,14 +187,12 @@ class ParserGenerator(object):
             self.expect(token_mod.OP, ":")
             a, z = self.parse_rhs()
             self.expect(token_mod.NEWLINE)
-            # self.dump_nfa(name, a, z)
+
             dfa = self.make_dfa(a, z)
-            # self.dump_dfa(name, dfa)
-            oldlen = len(dfa)
+
             self.simplify_dfa(dfa)
-            newlen = len(dfa)
             dfas[name] = dfa
-            # print name, oldlen, newlen
+
             if startsymbol is None:
                 startsymbol = name
         assert startsymbol is not None
@@ -368,7 +366,7 @@ class ParserGenerator(object):
         if args:
             try:
                 msg = msg % args
-            except:
+            except Exception:
                 msg = " ".join([msg] + list(map(str, args)))
         raise SyntaxError(msg, (self.filename, self.end[0], self.end[1], self.line))
 
