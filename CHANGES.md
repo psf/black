@@ -10,8 +10,6 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Stop type hints after comments from wrapping unnecessarily. (#3362)
-
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
