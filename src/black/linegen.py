@@ -538,12 +538,16 @@ def transform_line(
                 ]
         else:
             if line.inside_brackets:
-                transformers = [
-                    comma_split,
-                    delimiter_split,
-                    standalone_comment_split,
-                    rhs,
-                ]
+                if (
+                    not line.contains_standalone_comments()
+                    or len(line.comments) > 0
+                    or any(
+                        leaf.type == STANDALONE_COMMENT for leaf in line.leaves[1:-1]
+                    )
+                ):
+                    transformers = [delimiter_split, standalone_comment_split, rhs]
+                else:
+                    transformers = [standalone_comment_split, delimiter_split, rhs]
             else:
                 transformers = [rhs]
     # It's always safe to attempt hugging of power operations and pretty much every line
