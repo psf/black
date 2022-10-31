@@ -297,8 +297,10 @@ x += (
 y = "Short string"
 
 print(
-    "This is a really long string inside of a print statement with extra arguments"
-    " attached at the end of it.",
+    (
+        "This is a really long string inside of a print statement with extra arguments"
+        " attached at the end of it."
+    ),
     x,
     y,
     z,
@@ -474,13 +476,15 @@ bad_split3 = (
 )
 
 bad_split_func1(
-    "But what should happen when code has already "
-    "been formatted but in the wrong way? Like "
-    "with a space at the end instead of the "
-    "beginning. Or what about when it is split too "
-    "soon? In the case of a split that is too "
-    "short, black will try to honer the custom "
-    "split.",
+    (
+        "But what should happen when code has already "
+        "been formatted but in the wrong way? Like "
+        "with a space at the end instead of the "
+        "beginning. Or what about when it is split too "
+        "soon? In the case of a split that is too "
+        "short, black will try to honer the custom "
+        "split."
+    ),
     xxx,
     yyy,
     zzz,
@@ -583,9 +587,11 @@ comment_string = (  # This comment gets thrown to the top.
 )
 
 arg_comment_string = print(
-    "Long lines with inline comments which are apart of (and not the only member of) an"
-    " argument list should have their comments appended to the reformatted string's"
-    " enclosing left parentheses.",  # This comment gets thrown to the top.
+    (  # This comment gets thrown to the top.
+        "Long lines with inline comments which are apart of (and not the only member"
+        " of) an argument list should have their comments appended to the reformatted"
+        " string's enclosing left parentheses."
+    ),
     "Arg #2",
     "Arg #3",
     "Arg #4",
@@ -645,23 +651,31 @@ return (
 )
 
 func_with_bad_comma(
-    "This is a really long string argument to a function that has a trailing comma"
-    " which should NOT be there.",
+    (
+        "This is a really long string argument to a function that has a trailing comma"
+        " which should NOT be there."
+    ),
 )
 
 func_with_bad_comma(
-    "This is a really long string argument to a function that has a trailing comma"
-    " which should NOT be there.",  # comment after comma
+    (  # comment after comma
+        "This is a really long string argument to a function that has a trailing comma"
+        " which should NOT be there."
+    ),
 )
 
 func_with_bad_comma(
-    "This is a really long string argument to a function that has a trailing comma"
-    " which should NOT be there.",
+    (
+        "This is a really long string argument to a function that has a trailing comma"
+        " which should NOT be there."
+    ),
 )
 
 func_with_bad_comma(
-    "This is a really long string argument to a function that has a trailing comma"
-    " which should NOT be there.",  # comment after comma
+    (  # comment after comma
+        "This is a really long string argument to a function that has a trailing comma"
+        " which should NOT be there."
+    ),
 )
 
 func_with_bad_parens_that_wont_fit_in_one_line(
