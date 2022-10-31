@@ -154,6 +154,7 @@ class Preview(Enum):
     long_docstring_quotes_on_newline = auto()
     normalize_docstring_quotes_and_prefixes_properly = auto()
     one_element_subscript = auto()
+    prefer_splitting_right_hand_side_of_assignments = auto()
     remove_block_trailing_newline = auto()
     remove_redundant_parens = auto()
     string_processing = auto()

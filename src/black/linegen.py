@@ -2,6 +2,7 @@
 Generating lines of code.
 """
 import sys
+from dataclasses import dataclass
 from functools import partial, wraps
 from typing import Collection, Iterator, List, Optional, Set, Union, cast
 
@@ -12,12 +13,14 @@ from black.lines import (
     append_leaves,
     can_be_split,
     can_omit_invisible_parens,
+    is_assignment_line,
     is_line_short_enough,
     line_to_string,
 )
 from black.mode import Feature, Mode, Preview
 from black.nodes import (
     ASSIGNMENTS,
+    BRACKETS,
     CLOSING_BRACKETS,
     OPENING_BRACKETS,
     RARROW,
@@ -600,6 +603,17 @@ def left_hand_split(line: Line, _features: Collection[Feature] = ()) -> Iterator
             yield result
 
 
+@dataclass
+class _RHSResult:
+    """Intermediate split result from a right hand split."""
+
+    head: Line
+    body: Line
+    tail: Line
+    opening_bracket: Leaf
+    closing_bracket: Leaf
+
+
 def right_hand_split(
     line: Line,
     line_length: int,
@@ -613,6 +627,97 @@ def right_hand_split(
     this split.
 
     Note: running this function modifies `bracket_depth` on the leaves of `line`.
+    """
+    rhs_result = _first_right_hand_split(line, omit=omit)
+    yield from _maybe_split_without_optional_parens(
+        rhs_result, line, line_length, features=features, omit=omit
+    )
+
+
+def _maybe_split_without_optional_parens(
+    rhs: _RHSResult,
+    line: Line,
+    line_length: int,
+    features: Collection[Feature] = (),
+    omit: Collection[LeafID] = (),
+) -> Iterator[Line]:
+    if (
+        Feature.FORCE_OPTIONAL_PARENTHESES not in features
+        # the opening bracket is an optional paren
+        and rhs.opening_bracket.type == token.LPAR
+        and not rhs.opening_bracket.value
+        # the closing bracket is an optional paren
+        and rhs.closing_bracket.type == token.RPAR
+        and not rhs.closing_bracket.value
+        # it's not an import (optional parens are the only thing we can split on
+        # in this case; attempting a split without them is a waste of time)
+        and not line.is_import
+        # there are no standalone comments in the body
+        and not rhs.body.contains_standalone_comments(0)
+        # and we can actually remove the parens
+        and can_omit_invisible_parens(rhs.body, line_length)
+    ):
+        omit = {id(rhs.closing_bracket), *omit}
+        try:
+            alt_rhs = _first_right_hand_split(line, omit=omit)
+            if not (
+                Preview.prefer_splitting_right_hand_side_of_assignments in line.mode
+                # this is an assignment statement
+                and is_assignment_line(line)
+                # the left side of assignement contains brackets
+                and any(leaf.type in BRACKETS for leaf in rhs.head.leaves[:-1])
+                # the left side of assignment is short enough
+                and is_line_short_enough(rhs.head, line_length=line_length)
+                and (
+                    # no more splits inside the optional parens (this is done by
+                    # checking whether the resulting first line still has the `=`
+                    # token)
+                    not any(leaf.type == token.EQUAL for leaf in alt_rhs.head.leaves)
+                    # the split from inside the optional parens produces a long line
+                    or not is_line_short_enough(alt_rhs.head, line_length=line_length)
+                )
+            ):
+                yield from _maybe_split_without_optional_parens(
+                    alt_rhs, line, line_length, features=features, omit=omit
+                )
+                return
+
+        except CannotSplit as e:
+            if not (
+                can_be_split(rhs.body)
+                or is_line_short_enough(rhs.body, line_length=line_length)
+            ):
+                raise CannotSplit(
+                    "Splitting failed, body is still too long and can't be split."
+                ) from e
+
+            elif (
+                rhs.head.contains_multiline_strings()
+                or rhs.tail.contains_multiline_strings()
+            ):
+                raise CannotSplit(
+                    "The current optional pair of parentheses is bound to fail to"
+                    " satisfy the splitting algorithm because the head or the tail"
+                    " contains multiline strings which by definition never fit one"
+                    " line."
+                ) from e
+
+    ensure_visible(rhs.opening_bracket)
+    ensure_visible(rhs.closing_bracket)
+    for result in (rhs.head, rhs.body, rhs.tail):
+        if result:
+            yield result
+
+
+def _first_right_hand_split(
+    line: Line,
+    omit: Collection[LeafID] = (),
+) -> _RHSResult:
+    """Split the line into head, body, tail starting with the last bracket pair.
+
+    Note: this function should not have side effects. It's replied upon by
+    _maybe_split_without_optional_parens to get an opinion whether to prefer
+    splitting on the right side of an assignment statement.
     """
     tail_leaves: List[Leaf] = []
     body_leaves: List[Leaf] = []
@@ -643,49 +748,7 @@ def right_hand_split(
     body = bracket_split_build_line(body_leaves, line, opening_bracket, is_body=True)
     tail = bracket_split_build_line(tail_leaves, line, opening_bracket)
     bracket_split_succeeded_or_raise(head, body, tail)
-    if (
-        Feature.FORCE_OPTIONAL_PARENTHESES not in features
-        # the opening bracket is an optional paren
-        and opening_bracket.type == token.LPAR
-        and not opening_bracket.value
-        # the closing bracket is an optional paren
-        and closing_bracket.type == token.RPAR
-        and not closing_bracket.value
-        # it's not an import (optional parens are the only thing we can split on
-        # in this case; attempting a split without them is a waste of time)
-        and not line.is_import
-        # there are no standalone comments in the body
-        and not body.contains_standalone_comments(0)
-        # and we can actually remove the parens
-        and can_omit_invisible_parens(body, line_length)
-    ):
-        omit = {id(closing_bracket), *omit}
-        try:
-            yield from right_hand_split(line, line_length, features=features, omit=omit)
-            return
-
-        except CannotSplit as e:
-            if not (
-                can_be_split(body)
-                or is_line_short_enough(body, line_length=line_length)
-            ):
-                raise CannotSplit(
-                    "Splitting failed, body is still too long and can't be split."
-                ) from e
-
-            elif head.contains_multiline_strings() or tail.contains_multiline_strings():
-                raise CannotSplit(
-                    "The current optional pair of parentheses is bound to fail to"
-                    " satisfy the splitting algorithm because the head or the tail"
-                    " contains multiline strings which by definition never fit one"
-                    " line."
-                ) from e
-
-    ensure_visible(opening_bracket)
-    ensure_visible(closing_bracket)
-    for result in (head, body, tail):
-        if result:
-            yield result
+    return _RHSResult(head, body, tail, opening_bracket, closing_bracket)
 
 
 def bracket_split_succeeded_or_raise(head: Line, body: Line, tail: Line) -> None:

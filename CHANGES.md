@@ -17,6 +17,8 @@
 - Enforce empty lines before classes and functions with sticky leading comments (#3302)
 - Implicitly concatenated strings used as function args are now wrapped inside
   parentheses (#3307)
+- For assignment statements, prefer splitting the right hand side if the left hand side
+  fits on a single line (#3368)
 
 ### Configuration
 
