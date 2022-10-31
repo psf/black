@@ -492,9 +492,7 @@ def transform_line(
             bracket pair instead.
             """
             for omit in generate_trailers_to_omit(line, mode.line_length):
-                lines = list(
-                    right_hand_split(line, mode, features, omit=omit)
-                )
+                lines = list(right_hand_split(line, mode, features, omit=omit))
                 # Note: this check is only able to figure out if the first line of the
                 # *current* transformation fits in the line length.  This is true only
                 # for simple cases.  All others require running more transforms via
@@ -507,9 +505,7 @@ def transform_line(
             # This mostly happens to multiline strings that are by definition
             # reported as not fitting a single line, as well as lines that contain
             # trailing commas (those have to be exploded).
-            yield from right_hand_split(
-                line, mode, features=features
-            )
+            yield from right_hand_split(line, mode, features=features)
 
         # HACK: nested functions (like _rhs) compiled by mypyc don't retain their
         # __name__ attribute which is needed in `run_transformer` further down.
@@ -665,10 +661,7 @@ def right_hand_split(
             return
 
         except CannotSplit as e:
-            if not (
-                can_be_split(body)
-                or is_line_short_enough(body, mode=mode)
-            ):
+            if not (can_be_split(body) or is_line_short_enough(body, mode=mode)):
                 raise CannotSplit(
                     "Splitting failed, body is still too long and can't be split."
                 ) from e
@@ -1287,8 +1280,6 @@ def run_transformer(
     second_opinion = run_transformer(
         line_copy, transform, mode, features_fop, line_str=line_str
     )
-    if all(
-        is_line_short_enough(ln, mode=mode) for ln in second_opinion
-    ):
+    if all(is_line_short_enough(ln, mode=mode) for ln in second_opinion):
         result = second_opinion
     return result
