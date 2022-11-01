@@ -14,6 +14,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Stop wrapping unnecessarily when there are comments inside brackets (#3362).
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
