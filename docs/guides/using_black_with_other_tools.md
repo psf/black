@@ -267,7 +267,7 @@ ignore = E203, W503
 #### Why those options above?
 
 pycodestyle should be configured to only complain about lines that surpass `88` characters
-via `max-line-length = 88`.
+via `max_line_length = 88`.
 
 See [Why are Flake8’s E203 and W503 violated?](https://black.readthedocs.io/en/stable/faq.html#why-are-flake8-s-e203-and-w503-violated)
 
