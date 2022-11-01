@@ -1,8 +1,8 @@
 """
 Generating lines of code.
 """
-import enum
 import sys
+from enum import Enum, auto
 from functools import partial, wraps
 from typing import Collection, Iterator, List, Optional, Set, Union, cast
 
@@ -562,10 +562,10 @@ def transform_line(
         yield line
 
 
-class _BracketSplitComponent(enum.Enum):
-    head = enum.auto()
-    body = enum.auto()
-    tail = enum.auto()
+class _BracketSplitComponent(Enum):
+    head = auto()
+    body = auto()
+    tail = auto()
 
 
 def left_hand_split(line: Line, _features: Collection[Feature] = ()) -> Iterator[Line]:
