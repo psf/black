@@ -1,6 +1,7 @@
 """
 Generating lines of code.
 """
+import enum
 import sys
 from functools import partial, wraps
 from typing import Collection, Iterator, List, Optional, Set, Union, cast
@@ -561,6 +562,12 @@ def transform_line(
         yield line
 
 
+class _BracketSplitComponent(enum.Enum):
+    head = enum.auto()
+    body = enum.auto()
+    tail = enum.auto()
+
+
 def left_hand_split(line: Line, _features: Collection[Feature] = ()) -> Iterator[Line]:
     """Split line into many lines, starting with the first matching bracket pair.
 
@@ -591,9 +598,15 @@ def left_hand_split(line: Line, _features: Collection[Feature] = ()) -> Iterator
     if not matching_bracket:
         raise CannotSplit("No brackets found")
 
-    head = bracket_split_build_line(head_leaves, line, matching_bracket)
-    body = bracket_split_build_line(body_leaves, line, matching_bracket, is_body=True)
-    tail = bracket_split_build_line(tail_leaves, line, matching_bracket)
+    head = bracket_split_build_line(
+        head_leaves, line, matching_bracket, component=_BracketSplitComponent.head
+    )
+    body = bracket_split_build_line(
+        body_leaves, line, matching_bracket, component=_BracketSplitComponent.body
+    )
+    tail = bracket_split_build_line(
+        tail_leaves, line, matching_bracket, component=_BracketSplitComponent.tail
+    )
     bracket_split_succeeded_or_raise(head, body, tail)
     for result in (head, body, tail):
         if result:
@@ -640,10 +653,14 @@ def right_hand_split(
     body_leaves.reverse()
     head_leaves.reverse()
     head = bracket_split_build_line(
-        head_leaves, line, opening_bracket, check_should_split_line=True
+        head_leaves, line, opening_bracket, component=_BracketSplitComponent.head
     )
-    body = bracket_split_build_line(body_leaves, line, opening_bracket, is_body=True)
-    tail = bracket_split_build_line(tail_leaves, line, opening_bracket)
+    body = bracket_split_build_line(
+        body_leaves, line, opening_bracket, component=_BracketSplitComponent.body
+    )
+    tail = bracket_split_build_line(
+        tail_leaves, line, opening_bracket, component=_BracketSplitComponent.tail
+    )
     bracket_split_succeeded_or_raise(head, body, tail)
     if (
         Feature.FORCE_OPTIONAL_PARENTHESES not in features
@@ -721,16 +738,19 @@ def bracket_split_build_line(
     original: Line,
     opening_bracket: Leaf,
     *,
-    is_body: bool = False,
-    check_should_split_line: bool = False,
+    component: _BracketSplitComponent,
 ) -> Line:
     """Return a new line with given `leaves` and respective comments from `original`.
 
-    If `is_body` is True, the result line is one-indented inside brackets and as such
-    has its first leaf's prefix normalized and a trailing comma added when expected.
+    If it's the head component, trailing commas inside inner parens will also be
+    checked to ensure they are respected.
+
+    If it's the body component, the result line is one-indented inside brackets and as
+    such has its first leaf's prefix normalized and a trailing comma added when
+    expected.
     """
     result = Line(mode=original.mode, depth=original.depth)
-    if is_body:
+    if component == _BracketSplitComponent.body:
         result.inside_brackets = True
         result.depth += 1
         if leaves:
@@ -769,17 +789,15 @@ def bracket_split_build_line(
                     break
 
     # Populate the line
-    check_should_split_line = (
+    track_bracket = (
         Preview.handle_trailing_commas_in_leading_parts in original.mode
-        and check_should_split_line
+        and component == _BracketSplitComponent.head
     )
     for leaf in leaves:
-        result.append(leaf, preformatted=True, track_bracket=check_should_split_line)
+        result.append(leaf, preformatted=True, track_bracket=track_bracket)
         for comment_after in original.comments_after(leaf):
             result.append(comment_after, preformatted=True)
-    if (is_body or check_should_split_line) and should_split_line(
-        result, opening_bracket
-    ):
+    if should_split_line(result, opening_bracket, component):
         result.should_split_rhs = True
     return result
 
@@ -1158,30 +1176,56 @@ def maybe_make_parens_invisible_in_atom(
     return True
 
 
-def should_split_line(line: Line, opening_bracket: Leaf) -> bool:
+def should_split_line(
+    line: Line, opening_bracket: Leaf, component: _BracketSplitComponent
+) -> bool:
     """Should `line` be immediately split with `delimiter_split()` after RHS?"""
+
+    if component == _BracketSplitComponent.tail:
+        return False
 
     if not (opening_bracket.parent and opening_bracket.value in "[{("):
         return False
 
-    # We're essentially checking if the body is delimited by commas and there's more
+    # We're essentially checking if the line is delimited by commas and there's more
     # than one of them (we're excluding the trailing comma and if the delimiter priority
     # is still commas, that means there's more).
     exclude = set()
     trailing_comma = False
     try:
         last_leaf = line.leaves[-1]
-        if last_leaf.type == token.COMMA:
+        if component == _BracketSplitComponent.body and last_leaf.type == token.COMMA:
             trailing_comma = True
             exclude.add(id(last_leaf))
-        else:
-            # Check commas inside inner parens.
+        elif (
+            component == _BracketSplitComponent.head
+            and Preview.handle_trailing_commas_in_leading_parts in line.mode
+        ):
+            # Check commas inside inner parens, we need to only include leaves inside
+            # the matching brackets.
+            include: Set[LeafID] = set()
+            reversed_leaves: List[Leaf] = list(reversed(line.leaves))
+            reversed_leaves_ids: List[LeafID] = [id(leaf) for leaf in reversed_leaves]
             next_leaf = last_leaf
-            for leaf in reversed(line.leaves[:-1]):
+            for i, leaf in enumerate(reversed_leaves):
+                if i == 0:
+                    continue
                 if next_leaf.type in CLOSING_BRACKETS and leaf.type == token.COMMA:
-                    trailing_comma = True
-                    break
+                    # print(f'>>>> {next_leaf=}')
+                    opening = next_leaf.opening_bracket
+                    if opening is None:
+                        continue
+                    try:
+                        opening_bracket_index = reversed_leaves_ids.index(id(opening))
+                    except ValueError:
+                        pass
+                    else:
+                        trailing_comma = True
+                        include.update(
+                            reversed_leaves_ids[i + 1 : opening_bracket_index - 1]
+                        )
                 next_leaf = leaf
+            exclude = set(reversed_leaves_ids) - include
         max_priority = line.bracket_tracker.max_delimiter_priority(exclude=exclude)
     except (IndexError, ValueError):
         return False
