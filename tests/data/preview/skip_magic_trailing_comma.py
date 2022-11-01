@@ -15,6 +15,24 @@ set_of_types = {tuple[int,],}
 # Except single element tuples
 small_tuple = (1,)
 
+# Trailing commas in multiple chained non-nested parens.
+zero(
+    one,
+).two(
+    three,
+).four(
+    five,
+)
+
+(
+    a,
+    b,
+    c,
+    d,
+) = func1(
+    arg1
+) and func2(arg2)
+
 # output
 # We should not remove the trailing comma in a single-element subscript.
 a: tuple[int,]
@@ -32,3 +50,8 @@ set_of_types = {tuple[int,]}
 
 # Except single element tuples
 small_tuple = (1,)
+
+# Trailing commas in multiple chained non-nested parens.
+zero(one).two(three).four(five)
+
+(a, b, c, d) = func1(arg1) and func2(arg2)
