@@ -528,6 +528,17 @@ def transform_line(
                     string_paren_wrap,
                     rhs,
                 ]
+
+                if (
+                    Preview.stop_some_unnecessary_wrapping_inside_brackets in mode
+                    and line.contains_standalone_comments()
+                    and len(line.comments) == 0
+                    and all(
+                        leaf.type != STANDALONE_COMMENT for leaf in line.leaves[1:-1]
+                    )
+                ):
+                    transformers.remove(standalone_comment_split)
+                    transformers.insert(0, standalone_comment_split)
             else:
                 transformers = [
                     string_merge,
@@ -538,16 +549,7 @@ def transform_line(
                 ]
         else:
             if line.inside_brackets:
-                if (
-                    not line.contains_standalone_comments()
-                    or len(line.comments) > 0
-                    or any(
-                        leaf.type == STANDALONE_COMMENT for leaf in line.leaves[1:-1]
-                    )
-                ):
-                    transformers = [delimiter_split, standalone_comment_split, rhs]
-                else:
-                    transformers = [standalone_comment_split, delimiter_split, rhs]
+                transformers = [delimiter_split, standalone_comment_split, rhs]
             else:
                 transformers = [rhs]
     # It's always safe to attempt hugging of power operations and pretty much every line
