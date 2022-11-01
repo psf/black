@@ -93,7 +93,7 @@ class BracketTracker:
             self.depth -= 1
             try:
                 opening_bracket = self.bracket_match.pop((self.depth, leaf.type))
-            except KeyError as e:
+            except KeyError:
                 # OK to have non-matching closing brackets, as the line might be a
                 # continuation from previous lines and the closing brackets match
                 # the ones from previously split lines.

@@ -17,6 +17,8 @@
 - Enforce empty lines before classes and functions with sticky leading comments (#3302)
 - Implicitly concatenated strings used as function args are now wrapped inside
   parentheses (#3307)
+- Correctly handle trailing commas that are inside a line's leading non-nested parens
+  (#3370)
 
 ### Configuration
 

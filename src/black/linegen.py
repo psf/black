@@ -639,7 +639,9 @@ def right_hand_split(
     tail_leaves.reverse()
     body_leaves.reverse()
     head_leaves.reverse()
-    head = bracket_split_build_line(head_leaves, line, opening_bracket, check_should_split_line=True)
+    head = bracket_split_build_line(
+        head_leaves, line, opening_bracket, check_should_split_line=True
+    )
     body = bracket_split_build_line(body_leaves, line, opening_bracket, is_body=True)
     tail = bracket_split_build_line(tail_leaves, line, opening_bracket)
     bracket_split_succeeded_or_raise(head, body, tail)
@@ -715,7 +717,12 @@ def bracket_split_succeeded_or_raise(head: Line, body: Line, tail: Line) -> None
 
 
 def bracket_split_build_line(
-    leaves: List[Leaf], original: Line, opening_bracket: Leaf, *, is_body: bool = False, check_should_split_line: bool = False
+    leaves: List[Leaf],
+    original: Line,
+    opening_bracket: Leaf,
+    *,
+    is_body: bool = False,
+    check_should_split_line: bool = False,
 ) -> Line:
     """Return a new line with given `leaves` and respective comments from `original`.
 
@@ -762,12 +769,17 @@ def bracket_split_build_line(
                     break
 
     # Populate the line
-    check_should_split_line = Preview.handle_trailing_commas_in_leading_parts in original.mode and check_should_split_line
+    check_should_split_line = (
+        Preview.handle_trailing_commas_in_leading_parts in original.mode
+        and check_should_split_line
+    )
     for leaf in leaves:
         result.append(leaf, preformatted=True, track_bracket=check_should_split_line)
         for comment_after in original.comments_after(leaf):
             result.append(comment_after, preformatted=True)
-    if (is_body or check_should_split_line) and should_split_line(result, opening_bracket):
+    if (is_body or check_should_split_line) and should_split_line(
+        result, opening_bracket
+    ):
         result.should_split_rhs = True
     return result
 

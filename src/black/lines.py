@@ -53,7 +53,9 @@ class Line:
     should_split_rhs: bool = False
     magic_trailing_comma: Optional[Leaf] = None
 
-    def append(self, leaf: Leaf, preformatted: bool = False, track_bracket: bool = False) -> None:
+    def append(
+        self, leaf: Leaf, preformatted: bool = False, track_bracket: bool = False
+    ) -> None:
         """Add a new `leaf` to the end of the line.
 
         Unless `preformatted` is True, the `leaf` will receive a new consistent
