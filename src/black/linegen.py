@@ -788,7 +788,8 @@ def bracket_split_build_line(
                         leaves.insert(i + 1, new_comma)
                     break
 
-    leaves_to_track = set()
+    start_index = len(leaves)
+    end_index = -1
     if (
         Preview.handle_trailing_commas_in_head in original.mode
         and component == _BracketSplitComponent.head
@@ -800,19 +801,18 @@ def bracket_split_build_line(
                 i for i, l in enumerate(leaves) if l.type in OPENING_BRACKETS
             )
             end_index = next(
-                i for i, l in enumerate(reversed(leaves)) if l.type in CLOSING_BRACKETS
-            )
-            leaves_to_track = set(
-                id(leaf) for leaf in leaves[start_index : len(leaves) - end_index + 1]
+                len(leaves) - i
+                for i, l in enumerate(reversed(leaves))
+                if l.type in CLOSING_BRACKETS
             )
         except StopIteration:
             pass
     # Populate the line
-    for leaf in leaves:
+    for i, leaf in enumerate(leaves):
         result.append(
             leaf,
             preformatted=True,
-            track_bracket=id(leaf) in leaves_to_track,
+            track_bracket=start_index <= i <= end_index,
         )
         for comment_after in original.comments_after(leaf):
             result.append(comment_after, preformatted=True)
