@@ -6,7 +6,12 @@ from enum import Enum, auto
 from functools import partial, wraps
 from typing import Collection, Iterator, List, Optional, Set, Union, cast
 
-from black.brackets import COMMA_PRIORITY, DOT_PRIORITY, max_delimiter_priority_in_atom
+from black.brackets import (
+    COMMA_PRIORITY,
+    DOT_PRIORITY,
+    get_leaves_inside_matching_brackets,
+    max_delimiter_priority_in_atom,
+)
 from black.comments import FMT_OFF, generate_comments, list_comments
 from black.lines import (
     Line,
@@ -793,29 +798,7 @@ def bracket_split_build_line(
         Preview.handle_trailing_commas_in_head in original.mode
         and component == _BracketSplitComponent.head
     ):
-        try:
-            # Only track brackets from the first opening bracket to the last closing
-            # bracket.
-            start_index = next(
-                i for i, l in enumerate(leaves) if l.type in OPENING_BRACKETS
-            )
-            end_index = next(
-                len(leaves) - i
-                for i, l in enumerate(reversed(leaves))
-                if l.type in CLOSING_BRACKETS
-            )
-        except StopIteration:
-            pass
-        else:
-            depth = 0
-            for i in range(end_index, start_index - 1, -1):
-                leaf = leaves[i]
-                if leaf.type in CLOSING_BRACKETS:
-                    depth += 1
-                if depth > 0:
-                    leaves_to_track.add(id(leaf))
-                if leaf.type in OPENING_BRACKETS:
-                    depth -= 1
+        leaves_to_track = get_leaves_inside_matching_brackets(leaves)
     # Populate the line
     for leaf in leaves:
         result.append(
