@@ -788,8 +788,7 @@ def bracket_split_build_line(
                         leaves.insert(i + 1, new_comma)
                     break
 
-    start_index = len(leaves)
-    end_index = -1
+    leaves_to_track: Set[LeafID] = set()
     if (
         Preview.handle_trailing_commas_in_head in original.mode
         and component == _BracketSplitComponent.head
@@ -807,12 +806,22 @@ def bracket_split_build_line(
             )
         except StopIteration:
             pass
+        else:
+            depth = 0
+            for i in range(end_index, start_index-1, -1):
+                leaf = leaves[i]
+                if leaf.type in CLOSING_BRACKETS:
+                    depth += 1
+                if depth > 0:
+                    leaves_to_track.add(id(leaf))
+                if leaf.type in OPENING_BRACKETS:
+                    depth -= 1
     # Populate the line
     for i, leaf in enumerate(leaves):
         result.append(
             leaf,
             preformatted=True,
-            track_bracket=start_index <= i <= end_index,
+            track_bracket=id(leaf) in leaves_to_track,
         )
         for comment_after in original.comments_after(leaf):
             result.append(comment_after, preformatted=True)
@@ -1330,6 +1339,7 @@ def run_transformer(
         # structure), then we can't proceed. Doing so would cause the below
         # call to `append_leaves()` to fail.
         or any(leaf.parent is None for leaf in line.leaves)
+        # or Feature.FORCE_OPTIONAL_PARENTHESES in features
     ):
         return result
 
