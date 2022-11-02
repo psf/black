@@ -6,7 +6,12 @@ from enum import Enum, auto
 from functools import partial, wraps
 from typing import Collection, Iterator, List, Optional, Set, Union, cast
 
-from black.brackets import COMMA_PRIORITY, DOT_PRIORITY, max_delimiter_priority_in_atom
+from black.brackets import (
+    COMMA_PRIORITY,
+    DOT_PRIORITY,
+    get_inner_leaf_ids_with_matching_brackets,
+    max_delimiter_priority_in_atom,
+)
 from black.comments import FMT_OFF, generate_comments, list_comments
 from black.lines import (
     Line,
@@ -742,8 +747,8 @@ def bracket_split_build_line(
 ) -> Line:
     """Return a new line with given `leaves` and respective comments from `original`.
 
-    If it's the head component, trailing commas inside inner parens will also be
-    checked to ensure they are respected.
+    If it's the head component, brackets will be tracked so trailing commas are
+    respected.
 
     If it's the body component, the result line is one-indented inside brackets and as
     such has its first leaf's prefix normalized and a trailing comma added when
@@ -789,39 +794,23 @@ def bracket_split_build_line(
                     break
 
     # Populate the line
-    track_bracket = (
-        Preview.handle_trailing_commas_in_leading_parts in original.mode
+    if (
+        Preview.handle_trailing_commas_in_head in original.mode
         and component == _BracketSplitComponent.head
-    )
-    ids_to_track = set()
-    if component == _BracketSplitComponent.head:
-        is_trailing_non_matching_opening_brackets = True
-        bracket_depth = 0
-        for leaf in reversed(leaves):
-            if leaf is opening_bracket:
-                continue
-            if leaf.type in CLOSING_BRACKETS:
-                is_trailing_non_matching_opening_brackets = False
-                bracket_depth += 1
-            elif leaf.type in OPENING_BRACKETS:
-                if bracket_depth == 0:
-                    if is_trailing_non_matching_opening_brackets:
-                        continue
-                    else:
-                        break
-                else:
-                    bracket_depth -= 1
-            ids_to_track.add(id(leaf))
+    ):
+        leaves_to_track = get_inner_leaf_ids_with_matching_brackets(leaves)
+    else:
+        leaves_to_track = set()
     for leaf in leaves:
         result.append(
             leaf,
             preformatted=True,
-            track_bracket=track_bracket and id(leaf) in ids_to_track,
+            track_bracket=id(leaf) in leaves_to_track,
         )
         for comment_after in original.comments_after(leaf):
             result.append(comment_after, preformatted=True)
     if component == _BracketSplitComponent.body and should_split_line(
-        result, opening_bracket, component
+        result, opening_bracket
     ):
         result.should_split_rhs = True
     return result
@@ -1201,57 +1190,22 @@ def maybe_make_parens_invisible_in_atom(
     return True
 
 
-def should_split_line(
-    line: Line, opening_bracket: Leaf, component: _BracketSplitComponent
-) -> bool:
+def should_split_line(line: Line, opening_bracket: Leaf) -> bool:
     """Should `line` be immediately split with `delimiter_split()` after RHS?"""
-
-    if component == _BracketSplitComponent.tail:
-        return False
 
     if not (opening_bracket.parent and opening_bracket.value in "[{("):
         return False
 
-    # We're essentially checking if the line is delimited by commas and there's more
+    # We're essentially checking if the body is delimited by commas and there's more
     # than one of them (we're excluding the trailing comma and if the delimiter priority
     # is still commas, that means there's more).
     exclude = set()
     trailing_comma = False
     try:
         last_leaf = line.leaves[-1]
-        if component == _BracketSplitComponent.body and last_leaf.type == token.COMMA:
+        if last_leaf.type == token.COMMA:
             trailing_comma = True
             exclude.add(id(last_leaf))
-        elif (
-            component == _BracketSplitComponent.head
-            and Preview.handle_trailing_commas_in_leading_parts in line.mode
-        ):
-            # Check commas inside inner parens, we need to only include leaves inside
-            # the matching brackets.
-            include: Set[LeafID] = set()
-            reversed_leaves: List[Leaf] = list(reversed(line.leaves))
-            reversed_leaves_ids: List[LeafID] = [id(leaf) for leaf in reversed_leaves]
-            next_leaf = last_leaf
-            for i, leaf in enumerate(reversed_leaves):
-                if i == 0:
-                    continue
-                if leaf.type in CLOSING_BRACKETS and line.has_magic_trailing_comma(
-                    leaf
-                ):
-                    opening = next_leaf.opening_bracket
-                    if opening is None:
-                        continue
-                    try:
-                        opening_bracket_index = reversed_leaves_ids.index(id(opening))
-                    except ValueError:
-                        pass
-                    else:
-                        trailing_comma = True
-                        include.update(
-                            reversed_leaves_ids[i + 1 : opening_bracket_index - 1]
-                        )
-                next_leaf = leaf
-            exclude = set(reversed_leaves_ids) - include
         max_priority = line.bracket_tracker.max_delimiter_priority(exclude=exclude)
     except (IndexError, ValueError):
         return False
