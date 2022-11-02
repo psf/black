@@ -714,7 +714,9 @@ def append_leaves(
 def is_line_short_enough(  # noqa: C901
     line: Line, *, mode: Mode, line_str: str = ""
 ) -> bool:
-    """Return True if `line` is no longer than `line_length`.
+    """For non-multiline strings, return True if `line` is no longer than `line_length`.
+    For multiline strings, looks at the context around `line` to determine
+    if it should be inlined or split up.
     Uses the provided `line_str` rendering, if any, otherwise computes a new one.
     """
     if not line_str:
