@@ -793,11 +793,36 @@ def bracket_split_build_line(
         Preview.handle_trailing_commas_in_leading_parts in original.mode
         and component == _BracketSplitComponent.head
     )
+    ids_to_track = set()
+    if component == _BracketSplitComponent.head:
+        is_trailing_non_matching_opening_brackets = True
+        bracket_depth = 0
+        for leaf in reversed(leaves):
+            if leaf is opening_bracket:
+                continue
+            if leaf.type in CLOSING_BRACKETS:
+                is_trailing_non_matching_opening_brackets = False
+                bracket_depth += 1
+            elif leaf.type in OPENING_BRACKETS:
+                if bracket_depth == 0:
+                    if is_trailing_non_matching_opening_brackets:
+                        continue
+                    else:
+                        break
+                else:
+                    bracket_depth -= 1
+            ids_to_track.add(id(leaf))
     for leaf in leaves:
-        result.append(leaf, preformatted=True, track_bracket=track_bracket)
+        result.append(
+            leaf,
+            preformatted=True,
+            track_bracket=track_bracket and id(leaf) in ids_to_track,
+        )
         for comment_after in original.comments_after(leaf):
             result.append(comment_after, preformatted=True)
-    if should_split_line(result, opening_bracket, component):
+    if component == _BracketSplitComponent.body and should_split_line(
+        result, opening_bracket, component
+    ):
         result.should_split_rhs = True
     return result
 
@@ -1210,8 +1235,9 @@ def should_split_line(
             for i, leaf in enumerate(reversed_leaves):
                 if i == 0:
                     continue
-                if next_leaf.type in CLOSING_BRACKETS and leaf.type == token.COMMA:
-                    # print(f'>>>> {next_leaf=}')
+                if leaf.type in CLOSING_BRACKETS and line.has_magic_trailing_comma(
+                    leaf
+                ):
                     opening = next_leaf.opening_bracket
                     if opening is None:
                         continue
