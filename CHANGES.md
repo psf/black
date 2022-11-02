@@ -17,7 +17,7 @@
 - Enforce empty lines before classes and functions with sticky leading comments (#3302)
 - Implicitly concatenated strings used as function args are now wrapped inside
   parentheses (#3307)
-- TODO multiline string entry
+- Improve handling of multiline strings by changing line split behavior (#1879)
 
 ### Configuration
 
