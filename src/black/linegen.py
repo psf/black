@@ -808,7 +808,7 @@ def bracket_split_build_line(
             pass
         else:
             depth = 0
-            for i in range(end_index, start_index-1, -1):
+            for i in range(end_index, start_index - 1, -1):
                 leaf = leaves[i]
                 if leaf.type in CLOSING_BRACKETS:
                     depth += 1
@@ -817,7 +817,7 @@ def bracket_split_build_line(
                 if leaf.type in OPENING_BRACKETS:
                     depth -= 1
     # Populate the line
-    for i, leaf in enumerate(leaves):
+    for leaf in leaves:
         result.append(
             leaf,
             preformatted=True,
