@@ -57,6 +57,10 @@ MATH_PRIORITIES: Final = {
 DOT_PRIORITY: Final = 1
 
 
+class BracketMatchError(Exception):
+    """Raised when an opening bracket is unable to be matched to a closing bracket."""
+
+
 @dataclass
 class BracketTracker:
     """Keeps track of brackets on a line."""
@@ -93,11 +97,11 @@ class BracketTracker:
             self.depth -= 1
             try:
                 opening_bracket = self.bracket_match.pop((self.depth, leaf.type))
-            except KeyError:
-                # OK to have non-matching closing brackets, as the line might be a
-                # continuation from previous lines and the closing brackets match
-                # the ones from previously split lines.
-                return
+            except KeyError as e:
+                raise BracketMatchError(
+                    "Unable to match a closing bracket to the following opening"
+                    f" bracket: {leaf}"
+                ) from e
             leaf.opening_bracket = opening_bracket
             if not leaf.value:
                 self.invisible.append(leaf)
@@ -336,32 +340,3 @@ def max_delimiter_priority_in_atom(node: LN) -> Priority:
 
     except ValueError:
         return 0
-
-
-def get_inner_leaf_ids_with_matching_brackets(leaves: Sequence[Leaf]) -> Set[LeafID]:
-    """Returns a continuous list of inner leaf ids.
-
-    The list starts with the first opening bracket whose closing bracket is included in
-    `leaves`, and ends with the last closing bracket whose opening bracket is included
-    in `leaves`. Leaves in between pairs of matching brackets are included.
-    """
-    ids = set()
-    is_tail = True
-    bracket_depth = 0
-    for leaf in reversed(leaves):
-        if leaf.type in CLOSING_BRACKETS:
-            is_tail = False
-            bracket_depth += 1
-        elif leaf.type in OPENING_BRACKETS:
-            if bracket_depth == 0:
-                if is_tail:
-                    # Excluding non matching opening brackets at the tail
-                    continue
-                else:
-                    # Found a non matching opening bracket at the head, no more leaves
-                    # to return
-                    break
-            else:
-                bracket_depth -= 1
-        ids.add(id(leaf))
-    return ids

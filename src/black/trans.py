@@ -30,6 +30,7 @@ else:
 
 from mypy_extensions import trait
 
+from black.brackets import BracketMatchError
 from black.comments import contains_pragma_comment
 from black.lines import Line, append_leaves
 from black.mode import Feature
@@ -811,7 +812,13 @@ class StringParenStripper(StringTransformer):
 
         new_line = line.clone()
         new_line.comments = line.comments.copy()
-        append_leaves(new_line, line, LL[: string_idx - 1])
+        try:
+            append_leaves(new_line, line, LL[: string_idx - 1])
+        except BracketMatchError:
+            # HACK: I believe there is currently a bug somewhere in
+            # right_hand_split() that is causing brackets to not be tracked
+            # properly by a shared BracketTracker.
+            append_leaves(new_line, line, LL[: string_idx - 1], preformatted=True)
 
         string_leaf = Leaf(token.STRING, LL[string_idx].value)
         LL[string_idx - 1].remove()
