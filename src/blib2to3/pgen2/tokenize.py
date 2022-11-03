@@ -69,9 +69,7 @@ def maybe(*choices):
 
 
 def _combinations(*strs):
-    return set(
-        x + y for x in strs for y in strs + ("",) if x.casefold() != y.casefold()
-    )
+    return {x + y for x in strs for y in strs + ("",) if x.casefold() != y.casefold()}
 
 
 Whitespace = r"[ \f\t]*"
@@ -347,7 +345,7 @@ def detect_encoding(readline: Callable[[], bytes]) -> Tuple[str, List[bytes]]:
             codec = lookup(encoding)
         except LookupError:
             # This behaviour mimics the Python interpreter
-            raise SyntaxError("unknown encoding: " + encoding)
+            raise SyntaxError("unknown encoding: " + encoding)  # noqa B904
 
         if bom_found:
             if codec.name != "utf-8":
@@ -403,7 +401,7 @@ def untokenize(iterable: Iterable[TokenInfo]) -> Text:
     return ut.untokenize(iterable)
 
 
-def generate_tokens(
+def generate_tokens(  # noqa: C901
     readline: Callable[[], Text], grammar: Optional[Grammar] = None
 ) -> Iterator[GoodTokenInfo]:
     """
@@ -450,14 +448,14 @@ def generate_tokens(
         if contstr:  # continued string
             assert contline is not None
             if not line:
-                raise TokenError("EOF in multi-line string", strstart)
-            endmatch = endprog.match(line)
+                raise TokenError("EOF in multi-line string", strstart)  # noqa: F821
+            endmatch = endprog.match(line)  # noqa: F821
             if endmatch:
                 pos = end = endmatch.end(0)
                 yield (
                     token_mod.STRING,
                     contstr + line[:end],
-                    strstart,
+                    strstart,  # noqa: F821
                     (lnum, end),
                     contline + line,
                 )
@@ -467,7 +465,7 @@ def generate_tokens(
                 yield (
                     token_mod.ERRORTOKEN,
                     contstr + line,
-                    strstart,
+                    strstart,  # noqa: F821
                     (lnum, len(line)),
                     contline,
                 )
@@ -601,7 +599,7 @@ def generate_tokens(
                     or token[:3] in single_quoted
                 ):
                     if token[-1] == "\n":  # continued string
-                        strstart = (lnum, start)
+                        strstart = (lnum, start)  # noqa: F841
                         endprog = (
                             endprogs[initial]
                             or endprogs[token[1]]
@@ -688,7 +686,7 @@ def generate_tokens(
         yield stashed
         stashed = None
 
-    for indent in indents[1:]:  # pop remaining indent levels
+    for _ in indents[1:]:  # pop remaining indent levels
         yield (token_mod.DEDENT, "", (lnum, 0), (lnum, 0), "")
     yield (token_mod.ENDMARKER, "", (lnum, 0), (lnum, 0), "")
 
