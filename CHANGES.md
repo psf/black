@@ -51,6 +51,9 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Force output messages to always be UTF-8 on Windows (so we can see the emoji), even if
+  terminal is redirected or captured (#3374)
+
 ### _Blackd_
 
 <!-- Changes to blackd -->

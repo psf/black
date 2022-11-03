@@ -1404,6 +1404,16 @@ def patch_click() -> None:
 
 
 def patched_main() -> None:
+    #: Fixes errors with emoji in  Windows terminals when output is redirected
+    # (i.e. pre-commit): https://github.com/psf/black/issues/3156
+    if "pytest" not in sys.modules and sys.platform == "win32":
+        sys.stdout = io.TextIOWrapper(
+            sys.stdout.buffer, encoding="utf-8"
+        )  # pragma: nocover
+        sys.stderr = io.TextIOWrapper(
+            sys.stderr.buffer, encoding="utf-8"
+        )  # pragma: nocover
+
     # PyInstaller patches multiprocessing to need freeze_support() even in non-Windows
     # environments so just assume we always need to call it if frozen.
     if getattr(sys, "frozen", False):
