@@ -1615,6 +1615,8 @@ class BlackTestCase(BlackBaseTestCase):
             ("invalid", None),
             ("3", None),
             ("3.2", None),
+            ("2.7.18", None),
+            ("==2.7", None),
             (">3.10,<3.11", None),
         ]:
             test_toml = {"project": {"requires-python": version}}

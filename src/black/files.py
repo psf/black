@@ -160,6 +160,8 @@ def parse_req_python_version(requires_python: str) -> Optional[List[TargetVersio
     If the parsed version cannot be mapped to a valid TargetVersion, returns None.
     """
     version = Version(requires_python)
+    if version.release[0] != 3:
+        return None
     try:
         return [TargetVersion(version.release[1])]
     except (IndexError, ValueError):
