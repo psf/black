@@ -51,6 +51,9 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- Vim plugin: Optionally allow using the system installation of Black via
+  `let g:black_use_virtualenv = 0`(#3309)
+
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
