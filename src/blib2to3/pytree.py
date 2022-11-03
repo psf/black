@@ -400,7 +400,7 @@ class Leaf(Base):
         value: Text,
         context: Optional[Context] = None,
         prefix: Optional[Text] = None,
-        fixers_applied: List[Any] = [],
+        fixers_applied: List[Any] = [],  # noqa: B006
         opening_bracket: Optional["Leaf"] = None,
     ) -> None:
         """
@@ -758,7 +758,7 @@ class WildcardPattern(BasePattern):
         assert 0 <= min <= max <= HUGE, (min, max)
         if content is not None:
             wrapped_content = tuple(
-                map(lambda s: tuple(s), content)
+                map(lambda s: tuple(s), content)  # noqa: C417
             )  # Protect against alterations
             # Check sanity of alternatives
             assert len(wrapped_content), repr(
@@ -949,7 +949,7 @@ class NegatedPattern(BasePattern):
                 yield 0, {}
         else:
             # Return a match if the argument pattern has no matches
-            for c, r in self.content.generate_matches(nodes):
+            for _c, _r in self.content.generate_matches(nodes):
                 return
             yield 0, {}
 
