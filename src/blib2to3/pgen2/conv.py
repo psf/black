@@ -200,7 +200,7 @@ class Converter(grammar.Grammar):
         mo = re.match(r"static label labels\[(\d+)\] = {$", line)
         assert mo, (lineno, line)
         nlabels = int(mo.group(1))
-        for i in range(nlabels):
+        for _ in range(nlabels):
             lineno, line = lineno + 1, next(f)
             mo = re.match(r'\s+{(\d+), (0|"\w+")},$', line)
             assert mo, (lineno, line)

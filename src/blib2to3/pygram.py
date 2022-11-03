@@ -197,7 +197,7 @@ def initialize(cache_dir: Union[str, "os.PathLike[str]", None] = None) -> None:
     python_grammar_no_print_statement_no_exec_statement_async_keywords = (
         python_grammar_no_print_statement_no_exec_statement.copy()
     )
-    python_grammar_no_print_statement_no_exec_statement_async_keywords.async_keywords = (
+    python_grammar_no_print_statement_no_exec_statement_async_keywords.async_keywords = (  # noqa: B950
         True
     )
     python_grammar_no_print_statement_no_exec_statement_async_keywords.version = (3, 7)

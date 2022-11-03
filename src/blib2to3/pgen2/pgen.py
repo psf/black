@@ -147,7 +147,7 @@ class ParserGenerator(object):
         state = dfa[0]
         totalset: Dict[str, int] = {}
         overlapcheck = {}
-        for label, next in state.arcs.items():
+        for label in state.arcs:
             if label in self.dfas:
                 if label in self.first:
                     fset = self.first[label]
@@ -345,7 +345,7 @@ class ParserGenerator(object):
             self.raise_error(
                 "expected (...) or NAME or STRING, got %s/%s", self.type, self.value
             )
-            assert False
+            assert False  # noqa: B011
 
     def expect(self, type: int, value: Optional[Any] = None) -> Text:
         if self.type != type or (value is not None and self.value != value):
