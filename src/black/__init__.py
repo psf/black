@@ -1406,10 +1406,12 @@ def patch_click() -> None:
 def patched_main() -> None:
     #: Fixes errors with emoji in  Windows terminals when output is redirected
     # (i.e. pre-commit): https://github.com/psf/black/issues/3156
+    # To be as safe as possible, we only enable this for "Windows 10 October
+    # 2018 Update (version 1809)" and up
     if (
         "pytest" not in sys.modules
         and platform.system() == "Windows"
-        and int(platform.release()) >= 10
+        and tuple(map(int, platform.version().split("."))) >= (10, 0, 1809)
     ):
         sys.stdout = io.TextIOWrapper(
             sys.stdout.buffer, encoding="utf-8"
