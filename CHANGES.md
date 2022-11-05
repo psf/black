@@ -22,6 +22,9 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Fix incorrectly ignoring .gitignore presence when more than one source directory is
+  specified (#3336)
+
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
