@@ -14,12 +14,18 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Enforce empty lines before classes and functions with sticky leading comments (#3302)
+- Implicitly concatenated strings used as function args are now wrapped inside
+  parentheses (#3307)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
 
 - Fix incorrectly applied .gitignore rules by considering the .gitignore location and
   the relative path to the target file (#3338)
+- Fix incorrectly ignoring .gitignore presence when more than one source directory is
+  specified (#3336)
 
 ### Packaging
 
@@ -48,6 +54,9 @@
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- Vim plugin: Optionally allow using the system installation of Black via
+  `let g:black_use_virtualenv = 0`(#3309)
 
 ### Documentation
 

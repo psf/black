@@ -150,6 +150,7 @@ class Preview(Enum):
     """Individual preview style features."""
 
     annotation_parens = auto()
+    empty_lines_before_class_or_def_with_leading_comments = auto()
     long_docstring_quotes_on_newline = auto()
     normalize_docstring_quotes_and_prefixes_properly = auto()
     one_element_subscript = auto()
@@ -179,8 +180,10 @@ class Mode:
     def __post_init__(self) -> None:
         if self.experimental_string_processing:
             warn(
-                "`experimental string processing` has been included in `preview`"
-                " and deprecated. Use `preview` instead.",
+                (
+                    "`experimental string processing` has been included in `preview`"
+                    " and deprecated. Use `preview` instead."
+                ),
                 Deprecated,
             )
 

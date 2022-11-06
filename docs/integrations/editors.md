@@ -104,7 +104,7 @@ Commands and shortcuts:
   - you can optionally pass `target_version=<version>` with the same values as in the
     command line.
 - `:BlackUpgrade` to upgrade _Black_ inside the virtualenv;
-- `:BlackVersion` to get the current version of _Black_ inside the virtualenv.
+- `:BlackVersion` to get the current version of _Black_ in use.
 
 Configuration:
 
@@ -159,6 +159,18 @@ restarting Vim.
 If you need to do anything special to make your virtualenv work and install _Black_ (for
 example you want to run a version from main), create a virtualenv manually and point
 `g:black_virtualenv` to it. The plugin will use it.
+
+If you would prefer to use the system installation of _Black_ rather than a virtualenv,
+then add this to your vimrc:
+
+```
+let g:black_use_virtualenv = 0
+```
+
+Note that the `:BlackUpgrade` command is only usable and useful with a virtualenv, so
+when the virtualenv is not in use, `:BlackUpgrade` is disabled. If you need to upgrade
+the system installation of _Black_, then use your system package manager or pip--
+whatever tool you used to install _Black_ originally.
 
 To run _Black_ on save, add the following lines to `.vimrc` or `init.vim`:
 

@@ -66,7 +66,7 @@ Further information can be found in our docs:
 _Black_ is already [successfully used](https://github.com/psf/black#used-by) by many
 projects, small and big. _Black_ has a comprehensive test suite, with efficient parallel
 tests, and our own auto formatting and parallel Continuous Integration runner. Now that
-we have become stable, you should not expect large formatting to changes in the future.
+we have become stable, you should not expect large formatting changes in the future.
 Stylistic changes will mostly be responses to bug reports and support for new Python
 syntax. For more information please refer to the
 [The Black Code Style](https://black.readthedocs.io/en/stable/the_black_code_style/index.html).
@@ -138,7 +138,7 @@ pandas, Pillow, Twisted, LocalStack, every Datadog Agent Integration, Home Assis
 Zulip, Kedro, OpenOA, FLORIS, ORBIT, WOMBAT, and many more.
 
 The following organizations use _Black_: Facebook, Dropbox, KeepTruckin, Mozilla, Quora,
-Duolingo, QuantumBlack, Tesla.
+Duolingo, QuantumBlack, Tesla, Archer Aviation.
 
 Are we missing anyone? Let us know.
 
