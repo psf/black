@@ -51,8 +51,8 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
-- Force output messages to always be UTF-8 on Windows (so we can see the emoji), even if
-  terminal is redirected or captured (#3374)
+- Fix emoji rendering on Windows 10+ when standard output is redirected
+  or captured by forcing UTF-8 encoding in this case (#3374)
 
 ### _Blackd_
 
