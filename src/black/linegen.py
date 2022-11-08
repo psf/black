@@ -808,7 +808,7 @@ def bracket_split_build_line(
         )
         for comment_after in original.comments_after(leaf):
             result.append(comment_after, preformatted=True)
-    if component == _BracketSplitComponent.body and should_split_line(
+    if component is _BracketSplitComponent.body and should_split_line(
         result, opening_bracket
     ):
         result.should_split_rhs = True
