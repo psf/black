@@ -182,6 +182,19 @@ def normalize_path_maybe_ignore(
     return root_relative_path
 
 
+def path_is_ignored(
+    path: Path, gitignore_dict: Dict[Path, PathSpec], report: Report
+) -> bool:
+    for gitignore_path, pattern in gitignore_dict.items():
+        relative_path = normalize_path_maybe_ignore(path, gitignore_path, report)
+        if relative_path is None:
+            break
+        if pattern.match_file(relative_path):
+            report.path_ignored(path, "matches a .gitignore file content")
+            return True
+    return False
+
+
 def path_is_excluded(
     normalized_path: str,
     pattern: Optional[Pattern[str]],
@@ -198,7 +211,7 @@ def gen_python_files(
     extend_exclude: Optional[Pattern[str]],
     force_exclude: Optional[Pattern[str]],
     report: Report,
-    gitignore: Optional[PathSpec],
+    gitignore_dict: Optional[Dict[Path, PathSpec]],
     *,
     verbose: bool,
     quiet: bool,
@@ -211,6 +224,7 @@ def gen_python_files(
 
     `report` is where output about exclusions goes.
     """
+
     assert root.is_absolute(), f"INTERNAL ERROR: `root` must be absolute but is {root}"
     for child in paths:
         normalized_path = normalize_path_maybe_ignore(child, root, report)
@@ -218,8 +232,7 @@ def gen_python_files(
             continue
 
         # First ignore files matching .gitignore, if passed
-        if gitignore is not None and gitignore.match_file(normalized_path):
-            report.path_ignored(child, "matches the .gitignore file content")
+        if gitignore_dict and path_is_ignored(child, gitignore_dict, report):
             continue
 
         # Then ignore with `--exclude` `--extend-exclude` and `--force-exclude` options.
@@ -244,6 +257,13 @@ def gen_python_files(
         if child.is_dir():
             # If gitignore is None, gitignore usage is disabled, while a Falsey
             # gitignore is when the directory doesn't have a .gitignore file.
+            if gitignore_dict is not None:
+                new_gitignore_dict = {
+                    **gitignore_dict,
+                    root / child: get_gitignore(child),
+                }
+            else:
+                new_gitignore_dict = None
             yield from gen_python_files(
                 child.iterdir(),
                 root,
@@ -252,7 +272,7 @@ def gen_python_files(
                 extend_exclude,
                 force_exclude,
                 report,
-                gitignore + get_gitignore(child) if gitignore is not None else None,
+                new_gitignore_dict,
                 verbose=verbose,
                 quiet=quiet,
             )

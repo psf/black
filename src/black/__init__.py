@@ -628,9 +628,9 @@ def get_sources(
     sources: Set[Path] = set()
     root = ctx.obj["root"]
 
-    exclude_is_None = exclude is None
+    using_default_exclude = exclude is None
     exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES) if exclude is None else exclude
-    gitignore = None  # type: Optional[PathSpec]
+    gitignore: Optional[PathSpec] = None
     root_gitignore = get_gitignore(root)
 
     for s in src:
@@ -666,14 +666,11 @@ def get_sources(
 
             sources.add(p)
         elif p.is_dir():
-            if exclude_is_None:
-                p_gitignore = get_gitignore(p)
-                # No need to use p's gitignore if it is identical to root's gitignore
-                # (i.e. root and p point to the same directory).
-                if root_gitignore == p_gitignore:
-                    gitignore = root_gitignore
-                else:
-                    gitignore = root_gitignore + p_gitignore
+            if using_default_exclude:
+                gitignore = {
+                    root: root_gitignore,
+                    root / p: get_gitignore(p),
+                }
             sources.update(
                 gen_python_files(
                     p.iterdir(),

@@ -22,6 +22,8 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Fix incorrectly applied .gitignore rules by considering the .gitignore location and
+  the relative path to the target file (#3338)
 - Fix incorrectly ignoring .gitignore presence when more than one source directory is
   specified (#3336)
 
