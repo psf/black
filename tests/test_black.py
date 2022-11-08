@@ -1998,6 +1998,17 @@ class TestFileCollection:
         ctx.obj["root"] = base
         assert_collected_sources(src, expected, ctx=ctx, extend_exclude=r"/exclude/")
 
+    def test_gitignore_used_on_multiple_sources(self) -> None:
+        root = Path(DATA_DIR / "gitignore_used_on_multiple_sources")
+        expected = [
+            root / "dir1" / "b.py",
+            root / "dir2" / "b.py",
+        ]
+        ctx = FakeContext()
+        ctx.obj["root"] = root
+        src = [root / "dir1", root / "dir2"]
+        assert_collected_sources(src, expected, ctx=ctx)
+
     @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_exclude_for_issue_1572(self) -> None:
         # Exclude shouldn't touch files that were explicitly given to Black through the
@@ -2031,7 +2042,7 @@ class TestFileCollection:
                 None,
                 None,
                 report,
-                gitignore,
+                {path: gitignore},
                 verbose=False,
                 quiet=False,
             )
@@ -2060,7 +2071,7 @@ class TestFileCollection:
                 None,
                 None,
                 report,
-                root_gitignore,
+                {path: root_gitignore},
                 verbose=False,
                 quiet=False,
             )
@@ -2097,6 +2108,32 @@ class TestFileCollection:
 
         gitignore = path / "a" / ".gitignore"
         assert f"Could not parse {gitignore}" in result.stderr_bytes.decode()
+
+    def test_gitignore_that_ignores_subfolders(self) -> None:
+        # If gitignore with */* is in root
+        root = Path(DATA_DIR / "ignore_subfolders_gitignore_tests" / "subdir")
+        expected = [root / "b.py"]
+        ctx = FakeContext()
+        ctx.obj["root"] = root
+        assert_collected_sources([root], expected, ctx=ctx)
+
+        # If .gitignore with */* is nested
+        root = Path(DATA_DIR / "ignore_subfolders_gitignore_tests")
+        expected = [
+            root / "a.py",
+            root / "subdir" / "b.py",
+        ]
+        ctx = FakeContext()
+        ctx.obj["root"] = root
+        assert_collected_sources([root], expected, ctx=ctx)
+
+        # If command is executed from outer dir
+        root = Path(DATA_DIR / "ignore_subfolders_gitignore_tests")
+        target = root / "subdir"
+        expected = [target / "b.py"]
+        ctx = FakeContext()
+        ctx.obj["root"] = root
+        assert_collected_sources([target], expected, ctx=ctx)
 
     def test_empty_include(self) -> None:
         path = DATA_DIR / "include_exclude_tests"
@@ -2152,7 +2189,7 @@ class TestFileCollection:
                     None,
                     None,
                     report,
-                    gitignore,
+                    {path: gitignore},
                     verbose=False,
                     quiet=False,
                 )
