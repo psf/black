@@ -1322,7 +1322,6 @@ def run_transformer(
         # structure), then we can't proceed. Doing so would cause the below
         # call to `append_leaves()` to fail.
         or any(leaf.parent is None for leaf in line.leaves)
-        # or Feature.FORCE_OPTIONAL_PARENTHESES in features
     ):
         return result
 
