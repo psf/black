@@ -755,7 +755,7 @@ def bracket_split_build_line(
     expected.
     """
     result = Line(mode=original.mode, depth=original.depth)
-    if component == _BracketSplitComponent.body:
+    if component is _BracketSplitComponent.body:
         result.inside_brackets = True
         result.depth += 1
         if leaves:
