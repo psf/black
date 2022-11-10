@@ -351,7 +351,8 @@ def max_delimiter_priority_in_atom(node: LN) -> Priority:
 
 
 def get_leaves_inside_matching_brackets(leaves: Sequence[Leaf]) -> Set[LeafID]:
-    """Return leaves that are inside matching brackets.
+    """
+    Return leaves that are inside matching brackets.
 
     The input `leaves` can have non-matching brackets at the head or tail parts.
     Matching brackets are included.
