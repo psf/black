@@ -159,10 +159,7 @@ class BlackTestCase(BlackBaseTestCase):
         mode = black.Mode(preview=True)
         for nl in ["\n", "\r\n"]:
             source = expected = nl
-            actual = fs(source, mode=mode)
-            self.assertFormatEqual(expected, actual)
-            black.assert_equivalent(source, actual)
-            black.assert_stable(source, actual, mode)
+            assert_format(source, expected, mode=mode)
 
     def test_one_empty_line_ff(self) -> None:
         mode = black.Mode(preview=True)

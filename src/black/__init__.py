@@ -1107,6 +1107,8 @@ def _format_str_once(src_contents: str, *, mode: Mode) -> str:
     for block in dst_blocks:
         dst_contents.extend(block.all_lines())
     if mode.preview and not dst_contents:
+        # Use decode_bytes to retrieve the correct source newline (CRLF or LF),
+        # and check if normalized_content has more than one line
         normalized_content, _, newline = decode_bytes(src_contents.encode("utf-8"))
         if "\n" in normalized_content:
             return newline
