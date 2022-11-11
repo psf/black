@@ -2,10 +2,16 @@
 Generating lines of code.
 """
 import sys
+from enum import Enum, auto
 from functools import partial, wraps
 from typing import Collection, Iterator, List, Optional, Set, Union, cast
 
-from black.brackets import COMMA_PRIORITY, DOT_PRIORITY, max_delimiter_priority_in_atom
+from black.brackets import (
+    COMMA_PRIORITY,
+    DOT_PRIORITY,
+    get_leaves_inside_matching_brackets,
+    max_delimiter_priority_in_atom,
+)
 from black.comments import FMT_OFF, generate_comments, list_comments
 from black.lines import (
     Line,
@@ -561,6 +567,12 @@ def transform_line(
         yield line
 
 
+class _BracketSplitComponent(Enum):
+    head = auto()
+    body = auto()
+    tail = auto()
+
+
 def left_hand_split(line: Line, _features: Collection[Feature] = ()) -> Iterator[Line]:
     """Split line into many lines, starting with the first matching bracket pair.
 
@@ -591,9 +603,15 @@ def left_hand_split(line: Line, _features: Collection[Feature] = ()) -> Iterator
     if not matching_bracket:
         raise CannotSplit("No brackets found")
 
-    head = bracket_split_build_line(head_leaves, line, matching_bracket)
-    body = bracket_split_build_line(body_leaves, line, matching_bracket, is_body=True)
-    tail = bracket_split_build_line(tail_leaves, line, matching_bracket)
+    head = bracket_split_build_line(
+        head_leaves, line, matching_bracket, component=_BracketSplitComponent.head
+    )
+    body = bracket_split_build_line(
+        body_leaves, line, matching_bracket, component=_BracketSplitComponent.body
+    )
+    tail = bracket_split_build_line(
+        tail_leaves, line, matching_bracket, component=_BracketSplitComponent.tail
+    )
     bracket_split_succeeded_or_raise(head, body, tail)
     for result in (head, body, tail):
         if result:
@@ -639,9 +657,15 @@ def right_hand_split(
     tail_leaves.reverse()
     body_leaves.reverse()
     head_leaves.reverse()
-    head = bracket_split_build_line(head_leaves, line, opening_bracket)
-    body = bracket_split_build_line(body_leaves, line, opening_bracket, is_body=True)
-    tail = bracket_split_build_line(tail_leaves, line, opening_bracket)
+    head = bracket_split_build_line(
+        head_leaves, line, opening_bracket, component=_BracketSplitComponent.head
+    )
+    body = bracket_split_build_line(
+        body_leaves, line, opening_bracket, component=_BracketSplitComponent.body
+    )
+    tail = bracket_split_build_line(
+        tail_leaves, line, opening_bracket, component=_BracketSplitComponent.tail
+    )
     bracket_split_succeeded_or_raise(head, body, tail)
     if (
         Feature.FORCE_OPTIONAL_PARENTHESES not in features
@@ -715,15 +739,23 @@ def bracket_split_succeeded_or_raise(head: Line, body: Line, tail: Line) -> None
 
 
 def bracket_split_build_line(
-    leaves: List[Leaf], original: Line, opening_bracket: Leaf, *, is_body: bool = False
+    leaves: List[Leaf],
+    original: Line,
+    opening_bracket: Leaf,
+    *,
+    component: _BracketSplitComponent,
 ) -> Line:
     """Return a new line with given `leaves` and respective comments from `original`.
 
-    If `is_body` is True, the result line is one-indented inside brackets and as such
-    has its first leaf's prefix normalized and a trailing comma added when expected.
+    If it's the head component, brackets will be tracked so trailing commas are
+    respected.
+
+    If it's the body component, the result line is one-indented inside brackets and as
+    such has its first leaf's prefix normalized and a trailing comma added when
+    expected.
     """
     result = Line(mode=original.mode, depth=original.depth)
-    if is_body:
+    if component is _BracketSplitComponent.body:
         result.inside_brackets = True
         result.depth += 1
         if leaves:
@@ -761,12 +793,24 @@ def bracket_split_build_line(
                         leaves.insert(i + 1, new_comma)
                     break
 
+    leaves_to_track: Set[LeafID] = set()
+    if (
+        Preview.handle_trailing_commas_in_head in original.mode
+        and component is _BracketSplitComponent.head
+    ):
+        leaves_to_track = get_leaves_inside_matching_brackets(leaves)
     # Populate the line
     for leaf in leaves:
-        result.append(leaf, preformatted=True)
+        result.append(
+            leaf,
+            preformatted=True,
+            track_bracket=id(leaf) in leaves_to_track,
+        )
         for comment_after in original.comments_after(leaf):
             result.append(comment_after, preformatted=True)
-    if is_body and should_split_line(result, opening_bracket):
+    if component is _BracketSplitComponent.body and should_split_line(
+        result, opening_bracket
+    ):
         result.should_split_rhs = True
     return result
 

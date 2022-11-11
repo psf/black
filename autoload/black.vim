@@ -56,6 +56,16 @@ def _get_virtualenv_site_packages(venv_path, pyver):
   return venv_path / 'lib' / f'python{pyver[0]}.{pyver[1]}' / 'site-packages'
 
 def _initialize_black_env(upgrade=False):
+  if vim.eval("g:black_use_virtualenv ? 'true' : 'false'") == "false":
+    if upgrade:
+      print("Upgrade disabled due to g:black_use_virtualenv being disabled.")
+      print("Either use your system package manager (or pip) to upgrade black separately,")
+      print("or modify your vimrc to have 'let g:black_use_virtualenv = 1'.")
+      return False
+    else:
+      # Nothing needed to be done.
+      return True
+
   pyver = sys.version_info[:3]
   if pyver < (3, 7):
     print("Sorry, Black requires Python 3.7+ to run.")

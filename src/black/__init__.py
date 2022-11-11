@@ -30,6 +30,7 @@ from typing import (
 import click
 from click.core import ParameterSource
 from mypy_extensions import mypyc_attr
+from pathspec import PathSpec
 from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
 
 from _black_version import version as __version__
@@ -497,8 +498,10 @@ def main(  # noqa: C901
             user_level_config = str(find_user_pyproject_toml())
             if config == user_level_config:
                 out(
-                    "Using configuration from user-level config at "
-                    f"'{user_level_config}'.",
+                    (
+                        "Using configuration from user-level config at "
+                        f"'{user_level_config}'."
+                    ),
                     fg="blue",
                 )
             elif config_source in (
@@ -625,6 +628,11 @@ def get_sources(
     sources: Set[Path] = set()
     root = ctx.obj["root"]
 
+    using_default_exclude = exclude is None
+    exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES) if exclude is None else exclude
+    gitignore: Optional[PathSpec] = None
+    root_gitignore = get_gitignore(root)
+
     for s in src:
         if s == "-" and stdin_filename:
             p = Path(stdin_filename)
@@ -658,16 +666,11 @@ def get_sources(
 
             sources.add(p)
         elif p.is_dir():
-            if exclude is None:
-                exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES)
-                gitignore = get_gitignore(root)
-                p_gitignore = get_gitignore(p)
-                # No need to use p's gitignore if it is identical to root's gitignore
-                # (i.e. root and p point to the same directory).
-                if gitignore != p_gitignore:
-                    gitignore += p_gitignore
-            else:
-                gitignore = None
+            if using_default_exclude:
+                gitignore = {
+                    root: root_gitignore,
+                    root / p: get_gitignore(p),
+                }
             sources.update(
                 gen_python_files(
                     p.iterdir(),

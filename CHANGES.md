@@ -17,10 +17,19 @@
 - Enforce empty lines before classes and functions with sticky leading comments (#3302)
 - Reformat empty and whitespace-only files as either an empty file (if no newline is
   present) or as a single newline character (if a newline is present) (#3348)
+- Implicitly concatenated strings used as function args are now wrapped inside
+  parentheses (#3307)
+- Correctly handle trailing commas that are inside a line's leading non-nested parens
+  (#3370)
 
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
+
+- Fix incorrectly applied .gitignore rules by considering the .gitignore location and
+  the relative path to the target file (#3338)
+- Fix incorrectly ignoring .gitignore presence when more than one source directory is
+  specified (#3336)
 
 ### Packaging
 
@@ -49,6 +58,9 @@
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- Vim plugin: Optionally allow using the system installation of Black via
+  `let g:black_use_virtualenv = 0`(#3309)
 
 ### Documentation
 
