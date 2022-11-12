@@ -35,6 +35,9 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
+- Upgrade mypyc from `0.971` to `0.990` so mypycified _Black_ can be built on armv7
+  (#3380)
+
 ### Parser
 
 <!-- Changes to the parser or to version autodetection -->
