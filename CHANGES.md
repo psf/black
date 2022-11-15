@@ -51,6 +51,9 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Fix false symlink detection messages in verbose output due to using an incorrect
+  relative path to the project root (#3385)
+
 ### _Blackd_
 
 <!-- Changes to blackd -->
