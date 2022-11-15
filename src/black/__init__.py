@@ -666,10 +666,11 @@ def get_sources(
 
             sources.add(p)
         elif p.is_dir():
+            p = root / normalize_path_maybe_ignore(p, ctx.obj["root"], report)
             if using_default_exclude:
                 gitignore = {
                     root: root_gitignore,
-                    root / p: get_gitignore(p),
+                    p: get_gitignore(p),
                 }
             sources.update(
                 gen_python_files(
