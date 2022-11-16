@@ -147,7 +147,7 @@ def infer_target_version(
             pass
         try:
             return parse_req_python_specifier(requires_python)
-        except InvalidSpecifier:
+        except (InvalidSpecifier, InvalidVersion):
             pass
 
     return None
@@ -193,6 +193,9 @@ def strip_specifier_set(specifier_set: SpecifierSet) -> SpecifierSet:
     """
     specifiers = []
     for s in specifier_set:
+        if not isinstance(s, Specifier):
+            return SpecifierSet()
+
         if "*" in str(s):
             specifiers.append(s)
         elif s.operator in ["~=", "==", ">=", "==="]:
