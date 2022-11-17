@@ -252,3 +252,35 @@ max-line-length = "88"
 ```
 
 </details>
+
+### pycodestyle
+
+[pycodestyle](https://pycodestyle.pycqa.org/) is also a code linter like Flake8.
+
+#### Configuration
+
+```
+max_line_length = 88
+ignore = E203
+```
+
+#### Why those options above?
+
+pycodestyle should be configured to only complain about lines that surpass `88`
+characters via `max_line_length = 88`.
+
+See
+[Why are Flake8’s E203 and W503 violated?](https://black.readthedocs.io/en/stable/faq.html#why-are-flake8-s-e203-and-w503-violated)
+
+#### Formats
+
+<details>
+<summary>setup.cfg</summary>
+
+```cfg
+[pycodestyle]
+ignore = E203
+max_line_length = 88
+```
+
+</details>

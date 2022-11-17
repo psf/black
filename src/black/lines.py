@@ -53,7 +53,9 @@ class Line:
     should_split_rhs: bool = False
     magic_trailing_comma: Optional[Leaf] = None
 
-    def append(self, leaf: Leaf, preformatted: bool = False) -> None:
+    def append(
+        self, leaf: Leaf, preformatted: bool = False, track_bracket: bool = False
+    ) -> None:
         """Add a new `leaf` to the end of the line.
 
         Unless `preformatted` is True, the `leaf` will receive a new consistent
@@ -75,7 +77,7 @@ class Line:
             leaf.prefix += whitespace(
                 leaf, complex_subscript=self.is_complex_subscript(leaf)
             )
-        if self.inside_brackets or not preformatted:
+        if self.inside_brackets or not preformatted or track_bracket:
             self.bracket_tracker.mark(leaf)
             if self.mode.magic_trailing_comma:
                 if self.has_magic_trailing_comma(leaf):

@@ -2,7 +2,7 @@
 
 import sys
 from dataclasses import dataclass, field
-from typing import Dict, Iterable, List, Optional, Tuple, Union
+from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
 
 if sys.version_info < (3, 8):
     from typing_extensions import Final
@@ -340,3 +340,35 @@ def max_delimiter_priority_in_atom(node: LN) -> Priority:
 
     except ValueError:
         return 0
+
+
+def get_leaves_inside_matching_brackets(leaves: Sequence[Leaf]) -> Set[LeafID]:
+    """Return leaves that are inside matching brackets.
+
+    The input `leaves` can have non-matching brackets at the head or tail parts.
+    Matching brackets are included.
+    """
+    try:
+        # Only track brackets from the first opening bracket to the last closing
+        # bracket.
+        start_index = next(
+            i for i, l in enumerate(leaves) if l.type in OPENING_BRACKETS
+        )
+        end_index = next(
+            len(leaves) - i
+            for i, l in enumerate(reversed(leaves))
+            if l.type in CLOSING_BRACKETS
+        )
+    except StopIteration:
+        return set()
+    ids = set()
+    depth = 0
+    for i in range(end_index, start_index - 1, -1):
+        leaf = leaves[i]
+        if leaf.type in CLOSING_BRACKETS:
+            depth += 1
+        if depth > 0:
+            ids.add(id(leaf))
+        if leaf.type in OPENING_BRACKETS:
+            depth -= 1
+    return ids
