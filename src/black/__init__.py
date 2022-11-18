@@ -512,6 +512,11 @@ def main(  # noqa: C901
             else:
                 out(f"Using configuration in '{config}'.", fg="blue")
 
+            if ctx.default_map:
+                out("Configuration:", fg="blue")
+                for param, value in ctx.default_map.items():
+                    out(f"{param}={value}")
+
     error_msg = "Oh no! 💥 💔 💥"
     if (
         required_version

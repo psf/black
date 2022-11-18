@@ -51,6 +51,8 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Adding black configuration output to verbose logging. (#3388)
+
 ### _Blackd_
 
 <!-- Changes to blackd -->
