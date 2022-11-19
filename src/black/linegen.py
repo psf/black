@@ -687,7 +687,7 @@ def _maybe_split_omitting_optional_parens(
                 and any(leaf.type in BRACKETS for leaf in rhs.head.leaves[:-1])
                 # the left side of assignment is short enough (the -1 is for the ending
                 # optional paren)
-                and is_line_short_enough(rhs.head, line_length=line_length-1)
+                and is_line_short_enough(rhs.head, line_length=line_length - 1)
                 # the left side of assignment won't explode further because of magic
                 # trailing comma
                 and rhs.head.magic_trailing_comma is None
