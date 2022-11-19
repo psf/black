@@ -51,8 +51,8 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
-- Fix emoji rendering on Windows 10+ when standard output is redirected
-  or captured by forcing UTF-8 encoding in this case (#3374)
+- Fix emoji rendering on Windows 10+ when standard output is redirected or captured by
+  forcing UTF-8 encoding in this case (#3374)
 
 ### _Blackd_
 
