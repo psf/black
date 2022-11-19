@@ -19,7 +19,6 @@ from black.lines import (
     append_leaves,
     can_be_split,
     can_omit_invisible_parens,
-    is_assignment_line,
     is_line_short_enough,
     line_to_string,
 )

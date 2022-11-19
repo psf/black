@@ -875,17 +875,3 @@ def line_to_string(line: Line) -> str:
     WARNING: This is known to be computationally expensive.
     """
     return str(line).strip("\n")
-
-
-def is_assignment_line(line: Line) -> bool:
-    """Returns whether line is an assignment statement."""
-    leaves = line.leaves
-    if not leaves:
-        return False
-    parent = leaves[0].parent
-    if not parent:
-        return False
-    grandparent = parent.parent
-    if not grandparent:
-        return False
-    return len(grandparent.children) > 2 and grandparent.children[1].type == token.EQUAL
