@@ -815,6 +815,27 @@ def bracket_split_build_line(
     return result
 
 
+def _find_last_non_standalone_comment(line: Line) -> Optional[int]:
+    last_leaf = line.leaves[-1]
+    if last_leaf.type == STANDALONE_COMMENT:
+        for leaf_idx in range(len(line.leaves) - 1, 0, -1):
+            if line.leaves[leaf_idx].type != STANDALONE_COMMENT:
+                return leaf_idx
+    return None
+
+
+def _safe_add_trailing_comma(line: Line, safe: bool, delimiter_priority: int) -> Line:
+    if (
+        safe
+        and delimiter_priority == COMMA_PRIORITY
+        and line.leaves[-1].type != token.COMMA
+        and line.leaves[-1].type != STANDALONE_COMMENT
+    ):
+        new_comma = Leaf(token.COMMA, ",")
+        line.append(new_comma)
+    return line
+
+
 def dont_increase_indentation(split_func: Transformer) -> Transformer:
     """Normalize prefix of the first leaf in every line returned by `split_func`.
 
@@ -831,7 +852,7 @@ def dont_increase_indentation(split_func: Transformer) -> Transformer:
 
 
 @dont_increase_indentation
-def delimiter_split(line: Line, features: Collection[Feature] = ()) -> Iterator[Line]:
+def delimiter_split(line: Line, features: Collection[Feature] = ()) -> Iterator[Line]:  # noqa
     """Split according to delimiters of the highest priority.
 
     If the appropriate Features are given, the split will add trailing commas
@@ -871,7 +892,9 @@ def delimiter_split(line: Line, features: Collection[Feature] = ()) -> Iterator[
             )
             current_line.append(leaf)
 
-    for leaf in line.leaves:
+    last_non_comment_leaf = _find_last_non_standalone_comment(line)
+
+    for idx, leaf in enumerate(line.leaves):
         yield from append_to_line(leaf)
 
         for comment_after in line.comments_after(leaf):
@@ -887,7 +910,10 @@ def delimiter_split(line: Line, features: Collection[Feature] = ()) -> Iterator[
                 trailing_comma_safe = (
                     trailing_comma_safe and Feature.TRAILING_COMMA_IN_CALL in features
                 )
-
+        if idx == last_non_comment_leaf:
+            current_line = _safe_add_trailing_comma(
+                current_line, trailing_comma_safe, delimiter_priority
+            )
         leaf_priority = bt.delimiters.get(id(leaf))
         if leaf_priority == delimiter_priority:
             yield current_line
@@ -896,14 +922,10 @@ def delimiter_split(line: Line, features: Collection[Feature] = ()) -> Iterator[
                 mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
             )
     if current_line:
-        if (
-            trailing_comma_safe
-            and delimiter_priority == COMMA_PRIORITY
-            and current_line.leaves[-1].type != token.COMMA
-            and current_line.leaves[-1].type != STANDALONE_COMMENT
-        ):
-            new_comma = Leaf(token.COMMA, ",")
-            current_line.append(new_comma)
+        if not last_non_comment_leaf:
+            current_line = _safe_add_trailing_comma(
+                current_line, trailing_comma_safe, delimiter_priority
+            )
         yield current_line
 
 
