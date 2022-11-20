@@ -852,7 +852,8 @@ def dont_increase_indentation(split_func: Transformer) -> Transformer:
 
 
 @dont_increase_indentation
-def delimiter_split(line: Line, features: Collection[Feature] = ()) -> Iterator[Line]:  # noqa
+def delimiter_split(line: Line,  # noqa: C901
+                    features: Collection[Feature] = ()) -> Iterator[Line]:
     """Split according to delimiters of the highest priority.
 
     If the appropriate Features are given, the split will add trailing commas
