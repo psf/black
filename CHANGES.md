@@ -21,6 +21,8 @@
   parentheses (#3307)
 - Correctly handle trailing commas that are inside a line's leading non-nested parens
   (#3370)
+- Correctly handle trailing commas inside dictionaries where a comment is after the
+  final entry (#3393)
 
 ### Configuration
 
