@@ -51,6 +51,8 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Adding pyproject.toml configuration output to verbose logging (#3392)
+
 ### _Blackd_
 
 <!-- Changes to blackd -->
