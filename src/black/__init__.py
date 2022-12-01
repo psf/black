@@ -384,6 +384,14 @@ def validate_regex(
     ),
 )
 @click.option(
+    "-l",
+    "--lean",
+    is_flag=True,
+    help=(
+        "Do not use the cake emoji on successful run"
+    ),
+)
+@click.option(
     "-v",
     "--verbose",
     is_flag=True,
@@ -441,6 +449,7 @@ def main(  # noqa: C901
     experimental_string_processing: bool,
     preview: bool,
     quiet: bool,
+    lean: bool,
     verbose: bool,
     required_version: Optional[str],
     include: Pattern[str],
@@ -602,10 +611,15 @@ def main(  # noqa: C901
                 workers=workers,
             )
 
+    if lean:
+        done_message = "✨ All done! ✨"
+    else:
+        done_message = "All done! ✨ 🍰 ✨"
+
     if verbose or not quiet:
         if code is None and (verbose or report.change_count or report.failure_count):
             out()
-        out(error_msg if report.return_code else "All done! ✨ 🍰 ✨")
+        out(error_msg if report.return_code else done_message)
         if code is None:
             click.echo(str(report), err=True)
     ctx.exit(report.return_code)
