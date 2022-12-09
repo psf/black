@@ -44,15 +44,16 @@ jobs:
             name: linux-x86_64
           - os: windows-2019
             name: windows-amd64
-          - os: macos-11
-            name: macos-x86_64
-            macos_arch: "x86_64"
+          # Only build arm64 wheels on macos until #3312 is fixed
+          # - os: macos-11
+          #   name: macos-x86_64
+          #   macos_arch: "x86_64"
           - os: macos-11
             name: macos-arm64
             macos_arch: "arm64"
-          - os: macos-11
-            name: macos-universal2
-            macos_arch: "universal2"
+          # - os: macos-11
+          #   name: macos-universal2
+          #   macos_arch: "universal2"
 
     steps:
       - uses: actions/checkout@v3
