@@ -40,7 +40,7 @@ def blackify(base_branch: str, black_command: str, logger: logging.Logger) -> in
 
     git("checkout", base_branch, "-b%s-black" % current_branch)
 
-    for last_commit, commit in zip(commits, commits[1:], strict=False):
+    for last_commit, commit in zip(commits, commits[1:]):
         allow_empty = (
             b"--allow-empty" in run(["git", "apply", "-h"], stdout=PIPE).stdout
         )
