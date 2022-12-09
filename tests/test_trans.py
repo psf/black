@@ -11,8 +11,7 @@ def test_fexpr_spans() -> None:
 
         # Checking slices isn't strictly necessary, but it's easier to verify at
         # a glance than only spans
-        assert len(spans) == len(expected_slices)
-        for (i, j), slice in zip(spans, expected_slices):
+        for (i, j), slice in zip(spans, expected_slices, strict=True):
             assert len(string[i:j]) == j - i
             assert string[i:j] == slice
 
