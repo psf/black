@@ -172,7 +172,7 @@ class LineGenerator(Visitor[Line]):
         `parens` holds a set of string leaf values immediately after which
         invisible parens should be put.
         """
-        normalize_invisible_parens(node, parens_after=parens, preview=self.mode.preview)
+        normalize_invisible_parens(node, parens_after=parens)
         for child in node.children:
             if is_name_token(child) and child.value in keywords:
                 yield from self.line()
@@ -208,7 +208,7 @@ class LineGenerator(Visitor[Line]):
 
     def visit_match_case(self, node: Node) -> Iterator[Line]:
         """Visit either a match or case statement."""
-        normalize_invisible_parens(node, parens_after=set(), preview=self.mode.preview)
+        normalize_invisible_parens(node, parens_after=set())
 
         yield from self.line()
         for child in node.children:
@@ -960,9 +960,7 @@ def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
     leaf.prefix = ""
 
 
-def normalize_invisible_parens(
-    node: Node, parens_after: Set[str], *, preview: bool
-) -> None:
+def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
     """Make existing optional parentheses invisible or create new ones.
 
     `parens_after` is a set of string leaf values immediately after which parens
@@ -980,9 +978,7 @@ def normalize_invisible_parens(
         # Fixes a bug where invisible parens are not properly stripped from
         # assignment statements that contain type annotations.
         if isinstance(child, Node) and child.type == syms.annassign:
-            normalize_invisible_parens(
-                child, parens_after=parens_after, preview=preview
-            )
+            normalize_invisible_parens(child, parens_after=parens_after)
 
         # Add parentheses around long tuple unpacking in assignments.
         if (
@@ -994,8 +990,7 @@ def normalize_invisible_parens(
 
         if check_lpar:
             if (
-                preview
-                and child.type == syms.atom
+                child.type == syms.atom
                 and node.type == syms.for_stmt
                 and isinstance(child.prev_sibling, Leaf)
                 and child.prev_sibling.type == token.NAME
@@ -1007,7 +1002,7 @@ def normalize_invisible_parens(
                     remove_brackets_around_comma=True,
                 ):
                     wrap_in_parentheses(node, child, visible=False)
-            elif preview and isinstance(child, Node) and node.type == syms.with_stmt:
+            elif isinstance(child, Node) and node.type == syms.with_stmt:
                 remove_with_parens(child, node)
             elif child.type == syms.atom:
                 if maybe_make_parens_invisible_in_atom(
@@ -1043,7 +1038,7 @@ def normalize_invisible_parens(
             elif not (isinstance(child, Leaf) and is_multiline_string(child)):
                 wrap_in_parentheses(node, child, visible=False)
 
-        comma_check = child.type == token.COMMA if preview else False
+        comma_check = child.type == token.COMMA
 
         check_lpar = isinstance(child, Leaf) and (
             child.value in parens_after or comma_check
