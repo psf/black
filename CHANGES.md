@@ -14,6 +14,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix a crash in preview style with assert + parenthesized string (#3415)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->

@@ -25,6 +25,13 @@ assert (
     == long_module.long_class.long_func()["some_key"].another_func(arg1)
 )
 
+# Regression test for https://github.com/psf/black/issues/3414.
+assert xxxxxxxxx.xxxxxxxxx.xxxxxxxxx(
+    xxxxxxxxx
+).xxxxxxxxxxxxxxxxxx(), (
+    "xxx {xxxxxxxxx} xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+)
+
 
 # output
 
@@ -71,4 +78,11 @@ def refresh_token(self, device_family, refresh_token, api_key):
 assert (
     long_module.long_class.long_func().another_func()
     == long_module.long_class.long_func()["some_key"].another_func(arg1)
+)
+
+# Regression test for https://github.com/psf/black/issues/3414.
+assert xxxxxxxxx.xxxxxxxxx.xxxxxxxxx(
+    xxxxxxxxx
+).xxxxxxxxxxxxxxxxxx(), (
+    "xxx {xxxxxxxxx} xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 )
