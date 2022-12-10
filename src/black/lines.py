@@ -290,8 +290,7 @@ class Line:
 
         if closing.type == token.RSQB:
             if (
-                Preview.one_element_subscript in self.mode
-                and closing.parent
+                closing.parent
                 and closing.parent.type == syms.trailer
                 and closing.opening_bracket
                 and is_one_sequence_between(

@@ -150,7 +150,6 @@ class Preview(Enum):
     """Individual preview style features."""
 
     long_docstring_quotes_on_newline = auto()
-    one_element_subscript = auto()
     remove_block_trailing_newline = auto()
     remove_redundant_parens = auto()
     string_processing = auto()
