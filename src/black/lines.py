@@ -628,9 +628,7 @@ class EmptyLineTracker:
         ):
             slc = self.semantic_leading_comment
             if (
-                Preview.empty_lines_before_class_or_def_with_leading_comments
-                in current_line.mode
-                and slc is not None
+                slc is not None
                 and slc.previous_block is not None
                 and not slc.previous_block.original_line.is_class
                 and not slc.previous_block.original_line.opens_block
