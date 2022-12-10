@@ -330,24 +330,17 @@ class LineGenerator(Visitor[Line]):
         if is_docstring(leaf) and "\\\n" not in leaf.value:
             # We're ignoring docstrings with backslash newline escapes because changing
             # indentation of those changes the AST representation of the code.
-            if Preview.normalize_docstring_quotes_and_prefixes_properly in self.mode:
-                # There was a bug where --skip-string-normalization wouldn't stop us
-                # from normalizing docstring prefixes. To maintain stability, we can
-                # only address this buggy behaviour while the preview style is enabled.
-                if self.mode.string_normalization:
-                    docstring = normalize_string_prefix(leaf.value)
-                    # visit_default() does handle string normalization for us, but
-                    # since this method acts differently depending on quote style (ex.
-                    # see padding logic below), there's a possibility for unstable
-                    # formatting as visit_default() is called *after*. To avoid a
-                    # situation where this function formats a docstring differently on
-                    # the second pass, normalize it early.
-                    docstring = normalize_string_quotes(docstring)
-                else:
-                    docstring = leaf.value
-            else:
-                # ... otherwise, we'll keep the buggy behaviour >.<
+            if self.mode.string_normalization:
                 docstring = normalize_string_prefix(leaf.value)
+                # visit_default() does handle string normalization for us, but
+                # since this method acts differently depending on quote style (ex.
+                # see padding logic below), there's a possibility for unstable
+                # formatting as visit_default() is called *after*. To avoid a
+                # situation where this function formats a docstring differently on
+                # the second pass, normalize it early.
+                docstring = normalize_string_quotes(docstring)
+            else:
+                docstring = leaf.value
             prefix = get_string_prefix(docstring)
             docstring = docstring[len(prefix) :]  # Remove the prefix
             quote_char = docstring[0]
@@ -425,14 +418,8 @@ class LineGenerator(Visitor[Line]):
         self.visit_try_stmt = partial(
             v, keywords={"try", "except", "else", "finally"}, parens=Ø
         )
-        if self.mode.preview:
-            self.visit_except_clause = partial(
-                v, keywords={"except"}, parens={"except"}
-            )
-            self.visit_with_stmt = partial(v, keywords={"with"}, parens={"with"})
-        else:
-            self.visit_except_clause = partial(v, keywords={"except"}, parens=Ø)
-            self.visit_with_stmt = partial(v, keywords={"with"}, parens=Ø)
+        self.visit_except_clause = partial(v, keywords={"except"}, parens={"except"})
+        self.visit_with_stmt = partial(v, keywords={"with"}, parens={"with"})
         self.visit_classdef = partial(v, keywords={"class"}, parens=Ø)
         self.visit_expr_stmt = partial(v, keywords=Ø, parens=ASSIGNMENTS)
         self.visit_return_stmt = partial(v, keywords={"return"}, parens={"return"})
