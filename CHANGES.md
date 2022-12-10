@@ -36,7 +36,8 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
-- Verbose logging now shows the values of `pyproject.toml` configuration variables (#3392)
+- Verbose logging now shows the values of `pyproject.toml` configuration variables
+  (#3392)
 
 ### _Blackd_
 
