@@ -75,30 +75,6 @@ def assert_format(
         source, expected, mode, fast=fast, minimum_version=minimum_version
     )
 
-    for line_length in (88, 100, 200, 1):
-        for string_normalization in (True, False):
-            for is_pyi in (False, True):
-                for magic_trailing_comma in (True, False):
-                    for preview in (True, False):
-                        new_mode = replace(
-                            mode,
-                            line_length=line_length,
-                            string_normalization=string_normalization,
-                            is_pyi=is_pyi,
-                            magic_trailing_comma=magic_trailing_comma,
-                            preview=preview,
-                        )
-                        if mode == new_mode:
-                            continue
-                        print("try", new_mode)
-                        _assert_format_inner(
-                            source,
-                            None,
-                            new_mode,
-                            fast=fast,
-                            minimum_version=minimum_version,
-                        )
-
     # For both preview and non-preview tests, ensure that Black doesn't crash on
     # this code, but don't pass "expected" because the precise output may differ.
     _assert_format_inner(
@@ -108,22 +84,13 @@ def assert_format(
         fast=fast,
         minimum_version=minimum_version,
     )
-    for preview in (True, False):
-        _assert_format_inner(
-            source,
-            None,
-            replace(
-                mode,
-                magic_trailing_comma=not mode.magic_trailing_comma,
-                preview=preview,
-            ),
-            fast=fast,
-            minimum_version=minimum_version,
-        )
+    # Similarly, setting line length to 1 is a good way to catch
+    # stability bugs. But only in non-preview mode because preview mode
+    # currently has a lot of line length 1 bugs.
     _assert_format_inner(
         source,
         None,
-        replace(mode, string_normalization=not mode.string_normalization),
+        replace(mode, preview=False, line_length=1),
         fast=fast,
         minimum_version=minimum_version,
     )
