@@ -15,6 +15,7 @@
 <!-- Changes that affect Black's preview style -->
 
 - Fix a crash in preview style with assert + parenthesized string (#3415)
+- Fix a crash in preview style with a walrus operator in a return annotation (#3422)
 
 ### Configuration
 
