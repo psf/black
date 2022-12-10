@@ -633,7 +633,7 @@ def get_sources(
 
     using_default_exclude = exclude is None
     exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES) if exclude is None else exclude
-    gitignore: Optional[PathSpec] = None
+    gitignore: Optional[Dict[Path, PathSpec]] = None
     root_gitignore = get_gitignore(root)
 
     for s in src:
