@@ -778,10 +778,7 @@ def bracket_split_build_line(
                     break
 
     leaves_to_track: Set[LeafID] = set()
-    if (
-        Preview.handle_trailing_commas_in_head in original.mode
-        and component is _BracketSplitComponent.head
-    ):
+    if component is _BracketSplitComponent.head:
         leaves_to_track = get_leaves_inside_matching_brackets(leaves)
     # Populate the line
     for leaf in leaves:
