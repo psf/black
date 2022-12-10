@@ -91,10 +91,6 @@ def foo() -> tuple[int, int, int,]:
 def frobnicate() -> "ThisIsTrulyUnreasonablyExtremelyLongClassName | list[ThisIsTrulyUnreasonablyExtremelyLongClassName]":
     pass
 
-# Should not remove parens around walrus operator
-def walrus() -> (x := 1):
-    pass
-
 # output
 # Control
 def double(a: int) -> int:
@@ -223,9 +219,4 @@ def frobnicate() -> (
     "ThisIsTrulyUnreasonablyExtremelyLongClassName |"
     " list[ThisIsTrulyUnreasonablyExtremelyLongClassName]"
 ):
-    pass
-
-
-# Should not remove parens around walrus operator
-def walrus() -> (x := 1):
     pass

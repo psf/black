@@ -44,6 +44,13 @@ def test_preview_format(filename: str) -> None:
     )
 
 
+@pytest.mark.parametrize("filename", all_data_cases("preview_38"))
+def test_preview_minimum_python_38_format(filename: str) -> None:
+    source, expected = read_data("preview_38", filename)
+    mode = black.Mode(preview=True)
+    assert_format(source, expected, mode, minimum_version=(3, 9))
+
+
 @pytest.mark.parametrize("filename", all_data_cases("preview_39"))
 def test_preview_minimum_python_39_format(filename: str) -> None:
     source, expected = read_data("preview_39", filename)
