@@ -287,8 +287,7 @@ class LineGenerator(Visitor[Line]):
             ):
                 wrap_in_parentheses(node, leaf)
 
-        if Preview.remove_redundant_parens in self.mode:
-            remove_await_parens(node)
+        remove_await_parens(node)
 
         yield from self.visit_default(node)
 
