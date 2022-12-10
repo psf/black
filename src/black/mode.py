@@ -149,6 +149,7 @@ def supports_feature(target_versions: Set[TargetVersion], feature: Feature) -> b
 class Preview(Enum):
     """Individual preview style features."""
 
+    annotation_parens = auto()
     long_docstring_quotes_on_newline = auto()
     string_processing = auto()
 
