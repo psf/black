@@ -457,15 +457,15 @@ the latter are treated as true raw strings with no special semantics.
 
 ### AST before and after formatting
 
-When run with `--safe`, _Black_ checks that the code before and after is semantically
-equivalent. This check is done by comparing the AST of the source with the AST of the
-target. There are three limited cases in which the AST does differ:
+When run with `--safe` (the default), _Black_ checks that the code before and after is
+semantically equivalent. This check is done by comparing the AST of the source with the
+AST of the target. There are three limited cases in which the AST does differ:
 
 1. _Black_ cleans up leading and trailing whitespace of docstrings, re-indenting them if
    needed. It's been one of the most popular user-reported features for the formatter to
    fix whitespace issues with docstrings. While the result is technically an AST
-   difference, due to the various possibilities of forming docstrings, all realtime use
-   of docstrings that we're aware of sanitizes indentation and leading/trailing
+   difference, due to the various possibilities of forming docstrings, all real-world
+   uses of docstrings that we're aware of sanitize indentation and leading/trailing
    whitespace anyway.
 
 1. _Black_ manages optional parentheses for some statements. In the case of the `del`
