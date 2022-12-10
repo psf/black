@@ -59,7 +59,7 @@ def _assert_format_equal(expected: str, actual: str) -> None:
 
 def assert_format(
     source: str,
-    expected: Optional[str] = None,
+    expected: str,
     mode: black.Mode = DEFAULT_MODE,
     *,
     fast: bool = False,
@@ -75,8 +75,8 @@ def assert_format(
         source, expected, mode, fast=fast, minimum_version=minimum_version
     )
 
-    # For both preview and non-preview tests, ensure that Black doesn't crash on this code,
-    # but don't pass "expected" because the precise output may differ.
+    # For both preview and non-preview tests, ensure that Black doesn't crash on
+    # this code, but don't pass "expected" because the precise output may differ.
     _assert_format_inner(
         source,
         None,
