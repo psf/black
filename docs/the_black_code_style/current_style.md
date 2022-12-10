@@ -464,8 +464,8 @@ AST of the target. There are three limited cases in which the AST does differ:
 1. _Black_ cleans up leading and trailing whitespace of docstrings, re-indenting them if
    needed. It's been one of the most popular user-reported features for the formatter to
    fix whitespace issues with docstrings. While the result is technically an AST
-   difference, due to the various possibilities of forming docstrings, all realtime use
-   of docstrings that we're aware of sanitizes indentation and leading/trailing
+   difference, due to the various possibilities of forming docstrings, all real-world
+   uses of docstrings that we're aware of sanitize indentation and leading/trailing
    whitespace anyway.
 
 1. _Black_ manages optional parentheses for some statements. In the case of the `del`
