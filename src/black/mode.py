@@ -151,7 +151,6 @@ class Preview(Enum):
 
     long_docstring_quotes_on_newline = auto()
     string_processing = auto()
-    skip_magic_trailing_comma_in_subscript = auto()
 
 
 class Deprecated(UserWarning):

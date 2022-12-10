@@ -275,8 +275,7 @@ class Line:
         - it's not a single-element subscript
         Additionally, if ensure_removable:
         - it's not from square bracket indexing
-        (specifically, single-element square bracket indexing with
-        Preview.skip_magic_trailing_comma_in_subscript)
+        (specifically, single-element square bracket indexing)
         """
         if not (
             closing.type in CLOSING_BRACKETS
@@ -308,18 +307,16 @@ class Line:
             comma = self.leaves[-1]
             if comma.parent is None:
                 return False
-            if Preview.skip_magic_trailing_comma_in_subscript in self.mode:
-                return (
-                    comma.parent.type != syms.subscriptlist
-                    or closing.opening_bracket is None
-                    or not is_one_sequence_between(
-                        closing.opening_bracket,
-                        closing,
-                        self.leaves,
-                        brackets=(token.LSQB, token.RSQB),
-                    )
+            return (
+                comma.parent.type != syms.subscriptlist
+                or closing.opening_bracket is None
+                or not is_one_sequence_between(
+                    closing.opening_bracket,
+                    closing,
+                    self.leaves,
+                    brackets=(token.LSQB, token.RSQB),
                 )
-            return comma.parent.type == syms.listmaker
+            )
 
         if self.is_import:
             return True
