@@ -15,6 +15,8 @@
 <!-- Changes that affect Black's preview style -->
 
 - Fix a crash in preview style with assert + parenthesized string (#3415)
+- Do not put the closing quotes in a docstring on a separate line, even if the line is
+  too long (#3430)
 
 ### Configuration
 
