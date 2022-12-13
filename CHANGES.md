@@ -10,6 +10,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix a crash when a colon line is marked between `# fmt: off` and `# fmt: on` (#3439)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
