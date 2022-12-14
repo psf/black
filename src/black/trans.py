@@ -1859,8 +1859,8 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             is_valid_index = is_valid_index_factory(LL)
 
             for i, leaf in enumerate(LL):
-                # We MUST find a corresponding colon that matches the dict or lambda...
-                if leaf.type == token.COLON and parent_type(leaf) in parent_types:
+                # We MUST find a colon, it can either be dict's or lambda's colon...
+                if leaf.type == token.COLON:
                     idx = i + 2 if is_empty_par(LL[i + 1]) else i + 1
 
                     # That colon MUST be followed by a string...
@@ -1954,6 +1954,24 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                     f" (left_leaves={left_leaves}, right_leaves={right_leaves})"
                 )
                 old_rpar_leaf = right_leaves.pop()
+            elif right_leaves and right_leaves[-1].type == token.RPAR:
+                # Special case for lambda expressions as dict's value, e.g.:
+                #     my_dict = {
+                #        "key": lambda x: f"formatted: {x},
+                #     }
+                # After wrapping the dict's value with parentheses, the string is
+                # followed by a RPAR but it's opening bracket is lambda's, not
+                # the string's:
+                #        "key": (lambda x: f"formatted: {x}),
+                opening_bracket = right_leaves[-1].opening_bracket
+                index = left_leaves.index(opening_bracket)
+                if (
+                    index > 0
+                    and index < len(left_leaves) - 1
+                    and left_leaves[index - 1].type == token.COLON
+                    and left_leaves[index + 1].value == "lambda"
+                ):
+                    right_leaves.pop()
 
             append_leaves(string_line, line, right_leaves)
 

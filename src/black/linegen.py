@@ -184,7 +184,7 @@ class LineGenerator(Visitor[Line]):
             for i, child in enumerate(node.children):
                 if i == 0:
                     continue
-                if node.children[i-1].type == token.COLON:
+                if node.children[i - 1].type == token.COLON:
                     if child.type == syms.atom and child.children[0].type == token.LPAR:
                         if maybe_make_parens_invisible_in_atom(
                             child,

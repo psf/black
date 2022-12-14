@@ -280,6 +280,13 @@ string_with_escaped_nameescape = (
 
 msg = lambda x: f"this is a very very very long lambda value {x} that doesn't fit on a single line"
 
+dict_with_lambda_values = {
+    "join": lambda j: (
+        f"{j.__class__.__name__}({some_function_call(j.left)}, "
+        f"{some_function_call(j.right)})"
+    ),
+}
+
 
 # output
 
@@ -814,3 +821,10 @@ msg = (
         " line"
     )
 )
+
+dict_with_lambda_values = {
+    "join": lambda j: (
+        f"{j.__class__.__name__}({some_function_call(j.left)}, "
+        f"{some_function_call(j.right)})"
+    ),
+}
