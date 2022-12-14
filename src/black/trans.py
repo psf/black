@@ -1964,14 +1964,15 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                 # the string's:
                 #        "key": (lambda x: f"formatted: {x}),
                 opening_bracket = right_leaves[-1].opening_bracket
-                index = left_leaves.index(opening_bracket)
-                if (
-                    index > 0
-                    and index < len(left_leaves) - 1
-                    and left_leaves[index - 1].type == token.COLON
-                    and left_leaves[index + 1].value == "lambda"
-                ):
-                    right_leaves.pop()
+                if opening_bracket is not None:
+                    index = left_leaves.index(opening_bracket)
+                    if (
+                        index > 0
+                        and index < len(left_leaves) - 1
+                        and left_leaves[index - 1].type == token.COLON
+                        and left_leaves[index + 1].value == "lambda"
+                    ):
+                        right_leaves.pop()
 
             append_leaves(string_line, line, right_leaves)
 
