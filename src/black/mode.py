@@ -159,6 +159,7 @@ class Preview(Enum):
     remove_redundant_parens = auto()
     string_processing = auto()
     skip_magic_trailing_comma_in_subscript = auto()
+    wrap_long_dict_values_in_parens = auto()
 
 
 class Deprecated(UserWarning):

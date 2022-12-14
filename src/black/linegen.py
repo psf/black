@@ -179,6 +179,13 @@ class LineGenerator(Visitor[Line]):
 
             yield from self.visit(child)
 
+    def visit_dictsetmaker(self, node: Node) -> Iterator[Line]:
+        if Preview.wrap_long_dict_values_in_parens in self.mode:
+            normalize_invisible_parens(
+                node, parens_after={":"}, preview=self.mode.preview
+            )
+        yield from self.visit_default(node)
+
     def visit_funcdef(self, node: Node) -> Iterator[Line]:
         """Visit function definition."""
         if Preview.annotation_parens not in self.mode:
