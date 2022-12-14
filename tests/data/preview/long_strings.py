@@ -362,9 +362,8 @@ D4 = {
     "A %s %s"
     % ("formatted", "string"): (
         "This is a really really really long string that has to go inside of a"
-        " dictionary. It is %s bad (#%d)."
-    )
-    % ("soooo", 2),
+        " dictionary. It is %s bad (#%d)." % ("soooo", 2)
+    ),
 }
 
 D5 = {  # Test for https://github.com/psf/black/issues/3261

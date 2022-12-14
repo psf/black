@@ -157,6 +157,8 @@ class Preview(Enum):
     one_element_subscript = auto()
     remove_block_trailing_newline = auto()
     remove_redundant_parens = auto()
+    # NOTE: string_processing requires wrap_long_dict_values_in_parens
+    # for https://github.com/psf/black/issues/3117 to be fixed.
     string_processing = auto()
     skip_magic_trailing_comma_in_subscript = auto()
     wrap_long_dict_values_in_parens = auto()
