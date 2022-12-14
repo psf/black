@@ -17,6 +17,9 @@
 - Fix a crash in preview style with assert + parenthesized string (#3415)
 - Do not put the closing quotes in a docstring on a separate line, even if the line is
   too long (#3430)
+- Long values in dict literals are now wrapped in parentheses; correspondingly
+  unnecessary parentheses around short values in dict literals are now removed; long
+  string lambda values are now wrapped in parentheses (#3440)
 
 ### Configuration
 
