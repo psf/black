@@ -248,6 +248,8 @@ def generate_ignored_nodes(
                         container.children[index + 1], preview=preview
                     )
                 ):
+                    # This means `# fmt: on` is placed right after an indentation
+                    # level, and we shouldn't swallow the previous INDENT token.
                     return
                 if children_contains_fmt_on(child, preview=preview):
                     return
