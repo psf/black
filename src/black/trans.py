@@ -1964,7 +1964,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                 # the string's:
                 #        "key": (lambda x: f"formatted: {x}),
                 opening_bracket = right_leaves[-1].opening_bracket
-                if opening_bracket is not None:
+                if opening_bracket is not None and opening_bracket in left_leaves:
                     index = left_leaves.index(opening_bracket)
                     if (
                         index > 0
