@@ -17,6 +17,13 @@ my_dict = {
     "a key in my dict": MyClass.some_attribute.first_call().second_call().third_call(some_args="some value")
 }
 
+dict_with_lambda_values = {
+    "join": lambda j: (
+        f"{j.__class__.__name__}({some_function_call(j.left)}, "
+        f"{some_function_call(j.right)})"
+    ),
+}
+
 
 # output
 
@@ -50,4 +57,13 @@ my_dict = {
         .second_call()
         .third_call(some_args="some value")
     )
+}
+
+dict_with_lambda_values = {
+    "join": (
+        lambda j: (
+            f"{j.__class__.__name__}({some_function_call(j.left)}, "
+            f"{some_function_call(j.right)})"
+        )
+    ),
 }
