@@ -1960,7 +1960,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                 #        "key": lambda x: f"formatted: {x},
                 #     }
                 # After wrapping the dict's value with parentheses, the string is
-                # followed by a RPAR but it's opening bracket is lambda's, not
+                # followed by a RPAR but its opening bracket is lambda's, not
                 # the string's:
                 #        "key": (lambda x: f"formatted: {x}),
                 opening_bracket = right_leaves[-1].opening_bracket
