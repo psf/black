@@ -1638,6 +1638,8 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         * The line is a dictionary key assignment where some valid key is being
         assigned the value of some string.
             OR
+        * The line is an lambda expression and the value is a string.
+            OR
         * The line starts with an "atom" string that prefers to be wrapped in
         parens. It's preferred to be wrapped when the string is surrounded by
         commas (or is the first/last child).
@@ -1683,7 +1685,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             or self._else_match(LL)
             or self._assert_match(LL)
             or self._assign_match(LL)
-            or self._dict_match(LL)
+            or self._dict_or_lambda_match(LL)
             or self._prefer_paren_wrap_match(LL)
         )
 
@@ -1841,22 +1843,23 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         return None
 
     @staticmethod
-    def _dict_match(LL: List[Leaf]) -> Optional[int]:
+    def _dict_or_lambda_match(LL: List[Leaf]) -> Optional[int]:
         """
         Returns:
             string_idx such that @LL[string_idx] is equal to our target (i.e.
             matched) string, if this line matches the dictionary key assignment
-            statement requirements listed in the 'Requirements' section of this
-            classes' docstring.
+            statement or lambda expression requirements listed in the
+            'Requirements' section of this classes' docstring.
                 OR
             None, otherwise.
         """
-        # If this line is apart of a dictionary key assignment...
-        if syms.dictsetmaker in [parent_type(LL[0]), parent_type(LL[0].parent)]:
+        # If this line is a part of a dictionary key assignment or lambda expression...
+        parent_types = [parent_type(LL[0]), parent_type(LL[0].parent)]
+        if syms.dictsetmaker in parent_types or syms.lambdef in parent_types:
             is_valid_index = is_valid_index_factory(LL)
 
             for i, leaf in enumerate(LL):
-                # We MUST find a colon...
+                # We MUST find a colon, it can either be dict's or lambda's colon...
                 if leaf.type == token.COLON:
                     idx = i + 2 if is_empty_par(LL[i + 1]) else i + 1
 
@@ -1951,6 +1954,25 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                     f" (left_leaves={left_leaves}, right_leaves={right_leaves})"
                 )
                 old_rpar_leaf = right_leaves.pop()
+            elif right_leaves and right_leaves[-1].type == token.RPAR:
+                # Special case for lambda expressions as dict's value, e.g.:
+                #     my_dict = {
+                #        "key": lambda x: f"formatted: {x},
+                #     }
+                # After wrapping the dict's value with parentheses, the string is
+                # followed by a RPAR but its opening bracket is lambda's, not
+                # the string's:
+                #        "key": (lambda x: f"formatted: {x}),
+                opening_bracket = right_leaves[-1].opening_bracket
+                if opening_bracket is not None and opening_bracket in left_leaves:
+                    index = left_leaves.index(opening_bracket)
+                    if (
+                        index > 0
+                        and index < len(left_leaves) - 1
+                        and left_leaves[index - 1].type == token.COLON
+                        and left_leaves[index + 1].value == "lambda"
+                    ):
+                        right_leaves.pop()
 
             append_leaves(string_line, line, right_leaves)
 

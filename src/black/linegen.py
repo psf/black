@@ -179,6 +179,23 @@ class LineGenerator(Visitor[Line]):
 
             yield from self.visit(child)
 
+    def visit_dictsetmaker(self, node: Node) -> Iterator[Line]:
+        if Preview.wrap_long_dict_values_in_parens in self.mode:
+            for i, child in enumerate(node.children):
+                if i == 0:
+                    continue
+                if node.children[i - 1].type == token.COLON:
+                    if child.type == syms.atom and child.children[0].type == token.LPAR:
+                        if maybe_make_parens_invisible_in_atom(
+                            child,
+                            parent=node,
+                            remove_brackets_around_comma=False,
+                        ):
+                            wrap_in_parentheses(node, child, visible=False)
+                    else:
+                        wrap_in_parentheses(node, child, visible=False)
+        yield from self.visit_default(node)
+
     def visit_funcdef(self, node: Node) -> Iterator[Line]:
         """Visit function definition."""
         if Preview.annotation_parens not in self.mode:

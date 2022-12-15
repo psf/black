@@ -278,6 +278,15 @@ string_with_escaped_nameescape = (
     "........................................................................... \\N{LAO KO LA}"
 )
 
+msg = lambda x: f"this is a very very very long lambda value {x} that doesn't fit on a single line"
+
+dict_with_lambda_values = {
+    "join": lambda j: (
+        f"{j.__class__.__name__}({some_function_call(j.left)}, "
+        f"{some_function_call(j.right)})"
+    ),
+}
+
 
 # output
 
@@ -362,9 +371,8 @@ D4 = {
     "A %s %s"
     % ("formatted", "string"): (
         "This is a really really really long string that has to go inside of a"
-        " dictionary. It is %s bad (#%d)."
-    )
-    % ("soooo", 2),
+        " dictionary. It is %s bad (#%d)." % ("soooo", 2)
+    ),
 }
 
 D5 = {  # Test for https://github.com/psf/black/issues/3261
@@ -806,3 +814,17 @@ string_with_escaped_nameescape = (
     "..........................................................................."
     " \\N{LAO KO LA}"
 )
+
+msg = (
+    lambda x: (
+        f"this is a very very very long lambda value {x} that doesn't fit on a single"
+        " line"
+    )
+)
+
+dict_with_lambda_values = {
+    "join": lambda j: (
+        f"{j.__class__.__name__}({some_function_call(j.left)}, "
+        f"{some_function_call(j.right)})"
+    ),
+}
