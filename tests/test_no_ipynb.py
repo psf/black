@@ -17,7 +17,7 @@ def test_ipynb_diff_with_no_change_single() -> None:
     result = runner.invoke(main, [str(path)])
     expected_output = (
         "Skipping .ipynb files as Jupyter dependencies are not installed.\n"
-        "You can fix this by running ``pip install black[jupyter]``\n"
+        'You can fix this by running ``pip install "black[jupyter]"``\n'
     )
     assert expected_output in result.output
 
@@ -32,6 +32,6 @@ def test_ipynb_diff_with_no_change_dir(tmp_path: pathlib.Path) -> None:
     result = runner.invoke(main, [str(tmp_path)])
     expected_output = (
         "Skipping .ipynb files as Jupyter dependencies are not installed.\n"
-        "You can fix this by running ``pip install black[jupyter]``\n"
+        'You can fix this by running ``pip install "black[jupyter]"``\n'
     )
     assert expected_output in result.output

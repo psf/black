@@ -10,6 +10,57 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix a crash when a colon line is marked between `# fmt: off` and `# fmt: on` (#3439)
+
+### Preview style
+
+<!-- Changes that affect Black's preview style -->
+
+- Fix a crash in preview style with assert + parenthesized string (#3415)
+- Do not put the closing quotes in a docstring on a separate line, even if the line is
+  too long (#3430)
+
+### Configuration
+
+<!-- Changes to how Black can be configured -->
+
+### Packaging
+
+<!-- Changes to how Black is packaged, such as dependency requirements -->
+
+- Upgrade mypyc from `0.971` to `0.991` so mypycified _Black_ can be built on armv7
+  (#3380)
+
+### Parser
+
+<!-- Changes to the parser or to version autodetection -->
+
+### Performance
+
+<!-- Changes that improve Black's performance. -->
+
+### Output
+
+<!-- Changes to Black's terminal output and error messages -->
+
+- Verbose logging now shows the values of `pyproject.toml` configuration variables
+  (#3392)
+
+### _Blackd_
+
+<!-- Changes to blackd -->
+
+### Integrations
+
+<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+### Documentation
+
+<!-- Major changes to documentation and policies. Small docs changes
+     don't need a changelog entry. -->
+
+## 22.12.0
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
@@ -28,14 +79,10 @@
 
 <!-- Changes to how Black can be configured -->
 
-- Fix incorrectly applied .gitignore rules by considering the .gitignore location and
-  the relative path to the target file (#3338)
-- Fix incorrectly ignoring .gitignore presence when more than one source directory is
+- Fix incorrectly applied `.gitignore` rules by considering the `.gitignore` location
+  and the relative path to the target file (#3338)
+- Fix incorrectly ignoring `.gitignore` presence when more than one source directory is
   specified (#3336)
-
-### Packaging
-
-<!-- Changes to how Black is packaged, such as dependency requirements -->
 
 ### Parser
 
@@ -45,29 +92,12 @@
   passed as function args (for example,
   `any(match := my_re.match(text) for text in texts)`) (#3327).
 
-### Performance
-
-<!-- Changes that improve Black's performance. -->
-
-### Output
-
-<!-- Changes to Black's terminal output and error messages -->
-
-### _Blackd_
-
-<!-- Changes to blackd -->
-
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
 - Vim plugin: Optionally allow using the system installation of Black via
   `let g:black_use_virtualenv = 0`(#3309)
-
-### Documentation
-
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
 
 ## 22.10.0
 
