@@ -73,6 +73,8 @@
   present) or as a single newline character (if a newline is present) (#3348)
 - Implicitly concatenated strings used as function args are now wrapped inside
   parentheses (#3307)
+- For assignment statements, prefer splitting the right hand side if the left hand side
+  fits on a single line (#3368)
 - Correctly handle trailing commas that are inside a line's leading non-nested parens
   (#3370)
 

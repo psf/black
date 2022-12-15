@@ -983,9 +983,9 @@ class xxxxxxxxxxxxxxxxxxxxx(xxxx.xxxxxxxxxxxxx):
         )
 
 
-value.__dict__[
-    key
-] = "test"  # set some Thrift field to non-None in the struct aa bb cc dd ee
+value.__dict__[key] = (
+    "test"  # set some Thrift field to non-None in the struct aa bb cc dd ee
+)
 
 RE_ONE_BACKSLASH = {
     "asdf_hjkl_jkl": re.compile(
