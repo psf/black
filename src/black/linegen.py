@@ -656,7 +656,7 @@ def _first_right_hand_split(
 ) -> _RHSResult:
     """Split the line into head, body, tail starting with the last bracket pair.
 
-    Note: this function should not have side effects. It's replied upon by
+    Note: this function should not have side effects. It's relied upon by
     _maybe_split_omitting_optional_parens to get an opinion whether to prefer
     splitting on the right side of an assignment statement.
     """
