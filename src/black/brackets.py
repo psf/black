@@ -349,26 +349,23 @@ def get_leaves_inside_matching_brackets(leaves: Sequence[Leaf]) -> Set[LeafID]:
     Matching brackets are included.
     """
     try:
-        # Only track brackets from the first opening bracket to the last closing
-        # bracket.
+        # Start with the first opening bracket and ignore closing brackets before.
         start_index = next(
             i for i, l in enumerate(leaves) if l.type in OPENING_BRACKETS
         )
-        end_index = next(
-            len(leaves) - i
-            for i, l in enumerate(reversed(leaves))
-            if l.type in CLOSING_BRACKETS
-        )
     except StopIteration:
         return set()
+    bracket_stack = []
     ids = set()
-    depth = 0
-    for i in range(end_index, start_index - 1, -1):
+    for i in range(start_index, len(leaves)):
         leaf = leaves[i]
-        if leaf.type in CLOSING_BRACKETS:
-            depth += 1
-        if depth > 0:
-            ids.add(id(leaf))
         if leaf.type in OPENING_BRACKETS:
-            depth -= 1
+            bracket_stack.append((BRACKET[leaf.type], i))
+        if leaf.type in CLOSING_BRACKETS:
+            if bracket_stack and leaf.type == bracket_stack[-1][0]:
+                _, start = bracket_stack.pop()
+                for j in range(start, i + 1):
+                    ids.add(id(leaves[j]))
+            else:
+                break
     return ids

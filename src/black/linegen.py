@@ -389,19 +389,18 @@ class LineGenerator(Visitor[Line]):
                 # We need to find the length of the last line of the docstring
                 # to find if we can add the closing quotes to the line without
                 # exceeding the maximum line length.
-                # If docstring is one line, then we need to add the length
-                # of the indent, prefix, and starting quotes. Ending quotes are
-                # handled later.
+                # If docstring is one line, we don't put the closing quotes on a
+                # separate line because it looks ugly (#3320).
                 lines = docstring.splitlines()
                 last_line_length = len(lines[-1]) if docstring else 0
-
-                if len(lines) == 1:
-                    last_line_length += len(indent) + len(prefix) + quote_len
 
                 # If adding closing quotes would cause the last line to exceed
                 # the maximum line length then put a line break before the
                 # closing quotes
-                if last_line_length + quote_len > self.mode.line_length:
+                if (
+                    len(lines) > 1
+                    and last_line_length + quote_len > self.mode.line_length
+                ):
                     leaf.value = prefix + quote + docstring + "\n" + indent + quote
                 else:
                     leaf.value = prefix + quote + docstring + quote
