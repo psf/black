@@ -64,7 +64,7 @@ class A:
         print ( "This will be formatted" )
 
 
-# Regression test for https://github.com/psf/black/issues/2985
+# Regression test for https://github.com/psf/black/issues/2985.
 class Named(t.Protocol):
     # fmt: off
     @property
@@ -73,6 +73,15 @@ class Named(t.Protocol):
 class Factory(t.Protocol):
     def  this_will_be_formatted ( self, **kwargs ) -> Named: ...
     # fmt: on
+
+
+# Regression test for https://github.com/psf/black/issues/3436.
+if x:
+    return x
+# fmt: off
+elif   unformatted:
+# fmt: on
+    will_be_formatted  ()
 
 
 # output
@@ -144,7 +153,7 @@ class A:
         print("This will be formatted")
 
 
-# Regression test for https://github.com/psf/black/issues/2985
+# Regression test for https://github.com/psf/black/issues/2985.
 class Named(t.Protocol):
     # fmt: off
     @property
@@ -156,3 +165,12 @@ class Factory(t.Protocol):
         ...
 
     # fmt: on
+
+
+# Regression test for https://github.com/psf/black/issues/3436.
+if x:
+    return x
+# fmt: off
+elif   unformatted:
+    # fmt: on
+    will_be_formatted()

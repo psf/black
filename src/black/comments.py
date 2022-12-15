@@ -232,7 +232,7 @@ def generate_ignored_nodes(
 
         # fix for fmt: on in children
         if children_contains_fmt_on(container, preview=preview):
-            for child in container.children:
+            for index, child in enumerate(container.children):
                 if isinstance(child, Leaf) and is_fmt_on(child, preview=preview):
                     if child.type in CLOSING_BRACKETS:
                         # This means `# fmt: on` is placed at a different bracket level
@@ -240,6 +240,16 @@ def generate_ignored_nodes(
                         # we include this closing bracket in the ignored nodes.
                         # The alternative is to fail the formatting.
                         yield child
+                    return
+                if (
+                    child.type == token.INDENT
+                    and index < len(container.children) - 1
+                    and children_contains_fmt_on(
+                        container.children[index + 1], preview=preview
+                    )
+                ):
+                    # This means `# fmt: on` is placed right after an indentation
+                    # level, and we shouldn't swallow the previous INDENT token.
                     return
                 if children_contains_fmt_on(child, preview=preview):
                     return
