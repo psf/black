@@ -1853,7 +1853,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                 OR
             None, otherwise.
         """
-        # If this line is apart of a dictionary key assignment or lambda expression...
+        # If this line is a part of a dictionary key assignment or lambda expression...
         parent_types = [parent_type(LL[0]), parent_type(LL[0].parent)]
         if syms.dictsetmaker in parent_types or syms.lambdef in parent_types:
             is_valid_index = is_valid_index_factory(LL)
