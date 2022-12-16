@@ -17,6 +17,24 @@ my_dict = {
     "a key in my dict": MyClass.some_attribute.first_call().second_call().third_call(some_args="some value")
 }
 
+{
+    'xxxxxx':
+        xxxxxxxxxxxxxxxxxxx.xxxxxxxxxxxxxx(
+            xxxxxxxxxxxxxx={
+                'x':
+                    xxxxxxxxxxxxxxxxxxxxxxxxxx.xxxxxxxxxxxxxxxxxxxx(
+                        xxxxxxxxxxxxxxxxxxxxxxxxxx=(
+                            xxxxxxxxxxxxxxxxxxxxxxxxxx
+                            .xxxxxxxxxxxxxxxxxxxxxxx(
+                                xxxxxxxxxxxxx=xxxxxxxxxxxxxxxxxxxxxxx
+                                .xxxxxxxxxxxxxxxxxxxxxx(
+                                    xxxxxxxxxxxxxxxxxxxxxxxx={
+                                        'x': x.xx,
+                                        'x': x.x,
+                                    }))))
+            }),
+}
+
 
 # output
 
@@ -50,4 +68,23 @@ my_dict = {
         .second_call()
         .third_call(some_args="some value")
     )
+}
+
+{
+    "xxxxxx": xxxxxxxxxxxxxxxxxxx.xxxxxxxxxxxxxx(
+        xxxxxxxxxxxxxx={
+            "x": xxxxxxxxxxxxxxxxxxxxxxxxxx.xxxxxxxxxxxxxxxxxxxx(
+                xxxxxxxxxxxxxxxxxxxxxxxxxx=(
+                    xxxxxxxxxxxxxxxxxxxxxxxxxx.xxxxxxxxxxxxxxxxxxxxxxx(
+                        xxxxxxxxxxxxx=xxxxxxxxxxxxxxxxxxxxxxx.xxxxxxxxxxxxxxxxxxxxxx(
+                            xxxxxxxxxxxxxxxxxxxxxxxx={
+                                "x": x.xx,
+                                "x": x.x,
+                            }
+                        )
+                    )
+                )
+            )
+        }
+    ),
 }
