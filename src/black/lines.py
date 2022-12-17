@@ -33,6 +33,7 @@ from black.nodes import (
     syms,
     whitespace,
 )
+from black.strings import str_width
 from blib2to3.pgen2 import token
 from blib2to3.pytree import Leaf, Node
 
@@ -732,9 +733,11 @@ def is_line_short_enough(  # noqa: C901
     if not line_str:
         line_str = line_to_string(line)
 
+    width = str_width if mode.preview else len
+
     if Preview.multiline_string_handling not in mode:
         return (
-            len(line_str) <= mode.line_length
+            width(line_str) <= mode.line_length
             and "\n" not in line_str  # multiline strings
             and not line.contains_standalone_comments()
         )
@@ -743,10 +746,10 @@ def is_line_short_enough(  # noqa: C901
         return False
     if "\n" not in line_str:
         # No multiline strings (MLS) present
-        return len(line_str) <= mode.line_length
+        return width(line_str) <= mode.line_length
 
     first, *_, last = line_str.split("\n")
-    if len(first) > mode.line_length or len(last) > mode.line_length:
+    if width(first) > mode.line_length or width(last) > mode.line_length:
         return False
 
     # Traverse the AST to examine the context of the multiline string (MLS),

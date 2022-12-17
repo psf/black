@@ -18,6 +18,11 @@
   entry (#3393)
 - `with` statements that contain two context managers will be consistently wrapped in
   parentheses (#3589)
+- Let string splitters respect [East Asian Width](https://www.unicode.org/reports/tr11/)
+  (#3445)
+- Now long string literals can be split after East Asian commas and periods (`、` U+3001
+  IDEOGRAPHIC COMMA, `。` U+3002 IDEOGRAPHIC FULL STOP, & `，` U+FF0C FULLWIDTH COMMA)
+  besides before spaces (#3445)
 
 ### Configuration
 

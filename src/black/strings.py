@@ -4,6 +4,7 @@ Simple formatting on strings. Further string formatting code is in trans.py.
 
 import re
 import sys
+import unicodedata
 from functools import lru_cache
 from typing import List, Match, Pattern
 
@@ -278,3 +279,37 @@ def normalize_unicode_escape_sequences(leaf: Leaf) -> None:
             return back_slashes + "N{" + groups["N"].upper() + "}"
 
     leaf.value = re.sub(UNICODE_ESCAPE_RE, replace, text)
+
+
+def char_width(char: str) -> int:
+    """Return the width of a single character as it would be displayed in a
+    terminal or editor (which respects Unicode East Asian Width).
+
+    Full width characters are counted as 2, while half width characters are
+    counted as 1.
+    """
+    return 2 if unicodedata.east_asian_width(char) in ("F", "W") else 1
+
+
+def str_width(line_str: str) -> int:
+    """Return the width of `line_str` as it would be displayed in a terminal
+    or editor (which respects Unicode East Asian Width).
+
+    You could utilize this function to determine, for example, if a string
+    is too wide to display in a terminal or editor.
+    """
+    return sum(map(char_width, line_str))
+
+
+def count_chars_in_width(line_str: str, max_width: int) -> int:
+    """Count the number of characters in `line_str` that would fit in a
+    terminal or editor of `max_width` (which respects Unicode East Asian
+    Width).
+    """
+    total_width = 0
+    for i, char in enumerate(line_str):
+        width = char_width(char)
+        if width + total_width > max_width:
+            return i
+        total_width += width
+    return len(line_str)
