@@ -57,6 +57,10 @@ def _assert_format_equal(expected: str, actual: str) -> None:
     assert actual == expected
 
 
+class FormatFailure(Exception):
+    """Used to wrap failures when assert_format() runs in an extra mode."""
+
+
 def assert_format(
     source: str,
     expected: str,
@@ -77,23 +81,35 @@ def assert_format(
 
     # For both preview and non-preview tests, ensure that Black doesn't crash on
     # this code, but don't pass "expected" because the precise output may differ.
-    _assert_format_inner(
-        source,
-        None,
-        replace(mode, preview=not mode.preview),
-        fast=fast,
-        minimum_version=minimum_version,
-    )
+    try:
+        _assert_format_inner(
+            source,
+            None,
+            replace(mode, preview=not mode.preview),
+            fast=fast,
+            minimum_version=minimum_version,
+        )
+    except Exception as e:
+        text = "non-preview" if mode.preview else "preview"
+        raise FormatFailure(
+            f"Black crashed formatting this case in {text} mode."
+        ) from e
     # Similarly, setting line length to 1 is a good way to catch
     # stability bugs. But only in non-preview mode because preview mode
     # currently has a lot of line length 1 bugs.
-    _assert_format_inner(
-        source,
-        None,
-        replace(mode, preview=False, line_length=1),
-        fast=fast,
-        minimum_version=minimum_version,
-    )
+    try:
+        _assert_format_inner(
+            source,
+            None,
+            replace(mode, preview=False, line_length=1),
+            fast=fast,
+            minimum_version=minimum_version,
+        )
+    except Exception as e:
+        text = "non-preview" if mode.preview else "preview"
+        raise FormatFailure(
+            "Black crashed formatting this case with line-length set to 1."
+        ) from e
 
 
 def _assert_format_inner(
