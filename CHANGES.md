@@ -57,6 +57,8 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- Move 3.11 CI to normal flow now all dependencies support 3.11 (#3446)
+
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
