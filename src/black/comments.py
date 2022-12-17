@@ -238,9 +238,7 @@ def generate_ignored_nodes(leaf: Leaf, comment: ProtoComment) -> Iterator[LN]:
                 if (
                     child.type == token.INDENT
                     and index < len(container.children) - 1
-                    and children_contains_fmt_on(
-                        container.children[index + 1]
-                    )
+                    and children_contains_fmt_on(container.children[index + 1])
                 ):
                     # This means `# fmt: on` is placed right after an indentation
                     # level, and we shouldn't swallow the previous INDENT token.
