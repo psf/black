@@ -524,6 +524,13 @@ xxxxxx_xxx_xxxx_xx_xxxxx_xxxxxxxx_xxxxxxxx_xxxxxxxxxx_xxxx_xxxx_xxxxx = xxxx.xxx
     },
 )
 
+# Regression test for https://github.com/psf/black/issues/3117.
+some_dict = {
+    "something_something":
+        r"Lorem ipsum dolor sit amet, an sed convenire eloquentiam \t"
+        r"signiferumque, duo ea vocibus consetetur scriptorem. Facer \t",
+}
+
 
 # output
 
@@ -976,9 +983,9 @@ class xxxxxxxxxxxxxxxxxxxxx(xxxx.xxxxxxxxxxxxx):
         )
 
 
-value.__dict__[
-    key
-] = "test"  # set some Thrift field to non-None in the struct aa bb cc dd ee
+value.__dict__[key] = (
+    "test"  # set some Thrift field to non-None in the struct aa bb cc dd ee
+)
 
 RE_ONE_BACKSLASH = {
     "asdf_hjkl_jkl": re.compile(
@@ -1178,3 +1185,11 @@ xxxxxx_xxx_xxxx_xx_xxxxx_xxxxxxxx_xxxxxxxx_xxxxxxxxxx_xxxx_xxxx_xxxxx = xxxx.xxx
         ),
     },
 )
+
+# Regression test for https://github.com/psf/black/issues/3117.
+some_dict = {
+    "something_something": (
+        r"Lorem ipsum dolor sit amet, an sed convenire eloquentiam \t"
+        r"signiferumque, duo ea vocibus consetetur scriptorem. Facer \t"
+    ),
+}
