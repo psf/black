@@ -11,7 +11,7 @@
 <!-- Changes that affect Black's stable style -->
 
 - Introduce the 2023 stable style, which incorporates most aspects of last year's
-  preview style. Specific changes:
+  preview style (#3418). Specific changes:
   - Enforce empty lines before classes and functions with sticky leading comments
     (#3302) (22.12.0)
   - Reformat empty and whitespace-only files as either an empty file (if no newline is
