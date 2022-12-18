@@ -23,9 +23,9 @@ FIRST_NON_WHITESPACE_RE: Final = re.compile(r"\s*\t+\s*(\S)")
 UNICODE_ESCAPE_RE: Final = re.compile(
     r"(?P<backslashes>\\+)(?P<body>"
     r"(u(?P<u>[a-fA-F0-9]{4}))"  # Character with 16-bit hex value xxxx
-    r"|(U(?P<U>[a-fA-F0-9]{0,8}))"  # Character with 32-bit hex value xxxxxxxx
+    r"|(U(?P<U>[a-fA-F0-9]{8}))"  # Character with 32-bit hex value xxxxxxxx
     r"|(x(?P<x>[a-fA-F0-9]{2}))"  # Character with hex value hh
-    r"|(N\{(?P<N>[a-fA-F0-9]{2})\})"  # Character named name in the Unicode database
+    r"|(N\{(?P<N>[a-zA-Z0-9]{2})\})"  # Character named name in the Unicode database
     r")",
     re.VERBOSE,
 )
