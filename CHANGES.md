@@ -17,6 +17,8 @@
 <!-- Changes that affect Black's preview style -->
 
 - Fix a crash in preview style with assert + parenthesized string (#3415)
+- Fix crashes in preview style with walrus operators used in function return annotations
+  and except clauses (#3423)
 - Do not put the closing quotes in a docstring on a separate line, even if the line is
   too long (#3430)
 - Long values in dict literals are now wrapped in parentheses; correspondingly
@@ -33,6 +35,9 @@
 
 - Upgrade mypyc from `0.971` to `0.991` so mypycified _Black_ can be built on armv7
   (#3380)
+- Drop specific support for the `tomli` requirement on 3.11 alpha releases, working
+  around a bug that would cause the requirement not to be installed on any non-final
+  Python releases (#3448)
 
 ### Parser
 
