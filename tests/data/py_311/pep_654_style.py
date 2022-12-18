@@ -76,7 +76,7 @@ try:
     except:
         try:
             raise TypeError(int)
-        except* (Exception):
+        except* Exception:
             pass
         1 / 0
 except Exception as e:
