@@ -8,6 +8,8 @@ x = "don't format me"
 x = "\xA3"
 x = "\u2717"
 x = "\N{ox}\N{OX}"
+x = "\N{lAtIn smaLL letteR x}"
+x = "\N{CYRILLIC small LETTER BYELORUSSIAN-UKRAINIAN I}"
 
 # output
 
@@ -21,3 +23,5 @@ x = "don't format me"
 x = "\xa3"
 x = "\u2717"
 x = "\N{OX}\N{OX}"
+x = "\N{LATIN SMALL LETTER X}"
+x = "\N{CYRILLIC SMALL LETTER BYELORUSSIAN-UKRAINIAN I}"
