@@ -150,6 +150,7 @@ class Preview(Enum):
     """Individual preview style features."""
 
     prefer_splitting_right_hand_side_of_assignments = auto()
+    long_docstring_quotes_on_newline = auto()
     # NOTE: string_processing requires wrap_long_dict_values_in_parens
     # for https://github.com/psf/black/issues/3117 to be fixed.
     string_processing = auto()
