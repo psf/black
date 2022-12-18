@@ -14,11 +14,11 @@ Specifying the name of the default behavior in `--run-optional=` is harmless.
 Adapted from https://pypi.org/project/pytest-optional-tests/, (c) 2019 Reece Hart
 """
 
-from functools import lru_cache
 import itertools
 import logging
 import re
-from typing import FrozenSet, List, Set, TYPE_CHECKING
+from functools import lru_cache
+from typing import TYPE_CHECKING, FrozenSet, List, Set
 
 import pytest
 
@@ -26,14 +26,14 @@ try:
     from pytest import StashKey
 except ImportError:
     # pytest < 7
-    from _pytest.store import StoreKey as StashKey
+    from _pytest.store import StoreKey as StashKey  # type: ignore[no-redef]
 
 log = logging.getLogger(__name__)
 
 
 if TYPE_CHECKING:
-    from _pytest.config.argparsing import Parser
     from _pytest.config import Config
+    from _pytest.config.argparsing import Parser
     from _pytest.mark.structures import MarkDecorator
     from _pytest.nodes import Node
 
