@@ -11,6 +11,8 @@ x = "\uFaCe"
 x = "\N{ox}\N{OX}"
 x = "\N{lAtIn smaLL letteR x}"
 x = "\N{CYRILLIC small LETTER BYELORUSSIAN-UKRAINIAN I}"
+x = b"\x1Fdon't byte"
+x = rb"\x1Fdon't format"
 
 # output
 
@@ -27,3 +29,5 @@ x = "\uface"
 x = "\N{OX}\N{OX}"
 x = "\N{LATIN SMALL LETTER X}"
 x = "\N{CYRILLIC SMALL LETTER BYELORUSSIAN-UKRAINIAN I}"
+x = b"\x1fdon't byte"
+x = rb"\x1Fdon't format"
