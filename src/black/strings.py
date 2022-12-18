@@ -20,12 +20,12 @@ STRING_PREFIX_RE: Final = re.compile(
     r"^([" + STRING_PREFIX_CHARS + r"]*)(.*)$", re.DOTALL
 )
 FIRST_NON_WHITESPACE_RE: Final = re.compile(r"\s*\t+\s*(\S)")
-UNICODE_RE: Final = re.compile(
-    r"(\\+)("
-    r"(u([a-zA-Z0-9]{4}))"  # Character with 16-bit hex value xxxx
-    r"|(U([a-zA-Z0-9]{0,8}))"  # Character with 32-bit hex value xxxxxxxx
-    r"|(x([a-zA-Z0-9]{2}))"  # Character with hex value hh
-    r"|(N\{([a-zA-Z0-9]{2})\})"  # Character named name in the Unicode database
+UNICODE_ESCAPE_RE: Final = re.compile(
+    r"(?P<backslashes>\\+)(?P<body>"
+    r"(?P<u>u([a-zA-Z0-9]{4}))"  # Character with 16-bit hex value xxxx
+    r"|(?P<U>U([a-zA-Z0-9]{0,8}))"  # Character with 32-bit hex value xxxxxxxx
+    r"|(?P<x>x([a-zA-Z0-9]{2}))"  # Character with hex value hh
+    r"|(?P<N>N\{([a-zA-Z0-9]{2})\})"  # Character named name in the Unicode database
     r")",
     re.VERBOSE,
 )
@@ -253,25 +253,27 @@ def normalize_unicode_escape_sequences(leaf: Leaf) -> None:
     """Replace hex codes in Unicode escape sequences with lowercase representation."""
     text = leaf.value
     prefix = get_string_prefix(text)
+    if "r" in prefix.lower():
+        return
 
     def replace(m: Match[str]) -> str:
         groups = m.groups()
-        back_slashes = groups[0]
+        back_slashes = groups["backslashes"]
 
-        if len(back_slashes) % 2 == 0 or prefix == "r":
-            return back_slashes + groups[1]
+        if len(back_slashes) % 2 == 0:
+            return back_slashes + groups["body"]
 
-        if groups[2]:
+        if groups["u"]:
             # \u
-            return back_slashes + "u" + groups[3].lower()
-        elif groups[4]:
+            return back_slashes + "u" + groups["u"].lower()
+        elif groups["U"]:
             # \U
-            return back_slashes + "U" + groups[5].lower()
-        elif groups[6]:
+            return back_slashes + "U" + groups["U"].lower()
+        elif groups["x"]:
             # \x
-            return back_slashes + "x" + groups[7].lower()
-        else:
+            return back_slashes + "x" + groups["x"].lower()
+        elif groups["N"]:
             # \N{}
-            return back_slashes + "N{" + groups[9].upper() + "}"
+            return back_slashes + "N{" + groups["N"].upper() + "}"
 
     leaf.value = re.sub(UNICODE_RE, replace, text)
