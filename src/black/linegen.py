@@ -393,7 +393,7 @@ class LineGenerator(Visitor[Line]):
             quote = quote_char * quote_len
 
             # It's invalid to put closing single-character quotes on a new line.
-            if Preview.long_docstring_quotes_on_newline in self.mode and quote_len == 3:
+            if self.mode and quote_len == 3:
                 # We need to find the length of the last line of the docstring
                 # to find if we can add the closing quotes to the line without
                 # exceeding the maximum line length.
@@ -408,6 +408,7 @@ class LineGenerator(Visitor[Line]):
                 if (
                     len(lines) > 1
                     and last_line_length + quote_len > self.mode.line_length
+                    and len(indent) + quote_len <= self.mode.line_length
                 ):
                     leaf.value = prefix + quote + docstring + "\n" + indent + quote
                 else:
