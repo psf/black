@@ -18,6 +18,26 @@ D3 = {x: "This is a really long string that can't possibly be expected to fit al
 
 D4 = {"A long and ridiculous {}".format(string_key): "This is a really really really long string that has to go i,side of a dictionary. It is soooo bad.", some_func("calling", "some", "stuff"): "This is a really really really long string that has to go inside of a dictionary. It is {soooo} bad (#{x}).".format(sooo="soooo", x=2), "A %s %s" % ("formatted", "string"): "This is a really really really long string that has to go inside of a dictionary. It is %s bad (#%d)." % ("soooo", 2)}
 
+D5 = {  # Test for https://github.com/psf/black/issues/3261
+    ("This is a really long string that can't be expected to fit in one line and is used as a nested dict's key"): {"inner": "value"},
+}
+
+D6 = {  # Test for https://github.com/psf/black/issues/3261
+    ("This is a really long string that can't be expected to fit in one line and is used as a dict's key"): ["value1", "value2"],
+}
+
+L1 = ["The is a short string", "This is a really long string that can't possibly be expected to fit all together on one line. Also it is inside a list literal, so it's expected to be wrapped in parens when spliting to avoid implicit str concatenation.", short_call("arg", {"key": "value"}), "This is another really really (not really) long string that also can't be expected to fit on one line and is, like the other string, inside a list literal.", ("parens should be stripped for short string in list")]
+
+L2 = ["This is a really long string that can't be expected to fit in one line and is the only child of a list literal."]
+
+S1 = {"The is a short string", "This is a really long string that can't possibly be expected to fit all together on one line. Also it is inside a set literal, so it's expected to be wrapped in parens when spliting to avoid implicit str concatenation.", short_call("arg", {"key": "value"}), "This is another really really (not really) long string that also can't be expected to fit on one line and is, like the other string, inside a set literal.", ("parens should be stripped for short string in set")}
+
+S2 = {"This is a really long string that can't be expected to fit in one line and is the only child of a set literal."}
+
+T1 = ("The is a short string", "This is a really long string that can't possibly be expected to fit all together on one line. Also it is inside a tuple literal, so it's expected to be wrapped in parens when spliting to avoid implicit str concatenation.", short_call("arg", {"key": "value"}), "This is another really really (not really) long string that also can't be expected to fit on one line and is, like the other string, inside a tuple literal.", ("parens should be stripped for short string in list"))
+
+T2 = ("This is a really long string that can't be expected to fit in one line and is the only child of a tuple literal.",)
+
 func_with_keywords(my_arg, my_kwarg="Long keyword strings also need to be wrapped, but they will probably need to be handled a little bit differently.")
 
 bad_split1 = (
@@ -72,6 +92,25 @@ bad_split_func3(
     zzz,
 )
 
+inline_comments_func1(
+    "if there are inline "
+    "comments in the middle "
+    # Here is the standard alone comment.
+    "of the implicitly concatenated "
+    "string, we should handle "
+    "them correctly",
+    xxx,
+)
+
+inline_comments_func2(
+    "what if the string is very very very very very very very very very very long and this part does "
+    "not fit into a single line? "
+    # Here is the standard alone comment.
+    "then the string should still be properly handled by merging and splitting "
+    "it into parts that fit in line length.",
+    xxx,
+)
+
 raw_string = r"This is a long raw string. When re-formatting this string, black needs to make sure it prepends the 'r' onto the new string."
 
 fmt_string1 = "We also need to be sure to preserve any and all {} which may or may not be attached to the string in question.".format("method calls")
@@ -90,7 +129,7 @@ fstring_with_no_fexprs = f"Some regular string that needs to get split certainly
 
 comment_string = "Long lines with inline comments should have their comments appended to the reformatted string's enclosing right parentheses."  # This comment gets thrown to the top.
 
-arg_comment_string = print("Long lines with inline comments which are apart of (and not the only member of) an argument list should have their comments appended to the reformatted string's enclosing left parentheses.",  # This comment stays on the bottom.
+arg_comment_string = print("Long lines with inline comments which are apart of (and not the only member of) an argument list should have their comments appended to the reformatted string's enclosing left parentheses.",  # This comment gets thrown to the top.
     "Arg #2", "Arg #3", "Arg #4", "Arg #5")
 
 pragma_comment_string1 = "Lines which end with an inline pragma comment of the form `# <pragma>: <...>` should be left alone."  # noqa: E501
@@ -239,6 +278,15 @@ string_with_escaped_nameescape = (
     "........................................................................... \\N{LAO KO LA}"
 )
 
+msg = lambda x: f"this is a very very very long lambda value {x} that doesn't fit on a single line"
+
+dict_with_lambda_values = {
+    "join": lambda j: (
+        f"{j.__class__.__name__}({some_function_call(j.left)}, "
+        f"{some_function_call(j.right)})"
+    ),
+}
+
 
 # output
 
@@ -258,8 +306,10 @@ x += (
 y = "Short string"
 
 print(
-    "This is a really long string inside of a print statement with extra arguments"
-    " attached at the end of it.",
+    (
+        "This is a really long string inside of a print statement with extra arguments"
+        " attached at the end of it."
+    ),
     x,
     y,
     z,
@@ -321,10 +371,87 @@ D4 = {
     "A %s %s"
     % ("formatted", "string"): (
         "This is a really really really long string that has to go inside of a"
-        " dictionary. It is %s bad (#%d)."
-    )
-    % ("soooo", 2),
+        " dictionary. It is %s bad (#%d)." % ("soooo", 2)
+    ),
 }
+
+D5 = {  # Test for https://github.com/psf/black/issues/3261
+    "This is a really long string that can't be expected to fit in one line and is used as a nested dict's key": {
+        "inner": "value"
+    },
+}
+
+D6 = {  # Test for https://github.com/psf/black/issues/3261
+    "This is a really long string that can't be expected to fit in one line and is used as a dict's key": [
+        "value1",
+        "value2",
+    ],
+}
+
+L1 = [
+    "The is a short string",
+    (
+        "This is a really long string that can't possibly be expected to fit all"
+        " together on one line. Also it is inside a list literal, so it's expected to"
+        " be wrapped in parens when spliting to avoid implicit str concatenation."
+    ),
+    short_call("arg", {"key": "value"}),
+    (
+        "This is another really really (not really) long string that also can't be"
+        " expected to fit on one line and is, like the other string, inside a list"
+        " literal."
+    ),
+    "parens should be stripped for short string in list",
+]
+
+L2 = [
+    "This is a really long string that can't be expected to fit in one line and is the"
+    " only child of a list literal."
+]
+
+S1 = {
+    "The is a short string",
+    (
+        "This is a really long string that can't possibly be expected to fit all"
+        " together on one line. Also it is inside a set literal, so it's expected to be"
+        " wrapped in parens when spliting to avoid implicit str concatenation."
+    ),
+    short_call("arg", {"key": "value"}),
+    (
+        "This is another really really (not really) long string that also can't be"
+        " expected to fit on one line and is, like the other string, inside a set"
+        " literal."
+    ),
+    "parens should be stripped for short string in set",
+}
+
+S2 = {
+    "This is a really long string that can't be expected to fit in one line and is the"
+    " only child of a set literal."
+}
+
+T1 = (
+    "The is a short string",
+    (
+        "This is a really long string that can't possibly be expected to fit all"
+        " together on one line. Also it is inside a tuple literal, so it's expected to"
+        " be wrapped in parens when spliting to avoid implicit str concatenation."
+    ),
+    short_call("arg", {"key": "value"}),
+    (
+        "This is another really really (not really) long string that also can't be"
+        " expected to fit on one line and is, like the other string, inside a tuple"
+        " literal."
+    ),
+    "parens should be stripped for short string in list",
+)
+
+T2 = (
+    (
+        "This is a really long string that can't be expected to fit in one line and is"
+        " the only child of a tuple literal."
+    ),
+)
 
 func_with_keywords(
     my_arg,
@@ -357,13 +484,15 @@ bad_split3 = (
 )
 
 bad_split_func1(
-    "But what should happen when code has already "
-    "been formatted but in the wrong way? Like "
-    "with a space at the end instead of the "
-    "beginning. Or what about when it is split too "
-    "soon? In the case of a split that is too "
-    "short, black will try to honer the custom "
-    "split.",
+    (
+        "But what should happen when code has already "
+        "been formatted but in the wrong way? Like "
+        "with a space at the end instead of the "
+        "beginning. Or what about when it is split too "
+        "soon? In the case of a split that is too "
+        "short, black will try to honer the custom "
+        "split."
+    ),
     xxx,
     yyy,
     zzz,
@@ -393,6 +522,22 @@ bad_split_func3(
     xxx,
     yyy,
     zzz,
+)
+
+inline_comments_func1(
+    "if there are inline comments in the middle "
+    # Here is the standard alone comment.
+    "of the implicitly concatenated string, we should handle them correctly",
+    xxx,
+)
+
+inline_comments_func2(
+    "what if the string is very very very very very very very very very very long and"
+    " this part does not fit into a single line? "
+    # Here is the standard alone comment.
+    "then the string should still be properly handled by merging and splitting "
+    "it into parts that fit in line length.",
+    xxx,
 )
 
 raw_string = (
@@ -450,9 +595,11 @@ comment_string = (  # This comment gets thrown to the top.
 )
 
 arg_comment_string = print(
-    "Long lines with inline comments which are apart of (and not the only member of) an"
-    " argument list should have their comments appended to the reformatted string's"
-    " enclosing left parentheses.",  # This comment stays on the bottom.
+    (  # This comment gets thrown to the top.
+        "Long lines with inline comments which are apart of (and not the only member"
+        " of) an argument list should have their comments appended to the reformatted"
+        " string's enclosing left parentheses."
+    ),
     "Arg #2",
     "Arg #3",
     "Arg #4",
@@ -512,23 +659,31 @@ return (
 )
 
 func_with_bad_comma(
-    "This is a really long string argument to a function that has a trailing comma"
-    " which should NOT be there.",
+    (
+        "This is a really long string argument to a function that has a trailing comma"
+        " which should NOT be there."
+    ),
 )
 
 func_with_bad_comma(
-    "This is a really long string argument to a function that has a trailing comma"
-    " which should NOT be there.",  # comment after comma
+    (  # comment after comma
+        "This is a really long string argument to a function that has a trailing comma"
+        " which should NOT be there."
+    ),
 )
 
 func_with_bad_comma(
-    "This is a really long string argument to a function that has a trailing comma"
-    " which should NOT be there.",
+    (
+        "This is a really long string argument to a function that has a trailing comma"
+        " which should NOT be there."
+    ),
 )
 
 func_with_bad_comma(
-    "This is a really long string argument to a function that has a trailing comma"
-    " which should NOT be there.",  # comment after comma
+    (  # comment after comma
+        "This is a really long string argument to a function that has a trailing comma"
+        " which should NOT be there."
+    ),
 )
 
 func_with_bad_parens_that_wont_fit_in_one_line(
@@ -659,3 +814,17 @@ string_with_escaped_nameescape = (
     "..........................................................................."
     " \\N{LAO KO LA}"
 )
+
+msg = (
+    lambda x: (
+        f"this is a very very very long lambda value {x} that doesn't fit on a single"
+        " line"
+    )
+)
+
+dict_with_lambda_values = {
+    "join": lambda j: (
+        f"{j.__class__.__name__}({some_function_call(j.left)}, "
+        f"{some_function_call(j.right)})"
+    ),
+}

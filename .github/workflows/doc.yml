@@ -1,6 +1,9 @@
-name: Documentation Build
+name: Documentation
 
 on: [push, pull_request]
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -21,7 +24,9 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Set up latest Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
+        with:
+          python-version: "*"
 
       - name: Install dependencies
         run: |

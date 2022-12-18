@@ -49,6 +49,20 @@ p = {(k, k**2): v**2.0 for k, v in pairs}
 q = [10.5**i for i in range(6)]
 
 
+# WE SHOULD DEFINITELY NOT EAT THESE COMMENTS (https://github.com/psf/black/issues/2873)
+if hasattr(view, "sum_of_weights"):
+    return np.divide(  # type: ignore[no-any-return]
+        view.variance,  # type: ignore[union-attr]
+        view.sum_of_weights,  # type: ignore[union-attr]
+        out=np.full(view.sum_of_weights.shape, np.nan),  # type: ignore[union-attr]
+        where=view.sum_of_weights**2 > view.sum_of_weights_squared,  # type: ignore[union-attr]
+    )
+
+return np.divide(
+    where=view.sum_of_weights_of_weight_long**2 > view.sum_of_weights_squared,  # type: ignore
+)
+
+
 # output
 
 
@@ -101,3 +115,17 @@ n = count <= 10**5.0
 o = settings(max_examples=10**6.0)
 p = {(k, k**2): v**2.0 for k, v in pairs}
 q = [10.5**i for i in range(6)]
+
+
+# WE SHOULD DEFINITELY NOT EAT THESE COMMENTS (https://github.com/psf/black/issues/2873)
+if hasattr(view, "sum_of_weights"):
+    return np.divide(  # type: ignore[no-any-return]
+        view.variance,  # type: ignore[union-attr]
+        view.sum_of_weights,  # type: ignore[union-attr]
+        out=np.full(view.sum_of_weights.shape, np.nan),  # type: ignore[union-attr]
+        where=view.sum_of_weights**2 > view.sum_of_weights_squared,  # type: ignore[union-attr]
+    )
+
+return np.divide(
+    where=view.sum_of_weights_of_weight_long**2 > view.sum_of_weights_squared,  # type: ignore
+)

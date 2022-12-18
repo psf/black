@@ -11,23 +11,29 @@
 .. autoclass:: black.brackets.BracketTracker
     :members:
 
-:class:`EmptyLineTracker`
--------------------------
-
-.. autoclass:: black.EmptyLineTracker
-    :members:
-
 :class:`Line`
 -------------
 
-.. autoclass:: black.Line
+.. autoclass:: black.lines.Line
     :members:
     :special-members: __str__, __bool__
+
+:class:`LinesBlock`
+-------------------------
+
+.. autoclass:: black.lines.LinesBlock
+    :members:
+
+:class:`EmptyLineTracker`
+-------------------------
+
+.. autoclass:: black.lines.EmptyLineTracker
+    :members:
 
 :class:`LineGenerator`
 ----------------------
 
-.. autoclass:: black.LineGenerator
+.. autoclass:: black.linegen.LineGenerator
     :show-inheritance:
     :members:
 
@@ -40,7 +46,7 @@
 :class:`Report`
 ---------------
 
-.. autoclass:: black.Report
+.. autoclass:: black.report.Report
     :members:
     :special-members: __str__
 

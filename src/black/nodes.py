@@ -3,16 +3,7 @@ blib2to3 Node/Leaf transformation-related utility functions.
 """
 
 import sys
-from typing import (
-    Generic,
-    Iterator,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    TypeVar,
-    Union,
-)
+from typing import Generic, Iterator, List, Optional, Set, Tuple, TypeVar, Union
 
 if sys.version_info >= (3, 8):
     from typing import Final
@@ -25,14 +16,11 @@ else:
 
 from mypy_extensions import mypyc_attr
 
-# lib2to3 fork
-from blib2to3.pytree import Node, Leaf, type_repr, NL
-from blib2to3 import pygram
-from blib2to3.pgen2 import token
-
 from black.cache import CACHE_DIR
 from black.strings import has_triple_quotes
-
+from blib2to3 import pygram
+from blib2to3.pgen2 import token
+from blib2to3.pytree import NL, Leaf, Node, type_repr
 
 pygram.initialize(CACHE_DIR)
 syms: Final = pygram.python_symbols
@@ -120,6 +108,7 @@ TEST_DESCENDANTS: Final = {
     syms.term,
     syms.power,
 }
+TYPED_NAMES: Final = {syms.tname, syms.tname_star}
 ASSIGNMENTS: Final = {
     "=",
     "+=",
@@ -243,6 +232,14 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
                     # that, too.
                     return prevp.prefix
 
+        elif (
+            prevp.type == token.STAR
+            and parent_type(prevp) == syms.star_expr
+            and parent_type(prevp.parent) == syms.subscriptlist
+        ):
+            # No space between typevar tuples.
+            return NO
+
         elif prevp.type in VARARGS_SPECIALS:
             if is_vararg(prevp, within=VARARGS_PARENTS | UNPACKING_PARENTS):
                 return NO
@@ -281,7 +278,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
             return NO
 
         if t == token.EQUAL:
-            if prev.type != syms.tname:
+            if prev.type not in TYPED_NAMES:
                 return NO
 
         elif prev.type == token.EQUAL:
@@ -292,7 +289,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
         elif prev.type != token.COMMA:
             return NO
 
-    elif p.type == syms.tname:
+    elif p.type in TYPED_NAMES:
         # type names
         if not prev:
             prevp = preceding_leaf(p)
@@ -401,6 +398,10 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
     elif p.type == syms.sliceop:
         return NO
 
+    elif p.type == syms.except_clause:
+        if t == token.STAR:
+            return NO
+
     return SPACE
 
 
@@ -501,12 +502,14 @@ def container_of(leaf: Leaf) -> LN:
     return container
 
 
-def first_leaf_column(node: Node) -> Optional[int]:
-    """Returns the column of the first leaf child of a node."""
-    for child in node.children:
-        if isinstance(child, Leaf):
-            return child.column
-    return None
+def first_leaf_of(node: LN) -> Optional[Leaf]:
+    """Returns the first leaf of the node tree."""
+    if isinstance(node, Leaf):
+        return node
+    if node.children:
+        return first_leaf_of(node.children[0])
+    else:
+        return None
 
 
 def is_arith_like(node: LN) -> bool:
@@ -841,3 +844,7 @@ def is_rpar_token(nl: NL) -> TypeGuard[Leaf]:
 
 def is_string_token(nl: NL) -> TypeGuard[Leaf]:
     return nl.type == token.STRING
+
+
+def is_number_token(nl: NL) -> TypeGuard[Leaf]:
+    return nl.type == token.NUMBER
