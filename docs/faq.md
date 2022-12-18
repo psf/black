@@ -57,7 +57,8 @@ _Black_ is timid about formatting Jupyter Notebooks. Cells containing any of the
 following will not be formatted:
 
 - automagics (e.g. `pip install black`)
-- non-Python cell magics (e.g. `%%writeline`)
+- non-Python cell magics (e.g. `%%writeline`). These can be added with the flag
+  `--python-cell-magics`, e.g. `black --python-cell-magics writeline hello.ipynb`.
 - multiline magics, e.g.:
 
   ```python
@@ -85,14 +86,16 @@ disabled-by-default counterpart W504. E203 should be disabled while changes are 
 
 ## Which Python versions does Black support?
 
-Currently the runtime requires Python 3.6-3.10. Formatting is supported for files
-containing syntax from Python 3.3 to 3.10. We promise to support at least all Python
+Currently the runtime requires Python 3.7-3.11. Formatting is supported for files
+containing syntax from Python 3.3 to 3.11. We promise to support at least all Python
 versions that have not reached their end of life. This is the case for both running
 _Black_ and formatting code.
 
 Support for formatting Python 2 code was removed in version 22.0. While we've made no
 plans to stop supporting older Python 3 minor versions immediately, their support might
 also be removed some time in the future without a deprecation period.
+
+Runtime support for 3.6 was removed in version 22.10.0.
 
 ## Why does my linter or typechecker complain after I format my code?
 
@@ -112,3 +115,24 @@ _Black_ is an autoformatter, not a Python linter or interpreter. Detecting all s
 errors is not a goal. It can format all code accepted by CPython (if you find an example
 where that doesn't hold, please report a bug!), but it may also format some code that
 CPython doesn't accept.
+
+(labels/mypyc-support)=
+
+## What is `compiled: yes/no` all about in the version output?
+
+While _Black_ is indeed a pure Python project, we use [mypyc] to compile _Black_ into a
+C Python extension, usually doubling performance. These compiled wheels are available
+for 64-bit versions of Windows, Linux (via the manylinux standard), and macOS across all
+supported CPython versions.
+
+Platforms including musl-based and/or ARM Linux distributions, and ARM Windows are
+currently **not** supported. These platforms will fall back to the slower pure Python
+wheel available on PyPI.
+
+If you are experiencing exceptionally weird issues or even segfaults, you can try
+passing `--no-binary black` to your pip install invocation. This flag excludes all
+wheels (including the pure Python wheel), so this command will use the [sdist].
+
+[mypyc]: https://mypyc.readthedocs.io/en/latest/
+[sdist]:
+  https://packaging.python.org/en/latest/glossary/#term-Source-Distribution-or-sdist

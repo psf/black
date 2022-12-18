@@ -210,31 +210,16 @@ mixed feelings about _Black_'s formatting style.
 #### Configuration
 
 ```
-disable = C0326, C0330
 max-line-length = 88
 ```
 
 #### Why those options above?
 
-When _Black_ is folding very long expressions, the closing brackets will
-[be dedented](../the_black_code_style/current_style.md#how-black-wraps-lines).
+Pylint should be configured to only complain about lines that surpass `88` characters
+via `max-line-length = 88`.
 
-```py3
-ImportantClass.important_method(
-    exc, limit, lookup_lines, capture_locals, callback
-)
-```
-
-Although this style is PEP 8 compliant, Pylint will raise
-`C0330: Wrong hanging indentation before block (add 4 spaces)` warnings. Since _Black_
-isn't configurable on this style, Pylint should be told to ignore these warnings via
-`disable = C0330`.
-
-Also, since _Black_ deals with whitespace around operators and brackets, Pylint's
-warning `C0326: Bad whitespace` should be disabled using `disable = C0326`.
-
-And as usual, Pylint should be configured to only complain about lines that surpass `88`
-characters via `max-line-length = 88`.
+If using `pylint<2.6.0`, also disable `C0326` and `C0330` as these are incompatible with
+_Black_ formatting and have since been removed.
 
 #### Formats
 
@@ -242,9 +227,6 @@ characters via `max-line-length = 88`.
 <summary>pylintrc</summary>
 
 ```ini
-[MESSAGES CONTROL]
-disable = C0326, C0330
-
 [format]
 max-line-length = 88
 ```
@@ -257,9 +239,6 @@ max-line-length = 88
 ```cfg
 [pylint]
 max-line-length = 88
-
-[pylint.messages_control]
-disable = C0326, C0330
 ```
 
 </details>
@@ -268,11 +247,40 @@ disable = C0326, C0330
 <summary>pyproject.toml</summary>
 
 ```toml
-[tool.pylint.messages_control]
-disable = "C0326, C0330"
-
 [tool.pylint.format]
 max-line-length = "88"
+```
+
+</details>
+
+### pycodestyle
+
+[pycodestyle](https://pycodestyle.pycqa.org/) is also a code linter like Flake8.
+
+#### Configuration
+
+```
+max_line_length = 88
+ignore = E203
+```
+
+#### Why those options above?
+
+pycodestyle should be configured to only complain about lines that surpass `88`
+characters via `max_line_length = 88`.
+
+See
+[Why are Flake8’s E203 and W503 violated?](https://black.readthedocs.io/en/stable/faq.html#why-are-flake8-s-e203-and-w503-violated)
+
+#### Formats
+
+<details>
+<summary>setup.cfg</summary>
+
+```cfg
+[pycodestyle]
+ignore = E203
+max_line_length = 88
 ```
 
 </details>

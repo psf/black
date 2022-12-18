@@ -1,33 +1,75 @@
 """
 Generating lines of code.
 """
-from functools import partial, wraps
 import sys
-from typing import Collection, Iterator, List, Optional, Set, Union
+from dataclasses import dataclass
+from enum import Enum, auto
+from functools import partial, wraps
+from typing import Collection, Iterator, List, Optional, Set, Union, cast
 
-from black.nodes import WHITESPACE, RARROW, STATEMENT, STANDALONE_COMMENT
-from black.nodes import ASSIGNMENTS, OPENING_BRACKETS, CLOSING_BRACKETS
-from black.nodes import Visitor, syms, is_arith_like, ensure_visible
-from black.nodes import is_docstring, is_empty_tuple, is_one_tuple, is_one_tuple_between
-from black.nodes import is_name_token, is_lpar_token, is_rpar_token
-from black.nodes import is_walrus_assignment, is_yield, is_vararg, is_multiline_string
-from black.nodes import is_stub_suite, is_stub_body, is_atom_with_invisible_parens
-from black.nodes import wrap_in_parentheses
-from black.brackets import max_delimiter_priority_in_atom
-from black.brackets import DOT_PRIORITY, COMMA_PRIORITY
-from black.lines import Line, line_to_string, is_line_short_enough
-from black.lines import can_omit_invisible_parens, can_be_split, append_leaves
-from black.comments import generate_comments, list_comments, FMT_OFF
+from black.brackets import (
+    COMMA_PRIORITY,
+    DOT_PRIORITY,
+    get_leaves_inside_matching_brackets,
+    max_delimiter_priority_in_atom,
+)
+from black.comments import FMT_OFF, generate_comments, list_comments
+from black.lines import (
+    Line,
+    append_leaves,
+    can_be_split,
+    can_omit_invisible_parens,
+    is_line_short_enough,
+    line_to_string,
+)
+from black.mode import Feature, Mode, Preview
+from black.nodes import (
+    ASSIGNMENTS,
+    BRACKETS,
+    CLOSING_BRACKETS,
+    OPENING_BRACKETS,
+    RARROW,
+    STANDALONE_COMMENT,
+    STATEMENT,
+    WHITESPACE,
+    Visitor,
+    ensure_visible,
+    is_arith_like,
+    is_atom_with_invisible_parens,
+    is_docstring,
+    is_empty_tuple,
+    is_lpar_token,
+    is_multiline_string,
+    is_name_token,
+    is_one_sequence_between,
+    is_one_tuple,
+    is_rpar_token,
+    is_stub_body,
+    is_stub_suite,
+    is_vararg,
+    is_walrus_assignment,
+    is_yield,
+    syms,
+    wrap_in_parentheses,
+)
 from black.numerics import normalize_numeric_literal
-from black.strings import get_string_prefix, fix_docstring
-from black.strings import normalize_string_prefix, normalize_string_quotes
-from black.trans import Transformer, CannotTransform, StringMerger, StringSplitter
-from black.trans import StringParenWrapper, StringParenStripper, hug_power_op
-from black.mode import Mode, Feature, Preview
-
-from blib2to3.pytree import Node, Leaf
+from black.strings import (
+    fix_docstring,
+    get_string_prefix,
+    normalize_string_prefix,
+    normalize_string_quotes,
+)
+from black.trans import (
+    CannotTransform,
+    StringMerger,
+    StringParenStripper,
+    StringParenWrapper,
+    StringSplitter,
+    Transformer,
+    hug_power_op,
+)
 from blib2to3.pgen2 import token
-
+from blib2to3.pytree import Leaf, Node
 
 # types
 LeafID = int
@@ -72,7 +114,7 @@ class LineGenerator(Visitor[Line]):
         """Default `visit_*()` implementation. Recurses to children of `node`."""
         if isinstance(node, Leaf):
             any_open_brackets = self.current_line.bracket_tracker.any_open_brackets()
-            for comment in generate_comments(node):
+            for comment in generate_comments(node, preview=self.mode.preview):
                 if any_open_brackets:
                     # any comment within brackets is subject to splitting
                     self.current_line.append(comment)
@@ -148,16 +190,60 @@ class LineGenerator(Visitor[Line]):
         `parens` holds a set of string leaf values immediately after which
         invisible parens should be put.
         """
-        normalize_invisible_parens(node, parens_after=parens)
+        normalize_invisible_parens(node, parens_after=parens, preview=self.mode.preview)
         for child in node.children:
             if is_name_token(child) and child.value in keywords:
                 yield from self.line()
 
             yield from self.visit(child)
 
+    def visit_dictsetmaker(self, node: Node) -> Iterator[Line]:
+        if Preview.wrap_long_dict_values_in_parens in self.mode:
+            for i, child in enumerate(node.children):
+                if i == 0:
+                    continue
+                if node.children[i - 1].type == token.COLON:
+                    if child.type == syms.atom and child.children[0].type == token.LPAR:
+                        if maybe_make_parens_invisible_in_atom(
+                            child,
+                            parent=node,
+                            remove_brackets_around_comma=False,
+                        ):
+                            wrap_in_parentheses(node, child, visible=False)
+                    else:
+                        wrap_in_parentheses(node, child, visible=False)
+        yield from self.visit_default(node)
+
+    def visit_funcdef(self, node: Node) -> Iterator[Line]:
+        """Visit function definition."""
+        if Preview.annotation_parens not in self.mode:
+            yield from self.visit_stmt(node, keywords={"def"}, parens=set())
+        else:
+            yield from self.line()
+
+            # Remove redundant brackets around return type annotation.
+            is_return_annotation = False
+            for child in node.children:
+                if child.type == token.RARROW:
+                    is_return_annotation = True
+                elif is_return_annotation:
+                    if child.type == syms.atom and child.children[0].type == token.LPAR:
+                        if maybe_make_parens_invisible_in_atom(
+                            child,
+                            parent=node,
+                            remove_brackets_around_comma=False,
+                        ):
+                            wrap_in_parentheses(node, child, visible=False)
+                    else:
+                        wrap_in_parentheses(node, child, visible=False)
+                    is_return_annotation = False
+
+            for child in node.children:
+                yield from self.visit(child)
+
     def visit_match_case(self, node: Node) -> Iterator[Line]:
         """Visit either a match or case statement."""
-        normalize_invisible_parens(node, parens_after=set())
+        normalize_invisible_parens(node, parens_after=set(), preview=self.mode.preview)
 
         yield from self.line()
         for child in node.children:
@@ -204,7 +290,9 @@ class LineGenerator(Visitor[Line]):
         for child in children:
             yield from self.visit(child)
 
-            if child.type == token.ASYNC:
+            if child.type == token.ASYNC or child.type == STANDALONE_COMMENT:
+                # STANDALONE_COMMENT happens when `# fmt: skip` is applied on the async
+                # line.
                 break
 
         internal_stmt = next(children)
@@ -236,6 +324,9 @@ class LineGenerator(Visitor[Line]):
                 and "j" not in value
             ):
                 wrap_in_parentheses(node, leaf)
+
+        if Preview.remove_redundant_parens in self.mode:
+            remove_await_parens(node)
 
         yield from self.visit_default(node)
 
@@ -274,7 +365,24 @@ class LineGenerator(Visitor[Line]):
         if is_docstring(leaf) and "\\\n" not in leaf.value:
             # We're ignoring docstrings with backslash newline escapes because changing
             # indentation of those changes the AST representation of the code.
-            docstring = normalize_string_prefix(leaf.value)
+            if Preview.normalize_docstring_quotes_and_prefixes_properly in self.mode:
+                # There was a bug where --skip-string-normalization wouldn't stop us
+                # from normalizing docstring prefixes. To maintain stability, we can
+                # only address this buggy behaviour while the preview style is enabled.
+                if self.mode.string_normalization:
+                    docstring = normalize_string_prefix(leaf.value)
+                    # visit_default() does handle string normalization for us, but
+                    # since this method acts differently depending on quote style (ex.
+                    # see padding logic below), there's a possibility for unstable
+                    # formatting as visit_default() is called *after*. To avoid a
+                    # situation where this function formats a docstring differently on
+                    # the second pass, normalize it early.
+                    docstring = normalize_string_quotes(docstring)
+                else:
+                    docstring = leaf.value
+            else:
+                # ... otherwise, we'll keep the buggy behaviour >.<
+                docstring = normalize_string_prefix(leaf.value)
             prefix = get_string_prefix(docstring)
             docstring = docstring[len(prefix) :]  # Remove the prefix
             quote_char = docstring[0]
@@ -286,9 +394,9 @@ class LineGenerator(Visitor[Line]):
             quote_len = 1 if docstring[1] != quote_char else 3
             docstring = docstring[quote_len:-quote_len]
             docstring_started_empty = not docstring
+            indent = " " * 4 * self.current_line.depth
 
             if is_multiline_string(leaf):
-                indent = " " * 4 * self.current_line.depth
                 docstring = fix_docstring(docstring, indent)
             else:
                 docstring = docstring.strip()
@@ -310,7 +418,29 @@ class LineGenerator(Visitor[Line]):
 
             # We could enforce triple quotes at this point.
             quote = quote_char * quote_len
-            leaf.value = prefix + quote + docstring + quote
+
+            # It's invalid to put closing single-character quotes on a new line.
+            if Preview.long_docstring_quotes_on_newline in self.mode and quote_len == 3:
+                # We need to find the length of the last line of the docstring
+                # to find if we can add the closing quotes to the line without
+                # exceeding the maximum line length.
+                # If docstring is one line, we don't put the closing quotes on a
+                # separate line because it looks ugly (#3320).
+                lines = docstring.splitlines()
+                last_line_length = len(lines[-1]) if docstring else 0
+
+                # If adding closing quotes would cause the last line to exceed
+                # the maximum line length then put a line break before the
+                # closing quotes
+                if (
+                    len(lines) > 1
+                    and last_line_length + quote_len > self.mode.line_length
+                ):
+                    leaf.value = prefix + quote + docstring + "\n" + indent + quote
+                else:
+                    leaf.value = prefix + quote + docstring + quote
+            else:
+                leaf.value = prefix + quote + docstring + quote
 
         yield from self.visit_default(leaf)
 
@@ -329,9 +459,14 @@ class LineGenerator(Visitor[Line]):
         self.visit_try_stmt = partial(
             v, keywords={"try", "except", "else", "finally"}, parens=Ø
         )
-        self.visit_except_clause = partial(v, keywords={"except"}, parens=Ø)
-        self.visit_with_stmt = partial(v, keywords={"with"}, parens=Ø)
-        self.visit_funcdef = partial(v, keywords={"def"}, parens=Ø)
+        if self.mode.preview:
+            self.visit_except_clause = partial(
+                v, keywords={"except"}, parens={"except"}
+            )
+            self.visit_with_stmt = partial(v, keywords={"with"}, parens={"with"})
+        else:
+            self.visit_except_clause = partial(v, keywords={"except"}, parens=Ø)
+            self.visit_with_stmt = partial(v, keywords={"with"}, parens=Ø)
         self.visit_classdef = partial(v, keywords={"class"}, parens=Ø)
         self.visit_expr_stmt = partial(v, keywords=Ø, parens=ASSIGNMENTS)
         self.visit_return_stmt = partial(v, keywords={"return"}, parens={"return"})
@@ -466,6 +601,12 @@ def transform_line(
         yield line
 
 
+class _BracketSplitComponent(Enum):
+    head = auto()
+    body = auto()
+    tail = auto()
+
+
 def left_hand_split(line: Line, _features: Collection[Feature] = ()) -> Iterator[Line]:
     """Split line into many lines, starting with the first matching bracket pair.
 
@@ -483,7 +624,10 @@ def left_hand_split(line: Line, _features: Collection[Feature] = ()) -> Iterator
             current_leaves is body_leaves
             and leaf.type in CLOSING_BRACKETS
             and leaf.opening_bracket is matching_bracket
+            and isinstance(matching_bracket, Leaf)
         ):
+            ensure_visible(leaf)
+            ensure_visible(matching_bracket)
             current_leaves = tail_leaves if body_leaves else head_leaves
         current_leaves.append(leaf)
         if current_leaves is head_leaves:
@@ -493,13 +637,30 @@ def left_hand_split(line: Line, _features: Collection[Feature] = ()) -> Iterator
     if not matching_bracket:
         raise CannotSplit("No brackets found")
 
-    head = bracket_split_build_line(head_leaves, line, matching_bracket)
-    body = bracket_split_build_line(body_leaves, line, matching_bracket, is_body=True)
-    tail = bracket_split_build_line(tail_leaves, line, matching_bracket)
+    head = bracket_split_build_line(
+        head_leaves, line, matching_bracket, component=_BracketSplitComponent.head
+    )
+    body = bracket_split_build_line(
+        body_leaves, line, matching_bracket, component=_BracketSplitComponent.body
+    )
+    tail = bracket_split_build_line(
+        tail_leaves, line, matching_bracket, component=_BracketSplitComponent.tail
+    )
     bracket_split_succeeded_or_raise(head, body, tail)
     for result in (head, body, tail):
         if result:
             yield result
+
+
+@dataclass
+class _RHSResult:
+    """Intermediate split result from a right hand split."""
+
+    head: Line
+    body: Line
+    tail: Line
+    opening_bracket: Leaf
+    closing_bracket: Leaf
 
 
 def right_hand_split(
@@ -515,6 +676,22 @@ def right_hand_split(
     this split.
 
     Note: running this function modifies `bracket_depth` on the leaves of `line`.
+    """
+    rhs_result = _first_right_hand_split(line, omit=omit)
+    yield from _maybe_split_omitting_optional_parens(
+        rhs_result, line, line_length, features=features, omit=omit
+    )
+
+
+def _first_right_hand_split(
+    line: Line,
+    omit: Collection[LeafID] = (),
+) -> _RHSResult:
+    """Split the line into head, body, tail starting with the last bracket pair.
+
+    Note: this function should not have side effects. It's relied upon by
+    _maybe_split_omitting_optional_parens to get an opinion whether to prefer
+    splitting on the right side of an assignment statement.
     """
     tail_leaves: List[Leaf] = []
     body_leaves: List[Leaf] = []
@@ -541,41 +718,81 @@ def right_hand_split(
     tail_leaves.reverse()
     body_leaves.reverse()
     head_leaves.reverse()
-    head = bracket_split_build_line(head_leaves, line, opening_bracket)
-    body = bracket_split_build_line(body_leaves, line, opening_bracket, is_body=True)
-    tail = bracket_split_build_line(tail_leaves, line, opening_bracket)
+    head = bracket_split_build_line(
+        head_leaves, line, opening_bracket, component=_BracketSplitComponent.head
+    )
+    body = bracket_split_build_line(
+        body_leaves, line, opening_bracket, component=_BracketSplitComponent.body
+    )
+    tail = bracket_split_build_line(
+        tail_leaves, line, opening_bracket, component=_BracketSplitComponent.tail
+    )
     bracket_split_succeeded_or_raise(head, body, tail)
+    return _RHSResult(head, body, tail, opening_bracket, closing_bracket)
+
+
+def _maybe_split_omitting_optional_parens(
+    rhs: _RHSResult,
+    line: Line,
+    line_length: int,
+    features: Collection[Feature] = (),
+    omit: Collection[LeafID] = (),
+) -> Iterator[Line]:
     if (
         Feature.FORCE_OPTIONAL_PARENTHESES not in features
         # the opening bracket is an optional paren
-        and opening_bracket.type == token.LPAR
-        and not opening_bracket.value
+        and rhs.opening_bracket.type == token.LPAR
+        and not rhs.opening_bracket.value
         # the closing bracket is an optional paren
-        and closing_bracket.type == token.RPAR
-        and not closing_bracket.value
+        and rhs.closing_bracket.type == token.RPAR
+        and not rhs.closing_bracket.value
         # it's not an import (optional parens are the only thing we can split on
         # in this case; attempting a split without them is a waste of time)
         and not line.is_import
         # there are no standalone comments in the body
-        and not body.contains_standalone_comments(0)
+        and not rhs.body.contains_standalone_comments(0)
         # and we can actually remove the parens
-        and can_omit_invisible_parens(body, line_length)
+        and can_omit_invisible_parens(rhs.body, line_length)
     ):
-        omit = {id(closing_bracket), *omit}
+        omit = {id(rhs.closing_bracket), *omit}
         try:
-            yield from right_hand_split(line, line_length, features=features, omit=omit)
-            return
+            # The _RHSResult Omitting Optional Parens.
+            rhs_oop = _first_right_hand_split(line, omit=omit)
+            if not (
+                Preview.prefer_splitting_right_hand_side_of_assignments in line.mode
+                # the split is right after `=`
+                and len(rhs.head.leaves) >= 2
+                and rhs.head.leaves[-2].type == token.EQUAL
+                # the left side of assignement contains brackets
+                and any(leaf.type in BRACKETS for leaf in rhs.head.leaves[:-1])
+                # the left side of assignment is short enough (the -1 is for the ending
+                # optional paren)
+                and is_line_short_enough(rhs.head, line_length=line_length - 1)
+                # the left side of assignment won't explode further because of magic
+                # trailing comma
+                and rhs.head.magic_trailing_comma is None
+                # the split by omitting optional parens isn't preferred by some other
+                # reason
+                and not _prefer_split_rhs_oop(rhs_oop, line_length=line_length)
+            ):
+                yield from _maybe_split_omitting_optional_parens(
+                    rhs_oop, line, line_length, features=features, omit=omit
+                )
+                return
 
         except CannotSplit as e:
             if not (
-                can_be_split(body)
-                or is_line_short_enough(body, line_length=line_length)
+                can_be_split(rhs.body)
+                or is_line_short_enough(rhs.body, line_length=line_length)
             ):
                 raise CannotSplit(
                     "Splitting failed, body is still too long and can't be split."
                 ) from e
 
-            elif head.contains_multiline_strings() or tail.contains_multiline_strings():
+            elif (
+                rhs.head.contains_multiline_strings()
+                or rhs.tail.contains_multiline_strings()
+            ):
                 raise CannotSplit(
                     "The current optional pair of parentheses is bound to fail to"
                     " satisfy the splitting algorithm because the head or the tail"
@@ -583,11 +800,40 @@ def right_hand_split(
                     " line."
                 ) from e
 
-    ensure_visible(opening_bracket)
-    ensure_visible(closing_bracket)
-    for result in (head, body, tail):
+    ensure_visible(rhs.opening_bracket)
+    ensure_visible(rhs.closing_bracket)
+    for result in (rhs.head, rhs.body, rhs.tail):
         if result:
             yield result
+
+
+def _prefer_split_rhs_oop(rhs_oop: _RHSResult, line_length: int) -> bool:
+    """
+    Returns whether we should prefer the result from a split omitting optional parens.
+    """
+    has_closing_bracket_after_assign = False
+    for leaf in reversed(rhs_oop.head.leaves):
+        if leaf.type == token.EQUAL:
+            break
+        if leaf.type in CLOSING_BRACKETS:
+            has_closing_bracket_after_assign = True
+            break
+    return (
+        # contains matching brackets after the `=` (done by checking there is a
+        # closing bracket)
+        has_closing_bracket_after_assign
+        or (
+            # the split is actually from inside the optional parens (done by checking
+            # the first line still contains the `=`)
+            any(leaf.type == token.EQUAL for leaf in rhs_oop.head.leaves)
+            # the first line is short enough
+            and is_line_short_enough(rhs_oop.head, line_length=line_length)
+        )
+        # contains unsplittable type ignore
+        or rhs_oop.head.contains_unsplittable_type_ignore()
+        or rhs_oop.body.contains_unsplittable_type_ignore()
+        or rhs_oop.tail.contains_unsplittable_type_ignore()
+    )
 
 
 def bracket_split_succeeded_or_raise(head: Line, body: Line, tail: Line) -> None:
@@ -617,15 +863,23 @@ def bracket_split_succeeded_or_raise(head: Line, body: Line, tail: Line) -> None
 
 
 def bracket_split_build_line(
-    leaves: List[Leaf], original: Line, opening_bracket: Leaf, *, is_body: bool = False
+    leaves: List[Leaf],
+    original: Line,
+    opening_bracket: Leaf,
+    *,
+    component: _BracketSplitComponent,
 ) -> Line:
     """Return a new line with given `leaves` and respective comments from `original`.
 
-    If `is_body` is True, the result line is one-indented inside brackets and as such
-    has its first leaf's prefix normalized and a trailing comma added when expected.
+    If it's the head component, brackets will be tracked so trailing commas are
+    respected.
+
+    If it's the body component, the result line is one-indented inside brackets and as
+    such has its first leaf's prefix normalized and a trailing comma added when
+    expected.
     """
     result = Line(mode=original.mode, depth=original.depth)
-    if is_body:
+    if component is _BracketSplitComponent.body:
         result.inside_brackets = True
         result.depth += 1
         if leaves:
@@ -663,12 +917,24 @@ def bracket_split_build_line(
                         leaves.insert(i + 1, new_comma)
                     break
 
+    leaves_to_track: Set[LeafID] = set()
+    if (
+        Preview.handle_trailing_commas_in_head in original.mode
+        and component is _BracketSplitComponent.head
+    ):
+        leaves_to_track = get_leaves_inside_matching_brackets(leaves)
     # Populate the line
     for leaf in leaves:
-        result.append(leaf, preformatted=True)
+        result.append(
+            leaf,
+            preformatted=True,
+            track_bracket=id(leaf) in leaves_to_track,
+        )
         for comment_after in original.comments_after(leaf):
             result.append(comment_after, preformatted=True)
-    if is_body and should_split_line(result, opening_bracket):
+    if component is _BracketSplitComponent.body and should_split_line(
+        result, opening_bracket
+    ):
         result.should_split_rhs = True
     return result
 
@@ -681,9 +947,9 @@ def dont_increase_indentation(split_func: Transformer) -> Transformer:
 
     @wraps(split_func)
     def split_wrapper(line: Line, features: Collection[Feature] = ()) -> Iterator[Line]:
-        for line in split_func(line, features):
-            normalize_prefix(line.leaves[0], inside_brackets=True)
-            yield line
+        for split_line in split_func(line, features):
+            normalize_prefix(split_line.leaves[0], inside_brackets=True)
+            yield split_line
 
     return split_wrapper
 
@@ -818,7 +1084,9 @@ def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
     leaf.prefix = ""
 
 
-def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
+def normalize_invisible_parens(
+    node: Node, parens_after: Set[str], *, preview: bool
+) -> None:
     """Make existing optional parentheses invisible or create new ones.
 
     `parens_after` is a set of string leaf values immediately after which parens
@@ -827,7 +1095,7 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
     Standardizes on visible parentheses for single-element tuples, and keeps
     existing visible parentheses for other tuples and generator expressions.
     """
-    for pc in list_comments(node.prefix, is_endmarker=False):
+    for pc in list_comments(node.prefix, is_endmarker=False, preview=preview):
         if pc.value in FMT_OFF:
             # This `node` has a prefix with `# fmt: off`, don't mess with parens.
             return
@@ -836,7 +1104,9 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
         # Fixes a bug where invisible parens are not properly stripped from
         # assignment statements that contain type annotations.
         if isinstance(child, Node) and child.type == syms.annassign:
-            normalize_invisible_parens(child, parens_after=parens_after)
+            normalize_invisible_parens(
+                child, parens_after=parens_after, preview=preview
+            )
 
         # Add parentheses around long tuple unpacking in assignments.
         if (
@@ -847,8 +1117,27 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
             check_lpar = True
 
         if check_lpar:
-            if child.type == syms.atom:
-                if maybe_make_parens_invisible_in_atom(child, parent=node):
+            if (
+                preview
+                and child.type == syms.atom
+                and node.type == syms.for_stmt
+                and isinstance(child.prev_sibling, Leaf)
+                and child.prev_sibling.type == token.NAME
+                and child.prev_sibling.value == "for"
+            ):
+                if maybe_make_parens_invisible_in_atom(
+                    child,
+                    parent=node,
+                    remove_brackets_around_comma=True,
+                ):
+                    wrap_in_parentheses(node, child, visible=False)
+            elif preview and isinstance(child, Node) and node.type == syms.with_stmt:
+                remove_with_parens(child, node)
+            elif child.type == syms.atom:
+                if maybe_make_parens_invisible_in_atom(
+                    child,
+                    parent=node,
+                ):
                     wrap_in_parentheses(node, child, visible=False)
             elif is_one_tuple(child):
                 wrap_in_parentheses(node, child, visible=True)
@@ -865,28 +1154,127 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
                     node.insert_child(index, Leaf(token.LPAR, ""))
                     node.append_child(Leaf(token.RPAR, ""))
                 break
+            elif (
+                index == 1
+                and child.type == token.STAR
+                and node.type == syms.except_clause
+            ):
+                # In except* (PEP 654), the star is actually part of
+                # of the keyword. So we need to skip the insertion of
+                # invisible parentheses to work more precisely.
+                continue
 
             elif not (isinstance(child, Leaf) and is_multiline_string(child)):
                 wrap_in_parentheses(node, child, visible=False)
 
-        check_lpar = isinstance(child, Leaf) and child.value in parens_after
+        comma_check = child.type == token.COMMA if preview else False
+
+        check_lpar = isinstance(child, Leaf) and (
+            child.value in parens_after or comma_check
+        )
 
 
-def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
+def remove_await_parens(node: Node) -> None:
+    if node.children[0].type == token.AWAIT and len(node.children) > 1:
+        if (
+            node.children[1].type == syms.atom
+            and node.children[1].children[0].type == token.LPAR
+        ):
+            if maybe_make_parens_invisible_in_atom(
+                node.children[1],
+                parent=node,
+                remove_brackets_around_comma=True,
+            ):
+                wrap_in_parentheses(node, node.children[1], visible=False)
+
+            # Since await is an expression we shouldn't remove
+            # brackets in cases where this would change
+            # the AST due to operator precedence.
+            # Therefore we only aim to remove brackets around
+            # power nodes that aren't also await expressions themselves.
+            # https://peps.python.org/pep-0492/#updated-operator-precedence-table
+            # N.B. We've still removed any redundant nested brackets though :)
+            opening_bracket = cast(Leaf, node.children[1].children[0])
+            closing_bracket = cast(Leaf, node.children[1].children[-1])
+            bracket_contents = cast(Node, node.children[1].children[1])
+            if bracket_contents.type != syms.power:
+                ensure_visible(opening_bracket)
+                ensure_visible(closing_bracket)
+            elif (
+                bracket_contents.type == syms.power
+                and bracket_contents.children[0].type == token.AWAIT
+            ):
+                ensure_visible(opening_bracket)
+                ensure_visible(closing_bracket)
+                # If we are in a nested await then recurse down.
+                remove_await_parens(bracket_contents)
+
+
+def remove_with_parens(node: Node, parent: Node) -> None:
+    """Recursively hide optional parens in `with` statements."""
+    # Removing all unnecessary parentheses in with statements in one pass is a tad
+    # complex as different variations of bracketed statements result in pretty
+    # different parse trees:
+    #
+    # with (open("file")) as f:                       # this is an asexpr_test
+    #     ...
+    #
+    # with (open("file") as f):                       # this is an atom containing an
+    #     ...                                         # asexpr_test
+    #
+    # with (open("file")) as f, (open("file")) as f:  # this is asexpr_test, COMMA,
+    #     ...                                         # asexpr_test
+    #
+    # with (open("file") as f, open("file") as f):    # an atom containing a
+    #     ...                                         # testlist_gexp which then
+    #                                                 # contains multiple asexpr_test(s)
+    if node.type == syms.atom:
+        if maybe_make_parens_invisible_in_atom(
+            node,
+            parent=parent,
+            remove_brackets_around_comma=True,
+        ):
+            wrap_in_parentheses(parent, node, visible=False)
+        if isinstance(node.children[1], Node):
+            remove_with_parens(node.children[1], node)
+    elif node.type == syms.testlist_gexp:
+        for child in node.children:
+            if isinstance(child, Node):
+                remove_with_parens(child, node)
+    elif node.type == syms.asexpr_test and not any(
+        leaf.type == token.COLONEQUAL for leaf in node.leaves()
+    ):
+        if maybe_make_parens_invisible_in_atom(
+            node.children[0],
+            parent=node,
+            remove_brackets_around_comma=True,
+        ):
+            wrap_in_parentheses(node, node.children[0], visible=False)
+
+
+def maybe_make_parens_invisible_in_atom(
+    node: LN,
+    parent: LN,
+    remove_brackets_around_comma: bool = False,
+) -> bool:
     """If it's safe, make the parens in the atom `node` invisible, recursively.
     Additionally, remove repeated, adjacent invisible parens from the atom `node`
     as they are redundant.
 
     Returns whether the node should itself be wrapped in invisible parentheses.
-
     """
-
     if (
         node.type != syms.atom
         or is_empty_tuple(node)
         or is_one_tuple(node)
         or (is_yield(node) and parent.type != syms.expr_stmt)
-        or max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
+        or (
+            # This condition tries to prevent removing non-optional brackets
+            # around a tuple, however, can be a bit overzealous so we provide
+            # and option to skip this check for `for` and `with` statements.
+            not remove_brackets_around_comma
+            and max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
+        )
     ):
         return False
 
@@ -896,6 +1284,8 @@ def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
             syms.expr_stmt,
             syms.assert_stmt,
             syms.return_stmt,
+            syms.except_clause,
+            syms.funcdef,
             # these ones aren't useful to end users, but they do please fuzzers
             syms.for_stmt,
             syms.del_stmt,
@@ -909,7 +1299,11 @@ def maybe_make_parens_invisible_in_atom(node: LN, parent: LN) -> bool:
         # make parentheses invisible
         first.value = ""
         last.value = ""
-        maybe_make_parens_invisible_in_atom(middle, parent=parent)
+        maybe_make_parens_invisible_in_atom(
+            middle,
+            parent=parent,
+            remove_brackets_around_comma=remove_brackets_around_comma,
+        )
 
         if is_atom_with_invisible_parens(middle):
             # Strip the invisible parens from `middle` by replacing
@@ -985,7 +1379,7 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
                     prev
                     and prev.type == token.COMMA
                     and leaf.opening_bracket is not None
-                    and not is_one_tuple_between(
+                    and not is_one_sequence_between(
                         leaf.opening_bracket, leaf, line.leaves
                     )
                 ):
@@ -1013,7 +1407,7 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
                 prev
                 and prev.type == token.COMMA
                 and leaf.opening_bracket is not None
-                and not is_one_tuple_between(leaf.opening_bracket, leaf, line.leaves)
+                and not is_one_sequence_between(leaf.opening_bracket, leaf, line.leaves)
             ):
                 # Never omit bracket pairs with trailing commas.
                 # We need to explode on those.
@@ -1041,8 +1435,10 @@ def run_transformer(
 
         result.extend(transform_line(transformed_line, mode=mode, features=features))
 
+    features_set = set(features)
     if (
-        transform.__class__.__name__ != "rhs"
+        Feature.FORCE_OPTIONAL_PARENTHESES in features_set
+        or transform.__class__.__name__ != "rhs"
         or not line.bracket_tracker.invisible
         or any(bracket.value for bracket in line.bracket_tracker.invisible)
         or line.contains_multiline_strings()
@@ -1059,7 +1455,7 @@ def run_transformer(
 
     line_copy = line.clone()
     append_leaves(line_copy, line, line.leaves)
-    features_fop = set(features) | {Feature.FORCE_OPTIONAL_PARENTHESES}
+    features_fop = features_set | {Feature.FORCE_OPTIONAL_PARENTHESES}
     second_opinion = run_transformer(
         line_copy, transform, mode, features_fop, line_str=line_str
     )

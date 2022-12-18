@@ -4,11 +4,11 @@ The double calls are for patching purposes in tests.
 """
 
 import json
-from typing import Any, Optional
-from mypy_extensions import mypyc_attr
 import tempfile
+from typing import Any, Optional
 
 from click import echo, style
+from mypy_extensions import mypyc_attr
 
 
 @mypyc_attr(patchable=True)

@@ -24,7 +24,7 @@ parameters: '(' [typedargslist] ')'
 #     arguments = argument (',' argument)*
 #     argument = tfpdef ['=' test]
 #     kwargs = '**' tname [',']
-#     args = '*' [tname]
+#     args = '*' [tname_star]
 #     kwonly_kwargs = (',' argument)* [',' [kwargs]]
 #     args_kwonly_kwargs = args kwonly_kwargs | kwargs
 #     poskeyword_args_kwonly_kwargs = arguments [',' [args_kwonly_kwargs]]
@@ -34,14 +34,15 @@ parameters: '(' [typedargslist] ')'
 # It needs to be fully expanded to allow our LL(1) parser to work on it.
 
 typedargslist: tfpdef ['=' test] (',' tfpdef ['=' test])* ',' '/' [
-                     ',' [((tfpdef ['=' test] ',')* ('*' [tname] (',' tname ['=' test])*
+                     ',' [((tfpdef ['=' test] ',')* ('*' [tname_star] (',' tname ['=' test])*
                             [',' ['**' tname [',']]] | '**' tname [','])
                      | tfpdef ['=' test] (',' tfpdef ['=' test])* [','])]
-                ] | ((tfpdef ['=' test] ',')* ('*' [tname] (',' tname ['=' test])*
+                ] | ((tfpdef ['=' test] ',')* ('*' [tname_star] (',' tname ['=' test])*
                      [',' ['**' tname [',']]] | '**' tname [','])
                      | tfpdef ['=' test] (',' tfpdef ['=' test])* [','])
 
 tname: NAME [':' test]
+tname_star: NAME [':' (test|star_expr)]
 tfpdef: tname | '(' tfplist ')'
 tfplist: tfpdef (',' tfpdef)* [',']
 
@@ -109,7 +110,7 @@ compound_stmt: if_stmt | while_stmt | for_stmt | try_stmt | with_stmt | funcdef 
 async_stmt: ASYNC (funcdef | with_stmt | for_stmt)
 if_stmt: 'if' namedexpr_test ':' suite ('elif' namedexpr_test ':' suite)* ['else' ':' suite]
 while_stmt: 'while' namedexpr_test ':' suite ['else' ':' suite]
-for_stmt: 'for' exprlist 'in' testlist ':' suite ['else' ':' suite]
+for_stmt: 'for' exprlist 'in' testlist_star_expr ':' suite ['else' ':' suite]
 try_stmt: ('try' ':' suite
            ((except_clause ':' suite)+
 	    ['else' ':' suite]
@@ -118,7 +119,7 @@ try_stmt: ('try' ':' suite
 with_stmt: 'with' asexpr_test (',' asexpr_test)*  ':' suite
 
 # NB compile.c makes sure that the default except clause is last
-except_clause: 'except' [test [(',' | 'as') test]]
+except_clause: 'except' ['*'] [test [(',' | 'as') test]]
 suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
 
 # Backward compatibility cruft to support:
@@ -163,7 +164,7 @@ listmaker: (namedexpr_test|star_expr) ( old_comp_for | (',' (namedexpr_test|star
 testlist_gexp: (namedexpr_test|star_expr) ( old_comp_for | (',' (namedexpr_test|star_expr))* [','] )
 lambdef: 'lambda' [varargslist] ':' test
 trailer: '(' [arglist] ')' | '[' subscriptlist ']' | '.' NAME
-subscriptlist: subscript (',' subscript)* [',']
+subscriptlist: (subscript|star_expr) (',' (subscript|star_expr))* [',']
 subscript: test [':=' test] | [test] ':' [test] [sliceop]
 sliceop: ':' [test]
 exprlist: (expr|star_expr) (',' (expr|star_expr))* [',']
@@ -185,7 +186,7 @@ arglist: argument (',' argument)* [',']
 # multiple (test comp_for) arguments are blocked; keyword unpackings
 # that precede iterable unpackings are blocked; etc.
 argument: ( test [comp_for] |
-            test ':=' test |
+            test ':=' test [comp_for] |
             test 'as' test |
             test '=' asexpr_test |
 	    '**' test |

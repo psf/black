@@ -1,10 +1,11 @@
 """
 String transformers that can split and merge strings.
 """
+import re
+import sys
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass
-import re
 from typing import (
     Any,
     Callable,
@@ -21,29 +22,38 @@ from typing import (
     TypeVar,
     Union,
 )
-import sys
 
 if sys.version_info < (3, 8):
-    from typing_extensions import Literal, Final
+    from typing_extensions import Final, Literal
 else:
     from typing import Literal, Final
 
 from mypy_extensions import trait
 
-from black.rusty import Result, Ok, Err
-
-from black.mode import Feature
-from black.nodes import syms, replace_child, parent_type
-from black.nodes import is_empty_par, is_empty_lpar, is_empty_rpar
-from black.nodes import OPENING_BRACKETS, CLOSING_BRACKETS, STANDALONE_COMMENT
-from black.lines import Line, append_leaves
 from black.brackets import BracketMatchError
 from black.comments import contains_pragma_comment
-from black.strings import has_triple_quotes, get_string_prefix, assert_is_leaf_string
-from black.strings import normalize_string_quotes
-
-from blib2to3.pytree import Leaf, Node
+from black.lines import Line, append_leaves
+from black.mode import Feature
+from black.nodes import (
+    CLOSING_BRACKETS,
+    OPENING_BRACKETS,
+    STANDALONE_COMMENT,
+    is_empty_lpar,
+    is_empty_par,
+    is_empty_rpar,
+    parent_type,
+    replace_child,
+    syms,
+)
+from black.rusty import Err, Ok, Result
+from black.strings import (
+    assert_is_leaf_string,
+    get_string_prefix,
+    has_triple_quotes,
+    normalize_string_quotes,
+)
 from blib2to3.pgen2 import token
+from blib2to3.pytree import Leaf, Node
 
 
 class CannotTransform(Exception):
@@ -121,7 +131,7 @@ def hug_power_op(line: Line, features: Collection[Feature]) -> Iterator[Line]:
 
         return False
 
-    leaves: List[Leaf] = []
+    new_line = line.clone()
     should_hug = False
     for idx, leaf in enumerate(line.leaves):
         new_leaf = leaf.clone()
@@ -139,18 +149,14 @@ def hug_power_op(line: Line, features: Collection[Feature]) -> Iterator[Line]:
         if should_hug:
             new_leaf.prefix = ""
 
-        leaves.append(new_leaf)
+        # We have to be careful to make a new line properly:
+        # - bracket related metadata must be maintained (handled by Line.append)
+        # - comments need to copied over, updating the leaf IDs they're attached to
+        new_line.append(new_leaf, preformatted=True)
+        for comment_leaf in line.comments_after(leaf):
+            new_line.append(comment_leaf, preformatted=True)
 
-    yield Line(
-        mode=line.mode,
-        depth=line.depth,
-        leaves=leaves,
-        comments=line.comments,
-        bracket_tracker=line.bracket_tracker,
-        inside_brackets=line.inside_brackets,
-        should_split_rhs=line.should_split_rhs,
-        magic_trailing_comma=line.magic_trailing_comma,
-    )
+    yield new_line
 
 
 class StringTransformer(ABC):
@@ -365,7 +371,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
 
         is_valid_index = is_valid_index_factory(LL)
 
-        for (i, leaf) in enumerate(LL):
+        for i, leaf in enumerate(LL):
             if (
                 leaf.type == token.STRING
                 and is_valid_index(i + 1)
@@ -547,6 +553,9 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
 
             next_str_idx += 1
 
+        # Take a note on the index of the non-STRING leaf.
+        non_string_idx = next_str_idx
+
         S_leaf = Leaf(token.STRING, S)
         if self.normalize_strings:
             S_leaf.value = normalize_string_quotes(S_leaf.value)
@@ -566,11 +575,22 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
         string_leaf = Leaf(token.STRING, S_leaf.value.replace(BREAK_MARK, ""))
 
         if atom_node is not None:
-            replace_child(atom_node, string_leaf)
+            # If not all children of the atom node are merged (this can happen
+            # when there is a standalone comment in the middle) ...
+            if non_string_idx - string_idx < len(atom_node.children):
+                # We need to replace the old STRING leaves with the new string leaf.
+                first_child_idx = LL[string_idx].remove()
+                for idx in range(string_idx + 1, non_string_idx):
+                    LL[idx].remove()
+                if first_child_idx is not None:
+                    atom_node.insert_child(first_child_idx, string_leaf)
+            else:
+                # Else replace the atom node with the new string leaf.
+                replace_child(atom_node, string_leaf)
 
         # Build the final line ('new_line') that this method will later return.
         new_line = line.clone()
-        for (i, leaf) in enumerate(LL):
+        for i, leaf in enumerate(LL):
             if i == string_idx:
                 new_line.append(string_leaf)
 
@@ -691,7 +711,7 @@ class StringParenStripper(StringTransformer):
 
         is_valid_index = is_valid_index_factory(LL)
 
-        for (idx, leaf) in enumerate(LL):
+        for idx, leaf in enumerate(LL):
             # Should be a string...
             if leaf.type != token.STRING:
                 continue
@@ -1023,6 +1043,37 @@ class BaseStringSplitter(StringTransformer):
         max_string_length = self.line_length - offset
         return max_string_length
 
+    @staticmethod
+    def _prefer_paren_wrap_match(LL: List[Leaf]) -> Optional[int]:
+        """
+        Returns:
+            string_idx such that @LL[string_idx] is equal to our target (i.e.
+            matched) string, if this line matches the "prefer paren wrap" statement
+            requirements listed in the 'Requirements' section of the StringParenWrapper
+            class's docstring.
+                OR
+            None, otherwise.
+        """
+        # The line must start with a string.
+        if LL[0].type != token.STRING:
+            return None
+
+        # If the string is surrounded by commas (or is the first/last child)...
+        prev_sibling = LL[0].prev_sibling
+        next_sibling = LL[0].next_sibling
+        if not prev_sibling and not next_sibling and parent_type(LL[0]) == syms.atom:
+            # If it's an atom string, we need to check the parent atom's siblings.
+            parent = LL[0].parent
+            assert parent is not None  # For type checkers.
+            prev_sibling = parent.prev_sibling
+            next_sibling = parent.next_sibling
+        if (not prev_sibling or prev_sibling.type == token.COMMA) and (
+            not next_sibling or next_sibling.type == token.COMMA
+        ):
+            return 0
+
+        return None
+
 
 def iter_fexpr_spans(s: str) -> Iterator[Tuple[int, int]]:
     """
@@ -1118,6 +1169,9 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
     def do_splitter_match(self, line: Line) -> TMatchResult:
         LL = line.leaves
 
+        if self._prefer_paren_wrap_match(LL) is not None:
+            return TErr("Line needs to be wrapped in parens first.")
+
         is_valid_index = is_valid_index_factory(LL)
 
         idx = 0
@@ -1188,7 +1242,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
 
         string_op_leaves = self._get_string_operator_leaves(LL)
         string_op_leaves_length = (
-            sum([len(str(prefix_leaf)) for prefix_leaf in string_op_leaves]) + 1
+            sum(len(str(prefix_leaf)) for prefix_leaf in string_op_leaves) + 1
             if string_op_leaves
             else 0
         )
@@ -1563,8 +1617,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
 
 class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
     """
-    StringTransformer that splits non-"atom" strings (i.e. strings that do not
-    exist on lines by themselves).
+    StringTransformer that wraps strings in parens and then splits at the LPAR.
 
     Requirements:
         All of the requirements listed in BaseStringSplitter's docstring in
@@ -1584,6 +1637,12 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             OR
         * The line is a dictionary key assignment where some valid key is being
         assigned the value of some string.
+            OR
+        * The line is an lambda expression and the value is a string.
+            OR
+        * The line starts with an "atom" string that prefers to be wrapped in
+        parens. It's preferred to be wrapped when the string is surrounded by
+        commas (or is the first/last child).
 
     Transformations:
         The chosen string is wrapped in parentheses and then split at the LPAR.
@@ -1608,6 +1667,9 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         changed such that it no longer needs to be given its own line,
         StringParenWrapper relies on StringParenStripper to clean up the
         parentheses it created.
+
+        For "atom" strings that prefers to be wrapped in parens, it requires
+        StringSplitter to hold the split until the string is wrapped in parens.
     """
 
     def do_splitter_match(self, line: Line) -> TMatchResult:
@@ -1623,7 +1685,8 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             or self._else_match(LL)
             or self._assert_match(LL)
             or self._assign_match(LL)
-            or self._dict_match(LL)
+            or self._dict_or_lambda_match(LL)
+            or self._prefer_paren_wrap_match(LL)
         )
 
         if string_idx is not None:
@@ -1713,7 +1776,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         if parent_type(LL[0]) == syms.assert_stmt and LL[0].value == "assert":
             is_valid_index = is_valid_index_factory(LL)
 
-            for (i, leaf) in enumerate(LL):
+            for i, leaf in enumerate(LL):
                 # We MUST find a comma...
                 if leaf.type == token.COMMA:
                     idx = i + 2 if is_empty_par(LL[i + 1]) else i + 1
@@ -1751,7 +1814,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         ):
             is_valid_index = is_valid_index_factory(LL)
 
-            for (i, leaf) in enumerate(LL):
+            for i, leaf in enumerate(LL):
                 # We MUST find either an '=' or '+=' symbol...
                 if leaf.type in [token.EQUAL, token.PLUSEQUAL]:
                     idx = i + 2 if is_empty_par(LL[i + 1]) else i + 1
@@ -1780,22 +1843,23 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         return None
 
     @staticmethod
-    def _dict_match(LL: List[Leaf]) -> Optional[int]:
+    def _dict_or_lambda_match(LL: List[Leaf]) -> Optional[int]:
         """
         Returns:
             string_idx such that @LL[string_idx] is equal to our target (i.e.
             matched) string, if this line matches the dictionary key assignment
-            statement requirements listed in the 'Requirements' section of this
-            classes' docstring.
+            statement or lambda expression requirements listed in the
+            'Requirements' section of this classes' docstring.
                 OR
             None, otherwise.
         """
-        # If this line is apart of a dictionary key assignment...
-        if syms.dictsetmaker in [parent_type(LL[0]), parent_type(LL[0].parent)]:
+        # If this line is a part of a dictionary key assignment or lambda expression...
+        parent_types = [parent_type(LL[0]), parent_type(LL[0].parent)]
+        if syms.dictsetmaker in parent_types or syms.lambdef in parent_types:
             is_valid_index = is_valid_index_factory(LL)
 
-            for (i, leaf) in enumerate(LL):
-                # We MUST find a colon...
+            for i, leaf in enumerate(LL):
+                # We MUST find a colon, it can either be dict's or lambda's colon...
                 if leaf.type == token.COLON:
                     idx = i + 2 if is_empty_par(LL[i + 1]) else i + 1
 
@@ -1890,6 +1954,25 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                     f" (left_leaves={left_leaves}, right_leaves={right_leaves})"
                 )
                 old_rpar_leaf = right_leaves.pop()
+            elif right_leaves and right_leaves[-1].type == token.RPAR:
+                # Special case for lambda expressions as dict's value, e.g.:
+                #     my_dict = {
+                #        "key": lambda x: f"formatted: {x},
+                #     }
+                # After wrapping the dict's value with parentheses, the string is
+                # followed by a RPAR but its opening bracket is lambda's, not
+                # the string's:
+                #        "key": (lambda x: f"formatted: {x}),
+                opening_bracket = right_leaves[-1].opening_bracket
+                if opening_bracket is not None and opening_bracket in left_leaves:
+                    index = left_leaves.index(opening_bracket)
+                    if (
+                        index > 0
+                        and index < len(left_leaves) - 1
+                        and left_leaves[index - 1].type == token.COLON
+                        and left_leaves[index + 1].value == "lambda"
+                    ):
+                        right_leaves.pop()
 
             append_leaves(string_line, line, right_leaves)
 

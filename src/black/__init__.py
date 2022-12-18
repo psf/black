@@ -1,20 +1,16 @@
-import asyncio
-from json.decoder import JSONDecodeError
-import json
-from concurrent.futures import Executor, ThreadPoolExecutor, ProcessPoolExecutor
-from contextlib import contextmanager
-from datetime import datetime
-from enum import Enum
 import io
-from multiprocessing import Manager, freeze_support
-import os
-from pathlib import Path
-from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
+import json
+import platform
 import re
-import signal
 import sys
 import tokenize
 import traceback
+from contextlib import contextmanager
+from dataclasses import replace
+from datetime import datetime
+from enum import Enum
+from json.decoder import JSONDecodeError
+from pathlib import Path
 from typing import (
     Any,
     Dict,
@@ -33,48 +29,62 @@ from typing import (
 
 import click
 from click.core import ParameterSource
-from dataclasses import replace
 from mypy_extensions import mypyc_attr
+from pathspec import PathSpec
+from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
 
-from black.const import DEFAULT_LINE_LENGTH, DEFAULT_INCLUDES, DEFAULT_EXCLUDES
-from black.const import STDIN_PLACEHOLDER
-from black.nodes import STARS, syms, is_simple_decorator_expression
-from black.nodes import is_string_token
-from black.lines import Line, EmptyLineTracker
-from black.linegen import transform_line, LineGenerator, LN
+from _black_version import version as __version__
+from black.cache import Cache, get_cache_info, read_cache, write_cache
 from black.comments import normalize_fmt_off
-from black.mode import FUTURE_FLAG_TO_FEATURE, Mode, TargetVersion
-from black.mode import Feature, supports_feature, VERSION_TO_FEATURES
-from black.cache import read_cache, write_cache, get_cache_info, filter_cached, Cache
-from black.concurrency import cancel, shutdown, maybe_install_uvloop
-from black.output import dump_to_file, ipynb_diff, diff, color_diff, out, err
-from black.report import Report, Changed, NothingChanged
+from black.const import (
+    DEFAULT_EXCLUDES,
+    DEFAULT_INCLUDES,
+    DEFAULT_LINE_LENGTH,
+    STDIN_PLACEHOLDER,
+)
 from black.files import (
     find_project_root,
     find_pyproject_toml,
-    parse_pyproject_toml,
     find_user_pyproject_toml,
+    gen_python_files,
+    get_gitignore,
+    normalize_path_maybe_ignore,
+    parse_pyproject_toml,
+    wrap_stream_for_windows,
 )
-from black.files import gen_python_files, get_gitignore, normalize_path_maybe_ignore
-from black.files import wrap_stream_for_windows
+from black.handle_ipynb_magics import (
+    PYTHON_CELL_MAGICS,
+    TRANSFORMED_MAGICS,
+    jupyter_dependencies_are_installed,
+    mask_cell,
+    put_trailing_semicolon_back,
+    remove_trailing_semicolon,
+    unmask_cell,
+)
+from black.linegen import LN, LineGenerator, transform_line
+from black.lines import EmptyLineTracker, LinesBlock
+from black.mode import (
+    FUTURE_FLAG_TO_FEATURE,
+    VERSION_TO_FEATURES,
+    Feature,
+    Mode,
+    TargetVersion,
+    supports_feature,
+)
+from black.nodes import (
+    STARS,
+    is_number_token,
+    is_simple_decorator_expression,
+    is_string_token,
+    syms,
+)
+from black.output import color_diff, diff, dump_to_file, err, ipynb_diff, out
 from black.parsing import InvalidInput  # noqa F401
 from black.parsing import lib2to3_parse, parse_ast, stringify_ast
-from black.handle_ipynb_magics import (
-    mask_cell,
-    unmask_cell,
-    remove_trailing_semicolon,
-    put_trailing_semicolon_back,
-    TRANSFORMED_MAGICS,
-    PYTHON_CELL_MAGICS,
-    jupyter_dependencies_are_installed,
-)
-
-
-# lib2to3 fork
-from blib2to3.pytree import Node, Leaf
+from black.report import Changed, NothingChanged, Report
+from black.trans import iter_fexpr_spans
 from blib2to3.pgen2 import token
-
-from _black_version import version as __version__
+from blib2to3.pytree import Leaf, Node
 
 COMPILED = Path(__file__).suffix in (".pyd", ".so")
 
@@ -106,8 +116,6 @@ class WriteBack(Enum):
 
 # Legacy name, left for integrations.
 FileMode = Mode
-
-DEFAULT_WORKERS = os.cpu_count()
 
 
 def read_pyproject_toml(
@@ -242,6 +250,12 @@ def validate_regex(
     default=[],
 )
 @click.option(
+    "-x",
+    "--skip-source-first-line",
+    is_flag=True,
+    help="Skip the first line of the source code.",
+)
+@click.option(
     "-S",
     "--skip-string-normalization",
     is_flag=True,
@@ -357,9 +371,8 @@ def validate_regex(
     "-W",
     "--workers",
     type=click.IntRange(min=1),
-    default=DEFAULT_WORKERS,
-    show_default=True,
-    help="Number of parallel workers",
+    default=None,
+    help="Number of parallel workers [default: number of CPUs in the system]",
 )
 @click.option(
     "-q",
@@ -381,7 +394,10 @@ def validate_regex(
 )
 @click.version_option(
     version=__version__,
-    message=f"%(prog)s, %(version)s (compiled: {'yes' if COMPILED else 'no'})",
+    message=(
+        f"%(prog)s, %(version)s (compiled: {'yes' if COMPILED else 'no'})\n"
+        f"Python ({platform.python_implementation()}) {platform.python_version()}"
+    ),
 )
 @click.argument(
     "src",
@@ -419,6 +435,7 @@ def main(  # noqa: C901
     pyi: bool,
     ipynb: bool,
     python_cell_magics: Sequence[str],
+    skip_source_first_line: bool,
     skip_string_normalization: bool,
     skip_magic_trailing_comma: bool,
     experimental_string_processing: bool,
@@ -431,7 +448,7 @@ def main(  # noqa: C901
     extend_exclude: Optional[Pattern[str]],
     force_exclude: Optional[Pattern[str]],
     stdin_filename: Optional[str],
-    workers: int,
+    workers: Optional[int],
     src: Tuple[str, ...],
     config: Optional[str],
 ) -> None:
@@ -448,7 +465,9 @@ def main(  # noqa: C901
         out(main.get_usage(ctx) + "\n\nOne of 'SRC' or 'code' is required.")
         ctx.exit(1)
 
-    root, method = find_project_root(src) if code is None else (None, None)
+    root, method = (
+        find_project_root(src, stdin_filename) if code is None else (None, None)
+    )
     ctx.obj["root"] = root
 
     if verbose:
@@ -459,7 +478,9 @@ def main(  # noqa: C901
             )
 
             normalized = [
-                (normalize_path_maybe_ignore(Path(source), root), source)
+                (source, source)
+                if source == "-"
+                else (normalize_path_maybe_ignore(Path(source), root), source)
                 for source in src
             ]
             srcs_string = ", ".join(
@@ -477,8 +498,10 @@ def main(  # noqa: C901
             user_level_config = str(find_user_pyproject_toml())
             if config == user_level_config:
                 out(
-                    f"Using configuration from user-level config at "
-                    f"'{user_level_config}'.",
+                    (
+                        "Using configuration from user-level config at "
+                        f"'{user_level_config}'."
+                    ),
                     fg="blue",
                 )
             elif config_source in (
@@ -488,6 +511,9 @@ def main(  # noqa: C901
                 out("Using configuration from project root.", fg="blue")
             else:
                 out(f"Using configuration in '{config}'.", fg="blue")
+            if ctx.default_map:
+                for param, value in ctx.default_map.items():
+                    out(f"{param}: {value}")
 
     error_msg = "Oh no! 💥 💔 💥"
     if (
@@ -515,6 +541,7 @@ def main(  # noqa: C901
         line_length=line_length,
         is_pyi=pyi,
         is_ipynb=ipynb,
+        skip_source_first_line=skip_source_first_line,
         string_normalization=not skip_string_normalization,
         magic_trailing_comma=not skip_magic_trailing_comma,
         experimental_string_processing=experimental_string_processing,
@@ -567,6 +594,8 @@ def main(  # noqa: C901
                 report=report,
             )
         else:
+            from black.concurrency import reformat_many
+
             reformat_many(
                 sources=sources,
                 fast=fast,
@@ -600,12 +629,12 @@ def get_sources(
 ) -> Set[Path]:
     """Compute the set of files to be formatted."""
     sources: Set[Path] = set()
+    root = ctx.obj["root"]
 
-    if exclude is None:
-        exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES)
-        gitignore = get_gitignore(ctx.obj["root"])
-    else:
-        gitignore = None
+    using_default_exclude = exclude is None
+    exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES) if exclude is None else exclude
+    gitignore: Optional[Dict[Path, PathSpec]] = None
+    root_gitignore = get_gitignore(root)
 
     for s in src:
         if s == "-" and stdin_filename:
@@ -640,6 +669,11 @@ def get_sources(
 
             sources.add(p)
         elif p.is_dir():
+            if using_default_exclude:
+                gitignore = {
+                    root: root_gitignore,
+                    root / p: get_gitignore(p),
+                }
             sources.update(
                 gen_python_files(
                     p.iterdir(),
@@ -697,6 +731,9 @@ def reformat_code(
         report.failed(path, str(exc))
 
 
+# diff-shades depends on being to monkeypatch this function to operate. I know it's
+# not ideal, but this shouldn't cause any issues ... hopefully. ~ichard26
+@mypyc_attr(patchable=True)
 def reformat_one(
     src: Path, fast: bool, write_back: WriteBack, mode: Mode, report: "Report"
 ) -> None:
@@ -748,126 +785,6 @@ def reformat_one(
         report.failed(src, str(exc))
 
 
-# diff-shades depends on being to monkeypatch this function to operate. I know it's
-# not ideal, but this shouldn't cause any issues ... hopefully. ~ichard26
-@mypyc_attr(patchable=True)
-def reformat_many(
-    sources: Set[Path],
-    fast: bool,
-    write_back: WriteBack,
-    mode: Mode,
-    report: "Report",
-    workers: Optional[int],
-) -> None:
-    """Reformat multiple files using a ProcessPoolExecutor."""
-    executor: Executor
-    loop = asyncio.get_event_loop()
-    worker_count = workers if workers is not None else DEFAULT_WORKERS
-    if sys.platform == "win32":
-        # Work around https://bugs.python.org/issue26903
-        assert worker_count is not None
-        worker_count = min(worker_count, 60)
-    try:
-        executor = ProcessPoolExecutor(max_workers=worker_count)
-    except (ImportError, NotImplementedError, OSError):
-        # we arrive here if the underlying system does not support multi-processing
-        # like in AWS Lambda or Termux, in which case we gracefully fallback to
-        # a ThreadPoolExecutor with just a single worker (more workers would not do us
-        # any good due to the Global Interpreter Lock)
-        executor = ThreadPoolExecutor(max_workers=1)
-
-    try:
-        loop.run_until_complete(
-            schedule_formatting(
-                sources=sources,
-                fast=fast,
-                write_back=write_back,
-                mode=mode,
-                report=report,
-                loop=loop,
-                executor=executor,
-            )
-        )
-    finally:
-        shutdown(loop)
-        if executor is not None:
-            executor.shutdown()
-
-
-async def schedule_formatting(
-    sources: Set[Path],
-    fast: bool,
-    write_back: WriteBack,
-    mode: Mode,
-    report: "Report",
-    loop: asyncio.AbstractEventLoop,
-    executor: Executor,
-) -> None:
-    """Run formatting of `sources` in parallel using the provided `executor`.
-
-    (Use ProcessPoolExecutors for actual parallelism.)
-
-    `write_back`, `fast`, and `mode` options are passed to
-    :func:`format_file_in_place`.
-    """
-    cache: Cache = {}
-    if write_back not in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
-        cache = read_cache(mode)
-        sources, cached = filter_cached(cache, sources)
-        for src in sorted(cached):
-            report.done(src, Changed.CACHED)
-    if not sources:
-        return
-
-    cancelled = []
-    sources_to_cache = []
-    lock = None
-    if write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
-        # For diff output, we need locks to ensure we don't interleave output
-        # from different processes.
-        manager = Manager()
-        lock = manager.Lock()
-    tasks = {
-        asyncio.ensure_future(
-            loop.run_in_executor(
-                executor, format_file_in_place, src, fast, mode, write_back, lock
-            )
-        ): src
-        for src in sorted(sources)
-    }
-    pending = tasks.keys()
-    try:
-        loop.add_signal_handler(signal.SIGINT, cancel, pending)
-        loop.add_signal_handler(signal.SIGTERM, cancel, pending)
-    except NotImplementedError:
-        # There are no good alternatives for these on Windows.
-        pass
-    while pending:
-        done, _ = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
-        for task in done:
-            src = tasks.pop(task)
-            if task.cancelled():
-                cancelled.append(task)
-            elif task.exception():
-                report.failed(src, str(task.exception()))
-            else:
-                changed = Changed.YES if task.result() else Changed.NO
-                # If the file was written back or was successfully checked as
-                # well-formatted, store this information in the cache.
-                if write_back is WriteBack.YES or (
-                    write_back is WriteBack.CHECK and changed is Changed.NO
-                ):
-                    sources_to_cache.append(src)
-                report.done(src, changed)
-    if cancelled:
-        if sys.version_info >= (3, 7):
-            await asyncio.gather(*cancelled, return_exceptions=True)
-        else:
-            await asyncio.gather(*cancelled, loop=loop, return_exceptions=True)
-    if sources_to_cache:
-        write_cache(cache, sources_to_cache, mode)
-
-
 def format_file_in_place(
     src: Path,
     fast: bool,
@@ -887,7 +804,10 @@ def format_file_in_place(
         mode = replace(mode, is_ipynb=True)
 
     then = datetime.utcfromtimestamp(src.stat().st_mtime)
+    header = b""
     with open(src, "rb") as buf:
+        if mode.skip_source_first_line:
+            header = buf.readline()
         src_contents, encoding, newline = decode_bytes(buf.read())
     try:
         dst_contents = format_file_contents(src_contents, fast=fast, mode=mode)
@@ -897,6 +817,8 @@ def format_file_in_place(
         raise ValueError(
             f"File '{src}' cannot be parsed as valid Jupyter notebook."
         ) from None
+    src_contents = header.decode(encoding) + src_contents
+    dst_contents = header.decode(encoding) + dst_contents
 
     if write_back == WriteBack.YES:
         with open(src, "w", encoding=encoding, newline=newline) as f:
@@ -998,7 +920,7 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
     valid by calling :func:`assert_equivalent` and :func:`assert_stable` on it.
     `mode` is passed to :func:`format_str`.
     """
-    if not src_contents.strip():
+    if not mode.preview and not src_contents.strip():
         raise NothingChanged
 
     if mode.is_ipynb:
@@ -1095,6 +1017,9 @@ def format_ipynb_string(src_contents: str, *, fast: bool, mode: Mode) -> FileCon
     Operate cell-by-cell, only on code cells, only for Python notebooks.
     If the ``.ipynb`` originally had a trailing newline, it'll be preserved.
     """
+    if mode.preview and not src_contents:
+        raise NothingChanged
+
     trailing_newline = src_contents[-1] == "\n"
     modified = False
     nb = json.loads(src_contents)
@@ -1159,31 +1084,41 @@ def format_str(src_contents: str, *, mode: Mode) -> str:
 
 def _format_str_once(src_contents: str, *, mode: Mode) -> str:
     src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)
-    dst_contents = []
-    future_imports = get_future_imports(src_node)
+    dst_blocks: List[LinesBlock] = []
     if mode.target_versions:
         versions = mode.target_versions
     else:
+        future_imports = get_future_imports(src_node)
         versions = detect_target_versions(src_node, future_imports=future_imports)
 
-    normalize_fmt_off(src_node)
+    normalize_fmt_off(src_node, preview=mode.preview)
     lines = LineGenerator(mode=mode)
-    elt = EmptyLineTracker(is_pyi=mode.is_pyi)
-    empty_line = Line(mode=mode)
-    after = 0
+    elt = EmptyLineTracker(mode=mode)
     split_line_features = {
         feature
         for feature in {Feature.TRAILING_COMMA_IN_CALL, Feature.TRAILING_COMMA_IN_DEF}
         if supports_feature(versions, feature)
     }
+    block: Optional[LinesBlock] = None
     for current_line in lines.visit(src_node):
-        dst_contents.append(str(empty_line) * after)
-        before, after = elt.maybe_empty_lines(current_line)
-        dst_contents.append(str(empty_line) * before)
+        block = elt.maybe_empty_lines(current_line)
+        dst_blocks.append(block)
         for line in transform_line(
             current_line, mode=mode, features=split_line_features
         ):
-            dst_contents.append(str(line))
+            block.content_lines.append(str(line))
+    if dst_blocks:
+        dst_blocks[-1].after = 0
+    dst_contents = []
+    for block in dst_blocks:
+        dst_contents.extend(block.all_lines())
+    if mode.preview and not dst_contents:
+        # Use decode_bytes to retrieve the correct source newline (CRLF or LF),
+        # and check if normalized_content has more than one line
+        normalized_content, _, newline = decode_bytes(src_contents.encode("utf-8"))
+        if "\n" in normalized_content:
+            return newline
+        return ""
     return "".join(dst_contents)
 
 
@@ -1211,6 +1146,7 @@ def get_features_used(  # noqa: C901
 
     Currently looking for:
     - f-strings;
+    - self-documenting expressions in f-strings (f"{x=}");
     - underscores in numeric literals;
     - trailing commas after * or ** in function signatures and calls;
     - positional only arguments in function signatures and lambdas;
@@ -1232,9 +1168,13 @@ def get_features_used(  # noqa: C901
             value_head = n.value[:2]
             if value_head in {'f"', 'F"', "f'", "F'", "rf", "fr", "RF", "FR"}:
                 features.add(Feature.F_STRINGS)
+                if Feature.DEBUG_F_STRINGS not in features:
+                    for span_beg, span_end in iter_fexpr_spans(n.value):
+                        if n.value[span_beg : span_end - 1].rstrip().endswith("="):
+                            features.add(Feature.DEBUG_F_STRINGS)
+                            break
 
-        elif n.type == token.NUMBER:
-            assert isinstance(n, Leaf)
+        elif is_number_token(n):
             if "_" in n.value:
                 features.add(Feature.NUMERIC_UNDERSCORES)
 
@@ -1288,6 +1228,25 @@ def get_features_used(  # noqa: C901
             and n.children[3].type == syms.testlist_star_expr
         ):
             features.add(Feature.ANN_ASSIGN_EXTENDED_RHS)
+
+        elif (
+            n.type == syms.except_clause
+            and len(n.children) >= 2
+            and n.children[1].type == token.STAR
+        ):
+            features.add(Feature.EXCEPT_STAR)
+
+        elif n.type in {syms.subscriptlist, syms.trailer} and any(
+            child.type == syms.star_expr for child in n.children
+        ):
+            features.add(Feature.VARIADIC_GENERICS)
+
+        elif (
+            n.type == syms.tname_star
+            and len(n.children) == 3
+            and n.children[2].type == syms.star_expr
+        ):
+            features.add(Feature.VARIADIC_GENERICS)
 
     return features
 
@@ -1358,10 +1317,10 @@ def assert_equivalent(src: str, dst: str) -> None:
         src_ast = parse_ast(src)
     except Exception as exc:
         raise AssertionError(
-            f"cannot use --safe with this file; failed to parse source file AST: "
+            "cannot use --safe with this file; failed to parse source file AST: "
             f"{exc}\n"
-            f"This could be caused by running Black with an older Python version "
-            f"that does not support new syntax used in your source file."
+            "This could be caused by running Black with an older Python version "
+            "that does not support new syntax used in your source file."
         ) from exc
 
     try:
@@ -1380,7 +1339,7 @@ def assert_equivalent(src: str, dst: str) -> None:
         log = dump_to_file(diff(src_ast_str, dst_ast_str, "src", "dst"))
         raise AssertionError(
             "INTERNAL ERROR: Black produced code that is not equivalent to the"
-            f" source.  Please report a bug on "
+            " source.  Please report a bug on "
             f"https://github.com/psf/black/issues.  This diff might be helpful: {log}"
         ) from None
 
@@ -1424,22 +1383,37 @@ def patch_click() -> None:
     file paths is minimal since it's Python source code.  Moreover, this crash was
     spurious on Python 3.7 thanks to PEP 538 and PEP 540.
     """
+    modules: List[Any] = []
     try:
         from click import core
-        from click import _unicodefun
-    except ModuleNotFoundError:
-        return
+    except ImportError:
+        pass
+    else:
+        modules.append(core)
+    try:
+        # Removed in Click 8.1.0 and newer; we keep this around for users who have
+        # older versions installed.
+        from click import _unicodefun  # type: ignore
+    except ImportError:
+        pass
+    else:
+        modules.append(_unicodefun)
 
-    for module in (core, _unicodefun):
+    for module in modules:
         if hasattr(module, "_verify_python3_env"):
-            module._verify_python3_env = lambda: None  # type: ignore
+            module._verify_python3_env = lambda: None
         if hasattr(module, "_verify_python_env"):
-            module._verify_python_env = lambda: None  # type: ignore
+            module._verify_python_env = lambda: None
 
 
 def patched_main() -> None:
-    maybe_install_uvloop()
-    freeze_support()
+    # PyInstaller patches multiprocessing to need freeze_support() even in non-Windows
+    # environments so just assume we always need to call it if frozen.
+    if getattr(sys, "frozen", False):
+        from multiprocessing import freeze_support
+
+        freeze_support()
+
     patch_click()
     main()
 

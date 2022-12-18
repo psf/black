@@ -23,7 +23,7 @@ import sys
 import zipfile
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Optional, Tuple
+from typing import Any
 
 import click
 import urllib3
@@ -55,7 +55,7 @@ def set_output(name: str, value: str) -> None:
     print(f"::set-output name={name}::{value}")
 
 
-def http_get(url: str, is_json: bool = True, **kwargs: Any) -> Any:
+def http_get(url: str, *, is_json: bool = True, **kwargs: Any) -> Any:
     headers = kwargs.get("headers") or {}
     headers["User-Agent"] = USER_AGENT
     if "github" in url:
@@ -78,10 +78,10 @@ def http_get(url: str, is_json: bool = True, **kwargs: Any) -> Any:
     return data
 
 
-def get_branch_or_tag_revision(sha: str = "main") -> str:
+def get_main_revision() -> str:
     data = http_get(
         f"https://api.github.com/repos/{REPO}/commits",
-        fields={"per_page": "1", "sha": sha},
+        fields={"per_page": "1", "sha": "main"},
     )
     assert isinstance(data[0]["sha"], str)
     return data[0]["sha"]
@@ -100,53 +100,18 @@ def get_pypi_version() -> Version:
     return sorted_versions[0]
 
 
-def resolve_custom_ref(ref: str) -> Tuple[str, str]:
-    if ref == ".pypi":
-        # Special value to get latest PyPI version.
-        version = str(get_pypi_version())
-        return version, f"git checkout {version}"
-
-    if ref.startswith(".") and ref[1:].isnumeric():
-        # Special format to get a PR.
-        number = int(ref[1:])
-        revision = get_pr_revision(number)
-        return (
-            f"pr-{number}-{revision[:SHA_LENGTH]}",
-            f"gh pr checkout {number} && git merge origin/main",
-        )
-
-    # Alright, it's probably a branch, tag, or a commit SHA, let's find out!
-    revision = get_branch_or_tag_revision(ref)
-    # We're cutting the revision short as we might be operating on a short commit SHA.
-    if revision == ref or revision[: len(ref)] == ref:
-        # It's *probably* a commit as the resolved SHA isn't different from the REF.
-        return revision[:SHA_LENGTH], f"git checkout {revision}"
-
-    # It's *probably* a pre-existing branch or tag, yay!
-    return f"{ref}-{revision[:SHA_LENGTH]}", f"git checkout {revision}"
-
-
 @click.group()
 def main() -> None:
     pass
 
 
 @main.command("config", help="Acquire run configuration and metadata.")
-@click.argument(
-    "event", type=click.Choice(["push", "pull_request", "workflow_dispatch"])
-)
-@click.argument("custom_baseline", required=False)
-@click.argument("custom_target", required=False)
-@click.option("--baseline-args", default="")
-def config(
-    event: Literal["push", "pull_request", "workflow_dispatch"],
-    custom_baseline: Optional[str],
-    custom_target: Optional[str],
-    baseline_args: str,
-) -> None:
+@click.argument("event", type=click.Choice(["push", "pull_request"]))
+def config(event: Literal["push", "pull_request"]) -> None:
     import diff_shades
 
     if event == "push":
+        jobs = [{"mode": "preview-changes", "force-flag": "--force-preview-style"}]
         # Push on main, let's use PyPI Black as the baseline.
         baseline_name = str(get_pypi_version())
         baseline_cmd = f"git checkout {baseline_name}"
@@ -156,11 +121,14 @@ def config(
         target_cmd = f"git checkout {target_rev}"
 
     elif event == "pull_request":
+        jobs = [
+            {"mode": "preview-changes", "force-flag": "--force-preview-style"},
+            {"mode": "assert-no-changes", "force-flag": "--force-stable-style"},
+        ]
         # PR, let's use main as the baseline.
-        baseline_rev = get_branch_or_tag_revision()
+        baseline_rev = get_main_revision()
         baseline_name = "main-" + baseline_rev[:SHA_LENGTH]
         baseline_cmd = f"git checkout {baseline_rev}"
-
         pr_ref = os.getenv("GITHUB_REF")
         assert pr_ref is not None
         pr_num = int(pr_ref[10:-6])
@@ -168,27 +136,20 @@ def config(
         target_name = f"pr-{pr_num}-{pr_rev[:SHA_LENGTH]}"
         target_cmd = f"gh pr checkout {pr_num} && git merge origin/main"
 
-        # These are only needed for the PR comment.
-        set_output("baseline-sha", baseline_rev)
-        set_output("target-sha", pr_rev)
-    else:
-        assert custom_baseline is not None and custom_target is not None
-        baseline_name, baseline_cmd = resolve_custom_ref(custom_baseline)
-        target_name, target_cmd = resolve_custom_ref(custom_target)
-        if baseline_name == target_name:
-            # Alright we're using the same revisions but we're (hopefully) using
-            # different command line arguments, let's support that too.
-            baseline_name += "-1"
-            target_name += "-2"
+    env = f"{platform.system()}-{platform.python_version()}-{diff_shades.__version__}"
+    for entry in jobs:
+        entry["baseline-analysis"] = f"{entry['mode']}-{baseline_name}.json"
+        entry["baseline-setup-cmd"] = baseline_cmd
+        entry["target-analysis"] = f"{entry['mode']}-{target_name}.json"
+        entry["target-setup-cmd"] = target_cmd
+        entry["baseline-cache-key"] = f"{env}-{baseline_name}-{entry['mode']}"
+        if event == "pull_request":
+            # These are only needed for the PR comment.
+            entry["baseline-sha"] = baseline_rev
+            entry["target-sha"] = pr_rev
 
-    set_output("baseline-analysis", baseline_name + ".json")
-    set_output("baseline-setup-cmd", baseline_cmd)
-    set_output("target-analysis", target_name + ".json")
-    set_output("target-setup-cmd", target_cmd)
-
-    key = f"{platform.system()}-{platform.python_version()}-{diff_shades.__version__}"
-    key += f"-{baseline_name}-{baseline_args.encode('utf-8').hex()}"
-    set_output("baseline-cache-key", key)
+    set_output("matrix", json.dumps(jobs, indent=None))
+    pprint.pprint(jobs)
 
 
 @main.command("comment-body", help="Generate the body for a summary PR comment.")
@@ -238,15 +199,13 @@ def comment_details(run_id: str) -> None:
 
     set_output("needs-comment", "true")
     jobs = http_get(data["jobs_url"])["jobs"]
-    assert len(jobs) == 1, "multiple jobs not supported nor tested"
-    job = jobs[0]
-    steps = {s["name"]: s["number"] for s in job["steps"]}
-    diff_step = steps[DIFF_STEP_NAME]
-    diff_url = job["html_url"] + f"#step:{diff_step}:1"
+    job = next(j for j in jobs if j["name"] == "analysis / preview-changes")
+    diff_step = next(s for s in job["steps"] if s["name"] == DIFF_STEP_NAME)
+    diff_url = job["html_url"] + f"#step:{diff_step['number']}:1"
 
-    artifacts_data = http_get(data["artifacts_url"])["artifacts"]
-    artifacts = {a["name"]: a["archive_download_url"] for a in artifacts_data}
-    comment_url = artifacts[COMMENT_FILE]
+    artifacts = http_get(data["artifacts_url"])["artifacts"]
+    comment_artifact = next(a for a in artifacts if a["name"] == COMMENT_FILE)
+    comment_url = comment_artifact["archive_download_url"]
     comment_zip = BytesIO(http_get(comment_url, is_json=False))
     with zipfile.ZipFile(comment_zip) as zfile:
         with zfile.open(COMMENT_FILE) as rf:

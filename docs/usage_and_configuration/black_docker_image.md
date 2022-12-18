@@ -1,7 +1,7 @@
 # Black Docker image
 
-Official _Black_ Docker images are available on Docker Hub:
-https://hub.docker.com/r/pyfound/black
+Official _Black_ Docker images are available on
+[Docker Hub](https://hub.docker.com/r/pyfound/black).
 
 _Black_ images with the following tags are available:
 
