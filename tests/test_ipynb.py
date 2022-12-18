@@ -17,8 +17,6 @@ from black import (
     format_file_in_place,
     main,
 )
-import pytest
-from _pytest.monkeypatch import MonkeyPatch
 from black.handle_ipynb_magics import jupyter_dependencies_are_installed
 from tests.util import DATA_DIR, TOML_CONFIG_DIR, get_case_path, read_jupyter_notebook
 
