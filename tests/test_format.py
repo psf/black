@@ -14,6 +14,7 @@ from tests.util import (
     read_data,
 )
 
+
 @pytest.fixture(autouse=True)
 def patch_dump_to_file(request: Any) -> Iterator[None]:
     with patch("black.dump_to_file", dump_to_stderr):

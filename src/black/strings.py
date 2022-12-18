@@ -5,7 +5,7 @@ Simple formatting on strings. Further string formatting code is in trans.py.
 import re
 import sys
 from functools import lru_cache
-from typing import List, Pattern, Match
+from typing import List, Match, Pattern
 
 from blib2to3.pytree import Leaf
 
