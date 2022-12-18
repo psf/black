@@ -42,20 +42,6 @@ def test_preview_format(filename: str) -> None:
     check_file("preview", filename, black.Mode(preview=True))
 
 
-@pytest.mark.parametrize("filename", all_data_cases("preview_39"))
-def test_preview_minimum_python_39_format(filename: str) -> None:
-    source, expected = read_data("preview_39", filename)
-    mode = black.Mode(preview=True)
-    assert_format(source, expected, mode, minimum_version=(3, 9))
-
-
-@pytest.mark.parametrize("filename", all_data_cases("preview_310"))
-def test_preview_minimum_python_310_format(filename: str) -> None:
-    source, expected = read_data("preview_310", filename)
-    mode = black.Mode(preview=True)
-    assert_format(source, expected, mode, minimum_version=(3, 10))
-
-
 # =============== #
 # Complex cases
 # ============= #
