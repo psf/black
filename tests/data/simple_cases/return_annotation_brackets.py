@@ -87,10 +87,6 @@ def foo() -> tuple[loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
 def foo() -> tuple[int, int, int,]:
     return 2
 
-# Long string example
-def frobnicate() -> "ThisIsTrulyUnreasonablyExtremelyLongClassName | list[ThisIsTrulyUnreasonablyExtremelyLongClassName]":
-    pass
-
 # output
 # Control
 def double(a: int) -> int:
@@ -212,11 +208,3 @@ def foo() -> (
     ]
 ):
     return 2
-
-
-# Long string example
-def frobnicate() -> (
-    "ThisIsTrulyUnreasonablyExtremelyLongClassName |"
-    " list[ThisIsTrulyUnreasonablyExtremelyLongClassName]"
-):
-    pass

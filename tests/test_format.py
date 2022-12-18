@@ -31,17 +31,15 @@ def check_file(
 @pytest.mark.filterwarnings("ignore:invalid escape sequence.*:DeprecationWarning")
 @pytest.mark.parametrize("filename", all_data_cases("simple_cases"))
 def test_simple_format(filename: str) -> None:
-    check_file("simple_cases", filename, DEFAULT_MODE)
+    magic_trailing_comma = filename != "skip_magic_trailing_comma"
+    check_file(
+        "simple_cases", filename, black.Mode(magic_trailing_comma=magic_trailing_comma)
+    )
 
 
 @pytest.mark.parametrize("filename", all_data_cases("preview"))
 def test_preview_format(filename: str) -> None:
-    magic_trailing_comma = filename != "skip_magic_trailing_comma"
-    check_file(
-        "preview",
-        filename,
-        black.Mode(preview=True, magic_trailing_comma=magic_trailing_comma),
-    )
+    check_file("preview", filename, black.Mode(preview=True))
 
 
 @pytest.mark.parametrize("filename", all_data_cases("preview_39"))
