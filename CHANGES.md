@@ -35,6 +35,9 @@
 
 - Upgrade mypyc from `0.971` to `0.991` so mypycified _Black_ can be built on armv7
   (#3380)
+- Drop specific support for the `tomli` requirement on 3.11 alpha releases, working
+  around a bug that would cause the requirement not to be installed on any non-final
+  Python releases (#3448)
 
 ### Parser
 
