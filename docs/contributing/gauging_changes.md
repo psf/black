@@ -7,36 +7,52 @@ It's recommended you evaluate the quantifiable changes your _Black_ formatting
 modification causes before submitting a PR. Think about if the change seems disruptive
 enough to cause frustration to projects that are already "black formatted".
 
-## black-primer
+## diff-shades
 
-`black-primer` is a tool built for CI (and humans) to have _Black_ `--check` a number of
-Git accessible projects in parallel. (configured in `primer.json`) _(A PR will be
-accepted to add Mercurial support.)_
+diff-shades is a tool that runs _Black_ across a list of open-source projects recording
+the results. The main highlight feature of diff-shades is being able to compare two
+revisions of _Black_. This is incredibly useful as it allows us to see what exact
+changes will occur, say merging a certain PR.
 
-### Run flow
+For more information, please see the [diff-shades documentation][diff-shades].
 
-- Ensure we have a `black` + `git` in PATH
-- Load projects from `primer.json`
-- Run projects in parallel with `--worker` workers (defaults to CPU count / 2)
-  - Checkout projects
-  - Run black and record result
-  - Clean up repository checkout _(can optionally be disabled via `--keep`)_
-- Display results summary to screen
-- Default to cleaning up `--work-dir` (which defaults to tempfile schemantics)
-- Return
-  - 0 for successful run
-  - \< 0 for environment / internal error
-  - \> 0 for each project with an error
+### CI integration
 
-### Speed up runs 🏎
+diff-shades is also the tool behind the "diff-shades results comparing ..." /
+"diff-shades reports zero changes ..." comments on PRs. The project has a GitHub Actions
+workflow that analyzes and compares two revisions of _Black_ according to these rules:
 
-If you're running locally yourself to test black on lots of code try:
+|                       | Baseline revision       | Target revision              |
+| --------------------- | ----------------------- | ---------------------------- |
+| On PRs                | latest commit on `main` | PR commit with `main` merged |
+| On pushes (main only) | latest PyPI version     | the pushed commit            |
 
-- Using `-k` / `--keep` + `-w` / `--work-dir` so you don't have to re-checkout the repo
-  each run
+For pushes to main, there's only one analysis job named `preview-changes` where the
+preview style is used for all projects.
 
-### CLI arguments
+For PRs they get one more analysis job: `assert-no-changes`. It's similar to
+`preview-changes` but runs with the stable code style. It will fail if changes were
+made. This makes sure code won't be reformatted again and again within the same year in
+accordance to Black's stability policy.
 
-```{program-output} black-primer --help
+Additionally for PRs, a PR comment will be posted embedding a summary of the preview
+changes and links to further information. If there's a pre-existing diff-shades comment,
+it'll be updated instead the next time the workflow is triggered on the same PR.
 
+```{note}
+The `preview-changes` job will only fail intentionally if while analyzing a file failed to
+format. Otherwise a failure indicates a bug in the workflow.
 ```
+
+The workflow uploads several artifacts upon completion:
+
+- The raw analyses (.json)
+- HTML diffs (.html)
+- `.pr-comment.json` (if triggered by a PR)
+
+The last one is downloaded by the `diff-shades-comment` workflow and shouldn't be
+downloaded locally. The HTML diffs come in handy for push-based where there's no PR to
+post a comment. And the analyses exist just in case you want to do further analysis
+using the collected data locally.
+
+[diff-shades]: https://github.com/ichard26/diff-shades#readme

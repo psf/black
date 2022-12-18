@@ -25,13 +25,10 @@ def format_scientific_notation(text: str) -> str:
     return f"{before}e{sign}{after}"
 
 
-def format_long_or_complex_number(text: str) -> str:
-    """Formats a long or complex string like `10L` or `10j`"""
+def format_complex_number(text: str) -> str:
+    """Formats a complex string like `10j`"""
     number = text[:-1]
     suffix = text[-1]
-    # Capitalize in "2L" because "l" looks too similar to "1".
-    if suffix == "l":
-        suffix = "L"
     return f"{format_float_or_int_string(number)}{suffix}"
 
 
@@ -47,9 +44,7 @@ def format_float_or_int_string(text: str) -> str:
 def normalize_numeric_literal(leaf: Leaf) -> None:
     """Normalizes numeric (float, int, and complex) literals.
 
-    All letters used in the representation are normalized to lowercase (except
-    in Python 2 long literals).
-    """
+    All letters used in the representation are normalized to lowercase."""
     text = leaf.value.lower()
     if text.startswith(("0o", "0b")):
         # Leave octal and binary literals alone.
@@ -58,8 +53,8 @@ def normalize_numeric_literal(leaf: Leaf) -> None:
         text = format_hex(text)
     elif "e" in text:
         text = format_scientific_notation(text)
-    elif text.endswith(("j", "l")):
-        text = format_long_or_complex_number(text)
+    elif text.endswith("j"):
+        text = format_complex_number(text)
     else:
         text = format_float_or_int_string(text)
     leaf.value = text

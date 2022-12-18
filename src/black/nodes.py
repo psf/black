@@ -3,33 +3,24 @@ blib2to3 Node/Leaf transformation-related utility functions.
 """
 
 import sys
-from typing import (
-    Collection,
-    Generic,
-    Iterator,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    TypeVar,
-    Union,
-)
+from typing import Generic, Iterator, List, Optional, Set, Tuple, TypeVar, Union
 
 if sys.version_info >= (3, 8):
     from typing import Final
 else:
     from typing_extensions import Final
+if sys.version_info >= (3, 10):
+    from typing import TypeGuard
+else:
+    from typing_extensions import TypeGuard
 
 from mypy_extensions import mypyc_attr
 
-# lib2to3 fork
-from blib2to3.pytree import Node, Leaf, type_repr
-from blib2to3 import pygram
-from blib2to3.pgen2 import token
-
 from black.cache import CACHE_DIR
 from black.strings import has_triple_quotes
-
+from blib2to3 import pygram
+from blib2to3.pgen2 import token
+from blib2to3.pytree import NL, Leaf, Node, type_repr
 
 pygram.initialize(CACHE_DIR)
 syms: Final = pygram.python_symbols
@@ -117,6 +108,7 @@ TEST_DESCENDANTS: Final = {
     syms.term,
     syms.power,
 }
+TYPED_NAMES: Final = {syms.tname, syms.tname_star}
 ASSIGNMENTS: Final = {
     "=",
     "+=",
@@ -240,6 +232,14 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
                     # that, too.
                     return prevp.prefix
 
+        elif (
+            prevp.type == token.STAR
+            and parent_type(prevp) == syms.star_expr
+            and parent_type(prevp.parent) == syms.subscriptlist
+        ):
+            # No space between typevar tuples.
+            return NO
+
         elif prevp.type in VARARGS_SPECIALS:
             if is_vararg(prevp, within=VARARGS_PARENTS | UNPACKING_PARENTS):
                 return NO
@@ -255,16 +255,6 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
         ):
             return NO
 
-        elif (
-            prevp.type == token.RIGHTSHIFT
-            and prevp.parent
-            and prevp.parent.type == syms.shift_expr
-            and prevp.prev_sibling
-            and prevp.prev_sibling.type == token.NAME
-            and prevp.prev_sibling.value == "print"  # type: ignore
-        ):
-            # Python 2 print chevron
-            return NO
         elif prevp.type == token.AT and p.parent and p.parent.type == syms.decorator:
             # no space in decorators
             return NO
@@ -288,7 +278,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
             return NO
 
         if t == token.EQUAL:
-            if prev.type != syms.tname:
+            if prev.type not in TYPED_NAMES:
                 return NO
 
         elif prev.type == token.EQUAL:
@@ -299,7 +289,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
         elif prev.type != token.COMMA:
             return NO
 
-    elif p.type == syms.tname:
+    elif p.type in TYPED_NAMES:
         # type names
         if not prev:
             prevp = preceding_leaf(p)
@@ -312,12 +302,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
             return NO
 
         if not prev:
-            if t == token.DOT:
-                prevp = preceding_leaf(p)
-                if not prevp or prevp.type != token.NUMBER:
-                    return NO
-
-            elif t == token.LSQB:
+            if t == token.DOT or t == token.LSQB:
                 return NO
 
         elif prev.type != token.COMMA:
@@ -413,6 +398,10 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
     elif p.type == syms.sliceop:
         return NO
 
+    elif p.type == syms.except_clause:
+        if t == token.STAR:
+            return NO
+
     return SPACE
 
 
@@ -448,27 +437,6 @@ def prev_siblings_are(node: Optional[LN], tokens: List[Optional[NodeType]]) -> b
     if node.type != tokens[-1]:
         return False
     return prev_siblings_are(node.prev_sibling, tokens[:-1])
-
-
-def last_two_except(leaves: List[Leaf], omit: Collection[LeafID]) -> Tuple[Leaf, Leaf]:
-    """Return (penultimate, last) leaves skipping brackets in `omit` and contents."""
-    stop_after: Optional[Leaf] = None
-    last: Optional[Leaf] = None
-    for leaf in reversed(leaves):
-        if stop_after:
-            if leaf is stop_after:
-                stop_after = None
-            continue
-
-        if last:
-            return leaf, last
-
-        if id(leaf) in omit:
-            stop_after = leaf.opening_bracket
-        else:
-            last = leaf
-    else:
-        raise LookupError("Last two leaves were also skipped")
 
 
 def parent_type(node: Optional[LN]) -> Optional[NodeType]:
@@ -534,23 +502,24 @@ def container_of(leaf: Leaf) -> LN:
     return container
 
 
-def first_leaf_column(node: Node) -> Optional[int]:
-    """Returns the column of the first leaf child of a node."""
-    for child in node.children:
-        if isinstance(child, Leaf):
-            return child.column
-    return None
+def first_leaf_of(node: LN) -> Optional[Leaf]:
+    """Returns the first leaf of the node tree."""
+    if isinstance(node, Leaf):
+        return node
+    if node.children:
+        return first_leaf_of(node.children[0])
+    else:
+        return None
 
 
-def first_child_is_arith(node: Node) -> bool:
-    """Whether first child is an arithmetic or a binary arithmetic expression"""
-    expr_types = {
+def is_arith_like(node: LN) -> bool:
+    """Whether node is an arithmetic or a binary arithmetic expression"""
+    return node.type in {
         syms.arith_expr,
         syms.shift_expr,
         syms.xor_expr,
         syms.and_expr,
     }
-    return bool(node.children and node.children[0].type in expr_types)
 
 
 def is_docstring(leaf: Leaf) -> bool:
@@ -594,9 +563,14 @@ def is_one_tuple(node: LN) -> bool:
     )
 
 
-def is_one_tuple_between(opening: Leaf, closing: Leaf, leaves: List[Leaf]) -> bool:
-    """Return True if content between `opening` and `closing` looks like a one-tuple."""
-    if opening.type != token.LPAR and closing.type != token.RPAR:
+def is_one_sequence_between(
+    opening: Leaf,
+    closing: Leaf,
+    leaves: List[Leaf],
+    brackets: Tuple[int, int] = (token.LPAR, token.RPAR),
+) -> bool:
+    """Return True if content between `opening` and `closing` is a one-sequence."""
+    if (opening.type, closing.type) != brackets:
         return False
 
     depth = closing.bracket_depth + 1
@@ -687,7 +661,7 @@ def is_yield(node: LN) -> bool:
     if node.type == syms.yield_expr:
         return True
 
-    if node.type == token.NAME and node.value == "yield":  # type: ignore
+    if is_name_token(node) and node.value == "yield":
         return True
 
     if node.type != syms.atom:
@@ -854,3 +828,23 @@ def ensure_visible(leaf: Leaf) -> None:
         leaf.value = "("
     elif leaf.type == token.RPAR:
         leaf.value = ")"
+
+
+def is_name_token(nl: NL) -> TypeGuard[Leaf]:
+    return nl.type == token.NAME
+
+
+def is_lpar_token(nl: NL) -> TypeGuard[Leaf]:
+    return nl.type == token.LPAR
+
+
+def is_rpar_token(nl: NL) -> TypeGuard[Leaf]:
+    return nl.type == token.RPAR
+
+
+def is_string_token(nl: NL) -> TypeGuard[Leaf]:
+    return nl.type == token.STRING
+
+
+def is_number_token(nl: NL) -> TypeGuard[Leaf]:
+    return nl.type == token.NUMBER

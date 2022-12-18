@@ -138,17 +138,21 @@ def assert_is_leaf_string(string: str) -> None:
     ), f"{set(string[:quote_idx])} is NOT a subset of {set(STRING_PREFIX_CHARS)}."
 
 
-def normalize_string_prefix(s: str, remove_u_prefix: bool = False) -> str:
-    """Make all string prefixes lowercase.
-
-    If remove_u_prefix is given, also removes any u prefix from the string.
-    """
+def normalize_string_prefix(s: str) -> str:
+    """Make all string prefixes lowercase."""
     match = STRING_PREFIX_RE.match(s)
     assert match is not None, f"failed to match string {s!r}"
     orig_prefix = match.group(1)
-    new_prefix = orig_prefix.replace("F", "f").replace("B", "b").replace("U", "u")
-    if remove_u_prefix:
-        new_prefix = new_prefix.replace("u", "")
+    new_prefix = (
+        orig_prefix.replace("F", "f")
+        .replace("B", "b")
+        .replace("U", "")
+        .replace("u", "")
+    )
+
+    # Python syntax guarantees max 2 prefixes and that one of them is "r"
+    if len(new_prefix) == 2 and "r" != new_prefix[0].lower():
+        new_prefix = new_prefix[::-1]
     return f"{new_prefix}{match.group(2)}"
 
 

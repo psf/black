@@ -4,16 +4,23 @@ Mostly around Python language feature support per version and Black configuratio
 chosen by the user.
 """
 
+import sys
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, auto
+from hashlib import sha256
 from operator import attrgetter
 from typing import Dict, Set
+from warnings import warn
+
+if sys.version_info < (3, 8):
+    from typing_extensions import Final
+else:
+    from typing import Final
 
 from black.const import DEFAULT_LINE_LENGTH
 
 
 class TargetVersion(Enum):
-    PY27 = 2
     PY33 = 3
     PY34 = 4
     PY35 = 5
@@ -22,14 +29,10 @@ class TargetVersion(Enum):
     PY38 = 8
     PY39 = 9
     PY310 = 10
-
-    def is_python2(self) -> bool:
-        return self is TargetVersion.PY27
+    PY311 = 11
 
 
 class Feature(Enum):
-    # All string literals are unicode
-    UNICODE_LITERALS = 1
     F_STRINGS = 2
     NUMERIC_UNDERSCORES = 3
     TRAILING_COMMA_IN_CALL = 4
@@ -42,40 +45,27 @@ class Feature(Enum):
     POS_ONLY_ARGUMENTS = 9
     RELAXED_DECORATORS = 10
     PATTERN_MATCHING = 11
+    UNPACKING_ON_FLOW = 12
+    ANN_ASSIGN_EXTENDED_RHS = 13
+    EXCEPT_STAR = 14
+    VARIADIC_GENERICS = 15
+    DEBUG_F_STRINGS = 16
     FORCE_OPTIONAL_PARENTHESES = 50
 
-    # temporary for Python 2 deprecation
-    PRINT_STMT = 200
-    EXEC_STMT = 201
-    AUTOMATIC_PARAMETER_UNPACKING = 202
-    COMMA_STYLE_EXCEPT = 203
-    COMMA_STYLE_RAISE = 204
-    LONG_INT_LITERAL = 205
-    OCTAL_INT_LITERAL = 206
-    BACKQUOTE_REPR = 207
+    # __future__ flags
+    FUTURE_ANNOTATIONS = 51
+
+
+FUTURE_FLAG_TO_FEATURE: Final = {
+    "annotations": Feature.FUTURE_ANNOTATIONS,
+}
 
 
 VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
-    TargetVersion.PY27: {
-        Feature.ASYNC_IDENTIFIERS,
-        Feature.PRINT_STMT,
-        Feature.EXEC_STMT,
-        Feature.AUTOMATIC_PARAMETER_UNPACKING,
-        Feature.COMMA_STYLE_EXCEPT,
-        Feature.COMMA_STYLE_RAISE,
-        Feature.LONG_INT_LITERAL,
-        Feature.OCTAL_INT_LITERAL,
-        Feature.BACKQUOTE_REPR,
-    },
-    TargetVersion.PY33: {Feature.UNICODE_LITERALS, Feature.ASYNC_IDENTIFIERS},
-    TargetVersion.PY34: {Feature.UNICODE_LITERALS, Feature.ASYNC_IDENTIFIERS},
-    TargetVersion.PY35: {
-        Feature.UNICODE_LITERALS,
-        Feature.TRAILING_COMMA_IN_CALL,
-        Feature.ASYNC_IDENTIFIERS,
-    },
+    TargetVersion.PY33: {Feature.ASYNC_IDENTIFIERS},
+    TargetVersion.PY34: {Feature.ASYNC_IDENTIFIERS},
+    TargetVersion.PY35: {Feature.TRAILING_COMMA_IN_CALL, Feature.ASYNC_IDENTIFIERS},
     TargetVersion.PY36: {
-        Feature.UNICODE_LITERALS,
         Feature.F_STRINGS,
         Feature.NUMERIC_UNDERSCORES,
         Feature.TRAILING_COMMA_IN_CALL,
@@ -83,51 +73,100 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.ASYNC_IDENTIFIERS,
     },
     TargetVersion.PY37: {
-        Feature.UNICODE_LITERALS,
         Feature.F_STRINGS,
         Feature.NUMERIC_UNDERSCORES,
         Feature.TRAILING_COMMA_IN_CALL,
         Feature.TRAILING_COMMA_IN_DEF,
         Feature.ASYNC_KEYWORDS,
+        Feature.FUTURE_ANNOTATIONS,
     },
     TargetVersion.PY38: {
-        Feature.UNICODE_LITERALS,
         Feature.F_STRINGS,
+        Feature.DEBUG_F_STRINGS,
         Feature.NUMERIC_UNDERSCORES,
         Feature.TRAILING_COMMA_IN_CALL,
         Feature.TRAILING_COMMA_IN_DEF,
         Feature.ASYNC_KEYWORDS,
+        Feature.FUTURE_ANNOTATIONS,
         Feature.ASSIGNMENT_EXPRESSIONS,
         Feature.POS_ONLY_ARGUMENTS,
+        Feature.UNPACKING_ON_FLOW,
+        Feature.ANN_ASSIGN_EXTENDED_RHS,
     },
     TargetVersion.PY39: {
-        Feature.UNICODE_LITERALS,
         Feature.F_STRINGS,
+        Feature.DEBUG_F_STRINGS,
         Feature.NUMERIC_UNDERSCORES,
         Feature.TRAILING_COMMA_IN_CALL,
         Feature.TRAILING_COMMA_IN_DEF,
         Feature.ASYNC_KEYWORDS,
+        Feature.FUTURE_ANNOTATIONS,
         Feature.ASSIGNMENT_EXPRESSIONS,
         Feature.RELAXED_DECORATORS,
         Feature.POS_ONLY_ARGUMENTS,
+        Feature.UNPACKING_ON_FLOW,
+        Feature.ANN_ASSIGN_EXTENDED_RHS,
     },
     TargetVersion.PY310: {
-        Feature.UNICODE_LITERALS,
         Feature.F_STRINGS,
+        Feature.DEBUG_F_STRINGS,
         Feature.NUMERIC_UNDERSCORES,
         Feature.TRAILING_COMMA_IN_CALL,
         Feature.TRAILING_COMMA_IN_DEF,
         Feature.ASYNC_KEYWORDS,
+        Feature.FUTURE_ANNOTATIONS,
         Feature.ASSIGNMENT_EXPRESSIONS,
         Feature.RELAXED_DECORATORS,
         Feature.POS_ONLY_ARGUMENTS,
+        Feature.UNPACKING_ON_FLOW,
+        Feature.ANN_ASSIGN_EXTENDED_RHS,
         Feature.PATTERN_MATCHING,
+    },
+    TargetVersion.PY311: {
+        Feature.F_STRINGS,
+        Feature.DEBUG_F_STRINGS,
+        Feature.NUMERIC_UNDERSCORES,
+        Feature.TRAILING_COMMA_IN_CALL,
+        Feature.TRAILING_COMMA_IN_DEF,
+        Feature.ASYNC_KEYWORDS,
+        Feature.FUTURE_ANNOTATIONS,
+        Feature.ASSIGNMENT_EXPRESSIONS,
+        Feature.RELAXED_DECORATORS,
+        Feature.POS_ONLY_ARGUMENTS,
+        Feature.UNPACKING_ON_FLOW,
+        Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PATTERN_MATCHING,
+        Feature.EXCEPT_STAR,
+        Feature.VARIADIC_GENERICS,
     },
 }
 
 
 def supports_feature(target_versions: Set[TargetVersion], feature: Feature) -> bool:
     return all(feature in VERSION_TO_FEATURES[version] for version in target_versions)
+
+
+class Preview(Enum):
+    """Individual preview style features."""
+
+    annotation_parens = auto()
+    empty_lines_before_class_or_def_with_leading_comments = auto()
+    handle_trailing_commas_in_head = auto()
+    long_docstring_quotes_on_newline = auto()
+    normalize_docstring_quotes_and_prefixes_properly = auto()
+    one_element_subscript = auto()
+    prefer_splitting_right_hand_side_of_assignments = auto()
+    remove_block_trailing_newline = auto()
+    remove_redundant_parens = auto()
+    # NOTE: string_processing requires wrap_long_dict_values_in_parens
+    # for https://github.com/psf/black/issues/3117 to be fixed.
+    string_processing = auto()
+    skip_magic_trailing_comma_in_subscript = auto()
+    wrap_long_dict_values_in_parens = auto()
+
+
+class Deprecated(UserWarning):
+    """Visible deprecation warning."""
 
 
 @dataclass
@@ -137,8 +176,32 @@ class Mode:
     string_normalization: bool = True
     is_pyi: bool = False
     is_ipynb: bool = False
+    skip_source_first_line: bool = False
     magic_trailing_comma: bool = True
     experimental_string_processing: bool = False
+    python_cell_magics: Set[str] = field(default_factory=set)
+    preview: bool = False
+
+    def __post_init__(self) -> None:
+        if self.experimental_string_processing:
+            warn(
+                (
+                    "`experimental string processing` has been included in `preview`"
+                    " and deprecated. Use `preview` instead."
+                ),
+                Deprecated,
+            )
+
+    def __contains__(self, feature: Preview) -> bool:
+        """
+        Provide `Preview.FEATURE in Mode` syntax that mirrors the ``preview`` flag.
+
+        The argument is not checked and features are not differentiated.
+        They only exist to make development easier by clarifying intent.
+        """
+        if feature is Preview.string_processing:
+            return self.preview or self.experimental_string_processing
+        return self.preview
 
     def get_cache_key(self) -> str:
         if self.target_versions:
@@ -154,7 +217,10 @@ class Mode:
             str(int(self.string_normalization)),
             str(int(self.is_pyi)),
             str(int(self.is_ipynb)),
+            str(int(self.skip_source_first_line)),
             str(int(self.magic_trailing_comma)),
             str(int(self.experimental_string_processing)),
+            str(int(self.preview)),
+            sha256((",".join(sorted(self.python_cell_magics))).encode()).hexdigest(),
         ]
         return ".".join(parts)

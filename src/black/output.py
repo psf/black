@@ -4,11 +4,11 @@ The double calls are for patching purposes in tests.
 """
 
 import json
-from typing import Any, Optional
-from mypy_extensions import mypyc_attr
 import tempfile
+from typing import Any, Optional
 
 from click import echo, style
+from mypy_extensions import mypyc_attr
 
 
 @mypyc_attr(patchable=True)
@@ -81,7 +81,7 @@ def color_diff(contents: str) -> str:
     lines = contents.split("\n")
     for i, line in enumerate(lines):
         if line.startswith("+++") or line.startswith("---"):
-            line = "\033[1;37m" + line + "\033[0m"  # bold white, reset
+            line = "\033[1m" + line + "\033[0m"  # bold, reset
         elif line.startswith("@@"):
             line = "\033[36m" + line + "\033[0m"  # cyan, reset
         elif line.startswith("+"):

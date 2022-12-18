@@ -1,8 +1,11 @@
-name: Upload self-contained binaries
+name: Publish executables
 
 on:
   release:
     types: [published]
+
+permissions:
+  contents: write # actions/upload-release-asset needs this.
 
 jobs:
   build:
@@ -26,22 +29,28 @@ jobs:
             executable_mime: "application/x-mach-binary"
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up latest Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: "*"
 
-      - name: Install dependencies
+      - name: Install Black and PyInstaller
         run: |
-          python -m pip install --upgrade pip wheel setuptools
-          python -m pip install .
+          python -m pip install --upgrade pip wheel
+          python -m pip install .[colorama]
           python -m pip install pyinstaller
 
-      - name: Build binary
+      - name: Build executable with PyInstaller
+        run: >
+          python -m PyInstaller -F --name ${{ matrix.asset_name }} --add-data
+          'src/blib2to3${{ matrix.pathsep }}blib2to3' src/black/__main__.py
+
+      - name: Quickly test executable
         run: |
-          python -m PyInstaller -F --name ${{ matrix.asset_name }} --add-data 'src/blib2to3${{ matrix.pathsep }}blib2to3' src/black/__main__.py
+          ./dist/${{ matrix.asset_name }} --version
+          ./dist/${{ matrix.asset_name }} src --verbose
 
       - name: Upload binary as release asset
         uses: actions/upload-release-asset@v1

@@ -1,5 +1,403 @@
 # Change Log
 
+## Unreleased
+
+### Highlights
+
+<!-- Include any especially major or disruptive changes here -->
+
+### Stable style
+
+<!-- Changes that affect Black's stable style -->
+
+- Fix a crash when a colon line is marked between `# fmt: off` and `# fmt: on` (#3439)
+
+### Preview style
+
+<!-- Changes that affect Black's preview style -->
+
+- Fix a crash in preview style with assert + parenthesized string (#3415)
+- Fix crashes in preview style with walrus operators used in function return annotations
+  and except clauses (#3423)
+- Do not put the closing quotes in a docstring on a separate line, even if the line is
+  too long (#3430)
+- Long values in dict literals are now wrapped in parentheses; correspondingly
+  unnecessary parentheses around short values in dict literals are now removed; long
+  string lambda values are now wrapped in parentheses (#3440)
+
+### Configuration
+
+<!-- Changes to how Black can be configured -->
+
+### Packaging
+
+<!-- Changes to how Black is packaged, such as dependency requirements -->
+
+- Upgrade mypyc from `0.971` to `0.991` so mypycified _Black_ can be built on armv7
+  (#3380)
+- Drop specific support for the `tomli` requirement on 3.11 alpha releases, working
+  around a bug that would cause the requirement not to be installed on any non-final
+  Python releases (#3448)
+
+### Parser
+
+<!-- Changes to the parser or to version autodetection -->
+
+### Performance
+
+<!-- Changes that improve Black's performance. -->
+
+### Output
+
+<!-- Changes to Black's terminal output and error messages -->
+
+- Verbose logging now shows the values of `pyproject.toml` configuration variables
+  (#3392)
+
+### _Blackd_
+
+<!-- Changes to blackd -->
+
+### Integrations
+
+<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- Move 3.11 CI to normal flow now all dependencies support 3.11 (#3446)
+
+### Documentation
+
+<!-- Major changes to documentation and policies. Small docs changes
+     don't need a changelog entry. -->
+
+## 22.12.0
+
+### Preview style
+
+<!-- Changes that affect Black's preview style -->
+
+- Enforce empty lines before classes and functions with sticky leading comments (#3302)
+- Reformat empty and whitespace-only files as either an empty file (if no newline is
+  present) or as a single newline character (if a newline is present) (#3348)
+- Implicitly concatenated strings used as function args are now wrapped inside
+  parentheses (#3307)
+- For assignment statements, prefer splitting the right hand side if the left hand side
+  fits on a single line (#3368)
+- Correctly handle trailing commas that are inside a line's leading non-nested parens
+  (#3370)
+
+### Configuration
+
+<!-- Changes to how Black can be configured -->
+
+- Fix incorrectly applied `.gitignore` rules by considering the `.gitignore` location
+  and the relative path to the target file (#3338)
+- Fix incorrectly ignoring `.gitignore` presence when more than one source directory is
+  specified (#3336)
+
+### Parser
+
+<!-- Changes to the parser or to version autodetection -->
+
+- Parsing support has been added for walruses inside generator expression that are
+  passed as function args (for example,
+  `any(match := my_re.match(text) for text in texts)`) (#3327).
+
+### Integrations
+
+<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- Vim plugin: Optionally allow using the system installation of Black via
+  `let g:black_use_virtualenv = 0`(#3309)
+
+## 22.10.0
+
+### Highlights
+
+- Runtime support for Python 3.6 has been removed. Formatting 3.6 code will still be
+  supported until further notice.
+
+### Stable style
+
+- Fix a crash when `# fmt: on` is used on a different block level than `# fmt: off`
+  (#3281)
+
+### Preview style
+
+- Fix a crash when formatting some dicts with parenthesis-wrapped long string keys
+  (#3262)
+
+### Configuration
+
+- `.ipynb_checkpoints` directories are now excluded by default (#3293)
+- Add `--skip-source-first-line` / `-x` option to ignore the first line of source code
+  while formatting (#3299)
+
+### Packaging
+
+- Executables made with PyInstaller will no longer crash when formatting several files
+  at once on macOS. Native x86-64 executables for macOS are available once again.
+  (#3275)
+- Hatchling is now used as the build backend. This will not have any effect for users
+  who install Black with its wheels from PyPI. (#3233)
+- Faster compiled wheels are now available for CPython 3.11 (#3276)
+
+### _Blackd_
+
+- Windows style (CRLF) newlines will be preserved (#3257).
+
+### Integrations
+
+- Vim plugin: add flag (`g:black_preview`) to enable/disable the preview style (#3246)
+- Update GitHub Action to support formatting of Jupyter Notebook files via a `jupyter`
+  option (#3282)
+- Update GitHub Action to support use of version specifiers (e.g. `<23`) for Black
+  version (#3265)
+
+## 22.8.0
+
+### Highlights
+
+- Python 3.11 is now supported, except for _blackd_ as aiohttp does not support 3.11 as
+  of publishing (#3234)
+- This is the last release that supports running _Black_ on Python 3.6 (formatting 3.6
+  code will continue to be supported until further notice)
+- Reword the stability policy to say that we may, in rare cases, make changes that
+  affect code that was not previously formatted by _Black_ (#3155)
+
+### Stable style
+
+- Fix an infinite loop when using `# fmt: on/off` in the middle of an expression or code
+  block (#3158)
+- Fix incorrect handling of `# fmt: skip` on colon (`:`) lines (#3148)
+- Comments are no longer deleted when a line had spaces removed around power operators
+  (#2874)
+
+### Preview style
+
+- Single-character closing docstring quotes are no longer moved to their own line as
+  this is invalid. This was a bug introduced in version 22.6.0. (#3166)
+- `--skip-string-normalization` / `-S` now prevents docstring prefixes from being
+  normalized as expected (#3168)
+- When using `--skip-magic-trailing-comma` or `-C`, trailing commas are stripped from
+  subscript expressions with more than 1 element (#3209)
+- Implicitly concatenated strings inside a list, set, or tuple are now wrapped inside
+  parentheses (#3162)
+- Fix a string merging/split issue when a comment is present in the middle of implicitly
+  concatenated strings on its own line (#3227)
+
+### _Blackd_
+
+- `blackd` now supports enabling the preview style via the `X-Preview` header (#3217)
+
+### Configuration
+
+- Black now uses the presence of debug f-strings to detect target version (#3215)
+- Fix misdetection of project root and verbose logging of sources in cases involving
+  `--stdin-filename` (#3216)
+- Immediate `.gitignore` files in source directories given on the command line are now
+  also respected, previously only `.gitignore` files in the project root and
+  automatically discovered directories were respected (#3237)
+
+### Documentation
+
+- Recommend using BlackConnect in IntelliJ IDEs (#3150)
+
+### Integrations
+
+- Vim plugin: prefix messages with `Black: ` so it's clear they come from Black (#3194)
+- Docker: changed to a /opt/venv installation + added to PATH to be available to
+  non-root users (#3202)
+
+### Output
+
+- Change from deprecated `asyncio.get_event_loop()` to create our event loop which
+  removes DeprecationWarning (#3164)
+- Remove logging from internal `blib2to3` library since it regularly emits error logs
+  about failed caching that can and should be ignored (#3193)
+
+### Parser
+
+- Type comments are now included in the AST equivalence check consistently so accidental
+  deletion raises an error. Though type comments can't be tracked when running on PyPy
+  3.7 due to standard library limitations. (#2874)
+
+### Performance
+
+- Reduce Black's startup time when formatting a single file by 15-30% (#3211)
+
+## 22.6.0
+
+### Style
+
+- Fix unstable formatting involving `#fmt: skip` and `# fmt:skip` comments (notice the
+  lack of spaces) (#2970)
+
+### Preview style
+
+- Docstring quotes are no longer moved if it would violate the line length limit (#3044)
+- Parentheses around return annotations are now managed (#2990)
+- Remove unnecessary parentheses around awaited objects (#2991)
+- Remove unnecessary parentheses in `with` statements (#2926)
+- Remove trailing newlines after code block open (#3035)
+
+### Integrations
+
+- Add `scripts/migrate-black.py` script to ease introduction of Black to a Git project
+  (#3038)
+
+### Output
+
+- Output Python version and implementation as part of `--version` flag (#2997)
+
+### Packaging
+
+- Use `tomli` instead of `tomllib` on Python 3.11 builds where `tomllib` is not
+  available (#2987)
+
+### Parser
+
+- [PEP 654](https://peps.python.org/pep-0654/#except) syntax (for example,
+  `except *ExceptionGroup:`) is now supported (#3016)
+- [PEP 646](https://peps.python.org/pep-0646) syntax (for example,
+  `Array[Batch, *Shape]` or `def fn(*args: *T) -> None`) is now supported (#3071)
+
+### Vim Plugin
+
+- Fix `strtobool` function. It didn't parse true/on/false/off. (#3025)
+
+## 22.3.0
+
+### Preview style
+
+- Code cell separators `#%%` are now standardised to `# %%` (#2919)
+- Remove unnecessary parentheses from `except` statements (#2939)
+- Remove unnecessary parentheses from tuple unpacking in `for` loops (#2945)
+- Avoid magic-trailing-comma in single-element subscripts (#2942)
+
+### Configuration
+
+- Do not format `__pypackages__` directories by default (#2836)
+- Add support for specifying stable version with `--required-version` (#2832).
+- Avoid crashing when the user has no homedir (#2814)
+- Avoid crashing when md5 is not available (#2905)
+- Fix handling of directory junctions on Windows (#2904)
+
+### Documentation
+
+- Update pylint config documentation (#2931)
+
+### Integrations
+
+- Move test to disable plugin in Vim/Neovim, which speeds up loading (#2896)
+
+### Output
+
+- In verbose mode, log when _Black_ is using user-level config (#2861)
+
+### Packaging
+
+- Fix Black to work with Click 8.1.0 (#2966)
+- On Python 3.11 and newer, use the standard library's `tomllib` instead of `tomli`
+  (#2903)
+- `black-primer`, the deprecated internal devtool, has been removed and copied to a
+  [separate repository](https://github.com/cooperlees/black-primer) (#2924)
+
+### Parser
+
+- Black can now parse starred expressions in the target of `for` and `async for`
+  statements, e.g `for item in *items_1, *items_2: pass` (#2879).
+
+## 22.1.0
+
+At long last, _Black_ is no longer a beta product! This is the first non-beta release
+and the first release covered by our new
+[stability policy](https://black.readthedocs.io/en/stable/the_black_code_style/index.html#stability-policy).
+
+### Highlights
+
+- **Remove Python 2 support** (#2740)
+- Introduce the `--preview` flag (#2752)
+
+### Style
+
+- Deprecate `--experimental-string-processing` and move the functionality under
+  `--preview` (#2789)
+- For stubs, one blank line between class attributes and methods is now kept if there's
+  at least one pre-existing blank line (#2736)
+- Black now normalizes string prefix order (#2297)
+- Remove spaces around power operators if both operands are simple (#2726)
+- Work around bug that causes unstable formatting in some cases in the presence of the
+  magic trailing comma (#2807)
+- Use parentheses for attribute access on decimal float and int literals (#2799)
+- Don't add whitespace for attribute access on hexadecimal, binary, octal, and complex
+  literals (#2799)
+- Treat blank lines in stubs the same inside top-level `if` statements (#2820)
+- Fix unstable formatting with semicolons and arithmetic expressions (#2817)
+- Fix unstable formatting around magic trailing comma (#2572)
+
+### Parser
+
+- Fix mapping cases that contain as-expressions, like `case {"key": 1 | 2 as password}`
+  (#2686)
+- Fix cases that contain multiple top-level as-expressions, like `case 1 as a, 2 as b`
+  (#2716)
+- Fix call patterns that contain as-expressions with keyword arguments, like
+  `case Foo(bar=baz as quux)` (#2749)
+- Tuple unpacking on `return` and `yield` constructs now implies 3.8+ (#2700)
+- Unparenthesized tuples on annotated assignments (e.g
+  `values: Tuple[int, ...] = 1, 2, 3`) now implies 3.8+ (#2708)
+- Fix handling of standalone `match()` or `case()` when there is a trailing newline or a
+  comment inside of the parentheses. (#2760)
+- `from __future__ import annotations` statement now implies Python 3.7+ (#2690)
+
+### Performance
+
+- Speed-up the new backtracking parser about 4X in general (enabled when
+  `--target-version` is set to 3.10 and higher). (#2728)
+- _Black_ is now compiled with [mypyc](https://github.com/mypyc/mypyc) for an overall 2x
+  speed-up. 64-bit Windows, MacOS, and Linux (not including musl) are supported. (#1009,
+  #2431)
+
+### Configuration
+
+- Do not accept bare carriage return line endings in pyproject.toml (#2408)
+- Add configuration option (`python-cell-magics`) to format cells with custom magics in
+  Jupyter Notebooks (#2744)
+- Allow setting custom cache directory on all platforms with environment variable
+  `BLACK_CACHE_DIR` (#2739).
+- Enable Python 3.10+ by default, without any extra need to specify
+  `--target-version=py310`. (#2758)
+- Make passing `SRC` or `--code` mandatory and mutually exclusive (#2804)
+
+### Output
+
+- Improve error message for invalid regular expression (#2678)
+- Improve error message when parsing fails during AST safety check by embedding the
+  underlying SyntaxError (#2693)
+- No longer color diff headers white as it's unreadable in light themed terminals
+  (#2691)
+- Text coloring added in the final statistics (#2712)
+- Verbose mode also now describes how a project root was discovered and which paths will
+  be formatted. (#2526)
+
+### Packaging
+
+- All upper version bounds on dependencies have been removed (#2718)
+- `typing-extensions` is no longer a required dependency in Python 3.10+ (#2772)
+- Set `click` lower bound to `8.0.0` (#2791)
+
+### Integrations
+
+- Update GitHub action to support containerized runs (#2748)
+
+### Documentation
+
+- Change protocol in pip installation instructions to `https://` (#2761)
+- Change HTML theme to Furo primarily for its responsive design and mobile support
+  (#2793)
+- Deprecate the `black-primer` tool (#2809)
+- Document Python support policy (#2819)
+
 ## 21.12b0
 
 ### _Black_

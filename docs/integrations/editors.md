@@ -10,104 +10,89 @@ Options include the following:
 
 ## PyCharm/IntelliJ IDEA
 
-1. Install `black`.
+1. Install _Black_ with the `d` extra.
 
    ```console
-   $ pip install black
+   $ pip install 'black[d]'
    ```
 
-1. Locate your `black` installation folder.
+1. Install
+   [BlackConnect IntelliJ IDEs plugin](https://plugins.jetbrains.com/plugin/14321-blackconnect).
 
-   On macOS / Linux / BSD:
-
-   ```console
-   $ which black
-   /usr/local/bin/black  # possible location
-   ```
-
-   On Windows:
-
-   ```console
-   $ where black
-   %LocalAppData%\Programs\Python\Python36-32\Scripts\black.exe  # possible location
-   ```
-
-   Note that if you are using a virtual environment detected by PyCharm, this is an
-   unneeded step. In this case the path to `black` is `$PyInterpreterDirectory$/black`.
-
-1. Open External tools in PyCharm/IntelliJ IDEA
+1. Open plugin configuration in PyCharm/IntelliJ IDEA
 
    On macOS:
 
-   `PyCharm -> Preferences -> Tools -> External Tools`
+   `PyCharm -> Preferences -> Tools -> BlackConnect`
 
    On Windows / Linux / BSD:
 
-   `File -> Settings -> Tools -> External Tools`
+   `File -> Settings -> Tools -> BlackConnect`
 
-1. Click the + icon to add a new external tool with the following values:
+1. In `Local Instance (shared between projects)` section:
 
-   - Name: Black
-   - Description: Black is the uncompromising Python code formatter.
-   - Program: \<install_location_from_step_2>
-   - Arguments: `"$FilePath$"`
+   1. Check `Start local blackd instance when plugin loads`.
+   1. Press the `Detect` button near `Path` input. The plugin should detect the `blackd`
+      executable.
 
-1. Format the currently opened file by selecting `Tools -> External Tools -> black`.
+1. In `Trigger Settings` section check `Trigger on code reformat` to enable code
+   reformatting with _Black_.
 
-   - Alternatively, you can set a keyboard shortcut by navigating to
-     `Preferences or Settings -> Keymap -> External Tools -> External Tools - Black`.
+1. Format the currently opened file by selecting `Code -> Reformat Code` or using a
+   shortcut.
 
-1. Optionally, run _Black_ on every file save:
+1. Optionally, to run _Black_ on every file save:
 
-   1. Make sure you have the
-      [File Watchers](https://plugins.jetbrains.com/plugin/7177-file-watchers) plugin
-      installed.
-   1. Go to `Preferences or Settings -> Tools -> File Watchers` and click `+` to add a
-      new watcher:
-      - Name: Black
-      - File type: Python
-      - Scope: Project Files
-      - Program: \<install_location_from_step_2>
-      - Arguments: `$FilePath$`
-      - Output paths to refresh: `$FilePath$`
-      - Working directory: `$ProjectFileDir$`
-
-   - In Advanced Options
-     - Uncheck "Auto-save edited files to trigger the watcher"
-     - Uncheck "Trigger the watcher on external changes"
+   - In `Trigger Settings` section of plugin configuration check
+     `Trigger when saving changed files`.
 
 ## Wing IDE
 
-Wing supports black via the OS Commands tool, as explained in the Wing documentation on
-[pep8 formatting](https://wingware.com/doc/edit/pep8). The detailed procedure is:
+Wing IDE supports `black` via **Preference Settings** for system wide settings and
+**Project Properties** for per-project or workspace specific settings, as explained in
+the Wing documentation on
+[Auto-Reformatting](https://wingware.com/doc/edit/auto-reformatting). The detailed
+procedure is:
 
-1. Install `black`.
+### Prerequistes
 
-   ```console
-   $ pip install black
-   ```
+- Wing IDE version 8.0+
 
-1. Make sure it runs from the command line, e.g.
+- Install `black`.
 
-   ```console
-   $ black --help
-   ```
+  ```console
+  $ pip install black
+  ```
 
-1. In Wing IDE, activate the **OS Commands** panel and define the command **black** to
-   execute black on the currently selected file:
+- Make sure it runs from the command line, e.g.
 
-   - Use the Tools -> OS Commands menu selection
-   - click on **+** in **OS Commands** -> New: Command line..
-     - Title: black
-     - Command Line: black %s
-     - I/O Encoding: Use Default
-     - Key Binding: F1
-     - [x] Raise OS Commands when executed
-     - [x] Auto-save files before execution
-     - [x] Line mode
+  ```console
+  $ black --help
+  ```
 
-1. Select a file in the editor and press **F1** , or whatever key binding you selected
-   in step 3, to reformat the file.
+### Preference Settings
+
+If you want Wing IDE to always reformat with `black` for every project, follow these
+steps:
+
+1. In menubar navigate to `Edit -> Preferences -> Editor -> Reformatting`.
+
+1. Set **Auto-Reformat** from `disable` (default) to `Line after edit` or
+   `Whole files before save`.
+
+1. Set **Reformatter** from `PEP8` (default) to `Black`.
+
+### Project Properties
+
+If you want to just reformat for a specific project and not intervene with Wing IDE
+global setting, follow these steps:
+
+1. In menubar navigate to `Project -> Project Properties -> Options`.
+
+1. Set **Auto-Reformat** from `Use Preferences setting` (default) to `Line after edit`
+   or `Whole files before save`.
+
+1. Set **Reformatter** from `Use Preferences setting` (default) to `Black`.
 
 ## Vim
 
@@ -119,7 +104,7 @@ Commands and shortcuts:
   - you can optionally pass `target_version=<version>` with the same values as in the
     command line.
 - `:BlackUpgrade` to upgrade _Black_ inside the virtualenv;
-- `:BlackVersion` to get the current version of _Black_ inside the virtualenv.
+- `:BlackVersion` to get the current version of _Black_ in use.
 
 Configuration:
 
@@ -128,6 +113,7 @@ Configuration:
 - `g:black_skip_string_normalization` (defaults to `0`)
 - `g:black_virtualenv` (defaults to `~/.vim/black` or `~/.local/share/nvim/black`)
 - `g:black_quiet` (defaults to `0`)
+- `g:black_preview` (defaults to `0`)
 
 To install with [vim-plug](https://github.com/junegunn/vim-plug):
 
@@ -162,7 +148,7 @@ curl https://raw.githubusercontent.com/psf/black/stable/autoload/black.vim -o ~/
 Let me know if this requires any changes to work with Vim 8's builtin `packadd`, or
 Pathogen, and so on.
 
-This plugin **requires Vim 7.0+ built with Python 3.6+ support**. It needs Python 3.6 to
+This plugin **requires Vim 7.0+ built with Python 3.7+ support**. It needs Python 3.7 to
 be able to run _Black_ inside the Vim process which is much faster than calling an
 external command.
 
@@ -174,10 +160,25 @@ If you need to do anything special to make your virtualenv work and install _Bla
 example you want to run a version from main), create a virtualenv manually and point
 `g:black_virtualenv` to it. The plugin will use it.
 
-To run _Black_ on save, add the following line to `.vimrc` or `init.vim`:
+If you would prefer to use the system installation of _Black_ rather than a virtualenv,
+then add this to your vimrc:
 
 ```
-autocmd BufWritePre *.py execute ':Black'
+let g:black_use_virtualenv = 0
+```
+
+Note that the `:BlackUpgrade` command is only usable and useful with a virtualenv, so
+when the virtualenv is not in use, `:BlackUpgrade` is disabled. If you need to upgrade
+the system installation of _Black_, then use your system package manager or pip--
+whatever tool you used to install _Black_ originally.
+
+To run _Black_ on save, add the following lines to `.vimrc` or `init.vim`:
+
+```
+augroup black_on_save
+  autocmd!
+  autocmd BufWritePre *.py Black
+augroup end
 ```
 
 To run _Black_ on a key press (e.g. F9 below), add this:
@@ -283,9 +284,15 @@ close and reopen your File, _Black_ will be done with its job.
 
 ## Visual Studio Code
 
-Use the
-[Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
-([instructions](https://code.visualstudio.com/docs/python/editing#_formatting)).
+- Use the
+  [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
+  ([instructions](https://code.visualstudio.com/docs/python/editing#_formatting)).
+
+- Alternatively the pre-release
+  [Black Formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter)
+  extension can be used which runs a [Language Server Protocol](https://langserver.org/)
+  server for Black. Formatting is much more responsive using this extension, **but the
+  minimum supported version of Black is 22.3.0**.
 
 ## SublimeText 3
 
