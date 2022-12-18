@@ -22,10 +22,10 @@ STRING_PREFIX_RE: Final = re.compile(
 FIRST_NON_WHITESPACE_RE: Final = re.compile(r"\s*\t+\s*(\S)")
 UNICODE_ESCAPE_RE: Final = re.compile(
     r"(?P<backslashes>\\+)(?P<body>"
-    r"(?P<u>u([a-zA-Z0-9]{4}))"  # Character with 16-bit hex value xxxx
-    r"|(?P<U>U([a-zA-Z0-9]{0,8}))"  # Character with 32-bit hex value xxxxxxxx
-    r"|(?P<x>x([a-zA-Z0-9]{2}))"  # Character with hex value hh
-    r"|(?P<N>N\{([a-zA-Z0-9]{2})\})"  # Character named name in the Unicode database
+    r"(u(?P<u>[a-fA-F0-9]{4}))"  # Character with 16-bit hex value xxxx
+    r"|(U(?P<U>[a-fA-F0-9]{0,8}))"  # Character with 32-bit hex value xxxxxxxx
+    r"|(x(?P<x>[a-fA-F0-9]{2}))"  # Character with hex value hh
+    r"|(N\{(?P<N>[a-fA-F0-9]{2})\})"  # Character named name in the Unicode database
     r")",
     re.VERBOSE,
 )
@@ -257,7 +257,7 @@ def normalize_unicode_escape_sequences(leaf: Leaf) -> None:
         return
 
     def replace(m: Match[str]) -> str:
-        groups = m.groups()
+        groups = m.groupdict()
         back_slashes = groups["backslashes"]
 
         if len(back_slashes) % 2 == 0:
@@ -272,8 +272,9 @@ def normalize_unicode_escape_sequences(leaf: Leaf) -> None:
         elif groups["x"]:
             # \x
             return back_slashes + "x" + groups["x"].lower()
-        elif groups["N"]:
+        else:
+            assert groups["N"], f"Unexpected match: {m}"
             # \N{}
             return back_slashes + "N{" + groups["N"].upper() + "}"
 
-    leaf.value = re.sub(UNICODE_RE, replace, text)
+    leaf.value = re.sub(UNICODE_ESCAPE_RE, replace, text)
