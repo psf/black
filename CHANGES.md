@@ -24,6 +24,7 @@
 - Long values in dict literals are now wrapped in parentheses; correspondingly
   unnecessary parentheses around short values in dict literals are now removed; long
   string lambda values are now wrapped in parentheses (#3440)
+- Fix two crashes in preview style involving edge cases with docstrings (#3451)
 
 ### Configuration
 
