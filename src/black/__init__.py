@@ -511,6 +511,9 @@ def main(  # noqa: C901
                 out("Using configuration from project root.", fg="blue")
             else:
                 out(f"Using configuration in '{config}'.", fg="blue")
+            if ctx.default_map:
+                for param, value in ctx.default_map.items():
+                    out(f"{param}: {value}")
 
     error_msg = "Oh no! 💥 💔 💥"
     if (
@@ -630,7 +633,7 @@ def get_sources(
 
     using_default_exclude = exclude is None
     exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES) if exclude is None else exclude
-    gitignore: Optional[PathSpec] = None
+    gitignore: Optional[Dict[Path, PathSpec]] = None
     root_gitignore = get_gitignore(root)
 
     for s in src:
