@@ -66,7 +66,7 @@
 
 - Move 3.11 CI to normal flow now all dependencies support 3.11 (#3446)
 - Docker: Add new `latest_prerelease` tag automation to follow latest black alpha release
-  on docker images
+  on docker images (#3465)
 
 ### Documentation
 
