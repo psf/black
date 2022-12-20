@@ -115,11 +115,17 @@ Configuration:
 - `g:black_quiet` (defaults to `0`)
 - `g:black_preview` (defaults to `0`)
 
+#### Installation
+
+##### `vim-plug`
+
 To install with [vim-plug](https://github.com/junegunn/vim-plug):
 
 ```
 Plug 'psf/black', { 'branch': 'stable' }
 ```
+
+##### Vundle
 
 or with [Vundle](https://github.com/VundleVim/Vundle.vim):
 
@@ -134,6 +140,8 @@ $ cd ~/.vim/bundle/black
 $ git checkout origin/stable -b stable
 ```
 
+##### Vim 8 Native Plugin Management
+
 or you can copy the plugin files from
 [plugin/black.vim](https://github.com/psf/black/blob/stable/plugin/black.vim) and
 [autoload/black.vim](https://github.com/psf/black/blob/stable/autoload/black.vim).
@@ -147,6 +155,21 @@ curl https://raw.githubusercontent.com/psf/black/stable/autoload/black.vim -o ~/
 
 Let me know if this requires any changes to work with Vim 8's builtin `packadd`, or
 Pathogen, and so on.
+
+##### With ALE
+
+1. Install [`ale`](https://github.com/dense-analysis/ale)
+
+1. Install `black`
+
+1. Add this to your vimrc:
+
+   ```vim
+   let g:ale_fixers = {}
+   let g:ale_fixers.python = ['black']
+   ```
+
+#### Usage
 
 This plugin **requires Vim 7.0+ built with Python 3.7+ support**. It needs Python 3.7 to
 be able to run _Black_ inside the Vim process which is much faster than calling an
@@ -186,6 +209,8 @@ To run _Black_ on a key press (e.g. F9 below), add this:
 ```
 nnoremap <F9> :Black<CR>
 ```
+
+#### Troubleshooting
 
 **How to get Vim with Python 3.6?** On Ubuntu 17.10 Vim comes with Python 3.6 by
 default. On macOS with Homebrew run: `brew install vim`. When building Vim from source,
@@ -238,19 +263,6 @@ If you later want to update _Black_, you should do it like this:
 ```console
 $ pip install -U black --no-binary typed-ast
 ```
-
-### With ALE
-
-1. Install [`ale`](https://github.com/dense-analysis/ale)
-
-1. Install `black`
-
-1. Add this to your vimrc:
-
-   ```vim
-   let g:ale_fixers = {}
-   let g:ale_fixers.python = ['black']
-   ```
 
 ## Gedit
 
