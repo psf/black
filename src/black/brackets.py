@@ -57,6 +57,10 @@ MATH_PRIORITIES: Final = {
 DOT_PRIORITY: Final = 1
 
 
+class BracketMatchError(Exception):
+    """Raised when an opening bracket is unable to be matched to a closing bracket."""
+
+
 @dataclass
 class BracketTracker:
     """Keeps track of brackets on a line."""
@@ -101,7 +105,13 @@ class BracketTracker:
         self.maybe_decrement_after_lambda_arguments(leaf)
         if leaf.type in CLOSING_BRACKETS:
             self.depth -= 1
-            opening_bracket = self.bracket_match.pop((self.depth, leaf.type))
+            try:
+                opening_bracket = self.bracket_match.pop((self.depth, leaf.type))
+            except KeyError as e:
+                raise BracketMatchError(
+                    "Unable to match a closing bracket to the following opening"
+                    f" bracket: {leaf}"
+                ) from e
             leaf.opening_bracket = opening_bracket
             if not leaf.value:
                 self.invisible.append(leaf)
