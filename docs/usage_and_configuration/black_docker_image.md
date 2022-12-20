@@ -13,7 +13,8 @@ _Black_ images with the following tags are available:
 - `latest_prerelease` - tag created when a new alpha (prerelease) version of _Black_ is
   released.\
   ℹ Recommended for users who want to preview or test alpha versions of _Black_. Note that
-  the most recent release may be newer than any prerelease.
+  the most recent release may be newer than any prerelease, because no prereleases
+  are created before most releases.
 - `latest` - tag used for the newest image of _Black_.\
   ℹ Recommended for users who always want to use the latest version of _Black_, even before
   it is released.
