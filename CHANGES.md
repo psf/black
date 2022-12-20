@@ -21,6 +21,8 @@
   and except clauses (#3423)
 - Fix a crash in preview advanced string processing where mixed implicitly concatenated
   regular and f-strings start with an empty span (#3463)
+- Fix a crash in preview advanced string processing where a standalone comment is placed
+  before a dict's value (#3469)
 - Do not put the closing quotes in a docstring on a separate line, even if the line is
   too long (#3430)
 - Long values in dict literals are now wrapped in parentheses; correspondingly
