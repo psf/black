@@ -136,7 +136,7 @@ Another option which is a bit more explicit and offers more control is to use
 which matches the given pattern.
 
 The following matches all stable versions (see the
-[Release Process](./contributing/release_process.md) section for documentation of
+[Release Process](../contributing/release_process.md) section for documentation of
 version scheme used by Black),
 
 ```
