@@ -20,11 +20,15 @@
 - Fix a crash in preview style with assert + parenthesized string (#3415)
 - Fix crashes in preview style with walrus operators used in function return annotations
   and except clauses (#3423)
+- Fix a crash in preview advanced string processing where mixed implicitly concatenated
+  regular and f-strings start with an empty span (#3463)
 - Do not put the closing quotes in a docstring on a separate line, even if the line is
   too long (#3430)
 - Long values in dict literals are now wrapped in parentheses; correspondingly
   unnecessary parentheses around short values in dict literals are now removed; long
   string lambda values are now wrapped in parentheses (#3440)
+- Exclude string type annotations from improved string processing; fix crash when the
+  return type annotation is stringified and spans across multiple lines (#3462)
 
 ### Configuration
 
