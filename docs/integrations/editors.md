@@ -120,6 +120,10 @@ Configuration:
 
 #### Installation
 
+This plugin **requires Vim 7.0+ built with Python 3.7+ support**. It needs Python 3.7 to
+be able to run _Black_ inside the Vim process which is much faster than calling an
+external command.
+
 ##### `vim-plug`
 
 To install with [vim-plug](https://github.com/junegunn/vim-plug):
@@ -137,14 +141,14 @@ which matches the given pattern.
 
 The following matches all stable versions (see the
 [Release Process](../contributing/release_process.md) section for documentation of
-version scheme used by Black),
+version scheme used by Black):
 
 ```
 Plug 'psf/black', { 'tag': '*.*.*' }
 ```
 
 and the following demonstrates pinning to a specific year's stable style (2022 in this
-case).
+case):
 
 ```
 Plug 'psf/black', { 'tag': '22.*.*' }
@@ -188,10 +192,6 @@ Let me know if this requires any changes to work with Vim 8's builtin `packadd`,
 Pathogen, and so on.
 
 #### Usage
-
-This plugin **requires Vim 7.0+ built with Python 3.7+ support**. It needs Python 3.7 to
-be able to run _Black_ inside the Vim process which is much faster than calling an
-external command.
 
 On first run, the plugin creates its own virtualenv using the right Python version and
 automatically installs _Black_. You can upgrade it later by calling `:BlackUpgrade` and
