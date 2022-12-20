@@ -57,10 +57,6 @@ MATH_PRIORITIES: Final = {
 DOT_PRIORITY: Final = 1
 
 
-class BracketMatchError(Exception):
-    """Raised when an opening bracket is unable to be matched to a closing bracket."""
-
-
 @dataclass
 class BracketTracker:
     """Keeps track of brackets on a line."""
@@ -80,9 +76,12 @@ class BracketTracker:
         within brackets a given leaf is. 0 means there are no enclosing brackets
         that started on this line.
 
-        If a leaf is itself a closing bracket, it receives an `opening_bracket`
-        field that it forms a pair with. This is a one-directional link to
-        avoid reference cycles.
+        If a leaf is itself a closing bracket and there is a matching opening
+        bracket earlier, it receives an `opening_bracket` field that it forms a
+        pair. This is a one-directional link to avoid reference cycles. Closing
+        bracket without opening happens on lines continued from previous
+        breaks, e.g. `) -> "ReturnType":` as part of a funcdef where we place
+        the return type annotation on its own line of the previous closing RPAR.
 
         If a leaf is a delimiter (a token on which Black can split the line if
         needed) and it's on depth 0, its `id()` is stored in the tracker's
@@ -91,17 +90,18 @@ class BracketTracker:
         if leaf.type == token.COMMENT:
             return
 
+        if (
+            self.depth == 0
+            and leaf.type in CLOSING_BRACKETS
+            and (self.depth, leaf.type) not in self.bracket_match
+        ):
+            return
+
         self.maybe_decrement_after_for_loop_variable(leaf)
         self.maybe_decrement_after_lambda_arguments(leaf)
         if leaf.type in CLOSING_BRACKETS:
             self.depth -= 1
-            try:
-                opening_bracket = self.bracket_match.pop((self.depth, leaf.type))
-            except KeyError as e:
-                raise BracketMatchError(
-                    "Unable to match a closing bracket to the following opening"
-                    f" bracket: {leaf}"
-                ) from e
+            opening_bracket = self.bracket_match.pop((self.depth, leaf.type))
             leaf.opening_bracket = opening_bracket
             if not leaf.value:
                 self.invisible.append(leaf)
