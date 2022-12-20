@@ -44,7 +44,9 @@ jobs:
           tags: pyfound/black:latest,pyfound/black:${{ env.GIT_TAG }}
 
       - name: Build and push latest_release tag
-        if: ${{ github.event_name == 'release' && github.event.action == 'published' }}
+        if:
+          ${{ github.event_name == 'release' && github.event.action == 'published' &&
+          !github.event.release.prerelease }}
         uses: docker/build-push-action@v3
         with:
           context: .
