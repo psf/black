@@ -912,7 +912,6 @@ class StringParenStripper(StringTransformer):
         new_line = line.clone()
         new_line.comments = line.comments.copy()
 
-        previous_string_idx = -1
         previous_rpar_idx = -1
         for string_idx, rpar_idx in string_and_rpar_indices:
             try:
@@ -937,16 +936,12 @@ class StringParenStripper(StringTransformer):
 
             LL[rpar_idx].remove()
 
-            previous_string_idx = string_idx
+            append_leaves(new_line, line, LL[string_idx + 1 : rpar_idx])
+
             previous_rpar_idx = rpar_idx
 
-        # Append the leaves after the last string_idx:
-        append_leaves(
-            new_line,
-            line,
-            LL[previous_string_idx + 1 : previous_rpar_idx]
-            + LL[previous_rpar_idx + 1 :],
-        )
+        # Append the leaves after the last rpar_idx:
+        append_leaves(new_line, line, LL[previous_rpar_idx + 1 :])
 
         return new_line
 

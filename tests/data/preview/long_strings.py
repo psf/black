@@ -287,6 +287,19 @@ dict_with_lambda_values = {
     ),
 }
 
+# Complex string concatenations with a method call in the middle.
+code = (
+    ("    return [\n")
+    + (
+        ", \n".join(
+            "        (%r, self.%s, visitor.%s)"
+            % (attrname, attrname, visit_name)
+            for attrname, visit_name in names
+        )
+    )
+    + ("\n    ]\n")
+)
+
 
 # output
 
@@ -828,3 +841,13 @@ dict_with_lambda_values = {
         f"{some_function_call(j.right)})"
     ),
 }
+
+# Complex string concatenations with a method call in the middle.
+code = (
+    "    return [\n"
+    + ", \n".join(
+        "        (%r, self.%s, visitor.%s)" % (attrname, attrname, visit_name)
+        for attrname, visit_name in names
+    )
+    + "\n    ]\n"
+)
