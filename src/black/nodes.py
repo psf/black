@@ -854,10 +854,7 @@ def is_part_of_annotation(leaf: Leaf) -> bool:
     """Returns whether this leaf is part of type annotations."""
     ancestor = leaf.parent
     while ancestor is not None:
-        if (
-            ancestor.prev_sibling
-            and ancestor.prev_sibling.type == token.RARROW
-        ):
+        if ancestor.prev_sibling and ancestor.prev_sibling.type == token.RARROW:
             return True
         if ancestor.parent and ancestor.parent.type == syms.tname:
             return True
