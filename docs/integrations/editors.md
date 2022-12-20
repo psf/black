@@ -124,8 +124,30 @@ Configuration:
 
 To install with [vim-plug](https://github.com/junegunn/vim-plug):
 
+_Black_'s `stable` branch tracks official version updates, and can be used to simply
+follow the most recent stable version.
+
+```
+Plug 'psf/black', { 'branch': 'stable' }
+```
+
+Another option which is a bit more explicit and offers more control is to use
+`vim-plug`'s `tag` option with a shell wildcard. This will resolve to the latest tag
+which matches the given pattern.
+
+The following matches all stable versions (see the
+[Release Process](./contributing/release_process.md) section for documentation of
+version scheme used by Black),
+
 ```
 Plug 'psf/black', { 'tag': '*.*.*' }
+```
+
+and the following demonstrates pinning to a specific year's stable style (2022 in this
+case).
+
+```
+Plug 'psf/black', { 'tag': '22.*.*' }
 ```
 
 ##### Vundle

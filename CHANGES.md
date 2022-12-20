@@ -71,6 +71,8 @@
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
 
+- Expand `vim-plug` installation instructions to offer more explicit options (#3468)
+
 ## 22.12.0
 
 ### Preview style
