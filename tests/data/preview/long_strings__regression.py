@@ -543,6 +543,13 @@ xxxx(
     f'xxxxxxxxxxxxx xxxx xx xxxxxxxxxx. xxxxx: {x.xxx}',
 )
 
+# Regression test for https://github.com/psf/black/issues/3455.
+a_dict = {
+    "/this/is/a/very/very/very/very/very/very/very/very/very/very/long/key/without/spaces":
+        # And there is a comment before the value
+        ("item1", "item2", "item3"),
+}
+
 
 # output
 
@@ -1221,3 +1228,10 @@ xxxx(
         f"xxxxxxxxxxxxx xxxx xx xxxxxxxxxx. xxxxx: {x.xxx}"
     ),
 )
+
+# Regression test for https://github.com/psf/black/issues/3455.
+a_dict = {
+    "/this/is/a/very/very/very/very/very/very/very/very/very/very/long/key/without/spaces":
+    # And there is a comment before the value
+    ("item1", "item2", "item3"),
+}

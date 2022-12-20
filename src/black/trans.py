@@ -1866,7 +1866,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
 
             for i, leaf in enumerate(LL):
                 # We MUST find a colon, it can either be dict's or lambda's colon...
-                if leaf.type == token.COLON:
+                if leaf.type == token.COLON and i < len(LL) - 1:
                     idx = i + 2 if is_empty_par(LL[i + 1]) else i + 1
 
                     # That colon MUST be followed by a string...
