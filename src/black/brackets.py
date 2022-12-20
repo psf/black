@@ -77,7 +77,7 @@ class BracketTracker:
         that started on this line.
 
         If a leaf is itself a closing bracket and there is a matching opening
-        bracket earlier, it receives an `opening_bracket` field that it forms a
+        bracket earlier, it receives an `opening_bracket` field with which it forms a
         pair. This is a one-directional link to avoid reference cycles. Closing
         bracket without opening happens on lines continued from previous
         breaks, e.g. `) -> "ReturnType":` as part of a funcdef where we place
