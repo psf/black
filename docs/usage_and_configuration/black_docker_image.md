@@ -10,7 +10,8 @@ _Black_ images with the following tags are available:
 - `latest_release` - tag created when a new version of _Black_ is released.\
   ℹ Recommended for users who want to use released versions of _Black_. It maps to [the latest release](https://github.com/psf/black/releases/latest)
   of _Black_.
-- `latest_prerelease` - tag created when a new alpha (prerelease) version of _Black_ is released.\
+- `latest_prerelease` - tag created when a new alpha (prerelease) version of _Black_ is
+  released.\
   ℹ Recommended for users who want to preview or test alpha versions of _Black_.
 - `latest` - tag used for the newest image of _Black_.\
   ℹ Recommended for users who always want to use the latest version of _Black_, even before
