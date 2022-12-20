@@ -164,19 +164,6 @@ curl https://raw.githubusercontent.com/psf/black/stable/autoload/black.vim -o ~/
 Let me know if this requires any changes to work with Vim 8's builtin `packadd`, or
 Pathogen, and so on.
 
-##### With ALE
-
-1. Install [`ale`](https://github.com/dense-analysis/ale)
-
-1. Install `black`
-
-1. Add this to your vimrc:
-
-   ```vim
-   let g:ale_fixers = {}
-   let g:ale_fixers.python = ['black']
-   ```
-
 #### Usage
 
 This plugin **requires Vim 7.0+ built with Python 3.7+ support**. It needs Python 3.7 to
@@ -271,6 +258,19 @@ If you later want to update _Black_, you should do it like this:
 ```console
 $ pip install -U black --no-binary typed-ast
 ```
+
+### With ALE
+
+1. Install [`ale`](https://github.com/dense-analysis/ale)
+
+1. Install `black`
+
+1. Add this to your vimrc:
+
+   ```vim
+   let g:ale_fixers = {}
+   let g:ale_fixers.python = ['black']
+   ```
 
 ## Gedit
 
