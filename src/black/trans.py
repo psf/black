@@ -920,9 +920,7 @@ class StringParenStripper(StringTransformer):
             leaf = LL[idx]
             lpar_or_rpar_idx = idx - 1 if leaf.type == token.STRING else idx
             try:
-                append_leaves(
-                    new_line, line, LL[previous_idx + 1 : lpar_or_rpar_idx]
-                )
+                append_leaves(new_line, line, LL[previous_idx + 1 : lpar_or_rpar_idx])
             except BracketMatchError:
                 # HACK: I believe there is currently a bug somewhere in
                 # right_hand_split() that is causing brackets to not be tracked
@@ -931,7 +929,7 @@ class StringParenStripper(StringTransformer):
                     new_line,
                     line,
                     LL[previous_idx + 1 : lpar_or_rpar_idx],
-                    preformatted=True
+                    preformatted=True,
                 )
             if leaf.type == token.STRING:
                 string_leaf = Leaf(token.STRING, LL[idx].value)
