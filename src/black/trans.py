@@ -628,7 +628,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
                   process stringified type annotations since pyright doesn't support
                   them spanning multiple string values. (NOTE: mypy, pytype, pyre do
                   support them, so we can change if pyright also gains support in the
-                  future.)
+                  future. See https://github.com/microsoft/pyright/issues/4359.)
         """
         # We first check for "inner" stand-alone comments (i.e. stand-alone
         # comments that have a string leaf before them AND after them).
