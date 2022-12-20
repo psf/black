@@ -385,10 +385,9 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
                 and is_valid_index(idx + 1)
                 and LL[idx + 1].type == token.STRING
             ):
-                if is_part_of_annotation(leaf):
-                    continue
+                if not is_part_of_annotation(leaf):
+                    string_indices.append(idx)
 
-                string_indices.append(idx)
                 # Advance to the next non-STRING leaf.
                 idx += 2
                 while is_valid_index(idx) and LL[idx].type == token.STRING:
