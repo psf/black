@@ -204,7 +204,7 @@ class StringTransformer(ABC):
             StringParenStripper), multiple matches and transforms are done at
             once to reduce the complexity.
                 OR
-            * Err(CannotTransform), if no match was not able to be made.
+            * Err(CannotTransform), if no match could be made.
         """
 
     @abstractmethod
