@@ -111,7 +111,10 @@ Configuration:
 - `g:black_fast` (defaults to `0`)
 - `g:black_linelength` (defaults to `88`)
 - `g:black_skip_string_normalization` (defaults to `0`)
+- `g:black_skip_magic_trailing_comma` (defaults to `0`)
 - `g:black_virtualenv` (defaults to `~/.vim/black` or `~/.local/share/nvim/black`)
+- `g:black_use_virtualenv` (defaults to `1`)
+- `g:black_target_version` (defaults to `""`)
 - `g:black_quiet` (defaults to `0`)
 - `g:black_preview` (defaults to `0`)
 
