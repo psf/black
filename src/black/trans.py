@@ -1359,9 +1359,14 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
             # prefix, and the current custom split did NOT originally use a
             # prefix...
             if (
-                next_value != self._normalize_f_string(next_value, prefix)
-                and use_custom_breakpoints
+                use_custom_breakpoints
                 and not csplit.has_prefix
+                and (
+                    # `next_value == prefix + QUOTE` happens when the custom
+                    # split is an empty string.
+                    next_value == prefix + QUOTE
+                    or next_value != self._normalize_f_string(next_value, prefix)
+                )
             ):
                 # Then `csplit.break_idx` will be off by one after removing
                 # the 'f' prefix.
