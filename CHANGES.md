@@ -24,6 +24,8 @@
 - Long values in dict literals are now wrapped in parentheses; correspondingly
   unnecessary parentheses around short values in dict literals are now removed; long
   string lambda values are now wrapped in parentheses (#3440)
+- Exclude string type annotations from improved string processing; fix crash when return
+  the type annotation is stringified and spans across multiple lines (#3462)
 
 ### Configuration
 
