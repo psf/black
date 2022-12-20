@@ -125,7 +125,7 @@ Configuration:
 To install with [vim-plug](https://github.com/junegunn/vim-plug):
 
 ```
-Plug 'psf/black', { 'branch': 'stable' }
+Plug 'psf/black', { 'tag': '*.*.*' }
 ```
 
 ##### Vundle
