@@ -531,6 +531,18 @@ some_dict = {
         r"signiferumque, duo ea vocibus consetetur scriptorem. Facer \t",
 }
 
+# Regression test for https://github.com/psf/black/issues/3459.
+xxxx(
+    empty_str_as_first_split=''
+    f'xxxxxxx {xxxxxxxxxx} xxx xxxxxxxxxx xxxxx xxx xxx xx '
+    'xxxxx xxxxxxxxx xxxxxxx, xxx xxxxxxxxxxx xxx xxxxx. '
+    f'xxxxxxxxxxxxx xxxx xx xxxxxxxxxx. xxxxx: {x.xxx}',
+    empty_u_str_as_first_split=u''
+    f'xxxxxxx {xxxxxxxxxx} xxx xxxxxxxxxx xxxxx xxx xxx xx '
+    'xxxxx xxxxxxxxx xxxxxxx, xxx xxxxxxxxxxx xxx xxxxx. '
+    f'xxxxxxxxxxxxx xxxx xx xxxxxxxxxx. xxxxx: {x.xxx}',
+)
+
 
 # output
 
@@ -1193,3 +1205,19 @@ some_dict = {
         r"signiferumque, duo ea vocibus consetetur scriptorem. Facer \t"
     ),
 }
+
+# Regression test for https://github.com/psf/black/issues/3459.
+xxxx(
+    empty_str_as_first_split=(
+        ""
+        f"xxxxxxx {xxxxxxxxxx} xxx xxxxxxxxxx xxxxx xxx xxx xx "
+        "xxxxx xxxxxxxxx xxxxxxx, xxx xxxxxxxxxxx xxx xxxxx. "
+        f"xxxxxxxxxxxxx xxxx xx xxxxxxxxxx. xxxxx: {x.xxx}"
+    ),
+    empty_u_str_as_first_split=(
+        ""
+        f"xxxxxxx {xxxxxxxxxx} xxx xxxxxxxxxx xxxxx xxx xxx xx "
+        "xxxxx xxxxxxxxx xxxxxxx, xxx xxxxxxxxxxx xxx xxxxx. "
+        f"xxxxxxxxxxxxx xxxx xx xxxxxxxxxx. xxxxx: {x.xxx}"
+    ),
+)
