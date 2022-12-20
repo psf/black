@@ -881,8 +881,7 @@ class StringParenStripper(StringTransformer):
     ) -> Iterator[TResult[Line]]:
         LL = line.leaves
 
-        # A list of tuples of (string_idx, rpar_idx)
-        string_and_rpar_indices: List[Tuple[int, int]] = []
+        string_and_rpar_indices: List[int] = []
         for string_idx in string_indices:
             string_parser = StringParser()
             rpar_idx = string_parser.parse(LL, string_idx)
@@ -895,7 +894,7 @@ class StringParenStripper(StringTransformer):
                     should_transform = False
                     break
             if should_transform:
-                string_and_rpar_indices.append((string_idx, rpar_idx))
+                string_and_rpar_indices.extend((string_idx, rpar_idx))
 
         if string_and_rpar_indices:
             yield Ok(self._transform_to_new_line(line, string_and_rpar_indices))
@@ -905,18 +904,24 @@ class StringParenStripper(StringTransformer):
             )
 
     def _transform_to_new_line(
-        self, line: Line, string_and_rpar_indices: List[Tuple[int, int]]
+        self, line: Line, string_and_rpar_indices: List[int]
     ) -> Line:
         LL = line.leaves
 
         new_line = line.clone()
         new_line.comments = line.comments.copy()
 
-        previous_rpar_idx = -1
-        for string_idx, rpar_idx in string_and_rpar_indices:
+        previous_idx = -1
+        # We need to sort the indices, since string_idx and its matching
+        # rpar_idx may not come in order, e.g. in
+        # `("outer" % ("inner".join(items)))`, the "inner" string's
+        # string_idx is smaller than "outer" string's rpar_idx.
+        for idx in sorted(string_and_rpar_indices):
+            leaf = LL[idx]
+            lpar_or_rpar_idx = idx - 1 if leaf.type == token.STRING else idx
             try:
                 append_leaves(
-                    new_line, line, LL[previous_rpar_idx + 1 : string_idx - 1]
+                    new_line, line, LL[previous_idx + 1 : lpar_or_rpar_idx]
                 )
             except BracketMatchError:
                 # HACK: I believe there is currently a bug somewhere in
@@ -925,23 +930,21 @@ class StringParenStripper(StringTransformer):
                 append_leaves(
                     new_line,
                     line,
-                    LL[previous_rpar_idx + 1 : string_idx - 1],
-                    preformatted=True,
+                    LL[previous_idx + 1 : lpar_or_rpar_idx],
+                    preformatted=True
                 )
+            if leaf.type == token.STRING:
+                string_leaf = Leaf(token.STRING, LL[idx].value)
+                LL[lpar_or_rpar_idx].remove()  # Remove lpar.
+                replace_child(LL[idx], string_leaf)
+                new_line.append(string_leaf)
+            else:
+                LL[lpar_or_rpar_idx].remove()  # This is a rpar.
 
-            string_leaf = Leaf(token.STRING, LL[string_idx].value)
-            LL[string_idx - 1].remove()
-            replace_child(LL[string_idx], string_leaf)
-            new_line.append(string_leaf)
+            previous_idx = idx
 
-            LL[rpar_idx].remove()
-
-            append_leaves(new_line, line, LL[string_idx + 1 : rpar_idx])
-
-            previous_rpar_idx = rpar_idx
-
-        # Append the leaves after the last rpar_idx:
-        append_leaves(new_line, line, LL[previous_rpar_idx + 1 :])
+        # Append the leaves after the last idx:
+        append_leaves(new_line, line, LL[idx + 1 :])
 
         return new_line
 

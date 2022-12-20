@@ -301,6 +301,10 @@ code = (
 )
 
 
+# Test case of an outer string' parens enclose an inner string's parens.
+call(body=("%s %s" % ((",".join(items)), suffix)))
+
+
 # output
 
 
@@ -851,3 +855,7 @@ code = (
     )
     + "\n    ]\n"
 )
+
+
+# Test case of an outer string' parens enclose an inner string's parens.
+call(body="%s %s" % (",".join(items), suffix))
