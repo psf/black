@@ -23,6 +23,8 @@
   regular and f-strings start with an empty span (#3463)
 - Fix a crash in preview advanced string processing where a standalone comment is placed
   before a dict's value (#3469)
+- Fix an issue where extra empty lines are added when a decorator has `# fmt: skip`
+  applied or there is a standalone comment between decorators (#3470)
 - Do not put the closing quotes in a docstring on a separate line, even if the line is
   too long (#3430)
 - Long values in dict literals are now wrapped in parentheses; correspondingly

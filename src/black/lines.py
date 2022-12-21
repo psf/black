@@ -520,7 +520,8 @@ class EmptyLineTracker:
                 and (self.semantic_leading_comment is None or before)
             ):
                 self.semantic_leading_comment = block
-        elif not current_line.is_decorator:
+        # `or before` means this decorator already has an empty line before
+        elif not current_line.is_decorator or before:
             self.semantic_leading_comment = None
 
         self.previous_line = current_line
