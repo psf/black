@@ -16,9 +16,6 @@
 
 <!-- Changes that affect Black's preview style -->
 
-- Enforce empty lines before classes and functions with sticky leading comments (#3302)
-- Implicitly concatenated strings used as function args are now wrapped inside
-  parentheses (#3307)
 - Fix a crash in preview style with assert + parenthesized string (#3415)
 - Fix crashes in preview style with walrus operators used in function return annotations
   and except clauses (#3423)
