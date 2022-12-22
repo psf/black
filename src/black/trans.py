@@ -30,7 +30,6 @@ else:
 
 from mypy_extensions import trait
 
-from black.brackets import BracketMatchError
 from black.comments import contains_pragma_comment
 from black.lines import Line, append_leaves
 from black.mode import Feature
@@ -41,6 +40,7 @@ from black.nodes import (
     is_empty_lpar,
     is_empty_par,
     is_empty_rpar,
+    is_part_of_annotation,
     parent_type,
     replace_child,
     syms,
@@ -351,7 +351,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
 
     Requirements:
         (A) The line contains adjacent strings such that ALL of the validation checks
-        listed in StringMerger.__validate_msg(...)'s docstring pass.
+        listed in StringMerger._validate_msg(...)'s docstring pass.
             OR
         (B) The line contains a string which uses line continuation backslashes.
 
@@ -377,6 +377,8 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
                 and is_valid_index(i + 1)
                 and LL[i + 1].type == token.STRING
             ):
+                if is_part_of_annotation(leaf):
+                    return TErr("String is part of type annotation.")
                 return Ok(i)
 
             if leaf.type == token.STRING and "\\\n" in leaf.value:
@@ -454,7 +456,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
 
         Returns:
             Ok(new_line), if ALL of the validation checks found in
-            __validate_msg(...) pass.
+            _validate_msg(...) pass.
                 OR
             Err(CannotTransform), otherwise.
         """
@@ -608,7 +610,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
     def _validate_msg(line: Line, string_idx: int) -> TResult[None]:
         """Validate (M)erge (S)tring (G)roup
 
-        Transform-time string validation logic for __merge_string_group(...).
+        Transform-time string validation logic for _merge_string_group(...).
 
         Returns:
             * Ok(None), if ALL validation checks (listed below) pass.
@@ -622,6 +624,11 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
                 - The set of all string prefixes in the string group is of
                   length greater than one and is not equal to {"", "f"}.
                 - The string group consists of raw strings.
+                - The string group is stringified type annotations. We don't want to
+                  process stringified type annotations since pyright doesn't support
+                  them spanning multiple string values. (NOTE: mypy, pytype, pyre do
+                  support them, so we can change if pyright also gains support in the
+                  future. See https://github.com/microsoft/pyright/issues/4359.)
         """
         # We first check for "inner" stand-alone comments (i.e. stand-alone
         # comments that have a string leaf before them AND after them).
@@ -812,13 +819,7 @@ class StringParenStripper(StringTransformer):
 
         new_line = line.clone()
         new_line.comments = line.comments.copy()
-        try:
-            append_leaves(new_line, line, LL[: string_idx - 1])
-        except BracketMatchError:
-            # HACK: I believe there is currently a bug somewhere in
-            # right_hand_split() that is causing brackets to not be tracked
-            # properly by a shared BracketTracker.
-            append_leaves(new_line, line, LL[: string_idx - 1], preformatted=True)
+        append_leaves(new_line, line, LL[: string_idx - 1])
 
         string_leaf = Leaf(token.STRING, LL[string_idx].value)
         LL[string_idx - 1].remove()
@@ -1359,9 +1360,14 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
             # prefix, and the current custom split did NOT originally use a
             # prefix...
             if (
-                next_value != self._normalize_f_string(next_value, prefix)
-                and use_custom_breakpoints
+                use_custom_breakpoints
                 and not csplit.has_prefix
+                and (
+                    # `next_value == prefix + QUOTE` happens when the custom
+                    # split is an empty string.
+                    next_value == prefix + QUOTE
+                    or next_value != self._normalize_f_string(next_value, prefix)
+                )
             ):
                 # Then `csplit.break_idx` will be off by one after removing
                 # the 'f' prefix.
@@ -1638,6 +1644,8 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         * The line is a dictionary key assignment where some valid key is being
         assigned the value of some string.
             OR
+        * The line is an lambda expression and the value is a string.
+            OR
         * The line starts with an "atom" string that prefers to be wrapped in
         parens. It's preferred to be wrapped when the string is surrounded by
         commas (or is the first/last child).
@@ -1683,7 +1691,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             or self._else_match(LL)
             or self._assert_match(LL)
             or self._assign_match(LL)
-            or self._dict_match(LL)
+            or self._dict_or_lambda_match(LL)
             or self._prefer_paren_wrap_match(LL)
         )
 
@@ -1841,23 +1849,24 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         return None
 
     @staticmethod
-    def _dict_match(LL: List[Leaf]) -> Optional[int]:
+    def _dict_or_lambda_match(LL: List[Leaf]) -> Optional[int]:
         """
         Returns:
             string_idx such that @LL[string_idx] is equal to our target (i.e.
             matched) string, if this line matches the dictionary key assignment
-            statement requirements listed in the 'Requirements' section of this
-            classes' docstring.
+            statement or lambda expression requirements listed in the
+            'Requirements' section of this classes' docstring.
                 OR
             None, otherwise.
         """
-        # If this line is apart of a dictionary key assignment...
-        if syms.dictsetmaker in [parent_type(LL[0]), parent_type(LL[0].parent)]:
+        # If this line is a part of a dictionary key assignment or lambda expression...
+        parent_types = [parent_type(LL[0]), parent_type(LL[0].parent)]
+        if syms.dictsetmaker in parent_types or syms.lambdef in parent_types:
             is_valid_index = is_valid_index_factory(LL)
 
             for i, leaf in enumerate(LL):
-                # We MUST find a colon...
-                if leaf.type == token.COLON:
+                # We MUST find a colon, it can either be dict's or lambda's colon...
+                if leaf.type == token.COLON and i < len(LL) - 1:
                     idx = i + 2 if is_empty_par(LL[i + 1]) else i + 1
 
                     # That colon MUST be followed by a string...
@@ -1951,6 +1960,25 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                     f" (left_leaves={left_leaves}, right_leaves={right_leaves})"
                 )
                 old_rpar_leaf = right_leaves.pop()
+            elif right_leaves and right_leaves[-1].type == token.RPAR:
+                # Special case for lambda expressions as dict's value, e.g.:
+                #     my_dict = {
+                #        "key": lambda x: f"formatted: {x},
+                #     }
+                # After wrapping the dict's value with parentheses, the string is
+                # followed by a RPAR but its opening bracket is lambda's, not
+                # the string's:
+                #        "key": (lambda x: f"formatted: {x}),
+                opening_bracket = right_leaves[-1].opening_bracket
+                if opening_bracket is not None and opening_bracket in left_leaves:
+                    index = left_leaves.index(opening_bracket)
+                    if (
+                        index > 0
+                        and index < len(left_leaves) - 1
+                        and left_leaves[index - 1].type == token.COLON
+                        and left_leaves[index + 1].value == "lambda"
+                    ):
+                        right_leaves.pop()
 
             append_leaves(string_line, line, right_leaves)
 

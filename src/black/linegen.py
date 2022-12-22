@@ -2,10 +2,17 @@
 Generating lines of code.
 """
 import sys
+from dataclasses import dataclass, replace
+from enum import Enum, auto
 from functools import partial, wraps
 from typing import Collection, Iterator, List, Optional, Set, Union, cast
 
-from black.brackets import COMMA_PRIORITY, DOT_PRIORITY, max_delimiter_priority_in_atom
+from black.brackets import (
+    COMMA_PRIORITY,
+    DOT_PRIORITY,
+    get_leaves_inside_matching_brackets,
+    max_delimiter_priority_in_atom,
+)
 from black.comments import FMT_OFF, generate_comments, list_comments
 from black.lines import (
     Line,
@@ -18,6 +25,7 @@ from black.lines import (
 from black.mode import Feature, Mode, Preview
 from black.nodes import (
     ASSIGNMENTS,
+    BRACKETS,
     CLOSING_BRACKETS,
     OPENING_BRACKETS,
     RARROW,
@@ -172,6 +180,23 @@ class LineGenerator(Visitor[Line]):
                 yield from self.line()
 
             yield from self.visit(child)
+
+    def visit_dictsetmaker(self, node: Node) -> Iterator[Line]:
+        if Preview.wrap_long_dict_values_in_parens in self.mode:
+            for i, child in enumerate(node.children):
+                if i == 0:
+                    continue
+                if node.children[i - 1].type == token.COLON:
+                    if child.type == syms.atom and child.children[0].type == token.LPAR:
+                        if maybe_make_parens_invisible_in_atom(
+                            child,
+                            parent=node,
+                            remove_brackets_around_comma=False,
+                        ):
+                            wrap_in_parentheses(node, child, visible=False)
+                    else:
+                        wrap_in_parentheses(node, child, visible=False)
+        yield from self.visit_default(node)
 
     def visit_funcdef(self, node: Node) -> Iterator[Line]:
         """Visit function definition."""
@@ -383,19 +408,18 @@ class LineGenerator(Visitor[Line]):
                 # We need to find the length of the last line of the docstring
                 # to find if we can add the closing quotes to the line without
                 # exceeding the maximum line length.
-                # If docstring is one line, then we need to add the length
-                # of the indent, prefix, and starting quotes. Ending quotes are
-                # handled later.
+                # If docstring is one line, we don't put the closing quotes on a
+                # separate line because it looks ugly (#3320).
                 lines = docstring.splitlines()
                 last_line_length = len(lines[-1]) if docstring else 0
-
-                if len(lines) == 1:
-                    last_line_length += len(indent) + len(prefix) + quote_len
 
                 # If adding closing quotes would cause the last line to exceed
                 # the maximum line length then put a line break before the
                 # closing quotes
-                if last_line_length + quote_len > self.mode.line_length:
+                if (
+                    len(lines) > 1
+                    and last_line_length + quote_len > self.mode.line_length
+                ):
                     leaf.value = prefix + quote + docstring + "\n" + indent + quote
                 else:
                     leaf.value = prefix + quote + docstring + quote
@@ -557,6 +581,12 @@ def transform_line(
         yield line
 
 
+class _BracketSplitComponent(Enum):
+    head = auto()
+    body = auto()
+    tail = auto()
+
+
 def left_hand_split(line: Line, _features: Collection[Feature] = ()) -> Iterator[Line]:
     """Split line into many lines, starting with the first matching bracket pair.
 
@@ -587,13 +617,30 @@ def left_hand_split(line: Line, _features: Collection[Feature] = ()) -> Iterator
     if not matching_bracket:
         raise CannotSplit("No brackets found")
 
-    head = bracket_split_build_line(head_leaves, line, matching_bracket)
-    body = bracket_split_build_line(body_leaves, line, matching_bracket, is_body=True)
-    tail = bracket_split_build_line(tail_leaves, line, matching_bracket)
+    head = bracket_split_build_line(
+        head_leaves, line, matching_bracket, component=_BracketSplitComponent.head
+    )
+    body = bracket_split_build_line(
+        body_leaves, line, matching_bracket, component=_BracketSplitComponent.body
+    )
+    tail = bracket_split_build_line(
+        tail_leaves, line, matching_bracket, component=_BracketSplitComponent.tail
+    )
     bracket_split_succeeded_or_raise(head, body, tail)
     for result in (head, body, tail):
         if result:
             yield result
+
+
+@dataclass
+class _RHSResult:
+    """Intermediate split result from a right hand split."""
+
+    head: Line
+    body: Line
+    tail: Line
+    opening_bracket: Leaf
+    closing_bracket: Leaf
 
 
 def right_hand_split(
@@ -609,6 +656,22 @@ def right_hand_split(
     this split.
 
     Note: running this function modifies `bracket_depth` on the leaves of `line`.
+    """
+    rhs_result = _first_right_hand_split(line, omit=omit)
+    yield from _maybe_split_omitting_optional_parens(
+        rhs_result, line, mode, features=features, omit=omit
+    )
+
+
+def _first_right_hand_split(
+    line: Line,
+    omit: Collection[LeafID] = (),
+) -> _RHSResult:
+    """Split the line into head, body, tail starting with the last bracket pair.
+
+    Note: this function should not have side effects. It's relied upon by
+    _maybe_split_omitting_optional_parens to get an opinion whether to prefer
+    splitting on the right side of an assignment statement.
     """
     tail_leaves: List[Leaf] = []
     body_leaves: List[Leaf] = []
@@ -635,38 +698,82 @@ def right_hand_split(
     tail_leaves.reverse()
     body_leaves.reverse()
     head_leaves.reverse()
-    head = bracket_split_build_line(head_leaves, line, opening_bracket)
-    body = bracket_split_build_line(body_leaves, line, opening_bracket, is_body=True)
-    tail = bracket_split_build_line(tail_leaves, line, opening_bracket)
+    head = bracket_split_build_line(
+        head_leaves, line, opening_bracket, component=_BracketSplitComponent.head
+    )
+    body = bracket_split_build_line(
+        body_leaves, line, opening_bracket, component=_BracketSplitComponent.body
+    )
+    tail = bracket_split_build_line(
+        tail_leaves, line, opening_bracket, component=_BracketSplitComponent.tail
+    )
     bracket_split_succeeded_or_raise(head, body, tail)
+    return _RHSResult(head, body, tail, opening_bracket, closing_bracket)
+
+
+def _maybe_split_omitting_optional_parens(
+    rhs: _RHSResult,
+    line: Line,
+    mode: Mode,
+    features: Collection[Feature] = (),
+    omit: Collection[LeafID] = (),
+) -> Iterator[Line]:
     if (
         Feature.FORCE_OPTIONAL_PARENTHESES not in features
         # the opening bracket is an optional paren
-        and opening_bracket.type == token.LPAR
-        and not opening_bracket.value
+        and rhs.opening_bracket.type == token.LPAR
+        and not rhs.opening_bracket.value
         # the closing bracket is an optional paren
-        and closing_bracket.type == token.RPAR
-        and not closing_bracket.value
+        and rhs.closing_bracket.type == token.RPAR
+        and not rhs.closing_bracket.value
         # it's not an import (optional parens are the only thing we can split on
         # in this case; attempting a split without them is a waste of time)
         and not line.is_import
         # there are no standalone comments in the body
-        and not body.contains_standalone_comments(0)
+        and not rhs.body.contains_standalone_comments(0)
         # and we can actually remove the parens
-        and can_omit_invisible_parens(body, mode.line_length)
+        and can_omit_invisible_parens(rhs.body, mode.line_length)
     ):
-        omit = {id(closing_bracket), *omit}
+        omit = {id(rhs.closing_bracket), *omit}
         try:
-            yield from right_hand_split(line, mode, features=features, omit=omit)
-            return
+            # The _RHSResult Omitting Optional Parens.
+            rhs_oop = _first_right_hand_split(line, omit=omit)
+            if not (
+                Preview.prefer_splitting_right_hand_side_of_assignments in line.mode
+                # the split is right after `=`
+                and len(rhs.head.leaves) >= 2
+                and rhs.head.leaves[-2].type == token.EQUAL
+                # the left side of assignement contains brackets
+                and any(leaf.type in BRACKETS for leaf in rhs.head.leaves[:-1])
+                # the left side of assignment is short enough (the -1 is for the ending
+                # optional paren)
+                and is_line_short_enough(
+                    rhs.head, mode=replace(mode, line_length=mode.line_length - 1)
+                )
+                # the left side of assignment won't explode further because of magic
+                # trailing comma
+                and rhs.head.magic_trailing_comma is None
+                # the split by omitting optional parens isn't preferred by some other
+                # reason
+                and not _prefer_split_rhs_oop(rhs_oop, mode)
+            ):
+                yield from _maybe_split_omitting_optional_parens(
+                    rhs_oop, line, mode, features=features, omit=omit
+                )
+                return
 
         except CannotSplit as e:
-            if not (can_be_split(body) or is_line_short_enough(body, mode=mode)):
+            if not (
+                can_be_split(rhs.body) or is_line_short_enough(rhs.body, mode=mode)
+            ):
                 raise CannotSplit(
                     "Splitting failed, body is still too long and can't be split."
                 ) from e
 
-            elif head.contains_multiline_strings() or tail.contains_multiline_strings():
+            elif (
+                rhs.head.contains_multiline_strings()
+                or rhs.tail.contains_multiline_strings()
+            ):
                 raise CannotSplit(
                     "The current optional pair of parentheses is bound to fail to"
                     " satisfy the splitting algorithm because the head or the tail"
@@ -674,11 +781,40 @@ def right_hand_split(
                     " line."
                 ) from e
 
-    ensure_visible(opening_bracket)
-    ensure_visible(closing_bracket)
-    for result in (head, body, tail):
+    ensure_visible(rhs.opening_bracket)
+    ensure_visible(rhs.closing_bracket)
+    for result in (rhs.head, rhs.body, rhs.tail):
         if result:
             yield result
+
+
+def _prefer_split_rhs_oop(rhs_oop: _RHSResult, mode: Mode) -> bool:
+    """
+    Returns whether we should prefer the result from a split omitting optional parens.
+    """
+    has_closing_bracket_after_assign = False
+    for leaf in reversed(rhs_oop.head.leaves):
+        if leaf.type == token.EQUAL:
+            break
+        if leaf.type in CLOSING_BRACKETS:
+            has_closing_bracket_after_assign = True
+            break
+    return (
+        # contains matching brackets after the `=` (done by checking there is a
+        # closing bracket)
+        has_closing_bracket_after_assign
+        or (
+            # the split is actually from inside the optional parens (done by checking
+            # the first line still contains the `=`)
+            any(leaf.type == token.EQUAL for leaf in rhs_oop.head.leaves)
+            # the first line is short enough
+            and is_line_short_enough(rhs_oop.head, mode=mode)
+        )
+        # contains unsplittable type ignore
+        or rhs_oop.head.contains_unsplittable_type_ignore()
+        or rhs_oop.body.contains_unsplittable_type_ignore()
+        or rhs_oop.tail.contains_unsplittable_type_ignore()
+    )
 
 
 def bracket_split_succeeded_or_raise(head: Line, body: Line, tail: Line) -> None:
@@ -708,15 +844,23 @@ def bracket_split_succeeded_or_raise(head: Line, body: Line, tail: Line) -> None
 
 
 def bracket_split_build_line(
-    leaves: List[Leaf], original: Line, opening_bracket: Leaf, *, is_body: bool = False
+    leaves: List[Leaf],
+    original: Line,
+    opening_bracket: Leaf,
+    *,
+    component: _BracketSplitComponent,
 ) -> Line:
     """Return a new line with given `leaves` and respective comments from `original`.
 
-    If `is_body` is True, the result line is one-indented inside brackets and as such
-    has its first leaf's prefix normalized and a trailing comma added when expected.
+    If it's the head component, brackets will be tracked so trailing commas are
+    respected.
+
+    If it's the body component, the result line is one-indented inside brackets and as
+    such has its first leaf's prefix normalized and a trailing comma added when
+    expected.
     """
     result = Line(mode=original.mode, depth=original.depth)
-    if is_body:
+    if component is _BracketSplitComponent.body:
         result.inside_brackets = True
         result.depth += 1
         if leaves:
@@ -754,12 +898,24 @@ def bracket_split_build_line(
                         leaves.insert(i + 1, new_comma)
                     break
 
+    leaves_to_track: Set[LeafID] = set()
+    if (
+        Preview.handle_trailing_commas_in_head in original.mode
+        and component is _BracketSplitComponent.head
+    ):
+        leaves_to_track = get_leaves_inside_matching_brackets(leaves)
     # Populate the line
     for leaf in leaves:
-        result.append(leaf, preformatted=True)
+        result.append(
+            leaf,
+            preformatted=True,
+            track_bracket=id(leaf) in leaves_to_track,
+        )
         for comment_after in original.comments_after(leaf):
             result.append(comment_after, preformatted=True)
-    if is_body and should_split_line(result, opening_bracket):
+    if component is _BracketSplitComponent.body and should_split_line(
+        result, opening_bracket
+    ):
         result.should_split_rhs = True
     return result
 
@@ -1109,6 +1265,8 @@ def maybe_make_parens_invisible_in_atom(
             syms.expr_stmt,
             syms.assert_stmt,
             syms.return_stmt,
+            syms.except_clause,
+            syms.funcdef,
             # these ones aren't useful to end users, but they do please fuzzers
             syms.for_stmt,
             syms.del_stmt,
@@ -1258,8 +1416,10 @@ def run_transformer(
 
         result.extend(transform_line(transformed_line, mode=mode, features=features))
 
+    features_set = set(features)
     if (
-        transform.__class__.__name__ != "rhs"
+        Feature.FORCE_OPTIONAL_PARENTHESES in features_set
+        or transform.__class__.__name__ != "rhs"
         or not line.bracket_tracker.invisible
         or any(bracket.value for bracket in line.bracket_tracker.invisible)
         or line.contains_multiline_strings()
@@ -1276,7 +1436,7 @@ def run_transformer(
 
     line_copy = line.clone()
     append_leaves(line_copy, line, line.leaves)
-    features_fop = set(features) | {Feature.FORCE_OPTIONAL_PARENTHESES}
+    features_fop = features_set | {Feature.FORCE_OPTIONAL_PARENTHESES}
     second_opinion = run_transformer(
         line_copy, transform, mode, features_fop, line_str=line_str
     )

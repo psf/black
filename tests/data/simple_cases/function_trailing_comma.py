@@ -49,6 +49,17 @@ def func() -> ((also_super_long_type_annotation_that_may_cause_an_AST_related_cr
 ):
     pass
 
+
+# Make sure inner one-element tuple won't explode
+some_module.some_function(
+    argument1, (one_element_tuple,), argument4, argument5, argument6
+)
+
+# Inner trailing comma causes outer to explode
+some_module.some_function(
+    argument1, (one, two,), argument4, argument5, argument6
+)
+
 # output
 
 def f(
@@ -151,3 +162,21 @@ def func() -> (
     )
 ):
     pass
+
+
+# Make sure inner one-element tuple won't explode
+some_module.some_function(
+    argument1, (one_element_tuple,), argument4, argument5, argument6
+)
+
+# Inner trailing comma causes outer to explode
+some_module.some_function(
+    argument1,
+    (
+        one,
+        two,
+    ),
+    argument4,
+    argument5,
+    argument6,
+)

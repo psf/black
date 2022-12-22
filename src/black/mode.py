@@ -151,14 +151,19 @@ class Preview(Enum):
 
     annotation_parens = auto()
     empty_lines_before_class_or_def_with_leading_comments = auto()
+    handle_trailing_commas_in_head = auto()
     long_docstring_quotes_on_newline = auto()
     multiline_string_handling = auto()
     normalize_docstring_quotes_and_prefixes_properly = auto()
     one_element_subscript = auto()
+    prefer_splitting_right_hand_side_of_assignments = auto()
     remove_block_trailing_newline = auto()
     remove_redundant_parens = auto()
+    # NOTE: string_processing requires wrap_long_dict_values_in_parens
+    # for https://github.com/psf/black/issues/3117 to be fixed.
     string_processing = auto()
     skip_magic_trailing_comma_in_subscript = auto()
+    wrap_long_dict_values_in_parens = auto()
 
 
 class Deprecated(UserWarning):
