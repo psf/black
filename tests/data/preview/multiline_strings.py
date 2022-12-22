@@ -137,6 +137,17 @@ value!"""),
     **kwargs,
 ):
     pass
+
+print(f"""
+    This {animal}
+    moos and barks
+{animal} say
+""")
+msg = f"""The arguments {bad_arguments} were passed in.
+Please use `--build-option` instead,
+`--global-option` is reserved to flags like `--verbose` or `--quiet`.
+"""
+
 # output
 """cow
 say""",
@@ -316,3 +327,14 @@ value!"""),
     **kwargs,
 ):
     pass
+
+
+print(f"""
+    This {animal}
+    moos and barks
+{animal} say
+""")
+msg = f"""The arguments {bad_arguments} were passed in.
+Please use `--build-option` instead,
+`--global-option` is reserved to flags like `--verbose` or `--quiet`.
+"""
