@@ -16,6 +16,7 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Improve the performance on large expressions that contain many strings (#3467)
 - Fix a crash in preview style with assert + parenthesized string (#3415)
 - Fix crashes in preview style with walrus operators used in function return annotations
   and except clauses (#3423)
