@@ -298,6 +298,9 @@ def str_width(line_str: str) -> int:
     You could utilize this function to determine, for example, if a string
     is too wide to display in a terminal or editor.
     """
+    if line_str.isascii():
+        # Fast path for most of strings which contains only characters in ASCII:
+        return len(line_str)
     return sum(map(char_width, line_str))
 
 
