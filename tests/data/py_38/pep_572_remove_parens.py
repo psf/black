@@ -53,6 +53,16 @@ async def await_the_walrus():
     with (x := await y):
         pass
 
+    with (x := await a, y := await b):
+        pass
+
+    with ((x := await a, y := await b)):
+        pass
+
+    with (x := await a), (y := await b):
+        pass
+
+
 # output
 if foo := 0:
     pass
@@ -109,4 +119,13 @@ def this_is_so_dumb() -> (please := no):
 
 async def await_the_walrus():
     with (x := await y):
+        pass
+
+    with (x := await a, y := await b):
+        pass
+
+    with ((x := await a, y := await b)):
+        pass
+
+    with (x := await a), (y := await b):
         pass

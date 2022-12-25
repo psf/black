@@ -46,6 +46,7 @@ from black.nodes import (
     is_rpar_token,
     is_stub_body,
     is_stub_suite,
+    is_tuple_containing_walrus,
     is_vararg,
     is_walrus_assignment,
     is_yield,
@@ -1259,6 +1260,7 @@ def maybe_make_parens_invisible_in_atom(
             not remove_brackets_around_comma
             and max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
         )
+        or is_tuple_containing_walrus(node)
     ):
         return False
 
@@ -1274,6 +1276,7 @@ def maybe_make_parens_invisible_in_atom(
             # these ones aren't useful to end users, but they do please fuzzers
             syms.for_stmt,
             syms.del_stmt,
+            syms.for_stmt,
         ]:
             return False
 
