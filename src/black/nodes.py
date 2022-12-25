@@ -571,10 +571,7 @@ def is_tuple_containing_walrus(node: LN) -> bool:
     if gexp is None or gexp.type != syms.testlist_gexp:
         return False
 
-    return any(
-        child.type == syms.namedexpr_test
-        for child in gexp.children
-    )
+    return any(child.type == syms.namedexpr_test for child in gexp.children)
 
 
 def is_one_sequence_between(
