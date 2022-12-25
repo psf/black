@@ -49,6 +49,9 @@ def a():
 def this_is_so_dumb() -> (please := no):
     pass
 
+async def await_the_walrus():
+    with (x := await y):
+        pass
 
 # output
 if foo := 0:
@@ -103,3 +106,7 @@ def a():
 def this_is_so_dumb() -> (please := no):
     pass
 
+
+async def await_the_walrus():
+    with (x := await y):
+        pass

@@ -33,6 +33,7 @@
   string lambda values are now wrapped in parentheses (#3440)
 - Exclude string type annotations from improved string processing; fix crash when the
   return type annotation is stringified and spans across multiple lines (#3462)
+- Fix a crash in preview style with walrus operators used in `await` statements (#3473)
 
 ### Configuration
 
