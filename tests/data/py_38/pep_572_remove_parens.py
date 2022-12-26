@@ -50,12 +50,19 @@ def this_is_so_dumb() -> (please := no):
     pass
 
 async def await_the_walrus():
+    with (x := y):
+        pass
+
+    with (x := y) as z, (a := b) as c:
+        pass
+
     with (x := await y):
         pass
 
     with (x := await a, y := await b):
         pass
 
+    # Ideally we should remove one set of parentheses
     with ((x := await a, y := await b)):
         pass
 
@@ -118,12 +125,19 @@ def this_is_so_dumb() -> (please := no):
 
 
 async def await_the_walrus():
+    with (x := y):
+        pass
+
+    with (x := y) as z, (a := b) as c:
+        pass
+
     with (x := await y):
         pass
 
     with (x := await a, y := await b):
         pass
 
+    # Ideally we should remove one set of parentheses
     with ((x := await a, y := await b)):
         pass
 
