@@ -140,6 +140,22 @@ class LineGenerator(Visitor[Line]):
                 self.current_line.append(node)
         yield from super().visit_default(node)
 
+    def visit_test(self, node: Node) -> Iterator[Line]:
+        """Visit an `x if y else z` test"""
+
+        if Preview.parenthesize_conditional_expressions in self.mode:
+            already_parenthesized = (
+                node.prev_sibling and node.prev_sibling.type == token.LPAR
+            )
+
+            if not already_parenthesized:
+                lpar = Leaf(token.LPAR, "")
+                rpar = Leaf(token.RPAR, "")
+                node.insert_child(0, lpar)
+                node.append_child(rpar)
+
+        yield from self.visit_default(node)
+
     def visit_INDENT(self, node: Leaf) -> Iterator[Line]:
         """Increase indentation level, maybe yield a line."""
         # In blib2to3 INDENT never holds comments.
