@@ -114,6 +114,31 @@ class MyClass:
         pass
 
 
+# Regression test for https://github.com/psf/black/issues/3454.
+def foo():
+    pass
+    # Trailing comment that belongs to this function
+
+
+@decorator1
+@decorator2  # fmt: skip
+def bar():
+    pass
+
+
+# Regression test for https://github.com/psf/black/issues/3454.
+def foo():
+    pass
+    # Trailing comment that belongs to this function.
+    # NOTE this comment only has one empty line below, and the formatter
+    # should enforce two blank lines.
+
+@decorator1
+# A standalone comment
+def bar():
+    pass
+
+
 # output
 
 
@@ -252,3 +277,29 @@ class MyClass:
     # More comments.
     def first_method(self):
         pass
+
+
+# Regression test for https://github.com/psf/black/issues/3454.
+def foo():
+    pass
+    # Trailing comment that belongs to this function
+
+
+@decorator1
+@decorator2  # fmt: skip
+def bar():
+    pass
+
+
+# Regression test for https://github.com/psf/black/issues/3454.
+def foo():
+    pass
+    # Trailing comment that belongs to this function.
+    # NOTE this comment only has one empty line below, and the formatter
+    # should enforce two blank lines.
+
+
+@decorator1
+# A standalone comment
+def bar():
+    pass

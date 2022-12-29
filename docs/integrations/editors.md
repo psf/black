@@ -111,15 +111,50 @@ Configuration:
 - `g:black_fast` (defaults to `0`)
 - `g:black_linelength` (defaults to `88`)
 - `g:black_skip_string_normalization` (defaults to `0`)
+- `g:black_skip_magic_trailing_comma` (defaults to `0`)
 - `g:black_virtualenv` (defaults to `~/.vim/black` or `~/.local/share/nvim/black`)
+- `g:black_use_virtualenv` (defaults to `1`)
+- `g:black_target_version` (defaults to `""`)
 - `g:black_quiet` (defaults to `0`)
 - `g:black_preview` (defaults to `0`)
 
+#### Installation
+
+This plugin **requires Vim 7.0+ built with Python 3.7+ support**. It needs Python 3.7 to
+be able to run _Black_ inside the Vim process which is much faster than calling an
+external command.
+
+##### `vim-plug`
+
 To install with [vim-plug](https://github.com/junegunn/vim-plug):
+
+_Black_'s `stable` branch tracks official version updates, and can be used to simply
+follow the most recent stable version.
 
 ```
 Plug 'psf/black', { 'branch': 'stable' }
 ```
+
+Another option which is a bit more explicit and offers more control is to use
+`vim-plug`'s `tag` option with a shell wildcard. This will resolve to the latest tag
+which matches the given pattern.
+
+The following matches all stable versions (see the
+[Release Process](../contributing/release_process.md) section for documentation of
+version scheme used by Black):
+
+```
+Plug 'psf/black', { 'tag': '*.*.*' }
+```
+
+and the following demonstrates pinning to a specific year's stable style (2022 in this
+case):
+
+```
+Plug 'psf/black', { 'tag': '22.*.*' }
+```
+
+##### Vundle
 
 or with [Vundle](https://github.com/VundleVim/Vundle.vim):
 
@@ -133,6 +168,14 @@ and execute the following in a terminal:
 $ cd ~/.vim/bundle/black
 $ git checkout origin/stable -b stable
 ```
+
+##### Arch Linux
+
+On Arch Linux, the plugin is shipped with the
+[`python-black`](https://archlinux.org/packages/community/any/python-black/) package, so
+you can start using it in Vim after install with no additional setup.
+
+##### Vim 8 Native Plugin Management
 
 or you can copy the plugin files from
 [plugin/black.vim](https://github.com/psf/black/blob/stable/plugin/black.vim) and
@@ -148,9 +191,7 @@ curl https://raw.githubusercontent.com/psf/black/stable/autoload/black.vim -o ~/
 Let me know if this requires any changes to work with Vim 8's builtin `packadd`, or
 Pathogen, and so on.
 
-This plugin **requires Vim 7.0+ built with Python 3.7+ support**. It needs Python 3.7 to
-be able to run _Black_ inside the Vim process which is much faster than calling an
-external command.
+#### Usage
 
 On first run, the plugin creates its own virtualenv using the right Python version and
 automatically installs _Black_. You can upgrade it later by calling `:BlackUpgrade` and
@@ -186,6 +227,8 @@ To run _Black_ on a key press (e.g. F9 below), add this:
 ```
 nnoremap <F9> :Black<CR>
 ```
+
+#### Troubleshooting
 
 **How to get Vim with Python 3.6?** On Ubuntu 17.10 Vim comes with Python 3.6 by
 default. On macOS with Homebrew run: `brew install vim`. When building Vim from source,
