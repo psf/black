@@ -50,7 +50,7 @@ first_item, second_item = some_looooooooong_module.some_loooooog_function_name(
     forth_item,
     fifth_item,
     last_item_very_loooooong,
-) = everyting = some_loooooog_function_name(
+) = everything = some_looooong_function_name(
     first_argument, second_argument, third_argument
 )
 
