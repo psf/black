@@ -531,6 +531,25 @@ some_dict = {
         r"signiferumque, duo ea vocibus consetetur scriptorem. Facer \t",
 }
 
+# Regression test for https://github.com/psf/black/issues/3459.
+xxxx(
+    empty_str_as_first_split=''
+    f'xxxxxxx {xxxxxxxxxx} xxx xxxxxxxxxx xxxxx xxx xxx xx '
+    'xxxxx xxxxxxxxx xxxxxxx, xxx xxxxxxxxxxx xxx xxxxx. '
+    f'xxxxxxxxxxxxx xxxx xx xxxxxxxxxx. xxxxx: {x.xxx}',
+    empty_u_str_as_first_split=u''
+    f'xxxxxxx {xxxxxxxxxx} xxx xxxxxxxxxx xxxxx xxx xxx xx '
+    'xxxxx xxxxxxxxx xxxxxxx, xxx xxxxxxxxxxx xxx xxxxx. '
+    f'xxxxxxxxxxxxx xxxx xx xxxxxxxxxx. xxxxx: {x.xxx}',
+)
+
+# Regression test for https://github.com/psf/black/issues/3455.
+a_dict = {
+    "/this/is/a/very/very/very/very/very/very/very/very/very/very/long/key/without/spaces":
+        # And there is a comment before the value
+        ("item1", "item2", "item3"),
+}
+
 
 # output
 
@@ -1192,4 +1211,27 @@ some_dict = {
         r"Lorem ipsum dolor sit amet, an sed convenire eloquentiam \t"
         r"signiferumque, duo ea vocibus consetetur scriptorem. Facer \t"
     ),
+}
+
+# Regression test for https://github.com/psf/black/issues/3459.
+xxxx(
+    empty_str_as_first_split=(
+        ""
+        f"xxxxxxx {xxxxxxxxxx} xxx xxxxxxxxxx xxxxx xxx xxx xx "
+        "xxxxx xxxxxxxxx xxxxxxx, xxx xxxxxxxxxxx xxx xxxxx. "
+        f"xxxxxxxxxxxxx xxxx xx xxxxxxxxxx. xxxxx: {x.xxx}"
+    ),
+    empty_u_str_as_first_split=(
+        ""
+        f"xxxxxxx {xxxxxxxxxx} xxx xxxxxxxxxx xxxxx xxx xxx xx "
+        "xxxxx xxxxxxxxx xxxxxxx, xxx xxxxxxxxxxx xxx xxxxx. "
+        f"xxxxxxxxxxxxx xxxx xx xxxxxxxxxx. xxxxx: {x.xxx}"
+    ),
+)
+
+# Regression test for https://github.com/psf/black/issues/3455.
+a_dict = {
+    "/this/is/a/very/very/very/very/very/very/very/very/very/very/long/key/without/spaces":
+    # And there is a comment before the value
+    ("item1", "item2", "item3"),
 }
