@@ -16,14 +16,23 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Improve the performance on large expressions that contain many strings (#3467)
 - Fix a crash in preview style with assert + parenthesized string (#3415)
 - Fix crashes in preview style with walrus operators used in function return annotations
   and except clauses (#3423)
+- Fix a crash in preview advanced string processing where mixed implicitly concatenated
+  regular and f-strings start with an empty span (#3463)
+- Fix a crash in preview advanced string processing where a standalone comment is placed
+  before a dict's value (#3469)
+- Fix an issue where extra empty lines are added when a decorator has `# fmt: skip`
+  applied or there is a standalone comment between decorators (#3470)
 - Do not put the closing quotes in a docstring on a separate line, even if the line is
   too long (#3430)
 - Long values in dict literals are now wrapped in parentheses; correspondingly
   unnecessary parentheses around short values in dict literals are now removed; long
   string lambda values are now wrapped in parentheses (#3440)
+- Exclude string type annotations from improved string processing; fix crash when the
+  return type annotation is stringified and spans across multiple lines (#3462)
 
 ### Configuration
 
@@ -63,11 +72,15 @@
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
 - Move 3.11 CI to normal flow now all dependencies support 3.11 (#3446)
+- Docker: Add new `latest_prerelease` tag automation to follow latest black alpha
+  release on docker images (#3465)
 
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
+
+- Expand `vim-plug` installation instructions to offer more explicit options (#3468)
 
 ## 22.12.0
 
