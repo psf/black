@@ -848,3 +848,15 @@ def is_string_token(nl: NL) -> TypeGuard[Leaf]:
 
 def is_number_token(nl: NL) -> TypeGuard[Leaf]:
     return nl.type == token.NUMBER
+
+
+def is_part_of_annotation(leaf: Leaf) -> bool:
+    """Returns whether this leaf is part of type annotations."""
+    ancestor = leaf.parent
+    while ancestor is not None:
+        if ancestor.prev_sibling and ancestor.prev_sibling.type == token.RARROW:
+            return True
+        if ancestor.parent and ancestor.parent.type == syms.tname:
+            return True
+        ancestor = ancestor.parent
+    return False
