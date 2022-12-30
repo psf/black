@@ -118,7 +118,7 @@ sources = ["src"]
 [tool.hatch.build.targets.wheel.hooks.mypyc]
 enable-by-default = false
 dependencies = [
-  "hatch-mypyc>=0.13.0",
+  "hatch-mypyc>=0.14.1",
   "mypy==0.991",
   # Required stubs to be removed when the packages support PEP 561 themselves
   "types-typed-ast>=1.4.2",
@@ -142,6 +142,7 @@ exclude = [
 options = { opt_level = "3", debug_level = "0" }
 
 [tool.cibuildwheel]
+build-frontend = "build"
 build-verbosity = 1
 # So these are the environments we target:
 # - Python: CPython 3.7+ only
