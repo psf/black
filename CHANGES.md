@@ -10,38 +10,48 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix a crash when a colon line is marked between `# fmt: off` and `# fmt: on` (#3439)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
-- Enforce empty lines before classes and functions with sticky leading comments (#3302)
-- Reformat empty and whitespace-only files as either an empty file (if no newline is
-  present) or as a single newline character (if a newline is present) (#3348)
-- Implicitly concatenated strings used as function args are now wrapped inside
-  parentheses (#3307)
-- Correctly handle trailing commas that are inside a line's leading non-nested parens
-  (#3370)
+- Add parentheses around `if`-`else` expressions (#2278)
+- Improve the performance on large expressions that contain many strings (#3467)
+- Fix a crash in preview style with assert + parenthesized string (#3415)
+- Fix crashes in preview style with walrus operators used in function return annotations
+  and except clauses (#3423)
+- Fix a crash in preview advanced string processing where mixed implicitly concatenated
+  regular and f-strings start with an empty span (#3463)
+- Fix a crash in preview advanced string processing where a standalone comment is placed
+  before a dict's value (#3469)
+- Fix an issue where extra empty lines are added when a decorator has `# fmt: skip`
+  applied or there is a standalone comment between decorators (#3470)
+- Do not put the closing quotes in a docstring on a separate line, even if the line is
+  too long (#3430)
+- Long values in dict literals are now wrapped in parentheses; correspondingly
+  unnecessary parentheses around short values in dict literals are now removed; long
+  string lambda values are now wrapped in parentheses (#3440)
+- Exclude string type annotations from improved string processing; fix crash when the
+  return type annotation is stringified and spans across multiple lines (#3462)
 
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
 
-- Fix incorrectly applied .gitignore rules by considering the .gitignore location and
-  the relative path to the target file (#3338)
-- Fix incorrectly ignoring .gitignore presence when more than one source directory is
-  specified (#3336)
-
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
+- Upgrade mypyc from `0.971` to `0.991` so mypycified _Black_ can be built on armv7
+  (#3380)
+- Drop specific support for the `tomli` requirement on 3.11 alpha releases, working
+  around a bug that would cause the requirement not to be installed on any non-final
+  Python releases (#3448)
+
 ### Parser
 
 <!-- Changes to the parser or to version autodetection -->
-
-- Parsing support has been added for walruses inside generator expression that are
-  passed as function args (for example,
-  `any(match := my_re.match(text) for text in texts)`) (#3327).
 
 ### Performance
 
@@ -53,6 +63,8 @@
 
 - Fix emoji rendering on Windows 10+ when standard output is redirected or captured by
   forcing UTF-8 encoding in this case (#3374)
+- Verbose logging now shows the values of `pyproject.toml` configuration variables
+  (#3392)
 
 ### _Blackd_
 
@@ -62,13 +74,56 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
-- Vim plugin: Optionally allow using the system installation of Black via
-  `let g:black_use_virtualenv = 0`(#3309)
+- Move 3.11 CI to normal flow now all dependencies support 3.11 (#3446)
+- Docker: Add new `latest_prerelease` tag automation to follow latest black alpha
+  release on docker images (#3465)
 
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
+
+- Expand `vim-plug` installation instructions to offer more explicit options (#3468)
+
+## 22.12.0
+
+### Preview style
+
+<!-- Changes that affect Black's preview style -->
+
+- Enforce empty lines before classes and functions with sticky leading comments (#3302)
+- Reformat empty and whitespace-only files as either an empty file (if no newline is
+  present) or as a single newline character (if a newline is present) (#3348)
+- Implicitly concatenated strings used as function args are now wrapped inside
+  parentheses (#3307)
+- For assignment statements, prefer splitting the right hand side if the left hand side
+  fits on a single line (#3368)
+- Correctly handle trailing commas that are inside a line's leading non-nested parens
+  (#3370)
+
+### Configuration
+
+<!-- Changes to how Black can be configured -->
+
+- Fix incorrectly applied `.gitignore` rules by considering the `.gitignore` location
+  and the relative path to the target file (#3338)
+- Fix incorrectly ignoring `.gitignore` presence when more than one source directory is
+  specified (#3336)
+
+### Parser
+
+<!-- Changes to the parser or to version autodetection -->
+
+- Parsing support has been added for walruses inside generator expression that are
+  passed as function args (for example,
+  `any(match := my_re.match(text) for text in texts)`) (#3327).
+
+### Integrations
+
+<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- Vim plugin: Optionally allow using the system installation of Black via
+  `let g:black_use_virtualenv = 0`(#3309)
 
 ## 22.10.0
 
