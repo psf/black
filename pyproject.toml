@@ -166,6 +166,7 @@ MYPYC_DEBUG_LEVEL = "0"
 # CPython 3.11 wheels aren't available for aiohttp and building a Cython extension
 # from source also doesn't work.
 AIOHTTP_NO_EXTENSIONS = "1"
+SYSTEM_VERSION_COMPAT = "1"
 
 [tool.cibuildwheel.linux]
 before-build = [
