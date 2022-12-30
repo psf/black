@@ -118,7 +118,7 @@ sources = ["src"]
 [tool.hatch.build.targets.wheel.hooks.mypyc]
 enable-by-default = false
 dependencies = [
-  "hatch-mypyc>=0.14.1",
+  "hatch-mypyc>=0.13.0",
   "mypy==0.991",
   # Required stubs to be removed when the packages support PEP 561 themselves
   "types-typed-ast>=1.4.2",
