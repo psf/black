@@ -20,8 +20,7 @@ jobs:
         if: github.event_name == 'pull_request' && github.repository == 'psf/black'
         run: |
           if [ "$GITHUB_BASE_REF" != "main" ]; then
-              echo "::error::PR targeting '$GITHUB_BASE_REF', please refile targeting 'main'."
-              && exit 1
+              echo "::error::PR targeting '$GITHUB_BASE_REF', please refile targeting 'main'." && exit 1
           fi
 
       - name: Set up latest Python
