@@ -198,6 +198,8 @@
   parentheses (#3162)
 - Fix a string merging/split issue when a comment is present in the middle of implicitly
   concatenated strings on its own line (#3227)
+- All unnecessary parentheses in `for` assignments are now removed, previously certain
+  redundant parentheses were still kept (#3243)
 
 ### _Blackd_
 
