@@ -4,7 +4,6 @@ Simple formatting on strings. Further string formatting code is in trans.py.
 
 import re
 import sys
-import unicodedata
 from functools import lru_cache
 from typing import List, Match, Pattern
 
@@ -15,6 +14,7 @@ if sys.version_info < (3, 8):
 else:
     from typing import Final
 
+from black._width_table import WIDTH_TABLE
 
 STRING_PREFIX_CHARS: Final = "furbFURB"  # All possible string prefix characters.
 STRING_PREFIX_RE: Final = re.compile(
@@ -281,14 +281,31 @@ def normalize_unicode_escape_sequences(leaf: Leaf) -> None:
     leaf.value = re.sub(UNICODE_ESCAPE_RE, replace, text)
 
 
+@lru_cache(maxsize=4096)
 def char_width(char: str) -> int:
     """Return the width of a single character as it would be displayed in a
     terminal or editor (which respects Unicode East Asian Width).
 
     Full width characters are counted as 2, while half width characters are
-    counted as 1.
+    counted as 1.  Also control characters are counted as 0.
     """
-    return 2 if unicodedata.east_asian_width(char) in ("F", "W") else 1
+    table = WIDTH_TABLE
+    codepoint = ord(char)
+    highest = len(table) - 1
+    lowest = 0
+    idx = highest // 2
+    while True:
+        start_codepoint, end_codepoint, width = table[idx]
+        if codepoint < start_codepoint:
+            highest = idx - 1
+        elif codepoint > end_codepoint:
+            lowest = idx + 1
+        else:
+            return 0 if width < 0 else width
+        if highest < lowest:
+            break
+        idx = (highest + lowest) // 2
+    return 1
 
 
 def str_width(line_str: str) -> int:
@@ -299,7 +316,7 @@ def str_width(line_str: str) -> int:
     is too wide to display in a terminal or editor.
     """
     if line_str.isascii():
-        # Fast path for most of strings which contains only characters in ASCII:
+        # Fast path for a line consisting of only ASCII characters
         return len(line_str)
     return sum(map(char_width, line_str))
 
