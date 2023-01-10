@@ -1,4 +1,5 @@
 from dataclasses import replace
+import re
 from typing import Any, Iterator
 from unittest.mock import patch
 
@@ -44,13 +45,6 @@ def test_preview_format(filename: str) -> None:
     )
 
 
-@pytest.mark.parametrize("filename", all_data_cases("preview_38"))
-def test_preview_targeting_python_38_format(filename: str) -> None:
-    source, expected = read_data("preview_38", filename)
-    mode = black.Mode(preview=True, target_versions={black.TargetVersion.PY38})
-    assert_format(source, expected, mode, minimum_version=(3, 8))
-
-
 @pytest.mark.parametrize("filename", all_data_cases("preview_39"))
 def test_preview_minimum_python_39_format(filename: str) -> None:
     source, expected = read_data("preview_39", filename)
@@ -63,6 +57,27 @@ def test_preview_minimum_python_310_format(filename: str) -> None:
     source, expected = read_data("preview_310", filename)
     mode = black.Mode(preview=True)
     assert_format(source, expected, mode, minimum_version=(3, 10))
+
+
+def test_preview_context_managers_targeting_py38() -> None:
+    source, expected = read_data("preview_context_managers", "targeting_py38.py")
+    mode = black.Mode(preview=True, target_versions={black.TargetVersion.PY38})
+    assert_format(source, expected, mode, minimum_version=(3, 8))
+
+
+def test_preview_context_managers_targeting_py39() -> None:
+    source, expected = read_data("preview_context_managers", "targeting_py39.py")
+    mode = black.Mode(preview=True, target_versions={black.TargetVersion.PY39})
+    assert_format(source, expected, mode, minimum_version=(3, 9))
+
+
+@pytest.mark.parametrize("filename", all_data_cases("preview_context_managers/auto_detect"))
+def test_preview_context_managers_auto_detect(filename: str) -> None:
+    match = re.match(r"features_3_(\d+)", filename)
+    assert match is not None, "Unexpected filename format: %s" % filename
+    source, expected = read_data("preview_context_managers/auto_detect", filename)
+    mode = black.Mode(preview=True)
+    assert_format(source, expected, mode, minimum_version=(3, int(match.group(1))))
 
 
 # =============== #

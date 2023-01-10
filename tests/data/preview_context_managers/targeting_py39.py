@@ -25,7 +25,7 @@ with \
 
 with (
      new_new_new1() as cm1,
-     new_new_new2() 
+     new_new_new2()
 ):
     pass
 

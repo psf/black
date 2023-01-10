@@ -22,7 +22,7 @@ from black.lines import (
     is_line_short_enough,
     line_to_string,
 )
-from black.mode import Feature, Mode, Preview, supports_feature
+from black.mode import Feature, Mode, Preview
 from black.nodes import (
     ASSIGNMENTS,
     BRACKETS,
@@ -89,8 +89,9 @@ class LineGenerator(Visitor[Line]):
     in ways that will no longer stringify to valid Python code on the tree.
     """
 
-    def __init__(self, mode: Mode) -> None:
+    def __init__(self, mode: Mode, features: Collection[Feature]) -> None:
         self.mode = mode
+        self.features = features
         self.current_line: Line
         self.__post_init__()
 
@@ -190,7 +191,9 @@ class LineGenerator(Visitor[Line]):
         `parens` holds a set of string leaf values immediately after which
         invisible parens should be put.
         """
-        normalize_invisible_parens(node, parens_after=parens, mode=self.mode)
+        normalize_invisible_parens(
+            node, parens_after=parens, mode=self.mode, features=self.features
+        )
         for child in node.children:
             if is_name_token(child) and child.value in keywords:
                 yield from self.line()
@@ -243,7 +246,9 @@ class LineGenerator(Visitor[Line]):
 
     def visit_match_case(self, node: Node) -> Iterator[Line]:
         """Visit either a match or case statement."""
-        normalize_invisible_parens(node, parens_after=set(), mode=self.mode)
+        normalize_invisible_parens(
+            node, parens_after=set(), mode=self.mode, features=self.features
+        )
 
         yield from self.line()
         for child in node.children:
@@ -1087,9 +1092,6 @@ def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
 def maybe_wrap_multiple_context_managers(node: Node, mode: Mode) -> None:
     if (
         Preview.wrap_multiple_context_managers_in_parens not in mode
-        or not supports_feature(
-            mode.target_versions, Feature.PARENTHESIZED_CONTEXT_MANAGERS
-        )
         or len(node.children) <= 2
         # If it's an atom, it's already wrapped in parens.
         or node.children[1].type == syms.atom
@@ -1112,7 +1114,7 @@ def maybe_wrap_multiple_context_managers(node: Node, mode: Mode) -> None:
 
 
 def normalize_invisible_parens(
-    node: Node, parens_after: Set[str], *, mode: Mode
+    node: Node, parens_after: Set[str], *, mode: Mode, features: Collection[Feature]
 ) -> None:
     """Make existing optional parentheses invisible or create new ones.
 
@@ -1128,7 +1130,10 @@ def normalize_invisible_parens(
             return
 
     # TODO: Explain.
-    if node.type == syms.with_stmt:
+    if (
+        node.type == syms.with_stmt
+        and Feature.PARENTHESIZED_CONTEXT_MANAGERS in features
+    ):
         maybe_wrap_multiple_context_managers(node, mode)
 
     check_lpar = False
@@ -1136,7 +1141,9 @@ def normalize_invisible_parens(
         # Fixes a bug where invisible parens are not properly stripped from
         # assignment statements that contain type annotations.
         if isinstance(child, Node) and child.type == syms.annassign:
-            normalize_invisible_parens(child, parens_after=parens_after, mode=mode)
+            normalize_invisible_parens(
+                child, parens_after=parens_after, mode=mode, features=features
+            )
 
         # Add parentheses around long tuple unpacking in assignments.
         if (
