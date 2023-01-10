@@ -50,6 +50,7 @@ class Feature(Enum):
     EXCEPT_STAR = 14
     VARIADIC_GENERICS = 15
     DEBUG_F_STRINGS = 16
+    PARENTHESIZED_CONTEXT_MANAGERS = 17
     FORCE_OPTIONAL_PARENTHESES = 50
 
     # __future__ flags
@@ -106,6 +107,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.POS_ONLY_ARGUMENTS,
         Feature.UNPACKING_ON_FLOW,
         Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS,
     },
     TargetVersion.PY310: {
         Feature.F_STRINGS,
@@ -120,6 +122,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.POS_ONLY_ARGUMENTS,
         Feature.UNPACKING_ON_FLOW,
         Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS,
         Feature.PATTERN_MATCHING,
     },
     TargetVersion.PY311: {
@@ -135,6 +138,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.POS_ONLY_ARGUMENTS,
         Feature.UNPACKING_ON_FLOW,
         Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS,
         Feature.PATTERN_MATCHING,
         Feature.EXCEPT_STAR,
         Feature.VARIADIC_GENERICS,
@@ -164,6 +168,7 @@ class Preview(Enum):
     parenthesize_conditional_expressions = auto()
     skip_magic_trailing_comma_in_subscript = auto()
     wrap_long_dict_values_in_parens = auto()
+    wrap_multiple_context_managers_in_parens = auto()
 
 
 class Deprecated(UserWarning):

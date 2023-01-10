@@ -22,7 +22,7 @@ from black.lines import (
     is_line_short_enough,
     line_to_string,
 )
-from black.mode import Feature, Mode, Preview
+from black.mode import Feature, Mode, Preview, supports_feature
 from black.nodes import (
     ASSIGNMENTS,
     BRACKETS,
@@ -190,7 +190,7 @@ class LineGenerator(Visitor[Line]):
         `parens` holds a set of string leaf values immediately after which
         invisible parens should be put.
         """
-        normalize_invisible_parens(node, parens_after=parens, preview=self.mode.preview)
+        normalize_invisible_parens(node, parens_after=parens, mode=self.mode)
         for child in node.children:
             if is_name_token(child) and child.value in keywords:
                 yield from self.line()
@@ -243,7 +243,7 @@ class LineGenerator(Visitor[Line]):
 
     def visit_match_case(self, node: Node) -> Iterator[Line]:
         """Visit either a match or case statement."""
-        normalize_invisible_parens(node, parens_after=set(), preview=self.mode.preview)
+        normalize_invisible_parens(node, parens_after=set(), mode=self.mode)
 
         yield from self.line()
         for child in node.children:
@@ -1084,8 +1084,35 @@ def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
     leaf.prefix = ""
 
 
+def maybe_wrap_multiple_context_managers(node: Node, mode: Mode) -> None:
+    if (
+        Preview.wrap_multiple_context_managers_in_parens not in mode
+        or not supports_feature(
+            mode.target_versions, Feature.PARENTHESIZED_CONTEXT_MANAGERS
+        )
+        or len(node.children) <= 2
+        # If it's an atom, it's already wrapped in parens.
+        or node.children[1].type == syms.atom
+    ):
+        return
+    colon_index: Optional[int] = None
+    for i in range(2, len(node.children)):
+        if node.children[i].type == token.COLON:
+            colon_index = i
+            break
+    if colon_index is not None:
+        # TODO: test comments!!
+        lpar = Leaf(token.LPAR, "")
+        rpar = Leaf(token.RPAR, "")
+        children = node.children[1:colon_index]
+        for c in children:
+            c.remove()
+        new_child = Node(syms.atom, [lpar, Node(syms.testlist_gexp, children), rpar])
+        node.insert_child(1, new_child)
+
+
 def normalize_invisible_parens(
-    node: Node, parens_after: Set[str], *, preview: bool
+    node: Node, parens_after: Set[str], *, mode: Mode
 ) -> None:
     """Make existing optional parentheses invisible or create new ones.
 
@@ -1095,18 +1122,21 @@ def normalize_invisible_parens(
     Standardizes on visible parentheses for single-element tuples, and keeps
     existing visible parentheses for other tuples and generator expressions.
     """
-    for pc in list_comments(node.prefix, is_endmarker=False, preview=preview):
+    for pc in list_comments(node.prefix, is_endmarker=False, preview=mode.preview):
         if pc.value in FMT_OFF:
             # This `node` has a prefix with `# fmt: off`, don't mess with parens.
             return
+
+    # TODO: Explain.
+    if node.type == syms.with_stmt:
+        maybe_wrap_multiple_context_managers(node, mode)
+
     check_lpar = False
     for index, child in enumerate(list(node.children)):
         # Fixes a bug where invisible parens are not properly stripped from
         # assignment statements that contain type annotations.
         if isinstance(child, Node) and child.type == syms.annassign:
-            normalize_invisible_parens(
-                child, parens_after=parens_after, preview=preview
-            )
+            normalize_invisible_parens(child, parens_after=parens_after, mode=mode)
 
         # Add parentheses around long tuple unpacking in assignments.
         if (
@@ -1118,7 +1148,7 @@ def normalize_invisible_parens(
 
         if check_lpar:
             if (
-                preview
+                mode.preview
                 and child.type == syms.atom
                 and node.type == syms.for_stmt
                 and isinstance(child.prev_sibling, Leaf)
@@ -1131,7 +1161,9 @@ def normalize_invisible_parens(
                     remove_brackets_around_comma=True,
                 ):
                     wrap_in_parentheses(node, child, visible=False)
-            elif preview and isinstance(child, Node) and node.type == syms.with_stmt:
+            elif (
+                mode.preview and isinstance(child, Node) and node.type == syms.with_stmt
+            ):
                 remove_with_parens(child, node)
             elif child.type == syms.atom:
                 if maybe_make_parens_invisible_in_atom(
@@ -1142,17 +1174,7 @@ def normalize_invisible_parens(
             elif is_one_tuple(child):
                 wrap_in_parentheses(node, child, visible=True)
             elif node.type == syms.import_from:
-                # "import from" nodes store parentheses directly as part of
-                # the statement
-                if is_lpar_token(child):
-                    assert is_rpar_token(node.children[-1])
-                    # make parentheses invisible
-                    child.value = ""
-                    node.children[-1].value = ""
-                elif child.type != token.STAR:
-                    # insert invisible parentheses
-                    node.insert_child(index, Leaf(token.LPAR, ""))
-                    node.append_child(Leaf(token.RPAR, ""))
+                _normalize_import_from(node, child, index)
                 break
             elif (
                 index == 1
@@ -1167,11 +1189,25 @@ def normalize_invisible_parens(
             elif not (isinstance(child, Leaf) and is_multiline_string(child)):
                 wrap_in_parentheses(node, child, visible=False)
 
-        comma_check = child.type == token.COMMA if preview else False
+        comma_check = child.type == token.COMMA if mode.preview else False
 
         check_lpar = isinstance(child, Leaf) and (
             child.value in parens_after or comma_check
         )
+
+
+def _normalize_import_from(parent: Node, child: LN, index: int) -> None:
+    # "import from" nodes store parentheses directly as part of
+    # the statement
+    if is_lpar_token(child):
+        assert is_rpar_token(parent.children[-1])
+        # make parentheses invisible
+        child.value = ""
+        parent.children[-1].value = ""
+    elif child.type != token.STAR:
+        # insert invisible parentheses
+        parent.insert_child(index, Leaf(token.LPAR, ""))
+        parent.append_child(Leaf(token.RPAR, ""))
 
 
 def remove_await_parens(node: Node) -> None:
