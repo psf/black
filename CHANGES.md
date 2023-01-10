@@ -34,6 +34,7 @@
   string lambda values are now wrapped in parentheses (#3440)
 - Exclude string type annotations from improved string processing; fix crash when the
   return type annotation is stringified and spans across multiple lines (#3462)
+- Wrap multiple context managers in parentheses when targeting Python 3.9+ (#3489)
 
 ### Configuration
 
