@@ -1,5 +1,5 @@
-from dataclasses import replace
 import re
+from dataclasses import replace
 from typing import Any, Iterator
 from unittest.mock import patch
 
@@ -71,7 +71,9 @@ def test_preview_context_managers_targeting_py39() -> None:
     assert_format(source, expected, mode, minimum_version=(3, 9))
 
 
-@pytest.mark.parametrize("filename", all_data_cases("preview_context_managers/auto_detect"))
+@pytest.mark.parametrize(
+    "filename", all_data_cases("preview_context_managers/auto_detect")
+)
 def test_preview_context_managers_auto_detect(filename: str) -> None:
     match = re.match(r"features_3_(\d+)", filename)
     assert match is not None, "Unexpected filename format: %s" % filename

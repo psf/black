@@ -1089,30 +1089,6 @@ def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
     leaf.prefix = ""
 
 
-def maybe_wrap_multiple_context_managers(node: Node, mode: Mode) -> None:
-    if (
-        Preview.wrap_multiple_context_managers_in_parens not in mode
-        or len(node.children) <= 2
-        # If it's an atom, it's already wrapped in parens.
-        or node.children[1].type == syms.atom
-    ):
-        return
-    colon_index: Optional[int] = None
-    for i in range(2, len(node.children)):
-        if node.children[i].type == token.COLON:
-            colon_index = i
-            break
-    if colon_index is not None:
-        # TODO: test comments!!
-        lpar = Leaf(token.LPAR, "")
-        rpar = Leaf(token.RPAR, "")
-        children = node.children[1:colon_index]
-        for c in children:
-            c.remove()
-        new_child = Node(syms.atom, [lpar, Node(syms.testlist_gexp, children), rpar])
-        node.insert_child(1, new_child)
-
-
 def normalize_invisible_parens(
     node: Node, parens_after: Set[str], *, mode: Mode, features: Collection[Feature]
 ) -> None:
@@ -1129,12 +1105,11 @@ def normalize_invisible_parens(
             # This `node` has a prefix with `# fmt: off`, don't mess with parens.
             return
 
-    # TODO: Explain.
-    if (
-        node.type == syms.with_stmt
-        and Feature.PARENTHESIZED_CONTEXT_MANAGERS in features
-    ):
-        maybe_wrap_multiple_context_managers(node, mode)
+    # The multiple context managers grammar has a different pattern, thus this is
+    # separate from the for-loop below. This possibly wraps them in invisible parens,
+    # and later will be removed in remove_with_parens when needed.
+    if node.type == syms.with_stmt:
+        _maybe_wrap_cms_in_parens(node, mode, features)
 
     check_lpar = False
     for index, child in enumerate(list(node.children)):
@@ -1251,6 +1226,49 @@ def remove_await_parens(node: Node) -> None:
                 ensure_visible(closing_bracket)
                 # If we are in a nested await then recurse down.
                 remove_await_parens(bracket_contents)
+
+
+def _maybe_wrap_cms_in_parens(
+    node: Node, mode: Mode, features: Collection[Feature]
+) -> None:
+    """When enabled and safe, wrap the multiple context managers in invisible parens.
+
+    It is only safe when `features` contain Feature.PARENTHESIZED_CONTEXT_MANAGERS.
+    """
+    if (
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS not in features
+        or Preview.wrap_multiple_context_managers_in_parens not in mode
+        or len(node.children) <= 2
+        # If it's an atom, it's already wrapped in parens.
+        or node.children[1].type == syms.atom
+    ):
+        return
+    colon_index: Optional[int] = None
+    for i in range(2, len(node.children)):
+        if node.children[i].type == token.COLON:
+            colon_index = i
+            break
+    if colon_index is not None:
+        lpar = Leaf(token.LPAR, "")
+        rpar = Leaf(token.RPAR, "")
+        context_managers = node.children[1:colon_index]
+        for child in context_managers:
+            child.remove()
+        # After wrapping, the with_stmt will look like this:
+        #   with_stmt
+        #     NAME 'with'
+        #     atom
+        #       LPAR ''
+        #       testlist_gexp
+        #         ... <-- context_managers
+        #       /testlist_gexp
+        #       RPAR ''
+        #     /atom
+        #     COLON ':'
+        new_child = Node(
+            syms.atom, [lpar, Node(syms.testlist_gexp, context_managers), rpar]
+        )
+        node.insert_child(1, new_child)
 
 
 def remove_with_parens(node: Node, parent: Node) -> None:
