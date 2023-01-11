@@ -40,7 +40,8 @@ so style options are deliberately limited and rarely added.
 
 </details>
 
-Note that all command-line options listed above can also be configured using a `pyproject.toml` file (more on that below).
+Note that all command-line options listed above can also be configured using a
+`pyproject.toml` file (more on that below).
 
 ### Code input alternatives
 
