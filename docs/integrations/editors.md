@@ -9,6 +9,7 @@ Options include the following:
 - [Elpy](https://github.com/jorgenschaefer/elpy).
 
 ## PyCharm/IntelliJ IDEA
+
 ### As local server
 
 1. Install _Black_ with the `d` extra.
@@ -126,8 +127,8 @@ Options include the following:
 1. Make sure you have the
    [File Watchers](https://plugins.jetbrains.com/plugin/7177-file-watchers) plugin
    installed.
-1. Go to `Preferences or Settings -> Tools -> File Watchers` and click `+` to add a
-   new watcher:
+1. Go to `Preferences or Settings -> Tools -> File Watchers` and click `+` to add a new
+   watcher:
    - Name: Black
    - File type: Python
    - Scope: Project Files
@@ -137,9 +138,8 @@ Options include the following:
    - Working directory: `$ProjectFileDir$`
 
 - In Advanced Options
-   - Uncheck "Auto-save edited files to trigger the watcher"
-   - Uncheck "Trigger the watcher on external changes"
-
+  - Uncheck "Auto-save edited files to trigger the watcher"
+  - Uncheck "Trigger the watcher on external changes"
 
 ## Wing IDE
 
