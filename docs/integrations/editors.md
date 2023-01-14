@@ -10,6 +10,19 @@ Options include the following:
 
 ## PyCharm/IntelliJ IDEA
 
+There are three different ways you can use _Black_ from PyCharm:
+
+1. As local server using the BlackConnect plugin
+1. As external tool
+1. As file watcher
+
+The first option is the simplest to set up and formats the fastest (by spinning up
+{doc}`Black's HTTP server </usage_and_configuration/black_as_a_server>`, avoiding the
+startup cost on subsequent formats), but if you would prefer to not install a
+third-party plugin or blackd's extra dependencies, the other two are also great options.
+
+### As local server
+
 1. Install _Black_ with the `d` extra.
 
    ```console
@@ -45,6 +58,99 @@ Options include the following:
 
    - In `Trigger Settings` section of plugin configuration check
      `Trigger when saving changed files`.
+
+### As external tool
+
+1. Install `black`.
+
+   ```console
+   $ pip install black
+   ```
+
+1. Locate your `black` installation folder.
+
+   On macOS / Linux / BSD:
+
+   ```console
+   $ which black
+   /usr/local/bin/black  # possible location
+   ```
+
+   On Windows:
+
+   ```console
+   $ where black
+   %LocalAppData%\Programs\Python\Python36-32\Scripts\black.exe  # possible location
+   ```
+
+   Note that if you are using a virtual environment detected by PyCharm, this is an
+   unneeded step. In this case the path to `black` is `$PyInterpreterDirectory$/black`.
+
+1. Open External tools in PyCharm/IntelliJ IDEA
+
+   On macOS:
+
+   `PyCharm -> Preferences -> Tools -> External Tools`
+
+   On Windows / Linux / BSD:
+
+   `File -> Settings -> Tools -> External Tools`
+
+1. Click the + icon to add a new external tool with the following values:
+
+   - Name: Black
+   - Description: Black is the uncompromising Python code formatter.
+   - Program: \<install_location_from_step_2>
+   - Arguments: `"$FilePath$"`
+
+1. Format the currently opened file by selecting `Tools -> External Tools -> black`.
+
+   - Alternatively, you can set a keyboard shortcut by navigating to
+     `Preferences or Settings -> Keymap -> External Tools -> External Tools - Black`.
+
+### As file watcher
+
+1. Install `black`.
+
+   ```console
+   $ pip install black
+   ```
+
+1. Locate your `black` installation folder.
+
+   On macOS / Linux / BSD:
+
+   ```console
+   $ which black
+   /usr/local/bin/black  # possible location
+   ```
+
+   On Windows:
+
+   ```console
+   $ where black
+   %LocalAppData%\Programs\Python\Python36-32\Scripts\black.exe  # possible location
+   ```
+
+   Note that if you are using a virtual environment detected by PyCharm, this is an
+   unneeded step. In this case the path to `black` is `$PyInterpreterDirectory$/black`.
+
+1. Make sure you have the
+   [File Watchers](https://plugins.jetbrains.com/plugin/7177-file-watchers) plugin
+   installed.
+1. Go to `Preferences or Settings -> Tools -> File Watchers` and click `+` to add a new
+   watcher:
+   - Name: Black
+   - File type: Python
+   - Scope: Project Files
+   - Program: \<install_location_from_step_2>
+   - Arguments: `$FilePath$`
+   - Output paths to refresh: `$FilePath$`
+   - Working directory: `$ProjectFileDir$`
+
+- In Advanced Options
+  - Uncheck "Auto-save edited files to trigger the watcher"
+  - Uncheck "Trigger the watcher on external changes"
 
 ## Wing IDE
 
