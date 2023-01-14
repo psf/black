@@ -10,6 +10,17 @@ Options include the following:
 
 ## PyCharm/IntelliJ IDEA
 
+There are three different ways you can use _Black_ from PyCharm:
+
+1. As local server using the BlackConnect plugin
+1. As external tool
+1. As file watcher
+
+The first option is the simplest to set up and formats the fastest (by spinning up
+{doc}`Black's HTTP server </usage_and_configuration/black_as_a_server>`, avoiding the
+startup cost on subsequent formats), but if you would prefer to not install a
+third-party plugin or blackd's extra dependencies, the other two are also great options.
+
 ### As local server
 
 1. Install _Black_ with the `d` extra.
