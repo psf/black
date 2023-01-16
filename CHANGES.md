@@ -54,7 +54,7 @@
 - Drop specific support for the `tomli` requirement on 3.11 alpha releases, working
   around a bug that would cause the requirement not to be installed on any non-final
   Python releases (#3448)
-- Black now depends on `packaging` version `20.0` or later. This is required for new
+- Black now depends on `packaging` version `22.0` or later. This is required for new
   functionality that needs to parse part of the project metadata (#3219)
 
 ### Parser

@@ -1570,7 +1570,6 @@ class BlackTestCase(BlackBaseTestCase):
             config = black.parse_pyproject_toml(str(test_toml_file))
             self.assertEqual(config.get("target_version"), expected)
 
-    @pytest.mark.filterwarnings("ignore::DeprecationWarning")
     def test_infer_target_version(self) -> None:
         for version, expected in [
             ("3.6", [TargetVersion.PY36]),

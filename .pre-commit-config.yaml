@@ -48,6 +48,7 @@ repos:
           - tomli >= 0.2.6, < 2.0.0
           - types-typed-ast >= 1.4.1
           - click >= 8.1.0
+          - packaging >= 22.0
           - platformdirs >= 2.1.0
           - pytest
           - hypothesis
