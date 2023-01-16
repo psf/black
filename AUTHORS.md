@@ -10,7 +10,7 @@ Maintained with:
 - [Mika Naylor](mailto:mail@autophagy.io)
 - [Zsolt Dollenstein](mailto:zsol.zsol@gmail.com)
 - [Cooper Lees](mailto:me@cooperlees.com)
-- Richard Si
+- [Richard Si](mailto:sichard26@gmail.com)
 - [Felix Hildén](mailto:felix.hilden@gmail.com)
 - [Batuhan Taskaya](mailto:batuhan@python.org)
 

@@ -42,7 +42,7 @@ The lifecycle of a bug report or user support issue typically goes something lik
 1. _the issue is waiting for triage_
 2. **identified** - has been marked with a type label and other relevant labels, more
    details or a functional reproduction may be still needed (and therefore should be
-   marked with `S: needs repro` or `S: awaiting reponse`)
+   marked with `S: needs repro` or `S: awaiting response`)
 3. **confirmed** - the issue can reproduced and necessary details have been provided
 4. **discussion** - initial triage has been done and now the general details on how the
    issue should be best resolved are being hashed out
