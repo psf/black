@@ -146,6 +146,13 @@ def test_docstring_no_string_normalization() -> None:
     assert_format(source, expected, mode)
 
 
+def test_docstring_line_length_6() -> None:
+    """Like test_docstring but with line length set to 6."""
+    source, expected = read_data("miscellaneous", "linelength6")
+    mode = black.Mode(line_length=6)
+    assert_format(source, expected, mode)
+
+
 def test_preview_docstring_no_string_normalization() -> None:
     """
     Like test_docstring but with string normalization off *and* the preview style

@@ -401,6 +401,7 @@ class LineGenerator(Visitor[Line]):
             else:
                 docstring = docstring.strip()
 
+            has_trailing_backslash = False
             if docstring:
                 # Add some padding if the docstring starts / ends with a quote mark.
                 if docstring[0] == quote_char:
@@ -413,6 +414,7 @@ class LineGenerator(Visitor[Line]):
                         # Odd number of tailing backslashes, add some padding to
                         # avoid escaping the closing string quote.
                         docstring += " "
+                        has_trailing_backslash = True
             elif not docstring_started_empty:
                 docstring = " "
 
@@ -435,6 +437,8 @@ class LineGenerator(Visitor[Line]):
                 if (
                     len(lines) > 1
                     and last_line_length + quote_len > self.mode.line_length
+                    and len(indent) + quote_len <= self.mode.line_length
+                    and not has_trailing_backslash
                 ):
                     leaf.value = prefix + quote + docstring + "\n" + indent + quote
                 else:
