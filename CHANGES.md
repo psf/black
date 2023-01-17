@@ -64,6 +64,7 @@
 
 - Verbose logging now shows the values of `pyproject.toml` configuration variables
   (#3392)
+- Added `--emoji/--no-emoji` option to disable emojis in output messages (#3502)
 
 ### _Blackd_
 

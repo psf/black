@@ -301,6 +301,12 @@ def validate_regex(
     help="Show colored diff. Only applies when `--diff` is given.",
 )
 @click.option(
+    "--emoji/--no-emoji",
+    is_flag=True,
+    default=True,
+    help="Use emoji in messages. Defaults to true.",
+)
+@click.option(
     "--fast/--safe",
     is_flag=True,
     help="If --fast given, skip temporary sanity checks. [default: --safe]",
@@ -431,6 +437,7 @@ def main(  # noqa: C901
     check: bool,
     diff: bool,
     color: bool,
+    emoji: bool,
     fast: bool,
     pyi: bool,
     ipynb: bool,
@@ -519,7 +526,7 @@ def main(  # noqa: C901
                 for param, value in ctx.default_map.items():
                     out(f"{param}: {value}")
 
-    error_msg = "Oh no! 💥 💔 💥"
+    error_msg = f'Oh no!{" 💥 💔 💥" if emoji else ""}'
     if (
         required_version
         and required_version != __version__
@@ -583,7 +590,10 @@ def main(  # noqa: C901
 
         path_empty(
             sources,
-            "No Python files are present to be formatted. Nothing to do 😴",
+            (
+                "No Python files are present to be formatted."
+                f' Nothing to do{" 😴" if emoji else ""}'
+            ),
             quiet,
             verbose,
             ctx,
@@ -612,7 +622,9 @@ def main(  # noqa: C901
     if verbose or not quiet:
         if code is None and (verbose or report.change_count or report.failure_count):
             out()
-        out(error_msg if report.return_code else "All done! ✨ 🍰 ✨")
+        out(
+            error_msg if report.return_code else f'All done!{" ✨ 🍰 ✨" if emoji else ""}'
+        )
         if code is None:
             click.echo(str(report), err=True)
     ctx.exit(report.return_code)
