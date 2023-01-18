@@ -45,6 +45,7 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Add parentheses around `if`-`else` expressions (#2278)
 - Improve the performance on large expressions that contain many strings (#3467)
 - Fix a crash in preview style with assert + parenthesized string (#3415)
 - Fix crashes in preview style with walrus operators used in function return annotations
@@ -60,8 +61,11 @@
 - Long values in dict literals are now wrapped in parentheses; correspondingly
   unnecessary parentheses around short values in dict literals are now removed; long
   string lambda values are now wrapped in parentheses (#3440)
+- Fix two crashes in preview style involving edge cases with docstrings (#3451)
 - Exclude string type annotations from improved string processing; fix crash when the
   return type annotation is stringified and spans across multiple lines (#3462)
+- Fix several crashes in preview style with walrus operators used in `with` statements
+  or tuples (#3473)
 
 ### Configuration
 

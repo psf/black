@@ -19,7 +19,7 @@ with make_context_manager1() as cm1, make_context_manager2() as cm2, make_contex
     ...  # nothing to split on - line too long
 ```
 
-So _Black_ will eventually format it like this:
+So _Black_ will, when we implement this, format it like this:
 
 ```py3
 with \
@@ -31,8 +31,8 @@ with \
     ...  # backslashes and an ugly stranded colon
 ```
 
-Although when the target version is Python 3.9 or higher, _Black_ will use parentheses
-instead since they're allowed in Python 3.9 and higher.
+Although when the target version is Python 3.9 or higher, _Black_ will, when we
+implement this, use parentheses instead since they're allowed in Python 3.9 and higher.
 
 An alternative to consider if the backslashes in the above formatting are undesirable is
 to use {external:py:obj}`contextlib.ExitStack` to combine context managers in the
