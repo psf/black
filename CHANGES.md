@@ -35,6 +35,8 @@
 - Fix two crashes in preview style involving edge cases with docstrings (#3451)
 - Exclude string type annotations from improved string processing; fix crash when the
   return type annotation is stringified and spans across multiple lines (#3462)
+- Fix several crashes in preview style with walrus operators used in `with` statements
+  or tuples (#3473)
 
 ### Configuration
 
