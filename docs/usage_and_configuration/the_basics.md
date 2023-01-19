@@ -40,6 +40,9 @@ so style options are deliberately limited and rarely added.
 
 </details>
 
+Note that all command-line options listed above can also be configured using a
+`pyproject.toml` file (more on that below).
+
 ### Code input alternatives
 
 #### Standard Input
@@ -286,9 +289,6 @@ look for multiple files, and doesn't compose configuration from different levels
 file hierarchy.
 
 ## Next steps
-
-You've probably noted that not all of the options you can pass to _Black_ have been
-covered. Don't worry, the rest will be covered in a later section.
 
 A good next step would be configuring auto-discovery so `black .` is all you need
 instead of laborously listing every file or directory. You can get started by heading

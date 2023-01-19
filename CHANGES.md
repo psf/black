@@ -32,9 +32,12 @@
 - Long values in dict literals are now wrapped in parentheses; correspondingly
   unnecessary parentheses around short values in dict literals are now removed; long
   string lambda values are now wrapped in parentheses (#3440)
+- Fix two crashes in preview style involving edge cases with docstrings (#3451)
 - Exclude string type annotations from improved string processing; fix crash when the
   return type annotation is stringified and spans across multiple lines (#3462)
 - Wrap multiple context managers in parentheses when targeting Python 3.9+ (#3489)
+- Fix several crashes in preview style with walrus operators used in `with` statements
+  or tuples (#3473)
 
 ### Configuration
 
@@ -64,6 +67,8 @@
 
 - Verbose logging now shows the values of `pyproject.toml` configuration variables
   (#3392)
+- Fix false symlink detection messages in verbose output due to using an incorrect
+  relative path to the project root (#3385)
 
 ### _Blackd_
 

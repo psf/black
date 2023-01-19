@@ -46,6 +46,7 @@ from black.nodes import (
     is_rpar_token,
     is_stub_body,
     is_stub_suite,
+    is_tuple_containing_walrus,
     is_vararg,
     is_walrus_assignment,
     is_yield,
@@ -406,6 +407,7 @@ class LineGenerator(Visitor[Line]):
             else:
                 docstring = docstring.strip()
 
+            has_trailing_backslash = False
             if docstring:
                 # Add some padding if the docstring starts / ends with a quote mark.
                 if docstring[0] == quote_char:
@@ -418,6 +420,7 @@ class LineGenerator(Visitor[Line]):
                         # Odd number of tailing backslashes, add some padding to
                         # avoid escaping the closing string quote.
                         docstring += " "
+                        has_trailing_backslash = True
             elif not docstring_started_empty:
                 docstring = " "
 
@@ -440,6 +443,8 @@ class LineGenerator(Visitor[Line]):
                 if (
                     len(lines) > 1
                     and last_line_length + quote_len > self.mode.line_length
+                    and len(indent) + quote_len <= self.mode.line_length
+                    and not has_trailing_backslash
                 ):
                     leaf.value = prefix + quote + docstring + "\n" + indent + quote
                 else:
@@ -1336,6 +1341,7 @@ def maybe_make_parens_invisible_in_atom(
             not remove_brackets_around_comma
             and max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
         )
+        or is_tuple_containing_walrus(node)
     ):
         return False
 
@@ -1347,9 +1353,11 @@ def maybe_make_parens_invisible_in_atom(
             syms.return_stmt,
             syms.except_clause,
             syms.funcdef,
+            syms.with_stmt,
             # these ones aren't useful to end users, but they do please fuzzers
             syms.for_stmt,
             syms.del_stmt,
+            syms.for_stmt,
         ]:
             return False
 

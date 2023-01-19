@@ -475,6 +475,53 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertFormatEqual(contents_spc, fs(contents_spc))
         self.assertFormatEqual(contents_spc, fs(contents_tab))
 
+    def test_false_positive_symlink_output_issue_3384(self) -> None:
+        # Emulate the behavior when using the CLI (`black ./child  --verbose`), which
+        # involves patching some `pathlib.Path` methods. In particular, `is_dir` is
+        # patched only on its first call: when checking if "./child" is a directory it
+        # should return True. The "./child" folder exists relative to the cwd when
+        # running from CLI, but fails when running the tests because cwd is different
+        project_root = Path(THIS_DIR / "data" / "nested_gitignore_tests")
+        working_directory = project_root / "root"
+        target_abspath = working_directory / "child"
+        target_contents = (
+            src.relative_to(working_directory) for src in target_abspath.iterdir()
+        )
+
+        def mock_n_calls(responses: List[bool]) -> Callable[[], bool]:
+            def _mocked_calls() -> bool:
+                if responses:
+                    return responses.pop(0)
+                return False
+
+            return _mocked_calls
+
+        with patch("pathlib.Path.iterdir", return_value=target_contents), patch(
+            "pathlib.Path.cwd", return_value=working_directory
+        ), patch("pathlib.Path.is_dir", side_effect=mock_n_calls([True])):
+            ctx = FakeContext()
+            ctx.obj["root"] = project_root
+            report = MagicMock(verbose=True)
+            black.get_sources(
+                ctx=ctx,
+                src=("./child",),
+                quiet=False,
+                verbose=True,
+                include=DEFAULT_INCLUDE,
+                exclude=None,
+                report=report,
+                extend_exclude=None,
+                force_exclude=None,
+                stdin_filename=None,
+            )
+        assert not any(
+            mock_args[1].startswith("is a symbolic link that points outside")
+            for _, mock_args, _ in report.path_ignored.mock_calls
+        ), "A symbolic link was reported."
+        report.path_ignored.assert_called_once_with(
+            Path("child", "b.py"), "matches a .gitignore file content"
+        )
+
     def test_report_verbose(self) -> None:
         report = Report(verbose=True)
         out_lines = []
