@@ -66,6 +66,8 @@
 
 - Verbose logging now shows the values of `pyproject.toml` configuration variables
   (#3392)
+- Fix false symlink detection messages in verbose output due to using an incorrect
+  relative path to the project root (#3385)
 
 ### _Blackd_
 
