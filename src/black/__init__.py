@@ -1096,8 +1096,13 @@ def _format_str_once(src_contents: str, *, mode: Mode) -> str:
         future_imports = get_future_imports(src_node)
         versions = detect_target_versions(src_node, future_imports=future_imports)
 
+    context_manager_features = {
+        feature
+        for feature in {Feature.PARENTHESIZED_CONTEXT_MANAGERS}
+        if supports_feature(versions, feature)
+    }
     normalize_fmt_off(src_node, preview=mode.preview)
-    lines = LineGenerator(mode=mode)
+    lines = LineGenerator(mode=mode, features=context_manager_features)
     elt = EmptyLineTracker(mode=mode)
     split_line_features = {
         feature
@@ -1159,6 +1164,10 @@ def get_features_used(  # noqa: C901
     - relaxed decorator syntax;
     - usage of __future__ flags (annotations);
     - print / exec statements;
+    - parenthesized context managers;
+    - match statements;
+    - except* clause;
+    - variadic generics;
     """
     features: Set[Feature] = set()
     if future_imports:
@@ -1233,6 +1242,23 @@ def get_features_used(  # noqa: C901
             and n.children[3].type == syms.testlist_star_expr
         ):
             features.add(Feature.ANN_ASSIGN_EXTENDED_RHS)
+
+        elif (
+            n.type == syms.with_stmt
+            and len(n.children) > 2
+            and n.children[1].type == syms.atom
+        ):
+            atom_children = n.children[1].children
+            if (
+                len(atom_children) == 3
+                and atom_children[0].type == token.LPAR
+                and atom_children[1].type == syms.testlist_gexp
+                and atom_children[2].type == token.RPAR
+            ):
+                features.add(Feature.PARENTHESIZED_CONTEXT_MANAGERS)
+
+        elif n.type == syms.match_stmt:
+            features.add(Feature.PATTERN_MATCHING)
 
         elif (
             n.type == syms.except_clause
