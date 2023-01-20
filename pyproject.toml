@@ -67,7 +67,7 @@ dependencies = [
   "mypy_extensions>=0.4.3",
   "pathspec>=0.9.0",
   "platformdirs>=2",
-  "tomli>=1.1.0; python_full_version < '3.11.0a7'",
+  "tomli>=1.1.0; python_version < '3.11'",
   "typed-ast>=1.4.2; python_version < '3.8' and implementation_name == 'cpython'",
   "typing_extensions>=3.10.0.0; python_version < '3.10'",
 ]
@@ -119,7 +119,7 @@ sources = ["src"]
 enable-by-default = false
 dependencies = [
   "hatch-mypyc>=0.13.0",
-  "mypy==0.971",
+  "mypy==0.991",
   # Required stubs to be removed when the packages support PEP 561 themselves
   "types-typed-ast>=1.4.2",
 ]

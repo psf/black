@@ -1,3 +1,4 @@
+import re
 from dataclasses import replace
 from typing import Any, Iterator
 from unittest.mock import patch
@@ -56,6 +57,29 @@ def test_preview_minimum_python_310_format(filename: str) -> None:
     source, expected = read_data("preview_310", filename)
     mode = black.Mode(preview=True)
     assert_format(source, expected, mode, minimum_version=(3, 10))
+
+
+def test_preview_context_managers_targeting_py38() -> None:
+    source, expected = read_data("preview_context_managers", "targeting_py38.py")
+    mode = black.Mode(preview=True, target_versions={black.TargetVersion.PY38})
+    assert_format(source, expected, mode, minimum_version=(3, 8))
+
+
+def test_preview_context_managers_targeting_py39() -> None:
+    source, expected = read_data("preview_context_managers", "targeting_py39.py")
+    mode = black.Mode(preview=True, target_versions={black.TargetVersion.PY39})
+    assert_format(source, expected, mode, minimum_version=(3, 9))
+
+
+@pytest.mark.parametrize(
+    "filename", all_data_cases("preview_context_managers/auto_detect")
+)
+def test_preview_context_managers_auto_detect(filename: str) -> None:
+    match = re.match(r"features_3_(\d+)", filename)
+    assert match is not None, "Unexpected filename format: %s" % filename
+    source, expected = read_data("preview_context_managers/auto_detect", filename)
+    mode = black.Mode(preview=True)
+    assert_format(source, expected, mode, minimum_version=(3, int(match.group(1))))
 
 
 # =============== #
@@ -143,6 +167,13 @@ def test_docstring_no_string_normalization() -> None:
     """Like test_docstring but with string normalization off."""
     source, expected = read_data("miscellaneous", "docstring_no_string_normalization")
     mode = replace(DEFAULT_MODE, string_normalization=False)
+    assert_format(source, expected, mode)
+
+
+def test_docstring_line_length_6() -> None:
+    """Like test_docstring but with line length set to 6."""
+    source, expected = read_data("miscellaneous", "linelength6")
+    mode = black.Mode(line_length=6)
     assert_format(source, expected, mode)
 
 
