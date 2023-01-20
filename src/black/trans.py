@@ -573,9 +573,11 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             """
             assert_is_leaf_string(string)
             if "f" in string_prefix:
-                # After quotes toggling, quotes in expressions be escaped because
-                # quotes can't be reused in f-strings.
                 string = _toggle_fexpr_quotes(string, QUOTE)
+                # After quotes toggling, quotes in expressions won't be escaped
+                # because quotes can't be reused in f-strings. So we can simply
+                # let the escaping logic below run without knowing f-string
+                # expressions.
 
             RE_EVEN_BACKSLASHES = r"(?:(?<!\\)(?:\\\\)*)"
             naked_string = string[len(string_prefix) + 1 : -1]
