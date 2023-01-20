@@ -38,7 +38,8 @@
 - Fix several crashes in preview style with walrus operators used in `with` statements
   or tuples (#3473)
 - Fix an invalid quote escaping bug in f-string expressions where it produced invalid
-  code (#3509)
+  code. Implicitly concatenated f-strings with different quotes can now be merged or
+  quote-normalized by changing the quotes used in expressions. (#3509)
 
 ### Configuration
 
