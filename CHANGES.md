@@ -37,6 +37,8 @@
   return type annotation is stringified and spans across multiple lines (#3462)
 - Fix several crashes in preview style with walrus operators used in `with` statements
   or tuples (#3473)
+- Fix an invalid quote escaping bug in f-string expressions where it produced invalid
+  code (#3509)
 
 ### Configuration
 
