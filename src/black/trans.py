@@ -1267,7 +1267,7 @@ def _toggle_fexpr_quotes(fstring: str, old_quote: str) -> str:
         parts.append(fstring[start:end].replace(old_quote, new_quote))
         previous_index = end
     parts.append(fstring[previous_index:])
-    return ''.join(parts)
+    return "".join(parts)
 
 
 class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
