@@ -65,8 +65,8 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
-- Calling `black --help` multiple times will return the same help contents each
-  time (#3516)
+- Calling `black --help` multiple times will return the same help contents each time
+  (#3516)
 - Verbose logging now shows the values of `pyproject.toml` configuration variables
   (#3392)
 - Fix false symlink detection messages in verbose output due to using an incorrect
