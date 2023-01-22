@@ -39,6 +39,9 @@
 - Wrap multiple context managers in parentheses when targeting Python 3.9+ (#3489)
 - Fix several crashes in preview style with walrus operators used in `with` statements
   or tuples (#3473)
+- Fix an invalid quote escaping bug in f-string expressions where it produced invalid
+  code. Implicitly concatenated f-strings with different quotes can now be merged or
+  quote-normalized by changing the quotes used in expressions. (#3509)
 
 ### Configuration
 
