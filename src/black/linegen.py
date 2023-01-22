@@ -59,6 +59,7 @@ from black.strings import (
     get_string_prefix,
     normalize_string_prefix,
     normalize_string_quotes,
+    normalize_unicode_escape_sequences,
 )
 from black.trans import (
     CannotTransform,
@@ -368,6 +369,9 @@ class LineGenerator(Visitor[Line]):
         yield from self.visit_default(node)
 
     def visit_STRING(self, leaf: Leaf) -> Iterator[Line]:
+        if Preview.hex_codes_in_unicode_sequences in self.mode:
+            normalize_unicode_escape_sequences(leaf)
+
         if is_docstring(leaf) and "\\\n" not in leaf.value:
             # We're ignoring docstrings with backslash newline escapes because changing
             # indentation of those changes the AST representation of the code.
