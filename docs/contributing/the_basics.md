@@ -4,7 +4,7 @@ An overview on contributing to the _Black_ project.
 
 ## Technicalities
 
-Development on the latest version of Python is preferred. As of this writing it's 3.9.
+Development on the latest version of Python is preferred. As of this writing it's 3.11.
 You can use any operating system.
 
 Install development dependencies inside a virtual environment of your choice, for
