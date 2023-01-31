@@ -520,8 +520,6 @@ def main(  # noqa: C901
                 for param, value in ctx.default_map.items():
                     out(f"{param}: {value}")
 
-        out(f"Target version: {[v.name.lower() for v in target_version]}", fg="blue")
-
     error_msg = "Oh no! 💥 💔 💥"
     if (
         required_version
