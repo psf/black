@@ -71,6 +71,7 @@
 - Fix an invalid quote escaping bug in f-string expressions where it produced invalid
   code. Implicitly concatenated f-strings with different quotes can now be merged or
   quote-normalized by changing the quotes used in expressions. (#3509)
+- Fix crash on `await (yield)` when Black is compiled with mypyc (#3533)
 
 ### Configuration
 
