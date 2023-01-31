@@ -1223,18 +1223,19 @@ def remove_await_parens(node: Node) -> None:
             # N.B. We've still removed any redundant nested brackets though :)
             opening_bracket = cast(Leaf, node.children[1].children[0])
             closing_bracket = cast(Leaf, node.children[1].children[-1])
-            bracket_contents = cast(Node, node.children[1].children[1])
-            if bracket_contents.type != syms.power:
-                ensure_visible(opening_bracket)
-                ensure_visible(closing_bracket)
-            elif (
-                bracket_contents.type == syms.power
-                and bracket_contents.children[0].type == token.AWAIT
-            ):
-                ensure_visible(opening_bracket)
-                ensure_visible(closing_bracket)
-                # If we are in a nested await then recurse down.
-                remove_await_parens(bracket_contents)
+            bracket_contents = node.children[1].children[1]
+            if isinstance(bracket_contents, Node):
+                if bracket_contents.type != syms.power:
+                    ensure_visible(opening_bracket)
+                    ensure_visible(closing_bracket)
+                elif (
+                    bracket_contents.type == syms.power
+                    and bracket_contents.children[0].type == token.AWAIT
+                ):
+                    ensure_visible(opening_bracket)
+                    ensure_visible(closing_bracket)
+                    # If we are in a nested await then recurse down.
+                    remove_await_parens(bracket_contents)
 
 
 def _maybe_wrap_cms_in_parens(
