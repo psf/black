@@ -117,7 +117,7 @@ class LineGenerator(Visitor[Line]):
         """Default `visit_*()` implementation. Recurses to children of `node`."""
         if isinstance(node, Leaf):
             any_open_brackets = self.current_line.bracket_tracker.any_open_brackets()
-            for comment in generate_comments(node, preview=self.mode.preview):
+            for comment in generate_comments(node):
                 if any_open_brackets:
                     # any comment within brackets is subject to splitting
                     self.current_line.append(comment)
@@ -221,30 +221,27 @@ class LineGenerator(Visitor[Line]):
 
     def visit_funcdef(self, node: Node) -> Iterator[Line]:
         """Visit function definition."""
-        if Preview.annotation_parens not in self.mode:
-            yield from self.visit_stmt(node, keywords={"def"}, parens=set())
-        else:
-            yield from self.line()
+        yield from self.line()
 
-            # Remove redundant brackets around return type annotation.
-            is_return_annotation = False
-            for child in node.children:
-                if child.type == token.RARROW:
-                    is_return_annotation = True
-                elif is_return_annotation:
-                    if child.type == syms.atom and child.children[0].type == token.LPAR:
-                        if maybe_make_parens_invisible_in_atom(
-                            child,
-                            parent=node,
-                            remove_brackets_around_comma=False,
-                        ):
-                            wrap_in_parentheses(node, child, visible=False)
-                    else:
+        # Remove redundant brackets around return type annotation.
+        is_return_annotation = False
+        for child in node.children:
+            if child.type == token.RARROW:
+                is_return_annotation = True
+            elif is_return_annotation:
+                if child.type == syms.atom and child.children[0].type == token.LPAR:
+                    if maybe_make_parens_invisible_in_atom(
+                        child,
+                        parent=node,
+                        remove_brackets_around_comma=False,
+                    ):
                         wrap_in_parentheses(node, child, visible=False)
-                    is_return_annotation = False
+                else:
+                    wrap_in_parentheses(node, child, visible=False)
+                is_return_annotation = False
 
-            for child in node.children:
-                yield from self.visit(child)
+        for child in node.children:
+            yield from self.visit(child)
 
     def visit_match_case(self, node: Node) -> Iterator[Line]:
         """Visit either a match or case statement."""
@@ -332,8 +329,7 @@ class LineGenerator(Visitor[Line]):
             ):
                 wrap_in_parentheses(node, leaf)
 
-        if Preview.remove_redundant_parens in self.mode:
-            remove_await_parens(node)
+        remove_await_parens(node)
 
         yield from self.visit_default(node)
 
@@ -375,24 +371,17 @@ class LineGenerator(Visitor[Line]):
         if is_docstring(leaf) and "\\\n" not in leaf.value:
             # We're ignoring docstrings with backslash newline escapes because changing
             # indentation of those changes the AST representation of the code.
-            if Preview.normalize_docstring_quotes_and_prefixes_properly in self.mode:
-                # There was a bug where --skip-string-normalization wouldn't stop us
-                # from normalizing docstring prefixes. To maintain stability, we can
-                # only address this buggy behaviour while the preview style is enabled.
-                if self.mode.string_normalization:
-                    docstring = normalize_string_prefix(leaf.value)
-                    # visit_default() does handle string normalization for us, but
-                    # since this method acts differently depending on quote style (ex.
-                    # see padding logic below), there's a possibility for unstable
-                    # formatting as visit_default() is called *after*. To avoid a
-                    # situation where this function formats a docstring differently on
-                    # the second pass, normalize it early.
-                    docstring = normalize_string_quotes(docstring)
-                else:
-                    docstring = leaf.value
-            else:
-                # ... otherwise, we'll keep the buggy behaviour >.<
+            if self.mode.string_normalization:
                 docstring = normalize_string_prefix(leaf.value)
+                # visit_default() does handle string normalization for us, but
+                # since this method acts differently depending on quote style (ex.
+                # see padding logic below), there's a possibility for unstable
+                # formatting as visit_default() is called *after*. To avoid a
+                # situation where this function formats a docstring differently on
+                # the second pass, normalize it early.
+                docstring = normalize_string_quotes(docstring)
+            else:
+                docstring = leaf.value
             prefix = get_string_prefix(docstring)
             docstring = docstring[len(prefix) :]  # Remove the prefix
             quote_char = docstring[0]
@@ -432,7 +421,7 @@ class LineGenerator(Visitor[Line]):
             quote = quote_char * quote_len
 
             # It's invalid to put closing single-character quotes on a new line.
-            if Preview.long_docstring_quotes_on_newline in self.mode and quote_len == 3:
+            if self.mode and quote_len == 3:
                 # We need to find the length of the last line of the docstring
                 # to find if we can add the closing quotes to the line without
                 # exceeding the maximum line length.
@@ -473,14 +462,8 @@ class LineGenerator(Visitor[Line]):
         self.visit_try_stmt = partial(
             v, keywords={"try", "except", "else", "finally"}, parens=Ø
         )
-        if self.mode.preview:
-            self.visit_except_clause = partial(
-                v, keywords={"except"}, parens={"except"}
-            )
-            self.visit_with_stmt = partial(v, keywords={"with"}, parens={"with"})
-        else:
-            self.visit_except_clause = partial(v, keywords={"except"}, parens=Ø)
-            self.visit_with_stmt = partial(v, keywords={"with"}, parens=Ø)
+        self.visit_except_clause = partial(v, keywords={"except"}, parens={"except"})
+        self.visit_with_stmt = partial(v, keywords={"with"}, parens={"with"})
         self.visit_classdef = partial(v, keywords={"class"}, parens=Ø)
         self.visit_expr_stmt = partial(v, keywords=Ø, parens=ASSIGNMENTS)
         self.visit_return_stmt = partial(v, keywords={"return"}, parens={"return"})
@@ -932,10 +915,7 @@ def bracket_split_build_line(
                     break
 
     leaves_to_track: Set[LeafID] = set()
-    if (
-        Preview.handle_trailing_commas_in_head in original.mode
-        and component is _BracketSplitComponent.head
-    ):
+    if component is _BracketSplitComponent.head:
         leaves_to_track = get_leaves_inside_matching_brackets(leaves)
     # Populate the line
     for leaf in leaves:
@@ -1109,7 +1089,7 @@ def normalize_invisible_parens(
     Standardizes on visible parentheses for single-element tuples, and keeps
     existing visible parentheses for other tuples and generator expressions.
     """
-    for pc in list_comments(node.prefix, is_endmarker=False, preview=mode.preview):
+    for pc in list_comments(node.prefix, is_endmarker=False):
         if pc.value in FMT_OFF:
             # This `node` has a prefix with `# fmt: off`, don't mess with parens.
             return
@@ -1139,8 +1119,7 @@ def normalize_invisible_parens(
 
         if check_lpar:
             if (
-                mode.preview
-                and child.type == syms.atom
+                child.type == syms.atom
                 and node.type == syms.for_stmt
                 and isinstance(child.prev_sibling, Leaf)
                 and child.prev_sibling.type == token.NAME
@@ -1152,9 +1131,7 @@ def normalize_invisible_parens(
                     remove_brackets_around_comma=True,
                 ):
                     wrap_in_parentheses(node, child, visible=False)
-            elif (
-                mode.preview and isinstance(child, Node) and node.type == syms.with_stmt
-            ):
+            elif isinstance(child, Node) and node.type == syms.with_stmt:
                 remove_with_parens(child, node)
             elif child.type == syms.atom:
                 if maybe_make_parens_invisible_in_atom(
@@ -1180,7 +1157,7 @@ def normalize_invisible_parens(
             elif not (isinstance(child, Leaf) and is_multiline_string(child)):
                 wrap_in_parentheses(node, child, visible=False)
 
-        comma_check = child.type == token.COMMA if mode.preview else False
+        comma_check = child.type == token.COMMA
 
         check_lpar = isinstance(child, Leaf) and (
             child.value in parens_after or comma_check

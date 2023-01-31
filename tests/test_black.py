@@ -419,7 +419,8 @@ class BlackTestCase(BlackBaseTestCase):
             msg = (
                 "Expected diff isn't equal to the actual. If you made changes to"
                 " expression.py and this is an anticipated difference, overwrite"
-                f" tests/data/expression_skip_magic_trailing_comma.diff with {dump}"
+                " tests/data/miscellaneous/expression_skip_magic_trailing_comma.diff"
+                f" with {dump}"
             )
             self.assertEqual(expected, actual, msg)
 

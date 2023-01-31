@@ -32,31 +32,15 @@ def check_file(
 @pytest.mark.filterwarnings("ignore:invalid escape sequence.*:DeprecationWarning")
 @pytest.mark.parametrize("filename", all_data_cases("simple_cases"))
 def test_simple_format(filename: str) -> None:
-    check_file("simple_cases", filename, DEFAULT_MODE)
+    magic_trailing_comma = filename != "skip_magic_trailing_comma"
+    check_file(
+        "simple_cases", filename, black.Mode(magic_trailing_comma=magic_trailing_comma)
+    )
 
 
 @pytest.mark.parametrize("filename", all_data_cases("preview"))
 def test_preview_format(filename: str) -> None:
-    magic_trailing_comma = filename != "skip_magic_trailing_comma"
-    check_file(
-        "preview",
-        filename,
-        black.Mode(preview=True, magic_trailing_comma=magic_trailing_comma),
-    )
-
-
-@pytest.mark.parametrize("filename", all_data_cases("preview_39"))
-def test_preview_minimum_python_39_format(filename: str) -> None:
-    source, expected = read_data("preview_39", filename)
-    mode = black.Mode(preview=True)
-    assert_format(source, expected, mode, minimum_version=(3, 9))
-
-
-@pytest.mark.parametrize("filename", all_data_cases("preview_310"))
-def test_preview_minimum_python_310_format(filename: str) -> None:
-    source, expected = read_data("preview_310", filename)
-    mode = black.Mode(preview=True)
-    assert_format(source, expected, mode, minimum_version=(3, 10))
+    check_file("preview", filename, black.Mode(preview=True))
 
 
 def test_preview_context_managers_targeting_py38() -> None:

@@ -10,6 +10,35 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Introduce the 2023 stable style, which incorporates most aspects of last year's
+  preview style (#3418). Specific changes:
+  - Enforce empty lines before classes and functions with sticky leading comments
+    (#3302) (22.12.0)
+  - Reformat empty and whitespace-only files as either an empty file (if no newline is
+    present) or as a single newline character (if a newline is present) (#3348)
+    (22.12.0)
+  - Implicitly concatenated strings used as function args are now wrapped inside
+    parentheses (#3307) (22.12.0)
+  - Correctly handle trailing commas that are inside a line's leading non-nested parens
+    (#3370) (22.12.0)
+  - `--skip-string-normalization` / `-S` now prevents docstring prefixes from being
+    normalized as expected (#3168) (since 22.8.0)
+  - When using `--skip-magic-trailing-comma` or `-C`, trailing commas are stripped from
+    subscript expressions with more than 1 element (#3209) (22.8.0)
+  - Implicitly concatenated strings inside a list, set, or tuple are now wrapped inside
+    parentheses (#3162) (22.8.0)
+  - Fix a string merging/split issue when a comment is present in the middle of
+    implicitly concatenated strings on its own line (#3227) (22.8.0)
+  - Docstring quotes are no longer moved if it would violate the line length limit
+    (#3044, #3430) (22.6.0)
+  - Parentheses around return annotations are now managed (#2990) (22.6.0)
+  - Remove unnecessary parentheses around awaited objects (#2991) (22.6.0)
+  - Remove unnecessary parentheses in `with` statements (#2926) (22.6.0)
+  - Remove trailing newlines after code block open (#3035) (22.6.0)
+  - Code cell separators `#%%` are now standardised to `# %%` (#2919) (22.3.0)
+  - Remove unnecessary parentheses from `except` statements (#2939) (22.3.0)
+  - Remove unnecessary parentheses from tuple unpacking in `for` loops (#2945) (22.3.0)
+  - Avoid magic-trailing-comma in single-element subscripts (#2942) (22.3.0)
 - Fix a crash when a colon line is marked between `# fmt: off` and `# fmt: on` (#3439)
 
 ### Preview style

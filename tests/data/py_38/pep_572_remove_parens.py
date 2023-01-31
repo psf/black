@@ -62,7 +62,6 @@ async def await_the_walrus():
     with (x := await a, y := await b):
         pass
 
-    # Ideally we should remove one set of parentheses
     with ((x := await a, y := await b)):
         pass
 
@@ -137,8 +136,7 @@ async def await_the_walrus():
     with (x := await a, y := await b):
         pass
 
-    # Ideally we should remove one set of parentheses
-    with ((x := await a, y := await b)):
+    with (x := await a, y := await b):
         pass
 
     with (x := await a), (y := await b):

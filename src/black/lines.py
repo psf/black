@@ -14,7 +14,7 @@ from typing import (
 )
 
 from black.brackets import DOT_PRIORITY, BracketTracker
-from black.mode import Mode, Preview
+from black.mode import Mode
 from black.nodes import (
     BRACKETS,
     CLOSING_BRACKETS,
@@ -275,8 +275,7 @@ class Line:
         - it's not a single-element subscript
         Additionally, if ensure_removable:
         - it's not from square bracket indexing
-        (specifically, single-element square bracket indexing with
-        Preview.skip_magic_trailing_comma_in_subscript)
+        (specifically, single-element square bracket indexing)
         """
         if not (
             closing.type in CLOSING_BRACKETS
@@ -290,8 +289,7 @@ class Line:
 
         if closing.type == token.RSQB:
             if (
-                Preview.one_element_subscript in self.mode
-                and closing.parent
+                closing.parent
                 and closing.parent.type == syms.trailer
                 and closing.opening_bracket
                 and is_one_sequence_between(
@@ -309,18 +307,16 @@ class Line:
             comma = self.leaves[-1]
             if comma.parent is None:
                 return False
-            if Preview.skip_magic_trailing_comma_in_subscript in self.mode:
-                return (
-                    comma.parent.type != syms.subscriptlist
-                    or closing.opening_bracket is None
-                    or not is_one_sequence_between(
-                        closing.opening_bracket,
-                        closing,
-                        self.leaves,
-                        brackets=(token.LSQB, token.RSQB),
-                    )
+            return (
+                comma.parent.type != syms.subscriptlist
+                or closing.opening_bracket is None
+                or not is_one_sequence_between(
+                    closing.opening_bracket,
+                    closing,
+                    self.leaves,
+                    brackets=(token.LSQB, token.RSQB),
                 )
-            return comma.parent.type == syms.listmaker
+            )
 
         if self.is_import:
             return True
@@ -592,11 +588,7 @@ class EmptyLineTracker:
         ):
             return before, 1
 
-        if (
-            Preview.remove_block_trailing_newline in current_line.mode
-            and self.previous_line
-            and self.previous_line.opens_block
-        ):
+        if self.previous_line and self.previous_line.opens_block:
             return 0, 0
         return before, 0
 
@@ -629,9 +621,7 @@ class EmptyLineTracker:
         ):
             slc = self.semantic_leading_comment
             if (
-                Preview.empty_lines_before_class_or_def_with_leading_comments
-                in current_line.mode
-                and slc is not None
+                slc is not None
                 and slc.previous_block is not None
                 and not slc.previous_block.original_line.is_class
                 and not slc.previous_block.original_line.opens_block
