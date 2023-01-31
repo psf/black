@@ -45,6 +45,7 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Format hex code in unicode escape sequences in string literals (#2916)
 - Add parentheses around `if`-`else` expressions (#2278)
 - Improve the performance on large expressions that contain many strings (#3467)
 - Fix a crash in preview style with assert + parenthesized string (#3415)
@@ -64,8 +65,12 @@
 - Fix two crashes in preview style involving edge cases with docstrings (#3451)
 - Exclude string type annotations from improved string processing; fix crash when the
   return type annotation is stringified and spans across multiple lines (#3462)
+- Wrap multiple context managers in parentheses when targeting Python 3.9+ (#3489)
 - Fix several crashes in preview style with walrus operators used in `with` statements
   or tuples (#3473)
+- Fix an invalid quote escaping bug in f-string expressions where it produced invalid
+  code. Implicitly concatenated f-strings with different quotes can now be merged or
+  quote-normalized by changing the quotes used in expressions. (#3509)
 
 ### Configuration
 
@@ -93,8 +98,12 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Calling `black --help` multiple times will return the same help contents each time
+  (#3516)
 - Verbose logging now shows the values of `pyproject.toml` configuration variables
   (#3392)
+- Fix false symlink detection messages in verbose output due to using an incorrect
+  relative path to the project root (#3385)
 
 ### _Blackd_
 

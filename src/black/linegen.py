@@ -59,6 +59,7 @@ from black.strings import (
     get_string_prefix,
     normalize_string_prefix,
     normalize_string_quotes,
+    normalize_unicode_escape_sequences,
 )
 from black.trans import (
     CannotTransform,
@@ -90,8 +91,9 @@ class LineGenerator(Visitor[Line]):
     in ways that will no longer stringify to valid Python code on the tree.
     """
 
-    def __init__(self, mode: Mode) -> None:
+    def __init__(self, mode: Mode, features: Collection[Feature]) -> None:
         self.mode = mode
+        self.features = features
         self.current_line: Line
         self.__post_init__()
 
@@ -191,7 +193,9 @@ class LineGenerator(Visitor[Line]):
         `parens` holds a set of string leaf values immediately after which
         invisible parens should be put.
         """
-        normalize_invisible_parens(node, parens_after=parens)
+        normalize_invisible_parens(
+            node, parens_after=parens, mode=self.mode, features=self.features
+        )
         for child in node.children:
             if is_name_token(child) and child.value in keywords:
                 yield from self.line()
@@ -241,7 +245,9 @@ class LineGenerator(Visitor[Line]):
 
     def visit_match_case(self, node: Node) -> Iterator[Line]:
         """Visit either a match or case statement."""
-        normalize_invisible_parens(node, parens_after=set())
+        normalize_invisible_parens(
+            node, parens_after=set(), mode=self.mode, features=self.features
+        )
 
         yield from self.line()
         for child in node.children:
@@ -359,6 +365,9 @@ class LineGenerator(Visitor[Line]):
         yield from self.visit_default(node)
 
     def visit_STRING(self, leaf: Leaf) -> Iterator[Line]:
+        if Preview.hex_codes_in_unicode_sequences in self.mode:
+            normalize_unicode_escape_sequences(leaf)
+
         if is_docstring(leaf) and "\\\n" not in leaf.value:
             # We're ignoring docstrings with backslash newline escapes because changing
             # indentation of those changes the AST representation of the code.
@@ -1069,7 +1078,9 @@ def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
     leaf.prefix = ""
 
 
-def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
+def normalize_invisible_parens(
+    node: Node, parens_after: Set[str], *, mode: Mode, features: Collection[Feature]
+) -> None:
     """Make existing optional parentheses invisible or create new ones.
 
     `parens_after` is a set of string leaf values immediately after which parens
@@ -1082,12 +1093,21 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
         if pc.value in FMT_OFF:
             # This `node` has a prefix with `# fmt: off`, don't mess with parens.
             return
+
+    # The multiple context managers grammar has a different pattern, thus this is
+    # separate from the for-loop below. This possibly wraps them in invisible parens,
+    # and later will be removed in remove_with_parens when needed.
+    if node.type == syms.with_stmt:
+        _maybe_wrap_cms_in_parens(node, mode, features)
+
     check_lpar = False
     for index, child in enumerate(list(node.children)):
         # Fixes a bug where invisible parens are not properly stripped from
         # assignment statements that contain type annotations.
         if isinstance(child, Node) and child.type == syms.annassign:
-            normalize_invisible_parens(child, parens_after=parens_after)
+            normalize_invisible_parens(
+                child, parens_after=parens_after, mode=mode, features=features
+            )
 
         # Add parentheses around long tuple unpacking in assignments.
         if (
@@ -1122,17 +1142,7 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
             elif is_one_tuple(child):
                 wrap_in_parentheses(node, child, visible=True)
             elif node.type == syms.import_from:
-                # "import from" nodes store parentheses directly as part of
-                # the statement
-                if is_lpar_token(child):
-                    assert is_rpar_token(node.children[-1])
-                    # make parentheses invisible
-                    child.value = ""
-                    node.children[-1].value = ""
-                elif child.type != token.STAR:
-                    # insert invisible parentheses
-                    node.insert_child(index, Leaf(token.LPAR, ""))
-                    node.append_child(Leaf(token.RPAR, ""))
+                _normalize_import_from(node, child, index)
                 break
             elif (
                 index == 1
@@ -1152,6 +1162,20 @@ def normalize_invisible_parens(node: Node, parens_after: Set[str]) -> None:
         check_lpar = isinstance(child, Leaf) and (
             child.value in parens_after or comma_check
         )
+
+
+def _normalize_import_from(parent: Node, child: LN, index: int) -> None:
+    # "import from" nodes store parentheses directly as part of
+    # the statement
+    if is_lpar_token(child):
+        assert is_rpar_token(parent.children[-1])
+        # make parentheses invisible
+        child.value = ""
+        parent.children[-1].value = ""
+    elif child.type != token.STAR:
+        # insert invisible parentheses
+        parent.insert_child(index, Leaf(token.LPAR, ""))
+        parent.append_child(Leaf(token.RPAR, ""))
 
 
 def remove_await_parens(node: Node) -> None:
@@ -1188,6 +1212,49 @@ def remove_await_parens(node: Node) -> None:
                 ensure_visible(closing_bracket)
                 # If we are in a nested await then recurse down.
                 remove_await_parens(bracket_contents)
+
+
+def _maybe_wrap_cms_in_parens(
+    node: Node, mode: Mode, features: Collection[Feature]
+) -> None:
+    """When enabled and safe, wrap the multiple context managers in invisible parens.
+
+    It is only safe when `features` contain Feature.PARENTHESIZED_CONTEXT_MANAGERS.
+    """
+    if (
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS not in features
+        or Preview.wrap_multiple_context_managers_in_parens not in mode
+        or len(node.children) <= 2
+        # If it's an atom, it's already wrapped in parens.
+        or node.children[1].type == syms.atom
+    ):
+        return
+    colon_index: Optional[int] = None
+    for i in range(2, len(node.children)):
+        if node.children[i].type == token.COLON:
+            colon_index = i
+            break
+    if colon_index is not None:
+        lpar = Leaf(token.LPAR, "")
+        rpar = Leaf(token.RPAR, "")
+        context_managers = node.children[1:colon_index]
+        for child in context_managers:
+            child.remove()
+        # After wrapping, the with_stmt will look like this:
+        #   with_stmt
+        #     NAME 'with'
+        #     atom
+        #       LPAR ''
+        #       testlist_gexp
+        #         ... <-- context_managers
+        #       /testlist_gexp
+        #       RPAR ''
+        #     /atom
+        #     COLON ':'
+        new_child = Node(
+            syms.atom, [lpar, Node(syms.testlist_gexp, context_managers), rpar]
+        )
+        node.insert_child(1, new_child)
 
 
 def remove_with_parens(node: Node, parent: Node) -> None:

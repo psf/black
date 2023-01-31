@@ -31,8 +31,8 @@ with \
     ...  # backslashes and an ugly stranded colon
 ```
 
-Although when the target version is Python 3.9 or higher, _Black_ will, when we
-implement this, use parentheses instead since they're allowed in Python 3.9 and higher.
+Although when the target version is Python 3.9 or higher, _Black_ uses parentheses
+instead in `--preview` mode (see below) since they're allowed in Python 3.9 and higher.
 
 An alternative to consider if the backslashes in the above formatting are undesirable is
 to use {external:py:obj}`contextlib.ExitStack` to combine context managers in the

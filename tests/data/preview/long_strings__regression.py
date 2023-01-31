@@ -550,6 +550,16 @@ a_dict = {
         ("item1", "item2", "item3"),
 }
 
+# Regression test for https://github.com/psf/black/issues/3506.
+s = (
+    "With single quote: ' "
+    f" {my_dict['foo']}"
+    ' With double quote: " '
+    f' {my_dict["bar"]}'
+)
+
+s = f'Lorem Ipsum is simply dummy text of the printing and typesetting industry:\'{my_dict["foo"]}\''
+
 
 # output
 
@@ -1235,3 +1245,11 @@ a_dict = {
     # And there is a comment before the value
     ("item1", "item2", "item3"),
 }
+
+# Regression test for https://github.com/psf/black/issues/3506.
+s = f"With single quote: '  {my_dict['foo']} With double quote: \"  {my_dict['bar']}"
+
+s = (
+    "Lorem Ipsum is simply dummy text of the printing and typesetting"
+    f" industry:'{my_dict['foo']}'"
+)

@@ -5,7 +5,9 @@ Simple formatting on strings. Further string formatting code is in trans.py.
 import re
 import sys
 from functools import lru_cache
-from typing import List, Pattern
+from typing import List, Match, Pattern
+
+from blib2to3.pytree import Leaf
 
 if sys.version_info < (3, 8):
     from typing_extensions import Final
@@ -18,6 +20,15 @@ STRING_PREFIX_RE: Final = re.compile(
     r"^([" + STRING_PREFIX_CHARS + r"]*)(.*)$", re.DOTALL
 )
 FIRST_NON_WHITESPACE_RE: Final = re.compile(r"\s*\t+\s*(\S)")
+UNICODE_ESCAPE_RE: Final = re.compile(
+    r"(?P<backslashes>\\+)(?P<body>"
+    r"(u(?P<u>[a-fA-F0-9]{4}))"  # Character with 16-bit hex value xxxx
+    r"|(U(?P<U>[a-fA-F0-9]{8}))"  # Character with 32-bit hex value xxxxxxxx
+    r"|(x(?P<x>[a-fA-F0-9]{2}))"  # Character with hex value hh
+    r"|(N\{(?P<N>[a-zA-Z0-9 \-]{2,})\})"  # Character named name in the Unicode database
+    r")",
+    re.VERBOSE,
+)
 
 
 def sub_twice(regex: Pattern[str], replacement: str, original: str) -> str:
@@ -236,3 +247,34 @@ def normalize_string_quotes(s: str) -> str:
         return s  # Prefer double quotes
 
     return f"{prefix}{new_quote}{new_body}{new_quote}"
+
+
+def normalize_unicode_escape_sequences(leaf: Leaf) -> None:
+    """Replace hex codes in Unicode escape sequences with lowercase representation."""
+    text = leaf.value
+    prefix = get_string_prefix(text)
+    if "r" in prefix.lower():
+        return
+
+    def replace(m: Match[str]) -> str:
+        groups = m.groupdict()
+        back_slashes = groups["backslashes"]
+
+        if len(back_slashes) % 2 == 0:
+            return back_slashes + groups["body"]
+
+        if groups["u"]:
+            # \u
+            return back_slashes + "u" + groups["u"].lower()
+        elif groups["U"]:
+            # \U
+            return back_slashes + "U" + groups["U"].lower()
+        elif groups["x"]:
+            # \x
+            return back_slashes + "x" + groups["x"].lower()
+        else:
+            assert groups["N"], f"Unexpected match: {m}"
+            # \N{}
+            return back_slashes + "N{" + groups["N"].upper() + "}"
+
+    leaf.value = re.sub(UNICODE_ESCAPE_RE, replace, text)
