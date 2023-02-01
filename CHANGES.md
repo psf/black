@@ -10,6 +10,64 @@
 
 <!-- Changes that affect Black's stable style -->
 
+### Preview style
+
+<!-- Changes that affect Black's preview style -->
+
+### Configuration
+
+<!-- Changes to how Black can be configured -->
+
+### Packaging
+
+<!-- Changes to how Black is packaged, such as dependency requirements -->
+
+### Parser
+
+<!-- Changes to the parser or to version autodetection -->
+
+### Performance
+
+<!-- Changes that improve Black's performance. -->
+
+### Output
+
+<!-- Changes to Black's terminal output and error messages -->
+
+### _Blackd_
+
+<!-- Changes to blackd -->
+
+### Integrations
+
+<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+### Documentation
+
+<!-- Major changes to documentation and policies. Small docs changes
+     don't need a changelog entry. -->
+
+## 23.1.0
+
+### Highlights
+
+This is the first release of 2023, and following our
+[stability policy](https://black.readthedocs.io/en/stable/the_black_code_style/index.html#stability-policy),
+it comes with a number of improvements to our stable style, including improvements to
+empty line handling, removal of redundant parentheses in several contexts, and output
+that highlights implicitly concatenated strings better.
+
+There are also many changes to the preview style; try out `black --preview` and give us
+feedback to help us set the stable style for next year.
+
+In addition to style changes, Black now automatically infers the supported Python
+versions from your `pyproject.toml` file, removing the need to set Black's target
+versions separately.
+
+### Stable style
+
+<!-- Changes that affect Black's stable style -->
+
 - Introduce the 2023 stable style, which incorporates most aspects of last year's
   preview style (#3418). Specific changes:
   - Enforce empty lines before classes and functions with sticky leading comments
@@ -45,9 +103,9 @@
 
 <!-- Changes that affect Black's preview style -->
 
-- Format hex code in unicode escape sequences in string literals (#2916)
+- Format hex codes in unicode escape sequences in string literals (#2916)
 - Add parentheses around `if`-`else` expressions (#2278)
-- Improve the performance on large expressions that contain many strings (#3467)
+- Improve performance on large expressions that contain many strings (#3467)
 - Fix a crash in preview style with assert + parenthesized string (#3415)
 - Fix crashes in preview style with walrus operators used in function return annotations
   and except clauses (#3423)
@@ -86,19 +144,13 @@
 
 - Upgrade mypyc from `0.971` to `0.991` so mypycified _Black_ can be built on armv7
   (#3380)
+  - This also fixes some crashes while using compiled Black with a debug build of
+    CPython
 - Drop specific support for the `tomli` requirement on 3.11 alpha releases, working
   around a bug that would cause the requirement not to be installed on any non-final
   Python releases (#3448)
 - Black now depends on `packaging` version `22.0` or later. This is required for new
   functionality that needs to parse part of the project metadata (#3219)
-
-### Parser
-
-<!-- Changes to the parser or to version autodetection -->
-
-### Performance
-
-<!-- Changes that improve Black's performance. -->
 
 ### Output
 
@@ -111,15 +163,11 @@
 - Fix false symlink detection messages in verbose output due to using an incorrect
   relative path to the project root (#3385)
 
-### _Blackd_
-
-<!-- Changes to blackd -->
-
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
-- Move 3.11 CI to normal flow now all dependencies support 3.11 (#3446)
+- Move 3.11 CI to normal flow now that all dependencies support 3.11 (#3446)
 - Docker: Add new `latest_prerelease` tag automation to follow latest black alpha
   release on docker images (#3465)
 
