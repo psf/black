@@ -62,3 +62,52 @@ plain strings. User-made splits are respected when they do not exceed the line l
 limit. Line continuation backslashes are converted into parenthesized strings.
 Unnecessary parentheses are stripped. The stability and status of this feature is
 tracked in [this issue](https://github.com/psf/black/issues/2188).
+
+### Improved line breaks
+
+For assignment expressions, it now prefers to split and wrap the right side of the
+assignment instead of left side. For example:
+
+```python
+some_dict[
+    "with_a_long_key"
+] = some_looooooooong_module.some_looooooooooooooong_function_name(
+    first_argument, second_argument, third_argument
+)
+```
+
+will be changed to:
+
+```python
+some_dict["with_a_long_key"] = (
+    some_looooooooong_module.some_looooooooooooooong_function_name(
+        first_argument, second_argument, third_argument
+    )
+)
+```
+
+### Improved parentheses management
+
+For dict literals with long values, they are now wrapped in parentheses. Unnecessary
+parentheses are now removed. For example:
+
+```python
+my_dict = {
+    my_dict = {
+    "a key in my dict": a_very_long_variable
+    * and_a_very_long_function_call()
+    / 100000.0,
+    "another key": (short_value),
+}
+```
+
+will be changed to:
+
+```python
+my_dict = {
+    "a key in my dict": (
+        a_very_long_variable * and_a_very_long_function_call() / 100000.0
+    ),
+    "another key": short_value,
+}
+```
