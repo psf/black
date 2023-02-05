@@ -1,8 +1,8 @@
 ---
-name: Style issue
-about: Help us improve the Black style
+name: Code style issue
+about: Help us improve the Black code style
 title: ""
-labels: "T: design"
+labels: "T: style"
 assignees: ""
 ---
 
