@@ -65,6 +65,7 @@ classifiers = [
 dependencies = [
   "click>=8.0.0",
   "mypy_extensions>=0.4.3",
+  "packaging>=22.0",
   "pathspec>=0.9.0",
   "platformdirs>=2",
   "tomli>=1.1.0; python_version < '3.11'",

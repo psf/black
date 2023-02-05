@@ -19,7 +19,7 @@ with make_context_manager1() as cm1, make_context_manager2() as cm2, make_contex
     ...  # nothing to split on - line too long
 ```
 
-So _Black_ will eventually format it like this:
+So _Black_ will, when we implement this, format it like this:
 
 ```py3
 with \
@@ -31,8 +31,8 @@ with \
     ...  # backslashes and an ugly stranded colon
 ```
 
-Although when the target version is Python 3.9 or higher, _Black_ will use parentheses
-instead since they're allowed in Python 3.9 and higher.
+Although when the target version is Python 3.9 or higher, _Black_ uses parentheses
+instead in `--preview` mode (see below) since they're allowed in Python 3.9 and higher.
 
 An alternative to consider if the backslashes in the above formatting are undesirable is
 to use {external:py:obj}`contextlib.ExitStack` to combine context managers in the
@@ -62,93 +62,3 @@ plain strings. User-made splits are respected when they do not exceed the line l
 limit. Line continuation backslashes are converted into parenthesized strings.
 Unnecessary parentheses are stripped. The stability and status of this feature is
 tracked in [this issue](https://github.com/psf/black/issues/2188).
-
-### Improved empty line management
-
-1.  _Black_ will remove newlines in the beginning of new code blocks, i.e. when the
-    indentation level is increased. For example:
-
-    ```python
-    def my_func():
-
-        print("The line above me will be deleted!")
-    ```
-
-    will be changed to:
-
-    ```python
-    def my_func():
-        print("The line above me will be deleted!")
-    ```
-
-    This new feature will be applied to **all code blocks**: `def`, `class`, `if`,
-    `for`, `while`, `with`, `case` and `match`.
-
-2.  _Black_ will enforce empty lines before classes and functions with leading comments.
-    For example:
-
-    ```python
-    some_var = 1
-    # Leading sticky comment
-    def my_func():
-        ...
-    ```
-
-    will be changed to:
-
-    ```python
-    some_var = 1
-
-
-    # Leading sticky comment
-    def my_func():
-        ...
-    ```
-
-### Improved parentheses management
-
-_Black_ will format parentheses around return annotations similarly to other sets of
-parentheses. For example:
-
-```python
-def foo() -> (int):
-    ...
-
-def foo() -> looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong:
-    ...
-```
-
-will be changed to:
-
-```python
-def foo() -> int:
-    ...
-
-
-def foo() -> (
-    looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong
-):
-    ...
-```
-
-And, extra parentheses in `await` expressions and `with` statements are removed. For
-example:
-
-```python
-with ((open("bla.txt")) as f, open("x")):
-    ...
-
-async def main():
-    await (asyncio.sleep(1))
-```
-
-will be changed to:
-
-```python
-with open("bla.txt") as f, open("x"):
-    ...
-
-
-async def main():
-    await asyncio.sleep(1)
-```
