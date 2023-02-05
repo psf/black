@@ -14,6 +14,9 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Add trailing commas to collection literals even if there's a comment after the last
+  entry (#3393)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->

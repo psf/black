@@ -32,7 +32,7 @@ from mypy_extensions import trait
 
 from black.comments import contains_pragma_comment
 from black.lines import Line, append_leaves
-from black.mode import Feature
+from black.mode import Feature, Mode
 from black.nodes import (
     CLOSING_BRACKETS,
     OPENING_BRACKETS,
@@ -63,7 +63,7 @@ class CannotTransform(Exception):
 # types
 T = TypeVar("T")
 LN = Union[Leaf, Node]
-Transformer = Callable[[Line, Collection[Feature]], Iterator[Line]]
+Transformer = Callable[[Line, Collection[Feature], Mode], Iterator[Line]]
 Index = int
 NodeType = int
 ParserState = int
@@ -81,7 +81,9 @@ def TErr(err_msg: str) -> Err[CannotTransform]:
     return Err(cant_transform)
 
 
-def hug_power_op(line: Line, features: Collection[Feature]) -> Iterator[Line]:
+def hug_power_op(
+    line: Line, features: Collection[Feature], mode: Mode
+) -> Iterator[Line]:
     """A transformer which normalizes spacing around power operators."""
 
     # Performance optimization to avoid unnecessary Leaf clones and other ops.
@@ -228,7 +230,9 @@ class StringTransformer(ABC):
             yield an CannotTransform after that point.)
         """
 
-    def __call__(self, line: Line, _features: Collection[Feature]) -> Iterator[Line]:
+    def __call__(
+        self, line: Line, _features: Collection[Feature], _mode: Mode
+    ) -> Iterator[Line]:
         """
         StringTransformer instances have a call signature that mirrors that of
         the Transformer type.
