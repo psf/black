@@ -65,7 +65,7 @@ tracked in [this issue](https://github.com/psf/black/issues/2188).
 
 ### Improved line breaks
 
-For assignment expressions, it now prefers to split and wrap the right side of the
+For assignment expressions, _Black_ now prefers to split and wrap the right side of the
 assignment instead of left side. For example:
 
 ```python
