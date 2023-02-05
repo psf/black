@@ -14,8 +14,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
-- Correctly handle trailing commas inside dictionaries where a comment is after the
-  final entry (#3393)
+- Add trailing commas to collection literals even if there's a comment after the last
+  entry (#3393)
 
 ### Configuration
 
