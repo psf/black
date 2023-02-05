@@ -520,7 +520,7 @@ def transform_line(
     else:
 
         def _rhs(
-            self: object, line: Line, features: Collection[Feature]
+            self: object, line: Line, features: Collection[Feature], mode: Mode
         ) -> Iterator[Line]:
             """Wraps calls to `right_hand_split`.
 
@@ -604,7 +604,9 @@ class _BracketSplitComponent(Enum):
     tail = auto()
 
 
-def left_hand_split(line: Line, _features: Collection[Feature] = ()) -> Iterator[Line]:
+def left_hand_split(
+    line: Line, _features: Collection[Feature], mode: Mode
+) -> Iterator[Line]:
     """Split line into many lines, starting with the first matching bracket pair.
 
     Note: this usually looks weird, only use this for function definitions.
@@ -940,8 +942,10 @@ def dont_increase_indentation(split_func: Transformer) -> Transformer:
     """
 
     @wraps(split_func)
-    def split_wrapper(line: Line, features: Collection[Feature] = ()) -> Iterator[Line]:
-        for split_line in split_func(line, features):
+    def split_wrapper(
+        line: Line, features: Collection[Feature], mode: Mode
+    ) -> Iterator[Line]:
+        for split_line in split_func(line, features, mode):
             normalize_prefix(split_line.leaves[0], inside_brackets=True)
             yield split_line
 
@@ -968,7 +972,9 @@ def _safe_add_trailing_comma(safe: bool, delimiter_priority: int, line: Line) ->
 
 
 @dont_increase_indentation
-def delimiter_split(line: Line, features: Collection[Feature] = ()) -> Iterator[Line]:
+def delimiter_split(
+    line: Line, features: Collection[Feature], mode: Mode
+) -> Iterator[Line]:
     """Split according to delimiters of the highest priority.
 
     If the appropriate Features are given, the split will add trailing commas
@@ -1026,7 +1032,11 @@ def delimiter_split(line: Line, features: Collection[Feature] = ()) -> Iterator[
                     trailing_comma_safe and Feature.TRAILING_COMMA_IN_CALL in features
                 )
 
-        if last_leaf.type == STANDALONE_COMMENT and leaf_idx == last_non_comment_leaf:
+        if (
+            Preview.add_trailing_comma_consistently in mode
+            and last_leaf.type == STANDALONE_COMMENT
+            and leaf_idx == last_non_comment_leaf
+        ):
             current_line = _safe_add_trailing_comma(
                 trailing_comma_safe, delimiter_priority, current_line
             )
@@ -1047,7 +1057,7 @@ def delimiter_split(line: Line, features: Collection[Feature] = ()) -> Iterator[
 
 @dont_increase_indentation
 def standalone_comment_split(
-    line: Line, features: Collection[Feature] = ()
+    line: Line, features: Collection[Feature], mode: Mode
 ) -> Iterator[Line]:
     """Split standalone comments from the rest of the line."""
     if not line.contains_standalone_comments(0):
@@ -1500,7 +1510,7 @@ def run_transformer(
     if not line_str:
         line_str = line_to_string(line)
     result: List[Line] = []
-    for transformed_line in transform(line, features):
+    for transformed_line in transform(line, features, mode):
         if str(transformed_line).strip("\n") == line_str:
             raise CannotTransform("Line transformer returned an unchanged result")
 
