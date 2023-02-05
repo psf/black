@@ -17,7 +17,7 @@ Python language and, occasionally, in response to user feedback. Large-scale sty
 preferences presented in {doc}`current_style` are very unlikely to change, but minor
 style aspects and details might change according to the stability policy presented
 below. Ongoing style considerations are tracked on GitHub with the
-[design](https://github.com/psf/black/labels/T%3A%20design) issue label.
+[style](https://github.com/psf/black/labels/T%3A%20style) issue label.
 
 (labels/stability-policy)=
 
