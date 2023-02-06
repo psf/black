@@ -36,7 +36,7 @@ jobs:
           latest_non_release)" >> $GITHUB_ENV
 
       - name: Build and push
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4
         with:
           context: .
           platforms: linux/amd64,linux/arm64
@@ -47,7 +47,7 @@ jobs:
         if:
           ${{ github.event_name == 'release' && github.event.action == 'published' &&
           !github.event.release.prerelease }}
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4
         with:
           context: .
           platforms: linux/amd64,linux/arm64
@@ -58,7 +58,7 @@ jobs:
         if:
           ${{ github.event_name == 'release' && github.event.action == 'published' &&
           github.event.release.prerelease }}
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4
         with:
           context: .
           platforms: linux/amd64,linux/arm64
