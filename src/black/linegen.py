@@ -762,7 +762,7 @@ def _maybe_split_omitting_optional_parens(
                 # the split is right after `=`
                 and len(rhs.head.leaves) >= 2
                 and rhs.head.leaves[-2].type == token.EQUAL
-                # the left side of assignement contains brackets
+                # the left side of assignment contains brackets
                 and any(leaf.type in BRACKETS for leaf in rhs.head.leaves[:-1])
                 # the left side of assignment is short enough (the -1 is for the ending
                 # optional paren)
