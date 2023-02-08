@@ -2,6 +2,8 @@
 say""",
 call(3, "dogsay", textwrap.dedent("""dove
     coo""" % "cowabunga"))
+call(3, "dogsay", textwrap.dedent("""dove
+coo""" % "cowabunga"))
 call(3, textwrap.dedent("""cow
     moo""" % "cowabunga"), "dogsay")
 call(3, "dogsay", textwrap.dedent("""crow
@@ -45,6 +47,12 @@ data = yaml.load("""\
 a: 1
 b: 2
 """,)
+data = yaml.load(
+    """\
+    a: 1
+    b: 2
+"""
+)
 
 MULTILINE = """
 foo
@@ -159,6 +167,12 @@ call(
 )
 call(
     3,
+    "dogsay",
+    textwrap.dedent("""dove
+coo""" % "cowabunga"),
+)
+call(
+    3,
     textwrap.dedent("""cow
     moo""" % "cowabunga"),
     "dogsay",
@@ -222,6 +236,10 @@ a: 1
 b: 2
 """,
 )
+data = yaml.load("""\
+    a: 1
+    b: 2
+""")
 
 MULTILINE = """
 foo
