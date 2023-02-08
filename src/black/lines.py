@@ -734,10 +734,10 @@ def is_line_short_enough(  # noqa: C901
 
     # Traverse the AST to examine the context of the multiline string (MLS),
     # tracking aspects such as depth and comma existence,
-    # to determine whether to split the MLS or keep it together
-    # Depth (which is based on the existing bracket depth concept)
-    # is needed to determine nesting level of the MLS
-    # Includes special case for trailing commas
+    # to determine whether to split the MLS or keep it together.
+    # Depth (which is based on the existing bracket_depth concept)
+    # is needed to determine nesting level of the MLS.
+    # Includes special case for trailing commas.
     commas: List[int] = []  # tracks number of commas per depth level
     multiline_string: Optional[Leaf] = None
     # store the leaves that contain parts of the MLS
