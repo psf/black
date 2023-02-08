@@ -205,6 +205,7 @@ f"trigger 3.6 mode"
 
 # Comment 2
 
+
 # fmt: off
 def func_no_args():
   a; b; c

@@ -50,6 +50,7 @@ class Feature(Enum):
     EXCEPT_STAR = 14
     VARIADIC_GENERICS = 15
     DEBUG_F_STRINGS = 16
+    PARENTHESIZED_CONTEXT_MANAGERS = 17
     FORCE_OPTIONAL_PARENTHESES = 50
 
     # __future__ flags
@@ -106,6 +107,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.POS_ONLY_ARGUMENTS,
         Feature.UNPACKING_ON_FLOW,
         Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS,
     },
     TargetVersion.PY310: {
         Feature.F_STRINGS,
@@ -120,6 +122,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.POS_ONLY_ARGUMENTS,
         Feature.UNPACKING_ON_FLOW,
         Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS,
         Feature.PATTERN_MATCHING,
     },
     TargetVersion.PY311: {
@@ -135,6 +138,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.POS_ONLY_ARGUMENTS,
         Feature.UNPACKING_ON_FLOW,
         Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS,
         Feature.PATTERN_MATCHING,
         Feature.EXCEPT_STAR,
         Feature.VARIADIC_GENERICS,
@@ -149,21 +153,17 @@ def supports_feature(target_versions: Set[TargetVersion], feature: Feature) -> b
 class Preview(Enum):
     """Individual preview style features."""
 
-    annotation_parens = auto()
-    empty_lines_before_class_or_def_with_leading_comments = auto()
-    handle_trailing_commas_in_head = auto()
-    long_docstring_quotes_on_newline = auto()
+    add_trailing_comma_consistently = auto()
+    hex_codes_in_unicode_sequences = auto()
     multiline_string_handling = auto()
-    normalize_docstring_quotes_and_prefixes_properly = auto()
-    one_element_subscript = auto()
     prefer_splitting_right_hand_side_of_assignments = auto()
-    remove_block_trailing_newline = auto()
-    remove_redundant_parens = auto()
     # NOTE: string_processing requires wrap_long_dict_values_in_parens
     # for https://github.com/psf/black/issues/3117 to be fixed.
     string_processing = auto()
+    parenthesize_conditional_expressions = auto()
     skip_magic_trailing_comma_in_subscript = auto()
     wrap_long_dict_values_in_parens = auto()
+    wrap_multiple_context_managers_in_parens = auto()
 
 
 class Deprecated(UserWarning):

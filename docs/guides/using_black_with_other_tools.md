@@ -260,7 +260,7 @@ max-line-length = "88"
 #### Configuration
 
 ```
-max_line_length = 88
+max-line-length = 88
 ignore = E203
 ```
 

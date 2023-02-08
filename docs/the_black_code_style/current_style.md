@@ -194,7 +194,45 @@ that in-function vertical whitespace should only be used sparingly.
 _Black_ will allow single empty lines inside functions, and single and double empty
 lines on module level left by the original editors, except when they're within
 parenthesized expressions. Since such expressions are always reformatted to fit minimal
-space, this whitespace is lost.
+space, this whitespace is lost. The other exception is that it will remove any empty
+lines immediately following a statement that introduces a new indentation level.
+
+```python
+# in:
+
+def foo():
+
+    print("All the newlines above me should be deleted!")
+
+
+if condition:
+
+    print("No newline above me!")
+
+    print("There is a newline above me, and that's OK!")
+
+
+class Point:
+
+    x: int
+    y: int
+
+# out:
+
+def foo():
+    print("All the newlines above me should be deleted!")
+
+
+if condition:
+    print("No newline above me!")
+
+    print("There is a newline above me, and that's OK!")
+
+
+class Point:
+    x: int
+    y: int
+```
 
 It will also insert proper spacing before and after function definitions. It's one line
 before and after inner functions and two lines before and after module-level functions
