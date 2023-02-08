@@ -732,12 +732,12 @@ def is_line_short_enough(  # noqa: C901
     if len(first) > mode.line_length or len(last) > mode.line_length:
         return False
 
-    # Traverse the AST to examine the context around the multiline string (MLS),
+    # Traverse the AST to examine the context of the multiline string (MLS),
     # tracking aspects such as depth and comma existence,
     # to determine whether to split the MLS or keep it together
     # Depth (which is based on the existing bracket depth concept)
     # is needed to determine nesting level of the MLS
-    # Include special cases for e.g. trailing commas and long line length
+    # Includes special case for trailing commas
     commas: List[int] = []  # tracks number of commas per depth level
     multiline_string: Optional[Leaf] = None
     # store the leaves that contain parts of the MLS
@@ -778,7 +778,7 @@ def is_line_short_enough(  # noqa: C901
                 return False
             multiline_string = leaf
             ctx: LN = leaf
-            # fetch the tree structure around the MLS in the AST
+            # fetch the leaf components of the MLS in the AST
             while str(ctx) in line_str:
                 multiline_string_contexts.append(ctx)
                 if ctx.parent is None:
