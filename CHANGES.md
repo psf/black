@@ -41,6 +41,8 @@
 
 <!-- Changes to blackd -->
 
+- fix a bug where a single character would cause a 500 (#3558)
+
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
