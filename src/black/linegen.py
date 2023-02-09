@@ -816,7 +816,7 @@ def _maybe_split_omitting_optional_parens(
 
 
 def _prefer_split_rhs_oop(rhs_oop: _RHSResult, line_length: int) -> bool:
-    """Returns whether we should prefer the result from a split omitting optional parens."""
+    """Return whether we should prefer a split omitting optional parens."""
     has_closing_bracket_after_assign = False
     for leaf in reversed(rhs_oop.head.leaves):
         if leaf.type == token.EQUAL:
