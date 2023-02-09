@@ -694,7 +694,8 @@ def _first_right_hand_split(
     line: Line,
     omit: Collection[LeafID] = (),
 ) -> _RHSResult:
-    """Split the line into head, body, tail starting with the last bracket pair.
+    """
+    Split the line into head, body, tail starting with the last bracket pair.
 
     Note: this function should not have side effects. It's relied upon by
     _maybe_split_omitting_optional_parens to get an opinion whether to prefer
@@ -815,9 +816,7 @@ def _maybe_split_omitting_optional_parens(
 
 
 def _prefer_split_rhs_oop(rhs_oop: _RHSResult, line_length: int) -> bool:
-    """
-    Returns whether we should prefer the result from a split omitting optional parens.
-    """
+    """Returns whether we should prefer the result from a split omitting optional parens."""
     has_closing_bracket_after_assign = False
     for leaf in reversed(rhs_oop.head.leaves):
         if leaf.type == token.EQUAL:
@@ -1262,7 +1261,8 @@ def remove_await_parens(node: Node) -> None:
 def _maybe_wrap_cms_in_parens(
     node: Node, mode: Mode, features: Collection[Feature]
 ) -> None:
-    """When enabled and safe, wrap the multiple context managers in invisible parens.
+    """
+    When enabled and safe, wrap the multiple context managers in invisible parens.
 
     It is only safe when `features` contain Feature.PARENTHESIZED_CONTEXT_MANAGERS.
     """
