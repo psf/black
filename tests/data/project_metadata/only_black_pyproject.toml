@@ -1,0 +1,7 @@
+[project]
+name = "test"
+version = "1.0.0"
+
+[tool.black]
+line-length = 79
+target-version = ["py310"]

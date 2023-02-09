@@ -81,15 +81,25 @@ class BracketTracker:
         within brackets a given leaf is. 0 means there are no enclosing brackets
         that started on this line.
 
-        If a leaf is itself a closing bracket, it receives an `opening_bracket`
-        field that it forms a pair with. This is a one-directional link to
-        avoid reference cycles.
+        If a leaf is itself a closing bracket and there is a matching opening
+        bracket earlier, it receives an `opening_bracket` field with which it forms a
+        pair. This is a one-directional link to avoid reference cycles. Closing
+        bracket without opening happens on lines continued from previous
+        breaks, e.g. `) -> "ReturnType":` as part of a funcdef where we place
+        the return type annotation on its own line of the previous closing RPAR.
 
         If a leaf is a delimiter (a token on which Black can split the line if
         needed) and it's on depth 0, its `id()` is stored in the tracker's
         `delimiters` field.
         """
         if leaf.type == token.COMMENT:
+            return
+
+        if (
+            self.depth == 0
+            and leaf.type in CLOSING_BRACKETS
+            and (self.depth, leaf.type) not in self.bracket_match
+        ):
             return
 
         self.maybe_decrement_after_for_loop_variable(leaf)
@@ -358,26 +368,23 @@ def get_leaves_inside_matching_brackets(leaves: Sequence[Leaf]) -> Set[LeafID]:
     Matching brackets are included.
     """
     try:
-        # Only track brackets from the first opening bracket to the last closing
-        # bracket.
+        # Start with the first opening bracket and ignore closing brackets before.
         start_index = next(
             i for i, l in enumerate(leaves) if l.type in OPENING_BRACKETS
         )
-        end_index = next(
-            len(leaves) - i
-            for i, l in enumerate(reversed(leaves))
-            if l.type in CLOSING_BRACKETS
-        )
     except StopIteration:
         return set()
+    bracket_stack = []
     ids = set()
-    depth = 0
-    for i in range(end_index, start_index - 1, -1):
+    for i in range(start_index, len(leaves)):
         leaf = leaves[i]
-        if leaf.type in CLOSING_BRACKETS:
-            depth += 1
-        if depth > 0:
-            ids.add(id(leaf))
         if leaf.type in OPENING_BRACKETS:
-            depth -= 1
+            bracket_stack.append((BRACKET[leaf.type], i))
+        if leaf.type in CLOSING_BRACKETS:
+            if bracket_stack and leaf.type == bracket_stack[-1][0]:
+                _, start = bracket_stack.pop()
+                for j in range(start, i + 1):
+                    ids.add(id(leaves[j]))
+            else:
+                break
     return ids

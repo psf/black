@@ -524,6 +524,42 @@ xxxxxx_xxx_xxxx_xx_xxxxx_xxxxxxxx_xxxxxxxx_xxxxxxxxxx_xxxx_xxxx_xxxxx = xxxx.xxx
     },
 )
 
+# Regression test for https://github.com/psf/black/issues/3117.
+some_dict = {
+    "something_something":
+        r"Lorem ipsum dolor sit amet, an sed convenire eloquentiam \t"
+        r"signiferumque, duo ea vocibus consetetur scriptorem. Facer \t",
+}
+
+# Regression test for https://github.com/psf/black/issues/3459.
+xxxx(
+    empty_str_as_first_split=''
+    f'xxxxxxx {xxxxxxxxxx} xxx xxxxxxxxxx xxxxx xxx xxx xx '
+    'xxxxx xxxxxxxxx xxxxxxx, xxx xxxxxxxxxxx xxx xxxxx. '
+    f'xxxxxxxxxxxxx xxxx xx xxxxxxxxxx. xxxxx: {x.xxx}',
+    empty_u_str_as_first_split=u''
+    f'xxxxxxx {xxxxxxxxxx} xxx xxxxxxxxxx xxxxx xxx xxx xx '
+    'xxxxx xxxxxxxxx xxxxxxx, xxx xxxxxxxxxxx xxx xxxxx. '
+    f'xxxxxxxxxxxxx xxxx xx xxxxxxxxxx. xxxxx: {x.xxx}',
+)
+
+# Regression test for https://github.com/psf/black/issues/3455.
+a_dict = {
+    "/this/is/a/very/very/very/very/very/very/very/very/very/very/long/key/without/spaces":
+        # And there is a comment before the value
+        ("item1", "item2", "item3"),
+}
+
+# Regression test for https://github.com/psf/black/issues/3506.
+s = (
+    "With single quote: ' "
+    f" {my_dict['foo']}"
+    ' With double quote: " '
+    f' {my_dict["bar"]}'
+)
+
+s = f'Lorem Ipsum is simply dummy text of the printing and typesetting industry:\'{my_dict["foo"]}\''
+
 
 # output
 
@@ -976,9 +1012,9 @@ class xxxxxxxxxxxxxxxxxxxxx(xxxx.xxxxxxxxxxxxx):
         )
 
 
-value.__dict__[
-    key
-] = "test"  # set some Thrift field to non-None in the struct aa bb cc dd ee
+value.__dict__[key] = (
+    "test"  # set some Thrift field to non-None in the struct aa bb cc dd ee
+)
 
 RE_ONE_BACKSLASH = {
     "asdf_hjkl_jkl": re.compile(
@@ -1177,4 +1213,43 @@ xxxxxx_xxx_xxxx_xx_xxxxx_xxxxxxxx_xxxxxxxx_xxxxxxxxxx_xxxx_xxxx_xxxxx = xxxx.xxx
             "xxx3_xxxxx_xxxxxxxx_xxxxxxxx_xxxxxxxxxx_xxxxxxxx_xxxxxx_xxxxxxx"
         ),
     },
+)
+
+# Regression test for https://github.com/psf/black/issues/3117.
+some_dict = {
+    "something_something": (
+        r"Lorem ipsum dolor sit amet, an sed convenire eloquentiam \t"
+        r"signiferumque, duo ea vocibus consetetur scriptorem. Facer \t"
+    ),
+}
+
+# Regression test for https://github.com/psf/black/issues/3459.
+xxxx(
+    empty_str_as_first_split=(
+        ""
+        f"xxxxxxx {xxxxxxxxxx} xxx xxxxxxxxxx xxxxx xxx xxx xx "
+        "xxxxx xxxxxxxxx xxxxxxx, xxx xxxxxxxxxxx xxx xxxxx. "
+        f"xxxxxxxxxxxxx xxxx xx xxxxxxxxxx. xxxxx: {x.xxx}"
+    ),
+    empty_u_str_as_first_split=(
+        ""
+        f"xxxxxxx {xxxxxxxxxx} xxx xxxxxxxxxx xxxxx xxx xxx xx "
+        "xxxxx xxxxxxxxx xxxxxxx, xxx xxxxxxxxxxx xxx xxxxx. "
+        f"xxxxxxxxxxxxx xxxx xx xxxxxxxxxx. xxxxx: {x.xxx}"
+    ),
+)
+
+# Regression test for https://github.com/psf/black/issues/3455.
+a_dict = {
+    "/this/is/a/very/very/very/very/very/very/very/very/very/very/long/key/without/spaces":
+    # And there is a comment before the value
+    ("item1", "item2", "item3"),
+}
+
+# Regression test for https://github.com/psf/black/issues/3506.
+s = f"With single quote: '  {my_dict['foo']} With double quote: \"  {my_dict['bar']}"
+
+s = (
+    "Lorem Ipsum is simply dummy text of the printing and typesetting"
+    f" industry:'{my_dict['foo']}'"
 )

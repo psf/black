@@ -25,6 +25,7 @@ from typing import (
     List,
     Optional,
     Sequence,
+    Type,
     TypeVar,
     Union,
 )
@@ -152,6 +153,34 @@ class BlackTestCase(BlackBaseTestCase):
         finally:
             os.unlink(tmp_file)
         self.assertFormatEqual(expected, actual)
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_one_empty_line(self) -> None:
+        mode = black.Mode(preview=True)
+        for nl in ["\n", "\r\n"]:
+            source = expected = nl
+            assert_format(source, expected, mode=mode)
+
+    def test_one_empty_line_ff(self) -> None:
+        mode = black.Mode(preview=True)
+        for nl in ["\n", "\r\n"]:
+            expected = nl
+            tmp_file = Path(black.dump_to_file(nl))
+            if system() == "Windows":
+                # Writing files in text mode automatically uses the system newline,
+                # but in this case we don't want this for testing reasons. See:
+                # https://github.com/psf/black/pull/3348
+                with open(tmp_file, "wb") as f:
+                    f.write(nl.encode("utf-8"))
+            try:
+                self.assertFalse(
+                    ff(tmp_file, mode=mode, write_back=black.WriteBack.YES)
+                )
+                with open(tmp_file, "rb") as f:
+                    actual = f.read().decode("utf8")
+            finally:
+                os.unlink(tmp_file)
+            self.assertFormatEqual(expected, actual)
 
     def test_experimental_string_processing_warns(self) -> None:
         self.assertWarns(
@@ -390,7 +419,8 @@ class BlackTestCase(BlackBaseTestCase):
             msg = (
                 "Expected diff isn't equal to the actual. If you made changes to"
                 " expression.py and this is an anticipated difference, overwrite"
-                f" tests/data/expression_skip_magic_trailing_comma.diff with {dump}"
+                " tests/data/miscellaneous/expression_skip_magic_trailing_comma.diff"
+                f" with {dump}"
             )
             self.assertEqual(expected, actual, msg)
 
@@ -445,6 +475,53 @@ class BlackTestCase(BlackBaseTestCase):
         contents_spc = "if 1:\n    if 2:\n        pass\n        # comment\n    pass\n"
         self.assertFormatEqual(contents_spc, fs(contents_spc))
         self.assertFormatEqual(contents_spc, fs(contents_tab))
+
+    def test_false_positive_symlink_output_issue_3384(self) -> None:
+        # Emulate the behavior when using the CLI (`black ./child  --verbose`), which
+        # involves patching some `pathlib.Path` methods. In particular, `is_dir` is
+        # patched only on its first call: when checking if "./child" is a directory it
+        # should return True. The "./child" folder exists relative to the cwd when
+        # running from CLI, but fails when running the tests because cwd is different
+        project_root = Path(THIS_DIR / "data" / "nested_gitignore_tests")
+        working_directory = project_root / "root"
+        target_abspath = working_directory / "child"
+        target_contents = (
+            src.relative_to(working_directory) for src in target_abspath.iterdir()
+        )
+
+        def mock_n_calls(responses: List[bool]) -> Callable[[], bool]:
+            def _mocked_calls() -> bool:
+                if responses:
+                    return responses.pop(0)
+                return False
+
+            return _mocked_calls
+
+        with patch("pathlib.Path.iterdir", return_value=target_contents), patch(
+            "pathlib.Path.cwd", return_value=working_directory
+        ), patch("pathlib.Path.is_dir", side_effect=mock_n_calls([True])):
+            ctx = FakeContext()
+            ctx.obj["root"] = project_root
+            report = MagicMock(verbose=True)
+            black.get_sources(
+                ctx=ctx,
+                src=("./child",),
+                quiet=False,
+                verbose=True,
+                include=DEFAULT_INCLUDE,
+                exclude=None,
+                report=report,
+                extend_exclude=None,
+                force_exclude=None,
+                stdin_filename=None,
+            )
+        assert not any(
+            mock_args[1].startswith("is a symbolic link that points outside")
+            for _, mock_args, _ in report.path_ignored.mock_calls
+        ), "A symbolic link was reported."
+        report.path_ignored.assert_called_once_with(
+            Path("child", "b.py"), "matches a .gitignore file content"
+        )
 
     def test_report_verbose(self) -> None:
         report = Report(verbose=True)
@@ -971,8 +1048,8 @@ class BlackTestCase(BlackBaseTestCase):
         )
 
     def test_format_file_contents(self) -> None:
-        empty = ""
         mode = DEFAULT_MODE
+        empty = ""
         with self.assertRaises(black.NothingChanged):
             black.format_file_contents(empty, mode=mode, fast=False)
         just_nl = "\n"
@@ -989,6 +1066,17 @@ class BlackTestCase(BlackBaseTestCase):
         with self.assertRaises(black.InvalidInput) as e:
             black.format_file_contents(invalid, mode=mode, fast=False)
         self.assertEqual(str(e.exception), "Cannot parse: 1:7: return if you can")
+
+        mode = black.Mode(preview=True)
+        just_crlf = "\r\n"
+        with self.assertRaises(black.NothingChanged):
+            black.format_file_contents(just_crlf, mode=mode, fast=False)
+        just_whitespace_nl = "\n\t\n \n\t \n \t\n\n"
+        actual = black.format_file_contents(just_whitespace_nl, mode=mode, fast=False)
+        self.assertEqual("\n", actual)
+        just_whitespace_crlf = "\r\n\t\r\n \r\n\t \r\n \t\r\n\r\n"
+        actual = black.format_file_contents(just_whitespace_crlf, mode=mode, fast=False)
+        self.assertEqual("\r\n", actual)
 
     def test_endmarker(self) -> None:
         n = black.lib2to3_parse("\n")
@@ -1281,8 +1369,51 @@ class BlackTestCase(BlackBaseTestCase):
             report.done.assert_called_with(expected, black.Changed.YES)
 
     def test_reformat_one_with_stdin_empty(self) -> None:
+        cases = [
+            ("", ""),
+            ("\n", "\n"),
+            ("\r\n", "\r\n"),
+            (" \t", ""),
+            (" \t\n\t ", "\n"),
+            (" \t\r\n\t ", "\r\n"),
+        ]
+
+        def _new_wrapper(
+            output: io.StringIO, io_TextIOWrapper: Type[io.TextIOWrapper]
+        ) -> Callable[[Any, Any], io.TextIOWrapper]:
+            def get_output(*args: Any, **kwargs: Any) -> io.TextIOWrapper:
+                if args == (sys.stdout.buffer,):
+                    # It's `format_stdin_to_stdout()` calling `io.TextIOWrapper()`,
+                    # return our mock object.
+                    return output
+                # It's something else (i.e. `decode_bytes()`) calling
+                # `io.TextIOWrapper()`, pass through to the original implementation.
+                # See discussion in https://github.com/psf/black/pull/2489
+                return io_TextIOWrapper(*args, **kwargs)
+
+            return get_output
+
+        mode = black.Mode(preview=True)
+        for content, expected in cases:
+            output = io.StringIO()
+            io_TextIOWrapper = io.TextIOWrapper
+
+            with patch("io.TextIOWrapper", _new_wrapper(output, io_TextIOWrapper)):
+                try:
+                    black.format_stdin_to_stdout(
+                        fast=True,
+                        content=content,
+                        write_back=black.WriteBack.YES,
+                        mode=mode,
+                    )
+                except io.UnsupportedOperation:
+                    pass  # StringIO does not support detach
+                assert output.getvalue() == expected
+
+        # An empty string is the only test case for `preview=False`
         output = io.StringIO()
-        with patch("io.TextIOWrapper", lambda *args, **kwargs: output):
+        io_TextIOWrapper = io.TextIOWrapper
+        with patch("io.TextIOWrapper", _new_wrapper(output, io_TextIOWrapper)):
             try:
                 black.format_stdin_to_stdout(
                     fast=True,
@@ -1428,6 +1559,72 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(config["python_cell_magics"], ["custom1", "custom2"])
         self.assertEqual(config["exclude"], r"\.pyi?$")
         self.assertEqual(config["include"], r"\.py?$")
+
+    def test_parse_pyproject_toml_project_metadata(self) -> None:
+        for test_toml, expected in [
+            ("only_black_pyproject.toml", ["py310"]),
+            ("only_metadata_pyproject.toml", ["py37", "py38", "py39", "py310"]),
+            ("neither_pyproject.toml", None),
+            ("both_pyproject.toml", ["py310"]),
+        ]:
+            test_toml_file = THIS_DIR / "data" / "project_metadata" / test_toml
+            config = black.parse_pyproject_toml(str(test_toml_file))
+            self.assertEqual(config.get("target_version"), expected)
+
+    def test_infer_target_version(self) -> None:
+        for version, expected in [
+            ("3.6", [TargetVersion.PY36]),
+            ("3.11.0rc1", [TargetVersion.PY311]),
+            (">=3.10", [TargetVersion.PY310, TargetVersion.PY311]),
+            (">=3.10.6", [TargetVersion.PY310, TargetVersion.PY311]),
+            ("<3.6", [TargetVersion.PY33, TargetVersion.PY34, TargetVersion.PY35]),
+            (">3.7,<3.10", [TargetVersion.PY38, TargetVersion.PY39]),
+            (">3.7,!=3.8,!=3.9", [TargetVersion.PY310, TargetVersion.PY311]),
+            (
+                "> 3.9.4, != 3.10.3",
+                [TargetVersion.PY39, TargetVersion.PY310, TargetVersion.PY311],
+            ),
+            (
+                "!=3.3,!=3.4",
+                [
+                    TargetVersion.PY35,
+                    TargetVersion.PY36,
+                    TargetVersion.PY37,
+                    TargetVersion.PY38,
+                    TargetVersion.PY39,
+                    TargetVersion.PY310,
+                    TargetVersion.PY311,
+                ],
+            ),
+            (
+                "==3.*",
+                [
+                    TargetVersion.PY33,
+                    TargetVersion.PY34,
+                    TargetVersion.PY35,
+                    TargetVersion.PY36,
+                    TargetVersion.PY37,
+                    TargetVersion.PY38,
+                    TargetVersion.PY39,
+                    TargetVersion.PY310,
+                    TargetVersion.PY311,
+                ],
+            ),
+            ("==3.8.*", [TargetVersion.PY38]),
+            (None, None),
+            ("", None),
+            ("invalid", None),
+            ("==invalid", None),
+            (">3.9,!=invalid", None),
+            ("3", None),
+            ("3.2", None),
+            ("2.7.18", None),
+            ("==2.7", None),
+            (">3.10,<3.11", None),
+        ]:
+            test_toml = {"project": {"requires-python": version}}
+            result = black.files.infer_target_version(test_toml)
+            self.assertEqual(result, expected)
 
     def test_read_pyproject_toml(self) -> None:
         test_toml_file = THIS_DIR / "test.toml"

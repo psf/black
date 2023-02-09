@@ -173,6 +173,11 @@ def multiline_backslash_2():
   '''
   hey there \ '''
 
+# Regression test for #3425
+def multiline_backslash_really_long_dont_crash():
+    """
+    hey there hello guten tag hi hoow are you ola zdravstvuyte ciao como estas ca va \ """
+
 
 def multiline_backslash_3():
   '''
@@ -389,6 +394,12 @@ def multiline_backslash_1():
 def multiline_backslash_2():
     """
     hey there \ """
+
+
+# Regression test for #3425
+def multiline_backslash_really_long_dont_crash():
+    """
+    hey there hello guten tag hi hoow are you ola zdravstvuyte ciao como estas ca va \ """
 
 
 def multiline_backslash_3():

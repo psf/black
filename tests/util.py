@@ -2,6 +2,7 @@ import os
 import sys
 import unittest
 from contextlib import contextmanager
+from dataclasses import replace
 from functools import partial
 from pathlib import Path
 from typing import Any, Iterator, List, Optional, Tuple
@@ -56,6 +57,10 @@ def _assert_format_equal(expected: str, actual: str) -> None:
     assert actual == expected
 
 
+class FormatFailure(Exception):
+    """Used to wrap failures when assert_format() runs in an extra mode."""
+
+
 def assert_format(
     source: str,
     expected: str,
@@ -71,12 +76,57 @@ def assert_format(
     safety guards so they don't just crash with a SyntaxError. Please note this is
     separate from TargetVerson Mode configuration.
     """
+    _assert_format_inner(
+        source, expected, mode, fast=fast, minimum_version=minimum_version
+    )
+
+    # For both preview and non-preview tests, ensure that Black doesn't crash on
+    # this code, but don't pass "expected" because the precise output may differ.
+    try:
+        _assert_format_inner(
+            source,
+            None,
+            replace(mode, preview=not mode.preview),
+            fast=fast,
+            minimum_version=minimum_version,
+        )
+    except Exception as e:
+        text = "non-preview" if mode.preview else "preview"
+        raise FormatFailure(
+            f"Black crashed formatting this case in {text} mode."
+        ) from e
+    # Similarly, setting line length to 1 is a good way to catch
+    # stability bugs. But only in non-preview mode because preview mode
+    # currently has a lot of line length 1 bugs.
+    try:
+        _assert_format_inner(
+            source,
+            None,
+            replace(mode, preview=False, line_length=1),
+            fast=fast,
+            minimum_version=minimum_version,
+        )
+    except Exception as e:
+        raise FormatFailure(
+            "Black crashed formatting this case with line-length set to 1."
+        ) from e
+
+
+def _assert_format_inner(
+    source: str,
+    expected: Optional[str] = None,
+    mode: black.Mode = DEFAULT_MODE,
+    *,
+    fast: bool = False,
+    minimum_version: Optional[Tuple[int, int]] = None,
+) -> None:
     actual = black.format_str(source, mode=mode)
-    _assert_format_equal(expected, actual)
+    if expected is not None:
+        _assert_format_equal(expected, actual)
     # It's not useful to run safety checks if we're expecting no changes anyway. The
     # assertion right above will raise if reality does actually make changes. This just
     # avoids wasted CPU cycles.
-    if not fast and source != expected:
+    if not fast and source != actual:
         # Unfortunately the AST equivalence check relies on the built-in ast module
         # being able to parse the code being formatted. This doesn't always work out
         # when checking modern code on older versions.

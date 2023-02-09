@@ -119,7 +119,6 @@ def f():
     if not prev:
         prevp = preceding_leaf(p)
         if not prevp or prevp.type in OPENING_BRACKETS:
-
             return NO
 
         if prevp.type == token.EQUAL:

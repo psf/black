@@ -194,7 +194,45 @@ that in-function vertical whitespace should only be used sparingly.
 _Black_ will allow single empty lines inside functions, and single and double empty
 lines on module level left by the original editors, except when they're within
 parenthesized expressions. Since such expressions are always reformatted to fit minimal
-space, this whitespace is lost.
+space, this whitespace is lost. The other exception is that it will remove any empty
+lines immediately following a statement that introduces a new indentation level.
+
+```python
+# in:
+
+def foo():
+
+    print("All the newlines above me should be deleted!")
+
+
+if condition:
+
+    print("No newline above me!")
+
+    print("There is a newline above me, and that's OK!")
+
+
+class Point:
+
+    x: int
+    y: int
+
+# out:
+
+def foo():
+    print("All the newlines above me should be deleted!")
+
+
+if condition:
+    print("No newline above me!")
+
+    print("There is a newline above me, and that's OK!")
+
+
+class Point:
+    x: int
+    y: int
+```
 
 It will also insert proper spacing before and after function definitions. It's one line
 before and after inner functions and two lines before and after module-level functions
@@ -457,15 +495,15 @@ the latter are treated as true raw strings with no special semantics.
 
 ### AST before and after formatting
 
-When run with `--safe`, _Black_ checks that the code before and after is semantically
-equivalent. This check is done by comparing the AST of the source with the AST of the
-target. There are three limited cases in which the AST does differ:
+When run with `--safe` (the default), _Black_ checks that the code before and after is
+semantically equivalent. This check is done by comparing the AST of the source with the
+AST of the target. There are three limited cases in which the AST does differ:
 
 1. _Black_ cleans up leading and trailing whitespace of docstrings, re-indenting them if
    needed. It's been one of the most popular user-reported features for the formatter to
    fix whitespace issues with docstrings. While the result is technically an AST
-   difference, due to the various possibilities of forming docstrings, all realtime use
-   of docstrings that we're aware of sanitizes indentation and leading/trailing
+   difference, due to the various possibilities of forming docstrings, all real-world
+   uses of docstrings that we're aware of sanitize indentation and leading/trailing
    whitespace anyway.
 
 1. _Black_ manages optional parentheses for some statements. In the case of the `del`
