@@ -29,7 +29,7 @@ FMT_SKIP: Final = {"# fmt: skip", "# fmt:skip"}
 FMT_PASS: Final = {*FMT_OFF, *FMT_SKIP}
 FMT_ON: Final = {"# fmt: on", "# fmt:on", "# yapf: enable"}
 
-COMMENT_EXCEPTIONS = " !:#'"
+COMMENT_EXCEPTIONS = " !:#'|"
 
 
 @dataclass
