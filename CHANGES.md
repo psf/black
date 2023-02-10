@@ -10,6 +10,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Do not reformat Quarto-style metadata comments (`#| key: value`) (#3561)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
