@@ -28,7 +28,11 @@ def make_width_table() -> Iterable[Tuple[int, int, int]]:
     range_width = -2
     for codepoint in range(0, sys.maxunicode + 1):
         width = wcwidth.wcwidth(chr(codepoint))
-        if width == 1:
+        if width <= 1:
+            # Ignore narrow characters along with zero-width characters so that
+            # they are treated as single-width.  Note that treating zero-width
+            # characters as single-width is consistent with the heuristics built
+            # on top of str.isascii() in the str_width() function in strings.py.
             continue
         if start_codepoint < 0:
             start_codepoint = codepoint
