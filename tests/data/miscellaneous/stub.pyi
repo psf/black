@@ -56,6 +56,11 @@ class Nested:
         def who_has_to_know(self): ...
     def verse(self): ...
 
+class Outer:
+    class Inner:
+        inner_attr: int
+    outer_attr: int
+
 class Conditional:
     def f(self): ...
     if sys.version_info >= (3, 8):
@@ -128,6 +133,12 @@ class Nested:
         def who_has_to_know(self): ...
 
     def verse(self): ...
+
+class Outer:
+    class Inner:
+        inner_attr: int
+
+    outer_attr: int
 
 class Conditional:
     def f(self): ...

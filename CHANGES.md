@@ -10,6 +10,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- For stubs, enforce one blank line after a nested class with a body other than just
+  `...` (#3564)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
