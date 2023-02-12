@@ -543,7 +543,12 @@ class EmptyLineTracker:
                 if depth and not current_line.is_def and self.previous_line.is_def:
                     # Empty lines between attributes and methods should be preserved.
                     before = min(1, before)
-                elif depth and not self.previous_defs[-1].is_class:
+                elif (
+                    self.previous_defs[-1].is_class
+                    and not self.previous_defs[-1].is_stub_class
+                ):
+                    before = 1
+                elif depth:
                     before = 0
                 else:
                     before = 1

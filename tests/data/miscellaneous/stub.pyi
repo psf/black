@@ -57,6 +57,8 @@ class Nested:
     def verse(self): ...
 
 class Outer:
+    class InnerStub: ...
+    outer_attr_after_inner_stub: int
     class Inner:
         inner_attr: int
     outer_attr: int
@@ -135,6 +137,9 @@ class Nested:
     def verse(self): ...
 
 class Outer:
+    class InnerStub: ...
+    outer_attr_after_inner_stub: int
+
     class Inner:
         inner_attr: int
 
