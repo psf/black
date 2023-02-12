@@ -10,15 +10,14 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- For stubs, enforce one blank line after a nested class with a body other than just
-  `...` (#3564)
-
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
 - Add trailing commas to collection literals even if there's a comment after the last
   entry (#3393)
+- For stubs, enforce one blank line after a nested class with a body other than just
+  `...` (#3564)
 
 ### Configuration
 

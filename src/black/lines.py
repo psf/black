@@ -14,7 +14,7 @@ from typing import (
 )
 
 from black.brackets import DOT_PRIORITY, BracketTracker
-from black.mode import Mode
+from black.mode import Mode, Preview
 from black.nodes import (
     BRACKETS,
     CLOSING_BRACKETS,
@@ -544,7 +544,8 @@ class EmptyLineTracker:
                     # Empty lines between attributes and methods should be preserved.
                     before = min(1, before)
                 elif (
-                    self.previous_defs[-1].is_class
+                    Preview.blank_line_after_nested_stub_class in self.mode
+                    and self.previous_defs[-1].is_class
                     and not self.previous_defs[-1].is_stub_class
                 ):
                     before = 1
