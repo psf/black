@@ -45,9 +45,9 @@ endif
 
 function BlackIndent()
     let original_indent = GetPythonIndent(v:lnum)
-    let syntax_name = synID(v:lnum, match(getline(v:lnum), '\S') + 1, 1)
-        \ ->synIDtrans()
-        \ ->synIDattr("name")
+    let syntax_name = synIDattr(
+        \ synIDtrans(synID(v:lnum, match(getline(v:lnum), '\S') + 1, 1)),
+        \ "name")
     if syntax_name !=# "String"
         if !s:has_paren_patch && getline(v:lnum) =~# '^\s*\%(]\|}\|)\)'
             " Closing parens should be dedented from preceding line once.
