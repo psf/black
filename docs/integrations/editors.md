@@ -114,6 +114,7 @@ Configuration:
 - `g:black_virtualenv` (defaults to `~/.vim/black` or `~/.local/share/nvim/black`)
 - `g:black_quiet` (defaults to `0`)
 - `g:black_preview` (defaults to `0`)
+- `g:black_indent` (defaults to `0`)
 
 To install with [vim-plug](https://github.com/junegunn/vim-plug):
 
@@ -135,14 +136,17 @@ $ git checkout origin/stable -b stable
 ```
 
 or you can copy the plugin files from
-[plugin/black.vim](https://github.com/psf/black/blob/stable/plugin/black.vim) and
-[autoload/black.vim](https://github.com/psf/black/blob/stable/autoload/black.vim).
+[plugin/black.vim](https://github.com/psf/black/blob/stable/plugin/black.vim),
+[autoload/black.vim](https://github.com/psf/black/blob/stable/autoload/black.vim),
+and [indent/python.vim](https://github.com/psf/black/blob/stable/indent/python.vim).
 
 ```
 mkdir -p ~/.vim/pack/python/start/black/plugin
 mkdir -p ~/.vim/pack/python/start/black/autoload
+mkdir -p ~/.vim/pack/python/start/black/indent
 curl https://raw.githubusercontent.com/psf/black/stable/plugin/black.vim -o ~/.vim/pack/python/start/black/plugin/black.vim
 curl https://raw.githubusercontent.com/psf/black/stable/autoload/black.vim -o ~/.vim/pack/python/start/black/autoload/black.vim
+curl https://raw.githubusercontent.com/psf/black/stable/indent/python.vim -o ~/.vim/pack/python/start/black/indent/python.vim
 ```
 
 Let me know if this requires any changes to work with Vim 8's builtin `packadd`, or
@@ -159,6 +163,9 @@ restarting Vim.
 If you need to do anything special to make your virtualenv work and install _Black_ (for
 example you want to run a version from main), create a virtualenv manually and point
 `g:black_virtualenv` to it. The plugin will use it.
+
+The plugin can make Vim itself indent files according to the _Black_ code style. To
+enable this, set `g:black_indent` to `1`.
 
 To run _Black_ on save, add the following lines to `.vimrc` or `init.vim`:
 

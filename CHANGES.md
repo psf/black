@@ -46,6 +46,9 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- Vim plugin: can now indent while editing according to the _Black_ code style, which
+  can be enabled with the `g:black_indent` flag (#3332)
+
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
