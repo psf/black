@@ -137,8 +137,8 @@ $ git checkout origin/stable -b stable
 
 or you can copy the plugin files from
 [plugin/black.vim](https://github.com/psf/black/blob/stable/plugin/black.vim),
-[autoload/black.vim](https://github.com/psf/black/blob/stable/autoload/black.vim),
-and [indent/python.vim](https://github.com/psf/black/blob/stable/indent/python.vim).
+[autoload/black.vim](https://github.com/psf/black/blob/stable/autoload/black.vim), and
+[indent/python.vim](https://github.com/psf/black/blob/stable/indent/python.vim).
 
 ```
 mkdir -p ~/.vim/pack/python/start/black/plugin
