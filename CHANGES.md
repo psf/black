@@ -25,7 +25,7 @@ Forked the repo.
 ### Parser
 
 - Removing the bloat (useful formatting) soon.
-- 
+
 ### Performance
 
 - Removing the bloat (useful formatting) soon.
