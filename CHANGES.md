@@ -8,7 +8,7 @@ Forked the repo.
 
 ### Stable style
 
-- Completely changed.
+- Completely changed (\**will be soon*).
 
 ### Preview style
 
