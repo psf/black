@@ -16,6 +16,7 @@
 
 - Add trailing commas to collection literals even if there's a comment after the last
   entry (#3393)
+- Fix target version inference (#3583)
 
 ### Configuration
 
