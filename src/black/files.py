@@ -172,10 +172,15 @@ def parse_req_python_specifier(requires_python: str) -> Optional[List[TargetVers
     """Parse a specifier string (i.e. ``">=3.7,<3.10"``) to a list of TargetVersion.
 
     If parsing fails, will raise a packaging.specifiers.InvalidSpecifier error.
-    If the parsed specifier cannot be mapped to a valid TargetVersion, returns None.
+    If the parsed specifier is empty or cannot be mapped to a valid TargetVersion,
+    returns None.
     """
     specifier_set = strip_specifier_set(SpecifierSet(requires_python))
     if not specifier_set:
+        # This means that the specifier has no version clauses. Technically,
+        # all Python versions are included in this specifier. But because the
+        # user didn't refer to any specific Python version, we fall back to
+        # per-file auto-detection.
         return None
 
     target_version_map = {f"3.{v.value}": v for v in TargetVersion}
