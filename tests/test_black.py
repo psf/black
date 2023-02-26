@@ -1572,6 +1572,17 @@ class BlackTestCase(BlackBaseTestCase):
             self.assertEqual(config.get("target_version"), expected)
 
     def test_infer_target_version(self) -> None:
+        ALL_TARGET_VERSIONS = [
+            TargetVersion.PY33,
+            TargetVersion.PY34,
+            TargetVersion.PY35,
+            TargetVersion.PY36,
+            TargetVersion.PY37,
+            TargetVersion.PY38,
+            TargetVersion.PY39,
+            TargetVersion.PY310,
+            TargetVersion.PY311,
+        ]
         for version, expected in [
             ("3.6", [TargetVersion.PY36]),
             ("3.11.0rc1", [TargetVersion.PY311]),
@@ -1596,20 +1607,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY311,
                 ],
             ),
-            (
-                "==3.*",
-                [
-                    TargetVersion.PY33,
-                    TargetVersion.PY34,
-                    TargetVersion.PY35,
-                    TargetVersion.PY36,
-                    TargetVersion.PY37,
-                    TargetVersion.PY38,
-                    TargetVersion.PY39,
-                    TargetVersion.PY310,
-                    TargetVersion.PY311,
-                ],
-            ),
+            ("==3.*", ALL_TARGET_VERSIONS),
             ("==3.8.*", [TargetVersion.PY38]),
             (None, None),
             ("", None),
