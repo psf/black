@@ -121,7 +121,8 @@ FileMode = Mode
 def read_pyproject_toml(
     ctx: click.Context, param: click.Parameter, value: Optional[str]
 ) -> Optional[str]:
-    """Inject Black configuration from "pyproject.toml" into defaults in `ctx`.
+    """
+    Inject Black configuration from "pyproject.toml" into defaults in `ctx`.
 
     Returns the path to a successfully found and read configuration file, None
     otherwise.
@@ -167,7 +168,8 @@ def read_pyproject_toml(
 def target_version_option_callback(
     c: click.Context, p: Union[click.Option, click.Parameter], v: Tuple[str, ...]
 ) -> List[TargetVersion]:
-    """Compute the target versions from a --target-version flag.
+    """
+    Compute the target versions from a --target-version flag.
 
     This is its own function because mypy couldn't infer the type correctly
     when it was a lambda, causing mypyc trouble.
@@ -176,7 +178,8 @@ def target_version_option_callback(
 
 
 def re_compile_maybe_verbose(regex: str) -> Pattern[str]:
-    """Compile a regular expression string in `regex`.
+    """
+    Compile a regular expression string in `regex`.
 
     If it contains newlines, use verbose mode.
     """
@@ -704,9 +707,7 @@ def get_sources(
 def path_empty(
     src: Sized, msg: str, quiet: bool, verbose: bool, ctx: click.Context
 ) -> None:
-    """
-    Exit if there is no `src` provided for formatting
-    """
+    """Exit if there is no `src` provided for formatting"""
     if not src:
         if verbose or not quiet:
             out(msg)
@@ -743,7 +744,8 @@ def reformat_code(
 def reformat_one(
     src: Path, fast: bool, write_back: WriteBack, mode: Mode, report: "Report"
 ) -> None:
-    """Reformat a single file under `src` without spawning child processes.
+    """
+    Reformat a single file under `src` without spawning child processes.
 
     `fast`, `write_back`, and `mode` options are passed to
     :func:`format_file_in_place` or :func:`format_stdin_to_stdout`.
@@ -798,7 +800,8 @@ def format_file_in_place(
     write_back: WriteBack = WriteBack.NO,
     lock: Any = None,  # multiprocessing.Manager().Lock() is some crazy proxy
 ) -> bool:
-    """Format file under `src` path. Return True if changed.
+    """
+    Format file under `src` path. Return True if changed.
 
     If `write_back` is DIFF, write a diff to stdout. If it is YES, write reformatted
     code to the file.
@@ -862,7 +865,8 @@ def format_stdin_to_stdout(
     write_back: WriteBack = WriteBack.NO,
     mode: Mode,
 ) -> bool:
-    """Format file on stdin. Return True if changed.
+    """
+    Format file on stdin. Return True if changed.
 
     If content is None, it's read from sys.stdin.
 
@@ -909,7 +913,8 @@ def format_stdin_to_stdout(
 def check_stability_and_equivalence(
     src_contents: str, dst_contents: str, *, mode: Mode
 ) -> None:
-    """Perform stability and equivalence checks.
+    """
+    Perform stability and equivalence checks.
 
     Raise AssertionError if source and destination contents are not
     equivalent, or if a second pass of the formatter would format the
@@ -920,7 +925,8 @@ def check_stability_and_equivalence(
 
 
 def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileContent:
-    """Reformat contents of a file and return new contents.
+    """
+    Reformat contents of a file and return new contents.
 
     If `fast` is False, additionally confirm that the reformatted code is
     valid by calling :func:`assert_equivalent` and :func:`assert_stable` on it.
@@ -940,7 +946,8 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
 
 
 def validate_cell(src: str, mode: Mode) -> None:
-    """Check that cell does not already contain TransformerManager transformations,
+    """
+    Check that cell does not already contain TransformerManager transformations,
     or non-Python cell magics, which might cause tokenizer_rt to break because of
     indentations.
 
@@ -966,7 +973,8 @@ def validate_cell(src: str, mode: Mode) -> None:
 
 
 def format_cell(src: str, *, fast: bool, mode: Mode) -> str:
-    """Format code in given cell of Jupyter notebook.
+    """
+    Format code in given cell of Jupyter notebook.
 
     General idea is:
 
@@ -1003,7 +1011,8 @@ def format_cell(src: str, *, fast: bool, mode: Mode) -> str:
 
 
 def validate_metadata(nb: MutableMapping[str, Any]) -> None:
-    """If notebook is marked as non-Python, don't format it.
+    """
+    If notebook is marked as non-Python, don't format it.
 
     All notebook metadata fields are optional, see
     https://nbformat.readthedocs.io/en/latest/format_description.html. So
@@ -1015,7 +1024,8 @@ def validate_metadata(nb: MutableMapping[str, Any]) -> None:
 
 
 def format_ipynb_string(src_contents: str, *, fast: bool, mode: Mode) -> FileContent:
-    """Format Jupyter notebook.
+    """
+    Format Jupyter notebook.
 
     Operate cell-by-cell, only on code cells, only for Python notebooks.
     If the ``.ipynb`` originally had a trailing newline, it'll be preserved.
@@ -1047,7 +1057,8 @@ def format_ipynb_string(src_contents: str, *, fast: bool, mode: Mode) -> FileCon
 
 
 def format_str(src_contents: str, *, mode: Mode) -> str:
-    """Reformat a string and return new contents.
+    """
+    Reformat a string and return new contents.
 
     `mode` determines formatting options, such as how many characters per line are
     allowed.  Example:
@@ -1074,7 +1085,6 @@ def format_str(src_contents: str, *, mode: Mode) -> str:
         arg: str = '',
     ) -> None:
         hey
-
     """
     dst_contents = _format_str_once(src_contents, mode=mode)
     # Forced second pass to work around optional trailing commas (becoming
@@ -1131,7 +1141,8 @@ def _format_str_once(src_contents: str, *, mode: Mode) -> str:
 
 
 def decode_bytes(src: bytes) -> Tuple[FileContent, Encoding, NewLine]:
-    """Return a tuple of (decoded_contents, encoding, newline).
+    """
+    Return a tuple of (decoded_contents, encoding, newline).
 
     `newline` is either CRLF or LF but `decoded_contents` is decoded with
     universal newlines (i.e. only contains LF).
@@ -1150,7 +1161,8 @@ def decode_bytes(src: bytes) -> Tuple[FileContent, Encoding, NewLine]:
 def get_features_used(  # noqa: C901
     node: Node, *, future_imports: Optional[Set[str]] = None
 ) -> Set[Feature]:
-    """Return a set of (relatively) new Python features used in this file.
+    """
+    Return a set of (relatively) new Python features used in this file.
 
     Currently looking for:
     - f-strings;
@@ -1394,7 +1406,8 @@ def assert_stable(src: str, dst: str, mode: Mode) -> None:
 
 @contextmanager
 def nullcontext() -> Iterator[None]:
-    """Return an empty context manager.
+    """
+    Return an empty context manager.
 
     To be used like `nullcontext` in Python 3.7.
     """
@@ -1402,7 +1415,8 @@ def nullcontext() -> Iterator[None]:
 
 
 def patch_click() -> None:
-    """Make Click not crash on Python 3.6 with LANG=C.
+    """
+    Make Click not crash on Python 3.6 with LANG=C.
 
     On certain misconfigured environments, Python 3 selects the ASCII encoding as the
     default which restricts paths that it can access during the lifetime of the

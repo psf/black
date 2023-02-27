@@ -73,7 +73,8 @@ def jupyter_dependencies_are_installed(*, verbose: bool, quiet: bool) -> bool:
 
 
 def remove_trailing_semicolon(src: str) -> Tuple[str, bool]:
-    """Remove trailing semicolon from Jupyter notebook cell.
+    """
+    Remove trailing semicolon from Jupyter notebook cell.
 
     For example,
 
@@ -105,7 +106,8 @@ def remove_trailing_semicolon(src: str) -> Tuple[str, bool]:
 
 
 def put_trailing_semicolon_back(src: str, has_trailing_semicolon: bool) -> str:
-    """Put trailing semicolon back if cell originally had it.
+    """
+    Put trailing semicolon back if cell originally had it.
 
     Mirrors the logic in `quiet` from `IPython.core.displayhook`, but uses
     ``tokenize_rt`` so that round-tripping works fine.
@@ -129,7 +131,8 @@ def put_trailing_semicolon_back(src: str, has_trailing_semicolon: bool) -> str:
 
 
 def mask_cell(src: str) -> Tuple[str, List[Replacement]]:
-    """Mask IPython magics so content becomes parseable Python code.
+    """
+    Mask IPython magics so content becomes parseable Python code.
 
     For example,
 
@@ -169,7 +172,8 @@ def mask_cell(src: str) -> Tuple[str, List[Replacement]]:
 
 
 def get_token(src: str, magic: str) -> str:
-    """Return randomly generated token to mask IPython magic with.
+    """
+    Return randomly generated token to mask IPython magic with.
 
     For example, if 'magic' was `%matplotlib inline`, then a possible
     token to mask it with would be `"43fdd17f7e5ddc83"`. The token
@@ -195,7 +199,8 @@ def get_token(src: str, magic: str) -> str:
 
 
 def replace_cell_magics(src: str) -> Tuple[str, List[Replacement]]:
-    """Replace cell magic with token.
+    """
+    Replace cell magic with token.
 
     Note that 'src' will already have been processed by IPython's
     TransformerManager().transform_cell.
@@ -226,7 +231,8 @@ def replace_cell_magics(src: str) -> Tuple[str, List[Replacement]]:
 
 
 def replace_magics(src: str) -> Tuple[str, List[Replacement]]:
-    """Replace magics within body of cell.
+    """
+    Replace magics within body of cell.
 
     Note that 'src' will already have been processed by IPython's
     TransformerManager().transform_cell.
@@ -267,7 +273,8 @@ def replace_magics(src: str) -> Tuple[str, List[Replacement]]:
 
 
 def unmask_cell(src: str, replacements: List[Replacement]) -> str:
-    """Remove replacements from cell.
+    """
+    Remove replacements from cell.
 
     For example
 
@@ -285,7 +292,8 @@ def unmask_cell(src: str, replacements: List[Replacement]) -> str:
 
 
 def _is_ipython_magic(node: ast.expr) -> TypeGuard[ast.Attribute]:
-    """Check if attribute is IPython magic.
+    """
+    Check if attribute is IPython magic.
 
     Note that the source of the abstract syntax tree
     will already have been processed by IPython's
@@ -322,7 +330,8 @@ class CellMagic:
 
 # ast.NodeVisitor + dataclass = breakage under mypyc.
 class CellMagicFinder(ast.NodeVisitor):
-    """Find cell magics.
+    """
+    Find cell magics.
 
     Note that the source of the abstract syntax tree
     will already have been processed by IPython's
@@ -363,7 +372,8 @@ class OffsetAndMagic:
 # Unsurprisingly, subclassing ast.NodeVisitor means we can't use dataclasses here
 # as mypyc will generate broken code.
 class MagicFinder(ast.NodeVisitor):
-    """Visit cell to look for get_ipython calls.
+    """
+    Visit cell to look for get_ipython calls.
 
     Note that the source of the abstract syntax tree
     will already have been processed by IPython's
@@ -385,7 +395,8 @@ class MagicFinder(ast.NodeVisitor):
         self.magics: Dict[int, List[OffsetAndMagic]] = collections.defaultdict(list)
 
     def visit_Assign(self, node: ast.Assign) -> None:
-        """Look for system assign magics.
+        """
+        Look for system assign magics.
 
         For example,
 
@@ -418,7 +429,8 @@ class MagicFinder(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_Expr(self, node: ast.Expr) -> None:
-        """Look for magics in body of cell.
+        """
+        Look for magics in body of cell.
 
         For examples,
 

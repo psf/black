@@ -46,7 +46,8 @@ if TYPE_CHECKING:
 def find_project_root(
     srcs: Sequence[str], stdin_filename: Optional[str] = None
 ) -> Tuple[Path, str]:
-    """Return a directory containing .git, .hg, or pyproject.toml.
+    """
+    Return a directory containing .git, .hg, or pyproject.toml.
 
     That directory will be a common parent of all files and directories
     passed in `srcs`.
@@ -111,7 +112,8 @@ def find_pyproject_toml(path_search_start: Tuple[str, ...]) -> Optional[str]:
 
 @mypyc_attr(patchable=True)
 def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
-    """Parse a pyproject toml file, pulling out relevant parts for Black.
+    """
+    Parse a pyproject toml file, pulling out relevant parts for Black.
 
     If parsing fails, will raise a tomllib.TOMLDecodeError.
     """
@@ -131,7 +133,8 @@ def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
 def infer_target_version(
     pyproject_toml: Dict[str, Any]
 ) -> Optional[List[TargetVersion]]:
-    """Infer Black's target version from the project metadata in pyproject.toml.
+    """
+    Infer Black's target version from the project metadata in pyproject.toml.
 
     Supports the PyPA standard format (PEP 621):
     https://packaging.python.org/en/latest/specifications/declaring-project-metadata/#requires-python
@@ -154,7 +157,8 @@ def infer_target_version(
 
 
 def parse_req_python_version(requires_python: str) -> Optional[List[TargetVersion]]:
-    """Parse a version string (i.e. ``"3.7"``) to a list of TargetVersion.
+    """
+    Parse a version string (i.e. ``"3.7"``) to a list of TargetVersion.
 
     If parsing fails, will raise a packaging.version.InvalidVersion error.
     If the parsed version cannot be mapped to a valid TargetVersion, returns None.
@@ -169,7 +173,8 @@ def parse_req_python_version(requires_python: str) -> Optional[List[TargetVersio
 
 
 def parse_req_python_specifier(requires_python: str) -> Optional[List[TargetVersion]]:
-    """Parse a specifier string (i.e. ``">=3.7,<3.10"``) to a list of TargetVersion.
+    """
+    Parse a specifier string (i.e. ``">=3.7,<3.10"``) to a list of TargetVersion.
 
     If parsing fails, will raise a packaging.specifiers.InvalidSpecifier error.
     If the parsed specifier cannot be mapped to a valid TargetVersion, returns None.
@@ -186,7 +191,8 @@ def parse_req_python_specifier(requires_python: str) -> Optional[List[TargetVers
 
 
 def strip_specifier_set(specifier_set: SpecifierSet) -> SpecifierSet:
-    """Strip minor versions for some specifiers in the specifier set.
+    """
+    Strip minor versions for some specifiers in the specifier set.
 
     For background on version specifiers, see PEP 440:
     https://peps.python.org/pep-0440/#version-specifiers
@@ -212,7 +218,8 @@ def strip_specifier_set(specifier_set: SpecifierSet) -> SpecifierSet:
 
 @lru_cache()
 def find_user_pyproject_toml() -> Path:
-    r"""Return the path to the top-level user configuration for black.
+    r"""
+    Return the path to the top-level user configuration for black.
 
     This looks for ~\.black on Windows and ~/.config/black on Linux and other
     Unix systems.
@@ -250,7 +257,8 @@ def normalize_path_maybe_ignore(
     root: Path,
     report: Optional[Report] = None,
 ) -> Optional[str]:
-    """Normalize `path`. May return `None` if `path` was ignored.
+    """
+    Normalize `path`. May return `None` if `path` was ignored.
 
     `report` is where "path ignored" output goes.
     """
@@ -308,7 +316,8 @@ def gen_python_files(
     verbose: bool,
     quiet: bool,
 ) -> Iterator[Path]:
-    """Generate all files under `path` whose paths are not excluded by the
+    """
+    Generate all files under `path` whose paths are not excluded by the
     `exclude_regex`, `extend_exclude`, or `force_exclude` regexes,
     but are included by the `include` regex.
 

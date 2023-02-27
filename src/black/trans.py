@@ -73,7 +73,8 @@ TMatchResult = TResult[List[Index]]
 
 
 def TErr(err_msg: str) -> Err[CannotTransform]:
-    """(T)ransform Err
+    """
+    (T)ransform Err
 
     Convenience function used when working with the TResult type.
     """
@@ -269,7 +270,8 @@ class StringTransformer(ABC):
 
 @dataclass
 class CustomSplit:
-    """A custom (i.e. manual) string split.
+    """
+    A custom (i.e. manual) string split.
 
     A single CustomSplit instance represents a single substring.
 
@@ -318,7 +320,8 @@ class CustomSplitMapMixin:
     def add_custom_splits(
         self, string: str, custom_splits: Iterable[CustomSplit]
     ) -> None:
-        """Custom Split Map Setter Method
+        """
+        Custom Split Map Setter Method
 
         Side Effects:
             Adds a mapping from @string to the custom splits @custom_splits.
@@ -327,7 +330,8 @@ class CustomSplitMapMixin:
         self._CUSTOM_SPLIT_MAP[key] = tuple(custom_splits)
 
     def pop_custom_splits(self, string: str) -> List[CustomSplit]:
-        """Custom Split Map Getter Method
+        """
+        Custom Split Map Getter Method
 
         Returns:
             * A list of the custom splits that are mapped to @string, if any
@@ -356,7 +360,8 @@ class CustomSplitMapMixin:
 
 
 class StringMerger(StringTransformer, CustomSplitMapMixin):
-    """StringTransformer that merges strings together.
+    """
+    StringTransformer that merges strings together.
 
     Requirements:
         (A) The line contains adjacent strings such that ALL of the validation checks
@@ -564,7 +569,8 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
         QUOTE = LL[string_idx].value[-1]
 
         def make_naked(string: str, string_prefix: str) -> str:
-            """Strip @string (i.e. make it a "naked" string)
+            """
+            Strip @string (i.e. make it a "naked" string)
 
             Pre-conditions:
                 * assert_is_leaf_string(@string)
@@ -684,7 +690,8 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
 
     @staticmethod
     def _validate_msg(line: Line, string_idx: int) -> TResult[None]:
-        """Validate (M)erge (S)tring (G)roup
+        """
+        Validate (M)erge (S)tring (G)roup
 
         Transform-time string validation logic for _merge_string_group(...).
 
@@ -770,7 +777,8 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
 
 
 class StringParenStripper(StringTransformer):
-    """StringTransformer that strips surrounding parentheses from strings.
+    """
+    StringTransformer that strips surrounding parentheses from strings.
 
     Requirements:
         The line contains a string which is surrounded by parentheses and:

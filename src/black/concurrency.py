@@ -24,7 +24,8 @@ from black.report import Changed, Report
 
 
 def maybe_install_uvloop() -> None:
-    """If our environment has uvloop installed we use it.
+    """
+    If our environment has uvloop installed we use it.
 
     This is called only from command-line entry points to avoid
     interfering with the parent process if Black is used as a library.
@@ -125,7 +126,8 @@ async def schedule_formatting(
     loop: asyncio.AbstractEventLoop,
     executor: "Executor",
 ) -> None:
-    """Run formatting of `sources` in parallel using the provided `executor`.
+    """
+    Run formatting of `sources` in parallel using the provided `executor`.
 
     (Use ProcessPoolExecutors for actual parallelism.)
 

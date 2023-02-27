@@ -10,9 +10,10 @@ result = 1# This comment is talking about type: ignore
 square = Square(4) # type: Optional[Square]
 
 def function(a:int=42):
-    """ This docstring is already formatted
-       a
-       b
+    """
+    This docstring is already formatted
+    a
+    b
     """
     #    There's a NBSP + 3 spaces before
     #    And 4 spaces on the next line
@@ -35,7 +36,8 @@ square = Square(4)  #  type: Optional[Square]
 
 
 def function(a: int = 42):
-    """This docstring is already formatted
+    """
+    This docstring is already formatted
     a
     b
     """
