@@ -14,7 +14,7 @@ from typing import (
 )
 
 from black.brackets import DOT_PRIORITY, BracketTracker
-from black.mode import Mode
+from black.mode import Mode, Preview
 from black.nodes import (
     BRACKETS,
     CLOSING_BRACKETS,
@@ -26,6 +26,7 @@ from black.nodes import (
     is_multiline_string,
     is_one_sequence_between,
     is_type_comment,
+    is_with_stmt,
     replace_child,
     syms,
     whitespace,
@@ -118,6 +119,11 @@ class Line:
     def is_import(self) -> bool:
         """Is this an import line?"""
         return bool(self) and is_import(self.leaves[0])
+
+    @property
+    def is_with_stmt(self) -> bool:
+        """Is this an with_stmt line?"""
+        return bool(self) and is_with_stmt(self.leaves[0])
 
     @property
     def is_class(self) -> bool:
@@ -447,6 +453,17 @@ class Line:
 
 
 @dataclass
+class RHSResult:
+    """Intermediate split result from a right hand split."""
+
+    head: Line
+    body: Line
+    tail: Line
+    opening_bracket: Leaf
+    closing_bracket: Leaf
+
+
+@dataclass
 class LinesBlock:
     """Class that holds information about a block of formatted lines.
 
@@ -752,24 +769,40 @@ def can_be_split(line: Line) -> bool:
 
 
 def can_omit_invisible_parens(
-    line: Line,
+    rhs: RHSResult,
     line_length: int,
 ) -> bool:
-    """Does `line` have a shape safe to reformat without optional parens around it?
+    """Does `rhs.body` have a shape safe to reformat without optional parens around it?
 
     Returns True for only a subset of potentially nice looking formattings but
     the point is to not return false positives that end up producing lines that
     are too long.
     """
+    line = rhs.body
     bt = line.bracket_tracker
     if not bt.delimiters:
         # Without delimiters the optional parentheses are useless.
         return True
 
     max_priority = bt.max_delimiter_priority()
-    if bt.delimiter_count_with_priority(max_priority) > 1:
+    delimiter_count = bt.delimiter_count_with_priority(max_priority)
+    if delimiter_count > 1:
         # With more than one delimiter of a kind the optional parentheses read better.
         return False
+
+    if delimiter_count == 1:
+        if (
+            Preview.wrap_multiple_context_managers_in_parens in line.mode
+            and rhs.head.is_with_stmt
+        ):
+            # For two context manager with statements, the optional parentheses read
+            # better. In this case, `rhs.body` is the context managers part of
+            # the with statement. `rhs.head` is the `with (` part on the previous
+            # line.
+            return False
+        # Otherwise it may also read better, but we don't do it today and requires
+        # careful considerations for all possible cases. See
+        # https://github.com/psf/black/issues/2156.
 
     if max_priority == DOT_PRIORITY:
         # A single stranded method call doesn't require optional parentheses.

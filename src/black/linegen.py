@@ -2,7 +2,6 @@
 Generating lines of code.
 """
 import sys
-from dataclasses import dataclass
 from enum import Enum, auto
 from functools import partial, wraps
 from typing import Collection, Iterator, List, Optional, Set, Union, cast
@@ -16,6 +15,7 @@ from black.brackets import (
 from black.comments import FMT_OFF, generate_comments, list_comments
 from black.lines import (
     Line,
+    RHSResult,
     append_leaves,
     can_be_split,
     can_omit_invisible_parens,
@@ -651,17 +651,6 @@ def left_hand_split(
             yield result
 
 
-@dataclass
-class _RHSResult:
-    """Intermediate split result from a right hand split."""
-
-    head: Line
-    body: Line
-    tail: Line
-    opening_bracket: Leaf
-    closing_bracket: Leaf
-
-
 def right_hand_split(
     line: Line,
     line_length: int,
@@ -685,7 +674,7 @@ def right_hand_split(
 def _first_right_hand_split(
     line: Line,
     omit: Collection[LeafID] = (),
-) -> _RHSResult:
+) -> RHSResult:
     """Split the line into head, body, tail starting with the last bracket pair.
 
     Note: this function should not have side effects. It's relied upon by
@@ -727,11 +716,11 @@ def _first_right_hand_split(
         tail_leaves, line, opening_bracket, component=_BracketSplitComponent.tail
     )
     bracket_split_succeeded_or_raise(head, body, tail)
-    return _RHSResult(head, body, tail, opening_bracket, closing_bracket)
+    return RHSResult(head, body, tail, opening_bracket, closing_bracket)
 
 
 def _maybe_split_omitting_optional_parens(
-    rhs: _RHSResult,
+    rhs: RHSResult,
     line: Line,
     line_length: int,
     features: Collection[Feature] = (),
@@ -751,11 +740,11 @@ def _maybe_split_omitting_optional_parens(
         # there are no standalone comments in the body
         and not rhs.body.contains_standalone_comments(0)
         # and we can actually remove the parens
-        and can_omit_invisible_parens(rhs.body, line_length)
+        and can_omit_invisible_parens(rhs, line_length)
     ):
         omit = {id(rhs.closing_bracket), *omit}
         try:
-            # The _RHSResult Omitting Optional Parens.
+            # The RHSResult Omitting Optional Parens.
             rhs_oop = _first_right_hand_split(line, omit=omit)
             if not (
                 Preview.prefer_splitting_right_hand_side_of_assignments in line.mode
@@ -806,7 +795,7 @@ def _maybe_split_omitting_optional_parens(
             yield result
 
 
-def _prefer_split_rhs_oop(rhs_oop: _RHSResult, line_length: int) -> bool:
+def _prefer_split_rhs_oop(rhs_oop: RHSResult, line_length: int) -> bool:
     """
     Returns whether we should prefer the result from a split omitting optional parens.
     """

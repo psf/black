@@ -49,6 +49,14 @@ with \
     pass
 
 
+with mock.patch.object(
+    self.my_runner, "first_method", autospec=True
+) as mock_run_adb, mock.patch.object(
+    self.my_runner, "second_method", autospec=True, return_value="foo"
+):
+    pass
+
+
 # output
 
 
@@ -100,5 +108,14 @@ with (
         looong_arg3=looong_value3,
         looong_arg4=looong_value4,
     ) as cm2,
+):
+    pass
+
+
+with (
+    mock.patch.object(self.my_runner, "first_method", autospec=True) as mock_run_adb,
+    mock.patch.object(
+        self.my_runner, "second_method", autospec=True, return_value="foo"
+    ),
 ):
     pass

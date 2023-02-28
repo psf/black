@@ -16,6 +16,8 @@
 
 - Add trailing commas to collection literals even if there's a comment after the last
   entry (#3393)
+- `with` statements that contain two context managers will be consistently wrapped in
+  parens (#3589)
 
 ### Configuration
 
