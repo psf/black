@@ -122,7 +122,7 @@ class Line:
 
     @property
     def is_with_stmt(self) -> bool:
-        """Is this an with_stmt line?"""
+        """Is this a with_stmt line?"""
         return bool(self) and is_with_stmt(self.leaves[0])
 
     @property
