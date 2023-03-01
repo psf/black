@@ -57,6 +57,16 @@ with mock.patch.object(
     pass
 
 
+with xxxxxxxx.some_kind_of_method(
+    some_argument=[
+        "first",
+        "second",
+        "third",
+    ]
+).another_method() as cmd:
+    pass
+
+
 # output
 
 
@@ -118,4 +128,14 @@ with (
         self.my_runner, "second_method", autospec=True, return_value="foo"
     ),
 ):
+    pass
+
+
+with xxxxxxxx.some_kind_of_method(
+    some_argument=[
+        "first",
+        "second",
+        "third",
+    ]
+).another_method() as cmd:
     pass

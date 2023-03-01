@@ -13,7 +13,7 @@ from typing import (
     cast,
 )
 
-from black.brackets import DOT_PRIORITY, BracketTracker
+from black.brackets import COMMA_PRIORITY, DOT_PRIORITY, BracketTracker
 from black.mode import Mode, Preview
 from black.nodes import (
     BRACKETS,
@@ -793,6 +793,7 @@ def can_omit_invisible_parens(
     if delimiter_count == 1:
         if (
             Preview.wrap_multiple_context_managers_in_parens in line.mode
+            and max_priority == COMMA_PRIORITY
             and rhs.head.is_with_stmt
         ):
             # For two context manager with statements, the optional parentheses read
