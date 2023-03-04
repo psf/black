@@ -148,7 +148,7 @@ def lib2to3_unparse(node: Node) -> str:
 
 
 def parse_single_version(
-    src: str, version: Tuple[int, int], type_comments: bool
+    src: str, version: Tuple[int, int], *, type_comments: bool
 ) -> Union[ast.AST, ast3.AST]:
     filename = "<unknown>"
     # typed-ast is needed because of feature version limitations in the builtin ast 3.8>
