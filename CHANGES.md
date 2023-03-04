@@ -29,6 +29,8 @@
 
 <!-- Changes to the parser or to version autodetection -->
 
+- Added support for formatting files with invalid type comments (#3594)
+
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
