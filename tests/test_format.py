@@ -190,3 +190,9 @@ def test_power_op_newline() -> None:
     # requires line_length=0
     source, expected = read_data("miscellaneous", "power_op_newline")
     assert_format(source, expected, mode=black.Mode(line_length=0))
+
+def test_type_comment_syntax_error() -> None:
+    """Test that black is able to format python code with type comment syntax errors."""
+    source, expected = read_data("type_comments", "type_comment_syntax_error")
+    assert_format(source, expected)
+    black.assert_equivalent(source, expected)

@@ -1938,14 +1938,6 @@ class BlackTestCase(BlackBaseTestCase):
         err.match("invalid character")
         err.match(r"\(<unknown>, line 1\)")
 
-    def test_type_comment_syntax_error(self) -> None:
-        """
-        Test that black is able to format python code with type comment syntax errors.
-        """
-        source, expected = read_data("type_comments", "type_comment_syntax_error")
-        assert_format(source, expected)
-        black.assert_equivalent(source, expected)
-
 
 class TestCaching:
     def test_get_cache_dir(
