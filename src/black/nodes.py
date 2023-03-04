@@ -2,6 +2,7 @@
 blib2to3 Node/Leaf transformation-related utility functions.
 """
 
+import re
 import sys
 from typing import Generic, Iterator, List, Optional, Set, Tuple, TypeVar, Union
 
@@ -789,12 +790,18 @@ def is_import(leaf: Leaf) -> bool:
     )
 
 
+is_type_comment_regex = re.compile(r"^#[\s\t]+type[\s\t]*:")
+
+
 def is_type_comment(leaf: Leaf, suffix: str = "") -> bool:
     """Return True if the given leaf is a special comment.
     Only returns true for type comments for now."""
     t = leaf.type
     v = leaf.value
-    return t in {token.COMMENT, STANDALONE_COMMENT} and v.startswith("# type:" + suffix)
+    if t not in {token.COMMENT, STANDALONE_COMMENT} or not v.startswith("#"):
+        return False
+
+    return bool(is_type_comment_regex.match(v))
 
 
 def wrap_in_parentheses(parent: Node, child: LN, *, visible: bool = True) -> None:
