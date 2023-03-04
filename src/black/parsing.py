@@ -165,9 +165,12 @@ def parse_single_version(
         else:
             return ast3.parse(src, filename)
     else:
-        # Typed-ast is guaranteed to be used here and automatically tracks type
-        # comments separately.
-        return ast3.parse(src, filename, feature_version=version[1])
+        if type_comments:
+            # Typed-ast is guaranteed to be used here and automatically tracks type
+            # comments separately.
+            return ast3.parse(src, filename, feature_version=version[1])
+        else:
+            return ast.parse(src, filename)
 
 
 def parse_ast(src: str) -> Union[ast.AST, ast3.AST]:
