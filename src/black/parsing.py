@@ -185,11 +185,13 @@ def parse_ast(src: str) -> Union[ast.AST, ast3.AST]:
             if not first_error:
                 first_error = str(e)
 
-            # Try to parse without type comments
-            try:
-                return parse_single_version(src, version, type_comments=False)
-            except SyntaxError:
-                pass
+
+    # Try to parse without type comments
+    for version in sorted(versions, reverse=True):
+        try:
+            return parse_single_version(src, version, type_comments=False)
+        except SyntaxError:
+            pass
 
     raise SyntaxError(first_error)
 
