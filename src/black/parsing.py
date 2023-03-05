@@ -185,7 +185,6 @@ def parse_ast(src: str) -> Union[ast.AST, ast3.AST]:
             if not first_error:
                 first_error = str(e)
 
-
     # Try to parse without type comments
     for version in sorted(versions, reverse=True):
         try:
