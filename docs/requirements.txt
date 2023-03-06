@@ -1,6 +1,6 @@
 # Used by ReadTheDocs; pinned requirements for stability.
 
-myst-parser==0.18.1
+myst-parser==0.19.1
 Sphinx==5.3.0
 # Older versions break Sphinx even though they're declared to be supported.
 docutils==0.19
