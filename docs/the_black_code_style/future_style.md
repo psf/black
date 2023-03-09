@@ -111,3 +111,51 @@ my_dict = {
     "another key": short_value,
 }
 ```
+
+### Improved multiline string handling
+
+_Black_ is smarter when formatting multiline strings, especially in function arguments,
+to avoid introducing extra line breaks. Previously, it would always consider multiline
+strings as not fitting on a single line. With this new feature, _Black_ looks at the
+context around the multiline string to decide if it should be inlined or split to a
+separate line. For example, when a multiline string is passed to a function, _Black_
+will only split the multiline string if a line is too long or if multiple arguments are
+being passed.
+
+For example, _Black_ will reformat
+
+```python
+textwrap.dedent(
+    """\
+    This is a
+    multiline string
+"""
+)
+```
+
+to:
+
+```python
+textwrap.dedent("""\
+    This is a
+    multiline string
+""")
+```
+
+And:
+
+```python
+MULTILINE = """
+foobar
+""".replace(
+    "\n", ""
+)
+```
+
+to:
+
+```python
+MULTILINE = """
+foobar
+""".replace("\n", "")
+```
