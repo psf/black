@@ -789,6 +789,16 @@ def is_import(leaf: Leaf) -> bool:
     )
 
 
+def is_with_stmt(leaf: Leaf) -> bool:
+    """Return True if the given leaf starts a with statement."""
+    return bool(
+        leaf.type == token.NAME
+        and leaf.value == "with"
+        and leaf.parent
+        and leaf.parent.type == syms.with_stmt
+    )
+
+
 def is_type_comment(leaf: Leaf, suffix: str = "") -> bool:
     """Return True if the given leaf is a special comment.
     Only returns true for type comments for now."""
