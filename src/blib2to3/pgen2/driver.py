@@ -107,7 +107,7 @@ class TokenProxy:
 
     def can_advance(self, to: int) -> bool:
         # Try to eat, fail if it can't. The eat operation is cached
-        # so there wont be any additional cost of eating here
+        # so there won't be any additional cost of eating here
         try:
             self.eat(to)
         except StopIteration:
