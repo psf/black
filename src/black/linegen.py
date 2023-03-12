@@ -2,7 +2,7 @@
 Generating lines of code.
 """
 import sys
-from dataclasses import dataclass
+from dataclasses import replace
 from enum import Enum, auto
 from functools import partial, wraps
 from typing import Collection, Iterator, List, Optional, Set, Union, cast
@@ -16,6 +16,7 @@ from black.brackets import (
 from black.comments import FMT_OFF, generate_comments, list_comments
 from black.lines import (
     Line,
+    RHSResult,
     append_leaves,
     can_be_split,
     can_omit_invisible_parens,
@@ -505,7 +506,7 @@ def transform_line(
         and not line.should_split_rhs
         and not line.magic_trailing_comma
         and (
-            is_line_short_enough(line, line_length=mode.line_length, line_str=line_str)
+            is_line_short_enough(line, mode=mode, line_str=line_str)
             or line.contains_unsplittable_type_ignore()
         )
         and not (line.inside_brackets and line.contains_standalone_comments())
@@ -529,14 +530,12 @@ def transform_line(
             bracket pair instead.
             """
             for omit in generate_trailers_to_omit(line, mode.line_length):
-                lines = list(
-                    right_hand_split(line, mode.line_length, features, omit=omit)
-                )
+                lines = list(right_hand_split(line, mode, features, omit=omit))
                 # Note: this check is only able to figure out if the first line of the
                 # *current* transformation fits in the line length.  This is true only
                 # for simple cases.  All others require running more transforms via
                 # `transform_line()`.  This check doesn't know if those would succeed.
-                if is_line_short_enough(lines[0], line_length=mode.line_length):
+                if is_line_short_enough(lines[0], mode=mode):
                     yield from lines
                     return
 
@@ -544,9 +543,7 @@ def transform_line(
             # This mostly happens to multiline strings that are by definition
             # reported as not fitting a single line, as well as lines that contain
             # trailing commas (those have to be exploded).
-            yield from right_hand_split(
-                line, line_length=mode.line_length, features=features
-            )
+            yield from right_hand_split(line, mode, features=features)
 
         # HACK: nested functions (like _rhs) compiled by mypyc don't retain their
         # __name__ attribute which is needed in `run_transformer` further down.
@@ -651,20 +648,9 @@ def left_hand_split(
             yield result
 
 
-@dataclass
-class _RHSResult:
-    """Intermediate split result from a right hand split."""
-
-    head: Line
-    body: Line
-    tail: Line
-    opening_bracket: Leaf
-    closing_bracket: Leaf
-
-
 def right_hand_split(
     line: Line,
-    line_length: int,
+    mode: Mode,
     features: Collection[Feature] = (),
     omit: Collection[LeafID] = (),
 ) -> Iterator[Line]:
@@ -678,14 +664,14 @@ def right_hand_split(
     """
     rhs_result = _first_right_hand_split(line, omit=omit)
     yield from _maybe_split_omitting_optional_parens(
-        rhs_result, line, line_length, features=features, omit=omit
+        rhs_result, line, mode, features=features, omit=omit
     )
 
 
 def _first_right_hand_split(
     line: Line,
     omit: Collection[LeafID] = (),
-) -> _RHSResult:
+) -> RHSResult:
     """Split the line into head, body, tail starting with the last bracket pair.
 
     Note: this function should not have side effects. It's relied upon by
@@ -727,13 +713,13 @@ def _first_right_hand_split(
         tail_leaves, line, opening_bracket, component=_BracketSplitComponent.tail
     )
     bracket_split_succeeded_or_raise(head, body, tail)
-    return _RHSResult(head, body, tail, opening_bracket, closing_bracket)
+    return RHSResult(head, body, tail, opening_bracket, closing_bracket)
 
 
 def _maybe_split_omitting_optional_parens(
-    rhs: _RHSResult,
+    rhs: RHSResult,
     line: Line,
-    line_length: int,
+    mode: Mode,
     features: Collection[Feature] = (),
     omit: Collection[LeafID] = (),
 ) -> Iterator[Line]:
@@ -751,11 +737,11 @@ def _maybe_split_omitting_optional_parens(
         # there are no standalone comments in the body
         and not rhs.body.contains_standalone_comments(0)
         # and we can actually remove the parens
-        and can_omit_invisible_parens(rhs.body, line_length)
+        and can_omit_invisible_parens(rhs, mode.line_length)
     ):
         omit = {id(rhs.closing_bracket), *omit}
         try:
-            # The _RHSResult Omitting Optional Parens.
+            # The RHSResult Omitting Optional Parens.
             rhs_oop = _first_right_hand_split(line, omit=omit)
             if not (
                 Preview.prefer_splitting_right_hand_side_of_assignments in line.mode
@@ -766,23 +752,24 @@ def _maybe_split_omitting_optional_parens(
                 and any(leaf.type in BRACKETS for leaf in rhs.head.leaves[:-1])
                 # the left side of assignment is short enough (the -1 is for the ending
                 # optional paren)
-                and is_line_short_enough(rhs.head, line_length=line_length - 1)
+                and is_line_short_enough(
+                    rhs.head, mode=replace(mode, line_length=mode.line_length - 1)
+                )
                 # the left side of assignment won't explode further because of magic
                 # trailing comma
                 and rhs.head.magic_trailing_comma is None
                 # the split by omitting optional parens isn't preferred by some other
                 # reason
-                and not _prefer_split_rhs_oop(rhs_oop, line_length=line_length)
+                and not _prefer_split_rhs_oop(rhs_oop, mode)
             ):
                 yield from _maybe_split_omitting_optional_parens(
-                    rhs_oop, line, line_length, features=features, omit=omit
+                    rhs_oop, line, mode, features=features, omit=omit
                 )
                 return
 
         except CannotSplit as e:
             if not (
-                can_be_split(rhs.body)
-                or is_line_short_enough(rhs.body, line_length=line_length)
+                can_be_split(rhs.body) or is_line_short_enough(rhs.body, mode=mode)
             ):
                 raise CannotSplit(
                     "Splitting failed, body is still too long and can't be split."
@@ -806,7 +793,7 @@ def _maybe_split_omitting_optional_parens(
             yield result
 
 
-def _prefer_split_rhs_oop(rhs_oop: _RHSResult, line_length: int) -> bool:
+def _prefer_split_rhs_oop(rhs_oop: RHSResult, mode: Mode) -> bool:
     """
     Returns whether we should prefer the result from a split omitting optional parens.
     """
@@ -826,7 +813,7 @@ def _prefer_split_rhs_oop(rhs_oop: _RHSResult, line_length: int) -> bool:
             # the first line still contains the `=`)
             any(leaf.type == token.EQUAL for leaf in rhs_oop.head.leaves)
             # the first line is short enough
-            and is_line_short_enough(rhs_oop.head, line_length=line_length)
+            and is_line_short_enough(rhs_oop.head, mode=mode)
         )
         # contains unsplittable type ignore
         or rhs_oop.head.contains_unsplittable_type_ignore()
@@ -1525,7 +1512,7 @@ def run_transformer(
         or line.contains_multiline_strings()
         or result[0].contains_uncollapsable_type_comments()
         or result[0].contains_unsplittable_type_ignore()
-        or is_line_short_enough(result[0], line_length=mode.line_length)
+        or is_line_short_enough(result[0], mode=mode)
         # If any leaves have no parents (which _can_ occur since
         # `transform(line)` potentially destroys the line's underlying node
         # structure), then we can't proceed. Doing so would cause the below
@@ -1540,8 +1527,6 @@ def run_transformer(
     second_opinion = run_transformer(
         line_copy, transform, mode, features_fop, line_str=line_str
     )
-    if all(
-        is_line_short_enough(ln, line_length=mode.line_length) for ln in second_opinion
-    ):
+    if all(is_line_short_enough(ln, mode=mode) for ln in second_opinion):
         result = second_opinion
     return result

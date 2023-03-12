@@ -16,6 +16,8 @@
 
 - Add trailing commas to collection literals even if there's a comment after the last
   entry (#3393)
+- `with` statements that contain two context managers will be consistently wrapped in
+  parentheses (#3589)
 - For stubs, enforce one blank line after a nested class with a body other than just
   `...` (#3564)
 
@@ -135,6 +137,7 @@ versions separately.
   code. Implicitly concatenated f-strings with different quotes can now be merged or
   quote-normalized by changing the quotes used in expressions. (#3509)
 - Fix crash on `await (yield)` when Black is compiled with mypyc (#3533)
+- Improve handling of multiline strings by changing line split behavior (#1879)
 
 ### Configuration
 

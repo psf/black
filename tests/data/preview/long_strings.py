@@ -26,15 +26,15 @@ D6 = {  # Test for https://github.com/psf/black/issues/3261
     ("This is a really long string that can't be expected to fit in one line and is used as a dict's key"): ["value1", "value2"],
 }
 
-L1 = ["The is a short string", "This is a really long string that can't possibly be expected to fit all together on one line. Also it is inside a list literal, so it's expected to be wrapped in parens when spliting to avoid implicit str concatenation.", short_call("arg", {"key": "value"}), "This is another really really (not really) long string that also can't be expected to fit on one line and is, like the other string, inside a list literal.", ("parens should be stripped for short string in list")]
+L1 = ["The is a short string", "This is a really long string that can't possibly be expected to fit all together on one line. Also it is inside a list literal, so it's expected to be wrapped in parens when splitting to avoid implicit str concatenation.", short_call("arg", {"key": "value"}), "This is another really really (not really) long string that also can't be expected to fit on one line and is, like the other string, inside a list literal.", ("parens should be stripped for short string in list")]
 
 L2 = ["This is a really long string that can't be expected to fit in one line and is the only child of a list literal."]
 
-S1 = {"The is a short string", "This is a really long string that can't possibly be expected to fit all together on one line. Also it is inside a set literal, so it's expected to be wrapped in parens when spliting to avoid implicit str concatenation.", short_call("arg", {"key": "value"}), "This is another really really (not really) long string that also can't be expected to fit on one line and is, like the other string, inside a set literal.", ("parens should be stripped for short string in set")}
+S1 = {"The is a short string", "This is a really long string that can't possibly be expected to fit all together on one line. Also it is inside a set literal, so it's expected to be wrapped in parens when splitting to avoid implicit str concatenation.", short_call("arg", {"key": "value"}), "This is another really really (not really) long string that also can't be expected to fit on one line and is, like the other string, inside a set literal.", ("parens should be stripped for short string in set")}
 
 S2 = {"This is a really long string that can't be expected to fit in one line and is the only child of a set literal."}
 
-T1 = ("The is a short string", "This is a really long string that can't possibly be expected to fit all together on one line. Also it is inside a tuple literal, so it's expected to be wrapped in parens when spliting to avoid implicit str concatenation.", short_call("arg", {"key": "value"}), "This is another really really (not really) long string that also can't be expected to fit on one line and is, like the other string, inside a tuple literal.", ("parens should be stripped for short string in list"))
+T1 = ("The is a short string", "This is a really long string that can't possibly be expected to fit all together on one line. Also it is inside a tuple literal, so it's expected to be wrapped in parens when splitting to avoid implicit str concatenation.", short_call("arg", {"key": "value"}), "This is another really really (not really) long string that also can't be expected to fit on one line and is, like the other string, inside a tuple literal.", ("parens should be stripped for short string in list"))
 
 T2 = ("This is a really long string that can't be expected to fit in one line and is the only child of a tuple literal.",)
 
@@ -410,7 +410,7 @@ L1 = [
     (
         "This is a really long string that can't possibly be expected to fit all"
         " together on one line. Also it is inside a list literal, so it's expected to"
-        " be wrapped in parens when spliting to avoid implicit str concatenation."
+        " be wrapped in parens when splitting to avoid implicit str concatenation."
     ),
     short_call("arg", {"key": "value"}),
     (
@@ -431,7 +431,7 @@ S1 = {
     (
         "This is a really long string that can't possibly be expected to fit all"
         " together on one line. Also it is inside a set literal, so it's expected to be"
-        " wrapped in parens when spliting to avoid implicit str concatenation."
+        " wrapped in parens when splitting to avoid implicit str concatenation."
     ),
     short_call("arg", {"key": "value"}),
     (
@@ -452,7 +452,7 @@ T1 = (
     (
         "This is a really long string that can't possibly be expected to fit all"
         " together on one line. Also it is inside a tuple literal, so it's expected to"
-        " be wrapped in parens when spliting to avoid implicit str concatenation."
+        " be wrapped in parens when splitting to avoid implicit str concatenation."
     ),
     short_call("arg", {"key": "value"}),
     (
