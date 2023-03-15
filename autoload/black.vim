@@ -9,7 +9,7 @@ def strtobool(text):
     return True
   if text.lower() in ['n', 'no', 'f', 'false', 'off', '0']:
     return False
-  raise ValueError(f"{text} is not convertable to boolean")
+  raise ValueError(f"{text} is not convertible to boolean")
 
 class Flag(collections.namedtuple("FlagBase", "name, cast")):
   @property
