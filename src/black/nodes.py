@@ -807,7 +807,7 @@ def is_async_stmt_or_funcdef(leaf: Leaf) -> bool:
     """Return True if the given leaf starts an async def/for/with statement.
 
     Note that `async def` can be either an `async_stmt` or `async_funcdef`,
-    the later is used when it has decorators.
+    the latter is used when it has decorators.
     """
     return bool(
         leaf.type == token.ASYNC
