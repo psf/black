@@ -67,6 +67,23 @@ with xxxxxxxx.some_kind_of_method(
     pass
 
 
+async def func():
+    async with \
+        make_context_manager1() as cm1, \
+        make_context_manager2() as cm2, \
+        make_context_manager3() as cm3, \
+        make_context_manager4() as cm4 \
+    :
+        pass
+
+    async with some_function(
+        argument1, argument2, argument3="some_value"
+    ) as some_cm, some_other_function(
+        argument1, argument2, argument3="some_value"
+    ):
+        pass
+
+
 # output
 
 
@@ -139,3 +156,19 @@ with xxxxxxxx.some_kind_of_method(
     ]
 ).another_method() as cmd:
     pass
+
+
+async def func():
+    async with (
+        make_context_manager1() as cm1,
+        make_context_manager2() as cm2,
+        make_context_manager3() as cm3,
+        make_context_manager4() as cm4,
+    ):
+        pass
+
+    async with (
+        some_function(argument1, argument2, argument3="some_value") as some_cm,
+        some_other_function(argument1, argument2, argument3="some_value"),
+    ):
+        pass
