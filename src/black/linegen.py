@@ -36,6 +36,7 @@ from black.nodes import (
     Visitor,
     ensure_visible,
     is_arith_like,
+    is_async_stmt_or_funcdef,
     is_atom_with_invisible_parens,
     is_docstring,
     is_empty_tuple,
@@ -109,6 +110,17 @@ class LineGenerator(Visitor[Line]):
         if not self.current_line:
             self.current_line.depth += indent
             return  # Line is empty, don't emit. Creating a new one unnecessary.
+
+        if (
+            Preview.improved_async_statements_handling in self.mode
+            and len(self.current_line.leaves) == 1
+            and is_async_stmt_or_funcdef(self.current_line.leaves[0])
+        ):
+            # Special case for async def/for/with statements. `visit_async_stmt`
+            # adds an `ASYNC` leaf then visits the child def/for/with statement
+            # nodes. Line yields from those nodes shouldn't treat the former
+            # `ASYNC` leaf as a complete line.
+            return
 
         complete_line = self.current_line
         self.current_line = Line(mode=self.mode, depth=complete_line.depth + indent)
@@ -301,8 +313,11 @@ class LineGenerator(Visitor[Line]):
                 break
 
         internal_stmt = next(children)
-        for child in internal_stmt.children:
-            yield from self.visit(child)
+        if Preview.improved_async_statements_handling in self.mode:
+            yield from self.visit(internal_stmt)
+        else:
+            for child in internal_stmt.children:
+                yield from self.visit(child)
 
     def visit_decorators(self, node: Node) -> Iterator[Line]:
         """Visit decorators."""

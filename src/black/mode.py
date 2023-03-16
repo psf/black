@@ -155,6 +155,7 @@ class Preview(Enum):
 
     add_trailing_comma_consistently = auto()
     hex_codes_in_unicode_sequences = auto()
+    improved_async_statements_handling = auto()
     multiline_string_handling = auto()
     prefer_splitting_right_hand_side_of_assignments = auto()
     # NOTE: string_processing requires wrap_long_dict_values_in_parens

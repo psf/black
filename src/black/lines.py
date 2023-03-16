@@ -28,7 +28,7 @@ from black.nodes import (
     is_multiline_string,
     is_one_sequence_between,
     is_type_comment,
-    is_with_stmt,
+    is_with_or_async_with_stmt,
     replace_child,
     syms,
     whitespace,
@@ -124,9 +124,9 @@ class Line:
         return bool(self) and is_import(self.leaves[0])
 
     @property
-    def is_with_stmt(self) -> bool:
+    def is_with_or_async_with_stmt(self) -> bool:
         """Is this a with_stmt line?"""
-        return bool(self) and is_with_stmt(self.leaves[0])
+        return bool(self) and is_with_or_async_with_stmt(self.leaves[0])
 
     @property
     def is_class(self) -> bool:
@@ -872,7 +872,7 @@ def can_omit_invisible_parens(
         if (
             Preview.wrap_multiple_context_managers_in_parens in line.mode
             and max_priority == COMMA_PRIORITY
-            and rhs.head.is_with_stmt
+            and rhs.head.is_with_or_async_with_stmt
         ):
             # For two context manager with statements, the optional parentheses read
             # better. In this case, `rhs.body` is the context managers part of
