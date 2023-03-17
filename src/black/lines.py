@@ -194,6 +194,19 @@ class Line:
         if len(self.leaves) == 0:
             return False
         return self.leaves[-1].type == token.COLON
+    
+    def is_fmt_pass_converted(self, *, first_leaf_matches: Optional[Callable[[Leaf], bool]] = None) -> bool:
+        """Is this line converted from fmt off/skip code?
+        
+        If first_leaf_matches is not None, it only returns True if the first
+        leaf of converted code matches.
+        """
+        if len(self.leaves) != 1:
+            return False
+        leaf = self.leaves[0]
+        if leaf.type != STANDALONE_COMMENT or leaf.fmt_pass_converted_first_leaf is None:
+            return False
+        return first_leaf_matches is None or first_leaf_matches(leaf.fmt_pass_converted_first_leaf)
 
     def contains_standalone_comments(self, depth_limit: int = sys.maxsize) -> bool:
         """If so, needs to be split before emitting."""
@@ -597,6 +610,7 @@ class EmptyLineTracker:
             self.previous_line
             and self.previous_line.is_import
             and not current_line.is_import
+            and not current_line.is_fmt_pass_converted(first_leaf_matches=is_import)
             and depth == self.previous_line.depth
         ):
             return (before or 1), 0
