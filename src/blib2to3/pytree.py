@@ -392,8 +392,9 @@ class Leaf(Base):
     _prefix = ""  # Whitespace and comments preceding this token in the input
     lineno: int = 0  # Line where this token starts in the input
     column: int = 0  # Column where this token starts in the input
-    # If not None, this Leaf is created by converting block of fmt off/skip
-    # code, and it points to the first Leaf in the converted code.
+    # If not None, this Leaf is created by converting a block of fmt off/skip
+    # code, and `fmt_pass_converted_first_leaf` points to the first Leaf in the
+    # converted code.
     fmt_pass_converted_first_leaf: Optional["Leaf"] = None
 
     def __init__(
