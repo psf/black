@@ -51,9 +51,9 @@ line_length = 88
 
 #### Why those options above?
 
-_Black_ wraps imports that surpass `line-length` by moving identifiers into their own
-indented line. If that still doesn't fit the bill, it will put all of them in separate
-lines and put a trailing comma. A more detailed explanation of this behaviour can be
+_Black_ wraps imports that surpass `line-length` by moving identifiers onto separate
+lines and by adding a trailing comma after each. A more detailed explanation of this
+behaviour can be
 [found here](../the_black_code_style/current_style.md#how-black-wraps-lines).
 
 isort's default mode of wrapping imports that extend past the `line_length` limit is
