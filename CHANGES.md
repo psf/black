@@ -10,6 +10,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Import lines with `# fmt: skip` and `# fmt: off` no longer have an extra blank line
+  added when they are right after another import line (#3610)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->

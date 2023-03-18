@@ -195,7 +195,6 @@ import sys
 from third_party import X, Y, Z
 
 from library import some_connection, some_decorator
-
 # fmt: off
 from third_party import (X,
                          Y, Z)
