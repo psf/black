@@ -54,8 +54,8 @@
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
 
-- Document that only the most recent release is supported for security issues; vulnerabilities
-  should be reported through Tidelift (#3612)
+- Document that only the most recent release is supported for security issues;
+  vulnerabilities should be reported through Tidelift (#3612)
 
 ## 23.1.0
 
