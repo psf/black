@@ -41,7 +41,7 @@ jobs:
 
       - name: Create or update PR comment
         if: steps.metadata.outputs.needs-comment == 'true'
-        uses: peter-evans/create-or-update-comment@5adcb0bb0f9fb3f95ef05400558bdb3f329ee808
+        uses: peter-evans/create-or-update-comment@67dcc547d311b736a8e6c5c236542148a47adc3d
         with:
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           issue-number: ${{ steps.metadata.outputs.pr-number }}

@@ -203,6 +203,7 @@ def convert_one_fmt_off_pair(node: Node) -> bool:
                     STANDALONE_COMMENT,
                     hidden_value,
                     prefix=standalone_comment_prefix,
+                    fmt_pass_converted_first_leaf=first_leaf_of(first),
                 ),
             )
             return True

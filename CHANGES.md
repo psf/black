@@ -10,12 +10,17 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Import lines with `# fmt: skip` and `# fmt: off` no longer have an extra blank line
+  added when they are right after another import line (#3610)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
 - Add trailing commas to collection literals even if there's a comment after the last
   entry (#3393)
+- `async def`, `async for`, and `async with` statements are now formatted consistently
+  compared to their non-async version. (#3609)
 - `with` statements that contain two context managers will be consistently wrapped in
   parentheses (#3589)
 - Let string splitters respect [East Asian Width](https://www.unicode.org/reports/tr11/)
@@ -23,6 +28,8 @@
 - Now long string literals can be split after East Asian commas and periods (`、` U+3001
   IDEOGRAPHIC COMMA, `。` U+3002 IDEOGRAPHIC FULL STOP, & `，` U+FF0C FULLWIDTH COMMA)
   besides before spaces (#3445)
+- For stubs, enforce one blank line after a nested class with a body other than just
+  `...` (#3564)
 
 ### Configuration
 
@@ -56,6 +63,9 @@
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
+
+- Document that only the most recent release is supported for security issues;
+  vulnerabilities should be reported through Tidelift (#3612)
 
 ## 23.1.0
 

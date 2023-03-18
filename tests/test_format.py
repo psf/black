@@ -186,6 +186,12 @@ def test_stub() -> None:
     assert_format(source, expected, mode)
 
 
+def test_nested_class_stub() -> None:
+    mode = replace(DEFAULT_MODE, is_pyi=True, preview=True)
+    source, expected = read_data("miscellaneous", "nested_class_stub.pyi")
+    assert_format(source, expected, mode)
+
+
 def test_power_op_newline() -> None:
     # requires line_length=0
     source, expected = read_data("miscellaneous", "power_op_newline")

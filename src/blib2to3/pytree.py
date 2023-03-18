@@ -392,6 +392,10 @@ class Leaf(Base):
     _prefix = ""  # Whitespace and comments preceding this token in the input
     lineno: int = 0  # Line where this token starts in the input
     column: int = 0  # Column where this token starts in the input
+    # If not None, this Leaf is created by converting a block of fmt off/skip
+    # code, and `fmt_pass_converted_first_leaf` points to the first Leaf in the
+    # converted code.
+    fmt_pass_converted_first_leaf: Optional["Leaf"] = None
 
     def __init__(
         self,
@@ -401,6 +405,7 @@ class Leaf(Base):
         prefix: Optional[Text] = None,
         fixers_applied: List[Any] = [],
         opening_bracket: Optional["Leaf"] = None,
+        fmt_pass_converted_first_leaf: Optional["Leaf"] = None,
     ) -> None:
         """
         Initializer.
@@ -419,6 +424,7 @@ class Leaf(Base):
         self.fixers_applied: Optional[List[Any]] = fixers_applied[:]
         self.children = []
         self.opening_bracket = opening_bracket
+        self.fmt_pass_converted_first_leaf = fmt_pass_converted_first_leaf
 
     def __repr__(self) -> str:
         """Return a canonical string representation."""
