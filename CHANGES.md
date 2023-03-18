@@ -23,6 +23,8 @@
   compared to their non-async version. (#3609)
 - `with` statements that contain two context managers will be consistently wrapped in
   parentheses (#3589)
+- For stubs, enforce one blank line after a nested class with a body other than just
+  `...` (#3564)
 
 ### Configuration
 

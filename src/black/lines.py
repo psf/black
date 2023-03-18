@@ -521,7 +521,7 @@ class EmptyLineTracker:
     mode: Mode
     previous_line: Optional[Line] = None
     previous_block: Optional[LinesBlock] = None
-    previous_defs: List[int] = field(default_factory=list)
+    previous_defs: List[Line] = field(default_factory=list)
     semantic_leading_comment: Optional[LinesBlock] = None
 
     def maybe_empty_lines(self, current_line: Line) -> LinesBlock:
@@ -577,12 +577,18 @@ class EmptyLineTracker:
         else:
             before = 0
         depth = current_line.depth
-        while self.previous_defs and self.previous_defs[-1] >= depth:
+        while self.previous_defs and self.previous_defs[-1].depth >= depth:
             if self.mode.is_pyi:
                 assert self.previous_line is not None
                 if depth and not current_line.is_def and self.previous_line.is_def:
                     # Empty lines between attributes and methods should be preserved.
                     before = min(1, before)
+                elif (
+                    Preview.blank_line_after_nested_stub_class in self.mode
+                    and self.previous_defs[-1].is_class
+                    and not self.previous_defs[-1].is_stub_class
+                ):
+                    before = 1
                 elif depth:
                     before = 0
                 else:
@@ -637,7 +643,7 @@ class EmptyLineTracker:
         self, current_line: Line, before: int
     ) -> Tuple[int, int]:
         if not current_line.is_decorator:
-            self.previous_defs.append(current_line.depth)
+            self.previous_defs.append(current_line)
         if self.previous_line is None:
             # Don't insert empty lines before the first line in the file.
             return 0, 0
