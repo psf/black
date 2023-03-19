@@ -48,9 +48,11 @@ from black.nodes import (
 from black.rusty import Err, Ok, Result
 from black.strings import (
     assert_is_leaf_string,
+    count_chars_in_width,
     get_string_prefix,
     has_triple_quotes,
     normalize_string_quotes,
+    str_width,
 )
 from blib2to3.pgen2 import token
 from blib2to3.pytree import Leaf, Node
@@ -70,6 +72,8 @@ ParserState = int
 StringID = int
 TResult = Result[T, CannotTransform]  # (T)ransform Result
 TMatchResult = TResult[List[Index]]
+
+SPLIT_SAFE_CHARS = frozenset(["\u3001", "\u3002", "\uff0c"])  # East Asian stops
 
 
 def TErr(err_msg: str) -> Err[CannotTransform]:
@@ -1164,7 +1168,7 @@ class BaseStringSplitter(StringTransformer):
             # WMA4 the length of the inline comment.
             offset += len(comment_leaf.value)
 
-        max_string_length = self.line_length - offset
+        max_string_length = count_chars_in_width(str(line), self.line_length - offset)
         return max_string_length
 
     @staticmethod
@@ -1419,11 +1423,13 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
             is_valid_index(string_idx + 1) and LL[string_idx + 1].type == token.COMMA
         )
 
-        def max_last_string() -> int:
+        def max_last_string_column() -> int:
             """
             Returns:
-                The max allowed length of the string value used for the last
-                line we will construct.
+                The max allowed width of the string value used for the last
+                line we will construct.  Note that this value means the width
+                rather than the number of characters (e.g., many East Asian
+                characters expand to two columns).
             """
             result = self.line_length
             result -= line.depth * 4
@@ -1431,14 +1437,14 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
             result -= string_op_leaves_length
             return result
 
-        # --- Calculate Max Break Index (for string value)
+        # --- Calculate Max Break Width (for string value)
         # We start with the line length limit
-        max_break_idx = self.line_length
+        max_break_width = self.line_length
         # The last index of a string of length N is N-1.
-        max_break_idx -= 1
+        max_break_width -= 1
         # Leading whitespace is not present in the string value (e.g. Leaf.value).
-        max_break_idx -= line.depth * 4
-        if max_break_idx < 0:
+        max_break_width -= line.depth * 4
+        if max_break_width < 0:
             yield TErr(
                 f"Unable to split {LL[string_idx].value} at such high of a line depth:"
                 f" {line.depth}"
@@ -1451,7 +1457,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
         # line limit.
         use_custom_breakpoints = bool(
             custom_splits
-            and all(csplit.break_idx <= max_break_idx for csplit in custom_splits)
+            and all(csplit.break_idx <= max_break_width for csplit in custom_splits)
         )
 
         # Temporary storage for the remaining chunk of the string line that
@@ -1467,7 +1473,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
             if use_custom_breakpoints:
                 return len(custom_splits) > 1
             else:
-                return len(rest_value) > max_last_string()
+                return str_width(rest_value) > max_last_string_column()
 
         string_line_results: List[Ok[Line]] = []
         while more_splits_should_be_made():
@@ -1477,7 +1483,10 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
                 break_idx = csplit.break_idx
             else:
                 # Algorithmic Split (automatic)
-                max_bidx = max_break_idx - string_op_leaves_length
+                max_bidx = (
+                    count_chars_in_width(rest_value, max_break_width)
+                    - string_op_leaves_length
+                )
                 maybe_break_idx = self._get_break_idx(rest_value, max_bidx)
                 if maybe_break_idx is None:
                     # If we are unable to algorithmically determine a good split
@@ -1574,7 +1583,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
 
             # Try to fit them all on the same line with the last substring...
             if (
-                len(temp_value) <= max_last_string()
+                str_width(temp_value) <= max_last_string_column()
                 or LL[string_idx + 1].type == token.COMMA
             ):
                 last_line.append(rest_leaf)
@@ -1694,6 +1703,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
                 section of this classes' docstring would be be met by returning @i.
             """
             is_space = string[i] == " "
+            is_split_safe = is_valid_index(i - 1) and string[i - 1] in SPLIT_SAFE_CHARS
 
             is_not_escaped = True
             j = i - 1
@@ -1706,7 +1716,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
                 and len(string[:i]) >= self.MIN_SUBSTR_SIZE
             )
             return (
-                is_space
+                (is_space or is_split_safe)
                 and is_not_escaped
                 and is_big_enough
                 and not breaks_unsplittable_expression(i)
@@ -1851,11 +1861,13 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
 
         if string_idx is not None:
             string_value = line.leaves[string_idx].value
-            # If the string has no spaces...
-            if " " not in string_value:
+            # If the string has neither spaces nor East Asian stops...
+            if not any(
+                char == " " or char in SPLIT_SAFE_CHARS for char in string_value
+            ):
                 # And will still violate the line length limit when split...
-                max_string_length = self.line_length - ((line.depth + 1) * 4)
-                if len(string_value) > max_string_length:
+                max_string_width = self.line_length - ((line.depth + 1) * 4)
+                if str_width(string_value) > max_string_width:
                     # And has no associated custom splits...
                     if not self.has_custom_splits(string_value):
                         # Then we should NOT put this string on its own line.
