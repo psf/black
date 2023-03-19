@@ -599,7 +599,7 @@ class EmptyLineTracker:
                     before = 1
                 elif (
                     not depth
-                    and self.previous_defs[-1]
+                    and self.previous_defs[-1].depth
                     and current_line.leaves[-1].type == token.COLON
                     and (
                         current_line.leaves[0].value
