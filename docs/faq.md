@@ -23,7 +23,7 @@ hooks, and scripting `unexpand` to run after applying _Black_.
 ## Does Black have an API?
 
 Not yet. _Black_ is fundamentally a command line tool. Many
-[integrations](integrations/index.rst) are provided, but a Python interface is not one
+[integrations](/integrations/index.md) are provided, but a Python interface is not one
 of them. A simple API is being [planned](https://github.com/psf/black/issues/779)
 though.
 
@@ -39,7 +39,7 @@ other tools, such as `# noqa`, may be moved by _Black_. See below for more detai
 ## How stable is Black's style?
 
 Stable. _Black_ aims to enforce one style and one style only, with some room for
-pragmatism. See [The Black Code Style](the_black_code_style/index.rst) for more details.
+pragmatism. See [The Black Code Style](the_black_code_style/index.md) for more details.
 
 Starting in 2022, the formatting output will be stable for the releases made in the same
 year (other than unintentional bugs). It is possible to opt-in to the latest formatting
