@@ -51,7 +51,7 @@ with contextlib.ExitStack() as exit_stack:
 
 Experimental, potentially disruptive style changes are gathered under the `--preview`
 CLI flag. At the end of each year, these changes may be adopted into the default style,
-as described in [The Black Code Style](./index.rst). Because the functionality is
+as described in [The Black Code Style](index.md). Because the functionality is
 experimental, feedback and issue reports are highly encouraged!
 
 ### Improved string processing
