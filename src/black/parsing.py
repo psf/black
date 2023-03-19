@@ -148,24 +148,29 @@ def lib2to3_unparse(node: Node) -> str:
 
 
 def parse_single_version(
-    src: str, version: Tuple[int, int]
+    src: str, version: Tuple[int, int], *, type_comments: bool
 ) -> Union[ast.AST, ast3.AST]:
     filename = "<unknown>"
     # typed-ast is needed because of feature version limitations in the builtin ast 3.8>
     if sys.version_info >= (3, 8) and version >= (3,):
-        return ast.parse(src, filename, feature_version=version, type_comments=True)
+        return ast.parse(
+            src, filename, feature_version=version, type_comments=type_comments
+        )
 
     if _IS_PYPY:
         # PyPy 3.7 doesn't support type comment tracking which is not ideal, but there's
         # not much we can do as typed-ast won't work either.
         if sys.version_info >= (3, 8):
-            return ast3.parse(src, filename, type_comments=True)
+            return ast3.parse(src, filename, type_comments=type_comments)
         else:
             return ast3.parse(src, filename)
     else:
-        # Typed-ast is guaranteed to be used here and automatically tracks type
-        # comments separately.
-        return ast3.parse(src, filename, feature_version=version[1])
+        if type_comments:
+            # Typed-ast is guaranteed to be used here and automatically tracks type
+            # comments separately.
+            return ast3.parse(src, filename, feature_version=version[1])
+        else:
+            return ast.parse(src, filename)
 
 
 def parse_ast(src: str) -> Union[ast.AST, ast3.AST]:
@@ -175,10 +180,17 @@ def parse_ast(src: str) -> Union[ast.AST, ast3.AST]:
     first_error = ""
     for version in sorted(versions, reverse=True):
         try:
-            return parse_single_version(src, version)
+            return parse_single_version(src, version, type_comments=True)
         except SyntaxError as e:
             if not first_error:
                 first_error = str(e)
+
+    # Try to parse without type comments
+    for version in sorted(versions, reverse=True):
+        try:
+            return parse_single_version(src, version, type_comments=False)
+        except SyntaxError:
+            pass
 
     raise SyntaxError(first_error)
 
