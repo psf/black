@@ -10,26 +10,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Import lines with `# fmt: skip` and `# fmt: off` no longer have an extra blank line
-  added when they are right after another import line (#3610)
-
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
-
-- Add trailing commas to collection literals even if there's a comment after the last
-  entry (#3393)
-- `async def`, `async for`, and `async with` statements are now formatted consistently
-  compared to their non-async version. (#3609)
-- `with` statements that contain two context managers will be consistently wrapped in
-  parentheses (#3589)
-- Let string splitters respect [East Asian Width](https://www.unicode.org/reports/tr11/)
-  (#3445)
-- Now long string literals can be split after East Asian commas and periods (`、` U+3001
-  IDEOGRAPHIC COMMA, `。` U+3002 IDEOGRAPHIC FULL STOP, & `，` U+FF0C FULLWIDTH COMMA)
-  besides before spaces (#3445)
-- For stubs, enforce one blank line after a nested class with a body other than just
-  `...` (#3564)
 
 ### Configuration
 
@@ -42,8 +25,6 @@
 ### Parser
 
 <!-- Changes to the parser or to version autodetection -->
-
-- Added support for formatting files with invalid type comments (#3594)
 
 ### Performance
 
@@ -61,13 +42,56 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
-- Update GitHub Action to use the version of Black equivalent to action's version if
-  version input is not specified (#3543)
-
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
+
+## 23.3.0
+
+### Highlights
+
+This release fixes a longstanding confusing behavior in Black's GitHub action, where the
+version of the action did not determine the version of Black being run (issue #3382). In
+addition, there is a small bug fix around imports and a number of improvements to the
+preview style.
+
+Please try out the
+[preview style](https://black.readthedocs.io/en/stable/the_black_code_style/future_style.html#preview-style)
+with `black --preview` and tell us your feedback. All changes in the preview style are
+expected to become part of Black's stable style in January 2024.
+
+### Stable style
+
+- Import lines with `# fmt: skip` and `# fmt: off` no longer have an extra blank line
+  added when they are right after another import line (#3610)
+
+### Preview style
+
+- Add trailing commas to collection literals even if there's a comment after the last
+  entry (#3393)
+- `async def`, `async for`, and `async with` statements are now formatted consistently
+  compared to their non-async version. (#3609)
+- `with` statements that contain two context managers will be consistently wrapped in
+  parentheses (#3589)
+- Let string splitters respect [East Asian Width](https://www.unicode.org/reports/tr11/)
+  (#3445)
+- Now long string literals can be split after East Asian commas and periods (`、` U+3001
+  IDEOGRAPHIC COMMA, `。` U+3002 IDEOGRAPHIC FULL STOP, & `，` U+FF0C FULLWIDTH COMMA)
+  besides before spaces (#3445)
+- For stubs, enforce one blank line after a nested class with a body other than just
+  `...` (#3564)
+
+### Parser
+
+- Added support for formatting files with invalid type comments (#3594)
+
+### Integrations
+
+- Update GitHub Action to use the version of Black equivalent to action's version if
+  version input is not specified (#3543)
+
+### Documentation
 
 - Document that only the most recent release is supported for security issues;
   vulnerabilities should be reported through Tidelift (#3612)
