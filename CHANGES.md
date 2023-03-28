@@ -61,6 +61,9 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- Update GitHub Action to use the version of Black equivalent to action's version if
+  version input is not specified (#3543)
+
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
