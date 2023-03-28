@@ -49,6 +49,41 @@ with \
     pass
 
 
+with mock.patch.object(
+    self.my_runner, "first_method", autospec=True
+) as mock_run_adb, mock.patch.object(
+    self.my_runner, "second_method", autospec=True, return_value="foo"
+):
+    pass
+
+
+with xxxxxxxx.some_kind_of_method(
+    some_argument=[
+        "first",
+        "second",
+        "third",
+    ]
+).another_method() as cmd:
+    pass
+
+
+async def func():
+    async with \
+        make_context_manager1() as cm1, \
+        make_context_manager2() as cm2, \
+        make_context_manager3() as cm3, \
+        make_context_manager4() as cm4 \
+    :
+        pass
+
+    async with some_function(
+        argument1, argument2, argument3="some_value"
+    ) as some_cm, some_other_function(
+        argument1, argument2, argument3="some_value"
+    ):
+        pass
+
+
 # output
 
 
@@ -84,7 +119,7 @@ with (
     # First comment.
     new_new_new1() as cm1,
     # Second comment.
-    new_new_new2()
+    new_new_new2(),
     # Last comment.
 ):
     pass
@@ -102,3 +137,38 @@ with (
     ) as cm2,
 ):
     pass
+
+
+with (
+    mock.patch.object(self.my_runner, "first_method", autospec=True) as mock_run_adb,
+    mock.patch.object(
+        self.my_runner, "second_method", autospec=True, return_value="foo"
+    ),
+):
+    pass
+
+
+with xxxxxxxx.some_kind_of_method(
+    some_argument=[
+        "first",
+        "second",
+        "third",
+    ]
+).another_method() as cmd:
+    pass
+
+
+async def func():
+    async with (
+        make_context_manager1() as cm1,
+        make_context_manager2() as cm2,
+        make_context_manager3() as cm3,
+        make_context_manager4() as cm4,
+    ):
+        pass
+
+    async with (
+        some_function(argument1, argument2, argument3="some_value") as some_cm,
+        some_other_function(argument1, argument2, argument3="some_value"),
+    ):
+        pass

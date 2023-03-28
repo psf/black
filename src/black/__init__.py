@@ -219,8 +219,9 @@ def validate_regex(
     callback=target_version_option_callback,
     multiple=True,
     help=(
-        "Python versions that should be supported by Black's output. [default: per-file"
-        " auto-detection]"
+        "Python versions that should be supported by Black's output. By default, Black"
+        " will try to infer this from the project metadata in pyproject.toml. If this"
+        " does not yield conclusive results, Black will use per-file auto-detection."
     ),
 )
 @click.option(
@@ -244,7 +245,7 @@ def validate_regex(
     multiple=True,
     help=(
         "When processing Jupyter Notebooks, add the given magic to the list"
-        f" of known python-magics ({', '.join(PYTHON_CELL_MAGICS)})."
+        f" of known python-magics ({', '.join(sorted(PYTHON_CELL_MAGICS))})."
         " Useful for formatting cells with custom python magics."
     ),
     default=[],
@@ -925,9 +926,6 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
     valid by calling :func:`assert_equivalent` and :func:`assert_stable` on it.
     `mode` is passed to :func:`format_str`.
     """
-    if not mode.preview and not src_contents.strip():
-        raise NothingChanged
-
     if mode.is_ipynb:
         dst_contents = format_ipynb_string(src_contents, fast=fast, mode=mode)
     else:
@@ -1022,7 +1020,7 @@ def format_ipynb_string(src_contents: str, *, fast: bool, mode: Mode) -> FileCon
     Operate cell-by-cell, only on code cells, only for Python notebooks.
     If the ``.ipynb`` originally had a trailing newline, it'll be preserved.
     """
-    if mode.preview and not src_contents:
+    if not src_contents:
         raise NothingChanged
 
     trailing_newline = src_contents[-1] == "\n"
@@ -1101,7 +1099,7 @@ def _format_str_once(src_contents: str, *, mode: Mode) -> str:
         for feature in {Feature.PARENTHESIZED_CONTEXT_MANAGERS}
         if supports_feature(versions, feature)
     }
-    normalize_fmt_off(src_node, preview=mode.preview)
+    normalize_fmt_off(src_node)
     lines = LineGenerator(mode=mode, features=context_manager_features)
     elt = EmptyLineTracker(mode=mode)
     split_line_features = {
@@ -1122,7 +1120,7 @@ def _format_str_once(src_contents: str, *, mode: Mode) -> str:
     dst_contents = []
     for block in dst_blocks:
         dst_contents.extend(block.all_lines())
-    if mode.preview and not dst_contents:
+    if not dst_contents:
         # Use decode_bytes to retrieve the correct source newline (CRLF or LF),
         # and check if normalized_content has more than one line
         normalized_content, _, newline = decode_bytes(src_contents.encode("utf-8"))

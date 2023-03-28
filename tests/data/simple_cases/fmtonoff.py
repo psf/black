@@ -195,7 +195,6 @@ import sys
 from third_party import X, Y, Z
 
 from library import some_connection, some_decorator
-
 # fmt: off
 from third_party import (X,
                          Y, Z)
@@ -204,6 +203,7 @@ f"trigger 3.6 mode"
 # Comment 1
 
 # Comment 2
+
 
 # fmt: off
 def func_no_args():

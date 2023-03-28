@@ -7,7 +7,7 @@ first_value, (m1, m2,), third_value = xxxxxx_yyyyyy_zzzzzz_wwwwww_uuuuuuu_vvvvvv
     arg2,
 )
 
-# Make when when the left side of assignement plus the opening paren "... = (" is
+# Make when when the left side of assignment plus the opening paren "... = (" is
 # exactly line length limit + 1, it won't be split like that.
 xxxxxxxxx_yyy_zzzzzzzz[xx.xxxxxx(x_yyy_zzzzzz.xxxxx[0]), x_yyy_zzzzzz.xxxxxx(xxxx=1)] = 1
 
@@ -31,7 +31,7 @@ xxxxxxxxx_yyy_zzzzzzzz[xx.xxxxxx(x_yyy_zzzzzz.xxxxx[0]), x_yyy_zzzzzz.xxxxxx(xxx
     arg2,
 )
 
-# Make when when the left side of assignement plus the opening paren "... = (" is
+# Make when when the left side of assignment plus the opening paren "... = (" is
 # exactly line length limit + 1, it won't be split like that.
 xxxxxxxxx_yyy_zzzzzzzz[
     xx.xxxxxx(x_yyy_zzzzzz.xxxxx[0]), x_yyy_zzzzzz.xxxxxx(xxxx=1)

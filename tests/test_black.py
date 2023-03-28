@@ -419,7 +419,8 @@ class BlackTestCase(BlackBaseTestCase):
             msg = (
                 "Expected diff isn't equal to the actual. If you made changes to"
                 " expression.py and this is an anticipated difference, overwrite"
-                f" tests/data/expression_skip_magic_trailing_comma.diff with {dump}"
+                " tests/data/miscellaneous/expression_skip_magic_trailing_comma.diff"
+                f" with {dump}"
             )
             self.assertEqual(expected, actual, msg)
 
@@ -1558,6 +1559,72 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(config["python_cell_magics"], ["custom1", "custom2"])
         self.assertEqual(config["exclude"], r"\.pyi?$")
         self.assertEqual(config["include"], r"\.py?$")
+
+    def test_parse_pyproject_toml_project_metadata(self) -> None:
+        for test_toml, expected in [
+            ("only_black_pyproject.toml", ["py310"]),
+            ("only_metadata_pyproject.toml", ["py37", "py38", "py39", "py310"]),
+            ("neither_pyproject.toml", None),
+            ("both_pyproject.toml", ["py310"]),
+        ]:
+            test_toml_file = THIS_DIR / "data" / "project_metadata" / test_toml
+            config = black.parse_pyproject_toml(str(test_toml_file))
+            self.assertEqual(config.get("target_version"), expected)
+
+    def test_infer_target_version(self) -> None:
+        for version, expected in [
+            ("3.6", [TargetVersion.PY36]),
+            ("3.11.0rc1", [TargetVersion.PY311]),
+            (">=3.10", [TargetVersion.PY310, TargetVersion.PY311]),
+            (">=3.10.6", [TargetVersion.PY310, TargetVersion.PY311]),
+            ("<3.6", [TargetVersion.PY33, TargetVersion.PY34, TargetVersion.PY35]),
+            (">3.7,<3.10", [TargetVersion.PY38, TargetVersion.PY39]),
+            (">3.7,!=3.8,!=3.9", [TargetVersion.PY310, TargetVersion.PY311]),
+            (
+                "> 3.9.4, != 3.10.3",
+                [TargetVersion.PY39, TargetVersion.PY310, TargetVersion.PY311],
+            ),
+            (
+                "!=3.3,!=3.4",
+                [
+                    TargetVersion.PY35,
+                    TargetVersion.PY36,
+                    TargetVersion.PY37,
+                    TargetVersion.PY38,
+                    TargetVersion.PY39,
+                    TargetVersion.PY310,
+                    TargetVersion.PY311,
+                ],
+            ),
+            (
+                "==3.*",
+                [
+                    TargetVersion.PY33,
+                    TargetVersion.PY34,
+                    TargetVersion.PY35,
+                    TargetVersion.PY36,
+                    TargetVersion.PY37,
+                    TargetVersion.PY38,
+                    TargetVersion.PY39,
+                    TargetVersion.PY310,
+                    TargetVersion.PY311,
+                ],
+            ),
+            ("==3.8.*", [TargetVersion.PY38]),
+            (None, None),
+            ("", None),
+            ("invalid", None),
+            ("==invalid", None),
+            (">3.9,!=invalid", None),
+            ("3", None),
+            ("3.2", None),
+            ("2.7.18", None),
+            ("==2.7", None),
+            (">3.10,<3.11", None),
+        ]:
+            test_toml = {"project": {"requires-python": version}}
+            result = black.files.infer_target_version(test_toml)
+            self.assertEqual(result, expected)
 
     def test_read_pyproject_toml(self) -> None:
         test_toml_file = THIS_DIR / "test.toml"

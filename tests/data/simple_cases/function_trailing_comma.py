@@ -116,9 +116,9 @@ def f(
         pass
 
 
-def xxxxxxxxxxxxxxxxxxxxxxxxxxxx() -> Set[
-    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-]:
+def xxxxxxxxxxxxxxxxxxxxxxxxxxxx() -> (
+    Set["xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"]
+):
     json = {
         "k": {
             "k2": {
@@ -140,9 +140,7 @@ def some_function_with_a_really_long_name() -> (
 
 def some_method_with_a_really_long_name(
     very_long_parameter_so_yeah: str, another_long_parameter: int
-) -> (
-    another_case_of_returning_a_deeply_nested_import_of_a_type_i_suppose_cause_why_not
-):
+) -> another_case_of_returning_a_deeply_nested_import_of_a_type_i_suppose_cause_why_not:
     pass
 
 
@@ -155,10 +153,8 @@ def func() -> (
 
 
 def func() -> (
-    (
-        also_super_long_type_annotation_that_may_cause_an_AST_related_crash_in_black(
-            this_shouldn_t_get_a_trailing_comma_too
-        )
+    also_super_long_type_annotation_that_may_cause_an_AST_related_crash_in_black(
+        this_shouldn_t_get_a_trailing_comma_too
     )
 ):
     pass

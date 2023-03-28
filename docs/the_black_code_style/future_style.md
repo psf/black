@@ -31,8 +31,8 @@ with \
     ...  # backslashes and an ugly stranded colon
 ```
 
-Although when the target version is Python 3.9 or higher, _Black_ will, when we
-implement this, use parentheses instead since they're allowed in Python 3.9 and higher.
+Although when the target version is Python 3.9 or higher, _Black_ uses parentheses
+instead in `--preview` mode (see below) since they're allowed in Python 3.9 and higher.
 
 An alternative to consider if the backslashes in the above formatting are undesirable is
 to use {external:py:obj}`contextlib.ExitStack` to combine context managers in the
@@ -51,7 +51,7 @@ with contextlib.ExitStack() as exit_stack:
 
 Experimental, potentially disruptive style changes are gathered under the `--preview`
 CLI flag. At the end of each year, these changes may be adopted into the default style,
-as described in [The Black Code Style](./index.rst). Because the functionality is
+as described in [The Black Code Style](index.md). Because the functionality is
 experimental, feedback and issue reports are highly encouraged!
 
 ### Improved string processing
@@ -63,92 +63,99 @@ limit. Line continuation backslashes are converted into parenthesized strings.
 Unnecessary parentheses are stripped. The stability and status of this feature is
 tracked in [this issue](https://github.com/psf/black/issues/2188).
 
-### Improved empty line management
+### Improved line breaks
 
-1.  _Black_ will remove newlines in the beginning of new code blocks, i.e. when the
-    indentation level is increased. For example:
+For assignment expressions, _Black_ now prefers to split and wrap the right side of the
+assignment instead of left side. For example:
 
-    ```python
-    def my_func():
+```python
+some_dict[
+    "with_a_long_key"
+] = some_looooooooong_module.some_looooooooooooooong_function_name(
+    first_argument, second_argument, third_argument
+)
+```
 
-        print("The line above me will be deleted!")
-    ```
+will be changed to:
 
-    will be changed to:
-
-    ```python
-    def my_func():
-        print("The line above me will be deleted!")
-    ```
-
-    This new feature will be applied to **all code blocks**: `def`, `class`, `if`,
-    `for`, `while`, `with`, `case` and `match`.
-
-2.  _Black_ will enforce empty lines before classes and functions with leading comments.
-    For example:
-
-    ```python
-    some_var = 1
-    # Leading sticky comment
-    def my_func():
-        ...
-    ```
-
-    will be changed to:
-
-    ```python
-    some_var = 1
-
-
-    # Leading sticky comment
-    def my_func():
-        ...
-    ```
+```python
+some_dict["with_a_long_key"] = (
+    some_looooooooong_module.some_looooooooooooooong_function_name(
+        first_argument, second_argument, third_argument
+    )
+)
+```
 
 ### Improved parentheses management
 
-_Black_ will format parentheses around return annotations similarly to other sets of
-parentheses. For example:
+For dict literals with long values, they are now wrapped in parentheses. Unnecessary
+parentheses are now removed. For example:
 
 ```python
-def foo() -> (int):
-    ...
-
-def foo() -> looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong:
-    ...
+my_dict = {
+    my_dict = {
+    "a key in my dict": a_very_long_variable
+    * and_a_very_long_function_call()
+    / 100000.0,
+    "another key": (short_value),
+}
 ```
 
 will be changed to:
 
 ```python
-def foo() -> int:
-    ...
-
-
-def foo() -> (
-    looooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong
-):
-    ...
+my_dict = {
+    "a key in my dict": (
+        a_very_long_variable * and_a_very_long_function_call() / 100000.0
+    ),
+    "another key": short_value,
+}
 ```
 
-And, extra parentheses in `await` expressions and `with` statements are removed. For
-example:
+### Improved multiline string handling
+
+_Black_ is smarter when formatting multiline strings, especially in function arguments,
+to avoid introducing extra line breaks. Previously, it would always consider multiline
+strings as not fitting on a single line. With this new feature, _Black_ looks at the
+context around the multiline string to decide if it should be inlined or split to a
+separate line. For example, when a multiline string is passed to a function, _Black_
+will only split the multiline string if a line is too long or if multiple arguments are
+being passed.
+
+For example, _Black_ will reformat
 
 ```python
-with ((open("bla.txt")) as f, open("x")):
-    ...
-
-async def main():
-    await (asyncio.sleep(1))
+textwrap.dedent(
+    """\
+    This is a
+    multiline string
+"""
+)
 ```
 
-will be changed to:
+to:
 
 ```python
-with open("bla.txt") as f, open("x"):
-    ...
+textwrap.dedent("""\
+    This is a
+    multiline string
+""")
+```
 
+And:
 
-async def main():
-    await asyncio.sleep(1)
+```python
+MULTILINE = """
+foobar
+""".replace(
+    "\n", ""
+)
+```
+
+to:
+
+```python
+MULTILINE = """
+foobar
+""".replace("\n", "")
 ```

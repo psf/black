@@ -69,7 +69,7 @@ some_kind_of_table[
 ] = lambda obj: obj.some_long_named_method()
 
 
-# Make when when the left side of assignement plus the opening paren "... = (" is
+# Make when when the left side of assignment plus the opening paren "... = (" is
 # exactly line length limit + 1, it won't be split like that.
 xxxxxxxxx_yyy_zzzzzzzz[
     xx.xxxxxx(x_yyy_zzzzzz.xxxxx[0]), x_yyy_zzzzzz.xxxxxx(xxxx=1)
