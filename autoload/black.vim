@@ -34,7 +34,7 @@ FLAGS = [
 ]
 
 
-def _get_python_binary(exec_prefix):
+def _get_python_binary(exec_prefix, pyver):
   try:
     default = vim.eval("g:pymode_python").strip()
   except vim.error:
@@ -43,7 +43,15 @@ def _get_python_binary(exec_prefix):
     return default
   if sys.platform[:3] == "win":
     return exec_prefix / 'python.exe'
-  return exec_prefix / 'bin' / 'python3'
+  bin_path = exec_prefix / "bin"
+  exec_path = (bin_path / f"python{pyver[0]}.{pyver[1]}").resolve()
+  if exec_path.exists():
+    return exec_path
+  # It is possible that some environments may only have python3
+  exec_path = (bin_path / f"python3").resolve()
+  if exec_path.exists():
+    return exec_path
+  raise ValueError("python executable not found")
 
 def _get_pip(venv_path):
   if sys.platform[:3] == "win":
@@ -82,7 +90,7 @@ def _initialize_black_env(upgrade=False):
     _executable = sys.executable
     _base_executable = getattr(sys, "_base_executable", _executable)
     try:
-      executable = str(_get_python_binary(Path(sys.exec_prefix)))
+      executable = str(_get_python_binary(Path(sys.exec_prefix), pyver))
       sys.executable = executable
       sys._base_executable = executable
       print(f'Creating a virtualenv in {virtualenv_path}...')
