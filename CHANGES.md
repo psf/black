@@ -81,6 +81,7 @@ expected to become part of Black's stable style in January 2024.
   besides before spaces (#3445)
 - For stubs, enforce one blank line after a nested class with a body other than just
   `...` (#3564)
+- Improve handling of multiline strings by changing line split behavior (#1879)
 
 ### Parser
 
@@ -90,6 +91,7 @@ expected to become part of Black's stable style in January 2024.
 
 - Update GitHub Action to use the version of Black equivalent to action's version if
   version input is not specified (#3543)
+- Fix missing Python binary path in autoload script for vim (#3508)
 
 ### Documentation
 
@@ -179,7 +181,6 @@ versions separately.
   code. Implicitly concatenated f-strings with different quotes can now be merged or
   quote-normalized by changing the quotes used in expressions. (#3509)
 - Fix crash on `await (yield)` when Black is compiled with mypyc (#3533)
-- Improve handling of multiline strings by changing line split behavior (#1879)
 
 ### Configuration
 
@@ -220,7 +221,6 @@ versions separately.
 - Move 3.11 CI to normal flow now that all dependencies support 3.11 (#3446)
 - Docker: Add new `latest_prerelease` tag automation to follow latest black alpha
   release on docker images (#3465)
-- Fixed missing python binary path in autoload script for vim (#3508)
 
 ### Documentation
 
