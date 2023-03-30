@@ -215,3 +215,14 @@ filterwarnings = [
     # https://github.com/aio-libs/aiohttp/issues/6905
     '''ignore:'cgi' is deprecated and slated for removal in Python 3.13:DeprecationWarning''',
 ]
+
+[tool.coverage.report]
+omit = [
+  "src/blib2to3/*",
+  "tests/data/*",
+  "*/site-packages/*",
+  ".tox/*"
+]
+
+[tool.coverage.run]
+relative_files = true
