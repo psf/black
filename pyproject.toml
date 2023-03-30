@@ -226,3 +226,24 @@ omit = [
 
 [tool.coverage.run]
 relative_files = true
+
+[tool.mypy]
+python_version = "3.7"
+mypy_path = "src"
+show_column_numbers = true
+show_error_codes = true
+strict = true
+no_implicit_reexport = true
+warn_unreachable = true
+
+[[tool.mypy.overrides]]
+module = [
+  "blib2to3.driver.*",
+  "IPython.*",
+  "colorama.*",
+  "pathspec.*",
+  "tokenize_rt.*",
+  "uvloop.*",
+  "_black_version.*"
+]
+ignore_missing_imports = true
