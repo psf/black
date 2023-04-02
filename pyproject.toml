@@ -237,29 +237,13 @@ no_implicit_reexport = true
 warn_unreachable = true
 
 [[tool.mypy.overrides]]
-module="blib2to3.driver.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module="IPython.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module="colorama.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module="pathspec.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module="tokenize_rt.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module="uvloop.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module="_black_version.*"
+module = [
+    "blib2to3.driver.*",
+    "IPython.*",
+    "colorama.*",
+    "pathspec.*",
+    "tokenize_rt.*",
+    "uvloop.*",
+    "_black_version.*"
+]
 ignore_missing_imports = true
