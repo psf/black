@@ -93,7 +93,6 @@ parentheses are now removed. For example:
 
 ```python
 my_dict = {
-    my_dict = {
     "a key in my dict": a_very_long_variable
     * and_a_very_long_function_call()
     / 100000.0,
