@@ -1,0 +1,18 @@
+
+from sklearn import tree
+
+# Define the training data
+X = [[25, 50000], [30, 70000], [35, 80000], [40, 90000], [45, 100000], [50, 120000], [55, 135000], [60, 150000]]
+Y = ['No', 'No', 'No', 'Yes', 'Yes', 'Yes', 'Yes', 'Yes']
+
+# Create the decision tree classifier
+clf = tree.DecisionTreeClassifier()
+
+# Train the model
+clf = clf.fit(X, Y)
+
+# Predict whether a person with age 45 and income 110000 will buy a car or not
+prediction = clf.predict([[45, 110000]])
+
+# Print the prediction
+print(prediction)
