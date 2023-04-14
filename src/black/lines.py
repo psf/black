@@ -790,7 +790,7 @@ def is_line_short_enough(  # noqa: C901
     # store the leaves that contain parts of the MLS
     multiline_string_contexts: List[LN] = []
 
-    max_level_to_update = math.inf  # track the depth of the MLS
+    max_level_to_update: Union[int, float] = math.inf  # track the depth of the MLS
     for i, leaf in enumerate(line.leaves):
         if max_level_to_update == math.inf:
             had_comma: Optional[int] = None
