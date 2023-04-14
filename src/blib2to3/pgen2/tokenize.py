@@ -425,7 +425,7 @@ def generate_tokens(
     logical line; continuation lines are included.
     """
     lnum = parenlev = continued = 0
-    numchars: Final = "0123456789"
+    numchars: Final[str] = "0123456789"
     contstr, needcont = "", 0
     contline: Optional[str] = None
     indents = [0]
