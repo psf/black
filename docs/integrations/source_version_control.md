@@ -42,7 +42,7 @@ repos:
         # supported by your project here, or alternatively use
         # pre-commit's default_language_version, see
         # https://pre-commit.com/#top_level-default_language_version
-        language_version: python3.9
+        language_version: python3.11
 ```
 
 [black-tags]: https://github.com/psf/black/tags
