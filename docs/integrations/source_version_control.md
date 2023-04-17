@@ -22,11 +22,28 @@ Feel free to switch out the `rev` value to something else, like another
 branches or other mutable refs since the hook [won't auto update as you may
 expect][pre-commit-mutable-rev].
 
-If you want support for Jupyter Notebooks as well, then replace `id: black` with
-`id: black-jupyter`.
+## Jupyter Notebooks
+
+If you want to include support for Jupyter Notebooks,
+then simply replace the hook's `id: black` with `id: black-jupyter`
+in the `.pre-commit-config.yaml`:
 
 ```{note}
-The `black-jupyter` hook is only available from version 21.8b0 and onwards.
+The `black-jupyter` hook became available in version 21.8b0.
+```
+
+```yaml
+repos:
+  - repo: https://github.com/psf/black
+    rev: 23.3.0
+    hooks:
+      - id: black-jupyter
+        description: Black, with Jupyter Notebook support
+        # It is recommended to specify the latest version of Python
+        # supported by your project here, or alternatively use
+        # pre-commit's default_language_version, see
+        # https://pre-commit.com/#top_level-default_language_version
+        language_version: python3.9
 ```
 
 [black-tags]: https://github.com/psf/black/tags
