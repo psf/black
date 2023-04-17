@@ -14,7 +14,7 @@ repos:
         # supported by your project here, or alternatively use
         # pre-commit's default_language_version, see
         # https://pre-commit.com/#top_level-default_language_version
-        language_version: python3.9
+        language_version: python3.11
 ```
 
 Feel free to switch out the `rev` value to something else, like another
@@ -26,10 +26,6 @@ expect][pre-commit-mutable-rev].
 
 If you want to include support for Jupyter Notebooks, then simply replace the hook's
 `id: black` with `id: black-jupyter` in the `.pre-commit-config.yaml`:
-
-```{note}
-The `black-jupyter` hook became available in version 21.8b0.
-```
 
 ```yaml
 repos:
@@ -43,6 +39,10 @@ repos:
         # pre-commit's default_language_version, see
         # https://pre-commit.com/#top_level-default_language_version
         language_version: python3.11
+```
+
+```{note}
+The `black-jupyter` hook became available in version 21.8b0.
 ```
 
 [black-tags]: https://github.com/psf/black/tags
