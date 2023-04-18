@@ -24,8 +24,9 @@ expect][pre-commit-mutable-rev].
 
 ## Jupyter Notebooks
 
-If you want to include support for Jupyter Notebooks, then simply replace the hook's
-`id: black` with `id: black-jupyter` in the `.pre-commit-config.yaml`:
+There is an alternate hook `black-jupyter` that expands the targets of `black` to
+include Jupyter Notebooks. To use this hook, simply replace the hook's `id: black` with
+`id: black-jupyter` in the `.pre-commit-config.yaml`:
 
 ```yaml
 repos:
@@ -33,7 +34,6 @@ repos:
     rev: 23.3.0
     hooks:
       - id: black-jupyter
-        description: Black, with Jupyter Notebook support
         # It is recommended to specify the latest version of Python
         # supported by your project here, or alternatively use
         # pre-commit's default_language_version, see
