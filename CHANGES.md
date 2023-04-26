@@ -14,6 +14,9 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Black now avoids breaking up lines containing a comment beginning with "# pyright:
+  ignore". (#3661)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->

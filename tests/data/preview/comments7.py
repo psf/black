@@ -187,6 +187,7 @@ def func():
         0.0789,
         a[-1],  # type: ignore
     )
+    c = call(0.0123, 0.0456, 0.0789, 0.0123, 0.0789, a[-1])  # pyright: ignore[reportGeneralTypeIssues]
     c = call(0.0123, 0.0456, 0.0789, 0.0123, 0.0789, a[-1])  # type: ignore
     c = call(
         0.0123,

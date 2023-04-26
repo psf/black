@@ -96,7 +96,24 @@ def func(
         0.0123,
         0.0456,
         0.0789,
+        a[-1],  # pyright: ignore[reportGeneralTypeIssues]
+    )
+
+    c = call(
+        0.0123,
+        0.0456,
+        0.0789,
+        0.0123,
+        0.0456,
+        0.0789,
+        0.0123,
+        0.0456,
+        0.0789,
         a[-1],  # type: ignore
+    )
+
+    c = call(
+        "aaaaaaaa", "aaaaaaaa", "aaaaaaaa", "aaaaaaaa", "aaaaaaaa", "aaaaaaaa", "aaaaaaaa"  # pyright: ignore[reportGeneralTypeIssues]
     )
 
     c = call(
@@ -108,11 +125,20 @@ result = (  # aaa
     "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 )
 
+AAAAAAAAAAAAA = [AAAAAAAAAAAAA] + SHARED_AAAAAAAAAAAAA + USER_AAAAAAAAAAAAA + AAAAAAAAAAAAA  # pyright: ignore[reportGeneralTypeIssues]
+
 AAAAAAAAAAAAA = [AAAAAAAAAAAAA] + SHARED_AAAAAAAAAAAAA + USER_AAAAAAAAAAAAA + AAAAAAAAAAAAA  # type: ignore
+
+call_to_some_function_asdf(
+    foo,
+    [AAAAAAAAAAAAAAAAAAAAAAA, AAAAAAAAAAAAAAAAAAAAAAA, AAAAAAAAAAAAAAAAAAAAAAA, BBBBBBBBBBBB],  # pyright: ignore[reportGeneralTypeIssues]
+)
 
 call_to_some_function_asdf(
     foo,
     [AAAAAAAAAAAAAAAAAAAAAAA, AAAAAAAAAAAAAAAAAAAAAAA, AAAAAAAAAAAAAAAAAAAAAAA, BBBBBBBBBBBB],  # type: ignore
 )
+
+aaaaaaaaaaaaa, bbbbbbbbb = map(list, map(itertools.chain.from_iterable, zip(*items)))  # pyright: ignore[reportGeneralTypeIssues]
 
 aaaaaaaaaaaaa, bbbbbbbbb = map(list, map(itertools.chain.from_iterable, zip(*items)))  # type: ignore[arg-type]
