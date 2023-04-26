@@ -55,6 +55,20 @@ first_item, second_item = some_looooooooong_module.some_loooooog_function_name(
 )
 
 
+# Make sure unsplittable pyright: ignore comments won't be moved.
+some_kind_of_table[some_key] = util.some_function(  # pyright: ignore[reportGeneralTypeIssues]  # noqa: E501
+    some_arg
+).intersection(pk_cols)
+
+some_kind_of_table[
+    some_key
+] = lambda obj: obj.some_long_named_method()  # pyright: ignore[reportGeneralTypeIssues]  # noqa: E501
+
+some_kind_of_table[
+    some_key  # pyright: ignore[reportGeneralTypeIssues]  # noqa: E501
+] = lambda obj: obj.some_long_named_method()
+
+
 # Make sure unsplittable type ignore won't be moved.
 some_kind_of_table[some_key] = util.some_function(  # type: ignore  # noqa: E501
     some_arg
