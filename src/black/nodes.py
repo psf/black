@@ -822,7 +822,7 @@ def is_type_comment(leaf: Leaf, suffix: str = "") -> bool:
     t = leaf.type
     v = leaf.value
     return t in {token.COMMENT, STANDALONE_COMMENT} and (
-        v.startswith(f"# pyright:{suffix}") or v.startswith(f"# type:{suffix}")
+        v.startswith((f"# pyright:{suffix}", f"# type:{suffix}"))
     )
 
 
