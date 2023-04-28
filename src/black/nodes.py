@@ -181,9 +181,9 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
     `complex_subscript` signals whether the given leaf is part of a subscription
     which has non-trivial arguments, like arithmetic expressions or function calls.
     """
-    NO: Final = ""
-    SPACE: Final = " "
-    DOUBLESPACE: Final = "  "
+    NO: Final[str] = ""
+    SPACE: Final[str] = " "
+    DOUBLESPACE: Final[str] = "  "
     t = leaf.type
     p = leaf.parent
     v = leaf.value

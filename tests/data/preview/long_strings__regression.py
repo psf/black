@@ -715,11 +715,9 @@ class A:
     def foo():
         some_func_call(
             "xxxxxxxxxx",
-            (
-                "xx {xxxxxxxxxxx}/xxxxxxxxxxx.xxx xxxx.xxx && xxxxxx -x "
-                '"xxxx xxxxxxx xxxxxx xxxx; xxxx xxxxxx_xxxxx xxxxxx xxxx; '
-                "xxxx.xxxx_xxxxxx(['xxxx.xxx'], xxxx.xxxxxxx().xxxxxxxxxx)\" "
-            ),
+            "xx {xxxxxxxxxxx}/xxxxxxxxxxx.xxx xxxx.xxx && xxxxxx -x "
+            '"xxxx xxxxxxx xxxxxx xxxx; xxxx xxxxxx_xxxxx xxxxxx xxxx; '
+            "xxxx.xxxx_xxxxxx(['xxxx.xxx'], xxxx.xxxxxxx().xxxxxxxxxx)\" ",
             None,
             ("xxxxxxxxxxx",),
         ),
@@ -728,11 +726,9 @@ class A:
 class A:
     def foo():
         some_func_call(
-            (
-                "xx {xxxxxxxxxxx}/xxxxxxxxxxx.xxx xxxx.xxx && xxxxxx -x "
-                "xxxx, ('xxxxxxx xxxxxx xxxx, xxxx') xxxxxx_xxxxx xxxxxx xxxx; "
-                "xxxx.xxxx_xxxxxx(['xxxx.xxx'], xxxx.xxxxxxx().xxxxxxxxxx)\" "
-            ),
+            "xx {xxxxxxxxxxx}/xxxxxxxxxxx.xxx xxxx.xxx && xxxxxx -x "
+            "xxxx, ('xxxxxxx xxxxxx xxxx, xxxx') xxxxxx_xxxxx xxxxxx xxxx; "
+            "xxxx.xxxx_xxxxxx(['xxxx.xxx'], xxxx.xxxxxxx().xxxxxxxxxx)\" ",
             None,
             ("xxxxxxxxxxx",),
         ),
@@ -850,10 +846,8 @@ some_commented_string = (
 )
 
 lpar_and_rpar_have_comments = func_call(  # LPAR Comment
-    (  # Comma Comment
-        "Long really ridiculous type of string that shouldn't really even exist at all."
-        " I mean commmme onnn!!!"
-    ),
+    "Long really ridiculous type of string that shouldn't really even exist at all. I"
+    " mean commmme onnn!!!",  # Comma Comment
 )  # RPAR Comment
 
 cmd_fstring = (
