@@ -14,6 +14,9 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Implicitly concatenated strings used as function args are no longer wrapped inside
+  parentheses (#3640)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->

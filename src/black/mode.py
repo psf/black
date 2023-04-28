@@ -188,10 +188,8 @@ class Mode:
     def __post_init__(self) -> None:
         if self.experimental_string_processing:
             warn(
-                (
-                    "`experimental string processing` has been included in `preview`"
-                    " and deprecated. Use `preview` instead."
-                ),
+                "`experimental string processing` has been included in `preview`"
+                " and deprecated. Use `preview` instead.",
                 Deprecated,
             )
 

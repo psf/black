@@ -29,11 +29,9 @@ try:
 except ImportError:
     if sys.version_info < (3, 8) and not _IS_PYPY:
         print(
-            (
-                "The typed_ast package is required but not installed.\n"
-                "You can upgrade to Python 3.8+ or install typed_ast with\n"
-                "`python3 -m pip install typed-ast`."
-            ),
+            "The typed_ast package is required but not installed.\n"
+            "You can upgrade to Python 3.8+ or install typed_ast with\n"
+            "`python3 -m pip install typed-ast`.",
             file=sys.stderr,
         )
         sys.exit(1)

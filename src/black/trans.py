@@ -1186,19 +1186,33 @@ class BaseStringSplitter(StringTransformer):
         if LL[0].type != token.STRING:
             return None
 
-        # If the string is surrounded by commas (or is the first/last child)...
-        prev_sibling = LL[0].prev_sibling
-        next_sibling = LL[0].next_sibling
-        if not prev_sibling and not next_sibling and parent_type(LL[0]) == syms.atom:
-            # If it's an atom string, we need to check the parent atom's siblings.
-            parent = LL[0].parent
-            assert parent is not None  # For type checkers.
-            prev_sibling = parent.prev_sibling
-            next_sibling = parent.next_sibling
-        if (not prev_sibling or prev_sibling.type == token.COMMA) and (
-            not next_sibling or next_sibling.type == token.COMMA
+        matching_nodes = [
+            syms.listmaker,
+            syms.dictsetmaker,
+            syms.testlist_gexp,
+        ]
+        # If the string is an immediate child of a list/set/tuple literal...
+        if (
+            parent_type(LL[0]) in matching_nodes
+            or parent_type(LL[0].parent) in matching_nodes
         ):
-            return 0
+            # And the string is surrounded by commas (or is the first/last child)...
+            prev_sibling = LL[0].prev_sibling
+            next_sibling = LL[0].next_sibling
+            if (
+                not prev_sibling
+                and not next_sibling
+                and parent_type(LL[0]) == syms.atom
+            ):
+                # If it's an atom string, we need to check the parent atom's siblings.
+                parent = LL[0].parent
+                assert parent is not None  # For type checkers.
+                prev_sibling = parent.prev_sibling
+                next_sibling = parent.next_sibling
+            if (not prev_sibling or prev_sibling.type == token.COMMA) and (
+                not next_sibling or next_sibling.type == token.COMMA
+            ):
+                return 0
 
         return None
 
@@ -1811,8 +1825,9 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         * The line is an lambda expression and the value is a string.
             OR
         * The line starts with an "atom" string that prefers to be wrapped in
-        parens. It's preferred to be wrapped when the string is surrounded by
-        commas (or is the first/last child).
+        parens. It's preferred to be wrapped when it's is an immediate child of
+        a list/set/tuple literal, AND the string is surrounded by commas (or is
+        the first/last child).
 
     Transformations:
         The chosen string is wrapped in parentheses and then split at the LPAR.
