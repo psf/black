@@ -7,10 +7,10 @@ from functools import partial
 from pathlib import Path
 from typing import Any, Iterator, List, Optional, Tuple
 
-import black
-from black.debug import DebugVisitor
-from black.mode import TargetVersion
-from black.output import diff, err, out
+import cercis
+from cercis.debug import DebugVisitor
+from cercis.mode import TargetVersion
+from cercis.output import diff, err, out
 
 PYTHON_SUFFIX = ".py"
 ALLOWED_SUFFIXES = (PYTHON_SUFFIX, ".pyi", ".out", ".diff", ".ipynb")
@@ -28,9 +28,9 @@ PY36_VERSIONS = {
     TargetVersion.PY39,
 }
 
-DEFAULT_MODE = black.Mode()
-ff = partial(black.format_file_in_place, mode=DEFAULT_MODE, fast=True)
-fs = partial(black.format_str, mode=DEFAULT_MODE)
+DEFAULT_MODE = cercis.Mode()
+ff = partial(cercis.format_file_in_place, mode=DEFAULT_MODE, fast=True)
+fs = partial(cercis.format_str, mode=DEFAULT_MODE)
 
 
 def _assert_format_equal(expected: str, actual: str) -> None:
@@ -38,14 +38,14 @@ def _assert_format_equal(expected: str, actual: str) -> None:
         bdv: DebugVisitor[Any]
         out("Expected tree:", fg="green")
         try:
-            exp_node = black.lib2to3_parse(expected)
+            exp_node = cercis.lib2to3_parse(expected)
             bdv = DebugVisitor()
             list(bdv.visit(exp_node))
         except Exception as ve:
             err(str(ve))
         out("Actual tree:", fg="red")
         try:
-            exp_node = black.lib2to3_parse(actual)
+            exp_node = cercis.lib2to3_parse(actual)
             bdv = DebugVisitor()
             list(bdv.visit(exp_node))
         except Exception as ve:
@@ -62,12 +62,12 @@ class FormatFailure(Exception):
 
 
 def assert_format(
-    source: str,
-    expected: str,
-    mode: black.Mode = DEFAULT_MODE,
-    *,
-    fast: bool = False,
-    minimum_version: Optional[Tuple[int, int]] = None,
+        source: str,
+        expected: str,
+        mode: cercis.Mode = DEFAULT_MODE,
+        *,
+        fast: bool = False,
+        minimum_version: Optional[Tuple[int, int]] = None,
 ) -> None:
     """Convenience function to check that Black formats as expected.
 
@@ -112,14 +112,14 @@ def assert_format(
 
 
 def _assert_format_inner(
-    source: str,
-    expected: Optional[str] = None,
-    mode: black.Mode = DEFAULT_MODE,
-    *,
-    fast: bool = False,
-    minimum_version: Optional[Tuple[int, int]] = None,
+        source: str,
+        expected: Optional[str] = None,
+        mode: cercis.Mode = DEFAULT_MODE,
+        *,
+        fast: bool = False,
+        minimum_version: Optional[Tuple[int, int]] = None,
 ) -> None:
-    actual = black.format_str(source, mode=mode)
+    actual = cercis.format_str(source, mode=mode)
     if expected is not None:
         _assert_format_equal(expected, actual)
     # It's not useful to run safety checks if we're expecting no changes anyway. The
@@ -130,8 +130,8 @@ def _assert_format_inner(
         # being able to parse the code being formatted. This doesn't always work out
         # when checking modern code on older versions.
         if minimum_version is None or sys.version_info >= minimum_version:
-            black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, mode=mode)
+            cercis.assert_equivalent(source, actual)
+        cercis.assert_stable(source, actual, mode=mode)
 
 
 def dump_to_stderr(*output: str) -> str:
@@ -154,7 +154,7 @@ def all_data_cases(subdir_name: str, data: bool = True) -> List[str]:
 
 
 def get_case_path(
-    subdir_name: str, name: str, data: bool = True, suffix: str = PYTHON_SUFFIX
+        subdir_name: str, name: str, data: bool = True, suffix: str = PYTHON_SUFFIX
 ) -> Path:
     """Get case path from name"""
     case_path = get_base_dir(data) / subdir_name / name

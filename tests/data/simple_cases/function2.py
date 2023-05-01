@@ -55,8 +55,8 @@ with hmm_but_this_should_get_two_preceding_newlines():
 # output
 
 def f(
-    a,
-    **kwargs,
+        a,
+        **kwargs,
 ) -> A:
     with cache_dir():
         if something:

@@ -1,16 +1,16 @@
-- id: black
-  name: black
-  description: "Black: The uncompromising Python code formatter"
-  entry: black
+- id: cercis
+  name: cercis
+  description: "Cercis: a more configurable Python code formatter"
+  entry: cercis
   language: python
   minimum_pre_commit_version: 2.9.2
   require_serial: true
   types_or: [python, pyi]
-- id: black-jupyter
-  name: black-jupyter
+- id: cercis-jupyter
+  name: cercis-jupyter
   description:
-    "Black: The uncompromising Python code formatter (with Jupyter Notebook support)"
-  entry: black
+    "Cercis: a more configurable Python code formatter (with Jupyter Notebook support)"
+  entry: cercis
   language: python
   minimum_pre_commit_version: 2.9.2
   require_serial: true

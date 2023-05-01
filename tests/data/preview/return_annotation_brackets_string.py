@@ -6,7 +6,7 @@ def frobnicate() -> "ThisIsTrulyUnreasonablyExtremelyLongClassName | list[ThisIs
 
 # Long string example
 def frobnicate() -> (
-    "ThisIsTrulyUnreasonablyExtremelyLongClassName |"
-    " list[ThisIsTrulyUnreasonablyExtremelyLongClassName]"
+        "ThisIsTrulyUnreasonablyExtremelyLongClassName |"
+        " list[ThisIsTrulyUnreasonablyExtremelyLongClassName]"
 ):
     pass

@@ -34,11 +34,11 @@ def blackify(base_branch: str, black_command: str, logger: logging.Logger) -> in
         "log", "--reverse", "--pretty=format:%H", "%s~1..HEAD" % merge_base
     ).split()
     for commit in commits:
-        git("checkout", commit, "-b%s-black" % commit)
+        git("checkout", commit, "-b%s-cercis" % commit)
         check_output(black_command, shell=True)
         git("commit", "-aqm", "blackify")
 
-    git("checkout", base_branch, "-b%s-black" % current_branch)
+    git("checkout", base_branch, "-b%s-cercis" % current_branch)
 
     for last_commit, commit in zip(commits, commits[1:]):
         allow_empty = (
@@ -51,7 +51,7 @@ def blackify(base_branch: str, black_command: str, logger: logging.Logger) -> in
                 "diff",
                 "--binary",
                 "--find-copies",
-                "%s-black..%s-black" % (last_commit, commit),
+                "%s-cercis..%s-cercis" % (last_commit, commit),
             ],
             stdout=PIPE,
         )
@@ -77,7 +77,7 @@ def blackify(base_branch: str, black_command: str, logger: logging.Logger) -> in
         git("commit", "--allow-empty", "-aqC", commit)
 
     for commit in commits:
-        git("branch", "-qD", "%s-black" % commit)
+        git("branch", "-qD", "%s-cercis" % commit)
 
     return 0
 
@@ -87,7 +87,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("base_branch")
-    parser.add_argument("--black_command", default="black -q .")
+    parser.add_argument("--black_command", default="cercis -q .")
     parser.add_argument("--logfile", type=argparse.FileType("w"), default=sys.stdout)
     args = parser.parse_args()
     logger = logging.getLogger(__name__)

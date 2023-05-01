@@ -3,5 +3,5 @@ name = "test"
 version = "1.0.0"
 requires-python = ">=3.7,<3.11"
 
-[tool.black]
+[tool.cercis]
 line-length = 79

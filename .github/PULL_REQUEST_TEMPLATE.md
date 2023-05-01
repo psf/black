@@ -22,7 +22,7 @@
 - [ ] Add / update tests if necessary?
 - [ ] Add new / update outdated documentation?
 
-<!-- Just as a reminder, everyone in all psf/black spaces including PRs
+<!-- Just as a reminder, everyone in all psf/cercis spaces including PRs
      must follow the PSF Code of Conduct (link below).
 
      Finally, once again thanks for your time and effort. If you have any

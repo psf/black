@@ -2,7 +2,7 @@ from typing import Any, Tuple
 
 
 def f(
-    a,  # type: int
+        a,  # type: int
 ):
     pass
 
@@ -14,35 +14,35 @@ def f(a, b, c, d, e, f, g, h, i):
 
 
 def f(
-    a,  # type: int
-    b,  # type: int
-    c,  # type: int
-    d,  # type: int
-    e,  # type: int
-    f,  # type: int
-    g,  # type: int
-    h,  # type: int
-    i,  # type: int
+        a,  # type: int
+        b,  # type: int
+        c,  # type: int
+        d,  # type: int
+        e,  # type: int
+        f,  # type: int
+        g,  # type: int
+        h,  # type: int
+        i,  # type: int
 ):
     # type: (...) -> None
     pass
 
 
 def f(
-    arg,  # type: int
-    *args,  # type: *Any
-    default=False,  # type: bool
-    **kwargs,  # type: **Any
+        arg,  # type: int
+        *args,  # type: *Any
+        default=False,  # type: bool
+        **kwargs,  # type: **Any
 ):
     # type: (...) -> None
     pass
 
 
 def f(
-    a,  # type: int
-    b,  # type: int
-    c,  # type: int
-    d,  # type: int
+        a,  # type: int
+        b,  # type: int
+        c,  # type: int
+        d,  # type: int
 ):
     # type: (...) -> None
 
@@ -70,21 +70,21 @@ def f(
 
 
 def f(
-    x,  # not a type comment
-    y,  # type: int
+        x,  # not a type comment
+        y,  # type: int
 ):
     # type: (...) -> None
     pass
 
 
 def f(
-    x,  # not a type comment
+        x,  # not a type comment
 ):  # type: (int) -> None
     pass
 
 
 def func(
-    a=some_list[0],  # type: int
+        a=some_list[0],  # type: int
 ):  # type: () -> int
     c = call(
         0.0123,

@@ -1,11 +1,13 @@
 from typing import List, Tuple
 
-from black.trans import iter_fexpr_spans
+from cercis.trans import iter_fexpr_spans
 
 
 def test_fexpr_spans() -> None:
     def check(
-        string: str, expected_spans: List[Tuple[int, int]], expected_slices: List[str]
+            string: str,
+            expected_spans: List[Tuple[int, int]],
+            expected_slices: List[str],
     ) -> None:
         spans = list(iter_fexpr_spans(string))
 

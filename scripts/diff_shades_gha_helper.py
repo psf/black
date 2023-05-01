@@ -1,4 +1,4 @@
-"""Helper script for psf/black's diff-shades Github Actions integration.
+"""Helper script for psf/cercis's diff-shades Github Actions integration.
 
 diff-shades is a tool for analyzing what happens when you run Black on
 OSS code capturing it for comparisons or other usage. It's used here to
@@ -40,10 +40,10 @@ DOCS_URL: Final = (
     "https://black.readthedocs.io/en/latest/"
     "contributing/gauging_changes.html#diff-shades"
 )
-USER_AGENT: Final = f"psf/black diff-shades workflow via urllib3/{urllib3.__version__}"
+USER_AGENT: Final = f"psf/cercis diff-shades workflow via urllib3/{urllib3.__version__}"
 SHA_LENGTH: Final = 10
 GH_API_TOKEN: Final = os.getenv("GITHUB_TOKEN")
-REPO: Final = os.getenv("GITHUB_REPOSITORY", default="psf/black")
+REPO: Final = os.getenv("GITHUB_REPOSITORY", default="psf/cercis")
 http = urllib3.PoolManager()
 
 

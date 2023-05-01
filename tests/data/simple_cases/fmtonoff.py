@@ -234,15 +234,15 @@ def spaces(a=1, b=(), c=[], d={}, e=True, f=-1, g=1 if False else 2, h="", i=r""
 
 
 def spaces_types(
-    a: int = 1,
-    b: tuple = (),
-    c: list = [],
-    d: dict = {},
-    e: bool = True,
-    f: int = -1,
-    g: int = 1 if False else 2,
-    h: str = "",
-    i: str = r"",
+        a: int = 1,
+        b: tuple = (),
+        c: list = [],
+        d: dict = {},
+        e: bool = True,
+        f: int = -1,
+        g: int = 1 if False else 2,
+        h: str = "",
+        i: str = r"",
 ):
     ...
 

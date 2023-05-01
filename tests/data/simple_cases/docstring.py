@@ -11,7 +11,7 @@ class MyClass:
 
 
 def foo():
-  """This is a docstring with             
+  """This is a docstring with
   some lines of text here
   """
   return
@@ -46,7 +46,7 @@ def zort():
 
 def poit():
   """
-  Lorem ipsum dolor sit amet.       
+  Lorem ipsum dolor sit amet.
 
   Consectetur adipiscing elit:
    - sed do eiusmod tempor incididunt ut labore
@@ -98,16 +98,16 @@ def and_that():
 
 
 def and_this():
-  ''' 
+  '''
   "hey yah"'''
 
 
 def multiline_whitespace():
     '''
-    
-    
-    
-    
+
+
+
+
     '''
 
 
@@ -129,7 +129,7 @@ def believe_it_or_not_this_is_in_the_py_stdlib(): '''
 
 def ignored_docstring():
     """a => \
-b"""  
+b"""
 
 def single_line_docstring_with_whitespace():
     """   This should be stripped """
@@ -141,8 +141,8 @@ def docstring_with_inline_tabs_and_space_indentation():
     	tab at start of line and then a tab	separated	value
     				multiple tabs at the beginning	and	inline
     	 	  	mixed tabs and spaces at beginning. next line has mixed tabs and spaces only.
-    			 	  		
-    line ends with some tabs		
+
+    line ends with some tabs
     """
 
 
@@ -153,8 +153,8 @@ def docstring_with_inline_tabs_and_tab_indentation():
 		tab at start of line and then a tab	separated	value
 					multiple tabs at the beginning	and	inline
 		 	  	mixed tabs and spaces at beginning. next line has mixed tabs and spaces only.
-				 	  		
-	line ends with some tabs		
+
+	line ends with some tabs
 	"""
 	pass
 
@@ -217,7 +217,7 @@ def multiline_docstring_at_line_limit():
 def stable_quote_normalization_with_immediate_inner_single_quote(self):
     ''''<text here>
 
-    <text here, since without another non-empty line black is stable>
+    <text here, since without another non-empty line cercis is stable>
     '''
 
 
@@ -440,5 +440,5 @@ def multiline_docstring_at_line_limit():
 def stable_quote_normalization_with_immediate_inner_single_quote(self):
     """'<text here>
 
-    <text here, since without another non-empty line black is stable>
+    <text here, since without another non-empty line cercis is stable>
     """

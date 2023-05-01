@@ -133,10 +133,10 @@ class BlackDTestCase(AioHTTPTestCase):  # type: ignore[misc]
     async def test_blackd_python_variant(self) -> None:
         code = (
             "def f(\n"
-            "    and_has_a_bunch_of,\n"
-            "    very_long_arguments_too,\n"
-            "    and_lots_of_them_as_well_lol,\n"
-            "    **and_very_long_keyword_arguments\n"
+            "        and_has_a_bunch_of,\n"
+            "        very_long_arguments_too,\n"
+            "        and_lots_of_them_as_well_lol,\n"
+            "        **and_very_long_keyword_arguments\n"
             "):\n"
             "    pass\n"
         )

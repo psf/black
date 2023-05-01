@@ -32,8 +32,8 @@ def func(
 
 
 def func(
-    arg1,
-    arg2,
+        arg1,
+        arg2,
 ) -> Set[
     "this_is_a_very_long_module_name.AndAVeryLongClasName"
     ".WithAVeryVeryVeryVeryVeryLongSubClassName"
@@ -42,10 +42,10 @@ def func(
 
 
 def func(
-    argument: (
-        "VeryLongClassNameWithAwkwardGenericSubtype[int] |"
-        "VeryLongClassNameWithAwkwardGenericSubtype[str]"
-    ),
+        argument: (
+            "VeryLongClassNameWithAwkwardGenericSubtype[int] |"
+            "VeryLongClassNameWithAwkwardGenericSubtype[str]"
+        ),
 ) -> (
     "VeryLongClassNameWithAwkwardGenericSubtype[int] |"
     "VeryLongClassNameWithAwkwardGenericSubtype[str]"
@@ -54,6 +54,6 @@ def func(
 
 
 def func(
-    argument: ("int |" "str"),
+        argument: ("int |" "str"),
 ) -> Set["int |" " str"]:
     pass

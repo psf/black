@@ -336,13 +336,13 @@ barks""",
 
 
 def dastardly_default_value(
-    cow: String = json.loads("""this
+        cow: String = json.loads("""this
 is
 quite
 the
 dastadardly
 value!"""),
-    **kwargs,
+        **kwargs,
 ):
     pass
 

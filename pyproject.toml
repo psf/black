@@ -5,8 +5,9 @@
 # verbose regular expressions by Black.  Use [ ] to denote a significant space
 # character.
 
-[tool.black]
+[tool.cercis]
 line-length = 88
+function-definition-extra-indent = true
 target-version = ['py37', 'py38']
 include = '\.pyi?$'
 extend-exclude = '''
@@ -30,12 +31,14 @@ requires = ["hatchling>=1.8.0", "hatch-vcs", "hatch-fancy-pypi-readme"]
 build-backend = "hatchling.build"
 
 [project]
-name = "black"
-description = "The uncompromising code formatter."
+name = "cercis"
+version = "0.1.0"
+description = "A more configurable Python code formatter"
 license = { text = "MIT" }
 requires-python = ">=3.7"
 authors = [
   { name = "Łukasz Langa", email = "lukasz@langa.pl" },
+  { name = "jsh9", email = "" },
 ]
 keywords = [
   "automation",
@@ -72,7 +75,7 @@ dependencies = [
   "typed-ast>=1.4.2; python_version < '3.8' and implementation_name == 'cpython'",
   "typing_extensions>=3.10.0.0; python_version < '3.10'",
 ]
-dynamic = ["readme", "version"]
+dynamic = ["readme"]
 
 [project.optional-dependencies]
 colorama = ["colorama>=0.4.3"]
@@ -86,12 +89,12 @@ jupyter = [
 ]
 
 [project.scripts]
-black = "black:patched_main"
+cercis = "cercis:patched_main"
 blackd = "blackd:patched_main [d]"
 
 [project.urls]
-Changelog = "https://github.com/psf/black/blob/main/CHANGES.md"
-Homepage = "https://github.com/psf/black"
+Changelog = "https://github.com/jsh9/cercis/blob/main/CHANGES.md"
+Homepage = "https://github.com/jsh9/cercis"
 
 [tool.hatch.metadata.hooks.fancy-pypi-readme]
 content-type = "text/markdown"
@@ -104,7 +107,7 @@ fragments = [
 source = "vcs"
 
 [tool.hatch.build.hooks.vcs]
-version-file = "src/_black_version.py"
+version-file = "src/_cercis_version.py"
 template = '''
 version = "{version}"
 '''
@@ -131,14 +134,14 @@ exclude = [
   # Not performance sensitive, so save bytes + compilation time:
   "/src/blib2to3/__init__.py",
   "/src/blib2to3/pgen2/__init__.py",
-  "/src/black/output.py",
-  "/src/black/concurrency.py",
-  "/src/black/files.py",
-  "/src/black/report.py",
+  "/src/cercis/output.py",
+  "/src/cercis/concurrency.py",
+  "/src/cercis/files.py",
+  "/src/cercis/report.py",
   # Breaks the test suite when compiled (and is also useless):
-  "/src/black/debug.py",
+  "/src/cercis/debug.py",
   # Compiled modules can't be run directly and that's a problem here:
-  "/src/black/__main__.py",
+  "/src/cercis/__main__.py",
 ]
 options = { debug_level = "0" }
 
@@ -187,7 +190,7 @@ profile = "black"
 line_length = 88
 skip_gitignore = true
 skip_glob = ["src/blib2to3", "tests/data", "profiling"]
-known_first_party = ["black", "blib2to3", "blackd", "_black_version"]
+known_first_party = ["cercis", "blib2to3", "blackd", "_cercis_version"]
 
 [tool.pytest.ini_options]
 # Option below requires `tests/optional.py`

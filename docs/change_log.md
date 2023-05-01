@@ -1,3 +1,0 @@
-```{include} ../CHANGES.md
-
-```

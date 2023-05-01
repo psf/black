@@ -58,7 +58,7 @@ jobs:
       - name: Upload coverage to Coveralls
         # Upload coverage if we are on the main repository and
         # we're running on Linux (this action only supports Linux)
-        if: github.repository == 'psf/black' && matrix.os == 'ubuntu-latest'
+        if: github.repository == 'psf/cercis' && matrix.os == 'ubuntu-latest'
         uses: AndreMiras/coveralls-python-action@v20201129
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -68,7 +68,7 @@ jobs:
 
   coveralls-finish:
     needs: main
-    if: github.repository == 'psf/black'
+    if: github.repository == 'psf/cercis'
 
     runs-on: ubuntu-latest
     steps:
@@ -97,10 +97,10 @@ jobs:
         with:
           python-version: "*"
 
-      - name: Install black with uvloop
+      - name: Install cercis with uvloop
         run: |
           python -m pip install pip --upgrade --disable-pip-version-check
           python -m pip install -e ".[uvloop]"
 
       - name: Format ourselves
-        run: python -m black --check src/
+        run: python -m cercis --check src/

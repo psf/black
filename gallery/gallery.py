@@ -202,13 +202,13 @@ def format_repo_with_version(
     black_version: BlackVersion,
     input_directory: Path,
 ) -> str:
-    current_branch = f"black-{black_version.version}"
+    current_branch = f"cercis-{black_version.version}"
     git_switch_branch(black_version.version, repo=black_repo)
     git_switch_branch(current_branch, repo=repo, new=True, from_branch=from_branch)
 
     format_cmd: List[Union[Path, str]] = [
         black_runner(black_version.version, black_repo),
-        (black_repo / "black.py").resolve(),
+        (black_repo / "cercis.py").resolve(),
         ".",
     ]
     if black_version.config:
@@ -217,7 +217,7 @@ def format_repo_with_version(
     subprocess.run(format_cmd, cwd=repo, check=False)  # ensure the process
     # continuess to run even it can't format some files. Reporting those
     # should be enough
-    git_add_and_commit(f"Format with black:{black_version.version}", repo=repo)
+    git_add_and_commit(f"Format with cercis:{black_version.version}", repo=repo)
 
     return current_branch
 
@@ -255,7 +255,7 @@ def main() -> None:
         "-t", "--top-packages", help="Top n PyPI packages to download.", type=int
     )
 
-    parser.add_argument("-b", "--black-repo", help="Black's Git repository.", type=Path)
+    parser.add_argument("-b", "--cercis-repo", help="Black's Git repository.", type=Path)
     parser.add_argument(
         "-v",
         "--version",

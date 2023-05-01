@@ -11,7 +11,7 @@ import hypothesmith
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
-import black
+import cercis
 from blib2to3.pgen2.tokenize import TokenError
 
 
@@ -30,7 +30,7 @@ from blib2to3.pgen2.tokenize import TokenError
     src_contents=hypothesmith.from_grammar() | hypothesmith.from_node(),
     # Using randomly-varied modes helps us to exercise less common code paths.
     mode=st.builds(
-        black.FileMode,
+        cercis.FileMode,
         line_length=st.just(88) | st.integers(0, 200),
         string_normalization=st.booleans(),
         preview=st.booleans(),
@@ -39,15 +39,15 @@ from blib2to3.pgen2.tokenize import TokenError
     ),
 )
 def test_idempotent_any_syntatically_valid_python(
-    src_contents: str, mode: black.FileMode
+    src_contents: str, mode: cercis.FileMode
 ) -> None:
     # Before starting, let's confirm that the input string is valid Python:
     compile(src_contents, "<string>", "exec")  # else the bug is in hypothesmith
 
     # Then format the code...
     try:
-        dst_contents = black.format_str(src_contents, mode=mode)
-    except black.InvalidInput:
+        dst_contents = cercis.format_str(src_contents, mode=mode)
+    except cercis.InvalidInput:
         # This is a bug - if it's valid Python code, as above, Black should be
         # able to cope with it.  See issues #970, #1012
         # TODO: remove this try-except block when issues are resolved.
@@ -64,10 +64,10 @@ def test_idempotent_any_syntatically_valid_python(
         raise
 
     # And check that we got equivalent and stable output.
-    black.assert_equivalent(src_contents, dst_contents)
-    black.assert_stable(src_contents, dst_contents, mode=mode)
+    cercis.assert_equivalent(src_contents, dst_contents)
+    cercis.assert_stable(src_contents, dst_contents, mode=mode)
 
-    # Future test: check that pure-python and mypyc versions of black
+    # Future test: check that pure-python and mypyc versions of cercis
     # give identical output for identical input?
 
 

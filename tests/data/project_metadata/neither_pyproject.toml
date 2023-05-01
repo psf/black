@@ -2,5 +2,5 @@
 name = "test"
 version = "1.0.0"
 
-[tool.black]
+[tool.cercis]
 line-length = 79

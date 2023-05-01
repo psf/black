@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   docker:
-    if: github.repository == 'psf/black'
+    if: github.repository == 'psf/cercis'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -41,7 +41,7 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: pyfound/black:latest,pyfound/black:${{ env.GIT_TAG }}
+          tags: pyfound/cercis:latest,pyfound/cercis:${{ env.GIT_TAG }}
 
       - name: Build and push latest_release tag
         if:
@@ -52,7 +52,7 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: pyfound/black:latest_release
+          tags: pyfound/cercis:latest_release
 
       - name: Build and push latest_prerelease tag
         if:
@@ -63,7 +63,7 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: pyfound/black:latest_prerelease
+          tags: pyfound/cercis:latest_prerelease
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}

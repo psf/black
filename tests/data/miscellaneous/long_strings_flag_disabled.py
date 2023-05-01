@@ -63,7 +63,7 @@ bad_split2 = (
     "with a space at the end instead of the "
     "beginning. Or what about when it is split too "
     "soon? In the case of a split that is too "
-    "short, black will try to honer the custom "
+    "short, cercis will try to honer the custom "
     "split."
 )
 
@@ -79,7 +79,7 @@ bad_split_func1(
     "with a space at the end instead of the "
     "beginning. Or what about when it is split too "
     "soon? In the case of a split that is too "
-    "short, black will try to honer the custom "
+    "short, cercis will try to honer the custom "
     "split.",
     xxx,
     yyy,
@@ -102,7 +102,7 @@ bad_split_func3(
         "with a space at the end instead of the "
         r"beginning. Or what about when it is split too "
         r"soon? In the case of a split that is too "
-        "short, black will try to honer the custom "
+        "short, cercis will try to honer the custom "
         "split."
     ),
     xxx,
@@ -110,7 +110,7 @@ bad_split_func3(
     zzz,
 )
 
-raw_string = r"This is a long raw string. When re-formatting this string, black needs to make sure it prepends the 'r' onto the new string."
+raw_string = r"This is a long raw string. When re-formatting this string, cercis needs to make sure it prepends the 'r' onto the new string."
 
 fmt_string1 = "We also need to be sure to preserve any and all {} which may or may not be attached to the string in question.".format(
     "method calls"
@@ -143,7 +143,7 @@ old_fmt_string3 = (
     )
 )
 
-fstring = f"f-strings definitely make things more {difficult} than they need to be for {{black}}. But boy they sure are handy. The problem is that some lines will need to have the 'f' whereas others do not. This {line}, for example, needs one."
+fstring = f"f-strings definitely make things more {difficult} than they need to be for {{cercis}}. But boy they sure are handy. The problem is that some lines will need to have the 'f' whereas others do not. This {line}, for example, needs one."
 
 fstring_with_no_fexprs = f"Some regular string that needs to get split certainly but is NOT an fstring by any means whatsoever."
 

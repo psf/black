@@ -5,7 +5,7 @@ def foo(
 # output
 
 def foo(
-    # type: Foo
-    x,
+        # type: Foo
+        x,
 ):
     pass

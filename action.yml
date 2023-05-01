@@ -4,7 +4,7 @@ author: "Łukasz Langa and contributors to Black"
 inputs:
   options:
     description:
-      "Options passed to Black. Use `black --help` to see available options. Default:
+      "Options passed to Black. Use `cercis --help` to see available options. Default:
       '--check --diff'"
     required: false
     default: "--check --diff"
@@ -28,7 +28,7 @@ inputs:
     required: false
     default: ""
 branding:
-  color: "black"
+  color: "cercis"
   icon: "check-circle"
 runs:
   using: composite

@@ -2,27 +2,6 @@
 # "Version control integration" in docs/integrations/source_version_control.md
 exclude: ^(src/blib2to3/|profiling/|tests/data/)
 repos:
-  - repo: local
-    hooks:
-      - id: check-pre-commit-rev-in-example
-        name: Check pre-commit rev in example
-        language: python
-        entry: python -m scripts.check_pre_commit_rev_in_example
-        files: '(CHANGES\.md|source_version_control\.md)$'
-        additional_dependencies:
-          &version_check_dependencies [
-            commonmark==0.9.1,
-            pyyaml==5.4.1,
-            beautifulsoup4==4.9.3,
-          ]
-
-      - id: check-version-in-the-basics-example
-        name: Check black version in the basics example
-        language: python
-        entry: python -m scripts.check_version_in_basics_example
-        files: '(CHANGES\.md|the_basics\.md)$'
-        additional_dependencies: *version_check_dependencies
-
   - repo: https://github.com/pycqa/isort
     rev: 5.12.0
     hooks:
@@ -32,6 +11,7 @@ repos:
     rev: 4.0.1
     hooks:
       - id: flake8
+        args: [--max-line-length=88]
         additional_dependencies:
           - flake8-bugbear
           - flake8-comprehensions

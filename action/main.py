@@ -5,7 +5,7 @@ from pathlib import Path
 from subprocess import PIPE, STDOUT, run
 
 ACTION_PATH = Path(os.environ["GITHUB_ACTION_PATH"])
-ENV_PATH = ACTION_PATH / ".black-env"
+ENV_PATH = ACTION_PATH / ".cercis-env"
 ENV_BIN = ENV_PATH / ("Scripts" if sys.platform == "win32" else "bin")
 OPTIONS = os.getenv("INPUT_OPTIONS", default="")
 SRC = os.getenv("INPUT_SRC", default="")
@@ -23,7 +23,7 @@ if JUPYTER:
 else:
     extra_deps = "[colorama]"
 if version_specifier:
-    req = f"black{extra_deps}{version_specifier}"
+    req = f"cercis{extra_deps}{version_specifier}"
 else:
     describe_name = ""
     with open(ACTION_PATH / ".git_archival.txt", encoding="utf-8") as fp:
@@ -39,7 +39,7 @@ else:
     # - 23.1.0-51-g448bba7
     if describe_name.count("-") < 2:
         # the action's commit matches a tag exactly, install exact version from PyPI
-        req = f"black{extra_deps}=={describe_name}"
+        req = f"cercis{extra_deps}=={describe_name}"
     else:
         # the action's commit does not match any tag, install from the local git repo
         req = f".{extra_deps}"
@@ -57,7 +57,7 @@ if pip_proc.returncode:
     sys.exit(pip_proc.returncode)
 
 
-base_cmd = [str(ENV_BIN / "black")]
+base_cmd = [str(ENV_BIN / "cercis")]
 if BLACK_ARGS:
     # TODO: remove after a while since this is deprecated in favour of SRC + OPTIONS.
     proc = run([*base_cmd, *shlex.split(BLACK_ARGS)])
