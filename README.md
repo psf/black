@@ -5,8 +5,8 @@
 _**Cercis**_ /ˈsɜːrsɪs/ is a Python code formatter that is more configurable than
 [Black](https://github.com/psf/black) (a popular Python code formatter).
 
-[_Cercis_](https://en.wikipedia.org/wiki/Cercis) is also a name of a deciduous tree that
-boasts vibrant pink to purple-hued flowers, which bloom in early spring.
+[_Cercis_](https://en.wikipedia.org/wiki/Cercis) is also the name of a deciduous tree
+that boasts vibrant pink to purple-hued flowers, which bloom in early spring.
 
 This code repository is forked from and directly inspired by
 [Black](https://github.com/psf/black). The original license of Black is included in this
@@ -14,13 +14,9 @@ repository (see [LICENSE_ORIGINAL](./LICENSE_ORIGINAL)).
 
 ## 1. Motivations
 
-While we like the idea of auto-formatting and making code readable, we take issue with
-some style choices and the lack of configurability of the Black formatter. We
-acknowledge that people have different style preferences, and we believe this is totally
-OK.
-
-Therefore, _Cercis_ aims at providing some configurability beyond Black's limited
-offering.
+While we like the idea of auto-formatting and code readability, we take issue with some
+style choices and the lack of configurability of the Black formatter. Therefore,
+_Cercis_ aims at providing some configurability beyond Black's limited offering.
 
 ## 2. Installation and usage
 
@@ -58,6 +54,7 @@ file. Remember to replace `<VERSION>` with your version of this tool (such as `v
   rev: <VERSION>
   hooks:
     - id: cercis
+      args: [--line-length=88]
 ```
 
 To format Jupyter notebooks (.ipynb), put the following into your
@@ -68,9 +65,12 @@ To format Jupyter notebooks (.ipynb), put the following into your
   rev: <VERSION>
   hooks:
     - id: cercis-jupyter
+      args: [--line-length=88]
 ```
 
-See [pre-commit](https://github.com/pre-commit/pre-commit) for more instructions.
+See [pre-commit](https://github.com/pre-commit/pre-commit) for more instructions. In
+particular, [here](https://pre-commit.com/#passing-arguments-to-hooks) is how to specify
+arguments in pre-commit config.
 
 ## 3. The code style
 
