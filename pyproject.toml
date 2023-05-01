@@ -8,6 +8,7 @@
 [tool.cercis]
 line-length = 88
 function-definition-extra-indent = true
+single-quote = true
 target-version = ['py37', 'py38']
 include = '\.pyi?$'
 extend-exclude = '''

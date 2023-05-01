@@ -17,7 +17,11 @@ if sys.version_info < (3, 8):
 else:
     from typing import Final
 
-from cercis.const import DEFAULT_FUNCTION_DEFINITION_EXTRA_INDENT, DEFAULT_LINE_LENGTH
+from cercis.const import (
+    DEFAULT_FUNCTION_DEFINITION_EXTRA_INDENT,
+    DEFAULT_LINE_LENGTH,
+    DEFAULT_SINGLE_QUOTE,
+)
 
 
 class TargetVersion(Enum):
@@ -185,6 +189,7 @@ class Mode:
     python_cell_magics: Set[str] = field(default_factory=set)
     preview: bool = False
     function_definition_extra_indent: bool = DEFAULT_FUNCTION_DEFINITION_EXTRA_INDENT
+    single_quote: bool = DEFAULT_SINGLE_QUOTE
 
     def __post_init__(self) -> None:
         if self.experimental_string_processing:

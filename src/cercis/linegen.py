@@ -149,7 +149,10 @@ class LineGenerator(Visitor[Line]):
             normalize_prefix(node, inside_brackets=any_open_brackets)
             if self.mode.string_normalization and node.type == token.STRING:
                 node.value = normalize_string_prefix(node.value)
-                node.value = normalize_string_quotes(node.value)
+                node.value = normalize_string_quotes(
+                    node.value,
+                    single_quote=self.mode.single_quote,
+                )
             if node.type == token.NUMBER:
                 normalize_numeric_literal(node)
             if node.type not in WHITESPACE:
@@ -395,7 +398,10 @@ class LineGenerator(Visitor[Line]):
                 # formatting as visit_default() is called *after*. To avoid a
                 # situation where this function formats a docstring differently on
                 # the second pass, normalize it early.
-                docstring = normalize_string_quotes(docstring)
+                docstring = normalize_string_quotes(
+                    docstring,
+                    single_quote=self.mode.single_quote,
+                )
             else:
                 docstring = leaf.value
             prefix = get_string_prefix(docstring)
@@ -510,9 +516,11 @@ def transform_line(
 
     ll = mode.line_length
     sn = mode.string_normalization
-    string_merge = StringMerger(ll, sn)
+    sq = mode.single_quote
+
+    string_merge = StringMerger(ll, sn, sq)
     string_paren_strip = StringParenStripper(ll, sn)
-    string_split = StringSplitter(ll, sn)
+    string_split = StringSplitter(ll, sn, sq)
     string_paren_wrap = StringParenWrapper(ll, sn)
 
     transformers: List[Transformer]

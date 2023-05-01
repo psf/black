@@ -196,9 +196,15 @@ class StringTransformer(ABC):
 
     # Ideally this would be a dataclass, but unfortunately mypyc breaks when used with
     # `abc.ABC`.
-    def __init__(self, line_length: int, normalize_strings: bool) -> None:
+    def __init__(
+            self,
+            line_length: int,
+            normalize_strings: bool,
+            single_quote: bool = True,
+    ) -> None:
         self.line_length = line_length
         self.normalize_strings = normalize_strings
+        self.single_quote = single_quote
 
     @abstractmethod
     def do_match(self, line: Line) -> TMatchResult:
@@ -653,7 +659,10 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
 
         S_leaf = Leaf(token.STRING, S)
         if self.normalize_strings:
-            S_leaf.value = normalize_string_quotes(S_leaf.value)
+            S_leaf.value = normalize_string_quotes(
+                S_leaf.value,
+                single_quote=self.single_quote,
+            )
 
         # Fill the 'custom_splits' list with the appropriate CustomSplit objects.
         temp_string = S_leaf.value[len(prefix) + 1 : -1]
@@ -1758,7 +1767,10 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
 
     def _maybe_normalize_string_quotes(self, leaf: Leaf) -> None:
         if self.normalize_strings:
-            leaf.value = normalize_string_quotes(leaf.value)
+            leaf.value = normalize_string_quotes(
+                leaf.value,
+                single_quote=self.single_quote,
+            )
 
     def _normalize_f_string(self, string: str, prefix: str) -> str:
         """

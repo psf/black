@@ -3,3 +3,4 @@ DEFAULT_EXCLUDES = r"/(\.direnv|\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.ven
 DEFAULT_INCLUDES = r"(\.pyi?|\.ipynb)$"
 STDIN_PLACEHOLDER = "__BLACK_STDIN_FILENAME__"
 DEFAULT_FUNCTION_DEFINITION_EXTRA_INDENT = True
+DEFAULT_SINGLE_QUOTE = True

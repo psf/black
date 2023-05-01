@@ -43,6 +43,7 @@ from cercis.const import (
     DEFAULT_FUNCTION_DEFINITION_EXTRA_INDENT,
     DEFAULT_INCLUDES,
     DEFAULT_LINE_LENGTH,
+    DEFAULT_SINGLE_QUOTE,
     STDIN_PLACEHOLDER,
 )
 from cercis.files import (
@@ -223,6 +224,14 @@ def validate_regex(
         "If True, use 8 spaces as indent in function definition;"
         " otherwise, use 8 (Black's default)."
     ),
+)
+@click.option(
+    "-sq",
+    "--single-quote",
+    type=bool,
+    show_default=True,
+    default=DEFAULT_SINGLE_QUOTE,
+    help=("If True, format code using single quotes; otherwise use double quotes."),
 )
 @click.option(
     "-t",
@@ -441,6 +450,7 @@ def main(  # noqa: C901
         code: Optional[str],
         line_length: int,
         function_definition_extra_indent: bool,
+        single_quote: bool,
         target_version: List[TargetVersion],
         check: bool,
         diff: bool,
@@ -564,6 +574,7 @@ def main(  # noqa: C901
         preview=preview,
         python_cell_magics=set(python_cell_magics),
         function_definition_extra_indent=function_definition_extra_indent,
+        single_quote=single_quote,
     )
 
     if code is not None:
