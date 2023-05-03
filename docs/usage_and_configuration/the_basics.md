@@ -175,7 +175,7 @@ All done! ✨ 🍰 ✨
 
 #### `--color` / `--no-color`
 
-Show (or do not show) colored diiff. Only applies when `--diff` is given.
+Show (or do not show) colored diff. Only applies when `--diff` is given.
 
 #### `--fast` / `--safe`
 
