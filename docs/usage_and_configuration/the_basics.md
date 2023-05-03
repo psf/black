@@ -209,7 +209,7 @@ $ black --required-version 31 -c "still = 'beta?!'"
 Oh no! 💥 💔 💥 The required version does not match the running version!
 ```
 
-Because of our [stability policy](../the_black_code_style/index.rst), this will
+Because of our [stability policy](../the_black_code_style/index.md), this will
 guarantee stable formatting, but still allow you to take advantage of improvements that
 do not affect formatting.
 
