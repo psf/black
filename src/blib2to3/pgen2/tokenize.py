@@ -34,6 +34,7 @@ from typing import (
     Iterator,
     List,
     Optional,
+    Set,
     Text,
     Tuple,
     Pattern,
@@ -66,19 +67,19 @@ __all__ = [x for x in dir(token) if x[0] != "_"] + [
 del token
 
 
-def group(*choices):
+def group(*choices: str) -> str:
     return "(" + "|".join(choices) + ")"
 
 
-def any(*choices):
+def any(*choices: str) -> str:
     return group(*choices) + "*"
 
 
-def maybe(*choices):
+def maybe(*choices: str) -> str:
     return group(*choices) + "?"
 
 
-def _combinations(*l):
+def _combinations(*l: str) -> Set[str]:
     return set(x + y for x in l for y in l + ("",) if x.casefold() != y.casefold())
 
 
@@ -187,15 +188,17 @@ class StopTokenizing(Exception):
     pass
 
 
-def printtoken(type, token, xxx_todo_changeme, xxx_todo_changeme1, line):  # for testing
-    (srow, scol) = xxx_todo_changeme
-    (erow, ecol) = xxx_todo_changeme1
+Coord = Tuple[int, int]
+
+
+def printtoken(type: int, token: Text, srow_col: Coord, erow_col: Coord, line: Text):  # for testing
+    (srow, scol) = srow_col
+    (erow, ecol) = erow_col
     print(
         "%d,%d-%d,%d:\t%s\t%s" % (srow, scol, erow, ecol, tok_name[type], repr(token))
     )
 
 
-Coord = Tuple[int, int]
 TokenEater = Callable[[int, Text, Coord, Coord, Text], None]
 
 
@@ -219,7 +222,7 @@ def tokenize(readline: Callable[[], Text], tokeneater: TokenEater = printtoken) 
 
 
 # backwards compatible interface
-def tokenize_loop(readline, tokeneater):
+def tokenize_loop(readline: Callable[[], Text], tokeneater: TokenEater) -> None:
     for token_info in generate_tokens(readline):
         tokeneater(*token_info)
 
