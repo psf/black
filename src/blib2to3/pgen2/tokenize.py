@@ -599,7 +599,7 @@ def generate_tokens(
                     if token[-1] == "\n":  # continued string
                         strstart = (lnum, start)
                         maybe_endprog = (
-                            endprogs[initial]
+                            endprogs.get(initial)
                             or endprogs.get(token[1])
                             or endprogs.get(token[2])
                         )
