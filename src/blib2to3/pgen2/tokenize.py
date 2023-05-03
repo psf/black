@@ -191,7 +191,9 @@ class StopTokenizing(Exception):
 Coord = Tuple[int, int]
 
 
-def printtoken(type: int, token: Text, srow_col: Coord, erow_col: Coord, line: Text):  # for testing
+def printtoken(
+    type: int, token: Text, srow_col: Coord, erow_col: Coord, line: Text
+):  # for testing
     (srow, scol) = srow_col
     (erow, ecol) = erow_col
     print(
@@ -232,7 +234,6 @@ TokenInfo = Union[Tuple[int, str], GoodTokenInfo]
 
 
 class Untokenizer:
-
     tokens: List[Text]
     prev_row: int
     prev_col: int
@@ -606,7 +607,9 @@ def generate_tokens(
                             or endprogs.get(token[1])
                             or endprogs.get(token[2])
                         )
-                        assert maybe_endprog is not None, f"endprog not found for {token}"
+                        assert (
+                            maybe_endprog is not None
+                        ), f"endprog not found for {token}"
                         endprog = maybe_endprog
                         contstr, needcont = line[start:], 1
                         contline = line
@@ -635,7 +638,6 @@ def generate_tokens(
 
                     if token in ("def", "for"):
                         if stashed and stashed[0] == NAME and stashed[1] == "async":
-
                             if token == "def":
                                 async_def = True
                                 async_def_indent = indents[-1]
