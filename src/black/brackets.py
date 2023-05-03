@@ -1,20 +1,28 @@
 """Builds on top of nodes.py to track brackets."""
 
-from dataclasses import dataclass, field
 import sys
-from typing import Dict, Iterable, List, Optional, Tuple, Union
+from dataclasses import dataclass, field
+from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
 
 if sys.version_info < (3, 8):
     from typing_extensions import Final
 else:
     from typing import Final
 
-from blib2to3.pytree import Leaf, Node
+from black.nodes import (
+    BRACKET,
+    CLOSING_BRACKETS,
+    COMPARATORS,
+    LOGIC_OPERATORS,
+    MATH_OPERATORS,
+    OPENING_BRACKETS,
+    UNPACKING_PARENTS,
+    VARARGS_PARENTS,
+    is_vararg,
+    syms,
+)
 from blib2to3.pgen2 import token
-
-from black.nodes import syms, is_vararg, VARARGS_PARENTS, UNPACKING_PARENTS
-from black.nodes import BRACKET, OPENING_BRACKETS, CLOSING_BRACKETS
-from black.nodes import MATH_OPERATORS, COMPARATORS, LOGIC_OPERATORS
+from blib2to3.pytree import Leaf, Node
 
 # types
 LN = Union[Leaf, Node]
@@ -72,15 +80,25 @@ class BracketTracker:
         within brackets a given leaf is. 0 means there are no enclosing brackets
         that started on this line.
 
-        If a leaf is itself a closing bracket, it receives an `opening_bracket`
-        field that it forms a pair with. This is a one-directional link to
-        avoid reference cycles.
+        If a leaf is itself a closing bracket and there is a matching opening
+        bracket earlier, it receives an `opening_bracket` field with which it forms a
+        pair. This is a one-directional link to avoid reference cycles. Closing
+        bracket without opening happens on lines continued from previous
+        breaks, e.g. `) -> "ReturnType":` as part of a funcdef where we place
+        the return type annotation on its own line of the previous closing RPAR.
 
         If a leaf is a delimiter (a token on which Black can split the line if
         needed) and it's on depth 0, its `id()` is stored in the tracker's
         `delimiters` field.
         """
         if leaf.type == token.COMMENT:
+            return
+
+        if (
+            self.depth == 0
+            and leaf.type in CLOSING_BRACKETS
+            and (self.depth, leaf.type) not in self.bracket_match
+        ):
             return
 
         self.maybe_decrement_after_for_loop_variable(leaf)
@@ -332,3 +350,32 @@ def max_delimiter_priority_in_atom(node: LN) -> Priority:
 
     except ValueError:
         return 0
+
+
+def get_leaves_inside_matching_brackets(leaves: Sequence[Leaf]) -> Set[LeafID]:
+    """Return leaves that are inside matching brackets.
+
+    The input `leaves` can have non-matching brackets at the head or tail parts.
+    Matching brackets are included.
+    """
+    try:
+        # Start with the first opening bracket and ignore closing brackets before.
+        start_index = next(
+            i for i, l in enumerate(leaves) if l.type in OPENING_BRACKETS
+        )
+    except StopIteration:
+        return set()
+    bracket_stack = []
+    ids = set()
+    for i in range(start_index, len(leaves)):
+        leaf = leaves[i]
+        if leaf.type in OPENING_BRACKETS:
+            bracket_stack.append((BRACKET[leaf.type], i))
+        if leaf.type in CLOSING_BRACKETS:
+            if bracket_stack and leaf.type == bracket_stack[-1][0]:
+                _, start = bracket_stack.pop()
+                for j in range(start, i + 1):
+                    ids.add(id(leaves[j]))
+            else:
+                break
+    return ids

@@ -12,6 +12,11 @@ inputs:
     description: "Source to run Black. Default: '.'"
     required: false
     default: "."
+  jupyter:
+    description:
+      "Set this option to true to include Jupyter Notebook files. Default: false"
+    required: false
+    default: false
   black_args:
     description: "[DEPRECATED] Black input arguments."
     required: false
@@ -29,30 +34,16 @@ runs:
   using: composite
   steps:
     - run: |
-        # Exists since using github.action_path + path to main script doesn't work because bash
-        # interprets the backslashes in github.action_path (which are used when the runner OS
-        # is Windows) destroying the path to the target file.
-        #
-        # Also semicolons are necessary because I can't get the newlines to work
-        entrypoint="import sys;
-        import subprocess;
-        from pathlib import Path;
-
-        MAIN_SCRIPT = Path(r'${GITHUB_ACTION_PATH}') / 'action' / 'main.py';
-
-        proc = subprocess.run([sys.executable, str(MAIN_SCRIPT)]);
-        sys.exit(proc.returncode)
-        "
-
         if [ "$RUNNER_OS" == "Windows" ]; then
-          echo $entrypoint | python
+          python $GITHUB_ACTION_PATH/action/main.py
         else
-          echo $entrypoint | python3
+          python3 $GITHUB_ACTION_PATH/action/main.py
         fi
       env:
         # TODO: Remove once https://github.com/actions/runner/issues/665 is fixed.
         INPUT_OPTIONS: ${{ inputs.options }}
         INPUT_SRC: ${{ inputs.src }}
+        INPUT_JUPYTER: ${{ inputs.jupyter }}
         INPUT_BLACK_ARGS: ${{ inputs.black_args }}
         INPUT_VERSION: ${{ inputs.version }}
         pythonioencoding: utf-8

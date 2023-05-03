@@ -10,7 +10,7 @@ Maintained with:
 - [Mika Naylor](mailto:mail@autophagy.io)
 - [Zsolt Dollenstein](mailto:zsol.zsol@gmail.com)
 - [Cooper Lees](mailto:me@cooperlees.com)
-- Richard Si
+- [Richard Si](mailto:sichard26@gmail.com)
 - [Felix Hildén](mailto:felix.hilden@gmail.com)
 - [Batuhan Taskaya](mailto:batuhan@python.org)
 
@@ -19,15 +19,18 @@ Multiple contributions by:
 - [Abdur-Rahmaan Janhangeer](mailto:arj.python@gmail.com)
 - [Adam Johnson](mailto:me@adamj.eu)
 - [Adam Williamson](mailto:adamw@happyassassin.net)
-- [Alexander Huynh](mailto:github@grande.coffee)
+- [Alexander Huynh](mailto:ahrex-gh-psf-black@e.sc)
+- [Alexandr Artemyev](mailto:mogost@gmail.com)
 - [Alex Vandiver](mailto:github@chmrr.net)
 - [Allan Simon](mailto:allan.simon@supinfo.com)
 - Anders-Petter Ljungquist
+- [Amethyst Reese](mailto:amy@n7.gg)
 - [Andrew Thorp](mailto:andrew.thorp.dev@gmail.com)
 - [Andrew Zhou](mailto:andrewfzhou@gmail.com)
 - [Andrey](mailto:dyuuus@yandex.ru)
 - [Andy Freeland](mailto:andy@andyfreeland.net)
 - [Anthony Sottile](mailto:asottile@umich.edu)
+- [Antonio Ossa Guerra](mailto:aaossa+black@uc.cl)
 - [Arjaan Buijk](mailto:arjaan.buijk@gmail.com)
 - [Arnav Borbornah](mailto:arnavborborah11@gmail.com)
 - [Artem Malyshev](mailto:proofit404@gmail.com)
@@ -78,6 +81,7 @@ Multiple contributions by:
 - [Hugo Barrera](mailto::hugo@barrera.io)
 - Hugo van Kemenade
 - [Hynek Schlawack](mailto:hs@ox.cx)
+- [Ionite](mailto:dev@ionite.io)
 - [Ivan Katanić](mailto:ivan.katanic@gmail.com)
 - [Jakub Kadlubiec](mailto:jakub.kadlubiec@skyscanner.net)
 - [Jakub Warczarek](mailto:jakub.warczarek@gmail.com)
@@ -148,6 +152,7 @@ Multiple contributions by:
 - [Rishikesh Jha](mailto:rishijha424@gmail.com)
 - [Rupert Bedford](mailto:rupert@rupertb.com)
 - Russell Davis
+- [Sagi Shadur](mailto:saroad2@gmail.com)
 - [Rémi Verschelde](mailto:rverschelde@gmail.com)
 - [Sami Salonen](mailto:sakki@iki.fi)
 - [Samuel Cormier-Iijima](mailto:samuel@cormier-iijima.com)

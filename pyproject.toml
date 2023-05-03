@@ -7,7 +7,7 @@
 
 [tool.black]
 line-length = 88
-target-version = ['py36', 'py37', 'py38']
+target-version = ['py37', 'py38']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
@@ -22,19 +22,196 @@ extend-exclude = '''
 # this off.
 preview = true
 
-# Build system information below.
+# Build system information and other project-specific configuration below.
 # NOTE: You don't need this in your own Black configuration.
 
 [build-system]
-requires = ["setuptools>=45.0", "setuptools_scm[toml]>=6.3.1", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling>=1.8.0", "hatch-vcs", "hatch-fancy-pypi-readme"]
+build-backend = "hatchling.build"
+
+[project]
+name = "black"
+description = "The uncompromising code formatter."
+license = { text = "MIT" }
+requires-python = ">=3.7"
+authors = [
+  { name = "Łukasz Langa", email = "lukasz@langa.pl" },
+]
+keywords = [
+  "automation",
+  "autopep8",
+  "formatter",
+  "gofmt",
+  "pyfmt",
+  "rustfmt",
+  "yapf",
+]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = [
+  "click>=8.0.0",
+  "mypy_extensions>=0.4.3",
+  "packaging>=22.0",
+  "pathspec>=0.9.0",
+  "platformdirs>=2",
+  "tomli>=1.1.0; python_version < '3.11'",
+  "typed-ast>=1.4.2; python_version < '3.8' and implementation_name == 'cpython'",
+  "typing_extensions>=3.10.0.0; python_version < '3.10'",
+]
+dynamic = ["readme", "version"]
+
+[project.optional-dependencies]
+colorama = ["colorama>=0.4.3"]
+uvloop = ["uvloop>=0.15.2"]
+d = [
+  "aiohttp>=3.7.4",
+]
+jupyter = [
+  "ipython>=7.8.0",
+  "tokenize-rt>=3.2.0",
+]
+
+[project.scripts]
+black = "black:patched_main"
+blackd = "blackd:patched_main [d]"
+
+[project.urls]
+Changelog = "https://github.com/psf/black/blob/main/CHANGES.md"
+Homepage = "https://github.com/psf/black"
+
+[tool.hatch.metadata.hooks.fancy-pypi-readme]
+content-type = "text/markdown"
+fragments = [
+  { path = "README.md" },
+  { path = "CHANGES.md" },
+]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/_black_version.py"
+template = '''
+version = "{version}"
+'''
+
+[tool.hatch.build.targets.sdist]
+exclude = ["/profiling"]
+
+[tool.hatch.build.targets.wheel]
+only-include = ["src"]
+sources = ["src"]
+
+[tool.hatch.build.targets.wheel.hooks.mypyc]
+enable-by-default = false
+dependencies = [
+  "hatch-mypyc>=0.13.0",
+  "mypy==0.991",
+  # Required stubs to be removed when the packages support PEP 561 themselves
+  "types-typed-ast>=1.4.2",
+]
+require-runtime-dependencies = true
+exclude = [
+  # There's no good reason for blackd to be compiled.
+  "/src/blackd",
+  # Not performance sensitive, so save bytes + compilation time:
+  "/src/blib2to3/__init__.py",
+  "/src/blib2to3/pgen2/__init__.py",
+  "/src/black/output.py",
+  "/src/black/concurrency.py",
+  "/src/black/files.py",
+  "/src/black/report.py",
+  # Breaks the test suite when compiled (and is also useless):
+  "/src/black/debug.py",
+  # Compiled modules can't be run directly and that's a problem here:
+  "/src/black/__main__.py",
+]
+options = { debug_level = "0" }
+
+[tool.cibuildwheel]
+build-verbosity = 1
+# So these are the environments we target:
+# - Python: CPython 3.7+ only
+# - Architecture (64-bit only): amd64 / x86_64, universal2, and arm64
+# - OS: Linux (no musl), Windows, and macOS
+build = "cp3*-*"
+skip = ["*-manylinux_i686", "*-musllinux_*", "*-win32", "pp-*"]
+# This is the bare minimum needed to run the test suite. Pulling in the full
+# test_requirements.txt would download a bunch of other packages not necessary
+# here and would slow down the testing step a fair bit.
+test-requires = ["pytest>=6.1.1"]
+test-command = 'pytest {project} -k "not incompatible_with_mypyc"'
+test-extras = ["d"," jupyter"]
+# Skip trying to test arm64 builds on Intel Macs. (so cross-compilation doesn't
+# straight up crash)
+test-skip = ["*-macosx_arm64", "*-macosx_universal2:arm64"]
+
+[tool.cibuildwheel.environment]
+HATCH_BUILD_HOOKS_ENABLE = "1"
+MYPYC_OPT_LEVEL = "3"
+MYPYC_DEBUG_LEVEL = "0"
+# CPython 3.11 wheels aren't available for aiohttp and building a Cython extension
+# from source also doesn't work.
+AIOHTTP_NO_EXTENSIONS = "1"
+
+[tool.cibuildwheel.linux]
+before-build = [
+    "yum install -y clang gcc",
+]
+
+[tool.cibuildwheel.linux.environment]
+HATCH_BUILD_HOOKS_ENABLE = "1"
+MYPYC_OPT_LEVEL = "3"
+MYPYC_DEBUG_LEVEL = "0"
+# Black needs Clang to compile successfully on Linux.
+CC = "clang"
+AIOHTTP_NO_EXTENSIONS = "1"
+
+[tool.isort]
+atomic = true
+profile = "black"
+line_length = 88
+skip_gitignore = true
+skip_glob = ["src/blib2to3", "tests/data", "profiling"]
+known_first_party = ["black", "blib2to3", "blackd", "_black_version"]
 
 [tool.pytest.ini_options]
 # Option below requires `tests/optional.py`
+addopts = "--strict-config --strict-markers"
 optional-tests = [
   "no_blackd: run when `d` extra NOT installed",
   "no_jupyter: run when `jupyter` extra NOT installed",
 ]
 markers = [
   "incompatible_with_mypyc: run when testing mypyc compiled black"
+]
+xfail_strict = true
+filterwarnings = [
+    "error",
+    # this is mitigated by a try/catch in https://github.com/psf/black/pull/2974/
+    # this ignore can be removed when support for aiohttp 3.7 is dropped.
+    '''ignore:Decorator `@unittest_run_loop` is no longer needed in aiohttp 3\.8\+:DeprecationWarning''',
+    # this is mitigated by a try/catch in https://github.com/psf/black/pull/3198/
+    # this ignore can be removed when support for aiohttp 3.x is dropped.
+    '''ignore:Middleware decorator is deprecated since 4\.0 and its behaviour is default, you can simply remove this decorator:DeprecationWarning''',
+    # this is mitigated by https://github.com/python/cpython/issues/79071 in python 3.8+
+    # this ignore can be removed when support for 3.7 is dropped.
+    '''ignore:Bare functions are deprecated, use async ones:DeprecationWarning''',
+    # aiohttp is using deprecated cgi modules - Safe to remove when fixed:
+    # https://github.com/aio-libs/aiohttp/issues/6905
+    '''ignore:'cgi' is deprecated and slated for removal in Python 3.13:DeprecationWarning''',
 ]

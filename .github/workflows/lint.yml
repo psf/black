@@ -16,13 +16,27 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v3
+      - name: Assert PR target is main
+        if: github.event_name == 'pull_request' && github.repository == 'psf/black'
+        run: |
+          if [ "$GITHUB_BASE_REF" != "main" ]; then
+              echo "::error::PR targeting '$GITHUB_BASE_REF', please refile targeting 'main'." && exit 1
+          fi
+
+      - name: Set up latest Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "*"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e '.[d]'
+          python -m pip install tox
 
-      - name: Lint
-        uses: pre-commit/action@v2.0.3
+      - name: Run pre-commit hooks
+        uses: pre-commit/action@v3.0.0
+
+      - name: Format ourselves
+        run: |
+          tox -e run_self

@@ -3,16 +3,7 @@ blib2to3 Node/Leaf transformation-related utility functions.
 """
 
 import sys
-from typing import (
-    Generic,
-    Iterator,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    TypeVar,
-    Union,
-)
+from typing import Generic, Iterator, List, Optional, Set, Tuple, TypeVar, Union
 
 if sys.version_info >= (3, 8):
     from typing import Final
@@ -25,14 +16,11 @@ else:
 
 from mypy_extensions import mypyc_attr
 
-# lib2to3 fork
-from blib2to3.pytree import Node, Leaf, type_repr, NL
-from blib2to3 import pygram
-from blib2to3.pgen2 import token
-
 from black.cache import CACHE_DIR
 from black.strings import has_triple_quotes
-
+from blib2to3 import pygram
+from blib2to3.pgen2 import token
+from blib2to3.pytree import NL, Leaf, Node, type_repr
 
 pygram.initialize(CACHE_DIR)
 syms: Final = pygram.python_symbols
@@ -120,6 +108,7 @@ TEST_DESCENDANTS: Final = {
     syms.term,
     syms.power,
 }
+TYPED_NAMES: Final = {syms.tname, syms.tname_star}
 ASSIGNMENTS: Final = {
     "=",
     "+=",
@@ -192,9 +181,9 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
     `complex_subscript` signals whether the given leaf is part of a subscription
     which has non-trivial arguments, like arithmetic expressions or function calls.
     """
-    NO: Final = ""
-    SPACE: Final = " "
-    DOUBLESPACE: Final = "  "
+    NO: Final[str] = ""
+    SPACE: Final[str] = " "
+    DOUBLESPACE: Final[str] = "  "
     t = leaf.type
     p = leaf.parent
     v = leaf.value
@@ -243,6 +232,14 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
                     # that, too.
                     return prevp.prefix
 
+        elif (
+            prevp.type == token.STAR
+            and parent_type(prevp) == syms.star_expr
+            and parent_type(prevp.parent) == syms.subscriptlist
+        ):
+            # No space between typevar tuples.
+            return NO
+
         elif prevp.type in VARARGS_SPECIALS:
             if is_vararg(prevp, within=VARARGS_PARENTS | UNPACKING_PARENTS):
                 return NO
@@ -281,7 +278,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
             return NO
 
         if t == token.EQUAL:
-            if prev.type != syms.tname:
+            if prev.type not in TYPED_NAMES:
                 return NO
 
         elif prev.type == token.EQUAL:
@@ -292,7 +289,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
         elif prev.type != token.COMMA:
             return NO
 
-    elif p.type == syms.tname:
+    elif p.type in TYPED_NAMES:
         # type names
         if not prev:
             prevp = preceding_leaf(p)
@@ -401,6 +398,10 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
     elif p.type == syms.sliceop:
         return NO
 
+    elif p.type == syms.except_clause:
+        if t == token.STAR:
+            return NO
+
     return SPACE
 
 
@@ -501,12 +502,14 @@ def container_of(leaf: Leaf) -> LN:
     return container
 
 
-def first_leaf_column(node: Node) -> Optional[int]:
-    """Returns the column of the first leaf child of a node."""
-    for child in node.children:
-        if isinstance(child, Leaf):
-            return child.column
-    return None
+def first_leaf_of(node: LN) -> Optional[Leaf]:
+    """Returns the first leaf of the node tree."""
+    if isinstance(node, Leaf):
+        return node
+    if node.children:
+        return first_leaf_of(node.children[0])
+    else:
+        return None
 
 
 def is_arith_like(node: LN) -> bool:
@@ -558,6 +561,17 @@ def is_one_tuple(node: LN) -> bool:
         and len(node.children) == 2
         and node.children[1].type == token.COMMA
     )
+
+
+def is_tuple_containing_walrus(node: LN) -> bool:
+    """Return True if `node` holds a tuple that contains a walrus operator."""
+    if node.type != syms.atom:
+        return False
+    gexp = unwrap_singleton_parenthesis(node)
+    if gexp is None or gexp.type != syms.testlist_gexp:
+        return False
+
+    return any(child.type == syms.namedexpr_test for child in gexp.children)
 
 
 def is_one_sequence_between(
@@ -775,6 +789,33 @@ def is_import(leaf: Leaf) -> bool:
     )
 
 
+def is_with_or_async_with_stmt(leaf: Leaf) -> bool:
+    """Return True if the given leaf starts a with or async with statement."""
+    return bool(
+        leaf.type == token.NAME
+        and leaf.value == "with"
+        and leaf.parent
+        and leaf.parent.type == syms.with_stmt
+    ) or bool(
+        leaf.type == token.ASYNC
+        and leaf.next_sibling
+        and leaf.next_sibling.type == syms.with_stmt
+    )
+
+
+def is_async_stmt_or_funcdef(leaf: Leaf) -> bool:
+    """Return True if the given leaf starts an async def/for/with statement.
+
+    Note that `async def` can be either an `async_stmt` or `async_funcdef`,
+    the latter is used when it has decorators.
+    """
+    return bool(
+        leaf.type == token.ASYNC
+        and leaf.parent
+        and leaf.parent.type in {syms.async_stmt, syms.async_funcdef}
+    )
+
+
 def is_type_comment(leaf: Leaf, suffix: str = "") -> bool:
     """Return True if the given leaf is a special comment.
     Only returns true for type comments for now."""
@@ -841,3 +882,19 @@ def is_rpar_token(nl: NL) -> TypeGuard[Leaf]:
 
 def is_string_token(nl: NL) -> TypeGuard[Leaf]:
     return nl.type == token.STRING
+
+
+def is_number_token(nl: NL) -> TypeGuard[Leaf]:
+    return nl.type == token.NUMBER
+
+
+def is_part_of_annotation(leaf: Leaf) -> bool:
+    """Returns whether this leaf is part of type annotations."""
+    ancestor = leaf.parent
+    while ancestor is not None:
+        if ancestor.prev_sibling and ancestor.prev_sibling.type == token.RARROW:
+            return True
+        if ancestor.parent and ancestor.parent.type == syms.tname:
+            return True
+        ancestor = ancestor.parent
+    return False

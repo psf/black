@@ -1,4 +1,4 @@
-![Black Logo](https://raw.githubusercontent.com/psf/black/main/docs/_static/logo2-readme.png)
+[![Black Logo](https://raw.githubusercontent.com/psf/black/main/docs/_static/logo2-readme.png)](https://black.readthedocs.io/en/stable/)
 
 <h2 align="center">The Uncompromising Code Formatter</h2>
 
@@ -38,8 +38,8 @@ Try it out now using the [Black Playground](https://black.vercel.app). Watch the
 
 ### Installation
 
-_Black_ can be installed by running `pip install black`. It requires Python 3.6.2+ to
-run. If you want to format Jupyter Notebooks, install with `pip install black[jupyter]`.
+_Black_ can be installed by running `pip install black`. It requires Python 3.7+ to run.
+If you want to format Jupyter Notebooks, install with `pip install "black[jupyter]"`.
 
 If you can't wait for the latest _hotness_ and want to install from GitHub, use:
 
@@ -66,10 +66,10 @@ Further information can be found in our docs:
 _Black_ is already [successfully used](https://github.com/psf/black#used-by) by many
 projects, small and big. _Black_ has a comprehensive test suite, with efficient parallel
 tests, and our own auto formatting and parallel Continuous Integration runner. Now that
-we have become stable, you should not expect large formatting to changes in the future.
+we have become stable, you should not expect large formatting changes in the future.
 Stylistic changes will mostly be responses to bug reports and support for new Python
 syntax. For more information please refer to the
-[The Black Code Style](docs/the_black_code_style/index.rst).
+[The Black Code Style](https://black.readthedocs.io/en/stable/the_black_code_style/index.html).
 
 Also, as a safety measure which slows down processing, _Black_ will check that the
 reformatted code still produces a valid AST that is effectively equivalent to the
@@ -138,7 +138,7 @@ pandas, Pillow, Twisted, LocalStack, every Datadog Agent Integration, Home Assis
 Zulip, Kedro, OpenOA, FLORIS, ORBIT, WOMBAT, and many more.
 
 The following organizations use _Black_: Facebook, Dropbox, KeepTruckin, Mozilla, Quora,
-Duolingo, QuantumBlack, Tesla.
+Duolingo, QuantumBlack, Tesla, Archer Aviation.
 
 Are we missing anyone? Let us know.
 
@@ -165,8 +165,8 @@ Twisted and CPython:
 
 > At least the name is good.
 
-**Kenneth Reitz**, creator of [`requests`](http://python-requests.org/) and
-[`pipenv`](https://readthedocs.org/projects/pipenv/):
+**Kenneth Reitz**, creator of [`requests`](https://requests.readthedocs.io/en/latest/)
+and [`pipenv`](https://readthedocs.org/projects/pipenv/):
 
 > This vastly improves the formatting of our code. Thanks a ton!
 

@@ -107,7 +107,7 @@ class TokenProxy:
 
     def can_advance(self, to: int) -> bool:
         # Try to eat, fail if it can't. The eat operation is cached
-        # so there wont be any additional cost of eating here
+        # so there won't be any additional cost of eating here
         try:
             self.eat(to)
         except StopIteration:
@@ -263,14 +263,13 @@ def load_grammar(
         logger = logging.getLogger(__name__)
     gp = _generate_pickle_name(gt) if gp is None else gp
     if force or not _newer(gp, gt):
-        logger.info("Generating grammar tables from %s", gt)
         g: grammar.Grammar = pgen.generate_grammar(gt)
         if save:
-            logger.info("Writing grammar tables to %s", gp)
             try:
                 g.dump(gp)
-            except OSError as e:
-                logger.info("Writing failed: %s", e)
+            except OSError:
+                # Ignore error, caching is not vital.
+                pass
     else:
         g = grammar.Grammar()
         g.load(gp)

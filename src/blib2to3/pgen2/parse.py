@@ -32,7 +32,7 @@ from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pytree import convert, NL, Context, RawNode, Leaf, Node
 
 if TYPE_CHECKING:
-    from blib2to3.driver import TokenProxy
+    from blib2to3.pgen2.driver import TokenProxy
 
 
 Results = Dict[Text, NL]
@@ -114,7 +114,7 @@ class Recorder:
                     args.insert(0, ilabel)
                 func(*args)
 
-    def determine_route(self, value: Text = None, force: bool = False) -> Optional[int]:
+    def determine_route(self, value: Optional[Text] = None, force: bool = False) -> Optional[int]:
         alive_ilabels = self.ilabels
         if len(alive_ilabels) == 0:
             *_, most_successful_ilabel = self._dead_ilabels

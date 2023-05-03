@@ -24,7 +24,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: psf/black@stable
 ```
 
@@ -32,12 +32,21 @@ We recommend the use of the `@stable` tag, but per version tags also exist if yo
 that. Note that the action's version you select is independent of the version of _Black_
 the action will use.
 
-The version of _Black_ the action will use can be configured via `version`. The action
-defaults to the latest release available on PyPI. Only versions available from PyPI are
-supported, so no commit SHAs or branch names.
+The version of _Black_ the action will use can be configured via `version`. This can be
+any
+[valid version specifier](https://packaging.python.org/en/latest/glossary/#term-Version-Specifier)
+or just the version number if you want an exact version. The action defaults to the
+latest release available on PyPI. Only versions available from PyPI are supported, so no
+commit SHAs or branch names.
+
+If you want to include Jupyter Notebooks, _Black_ must be installed with the `jupyter`
+extra. Installing the extra and including Jupyter Notebook files can be configured via
+`jupyter` (default is `false`).
 
 You can also configure the arguments passed to _Black_ via `options` (defaults to
-`'--check --diff'`) and `src` (default is `'.'`)
+`'--check --diff'`) and `src` (default is `'.'`). Please note that the
+[`--check` flag](labels/exit-code) is required so that the workflow fails if _Black_
+finds files that need to be formatted.
 
 Here's an example configuration:
 
@@ -46,5 +55,18 @@ Here's an example configuration:
   with:
     options: "--check --verbose"
     src: "./src"
+    jupyter: true
     version: "21.5b1"
+```
+
+If you want to match versions covered by Black's
+[stability policy](labels/stability-policy), you can use the compatible release operator
+(`~=`):
+
+```yaml
+- uses: psf/black@stable
+  with:
+    options: "--check --verbose"
+    src: "./src"
+    version: "~= 22.0"
 ```

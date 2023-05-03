@@ -1,6 +1,7 @@
-from dataclasses import dataclass, field
 import itertools
+import math
 import sys
+from dataclasses import dataclass, field
 from typing import (
     Callable,
     Dict,
@@ -10,24 +11,37 @@ from typing import (
     Sequence,
     Tuple,
     TypeVar,
+    Union,
     cast,
 )
 
-from blib2to3.pytree import Node, Leaf
-from blib2to3.pgen2 import token
-
-from black.brackets import BracketTracker, DOT_PRIORITY
+from black.brackets import COMMA_PRIORITY, DOT_PRIORITY, BracketTracker
 from black.mode import Mode, Preview
-from black.nodes import STANDALONE_COMMENT, TEST_DESCENDANTS
-from black.nodes import BRACKETS, OPENING_BRACKETS, CLOSING_BRACKETS
-from black.nodes import syms, whitespace, replace_child, child_towards
-from black.nodes import is_multiline_string, is_import, is_type_comment
-from black.nodes import is_one_sequence_between
+from black.nodes import (
+    BRACKETS,
+    CLOSING_BRACKETS,
+    OPENING_BRACKETS,
+    STANDALONE_COMMENT,
+    TEST_DESCENDANTS,
+    child_towards,
+    is_import,
+    is_multiline_string,
+    is_one_sequence_between,
+    is_type_comment,
+    is_with_or_async_with_stmt,
+    replace_child,
+    syms,
+    whitespace,
+)
+from black.strings import str_width
+from blib2to3.pgen2 import token
+from blib2to3.pytree import Leaf, Node
 
 # types
 T = TypeVar("T")
 Index = int
 LeafID = int
+LN = Union[Leaf, Node]
 
 
 @dataclass
@@ -44,7 +58,9 @@ class Line:
     should_split_rhs: bool = False
     magic_trailing_comma: Optional[Leaf] = None
 
-    def append(self, leaf: Leaf, preformatted: bool = False) -> None:
+    def append(
+        self, leaf: Leaf, preformatted: bool = False, track_bracket: bool = False
+    ) -> None:
         """Add a new `leaf` to the end of the line.
 
         Unless `preformatted` is True, the `leaf` will receive a new consistent
@@ -66,7 +82,7 @@ class Line:
             leaf.prefix += whitespace(
                 leaf, complex_subscript=self.is_complex_subscript(leaf)
             )
-        if self.inside_brackets or not preformatted:
+        if self.inside_brackets or not preformatted or track_bracket:
             self.bracket_tracker.mark(leaf)
             if self.mode.magic_trailing_comma:
                 if self.has_magic_trailing_comma(leaf):
@@ -107,6 +123,11 @@ class Line:
     def is_import(self) -> bool:
         """Is this an import line?"""
         return bool(self) and is_import(self.leaves[0])
+
+    @property
+    def is_with_or_async_with_stmt(self) -> bool:
+        """Is this a with_stmt line?"""
+        return bool(self) and is_with_or_async_with_stmt(self.leaves[0])
 
     @property
     def is_class(self) -> bool:
@@ -166,6 +187,33 @@ class Line:
             bool(self)
             and self.leaves[0].type == token.STRING
             and self.leaves[0].value.startswith(('"""', "'''"))
+        )
+
+    @property
+    def opens_block(self) -> bool:
+        """Does this line open a new level of indentation."""
+        if len(self.leaves) == 0:
+            return False
+        return self.leaves[-1].type == token.COLON
+
+    def is_fmt_pass_converted(
+        self, *, first_leaf_matches: Optional[Callable[[Leaf], bool]] = None
+    ) -> bool:
+        """Is this line converted from fmt off/skip code?
+
+        If first_leaf_matches is not None, it only returns True if the first
+        leaf of converted code matches.
+        """
+        if len(self.leaves) != 1:
+            return False
+        leaf = self.leaves[0]
+        if (
+            leaf.type != STANDALONE_COMMENT
+            or leaf.fmt_pass_converted_first_leaf is None
+        ):
+            return False
+        return first_leaf_matches is None or first_leaf_matches(
+            leaf.fmt_pass_converted_first_leaf
         )
 
     def contains_standalone_comments(self, depth_limit: int = sys.maxsize) -> bool:
@@ -257,6 +305,7 @@ class Line:
         - it's not a single-element subscript
         Additionally, if ensure_removable:
         - it's not from square bracket indexing
+        (specifically, single-element square bracket indexing)
         """
         if not (
             closing.type in CLOSING_BRACKETS
@@ -270,8 +319,7 @@ class Line:
 
         if closing.type == token.RSQB:
             if (
-                Preview.one_element_subscript in self.mode
-                and closing.parent
+                closing.parent
                 and closing.parent.type == syms.trailer
                 and closing.opening_bracket
                 and is_one_sequence_between(
@@ -285,8 +333,20 @@ class Line:
 
             if not ensure_removable:
                 return True
+
             comma = self.leaves[-1]
-            return bool(comma.parent and comma.parent.type == syms.listmaker)
+            if comma.parent is None:
+                return False
+            return (
+                comma.parent.type != syms.subscriptlist
+                or closing.opening_bracket is None
+                or not is_one_sequence_between(
+                    closing.opening_bracket,
+                    closing,
+                    self.leaves,
+                    brackets=(token.LSQB, token.RSQB),
+                )
+            )
 
         if self.is_import:
             return True
@@ -417,6 +477,39 @@ class Line:
 
 
 @dataclass
+class RHSResult:
+    """Intermediate split result from a right hand split."""
+
+    head: Line
+    body: Line
+    tail: Line
+    opening_bracket: Leaf
+    closing_bracket: Leaf
+
+
+@dataclass
+class LinesBlock:
+    """Class that holds information about a block of formatted lines.
+
+    This is introduced so that the EmptyLineTracker can look behind the standalone
+    comments and adjust their empty lines for class or def lines.
+    """
+
+    mode: Mode
+    previous_block: Optional["LinesBlock"]
+    original_line: Line
+    before: int = 0
+    content_lines: List[str] = field(default_factory=list)
+    after: int = 0
+
+    def all_lines(self) -> List[str]:
+        empty_line = str(Line(mode=self.mode))
+        return (
+            [empty_line * self.before] + self.content_lines + [empty_line * self.after]
+        )
+
+
+@dataclass
 class EmptyLineTracker:
     """Provides a stateful method that returns the number of potential extra
     empty lines needed before and after the currently processed line.
@@ -426,33 +519,56 @@ class EmptyLineTracker:
     are consumed by `maybe_empty_lines()` and included in the computation.
     """
 
-    is_pyi: bool = False
+    mode: Mode
     previous_line: Optional[Line] = None
-    previous_after: int = 0
-    previous_defs: List[int] = field(default_factory=list)
+    previous_block: Optional[LinesBlock] = None
+    previous_defs: List[Line] = field(default_factory=list)
+    semantic_leading_comment: Optional[LinesBlock] = None
 
-    def maybe_empty_lines(self, current_line: Line) -> Tuple[int, int]:
+    def maybe_empty_lines(self, current_line: Line) -> LinesBlock:
         """Return the number of extra empty lines before and after the `current_line`.
 
         This is for separating `def`, `async def` and `class` with extra empty
         lines (two on module-level).
         """
         before, after = self._maybe_empty_lines(current_line)
+        previous_after = self.previous_block.after if self.previous_block else 0
         before = (
             # Black should not insert empty lines at the beginning
             # of the file
             0
             if self.previous_line is None
-            else before - self.previous_after
+            else before - previous_after
         )
-        self.previous_after = after
+        block = LinesBlock(
+            mode=self.mode,
+            previous_block=self.previous_block,
+            original_line=current_line,
+            before=before,
+            after=after,
+        )
+
+        # Maintain the semantic_leading_comment state.
+        if current_line.is_comment:
+            if self.previous_line is None or (
+                not self.previous_line.is_decorator
+                # `or before` means this comment already has an empty line before
+                and (not self.previous_line.is_comment or before)
+                and (self.semantic_leading_comment is None or before)
+            ):
+                self.semantic_leading_comment = block
+        # `or before` means this decorator already has an empty line before
+        elif not current_line.is_decorator or before:
+            self.semantic_leading_comment = None
+
         self.previous_line = current_line
-        return before, after
+        self.previous_block = block
+        return block
 
     def _maybe_empty_lines(self, current_line: Line) -> Tuple[int, int]:
         max_allowed = 1
         if current_line.depth == 0:
-            max_allowed = 1 if self.is_pyi else 2
+            max_allowed = 1 if self.mode.is_pyi else 2
         if current_line.leaves:
             # Consume the first leaf's extra newlines.
             first_leaf = current_line.leaves[0]
@@ -462,12 +578,18 @@ class EmptyLineTracker:
         else:
             before = 0
         depth = current_line.depth
-        while self.previous_defs and self.previous_defs[-1] >= depth:
-            if self.is_pyi:
+        while self.previous_defs and self.previous_defs[-1].depth >= depth:
+            if self.mode.is_pyi:
                 assert self.previous_line is not None
                 if depth and not current_line.is_def and self.previous_line.is_def:
                     # Empty lines between attributes and methods should be preserved.
                     before = min(1, before)
+                elif (
+                    Preview.blank_line_after_nested_stub_class in self.mode
+                    and self.previous_defs[-1].is_class
+                    and not self.previous_defs[-1].is_stub_class
+                ):
+                    before = 1
                 elif depth:
                     before = 0
                 else:
@@ -477,7 +599,7 @@ class EmptyLineTracker:
                     before = 1
                 elif (
                     not depth
-                    and self.previous_defs[-1]
+                    and self.previous_defs[-1].depth
                     and current_line.leaves[-1].type == token.COLON
                     and (
                         current_line.leaves[0].value
@@ -502,6 +624,7 @@ class EmptyLineTracker:
             self.previous_line
             and self.previous_line.is_import
             and not current_line.is_import
+            and not current_line.is_fmt_pass_converted(first_leaf_matches=is_import)
             and depth == self.previous_line.depth
         ):
             return (before or 1), 0
@@ -513,19 +636,21 @@ class EmptyLineTracker:
         ):
             return before, 1
 
+        if self.previous_line and self.previous_line.opens_block:
+            return 0, 0
         return before, 0
 
     def _maybe_empty_lines_for_class_or_def(
         self, current_line: Line, before: int
     ) -> Tuple[int, int]:
         if not current_line.is_decorator:
-            self.previous_defs.append(current_line.depth)
+            self.previous_defs.append(current_line)
         if self.previous_line is None:
             # Don't insert empty lines before the first line in the file.
             return 0, 0
 
         if self.previous_line.is_decorator:
-            if self.is_pyi and current_line.is_stub_class:
+            if self.mode.is_pyi and current_line.is_stub_class:
                 # Insert an empty line after a decorated stub class
                 return 0, 1
 
@@ -536,14 +661,25 @@ class EmptyLineTracker:
         ):
             return 0, 0
 
+        comment_to_add_newlines: Optional[LinesBlock] = None
         if (
             self.previous_line.is_comment
             and self.previous_line.depth == current_line.depth
             and before == 0
         ):
-            return 0, 0
+            slc = self.semantic_leading_comment
+            if (
+                slc is not None
+                and slc.previous_block is not None
+                and not slc.previous_block.original_line.is_class
+                and not slc.previous_block.original_line.opens_block
+                and slc.before <= 1
+            ):
+                comment_to_add_newlines = slc
+            else:
+                return 0, 0
 
-        if self.is_pyi:
+        if self.mode.is_pyi:
             if current_line.is_class or self.previous_line.is_class:
                 if self.previous_line.depth < current_line.depth:
                     newlines = 0
@@ -571,6 +707,13 @@ class EmptyLineTracker:
                 newlines = 0
         else:
             newlines = 1 if current_line.depth else 2
+        if comment_to_add_newlines is not None:
+            previous_block = comment_to_add_newlines.previous_block
+            if previous_block is not None:
+                comment_to_add_newlines.before = (
+                    max(comment_to_add_newlines.before, newlines) - previous_block.after
+                )
+                newlines = 0
         return newlines, 0
 
 
@@ -606,18 +749,95 @@ def append_leaves(
             new_line.append(comment_leaf, preformatted=True)
 
 
-def is_line_short_enough(line: Line, *, line_length: int, line_str: str = "") -> bool:
-    """Return True if `line` is no longer than `line_length`.
-
+def is_line_short_enough(  # noqa: C901
+    line: Line, *, mode: Mode, line_str: str = ""
+) -> bool:
+    """For non-multiline strings, return True if `line` is no longer than `line_length`.
+    For multiline strings, looks at the context around `line` to determine
+    if it should be inlined or split up.
     Uses the provided `line_str` rendering, if any, otherwise computes a new one.
     """
     if not line_str:
         line_str = line_to_string(line)
-    return (
-        len(line_str) <= line_length
-        and "\n" not in line_str  # multiline strings
-        and not line.contains_standalone_comments()
-    )
+
+    width = str_width if mode.preview else len
+
+    if Preview.multiline_string_handling not in mode:
+        return (
+            width(line_str) <= mode.line_length
+            and "\n" not in line_str  # multiline strings
+            and not line.contains_standalone_comments()
+        )
+
+    if line.contains_standalone_comments():
+        return False
+    if "\n" not in line_str:
+        # No multiline strings (MLS) present
+        return width(line_str) <= mode.line_length
+
+    first, *_, last = line_str.split("\n")
+    if width(first) > mode.line_length or width(last) > mode.line_length:
+        return False
+
+    # Traverse the AST to examine the context of the multiline string (MLS),
+    # tracking aspects such as depth and comma existence,
+    # to determine whether to split the MLS or keep it together.
+    # Depth (which is based on the existing bracket_depth concept)
+    # is needed to determine nesting level of the MLS.
+    # Includes special case for trailing commas.
+    commas: List[int] = []  # tracks number of commas per depth level
+    multiline_string: Optional[Leaf] = None
+    # store the leaves that contain parts of the MLS
+    multiline_string_contexts: List[LN] = []
+
+    max_level_to_update: Union[int, float] = math.inf  # track the depth of the MLS
+    for i, leaf in enumerate(line.leaves):
+        if max_level_to_update == math.inf:
+            had_comma: Optional[int] = None
+            if leaf.bracket_depth + 1 > len(commas):
+                commas.append(0)
+            elif leaf.bracket_depth + 1 < len(commas):
+                had_comma = commas.pop()
+            if (
+                had_comma is not None
+                and multiline_string is not None
+                and multiline_string.bracket_depth == leaf.bracket_depth + 1
+            ):
+                # Have left the level with the MLS, stop tracking commas
+                max_level_to_update = leaf.bracket_depth
+                if had_comma > 0:
+                    # MLS was in parens with at least one comma - force split
+                    return False
+
+        if leaf.bracket_depth <= max_level_to_update and leaf.type == token.COMMA:
+            # Ignore non-nested trailing comma
+            # directly after MLS/MLS-containing expression
+            ignore_ctxs: List[Optional[LN]] = [None]
+            ignore_ctxs += multiline_string_contexts
+            if not (leaf.prev_sibling in ignore_ctxs and i == len(line.leaves) - 1):
+                commas[leaf.bracket_depth] += 1
+        if max_level_to_update != math.inf:
+            max_level_to_update = min(max_level_to_update, leaf.bracket_depth)
+
+        if is_multiline_string(leaf):
+            if len(multiline_string_contexts) > 0:
+                # >1 multiline string cannot fit on a single line - force split
+                return False
+            multiline_string = leaf
+            ctx: LN = leaf
+            # fetch the leaf components of the MLS in the AST
+            while str(ctx) in line_str:
+                multiline_string_contexts.append(ctx)
+                if ctx.parent is None:
+                    break
+                ctx = ctx.parent
+
+    # May not have a triple-quoted multiline string at all,
+    # in case of a regular string with embedded newlines and line continuations
+    if len(multiline_string_contexts) == 0:
+        return True
+
+    return all(val == 0 for val in commas)
 
 
 def can_be_split(line: Line) -> bool:
@@ -657,24 +877,41 @@ def can_be_split(line: Line) -> bool:
 
 
 def can_omit_invisible_parens(
-    line: Line,
+    rhs: RHSResult,
     line_length: int,
 ) -> bool:
-    """Does `line` have a shape safe to reformat without optional parens around it?
+    """Does `rhs.body` have a shape safe to reformat without optional parens around it?
 
     Returns True for only a subset of potentially nice looking formattings but
     the point is to not return false positives that end up producing lines that
     are too long.
     """
+    line = rhs.body
     bt = line.bracket_tracker
     if not bt.delimiters:
         # Without delimiters the optional parentheses are useless.
         return True
 
     max_priority = bt.max_delimiter_priority()
-    if bt.delimiter_count_with_priority(max_priority) > 1:
+    delimiter_count = bt.delimiter_count_with_priority(max_priority)
+    if delimiter_count > 1:
         # With more than one delimiter of a kind the optional parentheses read better.
         return False
+
+    if delimiter_count == 1:
+        if (
+            Preview.wrap_multiple_context_managers_in_parens in line.mode
+            and max_priority == COMMA_PRIORITY
+            and rhs.head.is_with_or_async_with_stmt
+        ):
+            # For two context manager with statements, the optional parentheses read
+            # better. In this case, `rhs.body` is the context managers part of
+            # the with statement. `rhs.head` is the `with (` part on the previous
+            # line.
+            return False
+        # Otherwise it may also read better, but we don't do it today and requires
+        # careful considerations for all possible cases. See
+        # https://github.com/psf/black/issues/2156.
 
     if max_priority == DOT_PRIORITY:
         # A single stranded method call doesn't require optional parentheses.

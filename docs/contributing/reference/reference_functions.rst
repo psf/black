@@ -52,7 +52,7 @@ Formatting
 
 .. autofunction:: black.reformat_one
 
-.. autofunction:: black.schedule_formatting
+.. autofunction:: black.concurrency.schedule_formatting
 
 File operations
 ---------------
@@ -137,9 +137,9 @@ Utilities
 
 .. autofunction:: black.comments.is_fmt_on
 
-.. autofunction:: black.comments.contains_fmt_on_at_column
+.. autofunction:: black.comments.children_contains_fmt_on
 
-.. autofunction:: black.nodes.first_leaf_column
+.. autofunction:: black.nodes.first_leaf_of
 
 .. autofunction:: black.linegen.generate_trailers_to_omit
 
@@ -173,7 +173,7 @@ Utilities
 
 .. autofunction:: black.linegen.should_split_line
 
-.. autofunction:: black.shutdown
+.. autofunction:: black.concurrency.shutdown
 
 .. autofunction:: black.strings.sub_twice
 

@@ -1,7 +1,7 @@
+import re
 import sys
 from dataclasses import dataclass
 from functools import lru_cache
-import re
 from typing import Iterator, List, Optional, Union
 
 if sys.version_info >= (3, 8):
@@ -9,11 +9,17 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Final
 
-from blib2to3.pytree import Node, Leaf
+from black.nodes import (
+    CLOSING_BRACKETS,
+    STANDALONE_COMMENT,
+    WHITESPACE,
+    container_of,
+    first_leaf_of,
+    preceding_leaf,
+    syms,
+)
 from blib2to3.pgen2 import token
-
-from black.nodes import first_leaf_column, preceding_leaf, container_of
-from black.nodes import STANDALONE_COMMENT, WHITESPACE
+from blib2to3.pytree import Leaf, Node
 
 # types
 LN = Union[Leaf, Node]
@@ -23,7 +29,7 @@ FMT_SKIP: Final = {"# fmt: skip", "# fmt:skip"}
 FMT_PASS: Final = {*FMT_OFF, *FMT_SKIP}
 FMT_ON: Final = {"# fmt: on", "# fmt:on", "# yapf: enable"}
 
-COMMENT_EXCEPTIONS = {True: " !:#'", False: " !:#'%"}
+COMMENT_EXCEPTIONS = " !:#'"
 
 
 @dataclass
@@ -44,7 +50,7 @@ class ProtoComment:
     consumed: int  # how many characters of the original leaf's prefix did we consume
 
 
-def generate_comments(leaf: LN, *, preview: bool) -> Iterator[Leaf]:
+def generate_comments(leaf: LN) -> Iterator[Leaf]:
     """Clean the prefix of the `leaf` and generate comments from it, if any.
 
     Comments in lib2to3 are shoved into the whitespace prefix.  This happens
@@ -63,16 +69,12 @@ def generate_comments(leaf: LN, *, preview: bool) -> Iterator[Leaf]:
     Inline comments are emitted as regular token.COMMENT leaves.  Standalone
     are emitted with a fake STANDALONE_COMMENT token identifier.
     """
-    for pc in list_comments(
-        leaf.prefix, is_endmarker=leaf.type == token.ENDMARKER, preview=preview
-    ):
+    for pc in list_comments(leaf.prefix, is_endmarker=leaf.type == token.ENDMARKER):
         yield Leaf(pc.type, pc.value, prefix="\n" * pc.newlines)
 
 
 @lru_cache(maxsize=4096)
-def list_comments(
-    prefix: str, *, is_endmarker: bool, preview: bool
-) -> List[ProtoComment]:
+def list_comments(prefix: str, *, is_endmarker: bool) -> List[ProtoComment]:
     """Return a list of :class:`ProtoComment` objects parsed from the given `prefix`."""
     result: List[ProtoComment] = []
     if not prefix or "#" not in prefix:
@@ -98,7 +100,7 @@ def list_comments(
             comment_type = token.COMMENT  # simple trailing comment
         else:
             comment_type = STANDALONE_COMMENT
-        comment = make_comment(line, preview=preview)
+        comment = make_comment(line)
         result.append(
             ProtoComment(
                 type=comment_type, value=comment, newlines=nlines, consumed=consumed
@@ -108,7 +110,7 @@ def list_comments(
     return result
 
 
-def make_comment(content: str, *, preview: bool) -> str:
+def make_comment(content: str) -> str:
     """Return a consistently formatted comment from the given `content` string.
 
     All comments (except for "##", "#!", "#:", '#'") should have a single
@@ -129,26 +131,26 @@ def make_comment(content: str, *, preview: bool) -> str:
         and not content.lstrip().startswith("type:")
     ):
         content = " " + content[1:]  # Replace NBSP by a simple space
-    if content and content[0] not in COMMENT_EXCEPTIONS[preview]:
+    if content and content[0] not in COMMENT_EXCEPTIONS:
         content = " " + content
     return "#" + content
 
 
-def normalize_fmt_off(node: Node, *, preview: bool) -> None:
+def normalize_fmt_off(node: Node) -> None:
     """Convert content between `# fmt: off`/`# fmt: on` into standalone comments."""
     try_again = True
     while try_again:
-        try_again = convert_one_fmt_off_pair(node, preview=preview)
+        try_again = convert_one_fmt_off_pair(node)
 
 
-def convert_one_fmt_off_pair(node: Node, *, preview: bool) -> bool:
+def convert_one_fmt_off_pair(node: Node) -> bool:
     """Convert content of a single `# fmt: off`/`# fmt: on` into a standalone comment.
 
     Returns True if a pair was converted.
     """
     for leaf in node.leaves():
         previous_consumed = 0
-        for comment in list_comments(leaf.prefix, is_endmarker=False, preview=preview):
+        for comment in list_comments(leaf.prefix, is_endmarker=False):
             if comment.value not in FMT_PASS:
                 previous_consumed = comment.consumed
                 continue
@@ -163,7 +165,7 @@ def convert_one_fmt_off_pair(node: Node, *, preview: bool) -> bool:
                     if comment.value in FMT_SKIP and prev.type in WHITESPACE:
                         continue
 
-            ignored_nodes = list(generate_ignored_nodes(leaf, comment, preview=preview))
+            ignored_nodes = list(generate_ignored_nodes(leaf, comment))
             if not ignored_nodes:
                 continue
 
@@ -174,6 +176,11 @@ def convert_one_fmt_off_pair(node: Node, *, preview: bool) -> bool:
                 first.prefix = prefix[comment.consumed :]
             if comment.value in FMT_SKIP:
                 first.prefix = ""
+                standalone_comment_prefix = prefix
+            else:
+                standalone_comment_prefix = (
+                    prefix[:previous_consumed] + "\n" * comment.newlines
+                )
             hidden_value = "".join(str(n) for n in ignored_nodes)
             if comment.value in FMT_OFF:
                 hidden_value = comment.value + "\n" + hidden_value
@@ -195,7 +202,8 @@ def convert_one_fmt_off_pair(node: Node, *, preview: bool) -> bool:
                 Leaf(
                     STANDALONE_COMMENT,
                     hidden_value,
-                    prefix=prefix[:previous_consumed] + "\n" * comment.newlines,
+                    prefix=standalone_comment_prefix,
+                    fmt_pass_converted_first_leaf=first_leaf_of(first),
                 ),
             )
             return True
@@ -203,52 +211,99 @@ def convert_one_fmt_off_pair(node: Node, *, preview: bool) -> bool:
     return False
 
 
-def generate_ignored_nodes(
-    leaf: Leaf, comment: ProtoComment, *, preview: bool
-) -> Iterator[LN]:
+def generate_ignored_nodes(leaf: Leaf, comment: ProtoComment) -> Iterator[LN]:
     """Starting from the container of `leaf`, generate all leaves until `# fmt: on`.
 
     If comment is skip, returns leaf only.
     Stops at the end of the block.
     """
-    container: Optional[LN] = container_of(leaf)
     if comment.value in FMT_SKIP:
-        prev_sibling = leaf.prev_sibling
-        if comment.value in leaf.prefix and prev_sibling is not None:
-            leaf.prefix = leaf.prefix.replace(comment.value, "")
-            siblings = [prev_sibling]
-            while (
-                "\n" not in prev_sibling.prefix
-                and prev_sibling.prev_sibling is not None
-            ):
-                prev_sibling = prev_sibling.prev_sibling
-                siblings.insert(0, prev_sibling)
-            for sibling in siblings:
-                yield sibling
-        elif leaf.parent is not None:
-            yield leaf.parent
+        yield from _generate_ignored_nodes_from_fmt_skip(leaf, comment)
         return
+    container: Optional[LN] = container_of(leaf)
     while container is not None and container.type != token.ENDMARKER:
-        if is_fmt_on(container, preview=preview):
+        if is_fmt_on(container):
             return
 
         # fix for fmt: on in children
-        if contains_fmt_on_at_column(container, leaf.column, preview=preview):
-            for child in container.children:
-                if contains_fmt_on_at_column(child, leaf.column, preview=preview):
+        if children_contains_fmt_on(container):
+            for index, child in enumerate(container.children):
+                if isinstance(child, Leaf) and is_fmt_on(child):
+                    if child.type in CLOSING_BRACKETS:
+                        # This means `# fmt: on` is placed at a different bracket level
+                        # than `# fmt: off`. This is an invalid use, but as a courtesy,
+                        # we include this closing bracket in the ignored nodes.
+                        # The alternative is to fail the formatting.
+                        yield child
+                    return
+                if (
+                    child.type == token.INDENT
+                    and index < len(container.children) - 1
+                    and children_contains_fmt_on(container.children[index + 1])
+                ):
+                    # This means `# fmt: on` is placed right after an indentation
+                    # level, and we shouldn't swallow the previous INDENT token.
+                    return
+                if children_contains_fmt_on(child):
                     return
                 yield child
         else:
+            if container.type == token.DEDENT and container.next_sibling is None:
+                # This can happen when there is no matching `# fmt: on` comment at the
+                # same level as `# fmt: on`. We need to keep this DEDENT.
+                return
             yield container
             container = container.next_sibling
 
 
-def is_fmt_on(container: LN, preview: bool) -> bool:
+def _generate_ignored_nodes_from_fmt_skip(
+    leaf: Leaf, comment: ProtoComment
+) -> Iterator[LN]:
+    """Generate all leaves that should be ignored by the `# fmt: skip` from `leaf`."""
+    prev_sibling = leaf.prev_sibling
+    parent = leaf.parent
+    # Need to properly format the leaf prefix to compare it to comment.value,
+    # which is also formatted
+    comments = list_comments(leaf.prefix, is_endmarker=False)
+    if not comments or comment.value != comments[0].value:
+        return
+    if prev_sibling is not None:
+        leaf.prefix = ""
+        siblings = [prev_sibling]
+        while "\n" not in prev_sibling.prefix and prev_sibling.prev_sibling is not None:
+            prev_sibling = prev_sibling.prev_sibling
+            siblings.insert(0, prev_sibling)
+        yield from siblings
+    elif (
+        parent is not None and parent.type == syms.suite and leaf.type == token.NEWLINE
+    ):
+        # The `# fmt: skip` is on the colon line of the if/while/def/class/...
+        # statements. The ignored nodes should be previous siblings of the
+        # parent suite node.
+        leaf.prefix = ""
+        ignored_nodes: List[LN] = []
+        parent_sibling = parent.prev_sibling
+        while parent_sibling is not None and parent_sibling.type != syms.suite:
+            ignored_nodes.insert(0, parent_sibling)
+            parent_sibling = parent_sibling.prev_sibling
+        # Special case for `async_stmt` where the ASYNC token is on the
+        # grandparent node.
+        grandparent = parent.parent
+        if (
+            grandparent is not None
+            and grandparent.prev_sibling is not None
+            and grandparent.prev_sibling.type == token.ASYNC
+        ):
+            ignored_nodes.insert(0, grandparent.prev_sibling)
+        yield from iter(ignored_nodes)
+
+
+def is_fmt_on(container: LN) -> bool:
     """Determine whether formatting is switched on within a container.
     Determined by whether the last `# fmt:` comment is `on` or `off`.
     """
     fmt_on = False
-    for comment in list_comments(container.prefix, is_endmarker=False, preview=preview):
+    for comment in list_comments(container.prefix, is_endmarker=False):
         if comment.value in FMT_ON:
             fmt_on = True
         elif comment.value in FMT_OFF:
@@ -256,17 +311,12 @@ def is_fmt_on(container: LN, preview: bool) -> bool:
     return fmt_on
 
 
-def contains_fmt_on_at_column(container: LN, column: int, *, preview: bool) -> bool:
-    """Determine if children at a given column have formatting switched on."""
+def children_contains_fmt_on(container: LN) -> bool:
+    """Determine if children have formatting switched on."""
     for child in container.children:
-        if (
-            isinstance(child, Node)
-            and first_leaf_column(child) == column
-            or isinstance(child, Leaf)
-            and child.column == column
-        ):
-            if is_fmt_on(child, preview=preview):
-                return True
+        leaf = first_leaf_of(child)
+        if leaf is not None and is_fmt_on(leaf):
+            return True
 
     return False
 

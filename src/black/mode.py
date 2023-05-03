@@ -4,11 +4,10 @@ Mostly around Python language feature support per version and Black configuratio
 chosen by the user.
 """
 
-from hashlib import sha256
 import sys
-
 from dataclasses import dataclass, field
 from enum import Enum, auto
+from hashlib import sha256
 from operator import attrgetter
 from typing import Dict, Set
 from warnings import warn
@@ -30,6 +29,7 @@ class TargetVersion(Enum):
     PY38 = 8
     PY39 = 9
     PY310 = 10
+    PY311 = 11
 
 
 class Feature(Enum):
@@ -47,6 +47,10 @@ class Feature(Enum):
     PATTERN_MATCHING = 11
     UNPACKING_ON_FLOW = 12
     ANN_ASSIGN_EXTENDED_RHS = 13
+    EXCEPT_STAR = 14
+    VARIADIC_GENERICS = 15
+    DEBUG_F_STRINGS = 16
+    PARENTHESIZED_CONTEXT_MANAGERS = 17
     FORCE_OPTIONAL_PARENTHESES = 50
 
     # __future__ flags
@@ -79,6 +83,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
     },
     TargetVersion.PY38: {
         Feature.F_STRINGS,
+        Feature.DEBUG_F_STRINGS,
         Feature.NUMERIC_UNDERSCORES,
         Feature.TRAILING_COMMA_IN_CALL,
         Feature.TRAILING_COMMA_IN_DEF,
@@ -91,6 +96,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
     },
     TargetVersion.PY39: {
         Feature.F_STRINGS,
+        Feature.DEBUG_F_STRINGS,
         Feature.NUMERIC_UNDERSCORES,
         Feature.TRAILING_COMMA_IN_CALL,
         Feature.TRAILING_COMMA_IN_DEF,
@@ -101,9 +107,11 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.POS_ONLY_ARGUMENTS,
         Feature.UNPACKING_ON_FLOW,
         Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS,
     },
     TargetVersion.PY310: {
         Feature.F_STRINGS,
+        Feature.DEBUG_F_STRINGS,
         Feature.NUMERIC_UNDERSCORES,
         Feature.TRAILING_COMMA_IN_CALL,
         Feature.TRAILING_COMMA_IN_DEF,
@@ -114,7 +122,26 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.POS_ONLY_ARGUMENTS,
         Feature.UNPACKING_ON_FLOW,
         Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS,
         Feature.PATTERN_MATCHING,
+    },
+    TargetVersion.PY311: {
+        Feature.F_STRINGS,
+        Feature.DEBUG_F_STRINGS,
+        Feature.NUMERIC_UNDERSCORES,
+        Feature.TRAILING_COMMA_IN_CALL,
+        Feature.TRAILING_COMMA_IN_DEF,
+        Feature.ASYNC_KEYWORDS,
+        Feature.FUTURE_ANNOTATIONS,
+        Feature.ASSIGNMENT_EXPRESSIONS,
+        Feature.RELAXED_DECORATORS,
+        Feature.POS_ONLY_ARGUMENTS,
+        Feature.UNPACKING_ON_FLOW,
+        Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS,
+        Feature.PATTERN_MATCHING,
+        Feature.EXCEPT_STAR,
+        Feature.VARIADIC_GENERICS,
     },
 }
 
@@ -126,9 +153,19 @@ def supports_feature(target_versions: Set[TargetVersion], feature: Feature) -> b
 class Preview(Enum):
     """Individual preview style features."""
 
+    add_trailing_comma_consistently = auto()
+    blank_line_after_nested_stub_class = auto()
+    hex_codes_in_unicode_sequences = auto()
+    improved_async_statements_handling = auto()
+    multiline_string_handling = auto()
+    prefer_splitting_right_hand_side_of_assignments = auto()
+    # NOTE: string_processing requires wrap_long_dict_values_in_parens
+    # for https://github.com/psf/black/issues/3117 to be fixed.
     string_processing = auto()
-    remove_redundant_parens = auto()
-    one_element_subscript = auto()
+    parenthesize_conditional_expressions = auto()
+    skip_magic_trailing_comma_in_subscript = auto()
+    wrap_long_dict_values_in_parens = auto()
+    wrap_multiple_context_managers_in_parens = auto()
 
 
 class Deprecated(UserWarning):
@@ -142,6 +179,7 @@ class Mode:
     string_normalization: bool = True
     is_pyi: bool = False
     is_ipynb: bool = False
+    skip_source_first_line: bool = False
     magic_trailing_comma: bool = True
     experimental_string_processing: bool = False
     python_cell_magics: Set[str] = field(default_factory=set)
@@ -180,6 +218,7 @@ class Mode:
             str(int(self.string_normalization)),
             str(int(self.is_pyi)),
             str(int(self.is_ipynb)),
+            str(int(self.skip_source_first_line)),
             str(int(self.magic_trailing_comma)),
             str(int(self.experimental_string_processing)),
             str(int(self.preview)),

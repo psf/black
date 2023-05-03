@@ -1,9 +1,10 @@
-from functools import lru_cache
 import io
 import os
-from pathlib import Path
 import sys
+from functools import lru_cache
+from pathlib import Path
 from typing import (
+    TYPE_CHECKING,
     Any,
     Dict,
     Iterable,
@@ -14,10 +15,11 @@ from typing import (
     Sequence,
     Tuple,
     Union,
-    TYPE_CHECKING,
 )
 
 from mypy_extensions import mypyc_attr
+from packaging.specifiers import InvalidSpecifier, Specifier, SpecifierSet
+from packaging.version import InvalidVersion, Version
 from pathspec import PathSpec
 from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
 
@@ -26,20 +28,24 @@ if sys.version_info >= (3, 11):
         import tomllib
     except ImportError:
         # Help users on older alphas
-        import tomli as tomllib
+        if not TYPE_CHECKING:
+            import tomli as tomllib
 else:
     import tomli as tomllib
 
+from black.handle_ipynb_magics import jupyter_dependencies_are_installed
+from black.mode import TargetVersion
 from black.output import err
 from black.report import Report
-from black.handle_ipynb_magics import jupyter_dependencies_are_installed
 
 if TYPE_CHECKING:
     import colorama  # noqa: F401
 
 
 @lru_cache()
-def find_project_root(srcs: Sequence[str]) -> Tuple[Path, str]:
+def find_project_root(
+    srcs: Sequence[str], stdin_filename: Optional[str] = None
+) -> Tuple[Path, str]:
     """Return a directory containing .git, .hg, or pyproject.toml.
 
     That directory will be a common parent of all files and directories
@@ -52,6 +58,8 @@ def find_project_root(srcs: Sequence[str]) -> Tuple[Path, str]:
     the second element as a string describing the method by which the
     project root was discovered.
     """
+    if stdin_filename is not None:
+        srcs = tuple(stdin_filename if s == "-" else s for s in srcs)
     if not srcs:
         srcs = [str(Path.cwd().resolve())]
 
@@ -103,14 +111,103 @@ def find_pyproject_toml(path_search_start: Tuple[str, ...]) -> Optional[str]:
 
 @mypyc_attr(patchable=True)
 def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
-    """Parse a pyproject toml file, pulling out relevant parts for Black
+    """Parse a pyproject toml file, pulling out relevant parts for Black.
 
-    If parsing fails, will raise a tomllib.TOMLDecodeError
+    If parsing fails, will raise a tomllib.TOMLDecodeError.
     """
     with open(path_config, "rb") as f:
         pyproject_toml = tomllib.load(f)
-    config = pyproject_toml.get("tool", {}).get("black", {})
-    return {k.replace("--", "").replace("-", "_"): v for k, v in config.items()}
+    config: Dict[str, Any] = pyproject_toml.get("tool", {}).get("black", {})
+    config = {k.replace("--", "").replace("-", "_"): v for k, v in config.items()}
+
+    if "target_version" not in config:
+        inferred_target_version = infer_target_version(pyproject_toml)
+        if inferred_target_version is not None:
+            config["target_version"] = [v.name.lower() for v in inferred_target_version]
+
+    return config
+
+
+def infer_target_version(
+    pyproject_toml: Dict[str, Any]
+) -> Optional[List[TargetVersion]]:
+    """Infer Black's target version from the project metadata in pyproject.toml.
+
+    Supports the PyPA standard format (PEP 621):
+    https://packaging.python.org/en/latest/specifications/declaring-project-metadata/#requires-python
+
+    If the target version cannot be inferred, returns None.
+    """
+    project_metadata = pyproject_toml.get("project", {})
+    requires_python = project_metadata.get("requires-python", None)
+    if requires_python is not None:
+        try:
+            return parse_req_python_version(requires_python)
+        except InvalidVersion:
+            pass
+        try:
+            return parse_req_python_specifier(requires_python)
+        except (InvalidSpecifier, InvalidVersion):
+            pass
+
+    return None
+
+
+def parse_req_python_version(requires_python: str) -> Optional[List[TargetVersion]]:
+    """Parse a version string (i.e. ``"3.7"``) to a list of TargetVersion.
+
+    If parsing fails, will raise a packaging.version.InvalidVersion error.
+    If the parsed version cannot be mapped to a valid TargetVersion, returns None.
+    """
+    version = Version(requires_python)
+    if version.release[0] != 3:
+        return None
+    try:
+        return [TargetVersion(version.release[1])]
+    except (IndexError, ValueError):
+        return None
+
+
+def parse_req_python_specifier(requires_python: str) -> Optional[List[TargetVersion]]:
+    """Parse a specifier string (i.e. ``">=3.7,<3.10"``) to a list of TargetVersion.
+
+    If parsing fails, will raise a packaging.specifiers.InvalidSpecifier error.
+    If the parsed specifier cannot be mapped to a valid TargetVersion, returns None.
+    """
+    specifier_set = strip_specifier_set(SpecifierSet(requires_python))
+    if not specifier_set:
+        return None
+
+    target_version_map = {f"3.{v.value}": v for v in TargetVersion}
+    compatible_versions: List[str] = list(specifier_set.filter(target_version_map))
+    if compatible_versions:
+        return [target_version_map[v] for v in compatible_versions]
+    return None
+
+
+def strip_specifier_set(specifier_set: SpecifierSet) -> SpecifierSet:
+    """Strip minor versions for some specifiers in the specifier set.
+
+    For background on version specifiers, see PEP 440:
+    https://peps.python.org/pep-0440/#version-specifiers
+    """
+    specifiers = []
+    for s in specifier_set:
+        if "*" in str(s):
+            specifiers.append(s)
+        elif s.operator in ["~=", "==", ">=", "==="]:
+            version = Version(s.version)
+            stripped = Specifier(f"{s.operator}{version.major}.{version.minor}")
+            specifiers.append(stripped)
+        elif s.operator == ">":
+            version = Version(s.version)
+            if len(version.release) > 2:
+                s = Specifier(f">={version.major}.{version.minor}")
+            specifiers.append(s)
+        else:
+            specifiers.append(s)
+
+    return SpecifierSet(",".join(str(s) for s in specifiers))
 
 
 @lru_cache()
@@ -177,6 +274,19 @@ def normalize_path_maybe_ignore(
     return root_relative_path
 
 
+def path_is_ignored(
+    path: Path, gitignore_dict: Dict[Path, PathSpec], report: Report
+) -> bool:
+    for gitignore_path, pattern in gitignore_dict.items():
+        relative_path = normalize_path_maybe_ignore(path, gitignore_path, report)
+        if relative_path is None:
+            break
+        if pattern.match_file(relative_path):
+            report.path_ignored(path, "matches a .gitignore file content")
+            return True
+    return False
+
+
 def path_is_excluded(
     normalized_path: str,
     pattern: Optional[Pattern[str]],
@@ -193,7 +303,7 @@ def gen_python_files(
     extend_exclude: Optional[Pattern[str]],
     force_exclude: Optional[Pattern[str]],
     report: Report,
-    gitignore: Optional[PathSpec],
+    gitignore_dict: Optional[Dict[Path, PathSpec]],
     *,
     verbose: bool,
     quiet: bool,
@@ -206,6 +316,7 @@ def gen_python_files(
 
     `report` is where output about exclusions goes.
     """
+
     assert root.is_absolute(), f"INTERNAL ERROR: `root` must be absolute but is {root}"
     for child in paths:
         normalized_path = normalize_path_maybe_ignore(child, root, report)
@@ -213,8 +324,7 @@ def gen_python_files(
             continue
 
         # First ignore files matching .gitignore, if passed
-        if gitignore is not None and gitignore.match_file(normalized_path):
-            report.path_ignored(child, "matches the .gitignore file content")
+        if gitignore_dict and path_is_ignored(child, gitignore_dict, report):
             continue
 
         # Then ignore with `--exclude` `--extend-exclude` and `--force-exclude` options.
@@ -239,6 +349,13 @@ def gen_python_files(
         if child.is_dir():
             # If gitignore is None, gitignore usage is disabled, while a Falsey
             # gitignore is when the directory doesn't have a .gitignore file.
+            if gitignore_dict is not None:
+                new_gitignore_dict = {
+                    **gitignore_dict,
+                    root / child: get_gitignore(child),
+                }
+            else:
+                new_gitignore_dict = None
             yield from gen_python_files(
                 child.iterdir(),
                 root,
@@ -247,7 +364,7 @@ def gen_python_files(
                 extend_exclude,
                 force_exclude,
                 report,
-                gitignore + get_gitignore(child) if gitignore is not None else None,
+                new_gitignore_dict,
                 verbose=verbose,
                 quiet=quiet,
             )
