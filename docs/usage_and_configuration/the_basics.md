@@ -48,7 +48,7 @@ print("hello, world")
 
 How many characters per line to allow. The default is 88.
 
-See also [the style documentation](the_black_code_style/current_style.md#line-length).
+See also [the style documentation](labels/line-length).
 
 #### `-t`, `--target-version`
 
@@ -107,22 +107,23 @@ magics. Useful for formatting cells with custom python magics.
 #### `-S, --skip-string-normalization`
 
 By default, _Black_ uses double quotes for all strings and normalizes string prefixes,
-as described in
-[the style documentation](the_black_code_style/current_style.md#strings). If this option
-is given, strings are left unchanged instead.
+as described in [the style documentation](labels/strings). If this option is given,
+strings are left unchanged instead.
 
 #### `-C, --skip-magic-trailing-comma`
 
 By default, _Black_ uses existing trailing commas as an indication that short lines
 should be left separate, as described in
-[the style documentation](the_black_code_style/current_style.md#the-magic-trailing-comma).
-If this option is given, the magic trailing comma is ignored.
+[the style documentation](labels/magic-trailing-comma). If this option is given, the
+magic trailing comma is ignored.
 
 #### `--preview`
 
 Enable potentially disruptive style changes that may be added to Black's main
 functionality in the next major release. Read more about
-[our preview style](the_black_code_style/future_style.md#preview-style).
+[our preview style](labels/preview-style).
+
+(labels/exit-code)=
 
 #### `--check`
 
@@ -179,10 +180,9 @@ Show (or do not show) colored diff. Only applies when `--diff` is given.
 
 #### `--fast` / `--safe`
 
-By default, _Black_ performs
-[an AST safety check](the_black_code_style/current_style.md#ast-before-and-after-formatting)
-after formatting your code. The `--fast` flag turns off this check and the `--safe` flag
-explicitly enables it.
+By default, _Black_ performs [an AST safety check](labels/ast-changes) after formatting
+your code. The `--fast` flag turns off this check and the `--safe` flag explicitly
+enables it.
 
 #### `--required-version`
 
@@ -209,9 +209,9 @@ $ black --required-version 31 -c "still = 'beta?!'"
 Oh no! 💥 💔 💥 The required version does not match the running version!
 ```
 
-Because of our [stability policy](../the_black_code_style/index.md), this will
-guarantee stable formatting, but still allow you to take advantage of improvements that
-do not affect formatting.
+Because of our [stability policy](../the_black_code_style/index.md), this will guarantee
+stable formatting, but still allow you to take advantage of improvements that do not
+affect formatting.
 
 #### `--include`
 

@@ -140,6 +140,8 @@ If you're reaching for backslashes, that's a clear signal that you can do better
 slightly refactor your code. I hope some of the examples above show you that there are
 many ways in which you can do it.
 
+(labels/line-length)=
+
 ### Line length
 
 You probably noticed the peculiar default line length. _Black_ defaults to 88 characters
@@ -272,6 +274,8 @@ manually and _Black_ will keep it.
 A pre-existing trailing comma informs _Black_ to always explode contents of the current
 bracket pair into one item per line. Read more about this in the
 [Pragmatism](#pragmatism) section below.
+
+(labels/strings)=
 
 ### Strings
 
@@ -457,6 +461,8 @@ there were not many users anyway. Not many edge cases were reported. As a mature
 _Black_ does make some exceptions to rules it otherwise holds. This section documents
 what those exceptions are and why this is the case.
 
+(labels/magic-trailing-comma)=
+
 ### The magic trailing comma
 
 _Black_ in general does not take existing formatting into account.
@@ -492,6 +498,8 @@ exception to this rule is r-strings. It turns out that the very popular
 default by (among others) GitHub and Visual Studio Code, differentiates between
 r-strings and R-strings. The former are syntax highlighted as regular expressions while
 the latter are treated as true raw strings with no special semantics.
+
+(labels/ast-changes)=
 
 ### AST before and after formatting
 
