@@ -193,7 +193,7 @@ Coord = Tuple[int, int]
 
 def printtoken(
     type: int, token: Text, srow_col: Coord, erow_col: Coord, line: Text
-):  # for testing
+) -> None:  # for testing
     (srow, scol) = srow_col
     (erow, ecol) = erow_col
     print(
