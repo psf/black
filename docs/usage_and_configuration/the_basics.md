@@ -26,8 +26,8 @@ python -m black {source_file_or_directory}
 
 ### Command line options
 
-The CLI options of _Black_ can be displayed by running
-`black --help`. All options are also covered in more detail below.
+The CLI options of _Black_ can be displayed by running `black --help`. All options are
+also covered in more detail below.
 
 While _Black_ has quite a few knobs these days, it is still opinionated so style options
 are deliberately limited and rarely added.
