@@ -163,7 +163,6 @@ endprogs: Final = {
     '"""': double3prog,
     **{f"{prefix}'''": single3prog for prefix in _strprefixes},
     **{f'{prefix}"""': double3prog for prefix in _strprefixes},
-    **{prefix: None for prefix in _strprefixes},
 }
 
 triple_quoted: Final = (
@@ -599,11 +598,13 @@ def generate_tokens(
                 ):
                     if token[-1] == "\n":  # continued string
                         strstart = (lnum, start)
-                        endprog = (
-                            endprogs[initial]
-                            or endprogs[token[1]]
-                            or endprogs[token[2]]
+                        maybe_endprog = (
+                            endprogs.get(initial)
+                            or endprogs.get(token[1])
+                            or endprogs.get(token[2])
                         )
+                        assert maybe_endprog is not None, f"endprog not found for {token}"
+                        endprog = maybe_endprog
                         contstr, needcont = line[start:], 1
                         contline = line
                         break
