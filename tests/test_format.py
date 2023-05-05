@@ -203,3 +203,15 @@ def test_type_comment_syntax_error() -> None:
     source, expected = read_data("type_comments", "type_comment_syntax_error")
     assert_format(source, expected)
     black.assert_equivalent(source, expected)
+
+
+def test_subscript() -> None:
+    source, expected = read_data("miscellaneous", "subscript")
+    mode = black.Mode(preview=True, target_versions={black.TargetVersion.PY39})
+    assert_format(source, expected, mode)
+
+
+def test_subscript_py310() -> None:
+    source, expected = read_data("miscellaneous", "subscript_py310")
+    mode = black.Mode(preview=True, target_versions={black.TargetVersion.PY310})
+    assert_format(source, expected, mode)

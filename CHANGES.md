@@ -17,6 +17,7 @@
 - Implicitly concatenated strings used as function args are no longer wrapped inside
   parentheses (#3640)
 - Remove blank lines between a class definition and its docstring (#3692)
+- parentheses are removed from subscript operations (#3680)
 
 ### Configuration
 

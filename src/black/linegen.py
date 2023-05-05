@@ -349,6 +349,30 @@ class LineGenerator(Visitor[Line]):
 
         yield from self.visit_default(node)
 
+    def visit_trailer(self, node: Node) -> Iterator[Line]:
+        if (
+            Preview.remove_redundant_parens_subscript in self.mode
+            # Ensure that we are in a getitem trailer
+            and node.children[0].type == token.LSQB
+            and (
+                # If there are parens in the subscript
+                (
+                    node.children[1].type == syms.atom
+                    and node.children[1].children[0].type == token.LPAR
+                    and not is_walrus_assignment(node.children[1])
+                )
+                or (
+                    is_walrus_assignment(node.children[1])
+                    # This is only supported in py310 and up
+                    and all(t.value >= 10 for t in self.mode.target_versions)
+                )
+            )
+        ):
+            normalize_invisible_parens(
+                node, parens_after={"["}, mode=self.mode, features=self.features
+            )
+        yield from self.visit_default(node)
+
     def visit_SEMI(self, leaf: Leaf) -> Iterator[Line]:
         """Remove a semicolon and put the other statement on a separate line."""
         yield from self.line()
@@ -1169,6 +1193,8 @@ def normalize_invisible_parens(
                 if maybe_make_parens_invisible_in_atom(
                     child,
                     parent=node,
+                    force_remove_brackets_around_comma=node.type == syms.trailer
+                    and child.children[0].type == token.LPAR,
                 ):
                     wrap_in_parentheses(node, child, visible=False)
             elif is_one_tuple(child):
@@ -1336,6 +1362,7 @@ def maybe_make_parens_invisible_in_atom(
     node: LN,
     parent: LN,
     remove_brackets_around_comma: bool = False,
+    force_remove_brackets_around_comma: bool = False,
 ) -> bool:
     """If it's safe, make the parens in the atom `node` invisible, recursively.
     Additionally, remove repeated, adjacent invisible parens from the atom `node`
@@ -1343,10 +1370,12 @@ def maybe_make_parens_invisible_in_atom(
 
     Returns whether the node should itself be wrapped in invisible parentheses.
     """
+    if force_remove_brackets_around_comma:
+        remove_brackets_around_comma = True
     if (
         node.type != syms.atom
         or is_empty_tuple(node)
-        or is_one_tuple(node)
+        or (is_one_tuple(node) and not force_remove_brackets_around_comma)
         or (is_yield(node) and parent.type != syms.expr_stmt)
         or (
             # This condition tries to prevent removing non-optional brackets
