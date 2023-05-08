@@ -45,6 +45,9 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- GitHub Action: adds 2 action outputs to report changes that can be used in other
+  steps. Outputs: `is-formatted` and `changed-files` (#3531)
+
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes

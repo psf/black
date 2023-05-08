@@ -70,3 +70,43 @@ If you want to match versions covered by Black's
     src: "./src"
     version: "~= 22.0"
 ```
+
+## Outputs
+
+This action will output two variables for further processing of changes black has made
+against `src` set.
+
+### `is-formatted`
+
+Defaults to `"false"`, set to `"true"` if black changed any files.
+
+### `changed-files`
+
+Defaults to `"0"`, set to string representation of integer value of how many files black
+modified.
+
+### Usage
+
+One could use either of these output variables to further have conditional steps within
+the same pipeline, like creating a pull request after black has done changes to the code
+base.
+
+```yaml
+- uses: psf/black@stable
+  with:
+    options: "--verbose"
+    src: "./src"
+    id: "action_black"
+
+- name: Create Pull Request
+  if: steps.action_black.outputs.is-formatted == 'true'
+  uses: peter-evans/create-pull-request@v3
+  with:
+    token: ${{ secrets.GITHUB_TOKEN }}
+    title: "Format Python code with psf/black push"
+    commit-message: ":art: Format Python code with psf/black"
+    body: |
+      There appear to be some python formatting errors in ${{ github.sha }}. This pull request
+      uses the [psf/black](https://github.com/psf/black) formatter to fix these issues.
+    base: ${{ github.head_ref }} # Creates pull request onto pull request or commit branch
+```
