@@ -636,7 +636,11 @@ class EmptyLineTracker:
         ):
             return before, 1
 
-        if self.previous_line and self.previous_line.opens_block:
+        if (
+            not self.mode.allow_block_newline
+            and self.previous_line
+            and self.previous_line.opens_block
+        ):
             return 0, 0
         return before, 0
 

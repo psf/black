@@ -203,3 +203,10 @@ def test_type_comment_syntax_error() -> None:
     source, expected = read_data("type_comments", "type_comment_syntax_error")
     assert_format(source, expected)
     black.assert_equivalent(source, expected)
+
+
+def test_optional_allow_block_newline() -> None:
+    """test allow_block_newline=True"""
+    source, expected = read_data("miscellaneous", "allow_newline_after_code_block_open")
+    mode = black.Mode(allow_block_newline=True)
+    assert_format(source, expected, mode)

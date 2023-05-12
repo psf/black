@@ -33,6 +33,7 @@ PYTHON_VARIANT_HEADER = "X-Python-Variant"
 SKIP_SOURCE_FIRST_LINE = "X-Skip-Source-First-Line"
 SKIP_STRING_NORMALIZATION_HEADER = "X-Skip-String-Normalization"
 SKIP_MAGIC_TRAILING_COMMA = "X-Skip-Magic-Trailing-Comma"
+ALLOW_BLOCK_NEWLINE = "X-Allow_Block_Newline"
 PREVIEW = "X-Preview"
 FAST_OR_SAFE_HEADER = "X-Fast-Or-Safe"
 DIFF_HEADER = "X-Diff"
@@ -44,6 +45,7 @@ BLACK_HEADERS = [
     SKIP_SOURCE_FIRST_LINE,
     SKIP_STRING_NORMALIZATION_HEADER,
     SKIP_MAGIC_TRAILING_COMMA,
+    ALLOW_BLOCK_NEWLINE,
     PREVIEW,
     FAST_OR_SAFE_HEADER,
     DIFF_HEADER,
@@ -113,6 +115,7 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
         skip_magic_trailing_comma = bool(
             request.headers.get(SKIP_MAGIC_TRAILING_COMMA, False)
         )
+        allow_block_newline = bool(request.headers.get(ALLOW_BLOCK_NEWLINE, False))
         skip_source_first_line = bool(
             request.headers.get(SKIP_SOURCE_FIRST_LINE, False)
         )
@@ -127,6 +130,7 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
             skip_source_first_line=skip_source_first_line,
             string_normalization=not skip_string_normalization,
             magic_trailing_comma=not skip_magic_trailing_comma,
+            allow_block_newline=allow_block_newline,
             preview=preview,
         )
         req_bytes = await request.content.read()

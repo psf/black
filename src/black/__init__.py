@@ -269,6 +269,11 @@ def validate_regex(
     help="Don't use trailing commas as a reason to split lines.",
 )
 @click.option(
+    "--allow-block-newline",
+    is_flag=True,
+    help="Allow a single opening newline after a block opens.",
+)
+@click.option(
     "--experimental-string-processing",
     is_flag=True,
     hidden=True,
@@ -439,6 +444,7 @@ def main(  # noqa: C901
     skip_source_first_line: bool,
     skip_string_normalization: bool,
     skip_magic_trailing_comma: bool,
+    allow_block_newline: bool,
     experimental_string_processing: bool,
     preview: bool,
     quiet: bool,
@@ -547,6 +553,7 @@ def main(  # noqa: C901
         skip_source_first_line=skip_source_first_line,
         string_normalization=not skip_string_normalization,
         magic_trailing_comma=not skip_magic_trailing_comma,
+        allow_block_newline=allow_block_newline,
         experimental_string_processing=experimental_string_processing,
         preview=preview,
         python_cell_magics=set(python_cell_magics),
