@@ -32,7 +32,7 @@ else:
                 describe_name = line[len("describe-name: ") :].rstrip()
                 break
     if not describe_name:
-        sys.stderr.write("::error::Failed to detect action version.")
+        print("::error::Failed to detect action version.", file=sys.stderr, flush=True)
         sys.exit(1)
     # expected format is one of:
     # - 23.1.0
@@ -53,7 +53,7 @@ pip_proc = run(
 )
 if pip_proc.returncode:
     print(pip_proc.stdout)
-    sys.stderr.write("::error::Failed to install Black.")
+    print("::error::Failed to install Black.", file=sys.stderr, flush=True)
     sys.exit(pip_proc.returncode)
 
 
