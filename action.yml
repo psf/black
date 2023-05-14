@@ -36,7 +36,7 @@ runs:
     - name: black
       run: |
         if [ "$RUNNER_OS" == "Windows" ]; then
-          python $GITHUB_ACTION_PATH/action/main.py | tee -a $GITHUB_STEP_SUMMARY 
+          python $GITHUB_ACTION_PATH/action/main.py | tee -a $GITHUB_STEP_SUMMARY
         else
           python3 $GITHUB_ACTION_PATH/action/main.py | tee -a $GITHUB_STEP_SUMMARY
         fi
