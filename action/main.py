@@ -32,7 +32,7 @@ else:
                 describe_name = line[len("describe-name: ") :].rstrip()
                 break
     if not describe_name:
-        print("::error::Failed to detect action version.", flush=True)
+        print("::error::Failed to detect action version.", file=sys.stderr, flush=True)
         sys.exit(1)
     # expected format is one of:
     # - 23.1.0
@@ -53,15 +53,25 @@ pip_proc = run(
 )
 if pip_proc.returncode:
     print(pip_proc.stdout)
-    print("::error::Failed to install Black.", flush=True)
+    print("::error::Failed to install Black.", file=sys.stderr, flush=True)
     sys.exit(pip_proc.returncode)
 
 
 base_cmd = [str(ENV_BIN / "black")]
 if BLACK_ARGS:
     # TODO: remove after a while since this is deprecated in favour of SRC + OPTIONS.
-    proc = run([*base_cmd, *shlex.split(BLACK_ARGS)])
+    proc = run(
+        [*base_cmd, *shlex.split(BLACK_ARGS)],
+        stdout=PIPE,
+        stderr=STDOUT,
+        encoding="utf-8",
+    )
 else:
-    proc = run([*base_cmd, *shlex.split(OPTIONS), *shlex.split(SRC)])
-
+    proc = run(
+        [*base_cmd, *shlex.split(OPTIONS), *shlex.split(SRC)],
+        stdout=PIPE,
+        stderr=STDOUT,
+        encoding="utf-8",
+    )
+print(proc.stdout)
 sys.exit(proc.returncode)
