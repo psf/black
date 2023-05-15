@@ -34,6 +34,7 @@ from typing import (
     Iterator,
     List,
     Optional,
+    Set,
     Text,
     Tuple,
     Pattern,
@@ -66,19 +67,19 @@ __all__ = [x for x in dir(token) if x[0] != "_"] + [
 del token
 
 
-def group(*choices):
+def group(*choices: str) -> str:
     return "(" + "|".join(choices) + ")"
 
 
-def any(*choices):
+def any(*choices: str) -> str:
     return group(*choices) + "*"
 
 
-def maybe(*choices):
+def maybe(*choices: str) -> str:
     return group(*choices) + "?"
 
 
-def _combinations(*l):
+def _combinations(*l: str) -> Set[str]:
     return set(x + y for x in l for y in l + ("",) if x.casefold() != y.casefold())
 
 
@@ -163,7 +164,6 @@ endprogs: Final = {
     '"""': double3prog,
     **{f"{prefix}'''": single3prog for prefix in _strprefixes},
     **{f'{prefix}"""': double3prog for prefix in _strprefixes},
-    **{prefix: None for prefix in _strprefixes},
 }
 
 triple_quoted: Final = (
@@ -188,15 +188,19 @@ class StopTokenizing(Exception):
     pass
 
 
-def printtoken(type, token, xxx_todo_changeme, xxx_todo_changeme1, line):  # for testing
-    (srow, scol) = xxx_todo_changeme
-    (erow, ecol) = xxx_todo_changeme1
+Coord = Tuple[int, int]
+
+
+def printtoken(
+    type: int, token: Text, srow_col: Coord, erow_col: Coord, line: Text
+) -> None:  # for testing
+    (srow, scol) = srow_col
+    (erow, ecol) = erow_col
     print(
         "%d,%d-%d,%d:\t%s\t%s" % (srow, scol, erow, ecol, tok_name[type], repr(token))
     )
 
 
-Coord = Tuple[int, int]
 TokenEater = Callable[[int, Text, Coord, Coord, Text], None]
 
 
@@ -220,7 +224,7 @@ def tokenize(readline: Callable[[], Text], tokeneater: TokenEater = printtoken) 
 
 
 # backwards compatible interface
-def tokenize_loop(readline, tokeneater):
+def tokenize_loop(readline: Callable[[], Text], tokeneater: TokenEater) -> None:
     for token_info in generate_tokens(readline):
         tokeneater(*token_info)
 
@@ -230,7 +234,6 @@ TokenInfo = Union[Tuple[int, str], GoodTokenInfo]
 
 
 class Untokenizer:
-
     tokens: List[Text]
     prev_row: int
     prev_col: int
@@ -599,11 +602,15 @@ def generate_tokens(
                 ):
                     if token[-1] == "\n":  # continued string
                         strstart = (lnum, start)
-                        endprog = (
-                            endprogs[initial]
-                            or endprogs[token[1]]
-                            or endprogs[token[2]]
+                        maybe_endprog = (
+                            endprogs.get(initial)
+                            or endprogs.get(token[1])
+                            or endprogs.get(token[2])
                         )
+                        assert (
+                            maybe_endprog is not None
+                        ), f"endprog not found for {token}"
+                        endprog = maybe_endprog
                         contstr, needcont = line[start:], 1
                         contline = line
                         break
@@ -631,7 +638,6 @@ def generate_tokens(
 
                     if token in ("def", "for"):
                         if stashed and stashed[0] == NAME and stashed[1] == "async":
-
                             if token == "def":
                                 async_def = True
                                 async_def_indent = indents[-1]

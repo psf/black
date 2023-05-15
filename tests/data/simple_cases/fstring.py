@@ -7,6 +7,8 @@ f"{f'''{'nested'} inner'''} outer"
 f"\"{f'{nested} inner'}\" outer"
 f"space between opening braces: { {a for a in (1, 2, 3)}}"
 f'Hello \'{tricky + "example"}\''
+f"Tried directories {str(rootdirs)} \
+but none started with prefix {parentdir_prefix}"
 
 # output
 
@@ -19,3 +21,5 @@ f"{f'''{'nested'} inner'''} outer"
 f"\"{f'{nested} inner'}\" outer"
 f"space between opening braces: { {a for a in (1, 2, 3)}}"
 f'Hello \'{tricky + "example"}\''
+f"Tried directories {str(rootdirs)} \
+but none started with prefix {parentdir_prefix}"
