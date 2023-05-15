@@ -33,11 +33,12 @@ branding:
 runs:
   using: composite
   steps:
-    - run: |
+    - name: black
+      run: |
         if [ "$RUNNER_OS" == "Windows" ]; then
-          python $GITHUB_ACTION_PATH/action/main.py
+          python $GITHUB_ACTION_PATH/action/main.py | tee -a $GITHUB_STEP_SUMMARY
         else
-          python3 $GITHUB_ACTION_PATH/action/main.py
+          python3 $GITHUB_ACTION_PATH/action/main.py | tee -a $GITHUB_STEP_SUMMARY
         fi
       env:
         # TODO: Remove once https://github.com/actions/runner/issues/665 is fixed.
