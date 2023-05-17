@@ -21,6 +21,8 @@
 
 <!-- Changes to how Black can be configured -->
 
+- `.pytest_cache`, `.ruff_cache` and `.vscode` are now excluded by default (#3691)
+
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
