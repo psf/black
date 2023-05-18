@@ -634,6 +634,8 @@ class EmptyLineTracker:
             and self.previous_line.is_class
             and current_line.is_triple_quoted_string
         ):
+            if Preview.no_blank_line_before_class_docstring in current_line.mode:
+                return 0, 1
             return before, 1
 
         if self.previous_line and self.previous_line.opens_block:
