@@ -30,7 +30,6 @@ class PgenGrammar(grammar.Grammar):
 
 
 class ParserGenerator(object):
-
     filename: Path
     stream: IO[Text]
     generator: Iterator[GoodTokenInfo]
@@ -39,7 +38,7 @@ class ParserGenerator(object):
     def __init__(self, filename: Path, stream: Optional[IO[Text]] = None) -> None:
         close_stream = None
         if stream is None:
-            stream = open(filename)
+            stream = open(filename, encoding="utf-8")
             close_stream = stream.close
         self.filename = filename
         self.stream = stream
