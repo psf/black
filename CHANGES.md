@@ -28,6 +28,8 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
+- Upgrade mypyc from 0.991 to 1.3 (#3697)
+
 ### Parser
 
 <!-- Changes to the parser or to version autodetection -->
