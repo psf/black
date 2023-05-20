@@ -16,10 +16,13 @@
 
 - Implicitly concatenated strings used as function args are no longer wrapped inside
   parentheses (#3640)
+- Remove blank lines between a class definition and its docstring (#3692)
 
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
+
+- `.pytest_cache`, `.ruff_cache` and `.vscode` are now excluded by default (#3691)
 
 ### Packaging
 
