@@ -95,6 +95,7 @@ class _python_symbols(Symbols):
     old_test: int
     or_test: int
     parameters: int
+    paramspec: int
     pass_stmt: int
     pattern: int
     patterns: int
@@ -127,6 +128,10 @@ class _python_symbols(Symbols):
     trailer: int
     try_stmt: int
     typedargslist: int
+    typeparam: int
+    typeparams: int
+    typevar: int
+    typevartuple: int
     varargslist: int
     vfpdef: int
     vfplist: int

@@ -30,6 +30,7 @@ class TargetVersion(Enum):
     PY39 = 9
     PY310 = 10
     PY311 = 11
+    PY312 = 12
 
 
 class Feature(Enum):
@@ -51,6 +52,7 @@ class Feature(Enum):
     VARIADIC_GENERICS = 15
     DEBUG_F_STRINGS = 16
     PARENTHESIZED_CONTEXT_MANAGERS = 17
+    TYPE_PARAMS = 18
     FORCE_OPTIONAL_PARENTHESES = 50
 
     # __future__ flags
@@ -142,6 +144,25 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.PATTERN_MATCHING,
         Feature.EXCEPT_STAR,
         Feature.VARIADIC_GENERICS,
+    },
+    TargetVersion.PY312: {
+        Feature.F_STRINGS,
+        Feature.DEBUG_F_STRINGS,
+        Feature.NUMERIC_UNDERSCORES,
+        Feature.TRAILING_COMMA_IN_CALL,
+        Feature.TRAILING_COMMA_IN_DEF,
+        Feature.ASYNC_KEYWORDS,
+        Feature.FUTURE_ANNOTATIONS,
+        Feature.ASSIGNMENT_EXPRESSIONS,
+        Feature.RELAXED_DECORATORS,
+        Feature.POS_ONLY_ARGUMENTS,
+        Feature.UNPACKING_ON_FLOW,
+        Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS,
+        Feature.PATTERN_MATCHING,
+        Feature.EXCEPT_STAR,
+        Feature.VARIADIC_GENERICS,
+        Feature.TYPE_PARAMS,
     },
 }
 
