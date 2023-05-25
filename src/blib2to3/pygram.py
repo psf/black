@@ -127,6 +127,7 @@ class _python_symbols(Symbols):
     tname_star: int
     trailer: int
     try_stmt: int
+    type_stmt: int
     typedargslist: int
     typeparam: int
     typeparams: int

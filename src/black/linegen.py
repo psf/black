@@ -214,15 +214,15 @@ class LineGenerator(Visitor[Line]):
                 yield from self.line()
 
             yield from self.visit(child)
-    
+
     def visit_typeparams(self, node: Node) -> Iterator[Line]:
         yield from self.visit_default(node)
         node.children[0].prefix = ""
-    
+
     def visit_typevartuple(self, node: Node) -> Iterator[Line]:
         yield from self.visit_default(node)
         node.children[1].prefix = ""
-    
+
     def visit_paramspec(self, node: Node) -> Iterator[Line]:
         yield from self.visit_default(node)
         node.children[1].prefix = ""
