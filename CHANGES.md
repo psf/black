@@ -43,6 +43,7 @@
 ### _Blackd_
 
 <!-- Changes to blackd -->
+- The `blackd` argument parser now shows the default values for options in their help text (#3712)
 
 ### Integrations
 
