@@ -23,6 +23,8 @@
 <!-- Changes to how Black can be configured -->
 
 - `.pytest_cache`, `.ruff_cache` and `.vscode` are now excluded by default (#3691)
+- Fix black not honouring `pyproject.toml` settings when running `--stdin-filename` and
+  the `pyproject.toml` found isn't in the current working directory (#3719)
 
 ### Packaging
 
