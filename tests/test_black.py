@@ -1638,7 +1638,7 @@ class BlackTestCase(BlackBaseTestCase):
             src_python.touch()
 
             fake_ctx = FakeContext()
-            fake_ctx.params["src"] = ("-", )
+            fake_ctx.params["src"] = ("-",)
             fake_ctx.params["stdin_filename"] = str(src_python)
 
             with change_directory(root):
