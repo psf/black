@@ -164,8 +164,8 @@ If you'd like colored diffs, you can enable them with `--color`.
 
 ```console
 $ black test.py --diff
---- test.py     2021-03-08 22:23:40.848954 +0000
-+++ test.py     2021-03-08 22:23:47.126319 +0000
+--- test.py     2021-03-08 22:23:40.848954+00:00
++++ test.py     2021-03-08 22:23:47.126319+00:00
 @@ -1 +1 @@
 -print ( 'hello, world' )
 +print("hello, world")

@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from concurrent.futures import Executor, ProcessPoolExecutor
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import partial
 from multiprocessing import freeze_support
 from typing import Set, Tuple
@@ -138,7 +138,7 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
         req_bytes = await request.content.read()
         charset = request.charset if request.charset is not None else "utf8"
         req_str = req_bytes.decode(charset)
-        then = datetime.utcnow()
+        then = datetime.now(timezone.utc)
 
         header = ""
         if skip_source_first_line:
@@ -165,9 +165,9 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
         # Only output the diff in the HTTP response
         only_diff = bool(request.headers.get(DIFF_HEADER, False))
         if only_diff:
-            now = datetime.utcnow()
-            src_name = f"In\t{then} +0000"
-            dst_name = f"Out\t{now} +0000"
+            now = datetime.now(timezone.utc)
+            src_name = f"In\t{then}"
+            dst_name = f"Out\t{now}"
             loop = asyncio.get_event_loop()
             formatted_str = await loop.run_in_executor(
                 executor,

@@ -42,6 +42,8 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Use aware UTC datetimes internally, avoids deprecation warning on Python 3.12 (#3728)
+
 ### _Blackd_
 
 <!-- Changes to blackd -->

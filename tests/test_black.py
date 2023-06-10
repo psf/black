@@ -207,8 +207,8 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_piping_diff(self) -> None:
         diff_header = re.compile(
-            r"(STDIN|STDOUT)\t\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d\d\d\d "
-            r"\+\d\d\d\d"
+            r"(STDIN|STDOUT)\t\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d\d\d\d"
+            r"\+\d\d:\d\d"
         )
         source, _ = read_data("simple_cases", "expression.py")
         expected, _ = read_data("simple_cases", "expression.diff")
@@ -300,7 +300,7 @@ class BlackTestCase(BlackBaseTestCase):
         tmp_file = Path(black.dump_to_file(source))
         diff_header = re.compile(
             rf"{re.escape(str(tmp_file))}\t\d\d\d\d-\d\d-\d\d "
-            r"\d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
+            r"\d\d:\d\d:\d\d\.\d\d\d\d\d\d\+\d\d:\d\d"
         )
         try:
             result = BlackRunner().invoke(
@@ -411,7 +411,7 @@ class BlackTestCase(BlackBaseTestCase):
         tmp_file = Path(black.dump_to_file(source))
         diff_header = re.compile(
             rf"{re.escape(str(tmp_file))}\t\d\d\d\d-\d\d-\d\d "
-            r"\d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
+            r"\d\d:\d\d:\d\d\.\d\d\d\d\d\d\+\d\d:\d\d"
         )
         try:
             result = BlackRunner().invoke(
@@ -1750,7 +1750,7 @@ class BlackTestCase(BlackBaseTestCase):
         tmp_file = Path(black.dump_to_file(source, ensure_final_newline=False))
         diff_header = re.compile(
             rf"{re.escape(str(tmp_file))}\t\d\d\d\d-\d\d-\d\d "
-            r"\d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
+            r"\d\d:\d\d:\d\d\.\d\d\d\d\d\d\+\d\d:\d\d"
         )
         try:
             result = BlackRunner().invoke(black.main, ["--diff", str(tmp_file)])
