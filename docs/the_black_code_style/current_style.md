@@ -164,7 +164,9 @@ to present code neatly in documentation or talk slides.
 
 If you use Flake8, you have a few options:
 
-1. Recommended is using [Bugbear](https://github.com/PyCQA/flake8-bugbear) and enabling its B950 check instead of using Flake8's E501, because it aligns with Black's 10% rule. Install Bugbear and use the following config:
+1. Recommended is using [Bugbear](https://github.com/PyCQA/flake8-bugbear) and enabling
+   its B950 check instead of using Flake8's E501, because it aligns with Black's 10%
+   rule. Install Bugbear and use the following config:
 
    ```ini
    [flake8]
@@ -174,8 +176,8 @@ If you use Flake8, you have a few options:
    extend-ignore = E203, E501
    ```
 
-   The rationale for E950 is explained in [Bugbear's documentation](https://github.com/PyCQA/flake8-bugbear#opinionated-warnings).
-
+   The rationale for E950 is explained in
+   [Bugbear's documentation](https://github.com/PyCQA/flake8-bugbear#opinionated-warnings).
 
 2. For a minimally compatible config:
 
@@ -185,7 +187,8 @@ If you use Flake8, you have a few options:
    extend-ignore = E203
    ```
 
-An explanation of why E203 is disabled can be found in the [Slices section](#slices) of this page.
+An explanation of why E203 is disabled can be found in the [Slices section](#slices) of
+this page.
 
 ### Empty lines
 
