@@ -160,6 +160,8 @@ harder to work with line lengths exceeding 100 characters. It also adversely aff
 side-by-side diff review on typical screen resolutions. Long lines also make it harder
 to present code neatly in documentation or talk slides.
 
+#### Flake8
+
 If you use Flake8, you have a few options:
 
 1. Recommended is using [Bugbear](https://github.com/PyCQA/flake8-bugbear) and enabling its B950 check instead of using Flake8's E501, because it aligns with Black's 10% rule. Install Bugbear and use the following config:
@@ -172,6 +174,9 @@ If you use Flake8, you have a few options:
    extend-ignore = E203, E501
    ```
 
+   The rationale for E950 is explained in [Bugbear's documentation](https://github.com/PyCQA/flake8-bugbear#opinionated-warnings).
+
+
 2. For a minimally compatible config:
 
    ```ini
@@ -179,6 +184,8 @@ If you use Flake8, you have a few options:
    max-line-length = 88
    extend-ignore = E203
    ```
+
+An explanation of why E203 is disabled can be found in the [Slices section](#slices) of this page.
 
 ### Empty lines
 
