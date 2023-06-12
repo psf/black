@@ -57,7 +57,8 @@
 
 ### Documentation
 
-- Add a CITATION.cff file to the root of the repository, containing metadata on how to cite this software (#3723)
+- Add a CITATION.cff file to the root of the repository, containing metadata on how to
+  cite this software (#3723)
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
