@@ -10,6 +10,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix a bug where an illegal trailing comma was added to return type annotations using
+  PEP 604 unions (#3735)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
