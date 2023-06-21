@@ -13,7 +13,7 @@
 - Fix a bug where an illegal trailing comma was added to return type annotations using
   PEP 604 unions (#3735)
 - Fix a bug where multi-line open parenthesis magic comment like `type: ignore` were not
-  correctly parsed (#3737)
+  correctly parsed (#3740)
 
 ### Preview style
 

@@ -1399,7 +1399,12 @@ def maybe_make_parens_invisible_in_atom(
     if is_lpar_token(first) and is_rpar_token(last):
         middle = node.children[1]
         # make parentheses invisible
-        if not node.children[1].prefix.strip().replace(" ", "").startswith("#type:ignore"):
+        if (
+            not node.children[1]
+            .prefix.strip()
+            .replace(" ", "")
+            .startswith("#type:ignore")
+        ):
             first.value = ""
             last.value = ""
         maybe_make_parens_invisible_in_atom(
