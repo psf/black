@@ -80,7 +80,8 @@ def reformat_many(
 
     executor: Executor
     if workers is None:
-        workers = os.cpu_count() or 1
+        workers = int(os.environ.get("BLACK_NUM_WORKERS", 0))
+        workers = workers or os.cpu_count() or 1
     if sys.platform == "win32":
         # Work around https://bugs.python.org/issue26903
         workers = min(workers, 60)
