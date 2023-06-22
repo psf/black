@@ -10,12 +10,16 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix a bug where an illegal trailing comma was added to return type annotations using
+  PEP 604 unions (#3735)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
 - Implicitly concatenated strings used as function args are no longer wrapped inside
   parentheses (#3640)
+- Remove blank lines between a class definition and its docstring (#3692)
 
 ### Configuration
 
@@ -23,6 +27,7 @@
 
 - The `--workers` argument to Black can now be specified via the `BLACK_NUM_WORKERS`
   environment variable (#3743)
+- `.pytest_cache`, `.ruff_cache` and `.vscode` are now excluded by default (#3691)
 
 ### Packaging
 
@@ -32,6 +37,8 @@
 
 <!-- Changes to the parser or to version autodetection -->
 
+- Add support for the new PEP 695 syntax in Python 3.12 (#3703)
+
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
@@ -40,13 +47,20 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Use aware UTC datetimes internally, avoids deprecation warning on Python 3.12 (#3728)
+
 ### _Blackd_
 
 <!-- Changes to blackd -->
 
+- The `blackd` argument parser now shows the default values for options in their help
+  text (#3712)
+
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- Update GitHub Action to display black output in the job summary (#3688)
 
 ### Documentation
 

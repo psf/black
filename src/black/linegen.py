@@ -215,6 +215,18 @@ class LineGenerator(Visitor[Line]):
 
             yield from self.visit(child)
 
+    def visit_typeparams(self, node: Node) -> Iterator[Line]:
+        yield from self.visit_default(node)
+        node.children[0].prefix = ""
+
+    def visit_typevartuple(self, node: Node) -> Iterator[Line]:
+        yield from self.visit_default(node)
+        node.children[1].prefix = ""
+
+    def visit_paramspec(self, node: Node) -> Iterator[Line]:
+        yield from self.visit_default(node)
+        node.children[1].prefix = ""
+
     def visit_dictsetmaker(self, node: Node) -> Iterator[Line]:
         if Preview.wrap_long_dict_values_in_parens in self.mode:
             for i, child in enumerate(node.children):
@@ -905,6 +917,13 @@ def bracket_split_build_line(
                         getattr(leaves[0].parent, "parent", None),
                     )
                     if isinstance(node, Node) and isinstance(node.prev_sibling, Leaf)
+                )
+                # Except the false negatives above for PEP 604 unions where we
+                # can't add the comma.
+                and not (
+                    leaves[0].parent
+                    and leaves[0].parent.next_sibling
+                    and leaves[0].parent.next_sibling.type == token.VBAR
                 )
             )
 

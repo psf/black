@@ -26,62 +26,106 @@ python -m black {source_file_or_directory}
 
 ### Command line options
 
-The CLI options of _Black_ can be displayed by expanding the view below or by running
-`black --help`. While _Black_ has quite a few knobs these days, it is still opinionated
-so style options are deliberately limited and rarely added.
+The CLI options of _Black_ can be displayed by running `black --help`. All options are
+also covered in more detail below.
 
-<details>
-
-<summary>CLI reference</summary>
-
-```{program-output} black --help
-
-```
-
-</details>
+While _Black_ has quite a few knobs these days, it is still opinionated so style options
+are deliberately limited and rarely added.
 
 Note that all command-line options listed above can also be configured using a
 `pyproject.toml` file (more on that below).
 
-### Code input alternatives
+#### `-c`, `--code`
 
-#### Standard Input
-
-_Black_ supports formatting code via stdin, with the result being printed to stdout.
-Just let _Black_ know with `-` as the path.
-
-```console
-$ echo "print ( 'hello, world' )" | black -
-print("hello, world")
-reformatted -
-All done! ✨ 🍰 ✨
-1 file reformatted.
-```
-
-**Tip:** if you need _Black_ to treat stdin input as a file passed directly via the CLI,
-use `--stdin-filename`. Useful to make sure _Black_ will respect the `--force-exclude`
-option on some editors that rely on using stdin.
-
-#### As a string
-
-You can also pass code as a string using the `-c` / `--code` option.
+Format the code passed in as a string.
 
 ```console
 $ black --code "print ( 'hello, world' )"
 print("hello, world")
 ```
 
-### Writeback and reporting
+#### `-l`, `--line-length`
 
-By default _Black_ reformats the files given and/or found in place. Sometimes you need
-_Black_ to just tell you what it _would_ do without actually rewriting the Python files.
+How many characters per line to allow. The default is 88.
 
-There's two variations to this mode that are independently enabled by their respective
-flags. Both variations can be enabled at once.
+See also [the style documentation](labels/line-length).
+
+#### `-t`, `--target-version`
+
+Python versions that should be supported by Black's output. You should include all
+versions that your code supports. If you support Python 3.7 through 3.10, you should
+write:
+
+```console
+$ black -t py37 -t py38 -t py39 -t py310
+```
+
+In a [configuration file](#configuration-via-a-file), you can write:
+
+```toml
+target-versions = ["py37", "py38", "py39", "py310"]
+```
+
+_Black_ uses this option to decide what grammar to use to parse your code. In addition,
+it may use it to decide what style to use. For example, support for a trailing comma
+after `*args` in a function call was added in Python 3.5, so _Black_ will add this comma
+only if the target versions are all Python 3.5 or higher:
+
+```console
+$ black --line-length=10 --target-version=py35 -c 'f(a, *args)'
+f(
+    a,
+    *args,
+)
+$ black --line-length=10 --target-version=py34 -c 'f(a, *args)'
+f(
+    a,
+    *args
+)
+$ black --line-length=10 --target-version=py34 --target-version=py35 -c 'f(a, *args)'
+f(
+    a,
+    *args
+)
+```
+
+#### `--pyi`
+
+Format all input files like typing stubs regardless of file extension. This is useful
+when piping source on standard input.
+
+#### `--ipynb`
+
+Format all input files like Jupyter Notebooks regardless of file extension. This is
+useful when piping source on standard input.
+
+#### `--python-cell-magics`
+
+When processing Jupyter Notebooks, add the given magic to the list of known python-
+magics. Useful for formatting cells with custom python magics.
+
+#### `-S, --skip-string-normalization`
+
+By default, _Black_ uses double quotes for all strings and normalizes string prefixes,
+as described in [the style documentation](labels/strings). If this option is given,
+strings are left unchanged instead.
+
+#### `-C, --skip-magic-trailing-comma`
+
+By default, _Black_ uses existing trailing commas as an indication that short lines
+should be left separate, as described in
+[the style documentation](labels/magic-trailing-comma). If this option is given, the
+magic trailing comma is ignored.
+
+#### `--preview`
+
+Enable potentially disruptive style changes that may be added to Black's main
+functionality in the next major release. Read more about
+[our preview style](labels/preview-style).
 
 (labels/exit-code)=
 
-#### Exit code
+#### `--check`
 
 Passing `--check` will make _Black_ exit with:
 
@@ -111,17 +155,17 @@ $ echo $?
 123
 ```
 
-#### Diffs
+#### `--diff`
 
 Passing `--diff` will make _Black_ print out diffs that indicate what changes _Black_
 would've made. They are printed to stdout so capturing them is simple.
 
-If you'd like colored diffs, you can enable them with the `--color`.
+If you'd like colored diffs, you can enable them with `--color`.
 
 ```console
 $ black test.py --diff
---- test.py     2021-03-08 22:23:40.848954 +0000
-+++ test.py     2021-03-08 22:23:47.126319 +0000
+--- test.py     2021-03-08 22:23:40.848954+00:00
++++ test.py     2021-03-08 22:23:47.126319+00:00
 @@ -1 +1 @@
 -print ( 'hello, world' )
 +print("hello, world")
@@ -130,21 +174,91 @@ All done! ✨ 🍰 ✨
 1 file would be reformatted.
 ```
 
-### Output verbosity
+#### `--color` / `--no-color`
 
-_Black_ in general tries to produce the right amount of output, balancing between
-usefulness and conciseness. By default, _Black_ emits files modified and error messages,
-plus a short summary.
+Show (or do not show) colored diff. Only applies when `--diff` is given.
+
+#### `--fast` / `--safe`
+
+By default, _Black_ performs [an AST safety check](labels/ast-changes) after formatting
+your code. The `--fast` flag turns off this check and the `--safe` flag explicitly
+enables it.
+
+#### `--required-version`
+
+Require a specific version of _Black_ to be running. This is useful for ensuring that
+all contributors to your project are using the same version, because different versions
+of _Black_ may format code a little differently. This option can be set in a
+configuration file for consistent results across environments.
 
 ```console
-$ black src/
-error: cannot format src/black_primer/cli.py: Cannot parse: 5:6: mport asyncio
-reformatted src/black_primer/lib.py
-reformatted src/blackd/__init__.py
-reformatted src/black/__init__.py
-Oh no! 💥 💔 💥
-3 files reformatted, 2 files left unchanged, 1 file failed to reformat.
+$ black --version
+black, 23.3.0 (compiled: yes)
+$ black --required-version 23.3.0 -c "format = 'this'"
+format = "this"
+$ black --required-version 31.5b2 -c "still = 'beta?!'"
+Oh no! 💥 💔 💥 The required version does not match the running version!
 ```
+
+You can also pass just the major version:
+
+```console
+$ black --required-version 22 -c "format = 'this'"
+format = "this"
+$ black --required-version 31 -c "still = 'beta?!'"
+Oh no! 💥 💔 💥 The required version does not match the running version!
+```
+
+Because of our [stability policy](../the_black_code_style/index.md), this will guarantee
+stable formatting, but still allow you to take advantage of improvements that do not
+affect formatting.
+
+#### `--include`
+
+A regular expression that matches files and directories that should be included on
+recursive searches. An empty value means all files are included regardless of the name.
+Use forward slashes for directories on all platforms (Windows, too). Exclusions are
+calculated first, inclusions later.
+
+#### `--exclude`
+
+A regular expression that matches files and directories that should be excluded on
+recursive searches. An empty value means no paths are excluded. Use forward slashes for
+directories on all platforms (Windows, too). Exclusions are calculated first, inclusions
+later.
+
+#### `--extend-exclude`
+
+Like `--exclude`, but adds additional files and directories on top of the excluded ones.
+Useful if you simply want to add to the default.
+
+#### `--force-exclude`
+
+Like `--exclude`, but files and directories matching this regex will be excluded even
+when they are passed explicitly as arguments. This is useful when invoking _Black_
+programmatically on changed files, such as in a pre-commit hook or editor plugin.
+
+#### `--stdin-filename`
+
+The name of the file when passing it through stdin. Useful to make sure Black will
+respect the `--force-exclude` option on some editors that rely on using stdin.
+
+#### `-W`, `--workers`
+
+When _Black_ formats multiple files, it may use a process pool to speed up formatting.
+This option controls the number of parallel workers.
+
+#### `-q`, `--quiet`
+
+Passing `-q` / `--quiet` will cause _Black_ to stop emitting all non-critical output.
+Error messages will still be emitted (which can silenced by `2>/dev/null`).
+
+```console
+$ black src/ -q
+error: cannot format src/black_primer/cli.py: Cannot parse: 5:6: mport asyncio
+```
+
+#### `-v`, `--verbose`
 
 Passing `-v` / `--verbose` will cause _Black_ to also emit messages about files that
 were not changed or were ignored due to exclusion patterns. If _Black_ is using a
@@ -164,35 +278,73 @@ Oh no! 💥 💔 💥
 3 files reformatted, 2 files left unchanged, 1 file failed to reformat
 ```
 
-Passing `-q` / `--quiet` will cause _Black_ to stop emitting all non-critial output.
-Error messages will still be emitted (which can silenced by `2>/dev/null`).
-
-```console
-$ black src/ -q
-error: cannot format src/black_primer/cli.py: Cannot parse: 5:6: mport asyncio
-```
-
-### Versions
+#### `--version`
 
 You can check the version of _Black_ you have installed using the `--version` flag.
 
 ```console
 $ black --version
-black, version 23.3.0
+black, 23.3.0
 ```
 
-An option to require a specific version to be running is also provided.
+#### `--config`
+
+Read configuration options from a configuration file. See
+[below](#configuration-via-a-file) for more details on the configuration file.
+
+#### `-h`, `--help`
+
+Show available command-line options and exit.
+
+### Code input alternatives
+
+_Black_ supports formatting code via stdin, with the result being printed to stdout.
+Just let _Black_ know with `-` as the path.
 
 ```console
-$ black --required-version 21.9b0 -c "format = 'this'"
-format = "this"
-$ black --required-version 31.5b2 -c "still = 'beta?!'"
-Oh no! 💥 💔 💥 The required version does not match the running version!
+$ echo "print ( 'hello, world' )" | black -
+print("hello, world")
+reformatted -
+All done! ✨ 🍰 ✨
+1 file reformatted.
 ```
 
-This is useful for example when running _Black_ in multiple environments that haven't
-necessarily installed the correct version. This option can be set in a configuration
-file for consistent results across environments.
+**Tip:** if you need _Black_ to treat stdin input as a file passed directly via the CLI,
+use `--stdin-filename`. Useful to make sure _Black_ will respect the `--force-exclude`
+option on some editors that rely on using stdin.
+
+You can also pass code as a string using the `-c` / `--code` option.
+
+### Writeback and reporting
+
+By default _Black_ reformats the files given and/or found in place. Sometimes you need
+_Black_ to just tell you what it _would_ do without actually rewriting the Python files.
+
+There's two variations to this mode that are independently enabled by their respective
+flags:
+
+- `--check` (exit with code 1 if any file would be reformatted)
+- `--diff` (print a diff instead of reformatting files)
+
+Both variations can be enabled at once.
+
+### Output verbosity
+
+_Black_ in general tries to produce the right amount of output, balancing between
+usefulness and conciseness. By default, _Black_ emits files modified and error messages,
+plus a short summary.
+
+```console
+$ black src/
+error: cannot format src/black_primer/cli.py: Cannot parse: 5:6: mport asyncio
+reformatted src/black_primer/lib.py
+reformatted src/blackd/__init__.py
+reformatted src/black/__init__.py
+Oh no! 💥 💔 💥
+3 files reformatted, 2 files left unchanged, 1 file failed to reformat.
+```
+
+The `--quiet` and `--verbose` flags control output verbosity.
 
 ## Configuration via a file
 

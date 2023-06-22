@@ -134,6 +134,13 @@ def test_python_311(filename: str) -> None:
     assert_format(source, expected, mode, minimum_version=(3, 11))
 
 
+@pytest.mark.parametrize("filename", all_data_cases("py_312"))
+def test_python_312(filename: str) -> None:
+    source, expected = read_data("py_312", filename)
+    mode = black.Mode(target_versions={black.TargetVersion.PY312})
+    assert_format(source, expected, mode, minimum_version=(3, 12))
+
+
 @pytest.mark.parametrize("filename", all_data_cases("fast"))
 def test_fast_cases(filename: str) -> None:
     source, expected = read_data("fast", filename)

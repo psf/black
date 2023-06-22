@@ -47,6 +47,8 @@ with contextlib.ExitStack() as exit_stack:
     ...
 ```
 
+(labels/preview-style)=
+
 ## Preview style
 
 Experimental, potentially disruptive style changes are gathered under the `--preview`
