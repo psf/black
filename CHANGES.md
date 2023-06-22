@@ -20,6 +20,8 @@
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
+- The `--workers` argument to Black can now be specified via the `BLACK_NUM_WORKERS`
+  environment variable (#3743)
 
 ### Packaging
 
