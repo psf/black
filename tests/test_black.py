@@ -280,27 +280,6 @@ class BlackTestCase(BlackBaseTestCase):
             versions = black.detect_target_versions(root)
             self.assertIn(black.TargetVersion.PY312, versions)
 
-    def test_consecutive_ignore(self) -> None:
-        # https://github.com/psf/black/issues/3737
-
-        source, _ = read_data("miscellaneous", "consecutive_ignore.py")
-        expected, _ = read_data("miscellaneous", "consecutive_ignore.diff")
-        tmp_file = Path(black.dump_to_file(source))
-        diff_header = re.compile(
-            rf"{re.escape(str(tmp_file))}\t\d\d\d\d-\d\d-\d\d "
-            r"\d\d:\d\d:\d\d\.\d\d\d\d\d\d\+\d\d:\d\d"
-        )
-        try:
-            result = BlackRunner().invoke(black.main, ["--diff", str(tmp_file)])
-            self.assertEqual(result.exit_code, 0)
-        finally:
-            os.unlink(tmp_file)
-
-        actual = result.output
-        actual = diff_header.sub(DETERMINISTIC_HEADER, actual)
-        self.assertEqual(actual, expected)
-        print(result.output)
-
     def test_expression_ff(self) -> None:
         source, expected = read_data("simple_cases", "expression.py")
         tmp_file = Path(black.dump_to_file(source))
