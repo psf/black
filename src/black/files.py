@@ -89,9 +89,11 @@ def find_project_root(
     return directory, "file system root"
 
 
-def find_pyproject_toml(path_search_start: Tuple[str, ...]) -> Optional[str]:
+def find_pyproject_toml(
+    path_search_start: Tuple[str, ...], stdin_filename: Optional[str] = None
+) -> Optional[str]:
     """Find the absolute filepath to a pyproject.toml if it exists"""
-    path_project_root, _ = find_project_root(path_search_start)
+    path_project_root, _ = find_project_root(path_search_start, stdin_filename)
     path_pyproject_toml = path_project_root / "pyproject.toml"
     if path_pyproject_toml.is_file():
         return str(path_pyproject_toml)
