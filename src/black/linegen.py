@@ -918,6 +918,13 @@ def bracket_split_build_line(
                     )
                     if isinstance(node, Node) and isinstance(node.prev_sibling, Leaf)
                 )
+                # Except the false negatives above for PEP 604 unions where we
+                # can't add the comma.
+                and not (
+                    leaves[0].parent
+                    and leaves[0].parent.next_sibling
+                    and leaves[0].parent.next_sibling.type == token.VBAR
+                )
             )
 
             if original.is_import or no_commas:
