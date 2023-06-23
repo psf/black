@@ -12,8 +12,9 @@
 
 - Fix a bug where an illegal trailing comma was added to return type annotations using
   PEP 604 unions (#3735)
-- Fix a bug where comments in stub files were removed under some circumstances. This bug
-  would lead to crashes if the removed comment was a `# type: ignore` (#3745).
+- Fix several bugs where comments in stub files were removed under some circumstances.
+  These bugs would lead to crashes if the removed comment was a `# type: ignore`
+  (#3745).
 
 ### Preview style
 

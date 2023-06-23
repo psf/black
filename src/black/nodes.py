@@ -731,6 +731,9 @@ def is_stub_suite(node: Node) -> bool:
     ):
         return False
 
+    if node.children[3].prefix.strip():
+        return False
+
     return is_stub_body(node.children[2])
 
 
@@ -744,7 +747,8 @@ def is_stub_body(node: LN) -> bool:
 
     child = node.children[0]
     return (
-        child.type == syms.atom
+        not child.prefix.strip()
+        and child.type == syms.atom
         and len(child.children) == 3
         and all(leaf == Leaf(token.DOT, ".") for leaf in child.children)
     )
