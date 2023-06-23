@@ -1,0 +1,2 @@
+[tool.black]
+config = "recursion_1.toml"

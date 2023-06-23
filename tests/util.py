@@ -17,6 +17,7 @@ ALLOWED_SUFFIXES = (PYTHON_SUFFIX, ".pyi", ".out", ".diff", ".ipynb")
 
 THIS_DIR = Path(__file__).parent
 DATA_DIR = THIS_DIR / "data"
+TOML_CONFIG_DIR = DATA_DIR / "toml_configs"
 PROJECT_ROOT = THIS_DIR.parent
 EMPTY_LINE = "# EMPTY LINE WITH WHITESPACE" + " (this comment will be removed)"
 DETERMINISTIC_HEADER = "[Deterministic header]"

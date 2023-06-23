@@ -140,28 +140,44 @@ def read_pyproject_toml(
 
     if not config:
         return None
-    else:
-        # Sanitize the values to be Click friendly. For more information please see:
-        # https://github.com/psf/black/issues/1458
-        # https://github.com/pallets/click/issues/1567
-        config = {
-            k: str(v) if not isinstance(v, (list, dict)) else v
-            for k, v in config.items()
-        }
 
-    target_version = config.get("target_version")
+    inner_config = config.get("config") or (
+        ctx.default_map.get("config") if ctx.default_map else None
+    )
+    if inner_config:
+        inner_config_path = (Path(value).parent / inner_config).resolve()
+
+        try:
+            read_pyproject_toml(ctx, param, str(inner_config_path))
+        except RecursionError as e:
+            raise click.FileError(
+                filename=value, hint=f"Error reading configuration file: {e}"
+            ) from None
+
+        del config["config"]
+
+        if ctx.default_map:
+            ctx.default_map.update(config)
+            config = ctx.default_map.copy()
+    else:
+        if ctx.default_map:
+            config.update(ctx.default_map)
+
+    # Sanitize the values to be Click friendly. For more information please see:
+    # https://github.com/psf/black/issues/1458
+    # https://github.com/pallets/click/issues/1567
+    default_map: Dict[str, Any] = {
+        k: str(v) if not isinstance(v, (list, dict)) else v for k, v in config.items()
+    }
+
+    target_version = default_map.get("target_version")
     if target_version is not None and not isinstance(target_version, list):
         raise click.BadOptionUsage(
             "target-version", "Config key target-version must be a list"
         )
 
-    default_map: Dict[str, Any] = {}
-    if ctx.default_map:
-        default_map.update(ctx.default_map)
-    default_map.update(config)
-
     ctx.default_map = default_map
-    return value
+    return str(value)
 
 
 def target_version_option_callback(

@@ -18,7 +18,7 @@ from black import (
     main,
 )
 from black.handle_ipynb_magics import jupyter_dependencies_are_installed
-from tests.util import DATA_DIR, get_case_path, read_jupyter_notebook
+from tests.util import DATA_DIR, TOML_CONFIG_DIR, get_case_path, read_jupyter_notebook
 
 with contextlib.suppress(ModuleNotFoundError):
     import IPython
@@ -28,7 +28,7 @@ pytest.importorskip("tokenize_rt", reason="tokenize-rt is an optional dependency
 
 JUPYTER_MODE = Mode(is_ipynb=True)
 
-EMPTY_CONFIG = DATA_DIR / "empty_pyproject.toml"
+EMPTY_CONFIG = TOML_CONFIG_DIR / "empty_pyproject.toml"
 
 runner = CliRunner()
 

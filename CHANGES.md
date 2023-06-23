@@ -546,6 +546,7 @@ and the first release covered by our new
 - Enable Python 3.10+ by default, without any extra need to specify
   `--target-version=py310`. (#2758)
 - Make passing `SRC` or `--code` mandatory and mutually exclusive (#2804)
+- Allow specifying `config` in config files to include configuration options (#2525)
 
 ### Output
 

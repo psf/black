@@ -357,6 +357,40 @@ project.
 "No". _Black_ is all about sensible defaults. Applying those defaults will have your
 code in compliance with many other _Black_ formatted projects.
 
+### Linked Configuration
+
+You can use the `config = ` field to include configuration options from another
+configuration file, whose path needs to be relative to `pyproject.toml`. Values set in
+the original configuration file have precedence over those in the included file.
+
+Suppose `pyproject.toml` contains:
+
+```{code-block} toml
+---
+lineno-start: 1
+emphasize-lines: 2,3
+---
+[tool.black]
+config = "linked_config.toml"
+color = true
+```
+
+And `linked_config.toml` contains:
+
+```{code-block} toml
+---
+lineno-start: 1
+emphasize-lines: 2
+---
+[tool.black]
+color = false
+line-length = 88
+target-version = ['py36', 'py37', 'py38']
+```
+
+The resulting value for `color` would be `true` as specified in the first config
+(`pyproject.toml`).
+
 ### What on Earth is a `pyproject.toml` file?
 
 [PEP 518](https://www.python.org/dev/peps/pep-0518/) defines `pyproject.toml` as a

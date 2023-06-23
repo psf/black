@@ -54,6 +54,7 @@ from tests.util import (
     PROJECT_ROOT,
     PY36_VERSIONS,
     THIS_DIR,
+    TOML_CONFIG_DIR,
     BlackBaseTestCase,
     assert_format,
     change_directory,
@@ -66,7 +67,7 @@ from tests.util import (
 )
 
 THIS_FILE = Path(__file__)
-EMPTY_CONFIG = THIS_DIR / "data" / "empty_pyproject.toml"
+EMPTY_CONFIG = TOML_CONFIG_DIR / "empty_pyproject.toml"
 PY36_ARGS = [f"--target-version={version.name.lower()}" for version in PY36_VERSIONS]
 DEFAULT_EXCLUDE = black.re_compile_maybe_verbose(black.const.DEFAULT_EXCLUDES)
 DEFAULT_INCLUDE = black.re_compile_maybe_verbose(black.const.DEFAULT_INCLUDES)
@@ -127,7 +128,7 @@ def invokeBlack(
 ) -> None:
     runner = BlackRunner()
     if ignore_config:
-        args = ["--verbose", "--config", str(THIS_DIR / "empty.toml"), *args]
+        args = ["--verbose", "--config", str(TOML_CONFIG_DIR / "empty.toml"), *args]
     result = runner.invoke(black.main, args, catch_exceptions=False)
     assert result.stdout_bytes is not None
     assert result.stderr_bytes is not None
@@ -1515,7 +1516,7 @@ class BlackTestCase(BlackBaseTestCase):
             tmp_file.unlink()
 
     def test_parse_pyproject_toml(self) -> None:
-        test_toml_file = THIS_DIR / "test.toml"
+        test_toml_file = TOML_CONFIG_DIR / "test.toml"
         config = black.parse_pyproject_toml(str(test_toml_file))
         self.assertEqual(config["verbose"], 1)
         self.assertEqual(config["check"], "no")
@@ -1607,7 +1608,7 @@ class BlackTestCase(BlackBaseTestCase):
             self.assertEqual(result, expected)
 
     def test_read_pyproject_toml(self) -> None:
-        test_toml_file = THIS_DIR / "test.toml"
+        test_toml_file = TOML_CONFIG_DIR / "test.toml"
         fake_ctx = FakeContext()
         black.read_pyproject_toml(fake_ctx, FakeParameter(), str(test_toml_file))
         config = fake_ctx.default_map
@@ -1619,6 +1620,34 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(config["target_version"], ["py36", "py37", "py38"])
         self.assertEqual(config["exclude"], r"\.pyi?$")
         self.assertEqual(config["include"], r"\.py?$")
+
+    def test_black_replace_config(self) -> None:
+        test_toml_file = TOML_CONFIG_DIR / "test_replace.toml"
+        fake_ctx = FakeContext()
+        black.read_pyproject_toml(fake_ctx, FakeParameter(), str(test_toml_file))
+        config = fake_ctx.default_map
+        # `0` in `test_replace.toml` and `1` in `_black_config.toml`.
+        # Should be `0` as the root config is on a higher level than linked configs
+        self.assertEqual(config["verbose"], "0")
+        self.assertEqual(config["check"], "no")
+        self.assertEqual(config["diff"], "y")
+        self.assertEqual(config["color"], "False")
+        self.assertEqual(config["line_length"], "88")
+        self.assertEqual(config["target_version"], ["py36", "py37", "py38"])
+        self.assertEqual(config["exclude"], r"\.pyi?$")
+        self.assertEqual(config["include"], r"\.py?$")
+
+    def test_invalid_black_config(self) -> None:
+        test_toml_file = TOML_CONFIG_DIR / "invalid_test.toml"
+        fake_ctx = FakeContext()
+        with self.assertRaises(click.exceptions.FileError):
+            black.read_pyproject_toml(fake_ctx, FakeParameter(), str(test_toml_file))
+
+    def test_recursion_black_config(self) -> None:
+        test_toml_file = TOML_CONFIG_DIR / "recursion_1.toml"
+        fake_ctx = FakeContext()
+        with self.assertRaises(click.exceptions.FileError):
+            black.read_pyproject_toml(fake_ctx, FakeParameter(), str(test_toml_file))
 
     @pytest.mark.incompatible_with_mypyc
     def test_find_project_root(self) -> None:
