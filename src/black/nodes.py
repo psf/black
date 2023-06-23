@@ -718,6 +718,11 @@ def is_multiline_string(leaf: Leaf) -> bool:
 
 def is_stub_suite(node: Node) -> bool:
     """Return True if `node` is a suite with a stub body."""
+
+    # If there is a comment, we want to keep it.
+    if node.prefix.strip():
+        return False
+
     if (
         len(node.children) != 4
         or node.children[0].type != token.NEWLINE
