@@ -246,7 +246,8 @@ respect the `--force-exclude` option on some editors that rely on using stdin.
 #### `-W`, `--workers`
 
 When _Black_ formats multiple files, it may use a process pool to speed up formatting.
-This option controls the number of parallel workers.
+This option controls the number of parallel workers. This can also be specified via the
+`BLACK_NUM_WORKERS` environment variable.
 
 #### `-q`, `--quiet`
 
@@ -295,6 +296,19 @@ Read configuration options from a configuration file. See
 #### `-h`, `--help`
 
 Show available command-line options and exit.
+
+### Environment variable options
+
+_Black_ supports the following configuration via environment variables.
+
+#### `BLACK_CACHE_DIR`
+
+The directory where _Black_ should store its cache.
+
+#### `BLACK_NUM_WORKERS`
+
+The number of parallel workers _Black_ should use. The command line option `-W` /
+`--workers` takes precedence over this environment variable.
 
 ### Code input alternatives
 

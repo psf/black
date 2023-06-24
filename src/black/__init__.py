@@ -376,7 +376,10 @@ def validate_regex(
     "--workers",
     type=click.IntRange(min=1),
     default=None,
-    help="Number of parallel workers [default: number of CPUs in the system]",
+    help=(
+        "Number of parallel workers [default: BLACK_NUM_WORKERS environment variable "
+        "or number of CPUs in the system]"
+    ),
 )
 @click.option(
     "-q",
