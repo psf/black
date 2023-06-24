@@ -59,6 +59,7 @@ class Replacement:
 def jupyter_dependencies_are_installed(*, verbose: bool, quiet: bool) -> bool:
     try:
         # isort: off
+        # tokenize_rt is less commonly installed than IPython and IPython is expensive to import
         import tokenize_rt  # noqa:F401
         import IPython  # noqa:F401
 
