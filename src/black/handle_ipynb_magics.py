@@ -58,8 +58,8 @@ class Replacement:
 @lru_cache()
 def jupyter_dependencies_are_installed(*, verbose: bool, quiet: bool) -> bool:
     try:
-        import IPython  # noqa:F401
         import tokenize_rt  # noqa:F401
+        import IPython  # noqa:F401
     except ModuleNotFoundError:
         if verbose or not quiet:
             msg = (
