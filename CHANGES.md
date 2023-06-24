@@ -45,6 +45,8 @@
 
 <!-- Changes that improve Black's performance. -->
 
+- Avoid importing `IPython` in a case where we wouldn't need it (#3748)
+
 ### Output
 
 <!-- Changes to Black's terminal output and error messages -->
