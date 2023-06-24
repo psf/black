@@ -243,11 +243,9 @@ def format_repos(repos: Tuple[Path, ...], options: Namespace) -> None:
 
 
 def main() -> None:
-    parser = ArgumentParser(
-        description="""Black Gallery is a script that
+    parser = ArgumentParser(description="""Black Gallery is a script that
     automates the process of applying different Black versions to a selected
-    PyPI package and seeing the results between versions."""
-    )
+    PyPI package and seeing the results between versions.""")
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-p", "--pypi-package", help="PyPI package to download.")
