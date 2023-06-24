@@ -49,6 +49,7 @@ from black.nodes import (
     is_stub_body,
     is_stub_suite,
     is_tuple_containing_walrus,
+    is_type_ignore_comment_string,
     is_vararg,
     is_walrus_assignment,
     is_yield,
@@ -1400,10 +1401,9 @@ def maybe_make_parens_invisible_in_atom(
         middle = node.children[1]
         # make parentheses invisible
         if (
-            not node.children[1]
-            .prefix.strip()
-            .replace(" ", "")
-            .startswith("#type:ignore")
+            # If the prefix of `middle` includes a type comment with
+            # ignore annotation, then we do not remove the parentheses
+            not is_type_ignore_comment_string(middle.prefix.strip())
         ):
             first.value = ""
             last.value = ""
