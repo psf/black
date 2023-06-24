@@ -61,6 +61,7 @@ def jupyter_dependencies_are_installed(*, verbose: bool, quiet: bool) -> bool:
         # isort: off
         import tokenize_rt  # noqa:F401
         import IPython  # noqa:F401
+
         # isort: on
     except ModuleNotFoundError:
         if verbose or not quiet:
