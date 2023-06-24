@@ -481,26 +481,6 @@ def main(  # noqa: C901
                 fg="blue",
             )
 
-            normalized = [
-                (
-                    (source, source)
-                    if source == "-"
-                    else (normalize_path_maybe_ignore(Path(source), root), source)
-                )
-                for source in src
-            ]
-            srcs_string = ", ".join(
-                [
-                    (
-                        f'"{_norm}"'
-                        if _norm
-                        else f'\033[31m"{source} (skipping - invalid)"\033[34m'
-                    )
-                    for _norm, source in normalized
-                ]
-            )
-            out(f"Sources to be formatted: {srcs_string}", fg="blue")
-
         if config:
             config_source = ctx.get_parameter_source("config")
             user_level_config = str(find_user_pyproject_toml())
@@ -653,7 +633,11 @@ def get_sources(
         if is_stdin or p.is_file():
             normalized_path = normalize_path_maybe_ignore(p, ctx.obj["root"], report)
             if normalized_path is None:
+                if verbose:
+                    out(f'Skipping invalid source: "{normalized_path}"', fg="red")
                 continue
+            if verbose:
+                out(f'Found input source: "{normalized_path}"', fg="blue")
 
             normalized_path = "/" + normalized_path
             # Hard-exclude any files that matches the `--force-exclude` regex.
@@ -676,6 +660,9 @@ def get_sources(
             sources.add(p)
         elif p.is_dir():
             p = root / normalize_path_maybe_ignore(p, ctx.obj["root"], report)
+            if verbose:
+                out(f'Found input source directory: "{p}"', fg="blue")
+
             if using_default_exclude:
                 gitignore = {
                     root: root_gitignore,
@@ -696,9 +683,12 @@ def get_sources(
                 )
             )
         elif s == "-":
+            if verbose:
+                out("Found input source stdin", fg="blue")
             sources.add(p)
         else:
             err(f"invalid path: {s}")
+
     return sources
 
 
