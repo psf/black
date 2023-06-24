@@ -631,7 +631,7 @@ def get_sources(
             is_stdin = False
 
         if is_stdin or p.is_file():
-            normalized_path = normalize_path_maybe_ignore(p, ctx.obj["root"], report)
+            normalized_path: Optional[str] = normalize_path_maybe_ignore(p, ctx.obj["root"], report)
             if normalized_path is None:
                 if verbose:
                     out(f'Skipping invalid source: "{normalized_path}"', fg="red")
