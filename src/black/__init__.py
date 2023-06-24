@@ -127,7 +127,9 @@ def read_pyproject_toml(
     otherwise.
     """
     if not value:
-        value = find_pyproject_toml(ctx.params.get("src", ()))
+        value = find_pyproject_toml(
+            ctx.params.get("src", ()), ctx.params.get("stdin_filename", None)
+        )
         if value is None:
             return None
 
@@ -362,6 +364,7 @@ def validate_regex(
 @click.option(
     "--stdin-filename",
     type=str,
+    is_eager=True,
     help=(
         "The name of the file when passing it through stdin. Useful to make "
         "sure Black will respect --force-exclude option on some "
