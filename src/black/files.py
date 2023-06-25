@@ -277,9 +277,9 @@ def normalize_path_maybe_ignore(
 
 
 def _path_is_ignored(
-    path: Path, gitignore_dict: Dict[Path, PathSpec], report: Report
+    path: Path, root: Path, gitignore_dict: Dict[Path, PathSpec], report: Report
 ) -> bool:
-    assert path.is_absolute()
+    path = root / path
     # Note that this logic is sensitive to the ordering of gitignore_dict. Callers must
     # ensure that gitignore_dict is ordered from least specific to most specific.
     # This logic is currently applied post-symlink resolution. It might be more correct
@@ -290,7 +290,9 @@ def _path_is_ignored(
         except ValueError:
             break
         if pattern.match_file(relative_path):
-            report.path_ignored(path, "matches a .gitignore file content")
+            report.path_ignored(
+                path.relative_to(root), "matches a .gitignore file content"
+            )
             return True
     return False
 
@@ -333,7 +335,7 @@ def gen_python_files(
 
         # First ignore files matching .gitignore, if passed
         if gitignore_dict and _path_is_ignored(
-            root / normalized_path, gitignore_dict, report
+            normalized_path, root, gitignore_dict, report
         ):
             continue
 

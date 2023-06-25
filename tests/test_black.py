@@ -511,6 +511,8 @@ class BlackTestCase(BlackBaseTestCase):
             "pathlib.Path.cwd", return_value=working_directory
         ), patch("pathlib.Path.is_dir", side_effect=mock_n_calls([True])):
             ctx = FakeContext()
+            # Note that the root folder (project_root) isn't the folder
+            # named "root" (aka working_directory)
             ctx.obj["root"] = project_root
             report = MagicMock(verbose=True)
             black.get_sources(
@@ -530,7 +532,7 @@ class BlackTestCase(BlackBaseTestCase):
             for _, mock_args, _ in report.path_ignored.mock_calls
         ), "A symbolic link was reported."
         report.path_ignored.assert_called_once_with(
-            Path("child", "b.py"), "matches a .gitignore file content"
+            Path("root", "child", "b.py"), "matches a .gitignore file content"
         )
 
     def test_report_verbose(self) -> None:
