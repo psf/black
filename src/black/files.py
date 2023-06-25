@@ -291,7 +291,9 @@ def _path_is_ignored(
         except ValueError:
             break
         if pattern.match_file(relative_path):
-            report.path_ignored(root_relative_path, "matches a .gitignore file content")
+            report.path_ignored(
+                path.relative_to(root), "matches a .gitignore file content"
+            )
             return True
     return False
 
