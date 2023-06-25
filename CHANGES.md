@@ -45,7 +45,7 @@
 
 <!-- Changes that improve Black's performance. -->
 
-- Speed up _Black_ by about 40% when the cache is full (#3751)
+- Speed up _Black_ significantly when the cache is full (#3751)
 
 ### Output
 
