@@ -45,6 +45,8 @@
 
 <!-- Changes that improve Black's performance. -->
 
+- Speed up _Black_ by about 40% when the cache is full (#3751)
+
 ### Output
 
 <!-- Changes to Black's terminal output and error messages -->
