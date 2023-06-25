@@ -277,7 +277,10 @@ def normalize_path_maybe_ignore(
 
 
 def _path_is_ignored(
-    root_relative_path: str, root: Path, gitignore_dict: Dict[Path, PathSpec], report: Report
+    root_relative_path: str,
+    root: Path,
+    gitignore_dict: Dict[Path, PathSpec],
+    report: Report,
 ) -> bool:
     path = root / root_relative_path
     # Note that this logic is sensitive to the ordering of gitignore_dict. Callers must
