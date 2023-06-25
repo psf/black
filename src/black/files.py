@@ -276,12 +276,18 @@ def normalize_path_maybe_ignore(
     return root_relative_path
 
 
-def path_is_ignored(
+def _path_is_ignored(
     path: Path, gitignore_dict: Dict[Path, PathSpec], report: Report
 ) -> bool:
+    assert path.is_absolute()
+    # Note that this logic is sensitive to the ordering of gitignore_path. Callers must ensure
+    # that gitignore_dict is ordered from least specific to most specific.
+    # This logic is currently applied post-symlink resolution. It might be more correct to apply
+    # ignores before resolving the symlink.
     for gitignore_path, pattern in gitignore_dict.items():
-        relative_path = normalize_path_maybe_ignore(path, gitignore_path, report)
-        if relative_path is None:
+        try:
+            relative_path = path.relative_to(gitignore_path).as_posix()
+        except ValueError:
             break
         if pattern.match_file(relative_path):
             report.path_ignored(path, "matches a .gitignore file content")
@@ -326,7 +332,7 @@ def gen_python_files(
             continue
 
         # First ignore files matching .gitignore, if passed
-        if gitignore_dict and path_is_ignored(child, gitignore_dict, report):
+        if gitignore_dict and _path_is_ignored(root / normalized_path, gitignore_dict, report):
             continue
 
         # Then ignore with `--exclude` `--extend-exclude` and `--force-exclude` options.
