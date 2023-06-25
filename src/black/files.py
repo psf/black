@@ -285,8 +285,6 @@ def _path_is_ignored(
     path = root / root_relative_path
     # Note that this logic is sensitive to the ordering of gitignore_dict. Callers must
     # ensure that gitignore_dict is ordered from least specific to most specific.
-    # This logic is currently applied post-symlink resolution. It might be more correct
-    # to apply ignores before resolving the symlink.
     for gitignore_path, pattern in gitignore_dict.items():
         try:
             relative_path = path.relative_to(gitignore_path).as_posix()
