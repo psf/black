@@ -280,7 +280,7 @@ def _path_is_ignored(
     path: Path, gitignore_dict: Dict[Path, PathSpec], report: Report
 ) -> bool:
     assert path.is_absolute()
-    # Note that this logic is sensitive to the ordering of gitignore_path. Callers must
+    # Note that this logic is sensitive to the ordering of gitignore_dict. Callers must
     # ensure that gitignore_dict is ordered from least specific to most specific.
     # This logic is currently applied post-symlink resolution. It might be more correct
     # to apply ignores before resolving the symlink.
