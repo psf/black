@@ -52,6 +52,7 @@
 <!-- Changes to Black's terminal output and error messages -->
 
 - Use aware UTC datetimes internally, avoids deprecation warning on Python 3.12 (#3728)
+- Change verbose logging to exactly mirror _Black_'s logic for source discovery (#3749)
 
 ### _Blackd_
 
