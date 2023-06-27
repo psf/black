@@ -205,11 +205,11 @@ class StringTransformer(ABC):
         """
         Returns:
             * Ok(string_indices) such that for each index, `line.leaves[index]`
-            is our target string if a match was able to be made. For
-            transformers that don't result in more lines (e.g. StringMerger,
-            StringParenStripper), multiple matches and transforms are done at
-            once to reduce the complexity.
-                OR
+              is our target string if a match was able to be made. For
+              transformers that don't result in more lines (e.g. StringMerger,
+              StringParenStripper), multiple matches and transforms are done at
+              once to reduce the complexity.
+              OR
             * Err(CannotTransform), if no match could be made.
         """
 
@@ -220,12 +220,12 @@ class StringTransformer(ABC):
         """
         Yields:
             * Ok(new_line) where new_line is the new transformed line.
-                OR
+              OR
             * Err(CannotTransform) if the transformation failed for some reason. The
-            `do_match(...)` template method should usually be used to reject
-            the form of the given Line, but in some cases it is difficult to
-            know whether or not a Line meets the StringTransformer's
-            requirements until the transformation is already midway.
+              `do_match(...)` template method should usually be used to reject
+              the form of the given Line, but in some cases it is difficult to
+              know whether or not a Line meets the StringTransformer's
+              requirements until the transformation is already midway.
 
         Side Effects:
             This method should NOT mutate @line directly, but it MAY mutate the
@@ -335,8 +335,8 @@ class CustomSplitMapMixin:
 
         Returns:
             * A list of the custom splits that are mapped to @string, if any
-            exist.
-                OR
+              exist.
+              OR
             * [], otherwise.
 
         Side Effects:
@@ -365,14 +365,14 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
     Requirements:
         (A) The line contains adjacent strings such that ALL of the validation checks
         listed in StringMerger._validate_msg(...)'s docstring pass.
-            OR
+        OR
         (B) The line contains a string which uses line continuation backslashes.
 
     Transformations:
         Depending on which of the two requirements above where met, either:
 
         (A) The string group associated with the target string is merged.
-            OR
+        OR
         (B) All line-continuation backslashes are removed from the target string.
 
     Collaborations:
@@ -965,17 +965,20 @@ class BaseStringSplitter(StringTransformer):
 
     Requirements:
         * The target string value is responsible for the line going over the
-        line length limit. It follows that after all of black's other line
-        split methods have been exhausted, this line (or one of the resulting
-        lines after all line splits are performed) would still be over the
-        line_length limit unless we split this string.
-            AND
+          line length limit. It follows that after all of black's other line
+          split methods have been exhausted, this line (or one of the resulting
+          lines after all line splits are performed) would still be over the
+          line_length limit unless we split this string.
+          AND
+
         * The target string is NOT a "pointless" string (i.e. a string that has
-        no parent or siblings).
-            AND
+          no parent or siblings).
+          AND
+
         * The target string is not followed by an inline comment that appears
-        to be a pragma.
-            AND
+          to be a pragma.
+          AND
+
         * The target string is not a multiline (i.e. triple-quote) string.
     """
 
@@ -1027,7 +1030,7 @@ class BaseStringSplitter(StringTransformer):
 
         Returns:
             * Ok(None), if ALL of the requirements are met.
-                OR
+              OR
             * Err(CannotTransform), if ANY of the requirements are NOT met.
         """
         LL = line.leaves
