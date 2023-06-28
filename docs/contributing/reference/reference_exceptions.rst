@@ -11,8 +11,8 @@
 
 .. autoexception:: black.brackets.BracketMatchError
 
-.. autoexception:: black.NothingChanged
+.. autoexception:: black.report.NothingChanged
 
-.. autoexception:: black.InvalidInput
+.. autoexception:: black.parsing.InvalidInput
 
 .. autoexception:: black.mode.Deprecated

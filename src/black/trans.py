@@ -1302,9 +1302,9 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
 
     Requirements:
         * The line consists ONLY of a single string (possibly prefixed by a
-        string operator [e.g. '+' or '==']), MAYBE a string trailer, and MAYBE
-        a trailing comma.
-            AND
+          string operator [e.g. '+' or '==']), MAYBE a string trailer, and MAYBE
+          a trailing comma.
+          AND
         * All of the requirements listed in BaseStringSplitter's docstring.
 
     Transformations:
@@ -1811,26 +1811,26 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         addition to the requirements listed below:
 
         * The line is a return/yield statement, which returns/yields a string.
-            OR
+          OR
         * The line is part of a ternary expression (e.g. `x = y if cond else
-        z`) such that the line starts with `else <string>`, where <string> is
-        some string.
-            OR
+          z`) such that the line starts with `else <string>`, where <string> is
+          some string.
+          OR
         * The line is an assert statement, which ends with a string.
-            OR
+          OR
         * The line is an assignment statement (e.g. `x = <string>` or `x +=
-        <string>`) such that the variable is being assigned the value of some
-        string.
-            OR
+          <string>`) such that the variable is being assigned the value of some
+          string.
+          OR
         * The line is a dictionary key assignment where some valid key is being
-        assigned the value of some string.
-            OR
+          assigned the value of some string.
+          OR
         * The line is an lambda expression and the value is a string.
-            OR
+          OR
         * The line starts with an "atom" string that prefers to be wrapped in
-        parens. It's preferred to be wrapped when it's is an immediate child of
-        a list/set/tuple literal, AND the string is surrounded by commas (or is
-        the first/last child).
+          parens. It's preferred to be wrapped when it's is an immediate child of
+          a list/set/tuple literal, AND the string is surrounded by commas (or is
+          the first/last child).
 
     Transformations:
         The chosen string is wrapped in parentheses and then split at the LPAR.
@@ -2276,7 +2276,7 @@ class StringParser:
         Returns:
             The index directly after the last leaf which is apart of the string
             trailer, if a "trailer" exists.
-                OR
+            OR
             @string_idx + 1, if no string "trailer" exists.
         """
         assert leaves[string_idx].type == token.STRING
@@ -2290,11 +2290,11 @@ class StringParser:
         """
         Pre-conditions:
             * On the first call to this function, @leaf MUST be the leaf that
-            was directly after the string leaf in question (e.g. if our target
-            string is `line.leaves[i]` then the first call to this method must
-            be `line.leaves[i + 1]`).
+              was directly after the string leaf in question (e.g. if our target
+              string is `line.leaves[i]` then the first call to this method must
+              be `line.leaves[i + 1]`).
             * On the next call to this function, the leaf parameter passed in
-            MUST be the leaf directly following @leaf.
+              MUST be the leaf directly following @leaf.
 
         Returns:
             True iff @leaf is apart of the string's trailer.

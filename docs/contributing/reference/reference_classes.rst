@@ -65,6 +65,20 @@ Black Classes
     :members:
     :special-members: __str__
 
+:class:`Ok`
+---------------
+
+.. autoclass:: black.rusty.Ok
+    :show-inheritance:
+    :members:
+
+:class:`Err`
+---------------
+
+.. autoclass:: black.rusty.Err
+    :show-inheritance:
+    :members:
+
 :class:`Visitor`
 ----------------
 
@@ -77,6 +91,12 @@ Black Classes
 
 .. autoclass:: black.trans.StringTransformer
     :show-inheritance:
+    :members:
+
+:class:`CustomSplit`
+----------------------------
+
+.. autoclass:: black.trans.CustomSplit
     :members:
 
 :class:`CustomSplitMapMixin`
@@ -107,11 +127,37 @@ Black Classes
     :show-inheritance:
     :members:
 
+:class:`StringSplitter`
+-----------------------------
+
+.. autoclass:: black.trans.StringSplitter
+    :show-inheritance:
+    :members:
+
+:class:`StringParenWrapper`
+-----------------------------
+
+.. autoclass:: black.trans.StringParenWrapper
+    :show-inheritance:
+    :members:
+
+:class:`StringParser`
+-----------------------------
+
+.. autoclass:: black.trans.StringParser
+    :members:
+
 :class:`DebugVisitor`
 ------------------------
 
 .. autoclass:: black.debug.DebugVisitor
     :show-inheritance:
+    :members:
+
+:class:`Replacement`
+------------------------
+
+.. autoclass:: black.handle_ipynb_magics.Replacement
     :members:
 
 :class:`CellMagic`
@@ -125,6 +171,12 @@ Black Classes
 
 .. autoclass:: black.handle_ipynb_magics.CellMagicFinder
     :show-inheritance:
+    :members:
+
+:class:`OffsetAndMagic`
+------------------------
+
+.. autoclass:: black.handle_ipynb_magics.OffsetAndMagic
     :members:
 
 :class:`MagicFinder`
@@ -142,10 +194,9 @@ Classes inherited from Python `Enum <https://docs.python.org/3/library/enum.html
 :class:`Changed`
 ----------------
 
-.. autoclass:: black.Changed
+.. autoclass:: black.report.Changed
     :show-inheritance:
     :members:
-
 
 :class:`WriteBack`
 ------------------
@@ -157,14 +208,14 @@ Classes inherited from Python `Enum <https://docs.python.org/3/library/enum.html
 :class:`TargetVersion`
 ----------------------
 
-.. autoclass:: black.TargetVersion
+.. autoclass:: black.mode.TargetVersion
     :show-inheritance:
     :members:
 
 :class:`Feature`
 ------------------
 
-.. autoclass:: black.Feature
+.. autoclass:: black.mode.Feature
     :show-inheritance:
     :members:
 
