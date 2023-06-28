@@ -335,7 +335,8 @@ class CellMagicFinder(ast.NodeVisitor):
 
     For example,
 
-        %%time\nfoo()
+        %%time\n
+        foo()
 
     would have been transformed to
 
