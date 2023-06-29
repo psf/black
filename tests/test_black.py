@@ -104,6 +104,7 @@ class FakeContext(click.Context):
 
     def __init__(self) -> None:
         self.default_map: Dict[str, Any] = {}
+        self.params: Dict[str, Any] = {}
         # Dummy root, since most of the tests don't care about it
         self.obj: Dict[str, Any] = {"root": PROJECT_ROOT}
 
@@ -207,8 +208,8 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_piping_diff(self) -> None:
         diff_header = re.compile(
-            r"(STDIN|STDOUT)\t\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d\d\d\d "
-            r"\+\d\d\d\d"
+            r"(STDIN|STDOUT)\t\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d\d\d\d"
+            r"\+\d\d:\d\d"
         )
         source, _ = read_data("simple_cases", "expression.py")
         expected, _ = read_data("simple_cases", "expression.diff")
@@ -271,6 +272,15 @@ class BlackTestCase(BlackBaseTestCase):
         versions = black.detect_target_versions(root)
         self.assertIn(black.TargetVersion.PY38, versions)
 
+    def test_pep_695_version_detection(self) -> None:
+        for file in ("type_aliases", "type_params"):
+            source, _ = read_data("py_312", file)
+            root = black.lib2to3_parse(source)
+            features = black.get_features_used(root)
+            self.assertIn(black.Feature.TYPE_PARAMS, features)
+            versions = black.detect_target_versions(root)
+            self.assertIn(black.TargetVersion.PY312, versions)
+
     def test_expression_ff(self) -> None:
         source, expected = read_data("simple_cases", "expression.py")
         tmp_file = Path(black.dump_to_file(source))
@@ -291,7 +301,7 @@ class BlackTestCase(BlackBaseTestCase):
         tmp_file = Path(black.dump_to_file(source))
         diff_header = re.compile(
             rf"{re.escape(str(tmp_file))}\t\d\d\d\d-\d\d-\d\d "
-            r"\d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
+            r"\d\d:\d\d:\d\d\.\d\d\d\d\d\d\+\d\d:\d\d"
         )
         try:
             result = BlackRunner().invoke(
@@ -402,7 +412,7 @@ class BlackTestCase(BlackBaseTestCase):
         tmp_file = Path(black.dump_to_file(source))
         diff_header = re.compile(
             rf"{re.escape(str(tmp_file))}\t\d\d\d\d-\d\d-\d\d "
-            r"\d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
+            r"\d\d:\d\d:\d\d\.\d\d\d\d\d\d\+\d\d:\d\d"
         )
         try:
             result = BlackRunner().invoke(
@@ -1533,14 +1543,25 @@ class BlackTestCase(BlackBaseTestCase):
         for version, expected in [
             ("3.6", [TargetVersion.PY36]),
             ("3.11.0rc1", [TargetVersion.PY311]),
-            (">=3.10", [TargetVersion.PY310, TargetVersion.PY311]),
-            (">=3.10.6", [TargetVersion.PY310, TargetVersion.PY311]),
+            (">=3.10", [TargetVersion.PY310, TargetVersion.PY311, TargetVersion.PY312]),
+            (
+                ">=3.10.6",
+                [TargetVersion.PY310, TargetVersion.PY311, TargetVersion.PY312],
+            ),
             ("<3.6", [TargetVersion.PY33, TargetVersion.PY34, TargetVersion.PY35]),
             (">3.7,<3.10", [TargetVersion.PY38, TargetVersion.PY39]),
-            (">3.7,!=3.8,!=3.9", [TargetVersion.PY310, TargetVersion.PY311]),
+            (
+                ">3.7,!=3.8,!=3.9",
+                [TargetVersion.PY310, TargetVersion.PY311, TargetVersion.PY312],
+            ),
             (
                 "> 3.9.4, != 3.10.3",
-                [TargetVersion.PY39, TargetVersion.PY310, TargetVersion.PY311],
+                [
+                    TargetVersion.PY39,
+                    TargetVersion.PY310,
+                    TargetVersion.PY311,
+                    TargetVersion.PY312,
+                ],
             ),
             (
                 "!=3.3,!=3.4",
@@ -1552,6 +1573,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY39,
                     TargetVersion.PY310,
                     TargetVersion.PY311,
+                    TargetVersion.PY312,
                 ],
             ),
             (
@@ -1566,6 +1588,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY39,
                     TargetVersion.PY310,
                     TargetVersion.PY311,
+                    TargetVersion.PY312,
                 ],
             ),
             ("==3.8.*", [TargetVersion.PY38]),
@@ -1597,6 +1620,39 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(config["target_version"], ["py36", "py37", "py38"])
         self.assertEqual(config["exclude"], r"\.pyi?$")
         self.assertEqual(config["include"], r"\.py?$")
+
+    def test_read_pyproject_toml_from_stdin(self) -> None:
+        with TemporaryDirectory() as workspace:
+            root = Path(workspace)
+
+            src_dir = root / "src"
+            src_dir.mkdir()
+
+            src_pyproject = src_dir / "pyproject.toml"
+            src_pyproject.touch()
+
+            test_toml_file = THIS_DIR / "test.toml"
+            src_pyproject.write_text(test_toml_file.read_text())
+
+            src_python = src_dir / "foo.py"
+            src_python.touch()
+
+            fake_ctx = FakeContext()
+            fake_ctx.params["src"] = ("-",)
+            fake_ctx.params["stdin_filename"] = str(src_python)
+
+            with change_directory(root):
+                black.read_pyproject_toml(fake_ctx, FakeParameter(), None)
+
+            config = fake_ctx.default_map
+            self.assertEqual(config["verbose"], "1")
+            self.assertEqual(config["check"], "no")
+            self.assertEqual(config["diff"], "y")
+            self.assertEqual(config["color"], "True")
+            self.assertEqual(config["line_length"], "79")
+            self.assertEqual(config["target_version"], ["py36", "py37", "py38"])
+            self.assertEqual(config["exclude"], r"\.pyi?$")
+            self.assertEqual(config["include"], r"\.py?$")
 
     @pytest.mark.incompatible_with_mypyc
     def test_find_project_root(self) -> None:
@@ -1728,7 +1784,7 @@ class BlackTestCase(BlackBaseTestCase):
         tmp_file = Path(black.dump_to_file(source, ensure_final_newline=False))
         diff_header = re.compile(
             rf"{re.escape(str(tmp_file))}\t\d\d\d\d-\d\d-\d\d "
-            r"\d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
+            r"\d\d:\d\d:\d\d\.\d\d\d\d\d\d\+\d\d:\d\d"
         )
         try:
             result = BlackRunner().invoke(black.main, ["--diff", str(tmp_file)])

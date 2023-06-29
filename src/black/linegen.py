@@ -49,6 +49,7 @@ from black.nodes import (
     is_stub_body,
     is_stub_suite,
     is_tuple_containing_walrus,
+    is_type_ignore_comment_string,
     is_vararg,
     is_walrus_assignment,
     is_yield,
@@ -214,6 +215,18 @@ class LineGenerator(Visitor[Line]):
                 yield from self.line()
 
             yield from self.visit(child)
+
+    def visit_typeparams(self, node: Node) -> Iterator[Line]:
+        yield from self.visit_default(node)
+        node.children[0].prefix = ""
+
+    def visit_typevartuple(self, node: Node) -> Iterator[Line]:
+        yield from self.visit_default(node)
+        node.children[1].prefix = ""
+
+    def visit_paramspec(self, node: Node) -> Iterator[Line]:
+        yield from self.visit_default(node)
+        node.children[1].prefix = ""
 
     def visit_dictsetmaker(self, node: Node) -> Iterator[Line]:
         if Preview.wrap_long_dict_values_in_parens in self.mode:
@@ -906,6 +919,13 @@ def bracket_split_build_line(
                     )
                     if isinstance(node, Node) and isinstance(node.prev_sibling, Leaf)
                 )
+                # Except the false negatives above for PEP 604 unions where we
+                # can't add the comma.
+                and not (
+                    leaves[0].parent
+                    and leaves[0].parent.next_sibling
+                    and leaves[0].parent.next_sibling.type == token.VBAR
+                )
             )
 
             if original.is_import or no_commas:
@@ -1380,8 +1400,13 @@ def maybe_make_parens_invisible_in_atom(
     if is_lpar_token(first) and is_rpar_token(last):
         middle = node.children[1]
         # make parentheses invisible
-        first.value = ""
-        last.value = ""
+        if (
+            # If the prefix of `middle` includes a type comment with
+            # ignore annotation, then we do not remove the parentheses
+            not is_type_ignore_comment_string(middle.prefix.strip())
+        ):
+            first.value = ""
+            last.value = ""
         maybe_make_parens_invisible_in_atom(
             middle,
             parent=parent,

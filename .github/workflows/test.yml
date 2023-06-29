@@ -103,4 +103,4 @@ jobs:
           python -m pip install -e ".[uvloop]"
 
       - name: Format ourselves
-        run: python -m black --check src/
+        run: python -m black --check .

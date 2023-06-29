@@ -5,8 +5,14 @@
 
 .. currentmodule:: black
 
+.. autoexception:: black.trans.CannotTransform
+
 .. autoexception:: black.linegen.CannotSplit
 
-.. autoexception:: black.NothingChanged
+.. autoexception:: black.brackets.BracketMatchError
 
-.. autoexception:: black.InvalidInput
+.. autoexception:: black.report.NothingChanged
+
+.. autoexception:: black.parsing.InvalidInput
+
+.. autoexception:: black.mode.Deprecated

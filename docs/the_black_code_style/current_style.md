@@ -140,6 +140,8 @@ If you're reaching for backslashes, that's a clear signal that you can do better
 slightly refactor your code. I hope some of the examples above show you that there are
 many ways in which you can do it.
 
+(labels/line-length)=
+
 ### Line length
 
 You probably noticed the peculiar default line length. _Black_ defaults to 88 characters
@@ -158,33 +160,35 @@ harder to work with line lengths exceeding 100 characters. It also adversely aff
 side-by-side diff review on typical screen resolutions. Long lines also make it harder
 to present code neatly in documentation or talk slides.
 
-If you're using Flake8, you can bump `max-line-length` to 88 and mostly forget about it.
-However, it's better if you use [Bugbear](https://github.com/PyCQA/flake8-bugbear)'s
-B950 warning instead of E501, and bump the max line length to 88 (or the `--line-length`
-you used for black), which will align more with black's _"try to respect
-`--line-length`, but don't become crazy if you can't"_. You'd do it like this:
+#### Flake8
 
-```ini
-[flake8]
-max-line-length = 88
-...
-select = C,E,F,W,B,B950
-extend-ignore = E203, E501
-```
+If you use Flake8, you have a few options:
 
-Explanation of why E203 is disabled can be found further in this documentation. And if
-you're curious about the reasoning behind B950,
-[Bugbear's documentation](https://github.com/PyCQA/flake8-bugbear#opinionated-warnings)
-explains it. The tl;dr is "it's like highway speed limits, we won't bother you if you
-overdo it by a few km/h".
+1. Recommended is using [Bugbear](https://github.com/PyCQA/flake8-bugbear) and enabling
+   its B950 check instead of using Flake8's E501, because it aligns with Black's 10%
+   rule. Install Bugbear and use the following config:
 
-**If you're looking for a minimal, black-compatible flake8 configuration:**
+   ```ini
+   [flake8]
+   max-line-length = 80
+   ...
+   select = C,E,F,W,B,B950
+   extend-ignore = E203, E501
+   ```
 
-```ini
-[flake8]
-max-line-length = 88
-extend-ignore = E203
-```
+   The rationale for E950 is explained in
+   [Bugbear's documentation](https://github.com/PyCQA/flake8-bugbear#opinionated-warnings).
+
+2. For a minimally compatible config:
+
+   ```ini
+   [flake8]
+   max-line-length = 88
+   extend-ignore = E203
+   ```
+
+An explanation of why E203 is disabled can be found in the [Slices section](#slices) of
+this page.
 
 ### Empty lines
 
@@ -272,6 +276,8 @@ manually and _Black_ will keep it.
 A pre-existing trailing comma informs _Black_ to always explode contents of the current
 bracket pair into one item per line. Read more about this in the
 [Pragmatism](#pragmatism) section below.
+
+(labels/strings)=
 
 ### Strings
 
@@ -457,6 +463,8 @@ there were not many users anyway. Not many edge cases were reported. As a mature
 _Black_ does make some exceptions to rules it otherwise holds. This section documents
 what those exceptions are and why this is the case.
 
+(labels/magic-trailing-comma)=
+
 ### The magic trailing comma
 
 _Black_ in general does not take existing formatting into account.
@@ -492,6 +500,8 @@ exception to this rule is r-strings. It turns out that the very popular
 default by (among others) GitHub and Visual Studio Code, differentiates between
 r-strings and R-strings. The former are syntax highlighted as regular expressions while
 the latter are treated as true raw strings with no special semantics.
+
+(labels/ast-changes)=
 
 ### AST before and after formatting
 

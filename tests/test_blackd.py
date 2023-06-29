@@ -114,7 +114,7 @@ class BlackDTestCase(AioHTTPTestCase):  # type: ignore[misc]
     @unittest_run_loop
     async def test_blackd_diff(self) -> None:
         diff_header = re.compile(
-            r"(In|Out)\t\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d\d\d\d \+\d\d\d\d"
+            r"(In|Out)\t\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d\d\d\d\+\d\d:\d\d"
         )
 
         source, _ = read_data("miscellaneous", "blackd_diff")
