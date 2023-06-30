@@ -88,7 +88,7 @@ from blib2to3.pytree import Leaf, Node
 
 COMPILED = Path(__file__).suffix in (".pyd", ".so")
 
-# types
+# types1
 FileContent = str
 Encoding = str
 NewLine = str
