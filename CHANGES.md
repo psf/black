@@ -70,6 +70,8 @@
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
 - Update GitHub Action to display black output in the job summary (#3688)
+- Deprecated `set-output` command in CI test to keep up to date with GitHub's
+  deprecation announcement (#3757)
 
 ### Documentation
 
