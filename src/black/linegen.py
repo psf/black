@@ -591,6 +591,12 @@ def transform_line(
                     rhs,
                 ]
 
+                # If there are comments at the beginning or end of the line, call
+                # standalone_comment_split before delimiter_split. Else, call
+                # delimiter_split first. This means that when there is a comment in the
+                # middle of an expression or list, it will perform a delimiter split.
+                # But when the comment is at the top or bottom, it won't perform a
+                # delimiter split (if it doesn't have to).
                 if (
                     Preview.stop_some_unnecessary_wrapping_inside_brackets in mode
                     and line.contains_standalone_comments()
