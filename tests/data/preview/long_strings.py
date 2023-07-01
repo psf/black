@@ -26,15 +26,15 @@ D6 = {  # Test for https://github.com/psf/black/issues/3261
     ("This is a really long string that can't be expected to fit in one line and is used as a dict's key"): ["value1", "value2"],
 }
 
-L1 = ["The is a short string", "This is a really long string that can't possibly be expected to fit all together on one line. Also it is inside a list literal, so it's expected to be wrapped in parens when spliting to avoid implicit str concatenation.", short_call("arg", {"key": "value"}), "This is another really really (not really) long string that also can't be expected to fit on one line and is, like the other string, inside a list literal.", ("parens should be stripped for short string in list")]
+L1 = ["The is a short string", "This is a really long string that can't possibly be expected to fit all together on one line. Also it is inside a list literal, so it's expected to be wrapped in parens when splitting to avoid implicit str concatenation.", short_call("arg", {"key": "value"}), "This is another really really (not really) long string that also can't be expected to fit on one line and is, like the other string, inside a list literal.", ("parens should be stripped for short string in list")]
 
 L2 = ["This is a really long string that can't be expected to fit in one line and is the only child of a list literal."]
 
-S1 = {"The is a short string", "This is a really long string that can't possibly be expected to fit all together on one line. Also it is inside a set literal, so it's expected to be wrapped in parens when spliting to avoid implicit str concatenation.", short_call("arg", {"key": "value"}), "This is another really really (not really) long string that also can't be expected to fit on one line and is, like the other string, inside a set literal.", ("parens should be stripped for short string in set")}
+S1 = {"The is a short string", "This is a really long string that can't possibly be expected to fit all together on one line. Also it is inside a set literal, so it's expected to be wrapped in parens when splitting to avoid implicit str concatenation.", short_call("arg", {"key": "value"}), "This is another really really (not really) long string that also can't be expected to fit on one line and is, like the other string, inside a set literal.", ("parens should be stripped for short string in set")}
 
 S2 = {"This is a really long string that can't be expected to fit in one line and is the only child of a set literal."}
 
-T1 = ("The is a short string", "This is a really long string that can't possibly be expected to fit all together on one line. Also it is inside a tuple literal, so it's expected to be wrapped in parens when spliting to avoid implicit str concatenation.", short_call("arg", {"key": "value"}), "This is another really really (not really) long string that also can't be expected to fit on one line and is, like the other string, inside a tuple literal.", ("parens should be stripped for short string in list"))
+T1 = ("The is a short string", "This is a really long string that can't possibly be expected to fit all together on one line. Also it is inside a tuple literal, so it's expected to be wrapped in parens when splitting to avoid implicit str concatenation.", short_call("arg", {"key": "value"}), "This is another really really (not really) long string that also can't be expected to fit on one line and is, like the other string, inside a tuple literal.", ("parens should be stripped for short string in list"))
 
 T2 = ("This is a really long string that can't be expected to fit in one line and is the only child of a tuple literal.",)
 
@@ -278,6 +278,32 @@ string_with_escaped_nameescape = (
     "........................................................................... \\N{LAO KO LA}"
 )
 
+msg = lambda x: f"this is a very very very long lambda value {x} that doesn't fit on a single line"
+
+dict_with_lambda_values = {
+    "join": lambda j: (
+        f"{j.__class__.__name__}({some_function_call(j.left)}, "
+        f"{some_function_call(j.right)})"
+    ),
+}
+
+# Complex string concatenations with a method call in the middle.
+code = (
+    ("    return [\n")
+    + (
+        ", \n".join(
+            "        (%r, self.%s, visitor.%s)"
+            % (attrname, attrname, visit_name)
+            for attrname, visit_name in names
+        )
+    )
+    + ("\n    ]\n")
+)
+
+
+# Test case of an outer string' parens enclose an inner string's parens.
+call(body=("%s %s" % ((",".join(items)), suffix)))
+
 
 # output
 
@@ -297,10 +323,8 @@ x += (
 y = "Short string"
 
 print(
-    (
-        "This is a really long string inside of a print statement with extra arguments"
-        " attached at the end of it."
-    ),
+    "This is a really long string inside of a print statement with extra arguments"
+    " attached at the end of it.",
     x,
     y,
     z,
@@ -362,9 +386,8 @@ D4 = {
     "A %s %s"
     % ("formatted", "string"): (
         "This is a really really really long string that has to go inside of a"
-        " dictionary. It is %s bad (#%d)."
-    )
-    % ("soooo", 2),
+        " dictionary. It is %s bad (#%d)." % ("soooo", 2)
+    ),
 }
 
 D5 = {  # Test for https://github.com/psf/black/issues/3261
@@ -385,7 +408,7 @@ L1 = [
     (
         "This is a really long string that can't possibly be expected to fit all"
         " together on one line. Also it is inside a list literal, so it's expected to"
-        " be wrapped in parens when spliting to avoid implicit str concatenation."
+        " be wrapped in parens when splitting to avoid implicit str concatenation."
     ),
     short_call("arg", {"key": "value"}),
     (
@@ -406,7 +429,7 @@ S1 = {
     (
         "This is a really long string that can't possibly be expected to fit all"
         " together on one line. Also it is inside a set literal, so it's expected to be"
-        " wrapped in parens when spliting to avoid implicit str concatenation."
+        " wrapped in parens when splitting to avoid implicit str concatenation."
     ),
     short_call("arg", {"key": "value"}),
     (
@@ -427,7 +450,7 @@ T1 = (
     (
         "This is a really long string that can't possibly be expected to fit all"
         " together on one line. Also it is inside a tuple literal, so it's expected to"
-        " be wrapped in parens when spliting to avoid implicit str concatenation."
+        " be wrapped in parens when splitting to avoid implicit str concatenation."
     ),
     short_call("arg", {"key": "value"}),
     (
@@ -476,15 +499,13 @@ bad_split3 = (
 )
 
 bad_split_func1(
-    (
-        "But what should happen when code has already "
-        "been formatted but in the wrong way? Like "
-        "with a space at the end instead of the "
-        "beginning. Or what about when it is split too "
-        "soon? In the case of a split that is too "
-        "short, black will try to honer the custom "
-        "split."
-    ),
+    "But what should happen when code has already "
+    "been formatted but in the wrong way? Like "
+    "with a space at the end instead of the "
+    "beginning. Or what about when it is split too "
+    "soon? In the case of a split that is too "
+    "short, black will try to honer the custom "
+    "split.",
     xxx,
     yyy,
     zzz,
@@ -587,11 +608,9 @@ comment_string = (  # This comment gets thrown to the top.
 )
 
 arg_comment_string = print(
-    (  # This comment gets thrown to the top.
-        "Long lines with inline comments which are apart of (and not the only member"
-        " of) an argument list should have their comments appended to the reformatted"
-        " string's enclosing left parentheses."
-    ),
+    "Long lines with inline comments which are apart of (and not the only member of) an"
+    " argument list should have their comments appended to the reformatted string's"
+    " enclosing left parentheses.",  # This comment gets thrown to the top.
     "Arg #2",
     "Arg #3",
     "Arg #4",
@@ -651,31 +670,23 @@ return (
 )
 
 func_with_bad_comma(
-    (
-        "This is a really long string argument to a function that has a trailing comma"
-        " which should NOT be there."
-    ),
+    "This is a really long string argument to a function that has a trailing comma"
+    " which should NOT be there.",
 )
 
 func_with_bad_comma(
-    (  # comment after comma
-        "This is a really long string argument to a function that has a trailing comma"
-        " which should NOT be there."
-    ),
+    "This is a really long string argument to a function that has a trailing comma"
+    " which should NOT be there.",  # comment after comma
 )
 
 func_with_bad_comma(
-    (
-        "This is a really long string argument to a function that has a trailing comma"
-        " which should NOT be there."
-    ),
+    "This is a really long string argument to a function that has a trailing comma"
+    " which should NOT be there.",
 )
 
 func_with_bad_comma(
-    (  # comment after comma
-        "This is a really long string argument to a function that has a trailing comma"
-        " which should NOT be there."
-    ),
+    "This is a really long string argument to a function that has a trailing comma"
+    " which should NOT be there.",  # comment after comma
 )
 
 func_with_bad_parens_that_wont_fit_in_one_line(
@@ -806,3 +817,31 @@ string_with_escaped_nameescape = (
     "..........................................................................."
     " \\N{LAO KO LA}"
 )
+
+msg = (
+    lambda x: (
+        f"this is a very very very long lambda value {x} that doesn't fit on a single"
+        " line"
+    )
+)
+
+dict_with_lambda_values = {
+    "join": lambda j: (
+        f"{j.__class__.__name__}({some_function_call(j.left)}, "
+        f"{some_function_call(j.right)})"
+    ),
+}
+
+# Complex string concatenations with a method call in the middle.
+code = (
+    "    return [\n"
+    + ", \n".join(
+        "        (%r, self.%s, visitor.%s)" % (attrname, attrname, visit_name)
+        for attrname, visit_name in names
+    )
+    + "\n    ]\n"
+)
+
+
+# Test case of an outer string' parens enclose an inner string's parens.
+call(body="%s %s" % (",".join(items), suffix))

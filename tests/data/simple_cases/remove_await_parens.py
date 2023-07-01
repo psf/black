@@ -77,6 +77,9 @@ async def main():
 async def main():
     await (await (await (await (await (asyncio.sleep(1))))))
 
+async def main():
+    await (yield)
+
 # output
 import asyncio
 
@@ -167,3 +170,7 @@ async def main():
 
 async def main():
     await (await (await (await (await asyncio.sleep(1)))))
+
+
+async def main():
+    await (yield)

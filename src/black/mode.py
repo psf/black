@@ -30,6 +30,7 @@ class TargetVersion(Enum):
     PY39 = 9
     PY310 = 10
     PY311 = 11
+    PY312 = 12
 
 
 class Feature(Enum):
@@ -50,6 +51,8 @@ class Feature(Enum):
     EXCEPT_STAR = 14
     VARIADIC_GENERICS = 15
     DEBUG_F_STRINGS = 16
+    PARENTHESIZED_CONTEXT_MANAGERS = 17
+    TYPE_PARAMS = 18
     FORCE_OPTIONAL_PARENTHESES = 50
 
     # __future__ flags
@@ -106,6 +109,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.POS_ONLY_ARGUMENTS,
         Feature.UNPACKING_ON_FLOW,
         Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS,
     },
     TargetVersion.PY310: {
         Feature.F_STRINGS,
@@ -120,6 +124,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.POS_ONLY_ARGUMENTS,
         Feature.UNPACKING_ON_FLOW,
         Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS,
         Feature.PATTERN_MATCHING,
     },
     TargetVersion.PY311: {
@@ -135,9 +140,29 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.POS_ONLY_ARGUMENTS,
         Feature.UNPACKING_ON_FLOW,
         Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS,
         Feature.PATTERN_MATCHING,
         Feature.EXCEPT_STAR,
         Feature.VARIADIC_GENERICS,
+    },
+    TargetVersion.PY312: {
+        Feature.F_STRINGS,
+        Feature.DEBUG_F_STRINGS,
+        Feature.NUMERIC_UNDERSCORES,
+        Feature.TRAILING_COMMA_IN_CALL,
+        Feature.TRAILING_COMMA_IN_DEF,
+        Feature.ASYNC_KEYWORDS,
+        Feature.FUTURE_ANNOTATIONS,
+        Feature.ASSIGNMENT_EXPRESSIONS,
+        Feature.RELAXED_DECORATORS,
+        Feature.POS_ONLY_ARGUMENTS,
+        Feature.UNPACKING_ON_FLOW,
+        Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS,
+        Feature.PATTERN_MATCHING,
+        Feature.EXCEPT_STAR,
+        Feature.VARIADIC_GENERICS,
+        Feature.TYPE_PARAMS,
     },
 }
 
@@ -149,16 +174,20 @@ def supports_feature(target_versions: Set[TargetVersion], feature: Feature) -> b
 class Preview(Enum):
     """Individual preview style features."""
 
-    annotation_parens = auto()
-    empty_lines_before_class_or_def_with_leading_comments = auto()
-    handle_trailing_commas_in_head = auto()
-    long_docstring_quotes_on_newline = auto()
-    normalize_docstring_quotes_and_prefixes_properly = auto()
-    one_element_subscript = auto()
-    remove_block_trailing_newline = auto()
-    remove_redundant_parens = auto()
+    add_trailing_comma_consistently = auto()
+    blank_line_after_nested_stub_class = auto()
+    hex_codes_in_unicode_sequences = auto()
+    improved_async_statements_handling = auto()
+    multiline_string_handling = auto()
+    no_blank_line_before_class_docstring = auto()
+    prefer_splitting_right_hand_side_of_assignments = auto()
+    # NOTE: string_processing requires wrap_long_dict_values_in_parens
+    # for https://github.com/psf/black/issues/3117 to be fixed.
     string_processing = auto()
+    parenthesize_conditional_expressions = auto()
     skip_magic_trailing_comma_in_subscript = auto()
+    wrap_long_dict_values_in_parens = auto()
+    wrap_multiple_context_managers_in_parens = auto()
     stop_some_unnecessary_wrapping_inside_brackets = auto()
 
 
@@ -182,10 +211,8 @@ class Mode:
     def __post_init__(self) -> None:
         if self.experimental_string_processing:
             warn(
-                (
-                    "`experimental string processing` has been included in `preview`"
-                    " and deprecated. Use `preview` instead."
-                ),
+                "`experimental string processing` has been included in `preview`"
+                " and deprecated. Use `preview` instead.",
                 Deprecated,
             )
 

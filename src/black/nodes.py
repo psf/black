@@ -181,9 +181,9 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
     `complex_subscript` signals whether the given leaf is part of a subscription
     which has non-trivial arguments, like arithmetic expressions or function calls.
     """
-    NO: Final = ""
-    SPACE: Final = " "
-    DOUBLESPACE: Final = "  "
+    NO: Final[str] = ""
+    SPACE: Final[str] = " "
+    DOUBLESPACE: Final[str] = "  "
     t = leaf.type
     p = leaf.parent
     v = leaf.value
@@ -563,6 +563,17 @@ def is_one_tuple(node: LN) -> bool:
     )
 
 
+def is_tuple_containing_walrus(node: LN) -> bool:
+    """Return True if `node` holds a tuple that contains a walrus operator."""
+    if node.type != syms.atom:
+        return False
+    gexp = unwrap_singleton_parenthesis(node)
+    if gexp is None or gexp.type != syms.testlist_gexp:
+        return False
+
+    return any(child.type == syms.namedexpr_test for child in gexp.children)
+
+
 def is_one_sequence_between(
     opening: Leaf,
     closing: Leaf,
@@ -778,12 +789,54 @@ def is_import(leaf: Leaf) -> bool:
     )
 
 
-def is_type_comment(leaf: Leaf, suffix: str = "") -> bool:
-    """Return True if the given leaf is a special comment.
-    Only returns true for type comments for now."""
+def is_with_or_async_with_stmt(leaf: Leaf) -> bool:
+    """Return True if the given leaf starts a with or async with statement."""
+    return bool(
+        leaf.type == token.NAME
+        and leaf.value == "with"
+        and leaf.parent
+        and leaf.parent.type == syms.with_stmt
+    ) or bool(
+        leaf.type == token.ASYNC
+        and leaf.next_sibling
+        and leaf.next_sibling.type == syms.with_stmt
+    )
+
+
+def is_async_stmt_or_funcdef(leaf: Leaf) -> bool:
+    """Return True if the given leaf starts an async def/for/with statement.
+
+    Note that `async def` can be either an `async_stmt` or `async_funcdef`,
+    the latter is used when it has decorators.
+    """
+    return bool(
+        leaf.type == token.ASYNC
+        and leaf.parent
+        and leaf.parent.type in {syms.async_stmt, syms.async_funcdef}
+    )
+
+
+def is_type_comment(leaf: Leaf) -> bool:
+    """Return True if the given leaf is a type comment. This function should only
+    be used for general type comments (excluding ignore annotations, which should
+    use `is_type_ignore_comment`). Note that general type comments are no longer
+    used in modern version of Python, this function may be deprecated in the future."""
     t = leaf.type
     v = leaf.value
-    return t in {token.COMMENT, STANDALONE_COMMENT} and v.startswith("# type:" + suffix)
+    return t in {token.COMMENT, STANDALONE_COMMENT} and v.startswith("# type:")
+
+
+def is_type_ignore_comment(leaf: Leaf) -> bool:
+    """Return True if the given leaf is a type comment with ignore annotation."""
+    t = leaf.type
+    v = leaf.value
+    return t in {token.COMMENT, STANDALONE_COMMENT} and is_type_ignore_comment_string(v)
+
+
+def is_type_ignore_comment_string(value: str) -> bool:
+    """Return True if the given string match with type comment with
+    ignore annotation."""
+    return value.startswith("# type: ignore")
 
 
 def wrap_in_parentheses(parent: Node, child: LN, *, visible: bool = True) -> None:
@@ -848,3 +901,15 @@ def is_string_token(nl: NL) -> TypeGuard[Leaf]:
 
 def is_number_token(nl: NL) -> TypeGuard[Leaf]:
     return nl.type == token.NUMBER
+
+
+def is_part_of_annotation(leaf: Leaf) -> bool:
+    """Returns whether this leaf is part of type annotations."""
+    ancestor = leaf.parent
+    while ancestor is not None:
+        if ancestor.prev_sibling and ancestor.prev_sibling.type == token.RARROW:
+            return True
+        if ancestor.parent and ancestor.parent.type == syms.tname:
+            return True
+        ancestor = ancestor.parent
+    return False

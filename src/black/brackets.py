@@ -80,15 +80,25 @@ class BracketTracker:
         within brackets a given leaf is. 0 means there are no enclosing brackets
         that started on this line.
 
-        If a leaf is itself a closing bracket, it receives an `opening_bracket`
-        field that it forms a pair with. This is a one-directional link to
-        avoid reference cycles.
+        If a leaf is itself a closing bracket and there is a matching opening
+        bracket earlier, it receives an `opening_bracket` field with which it forms a
+        pair. This is a one-directional link to avoid reference cycles. Closing
+        bracket without opening happens on lines continued from previous
+        breaks, e.g. `) -> "ReturnType":` as part of a funcdef where we place
+        the return type annotation on its own line of the previous closing RPAR.
 
         If a leaf is a delimiter (a token on which Black can split the line if
         needed) and it's on depth 0, its `id()` is stored in the tracker's
         `delimiters` field.
         """
         if leaf.type == token.COMMENT:
+            return
+
+        if (
+            self.depth == 0
+            and leaf.type in CLOSING_BRACKETS
+            and (self.depth, leaf.type) not in self.bracket_match
+        ):
             return
 
         self.maybe_decrement_after_for_loop_variable(leaf)

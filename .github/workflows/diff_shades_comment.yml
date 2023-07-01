@@ -33,7 +33,7 @@ jobs:
       - name: Try to find pre-existing PR comment
         if: steps.metadata.outputs.needs-comment == 'true'
         id: find-comment
-        uses: peter-evans/find-comment@f4499a714d59013c74a08789b48abe4b704364a0
+        uses: peter-evans/find-comment@a54c31d7fa095754bfef525c0c8e5e5674c4b4b1
         with:
           issue-number: ${{ steps.metadata.outputs.pr-number }}
           comment-author: "github-actions[bot]"
@@ -41,7 +41,7 @@ jobs:
 
       - name: Create or update PR comment
         if: steps.metadata.outputs.needs-comment == 'true'
-        uses: peter-evans/create-or-update-comment@5adcb0bb0f9fb3f95ef05400558bdb3f329ee808
+        uses: peter-evans/create-or-update-comment@c6c9a1a66007646a28c153e2a8580a5bad27bcfa
         with:
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           issue-number: ${{ steps.metadata.outputs.pr-number }}

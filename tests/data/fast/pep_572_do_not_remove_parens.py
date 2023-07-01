@@ -19,3 +19,7 @@ with (y := [3, 2, 1]) as (funfunfun := indeed):
 @(please := stop)
 def sigh():
     pass
+
+
+for (x := 3, y := 4) in y:
+    pass

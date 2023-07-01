@@ -20,20 +20,21 @@ def main(changes: str, the_basics: str) -> None:
 
     the_basics_html = commonmark.commonmark(the_basics)
     the_basics_soup = BeautifulSoup(the_basics_html, "html.parser")
-    (version_example,) = [
+    version_examples = [
         code_block.string
         for code_block in the_basics_soup.find_all(class_="language-console")
         if "$ black --version" in code_block.string
     ]
 
     for tag in tags:
-        if tag in version_example and tag != latest_tag:
-            print(
-                "Please set the version in the ``black --version`` "
-                "example from ``the_basics.md`` to be the latest one.\n"
-                f"Expected {latest_tag}, got {tag}.\n"
-            )
-            sys.exit(1)
+        for version_example in version_examples:
+            if tag in version_example and tag != latest_tag:
+                print(
+                    "Please set the version in the ``black --version`` "
+                    "examples from ``the_basics.md`` to be the latest one.\n"
+                    f"Expected {latest_tag}, got {tag}.\n"
+                )
+                sys.exit(1)
 
 
 if __name__ == "__main__":

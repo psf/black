@@ -7,7 +7,7 @@ import tokenize
 import traceback
 from contextlib import contextmanager
 from dataclasses import replace
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from json.decoder import JSONDecodeError
 from pathlib import Path
@@ -127,7 +127,9 @@ def read_pyproject_toml(
     otherwise.
     """
     if not value:
-        value = find_pyproject_toml(ctx.params.get("src", ()))
+        value = find_pyproject_toml(
+            ctx.params.get("src", ()), ctx.params.get("stdin_filename", None)
+        )
         if value is None:
             return None
 
@@ -219,8 +221,9 @@ def validate_regex(
     callback=target_version_option_callback,
     multiple=True,
     help=(
-        "Python versions that should be supported by Black's output. [default: per-file"
-        " auto-detection]"
+        "Python versions that should be supported by Black's output. By default, Black"
+        " will try to infer this from the project metadata in pyproject.toml. If this"
+        " does not yield conclusive results, Black will use per-file auto-detection."
     ),
 )
 @click.option(
@@ -244,7 +247,7 @@ def validate_regex(
     multiple=True,
     help=(
         "When processing Jupyter Notebooks, add the given magic to the list"
-        f" of known python-magics ({', '.join(PYTHON_CELL_MAGICS)})."
+        f" of known python-magics ({', '.join(sorted(PYTHON_CELL_MAGICS))})."
         " Useful for formatting cells with custom python magics."
     ),
     default=[],
@@ -361,6 +364,7 @@ def validate_regex(
 @click.option(
     "--stdin-filename",
     type=str,
+    is_eager=True,
     help=(
         "The name of the file when passing it through stdin. Useful to make "
         "sure Black will respect --force-exclude option on some "
@@ -372,7 +376,10 @@ def validate_regex(
     "--workers",
     type=click.IntRange(min=1),
     default=None,
-    help="Number of parallel workers [default: number of CPUs in the system]",
+    help=(
+        "Number of parallel workers [default: BLACK_NUM_WORKERS environment variable "
+        "or number of CPUs in the system]"
+    ),
 )
 @click.option(
     "-q",
@@ -477,31 +484,13 @@ def main(  # noqa: C901
                 fg="blue",
             )
 
-            normalized = [
-                (source, source)
-                if source == "-"
-                else (normalize_path_maybe_ignore(Path(source), root), source)
-                for source in src
-            ]
-            srcs_string = ", ".join(
-                [
-                    f'"{_norm}"'
-                    if _norm
-                    else f'\033[31m"{source} (skipping - invalid)"\033[34m'
-                    for _norm, source in normalized
-                ]
-            )
-            out(f"Sources to be formatted: {srcs_string}", fg="blue")
-
         if config:
             config_source = ctx.get_parameter_source("config")
             user_level_config = str(find_user_pyproject_toml())
             if config == user_level_config:
                 out(
-                    (
-                        "Using configuration from user-level config at "
-                        f"'{user_level_config}'."
-                    ),
+                    "Using configuration from user-level config at "
+                    f"'{user_level_config}'.",
                     fg="blue",
                 )
             elif config_source in (
@@ -511,6 +500,9 @@ def main(  # noqa: C901
                 out("Using configuration from project root.", fg="blue")
             else:
                 out(f"Using configuration in '{config}'.", fg="blue")
+            if ctx.default_map:
+                for param, value in ctx.default_map.items():
+                    out(f"{param}: {value}")
 
     error_msg = "Oh no! 💥 💔 💥"
     if (
@@ -642,9 +634,15 @@ def get_sources(
             is_stdin = False
 
         if is_stdin or p.is_file():
-            normalized_path = normalize_path_maybe_ignore(p, ctx.obj["root"], report)
+            normalized_path: Optional[str] = normalize_path_maybe_ignore(
+                p, ctx.obj["root"], report
+            )
             if normalized_path is None:
+                if verbose:
+                    out(f'Skipping invalid source: "{normalized_path}"', fg="red")
                 continue
+            if verbose:
+                out(f'Found input source: "{normalized_path}"', fg="blue")
 
             normalized_path = "/" + normalized_path
             # Hard-exclude any files that matches the `--force-exclude` regex.
@@ -666,10 +664,14 @@ def get_sources(
 
             sources.add(p)
         elif p.is_dir():
+            p = root / normalize_path_maybe_ignore(p, ctx.obj["root"], report)
+            if verbose:
+                out(f'Found input source directory: "{p}"', fg="blue")
+
             if using_default_exclude:
                 gitignore = {
                     root: root_gitignore,
-                    root / p: get_gitignore(p),
+                    p: get_gitignore(p),
                 }
             sources.update(
                 gen_python_files(
@@ -686,9 +688,12 @@ def get_sources(
                 )
             )
         elif s == "-":
+            if verbose:
+                out("Found input source stdin", fg="blue")
             sources.add(p)
         else:
             err(f"invalid path: {s}")
+
     return sources
 
 
@@ -800,7 +805,7 @@ def format_file_in_place(
     elif src.suffix == ".ipynb":
         mode = replace(mode, is_ipynb=True)
 
-    then = datetime.utcfromtimestamp(src.stat().st_mtime)
+    then = datetime.fromtimestamp(src.stat().st_mtime, timezone.utc)
     header = b""
     with open(src, "rb") as buf:
         if mode.skip_source_first_line:
@@ -821,9 +826,9 @@ def format_file_in_place(
         with open(src, "w", encoding=encoding, newline=newline) as f:
             f.write(dst_contents)
     elif write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
-        now = datetime.utcnow()
-        src_name = f"{src}\t{then} +0000"
-        dst_name = f"{src}\t{now} +0000"
+        now = datetime.now(timezone.utc)
+        src_name = f"{src}\t{then}"
+        dst_name = f"{src}\t{now}"
         if mode.is_ipynb:
             diff_contents = ipynb_diff(src_contents, dst_contents, src_name, dst_name)
         else:
@@ -861,7 +866,7 @@ def format_stdin_to_stdout(
     write a diff to stdout. The `mode` argument is passed to
     :func:`format_file_contents`.
     """
-    then = datetime.utcnow()
+    then = datetime.now(timezone.utc)
 
     if content is None:
         src, encoding, newline = decode_bytes(sys.stdin.buffer.read())
@@ -886,9 +891,9 @@ def format_stdin_to_stdout(
                 dst += "\n"
             f.write(dst)
         elif write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
-            now = datetime.utcnow()
-            src_name = f"STDIN\t{then} +0000"
-            dst_name = f"STDOUT\t{now} +0000"
+            now = datetime.now(timezone.utc)
+            src_name = f"STDIN\t{then}"
+            dst_name = f"STDOUT\t{now}"
             d = diff(src, dst, src_name, dst_name)
             if write_back == WriteBack.COLOR_DIFF:
                 d = color_diff(d)
@@ -917,9 +922,6 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
     valid by calling :func:`assert_equivalent` and :func:`assert_stable` on it.
     `mode` is passed to :func:`format_str`.
     """
-    if not mode.preview and not src_contents.strip():
-        raise NothingChanged
-
     if mode.is_ipynb:
         dst_contents = format_ipynb_string(src_contents, fast=fast, mode=mode)
     else:
@@ -1014,7 +1016,7 @@ def format_ipynb_string(src_contents: str, *, fast: bool, mode: Mode) -> FileCon
     Operate cell-by-cell, only on code cells, only for Python notebooks.
     If the ``.ipynb`` originally had a trailing newline, it'll be preserved.
     """
-    if mode.preview and not src_contents:
+    if not src_contents:
         raise NothingChanged
 
     trailing_newline = src_contents[-1] == "\n"
@@ -1088,8 +1090,13 @@ def _format_str_once(src_contents: str, *, mode: Mode) -> str:
         future_imports = get_future_imports(src_node)
         versions = detect_target_versions(src_node, future_imports=future_imports)
 
-    normalize_fmt_off(src_node, preview=mode.preview)
-    lines = LineGenerator(mode=mode)
+    context_manager_features = {
+        feature
+        for feature in {Feature.PARENTHESIZED_CONTEXT_MANAGERS}
+        if supports_feature(versions, feature)
+    }
+    normalize_fmt_off(src_node)
+    lines = LineGenerator(mode=mode, features=context_manager_features)
     elt = EmptyLineTracker(mode=mode)
     split_line_features = {
         feature
@@ -1109,7 +1116,7 @@ def _format_str_once(src_contents: str, *, mode: Mode) -> str:
     dst_contents = []
     for block in dst_blocks:
         dst_contents.extend(block.all_lines())
-    if mode.preview and not dst_contents:
+    if not dst_contents:
         # Use decode_bytes to retrieve the correct source newline (CRLF or LF),
         # and check if normalized_content has more than one line
         normalized_content, _, newline = decode_bytes(src_contents.encode("utf-8"))
@@ -1151,6 +1158,10 @@ def get_features_used(  # noqa: C901
     - relaxed decorator syntax;
     - usage of __future__ flags (annotations);
     - print / exec statements;
+    - parenthesized context managers;
+    - match statements;
+    - except* clause;
+    - variadic generics;
     """
     features: Set[Feature] = set()
     if future_imports:
@@ -1227,6 +1238,23 @@ def get_features_used(  # noqa: C901
             features.add(Feature.ANN_ASSIGN_EXTENDED_RHS)
 
         elif (
+            n.type == syms.with_stmt
+            and len(n.children) > 2
+            and n.children[1].type == syms.atom
+        ):
+            atom_children = n.children[1].children
+            if (
+                len(atom_children) == 3
+                and atom_children[0].type == token.LPAR
+                and atom_children[1].type == syms.testlist_gexp
+                and atom_children[2].type == token.RPAR
+            ):
+                features.add(Feature.PARENTHESIZED_CONTEXT_MANAGERS)
+
+        elif n.type == syms.match_stmt:
+            features.add(Feature.PATTERN_MATCHING)
+
+        elif (
             n.type == syms.except_clause
             and len(n.children) >= 2
             and n.children[1].type == token.STAR
@@ -1244,6 +1272,9 @@ def get_features_used(  # noqa: C901
             and n.children[2].type == syms.star_expr
         ):
             features.add(Feature.VARIADIC_GENERICS)
+
+        elif n.type in (syms.type_stmt, syms.typeparams):
+            features.add(Feature.TYPE_PARAMS)
 
     return features
 
