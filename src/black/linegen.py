@@ -604,6 +604,7 @@ def transform_line(
                     and all(
                         leaf.type != STANDALONE_COMMENT for leaf in line.leaves[1:-1]
                     )
+                    and line.magic_trailing_comma_token is None
                 ):
                     transformers.remove(standalone_comment_split)
                     transformers.insert(0, standalone_comment_split)
@@ -754,6 +755,7 @@ def _first_right_hand_split(
     body = bracket_split_build_line(
         body_leaves, line, opening_bracket, component=_BracketSplitComponent.body
     )
+    body.magic_trailing_comma_token = line.magic_trailing_comma_token
     tail = bracket_split_build_line(
         tail_leaves, line, opening_bracket, component=_BracketSplitComponent.tail
     )

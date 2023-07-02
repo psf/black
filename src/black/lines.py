@@ -58,6 +58,7 @@ class Line:
     inside_brackets: bool = False
     should_split_rhs: bool = False
     magic_trailing_comma: Optional[Leaf] = None
+    magic_trailing_comma_token: Optional[Leaf] = None
 
     def append(
         self, leaf: Leaf, preformatted: bool = False, track_bracket: bool = False
@@ -88,6 +89,7 @@ class Line:
             if self.mode.magic_trailing_comma:
                 if self.has_magic_trailing_comma(leaf):
                     self.magic_trailing_comma = leaf
+                    self.magic_trailing_comma_token = self.get_last_non_comment_leaf()
             elif self.has_magic_trailing_comma(leaf, ensure_removable=True):
                 self.remove_trailing_comma()
         if not self.append_comment(leaf):
@@ -297,6 +299,13 @@ class Line:
     def contains_multiline_strings(self) -> bool:
         return any(is_multiline_string(leaf) for leaf in self.leaves)
 
+    def get_last_non_comment_leaf(self) -> Optional[Leaf]:
+        for leaf in reversed(self.leaves):
+            if leaf.type != STANDALONE_COMMENT:
+                return leaf
+
+        return None
+
     def has_magic_trailing_comma(
         self, closing: Leaf, ensure_removable: bool = False
     ) -> bool:
@@ -308,10 +317,12 @@ class Line:
         - it's not from square bracket indexing
         (specifically, single-element square bracket indexing)
         """
+        last_non_comment_leaf = self.get_last_non_comment_leaf()
         if not (
             closing.type in CLOSING_BRACKETS
             and self.leaves
-            and self.leaves[-1].type == token.COMMA
+            and last_non_comment_leaf is not None
+            and last_non_comment_leaf.type == token.COMMA
         ):
             return False
 
