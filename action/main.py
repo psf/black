@@ -1,7 +1,7 @@
 import os
 import shlex
-import sys
 import shutil
+import sys
 from pathlib import Path
 from subprocess import PIPE, STDOUT, run
 
