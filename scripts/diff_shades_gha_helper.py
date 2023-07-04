@@ -52,13 +52,7 @@ def set_output(name: str, value: str) -> None:
         print(f"[INFO]: setting '{name}' to '{value}'")
     else:
         print(f"[INFO]: setting '{name}' to [{len(value)} chars]")
-
-    # Originally the `set-output` workflow command was used here, now replaced
-    # by setting variables through the `GITHUB_OUTPUT` environment variable
-    # to stay up to date with GitHub's update.
-    if "GITHUB_OUTPUT" in os.environ:
-        with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-            print(f"{name}={value}", file=f)
+    print(f"::set-output name={name}::{value}")
 
 
 def http_get(url: str, *, is_json: bool = True, **kwargs: Any) -> Any:
