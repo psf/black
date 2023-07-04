@@ -149,7 +149,7 @@ class BlackTestCase(BlackBaseTestCase):
         tmp_file = Path(black.dump_to_file())
         try:
             self.assertFalse(ff(tmp_file, write_back=black.WriteBack.YES))
-            actual = tmp_file.read_text(encoding="utf8")
+            actual = tmp_file.read_text(encoding="utf-8")
         finally:
             os.unlink(tmp_file)
         self.assertFormatEqual(expected, actual)
@@ -177,7 +177,7 @@ class BlackTestCase(BlackBaseTestCase):
                     ff(tmp_file, mode=mode, write_back=black.WriteBack.YES)
                 )
                 with open(tmp_file, "rb") as f:
-                    actual = f.read().decode("utf8")
+                    actual = f.read().decode("utf-8")
             finally:
                 os.unlink(tmp_file)
             self.assertFormatEqual(expected, actual)
@@ -197,7 +197,7 @@ class BlackTestCase(BlackBaseTestCase):
                 f"--line-length={black.DEFAULT_LINE_LENGTH}",
                 f"--config={EMPTY_CONFIG}",
             ],
-            input=BytesIO(source.encode("utf8")),
+            input=BytesIO(source.encode("utf-8")),
         )
         self.assertEqual(result.exit_code, 0)
         self.assertFormatEqual(expected, result.output)
@@ -220,7 +220,7 @@ class BlackTestCase(BlackBaseTestCase):
             f"--config={EMPTY_CONFIG}",
         ]
         result = BlackRunner().invoke(
-            black.main, args, input=BytesIO(source.encode("utf8"))
+            black.main, args, input=BytesIO(source.encode("utf-8"))
         )
         self.assertEqual(result.exit_code, 0)
         actual = diff_header.sub(DETERMINISTIC_HEADER, result.output)
@@ -238,7 +238,7 @@ class BlackTestCase(BlackBaseTestCase):
             f"--config={EMPTY_CONFIG}",
         ]
         result = BlackRunner().invoke(
-            black.main, args, input=BytesIO(source.encode("utf8"))
+            black.main, args, input=BytesIO(source.encode("utf-8"))
         )
         actual = result.output
         # Again, the contents are checked in a different test, so only look for colors.
@@ -285,7 +285,7 @@ class BlackTestCase(BlackBaseTestCase):
         tmp_file = Path(black.dump_to_file(source))
         try:
             self.assertTrue(ff(tmp_file, write_back=black.WriteBack.YES))
-            actual = tmp_file.read_text(encoding="utf8")
+            actual = tmp_file.read_text(encoding="utf-8")
         finally:
             os.unlink(tmp_file)
         self.assertFormatEqual(expected, actual)
@@ -388,7 +388,7 @@ class BlackTestCase(BlackBaseTestCase):
             black.main, [str(tmp_file), "-x", f"--config={EMPTY_CONFIG}"]
         )
         self.assertEqual(result.exit_code, 0)
-        actual = tmp_file.read_text(encoding="utf8")
+        actual = tmp_file.read_text(encoding="utf-8")
         self.assertFormatEqual(source, actual)
 
     def test_skip_source_first_line_when_mixing_newlines(self) -> None:
@@ -1117,7 +1117,7 @@ class BlackTestCase(BlackBaseTestCase):
             path = (workspace / "file.py").resolve()
             path.write_text(contents, encoding="utf-8")
             self.invokeBlack([str(path), "--pyi"])
-            actual = path.read_text(encoding="utf8")
+            actual = path.read_text(encoding="utf-8")
             # verify cache with --pyi is separate
             pyi_cache = black.read_cache(pyi_mode)
             self.assertIn(str(path), pyi_cache)
@@ -1141,7 +1141,7 @@ class BlackTestCase(BlackBaseTestCase):
                 path.write_text(contents, encoding="utf-8")
             self.invokeBlack([str(p) for p in paths] + ["--pyi"])
             for path in paths:
-                actual = path.read_text(encoding="utf8")
+                actual = path.read_text(encoding="utf-8")
                 self.assertEqual(actual, expected)
             # verify cache with --pyi is separate
             pyi_cache = black.read_cache(pyi_mode)
@@ -1153,7 +1153,7 @@ class BlackTestCase(BlackBaseTestCase):
     def test_pipe_force_pyi(self) -> None:
         source, expected = read_data("miscellaneous", "force_pyi")
         result = CliRunner().invoke(
-            black.main, ["-", "-q", "--pyi"], input=BytesIO(source.encode("utf8"))
+            black.main, ["-", "-q", "--pyi"], input=BytesIO(source.encode("utf-8"))
         )
         self.assertEqual(result.exit_code, 0)
         actual = result.output
@@ -1167,7 +1167,7 @@ class BlackTestCase(BlackBaseTestCase):
             path = (workspace / "file.py").resolve()
             path.write_text(source, encoding="utf-8")
             self.invokeBlack([str(path), *PY36_ARGS])
-            actual = path.read_text(encoding="utf8")
+            actual = path.read_text(encoding="utf-8")
             # verify cache with --target-version is separate
             py36_cache = black.read_cache(py36_mode)
             self.assertIn(str(path), py36_cache)
@@ -1189,7 +1189,7 @@ class BlackTestCase(BlackBaseTestCase):
                 path.write_text(source, encoding="utf-8")
             self.invokeBlack([str(p) for p in paths] + PY36_ARGS)
             for path in paths:
-                actual = path.read_text(encoding="utf8")
+                actual = path.read_text(encoding="utf-8")
                 self.assertEqual(actual, expected)
             # verify cache with --target-version is separate
             pyi_cache = black.read_cache(py36_mode)
@@ -1203,7 +1203,7 @@ class BlackTestCase(BlackBaseTestCase):
         result = CliRunner().invoke(
             black.main,
             ["-", "-q", "--target-version=py36"],
-            input=BytesIO(source.encode("utf8")),
+            input=BytesIO(source.encode("utf-8")),
         )
         self.assertEqual(result.exit_code, 0)
         actual = result.output
@@ -1432,11 +1432,11 @@ class BlackTestCase(BlackBaseTestCase):
             contents = nl.join(["def f(  ):", "    pass"])
             runner = BlackRunner()
             result = runner.invoke(
-                black.main, ["-", "--fast"], input=BytesIO(contents.encode("utf8"))
+                black.main, ["-", "--fast"], input=BytesIO(contents.encode("utf-8"))
             )
             self.assertEqual(result.exit_code, 0)
             output = result.stdout_bytes
-            self.assertIn(nl.encode("utf8"), output)
+            self.assertIn(nl.encode("utf-8"), output)
             if nl == "\n":
                 self.assertNotIn(b"\r\n", output)
 
