@@ -69,6 +69,9 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- Black is now tested with
+  [`PYTHONWARNDEFAULTENCODING = 1`](https://docs.python.org/3/library/io.html#io-encoding-warning)
+  (#3763)
 - Update GitHub Action to display black output in the job summary (#3688)
 - Deprecated `set-output` command in CI test to keep up to date with GitHub's
   deprecation announcement (#3757)
