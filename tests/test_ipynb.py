@@ -439,8 +439,7 @@ def test_cache_isnt_written_if_no_jupyter_deps_single(
     jupyter_dependencies_are_installed.cache_clear()
     nb = get_case_path("jupyter", "notebook_trailing_newline.ipynb")
     tmp_nb = tmp_path / "notebook.ipynb"
-    with open(nb) as src, open(tmp_nb, "w") as dst:
-        dst.write(src.read())
+    tmp_nb.write_bytes(nb.read_bytes())
     monkeypatch.setattr(
         "black.jupyter_dependencies_are_installed", lambda verbose, quiet: False
     )
@@ -465,8 +464,7 @@ def test_cache_isnt_written_if_no_jupyter_deps_dir(
     jupyter_dependencies_are_installed.cache_clear()
     nb = get_case_path("jupyter", "notebook_trailing_newline.ipynb")
     tmp_nb = tmp_path / "notebook.ipynb"
-    with open(nb) as src, open(tmp_nb, "w") as dst:
-        dst.write(src.read())
+    tmp_nb.write_bytes(nb.read_bytes())
     monkeypatch.setattr(
         "black.files.jupyter_dependencies_are_installed", lambda verbose, quiet: False
     )
@@ -483,8 +481,7 @@ def test_cache_isnt_written_if_no_jupyter_deps_dir(
 def test_ipynb_flag(tmp_path: pathlib.Path) -> None:
     nb = get_case_path("jupyter", "notebook_trailing_newline.ipynb")
     tmp_nb = tmp_path / "notebook.a_file_extension_which_is_definitely_not_ipynb"
-    with open(nb) as src, open(tmp_nb, "w") as dst:
-        dst.write(src.read())
+    tmp_nb.write_bytes(nb.read_bytes())
     result = runner.invoke(
         main,
         [
