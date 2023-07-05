@@ -2,7 +2,6 @@
 String transformers that can split and merge strings.
 """
 import re
-import sys
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass
@@ -12,9 +11,11 @@ from typing import (
     ClassVar,
     Collection,
     Dict,
+    Final,
     Iterable,
     Iterator,
     List,
+    Literal,
     Optional,
     Sequence,
     Set,
@@ -22,8 +23,6 @@ from typing import (
     TypeVar,
     Union,
 )
-
-from typing import Literal, Final
 
 from mypy_extensions import trait
 

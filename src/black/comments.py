@@ -1,10 +1,7 @@
 import re
-import sys
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Iterator, List, Optional, Union
-
-from typing import Final
+from typing import Final, Iterator, List, Optional, Union
 
 from black.nodes import (
     CLOSING_BRACKETS,

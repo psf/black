@@ -3,9 +3,7 @@ Parse Python code and perform AST validation.
 """
 import ast
 import sys
-from typing import Any, Iterable, Iterator, List, Set, Tuple, Type
-
-from typing import Final
+from typing import Any, Final, Iterable, Iterator, List, Set, Tuple, Type
 
 from black.mode import VERSION_TO_FEATURES, Feature, TargetVersion, supports_feature
 from black.nodes import syms
