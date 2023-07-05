@@ -5,16 +5,10 @@ Simple formatting on strings. Further string formatting code is in trans.py.
 import re
 import sys
 from functools import lru_cache
-from typing import List, Match, Pattern
-
-from blib2to3.pytree import Leaf
-
-if sys.version_info < (3, 8):
-    from typing_extensions import Final
-else:
-    from typing import Final
+from typing import Final, List, Match, Pattern
 
 from black._width_table import WIDTH_TABLE
+from blib2to3.pytree import Leaf
 
 STRING_PREFIX_CHARS: Final = "furbFURB"  # All possible string prefix characters.
 STRING_PREFIX_RE: Final = re.compile(

@@ -42,10 +42,7 @@ from typing import (
     cast,
 )
 
-if sys.version_info >= (3, 8):
-    from typing import Final
-else:
-    from typing_extensions import Final
+from typing import Final
 
 from blib2to3.pgen2.token import *
 from blib2to3.pgen2.grammar import Grammar

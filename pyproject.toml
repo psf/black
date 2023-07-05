@@ -33,7 +33,7 @@ build-backend = "hatchling.build"
 name = "black"
 description = "The uncompromising code formatter."
 license = { text = "MIT" }
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 authors = [
   { name = "Łukasz Langa", email = "lukasz@langa.pl" },
 ]
@@ -69,7 +69,6 @@ dependencies = [
   "pathspec>=0.9.0",
   "platformdirs>=2",
   "tomli>=1.1.0; python_version < '3.11'",
-  "typed-ast>=1.4.2; python_version < '3.8' and implementation_name == 'cpython'",
   "typing_extensions>=3.10.0.0; python_version < '3.10'",
 ]
 dynamic = ["readme", "version"]
@@ -121,8 +120,6 @@ enable-by-default = false
 dependencies = [
   "hatch-mypyc>=0.16.0",
   "mypy==1.3",
-  # Required stubs to be removed when the packages support PEP 561 themselves
-  "types-typed-ast>=1.4.2",
 ]
 require-runtime-dependencies = true
 exclude = [
@@ -145,7 +142,7 @@ options = { debug_level = "0" }
 [tool.cibuildwheel]
 build-verbosity = 1
 # So these are the environments we target:
-# - Python: CPython 3.7+ only
+# - Python: CPython 3.8+ only
 # - Architecture (64-bit only): amd64 / x86_64, universal2, and arm64
 # - OS: Linux (no musl), Windows, and macOS
 build = "cp3*-*"
@@ -208,9 +205,6 @@ filterwarnings = [
     # this is mitigated by a try/catch in https://github.com/psf/black/pull/3198/
     # this ignore can be removed when support for aiohttp 3.x is dropped.
     '''ignore:Middleware decorator is deprecated since 4\.0 and its behaviour is default, you can simply remove this decorator:DeprecationWarning''',
-    # this is mitigated by https://github.com/python/cpython/issues/79071 in python 3.8+
-    # this ignore can be removed when support for 3.7 is dropped.
-    '''ignore:Bare functions are deprecated, use async ones:DeprecationWarning''',
     # aiohttp is using deprecated cgi modules - Safe to remove when fixed:
     # https://github.com/aio-libs/aiohttp/issues/6905
     '''ignore:'cgi' is deprecated and slated for removal in Python 3.13:DeprecationWarning''',

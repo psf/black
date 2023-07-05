@@ -6,6 +6,9 @@
 
 <!-- Include any especially major or disruptive changes here -->
 
+- Runtime support for Python 3.7 has been removed. Formatting 3.7 code will still be
+  supported until further notice (#3765)
+
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
