@@ -32,6 +32,8 @@
 - `.pytest_cache`, `.ruff_cache` and `.vscode` are now excluded by default (#3691)
 - Fix black not honouring `pyproject.toml` settings when running `--stdin-filename` and
   the `pyproject.toml` found isn't in the current working directory (#3719)
+- Black will now error if `exclude` and `extend-exclude` have invalid data types in
+  `pyproject.toml`, instead of silently doing the wrong thing (#3764)
 
 ### Packaging
 
