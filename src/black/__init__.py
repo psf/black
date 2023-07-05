@@ -1410,40 +1410,6 @@ def nullcontext() -> Iterator[None]:
     yield
 
 
-def patch_click() -> None:
-    """Make Click not crash on Python 3.6 with LANG=C.
-
-    On certain misconfigured environments, Python 3 selects the ASCII encoding as the
-    default which restricts paths that it can access during the lifetime of the
-    application.  Click refuses to work in this scenario by raising a RuntimeError.
-
-    In case of Black the likelihood that non-ASCII characters are going to be used in
-    file paths is minimal since it's Python source code.  Moreover, this crash was
-    spurious on Python 3.7 thanks to PEP 538 and PEP 540.
-    """
-    modules: List[Any] = []
-    try:
-        from click import core
-    except ImportError:
-        pass
-    else:
-        modules.append(core)
-    try:
-        # Removed in Click 8.1.0 and newer; we keep this around for users who have
-        # older versions installed.
-        from click import _unicodefun  # type: ignore
-    except ImportError:
-        pass
-    else:
-        modules.append(_unicodefun)
-
-    for module in modules:
-        if hasattr(module, "_verify_python3_env"):
-            module._verify_python3_env = lambda: None
-        if hasattr(module, "_verify_python_env"):
-            module._verify_python_env = lambda: None
-
-
 def patched_main() -> None:
     # PyInstaller patches multiprocessing to need freeze_support() even in non-Windows
     # environments so just assume we always need to call it if frozen.
@@ -1452,7 +1418,6 @@ def patched_main() -> None:
 
         freeze_support()
 
-    patch_click()
     main()
 
 
