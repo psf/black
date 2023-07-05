@@ -413,7 +413,13 @@ class Line:
 
     def remove_trailing_comma(self) -> None:
         """Remove the trailing comma and moves the comments attached to it."""
-        trailing_comma = self.leaves.pop()
+        # There might be comments after the magic trailing comma, so we must search
+        # backwards to find it.
+        for i in range(len(self.leaves) - 1, -1, -1):
+            if self.leaves[i].type == token.COMMA:
+                trailing_comma = self.leaves.pop(i)
+                break
+
         trailing_comma_comments = self.comments.pop(id(trailing_comma), [])
         self.comments.setdefault(id(self.leaves[-1]), []).extend(
             trailing_comma_comments
