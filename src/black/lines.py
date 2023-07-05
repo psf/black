@@ -57,8 +57,8 @@ class Line:
     bracket_tracker: BracketTracker = field(default_factory=BracketTracker)
     inside_brackets: bool = False
     should_split_rhs: bool = False
+    bracket_after_magic_trailing_comma: Optional[Leaf] = None
     magic_trailing_comma: Optional[Leaf] = None
-    magic_trailing_comma_token: Optional[Leaf] = None
 
     def append(
         self, leaf: Leaf, preformatted: bool = False, track_bracket: bool = False
@@ -88,8 +88,8 @@ class Line:
             self.bracket_tracker.mark(leaf)
             if self.mode.magic_trailing_comma:
                 if self.has_magic_trailing_comma(leaf):
-                    self.magic_trailing_comma = leaf
-                    self.magic_trailing_comma_token = self.get_last_non_comment_leaf()
+                    self.bracket_after_magic_trailing_comma = leaf
+                    self.magic_trailing_comma = self.get_last_non_comment_leaf()
             elif self.has_magic_trailing_comma(leaf, ensure_removable=True):
                 self.remove_trailing_comma()
         if not self.append_comment(leaf):
@@ -471,6 +471,7 @@ class Line:
             inside_brackets=self.inside_brackets,
             should_split_rhs=self.should_split_rhs,
             magic_trailing_comma=self.magic_trailing_comma,
+            bracket_after_magic_trailing_comma=self.bracket_after_magic_trailing_comma,
         )
 
     def __str__(self) -> str:

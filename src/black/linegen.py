@@ -532,7 +532,7 @@ def transform_line(
     if (
         not line.contains_uncollapsable_type_comments()
         and not line.should_split_rhs
-        and not line.magic_trailing_comma
+        and not line.bracket_after_magic_trailing_comma
         and (
             is_line_short_enough(line, mode=mode, line_str=line_str)
             or line.contains_unsplittable_type_ignore()
@@ -604,7 +604,7 @@ def transform_line(
                     and all(
                         leaf.type != STANDALONE_COMMENT for leaf in line.leaves[1:-1]
                     )
-                    and line.magic_trailing_comma_token is None
+                    and line.magic_trailing_comma is None
                 ):
                     transformers.remove(standalone_comment_split)
                     transformers.insert(0, standalone_comment_split)
@@ -755,7 +755,7 @@ def _first_right_hand_split(
     body = bracket_split_build_line(
         body_leaves, line, opening_bracket, component=_BracketSplitComponent.body
     )
-    body.magic_trailing_comma_token = line.magic_trailing_comma_token
+    body.magic_trailing_comma = line.magic_trailing_comma
     tail = bracket_split_build_line(
         tail_leaves, line, opening_bracket, component=_BracketSplitComponent.tail
     )
@@ -804,7 +804,7 @@ def _maybe_split_omitting_optional_parens(
                 )
                 # the left side of assignment won't explode further because of magic
                 # trailing comma
-                and rhs.head.magic_trailing_comma is None
+                and rhs.head.bracket_after_magic_trailing_comma is None
                 # the split by omitting optional parens isn't preferred by some other
                 # reason
                 and not _prefer_split_rhs_oop(rhs_oop, mode)
@@ -1481,7 +1481,7 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
     """
 
     omit: Set[LeafID] = set()
-    if not line.magic_trailing_comma:
+    if not line.bracket_after_magic_trailing_comma:
         yield omit
 
     length = 4 * line.depth

@@ -2134,6 +2134,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             inside_brackets=True,
             should_split_rhs=line.should_split_rhs,
             magic_trailing_comma=line.magic_trailing_comma,
+            bracket_after_magic_trailing_comma=line.bracket_after_magic_trailing_comma,
         )
         string_leaf = Leaf(token.STRING, string_value)
         insert_str_child(string_leaf)
