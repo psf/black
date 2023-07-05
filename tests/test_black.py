@@ -149,8 +149,7 @@ class BlackTestCase(BlackBaseTestCase):
         tmp_file = Path(black.dump_to_file())
         try:
             self.assertFalse(ff(tmp_file, write_back=black.WriteBack.YES))
-            with open(tmp_file, encoding="utf8") as f:
-                actual = f.read()
+            actual = tmp_file.read_text(encoding="utf-8")
         finally:
             os.unlink(tmp_file)
         self.assertFormatEqual(expected, actual)
@@ -178,7 +177,7 @@ class BlackTestCase(BlackBaseTestCase):
                     ff(tmp_file, mode=mode, write_back=black.WriteBack.YES)
                 )
                 with open(tmp_file, "rb") as f:
-                    actual = f.read().decode("utf8")
+                    actual = f.read().decode("utf-8")
             finally:
                 os.unlink(tmp_file)
             self.assertFormatEqual(expected, actual)
@@ -198,7 +197,7 @@ class BlackTestCase(BlackBaseTestCase):
                 f"--line-length={black.DEFAULT_LINE_LENGTH}",
                 f"--config={EMPTY_CONFIG}",
             ],
-            input=BytesIO(source.encode("utf8")),
+            input=BytesIO(source.encode("utf-8")),
         )
         self.assertEqual(result.exit_code, 0)
         self.assertFormatEqual(expected, result.output)
@@ -221,7 +220,7 @@ class BlackTestCase(BlackBaseTestCase):
             f"--config={EMPTY_CONFIG}",
         ]
         result = BlackRunner().invoke(
-            black.main, args, input=BytesIO(source.encode("utf8"))
+            black.main, args, input=BytesIO(source.encode("utf-8"))
         )
         self.assertEqual(result.exit_code, 0)
         actual = diff_header.sub(DETERMINISTIC_HEADER, result.output)
@@ -239,7 +238,7 @@ class BlackTestCase(BlackBaseTestCase):
             f"--config={EMPTY_CONFIG}",
         ]
         result = BlackRunner().invoke(
-            black.main, args, input=BytesIO(source.encode("utf8"))
+            black.main, args, input=BytesIO(source.encode("utf-8"))
         )
         actual = result.output
         # Again, the contents are checked in a different test, so only look for colors.
@@ -286,8 +285,7 @@ class BlackTestCase(BlackBaseTestCase):
         tmp_file = Path(black.dump_to_file(source))
         try:
             self.assertTrue(ff(tmp_file, write_back=black.WriteBack.YES))
-            with open(tmp_file, encoding="utf8") as f:
-                actual = f.read()
+            actual = tmp_file.read_text(encoding="utf-8")
         finally:
             os.unlink(tmp_file)
         self.assertFormatEqual(expected, actual)
@@ -390,8 +388,7 @@ class BlackTestCase(BlackBaseTestCase):
             black.main, [str(tmp_file), "-x", f"--config={EMPTY_CONFIG}"]
         )
         self.assertEqual(result.exit_code, 0)
-        with open(tmp_file, encoding="utf8") as f:
-            actual = f.read()
+        actual = tmp_file.read_text(encoding="utf-8")
         self.assertFormatEqual(source, actual)
 
     def test_skip_source_first_line_when_mixing_newlines(self) -> None:
@@ -1081,7 +1078,7 @@ class BlackTestCase(BlackBaseTestCase):
                 (workspace / "one.py").resolve(),
                 (workspace / "two.py").resolve(),
             ]:
-                f.write_text('print("hello")\n')
+                f.write_text('print("hello")\n', encoding="utf-8")
             self.invokeBlack([str(workspace)])
 
     @event_loop()
@@ -1118,11 +1115,9 @@ class BlackTestCase(BlackBaseTestCase):
         contents, expected = read_data("miscellaneous", "force_pyi")
         with cache_dir() as workspace:
             path = (workspace / "file.py").resolve()
-            with open(path, "w") as fh:
-                fh.write(contents)
+            path.write_text(contents, encoding="utf-8")
             self.invokeBlack([str(path), "--pyi"])
-            with open(path, "r") as fh:
-                actual = fh.read()
+            actual = path.read_text(encoding="utf-8")
             # verify cache with --pyi is separate
             pyi_cache = black.read_cache(pyi_mode)
             self.assertIn(str(path), pyi_cache)
@@ -1143,12 +1138,10 @@ class BlackTestCase(BlackBaseTestCase):
                 (workspace / "file2.py").resolve(),
             ]
             for path in paths:
-                with open(path, "w") as fh:
-                    fh.write(contents)
+                path.write_text(contents, encoding="utf-8")
             self.invokeBlack([str(p) for p in paths] + ["--pyi"])
             for path in paths:
-                with open(path, "r") as fh:
-                    actual = fh.read()
+                actual = path.read_text(encoding="utf-8")
                 self.assertEqual(actual, expected)
             # verify cache with --pyi is separate
             pyi_cache = black.read_cache(pyi_mode)
@@ -1160,7 +1153,7 @@ class BlackTestCase(BlackBaseTestCase):
     def test_pipe_force_pyi(self) -> None:
         source, expected = read_data("miscellaneous", "force_pyi")
         result = CliRunner().invoke(
-            black.main, ["-", "-q", "--pyi"], input=BytesIO(source.encode("utf8"))
+            black.main, ["-", "-q", "--pyi"], input=BytesIO(source.encode("utf-8"))
         )
         self.assertEqual(result.exit_code, 0)
         actual = result.output
@@ -1172,11 +1165,9 @@ class BlackTestCase(BlackBaseTestCase):
         source, expected = read_data("miscellaneous", "force_py36")
         with cache_dir() as workspace:
             path = (workspace / "file.py").resolve()
-            with open(path, "w") as fh:
-                fh.write(source)
+            path.write_text(source, encoding="utf-8")
             self.invokeBlack([str(path), *PY36_ARGS])
-            with open(path, "r") as fh:
-                actual = fh.read()
+            actual = path.read_text(encoding="utf-8")
             # verify cache with --target-version is separate
             py36_cache = black.read_cache(py36_mode)
             self.assertIn(str(path), py36_cache)
@@ -1195,12 +1186,10 @@ class BlackTestCase(BlackBaseTestCase):
                 (workspace / "file2.py").resolve(),
             ]
             for path in paths:
-                with open(path, "w") as fh:
-                    fh.write(source)
+                path.write_text(source, encoding="utf-8")
             self.invokeBlack([str(p) for p in paths] + PY36_ARGS)
             for path in paths:
-                with open(path, "r") as fh:
-                    actual = fh.read()
+                actual = path.read_text(encoding="utf-8")
                 self.assertEqual(actual, expected)
             # verify cache with --target-version is separate
             pyi_cache = black.read_cache(py36_mode)
@@ -1214,7 +1203,7 @@ class BlackTestCase(BlackBaseTestCase):
         result = CliRunner().invoke(
             black.main,
             ["-", "-q", "--target-version=py36"],
-            input=BytesIO(source.encode("utf8")),
+            input=BytesIO(source.encode("utf-8")),
         )
         self.assertEqual(result.exit_code, 0)
         actual = result.output
@@ -1443,11 +1432,11 @@ class BlackTestCase(BlackBaseTestCase):
             contents = nl.join(["def f(  ):", "    pass"])
             runner = BlackRunner()
             result = runner.invoke(
-                black.main, ["-", "--fast"], input=BytesIO(contents.encode("utf8"))
+                black.main, ["-", "--fast"], input=BytesIO(contents.encode("utf-8"))
             )
             self.assertEqual(result.exit_code, 0)
             output = result.stdout_bytes
-            self.assertIn(nl.encode("utf8"), output)
+            self.assertIn(nl.encode("utf-8"), output)
             if nl == "\n":
                 self.assertNotIn(b"\r\n", output)
 
@@ -1631,8 +1620,8 @@ class BlackTestCase(BlackBaseTestCase):
             src_pyproject = src_dir / "pyproject.toml"
             src_pyproject.touch()
 
-            test_toml_file = THIS_DIR / "test.toml"
-            src_pyproject.write_text(test_toml_file.read_text())
+            test_toml_content = (THIS_DIR / "test.toml").read_text(encoding="utf-8")
+            src_pyproject.write_text(test_toml_content, encoding="utf-8")
 
             src_python = src_dir / "foo.py"
             src_python.touch()
@@ -1985,10 +1974,10 @@ class TestCaching:
         mode = DEFAULT_MODE
         with cache_dir() as workspace:
             cache_file = get_cache_file(mode)
-            cache_file.write_text("this is not a pickle")
+            cache_file.write_text("this is not a pickle", encoding="utf-8")
             assert black.read_cache(mode) == {}
             src = (workspace / "test.py").resolve()
-            src.write_text("print('hello')")
+            src.write_text("print('hello')", encoding="utf-8")
             invokeBlack([str(src)])
             cache = black.read_cache(mode)
             assert str(src) in cache
@@ -1997,10 +1986,10 @@ class TestCaching:
         mode = DEFAULT_MODE
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
-            src.write_text("print('hello')")
+            src.write_text("print('hello')", encoding="utf-8")
             black.write_cache({}, [src], mode)
             invokeBlack([str(src)])
-            assert src.read_text() == "print('hello')"
+            assert src.read_text(encoding="utf-8") == "print('hello')"
 
     @event_loop()
     def test_cache_multiple_files(self) -> None:
@@ -2009,17 +1998,13 @@ class TestCaching:
             "concurrent.futures.ProcessPoolExecutor", new=ThreadPoolExecutor
         ):
             one = (workspace / "one.py").resolve()
-            with one.open("w") as fobj:
-                fobj.write("print('hello')")
+            one.write_text("print('hello')", encoding="utf-8")
             two = (workspace / "two.py").resolve()
-            with two.open("w") as fobj:
-                fobj.write("print('hello')")
+            two.write_text("print('hello')", encoding="utf-8")
             black.write_cache({}, [one], mode)
             invokeBlack([str(workspace)])
-            with one.open("r") as fobj:
-                assert fobj.read() == "print('hello')"
-            with two.open("r") as fobj:
-                assert fobj.read() == 'print("hello")\n'
+            assert one.read_text(encoding="utf-8") == "print('hello')"
+            assert two.read_text(encoding="utf-8") == 'print("hello")\n'
             cache = black.read_cache(mode)
             assert str(one) in cache
             assert str(two) in cache
@@ -2029,8 +2014,7 @@ class TestCaching:
         mode = DEFAULT_MODE
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
-            with src.open("w") as fobj:
-                fobj.write("print('hello')")
+            src.write_text("print('hello')", encoding="utf-8")
             with patch("black.read_cache") as read_cache, patch(
                 "black.write_cache"
             ) as write_cache:
@@ -2049,8 +2033,7 @@ class TestCaching:
         with cache_dir() as workspace:
             for tag in range(0, 4):
                 src = (workspace / f"test{tag}.py").resolve()
-                with src.open("w") as fobj:
-                    fobj.write("print('hello')")
+                src.write_text("print('hello')", encoding="utf-8")
             with patch(
                 "black.concurrency.Manager", wraps=multiprocessing.Manager
             ) as mgr:
@@ -2120,11 +2103,9 @@ class TestCaching:
             "concurrent.futures.ProcessPoolExecutor", new=ThreadPoolExecutor
         ):
             failing = (workspace / "failing.py").resolve()
-            with failing.open("w") as fobj:
-                fobj.write("not actually python")
+            failing.write_text("not actually python", encoding="utf-8")
             clean = (workspace / "clean.py").resolve()
-            with clean.open("w") as fobj:
-                fobj.write('print("hello")\n')
+            clean.write_text('print("hello")\n', encoding="utf-8")
             invokeBlack([str(workspace)], exit_code=123)
             cache = black.read_cache(mode)
             assert str(failing) not in cache
