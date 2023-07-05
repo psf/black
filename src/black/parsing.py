@@ -3,7 +3,7 @@ Parse Python code and perform AST validation.
 """
 import ast
 import sys
-from typing import Any, Final, Iterable, Iterator, List, Set, Tuple, Type
+from typing import Final, Iterable, Iterator, List, Set, Tuple
 
 from black.mode import VERSION_TO_FEATURES, Feature, TargetVersion, supports_feature
 from black.nodes import syms
@@ -164,9 +164,18 @@ def _normalize(lineend: str, value: str) -> str:
 def stringify_ast(node: ast.AST, depth: int = 0) -> Iterator[str]:
     """Simple visitor generating strings to compare ASTs by content."""
 
+    if (
+        isinstance(node, ast.Constant)
+        and isinstance(node.value, str)
+        and node.kind == "u"
+    ):
+        # It's a quirk of history that we strip the u prefix over here. We used to
+        # rewrite the AST nodes for Python version compatibility and we never copied
+        # over the kind
+        node.kind = None
+
     yield f"{'  ' * depth}{node.__class__.__name__}("
 
-    type_ignore_classes: Tuple[Type[Any], ...]
     for field in sorted(node._fields):  # noqa: F402
         # TypeIgnore has only one field 'lineno' which breaks this comparison
         if isinstance(node, ast.TypeIgnore):
