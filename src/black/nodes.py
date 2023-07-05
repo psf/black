@@ -5,10 +5,7 @@ blib2to3 Node/Leaf transformation-related utility functions.
 import sys
 from typing import Generic, Iterator, List, Optional, Set, Tuple, TypeVar, Union
 
-if sys.version_info >= (3, 8):
-    from typing import Final
-else:
-    from typing_extensions import Final
+from typing import Final
 if sys.version_info >= (3, 10):
     from typing import TypeGuard
 else:

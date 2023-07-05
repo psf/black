@@ -4,10 +4,7 @@
 import sys
 from typing import List, Tuple
 
-if sys.version_info < (3, 8):
-    from typing_extensions import Final
-else:
-    from typing import Final
+from typing import Final
 
 WIDTH_TABLE: Final[List[Tuple[int, int, int]]] = [
     (0, 0, 0),

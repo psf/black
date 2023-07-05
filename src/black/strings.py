@@ -9,10 +9,7 @@ from typing import List, Match, Pattern
 
 from blib2to3.pytree import Leaf
 
-if sys.version_info < (3, 8):
-    from typing_extensions import Final
-else:
-    from typing import Final
+from typing import Final
 
 from black._width_table import WIDTH_TABLE
 

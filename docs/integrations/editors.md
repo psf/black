@@ -334,60 +334,6 @@ To run _Black_ on a key press (e.g. F9 below), add this:
 nnoremap <F9> :Black<CR>
 ```
 
-#### Troubleshooting
-
-**How to get Vim with Python 3.6?** On Ubuntu 17.10 Vim comes with Python 3.6 by
-default. On macOS with Homebrew run: `brew install vim`. When building Vim from source,
-use: `./configure --enable-python3interp=yes`. There's many guides online how to do
-this.
-
-**I get an import error when using _Black_ from a virtual environment**: If you get an
-error message like this:
-
-```text
-Traceback (most recent call last):
-  File "<string>", line 63, in <module>
-  File "/home/gui/.vim/black/lib/python3.7/site-packages/black.py", line 45, in <module>
-    from typed_ast import ast3, ast27
-  File "/home/gui/.vim/black/lib/python3.7/site-packages/typed_ast/ast3.py", line 40, in <module>
-    from typed_ast import _ast3
-ImportError: /home/gui/.vim/black/lib/python3.7/site-packages/typed_ast/_ast3.cpython-37m-x86_64-linux-gnu.so: undefined symbool: PyExc_KeyboardInterrupt
-```
-
-Then you need to install `typed_ast` directly from the source code. The error happens
-because `pip` will download [Python wheels](https://pythonwheels.com/) if they are
-available. Python wheels are a new standard of distributing Python packages and packages
-that have Cython and extensions written in C are already compiled, so the installation
-is much more faster. The problem here is that somehow the Python environment inside Vim
-does not match with those already compiled C extensions and these kind of errors are the
-result. Luckily there is an easy fix: installing the packages from the source code.
-
-The package that causes problems is:
-
-- [typed-ast](https://pypi.org/project/typed-ast/)
-
-Now remove those two packages:
-
-```console
-$ pip uninstall typed-ast -y
-```
-
-And now you can install them with:
-
-```console
-$ pip install --no-binary :all: typed-ast
-```
-
-The C extensions will be compiled and now Vim's Python environment will match. Note that
-you need to have the GCC compiler and the Python development files installed (on
-Ubuntu/Debian do `sudo apt-get install build-essential python3-dev`).
-
-If you later want to update _Black_, you should do it like this:
-
-```console
-$ pip install -U black --no-binary typed-ast
-```
-
 ### With ALE
 
 1. Install [`ale`](https://github.com/dense-analysis/ale)

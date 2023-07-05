@@ -23,10 +23,7 @@ from typing import (
     Union,
 )
 
-if sys.version_info < (3, 8):
-    from typing_extensions import Final, Literal
-else:
-    from typing import Literal, Final
+from typing import Literal, Final
 
 from mypy_extensions import trait
 
