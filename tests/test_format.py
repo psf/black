@@ -221,3 +221,17 @@ def test_skip_magic_trailing_comma() -> None:
     )
     mode = replace(DEFAULT_MODE, magic_trailing_comma=False, preview=True)
     assert_format(source, expected, mode)
+
+
+def test_trailing_comma_and_comment_in_pyi() -> None:
+    source, expected = read_data(
+        "miscellaneous", "trailing_comma_and_comment.pyi"
+    )
+    mode = replace(
+        DEFAULT_MODE,
+        magic_trailing_comma=False,
+        preview=False,
+        line_length=130,
+        is_pyi=True,
+    )
+    assert_format(source, expected, mode)

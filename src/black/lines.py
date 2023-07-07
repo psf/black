@@ -317,12 +317,18 @@ class Line:
         - it's not from square bracket indexing
         (specifically, single-element square bracket indexing)
         """
-        last_non_comment_leaf = self.get_last_non_comment_leaf()
+        if Preview.stop_some_unnecessary_wrapping_inside_brackets in self.mode:
+            leaf_to_check = self.get_last_non_comment_leaf()
+        elif len(self.leaves) > 0:
+            leaf_to_check = self.leaves[-1]
+        else:
+            return False
+
         if not (
             closing.type in CLOSING_BRACKETS
             and self.leaves
-            and last_non_comment_leaf is not None
-            and last_non_comment_leaf.type == token.COMMA
+            and leaf_to_check is not None
+            and leaf_to_check.type == token.COMMA
         ):
             return False
 
@@ -413,12 +419,15 @@ class Line:
 
     def remove_trailing_comma(self) -> None:
         """Remove the trailing comma and moves the comments attached to it."""
-        # There might be comments after the magic trailing comma, so we must search
-        # backwards to find it.
-        for i in range(len(self.leaves) - 1, -1, -1):
-            if self.leaves[i].type == token.COMMA:
-                trailing_comma = self.leaves.pop(i)
-                break
+        if Preview.stop_some_unnecessary_wrapping_inside_brackets in self.mode:
+            # There might be comments after the magic trailing comma, so we must search
+            # backwards to find it.
+            for i in range(len(self.leaves) - 1, -1, -1):
+                if self.leaves[i].type == token.COMMA:
+                    trailing_comma = self.leaves.pop(i)
+                    break
+        else:
+            trailing_comma = self.leaves.pop()
 
         trailing_comma_comments = self.comments.pop(id(trailing_comma), [])
         self.comments.setdefault(id(self.leaves[-1]), []).extend(
