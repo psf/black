@@ -55,7 +55,7 @@ class Replacement:
     src: str
 
 
-@lru_cache()
+@lru_cache
 def jupyter_dependencies_are_installed(*, verbose: bool, quiet: bool) -> bool:
     try:
         # isort: off

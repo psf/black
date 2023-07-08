@@ -42,7 +42,7 @@ if TYPE_CHECKING:
     import colorama  # noqa: F401
 
 
-@lru_cache()
+@lru_cache
 def find_project_root(
     srcs: Sequence[str], stdin_filename: Optional[str] = None
 ) -> Tuple[Path, str]:
@@ -212,7 +212,7 @@ def strip_specifier_set(specifier_set: SpecifierSet) -> SpecifierSet:
     return SpecifierSet(",".join(str(s) for s in specifiers))
 
 
-@lru_cache()
+@lru_cache
 def find_user_pyproject_toml() -> Path:
     r"""Return the path to the top-level user configuration for black.
 
@@ -232,7 +232,7 @@ def find_user_pyproject_toml() -> Path:
     return user_config_path.resolve()
 
 
-@lru_cache()
+@lru_cache
 def get_gitignore(root: Path) -> PathSpec:
     """Return a PathSpec matching gitignore content if present."""
     gitignore = root / ".gitignore"

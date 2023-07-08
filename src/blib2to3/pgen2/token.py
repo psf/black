@@ -1,6 +1,5 @@
 """Token constants (from "token.h")."""
 
-import sys
 from typing import Dict
 
 from typing import Final
@@ -75,7 +74,7 @@ NT_OFFSET: Final = 256
 
 tok_name: Final[Dict[int, str]] = {}
 for _name, _value in list(globals().items()):
-    if type(_value) is type(0):
+    if type(_value) is int:
         tok_name[_value] = _name
 
 
