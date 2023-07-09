@@ -17,6 +17,8 @@
   PEP 604 unions (#3735)
 - Fix a bug where multi-line open parenthesis magic comment like `type: ignore` were not
   correctly parsed (#3740)
+- Fix error in AST validation when Black removes trailing whitespace in a type comment
+  (#3773)
 
 ### Preview style
 
