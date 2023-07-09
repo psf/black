@@ -9,7 +9,6 @@ See Parser/parser.c in the Python distribution for additional info on
 how this parsing engine works.
 
 """
-import copy
 from contextlib import contextmanager
 
 # Local imports
@@ -18,7 +17,6 @@ from typing import (
     cast,
     Any,
     Optional,
-    Text,
     Union,
     Tuple,
     Dict,
@@ -35,7 +33,7 @@ if TYPE_CHECKING:
     from blib2to3.pgen2.driver import TokenProxy
 
 
-Results = Dict[Text, NL]
+Results = Dict[str, NL]
 Convert = Callable[[Grammar, RawNode], Union[Node, Leaf]]
 DFA = List[List[Tuple[int, int]]]
 DFAS = Tuple[DFA, Dict[int, int]]
@@ -100,7 +98,7 @@ class Recorder:
         finally:
             self.parser.is_backtracking = is_backtracking
 
-    def add_token(self, tok_type: int, tok_val: Text, raw: bool = False) -> None:
+    def add_token(self, tok_type: int, tok_val: str, raw: bool = False) -> None:
         func: Callable[..., Any]
         if raw:
             func = self.parser._addtoken
@@ -114,7 +112,7 @@ class Recorder:
                     args.insert(0, ilabel)
                 func(*args)
 
-    def determine_route(self, value: Optional[Text] = None, force: bool = False) -> Optional[int]:
+    def determine_route(self, value: Optional[str] = None, force: bool = False) -> Optional[int]:
         alive_ilabels = self.ilabels
         if len(alive_ilabels) == 0:
             *_, most_successful_ilabel = self._dead_ilabels
@@ -131,10 +129,10 @@ class ParseError(Exception):
     """Exception to signal the parser is stuck."""
 
     def __init__(
-        self, msg: Text, type: Optional[int], value: Optional[Text], context: Context
+        self, msg: str, type: Optional[int], value: Optional[str], context: Context
     ) -> None:
         Exception.__init__(
-            self, "%s: type=%r, value=%r, context=%r" % (msg, type, value, context)
+            self, f"{msg}: type={type!r}, value={value!r}, context={context!r}"
         )
         self.msg = msg
         self.type = type
@@ -142,7 +140,7 @@ class ParseError(Exception):
         self.context = context
 
 
-class Parser(object):
+class Parser:
     """Parser engine.
 
     The proper usage sequence is:
@@ -236,7 +234,7 @@ class Parser(object):
         self.used_names: Set[str] = set()
         self.proxy = proxy
 
-    def addtoken(self, type: int, value: Text, context: Context) -> bool:
+    def addtoken(self, type: int, value: str, context: Context) -> bool:
         """Add a token; return True iff this is the end of the program."""
         # Map from token to label
         ilabels = self.classify(type, value, context)
@@ -284,7 +282,7 @@ class Parser(object):
 
         return self._addtoken(ilabel, type, value, context)
 
-    def _addtoken(self, ilabel: int, type: int, value: Text, context: Context) -> bool:
+    def _addtoken(self, ilabel: int, type: int, value: str, context: Context) -> bool:
         # Loop until the token is shifted; may raise exceptions
         while True:
             dfa, state, node = self.stack[-1]
@@ -329,7 +327,7 @@ class Parser(object):
                     # No success finding a transition
                     raise ParseError("bad input", type, value, context)
 
-    def classify(self, type: int, value: Text, context: Context) -> List[int]:
+    def classify(self, type: int, value: str, context: Context) -> List[int]:
         """Turn a token into a label.  (Internal)
 
         Depending on whether the value is a soft-keyword or not,
@@ -352,7 +350,7 @@ class Parser(object):
             raise ParseError("bad token", type, value, context)
         return [ilabel]
 
-    def shift(self, type: int, value: Text, newstate: int, context: Context) -> None:
+    def shift(self, type: int, value: str, newstate: int, context: Context) -> None:
         """Shift a token.  (Internal)"""
         if self.is_backtracking:
             dfa, state, _ = self.stack[-1]

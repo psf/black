@@ -28,11 +28,8 @@ from typing import (
     Iterable,
     List,
     Optional,
-    Text,
     Iterator,
     Tuple,
-    TypeVar,
-    Generic,
     Union,
 )
 from contextlib import contextmanager
@@ -116,7 +113,7 @@ class TokenProxy:
             return True
 
 
-class Driver(object):
+class Driver:
     def __init__(self, grammar: Grammar, logger: Optional[Logger] = None) -> None:
         self.grammar = grammar
         if logger is None:
@@ -189,30 +186,30 @@ class Driver(object):
         assert p.rootnode is not None
         return p.rootnode
 
-    def parse_stream_raw(self, stream: IO[Text], debug: bool = False) -> NL:
+    def parse_stream_raw(self, stream: IO[str], debug: bool = False) -> NL:
         """Parse a stream and return the syntax tree."""
         tokens = tokenize.generate_tokens(stream.readline, grammar=self.grammar)
         return self.parse_tokens(tokens, debug)
 
-    def parse_stream(self, stream: IO[Text], debug: bool = False) -> NL:
+    def parse_stream(self, stream: IO[str], debug: bool = False) -> NL:
         """Parse a stream and return the syntax tree."""
         return self.parse_stream_raw(stream, debug)
 
     def parse_file(
-        self, filename: Path, encoding: Optional[Text] = None, debug: bool = False
+        self, filename: Path, encoding: Optional[str] = None, debug: bool = False
     ) -> NL:
         """Parse a file and return the syntax tree."""
-        with io.open(filename, "r", encoding=encoding) as stream:
+        with open(filename, encoding=encoding) as stream:
             return self.parse_stream(stream, debug)
 
-    def parse_string(self, text: Text, debug: bool = False) -> NL:
+    def parse_string(self, text: str, debug: bool = False) -> NL:
         """Parse a string and return the syntax tree."""
         tokens = tokenize.generate_tokens(
             io.StringIO(text).readline, grammar=self.grammar
         )
         return self.parse_tokens(tokens, debug)
 
-    def _partially_consume_prefix(self, prefix: Text, column: int) -> Tuple[Text, Text]:
+    def _partially_consume_prefix(self, prefix: str, column: int) -> Tuple[str, str]:
         lines: List[str] = []
         current_line = ""
         current_column = 0
@@ -240,7 +237,7 @@ class Driver(object):
         return "".join(lines), current_line
 
 
-def _generate_pickle_name(gt: Path, cache_dir: Optional[Path] = None) -> Text:
+def _generate_pickle_name(gt: Path, cache_dir: Optional[Path] = None) -> str:
     head, tail = os.path.splitext(gt)
     if tail == ".txt":
         tail = ""
@@ -252,8 +249,8 @@ def _generate_pickle_name(gt: Path, cache_dir: Optional[Path] = None) -> Text:
 
 
 def load_grammar(
-    gt: Text = "Grammar.txt",
-    gp: Optional[Text] = None,
+    gt: str = "Grammar.txt",
+    gp: Optional[str] = None,
     save: bool = True,
     force: bool = False,
     logger: Optional[Logger] = None,
@@ -276,7 +273,7 @@ def load_grammar(
     return g
 
 
-def _newer(a: Text, b: Text) -> bool:
+def _newer(a: str, b: str) -> bool:
     """Inquire whether file a was written since file b."""
     if not os.path.exists(a):
         return False
@@ -286,7 +283,7 @@ def _newer(a: Text, b: Text) -> bool:
 
 
 def load_packaged_grammar(
-    package: str, grammar_source: Text, cache_dir: Optional[Path] = None
+    package: str, grammar_source: str, cache_dir: Optional[Path] = None
 ) -> grammar.Grammar:
     """Normally, loads a pickled grammar by doing
         pkgutil.get_data(package, pickled_grammar)
@@ -309,7 +306,7 @@ def load_packaged_grammar(
     return g
 
 
-def main(*args: Text) -> bool:
+def main(*args: str) -> bool:
     """Main program, when run as a script: produce grammar pickle files.
 
     Calls load_grammar for each argument, a path to a grammar text file.
