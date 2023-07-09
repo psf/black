@@ -218,8 +218,8 @@ def stringify_ast(node: ast.AST, depth: int = 0) -> Iterator[str]:
                 # trailing and leading space may be removed.
                 normalized = _normalize("\n", value)
             elif field == "type_comment" and isinstance(value, str):
-                # Trailing spaces in type comments are removed.
-                normalized = value.rstrip(" ")
+                # Trailing whitespace in type comments is removed.
+                normalized = value.rstrip()
             else:
                 normalized = value
             yield f"{'  ' * (depth+2)}{normalized!r},  # {value.__class__.__name__}"
