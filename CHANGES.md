@@ -43,6 +43,7 @@
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
 - Upgrade mypyc from 0.991 to 1.3 (#3697)
+- Remove patching of Click that mitigated errors on Python 3.6 with `LANG=C` (#3768)
 
 ### Parser
 

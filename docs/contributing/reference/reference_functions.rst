@@ -165,8 +165,6 @@ Utilities
 
 .. autofunction:: black.linegen.normalize_invisible_parens
 
-.. autofunction:: black.patch_click
-
 .. autofunction:: black.nodes.preceding_leaf
 
 .. autofunction:: black.re_compile_maybe_verbose
