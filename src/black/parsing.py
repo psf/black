@@ -208,15 +208,18 @@ def stringify_ast(node: ast.AST, depth: int = 0) -> Iterator[str]:
 
         else:
             normalized: object
-            # Constant strings may be indented across newlines, if they are
-            # docstrings; fold spaces after newlines when comparing. Similarly,
-            # trailing and leading space may be removed.
             if (
                 isinstance(node, ast.Constant)
                 and field == "value"
                 and isinstance(value, str)
             ):
+                # Constant strings may be indented across newlines, if they are
+                # docstrings; fold spaces after newlines when comparing. Similarly,
+                # trailing and leading space may be removed.
                 normalized = _normalize("\n", value)
+            elif field == "type_comment" and isinstance(value, str):
+                # Trailing whitespace in type comments is removed.
+                normalized = value.rstrip()
             else:
                 normalized = value
             yield f"{'  ' * (depth+2)}{normalized!r},  # {value.__class__.__name__}"
