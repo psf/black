@@ -1,13 +1,7 @@
 import re
-import sys
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Iterator, List, Optional, Union
-
-if sys.version_info >= (3, 8):
-    from typing import Final
-else:
-    from typing_extensions import Final
+from typing import Final, Iterator, List, Optional, Union
 
 from black.nodes import (
     CLOSING_BRACKETS,
