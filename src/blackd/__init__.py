@@ -225,7 +225,6 @@ def parse_python_variant_header(value: str) -> Tuple[bool, Set[black.TargetVersi
 def patched_main() -> None:
     maybe_install_uvloop()
     freeze_support()
-    black.patch_click()
     main()
 
 

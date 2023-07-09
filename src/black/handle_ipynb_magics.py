@@ -55,11 +55,16 @@ class Replacement:
     src: str
 
 
-@lru_cache()
+@lru_cache
 def jupyter_dependencies_are_installed(*, verbose: bool, quiet: bool) -> bool:
     try:
-        import IPython  # noqa:F401
+        # isort: off
+        # tokenize_rt is less commonly installed than IPython
+        # and IPython is expensive to import
         import tokenize_rt  # noqa:F401
+        import IPython  # noqa:F401
+
+        # isort: on
     except ModuleNotFoundError:
         if verbose or not quiet:
             msg = (
@@ -330,7 +335,8 @@ class CellMagicFinder(ast.NodeVisitor):
 
     For example,
 
-        %%time\nfoo()
+        %%time\n
+        foo()
 
     would have been transformed to
 

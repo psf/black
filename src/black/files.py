@@ -42,7 +42,7 @@ if TYPE_CHECKING:
     import colorama  # noqa: F401
 
 
-@lru_cache()
+@lru_cache
 def find_project_root(
     srcs: Sequence[str], stdin_filename: Optional[str] = None
 ) -> Tuple[Path, str]:
@@ -89,9 +89,11 @@ def find_project_root(
     return directory, "file system root"
 
 
-def find_pyproject_toml(path_search_start: Tuple[str, ...]) -> Optional[str]:
+def find_pyproject_toml(
+    path_search_start: Tuple[str, ...], stdin_filename: Optional[str] = None
+) -> Optional[str]:
     """Find the absolute filepath to a pyproject.toml if it exists"""
-    path_project_root, _ = find_project_root(path_search_start)
+    path_project_root, _ = find_project_root(path_search_start, stdin_filename)
     path_pyproject_toml = path_project_root / "pyproject.toml"
     if path_pyproject_toml.is_file():
         return str(path_pyproject_toml)
@@ -210,7 +212,7 @@ def strip_specifier_set(specifier_set: SpecifierSet) -> SpecifierSet:
     return SpecifierSet(",".join(str(s) for s in specifiers))
 
 
-@lru_cache()
+@lru_cache
 def find_user_pyproject_toml() -> Path:
     r"""Return the path to the top-level user configuration for black.
 
@@ -230,7 +232,7 @@ def find_user_pyproject_toml() -> Path:
     return user_config_path.resolve()
 
 
-@lru_cache()
+@lru_cache
 def get_gitignore(root: Path) -> PathSpec:
     """Return a PathSpec matching gitignore content if present."""
     gitignore = root / ".gitignore"

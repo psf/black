@@ -127,7 +127,9 @@ def read_pyproject_toml(
     otherwise.
     """
     if not value:
-        value = find_pyproject_toml(ctx.params.get("src", ()))
+        value = find_pyproject_toml(
+            ctx.params.get("src", ()), ctx.params.get("stdin_filename", None)
+        )
         if value is None:
             return None
 
@@ -153,6 +155,16 @@ def read_pyproject_toml(
     if target_version is not None and not isinstance(target_version, list):
         raise click.BadOptionUsage(
             "target-version", "Config key target-version must be a list"
+        )
+
+    exclude = config.get("exclude")
+    if exclude is not None and not isinstance(exclude, str):
+        raise click.BadOptionUsage("exclude", "Config key exclude must be a string")
+
+    extend_exclude = config.get("extend_exclude")
+    if extend_exclude is not None and not isinstance(extend_exclude, str):
+        raise click.BadOptionUsage(
+            "extend-exclude", "Config key extend-exclude must be a string"
         )
 
     default_map: Dict[str, Any] = {}
@@ -362,6 +374,7 @@ def validate_regex(
 @click.option(
     "--stdin-filename",
     type=str,
+    is_eager=True,
     help=(
         "The name of the file when passing it through stdin. Useful to make "
         "sure Black will respect --force-exclude option on some "
@@ -373,7 +386,10 @@ def validate_regex(
     "--workers",
     type=click.IntRange(min=1),
     default=None,
-    help="Number of parallel workers [default: number of CPUs in the system]",
+    help=(
+        "Number of parallel workers [default: BLACK_NUM_WORKERS environment variable "
+        "or number of CPUs in the system]"
+    ),
 )
 @click.option(
     "-q",
@@ -477,26 +493,6 @@ def main(  # noqa: C901
                 f"Identified `{root}` as project root containing a {method}.",
                 fg="blue",
             )
-
-            normalized = [
-                (
-                    (source, source)
-                    if source == "-"
-                    else (normalize_path_maybe_ignore(Path(source), root), source)
-                )
-                for source in src
-            ]
-            srcs_string = ", ".join(
-                [
-                    (
-                        f'"{_norm}"'
-                        if _norm
-                        else f'\033[31m"{source} (skipping - invalid)"\033[34m'
-                    )
-                    for _norm, source in normalized
-                ]
-            )
-            out(f"Sources to be formatted: {srcs_string}", fg="blue")
 
         if config:
             config_source = ctx.get_parameter_source("config")
@@ -648,9 +644,15 @@ def get_sources(
             is_stdin = False
 
         if is_stdin or p.is_file():
-            normalized_path = normalize_path_maybe_ignore(p, ctx.obj["root"], report)
+            normalized_path: Optional[str] = normalize_path_maybe_ignore(
+                p, ctx.obj["root"], report
+            )
             if normalized_path is None:
+                if verbose:
+                    out(f'Skipping invalid source: "{normalized_path}"', fg="red")
                 continue
+            if verbose:
+                out(f'Found input source: "{normalized_path}"', fg="blue")
 
             normalized_path = "/" + normalized_path
             # Hard-exclude any files that matches the `--force-exclude` regex.
@@ -673,6 +675,9 @@ def get_sources(
             sources.add(p)
         elif p.is_dir():
             p = root / normalize_path_maybe_ignore(p, ctx.obj["root"], report)
+            if verbose:
+                out(f'Found input source directory: "{p}"', fg="blue")
+
             if using_default_exclude:
                 gitignore = {
                     root: root_gitignore,
@@ -693,9 +698,12 @@ def get_sources(
                 )
             )
         elif s == "-":
+            if verbose:
+                out("Found input source stdin", fg="blue")
             sources.add(p)
         else:
             err(f"invalid path: {s}")
+
     return sources
 
 
@@ -1402,40 +1410,6 @@ def nullcontext() -> Iterator[None]:
     yield
 
 
-def patch_click() -> None:
-    """Make Click not crash on Python 3.6 with LANG=C.
-
-    On certain misconfigured environments, Python 3 selects the ASCII encoding as the
-    default which restricts paths that it can access during the lifetime of the
-    application.  Click refuses to work in this scenario by raising a RuntimeError.
-
-    In case of Black the likelihood that non-ASCII characters are going to be used in
-    file paths is minimal since it's Python source code.  Moreover, this crash was
-    spurious on Python 3.7 thanks to PEP 538 and PEP 540.
-    """
-    modules: List[Any] = []
-    try:
-        from click import core
-    except ImportError:
-        pass
-    else:
-        modules.append(core)
-    try:
-        # Removed in Click 8.1.0 and newer; we keep this around for users who have
-        # older versions installed.
-        from click import _unicodefun  # type: ignore
-    except ImportError:
-        pass
-    else:
-        modules.append(_unicodefun)
-
-    for module in modules:
-        if hasattr(module, "_verify_python3_env"):
-            module._verify_python3_env = lambda: None
-        if hasattr(module, "_verify_python_env"):
-            module._verify_python_env = lambda: None
-
-
 def patched_main() -> None:
     # PyInstaller patches multiprocessing to need freeze_support() even in non-Windows
     # environments so just assume we always need to call it if frozen.
@@ -1444,7 +1418,6 @@ def patched_main() -> None:
 
         freeze_support()
 
-    patch_click()
     main()
 
 
