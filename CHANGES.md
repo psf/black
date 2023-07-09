@@ -55,6 +55,7 @@
 
 <!-- Changes that improve Black's performance. -->
 
+- Speed up _Black_ significantly when the cache is full (#3751)
 - Avoid importing `IPython` in a case where we wouldn't need it (#3748)
 
 ### Output
