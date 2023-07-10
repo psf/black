@@ -60,7 +60,8 @@
   PEP 604 unions (#3735)
 - Fix several bugs and crashes where comments in stub files were removed or mishandled
   under some circumstances (#3745)
-- Fix a crash with multi-line magic comments like `type: ignore` within parentheses (#3740)
+- Fix a crash with multi-line magic comments like `type: ignore` within parentheses
+  (#3740)
 - Fix error in AST validation when _Black_ removes trailing whitespace in a type comment
   (#3773)
 
@@ -75,8 +76,8 @@
 - The `--workers` argument to _Black_ can now be specified via the `BLACK_NUM_WORKERS`
   environment variable (#3743)
 - `.pytest_cache`, `.ruff_cache` and `.vscode` are now excluded by default (#3691)
-- Fix _Black_ not honouring `pyproject.toml` settings when running `--stdin-filename` and
-  the `pyproject.toml` found isn't in the current working directory (#3719)
+- Fix _Black_ not honouring `pyproject.toml` settings when running `--stdin-filename`
+  and the `pyproject.toml` found isn't in the current working directory (#3719)
 - _Black_ will now error if `exclude` and `extend-exclude` have invalid data types in
   `pyproject.toml`, instead of silently doing the wrong thing (#3764)
 
