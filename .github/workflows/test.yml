@@ -58,7 +58,9 @@ jobs:
       - name: Upload coverage to Coveralls
         # Upload coverage if we are on the main repository and
         # we're running on Linux (this action only supports Linux)
-        if: github.repository == 'psf/black' && matrix.os == 'ubuntu-latest'
+        if:
+          github.repository == 'psf/black' && matrix.os == 'ubuntu-latest' &&
+          !startsWith(matrix.python-version, 'pypy')
         uses: AndreMiras/coveralls-python-action@v20201129
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
