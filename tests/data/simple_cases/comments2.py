@@ -154,6 +154,9 @@ class Test:
                 not parsed.hostname.strip()):
             pass
 
+
+a = "type comment with trailing space"  # type: str   
+
 #######################
 ### SECTION COMMENT ###
 #######################
@@ -331,6 +334,8 @@ class Test:
         if parsed.hostname is None or not parsed.hostname.strip():  # type: ignore
             pass
 
+
+a = "type comment with trailing space"  # type: str
 
 #######################
 ### SECTION COMMENT ###

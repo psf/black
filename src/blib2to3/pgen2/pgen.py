@@ -11,7 +11,6 @@ from typing import (
     Iterator,
     List,
     Optional,
-    Text,
     Tuple,
     Union,
     Sequence,
@@ -29,13 +28,13 @@ class PgenGrammar(grammar.Grammar):
     pass
 
 
-class ParserGenerator(object):
+class ParserGenerator:
     filename: Path
-    stream: IO[Text]
+    stream: IO[str]
     generator: Iterator[GoodTokenInfo]
-    first: Dict[Text, Optional[Dict[Text, int]]]
+    first: Dict[str, Optional[Dict[str, int]]]
 
-    def __init__(self, filename: Path, stream: Optional[IO[Text]] = None) -> None:
+    def __init__(self, filename: Path, stream: Optional[IO[str]] = None) -> None:
         close_stream = None
         if stream is None:
             stream = open(filename, encoding="utf-8")
@@ -75,7 +74,7 @@ class ParserGenerator(object):
         c.start = c.symbol2number[self.startsymbol]
         return c
 
-    def make_first(self, c: PgenGrammar, name: Text) -> Dict[int, int]:
+    def make_first(self, c: PgenGrammar, name: str) -> Dict[int, int]:
         rawfirst = self.first[name]
         assert rawfirst is not None
         first = {}
@@ -85,7 +84,7 @@ class ParserGenerator(object):
             first[ilabel] = 1
         return first
 
-    def make_label(self, c: PgenGrammar, label: Text) -> int:
+    def make_label(self, c: PgenGrammar, label: str) -> int:
         # XXX Maybe this should be a method on a subclass of converter?
         ilabel = len(c.labels)
         if label[0].isalpha():
@@ -144,7 +143,7 @@ class ParserGenerator(object):
                 self.calcfirst(name)
             # print name, self.first[name].keys()
 
-    def calcfirst(self, name: Text) -> None:
+    def calcfirst(self, name: str) -> None:
         dfa = self.dfas[name]
         self.first[name] = None  # dummy to detect left recursion
         state = dfa[0]
@@ -176,7 +175,7 @@ class ParserGenerator(object):
                 inverse[symbol] = label
         self.first[name] = totalset
 
-    def parse(self) -> Tuple[Dict[Text, List["DFAState"]], Text]:
+    def parse(self) -> Tuple[Dict[str, List["DFAState"]], str]:
         dfas = {}
         startsymbol: Optional[str] = None
         # MSTART: (NEWLINE | RULE)* ENDMARKER
@@ -240,7 +239,7 @@ class ParserGenerator(object):
                 state.addarc(st, label)
         return states  # List of DFAState instances; first one is start
 
-    def dump_nfa(self, name: Text, start: "NFAState", finish: "NFAState") -> None:
+    def dump_nfa(self, name: str, start: "NFAState", finish: "NFAState") -> None:
         print("Dump of NFA for", name)
         todo = [start]
         for i, state in enumerate(todo):
@@ -256,7 +255,7 @@ class ParserGenerator(object):
                 else:
                     print("    %s -> %d" % (label, j))
 
-    def dump_dfa(self, name: Text, dfa: Sequence["DFAState"]) -> None:
+    def dump_dfa(self, name: str, dfa: Sequence["DFAState"]) -> None:
         print("Dump of DFA for", name)
         for i, state in enumerate(dfa):
             print("  State", i, state.isfinal and "(final)" or "")
@@ -349,7 +348,7 @@ class ParserGenerator(object):
             )
             assert False
 
-    def expect(self, type: int, value: Optional[Any] = None) -> Text:
+    def expect(self, type: int, value: Optional[Any] = None) -> str:
         if self.type != type or (value is not None and self.value != value):
             self.raise_error(
                 "expected %s/%s, got %s/%s", type, value, self.type, self.value
@@ -374,22 +373,22 @@ class ParserGenerator(object):
         raise SyntaxError(msg, (self.filename, self.end[0], self.end[1], self.line))
 
 
-class NFAState(object):
-    arcs: List[Tuple[Optional[Text], "NFAState"]]
+class NFAState:
+    arcs: List[Tuple[Optional[str], "NFAState"]]
 
     def __init__(self) -> None:
         self.arcs = []  # list of (label, NFAState) pairs
 
-    def addarc(self, next: "NFAState", label: Optional[Text] = None) -> None:
+    def addarc(self, next: "NFAState", label: Optional[str] = None) -> None:
         assert label is None or isinstance(label, str)
         assert isinstance(next, NFAState)
         self.arcs.append((label, next))
 
 
-class DFAState(object):
+class DFAState:
     nfaset: Dict[NFAState, Any]
     isfinal: bool
-    arcs: Dict[Text, "DFAState"]
+    arcs: Dict[str, "DFAState"]
 
     def __init__(self, nfaset: Dict[NFAState, Any], final: NFAState) -> None:
         assert isinstance(nfaset, dict)
@@ -399,7 +398,7 @@ class DFAState(object):
         self.isfinal = final in nfaset
         self.arcs = {}  # map from label to DFAState
 
-    def addarc(self, next: "DFAState", label: Text) -> None:
+    def addarc(self, next: "DFAState", label: str) -> None:
         assert isinstance(label, str)
         assert label not in self.arcs
         assert isinstance(next, DFAState)
