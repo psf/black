@@ -7,7 +7,7 @@ Use [pre-commit](https://pre-commit.com/). Once you
 ```yaml
 repos:
   - repo: https://github.com/psf/black
-    rev: 23.3.0
+    rev: 23.7.0
     hooks:
       - id: black
         # It is recommended to specify the latest version of Python
@@ -31,7 +31,7 @@ include Jupyter Notebooks. To use this hook, simply replace the hook's `id: blac
 ```yaml
 repos:
   - repo: https://github.com/psf/black
-    rev: 23.3.0
+    rev: 23.7.0
     hooks:
       - id: black-jupyter
         # It is recommended to specify the latest version of Python
