@@ -77,7 +77,7 @@ def test_trailing_semicolon_noop() -> None:
     [
         pytest.param(JUPYTER_MODE, id="default mode"),
         pytest.param(
-            replace(JUPYTER_MODE, python_cell_magics={"cust1", "cust1"}),
+            replace(JUPYTER_MODE, python_cell_magics={"cust1", "cust2"}),
             id="custom cell magics mode",
         ),
     ],
@@ -100,7 +100,7 @@ def test_cell_magic_noop() -> None:
     [
         pytest.param(JUPYTER_MODE, id="default mode"),
         pytest.param(
-            replace(JUPYTER_MODE, python_cell_magics={"cust1", "cust1"}),
+            replace(JUPYTER_MODE, python_cell_magics={"cust1", "cust2"}),
             id="custom cell magics mode",
         ),
     ],
@@ -183,7 +183,7 @@ def test_cell_magic_with_magic() -> None:
             id="No change when cell magic not registered",
         ),
         pytest.param(
-            replace(JUPYTER_MODE, python_cell_magics={"cust1", "cust1"}),
+            replace(JUPYTER_MODE, python_cell_magics={"cust1", "cust2"}),
             "%%custom_python_magic -n1 -n2\nx=2",
             pytest.raises(NothingChanged),
             id="No change when other cell magics registered",
