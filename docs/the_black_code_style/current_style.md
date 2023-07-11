@@ -254,7 +254,7 @@ required due to an inner function starting immediately after.
 
 _Black_ does not format comment contents, but it enforces two spaces between code and a
 comment on the same line, and a space before the comment text begins. Some types of
-comments that require specific spacing rules are respected: hashbangs (`#! comment`),
+comments that require specific spacing rules are respected: shebangs (`#! comment`),
 doc comments (`#: comment`), section comments with long runs of hashes, and Spyder
 cells. Non-breaking spaces after hashes are also preserved. Comments may sometimes be
 moved because of formatting changes, which can break tools that assign special meaning
