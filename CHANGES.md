@@ -30,6 +30,8 @@
 
 <!-- Changes that improve Black's performance. -->
 
+- minimize cost of introspection to detect jupyter dependencies (#3782)
+
 ### Output
 
 <!-- Changes to Black's terminal output and error messages -->
