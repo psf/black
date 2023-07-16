@@ -58,7 +58,9 @@ class Replacement:
 
 @lru_cache
 def jupyter_dependencies_are_installed(*, warn: bool) -> bool:
-    installed = find_spec("tokenize_rt") is not None and find_spec("IPython") is not None
+    installed = (
+        find_spec("tokenize_rt") is not None and find_spec("IPython") is not None
+    )
     if not installed and warn:
         msg = (
             "Skipping .ipynb files as Jupyter dependencies are not installed.\n"
