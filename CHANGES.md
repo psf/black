@@ -30,7 +30,7 @@
 
 <!-- Changes that improve Black's performance. -->
 
-- Avoid importing `IPython` if notebook cells do not contain magics (#3748)
+- Avoid importing `IPython` if notebook cells do not contain magics (#3782)
 
 ### Output
 
