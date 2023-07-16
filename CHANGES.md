@@ -30,7 +30,7 @@
 
 <!-- Changes that improve Black's performance. -->
 
-- minimize cost of introspection to detect jupyter dependencies (#3782)
+- Avoid importing `IPython` if notebook cells do not contain magics (#3748)
 
 ### Output
 
