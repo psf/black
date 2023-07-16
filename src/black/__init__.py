@@ -668,7 +668,7 @@ def get_sources(
                 p = Path(f"{STDIN_PLACEHOLDER}{str(p)}")
 
             if p.suffix == ".ipynb" and not jupyter_dependencies_are_installed(
-                verbose=verbose, quiet=quiet
+                warn=verbose or not quiet
             ):
                 continue
 
