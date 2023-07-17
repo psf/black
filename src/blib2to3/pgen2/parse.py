@@ -113,7 +113,9 @@ class Recorder:
                     args.insert(0, ilabel)
                 func(*args)
 
-    def determine_route(self, value: Optional[str] = None, force: bool = False) -> Optional[int]:
+    def determine_route(
+        self, value: Optional[str] = None, force: bool = False
+    ) -> Optional[int]:
         alive_ilabels = self.ilabels
         if len(alive_ilabels) == 0:
             *_, most_successful_ilabel = self._dead_ilabels

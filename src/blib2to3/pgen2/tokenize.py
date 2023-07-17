@@ -347,7 +347,7 @@ def detect_encoding(readline: Callable[[], bytes]) -> Tuple[str, List[bytes]]:
         try:
             return readline()
         except StopIteration:
-            return b''
+            return b""
 
     def find_cookie(line: bytes) -> Optional[str]:
         try:
