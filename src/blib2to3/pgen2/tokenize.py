@@ -30,19 +30,19 @@ each time a new token is found."""
 import sys
 from typing import (
     Callable,
+    Final,
     Iterable,
     Iterator,
     List,
     Optional,
+    Pattern,
     Set,
     Tuple,
-    Pattern,
     Union,
     cast,
 )
 
-from typing import Final
-
+from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.token import (
     ASYNC,
     AWAIT,
@@ -50,7 +50,6 @@ from blib2to3.pgen2.token import (
     DEDENT,
     ENDMARKER,
     ERRORTOKEN,
-    Final,
     INDENT,
     NAME,
     NEWLINE,
@@ -58,9 +57,9 @@ from blib2to3.pgen2.token import (
     NUMBER,
     OP,
     STRING,
+    Final,
     tok_name,
 )
-from blib2to3.pgen2.grammar import Grammar
 
 __author__ = "Ka-Ping Yee <ping@lfw.org>"
 __credits__ = "GvR, ESR, Tim Peters, Thomas Wouters, Fred Drake, Skip Montanaro"
