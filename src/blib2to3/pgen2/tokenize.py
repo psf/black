@@ -690,7 +690,7 @@ def generate_tokens(
         yield stashed
         stashed = None
 
-    for indent in indents[1:]:  # pop remaining indent levels
+    for _indent in indents[1:]:  # pop remaining indent levels
         yield (DEDENT, "", (lnum, 0), (lnum, 0), "")
     yield (ENDMARKER, "", (lnum, 0), (lnum, 0), "")
 
