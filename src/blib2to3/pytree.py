@@ -15,15 +15,16 @@ There's also a pattern matching implementation here.
 from typing import (
     Any,
     Dict,
+    Iterable,
     Iterator,
     List,
     Optional,
+    Set,
     Tuple,
     TypeVar,
     Union,
-    Set,
-    Iterable,
 )
+
 from blib2to3.pgen2.grammar import Grammar
 
 __author__ = "Guido van Rossum <guido@python.org>"
@@ -58,7 +59,6 @@ RawNode = Tuple[int, Optional[str], Optional[Context], Optional[List[NL]]]
 
 
 class Base:
-
     """
     Abstract base class for Node and Leaf.
 
@@ -237,7 +237,6 @@ class Base:
 
 
 class Node(Base):
-
     """Concrete implementation for interior nodes."""
 
     fixers_applied: Optional[List[Any]]
@@ -378,7 +377,6 @@ class Node(Base):
 
 
 class Leaf(Base):
-
     """Concrete implementation for leaf nodes."""
 
     # Default values for instance variables
@@ -506,7 +504,6 @@ _Results = Dict[str, NL]
 
 
 class BasePattern:
-
     """
     A pattern is a tree matching pattern.
 
@@ -646,7 +643,6 @@ class LeafPattern(BasePattern):
 
 
 class NodePattern(BasePattern):
-
     wildcards: bool = False
 
     def __init__(
@@ -715,7 +711,6 @@ class NodePattern(BasePattern):
 
 
 class WildcardPattern(BasePattern):
-
     """
     A wildcard pattern can match zero or more nodes.
 

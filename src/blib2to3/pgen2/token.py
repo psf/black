@@ -1,8 +1,6 @@
 """Token constants (from "token.h")."""
 
-from typing import Dict
-
-from typing import Final
+from typing import Dict, Final
 
 #  Taken from Python (r53757) and modified to include some tokens
 #   originally monkeypatched in by pgen2.tokenize

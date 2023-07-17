@@ -1,6 +1,6 @@
 # Note: don't use this config for your own repositories. Instead, see
 # "Version control integration" in docs/integrations/source_version_control.md
-exclude: ^(src/blib2to3/|profiling/|tests/data/)
+exclude: ^(profiling/|tests/data/)
 repos:
   - repo: local
     hooks:
@@ -36,6 +36,7 @@ repos:
           - flake8-bugbear
           - flake8-comprehensions
           - flake8-simplify
+        exclude: ^src/blib2to3/
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.4.1

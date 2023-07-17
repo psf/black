@@ -1,25 +1,22 @@
 # Copyright 2004-2005 Elemental Security, Inc. All Rights Reserved.
 # Licensed to PSF under a Contributor Agreement.
 
-# Pgen imports
-from . import grammar, token, tokenize
-
+import os
 from typing import (
+    IO,
     Any,
     Dict,
-    IO,
     Iterator,
     List,
+    NoReturn,
     Optional,
+    Sequence,
     Tuple,
     Union,
-    Sequence,
-    NoReturn,
 )
-from blib2to3.pgen2 import grammar
-from blib2to3.pgen2.tokenize import GoodTokenInfo
-import os
 
+from blib2to3.pgen2 import grammar, token, tokenize
+from blib2to3.pgen2.tokenize import GoodTokenInfo
 
 Path = Union[str, "os.PathLike[str]"]
 
@@ -149,7 +146,7 @@ class ParserGenerator:
         state = dfa[0]
         totalset: Dict[str, int] = {}
         overlapcheck = {}
-        for label, next in state.arcs.items():
+        for label in state.arcs:
             if label in self.dfas:
                 if label in self.first:
                     fset = self.first[label]
@@ -190,9 +187,9 @@ class ParserGenerator:
             # self.dump_nfa(name, a, z)
             dfa = self.make_dfa(a, z)
             # self.dump_dfa(name, dfa)
-            oldlen = len(dfa)
+            # oldlen = len(dfa)
             self.simplify_dfa(dfa)
-            newlen = len(dfa)
+            # newlen = len(dfa)
             dfas[name] = dfa
             # print name, oldlen, newlen
             if startsymbol is None:
@@ -346,7 +343,7 @@ class ParserGenerator:
             self.raise_error(
                 "expected (...) or NAME or STRING, got %s/%s", self.type, self.value
             )
-            assert False
+            raise AssertionError
 
     def expect(self, type: int, value: Optional[Any] = None) -> str:
         if self.type != type or (value is not None and self.value != value):
@@ -368,7 +365,7 @@ class ParserGenerator:
         if args:
             try:
                 msg = msg % args
-            except:
+            except Exception:
                 msg = " ".join([msg] + list(map(str, args)))
         raise SyntaxError(msg, (self.filename, self.end[0], self.end[1], self.line))
 
