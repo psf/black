@@ -440,17 +440,13 @@ def test_cache_isnt_written_if_no_jupyter_deps_single(
     nb = get_case_path("jupyter", "notebook_trailing_newline.ipynb")
     tmp_nb = tmp_path / "notebook.ipynb"
     tmp_nb.write_bytes(nb.read_bytes())
-    monkeypatch.setattr(
-        "black.jupyter_dependencies_are_installed", lambda verbose, quiet: False
-    )
+    monkeypatch.setattr("black.jupyter_dependencies_are_installed", lambda warn: False)
     result = runner.invoke(
         main, [str(tmp_path / "notebook.ipynb"), f"--config={EMPTY_CONFIG}"]
     )
     assert "No Python files are present to be formatted. Nothing to do" in result.output
     jupyter_dependencies_are_installed.cache_clear()
-    monkeypatch.setattr(
-        "black.jupyter_dependencies_are_installed", lambda verbose, quiet: True
-    )
+    monkeypatch.setattr("black.jupyter_dependencies_are_installed", lambda warn: True)
     result = runner.invoke(
         main, [str(tmp_path / "notebook.ipynb"), f"--config={EMPTY_CONFIG}"]
     )
@@ -466,13 +462,13 @@ def test_cache_isnt_written_if_no_jupyter_deps_dir(
     tmp_nb = tmp_path / "notebook.ipynb"
     tmp_nb.write_bytes(nb.read_bytes())
     monkeypatch.setattr(
-        "black.files.jupyter_dependencies_are_installed", lambda verbose, quiet: False
+        "black.files.jupyter_dependencies_are_installed", lambda warn: False
     )
     result = runner.invoke(main, [str(tmp_path), f"--config={EMPTY_CONFIG}"])
     assert "No Python files are present to be formatted. Nothing to do" in result.output
     jupyter_dependencies_are_installed.cache_clear()
     monkeypatch.setattr(
-        "black.files.jupyter_dependencies_are_installed", lambda verbose, quiet: True
+        "black.files.jupyter_dependencies_are_installed", lambda warn: True
     )
     result = runner.invoke(main, [str(tmp_path), f"--config={EMPTY_CONFIG}"])
     assert "reformatted" in result.output
