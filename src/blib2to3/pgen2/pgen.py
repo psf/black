@@ -15,11 +15,8 @@ from typing import (
     Union,
 )
 
-from blib2to3.pgen2 import grammar
+from blib2to3.pgen2 import grammar, token, tokenize
 from blib2to3.pgen2.tokenize import GoodTokenInfo
-
-# Pgen imports
-from . import grammar, token, tokenize
 
 Path = Union[str, "os.PathLike[str]"]
 

@@ -57,7 +57,6 @@ from blib2to3.pgen2.token import (
     NUMBER,
     OP,
     STRING,
-    Final,
     tok_name,
 )
 
@@ -696,8 +695,6 @@ def generate_tokens(
 
 
 if __name__ == "__main__":  # testing
-    import sys
-
     if len(sys.argv) > 1:
         tokenize(open(sys.argv[1]).readline)
     else:
