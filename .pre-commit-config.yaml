@@ -45,7 +45,7 @@ repos:
         additional_dependencies:
           - types-PyYAML
           - tomli >= 0.2.6, < 2.0.0
-          - click >= 8.1.0, != 8.1.4
+          - click >= 8.1.0, != 8.1.4, != 8.1.5
           - packaging >= 22.0
           - platformdirs >= 2.1.0
           - pytest
