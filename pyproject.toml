@@ -12,8 +12,7 @@ include = '\.pyi?$'
 extend-exclude = '''
 /(
   # The following are specific to Black, you probably don't want those.
-  | blib2to3
-  | tests/data
+  tests/data
   | profiling
 )/
 '''
@@ -183,7 +182,7 @@ atomic = true
 profile = "black"
 line_length = 88
 skip_gitignore = true
-skip_glob = ["src/blib2to3", "tests/data", "profiling"]
+skip_glob = ["tests/data", "profiling"]
 known_first_party = ["black", "blib2to3", "blackd", "_black_version"]
 
 [tool.pytest.ini_options]
