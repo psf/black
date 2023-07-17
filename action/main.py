@@ -36,4 +36,6 @@ if BLACK_ARGS:
 else:
     proc = run([*base_cmd, *shlex.split(OPTIONS), *shlex.split(SRC)])
 
+
 sys.exit(proc.returncode)
+
