@@ -44,6 +44,9 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- The `.black.env` folder specified by `ENV_PATH` will now be removed on the completion
+  of the GitHub Action. (#3759)
+
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
