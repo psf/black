@@ -74,6 +74,6 @@ else:
         stderr=STDOUT,
         encoding="utf-8",
     )
-shutil.rmtree(ENV_PATH)
+shutil.rmtree(ENV_PATH, ignore_errors=True)
 print(proc.stdout)
 sys.exit(proc.returncode)
