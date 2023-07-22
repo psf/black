@@ -12,7 +12,7 @@ repos:
         additional_dependencies:
           &version_check_dependencies [
             commonmark==0.9.1,
-            pyyaml==5.4.1,
+            pyyaml==6.0.1,
             beautifulsoup4==4.9.3,
           ]
 
