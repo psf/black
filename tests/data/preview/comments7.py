@@ -278,8 +278,7 @@ class C:
     )
     def test_fails_invalid_post_data(
         self, pyramid_config, db_request, post_data, message
-    ):
-        ...
+    ): ...
 
 
 square = Square(4)  # type: Optional[Square]
