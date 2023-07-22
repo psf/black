@@ -5,7 +5,6 @@ from dataclasses import dataclass, field
 from typing import (
     Callable,
     Dict,
-    Final,
     Iterator,
     List,
     Optional,
@@ -587,7 +586,7 @@ class EmptyLineTracker:
         else:
             before = 0
 
-        user_hint_before: Final = before
+        user_hint_before = before
         depth = current_line.depth
 
         previous_def = None
