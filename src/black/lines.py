@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from typing import (
     Callable,
     Dict,
+    Final,
     Iterator,
     List,
     Optional,
@@ -164,6 +165,13 @@ class Line:
             and second_leaf.type == token.NAME
             and second_leaf.value == "def"
         )
+
+    @property
+    def is_stub_def(self) -> bool:
+        """Is this line a function definition with a body consisting only of "..."?"""
+        return self.is_def and self.leaves[-3:] == [
+            Leaf(token.DOT, ".") for _ in range(3)
+        ]
 
     @property
     def is_class_paren_empty(self) -> bool:
@@ -578,6 +586,8 @@ class EmptyLineTracker:
             first_leaf.prefix = ""
         else:
             before = 0
+
+        user_hint_before: Final = before
         depth = current_line.depth
 
         previous_def = None
@@ -624,7 +634,9 @@ class EmptyLineTracker:
                     before = 2
 
         if current_line.is_decorator or current_line.is_def or current_line.is_class:
-            return self._maybe_empty_lines_for_class_or_def(current_line, before)
+            return self._maybe_empty_lines_for_class_or_def(
+                current_line, before, user_hint_before
+            )
 
         if (
             self.previous_line
@@ -648,8 +660,8 @@ class EmptyLineTracker:
             return 0, 0
         return before, 0
 
-    def _maybe_empty_lines_for_class_or_def(
-        self, current_line: Line, before: int
+    def _maybe_empty_lines_for_class_or_def(  # noqa: C901
+        self, current_line: Line, before: int, user_hint_before: int
     ) -> Tuple[int, int]:
         if not current_line.is_decorator:
             self.previous_defs.append(current_line)
@@ -714,7 +726,14 @@ class EmptyLineTracker:
             else:
                 newlines = 0
         else:
-            newlines = 1 if current_line.depth else 2
+            if (
+                Preview.dummy_implementations in self.mode
+                and self.previous_line.is_stub_def
+                and (current_line.is_stub_def or current_line.is_decorator)
+            ):
+                newlines = user_hint_before
+            else:
+                newlines = 1 if current_line.depth else 2
         if comment_to_add_newlines is not None:
             previous_block = comment_to_add_newlines.previous_block
             if previous_block is not None:
