@@ -586,7 +586,7 @@ class EmptyLineTracker:
         else:
             before = 0
 
-        user_hint_before = before
+        user_had_newline = bool(before)
         depth = current_line.depth
 
         previous_def = None
@@ -598,7 +598,7 @@ class EmptyLineTracker:
             if self.mode.is_pyi:
                 if depth and not current_line.is_def and self.previous_line.is_def:
                     # Empty lines between attributes and methods should be preserved.
-                    before = min(1, before)
+                    before = 1 if user_had_newline else 0
                 elif (
                     Preview.blank_line_after_nested_stub_class in self.mode
                     and previous_def.is_class
@@ -634,7 +634,7 @@ class EmptyLineTracker:
 
         if current_line.is_decorator or current_line.is_def or current_line.is_class:
             return self._maybe_empty_lines_for_class_or_def(
-                current_line, before, user_hint_before
+                current_line, before, user_had_newline
             )
 
         if (
@@ -660,7 +660,7 @@ class EmptyLineTracker:
         return before, 0
 
     def _maybe_empty_lines_for_class_or_def(  # noqa: C901
-        self, current_line: Line, before: int, user_hint_before: int
+        self, current_line: Line, before: int, user_had_newline: bool
     ) -> Tuple[int, int]:
         if not current_line.is_decorator:
             self.previous_defs.append(current_line)
@@ -731,7 +731,7 @@ class EmptyLineTracker:
             if (
                 Preview.dummy_implementations in self.mode
                 and self.previous_line.is_stub_def
-                and not bool(user_hint_before)
+                and not user_had_newline
             ):
                 newlines = 0
         if comment_to_add_newlines is not None:
