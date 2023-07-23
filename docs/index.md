@@ -21,7 +21,7 @@ Try it out now using the [Black Playground](https://black.vercel.app).
 *Black* is [successfully used](https://github.com/psf/black#used-by) by
 many projects, small and big. *Black* has a comprehensive test suite, with efficient
 parallel tests, our own auto formatting and parallel Continuous Integration runner.
-Now that we have become stable, you should not expect large formatting to changes in
+Now that we have become stable, you should not expect large changes to formatting in
 the future. Stylistic changes will mostly be responses to bug reports and support for new Python
 syntax.
 
