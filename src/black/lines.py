@@ -168,7 +168,7 @@ class Line:
     @property
     def is_stub_def(self) -> bool:
         """Is this line a function definition with a body consisting only of "..."?"""
-        return self.is_def and self.leaves[-3:] == [
+        return self.is_def and self.leaves[-4:] == [Leaf(token.COLON, ":")] + [
             Leaf(token.DOT, ".") for _ in range(3)
         ]
 
