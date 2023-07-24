@@ -49,7 +49,7 @@ LN = Union[Leaf, Node]
 class Line:
     """Holds leaves and comments. Can be printed with `str(line)`."""
 
-    mode: Mode
+    mode: Mode = field(repr=False)
     depth: int = 0
     leaves: List[Leaf] = field(default_factory=list)
     # keys ordered like `leaves`
@@ -579,16 +579,21 @@ class EmptyLineTracker:
         else:
             before = 0
         depth = current_line.depth
+
+        previous_def = None
         while self.previous_defs and self.previous_defs[-1].depth >= depth:
+            previous_def = self.previous_defs.pop()
+
+        if previous_def is not None:
+            assert self.previous_line is not None
             if self.mode.is_pyi:
-                assert self.previous_line is not None
                 if depth and not current_line.is_def and self.previous_line.is_def:
                     # Empty lines between attributes and methods should be preserved.
                     before = min(1, before)
                 elif (
                     Preview.blank_line_after_nested_stub_class in self.mode
-                    and self.previous_defs[-1].is_class
-                    and not self.previous_defs[-1].is_stub_class
+                    and previous_def.is_class
+                    and not previous_def.is_stub_class
                 ):
                     before = 1
                 elif depth:
@@ -600,7 +605,7 @@ class EmptyLineTracker:
                     before = 1
                 elif (
                     not depth
-                    and self.previous_defs[-1].depth
+                    and previous_def.depth
                     and current_line.leaves[-1].type == token.COLON
                     and (
                         current_line.leaves[0].value
@@ -617,7 +622,7 @@ class EmptyLineTracker:
                     before = 1
                 else:
                     before = 2
-            self.previous_defs.pop()
+
         if current_line.is_decorator or current_line.is_def or current_line.is_class:
             return self._maybe_empty_lines_for_class_or_def(current_line, before)
 

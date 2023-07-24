@@ -11,7 +11,7 @@ repository-code: "https://github.com/psf/black"
 url: "https://black.readthedocs.io/en/stable/"
 abstract: >-
   Black is the uncompromising Python code formatter. By using it, you agree to cede
-  control over minutiae ofhand-formatting. In return, Black gives you speed,
+  control over minutiae of hand-formatting. In return, Black gives you speed,
   determinism, and freedom from pycodestyle nagging about formatting. You will save time
   and mental energy for more important matters.
 
