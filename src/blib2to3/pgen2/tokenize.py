@@ -27,6 +27,7 @@ are the same, except instead of generating tokens, tokeneater is a callback
 function to which the 5 fields described above are passed as 5 arguments,
 each time a new token is found."""
 
+import io
 import sys
 from typing import (
     Callable,
@@ -57,6 +58,11 @@ from blib2to3.pgen2.token import (
     NUMBER,
     OP,
     STRING,
+    LBRACE,
+    RBRACE,
+    FSTRING_START,
+    FSTRING_MIDDLE,
+    FSTRING_END,
     tok_name,
 )
 
@@ -66,7 +72,7 @@ __credits__ = "GvR, ESR, Tim Peters, Thomas Wouters, Fred Drake, Skip Montanaro"
 import re
 from codecs import BOM_UTF8, lookup
 
-from . import token
+from blib2to3.pgen2 import token
 
 __all__ = [x for x in dir(token) if x[0] != "_"] + [
     "tokenize",
@@ -468,10 +474,12 @@ def generate_tokens(
                 raise TokenError("EOF in multi-line string", strstart)
             endmatch = endprog.match(line)
             if endmatch:
+                endquote = endmatch.group(0)
                 pos = end = endmatch.end(0)
-                yield (
-                    STRING,
+                yield from tokenize_string(
                     contstr + line[:end],
+                    startquote,
+                    endquote,
                     strstart,
                     (lnum, end),
                     contline + line,
@@ -590,15 +598,19 @@ def generate_tokens(
                         stashed = None
                     yield (COMMENT, token, spos, epos, line)
                 elif token in triple_quoted:
-                    endprog = endprogs[token]
+                    startquote = token
+                    endprog = endprogs[startquote]
                     endmatch = endprog.match(line, pos)
                     if endmatch:  # all on one line
+                        endquote = endmatch.group(0)
                         pos = endmatch.end(0)
                         token = line[start:pos]
                         if stashed:
                             yield stashed
                             stashed = None
-                        yield (STRING, token, spos, (lnum, pos), line)
+                        yield from tokenize_string(
+                            token, startquote, endquote, spos, (lnum, pos), line
+                        )
                     else:
                         strstart = (lnum, start)  # multiple lines
                         contstr = line[start:]
@@ -627,7 +639,18 @@ def generate_tokens(
                         if stashed:
                             yield stashed
                             stashed = None
-                        yield (STRING, token, spos, epos, line)
+
+                        if initial in single_quoted:
+                            startquote = initial
+                        elif token[:2] in single_quoted:
+                            startquote = token[:2]
+                        else:
+                            startquote = token[:3]
+
+                        endquote = token[-1]
+                        yield from tokenize_string(
+                            token, startquote, endquote, spos, epos, line
+                        )
                 elif initial.isidentifier():  # ordinary name
                     if token in ("async", "await"):
                         if async_keywords or async_def:
@@ -694,8 +717,82 @@ def generate_tokens(
     yield (ENDMARKER, "", (lnum, 0), (lnum, 0), "")
 
 
+def tokenize_string(
+    string: str,
+    startquote: str,
+    endquote: str,
+    startpos: Coord,
+    endpos: Coord,
+    line: str,
+) -> GoodTokenInfo:
+    if not string.startswith(("f", "F")):
+        # regular strings can still be returned as usual
+        yield (STRING, string, startpos, endpos, line)
+        return
+
+    lnum = startpos[0]
+    yield (FSTRING_START, startquote, startpos, (lnum, len(startquote)), line)
+    pos = len(startquote)
+    max = len(string) - len(endquote)
+    while pos < max:
+        opening_bracket_index = string.find("{", pos)
+        if opening_bracket_index == -1:
+            string_part = string[pos:max]
+            yield (FSTRING_MIDDLE, string_part, (lnum, pos), (lnum, max), line)
+            pos = max
+        else:
+            string_part = string[pos:opening_bracket_index]
+            yield (
+                FSTRING_MIDDLE,
+                string_part,
+                (lnum, pos),
+                (lnum, opening_bracket_index),
+                line,
+            )
+            yield (
+                LBRACE,
+                "{",
+                (lnum, opening_bracket_index),
+                (lnum, opening_bracket_index + 1),
+                line,
+            )
+            pos = opening_bracket_index + 1
+
+        # TODO: skip over {{
+        if pos < max:
+            inner_source = string[pos:max]
+            curly_brace_level = 1
+            startpos = pos
+            for token in generate_tokens(io.StringIO(inner_source).readline):
+                pos = startpos + token[3][1]
+
+                if token[0] == OP and token[1] == "{":
+                    curly_brace_level += 1
+                elif token[0] == OP and token[1] == "}":
+                    curly_brace_level -= 1
+
+                if curly_brace_level == 0:
+                    yield (
+                        RBRACE,
+                        "}",
+                        (lnum, pos),
+                        (lnum, pos + 1),
+                        line,
+                    )
+                    break
+
+                token_with_updated_pos = (
+                    token[0],
+                    token[1],
+                    (token[2][0], startpos + token[2][1]),
+                    (token[3][0], startpos + token[3][1]),
+                    token[4],
+                )
+                yield token_with_updated_pos
+
+    yield (FSTRING_END, endquote, (lnum, max), endpos, line)
+
+
 if __name__ == "__main__":  # testing
     if len(sys.argv) > 1:
         tokenize(open(sys.argv[1]).readline)
-    else:
-        tokenize(sys.stdin.readline)
