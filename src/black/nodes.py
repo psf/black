@@ -345,6 +345,9 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
 
             return NO
 
+        elif t == token.COLONEQUAL or prev.type == token.COLONEQUAL:
+            return SPACE
+
         elif not complex_subscript:
             return NO
 
