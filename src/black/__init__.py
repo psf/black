@@ -34,7 +34,7 @@ from pathspec import PathSpec
 from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
 
 from _black_version import version as __version__
-from black.cache import Cache, get_cache_info, read_cache, write_cache
+from black.cache import Cache
 from black.comments import normalize_fmt_off
 from black.const import (
     DEFAULT_EXCLUDES,
@@ -775,12 +775,9 @@ def reformat_one(
             if format_stdin_to_stdout(fast=fast, write_back=write_back, mode=mode):
                 changed = Changed.YES
         else:
-            cache: Cache = {}
+            cache = Cache.read(mode)
             if write_back not in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
-                cache = read_cache(mode)
-                res_src = src.resolve()
-                res_src_s = str(res_src)
-                if res_src_s in cache and cache[res_src_s] == get_cache_info(res_src):
+                if not cache.is_changed(src):
                     changed = Changed.CACHED
             if changed is not Changed.CACHED and format_file_in_place(
                 src, fast=fast, write_back=write_back, mode=mode
@@ -789,7 +786,8 @@ def reformat_one(
             if (write_back is WriteBack.YES and changed is not Changed.CACHED) or (
                 write_back is WriteBack.CHECK and changed is Changed.NO
             ):
-                write_cache(cache, [src], mode)
+                cache.update([src])
+                cache.write()
         report.done(src, changed)
     except Exception as exc:
         if report.verbose:

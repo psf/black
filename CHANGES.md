@@ -31,6 +31,7 @@
 <!-- Changes that improve Black's performance. -->
 
 - Avoid importing `IPython` if notebook cells do not contain magics (#3782)
+- Improve caching by comparing file hashes as fallback for mtime and size. (#3821)
 
 ### Output
 
