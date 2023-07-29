@@ -2093,13 +2093,16 @@ class TestCaching:
             assert cached_file_data.st_mtime == st.st_mtime
 
             # Modify st_mtime
-            src.write_text("print('hello')", encoding="utf-8")
-            new_st = src.stat()
+            cached_file_data = cache.file_data[str(src)] = FileData(
+                cached_file_data.st_mtime - 1,
+                cached_file_data.st_size,
+                cached_file_data.hash,
+            )
             todo, done = cache.filtered_cached([src])
             assert todo == set()
             assert done == {src}
-            assert cached_file_data.st_mtime < new_st.st_mtime
-            assert cached_file_data.st_size == new_st.st_size
+            assert cached_file_data.st_mtime < st.st_mtime
+            assert cached_file_data.st_size == st.st_size
             assert cached_file_data.hash == black.Cache.hash_digest(src)
 
             # Modify contents

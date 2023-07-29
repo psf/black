@@ -191,7 +191,7 @@ Black Classes
 
 .. autoclass:: black.cache.Cache
     :show-inheritance:
-    :member:
+    :members:
 
 Enum Classes
 ~~~~~~~~~~~~~
