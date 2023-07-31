@@ -63,7 +63,7 @@ $ black -t py37 -t py38 -t py39 -t py310
 In a [configuration file](#configuration-via-a-file), you can write:
 
 ```toml
-target-versions = ["py37", "py38", "py39", "py310"]
+target-version = ["py37", "py38", "py39", "py310"]
 ```
 
 _Black_ uses this option to decide what grammar to use to parse your code. In addition,
@@ -193,8 +193,8 @@ configuration file for consistent results across environments.
 
 ```console
 $ black --version
-black, 23.3.0 (compiled: yes)
-$ black --required-version 23.3.0 -c "format = 'this'"
+black, 23.7.0 (compiled: yes)
+$ black --required-version 23.7.0 -c "format = 'this'"
 format = "this"
 $ black --required-version 31.5b2 -c "still = 'beta?!'"
 Oh no! 💥 💔 💥 The required version does not match the running version!
@@ -285,7 +285,7 @@ You can check the version of _Black_ you have installed using the `--version` fl
 
 ```console
 $ black --version
-black, 23.3.0
+black, 23.7.0
 ```
 
 #### `--config`
