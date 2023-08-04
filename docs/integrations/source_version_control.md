@@ -20,10 +20,10 @@ repos:
 
 Feel free to switch out the `rev` value to a different version of Black.
 
-Note if you'd like to use a specific commit in `rev`, you'll need to swap
-the repo specified from the mirror to https://github.com/psf/black.
-We discourage the use of branches or other mutable refs since the hook
-[won't auto update as you may expect][pre-commit-mutable-rev].
+Note if you'd like to use a specific commit in `rev`, you'll need to swap the repo
+specified from the mirror to https://github.com/psf/black. We discourage the use of
+branches or other mutable refs since the hook [won't auto update as you may
+expect][pre-commit-mutable-rev].
 
 ## Jupyter Notebooks
 
