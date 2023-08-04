@@ -13,7 +13,7 @@ else:
 from mypy_extensions import mypyc_attr
 
 from black.cache import CACHE_DIR
-from black.mode import Mode
+from black.mode import Mode, Preview
 from black.strings import has_triple_quotes
 from blib2to3 import pygram
 from blib2to3.pgen2 import token
@@ -346,7 +346,9 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:  # no
 
             return NO
 
-        elif mode.preview and (t == token.COLONEQUAL or prev.type == token.COLONEQUAL):
+        elif Preview.walrus_subscript in mode and (
+            t == token.COLONEQUAL or prev.type == token.COLONEQUAL
+        ):
             return SPACE
 
         elif not complex_subscript:
