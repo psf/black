@@ -43,6 +43,9 @@
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+- Black now has an [official pre-commit mirror](https://github.com/psf/black-pre-commit-mirror).
+  Swapping `https://github.com/psf/black` to `https://github.com/psf/black-pre-commit-mirror`
+  in your `.pre-commit-config.yaml` will make Black about 2x faster.
 
 ### Documentation
 
