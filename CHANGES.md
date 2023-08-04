@@ -48,6 +48,7 @@
   [official pre-commit mirror](https://github.com/psf/black-pre-commit-mirror). Swapping
   `https://github.com/psf/black` to `https://github.com/psf/black-pre-commit-mirror` in
   your `.pre-commit-config.yaml` will make Black about 2x faster (#3828)
+
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
