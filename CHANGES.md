@@ -14,6 +14,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- More concise formatting for dummy implementations (#3796)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
