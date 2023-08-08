@@ -50,6 +50,8 @@
   [official pre-commit mirror](https://github.com/psf/black-pre-commit-mirror). Swapping
   `https://github.com/psf/black` to `https://github.com/psf/black-pre-commit-mirror` in
   your `.pre-commit-config.yaml` will make Black about 2x faster (#3828)
+- The `.black.env` folder specified by `ENV_PATH` will now be removed on the completion
+  of the GitHub Action. (#3759)
 
 ### Documentation
 
