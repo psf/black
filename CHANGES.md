@@ -14,6 +14,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- More concise formatting for dummy implementations (#3796)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
@@ -44,6 +46,10 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- Black now has an
+  [official pre-commit mirror](https://github.com/psf/black-pre-commit-mirror). Swapping
+  `https://github.com/psf/black` to `https://github.com/psf/black-pre-commit-mirror` in
+  your `.pre-commit-config.yaml` will make Black about 2x faster (#3828)
 - The `.black.env` folder specified by `ENV_PATH` will now be removed on the completion
   of the GitHub Action. (#3759)
 
