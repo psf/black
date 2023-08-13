@@ -97,9 +97,11 @@ class Cache:
             return True
 
         st = res_src.stat()
-        if st.st_size != old.st_size or int(st.st_mtime) != int(old.st_mtime):
+        if st.st_size != old.st_size:
+            return True
+        if int(st.st_mtime) != int(old.st_mtime):
             new_hash = Cache.hash_digest(res_src)
-            if st.st_size != old.st_size or new_hash != old.hash:
+            if new_hash != old.hash:
                 return True
         return False
 
@@ -112,29 +114,17 @@ class Cache:
         changed: Set[Path] = set()
         done: Set[Path] = set()
         for src in sources:
-            res_src = src.resolve()
-            old = self.file_data.get(str(res_src))
-            st = res_src.stat()
-
-            if old is None:
+            if self.is_changed(src):
                 changed.add(src)
-                continue
-            elif st.st_size != old.st_size or int(st.st_mtime) != int(old.st_mtime):
-                new_hash = Cache.hash_digest(res_src)
-                if st.st_size != old.st_size or new_hash != old.hash:
-                    changed.add(src)
-                    continue
-            done.add(src)
+            else:
+                done.add(src)
         return changed, done
 
-    def update(self, sources: Iterable[Path]) -> None:
-        """Update the cache file data."""
+    def write(self, sources: Iterable[Path]) -> None:
+        """Update the cache file data and write a new cache file."""
         self.file_data.update(
             **{str(src.resolve()): Cache.get_file_data(src) for src in sources}
         )
-
-    def write(self) -> None:
-        """Write a new cache file."""
         try:
             CACHE_DIR.mkdir(parents=True, exist_ok=True)
             with tempfile.NamedTemporaryFile(

@@ -184,5 +184,4 @@ async def schedule_formatting(
     if cancelled:
         await asyncio.gather(*cancelled, return_exceptions=True)
     if sources_to_cache:
-        cache.update(sources_to_cache)
-        cache.write()
+        cache.write(sources_to_cache)

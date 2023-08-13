@@ -786,8 +786,7 @@ def reformat_one(
             if (write_back is WriteBack.YES and changed is not Changed.CACHED) or (
                 write_back is WriteBack.CHECK and changed is Changed.NO
             ):
-                cache.update([src])
-                cache.write()
+                cache.write([src])
         report.done(src, changed)
     except Exception as exc:
         if report.verbose:

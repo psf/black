@@ -1966,8 +1966,7 @@ class TestCaching:
             src = (workspace / "test.py").resolve()
             src.write_text("print('hello')", encoding="utf-8")
             cache = black.Cache.read(mode)
-            cache.update([src])
-            cache.write()
+            cache.write([src])
             invokeBlack([str(src)])
             assert src.read_text(encoding="utf-8") == "print('hello')"
 
@@ -1982,8 +1981,7 @@ class TestCaching:
             two = (workspace / "two.py").resolve()
             two.write_text("print('hello')", encoding="utf-8")
             cache = black.Cache.read(mode)
-            cache.update([one])
-            cache.write()
+            cache.write([one])
             invokeBlack([str(workspace)])
             assert one.read_text(encoding="utf-8") == "print('hello')"
             assert two.read_text(encoding="utf-8") == 'print("hello")\n'
@@ -2048,8 +2046,7 @@ class TestCaching:
             src = (workspace / "test.py").resolve()
             src.touch()
             write_cache = black.Cache.read(mode)
-            write_cache.update([src])
-            write_cache.write()
+            write_cache.write([src])
             read_cache = black.Cache.read(mode)
             assert not read_cache.is_changed(src)
 
@@ -2072,7 +2069,7 @@ class TestCaching:
                 return FileData(0.0, 0, "")
 
             with patch.object(black.Cache, "get_file_data", side_effect=wrapped_func):
-                cache.update([cached, cached_but_changed])
+                cache.write([cached, cached_but_changed])
             todo, done = cache.filtered_cached({uncached, cached, cached_but_changed})
             assert todo == {uncached, cached_but_changed}
             assert done == {cached}
@@ -2084,7 +2081,7 @@ class TestCaching:
             src.write_text("print('hello')", encoding="utf-8")
             st = src.stat()
             cache = black.Cache.read(DEFAULT_MODE)
-            cache.update([src])
+            cache.write([src])
             cached_file_data = cache.file_data[str(src)]
 
             todo, done = cache.filtered_cached([src])
@@ -2120,7 +2117,7 @@ class TestCaching:
         with cache_dir(exists=False) as workspace:
             assert not workspace.exists()
             cache = black.Cache.read(mode)
-            cache.write()
+            cache.write([])
             assert workspace.exists()
 
     @event_loop()
@@ -2144,7 +2141,7 @@ class TestCaching:
             cache = black.Cache.read(mode)
             with patch.object(Path, "open") as mock:
                 mock.side_effect = OSError
-                cache.write()
+                cache.write([])
 
     def test_read_cache_line_lengths(self) -> None:
         mode = DEFAULT_MODE
@@ -2153,8 +2150,7 @@ class TestCaching:
             path = (workspace / "file.py").resolve()
             path.touch()
             cache = black.Cache.read(mode)
-            cache.update([path])
-            cache.write()
+            cache.write([path])
             one = black.Cache.read(mode)
             assert not one.is_changed(path)
             two = black.Cache.read(short_mode)
