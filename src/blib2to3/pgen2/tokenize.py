@@ -27,7 +27,6 @@ are the same, except instead of generating tokens, tokeneater is a callback
 function to which the 5 fields described above are passed as 5 arguments,
 each time a new token is found."""
 
-import io
 import sys
 from typing import (
     Callable,
@@ -61,7 +60,6 @@ from blib2to3.pgen2.token import (
     NL,
     NUMBER,
     OP,
-    RBRACE,
     STRING,
     tok_name,
 )
@@ -72,7 +70,7 @@ __credits__ = "GvR, ESR, Tim Peters, Thomas Wouters, Fred Drake, Skip Montanaro"
 import re
 from codecs import BOM_UTF8, lookup
 
-from blib2to3.pgen2 import token
+from . import token
 
 __all__ = [x for x in dir(token) if x[0] != "_"] + [
     "tokenize",
@@ -127,13 +125,12 @@ Double = r'[^"\\]*(?:\\.[^"\\]*)*"'
 Single3 = r"[^'\\]*(?:(?:\\.|'(?!''))[^'\\]*)*'''"
 # Tail end of """ string.
 Double3 = r'[^"\\]*(?:(?:\\.|"(?!""))[^"\\]*)*"""'
-_litprefix = r"(?:[uUrRbBfF]|[rR][fFbB]|[fFbBuU][rR])?"
+_litprefix = r"(?:[uUrRbB]|[rR][bB]|[bBuU][rR])?"
+_fstringlitprefix = r"(?:rF|FR|Fr|fr|RF|F|rf|f|Rf|fR)"
 Triple = group(_litprefix + "'''", _litprefix + '"""')
-# Single-line ' or " string.
-String = group(
-    _litprefix + r"'[^\n'\\]*(?:\\.[^\n'\\]*)*'",
-    _litprefix + r'"[^\n"\\]*(?:\\.[^\n"\\]*)*"',
-)
+
+SingleLbrace = r"[^{\\]*(?:\\.[^{\\]*)*{"
+DoubleLbrace = r"[^{\\]*(?:\\.[^{\\]*)*{"
 
 # Because of leftmost-then-longest match semantics, be sure to put the
 # longest operators first (e.g., if = came before ==, == would get
@@ -155,41 +152,57 @@ Special = group(r"\r?\n", r"[:;.,`@]")
 Funny = group(Operator, Bracket, Special)
 
 # First (or only) line of ' or " string.
+# TODO: handle escaping `{{`
 ContStr = group(
     _litprefix + r"'[^\n'\\]*(?:\\.[^\n'\\]*)*" + group("'", r"\\\r?\n"),
     _litprefix + r'"[^\n"\\]*(?:\\.[^\n"\\]*)*' + group('"', r"\\\r?\n"),
+    rf"({_fstringlitprefix}')[^\n'\\{{]*(?:\\.[^\n'\\{{]*)*"
+    + group("'", "{", r"\\\r?\n"),
+    rf'({_fstringlitprefix}")[^\n"\\{{]*(?:\\.[^\n"\\{{]*)*'
+    + group('"', "{", r"\\\r?\n"),
 )
 PseudoExtras = group(r"\\\r?\n", Comment, Triple)
 PseudoToken = Whitespace + group(PseudoExtras, Number, Funny, ContStr, Name)
 
 pseudoprog: Final = re.compile(PseudoToken, re.UNICODE)
-single3prog = re.compile(Single3)
-double3prog = re.compile(Double3)
 
-_strprefixes = (
-    _combinations("r", "R", "f", "F")
-    | _combinations("r", "R", "b", "B")
-    | {"u", "U", "ur", "uR", "Ur", "UR"}
-)
+singleprog = re.compile(Single)
+singleprog_plus_lbrace = re.compile(group(SingleLbrace, Single))
+doubleprog = re.compile(Double)
+doubleprog_plus_lbrace = re.compile(group(DoubleLbrace, Double))
+
+single3prog = re.compile(Single3)
+single3prog_plus_lbrace = re.compile(group(SingleLbrace, Single3))
+double3prog = re.compile(Double3)
+double3prog_plus_lbrace = re.compile(group(DoubleLbrace, Double3))
+
+_strprefixes = _combinations("r", "R", "b", "B") | {"u", "U", "ur", "uR", "Ur", "UR"}
+_fstring_prefixes = _combinations("r", "R", "f", "F") - {"r", "R"}
 
 endprogs: Final = {
-    "'": re.compile(Single),
-    '"': re.compile(Double),
+    "'": singleprog,
+    '"': doubleprog,
     "'''": single3prog,
     '"""': double3prog,
+    **{f"{prefix}'": singleprog for prefix in _strprefixes},
+    **{f'{prefix}"': doubleprog for prefix in _strprefixes},
+    **{f"{prefix}'": singleprog_plus_lbrace for prefix in _fstring_prefixes},
+    **{f'{prefix}"': doubleprog_plus_lbrace for prefix in _fstring_prefixes},
     **{f"{prefix}'''": single3prog for prefix in _strprefixes},
     **{f'{prefix}"""': double3prog for prefix in _strprefixes},
+    **{f"{prefix}'''": single3prog_plus_lbrace for prefix in _fstring_prefixes},
+    **{f'{prefix}"""': double3prog_plus_lbrace for prefix in _fstring_prefixes},
 }
 
 triple_quoted: Final = (
     {"'''", '"""'}
-    | {f"{prefix}'''" for prefix in _strprefixes}
-    | {f'{prefix}"""' for prefix in _strprefixes}
+    | {f"{prefix}'''" for prefix in _strprefixes | _fstring_prefixes}
+    | {f'{prefix}"""' for prefix in _strprefixes | _fstring_prefixes}
 )
 single_quoted: Final = (
     {"'", '"'}
-    | {f"{prefix}'" for prefix in _strprefixes}
-    | {f'{prefix}"' for prefix in _strprefixes}
+    | {f"{prefix}'" for prefix in _strprefixes | _fstring_prefixes}
+    | {f'{prefix}"' for prefix in _strprefixes | _fstring_prefixes}
 )
 
 tabsize = 8
@@ -474,12 +487,10 @@ def generate_tokens(
                 raise TokenError("EOF in multi-line string", strstart)
             endmatch = endprog.match(line)
             if endmatch:
-                endquote = endmatch.group(0)
                 pos = end = endmatch.end(0)
-                yield from tokenize_string(
+                yield (
+                    STRING,
                     contstr + line[:end],
-                    startquote,
-                    endquote,
                     strstart,
                     (lnum, end),
                     contline + line,
@@ -598,19 +609,15 @@ def generate_tokens(
                         stashed = None
                     yield (COMMENT, token, spos, epos, line)
                 elif token in triple_quoted:
-                    startquote = token
-                    endprog = endprogs[startquote]
+                    endprog = endprogs[token]
                     endmatch = endprog.match(line, pos)
                     if endmatch:  # all on one line
-                        endquote = endmatch.group(0)
                         pos = endmatch.end(0)
                         token = line[start:pos]
                         if stashed:
                             yield stashed
                             stashed = None
-                        yield from tokenize_string(
-                            token, startquote, endquote, spos, (lnum, pos), line
-                        )
+                        yield (STRING, token, spos, (lnum, pos), line)
                     else:
                         strstart = (lnum, start)  # multiple lines
                         contstr = line[start:]
@@ -640,17 +647,32 @@ def generate_tokens(
                             yield stashed
                             stashed = None
 
-                        if initial in single_quoted:
-                            startquote = initial
-                        elif token[:2] in single_quoted:
-                            startquote = token[:2]
+                        # TODO: move this logic to a function
+                        if not token.endswith("{"):
+                            yield (STRING, token, spos, epos, line)
                         else:
-                            startquote = token[:3]
+                            if pseudomatch[20] is not None:
+                                fstring_start = pseudomatch[20]
+                                offset = pseudomatch.end(20) - pseudomatch.start()
+                                start_epos = (lnum, start + offset)
+                            else:
+                                fstring_start = pseudomatch[22]
+                                offset = pseudomatch.end(22) - pseudomatch.start()
+                                start_epos = (lnum, start + offset - 1)
+                            yield (FSTRING_START, fstring_start, spos, start_epos, line)
+                            end_offset = pseudomatch.end() - 1
+                            fstring_middle = line[start + offset - 1 : end_offset]
+                            middle_spos = (lnum, start + offset)
+                            middle_epos = (lnum, end_offset + 1)
+                            yield (
+                                FSTRING_MIDDLE,
+                                fstring_middle,
+                                middle_spos,
+                                middle_epos,
+                                line,
+                            )
+                            yield (LBRACE, "{", (lnum, end_offset + 1), epos, line)
 
-                        endquote = token[-1]
-                        yield from tokenize_string(
-                            token, startquote, endquote, spos, epos, line
-                        )
                 elif initial.isidentifier():  # ordinary name
                     if token in ("async", "await"):
                         if async_keywords or async_def:
@@ -717,82 +739,8 @@ def generate_tokens(
     yield (ENDMARKER, "", (lnum, 0), (lnum, 0), "")
 
 
-def tokenize_string(
-    string: str,
-    startquote: str,
-    endquote: str,
-    startpos: Coord,
-    endpos: Coord,
-    line: str,
-) -> GoodTokenInfo:
-    if not string.startswith(("f", "F")):
-        # regular strings can still be returned as usual
-        yield (STRING, string, startpos, endpos, line)
-        return
-
-    lnum = startpos[0]
-    yield (FSTRING_START, startquote, startpos, (lnum, len(startquote)), line)
-    pos = len(startquote)
-    max = len(string) - len(endquote)
-    while pos < max:
-        opening_bracket_index = string.find("{", pos)
-        if opening_bracket_index == -1:
-            string_part = string[pos:max]
-            yield (FSTRING_MIDDLE, string_part, (lnum, pos), (lnum, max), line)
-            pos = max
-        else:
-            string_part = string[pos:opening_bracket_index]
-            yield (
-                FSTRING_MIDDLE,
-                string_part,
-                (lnum, pos),
-                (lnum, opening_bracket_index),
-                line,
-            )
-            yield (
-                LBRACE,
-                "{",
-                (lnum, opening_bracket_index),
-                (lnum, opening_bracket_index + 1),
-                line,
-            )
-            pos = opening_bracket_index + 1
-
-        # TODO: skip over {{
-        if pos < max:
-            inner_source = string[pos:max]
-            curly_brace_level = 1
-            startpos = pos
-            for token in generate_tokens(io.StringIO(inner_source).readline):
-                pos = startpos + token[3][1]
-
-                if token[0] == OP and token[1] == "{":
-                    curly_brace_level += 1
-                elif token[0] == OP and token[1] == "}":
-                    curly_brace_level -= 1
-
-                if curly_brace_level == 0:
-                    yield (
-                        RBRACE,
-                        "}",
-                        (lnum, pos),
-                        (lnum, pos + 1),
-                        line,
-                    )
-                    break
-
-                token_with_updated_pos = (
-                    token[0],
-                    token[1],
-                    (token[2][0], startpos + token[2][1]),
-                    (token[3][0], startpos + token[3][1]),
-                    token[4],
-                )
-                yield token_with_updated_pos
-
-    yield (FSTRING_END, endquote, (lnum, max), endpos, line)
-
-
 if __name__ == "__main__":  # testing
     if len(sys.argv) > 1:
         tokenize(open(sys.argv[1]).readline)
+    else:
+        tokenize(sys.stdin.readline)
