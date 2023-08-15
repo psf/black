@@ -10,7 +10,7 @@ Options include the following:
 
 ## PyCharm/IntelliJ IDEA
 
-There are three different ways you can use _Black_ from PyCharm:
+There are several different ways you can use _Black_ from PyCharm:
 
 1. Using the built-in _Black_ integration (PyCharm 2023.2 and later)
 1. As local server using the BlackConnect plugin
