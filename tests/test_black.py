@@ -2066,7 +2066,9 @@ class TestCaching:
             def wrapped_func(path: Path) -> FileData:
                 if path == cached:
                     return orig_func(path)
-                return FileData(0.0, 0, "")
+                if path == cached_but_changed:
+                    return FileData(0.0, 0, "")
+                raise AssertionError
 
             with patch.object(black.Cache, "get_file_data", side_effect=wrapped_func):
                 cache.write([cached, cached_but_changed])
