@@ -30,7 +30,8 @@ third-party plugin or blackd's extra dependencies, the other two are also great 
    $ pip install black
    ```
 
-1. Go to `Preferences or Settings -> Tools -> Black` and configure _Black_ to your liking.
+1. Go to `Preferences or Settings -> Tools -> Black` and configure _Black_ to your
+   liking.
 
 ### As local server
 
