@@ -775,9 +775,8 @@ def reformat_one(
             if format_stdin_to_stdout(fast=fast, write_back=write_back, mode=mode):
                 changed = Changed.YES
         else:
-            cache = Cache(mode)
+            cache = Cache.read(mode)
             if write_back not in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
-                cache.read()
                 if not cache.is_changed(src):
                     changed = Changed.CACHED
             if changed is not Changed.CACHED and format_file_in_place(

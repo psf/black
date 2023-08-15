@@ -133,9 +133,8 @@ async def schedule_formatting(
     `write_back`, `fast`, and `mode` options are passed to
     :func:`format_file_in_place`.
     """
-    cache = Cache(mode)
+    cache = Cache.read(mode)
     if write_back not in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
-        cache.read()
         sources, cached = cache.filtered_cached(sources)
         for src in sorted(cached):
             report.done(src, Changed.CACHED)
