@@ -152,14 +152,11 @@ Special = group(r"\r?\n", r"[:;.,`@]")
 Funny = group(Operator, Bracket, Special)
 
 # First (or only) line of ' or " string.
-# TODO: handle escaping `{{`
 ContStr = group(
     _litprefix + r"'[^\n'\\]*(?:\\.[^\n'\\]*)*" + group("'", r"\\\r?\n"),
     _litprefix + r'"[^\n"\\]*(?:\\.[^\n"\\]*)*' + group('"', r"\\\r?\n"),
-    rf"({_fstringlitprefix}')[^\n'\\{{]*(?:\\.[^\n'\\{{]*)*"
-    + group("'", "{", r"\\\r?\n"),
-    rf'({_fstringlitprefix}")[^\n"\\{{]*(?:\\.[^\n"\\{{]*)*'
-    + group('"', "{", r"\\\r?\n"),
+    group(_fstringlitprefix + "'") + r"[^\n'\\]*(?:\\.[^\n'\\]*)*({{)(?<!{{{{)",
+    group(_fstringlitprefix + '"') + r'[^\n"\\]*(?:\\.[^\n"\\]*)*({{)(?<!{{{{)',
 )
 PseudoExtras = group(r"\\\r?\n", Comment, Triple)
 PseudoToken = Whitespace + group(PseudoExtras, Number, Funny, ContStr, Name)
