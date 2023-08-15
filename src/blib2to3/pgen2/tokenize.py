@@ -155,8 +155,8 @@ Funny = group(Operator, Bracket, Special)
 ContStr = group(
     _litprefix + r"'[^\n'\\]*(?:\\.[^\n'\\]*)*" + group("'", r"\\\r?\n"),
     _litprefix + r'"[^\n"\\]*(?:\\.[^\n"\\]*)*' + group('"', r"\\\r?\n"),
-    group(_fstringlitprefix + "'") + r"[^\n'\\]*(?:\\.[^\n'\\]*)*({{)(?<!{{{{)",
-    group(_fstringlitprefix + '"') + r'[^\n"\\]*(?:\\.[^\n"\\]*)*({{)(?<!{{{{)',
+    group(_fstringlitprefix + "'") + r"[^\n'\\]*(?:\\.[^\n'\\]*)*({)(?<!{{)",
+    group(_fstringlitprefix + '"') + r'[^\n"\\]*(?:\\.[^\n"\\]*)*({)(?<!{{)',
 )
 PseudoExtras = group(r"\\\r?\n", Comment, Triple)
 PseudoToken = Whitespace + group(PseudoExtras, Number, Funny, ContStr, Name)
