@@ -51,27 +51,28 @@ def get_cache_file(mode: Mode) -> Path:
 @dataclass
 class Cache:
     mode: Mode
-    cache_file: Path
+    cache_file: Path = field(init=False)
     file_data: Dict[str, FileData] = field(default_factory=dict)
 
-    @classmethod
-    def read(cls, mode: Mode) -> Self:
+    def __post_init__(self) -> None:
+        self.cache_file = get_cache_file(self.mode)
+
+    def read(self) -> Self:
         """Read the cache if it exists and is well formed.
 
         If it is not well formed, the call to write later should
         resolve the issue.
         """
-        cache_file = get_cache_file(mode)
-        if not cache_file.exists():
-            return cls(mode, cache_file)
+        if not self.cache_file.exists():
+            return self
 
-        with cache_file.open("rb") as fobj:
+        with self.cache_file.open("rb") as fobj:
             try:
-                file_data: Dict[str, FileData] = pickle.load(fobj)
+                self.file_data = pickle.load(fobj)
             except (pickle.UnpicklingError, ValueError, IndexError):
-                return cls(mode, cache_file)
+                pass
 
-        return cls(mode, cache_file, file_data)
+        return self
 
     @staticmethod
     def hash_digest(path: Path) -> str:
