@@ -63,3 +63,6 @@ repos:
     hooks:
       - id: end-of-file-fixer
       - id: trailing-whitespace
+
+ci:
+  autoupdate_schedule: quarterly
