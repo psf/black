@@ -12,6 +12,7 @@ Options include the following:
 
 There are three different ways you can use _Black_ from PyCharm:
 
+1. Using the built-in _Black_ integration (PyCharm 2023.2 and later)
 1. As local server using the BlackConnect plugin
 1. As external tool
 1. As file watcher
@@ -20,6 +21,16 @@ The first option is the simplest to set up and formats the fastest (by spinning 
 {doc}`Black's HTTP server </usage_and_configuration/black_as_a_server>`, avoiding the
 startup cost on subsequent formats), but if you would prefer to not install a
 third-party plugin or blackd's extra dependencies, the other two are also great options.
+
+### Built-in _Black_ integration
+
+1. Install `black`.
+
+   ```console
+   $ pip install black
+   ```
+
+1. Go to `Preferences or Settings -> Tools -> Black` and configure _Black_ to your liking.
 
 ### As local server
 
