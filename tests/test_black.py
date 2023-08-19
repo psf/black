@@ -507,13 +507,11 @@ class BlackTestCase(BlackBaseTestCase):
         with patch("pathlib.Path.iterdir", return_value=target_contents), patch(
             "pathlib.Path.cwd", return_value=working_directory
         ), patch("pathlib.Path.is_dir", side_effect=mock_n_calls([True])):
-            ctx = FakeContext()
             # Note that the root folder (project_root) isn't the folder
             # named "root" (aka working_directory)
-            ctx.obj["root"] = project_root
             report = MagicMock(verbose=True)
             black.get_sources(
-                ctx=ctx,
+                root=project_root,
                 src=("./child",),
                 quiet=False,
                 verbose=True,
@@ -2163,7 +2161,7 @@ def assert_collected_sources(
     src: Sequence[Union[str, Path]],
     expected: Sequence[Union[str, Path]],
     *,
-    ctx: Optional[FakeContext] = None,
+    root: Optional[Path] = None,
     exclude: Optional[str] = None,
     include: Optional[str] = None,
     extend_exclude: Optional[str] = None,
@@ -2179,7 +2177,7 @@ def assert_collected_sources(
     )
     gs_force_exclude = None if force_exclude is None else compile_pattern(force_exclude)
     collected = black.get_sources(
-        ctx=ctx or FakeContext(),
+        root=root or THIS_DIR,
         src=gs_src,
         quiet=False,
         verbose=False,
@@ -2215,9 +2213,7 @@ class TestFileCollection:
             base / "b/.definitely_exclude/a.pyi",
         ]
         src = [base / "b/"]
-        ctx = FakeContext()
-        ctx.obj["root"] = base
-        assert_collected_sources(src, expected, ctx=ctx, extend_exclude=r"/exclude/")
+        assert_collected_sources(src, expected, root=base, extend_exclude=r"/exclude/")
 
     def test_gitignore_used_on_multiple_sources(self) -> None:
         root = Path(DATA_DIR / "gitignore_used_on_multiple_sources")
@@ -2225,10 +2221,8 @@ class TestFileCollection:
             root / "dir1" / "b.py",
             root / "dir2" / "b.py",
         ]
-        ctx = FakeContext()
-        ctx.obj["root"] = root
         src = [root / "dir1", root / "dir2"]
-        assert_collected_sources(src, expected, ctx=ctx)
+        assert_collected_sources(src, expected, root=root)
 
     @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_exclude_for_issue_1572(self) -> None:
@@ -2334,9 +2328,7 @@ class TestFileCollection:
         # If gitignore with */* is in root
         root = Path(DATA_DIR / "ignore_subfolders_gitignore_tests" / "subdir")
         expected = [root / "b.py"]
-        ctx = FakeContext()
-        ctx.obj["root"] = root
-        assert_collected_sources([root], expected, ctx=ctx)
+        assert_collected_sources([root], expected, root=root)
 
         # If .gitignore with */* is nested
         root = Path(DATA_DIR / "ignore_subfolders_gitignore_tests")
@@ -2344,17 +2336,13 @@ class TestFileCollection:
             root / "a.py",
             root / "subdir" / "b.py",
         ]
-        ctx = FakeContext()
-        ctx.obj["root"] = root
-        assert_collected_sources([root], expected, ctx=ctx)
+        assert_collected_sources([root], expected, root=root)
 
         # If command is executed from outer dir
         root = Path(DATA_DIR / "ignore_subfolders_gitignore_tests")
         target = root / "subdir"
         expected = [target / "b.py"]
-        ctx = FakeContext()
-        ctx.obj["root"] = root
-        assert_collected_sources([target], expected, ctx=ctx)
+        assert_collected_sources([target], expected, root=root)
 
     def test_empty_include(self) -> None:
         path = DATA_DIR / "include_exclude_tests"

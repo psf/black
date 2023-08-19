@@ -560,9 +560,10 @@ def main(  # noqa: C901
             content=code, fast=fast, write_back=write_back, mode=mode, report=report
         )
     else:
+        assert root is not None  # root is only None if code is not None
         try:
             sources = get_sources(
-                ctx=ctx,
+                root=root,
                 src=src,
                 quiet=quiet,
                 verbose=verbose,
@@ -615,7 +616,7 @@ def main(  # noqa: C901
 
 def get_sources(
     *,
-    ctx: click.Context,
+    root: Path,
     src: Tuple[str, ...],
     quiet: bool,
     verbose: bool,
@@ -628,7 +629,6 @@ def get_sources(
 ) -> Set[Path]:
     """Compute the set of files to be formatted."""
     sources: Set[Path] = set()
-    root = ctx.obj["root"]
 
     using_default_exclude = exclude is None
     exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES) if exclude is None else exclude
@@ -645,7 +645,7 @@ def get_sources(
 
         if is_stdin or p.is_file():
             normalized_path: Optional[str] = normalize_path_maybe_ignore(
-                p, ctx.obj["root"], report
+                p, root, report
             )
             if normalized_path is None:
                 if verbose:
@@ -674,7 +674,9 @@ def get_sources(
 
             sources.add(p)
         elif p.is_dir():
-            p = root / normalize_path_maybe_ignore(p, ctx.obj["root"], report)
+            p_relative = normalize_path_maybe_ignore(p, root, report)
+            assert p_relative is not None
+            p = root / p_relative
             if verbose:
                 out(f'Found input source directory: "{p}"', fg="blue")
 
@@ -686,7 +688,7 @@ def get_sources(
             sources.update(
                 gen_python_files(
                     p.iterdir(),
-                    ctx.obj["root"],
+                    root,
                     include,
                     exclude,
                     extend_exclude,
