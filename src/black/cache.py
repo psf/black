@@ -77,8 +77,7 @@ class Cache:
     def hash_digest(path: Path) -> str:
         """Return hash digest for path."""
 
-        with open(path, "rb") as fp:
-            data = fp.read()
+        data = path.read_bytes()
         return hashlib.sha256(data).hexdigest()
 
     @staticmethod
