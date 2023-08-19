@@ -1,3 +1,5 @@
+# Note that we recommend using https://github.com/psf/black-pre-commit-mirror instead
+# This will work about 2x as fast as using the hooks in this repository
 - id: black
   name: black
   description: "Black: The uncompromising Python code formatter"
