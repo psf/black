@@ -19,7 +19,8 @@
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
-- Black now applies exclusion and ignore logic before resolving symlinks (#3845)
+
+- Black now applies exclusion and ignore logic before resolving symlinks (#3846)
 
 ### Packaging
 
