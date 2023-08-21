@@ -39,10 +39,8 @@ python -m black {source_file_or_directory}...
 
 ## Next steps
 
-Took a look at [the _Black_ code style](./the_black_code_style/current_style.md) and
-tried out _Black_? Fantastic, you're ready for more. Why not explore some more on using
-_Black_ by reading
+Have you taken a look at [the _Black_ code style](./the_black_code_style/current_style.md) and
+given _Black_ a try? If you have, fantastic! You're all set for further exploration. How about delving deeper into using _Black_ by reading
 [Usage and Configuration: The basics](./usage_and_configuration/the_basics.md).
-Alternatively, you can check out the
-[Introducing _Black_ to your project](./guides/introducing_black_to_your_project.md)
-guide.
+Alternatively, you can check out the guide
+[Introducing _Black_ to your project](./guides/introducing_black_to_your_project.md).
