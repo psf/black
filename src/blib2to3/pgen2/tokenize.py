@@ -60,6 +60,7 @@ from blib2to3.pgen2.token import (
     NL,
     NUMBER,
     OP,
+    RBRACE,
     STRING,
     tok_name,
 )
@@ -465,7 +466,8 @@ def generate_tokens(
     and the line on which the token was found. The line passed is the
     logical line; continuation lines are included.
     """
-    lnum = parenlev = continued = 0
+    lnum = parenlev = fstring_level = continued = 0
+    inside_fstring_braces = False
     numchars: Final[str] = "0123456789"
     contstr, needcont = "", 0
     contline: Optional[str] = None
@@ -491,7 +493,7 @@ def generate_tokens(
         lnum += 1
         pos, max = 0, len(line)
 
-        if contstr:  # continued string
+        if contstr and not inside_fstring_braces:  # continued string
             assert contline is not None
             if not line:
                 raise TokenError("EOF in multi-line string", strstart)
@@ -523,7 +525,8 @@ def generate_tokens(
                 contline = contline + line
                 continue
 
-        elif parenlev == 0 and not continued:  # new statement
+        # new statement
+        elif parenlev == 0 and not continued and not inside_fstring_braces:
             if not line:
                 break
             column = 0
@@ -591,6 +594,32 @@ def generate_tokens(
             continued = 0
 
         while pos < max:
+            if fstring_level > 0 and not inside_fstring_braces:
+                endmatch = endprog.match(line, pos)
+                if endmatch:  # all on one line
+                    start, end = endmatch.span(0)
+                    token = line[start:end]
+                    pos = end
+                    # TODO: unsure if this can be safely removed
+                    if stashed:
+                        yield stashed
+                        stashed = None
+                    if not token.endswith("{"):
+                        # TODO: locations
+                        yield (FSTRING_MIDDLE, token, (lnum, 0), (lnum, 0), line)
+                        yield (FSTRING_END, token, (lnum, 0), (lnum, 0), line)
+                        fstring_level -= 1
+                    else:
+                        # TODO: most of the positions are wrong
+                        yield (FSTRING_MIDDLE, token, (lnum, 0), (lnum, 0), line)
+                        yield (LBRACE, "{", (lnum, 0), (lnum, 0), line)
+                        inside_fstring_braces = True
+                else:  # multiple lines
+                    breakpoint()  # TODO: see if the code below is correct
+                    contstr += line
+                    contline += line
+                    break
+
             pseudomatch = pseudoprog.match(line, pos)
             if pseudomatch:  # scan for tokens
                 start, end = pseudomatch.span(1)
@@ -632,8 +661,9 @@ def generate_tokens(
                             token = line[start:pos]
                             yield (STRING, token, spos, epos, line)
                         else:
-                            # TODO: most of this is wrong
+                            # TODO: most of the positions are wrong
                             yield (FSTRING_START, token, spos, epos, line)
+                            fstring_level += 1
                             pos = endmatch.end(0)
                             token = line[start:pos]
                             yield (
@@ -644,6 +674,7 @@ def generate_tokens(
                                 line,
                             )
                             yield (LBRACE, "{", epos, epos, line)
+                            inside_fstring_braces = True
                     else:
                         strstart = (lnum, start)  # multiple lines
                         contstr = line[start:]
@@ -654,17 +685,17 @@ def generate_tokens(
                     or token[:2] in single_quoted
                     or token[:3] in single_quoted
                 ):
+                    maybe_endprog = (
+                        endprogs.get(initial)
+                        or endprogs.get(token[1])
+                        or endprogs.get(token[2])
+                    )
+                    assert (
+                        maybe_endprog is not None
+                    ), f"endprog not found for {token}"
+                    endprog = maybe_endprog
                     if token[-1] == "\n":  # continued string
                         strstart = (lnum, start)
-                        maybe_endprog = (
-                            endprogs.get(initial)
-                            or endprogs.get(token[1])
-                            or endprogs.get(token[2])
-                        )
-                        assert (
-                            maybe_endprog is not None
-                        ), f"endprog not found for {token}"
-                        endprog = maybe_endprog
                         contstr, needcont = line[start:], 1
                         contline = line
                         break
@@ -686,6 +717,8 @@ def generate_tokens(
                                 offset = pseudomatch.end(22) - pseudomatch.start()
                                 start_epos = (lnum, start + offset - 1)
                             yield (FSTRING_START, fstring_start, spos, start_epos, line)
+                            fstring_level += 1
+
                             end_offset = pseudomatch.end() - 1
                             fstring_middle = line[start + offset - 1 : end_offset]
                             middle_spos = (lnum, start + offset)
@@ -698,6 +731,7 @@ def generate_tokens(
                                 line,
                             )
                             yield (LBRACE, "{", (lnum, end_offset + 1), epos, line)
+                            inside_fstring_braces = True
 
                 elif initial.isidentifier():  # ordinary name
                     if token in ("async", "await"):
@@ -743,6 +777,9 @@ def generate_tokens(
                         stashed = None
                     yield (NL, token, spos, (lnum, pos), line)
                     continued = 1
+                elif initial == '}' and parenlev == 0 and inside_fstring_braces:
+                    inside_fstring_braces = False
+                    yield (RBRACE, token, spos, epos, line)
                 else:
                     if initial in "([{":
                         parenlev += 1
