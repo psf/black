@@ -127,10 +127,19 @@ Single3 = r"[^'\\]*(?:(?:\\.|'(?!''))[^'\\]*)*'''"
 Double3 = r'[^"\\]*(?:(?:\\.|"(?!""))[^"\\]*)*"""'
 _litprefix = r"(?:[uUrRbB]|[rR][bB]|[bBuU][rR])?"
 _fstringlitprefix = r"(?:rF|FR|Fr|fr|RF|F|rf|f|Rf|fR)"
-Triple = group(_litprefix + "'''", _litprefix + '"""')
+Triple = group(
+    _litprefix + "'''",
+    _litprefix + '"""',
+    _fstringlitprefix + '"""',
+    _fstringlitprefix + "'''",
+)
 
+# TODO: these two are the same. remove one
 SingleLbrace = r"[^{\\]*(?:\\.[^{\\]*)*{"
 DoubleLbrace = r"[^{\\]*(?:\\.[^{\\]*)*{"
+
+Single3Lbrace = r"[^'\\]*(?:(?:\\.|'(?!''))[^'\\]*)*{"
+Double3Lbrace = r'[^"\\]*(?:(?:\\.|"(?!""))[^"\\]*)*{'
 
 # Because of leftmost-then-longest match semantics, be sure to put the
 # longest operators first (e.g., if = came before ==, == would get
@@ -151,12 +160,16 @@ Bracket = "[][(){}]"
 Special = group(r"\r?\n", r"[:;.,`@]")
 Funny = group(Operator, Bracket, Special)
 
+# FSTRING_MIDDLE and LBRACE, inside a single quoted fstring
+_fstring_middle_single = r"[^\n'\\]*(?:\\.[^\n'\\]*)*({)(?<!{{)"
+_fstring_middle_double = r'[^\n"\\]*(?:\\.[^\n"\\]*)*({)(?<!{{)'
+
 # First (or only) line of ' or " string.
 ContStr = group(
     _litprefix + r"'[^\n'\\]*(?:\\.[^\n'\\]*)*" + group("'", r"\\\r?\n"),
     _litprefix + r'"[^\n"\\]*(?:\\.[^\n"\\]*)*' + group('"', r"\\\r?\n"),
-    group(_fstringlitprefix + "'") + r"[^\n'\\]*(?:\\.[^\n'\\]*)*({)(?<!{{)",
-    group(_fstringlitprefix + '"') + r'[^\n"\\]*(?:\\.[^\n"\\]*)*({)(?<!{{)',
+    group(_fstringlitprefix + "'") + _fstring_middle_single,
+    group(_fstringlitprefix + '"') + _fstring_middle_double,
 )
 PseudoExtras = group(r"\\\r?\n", Comment, Triple)
 PseudoToken = Whitespace + group(PseudoExtras, Number, Funny, ContStr, Name)
@@ -169,9 +182,9 @@ doubleprog = re.compile(Double)
 doubleprog_plus_lbrace = re.compile(group(DoubleLbrace, Double))
 
 single3prog = re.compile(Single3)
-single3prog_plus_lbrace = re.compile(group(SingleLbrace, Single3))
+single3prog_plus_lbrace = re.compile(group(Single3Lbrace, Single3))
 double3prog = re.compile(Double3)
-double3prog_plus_lbrace = re.compile(group(DoubleLbrace, Double3))
+double3prog_plus_lbrace = re.compile(group(Double3Lbrace, Double3))
 
 _strprefixes = _combinations("r", "R", "b", "B") | {"u", "U", "ur", "uR", "Ur", "UR"}
 _fstring_prefixes = _combinations("r", "R", "f", "F") - {"r", "R"}
@@ -609,12 +622,28 @@ def generate_tokens(
                     endprog = endprogs[token]
                     endmatch = endprog.match(line, pos)
                     if endmatch:  # all on one line
-                        pos = endmatch.end(0)
-                        token = line[start:pos]
                         if stashed:
                             yield stashed
                             stashed = None
-                        yield (STRING, token, spos, (lnum, pos), line)
+                        # TODO: move this logic to a function
+                        # TODO: not how you should identify FSTRING_START
+                        if not token.startswith("f"):
+                            pos = endmatch.end(0)
+                            token = line[start:pos]
+                            yield (STRING, token, spos, epos, line)
+                        else:
+                            # TODO: most of this is wrong
+                            yield (FSTRING_START, token, spos, epos, line)
+                            pos = endmatch.end(0)
+                            token = line[start:pos]
+                            yield (
+                                FSTRING_MIDDLE,
+                                token,
+                                spos,
+                                epos,
+                                line,
+                            )
+                            yield (LBRACE, "{", epos, epos, line)
                     else:
                         strstart = (lnum, start)  # multiple lines
                         contstr = line[start:]
