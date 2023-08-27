@@ -5,13 +5,10 @@
 
 # Python imports
 import os
-
 from typing import Union
 
 # Local imports
-from .pgen2 import token
 from .pgen2 import driver
-
 from .pgen2.grammar import Grammar
 
 # Moved into initialize because mypyc can't handle __file__ (XXX bug)
@@ -21,7 +18,7 @@ from .pgen2.grammar import Grammar
 #                                      "PatternGrammar.txt")
 
 
-class Symbols(object):
+class Symbols:
     def __init__(self, grammar: Grammar) -> None:
         """Initializer.
 
@@ -95,6 +92,7 @@ class _python_symbols(Symbols):
     old_test: int
     or_test: int
     parameters: int
+    paramspec: int
     pass_stmt: int
     pattern: int
     patterns: int
@@ -126,7 +124,12 @@ class _python_symbols(Symbols):
     tname_star: int
     trailer: int
     try_stmt: int
+    type_stmt: int
     typedargslist: int
+    typeparam: int
+    typeparams: int
+    typevar: int
+    typevartuple: int
     varargslist: int
     vfpdef: int
     vfplist: int

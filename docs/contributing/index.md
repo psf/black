@@ -24,7 +24,8 @@ not very). This is deliberate. _Black_ aims to provide a consistent style and ta
 opportunities for arguing about style.
 
 Bug reports and fixes are always welcome! Please follow the
-[issue template on GitHub](https://github.com/psf/black/issues/new) for best results.
+[issue templates on GitHub](https://github.com/psf/black/issues/new/choose) for best
+results.
 
 Before you suggest a new feature or configuration knob, ask yourself why you want it. If
 it enables better integration with some workflow, fixes an inconsistency, speeds things

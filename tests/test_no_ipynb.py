@@ -27,8 +27,7 @@ def test_ipynb_diff_with_no_change_dir(tmp_path: pathlib.Path) -> None:
     runner = CliRunner()
     nb = get_case_path("jupyter", "notebook_trailing_newline.ipynb")
     tmp_nb = tmp_path / "notebook.ipynb"
-    with open(nb) as src, open(tmp_nb, "w") as dst:
-        dst.write(src.read())
+    tmp_nb.write_bytes(nb.read_bytes())
     result = runner.invoke(main, [str(tmp_path)])
     expected_output = (
         "Skipping .ipynb files as Jupyter dependencies are not installed.\n"

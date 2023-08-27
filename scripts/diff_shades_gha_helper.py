@@ -21,6 +21,7 @@ import pprint
 import subprocess
 import sys
 import zipfile
+from base64 import b64encode
 from io import BytesIO
 from pathlib import Path
 from typing import Any
@@ -52,7 +53,17 @@ def set_output(name: str, value: str) -> None:
         print(f"[INFO]: setting '{name}' to '{value}'")
     else:
         print(f"[INFO]: setting '{name}' to [{len(value)} chars]")
-    print(f"::set-output name={name}::{value}")
+
+    if "GITHUB_OUTPUT" in os.environ:
+        if "\n" in value:
+            # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
+            delimiter = b64encode(os.urandom(16)).decode()
+            value = f"{delimiter}\n{value}\n{delimiter}"
+            command = f"{name}<<{value}"
+        else:
+            command = f"{name}={value}"
+        with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+            print(command, file=f)
 
 
 def http_get(url: str, *, is_json: bool = True, **kwargs: Any) -> Any:
@@ -218,9 +229,7 @@ def comment_details(run_id: str) -> None:
     # while it's still in progress seems impossible).
     body = body.replace("$workflow-run-url", data["html_url"])
     body = body.replace("$job-diff-url", diff_url)
-    # https://github.community/t/set-output-truncates-multiline-strings/16852/3
-    escaped = body.replace("%", "%25").replace("\n", "%0A").replace("\r", "%0D")
-    set_output("comment-body", escaped)
+    set_output("comment-body", body)
 
 
 if __name__ == "__main__":
