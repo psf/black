@@ -41,7 +41,7 @@ import black
 import black.files
 from black import Feature, TargetVersion
 from black import re_compile_maybe_verbose as compile_pattern
-from black.cache import get_cache_dir, get_cache_file
+from black.cache import FileData, get_cache_dir, get_cache_file
 from black.debug import DebugVisitor
 from black.output import color_diff, diff
 from black.report import Report
@@ -507,13 +507,11 @@ class BlackTestCase(BlackBaseTestCase):
         with patch("pathlib.Path.iterdir", return_value=target_contents), patch(
             "pathlib.Path.cwd", return_value=working_directory
         ), patch("pathlib.Path.is_dir", side_effect=mock_n_calls([True])):
-            ctx = FakeContext()
             # Note that the root folder (project_root) isn't the folder
             # named "root" (aka working_directory)
-            ctx.obj["root"] = project_root
             report = MagicMock(verbose=True)
             black.get_sources(
-                ctx=ctx,
+                root=project_root,
                 src=("./child",),
                 quiet=False,
                 verbose=True,
@@ -1121,10 +1119,10 @@ class BlackTestCase(BlackBaseTestCase):
             self.invokeBlack([str(path), "--pyi"])
             actual = path.read_text(encoding="utf-8")
             # verify cache with --pyi is separate
-            pyi_cache = black.read_cache(pyi_mode)
-            self.assertIn(str(path), pyi_cache)
-            normal_cache = black.read_cache(DEFAULT_MODE)
-            self.assertNotIn(str(path), normal_cache)
+            pyi_cache = black.Cache.read(pyi_mode)
+            assert not pyi_cache.is_changed(path)
+            normal_cache = black.Cache.read(DEFAULT_MODE)
+            assert normal_cache.is_changed(path)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(contents, actual)
         black.assert_stable(contents, actual, pyi_mode)
@@ -1146,11 +1144,11 @@ class BlackTestCase(BlackBaseTestCase):
                 actual = path.read_text(encoding="utf-8")
                 self.assertEqual(actual, expected)
             # verify cache with --pyi is separate
-            pyi_cache = black.read_cache(pyi_mode)
-            normal_cache = black.read_cache(reg_mode)
+            pyi_cache = black.Cache.read(pyi_mode)
+            normal_cache = black.Cache.read(reg_mode)
             for path in paths:
-                self.assertIn(str(path), pyi_cache)
-                self.assertNotIn(str(path), normal_cache)
+                assert not pyi_cache.is_changed(path)
+                assert normal_cache.is_changed(path)
 
     def test_pipe_force_pyi(self) -> None:
         source, expected = read_data("miscellaneous", "force_pyi")
@@ -1171,10 +1169,10 @@ class BlackTestCase(BlackBaseTestCase):
             self.invokeBlack([str(path), *PY36_ARGS])
             actual = path.read_text(encoding="utf-8")
             # verify cache with --target-version is separate
-            py36_cache = black.read_cache(py36_mode)
-            self.assertIn(str(path), py36_cache)
-            normal_cache = black.read_cache(reg_mode)
-            self.assertNotIn(str(path), normal_cache)
+            py36_cache = black.Cache.read(py36_mode)
+            assert not py36_cache.is_changed(path)
+            normal_cache = black.Cache.read(reg_mode)
+            assert normal_cache.is_changed(path)
         self.assertEqual(actual, expected)
 
     @event_loop()
@@ -1194,11 +1192,11 @@ class BlackTestCase(BlackBaseTestCase):
                 actual = path.read_text(encoding="utf-8")
                 self.assertEqual(actual, expected)
             # verify cache with --target-version is separate
-            pyi_cache = black.read_cache(py36_mode)
-            normal_cache = black.read_cache(reg_mode)
+            pyi_cache = black.Cache.read(py36_mode)
+            normal_cache = black.Cache.read(reg_mode)
             for path in paths:
-                self.assertIn(str(path), pyi_cache)
-                self.assertNotIn(str(path), normal_cache)
+                assert not pyi_cache.is_changed(path)
+                assert normal_cache.is_changed(path)
 
     def test_pipe_force_py36(self) -> None:
         source, expected = read_data("miscellaneous", "force_py36")
@@ -1953,19 +1951,20 @@ class TestCaching:
         with cache_dir() as workspace:
             cache_file = get_cache_file(mode)
             cache_file.write_text("this is not a pickle", encoding="utf-8")
-            assert black.read_cache(mode) == {}
+            assert black.Cache.read(mode).file_data == {}
             src = (workspace / "test.py").resolve()
             src.write_text("print('hello')", encoding="utf-8")
             invokeBlack([str(src)])
-            cache = black.read_cache(mode)
-            assert str(src) in cache
+            cache = black.Cache.read(mode)
+            assert not cache.is_changed(src)
 
     def test_cache_single_file_already_cached(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
             src.write_text("print('hello')", encoding="utf-8")
-            black.write_cache({}, [src], mode)
+            cache = black.Cache.read(mode)
+            cache.write([src])
             invokeBlack([str(src)])
             assert src.read_text(encoding="utf-8") == "print('hello')"
 
@@ -1979,13 +1978,14 @@ class TestCaching:
             one.write_text("print('hello')", encoding="utf-8")
             two = (workspace / "two.py").resolve()
             two.write_text("print('hello')", encoding="utf-8")
-            black.write_cache({}, [one], mode)
+            cache = black.Cache.read(mode)
+            cache.write([one])
             invokeBlack([str(workspace)])
             assert one.read_text(encoding="utf-8") == "print('hello')"
             assert two.read_text(encoding="utf-8") == 'print("hello")\n'
-            cache = black.read_cache(mode)
-            assert str(one) in cache
-            assert str(two) in cache
+            cache = black.Cache.read(mode)
+            assert not cache.is_changed(one)
+            assert not cache.is_changed(two)
 
     @pytest.mark.parametrize("color", [False, True], ids=["no-color", "with-color"])
     def test_no_cache_when_writeback_diff(self, color: bool) -> None:
@@ -1993,8 +1993,8 @@ class TestCaching:
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
             src.write_text("print('hello')", encoding="utf-8")
-            with patch("black.read_cache") as read_cache, patch(
-                "black.write_cache"
+            with patch.object(black.Cache, "read") as read_cache, patch.object(
+                black.Cache, "write"
             ) as write_cache:
                 cmd = [str(src), "--diff"]
                 if color:
@@ -2002,8 +2002,8 @@ class TestCaching:
                 invokeBlack(cmd)
                 cache_file = get_cache_file(mode)
                 assert cache_file.exists() is False
+                read_cache.assert_called_once()
                 write_cache.assert_not_called()
-                read_cache.assert_not_called()
 
     @pytest.mark.parametrize("color", [False, True], ids=["no-color", "with-color"])
     @event_loop()
@@ -2036,17 +2036,17 @@ class TestCaching:
     def test_read_cache_no_cachefile(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir():
-            assert black.read_cache(mode) == {}
+            assert black.Cache.read(mode).file_data == {}
 
     def test_write_cache_read_cache(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
             src.touch()
-            black.write_cache({}, [src], mode)
-            cache = black.read_cache(mode)
-            assert str(src) in cache
-            assert cache[str(src)] == black.get_cache_info(src)
+            write_cache = black.Cache.read(mode)
+            write_cache.write([src])
+            read_cache = black.Cache.read(mode)
+            assert not read_cache.is_changed(src)
 
     def test_filter_cached(self) -> None:
         with TemporaryDirectory() as workspace:
@@ -2057,21 +2057,67 @@ class TestCaching:
             uncached.touch()
             cached.touch()
             cached_but_changed.touch()
-            cache = {
-                str(cached): black.get_cache_info(cached),
-                str(cached_but_changed): (0.0, 0),
-            }
-            todo, done = black.cache.filter_cached(
-                cache, {uncached, cached, cached_but_changed}
-            )
+            cache = black.Cache.read(DEFAULT_MODE)
+
+            orig_func = black.Cache.get_file_data
+
+            def wrapped_func(path: Path) -> FileData:
+                if path == cached:
+                    return orig_func(path)
+                if path == cached_but_changed:
+                    return FileData(0.0, 0, "")
+                raise AssertionError
+
+            with patch.object(black.Cache, "get_file_data", side_effect=wrapped_func):
+                cache.write([cached, cached_but_changed])
+            todo, done = cache.filtered_cached({uncached, cached, cached_but_changed})
             assert todo == {uncached, cached_but_changed}
             assert done == {cached}
+
+    def test_filter_cached_hash(self) -> None:
+        with TemporaryDirectory() as workspace:
+            path = Path(workspace)
+            src = (path / "test.py").resolve()
+            src.write_text("print('hello')", encoding="utf-8")
+            st = src.stat()
+            cache = black.Cache.read(DEFAULT_MODE)
+            cache.write([src])
+            cached_file_data = cache.file_data[str(src)]
+
+            todo, done = cache.filtered_cached([src])
+            assert todo == set()
+            assert done == {src}
+            assert cached_file_data.st_mtime == st.st_mtime
+
+            # Modify st_mtime
+            cached_file_data = cache.file_data[str(src)] = FileData(
+                cached_file_data.st_mtime - 1,
+                cached_file_data.st_size,
+                cached_file_data.hash,
+            )
+            todo, done = cache.filtered_cached([src])
+            assert todo == set()
+            assert done == {src}
+            assert cached_file_data.st_mtime < st.st_mtime
+            assert cached_file_data.st_size == st.st_size
+            assert cached_file_data.hash == black.Cache.hash_digest(src)
+
+            # Modify contents
+            src.write_text("print('hello world')", encoding="utf-8")
+            new_st = src.stat()
+            todo, done = cache.filtered_cached([src])
+            assert todo == {src}
+            assert done == set()
+            assert cached_file_data.st_mtime < new_st.st_mtime
+            assert cached_file_data.st_size != new_st.st_size
+            assert cached_file_data.hash != black.Cache.hash_digest(src)
 
     def test_write_cache_creates_directory_if_needed(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir(exists=False) as workspace:
             assert not workspace.exists()
-            black.write_cache({}, [], mode)
+            cache = black.Cache.read(mode)
+            cache.write([])
             assert workspace.exists()
 
     @event_loop()
@@ -2085,15 +2131,17 @@ class TestCaching:
             clean = (workspace / "clean.py").resolve()
             clean.write_text('print("hello")\n', encoding="utf-8")
             invokeBlack([str(workspace)], exit_code=123)
-            cache = black.read_cache(mode)
-            assert str(failing) not in cache
-            assert str(clean) in cache
+            cache = black.Cache.read(mode)
+            assert cache.is_changed(failing)
+            assert not cache.is_changed(clean)
 
     def test_write_cache_write_fail(self) -> None:
         mode = DEFAULT_MODE
-        with cache_dir(), patch.object(Path, "open") as mock:
-            mock.side_effect = OSError
-            black.write_cache({}, [], mode)
+        with cache_dir():
+            cache = black.Cache.read(mode)
+            with patch.object(Path, "open") as mock:
+                mock.side_effect = OSError
+                cache.write([])
 
     def test_read_cache_line_lengths(self) -> None:
         mode = DEFAULT_MODE
@@ -2101,18 +2149,19 @@ class TestCaching:
         with cache_dir() as workspace:
             path = (workspace / "file.py").resolve()
             path.touch()
-            black.write_cache({}, [path], mode)
-            one = black.read_cache(mode)
-            assert str(path) in one
-            two = black.read_cache(short_mode)
-            assert str(path) not in two
+            cache = black.Cache.read(mode)
+            cache.write([path])
+            one = black.Cache.read(mode)
+            assert not one.is_changed(path)
+            two = black.Cache.read(short_mode)
+            assert two.is_changed(path)
 
 
 def assert_collected_sources(
     src: Sequence[Union[str, Path]],
     expected: Sequence[Union[str, Path]],
     *,
-    ctx: Optional[FakeContext] = None,
+    root: Optional[Path] = None,
     exclude: Optional[str] = None,
     include: Optional[str] = None,
     extend_exclude: Optional[str] = None,
@@ -2128,7 +2177,7 @@ def assert_collected_sources(
     )
     gs_force_exclude = None if force_exclude is None else compile_pattern(force_exclude)
     collected = black.get_sources(
-        ctx=ctx or FakeContext(),
+        root=root or THIS_DIR,
         src=gs_src,
         quiet=False,
         verbose=False,
@@ -2164,9 +2213,7 @@ class TestFileCollection:
             base / "b/.definitely_exclude/a.pyi",
         ]
         src = [base / "b/"]
-        ctx = FakeContext()
-        ctx.obj["root"] = base
-        assert_collected_sources(src, expected, ctx=ctx, extend_exclude=r"/exclude/")
+        assert_collected_sources(src, expected, root=base, extend_exclude=r"/exclude/")
 
     def test_gitignore_used_on_multiple_sources(self) -> None:
         root = Path(DATA_DIR / "gitignore_used_on_multiple_sources")
@@ -2174,10 +2221,8 @@ class TestFileCollection:
             root / "dir1" / "b.py",
             root / "dir2" / "b.py",
         ]
-        ctx = FakeContext()
-        ctx.obj["root"] = root
         src = [root / "dir1", root / "dir2"]
-        assert_collected_sources(src, expected, ctx=ctx)
+        assert_collected_sources(src, expected, root=root)
 
     @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_exclude_for_issue_1572(self) -> None:
@@ -2283,9 +2328,7 @@ class TestFileCollection:
         # If gitignore with */* is in root
         root = Path(DATA_DIR / "ignore_subfolders_gitignore_tests" / "subdir")
         expected = [root / "b.py"]
-        ctx = FakeContext()
-        ctx.obj["root"] = root
-        assert_collected_sources([root], expected, ctx=ctx)
+        assert_collected_sources([root], expected, root=root)
 
         # If .gitignore with */* is nested
         root = Path(DATA_DIR / "ignore_subfolders_gitignore_tests")
@@ -2293,17 +2336,13 @@ class TestFileCollection:
             root / "a.py",
             root / "subdir" / "b.py",
         ]
-        ctx = FakeContext()
-        ctx.obj["root"] = root
-        assert_collected_sources([root], expected, ctx=ctx)
+        assert_collected_sources([root], expected, root=root)
 
         # If command is executed from outer dir
         root = Path(DATA_DIR / "ignore_subfolders_gitignore_tests")
         target = root / "subdir"
         expected = [target / "b.py"]
-        ctx = FakeContext()
-        ctx.obj["root"] = root
-        assert_collected_sources([target], expected, ctx=ctx)
+        assert_collected_sources([target], expected, root=root)
 
     def test_empty_include(self) -> None:
         path = DATA_DIR / "include_exclude_tests"

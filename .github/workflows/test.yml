@@ -49,7 +49,8 @@ jobs:
 
       - name: Unit tests
         if: "!startsWith(matrix.python-version, 'pypy')"
-        run: tox -e ci-py -- -v --color=yes
+        run:
+          tox -e ci-py$(echo ${{ matrix.python-version }} | tr -d '.') -- -v --color=yes
 
       - name: Unit tests (pypy)
         if: "startsWith(matrix.python-version, 'pypy')"

@@ -67,7 +67,7 @@ dependencies = [
   "pathspec>=0.9.0",
   "platformdirs>=2",
   "tomli>=1.1.0; python_version < '3.11'",
-  "typing_extensions>=3.10.0.0; python_version < '3.10'",
+  "typing_extensions>=4.0.1; python_version < '3.11'",
 ]
 dynamic = ["readme", "version"]
 

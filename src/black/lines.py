@@ -166,6 +166,13 @@ class Line:
         )
 
     @property
+    def is_stub_def(self) -> bool:
+        """Is this line a function definition with a body consisting only of "..."?"""
+        return self.is_def and self.leaves[-4:] == [Leaf(token.COLON, ":")] + [
+            Leaf(token.DOT, ".") for _ in range(3)
+        ]
+
+    @property
     def is_class_paren_empty(self) -> bool:
         """Is this a class with no base classes but using parentheses?
 
@@ -578,6 +585,8 @@ class EmptyLineTracker:
             first_leaf.prefix = ""
         else:
             before = 0
+
+        user_had_newline = bool(before)
         depth = current_line.depth
 
         previous_def = None
@@ -589,7 +598,7 @@ class EmptyLineTracker:
             if self.mode.is_pyi:
                 if depth and not current_line.is_def and self.previous_line.is_def:
                     # Empty lines between attributes and methods should be preserved.
-                    before = min(1, before)
+                    before = 1 if user_had_newline else 0
                 elif (
                     Preview.blank_line_after_nested_stub_class in self.mode
                     and previous_def.is_class
@@ -624,7 +633,9 @@ class EmptyLineTracker:
                     before = 2
 
         if current_line.is_decorator or current_line.is_def or current_line.is_class:
-            return self._maybe_empty_lines_for_class_or_def(current_line, before)
+            return self._maybe_empty_lines_for_class_or_def(
+                current_line, before, user_had_newline
+            )
 
         if (
             self.previous_line
@@ -648,8 +659,8 @@ class EmptyLineTracker:
             return 0, 0
         return before, 0
 
-    def _maybe_empty_lines_for_class_or_def(
-        self, current_line: Line, before: int
+    def _maybe_empty_lines_for_class_or_def(  # noqa: C901
+        self, current_line: Line, before: int, user_had_newline: bool
     ) -> Tuple[int, int]:
         if not current_line.is_decorator:
             self.previous_defs.append(current_line)
@@ -715,6 +726,14 @@ class EmptyLineTracker:
                 newlines = 0
         else:
             newlines = 1 if current_line.depth else 2
+            # If a user has left no space after a dummy implementation, don't insert
+            # new lines. This is useful for instance for @overload or Protocols.
+            if (
+                Preview.dummy_implementations in self.mode
+                and self.previous_line.is_stub_def
+                and not user_had_newline
+            ):
+                newlines = 0
         if comment_to_add_newlines is not None:
             previous_block = comment_to_add_newlines.previous_block
             if previous_block is not None:
