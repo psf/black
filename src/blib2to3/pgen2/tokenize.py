@@ -135,12 +135,11 @@ Triple = group(
     _fstringlitprefix + "'''",
 )
 
-# TODO: these two are the same. remove one
-SingleLbrace = r"[^{\\]*(?:\\.[^{\\]*)*{"
-DoubleLbrace = r"[^{\\]*(?:\\.[^{\\]*)*{"
+SingleLbrace = r"[^'\\{]*(?:(?:\\.|{{)[^'\\{]*)*{"
+DoubleLbrace = r'[^"\\{]*(?:(?:\\.|{{)[^"\\{]*)*{'
 
-Single3Lbrace = r"[^'\\]*(?:(?:\\.|'(?!''))[^'\\]*)*{"
-Double3Lbrace = r'[^"\\]*(?:(?:\\.|"(?!""))[^"\\]*)*{'
+Single3Lbrace = r"[^'\\{]*(?:(?:\\.|{{|'(?!''))[^'\\{]*)*{"
+Double3Lbrace = r'[^"\\{]*(?:(?:\\.|{{|"(?!""))[^"\\{]*)*{'
 
 # Because of leftmost-then-longest match semantics, be sure to put the
 # longest operators first (e.g., if = came before ==, == would get
@@ -162,8 +161,8 @@ Special = group(r"\r?\n", r"[:;.,`@]")
 Funny = group(Operator, Bracket, Special)
 
 # FSTRING_MIDDLE and LBRACE, inside a single quoted fstring
-_fstring_middle_single = r"[^\n'\\]*(?:\\.[^\n'\\]*)*({)(?<!{{)"
-_fstring_middle_double = r'[^\n"\\]*(?:\\.[^\n"\\]*)*({)(?<!{{)'
+_fstring_middle_single = r"[^\n'\\{]*(?:(?:\\.|{{)[^\n'\\{]*)*({)"
+_fstring_middle_double = r'[^\n"\\{]*(?:(?:\\.|{{)[^\n"\\{]*)*({)'
 
 # First (or only) line of ' or " string.
 ContStr = group(
@@ -687,12 +686,10 @@ def generate_tokens(
                 ):
                     maybe_endprog = (
                         endprogs.get(initial)
-                        or endprogs.get(token[1])
-                        or endprogs.get(token[2])
+                        or endprogs.get(token[:2])
+                        or endprogs.get(token[:3])
                     )
-                    assert (
-                        maybe_endprog is not None
-                    ), f"endprog not found for {token}"
+                    assert maybe_endprog is not None, f"endprog not found for {token}"
                     endprog = maybe_endprog
                     if token[-1] == "\n":  # continued string
                         strstart = (lnum, start)
@@ -777,7 +774,7 @@ def generate_tokens(
                         stashed = None
                     yield (NL, token, spos, (lnum, pos), line)
                     continued = 1
-                elif initial == '}' and parenlev == 0 and inside_fstring_braces:
+                elif initial == "}" and parenlev == 0 and inside_fstring_braces:
                     inside_fstring_braces = False
                     yield (RBRACE, token, spos, epos, line)
                 else:
