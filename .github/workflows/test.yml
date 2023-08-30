@@ -62,7 +62,7 @@ jobs:
         if:
           github.repository == 'psf/black' && matrix.os == 'ubuntu-latest' &&
           !startsWith(matrix.python-version, 'pypy')
-        uses: AndreMiras/coveralls-python-action@v20201129
+        uses: AndreMiras/coveralls-python-action@develop
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           parallel: true
