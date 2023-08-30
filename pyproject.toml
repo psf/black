@@ -210,3 +210,12 @@ filterwarnings = [
     # Work around https://github.com/pytest-dev/pytest/issues/10977 for Python 3.12
     '''ignore:(Attribute s|Attribute n|ast.Str|ast.Bytes|ast.NameConstant|ast.Num) is deprecated and will be removed in Python 3.14:DeprecationWarning'''
 ]
+[tool.coverage.report]
+omit = [
+  "src/blib2to3/*",
+  "tests/data/*",
+  "*/site-packages/*",
+  ".tox/*"
+]
+[tool.coverage.run]
+relative_files = true
