@@ -135,11 +135,11 @@ Triple = group(
     _fstringlitprefix + "'''",
 )
 
-SingleLbrace = r"[^'\\{]*(?:(?:\\.|{{)[^'\\{]*)*{"
-DoubleLbrace = r'[^"\\{]*(?:(?:\\.|{{)[^"\\{]*)*{'
+SingleLbrace = r"[^'\\{]*(?:(?:\\.|{{)[^'\\{]*)*{(?!{)"
+DoubleLbrace = r'[^"\\{]*(?:(?:\\.|{{)[^"\\{]*)*{(?!{)'
 
-Single3Lbrace = r"[^'\\{]*(?:(?:\\.|{{|'(?!''))[^'\\{]*)*{"
-Double3Lbrace = r'[^"\\{]*(?:(?:\\.|{{|"(?!""))[^"\\{]*)*{'
+Single3Lbrace = r"[^'\\{]*(?:(?:\\.|{{|'(?!''))[^'\\{]*)*{(?!{)"
+Double3Lbrace = r'[^"\\{]*(?:(?:\\.|{{|"(?!""))[^"\\{]*)*{(?!{)'
 
 # Because of leftmost-then-longest match semantics, be sure to put the
 # longest operators first (e.g., if = came before ==, == would get
@@ -499,13 +499,24 @@ def generate_tokens(
             endmatch = endprog.match(line)
             if endmatch:
                 pos = end = endmatch.end(0)
-                yield (
-                    STRING,
-                    contstr + line[:end],
-                    strstart,
-                    (lnum, end),
-                    contline + line,
-                )
+                token = contstr + line[:end]
+                spos = strstart
+                epos = (lnum, end)
+                tokenline = contline + line
+                # TODO: better way to detect fstring
+                if fstring_level == 0:
+                    yield (STRING, token, spos, epos, tokenline)
+                else:
+                    # TODO: positions are all wrong
+                    yield (FSTRING_MIDDLE, token, spos, epos, tokenline)
+                    if token.endswith("{"):
+                        yield (LBRACE, "{", spos, epos, tokenline)
+                        inside_fstring_braces = True
+                    else:
+                        yield (FSTRING_END, token, spos, epos, tokenline)
+                        fstring_level -= 1
+                    # TODO: contstr reliance doesn't work now because we can be inside
+                    # an fstring and still empty contstr right here.
                 contstr, needcont = "", 0
                 contline = None
             elif needcont and line[-2:] != "\\\n" and line[-3:] != "\\\r\n":
@@ -614,9 +625,8 @@ def generate_tokens(
                         yield (LBRACE, "{", (lnum, 0), (lnum, 0), line)
                         inside_fstring_braces = True
                 else:  # multiple lines
-                    breakpoint()  # TODO: see if the code below is correct
                     contstr += line
-                    contline += line
+                    contline = line
                     break
 
             pseudomatch = pseudoprog.match(line, pos)
@@ -647,6 +657,10 @@ def generate_tokens(
                         stashed = None
                     yield (COMMENT, token, spos, epos, line)
                 elif token in triple_quoted:
+                    if token.startswith("f"):
+                        yield (FSTRING_START, token, spos, epos, line)
+                        fstring_level += 1
+
                     endprog = endprogs[token]
                     endmatch = endprog.match(line, pos)
                     if endmatch:  # all on one line
@@ -661,8 +675,6 @@ def generate_tokens(
                             yield (STRING, token, spos, epos, line)
                         else:
                             # TODO: most of the positions are wrong
-                            yield (FSTRING_START, token, spos, epos, line)
-                            fstring_level += 1
                             pos = endmatch.end(0)
                             token = line[start:pos]
                             yield (
@@ -775,8 +787,8 @@ def generate_tokens(
                     yield (NL, token, spos, (lnum, pos), line)
                     continued = 1
                 elif initial == "}" and parenlev == 0 and inside_fstring_braces:
-                    inside_fstring_braces = False
                     yield (RBRACE, token, spos, epos, line)
+                    inside_fstring_braces = False
                 else:
                     if initial in "([{":
                         parenlev += 1
