@@ -641,7 +641,7 @@ def generate_tokens(
                     yield (NUMBER, token, spos, epos, line)
                 elif initial in "\r\n":
                     newline = NEWLINE
-                    if parenlev > 0:
+                    if parenlev > 0 or inside_fstring_braces:
                         newline = NL
                     elif async_def:
                         async_def_nl = True
