@@ -45,6 +45,8 @@
 
 <!-- Changes to blackd -->
 
+- Fix an issue in `blackd` with single character input (#3558)
+
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
