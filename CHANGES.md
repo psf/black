@@ -43,7 +43,7 @@
 
 <!-- Changes to blackd -->
 
-- fix a bug where a single character would cause a 500 (#3558)
+- Fix an issue in `blackd` with single character input (#3558)
 
 ### Integrations
 
