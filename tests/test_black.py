@@ -492,9 +492,7 @@ class BlackTestCase(BlackBaseTestCase):
         project_root = Path(THIS_DIR / "data" / "nested_gitignore_tests")
         working_directory = project_root / "root"
         target_abspath = working_directory / "child"
-        target_contents = (
-            src.relative_to(working_directory) for src in target_abspath.iterdir()
-        )
+        target_contents = list(target_abspath.iterdir())
 
         def mock_n_calls(responses: List[bool]) -> Callable[[], bool]:
             def _mocked_calls() -> bool:
@@ -2375,38 +2373,48 @@ class TestFileCollection:
         )
 
     @pytest.mark.incompatible_with_mypyc
-    def test_symlink_out_of_root_directory(self) -> None:
+    def test_symlinks(self) -> None:
         path = MagicMock()
         root = THIS_DIR.resolve()
-        child = MagicMock()
         include = re.compile(black.DEFAULT_INCLUDES)
         exclude = re.compile(black.DEFAULT_EXCLUDES)
         report = black.Report()
         gitignore = PathSpec.from_lines("gitwildmatch", [])
-        # `child` should behave like a symlink which resolved path is clearly
-        # outside of the `root` directory.
-        path.iterdir.return_value = [child]
-        child.resolve.return_value = Path("/a/b/c")
-        child.as_posix.return_value = "/a/b/c"
-        try:
-            list(
-                black.gen_python_files(
-                    path.iterdir(),
-                    root,
-                    include,
-                    exclude,
-                    None,
-                    None,
-                    report,
-                    {path: gitignore},
-                    verbose=False,
-                    quiet=False,
-                )
+
+        regular = MagicMock()
+        outside_root_symlink = MagicMock()
+        ignored_symlink = MagicMock()
+
+        path.iterdir.return_value = [regular, outside_root_symlink, ignored_symlink]
+
+        regular.absolute.return_value = root / "regular.py"
+        regular.resolve.return_value = root / "regular.py"
+        regular.is_dir.return_value = False
+
+        outside_root_symlink.absolute.return_value = root / "symlink.py"
+        outside_root_symlink.resolve.return_value = Path("/nowhere")
+
+        ignored_symlink.absolute.return_value = root / ".mypy_cache" / "symlink.py"
+
+        files = list(
+            black.gen_python_files(
+                path.iterdir(),
+                root,
+                include,
+                exclude,
+                None,
+                None,
+                report,
+                {path: gitignore},
+                verbose=False,
+                quiet=False,
             )
-        except ValueError as ve:
-            pytest.fail(f"`get_python_files_in_dir()` failed: {ve}")
+        )
+        assert files == [regular]
+
         path.iterdir.assert_called_once()
-        child.resolve.assert_called_once()
+        outside_root_symlink.resolve.assert_called_once()
+        ignored_symlink.resolve.assert_not_called()
 
     @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_get_sources_with_stdin(self) -> None:
