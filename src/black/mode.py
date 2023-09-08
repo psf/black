@@ -183,6 +183,7 @@ class Preview(Enum):
     wrap_long_dict_values_in_parens = auto()
     wrap_multiple_context_managers_in_parens = auto()
     dummy_implementations = auto()
+    walrus_subscript = auto()
 
 
 class Deprecated(UserWarning):

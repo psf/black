@@ -56,6 +56,13 @@ def test_preview_context_managers_targeting_py39() -> None:
     assert_format(source, expected, mode, minimum_version=(3, 9))
 
 
+@pytest.mark.parametrize("filename", all_data_cases("preview_py_310"))
+def test_preview_python_310(filename: str) -> None:
+    source, expected = read_data("preview_py_310", filename)
+    mode = black.Mode(target_versions={black.TargetVersion.PY310}, preview=True)
+    assert_format(source, expected, mode, minimum_version=(3, 10))
+
+
 @pytest.mark.parametrize(
     "filename", all_data_cases("preview_context_managers/auto_detect")
 )

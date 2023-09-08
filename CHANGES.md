@@ -80,6 +80,7 @@
   (#3740)
 - Fix error in AST validation when _Black_ removes trailing whitespace in a type comment
   (#3773)
+- Fix a bug whereby spaces were removed from walrus operators within subscript (#3823)
 
 ### Preview style
 
