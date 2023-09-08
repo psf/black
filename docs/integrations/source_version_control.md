@@ -6,7 +6,8 @@ Use [pre-commit](https://pre-commit.com/). Once you
 
 ```yaml
 repos:
-  - repo: https://github.com/psf/black
+  # Using this mirror lets us use mypyc-compiled black, which is about 2x faster
+  - repo: https://github.com/psf/black-pre-commit-mirror
     rev: 23.7.0
     hooks:
       - id: black
@@ -17,8 +18,10 @@ repos:
         language_version: python3.11
 ```
 
-Feel free to switch out the `rev` value to something else, like another
-[tag/version][black-tags] or even a specific commit. Although we discourage the use of
+Feel free to switch out the `rev` value to a different version of Black.
+
+Note if you'd like to use a specific commit in `rev`, you'll need to swap the repo
+specified from the mirror to https://github.com/psf/black. We discourage the use of
 branches or other mutable refs since the hook [won't auto update as you may
 expect][pre-commit-mutable-rev].
 
@@ -30,7 +33,8 @@ include Jupyter Notebooks. To use this hook, simply replace the hook's `id: blac
 
 ```yaml
 repos:
-  - repo: https://github.com/psf/black
+  # Using this mirror lets us use mypyc-compiled black, which is about 2x faster
+  - repo: https://github.com/psf/black-pre-commit-mirror
     rev: 23.7.0
     hooks:
       - id: black-jupyter
@@ -45,6 +49,5 @@ repos:
 The `black-jupyter` hook became available in version 21.8b0.
 ```
 
-[black-tags]: https://github.com/psf/black/tags
 [pre-commit-mutable-rev]:
   https://pre-commit.com/#using-the-latest-version-for-a-repository
