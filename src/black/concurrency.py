@@ -17,7 +17,7 @@ from typing import Any, Iterable, Optional, Set
 from mypy_extensions import mypyc_attr
 
 from black import WriteBack, format_file_in_place
-from black.cache import Cache, filter_cached, read_cache, write_cache
+from black.cache import Cache
 from black.mode import Mode
 from black.output import err
 from black.report import Changed, Report
@@ -133,10 +133,9 @@ async def schedule_formatting(
     `write_back`, `fast`, and `mode` options are passed to
     :func:`format_file_in_place`.
     """
-    cache: Cache = {}
+    cache = Cache.read(mode)
     if write_back not in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
-        cache = read_cache(mode)
-        sources, cached = filter_cached(cache, sources)
+        sources, cached = cache.filtered_cached(sources)
         for src in sorted(cached):
             report.done(src, Changed.CACHED)
     if not sources:
@@ -185,4 +184,4 @@ async def schedule_formatting(
     if cancelled:
         await asyncio.gather(*cancelled, return_exceptions=True)
     if sources_to_cache:
-        write_cache(cache, sources_to_cache, mode)
+        cache.write(sources_to_cache)

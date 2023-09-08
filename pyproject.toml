@@ -12,8 +12,7 @@ include = '\.pyi?$'
 extend-exclude = '''
 /(
   # The following are specific to Black, you probably don't want those.
-  | blib2to3
-  | tests/data
+  tests/data
   | profiling
 )/
 '''
@@ -54,7 +53,6 @@ classifiers = [
   "Operating System :: OS Independent",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.7",
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
@@ -69,7 +67,7 @@ dependencies = [
   "pathspec>=0.9.0",
   "platformdirs>=2",
   "tomli>=1.1.0; python_version < '3.11'",
-  "typing_extensions>=3.10.0.0; python_version < '3.10'",
+  "typing_extensions>=4.0.1; python_version < '3.11'",
 ]
 dynamic = ["readme", "version"]
 
@@ -184,7 +182,7 @@ atomic = true
 profile = "black"
 line_length = 88
 skip_gitignore = true
-skip_glob = ["src/blib2to3", "tests/data", "profiling"]
+skip_glob = ["tests/data", "profiling"]
 known_first_party = ["black", "blib2to3", "blackd", "_black_version"]
 
 [tool.pytest.ini_options]
@@ -212,3 +210,12 @@ filterwarnings = [
     # Work around https://github.com/pytest-dev/pytest/issues/10977 for Python 3.12
     '''ignore:(Attribute s|Attribute n|ast.Str|ast.Bytes|ast.NameConstant|ast.Num) is deprecated and will be removed in Python 3.14:DeprecationWarning'''
 ]
+[tool.coverage.report]
+omit = [
+  "src/blib2to3/*",
+  "tests/data/*",
+  "*/site-packages/*",
+  ".tox/*"
+]
+[tool.coverage.run]
+relative_files = true

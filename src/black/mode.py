@@ -182,6 +182,7 @@ class Preview(Enum):
     skip_magic_trailing_comma_in_subscript = auto()
     wrap_long_dict_values_in_parens = auto()
     wrap_multiple_context_managers_in_parens = auto()
+    dummy_implementations = auto()
 
 
 class Deprecated(UserWarning):

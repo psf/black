@@ -30,28 +30,41 @@ each time a new token is found."""
 import sys
 from typing import (
     Callable,
+    Final,
     Iterable,
     Iterator,
     List,
     Optional,
+    Pattern,
     Set,
     Tuple,
-    Pattern,
     Union,
     cast,
 )
 
-from typing import Final
-
-from blib2to3.pgen2.token import *
 from blib2to3.pgen2.grammar import Grammar
+from blib2to3.pgen2.token import (
+    ASYNC,
+    AWAIT,
+    COMMENT,
+    DEDENT,
+    ENDMARKER,
+    ERRORTOKEN,
+    INDENT,
+    NAME,
+    NEWLINE,
+    NL,
+    NUMBER,
+    OP,
+    STRING,
+    tok_name,
+)
 
 __author__ = "Ka-Ping Yee <ping@lfw.org>"
 __credits__ = "GvR, ESR, Tim Peters, Thomas Wouters, Fred Drake, Skip Montanaro"
 
 import re
 from codecs import BOM_UTF8, lookup
-from blib2to3.pgen2.token import *
 
 from . import token
 
@@ -334,7 +347,7 @@ def detect_encoding(readline: Callable[[], bytes]) -> Tuple[str, List[bytes]]:
         try:
             return readline()
         except StopIteration:
-            return b''
+            return b""
 
     def find_cookie(line: bytes) -> Optional[str]:
         try:
@@ -676,14 +689,12 @@ def generate_tokens(
         yield stashed
         stashed = None
 
-    for indent in indents[1:]:  # pop remaining indent levels
+    for _indent in indents[1:]:  # pop remaining indent levels
         yield (DEDENT, "", (lnum, 0), (lnum, 0), "")
     yield (ENDMARKER, "", (lnum, 0), (lnum, 0), "")
 
 
 if __name__ == "__main__":  # testing
-    import sys
-
     if len(sys.argv) > 1:
         tokenize(open(sys.argv[1]).readline)
     else:

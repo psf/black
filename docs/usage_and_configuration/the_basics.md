@@ -63,7 +63,7 @@ $ black -t py37 -t py38 -t py39 -t py310
 In a [configuration file](#configuration-via-a-file), you can write:
 
 ```toml
-target-versions = ["py37", "py38", "py39", "py310"]
+target-version = ["py37", "py38", "py39", "py310"]
 ```
 
 _Black_ uses this option to decide what grammar to use to parse your code. In addition,

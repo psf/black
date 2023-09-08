@@ -14,9 +14,13 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- More concise formatting for dummy implementations (#3796)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
+
+- Black now applies exclusion and ignore logic before resolving symlinks (#3846)
 
 ### Packaging
 
@@ -30,6 +34,9 @@
 
 <!-- Changes that improve Black's performance. -->
 
+- Avoid importing `IPython` if notebook cells do not contain magics (#3782)
+- Improve caching by comparing file hashes as fallback for mtime and size. (#3821)
+
 ### Output
 
 <!-- Changes to Black's terminal output and error messages -->
@@ -38,9 +45,18 @@
 
 <!-- Changes to blackd -->
 
+- Fix an issue in `blackd` with single character input (#3558)
+
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- Black now has an
+  [official pre-commit mirror](https://github.com/psf/black-pre-commit-mirror). Swapping
+  `https://github.com/psf/black` to `https://github.com/psf/black-pre-commit-mirror` in
+  your `.pre-commit-config.yaml` will make Black about 2x faster (#3828)
+- The `.black.env` folder specified by `ENV_PATH` will now be removed on the completion
+  of the GitHub Action. (#3759)
 
 ### Documentation
 
