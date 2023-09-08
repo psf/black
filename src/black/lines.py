@@ -716,7 +716,7 @@ class EmptyLineTracker:
             # statement in the same level, we always want a blank line if there's
             # something with a body preceding.
             elif (
-                Preview.blank_line_between_nested_and_def_stub_file
+                Preview.blank_line_between_nested_and_def_stub_file in current_line.mode
                 and self.previous_line.depth > current_line.depth
             ):
                 newlines = 1
