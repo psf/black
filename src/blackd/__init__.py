@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from concurrent.futures import Executor, ProcessPoolExecutor
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import partial
 from multiprocessing import freeze_support
 from typing import Set, Tuple
@@ -59,9 +59,15 @@ class InvalidVariantHeader(Exception):
 
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
 @click.option(
-    "--bind-host", type=str, help="Address to bind the server to.", default="localhost"
+    "--bind-host",
+    type=str,
+    help="Address to bind the server to.",
+    default="localhost",
+    show_default=True,
 )
-@click.option("--bind-port", type=int, help="Port to listen on", default=45484)
+@click.option(
+    "--bind-port", type=int, help="Port to listen on", default=45484, show_default=True
+)
 @click.version_option(version=black.__version__)
 def main(bind_host: str, bind_port: int) -> None:
     logging.basicConfig(level=logging.INFO)
@@ -132,7 +138,7 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
         req_bytes = await request.content.read()
         charset = request.charset if request.charset is not None else "utf8"
         req_str = req_bytes.decode(charset)
-        then = datetime.utcnow()
+        then = datetime.now(timezone.utc)
 
         header = ""
         if skip_source_first_line:
@@ -146,7 +152,8 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
         )
 
         # Preserve CRLF line endings
-        if req_str[req_str.find("\n") - 1] == "\r":
+        nl = req_str.find("\n")
+        if nl > 0 and req_str[nl - 1] == "\r":
             formatted_str = formatted_str.replace("\n", "\r\n")
             # If, after swapping line endings, nothing changed, then say so
             if formatted_str == req_str:
@@ -159,9 +166,9 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
         # Only output the diff in the HTTP response
         only_diff = bool(request.headers.get(DIFF_HEADER, False))
         if only_diff:
-            now = datetime.utcnow()
-            src_name = f"In\t{then} +0000"
-            dst_name = f"Out\t{now} +0000"
+            now = datetime.now(timezone.utc)
+            src_name = f"In\t{then}"
+            dst_name = f"Out\t{now}"
             loop = asyncio.get_event_loop()
             formatted_str = await loop.run_in_executor(
                 executor,
@@ -219,7 +226,6 @@ def parse_python_variant_header(value: str) -> Tuple[bool, Set[black.TargetVersi
 def patched_main() -> None:
     maybe_install_uvloop()
     freeze_support()
-    black.patch_click()
     main()
 
 

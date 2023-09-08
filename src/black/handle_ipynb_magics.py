@@ -6,6 +6,7 @@ import dataclasses
 import secrets
 import sys
 from functools import lru_cache
+from importlib.util import find_spec
 from typing import Dict, List, Optional, Tuple
 
 if sys.version_info >= (3, 10):
@@ -55,21 +56,18 @@ class Replacement:
     src: str
 
 
-@lru_cache()
-def jupyter_dependencies_are_installed(*, verbose: bool, quiet: bool) -> bool:
-    try:
-        import IPython  # noqa:F401
-        import tokenize_rt  # noqa:F401
-    except ModuleNotFoundError:
-        if verbose or not quiet:
-            msg = (
-                "Skipping .ipynb files as Jupyter dependencies are not installed.\n"
-                'You can fix this by running ``pip install "black[jupyter]"``'
-            )
-            out(msg)
-        return False
-    else:
-        return True
+@lru_cache
+def jupyter_dependencies_are_installed(*, warn: bool) -> bool:
+    installed = (
+        find_spec("tokenize_rt") is not None and find_spec("IPython") is not None
+    )
+    if not installed and warn:
+        msg = (
+            "Skipping .ipynb files as Jupyter dependencies are not installed.\n"
+            'You can fix this by running ``pip install "black[jupyter]"``'
+        )
+        out(msg)
+    return installed
 
 
 def remove_trailing_semicolon(src: str) -> Tuple[str, bool]:
@@ -330,7 +328,8 @@ class CellMagicFinder(ast.NodeVisitor):
 
     For example,
 
-        %%time\nfoo()
+        %%time\n
+        foo()
 
     would have been transformed to
 

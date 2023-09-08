@@ -4,18 +4,12 @@ Mostly around Python language feature support per version and Black configuratio
 chosen by the user.
 """
 
-import sys
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from hashlib import sha256
 from operator import attrgetter
-from typing import Dict, Set
+from typing import Dict, Final, Set
 from warnings import warn
-
-if sys.version_info < (3, 8):
-    from typing_extensions import Final
-else:
-    from typing import Final
 
 from black.const import DEFAULT_LINE_LENGTH
 
@@ -30,6 +24,7 @@ class TargetVersion(Enum):
     PY39 = 9
     PY310 = 10
     PY311 = 11
+    PY312 = 12
 
 
 class Feature(Enum):
@@ -51,6 +46,7 @@ class Feature(Enum):
     VARIADIC_GENERICS = 15
     DEBUG_F_STRINGS = 16
     PARENTHESIZED_CONTEXT_MANAGERS = 17
+    TYPE_PARAMS = 18
     FORCE_OPTIONAL_PARENTHESES = 50
 
     # __future__ flags
@@ -143,6 +139,25 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.EXCEPT_STAR,
         Feature.VARIADIC_GENERICS,
     },
+    TargetVersion.PY312: {
+        Feature.F_STRINGS,
+        Feature.DEBUG_F_STRINGS,
+        Feature.NUMERIC_UNDERSCORES,
+        Feature.TRAILING_COMMA_IN_CALL,
+        Feature.TRAILING_COMMA_IN_DEF,
+        Feature.ASYNC_KEYWORDS,
+        Feature.FUTURE_ANNOTATIONS,
+        Feature.ASSIGNMENT_EXPRESSIONS,
+        Feature.RELAXED_DECORATORS,
+        Feature.POS_ONLY_ARGUMENTS,
+        Feature.UNPACKING_ON_FLOW,
+        Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS,
+        Feature.PATTERN_MATCHING,
+        Feature.EXCEPT_STAR,
+        Feature.VARIADIC_GENERICS,
+        Feature.TYPE_PARAMS,
+    },
 }
 
 
@@ -168,6 +183,7 @@ class Preview(Enum):
     wrap_long_dict_values_in_parens = auto()
     wrap_multiple_context_managers_in_parens = auto()
     remove_redundant_parens_subscript = auto()
+    dummy_implementations = auto()
 
 
 class Deprecated(UserWarning):

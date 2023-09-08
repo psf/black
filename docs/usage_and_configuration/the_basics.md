@@ -63,7 +63,7 @@ $ black -t py37 -t py38 -t py39 -t py310
 In a [configuration file](#configuration-via-a-file), you can write:
 
 ```toml
-target-versions = ["py37", "py38", "py39", "py310"]
+target-version = ["py37", "py38", "py39", "py310"]
 ```
 
 _Black_ uses this option to decide what grammar to use to parse your code. In addition,
@@ -164,8 +164,8 @@ If you'd like colored diffs, you can enable them with `--color`.
 
 ```console
 $ black test.py --diff
---- test.py     2021-03-08 22:23:40.848954 +0000
-+++ test.py     2021-03-08 22:23:47.126319 +0000
+--- test.py     2021-03-08 22:23:40.848954+00:00
++++ test.py     2021-03-08 22:23:47.126319+00:00
 @@ -1 +1 @@
 -print ( 'hello, world' )
 +print("hello, world")
@@ -193,8 +193,8 @@ configuration file for consistent results across environments.
 
 ```console
 $ black --version
-black, 23.3.0 (compiled: yes)
-$ black --required-version 23.3.0 -c "format = 'this'"
+black, 23.7.0 (compiled: yes)
+$ black --required-version 23.7.0 -c "format = 'this'"
 format = "this"
 $ black --required-version 31.5b2 -c "still = 'beta?!'"
 Oh no! 💥 💔 💥 The required version does not match the running version!
@@ -246,7 +246,8 @@ respect the `--force-exclude` option on some editors that rely on using stdin.
 #### `-W`, `--workers`
 
 When _Black_ formats multiple files, it may use a process pool to speed up formatting.
-This option controls the number of parallel workers.
+This option controls the number of parallel workers. This can also be specified via the
+`BLACK_NUM_WORKERS` environment variable.
 
 #### `-q`, `--quiet`
 
@@ -284,7 +285,7 @@ You can check the version of _Black_ you have installed using the `--version` fl
 
 ```console
 $ black --version
-black, 23.3.0
+black, 23.7.0
 ```
 
 #### `--config`
@@ -295,6 +296,19 @@ Read configuration options from a configuration file. See
 #### `-h`, `--help`
 
 Show available command-line options and exit.
+
+### Environment variable options
+
+_Black_ supports the following configuration via environment variables.
+
+#### `BLACK_CACHE_DIR`
+
+The directory where _Black_ should store its cache.
+
+#### `BLACK_NUM_WORKERS`
+
+The number of parallel workers _Black_ should use. The command line option `-W` /
+`--workers` takes precedence over this environment variable.
 
 ### Code input alternatives
 

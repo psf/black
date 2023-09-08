@@ -13,7 +13,7 @@ def test_fexpr_spans() -> None:
         # a glance than only spans
         assert len(spans) == len(expected_slices)
         for (i, j), slice in zip(spans, expected_slices):
-            assert len(string[i:j]) == j - i
+            assert 0 <= i <= j <= len(string)
             assert string[i:j] == slice
 
         assert spans == expected_spans

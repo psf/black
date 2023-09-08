@@ -94,17 +94,9 @@ Split functions
 Caching
 -------
 
-.. autofunction:: black.cache.filter_cached
-
 .. autofunction:: black.cache.get_cache_dir
 
 .. autofunction:: black.cache.get_cache_file
-
-.. autofunction:: black.cache.get_cache_info
-
-.. autofunction:: black.cache.read_cache
-
-.. autofunction:: black.cache.write_cache
 
 Utilities
 ---------
@@ -164,8 +156,6 @@ Utilities
 .. autofunction:: black.strings.normalize_string_quotes
 
 .. autofunction:: black.linegen.normalize_invisible_parens
-
-.. autofunction:: black.patch_click
 
 .. autofunction:: black.nodes.preceding_leaf
 
