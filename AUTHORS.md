@@ -13,6 +13,7 @@ Maintained with:
 - [Richard Si](mailto:sichard26@gmail.com)
 - [Felix Hildén](mailto:felix.hilden@gmail.com)
 - [Batuhan Taskaya](mailto:batuhan@python.org)
+- [Shantanu Jain](mailto:hauntsaninja@gmail.com)
 
 Multiple contributions by:
 

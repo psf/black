@@ -4,18 +4,12 @@ Mostly around Python language feature support per version and Black configuratio
 chosen by the user.
 """
 
-import sys
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from hashlib import sha256
 from operator import attrgetter
-from typing import Dict, Set
+from typing import Dict, Final, Set
 from warnings import warn
-
-if sys.version_info < (3, 8):
-    from typing_extensions import Final
-else:
-    from typing import Final
 
 from black.const import DEFAULT_LINE_LENGTH
 
@@ -188,6 +182,7 @@ class Preview(Enum):
     skip_magic_trailing_comma_in_subscript = auto()
     wrap_long_dict_values_in_parens = auto()
     wrap_multiple_context_managers_in_parens = auto()
+    dummy_implementations = auto()
 
 
 class Deprecated(UserWarning):

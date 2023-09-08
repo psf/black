@@ -10,22 +10,17 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Fix a bug where an illegal trailing comma was added to return type annotations using
-  PEP 604 unions (#3735)
-
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
-- Implicitly concatenated strings used as function args are no longer wrapped inside
-  parentheses (#3640)
-- Remove blank lines between a class definition and its docstring (#3692)
+- More concise formatting for dummy implementations (#3796)
 
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
 
-- `.pytest_cache`, `.ruff_cache` and `.vscode` are now excluded by default (#3691)
+- Black now applies exclusion and ignore logic before resolving symlinks (#3846)
 
 ### Packaging
 
@@ -35,35 +30,110 @@
 
 <!-- Changes to the parser or to version autodetection -->
 
-- Add support for the new PEP 695 syntax in Python 3.12 (#3703)
-
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
+
+- Avoid importing `IPython` if notebook cells do not contain magics (#3782)
+- Improve caching by comparing file hashes as fallback for mtime and size. (#3821)
 
 ### Output
 
 <!-- Changes to Black's terminal output and error messages -->
 
-- Use aware UTC datetimes internally, avoids deprecation warning on Python 3.12 (#3728)
-
 ### _Blackd_
 
 <!-- Changes to blackd -->
+
+- Fix an issue in `blackd` with single character input (#3558)
+
+### Integrations
+
+<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- Black now has an
+  [official pre-commit mirror](https://github.com/psf/black-pre-commit-mirror). Swapping
+  `https://github.com/psf/black` to `https://github.com/psf/black-pre-commit-mirror` in
+  your `.pre-commit-config.yaml` will make Black about 2x faster (#3828)
+- The `.black.env` folder specified by `ENV_PATH` will now be removed on the completion
+  of the GitHub Action. (#3759)
+
+### Documentation
+
+<!-- Major changes to documentation and policies. Small docs changes
+     don't need a changelog entry. -->
+
+## 23.7.0
+
+### Highlights
+
+- Runtime support for Python 3.7 has been removed. Formatting 3.7 code will still be
+  supported until further notice (#3765)
+
+### Stable style
+
+- Fix a bug where an illegal trailing comma was added to return type annotations using
+  PEP 604 unions (#3735)
+- Fix several bugs and crashes where comments in stub files were removed or mishandled
+  under some circumstances (#3745)
+- Fix a crash with multi-line magic comments like `type: ignore` within parentheses
+  (#3740)
+- Fix error in AST validation when _Black_ removes trailing whitespace in a type comment
+  (#3773)
+
+### Preview style
+
+- Implicitly concatenated strings used as function args are no longer wrapped inside
+  parentheses (#3640)
+- Remove blank lines between a class definition and its docstring (#3692)
+
+### Configuration
+
+- The `--workers` argument to _Black_ can now be specified via the `BLACK_NUM_WORKERS`
+  environment variable (#3743)
+- `.pytest_cache`, `.ruff_cache` and `.vscode` are now excluded by default (#3691)
+- Fix _Black_ not honouring `pyproject.toml` settings when running `--stdin-filename`
+  and the `pyproject.toml` found isn't in the current working directory (#3719)
+- _Black_ will now error if `exclude` and `extend-exclude` have invalid data types in
+  `pyproject.toml`, instead of silently doing the wrong thing (#3764)
+
+### Packaging
+
+- Upgrade mypyc from 0.991 to 1.3 (#3697)
+- Remove patching of Click that mitigated errors on Python 3.6 with `LANG=C` (#3768)
+
+### Parser
+
+- Add support for the new PEP 695 syntax in Python 3.12 (#3703)
+
+### Performance
+
+- Speed up _Black_ significantly when the cache is full (#3751)
+- Avoid importing `IPython` in a case where we wouldn't need it (#3748)
+
+### Output
+
+- Use aware UTC datetimes internally, avoids deprecation warning on Python 3.12 (#3728)
+- Change verbose logging to exactly mirror _Black_'s logic for source discovery (#3749)
+
+### _Blackd_
 
 - The `blackd` argument parser now shows the default values for options in their help
   text (#3712)
 
 ### Integrations
 
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
-
+- Black is now tested with
+  [`PYTHONWARNDEFAULTENCODING = 1`](https://docs.python.org/3/library/io.html#io-encoding-warning)
+  (#3763)
 - Update GitHub Action to display black output in the job summary (#3688)
 
 ### Documentation
 
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
+- Add a CITATION.cff file to the root of the repository, containing metadata on how to
+  cite this software (#3723)
+- Update the _classes_ and _exceptions_ documentation in Developer reference to match
+  the latest code base (#3755)
 
 ## 23.3.0
 

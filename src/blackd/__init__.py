@@ -152,7 +152,8 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
         )
 
         # Preserve CRLF line endings
-        if req_str[req_str.find("\n") - 1] == "\r":
+        nl = req_str.find("\n")
+        if nl > 0 and req_str[nl - 1] == "\r":
             formatted_str = formatted_str.replace("\n", "\r\n")
             # If, after swapping line endings, nothing changed, then say so
             if formatted_str == req_str:
@@ -225,7 +226,6 @@ def parse_python_variant_header(value: str) -> Tuple[bool, Set[black.TargetVersi
 def patched_main() -> None:
     maybe_install_uvloop()
     freeze_support()
-    black.patch_click()
     main()
 
 

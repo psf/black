@@ -1,5 +1,6 @@
 import os
 import shlex
+import shutil
 import sys
 from pathlib import Path
 from subprocess import PIPE, STDOUT, run
@@ -73,5 +74,6 @@ else:
         stderr=STDOUT,
         encoding="utf-8",
     )
+shutil.rmtree(ENV_PATH, ignore_errors=True)
 print(proc.stdout)
 sys.exit(proc.returncode)

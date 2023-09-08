@@ -42,7 +42,7 @@ if TYPE_CHECKING:
     import colorama  # noqa: F401
 
 
-@lru_cache()
+@lru_cache
 def find_project_root(
     srcs: Sequence[str], stdin_filename: Optional[str] = None
 ) -> Tuple[Path, str]:
@@ -89,9 +89,11 @@ def find_project_root(
     return directory, "file system root"
 
 
-def find_pyproject_toml(path_search_start: Tuple[str, ...]) -> Optional[str]:
+def find_pyproject_toml(
+    path_search_start: Tuple[str, ...], stdin_filename: Optional[str] = None
+) -> Optional[str]:
     """Find the absolute filepath to a pyproject.toml if it exists"""
-    path_project_root, _ = find_project_root(path_search_start)
+    path_project_root, _ = find_project_root(path_search_start, stdin_filename)
     path_pyproject_toml = path_project_root / "pyproject.toml"
     if path_pyproject_toml.is_file():
         return str(path_pyproject_toml)
@@ -210,7 +212,7 @@ def strip_specifier_set(specifier_set: SpecifierSet) -> SpecifierSet:
     return SpecifierSet(",".join(str(s) for s in specifiers))
 
 
-@lru_cache()
+@lru_cache
 def find_user_pyproject_toml() -> Path:
     r"""Return the path to the top-level user configuration for black.
 
@@ -230,7 +232,7 @@ def find_user_pyproject_toml() -> Path:
     return user_config_path.resolve()
 
 
-@lru_cache()
+@lru_cache
 def get_gitignore(root: Path) -> PathSpec:
     """Return a PathSpec matching gitignore content if present."""
     gitignore = root / ".gitignore"
@@ -274,15 +276,24 @@ def normalize_path_maybe_ignore(
     return root_relative_path
 
 
-def path_is_ignored(
-    path: Path, gitignore_dict: Dict[Path, PathSpec], report: Report
+def _path_is_ignored(
+    root_relative_path: str,
+    root: Path,
+    gitignore_dict: Dict[Path, PathSpec],
+    report: Report,
 ) -> bool:
+    path = root / root_relative_path
+    # Note that this logic is sensitive to the ordering of gitignore_dict. Callers must
+    # ensure that gitignore_dict is ordered from least specific to most specific.
     for gitignore_path, pattern in gitignore_dict.items():
-        relative_path = normalize_path_maybe_ignore(path, gitignore_path, report)
-        if relative_path is None:
+        try:
+            relative_path = path.relative_to(gitignore_path).as_posix()
+        except ValueError:
             break
         if pattern.match_file(relative_path):
-            report.path_ignored(path, "matches a .gitignore file content")
+            report.path_ignored(
+                path.relative_to(root), "matches a .gitignore file content"
+            )
             return True
     return False
 
@@ -319,31 +330,35 @@ def gen_python_files(
 
     assert root.is_absolute(), f"INTERNAL ERROR: `root` must be absolute but is {root}"
     for child in paths:
-        normalized_path = normalize_path_maybe_ignore(child, root, report)
-        if normalized_path is None:
-            continue
+        root_relative_path = child.absolute().relative_to(root).as_posix()
 
         # First ignore files matching .gitignore, if passed
-        if gitignore_dict and path_is_ignored(child, gitignore_dict, report):
+        if gitignore_dict and _path_is_ignored(
+            root_relative_path, root, gitignore_dict, report
+        ):
             continue
 
         # Then ignore with `--exclude` `--extend-exclude` and `--force-exclude` options.
-        normalized_path = "/" + normalized_path
+        root_relative_path = "/" + root_relative_path
         if child.is_dir():
-            normalized_path += "/"
+            root_relative_path += "/"
 
-        if path_is_excluded(normalized_path, exclude):
+        if path_is_excluded(root_relative_path, exclude):
             report.path_ignored(child, "matches the --exclude regular expression")
             continue
 
-        if path_is_excluded(normalized_path, extend_exclude):
+        if path_is_excluded(root_relative_path, extend_exclude):
             report.path_ignored(
                 child, "matches the --extend-exclude regular expression"
             )
             continue
 
-        if path_is_excluded(normalized_path, force_exclude):
+        if path_is_excluded(root_relative_path, force_exclude):
             report.path_ignored(child, "matches the --force-exclude regular expression")
+            continue
+
+        normalized_path = normalize_path_maybe_ignore(child, root, report)
+        if normalized_path is None:
             continue
 
         if child.is_dir():
@@ -371,7 +386,7 @@ def gen_python_files(
 
         elif child.is_file():
             if child.suffix == ".ipynb" and not jupyter_dependencies_are_installed(
-                verbose=verbose, quiet=quiet
+                warn=verbose or not quiet
             ):
                 continue
             include_match = include.search(normalized_path) if include else True
