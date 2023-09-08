@@ -170,6 +170,8 @@ expected to become part of Black's stable style in January 2024.
 - For stubs, enforce one blank line after a nested class with a body other than just
   `...` (#3564)
 - Improve handling of multiline strings by changing line split behavior (#1879)
+- In stub files, add a blank line between a statement with a body (e.g an
+  `if sys.version_info > (3, x):`) and a function definition on the same level. (#3862)
 
 ### Parser
 
