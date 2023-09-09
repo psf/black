@@ -48,8 +48,8 @@ def get_cache_file(mode: Mode) -> Path:
     return CACHE_DIR / f"cache.{mode.get_cache_key()}.pickle"
 
 
-@dataclass
 @mypyc_attr(patchable=True)
+@dataclass
 class Cache:
     mode: Mode
     cache_file: Path
