@@ -43,6 +43,8 @@ To cut a release:
    1. Remove any empty sections for the current release
    1. (_optional_) Read through and copy-edit the changelog (eg. by moving entries,
       fixing typos, or rephrasing entries)
+   1. Double-check that no changelog entries since the last release were put in the
+      wrong section (e.g., run `git diff <last release> CHANGES.md`)
    1. Add a new empty template for the next release above
       ([template below](#changelog-template))
    1. Update references to the latest version in
