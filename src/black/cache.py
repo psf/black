@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Iterable, Set, Tuple
 
+from mypy_extensions import mypyc_attr
 from platformdirs import user_cache_dir
 
 from _black_version import version as __version__
@@ -48,6 +49,7 @@ def get_cache_file(mode: Mode) -> Path:
 
 
 @dataclass
+@mypyc_attr(patchable=True)
 class Cache:
     mode: Mode
     cache_file: Path
