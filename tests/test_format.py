@@ -201,9 +201,9 @@ def test_stub() -> None:
     assert_format(source, expected, mode)
 
 
-def test_nested_class_stub() -> None:
+def test_nested_stub() -> None:
     mode = replace(DEFAULT_MODE, is_pyi=True, preview=True)
-    source, expected = read_data("miscellaneous", "nested_class_stub.pyi")
+    source, expected = read_data("miscellaneous", "nested_stub.pyi")
     assert_format(source, expected, mode)
 
 
