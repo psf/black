@@ -1,8 +1,9 @@
-name: Publish to PyPI
+name: Build wheels and publish to PyPI
 
 on:
   release:
     types: [published]
+  pull_request:
 
 permissions:
   contents: read
@@ -28,7 +29,8 @@ jobs:
       - name: Build wheel and source distributions
         run: python -m build
 
-      - name: Upload to PyPI via Twine
+      - if: github.event_name == 'release'
+        name: Upload to PyPI via Twine
         env:
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
         run: twine upload --verbose -u '__token__' dist/*
@@ -68,7 +70,8 @@ jobs:
           name: ${{ matrix.name }}-mypyc-wheels
           path: ./wheelhouse/*.whl
 
-      - name: Upload wheels to PyPI via Twine
+      - if: github.event_name == 'release'
+        name: Upload wheels to PyPI via Twine
         env:
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
         run: pipx run twine upload --verbose -u '__token__' wheelhouse/*.whl
@@ -87,7 +90,8 @@ jobs:
           ref: stable
           fetch-depth: 0
 
-      - name: Update stable branch to release tag & push
+      - if: github.event_name == 'release'
+        name: Update stable branch to release tag & push
         run: |
           git reset --hard ${{ github.event.release.tag_name }}
           git push
