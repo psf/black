@@ -24,6 +24,8 @@ class FileData(NamedTuple):
     st_size: int
     hash: str
 
+FileData.__module__ = "black.cache"
+
 
 def get_cache_dir() -> Path:
     """Get the cache directory used by black.
