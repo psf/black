@@ -5,10 +5,10 @@ import pickle
 import sys
 import tempfile
 from dataclasses import dataclass, field
-from mypy_extensions import mypyc_attr
 from pathlib import Path
 from typing import Dict, Iterable, NamedTuple, Set, Tuple
 
+from mypy_extensions import mypyc_attr
 from platformdirs import user_cache_dir
 
 from _black_version import version as __version__
