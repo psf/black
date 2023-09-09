@@ -8,7 +8,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Iterable, NamedTuple, Set, Tuple
 
-from mypy_extensions import mypyc_attr
 from platformdirs import user_cache_dir
 
 from _black_version import version as __version__
@@ -20,7 +19,6 @@ else:
     from typing_extensions import Self
 
 
-@mypyc_attr(serializable=True)
 class FileData(NamedTuple):
     st_mtime: float
     st_size: int
