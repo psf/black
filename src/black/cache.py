@@ -24,7 +24,7 @@ class FileData(NamedTuple):
     st_size: int
     hash: str
 
-FileData.__module__ = "black.cache"
+FileData.__module__ = "black.cache"  # type: ignore
 
 
 def get_cache_dir() -> Path:
