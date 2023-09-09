@@ -14,13 +14,9 @@
 
 <!-- Changes that affect Black's preview style -->
 
-- More concise formatting for dummy implementations (#3796)
-
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
-
-- Black now applies exclusion and ignore logic before resolving symlinks (#3846)
 
 ### Packaging
 
@@ -34,9 +30,6 @@
 
 <!-- Changes that improve Black's performance. -->
 
-- Avoid importing `IPython` if notebook cells do not contain magics (#3782)
-- Improve caching by comparing file hashes as fallback for mtime and size. (#3821)
-
 ### Output
 
 <!-- Changes to Black's terminal output and error messages -->
@@ -45,23 +38,45 @@
 
 <!-- Changes to blackd -->
 
-- Fix an issue in `blackd` with single character input (#3558)
-
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+### Documentation
+
+<!-- Major changes to documentation and policies. Small docs changes
+     don't need a changelog entry. -->
+
+## 23.9.0
+
+### Preview style
+
+- More concise formatting for dummy implementations (#3796)
+- In stub files, add a blank line between a statement with a body (e.g an
+  `if sys.version_info > (3, x):`) and a function definition on the same level (#3862)
+- Fix a bug whereby spaces were removed from walrus operators within subscript(#3823)
+
+### Configuration
+
+- Black now applies exclusion and ignore logic before resolving symlinks (#3846)
+
+### Performance
+
+- Avoid importing `IPython` if notebook cells do not contain magics (#3782)
+- Improve caching by comparing file hashes as fallback for mtime and size (#3821)
+
+### _Blackd_
+
+- Fix an issue in `blackd` with single character input (#3558)
+
+### Integrations
 
 - Black now has an
   [official pre-commit mirror](https://github.com/psf/black-pre-commit-mirror). Swapping
   `https://github.com/psf/black` to `https://github.com/psf/black-pre-commit-mirror` in
   your `.pre-commit-config.yaml` will make Black about 2x faster (#3828)
 - The `.black.env` folder specified by `ENV_PATH` will now be removed on the completion
-  of the GitHub Action. (#3759)
-
-### Documentation
-
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
+  of the GitHub Action (#3759)
 
 ## 23.7.0
 
@@ -80,7 +95,6 @@
   (#3740)
 - Fix error in AST validation when _Black_ removes trailing whitespace in a type comment
   (#3773)
-- Fix a bug whereby spaces were removed from walrus operators within subscript (#3823)
 
 ### Preview style
 
@@ -171,8 +185,6 @@ expected to become part of Black's stable style in January 2024.
 - For stubs, enforce one blank line after a nested class with a body other than just
   `...` (#3564)
 - Improve handling of multiline strings by changing line split behavior (#1879)
-- In stub files, add a blank line between a statement with a body (e.g an
-  `if sys.version_info > (3, x):`) and a function definition on the same level. (#3862)
 
 ### Parser
 
