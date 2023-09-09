@@ -22,6 +22,8 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
+- Upgrade to mypy 1.5.1 (#3864)
+
 ### Parser
 
 <!-- Changes to the parser or to version autodetection -->
