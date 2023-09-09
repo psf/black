@@ -2063,7 +2063,7 @@ class TestCaching:
                 if path == cached:
                     return orig_func(path)
                 if path == cached_but_changed:
-                    return (0.0, 0, "")
+                    return FileData(0.0, 0, "")
                 raise AssertionError
 
             with patch.object(black.Cache, "get_file_data", side_effect=wrapped_func):
@@ -2085,20 +2085,20 @@ class TestCaching:
             todo, done = cache.filtered_cached([src])
             assert todo == set()
             assert done == {src}
-            assert cached_file_data[0] == st.st_mtime
+            assert cached_file_data.st_mtime == st.st_mtime
 
             # Modify st_mtime
-            cached_file_data = cache.file_data[str(src)] = (
-                cached_file_data[0] - 1,
-                cached_file_data[1],
-                cached_file_data[2],
+            cached_file_data = cache.file_data[str(src)] = FileData(
+                cached_file_data.st_mtime - 1,
+                cached_file_data.st_size,
+                cached_file_data.hash,
             )
             todo, done = cache.filtered_cached([src])
             assert todo == set()
             assert done == {src}
-            assert cached_file_data[0] < st.st_mtime
-            assert cached_file_data[1] == st.st_size
-            assert cached_file_data[2] == black.Cache.hash_digest(src)
+            assert cached_file_data.st_mtime < st.st_mtime
+            assert cached_file_data.st_size == st.st_size
+            assert cached_file_data.hash == black.Cache.hash_digest(src)
 
             # Modify contents
             src.write_text("print('hello world')", encoding="utf-8")
@@ -2106,9 +2106,9 @@ class TestCaching:
             todo, done = cache.filtered_cached([src])
             assert todo == {src}
             assert done == set()
-            assert cached_file_data[0] < new_st.st_mtime
-            assert cached_file_data[1] != new_st.st_size
-            assert cached_file_data[2] != black.Cache.hash_digest(src)
+            assert cached_file_data.st_mtime < new_st.st_mtime
+            assert cached_file_data.st_size != new_st.st_size
+            assert cached_file_data.hash != black.Cache.hash_digest(src)
 
     def test_write_cache_creates_directory_if_needed(self) -> None:
         mode = DEFAULT_MODE

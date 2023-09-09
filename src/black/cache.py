@@ -6,7 +6,7 @@ import sys
 import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Iterable, Set, Tuple
+from typing import Dict, Iterable, NamedTuple, Set, Tuple
 
 from platformdirs import user_cache_dir
 
@@ -19,9 +19,12 @@ else:
     from typing_extensions import Self
 
 
-# We'd like to use a NamedTuple (st_mtime, st_size, hash) here, but
-# that breaks mypyc.
-FileData = tuple[float, int, str]
+class FileData(NamedTuple):
+    st_mtime: float
+    st_size: int
+    hash: str
+
+FileData.__module__ = "black.cache"  # type: ignore
 
 
 def get_cache_dir() -> Path:
@@ -85,7 +88,7 @@ class Cache:
 
         stat = path.stat()
         hash = Cache.hash_digest(path)
-        return (stat.st_mtime, stat.st_size, hash)
+        return FileData(stat.st_mtime, stat.st_size, hash)
 
     def is_changed(self, source: Path) -> bool:
         """Check if source has changed compared to cached version."""
@@ -95,11 +98,11 @@ class Cache:
             return True
 
         st = res_src.stat()
-        if st.st_size != old[1]:
+        if st.st_size != old.st_size:
             return True
-        if int(st.st_mtime) != int(old[0]):
+        if int(st.st_mtime) != int(old.st_mtime):
             new_hash = Cache.hash_digest(res_src)
-            if new_hash != old[2]:
+            if new_hash != old.hash:
                 return True
         return False
 
@@ -128,6 +131,7 @@ class Cache:
             with tempfile.NamedTemporaryFile(
                 dir=str(self.cache_file.parent), delete=False
             ) as f:
+                print("DATA TO PICKLE", self.file_data)
                 pickle.dump(self.file_data, f, protocol=4)
             os.replace(f.name, self.cache_file)
         except OSError:
