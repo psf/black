@@ -21,7 +21,7 @@ else:
 
 # We'd like to use a NamedTuple (st_mtime, st_size, hash) here, but
 # that breaks mypyc.
-FileData = Tuple[float, int, str]
+FileData = tuple[float, int, str]
 
 
 def get_cache_dir() -> Path:
