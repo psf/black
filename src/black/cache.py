@@ -5,6 +5,7 @@ import pickle
 import sys
 import tempfile
 from dataclasses import dataclass, field
+from mypy_extensions import mypyc_attr
 from pathlib import Path
 from typing import Dict, Iterable, NamedTuple, Set, Tuple
 
@@ -19,12 +20,11 @@ else:
     from typing_extensions import Self
 
 
+@mypyc_attr(serializable=True)
 class FileData(NamedTuple):
     st_mtime: float
     st_size: int
     hash: str
-
-FileData.__module__ = "black.cache"  # type: ignore
 
 
 def get_cache_dir() -> Path:
@@ -131,7 +131,6 @@ class Cache:
             with tempfile.NamedTemporaryFile(
                 dir=str(self.cache_file.parent), delete=False
             ) as f:
-                print("DATA TO PICKLE", self.file_data)
                 pickle.dump(self.file_data, f, protocol=4)
             os.replace(f.name, self.cache_file)
         except OSError:
