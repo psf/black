@@ -129,6 +129,7 @@ class Cache:
             with tempfile.NamedTemporaryFile(
                 dir=str(self.cache_file.parent), delete=False
             ) as f:
+                print("DATA TO PICKLE", self.file_data)
                 pickle.dump(self.file_data, f, protocol=4)
             os.replace(f.name, self.cache_file)
         except OSError:
