@@ -153,7 +153,7 @@ def mask_cell(src: str) -> Tuple[str, List[Replacement]]:
 
     from IPython.core.inputtransformer2 import TransformerManager
 
-    transformer_manager = TransformerManager()
+    transformer_manager = TransformerManager()  # type: ignore[no-untyped-call]
     transformed = transformer_manager.transform_cell(src)
     transformed, cell_magic_replacements = replace_cell_magics(transformed)
     replacements += cell_magic_replacements
