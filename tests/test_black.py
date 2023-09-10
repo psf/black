@@ -2482,6 +2482,41 @@ class TestFileCollection:
         )
 
 
+class TestDeFactoAPI:
+    """Test that certain symbols that are commonly used externally keep working.
+
+    We don't (yet) formally expose an API (see issue #779), but we should endeavor to
+    keep certain functions that external users commonly rely on working.
+
+    """
+
+    def test_format_str(self):
+        # format_str and Mode should keep working
+        assert (
+            black.format_str("print('hello')", mode=black.Mode()) == 'print("hello")\n'
+        )
+
+        # you can pass line length
+        assert (
+            black.format_str("print('hello')", mode=black.Mode(line_length=42))
+            == 'print("hello")\n'
+        )
+
+        # invalid input raises InvalidInput
+        with pytest.raises(black.InvalidInput):
+            black.format_str("syntax error", mode=black.Mode())
+
+    def test_format_file_contents(self):
+        # You probably should be using format_str() instead, but let's keep this one around
+        # since people do use it
+        assert (
+            black.format_file_contents("x=1", fast=True, mode=black.Mode()) == "x = 1\n"
+        )
+
+        with pytest.raises(black.NothingChanged):
+            black.format_file_contents("x = 1\n", fast=True, mode=black.Mode())
+
+
 try:
     with open(black.__file__, "r", encoding="utf-8") as _bf:
         black_source_lines = _bf.readlines()

@@ -67,7 +67,7 @@ from black.mode import (
     FUTURE_FLAG_TO_FEATURE,
     VERSION_TO_FEATURES,
     Feature,
-    Mode,
+    Mode as Mode,  # re-exported
     TargetVersion,
     supports_feature,
 )
