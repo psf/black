@@ -1985,6 +1985,7 @@ class TestCaching:
             assert not cache.is_changed(one)
             assert not cache.is_changed(two)
 
+    @pytest.mark.incompatible_with_mypyc
     @pytest.mark.parametrize("color", [False, True], ids=["no-color", "with-color"])
     def test_no_cache_when_writeback_diff(self, color: bool) -> None:
         mode = DEFAULT_MODE
@@ -2046,6 +2047,7 @@ class TestCaching:
             read_cache = black.Cache.read(mode)
             assert not read_cache.is_changed(src)
 
+    @pytest.mark.incompatible_with_mypyc
     def test_filter_cached(self) -> None:
         with TemporaryDirectory() as workspace:
             path = Path(workspace)
