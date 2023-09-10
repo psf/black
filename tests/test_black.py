@@ -2490,7 +2490,7 @@ class TestDeFactoAPI:
 
     """
 
-    def test_format_str(self):
+    def test_format_str(self) -> None:
         # format_str and Mode should keep working
         assert (
             black.format_str("print('hello')", mode=black.Mode()) == 'print("hello")\n'
@@ -2506,7 +2506,7 @@ class TestDeFactoAPI:
         with pytest.raises(black.InvalidInput):
             black.format_str("syntax error", mode=black.Mode())
 
-    def test_format_file_contents(self):
+    def test_format_file_contents(self) -> None:
         # You probably should be using format_str() instead, but let's keep this one around
         # since people do use it
         assert (
