@@ -32,8 +32,8 @@
 
 <!-- Changes that improve Black's performance. -->
 
-- Store raw tuples instead of NamedTuples in Black's cache, improving
-  performance and decreasing the size of the cache (#3877)
+- Store raw tuples instead of NamedTuples in Black's cache, improving performance and
+  decreasing the size of the cache (#3877)
 
 ### Output
 
