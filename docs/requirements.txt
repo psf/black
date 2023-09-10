@@ -6,4 +6,4 @@ Sphinx==7.2.3
 docutils==0.19
 sphinxcontrib-programoutput==0.17
 sphinx_copybutton==0.5.2
-furo==2023.8.19
+furo==2023.9.10
