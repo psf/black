@@ -1985,6 +1985,7 @@ class TestCaching:
             assert not cache.is_changed(one)
             assert not cache.is_changed(two)
 
+    @pytest.mark.incompatible_with_mypyc
     @pytest.mark.parametrize("color", [False, True], ids=["no-color", "with-color"])
     def test_no_cache_when_writeback_diff(self, color: bool) -> None:
         mode = DEFAULT_MODE
@@ -2046,6 +2047,7 @@ class TestCaching:
             read_cache = black.Cache.read(mode)
             assert not read_cache.is_changed(src)
 
+    @pytest.mark.incompatible_with_mypyc
     def test_filter_cached(self) -> None:
         with TemporaryDirectory() as workspace:
             path = Path(workspace)
@@ -2478,6 +2480,41 @@ class TestFileCollection:
             force_exclude=r"/exclude/|a\.py",
             stdin_filename=stdin_filename,
         )
+
+
+class TestDeFactoAPI:
+    """Test that certain symbols that are commonly used externally keep working.
+
+    We don't (yet) formally expose an API (see issue #779), but we should endeavor to
+    keep certain functions that external users commonly rely on working.
+
+    """
+
+    def test_format_str(self) -> None:
+        # format_str and Mode should keep working
+        assert (
+            black.format_str("print('hello')", mode=black.Mode()) == 'print("hello")\n'
+        )
+
+        # you can pass line length
+        assert (
+            black.format_str("print('hello')", mode=black.Mode(line_length=42))
+            == 'print("hello")\n'
+        )
+
+        # invalid input raises InvalidInput
+        with pytest.raises(black.InvalidInput):
+            black.format_str("syntax error", mode=black.Mode())
+
+    def test_format_file_contents(self) -> None:
+        # You probably should be using format_str() instead, but let's keep
+        # this one around since people do use it
+        assert (
+            black.format_file_contents("x=1", fast=True, mode=black.Mode()) == "x = 1\n"
+        )
+
+        with pytest.raises(black.NothingChanged):
+            black.format_file_contents("x = 1\n", fast=True, mode=black.Mode())
 
 
 try:
