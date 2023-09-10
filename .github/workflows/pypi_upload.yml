@@ -63,7 +63,6 @@ jobs:
         uses: pypa/cibuildwheel@v2.15.0
         env:
           CIBW_ARCHS_MACOS: "${{ matrix.macos_arch }}"
-          CIBW_SKIP: "cp312-*"
 
       - name: Upload wheels as workflow artifacts
         uses: actions/upload-artifact@v3
