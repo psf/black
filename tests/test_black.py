@@ -2507,8 +2507,8 @@ class TestDeFactoAPI:
             black.format_str("syntax error", mode=black.Mode())
 
     def test_format_file_contents(self) -> None:
-        # You probably should be using format_str() instead, but let's keep this one around
-        # since people do use it
+        # You probably should be using format_str() instead, but let's keep
+        # this one around since people do use it
         assert (
             black.format_file_contents("x=1", fast=True, mode=black.Mode()) == "x = 1\n"
         )
