@@ -3,10 +3,11 @@
 ## 23.9.1
 
 Due to various issues, the previous release (23.9.0) did not include compiled mypyc
-wheels, which make Black significantly faster. These issues have now been fixed, and this release should come with compiled wheels once again.
+wheels, which make Black significantly faster. These issues have now been fixed, and
+this release should come with compiled wheels once again.
 
-There will be no wheels for Python 3.12 due to a bug in mypyc. We will
-provide 3.12 wheels in a future release as soon as the mypyc bug is fixed.
+There will be no wheels for Python 3.12 due to a bug in mypyc. We will provide 3.12
+wheels in a future release as soon as the mypyc bug is fixed.
 
 ### Packaging
 
