@@ -209,7 +209,10 @@ filterwarnings = [
     # https://github.com/aio-libs/aiohttp/issues/6905
     '''ignore:'cgi' is deprecated and slated for removal in Python 3.13:DeprecationWarning''',
     # Work around https://github.com/pytest-dev/pytest/issues/10977 for Python 3.12
-    '''ignore:(Attribute s|Attribute n|ast.Str|ast.Bytes|ast.NameConstant|ast.Num) is deprecated and will be removed in Python 3.14:DeprecationWarning'''
+    '''ignore:(Attribute s|Attribute n|ast.Str|ast.Bytes|ast.NameConstant|ast.Num) is deprecated and will be removed in Python 3.14:DeprecationWarning''',
+    # Will be fixed with aiohttp 3.9.0
+    # https://github.com/aio-libs/aiohttp/pull/7302
+    "ignore:datetime.*utcfromtimestamp\\(\\) is deprecated and scheduled for removal:DeprecationWarning",
 ]
 [tool.coverage.report]
 omit = [
