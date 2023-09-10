@@ -67,11 +67,8 @@ class Cache:
 
         with cache_file.open("rb") as fobj:
             try:
-                if sys.version_info >= (3, 9):
-                    file_data: Dict[str, FileData] = pickle.load(fobj)
-                else:
-                    data: Dict[str, Tuple[float, int, str]] = pickle.load(fobj)
-                    file_data = {k: FileData(*v) for k, v in data.items()}
+                data: Dict[str, Tuple[float, int, str]] = pickle.load(fobj)
+                file_data = {k: FileData(*v) for k, v in data.items()}
             except (pickle.UnpicklingError, ValueError, IndexError):
                 return cls(mode, cache_file)
 
@@ -133,13 +130,12 @@ class Cache:
             with tempfile.NamedTemporaryFile(
                 dir=str(self.cache_file.parent), delete=False
             ) as f:
-                if sys.version_info >= (3, 9):
-                    pickle.dump(self.file_data, f, protocol=4)
-                else:
-                    data: Dict[str, Tuple[float, int, str]] = {
-                        k: (*v,) for k, v in self.file_data.items()
-                    }
-                    pickle.dump(data, f, protocol=4)
+                # We store raw tuples in the cache because pickling NamedTuples
+                # doesn't work with mypyc on Python 3.8, and because it's faster.
+                data: Dict[str, Tuple[float, int, str]] = {
+                    k: (*v,) for k, v in self.file_data.items()
+                }
+                pickle.dump(data, f, protocol=4)
             os.replace(f.name, self.cache_file)
         except OSError:
             pass
