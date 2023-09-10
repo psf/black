@@ -482,7 +482,7 @@ def generate_tokens(
     async_def_nl = False
 
     strstart: Tuple[int, int]
-    endprog: Pattern[str]
+    endprog_stack: list[Pattern[str]] = []
 
     while 1:  # loop over lines in stream
         try:
@@ -496,6 +496,7 @@ def generate_tokens(
             assert contline is not None
             if not line:
                 raise TokenError("EOF in multi-line string", strstart)
+            endprog = endprog_stack[-1]
             endmatch = endprog.match(line)
             if endmatch:
                 pos = end = endmatch.end(0)
@@ -515,6 +516,7 @@ def generate_tokens(
                     else:
                         yield (FSTRING_END, token, spos, epos, tokenline)
                         fstring_level -= 1
+                        endprog_stack.pop()
                     # TODO: contstr reliance doesn't work now because we can be inside
                     # an fstring and still empty contstr right here.
                 contstr, needcont = "", 0
@@ -605,6 +607,7 @@ def generate_tokens(
 
         while pos < max:
             if fstring_level > 0 and not inside_fstring_braces:
+                endprog = endprog_stack[-1]
                 endmatch = endprog.match(line, pos)
                 if endmatch:  # all on one line
                     start, end = endmatch.span(0)
@@ -619,6 +622,7 @@ def generate_tokens(
                         yield (FSTRING_MIDDLE, token, (lnum, 0), (lnum, 0), line)
                         yield (FSTRING_END, token, (lnum, 0), (lnum, 0), line)
                         fstring_level -= 1
+                        endprog_stack.pop()
                     else:
                         # TODO: most of the positions are wrong
                         yield (FSTRING_MIDDLE, token, (lnum, 0), (lnum, 0), line)
@@ -657,11 +661,12 @@ def generate_tokens(
                         stashed = None
                     yield (COMMENT, token, spos, epos, line)
                 elif token in triple_quoted:
+                    endprog = endprogs[token]
                     if token.startswith("f"):
                         yield (FSTRING_START, token, spos, epos, line)
                         fstring_level += 1
+                        endprog_stack.append(endprog)
 
-                    endprog = endprogs[token]
                     endmatch = endprog.match(line, pos)
                     if endmatch:  # all on one line
                         if stashed:
@@ -704,6 +709,7 @@ def generate_tokens(
                     assert maybe_endprog is not None, f"endprog not found for {token}"
                     endprog = maybe_endprog
                     if token[-1] == "\n":  # continued string
+                        endprog_stack.append(endprog)
                         strstart = (lnum, start)
                         contstr, needcont = line[start:], 1
                         contline = line
@@ -727,6 +733,8 @@ def generate_tokens(
                                 start_epos = (lnum, start + offset - 1)
                             yield (FSTRING_START, fstring_start, spos, start_epos, line)
                             fstring_level += 1
+                            endprog = endprogs[fstring_start]
+                            endprog_stack.append(endprog)
 
                             end_offset = pseudomatch.end() - 1
                             fstring_middle = line[start + offset - 1 : end_offset]
