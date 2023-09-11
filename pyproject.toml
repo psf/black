@@ -145,8 +145,8 @@ build-verbosity = 1
 # - Python: CPython 3.8+ only
 # - Architecture (64-bit only): amd64 / x86_64, universal2, and arm64
 # - OS: Linux (no musl), Windows, and macOS
-build = "cp3*-*"
-skip = ["*-manylinux_i686", "*-musllinux_*", "*-win32", "pp-*", "cp312-*"]
+build = "cp3*"
+skip = ["*-manylinux_i686", "*-musllinux_*", "*-win32", "pp*", "cp312-*"]
 # This is the bare minimum needed to run the test suite. Pulling in the full
 # test_requirements.txt would download a bunch of other packages not necessary
 # here and would slow down the testing step a fair bit.
