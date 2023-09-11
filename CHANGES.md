@@ -22,8 +22,6 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
-- Upgrade to mypy 1.5.1 (#3864)
-
 ### Parser
 
 <!-- Changes to the parser or to version autodetection -->
@@ -31,9 +29,6 @@
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
-
-- Store raw tuples instead of NamedTuples in Black's cache, improving performance and
-  decreasing the size of the cache (#3877)
 
 ### Output
 
@@ -51,6 +46,24 @@
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
+
+## 23.9.1
+
+Due to various issues, the previous release (23.9.0) did not include compiled mypyc
+wheels, which make Black significantly faster. These issues have now been fixed, and
+this release should come with compiled wheels once again.
+
+There will be no wheels for Python 3.12 due to a bug in mypyc. We will provide 3.12
+wheels in a future release as soon as the mypyc bug is fixed.
+
+### Packaging
+
+- Upgrade to mypy 1.5.1 (#3864)
+
+### Performance
+
+- Store raw tuples instead of NamedTuples in Black's cache, improving performance and
+  decreasing the size of the cache (#3877)
 
 ## 23.9.0
 
