@@ -18,7 +18,7 @@ jobs:
     if: github.event_name == 'release'
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up latest Python
         uses: actions/setup-python@v4
@@ -87,7 +87,7 @@ jobs:
         include: ${{ fromJson(needs.generate_wheels_matrix.outputs.include) }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: pypa/cibuildwheel@v2.15.0
         with:
           only: ${{ matrix.only }}
@@ -114,7 +114,7 @@ jobs:
 
     steps:
       - name: Checkout stable branch
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: stable
           fetch-depth: 0

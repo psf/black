@@ -288,8 +288,8 @@ $ git checkout origin/stable -b stable
 ##### Arch Linux
 
 On Arch Linux, the plugin is shipped with the
-[`python-black`](https://archlinux.org/packages/community/any/python-black/) package, so
-you can start using it in Vim after install with no additional setup.
+[`python-black`](https://archlinux.org/packages/extra/any/python-black/) package, so you
+can start using it in Vim after install with no additional setup.
 
 ##### Vim 8 Native Plugin Management
 
