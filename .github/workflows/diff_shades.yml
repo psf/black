@@ -19,7 +19,7 @@ jobs:
       matrix: ${{ steps.set-config.outputs.matrix }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
           python-version: "*"
@@ -52,7 +52,7 @@ jobs:
 
     steps:
       - name: Checkout this repository (full clone)
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           # The baseline revision could be rather old so a full clone is ideal.
           fetch-depth: 0
