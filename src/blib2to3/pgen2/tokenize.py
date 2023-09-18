@@ -775,26 +775,26 @@ def generate_tokens(
                         else:
                             if pseudomatch[20] is not None:
                                 fstring_start = pseudomatch[20]
-                                offset = pseudomatch.end(20) - pseudomatch.start()
+                                offset = pseudomatch.end(20) - pseudomatch.start(1)
                                 start_epos = (lnum, start + offset)
                             elif pseudomatch[22] is not None:
                                 fstring_start = pseudomatch[22]
-                                offset = pseudomatch.end(22) - pseudomatch.start()
+                                offset = pseudomatch.end(22) - pseudomatch.start(1)
                                 start_epos = (lnum, start + offset)
                             elif pseudomatch[24] is not None:
                                 fstring_start = pseudomatch[24]
-                                offset = pseudomatch.end(24) - pseudomatch.start()
+                                offset = pseudomatch.end(24) - pseudomatch.start(1)
                                 start_epos = (lnum, start + offset)
                             else:
                                 fstring_start = pseudomatch[26]
-                                offset = pseudomatch.end(26) - pseudomatch.start()
+                                offset = pseudomatch.end(26) - pseudomatch.start(1)
                                 start_epos = (lnum, start + offset)
                             yield (FSTRING_START, fstring_start, spos, start_epos, line)
                             fstring_level += 1
                             endprog = endprogs[fstring_start]
                             endprog_stack.append(endprog)
 
-                            end_offset = pseudomatch.end() - 1
+                            end_offset = pseudomatch.end(1) - 1
                             fstring_middle = line[start + offset : end_offset]
                             middle_spos = (lnum, start + offset)
                             middle_epos = (lnum, end_offset)
