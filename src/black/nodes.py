@@ -131,7 +131,12 @@ BRACKET: Final = {
 OPENING_BRACKETS: Final = set(BRACKET.keys())
 CLOSING_BRACKETS: Final = set(BRACKET.values())
 BRACKETS: Final = OPENING_BRACKETS | CLOSING_BRACKETS
-ALWAYS_NO_SPACE: Final = CLOSING_BRACKETS | {token.COMMA, STANDALONE_COMMENT}
+ALWAYS_NO_SPACE: Final = CLOSING_BRACKETS | {
+    token.COMMA,
+    STANDALONE_COMMENT,
+    token.FSTRING_MIDDLE,
+    token.FSTRING_END,
+}
 
 RARROW = 55
 
@@ -195,6 +200,9 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
         syms.subscriptlist,
         syms.sliceop,
     }:
+        return NO
+
+    if t == token.LBRACE and p.type == syms.fstring_replacement_field:
         return NO
 
     prev = leaf.prev_sibling
