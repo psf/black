@@ -86,7 +86,7 @@ disabled-by-default counterpart W504. E203 should be disabled while changes are 
 
 ## Which Python versions does Black support?
 
-Currently the runtime requires Python 3.7-3.11. Formatting is supported for files
+Currently the runtime requires Python 3.8-3.11. Formatting is supported for files
 containing syntax from Python 3.3 to 3.11. We promise to support at least all Python
 versions that have not reached their end of life. This is the case for both running
 _Black_ and formatting code.
@@ -95,7 +95,7 @@ Support for formatting Python 2 code was removed in version 22.0. While we've ma
 plans to stop supporting older Python 3 minor versions immediately, their support might
 also be removed some time in the future without a deprecation period.
 
-Runtime support for 3.6 was removed in version 22.10.0.
+Runtime support for 3.7 was removed in version 23.7.0.
 
 ## Why does my linter or typechecker complain after I format my code?
 
@@ -107,7 +107,7 @@ codebase with _Black_.
 
 ## Can I run Black with PyPy?
 
-Yes, there is support for PyPy 3.7 and higher.
+Yes, there is support for PyPy 3.8 and higher.
 
 ## Why does Black not detect syntax errors in my code?
 
