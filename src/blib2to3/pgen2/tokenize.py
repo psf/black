@@ -497,7 +497,6 @@ def generate_tokens(
         lnum += 1
         pos, max = 0, len(line)
 
-
         # TODO: probably inside_fstring_braces is not the best boolean.
         # what about a case of a string inside a multiline fstring inside a
         # multiline fstring??
@@ -624,22 +623,35 @@ def generate_tokens(
                 if endmatch:  # all on one line
                     start, end = endmatch.span(0)
                     token = line[start:end]
-                    pos = end
+                    # TODO: triple quotes
+                    middle_token, end_token = token[:-1], token[-1]
                     # TODO: unsure if this can be safely removed
                     if stashed:
                         yield stashed
                         stashed = None
+                    yield (
+                        FSTRING_MIDDLE,
+                        middle_token,
+                        (lnum, pos),
+                        (lnum, end - 1),
+                        line,
+                    )
                     if not token.endswith("{"):
-                        # TODO: locations
-                        yield (FSTRING_MIDDLE, token, (lnum, 0), (lnum, 0), line)
-                        yield (FSTRING_END, token[-1], (lnum, 0), (lnum, 0), line)
+                        # TODO: end-1 is probably wrong
+                        yield (
+                            FSTRING_END,
+                            end_token,
+                            (lnum, end - 1),
+                            (lnum, end),
+                            line,
+                        )
                         fstring_level -= 1
                         endprog_stack.pop()
                     else:
                         # TODO: most of the positions are wrong
-                        yield (FSTRING_MIDDLE, token, (lnum, 0), (lnum, 0), line)
                         yield (LBRACE, "{", (lnum, 0), (lnum, 0), line)
                         inside_fstring_braces = True
+                    pos = end
                 else:  # multiple lines
                     contstr += line
                     contline = line
@@ -748,24 +760,24 @@ def generate_tokens(
                             elif pseudomatch[22] is not None:
                                 fstring_start = pseudomatch[22]
                                 offset = pseudomatch.end(22) - pseudomatch.start()
-                                start_epos = (lnum, start + offset - 1)
+                                start_epos = (lnum, start + offset)
                             elif pseudomatch[24] is not None:
                                 fstring_start = pseudomatch[24]
                                 offset = pseudomatch.end(24) - pseudomatch.start()
-                                start_epos = (lnum, start + offset - 1)
+                                start_epos = (lnum, start + offset)
                             else:
                                 fstring_start = pseudomatch[26]
                                 offset = pseudomatch.end(26) - pseudomatch.start()
-                                start_epos = (lnum, start + offset - 1)
+                                start_epos = (lnum, start + offset)
                             yield (FSTRING_START, fstring_start, spos, start_epos, line)
                             fstring_level += 1
                             endprog = endprogs[fstring_start]
                             endprog_stack.append(endprog)
 
                             end_offset = pseudomatch.end() - 1
-                            fstring_middle = line[start + offset - 1 : end_offset]
+                            fstring_middle = line[start + offset : end_offset]
                             middle_spos = (lnum, start + offset)
-                            middle_epos = (lnum, end_offset + 1)
+                            middle_epos = (lnum, end_offset)
                             yield (
                                 FSTRING_MIDDLE,
                                 fstring_middle,
@@ -774,12 +786,15 @@ def generate_tokens(
                                 line,
                             )
                             if not token.endswith("{"):
-                                yield (FSTRING_END, token[-1], epos, epos, line)
+                                end_spos = (lnum, end_offset)
+                                end_epos = (lnum, end_offset + 1)
+                                yield (FSTRING_END, token[-1], end_spos, end_epos, line)
                                 fstring_level -= 1
                                 endprog_stack.pop()
                             else:
-                                # TODO: most of the positions are wrong
-                                yield (LBRACE, "{", epos, epos, line)
+                                end_spos = (lnum, end_offset)
+                                end_epos = (lnum, end_offset + 1)
+                                yield (LBRACE, "{", end_spos, end_epos, line)
                                 inside_fstring_braces = True
 
                 elif initial.isidentifier():  # ordinary name
