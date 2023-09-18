@@ -45,7 +45,7 @@ jobs:
     outputs:
       include: ${{ steps.set-matrix.outputs.include }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install cibuildwheel and pypyp
         run: |
           pipx install cibuildwheel==2.15.0
