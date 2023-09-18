@@ -624,6 +624,7 @@ def generate_tokens(
                     start, end = endmatch.span(0)
                     token = line[start:end]
                     # TODO: triple quotes
+                    # TODO: check if the token will ever have any whitespace around?
                     middle_token, end_token = token[:-1], token[-1]
                     # TODO: unsure if this can be safely removed
                     if stashed:
@@ -703,24 +704,43 @@ def generate_tokens(
                             token = line[start:pos]
                             yield (STRING, token, spos, epos, line)
                         else:
-                            # TODO: most of the positions are wrong
-                            pos = endmatch.end(0)
-                            token = line[start:pos]
-                            yield (
-                                FSTRING_MIDDLE,
-                                token,
-                                spos,
-                                epos,
-                                line,
-                            )
+                            end = endmatch.end(0)
+                            token = line[pos:end]
+                            spos, epos = (lnum, pos), (lnum, end)
+                            # TODO: confirm there will be no padding around the tokens
+                            # TODO: don't detect like this perhaps?
                             if not token.endswith("{"):
-                                yield (FSTRING_END, token[-1], epos, epos, line)
+                                fstring_middle, fstring_end = token[:-3], token[-3:]
+                                fstring_middle_epos = fstring_end_spos = (lnum, end - 3)
+                                yield (
+                                    FSTRING_MIDDLE,
+                                    fstring_middle,
+                                    spos,
+                                    fstring_middle_epos,
+                                    line,
+                                )
+                                yield (
+                                    FSTRING_END,
+                                    fstring_end,
+                                    fstring_end_spos,
+                                    epos,
+                                    line,
+                                )
                                 fstring_level -= 1
                                 endprog_stack.pop()
                             else:
-                                # TODO: most of the positions are wrong
-                                yield (LBRACE, "{", epos, epos, line)
+                                fstring_middle, lbrace = token[:-1], token[-1]
+                                fstring_middle_epos = lbrace_spos = (lnum, end - 1)
+                                yield (
+                                    FSTRING_MIDDLE,
+                                    fstring_middle,
+                                    spos,
+                                    fstring_middle_epos,
+                                    line,
+                                )
+                                yield (LBRACE, lbrace, lbrace_spos, epos, line)
                                 inside_fstring_braces = True
+                            pos = end
                     else:
                         strstart = (lnum, start)  # multiple lines
                         contstr = line[start:]
