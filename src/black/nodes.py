@@ -121,6 +121,8 @@ ASSIGNMENTS: Final = {
     ">>=",
     "**=",
     "//=",
+    # also handle annassign
+    ":",
 }
 
 IMPLICIT_TUPLE: Final = {syms.testlist, syms.testlist_star_expr, syms.exprlist}
