@@ -504,7 +504,7 @@ def generate_tokens(
             endprog = endprog_stack[-1]
             endmatch = endprog.match(line)
             if endmatch:
-                pos = end = endmatch.end(0)
+                end = endmatch.end(0)
                 token = contstr + line[:end]
                 spos = strstart
                 epos = (lnum, end)
@@ -512,18 +512,40 @@ def generate_tokens(
                 # TODO: better way to detect fstring
                 if fstring_level == 0:
                     yield (STRING, token, spos, epos, tokenline)
+                    endprog_stack.pop()
                 else:
-                    # TODO: positions are all wrong
-                    yield (FSTRING_MIDDLE, token, spos, epos, tokenline)
                     if token.endswith("{"):
-                        yield (LBRACE, "{", spos, epos, tokenline)
+                        fstring_middle, lbrace = token[:-1], token[-1]
+                        fstring_middle_epos = lbrace_spos = (lnum, end - 1)
+                        yield (
+                            FSTRING_MIDDLE,
+                            fstring_middle,
+                            spos,
+                            fstring_middle_epos,
+                            line,
+                        )
+                        yield (LBRACE, lbrace, lbrace_spos, epos, line)
                         inside_fstring_braces = True
                     else:
-                        yield (FSTRING_END, token[-1], spos, epos, tokenline)
+                        # TODO: -3 maybe not guaranteed
+                        fstring_middle, fstring_end = token[:-3], token[-3:]
+                        fstring_middle_epos = end_spos = (lnum, end - 3)
+                        yield (
+                            FSTRING_MIDDLE,
+                            fstring_middle,
+                            spos,
+                            fstring_middle_epos,
+                            line,
+                        )
+                        yield (
+                            FSTRING_END,
+                            fstring_end,
+                            end_spos,
+                            epos,
+                            line,
+                        )
                         fstring_level -= 1
-                        endprog_stack.pop()
-                    # TODO: contstr reliance doesn't work now because we can be inside
-                    # an fstring and still empty contstr right here.
+                pos = end
                 contstr, needcont = "", 0
                 contline = None
             elif needcont and line[-2:] != "\\\n" and line[-3:] != "\\\r\n":
@@ -648,7 +670,8 @@ def generate_tokens(
                         inside_fstring_braces = True
                     pos = end
                 else:  # multiple lines
-                    contstr += line
+                    strstart = (lnum, end)
+                    contstr = line[end:]
                     contline = line
                     break
 
@@ -681,10 +704,10 @@ def generate_tokens(
                     yield (COMMENT, token, spos, epos, line)
                 elif token in triple_quoted:
                     endprog = endprogs[token]
+                    endprog_stack.append(endprog)
                     if token.startswith("f"):
                         yield (FSTRING_START, token, spos, epos, line)
                         fstring_level += 1
-                        endprog_stack.append(endprog)
 
                     endmatch = endprog.match(line, pos)
                     if endmatch:  # all on one line
@@ -697,6 +720,7 @@ def generate_tokens(
                             pos = endmatch.end(0)
                             token = line[start:pos]
                             yield (STRING, token, spos, epos, line)
+                            endprog_stack.pop()
                         else:
                             end = endmatch.end(0)
                             token = line[pos:end]
@@ -736,8 +760,14 @@ def generate_tokens(
                                 inside_fstring_braces = True
                             pos = end
                     else:
-                        strstart = (lnum, start)  # multiple lines
-                        contstr = line[start:]
+                        # multiple lines
+                        # TODO: normalize fstring detection
+                        if token.startswith("f"):
+                            strstart = (lnum, pos)
+                            contstr = line[pos:]
+                        else:
+                            strstart = (lnum, start)
+                            contstr = line[start:]
                         contline = line
                         break
                 elif (
@@ -758,7 +788,7 @@ def generate_tokens(
                         contstr, needcont = line[start:], 1
                         contline = line
                         break
-                    else:  # ordinary string
+                    else:  # single line string
                         if stashed:
                             yield stashed
                             stashed = None
