@@ -497,12 +497,6 @@ def generate_tokens(
         lnum += 1
         pos, max = 0, len(line)
 
-        # TODO: probably inside_fstring_braces is not the best boolean.
-        # what about a case of a string inside a multiline fstring inside a
-        # multiline fstring??
-        # for eg. this doesn't work right now: f"{f'{2+2}'}"
-        # because inside_fstring_braces gets set to false after the first `}`
-        # print(f'{parenlev = } {continued = } {inside_fstring_braces = }')
         if contstr and not inside_fstring_braces:  # continued string
             assert contline is not None
             if not line:
@@ -861,7 +855,7 @@ def generate_tokens(
                         stashed = None
                     yield (NL, token, spos, (lnum, pos), line)
                     continued = 1
-                elif initial == "}" and parenlev == 0 and inside_fstring_braces:
+                elif initial == "}" and parenlev == 0 and fstring_level > 0:
                     yield (RBRACE, token, spos, epos, line)
                     inside_fstring_braces = False
                 else:
