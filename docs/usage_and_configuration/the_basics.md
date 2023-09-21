@@ -52,10 +52,10 @@ See also [the style documentation](labels/line-length).
 
 #### `-t`, `--target-version`
 
-Python versions that should be supported by Black's output. You can run `black --help` and look for the `--target-version` option to see the full list of supported versions.
-You should include all
-versions that your code supports. If you support Python 3.8 through 3.11, you should
-write:
+Python versions that should be supported by Black's output. You can run `black --help`
+and look for the `--target-version` option to see the full list of supported versions.
+You should include all versions that your code supports. If you support Python 3.8
+through 3.11, you should write:
 
 ```console
 $ black -t py38 -t py39 -t py310 -t py311
