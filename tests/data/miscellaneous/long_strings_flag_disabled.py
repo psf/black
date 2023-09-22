@@ -254,9 +254,7 @@ annotated_variable: Final = (
     + CONCATENATED
     + "using the '+' operator."
 )
-annotated_variable: (
-    Final
-) = "This is a large string that has a type annotation attached to it. A type annotation should NOT stop a long string from being wrapped."
+annotated_variable: Final = "This is a large string that has a type annotation attached to it. A type annotation should NOT stop a long string from being wrapped."
 annotated_variable: Literal[
     "fakse_literal"
 ] = "This is a large string that has a type annotation attached to it. A type annotation should NOT stop a long string from being wrapped."

@@ -149,13 +149,11 @@ x = (
 
 
 # remove unnecessary paren
-def foo(i: int) -> None:
-    ...
+def foo(i: int) -> None: ...
 
 
 # this is a syntax error in the type annotation according to mypy, but it's not invalid *python* code, so make sure we don't mess with it and make it so.
-def foo(i: (int,)) -> None:
-    ...
+def foo(i: (int,)) -> None: ...
 
 
 def foo(
@@ -186,5 +184,4 @@ def f(
         None, help="Maximum number of jobs to launch. And some additional text."
     ),
     another_option: bool = False,
-):
-    ...
+): ...
