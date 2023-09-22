@@ -180,6 +180,7 @@ class Preview(Enum):
     # for https://github.com/psf/black/issues/3117 to be fixed.
     string_processing = auto()
     parenthesize_conditional_expressions = auto()
+    parenthesize_long_type_hints = auto()
     skip_magic_trailing_comma_in_subscript = auto()
     wrap_long_dict_values_in_parens = auto()
     wrap_multiple_context_managers_in_parens = auto()
