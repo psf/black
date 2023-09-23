@@ -471,6 +471,7 @@ def generate_tokens(
     logical line; continuation lines are included.
     """
     lnum = parenlev = fstring_level = continued = 0
+    parenlev_stack = []
     inside_fstring_braces = False
     numchars: Final[str] = "0123456789"
     contstr, needcont = "", 0
@@ -513,6 +514,7 @@ def generate_tokens(
                 if fstring_level == 0:
                     yield (STRING, token, spos, epos, tokenline)
                     endprog_stack.pop()
+                    parenlev = parenlev_stack.pop()
                 else:
                     if token.endswith("{"):
                         fstring_middle, lbrace = token[:-1], token[-1]
@@ -667,11 +669,12 @@ def generate_tokens(
                         )
                         fstring_level -= 1
                         endprog_stack.pop()
+                        parenlev = parenlev_stack.pop()
                     else:
-                        # TODO: most of the positions are wrong
-                        yield (LBRACE, "{", (lnum, 0), (lnum, 0), line)
+                        yield (LBRACE, "{", (lnum, end-1), (lnum, end), line)
                         inside_fstring_braces = True
                     pos = end
+                    continue
                 else:  # multiple lines
                     strstart = (lnum, end)
                     contstr = line[end:]
@@ -708,7 +711,9 @@ def generate_tokens(
                 elif token in triple_quoted:
                     endprog = endprogs[token]
                     endprog_stack.append(endprog)
-                    if token.startswith("f"):
+                    parenlev_stack.append(parenlev)
+                    parenlev = 0
+                    if token.startswith(("f", "F")):
                         yield (FSTRING_START, token, spos, epos, line)
                         fstring_level += 1
 
@@ -719,11 +724,12 @@ def generate_tokens(
                             stashed = None
                         # TODO: move this logic to a function
                         # TODO: not how you should identify FSTRING_START
-                        if not token.startswith("f"):
+                        if not token.startswith(("f", "F")):
                             pos = endmatch.end(0)
                             token = line[start:pos]
                             yield (STRING, token, spos, epos, line)
                             endprog_stack.pop()
+                            parenlev = parenlev_stack.pop()
                         else:
                             end = endmatch.end(0)
                             token = line[pos:end]
@@ -749,6 +755,7 @@ def generate_tokens(
                                 )
                                 fstring_level -= 1
                                 endprog_stack.pop()
+                                parenlev = parenlev_stack.pop()
                             else:
                                 fstring_middle, lbrace = token[:-1], token[-1]
                                 fstring_middle_epos = lbrace_spos = (lnum, end - 1)
@@ -765,7 +772,7 @@ def generate_tokens(
                     else:
                         # multiple lines
                         # TODO: normalize fstring detection
-                        if token.startswith("f"):
+                        if token.startswith(("f", "F")):
                             strstart = (lnum, pos)
                             contstr = line[pos:]
                         else:
@@ -787,6 +794,8 @@ def generate_tokens(
                     endprog = maybe_endprog
                     if token[-1] == "\n":  # continued string
                         endprog_stack.append(endprog)
+                        parenlev_stack.append(parenlev)
+                        parenlev = 0
                         strstart = (lnum, start)
                         contstr, needcont = line[start:], 1
                         contline = line
@@ -797,7 +806,7 @@ def generate_tokens(
                             stashed = None
 
                         # TODO: move this logic to a function
-                        if not token.startswith("f"):
+                        if not token.startswith(("f", "F")):
                             yield (STRING, token, spos, epos, line)
                         else:
                             if pseudomatch[20] is not None:
@@ -820,6 +829,8 @@ def generate_tokens(
                             fstring_level += 1
                             endprog = endprogs[fstring_start]
                             endprog_stack.append(endprog)
+                            parenlev_stack.append(parenlev)
+                            parenlev = 0
 
                             end_offset = pseudomatch.end(1) - 1
                             fstring_middle = line[start + offset : end_offset]
@@ -838,6 +849,7 @@ def generate_tokens(
                                 yield (FSTRING_END, token[-1], end_spos, end_epos, line)
                                 fstring_level -= 1
                                 endprog_stack.pop()
+                                parenlev = parenlev_stack.pop()
                             else:
                                 end_spos = (lnum, end_offset)
                                 end_epos = (lnum, end_offset + 1)
