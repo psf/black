@@ -547,6 +547,10 @@ def generate_tokens(
                             line,
                         )
                         fstring_level -= 1
+                        endprog_stack.pop()
+                        parenlev = parenlev_stack.pop()
+                        if fstring_level > 0:
+                            inside_fstring_braces = True
                 pos = end
                 contstr, needcont = "", 0
                 contline = None
@@ -670,6 +674,8 @@ def generate_tokens(
                         fstring_level -= 1
                         endprog_stack.pop()
                         parenlev = parenlev_stack.pop()
+                        if fstring_level > 0:
+                            inside_fstring_braces = True
                     else:
                         yield (LBRACE, "{", (lnum, end-1), (lnum, end), line)
                         inside_fstring_braces = True
@@ -756,6 +762,8 @@ def generate_tokens(
                                 fstring_level -= 1
                                 endprog_stack.pop()
                                 parenlev = parenlev_stack.pop()
+                                if fstring_level > 0:
+                                    inside_fstring_braces = True
                             else:
                                 fstring_middle, lbrace = token[:-1], token[-1]
                                 fstring_middle_epos = lbrace_spos = (lnum, end - 1)
@@ -850,6 +858,8 @@ def generate_tokens(
                                 fstring_level -= 1
                                 endprog_stack.pop()
                                 parenlev = parenlev_stack.pop()
+                                if fstring_level > 0:
+                                    inside_fstring_braces = True
                             else:
                                 end_spos = (lnum, end_offset)
                                 end_epos = (lnum, end_offset + 1)
