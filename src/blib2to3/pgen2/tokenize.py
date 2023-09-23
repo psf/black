@@ -527,7 +527,7 @@ def generate_tokens(
                         yield (LBRACE, lbrace, lbrace_spos, epos, line)
                         inside_fstring_braces = True
                     else:
-                        # TODO: -3 maybe not guaranteed
+                        # TODO: -3 maybe not guaranteed, could be \ separated single line string
                         fstring_middle, fstring_end = token[:-3], token[-3:]
                         fstring_middle_epos = end_spos = (lnum, end - 3)
                         yield (
@@ -639,9 +639,13 @@ def generate_tokens(
                 if endmatch:  # all on one line
                     start, end = endmatch.span(0)
                     token = line[start:end]
-                    # TODO: triple quotes
                     # TODO: check if the token will ever have any whitespace around?
-                    middle_token, end_token = token[:-1], token[-1]
+                    if token.endswith(('"""', "'''")):
+                        middle_token, end_token = token[:-3], token[-3:]
+                        middle_epos = end_spos = (lnum, end - 3)
+                    else:
+                        middle_token, end_token = token[:-1], token[-1]
+                        middle_epos = end_spos = (lnum, end - 1)
                     # TODO: unsure if this can be safely removed
                     if stashed:
                         yield stashed
@@ -650,15 +654,14 @@ def generate_tokens(
                         FSTRING_MIDDLE,
                         middle_token,
                         (lnum, pos),
-                        (lnum, end - 1),
+                        middle_epos,
                         line,
                     )
                     if not token.endswith("{"):
-                        # TODO: end-1 is probably wrong
                         yield (
                             FSTRING_END,
                             end_token,
-                            (lnum, end - 1),
+                            end_spos,
                             (lnum, end),
                             line,
                         )
