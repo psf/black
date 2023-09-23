@@ -489,13 +489,14 @@ class LineGenerator(Visitor[Line]):
         quote_char = fstring_end.value[0]
         quote_idx = fstring_start.value.index(quote_char)
         prefix, quote = fstring_start.value[:quote_idx], fstring_start.value[quote_idx:]
-        assert 'f' in prefix or 'F' in prefix
+
+        if not is_docstring(node):
+            prefix = normalize_string_prefix(prefix)
+
         assert quote == fstring_end.value
 
         is_raw_fstring = 'r' in prefix or 'R' in prefix
         middles = [node for node in node.children if node.type == token.FSTRING_MIDDLE]
-        # if ''.join(m.value for m in middles) == 'foo':
-        #     breakpoint()
 
         if self.mode.string_normalization:
             middles, quote = normalize_fstring_quotes(quote, middles, is_raw_fstring)
