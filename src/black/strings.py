@@ -283,7 +283,7 @@ def normalize_fstring_quotes(
         if segment != new_segment:
             # Consider the string without unnecessary escapes as the original
             middle.value = new_segment
-        
+
         new_segment = sub_twice(escaped_orig_quote, rf"\1\2{quote}", new_segment)
         new_segment = sub_twice(unescaped_new_quote, rf"\1\\{new_quote}", new_segment)
         new_segments.append(new_segment)
