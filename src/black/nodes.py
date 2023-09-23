@@ -136,6 +136,7 @@ ALWAYS_NO_SPACE: Final = CLOSING_BRACKETS | {
     STANDALONE_COMMENT,
     token.FSTRING_MIDDLE,
     token.FSTRING_END,
+    token.BANG,
 }
 
 RARROW = 55
@@ -266,6 +267,9 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
     elif prev.type in OPENING_BRACKETS:
         return NO
 
+    elif prev.type == token.BANG:
+        return NO
+
     if p.type in {syms.parameters, syms.arglist}:
         # untyped function signatures or calls
         if not prev or prev.type != token.COMMA:
@@ -384,6 +388,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
             elif prevp.type == token.EQUAL and prevp_parent.type == syms.argument:
                 return NO
 
+        # TODO: add fstring here?
         elif t in {token.NAME, token.NUMBER, token.STRING}:
             return NO
 

@@ -69,7 +69,8 @@ COLONEQUAL: Final = 59
 FSTRING_START: Final = 60
 FSTRING_MIDDLE: Final = 61
 FSTRING_END: Final = 62
-N_TOKENS: Final = 63
+BANG: Final = 63
+N_TOKENS: Final = 64
 NT_OFFSET: Final = 256
 # --end constants--
 

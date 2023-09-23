@@ -141,6 +141,10 @@ DoubleLbrace = r'[^"\\{]*(?:(?:\\.|{{)[^"\\{]*)*{(?!{)'
 Single3Lbrace = r"[^'\\{]*(?:(?:\\.|{{|'(?!''))[^'\\{]*)*{(?!{)"
 Double3Lbrace = r'[^"\\{]*(?:(?:\\.|{{|"(?!""))[^"\\{]*)*{(?!{)'
 
+# ! format specifier inside an fstring brace
+Bang = Whitespace + group("!")
+bang = re.compile(Bang)
+
 # Because of leftmost-then-longest match semantics, be sure to put the
 # longest operators first (e.g., if = came before ==, == would get
 # recognized as two instances of =).
@@ -686,6 +690,13 @@ def generate_tokens(
                     contstr = line[end:]
                     contline = line
                     break
+
+            if fstring_level > 0 and inside_fstring_braces:
+                match = bang.match(line, pos)
+                if match:
+                    start, end = match.span(1)
+                    yield (OP, "!", (lnum, start), (lnum, end), line)
+                    pos = end
 
             pseudomatch = pseudoprog.match(line, pos)
             if pseudomatch:  # scan for tokens

@@ -1184,6 +1184,7 @@ def get_features_used(  # noqa: C901
         if is_string_token(n):
             value_head = n.value[:2]
             if value_head in {'f"', 'F"', "f'", "F'", "rf", "fr", "RF", "FR"}:
+                # TODO: this will need tweaking
                 features.add(Feature.F_STRINGS)
                 if Feature.DEBUG_F_STRINGS not in features:
                     for span_beg, span_end in iter_fexpr_spans(n.value):
