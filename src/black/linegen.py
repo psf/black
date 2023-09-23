@@ -60,6 +60,7 @@ from black.numerics import normalize_numeric_literal
 from black.strings import (
     fix_docstring,
     get_string_prefix,
+    normalize_fstring_quotes,
     normalize_string_prefix,
     normalize_string_quotes,
     normalize_unicode_escape_sequences,
@@ -479,6 +480,30 @@ class LineGenerator(Visitor[Line]):
                 leaf.value = prefix + quote + docstring + quote
 
         yield from self.visit_default(leaf)
+
+    def visit_fstring(self, node: Node) -> Iterator[Line]:
+        """Bunch of hacks here. Needs improvement."""
+        fstring_start = node.children[0]
+        fstring_end = node.children[-1]
+
+        quote_char = fstring_end.value[0]
+        quote_idx = fstring_start.value.index(quote_char)
+        prefix, quote = fstring_start.value[:quote_idx], fstring_start.value[quote_idx:]
+        assert 'f' in prefix or 'F' in prefix
+        assert quote == fstring_end.value
+
+        is_raw_fstring = 'r' in prefix or 'R' in prefix
+        middles = [node for node in node.children if node.type == token.FSTRING_MIDDLE]
+        # if ''.join(m.value for m in middles) == 'foo':
+        #     breakpoint()
+
+        if self.mode.string_normalization:
+            middles, quote = normalize_fstring_quotes(quote, middles, is_raw_fstring)
+
+        fstring_start.value = prefix + quote
+        fstring_end.value = quote
+
+        yield from self.visit_default(node)
 
     def __post_init__(self) -> None:
         """You are in a twisty little maze of passages."""
