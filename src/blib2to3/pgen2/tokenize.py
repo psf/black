@@ -711,7 +711,7 @@ def generate_tokens(
                 pos = end
                 continue
 
-            if fstring_level > 0 and inside_fstring_braces:
+            if fstring_level > 0 and parenlev == 0 and inside_fstring_braces:
                 match = bang.match(line, pos)
                 if match:
                     start, end = match.span(1)
