@@ -1181,16 +1181,12 @@ def get_features_used(  # noqa: C901
         }
 
     for n in node.pre_order():
-        if is_string_token(n):
-            value_head = n.value[:2]
-            if value_head in {'f"', 'F"', "f'", "F'", "rf", "fr", "RF", "FR"}:
-                # TODO: this will need tweaking
-                features.add(Feature.F_STRINGS)
-                if Feature.DEBUG_F_STRINGS not in features:
-                    for span_beg, span_end in iter_fexpr_spans(n.value):
-                        if n.value[span_beg : span_end - 1].rstrip().endswith("="):
-                            features.add(Feature.DEBUG_F_STRINGS)
-                            break
+        if n.type == token.FSTRING_START:
+            features.add(Feature.F_STRINGS)
+        elif n.type == token.RBRACE and any(
+            child.type == token.EQUAL for child in n.parent.children
+        ):
+            features.add(Feature.DEBUG_F_STRINGS)
 
         elif is_number_token(n):
             if "_" in n.value:
