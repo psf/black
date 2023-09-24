@@ -703,7 +703,7 @@ def generate_tokens(
                 match = fstring_middle_after_colon.match(line, pos)
                 if match is None:
                     raise TokenError("unterminated f-string literal", (lnum, pos))
-                
+
                 start, end = match.span(1)
                 token = line[start:end]
                 yield (FSTRING_MIDDLE, token, (lnum, start), (lnum, end), line)
