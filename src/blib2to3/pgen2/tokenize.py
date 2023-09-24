@@ -228,6 +228,12 @@ single_quoted: Final = (
     | {f"{prefix}'" for prefix in _strprefixes | _fstring_prefixes}
     | {f'{prefix}"' for prefix in _strprefixes | _fstring_prefixes}
 )
+fstring_prefix: Final = (
+    {f"{prefix}'" for prefix in _fstring_prefixes}
+    | {f'{prefix}"' for prefix in _fstring_prefixes}
+    | {f"{prefix}'''" for prefix in _fstring_prefixes}
+    | {f'{prefix}"""' for prefix in _fstring_prefixes}
+)
 
 tabsize = 8
 
@@ -459,6 +465,15 @@ def untokenize(iterable: Iterable[TokenInfo]) -> str:
     """
     ut = Untokenizer()
     return ut.untokenize(iterable)
+
+
+def is_fstring_start(token: str) -> bool:
+    # TODO: builtins.any is shadowed :(
+    for prefix in fstring_prefix:
+        if token.startswith(prefix):
+            return True
+
+    return False
 
 
 def generate_tokens(
@@ -761,7 +776,7 @@ def generate_tokens(
                     endprog_stack.append(endprog)
                     parenlev_stack.append(parenlev)
                     parenlev = 0
-                    if token.startswith(("f", "F")):
+                    if is_fstring_start(token):
                         yield (FSTRING_START, token, spos, epos, line)
                         fstring_level += 1
 
@@ -771,8 +786,7 @@ def generate_tokens(
                             yield stashed
                             stashed = None
                         # TODO: move this logic to a function
-                        # TODO: not how you should identify FSTRING_START
-                        if not token.startswith(("f", "F")):
+                        if not is_fstring_start(token):
                             pos = endmatch.end(0)
                             token = line[start:pos]
                             yield (STRING, token, spos, epos, line)
@@ -821,8 +835,7 @@ def generate_tokens(
                             pos = end
                     else:
                         # multiple lines
-                        # TODO: normalize fstring detection
-                        if token.startswith(("f", "F")):
+                        if is_fstring_start(token):
                             strstart = (lnum, pos)
                             contstr = line[pos:]
                         else:
@@ -855,8 +868,7 @@ def generate_tokens(
                             yield stashed
                             stashed = None
 
-                        # TODO: move this logic to a function
-                        if not token.startswith(("f", "F")):
+                        if not is_fstring_start(token):
                             yield (STRING, token, spos, epos, line)
                         else:
                             if pseudomatch[20] is not None:

@@ -272,8 +272,8 @@ def normalize_fstring_quotes(
                 # so converting is impossible
                 return middles, quote
 
-        # Do not introduce or remove backslashes in raw strings
-        return middles, new_quote
+        # Do not introduce or remove backslashes in raw strings, just use double quote
+        return middles, '"'
 
     new_segments = []
     for middle in middles:
