@@ -144,6 +144,11 @@ Double3Lbrace = r'[^"\\{]*(?:(?:\\.|{{|"(?!""))[^"\\{]*)*{(?!{)'
 # ! format specifier inside an fstring brace
 Bang = Whitespace + group("!")
 bang = re.compile(Bang)
+Colon = Whitespace + group(":")
+colon = re.compile(Colon)
+
+FstringMiddleAfterColon = Whitespace + group(r".+?") + group("{", "}")
+fstring_middle_after_colon = re.compile(FstringMiddleAfterColon)
 
 # Because of leftmost-then-longest match semantics, be sure to put the
 # longest operators first (e.g., if = came before ==, == would get
@@ -477,6 +482,7 @@ def generate_tokens(
     lnum = parenlev = fstring_level = continued = 0
     parenlev_stack = []
     inside_fstring_braces = False
+    inside_fstring_colon = False
     numchars: Final[str] = "0123456789"
     contstr, needcont = "", 0
     contline: Optional[str] = None
@@ -681,7 +687,7 @@ def generate_tokens(
                         if fstring_level > 0:
                             inside_fstring_braces = True
                     else:
-                        yield (LBRACE, "{", (lnum, end-1), (lnum, end), line)
+                        yield (LBRACE, "{", (lnum, end - 1), (lnum, end), line)
                         inside_fstring_braces = True
                     pos = end
                     continue
@@ -691,12 +697,37 @@ def generate_tokens(
                     contline = line
                     break
 
+            # TODO: fstring_level > 0 is redundant in both cases here,
+            # remove it and ensure nothing breaks
+            if fstring_level > 0 and inside_fstring_colon:
+                match = fstring_middle_after_colon.match(line, pos)
+                if match is None:
+                    raise TokenError("unterminated f-string literal", (lnum, pos))
+                
+                start, end = match.span(1)
+                token = line[start:end]
+                yield (FSTRING_MIDDLE, token, (lnum, start), (lnum, end), line)
+                inside_fstring_colon = False
+                pos = end
+                continue
+
             if fstring_level > 0 and inside_fstring_braces:
                 match = bang.match(line, pos)
                 if match:
                     start, end = match.span(1)
                     yield (OP, "!", (lnum, start), (lnum, end), line)
                     pos = end
+                    continue
+
+                match = colon.match(line, pos)
+                if match:
+                    start, end = match.span(1)
+                    yield (OP, ":", (lnum, start), (lnum, end), line)
+                    inside_fstring_colon = True
+                    pos = end
+                    continue
+
+                # TODO: `=` is left, eg. f"{abc = }"
 
             pseudomatch = pseudoprog.match(line, pos)
             if pseudomatch:  # scan for tokens
