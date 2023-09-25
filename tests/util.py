@@ -34,22 +34,36 @@ fs = partial(black.format_str, mode=DEFAULT_MODE)
 
 
 def _assert_format_equal(expected: str, actual: str) -> None:
-    if actual != expected and not os.environ.get("SKIP_AST_PRINT"):
+    ast_print = not os.environ.get("SKIP_AST_PRINT")
+    ast_print_diff = os.environ.get("SKIP_AST_PRINT_DIFF")
+    if actual != expected and (ast_print or ast_print_diff):
         bdv: DebugVisitor[Any]
-        out("Expected tree:", fg="green")
+        actual_out: str = ""
+        expected_out: str = ""
+        if ast_print:
+            out("Expected tree:", fg="green")
         try:
             exp_node = black.lib2to3_parse(expected)
-            bdv = DebugVisitor()
+            bdv = DebugVisitor(print_output=bool(ast_print))
             list(bdv.visit(exp_node))
+            expected_out = "\n".join(bdv.list_output)
         except Exception as ve:
             err(str(ve))
-        out("Actual tree:", fg="red")
+        if ast_print:
+            out("Actual tree:", fg="red")
         try:
             exp_node = black.lib2to3_parse(actual)
-            bdv = DebugVisitor()
+            bdv = DebugVisitor(print_output=bool(ast_print))
             list(bdv.visit(exp_node))
+            actual_out = "\n".join(bdv.list_output)
         except Exception as ve:
             err(str(ve))
+        if ast_print_diff:
+            out("Tree Diff:")
+            out(
+                diff(expected_out, actual_out, "expected tree", "actual tree")
+                or "Trees do not differ"
+            )
 
     if actual != expected:
         out(diff(expected, actual, "expected", "actual"))
