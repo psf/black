@@ -35,7 +35,7 @@ fs = partial(black.format_str, mode=DEFAULT_MODE)
 
 def _assert_format_equal(expected: str, actual: str) -> None:
     ast_print = not os.environ.get("SKIP_AST_PRINT")
-    ast_print_diff = os.environ.get("SKIP_AST_PRINT_DIFF")
+    ast_print_diff = not os.environ.get("SKIP_AST_PRINT_DIFF")
     if actual != expected and (ast_print or ast_print_diff):
         bdv: DebugVisitor[Any]
         actual_out: str = ""
