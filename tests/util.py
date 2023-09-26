@@ -34,31 +34,32 @@ fs = partial(black.format_str, mode=DEFAULT_MODE)
 
 
 def _assert_format_equal(expected: str, actual: str) -> None:
-    ast_print = not os.environ.get("SKIP_AST_PRINT")
-    ast_print_diff = not os.environ.get("SKIP_AST_PRINT_DIFF")
-    if actual != expected and (ast_print or ast_print_diff):
+    # need to import inside the function for the monkeypatching tests to work
+    from .conftest import PRINT_FULL_TREE, PRINT_TREE_DIFF
+
+    if actual != expected and (PRINT_FULL_TREE or PRINT_TREE_DIFF):
         bdv: DebugVisitor[Any]
         actual_out: str = ""
         expected_out: str = ""
-        if ast_print:
+        if PRINT_FULL_TREE:
             out("Expected tree:", fg="green")
         try:
             exp_node = black.lib2to3_parse(expected)
-            bdv = DebugVisitor(print_output=bool(ast_print))
+            bdv = DebugVisitor(print_output=bool(PRINT_FULL_TREE))
             list(bdv.visit(exp_node))
             expected_out = "\n".join(bdv.list_output)
         except Exception as ve:
             err(str(ve))
-        if ast_print:
+        if PRINT_FULL_TREE:
             out("Actual tree:", fg="red")
         try:
             exp_node = black.lib2to3_parse(actual)
-            bdv = DebugVisitor(print_output=bool(ast_print))
+            bdv = DebugVisitor(print_output=bool(PRINT_FULL_TREE))
             list(bdv.visit(exp_node))
             actual_out = "\n".join(bdv.list_output)
         except Exception as ve:
             err(str(ve))
-        if ast_print_diff:
+        if PRINT_TREE_DIFF:
             out("Tree Diff:")
             out(
                 diff(expected_out, actual_out, "expected tree", "actual tree")
