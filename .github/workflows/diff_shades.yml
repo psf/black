@@ -44,7 +44,7 @@ jobs:
       HATCH_BUILD_HOOKS_ENABLE: "1"
       # Clang is less picky with the C code it's given than gcc (and may
       # generate faster binaries too).
-      CC: clang-12
+      CC: clang-14
     strategy:
       fail-fast: false
       matrix:
