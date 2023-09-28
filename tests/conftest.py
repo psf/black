@@ -11,13 +11,13 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         "--print-full-tree",
         action="store_true",
         default=False,
-        help="print full CST trees on failed tests",
+        help="print full syntax trees on failed tests",
     )
     parser.addoption(
         "--print-tree-diff",
         action="store_true",
         default=True,
-        help="print diff of CST trees on failed tests",
+        help="print diff of syntax trees on failed tests",
     )
 
 
