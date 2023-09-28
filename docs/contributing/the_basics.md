@@ -58,16 +58,16 @@ Further examples of invoking the tests
 (.venv)$ tox -e py -- --print-tree-diff=False
 ```
 
-`Black` has two pytest command-line options affecting
-test files in `tests/data/` that are split into an input part, and an output part,
-separated by a line with`# output`. These can be passed to `pytest` through `tox`, or
-directly into pytest if not using `tox`.
+`Black` has two pytest command-line options affecting test files in `tests/data/` that
+are split into an input part, and an output part, separated by a line with`# output`.
+These can be passed to `pytest` through `tox`, or directly into pytest if not using
+`tox`.
 
 #### `--print-full-tree`
 
-Upon a failing test, print the full concrete syntax tree (CST) as it is after processing the input
-("actual"), and the tree that's yielded after parsing the output ("expected"). Note that
-a test can fail with different output with the same CST. This used to be the
+Upon a failing test, print the full concrete syntax tree (CST) as it is after processing
+the input ("actual"), and the tree that's yielded after parsing the output ("expected").
+Note that a test can fail with different output with the same CST. This used to be the
 default, but now defaults to `False`.
 
 #### `--print-tree-diff`
