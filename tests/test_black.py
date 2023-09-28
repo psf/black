@@ -9,7 +9,6 @@ import os
 import re
 import sys
 import types
-import unittest
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, redirect_stderr
 from dataclasses import replace
@@ -1047,9 +1046,10 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(len(n.children), 1)
         self.assertEqual(n.children[0].type, black.token.ENDMARKER)
 
+    @patch("tests.conftest.PRINT_FULL_TREE", True)
+    @patch("tests.conftest.PRINT_TREE_DIFF", False)
     @pytest.mark.incompatible_with_mypyc
-    @unittest.skipIf(os.environ.get("SKIP_AST_PRINT"), "user set SKIP_AST_PRINT")
-    def test_assertFormatEqual(self) -> None:
+    def test_assertFormatEqual_print_full_tree(self) -> None:
         out_lines = []
         err_lines = []
 
@@ -1066,6 +1066,29 @@ class BlackTestCase(BlackBaseTestCase):
         out_str = "".join(out_lines)
         self.assertIn("Expected tree:", out_str)
         self.assertIn("Actual tree:", out_str)
+        self.assertEqual("".join(err_lines), "")
+
+    @patch("tests.conftest.PRINT_FULL_TREE", False)
+    @patch("tests.conftest.PRINT_TREE_DIFF", True)
+    @pytest.mark.incompatible_with_mypyc
+    def test_assertFormatEqual_print_tree_diff(self) -> None:
+        out_lines = []
+        err_lines = []
+
+        def out(msg: str, **kwargs: Any) -> None:
+            out_lines.append(msg)
+
+        def err(msg: str, **kwargs: Any) -> None:
+            err_lines.append(msg)
+
+        with patch("black.output._out", out), patch("black.output._err", err):
+            with self.assertRaises(AssertionError):
+                self.assertFormatEqual("j = [1, 2, 3]\n", "j = [1, 2, 3,]\n")
+
+        out_str = "".join(out_lines)
+        self.assertIn("Tree Diff:", out_str)
+        self.assertIn("+          COMMA", out_str)
+        self.assertIn("+ ','", out_str)
         self.assertEqual("".join(err_lines), "")
 
     @event_loop()

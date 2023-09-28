@@ -37,6 +37,44 @@ the root of the black repo:
 (.venv)$ tox -e run_self
 ```
 
+### Development
+
+Further examples of invoking the tests
+
+```console
+# Run all of the above mentioned, in parallel
+(.venv)$ tox --parallel=auto
+
+# Run tests on a specific python version
+(.venv)$ tox -e py39
+
+# pass arguments to pytest
+(.venv)$ tox -e py -- --no-cov
+
+# print full tree diff, see documentation below
+(.venv)$ tox -e py -- --print-full-tree
+
+# disable diff printing, see documentation below
+(.venv)$ tox -e py -- --print-tree-diff=False
+```
+
+`Black` has two pytest command-line options affecting test files in `tests/data/` that
+are split into an input part, and an output part, separated by a line with`# output`.
+These can be passed to `pytest` through `tox`, or directly into pytest if not using
+`tox`.
+
+#### `--print-full-tree`
+
+Upon a failing test, print the full concrete syntax tree (CST) as it is after processing
+the input ("actual"), and the tree that's yielded after parsing the output ("expected").
+Note that a test can fail with different output with the same CST. This used to be the
+default, but now defaults to `False`.
+
+#### `--print-tree-diff`
+
+Upon a failing test, print the diff of the trees as described above. This is the
+default. To turn it off pass `--print-tree-diff=False`.
+
 ### News / Changelog Requirement
 
 `Black` has CI that will check for an entry corresponding to your PR in `CHANGES.md`. If
