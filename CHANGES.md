@@ -10,14 +10,14 @@
 
 <!-- Changes that affect Black's stable style -->
 
-### Preview style
+- Fix comments getting removed from inside parenthesized strings (#3909)
 
-- Long type hints are now wrapped in parentheses and properly indented when split across
-  multiple lines (#3899)
+### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
-- Fix comments getting removed from inside parenthesized strings (#3909)
+- Long type hints are now wrapped in parentheses and properly indented when split across
+  multiple lines (#3899)
 
 ### Configuration
 
