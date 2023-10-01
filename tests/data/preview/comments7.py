@@ -137,6 +137,11 @@ square = Square(4) # type: Optional[Square]
         "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"  # aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     ),
 ]
+[
+    (  # aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"  # aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    ),
+]
 
 # output
 
@@ -296,4 +301,8 @@ square = Square(4)  # type: Optional[Square]
         "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     ),
 ]
-
+[
+    (  # aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"  # aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    ),
+]
