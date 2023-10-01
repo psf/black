@@ -1,6 +1,6 @@
-coverage >= 5.3
+coverage >= 7.3.1
 pre-commit
-pytest >= 6.1.1
-pytest-xdist >= 3.0.2
+pytest >= 7.4.2
+pytest-xdist >= 3.3.1
 pytest-cov >= 4.1.0
 tox
