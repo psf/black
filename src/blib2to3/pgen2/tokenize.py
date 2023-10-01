@@ -723,7 +723,7 @@ def generate_tokens(
                 start, end = match.span(1)
                 token = line[start:end]
                 yield (FSTRING_MIDDLE, token, (lnum, start), (lnum, end), line)
-                
+
                 brace_start, brace_end = match.span(2)
                 brace = line[brace_start:brace_end]
                 if brace == '{':
