@@ -131,6 +131,13 @@ class C:
 
 square = Square(4) # type: Optional[Square]
 
+# Regression test for https://github.com/psf/black/issues/3756.
+[
+    (
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"  # aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    ),
+]
+
 # output
 
 from .config import (
@@ -282,3 +289,11 @@ class C:
 
 
 square = Square(4)  # type: Optional[Square]
+
+# Regression test for https://github.com/psf/black/issues/3756.
+[
+    (  # aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    ),
+]
+
