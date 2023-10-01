@@ -498,6 +498,7 @@ def generate_tokens(
     parenlev_stack = []
     inside_fstring_braces = False
     inside_fstring_colon = False
+    bracelev = 0
     numchars: Final[str] = "0123456789"
     contstr, needcont = "", 0
     contline: Optional[str] = None
@@ -722,11 +723,19 @@ def generate_tokens(
                 start, end = match.span(1)
                 token = line[start:end]
                 yield (FSTRING_MIDDLE, token, (lnum, start), (lnum, end), line)
+                
+                brace_start, brace_end = match.span(2)
+                brace = line[brace_start:brace_end]
+                if brace == '{':
+                    yield (OP, brace, (lnum, brace_start), (lnum, brace_end), line)
+                    bracelev += 1
+                    end = brace_end
+
                 inside_fstring_colon = False
                 pos = end
                 continue
 
-            if fstring_level > 0 and inside_fstring_braces:
+            if fstring_level > 0 and parenlev == 0 and inside_fstring_braces:
                 match = bang.match(line, pos)
                 if match:
                     start, end = match.span(1)
@@ -964,11 +973,13 @@ def generate_tokens(
                         stashed = None
                     yield (NL, token, spos, (lnum, pos), line)
                     continued = 1
-                elif initial == "}" and parenlev == 0 and fstring_level > 0:
+                elif initial == "}" and parenlev == 0 and bracelev == 0 and fstring_level > 0:
                     yield (RBRACE, token, spos, epos, line)
                     inside_fstring_braces = False
                 else:
-                    if initial in "([{":
+                    if parenlev == 0 and bracelev > 0 and initial == '}':
+                        bracelev -= 1
+                    elif initial in "([{":
                         parenlev += 1
                     elif initial in ")]}":
                         parenlev -= 1
@@ -987,6 +998,8 @@ def generate_tokens(
     for _indent in indents[1:]:  # pop remaining indent levels
         yield (DEDENT, "", (lnum, 0), (lnum, 0), "")
     yield (ENDMARKER, "", (lnum, 0), (lnum, 0), "")
+    assert len(endprog_stack) == 0
+    assert len(parenlev_stack) == 0
 
 
 if __name__ == "__main__":  # testing
