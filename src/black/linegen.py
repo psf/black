@@ -498,7 +498,7 @@ class LineGenerator(Visitor[Line]):
         assert quote == fstring_end.value
 
         is_raw_fstring = 'r' in prefix or 'R' in prefix
-        middles = [node for node in node.leaves() if node.type == token.FSTRING_MIDDLE]
+        middles = [leaf for leaf in node.leaves() if leaf.type == token.FSTRING_MIDDLE]
 
         if self.mode.string_normalization:
             middles, quote = normalize_fstring_quotes(quote, middles, is_raw_fstring)
