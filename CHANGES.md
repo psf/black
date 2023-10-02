@@ -11,6 +11,8 @@
 <!-- Changes that affect Black's stable style -->
 
 - Fix comments getting removed from inside parenthesized strings (#3909)
+- Parenthesize singleton tuples in `yield` expressions as they already are in `return` statements,
+  e.g. `yield 5,` ➡️ `yield (5,)` (#3912)
 
 ### Preview style
 
