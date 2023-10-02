@@ -10,11 +10,14 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix comments getting removed from inside parenthesized strings (#3909)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
-- More concise formatting for dummy implementations (#3796)
+- Long type hints are now wrapped in parentheses and properly indented when split across
+  multiple lines (#3899)
 
 ### Configuration
 
@@ -32,9 +35,6 @@
 
 <!-- Changes that improve Black's performance. -->
 
-- Avoid importing `IPython` if notebook cells do not contain magics (#3782)
-- Improve caching by comparing file hashes as fallback for mtime and size. (#3821)
-
 ### Output
 
 <!-- Changes to Black's terminal output and error messages -->
@@ -47,17 +47,59 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+### Documentation
+
+<!-- Major changes to documentation and policies. Small docs changes
+     don't need a changelog entry. -->
+
+## 23.9.1
+
+Due to various issues, the previous release (23.9.0) did not include compiled mypyc
+wheels, which make Black significantly faster. These issues have now been fixed, and
+this release should come with compiled wheels once again.
+
+There will be no wheels for Python 3.12 due to a bug in mypyc. We will provide 3.12
+wheels in a future release as soon as the mypyc bug is fixed.
+
+### Packaging
+
+- Upgrade to mypy 1.5.1 (#3864)
+
+### Performance
+
+- Store raw tuples instead of NamedTuples in Black's cache, improving performance and
+  decreasing the size of the cache (#3877)
+
+## 23.9.0
+
+### Preview style
+
+- More concise formatting for dummy implementations (#3796)
+- In stub files, add a blank line between a statement with a body (e.g an
+  `if sys.version_info > (3, x):`) and a function definition on the same level (#3862)
+- Fix a bug whereby spaces were removed from walrus operators within subscript(#3823)
+
+### Configuration
+
+- Black now applies exclusion and ignore logic before resolving symlinks (#3846)
+
+### Performance
+
+- Avoid importing `IPython` if notebook cells do not contain magics (#3782)
+- Improve caching by comparing file hashes as fallback for mtime and size (#3821)
+
+### _Blackd_
+
+- Fix an issue in `blackd` with single character input (#3558)
+
+### Integrations
+
 - Black now has an
   [official pre-commit mirror](https://github.com/psf/black-pre-commit-mirror). Swapping
   `https://github.com/psf/black` to `https://github.com/psf/black-pre-commit-mirror` in
   your `.pre-commit-config.yaml` will make Black about 2x faster (#3828)
 - The `.black.env` folder specified by `ENV_PATH` will now be removed on the completion
-  of the GitHub Action. (#3759)
-
-### Documentation
-
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
+  of the GitHub Action (#3759)
 
 ## 23.7.0
 

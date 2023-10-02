@@ -63,14 +63,9 @@ from black.handle_ipynb_magics import (
 )
 from black.linegen import LN, LineGenerator, transform_line
 from black.lines import EmptyLineTracker, LinesBlock
-from black.mode import (
-    FUTURE_FLAG_TO_FEATURE,
-    VERSION_TO_FEATURES,
-    Feature,
-    Mode,
-    TargetVersion,
-    supports_feature,
-)
+from black.mode import FUTURE_FLAG_TO_FEATURE, VERSION_TO_FEATURES, Feature
+from black.mode import Mode as Mode  # re-exported
+from black.mode import TargetVersion, supports_feature
 from black.nodes import (
     STARS,
     is_number_token,

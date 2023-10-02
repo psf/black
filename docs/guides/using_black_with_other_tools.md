@@ -173,7 +173,7 @@ limit of `88`, _Black_'s default. This explains `max-line-length = 88`.
 ```ini
 [flake8]
 max-line-length = 88
-extend-ignore = E203
+extend-ignore = E203, E704
 ```
 
 </details>

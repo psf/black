@@ -1,8 +1,12 @@
-name: Publish to PyPI
+name: Build and publish
 
 on:
   release:
     types: [published]
+  pull_request:
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -11,9 +15,10 @@ jobs:
   main:
     name: sdist + pure wheel
     runs-on: ubuntu-latest
+    if: github.event_name == 'release'
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up latest Python
         uses: actions/setup-python@v4
@@ -28,39 +33,64 @@ jobs:
       - name: Build wheel and source distributions
         run: python -m build
 
-      - name: Upload to PyPI via Twine
+      - if: github.event_name == 'release'
+        name: Upload to PyPI via Twine
         env:
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
         run: twine upload --verbose -u '__token__' dist/*
 
+  generate_wheels_matrix:
+    name: generate wheels matrix
+    runs-on: ubuntu-latest
+    outputs:
+      include: ${{ steps.set-matrix.outputs.include }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install cibuildwheel and pypyp
+        run: |
+          pipx install cibuildwheel==2.15.0
+          pipx install pypyp==1
+      - name: generate matrix
+        if: github.event_name != 'pull_request'
+        run: |
+          {
+            cibuildwheel --print-build-identifiers --platform linux \
+            | pyp 'json.dumps({"only": x, "os": "ubuntu-latest"})' \
+            && cibuildwheel --print-build-identifiers --platform macos \
+            | pyp 'json.dumps({"only": x, "os": "macos-latest"})' \
+            && cibuildwheel --print-build-identifiers --platform windows \
+            | pyp 'json.dumps({"only": x, "os": "windows-latest"})'
+          } | pyp 'json.dumps(list(map(json.loads, lines)))' > /tmp/matrix
+        env:
+          CIBW_ARCHS_LINUX: x86_64
+          CIBW_ARCHS_MACOS: x86_64 arm64
+          CIBW_ARCHS_WINDOWS: AMD64
+      - name: generate matrix (PR)
+        if: github.event_name == 'pull_request'
+        run: |
+          cibuildwheel --print-build-identifiers --platform linux \
+          | pyp 'json.dumps({"only": x, "os": "ubuntu-latest"})' \
+          | pyp 'json.dumps(list(map(json.loads, lines)))' > /tmp/matrix
+        env:
+          CIBW_BUILD: "cp38-* cp311-*"
+          CIBW_ARCHS_LINUX: x86_64
+      - id: set-matrix
+        run: echo "include=$(cat /tmp/matrix)" | tee -a $GITHUB_OUTPUT
+
   mypyc:
-    name: mypyc wheels (${{ matrix.name }})
+    name: mypyc wheels ${{ matrix.only }}
+    needs: generate_wheels_matrix
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-latest
-            name: linux-x86_64
-          - os: windows-2019
-            name: windows-amd64
-          - os: macos-11
-            name: macos-x86_64
-            macos_arch: "x86_64"
-          - os: macos-11
-            name: macos-arm64
-            macos_arch: "arm64"
-          - os: macos-11
-            name: macos-universal2
-            macos_arch: "universal2"
+        include: ${{ fromJson(needs.generate_wheels_matrix.outputs.include) }}
 
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Build wheels via cibuildwheel
-        uses: pypa/cibuildwheel@v2.15.0
-        env:
-          CIBW_ARCHS_MACOS: "${{ matrix.macos_arch }}"
+      - uses: actions/checkout@v4
+      - uses: pypa/cibuildwheel@v2.16.1
+        with:
+          only: ${{ matrix.only }}
 
       - name: Upload wheels as workflow artifacts
         uses: actions/upload-artifact@v3
@@ -68,7 +98,8 @@ jobs:
           name: ${{ matrix.name }}-mypyc-wheels
           path: ./wheelhouse/*.whl
 
-      - name: Upload wheels to PyPI via Twine
+      - if: github.event_name == 'release'
+        name: Upload wheels to PyPI via Twine
         env:
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
         run: pipx run twine upload --verbose -u '__token__' wheelhouse/*.whl
@@ -77,17 +108,19 @@ jobs:
     name: Update stable branch
     needs: [main, mypyc]
     runs-on: ubuntu-latest
+    if: github.event_name == 'release'
     permissions:
       contents: write
 
     steps:
       - name: Checkout stable branch
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: stable
           fetch-depth: 0
 
-      - name: Update stable branch to release tag & push
+      - if: github.event_name == 'release'
+        name: Update stable branch to release tag & push
         run: |
           git reset --hard ${{ github.event.release.tag_name }}
           git push

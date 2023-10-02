@@ -10,16 +10,26 @@ Options include the following:
 
 ## PyCharm/IntelliJ IDEA
 
-There are three different ways you can use _Black_ from PyCharm:
+There are several different ways you can use _Black_ from PyCharm:
 
-1. As local server using the BlackConnect plugin
-1. As external tool
-1. As file watcher
+1. Using the built-in _Black_ integration (PyCharm 2023.2 and later). This option is the
+   simplest to set up.
+1. As local server using the BlackConnect plugin. This option formats the fastest. It
+   spins up {doc}`Black's HTTP server </usage_and_configuration/black_as_a_server>`, to
+   avoid the startup cost on subsequent formats.
+1. As external tool.
+1. As file watcher.
 
-The first option is the simplest to set up and formats the fastest (by spinning up
-{doc}`Black's HTTP server </usage_and_configuration/black_as_a_server>`, avoiding the
-startup cost on subsequent formats), but if you would prefer to not install a
-third-party plugin or blackd's extra dependencies, the other two are also great options.
+### Built-in _Black_ integration
+
+1. Install `black`.
+
+   ```console
+   $ pip install black
+   ```
+
+1. Go to `Preferences or Settings -> Tools -> Black` and configure _Black_ to your
+   liking.
 
 ### As local server
 
@@ -226,7 +236,7 @@ Configuration:
 
 #### Installation
 
-This plugin **requires Vim 7.0+ built with Python 3.7+ support**. It needs Python 3.7 to
+This plugin **requires Vim 7.0+ built with Python 3.8+ support**. It needs Python 3.8 to
 be able to run _Black_ inside the Vim process which is much faster than calling an
 external command.
 
@@ -278,8 +288,8 @@ $ git checkout origin/stable -b stable
 ##### Arch Linux
 
 On Arch Linux, the plugin is shipped with the
-[`python-black`](https://archlinux.org/packages/community/any/python-black/) package, so
-you can start using it in Vim after install with no additional setup.
+[`python-black`](https://archlinux.org/packages/extra/any/python-black/) package, so you
+can start using it in Vim after install with no additional setup.
 
 ##### Vim 8 Native Plugin Management
 
@@ -389,9 +399,10 @@ close and reopen your File, _Black_ will be done with its job.
   server for Black. Formatting is much more responsive using this extension, **but the
   minimum supported version of Black is 22.3.0**.
 
-## SublimeText 3
+## SublimeText
 
-Use [sublack plugin](https://github.com/jgirardet/sublack).
+For SublimeText 3, use [sublack plugin](https://github.com/jgirardet/sublack). For
+higher versions, it is recommended to use [LSP](#python-lsp-server) as documented below.
 
 ## Python LSP Server
 

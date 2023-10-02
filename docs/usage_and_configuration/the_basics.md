@@ -52,18 +52,19 @@ See also [the style documentation](labels/line-length).
 
 #### `-t`, `--target-version`
 
-Python versions that should be supported by Black's output. You should include all
-versions that your code supports. If you support Python 3.7 through 3.10, you should
-write:
+Python versions that should be supported by Black's output. You can run `black --help`
+and look for the `--target-version` option to see the full list of supported versions.
+You should include all versions that your code supports. If you support Python 3.8
+through 3.11, you should write:
 
 ```console
-$ black -t py37 -t py38 -t py39 -t py310
+$ black -t py38 -t py39 -t py310 -t py311
 ```
 
 In a [configuration file](#configuration-via-a-file), you can write:
 
 ```toml
-target-version = ["py37", "py38", "py39", "py310"]
+target-version = ["py38", "py39", "py310", "py311"]
 ```
 
 _Black_ uses this option to decide what grammar to use to parse your code. In addition,
@@ -193,8 +194,8 @@ configuration file for consistent results across environments.
 
 ```console
 $ black --version
-black, 23.7.0 (compiled: yes)
-$ black --required-version 23.7.0 -c "format = 'this'"
+black, 23.9.1 (compiled: yes)
+$ black --required-version 23.9.1 -c "format = 'this'"
 format = "this"
 $ black --required-version 31.5b2 -c "still = 'beta?!'"
 Oh no! 💥 💔 💥 The required version does not match the running version!
@@ -285,7 +286,7 @@ You can check the version of _Black_ you have installed using the `--version` fl
 
 ```console
 $ black --version
-black, 23.7.0
+black, 23.9.1
 ```
 
 #### `--config`

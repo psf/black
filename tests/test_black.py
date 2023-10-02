@@ -9,7 +9,6 @@ import os
 import re
 import sys
 import types
-import unittest
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, redirect_stderr
 from dataclasses import replace
@@ -491,9 +490,7 @@ class BlackTestCase(BlackBaseTestCase):
         project_root = Path(THIS_DIR / "data" / "nested_gitignore_tests")
         working_directory = project_root / "root"
         target_abspath = working_directory / "child"
-        target_contents = (
-            src.relative_to(working_directory) for src in target_abspath.iterdir()
-        )
+        target_contents = list(target_abspath.iterdir())
 
         def mock_n_calls(responses: List[bool]) -> Callable[[], bool]:
             def _mocked_calls() -> bool:
@@ -1048,9 +1045,10 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(len(n.children), 1)
         self.assertEqual(n.children[0].type, black.token.ENDMARKER)
 
+    @patch("tests.conftest.PRINT_FULL_TREE", True)
+    @patch("tests.conftest.PRINT_TREE_DIFF", False)
     @pytest.mark.incompatible_with_mypyc
-    @unittest.skipIf(os.environ.get("SKIP_AST_PRINT"), "user set SKIP_AST_PRINT")
-    def test_assertFormatEqual(self) -> None:
+    def test_assertFormatEqual_print_full_tree(self) -> None:
         out_lines = []
         err_lines = []
 
@@ -1067,6 +1065,29 @@ class BlackTestCase(BlackBaseTestCase):
         out_str = "".join(out_lines)
         self.assertIn("Expected tree:", out_str)
         self.assertIn("Actual tree:", out_str)
+        self.assertEqual("".join(err_lines), "")
+
+    @patch("tests.conftest.PRINT_FULL_TREE", False)
+    @patch("tests.conftest.PRINT_TREE_DIFF", True)
+    @pytest.mark.incompatible_with_mypyc
+    def test_assertFormatEqual_print_tree_diff(self) -> None:
+        out_lines = []
+        err_lines = []
+
+        def out(msg: str, **kwargs: Any) -> None:
+            out_lines.append(msg)
+
+        def err(msg: str, **kwargs: Any) -> None:
+            err_lines.append(msg)
+
+        with patch("black.output._out", out), patch("black.output._err", err):
+            with self.assertRaises(AssertionError):
+                self.assertFormatEqual("j = [1, 2, 3]\n", "j = [1, 2, 3,]\n")
+
+        out_str = "".join(out_lines)
+        self.assertIn("Tree Diff:", out_str)
+        self.assertIn("+          COMMA", out_str)
+        self.assertIn("+ ','", out_str)
         self.assertEqual("".join(err_lines), "")
 
     @event_loop()
@@ -1986,6 +2007,7 @@ class TestCaching:
             assert not cache.is_changed(one)
             assert not cache.is_changed(two)
 
+    @pytest.mark.incompatible_with_mypyc
     @pytest.mark.parametrize("color", [False, True], ids=["no-color", "with-color"])
     def test_no_cache_when_writeback_diff(self, color: bool) -> None:
         mode = DEFAULT_MODE
@@ -2047,6 +2069,7 @@ class TestCaching:
             read_cache = black.Cache.read(mode)
             assert not read_cache.is_changed(src)
 
+    @pytest.mark.incompatible_with_mypyc
     def test_filter_cached(self) -> None:
         with TemporaryDirectory() as workspace:
             path = Path(workspace)
@@ -2374,38 +2397,48 @@ class TestFileCollection:
         )
 
     @pytest.mark.incompatible_with_mypyc
-    def test_symlink_out_of_root_directory(self) -> None:
+    def test_symlinks(self) -> None:
         path = MagicMock()
         root = THIS_DIR.resolve()
-        child = MagicMock()
         include = re.compile(black.DEFAULT_INCLUDES)
         exclude = re.compile(black.DEFAULT_EXCLUDES)
         report = black.Report()
         gitignore = PathSpec.from_lines("gitwildmatch", [])
-        # `child` should behave like a symlink which resolved path is clearly
-        # outside of the `root` directory.
-        path.iterdir.return_value = [child]
-        child.resolve.return_value = Path("/a/b/c")
-        child.as_posix.return_value = "/a/b/c"
-        try:
-            list(
-                black.gen_python_files(
-                    path.iterdir(),
-                    root,
-                    include,
-                    exclude,
-                    None,
-                    None,
-                    report,
-                    {path: gitignore},
-                    verbose=False,
-                    quiet=False,
-                )
+
+        regular = MagicMock()
+        outside_root_symlink = MagicMock()
+        ignored_symlink = MagicMock()
+
+        path.iterdir.return_value = [regular, outside_root_symlink, ignored_symlink]
+
+        regular.absolute.return_value = root / "regular.py"
+        regular.resolve.return_value = root / "regular.py"
+        regular.is_dir.return_value = False
+
+        outside_root_symlink.absolute.return_value = root / "symlink.py"
+        outside_root_symlink.resolve.return_value = Path("/nowhere")
+
+        ignored_symlink.absolute.return_value = root / ".mypy_cache" / "symlink.py"
+
+        files = list(
+            black.gen_python_files(
+                path.iterdir(),
+                root,
+                include,
+                exclude,
+                None,
+                None,
+                report,
+                {path: gitignore},
+                verbose=False,
+                quiet=False,
             )
-        except ValueError as ve:
-            pytest.fail(f"`get_python_files_in_dir()` failed: {ve}")
+        )
+        assert files == [regular]
+
         path.iterdir.assert_called_once()
-        child.resolve.assert_called_once()
+        outside_root_symlink.resolve.assert_called_once()
+        ignored_symlink.resolve.assert_not_called()
 
     @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_get_sources_with_stdin(self) -> None:
@@ -2469,6 +2502,41 @@ class TestFileCollection:
             force_exclude=r"/exclude/|a\.py",
             stdin_filename=stdin_filename,
         )
+
+
+class TestDeFactoAPI:
+    """Test that certain symbols that are commonly used externally keep working.
+
+    We don't (yet) formally expose an API (see issue #779), but we should endeavor to
+    keep certain functions that external users commonly rely on working.
+
+    """
+
+    def test_format_str(self) -> None:
+        # format_str and Mode should keep working
+        assert (
+            black.format_str("print('hello')", mode=black.Mode()) == 'print("hello")\n'
+        )
+
+        # you can pass line length
+        assert (
+            black.format_str("print('hello')", mode=black.Mode(line_length=42))
+            == 'print("hello")\n'
+        )
+
+        # invalid input raises InvalidInput
+        with pytest.raises(black.InvalidInput):
+            black.format_str("syntax error", mode=black.Mode())
+
+    def test_format_file_contents(self) -> None:
+        # You probably should be using format_str() instead, but let's keep
+        # this one around since people do use it
+        assert (
+            black.format_file_contents("x=1", fast=True, mode=black.Mode()) == "x = 1\n"
+        )
+
+        with pytest.raises(black.NothingChanged):
+            black.format_file_contents("x = 1\n", fast=True, mode=black.Mode())
 
 
 try:
