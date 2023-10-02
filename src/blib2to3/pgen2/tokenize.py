@@ -798,6 +798,7 @@ def generate_tokens(
                         if not is_fstring_start(token):
                             pos = endmatch.end(0)
                             token = line[start:pos]
+                            epos = (lnum, pos)
                             yield (STRING, token, spos, epos, line)
                             endprog_stack.pop()
                             parenlev = parenlev_stack.pop()
