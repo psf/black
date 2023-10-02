@@ -401,7 +401,8 @@ close and reopen your File, _Black_ will be done with its job.
 
 ## SublimeText
 
-For SublimeText 3, use [sublack plugin](https://github.com/jgirardet/sublack). For higher versions, it is recommended to use [LSP](#python-lsp-server) as documented below.
+For SublimeText 3, use [sublack plugin](https://github.com/jgirardet/sublack). For
+higher versions, it is recommended to use [LSP](#python-lsp-server) as documented below.
 
 ## Python LSP Server
 
