@@ -399,9 +399,10 @@ close and reopen your File, _Black_ will be done with its job.
   server for Black. Formatting is much more responsive using this extension, **but the
   minimum supported version of Black is 22.3.0**.
 
-## SublimeText 3
+## SublimeText
 
-Use [sublack plugin](https://github.com/jgirardet/sublack).
+For SublimeText 3, use [sublack plugin](https://github.com/jgirardet/sublack). For
+higher versions, it is recommended to use [LSP](#python-lsp-server) as documented below.
 
 ## Python LSP Server
 
