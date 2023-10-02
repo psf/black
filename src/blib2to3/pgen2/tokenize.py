@@ -495,7 +495,7 @@ def generate_tokens(
     logical line; continuation lines are included.
     """
     lnum = parenlev = fstring_level = continued = 0
-    parenlev_stack = []
+    parenlev_stack: List[int] = []
     inside_fstring_braces = False
     inside_fstring_colon = False
     bracelev = 0
@@ -514,7 +514,7 @@ def generate_tokens(
     async_def_nl = False
 
     strstart: Tuple[int, int]
-    endprog_stack: list[Pattern[str]] = []
+    endprog_stack: List[Pattern[str]] = []
 
     while 1:  # loop over lines in stream
         try:

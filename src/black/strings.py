@@ -5,7 +5,7 @@ Simple formatting on strings. Further string formatting code is in trans.py.
 import re
 import sys
 from functools import lru_cache
-from typing import Final, List, Match, Pattern
+from typing import Final, List, Match, Pattern, Tuple
 
 from black._width_table import WIDTH_TABLE
 from blib2to3.pytree import Leaf
@@ -245,9 +245,9 @@ def normalize_string_quotes(s: str) -> str:
 
 def normalize_fstring_quotes(
     quote: str,
-    middles: list[str],
+    middles: List[Leaf],
     is_raw_fstring: bool
-) -> tuple[str, str]:
+) -> Tuple[List[Leaf], str]:
     """Prefer double quotes but only if it doesn't cause more escaping.
 
     Adds or removes backslashes as appropriate.

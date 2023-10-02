@@ -1183,7 +1183,7 @@ def get_features_used(  # noqa: C901
     for n in node.pre_order():
         if n.type == token.FSTRING_START:
             features.add(Feature.F_STRINGS)
-        elif n.type == token.RBRACE and any(
+        elif n.type == token.RBRACE and n.parent is not None and any(
             child.type == token.EQUAL for child in n.parent.children
         ):
             features.add(Feature.DEBUG_F_STRINGS)

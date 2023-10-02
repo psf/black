@@ -481,10 +481,12 @@ class LineGenerator(Visitor[Line]):
 
         yield from self.visit_default(leaf)
 
-    def visit_fstring(self, node: Node) -> Iterator[Line]:
+    def visit_fstring(self, node: Leaf) -> Iterator[Line]:
         """Bunch of hacks here. Needs improvement."""
         fstring_start = node.children[0]
         fstring_end = node.children[-1]
+        assert isinstance(fstring_start, Leaf)
+        assert isinstance(fstring_end, Leaf)
 
         quote_char = fstring_end.value[0]
         quote_idx = fstring_start.value.index(quote_char)
@@ -496,7 +498,7 @@ class LineGenerator(Visitor[Line]):
         assert quote == fstring_end.value
 
         is_raw_fstring = 'r' in prefix or 'R' in prefix
-        middles = [node for node in node.children if node.type == token.FSTRING_MIDDLE]
+        middles = [node for node in node.leaves() if node.type == token.FSTRING_MIDDLE]
 
         if self.mode.string_normalization:
             middles, quote = normalize_fstring_quotes(quote, middles, is_raw_fstring)

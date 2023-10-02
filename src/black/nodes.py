@@ -531,14 +531,14 @@ def is_arith_like(node: LN) -> bool:
     }
 
 
-def is_docstring(leaf: Leaf) -> bool:
+def is_docstring(node: NL) -> bool:
     if prev_siblings_are(
-        leaf.parent, [None, token.NEWLINE, token.INDENT, syms.simple_stmt]
+        node.parent, [None, token.NEWLINE, token.INDENT, syms.simple_stmt]
     ):
         return True
 
     # Multiline docstring on the same line as the `def`.
-    if prev_siblings_are(leaf.parent, [syms.parameters, token.COLON, syms.simple_stmt]):
+    if prev_siblings_are(node.parent, [syms.parameters, token.COLON, syms.simple_stmt]):
         # `syms.parameters` is only used in funcdefs and async_funcdefs in the Python
         # grammar. We're safe to return True without further checks.
         return True
