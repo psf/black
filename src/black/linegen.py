@@ -216,6 +216,21 @@ class LineGenerator(Visitor[Line]):
 
             yield from self.visit(child)
 
+    def visit_yield_expr(self, node: Node) -> Iterator[Line]:
+        """
+        If a "yield expr", treat similarly to "return expr",
+        but if it is a "yield from expr", treat expr as a group
+        """
+        content = node.children[1]
+        if content.type != syms.yield_arg:
+            # this is a "yield expr"
+            yield from self.visit_stmt(node, keywords=set(), parens={"yield"})
+            return
+        # this is a "yield from expr"
+        assert isinstance(content, Node)
+        wrap_in_parentheses(content, content.children[1], visible=False)
+        yield from self.visit_default(node)
+
     def visit_typeparams(self, node: Node) -> Iterator[Line]:
         yield from self.visit_default(node)
         node.children[0].prefix = ""
@@ -1414,6 +1429,7 @@ def maybe_make_parens_invisible_in_atom(
             syms.expr_stmt,
             syms.assert_stmt,
             syms.return_stmt,
+            syms.yield_expr,
             syms.except_clause,
             syms.funcdef,
             syms.with_stmt,
