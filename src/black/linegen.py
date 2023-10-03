@@ -656,7 +656,7 @@ def should_split_funcdef_with_rhs(line: Line, mode: Mode) -> bool:
     """If a funcdef has a magic trailing comma in the return type, then we should first
     split the line with rhs to respect the comma.
     """
-    if Preview.string_processing not in mode:
+    if Preview.respect_magic_trailing_comma_in_return_type not in mode:
         return False
 
     return_type_leaves: List[Leaf] = []
