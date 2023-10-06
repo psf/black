@@ -218,3 +218,24 @@ def test_type_comment_syntax_error() -> None:
     source, expected = read_data("type_comments", "type_comment_syntax_error")
     assert_format(source, expected)
     black.assert_equivalent(source, expected)
+
+
+def test_skip_magic_trailing_comma() -> None:
+    """
+    Test a case where the --skip-magic-trailing-comma option used
+    """
+    source, expected = read_data("miscellaneous", "skip_magic_trailing_comma")
+    mode = replace(DEFAULT_MODE, magic_trailing_comma=False, preview=True)
+    assert_format(source, expected, mode)
+
+
+def test_trailing_comma_and_comment_in_pyi() -> None:
+    source, expected = read_data("miscellaneous", "trailing_comma_and_comment.pyi")
+    mode = replace(
+        DEFAULT_MODE,
+        magic_trailing_comma=False,
+        preview=False,
+        line_length=130,
+        is_pyi=True,
+    )
+    assert_format(source, expected, mode)

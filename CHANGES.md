@@ -127,6 +127,7 @@ wheels in a future release as soon as the mypyc bug is fixed.
 - Implicitly concatenated strings used as function args are no longer wrapped inside
   parentheses (#3640)
 - Remove blank lines between a class definition and its docstring (#3692)
+- Stop wrapping unnecessarily when there are comments inside brackets (#3362).
 
 ### Configuration
 

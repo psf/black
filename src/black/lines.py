@@ -57,6 +57,7 @@ class Line:
     bracket_tracker: BracketTracker = field(default_factory=BracketTracker)
     inside_brackets: bool = False
     should_split_rhs: bool = False
+    bracket_after_magic_trailing_comma: Optional[Leaf] = None
     magic_trailing_comma: Optional[Leaf] = None
 
     def append(
@@ -89,7 +90,8 @@ class Line:
             self.bracket_tracker.mark(leaf)
             if self.mode.magic_trailing_comma:
                 if self.has_magic_trailing_comma(leaf):
-                    self.magic_trailing_comma = leaf
+                    self.bracket_after_magic_trailing_comma = leaf
+                    self.magic_trailing_comma = self.get_last_non_comment_leaf()
             elif self.has_magic_trailing_comma(leaf, ensure_removable=True):
                 self.remove_trailing_comma()
         if not self.append_comment(leaf):
@@ -306,6 +308,13 @@ class Line:
     def contains_multiline_strings(self) -> bool:
         return any(is_multiline_string(leaf) for leaf in self.leaves)
 
+    def get_last_non_comment_leaf(self) -> Optional[Leaf]:
+        for leaf in reversed(self.leaves):
+            if leaf.type != STANDALONE_COMMENT:
+                return leaf
+
+        return None
+
     def has_magic_trailing_comma(
         self, closing: Leaf, ensure_removable: bool = False
     ) -> bool:
@@ -317,10 +326,18 @@ class Line:
         - it's not from square bracket indexing
         (specifically, single-element square bracket indexing)
         """
+        if Preview.stop_some_unnecessary_wrapping_inside_brackets in self.mode:
+            leaf_to_check = self.get_last_non_comment_leaf()
+        elif len(self.leaves) > 0:
+            leaf_to_check = self.leaves[-1]
+        else:
+            return False
+
         if not (
             closing.type in CLOSING_BRACKETS
             and self.leaves
-            and self.leaves[-1].type == token.COMMA
+            and leaf_to_check is not None
+            and leaf_to_check.type == token.COMMA
         ):
             return False
 
@@ -411,7 +428,16 @@ class Line:
 
     def remove_trailing_comma(self) -> None:
         """Remove the trailing comma and moves the comments attached to it."""
-        trailing_comma = self.leaves.pop()
+        if Preview.stop_some_unnecessary_wrapping_inside_brackets in self.mode:
+            # There might be comments after the magic trailing comma, so we must search
+            # backwards to find it.
+            for i in range(len(self.leaves) - 1, -1, -1):
+                if self.leaves[i].type == token.COMMA:
+                    trailing_comma = self.leaves.pop(i)
+                    break
+        else:
+            trailing_comma = self.leaves.pop()
+
         trailing_comma_comments = self.comments.pop(id(trailing_comma), [])
         self.comments.setdefault(id(self.leaves[-1]), []).extend(
             trailing_comma_comments
@@ -463,6 +489,7 @@ class Line:
             inside_brackets=self.inside_brackets,
             should_split_rhs=self.should_split_rhs,
             magic_trailing_comma=self.magic_trailing_comma,
+            bracket_after_magic_trailing_comma=self.bracket_after_magic_trailing_comma,
         )
 
     def __str__(self) -> str:
