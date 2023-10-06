@@ -48,6 +48,8 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- The action output displayed in the job summary is now wrapped in Markdown (#3914)
+
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
