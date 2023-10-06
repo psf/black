@@ -240,3 +240,9 @@ class BlackDTestCase(AioHTTPTestCase):  # type: ignore[misc]
             response = await self.client.post("/", data=data)
             self.assertEqual(await response.text(), expected)
             self.assertEqual(response.status, 200)
+
+    @unittest_run_loop
+    async def test_single_character(self) -> None:
+        response = await self.client.post("/", data="1")
+        self.assertEqual(await response.text(), "1\n")
+        self.assertEqual(response.status, 200)

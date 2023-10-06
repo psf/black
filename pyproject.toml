@@ -12,8 +12,7 @@ include = '\.pyi?$'
 extend-exclude = '''
 /(
   # The following are specific to Black, you probably don't want those.
-  | blib2to3
-  | tests/data
+  tests/data
   | profiling
 )/
 '''
@@ -54,11 +53,11 @@ classifiers = [
   "Operating System :: OS Independent",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.7",
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "Topic :: Software Development :: Libraries :: Python Modules",
   "Topic :: Software Development :: Quality Assurance",
 ]
@@ -69,7 +68,7 @@ dependencies = [
   "pathspec>=0.9.0",
   "platformdirs>=2",
   "tomli>=1.1.0; python_version < '3.11'",
-  "typing_extensions>=3.10.0.0; python_version < '3.10'",
+  "typing_extensions>=4.0.1; python_version < '3.11'",
 ]
 dynamic = ["readme", "version"]
 
@@ -119,7 +118,7 @@ sources = ["src"]
 enable-by-default = false
 dependencies = [
   "hatch-mypyc>=0.16.0",
-  "mypy==1.3",
+  "mypy==1.5.1",
   "click==8.1.3",  # avoid https://github.com/pallets/click/issues/2558
 ]
 require-runtime-dependencies = true
@@ -146,8 +145,8 @@ build-verbosity = 1
 # - Python: CPython 3.8+ only
 # - Architecture (64-bit only): amd64 / x86_64, universal2, and arm64
 # - OS: Linux (no musl), Windows, and macOS
-build = "cp3*-*"
-skip = ["*-manylinux_i686", "*-musllinux_*", "*-win32", "pp-*"]
+build = "cp3*"
+skip = ["*-manylinux_i686", "*-musllinux_*", "*-win32", "pp*", "cp312-*"]
 # This is the bare minimum needed to run the test suite. Pulling in the full
 # test_requirements.txt would download a bunch of other packages not necessary
 # here and would slow down the testing step a fair bit.
@@ -184,7 +183,7 @@ atomic = true
 profile = "black"
 line_length = 88
 skip_gitignore = true
-skip_glob = ["src/blib2to3", "tests/data", "profiling"]
+skip_glob = ["tests/data", "profiling"]
 known_first_party = ["black", "blib2to3", "blackd", "_black_version"]
 
 [tool.pytest.ini_options]
@@ -210,5 +209,17 @@ filterwarnings = [
     # https://github.com/aio-libs/aiohttp/issues/6905
     '''ignore:'cgi' is deprecated and slated for removal in Python 3.13:DeprecationWarning''',
     # Work around https://github.com/pytest-dev/pytest/issues/10977 for Python 3.12
-    '''ignore:(Attribute s|Attribute n|ast.Str|ast.Bytes|ast.NameConstant|ast.Num) is deprecated and will be removed in Python 3.14:DeprecationWarning'''
+    '''ignore:(Attribute s|Attribute n|ast.Str|ast.Bytes|ast.NameConstant|ast.Num) is deprecated and will be removed in Python 3.14:DeprecationWarning''',
+    # Will be fixed with aiohttp 3.9.0
+    # https://github.com/aio-libs/aiohttp/pull/7302
+    "ignore:datetime.*utcfromtimestamp\\(\\) is deprecated and scheduled for removal:DeprecationWarning",
 ]
+[tool.coverage.report]
+omit = [
+  "src/blib2to3/*",
+  "tests/data/*",
+  "*/site-packages/*",
+  ".tox/*"
+]
+[tool.coverage.run]
+relative_files = true

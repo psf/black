@@ -942,6 +942,9 @@ class StringParenStripper(StringTransformer):
                 LL[lpar_or_rpar_idx].remove()  # Remove lpar.
                 replace_child(LL[idx], string_leaf)
                 new_line.append(string_leaf)
+                # replace comments
+                old_comments = new_line.comments.pop(id(LL[idx]), [])
+                new_line.comments.setdefault(id(string_leaf), []).extend(old_comments)
             else:
                 LL[lpar_or_rpar_idx].remove()  # This is a rpar.
 

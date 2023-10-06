@@ -281,7 +281,9 @@ class LineGenerator(Visitor[Line]):
 
     def visit_suite(self, node: Node) -> Iterator[Line]:
         """Visit a suite."""
-        if self.mode.is_pyi and is_stub_suite(node):
+        if (
+            self.mode.is_pyi or Preview.dummy_implementations in self.mode
+        ) and is_stub_suite(node):
             yield from self.visit(node.children[2])
         else:
             yield from self.visit_default(node)
@@ -296,7 +298,9 @@ class LineGenerator(Visitor[Line]):
 
         is_suite_like = node.parent and node.parent.type in STATEMENT
         if is_suite_like:
-            if self.mode.is_pyi and is_stub_body(node):
+            if (
+                self.mode.is_pyi or Preview.dummy_implementations in self.mode
+            ) and is_stub_body(node):
                 yield from self.visit_default(node)
             else:
                 yield from self.line(+1)
@@ -305,7 +309,7 @@ class LineGenerator(Visitor[Line]):
 
         else:
             if (
-                not self.mode.is_pyi
+                not (self.mode.is_pyi or Preview.dummy_implementations in self.mode)
                 or not node.parent
                 or not is_stub_suite(node.parent)
             ):
@@ -391,6 +395,24 @@ class LineGenerator(Visitor[Line]):
             rpar = Leaf(token.RPAR, ")")
             index = operand.remove() or 0
             node.insert_child(index, Node(syms.atom, [lpar, operand, rpar]))
+        yield from self.visit_default(node)
+
+    def visit_tname(self, node: Node) -> Iterator[Line]:
+        """
+        Add potential parentheses around types in function parameter lists to be made
+        into real parentheses in case the type hint is too long to fit on a line
+        Examples:
+        def foo(a: int, b: float = 7): ...
+
+        ->
+
+        def foo(a: (int), b: (float) = 7): ...
+        """
+        if Preview.parenthesize_long_type_hints in self.mode:
+            assert len(node.children) == 3
+            if maybe_make_parens_invisible_in_atom(node.children[2], parent=node):
+                wrap_in_parentheses(node, node.children[2], visible=False)
+
         yield from self.visit_default(node)
 
     def visit_STRING(self, leaf: Leaf) -> Iterator[Line]:
@@ -494,7 +516,14 @@ class LineGenerator(Visitor[Line]):
         self.visit_except_clause = partial(v, keywords={"except"}, parens={"except"})
         self.visit_with_stmt = partial(v, keywords={"with"}, parens={"with"})
         self.visit_classdef = partial(v, keywords={"class"}, parens=Ø)
-        self.visit_expr_stmt = partial(v, keywords=Ø, parens=ASSIGNMENTS)
+
+        # When this is moved out of preview, add ":" directly to ASSIGNMENTS in nodes.py
+        if Preview.parenthesize_long_type_hints in self.mode:
+            assignments = ASSIGNMENTS | {":"}
+        else:
+            assignments = ASSIGNMENTS
+        self.visit_expr_stmt = partial(v, keywords=Ø, parens=assignments)
+
         self.visit_return_stmt = partial(v, keywords={"return"}, parens={"return"})
         self.visit_import_from = partial(v, keywords=Ø, parens={"import"})
         self.visit_del_stmt = partial(v, keywords=Ø, parens={"del"})
@@ -544,7 +573,7 @@ def transform_line(
             transformers = [string_merge, string_paren_strip]
         else:
             transformers = []
-    elif line.is_def:
+    elif line.is_def and not should_split_funcdef_with_rhs(line, mode):
         transformers = [left_hand_split]
     else:
 
@@ -639,6 +668,40 @@ def transform_line(
 
     else:
         yield line
+
+
+def should_split_funcdef_with_rhs(line: Line, mode: Mode) -> bool:
+    """If a funcdef has a magic trailing comma in the return type, then we should first
+    split the line with rhs to respect the comma.
+    """
+    if Preview.respect_magic_trailing_comma_in_return_type not in mode:
+        return False
+
+    return_type_leaves: List[Leaf] = []
+    in_return_type = False
+
+    for leaf in line.leaves:
+        if leaf.type == token.COLON:
+            in_return_type = False
+        if in_return_type:
+            return_type_leaves.append(leaf)
+        if leaf.type == token.RARROW:
+            in_return_type = True
+
+    # using `bracket_split_build_line` will mess with whitespace, so we duplicate a
+    # couple lines from it.
+    result = Line(mode=line.mode, depth=line.depth)
+    leaves_to_track = get_leaves_inside_matching_brackets(return_type_leaves)
+    for leaf in return_type_leaves:
+        result.append(
+            leaf,
+            preformatted=True,
+            track_bracket=id(leaf) in leaves_to_track,
+        )
+
+    # we could also return true if the line is too long, and the return type is longer
+    # than the param list. Or if `should_split_rhs` returns True.
+    return result.magic_trailing_comma is not None
 
 
 class _BracketSplitComponent(Enum):
@@ -1383,7 +1446,7 @@ def maybe_make_parens_invisible_in_atom(
     Returns whether the node should itself be wrapped in invisible parentheses.
     """
     if (
-        node.type != syms.atom
+        node.type not in (syms.atom, syms.expr)
         or is_empty_tuple(node)
         or is_one_tuple(node)
         or (is_yield(node) and parent.type != syms.expr_stmt)
@@ -1407,6 +1470,7 @@ def maybe_make_parens_invisible_in_atom(
             syms.except_clause,
             syms.funcdef,
             syms.with_stmt,
+            syms.tname,
             # these ones aren't useful to end users, but they do please fuzzers
             syms.for_stmt,
             syms.del_stmt,

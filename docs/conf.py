@@ -210,7 +210,14 @@ epub_exclude_files = ["search.html"]
 
 autodoc_member_order = "bysource"
 
+#  -- sphinx-copybutton configuration ----------------------------------------
+copybutton_prompt_text = (
+    r">>> |\.\.\. |> |\$ |\# | In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
+)
+copybutton_prompt_is_regexp = True
+copybutton_remove_prompts = True
+
 # -- Options for intersphinx extension ---------------------------------------
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {"https://docs.python.org/3/": None}
+intersphinx_mapping = {"<name>": ("https://docs.python.org/3/", None)}
