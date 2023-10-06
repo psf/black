@@ -391,7 +391,7 @@ close and reopen your File, _Black_ will be done with its job.
 
 - Use the
   [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
-  ([instructions](https://code.visualstudio.com/docs/python/editing#_formatting)).
+  ([instructions](https://code.visualstudio.com/docs/python/formatting)).
 
 - Alternatively the pre-release
   [Black Formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter)
