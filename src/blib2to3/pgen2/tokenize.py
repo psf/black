@@ -147,7 +147,7 @@ bang = re.compile(Bang)
 Colon = Whitespace + group(":")
 colon = re.compile(Colon)
 
-FstringMiddleAfterColon = Whitespace + group(r".*?") + group("{", "}")
+FstringMiddleAfterColon = Whitespace + group(r".*?") + group("{", "}", "\n")
 fstring_middle_after_colon = re.compile(FstringMiddleAfterColon)
 
 # Because of leftmost-then-longest match semantics, be sure to put the
@@ -498,6 +498,7 @@ def generate_tokens(
     parenlev_stack: List[int] = []
     inside_fstring_braces = False
     inside_fstring_colon = False
+    formatspec = ""
     bracelev = 0
     numchars: Final[str] = "0123456789"
     contstr, needcont = "", 0
@@ -515,6 +516,7 @@ def generate_tokens(
 
     strstart: Tuple[int, int]
     endprog_stack: List[Pattern[str]] = []
+    formatspec_start: Tuple[int, int]
 
     while 1:  # loop over lines in stream
         try:
@@ -722,12 +724,21 @@ def generate_tokens(
 
                 start, end = match.span(1)
                 token = line[start:end]
-                yield (FSTRING_MIDDLE, token, (lnum, start), (lnum, end), line)
+                formatspec += token
 
                 brace_start, brace_end = match.span(2)
-                brace = line[brace_start:brace_end]
-                if brace == '{':
-                    yield (OP, brace, (lnum, brace_start), (lnum, brace_end), line)
+                brace_or_nl = line[brace_start:brace_end]
+                if brace_or_nl == "\n":
+                    # TODO: in a triple quoted string we should infact add the \n here
+                    # formatspec += "\n"
+                    pos = brace_end
+                    continue
+
+                yield (FSTRING_MIDDLE, formatspec, formatspec_start, (lnum, end), line)
+                formatspec = ""
+
+                if brace_or_nl == "{":
+                    yield (OP, "{", (lnum, brace_start), (lnum, brace_end), line)
                     bracelev += 1
                     end = brace_end
 
@@ -748,6 +759,7 @@ def generate_tokens(
                     start, end = match.span(1)
                     yield (OP, ":", (lnum, start), (lnum, end), line)
                     inside_fstring_colon = True
+                    formatspec_start = (lnum, end)
                     pos = end
                     continue
 
@@ -974,11 +986,16 @@ def generate_tokens(
                         stashed = None
                     yield (NL, token, spos, (lnum, pos), line)
                     continued = 1
-                elif initial == "}" and parenlev == 0 and bracelev == 0 and fstring_level > 0:
+                elif (
+                    initial == "}"
+                    and parenlev == 0
+                    and bracelev == 0
+                    and fstring_level > 0
+                ):
                     yield (RBRACE, token, spos, epos, line)
                     inside_fstring_braces = False
                 else:
-                    if parenlev == 0 and bracelev > 0 and initial == '}':
+                    if parenlev == 0 and bracelev > 0 and initial == "}":
                         bracelev -= 1
                     elif initial in "([{":
                         parenlev += 1
