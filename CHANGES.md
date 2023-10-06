@@ -16,6 +16,7 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Parentheses are removed from subscript operations (#3680)
 - Long type hints are now wrapped in parentheses and properly indented when split across
   multiple lines (#3899)
 - Magic trailing commas are now respected in return types. (#3916)
