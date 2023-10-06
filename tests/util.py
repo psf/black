@@ -12,6 +12,8 @@ from black.debug import DebugVisitor
 from black.mode import TargetVersion
 from black.output import diff, err, out
 
+from . import conftest
+
 PYTHON_SUFFIX = ".py"
 ALLOWED_SUFFIXES = (PYTHON_SUFFIX, ".pyi", ".out", ".diff", ".ipynb")
 
@@ -34,22 +36,34 @@ fs = partial(black.format_str, mode=DEFAULT_MODE)
 
 
 def _assert_format_equal(expected: str, actual: str) -> None:
-    if actual != expected and not os.environ.get("SKIP_AST_PRINT"):
+    if actual != expected and (conftest.PRINT_FULL_TREE or conftest.PRINT_TREE_DIFF):
         bdv: DebugVisitor[Any]
-        out("Expected tree:", fg="green")
+        actual_out: str = ""
+        expected_out: str = ""
+        if conftest.PRINT_FULL_TREE:
+            out("Expected tree:", fg="green")
         try:
             exp_node = black.lib2to3_parse(expected)
-            bdv = DebugVisitor()
+            bdv = DebugVisitor(print_output=conftest.PRINT_FULL_TREE)
             list(bdv.visit(exp_node))
+            expected_out = "\n".join(bdv.list_output)
         except Exception as ve:
             err(str(ve))
-        out("Actual tree:", fg="red")
+        if conftest.PRINT_FULL_TREE:
+            out("Actual tree:", fg="red")
         try:
             exp_node = black.lib2to3_parse(actual)
-            bdv = DebugVisitor()
+            bdv = DebugVisitor(print_output=conftest.PRINT_FULL_TREE)
             list(bdv.visit(exp_node))
+            actual_out = "\n".join(bdv.list_output)
         except Exception as ve:
             err(str(ve))
+        if conftest.PRINT_TREE_DIFF:
+            out("Tree Diff:")
+            out(
+                diff(expected_out, actual_out, "expected tree", "actual tree")
+                or "Trees do not differ"
+            )
 
     if actual != expected:
         out(diff(expected, actual, "expected", "actual"))

@@ -38,7 +38,7 @@ Try it out now using the [Black Playground](https://black.vercel.app). Watch the
 
 ### Installation
 
-_Black_ can be installed by running `pip install black`. It requires Python 3.7+ to run.
+_Black_ can be installed by running `pip install black`. It requires Python 3.8+ to run.
 If you want to format Jupyter Notebooks, install with `pip install "black[jupyter]"`.
 
 If you can't wait for the latest _hotness_ and want to install from GitHub, use:

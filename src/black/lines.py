@@ -81,7 +81,9 @@ class Line:
             # Note: at this point leaf.prefix should be empty except for
             # imports, for which we only preserve newlines.
             leaf.prefix += whitespace(
-                leaf, complex_subscript=self.is_complex_subscript(leaf)
+                leaf,
+                complex_subscript=self.is_complex_subscript(leaf),
+                mode=self.mode,
             )
         if self.inside_brackets or not preformatted or track_bracket:
             self.bracket_tracker.mark(leaf)
@@ -709,6 +711,17 @@ class EmptyLineTracker:
                     newlines = 0
                 else:
                     newlines = 1
+            # Remove case `self.previous_line.depth > current_line.depth` below when
+            # this becomes stable.
+            #
+            # Don't inspect the previous line if it's part of the body of the previous
+            # statement in the same level, we always want a blank line if there's
+            # something with a body preceding.
+            elif (
+                Preview.blank_line_between_nested_and_def_stub_file in current_line.mode
+                and self.previous_line.depth > current_line.depth
+            ):
+                newlines = 1
             elif (
                 current_line.is_def or current_line.is_decorator
             ) and not self.previous_line.is_def:

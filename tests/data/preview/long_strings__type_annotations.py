@@ -54,6 +54,6 @@ def func(
 
 
 def func(
-    argument: ("int |" "str"),
+    argument: "int |" "str",
 ) -> Set["int |" " str"]:
     pass

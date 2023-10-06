@@ -39,7 +39,7 @@ repos:
         exclude: ^src/blib2to3/
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.5.0
+    rev: v1.5.1
     hooks:
       - id: mypy
         exclude: ^docs/conf.py
@@ -53,7 +53,7 @@ repos:
           - hypothesis
 
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v3.0.1
+    rev: v3.0.3
     hooks:
       - id: prettier
         exclude: \.github/workflows/diff_shades\.yml

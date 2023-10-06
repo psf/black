@@ -170,6 +170,7 @@ class Preview(Enum):
 
     add_trailing_comma_consistently = auto()
     blank_line_after_nested_stub_class = auto()
+    blank_line_between_nested_and_def_stub_file = auto()
     hex_codes_in_unicode_sequences = auto()
     improved_async_statements_handling = auto()
     multiline_string_handling = auto()
@@ -179,11 +180,14 @@ class Preview(Enum):
     # for https://github.com/psf/black/issues/3117 to be fixed.
     string_processing = auto()
     parenthesize_conditional_expressions = auto()
+    parenthesize_long_type_hints = auto()
+    respect_magic_trailing_comma_in_return_type = auto()
     skip_magic_trailing_comma_in_subscript = auto()
     wrap_long_dict_values_in_parens = auto()
     wrap_multiple_context_managers_in_parens = auto()
     remove_redundant_parens_subscript = auto()
     dummy_implementations = auto()
+    walrus_subscript = auto()
 
 
 class Deprecated(UserWarning):
