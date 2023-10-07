@@ -199,7 +199,7 @@ def read_data(
 
 @functools.lru_cache()
 def get_flags_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(exit_on_error=False)
     parser.add_argument(
         "--target-version",
         action="append",

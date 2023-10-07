@@ -1,3 +1,4 @@
+# flags: --skip-string-normalization
 class ALonelyClass:
     '''
     A multiline class docstring.

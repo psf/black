@@ -1,5 +1,4 @@
 import re
-from dataclasses import replace
 from typing import Any, Iterator
 from unittest.mock import patch
 
@@ -7,7 +6,6 @@ import pytest
 
 import black
 from tests.util import (
-    DEFAULT_MODE,
     PY36_VERSIONS,
     all_data_cases,
     assert_format,
@@ -163,62 +161,3 @@ def test_python_2_hint() -> None:
     with pytest.raises(black.parsing.InvalidInput) as exc_info:
         assert_format("print 'daylily'", "print 'daylily'")
     exc_info.match(black.parsing.PY2_HINT)
-
-
-@pytest.mark.filterwarnings("ignore:invalid escape sequence.*:DeprecationWarning")
-def test_docstring_no_string_normalization() -> None:
-    """Like test_docstring but with string normalization off."""
-    source, expected = read_data("miscellaneous", "docstring_no_string_normalization")
-    mode = replace(DEFAULT_MODE, string_normalization=False)
-    assert_format(source, expected, mode)
-
-
-def test_docstring_line_length_6() -> None:
-    """Like test_docstring but with line length set to 6."""
-    source, expected = read_data("miscellaneous", "linelength6")
-    mode = black.Mode(line_length=6)
-    assert_format(source, expected, mode)
-
-
-def test_preview_docstring_no_string_normalization() -> None:
-    """
-    Like test_docstring but with string normalization off *and* the preview style
-    enabled.
-    """
-    source, expected = read_data(
-        "miscellaneous", "docstring_preview_no_string_normalization"
-    )
-    mode = replace(DEFAULT_MODE, string_normalization=False, preview=True)
-    assert_format(source, expected, mode)
-
-
-def test_long_strings_flag_disabled() -> None:
-    """Tests for turning off the string processing logic."""
-    source, expected = read_data("miscellaneous", "long_strings_flag_disabled")
-    mode = replace(DEFAULT_MODE, experimental_string_processing=False)
-    assert_format(source, expected, mode)
-
-
-def test_stub() -> None:
-    mode = replace(DEFAULT_MODE, is_pyi=True)
-    source, expected = read_data("miscellaneous", "stub.pyi")
-    assert_format(source, expected, mode)
-
-
-def test_nested_stub() -> None:
-    mode = replace(DEFAULT_MODE, is_pyi=True, preview=True)
-    source, expected = read_data("miscellaneous", "nested_stub.pyi")
-    assert_format(source, expected, mode)
-
-
-def test_power_op_newline() -> None:
-    # requires line_length=0
-    source, expected = read_data("miscellaneous", "power_op_newline")
-    assert_format(source, expected, mode=black.Mode(line_length=0))
-
-
-def test_type_comment_syntax_error() -> None:
-    """Test that black is able to format python code with type comment syntax errors."""
-    source, expected = read_data("type_comments", "type_comment_syntax_error")
-    assert_format(source, expected)
-    black.assert_equivalent(source, expected)

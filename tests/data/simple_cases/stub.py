@@ -1,3 +1,4 @@
+# flags: --pyi
 X: int
 
 def f(): ...

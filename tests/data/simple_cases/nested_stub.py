@@ -1,3 +1,4 @@
+# flags: --pyi --preview
 import sys
 
 class Outer:
