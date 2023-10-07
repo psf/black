@@ -63,8 +63,10 @@ Further examples of invoking the tests
 All aspects of the _Black_ style should be tested. Normally, tests should be created as
 files in the `tests/data/cases` directory. These files consist of up to three parts:
 
-- A line that starts with `# flags: ` followed by a set of command-line options. The
-  options accepted are mostly a subset of those of _Black_ itself, except for the
+- A line that starts with `# flags: ` followed by a set of command-line options. For
+  example, if the line is `# flags: --preview --skip-magic-trailing-comma`, the test
+  case will be run with preview mode on and the magic trailing comma off. The options
+  accepted are mostly a subset of those of _Black_ itself, except for the
   `--minimum-version=` flag, which should be used when testing a grammar feature that
   works only in newer versions of Python. This flag ensures that we don't try to
   validate the AST on older versions and tests that we autodetect the Python version
