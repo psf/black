@@ -187,7 +187,7 @@ class BlackTestCase(BlackBaseTestCase):
         )
 
     def test_piping(self) -> None:
-        source, expected = read_data_from_file(PROJECT_ROOT / "src/black/__init__.py")
+        _, source, expected = read_data_from_file(PROJECT_ROOT / "src/black/__init__.py")
         result = BlackRunner().invoke(
             black.main,
             [
@@ -433,7 +433,7 @@ class BlackTestCase(BlackBaseTestCase):
     @patch("black.dump_to_file", dump_to_stderr)
     def test_async_as_identifier(self) -> None:
         source_path = get_case_path("miscellaneous", "async_as_identifier")
-        source, expected = read_data_from_file(source_path)
+        _, source, expected = read_data_from_file(source_path)
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         major, minor = sys.version_info[:2]
@@ -448,7 +448,7 @@ class BlackTestCase(BlackBaseTestCase):
     @patch("black.dump_to_file", dump_to_stderr)
     def test_python37(self) -> None:
         source_path = get_case_path("py_37", "python37")
-        source, expected = read_data_from_file(source_path)
+        _, source, expected = read_data_from_file(source_path)
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
         major, minor = sys.version_info[:2]

@@ -1,3 +1,4 @@
+# flags: --skip-magic-trailing-comma
 # We should not remove the trailing comma in a single-element subscript.
 a: tuple[int,]
 b = tuple[int,]

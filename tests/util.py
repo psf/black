@@ -1,4 +1,7 @@
+import argparse
+import functools
 import os
+import shlex
 import sys
 import unittest
 from contextlib import contextmanager
@@ -8,6 +11,7 @@ from pathlib import Path
 from typing import Any, Iterator, List, Optional, Tuple
 
 import black
+from black.const import DEFAULT_LINE_LENGTH
 from black.debug import DebugVisitor
 from black.mode import TargetVersion
 from black.output import diff, err, out
@@ -178,18 +182,68 @@ def get_case_path(
     return case_path
 
 
-def read_data(subdir_name: str, name: str, data: bool = True) -> Tuple[str, str]:
-    """read_data('test_name') -> 'input', 'output'"""
+def read_data_with_mode(
+    subdir_name: str, name: str, data: bool = True
+) -> Tuple[black.Mode, str, str]:
+    """read_data_with_mode('test_name') -> Mode(), 'input', 'output'"""
     return read_data_from_file(get_case_path(subdir_name, name, data))
 
 
-def read_data_from_file(file_name: Path) -> Tuple[str, str]:
+def read_data(
+    subdir_name: str, name: str, data: bool = True
+) -> Tuple[black.Mode, str, str]:
+    """read_data('test_name') -> 'input', 'output'"""
+    _, input, output = read_data_with_mode(subdir_name, name, data)
+    return input, output
+
+
+@functools.lru_cache()
+def get_flags_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--target-version",
+        action="append",
+        type=lambda val: TargetVersion[val.upper()],
+        default=(),
+    )
+    parser.add_argument("--line-length", default=DEFAULT_LINE_LENGTH, type=int)
+    parser.add_argument(
+        "--skip-string-normalization", default=False, action="store_true"
+    )
+    parser.add_argument("--pyi", default=False, action="store_true")
+    parser.add_argument("--ipynb", default=False, action="store_true")
+    parser.add_argument(
+        "--skip-magic-trailing-comma", default=False, action="store_true"
+    )
+    parser.add_argument("--preview", default=False, action="store_true")
+    return parser
+
+
+def parse_mode(flags_line: str) -> black.Mode:
+    parser = get_flags_parser()
+    args = parser.parse_args(shlex.split(flags_line))
+    return black.Mode(
+        target_versions=set(args.target_version),
+        line_length=args.line_length,
+        string_normalization=not args.skip_string_normalization,
+        is_pyi=args.pyi,
+        is_ipynb=args.ipynb,
+        magic_trailing_comma=not args.skip_magic_trailing_comma,
+        preview=args.preview,
+    )
+
+
+def read_data_from_file(file_name: Path) -> Tuple[black.Mode, str, str]:
     with open(file_name, "r", encoding="utf8") as test:
         lines = test.readlines()
     _input: List[str] = []
     _output: List[str] = []
     result = _input
+    mode = black.Mode()
     for line in lines:
+        if not _input and line.startswith("# flags: "):
+            mode = parse_mode(line[len("# flags: ") :])
+            continue
         line = line.replace(EMPTY_LINE, "")
         if line.rstrip() == "# output":
             result = _output
@@ -199,7 +253,7 @@ def read_data_from_file(file_name: Path) -> Tuple[str, str]:
     if _input and not _output:
         # If there's no output marker, treat the entire file as already pre-formatted.
         _output = _input[:]
-    return "".join(_input).strip() + "\n", "".join(_output).strip() + "\n"
+    return mode, "".join(_input).strip() + "\n", "".join(_output).strip() + "\n"
 
 
 def read_jupyter_notebook(subdir_name: str, name: str, data: bool = True) -> str:

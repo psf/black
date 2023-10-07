@@ -1,3 +1,4 @@
+# flags: --pyi
 def f():  # type: ignore
     ...
 

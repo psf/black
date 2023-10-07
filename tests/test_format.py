@@ -13,6 +13,7 @@ from tests.util import (
     assert_format,
     dump_to_stderr,
     read_data,
+    read_data_with_mode,
 )
 
 
@@ -29,14 +30,17 @@ def check_file(
     assert_format(source, expected, mode, fast=False)
 
 
+def check_file_with_embedded_mode(
+    subdir: str, filename: str, *, data: bool = True
+) -> None:
+    mode, source, expected = read_data_with_mode(subdir, filename, data=data)
+    assert_format(source, expected, mode, fast=False)
+
+
 @pytest.mark.filterwarnings("ignore:invalid escape sequence.*:DeprecationWarning")
 @pytest.mark.parametrize("filename", all_data_cases("simple_cases"))
 def test_simple_format(filename: str) -> None:
-    magic_trailing_comma = filename != "skip_magic_trailing_comma"
-    mode = black.Mode(
-        magic_trailing_comma=magic_trailing_comma, is_pyi=filename.endswith("_pyi")
-    )
-    check_file("simple_cases", filename, mode)
+    check_file_with_embedded_mode("simple_cases", filename)
 
 
 @pytest.mark.parametrize("filename", all_data_cases("preview"))
