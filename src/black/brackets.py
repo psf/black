@@ -67,6 +67,17 @@ class BracketTracker:
     _lambda_argument_depths: List[int] = field(default_factory=list)
     invisible: List[Leaf] = field(default_factory=list)
 
+    def copy(self) -> "BracketTracker":
+        return BracketTracker(
+            self.depth,
+            self.bracket_match.copy(),
+            self.delimiters.copy(),
+            self.previous,
+            self._for_loop_depths.copy(),
+            self._lambda_argument_depths.copy(),
+            self.invisible.copy(),
+        )
+
     def mark(self, leaf: Leaf) -> None:
         """Mark `leaf` with bracket-related metadata. Keep track of delimiters.
 

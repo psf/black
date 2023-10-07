@@ -19,6 +19,8 @@
 - Long type hints are now wrapped in parentheses and properly indented when split across
   multiple lines (#3899)
 - Magic trailing commas are now respected in return types. (#3916)
+- Long type hints in parameter lists now get split across multiple lines and properly
+  indented without being wrapped in parentheses (#3930)
 
 ### Configuration
 

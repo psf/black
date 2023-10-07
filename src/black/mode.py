@@ -181,6 +181,7 @@ class Preview(Enum):
     string_processing = auto()
     parenthesize_conditional_expressions = auto()
     parenthesize_long_type_hints = auto()
+    split_long_param_type_without_parens = auto()
     respect_magic_trailing_comma_in_return_type = auto()
     skip_magic_trailing_comma_in_subscript = auto()
     wrap_long_dict_values_in_parens = auto()

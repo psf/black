@@ -59,6 +59,16 @@ class Line:
     should_split_rhs: bool = False
     magic_trailing_comma: Optional[Leaf] = None
 
+    def reset(self, depth: Optional[int] = None) -> None:
+        if depth is not None:
+            self.depth = depth
+        self.leaves = []
+        self.comments = {}
+        self.bracket_tracker = BracketTracker()
+        self.inside_brackets = False
+        self.should_split_rhs = False
+        self.magic_trailing_comma = None
+
     def append(
         self, leaf: Leaf, preformatted: bool = False, track_bracket: bool = False
     ) -> None:
@@ -455,6 +465,18 @@ class Line:
                 length += len(comment.value)
 
             yield index, leaf, length
+
+    def deep_copy(self) -> "Line":
+        return Line(
+            mode=self.mode,
+            depth=self.depth,
+            leaves=self.leaves.copy(),
+            comments=self.comments.copy(),
+            bracket_tracker=self.bracket_tracker.copy(),
+            inside_brackets=self.inside_brackets,
+            should_split_rhs=self.should_split_rhs,
+            magic_trailing_comma=self.magic_trailing_comma,
+        )
 
     def clone(self) -> "Line":
         return Line(
