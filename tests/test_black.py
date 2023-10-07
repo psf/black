@@ -265,7 +265,7 @@ class BlackTestCase(BlackBaseTestCase):
         black.assert_stable(source, actual, black.FileMode())
 
     def test_pep_572_version_detection(self) -> None:
-        source, _ = read_data("py_38", "pep_572")
+        source, _ = read_data("cases", "pep_572")
         root = black.lib2to3_parse(source)
         features = black.get_features_used(root)
         self.assertIn(black.Feature.ASSIGNMENT_EXPRESSIONS, features)
@@ -274,7 +274,7 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_pep_695_version_detection(self) -> None:
         for file in ("type_aliases", "type_params"):
-            source, _ = read_data("py_312", file)
+            source, _ = read_data("cases", file)
             root = black.lib2to3_parse(source)
             features = black.get_features_used(root)
             self.assertIn(black.Feature.TYPE_PARAMS, features)
@@ -341,7 +341,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertIn("\033[0m", actual)
 
     def test_detect_pos_only_arguments(self) -> None:
-        source, _ = read_data("py_38", "pep_570")
+        source, _ = read_data("cases", "pep_570")
         root = black.lib2to3_parse(source)
         features = black.get_features_used(root)
         self.assertIn(black.Feature.POS_ONLY_ARGUMENTS, features)
@@ -449,7 +449,7 @@ class BlackTestCase(BlackBaseTestCase):
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_python37(self) -> None:
-        source_path = get_case_path("py_37", "python37")
+        source_path = get_case_path("cases", "python37")
         _, source, expected = read_data_from_file(source_path)
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
