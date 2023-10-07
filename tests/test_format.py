@@ -40,9 +40,9 @@ def check_file(subdir: str, filename: str, *, data: bool = True) -> None:
 
 
 @pytest.mark.filterwarnings("ignore:invalid escape sequence.*:DeprecationWarning")
-@pytest.mark.parametrize("filename", all_data_cases("simple_cases"))
+@pytest.mark.parametrize("filename", all_data_cases("cases"))
 def test_simple_format(filename: str) -> None:
-    check_file("simple_cases", filename)
+    check_file("cases", filename)
 
 
 # =============== #
