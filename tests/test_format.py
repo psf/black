@@ -1,3 +1,4 @@
+from dataclasses import replace
 import re
 from typing import Any, Iterator
 from unittest.mock import patch
@@ -5,6 +6,7 @@ from unittest.mock import patch
 import pytest
 
 import black
+from black.mode import TargetVersion
 from tests.util import (
     PY36_VERSIONS,
     all_data_cases,
@@ -31,8 +33,13 @@ def check_file(
 def check_file_with_embedded_mode(
     subdir: str, filename: str, *, data: bool = True
 ) -> None:
-    mode, source, expected = read_data_with_mode(subdir, filename, data=data)
-    assert_format(source, expected, mode, fast=False)
+    args, source, expected = read_data_with_mode(subdir, filename, data=data)
+    assert_format(source, expected, args.mode, fast=args.fast, minimum_version=args.minimum_version)
+    if args.minimum_version is not None:
+        major, minor = args.minimum_version
+        target_version = TargetVersion[f"PY{major}{minor}"]
+        mode = replace(args.mode, target_versions={target_version})
+        assert_format(source, expected, mode, fast=args.fast, minimum_version=args.minimum_version)
 
 
 @pytest.mark.filterwarnings("ignore:invalid escape sequence.*:DeprecationWarning")
@@ -46,36 +53,6 @@ def test_preview_format(filename: str) -> None:
     check_file("preview", filename, black.Mode(preview=True))
 
 
-def test_preview_context_managers_targeting_py38() -> None:
-    source, expected = read_data("preview_context_managers", "targeting_py38.py")
-    mode = black.Mode(preview=True, target_versions={black.TargetVersion.PY38})
-    assert_format(source, expected, mode, minimum_version=(3, 8))
-
-
-def test_preview_context_managers_targeting_py39() -> None:
-    source, expected = read_data("preview_context_managers", "targeting_py39.py")
-    mode = black.Mode(preview=True, target_versions={black.TargetVersion.PY39})
-    assert_format(source, expected, mode, minimum_version=(3, 9))
-
-
-@pytest.mark.parametrize("filename", all_data_cases("preview_py_310"))
-def test_preview_python_310(filename: str) -> None:
-    source, expected = read_data("preview_py_310", filename)
-    mode = black.Mode(target_versions={black.TargetVersion.PY310}, preview=True)
-    assert_format(source, expected, mode, minimum_version=(3, 10))
-
-
-@pytest.mark.parametrize(
-    "filename", all_data_cases("preview_context_managers/auto_detect")
-)
-def test_preview_context_managers_auto_detect(filename: str) -> None:
-    match = re.match(r"features_3_(\d+)", filename)
-    assert match is not None, "Unexpected filename format: %s" % filename
-    source, expected = read_data("preview_context_managers/auto_detect", filename)
-    mode = black.Mode(preview=True)
-    assert_format(source, expected, mode, minimum_version=(3, int(match.group(1))))
-
-
 # =============== #
 # Complex cases
 # ============= #
@@ -86,48 +63,6 @@ def test_empty() -> None:
     assert_format(source, expected)
 
 
-@pytest.mark.parametrize("filename", all_data_cases("py_36"))
-def test_python_36(filename: str) -> None:
-    source, expected = read_data("py_36", filename)
-    mode = black.Mode(target_versions=PY36_VERSIONS)
-    assert_format(source, expected, mode, minimum_version=(3, 6))
-
-
-@pytest.mark.parametrize("filename", all_data_cases("py_37"))
-def test_python_37(filename: str) -> None:
-    source, expected = read_data("py_37", filename)
-    mode = black.Mode(target_versions={black.TargetVersion.PY37})
-    assert_format(source, expected, mode, minimum_version=(3, 7))
-
-
-@pytest.mark.parametrize("filename", all_data_cases("py_38"))
-def test_python_38(filename: str) -> None:
-    source, expected = read_data("py_38", filename)
-    mode = black.Mode(target_versions={black.TargetVersion.PY38})
-    assert_format(source, expected, mode, minimum_version=(3, 8))
-
-
-@pytest.mark.parametrize("filename", all_data_cases("py_39"))
-def test_python_39(filename: str) -> None:
-    source, expected = read_data("py_39", filename)
-    mode = black.Mode(target_versions={black.TargetVersion.PY39})
-    assert_format(source, expected, mode, minimum_version=(3, 9))
-
-
-@pytest.mark.parametrize("filename", all_data_cases("py_310"))
-def test_python_310(filename: str) -> None:
-    source, expected = read_data("py_310", filename)
-    mode = black.Mode(target_versions={black.TargetVersion.PY310})
-    assert_format(source, expected, mode, minimum_version=(3, 10))
-
-
-@pytest.mark.parametrize("filename", all_data_cases("py_310"))
-def test_python_310_without_target_version(filename: str) -> None:
-    source, expected = read_data("py_310", filename)
-    mode = black.Mode()
-    assert_format(source, expected, mode, minimum_version=(3, 10))
-
-
 def test_patma_invalid() -> None:
     source, expected = read_data("miscellaneous", "pattern_matching_invalid")
     mode = black.Mode(target_versions={black.TargetVersion.PY310})
@@ -135,26 +70,6 @@ def test_patma_invalid() -> None:
         assert_format(source, expected, mode, minimum_version=(3, 10))
 
     exc_info.match("Cannot parse: 10:11")
-
-
-@pytest.mark.parametrize("filename", all_data_cases("py_311"))
-def test_python_311(filename: str) -> None:
-    source, expected = read_data("py_311", filename)
-    mode = black.Mode(target_versions={black.TargetVersion.PY311})
-    assert_format(source, expected, mode, minimum_version=(3, 11))
-
-
-@pytest.mark.parametrize("filename", all_data_cases("py_312"))
-def test_python_312(filename: str) -> None:
-    source, expected = read_data("py_312", filename)
-    mode = black.Mode(target_versions={black.TargetVersion.PY312})
-    assert_format(source, expected, mode, minimum_version=(3, 12))
-
-
-@pytest.mark.parametrize("filename", all_data_cases("fast"))
-def test_fast_cases(filename: str) -> None:
-    source, expected = read_data("fast", filename)
-    assert_format(source, expected, fast=True)
 
 
 def test_python_2_hint() -> None:
