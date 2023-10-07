@@ -196,9 +196,7 @@ def read_data_with_mode(
     return read_data_from_file(get_case_path(subdir_name, name, data))
 
 
-def read_data(
-    subdir_name: str, name: str, data: bool = True
-) -> Tuple[str, str]:
+def read_data(subdir_name: str, name: str, data: bool = True) -> Tuple[str, str]:
     """read_data('test_name') -> 'input', 'output'"""
     _, input, output = read_data_with_mode(subdir_name, name, data)
     return input, output

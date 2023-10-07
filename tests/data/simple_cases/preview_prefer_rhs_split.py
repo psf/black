@@ -1,3 +1,4 @@
+# flags: --preview
 first_item, second_item = (
     some_looooooooong_module.some_looooooooooooooong_function_name(
         first_argument, second_argument, third_argument

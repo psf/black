@@ -1,3 +1,4 @@
+# flags: --preview
 """cow
 say""",
 call(3, "dogsay", textwrap.dedent("""dove

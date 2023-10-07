@@ -1,3 +1,4 @@
+# flags: --preview
 class A:
     def foo():
         result = type(message)("")

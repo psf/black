@@ -1,3 +1,4 @@
+# flags: --preview
 my_dict = {
     "something_something":
         r"Lorem ipsum dolor sit amet, an sed convenire eloquentiam \t"

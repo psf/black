@@ -1,3 +1,4 @@
+# flags: --preview
 e = {
     "a": fun(msg, "ts"),
     "longggggggggggggggid": ...,

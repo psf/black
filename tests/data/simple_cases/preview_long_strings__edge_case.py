@@ -1,3 +1,4 @@
+# flags: --preview
 some_variable = "This string is long but not so long that it needs to be split just yet"
 some_variable = 'This string is long but not so long that it needs to be split just yet'
 some_variable = "This string is long, just long enough that it needs to be split, u get?"

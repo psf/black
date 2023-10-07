@@ -1,3 +1,4 @@
+# flags: --preview
 from .config import (
     Any,
     Bool,
