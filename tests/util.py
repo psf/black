@@ -209,7 +209,7 @@ def _parse_minimum_version(version: str) -> Tuple[int, int]:
 
 @functools.lru_cache()
 def get_flags_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(exit_on_error=False)
+    parser = argparse.ArgumentParser()
     parser.add_argument(
         "--target-version",
         action="append",
