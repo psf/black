@@ -68,8 +68,9 @@ files in the `tests/data/cases` directory. These files consist of up to three pa
   `--minimum-version=` flag, which should be used when testing a grammar feature that
   works only in newer versions of Python. This flag ensures that we don't try to
   validate the AST on older versions and tests that we autodetect the Python version
-  correctly when the feature is used. If this line is omitted, the default options are
-  used.
+  correctly when the feature is used. For the exact flags accepted, see the function
+  `get_flags_parser` in `tests/util.py`. If this line is omitted, the default options
+  are used.
 - A block of Python code used as input for the formatter.
 - The line `# output`, followed by the output of _Black_ when run on the previous block.
   If this is omitted, the test asserts that _Black_ will leave the input code unchanged.
