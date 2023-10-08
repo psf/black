@@ -1,4 +1,4 @@
-FROM python:3-slim AS builder
+FROM python:3.11-slim AS builder
 
 RUN mkdir /src
 COPY . /src/
@@ -10,7 +10,7 @@ RUN . /opt/venv/bin/activate && pip install --no-cache-dir --upgrade pip setupto
     && cd /src \
     && pip install --no-cache-dir .[colorama,d]
 
-FROM python:3-slim
+FROM python:3.11-slim
 
 # copy only Python packages to limit the image size
 COPY --from=builder /opt/venv /opt/venv

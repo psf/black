@@ -36,10 +36,24 @@ runs:
     - name: black
       run: |
         if [ "$RUNNER_OS" == "Windows" ]; then
-          python $GITHUB_ACTION_PATH/action/main.py | tee -a $GITHUB_STEP_SUMMARY
+          runner="python"
         else
-          python3 $GITHUB_ACTION_PATH/action/main.py | tee -a $GITHUB_STEP_SUMMARY
+          runner="python3"
         fi
+
+        out=$(${runner} $GITHUB_ACTION_PATH/action/main.py)
+        exit_code=$?
+
+        # Display the raw output in the step
+        echo "${out}"
+
+        # Display the Markdown output in the job summary
+        echo "\`\`\`python" >> $GITHUB_STEP_SUMMARY
+        echo "${out}" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+        # Exit with the exit-code returned by Black
+        exit ${exit_code}
       env:
         # TODO: Remove once https://github.com/actions/runner/issues/665 is fixed.
         INPUT_OPTIONS: ${{ inputs.options }}

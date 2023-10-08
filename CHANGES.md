@@ -18,6 +18,7 @@
 
 - Long type hints are now wrapped in parentheses and properly indented when split across
   multiple lines (#3899)
+- Magic trailing commas are now respected in return types. (#3916)
 
 ### Configuration
 
@@ -46,6 +47,8 @@
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- The action output displayed in the job summary is now wrapped in Markdown (#3914)
 
 ### Documentation
 
