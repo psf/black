@@ -1,6 +1,7 @@
 """
 Parse Python code and perform AST validation.
 """
+
 import ast
 import sys
 from typing import Final, Iterable, Iterator, List, Set, Tuple

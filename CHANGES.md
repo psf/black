@@ -19,6 +19,7 @@
 - Long type hints are now wrapped in parentheses and properly indented when split across
   multiple lines (#3899)
 - Magic trailing commas are now respected in return types. (#3916)
+- Require one empty line after module-level docstrings. (#3932)
 
 ### Configuration
 
