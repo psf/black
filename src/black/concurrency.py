@@ -12,6 +12,7 @@ import sys
 from concurrent.futures import Executor, ProcessPoolExecutor, ThreadPoolExecutor
 from multiprocessing import Manager
 from pathlib import Path
+import traceback
 from typing import Any, Iterable, Optional, Set
 
 from mypy_extensions import mypyc_attr
@@ -171,6 +172,8 @@ async def schedule_formatting(
             if task.cancelled():
                 cancelled.append(task)
             elif task.exception():
+                if report.verbose:
+                    traceback.print_exception(task.exception())
                 report.failed(src, str(task.exception()))
             else:
                 changed = Changed.YES if task.result() else Changed.NO
