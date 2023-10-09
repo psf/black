@@ -155,7 +155,7 @@ class _pattern_symbols(Symbols):
 python_grammar: Grammar
 python_grammar_async_keywords: Grammar
 python_grammar_soft_keywords: Grammar
-
+pattern_grammar: Grammar
 python_symbols: _python_symbols
 pattern_symbols: _pattern_symbols
 
