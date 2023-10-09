@@ -251,5 +251,5 @@ ignore_missing_imports = true
 # CI only checks src/, but in case users are running LSP or similar we explicitly ignore
 # errors in test data files.
 [[tool.mypy.overrides]]
-module = ["tests.data.*"]
+module = ["tests.data.*", "scripts.*"]
 ignore_errors = true

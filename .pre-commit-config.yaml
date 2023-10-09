@@ -52,6 +52,7 @@ repos:
           - platformdirs >= 2.1.0
           - pytest
           - hypothesis
+          - aiohttp >= 3.7.4
 
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v3.0.3
