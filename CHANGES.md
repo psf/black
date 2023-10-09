@@ -24,6 +24,8 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Fix cache versioning logic when `BLACK_CACHE_DIR` is set (#3937)
+
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
