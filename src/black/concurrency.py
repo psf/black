@@ -173,7 +173,9 @@ async def schedule_formatting(
                 cancelled.append(task)
             elif task.exception():
                 if report.verbose:
-                    traceback.print_exception(task.exception())
+                    exc = task.exception()
+                    assert exc is not None
+                    traceback.print_exception(type(exc), exc, exc.__traceback__)
                 report.failed(src, str(task.exception()))
             else:
                 changed = Changed.YES if task.result() else Changed.NO
