@@ -37,8 +37,8 @@ def get_cache_dir() -> Path:
     """
     # NOTE: Function mostly exists as a clean way to test getting the cache directory.
     default_cache_dir = user_cache_dir("black")
-    cache_dir = Path(os.environ.get("BLACK_CACHE_DIR", default_cache_dir))
-    return cache_dir / __version__
+    cache_dir = Path(os.environ.get("BLACK_CACHE_DIR", default_cache_dir)) / __version__
+    return cache_dir
 
 
 CACHE_DIR = get_cache_dir()
