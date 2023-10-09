@@ -62,9 +62,3 @@ def test_patma_invalid() -> None:
         assert_format(source, expected, mode, minimum_version=(3, 10))
 
     exc_info.match("Cannot parse: 10:11")
-
-
-def test_python_2_hint() -> None:
-    with pytest.raises(black.parsing.InvalidInput) as exc_info:
-        assert_format("print 'daylily'", "print 'daylily'")
-    exc_info.match(black.parsing.PY2_HINT)
