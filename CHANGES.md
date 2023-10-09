@@ -40,6 +40,9 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Black no longer attempts to provide special errors for attempting to format Python 2
+  code (#3933)
+
 ### _Blackd_
 
 <!-- Changes to blackd -->

@@ -155,12 +155,6 @@ def test_fast_cases(filename: str) -> None:
     assert_format(source, expected, fast=True)
 
 
-def test_python_2_hint() -> None:
-    with pytest.raises(black.parsing.InvalidInput) as exc_info:
-        assert_format("print 'daylily'", "print 'daylily'")
-    exc_info.match(black.parsing.PY2_HINT)
-
-
 @pytest.mark.filterwarnings("ignore:invalid escape sequence.*:DeprecationWarning")
 def test_docstring_no_string_normalization() -> None:
     """Like test_docstring but with string normalization off."""
