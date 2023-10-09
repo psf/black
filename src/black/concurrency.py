@@ -172,11 +172,11 @@ async def schedule_formatting(
             if task.cancelled():
                 cancelled.append(task)
             elif task.exception():
+                exc = task.exception()
+                assert exc is not None
                 if report.verbose:
-                    exc = task.exception()
-                    assert exc is not None
                     traceback.print_exception(type(exc), exc, exc.__traceback__)
-                report.failed(src, str(task.exception()))
+                report.failed(src, str(exc))
             else:
                 changed = Changed.YES if task.result() else Changed.NO
                 # If the file was written back or was successfully checked as
