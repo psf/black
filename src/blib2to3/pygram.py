@@ -63,7 +63,6 @@ class _python_symbols(Symbols):
     encoding_decl: int
     eval_input: int
     except_clause: int
-    exec_stmt: int
     expr: int
     expr_stmt: int
     exprlist: int
@@ -97,7 +96,6 @@ class _python_symbols(Symbols):
     pattern: int
     patterns: int
     power: int
-    print_stmt: int
     raise_stmt: int
     return_stmt: int
     shift_expr: int
