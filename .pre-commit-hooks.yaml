@@ -4,6 +4,7 @@
   name: black
   description: "Black: The uncompromising Python code formatter"
   entry: black
+  stages: [pre-commit, pre-merge-commit, pre-push, manual]
   language: python
   minimum_pre_commit_version: 2.9.2
   require_serial: true
@@ -13,6 +14,7 @@
   description:
     "Black: The uncompromising Python code formatter (with Jupyter Notebook support)"
   entry: black
+  stages: [pre-commit, pre-merge-commit, pre-push, manual]
   language: python
   minimum_pre_commit_version: 2.9.2
   require_serial: true
