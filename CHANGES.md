@@ -44,6 +44,8 @@
 
 - Black no longer attempts to provide special errors for attempting to format Python 2
   code (#3933)
+- Black will more consistently print stacktraces on internal errors in verbose mode
+  (#3938)
 
 ### _Blackd_
 
