@@ -1963,11 +1963,11 @@ class TestCaching:
         # If BLACK_CACHE_DIR is not set, use user_cache_dir
         monkeypatch.delenv("BLACK_CACHE_DIR", raising=False)
         with patch_user_cache_dir:
-            assert get_cache_dir() == workspace1
+            assert get_cache_dir().parent == workspace1
 
         # If it is set, use the path provided in the env var.
         monkeypatch.setenv("BLACK_CACHE_DIR", str(workspace2))
-        assert get_cache_dir() == workspace2
+        assert get_cache_dir().parent == workspace2
 
     def test_cache_broken_file(self) -> None:
         mode = DEFAULT_MODE
