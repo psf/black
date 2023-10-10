@@ -1,3 +1,4 @@
+# flags: --preview
 """I am a very helpful module docstring.
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit,
