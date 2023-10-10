@@ -25,6 +25,8 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Fix cache versioning logic when `BLACK_CACHE_DIR` is set (#3937)
+
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
@@ -40,6 +42,9 @@
 ### Output
 
 <!-- Changes to Black's terminal output and error messages -->
+
+- Black no longer attempts to provide special errors for attempting to format Python 2
+  code (#3933)
 
 ### _Blackd_
 
