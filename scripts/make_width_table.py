@@ -15,6 +15,7 @@ You can do this by running:
     pip install -U wcwidth
 
 """
+
 import sys
 from os.path import basename, dirname, join
 from typing import Iterable, Tuple

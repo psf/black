@@ -187,6 +187,7 @@ class Preview(Enum):
     wrap_multiple_context_managers_in_parens = auto()
     dummy_implementations = auto()
     walrus_subscript = auto()
+    module_docstring_newlines = auto()
 
 
 class Deprecated(UserWarning):

@@ -1,6 +1,7 @@
 """
 Generating lines of code.
 """
+
 import sys
 from dataclasses import replace
 from enum import Enum, auto

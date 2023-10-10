@@ -1,4 +1,5 @@
 """Caching of formatted files with feature-based invalidation."""
+
 import hashlib
 import os
 import pickle
