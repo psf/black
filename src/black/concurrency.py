@@ -171,7 +171,7 @@ async def schedule_formatting(
             src = tasks.pop(task)
             if task.cancelled():
                 cancelled.append(task)
-            elif (exc := task.exception()):
+            elif exc := task.exception():
                 if report.verbose:
                     traceback.print_exception(type(exc), exc, exc.__traceback__)
                 report.failed(src, str(exc))
