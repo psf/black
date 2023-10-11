@@ -138,6 +138,7 @@ exclude = [
   "/src/black/__main__.py",
 ]
 options = { debug_level = "0" }
+mypy-args = ["--config-file", "pyproject.toml"]
 
 [tool.cibuildwheel]
 build-verbosity = 1

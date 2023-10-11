@@ -43,7 +43,7 @@ repos:
     hooks:
       - id: mypy
         exclude: ^docs/conf.py
-        args: ["--config", "pyproject.toml"]
+        args: ["--config-file", "pyproject.toml"]
         additional_dependencies:
           - types-PyYAML
           - tomli >= 0.2.6, < 2.0.0
