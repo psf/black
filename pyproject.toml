@@ -137,6 +137,7 @@ exclude = [
   # Compiled modules can't be run directly and that's a problem here:
   "/src/black/__main__.py",
 ]
+mypy-args = ["--ignore-missing-imports"]
 options = { debug_level = "0" }
 
 [tool.cibuildwheel]
