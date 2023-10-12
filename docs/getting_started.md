@@ -23,6 +23,9 @@ If you can't wait for the latest _hotness_ and want to install from GitHub, use:
 
 `pip install git+https://github.com/psf/black`
 
+For more ways to install _Black_, check
+[Ways to install Black](./usage_and_configuration/ways_to_install_black.md)
+
 ## Basic usage
 
 To get started right away with sensible defaults:
