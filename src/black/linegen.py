@@ -537,7 +537,9 @@ class LineGenerator(Visitor[Line]):
 
 
 def _hugging_power_ops_line_to_string(
-    line: Line, features: Collection[Feature], mode: Mode,
+    line: Line,
+    features: Collection[Feature],
+    mode: Mode,
 ) -> Optional[str]:
     try:
         return line_to_string(next(hug_power_op(line, features, mode)))
@@ -562,9 +564,9 @@ def transform_line(
 
     # We need the line string when power operators are hugging to determine if we should
     # split the line. Default to line_str, if no power operator are present on the line.
-    line_str_hugging_power_ops = _hugging_power_ops_line_to_string(
-        line, features, mode
-    ) or line_str
+    line_str_hugging_power_ops = (
+        _hugging_power_ops_line_to_string(line, features, mode) or line_str
+    )
 
     ll = mode.line_length
     sn = mode.string_normalization
