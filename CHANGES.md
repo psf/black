@@ -10,6 +10,7 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix lines with power operators getting splitted before the line length (#3889)
 - Fix comments getting removed from inside parenthesized strings (#3909)
 
 ### Preview style
