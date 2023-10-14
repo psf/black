@@ -10,13 +10,13 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Fix long lines with power operators getting splitted before the line length (#3942)
 - Fix comments getting removed from inside parenthesized strings (#3909)
 
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix long lines with power operators getting splitted before the line length (#3942)
 - Long type hints are now wrapped in parentheses and properly indented when split across
   multiple lines (#3899)
 - Magic trailing commas are now respected in return types. (#3916)
