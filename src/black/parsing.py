@@ -1,9 +1,10 @@
 """
 Parse Python code and perform AST validation.
 """
+
 import ast
 import sys
-from typing import Final, Iterable, Iterator, List, Set, Tuple
+from typing import Iterable, Iterator, List, Set, Tuple
 
 from black.mode import VERSION_TO_FEATURES, Feature, TargetVersion, supports_feature
 from black.nodes import syms
@@ -13,8 +14,6 @@ from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.parse import ParseError
 from blib2to3.pgen2.tokenize import TokenError
 from blib2to3.pytree import Leaf, Node
-
-PY2_HINT: Final = "Python 2 support was removed in version 22.0."
 
 
 class InvalidInput(ValueError):
@@ -26,9 +25,9 @@ def get_grammars(target_versions: Set[TargetVersion]) -> List[Grammar]:
         # No target_version specified, so try all grammars.
         return [
             # Python 3.7-3.9
-            pygram.python_grammar_no_print_statement_no_exec_statement_async_keywords,
+            pygram.python_grammar_async_keywords,
             # Python 3.0-3.6
-            pygram.python_grammar_no_print_statement_no_exec_statement,
+            pygram.python_grammar,
             # Python 3.10+
             pygram.python_grammar_soft_keywords,
         ]
@@ -39,12 +38,10 @@ def get_grammars(target_versions: Set[TargetVersion]) -> List[Grammar]:
         target_versions, Feature.ASYNC_IDENTIFIERS
     ) and not supports_feature(target_versions, Feature.PATTERN_MATCHING):
         # Python 3.7-3.9
-        grammars.append(
-            pygram.python_grammar_no_print_statement_no_exec_statement_async_keywords
-        )
+        grammars.append(pygram.python_grammar_async_keywords)
     if not supports_feature(target_versions, Feature.ASYNC_KEYWORDS):
         # Python 3.0-3.6
-        grammars.append(pygram.python_grammar_no_print_statement_no_exec_statement)
+        grammars.append(pygram.python_grammar)
     if any(Feature.PATTERN_MATCHING in VERSION_TO_FEATURES[v] for v in target_versions):
         # Python 3.10+
         grammars.append(pygram.python_grammar_soft_keywords)
@@ -89,14 +86,6 @@ def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -
         # Choose the latest version when raising the actual parsing error.
         assert len(errors) >= 1
         exc = errors[max(errors)]
-
-        if matches_grammar(src_txt, pygram.python_grammar) or matches_grammar(
-            src_txt, pygram.python_grammar_no_print_statement
-        ):
-            original_msg = exc.args[0]
-            msg = f"{original_msg}\n{PY2_HINT}"
-            raise InvalidInput(msg) from None
-
         raise exc from None
 
     if isinstance(result, Leaf):

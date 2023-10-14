@@ -1,6 +1,7 @@
 """
 Formatting numeric literals.
 """
+
 from blib2to3.pytree import Leaf
 
 

@@ -19,10 +19,13 @@
 - Long type hints are now wrapped in parentheses and properly indented when split across
   multiple lines (#3899)
 - Magic trailing commas are now respected in return types. (#3916)
+- Require one empty line after module-level docstrings. (#3932)
 
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
+
+- Fix cache versioning logic when `BLACK_CACHE_DIR` is set (#3937)
 
 ### Packaging
 
@@ -39,6 +42,11 @@
 ### Output
 
 <!-- Changes to Black's terminal output and error messages -->
+
+- Black no longer attempts to provide special errors for attempting to format Python 2
+  code (#3933)
+- Black will more consistently print stacktraces on internal errors in verbose mode
+  (#3938)
 
 ### _Blackd_
 
