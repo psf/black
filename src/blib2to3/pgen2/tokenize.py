@@ -538,7 +538,6 @@ def generate_tokens(
                 spos = strstart
                 epos = (lnum, end)
                 tokenline = contline + line
-                # TODO: better way to detect fstring
                 if fstring_level == 0:
                     yield (STRING, token, spos, epos, tokenline)
                     endprog_stack.pop()
@@ -717,7 +716,7 @@ def generate_tokens(
 
             # TODO: fstring_level > 0 is redundant in both cases here,
             # remove it and ensure nothing breaks
-            if fstring_level > 0 and inside_fstring_colon:
+            if inside_fstring_colon:
                 match = fstring_middle_after_colon.match(line, pos)
                 if match is None:
                     raise TokenError("unterminated f-string literal", (lnum, pos))
@@ -746,7 +745,7 @@ def generate_tokens(
                 pos = end
                 continue
 
-            if fstring_level > 0 and parenlev == 0 and inside_fstring_braces:
+            if inside_fstring_braces and parenlev == 0:
                 match = bang.match(line, pos)
                 if match:
                     start, end = match.span(1)
@@ -818,8 +817,6 @@ def generate_tokens(
                             end = endmatch.end(0)
                             token = line[pos:end]
                             spos, epos = (lnum, pos), (lnum, end)
-                            # TODO: confirm there will be no padding around the tokens
-                            # TODO: don't detect like this perhaps?
                             if not token.endswith("{"):
                                 fstring_middle, fstring_end = token[:-3], token[-3:]
                                 fstring_middle_epos = fstring_end_spos = (lnum, end - 3)
@@ -885,7 +882,7 @@ def generate_tokens(
                         contstr, needcont = line[start:], 1
                         contline = line
                         break
-                    else:  # single line string
+                    else:  # ordinary string
                         if stashed:
                             yield stashed
                             stashed = None
@@ -896,19 +893,17 @@ def generate_tokens(
                             if pseudomatch[20] is not None:
                                 fstring_start = pseudomatch[20]
                                 offset = pseudomatch.end(20) - pseudomatch.start(1)
-                                start_epos = (lnum, start + offset)
                             elif pseudomatch[22] is not None:
                                 fstring_start = pseudomatch[22]
                                 offset = pseudomatch.end(22) - pseudomatch.start(1)
-                                start_epos = (lnum, start + offset)
                             elif pseudomatch[24] is not None:
                                 fstring_start = pseudomatch[24]
                                 offset = pseudomatch.end(24) - pseudomatch.start(1)
-                                start_epos = (lnum, start + offset)
                             else:
                                 fstring_start = pseudomatch[26]
                                 offset = pseudomatch.end(26) - pseudomatch.start(1)
-                                start_epos = (lnum, start + offset)
+
+                            start_epos = (lnum, start + offset)
                             yield (FSTRING_START, fstring_start, spos, start_epos, line)
                             fstring_level += 1
                             endprog = endprogs[fstring_start]

@@ -501,7 +501,6 @@ class LineGenerator(Visitor[Line]):
         yield from self.visit_default(leaf)
 
     def visit_fstring(self, node: Node) -> Iterator[Line]:
-        """Bunch of hacks here. Needs improvement."""
         fstring_start = node.children[0]
         fstring_end = node.children[-1]
         assert isinstance(fstring_start, Leaf)
