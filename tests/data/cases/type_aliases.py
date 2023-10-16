@@ -25,5 +25,6 @@ type Another = str
 class X:
     type InClass = int
 
+
 type = aliased
 print(type(42))
