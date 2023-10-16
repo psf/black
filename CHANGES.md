@@ -16,10 +16,12 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix long lines with power operators getting splitted before the line length (#3942)
 - Long type hints are now wrapped in parentheses and properly indented when split across
   multiple lines (#3899)
 - Magic trailing commas are now respected in return types. (#3916)
 - Require one empty line after module-level docstrings. (#3932)
+- Treat raw triple-quoted strings as docstrings (#3947)
 
 ### Configuration
 
@@ -37,6 +39,8 @@
 
 - Fix bug where attributes named `type` were not acccepted inside `match` statements
   (#3950)
+- Add support for PEP 695 type aliases containing lambdas and other unusual expressions
+  (#3949)
 
 ### Performance
 
