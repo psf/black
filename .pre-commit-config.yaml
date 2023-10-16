@@ -43,6 +43,7 @@ repos:
     hooks:
       - id: mypy
         exclude: ^docs/conf.py
+        args: ["--config-file", "pyproject.toml"]
         additional_dependencies:
           - types-PyYAML
           - tomli >= 0.2.6, < 2.0.0
@@ -51,6 +52,10 @@ repos:
           - platformdirs >= 2.1.0
           - pytest
           - hypothesis
+          - aiohttp >= 3.7.4
+          - types-commonmark
+          - urllib3
+          - hypothesmith
 
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v3.0.3

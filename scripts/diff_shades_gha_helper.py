@@ -119,7 +119,7 @@ def main() -> None:
 @main.command("config", help="Acquire run configuration and metadata.")
 @click.argument("event", type=click.Choice(["push", "pull_request"]))
 def config(event: Literal["push", "pull_request"]) -> None:
-    import diff_shades
+    import diff_shades  # type: ignore[import]
 
     if event == "push":
         jobs = [{"mode": "preview-changes", "force-flag": "--force-preview-style"}]

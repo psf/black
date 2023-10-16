@@ -80,7 +80,7 @@ if __name__ == "__main__":
     try:
         import sys
 
-        import atheris
+        import atheris  # type: ignore[import]
     except ImportError:
         pass
     else:

@@ -4,6 +4,7 @@
 _build
 .DS_Store
 .vscode
+.python-version
 docs/_static/pypi.svg
 .tox
 __pycache__

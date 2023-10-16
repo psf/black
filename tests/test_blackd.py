@@ -31,7 +31,7 @@ else:
 
 
 @pytest.mark.blackd
-class BlackDTestCase(AioHTTPTestCase):  # type: ignore[misc]
+class BlackDTestCase(AioHTTPTestCase):
     def test_blackd_main(self) -> None:
         with patch("blackd.web.run_app"):
             result = CliRunner().invoke(blackd.main, [])
