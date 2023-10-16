@@ -37,6 +37,9 @@
 
 <!-- Changes to the parser or to version autodetection -->
 
+- Add support for PEP 695 type aliases containing lambdas and other unusual expressions
+  (#3949)
+
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
