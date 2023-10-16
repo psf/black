@@ -21,7 +21,7 @@ from blib2to3.pgen2.tokenize import TokenError
     max_examples=1000,  # roughly 1k tests/minute, or half that under coverage
     derandomize=True,  # deterministic mode to avoid CI flakiness
     deadline=None,  # ignore Hypothesis' health checks; we already know that
-    suppress_health_check=HealthCheck.all(),  # this is slow and filter-heavy.
+    suppress_health_check=list(HealthCheck),  # this is slow and filter-heavy.
 )
 @given(
     # Note that while Hypothesmith might generate code unlike that written by
