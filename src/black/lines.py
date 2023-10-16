@@ -193,11 +193,16 @@ class Line:
     @property
     def is_triple_quoted_string(self) -> bool:
         """Is the line a triple quoted string?"""
-        return (
-            bool(self)
-            and self.leaves[0].type == token.STRING
-            and self.leaves[0].value.startswith(('"""', "'''"))
-        )
+        if not self or self.leaves[0].type != token.STRING:
+            return False
+        value = self.leaves[0].value
+        if value.startswith(('"""', "'''")):
+            return True
+        if Preview.accept_raw_docstrings in self.mode and value.startswith(
+            ("r'''", 'r"""', "R'''", 'R"""')
+        ):
+            return True
+        return False
 
     @property
     def opens_block(self) -> bool:

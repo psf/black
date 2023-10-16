@@ -20,6 +20,7 @@
   multiple lines (#3899)
 - Magic trailing commas are now respected in return types. (#3916)
 - Require one empty line after module-level docstrings. (#3932)
+- Treat raw triple-quoted strings as docstrings (#3941)
 
 ### Configuration
 
