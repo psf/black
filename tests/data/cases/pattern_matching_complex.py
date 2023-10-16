@@ -143,3 +143,7 @@ match x:
         y = 1
     case []:
         y = 2
+# issue 3790
+match (X.type, Y):
+    case _:
+        pass

@@ -35,6 +35,9 @@
 
 <!-- Changes to the parser or to version autodetection -->
 
+- Fix bug where attributes named `type` were not acccepted inside `match`
+  statements (#3950)
+
 ### Performance
 
 <!-- Changes that improve Black's performance. -->

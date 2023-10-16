@@ -211,6 +211,7 @@ class Parser:
         # See note in docstring above. TL;DR this is ignored.
         self.convert = convert or lam_sub
         self.is_backtracking = False
+        self.last_token: Optional[int] = None
 
     def setup(self, proxy: "TokenProxy", start: Optional[int] = None) -> None:
         """Prepare for parsing.
@@ -236,6 +237,7 @@ class Parser:
         self.rootnode: Optional[NL] = None
         self.used_names: Set[str] = set()
         self.proxy = proxy
+        self.last_token = None
 
     def addtoken(self, type: int, value: str, context: Context) -> bool:
         """Add a token; return True iff this is the end of the program."""
@@ -317,6 +319,7 @@ class Parser:
                         dfa, state, node = self.stack[-1]
                         states, first = dfa
                     # Done with this token
+                    self.last_token = type
                     return False
 
             else:
@@ -343,9 +346,23 @@ class Parser:
                 return [self.grammar.keywords[value]]
             elif value in self.grammar.soft_keywords:
                 assert type in self.grammar.tokens
+                # Current soft keywords (match, case, type) can only appear at the
+                # beginning of a statement. So as a shortcut, don't try to treat them
+                # like keywords in any other context.
+                # ('_' is also a soft keyword in the real grammar, but for our grammar
+                # it's just an expression, so we don't need to treat it specially.)
+                if self.last_token not in (
+                    None,
+                    token.INDENT,
+                    token.DEDENT,
+                    token.NEWLINE,
+                    token.SEMI,
+                    token.COLON,
+                ):
+                    return [self.grammar.tokens[type]]
                 return [
-                    self.grammar.soft_keywords[value],
                     self.grammar.tokens[type],
+                    self.grammar.soft_keywords[value],
                 ]
 
         ilabel = self.grammar.tokens.get(type)
