@@ -188,6 +188,7 @@ class Preview(Enum):
     dummy_implementations = auto()
     walrus_subscript = auto()
     module_docstring_newlines = auto()
+    fix_power_op_line_length = auto()
 
 
 class Deprecated(UserWarning):

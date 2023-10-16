@@ -566,7 +566,7 @@ def transform_line(
     # split the line. Default to line_str, if no power operator are present on the line.
     line_str_hugging_power_ops = (
         (_hugging_power_ops_line_to_string(line, features, mode) or line_str)
-        if mode.preview
+        if Preview.fix_power_op_line_length in mode
         else line_str
     )
 
