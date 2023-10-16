@@ -536,6 +536,17 @@ class LineGenerator(Visitor[Line]):
         self.visit_case_block = self.visit_match_case
 
 
+def _hugging_power_ops_line_to_string(
+    line: Line,
+    features: Collection[Feature],
+    mode: Mode,
+) -> Optional[str]:
+    try:
+        return line_to_string(next(hug_power_op(line, features, mode)))
+    except CannotTransform:
+        return None
+
+
 def transform_line(
     line: Line, mode: Mode, features: Collection[Feature] = ()
 ) -> Iterator[Line]:
@@ -551,6 +562,14 @@ def transform_line(
 
     line_str = line_to_string(line)
 
+    # We need the line string when power operators are hugging to determine if we should
+    # split the line. Default to line_str, if no power operator are present on the line.
+    line_str_hugging_power_ops = (
+        (_hugging_power_ops_line_to_string(line, features, mode) or line_str)
+        if Preview.fix_power_op_line_length in mode
+        else line_str
+    )
+
     ll = mode.line_length
     sn = mode.string_normalization
     string_merge = StringMerger(ll, sn)
@@ -564,7 +583,7 @@ def transform_line(
         and not line.should_split_rhs
         and not line.magic_trailing_comma
         and (
-            is_line_short_enough(line, mode=mode, line_str=line_str)
+            is_line_short_enough(line, mode=mode, line_str=line_str_hugging_power_ops)
             or line.contains_unsplittable_type_ignore()
         )
         and not (line.inside_brackets and line.contains_standalone_comments())

@@ -29,6 +29,13 @@ o = settings(max_examples=10**6)
 p = {(k, k**2): v**2 for k, v in pairs}
 q = [10**i for i in range(6)]
 r = x**y
+s = 1 ** 1
+t = (
+    1
+    ** 1
+    **1
+    ** 1
+)
 
 a = 5.0**~4.0
 b = 5.0 ** f()
@@ -47,6 +54,13 @@ n = count <= 10**5.0
 o = settings(max_examples=10**6.0)
 p = {(k, k**2): v**2.0 for k, v in pairs}
 q = [10.5**i for i in range(6)]
+s = 1.0 ** 1.0
+t = (
+    1.0
+    ** 1.0
+    **1.0
+    ** 1.0
+)
 
 
 # WE SHOULD DEFINITELY NOT EAT THESE COMMENTS (https://github.com/psf/black/issues/2873)
@@ -97,6 +111,8 @@ o = settings(max_examples=10**6)
 p = {(k, k**2): v**2 for k, v in pairs}
 q = [10**i for i in range(6)]
 r = x**y
+s = 1**1
+t = 1**1**1**1
 
 a = 5.0**~4.0
 b = 5.0 ** f()
@@ -115,6 +131,8 @@ n = count <= 10**5.0
 o = settings(max_examples=10**6.0)
 p = {(k, k**2): v**2.0 for k, v in pairs}
 q = [10.5**i for i in range(6)]
+s = 1.0**1.0
+t = 1.0**1.0**1.0**1.0
 
 
 # WE SHOULD DEFINITELY NOT EAT THESE COMMENTS (https://github.com/psf/black/issues/2873)
