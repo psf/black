@@ -37,6 +37,8 @@
 
 <!-- Changes to the parser or to version autodetection -->
 
+- Fix bug where attributes named `type` were not acccepted inside `match` statements
+  (#3950)
 - Add support for PEP 695 type aliases containing lambdas and other unusual expressions
   (#3949)
 
