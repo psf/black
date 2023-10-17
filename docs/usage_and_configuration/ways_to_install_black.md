@@ -7,19 +7,19 @@ with different editors and environments, check the
 ## Install from PyPI
 
 To install the latest release of _Black_ from [PyPI](https://pypi.org/project/black/)
-(Requires Python 3.8+), use:
+(Requires Python {{ SUPPORTED_PYTHON_VERSION }}), use:
 
 `pip install black`
 
 _Black_ also publishes a number of extras. These are optional modules, designed to add
 functionality to the core _Black_ package.
 
-| extra    | Description                                                   | command                         |
-| -------- | ------------------------------------------------------------- | ------------------------------- |
-| jupyter  | Allows formatting of Jupyter notebooks                        | `pip install 'black[jupyter]'`  |
-| d        | Run _Black_ as a [server](./black_as_a_server.md)             | `pip install 'black[d]'`        |
-| colorama | Enables colored diffs in Windows environments                 | `pip install 'black[colorama]'` |
-| uvloop   | Speeds up _Black_ when concurrently formatting multiple files | `pip install 'black[uvloop]'`   |
+| extra    | Description                                                   | command                       |
+| -------- | ------------------------------------------------------------- | ----------------------------- |
+| jupyter  | Allows formatting of Jupyter notebooks                        | `pip install black[jupyter]`  |
+| d        | Run _Black_ as a [server](./black_as_a_server.md)             | `pip install black[d]`        |
+| colorama | Enables colored diffs in Windows environments                 | `pip install black[colorama]` |
+| uvloop   | Speeds up _Black_ when concurrently formatting multiple files | `pip install black[uvloop]`   |
 
 A _Black_ release currently offers three types of artifacts via PyPI, as outlined in the
 [Release Process](../contributing/release_process.md):

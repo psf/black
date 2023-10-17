@@ -17,6 +17,7 @@ import os
 import string
 from pathlib import Path
 
+import tomli
 from pkg_resources import get_distribution
 
 CURRENT_DIR = Path(__file__).parent
@@ -29,6 +30,14 @@ def make_pypi_svg(version: str) -> None:
         svg: str = string.Template(f.read()).substitute(version=version)
     with open(str(target), "w", encoding="utf8") as f:
         f.write(svg)
+
+
+def get_requires_python() -> str:
+    PROJECT_ROOT: Path = CURRENT_DIR.parent
+    pyproject_path: Path = PROJECT_ROOT / "pyproject.toml"
+    with open(str(pyproject_path), "rb") as f:
+        pyproject_toml = tomli.load(f)
+    return pyproject_toml["project"]["requires-python"]
 
 
 # Necessary so Click doesn't hit an encode error when called by
@@ -112,7 +121,10 @@ myst_disable_syntax = [
 ]
 
 # Optional MyST Syntaxes
-myst_enable_extensions = []
+myst_enable_extensions = ["substitution"]
+
+# Substitutions to be made in the documentation using MyST
+myst_substitutions = {"SUPPORTED_PYTHON_VERSION": get_requires_python()}
 
 # -- Options for HTML output -------------------------------------------------
 
