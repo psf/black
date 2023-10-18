@@ -10,22 +10,13 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Fix comments getting removed from inside parenthesized strings (#3909)
-
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
-- Long type hints are now wrapped in parentheses and properly indented when split across
-  multiple lines (#3899)
-- Magic trailing commas are now respected in return types. (#3916)
-- Require one empty line after module-level docstrings. (#3932)
-
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
-
-- Fix cache versioning logic when `BLACK_CACHE_DIR` is set (#3937)
 
 ### Packaging
 
@@ -43,11 +34,6 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
-- Black no longer attempts to provide special errors for attempting to format Python 2
-  code (#3933)
-- Black will more consistently print stacktraces on internal errors in verbose mode
-  (#3938)
-
 ### _Blackd_
 
 <!-- Changes to blackd -->
@@ -63,6 +49,43 @@
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
+
+## 23.10.0
+
+### Stable style
+
+- Fix comments getting removed from inside parenthesized strings (#3909)
+
+### Preview style
+
+- Fix long lines with power operators getting split before the line length (#3942)
+- Long type hints are now wrapped in parentheses and properly indented when split across
+  multiple lines (#3899)
+- Magic trailing commas are now respected in return types. (#3916)
+- Require one empty line after module-level docstrings. (#3932)
+- Treat raw triple-quoted strings as docstrings (#3947)
+
+### Configuration
+
+- Fix cache versioning logic when `BLACK_CACHE_DIR` is set (#3937)
+
+### Parser
+
+- Fix bug where attributes named `type` were not acccepted inside `match` statements
+  (#3950)
+- Add support for PEP 695 type aliases containing lambdas and other unusual expressions
+  (#3949)
+
+### Output
+
+- Black no longer attempts to provide special errors for attempting to format Python 2
+  code (#3933)
+- Black will more consistently print stacktraces on internal errors in verbose mode
+  (#3938)
+
+### Integrations
+
+- The action output displayed in the job summary is now wrapped in Markdown (#3914)
 
 ## 23.9.1
 
