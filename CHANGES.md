@@ -47,6 +47,12 @@
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
 
+## 23.10.1
+
+### Integrations
+
+- Fix the action failing when Black check doesn't pass (#3957)
+
 ## 23.10.0
 
 ### Stable style
