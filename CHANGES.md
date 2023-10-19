@@ -12,7 +12,7 @@
 
 ### Preview style
 
-- Fix merging implicit multiline strings that have inline comments (#3952)
+- Fix merging implicit multiline strings that have inline comments (#3956)
 
 ### Configuration
 
