@@ -16,7 +16,7 @@
 
 ### Configuration
 
-- Add support for single line format skip with other pragmas on the same line (#3959)
+- Add support for single line format skip with other comments on the same line (#3959)
 
 ### Packaging
 

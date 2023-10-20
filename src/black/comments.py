@@ -338,11 +338,11 @@ def contains_pragma_comment(comment_list: List[Leaf]) -> bool:
 
 def _contains_fmt_skip_comment(comment_line: str) -> bool:
     """
-    Checks if the given comment contains FMT_SKIP alone or paired with other pragma.
+    Checks if the given comment contains FMT_SKIP alone or paired with other comments.
     Matching styles:
-      # fmt:skip                <-- single comment
-      # noqa:XXX # fmt:skip     <-- multiple comments
-      # pylint:XXX; fmt:skip    <-- list of comments (; separated)
+      # fmt:skip                              <-- single comment
+      # noqa:XXX # fmt:skip # a nice line     <-- multiple comments
+      # pylint:XXX; fmt:skip                  <-- list of comments (; separated)
     """
     semantic_comment_blocks = [
         comment_line,
