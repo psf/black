@@ -210,8 +210,8 @@ def foo():
 
 some_tuple = ("some string", "some string" " which should be joined")
 
-some_commented_string = (
-    "This string is long but not so long that it needs hahahah toooooo be so greatttt"  # This comment gets thrown to the top.
+some_commented_string = (  # This comment stays at the top.
+    "This string is long but not so long that it needs hahahah toooooo be so greatttt"
     " {} that I just can't think of any more good words to say about it at"
     " allllllllllll".format("ha")  # comments here are fine
 )
@@ -834,7 +834,7 @@ def foo():
 
 some_tuple = ("some string", "some string which should be joined")
 
-some_commented_string = (  # This comment gets thrown to the top.
+some_commented_string = (  # This comment stays at the top.
     "This string is long but not so long that it needs hahahah toooooo be so greatttt"
     " {} that I just can't think of any more good words to say about it at"
     " allllllllllll".format("ha")  # comments here are fine

@@ -587,6 +587,7 @@ def transform_line(
             or line.contains_unsplittable_type_ignore()
         )
         and not (line.inside_brackets and line.contains_standalone_comments())
+        and not line.contains_implicit_multiline_string_with_comments()
     ):
         # Only apply basic string preprocessing, since lines shouldn't be split here.
         if Preview.string_processing in mode:

@@ -160,3 +160,67 @@ MULTILINE = """
 foobar
 """.replace("\n", "")
 ```
+
+Implicit multiline strings are special, because they can have inline comments. Strings
+without comments are merged, for example
+
+```python
+s = (
+    "An "
+    "implicit "
+    "multiline "
+    "string"
+)
+```
+
+becomes
+
+```python
+s = "An implicit multiline string"
+```
+
+A comment on any line of the string (or between two string lines) will block the
+merging, so
+
+```python
+s = (
+    "An "  # Important comment concerning just this line
+    "implicit "
+    "multiline "
+    "string"
+)
+```
+
+and
+
+```python
+s = (
+    "An "
+    "implicit "
+    # Comment in between
+    "multiline "
+    "string"
+)
+```
+
+will not be merged. Having the comment after or before the string lines (but still
+inside the parens) will merge the string. For example
+
+```python
+s = (  # Top comment
+    "An "
+    "implicit "
+    "multiline "
+    "string"
+    # Bottom comment
+)
+```
+
+becomes
+
+```python
+s = (  # Top comment
+    "An implicit multiline string"
+    # Bottom comment
+)
+```

@@ -390,7 +390,19 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
                 and is_valid_index(idx + 1)
                 and LL[idx + 1].type == token.STRING
             ):
-                if not is_part_of_annotation(leaf):
+                # Let's check if the string group contains an inline comment
+                # If we have a comment inline, we don't merge the strings
+                contains_comment = False
+                i = idx
+                while is_valid_index(i):
+                    if LL[i].type != token.STRING:
+                        break
+                    if line.comments_after(LL[i]):
+                        contains_comment = True
+                        break
+                    i += 1
+
+                if not is_part_of_annotation(leaf) and not contains_comment:
                     string_indices.append(idx)
 
                 # Advance to the next non-STRING leaf.
