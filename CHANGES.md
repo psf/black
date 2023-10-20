@@ -16,7 +16,7 @@
 
 ### Configuration
 
-<!-- Changes to how Black can be configured -->
+- Add support for single line format skip with other pragmas on the same line (#XXXX)
 
 ### Packaging
 
