@@ -68,7 +68,7 @@
 
 ### Parser
 
-- Fix bug where attributes named `type` were not acccepted inside `match` statements
+- Fix bug where attributes named `type` were not accepted inside `match` statements
   (#3950)
 - Add support for PEP 695 type aliases containing lambdas and other unusual expressions
   (#3949)
@@ -211,7 +211,7 @@ wheels in a future release as soon as the mypyc bug is fixed.
 
 This release fixes a longstanding confusing behavior in Black's GitHub action, where the
 version of the action did not determine the version of Black being run (issue #3382). In
-addition, there is a small bug fix around imports and a number of improvements to the
+addition, there is a small bug fix around imports and several improvements to the
 preview style.
 
 Please try out the
@@ -262,9 +262,9 @@ expected to become part of Black's stable style in January 2024.
 
 This is the first release of 2023, and following our
 [stability policy](https://black.readthedocs.io/en/stable/the_black_code_style/index.html#stability-policy),
-it comes with a number of improvements to our stable style, including improvements to
-empty line handling, removal of redundant parentheses in several contexts, and output
-that highlights implicitly concatenated strings better.
+it comes with several improvements to our stable style, including improvements to empty
+line handling, removal of redundant parentheses in several contexts, and output that
+highlights implicitly concatenated strings better.
 
 There are also many changes to the preview style; try out `black --preview` and give us
 feedback to help us set the stable style for next year.
@@ -926,7 +926,7 @@ and the first release covered by our new
   [`master`](https://github.com/psf/black/tree/main) branch with the
   [`main`](https://github.com/psf/black/tree/main) branch. Some additional changes in
   the source code were also made. (#2210)
-- Sigificantly reorganized the documentation to make much more sense. Check them out by
+- Significantly reorganized the documentation to make much more sense. Check them out by
   heading over to [the stable docs on RTD](https://black.readthedocs.io/en/stable/).
   (#2174)
 
