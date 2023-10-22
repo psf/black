@@ -3,13 +3,14 @@ FROM python:3.11-slim AS builder
 RUN mkdir /src
 COPY . /src/
 ENV VIRTUAL_ENV=/opt/venv
+ENV HATCH_BUILD_HOOKS_ENABLE=1
 # Install build tools to compile dependencies that don't have prebuilt wheels
 RUN apt update && apt install -y build-essential git python3-dev
 RUN python -m venv $VIRTUAL_ENV
-RUN python -m pip install --no-cache-dir hatch
+RUN python -m pip install --no-cache-dir hatch hatch-fancy-pypi-readme hatch-vcs
 RUN . /opt/venv/bin/activate && pip install --no-cache-dir --upgrade pip setuptools \
     && cd /src && hatch build -t wheel \
-    && pip install --no-cache-dir dist/*[colorama,d]
+    && pip install --no-cache-dir dist/*-cp*[colorama,d,uvloop]
 
 FROM python:3.11-slim
 
