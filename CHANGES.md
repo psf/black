@@ -68,7 +68,7 @@
 
 ### Parser
 
-- Fix bug where attributes named `type` were not acccepted inside `match` statements
+- Fix bug where attributes named `type` were not accepted inside `match` statements
   (#3950)
 - Add support for PEP 695 type aliases containing lambdas and other unusual expressions
   (#3949)
@@ -926,7 +926,7 @@ and the first release covered by our new
   [`master`](https://github.com/psf/black/tree/main) branch with the
   [`main`](https://github.com/psf/black/tree/main) branch. Some additional changes in
   the source code were also made. (#2210)
-- Sigificantly reorganized the documentation to make much more sense. Check them out by
+- Significantly reorganized the documentation to make much more sense. Check them out by
   heading over to [the stable docs on RTD](https://black.readthedocs.io/en/stable/).
   (#2174)
 
