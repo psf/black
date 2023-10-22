@@ -21,6 +21,7 @@
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
+- Change Dockerfile to hatch + compile black (#3965)
 
 ### Parser
 
