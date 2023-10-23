@@ -195,7 +195,7 @@ configuration file for consistent results across environments.
 ```console
 $ black --version
 black, 23.10.1 (compiled: yes)
-$ black --required-version 23.10.0 -c "format = 'this'"
+$ black --required-version 23.10.1 -c "format = 'this'"
 format = "this"
 $ black --required-version 31.5b2 -c "still = 'beta?!'"
 Oh no! 💥 💔 💥 The required version does not match the running version!
