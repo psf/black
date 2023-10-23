@@ -1,3 +1,4 @@
+# flags: --preview
 foo =  123  # fmt: skip # noqa: E501 # pylint
 bar =    (
     123   ,
