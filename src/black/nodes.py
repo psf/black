@@ -718,6 +718,10 @@ def is_multiline_string(leaf: Leaf) -> bool:
     return has_triple_quotes(leaf.value) and "\n" in leaf.value
 
 
+def is_funcdef(node: Node) -> bool:
+    return node.type == syms.funcdef
+
+
 def is_stub_suite(node: Node) -> bool:
     """Return True if `node` is a suite with a stub body."""
 

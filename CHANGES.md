@@ -13,6 +13,7 @@
 ### Preview style
 
 - Fix merging implicit multiline strings that have inline comments (#3956)
+- Allow empty first line after block open before a comment or compound statement (#3967)
 
 ### Configuration
 
