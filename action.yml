@@ -39,6 +39,9 @@ runs:
   steps:
     - name: black
       run: |
+        # Even when black fails, do not close the shell
+        set +e
+
         if [ "$RUNNER_OS" == "Windows" ]; then
           runner="python"
         else

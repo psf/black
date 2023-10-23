@@ -46,6 +46,8 @@
 - The summary output for GitHub workflows is now suppressible using the `summary`
   parameter. (#3958)
 
+- Fix the action failing when Black check doesn't pass (#3957)
+
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
