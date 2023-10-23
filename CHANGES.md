@@ -1,57 +1,30 @@
 # Change Log
 
-## Unreleased
+## 23.10.1
 
 ### Highlights
 
-<!-- Include any especially major or disruptive changes here -->
-
-### Stable style
-
-<!-- Changes that affect Black's stable style -->
+- Maintanence release to get a fix out for GitHub Action edge case (#3957)
 
 ### Preview style
 
 - Fix merging implicit multiline strings that have inline comments (#3956)
 - Allow empty first line after block open before a comment or compound statement (#3967)
 
-### Configuration
-
-<!-- Changes to how Black can be configured -->
-
 ### Packaging
 
-<!-- Changes to how Black is packaged, such as dependency requirements -->
-
 - Change Dockerfile to hatch + compile black (#3965)
-
-### Parser
-
-<!-- Changes to the parser or to version autodetection -->
-
-### Performance
-
-<!-- Changes that improve Black's performance. -->
-
-### Output
-
-<!-- Changes to Black's terminal output and error messages -->
-
-### _Blackd_
-
-<!-- Changes to blackd -->
 
 ### Integrations
 
 - The summary output for GitHub workflows is now suppressible using the `summary`
   parameter. (#3958)
-
 - Fix the action failing when Black check doesn't pass (#3957)
 
 ### Documentation
 
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
+- It is known Windows documentation CI is broken
+  https://github.com/psf/black/issues/3968
 
 ## 23.10.0
 
