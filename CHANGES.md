@@ -40,7 +40,7 @@
 
 ### Integrations
 
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+- The summary output for GitHub workflows is now suppressible using the `summary` parameter. (#3958)
 
 ### Documentation
 
