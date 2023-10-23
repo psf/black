@@ -36,6 +36,92 @@ func(
     ]
 )
 
+func(  # a
+    [  # b
+        "c",  # c
+        "d",  # d
+        "e",  # e
+    ]  # f
+)  # g
+
+func(  # a
+    {  # b
+        "c": 1,  # c
+        "d": 2,  # d
+        "e": 3,  # e
+    }  # f
+)  # g
+
+func(
+    # preserve me
+    [
+        "c",
+        "d",
+        "e",
+    ]
+)
+
+func(
+    [  # preserve me but hug brackets
+        "c",
+        "d",
+        "e",
+    ]
+)
+
+func(
+    [
+        # preserve me but hug brackets
+        "c",
+        "d",
+        "e",
+    ]
+)
+
+func(
+    [
+        "c",
+        # preserve me but hug brackets
+        "d",
+        "e",
+    ]
+)
+
+func(
+    [
+        "c",
+        "d",
+        "e",
+        # preserve me but hug brackets
+    ]
+)
+
+func(
+    [
+        "c",
+        "d",
+        "e",
+    ]  # preserve me but hug brackets
+)
+
+func(
+    [
+        "c",
+        "d",
+        "e",
+    ]
+    # preserve me
+)
+
+func([x for x in "short line"])
+func([x for x in "long line long line long line long line long line long line long line"])
+func([x for x in [x for x in "long line long line long line long line long line long line long line"]])
+
+func({"short line"})
+func({"long line", "long long line", "long long long line", "long long long long line", "long long long long long line"})
+func({{"long line", "long long line", "long long long line", "long long long long line", "long long long long long line"}})
+
+
 # output
 def foo_brackets(request):
     return JsonResponse({
@@ -77,3 +163,96 @@ func([
     "b",
     "c",
 ])
+
+func([  # a  # b
+    "c",  # c
+    "d",  # d
+    "e",  # e
+])  # f  # g
+
+func({  # a  # b
+    "c": 1,  # c
+    "d": 2,  # d
+    "e": 3,  # e
+})  # f  # g
+
+func(
+    # preserve me
+    [
+        "c",
+        "d",
+        "e",
+    ]
+)
+
+func([  # preserve me but hug brackets
+    "c",
+    "d",
+    "e",
+])
+
+func([
+    # preserve me but hug brackets
+    "c",
+    "d",
+    "e",
+])
+
+func([
+    "c",
+    # preserve me but hug brackets
+    "d",
+    "e",
+])
+
+func([
+    "c",
+    "d",
+    "e",
+    # preserve me but hug brackets
+])
+
+func([
+    "c",
+    "d",
+    "e",
+])  # preserve me but hug brackets
+
+func(
+    [
+        "c",
+        "d",
+        "e",
+    ]
+    # preserve me
+)
+
+func([x for x in "short line"])
+func([
+    x for x in "long line long line long line long line long line long line long line"
+])
+func([
+    x
+    for x in [
+        x
+        for x in "long line long line long line long line long line long line long line"
+    ]
+])
+
+func({"short line"})
+func({
+    "long line",
+    "long long line",
+    "long long long line",
+    "long long long long line",
+    "long long long long long line",
+})
+func({
+    {
+        "long line",
+        "long long line",
+        "long long long line",
+        "long long long long line",
+        "long long long long long line",
+    }
+})
