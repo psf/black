@@ -190,6 +190,7 @@ class Preview(Enum):
     module_docstring_newlines = auto()
     accept_raw_docstrings = auto()
     fix_power_op_line_length = auto()
+    single_line_format_skip_with_multiple_comments = auto()
 
 
 class Deprecated(UserWarning):
