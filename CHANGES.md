@@ -13,7 +13,8 @@
 ### Preview style
 
 - Fix merging implicit multiline strings that have inline comments (#3956)
-- Improve multiline dictionary and list indentation for sole function parameter (#3964)
+- Multiline dictionaries and lists that are the sole argument to a function are now
+  indented less (#3964)
 
 ### Configuration
 
