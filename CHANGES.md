@@ -40,7 +40,8 @@
 
 ### Integrations
 
-- The summary output for GitHub workflows is now suppressible using the `summary` parameter. (#3958)
+- The summary output for GitHub workflows is now suppressible using the `summary`
+  parameter. (#3958)
 
 ### Documentation
 
