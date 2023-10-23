@@ -1,18 +1,15 @@
 # Change Log
 
-## Unreleased
+## 23.10.1
 
 ### Highlights
 
-<!-- Include any especially major or disruptive changes here -->
-
-### Stable style
-
-<!-- Changes that affect Black's stable style -->
+- Maintanence release to get a fix out for GitHub Action edge case (#3957)
 
 ### Preview style
 
 - Fix merging implicit multiline strings that have inline comments (#3956)
+- Allow empty first line after block open before a comment or compound statement (#3967)
 
 ### Configuration
 
@@ -20,32 +17,18 @@
 
 ### Packaging
 
-<!-- Changes to how Black is packaged, such as dependency requirements -->
-
-### Parser
-
-<!-- Changes to the parser or to version autodetection -->
-
-### Performance
-
-<!-- Changes that improve Black's performance. -->
-
-### Output
-
-<!-- Changes to Black's terminal output and error messages -->
-
-### _Blackd_
-
-<!-- Changes to blackd -->
+- Change Dockerfile to hatch + compile black (#3965)
 
 ### Integrations
 
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+- The summary output for GitHub workflows is now suppressible using the `summary`
+  parameter. (#3958)
+- Fix the action failing when Black check doesn't pass (#3957)
 
 ### Documentation
 
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
+- It is known Windows documentation CI is broken
+  https://github.com/psf/black/issues/3968
 
 ## 23.10.0
 
@@ -68,7 +51,7 @@
 
 ### Parser
 
-- Fix bug where attributes named `type` were not acccepted inside `match` statements
+- Fix bug where attributes named `type` were not accepted inside `match` statements
   (#3950)
 - Add support for PEP 695 type aliases containing lambdas and other unusual expressions
   (#3949)
@@ -926,7 +909,7 @@ and the first release covered by our new
   [`master`](https://github.com/psf/black/tree/main) branch with the
   [`main`](https://github.com/psf/black/tree/main) branch. Some additional changes in
   the source code were also made. (#2210)
-- Sigificantly reorganized the documentation to make much more sense. Check them out by
+- Significantly reorganized the documentation to make much more sense. Check them out by
   heading over to [the stable docs on RTD](https://black.readthedocs.io/en/stable/).
   (#2174)
 

@@ -24,6 +24,8 @@ created for all unreleased
 [commits on the `main` branch](https://github.com/psf/black/commits/main). This tag is
 not meant to be used by external users.
 
+From version 23.11.0 the Docker image installs a compiled black into the image.
+
 ## Usage
 
 A permanent container doesn't have to be created to use _Black_ as a Docker image. It's

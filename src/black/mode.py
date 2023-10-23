@@ -191,6 +191,7 @@ class Preview(Enum):
     accept_raw_docstrings = auto()
     fix_power_op_line_length = auto()
     single_line_format_skip_with_multiple_comments = auto()
+    allow_empty_first_line_before_new_block_or_comment = auto()
 
 
 class Deprecated(UserWarning):
