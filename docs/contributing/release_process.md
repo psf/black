@@ -33,6 +33,7 @@ publish a [GitHub Release]. This triggers [release automation](#release-workflow
 builds all release artifacts and publishes them to the various platforms we publish to.
 
 We now have a `release.py` script to help with cutting the release PRs.
+
 - `python3 release.py --help` is your friend.
 - `release.py` has only been tested in Python 3.12 (so get with the times :D)
 
@@ -45,7 +46,7 @@ To cut a release:
    - `release.py` will calculate this and log to stderr for you copy paste pleasure
 1. File a PR editing `CHANGES.md` and the docs to version the latest changes
    - Run `python3 release.py [--debug]` to generate most changes
-     - Sub headings in the template, if they have no bullet points need manual removal 
+     - Sub headings in the template, if they have no bullet points need manual removal
        _PR welcome to improve :D_
 1. If `release.py` fail manually edit; otherwise, yay, skip this step!
    1. Replace the `## Unreleased` header with the version number
@@ -58,23 +59,24 @@ To cut a release:
       {doc}`/integrations/source_version_control` and
       {doc}`/usage_and_configuration/the_basics`
    - Example PR: [GH-3139]
-2. Once the release PR is merged, wait until all CI passes
+1. Once the release PR is merged, wait until all CI passes
    - If CI does not pass, **stop** and investigate the failure(s) as generally we'd want
      to fix failing CI before cutting a release
-3. [Draft a new GitHub Release][new-release]
+1. [Draft a new GitHub Release][new-release]
    1. Click `Choose a tag` and type in the version number, then select the
       `Create new tag: YY.M.N on publish` option that appears
    2. Verify that the new tag targets the `main` branch
    3. You can leave the release title blank, GitHub will default to the tag name
    4. Copy and paste the _raw changelog Markdown_ for the current release into the
       description box
-4. Publish the GitHub Release, triggering [release automation](#release-workflows) that
+1. Publish the GitHub Release, triggering [release automation](#release-workflows) that
    will handle the rest
-5. Once CI is done add + commit (git push - No review) a new empty template for the next release to CHANGES.md
-   *(Template is able to be copy pasted from release.py should we fail)*
+1. Once CI is done add + commit (git push - No review) a new empty template for the next
+   release to CHANGES.md _(Template is able to be copy pasted from release.py should we
+   fail)_
    1. `python3 release.py --add-changes-template|-a [--debug]`
    2. Should that fail, please return to copy + paste
-6. At this point, you're basically done. It's good practice to go and [watch and verify
+1. At this point, you're basically done. It's good practice to go and [watch and verify
    that all the release workflows pass][black-actions], although you will receive a
    GitHub notification should something fail.
    - If something fails, don't panic. Please go read the respective workflow's logs and
