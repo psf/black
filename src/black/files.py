@@ -361,6 +361,10 @@ def gen_python_files(
         if normalized_path is None:
             continue
 
+        normalized_path = "/" + normalized_path
+        if child.is_dir():
+            normalized_path += "/"
+
         if child.is_dir():
             # If gitignore is None, gitignore usage is disabled, while a Falsey
             # gitignore is when the directory doesn't have a .gitignore file.
