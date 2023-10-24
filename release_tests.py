@@ -32,16 +32,6 @@ class TestRelease(unittest.TestCase):
         # check we have a repo + changes file
         self.assertTrue(self.sf.changes_path.exists())
 
-    def __str__(self) -> str:
-        return f"""\
-TestRelease ENV:
-Tempdir path: {self.tempdir_path}
-Real SourceFiles on black repo:
-{self.sf_real_black_repo}
-Test SourceFiles:
-{self.sf}
-"""
-
     def _make_fake_black_repo(self) -> None:
         copy(self.sf_real_black_repo.changes_path, self.sf.changes_path)
         for idx, doc_path in enumerate(self.sf.version_doc_paths):
