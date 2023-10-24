@@ -65,13 +65,21 @@ NEW_VERSION_CHANGELOG_TEMPLATE = """\
 """
 
 
+class NoGitTagsError(Exception):
+    ...
+
+
 # TODO: Do better with alpha + beta releases
 # Maybe we vendor packaging library
 def get_git_tags(versions_only: bool = True) -> List[str]:
     """Pull out all tags or calvers only"""
-    git_tags = run(
-        ["git", "tag"], stdout=PIPE, check=True, encoding="utf8"
-    ).stdout.splitlines()
+    cp = run(
+        ["git", "tag"], stdout=PIPE, stderr=PIPE, check=True, encoding="utf8"
+    )
+    if not cp.stdout:
+        LOG.error(f"Returned no git tags stdout: {cp.stderr}")
+        raise NoGitTagsError
+    git_tags = cp.stdout.splitlines()
     if versions_only:
         return [t for t in git_tags if t[0].isdigit()]
     return git_tags
