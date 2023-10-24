@@ -13,11 +13,11 @@ from release import SourceFiles, int_calver
 class FakeDateTime:
     """Used to mock the date to test generating next calver function"""
 
-    def today(self, *args: Any, **kwargs: Any) -> "FakeDateTime":
+    def today(*args: Any, **kwargs: Any) -> "FakeDateTime":  # noqa
         return FakeDateTime()
 
     # Add leading 0 on purpose to ensure we remove it
-    def strftime(self, *args: Any, **kwargs: Any) -> str:
+    def strftime(*args: Any, **kwargs: Any) -> str:  # noqa
         return "69.01"
 
 
@@ -32,6 +32,16 @@ class TestRelease(unittest.TestCase):
         # check we have a repo + changes file
         self.assertTrue(self.sf.changes_path.exists())
 
+    def __str__(self) -> str:
+        return f"""\
+TestRelease ENV:
+Tempdir path: {self.tempdir_path}
+Real SourceFiles on black repo:
+{self.sf_real_black_repo}
+Test SourceFiles:
+{self.sf}
+"""
+
     def _make_fake_black_repo(self) -> None:
         copy(self.sf_real_black_repo.changes_path, self.sf.changes_path)
         for idx, doc_path in enumerate(self.sf.version_doc_paths):
@@ -44,12 +54,14 @@ class TestRelease(unittest.TestCase):
 
     @patch("release.get_git_tags")
     def test_get_current_version(self, mocked_git_tags: Mock) -> None:
+        print(f"{self}")  # COOPER
         mocked_git_tags.return_value = ["1.1.0", "69.1.0", "69.1.1", "2.2.0"]
         self.assertEqual("69.1.1", self.sf.get_current_version())
 
     @patch("release.get_git_tags")
     @patch("release.datetime", FakeDateTime)
     def test_get_next_version(self, mocked_git_tags: Mock) -> None:
+        print(f"{self}")  # COOPER
         # test we handle no args
         mocked_git_tags.return_value = []
         self.assertEqual(
@@ -68,6 +80,7 @@ class TestRelease(unittest.TestCase):
         )
 
     def test_int_calver(self) -> None:
+        print(f"{self}")  # COOPER
         first_month_release = int_calver("69.1.0")
         second_month_release = int_calver("69.1.1")
         self.assertEqual(6910, first_month_release)

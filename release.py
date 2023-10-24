@@ -100,6 +100,16 @@ class SourceFiles:
         self.current_version = self.get_current_version()
         self.next_version = self.get_next_version()
 
+    def __str__(self) -> str:
+        return f"""\
+> SourceFiles ENV:
+  Repo path: {self.black_repo_path}
+  CHANGES.md path: {self.changes_path}
+  docs path: {self.docs_path}
+  Current version: {self.current_version}
+  Next version: {self.next_version}
+"""
+
     def add_template_to_changes(self) -> int:
         """Add the template to CHANGES.md if it does not exist"""
         LOG.info(f"Adding template to {self.changes_path}")

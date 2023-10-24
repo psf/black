@@ -19,9 +19,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.12"]
-        # TODO: Workout how to install git on macos + windows
-        # os: [macOS-latest, ubuntu-latest, windows-latest]
-        os: [ubuntu-latest]
+        os: [macOS-latest, ubuntu-latest, windows-latest]
 
     steps:
       - uses: actions/checkout@v4
@@ -34,17 +32,13 @@ jobs:
       - name: Print Python Version
         run: python --version --version && which python
 
-      - name: Installing git CLI tool
-        run: |
-          sudo apt update
-          sudo apt install git
-
       - name: Update pip, setuptools + wheels
         run: |
           python -m pip install --upgrade pip setuptools wheel
 
       - name: Run Unitests via coverage + print report
         run: |
-          python -m pip install coverage
-          coverage run release_tests.py
-          coverage report -m
+          # python -m pip install coverage
+          # coverage run release_tests.py
+          # coverage report -m
+          python3 release_tests.py
