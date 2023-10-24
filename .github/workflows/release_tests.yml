@@ -1,0 +1,53 @@
+name: Release tool CI
+
+on:
+  push:
+    paths:
+      - .github/workflows/release.yml
+      - release.py
+      - release_tests.py
+  pull_request:
+    paths:
+      - .github/workflows/release.yml
+      - release.py
+      - release_tests.py
+
+jobs:
+  build:
+    name: Running python ${{ matrix.python-version }} on ${{matrix.os}}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+        os: [macOS-latest, ubuntu-latest, windows-latest]
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        allow-prereleases: true
+
+    - name: Print Python Version
+      run: python --version --version && which python
+
+    - name: Update pip, setuptools + wheels
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+
+    - name: Run Unitests via coverage + print report
+      run: |
+        python -m pip install coverage
+        coverage run release_tests.py
+        coverage report -m
+
+    - name: Run mypy strict
+      run: |
+        python -m pip install mypy
+        mypy --strict release.py
+
+    - name: Run black preview
+      run: |
+        python -m pip install black
+        black --preview release*
