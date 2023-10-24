@@ -16,7 +16,7 @@
 
 ### Configuration
 
-<!-- Changes to how Black can be configured -->
+- Add support for single line format skip with other comments on the same line (#3959)
 
 ### Packaging
 
@@ -57,10 +57,6 @@
 
 - Fix merging implicit multiline strings that have inline comments (#3956)
 - Allow empty first line after block open before a comment or compound statement (#3967)
-
-### Configuration
-
-- Add support for single line format skip with other comments on the same line (#3959)
 
 ### Packaging
 
