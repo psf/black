@@ -18,6 +18,8 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Fix a bug in the matching of absolute path names in `--include` (#3975)
+
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
