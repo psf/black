@@ -19,7 +19,9 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.12"]
-        os: [macOS-latest, ubuntu-latest, windows-latest]
+        # TODO: Workout how to install git on macos + windows
+        # os: [macOS-latest, ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
 
     steps:
       - uses: actions/checkout@v4
