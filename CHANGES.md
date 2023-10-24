@@ -12,10 +12,8 @@
 
 ### Preview style
 
-- Fix merging implicit multiline strings that have inline comments (#3956)
 - Multiline dictionaries and lists that are the sole argument to a function are now
   indented less (#3964)
-- Allow empty first line after block open before a comment or compound statement (#3967)
 
 ### Configuration
 
