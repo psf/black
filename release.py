@@ -133,7 +133,7 @@ class SourceFiles:
             "## Unreleased", f"## {self.next_version}"
         )
 
-        # Remove all comments (subheadings are harder - Human will still need to do them)
+        # Remove all comments (subheadings are harder - Human required still)
         no_comments_changes = []
         for line in versioned_changes.splitlines():
             if line.startswith("<!--"):

@@ -13,17 +13,18 @@ from release import SourceFiles, int_calver
 class FakeDateTime:
     """Used to mock the date to test generating next calver function"""
 
-    def today(*args: Any, **kwargs: Any) -> "FakeDateTime":
+    def today(self, *args: Any, **kwargs: Any) -> "FakeDateTime":
         return FakeDateTime()
 
     # Add leading 0 on purpose to ensure we remove it
-    def strftime(*args: Any, **kwargs: Any) -> str:
+    def strftime(self, *args: Any, **kwargs: Any) -> str:
         return "69.01"
 
 
 class TestRelease(unittest.TestCase):
     def setUp(self) -> None:
-        self.tempdir = TemporaryDirectory(delete=False)
+        # We only test on >= 3.12
+        self.tempdir = TemporaryDirectory(delete=False)  # type: ignore
         self.tempdir_path = Path(self.tempdir.name)
         self.sf_real_black_repo = SourceFiles(Path(__file__).parent)
         self.sf = SourceFiles(self.tempdir_path)

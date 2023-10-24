@@ -32,6 +32,11 @@ jobs:
       - name: Print Python Version
         run: python --version --version && which python
 
+      - name: Installing git CLI tool
+        run: |
+          sudo apt update
+          sudo apt install git
+
       - name: Update pip, setuptools + wheels
         run: |
           python -m pip install --upgrade pip setuptools wheel
@@ -41,13 +46,3 @@ jobs:
           python -m pip install coverage
           coverage run release_tests.py
           coverage report -m
-
-      - name: Run mypy strict
-        run: |
-          python -m pip install mypy
-          mypy --strict release.py
-
-      - name: Run black preview
-        run: |
-          python -m pip install black
-          black --preview release*
