@@ -18,7 +18,8 @@ previous revision that modified those lines.
 
 So when migrating your project's code style to _Black_, reformat everything and commit
 the changes (preferably in one massive commit). Then put the full 40 characters commit
-identifier(s) into a file.
+identifier(s) into a file usually called `.git-blame-ignore-revs` at the root of your
+project directory.
 
 ```text
 # Migrate code style to Black
