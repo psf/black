@@ -121,6 +121,13 @@ func({"short line"})
 func({"long line", "long long line", "long long long line", "long long long long line", "long long long long long line"})
 func({{"long line", "long long line", "long long long line", "long long long long line", "long long long long long line"}})
 
+foooooooooooooooooooo(
+    [{c: n + 1 for c in range(256)} for n in range(100)] + [{}], {size}
+)
+
+baaaaaaaaaaaaar(
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], {x}, "a string", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+)
 
 # output
 def foo_brackets(request):
@@ -256,3 +263,11 @@ func({
         "long long long long long line",
     }
 })
+
+foooooooooooooooooooo(
+    [{c: n + 1 for c in range(256)} for n in range(100)] + [{}], {size}
+)
+
+baaaaaaaaaaaaar(
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], {x}, "a string", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+)
