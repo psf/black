@@ -32,6 +32,9 @@ jobs:
       - name: Print Python Version
         run: python --version --version && which python
 
+      - name: Print Git Version
+        run: git --version && which git
+
       - name: Update pip, setuptools + wheels
         run: |
           python -m pip install --upgrade pip setuptools wheel
