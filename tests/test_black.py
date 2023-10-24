@@ -2388,6 +2388,16 @@ class TestFileCollection:
         # Setting exclude explicitly to an empty string to block .gitignore usage.
         assert_collected_sources(src, expected, include="", exclude="")
 
+    def test_include_absolute_path(self) -> None:
+        path = DATA_DIR / "include_exclude_tests"
+        src = [path]
+        expected = [
+            Path(path / "b/dont_exclude/a.pie"),
+        ]
+        assert_collected_sources(
+                src, expected, root=path, include=r"^/b/dont_exclude/a\.pie$", exclude=""
+        )
+
     def test_extend_exclude(self) -> None:
         path = DATA_DIR / "include_exclude_tests"
         src = [path]
