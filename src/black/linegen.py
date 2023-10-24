@@ -820,10 +820,9 @@ def _first_right_hand_split(
         if (
             tail_leaves[0].type == token.RPAR
             and tail_leaves[0].value
-            and head_leaves[-1].type == token.LPAR
-            and head_leaves[-1].value
-            and body_leaves[0].type in [token.LBRACE, token.LSQB]
+            and tail_leaves[0].opening_bracket is head_leaves[-1]
             and body_leaves[-1].type in [token.RBRACE, token.RSQB]
+            and body_leaves[-1].opening_bracket is body_leaves[0]
         ):
             head_leaves = head_leaves + body_leaves[:1]
             tail_leaves = body_leaves[-1:] + tail_leaves
