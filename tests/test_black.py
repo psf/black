@@ -2395,7 +2395,7 @@ class TestFileCollection:
             Path(path / "b/dont_exclude/a.pie"),
         ]
         assert_collected_sources(
-                src, expected, root=path, include=r"^/b/dont_exclude/a\.pie$", exclude=""
+            src, expected, root=path, include=r"^/b/dont_exclude/a\.pie$", exclude=""
         )
 
     def test_exclude_absolute_path(self) -> None:
@@ -2406,7 +2406,7 @@ class TestFileCollection:
             Path(path / "b/.definitely_exclude/a.py"),
         ]
         assert_collected_sources(
-                src, expected, root=path, include=r"\.py$", exclude=r"^/b/exclude/a\.py$"
+            src, expected, root=path, include=r"\.py$", exclude=r"^/b/exclude/a\.py$"
         )
 
     def test_extend_exclude(self) -> None:
