@@ -136,9 +136,8 @@ def normalize_format_skipping(node: Node, mode: Mode) -> None:
     """Convert content between `# fmt: off`/`# fmt: on` or on a line with `# fmt:skip`
     into a STANDALONE_COMMENT leaf containing the content to skip formatting for.
     """
-    more_to_process = True
-    while more_to_process:
-        more_to_process = _convert_one_fmt_off_or_skip(node, mode)
+    while _convert_one_fmt_off_or_skip(node, mode):
+        pass
 
 
 def _convert_one_fmt_off_or_skip(node: Node, mode: Mode) -> bool:
