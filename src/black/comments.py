@@ -190,21 +190,26 @@ def convert_one_fmt_off_pair(node: Node, mode: Mode) -> bool:
                 standalone_comment_prefix = prefix
 
             hidden_value = "".join(str(n) for n in ignored_nodes)
-            if comment.value in FMT_OFF:
+
+            if found_fmt_off:
                 hidden_value = comment.value + "\n" + hidden_value
-            if _contains_fmt_skip_comment(comment.value, mode):
+            elif found_fmt_skip:
                 hidden_value += "  " + comment.value
+
             if hidden_value.endswith("\n"):
-                # That happens when one of the `ignored_nodes` ended with a NEWLINE
+                # This happens when one of the `ignored_nodes` ended with a NEWLINE
                 # leaf (possibly followed by a DEDENT).
                 hidden_value = hidden_value[:-1]
+
             first_idx: Optional[int] = None
             for ignored in ignored_nodes:
                 index = ignored.remove()
                 if first_idx is None:
                     first_idx = index
+
             assert parent is not None, "INTERNAL ERROR: fmt: on/off handling (1)"
             assert first_idx is not None, "INTERNAL ERROR: fmt: on/off handling (2)"
+
             parent.insert_child(
                 first_idx,
                 Leaf(
