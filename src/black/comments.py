@@ -166,7 +166,13 @@ def convert_one_fmt_off_pair(node: Node, mode: Mode) -> bool:
                     if found_fmt_skip and prev.type in WHITESPACE:
                         continue
 
-            ignored_nodes = list(generate_ignored_nodes(leaf, comment, mode))
+            if found_fmt_off:
+                ignored_nodes = list(_generate_ignored_nodes_from_fmt_off(leaf))
+            elif found_fmt_skip:
+                ignored_nodes = list(
+                    _generate_ignored_nodes_from_fmt_skip(leaf, comment)
+                )
+
             if not ignored_nodes:
                 continue
 
@@ -212,17 +218,11 @@ def convert_one_fmt_off_pair(node: Node, mode: Mode) -> bool:
     return False
 
 
-def generate_ignored_nodes(
-    leaf: Leaf, comment: ProtoComment, mode: Mode
-) -> Iterator[LN]:
+def _generate_ignored_nodes_from_fmt_off(leaf: Leaf) -> Iterator[LN]:
     """Starting from the container of `leaf`, generate all leaves until `# fmt: on`.
 
-    If comment is skip, returns leaf only.
     Stops at the end of the block.
     """
-    if _contains_fmt_skip_comment(comment.value, mode):
-        yield from _generate_ignored_nodes_from_fmt_skip(leaf, comment)
-        return
     container: Optional[LN] = container_of(leaf)
     while container is not None and container.type != token.ENDMARKER:
         if is_fmt_on(container):
