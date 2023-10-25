@@ -41,7 +41,6 @@ jobs:
 
       - name: Run Unitests via coverage + print report
         run: |
-          # python -m pip install coverage
-          # coverage run release_tests.py
-          # coverage report -m
-          python3 release_tests.py
+          python -m pip install coverage
+          coverage run release_tests.py
+          coverage report -m

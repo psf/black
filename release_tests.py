@@ -2,7 +2,7 @@
 
 import unittest
 from pathlib import Path
-from shutil import copy, rmtree
+from shutil import rmtree
 from tempfile import TemporaryDirectory
 from typing import Any
 from unittest.mock import Mock, patch
@@ -26,17 +26,7 @@ class TestRelease(unittest.TestCase):
         # We only test on >= 3.12
         self.tempdir = TemporaryDirectory(delete=False)  # type: ignore
         self.tempdir_path = Path(self.tempdir.name)
-        self.sf_real_black_repo = SourceFiles(Path(__file__).parent)
         self.sf = SourceFiles(self.tempdir_path)
-        self._make_fake_black_repo()
-        # check we have a repo + changes file
-        self.assertTrue(self.sf.changes_path.exists())
-
-    def _make_fake_black_repo(self) -> None:
-        copy(self.sf_real_black_repo.changes_path, self.sf.changes_path)
-        for idx, doc_path in enumerate(self.sf.version_doc_paths):
-            doc_path.parent.mkdir(parents=True, exist_ok=True)
-            copy(self.sf_real_black_repo.version_doc_paths[idx], doc_path)
 
     def tearDown(self) -> None:
         rmtree(self.tempdir.name)
@@ -44,14 +34,12 @@ class TestRelease(unittest.TestCase):
 
     @patch("release.get_git_tags")
     def test_get_current_version(self, mocked_git_tags: Mock) -> None:
-        print(f"{self}")  # COOPER
         mocked_git_tags.return_value = ["1.1.0", "69.1.0", "69.1.1", "2.2.0"]
         self.assertEqual("69.1.1", self.sf.get_current_version())
 
     @patch("release.get_git_tags")
     @patch("release.datetime", FakeDateTime)
     def test_get_next_version(self, mocked_git_tags: Mock) -> None:
-        print(f"{self}")  # COOPER
         # test we handle no args
         mocked_git_tags.return_value = []
         self.assertEqual(
@@ -70,7 +58,6 @@ class TestRelease(unittest.TestCase):
         )
 
     def test_int_calver(self) -> None:
-        print(f"{self}")  # COOPER
         first_month_release = int_calver("69.1.0")
         second_month_release = int_calver("69.1.1")
         self.assertEqual(6910, first_month_release)
