@@ -161,12 +161,9 @@ def convert_one_fmt_off_pair(node: Node, mode: Mode) -> bool:
             if comment.type != STANDALONE_COMMENT:
                 prev = preceding_leaf(leaf)
                 if prev:
-                    if comment.value in FMT_OFF and prev.type not in WHITESPACE:
+                    if found_fmt_off and prev.type not in WHITESPACE:
                         continue
-                    if (
-                        _contains_fmt_skip_comment(comment.value, mode)
-                        and prev.type in WHITESPACE
-                    ):
+                    if found_fmt_skip and prev.type in WHITESPACE:
                         continue
 
             ignored_nodes = list(generate_ignored_nodes(leaf, comment, mode))
