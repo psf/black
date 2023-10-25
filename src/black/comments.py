@@ -147,12 +147,14 @@ def convert_one_fmt_off_pair(node: Node, mode: Mode) -> bool:
     for leaf in node.leaves():
         previous_consumed = 0
         for comment in list_comments(leaf.prefix, is_endmarker=False):
-            should_pass_fmt = comment.value in FMT_OFF or _contains_fmt_skip_comment(
-                comment.value, mode
-            )
-            if not should_pass_fmt:
+            found_fmt_off = comment.value in FMT_OFF
+            found_fmt_skip = _contains_fmt_skip_comment(comment.value, mode)
+            should_skip_formatting = found_fmt_off or found_fmt_skip
+
+            if not should_skip_formatting:
                 previous_consumed = comment.consumed
                 continue
+
             # We only want standalone comments. If there's no previous leaf or
             # the previous leaf is indentation, it's a standalone comment in
             # disguise.
