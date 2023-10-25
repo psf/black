@@ -113,6 +113,32 @@ my_dict = {
 }
 ```
 
+### Improved multiline dictionary and list indentation for sole function parameter
+
+For better readability and less verticality, _Black_ now pairs parantheses ("(", ")")
+with braces ("{", "}") and square brackets ("[", "]") on the same line for single
+parameter function calls. For example:
+
+```python
+foo(
+    [
+        1,
+        2,
+        3,
+    ]
+)
+```
+
+will be changed to:
+
+```python
+foo([
+    1,
+    2,
+    3,
+])
+```
+
 ### Improved multiline string handling
 
 _Black_ is smarter when formatting multiline strings, especially in function arguments,
