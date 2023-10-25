@@ -42,7 +42,6 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
-- The action output displayed in the job summary is now wrapped in Markdown (#3914)
 - Black will now run only on git hooks appropriate for a code formatter (#3940)
 
 ### Documentation
