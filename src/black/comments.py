@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Final, Iterator, List, Optional, Union
 
+from black.mode import Mode, Preview
 from black.nodes import (
     CLOSING_BRACKETS,
     STANDALONE_COMMENT,
@@ -20,10 +21,11 @@ LN = Union[Leaf, Node]
 
 FMT_OFF: Final = {"# fmt: off", "# fmt:off", "# yapf: disable"}
 FMT_SKIP: Final = {"# fmt: skip", "# fmt:skip"}
-FMT_PASS: Final = {*FMT_OFF, *FMT_SKIP}
 FMT_ON: Final = {"# fmt: on", "# fmt:on", "# yapf: enable"}
 
 COMMENT_EXCEPTIONS = " !:#'"
+_COMMENT_PREFIX = "# "
+_COMMENT_LIST_SEPARATOR = ";"
 
 
 @dataclass
@@ -130,14 +132,14 @@ def make_comment(content: str) -> str:
     return "#" + content
 
 
-def normalize_fmt_off(node: Node) -> None:
+def normalize_fmt_off(node: Node, mode: Mode) -> None:
     """Convert content between `# fmt: off`/`# fmt: on` into standalone comments."""
     try_again = True
     while try_again:
-        try_again = convert_one_fmt_off_pair(node)
+        try_again = convert_one_fmt_off_pair(node, mode)
 
 
-def convert_one_fmt_off_pair(node: Node) -> bool:
+def convert_one_fmt_off_pair(node: Node, mode: Mode) -> bool:
     """Convert content of a single `# fmt: off`/`# fmt: on` into a standalone comment.
 
     Returns True if a pair was converted.
@@ -145,21 +147,27 @@ def convert_one_fmt_off_pair(node: Node) -> bool:
     for leaf in node.leaves():
         previous_consumed = 0
         for comment in list_comments(leaf.prefix, is_endmarker=False):
-            if comment.value not in FMT_PASS:
+            should_pass_fmt = comment.value in FMT_OFF or _contains_fmt_skip_comment(
+                comment.value, mode
+            )
+            if not should_pass_fmt:
                 previous_consumed = comment.consumed
                 continue
             # We only want standalone comments. If there's no previous leaf or
             # the previous leaf is indentation, it's a standalone comment in
             # disguise.
-            if comment.value in FMT_PASS and comment.type != STANDALONE_COMMENT:
+            if should_pass_fmt and comment.type != STANDALONE_COMMENT:
                 prev = preceding_leaf(leaf)
                 if prev:
                     if comment.value in FMT_OFF and prev.type not in WHITESPACE:
                         continue
-                    if comment.value in FMT_SKIP and prev.type in WHITESPACE:
+                    if (
+                        _contains_fmt_skip_comment(comment.value, mode)
+                        and prev.type in WHITESPACE
+                    ):
                         continue
 
-            ignored_nodes = list(generate_ignored_nodes(leaf, comment))
+            ignored_nodes = list(generate_ignored_nodes(leaf, comment, mode))
             if not ignored_nodes:
                 continue
 
@@ -168,7 +176,7 @@ def convert_one_fmt_off_pair(node: Node) -> bool:
             prefix = first.prefix
             if comment.value in FMT_OFF:
                 first.prefix = prefix[comment.consumed :]
-            if comment.value in FMT_SKIP:
+            if _contains_fmt_skip_comment(comment.value, mode):
                 first.prefix = ""
                 standalone_comment_prefix = prefix
             else:
@@ -178,7 +186,7 @@ def convert_one_fmt_off_pair(node: Node) -> bool:
             hidden_value = "".join(str(n) for n in ignored_nodes)
             if comment.value in FMT_OFF:
                 hidden_value = comment.value + "\n" + hidden_value
-            if comment.value in FMT_SKIP:
+            if _contains_fmt_skip_comment(comment.value, mode):
                 hidden_value += "  " + comment.value
             if hidden_value.endswith("\n"):
                 # That happens when one of the `ignored_nodes` ended with a NEWLINE
@@ -205,13 +213,15 @@ def convert_one_fmt_off_pair(node: Node) -> bool:
     return False
 
 
-def generate_ignored_nodes(leaf: Leaf, comment: ProtoComment) -> Iterator[LN]:
+def generate_ignored_nodes(
+    leaf: Leaf, comment: ProtoComment, mode: Mode
+) -> Iterator[LN]:
     """Starting from the container of `leaf`, generate all leaves until `# fmt: on`.
 
     If comment is skip, returns leaf only.
     Stops at the end of the block.
     """
-    if comment.value in FMT_SKIP:
+    if _contains_fmt_skip_comment(comment.value, mode):
         yield from _generate_ignored_nodes_from_fmt_skip(leaf, comment)
         return
     container: Optional[LN] = container_of(leaf)
@@ -327,3 +337,32 @@ def contains_pragma_comment(comment_list: List[Leaf]) -> bool:
             return True
 
     return False
+
+
+def _contains_fmt_skip_comment(comment_line: str, mode: Mode) -> bool:
+    """
+    Checks if the given comment contains FMT_SKIP alone or paired with other comments.
+    Matching styles:
+      # fmt:skip                           <-- single comment
+      # noqa:XXX # fmt:skip # a nice line  <-- multiple comments (Preview)
+      # pylint:XXX; fmt:skip               <-- list of comments (; separated, Preview)
+    """
+    semantic_comment_blocks = (
+        [
+            comment_line,
+            *[
+                _COMMENT_PREFIX + comment.strip()
+                for comment in comment_line.split(_COMMENT_PREFIX)[1:]
+            ],
+            *[
+                _COMMENT_PREFIX + comment.strip()
+                for comment in comment_line.strip(_COMMENT_PREFIX).split(
+                    _COMMENT_LIST_SEPARATOR
+                )
+            ],
+        ]
+        if Preview.single_line_format_skip_with_multiple_comments in mode
+        else [comment_line]
+    )
+
+    return any(comment in FMT_SKIP for comment in semantic_comment_blocks)

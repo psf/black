@@ -17,7 +17,7 @@
 
 ### Configuration
 
-<!-- Changes to how Black can be configured -->
+- Add support for single line format skip with other comments on the same line (#3959)
 
 ### Packaging
 
