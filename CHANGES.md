@@ -12,7 +12,8 @@
 
 ### Preview style
 
-<!-- Changes that affect Black's preview style -->
+- Multiline dictionaries and lists that are the sole argument to a function are now
+  indented less (#3964)
 
 ### Configuration
 
