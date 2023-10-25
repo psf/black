@@ -1099,7 +1099,7 @@ def _format_str_once(src_contents: str, *, mode: Mode) -> str:
         for feature in {Feature.PARENTHESIZED_CONTEXT_MANAGERS}
         if supports_feature(versions, feature)
     }
-    normalize_fmt_off(src_node)
+    normalize_fmt_off(src_node, mode)
     lines = LineGenerator(mode=mode, features=context_manager_features)
     elt = EmptyLineTracker(mode=mode)
     split_line_features = {
