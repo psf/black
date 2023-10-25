@@ -156,7 +156,7 @@ def convert_one_fmt_off_pair(node: Node, mode: Mode) -> bool:
             # We only want standalone comments. If there's no previous leaf or
             # the previous leaf is indentation, it's a standalone comment in
             # disguise.
-            if should_pass_fmt and comment.type != STANDALONE_COMMENT:
+            if comment.type != STANDALONE_COMMENT:
                 prev = preceding_leaf(leaf)
                 if prev:
                     if comment.value in FMT_OFF and prev.type not in WHITESPACE:
