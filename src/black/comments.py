@@ -132,17 +132,21 @@ def make_comment(content: str) -> str:
     return "#" + content
 
 
-def normalize_fmt_off(node: Node, mode: Mode) -> None:
-    """Convert content between `# fmt: off`/`# fmt: on` into standalone comments."""
-    try_again = True
-    while try_again:
-        try_again = convert_one_fmt_off_pair(node, mode)
+def normalize_format_skipping(node: Node, mode: Mode) -> None:
+    """Convert content between `# fmt: off`/`# fmt: on` or on a line with `# fmt:skip`
+    into a STANDALONE_COMMENT leaf containing the content to skip formatting for.
+    """
+    more_to_process = True
+    while more_to_process:
+        more_to_process = _convert_one_fmt_off_or_skip(node, mode)
 
 
-def convert_one_fmt_off_pair(node: Node, mode: Mode) -> bool:
-    """Convert content of a single `# fmt: off`/`# fmt: on` into a standalone comment.
+def _convert_one_fmt_off_or_skip(node: Node, mode: Mode) -> bool:
+    """Convert one `# fmt: off`/`# fmt: on` pair or single `# fmt:skip` into a
+    STANDALONE_COMMENT leaf. This removes the leaf range from the tree and inserts
+    the unformatted content as the STANDALONE_COMMENT leaf's value.
 
-    Returns True if a pair was converted.
+    Returns True if a format skip was processed.
     """
     for leaf in node.leaves():
         previous_consumed = 0

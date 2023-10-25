@@ -35,7 +35,7 @@ from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
 
 from _black_version import version as __version__
 from black.cache import Cache
-from black.comments import normalize_fmt_off
+from black.comments import normalize_format_skipping
 from black.const import (
     DEFAULT_EXCLUDES,
     DEFAULT_INCLUDES,
@@ -1099,7 +1099,7 @@ def _format_str_once(src_contents: str, *, mode: Mode) -> str:
         for feature in {Feature.PARENTHESIZED_CONTEXT_MANAGERS}
         if supports_feature(versions, feature)
     }
-    normalize_fmt_off(src_node, mode)
+    normalize_format_skipping(src_node, mode)
     lines = LineGenerator(mode=mode, features=context_manager_features)
     elt = EmptyLineTracker(mode=mode)
     split_line_features = {
