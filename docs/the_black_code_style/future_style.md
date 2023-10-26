@@ -115,7 +115,7 @@ my_dict = {
 
 ### Improved multiline dictionary and list indentation for sole function parameter
 
-For better readability and less verticality, _Black_ now pairs parantheses ("(", ")")
+For better readability and less verticality, _Black_ now pairs parentheses ("(", ")")
 with braces ("{", "}") and square brackets ("[", "]") on the same line for single
 parameter function calls. For example:
 
