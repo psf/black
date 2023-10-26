@@ -315,9 +315,16 @@ def _generate_ignored_nodes_from_fmt_skip(
         siblings: List[LN] = []
         lineno = prev_sibling.get_lineno()
         # We only want siblings from the same line, as fmt: skip targets a line
-        while prev_sibling is not None and prev_sibling.get_lineno() == lineno:
+        while (
+            prev_sibling is not None
+            and prev_sibling.type not in WHITESPACE
+            and prev_sibling.get_lineno() == lineno
+        ):
             siblings.insert(0, prev_sibling)
-            prev_sibling = prev_sibling.prev_sibling
+            preceding = preceding_leaf(prev_sibling)
+            prev = prev_sibling.prev_sibling
+            prev_sibling = preceding if prev is None else prev
+
         yield from siblings
     elif (
         parent is not None and parent.type == syms.suite and leaf.type == token.NEWLINE
