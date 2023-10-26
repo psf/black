@@ -209,8 +209,8 @@ def _convert_one_fmt_off_or_skip(node: Node, mode: Mode) -> bool:
                 if first_idx is None:
                     first_idx = index
 
-            assert parent is not None, "INTERNAL ERROR: fmt: on/off handling (1)"
-            assert first_idx is not None, "INTERNAL ERROR: fmt: on/off handling (2)"
+            assert parent is not None, "INTERNAL ERROR: format skipping handling (1)"
+            assert first_idx is not None, "INTERNAL ERROR: format skipping handling (2)"
 
             parent.insert_child(
                 first_idx,
