@@ -111,8 +111,6 @@ Utilities
 
 .. autofunction:: black.nodes.container_of
 
-.. autofunction:: black.comments.convert_one_fmt_off_pair
-
 .. autofunction:: black.diff
 
 .. autofunction:: black.linegen.dont_increase_indentation
@@ -124,8 +122,6 @@ Utilities
 .. autofunction:: black.lines.enumerate_reversed
 
 .. autofunction:: black.comments.generate_comments
-
-.. autofunction:: black.comments.generate_ignored_nodes
 
 .. autofunction:: black.comments.is_fmt_on
 
@@ -145,7 +141,7 @@ Utilities
 
 .. autofunction:: black.brackets.max_delimiter_priority_in_atom
 
-.. autofunction:: black.normalize_fmt_off
+.. autofunction:: black.normalize_format_skipping
 
 .. autofunction:: black.numerics.normalize_numeric_literal
 
