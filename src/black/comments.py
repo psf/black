@@ -158,16 +158,15 @@ def _convert_one_fmt_off_or_skip(node: Node, mode: Mode) -> bool:
                 previous_consumed = comment.consumed
                 continue
 
-            # We only want standalone comments. If there's no previous leaf or
-            # the previous leaf is indentation, it's a standalone comment in
-            # disguise.
-            if comment.type != STANDALONE_COMMENT:
-                prev = preceding_leaf(leaf)
-                if prev:
-                    if found_fmt_off and prev.type not in WHITESPACE:
+            if found_fmt_off:
+                # We only want standalone comments. If there's no previous leaf or
+                # the previous leaf is indentation, it's a standalone comment in
+                # disguise.
+                if comment.type != STANDALONE_COMMENT:
+                    prev = preceding_leaf(leaf)
+                    if prev and prev.type not in WHITESPACE:
                         continue
 
-            if found_fmt_off:
                 ignored_nodes = list(_generate_ignored_nodes_from_fmt_off(leaf))
             elif found_fmt_skip:
                 ignored_nodes = list(
