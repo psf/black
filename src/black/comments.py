@@ -160,9 +160,9 @@ def _convert_one_fmt_off_or_skip(node: Node, mode: Mode) -> bool:
                 continue
 
             (ignored_nodes, hidden_value, standalone_comment_prefix) = (
-                _gather_fmt_off_data(leaf, comment, previous_consumed)
+                _gather_data_for_fmt_off(leaf, comment, previous_consumed)
                 if found_fmt_off
-                else _gather_fmt_skip_data(leaf, comment)
+                else _gather_data_for_fmt_skip(leaf, comment)
             )
 
             if not ignored_nodes:
@@ -194,7 +194,7 @@ def _convert_one_fmt_off_or_skip(node: Node, mode: Mode) -> bool:
     return False
 
 
-def _gather_fmt_off_data(
+def _gather_data_for_fmt_off(
     leaf: Leaf, comment: ProtoComment, previous_consumed: int
 ) -> Tuple[List[LN], str, str]:
     # We only want standalone comments. If there's no previous leaf or
@@ -225,7 +225,7 @@ def _gather_fmt_off_data(
     return (ignored_nodes, hidden_value, standalone_comment_prefix)
 
 
-def _gather_fmt_skip_data(
+def _gather_data_for_fmt_skip(
     leaf: Leaf, comment: ProtoComment
 ) -> Tuple[List[LN], str, str]:
     ignored_nodes = list(_generate_ignored_nodes_from_fmt_skip(leaf, comment))
