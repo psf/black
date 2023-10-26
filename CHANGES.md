@@ -8,7 +8,7 @@
 
 ### Stable style
 
-- Fix bug where multiple fmt:skip pragmas inside single block fails (#XXXX)
+- Fix bug where multiple fmt:skip pragmas inside single block fails (#3978)
 
 ### Preview style
 
