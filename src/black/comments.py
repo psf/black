@@ -166,8 +166,6 @@ def _convert_one_fmt_off_or_skip(node: Node, mode: Mode) -> bool:
                 if prev:
                     if found_fmt_off and prev.type not in WHITESPACE:
                         continue
-                    if found_fmt_skip and prev.type in WHITESPACE:
-                        continue
 
             if found_fmt_off:
                 ignored_nodes = list(_generate_ignored_nodes_from_fmt_off(leaf))
