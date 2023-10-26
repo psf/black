@@ -1,7 +1,7 @@
 import re
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Final, Iterator, List, Optional, Union
+from typing import Final, Iterator, List, Optional, Tuple, Union
 
 from black.mode import Mode, Preview
 from black.nodes import (
@@ -149,6 +149,7 @@ def _convert_one_fmt_off_or_skip(node: Node, mode: Mode) -> bool:
     """
     for leaf in node.leaves():
         previous_consumed = 0
+
         for comment in list_comments(leaf.prefix, is_endmarker=False):
             found_fmt_off = comment.value in FMT_OFF
             found_fmt_skip = _contains_fmt_skip_comment(comment.value, mode)
@@ -158,47 +159,17 @@ def _convert_one_fmt_off_or_skip(node: Node, mode: Mode) -> bool:
                 previous_consumed = comment.consumed
                 continue
 
-            if found_fmt_off:
-                # We only want standalone comments. If there's no previous leaf or
-                # the previous leaf is indentation, it's a standalone comment in
-                # disguise.
-                if comment.type != STANDALONE_COMMENT:
-                    prev = preceding_leaf(leaf)
-                    if prev and prev.type not in WHITESPACE:
-                        continue
-
-                ignored_nodes = list(_generate_ignored_nodes_from_fmt_off(leaf))
-            elif found_fmt_skip:
-                ignored_nodes = list(
-                    _generate_ignored_nodes_from_fmt_skip(leaf, comment)
-                )
+            (ignored_nodes, hidden_value, standalone_comment_prefix) = (
+                _gather_fmt_off_data(leaf, comment, previous_consumed)
+                if found_fmt_off
+                else _gather_fmt_skip_data(leaf, comment)
+            )
 
             if not ignored_nodes:
                 continue
 
-            first = ignored_nodes[0]  # Can be a container node with the `leaf`.
+            first = ignored_nodes[0]
             parent = first.parent
-            prefix = first.prefix
-
-            if found_fmt_off:
-                first.prefix = prefix[comment.consumed :]
-                standalone_comment_prefix = (
-                    prefix[:previous_consumed] + "\n" * comment.newlines
-                )
-            elif found_fmt_skip:
-                first.prefix = ""
-                standalone_comment_prefix = prefix
-
-            hidden_value = "".join(str(n) for n in ignored_nodes)
-
-            if found_fmt_off:
-                hidden_value = comment.value + "\n" + hidden_value
-                if hidden_value.endswith("\n"):
-                    # This happens when one of the `ignored_nodes` ended with a NEWLINE
-                    # leaf (possibly followed by a DEDENT).
-                    hidden_value = hidden_value[:-1]
-            elif found_fmt_skip:
-                hidden_value += "  " + comment.value
 
             first_idx: Optional[int] = None
             for ignored in ignored_nodes:
@@ -221,6 +192,54 @@ def _convert_one_fmt_off_or_skip(node: Node, mode: Mode) -> bool:
             return True
 
     return False
+
+
+def _gather_fmt_off_data(
+    leaf: Leaf, comment: ProtoComment, previous_consumed: int
+) -> Tuple[List[LN], str, str]:
+    # We only want standalone comments. If there's no previous leaf or
+    # the previous leaf is indentation, it's a standalone comment in
+    # disguise.
+    if comment.type != STANDALONE_COMMENT:
+        prev = preceding_leaf(leaf)
+        if prev and prev.type not in WHITESPACE:
+            return ([], "", "")
+
+    ignored_nodes = list(_generate_ignored_nodes_from_fmt_off(leaf))
+
+    if not ignored_nodes:
+        return ([], "", "")
+
+    first = ignored_nodes[0]  # Can be a container node with the `leaf`.
+    prefix = first.prefix
+
+    first.prefix = prefix[comment.consumed :]
+    standalone_comment_prefix = prefix[:previous_consumed] + "\n" * comment.newlines
+
+    hidden_value = comment.value + "\n" + "".join(str(n) for n in ignored_nodes)
+    if hidden_value.endswith("\n"):
+        # This happens when one of the `ignored_nodes` ended with a NEWLINE
+        # leaf (possibly followed by a DEDENT).
+        hidden_value = hidden_value[:-1]
+
+    return (ignored_nodes, hidden_value, standalone_comment_prefix)
+
+
+def _gather_fmt_skip_data(
+    leaf: Leaf, comment: ProtoComment
+) -> Tuple[List[LN], str, str]:
+    ignored_nodes = list(_generate_ignored_nodes_from_fmt_skip(leaf, comment))
+
+    if not ignored_nodes:
+        return ([], "", "")
+
+    first = ignored_nodes[0]  # Can be a container node with the `leaf`.
+    standalone_comment_prefix = first.prefix
+    first.prefix = ""
+
+    hidden_value = "".join(str(n) for n in ignored_nodes) + "  " + comment.value
+
+    return (ignored_nodes, hidden_value, standalone_comment_prefix)
 
 
 def _generate_ignored_nodes_from_fmt_off(leaf: Leaf) -> Iterator[LN]:
