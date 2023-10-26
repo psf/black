@@ -17,6 +17,11 @@ if (
 else:
     print("I'm bad")
 
+x = [
+    1      ,  # fmt: skip
+    2   ,
+    3 , 4  # fmt: skip
+]
 
 # output
 
@@ -38,3 +43,9 @@ if (
     print("I'm good!")
 else:
     print("I'm bad")
+
+x = [
+    1      ,  # fmt: skip
+    2,
+    3 , 4  # fmt: skip
+]
