@@ -196,13 +196,12 @@ def _convert_one_fmt_off_or_skip(node: Node, mode: Mode) -> bool:
 
             if found_fmt_off:
                 hidden_value = comment.value + "\n" + hidden_value
+                if hidden_value.endswith("\n"):
+                    # This happens when one of the `ignored_nodes` ended with a NEWLINE
+                    # leaf (possibly followed by a DEDENT).
+                    hidden_value = hidden_value[:-1]
             elif found_fmt_skip:
                 hidden_value += "  " + comment.value
-
-            if hidden_value.endswith("\n"):
-                # This happens when one of the `ignored_nodes` ended with a NEWLINE
-                # leaf (possibly followed by a DEDENT).
-                hidden_value = hidden_value[:-1]
 
             first_idx: Optional[int] = None
             for ignored in ignored_nodes:
