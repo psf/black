@@ -287,19 +287,37 @@ def _generate_ignored_nodes_from_fmt_skip(
     leaf: Leaf, comment: ProtoComment
 ) -> Iterator[LN]:
     """Generate all leaves that should be ignored by the `# fmt: skip` from `leaf`."""
-    prev_sibling = leaf.prev_sibling
+
+    # If leaf.prev_sibling is part of a bigger node that would start on a different
+    # line than the preceding leaf, use preceding leaf instead
+    preceding = preceding_leaf(leaf)
+    prev = leaf.prev_sibling
+    prev_sibling = (
+        preceding
+        if (
+            prev is not None
+            and preceding is not None
+            and prev.get_lineno() != preceding.get_lineno()
+        )
+        else prev
+    )
+
     parent = leaf.parent
+
     # Need to properly format the leaf prefix to compare it to comment.value,
     # which is also formatted
     comments = list_comments(leaf.prefix, is_endmarker=False)
     if not comments or comment.value != comments[0].value:
         return
+
     if prev_sibling is not None:
         leaf.prefix = ""
-        siblings = [prev_sibling]
-        while "\n" not in prev_sibling.prefix and prev_sibling.prev_sibling is not None:
-            prev_sibling = prev_sibling.prev_sibling
+        siblings: List[LN] = []
+        lineno = prev_sibling.get_lineno()
+        # We only want siblings from the same line, as fmt: skip targets a line
+        while prev_sibling is not None and prev_sibling.get_lineno() == lineno:
             siblings.insert(0, prev_sibling)
+            prev_sibling = prev_sibling.prev_sibling
         yield from siblings
     elif (
         parent is not None and parent.type == syms.suite and leaf.type == token.NEWLINE
