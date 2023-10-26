@@ -8,7 +8,7 @@
 
 ### Stable style
 
-<!-- Changes that affect Black's stable style -->
+- Fix bug where multiple fmt:skip pragmas inside single block fails (#XXXX)
 
 ### Preview style
 
