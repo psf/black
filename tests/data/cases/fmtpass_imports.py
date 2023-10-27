@@ -17,3 +17,6 @@ import sys
 
 import tempfile
 import zoneinfo
+
+from foo import bar
+from foo import bar  # fmt: skip
