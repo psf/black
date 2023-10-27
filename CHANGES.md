@@ -52,7 +52,7 @@
 
 ### Highlights
 
-- Maintanence release to get a fix out for GitHub Action edge case (#3957)
+- Maintenance release to get a fix out for GitHub Action edge case (#3957)
 
 ### Preview style
 
