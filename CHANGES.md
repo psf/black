@@ -14,6 +14,8 @@
 
 - Multiline dictionaries and lists that are the sole argument to a function are now
   indented less (#3964)
+- Multiline list unpacking as the sole argument to a function is now also indented less
+  (#XXXX)
 
 ### Configuration
 
