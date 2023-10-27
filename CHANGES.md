@@ -12,11 +12,14 @@
 
 ### Preview style
 
-<!-- Changes that affect Black's preview style -->
+- Multiline dictionaries and lists that are the sole argument to a function are now
+  indented less (#3964)
 
 ### Configuration
 
-<!-- Changes to how Black can be configured -->
+- Add support for single-line format skip with other comments on the same line (#3959)
+
+- Fix a bug in the matching of absolute path names in `--include` (#3976)
 
 ### Packaging
 
@@ -50,6 +53,32 @@
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
 
+## 23.10.1
+
+### Highlights
+
+- Maintenance release to get a fix out for GitHub Action edge case (#3957)
+
+### Preview style
+
+- Fix merging implicit multiline strings that have inline comments (#3956)
+- Allow empty first line after block open before a comment or compound statement (#3967)
+
+### Packaging
+
+- Change Dockerfile to hatch + compile black (#3965)
+
+### Integrations
+
+- The summary output for GitHub workflows is now suppressible using the `summary`
+  parameter. (#3958)
+- Fix the action failing when Black check doesn't pass (#3957)
+
+### Documentation
+
+- It is known Windows documentation CI is broken
+  https://github.com/psf/black/issues/3968
+
 ## 23.10.0
 
 ### Stable style
@@ -71,7 +100,7 @@
 
 ### Parser
 
-- Fix bug where attributes named `type` were not acccepted inside `match` statements
+- Fix bug where attributes named `type` were not accepted inside `match` statements
   (#3950)
 - Add support for PEP 695 type aliases containing lambdas and other unusual expressions
   (#3949)
@@ -929,7 +958,7 @@ and the first release covered by our new
   [`master`](https://github.com/psf/black/tree/main) branch with the
   [`main`](https://github.com/psf/black/tree/main) branch. Some additional changes in
   the source code were also made. (#2210)
-- Sigificantly reorganized the documentation to make much more sense. Check them out by
+- Significantly reorganized the documentation to make much more sense. Check them out by
   heading over to [the stable docs on RTD](https://black.readthedocs.io/en/stable/).
   (#2174)
 

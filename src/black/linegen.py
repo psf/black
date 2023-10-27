@@ -587,6 +587,7 @@ def transform_line(
             or line.contains_unsplittable_type_ignore()
         )
         and not (line.inside_brackets and line.contains_standalone_comments())
+        and not line.contains_implicit_multiline_string_with_comments()
     ):
         # Only apply basic string preprocessing, since lines shouldn't be split here.
         if Preview.string_processing in mode:
@@ -814,6 +815,19 @@ def _first_right_hand_split(
     tail_leaves.reverse()
     body_leaves.reverse()
     head_leaves.reverse()
+
+    if Preview.hug_parens_with_braces_and_square_brackets in line.mode:
+        if (
+            tail_leaves[0].type == token.RPAR
+            and tail_leaves[0].value
+            and tail_leaves[0].opening_bracket is head_leaves[-1]
+            and body_leaves[-1].type in [token.RBRACE, token.RSQB]
+            and body_leaves[-1].opening_bracket is body_leaves[0]
+        ):
+            head_leaves = head_leaves + body_leaves[:1]
+            tail_leaves = body_leaves[-1:] + tail_leaves
+            body_leaves = body_leaves[1:-1]
+
     head = bracket_split_build_line(
         head_leaves, line, opening_bracket, component=_BracketSplitComponent.head
     )

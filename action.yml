@@ -27,6 +27,10 @@ inputs:
     description: 'Python Version specifier (PEP440) - e.g. "21.5b1"'
     required: false
     default: ""
+  summary:
+    description: "Whether to add the output to the workflow summary"
+    required: false
+    default: true
 branding:
   color: "black"
   icon: "check-circle"
@@ -35,6 +39,9 @@ runs:
   steps:
     - name: black
       run: |
+        # Even when black fails, do not close the shell
+        set +e
+
         if [ "$RUNNER_OS" == "Windows" ]; then
           runner="python"
         else
@@ -47,10 +54,12 @@ runs:
         # Display the raw output in the step
         echo "${out}"
 
-        # Display the Markdown output in the job summary
-        echo "\`\`\`python" >> $GITHUB_STEP_SUMMARY
-        echo "${out}" >> $GITHUB_STEP_SUMMARY
-        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+        if [ "${{ inputs.summary }}" == "true" ]; then
+          # Display the Markdown output in the job summary
+          echo "\`\`\`python" >> $GITHUB_STEP_SUMMARY
+          echo "${out}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+        fi
 
         # Exit with the exit-code returned by Black
         exit ${exit_code}

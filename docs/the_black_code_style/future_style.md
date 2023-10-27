@@ -113,6 +113,45 @@ my_dict = {
 }
 ```
 
+### Improved multiline dictionary and list indentation for sole function parameter
+
+For better readability and less verticality, _Black_ now pairs parentheses ("(", ")")
+with braces ("{", "}") and square brackets ("[", "]") on the same line for single
+parameter function calls. For example:
+
+```python
+foo(
+    [
+        1,
+        2,
+        3,
+    ]
+)
+```
+
+will be changed to:
+
+```python
+foo([
+    1,
+    2,
+    3,
+])
+```
+
+You can use a magic trailing comma to avoid this compacting behavior; by default,
+_Black_ will not reformat the following code:
+
+```python
+foo(
+    [
+        1,
+        2,
+        3,
+    ],
+)
+```
+
 ### Improved multiline string handling
 
 _Black_ is smarter when formatting multiline strings, especially in function arguments,
@@ -159,4 +198,68 @@ to:
 MULTILINE = """
 foobar
 """.replace("\n", "")
+```
+
+Implicit multiline strings are special, because they can have inline comments. Strings
+without comments are merged, for example
+
+```python
+s = (
+    "An "
+    "implicit "
+    "multiline "
+    "string"
+)
+```
+
+becomes
+
+```python
+s = "An implicit multiline string"
+```
+
+A comment on any line of the string (or between two string lines) will block the
+merging, so
+
+```python
+s = (
+    "An "  # Important comment concerning just this line
+    "implicit "
+    "multiline "
+    "string"
+)
+```
+
+and
+
+```python
+s = (
+    "An "
+    "implicit "
+    # Comment in between
+    "multiline "
+    "string"
+)
+```
+
+will not be merged. Having the comment after or before the string lines (but still
+inside the parens) will merge the string. For example
+
+```python
+s = (  # Top comment
+    "An "
+    "implicit "
+    "multiline "
+    "string"
+    # Bottom comment
+)
+```
+
+becomes
+
+```python
+s = (  # Top comment
+    "An implicit multiline string"
+    # Bottom comment
+)
 ```

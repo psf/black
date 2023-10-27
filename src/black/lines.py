@@ -24,6 +24,8 @@ from black.nodes import (
     STANDALONE_COMMENT,
     TEST_DESCENDANTS,
     child_towards,
+    is_docstring,
+    is_funcdef,
     is_import,
     is_multiline_string,
     is_one_sequence_between,
@@ -237,6 +239,21 @@ class Line:
             if leaf.type == STANDALONE_COMMENT and leaf.bracket_depth <= depth_limit:
                 return True
 
+        return False
+
+    def contains_implicit_multiline_string_with_comments(self) -> bool:
+        """Chck if we have an implicit multiline string with comments on the line"""
+        for leaf_type, leaf_group_iterator in itertools.groupby(
+            self.leaves, lambda leaf: leaf.type
+        ):
+            if leaf_type != token.STRING:
+                continue
+            leaf_list = list(leaf_group_iterator)
+            if len(leaf_list) == 1:
+                continue
+            for leaf in leaf_list:
+                if self.comments_after(leaf):
+                    return True
         return False
 
     def contains_uncollapsable_type_comments(self) -> bool:
@@ -671,7 +688,30 @@ class EmptyLineTracker:
                 return 0, 1
             return before, 1
 
-        if self.previous_line and self.previous_line.opens_block:
+        is_empty_first_line_ok = (
+            Preview.allow_empty_first_line_before_new_block_or_comment
+            in current_line.mode
+            and (
+                # If it's a standalone comment
+                current_line.leaves[0].type == STANDALONE_COMMENT
+                # If it opens a new block
+                or current_line.opens_block
+                # If it's a triple quote comment (but not at the start of a funcdef)
+                or (
+                    is_docstring(current_line.leaves[0])
+                    and self.previous_line
+                    and self.previous_line.leaves[0]
+                    and self.previous_line.leaves[0].parent
+                    and not is_funcdef(self.previous_line.leaves[0].parent)
+                )
+            )
+        )
+
+        if (
+            self.previous_line
+            and self.previous_line.opens_block
+            and not is_empty_first_line_ok
+        ):
             return 0, 0
         return before, 0
 
