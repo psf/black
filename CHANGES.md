@@ -18,7 +18,8 @@
 ### Configuration
 
 - Add support for single line format skip with other comments on the same line (#3959)
-
+- File exclusion and inclusion logic is now consistently applied before symlink
+  resolution. (#3987, #3976)
 - Fix a bug in the matching of absolute path names in `--include` (#3976)
 
 ### Packaging
