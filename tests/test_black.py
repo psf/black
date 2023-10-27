@@ -1409,6 +1409,24 @@ class BlackTestCase(BlackBaseTestCase):
         for option in ["--include", "--exclude", "--extend-exclude", "--force-exclude"]:
             self.invokeBlack(["-", option, "**()(!!*)"], exit_code=2)
 
+    def test_force_exclude_symlink_parameter(self) -> None:
+        with TemporaryDirectory() as workspace:
+            root = Path(workspace)
+            (root / "pyproject.toml").touch()
+
+            symlink_target = root / "target.py"
+            symlink_target.write_text("print ( )\n", encoding="utf-8")
+
+            symlink = root / "symlink.py"
+            symlink.symlink_to(symlink_target)
+
+            # target.py would need to be reformatted, and symlink.py points to
+            # it, but since we force-exclude symlink.py, black should not check
+            # the pointed-to file.
+            self.invokeBlack(
+                ["--check", r"--force-exclude=sym", str(symlink)], exit_code=0
+            )
+
     def test_required_version_matches_version(self) -> None:
         self.invokeBlack(
             ["--required-version", black.__version__, "-c", "0"],
