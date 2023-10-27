@@ -12,11 +12,12 @@
 
 ### Preview style
 
-<!-- Changes that affect Black's preview style -->
+- Multiline dictionaries and lists that are the sole argument to a function are now
+  indented less (#3964)
 
 ### Configuration
 
-<!-- Changes to how Black can be configured -->
+- Add support for single line format skip with other comments on the same line (#3959)
 
 - Fix a bug in the matching of absolute path names in `--include` (#3976)
 
@@ -53,7 +54,7 @@
 
 ### Highlights
 
-- Maintanence release to get a fix out for GitHub Action edge case (#3957)
+- Maintenance release to get a fix out for GitHub Action edge case (#3957)
 
 ### Preview style
 
