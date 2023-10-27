@@ -137,6 +137,8 @@ baaaaaaaaaaaaar(
     [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], {x}, "a string", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 )
 
+foo(*["long long long long long line", "long long long long long line", "long long long long long line"])
+
 # output
 def foo_brackets(request):
     return JsonResponse({
@@ -287,3 +289,9 @@ foooooooooooooooooooo(
 baaaaaaaaaaaaar(
     [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], {x}, "a string", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 )
+
+foo(*[
+    "long long long long long line",
+    "long long long long long line",
+    "long long long long long line",
+])
