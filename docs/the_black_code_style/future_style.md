@@ -144,9 +144,8 @@ This also applies to list unpacking:
 ```python
 foo(
     *[
-        1,
-        2,
-        3,
+        a_long_function_name(a_long_variable_name)
+        for a_long_variable_name in some_generator
     ]
 )
 ```
@@ -155,9 +154,8 @@ will become:
 
 ```python
 foo(*[
-    1,
-    2,
-    3,
+    a_long_function_name(a_long_variable_name)
+    for a_long_variable_name in some_generator
 ])
 ```
 
