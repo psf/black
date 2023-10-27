@@ -45,6 +45,9 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- Black's pre-commit integration will now run only on git hooks appropriate for a code
+  formatter (#3940)
+
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
