@@ -19,6 +19,8 @@
 
 - Add support for single line format skip with other comments on the same line (#3959)
 
+- Fix a bug in the matching of absolute path names in `--include` (#3976)
+
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
