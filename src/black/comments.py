@@ -11,7 +11,6 @@ from black.nodes import (
     container_of,
     first_leaf_of,
     preceding_leaf,
-    syms,
 )
 from blib2to3.pgen2 import token
 from blib2to3.pytree import Leaf, Node
@@ -287,61 +286,41 @@ def _generate_ignored_nodes_from_fmt_skip(
     leaf: Leaf, comment: ProtoComment
 ) -> Iterator[LN]:
     """Generate all leaves that should be ignored by the `# fmt: skip` from `leaf`."""
+    prev = _get_previous_node_to_ignore(leaf)
 
-    # If leaf.prev_sibling is part of a bigger node that would start on a different
-    # line than the preceding leaf, use preceding leaf instead
-    preceding = preceding_leaf(leaf)
-    prev = leaf.prev_sibling
-    prev_sibling = (
+    siblings: List[LN] = []
+    if prev is not None and (leaf.get_lineno() or 1) - (prev.get_lineno() or -1) <= 1:
+        leaf.prefix = ""
+        lineno = prev.get_lineno()
+        while (
+            prev is not None
+            and prev.type not in WHITESPACE
+            and prev.get_lineno() == lineno
+        ):
+            siblings.insert(0, prev)
+            prev = _get_previous_node_to_ignore(prev)
+
+    yield from siblings
+
+
+def _get_previous_node_to_ignore(node: LN) -> Optional[LN]:
+    """
+    Return previous sibling if it is on the same line as preceding leaf, otherwise
+    return the preceding leaf.
+    """
+    preceding = preceding_leaf(node)
+    previous = node.prev_sibling
+    return (
         preceding
         if (
-            prev is not None
-            and preceding is not None
-            and prev.get_lineno() != preceding.get_lineno()
+            previous is None
+            or (
+                preceding is not None
+                and previous.get_lineno() != preceding.get_lineno()
+            )
         )
-        else prev
+        else previous
     )
-
-    parent = leaf.parent
-
-    if prev_sibling is not None:
-        leaf.prefix = ""
-        siblings: List[LN] = []
-        lineno = prev_sibling.get_lineno()
-        # We only want siblings from the same line, as fmt: skip targets a line
-        while (
-            prev_sibling is not None
-            and prev_sibling.type not in WHITESPACE
-            and prev_sibling.get_lineno() == lineno
-        ):
-            siblings.insert(0, prev_sibling)
-            preceding = preceding_leaf(prev_sibling)
-            prev = prev_sibling.prev_sibling
-            prev_sibling = preceding if prev is None else prev
-
-        yield from siblings
-    elif (
-        parent is not None and parent.type == syms.suite and leaf.type == token.NEWLINE
-    ):
-        # The `# fmt: skip` is on the colon line of the if/while/def/class/...
-        # statements. The ignored nodes should be previous siblings of the
-        # parent suite node.
-        leaf.prefix = ""
-        ignored_nodes: List[LN] = []
-        parent_sibling = parent.prev_sibling
-        while parent_sibling is not None and parent_sibling.type != syms.suite:
-            ignored_nodes.insert(0, parent_sibling)
-            parent_sibling = parent_sibling.prev_sibling
-        # Special case for `async_stmt` where the ASYNC token is on the
-        # grandparent node.
-        grandparent = parent.parent
-        if (
-            grandparent is not None
-            and grandparent.prev_sibling is not None
-            and grandparent.prev_sibling.type == token.ASYNC
-        ):
-            ignored_nodes.insert(0, grandparent.prev_sibling)
-        yield from iter(ignored_nodes)
 
 
 def is_fmt_on(container: LN) -> bool:
