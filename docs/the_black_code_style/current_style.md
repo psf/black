@@ -178,7 +178,7 @@ If you use Flake8, you have a few options:
    extend-ignore = E203, E501, E704
    ```
 
-   The rationale for E950 is explained in
+   The rationale for B950 is explained in
    [Bugbear's documentation](https://github.com/PyCQA/flake8-bugbear#opinionated-warnings).
 
 2. For a minimally compatible config:
