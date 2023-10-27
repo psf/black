@@ -304,12 +304,6 @@ def _generate_ignored_nodes_from_fmt_skip(
 
     parent = leaf.parent
 
-    # Need to properly format the leaf prefix to compare it to comment.value,
-    # which is also formatted
-    comments = list_comments(leaf.prefix, is_endmarker=False)
-    if not comments or comment.value != comments[0].value:
-        return
-
     if prev_sibling is not None:
         leaf.prefix = ""
         siblings: List[LN] = []
