@@ -139,6 +139,28 @@ foo([
 ])
 ```
 
+This also applies to list unpacking:
+
+```python
+foo(
+    *[
+        1,
+        2,
+        3,
+    ]
+)
+```
+
+will become:
+
+```python
+foo(*[
+    1,
+    2,
+    3,
+])
+```
+
 You can use a magic trailing comma to avoid this compacting behavior; by default,
 _Black_ will not reformat the following code:
 
