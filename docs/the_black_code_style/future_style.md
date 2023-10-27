@@ -139,6 +139,19 @@ foo([
 ])
 ```
 
+You can use a magic trailing comma to avoid this compacting behavior; by default,
+_Black_ will not reformat the following code:
+
+```python
+foo(
+    [
+        1,
+        2,
+        3,
+    ],
+)
+```
+
 ### Improved multiline string handling
 
 _Black_ is smarter when formatting multiline strings, especially in function arguments,
