@@ -82,12 +82,12 @@ async def main():
 
 async def main():
     await (a ** b)
-
-async def main():
+    await (a[b] ** c)
+    await (a ** b[c])
+    await ((a + b) ** (c + d))
     await (a + b)
-
-async def main():
     await (a[b])
+    await (a[b ** c])
 
 # output
 import asyncio
@@ -187,11 +187,9 @@ async def main():
 
 async def main():
     await (a**b)
-
-
-async def main():
+    await (a[b] ** c)
+    await (a ** b[c])
+    await ((a + b) ** (c + d))
     await (a + b)
-
-
-async def main():
     await a[b]
+    await a[b**c]

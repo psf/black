@@ -1360,9 +1360,9 @@ def remove_await_parens(node: Node) -> None:
                         ensure_visible(closing_bracket)
                         # If we are in a nested await then recurse down.
                         remove_await_parens(bracket_contents)
-                    elif (
-                        len(bracket_contents.children) == 3
-                        and bracket_contents.children[1].type == token.DOUBLESTAR
+                    elif any(
+                        isinstance(child, Leaf) and child.type == token.DOUBLESTAR
+                        for child in bracket_contents.children
                     ):
                         ensure_visible(opening_bracket)
                         ensure_visible(closing_bracket)
