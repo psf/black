@@ -139,7 +139,7 @@ foo([
 ])
 ```
 
-This also applies to list unpacking:
+This also applies to list and dictionary unpacking:
 
 ```python
 foo(
