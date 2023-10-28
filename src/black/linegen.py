@@ -817,7 +817,7 @@ def _first_right_hand_split(
     head_leaves.reverse()
 
     if Preview.hug_parens_with_braces_and_square_brackets in line.mode:
-        is_unpacking = 1 if body_leaves[0].type == token.STAR else 0
+        is_unpacking = 1 if body_leaves[0].type in [token.STAR, token.DOUBLESTAR] else 0
         if (
             tail_leaves[0].type == token.RPAR
             and tail_leaves[0].value
