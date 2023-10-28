@@ -1354,14 +1354,18 @@ def remove_await_parens(node: Node) -> None:
                 if bracket_contents.type != syms.power:
                     ensure_visible(opening_bracket)
                     ensure_visible(closing_bracket)
-                elif (
-                    bracket_contents.type == syms.power
-                    and bracket_contents.children[0].type == token.AWAIT
-                ):
-                    ensure_visible(opening_bracket)
-                    ensure_visible(closing_bracket)
-                    # If we are in a nested await then recurse down.
-                    remove_await_parens(bracket_contents)
+                elif bracket_contents.type == syms.power:
+                    if bracket_contents.children[0].type == token.AWAIT:
+                        ensure_visible(opening_bracket)
+                        ensure_visible(closing_bracket)
+                        # If we are in a nested await then recurse down.
+                        remove_await_parens(bracket_contents)
+                    elif (
+                        len(bracket_contents.children) == 3
+                        and bracket_contents.children[1].type == token.DOUBLESTAR
+                    ):
+                        ensure_visible(opening_bracket)
+                        ensure_visible(closing_bracket)
 
 
 def _maybe_wrap_cms_in_parens(

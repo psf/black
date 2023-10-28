@@ -80,6 +80,15 @@ async def main():
 async def main():
     await (yield)
 
+async def main():
+    await (a ** b)
+
+async def main():
+    await (a + b)
+
+async def main():
+    await (a[b])
+
 # output
 import asyncio
 
@@ -174,3 +183,15 @@ async def main():
 
 async def main():
     await (yield)
+
+
+async def main():
+    await (a**b)
+
+
+async def main():
+    await (a + b)
+
+
+async def main():
+    await a[b]

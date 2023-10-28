@@ -10,6 +10,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix crash on formatting code like `await (a ** b)` (#3994)
+
 ### Preview style
 
 - Multiline dictionaries and lists that are the sole argument to a function are now
