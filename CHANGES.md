@@ -17,7 +17,9 @@
 
 ### Configuration
 
-- Add support for single line format skip with other comments on the same line (#3959)
+- Add support for single-line format skip with other comments on the same line (#3959)
+
+- Fix a bug in the matching of absolute path names in `--include` (#3976)
 
 ### Packaging
 
@@ -43,6 +45,9 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- Black's pre-commit integration will now run only on git hooks appropriate for a code
+  formatter (#3940)
+
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
@@ -52,7 +57,7 @@
 
 ### Highlights
 
-- Maintanence release to get a fix out for GitHub Action edge case (#3957)
+- Maintenance release to get a fix out for GitHub Action edge case (#3957)
 
 ### Preview style
 
