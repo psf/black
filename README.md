@@ -68,7 +68,7 @@ projects, small and big. _Black_ has a comprehensive test suite, with efficient 
 tests, and our own auto formatting and parallel Continuous Integration runner. Now that
 we have become stable, you should not expect large formatting changes in the future.
 Stylistic changes will mostly be responses to bug reports and support for new Python
-syntax. For more information please refer to the
+syntax. For more information please refer to
 [The Black Code Style](https://black.readthedocs.io/en/stable/the_black_code_style/index.html).
 
 Also, as a safety measure which slows down processing, _Black_ will check that the
