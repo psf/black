@@ -86,7 +86,7 @@ take previous formatting into account (see
 for exceptions).
 
 Our documentation covers the current _Black_ code style, but planned changes to it are
-also documented. They're both worth taking a look:
+also documented. They're both worth taking a look at:
 
 - [The _Black_ Code Style: Current style](https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html)
 - [The _Black_ Code Style: Future style](https://black.readthedocs.io/en/stable/the_black_code_style/future_style.html)
