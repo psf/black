@@ -32,10 +32,10 @@ The 10,000 foot view of the release process is that you prepare a release PR and
 publish a [GitHub Release]. This triggers [release automation](#release-workflows) that
 builds all release artifacts and publishes them to the various platforms we publish to.
 
-We now have a `release.py` script to help with cutting the release PRs.
+We now have a `scripts/release.py` script to help with cutting the release PRs.
 
-- `python3 release.py --help` is your friend.
-- `release.py` has only been tested in Python 3.12 (so get with the times :D)
+- `python3 scripts/release.py --help` is your friend.
+  - `release.py` has only been tested in Python 3.12 (so get with the times :D)
 
 To cut a release:
 
@@ -45,17 +45,17 @@ To cut a release:
    - Example: the first release in January, 2022 → `22.1.0`
    - `release.py` will calculate this and log to stderr for you copy paste pleasure
 1. File a PR editing `CHANGES.md` and the docs to version the latest changes
-   - Run `python3 release.py [--debug]` to generate most changes
+   - Run `python3 scripts/release.py [--debug]` to generate most changes
      - Sub headings in the template, if they have no bullet points need manual removal
        _PR welcome to improve :D_
 1. If `release.py` fail manually edit; otherwise, yay, skip this step!
    1. Replace the `## Unreleased` header with the version number
-   2. Remove any empty sections for the current release
-   3. (_optional_) Read through and copy-edit the changelog (eg. by moving entries,
+   1. Remove any empty sections for the current release
+   1. (_optional_) Read through and copy-edit the changelog (eg. by moving entries,
       fixing typos, or rephrasing entries)
-   4. Double-check that no changelog entries since the last release were put in the
+   1. Double-check that no changelog entries since the last release were put in the
       wrong section (e.g., run `git diff <last release> CHANGES.md`)
-   5. Update references to the latest version in
+   1. Update references to the latest version in
       {doc}`/integrations/source_version_control` and
       {doc}`/usage_and_configuration/the_basics`
    - Example PR: [GH-3139]
@@ -65,17 +65,17 @@ To cut a release:
 1. [Draft a new GitHub Release][new-release]
    1. Click `Choose a tag` and type in the version number, then select the
       `Create new tag: YY.M.N on publish` option that appears
-   2. Verify that the new tag targets the `main` branch
-   3. You can leave the release title blank, GitHub will default to the tag name
-   4. Copy and paste the _raw changelog Markdown_ for the current release into the
+   1. Verify that the new tag targets the `main` branch
+   1. You can leave the release title blank, GitHub will default to the tag name
+   1. Copy and paste the _raw changelog Markdown_ for the current release into the
       description box
 1. Publish the GitHub Release, triggering [release automation](#release-workflows) that
    will handle the rest
 1. Once CI is done add + commit (git push - No review) a new empty template for the next
    release to CHANGES.md _(Template is able to be copy pasted from release.py should we
    fail)_
-   1. `python3 release.py --add-changes-template|-a [--debug]`
-   2. Should that fail, please return to copy + paste
+   1. `python3 scripts/release.py --add-changes-template|-a [--debug]`
+   1. Should that fail, please return to copy + paste
 1. At this point, you're basically done. It's good practice to go and [watch and verify
    that all the release workflows pass][black-actions], although you will receive a
    GitHub notification should something fail.

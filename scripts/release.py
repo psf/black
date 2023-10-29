@@ -82,14 +82,13 @@ def get_git_tags(versions_only: bool = True) -> List[str]:
     return git_tags
 
 
-def int_calver(calver: str) -> int:
-    """Convert a calver string into an hex base 16 integer for sorting
-    - So we can support hexadecimal chars"""
-    # Return 0 for all alpha + beta releases as we can ignore them
+# TODO: Support sorting alhpa/beta releases correctly
+def tuple_calver(calver: str) -> tuple[int, ...]:  # mypy can't notice maxsplit below
+    """Convert a calver string into a tuple of ints for sorting"""
     try:
-        return int(calver.capitalize().replace(".", ""))
+        return tuple(map(int, calver.split(".", maxsplit=2)))
     except ValueError:
-        return 0
+        return (0, 0, 0)
 
 
 class SourceFiles:
@@ -151,7 +150,7 @@ class SourceFiles:
         # Remove all comments (subheadings are harder - Human required still)
         no_comments_changes = []
         for line in versioned_changes.splitlines():
-            if line.startswith("<!--"):
+            if line.startswith("<!--") or line.endswith("-->"):
                 continue
             no_comments_changes.append(line)
 
@@ -162,7 +161,7 @@ class SourceFiles:
 
     def get_current_version(self) -> str:
         """Get the latest git (version) tag as latest version"""
-        return sorted(get_git_tags(), key=lambda k: int_calver(k))[-1]
+        return sorted(get_git_tags(), key=lambda k: tuple_calver(k))[-1]
 
     def get_next_version(self) -> str:
         """Workout the year and month + version number we need to move to"""
@@ -229,7 +228,8 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
 
-    sf = SourceFiles(Path(__file__).parent)
+    # Need parent.parent cause script is in scripts/ directory
+    sf = SourceFiles(Path(__file__).parent.parent)
 
     if args.add_changes_template:
         return sf.add_template_to_changes()

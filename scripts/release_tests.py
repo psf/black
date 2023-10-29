@@ -7,7 +7,7 @@ from tempfile import TemporaryDirectory
 from typing import Any
 from unittest.mock import Mock, patch
 
-from release import SourceFiles, int_calver
+from release import SourceFiles, tuple_calver  # type: ignore
 
 
 class FakeDateTime:
@@ -57,11 +57,11 @@ class TestRelease(unittest.TestCase):
             " month",
         )
 
-    def test_int_calver(self) -> None:
-        first_month_release = int_calver("69.1.0")
-        second_month_release = int_calver("69.1.1")
-        self.assertEqual(6910, first_month_release)
-        self.assertEqual(6911, second_month_release)
+    def test_tuple_calver(self) -> None:
+        first_month_release = tuple_calver("69.1.0")
+        second_month_release = tuple_calver("69.1.1")
+        self.assertEqual((69, 1, 0), first_month_release)
+        self.assertEqual((0, 0, 0), tuple_calver("69.1.1a0"))  # Hack for alphas/betas
         self.assertTrue(first_month_release < second_month_release)
 
 
