@@ -32,21 +32,29 @@ The 10,000 foot view of the release process is that you prepare a release PR and
 publish a [GitHub Release]. This triggers [release automation](#release-workflows) that
 builds all release artifacts and publishes them to the various platforms we publish to.
 
+We now have a `scripts/release.py` script to help with cutting the release PRs.
+
+- `python3 scripts/release.py --help` is your friend.
+  - `release.py` has only been tested in Python 3.12 (so get with the times :D)
+
 To cut a release:
 
 1. Determine the release's version number
    - **_Black_ follows the [CalVer] versioning standard using the `YY.M.N` format**
      - So unless there already has been a release during this month, `N` should be `0`
    - Example: the first release in January, 2022 → `22.1.0`
+   - `release.py` will calculate this and log to stderr for you copy paste pleasure
 1. File a PR editing `CHANGES.md` and the docs to version the latest changes
+   - Run `python3 scripts/release.py [--debug]` to generate most changes
+     - Sub headings in the template, if they have no bullet points need manual removal
+       _PR welcome to improve :D_
+1. If `release.py` fail manually edit; otherwise, yay, skip this step!
    1. Replace the `## Unreleased` header with the version number
    1. Remove any empty sections for the current release
    1. (_optional_) Read through and copy-edit the changelog (eg. by moving entries,
       fixing typos, or rephrasing entries)
    1. Double-check that no changelog entries since the last release were put in the
       wrong section (e.g., run `git diff <last release> CHANGES.md`)
-   1. Add a new empty template for the next release above
-      ([template below](#changelog-template))
    1. Update references to the latest version in
       {doc}`/integrations/source_version_control` and
       {doc}`/usage_and_configuration/the_basics`
@@ -63,6 +71,11 @@ To cut a release:
       description box
 1. Publish the GitHub Release, triggering [release automation](#release-workflows) that
    will handle the rest
+1. Once CI is done add + commit (git push - No review) a new empty template for the next
+   release to CHANGES.md _(Template is able to be copy pasted from release.py should we
+   fail)_
+   1. `python3 scripts/release.py --add-changes-template|-a [--debug]`
+   1. Should that fail, please return to copy + paste
 1. At this point, you're basically done. It's good practice to go and [watch and verify
    that all the release workflows pass][black-actions], although you will receive a
    GitHub notification should something fail.
@@ -79,59 +92,6 @@ release is warranted. Unless the regressions are serious and impact many users, 
 release is probably unnecessary.
 
 In the end, use your best judgement and ask other maintainers for their thoughts.
-```
-
-### Changelog template
-
-Use the following template for a clean changelog after the release:
-
-```
-## Unreleased
-
-### Highlights
-
-<!-- Include any especially major or disruptive changes here -->
-
-### Stable style
-
-<!-- Changes that affect Black's stable style -->
-
-### Preview style
-
-<!-- Changes that affect Black's preview style -->
-
-### Configuration
-
-<!-- Changes to how Black can be configured -->
-
-### Packaging
-
-<!-- Changes to how Black is packaged, such as dependency requirements -->
-
-### Parser
-
-<!-- Changes to the parser or to version autodetection -->
-
-### Performance
-
-<!-- Changes that improve Black's performance. -->
-
-### Output
-
-<!-- Changes to Black's terminal output and error messages -->
-
-### _Blackd_
-
-<!-- Changes to blackd -->
-
-### Integrations
-
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
-
-### Documentation
-
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
 ```
 
 ## Release workflows
