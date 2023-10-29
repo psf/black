@@ -150,6 +150,8 @@ foo(
     }
 )
 
+foo(**{x: y for x, y in enumerate(["long long long long line","long long long long line"])})
+
 # output
 def foo_brackets(request):
     return JsonResponse({
@@ -316,4 +318,8 @@ foo(**{
     "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb": 2,
     "ccccccccccccccccccccccccccccccccc": 3,
     **other,
+})
+
+foo(**{
+    x: y for x, y in enumerate(["long long long long line", "long long long long line"])
 })
