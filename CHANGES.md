@@ -8,7 +8,7 @@
 
 ### Stable style
 
-<!-- Changes that affect Black's stable style -->
+- Fix crash on formatting bytes strings that look like docstrings (#4003)
 
 ### Preview style
 

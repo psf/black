@@ -14,7 +14,7 @@ from mypy_extensions import mypyc_attr
 
 from black.cache import CACHE_DIR
 from black.mode import Mode, Preview
-from black.strings import has_triple_quotes
+from black.strings import get_string_prefix, has_triple_quotes
 from blib2to3 import pygram
 from blib2to3.pgen2 import token
 from blib2to3.pytree import NL, Leaf, Node, type_repr
@@ -525,6 +525,13 @@ def is_arith_like(node: LN) -> bool:
 
 
 def is_docstring(leaf: Leaf) -> bool:
+    if leaf.type != token.STRING:
+        return False
+
+    prefix = get_string_prefix(leaf.value)
+    if "b" in prefix or "B" in prefix:
+        return False
+
     if prev_siblings_are(
         leaf.parent, [None, token.NEWLINE, token.INDENT, syms.simple_stmt]
     ):
