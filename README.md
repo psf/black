@@ -16,12 +16,12 @@
 > “Any color you like.”
 
 _Black_ is the uncompromising Python code formatter. By using it, you agree to cede
-control over minutiae of hand-formatting. In return, _Black_ gives you speed,
+control over the minutiae of hand-formatting. In return, _Black_ gives you speed,
 determinism, and freedom from `pycodestyle` nagging about formatting. You will save time
 and mental energy for more important matters.
 
 Blackened code looks the same regardless of the project you're reading. Formatting
-becomes transparent after a while and you can focus on the content instead.
+becomes transparent after a while, and you can focus on the content instead.
 
 _Black_ makes code review faster by producing the smallest diffs possible.
 
@@ -64,14 +64,14 @@ Further information can be found in our docs:
 - [Usage and Configuration](https://black.readthedocs.io/en/stable/usage_and_configuration/index.html)
 
 _Black_ is already [successfully used](https://github.com/psf/black#used-by) by many
-projects, small and big. _Black_ has a comprehensive test suite, with efficient parallel
-tests, and our own auto formatting and parallel Continuous Integration runner. Now that
+projects, small and big. _Black_ has a comprehensive test suite with efficient parallel
+tests and our own auto-formatting and parallel Continuous Integration runner. Now that
 we have become stable, you should not expect large formatting changes in the future.
 Stylistic changes will mostly be responses to bug reports and support for new Python
-syntax. For more information please refer to
+syntax. For more information, please refer to
 [The Black Code Style](https://black.readthedocs.io/en/stable/the_black_code_style/index.html).
 
-Also, as a safety measure which slows down processing, _Black_ will check that the
+Also, as a safety measure that slows down processing, _Black_ will check that the
 reformatted code still produces a valid AST that is effectively equivalent to the
 original (see the
 [Pragmatism](https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html#ast-before-and-after-formatting)
@@ -101,14 +101,14 @@ intended behaviour.
 ### Pragmatism
 
 Early versions of _Black_ used to be absolutist in some respects. They took after its
-initial author. This was fine at the time as it made the implementation simpler and
+initial author. This was fine at the time as it made the implementation simpler, and
 there were not many users anyway. Not many edge cases were reported. As a mature tool,
 _Black_ does make some exceptions to rules it otherwise holds.
 
 - [The _Black_ code style: Pragmatism](https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html#pragmatism)
 
-Please refer to this document before submitting an issue just like with the document
-above. What seems like a bug might be intended behaviour.
+Please refer to this document before submitting an issue, just like with the document
+above. What seems like a bug might be the intended behaviour.
 
 ## Configuration
 
@@ -125,7 +125,7 @@ And if you're looking for more general configuration documentation:
 
 - [Usage and Configuration](https://black.readthedocs.io/en/stable/usage_and_configuration/index.html)
 
-**Pro-tip**: If you're asking yourself "Do I need to configure anything?" the answer is
+**Pro-tip**: If you're asking yourself, "Do I need to configure anything?" the answer is
 "No". _Black_ is all about sensible defaults. Applying those defaults will have your
 code in compliance with many other _Black_ formatted projects.
 
@@ -154,7 +154,7 @@ Are we missing anyone? Let us know.
 **Dusty Phillips**,
 [writer](https://smile.amazon.com/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=dusty+phillips):
 
-> _Black_ is opinionated so you don't have to be.
+> _Black_ is opinionated, so you don't have to be.
 
 **Hynek Schlawack**, [creator of `attrs`](https://www.attrs.org/), core developer of
 Twisted and CPython:
@@ -220,8 +220,8 @@ See [AUTHORS.md](./AUTHORS.md)
 ## Code of Conduct
 
 Everyone participating in the _Black_ project, and in particular in the issue tracker,
-pull requests, and social media activity, is expected to treat other people with respect
-and more generally to follow the guidelines articulated in the
+pull requests and social media activity, is expected to treat other people with respect
+and more generally, to follow the guidelines articulated in the
 [Python Community Code of Conduct](https://www.python.org/psf/codeofconduct/).
 
 At the same time, humor is encouraged. In fact, basic familiarity with Monty Python's
