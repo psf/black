@@ -13,6 +13,10 @@
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 </p>
 
+<p align="center">
+<a href="https://trendshift.io/repositories/1050" target="_blank"><img src="https://trendshift.io/api/badge/repositories/1050" alt="psf%2Fblack | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+</p>
+
 > “Any color you like.”
 
 _Black_ is the uncompromising Python code formatter. By using it, you agree to cede
