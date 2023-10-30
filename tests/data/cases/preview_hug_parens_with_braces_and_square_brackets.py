@@ -137,6 +137,21 @@ baaaaaaaaaaaaar(
     [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], {x}, "a string", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 )
 
+foo(*["long long long long long line", "long long long long long line", "long long long long long line"])
+
+foo(*[str(i) for i in range(100000000000000000000000000000000000000000000000000000000000)])
+
+foo(
+    **{
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": 1,
+        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb": 2,
+        "ccccccccccccccccccccccccccccccccc": 3,
+        **other,
+    }
+)
+
+foo(**{x: y for x, y in enumerate(["long long long long line","long long long long line"])})
+
 # output
 def foo_brackets(request):
     return JsonResponse({
@@ -287,3 +302,24 @@ foooooooooooooooooooo(
 baaaaaaaaaaaaar(
     [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], {x}, "a string", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 )
+
+foo(*[
+    "long long long long long line",
+    "long long long long long line",
+    "long long long long long line",
+])
+
+foo(*[
+    str(i) for i in range(100000000000000000000000000000000000000000000000000000000000)
+])
+
+foo(**{
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": 1,
+    "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb": 2,
+    "ccccccccccccccccccccccccccccccccc": 3,
+    **other,
+})
+
+foo(**{
+    x: y for x, y in enumerate(["long long long long line", "long long long long line"])
+})

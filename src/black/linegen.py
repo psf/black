@@ -817,16 +817,17 @@ def _first_right_hand_split(
     head_leaves.reverse()
 
     if Preview.hug_parens_with_braces_and_square_brackets in line.mode:
+        is_unpacking = 1 if body_leaves[0].type in [token.STAR, token.DOUBLESTAR] else 0
         if (
             tail_leaves[0].type == token.RPAR
             and tail_leaves[0].value
             and tail_leaves[0].opening_bracket is head_leaves[-1]
             and body_leaves[-1].type in [token.RBRACE, token.RSQB]
-            and body_leaves[-1].opening_bracket is body_leaves[0]
+            and body_leaves[-1].opening_bracket is body_leaves[is_unpacking]
         ):
-            head_leaves = head_leaves + body_leaves[:1]
+            head_leaves = head_leaves + body_leaves[: 1 + is_unpacking]
             tail_leaves = body_leaves[-1:] + tail_leaves
-            body_leaves = body_leaves[1:-1]
+            body_leaves = body_leaves[1 + is_unpacking : -1]
 
     head = bracket_split_build_line(
         head_leaves, line, opening_bracket, component=_BracketSplitComponent.head
