@@ -902,8 +902,8 @@ def _maybe_split_omitting_optional_parens(
                 return
 
         except CannotSplit as e:
-            if not (
-                can_be_split(rhs.body) or is_line_short_enough(rhs.body, mode=mode)
+            if not can_be_split(rhs.body) and not is_line_short_enough(
+                rhs.body, mode=mode
             ):
                 raise CannotSplit(
                     "Splitting failed, body is still too long and can't be split."
