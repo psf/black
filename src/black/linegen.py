@@ -902,7 +902,12 @@ def _maybe_split_omitting_optional_parens(
                 return
 
         except CannotSplit as e:
-            if not can_be_split(rhs.body) and not is_line_short_enough(
+            # For chained assignments we want to use the previous successful split
+            is_chained_assignment = [x.type for x in line.leaves].count(token.EQUAL) > 1
+            if is_chained_assignment:
+                pass
+
+            elif not can_be_split(rhs.body) and not is_line_short_enough(
                 rhs.body, mode=mode
             ):
                 raise CannotSplit(
