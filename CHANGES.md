@@ -9,7 +9,7 @@
 ### Stable style
 
 - Fix a crash when whitespace(s) followed a backslash before newline in a docstring
-  (#XXXX)
+  (#4008)
 
 ### Preview style
 
