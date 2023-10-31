@@ -869,24 +869,33 @@ def _maybe_split_omitting_optional_parens(
         try:
             # The RHSResult Omitting Optional Parens.
             rhs_oop = _first_right_hand_split(line, omit=omit)
-            if not (
+            prefer_splitting_rhs_mode = (
                 Preview.prefer_splitting_right_hand_side_of_assignments in line.mode
-                # the split is right after `=`
-                and len(rhs.head.leaves) >= 2
-                and rhs.head.leaves[-2].type == token.EQUAL
-                # the left side of assignment contains brackets
-                and any(leaf.type in BRACKETS for leaf in rhs.head.leaves[:-1])
-                # the left side of assignment is short enough (the -1 is for the ending
-                # optional paren)
-                and is_line_short_enough(
-                    rhs.head, mode=replace(mode, line_length=mode.line_length - 1)
+            )
+            is_split_right_after_equal = (
+                len(rhs.head.leaves) >= 2 and rhs.head.leaves[-2].type == token.EQUAL
+            )
+            lhs_contains_brackets = any(
+                leaf.type in BRACKETS for leaf in rhs.head.leaves[:-1]
+            )
+            # the -1 is for the ending optional paren
+            lhs_short_enough = is_line_short_enough(
+                rhs.head, mode=replace(mode, line_length=mode.line_length - 1)
+            )
+            lhs_explode_blocked_by_magic_trailing_comma = (
+                rhs.head.magic_trailing_comma is None
+            )
+            # the split by omitting optional parens isn't preferred by some other reason
+            prefer_split_rhs_oop = _prefer_split_rhs_oop(rhs_oop, mode)
+            if (
+                not (
+                    prefer_splitting_rhs_mode
+                    and is_split_right_after_equal
+                    and lhs_contains_brackets
+                    and lhs_short_enough
+                    and lhs_explode_blocked_by_magic_trailing_comma
                 )
-                # the left side of assignment won't explode further because of magic
-                # trailing comma
-                and rhs.head.magic_trailing_comma is None
-                # the split by omitting optional parens isn't preferred by some other
-                # reason
-                and not _prefer_split_rhs_oop(rhs_oop, mode)
+                or prefer_split_rhs_oop
             ):
                 yield from _maybe_split_omitting_optional_parens(
                     rhs_oop, line, mode, features=features, omit=omit
