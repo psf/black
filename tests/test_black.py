@@ -2388,6 +2388,27 @@ class TestFileCollection:
         # Setting exclude explicitly to an empty string to block .gitignore usage.
         assert_collected_sources(src, expected, include="", exclude="")
 
+    def test_include_absolute_path(self) -> None:
+        path = DATA_DIR / "include_exclude_tests"
+        src = [path]
+        expected = [
+            Path(path / "b/dont_exclude/a.pie"),
+        ]
+        assert_collected_sources(
+            src, expected, root=path, include=r"^/b/dont_exclude/a\.pie$", exclude=""
+        )
+
+    def test_exclude_absolute_path(self) -> None:
+        path = DATA_DIR / "include_exclude_tests"
+        src = [path]
+        expected = [
+            Path(path / "b/dont_exclude/a.py"),
+            Path(path / "b/.definitely_exclude/a.py"),
+        ]
+        assert_collected_sources(
+            src, expected, root=path, include=r"\.py$", exclude=r"^/b/exclude/a\.py$"
+        )
+
     def test_extend_exclude(self) -> None:
         path = DATA_DIR / "include_exclude_tests"
         src = [path]
@@ -2401,7 +2422,6 @@ class TestFileCollection:
 
     @pytest.mark.incompatible_with_mypyc
     def test_symlinks(self) -> None:
-        path = MagicMock()
         root = THIS_DIR.resolve()
         include = re.compile(black.DEFAULT_INCLUDES)
         exclude = re.compile(black.DEFAULT_EXCLUDES)
@@ -2409,19 +2429,44 @@ class TestFileCollection:
         gitignore = PathSpec.from_lines("gitwildmatch", [])
 
         regular = MagicMock()
-        outside_root_symlink = MagicMock()
-        ignored_symlink = MagicMock()
-
-        path.iterdir.return_value = [regular, outside_root_symlink, ignored_symlink]
-
         regular.absolute.return_value = root / "regular.py"
         regular.resolve.return_value = root / "regular.py"
         regular.is_dir.return_value = False
+        regular.is_file.return_value = True
 
+        outside_root_symlink = MagicMock()
         outside_root_symlink.absolute.return_value = root / "symlink.py"
         outside_root_symlink.resolve.return_value = Path("/nowhere")
+        outside_root_symlink.is_dir.return_value = False
+        outside_root_symlink.is_file.return_value = True
 
+        ignored_symlink = MagicMock()
         ignored_symlink.absolute.return_value = root / ".mypy_cache" / "symlink.py"
+        ignored_symlink.is_dir.return_value = False
+        ignored_symlink.is_file.return_value = True
+
+        # A symlink that has an excluded name, but points to an included name
+        symlink_excluded_name = MagicMock()
+        symlink_excluded_name.absolute.return_value = root / "excluded_name"
+        symlink_excluded_name.resolve.return_value = root / "included_name.py"
+        symlink_excluded_name.is_dir.return_value = False
+        symlink_excluded_name.is_file.return_value = True
+
+        # A symlink that has an included name, but points to an excluded name
+        symlink_included_name = MagicMock()
+        symlink_included_name.absolute.return_value = root / "included_name.py"
+        symlink_included_name.resolve.return_value = root / "excluded_name"
+        symlink_included_name.is_dir.return_value = False
+        symlink_included_name.is_file.return_value = True
+
+        path = MagicMock()
+        path.iterdir.return_value = [
+            regular,
+            outside_root_symlink,
+            ignored_symlink,
+            symlink_excluded_name,
+            symlink_included_name,
+        ]
 
         files = list(
             black.gen_python_files(
@@ -2437,7 +2482,7 @@ class TestFileCollection:
                 quiet=False,
             )
         )
-        assert files == [regular]
+        assert files == [regular, symlink_included_name]
 
         path.iterdir.assert_called_once()
         outside_root_symlink.resolve.assert_called_once()

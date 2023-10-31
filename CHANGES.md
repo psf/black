@@ -9,15 +9,21 @@
 ### Stable style
 
 - Fix bug where multiple fmt:skip pragmas inside single block fails (#3978)
+- Fix a crash when whitespace(s) followed a backslash before newline in a docstring
+  (#4008)
 
 ### Preview style
 
 - Multiline dictionaries and lists that are the sole argument to a function are now
   indented less (#3964)
+- Multiline list and dict unpacking as the sole argument to a function is now also
+  indented less (#3992)
 
 ### Configuration
 
-- Add support for single line format skip with other comments on the same line (#3959)
+- Add support for single-line format skip with other comments on the same line (#3959)
+
+- Fix a bug in the matching of absolute path names in `--include` (#3976)
 
 ### Packaging
 
@@ -43,6 +49,9 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- Black's pre-commit integration will now run only on git hooks appropriate for a code
+  formatter (#3940)
+
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
@@ -52,7 +61,7 @@
 
 ### Highlights
 
-- Maintanence release to get a fix out for GitHub Action edge case (#3957)
+- Maintenance release to get a fix out for GitHub Action edge case (#3957)
 
 ### Preview style
 

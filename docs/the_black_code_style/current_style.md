@@ -11,7 +11,7 @@ used by _Black_ can be viewed as a strict subset of PEP 8.
 _Black_ reformats entire files in place. It doesn't reformat lines that contain
 `# fmt: skip` or blocks that start with `# fmt: off` and end with `# fmt: on`.
 `# fmt: skip` can be mixed with other pragmas/comments either with multiple comments
-(e.g. `# fmt: skip # pylint # noqa`) or as a semicolon separeted list (e.g.
+(e.g. `# fmt: skip # pylint # noqa`) or as a semicolon separated list (e.g.
 `# fmt: skip; pylint; noqa`). `# fmt: on/off` must be on the same level of indentation
 and in the same block, meaning no unindents beyond the initial indentation level between
 them. It also recognizes [YAPF](https://github.com/google/yapf)'s block comments to the
@@ -178,7 +178,7 @@ If you use Flake8, you have a few options:
    extend-ignore = E203, E501, E704
    ```
 
-   The rationale for E950 is explained in
+   The rationale for B950 is explained in
    [Bugbear's documentation](https://github.com/PyCQA/flake8-bugbear#opinionated-warnings).
 
 2. For a minimally compatible config:

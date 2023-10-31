@@ -115,7 +115,7 @@ my_dict = {
 
 ### Improved multiline dictionary and list indentation for sole function parameter
 
-For better readability and less verticality, _Black_ now pairs parantheses ("(", ")")
+For better readability and less verticality, _Black_ now pairs parentheses ("(", ")")
 with braces ("{", "}") and square brackets ("[", "]") on the same line for single
 parameter function calls. For example:
 
@@ -137,6 +137,39 @@ foo([
     2,
     3,
 ])
+```
+
+This also applies to list and dictionary unpacking:
+
+```python
+foo(
+    *[
+        a_long_function_name(a_long_variable_name)
+        for a_long_variable_name in some_generator
+    ]
+)
+```
+
+will become:
+
+```python
+foo(*[
+    a_long_function_name(a_long_variable_name)
+    for a_long_variable_name in some_generator
+])
+```
+
+You can use a magic trailing comma to avoid this compacting behavior; by default,
+_Black_ will not reformat the following code:
+
+```python
+foo(
+    [
+        1,
+        2,
+        3,
+    ],
+)
 ```
 
 ### Improved multiline string handling

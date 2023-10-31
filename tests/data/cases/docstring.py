@@ -221,6 +221,12 @@ def stable_quote_normalization_with_immediate_inner_single_quote(self):
     '''
 
 
+def foo():
+    """
+    Docstring with a backslash followed by a space\ 
+    and then another line
+    """
+
 # output
 
 class MyClass:
@@ -441,4 +447,11 @@ def stable_quote_normalization_with_immediate_inner_single_quote(self):
     """'<text here>
 
     <text here, since without another non-empty line black is stable>
+    """
+
+
+def foo():
+    """
+    Docstring with a backslash followed by a space\ 
+    and then another line
     """
