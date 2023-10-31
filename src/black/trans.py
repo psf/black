@@ -590,15 +590,16 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             """
             assert_is_leaf_string(string)
             if "f" in string_prefix:
-                RE_QUOTES_IN_DEBUG_F_STRING = (
-                    r"{[^[]*\[\s*[\"\']\w*[\"\']\s*\][^=}]*=[^}]*}"
+                f_expressions = (
+                    string[span[0] : span[1]] for span in iter_fexpr_spans(string)
                 )
-                is_debug_f_string_with_quotes = re.search(
-                    RE_QUOTES_IN_DEBUG_F_STRING, string
+                expressions_contain_printable_quotes = any(
+                    re.search(r".*[\'\"].*=", expression)
+                    for expression in f_expressions
                 )
-                if not is_debug_f_string_with_quotes:
-                    # We don't want to toggle debug f-string quotes in the printable
-                    # part, because that would modify the AST
+                if not expressions_contain_printable_quotes:
+                    # We don't want to toggle printable quotes in debug f-strings, as
+                    # that would modify the AST
                     string = _toggle_fexpr_quotes(string, QUOTE)
                     # After quotes toggling, quotes in expressions won't be escaped
                     # because quotes can't be reused in f-strings. So we can simply
