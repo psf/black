@@ -8,7 +8,8 @@
 
 ### Stable style
 
-<!-- Changes that affect Black's stable style -->
+- Fix a crash when whitespace(s) followed a backslash before newline in a docstring
+  (#XXXX)
 
 ### Preview style
 
