@@ -2,6 +2,7 @@
 Generating lines of code.
 """
 
+import re
 import sys
 from dataclasses import replace
 from enum import Enum, auto
@@ -420,7 +421,7 @@ class LineGenerator(Visitor[Line]):
         if Preview.hex_codes_in_unicode_sequences in self.mode:
             normalize_unicode_escape_sequences(leaf)
 
-        if is_docstring(leaf) and "\\\n" not in leaf.value:
+        if is_docstring(leaf) and not re.search(r"\\\s*\n", leaf.value):
             # We're ignoring docstrings with backslash newline escapes because changing
             # indentation of those changes the AST representation of the code.
             if self.mode.string_normalization:
