@@ -590,11 +590,20 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             """
             assert_is_leaf_string(string)
             if "f" in string_prefix:
-                string = _toggle_fexpr_quotes(string, QUOTE)
-                # After quotes toggling, quotes in expressions won't be escaped
-                # because quotes can't be reused in f-strings. So we can simply
-                # let the escaping logic below run without knowing f-string
-                # expressions.
+                RE_QUOTES_IN_DEBUG_F_STRING = (
+                    r"{[^[]*\[\s*[\"\']\w*[\"\']\s*\][^=}]*=[^}]*}"
+                )
+                is_debug_f_string_with_quotes = re.search(
+                    RE_QUOTES_IN_DEBUG_F_STRING, string
+                )
+                if not is_debug_f_string_with_quotes:
+                    # We don't want to toggle debug f-string quotes in the printable
+                    # part, because that would modify the AST
+                    string = _toggle_fexpr_quotes(string, QUOTE)
+                    # After quotes toggling, quotes in expressions won't be escaped
+                    # because quotes can't be reused in f-strings. So we can simply
+                    # let the escaping logic below run without knowing f-string
+                    # expressions.
 
             RE_EVEN_BACKSLASHES = r"(?:(?<!\\)(?:\\\\)*)"
             naked_string = string[len(string_prefix) + 1 : -1]
