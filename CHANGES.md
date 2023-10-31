@@ -16,7 +16,7 @@
   indented less (#3964)
 - Multiline list and dict unpacking as the sole argument to a function is now also
   indented less (#3992)
-- Prefer more equal signs before a break when splitting chained assignments (#XXXX)
+- Prefer more equal signs before a break when splitting chained assignments (#4010)
 
 ### Configuration
 
