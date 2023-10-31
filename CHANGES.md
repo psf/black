@@ -14,6 +14,7 @@
 
 - Multiline dictionaries and lists that are the sole argument to a function are now
   indented less (#3964)
+- Preserve printable quote types for debug f-strings (#4005)
 
 ### Configuration
 
