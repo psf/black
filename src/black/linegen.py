@@ -885,8 +885,6 @@ def _maybe_split_omitting_optional_parens(
             lhs_explode_blocked_by_magic_trailing_comma = (
                 rhs.head.magic_trailing_comma is None
             )
-            # the split by omitting optional parens isn't preferred by some other reason
-            prefer_split_rhs_oop = _prefer_split_rhs_oop(rhs_oop, mode)
             if (
                 not (
                     prefer_splitting_rhs_mode
@@ -895,7 +893,8 @@ def _maybe_split_omitting_optional_parens(
                     and lhs_short_enough
                     and lhs_explode_blocked_by_magic_trailing_comma
                 )
-                or prefer_split_rhs_oop
+                # the omit optional parens split is preferred by some other reason
+                or _prefer_split_rhs_oop_over_rhs(rhs_oop, rhs, mode)
             ):
                 yield from _maybe_split_omitting_optional_parens(
                     rhs_oop, line, mode, features=features, omit=omit
@@ -928,10 +927,20 @@ def _maybe_split_omitting_optional_parens(
             yield result
 
 
-def _prefer_split_rhs_oop(rhs_oop: RHSResult, mode: Mode) -> bool:
+def _prefer_split_rhs_oop_over_rhs(
+    rhs_oop: RHSResult, rhs: RHSResult, mode: Mode
+) -> bool:
     """
-    Returns whether we should prefer the result from a split omitting optional parens.
+    Returns whether we should prefer the result from a split omitting optional parens
+    (rhs_oop) over the original (rhs).
     """
+    # If we have multiple targets, we prefer more `=`s on the head vs pushing them to
+    # the body
+    lhs_equal_count = [leaf.type for leaf in rhs.head.leaves].count(token.EQUAL)
+    lhs_oop_equal_count = [leaf.type for leaf in rhs_oop.head.leaves].count(token.EQUAL)
+    if lhs_equal_count > 1 and lhs_equal_count > lhs_oop_equal_count:
+        return False
+
     has_closing_bracket_after_assign = False
     for leaf in reversed(rhs_oop.head.leaves):
         if leaf.type == token.EQUAL:
