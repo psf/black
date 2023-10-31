@@ -9,11 +9,15 @@
 ### Stable style
 
 - Fix crash on formatting bytes strings that look like docstrings (#4003)
+- Fix crash when whitespace followed a backslash before newline in a docstring
+  (#4008)
 
 ### Preview style
 
 - Multiline dictionaries and lists that are the sole argument to a function are now
   indented less (#3964)
+- Multiline list and dict unpacking as the sole argument to a function is now also
+  indented less (#3992)
 
 ### Configuration
 

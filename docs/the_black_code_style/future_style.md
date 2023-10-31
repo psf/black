@@ -139,6 +139,26 @@ foo([
 ])
 ```
 
+This also applies to list and dictionary unpacking:
+
+```python
+foo(
+    *[
+        a_long_function_name(a_long_variable_name)
+        for a_long_variable_name in some_generator
+    ]
+)
+```
+
+will become:
+
+```python
+foo(*[
+    a_long_function_name(a_long_variable_name)
+    for a_long_variable_name in some_generator
+])
+```
+
 You can use a magic trailing comma to avoid this compacting behavior; by default,
 _Black_ will not reformat the following code:
 
