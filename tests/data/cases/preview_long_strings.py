@@ -311,6 +311,8 @@ log.info(f"Skipping: {desc['db_id']=} {desc['ms_name']} {money=} {dte=} {pos_sha
 
 log.info(f'Skipping: {desc["db_id"]} {desc["ms_name"]} {money=} {dte=} {pos_share=} {desc["status"]} {desc["exposure_max"]}')
 
+log.info(f'Skipping: {foo("asdf")=} {desc["ms_name"]} {money=} {dte=} {pos_share=} {desc["status"]} {desc["exposure_max"]}')
+
 log.info(f'Skipping: {  longer_longer_longer_longer_longer_longer_name   [ "db_id" ]      [ "another_key" ]   =  :  .3f }')
 
 # output
@@ -867,6 +869,11 @@ log.info(
 log.info(
     "Skipping:"
     f" {desc['db_id']} {desc['ms_name']} {money=} {dte=} {pos_share=} {desc['status']} {desc['exposure_max']}"
+)
+
+log.info(
+    "Skipping:"
+    f' {foo("asdf")=} {desc["ms_name"]} {money=} {dte=} {pos_share=} {desc["status"]} {desc["exposure_max"]}'
 )
 
 log.info(
