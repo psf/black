@@ -9,8 +9,7 @@
 ### Stable style
 
 - Fix crash on formatting bytes strings that look like docstrings (#4003)
-- Fix crash when whitespace followed a backslash before newline in a docstring
-  (#4008)
+- Fix crash when whitespace followed a backslash before newline in a docstring (#4008)
 
 ### Preview style
 
