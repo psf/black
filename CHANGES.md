@@ -8,12 +8,15 @@
 
 ### Stable style
 
-<!-- Changes that affect Black's stable style -->
+- Fix a crash when whitespace(s) followed a backslash before newline in a docstring
+  (#4008)
 
 ### Preview style
 
 - Multiline dictionaries and lists that are the sole argument to a function are now
   indented less (#3964)
+- Multiline list and dict unpacking as the sole argument to a function is now also
+  indented less (#3992)
 - Preserve printable quote types for debug f-strings (#4005)
 
 ### Configuration
