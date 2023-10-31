@@ -305,6 +305,13 @@ code = (
 # Test case of an outer string' parens enclose an inner string's parens.
 call(body=("%s %s" % ((",".join(items)), suffix)))
 
+log.info(f'Skipping: {desc["db_id"]=} {desc["ms_name"]} {money=} {dte=} {pos_share=} {desc["status"]=} {desc["exposure_max"]=}')
+
+log.info(f"Skipping: {desc['db_id']=} {desc['ms_name']} {money=} {dte=} {pos_share=} {desc['status']=} {desc['exposure_max']=}")
+
+log.info(f'Skipping: {desc["db_id"]} {desc["ms_name"]} {money=} {dte=} {pos_share=} {desc["status"]} {desc["exposure_max"]}')
+
+log.info(f'Skipping: {  longer_longer_longer_longer_longer_longer_name   [ "db_id" ]      [ "another_key" ]   =  :  .3f }')
 
 # output
 
@@ -846,3 +853,23 @@ code = (
 
 # Test case of an outer string' parens enclose an inner string's parens.
 call(body="%s %s" % (",".join(items), suffix))
+
+log.info(
+    "Skipping:"
+    f' {desc["db_id"]=} {desc["ms_name"]} {money=} {dte=} {pos_share=} {desc["status"]=} {desc["exposure_max"]=}'
+)
+
+log.info(
+    "Skipping:"
+    f" {desc['db_id']=} {desc['ms_name']} {money=} {dte=} {pos_share=} {desc['status']=} {desc['exposure_max']=}"
+)
+
+log.info(
+    "Skipping:"
+    f" {desc['db_id']} {desc['ms_name']} {money=} {dte=} {pos_share=} {desc['status']} {desc['exposure_max']}"
+)
+
+log.info(
+    "Skipping:"
+    f' {  longer_longer_longer_longer_longer_longer_name   [ "db_id" ]      [ "another_key" ]   =  :  .3f }'
+)
