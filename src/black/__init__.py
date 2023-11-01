@@ -652,7 +652,9 @@ def get_sources(
                 )
                 continue
 
-            normalized_path = normalize_path_maybe_ignore(path, root, report)
+            normalized_path: Optional[str] = normalize_path_maybe_ignore(
+                path, root, report
+            )
             if normalized_path is None:
                 if verbose:
                     out(f'Skipping invalid source: "{normalized_path}"', fg="red")
