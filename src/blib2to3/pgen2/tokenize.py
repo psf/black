@@ -314,9 +314,9 @@ def _get_normal_name(orig_enc: str) -> str:
     enc = orig_enc[:12].lower().replace("_", "-")
     if enc == "utf-8" or enc.startswith("utf-8-"):
         return "utf-8"
-    if enc in ("latin-1", "iso-8859-1", "iso-latin-1") or enc.startswith(
-        ("latin-1-", "iso-8859-1-", "iso-latin-1-")
-    ):
+    if enc in ("latin-1", "iso-8859-1", "iso-latin-1") or enc.startswith((
+        "latin-1-", "iso-8859-1-", "iso-latin-1-"
+    )):
         return "iso-8859-1"
     return orig_enc
 
