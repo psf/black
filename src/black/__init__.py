@@ -632,15 +632,15 @@ def get_sources(
 
     for s in src:
         if s == "-" and stdin_filename:
-            p = Path(stdin_filename)
+            path = Path(stdin_filename)
             is_stdin = True
         else:
-            p = Path(s)
+            path = Path(s)
             is_stdin = False
 
-        if is_stdin or p.is_file():
+        if is_stdin or path.is_file():
             normalized_path: Optional[str] = normalize_path_maybe_ignore(
-                p, root, report
+                path, root, report
             )
             if normalized_path is None:
                 if verbose:
@@ -656,33 +656,35 @@ def get_sources(
             else:
                 force_exclude_match = None
             if force_exclude_match and force_exclude_match.group(0):
-                report.path_ignored(p, "matches the --force-exclude regular expression")
+                report.path_ignored(
+                    path, "matches the --force-exclude regular expression"
+                )
                 continue
 
             if is_stdin:
-                p = Path(f"{STDIN_PLACEHOLDER}{str(p)}")
+                path = Path(f"{STDIN_PLACEHOLDER}{str(path)}")
 
-            if p.suffix == ".ipynb" and not jupyter_dependencies_are_installed(
+            if path.suffix == ".ipynb" and not jupyter_dependencies_are_installed(
                 warn=verbose or not quiet
             ):
                 continue
 
-            sources.add(p)
-        elif p.is_dir():
-            p_relative = normalize_path_maybe_ignore(p, root, report)
+            sources.add(path)
+        elif path.is_dir():
+            p_relative = normalize_path_maybe_ignore(path, root, report)
             assert p_relative is not None
-            p = root / p_relative
+            path = root / p_relative
             if verbose:
-                out(f'Found input source directory: "{p}"', fg="blue")
+                out(f'Found input source directory: "{path}"', fg="blue")
 
             if using_default_exclude:
                 gitignore = {
                     root: root_gitignore,
-                    p: get_gitignore(p),
+                    path: get_gitignore(path),
                 }
             sources.update(
                 gen_python_files(
-                    p.iterdir(),
+                    path.iterdir(),
                     root,
                     include,
                     exclude,
@@ -697,7 +699,7 @@ def get_sources(
         elif s == "-":
             if verbose:
                 out("Found input source stdin", fg="blue")
-            sources.add(p)
+            sources.add(path)
         else:
             err(f"invalid path: {s}")
 
