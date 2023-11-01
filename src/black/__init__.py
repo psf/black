@@ -668,9 +668,7 @@ def get_sources(
 
             sources.add(path)
         elif path.is_dir():
-            p_relative = normalize_path_maybe_ignore(path, root, report)
-            assert p_relative is not None
-            path = root / p_relative
+            path = root / (path.resolve().relative_to(root))
             if verbose:
                 out(f'Found input source directory: "{path}"', fg="blue")
 
