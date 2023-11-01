@@ -128,6 +128,9 @@ func([x for x in [x for x in "long line long line long line long line long line 
 func({"short line"})
 func({"long line", "long long line", "long long long line", "long long long long line", "long long long long long line"})
 func({{"long line", "long long line", "long long long line", "long long long long line", "long long long long long line"}})
+func(("long line", "long long line", "long long long line", "long long long long line", "long long long long long line"))
+func((("long line", "long long line", "long long long line", "long long long long line", "long long long long long line")))
+func([["long line", "long long line", "long long long line", "long long long long line", "long long long long long line"]])
 
 foooooooooooooooooooo(
     [{c: n + 1 for c in range(256)} for n in range(100)] + [{}], {size}
@@ -136,6 +139,10 @@ foooooooooooooooooooo(
 baaaaaaaaaaaaar(
     [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], {x}, "a string", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 )
+
+nested_mapping = {"key": [{"a very long key 1": "with a very long value", "a very long key 2": "with a very long value"}]}
+nested_array = [[["long line", "long long line", "long long long line", "long long long long line", "long long long long long line"]]]
+explicit_exploding = [[["short", "line",],],]
 
 foo(*["long long long long long line", "long long long long long line", "long long long long long line"])
 
@@ -285,15 +292,34 @@ func({
     "long long long long line",
     "long long long long long line",
 })
-func({
-    {
-        "long line",
-        "long long line",
-        "long long long line",
-        "long long long long line",
-        "long long long long long line",
-    }
-})
+func({{
+    "long line",
+    "long long line",
+    "long long long line",
+    "long long long long line",
+    "long long long long long line",
+}})
+func((
+    "long line",
+    "long long line",
+    "long long long line",
+    "long long long long line",
+    "long long long long long line",
+))
+func(((
+    "long line",
+    "long long line",
+    "long long long line",
+    "long long long long line",
+    "long long long long long line",
+)))
+func([[
+    "long line",
+    "long long line",
+    "long long long line",
+    "long long long long line",
+    "long long long long long line",
+]])
 
 foooooooooooooooooooo(
     [{c: n + 1 for c in range(256)} for n in range(100)] + [{}], {size}
@@ -302,6 +328,28 @@ foooooooooooooooooooo(
 baaaaaaaaaaaaar(
     [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], {x}, "a string", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 )
+
+nested_mapping = {
+    "key": [{
+        "a very long key 1": "with a very long value",
+        "a very long key 2": "with a very long value",
+    }]
+}
+nested_array = [[[
+    "long line",
+    "long long line",
+    "long long long line",
+    "long long long long line",
+    "long long long long long line",
+]]]
+explicit_exploding = [
+    [
+        [
+            "short",
+            "line",
+        ],
+    ],
+]
 
 foo(*[
     "long long long long long line",

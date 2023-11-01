@@ -13,8 +13,8 @@
 
 ### Preview style
 
-- Multiline dictionaries and lists that are the sole argument to a function are now
-  indented less (#3964)
+- Multiline tuples, lists, and dictionaries that are the sole argument to a function
+  or inside another tuple, list, or dictionary are now indented less (#3964, #4012)
 - Multiline list and dict unpacking as the sole argument to a function is now also
   indented less (#3992)
 
