@@ -824,7 +824,7 @@ def _first_right_hand_split(
     ):
         is_unpacking = 1 if body_leaves[0].type in [token.STAR, token.DOUBLESTAR] else 0
         while (
-            len(body_leaves) > 2 + is_unpacking
+            len(body_leaves) >= 2 + is_unpacking
             and body_leaves[-1].type in CLOSING_BRACKETS
             and body_leaves[-1].opening_bracket is body_leaves[is_unpacking]
         ):
