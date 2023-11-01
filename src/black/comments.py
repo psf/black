@@ -44,6 +44,7 @@ class ProtoComment:
     value: str  # content of the comment
     newlines: int  # how many newlines before the comment
     consumed: int  # how many characters of the original leaf's prefix did we consume
+    form_feed: bool  # is there a form feed before the comment
 
 
 def generate_comments(leaf: LN) -> Iterator[Leaf]:
@@ -65,8 +66,15 @@ def generate_comments(leaf: LN) -> Iterator[Leaf]:
     Inline comments are emitted as regular token.COMMENT leaves.  Standalone
     are emitted with a fake STANDALONE_COMMENT token identifier.
     """
+    total_consumed = 0
     for pc in list_comments(leaf.prefix, is_endmarker=leaf.type == token.ENDMARKER):
-        yield Leaf(pc.type, pc.value, prefix="\n" * pc.newlines)
+        total_consumed = pc.consumed
+        if pc.form_feed:
+            prefix = ("\n" * (pc.newlines - 1)) + "\f\n"
+        else:
+            prefix = "\n" * pc.newlines
+        yield Leaf(pc.type, pc.value, prefix=prefix)
+    leaf.prefix = leaf.prefix[total_consumed:]
 
 
 @lru_cache(maxsize=4096)
@@ -79,8 +87,13 @@ def list_comments(prefix: str, *, is_endmarker: bool) -> List[ProtoComment]:
     consumed = 0
     nlines = 0
     ignored_lines = 0
+    form_feed = False
     for index, line in enumerate(re.split("\r?\n", prefix)):
         consumed += len(line) + 1  # adding the length of the split '\n'
+        if "\f" in line and line.strip() == "":
+            form_feed = True
+            nlines += 1
+            continue
         line = line.lstrip()
         if not line:
             nlines += 1
@@ -99,9 +112,14 @@ def list_comments(prefix: str, *, is_endmarker: bool) -> List[ProtoComment]:
         comment = make_comment(line)
         result.append(
             ProtoComment(
-                type=comment_type, value=comment, newlines=nlines, consumed=consumed
+                type=comment_type,
+                value=comment,
+                newlines=nlines,
+                consumed=consumed,
+                form_feed=form_feed,
             )
         )
+        form_feed = False
         nlines = 0
     return result
 

@@ -533,12 +533,15 @@ class LinesBlock:
     before: int = 0
     content_lines: List[str] = field(default_factory=list)
     after: int = 0
+    form_feed: bool = False
 
     def all_lines(self) -> List[str]:
         empty_line = str(Line(mode=self.mode))
-        return (
-            [empty_line * self.before] + self.content_lines + [empty_line * self.after]
-        )
+        if self.form_feed:
+            prefix = [empty_line * (self.before - 1), "\f\n"]
+        else:
+            prefix = [empty_line * self.before]
+        return prefix + self.content_lines + [empty_line * self.after]
 
 
 @dataclass
@@ -563,6 +566,12 @@ class EmptyLineTracker:
         This is for separating `def`, `async def` and `class` with extra empty
         lines (two on module-level).
         """
+        form_feed = (
+            Preview.allow_form_feeds in self.mode
+            and current_line.depth == 0
+            and bool(current_line.leaves)
+            and "\f\n" in current_line.leaves[0].prefix
+        )
         before, after = self._maybe_empty_lines(current_line)
         previous_after = self.previous_block.after if self.previous_block else 0
         before = (
@@ -587,6 +596,7 @@ class EmptyLineTracker:
             original_line=current_line,
             before=before,
             after=after,
+            form_feed=form_feed,
         )
 
         # Maintain the semantic_leading_comment state.

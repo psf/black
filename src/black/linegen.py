@@ -1217,14 +1217,13 @@ def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
 
     Note: don't use backslashes for formatting or you'll lose your voting rights.
     """
-    if not inside_brackets:
-        spl = leaf.prefix.split("#")
-        if "\\" not in spl[0]:
-            nl_count = spl[-1].count("\n")
-            if len(spl) > 1:
-                nl_count -= 1
+    if not inside_brackets and "\\" not in leaf.prefix:
+        nl_count = leaf.prefix.count("\n")
+        if "\f" in leaf.prefix and leaf.prefix[-1] == "\n":
+            leaf.prefix = ("\n" * (nl_count - 1)) + "\f\n"
+        else:
             leaf.prefix = "\n" * nl_count
-            return
+        return
 
     leaf.prefix = ""
 

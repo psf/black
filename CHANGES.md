@@ -19,6 +19,7 @@
   indented less (#3964)
 - Multiline list and dict unpacking as the sole argument to a function is now also
   indented less (#3992)
+- Standalone form feed characters at the module level are no longer removed (#4021)
 
 ### Configuration
 
