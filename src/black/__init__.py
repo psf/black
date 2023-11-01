@@ -50,6 +50,7 @@ from black.files import (
     get_gitignore,
     normalize_path_maybe_ignore,
     parse_pyproject_toml,
+    path_is_excluded,
     wrap_stream_for_windows,
 )
 from black.handle_ipynb_magics import (
@@ -651,11 +652,7 @@ def get_sources(
 
             normalized_path = "/" + normalized_path
             # Hard-exclude any files that matches the `--force-exclude` regex.
-            if force_exclude:
-                force_exclude_match = force_exclude.search(normalized_path)
-            else:
-                force_exclude_match = None
-            if force_exclude_match and force_exclude_match.group(0):
+            if path_is_excluded(normalized_path, force_exclude):
                 report.path_ignored(
                     path, "matches the --force-exclude regular expression"
                 )
