@@ -78,7 +78,7 @@ from black.nodes import (
 from black.output import color_diff, diff, dump_to_file, err, ipynb_diff, out
 from black.parsing import InvalidInput  # noqa F401
 from black.parsing import lib2to3_parse, parse_ast, stringify_ast
-from black.ranges import convert_unchanged_lines
+from black.ranges import convert_unchanged_lines, parse_line_ranges
 from black.report import Changed, NothingChanged, Report
 from black.trans import iter_fexpr_spans
 from blib2to3.pgen2 import token
@@ -565,25 +565,11 @@ def main(  # noqa: C901
             err("Cannot use --line-ranges with ipynb files.")
             ctx.exit(1)
 
-        for lines_str in line_ranges:
-            parts = lines_str.split("-")
-            if len(parts) != 2:
-                err(
-                    "Incorrect --line-ranges format, expect 'START-END', found"
-                    f" {lines_str!r}"
-                )
-                ctx.exit(1)
-            try:
-                start = int(parts[0])
-                end = int(parts[1])
-            except ValueError:
-                err(
-                    "Incorrect --line-ranges value, expect integer ranges, found"
-                    f" {lines_str!r}"
-                )
-                ctx.exit(1)
-            else:
-                lines.append((start, end))
+        try:
+            lines = parse_line_ranges(line_ranges)
+        except ValueError as e:
+            err(str(e))
+            ctx.exit(1)
 
     if code is not None:
         # Run in quiet mode by default with -c; the extra output isn't useful.

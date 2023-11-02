@@ -25,6 +25,28 @@ from black.nodes import (
 )
 
 
+def parse_line_ranges(line_ranges: Sequence[str]) -> List[Tuple[int, int]]:
+    lines: List[Tuple[int, int]] = []
+    for lines_str in line_ranges:
+        parts = lines_str.split("-")
+        if len(parts) != 2:
+            raise ValueError(
+                "Incorrect --line-ranges format, expect 'START-END', found"
+                f" {lines_str!r}"
+            )
+        try:
+            start = int(parts[0])
+            end = int(parts[1])
+        except ValueError:
+            raise ValueError(
+                "Incorrect --line-ranges value, expect integer ranges, found"
+                f" {lines_str!r}"
+            ) from None
+        else:
+            lines.append((start, end))
+    return lines
+
+
 def convert_unchanged_lines(src_node: Node, lines: Collection[Tuple[int, int]]):
     """Converts unchanged lines to STANDALONE_COMMENT.
 

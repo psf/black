@@ -29,13 +29,19 @@ def check_file(subdir: str, filename: str, *, data: bool = True) -> None:
         args.mode,
         fast=args.fast,
         minimum_version=args.minimum_version,
+        lines=args.lines,
     )
     if args.minimum_version is not None:
         major, minor = args.minimum_version
         target_version = TargetVersion[f"PY{major}{minor}"]
         mode = replace(args.mode, target_versions={target_version})
         assert_format(
-            source, expected, mode, fast=args.fast, minimum_version=args.minimum_version
+            source,
+            expected,
+            mode,
+            fast=args.fast,
+            minimum_version=args.minimum_version,
+            lines=args.lines,
         )
 
 
