@@ -991,9 +991,8 @@ def can_omit_invisible_parens(
     for leaf in reversed(line.leaves):
         if closing_bracket and leaf is closing_bracket.opening_bracket:
             closing_bracket = None
-        if leaf.type == STANDALONE_COMMENT:
-            if not closing_bracket:
-                return False
+        if leaf.type == STANDALONE_COMMENT and not closing_bracket:
+            return False
         if (
             not closing_bracket
             and leaf.type in CLOSING_BRACKETS
