@@ -1269,7 +1269,7 @@ class BlackTestCase(BlackBaseTestCase):
                 report=report,
             )
             fsts.assert_called_once_with(
-                fast=True, write_back=black.WriteBack.YES, mode=DEFAULT_MODE
+                fast=True, write_back=black.WriteBack.YES, mode=DEFAULT_MODE, lines=()
             )
             # __BLACK_STDIN_FILENAME__ should have been stripped
             report.done.assert_called_with(expected, black.Changed.YES)
@@ -1295,6 +1295,7 @@ class BlackTestCase(BlackBaseTestCase):
                 fast=True,
                 write_back=black.WriteBack.YES,
                 mode=replace(DEFAULT_MODE, is_pyi=True),
+                lines=(),
             )
             # __BLACK_STDIN_FILENAME__ should have been stripped
             report.done.assert_called_with(expected, black.Changed.YES)
@@ -1320,6 +1321,7 @@ class BlackTestCase(BlackBaseTestCase):
                 fast=True,
                 write_back=black.WriteBack.YES,
                 mode=replace(DEFAULT_MODE, is_ipynb=True),
+                lines=(),
             )
             # __BLACK_STDIN_FILENAME__ should have been stripped
             report.done.assert_called_with(expected, black.Changed.YES)

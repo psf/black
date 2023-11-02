@@ -13,6 +13,7 @@ from json.decoder import JSONDecodeError
 from pathlib import Path
 from typing import (
     Any,
+    Collection,
     Dict,
     Generator,
     Iterator,
@@ -77,6 +78,7 @@ from black.nodes import (
 from black.output import color_diff, diff, dump_to_file, err, ipynb_diff, out
 from black.parsing import InvalidInput  # noqa F401
 from black.parsing import lib2to3_parse, parse_ast, stringify_ast
+from black.ranges import convert_unchanged_lines
 from black.report import Changed, NothingChanged, Report
 from black.trans import iter_fexpr_spans
 from blib2to3.pgen2 import token
@@ -305,6 +307,18 @@ def validate_regex(
     help="Don't write the files back, just output a diff for each file on stdout.",
 )
 @click.option(
+    "--line-ranges",
+    multiple=True,
+    metavar="START-END",
+    help=(
+        'Ranges of lines to format. Must be specified as "START-END", index is'
+        " 1-based and inclusive on both ends. Black may still format lines outside"
+        " of the ranges for multi-line statements. Formatting more than one files"
+        " or any ipynb files with this option is not supported."
+    ),
+    default=(),
+)
+@click.option(
     "--color/--no-color",
     is_flag=True,
     help="Show colored diff. Only applies when `--diff` is given.",
@@ -443,6 +457,7 @@ def main(  # noqa: C901
     target_version: List[TargetVersion],
     check: bool,
     diff: bool,
+    line_ranges: Sequence[str],
     color: bool,
     fast: bool,
     pyi: bool,
@@ -544,6 +559,32 @@ def main(  # noqa: C901
         python_cell_magics=set(python_cell_magics),
     )
 
+    lines: List[Tuple[int, int]] = []
+    if line_ranges:
+        if ipynb:
+            err("Cannot use --line-ranges with ipynb files.")
+            ctx.exit(1)
+
+        for lines_str in line_ranges:
+            parts = lines_str.split("-")
+            if len(parts) != 2:
+                err(
+                    "Incorrect --line-ranges format, expect 'START-END', found"
+                    f" {lines_str!r}"
+                )
+                ctx.exit(1)
+            try:
+                start = int(parts[0])
+                end = int(parts[1])
+            except ValueError:
+                err(
+                    "Incorrect --line-ranges value, expect integer ranges, found"
+                    f" {lines_str!r}"
+                )
+                ctx.exit(1)
+            else:
+                lines.append((start, end))
+
     if code is not None:
         # Run in quiet mode by default with -c; the extra output isn't useful.
         # You can still pass -v to get verbose output.
@@ -588,10 +629,14 @@ def main(  # noqa: C901
                 write_back=write_back,
                 mode=mode,
                 report=report,
+                lines=lines,
             )
         else:
             from black.concurrency import reformat_many
 
+            if lines:
+                err("Cannot use --line-ranges to format multiple files.")
+                ctx.exit(1)
             reformat_many(
                 sources=sources,
                 fast=fast,
@@ -741,7 +786,13 @@ def reformat_code(
 # not ideal, but this shouldn't cause any issues ... hopefully. ~ichard26
 @mypyc_attr(patchable=True)
 def reformat_one(
-    src: Path, fast: bool, write_back: WriteBack, mode: Mode, report: "Report"
+    src: Path,
+    fast: bool,
+    write_back: WriteBack,
+    mode: Mode,
+    report: "Report",
+    *,
+    lines: Collection[Tuple[int, int]] = (),
 ) -> None:
     """Reformat a single file under `src` without spawning child processes.
 
@@ -766,7 +817,9 @@ def reformat_one(
                 mode = replace(mode, is_pyi=True)
             elif src.suffix == ".ipynb":
                 mode = replace(mode, is_ipynb=True)
-            if format_stdin_to_stdout(fast=fast, write_back=write_back, mode=mode):
+            if format_stdin_to_stdout(
+                fast=fast, write_back=write_back, mode=mode, lines=lines
+            ):
                 changed = Changed.YES
         else:
             cache = Cache.read(mode)
@@ -774,7 +827,7 @@ def reformat_one(
                 if not cache.is_changed(src):
                     changed = Changed.CACHED
             if changed is not Changed.CACHED and format_file_in_place(
-                src, fast=fast, write_back=write_back, mode=mode
+                src, fast=fast, write_back=write_back, mode=mode, lines=lines
             ):
                 changed = Changed.YES
             if (write_back is WriteBack.YES and changed is not Changed.CACHED) or (
@@ -794,6 +847,8 @@ def format_file_in_place(
     mode: Mode,
     write_back: WriteBack = WriteBack.NO,
     lock: Any = None,  # multiprocessing.Manager().Lock() is some crazy proxy
+    *,
+    lines: Collection[Tuple[int, int]] = (),
 ) -> bool:
     """Format file under `src` path. Return True if changed.
 
@@ -813,7 +868,9 @@ def format_file_in_place(
             header = buf.readline()
         src_contents, encoding, newline = decode_bytes(buf.read())
     try:
-        dst_contents = format_file_contents(src_contents, fast=fast, mode=mode)
+        dst_contents = format_file_contents(
+            src_contents, fast=fast, mode=mode, lines=lines
+        )
     except NothingChanged:
         return False
     except JSONDecodeError:
@@ -858,6 +915,7 @@ def format_stdin_to_stdout(
     content: Optional[str] = None,
     write_back: WriteBack = WriteBack.NO,
     mode: Mode,
+    lines: Collection[Tuple[int, int]] = (),
 ) -> bool:
     """Format file on stdin. Return True if changed.
 
@@ -876,7 +934,7 @@ def format_stdin_to_stdout(
 
     dst = src
     try:
-        dst = format_file_contents(src, fast=fast, mode=mode)
+        dst = format_file_contents(src, fast=fast, mode=mode, lines=lines)
         return True
 
     except NothingChanged:
@@ -904,7 +962,11 @@ def format_stdin_to_stdout(
 
 
 def check_stability_and_equivalence(
-    src_contents: str, dst_contents: str, *, mode: Mode
+    src_contents: str,
+    dst_contents: str,
+    *,
+    mode: Mode,
+    lines: Collection[Tuple[int, int]] = (),
 ) -> None:
     """Perform stability and equivalence checks.
 
@@ -916,7 +978,13 @@ def check_stability_and_equivalence(
     assert_stable(src_contents, dst_contents, mode=mode)
 
 
-def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileContent:
+def format_file_contents(
+    src_contents: str,
+    *,
+    fast: bool,
+    mode: Mode,
+    lines: Collection[Tuple[int, int]] = (),
+) -> FileContent:
     """Reformat contents of a file and return new contents.
 
     If `fast` is False, additionally confirm that the reformatted code is
@@ -926,13 +994,15 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
     if mode.is_ipynb:
         dst_contents = format_ipynb_string(src_contents, fast=fast, mode=mode)
     else:
-        dst_contents = format_str(src_contents, mode=mode)
+        dst_contents = format_str(src_contents, mode=mode, lines=lines)
     if src_contents == dst_contents:
         raise NothingChanged
 
     if not fast and not mode.is_ipynb:
         # Jupyter notebooks will already have been checked above.
-        check_stability_and_equivalence(src_contents, dst_contents, mode=mode)
+        check_stability_and_equivalence(
+            src_contents, dst_contents, mode=mode, lines=lines
+        )
     return dst_contents
 
 
@@ -1043,7 +1113,9 @@ def format_ipynb_string(src_contents: str, *, fast: bool, mode: Mode) -> FileCon
         raise NothingChanged
 
 
-def format_str(src_contents: str, *, mode: Mode) -> str:
+def format_str(
+    src_contents: str, *, mode: Mode, lines: Collection[Tuple[int, int]] = ()
+) -> str:
     """Reformat a string and return new contents.
 
     `mode` determines formatting options, such as how many characters per line are
@@ -1073,16 +1145,18 @@ def format_str(src_contents: str, *, mode: Mode) -> str:
         hey
 
     """
-    dst_contents = _format_str_once(src_contents, mode=mode)
+    dst_contents = _format_str_once(src_contents, mode=mode, lines=lines)
     # Forced second pass to work around optional trailing commas (becoming
     # forced trailing commas on pass 2) interacting differently with optional
     # parentheses.  Admittedly ugly.
     if src_contents != dst_contents:
-        return _format_str_once(dst_contents, mode=mode)
+        return _format_str_once(dst_contents, mode=mode, lines=lines)
     return dst_contents
 
 
-def _format_str_once(src_contents: str, *, mode: Mode) -> str:
+def _format_str_once(
+    src_contents: str, *, mode: Mode, lines: Collection[Tuple[int, int]] = ()
+) -> str:
     src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)
     dst_blocks: List[LinesBlock] = []
     if mode.target_versions:
@@ -1097,6 +1171,10 @@ def _format_str_once(src_contents: str, *, mode: Mode) -> str:
         if supports_feature(versions, feature)
     }
     normalize_fmt_off(src_node, mode)
+    if lines:
+        # This should be called after normalize_fmt_off.
+        convert_unchanged_lines(src_node, lines)
+
     lines = LineGenerator(mode=mode, features=context_manager_features)
     elt = EmptyLineTracker(mode=mode)
     split_line_features = {
@@ -1373,12 +1451,14 @@ def assert_equivalent(src: str, dst: str) -> None:
         ) from None
 
 
-def assert_stable(src: str, dst: str, mode: Mode) -> None:
+def assert_stable(
+    src: str, dst: str, mode: Mode, *, lines: Collection[Tuple[int, int]] = ()
+) -> None:
     """Raise AssertionError if `dst` reformats differently the second time."""
     # We shouldn't call format_str() here, because that formats the string
     # twice and may hide a bug where we bounce back and forth between two
     # versions.
-    newdst = _format_str_once(dst, mode=mode)
+    newdst = _format_str_once(dst, mode=mode, lines=lines)
     if dst != newdst:
         log = dump_to_file(
             str(mode),
