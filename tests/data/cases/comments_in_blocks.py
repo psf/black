@@ -86,3 +86,26 @@ def get_subtree_proof_nodes(
         in ((group[0], (len(group) - 1).bit_length()) for group in chunk_index_groups)
     )
     return subtree_node_paths
+
+
+if (
+    # comment1
+    a
+    # comment2
+    or (
+        # comment3
+        (
+            # comment4
+            b
+        )
+        # comment5
+        and
+        # comment6
+        c
+        or (
+            # comment7
+            d
+        )
+    )
+):
+    print("Foo")
