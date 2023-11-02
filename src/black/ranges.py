@@ -17,7 +17,7 @@ from black.nodes import (
     furthest_ancestor_with_last_leaf,
     last_leaf,
     Leaf,
-        LN,
+    LN,
     Node,
     STANDALONE_COMMENT,
     syms,
@@ -25,7 +25,7 @@ from black.nodes import (
 )
 
 
-def     convert_unchanged_lines(src_node: Node, lines: Collection[Tuple[int, int]]):
+def convert_unchanged_lines(src_node: Node, lines: Collection[Tuple[int, int]]):
     """Converts unchanged lines to STANDALONE_COMMENT.
 
     The idea is similar to `# fmt: on/off` is implemented. It also converts the
