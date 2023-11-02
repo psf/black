@@ -16,14 +16,14 @@ import   typing
 from  typing   import   (
       Any  ,
    )
-class   MyClass(  object):
+class   MyClass(  object):     # Trailing comment with extra leading space.
         #NOTE: The following indentation is incorrect:
       @decor( 1  *  3 )
       def  my_func(  arg):
                 pass
 
-try:
-    for   i   in   range(10):
+try:                                       # Trailing comment with extra leading space.
+    for   i   in   range(10):              # Trailing comment with extra leading space.
         while    condition:
             if   something:
                 then_something(  )
@@ -34,8 +34,8 @@ except  ValueError  as  e:
 finally:
     unformatted(  )
 
-async  def  test_async_unformatted(  ):
-    async  for  i  in some_iter(  unformatted  ):
+async  def  test_async_unformatted(  ):    # Trailing comment with extra leading space.
+    async  for  i  in some_iter(  unformatted  ):    # Trailing comment with extra leading space.
         await  asyncio.sleep( 1 )
         async  with  some_context(  unformatted  ):
             print(  "unformatted"  )
@@ -82,14 +82,14 @@ import   typing
 from  typing   import   (
       Any  ,
    )
-class   MyClass(  object):
+class   MyClass(  object):     # Trailing comment with extra leading space.
         #NOTE: The following indentation is incorrect:
       @decor( 1  *  3 )
       def  my_func(  arg):
                 pass
 
-try:
-    for   i   in   range(10):
+try:                                       # Trailing comment with extra leading space.
+    for   i   in   range(10):              # Trailing comment with extra leading space.
         while    condition:
             if   something:
                 then_something(  )
@@ -100,8 +100,8 @@ except  ValueError  as  e:
 finally:
     unformatted(  )
 
-async  def  test_async_unformatted(  ):
-    async  for  i  in some_iter(  unformatted  ):
+async  def  test_async_unformatted(  ):    # Trailing comment with extra leading space.
+    async  for  i  in some_iter(  unformatted  ):    # Trailing comment with extra leading space.
         await  asyncio.sleep( 1 )
         async  with  some_context(  unformatted  ):
             print(  "unformatted"  )
