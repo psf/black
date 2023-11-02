@@ -986,15 +986,14 @@ def can_omit_invisible_parens(
     line = rhs.body
 
     # We need optional parens in order to split standalone comments to their own lines
-    # if there are no nested parens inside
+    # if there are no nested parens around the standalone comments
     closing_bracket: Optional[Leaf] = None
     for leaf in reversed(line.leaves):
         if closing_bracket and leaf is closing_bracket.opening_bracket:
             closing_bracket = None
         if leaf.type == STANDALONE_COMMENT:
-            if closing_bracket:
-                break
-            return False
+            if not closing_bracket:
+                return False
         if (
             not closing_bracket
             and leaf.type in CLOSING_BRACKETS
