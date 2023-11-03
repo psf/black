@@ -52,7 +52,7 @@ def test_simple_format(filename: str) -> None:
 
 
 @pytest.mark.parametrize("filename", all_data_cases("line_ranges_formatted"))
-def test_line_ranges_line_by_line(filename) -> None:
+def test_line_ranges_line_by_line(filename: str) -> None:
     args, source, expected = read_data_with_mode("line_ranges_formatted", filename)
     assert (
         source == expected

@@ -1,30 +1,21 @@
 """Functions related to Black's formatting by line ranges feature."""
 
-from dataclasses import dataclass
 import difflib
-from typing import (
-    Collection,
-    List,
-    Optional,
-    Sequence,
-    Set,
-    Tuple,
-    Union,
-    Iterator,
-)
+from dataclasses import dataclass
+from typing import Collection, Iterator, List, Sequence, Set, Tuple, Union
 
-from blib2to3.pgen2.token import ASYNC, NEWLINE
 from black.nodes import (
+    LN,
+    STANDALONE_COMMENT,
+    Leaf,
+    Node,
+    Visitor,
     first_leaf,
     furthest_ancestor_with_last_leaf,
     last_leaf,
-    Leaf,
-    LN,
-    Node,
-    STANDALONE_COMMENT,
     syms,
-    Visitor,
 )
+from blib2to3.pgen2.token import ASYNC, NEWLINE
 
 
 def parse_line_ranges(line_ranges: Sequence[str]) -> List[Tuple[int, int]]:
@@ -134,7 +125,7 @@ def adjusted_lines(
     return new_lines
 
 
-def convert_unchanged_lines(src_node: Node, lines: Collection[Tuple[int, int]]):
+def convert_unchanged_lines(src_node: Node, lines: Collection[Tuple[int, int]]) -> None:
     """Converts unchanged lines to STANDALONE_COMMENT.
 
     The idea is similar to `# fmt: on/off` is implemented. It also converts the
@@ -177,7 +168,9 @@ def _contains_standalone_comment(node: LN) -> bool:
 
 
 class _TopLevelStatementsVisitor(Visitor[None]):
-    """A node visitor that converts unchanged top-level statements to STANDALONE_COMMENT.
+    """
+    A node visitor that converts unchanged top-level statements to
+    STANDALONE_COMMENT.
 
     This is used in addition to _convert_unchanged_lines_by_flatterning, to
     speed up formatting when there are unchanged top-level
@@ -216,13 +209,11 @@ class _TopLevelStatementsVisitor(Visitor[None]):
         # `async_funcdef`, the ASYNC token is defined on a separate level by the
         # grammar.
         semantic_parent = node.parent
-        async_token: Optional[LN] = None
         if semantic_parent is not None:
             if (
                 semantic_parent.prev_sibling is not None
                 and semantic_parent.prev_sibling.type == ASYNC
             ):
-                async_token = semantic_parent.prev_sibling
                 semantic_parent = semantic_parent.parent
         if semantic_parent is not None and not _get_line_range(
             semantic_parent
@@ -230,7 +221,7 @@ class _TopLevelStatementsVisitor(Visitor[None]):
             _convert_node_to_standalone_comment(semantic_parent)
 
 
-def _convert_unchanged_line_by_line(node: Node, lines_set: Set[int]):
+def _convert_unchanged_line_by_line(node: Node, lines_set: Set[int]) -> None:
     """Converts unchanged to STANDALONE_COMMENT line by line."""
     for leaf in node.leaves():
         if leaf.type != NEWLINE:
@@ -247,9 +238,6 @@ def _convert_unchanged_line_by_line(node: Node, lines_set: Set[int]):
             while prev_sibling:
                 nodes_to_ignore.insert(0, prev_sibling)
                 prev_sibling = prev_sibling.prev_sibling
-            if not nodes_to_ignore:
-                assert False, "Unexpected empty nodes in the match_stmt"
-                continue
             if not _get_line_range(nodes_to_ignore).intersection(lines_set):
                 _convert_nodes_to_standalone_comment(nodes_to_ignore, newline=leaf)
         elif leaf.parent and leaf.parent.type == syms.suite:
@@ -262,9 +250,6 @@ def _convert_unchanged_line_by_line(node: Node, lines_set: Set[int]):
                 # NOTE: Multiple suite nodes can exist as siblings in e.g. `if_stmt`.
                 nodes_to_ignore.insert(0, parent_sibling)
                 parent_sibling = parent_sibling.prev_sibling
-            if not nodes_to_ignore:
-                assert False, "Unexpected empty nodes before suite"
-                continue
             # Special case for `async_stmt` and `async_funcdef` where the ASYNC
             # token is on the grandparent node.
             grandparent = leaf.parent.parent
@@ -290,7 +275,7 @@ def _convert_unchanged_line_by_line(node: Node, lines_set: Set[int]):
                 _convert_node_to_standalone_comment(ancestor)
 
 
-def _convert_node_to_standalone_comment(node: LN):
+def _convert_node_to_standalone_comment(node: LN) -> None:
     """Convert node to STANDALONE_COMMENT by modifying the tree inline."""
     parent = node.parent
     if not parent:
@@ -298,7 +283,6 @@ def _convert_node_to_standalone_comment(node: LN):
     first = first_leaf(node)
     last = last_leaf(node)
     if not first or not last:
-        assert False, "Unexpected empty first_leaf or last_leaf"
         return
     if first is last:
         # This can happen on the following edge cases:
@@ -331,7 +315,7 @@ def _convert_node_to_standalone_comment(node: LN):
         )
 
 
-def _convert_nodes_to_standalone_comment(nodes: Sequence[LN], *, newline: Leaf):
+def _convert_nodes_to_standalone_comment(nodes: Sequence[LN], *, newline: Leaf) -> None:
     """Convert nodes to STANDALONE_COMMENT by modifying the tree inline."""
     if not nodes:
         return
@@ -451,7 +435,7 @@ def _calculate_lines_mappings(
         modified_source.splitlines(keepends=True),
     )
     matching_blocks = matcher.get_matching_blocks()
-    lines_mappings: list[_LinesMapping] = []
+    lines_mappings: List[_LinesMapping] = []
     # matching_blocks is a sequence of "same block of code ranges", see
     # https://docs.python.org/3/library/difflib.html#difflib.SequenceMatcher.get_matching_blocks
     # Each block corresponds to a _LinesMapping with is_changed_block=False,

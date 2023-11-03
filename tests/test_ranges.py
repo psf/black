@@ -1,14 +1,17 @@
 """Test the ink_adjusted_lines module."""
 
-from black.ranges import adjusted_lines
+from typing import List, Tuple
+
 import pytest
+
+from black.ranges import adjusted_lines
 
 
 @pytest.mark.parametrize(
     "lines",
     [[(1, 1)], [(1, 3)], [(1, 1), (3, 4)]],
 )
-def test_no_diff(lines):
+def test_no_diff(lines: List[Tuple[int, int]]) -> None:
     source = """\
 import re
 
@@ -29,7 +32,7 @@ pass
         [(0, 8), (3, 1)],
     ],
 )
-def test_invalid_lines(lines):
+def test_invalid_lines(lines: List[Tuple[int, int]]) -> None:
     original_source = """\
 import re
 def foo(arg):
@@ -55,9 +58,7 @@ docstring with more descriptive texts.
 def func(arg1, arg2, arg3):
 pass
 """
-    assert not adjusted_lines(
-        lines, original_source, modified_source
-    )
+    assert not adjusted_lines(lines, original_source, modified_source)
 
 
 @pytest.mark.parametrize(
@@ -81,7 +82,9 @@ pass
         ),
     ],
 )
-def test_removals(lines, adjusted):
+def test_removals(
+    lines: List[Tuple[int, int]], adjusted: List[Tuple[int, int]]
+) -> None:
     original_source = """\
 1. first line
 2. second line
@@ -94,9 +97,7 @@ def test_removals(lines, adjusted):
 2. second line
 5. fifth line
 """
-    assert adjusted == adjusted_lines(
-        lines, original_source, modified_source
-    )
+    assert adjusted == adjusted_lines(lines, original_source, modified_source)
 
 
 @pytest.mark.parametrize(
@@ -116,7 +117,9 @@ def test_removals(lines, adjusted):
         ),
     ],
 )
-def test_additions(lines, adjusted):
+def test_additions(
+    lines: List[Tuple[int, int]], adjusted: List[Tuple[int, int]]
+) -> None:
     original_source = """\
 1. first line
 2. second line
@@ -129,9 +132,7 @@ this is added
 2. second line
 this is added
 """
-    assert adjusted == adjusted_lines(
-        lines, original_source, modified_source
-    )
+    assert adjusted == adjusted_lines(lines, original_source, modified_source)
 
 
 @pytest.mark.parametrize(
@@ -153,7 +154,7 @@ this is added
         ([(9, 10), (1, 1)], [(1, 1), (9, 9)]),
     ],
 )
-def test_diffs(lines, adjusted):
+def test_diffs(lines: List[Tuple[int, int]], adjusted: List[Tuple[int, int]]) -> None:
     original_source = """\
  1. import re
  2. def foo(arg):
@@ -181,6 +182,4 @@ def test_diffs(lines, adjusted):
 11.   pass
 12. # last line changed
 """
-    assert adjusted == adjusted_lines(
-        lines, original_source, modified_source
-    )
+    assert adjusted == adjusted_lines(lines, original_source, modified_source)

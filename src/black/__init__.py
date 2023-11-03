@@ -165,6 +165,12 @@ def read_pyproject_toml(
             "extend-exclude", "Config key extend-exclude must be a string"
         )
 
+    line_ranges = config.get("line_ranges")
+    if line_ranges is not None:
+        raise click.BadOptionUsage(
+            "line-ranges", "Cannot use line-ranges in the pyproject.toml file."
+        )
+
     default_map: Dict[str, Any] = {}
     if ctx.default_map:
         default_map.update(ctx.default_map)
@@ -311,10 +317,11 @@ def validate_regex(
     multiple=True,
     metavar="START-END",
     help=(
-        'Ranges of lines to format. Must be specified as "START-END", index is'
-        " 1-based and inclusive on both ends. Black may still format lines outside"
-        " of the ranges for multi-line statements. Formatting more than one files"
-        " or any ipynb files with this option is not supported."
+        "When specified, _Black_ will try its best to only format these lines. This"
+        " option can be specified multiple times, and a union of the lines will be"
+        " formatted. Each range must be specified as two integers connected by a `-`:"
+        " `<START>-<END>`. The `<START>` and `<END>` integer indices are 1-based and"
+        " inclusive on both ends."
     ),
     default=(),
 )
@@ -1174,7 +1181,7 @@ def _format_str_once(
         # This should be called after normalize_fmt_off.
         convert_unchanged_lines(src_node, lines)
 
-    lines = LineGenerator(mode=mode, features=context_manager_features)
+    line_generator = LineGenerator(mode=mode, features=context_manager_features)
     elt = EmptyLineTracker(mode=mode)
     split_line_features = {
         feature
@@ -1182,7 +1189,7 @@ def _format_str_once(
         if supports_feature(versions, feature)
     }
     block: Optional[LinesBlock] = None
-    for current_line in lines.visit(src_node):
+    for current_line in line_generator.visit(src_node):
         block = elt.maybe_empty_lines(current_line)
         dst_blocks.append(block)
         for line in transform_line(

@@ -2015,6 +2015,17 @@ class BlackTestCase(BlackBaseTestCase):
             assert "Cannot use --line-ranges with ipynb files" in result.output
             assert result.exit_code == 1
 
+    def test_line_ranges_in_pyproject_toml(self) -> None:
+        config = THIS_DIR / "data" / "invalid_line_ranges.toml"
+        result = BlackRunner().invoke(
+            black.main, ["--code", "print()", "--config", str(config)]
+        )
+        assert result.exit_code == 2
+        assert result.stderr_bytes is not None
+        assert (
+            b"Cannot use line-ranges in the pyproject.toml file." in result.stderr_bytes
+        )
+
 
 class TestCaching:
     def test_get_cache_dir(
