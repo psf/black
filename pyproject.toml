@@ -187,7 +187,7 @@ build-frontend = { name = "build", args = ["--no-isolation"] }
 # Unfortunately, hatch doesn't respect MACOSX_DEPLOYMENT_TARGET
 before-build = [
     "python -m pip install 'hatchling==1.18.0' hatch-vcs hatch-fancy-pypi-readme 'hatch-mypyc>=0.16.0' 'mypy==1.5.1' 'click==8.1.3'",
-    """sed -i '' -e "600,700s/'10_16'/'11_0' if 'arm64' in archs else '10_16'/" $(python -c 'import hatchling.builders.wheel as h; print(h.__file__)') """,
+    """sed -i '' -e "600,700s/'10_16'/os.environ['MACOSX_DEPLOYMENT_TARGET'].replace('.', '_')/" $(python -c 'import hatchling.builders.wheel as h; print(h.__file__)') """,
 ]
 
 [tool.isort]
