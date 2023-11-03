@@ -2,6 +2,7 @@
 Generating lines of code.
 """
 
+import re
 import sys
 from dataclasses import replace
 from enum import Enum, auto
@@ -420,7 +421,7 @@ class LineGenerator(Visitor[Line]):
         if Preview.hex_codes_in_unicode_sequences in self.mode:
             normalize_unicode_escape_sequences(leaf)
 
-        if is_docstring(leaf) and "\\\n" not in leaf.value:
+        if is_docstring(leaf) and not re.search(r"\\\s*\n", leaf.value):
             # We're ignoring docstrings with backslash newline escapes because changing
             # indentation of those changes the AST representation of the code.
             if self.mode.string_normalization:
@@ -1375,18 +1376,16 @@ def remove_await_parens(node: Node) -> None:
             opening_bracket = cast(Leaf, node.children[1].children[0])
             closing_bracket = cast(Leaf, node.children[1].children[-1])
             bracket_contents = node.children[1].children[1]
-            if isinstance(bracket_contents, Node):
-                if bracket_contents.type != syms.power:
-                    ensure_visible(opening_bracket)
-                    ensure_visible(closing_bracket)
-                elif (
-                    bracket_contents.type == syms.power
-                    and bracket_contents.children[0].type == token.AWAIT
-                ):
-                    ensure_visible(opening_bracket)
-                    ensure_visible(closing_bracket)
-                    # If we are in a nested await then recurse down.
-                    remove_await_parens(bracket_contents)
+            if isinstance(bracket_contents, Node) and (
+                bracket_contents.type != syms.power
+                or bracket_contents.children[0].type == token.AWAIT
+                or any(
+                    isinstance(child, Leaf) and child.type == token.DOUBLESTAR
+                    for child in bracket_contents.children
+                )
+            ):
+                ensure_visible(opening_bracket)
+                ensure_visible(closing_bracket)
 
 
 def _maybe_wrap_cms_in_parens(
