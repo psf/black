@@ -11,6 +11,8 @@
 - Fix crash on formatting bytes strings that look like docstrings (#4003)
 - Fix crash when whitespace followed a backslash before newline in a docstring (#4008)
 
+- Fix crash on formatting code like `await (a ** b)` (#3994)
+
 ### Preview style
 
 - Multiline dictionaries and lists that are the sole argument to a function are now
