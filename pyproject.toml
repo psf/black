@@ -113,7 +113,7 @@ exclude = ["/profiling"]
 [tool.hatch.build.targets.wheel]
 only-include = ["src"]
 sources = ["src"]
-macos-max-compat = false
+macos-max-compat = true
 
 [tool.hatch.build.targets.wheel.hooks.mypyc]
 enable-by-default = false
