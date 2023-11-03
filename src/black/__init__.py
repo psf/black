@@ -78,7 +78,7 @@ from black.nodes import (
 from black.output import color_diff, diff, dump_to_file, err, ipynb_diff, out
 from black.parsing import InvalidInput  # noqa F401
 from black.parsing import lib2to3_parse, parse_ast, stringify_ast
-from black.ranges import convert_unchanged_lines, parse_line_ranges
+from black.ranges import adjusted_lines, convert_unchanged_lines, parse_line_ranges
 from black.report import Changed, NothingChanged, Report
 from black.trans import iter_fexpr_spans
 from blib2to3.pgen2 import token
@@ -1147,6 +1147,8 @@ def format_str(
     # forced trailing commas on pass 2) interacting differently with optional
     # parentheses.  Admittedly ugly.
     if src_contents != dst_contents:
+        if lines:
+            lines = adjusted_lines(lines, src_contents, dst_contents)
         return _format_str_once(dst_contents, mode=mode, lines=lines)
     return dst_contents
 
@@ -1455,6 +1457,8 @@ def assert_stable(
     # We shouldn't call format_str() here, because that formats the string
     # twice and may hide a bug where we bounce back and forth between two
     # versions.
+    if lines:
+        lines = adjusted_lines(lines, src, dst)
     newdst = _format_str_once(dst, mode=mode, lines=lines)
     if dst != newdst:
         log = dump_to_file(
