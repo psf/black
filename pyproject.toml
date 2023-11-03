@@ -167,8 +167,6 @@ MYPYC_DEBUG_LEVEL = "0"
 # from source also doesn't work.
 AIOHTTP_NO_EXTENSIONS = "1"
 
-MACOSX_DEPLOYMENT_TARGET = """$(python -c 'import sysconfig; print(sysconfig.get_config_var("MACOSX_DEPLOYMENT_TARGET"))')"""
-
 [tool.cibuildwheel.linux]
 before-build = [
     "yum install -y clang gcc",
@@ -184,7 +182,8 @@ AIOHTTP_NO_EXTENSIONS = "1"
 CC = "clang"
 
 [tool.cibuildwheel.macos]
-build-frontend = { name = "build", args = ["--no-build-isolation"] }
+build-frontend = { name = "build", args = ["--no-isolation"] }
+# Unfortunately, hatch doesn't respect MACOSX_DEPLOYMENT_TARGET
 before-build = [
     "python -m pip install 'hatchling==1.18.0' hatch-vcs hatch-fancy-pypi-readme",
     """sed -i '' -e "600,700s/10_16/11_0/" $(python -c 'import hatchling.builders.wheel as h; print(h.__file__)') """,
