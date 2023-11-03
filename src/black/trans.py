@@ -594,12 +594,12 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
                     string[span[0] + 1 : span[1] - 1]  # +-1 to get rid of curly braces
                     for span in iter_fexpr_spans(string)
                 )
-                expressions_contain_printable_quotes = any(
+                debug_expressions_contain_visible_quotes = any(
                     re.search(r".*[\'\"].*(?<![!:=])={1}(?!=)(?![^\s:])", expression)
                     for expression in f_expressions
                 )
-                if not expressions_contain_printable_quotes:
-                    # We don't want to toggle printable quotes in debug f-strings, as
+                if not debug_expressions_contain_visible_quotes:
+                    # We don't want to toggle visible quotes in debug f-strings, as
                     # that would modify the AST
                     string = _toggle_fexpr_quotes(string, QUOTE)
                     # After quotes toggling, quotes in expressions won't be escaped

@@ -17,7 +17,8 @@
   indented less (#3964)
 - Multiline list and dict unpacking as the sole argument to a function is now also
   indented less (#3992)
-- Preserve printable quote types for debug f-strings (#4005)
+- In f-string debug expressions preserve quote types that are visible in the final
+  string (#4005)
 
 ### Configuration
 
