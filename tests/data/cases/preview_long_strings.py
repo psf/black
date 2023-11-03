@@ -321,6 +321,12 @@ log.info(f'Skipping: {"a" == "b" == "c" == "d"=} {desc["ms_name"]} {money=} {dte
 
 log.info(f'Skipping: {  longer_longer_longer_longer_longer_longer_name   [ "db_id" ]      [ "another_key" ]   =  :  .3f }')
 
+log.info(f'''Skipping: {"a" == 'b'} {desc["ms_name"]} {money=} {dte=} {pos_share=} {desc["status"]} {desc["exposure_max"]}''')
+
+log.info(f'''Skipping: {'a' == "b"=} {desc["ms_name"]} {money=} {dte=} {pos_share=} {desc["status"]} {desc["exposure_max"]}''')
+
+log.info(f"""Skipping: {'a' == 'b'} {desc['ms_name']} {money=} {dte=} {pos_share=} {desc['status']} {desc['exposure_max']}""")
+
 # output
 
 
@@ -900,4 +906,16 @@ log.info(
 log.info(
     "Skipping:"
     f' {  longer_longer_longer_longer_longer_longer_name   [ "db_id" ]      [ "another_key" ]   =  :  .3f }'
+)
+
+log.info(
+    f"""Skipping: {"a" == 'b'} {desc["ms_name"]} {money=} {dte=} {pos_share=} {desc["status"]} {desc["exposure_max"]}"""
+)
+
+log.info(
+    f"""Skipping: {'a' == "b"=} {desc["ms_name"]} {money=} {dte=} {pos_share=} {desc["status"]} {desc["exposure_max"]}"""
+)
+
+log.info(
+    f"""Skipping: {'a' == 'b'} {desc['ms_name']} {money=} {dte=} {pos_share=} {desc['status']} {desc['exposure_max']}"""
 )
