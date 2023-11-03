@@ -309,7 +309,7 @@ log.info(f'Skipping: {desc["db_id"]=} {desc["ms_name"]} {money=} {dte=} {pos_sha
 
 log.info(f"Skipping: {desc['db_id']=} {desc['ms_name']} {money=} {dte=} {pos_share=} {desc['status']=} {desc['exposure_max']=}")
 
-log.info(f'Skipping: {desc["db_id"]} {foo("bar",x=123)} {money=} {dte=} {pos_share=} {desc["status"]} {desc["exposure_max"]}')
+log.info(f'Skipping: {desc["db_id"]} {foo("bar",x=123)} {"foo" != "bar"} {dte=} {pos_share=} {desc["status"]} {desc["exposure_max"]}')
 
 log.info(f'Skipping: {desc["db_id"]} {foo("bar",x=123)=} {money=} {dte=} {pos_share=} {desc["status"]} {desc["exposure_max"]}')
 
@@ -874,7 +874,7 @@ log.info(
 
 log.info(
     "Skipping:"
-    f" {desc['db_id']} {foo('bar',x=123)} {money=} {dte=} {pos_share=} {desc['status']} {desc['exposure_max']}"
+    f" {desc['db_id']} {foo('bar',x=123)} {'foo' != 'bar'} {dte=} {pos_share=} {desc['status']} {desc['exposure_max']}"
 )
 
 log.info(
