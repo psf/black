@@ -595,7 +595,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
                     for span in iter_fexpr_spans(string)
                 )
                 expressions_contain_printable_quotes = any(
-                    re.search(r".*[\'\"].*=", expression)
+                    re.search(r".*[\'\"].*(?<![!:=])={1}(?!=)(?![^\s:])", expression)
                     for expression in f_expressions
                 )
                 if not expressions_contain_printable_quotes:
