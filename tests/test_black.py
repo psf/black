@@ -504,7 +504,7 @@ class BlackTestCase(BlackBaseTestCase):
             return _mocked_calls
 
         with patch("pathlib.Path.iterdir", return_value=target_contents), patch(
-            "pathlib.Path.cwd", return_value=working_directory
+            "pathlib.Path.resolve", return_value=target_abspath
         ), patch("pathlib.Path.is_dir", side_effect=mock_n_calls([True])):
             # Note that the root folder (project_root) isn't the folder
             # named "root" (aka working_directory)
@@ -526,7 +526,8 @@ class BlackTestCase(BlackBaseTestCase):
             for _, mock_args, _ in report.path_ignored.mock_calls
         ), "A symbolic link was reported."
         report.path_ignored.assert_called_once_with(
-            Path("root", "child", "b.py"), "matches a .gitignore file content"
+            Path(working_directory, "child", "b.py"),
+            "matches a .gitignore file content",
         )
 
     def test_report_verbose(self) -> None:
