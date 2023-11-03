@@ -8,6 +8,7 @@ import multiprocessing
 import os
 import re
 import sys
+import textwrap
 import types
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, redirect_stderr
@@ -1942,6 +1943,77 @@ class BlackTestCase(BlackBaseTestCase):
         # can't match it directly.
         err.match("invalid character")
         err.match(r"\(<unknown>, line 1\)")
+
+    def test_line_ranges_with_code_option(self) -> None:
+        code = textwrap.dedent("""\
+            if  a  ==  b:
+                print  ( "OK" )
+            """)
+        args = ["--line-ranges=1-1", "--code", code]
+        result = CliRunner().invoke(black.main, args)
+
+        expected = textwrap.dedent("""\
+            if a == b:
+                print  ( "OK" )
+            """)
+        self.compare_results(result, expected, expected_exit_code=0)
+
+    def test_line_ranges_with_stdin(self) -> None:
+        code = textwrap.dedent("""\
+            if  a  ==  b:
+                print  ( "OK" )
+            """)
+        runner = BlackRunner()
+        result = runner.invoke(
+            black.main, ["--line-ranges=1-1", "-"], input=BytesIO(code.encode("utf-8"))
+        )
+
+        expected = textwrap.dedent("""\
+            if a == b:
+                print  ( "OK" )
+            """)
+        self.compare_results(result, expected, expected_exit_code=0)
+
+    def test_line_ranges_with_source(self) -> None:
+        with TemporaryDirectory() as workspace:
+            test_file = Path(workspace) / "test.py"
+            test_file.write_text(
+                textwrap.dedent("""\
+            if  a  ==  b:
+                print  ( "OK" )
+            """),
+                encoding="utf-8",
+            )
+            args = ["--line-ranges=1-1", str(test_file)]
+            result = CliRunner().invoke(black.main, args)
+            assert not result.exit_code
+
+            formatted = test_file.read_text(encoding="utf-8")
+            expected = textwrap.dedent("""\
+            if a == b:
+                print  ( "OK" )
+            """)
+            assert expected == formatted
+
+    def test_line_ranges_with_multiple_sources(self) -> None:
+        with TemporaryDirectory() as workspace:
+            test1_file = Path(workspace) / "test1.py"
+            test1_file.write_text("", encoding="utf-8")
+            test2_file = Path(workspace) / "test2.py"
+            test2_file.write_text("", encoding="utf-8")
+            args = ["--line-ranges=1-1", str(test1_file), str(test2_file)]
+            result = CliRunner().invoke(black.main, args)
+            assert result.exit_code == 1
+            assert "Cannot use --line-ranges to format multiple files" in result.output
+
+    def test_line_ranges_with_ipynb(self) -> None:
+        with TemporaryDirectory() as workspace:
+            test_file = Path(workspace) / "test.ipynb"
+            test_file.write_text("{}", encoding="utf-8")
+            args = ["--line-ranges=1-1", "--ipynb", str(test_file)]
+            result = CliRunner().invoke(black.main, args)
+            assert "Cannot use --line-ranges with ipynb files" in result.output
+            assert result.exit_code == 1
 
 
 class TestCaching:

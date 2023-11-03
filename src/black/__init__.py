@@ -580,7 +580,12 @@ def main(  # noqa: C901
 
     if code is not None:
         reformat_code(
-            content=code, fast=fast, write_back=write_back, mode=mode, report=report
+            content=code,
+            fast=fast,
+            write_back=write_back,
+            mode=mode,
+            report=report,
+            lines=lines,
         )
     else:
         assert root is not None  # root is only None if code is not None
@@ -745,7 +750,13 @@ def path_empty(
 
 
 def reformat_code(
-    content: str, fast: bool, write_back: WriteBack, mode: Mode, report: Report
+    content: str,
+    fast: bool,
+    write_back: WriteBack,
+    mode: Mode,
+    report: Report,
+    *,
+    lines: Collection[Tuple[int, int]] = (),
 ) -> None:
     """
     Reformat and print out `content` without spawning child processes.
@@ -758,7 +769,7 @@ def reformat_code(
     try:
         changed = Changed.NO
         if format_stdin_to_stdout(
-            content=content, fast=fast, write_back=write_back, mode=mode
+            content=content, fast=fast, write_back=write_back, mode=mode, lines=lines
         ):
             changed = Changed.YES
         report.done(path, changed)
@@ -961,7 +972,7 @@ def check_stability_and_equivalence(
     content differently.
     """
     assert_equivalent(src_contents, dst_contents)
-    assert_stable(src_contents, dst_contents, mode=mode)
+    assert_stable(src_contents, dst_contents, mode=mode, lines=lines)
 
 
 def format_file_contents(
