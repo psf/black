@@ -12,6 +12,8 @@
 - Fix crash when whitespace followed a backslash before newline in a docstring (#4008)
 
 - Fix crash on formatting code like `await (a ** b)` (#3994)
+- Fix a bug that long `case` blocks will not be split into multiple lines, also enabled
+  general trailing comma rules on `case` blocks (#4024)
 
 ### Preview style
 
