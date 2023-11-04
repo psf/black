@@ -1260,6 +1260,13 @@ def normalize_invisible_parens(
                 child, parens_after=parens_after, mode=mode, features=features
             )
 
+        # Fixes a bug where invisible parens are not properly wrapped around
+        # case blocks.
+        if isinstance(child, Node) and child.type == syms.case_block:
+            normalize_invisible_parens(
+                child, parens_after={"case"}, mode=mode, features=features
+            )
+
         # Add parentheses around long tuple unpacking in assignments.
         if (
             index == 0

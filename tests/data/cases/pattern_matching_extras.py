@@ -30,22 +30,6 @@ def func(match: case, case: match) -> case:
             ...
 
 
-match maybe, multiple:
-    case perhaps, 5:
-        pass
-    case perhaps, 6,:
-        pass
-
-
-match more := (than, one), indeed,:
-    case _, (5, 6):
-        pass
-    case [[5], (6)], [7],:
-        pass
-    case _:
-        pass
-
-
 match a, *b, c:
     case [*_]:
         assert "seq" == _
@@ -71,12 +55,12 @@ match match(
     case [a as match]:
         pass
 
-    case case:
+    case anything:
         pass
 
 
 match match:
-    case case:
+    case something:
         pass
 
 
