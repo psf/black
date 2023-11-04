@@ -351,9 +351,9 @@ class Line:
 
         if closing.type == token.RSQB:
             if (
-                closing.parent
+                closing.parent is not None
                 and closing.parent.type == syms.trailer
-                and closing.opening_bracket
+                and closing.opening_bracket is not None
                 and is_one_sequence_between(
                     closing.opening_bracket,
                     closing,
@@ -369,16 +369,20 @@ class Line:
             comma = self.leaves[-1]
             if comma.parent is None:
                 return False
-            return (
-                comma.parent.type != syms.subscriptlist
-                or closing.opening_bracket is None
-                or not is_one_sequence_between(
+
+            if (
+                comma.parent.type == syms.subscriptlist
+                and closing.opening_bracket is not None
+                and is_one_sequence_between(
                     closing.opening_bracket,
                     closing,
                     self.leaves,
                     brackets=(token.LSQB, token.RSQB),
                 )
-            )
+            ):
+                return False
+
+            return True
 
         if self.is_import:
             return True
