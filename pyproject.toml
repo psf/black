@@ -224,6 +224,7 @@ omit = [
 ]
 [tool.coverage.run]
 relative_files = true
+branch = true
 
 [tool.mypy]
 # Specify the target platform details in config, so your developers are
