@@ -363,25 +363,6 @@ class Line:
             ):
                 return False
 
-            if not ensure_removable:
-                return True
-
-            comma = self.leaves[-1]
-            if comma.parent is None:
-                return False
-
-            if (
-                comma.parent.type == syms.subscriptlist
-                and closing.opening_bracket is not None
-                and is_one_sequence_between(
-                    closing.opening_bracket,
-                    closing,
-                    self.leaves,
-                    brackets=(token.LSQB, token.RSQB),
-                )
-            ):
-                return False
-
             return True
 
         if self.is_import:
