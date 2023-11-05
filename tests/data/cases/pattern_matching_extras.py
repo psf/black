@@ -55,12 +55,15 @@ match match(
     case [a as match]:
         pass
 
-    case anything:
+    case case:
+        pass
+
+    case something:
         pass
 
 
 match match:
-    case something:
+    case case:
         pass
 
 

@@ -25,9 +25,9 @@ def get_grammars(target_versions: Set[TargetVersion]) -> List[Grammar]:
         ]
 
     match match:
-        case something:
+        case case:
             match match:
-                case something:
+                case case:
                     pass
 
     if all(version.is_python2() for version in target_versions):

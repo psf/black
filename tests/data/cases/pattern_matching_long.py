@@ -6,8 +6,6 @@ match x:
         pass
     case xxxxxxxxxxxxxxxxxxxxxxx:
         pass
-    case case:
-        pass
 
 # output
 
@@ -34,6 +32,3 @@ match x:
         pass
     case xxxxxxxxxxxxxxxxxxxxxxx:
         pass
-    case case :
-        pass
-

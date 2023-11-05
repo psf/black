@@ -1229,7 +1229,7 @@ def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
     leaf.prefix = ""
 
 
-def normalize_invisible_parens(
+def normalize_invisible_parens(  # noqa: C901
     node: Node, parens_after: Set[str], *, mode: Mode, features: Collection[Feature]
 ) -> None:
     """Make existing optional parentheses invisible or create new ones.
@@ -1311,6 +1311,16 @@ def normalize_invisible_parens(
                 # of the keyword. So we need to skip the insertion of
                 # invisible parentheses to work more precisely.
                 continue
+
+            elif (
+                isinstance(child, Leaf)
+                and child.next_sibling is not None
+                and child.next_sibling.type == token.COLON
+                and child.value == "case"
+            ):
+                # A special patch for "case case:" scenario, the second occurrence
+                # of case will be not parsed as an actual keyword
+                break
 
             elif not (isinstance(child, Leaf) and is_multiline_string(child)):
                 wrap_in_parentheses(node, child, visible=False)
