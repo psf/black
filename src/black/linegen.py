@@ -1319,7 +1319,7 @@ def normalize_invisible_parens(  # noqa: C901
                 and child.value == "case"
             ):
                 # A special patch for "case case:" scenario, the second occurrence
-                # of case will be not parsed as an actual keyword
+                # of case will be not parsed as a Python keyword
                 break
 
             elif not (isinstance(child, Leaf) and is_multiline_string(child)):
