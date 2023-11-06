@@ -38,6 +38,8 @@
 
 <!-- Changes that improve Black's performance. -->
 
+- Fix mypyc builds on arm64 on macOS (#4017)
+
 ### Output
 
 <!-- Changes to Black's terminal output and error messages -->

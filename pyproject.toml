@@ -113,6 +113,8 @@ exclude = ["/profiling"]
 [tool.hatch.build.targets.wheel]
 only-include = ["src"]
 sources = ["src"]
+# Note that we change the behaviour of this flag below
+macos-max-compat = true
 
 [tool.hatch.build.targets.wheel.hooks.mypyc]
 enable-by-default = false
@@ -175,9 +177,18 @@ before-build = [
 HATCH_BUILD_HOOKS_ENABLE = "1"
 MYPYC_OPT_LEVEL = "3"
 MYPYC_DEBUG_LEVEL = "0"
+AIOHTTP_NO_EXTENSIONS = "1"
+
 # Black needs Clang to compile successfully on Linux.
 CC = "clang"
-AIOHTTP_NO_EXTENSIONS = "1"
+
+[tool.cibuildwheel.macos]
+build-frontend = { name = "build", args = ["--no-isolation"] }
+# Unfortunately, hatch doesn't respect MACOSX_DEPLOYMENT_TARGET
+before-build = [
+    "python -m pip install 'hatchling==1.18.0' hatch-vcs hatch-fancy-pypi-readme 'hatch-mypyc>=0.16.0' 'mypy==1.5.1' 'click==8.1.3'",
+    """sed -i '' -e "600,700s/'10_16'/os.environ['MACOSX_DEPLOYMENT_TARGET'].replace('.', '_')/" $(python -c 'import hatchling.builders.wheel as h; print(h.__file__)') """,
+]
 
 [tool.isort]
 atomic = true
