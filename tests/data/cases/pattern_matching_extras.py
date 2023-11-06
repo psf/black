@@ -51,13 +51,10 @@ match match(
         ),
     ):
         pass
-
     case [a as match]:
         pass
-
     case case:
         pass
-
     case something:
         pass
 
@@ -85,10 +82,8 @@ match something:
 match something:
     case 1 as a:
         pass
-
     case 2 as b, 3 as c:
         pass
-
     case 4 as d, (5 as e), (6 | 7 as g), *h:
         pass
 

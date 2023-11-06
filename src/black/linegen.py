@@ -1262,7 +1262,11 @@ def normalize_invisible_parens(  # noqa: C901
 
         # Fixes a bug where invisible parens are not properly wrapped around
         # case blocks.
-        if isinstance(child, Node) and child.type == syms.case_block:
+        if (
+            isinstance(child, Node)
+            and child.type == syms.case_block
+            and Preview.long_case_block_line_splitting in mode
+        ):
             normalize_invisible_parens(
                 child, parens_after={"case"}, mode=mode, features=features
             )
@@ -1317,6 +1321,7 @@ def normalize_invisible_parens(  # noqa: C901
                 and child.next_sibling is not None
                 and child.next_sibling.type == token.COLON
                 and child.value == "case"
+                and Preview.long_case_block_line_splitting in mode
             ):
                 # A special patch for "case case:" scenario, the second occurrence
                 # of case will be not parsed as a Python keyword.
