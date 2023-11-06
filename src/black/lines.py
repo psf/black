@@ -578,6 +578,7 @@ class EmptyLineTracker:
             and self.previous_block.previous_block is None
             and len(self.previous_block.original_line.leaves) == 1
             and self.previous_block.original_line.is_triple_quoted_string
+            and not (current_line.is_class or current_line.is_def)
         ):
             before = 1
 
