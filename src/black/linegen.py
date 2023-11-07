@@ -840,7 +840,7 @@ def _first_right_hand_split(
             hugged_opening_leaves.append(inner_body_leaves.pop(0))
             hugged_closing_leaves.insert(0, inner_body_leaves.pop())
 
-        if hugged_opening_leaves:
+        if hugged_opening_leaves and inner_body_leaves:
             inner_body = bracket_split_build_line(
                 inner_body_leaves,
                 line,
