@@ -861,8 +861,6 @@ def _maybe_split_omitting_optional_parens(
         # it's not an import (optional parens are the only thing we can split on
         # in this case; attempting a split without them is a waste of time)
         and not line.is_import
-        # there are no standalone comments in the body
-        and not rhs.body.contains_standalone_comments(0)
         # and we can actually remove the parens
         and can_omit_invisible_parens(rhs, mode.line_length)
     ):
@@ -1181,7 +1179,7 @@ def standalone_comment_split(
     line: Line, features: Collection[Feature], mode: Mode
 ) -> Iterator[Line]:
     """Split standalone comments from the rest of the line."""
-    if not line.contains_standalone_comments(0):
+    if not line.contains_standalone_comments():
         raise CannotSplit("Line does not have any standalone comments")
 
     current_line = Line(
@@ -1229,7 +1227,7 @@ def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
     leaf.prefix = ""
 
 
-def normalize_invisible_parens(
+def normalize_invisible_parens(  # noqa: C901
     node: Node, parens_after: Set[str], *, mode: Mode, features: Collection[Feature]
 ) -> None:
     """Make existing optional parentheses invisible or create new ones.
@@ -1258,6 +1256,17 @@ def normalize_invisible_parens(
         if isinstance(child, Node) and child.type == syms.annassign:
             normalize_invisible_parens(
                 child, parens_after=parens_after, mode=mode, features=features
+            )
+
+        # Fixes a bug where invisible parens are not properly wrapped around
+        # case blocks.
+        if (
+            isinstance(child, Node)
+            and child.type == syms.case_block
+            and Preview.long_case_block_line_splitting in mode
+        ):
+            normalize_invisible_parens(
+                child, parens_after={"case"}, mode=mode, features=features
             )
 
         # Add parentheses around long tuple unpacking in assignments.
@@ -1304,6 +1313,17 @@ def normalize_invisible_parens(
                 # of the keyword. So we need to skip the insertion of
                 # invisible parentheses to work more precisely.
                 continue
+
+            elif (
+                isinstance(child, Leaf)
+                and child.next_sibling is not None
+                and child.next_sibling.type == token.COLON
+                and child.value == "case"
+                and Preview.long_case_block_line_splitting in mode
+            ):
+                # A special patch for "case case:" scenario, the second occurrence
+                # of case will be not parsed as a Python keyword.
+                break
 
             elif not (isinstance(child, Leaf) and is_multiline_string(child)):
                 wrap_in_parentheses(node, child, visible=False)

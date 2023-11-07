@@ -13,6 +13,7 @@
 
 - Fix crash on formatting bytes strings that look like docstrings (#4003)
 - Fix crash when whitespace followed a backslash before newline in a docstring (#4008)
+- Fix standalone comments inside complex blocks crashing Black (#4016)
 
 - Fix crash on formatting code like `await (a ** b)` (#3994)
 
@@ -27,6 +28,8 @@
   indented less (#3992)
 - In f-string debug expressions preserve quote types that are visible in the final
   string (#4005)
+- Fix a bug where long `case` blocks were not split into multiple lines. Also enable
+  general trailing comma rules on `case` blocks (#4024)
 - Keep requiring two empty lines between module-level docstring and first function or
   class definition. (#4028)
 

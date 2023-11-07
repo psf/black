@@ -127,6 +127,13 @@ class BracketTracker:
         self.maybe_increment_lambda_arguments(leaf)
         self.maybe_increment_for_loop_variable(leaf)
 
+    def any_open_for_or_lambda(self) -> bool:
+        """Return True if there is an open for or lambda expression on the line.
+
+        See maybe_increment_for_loop_variable and maybe_increment_lambda_arguments
+        for details."""
+        return bool(self._for_loop_depths or self._lambda_argument_depths)
+
     def any_open_brackets(self) -> bool:
         """Return True if there is an yet unmatched open bracket on the line."""
         return bool(self.bracket_match)
