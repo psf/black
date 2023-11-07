@@ -32,6 +32,7 @@ from black.nodes import (
     is_type_comment,
     is_type_ignore_comment,
     is_with_or_async_with_stmt,
+    make_simple_prefix,
     replace_child,
     syms,
     whitespace,
@@ -537,11 +538,8 @@ class LinesBlock:
 
     def all_lines(self) -> List[str]:
         empty_line = str(Line(mode=self.mode))
-        if self.form_feed:
-            prefix = [empty_line * (self.before - 1), "\f\n"]
-        else:
-            prefix = [empty_line * self.before]
-        return prefix + self.content_lines + [empty_line * self.after]
+        prefix = make_simple_prefix(self.before, self.form_feed, empty_line)
+        return [prefix] + self.content_lines + [empty_line * self.after]
 
 
 @dataclass
