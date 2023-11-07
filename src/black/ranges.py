@@ -417,7 +417,7 @@ def _calculate_lines_mappings(
        (2, 3)  ->  (2, 2), is_changed_block=True (the diff)
        (4, 4)  ->  (3, 3), is_changed_block=False (the "pass" line)
 
-    You can think this visually as if it brings up a side-by-side diff, and tries
+    You can think of this visually as if it brings up a side-by-side diff, and tries
     to map the line ranges from the left side to the right side:
 
       (1, 1)->(1, 1)    1. import re          1. import re
