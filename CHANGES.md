@@ -36,7 +36,7 @@
 ### Configuration
 
 - Add support for single-line format skip with other comments on the same line (#3959)
-
+- Consistently apply force exclusion logic before resolving symlinks (#4015)
 - Fix a bug in the matching of absolute path names in `--include` (#3976)
 
 ### Packaging
