@@ -12,6 +12,7 @@
 ### Stable style
 
 - Fix bug where multiple fmt:skip pragmas inside single block fails (#3978)
+- Fix crash on formatting bytes strings that look like docstrings (#4003)
 - Fix crash when whitespace followed a backslash before newline in a docstring (#4008)
 - Fix crash on formatting code like `await (a ** b)` (#3994)
 - No longer treat leading f-strings as docstrings. This matches Python's behaviour and
