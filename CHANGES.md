@@ -6,12 +6,18 @@
 
 <!-- Include any especially major or disruptive changes here -->
 
+- Support formatting ranges of lines with the new `--line-ranges` command-line option
+  (#4020).
+
 ### Stable style
 
 - Fix crash on formatting bytes strings that look like docstrings (#4003)
 - Fix crash when whitespace followed a backslash before newline in a docstring (#4008)
 
 - Fix crash on formatting code like `await (a ** b)` (#3994)
+
+- No longer treat leading f-strings as docstrings. This matches Python's behaviour and
+  fixes a crash (#4019)
 
 ### Preview style
 
@@ -20,6 +26,8 @@
 - Multiline list and dict unpacking as the sole argument to a function is now also
   indented less (#3992)
 - Prefer more equal signs before a break when splitting chained assignments (#4010)
+- Keep requiring two empty lines between module-level docstring and first function or
+  class definition. (#4028)
 
 ### Configuration
 
@@ -38,6 +46,8 @@
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
+
+- Fix mypyc builds on arm64 on macOS (#4017)
 
 ### Output
 
