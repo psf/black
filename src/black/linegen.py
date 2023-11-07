@@ -902,8 +902,6 @@ def _maybe_split_omitting_optional_parens(
         # it's not an import (optional parens are the only thing we can split on
         # in this case; attempting a split without them is a waste of time)
         and not line.is_import
-        # there are no standalone comments in the body
-        and not rhs.body.contains_standalone_comments(0)
         # and we can actually remove the parens
         and can_omit_invisible_parens(rhs, mode.line_length)
     ):
@@ -1222,7 +1220,7 @@ def standalone_comment_split(
     line: Line, features: Collection[Feature], mode: Mode
 ) -> Iterator[Line]:
     """Split standalone comments from the rest of the line."""
-    if not line.contains_standalone_comments(0):
+    if not line.contains_standalone_comments():
         raise CannotSplit("Line does not have any standalone comments")
 
     current_line = Line(

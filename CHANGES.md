@@ -13,6 +13,7 @@
 
 - Fix crash on formatting bytes strings that look like docstrings (#4003)
 - Fix crash when whitespace followed a backslash before newline in a docstring (#4008)
+- Fix standalone comments inside complex blocks crashing Black (#4016)
 
 - Fix crash on formatting code like `await (a ** b)` (#3994)
 
@@ -33,7 +34,7 @@
 ### Configuration
 
 - Add support for single-line format skip with other comments on the same line (#3959)
-
+- Consistently apply force exclusion logic before resolving symlinks (#4015)
 - Fix a bug in the matching of absolute path names in `--include` (#3976)
 
 ### Packaging

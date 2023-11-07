@@ -175,6 +175,16 @@ foo(**{x: y for x, y in enumerate(["long long long long line","long long long lo
 # Edge case when deciding whether to hug the brackets without inner content.
 very_very_very_long_variable = very_very_very_long_module.VeryVeryVeryVeryLongClassName([[]])
 
+for foo in ["a", "b"]:
+    output.extend([
+        individual
+        for
+        # Foobar
+        container in xs_by_y[foo]
+        # Foobar
+        for individual in container["nested"]
+    ])
+
 # output
 def foo_brackets(request):
     return JsonResponse({
@@ -421,3 +431,13 @@ foo(**{
 very_very_very_long_variable = very_very_very_long_module.VeryVeryVeryVeryLongClassName(
     [[]]
 )
+
+for foo in ["a", "b"]:
+    output.extend([
+        individual
+        for
+        # Foobar
+        container in xs_by_y[foo]
+        # Foobar
+        for individual in container["nested"]
+    ])

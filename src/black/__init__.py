@@ -682,23 +682,25 @@ def get_sources(
             path = Path(s)
             is_stdin = False
 
+        # Compare the logic here to the logic in `gen_python_files`.
         if is_stdin or path.is_file():
+            root_relative_path = path.absolute().relative_to(root).as_posix()
+
+            root_relative_path = "/" + root_relative_path
+
+            # Hard-exclude any files that matches the `--force-exclude` regex.
+            if path_is_excluded(root_relative_path, force_exclude):
+                report.path_ignored(
+                    path, "matches the --force-exclude regular expression"
+                )
+                continue
+
             normalized_path: Optional[str] = normalize_path_maybe_ignore(
                 path, root, report
             )
             if normalized_path is None:
                 if verbose:
                     out(f'Skipping invalid source: "{normalized_path}"', fg="red")
-                continue
-            if verbose:
-                out(f'Found input source: "{normalized_path}"', fg="blue")
-
-            normalized_path = "/" + normalized_path
-            # Hard-exclude any files that matches the `--force-exclude` regex.
-            if path_is_excluded(normalized_path, force_exclude):
-                report.path_ignored(
-                    path, "matches the --force-exclude regular expression"
-                )
                 continue
 
             if is_stdin:
@@ -709,6 +711,8 @@ def get_sources(
             ):
                 continue
 
+            if verbose:
+                out(f'Found input source: "{normalized_path}"', fg="blue")
             sources.add(path)
         elif path.is_dir():
             path = root / (path.resolve().relative_to(root))
