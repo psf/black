@@ -447,32 +447,32 @@ def _calculate_lines_mappings(
             if block.a != 0 or block.b != 0:
                 lines_mappings.append(
                     _LinesMapping(
-                        1,
-                        block.a,
-                        1,
-                        block.b,
-                        False,
+                        original_start=1,
+                        original_end=block.a,
+                        modified_start=1,
+                        modified_end=block.b,
+                        is_changed_block=False,
                     )
                 )
         else:
             previous_block = matching_blocks[i - 1]
             lines_mappings.append(
                 _LinesMapping(
-                    previous_block.a + previous_block.size + 1,
-                    block.a,
-                    previous_block.b + previous_block.size + 1,
-                    block.b,
-                    True,
+                    original_start=previous_block.a + previous_block.size + 1,
+                    original_end=block.a,
+                    modified_start=previous_block.b + previous_block.size + 1,
+                    modified_end=block.b,
+                    is_changed_block=True,
                 )
             )
         if i < len(matching_blocks) - 1:
             lines_mappings.append(
                 _LinesMapping(
-                    block.a + 1,
-                    block.a + block.size,
-                    block.b + 1,
-                    block.b + block.size,
-                    False,
+                    original_start=block.a + 1,
+                    original_end=block.a + block.size,
+                    modified_start=block.b + 1,
+                    modified_end=block.b + block.size,
+                    is_changed_block=False,
                 )
             )
     return lines_mappings
