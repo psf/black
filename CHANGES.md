@@ -25,6 +25,8 @@
   inside another tuple, list, or dictionary are now indented less (#3964) (#4012)
 - Multiline list and dict unpacking as the sole argument to a function is now also
   indented less (#3992)
+- Fix a bug where long `case` blocks were not split into multiple lines. Also enable
+  general trailing comma rules on `case` blocks (#4024)
 - Keep requiring two empty lines between module-level docstring and first function or
   class definition. (#4028)
 

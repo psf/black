@@ -1270,7 +1270,7 @@ def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
     leaf.prefix = ""
 
 
-def normalize_invisible_parens(
+def normalize_invisible_parens(  # noqa: C901
     node: Node, parens_after: Set[str], *, mode: Mode, features: Collection[Feature]
 ) -> None:
     """Make existing optional parentheses invisible or create new ones.
@@ -1299,6 +1299,17 @@ def normalize_invisible_parens(
         if isinstance(child, Node) and child.type == syms.annassign:
             normalize_invisible_parens(
                 child, parens_after=parens_after, mode=mode, features=features
+            )
+
+        # Fixes a bug where invisible parens are not properly wrapped around
+        # case blocks.
+        if (
+            isinstance(child, Node)
+            and child.type == syms.case_block
+            and Preview.long_case_block_line_splitting in mode
+        ):
+            normalize_invisible_parens(
+                child, parens_after={"case"}, mode=mode, features=features
             )
 
         # Add parentheses around long tuple unpacking in assignments.
@@ -1345,6 +1356,17 @@ def normalize_invisible_parens(
                 # of the keyword. So we need to skip the insertion of
                 # invisible parentheses to work more precisely.
                 continue
+
+            elif (
+                isinstance(child, Leaf)
+                and child.next_sibling is not None
+                and child.next_sibling.type == token.COLON
+                and child.value == "case"
+                and Preview.long_case_block_line_splitting in mode
+            ):
+                # A special patch for "case case:" scenario, the second occurrence
+                # of case will be not parsed as a Python keyword.
+                break
 
             elif not (isinstance(child, Leaf) and is_multiline_string(child)):
                 wrap_in_parentheses(node, child, visible=False)
