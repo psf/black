@@ -1,4 +1,4 @@
-"""Test the ink_adjusted_lines module."""
+"""Test the black.ranges module."""
 
 from typing import List, Tuple
 
