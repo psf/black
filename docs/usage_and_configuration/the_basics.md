@@ -184,8 +184,8 @@ Each range must be specified as two integers connected by a `-`: `<START>-<END>`
 `<START>` and `<END>` integer indices are 1-based and inclusive on both ends.
 
 _Black_ may still format lines outside of the ranges for multi-line statements.
-Formatting more than one file or any ipynb files with this option is not supported.
-This option cannot be specified in the `pyproject.toml` config.
+Formatting more than one file or any ipynb files with this option is not supported. This
+option cannot be specified in the `pyproject.toml` config.
 
 Example: `black --line-ranges=1-10 --line-ranges=21-30 test.py` will format lines from
 `1` to `10` and `21` to `30`.
