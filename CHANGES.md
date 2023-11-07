@@ -21,6 +21,8 @@
   indented less (#3992)
 - In f-string debug expressions preserve quote types that are visible in the final
   string (#4005)
+- Keep requiring two empty lines between module-level docstring and first function or
+  class definition. (#4028)
 
 ### Configuration
 
@@ -39,6 +41,8 @@
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
+
+- Fix mypyc builds on arm64 on macOS (#4017)
 
 ### Output
 
