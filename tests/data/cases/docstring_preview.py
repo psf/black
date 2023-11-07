@@ -58,7 +58,8 @@ def docstring_almost_at_line_limit():
 
 
 def docstring_almost_at_line_limit_with_prefix():
-    f"""long docstring................................................................"""
+    f"""long docstring................................................................
+    """
 
 
 def mulitline_docstring_almost_at_line_limit():

@@ -6,12 +6,18 @@
 
 <!-- Include any especially major or disruptive changes here -->
 
+- Support formatting ranges of lines with the new `--line-ranges` command-line option
+  (#4020).
+
 ### Stable style
 
 - Fix crash on formatting bytes strings that look like docstrings (#4003)
 - Fix crash when whitespace followed a backslash before newline in a docstring (#4008)
 
 - Fix crash on formatting code like `await (a ** b)` (#3994)
+
+- No longer treat leading f-strings as docstrings. This matches Python's behaviour and
+  fixes a crash (#4019)
 
 ### Preview style
 
