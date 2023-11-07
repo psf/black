@@ -200,9 +200,9 @@ class Line:
         value = self.leaves[0].value
         if value.startswith(('"""', "'''")):
             return True
-        if Preview.accept_raw_docstrings in self.mode and value.startswith((
-            "r'''", 'r"""', "R'''", 'R"""'
-        )):
+        if Preview.accept_raw_docstrings in self.mode and value.startswith(
+            ("r'''", 'r"""', "R'''", 'R"""')
+        ):
             return True
         return False
 

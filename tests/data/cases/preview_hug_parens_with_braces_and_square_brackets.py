@@ -132,6 +132,13 @@ func(("long line", "long long line", "long long long line", "long long long long
 func((("long line", "long long line", "long long long line", "long long long long line", "long long long long long line")))
 func([["long line", "long long line", "long long long line", "long long long long line", "long long long long long line"]])
 
+# Do not hug if the argument fits in a single line.
+func({"fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line"})
+func(("fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line"))
+func(["fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line"])
+func(**{"fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit---"})
+func(*("fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit----"))
+
 foooooooooooooooooooo(
     [{c: n + 1 for c in range(256)} for n in range(100)] + [{}], {size}
 )
@@ -273,9 +280,9 @@ func(
 )
 
 func([x for x in "short line"])
-func([
-    x for x in "long line long line long line long line long line long line long line"
-])
+func(
+    [x for x in "long line long line long line long line long line long line long line"]
+)
 func([
     x
     for x in [
@@ -320,6 +327,23 @@ func([[
     "long long long long line",
     "long long long long long line",
 ]])
+
+# Do not hug if the argument fits in a single line.
+func(
+    {"fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line"}
+)
+func(
+    ("fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line")
+)
+func(
+    ["fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line"]
+)
+func(
+    **{"fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit---"}
+)
+func(
+    *("fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit----")
+)
 
 foooooooooooooooooooo(
     [{c: n + 1 for c in range(256)} for n in range(100)] + [{}], {size}

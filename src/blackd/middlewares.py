@@ -36,9 +36,9 @@ def cors(allow_headers: Iterable[str]) -> Middleware:
         resp.headers["Access-Control-Expose-Headers"] = "*"
         if is_options:
             resp.headers["Access-Control-Allow-Headers"] = ", ".join(allow_headers)
-            resp.headers["Access-Control-Allow-Methods"] = ", ".join((
-                "OPTIONS", "POST"
-            ))
+            resp.headers["Access-Control-Allow-Methods"] = ", ".join(
+                ("OPTIONS", "POST")
+            )
 
         return resp
 
