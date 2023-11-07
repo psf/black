@@ -6,6 +6,9 @@
 
 <!-- Include any especially major or disruptive changes here -->
 
+- Support formatting ranges of lines with the new `--line-ranges` command-line option
+  (#4020).
+
 ### Stable style
 
 - Fix crash on formatting bytes strings that look like docstrings (#4003)
