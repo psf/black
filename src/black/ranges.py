@@ -128,7 +128,7 @@ def adjusted_lines(
 def convert_unchanged_lines(src_node: Node, lines: Collection[Tuple[int, int]]) -> None:
     """Converts unchanged lines to STANDALONE_COMMENT.
 
-    The idea is similar to `# fmt: on/off` is implemented. It also converts the
+    The idea is similar to how `# fmt: on/off` is implemented. It also converts the
     nodes between those markers as a single `STANDALONE_COMMENT` leaf node with
     the unformatted code as its value. `STANDALONE_COMMENT` is a "fake" token
     that will be formatted as-is with its prefix normalized.
