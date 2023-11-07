@@ -844,10 +844,13 @@ def _first_right_hand_split(
             inner_body = bracket_split_build_line(
                 inner_body_leaves,
                 line,
-                opening_bracket,
+                hugged_opening_leaves[-1],
                 component=_BracketSplitComponent.body,
             )
-            if inner_body.should_split_rhs:
+            if (
+                line.mode.magic_trailing_comma
+                and inner_body_leaves[-1].type == token.COMMA
+            ):
                 should_hug = True
             else:
                 line_length = line.mode.line_length - sum(
@@ -857,7 +860,7 @@ def _first_right_hand_split(
                 if is_line_short_enough(
                     inner_body, mode=replace(line.mode, line_length=line_length)
                 ):
-                    # Do not hug if it fits in a single line.
+                    # Do not hug if it fits on a single line.
                     should_hug = False
                 else:
                     should_hug = True
