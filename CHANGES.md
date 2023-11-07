@@ -13,6 +13,9 @@
 
 - Fix crash on formatting code like `await (a ** b)` (#3994)
 
+- No longer treat leading f-strings as docstrings. This matches Python's behaviour and
+  fixes a crash (#4019)
+
 ### Preview style
 
 - Multiline dictionaries and lists that are the sole argument to a function are now

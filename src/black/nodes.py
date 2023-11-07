@@ -529,7 +529,7 @@ def is_docstring(leaf: Leaf) -> bool:
         return False
 
     prefix = get_string_prefix(leaf.value)
-    if "b" in prefix or "B" in prefix:
+    if set(prefix).intersection("bBfF"):
         return False
 
     if prev_siblings_are(
