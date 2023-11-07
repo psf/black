@@ -104,8 +104,7 @@ class Line:
         """
         if (
             self.bracket_tracker.depth == 0
-            or self.bracket_tracker._for_loop_depths
-            or self.bracket_tracker._lambda_argument_depths
+            or self.bracket_tracker.any_open_for_or_lambda()
         ):
             if self.is_comment:
                 raise ValueError("cannot append to standalone comments")
