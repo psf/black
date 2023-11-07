@@ -13,6 +13,9 @@
 
 - Fix crash on formatting code like `await (a ** b)` (#3994)
 
+- No longer treat leading f-strings as docstrings. This matches Python's behaviour and
+  fixes a crash (#4019)
+
 ### Preview style
 
 - Multiline dictionaries and lists that are the sole argument to a function are now
@@ -21,6 +24,8 @@
   indented less (#3992)
 - Fix a bug that long `case` blocks will not be split into multiple lines, while now
   also enabled general trailing comma rules on `case` blocks (#4024)
+- Keep requiring two empty lines between module-level docstring and first function or
+  class definition. (#4028)
 
 ### Configuration
 
@@ -39,6 +44,8 @@
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
+
+- Fix mypyc builds on arm64 on macOS (#4017)
 
 ### Output
 
