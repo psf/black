@@ -1,77 +1,48 @@
 # Change Log
 
-## Unreleased
+## 23.11.0
 
 ### Highlights
 
-<!-- Include any especially major or disruptive changes here -->
-
 - Support formatting ranges of lines with the new `--line-ranges` command-line option
-  (#4020).
+  (#4020)
 
 ### Stable style
 
 - Fix crash on formatting bytes strings that look like docstrings (#4003)
 - Fix crash when whitespace followed a backslash before newline in a docstring (#4008)
 - Fix standalone comments inside complex blocks crashing Black (#4016)
-
 - Fix crash on formatting code like `await (a ** b)` (#3994)
-
 - No longer treat leading f-strings as docstrings. This matches Python's behaviour and
   fixes a crash (#4019)
 
 ### Preview style
 
-- Multiline dictionaries and lists that are the sole argument to a function are now
+- Multiline dicts and lists that are the sole argument to a function are now
   indented less (#3964)
-- Multiline list and dict unpacking as the sole argument to a function is now also
+- Multiline unpacked dicts and lists as the sole argument to a function are now also
   indented less (#3992)
-- In f-string debug expressions preserve quote types that are visible in the final
-  string (#4005)
+- In f-string debug expressions, quote types that are visible in the final string
+  are now preserved (#4005)
 - Fix a bug where long `case` blocks were not split into multiple lines. Also enable
   general trailing comma rules on `case` blocks (#4024)
 - Keep requiring two empty lines between module-level docstring and first function or
-  class definition. (#4028)
+  class definition (#4028)
+- Add support for single-line format skip with other comments on the same line (#3959)
 
 ### Configuration
 
-- Add support for single-line format skip with other comments on the same line (#3959)
 - Consistently apply force exclusion logic before resolving symlinks (#4015)
 - Fix a bug in the matching of absolute path names in `--include` (#3976)
 
-### Packaging
-
-<!-- Changes to how Black is packaged, such as dependency requirements -->
-
-### Parser
-
-<!-- Changes to the parser or to version autodetection -->
-
 ### Performance
-
-<!-- Changes that improve Black's performance. -->
 
 - Fix mypyc builds on arm64 on macOS (#4017)
 
-### Output
-
-<!-- Changes to Black's terminal output and error messages -->
-
-### _Blackd_
-
-<!-- Changes to blackd -->
-
 ### Integrations
-
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
 - Black's pre-commit integration will now run only on git hooks appropriate for a code
   formatter (#3940)
-
-### Documentation
-
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
 
 ## 23.10.1
 
@@ -327,7 +298,6 @@ versions separately.
 
 ### Stable style
 
-<!-- Changes that affect Black's stable style -->
 
 - Introduce the 2023 stable style, which incorporates most aspects of last year's
   preview style (#3418). Specific changes:
@@ -362,7 +332,6 @@ versions separately.
 
 ### Preview style
 
-<!-- Changes that affect Black's preview style -->
 
 - Format hex codes in unicode escape sequences in string literals (#2916)
 - Add parentheses around `if`-`else` expressions (#2278)
@@ -394,14 +363,12 @@ versions separately.
 
 ### Configuration
 
-<!-- Changes to how Black can be configured -->
 
 - Black now tries to infer its `--target-version` from the project metadata specified in
   `pyproject.toml` (#3219)
 
 ### Packaging
 
-<!-- Changes to how Black is packaged, such as dependency requirements -->
 
 - Upgrade mypyc from `0.971` to `0.991` so mypycified _Black_ can be built on armv7
   (#3380)
@@ -415,7 +382,6 @@ versions separately.
 
 ### Output
 
-<!-- Changes to Black's terminal output and error messages -->
 
 - Calling `black --help` multiple times will return the same help contents each time
   (#3516)
@@ -426,7 +392,6 @@ versions separately.
 
 ### Integrations
 
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
 - Move 3.11 CI to normal flow now that all dependencies support 3.11 (#3446)
 - Docker: Add new `latest_prerelease` tag automation to follow latest black alpha
@@ -434,8 +399,6 @@ versions separately.
 
 ### Documentation
 
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
 
 - Expand `vim-plug` installation instructions to offer more explicit options (#3468)
 
@@ -443,7 +406,6 @@ versions separately.
 
 ### Preview style
 
-<!-- Changes that affect Black's preview style -->
 
 - Enforce empty lines before classes and functions with sticky leading comments (#3302)
 - Reformat empty and whitespace-only files as either an empty file (if no newline is
@@ -457,7 +419,6 @@ versions separately.
 
 ### Configuration
 
-<!-- Changes to how Black can be configured -->
 
 - Fix incorrectly applied `.gitignore` rules by considering the `.gitignore` location
   and the relative path to the target file (#3338)
@@ -466,7 +427,6 @@ versions separately.
 
 ### Parser
 
-<!-- Changes to the parser or to version autodetection -->
 
 - Parsing support has been added for walruses inside generator expression that are
   passed as function args (for example,
@@ -474,7 +434,6 @@ versions separately.
 
 ### Integrations
 
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
 - Vim plugin: Optionally allow using the system installation of Black via
   `let g:black_use_virtualenv = 0`(#3309)
