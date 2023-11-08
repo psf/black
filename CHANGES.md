@@ -1,5 +1,52 @@
 # Change Log
 
+## Unreleased
+
+### Highlights
+
+<!-- Include any especially major or disruptive changes here -->
+
+### Stable style
+
+<!-- Changes that affect Black's stable style -->
+
+### Preview style
+
+- Standalone form feed characters at the module level are no longer removed (#4021)
+
+### Configuration
+
+<!-- Changes to how Black can be configured -->
+
+### Packaging
+
+<!-- Changes to how Black is packaged, such as dependency requirements -->
+
+### Parser
+
+<!-- Changes to the parser or to version autodetection -->
+
+### Performance
+
+<!-- Changes that improve Black's performance. -->
+
+### Output
+
+<!-- Changes to Black's terminal output and error messages -->
+
+### _Blackd_
+
+<!-- Changes to blackd -->
+
+### Integrations
+
+<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+### Documentation
+
+<!-- Major changes to documentation and policies. Small docs changes
+     don't need a changelog entry. -->
+
 ## 23.11.0
 
 ### Highlights
@@ -29,7 +76,6 @@
 - Keep requiring two empty lines between module-level docstring and first function or
   class definition (#4028)
 - Add support for single-line format skip with other comments on the same line (#3959)
-- Standalone form feed characters at the module level are no longer removed (#4021)
 
 ### Configuration
 
