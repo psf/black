@@ -8,6 +8,7 @@ import multiprocessing
 import os
 import re
 import sys
+import textwrap
 import types
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, redirect_stderr
@@ -1269,7 +1270,7 @@ class BlackTestCase(BlackBaseTestCase):
                 report=report,
             )
             fsts.assert_called_once_with(
-                fast=True, write_back=black.WriteBack.YES, mode=DEFAULT_MODE
+                fast=True, write_back=black.WriteBack.YES, mode=DEFAULT_MODE, lines=()
             )
             # __BLACK_STDIN_FILENAME__ should have been stripped
             report.done.assert_called_with(expected, black.Changed.YES)
@@ -1295,6 +1296,7 @@ class BlackTestCase(BlackBaseTestCase):
                 fast=True,
                 write_back=black.WriteBack.YES,
                 mode=replace(DEFAULT_MODE, is_pyi=True),
+                lines=(),
             )
             # __BLACK_STDIN_FILENAME__ should have been stripped
             report.done.assert_called_with(expected, black.Changed.YES)
@@ -1320,6 +1322,7 @@ class BlackTestCase(BlackBaseTestCase):
                 fast=True,
                 write_back=black.WriteBack.YES,
                 mode=replace(DEFAULT_MODE, is_ipynb=True),
+                lines=(),
             )
             # __BLACK_STDIN_FILENAME__ should have been stripped
             report.done.assert_called_with(expected, black.Changed.YES)
@@ -1941,6 +1944,88 @@ class BlackTestCase(BlackBaseTestCase):
         err.match("invalid character")
         err.match(r"\(<unknown>, line 1\)")
 
+    def test_line_ranges_with_code_option(self) -> None:
+        code = textwrap.dedent("""\
+            if  a  ==  b:
+                print  ( "OK" )
+            """)
+        args = ["--line-ranges=1-1", "--code", code]
+        result = CliRunner().invoke(black.main, args)
+
+        expected = textwrap.dedent("""\
+            if a == b:
+                print  ( "OK" )
+            """)
+        self.compare_results(result, expected, expected_exit_code=0)
+
+    def test_line_ranges_with_stdin(self) -> None:
+        code = textwrap.dedent("""\
+            if  a  ==  b:
+                print  ( "OK" )
+            """)
+        runner = BlackRunner()
+        result = runner.invoke(
+            black.main, ["--line-ranges=1-1", "-"], input=BytesIO(code.encode("utf-8"))
+        )
+
+        expected = textwrap.dedent("""\
+            if a == b:
+                print  ( "OK" )
+            """)
+        self.compare_results(result, expected, expected_exit_code=0)
+
+    def test_line_ranges_with_source(self) -> None:
+        with TemporaryDirectory() as workspace:
+            test_file = Path(workspace) / "test.py"
+            test_file.write_text(
+                textwrap.dedent("""\
+            if  a  ==  b:
+                print  ( "OK" )
+            """),
+                encoding="utf-8",
+            )
+            args = ["--line-ranges=1-1", str(test_file)]
+            result = CliRunner().invoke(black.main, args)
+            assert not result.exit_code
+
+            formatted = test_file.read_text(encoding="utf-8")
+            expected = textwrap.dedent("""\
+            if a == b:
+                print  ( "OK" )
+            """)
+            assert expected == formatted
+
+    def test_line_ranges_with_multiple_sources(self) -> None:
+        with TemporaryDirectory() as workspace:
+            test1_file = Path(workspace) / "test1.py"
+            test1_file.write_text("", encoding="utf-8")
+            test2_file = Path(workspace) / "test2.py"
+            test2_file.write_text("", encoding="utf-8")
+            args = ["--line-ranges=1-1", str(test1_file), str(test2_file)]
+            result = CliRunner().invoke(black.main, args)
+            assert result.exit_code == 1
+            assert "Cannot use --line-ranges to format multiple files" in result.output
+
+    def test_line_ranges_with_ipynb(self) -> None:
+        with TemporaryDirectory() as workspace:
+            test_file = Path(workspace) / "test.ipynb"
+            test_file.write_text("{}", encoding="utf-8")
+            args = ["--line-ranges=1-1", "--ipynb", str(test_file)]
+            result = CliRunner().invoke(black.main, args)
+            assert "Cannot use --line-ranges with ipynb files" in result.output
+            assert result.exit_code == 1
+
+    def test_line_ranges_in_pyproject_toml(self) -> None:
+        config = THIS_DIR / "data" / "invalid_line_ranges.toml"
+        result = BlackRunner().invoke(
+            black.main, ["--code", "print()", "--config", str(config)]
+        )
+        assert result.exit_code == 2
+        assert result.stderr_bytes is not None
+        assert (
+            b"Cannot use line-ranges in the pyproject.toml file." in result.stderr_bytes
+        )
+
 
 class TestCaching:
     def test_get_cache_dir(
@@ -2551,6 +2636,23 @@ class TestFileCollection:
             force_exclude=r"/exclude/|a\.py",
             stdin_filename=stdin_filename,
         )
+
+    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
+    def test_get_sources_with_stdin_filename_and_force_exclude_and_symlink(
+        self,
+    ) -> None:
+        # Force exclude should exclude a symlink based on the symlink, not its target
+        path = THIS_DIR / "data" / "include_exclude_tests"
+        stdin_filename = str(path / "symlink.py")
+        expected = [f"__BLACK_STDIN_FILENAME__{stdin_filename}"]
+        target = path / "b/exclude/a.py"
+        with patch("pathlib.Path.resolve", return_value=target):
+            assert_collected_sources(
+                src=["-"],
+                expected=expected,
+                force_exclude=r"exclude/a\.py",
+                stdin_filename=stdin_filename,
+            )
 
 
 class TestDeFactoAPI:

@@ -152,6 +152,16 @@ foo(
 
 foo(**{x: y for x, y in enumerate(["long long long long line","long long long long line"])})
 
+for foo in ["a", "b"]:
+    output.extend([
+        individual
+        for
+        # Foobar
+        container in xs_by_y[foo]
+        # Foobar
+        for individual in container["nested"]
+    ])
+
 # output
 def foo_brackets(request):
     return JsonResponse({
@@ -323,3 +333,13 @@ foo(**{
 foo(**{
     x: y for x, y in enumerate(["long long long long line", "long long long long line"])
 })
+
+for foo in ["a", "b"]:
+    output.extend([
+        individual
+        for
+        # Foobar
+        container in xs_by_y[foo]
+        # Foobar
+        for individual in container["nested"]
+    ])

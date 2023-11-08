@@ -175,6 +175,23 @@ All done! ✨ 🍰 ✨
 1 file would be reformatted.
 ```
 
+### `--line-ranges`
+
+When specified, _Black_ will try its best to only format these lines.
+
+This option can be specified multiple times, and a union of the lines will be formatted.
+Each range must be specified as two integers connected by a `-`: `<START>-<END>`. The
+`<START>` and `<END>` integer indices are 1-based and inclusive on both ends.
+
+_Black_ may still format lines outside of the ranges for multi-line statements.
+Formatting more than one file or any ipynb files with this option is not supported. This
+option cannot be specified in the `pyproject.toml` config.
+
+Example: `black --line-ranges=1-10 --line-ranges=21-30 test.py` will format lines from
+`1` to `10` and `21` to `30`.
+
+This option is mainly for editor integrations, such as "Format Selection".
+
 #### `--color` / `--no-color`
 
 Show (or do not show) colored diff. Only applies when `--diff` is given.
@@ -194,8 +211,8 @@ configuration file for consistent results across environments.
 
 ```console
 $ black --version
-black, 23.10.1 (compiled: yes)
-$ black --required-version 23.10.1 -c "format = 'this'"
+black, 23.11.0 (compiled: yes)
+$ black --required-version 23.11.0 -c "format = 'this'"
 format = "this"
 $ black --required-version 31.5b2 -c "still = 'beta?!'"
 Oh no! 💥 💔 💥 The required version does not match the running version!
@@ -286,7 +303,7 @@ You can check the version of _Black_ you have installed using the `--version` fl
 
 ```console
 $ black --version
-black, 23.10.1
+black, 23.11.0
 ```
 
 #### `--config`

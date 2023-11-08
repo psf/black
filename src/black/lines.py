@@ -1,6 +1,5 @@
 import itertools
 import math
-import sys
 from dataclasses import dataclass, field
 from typing import (
     Callable,
@@ -104,7 +103,10 @@ class Line:
         Raises ValueError when any `leaf` is appended after a standalone comment
         or when a standalone comment is not the first leaf on the line.
         """
-        if self.bracket_tracker.depth == 0:
+        if (
+            self.bracket_tracker.depth == 0
+            or self.bracket_tracker.any_open_for_or_lambda()
+        ):
             if self.is_comment:
                 raise ValueError("cannot append to standalone comments")
 
@@ -234,10 +236,10 @@ class Line:
             leaf.fmt_pass_converted_first_leaf
         )
 
-    def contains_standalone_comments(self, depth_limit: int = sys.maxsize) -> bool:
+    def contains_standalone_comments(self) -> bool:
         """If so, needs to be split before emitting."""
         for leaf in self.leaves:
-            if leaf.type == STANDALONE_COMMENT and leaf.bracket_depth <= depth_limit:
+            if leaf.type == STANDALONE_COMMENT:
                 return True
 
         return False
@@ -352,9 +354,9 @@ class Line:
 
         if closing.type == token.RSQB:
             if (
-                closing.parent
+                closing.parent is not None
                 and closing.parent.type == syms.trailer
-                and closing.opening_bracket
+                and closing.opening_bracket is not None
                 and is_one_sequence_between(
                     closing.opening_bracket,
                     closing,
@@ -364,22 +366,7 @@ class Line:
             ):
                 return False
 
-            if not ensure_removable:
-                return True
-
-            comma = self.leaves[-1]
-            if comma.parent is None:
-                return False
-            return (
-                comma.parent.type != syms.subscriptlist
-                or closing.opening_bracket is None
-                or not is_one_sequence_between(
-                    closing.opening_bracket,
-                    closing,
-                    self.leaves,
-                    brackets=(token.LSQB, token.RSQB),
-                )
-            )
+            return True
 
         if self.is_import:
             return True
@@ -585,6 +572,7 @@ class EmptyLineTracker:
             and self.previous_block.previous_block is None
             and len(self.previous_block.original_line.leaves) == 1
             and self.previous_block.original_line.is_triple_quoted_string
+            and not (current_line.is_class or current_line.is_def)
         ):
             before = 1
 
@@ -989,6 +977,23 @@ def can_omit_invisible_parens(
     are too long.
     """
     line = rhs.body
+
+    # We need optional parens in order to split standalone comments to their own lines
+    # if there are no nested parens around the standalone comments
+    closing_bracket: Optional[Leaf] = None
+    for leaf in reversed(line.leaves):
+        if closing_bracket and leaf is closing_bracket.opening_bracket:
+            closing_bracket = None
+        if leaf.type == STANDALONE_COMMENT and not closing_bracket:
+            return False
+        if (
+            not closing_bracket
+            and leaf.type in CLOSING_BRACKETS
+            and leaf.opening_bracket in line.leaves
+            and leaf.value
+        ):
+            closing_bracket = leaf
+
     bt = line.bracket_tracker
     if not bt.delimiters:
         # Without delimiters the optional parentheses are useless.
