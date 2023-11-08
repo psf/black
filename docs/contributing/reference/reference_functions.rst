@@ -149,7 +149,7 @@ Utilities
 
 .. autofunction:: black.numerics.normalize_numeric_literal
 
-.. autofunction:: black.linegen.normalize_prefix
+.. autofunction:: black.comments.normalize_trailing_prefix
 
 .. autofunction:: black.strings.normalize_string_prefix
 
@@ -168,3 +168,5 @@ Utilities
 .. autofunction:: black.strings.sub_twice
 
 .. autofunction:: black.nodes.whitespace
+
+.. autofunction:: black.nodes.make_simple_prefix
