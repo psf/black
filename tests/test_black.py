@@ -2637,6 +2637,23 @@ class TestFileCollection:
             stdin_filename=stdin_filename,
         )
 
+    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
+    def test_get_sources_with_stdin_filename_and_force_exclude_and_symlink(
+        self,
+    ) -> None:
+        # Force exclude should exclude a symlink based on the symlink, not its target
+        path = THIS_DIR / "data" / "include_exclude_tests"
+        stdin_filename = str(path / "symlink.py")
+        expected = [f"__BLACK_STDIN_FILENAME__{stdin_filename}"]
+        target = path / "b/exclude/a.py"
+        with patch("pathlib.Path.resolve", return_value=target):
+            assert_collected_sources(
+                src=["-"],
+                expected=expected,
+                force_exclude=r"exclude/a\.py",
+                stdin_filename=stdin_filename,
+            )
+
 
 class TestDeFactoAPI:
     """Test that certain symbols that are commonly used externally keep working.
