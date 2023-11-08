@@ -18,12 +18,12 @@
 
 ### Preview style
 
-- Multiline dicts and lists that are the sole argument to a function are now
-  indented less (#3964)
+- Multiline dicts and lists that are the sole argument to a function are now indented
+  less (#3964)
 - Multiline unpacked dicts and lists as the sole argument to a function are now also
   indented less (#3992)
-- In f-string debug expressions, quote types that are visible in the final string
-  are now preserved (#4005)
+- In f-string debug expressions, quote types that are visible in the final string are
+  now preserved (#4005)
 - Fix a bug where long `case` blocks were not split into multiple lines. Also enable
   general trailing comma rules on `case` blocks (#4024)
 - Keep requiring two empty lines between module-level docstring and first function or
@@ -298,7 +298,6 @@ versions separately.
 
 ### Stable style
 
-
 - Introduce the 2023 stable style, which incorporates most aspects of last year's
   preview style (#3418). Specific changes:
   - Enforce empty lines before classes and functions with sticky leading comments
@@ -332,7 +331,6 @@ versions separately.
 
 ### Preview style
 
-
 - Format hex codes in unicode escape sequences in string literals (#2916)
 - Add parentheses around `if`-`else` expressions (#2278)
 - Improve performance on large expressions that contain many strings (#3467)
@@ -363,12 +361,10 @@ versions separately.
 
 ### Configuration
 
-
 - Black now tries to infer its `--target-version` from the project metadata specified in
   `pyproject.toml` (#3219)
 
 ### Packaging
-
 
 - Upgrade mypyc from `0.971` to `0.991` so mypycified _Black_ can be built on armv7
   (#3380)
@@ -382,7 +378,6 @@ versions separately.
 
 ### Output
 
-
 - Calling `black --help` multiple times will return the same help contents each time
   (#3516)
 - Verbose logging now shows the values of `pyproject.toml` configuration variables
@@ -392,20 +387,17 @@ versions separately.
 
 ### Integrations
 
-
 - Move 3.11 CI to normal flow now that all dependencies support 3.11 (#3446)
 - Docker: Add new `latest_prerelease` tag automation to follow latest black alpha
   release on docker images (#3465)
 
 ### Documentation
 
-
 - Expand `vim-plug` installation instructions to offer more explicit options (#3468)
 
 ## 22.12.0
 
 ### Preview style
-
 
 - Enforce empty lines before classes and functions with sticky leading comments (#3302)
 - Reformat empty and whitespace-only files as either an empty file (if no newline is
@@ -419,7 +411,6 @@ versions separately.
 
 ### Configuration
 
-
 - Fix incorrectly applied `.gitignore` rules by considering the `.gitignore` location
   and the relative path to the target file (#3338)
 - Fix incorrectly ignoring `.gitignore` presence when more than one source directory is
@@ -427,13 +418,11 @@ versions separately.
 
 ### Parser
 
-
 - Parsing support has been added for walruses inside generator expression that are
   passed as function args (for example,
   `any(match := my_re.match(text) for text in texts)`) (#3327).
 
 ### Integrations
-
 
 - Vim plugin: Optionally allow using the system installation of Black via
   `let g:black_use_virtualenv = 0`(#3309)
