@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "pypy-3.8"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "pypy-3.8"]
         os: [ubuntu-latest, macOS-latest, windows-latest]
 
     steps:
