@@ -333,10 +333,18 @@ class Line:
     def has_magic_trailing_comma(
         self, closing: Leaf, ensure_removable: bool = False
     ) -> bool:
-        """Return True if we have a magic trailing comma, that is when:
-        - there's a trailing comma here
-        - it's not a one-tuple
-        - it's not a single-element subscript
+        """Return whether we have a magic trailing comma.
+
+        This is when:
+
+        * there's a trailing comma here
+        * it's not a one-tuple
+        * it's not a single-element subscript
+
+        Additionally, if ``ensure_removable`` is false:
+
+        * it's a one-tuple or single-element subscript that is already split to
+          multiple lines
         """
         if not (
             closing.type in CLOSING_BRACKETS
@@ -360,7 +368,10 @@ class Line:
                     brackets=(token.LSQB, token.RSQB),
                 )
             ):
-                return False
+                return (
+                    closing.opening_bracket.lineno != closing.lineno
+                    and not ensure_removable
+                )
 
             return True
 
@@ -374,7 +385,10 @@ class Line:
                 self.leaves,
                 brackets=(token.LPAR, token.RPAR),
             ):
-                return False
+                return (
+                    closing.opening_bracket.lineno != closing.lineno
+                    and not ensure_removable
+                )
 
             return True
 

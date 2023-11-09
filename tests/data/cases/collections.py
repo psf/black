@@ -37,6 +37,9 @@ nested_long_lines = ["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbb
 ['ls', 'lsoneple/%s' % (foo,)]
 x = {"oneple": (1,)}
 y = {"oneple": (1,),}
+z = {"oneple": (
+    1,
+)}
 assert False, ("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa wraps %s" % bar)
 
 # looping over a 1-tuple should also not get wrapped
@@ -45,6 +48,18 @@ for x in (1,):
 for (x,) in (1,), (2,), (3,):
     pass
 
+(1,)
+(
+    1,
+)
+[1,]
+[
+    1,
+]
+{1,}
+{
+    1,
+}
 [1, 2, 3,]
 
 division_result_tuple = (6/2,)
@@ -127,6 +142,11 @@ x = {"oneple": (1,)}
 y = {
     "oneple": (1,),
 }
+z = {
+    "oneple": (
+        1,
+    )
+}
 assert False, (
     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa wraps %s"
     % bar
@@ -138,6 +158,22 @@ for x in (1,):
 for (x,) in (1,), (2,), (3,):
     pass
 
+(1,)
+(
+    1,
+)
+[
+    1,
+]
+[
+    1,
+]
+{
+    1,
+}
+{
+    1,
+}
 [
     1,
     2,

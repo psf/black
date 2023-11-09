@@ -1,7 +1,16 @@
 # We should not treat the trailing comma
-# in a single-element subscript.
+# in a single-line single-element subscript.
 a: tuple[int,]
 b = tuple[int,]
+
+# Trailing comma should be preserved on multi-line
+# single-element subscript.
+a: tuple[
+    int,
+]
+b = tuple[
+    int,
+]
 
 # The magic comma still applies to multi-element subscripts.
 c: tuple[int, int,]
@@ -13,9 +22,18 @@ list_of_types = [tuple[int,],]
 
 # output
 # We should not treat the trailing comma
-# in a single-element subscript.
+# in a single-line single-element subscript.
 a: tuple[int,]
 b = tuple[int,]
+
+# Trailing comma should be preserved on multi-line
+# single-element subscript.
+a: tuple[
+    int,
+]
+b = tuple[
+    int,
+]
 
 # The magic comma still applies to multi-element subscripts.
 c: tuple[

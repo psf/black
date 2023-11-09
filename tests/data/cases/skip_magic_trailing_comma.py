@@ -1,7 +1,13 @@
 # flags: --skip-magic-trailing-comma
 # We should not remove the trailing comma in a single-element subscript.
 a: tuple[int,]
+aa: tuple[
+    int,
+]
 b = tuple[int,]
+bb = tuple[
+    int,
+]
 
 # But commas in multiple element subscripts should be removed.
 c: tuple[int, int,]
@@ -15,6 +21,9 @@ set_of_types = {tuple[int,],}
 
 # Except single element tuples
 small_tuple = (1,)
+small_multiline_tuple = (
+    1,
+)
 
 # Trailing commas in multiple chained non-nested parens.
 zero(
@@ -50,7 +59,9 @@ func(
 # output
 # We should not remove the trailing comma in a single-element subscript.
 a: tuple[int,]
+aa: tuple[int,]
 b = tuple[int,]
+bb = tuple[int,]
 
 # But commas in multiple element subscripts should be removed.
 c: tuple[int, int]
@@ -64,6 +75,7 @@ set_of_types = {tuple[int,]}
 
 # Except single element tuples
 small_tuple = (1,)
+small_multiline_tuple = (1,)
 
 # Trailing commas in multiple chained non-nested parens.
 zero(one).two(three).four(five)
