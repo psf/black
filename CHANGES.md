@@ -12,7 +12,7 @@
 
 ### Preview style
 
-<!-- Changes that affect Black's preview style -->
+- Fix crash when hugging parens with #type:ignore comments (#XXXX)
 
 ### Configuration
 
