@@ -611,14 +611,13 @@ class A:
 
 class A:
     def foo():
-        XXXXXXXXXXXX.append(
-            (
-                "xxx_xxxxxxxxxx(xxxxx={}, xxxx={}, xxxxx, xxxx_xxxx_xxxxxxxxxx={})"
-                .format(xxxxx, xxxx, xxxx_xxxx_xxxxxxxxxx),
-                my_var,
-                my_other_var,
-            )
-        )
+        XXXXXXXXXXXX.append((
+            "xxx_xxxxxxxxxx(xxxxx={}, xxxx={}, xxxxx, xxxx_xxxx_xxxxxxxxxx={})".format(
+                xxxxx, xxxx, xxxx_xxxx_xxxxxxxxxx
+            ),
+            my_var,
+            my_other_var,
+        ))
 
 
 class A:
