@@ -371,15 +371,15 @@ class Line:
             if self.is_import:
                 return True
 
-            if closing.opening_bracket is not None and not is_one_sequence_between(
+            if closing.opening_bracket is not None and is_one_sequence_between(
                 closing.opening_bracket,
                 closing,
                 self.leaves,
                 brackets=(token.LPAR, token.RPAR),
             ):
-                return True
+                return False
 
-            return False
+            return True
 
         return False  # pragma: no cover
 
