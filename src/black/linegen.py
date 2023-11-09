@@ -15,7 +15,12 @@ from black.brackets import (
     get_leaves_inside_matching_brackets,
     max_delimiter_priority_in_atom,
 )
-from black.comments import FMT_OFF, generate_comments, list_comments
+from black.comments import (
+    FMT_OFF,
+    generate_comments,
+    is_type_ignore_comment_string,
+    list_comments,
+)
 from black.lines import (
     Line,
     RHSResult,
@@ -51,7 +56,6 @@ from black.nodes import (
     is_stub_body,
     is_stub_suite,
     is_tuple_containing_walrus,
-    is_type_ignore_comment_string,
     is_vararg,
     is_walrus_assignment,
     is_yield,

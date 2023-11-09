@@ -15,6 +15,7 @@ from typing import (
 )
 
 from black.brackets import COMMA_PRIORITY, DOT_PRIORITY, BracketTracker
+from black.comments import is_type_comment, is_type_ignore_comment
 from black.mode import Mode, Preview
 from black.nodes import (
     BRACKETS,
@@ -28,8 +29,6 @@ from black.nodes import (
     is_import,
     is_multiline_string,
     is_one_sequence_between,
-    is_type_comment,
-    is_type_ignore_comment,
     is_with_or_async_with_stmt,
     replace_child,
     syms,
