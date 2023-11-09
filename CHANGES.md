@@ -12,7 +12,7 @@
 
 ### Preview style
 
-- Fix crash when hugging parens with #type:ignore comments (#XXXX)
+- Fix crash when hugging parens with #type:ignore comments (#4037)
 
 ### Configuration
 
