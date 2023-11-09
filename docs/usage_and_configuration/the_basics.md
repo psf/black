@@ -192,6 +192,8 @@ Example: `black --line-ranges=1-10 --line-ranges=21-30 test.py` will format line
 
 This option is mainly for editor integrations, such as "Format Selection".
 
+Currently it also disables _Black_'s formatting stability check in `--safe` mode.
+
 #### `--color` / `--no-color`
 
 Show (or do not show) colored diff. Only applies when `--diff` is given.
