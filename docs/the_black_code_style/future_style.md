@@ -116,7 +116,8 @@ my_dict = {
 ### Improved multiline dictionary and list indentation for sole function parameter
 
 For better readability and less verticality, _Black_ now pairs parentheses ("(", ")")
-with braces ("{", "}") and square brackets ("[", "]") on the same line. For example:
+with braces ("{", "}") and square brackets ("[", "]") on the same line for single
+parameter function calls. For example:
 
 ```python
 foo(
@@ -126,14 +127,6 @@ foo(
         3,
     ]
 )
-
-nested_array = [
-    [
-        1,
-        2,
-        3,
-    ]
-]
 ```
 
 will be changed to:
@@ -144,12 +137,6 @@ foo([
     2,
     3,
 ])
-
-nested_array = [[
-    1,
-    2,
-    3,
-]]
 ```
 
 This also applies to list and dictionary unpacking:
