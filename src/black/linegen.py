@@ -17,6 +17,7 @@ from black.brackets import (
 )
 from black.comments import (
     FMT_OFF,
+    contains_type_ignore_comment,
     generate_comments,
     is_type_ignore_comment_string,
     list_comments,
@@ -829,6 +830,9 @@ def _first_right_hand_split(
             and tail_leaves[0].opening_bracket is head_leaves[-1]
             and body_leaves[-1].type in [token.RBRACE, token.RSQB]
             and body_leaves[-1].opening_bracket is body_leaves[is_unpacking]
+            and not contains_type_ignore_comment(
+                line.comments.get(id(head_leaves[-1]), [])
+            )
         ):
             head_leaves = head_leaves + body_leaves[: 1 + is_unpacking]
             tail_leaves = body_leaves[-1:] + tail_leaves

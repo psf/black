@@ -328,6 +328,14 @@ def children_contains_fmt_on(container: LN) -> bool:
     return False
 
 
+def contains_type_ignore_comment(comment_list: List[Leaf]) -> bool:
+    """Return True if the given leaf contains a type comment with ignore annotation."""
+    for comment in comment_list:
+        if is_type_ignore_comment(comment):
+            return True
+    return False
+
+
 def is_type_comment(leaf: Leaf) -> bool:
     """Return True if the given leaf is a type comment. This function should only
     be used for general type comments (excluding ignore annotations, which should
