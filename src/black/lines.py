@@ -367,15 +367,21 @@ class Line:
 
             return True
 
-        if self.is_import:
-            return True
+        if closing.type == token.RPAR:
+            if self.is_import:
+                return True
 
-        if closing.opening_bracket is not None and not is_one_sequence_between(
-            closing.opening_bracket, closing, self.leaves
-        ):
-            return True
+            if closing.opening_bracket is not None and not is_one_sequence_between(
+                closing.opening_bracket,
+                closing,
+                self.leaves,
+                brackets=(token.LPAR, token.RPAR),
+            ):
+                return True
 
-        return False
+            return False
+
+        return False  # pragma: no cover
 
     def append_comment(self, comment: Leaf) -> bool:
         """Add an inline or standalone comment to the line."""
