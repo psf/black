@@ -337,9 +337,6 @@ class Line:
         - there's a trailing comma here
         - it's not a one-tuple
         - it's not a single-element subscript
-        Additionally, if ensure_removable:
-        - it's not from square bracket indexing
-        (specifically, single-element square bracket indexing)
         """
         if not (
             closing.type in CLOSING_BRACKETS
