@@ -167,6 +167,30 @@ func(  # type:ignore
         "a"
     ]
 )
+
+func(
+    [
+        "a"
+    ]  # type:ignore
+)  # type: ignore
+
+func(
+    [  # type:ignore
+        "a"  # type: ignore
+    ]  # type:ignore
+)
+
+func(  # type:ignore
+    [
+        "a"  # type: ignore
+    ]
+)  # type:ignore
+
+func(  # type:ignore
+    [  # type: ignore
+        "a"  # type:ignore
+    ]  # type: ignore
+)  # type:ignore
 # output
 def foo_brackets(request):
     return JsonResponse({
@@ -352,3 +376,21 @@ for foo in ["a", "b"]:
 func(  # type:ignore
     ["a"]  # type: ignore
 )
+
+func(
+    ["a"]  # type:ignore
+)  # type: ignore
+
+func([  # type:ignore
+    "a"  # type: ignore
+])  # type:ignore
+
+func([  # type:ignore
+    "a"  # type: ignore
+])  # type:ignore
+
+func(  # type:ignore
+    [  # type: ignore
+        "a"  # type:ignore
+    ]  # type: ignore
+)  # type:ignore
