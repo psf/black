@@ -10,10 +10,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Magic trailing commas are now respected in one-tuples and single-element
-  subscripts when they are already split to multiple lines. So a multiline
-  one-tuple is no longer collapsed to a single line when magic trailing
-  commas are enabled. (#4038)
+- Magic trailing commas are now respected in one-tuples and single-element subscripts
+  when they are already split to multiple lines. So a multiline one-tuple is no longer
+  collapsed to a single line when magic trailing commas are enabled. (#4038)
 
 ### Preview style
 
