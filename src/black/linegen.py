@@ -830,13 +830,31 @@ def _first_right_hand_split(
             and tail_leaves[0].opening_bracket is head_leaves[-1]
             and body_leaves[-1].type in [token.RBRACE, token.RSQB]
             and body_leaves[-1].opening_bracket is body_leaves[is_unpacking]
-            and not contains_type_ignore_comment(
-                line.comments.get(id(head_leaves[-1]), [])
-            )
         ):
-            head_leaves = head_leaves + body_leaves[: 1 + is_unpacking]
-            tail_leaves = body_leaves[-1:] + tail_leaves
-            body_leaves = body_leaves[1 + is_unpacking : -1]
+            last_leaf_on_head_line = head_leaves[-1]
+            last_leaf_on_first_body_line = [
+                leaf for leaf in body_leaves if leaf.lineno == body_leaves[0].lineno
+            ][-1]
+            last_leaf_on_last_body_line = [
+                leaf for leaf in body_leaves if leaf.lineno == body_leaves[-1].lineno
+            ][-1]
+            last_leaf_on_tail_line = tail_leaves[-1]
+
+            start_blocked_by_type_ignore = contains_type_ignore_comment(
+                line.comments.get(id(last_leaf_on_head_line), [])
+            ) and contains_type_ignore_comment(
+                line.comments.get(id(last_leaf_on_first_body_line), [])
+            )
+            end_blocked_by_type_ignore = contains_type_ignore_comment(
+                line.comments.get(id(last_leaf_on_last_body_line), [])
+            ) and contains_type_ignore_comment(
+                line.comments.get(id(last_leaf_on_tail_line), [])
+            )
+
+            if not (start_blocked_by_type_ignore or end_blocked_by_type_ignore):
+                head_leaves = head_leaves + body_leaves[: 1 + is_unpacking]
+                tail_leaves = body_leaves[-1:] + tail_leaves
+                body_leaves = body_leaves[1 + is_unpacking : -1]
 
     head = bracket_split_build_line(
         head_leaves, line, opening_bracket, component=_BracketSplitComponent.head
