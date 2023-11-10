@@ -134,6 +134,8 @@ CLOSING_BRACKETS: Final = set(BRACKET.values())
 BRACKETS: Final = OPENING_BRACKETS | CLOSING_BRACKETS
 ALWAYS_NO_SPACE: Final = CLOSING_BRACKETS | {token.COMMA, STANDALONE_COMMENT}
 
+PRAGMA_COMMENT_MARKER: Final = ("# type:", "# noqa", "# pylint:")
+
 RARROW = 55
 
 
@@ -848,17 +850,17 @@ def is_type_comment(leaf: Leaf) -> bool:
     return t in {token.COMMENT, STANDALONE_COMMENT} and v.startswith("# type:")
 
 
-def is_type_ignore_comment(leaf: Leaf) -> bool:
-    """Return True if the given leaf is a type comment with ignore annotation."""
+def is_pragma_comment(leaf: Leaf) -> bool:
+    """Return True if the given leaf is a pragma comment. Pragma comments cause lines to
+    be unsplittable, but mergeable."""
     t = leaf.type
     v = leaf.value
-    return t in {token.COMMENT, STANDALONE_COMMENT} and is_type_ignore_comment_string(v)
+    return t in {token.COMMENT, STANDALONE_COMMENT} and is_pragma_comment_string(v)
 
 
-def is_type_ignore_comment_string(value: str) -> bool:
-    """Return True if the given string match with type comment with
-    ignore annotation."""
-    return value.startswith("# type: ignore")
+def is_pragma_comment_string(value: str) -> bool:
+    """Return True if the given string matches a known pragma comment."""
+    return value.startswith(PRAGMA_COMMENT_MARKER)
 
 
 def wrap_in_parentheses(parent: Node, child: LN, *, visible: bool = True) -> None:

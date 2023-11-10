@@ -116,3 +116,38 @@ call_to_some_function_asdf(
 )
 
 aaaaaaaaaaaaa, bbbbbbbbb = map(list, map(itertools.chain.from_iterable, zip(*items)))  # type: ignore[arg-type]
+
+
+def func(
+    a=some_list[0],  # type: int
+):  # type: () -> int
+    c = call(
+        0.0123,
+        0.0456,
+        0.0789,
+        0.0123,
+        0.0456,
+        0.0789,
+        0.0123,
+        0.0456,
+        0.0789,
+        a[-1],  # noqa
+    )
+
+    c = call(
+        "aaaaaaaa", "aaaaaaaa", "aaaaaaaa", "aaaaaaaa", "aaaaaaaa", "aaaaaaaa", "aaaaaaaa"  # noqa
+    )
+
+
+result = (  # aaa
+    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+)
+
+AAAAAAAAAAAAA = [AAAAAAAAAAAAA] + SHARED_AAAAAAAAAAAAA + USER_AAAAAAAAAAAAA + AAAAAAAAAAAAA  # noqa
+
+call_to_some_function_asdf(
+    foo,
+    [AAAAAAAAAAAAAAAAAAAAAAA, AAAAAAAAAAAAAAAAAAAAAAA, AAAAAAAAAAAAAAAAAAAAAAA, BBBBBBBBBBBB],  # noqa
+)
+
+aaaaaaaaaaaaa, bbbbbbbbb = map(list, map(itertools.chain.from_iterable, zip(*items)))  # noqa: A000

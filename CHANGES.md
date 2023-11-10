@@ -9,6 +9,7 @@
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
+- Treat lines marked with common pragma markers (e.g. `# noqa`) the same as `# type: ignore` -- don't split them, but allow merging (#4039)
 
 ### Preview style
 

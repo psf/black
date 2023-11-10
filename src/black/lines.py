@@ -29,7 +29,7 @@ from black.nodes import (
     is_multiline_string,
     is_one_sequence_between,
     is_type_comment,
-    is_type_ignore_comment,
+    is_pragma_comment,
     is_with_or_async_with_stmt,
     replace_child,
     syms,
@@ -285,8 +285,7 @@ class Line:
             for comment in comments:
                 if is_type_comment(comment):
                     if comment_seen or (
-                        not is_type_ignore_comment(comment)
-                        and leaf_id not in ignored_ids
+                        not is_pragma_comment(comment) and leaf_id not in ignored_ids
                     ):
                         return True
 
@@ -322,7 +321,7 @@ class Line:
             # line.
             for node in self.leaves[-2:]:
                 for comment in self.comments.get(id(node), []):
-                    if is_type_ignore_comment(comment):
+                    if is_pragma_comment(comment):
                         return True
 
         return False
