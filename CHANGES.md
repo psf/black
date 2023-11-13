@@ -40,7 +40,7 @@
 
 ### Integrations
 
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+- Fix support for pre-commit versions < 3.2.0 (#4040)
 
 ### Documentation
 
