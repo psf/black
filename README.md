@@ -129,12 +129,25 @@ And if you're looking for more general configuration documentation:
 "No". _Black_ is all about sensible defaults. Applying those defaults will have your
 code in compliance with many other _Black_ formatted projects.
 
+### Usage with Trunk Check
+[Trunk Check](https://docs.trunk.io/check) is an extensible super linter which can run Black automatically on
+every commit.
+
+Enable black in Trunk Check it with 
+
+```shell
+trunk check enable black
+```
+
+[Source for Trunk's Black integration](https://github.com/trunk-io/plugins/tree/main/linters/black).
+
 ## Used by
 
 The following notable open-source projects trust _Black_ with enforcing a consistent
 code style: pytest, tox, Pyramid, Django, Django Channels, Hypothesis, attrs,
 SQLAlchemy, Poetry, PyPA applications (Warehouse, Bandersnatch, Pipenv, virtualenv),
-pandas, Pillow, Twisted, LocalStack, every Datadog Agent Integration, Home Assistant,
+pandas, Pillow, Twisted, LocalStack, every Datadog Agent Integration, 
+every [Trunk Check python integration](https://docs.trunk.io/check/supported-linters#python-linters-flake8-pylint-black-etc) Home Assistant,
 Zulip, Kedro, OpenOA, FLORIS, ORBIT, WOMBAT, and many more.
 
 The following organizations use _Black_: Facebook, Dropbox, KeepTruckin, Lyft, Mozilla,
