@@ -40,7 +40,7 @@
 
 ### Integrations
 
-- Fix support for pre-commit versions < 3.2.0 (#4040)
+- Fix support for pre-commit versions < 3.2.0 (#4041)
 
 ### Documentation
 
