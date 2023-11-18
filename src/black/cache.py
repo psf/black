@@ -124,9 +124,9 @@ class Cache:
 
     def write(self, sources: Iterable[Path]) -> None:
         """Update the cache file data and write a new cache file."""
-        self.file_data.update(**{
-            str(src.resolve()): Cache.get_file_data(src) for src in sources
-        })
+        self.file_data.update(
+            **{str(src.resolve()): Cache.get_file_data(src) for src in sources}
+        )
         try:
             CACHE_DIR.mkdir(parents=True, exist_ok=True)
             with tempfile.NamedTemporaryFile(
