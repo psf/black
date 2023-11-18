@@ -79,6 +79,7 @@ Multiple contributions by:
 - [Hadi Alqattan](mailto:alqattanhadizaki@gmail.com)
 - [Hassan Abouelela](mailto:hassan@hassanamr.com)
 - [Heaford](mailto:dan@heaford.com)
+- Henri Holopainen
 - [Hugo Barrera](mailto::hugo@barrera.io)
 - Hugo van Kemenade
 - [Hynek Schlawack](mailto:hs@ox.cx)

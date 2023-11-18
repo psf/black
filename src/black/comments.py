@@ -17,15 +17,18 @@ from blib2to3.pgen2 import token
 from blib2to3.pytree import Leaf, Node
 
 # types
+COMMENT_EXCEPTIONS = " !:#'"
+_TYPE_PREFIX = "# type:"
+_COMMENT_PREFIX = "# "
+_COMMENT_LIST_SEPARATOR = ";"
+
 LN = Union[Leaf, Node]
 
 FMT_OFF: Final = {"# fmt: off", "# fmt:off", "# yapf: disable"}
 FMT_SKIP: Final = {"# fmt: skip", "# fmt:skip"}
 FMT_ON: Final = {"# fmt: on", "# fmt:on", "# yapf: enable"}
 
-COMMENT_EXCEPTIONS = " !:#'"
-_COMMENT_PREFIX = "# "
-_COMMENT_LIST_SEPARATOR = ";"
+_TYPE_IGNORE: Final = {_TYPE_PREFIX + "ignore", _TYPE_PREFIX + " ignore"}
 
 
 @dataclass
@@ -323,6 +326,37 @@ def children_contains_fmt_on(container: LN) -> bool:
             return True
 
     return False
+
+
+def contains_type_ignore_comment(comment_list: List[Leaf]) -> bool:
+    """Return True if the given list contains a type comment with ignore annotation."""
+    for comment in comment_list:
+        if is_type_ignore_comment(comment):
+            return True
+    return False
+
+
+def is_type_comment(leaf: Leaf) -> bool:
+    """Return True if the given leaf is a type comment. This function should only
+    be used for general type comments (excluding ignore annotations, which should
+    use `is_type_ignore_comment`). Note that general type comments are no longer
+    used in modern version of Python, this function may be deprecated in the future."""
+    t = leaf.type
+    v = leaf.value
+    return t in {token.COMMENT, STANDALONE_COMMENT} and v.startswith(_TYPE_PREFIX)
+
+
+def is_type_ignore_comment(leaf: Leaf) -> bool:
+    """Return True if the given leaf is a type comment with ignore annotation."""
+    t = leaf.type
+    v = leaf.value
+    return t in {token.COMMENT, STANDALONE_COMMENT} and is_type_ignore_comment_string(v)
+
+
+def is_type_ignore_comment_string(value: str) -> bool:
+    """Return True if the given string match with type comment with
+    ignore annotation."""
+    return any(value.startswith(type_ignore) for type_ignore in _TYPE_IGNORE)
 
 
 def contains_pragma_comment(comment_list: List[Leaf]) -> bool:

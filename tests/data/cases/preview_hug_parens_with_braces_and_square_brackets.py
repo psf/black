@@ -162,6 +162,35 @@ for foo in ["a", "b"]:
         for individual in container["nested"]
     ])
 
+func(  # type:ignore
+    [  # type: ignore
+        "a"
+    ]
+)
+
+func(
+    [
+        "a"
+    ]  # type:ignore
+)  # type: ignore
+
+func(
+    [  # type:ignore
+        "a"  # type: ignore
+    ]  # type:ignore
+)
+
+func(  # type:ignore
+    [
+        "a"  # type: ignore
+    ]
+)  # type:ignore
+
+func(  # type:ignore
+    [  # type: ignore
+        "a"  # type:ignore
+    ]  # type: ignore
+)  # type:ignore
 # output
 def foo_brackets(request):
     return JsonResponse({
@@ -343,3 +372,25 @@ for foo in ["a", "b"]:
         # Foobar
         for individual in container["nested"]
     ])
+
+func(  # type:ignore
+    ["a"]  # type: ignore
+)
+
+func(
+    ["a"]  # type:ignore
+)  # type: ignore
+
+func([  # type:ignore
+    "a"  # type: ignore
+])  # type:ignore
+
+func([  # type:ignore
+    "a"  # type: ignore
+])  # type:ignore
+
+func(  # type:ignore
+    [  # type: ignore
+        "a"  # type:ignore
+    ]  # type: ignore
+)  # type:ignore

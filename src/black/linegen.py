@@ -15,7 +15,13 @@ from black.brackets import (
     get_leaves_inside_matching_brackets,
     max_delimiter_priority_in_atom,
 )
-from black.comments import FMT_OFF, generate_comments, list_comments
+from black.comments import (
+    FMT_OFF,
+    contains_type_ignore_comment,
+    generate_comments,
+    is_type_ignore_comment_string,
+    list_comments,
+)
 from black.lines import (
     Line,
     RHSResult,
@@ -51,7 +57,6 @@ from black.nodes import (
     is_stub_body,
     is_stub_suite,
     is_tuple_containing_walrus,
-    is_type_ignore_comment_string,
     is_vararg,
     is_walrus_assignment,
     is_yield,
@@ -826,9 +831,30 @@ def _first_right_hand_split(
             and body_leaves[-1].type in [token.RBRACE, token.RSQB]
             and body_leaves[-1].opening_bracket is body_leaves[is_unpacking]
         ):
-            head_leaves = head_leaves + body_leaves[: 1 + is_unpacking]
-            tail_leaves = body_leaves[-1:] + tail_leaves
-            body_leaves = body_leaves[1 + is_unpacking : -1]
+            last_leaf_on_head_line = head_leaves[-1]
+            last_leaf_on_first_body_line = [
+                leaf for leaf in body_leaves if leaf.lineno == body_leaves[0].lineno
+            ][-1]
+            last_leaf_on_last_body_line = [
+                leaf for leaf in body_leaves if leaf.lineno == body_leaves[-1].lineno
+            ][-1]
+            last_leaf_on_tail_line = tail_leaves[-1]
+
+            start_blocked_by_type_ignore = contains_type_ignore_comment(
+                line.comments.get(id(last_leaf_on_head_line), [])
+            ) and contains_type_ignore_comment(
+                line.comments.get(id(last_leaf_on_first_body_line), [])
+            )
+            end_blocked_by_type_ignore = contains_type_ignore_comment(
+                line.comments.get(id(last_leaf_on_last_body_line), [])
+            ) and contains_type_ignore_comment(
+                line.comments.get(id(last_leaf_on_tail_line), [])
+            )
+
+            if not (start_blocked_by_type_ignore or end_blocked_by_type_ignore):
+                head_leaves = head_leaves + body_leaves[: 1 + is_unpacking]
+                tail_leaves = body_leaves[-1:] + tail_leaves
+                body_leaves = body_leaves[1 + is_unpacking : -1]
 
     head = bracket_split_build_line(
         head_leaves, line, opening_bracket, component=_BracketSplitComponent.head
