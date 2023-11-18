@@ -14,6 +14,9 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Additional cases of immediately nested tuples, lists, and dictionaries are now
+  indented less (#4012)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
