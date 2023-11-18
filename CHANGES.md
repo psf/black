@@ -20,7 +20,7 @@
 
 ### Packaging
 
-<!-- Changes to how Black is packaged, such as dependency requirements -->
+- Upgrade to mypy 1.7.0 (#4049)
 
 ### Parser
 
