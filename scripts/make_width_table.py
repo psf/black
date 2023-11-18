@@ -20,7 +20,7 @@ import sys
 from os.path import basename, dirname, join
 from typing import Iterable, Tuple
 
-import wcwidth  # type: ignore[import]
+import wcwidth  # type: ignore[import-not-found]
 
 
 def make_width_table() -> Iterable[Tuple[int, int, int]]:

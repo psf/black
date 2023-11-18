@@ -149,15 +149,13 @@ htmlhelp_basename = "blackdoc"
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
-latex_documents = [
-    (
-        master_doc,
-        "black.tex",
-        "Documentation for Black",
-        "Łukasz Langa and contributors to Black",
-        "manual",
-    )
-]
+latex_documents = [(
+    master_doc,
+    "black.tex",
+    "Documentation for Black",
+    "Łukasz Langa and contributors to Black",
+    "manual",
+)]
 
 
 # -- Options for manual page output ------------------------------------------
@@ -172,17 +170,15 @@ man_pages = [(master_doc, "black", "Documentation for Black", [author], 1)]
 # Grouping the document tree into Texinfo files. List of tuples
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
-texinfo_documents = [
-    (
-        master_doc,
-        "Black",
-        "Documentation for Black",
-        author,
-        "Black",
-        "The uncompromising Python code formatter",
-        "Miscellaneous",
-    )
-]
+texinfo_documents = [(
+    master_doc,
+    "Black",
+    "Documentation for Black",
+    author,
+    "Black",
+    "The uncompromising Python code formatter",
+    "Miscellaneous",
+)]
 
 
 # -- Options for Epub output -------------------------------------------------
