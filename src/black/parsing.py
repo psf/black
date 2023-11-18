@@ -175,7 +175,7 @@ def stringify_ast(node: ast.AST, depth: int = 0) -> Iterator[str]:
         except AttributeError:
             continue
 
-        yield f"{'  ' * (depth+1)}{field}="
+        yield f"{'  ' * (depth + 1)}{field}="
 
         if isinstance(value, list):
             for item in value:
@@ -211,6 +211,6 @@ def stringify_ast(node: ast.AST, depth: int = 0) -> Iterator[str]:
                 normalized = value.rstrip()
             else:
                 normalized = value
-            yield f"{'  ' * (depth+2)}{normalized!r},  # {value.__class__.__name__}"
+            yield f"{'  ' * (depth + 2)}{normalized!r},  # {value.__class__.__name__}"
 
     yield f"{'  ' * depth})  # /{node.__class__.__name__}"

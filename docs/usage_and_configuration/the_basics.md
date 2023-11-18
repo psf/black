@@ -67,6 +67,10 @@ In a [configuration file](#configuration-via-a-file), you can write:
 target-version = ["py38", "py39", "py310", "py311"]
 ```
 
+By default, Black will infer target versions from the project metadata in
+`pyproject.toml`, specifically the `[project.requires-python]` field. If this does not
+yield conclusive results, Black will use per-file auto-detection.
+
 _Black_ uses this option to decide what grammar to use to parse your code. In addition,
 it may use it to decide what style to use. For example, support for a trailing comma
 after `*args` in a function call was added in Python 3.5, so _Black_ will add this comma

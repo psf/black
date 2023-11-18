@@ -817,25 +817,66 @@ def _first_right_hand_split(
     body_leaves.reverse()
     head_leaves.reverse()
 
-    if Preview.hug_parens_with_braces_and_square_brackets in line.mode:
-        is_unpacking = 1 if body_leaves[0].type in [token.STAR, token.DOUBLESTAR] else 0
-        if (
-            tail_leaves[0].type == token.RPAR
-            and tail_leaves[0].value
-            and tail_leaves[0].opening_bracket is head_leaves[-1]
-            and body_leaves[-1].type in [token.RBRACE, token.RSQB]
-            and body_leaves[-1].opening_bracket is body_leaves[is_unpacking]
+    body: Optional[Line] = None
+    if (
+        Preview.hug_parens_with_braces_and_square_brackets in line.mode
+        and tail_leaves[0].value
+        and tail_leaves[0].opening_bracket is head_leaves[-1]
+    ):
+        inner_body_leaves = list(body_leaves)
+        hugged_opening_leaves: List[Leaf] = []
+        hugged_closing_leaves: List[Leaf] = []
+        is_unpacking = body_leaves[0].type in [token.STAR, token.DOUBLESTAR]
+        unpacking_offset: int = 1 if is_unpacking else 0
+        while (
+            len(inner_body_leaves) >= 2 + unpacking_offset
+            and inner_body_leaves[-1].type in CLOSING_BRACKETS
+            and inner_body_leaves[-1].opening_bracket
+            is inner_body_leaves[unpacking_offset]
         ):
-            head_leaves = head_leaves + body_leaves[: 1 + is_unpacking]
-            tail_leaves = body_leaves[-1:] + tail_leaves
-            body_leaves = body_leaves[1 + is_unpacking : -1]
+            if unpacking_offset:
+                hugged_opening_leaves.append(inner_body_leaves.pop(0))
+                unpacking_offset = 0
+            hugged_opening_leaves.append(inner_body_leaves.pop(0))
+            hugged_closing_leaves.insert(0, inner_body_leaves.pop())
+
+        if hugged_opening_leaves and inner_body_leaves:
+            inner_body = bracket_split_build_line(
+                inner_body_leaves,
+                line,
+                hugged_opening_leaves[-1],
+                component=_BracketSplitComponent.body,
+            )
+            if (
+                line.mode.magic_trailing_comma
+                and inner_body_leaves[-1].type == token.COMMA
+            ):
+                should_hug = True
+            else:
+                line_length = line.mode.line_length - sum(
+                    len(str(leaf))
+                    for leaf in hugged_opening_leaves + hugged_closing_leaves
+                )
+                if is_line_short_enough(
+                    inner_body, mode=replace(line.mode, line_length=line_length)
+                ):
+                    # Do not hug if it fits on a single line.
+                    should_hug = False
+                else:
+                    should_hug = True
+            if should_hug:
+                body_leaves = inner_body_leaves
+                head_leaves.extend(hugged_opening_leaves)
+                tail_leaves = hugged_closing_leaves + tail_leaves
+                body = inner_body  # No need to re-calculate the body again later.
 
     head = bracket_split_build_line(
         head_leaves, line, opening_bracket, component=_BracketSplitComponent.head
     )
-    body = bracket_split_build_line(
-        body_leaves, line, opening_bracket, component=_BracketSplitComponent.body
-    )
+    if body is None:
+        body = bracket_split_build_line(
+            body_leaves, line, opening_bracket, component=_BracketSplitComponent.body
+        )
     tail = bracket_split_build_line(
         tail_leaves, line, opening_bracket, component=_BracketSplitComponent.tail
     )
