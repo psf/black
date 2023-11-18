@@ -262,9 +262,11 @@ class Untokenizer:
     def untokenize(self, iterable: Iterable[TokenInfo]) -> str:
         for t in iterable:
             if len(t) == 2:
-                self.compat(t, iterable)
+                self.compat(cast(Tuple[int, str], t), iterable)
                 break
-            tok_type, token, start, end, line = t
+            tok_type, token, start, end, line = cast(
+                Tuple[int, str, Coord, Coord, str], t
+            )
             self.add_whitespace(start)
             self.tokens.append(token)
             self.prev_row, self.prev_col = end
