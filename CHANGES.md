@@ -43,7 +43,7 @@
 
 ### Integrations
 
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+- Enable 3.12 CI (#4035)
 
 ### Documentation
 
