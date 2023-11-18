@@ -14,7 +14,7 @@ import sys
 
 import commonmark
 import yaml
-from bs4 import BeautifulSoup  # type: ignore[import]
+from bs4 import BeautifulSoup  # type: ignore[import-untyped]
 
 
 def main(changes: str, source_version_control: str) -> None:
