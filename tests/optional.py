@@ -28,7 +28,7 @@ except ImportError:
     # pytest < 7
     #
     # "isort: skip" is needed or it moves the "type: ignore" to the following line
-    # becuase of the line length, and then mypy complains.
+    # because of the line length, and then mypy complains.
     # Of course, adding the "isort: skip" means that
     # flake8-bugbear then also complains about the line length,
     # so we *also* need a "noqa" comment for good measure :)
