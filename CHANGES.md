@@ -44,6 +44,7 @@
 ### Integrations
 
 - Enable 3.12 CI (#4035)
+- Build docker images in parallel (#4054)
 - Build docker images with 3.12 (#4055)
 
 ### Documentation
