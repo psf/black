@@ -1,4 +1,4 @@
-name: Lint
+name: Lint + format ourselves
 
 on: [push, pull_request]
 
@@ -11,7 +11,11 @@ jobs:
       github.event_name == 'push' || github.event.pull_request.head.repo.full_name !=
       github.repository
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
 
     steps:
       - uses: actions/checkout@v4
@@ -26,12 +30,12 @@ jobs:
       - name: Set up latest Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: "*"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e '.[d]'
+          python -m pip install -e '.'
           python -m pip install tox
 
       - name: Run pre-commit hooks
