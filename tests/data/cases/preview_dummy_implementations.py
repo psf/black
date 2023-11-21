@@ -48,6 +48,9 @@ def b(arg: Union[int, str, object]) -> Union[int, str]:
         raise TypeError
     return arg
 
+def has_comment():
+    ...  # not a dummy
+
 # output
 
 from typing import NoReturn, Protocol, Union, overload
@@ -98,3 +101,7 @@ def b(arg: Union[int, str, object]) -> Union[int, str]:
     if not isinstance(arg, (int, str)):
         raise TypeError
     return arg
+
+
+def has_comment():
+    ...  # not a dummy

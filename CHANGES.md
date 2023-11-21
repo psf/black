@@ -16,6 +16,7 @@
 
 - Additional cases of immediately nested tuples, lists, and dictionaries are now
   indented less (#4012)
+- Keep suites consisting of an ellipsis followed by a comment on their own lines (#4066)
 
 ### Configuration
 

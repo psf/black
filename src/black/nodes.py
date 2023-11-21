@@ -765,6 +765,10 @@ def is_stub_body(node: LN) -> bool:
     if len(node.children) != 2:
         return False
 
+    # If there is a comment after the ..., don't treat this suite as a stub body.
+    if node.children[1].prefix.strip():
+        return False
+
     child = node.children[0]
     return (
         not child.prefix.strip()
