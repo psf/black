@@ -684,14 +684,17 @@ class EmptyLineTracker:
                 return 0, 1
             return before, 1
 
-        is_empty_first_line_ok = Preview.allow_empty_first_line_in_block in current_line.mode and (
-            not is_docstring(current_line.leaves[0])
-            # If it's a triple quote comment (but not at the start of a funcdef)
-            or (
-                self.previous_line
-                and self.previous_line.leaves[0]
-                and self.previous_line.leaves[0].parent
-                and not is_funcdef(self.previous_line.leaves[0].parent)
+        # In preview mode, always allow blank lines, except right before a function docstring
+        is_empty_first_line_ok = (
+            Preview.allow_empty_first_line_in_block in current_line.mode
+            and (
+                not is_docstring(current_line.leaves[0])
+                or (
+                    self.previous_line
+                    and self.previous_line.leaves[0]
+                    and self.previous_line.leaves[0].parent
+                    and not is_funcdef(self.previous_line.leaves[0].parent)
+                )
             )
         )
 
