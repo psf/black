@@ -51,6 +51,10 @@ def baz():
     if x:
         a = 123
 
+def quux():
+
+    new_line = here
+
 # output
 
 def foo():
@@ -104,3 +108,8 @@ def baz():
     # OK
     if x:
         a = 123
+
+
+def quux():
+
+    new_line = here

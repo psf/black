@@ -685,17 +685,13 @@ class EmptyLineTracker:
             return before, 1
 
         is_empty_first_line_ok = (
-            Preview.allow_empty_first_line_before_new_block_or_comment
+            Preview.allow_empty_first_line_in_block
             in current_line.mode
             and (
-                # If it's a standalone comment
-                current_line.leaves[0].type == STANDALONE_COMMENT
-                # If it opens a new block
-                or current_line.opens_block
+                not is_docstring(current_line.leaves[0])
                 # If it's a triple quote comment (but not at the start of a funcdef)
                 or (
-                    is_docstring(current_line.leaves[0])
-                    and self.previous_line
+                    self.previous_line
                     and self.previous_line.leaves[0]
                     and self.previous_line.leaves[0].parent
                     and not is_funcdef(self.previous_line.leaves[0].parent)
