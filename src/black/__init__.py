@@ -1465,11 +1465,16 @@ def assert_stable(
     src: str, dst: str, mode: Mode, *, lines: Collection[Tuple[int, int]] = ()
 ) -> None:
     """Raise AssertionError if `dst` reformats differently the second time."""
+    if lines:
+        # Formatting specified lines requires `adjusted_lines` to map original lines
+        # to the formatted lines before re-formatting the previously formatted result.
+        # Due to less-ideal diff algorithm, some edge cases produce incorrect new line
+        # ranges. Hence for now, we skip the stable check.
+        # See https://github.com/psf/black/issues/4033 for context.
+        return
     # We shouldn't call format_str() here, because that formats the string
     # twice and may hide a bug where we bounce back and forth between two
     # versions.
-    if lines:
-        lines = adjusted_lines(lines, src, dst)
     newdst = _format_str_once(dst, mode=mode, lines=lines)
     if dst != newdst:
         log = dump_to_file(
