@@ -346,9 +346,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:  # no
 
             return NO
 
-        elif Preview.walrus_subscript in mode and (
-            t == token.COLONEQUAL or prev.type == token.COLONEQUAL
-        ):
+        elif t == token.COLONEQUAL or prev.type == token.COLONEQUAL:
             return SPACE
 
         elif not complex_subscript:

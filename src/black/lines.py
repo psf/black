@@ -203,9 +203,7 @@ class Line:
         value = self.leaves[0].value
         if value.startswith(('"""', "'''")):
             return True
-        if Preview.accept_raw_docstrings in self.mode and value.startswith(
-            ("r'''", 'r"""', "R'''", 'R"""')
-        ):
+        if value.startswith(("r'''", 'r"""', "R'''", 'R"""')):
             return True
         return False
 
@@ -628,11 +626,7 @@ class EmptyLineTracker:
                 if depth and not current_line.is_def and self.previous_line.is_def:
                     # Empty lines between attributes and methods should be preserved.
                     before = 1 if user_had_newline else 0
-                elif (
-                    Preview.blank_line_after_nested_stub_class in self.mode
-                    and previous_def.is_class
-                    and not previous_def.is_stub_class
-                ):
+                elif previous_def.is_class and not previous_def.is_stub_class:
                     before = 1
                 elif depth:
                     before = 0
@@ -680,14 +674,13 @@ class EmptyLineTracker:
             and self.previous_line.is_class
             and current_line.is_triple_quoted_string
         ):
-            if Preview.no_blank_line_before_class_docstring in current_line.mode:
-                return 0, 1
-            return before, 1
+            return 0, 1
 
-        # In preview mode, always allow blank lines, except right before a function docstring
-        is_empty_first_line_ok = (
-            Preview.allow_empty_first_line_in_block in current_line.mode
-            and (
+        if (
+            self.previous_line
+            and self.previous_line.opens_block
+            # Always allow blank lines, except right before a function docstring
+            and not (
                 not is_docstring(current_line.leaves[0])
                 or (
                     self.previous_line
@@ -696,12 +689,6 @@ class EmptyLineTracker:
                     and not is_funcdef(self.previous_line.leaves[0].parent)
                 )
             )
-        )
-
-        if (
-            self.previous_line
-            and self.previous_line.opens_block
-            and not is_empty_first_line_ok
         ):
             return 0, 0
         return before, 0
@@ -762,10 +749,7 @@ class EmptyLineTracker:
             # Don't inspect the previous line if it's part of the body of the previous
             # statement in the same level, we always want a blank line if there's
             # something with a body preceding.
-            elif (
-                Preview.blank_line_between_nested_and_def_stub_file in current_line.mode
-                and self.previous_line.depth > current_line.depth
-            ):
+            elif self.previous_line.depth > current_line.depth:
                 newlines = 1
             elif (
                 current_line.is_def or current_line.is_decorator
@@ -1001,11 +985,7 @@ def can_omit_invisible_parens(
         return False
 
     if delimiter_count == 1:
-        if (
-            Preview.wrap_multiple_context_managers_in_parens in line.mode
-            and max_priority == COMMA_PRIORITY
-            and rhs.head.is_with_or_async_with_stmt
-        ):
+        if max_priority == COMMA_PRIORITY and rhs.head.is_with_or_async_with_stmt:
             # For two context manager with statements, the optional parentheses read
             # better. In this case, `rhs.body` is the context managers part of
             # the with statement. `rhs.head` is the `with (` part on the previous

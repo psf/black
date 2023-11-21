@@ -114,10 +114,8 @@ class LineGenerator(Visitor[Line]):
             self.current_line.depth += indent
             return  # Line is empty, don't emit. Creating a new one unnecessary.
 
-        if (
-            Preview.improved_async_statements_handling in self.mode
-            and len(self.current_line.leaves) == 1
-            and is_async_stmt_or_funcdef(self.current_line.leaves[0])
+        if len(self.current_line.leaves) == 1 and is_async_stmt_or_funcdef(
+            self.current_line.leaves[0]
         ):
             # Special case for async def/for/with statements. `visit_async_stmt`
             # adds an `ASYNC` leaf then visits the child def/for/with statement
@@ -333,11 +331,7 @@ class LineGenerator(Visitor[Line]):
                 break
 
         internal_stmt = next(children)
-        if Preview.improved_async_statements_handling in self.mode:
-            yield from self.visit(internal_stmt)
-        else:
-            for child in internal_stmt.children:
-                yield from self.visit(child)
+        yield from self.visit(internal_stmt)
 
     def visit_decorators(self, node: Node) -> Iterator[Line]:
         """Visit decorators."""
@@ -567,9 +561,7 @@ def transform_line(
     # We need the line string when power operators are hugging to determine if we should
     # split the line. Default to line_str, if no power operator are present on the line.
     line_str_hugging_power_ops = (
-        (_hugging_power_ops_line_to_string(line, features, mode) or line_str)
-        if Preview.fix_power_op_line_length in mode
-        else line_str
+        _hugging_power_ops_line_to_string(line, features, mode) or line_str
     )
 
     ll = mode.line_length
@@ -679,9 +671,6 @@ def should_split_funcdef_with_rhs(line: Line, mode: Mode) -> bool:
     """If a funcdef has a magic trailing comma in the return type, then we should first
     split the line with rhs to respect the comma.
     """
-    if Preview.respect_magic_trailing_comma_in_return_type not in mode:
-        return False
-
     return_type_leaves: List[Leaf] = []
     in_return_type = False
 
@@ -1191,11 +1180,7 @@ def delimiter_split(
                     trailing_comma_safe and Feature.TRAILING_COMMA_IN_CALL in features
                 )
 
-        if (
-            Preview.add_trailing_comma_consistently in mode
-            and last_leaf.type == STANDALONE_COMMENT
-            and leaf_idx == last_non_comment_leaf
-        ):
+        if last_leaf.type == STANDALONE_COMMENT and leaf_idx == last_non_comment_leaf:
             current_line = _safe_add_trailing_comma(
                 trailing_comma_safe, delimiter_priority, current_line
             )
@@ -1282,11 +1267,7 @@ def normalize_invisible_parens(  # noqa: C901
 
         # Fixes a bug where invisible parens are not properly wrapped around
         # case blocks.
-        if (
-            isinstance(child, Node)
-            and child.type == syms.case_block
-            and Preview.long_case_block_line_splitting in mode
-        ):
+        if isinstance(child, Node) and child.type == syms.case_block:
             normalize_invisible_parens(
                 child, parens_after={"case"}, mode=mode, features=features
             )
@@ -1341,7 +1322,6 @@ def normalize_invisible_parens(  # noqa: C901
                 and child.next_sibling is not None
                 and child.next_sibling.type == token.COLON
                 and child.value == "case"
-                and Preview.long_case_block_line_splitting in mode
             ):
                 # A special patch for "case case:" scenario, the second occurrence
                 # of case will be not parsed as a Python keyword.
@@ -1415,7 +1395,6 @@ def _maybe_wrap_cms_in_parens(
     """
     if (
         Feature.PARENTHESIZED_CONTEXT_MANAGERS not in features
-        or Preview.wrap_multiple_context_managers_in_parens not in mode
         or len(node.children) <= 2
         # If it's an atom, it's already wrapped in parens.
         or node.children[1].type == syms.atom

@@ -1,4 +1,3 @@
-# flags: --preview
 def line_before_docstring():
 
     """Please move me up"""
