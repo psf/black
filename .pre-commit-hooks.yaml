@@ -6,7 +6,7 @@
   entry: black
   stages: [pre-commit, pre-merge-commit, pre-push, manual]
   language: python
-  minimum_pre_commit_version: 2.9.2
+  minimum_pre_commit_version: 3.2.0
   require_serial: true
   types_or: [python, pyi]
 - id: black-jupyter
@@ -16,7 +16,7 @@
   entry: black
   stages: [pre-commit, pre-merge-commit, pre-push, manual]
   language: python
-  minimum_pre_commit_version: 2.9.2
+  minimum_pre_commit_version: 3.2.0
   require_serial: true
   types_or: [python, pyi, jupyter]
   additional_dependencies: [".[jupyter]"]
