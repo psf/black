@@ -282,9 +282,7 @@ class LineGenerator(Visitor[Line]):
 
     def visit_suite(self, node: Node) -> Iterator[Line]:
         """Visit a suite."""
-        if (
-            self.mode.is_pyi or Preview.dummy_implementations in self.mode
-        ) and is_stub_suite(node):
+        if is_stub_suite(node):
             yield from self.visit(node.children[2])
         else:
             yield from self.visit_default(node)
@@ -299,9 +297,7 @@ class LineGenerator(Visitor[Line]):
 
         is_suite_like = node.parent and node.parent.type in STATEMENT
         if is_suite_like:
-            if (
-                self.mode.is_pyi or Preview.dummy_implementations in self.mode
-            ) and is_stub_body(node):
+            if is_stub_body(node):
                 yield from self.visit_default(node)
             else:
                 yield from self.line(+1)
@@ -309,11 +305,7 @@ class LineGenerator(Visitor[Line]):
                 yield from self.line(-1)
 
         else:
-            if (
-                not (self.mode.is_pyi or Preview.dummy_implementations in self.mode)
-                or not node.parent
-                or not is_stub_suite(node.parent)
-            ):
+            if not node.parent or not is_stub_suite(node.parent):
                 yield from self.line()
             yield from self.visit_default(node)
 
@@ -405,10 +397,9 @@ class LineGenerator(Visitor[Line]):
 
         def foo(a: (int), b: (float) = 7): ...
         """
-        if Preview.parenthesize_long_type_hints in self.mode:
-            assert len(node.children) == 3
-            if maybe_make_parens_invisible_in_atom(node.children[2], parent=node):
-                wrap_in_parentheses(node, node.children[2], visible=False)
+        assert len(node.children) == 3
+        if maybe_make_parens_invisible_in_atom(node.children[2], parent=node):
+            wrap_in_parentheses(node, node.children[2], visible=False)
 
         yield from self.visit_default(node)
 
@@ -514,13 +505,7 @@ class LineGenerator(Visitor[Line]):
         self.visit_with_stmt = partial(v, keywords={"with"}, parens={"with"})
         self.visit_classdef = partial(v, keywords={"class"}, parens=Ø)
 
-        # When this is moved out of preview, add ":" directly to ASSIGNMENTS in nodes.py
-        if Preview.parenthesize_long_type_hints in self.mode:
-            assignments = ASSIGNMENTS | {":"}
-        else:
-            assignments = ASSIGNMENTS
-        self.visit_expr_stmt = partial(v, keywords=Ø, parens=assignments)
-
+        self.visit_expr_stmt = partial(v, keywords=Ø, parens=ASSIGNMENTS)
         self.visit_return_stmt = partial(v, keywords={"return"}, parens={"return"})
         self.visit_import_from = partial(v, keywords=Ø, parens={"import"})
         self.visit_del_stmt = partial(v, keywords=Ø, parens={"del"})
@@ -900,9 +885,8 @@ def _maybe_split_omitting_optional_parens(
             # The RHSResult Omitting Optional Parens.
             rhs_oop = _first_right_hand_split(line, omit=omit)
             if not (
-                Preview.prefer_splitting_right_hand_side_of_assignments in line.mode
                 # the split is right after `=`
-                and len(rhs.head.leaves) >= 2
+                len(rhs.head.leaves) >= 2
                 and rhs.head.leaves[-2].type == token.EQUAL
                 # the left side of assignment contains brackets
                 and any(leaf.type in BRACKETS for leaf in rhs.head.leaves[:-1])

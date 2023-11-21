@@ -168,21 +168,13 @@ def supports_feature(target_versions: Set[TargetVersion], feature: Feature) -> b
 class Preview(Enum):
     """Individual preview style features."""
 
-    blank_line_after_nested_stub_class = auto()
     hex_codes_in_unicode_sequences = auto()
-    multiline_string_handling = auto()
-    prefer_splitting_right_hand_side_of_assignments = auto()
     # NOTE: string_processing requires wrap_long_dict_values_in_parens
     # for https://github.com/psf/black/issues/3117 to be fixed.
     string_processing = auto()
     parenthesize_conditional_expressions = auto()
-    parenthesize_long_type_hints = auto()
     wrap_long_dict_values_in_parens = auto()
-    wrap_multiple_context_managers_in_parens = auto()
-    dummy_implementations = auto()
-    module_docstring_newlines = auto()
     hug_parens_with_braces_and_square_brackets = auto()
-    allow_form_feeds = auto()
 
 
 class Deprecated(UserWarning):

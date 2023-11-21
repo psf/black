@@ -550,8 +550,7 @@ class EmptyLineTracker:
         lines (two on module-level).
         """
         form_feed = (
-            Preview.allow_form_feeds in self.mode
-            and current_line.depth == 0
+            current_line.depth == 0
             and bool(current_line.leaves)
             and "\f\n" in current_line.leaves[0].prefix
         )
@@ -565,8 +564,7 @@ class EmptyLineTracker:
             else before - previous_after
         )
         if (
-            Preview.module_docstring_newlines in current_line.mode
-            and self.previous_block
+            self.previous_block
             and self.previous_block.previous_block is None
             and len(self.previous_block.original_line.leaves) == 1
             and self.previous_block.original_line.is_triple_quoted_string
@@ -770,11 +768,7 @@ class EmptyLineTracker:
             newlines = 1 if current_line.depth else 2
             # If a user has left no space after a dummy implementation, don't insert
             # new lines. This is useful for instance for @overload or Protocols.
-            if (
-                Preview.dummy_implementations in self.mode
-                and self.previous_line.is_stub_def
-                and not user_had_newline
-            ):
+            if self.previous_line.is_stub_def and not user_had_newline:
                 newlines = 0
         if comment_to_add_newlines is not None:
             previous_block = comment_to_add_newlines.previous_block
@@ -830,13 +824,6 @@ def is_line_short_enough(  # noqa: C901
         line_str = line_to_string(line)
 
     width = str_width if mode.preview else len
-
-    if Preview.multiline_string_handling not in mode:
-        return (
-            width(line_str) <= mode.line_length
-            and "\n" not in line_str  # multiline strings
-            and not line.contains_standalone_comments()
-        )
 
     if line.contains_standalone_comments():
         return False
