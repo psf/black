@@ -49,7 +49,8 @@
 - Enable 3.12 CI (#4035)
 - Build docker images in parallel (#4054)
 - Build docker images with 3.12 (#4055)
-- Raise the `minimum_pre_commit_version` for the changes to Black's pre-commit integration introduced in 23.11.0 (#4067)
+- Raise the `minimum_pre_commit_version` for the changes to Black's pre-commit
+  integration introduced in 23.11.0 (#4067)
 
 ### Documentation
 
