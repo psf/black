@@ -169,11 +169,7 @@ class Preview(Enum):
     """Individual preview style features."""
 
     hex_codes_in_unicode_sequences = auto()
-    # NOTE: string_processing requires wrap_long_dict_values_in_parens
-    # for https://github.com/psf/black/issues/3117 to be fixed.
     string_processing = auto()
-    parenthesize_conditional_expressions = auto()
-    wrap_long_dict_values_in_parens = auto()
     hug_parens_with_braces_and_square_brackets = auto()
 
 

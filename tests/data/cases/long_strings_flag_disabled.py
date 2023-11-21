@@ -43,8 +43,10 @@ D4 = {
     % (
         "formatted",
         "string",
-    ): "This is a really really really long string that has to go inside of a dictionary. It is %s bad (#%d)."
-    % ("soooo", 2),
+    ): (
+        "This is a really really really long string that has to go inside of a dictionary. It is %s bad (#%d)."
+        % ("soooo", 2)
+    ),
 }
 
 func_with_keywords(
