@@ -286,7 +286,7 @@ class LineGenerator(Visitor[Line]):
         """Visit a suite."""
         if (
             self.mode.is_pyi or Preview.dummy_implementations in self.mode
-        ) and is_stub_suite(node):
+        ) and is_stub_suite(node, self.mode):
             yield from self.visit(node.children[2])
         else:
             yield from self.visit_default(node)
@@ -314,7 +314,7 @@ class LineGenerator(Visitor[Line]):
             if (
                 not (self.mode.is_pyi or Preview.dummy_implementations in self.mode)
                 or not node.parent
-                or not is_stub_suite(node.parent)
+                or not is_stub_suite(node.parent, self.mode)
             ):
                 yield from self.line()
             yield from self.visit_default(node)

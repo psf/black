@@ -253,7 +253,8 @@ def foo(
 def foo(
     a,
     b: list[Bad],
-): ...  # type: ignore
+):
+    ...  # type: ignore
 
 
 # don't lose any comments (no magic)
