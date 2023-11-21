@@ -196,6 +196,12 @@ Example: `black --line-ranges=1-10 --line-ranges=21-30 test.py` will format line
 
 This option is mainly for editor integrations, such as "Format Selection".
 
+```{note}
+Due to [#4052](https://github.com/psf/black/issues/4052), `--line-ranges` might format
+extra lines outside of the ranges when ther are unformatted lines with the exact
+content. It also disables _Black_'s formatting stability check in `--safe` mode.
+```
+
 #### `--color` / `--no-color`
 
 Show (or do not show) colored diff. Only applies when `--diff` is given.

@@ -194,6 +194,7 @@ class Preview(Enum):
     allow_empty_first_line_before_new_block_or_comment = auto()
     single_line_format_skip_with_multiple_comments = auto()
     long_case_block_line_splitting = auto()
+    allow_form_feeds = auto()
 
 
 class Deprecated(UserWarning):

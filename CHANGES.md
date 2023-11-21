@@ -13,13 +13,16 @@
 ### Preview style
 
 - Prefer more equal signs before a break when splitting chained assignments (#4010)
-
+- Standalone form feed characters at the module level are no longer removed (#4021)
 - Additional cases of immediately nested tuples, lists, and dictionaries are now
   indented less (#4012)
 
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
+
+- `--line-ranges` now skips _Black_'s internal stability check in `--safe` mode. This
+  avoids a crash on rare inputs that have many unformatted same-content lines. (#4034)
 
 ### Packaging
 
@@ -43,7 +46,9 @@
 
 ### Integrations
 
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+- Enable 3.12 CI (#4035)
+- Build docker images in parallel (#4054)
+- Build docker images with 3.12 (#4055)
 
 ### Documentation
 
