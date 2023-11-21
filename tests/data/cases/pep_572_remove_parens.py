@@ -96,12 +96,10 @@ assert (foo := 42 - 12)
 foo(x=(y := f(x)))
 
 
-def foo(answer=(p := 42)):
-    ...
+def foo(answer=(p := 42)): ...
 
 
-def foo2(answer: (p := 42) = 5):
-    ...
+def foo2(answer: (p := 42) = 5): ...
 
 
 lambda: (x := 1)

@@ -114,8 +114,7 @@ def func_no_args():
     c
     if True:
         raise RuntimeError
-    if False:
-        ...
+    if False: ...
     for i in range(10):
         print(i)
         continue
@@ -158,10 +157,7 @@ def spaces_types(
     g: int = 1 if False else 2,
     h: str = "",
     i: str = r"",
-):
-    ...
-
-
+): ...
 def spaces2(result=_core.Value(None)):
     assert fut is self._read_fut, (fut, self._read_fut)
 

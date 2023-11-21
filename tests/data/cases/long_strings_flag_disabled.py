@@ -254,10 +254,12 @@ annotated_variable: Final = (
     + CONCATENATED
     + "using the '+' operator."
 )
-annotated_variable: Final = "This is a large string that has a type annotation attached to it. A type annotation should NOT stop a long string from being wrapped."
-annotated_variable: Literal[
-    "fakse_literal"
-] = "This is a large string that has a type annotation attached to it. A type annotation should NOT stop a long string from being wrapped."
+annotated_variable: Final = (
+    "This is a large string that has a type annotation attached to it. A type annotation should NOT stop a long string from being wrapped."
+)
+annotated_variable: Literal["fakse_literal"] = (
+    "This is a large string that has a type annotation attached to it. A type annotation should NOT stop a long string from being wrapped."
+)
 
 backslashes = "This is a really long string with \"embedded\" double quotes and 'single' quotes that also handles checking for an even number of backslashes \\"
 backslashes = "This is a really long string with \"embedded\" double quotes and 'single' quotes that also handles checking for an even number of backslashes \\\\"
