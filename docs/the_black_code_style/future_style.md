@@ -296,3 +296,14 @@ s = (  # Top comment
     # Bottom comment
 )
 ```
+
+=======
+
+### Form feed characters
+
+_Black_ will now retain form feed characters on otherwise empty lines at the module
+level. Only one form feed is retained for a group of consecutive empty lines. Where
+there are two empty lines in a row, the form feed will be placed on the second line.
+
+_Black_ already retained form feed literals inside a comment or inside a string. This
+remains the case.

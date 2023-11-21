@@ -222,6 +222,8 @@ class Driver:
             elif char == "\n":
                 # unexpected empty line
                 current_column = 0
+            elif char == "\f":
+                current_column = 0
             else:
                 # indent is finished
                 wait_for_nl = True

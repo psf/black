@@ -10,6 +10,7 @@ from black.nodes import (
     WHITESPACE,
     container_of,
     first_leaf_of,
+    make_simple_prefix,
     preceding_leaf,
     syms,
 )
@@ -44,6 +45,7 @@ class ProtoComment:
     value: str  # content of the comment
     newlines: int  # how many newlines before the comment
     consumed: int  # how many characters of the original leaf's prefix did we consume
+    form_feed: bool  # is there a form feed before the comment
 
 
 def generate_comments(leaf: LN) -> Iterator[Leaf]:
@@ -65,8 +67,12 @@ def generate_comments(leaf: LN) -> Iterator[Leaf]:
     Inline comments are emitted as regular token.COMMENT leaves.  Standalone
     are emitted with a fake STANDALONE_COMMENT token identifier.
     """
+    total_consumed = 0
     for pc in list_comments(leaf.prefix, is_endmarker=leaf.type == token.ENDMARKER):
-        yield Leaf(pc.type, pc.value, prefix="\n" * pc.newlines)
+        total_consumed = pc.consumed
+        prefix = make_simple_prefix(pc.newlines, pc.form_feed)
+        yield Leaf(pc.type, pc.value, prefix=prefix)
+    normalize_trailing_prefix(leaf, total_consumed)
 
 
 @lru_cache(maxsize=4096)
@@ -79,11 +85,14 @@ def list_comments(prefix: str, *, is_endmarker: bool) -> List[ProtoComment]:
     consumed = 0
     nlines = 0
     ignored_lines = 0
-    for index, line in enumerate(re.split("\r?\n", prefix)):
-        consumed += len(line) + 1  # adding the length of the split '\n'
-        line = line.lstrip()
+    form_feed = False
+    for index, full_line in enumerate(re.split("\r?\n", prefix)):
+        consumed += len(full_line) + 1  # adding the length of the split '\n'
+        line = full_line.lstrip()
         if not line:
             nlines += 1
+            if "\f" in full_line:
+                form_feed = True
         if not line.startswith("#"):
             # Escaped newlines outside of a comment are not really newlines at
             # all. We treat a single-line comment following an escaped newline
@@ -99,11 +108,31 @@ def list_comments(prefix: str, *, is_endmarker: bool) -> List[ProtoComment]:
         comment = make_comment(line)
         result.append(
             ProtoComment(
-                type=comment_type, value=comment, newlines=nlines, consumed=consumed
+                type=comment_type,
+                value=comment,
+                newlines=nlines,
+                consumed=consumed,
+                form_feed=form_feed,
             )
         )
+        form_feed = False
         nlines = 0
     return result
+
+
+def normalize_trailing_prefix(leaf: LN, total_consumed: int) -> None:
+    """Normalize the prefix that's left over after generating comments.
+
+    Note: don't use backslashes for formatting or you'll lose your voting rights.
+    """
+    remainder = leaf.prefix[total_consumed:]
+    if "\\" not in remainder:
+        nl_count = remainder.count("\n")
+        form_feed = "\f" in remainder and remainder.endswith("\n")
+        leaf.prefix = make_simple_prefix(nl_count, form_feed)
+        return
+
+    leaf.prefix = ""
 
 
 def make_comment(content: str) -> str:

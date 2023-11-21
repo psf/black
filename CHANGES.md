@@ -12,7 +12,7 @@
 
 ### Preview style
 
-<!-- Changes that affect Black's preview style -->
+- Standalone form feed characters at the module level are no longer removed (#4021)
 
 - Additional cases of immediately nested tuples, lists, and dictionaries are now
   indented less (#4012)

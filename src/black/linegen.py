@@ -149,7 +149,8 @@ class LineGenerator(Visitor[Line]):
                     self.current_line.append(comment)
                     yield from self.line()
 
-            normalize_prefix(node, inside_brackets=any_open_brackets)
+            if any_open_brackets:
+                node.prefix = ""
             if self.mode.string_normalization and node.type == token.STRING:
                 node.value = normalize_string_prefix(node.value)
                 node.value = normalize_string_quotes(node.value)
@@ -1035,8 +1036,6 @@ def bracket_split_build_line(
         result.inside_brackets = True
         result.depth += 1
         if leaves:
-            # Since body is a new indent level, remove spurious leading whitespace.
-            normalize_prefix(leaves[0], inside_brackets=True)
             # Ensure a trailing comma for imports and standalone function arguments, but
             # be careful not to add one after any comments or within type annotations.
             no_commas = (
@@ -1106,7 +1105,7 @@ def dont_increase_indentation(split_func: Transformer) -> Transformer:
         line: Line, features: Collection[Feature], mode: Mode
     ) -> Iterator[Line]:
         for split_line in split_func(line, features, mode):
-            normalize_prefix(split_line.leaves[0], inside_brackets=True)
+            split_line.leaves[0].prefix = ""
             yield split_line
 
     return split_wrapper
@@ -1248,24 +1247,6 @@ def standalone_comment_split(
 
     if current_line:
         yield current_line
-
-
-def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
-    """Leave existing extra newlines if not `inside_brackets`. Remove everything
-    else.
-
-    Note: don't use backslashes for formatting or you'll lose your voting rights.
-    """
-    if not inside_brackets:
-        spl = leaf.prefix.split("#")
-        if "\\" not in spl[0]:
-            nl_count = spl[-1].count("\n")
-            if len(spl) > 1:
-                nl_count -= 1
-            leaf.prefix = "\n" * nl_count
-            return
-
-    leaf.prefix = ""
 
 
 def normalize_invisible_parens(  # noqa: C901
