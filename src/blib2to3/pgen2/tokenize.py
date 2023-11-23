@@ -39,7 +39,6 @@ from typing import (
     Set,
     Tuple,
     Union,
-    cast,
 )
 
 from blib2to3.pgen2.grammar import Grammar
@@ -262,11 +261,9 @@ class Untokenizer:
     def untokenize(self, iterable: Iterable[TokenInfo]) -> str:
         for t in iterable:
             if len(t) == 2:
-                self.compat(cast(Tuple[int, str], t), iterable)
+                self.compat(t, iterable)
                 break
-            tok_type, token, start, end, line = cast(
-                Tuple[int, str, Coord, Coord, str], t
-            )
+            tok_type, token, start, end, line = t
             self.add_whitespace(start)
             self.tokens.append(token)
             self.prev_row, self.prev_col = end
