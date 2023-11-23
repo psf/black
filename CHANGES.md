@@ -12,8 +12,8 @@
 
 ### Preview style
 
+- Prefer more equal signs before a break when splitting chained assignments (#4010)
 - Standalone form feed characters at the module level are no longer removed (#4021)
-
 - Additional cases of immediately nested tuples, lists, and dictionaries are now
   indented less (#4012)
 

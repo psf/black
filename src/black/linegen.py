@@ -910,24 +910,32 @@ def _maybe_split_omitting_optional_parens(
         try:
             # The RHSResult Omitting Optional Parens.
             rhs_oop = _first_right_hand_split(line, omit=omit)
-            if not (
+            prefer_splitting_rhs_mode = (
                 Preview.prefer_splitting_right_hand_side_of_assignments in line.mode
-                # the split is right after `=`
-                and len(rhs.head.leaves) >= 2
-                and rhs.head.leaves[-2].type == token.EQUAL
-                # the left side of assignment contains brackets
-                and any(leaf.type in BRACKETS for leaf in rhs.head.leaves[:-1])
-                # the left side of assignment is short enough (the -1 is for the ending
-                # optional paren)
-                and is_line_short_enough(
-                    rhs.head, mode=replace(mode, line_length=mode.line_length - 1)
+            )
+            is_split_right_after_equal = (
+                len(rhs.head.leaves) >= 2 and rhs.head.leaves[-2].type == token.EQUAL
+            )
+            rhs_head_contains_brackets = any(
+                leaf.type in BRACKETS for leaf in rhs.head.leaves[:-1]
+            )
+            # the -1 is for the ending optional paren
+            rhs_head_short_enough = is_line_short_enough(
+                rhs.head, mode=replace(mode, line_length=mode.line_length - 1)
+            )
+            rhs_head_explode_blocked_by_magic_trailing_comma = (
+                rhs.head.magic_trailing_comma is None
+            )
+            if (
+                not (
+                    prefer_splitting_rhs_mode
+                    and is_split_right_after_equal
+                    and rhs_head_contains_brackets
+                    and rhs_head_short_enough
+                    and rhs_head_explode_blocked_by_magic_trailing_comma
                 )
-                # the left side of assignment won't explode further because of magic
-                # trailing comma
-                and rhs.head.magic_trailing_comma is None
-                # the split by omitting optional parens isn't preferred by some other
-                # reason
-                and not _prefer_split_rhs_oop(rhs_oop, mode)
+                # the omit optional parens split is preferred by some other reason
+                or _prefer_split_rhs_oop_over_rhs(rhs_oop, rhs, mode)
             ):
                 yield from _maybe_split_omitting_optional_parens(
                     rhs_oop, line, mode, features=features, omit=omit
@@ -935,8 +943,12 @@ def _maybe_split_omitting_optional_parens(
                 return
 
         except CannotSplit as e:
-            if not (
-                can_be_split(rhs.body) or is_line_short_enough(rhs.body, mode=mode)
+            # For chained assignments we want to use the previous successful split
+            if line.is_chained_assignment:
+                pass
+
+            elif not can_be_split(rhs.body) and not is_line_short_enough(
+                rhs.body, mode=mode
             ):
                 raise CannotSplit(
                     "Splitting failed, body is still too long and can't be split."
@@ -960,10 +972,22 @@ def _maybe_split_omitting_optional_parens(
             yield result
 
 
-def _prefer_split_rhs_oop(rhs_oop: RHSResult, mode: Mode) -> bool:
+def _prefer_split_rhs_oop_over_rhs(
+    rhs_oop: RHSResult, rhs: RHSResult, mode: Mode
+) -> bool:
     """
-    Returns whether we should prefer the result from a split omitting optional parens.
+    Returns whether we should prefer the result from a split omitting optional parens
+    (rhs_oop) over the original (rhs).
     """
+    # If we have multiple targets, we prefer more `=`s on the head vs pushing them to
+    # the body
+    rhs_head_equal_count = [leaf.type for leaf in rhs.head.leaves].count(token.EQUAL)
+    rhs_oop_head_equal_count = [leaf.type for leaf in rhs_oop.head.leaves].count(
+        token.EQUAL
+    )
+    if rhs_head_equal_count > 1 and rhs_head_equal_count > rhs_oop_head_equal_count:
+        return False
+
     has_closing_bracket_after_assign = False
     for leaf in reversed(rhs_oop.head.leaves):
         if leaf.type == token.EQUAL:
