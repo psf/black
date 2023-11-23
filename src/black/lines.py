@@ -684,7 +684,8 @@ class EmptyLineTracker:
                 return 0, 1
             return before, 1
 
-        # In preview mode, always allow blank lines, except right before a function docstring
+        # In preview mode, always allow blank lines, except right before a function
+        # docstring
         is_empty_first_line_ok = (
             Preview.allow_empty_first_line_in_block in current_line.mode
             and (
