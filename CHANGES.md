@@ -26,7 +26,7 @@
 
 ### Packaging
 
-- Upgrade to mypy 1.7.1 (#4049, #4069)
+- Upgrade to mypy 1.7.1 (#4049) (#4069)
 
 ### Parser
 
