@@ -345,19 +345,6 @@ def validate_regex(
     ),
 )
 @click.option(
-    "--include",
-    type=str,
-    default=DEFAULT_INCLUDES,
-    callback=validate_regex,
-    help=(
-        "A regular expression that matches files and directories that should be"
-        " included on recursive searches. An empty value means all files are included"
-        " regardless of the name. Use forward slashes for directories on all platforms"
-        " (Windows, too). Exclusions are calculated first, inclusions later."
-    ),
-    show_default=True,
-)
-@click.option(
     "--exclude",
     type=str,
     callback=validate_regex,
@@ -365,8 +352,8 @@ def validate_regex(
         "A regular expression that matches files and directories that should be"
         " excluded on recursive searches. An empty value means no paths are excluded."
         " Use forward slashes for directories on all platforms (Windows, too)."
-        " Exclusions are calculated first, inclusions later. [default:"
-        f" {DEFAULT_EXCLUDES}]"
+        " Defaults to excluding all paths listed in .gitignore. Changing this value"
+        f" will override the default. [default: {DEFAULT_EXCLUDES}]"
     ),
     show_default=False,
 )
@@ -376,7 +363,7 @@ def validate_regex(
     callback=validate_regex,
     help=(
         "Like --exclude, but adds additional files and directories on top of the"
-        " excluded ones. (Useful if you simply want to add to the default)"
+        " default .gitignore values instead of overriding them."
     ),
 )
 @click.option(
@@ -397,6 +384,20 @@ def validate_regex(
         "sure Black will respect --force-exclude option on some "
         "editors that rely on using stdin."
     ),
+)
+@click.option(
+    "--include",
+    type=str,
+    default=DEFAULT_INCLUDES,
+    callback=validate_regex,
+    help=(
+        "A regular expression that matches files and directories that should be"
+        " included on recursive searches. An empty value means all files are included"
+        " regardless of the name. Use forward slashes for directories on all platforms"
+        " (Windows, too). Overrides all exclusions, including from .gitignore and"
+        " command line options."
+    ),
+    show_default=True,
 )
 @click.option(
     "-W",

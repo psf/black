@@ -231,24 +231,17 @@ Because of our [stability policy](../the_black_code_style/index.md), this will g
 stable formatting, but still allow you to take advantage of improvements that do not
 affect formatting.
 
-#### `--include`
-
-A regular expression that matches files and directories that should be included on
-recursive searches. An empty value means all files are included regardless of the name.
-Use forward slashes for directories on all platforms (Windows, too). Exclusions are
-calculated first, inclusions later.
-
 #### `--exclude`
 
 A regular expression that matches files and directories that should be excluded on
 recursive searches. An empty value means no paths are excluded. Use forward slashes for
-directories on all platforms (Windows, too). Exclusions are calculated first, inclusions
-later.
+directories on all platforms (Windows, too). Defaults to excluding all paths listed in
+`.gitignore`. Changing this value will override the default.
 
 #### `--extend-exclude`
 
-Like `--exclude`, but adds additional files and directories on top of the excluded ones.
-Useful if you simply want to add to the default.
+Like `--exclude`, but adds additional files and directories on top of the default
+`.gitignore` values instead of overriding them.
 
 #### `--force-exclude`
 
@@ -260,6 +253,13 @@ programmatically on changed files, such as in a pre-commit hook or editor plugin
 
 The name of the file when passing it through stdin. Useful to make sure Black will
 respect the `--force-exclude` option on some editors that rely on using stdin.
+
+#### `--include`
+
+A regular expression that matches files and directories that should be included on
+recursive searches. An empty value means all files are included regardless of the name.
+Use forward slashes for directories on all platforms (Windows, too). Overrides all
+exclusions, including from `.gitignore` and command line options.
 
 #### `-W`, `--workers`
 
