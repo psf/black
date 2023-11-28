@@ -23,6 +23,7 @@
 
 - `--line-ranges` now skips _Black_'s internal stability check in `--safe` mode. This
   avoids a crash on rare inputs that have many unformatted same-content lines. (#4034)
+- Clarify some changelog entries (#4075)
 
 ### Packaging
 
