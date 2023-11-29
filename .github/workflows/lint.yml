@@ -1,4 +1,4 @@
-name: Lint
+name: Lint + format ourselves
 
 on: [push, pull_request]
 
@@ -26,12 +26,12 @@ jobs:
       - name: Set up latest Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: "*"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e '.[d]'
+          python -m pip install -e '.'
           python -m pip install tox
 
       - name: Run pre-commit hooks

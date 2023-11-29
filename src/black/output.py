@@ -4,8 +4,9 @@ The double calls are for patching purposes in tests.
 """
 
 import json
+import re
 import tempfile
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from click import echo, style
 from mypy_extensions import mypyc_attr
@@ -55,12 +56,28 @@ def ipynb_diff(a: str, b: str, a_name: str, b_name: str) -> str:
     return "".join(diff_lines)
 
 
+_line_pattern = re.compile(r"(.*?(?:\r\n|\n|\r|$))")
+
+
+def _splitlines_no_ff(source: str) -> List[str]:
+    """Split a string into lines ignoring form feed and other chars.
+
+    This mimics how the Python parser splits source code.
+
+    A simplified version of the function with the same name in Lib/ast.py
+    """
+    result = [match[0] for match in _line_pattern.finditer(source)]
+    if result[-1] == "":
+        result.pop(-1)
+    return result
+
+
 def diff(a: str, b: str, a_name: str, b_name: str) -> str:
     """Return a unified diff string between strings `a` and `b`."""
     import difflib
 
-    a_lines = a.splitlines(keepends=True)
-    b_lines = b.splitlines(keepends=True)
+    a_lines = _splitlines_no_ff(a)
+    b_lines = _splitlines_no_ff(b)
     diff_lines = []
     for line in difflib.unified_diff(
         a_lines, b_lines, fromfile=a_name, tofile=b_name, n=5

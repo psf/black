@@ -149,7 +149,8 @@ class LineGenerator(Visitor[Line]):
                     self.current_line.append(comment)
                     yield from self.line()
 
-            normalize_prefix(node, inside_brackets=any_open_brackets)
+            if any_open_brackets:
+                node.prefix = ""
             if self.mode.string_normalization and node.type == token.STRING:
                 node.value = normalize_string_prefix(node.value)
                 node.value = normalize_string_quotes(node.value)
@@ -817,25 +818,66 @@ def _first_right_hand_split(
     body_leaves.reverse()
     head_leaves.reverse()
 
-    if Preview.hug_parens_with_braces_and_square_brackets in line.mode:
-        is_unpacking = 1 if body_leaves[0].type in [token.STAR, token.DOUBLESTAR] else 0
-        if (
-            tail_leaves[0].type == token.RPAR
-            and tail_leaves[0].value
-            and tail_leaves[0].opening_bracket is head_leaves[-1]
-            and body_leaves[-1].type in [token.RBRACE, token.RSQB]
-            and body_leaves[-1].opening_bracket is body_leaves[is_unpacking]
+    body: Optional[Line] = None
+    if (
+        Preview.hug_parens_with_braces_and_square_brackets in line.mode
+        and tail_leaves[0].value
+        and tail_leaves[0].opening_bracket is head_leaves[-1]
+    ):
+        inner_body_leaves = list(body_leaves)
+        hugged_opening_leaves: List[Leaf] = []
+        hugged_closing_leaves: List[Leaf] = []
+        is_unpacking = body_leaves[0].type in [token.STAR, token.DOUBLESTAR]
+        unpacking_offset: int = 1 if is_unpacking else 0
+        while (
+            len(inner_body_leaves) >= 2 + unpacking_offset
+            and inner_body_leaves[-1].type in CLOSING_BRACKETS
+            and inner_body_leaves[-1].opening_bracket
+            is inner_body_leaves[unpacking_offset]
         ):
-            head_leaves = head_leaves + body_leaves[: 1 + is_unpacking]
-            tail_leaves = body_leaves[-1:] + tail_leaves
-            body_leaves = body_leaves[1 + is_unpacking : -1]
+            if unpacking_offset:
+                hugged_opening_leaves.append(inner_body_leaves.pop(0))
+                unpacking_offset = 0
+            hugged_opening_leaves.append(inner_body_leaves.pop(0))
+            hugged_closing_leaves.insert(0, inner_body_leaves.pop())
+
+        if hugged_opening_leaves and inner_body_leaves:
+            inner_body = bracket_split_build_line(
+                inner_body_leaves,
+                line,
+                hugged_opening_leaves[-1],
+                component=_BracketSplitComponent.body,
+            )
+            if (
+                line.mode.magic_trailing_comma
+                and inner_body_leaves[-1].type == token.COMMA
+            ):
+                should_hug = True
+            else:
+                line_length = line.mode.line_length - sum(
+                    len(str(leaf))
+                    for leaf in hugged_opening_leaves + hugged_closing_leaves
+                )
+                if is_line_short_enough(
+                    inner_body, mode=replace(line.mode, line_length=line_length)
+                ):
+                    # Do not hug if it fits on a single line.
+                    should_hug = False
+                else:
+                    should_hug = True
+            if should_hug:
+                body_leaves = inner_body_leaves
+                head_leaves.extend(hugged_opening_leaves)
+                tail_leaves = hugged_closing_leaves + tail_leaves
+                body = inner_body  # No need to re-calculate the body again later.
 
     head = bracket_split_build_line(
         head_leaves, line, opening_bracket, component=_BracketSplitComponent.head
     )
-    body = bracket_split_build_line(
-        body_leaves, line, opening_bracket, component=_BracketSplitComponent.body
-    )
+    if body is None:
+        body = bracket_split_build_line(
+            body_leaves, line, opening_bracket, component=_BracketSplitComponent.body
+        )
     tail = bracket_split_build_line(
         tail_leaves, line, opening_bracket, component=_BracketSplitComponent.tail
     )
@@ -868,24 +910,32 @@ def _maybe_split_omitting_optional_parens(
         try:
             # The RHSResult Omitting Optional Parens.
             rhs_oop = _first_right_hand_split(line, omit=omit)
-            if not (
+            prefer_splitting_rhs_mode = (
                 Preview.prefer_splitting_right_hand_side_of_assignments in line.mode
-                # the split is right after `=`
-                and len(rhs.head.leaves) >= 2
-                and rhs.head.leaves[-2].type == token.EQUAL
-                # the left side of assignment contains brackets
-                and any(leaf.type in BRACKETS for leaf in rhs.head.leaves[:-1])
-                # the left side of assignment is short enough (the -1 is for the ending
-                # optional paren)
-                and is_line_short_enough(
-                    rhs.head, mode=replace(mode, line_length=mode.line_length - 1)
+            )
+            is_split_right_after_equal = (
+                len(rhs.head.leaves) >= 2 and rhs.head.leaves[-2].type == token.EQUAL
+            )
+            rhs_head_contains_brackets = any(
+                leaf.type in BRACKETS for leaf in rhs.head.leaves[:-1]
+            )
+            # the -1 is for the ending optional paren
+            rhs_head_short_enough = is_line_short_enough(
+                rhs.head, mode=replace(mode, line_length=mode.line_length - 1)
+            )
+            rhs_head_explode_blocked_by_magic_trailing_comma = (
+                rhs.head.magic_trailing_comma is None
+            )
+            if (
+                not (
+                    prefer_splitting_rhs_mode
+                    and is_split_right_after_equal
+                    and rhs_head_contains_brackets
+                    and rhs_head_short_enough
+                    and rhs_head_explode_blocked_by_magic_trailing_comma
                 )
-                # the left side of assignment won't explode further because of magic
-                # trailing comma
-                and rhs.head.magic_trailing_comma is None
-                # the split by omitting optional parens isn't preferred by some other
-                # reason
-                and not _prefer_split_rhs_oop(rhs_oop, mode)
+                # the omit optional parens split is preferred by some other reason
+                or _prefer_split_rhs_oop_over_rhs(rhs_oop, rhs, mode)
             ):
                 yield from _maybe_split_omitting_optional_parens(
                     rhs_oop, line, mode, features=features, omit=omit
@@ -893,8 +943,12 @@ def _maybe_split_omitting_optional_parens(
                 return
 
         except CannotSplit as e:
-            if not (
-                can_be_split(rhs.body) or is_line_short_enough(rhs.body, mode=mode)
+            # For chained assignments we want to use the previous successful split
+            if line.is_chained_assignment:
+                pass
+
+            elif not can_be_split(rhs.body) and not is_line_short_enough(
+                rhs.body, mode=mode
             ):
                 raise CannotSplit(
                     "Splitting failed, body is still too long and can't be split."
@@ -918,10 +972,22 @@ def _maybe_split_omitting_optional_parens(
             yield result
 
 
-def _prefer_split_rhs_oop(rhs_oop: RHSResult, mode: Mode) -> bool:
+def _prefer_split_rhs_oop_over_rhs(
+    rhs_oop: RHSResult, rhs: RHSResult, mode: Mode
+) -> bool:
     """
-    Returns whether we should prefer the result from a split omitting optional parens.
+    Returns whether we should prefer the result from a split omitting optional parens
+    (rhs_oop) over the original (rhs).
     """
+    # If we have multiple targets, we prefer more `=`s on the head vs pushing them to
+    # the body
+    rhs_head_equal_count = [leaf.type for leaf in rhs.head.leaves].count(token.EQUAL)
+    rhs_oop_head_equal_count = [leaf.type for leaf in rhs_oop.head.leaves].count(
+        token.EQUAL
+    )
+    if rhs_head_equal_count > 1 and rhs_head_equal_count > rhs_oop_head_equal_count:
+        return False
+
     has_closing_bracket_after_assign = False
     for leaf in reversed(rhs_oop.head.leaves):
         if leaf.type == token.EQUAL:
@@ -994,8 +1060,6 @@ def bracket_split_build_line(
         result.inside_brackets = True
         result.depth += 1
         if leaves:
-            # Since body is a new indent level, remove spurious leading whitespace.
-            normalize_prefix(leaves[0], inside_brackets=True)
             # Ensure a trailing comma for imports and standalone function arguments, but
             # be careful not to add one after any comments or within type annotations.
             no_commas = (
@@ -1065,7 +1129,7 @@ def dont_increase_indentation(split_func: Transformer) -> Transformer:
         line: Line, features: Collection[Feature], mode: Mode
     ) -> Iterator[Line]:
         for split_line in split_func(line, features, mode):
-            normalize_prefix(split_line.leaves[0], inside_brackets=True)
+            split_line.leaves[0].prefix = ""
             yield split_line
 
     return split_wrapper
@@ -1207,24 +1271,6 @@ def standalone_comment_split(
 
     if current_line:
         yield current_line
-
-
-def normalize_prefix(leaf: Leaf, *, inside_brackets: bool) -> None:
-    """Leave existing extra newlines if not `inside_brackets`. Remove everything
-    else.
-
-    Note: don't use backslashes for formatting or you'll lose your voting rights.
-    """
-    if not inside_brackets:
-        spl = leaf.prefix.split("#")
-        if "\\" not in spl[0]:
-            nl_count = spl[-1].count("\n")
-            if len(spl) > 1:
-                nl_count -= 1
-            leaf.prefix = "\n" * nl_count
-            return
-
-    leaf.prefix = ""
 
 
 def normalize_invisible_parens(  # noqa: C901

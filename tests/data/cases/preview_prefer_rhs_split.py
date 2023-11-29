@@ -84,3 +84,24 @@ some_kind_of_instance.some_kind_of_map[a_key] = (
 ) or (
     isinstance(some_other_var, BaseClass) and table.something != table.some_other_thing
 )
+
+# Multiple targets
+a = b = (
+    ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+)
+
+a = b = c = d = e = f = g = (
+    hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
+) = i = j = (
+    kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+)
+
+a = (
+    bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+) = c
+
+a = (
+    bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+) = (
+    cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+) = ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd

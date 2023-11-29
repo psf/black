@@ -116,8 +116,7 @@ my_dict = {
 ### Improved multiline dictionary and list indentation for sole function parameter
 
 For better readability and less verticality, _Black_ now pairs parentheses ("(", ")")
-with braces ("{", "}") and square brackets ("[", "]") on the same line for single
-parameter function calls. For example:
+with braces ("{", "}") and square brackets ("[", "]") on the same line. For example:
 
 ```python
 foo(
@@ -127,6 +126,14 @@ foo(
         3,
     ]
 )
+
+nested_array = [
+    [
+        1,
+        2,
+        3,
+    ]
+]
 ```
 
 will be changed to:
@@ -137,6 +144,12 @@ foo([
     2,
     3,
 ])
+
+nested_array = [[
+    1,
+    2,
+    3,
+]]
 ```
 
 This also applies to list and dictionary unpacking:
@@ -283,3 +296,14 @@ s = (  # Top comment
     # Bottom comment
 )
 ```
+
+=======
+
+### Form feed characters
+
+_Black_ will now retain form feed characters on otherwise empty lines at the module
+level. Only one form feed is retained for a group of consecutive empty lines. Where
+there are two empty lines in a row, the form feed will be placed on the second line.
+
+_Black_ already retained form feed literals inside a comment or inside a string. This
+remains the case.

@@ -67,6 +67,10 @@ In a [configuration file](#configuration-via-a-file), you can write:
 target-version = ["py38", "py39", "py310", "py311"]
 ```
 
+By default, Black will infer target versions from the project metadata in
+`pyproject.toml`, specifically the `[project.requires-python]` field. If this does not
+yield conclusive results, Black will use per-file auto-detection.
+
 _Black_ uses this option to decide what grammar to use to parse your code. In addition,
 it may use it to decide what style to use. For example, support for a trailing comma
 after `*args` in a function call was added in Python 3.5, so _Black_ will add this comma
@@ -191,6 +195,12 @@ Example: `black --line-ranges=1-10 --line-ranges=21-30 test.py` will format line
 `1` to `10` and `21` to `30`.
 
 This option is mainly for editor integrations, such as "Format Selection".
+
+```{note}
+Due to [#4052](https://github.com/psf/black/issues/4052), `--line-ranges` might format
+extra lines outside of the ranges when ther are unformatted lines with the exact
+content. It also disables _Black_'s formatting stability check in `--safe` mode.
+```
 
 #### `--color` / `--no-color`
 
