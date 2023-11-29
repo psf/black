@@ -115,7 +115,7 @@ magics. Useful for formatting cells with custom python magics.
 
 #### `-x, --skip-source-first-line`
 
-Skip formatting the first line of the source code.
+Skip the first line of the source code.
 
 #### `-S, --skip-string-normalization`
 
@@ -297,8 +297,8 @@ error: cannot format src/black_primer/cli.py: Cannot parse: 5:6: mport asyncio
 #### `-v`, `--verbose`
 
 Emit messages about files that were not changed or were ignored due to exclusion
-patterns. If _Black_ is using a configuration file, a blue message detailing which one
-it is using will be emitted.
+patterns. If _Black_ is using a configuration file, a message detailing which one it is
+using will be emitted.
 
 ```console
 $ black src/ -v
@@ -438,8 +438,7 @@ refers to the path to your home directory. On Windows, this will be something li
 You can also explicitly specify the path to a particular file that you want with
 `--config`. In this situation _Black_ will not look for any other file.
 
-If you're running with `--verbose`, you will see a blue message if a file was found and
-used.
+If you're running with `--verbose`, you will see a message if a file was found and used.
 
 Please note `blackd` will not use `pyproject.toml` configuration.
 

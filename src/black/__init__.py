@@ -271,7 +271,7 @@ def validate_regex(
     "-x",
     "--skip-source-first-line",
     is_flag=True,
-    help="Skip formatting the first line of the source code.",
+    help="Skip the first line of the source code.",
 )
 @click.option(
     "-S",
@@ -428,8 +428,7 @@ def validate_regex(
     is_flag=True,
     help=(
         "Stop emitting all non-critical output. Error messages will still be emitted"
-        " (which can Error messages will still be emitted (which can silenced by"
-        " 2>/dev/null)."
+        " (which can silenced by 2>/dev/null)."
     ),
 )
 @click.option(
@@ -438,7 +437,7 @@ def validate_regex(
     is_flag=True,
     help=(
         "Emit messages about files that were not changed or were ignored due to"
-        " exclusion patterns. If Black is using a configuration file, a blue message"
+        " exclusion patterns. If Black is using a configuration file, a message"
         " detailing which one it is using will be emitted."
     ),
 )
