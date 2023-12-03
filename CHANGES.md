@@ -8,7 +8,8 @@
 
 ### Stable style
 
-<!-- Changes that affect Black's stable style -->
+- Fix bug where `# fmt: off` automatically dedents even when it is not within the
+  specified line range. (#4084)
 
 ### Preview style
 
