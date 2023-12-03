@@ -162,7 +162,7 @@ def make_comment(content: str) -> str:
 
 
 def normalize_fmt_off(
-        node: Node, mode: Mode, lines: Collection[Tuple[int, int]]
+    node: Node, mode: Mode, lines: Collection[Tuple[int, int]]
 ) -> None:
     """Convert content between `# fmt: off`/`# fmt: on` into standalone comments."""
     try_again = True
@@ -171,7 +171,7 @@ def normalize_fmt_off(
 
 
 def convert_one_fmt_off_pair(
-        node: Node, mode: Mode, lines: Collection[Tuple[int, int]]
+    node: Node, mode: Mode, lines: Collection[Tuple[int, int]]
 ) -> bool:
     """Convert content of a single `# fmt: off`/`# fmt: on` into a standalone comment.
 
