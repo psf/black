@@ -172,7 +172,7 @@ class _TopLevelStatementsVisitor(Visitor[None]):
     A node visitor that converts unchanged top-level statements to
     STANDALONE_COMMENT.
 
-    This is used in addition to _convert_unchanged_lines_by_flatterning, to
+    This is used in addition to _convert_unchanged_line_by_line, to
     speed up formatting when there are unchanged top-level
     classes/functions/statements.
     """
@@ -302,7 +302,7 @@ def _convert_node_to_standalone_comment(node: LN) -> None:
     index = node.remove()
     if index is not None:
         # Remove the '\n', as STANDALONE_COMMENT will have '\n' appended when
-        # genearting the formatted code.
+        # generating the formatted code.
         value = str(node)[:-1]
         parent.insert_child(
             index,
