@@ -1180,7 +1180,7 @@ def _format_str_once(
         for feature in {Feature.PARENTHESIZED_CONTEXT_MANAGERS}
         if supports_feature(versions, feature)
     }
-    normalize_fmt_off(src_node, mode)
+    normalize_fmt_off(src_node, mode, lines)
     if lines:
         # This should be called after normalize_fmt_off.
         convert_unchanged_lines(src_node, lines)
