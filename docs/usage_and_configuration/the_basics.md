@@ -245,13 +245,13 @@ affect formatting.
 
 A regular expression that matches files and directories that should be excluded on
 recursive searches. An empty value means no paths are excluded. Use forward slashes for
-directories on all platforms (Windows, too). Defaults to excluding all paths listed in
-`.gitignore`. Changing this value will override the default.
+directories on all platforms (Windows, too). By default, Black also ignores all paths
+listed in `.gitignore`. Changing this value will override all default exclusions.
 
 #### `--extend-exclude`
 
-Like `--exclude`, but adds additional files and directories on top of the default
-`.gitignore` values instead of overriding them.
+Like `--exclude`, but adds additional files and directories on top of the default values
+instead of overriding them.
 
 #### `--force-exclude`
 

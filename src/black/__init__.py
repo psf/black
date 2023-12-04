@@ -352,8 +352,8 @@ def validate_regex(
         "A regular expression that matches files and directories that should be"
         " excluded on recursive searches. An empty value means no paths are excluded."
         " Use forward slashes for directories on all platforms (Windows, too)."
-        " Defaults to excluding all paths listed in .gitignore. Changing this value"
-        f" will override the default. [default: {DEFAULT_EXCLUDES}]"
+        " By default, Black also ignores all paths listed in .gitignore. Changing this"
+        f" value will override all default exclusions. [default: {DEFAULT_EXCLUDES}]"
     ),
     show_default=False,
 )
@@ -363,7 +363,7 @@ def validate_regex(
     callback=validate_regex,
     help=(
         "Like --exclude, but adds additional files and directories on top of the"
-        " default .gitignore values instead of overriding them."
+        " default values instead of overriding them."
     ),
 )
 @click.option(
