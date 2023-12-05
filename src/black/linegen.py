@@ -744,7 +744,7 @@ def left_hand_split(
             if leaf.type in OPENING_BRACKETS:
                 matching_bracket = leaf
                 current_leaves = body_leaves
-    if not matching_bracket:
+    if not matching_bracket or not tail_leaves:
         raise CannotSplit("No brackets found")
 
     head = bracket_split_build_line(
