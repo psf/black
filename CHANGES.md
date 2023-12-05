@@ -17,6 +17,7 @@
 - Standalone form feed characters at the module level are no longer removed (#4021)
 - Additional cases of immediately nested tuples, lists, and dictionaries are now
   indented less (#4012)
+- Fix crash in preview mode when using a short `--line-length` (#4086)
 
 ### Configuration
 
