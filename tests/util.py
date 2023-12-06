@@ -46,6 +46,7 @@ class TestCaseArgs:
     fast: bool = False
     minimum_version: Optional[Tuple[int, int]] = None
     lines: Collection[Tuple[int, int]] = ()
+    no_preview_line_length_1: bool = False
 
 
 def _assert_format_equal(expected: str, actual: str) -> None:
@@ -96,6 +97,7 @@ def assert_format(
     fast: bool = False,
     minimum_version: Optional[Tuple[int, int]] = None,
     lines: Collection[Tuple[int, int]] = (),
+    no_preview_line_length_1: bool = False,
 ) -> None:
     """Convenience function to check that Black formats as expected.
 
@@ -124,21 +126,28 @@ def assert_format(
             f"Black crashed formatting this case in {text} mode."
         ) from e
     # Similarly, setting line length to 1 is a good way to catch
-    # stability bugs. But only in non-preview mode because preview mode
-    # currently has a lot of line length 1 bugs.
-    try:
-        _assert_format_inner(
-            source,
-            None,
-            replace(mode, preview=False, line_length=1),
-            fast=fast,
-            minimum_version=minimum_version,
-            lines=lines,
-        )
-    except Exception as e:
-        raise FormatFailure(
-            "Black crashed formatting this case with line-length set to 1."
-        ) from e
+    # stability bugs. Some tests are known to be broken in preview mode with line length
+    # of 1 though, and have marked that with a flag --no-preview-line-length-1
+    preview_modes = [False]
+    if not no_preview_line_length_1:
+        preview_modes.append(True)
+
+    for preview_mode in preview_modes:
+
+        try:
+            _assert_format_inner(
+                source,
+                None,
+                replace(mode, preview=preview_mode, line_length=1),
+                fast=fast,
+                minimum_version=minimum_version,
+                lines=lines,
+            )
+        except Exception as e:
+            text = "preview" if preview_mode else "non-preview"
+            raise FormatFailure(
+                f"Black crashed formatting this case in {text} mode with line-length=1."
+            ) from e
 
 
 def _assert_format_inner(
@@ -246,6 +255,15 @@ def get_flags_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument("--line-ranges", action="append")
+    parser.add_argument(
+        "--no-preview-line-length-1",
+        default=False,
+        action="store_true",
+        help=(
+            "Don't run in preview mode with --line-length=1, as that's known to cause a"
+            " crash"
+        ),
+    )
     return parser
 
 
@@ -266,7 +284,11 @@ def parse_mode(flags_line: str) -> TestCaseArgs:
     else:
         lines = []
     return TestCaseArgs(
-        mode=mode, fast=args.fast, minimum_version=args.minimum_version, lines=lines
+        mode=mode,
+        fast=args.fast,
+        minimum_version=args.minimum_version,
+        lines=lines,
+        no_preview_line_length_1=args.no_preview_line_length_1,
     )
 
 
