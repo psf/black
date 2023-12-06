@@ -144,7 +144,7 @@ def assert_format(
                 lines=lines,
             )
         except Exception as e:
-            text = "preview" if mode.preview else "non-preview"
+            text = "preview" if preview_mode else "non-preview"
             raise FormatFailure(
                 f"Black crashed formatting this case in {text} mode with line-length=1."
             ) from e
