@@ -125,23 +125,6 @@ func([x for x in "short line"])
 func([x for x in "long line long line long line long line long line long line long line"])
 func([x for x in [x for x in "long line long line long line long line long line long line long line"]])
 
-func({"short line"})
-func({"long line", "long long line", "long long long line", "long long long long line", "long long long long long line"})
-func({{"long line", "long long line", "long long long line", "long long long long line", "long long long long long line"}})
-func(("long line", "long long line", "long long long line", "long long long long line", "long long long long long line"))
-func((("long line", "long long line", "long long long line", "long long long long line", "long long long long long line")))
-func([["long line", "long long line", "long long long line", "long long long long line", "long long long long long line"]])
-
-# Do not hug if the argument fits on a single line.
-func({"fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line"})
-func(("fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line"))
-func(["fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line"])
-func(**{"fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit---"})
-func(*("fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit----"))
-array = [{"fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line"}]
-array = [("fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line")]
-array = [["fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line"]]
-
 foooooooooooooooooooo(
     [{c: n + 1 for c in range(256)} for n in range(100)] + [{}], {size}
 )
@@ -151,13 +134,10 @@ baaaaaaaaaaaaar(
 )
 
 nested_mapping = {"key": [{"a very long key 1": "with a very long value", "a very long key 2": "with a very long value"}]}
-nested_array = [[["long line", "long long line", "long long long line", "long long long long line", "long long long long long line"]]]
 explicit_exploding = [[["short", "line",],],]
 single_item_do_not_explode = Context({
     "version": get_docs_version(),
 })
-
-foo(*["long long long long long line", "long long long long long line", "long long long long long line"])
 
 foo(*[str(i) for i in range(100000000000000000000000000000000000000000000000000000000000)])
 
@@ -310,69 +290,6 @@ func([
     ]
 ])
 
-func({"short line"})
-func({
-    "long line",
-    "long long line",
-    "long long long line",
-    "long long long long line",
-    "long long long long long line",
-})
-func({{
-    "long line",
-    "long long line",
-    "long long long line",
-    "long long long long line",
-    "long long long long long line",
-}})
-func((
-    "long line",
-    "long long line",
-    "long long long line",
-    "long long long long line",
-    "long long long long long line",
-))
-func(((
-    "long line",
-    "long long line",
-    "long long long line",
-    "long long long long line",
-    "long long long long long line",
-)))
-func([[
-    "long line",
-    "long long line",
-    "long long long line",
-    "long long long long line",
-    "long long long long long line",
-]])
-
-# Do not hug if the argument fits on a single line.
-func(
-    {"fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line"}
-)
-func(
-    ("fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line")
-)
-func(
-    ["fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line"]
-)
-func(
-    **{"fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit---"}
-)
-func(
-    *("fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit----")
-)
-array = [
-    {"fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line"}
-]
-array = [
-    ("fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line")
-]
-array = [
-    ["fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line"]
-]
-
 foooooooooooooooooooo(
     [{c: n + 1 for c in range(256)} for n in range(100)] + [{}], {size}
 )
@@ -387,13 +304,6 @@ nested_mapping = {
         "a very long key 2": "with a very long value",
     }]
 }
-nested_array = [[[
-    "long line",
-    "long long line",
-    "long long long line",
-    "long long long long line",
-    "long long long long long line",
-]]]
 explicit_exploding = [
     [
         [
@@ -405,12 +315,6 @@ explicit_exploding = [
 single_item_do_not_explode = Context({
     "version": get_docs_version(),
 })
-
-foo(*[
-    "long long long long long line",
-    "long long long long long line",
-    "long long long long long line",
-])
 
 foo(*[
     str(i) for i in range(100000000000000000000000000000000000000000000000000000000000)
