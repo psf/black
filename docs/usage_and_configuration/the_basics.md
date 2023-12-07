@@ -266,7 +266,7 @@ instead of overriding them.
 Like `--exclude`, but files and directories matching this regex will be excluded even
 when they are passed explicitly as arguments. This is useful when invoking Black
 programmatically on changed files, such as in a pre-commit hook or editor plugin.
-        
+
 #### `--stdin-filename`
 
 The name of the file when passing it through stdin. Useful to make sure Black will
