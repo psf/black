@@ -26,12 +26,12 @@ else:
 if version_specifier:
     req = f"black{extra_deps}{version_specifier}"
 else:
-    describe_name = ""
     with open(ACTION_PATH / ".git_archival.txt", encoding="utf-8") as fp:
-        for line in fp:
-            if line.startswith("describe-name: "):
-                describe_name = line[len("describe-name: ") :].rstrip()
-                break
+        prefix = "describe-name: "
+        describe_name = "".join(
+            filter(lambda x: x.startswith(prefix), fp)
+        ).split(maxsplit=1)
+
     if not describe_name:
         print("::error::Failed to detect action version.", file=sys.stderr, flush=True)
         sys.exit(1)

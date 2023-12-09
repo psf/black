@@ -63,17 +63,18 @@ def find_project_root(
     if not srcs:
         srcs = [str(Path.cwd().resolve())]
 
-    path_srcs = [Path(Path.cwd(), src).resolve() for src in srcs]
+    src_parents = list()
+    for src in srcs:
+        path = Path(Path.cwd(), src).resolve()
 
-    # A list of lists of parents for each 'src'. 'src' is included as a
-    # "parent" of itself if it is a directory
-    src_parents = [
-        list(path.parents) + ([path] if path.is_dir() else []) for path in path_srcs
-    ]
+        # `src` is included as a `parent` of itself if it is a directory.
+        parents = list(path.parents) + ([path] if path.is_dir() else [])
+        parents_in_set = set(parents)
+        src_parents.append(parents_in_set)
 
     common_base = max(
-        set.intersection(*(set(parents) for parents in src_parents)),
-        key=lambda path: path.parts,
+        set.intersection(*(src_parents)),
+        key=lambda path: path.parts
     )
 
     for directory in (common_base, *common_base.parents):
