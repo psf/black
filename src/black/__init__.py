@@ -300,6 +300,15 @@ def validate_regex(
     ),
 )
 @click.option(
+    "--unstable",
+    is_flag=True,
+    help=(
+        "Enable potentially disruptive style changes that have known bugs or are not"
+        " currently expected to make it into the stable style Black's next major"
+        " release. Implies --preview."
+    ),
+)
+@click.option(
     "--check",
     is_flag=True,
     help=(
@@ -491,6 +500,7 @@ def main(  # noqa: C901
     skip_magic_trailing_comma: bool,
     experimental_string_processing: bool,
     preview: bool,
+    unstable: bool,
     quiet: bool,
     verbose: bool,
     required_version: Optional[str],
@@ -579,6 +589,7 @@ def main(  # noqa: C901
         magic_trailing_comma=not skip_magic_trailing_comma,
         experimental_string_processing=experimental_string_processing,
         preview=preview,
+        unstable=unstable,
         python_cell_magics=set(python_cell_magics),
     )
 

@@ -197,6 +197,11 @@ class Preview(Enum):
     allow_form_feeds = auto()
 
 
+UNSTABLE_FEATURES: Set[Preview] = {
+    Preview.string_processing,
+}
+
+
 class Deprecated(UserWarning):
     """Visible deprecation warning."""
 
@@ -213,6 +218,7 @@ class Mode:
     experimental_string_processing: bool = False
     python_cell_magics: Set[str] = field(default_factory=set)
     preview: bool = False
+    unstable: bool = False
 
     def __post_init__(self) -> None:
         if self.experimental_string_processing:
@@ -226,12 +232,15 @@ class Mode:
         """
         Provide `Preview.FEATURE in Mode` syntax that mirrors the ``preview`` flag.
 
-        The argument is not checked and features are not differentiated.
-        They only exist to make development easier by clarifying intent.
+        In unstable mode, all features are enabled. In preview mode, all features
+        except those in UNSTABLE_FEATURES are enabled. For legacy reasons, the
+        string_processing feature has its own flag, which is deprecated.
         """
-        if feature is Preview.string_processing:
-            return self.preview or self.experimental_string_processing
-        return self.preview
+        if self.unstable:
+            return True
+        if feature is Preview.string_processing and self.experimental_string_processing:
+            return True
+        return self.preview and feature not in UNSTABLE_FEATURES
 
     def get_cache_key(self) -> str:
         if self.target_versions:

@@ -851,7 +851,7 @@ def is_line_short_enough(  # noqa: C901
     if not line_str:
         line_str = line_to_string(line)
 
-    width = str_width if mode.preview else len
+    width = str_width if Preview.string_processing in mode else len
 
     if Preview.multiline_string_handling not in mode:
         return (

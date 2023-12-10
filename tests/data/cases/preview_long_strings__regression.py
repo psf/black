@@ -1,4 +1,4 @@
-# flags: --preview
+# flags: --unstable
 class A:
     def foo():
         result = type(message)("")

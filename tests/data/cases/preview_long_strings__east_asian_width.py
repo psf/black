@@ -1,4 +1,4 @@
-# flags: --preview
+# flags: --unstable
 # The following strings do not have not-so-many chars, but are long enough
 # when these are rendered in a monospace font (if the renderer respects
 # Unicode East Asian Width properties).

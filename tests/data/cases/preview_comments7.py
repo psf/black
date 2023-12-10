@@ -1,4 +1,4 @@
-# flags: --preview
+# flags: --unstable
 from .config import (
     Any,
     Bool,

@@ -1,4 +1,4 @@
-# flags: --preview
+# flags: --unstable
 ("" % a) ** 2
 ("" % a)[0]
 ("" % a)()
