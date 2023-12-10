@@ -235,25 +235,26 @@ def validate_regex(
     callback=target_version_option_callback,
     multiple=True,
     help=(
-        "Python versions that should be supported by Black's output. By default, Black"
-        " will try to infer this from the project metadata in pyproject.toml. If this"
-        " does not yield conclusive results, Black will use per-file auto-detection."
+        "Python versions that should be supported by Black's output. You should"
+        " include all versions that your code supports. By default, Black will infer"
+        " target versions from the project metadata in pyproject.toml. If this does"
+        " not yield conclusive results, Black will use per-file auto-detection."
     ),
 )
 @click.option(
     "--pyi",
     is_flag=True,
     help=(
-        "Format all input files like typing stubs regardless of file extension (useful"
-        " when piping source on standard input)."
+        "Format all input files like typing stubs regardless of file extension. This"
+        " is useful when piping source on standard input."
     ),
 )
 @click.option(
     "--ipynb",
     is_flag=True,
     help=(
-        "Format all input files like Jupyter Notebooks regardless of file extension "
-        "(useful when piping source on standard input)."
+        "Format all input files like Jupyter Notebooks regardless of file extension."
+        "This is useful when piping source on standard input."
     ),
 )
 @click.option(
@@ -310,14 +311,22 @@ def validate_regex(
 @click.option(
     "--diff",
     is_flag=True,
-    help="Don't write the files back, just output a diff for each file on stdout.",
+    help=(
+        "Don't write the files back, just output a diff to indicate what changes"
+        " Black would've made. They are printed to stdout so capturing them is simple."
+    ),
+)
+@click.option(
+    "--color/--no-color",
+    is_flag=True,
+    help="Show (or do not show) colored diff. Only applies when --diff is given.",
 )
 @click.option(
     "--line-ranges",
     multiple=True,
     metavar="START-END",
     help=(
-        "When specified, _Black_ will try its best to only format these lines. This"
+        "When specified, Black will try its best to only format these lines. This"
         " option can be specified multiple times, and a union of the lines will be"
         " formatted. Each range must be specified as two integers connected by a `-`:"
         " `<START>-<END>`. The `<START>` and `<END>` integer indices are 1-based and"
@@ -326,22 +335,66 @@ def validate_regex(
     default=(),
 )
 @click.option(
-    "--color/--no-color",
-    is_flag=True,
-    help="Show colored diff. Only applies when `--diff` is given.",
-)
-@click.option(
     "--fast/--safe",
     is_flag=True,
-    help="If --fast given, skip temporary sanity checks. [default: --safe]",
+    help=(
+        "By default, Black performs an AST safety check after formatting your code."
+        " The --fast flag turns off this check and the --safe flag explicitly enables"
+        " it. [default: --safe]"
+    ),
 )
 @click.option(
     "--required-version",
     type=str,
     help=(
-        "Require a specific version of Black to be running (useful for unifying results"
-        " across many environments e.g. with a pyproject.toml file). It can be"
-        " either a major version number or an exact version."
+        "Require a specific version of Black to be running. This is useful for"
+        " ensuring that all contributors to your project are using the same"
+        " version, because different versions of Black may format code a little"
+        " differently. This option can be set in a configuration file for consistent"
+        " results across environments."
+    ),
+)
+@click.option(
+    "--exclude",
+    type=str,
+    callback=validate_regex,
+    help=(
+        "A regular expression that matches files and directories that should be"
+        " excluded on recursive searches. An empty value means no paths are excluded."
+        " Use forward slashes for directories on all platforms (Windows, too)."
+        " By default, Black also ignores all paths listed in .gitignore. Changing this"
+        f" value will override all default exclusions. [default: {DEFAULT_EXCLUDES}]"
+    ),
+    show_default=False,
+)
+@click.option(
+    "--extend-exclude",
+    type=str,
+    callback=validate_regex,
+    help=(
+        "Like --exclude, but adds additional files and directories on top of the"
+        " default values instead of overriding them."
+    ),
+)
+@click.option(
+    "--force-exclude",
+    type=str,
+    callback=validate_regex,
+    help=(
+        "Like --exclude, but files and directories matching this regex will be excluded"
+        " even when they are passed explicitly as arguments. This is useful when"
+        " invoking Black programmatically on changed files, such as in a pre-commit"
+        " hook or editor plugin."
+    ),
+)
+@click.option(
+    "--stdin-filename",
+    type=str,
+    is_eager=True,
+    help=(
+        "The name of the file when passing it through stdin. Useful to make sure Black"
+        " will respect the --force-exclude option on some editors that rely on using"
+        " stdin."
     ),
 )
 @click.option(
@@ -353,50 +406,10 @@ def validate_regex(
         "A regular expression that matches files and directories that should be"
         " included on recursive searches. An empty value means all files are included"
         " regardless of the name. Use forward slashes for directories on all platforms"
-        " (Windows, too). Exclusions are calculated first, inclusions later."
+        " (Windows, too). Overrides all exclusions, including from .gitignore and"
+        " command line options."
     ),
     show_default=True,
-)
-@click.option(
-    "--exclude",
-    type=str,
-    callback=validate_regex,
-    help=(
-        "A regular expression that matches files and directories that should be"
-        " excluded on recursive searches. An empty value means no paths are excluded."
-        " Use forward slashes for directories on all platforms (Windows, too)."
-        " Exclusions are calculated first, inclusions later. [default:"
-        f" {DEFAULT_EXCLUDES}]"
-    ),
-    show_default=False,
-)
-@click.option(
-    "--extend-exclude",
-    type=str,
-    callback=validate_regex,
-    help=(
-        "Like --exclude, but adds additional files and directories on top of the"
-        " excluded ones. (Useful if you simply want to add to the default)"
-    ),
-)
-@click.option(
-    "--force-exclude",
-    type=str,
-    callback=validate_regex,
-    help=(
-        "Like --exclude, but files and directories matching this regex will be "
-        "excluded even when they are passed explicitly as arguments."
-    ),
-)
-@click.option(
-    "--stdin-filename",
-    type=str,
-    is_eager=True,
-    help=(
-        "The name of the file when passing it through stdin. Useful to make "
-        "sure Black will respect --force-exclude option on some "
-        "editors that rely on using stdin."
-    ),
 )
 @click.option(
     "-W",
@@ -404,8 +417,10 @@ def validate_regex(
     type=click.IntRange(min=1),
     default=None,
     help=(
-        "Number of parallel workers [default: BLACK_NUM_WORKERS environment variable "
-        "or number of CPUs in the system]"
+        "When Black formats multiple files, it may use a process pool to speed up"
+        " formatting. This option controls the number of parallel workers. This can"
+        " also be specified via the BLACK_NUM_WORKERS environment variable. Defaults"
+        " to the number of CPUs in the system."
     ),
 )
 @click.option(
@@ -413,8 +428,8 @@ def validate_regex(
     "--quiet",
     is_flag=True,
     help=(
-        "Don't emit non-error messages to stderr. Errors are still emitted; silence"
-        " those with 2>/dev/null."
+        "Stop emitting all non-critical output. Error messages will still be emitted"
+        " (which can silenced by 2>/dev/null)."
     ),
 )
 @click.option(
@@ -422,8 +437,9 @@ def validate_regex(
     "--verbose",
     is_flag=True,
     help=(
-        "Also emit messages to stderr about files that were not changed or were ignored"
-        " due to exclusion patterns."
+        "Emit messages about files that were not changed or were ignored due to"
+        " exclusion patterns. If Black is using a configuration file, a message"
+        " detailing which one it is using will be emitted."
     ),
 )
 @click.version_option(
@@ -454,7 +470,7 @@ def validate_regex(
     ),
     is_eager=True,
     callback=read_pyproject_toml,
-    help="Read configuration from FILE path.",
+    help="Read configuration options from a configuration file.",
 )
 @click.pass_context
 def main(  # noqa: C901
@@ -1180,7 +1196,7 @@ def _format_str_once(
         for feature in {Feature.PARENTHESIZED_CONTEXT_MANAGERS}
         if supports_feature(versions, feature)
     }
-    normalize_fmt_off(src_node, mode)
+    normalize_fmt_off(src_node, mode, lines)
     if lines:
         # This should be called after normalize_fmt_off.
         convert_unchanged_lines(src_node, lines)

@@ -1,7 +1,7 @@
 import re
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Final, Iterator, List, Optional, Union
+from typing import Collection, Final, Iterator, List, Optional, Tuple, Union
 
 from black.mode import Mode, Preview
 from black.nodes import (
@@ -161,14 +161,18 @@ def make_comment(content: str) -> str:
     return "#" + content
 
 
-def normalize_fmt_off(node: Node, mode: Mode) -> None:
+def normalize_fmt_off(
+    node: Node, mode: Mode, lines: Collection[Tuple[int, int]]
+) -> None:
     """Convert content between `# fmt: off`/`# fmt: on` into standalone comments."""
     try_again = True
     while try_again:
-        try_again = convert_one_fmt_off_pair(node, mode)
+        try_again = convert_one_fmt_off_pair(node, mode, lines)
 
 
-def convert_one_fmt_off_pair(node: Node, mode: Mode) -> bool:
+def convert_one_fmt_off_pair(
+    node: Node, mode: Mode, lines: Collection[Tuple[int, int]]
+) -> bool:
     """Convert content of a single `# fmt: off`/`# fmt: on` into a standalone comment.
 
     Returns True if a pair was converted.
@@ -213,7 +217,18 @@ def convert_one_fmt_off_pair(node: Node, mode: Mode) -> bool:
                     prefix[:previous_consumed] + "\n" * comment.newlines
                 )
             hidden_value = "".join(str(n) for n in ignored_nodes)
+            comment_lineno = leaf.lineno - comment.newlines
             if comment.value in FMT_OFF:
+                fmt_off_prefix = ""
+                if len(lines) > 0 and not any(
+                    comment_lineno >= line[0] and comment_lineno <= line[1]
+                    for line in lines
+                ):
+                    # keeping indentation of comment by preserving original whitespaces.
+                    fmt_off_prefix = prefix.split(comment.value)[0]
+                    if "\n" in fmt_off_prefix:
+                        fmt_off_prefix = fmt_off_prefix.split("\n")[-1]
+                standalone_comment_prefix += fmt_off_prefix
                 hidden_value = comment.value + "\n" + hidden_value
             if _contains_fmt_skip_comment(comment.value, mode):
                 hidden_value += "  " + comment.value

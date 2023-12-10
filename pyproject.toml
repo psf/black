@@ -121,7 +121,7 @@ macos-max-compat = true
 enable-by-default = false
 dependencies = [
   "hatch-mypyc>=0.16.0",
-  "mypy==1.6.1",
+  "mypy==1.7.1",
   "click==8.1.3",  # avoid https://github.com/pallets/click/issues/2558
 ]
 require-runtime-dependencies = true
@@ -150,7 +150,7 @@ build-verbosity = 1
 # - Architecture (64-bit only): amd64 / x86_64, universal2, and arm64
 # - OS: Linux (no musl), Windows, and macOS
 build = "cp3*"
-skip = ["*-manylinux_i686", "*-musllinux_*", "*-win32", "pp*", "cp312-*"]
+skip = ["*-manylinux_i686", "*-musllinux_*", "*-win32", "pp*"]
 # This is the bare minimum needed to run the test suite. Pulling in the full
 # test_requirements.txt would download a bunch of other packages not necessary
 # here and would slow down the testing step a fair bit.
@@ -187,7 +187,7 @@ CC = "clang"
 build-frontend = { name = "build", args = ["--no-isolation"] }
 # Unfortunately, hatch doesn't respect MACOSX_DEPLOYMENT_TARGET
 before-build = [
-    "python -m pip install 'hatchling==1.18.0' hatch-vcs hatch-fancy-pypi-readme 'hatch-mypyc>=0.16.0' 'mypy==1.6.1' 'click==8.1.3'",
+    "python -m pip install 'hatchling==1.18.0' hatch-vcs hatch-fancy-pypi-readme 'hatch-mypyc>=0.16.0' 'mypy==1.7.1' 'click==8.1.3'",
     """sed -i '' -e "600,700s/'10_16'/os.environ['MACOSX_DEPLOYMENT_TARGET'].replace('.', '_')/" $(python -c 'import hatchling.builders.wheel as h; print(h.__file__)') """,
 ]
 
