@@ -196,7 +196,7 @@ class Line:
         )
 
     @property
-    def is_triple_quoted_string(self) -> bool:
+    def _is_triple_quoted_string(self) -> bool:
         """Is the line a triple quoted string?"""
         if not self or self.leaves[0].type != token.STRING:
             return False
@@ -212,7 +212,9 @@ class Line:
     @property
     def is_docstring(self) -> bool:
         """Is the line a docstring?"""
-        return bool(self) and is_docstring(self.leaves[0])
+        if Preview.format_module_docstring not in self.mode:
+            return self._is_triple_quoted_string
+        return bool(self) and is_docstring(self.leaves[0], self.mode)
 
     @property
     def is_chained_assignment(self) -> bool:
@@ -699,7 +701,7 @@ class EmptyLineTracker:
         is_empty_first_line_ok = (
             Preview.allow_empty_first_line_in_block in current_line.mode
             and (
-                not is_docstring(current_line.leaves[0])
+                not is_docstring(current_line.leaves[0], current_line.mode)
                 or (
                     self.previous_line
                     and self.previous_line.leaves[0]

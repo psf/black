@@ -20,6 +20,7 @@
 - Allow empty lines at the beginning of all blocks, except immediately before a
   docstring (#4060)
 - Fix crash in preview mode when using a short `--line-length` (#4086)
+- Format module docstrings the same as class and function docstrings (#4095)
 
 ### Configuration
 
