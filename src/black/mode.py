@@ -236,6 +236,7 @@ class Mode:
         except those in UNSTABLE_FEATURES are enabled. For legacy reasons, the
         string_processing feature has its own flag, which is deprecated.
         """
+        return False
         if self.unstable:
             return True
         if feature is Preview.string_processing and self.experimental_string_processing:
