@@ -55,6 +55,13 @@ def quux():
 
     new_line = here
 
+
+class Cls:
+
+    def method(self):
+
+        pass
+
 # output
 
 def foo():
@@ -113,3 +120,9 @@ def baz():
 def quux():
 
     new_line = here
+
+
+class Cls:
+    def method(self):
+
+        pass
