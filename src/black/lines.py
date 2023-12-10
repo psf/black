@@ -681,14 +681,17 @@ class EmptyLineTracker:
 
         # In preview mode, always allow blank lines, except right before a function
         # docstring
-        is_empty_first_line_ok = (
-                not is_docstring(current_line.leaves[0])
-                or (
-                    self.previous_line
-                    and self.previous_line.leaves[0]
-                    and self.previous_line.leaves[0].parent
-                    and not is_funcdef(self.previous_line.leaves[0].parent)
-                )
+        is_empty_first_line_ok = not is_docstring(current_line.leaves[0]) or (
+            self.previous_line
+            and self.previous_line.leaves[0]
+            and self.previous_line.leaves[0].parent
+            and not is_funcdef(self.previous_line.leaves[0].parent)
+        )
+
+        if (
+            self.previous_line
+            and self.previous_line.opens_block
+            and not is_empty_first_line_ok
         ):
             return 0, 0
         return before, 0
