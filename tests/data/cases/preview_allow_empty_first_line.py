@@ -51,6 +51,17 @@ def baz():
     if x:
         a = 123
 
+def quux():
+
+    new_line = here
+
+
+class Cls:
+
+    def method(self):
+
+        pass
+
 # output
 
 def foo():
@@ -104,3 +115,14 @@ def baz():
     # OK
     if x:
         a = 123
+
+
+def quux():
+
+    new_line = here
+
+
+class Cls:
+    def method(self):
+
+        pass
