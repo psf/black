@@ -540,7 +540,7 @@ def is_docstring(leaf: Leaf, mode: Mode) -> bool:
         return False
 
     if (
-        Preview.format_module_docstring in mode
+        Preview.unify_docstring_detection in mode
         and leaf.parent
         and leaf.parent.type == syms.simple_stmt
         and not leaf.parent.prev_sibling

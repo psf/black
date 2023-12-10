@@ -195,7 +195,7 @@ class Preview(Enum):
     single_line_format_skip_with_multiple_comments = auto()
     long_case_block_line_splitting = auto()
     allow_form_feeds = auto()
-    format_module_docstring = auto()
+    unify_docstring_detection = auto()
 
 
 class Deprecated(UserWarning):

@@ -212,7 +212,7 @@ class Line:
     @property
     def is_docstring(self) -> bool:
         """Is the line a docstring?"""
-        if Preview.format_module_docstring not in self.mode:
+        if Preview.unify_docstring_detection not in self.mode:
             return self._is_triple_quoted_string
         return bool(self) and is_docstring(self.leaves[0], self.mode)
 
