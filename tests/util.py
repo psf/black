@@ -125,7 +125,11 @@ def assert_format(
             lines=lines,
         )
     except Exception as e:
-        text = "unstable" if mode.unstable else "non-preview" if mode.preview else "preview"
+        text = (
+            "unstable"
+            if mode.unstable
+            else "non-preview" if mode.preview else "preview"
+        )
         raise FormatFailure(
             f"Black crashed formatting this case in {text} mode."
         ) from e
