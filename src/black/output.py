@@ -45,8 +45,8 @@ def ipynb_diff(a: str, b: str, a_name: str, b_name: str) -> str:
     b_nb = json.loads(b)
     diff_lines = [
         diff(
-            "".join(a_nb["cells"][cell_number]["source"]) + "\n",
-            "".join(b_nb["cells"][cell_number]["source"]) + "\n",
+            """""".join(a_nb["cells"][cell_number]["source"]) + "\n",
+            """""".join(b_nb["cells"][cell_number]["source"]) + "\n",
             f"{a_name}:cell_{cell_number}",
             f"{b_name}:cell_{cell_number}",
         )

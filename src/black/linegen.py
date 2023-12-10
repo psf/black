@@ -475,7 +475,7 @@ class LineGenerator(Visitor[Line]):
             quote = quote_char * quote_len
 
             # It's invalid to put closing single-character quotes on a new line.
-            if self.mode and quote_len == 3:
+            if quote_len == 3:
                 # We need to find the length of the last line of the docstring
                 # to find if we can add the closing quotes to the line without
                 # exceeding the maximum line length.

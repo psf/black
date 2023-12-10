@@ -210,6 +210,11 @@ class Line:
         return False
 
     @property
+    def is_docstring(self) -> bool:
+        """Is the line a docstring?"""
+        return bool(self) and is_docstring(self.leaves[0])
+
+    @property
     def is_chained_assignment(self) -> bool:
         """Is the line a chained assignment"""
         return [leaf.type for leaf in self.leaves].count(token.EQUAL) > 1
@@ -576,7 +581,7 @@ class EmptyLineTracker:
             and self.previous_block
             and self.previous_block.previous_block is None
             and len(self.previous_block.original_line.leaves) == 1
-            and self.previous_block.original_line.is_triple_quoted_string
+            and self.previous_block.original_line.is_docstring
             and not (current_line.is_class or current_line.is_def)
         ):
             before = 1
@@ -683,7 +688,7 @@ class EmptyLineTracker:
         if (
             self.previous_line
             and self.previous_line.is_class
-            and current_line.is_triple_quoted_string
+            and current_line.is_docstring
         ):
             if Preview.no_blank_line_before_class_docstring in current_line.mode:
                 return 0, 1

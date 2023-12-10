@@ -539,6 +539,9 @@ def is_docstring(leaf: Leaf) -> bool:
     if set(prefix).intersection("bBfF"):
         return False
 
+    if not leaf.parent.prev_sibling:
+        return True
+
     if prev_siblings_are(
         leaf.parent, [None, token.NEWLINE, token.INDENT, syms.simple_stmt]
     ):
