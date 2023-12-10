@@ -18,7 +18,8 @@
 - Additional cases of immediately nested tuples, lists, and dictionaries are now
   indented less (#4012)
 - Fix crash in preview mode when using a short `--line-length` (#4086)
-- Keep suites consisting of an ellipsis followed by a comment on their own lines (#4066)
+- Keep suites consisting of only an ellipsis on their own lines if they are not
+  functions or class definitions (#4066)
 
 ### Configuration
 
