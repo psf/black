@@ -51,7 +51,7 @@ def b(arg: Union[int, str, object]) -> Union[int, str]:
     return arg
 
 def has_comment():
-    ...  # not a dummy
+    ...  # still a dummy
 
 if some_condition:
     ...
@@ -111,8 +111,7 @@ def b(arg: Union[int, str, object]) -> Union[int, str]:
     return arg
 
 
-def has_comment():
-    ...  # not a dummy
+def has_comment(): ...  # still a dummy
 
 
 if some_condition:
