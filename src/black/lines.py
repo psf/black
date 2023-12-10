@@ -210,6 +210,11 @@ class Line:
         return False
 
     @property
+    def is_chained_assignment(self) -> bool:
+        """Is the line a chained assignment"""
+        return [leaf.type for leaf in self.leaves].count(token.EQUAL) > 1
+
+    @property
     def opens_block(self) -> bool:
         """Does this line open a new level of indentation."""
         if len(self.leaves) == 0:

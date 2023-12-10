@@ -8,15 +8,18 @@
 
 ### Stable style
 
-<!-- Changes that affect Black's stable style -->
+- Fix bug where `# fmt: off` automatically dedents when used with the `--line-ranges`
+  option, even when it is not within the specified line range. (#4084)
 
 ### Preview style
 
+- Prefer more equal signs before a break when splitting chained assignments (#4010)
 - Standalone form feed characters at the module level are no longer removed (#4021)
 - Additional cases of immediately nested tuples, lists, and dictionaries are now
   indented less (#4012)
 - Allow empty lines at the beginning of all blocks, except immediately before a
   docstring (#4060)
+- Fix crash in preview mode when using a short `--line-length` (#4086)
 
 ### Configuration
 
@@ -27,7 +30,8 @@
 
 ### Packaging
 
-- Upgrade to mypy 1.6.1 (#4049)
+- Upgrade to mypy 1.7.1 (#4049) (#4069)
+- Faster compiled wheels are now available for CPython 3.12 (#4070)
 
 ### Parser
 

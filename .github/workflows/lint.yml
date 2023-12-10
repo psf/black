@@ -11,11 +11,7 @@ jobs:
       github.event_name == 'push' || github.event.pull_request.head.repo.full_name !=
       github.repository
 
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
