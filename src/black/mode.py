@@ -171,6 +171,10 @@ class Preview(Enum):
     hex_codes_in_unicode_sequences = auto()
     string_processing = auto()
     hug_parens_with_braces_and_square_brackets = auto()
+    allow_empty_first_line_in_block = auto()
+    single_line_format_skip_with_multiple_comments = auto()
+    long_case_block_line_splitting = auto()
+    allow_form_feeds = auto()
 
 
 class Deprecated(UserWarning):

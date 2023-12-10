@@ -1,4 +1,4 @@
-# flags: --minimum-version=3.8
+# flags: --minimum-version=3.8 --no-preview-line-length-1
 if (foo := 0):
     pass
 

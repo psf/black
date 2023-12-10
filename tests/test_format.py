@@ -30,6 +30,7 @@ def check_file(subdir: str, filename: str, *, data: bool = True) -> None:
         fast=args.fast,
         minimum_version=args.minimum_version,
         lines=args.lines,
+        no_preview_line_length_1=args.no_preview_line_length_1,
     )
     if args.minimum_version is not None:
         major, minor = args.minimum_version
@@ -42,6 +43,7 @@ def check_file(subdir: str, filename: str, *, data: bool = True) -> None:
             fast=args.fast,
             minimum_version=args.minimum_version,
             lines=args.lines,
+            no_preview_line_length_1=args.no_preview_line_length_1,
         )
 
 

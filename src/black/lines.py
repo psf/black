@@ -208,6 +208,11 @@ class Line:
         return False
 
     @property
+    def is_chained_assignment(self) -> bool:
+        """Is the line a chained assignment"""
+        return [leaf.type for leaf in self.leaves].count(token.EQUAL) > 1
+
+    @property
     def opens_block(self) -> bool:
         """Does this line open a new level of indentation."""
         if len(self.leaves) == 0:
@@ -674,11 +679,9 @@ class EmptyLineTracker:
         ):
             return 0, 1
 
-        if (
-            self.previous_line
-            and self.previous_line.opens_block
-            # Always allow blank lines, except right before a function docstring
-            and not (
+        # In preview mode, always allow blank lines, except right before a function
+        # docstring
+        is_empty_first_line_ok = (
                 not is_docstring(current_line.leaves[0])
                 or (
                     self.previous_line
@@ -686,7 +689,6 @@ class EmptyLineTracker:
                     and self.previous_line.leaves[0].parent
                     and not is_funcdef(self.previous_line.leaves[0].parent)
                 )
-            )
         ):
             return 0, 0
         return before, 0
