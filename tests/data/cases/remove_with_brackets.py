@@ -75,13 +75,15 @@ with open("bla.txt") as f, open("x"):
 with open("bla.txt") as f, open("x"):
     pass
 
-with CtxManager1() as example1, CtxManager2() as example2: ...
+with CtxManager1() as example1, CtxManager2() as example2:
+    ...
 
 # Brackets remain when using magic comma
 with (
     CtxManager1() as example1,
     CtxManager2() as example2,
-): ...
+):
+    ...
 
 # Brackets remain for multi-line context managers
 with (
@@ -90,7 +92,8 @@ with (
     CtxManager2() as example2,
     CtxManager2() as example2,
     CtxManager2() as example2,
-): ...
+):
+    ...
 
 # Don't touch assignment expressions
 with (y := open("./test.py")) as f:
@@ -113,4 +116,5 @@ with open("bla.txt") as f:
 with open("bla.txt") as f:
     pass
 
-with CtxManager1() as example1, CtxManager2() as example2: ...
+with CtxManager1() as example1, CtxManager2() as example2:
+    ...
