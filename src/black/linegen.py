@@ -42,6 +42,7 @@ from black.nodes import (
     is_atom_with_invisible_parens,
     is_docstring,
     is_empty_tuple,
+    is_function_or_class,
     is_lpar_token,
     is_multiline_string,
     is_name_token,
@@ -293,9 +294,8 @@ class LineGenerator(Visitor[Line]):
                 wrap_in_parentheses(node, child, visible=False)
             prev_type = child.type
 
-        is_suite_like = node.parent and node.parent.type in STATEMENT
-        if is_suite_like:
-            if is_stub_body(node):
+        if node.parent and node.parent.type in STATEMENT:
+            if is_stub_body(node) and is_function_or_class(node.parent):
                 yield from self.visit_default(node)
             else:
                 yield from self.line(+1)

@@ -114,7 +114,8 @@ def func_no_args():
     c
     if True:
         raise RuntimeError
-    if False: ...
+    if False:
+        ...
     for i in range(10):
         print(i)
         continue
