@@ -828,16 +828,14 @@ def is_line_short_enough(  # noqa: C901
     if not line_str:
         line_str = line_to_string(line)
 
-    width = str_width if Preview.respect_east_asian_width in mode else len
-
     if line.contains_standalone_comments():
         return False
     if "\n" not in line_str:
         # No multiline strings (MLS) present
-        return width(line_str) <= mode.line_length
+        return str_width(line_str) <= mode.line_length
 
     first, *_, last = line_str.split("\n")
-    if width(first) > mode.line_length or width(last) > mode.line_length:
+    if str_width(first) > mode.line_length or str_width(last) > mode.line_length:
         return False
 
     # Traverse the AST to examine the context of the multiline string (MLS),
