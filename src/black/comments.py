@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Collection, Final, Iterator, List, Optional, Tuple, Union
 
-from black.mode import Mode, Preview
+from black.mode import Mode
 from black.nodes import (
     CLOSING_BRACKETS,
     STANDALONE_COMMENT,
