@@ -20,6 +20,8 @@
 - Allow empty lines at the beginning of all blocks, except immediately before a
   docstring (#4060)
 - Fix crash in preview mode when using a short `--line-length` (#4086)
+- Keep suites consisting of only an ellipsis on their own lines if they are not
+  functions or class definitions (#4066)
 
 ### Configuration
 
