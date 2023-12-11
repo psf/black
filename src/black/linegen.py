@@ -280,7 +280,7 @@ class LineGenerator(Visitor[Line]):
 
     def visit_suite(self, node: Node) -> Iterator[Line]:
         """Visit a suite."""
-        if is_stub_suite(node):
+        if is_stub_suite(node, self.mode):
             yield from self.visit(node.children[2])
         else:
             yield from self.visit_default(node)
@@ -303,7 +303,7 @@ class LineGenerator(Visitor[Line]):
                 yield from self.line(-1)
 
         else:
-            if not node.parent or not is_stub_suite(node.parent):
+            if not node.parent or not is_stub_suite(node.parent, self.mode):
                 yield from self.line()
             yield from self.visit_default(node)
 
