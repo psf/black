@@ -56,6 +56,8 @@ def has_comment():
 if some_condition:
     ...
 
+if already_dummy: ...
+
 # output
 
 from typing import NoReturn, Protocol, Union, overload
@@ -115,4 +117,7 @@ def has_comment(): ...  # still a dummy
 
 
 if some_condition:
+    ...
+
+if already_dummy:
     ...
