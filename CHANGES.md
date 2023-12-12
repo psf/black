@@ -6,6 +6,42 @@
 
 <!-- Include any especially major or disruptive changes here -->
 
+A draft for the 2024 stable style (#4064), stabilizing the following changes:
+
+- Multiline strings passed as the sole function arguments are formatted more compactly
+  (#1879)
+- Dummy class and function implementations consisting only of `...` are formatted more
+  compactly (#3796)
+- If an assignment statement is too long, we now prefer splitting on the right-hand side
+  (#3368)
+- Hex codes in Unicode escape sequences are now standardized to lowercase (#2916)
+- Allow empty first lines at the beginning of most blocks (#3967, #4061)
+- Add parentheses around long type annotations (#3899)
+- Standardize on a single newline after module docstrings (#3932)
+- Fix incorrect magic trailing comma handling in return types (#3916)
+- Remove blank lines before class docstrings (#3692)
+- Wrap multiple context managers in parentheses if combined in a single `with` statement
+  (#3489)
+- Fix bug in line length calculations for power operations (#3942)
+- Add trailing commas to collection literals even if there's a comment after the last
+  entry (#3393)
+- When using `--skip-magic-trailing-comma` or `-C`, trailing commas are stripped from
+  subscript expressions with more than 1 element (#3209)
+- Add extra blank lines in stubs in a few cases (#3564, #3862)
+- Accept raw strings as docstrings (#3947)
+- Split long lines in case blocks (#4024)
+- Stop removing spaces from walrus operators within subscripts (#3823)
+- Fix incorrect formatting of certain async statements (#3609)
+- Allow combining `# fmt: skip` with other comments (#3959)
+
+The following two changes may be included, but have outstanding issues that will need to
+be resolved:
+
+- Long values in dict literals are now wrapped in parentheses; correspondingly
+  unnecessary parentheses around short values in dict literals are now removed; long
+  string lambda values are now wrapped in parentheses (#3440)
+- Add parentheses around `if`-`else` expressions (#2278)
+
 ### Stable style
 
 - Fix bug where `# fmt: off` automatically dedents when used with the `--line-ranges`
