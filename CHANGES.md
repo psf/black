@@ -1,10 +1,16 @@
 # Change Log
 
-## Unreleased
+## 23.12.0
 
 ### Highlights
 
-<!-- Include any especially major or disruptive changes here -->
+It's almost 2024, which means it's time for a new edition of _Black_'s stable style!
+Together with this release, we'll put out an alpha release 24.1a1 showcasing the draft
+2024 stable style, which we'll finalize in the January release. Please try it out and
+[share your feedback](https://github.com/psf/black/issues/4042).
+
+This release (23.12.0) will still produce the 2023 style. Most but not all of the
+changes in `--preview` mode will be in the 2024 stable style.
 
 ### Stable style
 
@@ -26,8 +32,6 @@
 
 ### Configuration
 
-<!-- Changes to how Black can be configured -->
-
 - `--line-ranges` now skips _Black_'s internal stability check in `--safe` mode. This
   avoids a crash on rare inputs that have many unformatted same-content lines. (#4034)
 
@@ -36,32 +40,11 @@
 - Upgrade to mypy 1.7.1 (#4049) (#4069)
 - Faster compiled wheels are now available for CPython 3.12 (#4070)
 
-### Parser
-
-<!-- Changes to the parser or to version autodetection -->
-
-### Performance
-
-<!-- Changes that improve Black's performance. -->
-
-### Output
-
-<!-- Changes to Black's terminal output and error messages -->
-
-### _Blackd_
-
-<!-- Changes to blackd -->
-
 ### Integrations
 
 - Enable 3.12 CI (#4035)
 - Build docker images in parallel (#4054)
 - Build docker images with 3.12 (#4055)
-
-### Documentation
-
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
 
 ## 23.11.0
 
