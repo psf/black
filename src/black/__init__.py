@@ -1351,7 +1351,7 @@ def get_features_used(  # noqa: C901
             if (
                 len(atom_children) == 3
                 and atom_children[0].type == token.LPAR
-                and atom_children[1].type == syms.testlist_gexp
+                and _contains_asexpr(atom_children[1])
                 and atom_children[2].type == token.RPAR
             ):
                 features.add(Feature.PARENTHESIZED_CONTEXT_MANAGERS)
@@ -1382,6 +1382,22 @@ def get_features_used(  # noqa: C901
             features.add(Feature.TYPE_PARAMS)
 
     return features
+
+
+def _contains_asexpr(node: Union[Node, Leaf]) -> bool:
+    """Return True if `node` contains an as-pattern."""
+    if node.type == syms.asexpr_test:
+        return True
+    elif node.type == syms.atom:
+        if (
+            len(node.children) == 3
+            and node.children[0].type == token.LPAR
+            and node.children[2].type == token.RPAR
+        ):
+            return _contains_asexpr(node.children[1])
+    elif node.type == syms.testlist_gexp:
+        return any(_contains_asexpr(child) for child in node.children)
+    return False
 
 
 def detect_target_versions(
