@@ -46,6 +46,7 @@ be resolved:
 
 - Fix bug where `# fmt: off` automatically dedents when used with the `--line-ranges`
   option, even when it is not within the specified line range. (#4084)
+- Fix feature detection for parenthesized context managers (#4104)
 
 ### Preview style
 
