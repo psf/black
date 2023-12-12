@@ -8,16 +8,9 @@ deliberately limited and rarely added. Previous formatting is taken into account
 little as possible, with rare exceptions like the magic trailing comma. The coding style
 used by _Black_ can be viewed as a strict subset of PEP 8.
 
-_Black_ reformats entire files in place. It doesn't reformat lines that end with
-`# fmt: skip` or blocks that start with `# fmt: off` and end with `# fmt: on`.
-`# fmt: on/off` must be on the same level of indentation and in the same block, meaning
-no unindents beyond the initial indentation level between them. It also recognizes
-[YAPF](https://github.com/google/yapf)'s block comments to the same effect, as a
-courtesy for straddling code.
-
-The rest of this document describes the current formatting style. If you're interested
-in trying out where the style is heading, see [future style](./future_style.md) and try
-running `black --preview`.
+This document describes the current formatting style. If you're interested in trying out
+where the style is heading, see [future style](./future_style.md) and try running
+`black --preview`.
 
 ### How _Black_ wraps lines
 
@@ -176,7 +169,7 @@ If you use Flake8, you have a few options:
    extend-ignore = E203, E501, E704
    ```
 
-   The rationale for E950 is explained in
+   The rationale for B950 is explained in
    [Bugbear's documentation](https://github.com/PyCQA/flake8-bugbear#opinionated-warnings).
 
 2. For a minimally compatible config:

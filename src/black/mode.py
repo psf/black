@@ -190,6 +190,14 @@ class Preview(Enum):
     dummy_implementations = auto()
     walrus_subscript = auto()
     module_docstring_newlines = auto()
+    accept_raw_docstrings = auto()
+    fix_power_op_line_length = auto()
+    hug_parens_with_braces_and_square_brackets = auto()
+    allow_empty_first_line_in_block = auto()
+    single_line_format_skip_with_multiple_comments = auto()
+    long_case_block_line_splitting = auto()
+    allow_form_feeds = auto()
+    respect_east_asian_width = auto()
 
 
 class Deprecated(UserWarning):

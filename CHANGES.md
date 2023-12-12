@@ -10,22 +10,13 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Fix comments getting removed from inside parenthesized strings (#3909)
-
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
-- Long type hints are now wrapped in parentheses and properly indented when split across
-  multiple lines (#3899)
-- Magic trailing commas are now respected in return types. (#3916)
-- Require one empty line after module-level docstrings. (#3932)
-
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
-
-- Fix cache versioning logic when `BLACK_CACHE_DIR` is set (#3937)
 
 ### Packaging
 
@@ -43,11 +34,6 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
-- Black no longer attempts to provide special errors for attempting to format Python 2
-  code (#3933)
-- Black will more consistently print stacktraces on internal errors in verbose mode
-  (#3938)
-
 ### _Blackd_
 
 <!-- Changes to blackd -->
@@ -56,12 +42,163 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
-- The action output displayed in the job summary is now wrapped in Markdown (#3914)
-
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
+
+## 23.12.0
+
+### Highlights
+
+It's almost 2024, which means it's time for a new edition of _Black_'s stable style!
+Together with this release, we'll put out an alpha release 24.1a1 showcasing the draft
+2024 stable style, which we'll finalize in the January release. Please try it out and
+[share your feedback](https://github.com/psf/black/issues/4042).
+
+This release (23.12.0) will still produce the 2023 style. Most but not all of the
+changes in `--preview` mode will be in the 2024 stable style.
+
+### Stable style
+
+- Fix bug where `# fmt: off` automatically dedents when used with the `--line-ranges`
+  option, even when it is not within the specified line range. (#4084)
+- Fix feature detection for parenthesized context managers (#4104)
+
+### Preview style
+
+- Prefer more equal signs before a break when splitting chained assignments (#4010)
+- Standalone form feed characters at the module level are no longer removed (#4021)
+- Additional cases of immediately nested tuples, lists, and dictionaries are now
+  indented less (#4012)
+- Allow empty lines at the beginning of all blocks, except immediately before a
+  docstring (#4060)
+- Fix crash in preview mode when using a short `--line-length` (#4086)
+- Keep suites consisting of only an ellipsis on their own lines if they are not
+  functions or class definitions (#4066) (#4103)
+
+### Configuration
+
+- `--line-ranges` now skips _Black_'s internal stability check in `--safe` mode. This
+  avoids a crash on rare inputs that have many unformatted same-content lines. (#4034)
+
+### Packaging
+
+- Upgrade to mypy 1.7.1 (#4049) (#4069)
+- Faster compiled wheels are now available for CPython 3.12 (#4070)
+
+### Integrations
+
+- Enable 3.12 CI (#4035)
+- Build docker images in parallel (#4054)
+- Build docker images with 3.12 (#4055)
+
+## 23.11.0
+
+### Highlights
+
+- Support formatting ranges of lines with the new `--line-ranges` command-line option
+  (#4020)
+
+### Stable style
+
+- Fix crash on formatting bytes strings that look like docstrings (#4003)
+- Fix crash when whitespace followed a backslash before newline in a docstring (#4008)
+- Fix standalone comments inside complex blocks crashing Black (#4016)
+- Fix crash on formatting code like `await (a ** b)` (#3994)
+- No longer treat leading f-strings as docstrings. This matches Python's behaviour and
+  fixes a crash (#4019)
+
+### Preview style
+
+- Multiline dicts and lists that are the sole argument to a function are now indented
+  less (#3964)
+- Multiline unpacked dicts and lists as the sole argument to a function are now also
+  indented less (#3992)
+- In f-string debug expressions, quote types that are visible in the final string are
+  now preserved (#4005)
+- Fix a bug where long `case` blocks were not split into multiple lines. Also enable
+  general trailing comma rules on `case` blocks (#4024)
+- Keep requiring two empty lines between module-level docstring and first function or
+  class definition (#4028)
+- Add support for single-line format skip with other comments on the same line (#3959)
+
+### Configuration
+
+- Consistently apply force exclusion logic before resolving symlinks (#4015)
+- Fix a bug in the matching of absolute path names in `--include` (#3976)
+
+### Performance
+
+- Fix mypyc builds on arm64 on macOS (#4017)
+
+### Integrations
+
+- Black's pre-commit integration will now run only on git hooks appropriate for a code
+  formatter (#3940)
+
+## 23.10.1
+
+### Highlights
+
+- Maintenance release to get a fix out for GitHub Action edge case (#3957)
+
+### Preview style
+
+- Fix merging implicit multiline strings that have inline comments (#3956)
+- Allow empty first line after block open before a comment or compound statement (#3967)
+
+### Packaging
+
+- Change Dockerfile to hatch + compile black (#3965)
+
+### Integrations
+
+- The summary output for GitHub workflows is now suppressible using the `summary`
+  parameter. (#3958)
+- Fix the action failing when Black check doesn't pass (#3957)
+
+### Documentation
+
+- It is known Windows documentation CI is broken
+  https://github.com/psf/black/issues/3968
+
+## 23.10.0
+
+### Stable style
+
+- Fix comments getting removed from inside parenthesized strings (#3909)
+
+### Preview style
+
+- Fix long lines with power operators getting split before the line length (#3942)
+- Long type hints are now wrapped in parentheses and properly indented when split across
+  multiple lines (#3899)
+- Magic trailing commas are now respected in return types. (#3916)
+- Require one empty line after module-level docstrings. (#3932)
+- Treat raw triple-quoted strings as docstrings (#3947)
+
+### Configuration
+
+- Fix cache versioning logic when `BLACK_CACHE_DIR` is set (#3937)
+
+### Parser
+
+- Fix bug where attributes named `type` were not accepted inside `match` statements
+  (#3950)
+- Add support for PEP 695 type aliases containing lambdas and other unusual expressions
+  (#3949)
+
+### Output
+
+- Black no longer attempts to provide special errors for attempting to format Python 2
+  code (#3933)
+- Black will more consistently print stacktraces on internal errors in verbose mode
+  (#3938)
+
+### Integrations
+
+- The action output displayed in the job summary is now wrapped in Markdown (#3914)
 
 ## 23.9.1
 
@@ -254,8 +391,6 @@ versions separately.
 
 ### Stable style
 
-<!-- Changes that affect Black's stable style -->
-
 - Introduce the 2023 stable style, which incorporates most aspects of last year's
   preview style (#3418). Specific changes:
   - Enforce empty lines before classes and functions with sticky leading comments
@@ -289,8 +424,6 @@ versions separately.
 
 ### Preview style
 
-<!-- Changes that affect Black's preview style -->
-
 - Format hex codes in unicode escape sequences in string literals (#2916)
 - Add parentheses around `if`-`else` expressions (#2278)
 - Improve performance on large expressions that contain many strings (#3467)
@@ -321,14 +454,10 @@ versions separately.
 
 ### Configuration
 
-<!-- Changes to how Black can be configured -->
-
 - Black now tries to infer its `--target-version` from the project metadata specified in
   `pyproject.toml` (#3219)
 
 ### Packaging
-
-<!-- Changes to how Black is packaged, such as dependency requirements -->
 
 - Upgrade mypyc from `0.971` to `0.991` so mypycified _Black_ can be built on armv7
   (#3380)
@@ -342,8 +471,6 @@ versions separately.
 
 ### Output
 
-<!-- Changes to Black's terminal output and error messages -->
-
 - Calling `black --help` multiple times will return the same help contents each time
   (#3516)
 - Verbose logging now shows the values of `pyproject.toml` configuration variables
@@ -353,24 +480,17 @@ versions separately.
 
 ### Integrations
 
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
-
 - Move 3.11 CI to normal flow now that all dependencies support 3.11 (#3446)
 - Docker: Add new `latest_prerelease` tag automation to follow latest black alpha
   release on docker images (#3465)
 
 ### Documentation
 
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
-
 - Expand `vim-plug` installation instructions to offer more explicit options (#3468)
 
 ## 22.12.0
 
 ### Preview style
-
-<!-- Changes that affect Black's preview style -->
 
 - Enforce empty lines before classes and functions with sticky leading comments (#3302)
 - Reformat empty and whitespace-only files as either an empty file (if no newline is
@@ -384,8 +504,6 @@ versions separately.
 
 ### Configuration
 
-<!-- Changes to how Black can be configured -->
-
 - Fix incorrectly applied `.gitignore` rules by considering the `.gitignore` location
   and the relative path to the target file (#3338)
 - Fix incorrectly ignoring `.gitignore` presence when more than one source directory is
@@ -393,15 +511,11 @@ versions separately.
 
 ### Parser
 
-<!-- Changes to the parser or to version autodetection -->
-
 - Parsing support has been added for walruses inside generator expression that are
   passed as function args (for example,
   `any(match := my_re.match(text) for text in texts)`) (#3327).
 
 ### Integrations
-
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
 - Vim plugin: Optionally allow using the system installation of Black via
   `let g:black_use_virtualenv = 0`(#3309)
@@ -905,7 +1019,7 @@ and the first release covered by our new
   [`master`](https://github.com/psf/black/tree/main) branch with the
   [`main`](https://github.com/psf/black/tree/main) branch. Some additional changes in
   the source code were also made. (#2210)
-- Sigificantly reorganized the documentation to make much more sense. Check them out by
+- Significantly reorganized the documentation to make much more sense. Check them out by
   heading over to [the stable docs on RTD](https://black.readthedocs.io/en/stable/).
   (#2174)
 

@@ -31,14 +31,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "pypy-3.8"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "pypy-3.9"]
         os: [ubuntu-latest, macOS-latest, windows-latest]
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -96,7 +96,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up latest Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "*"
 

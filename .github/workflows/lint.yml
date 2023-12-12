@@ -1,4 +1,4 @@
-name: Lint
+name: Lint + format ourselves
 
 on: [push, pull_request]
 
@@ -24,14 +24,14 @@ jobs:
           fi
 
       - name: Set up latest Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "*"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e '.[d]'
+          python -m pip install -e '.'
           python -m pip install tox
 
       - name: Run pre-commit hooks

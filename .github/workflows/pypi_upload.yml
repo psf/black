@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up latest Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "*"
 
@@ -68,11 +68,12 @@ jobs:
       - name: generate matrix (PR)
         if: github.event_name == 'pull_request'
         run: |
-          cibuildwheel --print-build-identifiers --platform linux \
-          | pyp 'json.dumps({"only": x, "os": "ubuntu-latest"})' \
-          | pyp 'json.dumps(list(map(json.loads, lines)))' > /tmp/matrix
+          {
+            cibuildwheel --print-build-identifiers --platform linux \
+            | pyp 'json.dumps({"only": x, "os": "ubuntu-latest"})'
+          } | pyp 'json.dumps(list(map(json.loads, lines)))' > /tmp/matrix
         env:
-          CIBW_BUILD: "cp38-* cp311-*"
+          CIBW_BUILD: "cp38-* cp312-*"
           CIBW_ARCHS_LINUX: x86_64
       - id: set-matrix
         run: echo "include=$(cat /tmp/matrix)" | tee -a $GITHUB_OUTPUT

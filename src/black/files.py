@@ -280,7 +280,6 @@ def _path_is_ignored(
     root_relative_path: str,
     root: Path,
     gitignore_dict: Dict[Path, PathSpec],
-    report: Report,
 ) -> bool:
     path = root / root_relative_path
     # Note that this logic is sensitive to the ordering of gitignore_dict. Callers must
@@ -291,9 +290,6 @@ def _path_is_ignored(
         except ValueError:
             break
         if pattern.match_file(relative_path):
-            report.path_ignored(
-                path.relative_to(root), "matches a .gitignore file content"
-            )
             return True
     return False
 
@@ -334,8 +330,9 @@ def gen_python_files(
 
         # First ignore files matching .gitignore, if passed
         if gitignore_dict and _path_is_ignored(
-            root_relative_path, root, gitignore_dict, report
+            root_relative_path, root, gitignore_dict
         ):
+            report.path_ignored(child, "matches a .gitignore file content")
             continue
 
         # Then ignore with `--exclude` `--extend-exclude` and `--force-exclude` options.
@@ -389,7 +386,7 @@ def gen_python_files(
                 warn=verbose or not quiet
             ):
                 continue
-            include_match = include.search(normalized_path) if include else True
+            include_match = include.search(root_relative_path) if include else True
             if include_match:
                 yield child
 

@@ -210,8 +210,8 @@ def foo():
 
 some_tuple = ("some string", "some string" " which should be joined")
 
-some_commented_string = (
-    "This string is long but not so long that it needs hahahah toooooo be so greatttt"  # This comment gets thrown to the top.
+some_commented_string = (  # This comment stays at the top.
+    "This string is long but not so long that it needs hahahah toooooo be so greatttt"
     " {} that I just can't think of any more good words to say about it at"
     " allllllllllll".format("ha")  # comments here are fine
 )
@@ -611,14 +611,13 @@ class A:
 
 class A:
     def foo():
-        XXXXXXXXXXXX.append(
-            (
-                "xxx_xxxxxxxxxx(xxxxx={}, xxxx={}, xxxxx, xxxx_xxxx_xxxxxxxxxx={})"
-                .format(xxxxx, xxxx, xxxx_xxxx_xxxxxxxxxx),
-                my_var,
-                my_other_var,
-            )
-        )
+        XXXXXXXXXXXX.append((
+            "xxx_xxxxxxxxxx(xxxxx={}, xxxx={}, xxxxx, xxxx_xxxx_xxxxxxxxxx={})".format(
+                xxxxx, xxxx, xxxx_xxxx_xxxxxxxxxx
+            ),
+            my_var,
+            my_other_var,
+        ))
 
 
 class A:
@@ -834,7 +833,7 @@ def foo():
 
 some_tuple = ("some string", "some string which should be joined")
 
-some_commented_string = (  # This comment gets thrown to the top.
+some_commented_string = (  # This comment stays at the top.
     "This string is long but not so long that it needs hahahah toooooo be so greatttt"
     " {} that I just can't think of any more good words to say about it at"
     " allllllllllll".format("ha")  # comments here are fine
@@ -962,19 +961,17 @@ class Step(StepBase):
         )
 
 
-xxxxxxx_xxxxxx_xxxxxxx = xxx(
-    [
-        xxxxxxxxxxxx(
-            xxxxxx_xxxxxxx=(
-                '((x.aaaaaaaaa = "xxxxxx.xxxxxxxxxxxxxxxxxxxxx") || (x.xxxxxxxxx ='
-                ' "xxxxxxxxxxxx")) && '
-                # xxxxx xxxxxxxxxxxx xxxx xxx (xxxxxxxxxxxxxxxx) xx x xxxxxxxxx xx xxxxxx.
-                "(x.bbbbbbbbbbbb.xxx != "
-                '"xxx:xxx:xxx::cccccccccccc:xxxxxxx-xxxx/xxxxxxxxxxx/xxxxxxxxxxxxxxxxx") && '
-            )
+xxxxxxx_xxxxxx_xxxxxxx = xxx([
+    xxxxxxxxxxxx(
+        xxxxxx_xxxxxxx=(
+            '((x.aaaaaaaaa = "xxxxxx.xxxxxxxxxxxxxxxxxxxxx") || (x.xxxxxxxxx ='
+            ' "xxxxxxxxxxxx")) && '
+            # xxxxx xxxxxxxxxxxx xxxx xxx (xxxxxxxxxxxxxxxx) xx x xxxxxxxxx xx xxxxxx.
+            "(x.bbbbbbbbbbbb.xxx != "
+            '"xxx:xxx:xxx::cccccccccccc:xxxxxxx-xxxx/xxxxxxxxxxx/xxxxxxxxxxxxxxxxx") && '
         )
-    ]
-)
+    )
+])
 
 if __name__ == "__main__":
     for i in range(4, 8):

@@ -108,7 +108,7 @@ dotted_as_names: dotted_as_name (',' dotted_as_name)*
 dotted_name: NAME ('.' NAME)*
 global_stmt: ('global' | 'nonlocal') NAME (',' NAME)*
 assert_stmt: 'assert' test [',' test]
-type_stmt: "type" NAME [typeparams] '=' expr
+type_stmt: "type" NAME [typeparams] '=' test
 
 compound_stmt: if_stmt | while_stmt | for_stmt | try_stmt | with_stmt | funcdef | classdef | decorated | async_stmt | match_stmt
 async_stmt: ASYNC (funcdef | with_stmt | for_stmt)

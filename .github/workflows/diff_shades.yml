@@ -20,9 +20,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: "*"
+          python-version: "3.11"
 
       - name: Install diff-shades and support dependencies
         run: |
@@ -57,9 +57,9 @@ jobs:
           # The baseline revision could be rather old so a full clone is ideal.
           fetch-depth: 0
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: "*"
+          python-version: "3.11"
 
       - name: Install diff-shades and support dependencies
         run: |

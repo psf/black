@@ -8,7 +8,7 @@ import os
 import sys
 
 import commonmark
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup  # type: ignore[import-untyped]
 
 
 def main(changes: str, the_basics: str) -> None:
