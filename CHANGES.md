@@ -4,10 +4,10 @@
 
 ### Highlights
 
-It's almost 2024, which means it's time for a new edition of _Black_'s stable
-style! Together with this release, we'll put out an alpha release 24.1a1 showcasing
-the draft 2024 stable style, which we'll finalize in the January release.
-Please try it out and [share your feedback](https://github.com/psf/black/issues/4042).
+It's almost 2024, which means it's time for a new edition of _Black_'s stable style!
+Together with this release, we'll put out an alpha release 24.1a1 showcasing the draft
+2024 stable style, which we'll finalize in the January release. Please try it out and
+[share your feedback](https://github.com/psf/black/issues/4042).
 
 This release (23.12.0) will still produce the 2023 style. Most but not all of the
 changes in `--preview` mode will be in the 2024 stable style.
