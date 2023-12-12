@@ -76,8 +76,8 @@ dynamic = ["readme", "version"]
 colorama = ["colorama>=0.4.3"]
 uvloop = ["uvloop>=0.15.2"]
 d = [
-  "aiohttp>=3.7.4; sys_platform != 'win32' or implementation_name != 'pypy'",
-  "aiohttp>=3.7.4, !=3.9.0; sys_platform == 'win32' and implementation_name == 'pypy'",
+  "aiohttp>=3.7.4 ; (sys_platform != 'win32' or implementation_name != 'pypy') and python_version >= '1'",
+  "aiohttp>=3.7.4, !=3.9.0 ; (sys_platform == 'win32' and implementation_name == 'pypy') and python_version >= '1'",
 ]
 jupyter = [
   "ipython>=7.8.0",
