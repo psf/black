@@ -21,7 +21,8 @@
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
-* Fixed a bug that included dependencies from the `d` extra by default (#4108, #4107).
+
+- Fixed a bug that included dependencies from the `d` extra by default (#4108, #4107).
 
 ### Parser
 
