@@ -22,6 +22,8 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
+- Fixed a bug that included dependencies from the `d` extra by default (#4108)
+
 ### Parser
 
 <!-- Changes to the parser or to version autodetection -->
