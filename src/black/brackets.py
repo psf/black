@@ -115,7 +115,7 @@ class BracketTracker:
             if delim and self.previous is not None:
                 self.delimiters[id(self.previous)] = delim
             else:
-                delim = is_split_after_delimiter(leaf, self.previous)
+                delim = is_split_after_delimiter(leaf)
                 if delim:
                     self.delimiters[id(leaf)] = delim
         if leaf.type in OPENING_BRACKETS:
@@ -215,7 +215,7 @@ class BracketTracker:
         return self.bracket_match.get((self.depth - 1, token.RSQB))
 
 
-def is_split_after_delimiter(leaf: Leaf, previous: Optional[Leaf] = None) -> Priority:
+def is_split_after_delimiter(leaf: Leaf) -> Priority:
     """Return the priority of the `leaf` delimiter, given a line break after it.
 
     The delimiter priorities returned here are from those delimiters that would
