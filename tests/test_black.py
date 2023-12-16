@@ -485,7 +485,7 @@ class BlackTestCase(BlackBaseTestCase):
         contents_spc = "if 1:\n    if 2:\n        pass\n        # comment\n    pass\n"
         self.assertFormatEqual(contents_spc, fs(contents_spc))
         self.assertFormatEqual(contents_spc, fs(contents_tab))
-        
+
     def test_false_positive_symlink_output_issue_3384(self) -> None:
         # Emulate the behavior when using the CLI (`black ./child  --verbose`), which
         # involves patching some `pathlib.Path` methods. In particular, `is_dir` is
