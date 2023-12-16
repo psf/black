@@ -327,3 +327,11 @@ def count_chars_in_width(line_str: str, max_width: int) -> int:
             return i
         total_width += width
     return len(line_str)
+
+def remove_colon_whitespace(line_str: str) -> str:
+    if get_string_prefix(line_str) == 'f':
+        index =  line_str.find(":")
+        if index != -1:
+            if line_str[i + 1] == " ":
+                line_str.replace(" ","")
+    return line_str
