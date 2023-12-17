@@ -451,7 +451,7 @@ class Line:
         )
 
     def enumerate_with_length(
-            self, is_reversed: bool = False
+        self, is_reversed: bool = False
     ) -> Iterator[Tuple[Index, Leaf, int]]:
         """Return an enumeration of leaves with their length.
 
