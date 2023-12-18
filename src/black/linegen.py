@@ -48,11 +48,11 @@ from black.nodes import (
     is_name_token,
     is_one_sequence_between,
     is_one_tuple,
+    is_pragma_comment_string,
     is_rpar_token,
     is_stub_body,
     is_stub_suite,
     is_tuple_containing_walrus,
-    is_type_ignore_comment_string,
     is_vararg,
     is_walrus_assignment,
     is_yield,
@@ -1569,7 +1569,7 @@ def maybe_make_parens_invisible_in_atom(
         if (
             # If the prefix of `middle` includes a type comment with
             # ignore annotation, then we do not remove the parentheses
-            not is_type_ignore_comment_string(middle.prefix.strip())
+            not is_pragma_comment_string(middle.prefix.strip())
         ):
             first.value = ""
             last.value = ""

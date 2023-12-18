@@ -13,7 +13,7 @@ importA
 class A:
     def foo(self):
         for _ in range(10):
-            aaaaaaaaaaaaaaaaaaa = bbbbbbbbbbbbbbb.cccccccccc(  # pylint: disable=no-member
+            aaaaaaaaaaaaaaaaaaa = bbbbbbbbbbbbbbb.cccccccccc(  # notpylint: disable=no-member
                 xxxxxxxxxxxx
             )
 
@@ -59,7 +59,7 @@ class A:
         for _ in range(10):
             aaaaaaaaaaaaaaaaaaa = bbbbbbbbbbbbbbb.cccccccccc(
                 xxxxxxxxxxxx
-            )  # pylint: disable=no-member
+            )  # notpylint: disable=no-member
 
 
 def test(self, othr):

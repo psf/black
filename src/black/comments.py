@@ -6,6 +6,7 @@ from typing import Collection, Final, Iterator, List, Optional, Tuple, Union
 from black.mode import Mode, Preview
 from black.nodes import (
     CLOSING_BRACKETS,
+    PRAGMA_COMMENT_MARKER,
     STANDALONE_COMMENT,
     WHITESPACE,
     container_of,
@@ -377,7 +378,7 @@ def contains_pragma_comment(comment_list: List[Leaf]) -> bool:
         pylint).
     """
     for comment in comment_list:
-        if comment.value.startswith(("# type:", "# noqa", "# pylint:")):
+        if comment.value.startswith(PRAGMA_COMMENT_MARKER):
             return True
 
     return False
