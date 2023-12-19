@@ -191,10 +191,11 @@ class Preview(Enum):
     accept_raw_docstrings = auto()
     fix_power_op_line_length = auto()
     hug_parens_with_braces_and_square_brackets = auto()
-    allow_empty_first_line_before_new_block_or_comment = auto()
+    allow_empty_first_line_in_block = auto()
     single_line_format_skip_with_multiple_comments = auto()
     long_case_block_line_splitting = auto()
     allow_form_feeds = auto()
+    respect_east_asian_width = auto()
 
 
 class Deprecated(UserWarning):

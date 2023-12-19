@@ -12,7 +12,8 @@ _Black_ is a well-behaved Unix-style command-line tool:
 
 ## Usage
 
-To get started right away with sensible defaults:
+_Black_ will reformat entire files in place. To get started right away with sensible
+defaults:
 
 ```sh
 black {source_file_or_directory}
@@ -23,6 +24,17 @@ You can run _Black_ as a package if running it as a script doesn't work:
 ```sh
 python -m black {source_file_or_directory}
 ```
+
+### Ignoring sections
+
+Black will not reformat lines that contain `# fmt: skip` or blocks that start with
+`# fmt: off` and end with `# fmt: on`. `# fmt: skip` can be mixed with other
+pragmas/comments either with multiple comments (e.g. `# fmt: skip # pylint # noqa`) or
+as a semicolon separated list (e.g. `# fmt: skip; pylint; noqa`). `# fmt: on/off` must
+be on the same level of indentation and in the same block, meaning no unindents beyond
+the initial indentation level between them. Black also recognizes
+[YAPF](https://github.com/google/yapf)'s block comments to the same effect, as a
+courtesy for straddling code.
 
 ### Command line options
 
@@ -191,7 +203,7 @@ All done! ✨ 🍰 ✨
 
 Show (or do not show) colored diff. Only applies when `--diff` is given.
 
-### `--line-ranges`
+#### `--line-ranges`
 
 When specified, _Black_ will try its best to only format these lines.
 
@@ -229,8 +241,8 @@ configuration file for consistent results across environments.
 
 ```console
 $ black --version
-black, 23.11.0 (compiled: yes)
-$ black --required-version 23.11.0 -c "format = 'this'"
+black, 23.12.0 (compiled: yes)
+$ black --required-version 23.12.0 -c "format = 'this'"
 format = "this"
 $ black --required-version 31.5b2 -c "still = 'beta?!'"
 Oh no! 💥 💔 💥 The required version does not match the running version!
@@ -321,7 +333,7 @@ You can check the version of _Black_ you have installed using the `--version` fl
 
 ```console
 $ black --version
-black, 23.11.0
+black, 23.12.0
 ```
 
 #### `--config`

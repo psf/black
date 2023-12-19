@@ -42,6 +42,7 @@ from black.nodes import (
     is_atom_with_invisible_parens,
     is_docstring,
     is_empty_tuple,
+    is_function_or_class,
     is_lpar_token,
     is_multiline_string,
     is_name_token,
@@ -286,7 +287,7 @@ class LineGenerator(Visitor[Line]):
         """Visit a suite."""
         if (
             self.mode.is_pyi or Preview.dummy_implementations in self.mode
-        ) and is_stub_suite(node):
+        ) and is_stub_suite(node, self.mode):
             yield from self.visit(node.children[2])
         else:
             yield from self.visit_default(node)
@@ -299,11 +300,12 @@ class LineGenerator(Visitor[Line]):
                 wrap_in_parentheses(node, child, visible=False)
             prev_type = child.type
 
-        is_suite_like = node.parent and node.parent.type in STATEMENT
-        if is_suite_like:
-            if (
-                self.mode.is_pyi or Preview.dummy_implementations in self.mode
-            ) and is_stub_body(node):
+        if node.parent and node.parent.type in STATEMENT:
+            if Preview.dummy_implementations in self.mode:
+                condition = is_function_or_class(node.parent)
+            else:
+                condition = self.mode.is_pyi
+            if condition and is_stub_body(node):
                 yield from self.visit_default(node)
             else:
                 yield from self.line(+1)
@@ -314,7 +316,7 @@ class LineGenerator(Visitor[Line]):
             if (
                 not (self.mode.is_pyi or Preview.dummy_implementations in self.mode)
                 or not node.parent
-                or not is_stub_suite(node.parent)
+                or not is_stub_suite(node.parent, self.mode)
             ):
                 yield from self.line()
             yield from self.visit_default(node)
