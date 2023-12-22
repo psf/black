@@ -1,53 +1,10 @@
 # Change Log
 
-## Unreleased
-
-### Highlights
-
-<!-- Include any especially major or disruptive changes here -->
-
-### Stable style
-
-<!-- Changes that affect Black's stable style -->
-
-### Preview style
-
-<!-- Changes that affect Black's preview style -->
-
-### Configuration
-
-<!-- Changes to how Black can be configured -->
+## 23.12.1
 
 ### Packaging
 
-<!-- Changes to how Black is packaged, such as dependency requirements -->
-
 - Fixed a bug that included dependencies from the `d` extra by default (#4108)
-
-### Parser
-
-<!-- Changes to the parser or to version autodetection -->
-
-### Performance
-
-<!-- Changes that improve Black's performance. -->
-
-### Output
-
-<!-- Changes to Black's terminal output and error messages -->
-
-### _Blackd_
-
-<!-- Changes to blackd -->
-
-### Integrations
-
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
-
-### Documentation
-
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
 
 ## 23.12.0
 
