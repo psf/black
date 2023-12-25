@@ -736,8 +736,18 @@ def is_funcdef(node: Node) -> bool:
     return node.type == syms.funcdef
 
 
-def is_stub_suite(node: Node) -> bool:
+def is_function_or_class(node: Node) -> bool:
+    return node.type in {syms.funcdef, syms.classdef, syms.async_funcdef}
+
+
+def is_stub_suite(node: Node, mode: Mode) -> bool:
     """Return True if `node` is a suite with a stub body."""
+    if (
+        node.parent is not None
+        and Preview.dummy_implementations in mode
+        and not is_function_or_class(node.parent)
+    ):
+        return False
 
     # If there is a comment, we want to keep it.
     if node.prefix.strip():

@@ -12,7 +12,8 @@ _Black_ is a well-behaved Unix-style command-line tool:
 
 ## Usage
 
-To get started right away with sensible defaults:
+_Black_ will reformat entire files in place. To get started right away with sensible
+defaults:
 
 ```sh
 black {source_file_or_directory}
@@ -24,6 +25,17 @@ You can run _Black_ as a package if running it as a script doesn't work:
 python -m black {source_file_or_directory}
 ```
 
+### Ignoring sections
+
+Black will not reformat lines that contain `# fmt: skip` or blocks that start with
+`# fmt: off` and end with `# fmt: on`. `# fmt: skip` can be mixed with other
+pragmas/comments either with multiple comments (e.g. `# fmt: skip # pylint # noqa`) or
+as a semicolon separated list (e.g. `# fmt: skip; pylint; noqa`). `# fmt: on/off` must
+be on the same level of indentation and in the same block, meaning no unindents beyond
+the initial indentation level between them. Black also recognizes
+[YAPF](https://github.com/google/yapf)'s block comments to the same effect, as a
+courtesy for straddling code.
+
 ### Command line options
 
 The CLI options of _Black_ can be displayed by running `black --help`. All options are
@@ -34,6 +46,10 @@ are deliberately limited and rarely added.
 
 Note that all command-line options listed above can also be configured using a
 `pyproject.toml` file (more on that below).
+
+#### `-h`, `--help`
+
+Show available command-line options and exit.
 
 #### `-c`, `--code`
 
@@ -109,6 +125,10 @@ useful when piping source on standard input.
 When processing Jupyter Notebooks, add the given magic to the list of known python-
 magics. Useful for formatting cells with custom python magics.
 
+#### `-x, --skip-source-first-line`
+
+Skip the first line of the source code.
+
 #### `-S, --skip-string-normalization`
 
 By default, _Black_ uses double quotes for all strings and normalizes string prefixes,
@@ -132,7 +152,7 @@ functionality in the next major release. Read more about
 
 #### `--check`
 
-Passing `--check` will make _Black_ exit with:
+Don't write the files back, just return the status. _Black_ will exit with:
 
 - code 0 if nothing would change;
 - code 1 if some files would be reformatted; or
@@ -162,8 +182,8 @@ $ echo $?
 
 #### `--diff`
 
-Passing `--diff` will make _Black_ print out diffs that indicate what changes _Black_
-would've made. They are printed to stdout so capturing them is simple.
+Don't write the files back, just output a diff to indicate what changes _Black_ would've
+made. They are printed to stdout so capturing them is simple.
 
 If you'd like colored diffs, you can enable them with `--color`.
 
@@ -179,7 +199,11 @@ All done! ✨ 🍰 ✨
 1 file would be reformatted.
 ```
 
-### `--line-ranges`
+#### `--color` / `--no-color`
+
+Show (or do not show) colored diff. Only applies when `--diff` is given.
+
+#### `--line-ranges`
 
 When specified, _Black_ will try its best to only format these lines.
 
@@ -202,10 +226,6 @@ extra lines outside of the ranges when ther are unformatted lines with the exact
 content. It also disables _Black_'s formatting stability check in `--safe` mode.
 ```
 
-#### `--color` / `--no-color`
-
-Show (or do not show) colored diff. Only applies when `--diff` is given.
-
 #### `--fast` / `--safe`
 
 By default, _Black_ performs [an AST safety check](labels/ast-changes) after formatting
@@ -221,8 +241,8 @@ configuration file for consistent results across environments.
 
 ```console
 $ black --version
-black, 23.11.0 (compiled: yes)
-$ black --required-version 23.11.0 -c "format = 'this'"
+black, 23.12.1 (compiled: yes)
+$ black --required-version 23.12.1 -c "format = 'this'"
 format = "this"
 $ black --required-version 31.5b2 -c "still = 'beta?!'"
 Oh no! 💥 💔 💥 The required version does not match the running version!
@@ -241,29 +261,22 @@ Because of our [stability policy](../the_black_code_style/index.md), this will g
 stable formatting, but still allow you to take advantage of improvements that do not
 affect formatting.
 
-#### `--include`
-
-A regular expression that matches files and directories that should be included on
-recursive searches. An empty value means all files are included regardless of the name.
-Use forward slashes for directories on all platforms (Windows, too). Exclusions are
-calculated first, inclusions later.
-
 #### `--exclude`
 
 A regular expression that matches files and directories that should be excluded on
 recursive searches. An empty value means no paths are excluded. Use forward slashes for
-directories on all platforms (Windows, too). Exclusions are calculated first, inclusions
-later.
+directories on all platforms (Windows, too). By default, Black also ignores all paths
+listed in `.gitignore`. Changing this value will override all default exclusions.
 
 #### `--extend-exclude`
 
-Like `--exclude`, but adds additional files and directories on top of the excluded ones.
-Useful if you simply want to add to the default.
+Like `--exclude`, but adds additional files and directories on top of the default values
+instead of overriding them.
 
 #### `--force-exclude`
 
 Like `--exclude`, but files and directories matching this regex will be excluded even
-when they are passed explicitly as arguments. This is useful when invoking _Black_
+when they are passed explicitly as arguments. This is useful when invoking Black
 programmatically on changed files, such as in a pre-commit hook or editor plugin.
 
 #### `--stdin-filename`
@@ -271,16 +284,23 @@ programmatically on changed files, such as in a pre-commit hook or editor plugin
 The name of the file when passing it through stdin. Useful to make sure Black will
 respect the `--force-exclude` option on some editors that rely on using stdin.
 
+#### `--include`
+
+A regular expression that matches files and directories that should be included on
+recursive searches. An empty value means all files are included regardless of the name.
+Use forward slashes for directories on all platforms (Windows, too). Overrides all
+exclusions, including from `.gitignore` and command line options.
+
 #### `-W`, `--workers`
 
 When _Black_ formats multiple files, it may use a process pool to speed up formatting.
 This option controls the number of parallel workers. This can also be specified via the
-`BLACK_NUM_WORKERS` environment variable.
+`BLACK_NUM_WORKERS` environment variable. Defaults to the number of CPUs in the system.
 
 #### `-q`, `--quiet`
 
-Passing `-q` / `--quiet` will cause _Black_ to stop emitting all non-critical output.
-Error messages will still be emitted (which can silenced by `2>/dev/null`).
+Stop emitting all non-critical output. Error messages will still be emitted (which can
+silenced by `2>/dev/null`).
 
 ```console
 $ black src/ -q
@@ -289,9 +309,9 @@ error: cannot format src/black_primer/cli.py: Cannot parse: 5:6: mport asyncio
 
 #### `-v`, `--verbose`
 
-Passing `-v` / `--verbose` will cause _Black_ to also emit messages about files that
-were not changed or were ignored due to exclusion patterns. If _Black_ is using a
-configuration file, a blue message detailing which one it is using will be emitted.
+Emit messages about files that were not changed or were ignored due to exclusion
+patterns. If _Black_ is using a configuration file, a message detailing which one it is
+using will be emitted.
 
 ```console
 $ black src/ -v
@@ -313,17 +333,13 @@ You can check the version of _Black_ you have installed using the `--version` fl
 
 ```console
 $ black --version
-black, 23.11.0
+black, 23.12.1
 ```
 
 #### `--config`
 
 Read configuration options from a configuration file. See
 [below](#configuration-via-a-file) for more details on the configuration file.
-
-#### `-h`, `--help`
-
-Show available command-line options and exit.
 
 ### Environment variable options
 
@@ -355,7 +371,7 @@ All done! ✨ 🍰 ✨
 use `--stdin-filename`. Useful to make sure _Black_ will respect the `--force-exclude`
 option on some editors that rely on using stdin.
 
-You can also pass code as a string using the `-c` / `--code` option.
+You can also pass code as a string using the `--code` option.
 
 ### Writeback and reporting
 
@@ -435,8 +451,7 @@ refers to the path to your home directory. On Windows, this will be something li
 You can also explicitly specify the path to a particular file that you want with
 `--config`. In this situation _Black_ will not look for any other file.
 
-If you're running with `--verbose`, you will see a blue message if a file was found and
-used.
+If you're running with `--verbose`, you will see a message if a file was found and used.
 
 Please note `blackd` will not use `pyproject.toml` configuration.
 

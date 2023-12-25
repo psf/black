@@ -689,18 +689,14 @@ class EmptyLineTracker:
                 return 0, 1
             return before, 1
 
+        # In preview mode, always allow blank lines, except right before a function
+        # docstring
         is_empty_first_line_ok = (
-            Preview.allow_empty_first_line_before_new_block_or_comment
-            in current_line.mode
+            Preview.allow_empty_first_line_in_block in current_line.mode
             and (
-                # If it's a standalone comment
-                current_line.leaves[0].type == STANDALONE_COMMENT
-                # If it opens a new block
-                or current_line.opens_block
-                # If it's a triple quote comment (but not at the start of a funcdef)
+                not is_docstring(current_line.leaves[0])
                 or (
-                    is_docstring(current_line.leaves[0])
-                    and self.previous_line
+                    self.previous_line
                     and self.previous_line.leaves[0]
                     and self.previous_line.leaves[0].parent
                     and not is_funcdef(self.previous_line.leaves[0].parent)
@@ -855,7 +851,7 @@ def is_line_short_enough(  # noqa: C901
     if not line_str:
         line_str = line_to_string(line)
 
-    width = str_width if mode.preview else len
+    width = str_width if Preview.respect_east_asian_width in mode else len
 
     if Preview.multiline_string_handling not in mode:
         return (
