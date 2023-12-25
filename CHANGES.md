@@ -17,6 +17,7 @@
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
+- Fix cache mtime logic that resulted in false positive cache hits (#4128)
 
 ### Packaging
 
