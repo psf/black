@@ -22,7 +22,7 @@ def foo():
             Long comment here
             """
             a = 123
-
+    
     if z:
 
         for _ in range(100):
