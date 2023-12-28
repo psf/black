@@ -14,6 +14,9 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix bug where spaces were not added around parenthesized walruses in subscripts,
+  unlike other binary operators (#4109)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->

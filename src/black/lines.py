@@ -446,8 +446,15 @@ class Line:
 
             if subscript_start.type == syms.subscriptlist:
                 subscript_start = child_towards(subscript_start, leaf)
+
+        # When this is moved out of preview, add syms.namedexpr_test directly to
+        # TEST_DESCENDANTS in nodes.py
+        if Preview.walrus_subscript in self.mode:
+            test_decendants = TEST_DESCENDANTS | {syms.namedexpr_test}
+        else:
+            test_decendants = TEST_DESCENDANTS
         return subscript_start is not None and any(
-            n.type in TEST_DESCENDANTS for n in subscript_start.pre_order()
+            n.type in test_decendants for n in subscript_start.pre_order()
         )
 
     def enumerate_with_length(
