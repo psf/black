@@ -101,7 +101,7 @@ class Cache:
         st = res_src.stat()
         if st.st_size != old.st_size:
             return True
-        if int(st.st_mtime) != int(old.st_mtime):
+        if st.st_mtime != old.st_mtime:
             new_hash = Cache.hash_digest(res_src)
             if new_hash != old.hash:
                 return True
