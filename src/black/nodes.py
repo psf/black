@@ -742,10 +742,6 @@ def is_multiline_string(leaf: Leaf) -> bool:
     return has_triple_quotes(leaf.value) and "\n" in leaf.value
 
 
-def is_funcdef(node: Node) -> bool:
-    return node.type == syms.funcdef
-
-
 def is_function_or_class(node: Node) -> bool:
     return node.type in {syms.funcdef, syms.classdef, syms.async_funcdef}
 

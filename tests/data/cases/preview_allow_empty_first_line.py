@@ -62,6 +62,17 @@ class Cls:
 
         pass
 
+
+async def async_fn():
+
+    """Docstring."""
+
+
+@decorated
+async def async_fn():
+
+    """Docstring."""
+
 # output
 
 def foo():
@@ -126,3 +137,12 @@ class Cls:
     def method(self):
 
         pass
+
+
+async def async_fn():
+    """Docstring."""
+
+
+@decorated
+async def async_fn():
+    """Docstring."""

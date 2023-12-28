@@ -24,7 +24,6 @@ from black.nodes import (
     TEST_DESCENDANTS,
     child_towards,
     is_docstring,
-    is_funcdef,
     is_import,
     is_multiline_string,
     is_one_sequence_between,
@@ -709,12 +708,7 @@ class EmptyLineTracker:
             Preview.allow_empty_first_line_in_block in current_line.mode
             and (
                 not is_docstring(current_line.leaves[0], current_line.mode)
-                or (
-                    self.previous_line
-                    and self.previous_line.leaves[0]
-                    and self.previous_line.leaves[0].parent
-                    and not is_funcdef(self.previous_line.leaves[0].parent)
-                )
+                or (self.previous_line and not self.previous_line.is_def)
             )
         )
 
