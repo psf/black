@@ -17,6 +17,7 @@
 - Format module docstrings the same as class and function docstrings (#4095)
 - Fix bug where spaces were not added around parenthesized walruses in subscripts,
   unlike other binary operators (#4109)
+- Remove empty lines before docstrings in async functions (#4132)
 
 ### Configuration
 
