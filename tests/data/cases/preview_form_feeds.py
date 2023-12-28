@@ -37,7 +37,7 @@
 #
 
 #
-        
+    
 #
 
 \
@@ -72,7 +72,7 @@ pass
 pass
 
 pass
-        
+    
 pass
 
 
@@ -95,7 +95,7 @@ class Baz:
     def __init__(self):
         pass
     
-    
+
     def something(self):
         pass
     
@@ -203,6 +203,7 @@ def bar(a=1, b: bool = False):
 
 
 class Baz:
+
     def __init__(self):
         pass
 

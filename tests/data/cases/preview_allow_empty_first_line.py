@@ -22,7 +22,7 @@ def foo():
             Long comment here
             """
             a = 123
-    
+
     if z:
 
         for _ in range(100):
@@ -60,6 +60,15 @@ class Cls:
 
     def method(self):
 
+        pass
+
+
+def top_level(
+    a: int,
+    b: str,
+) -> Whatever[Generic, Something]:
+
+    def nested(x: int) -> int:
         pass
 
 # output
@@ -123,6 +132,16 @@ def quux():
 
 
 class Cls:
+
     def method(self):
 
+        pass
+
+
+def top_level(
+    a: int,
+    b: str,
+) -> Whatever[Generic, Something]:
+
+    def nested(x: int) -> int:
         pass

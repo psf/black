@@ -745,7 +745,10 @@ class EmptyLineTracker:
         if self.previous_line.depth < current_line.depth and (
             self.previous_line.is_class or self.previous_line.is_def
         ):
-            return 0, 0
+            if self.mode.is_pyi or not Preview.allow_empty_first_line_in_block:
+                return 0, 0
+            else:
+                return 1 if user_had_newline else 0, 0
 
         comment_to_add_newlines: Optional[LinesBlock] = None
         if (

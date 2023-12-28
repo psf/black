@@ -39,6 +39,7 @@ class ClassWithSpaceParentheses:
 
 
 class ClassWithEmptyFunc(object):
+
     def func_with_blank_parentheses():
         return 5
 
