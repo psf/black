@@ -63,6 +63,8 @@ def lines_with_leading_tabs_expanded(s: str) -> List[str]:
             )
         else:
             lines.append(line)
+    if s.endswith("\n"):
+        lines.append("")
     return lines
 
 

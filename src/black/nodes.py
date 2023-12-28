@@ -531,13 +531,23 @@ def is_arith_like(node: LN) -> bool:
     }
 
 
-def is_docstring(leaf: Leaf) -> bool:
+def is_docstring(leaf: Leaf, mode: Mode) -> bool:
     if leaf.type != token.STRING:
         return False
 
     prefix = get_string_prefix(leaf.value)
     if set(prefix).intersection("bBfF"):
         return False
+
+    if (
+        Preview.unify_docstring_detection in mode
+        and leaf.parent
+        and leaf.parent.type == syms.simple_stmt
+        and not leaf.parent.prev_sibling
+        and leaf.parent.parent
+        and leaf.parent.parent.type == syms.file_input
+    ):
+        return True
 
     if prev_siblings_are(
         leaf.parent, [None, token.NEWLINE, token.INDENT, syms.simple_stmt]

@@ -196,7 +196,7 @@ class Line:
         )
 
     @property
-    def is_triple_quoted_string(self) -> bool:
+    def _is_triple_quoted_string(self) -> bool:
         """Is the line a triple quoted string?"""
         if not self or self.leaves[0].type != token.STRING:
             return False
@@ -208,6 +208,13 @@ class Line:
         ):
             return True
         return False
+
+    @property
+    def is_docstring(self) -> bool:
+        """Is the line a docstring?"""
+        if Preview.unify_docstring_detection not in self.mode:
+            return self._is_triple_quoted_string
+        return bool(self) and is_docstring(self.leaves[0], self.mode)
 
     @property
     def is_chained_assignment(self) -> bool:
@@ -583,7 +590,7 @@ class EmptyLineTracker:
             and self.previous_block
             and self.previous_block.previous_block is None
             and len(self.previous_block.original_line.leaves) == 1
-            and self.previous_block.original_line.is_triple_quoted_string
+            and self.previous_block.original_line.is_docstring
             and not (current_line.is_class or current_line.is_def)
         ):
             before = 1
@@ -690,7 +697,7 @@ class EmptyLineTracker:
         if (
             self.previous_line
             and self.previous_line.is_class
-            and current_line.is_triple_quoted_string
+            and current_line.is_docstring
         ):
             if Preview.no_blank_line_before_class_docstring in current_line.mode:
                 return 0, 1
@@ -701,7 +708,7 @@ class EmptyLineTracker:
         is_empty_first_line_ok = (
             Preview.allow_empty_first_line_in_block in current_line.mode
             and (
-                not is_docstring(current_line.leaves[0])
+                not is_docstring(current_line.leaves[0], current_line.mode)
                 or (
                     self.previous_line
                     and self.previous_line.leaves[0]

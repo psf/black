@@ -14,6 +14,7 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Format module docstrings the same as class and function docstrings (#4095)
 - Fix bug where spaces were not added around parenthesized walruses in subscripts,
   unlike other binary operators (#4109)
 
