@@ -8,31 +8,25 @@
 
 ### Stable style
 
-- Fix bug where `# fmt: off` automatically dedents when used with the `--line-ranges`
-  option, even when it is not within the specified line range. (#4084)
+<!-- Changes that affect Black's stable style -->
 
 ### Preview style
 
-- Prefer more equal signs before a break when splitting chained assignments (#4010)
-- Standalone form feed characters at the module level are no longer removed (#4021)
-- Additional cases of immediately nested tuples, lists, and dictionaries are now
-  indented less (#4012)
-- Allow empty lines at the beginning of all blocks, except immediately before a
-  docstring (#4060)
-- Fix crash in preview mode when using a short `--line-length` (#4086)
+<!-- Changes that affect Black's preview style -->
+
 - Format module docstrings the same as class and function docstrings (#4095)
+- Fix bug where spaces were not added around parenthesized walruses in subscripts,
+  unlike other binary operators (#4109)
 
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
 
-- `--line-ranges` now skips _Black_'s internal stability check in `--safe` mode. This
-  avoids a crash on rare inputs that have many unformatted same-content lines. (#4034)
+- Fix cache mtime logic that resulted in false positive cache hits (#4128)
 
 ### Packaging
 
-- Upgrade to mypy 1.7.1 (#4049) (#4069)
-- Faster compiled wheels are now available for CPython 3.12 (#4070)
+<!-- Changes to how Black is packaged, such as dependency requirements -->
 
 ### Parser
 
@@ -52,14 +46,64 @@
 
 ### Integrations
 
-- Enable 3.12 CI (#4035)
-- Build docker images in parallel (#4054)
-- Build docker images with 3.12 (#4055)
+<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
+
+## 23.12.1
+
+### Packaging
+
+- Fixed a bug that included dependencies from the `d` extra by default (#4108)
+
+## 23.12.0
+
+### Highlights
+
+It's almost 2024, which means it's time for a new edition of _Black_'s stable style!
+Together with this release, we'll put out an alpha release 24.1a1 showcasing the draft
+2024 stable style, which we'll finalize in the January release. Please try it out and
+[share your feedback](https://github.com/psf/black/issues/4042).
+
+This release (23.12.0) will still produce the 2023 style. Most but not all of the
+changes in `--preview` mode will be in the 2024 stable style.
+
+### Stable style
+
+- Fix bug where `# fmt: off` automatically dedents when used with the `--line-ranges`
+  option, even when it is not within the specified line range. (#4084)
+- Fix feature detection for parenthesized context managers (#4104)
+
+### Preview style
+
+- Prefer more equal signs before a break when splitting chained assignments (#4010)
+- Standalone form feed characters at the module level are no longer removed (#4021)
+- Additional cases of immediately nested tuples, lists, and dictionaries are now
+  indented less (#4012)
+- Allow empty lines at the beginning of all blocks, except immediately before a
+  docstring (#4060)
+- Fix crash in preview mode when using a short `--line-length` (#4086)
+- Keep suites consisting of only an ellipsis on their own lines if they are not
+  functions or class definitions (#4066) (#4103)
+
+### Configuration
+
+- `--line-ranges` now skips _Black_'s internal stability check in `--safe` mode. This
+  avoids a crash on rare inputs that have many unformatted same-content lines. (#4034)
+
+### Packaging
+
+- Upgrade to mypy 1.7.1 (#4049) (#4069)
+- Faster compiled wheels are now available for CPython 3.12 (#4070)
+
+### Integrations
+
+- Enable 3.12 CI (#4035)
+- Build docker images in parallel (#4054)
+- Build docker images with 3.12 (#4055)
 
 ## 23.11.0
 

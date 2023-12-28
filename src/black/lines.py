@@ -453,12 +453,19 @@ class Line:
 
             if subscript_start.type == syms.subscriptlist:
                 subscript_start = child_towards(subscript_start, leaf)
+
+        # When this is moved out of preview, add syms.namedexpr_test directly to
+        # TEST_DESCENDANTS in nodes.py
+        if Preview.walrus_subscript in self.mode:
+            test_decendants = TEST_DESCENDANTS | {syms.namedexpr_test}
+        else:
+            test_decendants = TEST_DESCENDANTS
         return subscript_start is not None and any(
-            n.type in TEST_DESCENDANTS for n in subscript_start.pre_order()
+            n.type in test_decendants for n in subscript_start.pre_order()
         )
 
     def enumerate_with_length(
-        self, reversed: bool = False
+        self, is_reversed: bool = False
     ) -> Iterator[Tuple[Index, Leaf, int]]:
         """Return an enumeration of leaves with their length.
 
@@ -466,7 +473,7 @@ class Line:
         """
         op = cast(
             Callable[[Sequence[Leaf]], Iterator[Tuple[Index, Leaf]]],
-            enumerate_reversed if reversed else enumerate,
+            enumerate_reversed if is_reversed else enumerate,
         )
         for index, leaf in op(self.leaves):
             length = len(leaf.prefix) + len(leaf.value)
@@ -858,7 +865,7 @@ def is_line_short_enough(  # noqa: C901
     if not line_str:
         line_str = line_to_string(line)
 
-    width = str_width if mode.preview else len
+    width = str_width if Preview.respect_east_asian_width in mode else len
 
     if Preview.multiline_string_handling not in mode:
         return (
