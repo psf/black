@@ -92,7 +92,7 @@ class Line:
             if self.mode.magic_trailing_comma:
                 if self.has_magic_trailing_comma(leaf):
                     self.magic_trailing_comma = leaf
-            elif self.has_magic_trailing_comma(leaf, ensure_removable=True):
+            elif self.has_magic_trailing_comma(leaf):
                 self.remove_trailing_comma()
         if not self.append_comment(leaf):
             self.leaves.append(leaf)
@@ -343,16 +343,11 @@ class Line:
     def contains_multiline_strings(self) -> bool:
         return any(is_multiline_string(leaf) for leaf in self.leaves)
 
-    def has_magic_trailing_comma(
-        self, closing: Leaf, ensure_removable: bool = False
-    ) -> bool:
+    def has_magic_trailing_comma(self, closing: Leaf) -> bool:
         """Return True if we have a magic trailing comma, that is when:
         - there's a trailing comma here
+        - it's not from single-element square bracket indexing
         - it's not a one-tuple
-        - it's not a single-element subscript
-        Additionally, if ensure_removable:
-        - it's not from square bracket indexing
-        (specifically, single-element square bracket indexing)
         """
         if not (
             closing.type in CLOSING_BRACKETS
@@ -376,6 +371,8 @@ class Line:
                     brackets=(token.LSQB, token.RSQB),
                 )
             ):
+                assert closing.prev_sibling is not None
+                assert closing.prev_sibling.type == syms.subscriptlist
                 return False
 
             return True
