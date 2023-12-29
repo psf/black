@@ -707,7 +707,7 @@ class EmptyLineTracker:
         is_empty_first_line_ok = (
             Preview.allow_empty_first_line_in_block in current_line.mode
             and (
-                not is_docstring(current_line.leaves[0], current_line.mode)
+                not current_line.is_docstring
                 or (self.previous_line and not self.previous_line.is_def)
             )
         )
