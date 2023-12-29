@@ -69,10 +69,10 @@ def something():
 
 
 def foo(wait: bool = True):
-    # This full comment and the next one after it will get wrapped into
-    # the next one-liner unexpectedly
+    # This comment is two
+    # lines long
 
-    # even if this comment is separated
+    # This is only one
     time.sleep(1) if wait else None
     time.sleep(1) if wait else None
 
@@ -184,10 +184,10 @@ def something():
 
 
 def foo(wait: bool = True):
-    # This full comment and the next one after it will get wrapped into
-    # the next one-liner unexpectedly
+    # This comment is two
+    # lines long
 
-    # even if this comment is separated
+    # This is only one
     time.sleep(1) if wait else None
     time.sleep(1) if wait else None
 
