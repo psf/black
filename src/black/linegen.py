@@ -170,8 +170,12 @@ class LineGenerator(Visitor[Line]):
             )
 
             if not already_parenthesized:
+                # Similar to logic in wrap_in_parentheses
                 lpar = Leaf(token.LPAR, "")
                 rpar = Leaf(token.RPAR, "")
+                prefix = node.prefix
+                node.prefix = ""
+                lpar.prefix = prefix
                 node.insert_child(0, lpar)
                 node.append_child(rpar)
 
