@@ -203,6 +203,7 @@ def bar(a=1, b: bool = False):
 
 
 class Baz:
+
     def __init__(self):
         pass
 
