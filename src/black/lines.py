@@ -640,15 +640,15 @@ class EmptyLineTracker:
         if previous_def is not None:
             assert self.previous_line is not None
             if self.mode.is_pyi:
-                if depth and not current_line.is_def and self.previous_line.is_def:
-                    # Empty lines between attributes and methods should be preserved.
-                    before = 1 if user_had_newline else 0
-                elif (
+                if (
                     Preview.blank_line_after_nested_stub_class in self.mode
                     and previous_def.is_class
                     and not previous_def.is_stub_class
                 ):
                     before = 1
+                elif depth and not current_line.is_def and self.previous_line.is_def:
+                    # Empty lines between attributes and methods should be preserved.
+                    before = 1 if user_had_newline else 0
                 elif depth:
                     before = 0
                 else:
