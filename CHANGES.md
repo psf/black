@@ -20,6 +20,7 @@
 - Remove empty lines before docstrings in async functions (#4132)
 - Address a missing case in the change to allow empty lines at the beginning of all
   blocks, except immediately before a docstring (#4130)
+- For stubs, fix logic to enforce empty line after nested classes with bodies (#4141)
 
 ### Configuration
 
