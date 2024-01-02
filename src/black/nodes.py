@@ -742,15 +742,15 @@ def is_multiline_string(leaf: Leaf) -> bool:
     return has_triple_quotes(leaf.value) and "\n" in leaf.value
 
 
-def is_funcdef(node: Node) -> bool:
-    return node.type == syms.funcdef
-
-
 def is_parent_function_or_class(node: Node) -> bool:
     assert node.type in {syms.suite, syms.simple_stmt}
     assert node.parent is not None
     # Note this works for suites / simple_stmts in async def as well
     return node.parent.type in {syms.funcdef, syms.classdef}
+  
+ 
+def is_function_or_class(node: Node) -> bool:
+    return node.type in {syms.funcdef, syms.classdef, syms.async_funcdef}
 
 
 def is_stub_suite(node: Node, mode: Mode) -> bool:

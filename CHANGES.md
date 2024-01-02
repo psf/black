@@ -17,6 +17,9 @@
 - Format module docstrings the same as class and function docstrings (#4095)
 - Fix bug where spaces were not added around parenthesized walruses in subscripts,
   unlike other binary operators (#4109)
+- Remove empty lines before docstrings in async functions (#4132)
+- Address a missing case in the change to allow empty lines at the beginning of all
+  blocks, except immediately before a docstring (#4130)
 
 ### Configuration
 
@@ -47,6 +50,9 @@
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- Revert the change to run Black's pre-commit integration only on specific git hooks
+  (#3940) for better compatibility with older versions of pre-commit (#4137)
 
 ### Documentation
 

@@ -24,7 +24,6 @@ from black.nodes import (
     TEST_DESCENDANTS,
     child_towards,
     is_docstring,
-    is_funcdef,
     is_import,
     is_multiline_string,
     is_one_sequence_between,
@@ -708,13 +707,8 @@ class EmptyLineTracker:
         is_empty_first_line_ok = (
             Preview.allow_empty_first_line_in_block in current_line.mode
             and (
-                not is_docstring(current_line.leaves[0], current_line.mode)
-                or (
-                    self.previous_line
-                    and self.previous_line.leaves[0]
-                    and self.previous_line.leaves[0].parent
-                    and not is_funcdef(self.previous_line.leaves[0].parent)
-                )
+                not current_line.is_docstring
+                or (self.previous_line and not self.previous_line.is_def)
             )
         )
 
@@ -745,7 +739,10 @@ class EmptyLineTracker:
         if self.previous_line.depth < current_line.depth and (
             self.previous_line.is_class or self.previous_line.is_def
         ):
-            return 0, 0
+            if self.mode.is_pyi or not Preview.allow_empty_first_line_in_block:
+                return 0, 0
+            else:
+                return 1 if user_had_newline else 0, 0
 
         comment_to_add_newlines: Optional[LinesBlock] = None
         if (
