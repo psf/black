@@ -73,6 +73,15 @@ async def async_fn():
 
     """Docstring."""
 
+    
+def top_level(
+    a: int,
+    b: str,
+) -> Whatever[Generic, Something]:
+
+    def nested(x: int) -> int:
+        pass
+
 # output
 
 def foo():
@@ -134,6 +143,7 @@ def quux():
 
 
 class Cls:
+
     def method(self):
 
         pass
@@ -146,3 +156,12 @@ async def async_fn():
 @decorated
 async def async_fn():
     """Docstring."""
+
+
+def top_level(
+    a: int,
+    b: str,
+) -> Whatever[Generic, Something]:
+
+    def nested(x: int) -> int:
+        pass
