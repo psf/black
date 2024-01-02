@@ -747,8 +747,8 @@ def is_parent_function_or_class(node: Node) -> bool:
     assert node.parent is not None
     # Note this works for suites / simple_stmts in async def as well
     return node.parent.type in {syms.funcdef, syms.classdef}
-  
- 
+
+
 def is_function_or_class(node: Node) -> bool:
     return node.type in {syms.funcdef, syms.classdef, syms.async_funcdef}
 
