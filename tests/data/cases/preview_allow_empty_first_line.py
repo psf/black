@@ -63,6 +63,17 @@ class Cls:
         pass
 
 
+async def async_fn():
+
+    """Docstring."""
+
+
+@decorated
+async def async_fn():
+
+    """Docstring."""
+
+    
 def top_level(
     a: int,
     b: str,
@@ -136,6 +147,15 @@ class Cls:
     def method(self):
 
         pass
+
+
+async def async_fn():
+    """Docstring."""
+
+
+@decorated
+async def async_fn():
+    """Docstring."""
 
 
 def top_level(
