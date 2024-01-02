@@ -50,6 +50,9 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- Revert the change to run Black's pre-commit integration only on specific git hooks
+  (#3940) for better compatibility with older versions of pre-commit (#4137)
+
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
