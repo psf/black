@@ -24,7 +24,6 @@ from black.nodes import (
     TEST_DESCENDANTS,
     child_towards,
     is_docstring,
-    is_funcdef,
     is_import,
     is_multiline_string,
     is_one_sequence_between,
@@ -92,7 +91,7 @@ class Line:
             if self.mode.magic_trailing_comma:
                 if self.has_magic_trailing_comma(leaf):
                     self.magic_trailing_comma = leaf
-            elif self.has_magic_trailing_comma(leaf, ensure_removable=True):
+            elif self.has_magic_trailing_comma(leaf):
                 self.remove_trailing_comma()
         if not self.append_comment(leaf):
             self.leaves.append(leaf)
@@ -196,7 +195,7 @@ class Line:
         )
 
     @property
-    def is_triple_quoted_string(self) -> bool:
+    def _is_triple_quoted_string(self) -> bool:
         """Is the line a triple quoted string?"""
         if not self or self.leaves[0].type != token.STRING:
             return False
@@ -206,6 +205,13 @@ class Line:
         if value.startswith(("r'''", 'r"""', "R'''", 'R"""')):
             return True
         return False
+
+    @property
+    def is_docstring(self) -> bool:
+        """Is the line a docstring?"""
+        if Preview.unify_docstring_detection not in self.mode:
+            return self._is_triple_quoted_string
+        return bool(self) and is_docstring(self.leaves[0], self.mode)
 
     @property
     def is_chained_assignment(self) -> bool:
@@ -334,16 +340,11 @@ class Line:
     def contains_multiline_strings(self) -> bool:
         return any(is_multiline_string(leaf) for leaf in self.leaves)
 
-    def has_magic_trailing_comma(
-        self, closing: Leaf, ensure_removable: bool = False
-    ) -> bool:
+    def has_magic_trailing_comma(self, closing: Leaf) -> bool:
         """Return True if we have a magic trailing comma, that is when:
         - there's a trailing comma here
+        - it's not from single-element square bracket indexing
         - it's not a one-tuple
-        - it's not a single-element subscript
-        Additionally, if ensure_removable:
-        - it's not from square bracket indexing
-        (specifically, single-element square bracket indexing)
         """
         if not (
             closing.type in CLOSING_BRACKETS
@@ -367,6 +368,8 @@ class Line:
                     brackets=(token.LSQB, token.RSQB),
                 )
             ):
+                assert closing.prev_sibling is not None
+                assert closing.prev_sibling.type == syms.subscriptlist
                 return False
 
             return True
@@ -444,12 +447,19 @@ class Line:
 
             if subscript_start.type == syms.subscriptlist:
                 subscript_start = child_towards(subscript_start, leaf)
+
+        # When this is moved out of preview, add syms.namedexpr_test directly to
+        # TEST_DESCENDANTS in nodes.py
+        if Preview.walrus_subscript in self.mode:
+            test_decendants = TEST_DESCENDANTS | {syms.namedexpr_test}
+        else:
+            test_decendants = TEST_DESCENDANTS
         return subscript_start is not None and any(
-            n.type in TEST_DESCENDANTS for n in subscript_start.pre_order()
+            n.type in test_decendants for n in subscript_start.pre_order()
         )
 
     def enumerate_with_length(
-        self, reversed: bool = False
+        self, is_reversed: bool = False
     ) -> Iterator[Tuple[Index, Leaf, int]]:
         """Return an enumeration of leaves with their length.
 
@@ -457,7 +467,7 @@ class Line:
         """
         op = cast(
             Callable[[Sequence[Leaf]], Iterator[Tuple[Index, Leaf]]],
-            enumerate_reversed if reversed else enumerate,
+            enumerate_reversed if is_reversed else enumerate,
         )
         for index, leaf in op(self.leaves):
             length = len(leaf.prefix) + len(leaf.value)
@@ -572,7 +582,7 @@ class EmptyLineTracker:
             self.previous_block
             and self.previous_block.previous_block is None
             and len(self.previous_block.original_line.leaves) == 1
-            and self.previous_block.original_line.is_triple_quoted_string
+            and self.previous_block.original_line.is_docstring
             and not (current_line.is_class or current_line.is_def)
         ):
             before = 1
@@ -626,11 +636,14 @@ class EmptyLineTracker:
         if previous_def is not None:
             assert self.previous_line is not None
             if self.mode.is_pyi:
-                if depth and not current_line.is_def and self.previous_line.is_def:
+                if (
+                    previous_def.is_class
+                    and not previous_def.is_stub_class
+                ):
+                    before = 1
+                elif depth and not current_line.is_def and self.previous_line.is_def:
                     # Empty lines between attributes and methods should be preserved.
                     before = 1 if user_had_newline else 0
-                elif previous_def.is_class and not previous_def.is_stub_class:
-                    before = 1
                 elif depth:
                     before = 0
                 else:
@@ -675,17 +688,15 @@ class EmptyLineTracker:
         if (
             self.previous_line
             and self.previous_line.is_class
-            and current_line.is_triple_quoted_string
+            and current_line.is_docstring
         ):
             return 0, 1
 
         # In preview mode, always allow blank lines, except right before a function
         # docstring
-        is_empty_first_line_ok = not is_docstring(current_line.leaves[0]) or (
-            self.previous_line
-            and self.previous_line.leaves[0]
-            and self.previous_line.leaves[0].parent
-            and not is_funcdef(self.previous_line.leaves[0].parent)
+        is_empty_first_line_ok = (
+            not current_line.is_docstring
+            or (self.previous_line and not self.previous_line.is_def)
         )
 
         if (
@@ -715,7 +726,10 @@ class EmptyLineTracker:
         if self.previous_line.depth < current_line.depth and (
             self.previous_line.is_class or self.previous_line.is_def
         ):
-            return 0, 0
+            if self.mode.is_pyi:
+                return 0, 0
+            else:
+                return 1 if user_had_newline else 0, 0
 
         comment_to_add_newlines: Optional[LinesBlock] = None
         if (

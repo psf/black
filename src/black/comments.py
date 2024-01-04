@@ -221,8 +221,7 @@ def convert_one_fmt_off_pair(
             if comment.value in FMT_OFF:
                 fmt_off_prefix = ""
                 if len(lines) > 0 and not any(
-                    comment_lineno >= line[0] and comment_lineno <= line[1]
-                    for line in lines
+                    line[0] <= comment_lineno <= line[1] for line in lines
                 ):
                     # keeping indentation of comment by preserving original whitespaces.
                     fmt_off_prefix = prefix.split(comment.value)[0]

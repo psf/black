@@ -1273,7 +1273,7 @@ def iter_fexpr_spans(s: str) -> Iterator[Tuple[int, int]]:
             i += 1
             continue
 
-        # if we're in an expression part of the f-string, fast forward through strings
+        # if we're in an expression part of the f-string, fast-forward through strings
         # note that backslashes are not legal in the expression portion of f-strings
         if stack:
             delim = None
@@ -1740,7 +1740,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
             """
             Returns:
                 True iff ALL of the conditions listed in the 'Transformations'
-                section of this classes' docstring would be be met by returning @i.
+                section of this classes' docstring would be met by returning @i.
             """
             is_space = string[i] == " "
             is_split_safe = is_valid_index(i - 1) and string[i - 1] in SPLIT_SAFE_CHARS
@@ -1932,7 +1932,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                 OR
             None, otherwise.
         """
-        # If this line is apart of a return/yield statement and the first leaf
+        # If this line is a part of a return/yield statement and the first leaf
         # contains either the "return" or "yield" keywords...
         if parent_type(LL[0]) in [syms.return_stmt, syms.yield_expr] and LL[
             0
@@ -1957,7 +1957,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                 OR
             None, otherwise.
         """
-        # If this line is apart of a ternary expression and the first leaf
+        # If this line is a part of a ternary expression and the first leaf
         # contains the "else" keyword...
         if (
             parent_type(LL[0]) == syms.test
@@ -1984,7 +1984,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                 OR
             None, otherwise.
         """
-        # If this line is apart of an assert statement and the first leaf
+        # If this line is a part of an assert statement and the first leaf
         # contains the "assert" keyword...
         if parent_type(LL[0]) == syms.assert_stmt and LL[0].value == "assert":
             is_valid_index = is_valid_index_factory(LL)
@@ -2019,7 +2019,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                 OR
             None, otherwise.
         """
-        # If this line is apart of an expression statement or is a function
+        # If this line is a part of an expression statement or is a function
         # argument AND the first leaf contains a variable name...
         if (
             parent_type(LL[0]) in [syms.expr_stmt, syms.argument, syms.power]
@@ -2040,7 +2040,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                         string_parser = StringParser()
                         idx = string_parser.parse(LL, string_idx)
 
-                        # The next leaf MAY be a comma iff this line is apart
+                        # The next leaf MAY be a comma iff this line is a part
                         # of a function argument...
                         if (
                             parent_type(LL[0]) == syms.argument
@@ -2187,8 +2187,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                 if opening_bracket is not None and opening_bracket in left_leaves:
                     index = left_leaves.index(opening_bracket)
                     if (
-                        index > 0
-                        and index < len(left_leaves) - 1
+                        0 < index < len(left_leaves) - 1
                         and left_leaves[index - 1].type == token.COLON
                         and left_leaves[index + 1].value == "lambda"
                     ):
@@ -2297,7 +2296,7 @@ class StringParser:
             * @leaves[@string_idx].type == token.STRING
 
         Returns:
-            The index directly after the last leaf which is apart of the string
+            The index directly after the last leaf which is a part of the string
             trailer, if a "trailer" exists.
             OR
             @string_idx + 1, if no string "trailer" exists.
@@ -2320,7 +2319,7 @@ class StringParser:
               MUST be the leaf directly following @leaf.
 
         Returns:
-            True iff @leaf is apart of the string's trailer.
+            True iff @leaf is a part of the string's trailer.
         """
         # We ignore empty LPAR or RPAR leaves.
         if is_empty_par(leaf):

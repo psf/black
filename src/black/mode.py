@@ -171,6 +171,7 @@ class Preview(Enum):
     hex_codes_in_unicode_sequences = auto()
     string_processing = auto()
     hug_parens_with_braces_and_square_brackets = auto()
+    unify_docstring_detection = auto()
 
 
 class Deprecated(UserWarning):
