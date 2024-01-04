@@ -13,7 +13,7 @@ else:
 from mypy_extensions import mypyc_attr
 
 from black.cache import CACHE_DIR
-from black.mode import Mode
+from black.mode import Mode, Preview
 from black.strings import get_string_prefix, has_triple_quotes
 from blib2to3 import pygram
 from blib2to3.pgen2 import token
@@ -104,6 +104,7 @@ TEST_DESCENDANTS: Final = {
     syms.trailer,
     syms.term,
     syms.power,
+    syms.namedexpr_test,
 }
 TYPED_NAMES: Final = {syms.tname, syms.tname_star}
 ASSIGNMENTS: Final = {
@@ -754,10 +755,7 @@ def is_function_or_class(node: Node) -> bool:
 
 def is_stub_suite(node: Node) -> bool:
     """Return True if `node` is a suite with a stub body."""
-    if (
-        node.parent is not None
-        and not is_parent_function_or_class(node)
-    ):
+    if node.parent is not None and not is_parent_function_or_class(node):
         return False
 
     # If there is a comment, we want to keep it.

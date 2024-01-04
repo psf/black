@@ -15,7 +15,7 @@ from typing import (
 )
 
 from black.brackets import COMMA_PRIORITY, DOT_PRIORITY, BracketTracker
-from black.mode import Mode
+from black.mode import Mode, Preview
 from black.nodes import (
     BRACKETS,
     CLOSING_BRACKETS,
@@ -448,14 +448,8 @@ class Line:
             if subscript_start.type == syms.subscriptlist:
                 subscript_start = child_towards(subscript_start, leaf)
 
-        # When this is moved out of preview, add syms.namedexpr_test directly to
-        # TEST_DESCENDANTS in nodes.py
-        if Preview.walrus_subscript in self.mode:
-            test_decendants = TEST_DESCENDANTS | {syms.namedexpr_test}
-        else:
-            test_decendants = TEST_DESCENDANTS
         return subscript_start is not None and any(
-            n.type in test_decendants for n in subscript_start.pre_order()
+            n.type in TEST_DESCENDANTS for n in subscript_start.pre_order()
         )
 
     def enumerate_with_length(
@@ -636,10 +630,7 @@ class EmptyLineTracker:
         if previous_def is not None:
             assert self.previous_line is not None
             if self.mode.is_pyi:
-                if (
-                    previous_def.is_class
-                    and not previous_def.is_stub_class
-                ):
+                if previous_def.is_class and not previous_def.is_stub_class:
                     before = 1
                 elif depth and not current_line.is_def and self.previous_line.is_def:
                     # Empty lines between attributes and methods should be preserved.
@@ -694,9 +685,8 @@ class EmptyLineTracker:
 
         # In preview mode, always allow blank lines, except right before a function
         # docstring
-        is_empty_first_line_ok = (
-            not current_line.is_docstring
-            or (self.previous_line and not self.previous_line.is_def)
+        is_empty_first_line_ok = not current_line.is_docstring or (
+            self.previous_line and not self.previous_line.is_def
         )
 
         if (
