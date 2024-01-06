@@ -556,11 +556,11 @@ def is_docstring(node: NL, mode: Mode) -> bool:
 
     if (
         Preview.unify_docstring_detection in mode
-        and leaf.parent
-        and leaf.parent.type == syms.simple_stmt
-        and not leaf.parent.prev_sibling
-        and leaf.parent.parent
-        and leaf.parent.parent.type == syms.file_input
+        and node.parent
+        and node.parent.type == syms.simple_stmt
+        and not node.parent.prev_sibling
+        and node.parent.parent
+        and node.parent.parent.type == syms.file_input
     ):
         return True
 

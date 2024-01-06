@@ -518,7 +518,7 @@ class LineGenerator(Visitor[Line]):
         quote_idx = fstring_start.value.index(quote_char)
         prefix, quote = fstring_start.value[:quote_idx], fstring_start.value[quote_idx:]
 
-        if not is_docstring(node):
+        if not is_docstring(node, self.mode):
             prefix = normalize_string_prefix(prefix)
 
         assert quote == fstring_end.value
