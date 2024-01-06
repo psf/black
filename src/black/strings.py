@@ -291,7 +291,7 @@ def normalize_fstring_quotes(
         new_segments.append(new_segment)
 
 
-    if new_quote == '"""' and new_segments[-1][-1:] == '"':
+    if new_quote == '"""' and new_segments[-1].endswith('"'):
         # edge case:
         new_segments[-1] = new_segments[-1][:-1] + '\\"'
 
