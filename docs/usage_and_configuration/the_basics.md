@@ -268,6 +268,10 @@ recursive searches. An empty value means no paths are excluded. Use forward slas
 directories on all platforms (Windows, too). By default, Black also ignores all paths
 listed in `.gitignore`. Changing this value will override all default exclusions.
 
+If the regular expression contains newlines, it is treated as a verbose regular
+expression. This is typically useful if setting these options in a `pyproject.toml`
+config file, see [Configuration format](#configuration-format) for more information.
+
 #### `--extend-exclude`
 
 Like `--exclude`, but adds additional files and directories on top of the default values
