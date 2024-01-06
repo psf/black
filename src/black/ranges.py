@@ -487,10 +487,7 @@ def _find_lines_mapping_index(
     index = start_index
     while index < len(lines_mappings):
         mapping = lines_mappings[index]
-        if (
-            mapping.original_start <= original_line
-            and original_line <= mapping.original_end
-        ):
+        if mapping.original_start <= original_line <= mapping.original_end:
             return index
         index += 1
     return index
