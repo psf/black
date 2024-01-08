@@ -10,7 +10,7 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Stop normalize spaces before `# fmt: skip` comments (#4156)
+- Stop normalize spaces before `# fmt: skip` comments (#4146)
 
 ### Preview style
 
