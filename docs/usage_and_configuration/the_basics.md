@@ -270,7 +270,8 @@ listed in `.gitignore`. Changing this value will override all default exclusions
 
 If the regular expression contains newlines, it is treated as a verbose regular
 expression. This is typically useful when setting these options in a `pyproject.toml`
-configuration file; see [Configuration format](#configuration-format) for more information.
+configuration file; see [Configuration format](#configuration-format) for more
+information.
 
 #### `--extend-exclude`
 
