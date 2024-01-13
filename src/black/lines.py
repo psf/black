@@ -221,6 +221,22 @@ class Line:
         return [leaf.type for leaf in self.leaves].count(token.EQUAL) > 1
 
     @property
+    def is_call_chain(self) -> bool:
+        """Is the line a call chain"""
+        if self.comments:
+            return False
+        count = 0
+        line_node = self.leaves[0].parent
+        if line_node:
+            for child in line_node.children:
+                if (
+                    child.type == syms.trailer
+                    and child.children[0].type in OPENING_BRACKETS
+                ):
+                    count += 1
+        return count > 1
+
+    @property
     def opens_block(self) -> bool:
         """Does this line open a new level of indentation."""
         if len(self.leaves) == 0:
