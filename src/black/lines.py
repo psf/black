@@ -231,7 +231,10 @@ class Line:
             for child in line_node.children:
                 if (
                     child.type == syms.trailer
-                    and child.children[0].type in OPENING_BRACKETS
+                    and child.children[0].type == token.DOT
+                    and child.next_sibling
+                    and child.next_sibling.type == syms.trailer
+                    and child.next_sibling.children[0].type in OPENING_BRACKETS
                 ):
                     count += 1
         return count > 1
