@@ -225,19 +225,28 @@ class Line:
         """Is the line a call chain"""
         if self.comments:
             return False
-        count = 0
         line_node = self.leaves[0].parent
-        if line_node:
-            for child in line_node.children:
-                if (
-                    child.type == syms.trailer
-                    and child.children[0].type == token.DOT
-                    and child.next_sibling
-                    and child.next_sibling.type == syms.trailer
-                    and child.next_sibling.children[0].type in OPENING_BRACKETS
-                ):
-                    count += 1
-        return count > 1
+        if not line_node:
+            return False
+        depth = 2 if line_node.type == syms.old_comp_for else 1
+
+        def get_call_count(node: Node, depth: int) -> int:
+            count = 0
+            for child in node.children:
+                if isinstance(child, Node):
+                    if (
+                        child.type == syms.trailer
+                        and child.children[0].type == token.DOT
+                        and child.next_sibling
+                        and child.next_sibling.type == syms.trailer
+                        and child.next_sibling.children[0].type in OPENING_BRACKETS
+                    ):
+                        count += 1
+                    elif depth - 1 > 0:
+                        count += get_call_count(child, depth - 1)
+            return count
+
+        return get_call_count(line_node, depth) > 1
 
     @property
     def opens_block(self) -> bool:

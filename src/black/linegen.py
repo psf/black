@@ -911,7 +911,7 @@ def _maybe_split_omitting_optional_parens(
         and not line.is_import
         # and we can actually remove the parens
         and can_omit_invisible_parens(rhs, mode.line_length)
-        and (Preview.improve_call_chain not in mode or not rhs.body.is_call_chain)
+        and not (Preview.improve_call_chain in mode and rhs.body.is_call_chain)
     ):
         omit = {id(rhs.closing_bracket), *omit}
         try:
@@ -1182,7 +1182,7 @@ def delimiter_split(
         raise CannotSplit("No delimiters found") from None
 
     if (
-        Preview.improve_call_chain not in mode
+        not (Preview.improve_call_chain in mode and line.is_call_chain)
         and delimiter_priority == DOT_PRIORITY
         and bt.delimiter_count_with_priority(delimiter_priority) == 1
     ):
