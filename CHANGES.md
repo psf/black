@@ -22,6 +22,8 @@
 - Address a missing case in the change to allow empty lines at the beginning of all
   blocks, except immediately before a docstring (#4130)
 - For stubs, fix logic to enforce empty line after nested classes with bodies (#4141)
+- When a line contains more than one method call, it is treated as a call chain, and the
+  fluent style is prioritized for formatting this line (#4153)
 
 ### Configuration
 
