@@ -233,7 +233,11 @@ def convert_one_fmt_off_pair(
                 standalone_comment_prefix += fmt_off_prefix
                 hidden_value = comment.value + "\n" + hidden_value
             if _contains_fmt_skip_comment(comment.value, mode):
-                hidden_value += comment.leading_whitespace + comment.value
+                hidden_value += (
+                    comment.leading_whitespace
+                    if Preview.no_normalize_fmt_skip_whitespace in mode
+                    else "  "
+                ) + comment.value
             if hidden_value.endswith("\n"):
                 # That happens when one of the `ignored_nodes` ended with a NEWLINE
                 # leaf (possibly followed by a DEDENT).
