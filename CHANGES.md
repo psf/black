@@ -160,6 +160,11 @@ release:
 
 - Fixed a bug that included dependencies from the `d` extra by default (#4108)
 
+### Parser
+
+- Fixed a bug where base expressions caused inconsistent formatting of \*\* in tenary
+  expression (#4149)
+
 ## 23.12.0
 
 ### Highlights

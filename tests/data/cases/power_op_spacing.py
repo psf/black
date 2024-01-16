@@ -1,3 +1,8 @@
+m2 = None if not isinstance(dist, Normal) else μ** 2 + σ * 2
+m3 = None if not isinstance(dist, Normal) else μ**2 + σ * 2
+m4 = None if not isinstance(dist, Normal) else s**2 + σ * 2
+m5 = obj.method(another_obj.method()).attribute **2
+m6 = None if ... else μ**2 + σ**2
 def function(**kwargs):
     t = a**2 + b**3
     return t ** 2
@@ -78,6 +83,11 @@ return np.divide(
 
 
 # output
+m2 = None if not isinstance(dist, Normal) else μ**2 + σ * 2
+m3 = None if not isinstance(dist, Normal) else μ**2 + σ * 2
+m4 = None if not isinstance(dist, Normal) else s**2 + σ * 2
+m5 = obj.method(another_obj.method()).attribute ** 2
+m6 = None if ... else μ**2 + σ**2
 
 
 def function(**kwargs):
