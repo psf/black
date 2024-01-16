@@ -163,7 +163,7 @@ release:
 ### Parser
 
 - Fixed a bug where base expressions caused inconsistent formatting of \*\* in tenary
-  expression (#4149)
+  expression (#4154)
 
 ## 23.12.0
 
