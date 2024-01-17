@@ -421,7 +421,9 @@ class LineGenerator(Visitor[Line]):
         """
         if Preview.parenthesize_long_type_hints in self.mode:
             assert len(node.children) == 3
-            if maybe_make_parens_invisible_in_atom(node.children[2], parent=node, mode=self.mode):
+            if maybe_make_parens_invisible_in_atom(
+                node.children[2], parent=node, mode=self.mode
+            ):
                 wrap_in_parentheses(node, node.children[2], visible=False)
 
         yield from self.visit_default(node)
