@@ -242,7 +242,11 @@ class LineGenerator(Visitor[Line]):
                 if i == 0:
                     continue
                 if node.children[i - 1].type == token.COLON:
-                    if child.type == syms.atom and child.children[0].type == token.LPAR:
+                    if (
+                        child.type == syms.atom
+                        and child.children[0].type == token.LPAR
+                        and not is_walrus_assignment(child)
+                    ):
                         if maybe_make_parens_invisible_in_atom(
                             child,
                             parent=node,
@@ -1545,7 +1549,6 @@ def maybe_make_parens_invisible_in_atom(
             and max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
         )
         or is_tuple_containing_walrus(node)
-        or is_walrus_assignment(node)
     ):
         return False
 
