@@ -221,32 +221,29 @@ class Line:
         return [leaf.type for leaf in self.leaves].count(token.EQUAL) > 1
 
     @property
-    def is_call_chain(self) -> bool:
-        """Is the line a call chain"""
+    def should_use_fluent_style(self) -> bool:
+        """Should the line use fluent style?"""
         if self.comments:
             return False
         line_node = self.leaves[0].parent
-        if not line_node:
+        if not line_node or line_node.type != syms.power:
             return False
-        depth = 2 if line_node.type == syms.old_comp_for else 1
-
-        def get_call_count(node: Node, depth: int) -> int:
-            count = 0
-            for child in node.children:
-                if isinstance(child, Node):
-                    if (
-                        child.type == syms.trailer
-                        and child.children[0].type == token.DOT
-                        and child.next_sibling
-                        and child.next_sibling.type == syms.trailer
-                        and child.next_sibling.children[0].type in OPENING_BRACKETS
-                    ):
-                        count += 1
-                    elif depth - 1 > 0:
-                        count += get_call_count(child, depth - 1)
-            return count
-
-        return get_call_count(line_node, depth) > 1
+        is_dot_trailer_open = False
+        significant_method_call_count = 0
+        for child in line_node.children:
+            if isinstance(child, Node) and child.type == syms.trailer:
+                if child.children[0].type == token.DOT:
+                    is_dot_trailer_open = True
+                elif (
+                    child.children[0].type in OPENING_BRACKETS
+                    and len(str(child)) > 10
+                    and is_dot_trailer_open
+                ):
+                    is_dot_trailer_open = False
+                    significant_method_call_count += 1
+                    if significant_method_call_count > 1:
+                        return True
+        return False
 
     @property
     def opens_block(self) -> bool:
