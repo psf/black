@@ -226,7 +226,7 @@ class Line:
         if self.comments:
             return False
         line_node = self.leaves[0].parent
-        if not line_node or line_node.type != syms.power:
+        if not line_node:
             return False
         is_dot_trailer_open = False
         significant_method_call_count = 0

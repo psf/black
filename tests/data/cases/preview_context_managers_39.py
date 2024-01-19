@@ -149,16 +149,13 @@ with (
     pass
 
 
-with (
-    xxxxxxxx.some_kind_of_method(
-        some_argument=[
-            "first",
-            "second",
-            "third",
-        ]
-    )
-    .another_method() as cmd
-):
+with xxxxxxxx.some_kind_of_method(
+    some_argument=[
+        "first",
+        "second",
+        "third",
+    ]
+).another_method() as cmd:
     pass
 
 
