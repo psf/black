@@ -23,6 +23,7 @@
   blocks, except immediately before a docstring (#4130)
 - For stubs, fix logic to enforce empty line after nested classes with bodies (#4141)
 - Fix crash when using a walrus in a dictionary (#4155)
+- Fix unnecessary parentheses when wrapping long dicts (#4135)
 
 ### Configuration
 

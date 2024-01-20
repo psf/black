@@ -244,15 +244,14 @@ class LineGenerator(Visitor[Line]):
                 if node.children[i - 1].type == token.COLON:
                     if (
                         child.type == syms.atom
-                        and child.children[0].type == token.LPAR
+                        and child.children[0].type in OPENING_BRACKETS
                         and not is_walrus_assignment(child)
                     ):
-                        if maybe_make_parens_invisible_in_atom(
+                        maybe_make_parens_invisible_in_atom(
                             child,
                             parent=node,
                             remove_brackets_around_comma=False,
-                        ):
-                            wrap_in_parentheses(node, child, visible=False)
+                        )
                     else:
                         wrap_in_parentheses(node, child, visible=False)
         yield from self.visit_default(node)
