@@ -24,7 +24,6 @@ from black.nodes import (
     TEST_DESCENDANTS,
     child_towards,
     is_docstring,
-    is_funcdef,
     is_import,
     is_multiline_string,
     is_one_sequence_between,
@@ -92,7 +91,7 @@ class Line:
             if self.mode.magic_trailing_comma:
                 if self.has_magic_trailing_comma(leaf):
                     self.magic_trailing_comma = leaf
-            elif self.has_magic_trailing_comma(leaf, ensure_removable=True):
+            elif self.has_magic_trailing_comma(leaf):
                 self.remove_trailing_comma()
         if not self.append_comment(leaf):
             self.leaves.append(leaf)
@@ -343,16 +342,11 @@ class Line:
     def contains_multiline_strings(self) -> bool:
         return any(is_multiline_string(leaf) for leaf in self.leaves)
 
-    def has_magic_trailing_comma(
-        self, closing: Leaf, ensure_removable: bool = False
-    ) -> bool:
+    def has_magic_trailing_comma(self, closing: Leaf) -> bool:
         """Return True if we have a magic trailing comma, that is when:
         - there's a trailing comma here
+        - it's not from single-element square bracket indexing
         - it's not a one-tuple
-        - it's not a single-element subscript
-        Additionally, if ensure_removable:
-        - it's not from square bracket indexing
-        (specifically, single-element square bracket indexing)
         """
         if not (
             closing.type in CLOSING_BRACKETS
@@ -376,6 +370,8 @@ class Line:
                     brackets=(token.LSQB, token.RSQB),
                 )
             ):
+                assert closing.prev_sibling is not None
+                assert closing.prev_sibling.type == syms.subscriptlist
                 return False
 
             return True
@@ -644,15 +640,15 @@ class EmptyLineTracker:
         if previous_def is not None:
             assert self.previous_line is not None
             if self.mode.is_pyi:
-                if depth and not current_line.is_def and self.previous_line.is_def:
-                    # Empty lines between attributes and methods should be preserved.
-                    before = 1 if user_had_newline else 0
-                elif (
+                if (
                     Preview.blank_line_after_nested_stub_class in self.mode
                     and previous_def.is_class
                     and not previous_def.is_stub_class
                 ):
                     before = 1
+                elif depth and not current_line.is_def and self.previous_line.is_def:
+                    # Empty lines between attributes and methods should be preserved.
+                    before = 1 if user_had_newline else 0
                 elif depth:
                     before = 0
                 else:
@@ -708,13 +704,8 @@ class EmptyLineTracker:
         is_empty_first_line_ok = (
             Preview.allow_empty_first_line_in_block in current_line.mode
             and (
-                not is_docstring(current_line.leaves[0], current_line.mode)
-                or (
-                    self.previous_line
-                    and self.previous_line.leaves[0]
-                    and self.previous_line.leaves[0].parent
-                    and not is_funcdef(self.previous_line.leaves[0].parent)
-                )
+                not current_line.is_docstring
+                or (self.previous_line and not self.previous_line.is_def)
             )
         )
 
@@ -745,7 +736,10 @@ class EmptyLineTracker:
         if self.previous_line.depth < current_line.depth and (
             self.previous_line.is_class or self.previous_line.is_def
         ):
-            return 0, 0
+            if self.mode.is_pyi or not Preview.allow_empty_first_line_in_block:
+                return 0, 0
+            else:
+                return 1 if user_had_newline else 0, 0
 
         comment_to_add_newlines: Optional[LinesBlock] = None
         if (

@@ -145,7 +145,7 @@ There are a few deviations that cause incompatibilities with _Black_.
 
 ```
 max-line-length = 88
-extend-ignore = E203
+extend-ignore = E203, E704
 ```
 
 #### Why those options above?
@@ -184,7 +184,7 @@ extend-ignore = E203, E704
 ```ini
 [flake8]
 max-line-length = 88
-extend-ignore = E203
+extend-ignore = E203, E704
 ```
 
 </details>
@@ -195,7 +195,7 @@ extend-ignore = E203
 ```ini
 [flake8]
 max-line-length = 88
-extend-ignore = E203
+extend-ignore = E203, E704
 ```
 
 </details>
