@@ -221,6 +221,31 @@ class Line:
         return [leaf.type for leaf in self.leaves].count(token.EQUAL) > 1
 
     @property
+    def should_use_fluent_style(self) -> bool:
+        """Should the line use fluent style?"""
+        if self.comments:
+            return False
+        line_node = self.leaves[0].parent
+        if not line_node:
+            return False
+        is_dot_trailer_open = False
+        significant_method_call_count = 0
+        for child in line_node.children:
+            if isinstance(child, Node) and child.type == syms.trailer:
+                if child.children[0].type == token.DOT:
+                    is_dot_trailer_open = True
+                elif (
+                    child.children[0].type in OPENING_BRACKETS
+                    and len(str(child)) > 10
+                    and is_dot_trailer_open
+                ):
+                    is_dot_trailer_open = False
+                    significant_method_call_count += 1
+                    if significant_method_call_count > 1:
+                        return True
+        return False
+
+    @property
     def opens_block(self) -> bool:
         """Does this line open a new level of indentation."""
         if len(self.leaves) == 0:

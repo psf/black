@@ -915,6 +915,9 @@ def _maybe_split_omitting_optional_parens(
         and not line.is_import
         # and we can actually remove the parens
         and can_omit_invisible_parens(rhs, mode.line_length)
+        and not (
+            Preview.improve_call_chain in mode and rhs.body.should_use_fluent_style
+        )
     ):
         omit = {id(rhs.closing_bracket), *omit}
         try:
@@ -1184,9 +1187,12 @@ def delimiter_split(
     except ValueError:
         raise CannotSplit("No delimiters found") from None
 
-    if delimiter_priority == DOT_PRIORITY:
-        if bt.delimiter_count_with_priority(delimiter_priority) == 1:
-            raise CannotSplit("Splitting a single attribute from its owner looks wrong")
+    if (
+        not (Preview.improve_call_chain in mode and line.should_use_fluent_style)
+        and delimiter_priority == DOT_PRIORITY
+        and bt.delimiter_count_with_priority(delimiter_priority) == 1
+    ):
+        raise CannotSplit("Splitting a single attribute from its owner looks wrong")
 
     current_line = Line(
         mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets

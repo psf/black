@@ -197,6 +197,7 @@ class Preview(Enum):
     allow_form_feeds = auto()
     unify_docstring_detection = auto()
     respect_east_asian_width = auto()
+    improve_call_chain = auto()
 
 
 class Deprecated(UserWarning):
