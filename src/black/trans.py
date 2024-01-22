@@ -156,15 +156,13 @@ def handle_is_simple_look_up_prev(line: Line, index: int, disallowed: Set[int]) 
     expression to determine the bracket or parenthesis belong to the single expression.
     """
     contains_disallowed = False
-    has_changed = False
     chain = []
 
     while 0 <= index < len(line.leaves):
         current = line.leaves[index]
         chain.append(current)
-        if not has_changed and current.type in disallowed:
+        if not contains_disallowed and current.type in disallowed:
             contains_disallowed = True
-            has_changed = True
         if not is_expression_chained(chain):
             return not contains_disallowed
 
