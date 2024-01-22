@@ -2592,6 +2592,20 @@ class TestFileCollection:
         outside_root_symlink.resolve.assert_called_once()
         ignored_symlink.resolve.assert_not_called()
 
+    def test_get_sources_with_stdin_symlink_outside_root(
+        self,
+    ) -> None:
+        path = THIS_DIR / "data" / "include_exclude_tests"
+        stdin_filename = str(path / "b/exclude/a.py")
+        outside_root_symlink = Path("/target_directory/a.py")
+        with patch("pathlib.Path.resolve", return_value=outside_root_symlink):
+            assert_collected_sources(
+                root=Path("target_directory/"),
+                src=["-"],
+                expected=[],
+                stdin_filename=stdin_filename,
+            )
+
     @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_get_sources_with_stdin(self) -> None:
         src = ["-"]

@@ -29,6 +29,8 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Fix symlink handling, properly catch and ignore symlinks that point outside of root
+  (#4161)
 - Fix cache mtime logic that resulted in false positive cache hits (#4128)
 
 ### Packaging
