@@ -29,6 +29,7 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Raise an error when toml config contains an invalid key (#4165)
 - Fix symlink handling, properly catch and ignore symlinks that point outside of root
   (#4161)
 - Fix cache mtime logic that resulted in false positive cache hits (#4128)
