@@ -22,6 +22,7 @@
 - Address a missing case in the change to allow empty lines at the beginning of all
   blocks, except immediately before a docstring (#4130)
 - For stubs, fix logic to enforce empty line after nested classes with bodies (#4141)
+- Consistently add trailing comma on typed parameters (#4164)
 
 ### Configuration
 
