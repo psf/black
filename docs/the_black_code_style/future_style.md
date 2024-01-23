@@ -28,6 +28,7 @@ Currently, the following features are included in the preview style:
   longer normalized
 - `typed_params_trailing_comma`: consistently add trailing commas to typed function
   parameters
+- `is_simple_lookup_for_doublestar_expression`: fix line length computation for certain expressions that involve the power operator
 
 (labels/unstable-features)=
 
