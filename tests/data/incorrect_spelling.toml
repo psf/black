@@ -1,0 +1,2 @@
+[tool.black]
+ine_length = 50

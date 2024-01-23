@@ -106,6 +106,7 @@ class FakeContext(click.Context):
     def __init__(self) -> None:
         self.default_map: Dict[str, Any] = {}
         self.params: Dict[str, Any] = {}
+        self.command: click.Command = black.main
         # Dummy root, since most of the tests don't care about it
         self.obj: Dict[str, Any] = {"root": PROJECT_ROOT}
 
@@ -1537,6 +1538,17 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(config["python_cell_magics"], ["custom1", "custom2"])
         self.assertEqual(config["exclude"], r"\.pyi?$")
         self.assertEqual(config["include"], r"\.py?$")
+
+    def test_spellcheck_pyproject_toml(self) -> None:
+        test_toml_file = THIS_DIR / "data" / "incorrect_spelling.toml"
+        with pytest.raises(black.InvalidConfigKey) as exc_info:
+            self.invokeBlack(
+                ["print('hello world')", "--verbose", "--config", str(test_toml_file)],
+                exit_code=123,
+                ignore_config=False,
+            )
+
+        exc_info.match(f"Invalid key ine_length in {test_toml_file}")
 
     def test_parse_pyproject_toml_project_metadata(self) -> None:
         for test_toml, expected in [
