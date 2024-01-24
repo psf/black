@@ -241,8 +241,8 @@ configuration file for consistent results across environments.
 
 ```console
 $ black --version
-black, 23.11.0 (compiled: yes)
-$ black --required-version 23.11.0 -c "format = 'this'"
+black, 23.12.1 (compiled: yes)
+$ black --required-version 23.12.1 -c "format = 'this'"
 format = "this"
 $ black --required-version 31.5b2 -c "still = 'beta?!'"
 Oh no! 💥 💔 💥 The required version does not match the running version!
@@ -267,6 +267,11 @@ A regular expression that matches files and directories that should be excluded 
 recursive searches. An empty value means no paths are excluded. Use forward slashes for
 directories on all platforms (Windows, too). By default, Black also ignores all paths
 listed in `.gitignore`. Changing this value will override all default exclusions.
+
+If the regular expression contains newlines, it is treated as a
+[verbose regular expression](https://docs.python.org/3/library/re.html#re.VERBOSE). This
+is typically useful when setting these options in a `pyproject.toml` configuration file;
+see [Configuration format](#configuration-format) for more information.
 
 #### `--extend-exclude`
 
@@ -333,7 +338,7 @@ You can check the version of _Black_ you have installed using the `--version` fl
 
 ```console
 $ black --version
-black, 23.11.0
+black, 23.12.1
 ```
 
 #### `--config`

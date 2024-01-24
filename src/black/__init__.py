@@ -49,6 +49,7 @@ from black.files import (
     find_user_pyproject_toml,
     gen_python_files,
     get_gitignore,
+    get_root_relative_path,
     normalize_path_maybe_ignore,
     parse_pyproject_toml,
     path_is_excluded,
@@ -711,7 +712,10 @@ def get_sources(
 
         # Compare the logic here to the logic in `gen_python_files`.
         if is_stdin or path.is_file():
-            root_relative_path = path.absolute().relative_to(root).as_posix()
+            root_relative_path = get_root_relative_path(path, root, report)
+
+            if root_relative_path is None:
+                continue
 
             root_relative_path = "/" + root_relative_path
 
@@ -1362,7 +1366,7 @@ def get_features_used(  # noqa: C901
             if (
                 len(atom_children) == 3
                 and atom_children[0].type == token.LPAR
-                and atom_children[1].type == syms.testlist_gexp
+                and _contains_asexpr(atom_children[1])
                 and atom_children[2].type == token.RPAR
             ):
                 features.add(Feature.PARENTHESIZED_CONTEXT_MANAGERS)
@@ -1393,6 +1397,22 @@ def get_features_used(  # noqa: C901
             features.add(Feature.TYPE_PARAMS)
 
     return features
+
+
+def _contains_asexpr(node: Union[Node, Leaf]) -> bool:
+    """Return True if `node` contains an as-pattern."""
+    if node.type == syms.asexpr_test:
+        return True
+    elif node.type == syms.atom:
+        if (
+            len(node.children) == 3
+            and node.children[0].type == token.LPAR
+            and node.children[2].type == token.RPAR
+        ):
+            return _contains_asexpr(node.children[1])
+    elif node.type == syms.testlist_gexp:
+        return any(_contains_asexpr(child) for child in node.children)
+    return False
 
 
 def detect_target_versions(

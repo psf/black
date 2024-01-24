@@ -1,9 +1,11 @@
 # flags: --preview
 from typing import NoReturn, Protocol, Union, overload
 
+class Empty:
+    ...
 
 def dummy(a): ...
-def other(b): ...
+async def other(b): ...
 
 
 @overload
@@ -48,13 +50,35 @@ def b(arg: Union[int, str, object]) -> Union[int, str]:
         raise TypeError
     return arg
 
+def has_comment():
+    ...  # still a dummy
+
+if some_condition:
+    ...
+
+if already_dummy: ...
+
+class AsyncCls:
+    async def async_method(self):
+        ...
+
+async def async_function(self):
+    ...
+
+@decorated
+async def async_function(self):
+    ...
+
 # output
 
 from typing import NoReturn, Protocol, Union, overload
 
 
+class Empty: ...
+
+
 def dummy(a): ...
-def other(b): ...
+async def other(b): ...
 
 
 @overload
@@ -98,3 +122,24 @@ def b(arg: Union[int, str, object]) -> Union[int, str]:
     if not isinstance(arg, (int, str)):
         raise TypeError
     return arg
+
+
+def has_comment(): ...  # still a dummy
+
+
+if some_condition:
+    ...
+
+if already_dummy:
+    ...
+
+
+class AsyncCls:
+    async def async_method(self): ...
+
+
+async def async_function(self): ...
+
+
+@decorated
+async def async_function(self): ...

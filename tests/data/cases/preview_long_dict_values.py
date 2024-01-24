@@ -37,6 +37,26 @@ my_dict = {
 }
 
 
+class Random:
+    def func():
+        random_service.status.active_states.inactive = (
+            make_new_top_level_state_from_dict(
+                {
+                    "topLevelBase": {
+                        "secondaryBase": {
+                            "timestamp": 1234,
+                            "latitude": 1,
+                            "longitude": 2,
+                            "actionTimestamp": Timestamp(
+                                seconds=1530584000, nanos=0
+                            ).ToJsonString(),
+                        }
+                    },
+                }
+            )
+        )
+
+
 # output
 
 
@@ -89,3 +109,21 @@ my_dict = {
         }
     ),
 }
+
+
+class Random:
+    def func():
+        random_service.status.active_states.inactive = (
+            make_new_top_level_state_from_dict({
+                "topLevelBase": {
+                    "secondaryBase": {
+                        "timestamp": 1234,
+                        "latitude": 1,
+                        "longitude": 2,
+                        "actionTimestamp": (
+                            Timestamp(seconds=1530584000, nanos=0).ToJsonString()
+                        ),
+                    }
+                },
+            })
+        )

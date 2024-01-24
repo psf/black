@@ -47,6 +47,7 @@ from black.nodes import (
     is_name_token,
     is_one_sequence_between,
     is_one_tuple,
+    is_parent_function_or_class,
     is_rpar_token,
     is_stub_body,
     is_stub_suite,
@@ -169,8 +170,12 @@ class LineGenerator(Visitor[Line]):
             )
 
             if not already_parenthesized:
+                # Similar to logic in wrap_in_parentheses
                 lpar = Leaf(token.LPAR, "")
                 rpar = Leaf(token.RPAR, "")
+                prefix = node.prefix
+                node.prefix = ""
+                lpar.prefix = prefix
                 node.insert_child(0, lpar)
                 node.append_child(rpar)
 
@@ -237,13 +242,16 @@ class LineGenerator(Visitor[Line]):
                 if i == 0:
                     continue
                 if node.children[i - 1].type == token.COLON:
-                    if child.type == syms.atom and child.children[0].type == token.LPAR:
-                        if maybe_make_parens_invisible_in_atom(
+                    if (
+                        child.type == syms.atom
+                        and child.children[0].type in OPENING_BRACKETS
+                        and not is_walrus_assignment(child)
+                    ):
+                        maybe_make_parens_invisible_in_atom(
                             child,
                             parent=node,
                             remove_brackets_around_comma=False,
-                        ):
-                            wrap_in_parentheses(node, child, visible=False)
+                        )
                     else:
                         wrap_in_parentheses(node, child, visible=False)
         yield from self.visit_default(node)
@@ -286,7 +294,7 @@ class LineGenerator(Visitor[Line]):
         """Visit a suite."""
         if (
             self.mode.is_pyi or Preview.dummy_implementations in self.mode
-        ) and is_stub_suite(node):
+        ) and is_stub_suite(node, self.mode):
             yield from self.visit(node.children[2])
         else:
             yield from self.visit_default(node)
@@ -299,11 +307,12 @@ class LineGenerator(Visitor[Line]):
                 wrap_in_parentheses(node, child, visible=False)
             prev_type = child.type
 
-        is_suite_like = node.parent and node.parent.type in STATEMENT
-        if is_suite_like:
-            if (
-                self.mode.is_pyi or Preview.dummy_implementations in self.mode
-            ) and is_stub_body(node):
+        if node.parent and node.parent.type in STATEMENT:
+            if Preview.dummy_implementations in self.mode:
+                condition = is_parent_function_or_class(node)
+            else:
+                condition = self.mode.is_pyi
+            if condition and is_stub_body(node):
                 yield from self.visit_default(node)
             else:
                 yield from self.line(+1)
@@ -314,7 +323,7 @@ class LineGenerator(Visitor[Line]):
             if (
                 not (self.mode.is_pyi or Preview.dummy_implementations in self.mode)
                 or not node.parent
-                or not is_stub_suite(node.parent)
+                or not is_stub_suite(node.parent, self.mode)
             ):
                 yield from self.line()
             yield from self.visit_default(node)
@@ -422,7 +431,7 @@ class LineGenerator(Visitor[Line]):
         if Preview.hex_codes_in_unicode_sequences in self.mode:
             normalize_unicode_escape_sequences(leaf)
 
-        if is_docstring(leaf) and not re.search(r"\\\s*\n", leaf.value):
+        if is_docstring(leaf, self.mode) and not re.search(r"\\\s*\n", leaf.value):
             # We're ignoring docstrings with backslash newline escapes because changing
             # indentation of those changes the AST representation of the code.
             if self.mode.string_normalization:
@@ -475,7 +484,7 @@ class LineGenerator(Visitor[Line]):
             quote = quote_char * quote_len
 
             # It's invalid to put closing single-character quotes on a new line.
-            if self.mode and quote_len == 3:
+            if quote_len == 3:
                 # We need to find the length of the last line of the docstring
                 # to find if we can add the closing quotes to the line without
                 # exceeding the maximum line length.
@@ -1633,7 +1642,7 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
     opening_bracket: Optional[Leaf] = None
     closing_bracket: Optional[Leaf] = None
     inner_brackets: Set[LeafID] = set()
-    for index, leaf, leaf_length in line.enumerate_with_length(reversed=True):
+    for index, leaf, leaf_length in line.enumerate_with_length(is_reversed=True):
         length += leaf_length
         if length > line_length:
             break

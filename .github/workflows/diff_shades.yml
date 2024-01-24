@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
@@ -57,7 +57,7 @@ jobs:
           # The baseline revision could be rather old so a full clone is ideal.
           fetch-depth: 0
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
@@ -72,7 +72,7 @@ jobs:
 
       - name: Attempt to use cached baseline analysis
         id: baseline-cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ matrix.baseline-analysis }}
           key: ${{ matrix.baseline-cache-key }}

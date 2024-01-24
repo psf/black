@@ -67,6 +67,28 @@ def something():
         else ValuesListIterable
     )
 
+
+def foo(wait: bool = True):
+    # This comment is two
+    # lines long
+
+    # This is only one
+    time.sleep(1) if wait else None
+    time.sleep(1) if wait else None
+
+    # With newline above
+    time.sleep(1) if wait else None
+    # Without newline above
+    time.sleep(1) if wait else None
+
+
+a = "".join(
+    (
+        "",  # comment
+        "" if True else "",
+    )
+)
+
 # output
 
 long_kwargs_single_line = my_function(
@@ -159,3 +181,23 @@ def something():
         if named
         else FlatValuesListIterable if flat else ValuesListIterable
     )
+
+
+def foo(wait: bool = True):
+    # This comment is two
+    # lines long
+
+    # This is only one
+    time.sleep(1) if wait else None
+    time.sleep(1) if wait else None
+
+    # With newline above
+    time.sleep(1) if wait else None
+    # Without newline above
+    time.sleep(1) if wait else None
+
+
+a = "".join((
+    "",  # comment
+    "" if True else "",
+))

@@ -531,13 +531,23 @@ def is_arith_like(node: LN) -> bool:
     }
 
 
-def is_docstring(leaf: Leaf) -> bool:
+def is_docstring(leaf: Leaf, mode: Mode) -> bool:
     if leaf.type != token.STRING:
         return False
 
     prefix = get_string_prefix(leaf.value)
     if set(prefix).intersection("bBfF"):
         return False
+
+    if (
+        Preview.unify_docstring_detection in mode
+        and leaf.parent
+        and leaf.parent.type == syms.simple_stmt
+        and not leaf.parent.prev_sibling
+        and leaf.parent.parent
+        and leaf.parent.parent.type == syms.file_input
+    ):
+        return True
 
     if prev_siblings_are(
         leaf.parent, [None, token.NEWLINE, token.INDENT, syms.simple_stmt]
@@ -732,12 +742,25 @@ def is_multiline_string(leaf: Leaf) -> bool:
     return has_triple_quotes(leaf.value) and "\n" in leaf.value
 
 
-def is_funcdef(node: Node) -> bool:
-    return node.type == syms.funcdef
+def is_parent_function_or_class(node: Node) -> bool:
+    assert node.type in {syms.suite, syms.simple_stmt}
+    assert node.parent is not None
+    # Note this works for suites / simple_stmts in async def as well
+    return node.parent.type in {syms.funcdef, syms.classdef}
 
 
-def is_stub_suite(node: Node) -> bool:
+def is_function_or_class(node: Node) -> bool:
+    return node.type in {syms.funcdef, syms.classdef, syms.async_funcdef}
+
+
+def is_stub_suite(node: Node, mode: Mode) -> bool:
     """Return True if `node` is a suite with a stub body."""
+    if (
+        node.parent is not None
+        and Preview.dummy_implementations in mode
+        and not is_parent_function_or_class(node)
+    ):
+        return False
 
     # If there is a comment, we want to keep it.
     if node.prefix.strip():
