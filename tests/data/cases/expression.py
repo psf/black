@@ -312,8 +312,8 @@ str or None if (1 if True else 2) else str or bytes or None
     if (1 if super_long_test_name else 2)
     else (str or bytes or None)
 )
-{"2.7": dead, "3.7": long_live or die_hard}
-{"2.7": dead, "3.7": long_live or die_hard, **{"3.6": verygood}}
+{"2.7": dead, "3.7": (long_live or die_hard)}
+{"2.7": dead, "3.7": (long_live or die_hard), **{"3.6": verygood}}
 {**a, **b, **c}
 {"2.7", "3.6", "3.7", "3.8", "3.9", ("4.0" if gilectomy else "3.10")}
 ({"a": "b"}, (True or False), (+value), "string", b"bytes") or None
