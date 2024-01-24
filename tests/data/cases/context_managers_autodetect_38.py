@@ -1,4 +1,3 @@
-# flags: --preview
 # This file doesn't use any Python 3.9+ only grammars.
 
 

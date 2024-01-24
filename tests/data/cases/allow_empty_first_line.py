@@ -1,4 +1,3 @@
-# flags: --preview
 def foo():
     """
     Docstring

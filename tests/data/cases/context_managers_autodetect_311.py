@@ -1,5 +1,11 @@
-# flags: --preview --minimum-version=3.9
-# This file uses parenthesized context managers introduced in Python 3.9.
+# flags: --minimum-version=3.11
+# This file uses except* clause in Python 3.11.
+
+
+try:
+    some_call()
+except* Error as e:
+    pass
 
 
 with \
@@ -11,15 +17,16 @@ with \
     pass
 
 
-with (
-     new_new_new1() as cm1,
-     new_new_new2()
-):
-    pass
-
-
 # output
-# This file uses parenthesized context managers introduced in Python 3.9.
+
+
+# This file uses except* clause in Python 3.11.
+
+
+try:
+    some_call()
+except* Error as e:
+    pass
 
 
 with (
@@ -28,8 +35,4 @@ with (
     make_context_manager3() as cm3,
     make_context_manager4() as cm4,
 ):
-    pass
-
-
-with new_new_new1() as cm1, new_new_new2():
     pass

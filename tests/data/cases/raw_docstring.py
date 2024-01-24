@@ -1,4 +1,4 @@
-# flags: --preview --skip-string-normalization
+# flags: --skip-string-normalization
 class C:
 
     r"""Raw"""

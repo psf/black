@@ -1,4 +1,3 @@
-# flags: --preview
 async def func() -> (int):
     return 0
 
