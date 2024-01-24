@@ -259,20 +259,28 @@ def normalize_path_maybe_ignore(
     try:
         abspath = path if path.is_absolute() else Path.cwd() / path
         normalized_path = abspath.resolve()
-        try:
-            root_relative_path = normalized_path.relative_to(root).as_posix()
-        except ValueError:
-            if report:
-                report.path_ignored(
-                    path, f"is a symbolic link that points outside {root}"
-                )
-            return None
+        root_relative_path = get_root_relative_path(normalized_path, root, report)
 
     except OSError as e:
         if report:
             report.path_ignored(path, f"cannot be read because {e}")
         return None
 
+    return root_relative_path
+
+
+def get_root_relative_path(
+    path: Path,
+    root: Path,
+    report: Optional[Report] = None,
+) -> Optional[str]:
+    """Returns the file path relative to the 'root' directory"""
+    try:
+        root_relative_path = path.absolute().relative_to(root).as_posix()
+    except ValueError:
+        if report:
+            report.path_ignored(path, f"is a symbolic link that points outside {root}")
+        return None
     return root_relative_path
 
 
