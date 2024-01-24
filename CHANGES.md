@@ -23,12 +23,15 @@
   blocks, except immediately before a docstring (#4130)
 - For stubs, fix logic to enforce empty line after nested classes with bodies (#4141)
 - Fix crash when using a walrus in a dictionary (#4155)
+- Fix unnecessary parentheses when wrapping long dicts (#4135)
 - Stop normalizing spaces before `# fmt: skip` comments (#4146)
 
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
 
+- Fix symlink handling, properly catch and ignore symlinks that point outside of root
+  (#4161)
 - Fix cache mtime logic that resulted in false positive cache hits (#4128)
 
 ### Packaging
