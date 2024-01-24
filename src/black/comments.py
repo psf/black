@@ -90,7 +90,8 @@ def list_comments(prefix: str, *, is_endmarker: bool) -> List[ProtoComment]:
     for index, full_line in enumerate(re.split("\r?\n", prefix)):
         consumed += len(full_line) + 1  # adding the length of the split '\n'
         match = re.match(r"^(\s*)(\S.*|)$", full_line)
-        whitespace, line = ("  ", full_line) if match is None else match.groups()
+        assert match
+        whitespace, line = match.groups()
         if not line:
             nlines += 1
             if "\f" in full_line:
