@@ -49,6 +49,7 @@ from black.files import (
     find_user_pyproject_toml,
     gen_python_files,
     get_gitignore,
+    get_root_relative_path,
     normalize_path_maybe_ignore,
     parse_pyproject_toml,
     path_is_excluded,
@@ -700,7 +701,10 @@ def get_sources(
 
         # Compare the logic here to the logic in `gen_python_files`.
         if is_stdin or path.is_file():
-            root_relative_path = path.absolute().relative_to(root).as_posix()
+            root_relative_path = get_root_relative_path(path, root, report)
+
+            if root_relative_path is None:
+                continue
 
             root_relative_path = "/" + root_relative_path
 
