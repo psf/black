@@ -10,8 +10,6 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Stop normalize spaces before `# fmt: skip` comments (#4146)
-
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
@@ -25,6 +23,7 @@
   blocks, except immediately before a docstring (#4130)
 - For stubs, fix logic to enforce empty line after nested classes with bodies (#4141)
 - Fix crash when using a walrus in a dictionary (#4155)
+- Stop normalizing spaces before `# fmt: skip` comments (#4146)
 
 ### Configuration
 
