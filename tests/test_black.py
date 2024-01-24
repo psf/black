@@ -1548,7 +1548,7 @@ class BlackTestCase(BlackBaseTestCase):
                 ignore_config=False,
             )
 
-        exc_info.match(f'Invalid key ine_length in {re.escape(str(test_toml_file))}')
+        exc_info.match(f"Invalid key ine_length in {re.escape(str(test_toml_file))}")
 
     def test_parse_pyproject_toml_project_metadata(self) -> None:
         for test_toml, expected in [
