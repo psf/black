@@ -16,10 +16,11 @@ extend-exclude = '''
   | profiling
 )/
 '''
-# We use preview style for formatting Black itself. If you
-# want stable formatting across releases, you should keep
-# this off.
-preview = true
+# We use the unstable style for formatting Black itself. If you
+# want bug-free formatting, you should keep this off. If you want
+# stable formatting across releases, you should also keep `preview = true`
+# (which is implied by this flag) off.
+unstable = true
 
 # Build system information and other project-specific configuration below.
 # NOTE: You don't need this in your own Black configuration.
