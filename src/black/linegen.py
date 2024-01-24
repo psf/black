@@ -1078,8 +1078,8 @@ def bracket_split_build_line(
                 and not any(
                     leaf.type == token.COMMA
                     and (
-                        not is_part_of_annotation(leaf)
-                        or Preview.typed_params_trailing_comma not in original.mode
+                        Preview.typed_params_trailing_comma not in original.mode
+                        or not is_part_of_annotation(leaf)
                     )
                     for leaf in leaves
                 )
