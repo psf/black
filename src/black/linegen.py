@@ -251,8 +251,6 @@ class LineGenerator(Visitor[Line]):
                         )
                     else:
                         wrap_in_parentheses(node, child, visible=False)
-                else:
-                    wrap_in_parentheses(node, child, visible=False)
         yield from self.visit_default(node)
 
     def visit_funcdef(self, node: Node) -> Iterator[Line]:
