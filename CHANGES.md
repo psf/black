@@ -6,10 +6,10 @@
 
 <!-- Include any especially major or disruptive changes here -->
 
-A draft for the 2024 stable style (#4064), stabilizing the following changes:
+This release introduces the new 2024 stable style (#4106), stabilizing the following
+changes:
 
-- Multiline strings passed as the sole function arguments are formatted more compactly
-  (#1879)
+- Add parentheses around `if`-`else` expressions (#2278)
 - Dummy class and function implementations consisting only of `...` are formatted more
   compactly (#3796)
 - If an assignment statement is too long, we now prefer splitting on the right-hand side
@@ -34,30 +34,26 @@ A draft for the 2024 stable style (#4064), stabilizing the following changes:
 - Fix incorrect formatting of certain async statements (#3609)
 - Allow combining `# fmt: skip` with other comments (#3959)
 
-The following two changes may be included, but have outstanding issues that will need to
-be resolved:
-
-- Long values in dict literals are now wrapped in parentheses; correspondingly
-  unnecessary parentheses around short values in dict literals are now removed; long
-  string lambda values are now wrapped in parentheses (#3440)
-- Add parentheses around `if`-`else` expressions (#2278)
-
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
 
-### Preview style
-
-<!-- Changes that affect Black's preview style -->
+Several bug fixes were made in features that are moved to the stable style in this
+release:
 
 - Fix comment handling when parenthesising conditional expressions (#4134)
-- Format module docstrings the same as class and function docstrings (#4095)
 - Fix bug where spaces were not added around parenthesized walruses in subscripts,
   unlike other binary operators (#4109)
 - Remove empty lines before docstrings in async functions (#4132)
 - Address a missing case in the change to allow empty lines at the beginning of all
   blocks, except immediately before a docstring (#4130)
 - For stubs, fix logic to enforce empty line after nested classes with bodies (#4141)
+
+### Preview style
+
+<!-- Changes that affect Black's preview style -->
+
+- Format module docstrings the same as class and function docstrings (#4095)
 - Fix crash when using a walrus in a dictionary (#4155)
 - Fix unnecessary parentheses when wrapping long dicts (#4135)
 
