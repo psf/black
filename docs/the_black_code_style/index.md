@@ -42,9 +42,11 @@ _Black_:
   enabled by newer Python language syntax as well as due to improvements in the
   formatting logic.
 
-- The `--preview` flag is exempt from this policy. There are no guarantees around the
-  stability of the output with that flag passed into _Black_. This flag is intended for
-  allowing experimentation with the proposed changes to the _Black_ code style.
+- The `--preview` and `--unstable` flags are exempt from this policy. There are no
+  guarantees around the stability of the output with these flags passed into _Black_.
+  They are intended for allowing experimentation with proposed changes to the _Black_
+  code style. The `--preview` style at the end of a year should closely match the stable
+  style for the next year, but we may always make changes.
 
 Documentation for both the current and future styles can be found:
 

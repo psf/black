@@ -34,6 +34,7 @@ SKIP_SOURCE_FIRST_LINE = "X-Skip-Source-First-Line"
 SKIP_STRING_NORMALIZATION_HEADER = "X-Skip-String-Normalization"
 SKIP_MAGIC_TRAILING_COMMA = "X-Skip-Magic-Trailing-Comma"
 PREVIEW = "X-Preview"
+UNSTABLE = "X-Unstable"
 FAST_OR_SAFE_HEADER = "X-Fast-Or-Safe"
 DIFF_HEADER = "X-Diff"
 
@@ -45,6 +46,7 @@ BLACK_HEADERS = [
     SKIP_STRING_NORMALIZATION_HEADER,
     SKIP_MAGIC_TRAILING_COMMA,
     PREVIEW,
+    UNSTABLE,
     FAST_OR_SAFE_HEADER,
     DIFF_HEADER,
 ]
@@ -123,6 +125,7 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
             request.headers.get(SKIP_SOURCE_FIRST_LINE, False)
         )
         preview = bool(request.headers.get(PREVIEW, False))
+        unstable = bool(request.headers.get(UNSTABLE, False))
         fast = False
         if request.headers.get(FAST_OR_SAFE_HEADER, "safe") == "fast":
             fast = True
@@ -134,6 +137,7 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
             string_normalization=not skip_string_normalization,
             magic_trailing_comma=not skip_magic_trailing_comma,
             preview=preview,
+            unstable=unstable,
         )
         req_bytes = await request.content.read()
         charset = request.charset if request.charset is not None else "utf8"

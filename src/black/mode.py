@@ -179,7 +179,12 @@ class Preview(Enum):
 
 
 UNSTABLE_FEATURES: Set[Preview] = {
+    # Many issues, see summary in https://github.com/psf/black/issues/4042
     Preview.string_processing,
+    # See issues #3452 and #4158
+    Preview.wrap_long_dict_values_in_parens,
+    # See issue #4159
+    Preview.multiline_string_handling,
 }
 
 
@@ -217,7 +222,6 @@ class Mode:
         except those in UNSTABLE_FEATURES are enabled. For legacy reasons, the
         string_processing feature has its own flag, which is deprecated.
         """
-        return False
         if self.unstable:
             return True
         if feature is Preview.string_processing and self.experimental_string_processing:

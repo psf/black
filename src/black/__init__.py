@@ -290,7 +290,7 @@ def validate_regex(
     "--experimental-string-processing",
     is_flag=True,
     hidden=True,
-    help="(DEPRECATED and now included in --preview) Normalize string literals.",
+    help="(DEPRECATED and now included in --unstable) Normalize string literals.",
 )
 @click.option(
     "--preview",
