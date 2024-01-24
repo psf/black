@@ -832,6 +832,13 @@ def is_line_short_enough(  # noqa: C901
     if not line_str:
         line_str = line_to_string(line)
 
+    if Preview.multiline_string_handling not in mode:
+        return (
+            str_width(line_str) <= mode.line_length
+            and "\n" not in line_str  # multiline strings
+            and not line.contains_standalone_comments()
+        )
+
     if line.contains_standalone_comments():
         return False
     if "\n" not in line_str:
