@@ -1402,6 +1402,22 @@ class BlackTestCase(BlackBaseTestCase):
                     pass  # StringIO does not support detach
                 assert output.getvalue() == expected
 
+    def test_cli_unstable(self) -> None:
+        self.invokeBlack(["--unstable", "-c", "0"], exit_code=0)
+        self.invokeBlack(["--preview", "-c", "0"], exit_code=0)
+        # Must also pass --preview
+        self.invokeBlack(
+            ["--enable-unstable-feature", "string_processing", "-c", "0"], exit_code=1
+        )
+        self.invokeBlack(
+            ["--preview", "--enable-unstable-feature", "string_processing", "-c", "0"],
+            exit_code=0,
+        )
+        self.invokeBlack(
+            ["--unstable", "--enable-unstable-feature", "string_processing", "-c", "0"],
+            exit_code=0,
+        )
+
     def test_invalid_cli_regex(self) -> None:
         for option in ["--include", "--exclude", "--extend-exclude", "--force-exclude"]:
             self.invokeBlack(["-", option, "**()(!!*)"], exit_code=2)

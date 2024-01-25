@@ -545,7 +545,8 @@ def main(  # noqa: C901
         out(main.get_usage(ctx) + "\n\nOne of 'SRC' or 'code' is required.")
         ctx.exit(1)
 
-    if enable_unstable_feature and not preview:
+    # It doesn't do anything if --unstable is also passed, so just allow it.
+    if enable_unstable_feature and not (preview or unstable):
         out(
             main.get_usage(ctx)
             + "\n\n'--enable-unstable-feature' requires '--preview'."
