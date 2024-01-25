@@ -623,9 +623,8 @@ class EmptyLineTracker:
         previous_def = None
         while self.previous_defs and self.previous_defs[-1].depth >= depth:
             previous_def = self.previous_defs.pop()
-        if current_line.is_decorator or current_line.is_def or current_line.is_class:
-            if not current_line.is_decorator:
-                self.previous_defs.append(current_line)
+        if current_line.is_def or current_line.is_class:
+            self.previous_defs.append(current_line)
 
         if self.previous_line is None:
             # Don't insert empty lines before the first line in the file.
