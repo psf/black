@@ -1,4 +1,3 @@
-# flags: --preview
 
 
 # Warning! This file contains form feeds (ASCII 0x0C, often represented by \f or ^L).

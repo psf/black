@@ -1,4 +1,3 @@
-# flags: --preview
 def line_before_docstring():
 
     """Please move me up"""
@@ -63,4 +62,5 @@ class MultilineDocstringsAsWell:
 
 
 class SingleQuotedDocstring:
+
     "I'm a docstring but I don't even get triple quotes."
