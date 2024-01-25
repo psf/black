@@ -65,6 +65,7 @@ release:
 - Format module docstrings the same as class and function docstrings (#4095)
 - Fix crash when using a walrus in a dictionary (#4155)
 - Fix unnecessary parentheses when wrapping long dicts (#4135)
+- Stop normalizing spaces before `# fmt: skip` comments (#4146)
 
 ### Configuration
 

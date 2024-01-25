@@ -174,6 +174,7 @@ class Preview(Enum):
     string_processing = auto()
     hug_parens_with_braces_and_square_brackets = auto()
     unify_docstring_detection = auto()
+    no_normalize_fmt_skip_whitespace = auto()
     wrap_long_dict_values_in_parens = auto()
     multiline_string_handling = auto()
 
