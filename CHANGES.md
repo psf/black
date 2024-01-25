@@ -6,22 +6,54 @@
 
 <!-- Include any especially major or disruptive changes here -->
 
+This release introduces the new 2024 stable style (#4106), stabilizing the following
+changes:
+
+- Add parentheses around `if`-`else` expressions (#2278)
+- Dummy class and function implementations consisting only of `...` are formatted more
+  compactly (#3796)
+- If an assignment statement is too long, we now prefer splitting on the right-hand side
+  (#3368)
+- Hex codes in Unicode escape sequences are now standardized to lowercase (#2916)
+- Allow empty first lines at the beginning of most blocks (#3967, #4061)
+- Add parentheses around long type annotations (#3899)
+- Standardize on a single newline after module docstrings (#3932)
+- Fix incorrect magic trailing comma handling in return types (#3916)
+- Remove blank lines before class docstrings (#3692)
+- Wrap multiple context managers in parentheses if combined in a single `with` statement
+  (#3489)
+- Fix bug in line length calculations for power operations (#3942)
+- Add trailing commas to collection literals even if there's a comment after the last
+  entry (#3393)
+- When using `--skip-magic-trailing-comma` or `-C`, trailing commas are stripped from
+  subscript expressions with more than 1 element (#3209)
+- Add extra blank lines in stubs in a few cases (#3564, #3862)
+- Accept raw strings as docstrings (#3947)
+- Split long lines in case blocks (#4024)
+- Stop removing spaces from walrus operators within subscripts (#3823)
+- Fix incorrect formatting of certain async statements (#3609)
+- Allow combining `# fmt: skip` with other comments (#3959)
+
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
 
-### Preview style
-
-<!-- Changes that affect Black's preview style -->
+Several bug fixes were made in features that are moved to the stable style in this
+release:
 
 - Fix comment handling when parenthesising conditional expressions (#4134)
-- Format module docstrings the same as class and function docstrings (#4095)
 - Fix bug where spaces were not added around parenthesized walruses in subscripts,
   unlike other binary operators (#4109)
 - Remove empty lines before docstrings in async functions (#4132)
 - Address a missing case in the change to allow empty lines at the beginning of all
   blocks, except immediately before a docstring (#4130)
 - For stubs, fix logic to enforce empty line after nested classes with bodies (#4141)
+
+### Preview style
+
+<!-- Changes that affect Black's preview style -->
+
+- Format module docstrings the same as class and function docstrings (#4095)
 - Fix crash when using a walrus in a dictionary (#4155)
 - Fix unnecessary parentheses when wrapping long dicts (#4135)
 

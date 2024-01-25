@@ -1,4 +1,4 @@
-# flags: --preview --minimum-version=3.10
+# flags: --minimum-version=3.10
 match maybe, multiple:
     case perhaps, 5:
         pass

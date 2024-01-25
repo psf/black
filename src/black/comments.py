@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Collection, Final, Iterator, List, Optional, Tuple, Union
 
-from black.mode import Mode, Preview
+from black.mode import Mode
 from black.nodes import (
     CLOSING_BRACKETS,
     STANDALONE_COMMENT,
@@ -390,22 +390,18 @@ def _contains_fmt_skip_comment(comment_line: str, mode: Mode) -> bool:
       # noqa:XXX # fmt:skip # a nice line  <-- multiple comments (Preview)
       # pylint:XXX; fmt:skip               <-- list of comments (; separated, Preview)
     """
-    semantic_comment_blocks = (
-        [
-            comment_line,
-            *[
-                _COMMENT_PREFIX + comment.strip()
-                for comment in comment_line.split(_COMMENT_PREFIX)[1:]
-            ],
-            *[
-                _COMMENT_PREFIX + comment.strip()
-                for comment in comment_line.strip(_COMMENT_PREFIX).split(
-                    _COMMENT_LIST_SEPARATOR
-                )
-            ],
-        ]
-        if Preview.single_line_format_skip_with_multiple_comments in mode
-        else [comment_line]
-    )
+    semantic_comment_blocks = [
+        comment_line,
+        *[
+            _COMMENT_PREFIX + comment.strip()
+            for comment in comment_line.split(_COMMENT_PREFIX)[1:]
+        ],
+        *[
+            _COMMENT_PREFIX + comment.strip()
+            for comment in comment_line.strip(_COMMENT_PREFIX).split(
+                _COMMENT_LIST_SEPARATOR
+            )
+        ],
+    ]
 
     return any(comment in FMT_SKIP for comment in semantic_comment_blocks)

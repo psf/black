@@ -168,35 +168,14 @@ def supports_feature(target_versions: Set[TargetVersion], feature: Feature) -> b
 class Preview(Enum):
     """Individual preview style features."""
 
-    add_trailing_comma_consistently = auto()
-    blank_line_after_nested_stub_class = auto()
-    blank_line_between_nested_and_def_stub_file = auto()
     hex_codes_in_unicode_sequences = auto()
-    improved_async_statements_handling = auto()
-    multiline_string_handling = auto()
-    no_blank_line_before_class_docstring = auto()
-    prefer_splitting_right_hand_side_of_assignments = auto()
     # NOTE: string_processing requires wrap_long_dict_values_in_parens
     # for https://github.com/psf/black/issues/3117 to be fixed.
     string_processing = auto()
-    parenthesize_conditional_expressions = auto()
-    parenthesize_long_type_hints = auto()
-    respect_magic_trailing_comma_in_return_type = auto()
-    skip_magic_trailing_comma_in_subscript = auto()
-    wrap_long_dict_values_in_parens = auto()
-    wrap_multiple_context_managers_in_parens = auto()
-    dummy_implementations = auto()
-    walrus_subscript = auto()
-    module_docstring_newlines = auto()
-    accept_raw_docstrings = auto()
-    fix_power_op_line_length = auto()
     hug_parens_with_braces_and_square_brackets = auto()
-    allow_empty_first_line_in_block = auto()
-    single_line_format_skip_with_multiple_comments = auto()
-    long_case_block_line_splitting = auto()
-    allow_form_feeds = auto()
     unify_docstring_detection = auto()
-    respect_east_asian_width = auto()
+    wrap_long_dict_values_in_parens = auto()
+    multiline_string_handling = auto()
 
 
 class Deprecated(UserWarning):
