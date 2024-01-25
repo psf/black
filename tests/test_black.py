@@ -1541,14 +1541,20 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_spellcheck_pyproject_toml(self) -> None:
         test_toml_file = THIS_DIR / "data" / "incorrect_spelling.toml"
-        with pytest.raises(black.InvalidConfigKey) as exc_info:
-            self.invokeBlack(
-                ["print('hello world')", "--verbose", "--config", str(test_toml_file)],
-                exit_code=123,
-                ignore_config=False,
-            )
+        result = BlackRunner().invoke(
+            black.main,
+            [
+                "--code=print('hello world')",
+                "--verbose",
+                f"--config={str(test_toml_file)}",
+            ]
+        )
 
-        exc_info.match(f"Invalid key ine_length in {re.escape(str(test_toml_file))}")
+        assert (
+            r"Invalid config keys detected: ['ine_length', 'target_ersion'] in "
+            + str(test_toml_file)
+            in result.stderr
+        )
 
     def test_parse_pyproject_toml_project_metadata(self) -> None:
         for test_toml, expected in [
