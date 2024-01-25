@@ -46,6 +46,7 @@ class ProtoComment:
     newlines: int  # how many newlines before the comment
     consumed: int  # how many characters of the original leaf's prefix did we consume
     form_feed: bool  # is there a form feed before the comment
+    leading_whitespace: str  # leading whitespace before the comment, if any
 
 
 def generate_comments(leaf: LN) -> Iterator[Leaf]:
@@ -88,7 +89,9 @@ def list_comments(prefix: str, *, is_endmarker: bool) -> List[ProtoComment]:
     form_feed = False
     for index, full_line in enumerate(re.split("\r?\n", prefix)):
         consumed += len(full_line) + 1  # adding the length of the split '\n'
-        line = full_line.lstrip()
+        match = re.match(r"^(\s*)(\S.*|)$", full_line)
+        assert match
+        whitespace, line = match.groups()
         if not line:
             nlines += 1
             if "\f" in full_line:
@@ -113,6 +116,7 @@ def list_comments(prefix: str, *, is_endmarker: bool) -> List[ProtoComment]:
                 newlines=nlines,
                 consumed=consumed,
                 form_feed=form_feed,
+                leading_whitespace=whitespace,
             )
         )
         form_feed = False
@@ -230,7 +234,11 @@ def convert_one_fmt_off_pair(
                 standalone_comment_prefix += fmt_off_prefix
                 hidden_value = comment.value + "\n" + hidden_value
             if _contains_fmt_skip_comment(comment.value, mode):
-                hidden_value += "  " + comment.value
+                hidden_value += (
+                    comment.leading_whitespace
+                    if Preview.no_normalize_fmt_skip_whitespace in mode
+                    else "  "
+                ) + comment.value
             if hidden_value.endswith("\n"):
                 # That happens when one of the `ignored_nodes` ended with a NEWLINE
                 # leaf (possibly followed by a DEDENT).
@@ -390,22 +398,18 @@ def _contains_fmt_skip_comment(comment_line: str, mode: Mode) -> bool:
       # noqa:XXX # fmt:skip # a nice line  <-- multiple comments (Preview)
       # pylint:XXX; fmt:skip               <-- list of comments (; separated, Preview)
     """
-    semantic_comment_blocks = (
-        [
-            comment_line,
-            *[
-                _COMMENT_PREFIX + comment.strip()
-                for comment in comment_line.split(_COMMENT_PREFIX)[1:]
-            ],
-            *[
-                _COMMENT_PREFIX + comment.strip()
-                for comment in comment_line.strip(_COMMENT_PREFIX).split(
-                    _COMMENT_LIST_SEPARATOR
-                )
-            ],
-        ]
-        if Preview.single_line_format_skip_with_multiple_comments in mode
-        else [comment_line]
-    )
+    semantic_comment_blocks = [
+        comment_line,
+        *[
+            _COMMENT_PREFIX + comment.strip()
+            for comment in comment_line.split(_COMMENT_PREFIX)[1:]
+        ],
+        *[
+            _COMMENT_PREFIX + comment.strip()
+            for comment in comment_line.strip(_COMMENT_PREFIX).split(
+                _COMMENT_LIST_SEPARATOR
+            )
+        ],
+    ]
 
     return any(comment in FMT_SKIP for comment in semantic_comment_blocks)

@@ -1,4 +1,4 @@
-# flags: --preview --minimum-version=3.10
+# flags: --minimum-version=3.10
 # This file uses pattern matching introduced in Python 3.10.
 
 
