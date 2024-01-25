@@ -9,7 +9,6 @@ the_basics
 gauging_changes
 issue_triage
 release_process
-reference/reference_summary
 ```
 
 Welcome! Happy to see you willing to make the project better. Have you read the entire
@@ -42,9 +41,5 @@ This section covers the following topics:
 - {doc}`the_basics`
 - {doc}`gauging_changes`
 - {doc}`release_process`
-- {doc}`reference/reference_summary`
 
 For an overview on contributing to the _Black_, please checkout {doc}`the_basics`.
-
-If you need a reference of the functions, classes, etc. available to you while
-developing _Black_, there's the {doc}`reference/reference_summary` docs.

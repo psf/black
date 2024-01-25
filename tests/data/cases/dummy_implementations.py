@@ -1,4 +1,3 @@
-# flags: --preview
 from typing import NoReturn, Protocol, Union, overload
 
 class Empty:

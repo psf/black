@@ -104,6 +104,7 @@ TEST_DESCENDANTS: Final = {
     syms.trailer,
     syms.term,
     syms.power,
+    syms.namedexpr_test,
 }
 TYPED_NAMES: Final = {syms.tname, syms.tname_star}
 ASSIGNMENTS: Final = {
@@ -121,6 +122,7 @@ ASSIGNMENTS: Final = {
     ">>=",
     "**=",
     "//=",
+    ":",
 }
 
 IMPLICIT_TUPLE: Final = {syms.testlist, syms.testlist_star_expr, syms.exprlist}
@@ -346,9 +348,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:  # no
 
             return NO
 
-        elif Preview.walrus_subscript in mode and (
-            t == token.COLONEQUAL or prev.type == token.COLONEQUAL
-        ):
+        elif t == token.COLONEQUAL or prev.type == token.COLONEQUAL:
             return SPACE
 
         elif not complex_subscript:
@@ -753,13 +753,9 @@ def is_function_or_class(node: Node) -> bool:
     return node.type in {syms.funcdef, syms.classdef, syms.async_funcdef}
 
 
-def is_stub_suite(node: Node, mode: Mode) -> bool:
+def is_stub_suite(node: Node) -> bool:
     """Return True if `node` is a suite with a stub body."""
-    if (
-        node.parent is not None
-        and Preview.dummy_implementations in mode
-        and not is_parent_function_or_class(node)
-    ):
+    if node.parent is not None and not is_parent_function_or_class(node):
         return False
 
     # If there is a comment, we want to keep it.

@@ -202,9 +202,7 @@ class Line:
         value = self.leaves[0].value
         if value.startswith(('"""', "'''")):
             return True
-        if Preview.accept_raw_docstrings in self.mode and value.startswith(
-            ("r'''", 'r"""', "R'''", 'R"""')
-        ):
+        if value.startswith(("r'''", 'r"""', "R'''", 'R"""')):
             return True
         return False
 
@@ -450,14 +448,8 @@ class Line:
             if subscript_start.type == syms.subscriptlist:
                 subscript_start = child_towards(subscript_start, leaf)
 
-        # When this is moved out of preview, add syms.namedexpr_test directly to
-        # TEST_DESCENDANTS in nodes.py
-        if Preview.walrus_subscript in self.mode:
-            test_decendants = TEST_DESCENDANTS | {syms.namedexpr_test}
-        else:
-            test_decendants = TEST_DESCENDANTS
         return subscript_start is not None and any(
-            n.type in test_decendants for n in subscript_start.pre_order()
+            n.type in TEST_DESCENDANTS for n in subscript_start.pre_order()
         )
 
     def enumerate_with_length(
@@ -567,8 +559,7 @@ class EmptyLineTracker:
         lines (two on module-level).
         """
         form_feed = (
-            Preview.allow_form_feeds in self.mode
-            and current_line.depth == 0
+            current_line.depth == 0
             and bool(current_line.leaves)
             and "\f\n" in current_line.leaves[0].prefix
         )
@@ -582,8 +573,7 @@ class EmptyLineTracker:
             else before - previous_after
         )
         if (
-            Preview.module_docstring_newlines in current_line.mode
-            and self.previous_block
+            self.previous_block
             and self.previous_block.previous_block is None
             and len(self.previous_block.original_line.leaves) == 1
             and self.previous_block.original_line.is_docstring
@@ -640,11 +630,7 @@ class EmptyLineTracker:
         if previous_def is not None:
             assert self.previous_line is not None
             if self.mode.is_pyi:
-                if (
-                    Preview.blank_line_after_nested_stub_class in self.mode
-                    and previous_def.is_class
-                    and not previous_def.is_stub_class
-                ):
+                if previous_def.is_class and not previous_def.is_stub_class:
                     before = 1
                 elif depth and not current_line.is_def and self.previous_line.is_def:
                     # Empty lines between attributes and methods should be preserved.
@@ -695,18 +681,12 @@ class EmptyLineTracker:
             and self.previous_line.is_class
             and current_line.is_docstring
         ):
-            if Preview.no_blank_line_before_class_docstring in current_line.mode:
-                return 0, 1
-            return before, 1
+            return 0, 1
 
         # In preview mode, always allow blank lines, except right before a function
         # docstring
-        is_empty_first_line_ok = (
-            Preview.allow_empty_first_line_in_block in current_line.mode
-            and (
-                not current_line.is_docstring
-                or (self.previous_line and not self.previous_line.is_def)
-            )
+        is_empty_first_line_ok = not current_line.is_docstring or (
+            self.previous_line and not self.previous_line.is_def
         )
 
         if (
@@ -736,7 +716,7 @@ class EmptyLineTracker:
         if self.previous_line.depth < current_line.depth and (
             self.previous_line.is_class or self.previous_line.is_def
         ):
-            if self.mode.is_pyi or not Preview.allow_empty_first_line_in_block:
+            if self.mode.is_pyi:
                 return 0, 0
             else:
                 return 1 if user_had_newline else 0, 0
@@ -776,10 +756,7 @@ class EmptyLineTracker:
             # Don't inspect the previous line if it's part of the body of the previous
             # statement in the same level, we always want a blank line if there's
             # something with a body preceding.
-            elif (
-                Preview.blank_line_between_nested_and_def_stub_file in current_line.mode
-                and self.previous_line.depth > current_line.depth
-            ):
+            elif self.previous_line.depth > current_line.depth:
                 newlines = 1
             elif (
                 current_line.is_def or current_line.is_decorator
@@ -800,11 +777,7 @@ class EmptyLineTracker:
             newlines = 1 if current_line.depth else 2
             # If a user has left no space after a dummy implementation, don't insert
             # new lines. This is useful for instance for @overload or Protocols.
-            if (
-                Preview.dummy_implementations in self.mode
-                and self.previous_line.is_stub_def
-                and not user_had_newline
-            ):
+            if self.previous_line.is_stub_def and not user_had_newline:
                 newlines = 0
         if comment_to_add_newlines is not None:
             previous_block = comment_to_add_newlines.previous_block
@@ -859,11 +832,9 @@ def is_line_short_enough(  # noqa: C901
     if not line_str:
         line_str = line_to_string(line)
 
-    width = str_width if Preview.respect_east_asian_width in mode else len
-
     if Preview.multiline_string_handling not in mode:
         return (
-            width(line_str) <= mode.line_length
+            str_width(line_str) <= mode.line_length
             and "\n" not in line_str  # multiline strings
             and not line.contains_standalone_comments()
         )
@@ -872,10 +843,10 @@ def is_line_short_enough(  # noqa: C901
         return False
     if "\n" not in line_str:
         # No multiline strings (MLS) present
-        return width(line_str) <= mode.line_length
+        return str_width(line_str) <= mode.line_length
 
     first, *_, last = line_str.split("\n")
-    if width(first) > mode.line_length or width(last) > mode.line_length:
+    if str_width(first) > mode.line_length or str_width(last) > mode.line_length:
         return False
 
     # Traverse the AST to examine the context of the multiline string (MLS),
@@ -1015,11 +986,7 @@ def can_omit_invisible_parens(
         return False
 
     if delimiter_count == 1:
-        if (
-            Preview.wrap_multiple_context_managers_in_parens in line.mode
-            and max_priority == COMMA_PRIORITY
-            and rhs.head.is_with_or_async_with_stmt
-        ):
+        if max_priority == COMMA_PRIORITY and rhs.head.is_with_or_async_with_stmt:
             # For two context manager with statements, the optional parentheses read
             # better. In this case, `rhs.body` is the context managers part of
             # the with statement. `rhs.head` is the `with (` part on the previous
