@@ -734,9 +734,6 @@ class EmptyLineTracker:
                     newlines = 0
                 else:
                     newlines = 1
-            # Remove case `self.previous_line.depth > current_line.depth` below when
-            # this becomes stable.
-            #
             # Don't inspect the previous line if it's part of the body of the previous
             # statement in the same level, we always want a blank line if there's
             # something with a body preceding.
@@ -753,8 +750,6 @@ class EmptyLineTracker:
                     # Blank line between a block of functions (maybe with preceding
                     # decorators) and a block of non-functions
                     newlines = 1
-            elif self.previous_line.depth > current_line.depth:
-                newlines = 1
             else:
                 newlines = 0
         else:
