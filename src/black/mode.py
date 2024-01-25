@@ -9,7 +9,6 @@ from enum import Enum, auto
 from hashlib import sha256
 from operator import attrgetter
 from typing import Dict, Final, Set
-from warnings import warn
 
 from black.const import DEFAULT_LINE_LENGTH
 

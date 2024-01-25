@@ -8,6 +8,7 @@ from typing import Set, Tuple
 
 try:
     from aiohttp import web
+    from multidict import CIMultiDictProxy
 
     from .middlewares import cors
 except ImportError as ie:
@@ -57,6 +58,10 @@ BLACK_HEADERS = [
 BLACK_VERSION_HEADER = "X-Black-Version"
 
 
+class HeaderError(Exception):
+    pass
+
+
 class InvalidVariantHeader(Exception):
     pass
 
@@ -97,72 +102,21 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
             return web.Response(
                 status=501, text="This server only supports protocol version 1"
             )
-        try:
-            line_length = int(
-                request.headers.get(LINE_LENGTH_HEADER, black.DEFAULT_LINE_LENGTH)
-            )
-        except ValueError:
-            return web.Response(status=400, text="Invalid line length header value")
-
-        if PYTHON_VARIANT_HEADER in request.headers:
-            value = request.headers[PYTHON_VARIANT_HEADER]
-            try:
-                pyi, versions = parse_python_variant_header(value)
-            except InvalidVariantHeader as e:
-                return web.Response(
-                    status=400,
-                    text=f"Invalid value for {PYTHON_VARIANT_HEADER}: {e.args[0]}",
-                )
-        else:
-            pyi = False
-            versions = set()
-
-        skip_string_normalization = bool(
-            request.headers.get(SKIP_STRING_NORMALIZATION_HEADER, False)
-        )
-        skip_magic_trailing_comma = bool(
-            request.headers.get(SKIP_MAGIC_TRAILING_COMMA, False)
-        )
-        skip_source_first_line = bool(
-            request.headers.get(SKIP_SOURCE_FIRST_LINE, False)
-        )
-
-        preview = bool(request.headers.get(PREVIEW, False))
-        unstable = bool(request.headers.get(UNSTABLE, False))
-        enable_features: Set[black.Preview] = set()
-        enable_unstable_features = request.headers.get(ENABLE_UNSTABLE_FEATURE, "").split(",")
-        for piece in enable_unstable_features:
-            piece = piece.strip()
-            if piece:
-                try:
-                    enable_features.add(black.Preview[piece])
-                except KeyError:
-                    return web.Response(
-                        status=400,
-                        text=f"Invalid value for {ENABLE_UNSTABLE_FEATURE}: {piece}",
-                    )
 
         fast = False
         if request.headers.get(FAST_OR_SAFE_HEADER, "safe") == "fast":
             fast = True
-        mode = black.FileMode(
-            target_versions=versions,
-            is_pyi=pyi,
-            line_length=line_length,
-            skip_source_first_line=skip_source_first_line,
-            string_normalization=not skip_string_normalization,
-            magic_trailing_comma=not skip_magic_trailing_comma,
-            preview=preview,
-            unstable=unstable,
-            enabled_features=enable_features,
-        )
+        try:
+            mode = parse_mode(request.headers)
+        except HeaderError as e:
+            return web.Response(status=400, text=e.args[0])
         req_bytes = await request.content.read()
         charset = request.charset if request.charset is not None else "utf8"
         req_str = req_bytes.decode(charset)
         then = datetime.now(timezone.utc)
 
         header = ""
-        if skip_source_first_line:
+        if mode.skip_source_first_line:
             first_newline_position: int = req_str.find("\n") + 1
             header = req_str[:first_newline_position]
             req_str = req_str[first_newline_position:]
@@ -209,6 +163,57 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
     except Exception as e:
         logging.exception("Exception during handling a request")
         return web.Response(status=500, headers=headers, text=str(e))
+
+
+def parse_mode(headers: CIMultiDictProxy[str]) -> black.Mode:
+    try:
+        line_length = int(headers.get(LINE_LENGTH_HEADER, black.DEFAULT_LINE_LENGTH))
+    except ValueError:
+        raise HeaderError("Invalid line length header value") from None
+
+    if PYTHON_VARIANT_HEADER in headers:
+        value = headers[PYTHON_VARIANT_HEADER]
+        try:
+            pyi, versions = parse_python_variant_header(value)
+        except InvalidVariantHeader as e:
+            raise HeaderError(
+                f"Invalid value for {PYTHON_VARIANT_HEADER}: {e.args[0]}",
+            ) from None
+    else:
+        pyi = False
+        versions = set()
+
+    skip_string_normalization = bool(
+        headers.get(SKIP_STRING_NORMALIZATION_HEADER, False)
+    )
+    skip_magic_trailing_comma = bool(headers.get(SKIP_MAGIC_TRAILING_COMMA, False))
+    skip_source_first_line = bool(headers.get(SKIP_SOURCE_FIRST_LINE, False))
+
+    preview = bool(headers.get(PREVIEW, False))
+    unstable = bool(headers.get(UNSTABLE, False))
+    enable_features: Set[black.Preview] = set()
+    enable_unstable_features = headers.get(ENABLE_UNSTABLE_FEATURE, "").split(",")
+    for piece in enable_unstable_features:
+        piece = piece.strip()
+        if piece:
+            try:
+                enable_features.add(black.Preview[piece])
+            except KeyError:
+                raise HeaderError(
+                    f"Invalid value for {ENABLE_UNSTABLE_FEATURE}: {piece}",
+                ) from None
+
+    return black.FileMode(
+        target_versions=versions,
+        is_pyi=pyi,
+        line_length=line_length,
+        skip_source_first_line=skip_source_first_line,
+        string_normalization=not skip_string_normalization,
+        magic_trailing_comma=not skip_magic_trailing_comma,
+        preview=preview,
+        unstable=unstable,
+        enabled_features=enable_features,
+    )
 
 
 def parse_python_variant_header(value: str) -> Tuple[bool, Set[black.TargetVersion]]:
