@@ -35,6 +35,7 @@ SKIP_STRING_NORMALIZATION_HEADER = "X-Skip-String-Normalization"
 SKIP_MAGIC_TRAILING_COMMA = "X-Skip-Magic-Trailing-Comma"
 PREVIEW = "X-Preview"
 UNSTABLE = "X-Unstable"
+ENABLE_UNSTABLE_FEATURE = "X-Enable-Unstable-Feature"
 FAST_OR_SAFE_HEADER = "X-Fast-Or-Safe"
 DIFF_HEADER = "X-Diff"
 
@@ -47,6 +48,7 @@ BLACK_HEADERS = [
     SKIP_MAGIC_TRAILING_COMMA,
     PREVIEW,
     UNSTABLE,
+    ENABLE_UNSTABLE_FEATURE,
     FAST_OR_SAFE_HEADER,
     DIFF_HEADER,
 ]
@@ -124,8 +126,22 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
         skip_source_first_line = bool(
             request.headers.get(SKIP_SOURCE_FIRST_LINE, False)
         )
+
         preview = bool(request.headers.get(PREVIEW, False))
         unstable = bool(request.headers.get(UNSTABLE, False))
+        enable_features: Set[black.Preview] = set()
+        enable_unstable_features = request.headers.get(ENABLE_UNSTABLE_FEATURE, "").split(",")
+        for piece in enable_unstable_features:
+            piece = piece.strip()
+            if piece:
+                try:
+                    enable_features.add(black.Preview[piece])
+                except KeyError:
+                    return web.Response(
+                        status=400,
+                        text=f"Invalid value for {ENABLE_UNSTABLE_FEATURE}: {piece}",
+                    )
+
         fast = False
         if request.headers.get(FAST_OR_SAFE_HEADER, "safe") == "fast":
             fast = True
@@ -138,6 +154,7 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
             magic_trailing_comma=not skip_magic_trailing_comma,
             preview=preview,
             unstable=unstable,
+            enabled_features=enable_features,
         )
         req_bytes = await request.content.read()
         charset = request.charset if request.charset is not None else "utf8"

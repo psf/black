@@ -74,6 +74,7 @@ release:
 - Fix symlink handling, properly catch and ignore symlinks that point outside of root
   (#4161)
 - Fix cache mtime logic that resulted in false positive cache hits (#4128)
+- Remove the long-deprecated `--experimental-string-processing` flag (#4096)
 
 ### Packaging
 
