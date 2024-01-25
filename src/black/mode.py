@@ -205,7 +205,7 @@ class Mode:
     python_cell_magics: Set[str] = field(default_factory=set)
     preview: bool = False
     unstable: bool = False
-    enabled_features: set[Preview] = field(default_factory=set)
+    enabled_features: Set[Preview] = field(default_factory=set)
 
     def __contains__(self, feature: Preview) -> bool:
         """
