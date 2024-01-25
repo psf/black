@@ -608,7 +608,7 @@ class EmptyLineTracker:
         self.previous_block = block
         return block
 
-    def _maybe_empty_lines(self, current_line: Line) -> Tuple[int, int]:
+    def _maybe_empty_lines(self, current_line: Line) -> Tuple[int, int]:  # noqa: C901
         max_allowed = 1
         if current_line.depth == 0:
             max_allowed = 1 if self.mode.is_pyi else 2
