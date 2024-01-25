@@ -158,13 +158,11 @@ class BlackTestCase(BlackBaseTestCase):
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_one_empty_line(self) -> None:
-        mode = black.Mode(preview=True)
         for nl in ["\n", "\r\n"]:
             source = expected = nl
-            assert_format(source, expected, mode=mode)
+            assert_format(source, expected)
 
     def test_one_empty_line_ff(self) -> None:
-        mode = black.Mode(preview=True)
         for nl in ["\n", "\r\n"]:
             expected = nl
             tmp_file = Path(black.dump_to_file(nl))
@@ -175,9 +173,7 @@ class BlackTestCase(BlackBaseTestCase):
                 with open(tmp_file, "wb") as f:
                     f.write(nl.encode("utf-8"))
             try:
-                self.assertFalse(
-                    ff(tmp_file, mode=mode, write_back=black.WriteBack.YES)
-                )
+                self.assertFalse(ff(tmp_file, write_back=black.WriteBack.YES))
                 with open(tmp_file, "rb") as f:
                     actual = f.read().decode("utf-8")
             finally:
@@ -1047,7 +1043,6 @@ class BlackTestCase(BlackBaseTestCase):
             black.format_file_contents(invalid, mode=mode, fast=False)
         self.assertEqual(str(e.exception), "Cannot parse: 1:7: return if you can")
 
-        mode = black.Mode(preview=True)
         just_crlf = "\r\n"
         with self.assertRaises(black.NothingChanged):
             black.format_file_contents(just_crlf, mode=mode, fast=False)
@@ -1391,7 +1386,6 @@ class BlackTestCase(BlackBaseTestCase):
 
             return get_output
 
-        mode = black.Mode(preview=True)
         for content, expected in cases:
             output = io.StringIO()
             io_TextIOWrapper = io.TextIOWrapper
@@ -1402,26 +1396,11 @@ class BlackTestCase(BlackBaseTestCase):
                         fast=True,
                         content=content,
                         write_back=black.WriteBack.YES,
-                        mode=mode,
+                        mode=DEFAULT_MODE,
                     )
                 except io.UnsupportedOperation:
                     pass  # StringIO does not support detach
                 assert output.getvalue() == expected
-
-        # An empty string is the only test case for `preview=False`
-        output = io.StringIO()
-        io_TextIOWrapper = io.TextIOWrapper
-        with patch("io.TextIOWrapper", _new_wrapper(output, io_TextIOWrapper)):
-            try:
-                black.format_stdin_to_stdout(
-                    fast=True,
-                    content="",
-                    write_back=black.WriteBack.YES,
-                    mode=DEFAULT_MODE,
-                )
-            except io.UnsupportedOperation:
-                pass  # StringIO does not support detach
-            assert output.getvalue() == ""
 
     def test_invalid_cli_regex(self) -> None:
         for option in ["--include", "--exclude", "--extend-exclude", "--force-exclude"]:
