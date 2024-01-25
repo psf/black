@@ -573,6 +573,7 @@ class EmptyLineTracker:
             else before - previous_after
         )
         if (
+            # Always have one empty line after a module docstring
             self.previous_block
             and self.previous_block.previous_block is None
             and len(self.previous_block.original_line.leaves) == 1
@@ -611,6 +612,7 @@ class EmptyLineTracker:
         max_allowed = 1
         if current_line.depth == 0:
             max_allowed = 1 if self.mode.is_pyi else 2
+
         if current_line.leaves:
             # Consume the first leaf's extra newlines.
             first_leaf = current_line.leaves[0]
@@ -623,9 +625,23 @@ class EmptyLineTracker:
         user_had_newline = bool(before)
         depth = current_line.depth
 
+        # Mutate self.previous_defs, remainder of this function should be pure
         previous_def = None
         while self.previous_defs and self.previous_defs[-1].depth >= depth:
             previous_def = self.previous_defs.pop()
+        if current_line.is_decorator or current_line.is_def or current_line.is_class:
+            if not current_line.is_decorator:
+                self.previous_defs.append(current_line)
+
+        if self.previous_line is None:
+            # Don't insert empty lines before the first line in the file.
+            return 0, 0
+
+        if current_line.is_docstring:
+            if self.previous_line.is_class:
+                return 0, 1
+            if self.previous_line.opens_block and self.previous_line.is_def:
+                return 0, 0
 
         if previous_def is not None:
             assert self.previous_line is not None
@@ -668,49 +684,24 @@ class EmptyLineTracker:
             )
 
         if (
-            self.previous_line
-            and self.previous_line.is_import
+            self.previous_line.is_import
             and not current_line.is_import
             and not current_line.is_fmt_pass_converted(first_leaf_matches=is_import)
             and depth == self.previous_line.depth
         ):
             return (before or 1), 0
 
-        if (
-            self.previous_line
-            and self.previous_line.is_class
-            and current_line.is_docstring
-        ):
-            return 0, 1
-
-        # In preview mode, always allow blank lines, except right before a function
-        # docstring
-        is_empty_first_line_ok = not current_line.is_docstring or (
-            self.previous_line and not self.previous_line.is_def
-        )
-
-        if (
-            self.previous_line
-            and self.previous_line.opens_block
-            and not is_empty_first_line_ok
-        ):
-            return 0, 0
         return before, 0
 
     def _maybe_empty_lines_for_class_or_def(  # noqa: C901
         self, current_line: Line, before: int, user_had_newline: bool
     ) -> Tuple[int, int]:
-        if not current_line.is_decorator:
-            self.previous_defs.append(current_line)
-        if self.previous_line is None:
-            # Don't insert empty lines before the first line in the file.
-            return 0, 0
+        assert self.previous_line is not None
 
         if self.previous_line.is_decorator:
             if self.mode.is_pyi and current_line.is_stub_class:
                 # Insert an empty line after a decorated stub class
                 return 0, 1
-
             return 0, 0
 
         if self.previous_line.depth < current_line.depth and (
@@ -718,8 +709,7 @@ class EmptyLineTracker:
         ):
             if self.mode.is_pyi:
                 return 0, 0
-            else:
-                return 1 if user_had_newline else 0, 0
+            return 1 if user_had_newline else 0, 0
 
         comment_to_add_newlines: Optional[LinesBlock] = None
         if (
