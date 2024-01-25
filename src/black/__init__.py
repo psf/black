@@ -66,7 +66,13 @@ from black.handle_ipynb_magics import (
 )
 from black.linegen import LN, LineGenerator, transform_line
 from black.lines import EmptyLineTracker, LinesBlock
-from black.mode import FUTURE_FLAG_TO_FEATURE, VERSION_TO_FEATURES, Feature
+from black.mode import (
+    FUTURE_FLAG_TO_FEATURE,
+    UNSTABLE_FEATURES,
+    VERSION_TO_FEATURES,
+    Feature,
+    Preview,
+)
 from black.mode import Mode as Mode  # re-exported
 from black.mode import TargetVersion, supports_feature
 from black.nodes import (
@@ -192,6 +198,13 @@ def target_version_option_callback(
     return [TargetVersion[val.upper()] for val in v]
 
 
+def enable_unstable_feature_callback(
+    c: click.Context, p: Union[click.Option, click.Parameter], v: Tuple[str, ...]
+) -> List[Preview]:
+    """Compute the features from an --enable-unstable-feature flag."""
+    return [Preview[val] for val in v]
+
+
 def re_compile_maybe_verbose(regex: str) -> Pattern[str]:
     """Compile a regular expression string in `regex`.
 
@@ -287,12 +300,6 @@ def validate_regex(
     help="Don't use trailing commas as a reason to split lines.",
 )
 @click.option(
-    "--experimental-string-processing",
-    is_flag=True,
-    hidden=True,
-    help="(DEPRECATED and now included in --unstable) Normalize string literals.",
-)
-@click.option(
     "--preview",
     is_flag=True,
     help=(
@@ -307,6 +314,17 @@ def validate_regex(
         "Enable potentially disruptive style changes that have known bugs or are not"
         " currently expected to make it into the stable style Black's next major"
         " release. Implies --preview."
+    ),
+)
+@click.option(
+    "--enable-unstable-feature",
+    type=click.Choice([v.name for v in UNSTABLE_FEATURES]),
+    callback=enable_unstable_feature_callback,
+    multiple=True,
+    help=(
+        "Enable specific features included in the `--unstable` style. Requires"
+        " `--preview`. No compatibility guarantees are provided on the behavior"
+        " or existence of any unstable features."
     ),
 )
 @click.option(
@@ -499,9 +517,9 @@ def main(  # noqa: C901
     skip_source_first_line: bool,
     skip_string_normalization: bool,
     skip_magic_trailing_comma: bool,
-    experimental_string_processing: bool,
     preview: bool,
     unstable: bool,
+    enable_unstable_feature: List[Preview],
     quiet: bool,
     verbose: bool,
     required_version: Optional[str],
@@ -525,6 +543,13 @@ def main(  # noqa: C901
         ctx.exit(1)
     if not src and code is None:
         out(main.get_usage(ctx) + "\n\nOne of 'SRC' or 'code' is required.")
+        ctx.exit(1)
+
+    if enable_unstable_feature and not preview:
+        out(
+            main.get_usage(ctx)
+            + "\n\n'--enable-unstable-feature' requires '--preview'."
+        )
         ctx.exit(1)
 
     root, method = (
@@ -588,10 +613,10 @@ def main(  # noqa: C901
         skip_source_first_line=skip_source_first_line,
         string_normalization=not skip_string_normalization,
         magic_trailing_comma=not skip_magic_trailing_comma,
-        experimental_string_processing=experimental_string_processing,
         preview=preview,
         unstable=unstable,
         python_cell_magics=set(python_cell_magics),
+        enabled_features=set(enable_unstable_feature),
     )
 
     lines: List[Tuple[int, int]] = []

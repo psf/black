@@ -44,6 +44,7 @@ from black import Feature, TargetVersion
 from black import re_compile_maybe_verbose as compile_pattern
 from black.cache import FileData, get_cache_dir, get_cache_file
 from black.debug import DebugVisitor
+from black.mode import Preview
 from black.output import color_diff, diff
 from black.report import Report
 
@@ -183,11 +184,6 @@ class BlackTestCase(BlackBaseTestCase):
                 os.unlink(tmp_file)
             self.assertFormatEqual(expected, actual)
 
-    def test_experimental_string_processing_warns(self) -> None:
-        self.assertWarns(
-            black.mode.Deprecated, black.Mode, experimental_string_processing=True
-        )
-
     def test_piping(self) -> None:
         _, source, expected = read_data_from_file(
             PROJECT_ROOT / "src/black/__init__.py"
@@ -257,7 +253,7 @@ class BlackTestCase(BlackBaseTestCase):
         sys.settrace(tracefunc)
         mode = replace(
             DEFAULT_MODE,
-            experimental_string_processing=False,
+            enable_features={Preview.string_processing},
             target_versions={black.TargetVersion.PY38},
         )
         actual = fs(source, mode=mode)

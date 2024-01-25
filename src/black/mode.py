@@ -202,30 +202,22 @@ class Mode:
     is_ipynb: bool = False
     skip_source_first_line: bool = False
     magic_trailing_comma: bool = True
-    experimental_string_processing: bool = False
     python_cell_magics: Set[str] = field(default_factory=set)
     preview: bool = False
     unstable: bool = False
-
-    def __post_init__(self) -> None:
-        if self.experimental_string_processing:
-            warn(
-                "`experimental string processing` has been included in `preview`"
-                " and deprecated. Use `preview` instead.",
-                Deprecated,
-            )
+    enabled_features: set[Preview] = field(default_factory=set)
 
     def __contains__(self, feature: Preview) -> bool:
         """
         Provide `Preview.FEATURE in Mode` syntax that mirrors the ``preview`` flag.
 
         In unstable mode, all features are enabled. In preview mode, all features
-        except those in UNSTABLE_FEATURES are enabled. For legacy reasons, the
-        string_processing feature has its own flag, which is deprecated.
+        except those in UNSTABLE_FEATURES are enabled. Any features in
+        `self.enabled_features` are also enabled.
         """
         if self.unstable:
             return True
-        if feature is Preview.string_processing and self.experimental_string_processing:
+        if feature in self.enabled_features:
             return True
         return self.preview and feature not in UNSTABLE_FEATURES
 
@@ -245,7 +237,9 @@ class Mode:
             str(int(self.is_ipynb)),
             str(int(self.skip_source_first_line)),
             str(int(self.magic_trailing_comma)),
-            str(int(self.experimental_string_processing)),
+            sha256(
+                (",".join(sorted(f.name for f in self.enabled_features))).encode()
+            ).hexdigest(),
             str(int(self.preview)),
             sha256((",".join(sorted(self.python_cell_magics))).encode()).hexdigest(),
         ]
