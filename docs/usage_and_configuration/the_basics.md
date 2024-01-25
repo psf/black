@@ -163,11 +163,12 @@ There is no guarantee on the code style produced by this flag across releases.
 
 #### `--enable-unstable-feature`
 
-Enable specific features from the `--unstable` style. See [the preview style documentation](labels/unstable-features) for the list of supported features.
-This flag can only be used when `--preview` is enabled. Users are encouraged to use this
-flag if they use `--preview` style and a feature that affects their code is moved
-from the `--preview` to the `--unstable` style, but they want to avoid the thrash from
-undoing this change.
+Enable specific features from the `--unstable` style. See
+[the preview style documentation](labels/unstable-features) for the list of supported
+features. This flag can only be used when `--preview` is enabled. Users are encouraged
+to use this flag if they use `--preview` style and a feature that affects their code is
+moved from the `--preview` to the `--unstable` style, but they want to avoid the thrash
+from undoing this change.
 
 There are no guarantees on the behavior of these features, or even their existence,
 across releases.

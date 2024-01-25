@@ -71,10 +71,9 @@ from black.mode import (
     UNSTABLE_FEATURES,
     VERSION_TO_FEATURES,
     Feature,
-    Preview,
 )
 from black.mode import Mode as Mode  # re-exported
-from black.mode import TargetVersion, supports_feature
+from black.mode import Preview, TargetVersion, supports_feature
 from black.nodes import (
     STARS,
     is_number_token,

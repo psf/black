@@ -24,8 +24,8 @@ Currently, the following features are included in the preview style:
   detected as docstrings
 - `hug_parens_with_braces_and_square_brackets`: more compact formatting of nested
   brackets ([see below](labels/hug-parens))
-- `no_normalize_fmt_skip_whitespace`: whitespace before `# fmt: skip` comments is
-  no longer normalized
+- `no_normalize_fmt_skip_whitespace`: whitespace before `# fmt: skip` comments is no
+  longer normalized
 
 (labels/unstable-features)=
 
