@@ -44,7 +44,6 @@ from black import Feature, TargetVersion
 from black import re_compile_maybe_verbose as compile_pattern
 from black.cache import FileData, get_cache_dir, get_cache_file
 from black.debug import DebugVisitor
-from black.mode import Preview
 from black.output import color_diff, diff
 from black.report import Report
 

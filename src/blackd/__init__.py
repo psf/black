@@ -8,7 +8,7 @@ from typing import Set, Tuple
 
 try:
     from aiohttp import web
-    from multidict import CIMultiDictProxy
+    from multidict import MultiMapping
 
     from .middlewares import cors
 except ImportError as ie:
@@ -165,7 +165,7 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
         return web.Response(status=500, headers=headers, text=str(e))
 
 
-def parse_mode(headers: CIMultiDictProxy[str]) -> black.Mode:
+def parse_mode(headers: MultiMapping[str]) -> black.Mode:
     try:
         line_length = int(headers.get(LINE_LENGTH_HEADER, black.DEFAULT_LINE_LENGTH))
     except ValueError:
