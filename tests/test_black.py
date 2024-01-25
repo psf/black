@@ -243,21 +243,6 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertIn("\033[31m", actual)
         self.assertIn("\033[0m", actual)
 
-    @patch("black.dump_to_file", dump_to_stderr)
-    def _test_wip(self) -> None:
-        source, expected = read_data("miscellaneous", "wip")
-        sys.settrace(tracefunc)
-        mode = replace(
-            DEFAULT_MODE,
-            enable_features={Preview.string_processing},
-            target_versions={black.TargetVersion.PY38},
-        )
-        actual = fs(source, mode=mode)
-        sys.settrace(None)
-        self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
-
     def test_pep_572_version_detection(self) -> None:
         source, _ = read_data("cases", "pep_572")
         root = black.lib2to3_parse(source)
