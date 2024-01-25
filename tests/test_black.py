@@ -1547,7 +1547,7 @@ class BlackTestCase(BlackBaseTestCase):
                 "--code=print('hello world')",
                 "--verbose",
                 f"--config={str(test_toml_file)}",
-            ]
+            ],
         )
 
         assert (
