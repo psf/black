@@ -565,13 +565,7 @@ class EmptyLineTracker:
         )
         before, after = self._maybe_empty_lines(current_line)
         previous_after = self.previous_block.after if self.previous_block else 0
-        before = (
-            # Black should not insert empty lines at the beginning
-            # of the file
-            0
-            if self.previous_line is None
-            else before - previous_after
-        )
+        before = max(0, before - previous_after)
         if (
             # Always have one empty line after a module docstring
             self.previous_block
