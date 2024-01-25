@@ -117,10 +117,6 @@ class WriteBack(Enum):
 FileMode = Mode
 
 
-class InvalidConfigKey(Exception):
-    """Invalid configuration key found in pyproject toml."""
-
-
 def read_pyproject_toml(
     ctx: click.Context, param: click.Parameter, value: Optional[str]
 ) -> Optional[str]:
@@ -189,10 +185,16 @@ def read_pyproject_toml(
 def spellcheck_pyproject_toml_keys(
     ctx: click.Context, config_keys: List[str], config_file_path: str
 ) -> None:
+    invalid_keys: List[str] = []
     available_config_options = {param.name for param in ctx.command.params}
     for key in config_keys:
         if key not in available_config_options:
-            raise InvalidConfigKey(f"Invalid key {key} in {config_file_path}")
+            invalid_keys.append(key)
+    if invalid_keys:
+        out(
+            f"Invalid config keys detected: {invalid_keys} in {config_file_path}",
+            fg="red",
+        )
 
 
 def target_version_option_callback(
