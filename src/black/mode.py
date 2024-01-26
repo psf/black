@@ -237,7 +237,7 @@ class Mode:
             ]
         features_and_magics = (
             ",".join(sorted(f.name for f in self.enabled_features))
-            + "|"
+            + "@"
             + ",".join(sorted(self.python_cell_magics))
         )
         if len(features_and_magics) > _MAX_CACHE_KEY_PART_LENGTH:
