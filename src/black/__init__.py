@@ -142,6 +142,7 @@ def read_pyproject_toml(
     if not config:
         return None
     else:
+        spellcheck_pyproject_toml_keys(ctx, list(config), value)
         # Sanitize the values to be Click friendly. For more information please see:
         # https://github.com/psf/black/issues/1458
         # https://github.com/pallets/click/issues/1567
@@ -179,6 +180,22 @@ def read_pyproject_toml(
 
     ctx.default_map = default_map
     return value
+
+
+def spellcheck_pyproject_toml_keys(
+    ctx: click.Context, config_keys: List[str], config_file_path: str
+) -> None:
+    invalid_keys: List[str] = []
+    available_config_options = {param.name for param in ctx.command.params}
+    for key in config_keys:
+        if key not in available_config_options:
+            invalid_keys.append(key)
+    if invalid_keys:
+        keys_str = ", ".join(map(repr, invalid_keys))
+        out(
+            f"Invalid config keys detected: {keys_str} (in {config_file_path})",
+            fg="red",
+        )
 
 
 def target_version_option_callback(
