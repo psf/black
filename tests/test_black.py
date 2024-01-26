@@ -106,6 +106,7 @@ class FakeContext(click.Context):
     def __init__(self) -> None:
         self.default_map: Dict[str, Any] = {}
         self.params: Dict[str, Any] = {}
+        self.command: click.Command = black.main
         # Dummy root, since most of the tests don't care about it
         self.obj: Dict[str, Any] = {"root": PROJECT_ROOT}
 
@@ -157,13 +158,11 @@ class BlackTestCase(BlackBaseTestCase):
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_one_empty_line(self) -> None:
-        mode = black.Mode(preview=True)
         for nl in ["\n", "\r\n"]:
             source = expected = nl
-            assert_format(source, expected, mode=mode)
+            assert_format(source, expected)
 
     def test_one_empty_line_ff(self) -> None:
-        mode = black.Mode(preview=True)
         for nl in ["\n", "\r\n"]:
             expected = nl
             tmp_file = Path(black.dump_to_file(nl))
@@ -174,19 +173,12 @@ class BlackTestCase(BlackBaseTestCase):
                 with open(tmp_file, "wb") as f:
                     f.write(nl.encode("utf-8"))
             try:
-                self.assertFalse(
-                    ff(tmp_file, mode=mode, write_back=black.WriteBack.YES)
-                )
+                self.assertFalse(ff(tmp_file, write_back=black.WriteBack.YES))
                 with open(tmp_file, "rb") as f:
                     actual = f.read().decode("utf-8")
             finally:
                 os.unlink(tmp_file)
             self.assertFormatEqual(expected, actual)
-
-    def test_experimental_string_processing_warns(self) -> None:
-        self.assertWarns(
-            black.mode.Deprecated, black.Mode, experimental_string_processing=True
-        )
 
     def test_piping(self) -> None:
         _, source, expected = read_data_from_file(
@@ -250,21 +242,6 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertIn("\033[32m", actual)
         self.assertIn("\033[31m", actual)
         self.assertIn("\033[0m", actual)
-
-    @patch("black.dump_to_file", dump_to_stderr)
-    def _test_wip(self) -> None:
-        source, expected = read_data("miscellaneous", "wip")
-        sys.settrace(tracefunc)
-        mode = replace(
-            DEFAULT_MODE,
-            experimental_string_processing=False,
-            target_versions={black.TargetVersion.PY38},
-        )
-        actual = fs(source, mode=mode)
-        sys.settrace(None)
-        self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
 
     def test_pep_572_version_detection(self) -> None:
         source, _ = read_data("cases", "pep_572")
@@ -373,7 +350,7 @@ class BlackTestCase(BlackBaseTestCase):
     @patch("black.dump_to_file", dump_to_stderr)
     def test_string_quotes(self) -> None:
         source, expected = read_data("miscellaneous", "string_quotes")
-        mode = black.Mode(preview=True)
+        mode = black.Mode(unstable=True)
         assert_format(source, expected, mode)
         mode = replace(mode, string_normalization=False)
         not_normalized = fs(source, mode=mode)
@@ -1051,7 +1028,6 @@ class BlackTestCase(BlackBaseTestCase):
             black.format_file_contents(invalid, mode=mode, fast=False)
         self.assertEqual(str(e.exception), "Cannot parse: 1:7: return if you can")
 
-        mode = black.Mode(preview=True)
         just_crlf = "\r\n"
         with self.assertRaises(black.NothingChanged):
             black.format_file_contents(just_crlf, mode=mode, fast=False)
@@ -1395,7 +1371,6 @@ class BlackTestCase(BlackBaseTestCase):
 
             return get_output
 
-        mode = black.Mode(preview=True)
         for content, expected in cases:
             output = io.StringIO()
             io_TextIOWrapper = io.TextIOWrapper
@@ -1406,26 +1381,27 @@ class BlackTestCase(BlackBaseTestCase):
                         fast=True,
                         content=content,
                         write_back=black.WriteBack.YES,
-                        mode=mode,
+                        mode=DEFAULT_MODE,
                     )
                 except io.UnsupportedOperation:
                     pass  # StringIO does not support detach
                 assert output.getvalue() == expected
 
-        # An empty string is the only test case for `preview=False`
-        output = io.StringIO()
-        io_TextIOWrapper = io.TextIOWrapper
-        with patch("io.TextIOWrapper", _new_wrapper(output, io_TextIOWrapper)):
-            try:
-                black.format_stdin_to_stdout(
-                    fast=True,
-                    content="",
-                    write_back=black.WriteBack.YES,
-                    mode=DEFAULT_MODE,
-                )
-            except io.UnsupportedOperation:
-                pass  # StringIO does not support detach
-            assert output.getvalue() == ""
+    def test_cli_unstable(self) -> None:
+        self.invokeBlack(["--unstable", "-c", "0"], exit_code=0)
+        self.invokeBlack(["--preview", "-c", "0"], exit_code=0)
+        # Must also pass --preview
+        self.invokeBlack(
+            ["--enable-unstable-feature", "string_processing", "-c", "0"], exit_code=1
+        )
+        self.invokeBlack(
+            ["--preview", "--enable-unstable-feature", "string_processing", "-c", "0"],
+            exit_code=0,
+        )
+        self.invokeBlack(
+            ["--unstable", "--enable-unstable-feature", "string_processing", "-c", "0"],
+            exit_code=0,
+        )
 
     def test_invalid_cli_regex(self) -> None:
         for option in ["--include", "--exclude", "--extend-exclude", "--force-exclude"]:
@@ -1537,6 +1513,22 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(config["python_cell_magics"], ["custom1", "custom2"])
         self.assertEqual(config["exclude"], r"\.pyi?$")
         self.assertEqual(config["include"], r"\.py?$")
+
+    def test_spellcheck_pyproject_toml(self) -> None:
+        test_toml_file = THIS_DIR / "data" / "incorrect_spelling.toml"
+        result = BlackRunner().invoke(
+            black.main,
+            [
+                "--code=print('hello world')",
+                "--verbose",
+                f"--config={str(test_toml_file)}",
+            ],
+        )
+
+        assert (
+            r"Invalid config keys detected: 'ine_length', 'target_ersion' (in"
+            rf" {test_toml_file})" in result.stderr
+        )
 
     def test_parse_pyproject_toml_project_metadata(self) -> None:
         for test_toml, expected in [

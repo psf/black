@@ -144,9 +144,34 @@ magic trailing comma is ignored.
 
 #### `--preview`
 
-Enable potentially disruptive style changes that may be added to Black's main
-functionality in the next major release. Read more about
-[our preview style](labels/preview-style).
+Enable potentially disruptive style changes that we expect to add to Black's main
+functionality in the next major release. Use this if you want a taste of what next
+year's style will look like.
+
+Read more about [our preview style](labels/preview-style).
+
+There is no guarantee on the code style produced by this flag across releases.
+
+#### `--unstable`
+
+Enable all style changes in `--preview`, plus additional changes that we would like to
+make eventually, but that have known issues that need to be fixed before they can move
+back to the `--preview` style. Use this if you want to experiment with these changes and
+help fix issues with them.
+
+There is no guarantee on the code style produced by this flag across releases.
+
+#### `--enable-unstable-feature`
+
+Enable specific features from the `--unstable` style. See
+[the preview style documentation](labels/unstable-features) for the list of supported
+features. This flag can only be used when `--preview` is enabled. Users are encouraged
+to use this flag if they use `--preview` style and a feature that affects their code is
+moved from the `--preview` to the `--unstable` style, but they want to avoid the thrash
+from undoing this change.
+
+There are no guarantees on the behavior of these features, or even their existence,
+across releases.
 
 (labels/exit-code)=
 
@@ -241,8 +266,8 @@ configuration file for consistent results across environments.
 
 ```console
 $ black --version
-black, 23.12.1 (compiled: yes)
-$ black --required-version 23.12.1 -c "format = 'this'"
+black, 24.1.0 (compiled: yes)
+$ black --required-version 24.1.0 -c "format = 'this'"
 format = "this"
 $ black --required-version 31.5b2 -c "still = 'beta?!'"
 Oh no! 💥 💔 💥 The required version does not match the running version!
@@ -338,7 +363,7 @@ You can check the version of _Black_ you have installed using the `--version` fl
 
 ```console
 $ black --version
-black, 23.12.1
+black, 24.1.0
 ```
 
 #### `--config`

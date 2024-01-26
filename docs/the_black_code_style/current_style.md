@@ -449,6 +449,12 @@ file that are not enforced yet but might be in a future version of the formatter
 _Black_ will normalize line endings (`\n` or `\r\n`) based on the first line ending of
 the file.
 
+### Form feed characters
+
+_Black_ will retain form feed characters on otherwise empty lines at the module level.
+Only one form feed is retained for a group of consecutive empty lines. Where there are
+two empty lines in a row, the form feed is placed on the second line.
+
 ## Pragmatism
 
 Early versions of _Black_ used to be absolutist in some respects. They took after its

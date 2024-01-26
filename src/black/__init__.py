@@ -68,7 +68,7 @@ from black.linegen import LN, LineGenerator, transform_line
 from black.lines import EmptyLineTracker, LinesBlock
 from black.mode import FUTURE_FLAG_TO_FEATURE, VERSION_TO_FEATURES, Feature
 from black.mode import Mode as Mode  # re-exported
-from black.mode import TargetVersion, supports_feature
+from black.mode import Preview, TargetVersion, supports_feature
 from black.nodes import (
     STARS,
     is_number_token,
@@ -142,6 +142,7 @@ def read_pyproject_toml(
     if not config:
         return None
     else:
+        spellcheck_pyproject_toml_keys(ctx, list(config), value)
         # Sanitize the values to be Click friendly. For more information please see:
         # https://github.com/psf/black/issues/1458
         # https://github.com/pallets/click/issues/1567
@@ -181,6 +182,22 @@ def read_pyproject_toml(
     return value
 
 
+def spellcheck_pyproject_toml_keys(
+    ctx: click.Context, config_keys: List[str], config_file_path: str
+) -> None:
+    invalid_keys: List[str] = []
+    available_config_options = {param.name for param in ctx.command.params}
+    for key in config_keys:
+        if key not in available_config_options:
+            invalid_keys.append(key)
+    if invalid_keys:
+        keys_str = ", ".join(map(repr, invalid_keys))
+        out(
+            f"Invalid config keys detected: {keys_str} (in {config_file_path})",
+            fg="red",
+        )
+
+
 def target_version_option_callback(
     c: click.Context, p: Union[click.Option, click.Parameter], v: Tuple[str, ...]
 ) -> List[TargetVersion]:
@@ -190,6 +207,13 @@ def target_version_option_callback(
     when it was a lambda, causing mypyc trouble.
     """
     return [TargetVersion[val.upper()] for val in v]
+
+
+def enable_unstable_feature_callback(
+    c: click.Context, p: Union[click.Option, click.Parameter], v: Tuple[str, ...]
+) -> List[Preview]:
+    """Compute the features from an --enable-unstable-feature flag."""
+    return [Preview[val] for val in v]
 
 
 def re_compile_maybe_verbose(regex: str) -> Pattern[str]:
@@ -287,17 +311,31 @@ def validate_regex(
     help="Don't use trailing commas as a reason to split lines.",
 )
 @click.option(
-    "--experimental-string-processing",
-    is_flag=True,
-    hidden=True,
-    help="(DEPRECATED and now included in --preview) Normalize string literals.",
-)
-@click.option(
     "--preview",
     is_flag=True,
     help=(
         "Enable potentially disruptive style changes that may be added to Black's main"
         " functionality in the next major release."
+    ),
+)
+@click.option(
+    "--unstable",
+    is_flag=True,
+    help=(
+        "Enable potentially disruptive style changes that have known bugs or are not"
+        " currently expected to make it into the stable style Black's next major"
+        " release. Implies --preview."
+    ),
+)
+@click.option(
+    "--enable-unstable-feature",
+    type=click.Choice([v.name for v in Preview]),
+    callback=enable_unstable_feature_callback,
+    multiple=True,
+    help=(
+        "Enable specific features included in the `--unstable` style. Requires"
+        " `--preview`. No compatibility guarantees are provided on the behavior"
+        " or existence of any unstable features."
     ),
 )
 @click.option(
@@ -490,8 +528,9 @@ def main(  # noqa: C901
     skip_source_first_line: bool,
     skip_string_normalization: bool,
     skip_magic_trailing_comma: bool,
-    experimental_string_processing: bool,
     preview: bool,
+    unstable: bool,
+    enable_unstable_feature: List[Preview],
     quiet: bool,
     verbose: bool,
     required_version: Optional[str],
@@ -515,6 +554,14 @@ def main(  # noqa: C901
         ctx.exit(1)
     if not src and code is None:
         out(main.get_usage(ctx) + "\n\nOne of 'SRC' or 'code' is required.")
+        ctx.exit(1)
+
+    # It doesn't do anything if --unstable is also passed, so just allow it.
+    if enable_unstable_feature and not (preview or unstable):
+        out(
+            main.get_usage(ctx)
+            + "\n\n'--enable-unstable-feature' requires '--preview'."
+        )
         ctx.exit(1)
 
     root, method = (
@@ -578,9 +625,10 @@ def main(  # noqa: C901
         skip_source_first_line=skip_source_first_line,
         string_normalization=not skip_string_normalization,
         magic_trailing_comma=not skip_magic_trailing_comma,
-        experimental_string_processing=experimental_string_processing,
         preview=preview,
+        unstable=unstable,
         python_cell_magics=set(python_cell_magics),
+        enabled_features=set(enable_unstable_feature),
     )
 
     lines: List[Tuple[int, int]] = []

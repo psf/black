@@ -41,9 +41,10 @@ other tools, such as `# noqa`, may be moved by _Black_. See below for more detai
 Stable. _Black_ aims to enforce one style and one style only, with some room for
 pragmatism. See [The Black Code Style](the_black_code_style/index.md) for more details.
 
-Starting in 2022, the formatting output will be stable for the releases made in the same
-year (other than unintentional bugs). It is possible to opt-in to the latest formatting
-styles, using the `--preview` flag.
+Starting in 2022, the formatting output is stable for the releases made in the same year
+(other than unintentional bugs). At the beginning of every year, the first release will
+make changes to the stable style. It is possible to opt in to the latest formatting
+styles using the `--preview` flag.
 
 ## Why is my file not formatted?
 
