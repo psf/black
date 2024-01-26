@@ -34,6 +34,14 @@ changes:
 - Fix incorrect formatting of certain async statements (#3609)
 - Allow combining `# fmt: skip` with other comments (#3959)
 
+There are already a few improvements in the `--preview` style, which are slated for the
+2025 stable style. Try them out and
+[share your feedback](https://github.com/psf/black/issues). In the past, the preview
+style has included some features that we were not able to stabilize. This year, we're
+adding a separate `--unstable` style for features with known problems. Now, the
+`--preview` style only includes features that we actually expect to make it into next
+year's stable style.
+
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
@@ -53,6 +61,12 @@ release:
 
 <!-- Changes that affect Black's preview style -->
 
+- Add `--unstable` style, covering preview features that have known problems that would
+  block them from going into the stable style. Also add the `--enable-unstable-feature`
+  flag; for example, use
+  `--enable-unstable-feature hug_parens_with_braces_and_square_brackets` to apply this
+  preview style throughout 2024, even if a later Black release downgrades the feature to
+  unstable (#4096)
 - Format module docstrings the same as class and function docstrings (#4095)
 - Fix crash when using a walrus in a dictionary (#4155)
 - Fix unnecessary parentheses when wrapping long dicts (#4135)
@@ -66,6 +80,9 @@ release:
 - Fix symlink handling, properly catch and ignore symlinks that point outside of root
   (#4161)
 - Fix cache mtime logic that resulted in false positive cache hits (#4128)
+- Remove the long-deprecated `--experimental-string-processing` flag. This feature can
+  currently be enabled with `--preview --enable-unstable-feature string_processing`.
+  (#4096)
 
 ### Packaging
 

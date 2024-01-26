@@ -9,7 +9,6 @@ from enum import Enum, auto
 from hashlib import sha256
 from operator import attrgetter
 from typing import Dict, Final, Set
-from warnings import warn
 
 from black.const import DEFAULT_LINE_LENGTH
 
@@ -179,6 +178,16 @@ class Preview(Enum):
     multiline_string_handling = auto()
 
 
+UNSTABLE_FEATURES: Set[Preview] = {
+    # Many issues, see summary in https://github.com/psf/black/issues/4042
+    Preview.string_processing,
+    # See issues #3452 and #4158
+    Preview.wrap_long_dict_values_in_parens,
+    # See issue #4159
+    Preview.multiline_string_handling,
+}
+
+
 class Deprecated(UserWarning):
     """Visible deprecation warning."""
 
@@ -192,28 +201,24 @@ class Mode:
     is_ipynb: bool = False
     skip_source_first_line: bool = False
     magic_trailing_comma: bool = True
-    experimental_string_processing: bool = False
     python_cell_magics: Set[str] = field(default_factory=set)
     preview: bool = False
-
-    def __post_init__(self) -> None:
-        if self.experimental_string_processing:
-            warn(
-                "`experimental string processing` has been included in `preview`"
-                " and deprecated. Use `preview` instead.",
-                Deprecated,
-            )
+    unstable: bool = False
+    enabled_features: Set[Preview] = field(default_factory=set)
 
     def __contains__(self, feature: Preview) -> bool:
         """
         Provide `Preview.FEATURE in Mode` syntax that mirrors the ``preview`` flag.
 
-        The argument is not checked and features are not differentiated.
-        They only exist to make development easier by clarifying intent.
+        In unstable mode, all features are enabled. In preview mode, all features
+        except those in UNSTABLE_FEATURES are enabled. Any features in
+        `self.enabled_features` are also enabled.
         """
-        if feature is Preview.string_processing:
-            return self.preview or self.experimental_string_processing
-        return self.preview
+        if self.unstable:
+            return True
+        if feature in self.enabled_features:
+            return True
+        return self.preview and feature not in UNSTABLE_FEATURES
 
     def get_cache_key(self) -> str:
         if self.target_versions:
@@ -231,7 +236,9 @@ class Mode:
             str(int(self.is_ipynb)),
             str(int(self.skip_source_first_line)),
             str(int(self.magic_trailing_comma)),
-            str(int(self.experimental_string_processing)),
+            sha256(
+                (",".join(sorted(f.name for f in self.enabled_features))).encode()
+            ).hexdigest(),
             str(int(self.preview)),
             sha256((",".join(sorted(self.python_cell_magics))).encode()).hexdigest(),
         ]
