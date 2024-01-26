@@ -66,12 +66,7 @@ from black.handle_ipynb_magics import (
 )
 from black.linegen import LN, LineGenerator, transform_line
 from black.lines import EmptyLineTracker, LinesBlock
-from black.mode import (
-    FUTURE_FLAG_TO_FEATURE,
-    UNSTABLE_FEATURES,
-    VERSION_TO_FEATURES,
-    Feature,
-)
+from black.mode import FUTURE_FLAG_TO_FEATURE, VERSION_TO_FEATURES, Feature
 from black.mode import Mode as Mode  # re-exported
 from black.mode import Preview, TargetVersion, supports_feature
 from black.nodes import (
@@ -317,7 +312,7 @@ def validate_regex(
 )
 @click.option(
     "--enable-unstable-feature",
-    type=click.Choice([v.name for v in UNSTABLE_FEATURES]),
+    type=click.Choice([v.name for v in Preview]),
     callback=enable_unstable_feature_callback,
     multiple=True,
     help=(
