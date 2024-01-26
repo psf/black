@@ -26,6 +26,8 @@ Currently, the following features are included in the preview style:
   brackets ([see below](labels/hug-parens))
 - `no_normalize_fmt_skip_whitespace`: whitespace before `# fmt: skip` comments is no
   longer normalized
+- `typed_params_trailing_comma`: consistently add trailing commas to typed function
+  parameters
 
 (labels/unstable-features)=
 
