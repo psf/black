@@ -61,7 +61,12 @@ release:
 
 <!-- Changes that affect Black's preview style -->
 
-- Add `--unstable` style (#4096)
+- Add `--unstable` style, covering preview features that have known problems that would
+  block them from going into the stable style. Also add the `--enable-unstable-feature`
+  flag; for example, use
+  `--enable-unstable-feature hug_parens_with_braces_and_square_brackets` to apply this
+  preview style throughout 2024, even if a later Black release downgrades the feature to
+  unstable (#4096)
 - Format module docstrings the same as class and function docstrings (#4095)
 - Fix crash when using a walrus in a dictionary (#4155)
 - Fix unnecessary parentheses when wrapping long dicts (#4135)
