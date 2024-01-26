@@ -1551,9 +1551,8 @@ class BlackTestCase(BlackBaseTestCase):
         )
 
         assert (
-            r"Invalid config keys detected: ['ine_length', 'target_ersion'] in "
-            + str(test_toml_file)
-            in result.stderr
+            r"Invalid config keys detected: 'ine_length', 'target_ersion' (in"
+            rf" {test_toml_file})" in result.stderr
         )
 
     def test_parse_pyproject_toml_project_metadata(self) -> None:
