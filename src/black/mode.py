@@ -192,6 +192,9 @@ class Deprecated(UserWarning):
     """Visible deprecation warning."""
 
 
+_MAX_CACHE_KEY_PART_LENGTH: Final = 32
+
+
 @dataclass
 class Mode:
     target_versions: Set[TargetVersion] = field(default_factory=set)
@@ -228,6 +231,19 @@ class Mode:
             )
         else:
             version_str = "-"
+        if len(version_str) > _MAX_CACHE_KEY_PART_LENGTH:
+            version_str = sha256(version_str.encode()).hexdigest()[
+                :_MAX_CACHE_KEY_PART_LENGTH
+            ]
+        features_and_magics = (
+            ",".join(sorted(f.name for f in self.enabled_features))
+            + "@"
+            + ",".join(sorted(self.python_cell_magics))
+        )
+        if len(features_and_magics) > _MAX_CACHE_KEY_PART_LENGTH:
+            features_and_magics = sha256(features_and_magics.encode()).hexdigest()[
+                :_MAX_CACHE_KEY_PART_LENGTH
+            ]
         parts = [
             version_str,
             str(self.line_length),
@@ -236,10 +252,7 @@ class Mode:
             str(int(self.is_ipynb)),
             str(int(self.skip_source_first_line)),
             str(int(self.magic_trailing_comma)),
-            sha256(
-                (",".join(sorted(f.name for f in self.enabled_features))).encode()
-            ).hexdigest(),
             str(int(self.preview)),
-            sha256((",".join(sorted(self.python_cell_magics))).encode()).hexdigest(),
+            features_and_magics,
         ]
         return ".".join(parts)

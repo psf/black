@@ -18,6 +18,9 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Shorten the length of the name of the cache file to fix crashes on file systems that
+  do not support long paths (#4176)
+
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->

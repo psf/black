@@ -44,6 +44,7 @@ from black import Feature, TargetVersion
 from black import re_compile_maybe_verbose as compile_pattern
 from black.cache import FileData, get_cache_dir, get_cache_file
 from black.debug import DebugVisitor
+from black.mode import Mode, Preview
 from black.output import color_diff, diff
 from black.report import Report
 
@@ -2064,6 +2065,30 @@ class TestCaching:
         # If it is set, use the path provided in the env var.
         monkeypatch.setenv("BLACK_CACHE_DIR", str(workspace2))
         assert get_cache_dir().parent == workspace2
+
+    def test_cache_file_length(self) -> None:
+        cases = [
+            DEFAULT_MODE,
+            # all of the target versions
+            Mode(target_versions=set(TargetVersion)),
+            # all of the features
+            Mode(enabled_features=set(Preview)),
+            # all of the magics
+            Mode(python_cell_magics={f"magic{i}" for i in range(500)}),
+            # all of the things
+            Mode(
+                target_versions=set(TargetVersion),
+                enabled_features=set(Preview),
+                python_cell_magics={f"magic{i}" for i in range(500)},
+            ),
+        ]
+        for case in cases:
+            cache_file = get_cache_file(case)
+            # Some common file systems enforce a maximum path length
+            # of 143 (issue #4174). We can't do anything if the directory
+            # path is too long, but ensure the name of the cache file itself
+            # doesn't get too crazy.
+            assert len(cache_file.name) <= 96
 
     def test_cache_broken_file(self) -> None:
         mode = DEFAULT_MODE
