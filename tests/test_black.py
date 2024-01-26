@@ -2075,6 +2075,12 @@ class TestCaching:
             Mode(enabled_features=set(Preview)),
             # all of the magics
             Mode(python_cell_magics={f"magic{i}" for i in range(500)}),
+            # all of the things
+            Mode(
+                target_versions=set(TargetVersion),
+                enabled_features=set(Preview),
+                python_cell_magics={f"magic{i}" for i in range(500)},
+            ),
         ]
         for case in cases:
             cache_file = get_cache_file(case)
