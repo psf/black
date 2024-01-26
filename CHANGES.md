@@ -1,10 +1,8 @@
 # Change Log
 
-## Unreleased
+## 24.1.0
 
 ### Highlights
-
-<!-- Include any especially major or disruptive changes here -->
 
 This release introduces the new 2024 stable style (#4106), stabilizing the following
 changes:
@@ -44,8 +42,6 @@ year's stable style.
 
 ### Stable style
 
-<!-- Changes that affect Black's stable style -->
-
 Several bug fixes were made in features that are moved to the stable style in this
 release:
 
@@ -59,14 +55,12 @@ release:
 
 ### Preview style
 
-<!-- Changes that affect Black's preview style -->
-
 - Add `--unstable` style, covering preview features that have known problems that would
   block them from going into the stable style. Also add the `--enable-unstable-feature`
   flag; for example, use
   `--enable-unstable-feature hug_parens_with_braces_and_square_brackets` to apply this
-  preview style throughout 2024, even if a later Black release downgrades the feature to
-  unstable (#4096)
+  preview feature throughout 2024, even if a later Black release downgrades the feature
+  to unstable (#4096)
 - Format module docstrings the same as class and function docstrings (#4095)
 - Fix crash when using a walrus in a dictionary (#4155)
 - Fix unnecessary parentheses when wrapping long dicts (#4135)
@@ -74,47 +68,17 @@ release:
 
 ### Configuration
 
-<!-- Changes to how Black can be configured -->
-
-- Print warning when toml config contains an invalid key (#4165)
-- Fix symlink handling, properly catch and ignore symlinks that point outside of root
-  (#4161)
+- Print warning when configuration in `pyproject.toml` contains an invalid key (#4165)
+- Fix symlink handling, properly ignoring symlinks that point outside of root (#4161)
 - Fix cache mtime logic that resulted in false positive cache hits (#4128)
 - Remove the long-deprecated `--experimental-string-processing` flag. This feature can
   currently be enabled with `--preview --enable-unstable-feature string_processing`.
   (#4096)
 
-### Packaging
-
-<!-- Changes to how Black is packaged, such as dependency requirements -->
-
-### Parser
-
-<!-- Changes to the parser or to version autodetection -->
-
-### Performance
-
-<!-- Changes that improve Black's performance. -->
-
-### Output
-
-<!-- Changes to Black's terminal output and error messages -->
-
-### _Blackd_
-
-<!-- Changes to blackd -->
-
 ### Integrations
-
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
 - Revert the change to run Black's pre-commit integration only on specific git hooks
   (#3940) for better compatibility with older versions of pre-commit (#4137)
-
-### Documentation
-
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
 
 ## 23.12.1
 
