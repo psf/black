@@ -14,6 +14,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Consistently add trailing comma on typed parameters (#4164)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
@@ -112,7 +114,6 @@ release:
 - Fix crash when using a walrus in a dictionary (#4155)
 - Fix unnecessary parentheses when wrapping long dicts (#4135)
 - Stop normalizing spaces before `# fmt: skip` comments (#4146)
-- Consistently add trailing comma on typed parameters (#4164)
 
 ### Configuration
 
