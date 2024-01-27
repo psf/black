@@ -9,31 +9,37 @@ import black
 def generate_schema_from_click(
     cmd: click.Command,
 ) -> dict[str, Any]:
-    result = {}
+    result: dict[str, dict[str, Any]] = {}
     for param in cmd.params:
         if not isinstance(param, click.Option) or param.is_eager:
             continue
+
         assert param.name
         name = param.name.replace("_", "-")
-        default = {"default": param.default} if param.default is not None else {}
-        json_type: dict[str, Any]
+
+        result[name] = {}
+
         match param.type:
             case click.types.IntParamType():
-                json_type = {"type": "integer"}
+                result[name]["type"] = "integer"
             case click.types.StringParamType() | click.types.Path():
-                json_type = {"type": "string"}
+                result[name]["type"] = "string"
             case click.types.Choice(choices=choices):
-                json_type = {"enum": choices}
+                result[name]["enum"] = choices
             case click.types.BoolParamType():
-                json_type = {"type": "boolean"}
+                result[name]["type"] = "boolean"
             case _:
                 msg = f"{param.type!r} not a known type for {param}"
                 raise TypeError(msg)
 
         if param.multiple:
-            json_type = {"type": "array", "items": json_type}
+            result[name] = {"type": "array", "items": result[name]}
 
-        result[name] = {**default, **json_type, "description": param.help}
+        result[name]["description"] = param.help
+
+        if param.default is not None and not param.multiple:
+            result[name]["default"] = param.default
+
     return result
 
 
@@ -43,6 +49,7 @@ def generate_schema_from_click(
 def main(schemastore: bool, outfile: IO[str]) -> None:
     properties = generate_schema_from_click(black.main)
     del properties["line-ranges"]
+
     schema: dict[str, Any] = {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "$id": (
@@ -53,6 +60,7 @@ def main(schemastore: bool, outfile: IO[str]) -> None:
         "additionalProperties": False,
         "properties": properties,
     }
+
     if schemastore:
         schema["$id"] = ("https://json.schemastore.org/partial-black.json",)
         schema["properties"]["enable-unstable-feature"]["items"] = {"type": "string"}
