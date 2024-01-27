@@ -131,7 +131,7 @@ def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
 
 
 def infer_target_version(
-    pyproject_toml: Dict[str, Any]
+    pyproject_toml: Dict[str, Any],
 ) -> Optional[List[TargetVersion]]:
     """Infer Black's target version from the project metadata in pyproject.toml.
 

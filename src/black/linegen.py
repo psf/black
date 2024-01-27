@@ -48,6 +48,7 @@ from black.nodes import (
     is_one_sequence_between,
     is_one_tuple,
     is_parent_function_or_class,
+    is_part_of_annotation,
     is_rpar_token,
     is_stub_body,
     is_stub_suite,
@@ -1041,7 +1042,14 @@ def bracket_split_build_line(
             no_commas = (
                 original.is_def
                 and opening_bracket.value == "("
-                and not any(leaf.type == token.COMMA for leaf in leaves)
+                and not any(
+                    leaf.type == token.COMMA
+                    and (
+                        Preview.typed_params_trailing_comma not in original.mode
+                        or not is_part_of_annotation(leaf)
+                    )
+                    for leaf in leaves
+                )
                 # In particular, don't add one within a parenthesized return annotation.
                 # Unfortunately the indicator we're in a return annotation (RARROW) may
                 # be defined directly in the parent node, the parent of the parent ...

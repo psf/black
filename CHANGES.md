@@ -14,6 +14,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Consistently add trailing comma on typed parameters (#4164)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
