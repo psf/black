@@ -279,7 +279,7 @@ def validate_regex(
     is_flag=True,
     help=(
         "Format all input files like Jupyter Notebooks regardless of file extension."
-        "This is useful when piping source on standard input."
+        " This is useful when piping source on standard input."
     ),
 )
 @click.option(
