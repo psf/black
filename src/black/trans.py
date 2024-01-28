@@ -29,7 +29,7 @@ from mypy_extensions import trait
 
 from black.comments import contains_pragma_comment
 from black.lines import Line, append_leaves
-from black.mode import Feature, Mode
+from black.mode import Feature, Mode, Preview
 from black.nodes import (
     CLOSING_BRACKETS,
     OPENING_BRACKETS,
@@ -98,12 +98,18 @@ def hug_power_op(
         # Brackets and parentheses indicate calls, subscripts, etc. ...
         # basically stuff that doesn't count as "simple". Only a NAME lookup
         # or dotted lookup (eg. NAME.NAME) is OK.
-        if kind == -1:
-            return handle_is_simple_look_up_prev(line, index, {token.RPAR, token.RSQB})
+        if Preview.is_simple_lookup_for_doublestar_expression not in mode:
+            return original_is_simple_lookup_func(line, index, kind)
+
         else:
-            return handle_is_simple_lookup_forward(
-                line, index, {token.LPAR, token.LSQB}
-            )
+            if kind == -1:
+                return handle_is_simple_look_up_prev(
+                    line, index, {token.RPAR, token.RSQB}
+                )
+            else:
+                return handle_is_simple_lookup_forward(
+                    line, index, {token.LPAR, token.LSQB}
+                )
 
     def is_simple_operand(index: int, kind: Literal[1, -1]) -> bool:
         # An operand is considered "simple" if's a NAME, a numeric CONSTANT, a simple
@@ -149,6 +155,30 @@ def hug_power_op(
     yield new_line
 
 
+def original_is_simple_lookup_func(
+    line: Line, index: int, step: Literal[1, -1]
+) -> bool:
+    if step == -1:
+        disallowed = {token.RPAR, token.RSQB}
+    else:
+        disallowed = {token.LPAR, token.LSQB}
+
+    while 0 <= index < len(line.leaves):
+        current = line.leaves[index]
+        if current.type in disallowed:
+            return False
+        if current.type not in {token.NAME, token.DOT} or current.value == "for":
+            # If the current token isn't disallowed, we'll assume this is
+            # simple as only the disallowed tokens are semantically
+            # attached to this lookup expression we're checking. Also,
+            # stop early if we hit the 'for' bit of a comprehension.
+            return True
+
+        index += step
+
+    return True
+
+
 def handle_is_simple_look_up_prev(line: Line, index: int, disallowed: Set[int]) -> bool:
     """
     Handling the determination of is_simple_lookup for the lines prior to
@@ -183,7 +213,9 @@ def handle_is_simple_lookup_forward(
         current = line.leaves[index]
         if current.type in disallowed:
             return False
-        if current.type not in {token.NAME, token.DOT} or current.value == "for":
+        if current.type not in {token.NAME, token.DOT} or (
+            current.type == token.NAME and current.value == "for"
+        ):
             # If the current token isn't disallowed, we'll assume this is simple as
             # only the disallowed tokens are semantically attached to this lookup
             # expression we're checking. Also, stop early if we hit the 'for' bit
