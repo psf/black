@@ -14,6 +14,11 @@ limits on path length.
 - Shorten the length of the name of the cache file to fix crashes on file systems that
   do not support long paths (#4176)
 
+### Output
+
+- Black will swallow any `SyntaxWarning`s or `DeprecationWarning`s produced by the `ast`
+  module when performing equivalence checks (#4189)
+
 ## 24.1.0
 
 ### Highlights
