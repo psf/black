@@ -181,9 +181,9 @@ def original_is_simple_lookup_func(
 
 def handle_is_simple_look_up_prev(line: Line, index: int, disallowed: Set[int]) -> bool:
     """
-    Handling the determination of is_simple_lookup for the lines behind the doublestar
+    Handling the determination of is_simple_lookup for the lines prior to the doublestar
     token. This is required because of the need to isolate the chained expression
-    to determine the bracket or parenthesis belong to the single expression.
+    to determine the bracket or parenthesis belong to the single expression.    
     """
     contains_disallowed = False
     chain = []
@@ -205,9 +205,9 @@ def handle_is_simple_lookup_forward(
     line: Line, index: int, disallowed: Set[int]
 ) -> bool:
     """
-    Handling decision is_simple_lookup for the lines prior to the doublestar token.
+    Handling decision is_simple_lookup for the lines behind to the doublestar token.
     This function is simplified to keep consistent with the prior logic and the forward
-    case are more straightforward and do not need to care about chained expressions.
+    case are more straightforward and do not need to care about chained expressions.    
     """
     while 0 <= index < len(line.leaves):
         current = line.leaves[index]
