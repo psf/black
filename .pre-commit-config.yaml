@@ -23,6 +23,12 @@ repos:
         files: '(CHANGES\.md|the_basics\.md)$'
         additional_dependencies: *version_check_dependencies
 
+      - id: check-preview-features-in-docs
+        name: Check that lists of preview features in the docs are up-to-date
+        language: python
+        entry: python -m scripts.check_preview_features_in_docs
+        files: '(future_style\.md|mode\.py)$'
+
   - repo: https://github.com/pycqa/isort
     rev: 5.13.2
     hooks:
