@@ -114,7 +114,7 @@ def hug_power_op(
 
         if start.type in {token.PLUS, token.MINUS, token.TILDE}:
             if line.leaves[index + 1].type in {token.NAME, token.NUMBER}:
-                # step is always one as bases with a preceding unary op will be checked
+                # kind is always one as bases with a preceding unary op will be checked
                 # for simplicity starting from the next token (so it'll hit the check
                 # above).
                 return is_simple_lookup(index + 1, kind=1)
@@ -166,7 +166,7 @@ def handle_is_simple_look_up_prev(line: Line, index: int, disallowed: Set[int]) 
         if not is_expression_chained(chain):
             return not contains_disallowed
 
-        index += -1
+        index -= 1
 
     return True
 
