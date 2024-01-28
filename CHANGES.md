@@ -14,16 +14,12 @@
 
 <!-- Changes that affect Black's preview style -->
 
-- Consistently add trailing comma on typed parameters (#4164)
 - Checking for newline before adding one on docstring that is almost at the line limit
   (#4185)
 
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
-
-- Shorten the length of the name of the cache file to fix crashes on file systems that
-  do not support long paths (#4176)
 
 ### Packaging
 
@@ -53,6 +49,20 @@
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
+
+## 24.1.1
+
+Bugfix release to fix a bug that made Black unusable on certain file systems with strict
+limits on path length.
+
+### Preview style
+
+- Consistently add trailing comma on typed parameters (#4164)
+
+### Configuration
+
+- Shorten the length of the name of the cache file to fix crashes on file systems that
+  do not support long paths (#4176)
 
 ## 24.1.0
 
