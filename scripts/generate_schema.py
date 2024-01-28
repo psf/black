@@ -55,7 +55,7 @@ def main(schemastore: bool, outfile: IO[str]) -> None:
         "$id": (
             "https://github.com/psf/black/blob/main/black/resources/black.schema.json"
         ),
-        "$comment": "black table in pyproject.toml",
+        "$comment": "tool.black table in pyproject.toml",
         "type": "object",
         "additionalProperties": False,
         "properties": properties,
@@ -63,6 +63,8 @@ def main(schemastore: bool, outfile: IO[str]) -> None:
 
     if schemastore:
         schema["$id"] = ("https://json.schemastore.org/partial-black.json",)
+        # The precise list of unstable features may change frequently, so don't
+        # bother putting it in SchemaStore
         schema["properties"]["enable-unstable-feature"]["items"] = {"type": "string"}
 
     print(json.dumps(schema, indent=2), file=outfile)

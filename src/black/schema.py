@@ -4,8 +4,8 @@ import sys
 from typing import Any
 
 
-def get_schema(tool_name: str = "cibuildwheel") -> Any:
-    "Get the stored complete schema for black's settings."
+def get_schema(tool_name: str = "black") -> Any:
+    """Get the stored complete schema for black's settings."""
     assert tool_name == "black", "Only black is supported."
 
     loc = "resources/black.schema.json"
