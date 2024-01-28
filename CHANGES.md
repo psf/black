@@ -2,8 +2,8 @@
 
 ## 24.1.1
 
-Bugfix release to fix a bug that made Black unusable on certain file systems
-with strict limits on path length.
+Bugfix release to fix a bug that made Black unusable on certain file systems with strict
+limits on path length.
 
 ### Preview style
 
