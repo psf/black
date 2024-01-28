@@ -15,6 +15,8 @@
 <!-- Changes that affect Black's preview style -->
 
 - Consistently add trailing comma on typed parameters (#4164)
+- Checking for newline before adding one on docstring that is almost at the line limit
+  (#4185)
 
 ### Configuration
 
