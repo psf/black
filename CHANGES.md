@@ -1,56 +1,18 @@
 # Change Log
 
-## Unreleased
+## 24.1.1
 
-### Highlights
-
-<!-- Include any especially major or disruptive changes here -->
-
-### Stable style
-
-<!-- Changes that affect Black's stable style -->
+Bugfix release to fix a bug that made Black unusable on certain file systems with strict
+limits on path length.
 
 ### Preview style
-
-<!-- Changes that affect Black's preview style -->
 
 - Consistently add trailing comma on typed parameters (#4164)
 
 ### Configuration
 
-<!-- Changes to how Black can be configured -->
-
 - Shorten the length of the name of the cache file to fix crashes on file systems that
   do not support long paths (#4176)
-
-### Packaging
-
-<!-- Changes to how Black is packaged, such as dependency requirements -->
-
-### Parser
-
-<!-- Changes to the parser or to version autodetection -->
-
-### Performance
-
-<!-- Changes that improve Black's performance. -->
-
-### Output
-
-<!-- Changes to Black's terminal output and error messages -->
-
-### _Blackd_
-
-<!-- Changes to blackd -->
-
-### Integrations
-
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
-
-### Documentation
-
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
 
 ## 24.1.0
 
