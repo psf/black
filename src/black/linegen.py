@@ -477,13 +477,15 @@ class LineGenerator(Visitor[Line]):
                 last_line_length = len(lines[-1]) if docstring else 0
 
                 # If adding closing quotes would cause the last line to exceed
-                # the maximum line length then put a line break before the
-                # closing quotes
+                # the maximum line length, and the closing quote is not
+                # prefixed by a newline then put a line break before
+                # the closing quotes
                 if (
                     len(lines) > 1
                     and last_line_length + quote_len > self.mode.line_length
                     and len(indent) + quote_len <= self.mode.line_length
                     and not has_trailing_backslash
+                    and not leaf.value[-4] == "\n"
                 ):
                     leaf.value = prefix + quote + docstring + "\n" + indent + quote
                 else:
