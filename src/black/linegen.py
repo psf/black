@@ -485,9 +485,14 @@ class LineGenerator(Visitor[Line]):
                     and last_line_length + quote_len > self.mode.line_length
                     and len(indent) + quote_len <= self.mode.line_length
                     and not has_trailing_backslash
-                    and not leaf.value[-4] == "\n"
                 ):
-                    leaf.value = prefix + quote + docstring + "\n" + indent + quote
+                    if (
+                        Preview.docstring_check_for_newline in self.mode
+                        and leaf.value[-4] == "\n"
+                    ):
+                        leaf.value = prefix + quote + docstring + quote
+                    else:
+                        leaf.value = prefix + quote + docstring + "\n" + indent + quote
                 else:
                     leaf.value = prefix + quote + docstring + quote
             else:
