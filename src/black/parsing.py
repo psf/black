@@ -4,6 +4,7 @@ Parse Python code and perform AST validation.
 
 import ast
 import sys
+import warnings
 from typing import Iterable, Iterator, List, Set, Tuple
 
 from black.mode import VERSION_TO_FEATURES, Feature, TargetVersion, supports_feature
@@ -109,13 +110,16 @@ def lib2to3_unparse(node: Node) -> str:
     return code
 
 
-def parse_single_version(
+def _parse_single_version(
     src: str, version: Tuple[int, int], *, type_comments: bool
 ) -> ast.AST:
     filename = "<unknown>"
-    return ast.parse(
-        src, filename, feature_version=version, type_comments=type_comments
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", SyntaxWarning)
+        warnings.simplefilter("ignore", DeprecationWarning)
+        return ast.parse(
+            src, filename, feature_version=version, type_comments=type_comments
+        )
 
 
 def parse_ast(src: str) -> ast.AST:
@@ -125,7 +129,7 @@ def parse_ast(src: str) -> ast.AST:
     first_error = ""
     for version in sorted(versions, reverse=True):
         try:
-            return parse_single_version(src, version, type_comments=True)
+            return _parse_single_version(src, version, type_comments=True)
         except SyntaxError as e:
             if not first_error:
                 first_error = str(e)
@@ -133,7 +137,7 @@ def parse_ast(src: str) -> ast.AST:
     # Try to parse without type comments
     for version in sorted(versions, reverse=True):
         try:
-            return parse_single_version(src, version, type_comments=False)
+            return _parse_single_version(src, version, type_comments=False)
         except SyntaxError:
             pass
 
