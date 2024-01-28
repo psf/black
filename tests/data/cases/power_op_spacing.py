@@ -79,6 +79,7 @@ return np.divide(
 
 # output
 
+
 def function(**kwargs):
     t = a**2 + b**3
     return t**2
