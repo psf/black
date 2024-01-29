@@ -45,6 +45,8 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- Add a JSONSchema and provide a validate-pyproject entry-point (#4181)
+
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
