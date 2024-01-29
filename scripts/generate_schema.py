@@ -62,7 +62,7 @@ def main(schemastore: bool, outfile: IO[str]) -> None:
     }
 
     if schemastore:
-        schema["$id"] = ("https://json.schemastore.org/partial-black.json",)
+        schema["$id"] = "https://json.schemastore.org/partial-black.json"
         # The precise list of unstable features may change frequently, so don't
         # bother putting it in SchemaStore
         schema["properties"]["enable-unstable-feature"]["items"] = {"type": "string"}
