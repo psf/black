@@ -166,7 +166,7 @@ If you use Flake8, you have a few options:
    max-line-length = 80
    ...
    select = C,E,F,W,B,B950
-   extend-ignore = E203, E501, E704
+   extend-ignore = E203, E501, E701, E704
    ```
 
    The rationale for B950 is explained in
@@ -177,7 +177,7 @@ If you use Flake8, you have a few options:
    ```ini
    [flake8]
    max-line-length = 88
-   extend-ignore = E203, E704
+   extend-ignore = E203, E701, E704
    ```
 
 An explanation of why E203 is disabled can be found in the [Slices section](#slices) of
