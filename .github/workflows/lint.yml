@@ -40,3 +40,8 @@ jobs:
       - name: Format ourselves
         run: |
           tox -e run_self
+
+      - name: Regenerate schema
+        run: |
+          tox -e generate_schema
+          git diff --exit-code

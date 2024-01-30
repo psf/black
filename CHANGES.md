@@ -37,6 +37,9 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Black will swallow any `SyntaxWarning`s or `DeprecationWarning`s produced by the `ast`
+  module when performing equivalence checks (#4189)
+
 ### _Blackd_
 
 <!-- Changes to blackd -->
@@ -44,6 +47,8 @@
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- Add a JSONSchema and provide a validate-pyproject entry-point (#4181)
 
 ### Documentation
 
