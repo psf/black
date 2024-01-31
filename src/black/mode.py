@@ -179,8 +179,6 @@ class Preview(Enum):
     typed_params_trailing_comma = auto()
 
 
-# See https://github.com/psf/black/issues?q=is%3Aissue+is%3Aopen+label%3A%22C%3A+preview+style%22
-# for all open issues with the preview and unstable style.
 UNSTABLE_FEATURES: Set[Preview] = {
     # Many issues, see summary in https://github.com/psf/black/issues/4042
     Preview.string_processing,
