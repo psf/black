@@ -89,6 +89,9 @@ jupyter = [
 black = "black:patched_main"
 blackd = "blackd:patched_main [d]"
 
+[project.entry-points."validate_pyproject.tool_schema"]
+black = "black.schema:get_schema"
+
 [project.urls]
 Changelog = "https://github.com/psf/black/blob/main/CHANGES.md"
 Homepage = "https://github.com/psf/black"
