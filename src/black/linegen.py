@@ -488,7 +488,7 @@ class LineGenerator(Visitor[Line]):
                 ):
                     if (
                         Preview.docstring_check_for_newline in self.mode
-                        and leaf.value[-4] == "\n"
+                        and leaf.value[-1 - quote_len] == "\n"
                     ):
                         leaf.value = prefix + quote + docstring + quote
                     else:
