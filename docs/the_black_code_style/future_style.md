@@ -28,6 +28,8 @@ Currently, the following features are included in the preview style:
   longer normalized
 - `typed_params_trailing_comma`: consistently add trailing commas to typed function
   parameters
+- `docstring_check_for_newline`: checks if there is a newline before the terminating
+  quotes of a docstring
 
 (labels/unstable-features)=
 
