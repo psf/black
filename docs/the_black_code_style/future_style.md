@@ -16,6 +16,8 @@ feature, it is demoted to the `--unstable` style. To avoid thrash when a feature
 demoted from the `--preview` to the `--unstable` style, users can use the
 `--enable-unstable-feature` flag to enable specific unstable features.
 
+(labels/preview-features)=
+
 Currently, the following features are included in the preview style:
 
 - `hex_codes_in_unicode_sequences`: normalize casing of Unicode escape characters in
