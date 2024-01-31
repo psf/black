@@ -14,6 +14,9 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Move the `hug_parens_with_braces_and_square_brackets` feature to the unstable style
+  due to an outstanding crash and proposed formatting tweaks (#4198)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
