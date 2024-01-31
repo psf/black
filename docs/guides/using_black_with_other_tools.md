@@ -200,7 +200,7 @@ ignore = E203,E701
 ### Flake8
 
 [Flake8](https://pypi.org/p/flake8/) is a wrapper around multiple linters, including
-pycodestyle. As such, it has many of the same issues
+pycodestyle. As such, it has many of the same issues.
 
 #### Bugbear
 
@@ -208,7 +208,7 @@ It's recommended to use [the Bugbear plugin](https://github.com/PyCQA/flake8-bug
 and enabling
 [its B950 check](https://github.com/PyCQA/flake8-bugbear#opinionated-warnings#:~:text=you%20expect%20it.-,B950,-%3A%20Line%20too%20long)
 instead of using Flake8's E501, because it aligns with
-[Black's 10% rule](the_black_code_style/current_style.md#line-length).
+[Black's 10% rule](labels/line-length).
 
 Install Bugbear and use the following config:
 
@@ -232,7 +232,7 @@ extend-ignore = E203,E701
 
 #### Why those options above?
 
-See [the pycodestyle section](#why-pycodestyle-warnings) above.
+See [the pycodestyle section](labels/why-pycodestyle-warnings) above.
 
 #### Formats
 

@@ -155,8 +155,9 @@ to present code neatly in documentation or talk slides.
 
 #### Flake8 / pycodestyle
 
-See [Using _Black_ with other tools](guides/using_black_with_other_tools.md) about
-linter compatibility.
+See
+[Using _Black_ with other tools](../guides/using_black_with_other_tools.md#pycodestyle)
+about linter compatibility.
 
 ### Empty lines
 
