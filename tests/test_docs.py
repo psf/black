@@ -7,8 +7,9 @@ Test that the docs are up to date.
 import re
 from itertools import islice
 from pathlib import Path
-import pytest
 from typing import Optional, Sequence, Set
+
+import pytest
 
 from black.mode import UNSTABLE_FEATURES, Preview
 
