@@ -37,6 +37,7 @@ from black.nodes import (
     WHITESPACE,
     Visitor,
     ensure_visible,
+    get_annotation_type,
     is_arith_like,
     is_async_stmt_or_funcdef,
     is_atom_with_invisible_parens,
@@ -1053,7 +1054,7 @@ def bracket_split_build_line(
                 )
                 # Don't add one inside parenthesized return annotations
                 and not get_annotation_type(leaves[0]) == "return"
-                # Don't add one inside PEP 604 unions.
+                # Don't add one inside PEP 604 unions
                 and not (
                     leaves[0].parent
                     and leaves[0].parent.next_sibling
