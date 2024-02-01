@@ -31,7 +31,6 @@ from black.nodes import (
     BRACKETS,
     CLOSING_BRACKETS,
     OPENING_BRACKETS,
-    RARROW,
     STANDALONE_COMMENT,
     STATEMENT,
     WHITESPACE,
