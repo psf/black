@@ -8,12 +8,12 @@ from typing import (
     Generic,
     Iterator,
     List,
+    Literal,
     Optional,
     Set,
     Tuple,
     TypeVar,
     Union,
-    Literal,
 )
 
 if sys.version_info >= (3, 10):
