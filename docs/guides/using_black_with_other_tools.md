@@ -167,9 +167,9 @@ should be disabled.
 ##### `E701` / `E704`
 
 _Black_ will collapse implementations of classes and functions consisting solely of
-"..." or "pass" on to a single line. This matches how such examples are formatted in
-PEP 8. It remains true that in all other cases Black will prevent multiple statements on
-the same line, in accordance with PEP 8 generally discouraging this.
+"..." or "pass" to a single line. This matches how such examples are formatted in PEP 8.
+It remains true that in all other cases Black will prevent multiple statements on the
+same line, in accordance with PEP 8 generally discouraging this.
 
 However, `pycodestyle` does not mirror this logic and may raise
 `E701 multiple statements on one line (colon)` in this situation. Its
@@ -183,7 +183,7 @@ with PEP 8 as of
 [April 2016](https://github.com/python/peps/commit/c59c4376ad233a62ca4b3a6060c81368bd21e85b#diff-64ec08cc46db7540f18f2af46037f599).
 There's a disabled-by-default warning in Flake8 which goes against this PEP 8
 recommendation called `W503 line break before binary operator`. It should not be enabled
-in your configuration. You should use its counterpart
+in your configuration. You can use its counterpart
 `W504 line break after binary operator` instead.
 
 #### Formats
@@ -207,7 +207,7 @@ pycodestyle. As such, it has many of the same issues.
 #### Bugbear
 
 It's recommended to use [the Bugbear plugin](https://github.com/PyCQA/flake8-bugbear)
-and enabling
+and enable
 [its B950 check](https://github.com/PyCQA/flake8-bugbear#opinionated-warnings#:~:text=you%20expect%20it.-,B950,-%3A%20Line%20too%20long)
 instead of using Flake8's E501, because it aligns with
 [Black's 10% rule](labels/line-length).

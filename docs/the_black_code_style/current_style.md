@@ -143,21 +143,20 @@ significantly shorter files than sticking with 80 (the most popular), or even 79
 by the standard library). In general,
 [90-ish seems like the wise choice](https://youtu.be/wf-BqAjZb8M?t=260).
 
-If you're paid by the number of lines of code you write, you can pass `--line-length`
-with a lower number. _Black_ will try to respect that. However, sometimes it won't be
-able to without breaking other rules. In those rare cases, auto-formatted code will
-exceed your allotted limit.
+If you're paid by the lines of code you write, you can pass `--line-length` with a lower
+number. _Black_ will try to respect that. However, sometimes it won't be able to without
+breaking other rules. In those rare cases, auto-formatted code will exceed your allotted
+limit.
 
 You can also increase it, but remember that people with sight disabilities find it
 harder to work with line lengths exceeding 100 characters. It also adversely affects
 side-by-side diff review on typical screen resolutions. Long lines also make it harder
 to present code neatly in documentation or talk slides.
 
-#### Flake8 / pycodestyle
+#### Flake8 and other linters
 
-See
-[Using _Black_ with other tools](../guides/using_black_with_other_tools.md#pycodestyle)
-about linter compatibility.
+See [Using _Black_ with other tools](../guides/using_black_with_other_tools.md) about
+linter compatibility.
 
 ### Empty lines
 

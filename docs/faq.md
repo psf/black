@@ -79,6 +79,7 @@ following will not be formatted:
 
 ## Why does Flake8 report warnings?
 
+Some of Flake8's rules conflict with Black's style. We recommend disabling these rules.
 See [Using _Black_ with other tools](labels/why-pycodestyle-warnings).
 
 ## Which Python versions does Black support?
