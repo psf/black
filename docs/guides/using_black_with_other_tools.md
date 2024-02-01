@@ -166,13 +166,16 @@ should be disabled.
 
 ##### `E701` / `E704`
 
-PEP 8 states (and has always stated), "Blank lines may be omitted between a bunch of
-related one-liners." _Black_ takes advantage of this by putting the pass statement of
-dummy implementations on the same line as the colon, reducing the number of lines while
-improving readability. This does go against pycodestyle's
-`E701 multiple statements on one line (colon)`. Its disabled-by-default
-`E704 multiple statements on one line (def)` rule may also raise warnings in this
-situation and should not be enabled.
+_Black_ will collapse implementations of classes and functions consisting solely
+of "..." on to a single line. This matches how such examples are formatted in
+PEP 8. It remains true that in all other cases Black will prevent multiple
+statements on the same line, in accordance with PEP 8 generally
+discouraging this.
+
+However, `pycodestyle` does not mirror this logic and may raise
+`E701 multiple statements on one line (colon)` in this situation.
+Its disabled-by-default `E704 multiple statements on one line (def)` rule may
+also raise warnings and should not be enabled.
 
 ##### `W503`
 
