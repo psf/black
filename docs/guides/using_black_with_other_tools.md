@@ -166,10 +166,10 @@ should be disabled.
 
 ##### `E701` / `E704`
 
-_Black_ will collapse implementations of classes and functions consisting solely of
-"..." or "pass" to a single line. This matches how such examples are formatted in PEP 8.
-It remains true that in all other cases Black will prevent multiple statements on the
-same line, in accordance with PEP 8 generally discouraging this.
+_Black_ will collapse implementations of classes and functions consisting solely of `..`
+to a single line. This matches how such examples are formatted in PEP 8. It remains true
+that in all other cases Black will prevent multiple statements on the same line, in
+accordance with PEP 8 generally discouraging this.
 
 However, `pycodestyle` does not mirror this logic and may raise
 `E701 multiple statements on one line (colon)` in this situation. Its
