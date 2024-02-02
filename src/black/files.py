@@ -43,6 +43,12 @@ if TYPE_CHECKING:
 
 
 @lru_cache
+def _load_toml(path: Union[Path, str]) -> Dict[str, Any]:
+    with open(path, "rb") as f:
+        return tomllib.load(f)
+
+
+@lru_cache
 def find_project_root(
     srcs: Sequence[str], stdin_filename: Optional[str] = None
 ) -> Tuple[Path, str]:
@@ -84,7 +90,9 @@ def find_project_root(
             return directory, ".hg directory"
 
         if (directory / "pyproject.toml").is_file():
-            return directory, "pyproject.toml"
+            pyproject_toml = _load_toml(directory / "pyproject.toml")
+            if "black" in pyproject_toml.get("tool", {}):
+                return directory, "pyproject.toml"
 
     return directory, "file system root"
 
@@ -117,8 +125,7 @@ def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
 
     If parsing fails, will raise a tomllib.TOMLDecodeError.
     """
-    with open(path_config, "rb") as f:
-        pyproject_toml = tomllib.load(f)
+    pyproject_toml = _load_toml(path_config)
     config: Dict[str, Any] = pyproject_toml.get("tool", {}).get("black", {})
     config = {k.replace("--", "").replace("-", "_"): v for k, v in config.items()}
 

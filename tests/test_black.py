@@ -1668,9 +1668,9 @@ class BlackTestCase(BlackBaseTestCase):
             src_dir.mkdir()
 
             root_pyproject = root / "pyproject.toml"
-            root_pyproject.touch()
+            root_pyproject.write_text("[tool.black]", encoding="utf-8")
             src_pyproject = src_dir / "pyproject.toml"
-            src_pyproject.touch()
+            src_pyproject.write_text("[tool.black]", encoding="utf-8")
             src_python = src_dir / "foo.py"
             src_python.touch()
 
@@ -1692,6 +1692,20 @@ class BlackTestCase(BlackBaseTestCase):
                     black.find_project_root(("-",), stdin_filename="../src/a.py"),
                     (src_dir.resolve(), "pyproject.toml"),
                 )
+
+            src_sub = src_dir / "sub"
+            src_sub.mkdir()
+
+            src_sub_pyproject = src_sub / "pyproject.toml"
+            src_sub_pyproject.touch()  # empty
+
+            src_sub_python = src_sub / "bar.py"
+
+            # we skip src_sub_pyproject since it is missing the [tool.black] section
+            self.assertEqual(
+                black.find_project_root((src_sub_python,)),
+                (src_dir.resolve(), "pyproject.toml"),
+            )
 
     @patch(
         "black.files.find_user_pyproject_toml",
