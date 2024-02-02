@@ -962,7 +962,7 @@ def is_number_token(nl: NL) -> TypeGuard[Leaf]:
     return nl.type == token.NUMBER
 
 
-def get_annotation_type(leaf: Leaf) -> Optional[Literal["return", "param"]]:
+def get_annotation_type(leaf: Leaf) -> Literal["return", "param", None]:
     """Returns the type of annotation this leaf is part of, if any."""
     ancestor = leaf.parent
     while ancestor is not None:

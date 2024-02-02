@@ -1052,7 +1052,7 @@ def bracket_split_build_line(
                     for leaf in leaves
                 )
                 # Don't add one inside parenthesized return annotations
-                and not get_annotation_type(leaves[0]) == "return"
+                and get_annotation_type(leaves[0]) != "return"
                 # Don't add one inside PEP 604 unions
                 and not (
                     leaves[0].parent
