@@ -16,7 +16,12 @@
 
 ### Configuration
 
-<!-- Changes to how Black can be configured -->
+- _Black_ now ignores `pyproject.toml` that is missing a `tool.black` section when
+  discovering project root and configuration. Since _Black_ continues to use version
+  control as an indicator of project root, this is expected to primarily change behavior
+  for users in a monorepo setup (desirably). If you wish to preserve previous behavior,
+  simply add an empty `[tool.black]` to the previously discovered `pyproject.toml`
+  (#4204)
 
 ### Packaging
 
