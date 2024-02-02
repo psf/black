@@ -134,10 +134,10 @@ profile = black
 
 </details>
 
-### Flake8
+### pycodestyle
 
-[Flake8](https://pypi.org/p/flake8/) is a code linter. It warns you of syntax errors,
-possible bugs, stylistic errors, etc. For the most part, Flake8 follows
+[pycodestyle](https://pycodestyle.pycqa.org/) is a code linter. It warns you of syntax
+errors, possible bugs, stylistic errors, etc. For the most part, pycodestyle follows
 [PEP 8](https://www.python.org/dev/peps/pep-0008/) when warning about stylistic errors.
 There are a few deviations that cause incompatibilities with _Black_.
 
@@ -145,67 +145,115 @@ There are a few deviations that cause incompatibilities with _Black_.
 
 ```
 max-line-length = 88
-extend-ignore = E203, E704
+ignore = E203,E701
 ```
+
+(labels/why-pycodestyle-warnings)=
 
 #### Why those options above?
 
+##### `max-line-length`
+
+As with isort, pycodestyle should be configured to allow lines up to the length limit of
+`88`, _Black_'s default.
+
+##### `E203`
+
 In some cases, as determined by PEP 8, _Black_ will enforce an equal amount of
-whitespace around slice operators. Due to this, Flake8 will raise
-`E203 whitespace before ':'` warnings. Since this warning is not PEP 8 compliant, Flake8
-should be configured to ignore it via `extend-ignore = E203`.
+whitespace around slice operators. Due to this, pycodestyle will raise
+`E203 whitespace before ':'` warnings. Since this warning is not PEP 8 compliant, it
+should be disabled.
+
+##### `E701` / `E704`
+
+_Black_ will collapse implementations of classes and functions consisting solely of `..`
+to a single line. This matches how such examples are formatted in PEP 8. It remains true
+that in all other cases Black will prevent multiple statements on the same line, in
+accordance with PEP 8 generally discouraging this.
+
+However, `pycodestyle` does not mirror this logic and may raise
+`E701 multiple statements on one line (colon)` in this situation. Its
+disabled-by-default `E704 multiple statements on one line (def)` rule may also raise
+warnings and should not be enabled.
+
+##### `W503`
 
 When breaking a line, _Black_ will break it before a binary operator. This is compliant
 with PEP 8 as of
 [April 2016](https://github.com/python/peps/commit/c59c4376ad233a62ca4b3a6060c81368bd21e85b#diff-64ec08cc46db7540f18f2af46037f599).
 There's a disabled-by-default warning in Flake8 which goes against this PEP 8
 recommendation called `W503 line break before binary operator`. It should not be enabled
-in your configuration.
-
-Also, as like with isort, flake8 should be configured to allow lines up to the length
-limit of `88`, _Black_'s default. This explains `max-line-length = 88`.
+in your configuration. You can use its counterpart
+`W504 line break after binary operator` instead.
 
 #### Formats
 
 <details>
-<summary>.flake8</summary>
+<summary>setup.cfg, .pycodestyle, tox.ini</summary>
 
 ```ini
-[flake8]
+[pycodestyle]
 max-line-length = 88
-extend-ignore = E203, E704
+ignore = E203,E701
 ```
 
 </details>
 
-<details>
-<summary>setup.cfg</summary>
+### Flake8
 
-```ini
+[Flake8](https://pypi.org/p/flake8/) is a wrapper around multiple linters, including
+pycodestyle. As such, it has many of the same issues.
+
+#### Bugbear
+
+It's recommended to use [the Bugbear plugin](https://github.com/PyCQA/flake8-bugbear)
+and enable
+[its B950 check](https://github.com/PyCQA/flake8-bugbear#opinionated-warnings#:~:text=you%20expect%20it.-,B950,-%3A%20Line%20too%20long)
+instead of using Flake8's E501, because it aligns with
+[Black's 10% rule](labels/line-length).
+
+Install Bugbear and use the following config:
+
+```
 [flake8]
-max-line-length = 88
-extend-ignore = E203, E704
+max-line-length = 80
+extend-select = B950
+extend-ignore = E203,E501,E701
 ```
 
-</details>
+#### Minimal Configuration
+
+In cases where you can't or don't want to install Bugbear, you can use this minimally
+compatible config:
+
+```
+[flake8]
+max-line-length = 88
+extend-ignore = E203,E701
+```
+
+#### Why those options above?
+
+See [the pycodestyle section](labels/why-pycodestyle-warnings) above.
+
+#### Formats
 
 <details>
-<summary>tox.ini</summary>
+<summary>.flake8, setup.cfg, tox.ini</summary>
 
 ```ini
 [flake8]
 max-line-length = 88
-extend-ignore = E203, E704
+extend-ignore = E203,E701
 ```
 
 </details>
 
 ### Pylint
 
-[Pylint](https://pypi.org/p/pylint/) is also a code linter like Flake8. It has the same
-checks as flake8 and more. In particular, it has more formatting checks regarding style
-conventions like variable naming. With so many checks, Pylint is bound to have some
-mixed feelings about _Black_'s formatting style.
+[Pylint](https://pypi.org/p/pylint/) is also a code linter like Flake8. It has many of
+the same checks as Flake8 and more. It particularly has more formatting checks regarding
+style conventions like variable naming.
 
 #### Configuration
 
@@ -249,38 +297,6 @@ max-line-length = 88
 ```toml
 [tool.pylint.format]
 max-line-length = "88"
-```
-
-</details>
-
-### pycodestyle
-
-[pycodestyle](https://pycodestyle.pycqa.org/) is also a code linter like Flake8.
-
-#### Configuration
-
-```
-max-line-length = 88
-ignore = E203
-```
-
-#### Why those options above?
-
-pycodestyle should be configured to only complain about lines that surpass `88`
-characters via `max_line_length = 88`.
-
-See
-[Why are Flake8’s E203 and W503 violated?](https://black.readthedocs.io/en/stable/faq.html#why-are-flake8-s-e203-and-w503-violated)
-
-#### Formats
-
-<details>
-<summary>setup.cfg</summary>
-
-```cfg
-[pycodestyle]
-ignore = E203
-max_line_length = 88
 ```
 
 </details>

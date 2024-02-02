@@ -77,13 +77,10 @@ following will not be formatted:
 - invalid syntax, as it can't be safely distinguished from automagics in the absence of
   a running `IPython` kernel.
 
-## Why are Flake8's E203 and W503 violated?
+## Why does Flake8 report warnings?
 
-Because they go against PEP 8. E203 falsely triggers on list
-[slices](the_black_code_style/current_style.md#slices), and adhering to W503 hinders
-readability because operators are misaligned. Disable W503 and enable the
-disabled-by-default counterpart W504. E203 should be disabled while changes are still
-[discussed](https://github.com/PyCQA/pycodestyle/issues/373).
+Some of Flake8's rules conflict with Black's style. We recommend disabling these rules.
+See [Using _Black_ with other tools](labels/why-pycodestyle-warnings).
 
 ## Which Python versions does Black support?
 
