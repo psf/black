@@ -24,8 +24,6 @@ Currently, the following features are included in the preview style:
   strings
 - `unify_docstring_detection`: fix inconsistencies in whether certain strings are
   detected as docstrings
-- `hug_parens_with_braces_and_square_brackets`: more compact formatting of nested
-  brackets ([see below](labels/hug-parens))
 - `no_normalize_fmt_skip_whitespace`: whitespace before `# fmt: skip` comments is no
   longer normalized
 - `typed_params_trailing_comma`: consistently add trailing commas to typed function
@@ -41,6 +39,8 @@ The unstable style additionally includes the following features:
   ([see below](labels/wrap-long-dict-values))
 - `multiline_string_handling`: more compact formatting of expressions involving
   multiline strings ([see below](labels/multiline-string-handling))
+- `hug_parens_with_braces_and_square_brackets`: more compact formatting of nested
+  brackets ([see below](labels/hug-parens))
 
 (labels/hug-parens)=
 

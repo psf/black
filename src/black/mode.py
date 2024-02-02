@@ -186,6 +186,8 @@ UNSTABLE_FEATURES: Set[Preview] = {
     Preview.wrap_long_dict_values_in_parens,
     # See issue #4159
     Preview.multiline_string_handling,
+    # See issue #4036 (crash), #4098, #4099 (proposed tweaks)
+    Preview.hug_parens_with_braces_and_square_brackets,
 }
 
 
