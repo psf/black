@@ -16,14 +16,14 @@ feature, it is demoted to the `--unstable` style. To avoid thrash when a feature
 demoted from the `--preview` to the `--unstable` style, users can use the
 `--enable-unstable-feature` flag to enable specific unstable features.
 
+(labels/preview-features)=
+
 Currently, the following features are included in the preview style:
 
 - `hex_codes_in_unicode_sequences`: normalize casing of Unicode escape characters in
   strings
 - `unify_docstring_detection`: fix inconsistencies in whether certain strings are
   detected as docstrings
-- `hug_parens_with_braces_and_square_brackets`: more compact formatting of nested
-  brackets ([see below](labels/hug-parens))
 - `no_normalize_fmt_skip_whitespace`: whitespace before `# fmt: skip` comments is no
   longer normalized
 - `typed_params_trailing_comma`: consistently add trailing commas to typed function
@@ -41,6 +41,8 @@ The unstable style additionally includes the following features:
   ([see below](labels/wrap-long-dict-values))
 - `multiline_string_handling`: more compact formatting of expressions involving
   multiline strings ([see below](labels/multiline-string-handling))
+- `hug_parens_with_braces_and_square_brackets`: more compact formatting of nested
+  brackets ([see below](labels/hug-parens))
 
 (labels/hug-parens)=
 

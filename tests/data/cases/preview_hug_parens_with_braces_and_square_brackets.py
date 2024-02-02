@@ -1,4 +1,4 @@
-# flags: --preview
+# flags: --unstable
 def foo_brackets(request):
     return JsonResponse(
         {

@@ -456,10 +456,11 @@ of tools like [Poetry](https://python-poetry.org/),
 
 ### Where _Black_ looks for the file
 
-By default _Black_ looks for `pyproject.toml` starting from the common base directory of
-all files and directories passed on the command line. If it's not there, it looks in
-parent directories. It stops looking when it finds the file, or a `.git` directory, or a
-`.hg` directory, or the root of the file system, whichever comes first.
+By default _Black_ looks for `pyproject.toml` containing a `[tool.black]` section
+starting from the common base directory of all files and directories passed on the
+command line. If it's not there, it looks in parent directories. It stops looking when
+it finds the file, or a `.git` directory, or a `.hg` directory, or the root of the file
+system, whichever comes first.
 
 If you're formatting standard input, _Black_ will look for configuration starting from
 the current working directory.

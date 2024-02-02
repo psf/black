@@ -1,4 +1,4 @@
-# flags: --preview --no-preview-line-length-1
+# flags: --unstable --no-preview-line-length-1
 # split out from preview_hug_parens_with_brackes_and_square_brackets, as it produces
 # different code on the second pass with line-length 1 in many cases.
 # Seems to be about whether the last string in a sequence gets wrapped in parens or not.
