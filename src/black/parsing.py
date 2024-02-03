@@ -51,6 +51,25 @@ def get_grammars(target_versions: Set[TargetVersion]) -> List[Grammar]:
     # version has exactly one of the two 'ASYNC_*' flags
     return grammars
 
+def grammar_version_to_pretty_version(version: Tuple[int, int]) -> str:
+    # New function to convert grammar version tuples to human-readable strings
+    if version == (3, 0):
+        return "Python 3.0-3.6"
+    elif version == (3, 7):
+        return "Python 3.7-3.9"
+    elif version == (3, 10):
+        return "Python 3.10+"
+    else:
+        raise NotImplementedError(f"Unsupported grammar version: {version}")
+
+# Usage of get_grammars in parsing code
+grammars = get_grammars(target_versions)
+
+# Usage of grammar_version_to_pretty_version for error messages or logging
+for grammar in grammars:
+    pretty_version = grammar_version_to_pretty_version(grammar.version)
+    # Use pretty_version as needed
+
 
 def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -> Node:
     """Given a string with source, return the lib2to3 Node."""
