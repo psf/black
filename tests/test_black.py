@@ -2628,11 +2628,6 @@ class TestFileCollection:
         if system() != "Windows":
             return
 
-        # during my testing, I found the UNC bug happens in both Python 3.8 and 3.9
-        major, minor = sys.version_info[:2]
-        if major > 3 or (major == 3 and minor >= 10):
-            return
-
         stdin_filename = "\\\\?\\D:\\git\\OLive\\setup.py"
         root = Path("D:\\git\\OLive")
         collected = black.get_sources(
@@ -2651,7 +2646,8 @@ class TestFileCollection:
         expected_path = Path(
             f"{STDIN_PLACEHOLDER}{str(Path(stdin_filename).resolve())}"
         )
-        assert list(collected)[0] == expected_path
+        collected = next(iter(collected))
+        assert collected == expected_path
 
     def test_get_sources_with_stdin_symlink_outside_root(
         self,
