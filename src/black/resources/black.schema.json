@@ -86,6 +86,7 @@
           "wrap_long_dict_values_in_parens",
           "multiline_string_handling",
           "typed_params_trailing_comma",
+          "is_simple_lookup_for_doublestar_expression",
           "docstring_check_for_newline"
         ]
       },
