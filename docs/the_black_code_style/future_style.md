@@ -30,6 +30,8 @@ Currently, the following features are included in the preview style:
   parameters
 - `is_simple_lookup_for_doublestar_expression`: fix line length computation for certain
   expressions that involve the power operator
+- `docstring_check_for_newline`: checks if there is a newline before the terminating
+  quotes of a docstring
 
 (labels/unstable-features)=
 
