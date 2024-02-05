@@ -25,6 +25,7 @@
   for users in a monorepo setup (desirably). If you wish to preserve previous behavior,
   simply add an empty `[tool.black]` to the previously discovered `pyproject.toml`
   (#4204)
+- Fix UNC path as stdin-filename in Windows Python 3.8 (#4210)
 
 ### Packaging
 

@@ -749,7 +749,12 @@ def get_sources(
 
         # Compare the logic here to the logic in `gen_python_files`.
         if is_stdin or path.is_file():
-            root_relative_path = get_root_relative_path(path, root, report)
+            # From https://stackoverflow.com/questions/42513056/how-to-get-absolute-path-of-a-pathlib-path-object  # noqa: B950
+            # suggest to use resolve instead of absolute prior to Python 3.11
+            # to get the absolute path.
+            # This change is to fix bug:
+            # https://github.com/psf/black/issues/4209
+            root_relative_path = get_root_relative_path(path.resolve(), root, report)
 
             if root_relative_path is None:
                 continue
@@ -772,7 +777,7 @@ def get_sources(
                 continue
 
             if is_stdin:
-                path = Path(f"{STDIN_PLACEHOLDER}{str(path)}")
+                path = Path(f"{STDIN_PLACEHOLDER}{str(path.resolve())}")
 
             if path.suffix == ".ipynb" and not jupyter_dependencies_are_installed(
                 warn=verbose or not quiet

@@ -283,11 +283,7 @@ def get_root_relative_path(
 ) -> Optional[str]:
     """Returns the file path relative to the 'root' directory"""
     try:
-        # From https://stackoverflow.com/questions/42513056/how-to-get-absolute-path-of-a-pathlib-path-object  # noqa: B950
-        # suggest to use resolve instead of absolute prior to Python 3.11 to
-        # get the absolute path.
-        # This change is to fix bug https://github.com/psf/black/issues/4209
-        root_relative_path = path.resolve().relative_to(root).as_posix()
+        root_relative_path = path.absolute().relative_to(root).as_posix()
     except ValueError:
         if report:
             report.path_ignored(path, f"is a symbolic link that points outside {root}")
@@ -345,7 +341,7 @@ def gen_python_files(
 
     assert root.is_absolute(), f"INTERNAL ERROR: `root` must be absolute but is {root}"
     for child in paths:
-        root_relative_path = child.resolve().relative_to(root).as_posix()
+        root_relative_path = child.absolute().relative_to(root).as_posix()
 
         # First ignore files matching .gitignore, if passed
         if gitignore_dict and _path_is_ignored(

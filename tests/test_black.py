@@ -43,6 +43,7 @@ import black.files
 from black import Feature, TargetVersion
 from black import re_compile_maybe_verbose as compile_pattern
 from black.cache import FileData, get_cache_dir, get_cache_file
+from black.const import STDIN_PLACEHOLDER
 from black.debug import DebugVisitor
 from black.mode import Mode, Preview
 from black.output import color_diff, diff
@@ -2632,10 +2633,25 @@ class TestFileCollection:
         if major > 3 or (major == 3 and minor >= 10):
             return
 
-        unc_path = Path("\\\\?\\D:\\git\\OLive\\setup.py")
+        stdin_filename = "\\\\?\\D:\\git\\OLive\\setup.py"
         root = Path("D:\\git\\OLive")
-        relative_path = black.files.get_root_relative_path(unc_path, root)
-        assert relative_path == "setup.py"
+        collected = black.get_sources(
+            root=root,
+            src=("-",),
+            quiet=False,
+            verbose=False,
+            include=DEFAULT_INCLUDE,
+            exclude=DEFAULT_EXCLUDE,
+            extend_exclude=None,
+            force_exclude=None,
+            report=black.Report(),
+            stdin_filename=stdin_filename,
+        )
+        assert len(collected) == 1
+        expected_path = Path(
+            f"{STDIN_PLACEHOLDER}{str(Path(stdin_filename).resolve())}"
+        )
+        assert list(collected)[0] == expected_path
 
     def test_get_sources_with_stdin_symlink_outside_root(
         self,
