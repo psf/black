@@ -205,7 +205,7 @@ def handle_is_simple_lookup_forward(
     line: Line, index: int, disallowed: Set[int]
 ) -> bool:
     """
-    Handling decision is_simple_lookup for the lines behind to the doublestar token.
+    Handling decision is_simple_lookup for the lines behind the doublestar token.
     This function is simplified to keep consistent with the prior logic and the forward
     case are more straightforward and do not need to care about chained expressions.
     """
