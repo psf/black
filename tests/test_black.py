@@ -2646,8 +2646,8 @@ class TestFileCollection:
         expected_path = Path(
             f"{STDIN_PLACEHOLDER}{str(Path(stdin_filename).resolve())}"
         )
-        collected = next(iter(collected))
-        assert collected == expected_path
+        (collected_item,) = collected
+        assert collected_item == expected_path
 
     def test_get_sources_with_stdin_symlink_outside_root(
         self,
