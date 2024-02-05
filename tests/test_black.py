@@ -2623,6 +2623,20 @@ class TestFileCollection:
         outside_root_symlink.resolve.assert_called_once()
         ignored_symlink.resolve.assert_not_called()
 
+    def test_unc_path(self) -> None:
+        if system() != "Windows":
+            return
+
+        # during my testing, I found the UNC bug happens in both Python 3.8 and 3.9
+        major, minor = sys.version_info[:2]
+        if major > 3 or (major == 3 and minor >= 10):
+            return
+
+        unc_path = Path("\\\\?\\D:\\git\\OLive\\setup.py")
+        root = Path("D:\\git\\OLive")
+        relative_path = black.files.get_root_relative_path(unc_path, root)
+        assert relative_path == "setup.py"
+
     def test_get_sources_with_stdin_symlink_outside_root(
         self,
     ) -> None:
