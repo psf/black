@@ -143,7 +143,7 @@ significantly shorter files than sticking with 80 (the most popular), or even 79
 by the standard library). In general,
 [90-ish seems like the wise choice](https://youtu.be/wf-BqAjZb8M?t=260).
 
-If you're paid by the line of code you write, you can pass `--line-length` with a lower
+If you're paid by the lines of code you write, you can pass `--line-length` with a lower
 number. _Black_ will try to respect that. However, sometimes it won't be able to without
 breaking other rules. In those rare cases, auto-formatted code will exceed your allotted
 limit.
@@ -153,35 +153,10 @@ harder to work with line lengths exceeding 100 characters. It also adversely aff
 side-by-side diff review on typical screen resolutions. Long lines also make it harder
 to present code neatly in documentation or talk slides.
 
-#### Flake8
+#### Flake8 and other linters
 
-If you use Flake8, you have a few options:
-
-1. Recommended is using [Bugbear](https://github.com/PyCQA/flake8-bugbear) and enabling
-   its B950 check instead of using Flake8's E501, because it aligns with Black's 10%
-   rule. Install Bugbear and use the following config:
-
-   ```ini
-   [flake8]
-   max-line-length = 80
-   ...
-   select = C,E,F,W,B,B950
-   extend-ignore = E203, E501, E704
-   ```
-
-   The rationale for B950 is explained in
-   [Bugbear's documentation](https://github.com/PyCQA/flake8-bugbear#opinionated-warnings).
-
-2. For a minimally compatible config:
-
-   ```ini
-   [flake8]
-   max-line-length = 88
-   extend-ignore = E203, E704
-   ```
-
-An explanation of why E203 is disabled can be found in the [Slices section](#slices) of
-this page.
+See [Using _Black_ with other tools](../guides/using_black_with_other_tools.md) about
+linter compatibility.
 
 ### Empty lines
 
