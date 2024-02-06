@@ -20,6 +20,7 @@
   expression (#4154)
 - Checking for newline before adding one on docstring that is almost at the line limit
   (#4185)
+- Remove redundant parentheses in `case` statement `if` guards (#4214).
 
 ### Configuration
 

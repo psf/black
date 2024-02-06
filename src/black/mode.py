@@ -179,6 +179,7 @@ class Preview(Enum):
     typed_params_trailing_comma = auto()
     is_simple_lookup_for_doublestar_expression = auto()
     docstring_check_for_newline = auto()
+    remove_redundant_guard_parens = auto()
 
 
 UNSTABLE_FEATURES: Set[Preview] = {

@@ -529,6 +529,8 @@ class LineGenerator(Visitor[Line]):
         # PEP 634
         self.visit_match_stmt = self.visit_match_case
         self.visit_case_block = self.visit_match_case
+        if Preview.remove_redundant_guard_parens in self.mode:
+            self.visit_guard = partial(v, keywords=Ø, parens={"if"})
 
 
 def _hugging_power_ops_line_to_string(
