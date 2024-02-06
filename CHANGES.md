@@ -16,6 +16,10 @@
 
 - Move the `hug_parens_with_braces_and_square_brackets` feature to the unstable style
   due to an outstanding crash and proposed formatting tweaks (#4198)
+- Fixed a bug where base expressions caused inconsistent formatting of \*\* in tenary
+  expression (#4154)
+- Checking for newline before adding one on docstring that is almost at the line limit
+  (#4185)
 
 ### Configuration
 

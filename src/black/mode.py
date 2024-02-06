@@ -177,6 +177,8 @@ class Preview(Enum):
     wrap_long_dict_values_in_parens = auto()
     multiline_string_handling = auto()
     typed_params_trailing_comma = auto()
+    is_simple_lookup_for_doublestar_expression = auto()
+    docstring_check_for_newline = auto()
 
 
 UNSTABLE_FEATURES: Set[Preview] = {
