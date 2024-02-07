@@ -283,7 +283,7 @@ def get_root_relative_path(
 ) -> Optional[str]:
     """Returns the file path relative to the 'root' directory"""
     try:
-        root_relative_path = path.absolute().relative_to(root).as_posix()
+        root_relative_path = path.resolve().relative_to(root).as_posix()
     except ValueError:
         if report:
             report.path_ignored(path, f"is a symbolic link that points outside {root}")
@@ -341,7 +341,7 @@ def gen_python_files(
 
     assert root.is_absolute(), f"INTERNAL ERROR: `root` must be absolute but is {root}"
     for child in paths:
-        root_relative_path = child.absolute().relative_to(root).as_posix()
+        root_relative_path = child.resolve().relative_to(root).as_posix()
 
         # First ignore files matching .gitignore, if passed
         if gitignore_dict and _path_is_ignored(
