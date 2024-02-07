@@ -87,7 +87,8 @@
           "multiline_string_handling",
           "typed_params_trailing_comma",
           "is_simple_lookup_for_doublestar_expression",
-          "docstring_check_for_newline"
+          "docstring_check_for_newline",
+          "remove_redundant_guard_parens"
         ]
       },
       "description": "Enable specific features included in the `--unstable` style. Requires `--preview`. No compatibility guarantees are provided on the behavior or existence of any unstable features."
