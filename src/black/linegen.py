@@ -1544,13 +1544,16 @@ def maybe_make_parens_invisible_in_atom(
     last = node.children[-1]
     if is_lpar_token(first) and is_rpar_token(last):
         middle = node.children[1]
-        # make parentheses invisible
+        # Make parentheses invisible
         if (
-            # If the prefix of `middle` includes a type comment with
-            # ignore annotation, then we do not remove the parentheses
+            # Unless it has an attached comment
+            not last.prefix.strip() and
+            # Or if around an type comment with ignore annotation
             not is_type_ignore_comment_string(middle.prefix.strip())
         ):
             first.value = ""
+            if first.prefix.strip():
+                middle.prefix = first.prefix + middle.prefix
             last.value = ""
         maybe_make_parens_invisible_in_atom(
             middle,

@@ -10,6 +10,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fixed a bug where comments where mistakenly removed along with redundant parentheses
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
