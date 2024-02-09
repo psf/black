@@ -32,6 +32,8 @@ Currently, the following features are included in the preview style:
   expressions that involve the power operator
 - `docstring_check_for_newline`: checks if there is a newline before the terminating
   quotes of a docstring
+- `remove_redundant_guard_parens`: Removes redundant parentheses in `if` guards for
+  `case` blocks.
 
 (labels/unstable-features)=
 
