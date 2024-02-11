@@ -50,9 +50,9 @@ from black.files import (
     gen_python_files,
     get_gitignore,
     get_root_relative_path,
-    normalize_path_maybe_ignore,
     parse_pyproject_toml,
     path_is_excluded,
+    resolves_outside_root_or_cannot_stat,
     wrap_stream_for_windows,
 )
 from black.handle_ipynb_magics import (
@@ -763,12 +763,9 @@ def get_sources(
                 )
                 continue
 
-            normalized_path: Optional[str] = normalize_path_maybe_ignore(
-                path, root, report
-            )
-            if normalized_path is None:
+            if resolves_outside_root_or_cannot_stat(path, root, report):
                 if verbose:
-                    out(f'Skipping invalid source: "{normalized_path}"', fg="red")
+                    out(f'Skipping invalid source: "{path}"', fg="red")
                 continue
 
             if is_stdin:
@@ -780,7 +777,7 @@ def get_sources(
                 continue
 
             if verbose:
-                out(f'Found input source: "{normalized_path}"', fg="blue")
+                out(f'Found input source: "{path}"', fg="blue")
             sources.add(path)
         elif path.is_dir():
             path = root / (path.resolve().relative_to(root))

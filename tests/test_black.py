@@ -1760,12 +1760,15 @@ class BlackTestCase(BlackBaseTestCase):
             return
 
         # https://bugs.python.org/issue33660
+        # Can be removed when we drop support for Python 3.8.5
         root = Path("/")
         with change_directory(root):
             path = Path("workspace") / "project"
             report = black.Report(verbose=True)
-            normalized_path = black.normalize_path_maybe_ignore(path, root, report)
-            self.assertEqual(normalized_path, "workspace/project")
+            resolves_outside = black.resolves_outside_root_or_cannot_stat(
+                path, root, report
+            )
+            self.assertIs(resolves_outside, False)
 
     def test_normalize_path_ignore_windows_junctions_outside_of_root(self) -> None:
         if system() != "Windows":
@@ -1778,13 +1781,13 @@ class BlackTestCase(BlackBaseTestCase):
             os.system(f"mklink /J {junction_dir} {junction_target_outside_of_root}")
 
             report = black.Report(verbose=True)
-            normalized_path = black.normalize_path_maybe_ignore(
+            resolves_outside = black.resolves_outside_root_or_cannot_stat(
                 junction_dir, root, report
             )
             # Manually delete for Python < 3.8
             os.system(f"rmdir {junction_dir}")
 
-            self.assertEqual(normalized_path, None)
+            self.assertIs(resolves_outside, True)
 
     def test_newline_comment_interaction(self) -> None:
         source = "class A:\\\r\n# type: ignore\n pass\n"

@@ -254,26 +254,24 @@ def get_gitignore(root: Path) -> PathSpec:
         raise
 
 
-def normalize_path_maybe_ignore(
+def resolves_outside_root_or_cannot_stat(
     path: Path,
     root: Path,
     report: Optional[Report] = None,
-) -> Optional[str]:
-    """Normalize `path`. May return `None` if `path` was ignored.
-
-    `report` is where "path ignored" output goes.
+) -> bool:
+    """
+    Returns whether the path is a symbolic link that points outside the
+    root directory. Also returns True if we failed to resolve the path.
     """
     try:
-        abspath = path if path.is_absolute() else Path.cwd() / path
-        normalized_path = abspath.resolve()
-        root_relative_path = get_root_relative_path(normalized_path, root, report)
-
+        if sys.version_info < (3, 8, 6):
+            path = path.absolute()  # https://bugs.python.org/issue33660
+        resolved_path = path.resolve()
+        return get_root_relative_path(resolved_path, root, report) is None
     except OSError as e:
         if report:
             report.path_ignored(path, f"cannot be read because {e}")
-        return None
-
-    return root_relative_path
+        return True
 
 
 def get_root_relative_path(
@@ -369,8 +367,7 @@ def gen_python_files(
             report.path_ignored(child, "matches the --force-exclude regular expression")
             continue
 
-        normalized_path = normalize_path_maybe_ignore(child, root, report)
-        if normalized_path is None:
+        if resolves_outside_root_or_cannot_stat(child, root, report):
             continue
 
         if child.is_dir():
