@@ -277,7 +277,7 @@ def resolves_outside_root_or_cannot_stat(
             report.path_ignored(path, f"cannot be read because {e}")
         return True
     try:
-        resolved_path.relative_to(root).as_posix()
+        resolved_path.relative_to(root)
     except ValueError:
         if report:
             report.path_ignored(path, f"is a symbolic link that points outside {root}")
