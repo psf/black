@@ -263,16 +263,15 @@ def resolves_outside_root_or_cannot_stat(
     Returns whether the path is a symbolic link that points outside the
     root directory. Also returns True if we failed to resolve the path.
     """
-    if sys.version_info < (3, 8, 6):
-        path = path.absolute()  # https://bugs.python.org/issue33660
     try:
+        if sys.version_info < (3, 8, 6):
+            path = path.absolute()  # https://bugs.python.org/issue33660
         resolved_path = path.resolve()
+        return get_root_relative_path(resolved_path, root, report) is None
     except OSError as e:
         if report:
             report.path_ignored(path, f"cannot be read because {e}")
         return True
-
-    return get_root_relative_path(resolved_path, root, report) is None
 
 
 def get_root_relative_path(
