@@ -2636,7 +2636,7 @@ class TestFileCollection:
 
             actual_proj = actual / "project"
             actual_proj.mkdir()
-            (actual_proj / "module.py").write_text("print('hello')")
+            (actual_proj / "module.py").write_text("print('hello')", encoding="utf-8")
 
             symlink_proj = symlink / "project"
 
@@ -2666,7 +2666,7 @@ class TestFileCollection:
 
                 target = actual_proj / "target"
                 target.mkdir()
-                (target / "another.py").write_text("print('hello')")
+                (target / "another.py").write_text("print('hello')", encoding="utf-8")
                 (symlink_proj / "nested").symlink_to(target)
 
                 assert_collected_sources(
@@ -2772,7 +2772,7 @@ class TestFileCollection:
         with TemporaryDirectory() as tempdir:
             tmp = Path(tempdir).resolve()
             (tmp / "exclude").mkdir()
-            (tmp / "exclude" / "a.py").write_text("print('hello')")
+            (tmp / "exclude" / "a.py").write_text("print('hello')", encoding="utf-8")
             (tmp / "symlink.py").symlink_to(tmp / "exclude" / "a.py")
 
             stdin_filename = str(tmp / "symlink.py")
