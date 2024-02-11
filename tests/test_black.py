@@ -2688,7 +2688,7 @@ class TestFileCollection:
         path = THIS_DIR / "data" / "include_exclude_tests"
         stdin_filename = str(path / "b/exclude/a.py")
         outside_root_symlink = Path("/target_directory/a.py")
-        root = Path("target_directory/").resolve()
+        root = Path("target_dir/").resolve().absolute()
         with patch("pathlib.Path.resolve", return_value=outside_root_symlink):
             assert_collected_sources(
                 root=root,
