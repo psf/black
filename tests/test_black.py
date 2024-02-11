@@ -1768,7 +1768,7 @@ class BlackTestCase(BlackBaseTestCase):
             resolves_outside = black.resolves_outside_root_or_cannot_stat(
                 path, root, report
             )
-            self.assertEqual(resolves_outside, False)
+            self.assertIs(resolves_outside, False)
 
     def test_normalize_path_ignore_windows_junctions_outside_of_root(self) -> None:
         if system() != "Windows":
