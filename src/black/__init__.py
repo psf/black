@@ -44,12 +44,12 @@ from black.const import (
     STDIN_PLACEHOLDER,
 )
 from black.files import (
+    best_effort_relative_path,
     find_project_root,
     find_pyproject_toml,
     find_user_pyproject_toml,
     gen_python_files,
     get_gitignore,
-    get_root_relative_path,
     parse_pyproject_toml,
     path_is_excluded,
     resolves_outside_root_or_cannot_stat,
@@ -734,6 +734,7 @@ def get_sources(
     """Compute the set of files to be formatted."""
     sources: Set[Path] = set()
 
+    assert root.is_absolute(), f"INTERNAL ERROR: `root` must be absolute but is {root}"
     using_default_exclude = exclude is None
     exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES) if exclude is None else exclude
     gitignore: Optional[Dict[Path, PathSpec]] = None
@@ -749,11 +750,12 @@ def get_sources(
 
         # Compare the logic here to the logic in `gen_python_files`.
         if is_stdin or path.is_file():
-            root_relative_path = get_root_relative_path(path, root, report)
-
-            if root_relative_path is None:
+            if resolves_outside_root_or_cannot_stat(path, root, report):
+                if verbose:
+                    out(f'Skipping invalid source: "{path}"', fg="red")
                 continue
 
+            root_relative_path = best_effort_relative_path(path, root).as_posix()
             root_relative_path = "/" + root_relative_path
 
             # Hard-exclude any files that matches the `--force-exclude` regex.
@@ -761,11 +763,6 @@ def get_sources(
                 report.path_ignored(
                     path, "matches the --force-exclude regular expression"
                 )
-                continue
-
-            if resolves_outside_root_or_cannot_stat(path, root, report):
-                if verbose:
-                    out(f'Skipping invalid source: "{path}"', fg="red")
                 continue
 
             if is_stdin:

@@ -24,6 +24,7 @@
 
 ### Configuration
 
+- Fix issue where _Black_ would ignore input files in the presence of symlinks (#4222)
 - _Black_ now ignores `pyproject.toml` that is missing a `tool.black` section when
   discovering project root and configuration. Since _Black_ continues to use version
   control as an indicator of project root, this is expected to primarily change behavior

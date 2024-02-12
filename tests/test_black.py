@@ -2567,32 +2567,32 @@ class TestFileCollection:
         gitignore = PathSpec.from_lines("gitwildmatch", [])
 
         regular = MagicMock()
-        regular.absolute.return_value = root / "regular.py"
+        regular.relative_to.return_value = Path("regular.py")
         regular.resolve.return_value = root / "regular.py"
         regular.is_dir.return_value = False
         regular.is_file.return_value = True
 
         outside_root_symlink = MagicMock()
-        outside_root_symlink.absolute.return_value = root / "symlink.py"
+        outside_root_symlink.relative_to.return_value = Path("symlink.py")
         outside_root_symlink.resolve.return_value = Path("/nowhere")
         outside_root_symlink.is_dir.return_value = False
         outside_root_symlink.is_file.return_value = True
 
         ignored_symlink = MagicMock()
-        ignored_symlink.absolute.return_value = root / ".mypy_cache" / "symlink.py"
+        ignored_symlink.relative_to.return_value = Path(".mypy_cache") / "symlink.py"
         ignored_symlink.is_dir.return_value = False
         ignored_symlink.is_file.return_value = True
 
         # A symlink that has an excluded name, but points to an included name
         symlink_excluded_name = MagicMock()
-        symlink_excluded_name.absolute.return_value = root / "excluded_name"
+        symlink_excluded_name.relative_to.return_value = Path("excluded_name")
         symlink_excluded_name.resolve.return_value = root / "included_name.py"
         symlink_excluded_name.is_dir.return_value = False
         symlink_excluded_name.is_file.return_value = True
 
         # A symlink that has an included name, but points to an excluded name
         symlink_included_name = MagicMock()
-        symlink_included_name.absolute.return_value = root / "included_name.py"
+        symlink_included_name.relative_to.return_value = Path("included_name.py")
         symlink_included_name.resolve.return_value = root / "excluded_name"
         symlink_included_name.is_dir.return_value = False
         symlink_included_name.is_file.return_value = True
@@ -2626,39 +2626,100 @@ class TestFileCollection:
         outside_root_symlink.resolve.assert_called_once()
         ignored_symlink.resolve.assert_not_called()
 
+    def test_get_sources_symlink_and_force_exclude(self) -> None:
+        with TemporaryDirectory() as tempdir:
+            tmp = Path(tempdir).resolve()
+            actual = tmp / "actual"
+            actual.mkdir()
+            symlink = tmp / "symlink"
+            symlink.symlink_to(actual)
+
+            actual_proj = actual / "project"
+            actual_proj.mkdir()
+            (actual_proj / "module.py").write_text("print('hello')", encoding="utf-8")
+
+            symlink_proj = symlink / "project"
+
+            with change_directory(symlink_proj):
+                assert_collected_sources(
+                    src=["module.py"],
+                    root=symlink_proj.resolve(),
+                    expected=["module.py"],
+                )
+
+                absolute_module = symlink_proj / "module.py"
+                assert_collected_sources(
+                    src=[absolute_module],
+                    root=symlink_proj.resolve(),
+                    expected=[absolute_module],
+                )
+
+                # a few tricky tests for force_exclude
+                flat_symlink = symlink_proj / "symlink_module.py"
+                flat_symlink.symlink_to(actual_proj / "module.py")
+                assert_collected_sources(
+                    src=[flat_symlink],
+                    root=symlink_proj.resolve(),
+                    force_exclude=r"/symlink_module.py",
+                    expected=[],
+                )
+
+                target = actual_proj / "target"
+                target.mkdir()
+                (target / "another.py").write_text("print('hello')", encoding="utf-8")
+                (symlink_proj / "nested").symlink_to(target)
+
+                assert_collected_sources(
+                    src=[symlink_proj / "nested" / "another.py"],
+                    root=symlink_proj.resolve(),
+                    force_exclude=r"nested",
+                    expected=[],
+                )
+                assert_collected_sources(
+                    src=[symlink_proj / "nested" / "another.py"],
+                    root=symlink_proj.resolve(),
+                    force_exclude=r"target",
+                    expected=[symlink_proj / "nested" / "another.py"],
+                )
+
     def test_get_sources_with_stdin_symlink_outside_root(
         self,
     ) -> None:
         path = THIS_DIR / "data" / "include_exclude_tests"
         stdin_filename = str(path / "b/exclude/a.py")
         outside_root_symlink = Path("/target_directory/a.py")
+        root = Path("target_dir/").resolve().absolute()
         with patch("pathlib.Path.resolve", return_value=outside_root_symlink):
             assert_collected_sources(
-                root=Path("target_directory/"),
+                root=root,
                 src=["-"],
                 expected=[],
                 stdin_filename=stdin_filename,
             )
 
-    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_get_sources_with_stdin(self) -> None:
         src = ["-"]
         expected = ["-"]
-        assert_collected_sources(src, expected, include="", exclude=r"/exclude/|a\.py")
+        assert_collected_sources(
+            src,
+            root=THIS_DIR.resolve(),
+            expected=expected,
+            include="",
+            exclude=r"/exclude/|a\.py",
+        )
 
-    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_get_sources_with_stdin_filename(self) -> None:
         src = ["-"]
         stdin_filename = str(THIS_DIR / "data/collections.py")
         expected = [f"__BLACK_STDIN_FILENAME__{stdin_filename}"]
         assert_collected_sources(
             src,
-            expected,
+            root=THIS_DIR.resolve(),
+            expected=expected,
             exclude=r"/exclude/a\.py",
             stdin_filename=stdin_filename,
         )
 
-    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_get_sources_with_stdin_filename_and_exclude(self) -> None:
         # Exclude shouldn't exclude stdin_filename since it is mimicking the
         # file being passed directly. This is the same as
@@ -2669,12 +2730,12 @@ class TestFileCollection:
         expected = [f"__BLACK_STDIN_FILENAME__{stdin_filename}"]
         assert_collected_sources(
             src,
-            expected,
+            root=THIS_DIR.resolve(),
+            expected=expected,
             exclude=r"/exclude/|a\.py",
             stdin_filename=stdin_filename,
         )
 
-    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_get_sources_with_stdin_filename_and_extend_exclude(self) -> None:
         # Extend exclude shouldn't exclude stdin_filename since it is mimicking the
         # file being passed directly. This is the same as
@@ -2685,12 +2746,12 @@ class TestFileCollection:
         expected = [f"__BLACK_STDIN_FILENAME__{stdin_filename}"]
         assert_collected_sources(
             src,
-            expected,
+            root=THIS_DIR.resolve(),
+            expected=expected,
             extend_exclude=r"/exclude/|a\.py",
             stdin_filename=stdin_filename,
         )
 
-    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_get_sources_with_stdin_filename_and_force_exclude(self) -> None:
         # Force exclude should exclude the file when passing it through
         # stdin_filename
@@ -2698,27 +2759,32 @@ class TestFileCollection:
         stdin_filename = str(path / "b/exclude/a.py")
         assert_collected_sources(
             src=["-"],
+            root=THIS_DIR.resolve(),
             expected=[],
             force_exclude=r"/exclude/|a\.py",
             stdin_filename=stdin_filename,
         )
 
-    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_get_sources_with_stdin_filename_and_force_exclude_and_symlink(
         self,
     ) -> None:
         # Force exclude should exclude a symlink based on the symlink, not its target
-        path = THIS_DIR / "data" / "include_exclude_tests"
-        stdin_filename = str(path / "symlink.py")
-        expected = [f"__BLACK_STDIN_FILENAME__{stdin_filename}"]
-        target = path / "b/exclude/a.py"
-        with patch("pathlib.Path.resolve", return_value=target):
-            assert_collected_sources(
-                src=["-"],
-                expected=expected,
-                force_exclude=r"exclude/a\.py",
-                stdin_filename=stdin_filename,
-            )
+        with TemporaryDirectory() as tempdir:
+            tmp = Path(tempdir).resolve()
+            (tmp / "exclude").mkdir()
+            (tmp / "exclude" / "a.py").write_text("print('hello')", encoding="utf-8")
+            (tmp / "symlink.py").symlink_to(tmp / "exclude" / "a.py")
+
+            stdin_filename = str(tmp / "symlink.py")
+            expected = [f"__BLACK_STDIN_FILENAME__{stdin_filename}"]
+            with change_directory(tmp):
+                assert_collected_sources(
+                    src=["-"],
+                    root=tmp,
+                    expected=expected,
+                    force_exclude=r"exclude/a\.py",
+                    stdin_filename=stdin_filename,
+                )
 
 
 class TestDeFactoAPI:
