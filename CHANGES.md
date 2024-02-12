@@ -22,23 +22,18 @@
   simply add an empty `[tool.black]` to the previously discovered `pyproject.toml`
   (#4204)
 
-
 ### Output
-
 
 - Black will swallow any `SyntaxWarning`s or `DeprecationWarning`s produced by the `ast`
   module when performing equivalence checks (#4189)
 
 ### _Blackd_
 
-
 ### Integrations
-
 
 - Add a JSONSchema and provide a validate-pyproject entry-point (#4181)
 
 ### Documentation
-
 
 ## 24.1.1
 
