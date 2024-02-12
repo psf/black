@@ -245,6 +245,7 @@ def normalize_string_quotes(s: str) -> str:
 
     return f"{prefix}{new_quote}{new_body}{new_quote}"
 
+
 def normalize_fstring_quotes(
     quote: str,
     middles: List[Leaf],
@@ -289,7 +290,6 @@ def normalize_fstring_quotes(
         new_segment = sub_twice(escaped_orig_quote, rf"\1\2{quote}", new_segment)
         new_segment = sub_twice(unescaped_new_quote, rf"\1\\{new_quote}", new_segment)
         new_segments.append(new_segment)
-
 
     if new_quote == '"""' and new_segments[-1].endswith('"'):
         # edge case:

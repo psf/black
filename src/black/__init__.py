@@ -73,7 +73,6 @@ from black.nodes import (
     STARS,
     is_number_token,
     is_simple_decorator_expression,
-    is_string_token,
     syms,
 )
 from black.output import color_diff, diff, dump_to_file, err, ipynb_diff, out
@@ -81,7 +80,6 @@ from black.parsing import InvalidInput  # noqa F401
 from black.parsing import lib2to3_parse, parse_ast, stringify_ast
 from black.ranges import adjusted_lines, convert_unchanged_lines, parse_line_ranges
 from black.report import Changed, NothingChanged, Report
-from black.trans import iter_fexpr_spans
 from blib2to3.pgen2 import token
 from blib2to3.pytree import Leaf, Node
 

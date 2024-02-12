@@ -544,7 +544,6 @@ def is_arith_like(node: LN) -> bool:
     }
 
 
-
 def is_docstring(node: NL, mode: Mode) -> bool:
     if isinstance(node, Leaf):
         if node.type != token.STRING:
@@ -956,10 +955,6 @@ def is_lpar_token(nl: NL) -> TypeGuard[Leaf]:
 
 def is_rpar_token(nl: NL) -> TypeGuard[Leaf]:
     return nl.type == token.RPAR
-
-
-def is_string_token(nl: NL) -> TypeGuard[Leaf]:
-    return nl.type == token.STRING
 
 
 def is_number_token(nl: NL) -> TypeGuard[Leaf]:
