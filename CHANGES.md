@@ -2,6 +2,8 @@
 
 ## 24.2.0
 
+### Stable style
+
 - Fixed a bug where comments where mistakenly removed along with redundant parentheses
   (#4218)
 
