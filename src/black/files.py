@@ -43,6 +43,17 @@ if TYPE_CHECKING:
 
 
 @lru_cache
+def _load_toml(path: Union[Path, str]) -> Dict[str, Any]:
+    with open(path, "rb") as f:
+        return tomllib.load(f)
+
+
+@lru_cache
+def _cached_resolve(path: Path) -> Path:
+    return path.resolve()
+
+
+@lru_cache
 def find_project_root(
     srcs: Sequence[str], stdin_filename: Optional[str] = None
 ) -> Tuple[Path, str]:
@@ -61,9 +72,9 @@ def find_project_root(
     if stdin_filename is not None:
         srcs = tuple(stdin_filename if s == "-" else s for s in srcs)
     if not srcs:
-        srcs = [str(Path.cwd().resolve())]
+        srcs = [str(_cached_resolve(Path.cwd()))]
 
-    path_srcs = [Path(Path.cwd(), src).resolve() for src in srcs]
+    path_srcs = [_cached_resolve(Path(Path.cwd(), src)) for src in srcs]
 
     # A list of lists of parents for each 'src'. 'src' is included as a
     # "parent" of itself if it is a directory
@@ -84,7 +95,9 @@ def find_project_root(
             return directory, ".hg directory"
 
         if (directory / "pyproject.toml").is_file():
-            return directory, "pyproject.toml"
+            pyproject_toml = _load_toml(directory / "pyproject.toml")
+            if "black" in pyproject_toml.get("tool", {}):
+                return directory, "pyproject.toml"
 
     return directory, "file system root"
 
@@ -117,8 +130,7 @@ def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
 
     If parsing fails, will raise a tomllib.TOMLDecodeError.
     """
-    with open(path_config, "rb") as f:
-        pyproject_toml = tomllib.load(f)
+    pyproject_toml = _load_toml(path_config)
     config: Dict[str, Any] = pyproject_toml.get("tool", {}).get("black", {})
     config = {k.replace("--", "").replace("-", "_"): v for k, v in config.items()}
 
@@ -131,7 +143,7 @@ def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
 
 
 def infer_target_version(
-    pyproject_toml: Dict[str, Any]
+    pyproject_toml: Dict[str, Any],
 ) -> Optional[List[TargetVersion]]:
     """Infer Black's target version from the project metadata in pyproject.toml.
 
@@ -229,7 +241,7 @@ def find_user_pyproject_toml() -> Path:
     else:
         config_root = os.environ.get("XDG_CONFIG_HOME", "~/.config")
         user_config_path = Path(config_root).expanduser() / "black"
-    return user_config_path.resolve()
+    return _cached_resolve(user_config_path)
 
 
 @lru_cache
@@ -247,33 +259,43 @@ def get_gitignore(root: Path) -> PathSpec:
         raise
 
 
-def normalize_path_maybe_ignore(
+def resolves_outside_root_or_cannot_stat(
     path: Path,
     root: Path,
     report: Optional[Report] = None,
-) -> Optional[str]:
-    """Normalize `path`. May return `None` if `path` was ignored.
-
-    `report` is where "path ignored" output goes.
+) -> bool:
+    """
+    Returns whether the path is a symbolic link that points outside the
+    root directory. Also returns True if we failed to resolve the path.
     """
     try:
-        abspath = path if path.is_absolute() else Path.cwd() / path
-        normalized_path = abspath.resolve()
-        try:
-            root_relative_path = normalized_path.relative_to(root).as_posix()
-        except ValueError:
-            if report:
-                report.path_ignored(
-                    path, f"is a symbolic link that points outside {root}"
-                )
-            return None
-
+        if sys.version_info < (3, 8, 6):
+            path = path.absolute()  # https://bugs.python.org/issue33660
+        resolved_path = _cached_resolve(path)
     except OSError as e:
         if report:
             report.path_ignored(path, f"cannot be read because {e}")
-        return None
+        return True
+    try:
+        resolved_path.relative_to(root)
+    except ValueError:
+        if report:
+            report.path_ignored(path, f"is a symbolic link that points outside {root}")
+        return True
+    return False
 
-    return root_relative_path
+
+def best_effort_relative_path(path: Path, root: Path) -> Path:
+    # Precondition: resolves_outside_root_or_cannot_stat(path, root) is False
+    try:
+        return path.absolute().relative_to(root)
+    except ValueError:
+        pass
+    root_parent = next((p for p in path.parents if _cached_resolve(p) == root), None)
+    if root_parent is not None:
+        return path.relative_to(root_parent)
+    # something adversarial, fallback to path guaranteed by precondition
+    return _cached_resolve(path).relative_to(root)
 
 
 def _path_is_ignored(
@@ -326,7 +348,8 @@ def gen_python_files(
 
     assert root.is_absolute(), f"INTERNAL ERROR: `root` must be absolute but is {root}"
     for child in paths:
-        root_relative_path = child.absolute().relative_to(root).as_posix()
+        assert child.is_absolute()
+        root_relative_path = child.relative_to(root).as_posix()
 
         # First ignore files matching .gitignore, if passed
         if gitignore_dict and _path_is_ignored(
@@ -354,8 +377,7 @@ def gen_python_files(
             report.path_ignored(child, "matches the --force-exclude regular expression")
             continue
 
-        normalized_path = normalize_path_maybe_ignore(child, root, report)
-        if normalized_path is None:
+        if resolves_outside_root_or_cannot_stat(child, root, report):
             continue
 
         if child.is_dir():

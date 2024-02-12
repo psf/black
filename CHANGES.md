@@ -10,24 +10,30 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fixed a bug where comments where mistakenly removed along with redundant parentheses
+  (#4218)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
-- Fix comment handling when parenthesising conditional expressions (#4134)
-- Format module docstrings the same as class and function docstrings (#4095)
-- Fix bug where spaces were not added around parenthesized walruses in subscripts,
-  unlike other binary operators (#4109)
-- Remove empty lines before docstrings in async functions (#4132)
-- Address a missing case in the change to allow empty lines at the beginning of all
-  blocks, except immediately before a docstring (#4130)
-- For stubs, fix logic to enforce empty line after nested classes with bodies (#4141)
+- Move the `hug_parens_with_braces_and_square_brackets` feature to the unstable style
+  due to an outstanding crash and proposed formatting tweaks (#4198)
+- Fixed a bug where base expressions caused inconsistent formatting of \*\* in tenary
+  expression (#4154)
+- Checking for newline before adding one on docstring that is almost at the line limit
+  (#4185)
+- Remove redundant parentheses in `case` statement `if` guards (#4214).
 
 ### Configuration
 
-<!-- Changes to how Black can be configured -->
-
-- Fix cache mtime logic that resulted in false positive cache hits (#4128)
+- Fix issue where _Black_ would ignore input files in the presence of symlinks (#4222)
+- _Black_ now ignores `pyproject.toml` that is missing a `tool.black` section when
+  discovering project root and configuration. Since _Black_ continues to use version
+  control as an indicator of project root, this is expected to primarily change behavior
+  for users in a monorepo setup (desirably). If you wish to preserve previous behavior,
+  simply add an empty `[tool.black]` to the previously discovered `pyproject.toml`
+  (#4204)
 
 ### Packaging
 
@@ -45,6 +51,9 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Black will swallow any `SyntaxWarning`s or `DeprecationWarning`s produced by the `ast`
+  module when performing equivalence checks (#4189)
+
 ### _Blackd_
 
 <!-- Changes to blackd -->
@@ -53,13 +62,106 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
-- Revert the change to run Black's pre-commit integration only on specific git hooks
-  (#3940) for better compatibility with older versions of pre-commit (#4137)
+- Add a JSONSchema and provide a validate-pyproject entry-point (#4181)
 
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
+
+## 24.1.1
+
+Bugfix release to fix a bug that made Black unusable on certain file systems with strict
+limits on path length.
+
+### Preview style
+
+- Consistently add trailing comma on typed parameters (#4164)
+
+### Configuration
+
+- Shorten the length of the name of the cache file to fix crashes on file systems that
+  do not support long paths (#4176)
+
+## 24.1.0
+
+### Highlights
+
+This release introduces the new 2024 stable style (#4106), stabilizing the following
+changes:
+
+- Add parentheses around `if`-`else` expressions (#2278)
+- Dummy class and function implementations consisting only of `...` are formatted more
+  compactly (#3796)
+- If an assignment statement is too long, we now prefer splitting on the right-hand side
+  (#3368)
+- Hex codes in Unicode escape sequences are now standardized to lowercase (#2916)
+- Allow empty first lines at the beginning of most blocks (#3967, #4061)
+- Add parentheses around long type annotations (#3899)
+- Enforce newline after module docstrings (#3932, #4028)
+- Fix incorrect magic trailing comma handling in return types (#3916)
+- Remove blank lines before class docstrings (#3692)
+- Wrap multiple context managers in parentheses if combined in a single `with` statement
+  (#3489)
+- Fix bug in line length calculations for power operations (#3942)
+- Add trailing commas to collection literals even if there's a comment after the last
+  entry (#3393)
+- When using `--skip-magic-trailing-comma` or `-C`, trailing commas are stripped from
+  subscript expressions with more than 1 element (#3209)
+- Add extra blank lines in stubs in a few cases (#3564, #3862)
+- Accept raw strings as docstrings (#3947)
+- Split long lines in case blocks (#4024)
+- Stop removing spaces from walrus operators within subscripts (#3823)
+- Fix incorrect formatting of certain async statements (#3609)
+- Allow combining `# fmt: skip` with other comments (#3959)
+
+There are already a few improvements in the `--preview` style, which are slated for the
+2025 stable style. Try them out and
+[share your feedback](https://github.com/psf/black/issues). In the past, the preview
+style has included some features that we were not able to stabilize. This year, we're
+adding a separate `--unstable` style for features with known problems. Now, the
+`--preview` style only includes features that we actually expect to make it into next
+year's stable style.
+
+### Stable style
+
+Several bug fixes were made in features that are moved to the stable style in this
+release:
+
+- Fix comment handling when parenthesising conditional expressions (#4134)
+- Fix bug where spaces were not added around parenthesized walruses in subscripts,
+  unlike other binary operators (#4109)
+- Remove empty lines before docstrings in async functions (#4132)
+- Address a missing case in the change to allow empty lines at the beginning of all
+  blocks, except immediately before a docstring (#4130)
+- For stubs, fix logic to enforce empty line after nested classes with bodies (#4141)
+
+### Preview style
+
+- Add `--unstable` style, covering preview features that have known problems that would
+  block them from going into the stable style. Also add the `--enable-unstable-feature`
+  flag; for example, use
+  `--enable-unstable-feature hug_parens_with_braces_and_square_brackets` to apply this
+  preview feature throughout 2024, even if a later Black release downgrades the feature
+  to unstable (#4096)
+- Format module docstrings the same as class and function docstrings (#4095)
+- Fix crash when using a walrus in a dictionary (#4155)
+- Fix unnecessary parentheses when wrapping long dicts (#4135)
+- Stop normalizing spaces before `# fmt: skip` comments (#4146)
+
+### Configuration
+
+- Print warning when configuration in `pyproject.toml` contains an invalid key (#4165)
+- Fix symlink handling, properly ignoring symlinks that point outside of root (#4161)
+- Fix cache mtime logic that resulted in false positive cache hits (#4128)
+- Remove the long-deprecated `--experimental-string-processing` flag. This feature can
+  currently be enabled with `--preview --enable-unstable-feature string_processing`.
+  (#4096)
+
+### Integrations
+
+- Revert the change to run Black's pre-commit integration only on specific git hooks
+  (#3940) for better compatibility with older versions of pre-commit (#4137)
 
 ## 23.12.1
 

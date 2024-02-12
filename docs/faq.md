@@ -41,9 +41,10 @@ other tools, such as `# noqa`, may be moved by _Black_. See below for more detai
 Stable. _Black_ aims to enforce one style and one style only, with some room for
 pragmatism. See [The Black Code Style](the_black_code_style/index.md) for more details.
 
-Starting in 2022, the formatting output will be stable for the releases made in the same
-year (other than unintentional bugs). It is possible to opt-in to the latest formatting
-styles, using the `--preview` flag.
+Starting in 2022, the formatting output is stable for the releases made in the same year
+(other than unintentional bugs). At the beginning of every year, the first release will
+make changes to the stable style. It is possible to opt in to the latest formatting
+styles using the `--preview` flag.
 
 ## Why is my file not formatted?
 
@@ -76,13 +77,10 @@ following will not be formatted:
 - invalid syntax, as it can't be safely distinguished from automagics in the absence of
   a running `IPython` kernel.
 
-## Why are Flake8's E203 and W503 violated?
+## Why does Flake8 report warnings?
 
-Because they go against PEP 8. E203 falsely triggers on list
-[slices](the_black_code_style/current_style.md#slices), and adhering to W503 hinders
-readability because operators are misaligned. Disable W503 and enable the
-disabled-by-default counterpart W504. E203 should be disabled while changes are still
-[discussed](https://github.com/PyCQA/pycodestyle/issues/373).
+Some of Flake8's rules conflict with Black's style. We recommend disabling these rules.
+See [Using _Black_ with other tools](labels/why-pycodestyle-warnings).
 
 ## Which Python versions does Black support?
 

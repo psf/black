@@ -44,6 +44,7 @@ from black import Feature, TargetVersion
 from black import re_compile_maybe_verbose as compile_pattern
 from black.cache import FileData, get_cache_dir, get_cache_file
 from black.debug import DebugVisitor
+from black.mode import Mode, Preview
 from black.output import color_diff, diff
 from black.report import Report
 
@@ -106,6 +107,7 @@ class FakeContext(click.Context):
     def __init__(self) -> None:
         self.default_map: Dict[str, Any] = {}
         self.params: Dict[str, Any] = {}
+        self.command: click.Command = black.main
         # Dummy root, since most of the tests don't care about it
         self.obj: Dict[str, Any] = {"root": PROJECT_ROOT}
 
@@ -157,13 +159,11 @@ class BlackTestCase(BlackBaseTestCase):
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_one_empty_line(self) -> None:
-        mode = black.Mode(preview=True)
         for nl in ["\n", "\r\n"]:
             source = expected = nl
-            assert_format(source, expected, mode=mode)
+            assert_format(source, expected)
 
     def test_one_empty_line_ff(self) -> None:
-        mode = black.Mode(preview=True)
         for nl in ["\n", "\r\n"]:
             expected = nl
             tmp_file = Path(black.dump_to_file(nl))
@@ -174,19 +174,12 @@ class BlackTestCase(BlackBaseTestCase):
                 with open(tmp_file, "wb") as f:
                     f.write(nl.encode("utf-8"))
             try:
-                self.assertFalse(
-                    ff(tmp_file, mode=mode, write_back=black.WriteBack.YES)
-                )
+                self.assertFalse(ff(tmp_file, write_back=black.WriteBack.YES))
                 with open(tmp_file, "rb") as f:
                     actual = f.read().decode("utf-8")
             finally:
                 os.unlink(tmp_file)
             self.assertFormatEqual(expected, actual)
-
-    def test_experimental_string_processing_warns(self) -> None:
-        self.assertWarns(
-            black.mode.Deprecated, black.Mode, experimental_string_processing=True
-        )
 
     def test_piping(self) -> None:
         _, source, expected = read_data_from_file(
@@ -250,21 +243,6 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertIn("\033[32m", actual)
         self.assertIn("\033[31m", actual)
         self.assertIn("\033[0m", actual)
-
-    @patch("black.dump_to_file", dump_to_stderr)
-    def _test_wip(self) -> None:
-        source, expected = read_data("miscellaneous", "wip")
-        sys.settrace(tracefunc)
-        mode = replace(
-            DEFAULT_MODE,
-            experimental_string_processing=False,
-            target_versions={black.TargetVersion.PY38},
-        )
-        actual = fs(source, mode=mode)
-        sys.settrace(None)
-        self.assertFormatEqual(expected, actual)
-        black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, black.FileMode())
 
     def test_pep_572_version_detection(self) -> None:
         source, _ = read_data("cases", "pep_572")
@@ -372,7 +350,7 @@ class BlackTestCase(BlackBaseTestCase):
     @patch("black.dump_to_file", dump_to_stderr)
     def test_string_quotes(self) -> None:
         source, expected = read_data("miscellaneous", "string_quotes")
-        mode = black.Mode(preview=True)
+        mode = black.Mode(unstable=True)
         assert_format(source, expected, mode)
         mode = replace(mode, string_normalization=False)
         not_normalized = fs(source, mode=mode)
@@ -1050,7 +1028,6 @@ class BlackTestCase(BlackBaseTestCase):
             black.format_file_contents(invalid, mode=mode, fast=False)
         self.assertEqual(str(e.exception), "Cannot parse: 1:7: return if you can")
 
-        mode = black.Mode(preview=True)
         just_crlf = "\r\n"
         with self.assertRaises(black.NothingChanged):
             black.format_file_contents(just_crlf, mode=mode, fast=False)
@@ -1394,7 +1371,6 @@ class BlackTestCase(BlackBaseTestCase):
 
             return get_output
 
-        mode = black.Mode(preview=True)
         for content, expected in cases:
             output = io.StringIO()
             io_TextIOWrapper = io.TextIOWrapper
@@ -1405,26 +1381,27 @@ class BlackTestCase(BlackBaseTestCase):
                         fast=True,
                         content=content,
                         write_back=black.WriteBack.YES,
-                        mode=mode,
+                        mode=DEFAULT_MODE,
                     )
                 except io.UnsupportedOperation:
                     pass  # StringIO does not support detach
                 assert output.getvalue() == expected
 
-        # An empty string is the only test case for `preview=False`
-        output = io.StringIO()
-        io_TextIOWrapper = io.TextIOWrapper
-        with patch("io.TextIOWrapper", _new_wrapper(output, io_TextIOWrapper)):
-            try:
-                black.format_stdin_to_stdout(
-                    fast=True,
-                    content="",
-                    write_back=black.WriteBack.YES,
-                    mode=DEFAULT_MODE,
-                )
-            except io.UnsupportedOperation:
-                pass  # StringIO does not support detach
-            assert output.getvalue() == ""
+    def test_cli_unstable(self) -> None:
+        self.invokeBlack(["--unstable", "-c", "0"], exit_code=0)
+        self.invokeBlack(["--preview", "-c", "0"], exit_code=0)
+        # Must also pass --preview
+        self.invokeBlack(
+            ["--enable-unstable-feature", "string_processing", "-c", "0"], exit_code=1
+        )
+        self.invokeBlack(
+            ["--preview", "--enable-unstable-feature", "string_processing", "-c", "0"],
+            exit_code=0,
+        )
+        self.invokeBlack(
+            ["--unstable", "--enable-unstable-feature", "string_processing", "-c", "0"],
+            exit_code=0,
+        )
 
     def test_invalid_cli_regex(self) -> None:
         for option in ["--include", "--exclude", "--extend-exclude", "--force-exclude"]:
@@ -1536,6 +1513,22 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(config["python_cell_magics"], ["custom1", "custom2"])
         self.assertEqual(config["exclude"], r"\.pyi?$")
         self.assertEqual(config["include"], r"\.py?$")
+
+    def test_spellcheck_pyproject_toml(self) -> None:
+        test_toml_file = THIS_DIR / "data" / "incorrect_spelling.toml"
+        result = BlackRunner().invoke(
+            black.main,
+            [
+                "--code=print('hello world')",
+                "--verbose",
+                f"--config={str(test_toml_file)}",
+            ],
+        )
+
+        assert (
+            r"Invalid config keys detected: 'ine_length', 'target_ersion' (in"
+            rf" {test_toml_file})" in result.stderr
+        )
 
     def test_parse_pyproject_toml_project_metadata(self) -> None:
         for test_toml, expected in [
@@ -1674,9 +1667,9 @@ class BlackTestCase(BlackBaseTestCase):
             src_dir.mkdir()
 
             root_pyproject = root / "pyproject.toml"
-            root_pyproject.touch()
+            root_pyproject.write_text("[tool.black]", encoding="utf-8")
             src_pyproject = src_dir / "pyproject.toml"
-            src_pyproject.touch()
+            src_pyproject.write_text("[tool.black]", encoding="utf-8")
             src_python = src_dir / "foo.py"
             src_python.touch()
 
@@ -1698,6 +1691,20 @@ class BlackTestCase(BlackBaseTestCase):
                     black.find_project_root(("-",), stdin_filename="../src/a.py"),
                     (src_dir.resolve(), "pyproject.toml"),
                 )
+
+            src_sub = src_dir / "sub"
+            src_sub.mkdir()
+
+            src_sub_pyproject = src_sub / "pyproject.toml"
+            src_sub_pyproject.touch()  # empty
+
+            src_sub_python = src_sub / "bar.py"
+
+            # we skip src_sub_pyproject since it is missing the [tool.black] section
+            self.assertEqual(
+                black.find_project_root((src_sub_python,)),
+                (src_dir.resolve(), "pyproject.toml"),
+            )
 
     @patch(
         "black.files.find_user_pyproject_toml",
@@ -1752,12 +1759,15 @@ class BlackTestCase(BlackBaseTestCase):
             return
 
         # https://bugs.python.org/issue33660
+        # Can be removed when we drop support for Python 3.8.5
         root = Path("/")
         with change_directory(root):
             path = Path("workspace") / "project"
             report = black.Report(verbose=True)
-            normalized_path = black.normalize_path_maybe_ignore(path, root, report)
-            self.assertEqual(normalized_path, "workspace/project")
+            resolves_outside = black.resolves_outside_root_or_cannot_stat(
+                path, root, report
+            )
+            self.assertIs(resolves_outside, False)
 
     def test_normalize_path_ignore_windows_junctions_outside_of_root(self) -> None:
         if system() != "Windows":
@@ -1770,13 +1780,13 @@ class BlackTestCase(BlackBaseTestCase):
             os.system(f"mklink /J {junction_dir} {junction_target_outside_of_root}")
 
             report = black.Report(verbose=True)
-            normalized_path = black.normalize_path_maybe_ignore(
+            resolves_outside = black.resolves_outside_root_or_cannot_stat(
                 junction_dir, root, report
             )
             # Manually delete for Python < 3.8
             os.system(f"rmdir {junction_dir}")
 
-            self.assertEqual(normalized_path, None)
+            self.assertIs(resolves_outside, True)
 
     def test_newline_comment_interaction(self) -> None:
         source = "class A:\\\r\n# type: ignore\n pass\n"
@@ -2071,6 +2081,30 @@ class TestCaching:
         # If it is set, use the path provided in the env var.
         monkeypatch.setenv("BLACK_CACHE_DIR", str(workspace2))
         assert get_cache_dir().parent == workspace2
+
+    def test_cache_file_length(self) -> None:
+        cases = [
+            DEFAULT_MODE,
+            # all of the target versions
+            Mode(target_versions=set(TargetVersion)),
+            # all of the features
+            Mode(enabled_features=set(Preview)),
+            # all of the magics
+            Mode(python_cell_magics={f"magic{i}" for i in range(500)}),
+            # all of the things
+            Mode(
+                target_versions=set(TargetVersion),
+                enabled_features=set(Preview),
+                python_cell_magics={f"magic{i}" for i in range(500)},
+            ),
+        ]
+        for case in cases:
+            cache_file = get_cache_file(case)
+            # Some common file systems enforce a maximum path length
+            # of 143 (issue #4174). We can't do anything if the directory
+            # path is too long, but ensure the name of the cache file itself
+            # doesn't get too crazy.
+            assert len(cache_file.name) <= 96
 
     def test_cache_broken_file(self) -> None:
         mode = DEFAULT_MODE
@@ -2532,32 +2566,32 @@ class TestFileCollection:
         gitignore = PathSpec.from_lines("gitwildmatch", [])
 
         regular = MagicMock()
-        regular.absolute.return_value = root / "regular.py"
+        regular.relative_to.return_value = Path("regular.py")
         regular.resolve.return_value = root / "regular.py"
         regular.is_dir.return_value = False
         regular.is_file.return_value = True
 
         outside_root_symlink = MagicMock()
-        outside_root_symlink.absolute.return_value = root / "symlink.py"
+        outside_root_symlink.relative_to.return_value = Path("symlink.py")
         outside_root_symlink.resolve.return_value = Path("/nowhere")
         outside_root_symlink.is_dir.return_value = False
         outside_root_symlink.is_file.return_value = True
 
         ignored_symlink = MagicMock()
-        ignored_symlink.absolute.return_value = root / ".mypy_cache" / "symlink.py"
+        ignored_symlink.relative_to.return_value = Path(".mypy_cache") / "symlink.py"
         ignored_symlink.is_dir.return_value = False
         ignored_symlink.is_file.return_value = True
 
         # A symlink that has an excluded name, but points to an included name
         symlink_excluded_name = MagicMock()
-        symlink_excluded_name.absolute.return_value = root / "excluded_name"
+        symlink_excluded_name.relative_to.return_value = Path("excluded_name")
         symlink_excluded_name.resolve.return_value = root / "included_name.py"
         symlink_excluded_name.is_dir.return_value = False
         symlink_excluded_name.is_file.return_value = True
 
         # A symlink that has an included name, but points to an excluded name
         symlink_included_name = MagicMock()
-        symlink_included_name.absolute.return_value = root / "included_name.py"
+        symlink_included_name.relative_to.return_value = Path("included_name.py")
         symlink_included_name.resolve.return_value = root / "excluded_name"
         symlink_included_name.is_dir.return_value = False
         symlink_included_name.is_file.return_value = True
@@ -2591,25 +2625,100 @@ class TestFileCollection:
         outside_root_symlink.resolve.assert_called_once()
         ignored_symlink.resolve.assert_not_called()
 
-    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
+    def test_get_sources_symlink_and_force_exclude(self) -> None:
+        with TemporaryDirectory() as tempdir:
+            tmp = Path(tempdir).resolve()
+            actual = tmp / "actual"
+            actual.mkdir()
+            symlink = tmp / "symlink"
+            symlink.symlink_to(actual)
+
+            actual_proj = actual / "project"
+            actual_proj.mkdir()
+            (actual_proj / "module.py").write_text("print('hello')", encoding="utf-8")
+
+            symlink_proj = symlink / "project"
+
+            with change_directory(symlink_proj):
+                assert_collected_sources(
+                    src=["module.py"],
+                    root=symlink_proj.resolve(),
+                    expected=["module.py"],
+                )
+
+                absolute_module = symlink_proj / "module.py"
+                assert_collected_sources(
+                    src=[absolute_module],
+                    root=symlink_proj.resolve(),
+                    expected=[absolute_module],
+                )
+
+                # a few tricky tests for force_exclude
+                flat_symlink = symlink_proj / "symlink_module.py"
+                flat_symlink.symlink_to(actual_proj / "module.py")
+                assert_collected_sources(
+                    src=[flat_symlink],
+                    root=symlink_proj.resolve(),
+                    force_exclude=r"/symlink_module.py",
+                    expected=[],
+                )
+
+                target = actual_proj / "target"
+                target.mkdir()
+                (target / "another.py").write_text("print('hello')", encoding="utf-8")
+                (symlink_proj / "nested").symlink_to(target)
+
+                assert_collected_sources(
+                    src=[symlink_proj / "nested" / "another.py"],
+                    root=symlink_proj.resolve(),
+                    force_exclude=r"nested",
+                    expected=[],
+                )
+                assert_collected_sources(
+                    src=[symlink_proj / "nested" / "another.py"],
+                    root=symlink_proj.resolve(),
+                    force_exclude=r"target",
+                    expected=[symlink_proj / "nested" / "another.py"],
+                )
+
+    def test_get_sources_with_stdin_symlink_outside_root(
+        self,
+    ) -> None:
+        path = THIS_DIR / "data" / "include_exclude_tests"
+        stdin_filename = str(path / "b/exclude/a.py")
+        outside_root_symlink = Path("/target_directory/a.py")
+        root = Path("target_dir/").resolve().absolute()
+        with patch("pathlib.Path.resolve", return_value=outside_root_symlink):
+            assert_collected_sources(
+                root=root,
+                src=["-"],
+                expected=[],
+                stdin_filename=stdin_filename,
+            )
+
     def test_get_sources_with_stdin(self) -> None:
         src = ["-"]
         expected = ["-"]
-        assert_collected_sources(src, expected, include="", exclude=r"/exclude/|a\.py")
+        assert_collected_sources(
+            src,
+            root=THIS_DIR.resolve(),
+            expected=expected,
+            include="",
+            exclude=r"/exclude/|a\.py",
+        )
 
-    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_get_sources_with_stdin_filename(self) -> None:
         src = ["-"]
         stdin_filename = str(THIS_DIR / "data/collections.py")
         expected = [f"__BLACK_STDIN_FILENAME__{stdin_filename}"]
         assert_collected_sources(
             src,
-            expected,
+            root=THIS_DIR.resolve(),
+            expected=expected,
             exclude=r"/exclude/a\.py",
             stdin_filename=stdin_filename,
         )
 
-    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_get_sources_with_stdin_filename_and_exclude(self) -> None:
         # Exclude shouldn't exclude stdin_filename since it is mimicking the
         # file being passed directly. This is the same as
@@ -2620,12 +2729,12 @@ class TestFileCollection:
         expected = [f"__BLACK_STDIN_FILENAME__{stdin_filename}"]
         assert_collected_sources(
             src,
-            expected,
+            root=THIS_DIR.resolve(),
+            expected=expected,
             exclude=r"/exclude/|a\.py",
             stdin_filename=stdin_filename,
         )
 
-    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_get_sources_with_stdin_filename_and_extend_exclude(self) -> None:
         # Extend exclude shouldn't exclude stdin_filename since it is mimicking the
         # file being passed directly. This is the same as
@@ -2636,12 +2745,12 @@ class TestFileCollection:
         expected = [f"__BLACK_STDIN_FILENAME__{stdin_filename}"]
         assert_collected_sources(
             src,
-            expected,
+            root=THIS_DIR.resolve(),
+            expected=expected,
             extend_exclude=r"/exclude/|a\.py",
             stdin_filename=stdin_filename,
         )
 
-    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_get_sources_with_stdin_filename_and_force_exclude(self) -> None:
         # Force exclude should exclude the file when passing it through
         # stdin_filename
@@ -2649,27 +2758,32 @@ class TestFileCollection:
         stdin_filename = str(path / "b/exclude/a.py")
         assert_collected_sources(
             src=["-"],
+            root=THIS_DIR.resolve(),
             expected=[],
             force_exclude=r"/exclude/|a\.py",
             stdin_filename=stdin_filename,
         )
 
-    @patch("black.find_project_root", lambda *args: (THIS_DIR.resolve(), None))
     def test_get_sources_with_stdin_filename_and_force_exclude_and_symlink(
         self,
     ) -> None:
         # Force exclude should exclude a symlink based on the symlink, not its target
-        path = THIS_DIR / "data" / "include_exclude_tests"
-        stdin_filename = str(path / "symlink.py")
-        expected = [f"__BLACK_STDIN_FILENAME__{stdin_filename}"]
-        target = path / "b/exclude/a.py"
-        with patch("pathlib.Path.resolve", return_value=target):
-            assert_collected_sources(
-                src=["-"],
-                expected=expected,
-                force_exclude=r"exclude/a\.py",
-                stdin_filename=stdin_filename,
-            )
+        with TemporaryDirectory() as tempdir:
+            tmp = Path(tempdir).resolve()
+            (tmp / "exclude").mkdir()
+            (tmp / "exclude" / "a.py").write_text("print('hello')", encoding="utf-8")
+            (tmp / "symlink.py").symlink_to(tmp / "exclude" / "a.py")
+
+            stdin_filename = str(tmp / "symlink.py")
+            expected = [f"__BLACK_STDIN_FILENAME__{stdin_filename}"]
+            with change_directory(tmp):
+                assert_collected_sources(
+                    src=["-"],
+                    root=tmp,
+                    expected=expected,
+                    force_exclude=r"exclude/a\.py",
+                    stdin_filename=stdin_filename,
+                )
 
 
 class TestDeFactoAPI:

@@ -29,7 +29,7 @@ from mypy_extensions import trait
 
 from black.comments import contains_pragma_comment
 from black.lines import Line, append_leaves
-from black.mode import Feature, Mode
+from black.mode import Feature, Mode, Preview
 from black.nodes import (
     CLOSING_BRACKETS,
     OPENING_BRACKETS,
@@ -94,43 +94,36 @@ def hug_power_op(
     else:
         raise CannotTransform("No doublestar token was found in the line.")
 
-    def is_simple_lookup(index: int, step: Literal[1, -1]) -> bool:
+    def is_simple_lookup(index: int, kind: Literal[1, -1]) -> bool:
         # Brackets and parentheses indicate calls, subscripts, etc. ...
         # basically stuff that doesn't count as "simple". Only a NAME lookup
         # or dotted lookup (eg. NAME.NAME) is OK.
-        if step == -1:
-            disallowed = {token.RPAR, token.RSQB}
+        if Preview.is_simple_lookup_for_doublestar_expression not in mode:
+            return original_is_simple_lookup_func(line, index, kind)
+
         else:
-            disallowed = {token.LPAR, token.LSQB}
+            if kind == -1:
+                return handle_is_simple_look_up_prev(
+                    line, index, {token.RPAR, token.RSQB}
+                )
+            else:
+                return handle_is_simple_lookup_forward(
+                    line, index, {token.LPAR, token.LSQB}
+                )
 
-        while 0 <= index < len(line.leaves):
-            current = line.leaves[index]
-            if current.type in disallowed:
-                return False
-            if current.type not in {token.NAME, token.DOT} or current.value == "for":
-                # If the current token isn't disallowed, we'll assume this is simple as
-                # only the disallowed tokens are semantically attached to this lookup
-                # expression we're checking. Also, stop early if we hit the 'for' bit
-                # of a comprehension.
-                return True
-
-            index += step
-
-        return True
-
-    def is_simple_operand(index: int, kind: Literal["base", "exponent"]) -> bool:
+    def is_simple_operand(index: int, kind: Literal[1, -1]) -> bool:
         # An operand is considered "simple" if's a NAME, a numeric CONSTANT, a simple
         # lookup (see above), with or without a preceding unary operator.
         start = line.leaves[index]
         if start.type in {token.NAME, token.NUMBER}:
-            return is_simple_lookup(index, step=(1 if kind == "exponent" else -1))
+            return is_simple_lookup(index, kind)
 
         if start.type in {token.PLUS, token.MINUS, token.TILDE}:
             if line.leaves[index + 1].type in {token.NAME, token.NUMBER}:
-                # step is always one as bases with a preceding unary op will be checked
+                # kind is always one as bases with a preceding unary op will be checked
                 # for simplicity starting from the next token (so it'll hit the check
                 # above).
-                return is_simple_lookup(index + 1, step=1)
+                return is_simple_lookup(index + 1, kind=1)
 
         return False
 
@@ -145,9 +138,9 @@ def hug_power_op(
         should_hug = (
             (0 < idx < len(line.leaves) - 1)
             and leaf.type == token.DOUBLESTAR
-            and is_simple_operand(idx - 1, kind="base")
+            and is_simple_operand(idx - 1, kind=-1)
             and line.leaves[idx - 1].value != "lambda"
-            and is_simple_operand(idx + 1, kind="exponent")
+            and is_simple_operand(idx + 1, kind=1)
         )
         if should_hug:
             new_leaf.prefix = ""
@@ -160,6 +153,99 @@ def hug_power_op(
             new_line.append(comment_leaf, preformatted=True)
 
     yield new_line
+
+
+def original_is_simple_lookup_func(
+    line: Line, index: int, step: Literal[1, -1]
+) -> bool:
+    if step == -1:
+        disallowed = {token.RPAR, token.RSQB}
+    else:
+        disallowed = {token.LPAR, token.LSQB}
+
+    while 0 <= index < len(line.leaves):
+        current = line.leaves[index]
+        if current.type in disallowed:
+            return False
+        if current.type not in {token.NAME, token.DOT} or current.value == "for":
+            # If the current token isn't disallowed, we'll assume this is
+            # simple as only the disallowed tokens are semantically
+            # attached to this lookup expression we're checking. Also,
+            # stop early if we hit the 'for' bit of a comprehension.
+            return True
+
+        index += step
+
+    return True
+
+
+def handle_is_simple_look_up_prev(line: Line, index: int, disallowed: Set[int]) -> bool:
+    """
+    Handling the determination of is_simple_lookup for the lines prior to the doublestar
+    token. This is required because of the need to isolate the chained expression
+    to determine the bracket or parenthesis belong to the single expression.
+    """
+    contains_disallowed = False
+    chain = []
+
+    while 0 <= index < len(line.leaves):
+        current = line.leaves[index]
+        chain.append(current)
+        if not contains_disallowed and current.type in disallowed:
+            contains_disallowed = True
+        if not is_expression_chained(chain):
+            return not contains_disallowed
+
+        index -= 1
+
+    return True
+
+
+def handle_is_simple_lookup_forward(
+    line: Line, index: int, disallowed: Set[int]
+) -> bool:
+    """
+    Handling decision is_simple_lookup for the lines behind the doublestar token.
+    This function is simplified to keep consistent with the prior logic and the forward
+    case are more straightforward and do not need to care about chained expressions.
+    """
+    while 0 <= index < len(line.leaves):
+        current = line.leaves[index]
+        if current.type in disallowed:
+            return False
+        if current.type not in {token.NAME, token.DOT} or (
+            current.type == token.NAME and current.value == "for"
+        ):
+            # If the current token isn't disallowed, we'll assume this is simple as
+            # only the disallowed tokens are semantically attached to this lookup
+            # expression we're checking. Also, stop early if we hit the 'for' bit
+            # of a comprehension.
+            return True
+
+        index += 1
+
+    return True
+
+
+def is_expression_chained(chained_leaves: List[Leaf]) -> bool:
+    """
+    Function to determine if the variable is a chained call.
+    (e.g., foo.lookup, foo().lookup, (foo.lookup())) will be recognized as chained call)
+    """
+    if len(chained_leaves) < 2:
+        return True
+
+    current_leaf = chained_leaves[-1]
+    past_leaf = chained_leaves[-2]
+
+    if past_leaf.type == token.NAME:
+        return current_leaf.type in {token.DOT}
+    elif past_leaf.type in {token.RPAR, token.RSQB}:
+        return current_leaf.type in {token.RSQB, token.RPAR}
+    elif past_leaf.type in {token.LPAR, token.LSQB}:
+        return current_leaf.type in {token.NAME, token.LPAR, token.LSQB}
+    else:
+        return False
 
 
 class StringTransformer(ABC):

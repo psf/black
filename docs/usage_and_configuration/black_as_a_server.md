@@ -62,6 +62,12 @@ The headers controlling how source code is formatted are:
 - `X-Preview`: corresponds to the `--preview` command line flag. If present and its
   value is not an empty string, experimental and potentially disruptive style changes
   will be used.
+- `X-Unstable`: corresponds to the `--unstable` command line flag. If present and its
+  value is not an empty string, experimental style changes that are known to be buggy
+  will be used.
+- `X-Enable-Unstable-Feature`: corresponds to the `--enable-unstable-feature` flag. The
+  contents of the flag must be a comma-separated list of unstable features to be
+  enabled. Example: `X-Enable-Unstable-Feature: feature1, feature2`.
 - `X-Fast-Or-Safe`: if set to `fast`, `blackd` will act as _Black_ does when passed the
   `--fast` command line flag.
 - `X-Python-Variant`: if set to `pyi`, `blackd` will act as _Black_ does when passed the

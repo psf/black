@@ -16,10 +16,11 @@ extend-exclude = '''
   | profiling
 )/
 '''
-# We use preview style for formatting Black itself. If you
-# want stable formatting across releases, you should keep
-# this off.
-preview = true
+# We use the unstable style for formatting Black itself. If you
+# want bug-free formatting, you should keep this off. If you want
+# stable formatting across releases, you should also keep `preview = true`
+# (which is implied by this flag) off.
+unstable = true
 
 # Build system information and other project-specific configuration below.
 # NOTE: You don't need this in your own Black configuration.
@@ -87,6 +88,9 @@ jupyter = [
 [project.scripts]
 black = "black:patched_main"
 blackd = "blackd:patched_main [d]"
+
+[project.entry-points."validate_pyproject.tool_schema"]
+black = "black.schema:get_schema"
 
 [project.urls]
 Changelog = "https://github.com/psf/black/blob/main/CHANGES.md"

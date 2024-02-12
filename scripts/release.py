@@ -169,7 +169,9 @@ class SourceFiles:
         calver_parts = base_calver.split(".")
         base_calver = f"{calver_parts[0]}.{int(calver_parts[1])}"  # Remove leading 0
         git_tags = get_git_tags()
-        same_month_releases = [t for t in git_tags if t.startswith(base_calver)]
+        same_month_releases = [
+            t for t in git_tags if t.startswith(base_calver) and "a" not in t
+        ]
         if len(same_month_releases) < 1:
             return f"{base_calver}.0"
         same_month_version = same_month_releases[-1].split(".", 2)[-1]

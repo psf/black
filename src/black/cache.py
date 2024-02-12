@@ -13,6 +13,7 @@ from platformdirs import user_cache_dir
 
 from _black_version import version as __version__
 from black.mode import Mode
+from black.output import err
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -64,7 +65,13 @@ class Cache:
         resolve the issue.
         """
         cache_file = get_cache_file(mode)
-        if not cache_file.exists():
+        try:
+            exists = cache_file.exists()
+        except OSError as e:
+            # Likely file too long; see #4172 and #4174
+            err(f"Unable to read cache file {cache_file} due to {e}")
+            return cls(mode, cache_file)
+        if not exists:
             return cls(mode, cache_file)
 
         with cache_file.open("rb") as fobj:

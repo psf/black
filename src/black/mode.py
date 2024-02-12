@@ -9,7 +9,6 @@ from enum import Enum, auto
 from hashlib import sha256
 from operator import attrgetter
 from typing import Dict, Final, Set
-from warnings import warn
 
 from black.const import DEFAULT_LINE_LENGTH
 
@@ -170,39 +169,38 @@ def supports_feature(target_versions: Set[TargetVersion], feature: Feature) -> b
 class Preview(Enum):
     """Individual preview style features."""
 
-    add_trailing_comma_consistently = auto()
-    blank_line_after_nested_stub_class = auto()
-    blank_line_between_nested_and_def_stub_file = auto()
     hex_codes_in_unicode_sequences = auto()
-    improved_async_statements_handling = auto()
-    multiline_string_handling = auto()
-    no_blank_line_before_class_docstring = auto()
-    prefer_splitting_right_hand_side_of_assignments = auto()
     # NOTE: string_processing requires wrap_long_dict_values_in_parens
     # for https://github.com/psf/black/issues/3117 to be fixed.
     string_processing = auto()
-    parenthesize_conditional_expressions = auto()
-    parenthesize_long_type_hints = auto()
-    respect_magic_trailing_comma_in_return_type = auto()
-    skip_magic_trailing_comma_in_subscript = auto()
-    wrap_long_dict_values_in_parens = auto()
-    wrap_multiple_context_managers_in_parens = auto()
-    dummy_implementations = auto()
-    walrus_subscript = auto()
-    module_docstring_newlines = auto()
-    accept_raw_docstrings = auto()
-    fix_power_op_line_length = auto()
     hug_parens_with_braces_and_square_brackets = auto()
-    allow_empty_first_line_in_block = auto()
-    single_line_format_skip_with_multiple_comments = auto()
-    long_case_block_line_splitting = auto()
-    allow_form_feeds = auto()
     unify_docstring_detection = auto()
-    respect_east_asian_width = auto()
+    no_normalize_fmt_skip_whitespace = auto()
+    wrap_long_dict_values_in_parens = auto()
+    multiline_string_handling = auto()
+    typed_params_trailing_comma = auto()
+    is_simple_lookup_for_doublestar_expression = auto()
+    docstring_check_for_newline = auto()
+    remove_redundant_guard_parens = auto()
+
+
+UNSTABLE_FEATURES: Set[Preview] = {
+    # Many issues, see summary in https://github.com/psf/black/issues/4042
+    Preview.string_processing,
+    # See issues #3452 and #4158
+    Preview.wrap_long_dict_values_in_parens,
+    # See issue #4159
+    Preview.multiline_string_handling,
+    # See issue #4036 (crash), #4098, #4099 (proposed tweaks)
+    Preview.hug_parens_with_braces_and_square_brackets,
+}
 
 
 class Deprecated(UserWarning):
     """Visible deprecation warning."""
+
+
+_MAX_CACHE_KEY_PART_LENGTH: Final = 32
 
 
 @dataclass
@@ -214,28 +212,24 @@ class Mode:
     is_ipynb: bool = False
     skip_source_first_line: bool = False
     magic_trailing_comma: bool = True
-    experimental_string_processing: bool = False
     python_cell_magics: Set[str] = field(default_factory=set)
     preview: bool = False
-
-    def __post_init__(self) -> None:
-        if self.experimental_string_processing:
-            warn(
-                "`experimental string processing` has been included in `preview`"
-                " and deprecated. Use `preview` instead.",
-                Deprecated,
-            )
+    unstable: bool = False
+    enabled_features: Set[Preview] = field(default_factory=set)
 
     def __contains__(self, feature: Preview) -> bool:
         """
         Provide `Preview.FEATURE in Mode` syntax that mirrors the ``preview`` flag.
 
-        The argument is not checked and features are not differentiated.
-        They only exist to make development easier by clarifying intent.
+        In unstable mode, all features are enabled. In preview mode, all features
+        except those in UNSTABLE_FEATURES are enabled. Any features in
+        `self.enabled_features` are also enabled.
         """
-        if feature is Preview.string_processing:
-            return self.preview or self.experimental_string_processing
-        return self.preview
+        if self.unstable:
+            return True
+        if feature in self.enabled_features:
+            return True
+        return self.preview and feature not in UNSTABLE_FEATURES
 
     def get_cache_key(self) -> str:
         if self.target_versions:
@@ -245,6 +239,19 @@ class Mode:
             )
         else:
             version_str = "-"
+        if len(version_str) > _MAX_CACHE_KEY_PART_LENGTH:
+            version_str = sha256(version_str.encode()).hexdigest()[
+                :_MAX_CACHE_KEY_PART_LENGTH
+            ]
+        features_and_magics = (
+            ",".join(sorted(f.name for f in self.enabled_features))
+            + "@"
+            + ",".join(sorted(self.python_cell_magics))
+        )
+        if len(features_and_magics) > _MAX_CACHE_KEY_PART_LENGTH:
+            features_and_magics = sha256(features_and_magics.encode()).hexdigest()[
+                :_MAX_CACHE_KEY_PART_LENGTH
+            ]
         parts = [
             version_str,
             str(self.line_length),
@@ -253,8 +260,7 @@ class Mode:
             str(int(self.is_ipynb)),
             str(int(self.skip_source_first_line)),
             str(int(self.magic_trailing_comma)),
-            str(int(self.experimental_string_processing)),
             str(int(self.preview)),
-            sha256((",".join(sorted(self.python_cell_magics))).encode()).hexdigest(),
+            features_and_magics,
         ]
         return ".".join(parts)

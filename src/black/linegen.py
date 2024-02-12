@@ -48,6 +48,7 @@ from black.nodes import (
     is_one_sequence_between,
     is_one_tuple,
     is_parent_function_or_class,
+    is_part_of_annotation,
     is_rpar_token,
     is_stub_body,
     is_stub_suite,
@@ -116,10 +117,8 @@ class LineGenerator(Visitor[Line]):
             self.current_line.depth += indent
             return  # Line is empty, don't emit. Creating a new one unnecessary.
 
-        if (
-            Preview.improved_async_statements_handling in self.mode
-            and len(self.current_line.leaves) == 1
-            and is_async_stmt_or_funcdef(self.current_line.leaves[0])
+        if len(self.current_line.leaves) == 1 and is_async_stmt_or_funcdef(
+            self.current_line.leaves[0]
         ):
             # Special case for async def/for/with statements. `visit_async_stmt`
             # adds an `ASYNC` leaf then visits the child def/for/with statement
@@ -165,20 +164,19 @@ class LineGenerator(Visitor[Line]):
     def visit_test(self, node: Node) -> Iterator[Line]:
         """Visit an `x if y else z` test"""
 
-        if Preview.parenthesize_conditional_expressions in self.mode:
-            already_parenthesized = (
-                node.prev_sibling and node.prev_sibling.type == token.LPAR
-            )
+        already_parenthesized = (
+            node.prev_sibling and node.prev_sibling.type == token.LPAR
+        )
 
-            if not already_parenthesized:
-                # Similar to logic in wrap_in_parentheses
-                lpar = Leaf(token.LPAR, "")
-                rpar = Leaf(token.RPAR, "")
-                prefix = node.prefix
-                node.prefix = ""
-                lpar.prefix = prefix
-                node.insert_child(0, lpar)
-                node.append_child(rpar)
+        if not already_parenthesized:
+            # Similar to logic in wrap_in_parentheses
+            lpar = Leaf(token.LPAR, "")
+            rpar = Leaf(token.RPAR, "")
+            prefix = node.prefix
+            node.prefix = ""
+            lpar.prefix = prefix
+            node.insert_child(0, lpar)
+            node.append_child(rpar)
 
         yield from self.visit_default(node)
 
@@ -243,13 +241,16 @@ class LineGenerator(Visitor[Line]):
                 if i == 0:
                     continue
                 if node.children[i - 1].type == token.COLON:
-                    if child.type == syms.atom and child.children[0].type == token.LPAR:
-                        if maybe_make_parens_invisible_in_atom(
+                    if (
+                        child.type == syms.atom
+                        and child.children[0].type in OPENING_BRACKETS
+                        and not is_walrus_assignment(child)
+                    ):
+                        maybe_make_parens_invisible_in_atom(
                             child,
                             parent=node,
                             remove_brackets_around_comma=False,
-                        ):
-                            wrap_in_parentheses(node, child, visible=False)
+                        )
                     else:
                         wrap_in_parentheses(node, child, visible=False)
         yield from self.visit_default(node)
@@ -290,9 +291,7 @@ class LineGenerator(Visitor[Line]):
 
     def visit_suite(self, node: Node) -> Iterator[Line]:
         """Visit a suite."""
-        if (
-            self.mode.is_pyi or Preview.dummy_implementations in self.mode
-        ) and is_stub_suite(node, self.mode):
+        if is_stub_suite(node):
             yield from self.visit(node.children[2])
         else:
             yield from self.visit_default(node)
@@ -306,11 +305,7 @@ class LineGenerator(Visitor[Line]):
             prev_type = child.type
 
         if node.parent and node.parent.type in STATEMENT:
-            if Preview.dummy_implementations in self.mode:
-                condition = is_parent_function_or_class(node)
-            else:
-                condition = self.mode.is_pyi
-            if condition and is_stub_body(node):
+            if is_parent_function_or_class(node) and is_stub_body(node):
                 yield from self.visit_default(node)
             else:
                 yield from self.line(+1)
@@ -318,11 +313,7 @@ class LineGenerator(Visitor[Line]):
                 yield from self.line(-1)
 
         else:
-            if (
-                not (self.mode.is_pyi or Preview.dummy_implementations in self.mode)
-                or not node.parent
-                or not is_stub_suite(node.parent, self.mode)
-            ):
+            if not node.parent or not is_stub_suite(node.parent):
                 yield from self.line()
             yield from self.visit_default(node)
 
@@ -340,11 +331,7 @@ class LineGenerator(Visitor[Line]):
                 break
 
         internal_stmt = next(children)
-        if Preview.improved_async_statements_handling in self.mode:
-            yield from self.visit(internal_stmt)
-        else:
-            for child in internal_stmt.children:
-                yield from self.visit(child)
+        yield from self.visit(internal_stmt)
 
     def visit_decorators(self, node: Node) -> Iterator[Line]:
         """Visit decorators."""
@@ -418,10 +405,9 @@ class LineGenerator(Visitor[Line]):
 
         def foo(a: (int), b: (float) = 7): ...
         """
-        if Preview.parenthesize_long_type_hints in self.mode:
-            assert len(node.children) == 3
-            if maybe_make_parens_invisible_in_atom(node.children[2], parent=node):
-                wrap_in_parentheses(node, node.children[2], visible=False)
+        assert len(node.children) == 3
+        if maybe_make_parens_invisible_in_atom(node.children[2], parent=node):
+            wrap_in_parentheses(node, node.children[2], visible=False)
 
         yield from self.visit_default(node)
 
@@ -492,15 +478,22 @@ class LineGenerator(Visitor[Line]):
                 last_line_length = len(lines[-1]) if docstring else 0
 
                 # If adding closing quotes would cause the last line to exceed
-                # the maximum line length then put a line break before the
-                # closing quotes
+                # the maximum line length, and the closing quote is not
+                # prefixed by a newline then put a line break before
+                # the closing quotes
                 if (
                     len(lines) > 1
                     and last_line_length + quote_len > self.mode.line_length
                     and len(indent) + quote_len <= self.mode.line_length
                     and not has_trailing_backslash
                 ):
-                    leaf.value = prefix + quote + docstring + "\n" + indent + quote
+                    if (
+                        Preview.docstring_check_for_newline in self.mode
+                        and leaf.value[-1 - quote_len] == "\n"
+                    ):
+                        leaf.value = prefix + quote + docstring + quote
+                    else:
+                        leaf.value = prefix + quote + docstring + "\n" + indent + quote
                 else:
                     leaf.value = prefix + quote + docstring + quote
             else:
@@ -553,13 +546,7 @@ class LineGenerator(Visitor[Line]):
         self.visit_with_stmt = partial(v, keywords={"with"}, parens={"with"})
         self.visit_classdef = partial(v, keywords={"class"}, parens=Ø)
 
-        # When this is moved out of preview, add ":" directly to ASSIGNMENTS in nodes.py
-        if Preview.parenthesize_long_type_hints in self.mode:
-            assignments = ASSIGNMENTS | {":"}
-        else:
-            assignments = ASSIGNMENTS
-        self.visit_expr_stmt = partial(v, keywords=Ø, parens=assignments)
-
+        self.visit_expr_stmt = partial(v, keywords=Ø, parens=ASSIGNMENTS)
         self.visit_return_stmt = partial(v, keywords={"return"}, parens={"return"})
         self.visit_import_from = partial(v, keywords=Ø, parens={"import"})
         self.visit_del_stmt = partial(v, keywords=Ø, parens={"del"})
@@ -569,6 +556,8 @@ class LineGenerator(Visitor[Line]):
         # PEP 634
         self.visit_match_stmt = self.visit_match_case
         self.visit_case_block = self.visit_match_case
+        if Preview.remove_redundant_guard_parens in self.mode:
+            self.visit_guard = partial(v, keywords=Ø, parens={"if"})
 
 
 def _hugging_power_ops_line_to_string(
@@ -600,9 +589,7 @@ def transform_line(
     # We need the line string when power operators are hugging to determine if we should
     # split the line. Default to line_str, if no power operator are present on the line.
     line_str_hugging_power_ops = (
-        (_hugging_power_ops_line_to_string(line, features, mode) or line_str)
-        if Preview.fix_power_op_line_length in mode
-        else line_str
+        _hugging_power_ops_line_to_string(line, features, mode) or line_str
     )
 
     ll = mode.line_length
@@ -712,9 +699,6 @@ def should_split_funcdef_with_rhs(line: Line, mode: Mode) -> bool:
     """If a funcdef has a magic trailing comma in the return type, then we should first
     split the line with rhs to respect the comma.
     """
-    if Preview.respect_magic_trailing_comma_in_return_type not in mode:
-        return False
-
     return_type_leaves: List[Leaf] = []
     in_return_type = False
 
@@ -943,9 +927,6 @@ def _maybe_split_omitting_optional_parens(
         try:
             # The RHSResult Omitting Optional Parens.
             rhs_oop = _first_right_hand_split(line, omit=omit)
-            prefer_splitting_rhs_mode = (
-                Preview.prefer_splitting_right_hand_side_of_assignments in line.mode
-            )
             is_split_right_after_equal = (
                 len(rhs.head.leaves) >= 2 and rhs.head.leaves[-2].type == token.EQUAL
             )
@@ -961,8 +942,7 @@ def _maybe_split_omitting_optional_parens(
             )
             if (
                 not (
-                    prefer_splitting_rhs_mode
-                    and is_split_right_after_equal
+                    is_split_right_after_equal
                     and rhs_head_contains_brackets
                     and rhs_head_short_enough
                     and rhs_head_explode_blocked_by_magic_trailing_comma
@@ -1098,7 +1078,14 @@ def bracket_split_build_line(
             no_commas = (
                 original.is_def
                 and opening_bracket.value == "("
-                and not any(leaf.type == token.COMMA for leaf in leaves)
+                and not any(
+                    leaf.type == token.COMMA
+                    and (
+                        Preview.typed_params_trailing_comma not in original.mode
+                        or not is_part_of_annotation(leaf)
+                    )
+                    for leaf in leaves
+                )
                 # In particular, don't add one within a parenthesized return annotation.
                 # Unfortunately the indicator we're in a return annotation (RARROW) may
                 # be defined directly in the parent node, the parent of the parent ...
@@ -1248,11 +1235,7 @@ def delimiter_split(
                     trailing_comma_safe and Feature.TRAILING_COMMA_IN_CALL in features
                 )
 
-        if (
-            Preview.add_trailing_comma_consistently in mode
-            and last_leaf.type == STANDALONE_COMMENT
-            and leaf_idx == last_non_comment_leaf
-        ):
+        if last_leaf.type == STANDALONE_COMMENT and leaf_idx == last_non_comment_leaf:
             current_line = _safe_add_trailing_comma(
                 trailing_comma_safe, delimiter_priority, current_line
             )
@@ -1339,11 +1322,7 @@ def normalize_invisible_parens(  # noqa: C901
 
         # Fixes a bug where invisible parens are not properly wrapped around
         # case blocks.
-        if (
-            isinstance(child, Node)
-            and child.type == syms.case_block
-            and Preview.long_case_block_line_splitting in mode
-        ):
+        if isinstance(child, Node) and child.type == syms.case_block:
             normalize_invisible_parens(
                 child, parens_after={"case"}, mode=mode, features=features
             )
@@ -1398,7 +1377,6 @@ def normalize_invisible_parens(  # noqa: C901
                 and child.next_sibling is not None
                 and child.next_sibling.type == token.COLON
                 and child.value == "case"
-                and Preview.long_case_block_line_splitting in mode
             ):
                 # A special patch for "case case:" scenario, the second occurrence
                 # of case will be not parsed as a Python keyword.
@@ -1472,7 +1450,6 @@ def _maybe_wrap_cms_in_parens(
     """
     if (
         Feature.PARENTHESIZED_CONTEXT_MANAGERS not in features
-        or Preview.wrap_multiple_context_managers_in_parens not in mode
         or len(node.children) <= 2
         # If it's an atom, it's already wrapped in parens.
         or node.children[1].type == syms.atom
@@ -1603,6 +1580,9 @@ def maybe_make_parens_invisible_in_atom(
             not is_type_ignore_comment_string(middle.prefix.strip())
         ):
             first.value = ""
+            if first.prefix.strip():
+                # Preserve comments before first paren
+                middle.prefix = first.prefix + middle.prefix
             last.value = ""
         maybe_make_parens_invisible_in_atom(
             middle,
@@ -1614,6 +1594,9 @@ def maybe_make_parens_invisible_in_atom(
             # Strip the invisible parens from `middle` by replacing
             # it with the child in-between the invisible parens
             middle.replace(middle.children[1])
+            if middle.children[-1].prefix.strip():
+                # Preserve comments before last paren
+                last.prefix = middle.children[-1].prefix + last.prefix
 
         return False
 

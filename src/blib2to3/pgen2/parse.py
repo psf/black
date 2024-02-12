@@ -50,7 +50,7 @@ DUMMY_NODE = (-1, None, None, None)
 
 
 def stack_copy(
-    stack: List[Tuple[DFAS, int, RawNode]]
+    stack: List[Tuple[DFAS, int, RawNode]],
 ) -> List[Tuple[DFAS, int, RawNode]]:
     """Nodeless stack copy."""
     return [(dfa, label, DUMMY_NODE) for dfa, label, _ in stack]

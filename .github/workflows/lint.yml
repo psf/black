@@ -35,8 +35,13 @@ jobs:
           python -m pip install tox
 
       - name: Run pre-commit hooks
-        uses: pre-commit/action@v3.0.0
+        uses: pre-commit/action@v3.0.1
 
       - name: Format ourselves
         run: |
           tox -e run_self
+
+      - name: Regenerate schema
+        run: |
+          tox -e generate_schema
+          git diff --exit-code
