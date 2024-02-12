@@ -2,6 +2,9 @@
 
 ## 24.2.0
 
+- Fixed a bug where comments where mistakenly removed along with redundant parentheses
+  (#4218)
+
 ### Preview style
 
 - Move the `hug_parens_with_braces_and_square_brackets` feature to the unstable style
