@@ -706,6 +706,13 @@ class BlackTestCase(BlackBaseTestCase):
                 " files would fail to reformat.",
             )
 
+    def test_quiet_check_with_potential_reformats(self) -> None:
+        p = THIS_DIR / "data" / "cases" / "collections.py"
+        error_msg = "\nOh no! 💥 💔 💥\n1 file would be reformatted.\n"
+        args = [str(p), "--check", "--quiet"]
+        result = CliRunner().invoke(black.main, args)
+        self.compare_results(result, error_msg, 1)
+
     def test_report_normal(self) -> None:
         report = black.Report()
         out_lines = []
