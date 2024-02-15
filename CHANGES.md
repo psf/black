@@ -32,8 +32,6 @@
 
 ### Output
 
-- print reformat info when black is called with --quiet and --check and potential
-adjustments are found (#4236)
 <!-- Changes to Black's terminal output and error messages -->
 
 ### _Blackd_
@@ -46,6 +44,7 @@ adjustments are found (#4236)
 
 ### Documentation
 
+- Note what happens when --check is called with --quiet (#4236)
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
 
