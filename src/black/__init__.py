@@ -709,7 +709,11 @@ def main(  # noqa: C901
                 workers=workers,
             )
 
-    if verbose or not quiet:
+    if (
+        verbose
+        or not quiet
+        or (report.change_count > 0 and write_back is WriteBack.CHECK and code is None)
+    ):
         if code is None and (verbose or report.change_count or report.failure_count):
             out()
         out(error_msg if report.return_code else "All done! ✨ 🍰 ✨")
