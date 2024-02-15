@@ -32,6 +32,8 @@
 
 ### Output
 
+- print reformat info when black is called with --quiet and --check and potential
+adjustments are found (#4236)
 <!-- Changes to Black's terminal output and error messages -->
 
 ### _Blackd_
