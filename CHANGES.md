@@ -44,7 +44,7 @@
 
 ### Documentation
 
-- Note what happens when --check is called with --quiet (#4236)
+- Note what happens when `--check` is used with `--quiet` (#4236)
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
 
