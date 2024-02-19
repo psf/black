@@ -53,15 +53,22 @@ def _get_python_binary(exec_prefix, pyver=sys.version_info[:3]):
     return exec_path
   raise ValueError("python executable not found")
 
+def _get_python_version(exec_path):
+  import subprocess
+  version_proc = subprocess.run([exec_path, "--version"], stdout=subprocess.PIPE, text=True)
+  version = tuple(map(int, version_proc.stdout.split(" ")[1].strip().split(".")))
+  return version
+
 def _get_pip(venv_path):
   if sys.platform[:3] == "win":
     return venv_path / 'Scripts' / 'pip.exe'
   return venv_path / 'bin' / 'pip'
 
-def _get_virtualenv_site_packages(venv_path, pyver):
+def _get_virtualenv_site_packages(venv_path):
   if sys.platform[:3] == "win":
     return venv_path / 'Lib' / 'site-packages'
-  return venv_path / 'lib' / f'python{pyver[0]}.{pyver[1]}' / 'site-packages'
+  venv_python_version = _get_python_version(_get_python_binary(venv_path))
+  return venv_path / 'lib' / f'python{venv_python_version[0]}.{venv_python_version[1]}' / 'site-packages'
 
 def _initialize_black_env(upgrade=False):
   if vim.eval("g:black_use_virtualenv ? 'true' : 'false'") == "false":
@@ -83,7 +90,7 @@ def _initialize_black_env(upgrade=False):
   import subprocess
   import venv
   virtualenv_path = Path(vim.eval("g:black_virtualenv")).expanduser()
-  virtualenv_site_packages = str(_get_virtualenv_site_packages(virtualenv_path, pyver))
+  virtualenv_site_packages = str(_get_virtualenv_site_packages(virtualenv_path))
   first_install = False
   if not virtualenv_path.is_dir():
     print('Please wait, one time setup for Black.')
