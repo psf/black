@@ -756,8 +756,6 @@ def get_sources(
                 continue
 
             root_relative_path = best_effort_relative_path(path, root).as_posix()
-            root_relative_path = "/" + root_relative_path
-
             # Hard-exclude any files that matches the `--force-exclude` regex.
             if path_is_excluded(root_relative_path, force_exclude):
                 report.path_ignored(
