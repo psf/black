@@ -5,6 +5,7 @@
 hidden:
 ---
 
+ways_to_install_black
 the_basics
 file_collection_and_discovery
 black_as_a_server
@@ -20,8 +21,10 @@ purposefully limited.
 Using many of these more advanced features of _Black_ will require some configuration.
 Configuration that will either live on the command line or in a TOML configuration file.
 
-This section covers features of _Black_ and configuring _Black_ in detail:
+This section covers installation methods, features of _Black_, and configuring _Black_
+in detail:
 
+- {doc}`Ways to install Black <./ways_to_install_black>`
 - {doc}`The basics <./the_basics>`
 - {doc}`File collection and discovery <file_collection_and_discovery>`
 - {doc}`Black as a server (blackd) <./black_as_a_server>`
