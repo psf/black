@@ -34,7 +34,7 @@ FLAGS = [
 ]
 
 
-def _get_python_binary(exec_prefix, pyver):
+def _get_python_binary(exec_prefix, pyver=sys.version_info[:3]):
   try:
     default = vim.eval("g:pymode_python").strip()
   except vim.error:
