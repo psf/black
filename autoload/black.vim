@@ -4,6 +4,8 @@ import os
 import sys
 import vim
 
+from pathlib import Path
+
 def strtobool(text):
   if text.lower() in ['y', 'yes', 't', 'true', 'on', '1']:
     return True
@@ -71,6 +73,8 @@ def _get_virtualenv_site_packages(venv_path):
   return venv_path / 'lib' / f'python{venv_python_version[0]}.{venv_python_version[1]}' / 'site-packages'
 
 def _initialize_black_env(upgrade=False):
+  virtualenv_path = Path(vim.eval("g:black_virtualenv")).expanduser()
+  virtualenv_site_packages = str(_get_virtualenv_site_packages(virtualenv_path))
   if vim.eval("g:black_use_virtualenv ? 'true' : 'false'") == "false":
     if upgrade:
       print("Upgrade disabled due to g:black_use_virtualenv being disabled.")
@@ -78,7 +82,8 @@ def _initialize_black_env(upgrade=False):
       print("or modify your vimrc to have 'let g:black_use_virtualenv = 1'.")
       return False
     else:
-      # Nothing needed to be done.
+      if virtualenv_site_packages not in sys.path:
+        sys.path.insert(0, virtualenv_site_packages)
       return True
 
   pyver = sys.version_info[:3]
@@ -86,11 +91,8 @@ def _initialize_black_env(upgrade=False):
     print("Sorry, Black requires Python 3.8+ to run.")
     return False
 
-  from pathlib import Path
   import subprocess
   import venv
-  virtualenv_path = Path(vim.eval("g:black_virtualenv")).expanduser()
-  virtualenv_site_packages = str(_get_virtualenv_site_packages(virtualenv_path))
   first_install = False
   if not virtualenv_path.is_dir():
     print('Please wait, one time setup for Black.')
