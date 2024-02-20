@@ -40,7 +40,7 @@
 
 ### Integrations
 
-- Allow Black to use a different Python version than Vim
+- Allow Black to use a different Python version than Vim (#4245)
 
 ### Documentation
 
