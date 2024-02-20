@@ -55,10 +55,12 @@ def _get_python_binary(exec_prefix, pyver=sys.version_info[:3]):
     return exec_path
   raise ValueError("python executable not found")
 
-def _get_python_version(exec_path):
+def _get_python_version(exec_path, as_string=False):
   import subprocess
   version_proc = subprocess.run([exec_path, "--version"], stdout=subprocess.PIPE, text=True)
-  version = tuple(map(int, version_proc.stdout.split(" ")[1].strip().split(".")))
+  version = version_proc.stdout.split(" ")[1].strip()
+  if not as_string:
+    version = tuple(map(int, version.split(".")))
   return version
 
 def _get_pip(venv_path):
@@ -231,7 +233,9 @@ def BlackUpgrade():
   _initialize_black_env(upgrade=True)
 
 def BlackVersion():
-  print(f'Black, version {black.__version__} on Python {sys.version}.')
+  virtualenv_path = Path(vim.eval("g:black_virtualenv")).expanduser()
+  virtualenv_python_version = _get_python_version(_get_python_binary(virtualenv_path), as_string=True)
+  print(f'Black, version {black.__version__} on Python {virtualenv_python_version}.')
 
 EndPython3
 
