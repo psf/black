@@ -53,6 +53,9 @@ def _get_python_binary(exec_prefix, pyver=sys.version_info[:3]):
   exec_path = (bin_path / f"python3").resolve()
   if exec_path.exists():
     return exec_path
+  # TODO: Instead of failing, try to find black in PATH first and use its
+  # exec_prefix. This can happen when black is installed systemwide and
+  # g:black_virtualenv was not updated.
   raise ValueError("python executable not found")
 
 def _get_python_version(exec_path, as_string=False):
@@ -88,6 +91,7 @@ def _initialize_black_env(upgrade=False):
         sys.path.insert(0, virtualenv_site_packages)
       return True
 
+  # TODO: Is this check about the Vim plugin, or about Black?
   pyver = sys.version_info[:3]
   if pyver < (3, 8):
     print("Sorry, Black requires Python 3.8+ to run.")
