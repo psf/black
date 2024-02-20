@@ -59,6 +59,7 @@
 - Fix the version check in the vim file to reject Python 3.8 (#4567)
 - Enhance GitHub Action `psf/black` to read Black version from an additional section in
   pyproject.toml: `[project.dependency-groups]` (#4606)
+- Vim: Print the import paths when importing black fails
 
 ### Documentation
 
