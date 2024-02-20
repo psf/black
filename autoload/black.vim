@@ -120,7 +120,10 @@ def _initialize_black_env(upgrade=False):
   return True
 
 if _initialize_black_env():
-  import black
+  try:
+    import black
+  except ImportError:
+    print(f"Could not import black from any of: {', '.join(sys.path)}.")
   import time
 
 def get_target_version(tv):
