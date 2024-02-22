@@ -14,21 +14,9 @@
 
 <!-- Changes that affect Black's preview style -->
 
-- Move the `hug_parens_with_braces_and_square_brackets` feature to the unstable style
-  due to an outstanding crash and proposed formatting tweaks (#4198)
-- Fixed a bug where base expressions caused inconsistent formatting of \*\* in tenary
-  expression (#4154)
-- Checking for newline before adding one on docstring that is almost at the line limit
-  (#4185)
-
 ### Configuration
 
-- _Black_ now ignores `pyproject.toml` that is missing a `tool.black` section when
-  discovering project root and configuration. Since _Black_ continues to use version
-  control as an indicator of project root, this is expected to primarily change behavior
-  for users in a monorepo setup (desirably). If you wish to preserve previous behavior,
-  simply add an empty `[tool.black]` to the previously discovered `pyproject.toml`
-  (#4204)
+<!-- Changes to how Black can be configured -->
 
 ### Packaging
 
@@ -46,9 +34,6 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
-- Black will swallow any `SyntaxWarning`s or `DeprecationWarning`s produced by the `ast`
-  module when performing equivalence checks (#4189)
-
 ### _Blackd_
 
 <!-- Changes to blackd -->
@@ -57,12 +42,46 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
-- Add a JSONSchema and provide a validate-pyproject entry-point (#4181)
-
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
+
+## 24.2.0
+
+### Stable style
+
+- Fixed a bug where comments where mistakenly removed along with redundant parentheses
+  (#4218)
+
+### Preview style
+
+- Move the `hug_parens_with_braces_and_square_brackets` feature to the unstable style
+  due to an outstanding crash and proposed formatting tweaks (#4198)
+- Fixed a bug where base expressions caused inconsistent formatting of \*\* in tenary
+  expression (#4154)
+- Checking for newline before adding one on docstring that is almost at the line limit
+  (#4185)
+- Remove redundant parentheses in `case` statement `if` guards (#4214).
+
+### Configuration
+
+- Fix issue where _Black_ would ignore input files in the presence of symlinks (#4222)
+- _Black_ now ignores `pyproject.toml` that is missing a `tool.black` section when
+  discovering project root and configuration. Since _Black_ continues to use version
+  control as an indicator of project root, this is expected to primarily change behavior
+  for users in a monorepo setup (desirably). If you wish to preserve previous behavior,
+  simply add an empty `[tool.black]` to the previously discovered `pyproject.toml`
+  (#4204)
+
+### Output
+
+- Black will swallow any `SyntaxWarning`s or `DeprecationWarning`s produced by the `ast`
+  module when performing equivalence checks (#4189)
+
+### Integrations
+
+- Add a JSONSchema and provide a validate-pyproject entry-point (#4181)
 
 ## 24.1.1
 

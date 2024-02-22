@@ -529,6 +529,8 @@ class LineGenerator(Visitor[Line]):
         # PEP 634
         self.visit_match_stmt = self.visit_match_case
         self.visit_case_block = self.visit_match_case
+        if Preview.remove_redundant_guard_parens in self.mode:
+            self.visit_guard = partial(v, keywords=Ø, parens={"if"})
 
 
 def _hugging_power_ops_line_to_string(
@@ -1539,6 +1541,9 @@ def maybe_make_parens_invisible_in_atom(
             not is_type_ignore_comment_string(middle.prefix.strip())
         ):
             first.value = ""
+            if first.prefix.strip():
+                # Preserve comments before first paren
+                middle.prefix = first.prefix + middle.prefix
             last.value = ""
         maybe_make_parens_invisible_in_atom(
             middle,
@@ -1550,6 +1555,9 @@ def maybe_make_parens_invisible_in_atom(
             # Strip the invisible parens from `middle` by replacing
             # it with the child in-between the invisible parens
             middle.replace(middle.children[1])
+            if middle.children[-1].prefix.strip():
+                # Preserve comments before last paren
+                last.prefix = middle.children[-1].prefix + last.prefix
 
         return False
 
