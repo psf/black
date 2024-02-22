@@ -10,6 +10,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Don't move comments along with delimiters, which could cause crashes (#4248)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->

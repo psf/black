@@ -1194,8 +1194,11 @@ def delimiter_split(
     for leaf_idx, leaf in enumerate(line.leaves):
         yield from append_to_line(leaf)
 
-        for comment_after in line.comments_after(leaf):
-            yield from append_to_line(comment_after)
+        previous_leaf = line.leaves[leaf_idx - 1] if leaf_idx > 0 else None
+        previous_priority = previous_leaf and bt.delimiters.get(id(previous_leaf))
+        if previous_priority != delimiter_priority:
+            for comment_after in line.comments_after(leaf):
+                yield from append_to_line(comment_after)
 
         lowest_depth = min(lowest_depth, leaf.bracket_depth)
         if leaf.bracket_depth == lowest_depth:
@@ -1215,6 +1218,10 @@ def delimiter_split(
 
         leaf_priority = bt.delimiters.get(id(leaf))
         if leaf_priority == delimiter_priority:
+            if leaf_idx + 1 < len(line.leaves):
+                for comment_after in line.comments_after(line.leaves[leaf_idx + 1]):
+                    yield from append_to_line(comment_after)
+
             yield current_line
 
             current_line = Line(
