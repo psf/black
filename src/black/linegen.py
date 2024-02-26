@@ -1136,6 +1136,20 @@ def _get_last_non_comment_leaf(line: Line) -> Optional[int]:
     return None
 
 
+def _can_add_trailing_comma(leaf: Leaf, features: Collection[Feature]):
+    if (
+        is_vararg(leaf, within={syms.typedargslist})
+        and Feature.TRAILING_COMMA_IN_DEF in features
+    ):
+        return True
+    if (
+        is_vararg(leaf, within={syms.arglist, syms.argument})
+        and Feature.TRAILING_COMMA_IN_CALL in features
+    ):
+        return True
+    return False
+
+
 def _safe_add_trailing_comma(safe: bool, delimiter_priority: int, line: Line) -> Line:
     if (
         safe
@@ -1210,10 +1224,7 @@ def delimiter_split(
 
         lowest_depth = min(lowest_depth, leaf.bracket_depth)
         if trailing_comma_safe and leaf.bracket_depth == lowest_depth:
-            if is_vararg(leaf, within={syms.typedargslist}):
-                trailing_comma_safe = Feature.TRAILING_COMMA_IN_DEF in features
-            elif is_vararg(leaf, within={syms.arglist, syms.argument}):
-                trailing_comma_safe = Feature.TRAILING_COMMA_IN_CALL in features
+            trailing_comma_safe = _can_add_trailing_comma(leaf, features)
 
         if last_leaf.type == STANDALONE_COMMENT and leaf_idx == last_non_comment_leaf:
             current_line = _safe_add_trailing_comma(
