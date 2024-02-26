@@ -15,9 +15,8 @@
 
 import os
 import string
+from importlib.metadata import version
 from pathlib import Path
-
-from pkg_resources import get_distribution
 
 CURRENT_DIR = Path(__file__).parent
 
@@ -43,7 +42,7 @@ author = "Łukasz Langa and contributors to Black"
 
 # Autopopulate version
 # The version, including alpha/beta/rc tags, but not commit hash and datestamps
-release = get_distribution("black").version.split("+")[0]
+release = version("black").split("+")[0]
 # The short X.Y version.
 version = release
 for sp in "abcfr":
