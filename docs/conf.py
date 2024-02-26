@@ -15,9 +15,8 @@
 
 import os
 import string
-from pathlib import Path
-
 from importlib.metadata import version
+from pathlib import Path
 
 CURRENT_DIR = Path(__file__).parent
 
