@@ -12,6 +12,7 @@ from typing import Collection, Iterator, List, Optional, Set, Union, cast
 from black.brackets import (
     COMMA_PRIORITY,
     DOT_PRIORITY,
+    STRING_PRIORITY,
     get_leaves_inside_matching_brackets,
     max_delimiter_priority_in_atom,
 )
@@ -1190,26 +1191,29 @@ def delimiter_split(
             )
             current_line.append(leaf)
 
+    def append_comments(leaf: Leaf) -> Iterator[Line]:
+        for comment_after in line.comments_after(leaf):
+            yield from append_to_line(comment_after)
+
     last_non_comment_leaf = _get_last_non_comment_leaf(line)
     for leaf_idx, leaf in enumerate(line.leaves):
         yield from append_to_line(leaf)
 
-        previous_leaf = line.leaves[leaf_idx - 1] if leaf_idx > 0 else None
-        previous_priority = previous_leaf and bt.delimiters.get(id(previous_leaf))
-        if previous_priority != delimiter_priority:
-            for comment_after in line.comments_after(leaf):
-                yield from append_to_line(comment_after)
+        previous_priority = leaf_idx > 0 and bt.delimiters.get(
+            id(line.leaves[leaf_idx - 1])
+        )
+        if (
+            delimiter_priority == STRING_PRIORITY
+            or previous_priority != delimiter_priority
+        ):
+            yield from append_comments(leaf)
 
         lowest_depth = min(lowest_depth, leaf.bracket_depth)
-        if leaf.bracket_depth == lowest_depth:
+        if trailing_comma_safe and leaf.bracket_depth == lowest_depth:
             if is_vararg(leaf, within={syms.typedargslist}):
-                trailing_comma_safe = (
-                    trailing_comma_safe and Feature.TRAILING_COMMA_IN_DEF in features
-                )
+                trailing_comma_safe = Feature.TRAILING_COMMA_IN_DEF in features
             elif is_vararg(leaf, within={syms.arglist, syms.argument}):
-                trailing_comma_safe = (
-                    trailing_comma_safe and Feature.TRAILING_COMMA_IN_CALL in features
-                )
+                trailing_comma_safe = Feature.TRAILING_COMMA_IN_CALL in features
 
         if last_leaf.type == STANDALONE_COMMENT and leaf_idx == last_non_comment_leaf:
             current_line = _safe_add_trailing_comma(
@@ -1218,15 +1222,17 @@ def delimiter_split(
 
         leaf_priority = bt.delimiters.get(id(leaf))
         if leaf_priority == delimiter_priority:
-            if leaf_idx + 1 < len(line.leaves):
-                for comment_after in line.comments_after(line.leaves[leaf_idx + 1]):
-                    yield from append_to_line(comment_after)
+            if (
+                leaf_idx + 1 < len(line.leaves)
+                and delimiter_priority != STRING_PRIORITY
+            ):
+                yield from append_comments(line.leaves[leaf_idx + 1])
 
             yield current_line
-
             current_line = Line(
                 mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
             )
+
     if current_line:
         current_line = _safe_add_trailing_comma(
             trailing_comma_safe, delimiter_priority, current_line
