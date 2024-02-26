@@ -26,6 +26,8 @@
 
 <!-- Changes to the parser or to version autodetection -->
 
+- Regenerated the `_width_table.py` and added tests for the Khmer language (#4253)
+
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
