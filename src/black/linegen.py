@@ -1136,9 +1136,7 @@ def _get_last_non_comment_leaf(line: Line) -> Optional[int]:
     return None
 
 
-def _can_add_trailing_comma(
-    leaf: Leaf, features: Collection[Feature]
-) -> bool:
+def _can_add_trailing_comma(leaf: Leaf, features: Collection[Feature]) -> bool:
     if is_vararg(leaf, within={syms.typedargslist}):
         return Feature.TRAILING_COMMA_IN_DEF in features
     if is_vararg(leaf, within={syms.arglist, syms.argument}):
