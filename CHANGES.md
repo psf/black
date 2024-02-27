@@ -10,6 +10,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fixed a bug where lines were split incorrectly for function definitions with type
+  params and trailing commas (#4255)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
