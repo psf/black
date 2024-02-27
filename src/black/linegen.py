@@ -671,32 +671,59 @@ def transform_line(
 def should_split_funcdef_with_rhs(line: Line, mode: Mode) -> bool:
     """If a funcdef has a magic trailing comma in the return type, then we should first
     split the line with rhs to respect the comma.
+    If it has type parameters and a trailing comma in the function parameters, we should
+    split with rhs to avoid splitting the type parameters first.
     """
+
+    type_param_leaves: List[Leaf] = []
+    func_param_leaves: List[Leaf] = []
     return_type_leaves: List[Leaf] = []
-    in_return_type = False
+    other_leaves: List[Leaf] = []
+    current = other_leaves
 
     for leaf in line.leaves:
-        if leaf.type == token.COLON:
-            in_return_type = False
-        if in_return_type:
-            return_type_leaves.append(leaf)
-        if leaf.type == token.RARROW:
-            in_return_type = True
+        if current == other_leaves:
+            if leaf.type == token.LSQB:
+                current = type_param_leaves
 
-    # using `bracket_split_build_line` will mess with whitespace, so we duplicate a
-    # couple lines from it.
-    result = Line(mode=line.mode, depth=line.depth)
-    leaves_to_track = get_leaves_inside_matching_brackets(return_type_leaves)
-    for leaf in return_type_leaves:
-        result.append(
-            leaf,
-            preformatted=True,
-            track_bracket=id(leaf) in leaves_to_track,
-        )
+            elif leaf.type == token.LPAR:
+                current = func_param_leaves
+
+            elif leaf.type == token.RARROW:
+                current = return_type_leaves
+
+        current.append(leaf)
+
+        if current == other_leaves:
+            continue
+        elif current == return_type_leaves:
+            if leaf.type == token.COLON:
+                current = other_leaves
+        elif leaf.opening_bracket is current[0]:
+            current = other_leaves
+
+    def _has_magic_comma(_leaves: List[Leaf]) -> bool:
+        # using `bracket_split_build_line` will mess with whitespace, so we duplicate a
+        # couple lines from it.
+        line_copy = Line(mode=line.mode, depth=line.depth)
+        leaves_to_track = get_leaves_inside_matching_brackets(_leaves)
+        for _leaf in _leaves:
+            line_copy.append(
+                _leaf,
+                preformatted=True,
+                track_bracket=id(_leaf) in leaves_to_track,
+            )
+
+        return line_copy.magic_trailing_comma is not None
+
+    if return_type_leaves and _has_magic_comma(return_type_leaves):
+        return True
+    if type_param_leaves and _has_magic_comma(func_param_leaves):
+        return True
 
     # we could also return true if the line is too long, and the return type is longer
     # than the param list. Or if `should_split_rhs` returns True.
-    return result.magic_trailing_comma is not None
+    return False
 
 
 class _BracketSplitComponent(Enum):
