@@ -1136,18 +1136,14 @@ def _get_last_non_comment_leaf(line: Line) -> Optional[int]:
     return None
 
 
-def _can_add_trailing_comma(leaf: Leaf, features: Collection[Feature]):
-    if (
-        is_vararg(leaf, within={syms.typedargslist})
-        and Feature.TRAILING_COMMA_IN_DEF in features
-    ):
-        return True
-    if (
-        is_vararg(leaf, within={syms.arglist, syms.argument})
-        and Feature.TRAILING_COMMA_IN_CALL in features
-    ):
-        return True
-    return False
+def _can_add_trailing_comma(
+    leaf: Leaf, features: Collection[Feature]
+) -> bool:
+    if is_vararg(leaf, within={syms.typedargslist}):
+        return Feature.TRAILING_COMMA_IN_DEF in features
+    if is_vararg(leaf, within={syms.arglist, syms.argument}):
+        return Feature.TRAILING_COMMA_IN_CALL in features
+    return True
 
 
 def _safe_add_trailing_comma(safe: bool, delimiter_priority: int, line: Line) -> Line:
@@ -1171,10 +1167,9 @@ def delimiter_split(
     If the appropriate Features are given, the split will add trailing commas
     also in function signatures and calls that contain `*` and `**`.
     """
-    try:
-        last_leaf = line.leaves[-1]
-    except IndexError:
+    if len(line.leaves) == 0:
         raise CannotSplit("Line empty") from None
+    last_leaf = line.leaves[-1]
 
     bt = line.bracket_tracker
     try:
@@ -1182,9 +1177,11 @@ def delimiter_split(
     except ValueError:
         raise CannotSplit("No delimiters found") from None
 
-    if delimiter_priority == DOT_PRIORITY:
-        if bt.delimiter_count_with_priority(delimiter_priority) == 1:
-            raise CannotSplit("Splitting a single attribute from its owner looks wrong")
+    if (
+        delimiter_priority == DOT_PRIORITY
+        and bt.delimiter_count_with_priority(delimiter_priority) == 1
+    ):
+        raise CannotSplit("Splitting a single attribute from its owner looks wrong")
 
     current_line = Line(
         mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
