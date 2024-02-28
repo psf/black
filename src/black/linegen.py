@@ -1136,14 +1136,6 @@ def _get_last_non_comment_leaf(line: Line) -> Optional[int]:
     return None
 
 
-def _can_add_trailing_comma(leaf: Leaf, features: Collection[Feature]) -> bool:
-    if is_vararg(leaf, within={syms.typedargslist}):
-        return Feature.TRAILING_COMMA_IN_DEF in features
-    if is_vararg(leaf, within={syms.arglist, syms.argument}):
-        return Feature.TRAILING_COMMA_IN_CALL in features
-    return True
-
-
 def _safe_add_trailing_comma(safe: bool, delimiter_priority: int, line: Line) -> Line:
     if (
         safe
@@ -1168,9 +1160,10 @@ def delimiter_split(
     If the appropriate Features are given, the split will add trailing commas
     also in function signatures and calls that contain `*` and `**`.
     """
-    if len(line.leaves) == 0:
+    try:
+        last_leaf = line.leaves[-1]
+    except IndexError:
         raise CannotSplit("Line empty") from None
-    last_leaf = line.leaves[-1]
 
     bt = line.bracket_tracker
     try:
@@ -1178,11 +1171,9 @@ def delimiter_split(
     except ValueError:
         raise CannotSplit("No delimiters found") from None
 
-    if (
-        delimiter_priority == DOT_PRIORITY
-        and bt.delimiter_count_with_priority(delimiter_priority) == 1
-    ):
-        raise CannotSplit("Splitting a single attribute from its owner looks wrong")
+    if delimiter_priority == DOT_PRIORITY:
+        if bt.delimiter_count_with_priority(delimiter_priority) == 1:
+            raise CannotSplit("Splitting a single attribute from its owner looks wrong")
 
     current_line = Line(
         mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
@@ -1221,8 +1212,15 @@ def delimiter_split(
             yield from append_comments(leaf)
 
         lowest_depth = min(lowest_depth, leaf.bracket_depth)
-        if trailing_comma_safe and leaf.bracket_depth == lowest_depth:
-            trailing_comma_safe = _can_add_trailing_comma(leaf, features)
+        if leaf.bracket_depth == lowest_depth:
+            if is_vararg(leaf, within={syms.typedargslist}):
+                trailing_comma_safe = (
+                    trailing_comma_safe and Feature.TRAILING_COMMA_IN_DEF in features
+                )
+            elif is_vararg(leaf, within={syms.arglist, syms.argument}):
+                trailing_comma_safe = (
+                    trailing_comma_safe and Feature.TRAILING_COMMA_IN_CALL in features
+                )
 
         if last_leaf.type == STANDALONE_COMMENT and leaf_idx == last_non_comment_leaf:
             current_line = _safe_add_trailing_comma(
