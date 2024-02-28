@@ -3,7 +3,18 @@ blib2to3 Node/Leaf transformation-related utility functions.
 """
 
 import sys
-from typing import Final, Generic, Iterator, List, Optional, Set, Tuple, TypeVar, Union
+from typing import (
+    Final,
+    Generic,
+    Iterator,
+    List,
+    Literal,
+    Optional,
+    Set,
+    Tuple,
+    TypeVar,
+    Union,
+)
 
 if sys.version_info >= (3, 10):
     from typing import TypeGuard
@@ -951,16 +962,21 @@ def is_number_token(nl: NL) -> TypeGuard[Leaf]:
     return nl.type == token.NUMBER
 
 
-def is_part_of_annotation(leaf: Leaf) -> bool:
-    """Returns whether this leaf is part of type annotations."""
+def get_annotation_type(leaf: Leaf) -> Literal["return", "param", None]:
+    """Returns the type of annotation this leaf is part of, if any."""
     ancestor = leaf.parent
     while ancestor is not None:
         if ancestor.prev_sibling and ancestor.prev_sibling.type == token.RARROW:
-            return True
+            return "return"
         if ancestor.parent and ancestor.parent.type == syms.tname:
-            return True
+            return "param"
         ancestor = ancestor.parent
-    return False
+    return None
+
+
+def is_part_of_annotation(leaf: Leaf) -> bool:
+    """Returns whether this leaf is part of a type annotation."""
+    return get_annotation_type(leaf) is not None
 
 
 def first_leaf(node: LN) -> Optional[Leaf]:
