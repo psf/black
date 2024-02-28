@@ -1156,6 +1156,9 @@ def _safe_add_trailing_comma(safe: bool, delimiter_priority: int, line: Line) ->
     return line
 
 
+MIGRATE_COMMENT_DELIMITERS = {STRING_PRIORITY, COMMA_PRIORITY}
+
+
 @dont_increase_indentation
 def delimiter_split(
     line: Line, features: Collection[Feature], mode: Mode
@@ -1212,8 +1215,8 @@ def delimiter_split(
             id(line.leaves[leaf_idx - 1])
         )
         if (
-            delimiter_priority == STRING_PRIORITY
-            or previous_priority != delimiter_priority
+            previous_priority != delimiter_priority
+            or delimiter_priority in MIGRATE_COMMENT_DELIMITERS
         ):
             yield from append_comments(leaf)
 
@@ -1230,7 +1233,7 @@ def delimiter_split(
         if leaf_priority == delimiter_priority:
             if (
                 leaf_idx + 1 < len(line.leaves)
-                and delimiter_priority != STRING_PRIORITY
+                and delimiter_priority not in MIGRATE_COMMENT_DELIMITERS
             ):
                 yield from append_comments(line.leaves[leaf_idx + 1])
 

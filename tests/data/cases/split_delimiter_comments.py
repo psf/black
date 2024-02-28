@@ -11,6 +11,17 @@ bad_split3 = (
     "each line of a bad split? In that "  # Second Comment
     "case, we should just leave it alone."  # Third Comment
 )
+parametrize(
+    (
+        {},
+        {},
+    ),
+    (  # foobar
+        {},
+        {},
+    ),
+)
+
 
 
 # output
@@ -27,3 +38,14 @@ bad_split3 = (
     "each line of a bad split? In that "  # Second Comment
     "case, we should just leave it alone."  # Third Comment
 )
+parametrize(
+    (
+        {},
+        {},
+    ),
+    (  # foobar
+        {},
+        {},
+    ),
+)
+
