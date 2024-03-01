@@ -12,6 +12,7 @@ from typing import Collection, Iterator, List, Optional, Set, Union, cast
 from black.brackets import (
     COMMA_PRIORITY,
     DOT_PRIORITY,
+    STRING_PRIORITY,
     get_leaves_inside_matching_brackets,
     max_delimiter_priority_in_atom,
 )
@@ -1143,6 +1144,9 @@ def _safe_add_trailing_comma(safe: bool, delimiter_priority: int, line: Line) ->
     return line
 
 
+MIGRATE_COMMENT_DELIMITERS = {STRING_PRIORITY, COMMA_PRIORITY}
+
+
 @dont_increase_indentation
 def delimiter_split(
     line: Line, features: Collection[Feature], mode: Mode
@@ -1187,12 +1191,22 @@ def delimiter_split(
             )
             current_line.append(leaf)
 
+    def append_comments(leaf: Leaf) -> Iterator[Line]:
+        for comment_after in line.comments_after(leaf):
+            yield from append_to_line(comment_after)
+
     last_non_comment_leaf = _get_last_non_comment_leaf(line)
     for leaf_idx, leaf in enumerate(line.leaves):
         yield from append_to_line(leaf)
 
-        for comment_after in line.comments_after(leaf):
-            yield from append_to_line(comment_after)
+        previous_priority = leaf_idx > 0 and bt.delimiters.get(
+            id(line.leaves[leaf_idx - 1])
+        )
+        if (
+            previous_priority != delimiter_priority
+            or delimiter_priority in MIGRATE_COMMENT_DELIMITERS
+        ):
+            yield from append_comments(leaf)
 
         lowest_depth = min(lowest_depth, leaf.bracket_depth)
         if trailing_comma_safe and leaf.bracket_depth == lowest_depth:
@@ -1205,8 +1219,13 @@ def delimiter_split(
 
         leaf_priority = bt.delimiters.get(id(leaf))
         if leaf_priority == delimiter_priority:
-            yield current_line
+            if (
+                leaf_idx + 1 < len(line.leaves)
+                and delimiter_priority not in MIGRATE_COMMENT_DELIMITERS
+            ):
+                yield from append_comments(line.leaves[leaf_idx + 1])
 
+            yield current_line
             current_line = Line(
                 mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
             )
