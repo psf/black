@@ -40,12 +40,15 @@ _type_reprs: Dict[int, Union[str, int]] = {}
 def type_repr(type_num: int) -> Union[str, int]:
     global _type_reprs
     if not _type_reprs:
-        from .pygram import python_symbols
+        from . import pygram
+
+        if not hasattr(pygram, "python_symbols"):
+            pygram.initialize(cache_dir=None)
 
         # printing tokens is possible but not as useful
         # from .pgen2 import token // token.__dict__.items():
-        for name in dir(python_symbols):
-            val = getattr(python_symbols, name)
+        for name in dir(pygram.python_symbols):
+            val = getattr(pygram.python_symbols, name)
             if type(val) == int:
                 _type_reprs[val] = name
     return _type_reprs.setdefault(type_num, type_num)
