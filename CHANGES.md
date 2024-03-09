@@ -11,6 +11,10 @@
 <!-- Changes that affect Black's stable style -->
 
 - Don't move comments along with delimiters, which could cause crashes (#4248)
+- Strengthen AST safety check to catch more unsafe changes to strings. Previous versions
+  of Black would incorrectly format the contents of certain unusual f-strings containing
+  nested strings with the same quote type. Now, Black will crash on such strings until
+  support for the new f-string syntax is implemented. (#4270)
 
 ### Preview style
 
