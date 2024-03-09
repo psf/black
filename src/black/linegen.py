@@ -1311,8 +1311,12 @@ def normalize_invisible_parens(  # noqa: C901
             )
 
         # Fixes a bug where invisible parens are not properly wrapped around
-        # if statement.
-        if isinstance(child, Node) and child.type == syms.guard:
+        # if statement when line is too long.
+        if (
+            isinstance(child, Node)
+            and child.type == syms.guard
+            and Preview.parens_for_long_if_clauses_in_case_block in mode
+        ):
             normalize_invisible_parens(
                 child, parens_after={"if"}, mode=mode, features=features
             )

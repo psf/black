@@ -1,4 +1,4 @@
-# flags: --minimum-version=3.10
+# flags: --preview --minimum-version=3.10
 match "test":
     case "test" if "first long condition" != "some loooooooooooooooooooooooooooooooooooooog condition":
         print("Test")
