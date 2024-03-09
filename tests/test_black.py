@@ -1959,16 +1959,6 @@ class BlackTestCase(BlackBaseTestCase):
 
         exc_info.match("Cannot parse: 2:0: EOF in multi-line statement")
 
-    def test_equivalency_ast_parse_failure_includes_error(self) -> None:
-        with pytest.raises(AssertionError) as err:
-            black.assert_equivalent("a«»a  = 1", "a«»a  = 1")
-
-        err.match("--safe")
-        # Unfortunately the SyntaxError message has changed in newer versions so we
-        # can't match it directly.
-        err.match("invalid character")
-        err.match(r"\(<unknown>, line 1\)")
-
     def test_line_ranges_with_code_option(self) -> None:
         code = textwrap.dedent("""\
             if  a  ==  b:
@@ -2900,12 +2890,24 @@ class TestASTSafety(BlackBaseTestCase):
         )
 
     def test_assert_equivalent_fstring(self) -> None:
+        if sys.version_info < (3, 12):
+            pytest.skip("relies on 3.12+ syntax")
         # https://github.com/psf/black/issues/4268
         self.check_ast_equivalence(
             """print(f"{"|".join(['a','b','c'])}")""",
             """print(f"{" | ".join([a,b,c])}")""",
             should_fail=True,
         )
+
+    def test_equivalency_ast_parse_failure_includes_error(self) -> None:
+        with pytest.raises(ASTSafetyError) as err:
+            black.assert_equivalent("a«»a  = 1", "a«»a  = 1")
+
+        err.match("--safe")
+        # Unfortunately the SyntaxError message has changed in newer versions so we
+        # can't match it directly.
+        err.match("invalid character")
+        err.match(r"\(<unknown>, line 1\)")
 
 
 try:
