@@ -2891,7 +2891,7 @@ class TestASTSafety(BlackBaseTestCase):
 
     def test_assert_equivalent_fstring(self) -> None:
         major, minor = sys.version_info[:2]
-        if major > 3 or (major == 3 and minor >= 12):
+        if major < 3 or (major == 3 and minor < 12):
             pytest.skip("relies on 3.12+ syntax")
         # https://github.com/psf/black/issues/4268
         self.check_ast_equivalence(
