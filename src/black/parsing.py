@@ -110,7 +110,7 @@ def lib2to3_unparse(node: Node) -> str:
     return code
 
 
-class ASTSafetyError(AssertionError):
+class ASTSafetyError(Exception):
     """Raised when Black's generated code is not equivalent to the old AST."""
 
 
