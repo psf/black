@@ -11,8 +11,8 @@
 <!-- Changes that affect Black's stable style -->
 
 - Don't move comments along with delimiters, which could cause crashes (#4248)
-- Fixed a bug where long `if` clauses in `match-case` blocks are not wrapped with
-  parenthesis (#4269)
+- Fixed a bug where `if` clauses in `match-case` blocks are not wrapped with parenthesis
+  when the line is too long (#4269)
 
 ### Preview style
 
