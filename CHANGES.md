@@ -16,6 +16,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Improve wrapping of function definitions in edge-cases (#4272)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
