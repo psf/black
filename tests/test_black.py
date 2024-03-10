@@ -2895,7 +2895,7 @@ class TestASTSafety(BlackBaseTestCase):
             pytest.skip("relies on 3.12+ syntax")
         # https://github.com/psf/black/issues/4268
         self.check_ast_equivalence(
-            """print(f"{"|".join(['a','b','c'])}")""",
+            """print(f"{"|".join([a,b,c])}")""",
             """print(f"{" | ".join([a,b,c])}")""",
             should_fail=True,
         )
