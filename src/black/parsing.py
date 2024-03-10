@@ -239,7 +239,7 @@ def _stringify_ast(node: ast.AST, parent_stack: List[ast.AST]) -> Iterator[str]:
             else:
                 normalized = value
             yield (
-                f"{'    ' * (len(parent_stack) + 2)}{normalized!r},  #"
+                f"{'    ' * (len(parent_stack) + 1)}{normalized!r},  #"
                 f" {value.__class__.__name__}"
             )
 
