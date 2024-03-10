@@ -46,6 +46,7 @@ from black.cache import FileData, get_cache_dir, get_cache_file
 from black.debug import DebugVisitor
 from black.mode import Mode, Preview
 from black.output import color_diff, diff
+from black.parsing import ASTSafetyError
 from black.report import Report
 
 # Import other test classes
@@ -1473,10 +1474,6 @@ class BlackTestCase(BlackBaseTestCase):
                 ff(test_file, write_back=black.WriteBack.YES)
                 self.assertEqual(test_file.read_bytes(), expected)
 
-    def test_assert_equivalent_different_asts(self) -> None:
-        with self.assertRaises(AssertionError):
-            black.assert_equivalent("{}", "None")
-
     def test_root_logger_not_used_directly(self) -> None:
         def fail(*args: Any, **kwargs: Any) -> None:
             self.fail("Record created with root logger")
@@ -1961,16 +1958,6 @@ class BlackTestCase(BlackBaseTestCase):
             black.lib2to3_parse("print(", {})
 
         exc_info.match("Cannot parse: 2:0: EOF in multi-line statement")
-
-    def test_equivalency_ast_parse_failure_includes_error(self) -> None:
-        with pytest.raises(AssertionError) as err:
-            black.assert_equivalent("a«»a  = 1", "a«»a  = 1")
-
-        err.match("--safe")
-        # Unfortunately the SyntaxError message has changed in newer versions so we
-        # can't match it directly.
-        err.match("invalid character")
-        err.match(r"\(<unknown>, line 1\)")
 
     def test_line_ranges_with_code_option(self) -> None:
         code = textwrap.dedent("""\
@@ -2820,6 +2807,113 @@ class TestDeFactoAPI:
 
         with pytest.raises(black.NothingChanged):
             black.format_file_contents("x = 1\n", fast=True, mode=black.Mode())
+
+
+class TestASTSafety(BlackBaseTestCase):
+    def check_ast_equivalence(
+        self, source: str, dest: str, *, should_fail: bool = False
+    ) -> None:
+        # If we get a failure, make sure it's not because the code itself
+        # is invalid, since that will also cause assert_equivalent() to throw
+        # ASTSafetyError.
+        source = textwrap.dedent(source)
+        dest = textwrap.dedent(dest)
+        black.parse_ast(source)
+        black.parse_ast(dest)
+        if should_fail:
+            with self.assertRaises(ASTSafetyError):
+                black.assert_equivalent(source, dest)
+        else:
+            black.assert_equivalent(source, dest)
+
+    def test_assert_equivalent_basic(self) -> None:
+        self.check_ast_equivalence("{}", "None", should_fail=True)
+        self.check_ast_equivalence("1+2", "1    +   2")
+        self.check_ast_equivalence("hi # comment", "hi")
+
+    def test_assert_equivalent_del(self) -> None:
+        self.check_ast_equivalence("del (a, b)", "del a, b")
+
+    def test_assert_equivalent_strings(self) -> None:
+        self.check_ast_equivalence('x = "x"', 'x = " x "', should_fail=True)
+        self.check_ast_equivalence(
+            '''
+            """docstring  """
+            ''',
+            '''
+            """docstring"""
+            ''',
+        )
+        self.check_ast_equivalence(
+            '''
+            """docstring  """
+            ''',
+            '''
+            """ddocstring"""
+            ''',
+            should_fail=True,
+        )
+        self.check_ast_equivalence(
+            '''
+            class A:
+                """
+
+                docstring
+
+
+                """
+            ''',
+            '''
+            class A:
+                """docstring"""
+            ''',
+        )
+        self.check_ast_equivalence(
+            """
+            def f():
+                " docstring  "
+            """,
+            '''
+            def f():
+                """docstring"""
+            ''',
+        )
+        self.check_ast_equivalence(
+            """
+            async def f():
+                "   docstring  "
+            """,
+            '''
+            async def f():
+                """docstring"""
+            ''',
+        )
+
+    def test_assert_equivalent_fstring(self) -> None:
+        major, minor = sys.version_info[:2]
+        if major < 3 or (major == 3 and minor < 12):
+            pytest.skip("relies on 3.12+ syntax")
+        # https://github.com/psf/black/issues/4268
+        self.check_ast_equivalence(
+            """print(f"{"|".join([a,b,c])}")""",
+            """print(f"{" | ".join([a,b,c])}")""",
+            should_fail=True,
+        )
+        self.check_ast_equivalence(
+            """print(f"{"|".join(['a','b','c'])}")""",
+            """print(f"{" | ".join(['a','b','c'])}")""",
+            should_fail=True,
+        )
+
+    def test_equivalency_ast_parse_failure_includes_error(self) -> None:
+        with pytest.raises(ASTSafetyError) as err:
+            black.assert_equivalent("a«»a  = 1", "a«»a  = 1")
+
+        err.match("--safe")
+        # Unfortunately the SyntaxError message has changed in newer versions so we
+        # can't match it directly.
+        err.match("invalid character")
+        err.match(r"\(<unknown>, line 1\)")
 
 
 try:

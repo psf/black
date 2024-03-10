@@ -110,6 +110,10 @@ def lib2to3_unparse(node: Node) -> str:
     return code
 
 
+class ASTSafetyError(Exception):
+    """Raised when Black's generated code is not equivalent to the old AST."""
+
+
 def _parse_single_version(
     src: str, version: Tuple[int, int], *, type_comments: bool
 ) -> ast.AST:
@@ -154,9 +158,20 @@ def _normalize(lineend: str, value: str) -> str:
     return normalized.strip()
 
 
-def stringify_ast(node: ast.AST, depth: int = 0) -> Iterator[str]:
+def stringify_ast(node: ast.AST) -> Iterator[str]:
     """Simple visitor generating strings to compare ASTs by content."""
+    return _stringify_ast(node, [])
 
+
+def _stringify_ast_with_new_parent(
+    node: ast.AST, parent_stack: List[ast.AST], new_parent: ast.AST
+) -> Iterator[str]:
+    parent_stack.append(new_parent)
+    yield from _stringify_ast(node, parent_stack)
+    parent_stack.pop()
+
+
+def _stringify_ast(node: ast.AST, parent_stack: List[ast.AST]) -> Iterator[str]:
     if (
         isinstance(node, ast.Constant)
         and isinstance(node.value, str)
@@ -167,7 +182,7 @@ def stringify_ast(node: ast.AST, depth: int = 0) -> Iterator[str]:
         # over the kind
         node.kind = None
 
-    yield f"{'  ' * depth}{node.__class__.__name__}("
+    yield f"{'    ' * len(parent_stack)}{node.__class__.__name__}("
 
     for field in sorted(node._fields):  # noqa: F402
         # TypeIgnore has only one field 'lineno' which breaks this comparison
@@ -179,7 +194,7 @@ def stringify_ast(node: ast.AST, depth: int = 0) -> Iterator[str]:
         except AttributeError:
             continue
 
-        yield f"{'  ' * (depth + 1)}{field}="
+        yield f"{'    ' * (len(parent_stack) + 1)}{field}="
 
         if isinstance(value, list):
             for item in value:
@@ -191,13 +206,15 @@ def stringify_ast(node: ast.AST, depth: int = 0) -> Iterator[str]:
                     and isinstance(item, ast.Tuple)
                 ):
                     for elt in item.elts:
-                        yield from stringify_ast(elt, depth + 2)
+                        yield from _stringify_ast_with_new_parent(
+                            elt, parent_stack, node
+                        )
 
                 elif isinstance(item, ast.AST):
-                    yield from stringify_ast(item, depth + 2)
+                    yield from _stringify_ast_with_new_parent(item, parent_stack, node)
 
         elif isinstance(value, ast.AST):
-            yield from stringify_ast(value, depth + 2)
+            yield from _stringify_ast_with_new_parent(value, parent_stack, node)
 
         else:
             normalized: object
@@ -205,6 +222,12 @@ def stringify_ast(node: ast.AST, depth: int = 0) -> Iterator[str]:
                 isinstance(node, ast.Constant)
                 and field == "value"
                 and isinstance(value, str)
+                and len(parent_stack) >= 2
+                and isinstance(parent_stack[-1], ast.Expr)
+                and isinstance(
+                    parent_stack[-2],
+                    (ast.FunctionDef, ast.AsyncFunctionDef, ast.Module, ast.ClassDef),
+                )
             ):
                 # Constant strings may be indented across newlines, if they are
                 # docstrings; fold spaces after newlines when comparing. Similarly,
@@ -215,6 +238,9 @@ def stringify_ast(node: ast.AST, depth: int = 0) -> Iterator[str]:
                 normalized = value.rstrip()
             else:
                 normalized = value
-            yield f"{'  ' * (depth + 2)}{normalized!r},  # {value.__class__.__name__}"
+            yield (
+                f"{'    ' * (len(parent_stack) + 1)}{normalized!r},  #"
+                f" {value.__class__.__name__}"
+            )
 
-    yield f"{'  ' * depth})  # /{node.__class__.__name__}"
+    yield f"{'    ' * len(parent_stack)})  # /{node.__class__.__name__}"
