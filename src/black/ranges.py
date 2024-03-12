@@ -45,6 +45,32 @@ def is_valid_line_range(lines: Tuple[int, int]) -> bool:
     return not lines or lines[0] <= lines[1]
 
 
+def sanitized_lines(
+    lines: Collection[Tuple[int, int]], src_contents: str
+) -> Collection[Tuple[int, int]]:
+    """Returns the valid line ranges for the given source.
+
+    This removes ranges that are entirely outside the valid lines.
+
+    Other ranges are normalized so that the start values are at least 1 and the
+    end values are at most the (1-based) index of the last source line.
+    """
+    if not src_contents:
+        return []
+    good_lines = []
+    src_line_count = len(src_contents.splitlines())
+    for start, end in lines:
+        if start > src_line_count:
+            continue
+        # line-ranges are 1-based
+        start = max(start, 1)
+        if end < start:
+            continue
+        end = min(end, src_line_count)
+        good_lines.append((start, end))
+    return good_lines
+
+
 def adjusted_lines(
     lines: Collection[Tuple[int, int]],
     original_source: str,
@@ -84,14 +110,11 @@ def adjusted_lines(
     """
     lines_mappings = _calculate_lines_mappings(original_source, modified_source)
 
-    original_line_count = len(original_source.splitlines())
     new_lines = []
     # Keep an index of the current search. Since the lines and lines_mappings are
     # sorted, this makes the search complexity linear.
     current_mapping_index = 0
     for start, end in sorted(lines):
-        if end > original_line_count:
-            end = original_line_count
         start_mapping_index = _find_lines_mapping_index(
             start,
             lines_mappings,

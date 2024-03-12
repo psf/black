@@ -4,7 +4,7 @@ from typing import List, Tuple
 
 import pytest
 
-from black.ranges import adjusted_lines
+from black.ranges import adjusted_lines, sanitized_lines
 
 
 @pytest.mark.parametrize(
@@ -27,10 +27,9 @@ pass
         [(1, 0)],
         [(-8, 0)],
         [(-8, 8)],
+        [(1, 100)],
         [(2, 1)],
         [(0, 8), (3, 1)],
-        [(12, 13)],
-        [(100, 200)],
     ],
 )
 def test_invalid_lines(lines: List[Tuple[int, int]]) -> None:
@@ -78,10 +77,6 @@ pass
             [(1, 2)],
         ),
         (
-            [(1, 100)],
-            [(1, 2)],
-        ),
-        (
             [(6, 6)],
             [],
         ),
@@ -117,10 +112,6 @@ def test_removals(
             [(2, 5)],
         ),
         (
-            [(1, 100)],
-            [(2, 5)],
-        ),
-        (
             [(2, 2)],
             [(5, 5)],
         ),
@@ -153,10 +144,6 @@ this is added
         ),
         (
             [(1, 12)],
-            [(1, 11)],
-        ),
-        (
-            [(1, 100)],
             [(1, 11)],
         ),
         (
@@ -196,3 +183,60 @@ def test_diffs(lines: List[Tuple[int, int]], adjusted: List[Tuple[int, int]]) ->
 12. # last line changed
 """
     assert adjusted == adjusted_lines(lines, original_source, modified_source)
+
+
+@pytest.mark.parametrize(
+    "lines,sanitized",
+    [
+        (
+            [(1, 4)],
+            [(1, 4)],
+        ),
+        (
+            [(2, 3)],
+            [(2, 3)],
+        ),
+        (
+            [(2, 10)],
+            [(2, 4)],
+        ),
+        (
+            [(0, 3)],
+            [(1, 3)],
+        ),
+        (
+            [(0, 10)],
+            [(1, 4)],
+        ),
+        (
+            [(-2, 3)],
+            [(1, 3)],
+        ),
+        (
+            [(0, 0)],
+            [],
+        ),
+        (
+            [(-2, -1)],
+            [],
+        ),
+        (
+            [(-1, 0)],
+            [],
+        ),
+        (
+            [(3, 1), (1, 3), (5, 6)],
+            [(1, 3)],
+        ),
+    ],
+)
+def test_sanitize(
+    lines: List[Tuple[int, int]], sanitized: List[Tuple[int, int]]
+) -> None:
+    source = """\
+1. import re
+2. def func(arg1,
+3.   arg2, arg3):
+4.   pass
+"""
+    assert sanitized == sanitized_lines(lines, source)
