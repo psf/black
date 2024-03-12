@@ -1220,6 +1220,7 @@ def format_str(
         hey
 
     """
+    lines = adjusted_lines(lines, src_contents, src_contents)
     dst_contents = _format_str_once(src_contents, mode=mode, lines=lines)
     # Forced second pass to work around optional trailing commas (becoming
     # forced trailing commas on pass 2) interacting differently with optional

@@ -84,11 +84,14 @@ def adjusted_lines(
     """
     lines_mappings = _calculate_lines_mappings(original_source, modified_source)
 
+    original_line_count = len(original_source.splitlines())
     new_lines = []
     # Keep an index of the current search. Since the lines and lines_mappings are
     # sorted, this makes the search complexity linear.
     current_mapping_index = 0
     for start, end in sorted(lines):
+        if end > original_line_count:
+            end = original_line_count
         start_mapping_index = _find_lines_mapping_index(
             start,
             lines_mappings,
