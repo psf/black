@@ -183,6 +183,9 @@ Don't write the files back, just return the status. _Black_ will exit with:
 - code 1 if some files would be reformatted; or
 - code 123 if there was an internal error
 
+If used in combination with `--quiet` then only the exit code will be returned, unless
+there was an internal error.
+
 ```console
 $ black test.py --check
 All done! ✨ 🍰 ✨
