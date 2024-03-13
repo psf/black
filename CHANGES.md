@@ -16,7 +16,7 @@
 
 <!-- Changes that affect Black's preview style -->
 
-- Fixed a bug where `if` clauses in `match-case` blocks are not wrapped with parenthesis
+- `if` guards in `case` blocks are now wrapped in parentheses
   when the line is too long. (#4269)
 
 ### Configuration

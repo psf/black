@@ -1310,8 +1310,7 @@ def normalize_invisible_parens(  # noqa: C901
                 child, parens_after={"case"}, mode=mode, features=features
             )
 
-        # Fixes a bug where invisible parens are not properly wrapped around
-        # if statement when line is too long.
+        # Add parentheses around if guards in case blocks
         if (
             isinstance(child, Node)
             and child.type == syms.guard
