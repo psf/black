@@ -14,7 +14,7 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, redirect_stderr
 from dataclasses import replace
 from io import BytesIO
-from pathlib import Path
+from pathlib import Path, WindowsPath
 from platform import system
 from tempfile import TemporaryDirectory
 from typing import (
@@ -2460,7 +2460,11 @@ class TestFileCollection:
         assert result.stderr_bytes is not None
 
         gitignore = path / ".gitignore"
-        assert f"Could not parse {gitignore}" in result.stderr_bytes.decode()
+        assert re.search(
+            f"Could not parse {gitignore}".replace("\\", "\\\\"),
+            result.stderr_bytes.decode(),
+            re.IGNORECASE if isinstance(gitignore, WindowsPath) else 0,
+        )
 
     def test_invalid_nested_gitignore(self) -> None:
         path = THIS_DIR / "data" / "invalid_nested_gitignore_tests"
@@ -2472,7 +2476,11 @@ class TestFileCollection:
         assert result.stderr_bytes is not None
 
         gitignore = path / "a" / ".gitignore"
-        assert f"Could not parse {gitignore}" in result.stderr_bytes.decode()
+        assert re.search(
+            f"Could not parse {gitignore}".replace("\\", "\\\\"),
+            result.stderr_bytes.decode(),
+            re.IGNORECASE if isinstance(gitignore, WindowsPath) else 0,
+        )
 
     def test_gitignore_that_ignores_subfolders(self) -> None:
         # If gitignore with */* is in root
