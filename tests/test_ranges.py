@@ -240,3 +240,10 @@ def test_sanitize(
 4.   pass
 """
     assert sanitized == sanitized_lines(lines, source)
+
+    source_no_trailing_nl = """\
+    1. import re
+    2. def func(arg1,
+    3.   arg2, arg3):
+    4.   pass"""
+    assert sanitized == sanitized_lines(lines, source_no_trailing_nl)

@@ -58,7 +58,9 @@ def sanitized_lines(
     if not src_contents:
         return []
     good_lines = []
-    src_line_count = len(src_contents.splitlines())
+    src_line_count = src_contents.count("\n")
+    if not src_contents.endswith("\n"):
+        src_line_count += 1
     for start, end in lines:
         if start > src_line_count:
             continue
