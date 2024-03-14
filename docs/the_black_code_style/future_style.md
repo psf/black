@@ -34,6 +34,8 @@ Currently, the following features are included in the preview style:
   quotes of a docstring
 - `remove_redundant_guard_parens`: Removes redundant parentheses in `if` guards for
   `case` blocks.
+- `function_def_wrap_order`: extends function definition wrapping logic to avoid
+  suboptimal formatting, especially for PEP 695 type parameters
 
 (labels/unstable-features)=
 

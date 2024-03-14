@@ -180,6 +180,7 @@ class Preview(Enum):
     is_simple_lookup_for_doublestar_expression = auto()
     docstring_check_for_newline = auto()
     remove_redundant_guard_parens = auto()
+    function_def_wrap_order = auto()
 
 
 UNSTABLE_FEATURES: Set[Preview] = {
