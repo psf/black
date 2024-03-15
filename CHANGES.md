@@ -1,10 +1,8 @@
 # Change Log
 
-## Unreleased
+## 24.3.0
 
 ### Highlights
-
-<!-- Include any especially major or disruptive changes here -->
 
 This release is a milestone: it fixes Black's first CVE security vulnerability. If you
 run Black on untrusted input, or if you habitually put thousands of leading tab
@@ -16,31 +14,13 @@ incorrect changes to certain f-strings that are valid in Python 3.12 and higher.
 
 ### Stable style
 
-<!-- Changes that affect Black's stable style -->
-
 - Don't move comments along with delimiters, which could cause crashes (#4248)
 - Strengthen AST safety check to catch more unsafe changes to strings. Previous versions
   of Black would incorrectly format the contents of certain unusual f-strings containing
   nested strings with the same quote type. Now, Black will crash on such strings until
   support for the new f-string syntax is implemented. (#4270)
-- Fixed a bug where line-ranges exceeding the last code line would not work as expected
+- Fix a bug where line-ranges exceeding the last code line would not work as expected
   (#4273)
-
-### Preview style
-
-<!-- Changes that affect Black's preview style -->
-
-### Configuration
-
-<!-- Changes to how Black can be configured -->
-
-### Packaging
-
-<!-- Changes to how Black is packaged, such as dependency requirements -->
-
-### Parser
-
-<!-- Changes to the parser or to version autodetection -->
 
 ### Performance
 
@@ -49,23 +29,9 @@ incorrect changes to certain f-strings that are valid in Python 3.12 and higher.
   [CVE-2024-21503](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-21503).
   (#4278)
 
-### Output
-
-<!-- Changes to Black's terminal output and error messages -->
-
-### _Blackd_
-
-<!-- Changes to blackd -->
-
-### Integrations
-
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
-
 ### Documentation
 
 - Note what happens when `--check` is used with `--quiet` (#4236)
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
 
 ## 24.2.0
 
