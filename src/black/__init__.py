@@ -84,7 +84,12 @@ from black.parsing import (  # noqa F401
     parse_ast,
     stringify_ast,
 )
-from black.ranges import adjusted_lines, convert_unchanged_lines, parse_line_ranges
+from black.ranges import (
+    adjusted_lines,
+    convert_unchanged_lines,
+    parse_line_ranges,
+    sanitized_lines,
+)
 from black.report import Changed, NothingChanged, Report
 from black.trans import iter_fexpr_spans
 from blib2to3.pgen2 import token
@@ -1220,6 +1225,10 @@ def format_str(
         hey
 
     """
+    if lines:
+        lines = sanitized_lines(lines, src_contents)
+        if not lines:
+            return src_contents  # Nothing to format
     dst_contents = _format_str_once(src_contents, mode=mode, lines=lines)
     # Forced second pass to work around optional trailing commas (becoming
     # forced trailing commas on pass 2) interacting differently with optional

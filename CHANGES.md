@@ -15,6 +15,8 @@
   of Black would incorrectly format the contents of certain unusual f-strings containing
   nested strings with the same quote type. Now, Black will crash on such strings until
   support for the new f-string syntax is implemented. (#4270)
+- Fixed a bug where line-ranges exceeding the last code line would not work as expected
+  (#4273)
 
 ### Preview style
 
