@@ -14,7 +14,6 @@ STRING_PREFIX_CHARS: Final = "furbFURB"  # All possible string prefix characters
 STRING_PREFIX_RE: Final = re.compile(
     r"^([" + STRING_PREFIX_CHARS + r"]*)(.*)$", re.DOTALL
 )
-FIRST_NON_WHITESPACE_RE: Final = re.compile(r"\s*\t+\s*(\S)")
 UNICODE_ESCAPE_RE: Final = re.compile(
     r"(?P<backslashes>\\+)(?P<body>"
     r"(u(?P<u>[a-fA-F0-9]{4}))"  # Character with 16-bit hex value xxxx
@@ -51,18 +50,13 @@ def lines_with_leading_tabs_expanded(s: str) -> List[str]:
     """
     lines = []
     for line in s.splitlines():
-        # Find the index of the first non-whitespace character after a string of
-        # whitespace that includes at least one tab
-        match = FIRST_NON_WHITESPACE_RE.match(line)
-        if match:
-            first_non_whitespace_idx = match.start(1)
-
-            lines.append(
-                line[:first_non_whitespace_idx].expandtabs()
-                + line[first_non_whitespace_idx:]
-            )
-        else:
+        stripped_line = line.lstrip()
+        if not stripped_line or stripped_line == line:
             lines.append(line)
+        else:
+            prefix_length = len(line) - len(stripped_line)
+            prefix = line[:prefix_length].expandtabs()
+            lines.append(prefix + stripped_line)
     if s.endswith("\n"):
         lines.append("")
     return lines

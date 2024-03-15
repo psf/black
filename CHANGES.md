@@ -6,6 +6,14 @@
 
 <!-- Include any especially major or disruptive changes here -->
 
+This release is a milestone: it fixes Black's first CVE security vulnerability. If you
+run Black on untrusted input, or if you habitually put thousands of leading tab
+characters in your docstrings, you are strongly encouraged to upgrade immediately to fix
+[CVE-2024-21503](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-21503).
+
+This release also fixes a bug in Black's AST safety check that allowed Black to make
+incorrect changes to certain f-strings that are valid in Python 3.12 and higher.
+
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
@@ -36,7 +44,10 @@
 
 ### Performance
 
-<!-- Changes that improve Black's performance. -->
+- Fix catastrophic performance on docstrings that contain large numbers of leading tab
+  characters. This fixes
+  [CVE-2024-21503](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-21503).
+  (#4278)
 
 ### Output
 

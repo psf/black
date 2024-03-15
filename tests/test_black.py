@@ -48,6 +48,7 @@ from black.mode import Mode, Preview
 from black.output import color_diff, diff
 from black.parsing import ASTSafetyError
 from black.report import Report
+from black.strings import lines_with_leading_tabs_expanded
 
 # Import other test classes
 from tests.util import (
@@ -2040,6 +2041,17 @@ class BlackTestCase(BlackBaseTestCase):
         assert (
             b"Cannot use line-ranges in the pyproject.toml file." in result.stderr_bytes
         )
+
+    def test_lines_with_leading_tabs_expanded(self) -> None:
+        # See CVE-2024-21503. Mostly test that this completes in a reasonable
+        # time.
+        payload = "\t" * 10_000
+        assert lines_with_leading_tabs_expanded(payload) == [payload]
+
+        tab = " " * 8
+        assert lines_with_leading_tabs_expanded("\tx") == [f"{tab}x"]
+        assert lines_with_leading_tabs_expanded("\t\tx") == [f"{tab}{tab}x"]
+        assert lines_with_leading_tabs_expanded("\tx\n  y") == [f"{tab}x", "  y"]
 
 
 class TestCaching:
