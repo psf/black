@@ -14,6 +14,9 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- `if` guards in `case` blocks are now wrapped in parentheses when the line is too long.
+  (#4269)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->

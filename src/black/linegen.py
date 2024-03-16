@@ -1310,6 +1310,16 @@ def normalize_invisible_parens(  # noqa: C901
                 child, parens_after={"case"}, mode=mode, features=features
             )
 
+        # Add parentheses around if guards in case blocks
+        if (
+            isinstance(child, Node)
+            and child.type == syms.guard
+            and Preview.parens_for_long_if_clauses_in_case_block in mode
+        ):
+            normalize_invisible_parens(
+                child, parens_after={"if"}, mode=mode, features=features
+            )
+
         # Add parentheses around long tuple unpacking in assignments.
         if (
             index == 0
