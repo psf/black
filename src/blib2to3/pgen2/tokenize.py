@@ -27,6 +27,7 @@ are the same, except instead of generating tokens, tokeneater is a callback
 function to which the 5 fields described above are passed as 5 arguments,
 each time a new token is found."""
 
+import builtins
 import sys
 from typing import (
     Callable,
@@ -465,12 +466,7 @@ def untokenize(iterable: Iterable[TokenInfo]) -> str:
 
 
 def is_fstring_start(token: str) -> bool:
-    # TODO: builtins.any is shadowed :(
-    for prefix in fstring_prefix:
-        if token.startswith(prefix):
-            return True
-
-    return False
+    return builtins.any(token.startswith(prefix) for prefix in fstring_prefix)
 
 
 def generate_tokens(

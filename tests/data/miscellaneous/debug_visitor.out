@@ -229,8 +229,34 @@ file_input
                       LPAR
  '('
                       arglist
-                        STRING
- "f'{indent}{_type}'"
+                        fstring
+                          FSTRING_START
+ "f'"
+                          FSTRING_MIDDLE
+ ''
+                          fstring_replacement_field
+                            LBRACE
+ '{'
+                            NAME
+ 'indent'
+                            RBRACE
+ '}'
+                          /fstring_replacement_field
+                          FSTRING_MIDDLE
+ ''
+                          fstring_replacement_field
+                            LBRACE
+ '{'
+                            NAME
+ '_type'
+                            RBRACE
+ '}'
+                          /fstring_replacement_field
+                          FSTRING_MIDDLE
+ ''
+                          FSTRING_END
+ "'"
+                        /fstring
                         COMMA
  ','
                         argument
@@ -370,8 +396,34 @@ file_input
                       LPAR
  '('
                       arglist
-                        STRING
- "f'{indent}/{_type}'"
+                        fstring
+                          FSTRING_START
+ "f'"
+                          FSTRING_MIDDLE
+ ''
+                          fstring_replacement_field
+                            LBRACE
+ '{'
+                            NAME
+ 'indent'
+                            RBRACE
+ '}'
+                          /fstring_replacement_field
+                          FSTRING_MIDDLE
+ '/'
+                          fstring_replacement_field
+                            LBRACE
+ '{'
+                            NAME
+ '_type'
+                            RBRACE
+ '}'
+                          /fstring_replacement_field
+                          FSTRING_MIDDLE
+ ''
+                          FSTRING_END
+ "'"
+                        /fstring
                         COMMA
  ','
                         argument
@@ -494,8 +546,34 @@ file_input
                       LPAR
  '('
                       arglist
-                        STRING
- "f'{indent}{_type}'"
+                        fstring
+                          FSTRING_START
+ "f'"
+                          FSTRING_MIDDLE
+ ''
+                          fstring_replacement_field
+                            LBRACE
+ '{'
+                            NAME
+ 'indent'
+                            RBRACE
+ '}'
+                          /fstring_replacement_field
+                          FSTRING_MIDDLE
+ ''
+                          fstring_replacement_field
+                            LBRACE
+ '{'
+                            NAME
+ '_type'
+                            RBRACE
+ '}'
+                          /fstring_replacement_field
+                          FSTRING_MIDDLE
+ ''
+                          FSTRING_END
+ "'"
+                        /fstring
                         COMMA
  ','
                         argument
@@ -557,8 +635,36 @@ file_input
                           LPAR
  '('
                           arglist
-                            STRING
- "f' {node.prefix!r}'"
+                            fstring
+                              FSTRING_START
+ "f'"
+                              FSTRING_MIDDLE
+ ' '
+                              fstring_replacement_field
+                                LBRACE
+ '{'
+                                power
+                                  NAME
+ 'node'
+                                  trailer
+                                    DOT
+ '.'
+                                    NAME
+ 'prefix'
+                                  /trailer
+                                /power
+                                BANG
+ '!'
+                                NAME
+ 'r'
+                                RBRACE
+ '}'
+                              /fstring_replacement_field
+                              FSTRING_MIDDLE
+ ''
+                              FSTRING_END
+ "'"
+                            /fstring
                             COMMA
  ','
                             argument
@@ -613,8 +719,36 @@ file_input
                       LPAR
  '('
                       arglist
-                        STRING
- "f' {node.value!r}'"
+                        fstring
+                          FSTRING_START
+ "f'"
+                          FSTRING_MIDDLE
+ ' '
+                          fstring_replacement_field
+                            LBRACE
+ '{'
+                            power
+                              NAME
+ 'node'
+                              trailer
+                                DOT
+ '.'
+                                NAME
+ 'value'
+                              /trailer
+                            /power
+                            BANG
+ '!'
+                            NAME
+ 'r'
+                            RBRACE
+ '}'
+                          /fstring_replacement_field
+                          FSTRING_MIDDLE
+ ''
+                          FSTRING_END
+ "'"
+                        /fstring
                         COMMA
  ','
                         argument
