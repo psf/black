@@ -93,7 +93,7 @@ def pytest_configure(config: "Config") -> None:
     ot_run |= {no(excluded) for excluded in ot_markers - ot_run}
     ot_markers |= {no(m) for m in ot_markers}
 
-    log.info("optional tests to run:", ot_run)
+    log.info("optional tests to run: %s", ot_run)
     unknown_tests = ot_run - ot_markers
     if unknown_tests:
         raise ValueError(f"Unknown optional tests wanted: {unknown_tests!r}")
@@ -115,7 +115,7 @@ def pytest_collection_modifyitems(config: "Config", items: "List[Node]") -> None
             optional_markers_on_test & enabled_optional_markers
         ):
             continue
-        log.info("skipping non-requested optional", item)
+        log.info("skipping non-requested optional: %s", item)
         item.add_marker(skip_mark(frozenset(optional_markers_on_test)))
 
 
