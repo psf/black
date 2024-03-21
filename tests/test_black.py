@@ -2688,6 +2688,7 @@ class TestFileCollection:
             (root / "pyproject.toml").write_text("[tool.black]", encoding="utf-8")
 
             target = tmp / "outside_root" / "a.py"
+            target.parent.mkdir()
             target.write_text("print('hello')", encoding="utf-8")
             (root / "a.py").symlink_to(target)
 
