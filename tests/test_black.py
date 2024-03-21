@@ -2686,7 +2686,7 @@ class TestFileCollection:
             root = tmp / "root"
             root.mkdir()
             (root / "pyproject.toml").write_text("[tool.black]", encoding="utf-8")
-            (root / "a.py").symlink_to(Path("/outside_root/a.py"))
+            (root / "a.py").symlink_to(tmp / "outside_root" / "a.py")
 
             stdin_filename = str(root / "a.py")
             assert_collected_sources(
