@@ -474,20 +474,8 @@ class BlackTestCase(BlackBaseTestCase):
         # running from CLI, but fails when running the tests because cwd is different
         project_root = Path(THIS_DIR / "data" / "nested_gitignore_tests")
         working_directory = project_root / "root"
-        target_abspath = working_directory / "child"
-        target_contents = list(target_abspath.iterdir())
 
-        def mock_n_calls(responses: List[bool]) -> Callable[[], bool]:
-            def _mocked_calls() -> bool:
-                if responses:
-                    return responses.pop(0)
-                return False
-
-            return _mocked_calls
-
-        with patch("pathlib.Path.iterdir", return_value=target_contents), patch(
-            "pathlib.Path.resolve", return_value=target_abspath
-        ), patch("pathlib.Path.is_dir", side_effect=mock_n_calls([True])):
+        with change_directory(working_directory):
             # Note that the root folder (project_root) isn't the folder
             # named "root" (aka working_directory)
             report = MagicMock(verbose=True)
@@ -2692,11 +2680,19 @@ class TestFileCollection:
     def test_get_sources_with_stdin_symlink_outside_root(
         self,
     ) -> None:
-        path = THIS_DIR / "data" / "include_exclude_tests"
-        stdin_filename = str(path / "b/exclude/a.py")
-        outside_root_symlink = Path("/target_directory/a.py")
-        root = Path("target_dir/").resolve().absolute()
-        with patch("pathlib.Path.resolve", return_value=outside_root_symlink):
+        with TemporaryDirectory() as tempdir:
+            tmp = Path(tempdir).resolve()
+
+            root = tmp / "root"
+            root.mkdir()
+            (root / "pyproject.toml").write_text("[tool.black]", encoding="utf-8")
+
+            target = tmp / "outside_root" / "a.py"
+            target.parent.mkdir()
+            target.write_text("print('hello')", encoding="utf-8")
+            (root / "a.py").symlink_to(target)
+
+            stdin_filename = str(root / "a.py")
             assert_collected_sources(
                 root=root,
                 src=["-"],
