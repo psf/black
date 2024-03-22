@@ -16,6 +16,7 @@
 
 - `if` guards in `case` blocks are now wrapped in parentheses when the line is too long.
   (#4269)
+- Stop moving multiline strings to a new line unless inside brackets (#4289)
 
 ### Configuration
 
