@@ -862,9 +862,9 @@ def is_line_short_enough(  # noqa: C901
             # directly after MLS/MLS-containing expression
             ignore_ctxs: List[Optional[LN]] = [None]
             ignore_ctxs += multiline_string_contexts
-            if (
-                line.inside_brackets or leaf.bracket_depth > 0
-            ) and (i != len(line.leaves) - 1 or leaf.prev_sibling not in ignore_ctxs):
+            if (line.inside_brackets or leaf.bracket_depth > 0) and (
+                i != len(line.leaves) - 1 or leaf.prev_sibling not in ignore_ctxs
+            ):
                 commas[leaf.bracket_depth] += 1
         if max_level_to_update != math.inf:
             max_level_to_update = min(max_level_to_update, leaf.bracket_depth)
