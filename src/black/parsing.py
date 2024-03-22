@@ -223,11 +223,9 @@ def _stringify_ast(node: ast.AST, parent_stack: List[ast.AST]) -> Iterator[str]:
                 and field == "value"
                 and isinstance(value, str)
                 and len(parent_stack) >= 2
+                # Any standalone string, ideally this would
+                # exactly match black.nodes.is_docstring
                 and isinstance(parent_stack[-1], ast.Expr)
-                and isinstance(
-                    parent_stack[-2],
-                    (ast.FunctionDef, ast.AsyncFunctionDef, ast.Module, ast.ClassDef),
-                )
             ):
                 # Constant strings may be indented across newlines, if they are
                 # docstrings; fold spaces after newlines when comparing. Similarly,
