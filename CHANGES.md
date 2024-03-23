@@ -10,6 +10,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix unwanted crashes caused by AST equivalency check (#4290)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->

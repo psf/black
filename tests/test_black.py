@@ -2904,6 +2904,22 @@ class TestASTSafety(BlackBaseTestCase):
                 """docstring"""
             ''',
         )
+        self.check_ast_equivalence(
+            """
+            if __name__ == "__main__":
+                "  docstring-like  "
+            """,
+            '''
+            if __name__ == "__main__":
+                """docstring-like"""
+            ''',
+        )
+        self.check_ast_equivalence(r'def f(): r" \n "', r'def f(): "\\n"')
+        self.check_ast_equivalence('try: pass\nexcept: " x "', 'try: pass\nexcept: "x"')
+
+        self.check_ast_equivalence(
+            'def foo(): return " x "', 'def foo(): return "x"', should_fail=True
+        )
 
     def test_assert_equivalent_fstring(self) -> None:
         major, minor = sys.version_info[:2]
