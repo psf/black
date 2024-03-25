@@ -141,13 +141,13 @@ DoubleLbrace = r'[^"\\{]*(?:(?:\\.|{{)[^"\\{]*)*{(?!{)'
 Single3Lbrace = r"[^'\\{]*(?:(?:\\.|{{|'(?!''))[^'\\{]*)*{(?!{)"
 Double3Lbrace = r'[^"\\{]*(?:(?:\\.|{{|"(?!""))[^"\\{]*)*{(?!{)'
 
-# ! format specifier inside an fstring brace
-Bang = Whitespace + group("!")
+# ! format specifier inside an fstring brace, ensure it's not a `!=` token
+Bang = Whitespace + group("!") + r'(?!=)'
 bang = re.compile(Bang)
 Colon = Whitespace + group(":")
 colon = re.compile(Colon)
 
-FstringMiddleAfterColon = Whitespace + group(r".*?") + group("{", "}", "\n")
+FstringMiddleAfterColon = group(Whitespace + r".*?") + group("{", "}", "\n")
 fstring_middle_after_colon = re.compile(FstringMiddleAfterColon)
 
 # Because of leftmost-then-longest match semantics, be sure to put the
@@ -754,8 +754,6 @@ def generate_tokens(
                     formatspec_start = (lnum, end)
                     pos = end
                     continue
-
-                # TODO: `=` is left, eg. f"{abc = }"
 
             pseudomatch = pseudoprog.match(line, pos)
             if pseudomatch:  # scan for tokens
