@@ -142,7 +142,7 @@ Single3Lbrace = r"[^'\\{]*(?:(?:\\.|{{|'(?!''))[^'\\{]*)*{(?!{)"
 Double3Lbrace = r'[^"\\{]*(?:(?:\\.|{{|"(?!""))[^"\\{]*)*{(?!{)'
 
 # ! format specifier inside an fstring brace, ensure it's not a `!=` token
-Bang = Whitespace + group("!") + r'(?!=)'
+Bang = Whitespace + group("!") + r"(?!=)"
 bang = re.compile(Bang)
 Colon = Whitespace + group(":")
 colon = re.compile(Colon)

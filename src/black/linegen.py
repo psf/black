@@ -569,7 +569,7 @@ class LineGenerator(Visitor[Line]):
 
 def _fstring_to_string(node: Node) -> Leaf:
     """Converts an fstring node back to a string node."""
-    string_without_prefix = str(node)[len(node.prefix):]
+    string_without_prefix = str(node)[len(node.prefix) :]
     return Leaf(token.STRING, string_without_prefix, prefix=node.prefix)
 
 
