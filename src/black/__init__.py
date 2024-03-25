@@ -1230,9 +1230,9 @@ def _format_str_once(
         future_imports = get_future_imports(src_node)
         versions = detect_target_versions(src_node, future_imports=future_imports)
 
-    context_manager_features = {
+    line_generator_features = {
         feature
-        for feature in {Feature.PARENTHESIZED_CONTEXT_MANAGERS}
+        for feature in {Feature.PARENTHESIZED_CONTEXT_MANAGERS, Feature.FSTRING_PARSING}
         if supports_feature(versions, feature)
     }
     normalize_fmt_off(src_node, mode, lines)
@@ -1240,7 +1240,7 @@ def _format_str_once(
         # This should be called after normalize_fmt_off.
         convert_unchanged_lines(src_node, lines)
 
-    line_generator = LineGenerator(mode=mode, features=context_manager_features)
+    line_generator = LineGenerator(mode=mode, features=line_generator_features)
     elt = EmptyLineTracker(mode=mode)
     split_line_features = {
         feature
@@ -1322,8 +1322,10 @@ def get_features_used(  # noqa: C901
     for n in node.pre_order():
         if n.type == token.FSTRING_START:
             features.add(Feature.F_STRINGS)
-        elif n.type == token.RBRACE and n.parent is not None and any(
-            child.type == token.EQUAL for child in n.parent.children
+        elif (
+            n.type == token.RBRACE
+            and n.parent is not None
+            and any(child.type == token.EQUAL for child in n.parent.children)
         ):
             features.add(Feature.DEBUG_F_STRINGS)
 

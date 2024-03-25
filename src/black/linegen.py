@@ -502,6 +502,12 @@ class LineGenerator(Visitor[Line]):
         yield from self.visit_default(leaf)
 
     def visit_fstring(self, node: Node) -> Iterator[Line]:
+        if Feature.FSTRING_PARSING not in self.features:
+            string_leaf = _fstring_to_string(node)
+            node.replace(string_leaf)
+            yield from self.visit_default(string_leaf)
+            return
+
         fstring_start = node.children[0]
         fstring_end = node.children[-1]
         assert isinstance(fstring_start, Leaf)
@@ -516,7 +522,7 @@ class LineGenerator(Visitor[Line]):
 
         assert quote == fstring_end.value
 
-        is_raw_fstring = 'r' in prefix or 'R' in prefix
+        is_raw_fstring = "r" in prefix or "R" in prefix
         middles = [leaf for leaf in node.leaves() if leaf.type == token.FSTRING_MIDDLE]
 
         if self.mode.string_normalization:
@@ -558,6 +564,12 @@ class LineGenerator(Visitor[Line]):
         self.visit_case_block = self.visit_match_case
         if Preview.remove_redundant_guard_parens in self.mode:
             self.visit_guard = partial(v, keywords=Ø, parens={"if"})
+
+
+def _fstring_to_string(node: Node) -> Leaf:
+    """Converts an fstring node back to a string node."""
+    string_without_prefix = str(node).removeprefix(node.prefix)
+    return Leaf(token.STRING, string_without_prefix, prefix=node.prefix)
 
 
 def _hugging_power_ops_line_to_string(

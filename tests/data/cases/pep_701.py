@@ -88,6 +88,11 @@ f"This is a really long string, but just make sure that you reflow fstrings corr
 # %d
 # }"""
 
+raise ValueError(
+                "xxxxxxxxxxxIncorrect --line-ranges format, expect START-END, found"
+                f" {lines_str!r}"
+            )
+
 # output
 
 x = f"foo"
@@ -179,3 +184,9 @@ f"This is a really long string, but just make sure that you reflow fstrings corr
 # %m
 # %d
 # }"""
+
+raise ValueError(
+    "xxxxxxxxxxxIncorrect --line-ranges format, expect START-END, found" f" {
+        lines_str!r
+    }"
+)

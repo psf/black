@@ -249,7 +249,7 @@ def normalize_string_quotes(s: str) -> str:
 def normalize_fstring_quotes(
     quote: str,
     middles: List[Leaf],
-    is_raw_fstring: bool
+    is_raw_fstring: bool,
 ) -> Tuple[List[Leaf], str]:
     """Prefer double quotes but only if it doesn't cause more escaping.
 
