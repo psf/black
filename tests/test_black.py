@@ -14,7 +14,7 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, redirect_stderr
 from dataclasses import replace
 from io import BytesIO
-from pathlib import Path
+from pathlib import Path, WindowsPath
 from platform import system
 from tempfile import TemporaryDirectory
 from typing import (
@@ -46,7 +46,9 @@ from black.cache import FileData, get_cache_dir, get_cache_file
 from black.debug import DebugVisitor
 from black.mode import Mode, Preview
 from black.output import color_diff, diff
+from black.parsing import ASTSafetyError
 from black.report import Report
+from black.strings import lines_with_leading_tabs_expanded
 
 # Import other test classes
 from tests.util import (
@@ -471,20 +473,8 @@ class BlackTestCase(BlackBaseTestCase):
         # running from CLI, but fails when running the tests because cwd is different
         project_root = Path(THIS_DIR / "data" / "nested_gitignore_tests")
         working_directory = project_root / "root"
-        target_abspath = working_directory / "child"
-        target_contents = list(target_abspath.iterdir())
 
-        def mock_n_calls(responses: List[bool]) -> Callable[[], bool]:
-            def _mocked_calls() -> bool:
-                if responses:
-                    return responses.pop(0)
-                return False
-
-            return _mocked_calls
-
-        with patch("pathlib.Path.iterdir", return_value=target_contents), patch(
-            "pathlib.Path.resolve", return_value=target_abspath
-        ), patch("pathlib.Path.is_dir", side_effect=mock_n_calls([True])):
+        with change_directory(working_directory):
             # Note that the root folder (project_root) isn't the folder
             # named "root" (aka working_directory)
             report = MagicMock(verbose=True)
@@ -1472,10 +1462,6 @@ class BlackTestCase(BlackBaseTestCase):
                 ff(test_file, write_back=black.WriteBack.YES)
                 self.assertEqual(test_file.read_bytes(), expected)
 
-    def test_assert_equivalent_different_asts(self) -> None:
-        with self.assertRaises(AssertionError):
-            black.assert_equivalent("{}", "None")
-
     def test_root_logger_not_used_directly(self) -> None:
         def fail(*args: Any, **kwargs: Any) -> None:
             self.fail("Record created with root logger")
@@ -1961,16 +1947,6 @@ class BlackTestCase(BlackBaseTestCase):
 
         exc_info.match("Cannot parse: 2:0: EOF in multi-line statement")
 
-    def test_equivalency_ast_parse_failure_includes_error(self) -> None:
-        with pytest.raises(AssertionError) as err:
-            black.assert_equivalent("a«»a  = 1", "a«»a  = 1")
-
-        err.match("--safe")
-        # Unfortunately the SyntaxError message has changed in newer versions so we
-        # can't match it directly.
-        err.match("invalid character")
-        err.match(r"\(<unknown>, line 1\)")
-
     def test_line_ranges_with_code_option(self) -> None:
         code = textwrap.dedent("""\
             if  a  ==  b:
@@ -2052,6 +2028,17 @@ class BlackTestCase(BlackBaseTestCase):
         assert (
             b"Cannot use line-ranges in the pyproject.toml file." in result.stderr_bytes
         )
+
+    def test_lines_with_leading_tabs_expanded(self) -> None:
+        # See CVE-2024-21503. Mostly test that this completes in a reasonable
+        # time.
+        payload = "\t" * 10_000
+        assert lines_with_leading_tabs_expanded(payload) == [payload]
+
+        tab = " " * 8
+        assert lines_with_leading_tabs_expanded("\tx") == [f"{tab}x"]
+        assert lines_with_leading_tabs_expanded("\t\tx") == [f"{tab}{tab}x"]
+        assert lines_with_leading_tabs_expanded("\tx\n  y") == [f"{tab}x", "  y"]
 
 
 class TestCaching:
@@ -2472,7 +2459,11 @@ class TestFileCollection:
         assert result.stderr_bytes is not None
 
         gitignore = path / ".gitignore"
-        assert f"Could not parse {gitignore}" in result.stderr_bytes.decode()
+        assert re.search(
+            f"Could not parse {gitignore}".replace("\\", "\\\\"),
+            result.stderr_bytes.decode(),
+            re.IGNORECASE if isinstance(gitignore, WindowsPath) else 0,
+        )
 
     def test_invalid_nested_gitignore(self) -> None:
         path = THIS_DIR / "data" / "invalid_nested_gitignore_tests"
@@ -2484,7 +2475,11 @@ class TestFileCollection:
         assert result.stderr_bytes is not None
 
         gitignore = path / "a" / ".gitignore"
-        assert f"Could not parse {gitignore}" in result.stderr_bytes.decode()
+        assert re.search(
+            f"Could not parse {gitignore}".replace("\\", "\\\\"),
+            result.stderr_bytes.decode(),
+            re.IGNORECASE if isinstance(gitignore, WindowsPath) else 0,
+        )
 
     def test_gitignore_that_ignores_subfolders(self) -> None:
         # If gitignore with */* is in root
@@ -2684,11 +2679,19 @@ class TestFileCollection:
     def test_get_sources_with_stdin_symlink_outside_root(
         self,
     ) -> None:
-        path = THIS_DIR / "data" / "include_exclude_tests"
-        stdin_filename = str(path / "b/exclude/a.py")
-        outside_root_symlink = Path("/target_directory/a.py")
-        root = Path("target_dir/").resolve().absolute()
-        with patch("pathlib.Path.resolve", return_value=outside_root_symlink):
+        with TemporaryDirectory() as tempdir:
+            tmp = Path(tempdir).resolve()
+
+            root = tmp / "root"
+            root.mkdir()
+            (root / "pyproject.toml").write_text("[tool.black]", encoding="utf-8")
+
+            target = tmp / "outside_root" / "a.py"
+            target.parent.mkdir()
+            target.write_text("print('hello')", encoding="utf-8")
+            (root / "a.py").symlink_to(target)
+
+            stdin_filename = str(root / "a.py")
             assert_collected_sources(
                 root=root,
                 src=["-"],
@@ -2819,6 +2822,129 @@ class TestDeFactoAPI:
 
         with pytest.raises(black.NothingChanged):
             black.format_file_contents("x = 1\n", fast=True, mode=black.Mode())
+
+
+class TestASTSafety(BlackBaseTestCase):
+    def check_ast_equivalence(
+        self, source: str, dest: str, *, should_fail: bool = False
+    ) -> None:
+        # If we get a failure, make sure it's not because the code itself
+        # is invalid, since that will also cause assert_equivalent() to throw
+        # ASTSafetyError.
+        source = textwrap.dedent(source)
+        dest = textwrap.dedent(dest)
+        black.parse_ast(source)
+        black.parse_ast(dest)
+        if should_fail:
+            with self.assertRaises(ASTSafetyError):
+                black.assert_equivalent(source, dest)
+        else:
+            black.assert_equivalent(source, dest)
+
+    def test_assert_equivalent_basic(self) -> None:
+        self.check_ast_equivalence("{}", "None", should_fail=True)
+        self.check_ast_equivalence("1+2", "1    +   2")
+        self.check_ast_equivalence("hi # comment", "hi")
+
+    def test_assert_equivalent_del(self) -> None:
+        self.check_ast_equivalence("del (a, b)", "del a, b")
+
+    def test_assert_equivalent_strings(self) -> None:
+        self.check_ast_equivalence('x = "x"', 'x = " x "', should_fail=True)
+        self.check_ast_equivalence(
+            '''
+            """docstring  """
+            ''',
+            '''
+            """docstring"""
+            ''',
+        )
+        self.check_ast_equivalence(
+            '''
+            """docstring  """
+            ''',
+            '''
+            """ddocstring"""
+            ''',
+            should_fail=True,
+        )
+        self.check_ast_equivalence(
+            '''
+            class A:
+                """
+
+                docstring
+
+
+                """
+            ''',
+            '''
+            class A:
+                """docstring"""
+            ''',
+        )
+        self.check_ast_equivalence(
+            """
+            def f():
+                " docstring  "
+            """,
+            '''
+            def f():
+                """docstring"""
+            ''',
+        )
+        self.check_ast_equivalence(
+            """
+            async def f():
+                "   docstring  "
+            """,
+            '''
+            async def f():
+                """docstring"""
+            ''',
+        )
+        self.check_ast_equivalence(
+            """
+            if __name__ == "__main__":
+                "  docstring-like  "
+            """,
+            '''
+            if __name__ == "__main__":
+                """docstring-like"""
+            ''',
+        )
+        self.check_ast_equivalence(r'def f(): r" \n "', r'def f(): "\\n"')
+        self.check_ast_equivalence('try: pass\nexcept: " x "', 'try: pass\nexcept: "x"')
+
+        self.check_ast_equivalence(
+            'def foo(): return " x "', 'def foo(): return "x"', should_fail=True
+        )
+
+    def test_assert_equivalent_fstring(self) -> None:
+        major, minor = sys.version_info[:2]
+        if major < 3 or (major == 3 and minor < 12):
+            pytest.skip("relies on 3.12+ syntax")
+        # https://github.com/psf/black/issues/4268
+        self.check_ast_equivalence(
+            """print(f"{"|".join([a,b,c])}")""",
+            """print(f"{" | ".join([a,b,c])}")""",
+            should_fail=True,
+        )
+        self.check_ast_equivalence(
+            """print(f"{"|".join(['a','b','c'])}")""",
+            """print(f"{" | ".join(['a','b','c'])}")""",
+            should_fail=True,
+        )
+
+    def test_equivalency_ast_parse_failure_includes_error(self) -> None:
+        with pytest.raises(ASTSafetyError) as err:
+            black.assert_equivalent("a«»a  = 1", "a«»a  = 1")
+
+        err.match("--safe")
+        # Unfortunately the SyntaxError message has changed in newer versions so we
+        # can't match it directly.
+        err.match("invalid character")
+        err.match(r"\(<unknown>, line 1\)")
 
 
 try:

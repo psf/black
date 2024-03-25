@@ -12,6 +12,7 @@ from typing import Collection, Iterator, List, Optional, Set, Union, cast
 from black.brackets import (
     COMMA_PRIORITY,
     DOT_PRIORITY,
+    STRING_PRIORITY,
     get_leaves_inside_matching_brackets,
     max_delimiter_priority_in_atom,
 )
@@ -31,12 +32,12 @@ from black.nodes import (
     BRACKETS,
     CLOSING_BRACKETS,
     OPENING_BRACKETS,
-    RARROW,
     STANDALONE_COMMENT,
     STATEMENT,
     WHITESPACE,
     Visitor,
     ensure_visible,
+    get_annotation_type,
     is_arith_like,
     is_async_stmt_or_funcdef,
     is_atom_with_invisible_parens,
@@ -1085,11 +1086,12 @@ def bracket_split_build_line(
         result.inside_brackets = True
         result.depth += 1
         if leaves:
-            # Ensure a trailing comma for imports and standalone function arguments, but
-            # be careful not to add one after any comments or within type annotations.
             no_commas = (
+                # Ensure a trailing comma for imports and standalone function arguments
                 original.is_def
+                # Don't add one after any comments or within type annotations
                 and opening_bracket.value == "("
+                # Don't add one if there's already one there
                 and not any(
                     leaf.type == token.COMMA
                     and (
@@ -1098,22 +1100,9 @@ def bracket_split_build_line(
                     )
                     for leaf in leaves
                 )
-                # In particular, don't add one within a parenthesized return annotation.
-                # Unfortunately the indicator we're in a return annotation (RARROW) may
-                # be defined directly in the parent node, the parent of the parent ...
-                # and so on depending on how complex the return annotation is.
-                # This isn't perfect and there's some false negatives but they are in
-                # contexts were a comma is actually fine.
-                and not any(
-                    node.prev_sibling.type == RARROW
-                    for node in (
-                        leaves[0].parent,
-                        getattr(leaves[0].parent, "parent", None),
-                    )
-                    if isinstance(node, Node) and isinstance(node.prev_sibling, Leaf)
-                )
-                # Except the false negatives above for PEP 604 unions where we
-                # can't add the comma.
+                # Don't add one inside parenthesized return annotations
+                and get_annotation_type(leaves[0]) != "return"
+                # Don't add one inside PEP 604 unions
                 and not (
                     leaves[0].parent
                     and leaves[0].parent.next_sibling
@@ -1174,6 +1163,14 @@ def _get_last_non_comment_leaf(line: Line) -> Optional[int]:
     return None
 
 
+def _can_add_trailing_comma(leaf: Leaf, features: Collection[Feature]) -> bool:
+    if is_vararg(leaf, within={syms.typedargslist}):
+        return Feature.TRAILING_COMMA_IN_DEF in features
+    if is_vararg(leaf, within={syms.arglist, syms.argument}):
+        return Feature.TRAILING_COMMA_IN_CALL in features
+    return True
+
+
 def _safe_add_trailing_comma(safe: bool, delimiter_priority: int, line: Line) -> Line:
     if (
         safe
@@ -1186,6 +1183,9 @@ def _safe_add_trailing_comma(safe: bool, delimiter_priority: int, line: Line) ->
     return line
 
 
+MIGRATE_COMMENT_DELIMITERS = {STRING_PRIORITY, COMMA_PRIORITY}
+
+
 @dont_increase_indentation
 def delimiter_split(
     line: Line, features: Collection[Feature], mode: Mode
@@ -1195,10 +1195,9 @@ def delimiter_split(
     If the appropriate Features are given, the split will add trailing commas
     also in function signatures and calls that contain `*` and `**`.
     """
-    try:
-        last_leaf = line.leaves[-1]
-    except IndexError:
+    if len(line.leaves) == 0:
         raise CannotSplit("Line empty") from None
+    last_leaf = line.leaves[-1]
 
     bt = line.bracket_tracker
     try:
@@ -1206,9 +1205,11 @@ def delimiter_split(
     except ValueError:
         raise CannotSplit("No delimiters found") from None
 
-    if delimiter_priority == DOT_PRIORITY:
-        if bt.delimiter_count_with_priority(delimiter_priority) == 1:
-            raise CannotSplit("Splitting a single attribute from its owner looks wrong")
+    if (
+        delimiter_priority == DOT_PRIORITY
+        and bt.delimiter_count_with_priority(delimiter_priority) == 1
+    ):
+        raise CannotSplit("Splitting a single attribute from its owner looks wrong")
 
     current_line = Line(
         mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
@@ -1229,23 +1230,26 @@ def delimiter_split(
             )
             current_line.append(leaf)
 
+    def append_comments(leaf: Leaf) -> Iterator[Line]:
+        for comment_after in line.comments_after(leaf):
+            yield from append_to_line(comment_after)
+
     last_non_comment_leaf = _get_last_non_comment_leaf(line)
     for leaf_idx, leaf in enumerate(line.leaves):
         yield from append_to_line(leaf)
 
-        for comment_after in line.comments_after(leaf):
-            yield from append_to_line(comment_after)
+        previous_priority = leaf_idx > 0 and bt.delimiters.get(
+            id(line.leaves[leaf_idx - 1])
+        )
+        if (
+            previous_priority != delimiter_priority
+            or delimiter_priority in MIGRATE_COMMENT_DELIMITERS
+        ):
+            yield from append_comments(leaf)
 
         lowest_depth = min(lowest_depth, leaf.bracket_depth)
-        if leaf.bracket_depth == lowest_depth:
-            if is_vararg(leaf, within={syms.typedargslist}):
-                trailing_comma_safe = (
-                    trailing_comma_safe and Feature.TRAILING_COMMA_IN_DEF in features
-                )
-            elif is_vararg(leaf, within={syms.arglist, syms.argument}):
-                trailing_comma_safe = (
-                    trailing_comma_safe and Feature.TRAILING_COMMA_IN_CALL in features
-                )
+        if trailing_comma_safe and leaf.bracket_depth == lowest_depth:
+            trailing_comma_safe = _can_add_trailing_comma(leaf, features)
 
         if last_leaf.type == STANDALONE_COMMENT and leaf_idx == last_non_comment_leaf:
             current_line = _safe_add_trailing_comma(
@@ -1254,11 +1258,17 @@ def delimiter_split(
 
         leaf_priority = bt.delimiters.get(id(leaf))
         if leaf_priority == delimiter_priority:
-            yield current_line
+            if (
+                leaf_idx + 1 < len(line.leaves)
+                and delimiter_priority not in MIGRATE_COMMENT_DELIMITERS
+            ):
+                yield from append_comments(line.leaves[leaf_idx + 1])
 
+            yield current_line
             current_line = Line(
                 mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
             )
+
     if current_line:
         current_line = _safe_add_trailing_comma(
             trailing_comma_safe, delimiter_priority, current_line
@@ -1337,6 +1347,16 @@ def normalize_invisible_parens(  # noqa: C901
         if isinstance(child, Node) and child.type == syms.case_block:
             normalize_invisible_parens(
                 child, parens_after={"case"}, mode=mode, features=features
+            )
+
+        # Add parentheses around if guards in case blocks
+        if (
+            isinstance(child, Node)
+            and child.type == syms.guard
+            and Preview.parens_for_long_if_clauses_in_case_block in mode
+        ):
+            normalize_invisible_parens(
+                child, parens_after={"if"}, mode=mode, features=features
             )
 
         # Add parentheses around long tuple unpacking in assignments.

@@ -183,6 +183,9 @@ Don't write the files back, just return the status. _Black_ will exit with:
 - code 1 if some files would be reformatted; or
 - code 123 if there was an internal error
 
+If used in combination with `--quiet` then only the exit code will be returned, unless
+there was an internal error.
+
 ```console
 $ black test.py --check
 All done! ✨ 🍰 ✨
@@ -266,8 +269,8 @@ configuration file for consistent results across environments.
 
 ```console
 $ black --version
-black, 24.1.1 (compiled: yes)
-$ black --required-version 24.1.1 -c "format = 'this'"
+black, 24.3.0 (compiled: yes)
+$ black --required-version 24.3.0 -c "format = 'this'"
 format = "this"
 $ black --required-version 31.5b2 -c "still = 'beta?!'"
 Oh no! 💥 💔 💥 The required version does not match the running version!
@@ -363,7 +366,7 @@ You can check the version of _Black_ you have installed using the `--version` fl
 
 ```console
 $ black --version
-black, 24.1.1
+black, 24.3.0
 ```
 
 #### `--config`

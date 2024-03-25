@@ -12,12 +12,90 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Fixed a bug where comments where mistakenly removed along with redundant parentheses
-  (#4218)
+- Fix unwanted crashes caused by AST equivalency check (#4290)
 
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
+
+- `if` guards in `case` blocks are now wrapped in parentheses when the line is too long.
+  (#4269)
+- Stop moving multiline strings to a new line unless inside brackets (#4289)
+
+### Configuration
+
+<!-- Changes to how Black can be configured -->
+
+### Packaging
+
+<!-- Changes to how Black is packaged, such as dependency requirements -->
+
+### Parser
+
+<!-- Changes to the parser or to version autodetection -->
+
+### Performance
+
+<!-- Changes that improve Black's performance. -->
+
+### Output
+
+<!-- Changes to Black's terminal output and error messages -->
+
+### _Blackd_
+
+<!-- Changes to blackd -->
+
+### Integrations
+
+<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+### Documentation
+
+<!-- Major changes to documentation and policies. Small docs changes
+     don't need a changelog entry. -->
+
+## 24.3.0
+
+### Highlights
+
+This release is a milestone: it fixes Black's first CVE security vulnerability. If you
+run Black on untrusted input, or if you habitually put thousands of leading tab
+characters in your docstrings, you are strongly encouraged to upgrade immediately to fix
+[CVE-2024-21503](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-21503).
+
+This release also fixes a bug in Black's AST safety check that allowed Black to make
+incorrect changes to certain f-strings that are valid in Python 3.12 and higher.
+
+### Stable style
+
+- Don't move comments along with delimiters, which could cause crashes (#4248)
+- Strengthen AST safety check to catch more unsafe changes to strings. Previous versions
+  of Black would incorrectly format the contents of certain unusual f-strings containing
+  nested strings with the same quote type. Now, Black will crash on such strings until
+  support for the new f-string syntax is implemented. (#4270)
+- Fix a bug where line-ranges exceeding the last code line would not work as expected
+  (#4273)
+
+### Performance
+
+- Fix catastrophic performance on docstrings that contain large numbers of leading tab
+  characters. This fixes
+  [CVE-2024-21503](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-21503).
+  (#4278)
+
+### Documentation
+
+- Note what happens when `--check` is used with `--quiet` (#4236)
+
+## 24.2.0
+
+### Stable style
+
+- Fixed a bug where comments where mistakenly removed along with redundant parentheses
+  (#4218)
+
+### Preview style
 
 - Move the `hug_parens_with_braces_and_square_brackets` feature to the unstable style
   due to an outstanding crash and proposed formatting tweaks (#4198)
@@ -37,39 +115,14 @@
   simply add an empty `[tool.black]` to the previously discovered `pyproject.toml`
   (#4204)
 
-### Packaging
-
-<!-- Changes to how Black is packaged, such as dependency requirements -->
-
-### Parser
-
-<!-- Changes to the parser or to version autodetection -->
-
-### Performance
-
-<!-- Changes that improve Black's performance. -->
-
 ### Output
-
-<!-- Changes to Black's terminal output and error messages -->
 
 - Black will swallow any `SyntaxWarning`s or `DeprecationWarning`s produced by the `ast`
   module when performing equivalence checks (#4189)
 
-### _Blackd_
-
-<!-- Changes to blackd -->
-
 ### Integrations
 
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
-
 - Add a JSONSchema and provide a validate-pyproject entry-point (#4181)
-
-### Documentation
-
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
 
 ## 24.1.1
 

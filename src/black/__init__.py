@@ -71,9 +71,19 @@ from black.mode import Mode as Mode  # re-exported
 from black.mode import Preview, TargetVersion, supports_feature
 from black.nodes import STARS, is_number_token, is_simple_decorator_expression, syms
 from black.output import color_diff, diff, dump_to_file, err, ipynb_diff, out
-from black.parsing import InvalidInput  # noqa F401
-from black.parsing import lib2to3_parse, parse_ast, stringify_ast
-from black.ranges import adjusted_lines, convert_unchanged_lines, parse_line_ranges
+from black.parsing import (  # noqa F401
+    ASTSafetyError,
+    InvalidInput,
+    lib2to3_parse,
+    parse_ast,
+    stringify_ast,
+)
+from black.ranges import (
+    adjusted_lines,
+    convert_unchanged_lines,
+    parse_line_ranges,
+    sanitized_lines,
+)
 from black.report import Changed, NothingChanged, Report
 from blib2to3.pgen2 import token
 from blib2to3.pytree import Leaf, Node
@@ -1208,6 +1218,10 @@ def format_str(
         hey
 
     """
+    if lines:
+        lines = sanitized_lines(lines, src_contents)
+        if not lines:
+            return src_contents  # Nothing to format
     dst_contents = _format_str_once(src_contents, mode=mode, lines=lines)
     # Forced second pass to work around optional trailing commas (becoming
     # forced trailing commas on pass 2) interacting differently with optional
@@ -1507,7 +1521,7 @@ def assert_equivalent(src: str, dst: str) -> None:
     try:
         src_ast = parse_ast(src)
     except Exception as exc:
-        raise AssertionError(
+        raise ASTSafetyError(
             "cannot use --safe with this file; failed to parse source file AST: "
             f"{exc}\n"
             "This could be caused by running Black with an older Python version "
@@ -1518,7 +1532,7 @@ def assert_equivalent(src: str, dst: str) -> None:
         dst_ast = parse_ast(dst)
     except Exception as exc:
         log = dump_to_file("".join(traceback.format_tb(exc.__traceback__)), dst)
-        raise AssertionError(
+        raise ASTSafetyError(
             f"INTERNAL ERROR: Black produced invalid code: {exc}. "
             "Please report a bug on https://github.com/psf/black/issues.  "
             f"This invalid output might be helpful: {log}"
@@ -1528,7 +1542,7 @@ def assert_equivalent(src: str, dst: str) -> None:
     dst_ast_str = "\n".join(stringify_ast(dst_ast))
     if src_ast_str != dst_ast_str:
         log = dump_to_file(diff(src_ast_str, dst_ast_str, "src", "dst"))
-        raise AssertionError(
+        raise ASTSafetyError(
             "INTERNAL ERROR: Black produced code that is not equivalent to the"
             " source.  Please report a bug on "
             f"https://github.com/psf/black/issues.  This diff might be helpful: {log}"
