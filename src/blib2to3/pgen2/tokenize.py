@@ -724,7 +724,6 @@ def generate_tokens(
                     # TODO: in a triple quoted string we should infact add the \n here
                     # formatspec += "\n"
                     pos = brace_end
-                    continue
 
                 yield (FSTRING_MIDDLE, formatspec, formatspec_start, (lnum, end), line)
                 formatspec = ""
