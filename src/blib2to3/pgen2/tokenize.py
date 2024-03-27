@@ -665,7 +665,6 @@ def generate_tokens(
                 if endmatch:  # all on one line
                     start, end = endmatch.span(0)
                     token = line[start:end]
-                    # TODO: check if the token will ever have any whitespace around?
                     if token.endswith(('"""', "'''")):
                         middle_token, end_token = token[:-3], token[-3:]
                         middle_epos = end_spos = (lnum, end - 3)
@@ -707,8 +706,6 @@ def generate_tokens(
                     contline = line
                     break
 
-            # TODO: fstring_level > 0 is redundant in both cases here,
-            # remove it and ensure nothing breaks
             if inside_fstring_colon:
                 match = fstring_middle_after_colon.match(line, pos)
                 if match is None:
@@ -982,6 +979,10 @@ def generate_tokens(
                 else:
                     if parenlev == 0 and bracelev > 0 and initial == "}":
                         bracelev -= 1
+                        # if we're still inside fstrings, we're still part of the format spec
+                        if inside_fstring_braces:
+                            inside_fstring_colon = True
+                            formatspec_start = (lnum, pos)
                     elif initial in "([{":
                         parenlev += 1
                     elif initial in ")]}":

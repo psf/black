@@ -67,8 +67,11 @@ x = f"a{2+2:x}b"
 rf'foo'
 rf'{foo}'
 
+f"{x:{y}d}"
+
 x = f"a{2+2:=^{x}}b"
 x = f"a{2+2:=^{foo(x+y**2):something else}}b"
+x = f"a{2+2:=^{foo(x+y**2):something else}one more}b"
 f'{(abc:=10)}'
 
 f"This is a really long string, but just make sure that you reflow fstrings {
@@ -164,8 +167,11 @@ x = f"a{2 + 2:x}b"
 rf"foo"
 rf"{foo}"
 
+f"{x:{y}d}"
+
 x = f"a{2 + 2:=^{x}}b"
 x = f"a{2 + 2:=^{foo(x + y**2):something else}}b"
+x = f"a{2 + 2:=^{foo(x + y**2):something else}one more}b"
 f"{(abc := 10)}"
 
 f"This is a really long string, but just make sure that you reflow fstrings {2 + 2:d}"

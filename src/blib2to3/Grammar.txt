@@ -256,7 +256,6 @@ patterns: pattern (',' pattern)* [',']
 pattern: (expr|star_expr) ['as' expr]
 
 fstring: FSTRING_START fstring_middle* FSTRING_END
-# TODO making these FSTRING_MIDDLE makes them unformattable so maybe put a new token here?
 fstring_middle: fstring_replacement_field | FSTRING_MIDDLE
 fstring_replacement_field: '{' (yield_expr | testlist_star_expr) ['='] [ "!" NAME ] [ ':' fstring_format_spec* ] '}'
 fstring_format_spec: FSTRING_MIDDLE | fstring_replacement_field
