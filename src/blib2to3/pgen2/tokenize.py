@@ -469,6 +469,15 @@ def is_fstring_start(token: str) -> bool:
     return builtins.any(token.startswith(prefix) for prefix in fstring_prefix)
 
 
+def _split_fstring_start_and_middle(token: str) -> Tuple[str, str]:
+    for prefix in fstring_prefix:
+        _, prefix, rest = token.partition(prefix)
+        if prefix != "":
+            return prefix, rest
+
+    raise ValueError(f"Token {token!r} is not a valid f-string start")
+
+
 def generate_tokens(
     readline: Callable[[], str], grammar: Optional[Grammar] = None
 ) -> Iterator[GoodTokenInfo]:
@@ -531,11 +540,25 @@ def generate_tokens(
                 spos = strstart
                 epos = (lnum, end)
                 tokenline = contline + line
-                if fstring_level == 0:
+                if fstring_level == 0 and not is_fstring_start(token):
                     yield (STRING, token, spos, epos, tokenline)
                     endprog_stack.pop()
                     parenlev = parenlev_stack.pop()
                 else:
+                    if is_fstring_start(token):
+                        fstring_level += 1
+                        fstring_start, token = _split_fstring_start_and_middle(token)
+                        fstring_start_epos = (lnum, spos[1] + len(fstring_start))
+                        yield (
+                            FSTRING_START,
+                            fstring_start,
+                            spos,
+                            fstring_start_epos,
+                            tokenline,
+                        )
+                        # increase spos to the end of the fstring start
+                        spos = fstring_start_epos
+
                     if token.endswith("{"):
                         fstring_middle, lbrace = token[:-1], token[-1]
                         fstring_middle_epos = lbrace_spos = (lnum, end - 1)
@@ -549,9 +572,12 @@ def generate_tokens(
                         yield (LBRACE, lbrace, lbrace_spos, epos, line)
                         inside_fstring_braces = True
                     else:
-                        # TODO: -3 maybe not guaranteed, could be \ separated single line string
-                        fstring_middle, fstring_end = token[:-3], token[-3:]
-                        fstring_middle_epos = end_spos = (lnum, end - 3)
+                        if token.endswith(('"""', "'''")):
+                            fstring_middle, fstring_end = token[:-3], token[-3:]
+                            fstring_middle_epos = end_spos = (lnum, end - 3)
+                        else:
+                            fstring_middle, fstring_end = token[:-1], token[-1]
+                            fstring_middle_epos = end_spos = (lnum, end - 1)
                         yield (
                             FSTRING_MIDDLE,
                             fstring_middle,
@@ -792,7 +818,6 @@ def generate_tokens(
                         if stashed:
                             yield stashed
                             stashed = None
-                        # TODO: move this logic to a function
                         if not is_fstring_start(token):
                             pos = endmatch.end(0)
                             token = line[start:pos]

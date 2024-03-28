@@ -96,6 +96,9 @@ raise ValueError(
                 f" {lines_str!r}"
             )
 
+f"`escape` only permitted in {{'html', 'latex', 'latex-math'}}, \
+got {escape}"
+
 # output
 
 x = f"foo"
@@ -196,3 +199,8 @@ raise ValueError(
         lines_str!r
     }"
 )
+
+f"`escape` only permitted in {{'html', 'latex', 'latex-math'}}, \
+got {
+    escape
+}"
