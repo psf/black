@@ -65,6 +65,7 @@ from black.numerics import normalize_numeric_literal
 from black.strings import (
     fix_docstring,
     get_string_prefix,
+    normalize_fstring_quotes,
     normalize_string_prefix,
     normalize_string_quotes,
     normalize_unicode_escape_sequences,
@@ -501,6 +502,38 @@ class LineGenerator(Visitor[Line]):
 
         yield from self.visit_default(leaf)
 
+    def visit_fstring(self, node: Node) -> Iterator[Line]:
+        if Feature.FSTRING_PARSING not in self.features:
+            string_leaf = _fstring_to_string(node)
+            node.replace(string_leaf)
+            yield from self.visit_default(string_leaf)
+            return
+
+        fstring_start = node.children[0]
+        fstring_end = node.children[-1]
+        assert isinstance(fstring_start, Leaf)
+        assert isinstance(fstring_end, Leaf)
+
+        quote_char = fstring_end.value[0]
+        quote_idx = fstring_start.value.index(quote_char)
+        prefix, quote = fstring_start.value[:quote_idx], fstring_start.value[quote_idx:]
+
+        if not is_docstring(node, self.mode):
+            prefix = normalize_string_prefix(prefix)
+
+        assert quote == fstring_end.value
+
+        is_raw_fstring = "r" in prefix or "R" in prefix
+        middles = [leaf for leaf in node.leaves() if leaf.type == token.FSTRING_MIDDLE]
+
+        if self.mode.string_normalization:
+            middles, quote = normalize_fstring_quotes(quote, middles, is_raw_fstring)
+
+        fstring_start.value = prefix + quote
+        fstring_end.value = quote
+
+        yield from self.visit_default(node)
+
     def __post_init__(self) -> None:
         """You are in a twisty little maze of passages."""
         self.current_line = Line(mode=self.mode)
@@ -532,6 +565,12 @@ class LineGenerator(Visitor[Line]):
         self.visit_case_block = self.visit_match_case
         if Preview.remove_redundant_guard_parens in self.mode:
             self.visit_guard = partial(v, keywords=Ø, parens={"if"})
+
+
+def _fstring_to_string(node: Node) -> Leaf:
+    """Converts an fstring node back to a string node."""
+    string_without_prefix = str(node)[len(node.prefix) :]
+    return Leaf(token.STRING, string_without_prefix, prefix=node.prefix)
 
 
 def _hugging_power_ops_line_to_string(

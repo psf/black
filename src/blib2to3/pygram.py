@@ -70,6 +70,10 @@ class _python_symbols(Symbols):
     file_input: int
     flow_stmt: int
     for_stmt: int
+    fstring: int
+    fstring_format_spec: int
+    fstring_middle: int
+    fstring_replacement_field: int
     funcdef: int
     global_stmt: int
     guard: int

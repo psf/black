@@ -145,7 +145,13 @@ BRACKET: Final = {
 OPENING_BRACKETS: Final = set(BRACKET.keys())
 CLOSING_BRACKETS: Final = set(BRACKET.values())
 BRACKETS: Final = OPENING_BRACKETS | CLOSING_BRACKETS
-ALWAYS_NO_SPACE: Final = CLOSING_BRACKETS | {token.COMMA, STANDALONE_COMMENT}
+ALWAYS_NO_SPACE: Final = CLOSING_BRACKETS | {
+    token.COMMA,
+    STANDALONE_COMMENT,
+    token.FSTRING_MIDDLE,
+    token.FSTRING_END,
+    token.BANG,
+}
 
 RARROW = 55
 
@@ -211,6 +217,9 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:  # no
     }:
         return NO
 
+    if t == token.LBRACE and p.type == syms.fstring_replacement_field:
+        return NO
+
     prev = leaf.prev_sibling
     if not prev:
         prevp = preceding_leaf(p)
@@ -270,6 +279,9 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:  # no
             return NO
 
     elif prev.type in OPENING_BRACKETS:
+        return NO
+
+    elif prev.type == token.BANG:
         return NO
 
     if p.type in {syms.parameters, syms.arglist}:
@@ -393,6 +405,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:  # no
             elif prevp.type == token.EQUAL and prevp_parent.type == syms.argument:
                 return NO
 
+        # TODO: add fstring here?
         elif t in {token.NAME, token.NUMBER, token.STRING}:
             return NO
 
@@ -542,31 +555,32 @@ def is_arith_like(node: LN) -> bool:
     }
 
 
-def is_docstring(leaf: Leaf, mode: Mode) -> bool:
-    if leaf.type != token.STRING:
-        return False
+def is_docstring(node: NL, mode: Mode) -> bool:
+    if isinstance(node, Leaf):
+        if node.type != token.STRING:
+            return False
 
-    prefix = get_string_prefix(leaf.value)
-    if set(prefix).intersection("bBfF"):
-        return False
+        prefix = get_string_prefix(node.value)
+        if set(prefix).intersection("bBfF"):
+            return False
 
     if (
         Preview.unify_docstring_detection in mode
-        and leaf.parent
-        and leaf.parent.type == syms.simple_stmt
-        and not leaf.parent.prev_sibling
-        and leaf.parent.parent
-        and leaf.parent.parent.type == syms.file_input
+        and node.parent
+        and node.parent.type == syms.simple_stmt
+        and not node.parent.prev_sibling
+        and node.parent.parent
+        and node.parent.parent.type == syms.file_input
     ):
         return True
 
     if prev_siblings_are(
-        leaf.parent, [None, token.NEWLINE, token.INDENT, syms.simple_stmt]
+        node.parent, [None, token.NEWLINE, token.INDENT, syms.simple_stmt]
     ):
         return True
 
     # Multiline docstring on the same line as the `def`.
-    if prev_siblings_are(leaf.parent, [syms.parameters, token.COLON, syms.simple_stmt]):
+    if prev_siblings_are(node.parent, [syms.parameters, token.COLON, syms.simple_stmt]):
         # `syms.parameters` is only used in funcdefs and async_funcdefs in the Python
         # grammar. We're safe to return True without further checks.
         return True
@@ -952,10 +966,6 @@ def is_lpar_token(nl: NL) -> TypeGuard[Leaf]:
 
 def is_rpar_token(nl: NL) -> TypeGuard[Leaf]:
     return nl.type == token.RPAR
-
-
-def is_string_token(nl: NL) -> TypeGuard[Leaf]:
-    return nl.type == token.STRING
 
 
 def is_number_token(nl: NL) -> TypeGuard[Leaf]:

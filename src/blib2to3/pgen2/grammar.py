@@ -218,6 +218,7 @@ opmap_raw = """
 //= DOUBLESLASHEQUAL
 -> RARROW
 := COLONEQUAL
+! BANG
 """
 
 opmap = {}

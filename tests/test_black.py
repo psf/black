@@ -343,12 +343,11 @@ class BlackTestCase(BlackBaseTestCase):
         features = black.get_features_used(root)
         self.assertNotIn(black.Feature.DEBUG_F_STRINGS, features)
 
-        # We don't yet support feature version detection in nested f-strings
         root = black.lib2to3_parse(
             """f"heard a rumour that { f'{1+1=}' } ... seems like it could be true" """
         )
         features = black.get_features_used(root)
-        self.assertNotIn(black.Feature.DEBUG_F_STRINGS, features)
+        self.assertIn(black.Feature.DEBUG_F_STRINGS, features)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_string_quotes(self) -> None:

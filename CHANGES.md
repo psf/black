@@ -6,6 +6,8 @@
 
 <!-- Include any especially major or disruptive changes here -->
 
+- Add support for the new Python 3.12 f-string syntax introduced by PEP 701 (#3822)
+
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
