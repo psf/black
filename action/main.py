@@ -64,16 +64,14 @@ def read_version_specifier_from_pyproject() -> str:
         )
         sys.exit(1)
 
-    version = find_black_version_in_array(
-        pyproject.get("project", {}).get("dependencies")
-    )
-    if version is None:
-        for deps in (
-            pyproject.get("project", {}).get("optional-dependencies", {}).values()
-        ):
-            version = find_black_version_in_array(deps)
-            if version is not None:
-                break
+    arrays = [
+        pyproject.get("project", {}).get("dependencies"),
+        *pyproject.get("project", {}).get("optional-dependencies", {}).values(),
+    ]
+    for array in arrays:
+        version = find_black_version_in_array(array)
+        if version is not None:
+            break
 
     if version is None:
         print(
