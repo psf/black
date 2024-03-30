@@ -29,7 +29,8 @@ def determine_version_specifier() -> str:
     """
     if USE_PYPROJECT and VERSION:
         print(
-            "::error::'with.version' and 'with.use_pyproject' inputs are mutually exclusive.",
+            "::error::'with.version' and 'with.use_pyproject' inputs are "
+            "mutually exclusive.",
             file=sys.stderr,
             flush=True,
         )
