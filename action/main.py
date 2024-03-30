@@ -17,7 +17,7 @@ BLACK_ARGS = os.getenv("INPUT_BLACK_ARGS", default="")
 VERSION = os.getenv("INPUT_VERSION", default="")
 USE_PYPROJECT = os.getenv("INPUT_USE_PYPROJECT") == "true"
 
-BLACK_VERSION_RE = re.compile(r"^black([^A-Z0-9._-]+)", re.IGNORECASE)
+BLACK_VERSION_RE = re.compile(r"^black([^A-Z0-9._-]+.*)$", re.IGNORECASE)
 EXTRAS_RE = re.compile(r"\[.*\]")
 
 
