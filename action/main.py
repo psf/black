@@ -5,6 +5,7 @@ import shutil
 import sys
 from pathlib import Path
 from subprocess import PIPE, STDOUT, run
+from typing import Union
 
 ACTION_PATH = Path(os.environ["GITHUB_ACTION_PATH"])
 ENV_PATH = ACTION_PATH / ".black-env"
@@ -85,7 +86,7 @@ def read_version_specifier_from_pyproject() -> str:
     return version
 
 
-def find_black_version_in_array(array: object) -> str | None:
+def find_black_version_in_array(array: object) -> Union[str, None]:
     if not isinstance(array, list):
         return None
     try:
