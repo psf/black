@@ -1,4 +1,5 @@
 import os
+import re
 import shlex
 import shutil
 import sys
@@ -13,12 +14,90 @@ SRC = os.getenv("INPUT_SRC", default="")
 JUPYTER = os.getenv("INPUT_JUPYTER") == "true"
 BLACK_ARGS = os.getenv("INPUT_BLACK_ARGS", default="")
 VERSION = os.getenv("INPUT_VERSION", default="")
+USE_PYPROJECT = os.getenv("INPUT_USE_PYPROJECT") == "true"
+
+BLACK_VERSION_RE = re.compile(r"^black([^A-Z0-9._-]+)", re.IGNORECASE)
+EXTRAS_RE = re.compile(r"\[.*\]")
+
+
+def determine_version_specifier() -> str:
+    """Determine the version of Black to install.
+
+    The version can be specified either via the `with.version` input or via the
+    pyproject.toml file if `with.use_pyproject` is set to `true`.
+    """
+    if USE_PYPROJECT and VERSION:
+        print(
+            "::error::'with.version' and 'with.use_pyproject' inputs are mutually exclusive.",
+            file=sys.stderr,
+            flush=True,
+        )
+        sys.exit(1)
+    if USE_PYPROJECT:
+        return read_version_specifier_from_pyproject()
+    elif VERSION and VERSION[0] in "0123456789":
+        return f"=={VERSION}"
+    else:
+        return VERSION
+
+
+def read_version_specifier_from_pyproject() -> str:
+    if sys.version_info < (3, 11):
+        print(
+            "::error::'with.use_pyproject' input requires Python 3.11 or later.",
+            file=sys.stderr,
+            flush=True,
+        )
+        sys.exit(1)
+
+    import tomllib
+
+    try:
+        with Path("pyproject.toml").open("rb") as fp:
+            pyproject = tomllib.load(fp)
+    except FileNotFoundError:
+        print(
+            "::error::'with.use_pyproject' input requires a pyproject.toml file.",
+            file=sys.stderr,
+            flush=True,
+        )
+        sys.exit(1)
+
+    try:
+        deps = pyproject["project"]["dependencies"]
+        if not isinstance(deps, list):
+            raise TypeError()
+    except (KeyError, TypeError):
+        print(
+            "::error::'project.dependencies' table missing from pyproject.toml.",
+            file=sys.stderr,
+            flush=True,
+        )
+        sys.exit(1)
+
+    try:
+        for item in deps:
+            # Rudimentary PEP 508 parsing.
+            item = item.split(";")[0]
+            item = EXTRAS_RE.sub("", item).strip()
+            if item == "black":
+                return ""
+            elif m := BLACK_VERSION_RE.match(item):
+                return m.group(1).strip()
+    except TypeError:
+        pass
+
+    print(
+        "::error::'black' dependency missing from pyproject.toml.",
+        file=sys.stderr,
+        flush=True,
+    )
+    sys.exit(1)
+
 
 run([sys.executable, "-m", "venv", str(ENV_PATH)], check=True)
 
-version_specifier = VERSION
-if VERSION and VERSION[0] in "0123456789":
-    version_specifier = f"=={VERSION}"
+version_specifier = determine_version_specifier()
 if JUPYTER:
     extra_deps = "[colorama,jupyter]"
 else:
