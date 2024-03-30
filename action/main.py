@@ -63,20 +63,33 @@ def read_version_specifier_from_pyproject() -> str:
         )
         sys.exit(1)
 
-    try:
-        deps = pyproject["project"]["dependencies"]
-        if not isinstance(deps, list):
-            raise TypeError()
-    except (KeyError, TypeError):
+    version = find_black_version_in_array(
+        pyproject.get("project", {}).get("dependencies")
+    )
+    if version is None:
+        for deps in (
+            pyproject.get("project", {}).get("optional-dependencies", {}).values()
+        ):
+            version = find_black_version_in_array(deps)
+            if version is not None:
+                break
+
+    if version is None:
         print(
-            "::error::'project.dependencies' table missing from pyproject.toml.",
+            "::error::'black' dependency missing from pyproject.toml.",
             file=sys.stderr,
             flush=True,
         )
         sys.exit(1)
 
+    return version
+
+
+def find_black_version_in_array(array: object) -> str | None:
+    if not isinstance(array, list):
+        return None
     try:
-        for item in deps:
+        for item in array:
             # Rudimentary PEP 508 parsing.
             item = item.split(";")[0]
             item = EXTRAS_RE.sub("", item).strip()
@@ -87,12 +100,7 @@ def read_version_specifier_from_pyproject() -> str:
     except TypeError:
         pass
 
-    print(
-        "::error::'black' dependency missing from pyproject.toml.",
-        file=sys.stderr,
-        flush=True,
-    )
-    sys.exit(1)
+    return None
 
 
 run([sys.executable, "-m", "venv", str(ENV_PATH)], check=True)
