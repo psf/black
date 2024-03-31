@@ -1,8 +1,8 @@
 """
 String transformers that can split and merge strings.
 """
+
 import re
-import sys
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from dataclasses import dataclass
@@ -12,9 +12,11 @@ from typing import (
     ClassVar,
     Collection,
     Dict,
+    Final,
     Iterable,
     Iterator,
     List,
+    Literal,
     Optional,
     Sequence,
     Set,
@@ -23,16 +25,11 @@ from typing import (
     Union,
 )
 
-if sys.version_info < (3, 8):
-    from typing_extensions import Final, Literal
-else:
-    from typing import Literal, Final
-
 from mypy_extensions import trait
 
 from black.comments import contains_pragma_comment
 from black.lines import Line, append_leaves
-from black.mode import Feature, Mode
+from black.mode import Feature, Mode, Preview
 from black.nodes import (
     CLOSING_BRACKETS,
     OPENING_BRACKETS,
@@ -48,9 +45,11 @@ from black.nodes import (
 from black.rusty import Err, Ok, Result
 from black.strings import (
     assert_is_leaf_string,
+    count_chars_in_width,
     get_string_prefix,
     has_triple_quotes,
     normalize_string_quotes,
+    str_width,
 )
 from blib2to3.pgen2 import token
 from blib2to3.pytree import Leaf, Node
@@ -70,6 +69,8 @@ ParserState = int
 StringID = int
 TResult = Result[T, CannotTransform]  # (T)ransform Result
 TMatchResult = TResult[List[Index]]
+
+SPLIT_SAFE_CHARS = frozenset(["\u3001", "\u3002", "\uff0c"])  # East Asian stops
 
 
 def TErr(err_msg: str) -> Err[CannotTransform]:
@@ -94,43 +95,36 @@ def hug_power_op(
     else:
         raise CannotTransform("No doublestar token was found in the line.")
 
-    def is_simple_lookup(index: int, step: Literal[1, -1]) -> bool:
+    def is_simple_lookup(index: int, kind: Literal[1, -1]) -> bool:
         # Brackets and parentheses indicate calls, subscripts, etc. ...
         # basically stuff that doesn't count as "simple". Only a NAME lookup
         # or dotted lookup (eg. NAME.NAME) is OK.
-        if step == -1:
-            disallowed = {token.RPAR, token.RSQB}
+        if Preview.is_simple_lookup_for_doublestar_expression not in mode:
+            return original_is_simple_lookup_func(line, index, kind)
+
         else:
-            disallowed = {token.LPAR, token.LSQB}
+            if kind == -1:
+                return handle_is_simple_look_up_prev(
+                    line, index, {token.RPAR, token.RSQB}
+                )
+            else:
+                return handle_is_simple_lookup_forward(
+                    line, index, {token.LPAR, token.LSQB}
+                )
 
-        while 0 <= index < len(line.leaves):
-            current = line.leaves[index]
-            if current.type in disallowed:
-                return False
-            if current.type not in {token.NAME, token.DOT} or current.value == "for":
-                # If the current token isn't disallowed, we'll assume this is simple as
-                # only the disallowed tokens are semantically attached to this lookup
-                # expression we're checking. Also, stop early if we hit the 'for' bit
-                # of a comprehension.
-                return True
-
-            index += step
-
-        return True
-
-    def is_simple_operand(index: int, kind: Literal["base", "exponent"]) -> bool:
+    def is_simple_operand(index: int, kind: Literal[1, -1]) -> bool:
         # An operand is considered "simple" if's a NAME, a numeric CONSTANT, a simple
         # lookup (see above), with or without a preceding unary operator.
         start = line.leaves[index]
         if start.type in {token.NAME, token.NUMBER}:
-            return is_simple_lookup(index, step=(1 if kind == "exponent" else -1))
+            return is_simple_lookup(index, kind)
 
         if start.type in {token.PLUS, token.MINUS, token.TILDE}:
             if line.leaves[index + 1].type in {token.NAME, token.NUMBER}:
-                # step is always one as bases with a preceding unary op will be checked
+                # kind is always one as bases with a preceding unary op will be checked
                 # for simplicity starting from the next token (so it'll hit the check
                 # above).
-                return is_simple_lookup(index + 1, step=1)
+                return is_simple_lookup(index + 1, kind=1)
 
         return False
 
@@ -145,9 +139,9 @@ def hug_power_op(
         should_hug = (
             (0 < idx < len(line.leaves) - 1)
             and leaf.type == token.DOUBLESTAR
-            and is_simple_operand(idx - 1, kind="base")
+            and is_simple_operand(idx - 1, kind=-1)
             and line.leaves[idx - 1].value != "lambda"
-            and is_simple_operand(idx + 1, kind="exponent")
+            and is_simple_operand(idx + 1, kind=1)
         )
         if should_hug:
             new_leaf.prefix = ""
@@ -160,6 +154,99 @@ def hug_power_op(
             new_line.append(comment_leaf, preformatted=True)
 
     yield new_line
+
+
+def original_is_simple_lookup_func(
+    line: Line, index: int, step: Literal[1, -1]
+) -> bool:
+    if step == -1:
+        disallowed = {token.RPAR, token.RSQB}
+    else:
+        disallowed = {token.LPAR, token.LSQB}
+
+    while 0 <= index < len(line.leaves):
+        current = line.leaves[index]
+        if current.type in disallowed:
+            return False
+        if current.type not in {token.NAME, token.DOT} or current.value == "for":
+            # If the current token isn't disallowed, we'll assume this is
+            # simple as only the disallowed tokens are semantically
+            # attached to this lookup expression we're checking. Also,
+            # stop early if we hit the 'for' bit of a comprehension.
+            return True
+
+        index += step
+
+    return True
+
+
+def handle_is_simple_look_up_prev(line: Line, index: int, disallowed: Set[int]) -> bool:
+    """
+    Handling the determination of is_simple_lookup for the lines prior to the doublestar
+    token. This is required because of the need to isolate the chained expression
+    to determine the bracket or parenthesis belong to the single expression.
+    """
+    contains_disallowed = False
+    chain = []
+
+    while 0 <= index < len(line.leaves):
+        current = line.leaves[index]
+        chain.append(current)
+        if not contains_disallowed and current.type in disallowed:
+            contains_disallowed = True
+        if not is_expression_chained(chain):
+            return not contains_disallowed
+
+        index -= 1
+
+    return True
+
+
+def handle_is_simple_lookup_forward(
+    line: Line, index: int, disallowed: Set[int]
+) -> bool:
+    """
+    Handling decision is_simple_lookup for the lines behind the doublestar token.
+    This function is simplified to keep consistent with the prior logic and the forward
+    case are more straightforward and do not need to care about chained expressions.
+    """
+    while 0 <= index < len(line.leaves):
+        current = line.leaves[index]
+        if current.type in disallowed:
+            return False
+        if current.type not in {token.NAME, token.DOT} or (
+            current.type == token.NAME and current.value == "for"
+        ):
+            # If the current token isn't disallowed, we'll assume this is simple as
+            # only the disallowed tokens are semantically attached to this lookup
+            # expression we're checking. Also, stop early if we hit the 'for' bit
+            # of a comprehension.
+            return True
+
+        index += 1
+
+    return True
+
+
+def is_expression_chained(chained_leaves: List[Leaf]) -> bool:
+    """
+    Function to determine if the variable is a chained call.
+    (e.g., foo.lookup, foo().lookup, (foo.lookup())) will be recognized as chained call)
+    """
+    if len(chained_leaves) < 2:
+        return True
+
+    current_leaf = chained_leaves[-1]
+    past_leaf = chained_leaves[-2]
+
+    if past_leaf.type == token.NAME:
+        return current_leaf.type in {token.DOT}
+    elif past_leaf.type in {token.RPAR, token.RSQB}:
+        return current_leaf.type in {token.RSQB, token.RPAR}
+    elif past_leaf.type in {token.LPAR, token.LSQB}:
+        return current_leaf.type in {token.NAME, token.LPAR, token.LSQB}
+    else:
+        return False
 
 
 class StringTransformer(ABC):
@@ -202,11 +289,11 @@ class StringTransformer(ABC):
         """
         Returns:
             * Ok(string_indices) such that for each index, `line.leaves[index]`
-            is our target string if a match was able to be made. For
-            transformers that don't result in more lines (e.g. StringMerger,
-            StringParenStripper), multiple matches and transforms are done at
-            once to reduce the complexity.
-                OR
+              is our target string if a match was able to be made. For
+              transformers that don't result in more lines (e.g. StringMerger,
+              StringParenStripper), multiple matches and transforms are done at
+              once to reduce the complexity.
+              OR
             * Err(CannotTransform), if no match could be made.
         """
 
@@ -217,12 +304,12 @@ class StringTransformer(ABC):
         """
         Yields:
             * Ok(new_line) where new_line is the new transformed line.
-                OR
+              OR
             * Err(CannotTransform) if the transformation failed for some reason. The
-            `do_match(...)` template method should usually be used to reject
-            the form of the given Line, but in some cases it is difficult to
-            know whether or not a Line meets the StringTransformer's
-            requirements until the transformation is already midway.
+              `do_match(...)` template method should usually be used to reject
+              the form of the given Line, but in some cases it is difficult to
+              know whether or not a Line meets the StringTransformer's
+              requirements until the transformation is already midway.
 
         Side Effects:
             This method should NOT mutate @line directly, but it MAY mutate the
@@ -335,8 +422,8 @@ class CustomSplitMapMixin:
 
         Returns:
             * A list of the custom splits that are mapped to @string, if any
-            exist.
-                OR
+              exist.
+              OR
             * [], otherwise.
 
         Side Effects:
@@ -366,14 +453,14 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
     Requirements:
         (A) The line contains adjacent strings such that ALL of the validation checks
         listed in StringMerger._validate_msg(...)'s docstring pass.
-            OR
+        OR
         (B) The line contains a string which uses line continuation backslashes.
 
     Transformations:
         Depending on which of the two requirements above where met, either:
 
         (A) The string group associated with the target string is merged.
-            OR
+        OR
         (B) All line-continuation backslashes are removed from the target string.
 
     Collaborations:
@@ -394,7 +481,19 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
                 and is_valid_index(idx + 1)
                 and LL[idx + 1].type == token.STRING
             ):
-                if not is_part_of_annotation(leaf):
+                # Let's check if the string group contains an inline comment
+                # If we have a comment inline, we don't merge the strings
+                contains_comment = False
+                i = idx
+                while is_valid_index(i):
+                    if LL[i].type != token.STRING:
+                        break
+                    if line.comments_after(LL[i]):
+                        contains_comment = True
+                        break
+                    i += 1
+
+                if not is_part_of_annotation(leaf) and not contains_comment:
                     string_indices.append(idx)
 
                 # Advance to the next non-STRING leaf.
@@ -583,11 +682,22 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             """
             assert_is_leaf_string(string)
             if "f" in string_prefix:
-                string = _toggle_fexpr_quotes(string, QUOTE)
-                # After quotes toggling, quotes in expressions won't be escaped
-                # because quotes can't be reused in f-strings. So we can simply
-                # let the escaping logic below run without knowing f-string
-                # expressions.
+                f_expressions = (
+                    string[span[0] + 1 : span[1] - 1]  # +-1 to get rid of curly braces
+                    for span in iter_fexpr_spans(string)
+                )
+                debug_expressions_contain_visible_quotes = any(
+                    re.search(r".*[\'\"].*(?<![!:=])={1}(?!=)(?![^\s:])", expression)
+                    for expression in f_expressions
+                )
+                if not debug_expressions_contain_visible_quotes:
+                    # We don't want to toggle visible quotes in debug f-strings, as
+                    # that would modify the AST
+                    string = _toggle_fexpr_quotes(string, QUOTE)
+                    # After quotes toggling, quotes in expressions won't be escaped
+                    # because quotes can't be reused in f-strings. So we can simply
+                    # let the escaping logic below run without knowing f-string
+                    # expressions.
 
             RE_EVEN_BACKSLASHES = r"(?:(?<!\\)(?:\\\\)*)"
             naked_string = string[len(string_prefix) + 1 : -1]
@@ -950,6 +1060,9 @@ class StringParenStripper(StringTransformer):
                 LL[lpar_or_rpar_idx].remove()  # Remove lpar.
                 replace_child(LL[idx], string_leaf)
                 new_line.append(string_leaf)
+                # replace comments
+                old_comments = new_line.comments.pop(id(LL[idx]), [])
+                new_line.comments.setdefault(id(string_leaf), []).extend(old_comments)
             else:
                 LL[lpar_or_rpar_idx].remove()  # This is a rpar.
 
@@ -969,17 +1082,20 @@ class BaseStringSplitter(StringTransformer):
 
     Requirements:
         * The target string value is responsible for the line going over the
-        line length limit. It follows that after all of black's other line
-        split methods have been exhausted, this line (or one of the resulting
-        lines after all line splits are performed) would still be over the
-        line_length limit unless we split this string.
-            AND
+          line length limit. It follows that after all of black's other line
+          split methods have been exhausted, this line (or one of the resulting
+          lines after all line splits are performed) would still be over the
+          line_length limit unless we split this string.
+          AND
+
         * The target string is NOT a "pointless" string (i.e. a string that has
-        no parent or siblings).
-            AND
+          no parent or siblings).
+          AND
+
         * The target string is not followed by an inline comment that appears
-        to be a pragma.
-            AND
+          to be a pragma.
+          AND
+
         * The target string is not a multiline (i.e. triple-quote) string.
     """
 
@@ -1031,7 +1147,7 @@ class BaseStringSplitter(StringTransformer):
 
         Returns:
             * Ok(None), if ALL of the requirements are met.
-                OR
+              OR
             * Err(CannotTransform), if ANY of the requirements are NOT met.
         """
         LL = line.leaves
@@ -1172,7 +1288,7 @@ class BaseStringSplitter(StringTransformer):
             # WMA4 the length of the inline comment.
             offset += len(comment_leaf.value)
 
-        max_string_length = self.line_length - offset
+        max_string_length = count_chars_in_width(str(line), self.line_length - offset)
         return max_string_length
 
     @staticmethod
@@ -1190,19 +1306,33 @@ class BaseStringSplitter(StringTransformer):
         if LL[0].type != token.STRING:
             return None
 
-        # If the string is surrounded by commas (or is the first/last child)...
-        prev_sibling = LL[0].prev_sibling
-        next_sibling = LL[0].next_sibling
-        if not prev_sibling and not next_sibling and parent_type(LL[0]) == syms.atom:
-            # If it's an atom string, we need to check the parent atom's siblings.
-            parent = LL[0].parent
-            assert parent is not None  # For type checkers.
-            prev_sibling = parent.prev_sibling
-            next_sibling = parent.next_sibling
-        if (not prev_sibling or prev_sibling.type == token.COMMA) and (
-            not next_sibling or next_sibling.type == token.COMMA
+        matching_nodes = [
+            syms.listmaker,
+            syms.dictsetmaker,
+            syms.testlist_gexp,
+        ]
+        # If the string is an immediate child of a list/set/tuple literal...
+        if (
+            parent_type(LL[0]) in matching_nodes
+            or parent_type(LL[0].parent) in matching_nodes
         ):
-            return 0
+            # And the string is surrounded by commas (or is the first/last child)...
+            prev_sibling = LL[0].prev_sibling
+            next_sibling = LL[0].next_sibling
+            if (
+                not prev_sibling
+                and not next_sibling
+                and parent_type(LL[0]) == syms.atom
+            ):
+                # If it's an atom string, we need to check the parent atom's siblings.
+                parent = LL[0].parent
+                assert parent is not None  # For type checkers.
+                prev_sibling = parent.prev_sibling
+                next_sibling = parent.next_sibling
+            if (not prev_sibling or prev_sibling.type == token.COMMA) and (
+                not next_sibling or next_sibling.type == token.COMMA
+            ):
+                return 0
 
         return None
 
@@ -1237,7 +1367,7 @@ def iter_fexpr_spans(s: str) -> Iterator[Tuple[int, int]]:
             i += 1
             continue
 
-        # if we're in an expression part of the f-string, fast forward through strings
+        # if we're in an expression part of the f-string, fast-forward through strings
         # note that backslashes are not legal in the expression portion of f-strings
         if stack:
             delim = None
@@ -1289,9 +1419,9 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
 
     Requirements:
         * The line consists ONLY of a single string (possibly prefixed by a
-        string operator [e.g. '+' or '==']), MAYBE a string trailer, and MAYBE
-        a trailing comma.
-            AND
+          string operator [e.g. '+' or '==']), MAYBE a string trailer, and MAYBE
+          a trailing comma.
+          AND
         * All of the requirements listed in BaseStringSplitter's docstring.
 
     Transformations:
@@ -1427,11 +1557,13 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
             is_valid_index(string_idx + 1) and LL[string_idx + 1].type == token.COMMA
         )
 
-        def max_last_string() -> int:
+        def max_last_string_column() -> int:
             """
             Returns:
-                The max allowed length of the string value used for the last
-                line we will construct.
+                The max allowed width of the string value used for the last
+                line we will construct.  Note that this value means the width
+                rather than the number of characters (e.g., many East Asian
+                characters expand to two columns).
             """
             result = self.line_length
             result -= line.depth * 4
@@ -1439,14 +1571,14 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
             result -= string_op_leaves_length
             return result
 
-        # --- Calculate Max Break Index (for string value)
+        # --- Calculate Max Break Width (for string value)
         # We start with the line length limit
-        max_break_idx = self.line_length
+        max_break_width = self.line_length
         # The last index of a string of length N is N-1.
-        max_break_idx -= 1
+        max_break_width -= 1
         # Leading whitespace is not present in the string value (e.g. Leaf.value).
-        max_break_idx -= line.depth * 4
-        if max_break_idx < 0:
+        max_break_width -= line.depth * 4
+        if max_break_width < 0:
             yield TErr(
                 f"Unable to split {LL[string_idx].value} at such high of a line depth:"
                 f" {line.depth}"
@@ -1459,7 +1591,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
         # line limit.
         use_custom_breakpoints = bool(
             custom_splits
-            and all(csplit.break_idx <= max_break_idx for csplit in custom_splits)
+            and all(csplit.break_idx <= max_break_width for csplit in custom_splits)
         )
 
         # Temporary storage for the remaining chunk of the string line that
@@ -1475,7 +1607,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
             if use_custom_breakpoints:
                 return len(custom_splits) > 1
             else:
-                return len(rest_value) > max_last_string()
+                return str_width(rest_value) > max_last_string_column()
 
         string_line_results: List[Ok[Line]] = []
         while more_splits_should_be_made():
@@ -1485,7 +1617,10 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
                 break_idx = csplit.break_idx
             else:
                 # Algorithmic Split (automatic)
-                max_bidx = max_break_idx - string_op_leaves_length
+                max_bidx = (
+                    count_chars_in_width(rest_value, max_break_width)
+                    - string_op_leaves_length
+                )
                 maybe_break_idx = self._get_break_idx(rest_value, max_bidx)
                 if maybe_break_idx is None:
                     # If we are unable to algorithmically determine a good split
@@ -1582,7 +1717,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
 
             # Try to fit them all on the same line with the last substring...
             if (
-                len(temp_value) <= max_last_string()
+                str_width(temp_value) <= max_last_string_column()
                 or LL[string_idx + 1].type == token.COMMA
             ):
                 last_line.append(rest_leaf)
@@ -1699,9 +1834,10 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
             """
             Returns:
                 True iff ALL of the conditions listed in the 'Transformations'
-                section of this classes' docstring would be be met by returning @i.
+                section of this classes' docstring would be met by returning @i.
             """
             is_space = string[i] == " "
+            is_split_safe = is_valid_index(i - 1) and string[i - 1] in SPLIT_SAFE_CHARS
 
             is_not_escaped = True
             j = i - 1
@@ -1714,7 +1850,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
                 and len(string[:i]) >= self.MIN_SUBSTR_SIZE
             )
             return (
-                is_space
+                (is_space or is_split_safe)
                 and is_not_escaped
                 and is_big_enough
                 and not breaks_unsplittable_expression(i)
@@ -1792,25 +1928,26 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         addition to the requirements listed below:
 
         * The line is a return/yield statement, which returns/yields a string.
-            OR
+          OR
         * The line is part of a ternary expression (e.g. `x = y if cond else
-        z`) such that the line starts with `else <string>`, where <string> is
-        some string.
-            OR
+          z`) such that the line starts with `else <string>`, where <string> is
+          some string.
+          OR
         * The line is an assert statement, which ends with a string.
-            OR
+          OR
         * The line is an assignment statement (e.g. `x = <string>` or `x +=
-        <string>`) such that the variable is being assigned the value of some
-        string.
-            OR
+          <string>`) such that the variable is being assigned the value of some
+          string.
+          OR
         * The line is a dictionary key assignment where some valid key is being
-        assigned the value of some string.
-            OR
+          assigned the value of some string.
+          OR
         * The line is an lambda expression and the value is a string.
-            OR
+          OR
         * The line starts with an "atom" string that prefers to be wrapped in
-        parens. It's preferred to be wrapped when the string is surrounded by
-        commas (or is the first/last child).
+          parens. It's preferred to be wrapped when it's is an immediate child of
+          a list/set/tuple literal, AND the string is surrounded by commas (or is
+          the first/last child).
 
     Transformations:
         The chosen string is wrapped in parentheses and then split at the LPAR.
@@ -1859,11 +1996,13 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
 
         if string_idx is not None:
             string_value = line.leaves[string_idx].value
-            # If the string has no spaces...
-            if " " not in string_value:
+            # If the string has neither spaces nor East Asian stops...
+            if not any(
+                char == " " or char in SPLIT_SAFE_CHARS for char in string_value
+            ):
                 # And will still violate the line length limit when split...
-                max_string_length = self.line_length - ((line.depth + 1) * 4)
-                if len(string_value) > max_string_length:
+                max_string_width = self.line_length - ((line.depth + 1) * 4)
+                if str_width(string_value) > max_string_width:
                     # And has no associated custom splits...
                     if not self.has_custom_splits(string_value):
                         # Then we should NOT put this string on its own line.
@@ -1887,7 +2026,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                 OR
             None, otherwise.
         """
-        # If this line is apart of a return/yield statement and the first leaf
+        # If this line is a part of a return/yield statement and the first leaf
         # contains either the "return" or "yield" keywords...
         if parent_type(LL[0]) in [syms.return_stmt, syms.yield_expr] and LL[
             0
@@ -1912,7 +2051,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                 OR
             None, otherwise.
         """
-        # If this line is apart of a ternary expression and the first leaf
+        # If this line is a part of a ternary expression and the first leaf
         # contains the "else" keyword...
         if (
             parent_type(LL[0]) == syms.test
@@ -1939,7 +2078,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                 OR
             None, otherwise.
         """
-        # If this line is apart of an assert statement and the first leaf
+        # If this line is a part of an assert statement and the first leaf
         # contains the "assert" keyword...
         if parent_type(LL[0]) == syms.assert_stmt and LL[0].value == "assert":
             is_valid_index = is_valid_index_factory(LL)
@@ -1974,7 +2113,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                 OR
             None, otherwise.
         """
-        # If this line is apart of an expression statement or is a function
+        # If this line is a part of an expression statement or is a function
         # argument AND the first leaf contains a variable name...
         if (
             parent_type(LL[0]) in [syms.expr_stmt, syms.argument, syms.power]
@@ -1995,7 +2134,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                         string_parser = StringParser()
                         idx = string_parser.parse(LL, string_idx)
 
-                        # The next leaf MAY be a comma iff this line is apart
+                        # The next leaf MAY be a comma iff this line is a part
                         # of a function argument...
                         if (
                             parent_type(LL[0]) == syms.argument
@@ -2142,8 +2281,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                 if opening_bracket is not None and opening_bracket in left_leaves:
                     index = left_leaves.index(opening_bracket)
                     if (
-                        index > 0
-                        and index < len(left_leaves) - 1
+                        0 < index < len(left_leaves) - 1
                         and left_leaves[index - 1].type == token.COLON
                         and left_leaves[index + 1].value == "lambda"
                     ):
@@ -2252,9 +2390,9 @@ class StringParser:
             * @leaves[@string_idx].type == token.STRING
 
         Returns:
-            The index directly after the last leaf which is apart of the string
+            The index directly after the last leaf which is a part of the string
             trailer, if a "trailer" exists.
-                OR
+            OR
             @string_idx + 1, if no string "trailer" exists.
         """
         assert leaves[string_idx].type == token.STRING
@@ -2268,14 +2406,14 @@ class StringParser:
         """
         Pre-conditions:
             * On the first call to this function, @leaf MUST be the leaf that
-            was directly after the string leaf in question (e.g. if our target
-            string is `line.leaves[i]` then the first call to this method must
-            be `line.leaves[i + 1]`).
+              was directly after the string leaf in question (e.g. if our target
+              string is `line.leaves[i]` then the first call to this method must
+              be `line.leaves[i + 1]`).
             * On the next call to this function, the leaf parameter passed in
-            MUST be the leaf directly following @leaf.
+              MUST be the leaf directly following @leaf.
 
         Returns:
-            True iff @leaf is apart of the string's trailer.
+            True iff @leaf is a part of the string's trailer.
         """
         # We ignore empty LPAR or RPAR leaves.
         if is_empty_par(leaf):

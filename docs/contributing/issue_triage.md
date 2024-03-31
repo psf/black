@@ -59,7 +59,7 @@ the details are different:
 1. _the issue is waiting for triage_
 2. **identified** - has been marked with a type label and other relevant labels
 3. **discussion** - the merits of the suggested changes are currently being discussed, a
-   PR would be acceptable but would be at sigificant risk of being rejected
+   PR would be acceptable but would be at significant risk of being rejected
 4. **accepted & awaiting PR** - it's been determined the suggested changes are OK and a
    PR would be welcomed (`S: accepted`)
 5. **closed**: - the issue has been resolved, reasons include:

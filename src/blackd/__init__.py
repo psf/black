@@ -1,13 +1,14 @@
 import asyncio
 import logging
 from concurrent.futures import Executor, ProcessPoolExecutor
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import partial
 from multiprocessing import freeze_support
 from typing import Set, Tuple
 
 try:
     from aiohttp import web
+    from multidict import MultiMapping
 
     from .middlewares import cors
 except ImportError as ie:
@@ -34,6 +35,8 @@ SKIP_SOURCE_FIRST_LINE = "X-Skip-Source-First-Line"
 SKIP_STRING_NORMALIZATION_HEADER = "X-Skip-String-Normalization"
 SKIP_MAGIC_TRAILING_COMMA = "X-Skip-Magic-Trailing-Comma"
 PREVIEW = "X-Preview"
+UNSTABLE = "X-Unstable"
+ENABLE_UNSTABLE_FEATURE = "X-Enable-Unstable-Feature"
 FAST_OR_SAFE_HEADER = "X-Fast-Or-Safe"
 DIFF_HEADER = "X-Diff"
 
@@ -45,6 +48,8 @@ BLACK_HEADERS = [
     SKIP_STRING_NORMALIZATION_HEADER,
     SKIP_MAGIC_TRAILING_COMMA,
     PREVIEW,
+    UNSTABLE,
+    ENABLE_UNSTABLE_FEATURE,
     FAST_OR_SAFE_HEADER,
     DIFF_HEADER,
 ]
@@ -53,15 +58,25 @@ BLACK_HEADERS = [
 BLACK_VERSION_HEADER = "X-Black-Version"
 
 
+class HeaderError(Exception):
+    pass
+
+
 class InvalidVariantHeader(Exception):
     pass
 
 
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
 @click.option(
-    "--bind-host", type=str, help="Address to bind the server to.", default="localhost"
+    "--bind-host",
+    type=str,
+    help="Address to bind the server to.",
+    default="localhost",
+    show_default=True,
 )
-@click.option("--bind-port", type=int, help="Port to listen on", default=45484)
+@click.option(
+    "--bind-port", type=int, help="Port to listen on", default=45484, show_default=True
+)
 @click.version_option(version=black.__version__)
 def main(bind_host: str, bind_port: int) -> None:
     logging.basicConfig(level=logging.INFO)
@@ -87,55 +102,21 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
             return web.Response(
                 status=501, text="This server only supports protocol version 1"
             )
-        try:
-            line_length = int(
-                request.headers.get(LINE_LENGTH_HEADER, black.DEFAULT_LINE_LENGTH)
-            )
-        except ValueError:
-            return web.Response(status=400, text="Invalid line length header value")
 
-        if PYTHON_VARIANT_HEADER in request.headers:
-            value = request.headers[PYTHON_VARIANT_HEADER]
-            try:
-                pyi, versions = parse_python_variant_header(value)
-            except InvalidVariantHeader as e:
-                return web.Response(
-                    status=400,
-                    text=f"Invalid value for {PYTHON_VARIANT_HEADER}: {e.args[0]}",
-                )
-        else:
-            pyi = False
-            versions = set()
-
-        skip_string_normalization = bool(
-            request.headers.get(SKIP_STRING_NORMALIZATION_HEADER, False)
-        )
-        skip_magic_trailing_comma = bool(
-            request.headers.get(SKIP_MAGIC_TRAILING_COMMA, False)
-        )
-        skip_source_first_line = bool(
-            request.headers.get(SKIP_SOURCE_FIRST_LINE, False)
-        )
-        preview = bool(request.headers.get(PREVIEW, False))
         fast = False
         if request.headers.get(FAST_OR_SAFE_HEADER, "safe") == "fast":
             fast = True
-        mode = black.FileMode(
-            target_versions=versions,
-            is_pyi=pyi,
-            line_length=line_length,
-            skip_source_first_line=skip_source_first_line,
-            string_normalization=not skip_string_normalization,
-            magic_trailing_comma=not skip_magic_trailing_comma,
-            preview=preview,
-        )
+        try:
+            mode = parse_mode(request.headers)
+        except HeaderError as e:
+            return web.Response(status=400, text=e.args[0])
         req_bytes = await request.content.read()
         charset = request.charset if request.charset is not None else "utf8"
         req_str = req_bytes.decode(charset)
-        then = datetime.utcnow()
+        then = datetime.now(timezone.utc)
 
         header = ""
-        if skip_source_first_line:
+        if mode.skip_source_first_line:
             first_newline_position: int = req_str.find("\n") + 1
             header = req_str[:first_newline_position]
             req_str = req_str[first_newline_position:]
@@ -146,7 +127,8 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
         )
 
         # Preserve CRLF line endings
-        if req_str[req_str.find("\n") - 1] == "\r":
+        nl = req_str.find("\n")
+        if nl > 0 and req_str[nl - 1] == "\r":
             formatted_str = formatted_str.replace("\n", "\r\n")
             # If, after swapping line endings, nothing changed, then say so
             if formatted_str == req_str:
@@ -159,9 +141,9 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
         # Only output the diff in the HTTP response
         only_diff = bool(request.headers.get(DIFF_HEADER, False))
         if only_diff:
-            now = datetime.utcnow()
-            src_name = f"In\t{then} +0000"
-            dst_name = f"Out\t{now} +0000"
+            now = datetime.now(timezone.utc)
+            src_name = f"In\t{then}"
+            dst_name = f"Out\t{now}"
             loop = asyncio.get_event_loop()
             formatted_str = await loop.run_in_executor(
                 executor,
@@ -181,6 +163,57 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
     except Exception as e:
         logging.exception("Exception during handling a request")
         return web.Response(status=500, headers=headers, text=str(e))
+
+
+def parse_mode(headers: MultiMapping[str]) -> black.Mode:
+    try:
+        line_length = int(headers.get(LINE_LENGTH_HEADER, black.DEFAULT_LINE_LENGTH))
+    except ValueError:
+        raise HeaderError("Invalid line length header value") from None
+
+    if PYTHON_VARIANT_HEADER in headers:
+        value = headers[PYTHON_VARIANT_HEADER]
+        try:
+            pyi, versions = parse_python_variant_header(value)
+        except InvalidVariantHeader as e:
+            raise HeaderError(
+                f"Invalid value for {PYTHON_VARIANT_HEADER}: {e.args[0]}",
+            ) from None
+    else:
+        pyi = False
+        versions = set()
+
+    skip_string_normalization = bool(
+        headers.get(SKIP_STRING_NORMALIZATION_HEADER, False)
+    )
+    skip_magic_trailing_comma = bool(headers.get(SKIP_MAGIC_TRAILING_COMMA, False))
+    skip_source_first_line = bool(headers.get(SKIP_SOURCE_FIRST_LINE, False))
+
+    preview = bool(headers.get(PREVIEW, False))
+    unstable = bool(headers.get(UNSTABLE, False))
+    enable_features: Set[black.Preview] = set()
+    enable_unstable_features = headers.get(ENABLE_UNSTABLE_FEATURE, "").split(",")
+    for piece in enable_unstable_features:
+        piece = piece.strip()
+        if piece:
+            try:
+                enable_features.add(black.Preview[piece])
+            except KeyError:
+                raise HeaderError(
+                    f"Invalid value for {ENABLE_UNSTABLE_FEATURE}: {piece}",
+                ) from None
+
+    return black.FileMode(
+        target_versions=versions,
+        is_pyi=pyi,
+        line_length=line_length,
+        skip_source_first_line=skip_source_first_line,
+        string_normalization=not skip_string_normalization,
+        magic_trailing_comma=not skip_magic_trailing_comma,
+        preview=preview,
+        unstable=unstable,
+        enabled_features=enable_features,
+    )
 
 
 def parse_python_variant_header(value: str) -> Tuple[bool, Set[black.TargetVersion]]:
@@ -219,7 +252,6 @@ def parse_python_variant_header(value: str) -> Tuple[bool, Set[black.TargetVersi
 def patched_main() -> None:
     maybe_install_uvloop()
     freeze_support()
-    black.patch_click()
     main()
 
 

@@ -1,13 +1,7 @@
 """Builds on top of nodes.py to track brackets."""
 
-import sys
 from dataclasses import dataclass, field
-from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
-
-if sys.version_info < (3, 8):
-    from typing_extensions import Final
-else:
-    from typing import Final
+from typing import Dict, Final, Iterable, List, Optional, Sequence, Set, Tuple, Union
 
 from black.nodes import (
     BRACKET,
@@ -122,7 +116,7 @@ class BracketTracker:
             if delim and self.previous is not None:
                 self.delimiters[id(self.previous)] = delim
             else:
-                delim = is_split_after_delimiter(leaf, self.previous)
+                delim = is_split_after_delimiter(leaf)
                 if delim:
                     self.delimiters[id(leaf)] = delim
         if leaf.type in OPENING_BRACKETS:
@@ -133,6 +127,13 @@ class BracketTracker:
         self.previous = leaf
         self.maybe_increment_lambda_arguments(leaf)
         self.maybe_increment_for_loop_variable(leaf)
+
+    def any_open_for_or_lambda(self) -> bool:
+        """Return True if there is an open for or lambda expression on the line.
+
+        See maybe_increment_for_loop_variable and maybe_increment_lambda_arguments
+        for details."""
+        return bool(self._for_loop_depths or self._lambda_argument_depths)
 
     def any_open_brackets(self) -> bool:
         """Return True if there is an yet unmatched open bracket on the line."""
@@ -219,7 +220,7 @@ class BracketTracker:
         return self.bracket_match.get((self.depth - 1, token.RSQB))
 
 
-def is_split_after_delimiter(leaf: Leaf, previous: Optional[Leaf] = None) -> Priority:
+def is_split_after_delimiter(leaf: Leaf) -> Priority:
     """
     Return the priority of the `leaf` delimiter, given a line break after it.
 

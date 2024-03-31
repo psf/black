@@ -8,16 +8,9 @@ deliberately limited and rarely added. Previous formatting is taken into account
 little as possible, with rare exceptions like the magic trailing comma. The coding style
 used by _Black_ can be viewed as a strict subset of PEP 8.
 
-_Black_ reformats entire files in place. It doesn't reformat lines that end with
-`# fmt: skip` or blocks that start with `# fmt: off` and end with `# fmt: on`.
-`# fmt: on/off` must be on the same level of indentation and in the same block, meaning
-no unindents beyond the initial indentation level between them. It also recognizes
-[YAPF](https://github.com/google/yapf)'s block comments to the same effect, as a
-courtesy for straddling code.
-
-The rest of this document describes the current formatting style. If you're interested
-in trying out where the style is heading, see [future style](./future_style.md) and try
-running `black --preview`.
+This document describes the current formatting style. If you're interested in trying out
+where the style is heading, see [future style](./future_style.md) and try running
+`black --preview`.
 
 ### How _Black_ wraps lines
 
@@ -140,6 +133,8 @@ If you're reaching for backslashes, that's a clear signal that you can do better
 slightly refactor your code. I hope some of the examples above show you that there are
 many ways in which you can do it.
 
+(labels/line-length)=
+
 ### Line length
 
 You probably noticed the peculiar default line length. _Black_ defaults to 88 characters
@@ -148,7 +143,7 @@ significantly shorter files than sticking with 80 (the most popular), or even 79
 by the standard library). In general,
 [90-ish seems like the wise choice](https://youtu.be/wf-BqAjZb8M?t=260).
 
-If you're paid by the line of code you write, you can pass `--line-length` with a lower
+If you're paid by the lines of code you write, you can pass `--line-length` with a lower
 number. _Black_ will try to respect that. However, sometimes it won't be able to without
 breaking other rules. In those rare cases, auto-formatted code will exceed your allotted
 limit.
@@ -158,33 +153,10 @@ harder to work with line lengths exceeding 100 characters. It also adversely aff
 side-by-side diff review on typical screen resolutions. Long lines also make it harder
 to present code neatly in documentation or talk slides.
 
-If you're using Flake8, you can bump `max-line-length` to 88 and mostly forget about it.
-However, it's better if you use [Bugbear](https://github.com/PyCQA/flake8-bugbear)'s
-B950 warning instead of E501, and bump the max line length to 88 (or the `--line-length`
-you used for black), which will align more with black's _"try to respect
-`--line-length`, but don't become crazy if you can't"_. You'd do it like this:
+#### Flake8 and other linters
 
-```ini
-[flake8]
-max-line-length = 88
-...
-select = C,E,F,W,B,B950
-extend-ignore = E203, E501
-```
-
-Explanation of why E203 is disabled can be found further in this documentation. And if
-you're curious about the reasoning behind B950,
-[Bugbear's documentation](https://github.com/PyCQA/flake8-bugbear#opinionated-warnings)
-explains it. The tl;dr is "it's like highway speed limits, we won't bother you if you
-overdo it by a few km/h".
-
-**If you're looking for a minimal, black-compatible flake8 configuration:**
-
-```ini
-[flake8]
-max-line-length = 88
-extend-ignore = E203
-```
+See [Using _Black_ with other tools](../guides/using_black_with_other_tools.md) about
+linter compatibility.
 
 ### Empty lines
 
@@ -194,44 +166,35 @@ that in-function vertical whitespace should only be used sparingly.
 _Black_ will allow single empty lines inside functions, and single and double empty
 lines on module level left by the original editors, except when they're within
 parenthesized expressions. Since such expressions are always reformatted to fit minimal
-space, this whitespace is lost. The other exception is that it will remove any empty
-lines immediately following a statement that introduces a new indentation level.
+space, this whitespace is lost.
 
 ```python
 # in:
 
-def foo():
+def function(
+    some_argument: int,
 
-    print("All the newlines above me should be deleted!")
-
-
-if condition:
-
-    print("No newline above me!")
-
-    print("There is a newline above me, and that's OK!")
+    other_argument: int = 5,
+) -> EmptyLineInParenWillBeDeleted:
 
 
-class Point:
 
-    x: int
-    y: int
+    print("One empty line above me will be kept!")
 
+def this_is_okay_too():
+    print("No empty line here")
 # out:
 
-def foo():
-    print("All the newlines above me should be deleted!")
+def function(
+    some_argument: int,
+    other_argument: int = 5,
+) -> EmptyLineInParenWillBeDeleted:
+
+    print("One empty line above me will be kept!")
 
 
-if condition:
-    print("No newline above me!")
-
-    print("There is a newline above me, and that's OK!")
-
-
-class Point:
-    x: int
-    y: int
+def this_is_okay_too():
+    print("No empty line here")
 ```
 
 It will also insert proper spacing before and after function definitions. It's one line
@@ -250,11 +213,12 @@ required due to an inner function starting immediately after.
 
 _Black_ does not format comment contents, but it enforces two spaces between code and a
 comment on the same line, and a space before the comment text begins. Some types of
-comments that require specific spacing rules are respected: doc comments (`#: comment`),
-section comments with long runs of hashes, and Spyder cells. Non-breaking spaces after
-hashes are also preserved. Comments may sometimes be moved because of formatting
-changes, which can break tools that assign special meaning to them. See
-[AST before and after formatting](#ast-before-and-after-formatting) for more discussion.
+comments that require specific spacing rules are respected: shebangs (`#! comment`), doc
+comments (`#: comment`), section comments with long runs of hashes, and Spyder cells.
+Non-breaking spaces after hashes are also preserved. Comments may sometimes be moved
+because of formatting changes, which can break tools that assign special meaning to
+them. See [AST before and after formatting](#ast-before-and-after-formatting) for more
+discussion.
 
 ### Trailing commas
 
@@ -272,6 +236,8 @@ manually and _Black_ will keep it.
 A pre-existing trailing comma informs _Black_ to always explode contents of the current
 bracket pair into one item per line. Read more about this in the
 [Pragmatism](#pragmatism) section below.
+
+(labels/strings)=
 
 ### Strings
 
@@ -449,6 +415,12 @@ file that are not enforced yet but might be in a future version of the formatter
 _Black_ will normalize line endings (`\n` or `\r\n`) based on the first line ending of
 the file.
 
+### Form feed characters
+
+_Black_ will retain form feed characters on otherwise empty lines at the module level.
+Only one form feed is retained for a group of consecutive empty lines. Where there are
+two empty lines in a row, the form feed is placed on the second line.
+
 ## Pragmatism
 
 Early versions of _Black_ used to be absolutist in some respects. They took after its
@@ -456,6 +428,8 @@ initial author. This was fine at the time as it made the implementation simpler 
 there were not many users anyway. Not many edge cases were reported. As a mature tool,
 _Black_ does make some exceptions to rules it otherwise holds. This section documents
 what those exceptions are and why this is the case.
+
+(labels/magic-trailing-comma)=
 
 ### The magic trailing comma
 
@@ -492,6 +466,8 @@ exception to this rule is r-strings. It turns out that the very popular
 default by (among others) GitHub and Visual Studio Code, differentiates between
 r-strings and R-strings. The former are syntax highlighted as regular expressions while
 the latter are treated as true raw strings with no special semantics.
+
+(labels/ast-changes)=
 
 ### AST before and after formatting
 

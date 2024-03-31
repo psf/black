@@ -30,31 +30,40 @@ each time a new token is found."""
 import sys
 from typing import (
     Callable,
+    Final,
     Iterable,
     Iterator,
     List,
     Optional,
-    Text,
-    Tuple,
     Pattern,
+    Set,
+    Tuple,
     Union,
-    cast,
 )
 
-if sys.version_info >= (3, 8):
-    from typing import Final
-else:
-    from typing_extensions import Final
-
-from blib2to3.pgen2.token import *
 from blib2to3.pgen2.grammar import Grammar
+from blib2to3.pgen2.token import (
+    ASYNC,
+    AWAIT,
+    COMMENT,
+    DEDENT,
+    ENDMARKER,
+    ERRORTOKEN,
+    INDENT,
+    NAME,
+    NEWLINE,
+    NL,
+    NUMBER,
+    OP,
+    STRING,
+    tok_name,
+)
 
 __author__ = "Ka-Ping Yee <ping@lfw.org>"
 __credits__ = "GvR, ESR, Tim Peters, Thomas Wouters, Fred Drake, Skip Montanaro"
 
 import re
 from codecs import BOM_UTF8, lookup
-from blib2to3.pgen2.token import *
 
 from . import token
 
@@ -66,20 +75,20 @@ __all__ = [x for x in dir(token) if x[0] != "_"] + [
 del token
 
 
-def group(*choices):
+def group(*choices: str) -> str:
     return "(" + "|".join(choices) + ")"
 
 
-def any(*choices):
+def any(*choices: str) -> str:
     return group(*choices) + "*"
 
 
-def maybe(*choices):
+def maybe(*choices: str) -> str:
     return group(*choices) + "?"
 
 
-def _combinations(*l):
-    return set(x + y for x in l for y in l + ("",) if x.casefold() != y.casefold())
+def _combinations(*l: str) -> Set[str]:
+    return {x + y for x in l for y in l + ("",) if x.casefold() != y.casefold()}
 
 
 Whitespace = r"[ \f\t]*"
@@ -163,7 +172,6 @@ endprogs: Final = {
     '"""': double3prog,
     **{f"{prefix}'''": single3prog for prefix in _strprefixes},
     **{f'{prefix}"""': double3prog for prefix in _strprefixes},
-    **{prefix: None for prefix in _strprefixes},
 }
 
 triple_quoted: Final = (
@@ -188,19 +196,23 @@ class StopTokenizing(Exception):
     pass
 
 
-def printtoken(type, token, xxx_todo_changeme, xxx_todo_changeme1, line):  # for testing
-    (srow, scol) = xxx_todo_changeme
-    (erow, ecol) = xxx_todo_changeme1
+Coord = Tuple[int, int]
+
+
+def printtoken(
+    type: int, token: str, srow_col: Coord, erow_col: Coord, line: str
+) -> None:  # for testing
+    (srow, scol) = srow_col
+    (erow, ecol) = erow_col
     print(
         "%d,%d-%d,%d:\t%s\t%s" % (srow, scol, erow, ecol, tok_name[type], repr(token))
     )
 
 
-Coord = Tuple[int, int]
-TokenEater = Callable[[int, Text, Coord, Coord, Text], None]
+TokenEater = Callable[[int, str, Coord, Coord, str], None]
 
 
-def tokenize(readline: Callable[[], Text], tokeneater: TokenEater = printtoken) -> None:
+def tokenize(readline: Callable[[], str], tokeneater: TokenEater = printtoken) -> None:
     """
     The tokenize() function accepts two parameters: one representing the
     input stream, and one providing an output mechanism for tokenize().
@@ -220,18 +232,17 @@ def tokenize(readline: Callable[[], Text], tokeneater: TokenEater = printtoken) 
 
 
 # backwards compatible interface
-def tokenize_loop(readline, tokeneater):
+def tokenize_loop(readline: Callable[[], str], tokeneater: TokenEater) -> None:
     for token_info in generate_tokens(readline):
         tokeneater(*token_info)
 
 
-GoodTokenInfo = Tuple[int, Text, Coord, Coord, Text]
+GoodTokenInfo = Tuple[int, str, Coord, Coord, str]
 TokenInfo = Union[Tuple[int, str], GoodTokenInfo]
 
 
 class Untokenizer:
-
-    tokens: List[Text]
+    tokens: List[str]
     prev_row: int
     prev_col: int
 
@@ -247,14 +258,12 @@ class Untokenizer:
         if col_offset:
             self.tokens.append(" " * col_offset)
 
-    def untokenize(self, iterable: Iterable[TokenInfo]) -> Text:
+    def untokenize(self, iterable: Iterable[TokenInfo]) -> str:
         for t in iterable:
             if len(t) == 2:
-                self.compat(cast(Tuple[int, str], t), iterable)
+                self.compat(t, iterable)
                 break
-            tok_type, token, start, end, line = cast(
-                Tuple[int, Text, Coord, Coord, Text], t
-            )
+            tok_type, token, start, end, line = t
             self.add_whitespace(start)
             self.tokens.append(token)
             self.prev_row, self.prev_col = end
@@ -263,7 +272,7 @@ class Untokenizer:
                 self.prev_col = 0
         return "".join(self.tokens)
 
-    def compat(self, token: Tuple[int, Text], iterable: Iterable[TokenInfo]) -> None:
+    def compat(self, token: Tuple[int, str], iterable: Iterable[TokenInfo]) -> None:
         startline = False
         indents = []
         toks_append = self.tokens.append
@@ -335,7 +344,7 @@ def detect_encoding(readline: Callable[[], bytes]) -> Tuple[str, List[bytes]]:
         try:
             return readline()
         except StopIteration:
-            return bytes()
+            return b""
 
     def find_cookie(line: bytes) -> Optional[str]:
         try:
@@ -384,7 +393,7 @@ def detect_encoding(readline: Callable[[], bytes]) -> Tuple[str, List[bytes]]:
     return default, [first, second]
 
 
-def untokenize(iterable: Iterable[TokenInfo]) -> Text:
+def untokenize(iterable: Iterable[TokenInfo]) -> str:
     """Transform tokens back into Python source code.
 
     Each element returned by the iterable must be a token sequence
@@ -407,7 +416,7 @@ def untokenize(iterable: Iterable[TokenInfo]) -> Text:
 
 
 def generate_tokens(
-    readline: Callable[[], Text], grammar: Optional[Grammar] = None
+    readline: Callable[[], str], grammar: Optional[Grammar] = None
 ) -> Iterator[GoodTokenInfo]:
     """
     The generate_tokens() generator requires one argument, readline, which
@@ -425,7 +434,7 @@ def generate_tokens(
     logical line; continuation lines are included.
     """
     lnum = parenlev = continued = 0
-    numchars: Final = "0123456789"
+    numchars: Final[str] = "0123456789"
     contstr, needcont = "", 0
     contline: Optional[str] = None
     indents = [0]
@@ -599,11 +608,15 @@ def generate_tokens(
                 ):
                     if token[-1] == "\n":  # continued string
                         strstart = (lnum, start)
-                        endprog = (
-                            endprogs[initial]
-                            or endprogs[token[1]]
-                            or endprogs[token[2]]
+                        maybe_endprog = (
+                            endprogs.get(initial)
+                            or endprogs.get(token[1])
+                            or endprogs.get(token[2])
                         )
+                        assert (
+                            maybe_endprog is not None
+                        ), f"endprog not found for {token}"
+                        endprog = maybe_endprog
                         contstr, needcont = line[start:], 1
                         contline = line
                         break
@@ -631,7 +644,6 @@ def generate_tokens(
 
                     if token in ("def", "for"):
                         if stashed and stashed[0] == NAME and stashed[1] == "async":
-
                             if token == "def":
                                 async_def = True
                                 async_def_indent = indents[-1]
@@ -674,14 +686,12 @@ def generate_tokens(
         yield stashed
         stashed = None
 
-    for indent in indents[1:]:  # pop remaining indent levels
+    for _indent in indents[1:]:  # pop remaining indent levels
         yield (DEDENT, "", (lnum, 0), (lnum, 0), "")
     yield (ENDMARKER, "", (lnum, 0), (lnum, 0), "")
 
 
 if __name__ == "__main__":  # testing
-    import sys
-
     if len(sys.argv) > 1:
         tokenize(open(sys.argv[1]).readline)
     else:

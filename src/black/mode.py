@@ -4,18 +4,11 @@ Mostly around Python language feature support per version and Black configuratio
 chosen by the user.
 """
 
-import sys
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from hashlib import sha256
 from operator import attrgetter
-from typing import Dict, Set
-from warnings import warn
-
-if sys.version_info < (3, 8):
-    from typing_extensions import Final
-else:
-    from typing import Final
+from typing import Dict, Final, Set
 
 from black.const import DEFAULT_LINE_LENGTH
 
@@ -30,6 +23,7 @@ class TargetVersion(Enum):
     PY39 = 9
     PY310 = 10
     PY311 = 11
+    PY312 = 12
 
 
 class Feature(Enum):
@@ -51,6 +45,7 @@ class Feature(Enum):
     VARIADIC_GENERICS = 15
     DEBUG_F_STRINGS = 16
     PARENTHESIZED_CONTEXT_MANAGERS = 17
+    TYPE_PARAMS = 18
     FORCE_OPTIONAL_PARENTHESES = 50
 
     # __future__ flags
@@ -143,6 +138,25 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.EXCEPT_STAR,
         Feature.VARIADIC_GENERICS,
     },
+    TargetVersion.PY312: {
+        Feature.F_STRINGS,
+        Feature.DEBUG_F_STRINGS,
+        Feature.NUMERIC_UNDERSCORES,
+        Feature.TRAILING_COMMA_IN_CALL,
+        Feature.TRAILING_COMMA_IN_DEF,
+        Feature.ASYNC_KEYWORDS,
+        Feature.FUTURE_ANNOTATIONS,
+        Feature.ASSIGNMENT_EXPRESSIONS,
+        Feature.RELAXED_DECORATORS,
+        Feature.POS_ONLY_ARGUMENTS,
+        Feature.UNPACKING_ON_FLOW,
+        Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS,
+        Feature.PATTERN_MATCHING,
+        Feature.EXCEPT_STAR,
+        Feature.VARIADIC_GENERICS,
+        Feature.TYPE_PARAMS,
+    },
 }
 
 
@@ -153,20 +167,39 @@ def supports_feature(target_versions: Set[TargetVersion], feature: Feature) -> b
 class Preview(Enum):
     """Individual preview style features."""
 
-    add_trailing_comma_consistently = auto()
     hex_codes_in_unicode_sequences = auto()
-    prefer_splitting_right_hand_side_of_assignments = auto()
     # NOTE: string_processing requires wrap_long_dict_values_in_parens
     # for https://github.com/psf/black/issues/3117 to be fixed.
     string_processing = auto()
-    parenthesize_conditional_expressions = auto()
-    skip_magic_trailing_comma_in_subscript = auto()
+    hug_parens_with_braces_and_square_brackets = auto()
+    unify_docstring_detection = auto()
+    no_normalize_fmt_skip_whitespace = auto()
     wrap_long_dict_values_in_parens = auto()
-    wrap_multiple_context_managers_in_parens = auto()
+    multiline_string_handling = auto()
+    typed_params_trailing_comma = auto()
+    is_simple_lookup_for_doublestar_expression = auto()
+    docstring_check_for_newline = auto()
+    remove_redundant_guard_parens = auto()
+    parens_for_long_if_clauses_in_case_block = auto()
+
+
+UNSTABLE_FEATURES: Set[Preview] = {
+    # Many issues, see summary in https://github.com/psf/black/issues/4042
+    Preview.string_processing,
+    # See issues #3452 and #4158
+    Preview.wrap_long_dict_values_in_parens,
+    # See issue #4159
+    Preview.multiline_string_handling,
+    # See issue #4036 (crash), #4098, #4099 (proposed tweaks)
+    Preview.hug_parens_with_braces_and_square_brackets,
+}
 
 
 class Deprecated(UserWarning):
     """Visible deprecation warning."""
+
+
+_MAX_CACHE_KEY_PART_LENGTH: Final = 32
 
 
 @dataclass
@@ -178,30 +211,24 @@ class Mode:
     is_ipynb: bool = False
     skip_source_first_line: bool = False
     magic_trailing_comma: bool = True
-    experimental_string_processing: bool = False
     python_cell_magics: Set[str] = field(default_factory=set)
     preview: bool = False
-
-    def __post_init__(self) -> None:
-        if self.experimental_string_processing:
-            warn(
-                (
-                    "`experimental string processing` has been included in `preview`"
-                    " and deprecated. Use `preview` instead."
-                ),
-                Deprecated,
-            )
+    unstable: bool = False
+    enabled_features: Set[Preview] = field(default_factory=set)
 
     def __contains__(self, feature: Preview) -> bool:
         """
         Provide `Preview.FEATURE in Mode` syntax that mirrors the ``preview`` flag.
 
-        The argument is not checked and features are not differentiated.
-        They only exist to make development easier by clarifying intent.
+        In unstable mode, all features are enabled. In preview mode, all features
+        except those in UNSTABLE_FEATURES are enabled. Any features in
+        `self.enabled_features` are also enabled.
         """
-        if feature is Preview.string_processing:
-            return self.preview or self.experimental_string_processing
-        return self.preview
+        if self.unstable:
+            return True
+        if feature in self.enabled_features:
+            return True
+        return self.preview and feature not in UNSTABLE_FEATURES
 
     def get_cache_key(self) -> str:
         if self.target_versions:
@@ -211,6 +238,19 @@ class Mode:
             )
         else:
             version_str = "-"
+        if len(version_str) > _MAX_CACHE_KEY_PART_LENGTH:
+            version_str = sha256(version_str.encode()).hexdigest()[
+                :_MAX_CACHE_KEY_PART_LENGTH
+            ]
+        features_and_magics = (
+            ",".join(sorted(f.name for f in self.enabled_features))
+            + "@"
+            + ",".join(sorted(self.python_cell_magics))
+        )
+        if len(features_and_magics) > _MAX_CACHE_KEY_PART_LENGTH:
+            features_and_magics = sha256(features_and_magics.encode()).hexdigest()[
+                :_MAX_CACHE_KEY_PART_LENGTH
+            ]
         parts = [
             version_str,
             str(self.line_length),
@@ -219,8 +259,7 @@ class Mode:
             str(int(self.is_ipynb)),
             str(int(self.skip_source_first_line)),
             str(int(self.magic_trailing_comma)),
-            str(int(self.experimental_string_processing)),
             str(int(self.preview)),
-            sha256((",".join(sorted(self.python_cell_magics))).encode()).hexdigest(),
+            features_and_magics,
         ]
         return ".".join(parts)

@@ -10,16 +10,26 @@ Options include the following:
 
 ## PyCharm/IntelliJ IDEA
 
-There are three different ways you can use _Black_ from PyCharm:
+There are several different ways you can use _Black_ from PyCharm:
 
-1. As local server using the BlackConnect plugin
-1. As external tool
-1. As file watcher
+1. Using the built-in _Black_ integration (PyCharm 2023.2 and later). This option is the
+   simplest to set up.
+1. As local server using the BlackConnect plugin. This option formats the fastest. It
+   spins up {doc}`Black's HTTP server </usage_and_configuration/black_as_a_server>`, to
+   avoid the startup cost on subsequent formats.
+1. As external tool.
+1. As file watcher.
 
-The first option is the simplest to set up and formats the fastest (by spinning up
-{doc}`Black's HTTP server </usage_and_configuration/black_as_a_server>`, avoiding the
-startup cost on subsequent formats), but if you would prefer to not install a
-third-party plugin or blackd's extra dependencies, the other two are also great options.
+### Built-in _Black_ integration
+
+1. Install `black`.
+
+   ```console
+   $ pip install black
+   ```
+
+1. Go to `Preferences or Settings -> Tools -> Black` and configure _Black_ to your
+   liking.
 
 ### As local server
 
@@ -226,7 +236,7 @@ Configuration:
 
 #### Installation
 
-This plugin **requires Vim 7.0+ built with Python 3.7+ support**. It needs Python 3.7 to
+This plugin **requires Vim 7.0+ built with Python 3.8+ support**. It needs Python 3.8 to
 be able to run _Black_ inside the Vim process which is much faster than calling an
 external command.
 
@@ -278,8 +288,8 @@ $ git checkout origin/stable -b stable
 ##### Arch Linux
 
 On Arch Linux, the plugin is shipped with the
-[`python-black`](https://archlinux.org/packages/community/any/python-black/) package, so
-you can start using it in Vim after install with no additional setup.
+[`python-black`](https://archlinux.org/packages/extra/any/python-black/) package, so you
+can start using it in Vim after install with no additional setup.
 
 ##### Vim 8 Native Plugin Management
 
@@ -334,60 +344,6 @@ To run _Black_ on a key press (e.g. F9 below), add this:
 nnoremap <F9> :Black<CR>
 ```
 
-#### Troubleshooting
-
-**How to get Vim with Python 3.6?** On Ubuntu 17.10 Vim comes with Python 3.6 by
-default. On macOS with Homebrew run: `brew install vim`. When building Vim from source,
-use: `./configure --enable-python3interp=yes`. There's many guides online how to do
-this.
-
-**I get an import error when using _Black_ from a virtual environment**: If you get an
-error message like this:
-
-```text
-Traceback (most recent call last):
-  File "<string>", line 63, in <module>
-  File "/home/gui/.vim/black/lib/python3.7/site-packages/black.py", line 45, in <module>
-    from typed_ast import ast3, ast27
-  File "/home/gui/.vim/black/lib/python3.7/site-packages/typed_ast/ast3.py", line 40, in <module>
-    from typed_ast import _ast3
-ImportError: /home/gui/.vim/black/lib/python3.7/site-packages/typed_ast/_ast3.cpython-37m-x86_64-linux-gnu.so: undefined symbool: PyExc_KeyboardInterrupt
-```
-
-Then you need to install `typed_ast` directly from the source code. The error happens
-because `pip` will download [Python wheels](https://pythonwheels.com/) if they are
-available. Python wheels are a new standard of distributing Python packages and packages
-that have Cython and extensions written in C are already compiled, so the installation
-is much more faster. The problem here is that somehow the Python environment inside Vim
-does not match with those already compiled C extensions and these kind of errors are the
-result. Luckily there is an easy fix: installing the packages from the source code.
-
-The package that causes problems is:
-
-- [typed-ast](https://pypi.org/project/typed-ast/)
-
-Now remove those two packages:
-
-```console
-$ pip uninstall typed-ast -y
-```
-
-And now you can install them with:
-
-```console
-$ pip install --no-binary :all: typed-ast
-```
-
-The C extensions will be compiled and now Vim's Python environment will match. Note that
-you need to have the GCC compiler and the Python development files installed (on
-Ubuntu/Debian do `sudo apt-get install build-essential python3-dev`).
-
-If you later want to update _Black_, you should do it like this:
-
-```console
-$ pip install -U black --no-binary typed-ast
-```
-
 ### With ALE
 
 1. Install [`ale`](https://github.com/dense-analysis/ale)
@@ -435,7 +391,7 @@ close and reopen your File, _Black_ will be done with its job.
 
 - Use the
   [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
-  ([instructions](https://code.visualstudio.com/docs/python/editing#_formatting)).
+  ([instructions](https://code.visualstudio.com/docs/python/formatting)).
 
 - Alternatively the pre-release
   [Black Formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter)
@@ -443,9 +399,10 @@ close and reopen your File, _Black_ will be done with its job.
   server for Black. Formatting is much more responsive using this extension, **but the
   minimum supported version of Black is 22.3.0**.
 
-## SublimeText 3
+## SublimeText
 
-Use [sublack plugin](https://github.com/jgirardet/sublack).
+For SublimeText 3, use [sublack plugin](https://github.com/jgirardet/sublack). For
+higher versions, it is recommended to use [LSP](#python-lsp-server) as documented below.
 
 ## Python LSP Server
 
@@ -475,4 +432,4 @@ hook global WinSetOption filetype=python %{
 
 ## Thonny
 
-Use [Thonny-black-code-format](https://github.com/Franccisco/thonny-black-code-format).
+Use [Thonny-black-formatter](https://pypi.org/project/thonny-black-formatter/).

@@ -7,12 +7,13 @@ import tokenize
 import traceback
 from contextlib import contextmanager
 from dataclasses import replace
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from json.decoder import JSONDecodeError
 from pathlib import Path
 from typing import (
     Any,
+    Collection,
     Dict,
     Generator,
     Iterator,
@@ -34,7 +35,7 @@ from pathspec import PathSpec
 from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
 
 from _black_version import version as __version__
-from black.cache import Cache, get_cache_info, read_cache, write_cache
+from black.cache import Cache
 from black.comments import normalize_fmt_off
 from black.const import (
     DEFAULT_EXCLUDES,
@@ -43,13 +44,15 @@ from black.const import (
     STDIN_PLACEHOLDER,
 )
 from black.files import (
+    best_effort_relative_path,
     find_project_root,
     find_pyproject_toml,
     find_user_pyproject_toml,
     gen_python_files,
     get_gitignore,
-    normalize_path_maybe_ignore,
     parse_pyproject_toml,
+    path_is_excluded,
+    resolves_outside_root_or_cannot_stat,
     wrap_stream_for_windows,
 )
 from black.handle_ipynb_magics import (
@@ -63,14 +66,9 @@ from black.handle_ipynb_magics import (
 )
 from black.linegen import LN, LineGenerator, transform_line
 from black.lines import EmptyLineTracker, LinesBlock
-from black.mode import (
-    FUTURE_FLAG_TO_FEATURE,
-    VERSION_TO_FEATURES,
-    Feature,
-    Mode,
-    TargetVersion,
-    supports_feature,
-)
+from black.mode import FUTURE_FLAG_TO_FEATURE, VERSION_TO_FEATURES, Feature
+from black.mode import Mode as Mode  # re-exported
+from black.mode import Preview, TargetVersion, supports_feature
 from black.nodes import (
     STARS,
     is_number_token,
@@ -79,8 +77,19 @@ from black.nodes import (
     syms,
 )
 from black.output import color_diff, diff, dump_to_file, err, ipynb_diff, out
-from black.parsing import InvalidInput  # noqa F401
-from black.parsing import lib2to3_parse, parse_ast, stringify_ast
+from black.parsing import (  # noqa F401
+    ASTSafetyError,
+    InvalidInput,
+    lib2to3_parse,
+    parse_ast,
+    stringify_ast,
+)
+from black.ranges import (
+    adjusted_lines,
+    convert_unchanged_lines,
+    parse_line_ranges,
+    sanitized_lines,
+)
 from black.report import Changed, NothingChanged, Report
 from black.trans import iter_fexpr_spans
 from blib2to3.pgen2 import token
@@ -128,7 +137,9 @@ def read_pyproject_toml(
     otherwise.
     """
     if not value:
-        value = find_pyproject_toml(ctx.params.get("src", ()))
+        value = find_pyproject_toml(
+            ctx.params.get("src", ()), ctx.params.get("stdin_filename", None)
+        )
         if value is None:
             return None
 
@@ -142,6 +153,7 @@ def read_pyproject_toml(
     if not config:
         return None
     else:
+        spellcheck_pyproject_toml_keys(ctx, list(config), value)
         # Sanitize the values to be Click friendly. For more information please see:
         # https://github.com/psf/black/issues/1458
         # https://github.com/pallets/click/issues/1567
@@ -156,6 +168,22 @@ def read_pyproject_toml(
             "target-version", "Config key target-version must be a list"
         )
 
+    exclude = config.get("exclude")
+    if exclude is not None and not isinstance(exclude, str):
+        raise click.BadOptionUsage("exclude", "Config key exclude must be a string")
+
+    extend_exclude = config.get("extend_exclude")
+    if extend_exclude is not None and not isinstance(extend_exclude, str):
+        raise click.BadOptionUsage(
+            "extend-exclude", "Config key extend-exclude must be a string"
+        )
+
+    line_ranges = config.get("line_ranges")
+    if line_ranges is not None:
+        raise click.BadOptionUsage(
+            "line-ranges", "Cannot use line-ranges in the pyproject.toml file."
+        )
+
     default_map: Dict[str, Any] = {}
     if ctx.default_map:
         default_map.update(ctx.default_map)
@@ -163,6 +191,22 @@ def read_pyproject_toml(
 
     ctx.default_map = default_map
     return value
+
+
+def spellcheck_pyproject_toml_keys(
+    ctx: click.Context, config_keys: List[str], config_file_path: str
+) -> None:
+    invalid_keys: List[str] = []
+    available_config_options = {param.name for param in ctx.command.params}
+    for key in config_keys:
+        if key not in available_config_options:
+            invalid_keys.append(key)
+    if invalid_keys:
+        keys_str = ", ".join(map(repr, invalid_keys))
+        out(
+            f"Invalid config keys detected: {keys_str} (in {config_file_path})",
+            fg="red",
+        )
 
 
 def target_version_option_callback(
@@ -175,6 +219,13 @@ def target_version_option_callback(
     when it was a lambda, causing mypyc trouble.
     """
     return [TargetVersion[val.upper()] for val in v]
+
+
+def enable_unstable_feature_callback(
+    c: click.Context, p: Union[click.Option, click.Parameter], v: Tuple[str, ...]
+) -> List[Preview]:
+    """Compute the features from an --enable-unstable-feature flag."""
+    return [Preview[val] for val in v]
 
 
 def re_compile_maybe_verbose(regex: str) -> Pattern[str]:
@@ -222,25 +273,26 @@ def validate_regex(
     callback=target_version_option_callback,
     multiple=True,
     help=(
-        "Python versions that should be supported by Black's output. By default, Black"
-        " will try to infer this from the project metadata in pyproject.toml. If this"
-        " does not yield conclusive results, Black will use per-file auto-detection."
+        "Python versions that should be supported by Black's output. You should"
+        " include all versions that your code supports. By default, Black will infer"
+        " target versions from the project metadata in pyproject.toml. If this does"
+        " not yield conclusive results, Black will use per-file auto-detection."
     ),
 )
 @click.option(
     "--pyi",
     is_flag=True,
     help=(
-        "Format all input files like typing stubs regardless of file extension (useful"
-        " when piping source on standard input)."
+        "Format all input files like typing stubs regardless of file extension. This"
+        " is useful when piping source on standard input."
     ),
 )
 @click.option(
     "--ipynb",
     is_flag=True,
     help=(
-        "Format all input files like Jupyter Notebooks regardless of file extension "
-        "(useful when piping source on standard input)."
+        "Format all input files like Jupyter Notebooks regardless of file extension."
+        " This is useful when piping source on standard input."
     ),
 )
 @click.option(
@@ -272,17 +324,31 @@ def validate_regex(
     help="Don't use trailing commas as a reason to split lines.",
 )
 @click.option(
-    "--experimental-string-processing",
-    is_flag=True,
-    hidden=True,
-    help="(DEPRECATED and now included in --preview) Normalize string literals.",
-)
-@click.option(
     "--preview",
     is_flag=True,
     help=(
         "Enable potentially disruptive style changes that may be added to Black's main"
         " functionality in the next major release."
+    ),
+)
+@click.option(
+    "--unstable",
+    is_flag=True,
+    help=(
+        "Enable potentially disruptive style changes that have known bugs or are not"
+        " currently expected to make it into the stable style Black's next major"
+        " release. Implies --preview."
+    ),
+)
+@click.option(
+    "--enable-unstable-feature",
+    type=click.Choice([v.name for v in Preview]),
+    callback=enable_unstable_feature_callback,
+    multiple=True,
+    help=(
+        "Enable specific features included in the `--unstable` style. Requires"
+        " `--preview`. No compatibility guarantees are provided on the behavior"
+        " or existence of any unstable features."
     ),
 )
 @click.option(
@@ -297,25 +363,90 @@ def validate_regex(
 @click.option(
     "--diff",
     is_flag=True,
-    help="Don't write the files back, just output a diff for each file on stdout.",
+    help=(
+        "Don't write the files back, just output a diff to indicate what changes"
+        " Black would've made. They are printed to stdout so capturing them is simple."
+    ),
 )
 @click.option(
     "--color/--no-color",
     is_flag=True,
-    help="Show colored diff. Only applies when `--diff` is given.",
+    help="Show (or do not show) colored diff. Only applies when --diff is given.",
+)
+@click.option(
+    "--line-ranges",
+    multiple=True,
+    metavar="START-END",
+    help=(
+        "When specified, Black will try its best to only format these lines. This"
+        " option can be specified multiple times, and a union of the lines will be"
+        " formatted. Each range must be specified as two integers connected by a `-`:"
+        " `<START>-<END>`. The `<START>` and `<END>` integer indices are 1-based and"
+        " inclusive on both ends."
+    ),
+    default=(),
 )
 @click.option(
     "--fast/--safe",
     is_flag=True,
-    help="If --fast given, skip temporary sanity checks. [default: --safe]",
+    help=(
+        "By default, Black performs an AST safety check after formatting your code."
+        " The --fast flag turns off this check and the --safe flag explicitly enables"
+        " it. [default: --safe]"
+    ),
 )
 @click.option(
     "--required-version",
     type=str,
     help=(
-        "Require a specific version of Black to be running (useful for unifying results"
-        " across many environments e.g. with a pyproject.toml file). It can be"
-        " either a major version number or an exact version."
+        "Require a specific version of Black to be running. This is useful for"
+        " ensuring that all contributors to your project are using the same"
+        " version, because different versions of Black may format code a little"
+        " differently. This option can be set in a configuration file for consistent"
+        " results across environments."
+    ),
+)
+@click.option(
+    "--exclude",
+    type=str,
+    callback=validate_regex,
+    help=(
+        "A regular expression that matches files and directories that should be"
+        " excluded on recursive searches. An empty value means no paths are excluded."
+        " Use forward slashes for directories on all platforms (Windows, too)."
+        " By default, Black also ignores all paths listed in .gitignore. Changing this"
+        f" value will override all default exclusions. [default: {DEFAULT_EXCLUDES}]"
+    ),
+    show_default=False,
+)
+@click.option(
+    "--extend-exclude",
+    type=str,
+    callback=validate_regex,
+    help=(
+        "Like --exclude, but adds additional files and directories on top of the"
+        " default values instead of overriding them."
+    ),
+)
+@click.option(
+    "--force-exclude",
+    type=str,
+    callback=validate_regex,
+    help=(
+        "Like --exclude, but files and directories matching this regex will be excluded"
+        " even when they are passed explicitly as arguments. This is useful when"
+        " invoking Black programmatically on changed files, such as in a pre-commit"
+        " hook or editor plugin."
+    ),
+)
+@click.option(
+    "--stdin-filename",
+    type=str,
+    is_eager=True,
+    help=(
+        "The name of the file when passing it through stdin. Useful to make sure Black"
+        " will respect the --force-exclude option on some editors that rely on using"
+        " stdin."
     ),
 )
 @click.option(
@@ -327,64 +458,30 @@ def validate_regex(
         "A regular expression that matches files and directories that should be"
         " included on recursive searches. An empty value means all files are included"
         " regardless of the name. Use forward slashes for directories on all platforms"
-        " (Windows, too). Exclusions are calculated first, inclusions later."
+        " (Windows, too). Overrides all exclusions, including from .gitignore and"
+        " command line options."
     ),
     show_default=True,
-)
-@click.option(
-    "--exclude",
-    type=str,
-    callback=validate_regex,
-    help=(
-        "A regular expression that matches files and directories that should be"
-        " excluded on recursive searches. An empty value means no paths are excluded."
-        " Use forward slashes for directories on all platforms (Windows, too)."
-        " Exclusions are calculated first, inclusions later. [default:"
-        f" {DEFAULT_EXCLUDES}]"
-    ),
-    show_default=False,
-)
-@click.option(
-    "--extend-exclude",
-    type=str,
-    callback=validate_regex,
-    help=(
-        "Like --exclude, but adds additional files and directories on top of the"
-        " excluded ones. (Useful if you simply want to add to the default)"
-    ),
-)
-@click.option(
-    "--force-exclude",
-    type=str,
-    callback=validate_regex,
-    help=(
-        "Like --exclude, but files and directories matching this regex will be "
-        "excluded even when they are passed explicitly as arguments."
-    ),
-)
-@click.option(
-    "--stdin-filename",
-    type=str,
-    help=(
-        "The name of the file when passing it through stdin. Useful to make "
-        "sure Black will respect --force-exclude option on some "
-        "editors that rely on using stdin."
-    ),
 )
 @click.option(
     "-W",
     "--workers",
     type=click.IntRange(min=1),
     default=None,
-    help="Number of parallel workers [default: number of CPUs in the system]",
+    help=(
+        "When Black formats multiple files, it may use a process pool to speed up"
+        " formatting. This option controls the number of parallel workers. This can"
+        " also be specified via the BLACK_NUM_WORKERS environment variable. Defaults"
+        " to the number of CPUs in the system."
+    ),
 )
 @click.option(
     "-q",
     "--quiet",
     is_flag=True,
     help=(
-        "Don't emit non-error messages to stderr. Errors are still emitted; silence"
-        " those with 2>/dev/null."
+        "Stop emitting all non-critical output. Error messages will still be emitted"
+        " (which can silenced by 2>/dev/null)."
     ),
 )
 @click.option(
@@ -392,8 +489,9 @@ def validate_regex(
     "--verbose",
     is_flag=True,
     help=(
-        "Also emit messages to stderr about files that were not changed or were ignored"
-        " due to exclusion patterns."
+        "Emit messages about files that were not changed or were ignored due to"
+        " exclusion patterns. If Black is using a configuration file, a message"
+        " detailing which one it is using will be emitted."
     ),
 )
 @click.version_option(
@@ -424,7 +522,7 @@ def validate_regex(
     ),
     is_eager=True,
     callback=read_pyproject_toml,
-    help="Read configuration from FILE path.",
+    help="Read configuration options from a configuration file.",
 )
 @click.pass_context
 def main(  # noqa: C901
@@ -434,6 +532,7 @@ def main(  # noqa: C901
     target_version: List[TargetVersion],
     check: bool,
     diff: bool,
+    line_ranges: Sequence[str],
     color: bool,
     fast: bool,
     pyi: bool,
@@ -442,8 +541,9 @@ def main(  # noqa: C901
     skip_source_first_line: bool,
     skip_string_normalization: bool,
     skip_magic_trailing_comma: bool,
-    experimental_string_processing: bool,
     preview: bool,
+    unstable: bool,
+    enable_unstable_feature: List[Preview],
     quiet: bool,
     verbose: bool,
     required_version: Optional[str],
@@ -469,6 +569,14 @@ def main(  # noqa: C901
         out(main.get_usage(ctx) + "\n\nOne of 'SRC' or 'code' is required.")
         ctx.exit(1)
 
+    # It doesn't do anything if --unstable is also passed, so just allow it.
+    if enable_unstable_feature and not (preview or unstable):
+        out(
+            main.get_usage(ctx)
+            + "\n\n'--enable-unstable-feature' requires '--preview'."
+        )
+        ctx.exit(1)
+
     root, method = (
         find_project_root(src, stdin_filename) if code is None else (None, None)
     )
@@ -481,35 +589,13 @@ def main(  # noqa: C901
                 fg="blue",
             )
 
-            normalized = [
-                (
-                    (source, source)
-                    if source == "-"
-                    else (normalize_path_maybe_ignore(Path(source), root), source)
-                )
-                for source in src
-            ]
-            srcs_string = ", ".join(
-                [
-                    (
-                        f'"{_norm}"'
-                        if _norm
-                        else f'\033[31m"{source} (skipping - invalid)"\033[34m'
-                    )
-                    for _norm, source in normalized
-                ]
-            )
-            out(f"Sources to be formatted: {srcs_string}", fg="blue")
-
         if config:
             config_source = ctx.get_parameter_source("config")
             user_level_config = str(find_user_pyproject_toml())
             if config == user_level_config:
                 out(
-                    (
-                        "Using configuration from user-level config at "
-                        f"'{user_level_config}'."
-                    ),
+                    "Using configuration from user-level config at "
+                    f"'{user_level_config}'.",
                     fg="blue",
                 )
             elif config_source in (
@@ -552,10 +638,23 @@ def main(  # noqa: C901
         skip_source_first_line=skip_source_first_line,
         string_normalization=not skip_string_normalization,
         magic_trailing_comma=not skip_magic_trailing_comma,
-        experimental_string_processing=experimental_string_processing,
         preview=preview,
+        unstable=unstable,
         python_cell_magics=set(python_cell_magics),
+        enabled_features=set(enable_unstable_feature),
     )
+
+    lines: List[Tuple[int, int]] = []
+    if line_ranges:
+        if ipynb:
+            err("Cannot use --line-ranges with ipynb files.")
+            ctx.exit(1)
+
+        try:
+            lines = parse_line_ranges(line_ranges)
+        except ValueError as e:
+            err(str(e))
+            ctx.exit(1)
 
     if code is not None:
         # Run in quiet mode by default with -c; the extra output isn't useful.
@@ -566,12 +665,18 @@ def main(  # noqa: C901
 
     if code is not None:
         reformat_code(
-            content=code, fast=fast, write_back=write_back, mode=mode, report=report
+            content=code,
+            fast=fast,
+            write_back=write_back,
+            mode=mode,
+            report=report,
+            lines=lines,
         )
     else:
+        assert root is not None  # root is only None if code is not None
         try:
             sources = get_sources(
-                ctx=ctx,
+                root=root,
                 src=src,
                 quiet=quiet,
                 verbose=verbose,
@@ -600,10 +705,14 @@ def main(  # noqa: C901
                 write_back=write_back,
                 mode=mode,
                 report=report,
+                lines=lines,
             )
         else:
             from black.concurrency import reformat_many
 
+            if lines:
+                err("Cannot use --line-ranges to format multiple files.")
+                ctx.exit(1)
             reformat_many(
                 sources=sources,
                 fast=fast,
@@ -624,7 +733,7 @@ def main(  # noqa: C901
 
 def get_sources(
     *,
-    ctx: click.Context,
+    root: Path,
     src: Tuple[str, ...],
     quiet: bool,
     verbose: bool,
@@ -637,8 +746,8 @@ def get_sources(
 ) -> Set[Path]:
     """Compute the set of files to be formatted."""
     sources: Set[Path] = set()
-    root = ctx.obj["root"]
 
+    assert root.is_absolute(), f"INTERNAL ERROR: `root` must be absolute but is {root}"
     using_default_exclude = exclude is None
     exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES) if exclude is None else exclude
     gitignore: Optional[Dict[Path, PathSpec]] = None
@@ -646,47 +755,54 @@ def get_sources(
 
     for s in src:
         if s == "-" and stdin_filename:
-            p = Path(stdin_filename)
+            path = Path(stdin_filename)
             is_stdin = True
         else:
-            p = Path(s)
+            path = Path(s)
             is_stdin = False
 
-        if is_stdin or p.is_file():
-            normalized_path = normalize_path_maybe_ignore(p, ctx.obj["root"], report)
-            if normalized_path is None:
+        # Compare the logic here to the logic in `gen_python_files`.
+        if is_stdin or path.is_file():
+            if resolves_outside_root_or_cannot_stat(path, root, report):
+                if verbose:
+                    out(f'Skipping invalid source: "{path}"', fg="red")
                 continue
 
-            normalized_path = "/" + normalized_path
+            root_relative_path = best_effort_relative_path(path, root).as_posix()
+            root_relative_path = "/" + root_relative_path
+
             # Hard-exclude any files that matches the `--force-exclude` regex.
-            if force_exclude:
-                force_exclude_match = force_exclude.search(normalized_path)
-            else:
-                force_exclude_match = None
-            if force_exclude_match and force_exclude_match.group(0):
-                report.path_ignored(p, "matches the --force-exclude regular expression")
+            if path_is_excluded(root_relative_path, force_exclude):
+                report.path_ignored(
+                    path, "matches the --force-exclude regular expression"
+                )
                 continue
 
             if is_stdin:
-                p = Path(f"{STDIN_PLACEHOLDER}{str(p)}")
+                path = Path(f"{STDIN_PLACEHOLDER}{str(path)}")
 
-            if p.suffix == ".ipynb" and not jupyter_dependencies_are_installed(
-                verbose=verbose, quiet=quiet
+            if path.suffix == ".ipynb" and not jupyter_dependencies_are_installed(
+                warn=verbose or not quiet
             ):
                 continue
 
-            sources.add(p)
-        elif p.is_dir():
-            p = root / normalize_path_maybe_ignore(p, ctx.obj["root"], report)
+            if verbose:
+                out(f'Found input source: "{path}"', fg="blue")
+            sources.add(path)
+        elif path.is_dir():
+            path = root / (path.resolve().relative_to(root))
+            if verbose:
+                out(f'Found input source directory: "{path}"', fg="blue")
+
             if using_default_exclude:
                 gitignore = {
                     root: root_gitignore,
-                    p: get_gitignore(p),
+                    path: get_gitignore(path),
                 }
             sources.update(
                 gen_python_files(
-                    p.iterdir(),
-                    ctx.obj["root"],
+                    path.iterdir(),
+                    root,
                     include,
                     exclude,
                     extend_exclude,
@@ -698,9 +814,12 @@ def get_sources(
                 )
             )
         elif s == "-":
-            sources.add(p)
+            if verbose:
+                out("Found input source stdin", fg="blue")
+            sources.add(path)
         else:
             err(f"invalid path: {s}")
+
     return sources
 
 
@@ -715,7 +834,13 @@ def path_empty(
 
 
 def reformat_code(
-    content: str, fast: bool, write_back: WriteBack, mode: Mode, report: Report
+    content: str,
+    fast: bool,
+    write_back: WriteBack,
+    mode: Mode,
+    report: Report,
+    *,
+    lines: Collection[Tuple[int, int]] = (),
 ) -> None:
     """
     Reformat and print out `content` without spawning child processes.
@@ -728,7 +853,7 @@ def reformat_code(
     try:
         changed = Changed.NO
         if format_stdin_to_stdout(
-            content=content, fast=fast, write_back=write_back, mode=mode
+            content=content, fast=fast, write_back=write_back, mode=mode, lines=lines
         ):
             changed = Changed.YES
         report.done(path, changed)
@@ -742,7 +867,13 @@ def reformat_code(
 # not ideal, but this shouldn't cause any issues ... hopefully. ~ichard26
 @mypyc_attr(patchable=True)
 def reformat_one(
-    src: Path, fast: bool, write_back: WriteBack, mode: Mode, report: "Report"
+    src: Path,
+    fast: bool,
+    write_back: WriteBack,
+    mode: Mode,
+    report: "Report",
+    *,
+    lines: Collection[Tuple[int, int]] = (),
 ) -> None:
     """
     Reformat a single file under `src` without spawning child processes.
@@ -768,24 +899,23 @@ def reformat_one(
                 mode = replace(mode, is_pyi=True)
             elif src.suffix == ".ipynb":
                 mode = replace(mode, is_ipynb=True)
-            if format_stdin_to_stdout(fast=fast, write_back=write_back, mode=mode):
+            if format_stdin_to_stdout(
+                fast=fast, write_back=write_back, mode=mode, lines=lines
+            ):
                 changed = Changed.YES
         else:
-            cache: Cache = {}
+            cache = Cache.read(mode)
             if write_back not in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
-                cache = read_cache(mode)
-                res_src = src.resolve()
-                res_src_s = str(res_src)
-                if res_src_s in cache and cache[res_src_s] == get_cache_info(res_src):
+                if not cache.is_changed(src):
                     changed = Changed.CACHED
             if changed is not Changed.CACHED and format_file_in_place(
-                src, fast=fast, write_back=write_back, mode=mode
+                src, fast=fast, write_back=write_back, mode=mode, lines=lines
             ):
                 changed = Changed.YES
             if (write_back is WriteBack.YES and changed is not Changed.CACHED) or (
                 write_back is WriteBack.CHECK and changed is Changed.NO
             ):
-                write_cache(cache, [src], mode)
+                cache.write([src])
         report.done(src, changed)
     except Exception as exc:
         if report.verbose:
@@ -799,6 +929,8 @@ def format_file_in_place(
     mode: Mode,
     write_back: WriteBack = WriteBack.NO,
     lock: Any = None,  # multiprocessing.Manager().Lock() is some crazy proxy
+    *,
+    lines: Collection[Tuple[int, int]] = (),
 ) -> bool:
     """
     Format file under `src` path. Return True if changed.
@@ -812,14 +944,16 @@ def format_file_in_place(
     elif src.suffix == ".ipynb":
         mode = replace(mode, is_ipynb=True)
 
-    then = datetime.utcfromtimestamp(src.stat().st_mtime)
+    then = datetime.fromtimestamp(src.stat().st_mtime, timezone.utc)
     header = b""
     with open(src, "rb") as buf:
         if mode.skip_source_first_line:
             header = buf.readline()
         src_contents, encoding, newline = decode_bytes(buf.read())
     try:
-        dst_contents = format_file_contents(src_contents, fast=fast, mode=mode)
+        dst_contents = format_file_contents(
+            src_contents, fast=fast, mode=mode, lines=lines
+        )
     except NothingChanged:
         return False
     except JSONDecodeError:
@@ -833,9 +967,9 @@ def format_file_in_place(
         with open(src, "w", encoding=encoding, newline=newline) as f:
             f.write(dst_contents)
     elif write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
-        now = datetime.utcnow()
-        src_name = f"{src}\t{then} +0000"
-        dst_name = f"{src}\t{now} +0000"
+        now = datetime.now(timezone.utc)
+        src_name = f"{src}\t{then}"
+        dst_name = f"{src}\t{now}"
         if mode.is_ipynb:
             diff_contents = ipynb_diff(src_contents, dst_contents, src_name, dst_name)
         else:
@@ -864,6 +998,7 @@ def format_stdin_to_stdout(
     content: Optional[str] = None,
     write_back: WriteBack = WriteBack.NO,
     mode: Mode,
+    lines: Collection[Tuple[int, int]] = (),
 ) -> bool:
     """
     Format file on stdin. Return True if changed.
@@ -874,7 +1009,7 @@ def format_stdin_to_stdout(
     write a diff to stdout. The `mode` argument is passed to
     :func:`format_file_contents`.
     """
-    then = datetime.utcnow()
+    then = datetime.now(timezone.utc)
 
     if content is None:
         src, encoding, newline = decode_bytes(sys.stdin.buffer.read())
@@ -883,7 +1018,7 @@ def format_stdin_to_stdout(
 
     dst = src
     try:
-        dst = format_file_contents(src, fast=fast, mode=mode)
+        dst = format_file_contents(src, fast=fast, mode=mode, lines=lines)
         return True
 
     except NothingChanged:
@@ -899,9 +1034,9 @@ def format_stdin_to_stdout(
                 dst += "\n"
             f.write(dst)
         elif write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
-            now = datetime.utcnow()
-            src_name = f"STDIN\t{then} +0000"
-            dst_name = f"STDOUT\t{now} +0000"
+            now = datetime.now(timezone.utc)
+            src_name = f"STDIN\t{then}"
+            dst_name = f"STDOUT\t{now}"
             d = diff(src, dst, src_name, dst_name)
             if write_back == WriteBack.COLOR_DIFF:
                 d = color_diff(d)
@@ -911,7 +1046,11 @@ def format_stdin_to_stdout(
 
 
 def check_stability_and_equivalence(
-    src_contents: str, dst_contents: str, *, mode: Mode
+    src_contents: str,
+    dst_contents: str,
+    *,
+    mode: Mode,
+    lines: Collection[Tuple[int, int]] = (),
 ) -> None:
     """
     Perform stability and equivalence checks.
@@ -921,10 +1060,16 @@ def check_stability_and_equivalence(
     content differently.
     """
     assert_equivalent(src_contents, dst_contents)
-    assert_stable(src_contents, dst_contents, mode=mode)
+    assert_stable(src_contents, dst_contents, mode=mode, lines=lines)
 
 
-def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileContent:
+def format_file_contents(
+    src_contents: str,
+    *,
+    fast: bool,
+    mode: Mode,
+    lines: Collection[Tuple[int, int]] = (),
+) -> FileContent:
     """
     Reformat contents of a file and return new contents.
 
@@ -935,13 +1080,15 @@ def format_file_contents(src_contents: str, *, fast: bool, mode: Mode) -> FileCo
     if mode.is_ipynb:
         dst_contents = format_ipynb_string(src_contents, fast=fast, mode=mode)
     else:
-        dst_contents = format_str(src_contents, mode=mode)
+        dst_contents = format_str(src_contents, mode=mode, lines=lines)
     if src_contents == dst_contents:
         raise NothingChanged
 
     if not fast and not mode.is_ipynb:
         # Jupyter notebooks will already have been checked above.
-        check_stability_and_equivalence(src_contents, dst_contents, mode=mode)
+        check_stability_and_equivalence(
+            src_contents, dst_contents, mode=mode, lines=lines
+        )
     return dst_contents
 
 
@@ -1056,7 +1203,9 @@ def format_ipynb_string(src_contents: str, *, fast: bool, mode: Mode) -> FileCon
         raise NothingChanged
 
 
-def format_str(src_contents: str, *, mode: Mode) -> str:
+def format_str(
+    src_contents: str, *, mode: Mode, lines: Collection[Tuple[int, int]] = ()
+) -> str:
     """
     Reformat a string and return new contents.
 
@@ -1086,16 +1235,24 @@ def format_str(src_contents: str, *, mode: Mode) -> str:
     ) -> None:
         hey
     """
-    dst_contents = _format_str_once(src_contents, mode=mode)
+    if lines:
+        lines = sanitized_lines(lines, src_contents)
+        if not lines:
+            return src_contents  # Nothing to format
+    dst_contents = _format_str_once(src_contents, mode=mode, lines=lines)
     # Forced second pass to work around optional trailing commas (becoming
     # forced trailing commas on pass 2) interacting differently with optional
     # parentheses.  Admittedly ugly.
     if src_contents != dst_contents:
-        return _format_str_once(dst_contents, mode=mode)
+        if lines:
+            lines = adjusted_lines(lines, src_contents, dst_contents)
+        return _format_str_once(dst_contents, mode=mode, lines=lines)
     return dst_contents
 
 
-def _format_str_once(src_contents: str, *, mode: Mode) -> str:
+def _format_str_once(
+    src_contents: str, *, mode: Mode, lines: Collection[Tuple[int, int]] = ()
+) -> str:
     src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)
     dst_blocks: List[LinesBlock] = []
     if mode.target_versions:
@@ -1109,8 +1266,12 @@ def _format_str_once(src_contents: str, *, mode: Mode) -> str:
         for feature in {Feature.PARENTHESIZED_CONTEXT_MANAGERS}
         if supports_feature(versions, feature)
     }
-    normalize_fmt_off(src_node)
-    lines = LineGenerator(mode=mode, features=context_manager_features)
+    normalize_fmt_off(src_node, mode, lines)
+    if lines:
+        # This should be called after normalize_fmt_off.
+        convert_unchanged_lines(src_node, lines)
+
+    line_generator = LineGenerator(mode=mode, features=context_manager_features)
     elt = EmptyLineTracker(mode=mode)
     split_line_features = {
         feature
@@ -1118,7 +1279,7 @@ def _format_str_once(src_contents: str, *, mode: Mode) -> str:
         if supports_feature(versions, feature)
     }
     block: Optional[LinesBlock] = None
-    for current_line in lines.visit(src_node):
+    for current_line in line_generator.visit(src_node):
         block = elt.maybe_empty_lines(current_line)
         dst_blocks.append(block)
         for line in transform_line(
@@ -1262,7 +1423,7 @@ def get_features_used(  # noqa: C901
             if (
                 len(atom_children) == 3
                 and atom_children[0].type == token.LPAR
-                and atom_children[1].type == syms.testlist_gexp
+                and _contains_asexpr(atom_children[1])
                 and atom_children[2].type == token.RPAR
             ):
                 features.add(Feature.PARENTHESIZED_CONTEXT_MANAGERS)
@@ -1289,7 +1450,26 @@ def get_features_used(  # noqa: C901
         ):
             features.add(Feature.VARIADIC_GENERICS)
 
+        elif n.type in (syms.type_stmt, syms.typeparams):
+            features.add(Feature.TYPE_PARAMS)
+
     return features
+
+
+def _contains_asexpr(node: Union[Node, Leaf]) -> bool:
+    """Return True if `node` contains an as-pattern."""
+    if node.type == syms.asexpr_test:
+        return True
+    elif node.type == syms.atom:
+        if (
+            len(node.children) == 3
+            and node.children[0].type == token.LPAR
+            and node.children[2].type == token.RPAR
+        ):
+            return _contains_asexpr(node.children[1])
+    elif node.type == syms.testlist_gexp:
+        return any(_contains_asexpr(child) for child in node.children)
+    return False
 
 
 def detect_target_versions(
@@ -1357,7 +1537,7 @@ def assert_equivalent(src: str, dst: str) -> None:
     try:
         src_ast = parse_ast(src)
     except Exception as exc:
-        raise AssertionError(
+        raise ASTSafetyError(
             "cannot use --safe with this file; failed to parse source file AST: "
             f"{exc}\n"
             "This could be caused by running Black with an older Python version "
@@ -1368,7 +1548,7 @@ def assert_equivalent(src: str, dst: str) -> None:
         dst_ast = parse_ast(dst)
     except Exception as exc:
         log = dump_to_file("".join(traceback.format_tb(exc.__traceback__)), dst)
-        raise AssertionError(
+        raise ASTSafetyError(
             f"INTERNAL ERROR: Black produced invalid code: {exc}. "
             "Please report a bug on https://github.com/psf/black/issues.  "
             f"This invalid output might be helpful: {log}"
@@ -1378,19 +1558,28 @@ def assert_equivalent(src: str, dst: str) -> None:
     dst_ast_str = "\n".join(stringify_ast(dst_ast))
     if src_ast_str != dst_ast_str:
         log = dump_to_file(diff(src_ast_str, dst_ast_str, "src", "dst"))
-        raise AssertionError(
+        raise ASTSafetyError(
             "INTERNAL ERROR: Black produced code that is not equivalent to the"
             " source.  Please report a bug on "
             f"https://github.com/psf/black/issues.  This diff might be helpful: {log}"
         ) from None
 
 
-def assert_stable(src: str, dst: str, mode: Mode) -> None:
+def assert_stable(
+    src: str, dst: str, mode: Mode, *, lines: Collection[Tuple[int, int]] = ()
+) -> None:
     """Raise AssertionError if `dst` reformats differently the second time."""
+    if lines:
+        # Formatting specified lines requires `adjusted_lines` to map original lines
+        # to the formatted lines before re-formatting the previously formatted result.
+        # Due to less-ideal diff algorithm, some edge cases produce incorrect new line
+        # ranges. Hence for now, we skip the stable check.
+        # See https://github.com/psf/black/issues/4033 for context.
+        return
     # We shouldn't call format_str() here, because that formats the string
     # twice and may hide a bug where we bounce back and forth between two
     # versions.
-    newdst = _format_str_once(dst, mode=mode)
+    newdst = _format_str_once(dst, mode=mode, lines=lines)
     if dst != newdst:
         log = dump_to_file(
             str(mode),
@@ -1414,41 +1603,6 @@ def nullcontext() -> Iterator[None]:
     yield
 
 
-def patch_click() -> None:
-    """
-    Make Click not crash on Python 3.6 with LANG=C.
-
-    On certain misconfigured environments, Python 3 selects the ASCII encoding as the
-    default which restricts paths that it can access during the lifetime of the
-    application.  Click refuses to work in this scenario by raising a RuntimeError.
-
-    In case of Black the likelihood that non-ASCII characters are going to be used in
-    file paths is minimal since it's Python source code.  Moreover, this crash was
-    spurious on Python 3.7 thanks to PEP 538 and PEP 540.
-    """
-    modules: List[Any] = []
-    try:
-        from click import core
-    except ImportError:
-        pass
-    else:
-        modules.append(core)
-    try:
-        # Removed in Click 8.1.0 and newer; we keep this around for users who have
-        # older versions installed.
-        from click import _unicodefun  # type: ignore
-    except ImportError:
-        pass
-    else:
-        modules.append(_unicodefun)
-
-    for module in modules:
-        if hasattr(module, "_verify_python3_env"):
-            module._verify_python3_env = lambda: None
-        if hasattr(module, "_verify_python_env"):
-            module._verify_python_env = lambda: None
-
-
 def patched_main() -> None:
     # PyInstaller patches multiprocessing to need freeze_support() even in non-Windows
     # environments so just assume we always need to call it if frozen.
@@ -1457,7 +1611,6 @@ def patched_main() -> None:
 
         freeze_support()
 
-    patch_click()
     main()
 
 
