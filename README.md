@@ -40,7 +40,11 @@ Try it out now using the [Black Playground](https://black.vercel.app). Watch the
 
 ### Installing black using pipx
 
-```pipx``` is a tool that allows you to install and run Python packages in isolated environments, similar to virtual environments, but with the added capability of running these packages as executables directly from the command line. It was created to address some limitations of the standard Python packaging and distribution system, particularly in managing globally installed packages.
+`pipx` is a tool that allows you to install and run Python packages in isolated
+environments, similar to virtual environments, but with the added capability of running
+these packages as executables directly from the command line. It was created to address
+some limitations of the standard Python packaging and distribution system, particularly
+in managing globally installed packages.
 
 #### Steps to install black using pipx
 
@@ -50,6 +54,7 @@ On macOS
 pipx ensurepath
 sudo pipx ensurepath --global # optional to allow pipx actions with --global argument
 ```
+
 Upgrade pipx with brew update && brew upgrade pipx.
 
 On linux
@@ -80,13 +85,14 @@ Upgrade pipx with python3 -m pip install --user --upgrade pipx.
 
 Installing black
 
-```pipx install black```
+`pipx install black`
 
 Using black
 
-```black example.py```
+`black example.py`
 
 ### Installing black using pip
+
 _Black_ can be installed by running `pip install black`. It requires Python 3.8+ to run.
 If you want to format Jupyter Notebooks, install with `pip install "black[jupyter]"`.
 
