@@ -1,6 +1,7 @@
 # Change Log
 
 ### Added Instruction
+
 - Adding the pipx instruction to install black (#4295)
 
 ## Unreleased
