@@ -1,5 +1,8 @@
 # Change Log
 
+### Added Instruction
+- Adding the pipx instruction to install black (#4295)
+
 ## Unreleased
 
 ### Highlights
@@ -1810,3 +1813,5 @@ and the first release covered by our new
 - alpha quality
 
 - date-versioned (see: <https://calver.org/>)
+
+#4295
