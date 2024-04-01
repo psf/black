@@ -33,10 +33,10 @@ that. Note that the action's version you select is independent of the version of
 the action will use.
 
 The version of _Black_ the action will use can be configured via `version` or read from
-the pyproject.toml file. `version` can be any
+the `pyproject.toml` file. `version` can be any
 [valid version specifier](https://packaging.python.org/en/latest/glossary/#term-Version-Specifier)
 or just the version number if you want an exact version. To read the version from the
-pyproject.toml file instead, set `use_pyproject` to `true`. The action defaults to the
+`pyproject.toml` file instead, set `use_pyproject` to `true`. The action defaults to the
 latest release available on PyPI. Only versions available from PyPI are supported, so no
 commit SHAs or branch names.
 
@@ -72,7 +72,7 @@ If you want to match versions covered by Black's
     version: "~= 22.0"
 ```
 
-If you want to read the version from pyproject.toml, set `use_pyproject` to `true`:
+If you want to read the version from `pyproject.toml`, set `use_pyproject` to `true`:
 
 ```yaml
 - uses: psf/black@stable

@@ -28,7 +28,7 @@ inputs:
     required: false
     default: ""
   use_pyproject:
-    description: Read black version specifier from pyproject.toml if `true`.
+    description: Read Black version specifier from pyproject.toml if `true`.
     required: false
     default: "false"
   summary:
