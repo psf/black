@@ -36,7 +36,9 @@ The version of _Black_ the action will use can be configured via `version` or re
 the `pyproject.toml` file. `version` can be any
 [valid version specifier](https://packaging.python.org/en/latest/glossary/#term-Version-Specifier)
 or just the version number if you want an exact version. To read the version from the
-`pyproject.toml` file instead, set `use_pyproject` to `true`. The action defaults to the
+`pyproject.toml` file instead, set `use_pyproject` to `true`. This will first look into
+the `tool.black.required-version` field, then the `project.dependencies` array and finally
+the `project.optional-dependencies` table. The action defaults to the
 latest release available on PyPI. Only versions available from PyPI are supported, so no
 commit SHAs or branch names.
 
