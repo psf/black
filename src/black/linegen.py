@@ -503,36 +503,36 @@ class LineGenerator(Visitor[Line]):
         yield from self.visit_default(leaf)
 
     def visit_fstring(self, node: Node) -> Iterator[Line]:
-        if Feature.FSTRING_PARSING not in self.features:
-            string_leaf = _fstring_to_string(node)
-            node.replace(string_leaf)
-            yield from self.visit_default(string_leaf)
-            return
+        # currently we don't want to format and split f-strings at all.
+        string_leaf = _fstring_to_string(node)
+        node.replace(string_leaf)
+        yield from self.visit_default(string_leaf)
 
-        fstring_start = node.children[0]
-        fstring_end = node.children[-1]
-        assert isinstance(fstring_start, Leaf)
-        assert isinstance(fstring_end, Leaf)
+        # TODO: Uncomment Implementation to format f-string children
+        # fstring_start = node.children[0]
+        # fstring_end = node.children[-1]
+        # assert isinstance(fstring_start, Leaf)
+        # assert isinstance(fstring_end, Leaf)
 
-        quote_char = fstring_end.value[0]
-        quote_idx = fstring_start.value.index(quote_char)
-        prefix, quote = fstring_start.value[:quote_idx], fstring_start.value[quote_idx:]
+        # quote_char = fstring_end.value[0]
+        # quote_idx = fstring_start.value.index(quote_char)
+        # prefix, quote = fstring_start.value[:quote_idx], fstring_start.value[quote_idx:]
 
-        if not is_docstring(node, self.mode):
-            prefix = normalize_string_prefix(prefix)
+        # if not is_docstring(node, self.mode):
+        #     prefix = normalize_string_prefix(prefix)
 
-        assert quote == fstring_end.value
+        # assert quote == fstring_end.value
 
-        is_raw_fstring = "r" in prefix or "R" in prefix
-        middles = [leaf for leaf in node.leaves() if leaf.type == token.FSTRING_MIDDLE]
+        # is_raw_fstring = "r" in prefix or "R" in prefix
+        # middles = [leaf for leaf in node.leaves() if leaf.type == token.FSTRING_MIDDLE]
 
-        if self.mode.string_normalization:
-            middles, quote = normalize_fstring_quotes(quote, middles, is_raw_fstring)
+        # if self.mode.string_normalization:
+        #     middles, quote = normalize_fstring_quotes(quote, middles, is_raw_fstring)
 
-        fstring_start.value = prefix + quote
-        fstring_end.value = quote
+        # fstring_start.value = prefix + quote
+        # fstring_end.value = quote
 
-        yield from self.visit_default(node)
+        # yield from self.visit_default(node)
 
     def __post_init__(self) -> None:
         """You are in a twisty little maze of passages."""

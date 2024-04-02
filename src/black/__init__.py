@@ -1244,9 +1244,9 @@ def _format_str_once(
         future_imports = get_future_imports(src_node)
         versions = detect_target_versions(src_node, future_imports=future_imports)
 
-    line_generator_features = {
+    context_manager_features = {
         feature
-        for feature in {Feature.PARENTHESIZED_CONTEXT_MANAGERS, Feature.FSTRING_PARSING}
+        for feature in {Feature.PARENTHESIZED_CONTEXT_MANAGERS}
         if supports_feature(versions, feature)
     }
     normalize_fmt_off(src_node, mode, lines)
@@ -1254,14 +1254,13 @@ def _format_str_once(
         # This should be called after normalize_fmt_off.
         convert_unchanged_lines(src_node, lines)
 
-    line_generator = LineGenerator(mode=mode, features=line_generator_features)
+    line_generator = LineGenerator(mode=mode, features=context_manager_features)
     elt = EmptyLineTracker(mode=mode)
     split_line_features = {
         feature
         for feature in {
             Feature.TRAILING_COMMA_IN_CALL,
             Feature.TRAILING_COMMA_IN_DEF,
-            Feature.FSTRING_PARSING,
         }
         if supports_feature(versions, feature)
     }
