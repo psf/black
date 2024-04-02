@@ -210,7 +210,7 @@ def normalize_string_quotes(s: str) -> str:
             s = f"{prefix}{orig_quote}{body}{orig_quote}"
         new_body = sub_twice(escaped_orig_quote, rf"\1\2{orig_quote}", new_body)
         new_body = sub_twice(unescaped_new_quote, rf"\1\\{new_quote}", new_body)
-    # TODO: can probably be removed
+
     if "f" in prefix.casefold():
         matches = re.findall(
             r"""
