@@ -237,7 +237,7 @@ def get_flags_parser() -> argparse.ArgumentParser:
         "--target-version",
         action="append",
         type=lambda val: TargetVersion[val.upper()],
-        default=(),
+        default=[],
     )
     parser.add_argument("--line-length", default=DEFAULT_LINE_LENGTH, type=int)
     parser.add_argument(

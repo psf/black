@@ -1,4 +1,4 @@
-# flags: --minimum-version=3.12 --target-version=py312
+# flags: --minimum-version=3.12
 x = f"foo"
 x = f'foo'
 x = f"""foo"""
