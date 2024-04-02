@@ -65,7 +65,6 @@ from black.numerics import normalize_numeric_literal
 from black.strings import (
     fix_docstring,
     get_string_prefix,
-    normalize_fstring_quotes,
     normalize_string_prefix,
     normalize_string_quotes,
     normalize_unicode_escape_sequences,
