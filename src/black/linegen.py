@@ -515,7 +515,10 @@ class LineGenerator(Visitor[Line]):
 
         # quote_char = fstring_end.value[0]
         # quote_idx = fstring_start.value.index(quote_char)
-        # prefix, quote = fstring_start.value[:quote_idx], fstring_start.value[quote_idx:]
+        # prefix, quote = (
+        #     fstring_start.value[:quote_idx],
+        #     fstring_start.value[quote_idx:]
+        # )
 
         # if not is_docstring(node, self.mode):
         #     prefix = normalize_string_prefix(prefix)
@@ -523,7 +526,11 @@ class LineGenerator(Visitor[Line]):
         # assert quote == fstring_end.value
 
         # is_raw_fstring = "r" in prefix or "R" in prefix
-        # middles = [leaf for leaf in node.leaves() if leaf.type == token.FSTRING_MIDDLE]
+        # middles = [
+        #     leaf
+        #     for leaf in node.leaves()
+        #     if leaf.type == token.FSTRING_MIDDLE
+        # ]
 
         # if self.mode.string_normalization:
         #     middles, quote = normalize_fstring_quotes(quote, middles, is_raw_fstring)
