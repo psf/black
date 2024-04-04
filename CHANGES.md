@@ -49,7 +49,7 @@
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
 - Add a new option `use_pyproject` to the GitHub Action `psf/black`. This will read the
-  Black version from `pyproject.toml`.
+  Black version from `pyproject.toml`. (#4294)
 
 ### Documentation
 
