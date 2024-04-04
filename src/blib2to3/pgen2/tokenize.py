@@ -135,11 +135,13 @@ Triple = group(
     _fstringlitprefix + "'''",
 )
 
-SingleLbrace = r"[^'\\{]*(?:(?:\\.|{{)[^'\\{]*)*{(?!{)"
-DoubleLbrace = r'[^"\\{]*(?:(?:\\.|{{)[^"\\{]*)*{(?!{)'
+# beginning of a single quoted f-string. must not end with `{{` or `\N{`
+SingleLbrace = r"[^'\\{]*(?:(?:\\N{|\\.|{{)[^'\\{]*)*(?<!\\N){(?!{)"
+DoubleLbrace = r'[^"\\{]*(?:(?:\\N{|\\.|{{)[^"\\{]*)*(?<!\\N){(?!{)'
 
-Single3Lbrace = r"[^'\\{]*(?:(?:\\.|{{|'(?!''))[^'\\{]*)*{(?!{)"
-Double3Lbrace = r'[^"\\{]*(?:(?:\\.|{{|"(?!""))[^"\\{]*)*{(?!{)'
+# beginning of a triple quoted f-string. must not end with `{{` or `\N{`
+Single3Lbrace = r"[^'\\{]*(?:(?:\\N{|\\.|{{|'(?!''))[^'\\{]*)*(?<!\\N){(?!{)"
+Double3Lbrace = r'[^"\\{]*(?:(?:\\N{|\\.|{{|"(?!""))[^"\\{]*)*(?<!\\N){(?!{)'
 
 # ! format specifier inside an fstring brace, ensure it's not a `!=` token
 Bang = Whitespace + group("!") + r"(?!=)"
@@ -172,9 +174,9 @@ Funny = group(Operator, Bracket, Special)
 _string_middle_single = r"[^\n'\\]*(?:\\.[^\n'\\]*)*"
 _string_middle_double = r'[^\n"\\]*(?:\\.[^\n"\\]*)*'
 
-# FSTRING_MIDDLE and LBRACE, inside a single quoted fstring
-_fstring_middle_single = r"[^\n'\\{]*(?:(?:\\.|{{)[^\n'\\{]*)*({)(?!{)"
-_fstring_middle_double = r'[^\n"\\{]*(?:(?:\\.|{{)[^\n"\\{]*)*({)(?!{)'
+# FSTRING_MIDDLE and LBRACE, must not end with a `{{` or `\N{`
+_fstring_middle_single = r"[^\n'\\{]*(?:(?:\\N{|\\.|{{)[^\n'\\{]*)*(?<!\\N)({)(?!{)"
+_fstring_middle_double = r'[^\n"\\{]*(?:(?:\\N{|\\.|{{)[^\n"\\{]*)*(?<!\\N)({)(?!{)'
 
 # First (or only) line of ' or " string.
 ContStr = group(
