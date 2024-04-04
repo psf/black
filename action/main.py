@@ -98,7 +98,13 @@ def find_black_version_in_array(array: object) -> Union[str, None]:
             item = item.split(";")[0]
             item = EXTRAS_RE.sub("", item).strip()
             if item == "black":
-                return ""
+                print(
+                    "::error::Version specifier missing for 'black' dependency in "
+                    "pyproject.toml.",
+                    file=sys.stderr,
+                    flush=True,
+                )
+                sys.exit(1)
             elif m := BLACK_VERSION_RE.match(item):
                 return m.group(1).strip()
     except TypeError:
