@@ -48,6 +48,9 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- Add a new option `use_pyproject` to the GitHub Action `psf/black`. This will read the
+  Black version from `pyproject.toml`. (#4294)
+
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
