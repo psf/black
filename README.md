@@ -45,11 +45,32 @@ If you can't wait for the latest _hotness_ and want to install from GitHub, use:
 
 `pip install git+https://github.com/psf/black`
 
-### Usage
+To install _Black_ globally using pipx, follow these steps:
 
-To get started right away with sensible defaults:
+1. Install pipx on your system. For macOS, use Homebrew:
+    ```sh
+    brew install pipx
+    ```
+    For Ubuntu, use:
+    ```sh
+    sudo install pipx
+    ```
+    For Fedora, use:
+    ```sh
+    sudo dnf install pipx
+    ```
 
-```sh
+2. Configure the paths by running `ensurepath`. For example, on Ubuntu, you can use:
+    ```sh
+    sudo ensurepath global
+    ```
+
+3. Once pipx is set up, you can globally install _Black_ by running:
+    ```sh
+    pipx install black
+    ```
+
+Now you have _Black_ installed globally and can access the command from anywhere in your system.
 black {source_file_or_directory}
 ```
 
