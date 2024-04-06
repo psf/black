@@ -19,6 +19,8 @@ Also, you can try out _Black_ online for minimal fuss on the
 _Black_ can be installed by running `pip install black`. It requires Python 3.8+ to run.
 If you want to format Jupyter Notebooks, install with `pip install "black[jupyter]"`.
 
+If you use pipx, you can install Black with `pipx install black`.
+
 If you can't wait for the latest _hotness_ and want to install from GitHub, use:
 
 `pip install git+https://github.com/psf/black`
