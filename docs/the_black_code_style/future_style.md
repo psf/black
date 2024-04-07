@@ -35,7 +35,7 @@ Currently, the following features are included in the preview style:
 - `remove_redundant_guard_parens`: Removes redundant parentheses in `if` guards for
   `case` blocks.
 - `parens_for_long_if_clauses_in_case_block`: Adds parentheses to `if` clauses in `case`
-  blocks when the the line is too long
+  blocks when the line is too long
 
 (labels/unstable-features)=
 
