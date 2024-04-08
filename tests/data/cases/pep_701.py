@@ -99,7 +99,7 @@ raise ValueError(
 f"`escape` only permitted in {{'html', 'latex', 'latex-math'}}, \
 got {escape}"
 
-x = f'\N{GREEK CAPITAL LETTER DELTA}'
+x = f'\N{GREEK CAPITAL LETTER DELTA} \N{SNOWMAN} {x}'
 # output
 
 x = f"foo"
@@ -202,4 +202,4 @@ raise ValueError(
 f"`escape` only permitted in {{'html', 'latex', 'latex-math'}}, \
 got {escape}"
 
-x = f"\N{GREEK CAPITAL LETTER DELTA}"
+x = f"\N{GREEK CAPITAL LETTER DELTA} \N{SNOWMAN} {x}"
