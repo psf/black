@@ -91,7 +91,8 @@ def example(session):
         .all()
     # fmt: on
 def off_and_on_without_data():
-    """All comments here are technically on the same prefix.
+    """
+    All comments here are technically on the same prefix.
 
     The comments between will be formatted. This is a known limitation.
     """
@@ -302,7 +303,8 @@ def example(session):
 
 
 def off_and_on_without_data():
-    """All comments here are technically on the same prefix.
+    """
+    All comments here are technically on the same prefix.
 
     The comments between will be formatted. This is a known limitation.
     """

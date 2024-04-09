@@ -1,3 +1,4 @@
+# flags: --preview
 def docstring_almost_at_line_limit():
     """long docstring.................................................................
     """
@@ -63,7 +64,8 @@ def docstring_almost_at_line_limit_with_prefix():
 
 
 def mulitline_docstring_almost_at_line_limit():
-    """long docstring.................................................................
+    """
+    long docstring.................................................................
 
     ..................................................................................
     """
@@ -85,9 +87,11 @@ def docstring_at_line_limit_with_prefix():
 
 
 def multiline_docstring_at_line_limit():
-    """first line-----------------------------------------------------------------------
+    """
+    first line-----------------------------------------------------------------------
 
-    second line----------------------------------------------------------------------"""
+    second line----------------------------------------------------------------------
+    """
 
 
 def multiline_docstring_at_line_limit_with_prefix():

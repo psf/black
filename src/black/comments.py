@@ -31,7 +31,8 @@ _COMMENT_LIST_SEPARATOR = ";"
 
 @dataclass
 class ProtoComment:
-    """Describes a piece of syntax that is a comment.
+    """
+    Describes a piece of syntax that is a comment.
 
     It's not a :class:`blib2to3.pytree.Leaf` so that:
 
@@ -50,7 +51,8 @@ class ProtoComment:
 
 
 def generate_comments(leaf: LN) -> Iterator[Leaf]:
-    """Clean the prefix of the `leaf` and generate comments from it, if any.
+    """
+    Clean the prefix of the `leaf` and generate comments from it, if any.
 
     Comments in lib2to3 are shoved into the whitespace prefix.  This happens
     in `pgen2/driver.py:Driver.parse_tokens()`.  This was a brilliant implementation
@@ -140,7 +142,8 @@ def normalize_trailing_prefix(leaf: LN, total_consumed: int) -> None:
 
 
 def make_comment(content: str) -> str:
-    """Return a consistently formatted comment from the given `content` string.
+    """
+    Return a consistently formatted comment from the given `content` string.
 
     All comments (except for "##", "#!", "#:", '#'") should have a single
     space between the hash sign and the content.
@@ -177,7 +180,8 @@ def normalize_fmt_off(
 def convert_one_fmt_off_pair(
     node: Node, mode: Mode, lines: Collection[Tuple[int, int]]
 ) -> bool:
-    """Convert content of a single `# fmt: off`/`# fmt: on` into a standalone comment.
+    """
+    Convert content of a single `# fmt: off`/`# fmt: on` into a standalone comment.
 
     Returns True if a pair was converted.
     """
@@ -267,7 +271,8 @@ def convert_one_fmt_off_pair(
 def generate_ignored_nodes(
     leaf: Leaf, comment: ProtoComment, mode: Mode
 ) -> Iterator[LN]:
-    """Starting from the container of `leaf`, generate all leaves until `# fmt: on`.
+    """
+    Starting from the container of `leaf`, generate all leaves until `# fmt: on`.
 
     If comment is skip, returns leaf only.
     Stops at the end of the block.
@@ -354,7 +359,9 @@ def _generate_ignored_nodes_from_fmt_skip(
 
 
 def is_fmt_on(container: LN) -> bool:
-    """Determine whether formatting is switched on within a container.
+    """
+    Determine whether formatting is switched on within a container.
+
     Determined by whether the last `# fmt:` comment is `on` or `off`.
     """
     fmt_on = False

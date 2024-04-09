@@ -28,7 +28,8 @@ class FileData(NamedTuple):
 
 
 def get_cache_dir() -> Path:
-    """Get the cache directory used by black.
+    """
+    Get the cache directory used by black.
 
     Users can customize this directory on all systems using `BLACK_CACHE_DIR`
     environment variable. By default, the cache directory is the user cache directory
@@ -59,7 +60,8 @@ class Cache:
 
     @classmethod
     def read(cls, mode: Mode) -> Self:
-        """Read the cache if it exists and is well-formed.
+        """
+        Read the cache if it exists and is well-formed.
 
         If it is not well-formed, the call to write later should
         resolve the issue.

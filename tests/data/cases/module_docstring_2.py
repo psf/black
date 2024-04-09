@@ -37,7 +37,8 @@ a = 1
 b = 2
 
 # output
-"""I am a very helpful module docstring.
+"""
+I am a very helpful module docstring.
 
 With trailing spaces (only removed with unify_docstring_detection on):
 Lorem ipsum dolor sit amet, consectetur adipiscing elit,

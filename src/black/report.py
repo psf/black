@@ -60,7 +60,8 @@ class Report:
 
     @property
     def return_code(self) -> int:
-        """Return the exit code that the app should use.
+        """
+        Return the exit code that the app should use.
 
         This considers the current state of changed files and failures:
         - if there were any failures, return 123;
@@ -78,7 +79,8 @@ class Report:
         return 0
 
     def __str__(self) -> str:
-        """Render a color report of the current state.
+        """
+        Render a color report of the current state.
 
         Use `click.unstyle` to remove colors.
         """

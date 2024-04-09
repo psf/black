@@ -4,7 +4,8 @@
 #
 # Has many lines. Many, many lines.
 # Many, many, many lines.
-"""Module docstring.
+"""
+Module docstring.
 
 Possibly also many, many lines.
 """
@@ -30,7 +31,8 @@ y = 1
 
 
 def function(default=None):
-    """Docstring comes first.
+    """
+    Docstring comes first.
 
     Possibly many lines.
     """

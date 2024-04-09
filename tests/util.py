@@ -99,7 +99,8 @@ def assert_format(
     lines: Collection[Tuple[int, int]] = (),
     no_preview_line_length_1: bool = False,
 ) -> None:
-    """Convenience function to check that Black formats as expected.
+    """
+    Convenience function to check that Black formats as expected.
 
     You can pass @minimum_version if you're passing code with newer syntax to guard
     safety guards so they don't just crash with a SyntaxError. Please note this is
