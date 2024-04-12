@@ -17,7 +17,6 @@
 - Add a new option `use_pyproject` to the GitHub Action `psf/black`. This will read the
   Black version from `pyproject.toml`. (#4294)
 
-
 ## 24.3.0
 
 ### Highlights
