@@ -1,60 +1,21 @@
 # Change Log
 
-## Unreleased
-
-### Highlights
-
-<!-- Include any especially major or disruptive changes here -->
+## 24.4.0
 
 ### Stable style
-
-<!-- Changes that affect Black's stable style -->
 
 - Fix unwanted crashes caused by AST equivalency check (#4290)
 
 ### Preview style
 
-<!-- Changes that affect Black's preview style -->
-
 - `if` guards in `case` blocks are now wrapped in parentheses when the line is too long.
   (#4269)
 - Stop moving multiline strings to a new line unless inside brackets (#4289)
 
-### Configuration
-
-<!-- Changes to how Black can be configured -->
-
-### Packaging
-
-<!-- Changes to how Black is packaged, such as dependency requirements -->
-
-### Parser
-
-<!-- Changes to the parser or to version autodetection -->
-
-### Performance
-
-<!-- Changes that improve Black's performance. -->
-
-### Output
-
-<!-- Changes to Black's terminal output and error messages -->
-
-### _Blackd_
-
-<!-- Changes to blackd -->
-
 ### Integrations
-
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
 - Add a new option `use_pyproject` to the GitHub Action `psf/black`. This will read the
   Black version from `pyproject.toml`. (#4294)
-
-### Documentation
-
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
 
 ## 24.3.0
 
