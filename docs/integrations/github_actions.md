@@ -32,12 +32,15 @@ We recommend the use of the `@stable` tag, but per version tags also exist if yo
 that. Note that the action's version you select is independent of the version of _Black_
 the action will use.
 
-The version of _Black_ the action will use can be configured via `version`. This can be
-any
+The version of _Black_ the action will use can be configured via `version` or read from
+the `pyproject.toml` file. `version` can be any
 [valid version specifier](https://packaging.python.org/en/latest/glossary/#term-Version-Specifier)
-or just the version number if you want an exact version. The action defaults to the
-latest release available on PyPI. Only versions available from PyPI are supported, so no
-commit SHAs or branch names.
+or just the version number if you want an exact version. To read the version from the
+`pyproject.toml` file instead, set `use_pyproject` to `true`. This will first look into
+the `tool.black.required-version` field, then the `project.dependencies` array and
+finally the `project.optional-dependencies` table. The action defaults to the latest
+release available on PyPI. Only versions available from PyPI are supported, so no commit
+SHAs or branch names.
 
 If you want to include Jupyter Notebooks, _Black_ must be installed with the `jupyter`
 extra. Installing the extra and including Jupyter Notebook files can be configured via
@@ -69,4 +72,14 @@ If you want to match versions covered by Black's
     options: "--check --verbose"
     src: "./src"
     version: "~= 22.0"
+```
+
+If you want to read the version from `pyproject.toml`, set `use_pyproject` to `true`:
+
+```yaml
+- uses: psf/black@stable
+  with:
+    options: "--check --verbose"
+    src: "./src"
+    use_pyproject: true
 ```

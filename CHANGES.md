@@ -12,15 +12,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Fix unwanted crashes caused by AST equivalency check (#4290)
-
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
-
-- `if` guards in `case` blocks are now wrapped in parentheses when the line is too long.
-  (#4269)
-- Stop moving multiline strings to a new line unless inside brackets (#4289)
 
 ### Configuration
 
@@ -54,6 +48,23 @@
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
+
+## 24.4.0
+
+### Stable style
+
+- Fix unwanted crashes caused by AST equivalency check (#4290)
+
+### Preview style
+
+- `if` guards in `case` blocks are now wrapped in parentheses when the line is too long.
+  (#4269)
+- Stop moving multiline strings to a new line unless inside brackets (#4289)
+
+### Integrations
+
+- Add a new option `use_pyproject` to the GitHub Action `psf/black`. This will read the
+  Black version from `pyproject.toml`. (#4294)
 
 ## 24.3.0
 
