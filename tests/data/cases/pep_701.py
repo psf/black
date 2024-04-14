@@ -79,10 +79,9 @@ f"This is a really long string, but just make sure that you reflow fstrings {
 }"
 f"This is a really long string, but just make sure that you reflow fstrings correctly {2+2:d}"
 
-# TODO: Edge case: if the fstring replacement ends with a `=` it should not be touched
-# f"{2+2=}"
-# f"{2+2    =    }"
-# f"{     2      +     2    =    }"
+f"{2+2=}"
+f"{2+2    =    }"
+f"{     2      +     2    =    }"
 
 # TODO:
 # f"""foo {
@@ -100,6 +99,8 @@ f"`escape` only permitted in {{'html', 'latex', 'latex-math'}}, \
 got {escape}"
 
 x = f'\N{GREEK CAPITAL LETTER DELTA} \N{SNOWMAN} {x}'
+fr'\{{\}}'
+
 # output
 
 x = f"foo"
@@ -182,10 +183,9 @@ f"This is a really long string, but just make sure that you reflow fstrings {
 }"
 f"This is a really long string, but just make sure that you reflow fstrings correctly {2+2:d}"
 
-# TODO: Edge case: if the fstring replacement ends with a `=` it should not be touched
-# f"{2+2=}"
-# f"{2+2    =    }"
-# f"{     2      +     2    =    }"
+f"{2+2=}"
+f"{2+2    =    }"
+f"{     2      +     2    =    }"
 
 # TODO:
 # f"""foo {
@@ -203,3 +203,4 @@ f"`escape` only permitted in {{'html', 'latex', 'latex-math'}}, \
 got {escape}"
 
 x = f"\N{GREEK CAPITAL LETTER DELTA} \N{SNOWMAN} {x}"
+rf"\{{\}}"
