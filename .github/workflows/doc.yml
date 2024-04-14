@@ -30,7 +30,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install uv setuptools wheel
+          python -m pip install uv
           python -m uv pip install --system -e ".[d]"
           python -m uv pip install --system -r "docs/requirements.txt"
 
