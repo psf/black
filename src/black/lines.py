@@ -929,6 +929,7 @@ def can_be_split(line: Line) -> bool:
 def can_omit_invisible_parens(
     rhs: RHSResult,
     line_length: int,
+    inside_brackets: bool,
 ) -> bool:
     """Does `rhs.body` have a shape safe to reformat without optional parens around it?
 
@@ -962,8 +963,9 @@ def can_omit_invisible_parens(
     max_priority = bt.max_delimiter_priority()
     delimiter_count = bt.delimiter_count_with_priority(max_priority)
     if delimiter_count > 1:
-        # With more than one delimiter of a kind the optional parentheses read better.
-        return False
+        # With more than one delimiter of a kind the optional parentheses read
+        # better, but they're redundant if we're already inside brackets.
+        return inside_brackets
 
     if delimiter_count == 1:
         if max_priority == COMMA_PRIORITY and rhs.head.is_with_or_async_with_stmt:

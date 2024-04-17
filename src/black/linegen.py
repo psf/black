@@ -501,6 +501,19 @@ class LineGenerator(Visitor[Line]):
 
         yield from self.visit_default(leaf)
 
+    def visit_atom(self, node: Node) -> Iterator[Line]:
+        """Visit any atom"""
+        if (
+            Preview.condence_nested_brackets in self.mode
+            and len(node.children) == 3
+            and node.children[0].type == token.LSQB
+            and node.children[-1].type == token.RSQB
+        ):
+            # Lists of one item
+            maybe_make_parens_invisible_in_atom(node.children[1], parent=node)
+
+        yield from self.visit_default(node)
+
     def __post_init__(self) -> None:
         """You are in a twisty little maze of passages."""
         self.current_line = Line(mode=self.mode)
@@ -811,7 +824,7 @@ def _first_right_hand_split(
 
     body: Optional[Line] = None
     if (
-        Preview.hug_parens_with_braces_and_square_brackets in line.mode
+        Preview.condence_nested_brackets in line.mode
         and tail_leaves[0].value
         and tail_leaves[0].opening_bracket is head_leaves[-1]
     ):
@@ -883,19 +896,25 @@ def _maybe_split_omitting_optional_parens(
     features: Collection[Feature] = (),
     omit: Collection[LeafID] = (),
 ) -> Iterator[Line]:
-    if (
+    both_optional_parens = (
         Feature.FORCE_OPTIONAL_PARENTHESES not in features
-        # the opening bracket is an optional paren
         and rhs.opening_bracket.type == token.LPAR
         and not rhs.opening_bracket.value
-        # the closing bracket is an optional paren
         and rhs.closing_bracket.type == token.RPAR
         and not rhs.closing_bracket.value
+    )
+    if (
+        # If both brackets are optional parens
+        both_optional_parens
         # it's not an import (optional parens are the only thing we can split on
         # in this case; attempting a split without them is a waste of time)
         and not line.is_import
         # and we can actually remove the parens
-        and can_omit_invisible_parens(rhs, mode.line_length)
+        and can_omit_invisible_parens(
+            rhs,
+            mode.line_length,
+            Preview.condence_nested_brackets in mode and line.inside_brackets,
+        )
     ):
         omit = {id(rhs.closing_bracket), *omit}
         try:

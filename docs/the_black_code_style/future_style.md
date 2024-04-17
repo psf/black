@@ -47,8 +47,8 @@ The unstable style additionally includes the following features:
   ([see below](labels/wrap-long-dict-values))
 - `multiline_string_handling`: more compact formatting of expressions involving
   multiline strings ([see below](labels/multiline-string-handling))
-- `hug_parens_with_braces_and_square_brackets`: more compact formatting of nested
-  brackets ([see below](labels/hug-parens))
+- `condence_nested_brackets`: more compact formatting of nested brackets
+  ([see below](labels/hug-parens))
 
 (labels/hug-parens)=
 
@@ -122,6 +122,45 @@ foo(
         3,
     ],
 )
+```
+
+Parenthesises around sole list items will also be removed for similar reasons. Trailing
+commas are respected here as well. For example:
+
+```python
+items = [
+    (
+        long_variable_name
+        and even_longer_variable_name
+        and yet_another_very_long_variable_name
+    )
+]
+
+items = [
+    (
+        long_variable_name
+        and even_longer_variable_name
+        and yet_another_very_long_variable_name
+    ),
+]
+```
+
+will be changed to:
+
+```python
+items = [
+    long_variable_name
+    and even_longer_variable_name
+    and yet_another_very_long_variable_name
+]
+
+items = [
+    (
+        long_variable_name
+        and even_longer_variable_name
+        and yet_another_very_long_variable_name
+    ),
+]
 ```
 
 (labels/string-processing)=
