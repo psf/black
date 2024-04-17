@@ -1,4 +1,10 @@
 # flags: --unstable
+items = [(123)]
+items = [(True)]
+items = [(((((True)))))]
+items = [(((((True,)))))]
+items = [((((()))))]
+
 items = [
     (
         {"key1": "val1", "key2": "val2", "key3": "val3"}
@@ -84,6 +90,12 @@ items = [
 
 
 # output
+items = [123]
+items = [True]
+items = [True]
+items = [(True,)]
+items = [()]
+
 items = [
     {"key1": "val1", "key2": "val2", "key3": "val3"}
     if some_var == "longstring"

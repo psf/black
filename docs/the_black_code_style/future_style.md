@@ -128,6 +128,11 @@ Parenthesises around sole list items will also be removed for similar reasons. T
 commas are respected here as well. For example:
 
 ```python
+items = [(123)]
+items = [(True)]
+items = [((True,))]
+items = [(())]
+
 items = [
     (
         long_variable_name
@@ -148,6 +153,11 @@ items = [
 will be changed to:
 
 ```python
+items = [123]
+items = [True]
+items = [(True,)]
+items = [()]
+
 items = [
     long_variable_name
     and even_longer_variable_name
