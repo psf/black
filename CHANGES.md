@@ -13,6 +13,9 @@
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
+- Remove parenthesis around sole list items and rename
+  `hug_parens_with_braces_and_square_brackets` unstable style to
+  `concise_nested_brackets` (#4312)
 
 ### Configuration
 

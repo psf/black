@@ -171,7 +171,7 @@ class Preview(Enum):
     # NOTE: string_processing requires wrap_long_dict_values_in_parens
     # for https://github.com/psf/black/issues/3117 to be fixed.
     string_processing = auto()
-    condence_nested_brackets = auto()
+    concise_nested_brackets = auto()
     unify_docstring_detection = auto()
     no_normalize_fmt_skip_whitespace = auto()
     wrap_long_dict_values_in_parens = auto()
@@ -191,7 +191,7 @@ UNSTABLE_FEATURES: Set[Preview] = {
     # See issue #4159
     Preview.multiline_string_handling,
     # See issue #4036 (crash), #4098, #4099 (proposed tweaks)
-    Preview.condence_nested_brackets,
+    Preview.concise_nested_brackets,
 }
 
 

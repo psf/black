@@ -47,7 +47,7 @@ The unstable style additionally includes the following features:
   ([see below](labels/wrap-long-dict-values))
 - `multiline_string_handling`: more compact formatting of expressions involving
   multiline strings ([see below](labels/multiline-string-handling))
-- `condence_nested_brackets`: more compact formatting of nested brackets
+- `concise_nested_brackets`: more compact formatting of nested brackets
   ([see below](labels/hug-parens))
 
 (labels/hug-parens)=
