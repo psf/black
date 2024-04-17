@@ -926,7 +926,10 @@ def can_be_split(line: Line) -> bool:
     return True
 
 
-def can_omit_invisible_parens(rhs: RHSResult, line_length: int) -> bool:
+def can_omit_invisible_parens(
+    rhs: RHSResult,
+    line_length: int,
+) -> bool:
     """Does `rhs.body` have a shape safe to reformat without optional parens around it?
 
     Returns True for only a subset of potentially nice looking formattings but
