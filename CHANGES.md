@@ -41,6 +41,7 @@
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+- Github Action now works even when `git archive` is skipped (#4313)
 
 ### Documentation
 
