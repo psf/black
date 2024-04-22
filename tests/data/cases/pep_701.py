@@ -89,6 +89,11 @@ f"""foo {
 %d
 }"""
 
+f"{
+X
+!r
+}"
+
 raise ValueError(
                 "xxxxxxxxxxxIncorrect --line-ranges format, expect START-END, found"
                 f" {lines_str!r}"
@@ -196,6 +201,11 @@ f"""foo {
 %m
 %d
 }"""
+
+f"{
+X
+!r
+}"
 
 raise ValueError(
     "xxxxxxxxxxxIncorrect --line-ranges format, expect START-END, found"
