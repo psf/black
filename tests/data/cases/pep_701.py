@@ -83,12 +83,11 @@ f"{2+2=}"
 f"{2+2    =    }"
 f"{     2      +     2    =    }"
 
-# TODO:
-# f"""foo {
-#     datetime.datetime.now():%Y
-# %m
-# %d
-# }"""
+f"""foo {
+    datetime.datetime.now():%Y
+%m
+%d
+}"""
 
 raise ValueError(
                 "xxxxxxxxxxxIncorrect --line-ranges format, expect START-END, found"
@@ -192,12 +191,11 @@ f"{2+2=}"
 f"{2+2    =    }"
 f"{     2      +     2    =    }"
 
-# TODO:
-# f"""foo {
-#     datetime.datetime.now():%Y
-# %m
-# %d
-# }"""
+f"""foo {
+    datetime.datetime.now():%Y
+%m
+%d
+}"""
 
 raise ValueError(
     "xxxxxxxxxxxIncorrect --line-ranges format, expect START-END, found"

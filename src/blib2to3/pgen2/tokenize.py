@@ -149,7 +149,7 @@ bang = re.compile(Bang)
 Colon = Whitespace + group(":")
 colon = re.compile(Colon)
 
-FstringMiddleAfterColon = group(Whitespace + r".*?") + group("{", "}", "\n")
+FstringMiddleAfterColon = group(Whitespace + r".*?") + group("{", "}")
 fstring_middle_after_colon = re.compile(FstringMiddleAfterColon)
 
 # Because of leftmost-then-longest match semantics, be sure to put the
@@ -737,7 +737,9 @@ def generate_tokens(
             if inside_fstring_colon:
                 match = fstring_middle_after_colon.match(line, pos)
                 if match is None:
-                    raise TokenError("unterminated f-string literal", (lnum, pos))
+                    formatspec += line[pos:]
+                    pos = max
+                    continue
 
                 start, end = match.span(1)
                 token = line[start:end]
@@ -746,8 +748,6 @@ def generate_tokens(
                 brace_start, brace_end = match.span(2)
                 brace_or_nl = line[brace_start:brace_end]
                 if brace_or_nl == "\n":
-                    # TODO: in a triple quoted string we should infact add the \n here
-                    # formatspec += "\n"
                     pos = brace_end
 
                 yield (FSTRING_MIDDLE, formatspec, formatspec_start, (lnum, end), line)
