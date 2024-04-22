@@ -101,6 +101,11 @@ got {escape}"
 x = f'\N{GREEK CAPITAL LETTER DELTA} \N{SNOWMAN} {x}'
 fr'\{{\}}'
 
+f"""
+    WITH {f'''
+    {1}_cte AS ()'''}
+"""
+
 # output
 
 x = f"foo"
@@ -204,3 +209,8 @@ got {escape}"
 
 x = f"\N{GREEK CAPITAL LETTER DELTA} \N{SNOWMAN} {x}"
 rf"\{{\}}"
+
+f"""
+    WITH {f'''
+    {1}_cte AS ()'''}
+"""

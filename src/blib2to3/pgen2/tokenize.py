@@ -530,7 +530,7 @@ def generate_tokens(
         lnum += 1
         pos, max = 0, len(line)
 
-        if contstr and not inside_fstring_braces:  # continued string
+        if contstr:  # continued string
             assert contline is not None
             if not line:
                 raise TokenError("EOF in multi-line string", strstart)
