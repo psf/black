@@ -159,6 +159,8 @@ class LineGenerator(Visitor[Line]):
                 normalize_numeric_literal(node)
             if node.type not in WHITESPACE:
                 self.current_line.append(node)
+            if node.type == token.DOT:
+                node.prefix = node.prefix.lstrip("\n")
         yield from super().visit_default(node)
 
     def visit_test(self, node: Node) -> Iterator[Line]:
