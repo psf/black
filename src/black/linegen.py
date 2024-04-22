@@ -506,7 +506,7 @@ class LineGenerator(Visitor[Line]):
         # currently we don't want to format and split f-strings at all.
         string_leaf = _fstring_to_string(node)
         node.replace(string_leaf)
-        yield from self.visit_default(string_leaf)
+        yield from self.visit_STRING(string_leaf)
 
         # TODO: Uncomment Implementation to format f-string children
         # fstring_start = node.children[0]
