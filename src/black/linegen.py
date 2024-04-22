@@ -152,11 +152,6 @@ class LineGenerator(Visitor[Line]):
 
             if any_open_brackets:
                 node.prefix = ""
-            if self.mode.string_normalization and node.type == token.STRING:
-                node.value = normalize_string_prefix(node.value)
-                node.value = normalize_string_quotes(node.value)
-            if node.type == token.NUMBER:
-                normalize_numeric_literal(node)
             if node.type not in WHITESPACE:
                 self.current_line.append(node)
         yield from super().visit_default(node)
@@ -420,12 +415,11 @@ class LineGenerator(Visitor[Line]):
             # indentation of those changes the AST representation of the code.
             if self.mode.string_normalization:
                 docstring = normalize_string_prefix(leaf.value)
-                # visit_default() does handle string normalization for us, but
-                # since this method acts differently depending on quote style (ex.
+                # We handle string normalization at the end of this method, but since
+                # what we do right now acts differently depending on quote style (ex.
                 # see padding logic below), there's a possibility for unstable
-                # formatting as visit_default() is called *after*. To avoid a
-                # situation where this function formats a docstring differently on
-                # the second pass, normalize it early.
+                # formatting. To avoid a situation where this function formats a
+                # docstring differently on the second pass, normalize it early.
                 docstring = normalize_string_quotes(docstring)
             else:
                 docstring = leaf.value
@@ -499,6 +493,13 @@ class LineGenerator(Visitor[Line]):
             else:
                 leaf.value = prefix + quote + docstring + quote
 
+        if self.mode.string_normalization and leaf.type == token.STRING:
+            leaf.value = normalize_string_prefix(leaf.value)
+            leaf.value = normalize_string_quotes(leaf.value)
+        yield from self.visit_default(leaf)
+
+    def visit_NUMBER(self, leaf: Leaf) -> Iterator[Line]:
+        normalize_numeric_literal(leaf)
         yield from self.visit_default(leaf)
 
     def __post_init__(self) -> None:
