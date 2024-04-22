@@ -5,7 +5,7 @@ Simple formatting on strings. Further string formatting code is in trans.py.
 import re
 import sys
 from functools import lru_cache
-from typing import Final, List, Match, Pattern
+from typing import Final, List, Match, Pattern, Tuple
 
 from black._width_table import WIDTH_TABLE
 from blib2to3.pytree import Leaf
@@ -169,8 +169,7 @@ def _cached_compile(pattern: str) -> Pattern[str]:
 def normalize_string_quotes(s: str) -> str:
     """Prefer double quotes but only if it doesn't cause more escaping.
 
-    Adds or removes backslashes as appropriate. Doesn't parse and fix
-    strings nested in f-strings.
+    Adds or removes backslashes as appropriate.
     """
     value = s.lstrip(STRING_PREFIX_CHARS)
     if value[:3] == '"""':
@@ -211,6 +210,7 @@ def normalize_string_quotes(s: str) -> str:
             s = f"{prefix}{orig_quote}{body}{orig_quote}"
         new_body = sub_twice(escaped_orig_quote, rf"\1\2{orig_quote}", new_body)
         new_body = sub_twice(unescaped_new_quote, rf"\1\\{new_quote}", new_body)
+
     if "f" in prefix.casefold():
         matches = re.findall(
             r"""
@@ -238,6 +238,71 @@ def normalize_string_quotes(s: str) -> str:
         return s  # Prefer double quotes
 
     return f"{prefix}{new_quote}{new_body}{new_quote}"
+
+
+def normalize_fstring_quotes(
+    quote: str,
+    middles: List[Leaf],
+    is_raw_fstring: bool,
+) -> Tuple[List[Leaf], str]:
+    """Prefer double quotes but only if it doesn't cause more escaping.
+
+    Adds or removes backslashes as appropriate.
+    """
+    if quote == '"""':
+        return middles, quote
+
+    elif quote == "'''":
+        new_quote = '"""'
+    elif quote == '"':
+        new_quote = "'"
+    else:
+        new_quote = '"'
+
+    unescaped_new_quote = _cached_compile(rf"(([^\\]|^)(\\\\)*){new_quote}")
+    escaped_new_quote = _cached_compile(rf"([^\\]|^)\\((?:\\\\)*){new_quote}")
+    escaped_orig_quote = _cached_compile(rf"([^\\]|^)\\((?:\\\\)*){quote}")
+    if is_raw_fstring:
+        for middle in middles:
+            if unescaped_new_quote.search(middle.value):
+                # There's at least one unescaped new_quote in this raw string
+                # so converting is impossible
+                return middles, quote
+
+        # Do not introduce or remove backslashes in raw strings, just use double quote
+        return middles, '"'
+
+    new_segments = []
+    for middle in middles:
+        segment = middle.value
+        # remove unnecessary escapes
+        new_segment = sub_twice(escaped_new_quote, rf"\1\2{new_quote}", segment)
+        if segment != new_segment:
+            # Consider the string without unnecessary escapes as the original
+            middle.value = new_segment
+
+        new_segment = sub_twice(escaped_orig_quote, rf"\1\2{quote}", new_segment)
+        new_segment = sub_twice(unescaped_new_quote, rf"\1\\{new_quote}", new_segment)
+        new_segments.append(new_segment)
+
+    if new_quote == '"""' and new_segments[-1].endswith('"'):
+        # edge case:
+        new_segments[-1] = new_segments[-1][:-1] + '\\"'
+
+    for middle, new_segment in zip(middles, new_segments):
+        orig_escape_count = middle.value.count("\\")
+        new_escape_count = new_segment.count("\\")
+
+    if new_escape_count > orig_escape_count:
+        return middles, quote  # Do not introduce more escaping
+
+    if new_escape_count == orig_escape_count and quote == '"':
+        return middles, quote  # Prefer double quotes
+
+    for middle, new_segment in zip(middles, new_segments):
+        middle.value = new_segment
+
+    return middles, new_quote
 
 
 def normalize_unicode_escape_sequences(leaf: Leaf) -> None:

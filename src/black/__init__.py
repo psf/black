@@ -69,13 +69,7 @@ from black.lines import EmptyLineTracker, LinesBlock
 from black.mode import FUTURE_FLAG_TO_FEATURE, VERSION_TO_FEATURES, Feature
 from black.mode import Mode as Mode  # re-exported
 from black.mode import Preview, TargetVersion, supports_feature
-from black.nodes import (
-    STARS,
-    is_number_token,
-    is_simple_decorator_expression,
-    is_string_token,
-    syms,
-)
+from black.nodes import STARS, is_number_token, is_simple_decorator_expression, syms
 from black.output import color_diff, diff, dump_to_file, err, ipynb_diff, out
 from black.parsing import (  # noqa F401
     ASTSafetyError,
@@ -91,7 +85,6 @@ from black.ranges import (
     sanitized_lines,
 )
 from black.report import Changed, NothingChanged, Report
-from black.trans import iter_fexpr_spans
 from blib2to3.pgen2 import token
 from blib2to3.pytree import Leaf, Node
 
@@ -1265,7 +1258,10 @@ def _format_str_once(
     elt = EmptyLineTracker(mode=mode)
     split_line_features = {
         feature
-        for feature in {Feature.TRAILING_COMMA_IN_CALL, Feature.TRAILING_COMMA_IN_DEF}
+        for feature in {
+            Feature.TRAILING_COMMA_IN_CALL,
+            Feature.TRAILING_COMMA_IN_DEF,
+        }
         if supports_feature(versions, feature)
     }
     block: Optional[LinesBlock] = None
@@ -1337,15 +1333,14 @@ def get_features_used(  # noqa: C901
         }
 
     for n in node.pre_order():
-        if is_string_token(n):
-            value_head = n.value[:2]
-            if value_head in {'f"', 'F"', "f'", "F'", "rf", "fr", "RF", "FR"}:
-                features.add(Feature.F_STRINGS)
-                if Feature.DEBUG_F_STRINGS not in features:
-                    for span_beg, span_end in iter_fexpr_spans(n.value):
-                        if n.value[span_beg : span_end - 1].rstrip().endswith("="):
-                            features.add(Feature.DEBUG_F_STRINGS)
-                            break
+        if n.type == token.FSTRING_START:
+            features.add(Feature.F_STRINGS)
+        elif (
+            n.type == token.RBRACE
+            and n.parent is not None
+            and any(child.type == token.EQUAL for child in n.parent.children)
+        ):
+            features.add(Feature.DEBUG_F_STRINGS)
 
         elif is_number_token(n):
             if "_" in n.value:

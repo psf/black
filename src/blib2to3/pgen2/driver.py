@@ -167,7 +167,9 @@ class Driver:
             if type in {token.INDENT, token.DEDENT}:
                 prefix = _prefix
             lineno, column = end
-            if value.endswith("\n"):
+            # FSTRING_MIDDLE is the only token that can end with a newline, and
+            # `end` will point to the next line. For that case, don't increment lineno.
+            if value.endswith("\n") and type != token.FSTRING_MIDDLE:
                 lineno += 1
                 column = 0
         else:

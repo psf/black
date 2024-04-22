@@ -46,6 +46,7 @@ class Feature(Enum):
     DEBUG_F_STRINGS = 16
     PARENTHESIZED_CONTEXT_MANAGERS = 17
     TYPE_PARAMS = 18
+    FSTRING_PARSING = 19
     FORCE_OPTIONAL_PARENTHESES = 50
 
     # __future__ flags
@@ -156,6 +157,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.EXCEPT_STAR,
         Feature.VARIADIC_GENERICS,
         Feature.TYPE_PARAMS,
+        Feature.FSTRING_PARSING,
     },
 }
 
