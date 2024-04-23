@@ -110,6 +110,9 @@ f"""
     {1}_cte AS ()'''}
 """
 
+value: str = f'''foo
+'''
+
 # output
 
 x = f"foo"
@@ -221,4 +224,7 @@ rf"\{{\}}"
 f"""
     WITH {f'''
     {1}_cte AS ()'''}
+"""
+
+value: str = f"""foo
 """
