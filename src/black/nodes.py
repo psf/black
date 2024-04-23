@@ -771,7 +771,7 @@ def fstring_to_string(node: Node) -> Leaf:
     """Converts an fstring node back to a string node."""
     string_without_prefix = str(node)[len(node.prefix) :]
     string_leaf = Leaf(token.STRING, string_without_prefix, prefix=node.prefix)
-    string_leaf.lineno = node.get_lineno()
+    string_leaf.lineno = node.get_lineno() or 0
     return string_leaf
 
 
