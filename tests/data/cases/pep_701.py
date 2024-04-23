@@ -110,6 +110,15 @@ f"""
     {1}_cte AS ()'''}
 """
 
+value: str = f'''foo
+'''
+
+log(
+    f"Received operation {server_operation.name} from "
+    f"{self.writer._transport.get_extra_info('peername')}",  # type: ignore[attr-defined]
+    level=0,
+)
+
 # output
 
 x = f"foo"
@@ -222,3 +231,12 @@ f"""
     WITH {f'''
     {1}_cte AS ()'''}
 """
+
+value: str = f"""foo
+"""
+
+log(
+    f"Received operation {server_operation.name} from "
+    f"{self.writer._transport.get_extra_info('peername')}",  # type: ignore[attr-defined]
+    level=0,
+)

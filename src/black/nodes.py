@@ -762,8 +762,28 @@ def is_vararg(leaf: Leaf, within: Set[NodeType]) -> bool:
     return p.type in within
 
 
-def is_multiline_string(leaf: Leaf) -> bool:
+def is_fstring(node: Node) -> bool:
+    """Return True if the node is an f-string"""
+    return node.type == syms.fstring
+
+
+def fstring_to_string(node: Node) -> Leaf:
+    """Converts an fstring node back to a string node."""
+    string_without_prefix = str(node)[len(node.prefix) :]
+    string_leaf = Leaf(token.STRING, string_without_prefix, prefix=node.prefix)
+    string_leaf.lineno = node.get_lineno() or 0
+    return string_leaf
+
+
+def is_multiline_string(node: LN) -> bool:
     """Return True if `leaf` is a multiline string that actually spans many lines."""
+    if isinstance(node, Node) and is_fstring(node):
+        leaf = fstring_to_string(node)
+    elif isinstance(node, Leaf):
+        leaf = node
+    else:
+        return False
+
     return has_triple_quotes(leaf.value) and "\n" in leaf.value
 
 
