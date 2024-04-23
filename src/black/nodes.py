@@ -770,7 +770,9 @@ def is_fstring(node: Node) -> bool:
 def fstring_to_string(node: Node) -> Leaf:
     """Converts an fstring node back to a string node."""
     string_without_prefix = str(node)[len(node.prefix) :]
-    return Leaf(token.STRING, string_without_prefix, prefix=node.prefix)
+    string_leaf = Leaf(token.STRING, string_without_prefix, prefix=node.prefix)
+    string_leaf.lineno = node.get_lineno()
+    return string_leaf
 
 
 def is_multiline_string(node: LN) -> bool:
