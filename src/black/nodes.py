@@ -778,8 +778,10 @@ def is_multiline_string(node: LN) -> bool:
     """Return True if `leaf` is a multiline string that actually spans many lines."""
     if is_fstring(node):
         leaf = fstring_to_string(node)
-    else:
+    elif isinstance(node, Leaf):
         leaf = node
+    else:
+        return False
 
     return has_triple_quotes(leaf.value) and "\n" in leaf.value
 
