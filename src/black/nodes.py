@@ -776,7 +776,7 @@ def fstring_to_string(node: Node) -> Leaf:
 
 def is_multiline_string(node: LN) -> bool:
     """Return True if `leaf` is a multiline string that actually spans many lines."""
-    if is_fstring(node):
+    if isinstance(node, Node) and is_fstring(node):
         leaf = fstring_to_string(node)
     elif isinstance(node, Leaf):
         leaf = node
