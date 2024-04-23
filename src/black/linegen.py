@@ -44,7 +44,6 @@ from black.nodes import (
     is_atom_with_invisible_parens,
     is_docstring,
     is_empty_tuple,
-    is_fstring,
     is_lpar_token,
     is_multiline_string,
     is_name_token,

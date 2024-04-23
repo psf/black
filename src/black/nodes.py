@@ -767,7 +767,6 @@ def is_fstring(node: Node) -> bool:
     return node.type == syms.fstring
 
 
-
 def fstring_to_string(node: Node) -> Leaf:
     """Converts an fstring node back to a string node."""
     string_without_prefix = str(node)[len(node.prefix) :]
