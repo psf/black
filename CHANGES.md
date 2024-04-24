@@ -1,60 +1,23 @@
 # Change Log
 
-## Unreleased
+## 24.4.1
 
 ### Highlights
-
-<!-- Include any especially major or disruptive changes here -->
 
 - Add support for the new Python 3.12 f-string syntax introduced by PEP 701 (#3822)
 
 ### Stable style
 
-<!-- Changes that affect Black's stable style -->
-
 - Fix crash involving indented dummy functions containing newlines (#4318)
 
-### Preview style
-
-<!-- Changes that affect Black's preview style -->
-
-### Configuration
-
-<!-- Changes to how Black can be configured -->
-
-### Packaging
-
-<!-- Changes to how Black is packaged, such as dependency requirements -->
-
 ### Parser
-
-<!-- Changes to the parser or to version autodetection -->
 
 - Add support for type parameter defaults, a new syntactic feature added to Python 3.13
   by PEP 696 (#4327)
 
-### Performance
-
-<!-- Changes that improve Black's performance. -->
-
-### Output
-
-<!-- Changes to Black's terminal output and error messages -->
-
-### _Blackd_
-
-<!-- Changes to blackd -->
-
 ### Integrations
 
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
-
 - Github Action now works even when `git archive` is skipped (#4313)
-
-### Documentation
-
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
 
 ## 24.4.0
 
