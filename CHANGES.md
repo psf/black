@@ -6,9 +6,13 @@
 
 <!-- Include any especially major or disruptive changes here -->
 
+- Add support for the new Python 3.12 f-string syntax introduced by PEP 701 (#3822)
+
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
+
+- Fix crash involving indented dummy functions containing newlines (#4318)
 
 ### Preview style
 
@@ -45,6 +49,8 @@
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- Github Action now works even when `git archive` is skipped (#4313)
 
 ### Documentation
 

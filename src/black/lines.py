@@ -72,7 +72,12 @@ class Line:
 
         Inline comments are put aside.
         """
-        has_value = leaf.type in BRACKETS or bool(leaf.value.strip())
+        has_value = (
+            leaf.type in BRACKETS
+            # empty fstring-middles must not be truncated
+            or leaf.type == token.FSTRING_MIDDLE
+            or bool(leaf.value.strip())
+        )
         if not has_value:
             return
 

@@ -66,7 +66,11 @@ AWAIT: Final = 56
 ASYNC: Final = 57
 ERRORTOKEN: Final = 58
 COLONEQUAL: Final = 59
-N_TOKENS: Final = 60
+FSTRING_START: Final = 60
+FSTRING_MIDDLE: Final = 61
+FSTRING_END: Final = 62
+BANG: Final = 63
+N_TOKENS: Final = 64
 NT_OFFSET: Final = 256
 # --end constants--
 
