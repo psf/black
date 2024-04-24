@@ -263,6 +263,21 @@ class BlackTestCase(BlackBaseTestCase):
             versions = black.detect_target_versions(root)
             self.assertIn(black.TargetVersion.PY312, versions)
 
+    def test_pep_696_version_detection(self) -> None:
+        source, _ = read_data("cases", "type_param_defaults")
+        samples = [
+            source,
+            "type X[T=int] = float",
+            "type X[T:int=int]=int",
+            "type X[*Ts=int]=int",
+            "type X[*Ts=*int]=int",
+            "type X[**P=int]=int",
+        ]
+        for sample in samples:
+            root = black.lib2to3_parse(sample)
+            features = black.get_features_used(root)
+            self.assertIn(black.Feature.TYPE_PARAM_DEFAULTS, features)
+
     def test_expression_ff(self) -> None:
         source, expected = read_data("cases", "expression.py")
         tmp_file = Path(black.dump_to_file(source))
@@ -1531,16 +1546,34 @@ class BlackTestCase(BlackBaseTestCase):
         for version, expected in [
             ("3.6", [TargetVersion.PY36]),
             ("3.11.0rc1", [TargetVersion.PY311]),
-            (">=3.10", [TargetVersion.PY310, TargetVersion.PY311, TargetVersion.PY312]),
+            (
+                ">=3.10",
+                [
+                    TargetVersion.PY310,
+                    TargetVersion.PY311,
+                    TargetVersion.PY312,
+                    TargetVersion.PY313,
+                ],
+            ),
             (
                 ">=3.10.6",
-                [TargetVersion.PY310, TargetVersion.PY311, TargetVersion.PY312],
+                [
+                    TargetVersion.PY310,
+                    TargetVersion.PY311,
+                    TargetVersion.PY312,
+                    TargetVersion.PY313,
+                ],
             ),
             ("<3.6", [TargetVersion.PY33, TargetVersion.PY34, TargetVersion.PY35]),
             (">3.7,<3.10", [TargetVersion.PY38, TargetVersion.PY39]),
             (
                 ">3.7,!=3.8,!=3.9",
-                [TargetVersion.PY310, TargetVersion.PY311, TargetVersion.PY312],
+                [
+                    TargetVersion.PY310,
+                    TargetVersion.PY311,
+                    TargetVersion.PY312,
+                    TargetVersion.PY313,
+                ],
             ),
             (
                 "> 3.9.4, != 3.10.3",
@@ -1549,6 +1582,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY310,
                     TargetVersion.PY311,
                     TargetVersion.PY312,
+                    TargetVersion.PY313,
                 ],
             ),
             (
@@ -1562,6 +1596,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY310,
                     TargetVersion.PY311,
                     TargetVersion.PY312,
+                    TargetVersion.PY313,
                 ],
             ),
             (
@@ -1577,6 +1612,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY310,
                     TargetVersion.PY311,
                     TargetVersion.PY312,
+                    TargetVersion.PY313,
                 ],
             ),
             ("==3.8.*", [TargetVersion.PY38]),

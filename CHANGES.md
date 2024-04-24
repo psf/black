@@ -30,6 +30,9 @@
 
 <!-- Changes to the parser or to version autodetection -->
 
+- Add support for type parameter defaults, a new syntactic feature added to Python 3.13
+  by PEP 696 (#4327)
+
 ### Performance
 
 <!-- Changes that improve Black's performance. -->

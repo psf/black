@@ -1436,6 +1436,12 @@ def get_features_used(  # noqa: C901
         elif n.type in (syms.type_stmt, syms.typeparams):
             features.add(Feature.TYPE_PARAMS)
 
+        elif (
+            n.type in (syms.typevartuple, syms.paramspec, syms.typevar)
+            and n.children[-2].type == token.EQUAL
+        ):
+            features.add(Feature.TYPE_PARAM_DEFAULTS)
+
     return features
 
 
