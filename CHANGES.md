@@ -28,6 +28,9 @@
 
 <!-- Changes to the parser or to version autodetection -->
 
+- Add support to style function definitions containing newlines before function stubs
+  (#4318)
+
 ### Performance
 
 <!-- Changes that improve Black's performance. -->

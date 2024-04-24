@@ -309,8 +309,11 @@ class LineGenerator(Visitor[Line]):
                 yield from self.line(-1)
 
         else:
-            if not node.parent or not is_stub_suite(node.parent):
-                yield from self.line()
+            if node.parent and is_stub_suite(node.parent):
+                node.prefix = ""
+                yield from self.visit_default(node)
+                return
+            yield from self.line()
             yield from self.visit_default(node)
 
     def visit_async_stmt(self, node: Node) -> Iterator[Line]:
