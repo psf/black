@@ -14,6 +14,12 @@ def simple[T=something_that_is_long](short1: int, short2: str, short3: bytes) ->
 def longer[something_that_is_long=something_that_is_long](something_that_is_long: something_that_is_long) -> something_that_is_long:
     pass
 
+def trailing_comma1[T=int,](a: str):
+    pass
+
+def trailing_comma2[T=int](a: str,):
+    pass
+
 # output
 
 type A[T = int] = float
@@ -40,4 +46,16 @@ def simple[
 def longer[
     something_that_is_long = something_that_is_long
 ](something_that_is_long: something_that_is_long) -> something_that_is_long:
+    pass
+
+
+def trailing_comma1[
+    T = int,
+](a: str):
+    pass
+
+
+def trailing_comma2[
+    T = int
+](a: str,):
     pass
