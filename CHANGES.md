@@ -12,6 +12,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix crash involving indented dummy functions containing newlines (#4318)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
@@ -27,9 +29,6 @@
 ### Parser
 
 <!-- Changes to the parser or to version autodetection -->
-
-- Add support to style function definitions containing newlines before function stubs
-  (#4318)
 
 ### Performance
 
