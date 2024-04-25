@@ -29,6 +29,7 @@
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
+- Fix bad performance on certain complex string literals (#4331)
 
 ### Output
 
