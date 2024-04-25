@@ -801,7 +801,7 @@ def generate_tokens(
                 if brace_or_nl == "\n":
                     pos = brace_end
 
-                yield (FSTRING_MIDDLE, formatspec, (lnum, start), (lnum, end), line)
+                yield (FSTRING_MIDDLE, formatspec, formatspec_start, (lnum, end), line)
                 formatspec = ""
 
                 if brace_or_nl == "{":
@@ -812,6 +812,7 @@ def generate_tokens(
                     yield (RBRACE, "}", (lnum, brace_start), (lnum, brace_end), line)
                     fstring_state.consume_rbrace()
                     end = brace_end
+                    formatspec_start = (lnum, brace_end)
 
                 pos = end
                 continue
@@ -1052,6 +1053,7 @@ def generate_tokens(
                 ):
                     yield (RBRACE, token, spos, epos, line)
                     fstring_state.consume_rbrace()
+                    formatspec_start = epos
                 else:
                     if initial in "([{":
                         parenlev += 1
