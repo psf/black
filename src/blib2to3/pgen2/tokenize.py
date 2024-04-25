@@ -480,6 +480,88 @@ def _split_fstring_start_and_middle(token: str) -> Tuple[str, str]:
     raise ValueError(f"Token {token!r} is not a valid f-string start")
 
 
+STATE_NOT_FSTRING: Final = 0  # not in an f-string
+STATE_MIDDLE: Final = 1  # in the string portion of an f-string (outside braces)
+STATE_IN_BRACES: Final = 2  # between braces in an f-string
+# in the format specifier (between the colon and the closing brace)
+STATE_IN_COLON: Final = 3
+
+
+class FStringState:
+    """Keeps track of state around f-strings.
+
+    The tokenizer should call the appropriate method on this class when
+    it transitions to a different part of an f-string. This is needed
+    because the tokenization depends on knowing where exactly we are in
+    the f-string.
+
+    For example, consider the following f-string:
+
+        f"a{1:b{2}c}d"
+
+    The following is the tokenization of this string and the states
+    tracked by this class:
+
+        1,0-1,2:	FSTRING_START	'f"'  # [STATE_NOT_FSTRING, STATE_MIDDLE]
+        1,2-1,3:	FSTRING_MIDDLE	'a'
+        1,3-1,4:	LBRACE	'{'  # [STATE_NOT_FSTRING, STATE_IN_BRACES]
+        1,4-1,5:	NUMBER	'1'
+        1,5-1,6:	OP	':'  # [STATE_NOT_FSTRING, STATE_IN_COLON]
+        1,6-1,7:	FSTRING_MIDDLE	'b'
+        1,7-1,8:	LBRACE	'{'  # [STATE_NOT_FSTRING, STATE_IN_COLON, STATE_IN_BRACES]
+        1,8-1,9:	NUMBER	'2'
+        1,9-1,10:	RBRACE	'}'  # [STATE_NOT_FSTRING, STATE_IN_COLON]
+        1,10-1,11:	FSTRING_MIDDLE	'c'
+        1,11-1,12:	RBRACE	'}'  # [STATE_NOT_FSTRING, STATE_MIDDLE]
+        1,12-1,13:	FSTRING_MIDDLE	'd'
+        1,13-1,14:	FSTRING_END	'"'  # [STATE_NOT_FSTRING]
+        1,14-1,15:	NEWLINE	'\n'
+        2,0-2,0:	ENDMARKER	''
+
+    Notice that the nested braces in the format specifier are represented
+    by adding a STATE_IN_BRACES entry to the state stack. The stack is
+    also used if there are nested f-strings.
+
+    """
+
+    def __init__(self) -> None:
+        self.stack: List[int] = [STATE_NOT_FSTRING]
+
+    def is_in_fstring_expression(self) -> bool:
+        return self.stack[-1] not in (STATE_MIDDLE, STATE_NOT_FSTRING)
+
+    def current(self) -> int:
+        return self.stack[-1]
+
+    def enter_fstring(self) -> None:
+        self.stack.append(STATE_MIDDLE)
+
+    def leave_fstring(self) -> None:
+        state = self.stack.pop()
+        assert state == STATE_MIDDLE
+
+    def consume_lbrace(self) -> None:
+        current_state = self.stack[-1]
+        if current_state == STATE_MIDDLE:
+            self.stack[-1] = STATE_IN_BRACES
+        elif current_state == STATE_IN_COLON:
+            self.stack.append(STATE_IN_BRACES)
+        else:
+            assert False, current_state
+
+    def consume_rbrace(self) -> None:
+        current_state = self.stack[-1]
+        assert current_state in (STATE_IN_BRACES, STATE_IN_COLON)
+        if len(self.stack) > 1 and self.stack[-2] == STATE_IN_COLON:
+            self.stack.pop()
+        else:
+            self.stack[-1] = STATE_MIDDLE
+
+    def consume_colon(self) -> None:
+        assert self.stack[-1] == STATE_IN_BRACES, self.stack
+        self.stack[-1] = STATE_IN_COLON
+
+
 def generate_tokens(
     readline: Callable[[], str], grammar: Optional[Grammar] = None
 ) -> Iterator[GoodTokenInfo]:
@@ -498,12 +580,10 @@ def generate_tokens(
     and the line on which the token was found. The line passed is the
     logical line; continuation lines are included.
     """
-    lnum = parenlev = fstring_level = continued = 0
+    lnum = parenlev = continued = 0
     parenlev_stack: List[int] = []
-    inside_fstring_braces = False
-    inside_fstring_colon = False
+    fstring_state = FStringState()
     formatspec = ""
-    bracelev = 0
     numchars: Final[str] = "0123456789"
     contstr, needcont = "", 0
     contline: Optional[str] = None
@@ -542,13 +622,15 @@ def generate_tokens(
                 spos = strstart
                 epos = (lnum, end)
                 tokenline = contline + line
-                if fstring_level == 0 and not is_fstring_start(token):
+                if (
+                    fstring_state.current() == STATE_NOT_FSTRING
+                    and not is_fstring_start(token)
+                ):
                     yield (STRING, token, spos, epos, tokenline)
                     endprog_stack.pop()
                     parenlev = parenlev_stack.pop()
                 else:
                     if is_fstring_start(token):
-                        fstring_level += 1
                         fstring_start, token = _split_fstring_start_and_middle(token)
                         fstring_start_epos = (lnum, spos[1] + len(fstring_start))
                         yield (
@@ -558,6 +640,7 @@ def generate_tokens(
                             fstring_start_epos,
                             tokenline,
                         )
+                        fstring_state.enter_fstring()
                         # increase spos to the end of the fstring start
                         spos = fstring_start_epos
 
@@ -572,7 +655,7 @@ def generate_tokens(
                             line,
                         )
                         yield (LBRACE, lbrace, lbrace_spos, epos, line)
-                        inside_fstring_braces = True
+                        fstring_state.consume_lbrace()
                     else:
                         if token.endswith(('"""', "'''")):
                             fstring_middle, fstring_end = token[:-3], token[-3:]
@@ -594,11 +677,9 @@ def generate_tokens(
                             epos,
                             line,
                         )
-                        fstring_level -= 1
+                        fstring_state.leave_fstring()
                         endprog_stack.pop()
                         parenlev = parenlev_stack.pop()
-                        if fstring_level > 0:
-                            inside_fstring_braces = True
                 pos = end
                 contstr, needcont = "", 0
                 contline = None
@@ -619,7 +700,11 @@ def generate_tokens(
                 continue
 
         # new statement
-        elif parenlev == 0 and not continued and not inside_fstring_braces:
+        elif (
+            parenlev == 0
+            and not continued
+            and not fstring_state.is_in_fstring_expression()
+        ):
             if not line:
                 break
             column = 0
@@ -687,7 +772,7 @@ def generate_tokens(
             continued = 0
 
         while pos < max:
-            if fstring_level > 0 and not inside_fstring_braces:
+            if fstring_state.current() == STATE_MIDDLE:
                 endprog = endprog_stack[-1]
                 endmatch = endprog.match(line, pos)
                 if endmatch:  # all on one line
@@ -718,14 +803,12 @@ def generate_tokens(
                             (lnum, end),
                             line,
                         )
-                        fstring_level -= 1
+                        fstring_state.leave_fstring()
                         endprog_stack.pop()
                         parenlev = parenlev_stack.pop()
-                        if fstring_level > 0:
-                            inside_fstring_braces = True
                     else:
                         yield (LBRACE, "{", (lnum, end - 1), (lnum, end), line)
-                        inside_fstring_braces = True
+                        fstring_state.consume_lbrace()
                     pos = end
                     continue
                 else:  # multiple lines
@@ -734,7 +817,7 @@ def generate_tokens(
                     contline = line
                     break
 
-            if inside_fstring_colon:
+            if fstring_state.current() == STATE_IN_COLON:
                 match = fstring_middle_after_colon.match(line, pos)
                 if match is None:
                     formatspec += line[pos:]
@@ -754,15 +837,19 @@ def generate_tokens(
                 formatspec = ""
 
                 if brace_or_nl == "{":
-                    yield (OP, "{", (lnum, brace_start), (lnum, brace_end), line)
-                    bracelev += 1
+                    yield (LBRACE, "{", (lnum, brace_start), (lnum, brace_end), line)
+                    fstring_state.consume_lbrace()
                     end = brace_end
+                elif brace_or_nl == "}":
+                    yield (RBRACE, "}", (lnum, brace_start), (lnum, brace_end), line)
+                    fstring_state.consume_rbrace()
+                    end = brace_end
+                    formatspec_start = (lnum, brace_end)
 
-                inside_fstring_colon = False
                 pos = end
                 continue
 
-            if inside_fstring_braces and parenlev == 0:
+            if fstring_state.current() == STATE_IN_BRACES and parenlev == 0:
                 match = bang.match(line, pos)
                 if match:
                     start, end = match.span(1)
@@ -774,7 +861,7 @@ def generate_tokens(
                 if match:
                     start, end = match.span(1)
                     yield (OP, ":", (lnum, start), (lnum, end), line)
-                    inside_fstring_colon = True
+                    fstring_state.consume_colon()
                     formatspec_start = (lnum, end)
                     pos = end
                     continue
@@ -791,7 +878,7 @@ def generate_tokens(
                     yield (NUMBER, token, spos, epos, line)
                 elif initial in "\r\n":
                     newline = NEWLINE
-                    if parenlev > 0 or inside_fstring_braces:
+                    if parenlev > 0 or fstring_state.is_in_fstring_expression():
                         newline = NL
                     elif async_def:
                         async_def_nl = True
@@ -813,7 +900,7 @@ def generate_tokens(
                     parenlev = 0
                     if is_fstring_start(token):
                         yield (FSTRING_START, token, spos, epos, line)
-                        fstring_level += 1
+                        fstring_state.enter_fstring()
 
                     endmatch = endprog.match(line, pos)
                     if endmatch:  # all on one line
@@ -848,11 +935,9 @@ def generate_tokens(
                                     epos,
                                     line,
                                 )
-                                fstring_level -= 1
+                                fstring_state.leave_fstring()
                                 endprog_stack.pop()
                                 parenlev = parenlev_stack.pop()
-                                if fstring_level > 0:
-                                    inside_fstring_braces = True
                             else:
                                 fstring_middle, lbrace = token[:-1], token[-1]
                                 fstring_middle_epos = lbrace_spos = (lnum, end - 1)
@@ -864,7 +949,7 @@ def generate_tokens(
                                     line,
                                 )
                                 yield (LBRACE, lbrace, lbrace_spos, epos, line)
-                                inside_fstring_braces = True
+                                fstring_state.consume_lbrace()
                             pos = end
                     else:
                         # multiple lines
@@ -919,7 +1004,7 @@ def generate_tokens(
 
                             start_epos = (lnum, start + offset)
                             yield (FSTRING_START, fstring_start, spos, start_epos, line)
-                            fstring_level += 1
+                            fstring_state.enter_fstring()
                             endprog = endprogs[fstring_start]
                             endprog_stack.append(endprog)
                             parenlev_stack.append(parenlev)
@@ -940,16 +1025,14 @@ def generate_tokens(
                                 end_spos = (lnum, end_offset)
                                 end_epos = (lnum, end_offset + 1)
                                 yield (FSTRING_END, token[-1], end_spos, end_epos, line)
-                                fstring_level -= 1
+                                fstring_state.leave_fstring()
                                 endprog_stack.pop()
                                 parenlev = parenlev_stack.pop()
-                                if fstring_level > 0:
-                                    inside_fstring_braces = True
                             else:
                                 end_spos = (lnum, end_offset)
                                 end_epos = (lnum, end_offset + 1)
                                 yield (LBRACE, "{", end_spos, end_epos, line)
-                                inside_fstring_braces = True
+                                fstring_state.consume_lbrace()
 
                 elif initial.isidentifier():  # ordinary name
                     if token in ("async", "await"):
@@ -998,19 +1081,13 @@ def generate_tokens(
                 elif (
                     initial == "}"
                     and parenlev == 0
-                    and bracelev == 0
-                    and fstring_level > 0
+                    and fstring_state.is_in_fstring_expression()
                 ):
                     yield (RBRACE, token, spos, epos, line)
-                    inside_fstring_braces = False
+                    fstring_state.consume_rbrace()
+                    formatspec_start = epos
                 else:
-                    if parenlev == 0 and bracelev > 0 and initial == "}":
-                        bracelev -= 1
-                        # if we're still inside fstrings, we're still part of the format spec
-                        if inside_fstring_braces:
-                            inside_fstring_colon = True
-                            formatspec_start = (lnum, pos)
-                    elif initial in "([{":
+                    if initial in "([{":
                         parenlev += 1
                     elif initial in ")]}":
                         parenlev -= 1

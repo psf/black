@@ -26,6 +26,8 @@
 
 <!-- Changes to the parser or to version autodetection -->
 
+- Fix regression where certain complex f-strings failed to parse (#4332)
+
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
