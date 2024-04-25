@@ -2,8 +2,8 @@
 
 ## 24.4.2
 
-This is a bugfix release to fix two regressions in the new f-string
-parser introduced in 24.4.1.
+This is a bugfix release to fix two regressions in the new f-string parser introduced in
+24.4.1.
 
 ### Parser
 
