@@ -1,55 +1,17 @@
 # Change Log
 
-## Unreleased
+## 24.4.2
 
-### Highlights
-
-<!-- Include any especially major or disruptive changes here -->
-
-### Stable style
-
-<!-- Changes that affect Black's stable style -->
-
-### Preview style
-
-<!-- Changes that affect Black's preview style -->
-
-### Configuration
-
-<!-- Changes to how Black can be configured -->
-
-### Packaging
-
-<!-- Changes to how Black is packaged, such as dependency requirements -->
+This is a bugfix release to fix two regressions in the new f-string parser introduced in
+24.4.1.
 
 ### Parser
-
-<!-- Changes to the parser or to version autodetection -->
 
 - Fix regression where certain complex f-strings failed to parse (#4332)
 
 ### Performance
 
-<!-- Changes that improve Black's performance. -->
-
 - Fix bad performance on certain complex string literals (#4331)
-
-### Output
-
-<!-- Changes to Black's terminal output and error messages -->
-
-### _Blackd_
-
-<!-- Changes to blackd -->
-
-### Integrations
-
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
-
-### Documentation
-
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
 
 ## 24.4.1
 
