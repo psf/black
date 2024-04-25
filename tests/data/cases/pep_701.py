@@ -121,6 +121,7 @@ log(
 
 f"{1:{f'{2}'}}"
 f'{1:{f'{2}'}}'
+f'{1:{2}d}'
 
 f'{{\\"kind\\":\\"ConfigMap\\",\\"metadata\\":{{\\"annotations\\":{{}},\\"name\\":\\"cluster-info\\",\\"namespace\\":\\"amazon-cloudwatch\\"}}}}'
 
@@ -248,5 +249,6 @@ log(
 
 f"{1:{f'{2}'}}"
 f"{1:{f'{2}'}}"
+f'{1:{2}d}'
 
 f'{{\\"kind\\":\\"ConfigMap\\",\\"metadata\\":{{\\"annotations\\":{{}},\\"name\\":\\"cluster-info\\",\\"namespace\\":\\"amazon-cloudwatch\\"}}}}'

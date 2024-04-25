@@ -480,13 +480,50 @@ def _split_fstring_start_and_middle(token: str) -> Tuple[str, str]:
     raise ValueError(f"Token {token!r} is not a valid f-string start")
 
 
-STATE_NOT_FSTRING: Final = 0
-STATE_MIDDLE: Final = 1
-STATE_IN_BRACES: Final = 2
+STATE_NOT_FSTRING: Final = 0  # not in an f-string
+STATE_MIDDLE: Final = 1  # in the string portion of an f-string (outside braces)
+STATE_IN_BRACES: Final = 2  # between braces in an f-string
+# in the format specifier (between the colon and the closing brace)
 STATE_IN_COLON: Final = 3
 
 
 class FStringState:
+    """Keeps track of state around f-strings.
+
+    The tokenizer should call the appropriate method on this class when
+    it transitions to a different part of an f-string. This is needed
+    because the tokenization depends on knowing where exactly we are in
+    the f-string.
+
+    For example, consider the following f-string:
+
+        f"a{1:b{2}c}d"
+
+    The following is the tokenization of this string and the states
+    tracked by this class:
+
+        1,0-1,2:	FSTRING_START	'f"'  # [STATE_NOT_FSTRING, STATE_MIDDLE]
+        1,2-1,3:	FSTRING_MIDDLE	'a'
+        1,3-1,4:	LBRACE	'{'  # [STATE_NOT_FSTRING, STATE_IN_BRACES]
+        1,4-1,5:	NUMBER	'1'
+        1,5-1,6:	OP	':'  # [STATE_NOT_FSTRING, STATE_IN_COLON]
+        1,6-1,7:	FSTRING_MIDDLE	'b'
+        1,7-1,8:	LBRACE	'{'  # [STATE_NOT_FSTRING, STATE_IN_COLON, STATE_IN_BRACES]
+        1,8-1,9:	NUMBER	'2'
+        1,9-1,10:	RBRACE	'}'  # [STATE_NOT_FSTRING, STATE_IN_COLON]
+        1,10-1,11:	FSTRING_MIDDLE	'c'
+        1,11-1,12:	RBRACE	'}'  # [STATE_NOT_FSTRING, STATE_MIDDLE]
+        1,12-1,13:	FSTRING_MIDDLE	'd'
+        1,13-1,14:	FSTRING_END	'"'  # [STATE_NOT_FSTRING]
+        1,14-1,15:	NEWLINE	'\n'
+        2,0-2,0:	ENDMARKER	''
+
+    Notice that the nested braces in the format specifier are represented
+    by adding a STATE_IN_BRACES entry to the state stack. The stack is
+    also used if there are nested f-strings.
+
+    """
+
     def __init__(self) -> None:
         self.stack: List[int] = [STATE_NOT_FSTRING]
 
