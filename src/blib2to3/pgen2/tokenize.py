@@ -119,13 +119,13 @@ Imagnumber = group(r"\d+(?:_\d+)*[jJ]", Floatnumber + r"[jJ]")
 Number = group(Imagnumber, Floatnumber, Intnumber)
 
 # Tail end of ' string.
-Single = r"[^'\\]*(?:\\.[^'\\]*)*'"
+Single = r"(?:\\.|[^'\\])*'"
 # Tail end of " string.
-Double = r'[^"\\]*(?:\\.[^"\\]*)*"'
+Double = r'(?:\\.|[^"\\])*"'
 # Tail end of ''' string.
-Single3 = r"[^'\\]*(?:\\.|'(?!'')|[^'\\])*'''"
+Single3 = r"(?:\\.|'(?!'')|[^'\\])*'''"
 # Tail end of """ string.
-Double3 = r'[^"\\]*(?:\\.|"(?!"")|[^"\\])*"""'
+Double3 = r'(?:\\.|"(?!"")|[^"\\])*"""'
 _litprefix = r"(?:[uUrRbB]|[rR][bB]|[bBuU][rR])?"
 _fstringlitprefix = r"(?:rF|FR|Fr|fr|RF|F|rf|f|Rf|fR)"
 Triple = group(
@@ -136,12 +136,12 @@ Triple = group(
 )
 
 # beginning of a single quoted f-string. must not end with `{{` or `\N{`
-SingleLbrace = r"[^'\\{]*(?:\\N{|\\.|{{|[^'\\{])*(?<!\\N){(?!{)"
-DoubleLbrace = r'[^"\\{]*(?:\\N{|\\.|{{|[^"\\{])*(?<!\\N){(?!{)'
+SingleLbrace = r"(?:\\N{|\\.|{{|[^'\\{])*(?<!\\N){(?!{)"
+DoubleLbrace = r'(?:\\N{|\\.|{{|[^"\\{])*(?<!\\N){(?!{)'
 
 # beginning of a triple quoted f-string. must not end with `{{` or `\N{`
-Single3Lbrace = r"[^'{]*(?:\\N{|\\[^{]|{{|'(?!'')|[^'{])*(?<!\\N){(?!{)"
-Double3Lbrace = r'[^"{]*(?:\\N{|\\[^{]|{{|"(?!"")|[^"{])*(?<!\\N){(?!{)'
+Single3Lbrace = r"(?:\\N{|\\[^{]|{{|'(?!'')|[^'{])*(?<!\\N){(?!{)"
+Double3Lbrace = r'(?:\\N{|\\[^{]|{{|"(?!"")|[^"{])*(?<!\\N){(?!{)'
 
 # ! format specifier inside an fstring brace, ensure it's not a `!=` token
 Bang = Whitespace + group("!") + r"(?!=)"
