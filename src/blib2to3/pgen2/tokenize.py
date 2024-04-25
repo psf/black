@@ -480,25 +480,20 @@ def _split_fstring_start_and_middle(token: str) -> Tuple[str, str]:
     raise ValueError(f"Token {token!r} is not a valid f-string start")
 
 
-STATE_NOT_FSTRING: Final = -1
-STATE_MIDDLE: Final = 0
-STATE_IN_BRACES: Final = 1
-STATE_IN_COLON: Final = 2
+STATE_NOT_FSTRING: Final = 0
+STATE_MIDDLE: Final = 1
+STATE_IN_BRACES: Final = 2
+STATE_IN_COLON: Final = 3
 
 
 class FStringState:
     def __init__(self) -> None:
-        self.stack: List[int] = []
-
-    def is_in_fstring(self) -> bool:
-        return bool(self.stack)
+        self.stack: List[int] = [STATE_NOT_FSTRING]
 
     def is_in_fstring_expression(self) -> bool:
-        return bool(self.stack) and self.stack[-1] != STATE_MIDDLE
+        return self.stack[-1] not in (STATE_MIDDLE, STATE_NOT_FSTRING)
 
     def current(self) -> int:
-        if not self.stack:
-            return STATE_NOT_FSTRING
         return self.stack[-1]
 
     def enter_fstring(self) -> None:
@@ -590,7 +585,7 @@ def generate_tokens(
                 spos = strstart
                 epos = (lnum, end)
                 tokenline = contline + line
-                if not fstring_state.is_in_fstring() and not is_fstring_start(token):
+                if fstring_state.current() == STATE_NOT_FSTRING and not is_fstring_start(token):
                     yield (STRING, token, spos, epos, tokenline)
                     endprog_stack.pop()
                     parenlev = parenlev_stack.pop()
