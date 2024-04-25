@@ -487,7 +487,7 @@ STATE_IN_COLON: Final = 2
 
 
 class FStringState:
-    def __init__(self):
+    def __init__(self) -> None:
         self.stack: List[int] = []
 
     def is_in_fstring(self) -> bool:
@@ -495,9 +495,6 @@ class FStringState:
 
     def is_in_fstring_expression(self) -> bool:
         return bool(self.stack) and self.stack[-1] != STATE_MIDDLE
-
-    def is_in_middle(self) -> bool:
-        return bool(self.stack) and self.stack[-1] == STATE_MIDDLE
 
     def current(self) -> int:
         if not self.stack:
