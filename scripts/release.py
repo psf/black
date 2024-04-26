@@ -11,8 +11,7 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from subprocess import PIPE, run
-from typing import List
+from subprocess import run
 
 LOG = logging.getLogger(__name__)
 NEW_VERSION_CHANGELOG_TEMPLATE = """\
