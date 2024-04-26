@@ -230,7 +230,7 @@ def _parse_minimum_version(version: str) -> Tuple[int, int]:
     return int(major), int(minor)
 
 
-@functools.lru_cache()
+@functools.lru_cache
 def get_flags_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -303,7 +303,7 @@ def parse_mode(flags_line: str) -> TestCaseArgs:
 
 
 def read_data_from_file(file_name: Path) -> Tuple[TestCaseArgs, str, str]:
-    with open(file_name, "r", encoding="utf8") as test:
+    with open(file_name, encoding="utf8") as test:
         lines = test.readlines()
     _input: List[str] = []
     _output: List[str] = []
