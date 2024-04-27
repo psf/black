@@ -622,10 +622,10 @@ def generate_tokens(
                 spos = strstart
                 epos = (lnum, end)
                 tokenline = contline + line
-                if (
-                    fstring_state.current() == STATE_NOT_FSTRING
-                    and not is_fstring_start(token)
-                ):
+                if fstring_state.current() in (
+                    STATE_NOT_FSTRING,
+                    STATE_IN_BRACES,
+                ) and not is_fstring_start(token):
                     yield (STRING, token, spos, epos, tokenline)
                     endprog_stack.pop()
                     parenlev = parenlev_stack.pop()

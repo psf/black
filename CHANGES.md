@@ -26,6 +26,9 @@
 
 <!-- Changes to the parser or to version autodetection -->
 
+- Fix regression where Black failed to parse a multiline f-string containing another
+  multiline string (#4339)
+
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
