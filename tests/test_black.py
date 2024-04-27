@@ -2984,7 +2984,7 @@ class TestASTSafety(BlackBaseTestCase):
 
 
 try:
-    with open(black.__file__, "r", encoding="utf-8") as _bf:
+    with open(black.__file__, encoding="utf-8") as _bf:
         black_source_lines = _bf.readlines()
 except UnicodeDecodeError:
     if not black.COMPILED:

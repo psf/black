@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Configuration file for the Sphinx documentation builder.
 #
@@ -24,7 +23,7 @@ CURRENT_DIR = Path(__file__).parent
 def make_pypi_svg(version: str) -> None:
     template: Path = CURRENT_DIR / "_static" / "pypi_template.svg"
     target: Path = CURRENT_DIR / "_static" / "pypi.svg"
-    with open(str(template), "r", encoding="utf8") as f:
+    with open(str(template), encoding="utf8") as f:
         svg: str = string.Template(f.read()).substitute(version=version)
     with open(str(target), "w", encoding="utf8") as f:
         f.write(svg)
