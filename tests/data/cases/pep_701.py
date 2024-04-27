@@ -125,6 +125,9 @@ f'{1:{2}d}'
 
 f'{{\\"kind\\":\\"ConfigMap\\",\\"metadata\\":{{\\"annotations\\":{{}},\\"name\\":\\"cluster-info\\",\\"namespace\\":\\"amazon-cloudwatch\\"}}}}'
 
+f"""{'''
+'''}"""
+
 # output
 
 x = f"foo"
@@ -252,3 +255,6 @@ f"{1:{f'{2}'}}"
 f"{1:{2}d}"
 
 f'{{\\"kind\\":\\"ConfigMap\\",\\"metadata\\":{{\\"annotations\\":{{}},\\"name\\":\\"cluster-info\\",\\"namespace\\":\\"amazon-cloudwatch\\"}}}}'
+
+f"""{'''
+'''}"""

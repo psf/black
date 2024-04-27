@@ -623,7 +623,7 @@ def generate_tokens(
                 epos = (lnum, end)
                 tokenline = contline + line
                 if (
-                    fstring_state.current() == STATE_NOT_FSTRING
+                    fstring_state.current() in (STATE_NOT_FSTRING, STATE_IN_BRACES)
                     and not is_fstring_start(token)
                 ):
                     yield (STRING, token, spos, epos, tokenline)
