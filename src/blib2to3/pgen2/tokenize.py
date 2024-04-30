@@ -608,6 +608,12 @@ def generate_tokens(
         except StopIteration:
             line = ""
         lnum += 1
+
+        # skip lines that are just a slash, to avoid storing that line's
+        # indent information.
+        if line.rstrip("\n").strip(" \t") == "\\":
+            continue
+
         pos, max = 0, len(line)
 
         if contstr:  # continued string
