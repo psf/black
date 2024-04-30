@@ -1,3 +1,4 @@
+# flags: --minimum-version=3.10
 class Plotter:
 \
     pass
