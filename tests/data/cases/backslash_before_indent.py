@@ -5,7 +5,10 @@ class Plotter:
 
 class AnotherCase:
   \
-    pass
+    """Some
+    \
+    Docstring
+    """
 
 # output
 
@@ -15,5 +18,7 @@ class Plotter:
 
 
 class AnotherCase:
-
-    pass
+    """Some
+    \
+    Docstring
+    """

@@ -611,7 +611,7 @@ def generate_tokens(
 
         # skip lines that are just a slash, to avoid storing that line's
         # indent information.
-        if line.rstrip("\n").strip(" \t") == "\\":
+        if not contstr and line.rstrip("\n").strip(" \t") == "\\":
             continue
 
         pos, max = 0, len(line)
