@@ -23,7 +23,7 @@
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
 - Packaging metadata updated: docs are explictly linked, the issue tracker is now also
-  linked. This improves the PyPI listing for Black.
+  linked. This improves the PyPI listing for Black. (#4345)
 
 ### Parser
 
