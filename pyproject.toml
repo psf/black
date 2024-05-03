@@ -93,8 +93,10 @@ blackd = "blackd:patched_main [d]"
 black = "black.schema:get_schema"
 
 [project.urls]
+Documentation = "https://black.readthedocs.io/"
 Changelog = "https://github.com/psf/black/blob/main/CHANGES.md"
-Homepage = "https://github.com/psf/black"
+Repository = "https://github.com/psf/black"
+Issues = "https://github.com/psf/black/issues"
 
 [tool.hatch.metadata.hooks.fancy-pypi-readme]
 content-type = "text/markdown"
