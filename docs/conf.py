@@ -13,9 +13,12 @@
 #
 
 import os
+import re
 import string
 from importlib.metadata import version
 from pathlib import Path
+
+from sphinx.application import Sphinx
 
 CURRENT_DIR = Path(__file__).parent
 
@@ -27,6 +30,36 @@ def make_pypi_svg(version: str) -> None:
         svg: str = string.Template(f.read()).substitute(version=version)
     with open(str(target), "w", encoding="utf8") as f:
         f.write(svg)
+
+
+def replace_pr_numbers_with_links(content: str) -> str:
+    """Replaces all PR numbers with the corresponding GitHub link."""
+
+    base_url = "https://github.com/psf/black/pull/"
+    pr_num_regex = re.compile(r"\(#(\d+)\)")
+
+    def num_to_link(match: re.Match[str]) -> str:
+        number = match.group(1)
+        url = f"{base_url}{number}"
+        return f"([#{number}]({url}))"
+
+    return pr_num_regex.sub(num_to_link, content)
+
+
+def handle_include_read(
+    app: Sphinx,
+    relative_path: Path,
+    parent_docname: str,
+    content: list[str],
+) -> None:
+    """Handler for the include-read sphinx event."""
+    if parent_docname == "change_log":
+        content[0] = replace_pr_numbers_with_links(content[0])
+
+
+def setup(app: Sphinx) -> None:
+    """Sets up a minimal sphinx extension."""
+    app.connect("include-read", handle_include_read)
 
 
 # Necessary so Click doesn't hit an encode error when called by
