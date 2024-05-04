@@ -54,7 +54,7 @@ def handle_include_read(
 ) -> None:
     """Handler for the include-read sphinx event."""
     if parent_docname == "change_log":
-             content[0] = replace_pr_numbers_with_links(content[0])
+        content[0] = replace_pr_numbers_with_links(content[0])
 
 
 def setup(app: Sphinx) -> None:
