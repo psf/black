@@ -609,9 +609,9 @@ def generate_tokens(
             line = ""
         lnum += 1
 
-        # skip lines that are just a slash, to avoid storing that line's
-        # indent information.
-        if not contstr and line.rstrip("\n").strip(" \t") == "\\":
+        # skip lines that are just indent characters ending with a slash
+        # to avoid storing that line's indent information.
+        if not contstr and line.rstrip("\n").strip(" \t\f") == "\\":
             continue
 
         pos, max = 0, len(line)
